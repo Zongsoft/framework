@@ -24,6 +24,16 @@
 		<object name="Assembly" type="Zongsoft.Commands.AssemblyCommand, Zongsoft.Commands" />
 		<object name="Checksum" type="Zongsoft.Commands.ChecksumCommand, Zongsoft.Commands" />
 
+		<object name="Scheduler">
+			<scheduler.command>
+				<object type="Zongsoft.Scheduling.Commands.SchedulerCommand, Zongsoft.Commands" />
+			</scheduler.command>
+
+			<object name="Schedule" type="Zongsoft.Scheduling.Commands.ScheduleCommand, Zongsoft.Commands" />
+			<object name="Reschedule" type="Zongsoft.Scheduling.Commands.RescheduleCommand, Zongsoft.Commands" />
+			<object name="Unschedule" type="Zongsoft.Scheduling.Commands.UnscheduleCommand, Zongsoft.Commands" />
+		</object>
+
 		<object name="Sequence">
 			<sequence.command>
 				<object name="Sequence" type="Zongsoft.Commands.SequenceCommand, Zongsoft.Commands" />

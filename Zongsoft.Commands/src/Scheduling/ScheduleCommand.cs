@@ -1,0 +1,89 @@
+﻿/*
+ *   _____                                ______
+ *  /_   /  ____  ____  ____  _________  / __/ /_
+ *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
+ *   / /__/ /_/ / / / / /_/ /\_ \/ /_/ / __/ /_
+ *  /____/\____/_/ /_/\__  /____/\____/_/  \__/
+ *                   /____/
+ *
+ * Authors:
+ *   钟峰(Popeye Zhong) <zongsoft@qq.com>
+ *
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ *
+ * This file is part of Zongsoft.Commands library.
+ *
+ * The Zongsoft.Commands is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3.0 of the License,
+ * or (at your option) any later version.
+ *
+ * The Zongsoft.Commands is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the Zongsoft.Commands library. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+
+using Zongsoft.Common;
+using Zongsoft.Components;
+using Zongsoft.Scheduling;
+
+namespace Zongsoft.Scheduling.Commands;
+
+[CommandOption("id", typeof(string))]
+[CommandOption("cron", typeof(string))]
+[CommandOption("delay", typeof(TimeSpan))]
+public class ScheduleCommand : CommandBase<CommandContext>
+{
+	public ScheduleCommand() : base("Schedule") { }
+
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	{
+		if(context.Arguments == null || context.Arguments.IsEmpty)
+			throw new CommandException($"Missing the required argments.");
+
+		var scheduler = context.Find<SchedulerCommand>(true)?.Scheduler ?? throw new CommandException($"Missing the required scheduler.");
+
+		var options = string.IsNullOrEmpty(context.Options.GetValue<string>("id")) ?
+			Trigger.Options.Identifier(Timestamp.Millennium.Now.ToString()) :
+			Trigger.Options.Identifier(context.Options.GetValue<string>("id"));
+
+		string[] identifiers;
+
+		if(context.Options.TryGetValue<string>("cron", out var cron) && !string.IsNullOrEmpty(cron))
+			identifiers = await ScheduleAsync(scheduler, context.Arguments, context.Value, options.Cron(cron), cancellation);
+		else if(context.Options.TryGetValue<TimeSpan>("delay", out var duration) && duration > TimeSpan.Zero)
+			identifiers = await ScheduleAsync(scheduler, context.Arguments, context.Value, options.Delay(duration), cancellation);
+		else
+			identifiers = await ScheduleAsync(scheduler, context.Arguments, context.Value, options, cancellation);
+
+		context.Output.WriteLine(CommandOutletColor.DarkMagenta, $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}]");
+
+		for(int i = 0; i < identifiers.Length; i++)
+		{
+			context.Output.Write(CommandOutletColor.DarkGray, $"{(i + 1)}# ");
+			context.Output.WriteLine(CommandOutletColor.DarkYellow, identifiers[i]);
+		}
+
+		return identifiers;
+	}
+
+	private static async ValueTask<string[]> ScheduleAsync(IScheduler scheduler, string[] names, object argument, ITriggerOptions options, CancellationToken cancellation)
+	{
+		var result = new string[names.Length];
+
+		for(int i = 0; i < names.Length; i++)
+		{
+			result[i] = await scheduler.ScheduleAsync(names[i], argument, options, cancellation);
+		}
+
+		return result;
+	}
+}
