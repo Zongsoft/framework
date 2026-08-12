@@ -81,7 +81,12 @@ public static class RouteUtility
 		var templates = GetRouteTemplates(controller?.Selectors);
 
 		foreach(var template in templates)
-			yield return RoutePattern.Resolve(template).Map(controller.RouteValues);
+		{
+			var pattern = RoutePattern.Resolve(template).Map(controller.RouteValues);
+
+			if(pattern != null)
+				yield return pattern;
+		}
 	}
 
 	public static IEnumerable<RoutePattern> GetRoutePatterns(this ControllerServiceDescriptor.ControllerOperationDescriptor descriptor)
@@ -100,18 +105,28 @@ public static class RouteUtility
 		if(prefixes.Count == 0)
 		{
 			foreach(var template in templates)
-				yield return GetRouteTemplate(template, null)
+			{
+				var pattern = GetRouteTemplate(template, null)
 					.Map(action.Controller.RouteValues)
 					.Map(action.RouteValues);
+
+				if(pattern != null)
+					yield return pattern;
+			}
 		}
 		else
 		{
 			foreach(var prefix in prefixes)
 			{
 				foreach(var template in templates)
-					yield return GetRouteTemplate(template, prefix)
+				{
+					var pattern = GetRouteTemplate(template, prefix)
 						.Map(action.Controller.RouteValues)
 						.Map(action.RouteValues);
+
+					if(pattern != null)
+						yield return pattern;
+				}
 			}
 		}
 
@@ -152,13 +167,13 @@ public static class RouteUtility
 		{
 			var selector = selectors[i];
 
-			if(selector.AttributeRouteModel != null)
+			if(selector.AttributeRouteModel != null && !string.IsNullOrWhiteSpace(selector.AttributeRouteModel.Template))
 				result.Add(selector.AttributeRouteModel.Template);
 
 			foreach(var metadata in selector.EndpointMetadata)
 			{
-				if(metadata is IRouteTemplateProvider route)
-					result.Add(route.Template ?? string.Empty);
+				if(metadata is IRouteTemplateProvider route && !string.IsNullOrWhiteSpace(route.Template))
+					result.Add(route.Template);
 			}
 		}
 

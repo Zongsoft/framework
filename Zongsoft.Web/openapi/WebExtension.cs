@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Web.OpenApi library.
  *
@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.IO;
 
 using Microsoft.OpenApi;
 
@@ -64,24 +65,18 @@ public static partial class WebExtension
 			}
 		}
 
-		using var textWriter = new Utf8BufferTextWriter(System.Globalization.CultureInfo.InvariantCulture);
-		textWriter.SetWriter(context.Response.BodyWriter);
-
-		OpenApiWriterBase openApiWriter;
-
-		if(format == DocumentFormat.Yaml)
+		using var memory = new MemoryStream();
+		using(var streamWriter = new StreamWriter(memory, System.Text.Encoding.UTF8, leaveOpen: true))
 		{
-			context.Response.ContentType = format.Type;
-			openApiWriter = new OpenApiYamlWriter(textWriter);
-		}
-		else
-		{
-			context.Response.ContentType = format.Type;
-			openApiWriter = new OpenApiJsonWriter(textWriter);
+			OpenApiWriterBase writer = format == DocumentFormat.Yaml ?
+				new OpenApiYamlWriter(streamWriter):
+				new OpenApiJsonWriter(streamWriter);
+
+			await _document.SerializeAsync(writer, OpenApiSpecVersion.OpenApi3_1, context.RequestAborted);
+			await streamWriter.FlushAsync();
 		}
 
-		await context.Response.StartAsync();
-		await _document.SerializeAsync(openApiWriter, OpenApiSpecVersion.OpenApi3_1, context.RequestAborted);
-		await context.Response.BodyWriter.FlushAsync(context.RequestAborted);
+		context.Response.ContentType = format.Type;
+		await context.Response.Body.WriteAsync(memory.GetBuffer().AsMemory(0, (int)memory.Length), context.RequestAborted);
 	}).ExcludeFromDescription();
 }
