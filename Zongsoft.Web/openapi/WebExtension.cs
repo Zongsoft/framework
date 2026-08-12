@@ -47,7 +47,7 @@ public static partial class WebExtension
 		{
 			context.Response.StatusCode = StatusCodes.Status400BadRequest;
 			context.Response.ContentType = "text/plain;charset=utf-8";
-			await context.Response.WriteAsync("The requested OpenAPI document format is not supported. Supported formats are ('.json', '.yaml' and '.yml').");
+			await context.Response.WriteAsync(Properties.Resources.DocumentFormatNotSupported_Message);
 			return;
 		}
 
@@ -59,7 +59,7 @@ public static partial class WebExtension
 			{
 				context.Response.StatusCode = StatusCodes.Status404NotFound;
 				context.Response.ContentType = "text/plain;charset=utf-8";
-				await context.Response.WriteAsync($"No OpenAPI document with the name '{documentName}' was found.");
+				await context.Response.WriteAsync(string.Format(Properties.Resources.DocumentNotFound_Message, documentName));
 				return;
 			}
 		}

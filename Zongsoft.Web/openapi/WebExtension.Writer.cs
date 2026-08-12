@@ -44,7 +44,7 @@ partial class WebExtension
 
 			#if DEBUG
 			if(writer._inUse)
-				throw new InvalidOperationException("The writer wasn't returned!");
+				throw new InvalidOperationException(Properties.Resources.WriterNotReturned_Message);
 			writer._inUse = true;
 			#endif
 
