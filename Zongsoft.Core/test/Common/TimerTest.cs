@@ -15,24 +15,27 @@ public class TimerTest
 	#region 私有变量
 	private int _count;
 	private readonly Timer _timer;
+	private readonly TaskCompletionSource _completion;
 	#endregion
 
 	#region 构造函数
-	public TimerTest() => _timer = new Timer(TimeSpan.FromMilliseconds(1), this.OnTick);
+	public TimerTest()
+	{
+		_timer = new Timer(TimeSpan.FromMilliseconds(1), this.OnTick);
+		_completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+	}
 	#endregion
 
 	#region 测试方法
 	[Fact]
-	public void Test()
+	public async Task Test()
 	{
 		Assert.False(_timer.IsRunning);
 		_timer.Start(TestContext.Current.CancellationToken);
 		Assert.True(_timer.IsRunning);
 
-		SpinWait.SpinUntil(() => _count >= LIMIT, 1000 * 2);
+		await _completion.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
 		Assert.Equal(LIMIT, _count);
-
-		_timer.Stop();
 		Assert.False(_timer.IsRunning);
 	}
 	#endregion
@@ -41,7 +44,10 @@ public class TimerTest
 	private ValueTask OnTick(object state, CancellationToken cancellation)
 	{
 		if(Interlocked.Increment(ref _count) >= LIMIT)
+		{
 			_timer.Stop();
+			_completion.TrySetResult();
+		}
 
 		return ValueTask.CompletedTask;
 	}

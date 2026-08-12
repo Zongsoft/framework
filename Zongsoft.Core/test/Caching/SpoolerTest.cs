@@ -94,7 +94,7 @@ public class SpoolerTest
 		//设置触发周期
 		spooler.Period = TimeSpan.FromMilliseconds(1);
 		//等待周期刷新
-		SpinWait.SpinUntil(() => flusher.Count > 0, 1000);
+		await flusher.WaitAsync(TestContext.Current.CancellationToken);
 
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(3, flusher.Count);
@@ -146,9 +146,14 @@ public class SpoolerTest
 	{
 		private int _count;
 		public int Count => _count;
+
+		private readonly TaskCompletionSource _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		public Task WaitAsync(CancellationToken cancellation) => _completion.Task.WaitAsync(TimeSpan.FromSeconds(10), cancellation);
+
 		public ValueTask OnFlushAsync(IEnumerable<T> values, CancellationToken cancellation)
 		{
 			Interlocked.Add(ref _count, values.Count());
+			_completion.TrySetResult();
 			return ValueTask.CompletedTask;
 		}
 	}
