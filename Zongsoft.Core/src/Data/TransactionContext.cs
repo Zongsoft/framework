@@ -39,6 +39,11 @@ namespace Zongsoft.Data;
 /// <summary>表示事务的环境上下文和生命周期。</summary>
 public sealed class TransactionContext
 {
+	#region 公共事件
+	/// <summary>当事务上下文完成时发生。</summary>
+	public event EventHandler Completed;
+	#endregion
+
 	#region 静态字段
 	private static readonly AsyncLocal<TransactionContext> _current = new();
 	#endregion
@@ -61,11 +66,6 @@ public sealed class TransactionContext
 		this.Parameters = new();
 		_enlistments = new();
 	}
-	#endregion
-
-	#region 公共事件
-	/// <summary>当事务上下文完成时发生。</summary>
-	public event EventHandler Completed;
 	#endregion
 
 	#region 静态属性
@@ -100,18 +100,6 @@ public sealed class TransactionContext
 	internal Transaction Transaction { get; }
 	#endregion
 
-	#region 内部方法
-	internal static void Enter(TransactionContext context) => _current.Value = context;
-	internal static void Exit(TransactionContext context)
-	{
-		if(object.ReferenceEquals(_current.Value, context))
-			_current.Value = context.Parent;
-	}
-
-	internal void Commit() => this.Complete(EnlistmentPhase.Commit);
-	internal void Rollback() => this.Complete(EnlistmentPhase.Rollback);
-	#endregion
-
 	#region 公共方法
 	/// <summary>向根事务登记一个事务处理过程的回调。</summary>
 	public bool Enlist(IEnlistment enlistment)
@@ -127,6 +115,22 @@ public sealed class TransactionContext
 			return _completion == 0 && this.Root.EnlistCore(enlistment);
 		}
 	}
+	#endregion
+
+	#region 内部方法
+	internal static void Enter(TransactionContext context) => _current.Value = context;
+	internal static void Exit(TransactionContext context)
+	{
+		if(object.ReferenceEquals(_current.Value, context))
+			_current.Value = context.Parent;
+	}
+
+	internal void Commit() => this.Complete(EnlistmentPhase.Commit);
+	internal void Rollback() => this.Complete(EnlistmentPhase.Rollback);
+	#endregion
+
+	#region 重写方法
+	public override string ToString() => $"{this.Identifier}({this.Status}/{this.IsolationLevel})";
 	#endregion
 
 	#region 私有方法
