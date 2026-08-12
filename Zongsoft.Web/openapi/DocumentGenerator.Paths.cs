@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Web.OpenApi library.
  *
@@ -34,6 +34,8 @@ using System.Threading;
 using System.Collections.Generic;
 
 using Microsoft.OpenApi;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 
@@ -92,7 +94,13 @@ partial class DocumentGenerator
 
 			foreach(var method in methods)
 			{
-				foreach(var pattern in operation.GetRoutePatterns())
+				var patterns = operation.GetRoutePatterns().ToList();
+
+				//约定式路由的接口没有属性路由模板，需从运行时路由表反查其真实路径
+				if(patterns.Count == 0)
+					patterns = GetConventionalPatterns(context, operation, method);
+
+				foreach(var pattern in patterns)
 				{
 					var url = pattern.GetUrl();
 
@@ -206,6 +214,14 @@ partial class DocumentGenerator
 		//获取参数位置
 		var location = Utility.GetLocation(model);
 
+		//约定式路由的路径参数没有显式绑定源，需根据路由模板识别
+		if(location != ParameterLocation.Path && pattern.Contains(model.Name))
+			location = ParameterLocation.Path;
+
+		//无显式绑定源的标量参数按查询参数处理（约定式路由的接口参数通常没有 [From*] 特性）
+		if(location == null && Utility.IsScalarType(model.ParameterType))
+			location = ParameterLocation.Query;
+
 		//如果是路径参数但路由模板中不包含该参数名称则忽略它
 		if(location == ParameterLocation.Path && !pattern.Contains(model.Name))
 			return null;
@@ -246,5 +262,56 @@ partial class DocumentGenerator
 
 			return false;
 		}
+	}
+
+	/// <summary>从运行时路由表中反查约定式路由接口的路径模板。</summary>
+	private static List<RoutePattern> GetConventionalPatterns(DocumentContext context, ControllerServiceDescriptor.ControllerOperationDescriptor operation, HttpMethod method)
+	{
+		if(context.Routing == null)
+			return [];
+
+		var result = new List<RoutePattern>();
+		var controllerName = operation.Action.Controller.ControllerName;
+		var actionName = operation.Action.ActionName;
+
+		foreach(var endpoint in context.Routing.Endpoints)
+		{
+			if(endpoint is not RouteEndpoint routeEndpoint)
+				continue;
+
+			var descriptor = routeEndpoint.Metadata.GetMetadata<ControllerActionDescriptor>();
+			if(descriptor == null)
+				continue;
+
+			if(!string.Equals(descriptor.ControllerName, controllerName, StringComparison.OrdinalIgnoreCase) ||
+			   !string.Equals(descriptor.ActionName, actionName, StringComparison.OrdinalIgnoreCase))
+				continue;
+
+			var httpMethods = routeEndpoint.Metadata.GetMetadata<HttpMethodMetadata>()?.HttpMethods;
+			if(httpMethods != null && !httpMethods.Any(item => string.Equals(item, method.Method, StringComparison.OrdinalIgnoreCase)))
+				continue;
+
+			var rawText = routeEndpoint.RoutePattern.RawText;
+			if(string.IsNullOrWhiteSpace(rawText))
+				continue;
+
+			var pattern = RoutePattern.Resolve(rawText);
+			if(pattern == null)
+				continue;
+
+			//用控制器的实际路由值替换 {controller}/{action}/{area} 等占位符
+			foreach(var parameter in descriptor.RouteValues)
+				pattern[parameter.Key]?.Value = parameter.Value;
+
+			//若模板含控制器或操作占位符但未能替换为具体值，则该模板无法生成有效的接口路径
+			if(pattern.Contains("controller") && string.IsNullOrEmpty(pattern["controller"].Value))
+				continue;
+			if(pattern.Contains("action") && string.IsNullOrEmpty(pattern["action"].Value))
+				continue;
+
+			result.Add(pattern);
+		}
+
+		return result;
 	}
 }

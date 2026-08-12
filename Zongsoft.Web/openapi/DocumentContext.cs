@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Web.OpenApi library.
  *
@@ -31,6 +31,7 @@ using System;
 using System.Collections.Generic;
 
 using Microsoft.OpenApi;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 
 using Zongsoft.Services;
@@ -57,6 +58,9 @@ public class DocumentContext
 	public DocumentFormat Format { get; }
 	public IServiceProvider Services { get; }
 	public IConfiguration Configuration { get; }
+
+	/// <summary>获取运行时路由表（用于解析约定式路由的接口路径）。</summary>
+	public EndpointDataSource Routing { get; internal set; }
 	#endregion
 }
 

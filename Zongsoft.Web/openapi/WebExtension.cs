@@ -35,6 +35,7 @@ using Microsoft.OpenApi;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Web.OpenApi;
 
@@ -54,7 +55,13 @@ public static partial class WebExtension
 
 		if(_document == null)
 		{
-			_document = DocumentGenerator.Generate(new DocumentContext(format));
+			var documentContext = new DocumentContext(format)
+			{
+				//注入运行时路由表，用于补全约定式路由的接口路径
+				Routing = context.RequestServices?.GetService<EndpointDataSource>(),
+			};
+
+			_document = DocumentGenerator.Generate(documentContext);
 
 			if(_document == null)
 			{
