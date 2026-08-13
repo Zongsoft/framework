@@ -57,6 +57,7 @@ public class DataSession : IDisposable, IAsyncDisposable
 	private int _completion;          //表示当前会话是否已经结束(提交或回滚)的标记
 	private readonly object _synchrolock;      //表示当前会话状态转换的同步对象
 	private readonly SemaphoreSlim _semaphore; //表示当前会话连接及事务初始化的同步信号量
+	private readonly TaskCompletionSource _completionSource; //表示延迟提交/回滚完成信号（仅作等待信号，不替代上述状态机）
 	#endregion
 
 	#region 成员字段
@@ -76,6 +77,7 @@ public class DataSession : IDisposable, IAsyncDisposable
 
 		_synchrolock = new object();
 		_semaphore = new SemaphoreSlim(1, 1);
+		_completionSource = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
 		if(_ambient != null && !_ambient.Enlist(new Enlistment(this)))
 		{
@@ -107,6 +109,12 @@ public class DataSession : IDisposable, IAsyncDisposable
 
 	/// <summary>获取一个值，指示当前会话是否已经完成(提交或回滚)。</summary>
 	public bool IsCompleted => Volatile.Read(ref _completion) != COMPLETION_NONE;
+	#endregion
+
+	#region 内部属性
+	/// <summary>获取一个表示当前会话真实完成（提交/回滚并销毁）的任务。</summary>
+	/// <remarks>供环境事务的登记回调在延迟销毁场景下等待真实完成。</remarks>
+	internal Task Completion => _completionSource.Task;
 	#endregion
 
 	#region 公共方法
@@ -528,6 +536,8 @@ public class DataSession : IDisposable, IAsyncDisposable
 	/// <param name="committing">指定是否提交当前数据事务。</param>
 	private void Complete(bool committing)
 	{
+		//标记完成；若已无未结束的数据操作则立即销毁（提交/回滚），
+		//否则真实提交/回滚由最后一个活动释放时触发（延迟销毁）。
 		if(this.CompleteCore(committing))
 			this.Destroy();
 	}
@@ -537,6 +547,8 @@ public class DataSession : IDisposable, IAsyncDisposable
 	/// <param name="cancellation">指定的异步操作的取消标记。</param>
 	private ValueTask CompleteAsync(bool committing, CancellationToken cancellation)
 	{
+		//标记完成；若已无未结束的数据操作则立即销毁（提交/回滚），
+		//否则真实提交/回滚由最后一个活动释放时触发（延迟销毁）。
 		return this.CompleteCore(committing) ?
 			this.DestroyAsync(cancellation) : ValueTask.CompletedTask;
 	}
@@ -555,104 +567,144 @@ public class DataSession : IDisposable, IAsyncDisposable
 
 	private void Destroy()
 	{
-		//获取并将事务对象置空
-		var transaction = Interlocked.Exchange(ref _transaction, null);
+		Exception exception = null;
 
 		try
 		{
-			if(transaction != null)
-			{
-				try
-				{
-					//尝试提交或回滚事务
-					switch(_completion)
-					{
-						case COMPLETION_COMMIT:
-							transaction.Commit();
-							break;
-						case COMPLETION_ROLLBACK:
-							transaction.Rollback();
-							break;
-					}
-				}
-				finally
-				{
-					transaction.Dispose();
-				}
-			}
-		}
-		finally
-		{
+			//获取并将事务对象置空
+			var transaction = Interlocked.Exchange(ref _transaction, null);
+
 			try
 			{
-				//获取并将主连接对象置空
-				var connection = Interlocked.Exchange(ref _connection, null);
-
-				if(connection != null)
+				if(transaction != null)
 				{
-					//取消连接事件处理
-					connection.StateChange -= this.Connection_StateChange;
-
-					//释放主数据连接
-					connection.Dispose();
+					try
+					{
+						//尝试提交或回滚事务
+						switch(_completion)
+						{
+							case COMPLETION_COMMIT:
+								transaction.Commit();
+								break;
+							case COMPLETION_ROLLBACK:
+								transaction.Rollback();
+								break;
+						}
+					}
+					finally
+					{
+						transaction.Dispose();
+					}
 				}
 			}
 			finally
 			{
-				_semaphore.Dispose();
+				try
+				{
+					//获取并将主连接对象置空
+					var connection = Interlocked.Exchange(ref _connection, null);
+
+					if(connection != null)
+					{
+						//取消连接事件处理
+						connection.StateChange -= this.Connection_StateChange;
+
+						//释放主数据连接
+						connection.Dispose();
+					}
+				}
+				finally
+				{
+					_semaphore.Dispose();
+				}
 			}
 		}
+		catch(Exception ex)
+		{
+			exception = ex;
+		}
+		finally
+		{
+			//发出完成信号，通知等待延迟提交/回滚完成的线程
+			if(exception != null)
+				_completionSource.TrySetException(exception);
+			else
+				_completionSource.TrySetResult();
+		}
+
+		if(exception != null)
+			System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(exception).Throw();
 	}
 
 	private async ValueTask DestroyAsync(CancellationToken cancellation)
 	{
-		//获取并将事务对象置空
-		var transaction = Interlocked.Exchange(ref _transaction, null);
+		Exception exception = null;
 
 		try
 		{
-			if(transaction != null)
-			{
-				try
-				{
-					//尝试提交或回滚事务
-					switch(_completion)
-					{
-						case COMPLETION_COMMIT:
-							await transaction.CommitAsync(cancellation).ConfigureAwait(false);
-							break;
-						case COMPLETION_ROLLBACK:
-							await transaction.RollbackAsync(cancellation).ConfigureAwait(false);
-							break;
-					}
-				}
-				finally
-				{
-					await transaction.DisposeAsync().ConfigureAwait(false);
-				}
-			}
-		}
-		finally
-		{
+			//获取并将事务对象置空
+			var transaction = Interlocked.Exchange(ref _transaction, null);
+
 			try
 			{
-				//获取并将主连接对象置空
-				var connection = Interlocked.Exchange(ref _connection, null);
-
-				if(connection != null)
+				if(transaction != null)
 				{
-					//取消连接事件处理
-					connection.StateChange -= this.Connection_StateChange;
-
-					//释放主数据连接
-					await connection.DisposeAsync().ConfigureAwait(false);
+					try
+					{
+						//尝试提交或回滚事务
+						switch(_completion)
+						{
+							case COMPLETION_COMMIT:
+								await transaction.CommitAsync(cancellation).ConfigureAwait(false);
+								break;
+							case COMPLETION_ROLLBACK:
+								await transaction.RollbackAsync(cancellation).ConfigureAwait(false);
+								break;
+						}
+					}
+					finally
+					{
+						await transaction.DisposeAsync().ConfigureAwait(false);
+					}
 				}
 			}
 			finally
 			{
-				_semaphore.Dispose();
+				try
+				{
+					//获取并将主连接对象置空
+					var connection = Interlocked.Exchange(ref _connection, null);
+
+					if(connection != null)
+					{
+						//取消连接事件处理
+						connection.StateChange -= this.Connection_StateChange;
+
+						//释放主数据连接
+						await connection.DisposeAsync().ConfigureAwait(false);
+					}
+				}
+				finally
+				{
+					_semaphore.Dispose();
+				}
 			}
 		}
+		catch(Exception ex)
+		{
+			exception = ex;
+		}
+		finally
+		{
+			//发出完成信号，通知等待延迟提交/回滚完成的线程
+			if(exception != null)
+				_completionSource.TrySetException(exception);
+			else
+				_completionSource.TrySetResult();
+		}
+
+		if(exception != null)
+			System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(exception).Throw();
 	}
 	#endregion
 
@@ -751,10 +803,31 @@ public class DataSession : IDisposable, IAsyncDisposable
 
 		public void OnEnlist(Transactions.EnlistmentContext context)
 		{
-			if(context.Phase == Transactions.EnlistmentPhase.Prepare)
-				return;
+			if(GetCommit(context, out var commit))
+			{
+				//标记完成，并等待真实提交/回滚（延迟销毁时阻塞至最后一个活动释放）
+				_session.Complete(commit.Value);
+				_session.Completion.GetAwaiter().GetResult();
+			}
+		}
 
-			bool? commit = null;
+		public async ValueTask OnEnlistAsync(Transactions.EnlistmentContext context, CancellationToken cancellation)
+		{
+			if(GetCommit(context, out var commit))
+			{
+				//标记完成，并等待真实提交/回滚（延迟销毁时挂起至最后一个活动释放），
+				//以确保"事务提交/回滚完成"的契约在事件投递前成立。
+				await _session.CompleteAsync(commit.Value, cancellation).ConfigureAwait(false);
+				await _session.Completion.WaitAsync(cancellation).ConfigureAwait(false);
+			}
+		}
+
+		private static bool GetCommit(Transactions.EnlistmentContext context, out bool? commit)
+		{
+			commit = null;
+
+			if(context.Phase == Transactions.EnlistmentPhase.Prepare)
+				return false;
 
 			switch(context.Phase)
 			{
@@ -767,8 +840,7 @@ public class DataSession : IDisposable, IAsyncDisposable
 					break;
 			}
 
-			if(commit.HasValue)
-				_session.Complete(commit.Value);
+			return commit.HasValue;
 		}
 	}
 

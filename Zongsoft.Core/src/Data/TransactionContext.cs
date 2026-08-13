@@ -30,6 +30,7 @@
 using System;
 using System.Data;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Zongsoft.Data.Transactions;
@@ -127,6 +128,8 @@ public sealed class TransactionContext
 
 	internal void Commit() => this.Complete(EnlistmentPhase.Commit);
 	internal void Rollback() => this.Complete(EnlistmentPhase.Rollback);
+	internal Task CommitAsync(CancellationToken cancellation = default) => this.CompleteAsync(EnlistmentPhase.Commit, cancellation);
+	internal Task RollbackAsync(CancellationToken cancellation = default) => this.CompleteAsync(EnlistmentPhase.Rollback, cancellation);
 	#endregion
 
 	#region 重写方法
@@ -146,7 +149,8 @@ public sealed class TransactionContext
 		}
 	}
 
-	private void Complete(EnlistmentPhase phase)
+	private void Complete(EnlistmentPhase phase) => this.CompleteAsync(phase, CancellationToken.None).GetAwaiter().GetResult();
+	private async Task CompleteAsync(EnlistmentPhase phase, CancellationToken cancellation)
 	{
 		IEnlistment[] enlistments = null;
 		var nested = false;
@@ -188,7 +192,8 @@ public sealed class TransactionContext
 		{
 			try
 			{
-				enlistment.OnEnlist(new EnlistmentContext(this.Transaction, phase));
+				//异步执行事务登记回调，确保其真实提交/回滚完成后再继续后续流程
+				await enlistment.OnEnlistAsync(new EnlistmentContext(this.Transaction, phase), cancellation).ConfigureAwait(false);
 			}
 			catch(Exception exception)
 			{

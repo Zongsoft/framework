@@ -29,13 +29,15 @@
 
 using System;
 using System.Data;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Data.Transactions;
 
 namespace Zongsoft.Data;
 
 /// <summary>表示事务的控制范围。</summary>
-public class Transaction : IDisposable, IEquatable<Transaction>
+public class Transaction : IDisposable, IAsyncDisposable, IEquatable<Transaction>
 {
 	#region 成员字段
 	private readonly TransactionContext _context;
@@ -58,17 +60,6 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 	#region 公共属性
 	/// <summary>获取当前事务的上下文。</summary>
 	public TransactionContext Context => _context;
-
-	/// <summary>获取当前事务的隔离级别。</summary>
-	public IsolationLevel IsolationLevel => _context.IsolationLevel;
-
-	/// <summary>获取当前事务是否已终结。</summary>
-	public bool IsCompleted => _context.IsCompleted;
-	#endregion
-
-	#region 内部属性
-	internal Transaction Parent => _context.Parent?.Transaction;
-	internal TransactionStatus Status => _context.Status;
 	#endregion
 
 	#region 静态方法
@@ -87,8 +78,16 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 	/// <summary>提交事务。</summary>
 	public void Commit() => _context.Commit();
 
+	/// <summary>提交事务。</summary>
+	/// <remarks>等待所有登记回调（含数据会话的真实提交）完成后再返回，支持取消。</remarks>
+	public Task CommitAsync(CancellationToken cancellation = default) => _context.CommitAsync(cancellation);
+
 	/// <summary>回滚事务。</summary>
 	public void Rollback() => _context.Rollback();
+
+	/// <summary>回滚事务。</summary>
+	/// <remarks>等待所有登记回调（含数据会话的真实回滚）完成后再返回，支持取消。</remarks>
+	public Task RollbackAsync(CancellationToken cancellation = default) => _context.RollbackAsync(cancellation);
 	#endregion
 
 	#region 重写方法
@@ -106,8 +105,19 @@ public class Transaction : IDisposable, IEquatable<Transaction>
 
 	protected virtual void Dispose(bool disposing)
 	{
-		this.Rollback();
+		//先退出环境上下文再回滚，与 DisposeAsync 的顺序保持一致；
+		//避免回滚抛异常时 Exit 未执行而导致环境事务上下文残留。
 		TransactionContext.Exit(_context);
+		this.Rollback();
+	}
+
+	public ValueTask DisposeAsync()
+	{
+		//注意：AsyncLocal 写入无法穿越 async 方法的上下文边界传回调用方，
+		//因此退出环境上下文的操作必须在调用方上下文中同步执行，然后再异步回滚。
+		TransactionContext.Exit(_context);
+		GC.SuppressFinalize(this);
+		return new ValueTask(this.RollbackAsync(CancellationToken.None));
 	}
 	#endregion
 }

@@ -235,8 +235,8 @@ partial class DataServiceBase<TModel>
 				count += await this.UpdateAsync(dictionary.Data, schema, options, cancellation);
 			}
 
-			//提交事务
-			transaction.Commit();
+			//提交事务（异步等待真实提交完成，避免阻塞请求线程）
+			await transaction.CommitAsync(cancellation);
 
 			//返回更新数
 			return count;
@@ -244,7 +244,7 @@ partial class DataServiceBase<TModel>
 		catch
 		{
 			//回滚事务
-			transaction.Rollback();
+			await transaction.RollbackAsync(cancellation);
 			//重抛异常
 			throw;
 		}

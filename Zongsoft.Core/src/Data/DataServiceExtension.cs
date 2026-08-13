@@ -139,8 +139,8 @@ public static partial class DataServiceExtension
 			foreach(var item in items)
 				count += await service.UpdateAsync(item, schema, options, cancellation);
 
-			//提交事务
-			transaction.Commit();
+			//提交事务（异步等待真实提交完成，避免阻塞调用线程）
+			await transaction.CommitAsync(cancellation);
 
 			//返回更新记录数
 			return count;
@@ -148,7 +148,7 @@ public static partial class DataServiceExtension
 		catch
 		{
 			//回滚事务
-			transaction.Rollback();
+			await transaction.RollbackAsync(cancellation);
 
 			throw;
 		}

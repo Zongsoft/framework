@@ -323,6 +323,7 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		using(var transaction = new Transaction())
 		{
 			await InsertLogAsync(accessor, target, action);
+			var session = GetSession(transaction);
 
 			var logs = accessor.SelectAsync<Log>(
 				Condition.Equal(nameof(Log.Target), target) &
@@ -332,7 +333,60 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 			{
 				Assert.True(await enumerator.MoveNextAsync());
 
-				transaction.Commit();
+				//提交操作在另一线程执行，并阻塞等待当前读取器释放
+				var committing = Task.Run(transaction.Commit);
+
+				//等待提交线程进入完成流程（真实提交被延迟）
+				SpinWait.SpinUntil(() => session.IsCompleted, TimeSpan.FromSeconds(5));
+				Assert.True(session.IsCompleted);
+
+				//读取器未释放前，提交尚未完成（真实提交被延迟）
+				Assert.False(committing.IsCompleted);
+
+				//释放读取器后提交完成
+				await enumerator.DisposeAsync();
+				await committing;
+				AssertSessionReleased(session);
+			}
+		}
+
+		Assert.True(await ExistsLogAsync(accessor, target, action));
+	}
+
+	[Fact]
+	public async Task CommitAsyncWaitsForOpenReaderToReleaseAsync()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var target = GetTarget();
+		var action = "Reader.CommitAsync";
+
+		using(var transaction = new Transaction())
+		{
+			await InsertLogAsync(accessor, target, action);
+			var session = GetSession(transaction);
+
+			var logs = accessor.SelectAsync<Log>(
+				Condition.Equal(nameof(Log.Target), target) &
+				Condition.Equal(nameof(Log.Action), action));
+
+			await using(var enumerator = logs.GetAsyncEnumerator())
+			{
+				Assert.True(await enumerator.MoveNextAsync());
+
+				//异步提交：不阻塞当前线程，但不会在真实提交完成前返回
+				var committing = transaction.CommitAsync();
+				Assert.False(committing.IsCompleted);
+
+				//读取器未释放前，提交尚未完成（真实提交被延迟）
+				Assert.False(committing.IsCompleted);
+
+				//释放读取器后提交完成
+				await enumerator.DisposeAsync();
+				await committing;
+				AssertSessionReleased(session);
 			}
 		}
 
@@ -362,12 +416,19 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 			{
 				Assert.True(await enumerator.MoveNextAsync());
 
-				transaction.Commit();
-				AssertSessionCompleted(session);
+				var committing = Task.Run(transaction.Commit);
+				SpinWait.SpinUntil(() => session.IsCompleted, TimeSpan.FromSeconds(5));
 
+				//释放读取器后提交完成
+				await enumerator.DisposeAsync();
+				await committing;
+
+				//提交完成后会话已释放，连接已关闭
+				AssertSessionReleased(session);
+				Assert.Equal(ConnectionState.Closed, connection.State);
+
+				//提交后再处置会话不应影响已提交的结果
 				session.Dispose();
-				Assert.Same(connection, session.Connection);
-				Assert.NotEqual(ConnectionState.Closed, connection.State);
 			}
 
 			AssertSessionReleased(session);

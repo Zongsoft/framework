@@ -319,7 +319,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		}
 
 		//提交事务
-		transaction.Commit();
+		await transaction.CommitAsync(cancellation);
 
 		//返回删除数量
 		return total;

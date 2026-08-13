@@ -227,16 +227,119 @@ public class TransactionTest
 		Assert.Equal(TransactionStatus.Undetermined, completedStatus);
 	}
 
+	[Fact]
+	public void Commit_SyncBridgeInvokesAsyncEnlistmentAndWaitsForItsCompletion()
+	{
+		using var transaction = new Transaction();
+		var enlistment = new AsyncRecorder();
+		Assert.True(transaction.Enlist(enlistment));
+
+		transaction.Commit();
+
+		Assert.True(enlistment.IsCompleted);
+		Assert.Equal(TransactionStatus.Committed, transaction.Context.Status);
+	}
+
+	[Fact]
+	public async Task CommitAsync_CompletedFiresAfterAsyncEnlistmentsFinishAsync()
+	{
+		using var transaction = new Transaction();
+		var enlistment = new AsyncRecorder();
+		Assert.True(transaction.Enlist(enlistment));
+
+		TransactionStatus? statusAtCompletion = null;
+		transaction.Context.Completed += (_, _) =>
+		{
+			//断言异步登记回调已经全部完成
+			Assert.True(enlistment.IsCompleted);
+			statusAtCompletion = transaction.Context.Status;
+		};
+
+		await transaction.CommitAsync();
+
+		var context = Assert.Single(enlistment.Contexts);
+		Assert.Same(transaction, context.Transaction);
+		Assert.Equal(EnlistmentPhase.Commit, context.Phase);
+		Assert.Equal(TransactionStatus.Committed, statusAtCompletion);
+	}
+
+	[Fact]
+	public async Task RollbackAsync_CompletedFiresAfterAsyncEnlistmentsFinishAsync()
+	{
+		using var transaction = new Transaction();
+		var enlistment = new AsyncRecorder();
+		Assert.True(transaction.Enlist(enlistment));
+
+		TransactionStatus? statusAtCompletion = null;
+		transaction.Context.Completed += (_, _) => statusAtCompletion = transaction.Context.Status;
+
+		await transaction.RollbackAsync();
+
+		Assert.True(enlistment.IsCompleted);
+		Assert.Equal(TransactionStatus.Aborted, statusAtCompletion);
+		Assert.Equal(TransactionStatus.Aborted, transaction.Context.Status);
+	}
+
+	[Fact]
+	public async Task CommitAsync_ThrowWhenCancelledBeforeAsyncEnlistmentCompletesAsync()
+	{
+		using var transaction = new Transaction();
+		Assert.True(transaction.Enlist(new NeverCompletingEnlistment()));
+
+		using var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
+		await Assert.ThrowsAnyAsync<OperationCanceledException>(() => transaction.CommitAsync(cancellation.Token));
+
+		Assert.Equal(TransactionStatus.Undetermined, transaction.Context.Status);
+	}
+
+	[Fact]
+	public async Task DisposeAsync_RollsBackAndExitsAmbientContextAsync()
+	{
+		Assert.Null(TransactionContext.Current);
+
+		var transaction = new Transaction();
+		Assert.Same(transaction, Transaction.Current);
+
+		await transaction.DisposeAsync();
+
+		Assert.Null(Transaction.Current);
+		Assert.Null(TransactionContext.Current);
+		Assert.Equal(TransactionStatus.Aborted, transaction.Context.Status);
+	}
+
 	private sealed class Recorder : IEnlistment
 	{
 		private readonly System.Collections.Concurrent.ConcurrentQueue<EnlistmentContext> _contexts = new();
 		public System.Collections.Generic.IReadOnlyCollection<EnlistmentContext> Contexts => _contexts.ToArray();
 
 		public void OnEnlist(EnlistmentContext context) => _contexts.Enqueue(context);
+		public ValueTask OnEnlistAsync(EnlistmentContext context, CancellationToken cancellation) { _contexts.Enqueue(context); return ValueTask.CompletedTask; }
+	}
+
+	private sealed class AsyncRecorder : IEnlistment
+	{
+		private readonly System.Collections.Concurrent.ConcurrentQueue<EnlistmentContext> _contexts = new();
+		public System.Collections.Generic.IReadOnlyCollection<EnlistmentContext> Contexts => _contexts.ToArray();
+		public bool IsCompleted { get; private set; }
+
+		public void OnEnlist(EnlistmentContext context) => _contexts.Enqueue(context);
+		public async ValueTask OnEnlistAsync(EnlistmentContext context, CancellationToken cancellation)
+		{
+			await Task.Yield();
+			_contexts.Enqueue(context);
+			this.IsCompleted = true;
+		}
 	}
 
 	private sealed class ThrowingEnlistment : IEnlistment
 	{
 		public void OnEnlist(EnlistmentContext context) => throw new InvalidOperationException("Expected enlistment failure.");
+		public ValueTask OnEnlistAsync(EnlistmentContext context, CancellationToken cancellation) => throw new InvalidOperationException("Expected enlistment failure.");
+	}
+
+	private sealed class NeverCompletingEnlistment : IEnlistment
+	{
+		public void OnEnlist(EnlistmentContext context) { }
+		public async ValueTask OnEnlistAsync(EnlistmentContext context, CancellationToken cancellation) => await Task.Delay(Timeout.InfiniteTimeSpan, cancellation);
 	}
 }

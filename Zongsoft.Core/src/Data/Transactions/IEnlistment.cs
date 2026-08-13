@@ -28,10 +28,19 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Data.Transactions;
 
 public interface IEnlistment
 {
+	/// <summary>执行事务登记回调。</summary>
+	/// <param name="context">事务登记上下文。</param>
 	void OnEnlist(EnlistmentContext context);
+
+	/// <summary>异步执行事务登记回调。</summary>
+	/// <param name="context">事务登记上下文。</param>
+	/// <param name="cancellation">异步操作取消标记。</param>
+	ValueTask OnEnlistAsync(EnlistmentContext context, CancellationToken cancellation = default);
 }

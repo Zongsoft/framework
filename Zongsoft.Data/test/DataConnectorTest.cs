@@ -403,8 +403,15 @@ public class DataConnectorTest
 			Assert.Equal(ConnectionState.Open, connection.State);
 			Assert.Equal(0, connection.DisposeCount);
 
+			//环境事务回滚会等待所有活动（含独立租约）释放后才完成，
+			//故在后台线程执行，避免当前线程持有未释放租约而自锁（挂死）。
+			Task rollbackTask = null;
 			if(ambient != null)
-				ambient.Rollback();
+			{
+				rollbackTask = Task.Run(ambient.Rollback);
+				Assert.True(SpinWait.SpinUntil(() => session.IsCompleted, TimeSpan.FromSeconds(5)));
+				Assert.False(rollbackTask.IsCompleted);
+			}
 			else if(asynchronous)
 				await session.DisposeAsync();
 			else
@@ -428,6 +435,10 @@ public class DataConnectorTest
 				await lease.DisposeAsync();
 			else
 				lease.Dispose();
+
+			//释放独立租约后，环境事务的回滚才真正完成
+			if(rollbackTask != null)
+				await rollbackTask;
 
 			lease.Dispose();
 			await lease.DisposeAsync();

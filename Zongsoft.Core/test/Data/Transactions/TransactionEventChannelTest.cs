@@ -309,11 +309,17 @@ public sealed class TransactionEventChannelTest
 	private sealed class ThrowingEnlistment : IEnlistment
 	{
 		public void OnEnlist(EnlistmentContext context) => throw new InvalidOperationException("Expected enlistment failure.");
+		public ValueTask OnEnlistAsync(EnlistmentContext context, CancellationToken cancellation) => throw new InvalidOperationException("Expected enlistment failure.");
 	}
 
 	private sealed class DelegateEnlistment(Action<EnlistmentContext> enlist) : IEnlistment
 	{
 		public void OnEnlist(EnlistmentContext context) => enlist(context);
+		public ValueTask OnEnlistAsync(EnlistmentContext context, CancellationToken cancellation)
+		{
+			enlist(context);
+			return ValueTask.CompletedTask;
+		}
 	}
 
 	private sealed class TestEventRegistry : EventRegistryBase
