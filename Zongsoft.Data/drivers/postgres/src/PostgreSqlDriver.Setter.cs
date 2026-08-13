@@ -31,6 +31,9 @@ using System;
 using System.Data;
 using System.Data.Common;
 
+using Npgsql;
+using NpgsqlTypes;
+
 using Zongsoft.Data.Common;
 
 namespace Zongsoft.Data.PostgreSql;
@@ -59,11 +62,13 @@ partial class PostgreSqlDriver
 					break;
 				case DbType.DateTime:
 				case DbType.DateTime2:
+					//PostgreSQL 的 timestamp without time zone 列按字面值存取，不做时区转换；
+					//Npgsql 6+ 会强制将非 Utc 的 DateTime 转换（且 Npgsql 10 拒绝写入 Utc 到无时区列），
+					//故此处显式指定 NpgsqlDbType.Timestamp 并剥离 Kind，以保持写入与读取的字面值一致。
 					parameter.DbType = DbType.DateTime;
-					if(value is DateTime datetime && datetime.Kind != DateTimeKind.Utc)
-						parameter.Value = datetime.ToUniversalTime();
-					else
-						parameter.Value = value;
+					if(parameter is NpgsqlParameter npgsqlParameter)
+						npgsqlParameter.NpgsqlDbType = NpgsqlDbType.Timestamp;
+					parameter.Value = value is DateTime datetime ? DateTime.SpecifyKind(datetime, DateTimeKind.Unspecified) : value;
 					break;
 				default:
 					parameter.DbType = dbType;

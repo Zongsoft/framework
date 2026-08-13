@@ -18,6 +18,8 @@ spec:
           protocol: TCP
           hostPort: 5432
       env:
+        - name: TZ
+          value: Asia/Shanghai
         - name: POSTGRES_USER
           value: program
         - name: POSTGRES_PASSWORD
