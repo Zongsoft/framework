@@ -113,7 +113,7 @@ public class ServiceController<TModel, TService> : ServiceControllerBase<TModel,
 					foreach(var part in parts)
 						count += await this.OnDeleteAsync(part, null, cancellation);
 
-					transaction.Commit();
+					await transaction.CommitAsync(cancellation);
 				}
 
 				return count > 0 ? this.Content(count.ToString()) : this.NoContent();
@@ -297,7 +297,7 @@ public class SubserviceController<TModel, TService> : ServiceControllerBase<TMod
 					foreach(var part in parts)
 						count += await this.OnDeleteAsync(part, this.GetParameters(), cancellation);
 
-					transaction.Commit();
+					await transaction.CommitAsync(cancellation);
 				}
 
 				return count > 0 ? this.Content(count.ToString()) : this.NoContent();
