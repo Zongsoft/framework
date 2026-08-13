@@ -227,17 +227,21 @@ public class TransactionTest
 		Assert.Equal(TransactionStatus.Undetermined, completedStatus);
 	}
 
-	[Fact]
-	public void Commit_SyncBridgeInvokesAsyncEnlistmentAndWaitsForItsCompletion()
+	[Theory]
+	[InlineData(EnlistmentPhase.Commit)]
+	[InlineData(EnlistmentPhase.Rollback)]
+	public void Complete_UsesSynchronousEnlistmentOnly(EnlistmentPhase phase)
 	{
 		using var transaction = new Transaction();
-		var enlistment = new AsyncRecorder();
+		var enlistment = new PathRecorder();
 		Assert.True(transaction.Enlist(enlistment));
 
-		transaction.Commit();
+		Complete(transaction, phase);
 
-		Assert.True(enlistment.IsCompleted);
-		Assert.Equal(TransactionStatus.Committed, transaction.Context.Status);
+		var context = Assert.Single(enlistment.Contexts);
+		Assert.Equal(phase, context.Phase);
+		Assert.Equal(0, enlistment.AsyncCalls);
+		Assert.Equal(phase == EnlistmentPhase.Commit ? TransactionStatus.Committed : TransactionStatus.Aborted, transaction.Context.Status);
 	}
 
 	[Fact]
@@ -280,16 +284,48 @@ public class TransactionTest
 		Assert.Equal(TransactionStatus.Aborted, transaction.Context.Status);
 	}
 
-	[Fact]
-	public async Task CommitAsync_ThrowWhenCancelledBeforeAsyncEnlistmentCompletesAsync()
+	[Theory]
+	[InlineData(EnlistmentPhase.Commit)]
+	[InlineData(EnlistmentPhase.Rollback)]
+	public async Task CompleteAsync_PreCancelled_CompletesWithNonCancellableEnlistmentAsync(EnlistmentPhase phase)
 	{
 		using var transaction = new Transaction();
-		Assert.True(transaction.Enlist(new NeverCompletingEnlistment()));
+		var enlistment = new PathRecorder();
+		Assert.True(transaction.Enlist(enlistment));
+		using var cancellation = new CancellationTokenSource();
+		cancellation.Cancel();
 
-		using var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
-		await Assert.ThrowsAnyAsync<OperationCanceledException>(() => transaction.CommitAsync(cancellation.Token));
+		Task completion = CompleteAsync(transaction, phase, cancellation.Token);
+		await completion;
 
-		Assert.Equal(TransactionStatus.Undetermined, transaction.Context.Status);
+		var context = Assert.Single(enlistment.Contexts);
+		Assert.Equal(phase, context.Phase);
+		Assert.Equal(1, enlistment.AsyncCalls);
+		Assert.False(enlistment.CancellationRequested);
+		Assert.Equal(phase == EnlistmentPhase.Commit ? TransactionStatus.Committed : TransactionStatus.Aborted, transaction.Context.Status);
+	}
+
+	[Theory]
+	[InlineData(EnlistmentPhase.Commit)]
+	[InlineData(EnlistmentPhase.Rollback)]
+	public async Task CompleteAsync_CancelledAfterDecision_WaitsForAcceptedCompletionAsync(EnlistmentPhase phase)
+	{
+		using var transaction = new Transaction();
+		var enlistment = new GatedEnlistment();
+		Assert.True(transaction.Enlist(enlistment));
+		using var cancellation = new CancellationTokenSource();
+
+		var completion = CompleteAsync(transaction, phase, cancellation.Token);
+		await enlistment.Entered.WaitAsync(TimeSpan.FromSeconds(5));
+		cancellation.Cancel();
+
+		Assert.False(completion.IsCompleted);
+		enlistment.Release();
+		await completion.WaitAsync(TimeSpan.FromSeconds(5));
+
+		var context = Assert.Single(enlistment.Contexts);
+		Assert.Equal(phase, context.Phase);
+		Assert.Equal(phase == EnlistmentPhase.Commit ? TransactionStatus.Committed : TransactionStatus.Aborted, transaction.Context.Status);
 	}
 
 	[Fact]
@@ -331,15 +367,59 @@ public class TransactionTest
 		}
 	}
 
+	private sealed class PathRecorder : IEnlistment
+	{
+		private int _asyncCalls;
+		private readonly System.Collections.Concurrent.ConcurrentQueue<EnlistmentContext> _contexts = new();
+
+		public int AsyncCalls => _asyncCalls;
+		public bool CancellationRequested { get; private set; }
+		public System.Collections.Generic.IReadOnlyCollection<EnlistmentContext> Contexts => _contexts.ToArray();
+
+		public void OnEnlist(EnlistmentContext context) => _contexts.Enqueue(context);
+		public ValueTask OnEnlistAsync(EnlistmentContext context, CancellationToken cancellation)
+		{
+			Interlocked.Increment(ref _asyncCalls);
+			this.CancellationRequested = cancellation.IsCancellationRequested;
+			_contexts.Enqueue(context);
+			return ValueTask.CompletedTask;
+		}
+	}
+
 	private sealed class ThrowingEnlistment : IEnlistment
 	{
 		public void OnEnlist(EnlistmentContext context) => throw new InvalidOperationException("Expected enlistment failure.");
 		public ValueTask OnEnlistAsync(EnlistmentContext context, CancellationToken cancellation) => throw new InvalidOperationException("Expected enlistment failure.");
 	}
 
-	private sealed class NeverCompletingEnlistment : IEnlistment
+	private sealed class GatedEnlistment : IEnlistment
 	{
-		public void OnEnlist(EnlistmentContext context) { }
-		public async ValueTask OnEnlistAsync(EnlistmentContext context, CancellationToken cancellation) => await Task.Delay(Timeout.InfiniteTimeSpan, cancellation);
+		private readonly System.Collections.Concurrent.ConcurrentQueue<EnlistmentContext> _contexts = new();
+		private readonly TaskCompletionSource _entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		private readonly TaskCompletionSource _release = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+		public Task Entered => _entered.Task;
+		public System.Collections.Generic.IReadOnlyCollection<EnlistmentContext> Contexts => _contexts.ToArray();
+
+		public void OnEnlist(EnlistmentContext context) => throw new NotSupportedException();
+		public async ValueTask OnEnlistAsync(EnlistmentContext context, CancellationToken cancellation)
+		{
+			_contexts.Enqueue(context);
+			_entered.TrySetResult();
+			await _release.Task.WaitAsync(cancellation);
+		}
+
+		public void Release() => _release.TrySetResult();
+	}
+
+	private static Task CompleteAsync(Transaction transaction, EnlistmentPhase phase, CancellationToken cancellation) =>
+		phase == EnlistmentPhase.Commit ? transaction.CommitAsync(cancellation) : transaction.RollbackAsync(cancellation);
+
+	private static void Complete(Transaction transaction, EnlistmentPhase phase)
+	{
+		if(phase == EnlistmentPhase.Commit)
+			transaction.Commit();
+		else
+			transaction.Rollback();
 	}
 }

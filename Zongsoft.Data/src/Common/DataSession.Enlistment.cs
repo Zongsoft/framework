@@ -41,44 +41,31 @@ partial class DataSession
 
 		public void OnEnlist(Transactions.EnlistmentContext context)
 		{
-			if(GetCommit(context, out var commit))
-			{
-				//标记完成，并等待真实提交/回滚（延迟销毁时阻塞至最后一个活动释放）
-				_session.Complete(commit.Value);
-				_session.Completion.GetAwaiter().GetResult();
-			}
+			if(GetCompletion(context.Phase, out var completion))
+				_session.CompleteAndWait(completion);
 		}
 
 		public async ValueTask OnEnlistAsync(Transactions.EnlistmentContext context, CancellationToken cancellation)
 		{
-			if(GetCommit(context, out var commit))
-			{
-				//标记完成，并等待真实提交/回滚（延迟销毁时挂起至最后一个活动释放），
-				//以确保"事务提交/回滚完成"的契约在事件投递前成立。
-				await _session.CompleteAsync(commit.Value, cancellation).ConfigureAwait(false);
-				await _session.Completion.WaitAsync(cancellation).ConfigureAwait(false);
-			}
+			if(GetCompletion(context.Phase, out var completion))
+				await _session.CompleteAndWaitAsync(completion).ConfigureAwait(false);
 		}
 
-		private static bool GetCommit(Transactions.EnlistmentContext context, out bool? commit)
+		private static bool GetCompletion(Transactions.EnlistmentPhase phase, out CompletionKind completion)
 		{
-			commit = null;
-
-			if(context.Phase == Transactions.EnlistmentPhase.Prepare)
-				return false;
-
-			switch(context.Phase)
+			switch(phase)
 			{
 				case Transactions.EnlistmentPhase.Commit:
-					commit = true;
-					break;
+					completion = CompletionKind.Commit;
+					return true;
 				case Transactions.EnlistmentPhase.Abort:
 				case Transactions.EnlistmentPhase.Rollback:
-					commit = false;
-					break;
+					completion = CompletionKind.Rollback;
+					return true;
+				default:
+					completion = CompletionKind.None;
+					return false;
 			}
-
-			return commit.HasValue;
 		}
 	}
 }

@@ -28,10 +28,8 @@
  */
 
 using System;
-using System.IO;
 using System.Data;
 using System.Data.Common;
-using System.Collections;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -42,22 +40,11 @@ namespace Zongsoft.Data.Common;
 /// </summary>
 public partial class DataSession : IDisposable, IAsyncDisposable
 {
-	#region 常量定义
-	private const int COMPLETION_NONE = 0;
-	private const int COMPLETION_COMMIT = 1;
-	private const int COMPLETION_ROLLBACK = 2;
-	#endregion
-
 	#region 私有变量
 	private readonly bool TransactionSupported;
 	private readonly bool ShareConnectionSupported;
 
-	private int _reading;             //表示当前会话尚未释放的数据读取活动数量
-	private int _activities;          //表示当前会话尚未结束的数据操作数量
-	private int _completion;          //表示当前会话是否已经结束(提交或回滚)的标记
-	private readonly object _synchrolock;      //表示当前会话状态转换的同步对象
 	private readonly SemaphoreSlim _semaphore; //表示当前会话连接及事务初始化的同步信号量
-	private readonly TaskCompletionSource _completionSource; //表示延迟提交/回滚完成信号（仅作等待信号，不替代上述状态机）
 	#endregion
 
 	#region 成员字段
@@ -77,7 +64,7 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 
 		_synchrolock = new object();
 		_semaphore = new SemaphoreSlim(1, 1);
-		_completionSource = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		_completionSource = ambient == null ? null : new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
 		if(_ambient != null && !_ambient.Enlist(new Enlistment(this)))
 		{
@@ -108,13 +95,7 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 	public bool InTransaction => _ambient != null;
 
 	/// <summary>获取一个值，指示当前会话是否已经完成(提交或回滚)。</summary>
-	public bool IsCompleted => Volatile.Read(ref _completion) != COMPLETION_NONE;
-	#endregion
-
-	#region 内部属性
-	/// <summary>获取一个表示当前会话真实完成（提交/回滚并销毁）的任务。</summary>
-	/// <remarks>供环境事务的登记回调在延迟销毁场景下等待真实完成。</remarks>
-	internal Task Completion => _completionSource.Task;
+	public bool IsCompleted => _completion != CompletionKind.None;
 	#endregion
 
 	#region 公共方法
@@ -132,10 +113,13 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 	/// <returns>返回获取的数据连接租约。</returns>
 	public ConnectionLease AcquireLease(bool transactionSuppressed = false)
 	{
-		var activity = this.ReserveActivity();
+		if(!this.TransactionSupported || (_ambient != null && transactionSuppressed))
+		{
+			this.EnsureActive();
+			return this.CreateIndependentLease();
+		}
 
-		return !this.TransactionSupported || (_ambient != null && transactionSuppressed) ?
-			this.CreateIndependentLease(activity) : this.CreateSessionLease(activity);
+		return this.CreateSessionLease(this.ReserveSession());
 	}
 
 	/// <summary>异步获取当前数据会话的数据连接租约。</summary>
@@ -144,11 +128,13 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 	/// <returns>返回获取的数据连接租约。</returns>
 	public async ValueTask<ConnectionLease> AcquireLeaseAsync(bool transactionSuppressed = false, CancellationToken cancellation = default)
 	{
-		var activity = this.ReserveActivity();
+		if(!this.TransactionSupported || (_ambient != null && transactionSuppressed))
+		{
+			this.EnsureActive();
+			return await this.CreateIndependentLeaseAsync(cancellation).ConfigureAwait(false);
+		}
 
-		return !this.TransactionSupported || (_ambient != null && transactionSuppressed) ?
-			await this.CreateIndependentLeaseAsync(activity, cancellation).ConfigureAwait(false) :
-			await this.CreateSessionLeaseAsync(activity, cancellation).ConfigureAwait(false);
+		return await this.CreateSessionLeaseAsync(this.ReserveSession(), cancellation).ConfigureAwait(false);
 	}
 
 	/// <summary>提交当前会话事务。</summary>
@@ -160,11 +146,11 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 		if(_ambient != null)
 			return;
 
-		this.Complete(true);
+		this.RequestCompletion(CompletionKind.Commit);
 	}
 
 	/// <summary>提交当前会话事务。</summary>
-	public async ValueTask CommitAsync(CancellationToken cancellation)
+	public async ValueTask CommitAsync(CancellationToken cancellation = default)
 	{
 		/*
 		 * 注意：如果当前会话位于环境事务内，则提交操作必须由环境事务的 Enlistment 回调函数处理，即本方法不做任何处理。
@@ -172,7 +158,7 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 		if(_ambient != null)
 			return;
 
-		await this.CompleteAsync(true, cancellation);
+		await this.RequestCompletionAsync(CompletionKind.Commit, cancellation).ConfigureAwait(false);
 	}
 
 	/// <summary>回滚当前会话事务。</summary>
@@ -184,11 +170,11 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 		if(_ambient != null)
 			return;
 
-		this.Complete(false);
+		this.RequestCompletion(CompletionKind.Rollback);
 	}
 
 	/// <summary>回滚当前会话事务。</summary>
-	public async ValueTask RollbackAsync(CancellationToken cancellation)
+	public async ValueTask RollbackAsync(CancellationToken cancellation = default)
 	{
 		/*
 		 * 注意：如果当前会话位于环境事务内，则回滚操作必须由环境事务的 Enlistment 回调函数处理，即本方法不做任何处理。
@@ -196,7 +182,7 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 		if(_ambient != null)
 			return;
 
-		await this.CompleteAsync(false, cancellation);
+		await this.RequestCompletionAsync(CompletionKind.Rollback, cancellation).ConfigureAwait(false);
 	}
 
 	public void Dispose()
@@ -208,7 +194,7 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 	protected virtual void Dispose(bool disposing)
 	{
 		if(disposing)
-			this.Complete(false);
+			this.RequestCompletion(CompletionKind.Rollback);
 	}
 
 	public async ValueTask DisposeAsync()
@@ -220,7 +206,7 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 	protected virtual async ValueTask DisposeAsync(bool disposing)
 	{
 		if(disposing)
-			await this.CompleteAsync(false, CancellationToken.None);
+			await this.RequestCompletionAsync(CompletionKind.Rollback).ConfigureAwait(false);
 	}
 	#endregion
 
@@ -233,24 +219,15 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 		if(command == null)
 			throw new ArgumentNullException(nameof(command));
 
-		var activity = this.ReserveActivity();
-
 		//如果当前命令已关联外部连接，则保持其连接和事务不变
 		if(command.Connection != null && !object.ReferenceEquals(command.Connection, _connection))
 		{
-			try
-			{
-				this.OpenConnection(command.Connection);
-				return new ConnectionLease(command.Connection, command.Transaction, activity);
-			}
-			catch
-			{
-				activity.Dispose();
-				throw;
-			}
+			this.EnsureActive();
+			this.OpenConnection(command.Connection);
+			return new ConnectionLease(command.Connection, command.Transaction);
 		}
 
-		var lease = this.CreateSessionLease(activity);
+		var lease = this.CreateSessionLease(this.ReserveSession());
 
 		try
 		{
@@ -274,24 +251,15 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 		if(command == null)
 			throw new ArgumentNullException(nameof(command));
 
-		var activity = this.ReserveActivity();
-
 		//如果当前命令已关联外部连接，则保持其连接和事务不变
 		if(command.Connection != null && !object.ReferenceEquals(command.Connection, _connection))
 		{
-			try
-			{
-				await this.OpenConnectionAsync(command.Connection, cancellation).ConfigureAwait(false);
-				return new ConnectionLease(command.Connection, command.Transaction, activity);
-			}
-			catch
-			{
-				await activity.DisposeAsync().ConfigureAwait(false);
-				throw;
-			}
+			this.EnsureActive();
+			await this.OpenConnectionAsync(command.Connection, cancellation).ConfigureAwait(false);
+			return new ConnectionLease(command.Connection, command.Transaction);
 		}
 
-		var lease = await this.CreateSessionLeaseAsync(activity, cancellation).ConfigureAwait(false);
+		var lease = await this.CreateSessionLeaseAsync(this.ReserveSession(), cancellation).ConfigureAwait(false);
 
 		try
 		{
@@ -314,9 +282,9 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 		if(command == null)
 			throw new ArgumentNullException(nameof(command));
 
-		var activity = this.ReserveReader();
-		var lease = activity?.UseSessionConnection == true ?
-			this.CreateSessionLease(activity) : this.CreateIndependentLease(activity);
+		var kind = this.ReserveReader();
+		var lease = kind == LeaseKind.SessionReader ?
+			this.CreateSessionLease(kind) : this.CreateIndependentLease();
 
 		try
 		{
@@ -340,10 +308,10 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 		if(command == null)
 			throw new ArgumentNullException(nameof(command));
 
-		var activity = this.ReserveReader();
-		var lease = activity?.UseSessionConnection == true ?
-			await this.CreateSessionLeaseAsync(activity, cancellation).ConfigureAwait(false) :
-			await this.CreateIndependentLeaseAsync(activity, cancellation).ConfigureAwait(false);
+		var kind = this.ReserveReader();
+		var lease = kind == LeaseKind.SessionReader ?
+			await this.CreateSessionLeaseAsync(kind, cancellation).ConfigureAwait(false) :
+			await this.CreateIndependentLeaseAsync(cancellation).ConfigureAwait(false);
 
 		try
 		{
@@ -358,7 +326,7 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 		}
 	}
 
-	private ConnectionLease CreateSessionLease(SessionActivity activity)
+	private ConnectionLease CreateSessionLease(LeaseKind kind)
 	{
 		try
 		{
@@ -368,21 +336,21 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 			{
 				var connection = this.EnsureConnection();
 				this.OpenConnection(connection);
-				return new ConnectionLease(connection, this.EnsureTransaction(connection), activity);
+				return new ConnectionLease(this, connection, this.EnsureTransaction(connection), kind == LeaseKind.SessionReader);
 			}
 			finally
 			{
 				_semaphore.Release();
 			}
 		}
-		catch
+		catch(Exception exception)
 		{
-			activity?.Dispose();
+			this.ReleaseFailed(kind, exception);
 			throw;
 		}
 	}
 
-	private async ValueTask<ConnectionLease> CreateSessionLeaseAsync(SessionActivity activity, CancellationToken cancellation)
+	private async ValueTask<ConnectionLease> CreateSessionLeaseAsync(LeaseKind kind, CancellationToken cancellation)
 	{
 		try
 		{
@@ -392,99 +360,30 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 			{
 				var connection = this.EnsureConnection();
 				await this.OpenConnectionAsync(connection, cancellation).ConfigureAwait(false);
-				return new ConnectionLease(connection, this.EnsureTransaction(connection), activity);
+				return new ConnectionLease(this, connection, this.EnsureTransaction(connection), kind == LeaseKind.SessionReader);
 			}
 			finally
 			{
 				_semaphore.Release();
 			}
 		}
-		catch
+		catch(Exception exception)
 		{
-			if(activity != null)
-				await activity.DisposeAsync().ConfigureAwait(false);
-
+			await this.ReleaseFailedAsync(kind, exception).ConfigureAwait(false);
 			throw;
 		}
 	}
 
-	private ConnectionLease CreateIndependentLease(SessionActivity activity)
+	private ConnectionLease CreateIndependentLease()
 	{
-		try
-		{
-			var connection = _connector.Connect();
-			return new ConnectionLease(connection, null, activity, connection);
-		}
-		catch
-		{
-			activity?.Dispose();
-			throw;
-		}
+		var connection = _connector.Connect();
+		return new ConnectionLease(connection);
 	}
 
-	private async ValueTask<ConnectionLease> CreateIndependentLeaseAsync(SessionActivity activity, CancellationToken cancellation)
+	private async ValueTask<ConnectionLease> CreateIndependentLeaseAsync(CancellationToken cancellation)
 	{
-		try
-		{
-			var connection = await _connector.ConnectAsync(cancellation).ConfigureAwait(false);
-			return new ConnectionLease(connection, null, activity, connection);
-		}
-		catch
-		{
-			if(activity != null)
-				await activity.DisposeAsync().ConfigureAwait(false);
-
-			throw;
-		}
-	}
-
-	private SessionActivity ReserveActivity()
-	{
-		lock(_synchrolock)
-		{
-			if(_completion != COMPLETION_NONE)
-				throw new DataException(Properties.Resources.DataSession_Completed_Message);
-
-			_activities++;
-			return new SessionActivity(this);
-		}
-	}
-
-	private ReaderActivity ReserveReader()
-	{
-		lock(_synchrolock)
-		{
-			//已完成会话的读取器使用独立连接，不再参与会话生命周期
-			if(_completion != COMPLETION_NONE)
-				return null;
-
-			_activities++;
-			_reading++;
-			return new ReaderActivity(this, ShareConnectionSupported || _reading == 1);
-		}
-	}
-
-	private void ReleaseActivity(SessionActivity activity)
-	{
-		if(this.ReleaseActivityCore(activity))
-			this.Destroy();
-	}
-
-	private ValueTask ReleaseActivityAsync(SessionActivity activity)
-	{
-		return this.ReleaseActivityCore(activity) ?
-			this.DestroyAsync(CancellationToken.None) : ValueTask.CompletedTask;
-	}
-
-	private bool ReleaseActivityCore(SessionActivity activity)
-	{
-		lock(_synchrolock)
-		{
-			if(activity is ReaderActivity)
-				_reading--;
-
-			return --_activities == 0 && _completion != COMPLETION_NONE;
-		}
+		var connection = await _connector.ConnectAsync(cancellation).ConfigureAwait(false);
+		return new ConnectionLease(connection);
 	}
 	#endregion
 
@@ -530,271 +429,6 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 			return null;
 
 		return _transaction ??= connection.BeginTransaction(_ambient?.IsolationLevel ?? IsolationLevel.Unspecified);
-	}
-
-	/// <summary>完成当前数据会话。</summary>
-	/// <param name="committing">指定是否提交当前数据事务。</param>
-	private void Complete(bool committing)
-	{
-		//标记完成；若已无未结束的数据操作则立即销毁（提交/回滚），
-		//否则真实提交/回滚由最后一个活动释放时触发（延迟销毁）。
-		if(this.CompleteCore(committing))
-			this.Destroy();
-	}
-
-	/// <summary>完成当前数据会话。</summary>
-	/// <param name="committing">指定是否提交当前数据事务。</param>
-	/// <param name="cancellation">指定的异步操作的取消标记。</param>
-	private ValueTask CompleteAsync(bool committing, CancellationToken cancellation)
-	{
-		//标记完成；若已无未结束的数据操作则立即销毁（提交/回滚），
-		//否则真实提交/回滚由最后一个活动释放时触发（延迟销毁）。
-		return this.CompleteCore(committing) ?
-			this.DestroyAsync(cancellation) : ValueTask.CompletedTask;
-	}
-
-	private bool CompleteCore(bool committing)
-	{
-		lock(_synchrolock)
-		{
-			if(_completion != COMPLETION_NONE)
-				return false;
-
-			_completion = committing ? COMPLETION_COMMIT : COMPLETION_ROLLBACK;
-			return _activities == 0;
-		}
-	}
-
-	private void Destroy()
-	{
-		Exception exception = null;
-
-		try
-		{
-			//获取并将事务对象置空
-			var transaction = Interlocked.Exchange(ref _transaction, null);
-
-			try
-			{
-				if(transaction != null)
-				{
-					try
-					{
-						//尝试提交或回滚事务
-						switch(_completion)
-						{
-							case COMPLETION_COMMIT:
-								transaction.Commit();
-								break;
-							case COMPLETION_ROLLBACK:
-								transaction.Rollback();
-								break;
-						}
-					}
-					finally
-					{
-						transaction.Dispose();
-					}
-				}
-			}
-			finally
-			{
-				try
-				{
-					//获取并将主连接对象置空
-					var connection = Interlocked.Exchange(ref _connection, null);
-
-					if(connection != null)
-					{
-						//取消连接事件处理
-						connection.StateChange -= this.Connection_StateChange;
-
-						//释放主数据连接
-						connection.Dispose();
-					}
-				}
-				finally
-				{
-					_semaphore.Dispose();
-				}
-			}
-		}
-		catch(Exception ex)
-		{
-			exception = ex;
-		}
-		finally
-		{
-			//发出完成信号，通知等待延迟提交/回滚完成的线程
-			if(exception != null)
-				_completionSource.TrySetException(exception);
-			else
-				_completionSource.TrySetResult();
-		}
-
-		if(exception != null)
-			System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(exception).Throw();
-	}
-
-	private async ValueTask DestroyAsync(CancellationToken cancellation)
-	{
-		Exception exception = null;
-
-		try
-		{
-			//获取并将事务对象置空
-			var transaction = Interlocked.Exchange(ref _transaction, null);
-
-			try
-			{
-				if(transaction != null)
-				{
-					try
-					{
-						//尝试提交或回滚事务
-						switch(_completion)
-						{
-							case COMPLETION_COMMIT:
-								await transaction.CommitAsync(cancellation).ConfigureAwait(false);
-								break;
-							case COMPLETION_ROLLBACK:
-								await transaction.RollbackAsync(cancellation).ConfigureAwait(false);
-								break;
-						}
-					}
-					finally
-					{
-						await transaction.DisposeAsync().ConfigureAwait(false);
-					}
-				}
-			}
-			finally
-			{
-				try
-				{
-					//获取并将主连接对象置空
-					var connection = Interlocked.Exchange(ref _connection, null);
-
-					if(connection != null)
-					{
-						//取消连接事件处理
-						connection.StateChange -= this.Connection_StateChange;
-
-						//释放主数据连接
-						await connection.DisposeAsync().ConfigureAwait(false);
-					}
-				}
-				finally
-				{
-					_semaphore.Dispose();
-				}
-			}
-		}
-		catch(Exception ex)
-		{
-			exception = ex;
-		}
-		finally
-		{
-			//发出完成信号，通知等待延迟提交/回滚完成的线程
-			if(exception != null)
-				_completionSource.TrySetException(exception);
-			else
-				_completionSource.TrySetResult();
-		}
-
-		if(exception != null)
-			System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(exception).Throw();
-	}
-	#endregion
-
-	#region 嵌套子类
-	private class SessionActivity(DataSession session) : IDisposable, IAsyncDisposable
-	{
-		private int _disposed;
-		private readonly DataSession _session = session ?? throw new ArgumentNullException(nameof(session));
-
-		public void Dispose()
-		{
-			if(Interlocked.Exchange(ref _disposed, 1) == 0)
-				_session.ReleaseActivity(this);
-		}
-
-		public ValueTask DisposeAsync()
-		{
-			return Interlocked.Exchange(ref _disposed, 1) == 0 ?
-				_session.ReleaseActivityAsync(this) : ValueTask.CompletedTask;
-		}
-	}
-
-	private sealed class ReaderActivity(DataSession session, bool useSessionConnection) : SessionActivity(session)
-	{
-		public readonly bool UseSessionConnection = useSessionConnection;
-	}
-
-	/// <summary>表示一次数据操作实际使用的数据连接及其关联事务的租约。</summary>
-	/// <remarks>释放租约会归还其独占连接以及关联的会话活动令牌。</remarks>
-	public sealed class ConnectionLease : IDisposable, IAsyncDisposable
-	{
-		#region 私有变量
-		private int _disposed;
-		private readonly IDisposable _activity;
-		private readonly DbConnection _ownedConnection;
-		#endregion
-
-		#region 构造函数
-		internal ConnectionLease(DbConnection connection, DbTransaction transaction, IDisposable activity, DbConnection ownedConnection = null)
-		{
-			this.Connection = connection ?? throw new ArgumentNullException(nameof(connection));
-			this.Transaction = transaction;
-			_activity = activity;
-			_ownedConnection = ownedConnection;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取本次数据操作实际使用的数据连接。</summary>
-		public DbConnection Connection { get; }
-
-		/// <summary>获取本次数据操作关联的数据事务。</summary>
-		public DbTransaction Transaction { get; }
-		#endregion
-
-		#region 处置方法
-		public void Dispose()
-		{
-			if(Interlocked.Exchange(ref _disposed, 1) != 0)
-				return;
-
-			try
-			{
-				_ownedConnection?.Dispose();
-			}
-			finally
-			{
-				_activity?.Dispose();
-			}
-		}
-
-		public async ValueTask DisposeAsync()
-		{
-			if(Interlocked.Exchange(ref _disposed, 1) != 0)
-				return;
-
-			try
-			{
-				if(_ownedConnection != null)
-					await _ownedConnection.DisposeAsync().ConfigureAwait(false);
-			}
-			finally
-			{
-				if(_activity is IAsyncDisposable activity)
-					await activity.DisposeAsync().ConfigureAwait(false);
-				else
-					_activity?.Dispose();
-			}
-		}
-		#endregion
 	}
 	#endregion
 }

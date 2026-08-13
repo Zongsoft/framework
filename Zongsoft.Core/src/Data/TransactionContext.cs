@@ -127,8 +127,8 @@ public sealed class TransactionContext
 	}
 
 	internal void Commit() => this.Complete(EnlistmentPhase.Commit);
-	internal void Rollback() => this.Complete(EnlistmentPhase.Rollback);
 	internal Task CommitAsync(CancellationToken cancellation = default) => this.CompleteAsync(EnlistmentPhase.Commit, cancellation);
+	internal void Rollback() => this.Complete(EnlistmentPhase.Rollback);
 	internal Task RollbackAsync(CancellationToken cancellation = default) => this.CompleteAsync(EnlistmentPhase.Rollback, cancellation);
 	#endregion
 
@@ -149,36 +149,41 @@ public sealed class TransactionContext
 		}
 	}
 
-	private void Complete(EnlistmentPhase phase) => this.CompleteAsync(phase, CancellationToken.None).GetAwaiter().GetResult();
-	private async Task CompleteAsync(EnlistmentPhase phase, CancellationToken cancellation)
+	private void Complete(EnlistmentPhase phase)
 	{
-		IEnlistment[] enlistments = null;
-		var nested = false;
+		if(!this.TryComplete(ref phase, out var enlistments, out var nested))
+			return;
 
-		lock(_enlistments)
+		if(nested)
 		{
-			if(_completion != 0)
-				return;
+			this.OnCompleted();
+			return;
+		}
 
-			_completion = 1;
+		List<Exception> exceptions = null;
 
-			if(this.Parent != null)
+		foreach(var enlistment in enlistments)
+		{
+			try
 			{
-				if(phase is EnlistmentPhase.Abort or EnlistmentPhase.Rollback)
-					this.Root._rollbackOnly = 1;
-
-				this.Status = ToStatus(phase);
-				nested = true;
+				enlistment.OnEnlist(new EnlistmentContext(this.Transaction, phase));
 			}
-			else
+			catch(Exception exception)
 			{
-				if(phase == EnlistmentPhase.Commit && _rollbackOnly != 0)
-					phase = EnlistmentPhase.Rollback;
-
-				enlistments = [.. _enlistments];
-				_enlistments.Clear();
+				(exceptions ??= []).Add(exception);
 			}
 		}
+
+		this.FinishCompletion(phase, exceptions);
+	}
+
+	private async Task CompleteAsync(EnlistmentPhase phase, CancellationToken cancellation)
+	{
+		//事务终结不可取消：保留取消参数只为维持调用契约，不将其传入登记回调或底层资源终结
+		_ = cancellation;
+
+		if(!this.TryComplete(ref phase, out var enlistments, out var nested))
+			return;
 
 		if(nested)
 		{
@@ -193,7 +198,7 @@ public sealed class TransactionContext
 			try
 			{
 				//异步执行事务登记回调，确保其真实提交/回滚完成后再继续后续流程
-				await enlistment.OnEnlistAsync(new EnlistmentContext(this.Transaction, phase), cancellation).ConfigureAwait(false);
+				await enlistment.OnEnlistAsync(new EnlistmentContext(this.Transaction, phase), CancellationToken.None).ConfigureAwait(false);
 			}
 			catch(Exception exception)
 			{
@@ -201,6 +206,47 @@ public sealed class TransactionContext
 			}
 		}
 
+		this.FinishCompletion(phase, exceptions);
+	}
+
+	private bool TryComplete(ref EnlistmentPhase phase, out IEnlistment[] enlistments, out bool nested)
+	{
+		lock(_enlistments)
+		{
+			if(_completion != 0)
+			{
+				enlistments = null;
+				nested = false;
+				return false;
+			}
+
+			_completion = 1;
+
+			if(this.Parent != null)
+			{
+				if(phase is EnlistmentPhase.Abort or EnlistmentPhase.Rollback)
+					this.Root._rollbackOnly = 1;
+
+				this.Status = ToStatus(phase);
+				enlistments = null;
+				nested = true;
+			}
+			else
+			{
+				if(phase == EnlistmentPhase.Commit && _rollbackOnly != 0)
+					phase = EnlistmentPhase.Rollback;
+
+				enlistments = [.. _enlistments];
+				_enlistments.Clear();
+				nested = false;
+			}
+
+			return true;
+		}
+	}
+
+	private void FinishCompletion(EnlistmentPhase phase, List<Exception> exceptions)
+	{
 		this.Status = exceptions == null ? ToStatus(phase) : TransactionStatus.Undetermined;
 		this.OnCompleted();
 

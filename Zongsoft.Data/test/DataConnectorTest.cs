@@ -39,6 +39,16 @@ public class DataConnectorTest
 		Execute,
 	}
 
+	[Flags]
+	public enum TerminationFailure
+	{
+		None = 0,
+		Commit = 1,
+		Rollback = 2,
+		TransactionDispose = 4,
+		ConnectionDispose = 8,
+	}
+
 	[Fact]
 	public void TestFailureOpensAndFastRejectionsDoNotRepeatEvents()
 	{
@@ -236,6 +246,55 @@ public class DataConnectorTest
 	}
 
 	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task SessionReaderLease_ReleasedSharedReaderCanBeReusedWhileIndependentReaderRemains(bool asynchronous)
+	{
+		var driver = new DataDriverMocker();
+		var source = new DataSourceMocker(driver);
+		source.Features.Add(Feature.TransactionSuppressed);
+		var session = new DataSession(source);
+		using var firstCommand = session.Build(null, null);
+		using var secondCommand = session.Build(null, null);
+		using var thirdCommand = session.Build(null, null);
+		var firstReader = asynchronous ? await firstCommand.ExecuteReaderAsync() : firstCommand.ExecuteReader();
+		var sessionConnection = Assert.IsType<DbConnectionMocker>(session.Connection);
+		var secondReader = asynchronous ? await secondCommand.ExecuteReaderAsync() : secondCommand.ExecuteReader();
+		var independentConnection = Assert.IsType<DbConnectionMocker>(secondCommand.Connection);
+
+		Assert.NotSame(sessionConnection, independentConnection);
+		Assert.Equal(2, driver.Connections.Length);
+
+		if(asynchronous)
+			await firstReader.DisposeAsync();
+		else
+			firstReader.Dispose();
+
+		var thirdReader = asynchronous ? await thirdCommand.ExecuteReaderAsync() : thirdCommand.ExecuteReader();
+
+		Assert.Same(sessionConnection, thirdCommand.Connection);
+		Assert.Equal(2, driver.Connections.Length);
+		Assert.False(secondReader.IsClosed);
+		Assert.Equal(ConnectionState.Open, independentConnection.State);
+
+		if(asynchronous)
+		{
+			await thirdReader.DisposeAsync();
+			await secondReader.DisposeAsync();
+			await session.DisposeAsync();
+		}
+		else
+		{
+			thirdReader.Dispose();
+			secondReader.Dispose();
+			session.Dispose();
+		}
+
+		Assert.Equal(1, independentConnection.DisposeCount);
+		Assert.Equal(1, sessionConnection.DisposeCount);
+	}
+
+	[Theory]
 	[InlineData(false, SessionCompletion.Commit)]
 	[InlineData(false, SessionCompletion.Rollback)]
 	[InlineData(false, SessionCompletion.Dispose)]
@@ -403,14 +462,12 @@ public class DataConnectorTest
 			Assert.Equal(ConnectionState.Open, connection.State);
 			Assert.Equal(0, connection.DisposeCount);
 
-			//环境事务回滚会等待所有活动（含独立租约）释放后才完成，
-			//故在后台线程执行，避免当前线程持有未释放租约而自锁（挂死）。
-			Task rollbackTask = null;
 			if(ambient != null)
 			{
-				rollbackTask = Task.Run(ambient.Rollback);
-				Assert.True(SpinWait.SpinUntil(() => session.IsCompleted, TimeSpan.FromSeconds(5)));
-				Assert.False(rollbackTask.IsCompleted);
+				if(asynchronous)
+					await ambient.RollbackAsync().WaitAsync(TimeSpan.FromSeconds(5));
+				else
+					ambient.Rollback();
 			}
 			else if(asynchronous)
 				await session.DisposeAsync();
@@ -423,22 +480,18 @@ public class DataConnectorTest
 
 			if(sessionConnection != null)
 			{
-				Assert.Same(sessionConnection, session.Connection);
-				Assert.Same(sessionTransaction, session.Transaction);
-				Assert.Equal(ConnectionState.Open, sessionConnection.State);
-				Assert.Equal(0, sessionConnection.DisposeCount);
-				Assert.Equal(0, sessionTransaction.RollbackCount);
-				Assert.Equal(0, sessionTransaction.DisposeCount);
+				Assert.Null(session.Connection);
+				Assert.Null(session.Transaction);
+				Assert.Equal(ConnectionState.Closed, sessionConnection.State);
+				Assert.Equal(1, sessionConnection.DisposeCount);
+				Assert.Equal(1, sessionTransaction.RollbackCount);
+				Assert.Equal(1, sessionTransaction.DisposeCount);
 			}
 
 			if(asynchronous)
 				await lease.DisposeAsync();
 			else
 				lease.Dispose();
-
-			//释放独立租约后，环境事务的回滚才真正完成
-			if(rollbackTask != null)
-				await rollbackTask;
 
 			lease.Dispose();
 			await lease.DisposeAsync();
@@ -746,6 +799,138 @@ public class DataConnectorTest
 		Assert.Equal(1, connection.DisposeCount);
 	}
 
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task AmbientCommitAsync_CancelledAfterDecisionWaitsForSessionReaderReleaseAsync(bool asynchronous)
+	{
+		var driver = new DataDriverMocker();
+		using var ambient = new Transaction();
+		var session = new DataSession(new DataSourceMocker(driver), ambient.Context);
+		using var command = session.Build(null, null);
+		var reader = asynchronous ? await command.ExecuteReaderAsync() : command.ExecuteReader();
+		var connection = Assert.IsType<DbConnectionMocker>(session.Connection);
+		var transaction = Assert.IsType<DbTransactionMocker>(session.Transaction);
+		using var cancellation = new CancellationTokenSource();
+
+		var completion = ambient.CommitAsync(cancellation.Token);
+		Assert.True(SpinWait.SpinUntil(() => session.IsCompleted, TimeSpan.FromSeconds(5)));
+		cancellation.Cancel();
+
+		Assert.False(completion.IsCompleted);
+		Assert.Equal(0, transaction.CommitCount);
+		Assert.Equal(0, connection.DisposeCount);
+
+		if(asynchronous)
+			await reader.DisposeAsync();
+		else
+			reader.Dispose();
+
+		await completion.WaitAsync(TimeSpan.FromSeconds(5));
+
+		Assert.Equal(Zongsoft.Data.Transactions.TransactionStatus.Committed, ambient.Context.Status);
+		Assert.Equal(1, transaction.CommitCount);
+		Assert.Equal(1, transaction.DisposeCount);
+		Assert.Equal(1, connection.DisposeCount);
+		Assert.Null(session.Transaction);
+		Assert.Null(session.Connection);
+	}
+
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task SessionCommand_ExternalConnectionWithoutTransactionIsNotDisposedByLease(bool asynchronous)
+	{
+		var driver = new DataDriverMocker();
+		var session = new DataSession(new DataSourceMocker(driver));
+		using var command = session.Build(null, null);
+		var connection = Assert.IsType<DbConnectionMocker>(driver.CreateConnection());
+		command.Connection = connection;
+
+		var result = asynchronous ? await command.ExecuteNonQueryAsync() : command.ExecuteNonQuery();
+
+		Assert.Equal(1, result);
+		Assert.Equal(ConnectionState.Open, connection.State);
+		Assert.Equal(0, connection.DisposeCount);
+		Assert.Null(session.Connection);
+		Assert.Null(session.Transaction);
+
+		if(asynchronous)
+			await session.DisposeAsync();
+		else
+			session.Dispose();
+
+		Assert.Equal(ConnectionState.Open, connection.State);
+		Assert.Equal(0, connection.DisposeCount);
+		connection.Dispose();
+		Assert.Equal(1, connection.DisposeCount);
+	}
+
+	[Theory]
+	[InlineData(false, SessionCompletion.Commit, TerminationFailure.Commit)]
+	[InlineData(false, SessionCompletion.Rollback, TerminationFailure.Rollback)]
+	[InlineData(false, SessionCompletion.Commit, TerminationFailure.TransactionDispose)]
+	[InlineData(false, SessionCompletion.Commit, TerminationFailure.ConnectionDispose)]
+	[InlineData(true, SessionCompletion.Commit, TerminationFailure.Commit)]
+	[InlineData(true, SessionCompletion.Rollback, TerminationFailure.Rollback)]
+	[InlineData(true, SessionCompletion.Commit, TerminationFailure.TransactionDispose)]
+	[InlineData(true, SessionCompletion.Commit, TerminationFailure.ConnectionDispose)]
+	public async Task SessionCompletion_SingleTerminationFailurePreservesOriginalException(bool asynchronous, SessionCompletion completion, TerminationFailure failure)
+	{
+		var driver = new DataDriverMocker(terminationFailures: failure);
+		var session = new DataSession(new DataSourceMocker(driver));
+		var lease = asynchronous ? await session.AcquireLeaseAsync() : session.AcquireLease();
+		var connection = Assert.IsType<DbConnectionMocker>(lease.Connection);
+		var transaction = Assert.IsType<DbTransactionMocker>(lease.Transaction);
+		if(asynchronous)
+			await lease.DisposeAsync();
+		else
+			lease.Dispose();
+
+		var exception = asynchronous ?
+			await Assert.ThrowsAsync<InvalidOperationException>(() => CompleteSessionAsync(session, completion)) :
+			Assert.Throws<InvalidOperationException>(() => CompleteSession(session, completion));
+
+		Assert.Equal(GetFailureMessage(failure), exception.Message);
+		Assert.Equal(1, transaction.DisposeCount);
+		Assert.Equal(1, connection.DisposeCount);
+		Assert.Null(session.Transaction);
+		Assert.Null(session.Connection);
+	}
+
+	[Theory]
+	[InlineData(false, SessionCompletion.Commit)]
+	[InlineData(false, SessionCompletion.Rollback)]
+	[InlineData(true, SessionCompletion.Commit)]
+	[InlineData(true, SessionCompletion.Rollback)]
+	public async Task SessionCompletion_MultipleTerminationFailuresAreAggregatedInResourceOrder(bool asynchronous, SessionCompletion completion)
+	{
+		var actionFailure = completion == SessionCompletion.Commit ? TerminationFailure.Commit : TerminationFailure.Rollback;
+		var failures = actionFailure | TerminationFailure.TransactionDispose | TerminationFailure.ConnectionDispose;
+		var driver = new DataDriverMocker(terminationFailures: failures);
+		var session = new DataSession(new DataSourceMocker(driver));
+		var lease = asynchronous ? await session.AcquireLeaseAsync() : session.AcquireLease();
+		var connection = Assert.IsType<DbConnectionMocker>(lease.Connection);
+		var transaction = Assert.IsType<DbTransactionMocker>(lease.Transaction);
+		if(asynchronous)
+			await lease.DisposeAsync();
+		else
+			lease.Dispose();
+
+		var exception = asynchronous ?
+			await Assert.ThrowsAsync<AggregateException>(() => CompleteSessionAsync(session, completion)) :
+			Assert.Throws<AggregateException>(() => CompleteSession(session, completion));
+
+		Assert.Collection(exception.InnerExceptions,
+			error => Assert.Equal(GetFailureMessage(actionFailure), error.Message),
+			error => Assert.Equal(GetFailureMessage(TerminationFailure.TransactionDispose), error.Message),
+			error => Assert.Equal(GetFailureMessage(TerminationFailure.ConnectionDispose), error.Message));
+		Assert.Equal(1, transaction.DisposeCount);
+		Assert.Equal(1, connection.DisposeCount);
+		Assert.Null(session.Transaction);
+		Assert.Null(session.Connection);
+	}
+
 	[Fact]
 	public void TestHalfOpenAllowsSingleProbeAndRecovers()
 	{
@@ -950,6 +1135,28 @@ public class DataConnectorTest
 		Assert.Throws<DataException>(() => session.AcquireLease());
 	}
 
+	private static void CompleteSession(DataSession session, SessionCompletion completion)
+	{
+		if(completion == SessionCompletion.Commit)
+			session.Commit();
+		else
+			session.Rollback();
+	}
+
+	private static Task CompleteSessionAsync(DataSession session, SessionCompletion completion) =>
+		completion == SessionCompletion.Commit ?
+			session.CommitAsync(CancellationToken.None).AsTask() :
+			session.RollbackAsync(CancellationToken.None).AsTask();
+
+	private static string GetFailureMessage(TerminationFailure failure) => failure switch
+	{
+		TerminationFailure.Commit => "Expected commit failure.",
+		TerminationFailure.Rollback => "Expected rollback failure.",
+		TerminationFailure.TransactionDispose => "Expected transaction dispose failure.",
+		TerminationFailure.ConnectionDispose => "Expected connection dispose failure.",
+		_ => throw new ArgumentOutOfRangeException(nameof(failure)),
+	};
+
 	private sealed class RecordingLogger : Zongsoft.Diagnostics.ILogger
 	{
 		private readonly ConcurrentQueue<Zongsoft.Diagnostics.LogEntry> _entries = new();
@@ -1019,12 +1226,14 @@ public class DataConnectorTest
 	{
 		private readonly Func<CancellationToken, Task> _open;
 		private readonly bool _readerFailure;
+		private readonly TerminationFailure _terminationFailures;
 		private readonly ConcurrentQueue<DbConnectionMocker> _connections = new();
 
-		public DataDriverMocker(Func<CancellationToken, Task> open = null, bool readerFailure = false)
+		public DataDriverMocker(Func<CancellationToken, Task> open = null, bool readerFailure = false, TerminationFailure terminationFailures = TerminationFailure.None)
 		{
 			_open = open ?? (_ => Task.CompletedTask);
 			_readerFailure = readerFailure;
+			_terminationFailures = terminationFailures;
 		}
 
 		public override string Name => "Mock";
@@ -1035,7 +1244,7 @@ public class DataConnectorTest
 		public override DbCommand CreateCommand(IDataAccessContextBase context, IStatementBase statement) => new DbCommandMocker(_readerFailure);
 		public override DbConnection CreateConnection(string connectionString = null)
 		{
-			var connection = new DbConnectionMocker(_open);
+			var connection = new DbConnectionMocker(_open, _terminationFailures);
 			_connections.Enqueue(connection);
 			return connection;
 		}
@@ -1048,7 +1257,7 @@ public class DataConnectorTest
 		protected override ExpressionVisitorBase CreateVisitor() => null;
 	}
 
-	private sealed class DbConnectionMocker(Func<CancellationToken, Task> open) : DbConnection
+	private sealed class DbConnectionMocker(Func<CancellationToken, Task> open, TerminationFailure failures) : DbConnection
 	{
 		private string _connectionString;
 		private ConnectionState _state;
@@ -1100,7 +1309,7 @@ public class DataConnectorTest
 		}
 
 		protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) =>
-			this.Transaction = new DbTransactionMocker(this, isolationLevel);
+			this.Transaction = new DbTransactionMocker(this, isolationLevel, failures);
 		protected override DbCommand CreateDbCommand() => throw new NotSupportedException();
 
 		protected override void Dispose(bool disposing)
@@ -1114,10 +1323,13 @@ public class DataConnectorTest
 			}
 
 			base.Dispose(disposing);
+
+			if(disposing && failures.HasFlag(TerminationFailure.ConnectionDispose))
+				throw new InvalidOperationException(GetFailureMessage(TerminationFailure.ConnectionDispose));
 		}
 	}
 
-	private sealed class DbTransactionMocker(DbConnection connection, IsolationLevel isolationLevel) : DbTransaction
+	private sealed class DbTransactionMocker(DbConnection connection, IsolationLevel isolationLevel, TerminationFailure failures) : DbTransaction
 	{
 		private int _commitCount;
 		private int _rollbackCount;
@@ -1129,8 +1341,21 @@ public class DataConnectorTest
 		public int RollbackCount => _rollbackCount;
 		public int DisposeCount => _disposeCount;
 
-		public override void Commit() => Interlocked.Increment(ref _commitCount);
-		public override void Rollback() => Interlocked.Increment(ref _rollbackCount);
+		public override void Commit()
+		{
+			Interlocked.Increment(ref _commitCount);
+
+			if(failures.HasFlag(TerminationFailure.Commit))
+				throw new InvalidOperationException(GetFailureMessage(TerminationFailure.Commit));
+		}
+
+		public override void Rollback()
+		{
+			Interlocked.Increment(ref _rollbackCount);
+
+			if(failures.HasFlag(TerminationFailure.Rollback))
+				throw new InvalidOperationException(GetFailureMessage(TerminationFailure.Rollback));
+		}
 
 		protected override void Dispose(bool disposing)
 		{
@@ -1138,6 +1363,9 @@ public class DataConnectorTest
 				Interlocked.Increment(ref _disposeCount);
 
 			base.Dispose(disposing);
+
+			if(disposing && failures.HasFlag(TerminationFailure.TransactionDispose))
+				throw new InvalidOperationException(GetFailureMessage(TerminationFailure.TransactionDispose));
 		}
 	}
 

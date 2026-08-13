@@ -79,14 +79,16 @@ public class Transaction : IDisposable, IAsyncDisposable, IEquatable<Transaction
 	public void Commit() => _context.Commit();
 
 	/// <summary>提交事务。</summary>
-	/// <remarks>等待所有登记回调（含数据会话的真实提交）完成后再返回，支持取消。</remarks>
+	/// <param name="cancellation">保留用于兼容现有调用；事务终结不响应此取消标记。</param>
+	/// <remarks>等待所有登记回调（含数据会话的真实提交）完成后再返回；事务终结一旦调用便不会被取消。</remarks>
 	public Task CommitAsync(CancellationToken cancellation = default) => _context.CommitAsync(cancellation);
 
 	/// <summary>回滚事务。</summary>
 	public void Rollback() => _context.Rollback();
 
 	/// <summary>回滚事务。</summary>
-	/// <remarks>等待所有登记回调（含数据会话的真实回滚）完成后再返回，支持取消。</remarks>
+	/// <param name="cancellation">保留用于兼容现有调用；事务终结不响应此取消标记。</param>
+	/// <remarks>等待所有登记回调（含数据会话的真实回滚）完成后再返回；事务终结一旦调用便不会被取消。</remarks>
 	public Task RollbackAsync(CancellationToken cancellation = default) => _context.RollbackAsync(cancellation);
 	#endregion
 
@@ -117,7 +119,7 @@ public class Transaction : IDisposable, IAsyncDisposable, IEquatable<Transaction
 		//因此退出环境上下文的操作必须在调用方上下文中同步执行，然后再异步回滚。
 		TransactionContext.Exit(_context);
 		GC.SuppressFinalize(this);
-		return new ValueTask(this.RollbackAsync(CancellationToken.None));
+		return new ValueTask(_context.RollbackAsync(CancellationToken.None));
 	}
 	#endregion
 }
