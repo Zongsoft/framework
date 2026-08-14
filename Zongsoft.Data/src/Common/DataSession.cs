@@ -158,6 +158,10 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 		if(_ambient != null)
 			return;
 
+		/*
+		 * 取消语义：仅在提交决议被接受前响应取消（取消已请求则拒绝接受决议并抛 OperationCanceledException，
+		 * 会话保持活动，由调用方决定回滚或重试）；决议一经接受，底层提交不可取消（见 FinishAsync）。
+		 */
 		await this.RequestCompletionAsync(CompletionKind.Commit, cancellation).ConfigureAwait(false);
 	}
 
@@ -174,6 +178,8 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 	}
 
 	/// <summary>回滚当前会话事务。</summary>
+	/// <param name="cancellation">保留用于兼容现有调用；回滚属于资源清理操作，不响应此取消标记。</param>
+	/// <remarks>回滚一旦发起即不可取消，与 DisposeAsync 保持一致，确保会话资源必然被释放。</remarks>
 	public async ValueTask RollbackAsync(CancellationToken cancellation = default)
 	{
 		/*
@@ -182,7 +188,7 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 		if(_ambient != null)
 			return;
 
-		await this.RequestCompletionAsync(CompletionKind.Rollback, cancellation).ConfigureAwait(false);
+		await this.RequestCompletionAsync(CompletionKind.Rollback, CancellationToken.None).ConfigureAwait(false);
 	}
 
 	public void Dispose()

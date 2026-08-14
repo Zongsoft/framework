@@ -836,6 +836,35 @@ public class DataConnectorTest
 		Assert.Null(session.Connection);
 	}
 
+	[Fact]
+	public async Task SessionCompletion_PreCancelledCommitRejectsDecisionWhileRollbackStillExecutesAsync()
+	{
+		var driver = new DataDriverMocker();
+		var session = new DataSession(new DataSourceMocker(driver));
+		var lease = await session.AcquireLeaseAsync();
+		var transaction = Assert.IsType<DbTransactionMocker>(lease.Transaction);
+		await lease.DisposeAsync();
+
+		using var cancellation = new CancellationTokenSource();
+		cancellation.Cancel();
+
+		//预取消的提交：拒绝接受完成决议，会话保持活动，由调用方决定回滚或重试
+		await Assert.ThrowsAnyAsync<OperationCanceledException>(() => session.CommitAsync(cancellation.Token).AsTask());
+		Assert.False(session.IsCompleted);
+		Assert.Equal(0, transaction.CommitCount);
+		Assert.Equal(0, transaction.RollbackCount);
+		Assert.Equal(0, transaction.DisposeCount);
+
+		//预取消的回滚：清理操作不受取消影响，决议被接受且真实回滚必然执行
+		await session.RollbackAsync(cancellation.Token);
+		AssertSessionCompleted(session);
+		Assert.Equal(0, transaction.CommitCount);
+		Assert.Equal(1, transaction.RollbackCount);
+		Assert.Equal(1, transaction.DisposeCount);
+		Assert.Null(session.Transaction);
+		Assert.Null(session.Connection);
+	}
+
 	[Theory]
 	[InlineData(false)]
 	[InlineData(true)]
