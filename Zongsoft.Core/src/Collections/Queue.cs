@@ -394,7 +394,7 @@ public class Queue : Zongsoft.Collections.IQueue
 			throw new ArgumentOutOfRangeException("startOffset");
 
 		long finishIndex = _head < _tail ? _tail : _tail + _buffer.Length;
-		long startIndex = Math.Min(_head + startOffset, finishIndex);
+		long startIndex = Math.Min(_head + startOffset, finishIndex - 1);
 		return _buffer[startIndex % _buffer.Length];
 	}
 	#endregion
@@ -435,11 +435,11 @@ public class Queue : Zongsoft.Collections.IQueue
 
 		long startIndex = (_head + startOffset) % _buffer.Length;
 		long finishIndex = _head < _tail ? _tail : _tail + _buffer.Length;
-		actualLength = (int)Math.Min(finishIndex - startIndex + 1, count);
+		actualLength = (int)Math.Min(Math.Max(0, finishIndex - (_head + startOffset)), count);
 
 		object[] result = new object[actualLength];
 
-		long availableLength = Math.Min(actualLength, _buffer.LongLength - (_head + startOffset));
+		long availableLength = Math.Min(actualLength, _buffer.LongLength - startIndex);
 		if(availableLength > 0)
 			Array.Copy(_buffer, startIndex, result, 0, availableLength);
 

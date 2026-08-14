@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 
 using Xunit;
@@ -171,6 +172,55 @@ public class QueueTest
 		}
 
 		Assert.Equal(20, index);
+	}
+
+	[Fact]
+	public void TestDequeueManyOnWrappedFullQueue()
+	{
+		var queue = new Queue(4);
+
+		queue.Enqueue("A");
+		queue.Enqueue("B");
+		queue.Enqueue("C");
+		queue.Enqueue("D");
+
+		//移除前两个元素，使队头后移
+		Assert.Equal("A", queue.Dequeue());
+		Assert.Equal("B", queue.Dequeue());
+
+		//继续入队使队列重新填满并发生回绕(Head == Tail)
+		queue.Enqueue("E");
+		queue.Enqueue("F");
+
+		Assert.Equal(4, queue.Count);
+
+		//出队数量超出可用元素数，应忽略该参数值而应用可用的元素数
+		var items = queue.DequeueMany(10).Cast<object>().ToArray();
+
+		Assert.Equal(4, items.Length);
+		Assert.Equal(new object[] { "C", "D", "E", "F" }, items);
+		Assert.Empty(queue);
+	}
+
+	[Fact]
+	public void TestTakeWithOffsetBeyondSize()
+	{
+		var queue = new Queue(4);
+
+		queue.Enqueue("A");
+		queue.Enqueue("B");
+		queue.Enqueue("C");
+
+		//偏移值未超出可用元素数时返回对应位置的元素
+		Assert.Equal("C", queue.Take(2));
+
+		//偏移值超出可用元素数时返回最后一个元素
+		Assert.Equal("C", queue.Take(3));
+		Assert.Equal(3, queue.Count);
+
+		//批量获取的偏移值超出可用元素数时应返回空集合
+		Assert.Empty(queue.Take(3, 5));
+		Assert.Equal(3, queue.Count);
 	}
 
 	[Fact]
