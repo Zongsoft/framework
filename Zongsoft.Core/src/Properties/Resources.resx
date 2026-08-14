@@ -414,4 +414,10 @@
   <data name="ErrorOccurred.Label" xml:space="preserve">
     <value>Error occurred: </value>
   </data>
+  <data name="TransactionEventChannel.DispatchingTimeout" xml:space="preserve">
+    <value>The dispatching task of the transaction event channel '{0}' did not complete in a timely manner; the channel will be closed anyway.</value>
+  </data>
+  <data name="TransactionEventChannel.DispatchClosed" xml:space="preserve">
+    <value>The committed event '{0}' cannot be dispatched because the transaction event channel is closed.</value>
+  </data>
 </root>

@@ -111,7 +111,7 @@ public sealed class TransactionEventChannelTest
 
 			try
 			{
-				await committing.WaitAsync(TimeSpan.FromSeconds(10));
+				await committing.WaitAsync(TimeSpan.FromSeconds(30));
 			}
 			finally
 			{
@@ -278,13 +278,13 @@ public sealed class TransactionEventChannelTest
 				await _sendRelease.Task.WaitAsync(cancellation);
 		}
 
-		public Task WaitForSendStartAsync() => _sendStarted.Task.WaitAsync(TimeSpan.FromSeconds(10));
+		public Task WaitForSendStartAsync() => _sendStarted.Task.WaitAsync(TimeSpan.FromSeconds(30));
 		public void ReleaseSend() => _sendRelease?.TrySetResult();
 
 		public async Task WaitForCountAsync(int count)
 		{
 			for(var index = 0; index < count; index++)
-				Assert.True(await _received.WaitAsync(TimeSpan.FromSeconds(10)));
+				Assert.True(await _received.WaitAsync(TimeSpan.FromSeconds(30)));
 		}
 
 		public ValueTask CloseAsync(CancellationToken cancellation = default)

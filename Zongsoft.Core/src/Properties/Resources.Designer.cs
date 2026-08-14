@@ -806,7 +806,25 @@ namespace Zongsoft.Properties {
                 return ResourceManager.GetString("ShellCommand.Options.Timeout", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   查找类似 The dispatching task of the transaction event channel &apos;{0}&apos; did not complete in a timely manner; the channel will be closed anyway. 的本地化字符串。
+        /// </summary>
+        internal static string TransactionEventChannel_DispatchingTimeout {
+            get {
+                return ResourceManager.GetString("TransactionEventChannel.DispatchingTimeout", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The committed event &apos;{0}&apos; cannot be dispatched because the transaction event channel is closed. 的本地化字符串。
+        /// </summary>
+        internal static string TransactionEventChannel_DispatchClosed {
+            get {
+                return ResourceManager.GetString("TransactionEventChannel.DispatchClosed", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   查找类似 Tip: Press Ctrl+C to exit listening mode. 的本地化字符串。
         /// </summary>

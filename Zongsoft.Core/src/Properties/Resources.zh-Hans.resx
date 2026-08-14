@@ -414,4 +414,10 @@
   <data name="ErrorOccurred.Label" xml:space="preserve">
     <value>发生错误：</value>
   </data>
+  <data name="TransactionEventChannel.DispatchingTimeout" xml:space="preserve">
+    <value>事务事件通道“{0}”的投递任务未能在限定时间内完成，将继续关闭该通道。</value>
+  </data>
+  <data name="TransactionEventChannel.DispatchClosed" xml:space="preserve">
+    <value>无法投递已提交的事件“{0}”，因为事务事件通道已关闭。</value>
+  </data>
 </root>

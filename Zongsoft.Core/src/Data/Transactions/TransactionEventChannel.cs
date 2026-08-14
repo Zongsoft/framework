@@ -95,7 +95,17 @@ public sealed class TransactionEventChannel : ChannelBase, IEventChannel
 		_dispatcher.Writer.TryComplete();
 
 		if(_dispatching != null)
-			await _dispatching.WaitAsync(cancellation);
+		{
+			try
+			{
+				await _dispatching.WaitAsync(TimeSpan.FromSeconds(10), cancellation);
+			}
+			catch(TimeoutException)
+			{
+				//如果投递任务未能在限定时间内完成，则记录警告并继续关闭通道，以避免永久挂起
+				Diagnostics.Logging.GetLogging(this).Warn(string.Format(Properties.Resources.TransactionEventChannel_DispatchingTimeout, this));
+			}
+		}
 
 		await _channel.CloseAsync(cancellation);
 	}
@@ -115,7 +125,7 @@ public sealed class TransactionEventChannel : ChannelBase, IEventChannel
 	private void Dispatch(Snapshot snapshot)
 	{
 		if(!_dispatcher.Writer.TryWrite(snapshot))
-			Diagnostics.Logging.GetLogging(this).Warn($"The committed event '{snapshot.QualifiedName}' cannot be dispatched because the transaction event channel is closed.");
+			Diagnostics.Logging.GetLogging(this).Warn(string.Format(Properties.Resources.TransactionEventChannel_DispatchClosed, snapshot.QualifiedName));
 	}
 
 	private async Task DispatchAsync()
