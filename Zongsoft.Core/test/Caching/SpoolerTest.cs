@@ -14,7 +14,7 @@ public class SpoolerTest
 	[Fact]
 	public async Task TestClearAsync()
 	{
-		using var spooler = new Spooler<string>((_, __) => ValueTask.CompletedTask, TimeSpan.FromSeconds(10));
+		using var spooler = new Spooler<string>((_, __) => ValueTask.CompletedTask, TimeSpan.FromHours(1));
 		Assert.True(spooler.IsEmpty);
 
 		await spooler.PutAsync("A", TestContext.Current.CancellationToken);
@@ -32,7 +32,7 @@ public class SpoolerTest
 		const int COUNT = 1000;
 
 		var flusher = new Flusher<string>();
-		using var spooler = new Spooler<string>(flusher.OnFlushAsync, TimeSpan.FromSeconds(10));
+		using var spooler = new Spooler<string>(flusher.OnFlushAsync, TimeSpan.FromHours(1));
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(0, flusher.Count);
 
@@ -58,7 +58,7 @@ public class SpoolerTest
 	public async Task TestLimitAsync()
 	{
 		var flusher = new Flusher<string>();
-		using var spooler = new Spooler<string>(flusher.OnFlushAsync, TimeSpan.FromSeconds(10), 3);
+		using var spooler = new Spooler<string>(flusher.OnFlushAsync, TimeSpan.FromHours(1), 3);
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(0, flusher.Count);
 
@@ -80,7 +80,7 @@ public class SpoolerTest
 	public async Task TestPeriodAsync()
 	{
 		var flusher = new Flusher<string>();
-		using var spooler = new Spooler<string>(flusher.OnFlushAsync, TimeSpan.FromSeconds(10));
+		using var spooler = new Spooler<string>(flusher.OnFlushAsync, TimeSpan.FromHours(1));
 		Assert.True(spooler.IsEmpty);
 		Assert.Equal(0, flusher.Count);
 
@@ -108,7 +108,7 @@ public class SpoolerTest
 		const int CONCURRENCY = 16;
 
 		var flusher = new RecordingFlusher<int>(TimeSpan.FromMilliseconds(10));
-		using var spooler = new Spooler<int>(flusher.OnFlushAsync, TimeSpan.FromSeconds(10));
+		using var spooler = new Spooler<int>(flusher.OnFlushAsync, TimeSpan.FromHours(1));
 
 		for(int i = 0; i < COUNT; i++)
 			await spooler.PutAsync(i, TestContext.Current.CancellationToken);
@@ -130,7 +130,7 @@ public class SpoolerTest
 		const int LIMIT = 8;
 
 		var flusher = new RecordingFlusher<int>(TimeSpan.FromMilliseconds(1));
-		using var spooler = new Spooler<int>(flusher.OnFlushAsync, TimeSpan.FromSeconds(10), LIMIT);
+		using var spooler = new Spooler<int>(flusher.OnFlushAsync, TimeSpan.FromHours(1), LIMIT);
 
 		await Parallel.ForAsync(0, COUNT, TestContext.Current.CancellationToken, spooler.PutAsync);
 		await spooler.FlushAsync(TestContext.Current.CancellationToken);

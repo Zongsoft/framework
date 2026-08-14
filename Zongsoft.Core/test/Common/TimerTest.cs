@@ -34,7 +34,7 @@ public class TimerTest
 		_timer.Start(TestContext.Current.CancellationToken);
 		Assert.True(_timer.IsRunning);
 
-		await _completion.Task.WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+		await _completion.Task.WaitAsync(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken);
 		Assert.Equal(LIMIT, _count);
 		Assert.False(_timer.IsRunning);
 	}

@@ -12,6 +12,10 @@ public class MappingTest
 	{
 		const int COUNT = 10000;
 
+		//清空命令和实体映射集合，确保测试不受其他测试的残留影响
+		Mapping.Commands.Clear();
+		Mapping.Entities.Clear();
+
 		Assert.Empty(Mapping.Commands);
 		Assert.Empty(Mapping.Entities);
 
