@@ -37,7 +37,7 @@ namespace Zongsoft.Data.Common;
 
 partial class DataSession
 {
-	private class SessionCommand : DbCommand
+	private sealed class SessionCommand : DbCommand
 	{
 		#region 成员字段
 		private readonly DataSession _session;

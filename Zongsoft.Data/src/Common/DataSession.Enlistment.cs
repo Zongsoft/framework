@@ -35,7 +35,7 @@ namespace Zongsoft.Data.Common;
 
 partial class DataSession
 {
-	private class Enlistment(DataSession session) : Transactions.IEnlistment
+	private sealed class Enlistment(DataSession session) : Transactions.IEnlistment
 	{
 		private readonly DataSession _session = session;
 

@@ -39,7 +39,7 @@ namespace Zongsoft.Data.Common;
 
 partial class DataSession
 {
-	private class SessionReader : DbDataReader
+	private sealed class SessionReader : DbDataReader
 	{
 		#region 成员字段
 		private int _closed;
