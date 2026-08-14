@@ -429,7 +429,13 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 			AssertSessionReleased(session);
 		}
 
-		Assert.True(await ExistsLogAsync(accessor, target, action));
+		/*
+		 * 注意：对于本测试中的“事务内查询不存在表”错误，
+		 * PostgreSQL 会将整个事务标记为 aborted；在没有 Savepoint 恢复的情况下，
+		 * 后续 COMMIT 实际结束为回滚。因此此前插入的日志行不会存在。
+		 * MySQL/InnoDB 对此类错误通常只回滚失败语句，先前的插入仍可提交。
+		 */
+		Assert.False(await ExistsLogAsync(accessor, target, action));
 	}
 
 	[Fact]

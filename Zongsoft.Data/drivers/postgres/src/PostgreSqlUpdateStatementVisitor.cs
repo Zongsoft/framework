@@ -46,6 +46,36 @@ public class PostgreSqlUpdateStatementVisitor : UpdateStatementVisitor
 	#endregion
 
 	#region 重写方法
+	protected override void OnVisiting(ExpressionVisitorContext context, UpdateStatement statement)
+	{
+		base.OnVisiting(context, statement);
+
+		if(statement.Returning?.Table != null)
+		{
+			context.Write("WITH ");
+			context.Write(GetReturningSource(context, statement.Returning));
+			context.WriteLine(" AS (");
+		}
+	}
+
+	protected override void OnVisited(ExpressionVisitorContext context, UpdateStatement statement)
+	{
+		if(statement.Returning?.Table == null)
+		{
+			base.OnVisited(context, statement);
+			return;
+		}
+
+		this.VisitReturning(context, statement.Returning);
+		context.WriteLine();
+		context.WriteLine(")");
+		context.Write("INSERT INTO ");
+		context.Write(context.Dialect.GetIdentifier(statement.Returning.Table.Identifier()));
+		context.Write(" SELECT * FROM ");
+		context.Write(GetReturningSource(context, statement.Returning));
+		context.WriteLine(";");
+	}
+
 	protected override void VisitTables(ExpressionVisitorContext context, UpdateStatement statement, IList<TableIdentifier> tables)
 	{
 		for(int i = 0; i < tables.Count; i++)
@@ -116,5 +146,38 @@ public class PostgreSqlUpdateStatementVisitor : UpdateStatementVisitor
 				context.Write(")");
 		}
 	}
+
+	protected override void VisitReturning(ExpressionVisitorContext context, ReturningClause clause)
+	{
+		if(clause.Table == null)
+		{
+			base.VisitReturning(context, clause);
+			return;
+		}
+
+		if(clause.Members == null || clause.Members.Count == 0)
+			return;
+
+		this.OnVisiteReturning(context, clause);
+
+		var index = 0;
+		foreach(var member in clause.Members)
+		{
+			if(index++ > 0)
+				context.Write(",");
+
+			var qualified = context.Dialect.GetIdentifier(member.Kind);
+			if(!string.IsNullOrEmpty(qualified))
+				context.Write(qualified + ".");
+
+			context.Write(context.Dialect.GetIdentifier(member.Field.Name));
+			if(!string.IsNullOrEmpty(member.Field.Alias))
+				context.Write(" AS " + context.Dialect.GetIdentifier(member.Field.Alias));
+		}
+	}
+	#endregion
+
+	#region 私有方法
+	private static string GetReturningSource(ExpressionVisitorContext context, ReturningClause clause) => context.Dialect.GetIdentifier(clause.Table.Name + "_source");
 	#endregion
 }
