@@ -520,7 +520,7 @@ public class SynchronizedDictionaryTest
 			var dictionary = (SynchronizedDictionary<int, string>)state;
 
 			while(Hit(dictionary, index, stopwatch.Elapsed) < COUNT)
-				index = index >= COUNT ? 0 : index + 1;
+				index = (index + 1) % COUNT;
 
 			stopwatch.Stop();
 		}

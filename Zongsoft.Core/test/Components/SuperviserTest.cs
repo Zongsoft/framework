@@ -8,9 +8,11 @@ using Xunit;
 
 namespace Zongsoft.Components.Tests;
 
-public class SuperviserTest
+public class SuperviserTest : IDisposable
 {
 	private readonly Superviser<string> _superviser = new();
+
+	public void Dispose() => _superviser.Dispose();
 
 	private void Initialize(int count = 2)
 	{
@@ -74,8 +76,11 @@ public class SuperviserTest
 			_superviser.Supervise($"S{index + 1}", new MySupervisable($"S{index + 1}"));
 		});
 
+		//等待监测完成事件回调全部完成
+		Assert.True(SpinWait.SpinUntil(() => Volatile.Read(ref _supervised) >= COUNT, TIMEOUT), "等待监测完成事件回调超时。");
+
 		//确保计数器数值一致
-		Assert.Equal(COUNT, _raises);
+		Assert.Equal(COUNT, _supervised);
 
 		//挂载取消监测事件
 		_superviser.Unsupervised += this.OnUnsupervised;
@@ -86,11 +91,11 @@ public class SuperviserTest
 			_superviser.Unsupervise($"S{index + 1}");
 		});
 
-		//由于取消监测事件回调有延迟，因此需要等待取消事件回调完成
-		SpinWait.SpinUntil(() => _raises <= 0, TIMEOUT);
+		//由于取消监测事件回调有延迟，因此需要等待取消事件回调全部完成
+		Assert.True(SpinWait.SpinUntil(() => Volatile.Read(ref _unsupervised) >= COUNT, TIMEOUT), "等待取消监测事件回调超时。");
 
 		//确保计数器数值一致
-		Assert.Equal(0, _raises);
+		Assert.Equal(COUNT, _unsupervised);
 	}
 
 	[Fact]
@@ -150,9 +155,10 @@ public class SuperviserTest
 	}
 
 	#region 事件处理
-	private volatile int _raises = 0;
-	private void OnSupervised(object sender, Superviser<string>.SupervisedEventArgs args) => Interlocked.Increment(ref _raises);
-	private void OnUnsupervised(object sender, Superviser<string>.UnsupervisedEventArgs args) => Interlocked.Decrement(ref _raises);
+	private int _supervised;
+	private int _unsupervised;
+	private void OnSupervised(object sender, Superviser<string>.SupervisedEventArgs args) => Interlocked.Increment(ref _supervised);
+	private void OnUnsupervised(object sender, Superviser<string>.UnsupervisedEventArgs args) => Interlocked.Increment(ref _unsupervised);
 	#endregion
 
 	private sealed class MySupervisable(string name) : Supervisable<string>, IEquatable<string>, IEquatable<MySupervisable>

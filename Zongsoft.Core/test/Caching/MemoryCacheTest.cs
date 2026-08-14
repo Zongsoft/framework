@@ -59,10 +59,10 @@ public class MemoryCacheTest
 		cache.Compact();
 
 		//等待缓存项过期事件的触发
-		SpinWait.SpinUntil(() => _reason.HasValue);
+		Assert.True(SpinWait.SpinUntil(() => Volatile.Read(ref _reason) >= 0, 10_000), "等待缓存项过期事件回调超时。");
 
 		//确认缓存过期的原因
-		Assert.Equal(CacheEvictedReason.Depended, _reason);
+		Assert.Equal(CacheEvictedReason.Depended, (CacheEvictedReason)Volatile.Read(ref _reason));
 
 		//创建一个已经过期的缓存项
 		value = cache.GetOrCreate("KEY", key =>
@@ -102,6 +102,6 @@ public class MemoryCacheTest
 		Assert.Equal(TimeSpan.FromSeconds(10), cache.Options.ScanFrequency);
 	}
 
-	private CacheEvictedReason? _reason;
-	private void Cache_Evicted(object sender, CacheEvictedEventArgs args) => _reason = args.Reason;
+	private int _reason = -1;
+	private void Cache_Evicted(object sender, CacheEvictedEventArgs args) => Interlocked.Exchange(ref _reason, (int)args.Reason);
 }
