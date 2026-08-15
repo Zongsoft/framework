@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFrameworks>net10.0</TargetFrameworks>
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\..\..\..\Zongsoft.Core\src\Zongsoft.Core.csproj" />
+		<ProjectReference Include="..\..\..\src\Zongsoft.Externals.Redis.csproj" />
+	</ItemGroup>
+</Project>

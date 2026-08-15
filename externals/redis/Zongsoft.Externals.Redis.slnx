@@ -7,9 +7,9 @@
 		<Project Path="samples/messaging/Zongsoft.Externals.Redis.Messaging.Samples.csproj" />
 	</Folder>
 	<Folder Name="/samples/distributed-lock/">
-		<File Path="samples/DistributedLock/README.md" />
-		<File Path="samples/DistributedLock/README.zh-Hans.md" />
-		<Project Path="samples/DistributedLock/master/Zongsoft.Externals.Redis.DistributedLock.Master.csproj" />
-		<Project Path="samples/DistributedLock/slaver/Zongsoft.Externals.Redis.DistributedLock.Slaver.csproj" />
+		<File Path="samples/distributedlock/README.md" />
+		<File Path="samples/distributedlock/README.zh-Hans.md" />
+		<Project Path="samples/distributedlock/master/Zongsoft.Externals.Redis.DistributedLock.Master.csproj" />
+		<Project Path="samples/distributedlock/slaver/Zongsoft.Externals.Redis.DistributedLock.Slaver.csproj" />
 	</Folder>
 </Solution>
