@@ -8,7 +8,7 @@ namespace Zongsoft.Messaging.Kafka.Tests;
 
 public class KafkaQueuePublishingTests
 {
-	private const string KAFKA_UNAVAILABLE = "Kafka is unavailable at localhost:9092. Start test/Zongsoft.Messaging.Kafka-pod.yaml with Podman.";
+	private const string KAFKA_UNAVAILABLE = "Kafka is unavailable at localhost:9092. Start Zongsoft.Messaging.Kafka-pod.yaml with Podman.";
 
 	[Fact]
 	public async Task PublishAndConsumeMessage()

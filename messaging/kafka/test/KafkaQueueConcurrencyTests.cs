@@ -12,7 +12,7 @@ namespace Zongsoft.Messaging.Kafka.Tests;
 
 public class KafkaQueueConcurrencyTests
 {
-	private const string KAFKA_UNAVAILABLE = "Kafka is unavailable at localhost:9092. Start test/Zongsoft.Messaging.Kafka-pod.yaml with Podman.";
+	private const string KAFKA_UNAVAILABLE = "Kafka is unavailable at localhost:9092. Start Zongsoft.Messaging.Kafka-pod.yaml with Podman.";
 	private static readonly TimeSpan TEST_TIMEOUT = TimeSpan.FromSeconds(120);
 	private static readonly TimeSpan CLEANUP_TIMEOUT = TimeSpan.FromSeconds(45);
 
