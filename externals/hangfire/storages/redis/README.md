@@ -9,3 +9,13 @@
 [简体中文](README.zh-Hans.md)
 
 -----
+
+## Overview
+
+`Zongsoft.Externals.Hangfire.Storages.Redis` provides Redis-backed persistent storage for the [Zongsoft Hangfire integration](../..). It adapts `Hangfire.Redis.StackExchange` to Zongsoft connection settings and registers the resulting `RedisStorage` as Hangfire's `JobStorage`.
+
+## Configuration
+
+Load `Zongsoft.Externals.Hangfire.Storages.Redis.plugin` together with the core Hangfire and Redis plugins. The adapter reads `/Externals/Redis/ConnectionSettings`, preferring a setting named `Hangfire` whose driver is `Redis`; otherwise it falls back to the default or first Redis setting.
+
+Configure and verify the Redis connection before starting the Hangfire server. All Hangfire jobs, states, queues, and server metadata are persisted through that connection.

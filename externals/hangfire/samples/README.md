@@ -9,3 +9,11 @@
 [简体中文](README.zh-Hans.md)
 
 -----
+
+## Overview
+
+This project is the minimal handler sample for the [Zongsoft Hangfire integration](..). It defines `MyHandler`, derives it from `HandlerBase<object>`, and registers it under `/Workbench/Scheduler/Handlers` with the stable name `MyHandler`.
+
+When Hangfire dispatches a job to that name, the handler writes the argument, parameters, and an incrementing execution count to the Zongsoft diagnostics log. Use the sample together with the core Hangfire plugin, a configured storage plugin, and a running Hangfire server.
+
+The sample demonstrates handler registration only. Scheduling recurring and delayed jobs, server configuration, and storage setup are described in the [parent documentation](..).

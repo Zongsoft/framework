@@ -9,3 +9,11 @@
 [简体中文](README.zh-Hans.md)
 
 -----
+
+## Overview
+
+[**Z**ongsoft.**E**xternals.**OpenXml**](https://github.com/Zongsoft/framework/tree/main/externals/openxml) provides a focused spreadsheet API on top of the [Open XML SDK](https://github.com/dotnet/Open-XML-SDK).
+
+The `Zongsoft.Externals.OpenXml.Spreadsheet` namespace contains helpers for creating and opening workbooks, enumerating worksheets, addressing cells, and reading or updating cell values. `SpreadsheetDocument` accepts either a file path or a stream, so it can be used with local files as well as framework-provided storage.
+
+Reference the package directly or load `Zongsoft.Externals.OpenXml.plugin`. See the [tests](test) for workbook creation, cell addressing, and spreadsheet access examples.

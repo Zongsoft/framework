@@ -9,3 +9,11 @@
 [简体中文](README.zh-Hans.md)
 
 -----
+
+## Overview
+
+`Zongsoft.Externals.Hangfire.Web` integrates the [Hangfire Dashboard](https://docs.hangfire.io/en/latest/configuration/using-dashboard.html) with a Zongsoft ASP.NET Core host.
+
+Loading `Zongsoft.Externals.Hangfire.Web.plugin` registers Hangfire services and calls `UseHangfireDashboard()` during application initialization. The default Hangfire Dashboard route is therefore available to the host after a `JobStorage` has been configured.
+
+This package only supplies the web-host integration. Use the [core Hangfire plugin](..) for scheduling and background processing, and add an appropriate storage package such as the [Redis adapter](../storages/redis). Configure Dashboard authorization and routing according to the hosting application's security requirements; do not expose it publicly without access controls.
