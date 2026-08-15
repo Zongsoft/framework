@@ -42,9 +42,19 @@ public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisC
 {
 	#region 成员字段
 	private IDatabase _database;
+	private IConnectionMultiplexer _connection;
 	#endregion
 
 	#region 构造函数
+	public RedisQueue(string name, Configuration.RedisConnectionSettings settings) : base(name, settings)
+	{
+		if(settings == null)
+			throw new ArgumentNullException(nameof(settings));
+
+		_connection = ConnectionMultiplexer.Connect(settings.GetOptions());
+		_database = _connection.GetDatabase();
+	}
+
 	public RedisQueue(string name, IDatabase database, Configuration.RedisConnectionSettings settings = null) : base(name, settings)
 	{
 		_database = database ?? throw new ArgumentNullException(nameof(database));
@@ -53,15 +63,17 @@ public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisC
 
 	#region 内部属性
 	internal IDatabase Database => _database ?? throw new ObjectDisposedException(nameof(RedisQueue));
+	internal string GetQueueName(string topic) => this.Settings == null && string.IsNullOrEmpty(topic) ? this.Name : RedisQueueUtility.GetQueueName(this.Name, topic);
 	#endregion
 
 	#region 生成方法
 	protected override async ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
 	{
-		if(string.IsNullOrEmpty(topic))
+		if(string.IsNullOrEmpty(topic) && this.Settings != null)
 			throw new ArgumentNullException(nameof(topic));
 
-		return await _database.StreamAddAsync(RedisQueueUtility.GetQueueName(this.Name, topic), RedisQueueUtility.GetMessagePayload(data, tags));
+		cancellation.ThrowIfCancellationRequested();
+		return await this.Database.StreamAddAsync(this.GetQueueName(topic), RedisQueueUtility.GetMessagePayload(data, tags)).WaitAsync(cancellation);
 	}
 	#endregion
 
@@ -73,14 +85,25 @@ public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisC
 
 	protected override ValueTask<RedisSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation)
 	{
-		return ValueTask.FromResult(new RedisSubscriber(this, topic, handler, options));
+		return ValueTask.FromResult(new RedisSubscriber(this, topic, tags, handler, options));
 	}
+	#endregion
+
+	#region 重写方法
+	protected override string GetTopic(string topic) => this.Settings == null ? topic ?? string.Empty : base.GetTopic(topic);
 	#endregion
 
 	#region 资源释放
 	protected override void Dispose(bool disposing)
 	{
-		Interlocked.Exchange(ref _database, null);
+		if(disposing)
+		{
+			foreach(var subscriber in this.Subscribers)
+				subscriber.DisposeAsync().AsTask().GetAwaiter().GetResult();
+
+			Interlocked.Exchange(ref _database, null);
+			Interlocked.Exchange(ref _connection, null)?.Dispose();
+		}
 	}
 	#endregion
 }

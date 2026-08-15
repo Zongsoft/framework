@@ -3,6 +3,9 @@
 	<Project Path="test/Zongsoft.Externals.Redis.Tests.csproj" />
 
 	<Folder Name="/samples/" />
+	<Folder Name="/samples/messaging/">
+		<Project Path="samples/messaging/Zongsoft.Externals.Redis.Messaging.Samples.csproj" />
+	</Folder>
 	<Folder Name="/samples/distributed-lock/">
 		<File Path="samples/DistributedLock/README.md" />
 		<File Path="samples/DistributedLock/README.zh-Hans.md" />

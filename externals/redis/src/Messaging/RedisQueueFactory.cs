@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Redis library.
  *
@@ -32,7 +32,9 @@ using Zongsoft.Messaging;
 
 namespace Zongsoft.Externals.Redis.Messaging;
 
-[Service(typeof(IMessageQueueProvider))]
-public class RedisQueueProvider() : MessageQueueProviderBase<RedisQueue, Configuration.RedisConnectionSettings>(Configuration.RedisConnectionSettingsDriver.NAME)
+[Service<IMessageQueueFactory>]
+public sealed class RedisQueueFactory() : MessageQueueFactoryBase(Configuration.RedisConnectionSettingsDriver.NAME)
 {
+	public override IMessageQueue Create(IMessageQueueSettings settings) => new RedisQueue(settings.Name, settings as Configuration.RedisConnectionSettings);
+	public override IMessageQueue Create(string name, string connectionString) => new RedisQueue(name ?? string.Empty, Configuration.RedisConnectionSettingsDriver.Instance.GetSettings(connectionString));
 }

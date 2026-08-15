@@ -58,6 +58,22 @@ public sealed class RedisConnectionSettings : ConnectionSettingsBase<RedisConnec
 		set => this.SetValue(value);
 	}
 
+	[DefaultValue(10000)]
+	[ConnectionSetting(Ignored = true)]
+	public int Deadline
+	{
+		get => this.GetValue<int>();
+		set => this.SetValue(value);
+	}
+
+	[DefaultValue("30s")]
+	[ConnectionSetting(Ignored = true)]
+	public TimeSpan IdleTimeout
+	{
+		get => this.GetValue<TimeSpan>();
+		set => this.SetValue(value);
+	}
+
 	[ConnectionSetting(true)]
 	[Alias(nameof(ConfigurationOptions.EndPoints))]
 	public EndPointCollection Server
