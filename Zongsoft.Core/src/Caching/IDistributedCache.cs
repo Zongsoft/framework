@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -32,6 +32,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
+using Zongsoft.Components;
+
 namespace Zongsoft.Caching;
 
 /// <summary>
@@ -39,18 +41,24 @@ namespace Zongsoft.Caching;
 /// </summary>
 public interface IDistributedCache
 {
-	#region 事件定义
-	/// <summary>表示缓存过期的事件。</summary>
-	event EventHandler<DistributedCacheEventArgs> Expired;
-	/// <summary>表示缓存被移除的事件。</summary>
-	event EventHandler<DistributedCacheEventArgs> Removed;
-	/// <summary>表示缓存被更新的事件。</summary>
-	event EventHandler<DistributedCacheEventArgs> Updated;
-	#endregion
-
 	#region 属性定义
 	/// <summary>获取当前缓存容器的名字。</summary>
 	string Name { get; }
+	#endregion
+
+	#region 订阅方法
+	/// <summary>异步订阅当前缓存容器的变化通知。</summary>
+	/// <param name="handler">指定的缓存通知处理程序。</param>
+	/// <param name="options">指定的订阅选项。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回表示异步操作的缓存订阅对象。</returns>
+	/// <remarks>
+	///		<para>本方法仅在后端确认订阅成功后完成，<paramref name="cancellation"/>只取消订阅建立过程；订阅成功后的生命周期由返回的订阅对象管理。</para>
+	///		<para>同一订阅按通知到达顺序串行调用处理程序，不同订阅之间不保证顺序。处理程序异常由实现记录，不重试且不终止后续通知。</para>
+	///		<para>缓存通知采用至多一次和尽力而为语义，断开连接期间的通知可能丢失；它仅适用于缓存失效、刷新提示和监控，不得用于审计、可靠消息或事务协调。</para>
+	///		<para>未支持通知的分布式缓存在调用本方法时将得到<see cref="NotSupportedException"/>异常；连接、权限和参数错误应保留各自的异常类型。</para>
+	/// </remarks>
+	ValueTask<IDistributedCacheSubscription> SubscribeAsync(IHandler<DistributedCacheNotification> handler, DistributedCacheSubscriptionOptions options = null, CancellationToken cancellation = default) => ValueTask.FromException<IDistributedCacheSubscription>(new NotSupportedException($"The distributed cache '{this.Name}' does not support notifications."));
 	#endregion
 
 	#region 常用方法

@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Redis library.
  *
@@ -34,6 +34,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 using Zongsoft.Common;
 using Zongsoft.Caching;
@@ -44,7 +45,7 @@ using StackExchange.Redis;
 
 namespace Zongsoft.Externals.Redis;
 
-public partial class RedisService : IDisposable
+public partial class RedisService : IDisposable, IAsyncDisposable
 {
 	#region 成员字段
 	private readonly string _name;
@@ -55,6 +56,9 @@ public partial class RedisService : IDisposable
 	private IDatabase _database;
 	private volatile ConnectionMultiplexer _connection;
 	private readonly SemaphoreSlim _connectionLock = new SemaphoreSlim(1, 1);
+	private readonly SemaphoreSlim _subscriptionLock = new SemaphoreSlim(1, 1);
+	private readonly ConcurrentDictionary<RedisCacheSubscription, byte> _subscriptions = new();
+	private int _disposed;
 	#endregion
 
 	#region 构造函数
@@ -97,7 +101,28 @@ public partial class RedisService : IDisposable
 	public string Namespace
 	{
 		get => _namespace;
-		set => _namespace = string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+		set
+		{
+			var @namespace = string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+
+			_subscriptionLock.Wait();
+			try
+			{
+				this.ThrowIfDisposed();
+
+				if(string.Equals(_namespace, @namespace, StringComparison.Ordinal))
+					return;
+
+				if(!_subscriptions.IsEmpty)
+					throw new InvalidOperationException("The Redis cache namespace cannot be changed while notification subscriptions are active.");
+
+				_namespace = @namespace;
+			}
+			finally
+			{
+				_subscriptionLock.Release();
+			}
+		}
 	}
 
 	public int DatabaseId => _database?.Database ?? -1;
@@ -134,11 +159,26 @@ public partial class RedisService : IDisposable
 		if(databaseId < 0)
 			throw new ArgumentOutOfRangeException(nameof(databaseId));
 
-		if(_connection == null)
-			this.Connect(databaseId);
+		_subscriptionLock.Wait();
+		try
+		{
+			this.ThrowIfDisposed();
 
-		if(_database.Database != databaseId)
-			_database = _connection.GetDatabase(databaseId);
+			if(_database?.Database == databaseId)
+				return;
+
+			if(!_subscriptions.IsEmpty)
+				throw new InvalidOperationException("The Redis cache database cannot be changed while notification subscriptions are active.");
+
+			if(_connection == null)
+				this.Connect(databaseId);
+			else
+				_database = _connection.GetDatabase(databaseId);
+		}
+		finally
+		{
+			_subscriptionLock.Release();
+		}
 	}
 
 	public async ValueTask UseAsync(int databaseId, CancellationToken cancellation = default)
@@ -146,13 +186,26 @@ public partial class RedisService : IDisposable
 		if(databaseId < 0)
 			throw new ArgumentOutOfRangeException(nameof(databaseId));
 
-		cancellation.ThrowIfCancellationRequested();
+		await _subscriptionLock.WaitAsync(cancellation);
+		try
+		{
+			this.ThrowIfDisposed();
 
-		if(_connection == null)
-			await this.ConnectAsync(databaseId, cancellation);
+			if(_database?.Database == databaseId)
+				return;
 
-		if(_database.Database != databaseId)
-			_database = _connection.GetDatabase(databaseId);
+			if(!_subscriptions.IsEmpty)
+				throw new InvalidOperationException("The Redis cache database cannot be changed while notification subscriptions are active.");
+
+			if(_connection == null)
+				await this.ConnectAsync(databaseId, cancellation);
+			else
+				_database = _connection.GetDatabase(databaseId);
+		}
+		finally
+		{
+			_subscriptionLock.Release();
+		}
 	}
 
 	public RedisServiceInfo GetInfo()
@@ -328,7 +381,7 @@ public partial class RedisService : IDisposable
 		if(value is byte[] buffer)
 		{
 			using(var memoryStream = new MemoryStream(buffer))
-			return _database.StringSet(key, RedisValue.CreateFrom(memoryStream), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None);
+				return _database.StringSet(key, RedisValue.CreateFrom(memoryStream), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None);
 		}
 
 		if(TypeExtension.IsDictionary(value, out var fields))
@@ -497,15 +550,46 @@ public partial class RedisService : IDisposable
 	#endregion
 
 	#region 处置方法
-	public void Dispose()
+	public void Dispose() => this.DisposeAsync().AsTask().GetAwaiter().GetResult();
+	public async ValueTask DisposeAsync()
 	{
-		_connection?.Close();
+		if(Interlocked.Exchange(ref _disposed, 1) != 0)
+			return;
+
+		await _subscriptionLock.WaitAsync();
+		try
+		{
+			foreach(var subscription in _subscriptions.Keys)
+				await subscription.DisposeAsync();
+
+			_subscriptions.Clear();
+			_database = null;
+
+			var connection = Interlocked.Exchange(ref _connection, null);
+			if(connection != null)
+				await connection.DisposeAsync();
+		}
+		finally
+		{
+			_subscriptionLock.Release();
+		}
+
+		GC.SuppressFinalize(this);
 	}
 	#endregion
 
 	#region 私有方法
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private string GetKey(string key) => string.IsNullOrEmpty(_namespace) ? key : $"{_namespace}:{key}";
+
+	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+	private void ThrowIfDisposed()
+	{
+		if(Volatile.Read(ref _disposed) != 0)
+			throw new ObjectDisposedException(this.GetType().Name);
+	}
+
+	internal void Unregister(RedisCacheSubscription subscription) => _subscriptions.TryRemove(subscription, out _);
 
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private static When GetWhen(CacheRequisite requisite)
@@ -552,6 +636,8 @@ public partial class RedisService : IDisposable
 
 	private void Connect(int databaseId = -1)
 	{
+		this.ThrowIfDisposed();
+
 		if(_database != null)
 			return;
 
@@ -577,6 +663,7 @@ public partial class RedisService : IDisposable
 	private async ValueTask ConnectAsync(int databaseId, CancellationToken cancellation = default)
 	{
 		cancellation.ThrowIfCancellationRequested();
+		this.ThrowIfDisposed();
 
 		if(_database != null)
 			return;

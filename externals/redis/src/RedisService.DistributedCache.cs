@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -35,6 +35,7 @@ using System.Collections.Generic;
 
 using Zongsoft.Common;
 using Zongsoft.Caching;
+using Zongsoft.Components;
 
 using StackExchange.Redis;
 
@@ -42,25 +43,42 @@ namespace Zongsoft.Externals.Redis;
 
 partial class RedisService : IDistributedCache
 {
-	#region 事件定义
-	event EventHandler<DistributedCacheEventArgs> IDistributedCache.Expired
-	{
-		add => throw new NotImplementedException();
-		remove => throw new NotImplementedException();
-	}
-	event EventHandler<DistributedCacheEventArgs> IDistributedCache.Removed
-	{
-		add => throw new NotImplementedException();
-		remove => throw new NotImplementedException();
-	}
-	event EventHandler<DistributedCacheEventArgs> IDistributedCache.Updated
-	{
-		add => throw new NotImplementedException();
-		remove => throw new NotImplementedException();
-	}
-	#endregion
-
 	#region 普通方法
+	public async ValueTask<IDistributedCacheSubscription> SubscribeAsync(IHandler<DistributedCacheNotification> handler, DistributedCacheSubscriptionOptions options = null, CancellationToken cancellation = default)
+	{
+		ArgumentNullException.ThrowIfNull(handler);
+		RedisCacheSubscription subscription = null;
+		var snapshot = options == null ? new DistributedCacheSubscriptionOptions() : new DistributedCacheSubscriptionOptions(options);
+
+		await _subscriptionLock.WaitAsync(cancellation);
+
+		try
+		{
+			this.ThrowIfDisposed();
+			await this.ConnectAsync(cancellation);
+
+			var @namespace = string.IsNullOrEmpty(_namespace) ? string.Empty : _namespace + ":";
+			subscription = new RedisCacheSubscription(this, _connection, _database.Database, @namespace, handler, snapshot);
+			await subscription.SubscribeAsync(cancellation);
+
+			if(!_subscriptions.TryAdd(subscription, 0))
+				throw new InvalidOperationException("The Redis cache notification subscription could not be registered.");
+
+			return subscription;
+		}
+		catch
+		{
+			if(subscription != null)
+				await subscription.DisposeAsync();
+
+			throw;
+		}
+		finally
+		{
+			_subscriptionLock.Release();
+		}
+	}
+
 	public long GetCount()
 	{
 		//确保连接成功
@@ -262,7 +280,7 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		this.Connect();
 
-		return _database.KeyRename(GetKey(oldKey), GetKey(newKey), When.Exists);
+		return _database.KeyRename(GetKey(oldKey), GetKey(newKey), When.Always);
 	}
 
 	public async ValueTask<bool> RenameAsync(string oldKey, string newKey, CancellationToken cancellation = default)
@@ -275,7 +293,7 @@ partial class RedisService : IDistributedCache
 
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
-		return await _database.KeyRenameAsync(GetKey(oldKey), GetKey(newKey), When.Exists);
+		return await _database.KeyRenameAsync(GetKey(oldKey), GetKey(newKey), When.Always);
 	}
 	#endregion
 
