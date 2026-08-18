@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -41,7 +41,7 @@ public abstract class DistributedLockBase<TManager> : IDistributedLock, IDisposa
 	#endregion
 
 	#region 构造函数
-	protected DistributedLockBase(TManager manager, string key, byte[] token, TimeSpan expiry, bool isHeld)
+	protected DistributedLockBase(TManager manager, string key, byte[] token, TimeSpan expiry, bool isHeld, long fencingToken = 0)
 	{
 		if(manager == null)
 			throw new ArgumentNullException(nameof(manager));
@@ -56,6 +56,7 @@ public abstract class DistributedLockBase<TManager> : IDistributedLock, IDisposa
 		this.Key = key;
 		this.Token = token;
 		this.Expiry = expiry;
+		this.FencingToken = fencingToken;
 	}
 	#endregion
 
@@ -63,7 +64,7 @@ public abstract class DistributedLockBase<TManager> : IDistributedLock, IDisposa
 	public string Key { get; }
 	public byte[] Token { get; }
 	public TimeSpan Expiry { get; }
-	protected TManager Manager => _manager;
+	public long FencingToken { get; protected set; }
 
 	public bool IsExpired => _heldTime.HasValue && DateTime.UtcNow >= _heldTime.Value.Add(this.Expiry);
 	public bool IsHeld => _heldTime.HasValue && Volatile.Read(ref _manager) != null;
@@ -72,8 +73,12 @@ public abstract class DistributedLockBase<TManager> : IDistributedLock, IDisposa
 	public bool IsUnlocked => !this.IsLocked;
 	#endregion
 
+	#region 保护属性
+	protected TManager Manager => _manager;
+	#endregion
+
 	#region 公共方法
-	public virtual async ValueTask EnterAsync(CancellationToken cancellation = default)
+	public async ValueTask EnterAsync(CancellationToken cancellation = default)
 	{
 		//如果当前锁已经释放则抛出异常
 		var manager = Volatile.Read(ref _manager) ?? throw new InvalidOperationException($"The distributed lock has been released.");
@@ -86,13 +91,49 @@ public abstract class DistributedLockBase<TManager> : IDistributedLock, IDisposa
 			if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
 				await Task.Delay(expiry.Value, cancellation);
 
-			//进入分布式锁临界区，进入成功则更新持有时间
+			//进入分布式锁临界区，进入成功则更新持有时间并触发进入完成回调
 			if(await this.OnEnterAsync(cancellation))
+			{
 				_heldTime = DateTime.UtcNow;
+				this.OnEntered();
+			}
 		}
 	}
 
+	public ValueTask<bool> ExitAsync(CancellationToken cancellation = default)
+	{
+		if(_manager != null)
+		{
+			var manager = Interlocked.Exchange(ref _manager, null);
+
+			if(manager != null && _heldTime.HasValue)
+				return manager.ReleaseAsync(this.Key, this.Token, cancellation);
+		}
+
+		return ValueTask.FromResult(false);
+	}
+
+	public async ValueTask<bool> RenewAsync(CancellationToken cancellation = default)
+	{
+		if(!this.IsLocked)
+			return false;
+
+		if(await this.OnRenewAsync(cancellation))
+		{
+			_heldTime = DateTime.UtcNow;
+			return true;
+		}
+
+		_heldTime = null;
+		return false;
+	}
+	#endregion
+
+	#region 保护方法
+	protected void Lose() => _heldTime = null;
+	protected virtual void OnEntered() { }
 	protected abstract ValueTask<bool> OnEnterAsync(CancellationToken cancellation);
+	protected virtual ValueTask<bool> OnRenewAsync(CancellationToken cancellation) => ValueTask.FromResult(false);
 	#endregion
 
 	#region 释放方法
@@ -132,19 +173,6 @@ public abstract class DistributedLockBase<TManager> : IDistributedLock, IDisposa
 		}
 
 		static async ValueTask<bool> AwaitUnlock(ValueTask<bool> task) => await task;
-	}
-
-	public ValueTask<bool> ExitAsync(CancellationToken cancellation = default)
-	{
-		if(_manager != null)
-		{
-			var manager = Interlocked.Exchange(ref _manager, null);
-
-			if(manager != null && _heldTime.HasValue)
-				return manager.ReleaseAsync(this.Key, this.Token, cancellation);
-		}
-
-		return ValueTask.FromResult(false);
 	}
 	#endregion
 

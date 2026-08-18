@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -47,7 +47,13 @@ public sealed class RedisServiceRegistration : IServiceRegistration
 
 		services.AddStackExchangeRedisCache(options =>
 		{
-			options.ConfigurationOptions = settings.GetOptions<StackExchange.Redis.ConfigurationOptions>();
+			var configuration = settings.GetOptions<StackExchange.Redis.ConfigurationOptions>();
+			options.ConfigurationOptions = configuration;
+			options.ConnectionMultiplexerFactory = async () =>
+			{
+				var lease = await RedisConnectionPool.AcquireAsync(configuration);
+				return lease.CreateProxy();
+			};
 		});
 
 		static IConnectionSettings GetConnectionSettings(IConfiguration configuration)

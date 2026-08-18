@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -61,6 +61,8 @@ public interface IDistributedLock : IDisposable, IAsyncDisposable
 	string Key { get; }
 	/// <summary>获取分布式锁的令牌。</summary>
 	byte[] Token { get; }
+	/// <summary>获取单调递增的栅栏令牌；不支持该特性的实现返回零。</summary>
+	long FencingToken => 0;
 
 	/// <summary>获取一个值，指示锁是否已过期。</summary>
 	bool IsExpired { get; }
@@ -77,4 +79,7 @@ public interface IDistributedLock : IDisposable, IAsyncDisposable
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回异步操作任务。</returns>
 	ValueTask EnterAsync(CancellationToken cancellation = default);
+
+	/// <summary>为当前持有的锁续期。</summary>
+	ValueTask<bool> RenewAsync(CancellationToken cancellation = default);
 }

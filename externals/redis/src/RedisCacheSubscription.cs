@@ -30,6 +30,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Channels;
+using System.Diagnostics;
 
 using Zongsoft.Caching;
 using Zongsoft.Components;
@@ -43,38 +45,48 @@ internal sealed class RedisCacheSubscription : ChannelBase, IDistributedCacheSub
 {
 	#region 成员字段
 	private readonly RedisService _cache;
-	private readonly ISubscriber _subscriber;
-	private readonly int _database;
-	private readonly string _namespace;
+	private readonly RedisCacheNotificationHub _hub;
 	private readonly string _prefix;
 	private readonly DistributedCacheNotificationKind _kind;
+	private readonly DistributedCacheSubscriptionOptions _options;
 	private readonly CancellationTokenSource _lifetime;
-	private readonly object _dispatchLock = new();
-	private ChannelMessageQueue _queue;
+	private readonly object _queueLock = new();
+	private readonly Channel<DistributedCacheNotification> _queue;
+	private readonly Task _dispatchTask;
+	private long _pending;
+	private long _dropped;
 	private int _closing;
 	#endregion
 
 	#region 构造函数
-	public RedisCacheSubscription(RedisService cache, ConnectionMultiplexer connection, int database, string @namespace, IHandler<DistributedCacheNotification> handler, DistributedCacheSubscriptionOptions options)
+	public RedisCacheSubscription(RedisService cache, RedisCacheNotificationHub hub, IHandler<DistributedCacheNotification> handler, DistributedCacheSubscriptionOptions options)
 	{
 		_cache = cache ?? throw new ArgumentNullException(nameof(cache));
-		_subscriber = connection?.GetSubscriber() ?? throw new ArgumentNullException(nameof(connection));
+		_hub = hub ?? throw new ArgumentNullException(nameof(hub));
 		this.Handler = handler ?? throw new ArgumentNullException(nameof(handler));
 
 		ArgumentNullException.ThrowIfNull(options);
 
-		_database = database;
-		_namespace = @namespace ?? string.Empty;
+		_options = options.Snapshot();
 		_prefix = options.Prefix ?? string.Empty;
 		_kind = options.Kind;
 		_lifetime = new CancellationTokenSource();
+		_queue = Channel.CreateBounded<DistributedCacheNotification>(new BoundedChannelOptions(options.Capacity)
+		{
+			SingleReader = true,
+			SingleWriter = false,
+			FullMode = BoundedChannelFullMode.Wait,
+		});
+		_dispatchTask = this.DispatchAsync();
 	}
 	#endregion
 
 	#region 公共属性
 	public IDistributedCache Cache => _cache;
 	public IHandler<DistributedCacheNotification> Handler { get; }
-	public DistributedCacheSubscriptionOptions Options => new(_prefix, _kind);
+	public DistributedCacheSubscriptionOptions Options => _options;
+	public long PendingCount => Interlocked.Read(ref _pending);
+	public long DroppedCount => Interlocked.Read(ref _dropped);
 	#endregion
 
 	#region 公共方法
@@ -88,36 +100,52 @@ internal sealed class RedisCacheSubscription : ChannelBase, IDistributedCacheSub
 	#endregion
 
 	#region 内部方法
-	internal async ValueTask SubscribeAsync(CancellationToken cancellation)
+	internal ValueTask<bool> SubscribeAsync(CancellationToken cancellation)
 	{
 		cancellation.ThrowIfCancellationRequested();
+		return _hub.AddAsync(this, cancellation);
+	}
 
-		RedisKey prefix = _namespace + _prefix;
-		var channel = RedisChannel.KeySpacePrefix(in prefix, _database);
-		var task = _subscriber.SubscribeAsync(channel);
+	internal void Enqueue(DistributedCacheNotificationKind kind, string key)
+	{
+		if(Volatile.Read(ref _closing) != 0 || (_kind & kind) == 0 || !key.StartsWith(_prefix, StringComparison.Ordinal))
+			return;
 
-		try
+		var notification = new DistributedCacheNotification(kind, key);
+		lock(_queueLock)
 		{
-			_queue = await task.WaitAsync(cancellation);
-			_queue.OnMessage(this.OnMessageAsync);
-		}
-		catch
-		{
-			if(task.IsCompletedSuccessfully)
-				await task.Result.UnsubscribeAsync();
-			else if(!task.IsFaulted)
+			if(_closing != 0)
+				return;
+
+			if(_queue.Writer.TryWrite(notification))
 			{
-				try
-				{
-					var queue = await task;
-					await queue.UnsubscribeAsync();
-				}
-				catch
-				{
-				}
+				Interlocked.Increment(ref _pending);
+				RedisDiagnostics.PendingNotifications.Add(1);
+				return;
 			}
 
-			throw;
+			if(_options.OverflowPolicy == DistributedCacheNotificationOverflowPolicy.DropOldest && _queue.Reader.TryRead(out _))
+			{
+				Interlocked.Decrement(ref _pending);
+				Interlocked.Increment(ref _dropped);
+				RedisDiagnostics.PendingNotifications.Add(-1);
+				RedisDiagnostics.DroppedNotifications.Add(1);
+				if(_queue.Writer.TryWrite(notification))
+				{
+					Interlocked.Increment(ref _pending);
+					RedisDiagnostics.PendingNotifications.Add(1);
+				}
+				else
+				{
+					Interlocked.Increment(ref _dropped);
+					RedisDiagnostics.DroppedNotifications.Add(1);
+				}
+			}
+			else
+			{
+				Interlocked.Increment(ref _dropped);
+				RedisDiagnostics.DroppedNotifications.Add(1);
+			}
 		}
 	}
 
@@ -182,21 +210,16 @@ internal sealed class RedisCacheSubscription : ChannelBase, IDistributedCacheSub
 	{
 		cancellation.ThrowIfCancellationRequested();
 
-		lock(_dispatchLock)
-		{
-			if(_closing != 0)
-				return;
+		if(Interlocked.Exchange(ref _closing, 1) != 0)
+			return;
 
-			_closing = 1;
-			_lifetime.Cancel();
-		}
-
-		var queue = Interlocked.Exchange(ref _queue, null);
+		_lifetime.Cancel();
+		_queue.Writer.TryComplete();
 
 		try
 		{
-			if(queue != null)
-				await queue.UnsubscribeAsync();
+			await _hub.RemoveAsync(this);
+			await _dispatchTask;
 		}
 		catch(Exception exception)
 		{
@@ -221,38 +244,45 @@ internal sealed class RedisCacheSubscription : ChannelBase, IDistributedCacheSub
 	#endregion
 
 	#region 私有方法
-	private async Task OnMessageAsync(ChannelMessage message)
+	private async Task DispatchAsync()
 	{
-		if(Volatile.Read(ref _closing) != 0 || !message.TryParseKeyNotification(out var source))
-			return;
-
-		if(!TryGetNotificationKind(source.Type, out var kind) || (_kind & kind) == 0)
-			return;
-
-		var key = (string)source.GetKey();
-		if(string.IsNullOrEmpty(key) || !key.StartsWith(_namespace, StringComparison.Ordinal))
-			return;
-
-		key = key[_namespace.Length..];
-		if(string.IsNullOrEmpty(key) || !key.StartsWith(_prefix, StringComparison.Ordinal) || Volatile.Read(ref _closing) != 0)
-			return;
-
 		try
 		{
-			ValueTask operation;
-
-			lock(_dispatchLock)
+			while(await _queue.Reader.WaitToReadAsync())
 			{
-				if(_closing != 0)
-					return;
+				DistributedCacheNotification notification;
+				lock(_queueLock)
+				{
+					if(!_queue.Reader.TryRead(out notification))
+						continue;
+					Interlocked.Decrement(ref _pending);
+					RedisDiagnostics.PendingNotifications.Add(-1);
+				}
 
-				operation = this.Handler.HandleAsync(new DistributedCacheNotification(kind, key), _lifetime.Token);
+				if(Volatile.Read(ref _closing) != 0)
+					continue;
+
+				try
+				{
+					using var activity = RedisDiagnostics.ActivitySource.StartActivity("redis.cache.notification.handle", ActivityKind.Consumer);
+					var started = Stopwatch.GetTimestamp();
+					try
+					{
+						await this.Handler.HandleAsync(notification, _lifetime.Token);
+					}
+					finally
+					{
+						RedisDiagnostics.NotificationDuration.Record(Stopwatch.GetElapsedTime(started).TotalMilliseconds);
+					}
+				}
+				catch(OperationCanceledException) when (_lifetime.IsCancellationRequested)
+				{
+				}
+				catch(Exception exception)
+				{
+					Zongsoft.Diagnostics.Logging.GetLogging(typeof(RedisCacheSubscription)).Error(exception);
+				}
 			}
-
-			await operation;
-		}
-		catch(OperationCanceledException) when (_lifetime.IsCancellationRequested)
-		{
 		}
 		catch(Exception exception)
 		{

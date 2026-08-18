@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Redis library.
  *
@@ -31,25 +31,36 @@ using System;
 
 namespace Zongsoft.Externals.Redis;
 
-public class RedisServiceInfo
+/// <summary>指定 Redis 服务端可供本扩展使用的能力。</summary>
+[Flags]
+public enum RedisCapabilities
 {
-	#region 构造函数
-	public RedisServiceInfo(string name, string @namespace, int databaseId, Zongsoft.Configuration.IConnectionSettings settings)
-	{
-		this.Name = name;
-		this.Namespace = @namespace;
-		this.DatabaseId = databaseId;
-		this.Settings = settings;
-	}
-	#endregion
+	None = 0,
+	StreamAutoClaim = 1,
+	StreamAcknowledgeAndDelete = 2,
+	StreamGroupTrimming = 4,
+	StreamIdempotentProducer = 8,
+}
 
-	#region 公共属性
-	public string Name { get; }
-	public string Namespace { get; }
-	public int DatabaseId { get; }
-	public Zongsoft.Configuration.IConnectionSettings Settings { get; }
-	public RedisServerDescriptor[] Servers { get; internal set; }
-	/// <summary>获取所有相关主节点均支持的 Redis 能力。</summary>
-	public RedisCapabilities Capabilities { get; internal set; }
-	#endregion
+/// <summary>提供 Redis 版本与能力之间的保守映射。</summary>
+public static class RedisCapabilityMatrix
+{
+	private static readonly Version VERSION_6_2 = new(6, 2);
+	private static readonly Version VERSION_8_2 = new(8, 2);
+	private static readonly Version VERSION_8_6 = new(8, 6);
+
+	public static RedisCapabilities GetCapabilities(Version version)
+	{
+		if(version == null)
+			return RedisCapabilities.None;
+
+		var result = RedisCapabilities.None;
+		if(version >= VERSION_6_2)
+			result |= RedisCapabilities.StreamAutoClaim;
+		if(version >= VERSION_8_2)
+			result |= RedisCapabilities.StreamAcknowledgeAndDelete | RedisCapabilities.StreamGroupTrimming;
+		if(version >= VERSION_8_6)
+			result |= RedisCapabilities.StreamIdempotentProducer;
+		return result;
+	}
 }

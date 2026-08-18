@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -58,13 +58,13 @@ public class RedisGetCommand : CommandBase<CommandContext>
 
 		for(int i = 0; i < context.Arguments.Count; i++)
 		{
-			if(!await redis.ExistsAsync(context.Arguments[i], cancellation))
+			(var entry, var entryType, var expiry) = await redis.GetEntryAsync(context.Arguments[i], cancellation);
+			if(entryType == RedisEntryType.None)
 			{
 				context.Output.WriteLine(CommandOutletColor.Red, $"The '{context.Arguments[i]}' entry is not existed.");
 			}
 			else
 			{
-				(var entry, var entryType, var expiry) = await redis.GetEntryAsync(context.Arguments[i], cancellation);
 				result.Add(entry);
 
 				context.Output.Write(CommandOutletColor.DarkGray, $"[{entryType}] ");

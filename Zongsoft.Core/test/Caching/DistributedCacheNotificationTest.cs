@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Xunit;
 
 using Zongsoft.Components;
+using Zongsoft.Communication;
 
 namespace Zongsoft.Caching.Tests;
 
@@ -75,10 +76,60 @@ public class DistributedCacheNotificationTest
 
 		Assert.Null(defaults.Prefix);
 		Assert.Equal(DistributedCacheNotificationKind.All, defaults.Kind);
+		Assert.Equal(1024, defaults.Capacity);
+		Assert.Equal(DistributedCacheNotificationOverflowPolicy.DropOldest, defaults.OverflowPolicy);
 		Assert.Null(DistributedCacheSubscriptionOptions.Default.Prefix);
 		Assert.Equal(DistributedCacheNotificationKind.All, DistributedCacheSubscriptionOptions.Default.Kind);
+		Assert.Equal(1024, DistributedCacheSubscriptionOptions.Default.Capacity);
+		Assert.Equal(DistributedCacheNotificationOverflowPolicy.DropOldest, DistributedCacheSubscriptionOptions.Default.OverflowPolicy);
 		Assert.Equal("Case:Sensitive", options.Prefix);
 		Assert.Equal(DistributedCacheNotificationKind.Updated | DistributedCacheNotificationKind.Expired, options.Kind);
+	}
+
+	[Fact]
+	public void SubscriptionOptions_SnapshotIsImmutableAndIndependentFromSource()
+	{
+		var source = new DistributedCacheSubscriptionOptions("before", DistributedCacheNotificationKind.Updated)
+		{
+			Capacity = 3,
+			OverflowPolicy = DistributedCacheNotificationOverflowPolicy.DropNewest,
+		};
+		var snapshot = source.Snapshot();
+
+		source.Prefix = "after";
+		source.Kind = DistributedCacheNotificationKind.Removed;
+		source.Capacity = 7;
+		source.OverflowPolicy = DistributedCacheNotificationOverflowPolicy.DropOldest;
+
+		Assert.Equal("before", snapshot.Prefix);
+		Assert.Equal(DistributedCacheNotificationKind.Updated, snapshot.Kind);
+		Assert.Equal(3, snapshot.Capacity);
+		Assert.Equal(DistributedCacheNotificationOverflowPolicy.DropNewest, snapshot.OverflowPolicy);
+		Assert.Throws<NotSupportedException>(() => snapshot.Prefix = "mutated");
+		Assert.Throws<NotSupportedException>(() => snapshot.Kind = DistributedCacheNotificationKind.Expired);
+		Assert.Throws<NotSupportedException>(() => snapshot.Capacity = 4);
+		Assert.Throws<NotSupportedException>(() => snapshot.OverflowPolicy = DistributedCacheNotificationOverflowPolicy.DropOldest);
+	}
+
+	[Fact]
+	public void SubscriptionOptions_InvalidCapacityAndOverflowThrow()
+	{
+		var options = new DistributedCacheSubscriptionOptions();
+
+		Assert.Throws<ArgumentOutOfRangeException>(() => options.Capacity = 0);
+		Assert.Throws<ArgumentOutOfRangeException>(() => options.Capacity = -1);
+		Assert.Throws<ArgumentOutOfRangeException>(() => options.OverflowPolicy = (DistributedCacheNotificationOverflowPolicy)2);
+		Assert.Equal(1024, options.Capacity);
+		Assert.Equal(DistributedCacheNotificationOverflowPolicy.DropOldest, options.OverflowPolicy);
+	}
+
+	[Fact]
+	public void SubscriptionInterface_DefaultCountersAreZero()
+	{
+		IDistributedCacheSubscription subscription = new DefaultCounterSubscription(new UnsupportedCache("cache"));
+
+		Assert.Equal(0, subscription.PendingCount);
+		Assert.Equal(0, subscription.DroppedCount);
 	}
 
 	[Fact]
@@ -132,5 +183,15 @@ public class DistributedCacheNotificationTest
 		public ValueTask<bool> SetValueAsync(string key, object value, CacheRequisite requisite = CacheRequisite.Always, CancellationToken cancellation = default) => throw new NotImplementedException();
 		public bool SetValue(string key, object value, TimeSpan expiry, CacheRequisite requisite = CacheRequisite.Always) => throw new NotImplementedException();
 		public ValueTask<bool> SetValueAsync(string key, object value, TimeSpan expiry, CacheRequisite requisite = CacheRequisite.Always, CancellationToken cancellation = default) => throw new NotImplementedException();
+	}
+
+	private sealed class DefaultCounterSubscription(IDistributedCache cache) : ChannelBase, IDistributedCacheSubscription
+	{
+		public IDistributedCache Cache { get; } = cache;
+		public DistributedCacheSubscriptionOptions Options { get; } = DistributedCacheSubscriptionOptions.Default;
+		public IHandler<DistributedCacheNotification> Handler { get; } = Zongsoft.Components.Handler.Handle<DistributedCacheNotification>(_ => { });
+
+		public ValueTask UnsubscribeAsync(CancellationToken cancellation = default) => this.CloseAsync(cancellation);
+		protected override ValueTask OnCloseAsync(CancellationToken cancellation) => ValueTask.CompletedTask;
 	}
 }

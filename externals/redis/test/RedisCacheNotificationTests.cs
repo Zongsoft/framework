@@ -318,8 +318,8 @@ public class RedisCacheNotificationTests
 
 		Assert.True(subscription.IsClosed);
 		Assert.True(subscription.IsDisposed);
-		cache.Namespace = $"changed-{Guid.NewGuid():N}";
-		cache.Use(cache.DatabaseId + 1);
+		Assert.Throws<InvalidOperationException>(() => cache.Namespace = $"changed-{Guid.NewGuid():N}");
+		Assert.Throws<InvalidOperationException>(() => cache.Use(cache.DatabaseId + 1));
 		Assert.True(await cache.SetValueAsync("after-unsubscribe", "value"));
 		Assert.Null(await buffer.ReceiveAsync(TimeSpan.FromMilliseconds(750)));
 	}

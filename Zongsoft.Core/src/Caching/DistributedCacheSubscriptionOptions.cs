@@ -46,18 +46,25 @@ public class DistributedCacheSubscriptionOptions : INotifyPropertyChanged, INoti
 	#endregion
 
 	#region 成员字段
+	private int _capacity;
 	private string _prefix;
 	private DistributedCacheNotificationKind _kind;
+	private DistributedCacheNotificationOverflowPolicy _overflowPolicy;
 	#endregion
 
 	#region 构造函数
 	/// <summary>初始化默认订阅选项。</summary>
-	public DistributedCacheSubscriptionOptions() => _kind = DistributedCacheNotificationKind.All;
+	public DistributedCacheSubscriptionOptions()
+	{
+		_kind = DistributedCacheNotificationKind.All;
+		_capacity = 1024;
+	}
 
 	/// <summary>初始化指定逻辑键前缀和通知种类的订阅选项。</summary>
 	/// <param name="prefix">大小写敏感的逻辑缓存键前缀。</param>
 	/// <param name="kind">要接收的通知种类组合。</param>
 	public DistributedCacheSubscriptionOptions(string prefix, DistributedCacheNotificationKind kind = DistributedCacheNotificationKind.All)
+		: this()
 	{
 		this.Prefix = prefix;
 		this.Kind = kind;
@@ -72,10 +79,30 @@ public class DistributedCacheSubscriptionOptions : INotifyPropertyChanged, INoti
 		ArgumentNullException.ThrowIfNull(options);
 		this.Prefix = options.Prefix;
 		this.Kind = options.Kind;
+		this.Capacity = options.Capacity;
+		this.OverflowPolicy = options.OverflowPolicy;
 	}
 	#endregion
 
 	#region 公共属性
+	/// <summary>获取或设置单个订阅允许积压的最大通知数，默认为<c>1024</c>。</summary>
+	public int Capacity
+	{
+		get => _capacity;
+		set
+		{
+			if(value <= 0)
+				throw new ArgumentOutOfRangeException(nameof(value), value, "The notification queue capacity must be positive.");
+
+			if(_capacity == value)
+				return;
+
+			this.OnPropertyChanging(nameof(this.Capacity));
+			_capacity = value;
+			this.OnPropertyChanged(nameof(this.Capacity));
+		}
+	}
+
 	/// <summary>获取或设置按<see cref="StringComparison.Ordinal"/>比较的大小写敏感逻辑缓存键前缀，空值或空白表示全部缓存键。</summary>
 	public string Prefix
 	{
@@ -110,6 +137,30 @@ public class DistributedCacheSubscriptionOptions : INotifyPropertyChanged, INoti
 			this.OnPropertyChanged(nameof(this.Kind));
 		}
 	}
+
+	/// <summary>获取或设置通知队列溢出时的处理策略。</summary>
+	public DistributedCacheNotificationOverflowPolicy OverflowPolicy
+	{
+		get => _overflowPolicy;
+		set
+		{
+			if(!Enum.IsDefined(value))
+				throw new ArgumentOutOfRangeException(nameof(value));
+
+			if(_overflowPolicy == value)
+				return;
+
+			this.OnPropertyChanging(nameof(this.OverflowPolicy));
+			_overflowPolicy = value;
+			this.OnPropertyChanged(nameof(this.OverflowPolicy));
+		}
+	}
+	#endregion
+
+	#region 公共方法
+	/// <summary>创建当前选项的不可变快照。</summary>
+	/// <returns>返回不受当前实例后续修改影响的不可变选项。</returns>
+	public DistributedCacheSubscriptionOptions Snapshot() => new ImmutableOptions(this);
 	#endregion
 
 	#region 保护方法
@@ -120,6 +171,15 @@ public class DistributedCacheSubscriptionOptions : INotifyPropertyChanged, INoti
 	#region 嵌套子类
 	private sealed class ImmutableOptions : DistributedCacheSubscriptionOptions
 	{
+		public ImmutableOptions() { }
+		public ImmutableOptions(DistributedCacheSubscriptionOptions options)
+		{
+			_prefix = options.Prefix;
+			_kind = options.Kind;
+			_capacity = options.Capacity;
+			_overflowPolicy = options.OverflowPolicy;
+		}
+
 		protected override void OnPropertyChanged(string propertyName) => throw new NotSupportedException();
 		protected override void OnPropertyChanging(string propertyName) => throw new NotSupportedException();
 	}

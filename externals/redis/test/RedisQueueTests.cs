@@ -289,6 +289,12 @@ public class RedisQueueTests
 			Assert.Equal("dead-letter", (string)entries[0].Values[1].Value);
 			Assert.Equal("unacknowledged", Encoding.UTF8.GetString((byte[])entries[0].Values[0].Value));
 			Assert.Equal(0, (await database.StreamPendingAsync(key, group)).PendingMessageCount);
+
+			var sourceEntries = await database.StreamRangeAsync(key);
+			if((queue.Capabilities & RedisCapabilities.StreamAcknowledgeAndDelete) != 0)
+				Assert.Empty(sourceEntries);
+			else
+				Assert.Single(sourceEntries);
 		}
 		finally
 		{

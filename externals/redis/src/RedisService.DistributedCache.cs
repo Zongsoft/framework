@@ -48,18 +48,26 @@ partial class RedisService : IDistributedCache
 	{
 		ArgumentNullException.ThrowIfNull(handler);
 		RedisCacheSubscription subscription = null;
-		var snapshot = options == null ? new DistributedCacheSubscriptionOptions() : new DistributedCacheSubscriptionOptions(options);
+		var snapshot = (options ?? DistributedCacheSubscriptionOptions.Default).Snapshot();
 
-		await _subscriptionLock.WaitAsync(cancellation);
+		await _gate.WaitAsync(cancellation);
 
 		try
 		{
 			this.ThrowIfDisposed();
-			await this.ConnectAsync(cancellation);
+			await this.ConnectCoreAsync(-1, cancellation);
 
 			var @namespace = string.IsNullOrEmpty(_namespace) ? string.Empty : _namespace + ":";
-			subscription = new RedisCacheSubscription(this, _connection, _database.Database, @namespace, handler, snapshot);
-			await subscription.SubscribeAsync(cancellation);
+			while(true)
+			{
+				var hub = await RedisCacheNotificationHub.GetAsync(_connection, _database.Database, @namespace, cancellation);
+				subscription = new RedisCacheSubscription(this, hub, handler, snapshot);
+				if(await subscription.SubscribeAsync(cancellation))
+					break;
+
+				await subscription.DisposeAsync();
+				subscription = null;
+			}
 
 			if(!_subscriptions.TryAdd(subscription, 0))
 				throw new InvalidOperationException("The Redis cache notification subscription could not be registered.");
@@ -75,7 +83,7 @@ partial class RedisService : IDistributedCache
 		}
 		finally
 		{
-			_subscriptionLock.Release();
+			_gate.Release();
 		}
 	}
 

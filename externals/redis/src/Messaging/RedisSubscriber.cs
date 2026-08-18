@@ -58,6 +58,7 @@ public class RedisSubscriber : MessageConsumerBase<RedisQueue>
 	private const int CLAIM_BATCH_SIZE = 100;
 	private const string DEAD_SUFFIX = ":DEAD!";
 	private const string DEAD_SCRIPT = "local entries=redis.call('XRANGE',KEYS[1],ARGV[2],ARGV[2],'COUNT',1); if #entries==0 then return false end; local id=redis.call('XADD',KEYS[2],'MAXLEN','~',ARGV[3],'*',unpack(entries[1][2])); if id then redis.call('XACK',KEYS[1],ARGV[1],ARGV[2]) end; return id";
+	private const string DEAD_SCRIPT_82 = "local entries=redis.call('XRANGE',KEYS[1],ARGV[2],ARGV[2],'COUNT',1); if #entries==0 then return false end; local id=redis.call('XADD',KEYS[2],'MAXLEN','~',ARGV[3],'*',unpack(entries[1][2])); if id then redis.call('XACKDEL',KEYS[1],ARGV[1],'DELREF','IDS',1,ARGV[2]) end; return id";
 	#endregion
 
 	#region 私有字段
@@ -103,10 +104,10 @@ public class RedisSubscriber : MessageConsumerBase<RedisQueue>
 	#endregion
 
 	#region 重写方法
-	protected override ValueTask OnCloseAsync(CancellationToken cancellation)
+	protected override async ValueTask OnCloseAsync(CancellationToken cancellation)
 	{
-		_poller?.Stop();
-		return ValueTask.CompletedTask;
+		if(_poller != null)
+			await _poller.StopAsync(cancellation);
 	}
 	#endregion
 
@@ -133,13 +134,13 @@ public class RedisSubscriber : MessageConsumerBase<RedisQueue>
 		return true;
 	}
 
-	internal Message Receive(MessageDequeueOptions options, CancellationToken cancellation)
+	internal async ValueTask<Message> ReceiveAsync(MessageDequeueOptions options, CancellationToken cancellation)
 	{
 		cancellation.ThrowIfCancellationRequested();
 		options ??= MessageDequeueOptions.Default;
 
 		//获取已完成的任务结果
-		var result = this.GetReceiveResult(this.GetReceiveTask(options), cancellation);
+		var result = await this.GetReceiveResultAsync(this.GetReceiveTask(options), cancellation);
 
 		if(string.IsNullOrEmpty(_group))
 		{
@@ -154,13 +155,16 @@ public class RedisSubscriber : MessageConsumerBase<RedisQueue>
 			if((DateTime.UtcNow - _lastClaimTime).Ticks >= Math.Max(_idleTimeout.Ticks, TICKS_PERHOUR))
 			{
 				//将超时未应答的消息转移给当前消费者
-				this.Queue.Database.StreamAutoClaimIdsOnly(
-					this.Queue.GetQueueName(this.Topic),
-					_group,
-					_client,
-					(long)_idleTimeout.TotalMilliseconds,
-					"0",
-					CLAIM_BATCH_SIZE);
+				if((this.Queue.Capabilities & RedisCapabilities.StreamAutoClaim) != 0)
+				{
+					this.Queue.Database.StreamAutoClaimIdsOnly(
+						this.Queue.GetQueueName(this.Topic),
+						_group,
+						_client,
+						(long)_idleTimeout.TotalMilliseconds,
+						"0",
+						CLAIM_BATCH_SIZE);
+				}
 
 				//更新最后转移时间
 				_lastClaimTime = DateTime.UtcNow;
@@ -226,13 +230,13 @@ public class RedisSubscriber : MessageConsumerBase<RedisQueue>
 		return database.StreamReadGroupAsync(queueKey, _group, _client, ">", 1, false, options.Timeout > TimeSpan.Zero ? options.Timeout : null);
 	}
 
-	private Message GetReceiveResult(Task<StreamEntry[]> task, CancellationToken cancellation)
+	private async ValueTask<Message> GetReceiveResultAsync(Task<StreamEntry[]> task, CancellationToken cancellation)
 	{
 		StreamEntry[] result;
 
 		try
 		{
-			result = task.IsCompletedSuccessfully ? task.Result : task.WaitAsync(cancellation).GetAwaiter().GetResult();
+			result = task.IsCompletedSuccessfully ? task.Result : await task.WaitAsync(cancellation);
 		}
 		catch(RedisTimeoutException)
 		{
@@ -285,11 +289,15 @@ public class RedisSubscriber : MessageConsumerBase<RedisQueue>
 			return null;
 
 		var result = database.ScriptEvaluate(
-			DEAD_SCRIPT,
+			(this.Queue.Capabilities & RedisCapabilities.StreamAcknowledgeAndDelete) != 0 ? DEAD_SCRIPT_82 : DEAD_SCRIPT,
 			[(RedisKey)key, GetDeadQueueKey(key)],
 			[_group, id, this.Queue.MaximumLength > 0 ? this.Queue.MaximumLength : 100000]);
 
-		return result.IsNull ? null : (string)result;
+		if(result.IsNull)
+			return null;
+
+		RedisDiagnostics.DeadLetters.Add(1);
+		return (string)result;
 
 		static RedisKey GetDeadQueueKey(string key)
 		{
@@ -302,41 +310,86 @@ public class RedisSubscriber : MessageConsumerBase<RedisQueue>
 	#endregion
 
 	#region 处置方法
-	protected override ValueTask DisposeAsync(bool disposing)
+	protected override async ValueTask DisposeAsync(bool disposing)
 	{
 		var poller = Interlocked.Exchange(ref _poller, null);
-		poller?.Dispose();
+		if(poller != null)
+			await poller.DisposeAsync();
 
-		return base.DisposeAsync(disposing);
+		await base.DisposeAsync(disposing);
 	}
 	#endregion
 
 	#region 嵌套子类
-	private class Poller(RedisSubscriber subscriber) : MessagePollerBase
+	private sealed class Poller(RedisSubscriber subscriber) : IAsyncDisposable
 	{
 		private RedisSubscriber _subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
+		private CancellationTokenSource _cancellation;
+		private Task _worker;
 
-		protected override Message Receive(MessageDequeueOptions options, CancellationToken cancellation)
+		public void Start()
 		{
-			try
-			{
-				return _subscriber?.Receive(options, cancellation) ?? Message.Empty;
-			}
-			catch(OperationCanceledException)
-			{
-				return Message.Empty;
-			}
+			if(_worker != null)
+				return;
+
+			_cancellation = new CancellationTokenSource();
+			_worker = this.RunAsync(_cancellation.Token);
 		}
 
-		protected override ValueTask OnHandleAsync(Message message, CancellationToken cancellation)
+		public async ValueTask StopAsync(CancellationToken cancellation = default)
 		{
-			return _subscriber?.Handler?.HandleAsync(message, cancellation) ?? ValueTask.CompletedTask;
+			var source = Interlocked.Exchange(ref _cancellation, null);
+			if(source != null)
+				source.Cancel();
+
+			var worker = Interlocked.Exchange(ref _worker, null);
+			if(worker != null)
+			{
+				try { await worker.WaitAsync(cancellation); }
+				catch(OperationCanceledException) when (source?.IsCancellationRequested == true) { }
+			}
+
+			source?.Dispose();
 		}
 
-		protected override void Dispose(bool disposing)
+		public async ValueTask DisposeAsync()
 		{
-			base.Dispose(disposing);
+			await this.StopAsync();
 			_subscriber = null;
+			GC.SuppressFinalize(this);
+		}
+
+		private async Task RunAsync(CancellationToken cancellation)
+		{
+			while(!cancellation.IsCancellationRequested)
+			{
+				try
+				{
+					var subscriber = _subscriber;
+					if(subscriber == null)
+						return;
+
+					var message = await subscriber.ReceiveAsync(MessageDequeueOptions.Default, cancellation);
+					if(message.IsEmpty)
+					{
+						await Task.Delay(10, cancellation);
+						continue;
+					}
+
+					if(subscriber.Handler != null)
+						await subscriber.Handler.HandleAsync(message, cancellation);
+				}
+				catch(OperationCanceledException) when (cancellation.IsCancellationRequested)
+				{
+					return;
+				}
+				catch(Exception exception)
+				{
+					Zongsoft.Diagnostics.Logging.GetLogging(typeof(RedisSubscriber)).Error(exception);
+					try { await Task.Delay(100, cancellation); }
+					catch(OperationCanceledException) { return; }
+				}
+			}
 		}
 	}
 	#endregion

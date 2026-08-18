@@ -46,22 +46,22 @@ using StackExchange.Redis;
 
 namespace Zongsoft.Externals.Redis;
 
-public partial class RedisService : IDisposable, IAsyncDisposable
+public sealed partial class RedisService : IDisposable, IAsyncDisposable
 {
 	#region 成员字段
 	private readonly string _name;
 	private string _namespace;
+	private int _databaseId = -1;
+	private int _activated;
 	private IConnectionSettings _settings;
 	private ConfigurationOptions _options;
 
 	private IDatabase _database;
 	private volatile ConnectionMultiplexer _connection;
-	private readonly SemaphoreSlim _connectionLock = new SemaphoreSlim(1, 1);
-	private readonly SemaphoreSlim _subscriptionLock = new SemaphoreSlim(1, 1);
+	private RedisConnectionLease _connectionLease;
+	private readonly SemaphoreSlim _gate = new(1, 1);
 	private readonly ConcurrentDictionary<RedisCacheSubscription, byte> _subscriptions = new();
-	private readonly object _disposeLock = new();
-	private Task _disposeTask;
-	private int _disposed;
+	private TaskCompletionSource<bool> _disposal;
 	#endregion
 
 	#region 构造函数
@@ -108,7 +108,7 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 		{
 			var @namespace = string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
 
-			_subscriptionLock.Wait();
+			_gate.Wait();
 			try
 			{
 				this.ThrowIfDisposed();
@@ -116,19 +116,19 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 				if(string.Equals(_namespace, @namespace, StringComparison.Ordinal))
 					return;
 
-				if(!_subscriptions.IsEmpty)
-					throw new InvalidOperationException("The Redis cache namespace cannot be changed while notification subscriptions are active.");
+				if(Volatile.Read(ref _activated) != 0)
+					throw new InvalidOperationException("The Redis cache namespace cannot be changed after the service has been activated. Use WithNamespace() to create another scope.");
 
 				_namespace = @namespace;
 			}
 			finally
 			{
-				_subscriptionLock.Release();
+				_gate.Release();
 			}
 		}
 	}
 
-	public int DatabaseId => _database?.Database ?? -1;
+	public int DatabaseId => _database?.Database ?? _databaseId;
 	public IConnectionSettings Settings => _settings ??= ApplicationContext.Current?.Configuration.GetConnectionSettings("/Externals/Redis/ConnectionSettings", _name, "redis");
 	public ConfigurationOptions Options => _options ??= this.Settings?.GetOptions<ConfigurationOptions>();
 	#endregion
@@ -154,6 +154,30 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 			return _database;
 		}
 	}
+
+	internal IDictionary<string, string> GetStringEntries(string prefix)
+	{
+		if(string.IsNullOrEmpty(prefix))
+			throw new ArgumentNullException(nameof(prefix));
+
+		this.Connect();
+		var physicalPrefix = this.GetKey(prefix) + ":";
+		var keys = this.ScanKeys(EscapePattern(physicalPrefix) + "*").ToArray();
+		var result = new Dictionary<string, string>(keys.Length, StringComparer.OrdinalIgnoreCase);
+		if(keys.Length == 0)
+			return result;
+
+		var batch = _database.CreateBatch();
+		var tasks = new Task<RedisValue>[keys.Length];
+		for(int i = 0; i < keys.Length; i++)
+			tasks[i] = batch.StringGetAsync(keys[i]);
+		batch.Execute();
+		Task.WaitAll(tasks);
+
+		for(int i = 0; i < keys.Length; i++)
+			result[((string)keys[i])[physicalPrefix.Length..]] = tasks[i].Result;
+		return result;
+	}
 	#endregion
 
 	#region 公共方法
@@ -162,25 +186,22 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 		if(databaseId < 0)
 			throw new ArgumentOutOfRangeException(nameof(databaseId));
 
-		_subscriptionLock.Wait();
+		_gate.Wait();
 		try
 		{
 			this.ThrowIfDisposed();
 
-			if(_database?.Database == databaseId)
+			if(_databaseId == databaseId)
 				return;
 
-			if(!_subscriptions.IsEmpty)
-				throw new InvalidOperationException("The Redis cache database cannot be changed while notification subscriptions are active.");
+			if(Volatile.Read(ref _activated) != 0)
+				throw new InvalidOperationException("The Redis cache database cannot be changed after the service has been activated. Use WithDatabase() to create another scope.");
 
-			if(_connection == null)
-				this.Connect(databaseId);
-			else
-				_database = _connection.GetDatabase(databaseId);
+			_databaseId = databaseId;
 		}
 		finally
 		{
-			_subscriptionLock.Release();
+			_gate.Release();
 		}
 	}
 
@@ -189,25 +210,22 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 		if(databaseId < 0)
 			throw new ArgumentOutOfRangeException(nameof(databaseId));
 
-		await _subscriptionLock.WaitAsync(cancellation);
+		await _gate.WaitAsync(cancellation);
 		try
 		{
 			this.ThrowIfDisposed();
 
-			if(_database?.Database == databaseId)
+			if(_databaseId == databaseId)
 				return;
 
-			if(!_subscriptions.IsEmpty)
-				throw new InvalidOperationException("The Redis cache database cannot be changed while notification subscriptions are active.");
+			if(Volatile.Read(ref _activated) != 0)
+				throw new InvalidOperationException("The Redis cache database cannot be changed after the service has been activated. Use WithDatabase() to create another scope.");
 
-			if(_connection == null)
-				await this.ConnectAsync(databaseId, cancellation);
-			else
-				_database = _connection.GetDatabase(databaseId);
+			_databaseId = databaseId;
 		}
 		finally
 		{
-			_subscriptionLock.Release();
+			_gate.Release();
 		}
 	}
 
@@ -414,7 +432,7 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 			if(TryGetCondition(key, requisite, out var condition))
 				transaction.AddCondition(condition);
 
-			var values = new List<RedisValue>();
+			var values = value is ICollection collection ? new List<RedisValue>(collection.Count) : new List<RedisValue>();
 
 			foreach(var item in (IEnumerable)value)
 				values.Add(RedisValue.Unbox(item));
@@ -437,7 +455,7 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 			if(TryGetCondition(key, requisite, out var condition))
 				transaction.AddCondition(condition);
 
-			var values = new List<RedisValue>();
+			var values = value is ICollection collection ? new List<RedisValue>(collection.Count) : new List<RedisValue>();
 
 			foreach(var item in (IEnumerable)value)
 				values.Add(RedisValue.Unbox(item));
@@ -501,7 +519,7 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 			if(TryGetCondition(key, requisite, out var condition))
 				transaction.AddCondition(condition);
 
-			var values = new List<RedisValue>();
+			var values = value is ICollection collection ? new List<RedisValue>(collection.Count) : new List<RedisValue>();
 
 			foreach(var item in (IEnumerable)value)
 				values.Add(RedisValue.Unbox(item));
@@ -524,7 +542,7 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 			if(TryGetCondition(key, requisite, out var condition))
 				transaction.AddCondition(condition);
 
-			var values = new List<RedisValue>();
+			var values = value is ICollection collection ? new List<RedisValue>(collection.Count) : new List<RedisValue>();
 
 			foreach(var item in (IEnumerable)value)
 				values.Add(RedisValue.Unbox(item));
@@ -578,15 +596,23 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 	public void Dispose() => this.DisposeAsync().AsTask().GetAwaiter().GetResult();
 	public ValueTask DisposeAsync()
 	{
-		lock(_disposeLock)
-			return new ValueTask(_disposeTask ??= this.DisposeAsyncCore());
+		var disposal = Volatile.Read(ref _disposal);
+
+		if(disposal == null)
+		{
+			var candidate = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+			disposal = Interlocked.CompareExchange(ref _disposal, candidate, null) ?? candidate;
+
+			if(object.ReferenceEquals(disposal, candidate))
+				_ = this.DisposeAsyncCore(candidate);
+		}
+
+		return new ValueTask(disposal.Task);
 	}
 
-	private async Task DisposeAsyncCore()
+	private async Task DisposeAsyncCore(TaskCompletionSource<bool> completion)
 	{
-		Interlocked.Exchange(ref _disposed, 1);
-
-		await _subscriptionLock.WaitAsync();
+		await _gate.WaitAsync();
 		try
 		{
 			foreach(var subscription in _subscriptions.Keys)
@@ -602,27 +628,49 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 			}
 
 			_subscriptions.Clear();
+			_database = null;
 
-			await _connectionLock.WaitAsync();
-			try
-			{
-				_database = null;
+			Interlocked.Exchange(ref _connection, null);
+			var lease = Interlocked.Exchange(ref _connectionLease, null);
+			if(lease != null)
+				await lease.DisposeAsync();
 
-				var connection = Interlocked.Exchange(ref _connection, null);
-				if(connection != null)
-					await connection.DisposeAsync();
-			}
-			finally
-			{
-				_connectionLock.Release();
-			}
+			GC.SuppressFinalize(this);
+			completion.TrySetResult(true);
+		}
+		catch(Exception exception)
+		{
+			completion.TrySetException(exception);
 		}
 		finally
 		{
-			_subscriptionLock.Release();
+			_gate.Release();
 		}
+	}
 
-		GC.SuppressFinalize(this);
+	/// <summary>创建使用指定数据库的不可变作用域视图。</summary>
+	public RedisService WithDatabase(int databaseId)
+	{
+		if(databaseId < 0)
+			throw new ArgumentOutOfRangeException(nameof(databaseId));
+
+		return new RedisService(_name, _settings)
+		{
+			_databaseId = databaseId,
+			_namespace = _namespace,
+			_activated = 1,
+		};
+	}
+
+	/// <summary>创建使用指定键命名空间的不可变作用域视图。</summary>
+	public RedisService WithNamespace(string @namespace)
+	{
+		return new RedisService(_name, _settings)
+		{
+			_databaseId = _databaseId,
+			_namespace = string.IsNullOrWhiteSpace(@namespace) ? string.Empty : @namespace.Trim(),
+			_activated = 1,
+		};
 	}
 	#endregion
 
@@ -656,10 +704,29 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 		return $"{builder?.ToString() ?? _namespace}:{pattern}";
 	}
 
+	private static string EscapePattern(string value)
+	{
+		if(string.IsNullOrEmpty(value))
+			return value;
+
+		StringBuilder builder = null;
+		for(int i = 0; i < value.Length; i++)
+		{
+			var character = value[i];
+			if(character is '*' or '?' or '[' or ']' or '\\')
+			{
+				builder ??= new StringBuilder(value.Length + 8).Append(value, 0, i);
+				builder.Append('\\');
+			}
+			builder?.Append(character);
+		}
+		return builder?.ToString() ?? value;
+	}
+
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private void ThrowIfDisposed()
 	{
-		if(Volatile.Read(ref _disposed) != 0)
+		if(Volatile.Read(ref _disposal) != null)
 			throw new ObjectDisposedException(this.GetType().Name);
 	}
 
@@ -712,7 +779,7 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 			return false;
 		}
 
-		var result = new List<HashEntry>();
+		var result = value is ICollection collection ? new List<HashEntry>(collection.Count) : new List<HashEntry>();
 
 		foreach(var item in enumerable)
 		{
@@ -754,6 +821,17 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 			info.Servers[i] = new RedisServerDescriptor(_connection.GetServer(endpoints[i]));
 		}
 
+		var capabilities = (RedisCapabilities)(-1);
+		var found = false;
+		foreach(var server in info.Servers)
+		{
+			if(server.IsSlave)
+				continue;
+			capabilities &= RedisCapabilityMatrix.GetCapabilities(server.Version);
+			found = true;
+		}
+		info.Capabilities = found ? capabilities : RedisCapabilities.None;
+
 		return info;
 	}
 
@@ -764,31 +842,16 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 		if(_database != null)
 			return;
 
-		var options = this.Options ?? throw new InvalidOperationException($"The connection string for the redis named '{_name}' is not configured.");
-
-		_connectionLock.Wait();
+		_gate.Wait();
 
 		try
 		{
 			this.ThrowIfDisposed();
-
-			if(_database == null)
-			{
-				var connection = ConnectionMultiplexer.Connect(options);
-
-				if(Volatile.Read(ref _disposed) != 0)
-				{
-					connection.Dispose();
-					this.ThrowIfDisposed();
-				}
-
-				_connection = connection;
-				_database = connection.GetDatabase(databaseId);
-			}
+			this.ConnectCore(databaseId);
 		}
 		finally
 		{
-			_connectionLock.Release();
+			_gate.Release();
 		}
 	}
 
@@ -801,55 +864,69 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 		if(_database != null)
 			return;
 
-		var options = this.Options ?? throw new InvalidOperationException($"The connection string for the redis named '{_name}' is not configured.");
-
-		await _connectionLock.WaitAsync(cancellation);
+		await _gate.WaitAsync(cancellation);
 
 		try
 		{
 			this.ThrowIfDisposed();
-
-			if(_database == null)
-			{
-				var task = ConnectionMultiplexer.ConnectAsync(options);
-				ConnectionMultiplexer connection;
-
-				try
-				{
-					connection = await task.WaitAsync(cancellation);
-				}
-				catch(OperationCanceledException)
-				{
-					_ = DisposeConnectionAsync(task);
-					throw;
-				}
-
-				if(Volatile.Read(ref _disposed) != 0)
-				{
-					await connection.DisposeAsync();
-					this.ThrowIfDisposed();
-				}
-
-				_connection = connection;
-				_database = connection.GetDatabase(databaseId);
-			}
+			await this.ConnectCoreAsync(databaseId, cancellation);
 		}
 		finally
 		{
-			_connectionLock.Release();
+			_gate.Release();
 		}
 	}
 
-	private static async Task DisposeConnectionAsync(Task<ConnectionMultiplexer> task)
+	private void ConnectCore(int databaseId)
 	{
-		try
+		if(_database != null)
+			return;
+
+		Volatile.Write(ref _activated, 1);
+		if(databaseId < 0)
+			databaseId = _databaseId;
+
+		using var activity = RedisDiagnostics.ActivitySource.StartActivity("redis.connect", System.Diagnostics.ActivityKind.Client);
+		var options = this.Options ?? throw new InvalidOperationException($"The connection string for the redis named '{_name}' is not configured.");
+		var lease = RedisConnectionPool.Acquire(options);
+		var connection = lease.Connection;
+
+		if(Volatile.Read(ref _disposal) != null)
 		{
-			var connection = await task;
-			await connection.DisposeAsync();
+			lease.Dispose();
+			this.ThrowIfDisposed();
 		}
-		catch
+
+		_connectionLease = lease;
+		_connection = connection;
+		_database = connection.GetDatabase(databaseId);
+		_databaseId = _database.Database;
+	}
+
+	private async ValueTask ConnectCoreAsync(int databaseId, CancellationToken cancellation)
+	{
+		if(_database != null)
+			return;
+
+		Volatile.Write(ref _activated, 1);
+		if(databaseId < 0)
+			databaseId = _databaseId;
+
+		using var activity = RedisDiagnostics.ActivitySource.StartActivity("redis.connect", System.Diagnostics.ActivityKind.Client);
+		var options = this.Options ?? throw new InvalidOperationException($"The connection string for the redis named '{_name}' is not configured.");
+		var lease = await RedisConnectionPool.AcquireAsync(options, cancellation);
+		var connection = lease.Connection;
+
+		if(Volatile.Read(ref _disposal) != null)
 		{
+			await lease.DisposeAsync();
+			this.ThrowIfDisposed();
 		}
+
+		_connectionLease = lease;
+		_connection = connection;
+		_database = connection.GetDatabase(databaseId);
+		_databaseId = _database.Database;
 	}
 	#endregion
 }

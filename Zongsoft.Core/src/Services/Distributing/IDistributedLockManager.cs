@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -52,7 +52,14 @@ public interface IDistributedLockManager
 	/// <param name="expiry">锁定的有效时长。</param>
 	/// <param name="cancellation">异步操作的取消凭证。</param>
 	/// <returns>如果获取成功则返回分布式锁对象，否则返回空(<c>null</c>)。</returns>
-	ValueTask<IDistributedLock> AcquireAsync(string key, TimeSpan expiry, CancellationToken cancellation = default);
+	ValueTask<IDistributedLock> AcquireAsync(string key, TimeSpan expiry, CancellationToken cancellation = default) => this.AcquireAsync(key, new DistributedLockOptions(expiry), cancellation);
+
+	/// <summary>获取一个指定标识的分布式锁。</summary>
+	/// <param name="key">要获取的锁定标识。</param>
+	/// <param name="options">锁定的选项。</param>
+	/// <param name="cancellation">异步操作的取消凭证。</param>
+	/// <returns>如果获取成功则返回分布式锁对象，否则返回空(<c>null</c>)。</returns>
+	ValueTask<IDistributedLock> AcquireAsync(string key, DistributedLockOptions options, CancellationToken cancellation = default);
 
 	/// <summary>释放指定的分布式锁。</summary>
 	/// <param name="key">指定要释放的锁定标识。</param>

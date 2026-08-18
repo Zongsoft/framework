@@ -50,6 +50,10 @@ public interface IDistributedCacheSubscription : IChannel
 	DistributedCacheSubscriptionOptions Options { get; }
 	/// <summary>获取缓存通知处理程序。</summary>
 	IHandler<DistributedCacheNotification> Handler { get; }
+	/// <summary>获取当前等待处理的通知数；不支持统计的实现返回零。</summary>
+	long PendingCount => 0;
+	/// <summary>获取因为队列溢出而被丢弃的通知总数；不支持统计的实现返回零。</summary>
+	long DroppedCount => 0;
 	#endregion
 
 	#region 订阅方法
