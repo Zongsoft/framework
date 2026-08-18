@@ -32,7 +32,7 @@ using System;
 namespace Zongsoft.Caching;
 
 /// <summary>表示分布式缓存事件的基类。</summary>
-public class DistributedCacheEventArgs
+public class DistributedCacheEventArgs : EventArgs
 {
 	#region 构造函数
 	protected DistributedCacheEventArgs(string key) => this.Key = key;
