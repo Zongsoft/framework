@@ -84,14 +84,44 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		this.Connect();
 
-		return _connection.GetServer(_database.IdentifyEndpoint()).DatabaseSize(_database.Database);
+		if(!string.IsNullOrEmpty(_namespace))
+		{
+			long count = 0;
+
+			foreach(var key in this.ScanKeys(GetKeyPattern("*")))
+				count++;
+
+			return count;
+		}
+
+		long result = 0;
+
+		foreach(var server in this.GetServers())
+			result += server.DatabaseSize(_database.Database);
+
+		return result;
 	}
 
 	public async ValueTask<long> GetCountAsync(CancellationToken cancellation = default)
 	{
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
-		return await _connection.GetServer(_database.IdentifyEndpoint()).DatabaseSizeAsync(_database.Database);
+		if(!string.IsNullOrEmpty(_namespace))
+		{
+			long count = 0;
+
+			await foreach(var key in this.ScanKeysAsync(GetKeyPattern("*"), cancellation))
+				count++;
+
+			return count;
+		}
+
+		long result = 0;
+
+		foreach(var server in this.GetServers())
+			result += await server.DatabaseSizeAsync(_database.Database).WaitAsync(cancellation);
+
+		return result;
 	}
 
 	public bool Exists(string key)
@@ -112,7 +142,7 @@ partial class RedisService : IDistributedCache
 
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
-		return await _database.KeyExistsAsync(GetKey(key));
+		return await _database.KeyExistsAsync(GetKey(key)).WaitAsync(cancellation);
 	}
 
 	public IEnumerable<string> Find(string pattern)
@@ -120,9 +150,13 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		this.Connect();
 
-		return _connection.GetServer(_database.IdentifyEndpoint())
-			.Scan(_database.Database, pattern)
-			.Select(key => (string)key);
+		return FindCore(string.IsNullOrEmpty(pattern) ? "*" : pattern);
+
+		IEnumerable<string> FindCore(string pattern)
+		{
+			foreach(var key in this.ScanKeys(GetKeyPattern(pattern)))
+				yield return this.GetLogicalKey(key);
+		}
 	}
 
 	public async IAsyncEnumerable<string> FindAsync(string pattern, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellation = default)
@@ -130,8 +164,8 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		await this.ConnectAsync(cancellation);
 
-		await foreach(var key in _connection.GetServer(_database.IdentifyEndpoint()).ScanAsync(_database.Database, pattern))
-			yield return key;
+		await foreach(var key in this.ScanKeysAsync(GetKeyPattern(string.IsNullOrEmpty(pattern) ? "*" : pattern), cancellation))
+			yield return this.GetLogicalKey(key);
 	}
 	#endregion
 
@@ -154,28 +188,34 @@ partial class RedisService : IDistributedCache
 
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
-		return await _database.KeyTimeToLiveAsync(GetKey(key));
+		return await _database.KeyTimeToLiveAsync(GetKey(key)).WaitAsync(cancellation);
 	}
 
 	public bool SetExpiry(string key, TimeSpan expiry)
 	{
 		if(string.IsNullOrEmpty(key))
 			throw new ArgumentNullException(nameof(key));
+		if(expiry < TimeSpan.Zero)
+			throw new ArgumentOutOfRangeException(nameof(expiry));
 
 		//确保连接成功
 		this.Connect();
 
-		return _database.KeyExpire(GetKey(key), expiry);
+		return expiry == TimeSpan.Zero ? _database.KeyPersist(GetKey(key)) : _database.KeyExpire(GetKey(key), expiry);
 	}
 
 	public async ValueTask<bool> SetExpiryAsync(string key, TimeSpan expiry, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(key))
 			throw new ArgumentNullException(nameof(key));
+		if(expiry < TimeSpan.Zero)
+			throw new ArgumentOutOfRangeException(nameof(expiry));
 
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
-		return await _database.KeyExpireAsync(GetKey(key), expiry);
+		return expiry == TimeSpan.Zero ?
+			await _database.KeyPersistAsync(GetKey(key)).WaitAsync(cancellation) :
+			await _database.KeyExpireAsync(GetKey(key), expiry).WaitAsync(cancellation);
 	}
 	#endregion
 
@@ -187,14 +227,23 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		this.Connect();
 
-		RedisKey[] keys;
+		var keys = new List<RedisKey>(BATCH_SIZE);
 
-		do
+		foreach(var key in this.ScanKeys(GetKeyPattern("*")))
 		{
-			keys = _connection
-				.GetServer(_database.IdentifyEndpoint())
-				.Keys(_database.Database, GetKey("*"), BATCH_SIZE).ToArray();
-		} while(keys.Length > 0 && _database.KeyDelete(keys) > 0);
+			keys.Add(key);
+
+			if(keys.Count < BATCH_SIZE)
+				continue;
+
+			foreach(var item in keys)
+				_database.KeyDelete(item);
+
+			keys.Clear();
+		}
+
+		foreach(var key in keys)
+			_database.KeyDelete(key);
 	}
 
 	public async ValueTask ClearAsync(CancellationToken cancellation = default)
@@ -204,14 +253,21 @@ partial class RedisService : IDistributedCache
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
 
-		RedisKey[] keys;
+		var tasks = new List<Task<bool>>(BATCH_SIZE);
 
-		do
+		await foreach(var key in this.ScanKeysAsync(GetKeyPattern("*"), cancellation))
 		{
-			keys = _connection
-				.GetServer(_database.IdentifyEndpoint())
-				.Keys(_database.Database, GetKey("*"), BATCH_SIZE).ToArray();
-		} while(keys.Length > 0 && (await _database.KeyDeleteAsync(keys)) > 0);
+			tasks.Add(_database.KeyDeleteAsync(key));
+
+			if(tasks.Count < BATCH_SIZE)
+				continue;
+
+			await Task.WhenAll(tasks).WaitAsync(cancellation);
+			tasks.Clear();
+		}
+
+		if(tasks.Count > 0)
+			await Task.WhenAll(tasks).WaitAsync(cancellation);
 	}
 
 	public bool Remove(string key)
@@ -246,7 +302,16 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		this.Connect();
 
-		return (int)_database.KeyDelete(keys.Select(key => (RedisKey)GetKey(key)).ToArray());
+		var entries = keys.Where(key => !string.IsNullOrEmpty(key)).Select(key => (RedisKey)GetKey(key)).ToArray();
+		var count = 0;
+
+		foreach(var entry in entries)
+		{
+			if(_database.KeyDelete(entry))
+				count++;
+		}
+
+		return count;
 	}
 
 	public async ValueTask<bool> RemoveAsync(string key, CancellationToken cancellation = default)
@@ -256,7 +321,7 @@ partial class RedisService : IDistributedCache
 
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
-		return await _database.KeyDeleteAsync(GetKey(key));
+		return await _database.KeyDeleteAsync(GetKey(key)).WaitAsync(cancellation);
 	}
 
 	public async ValueTask<int> RemoveAsync(IEnumerable<string> keys, CancellationToken cancellation = default)
@@ -266,7 +331,27 @@ partial class RedisService : IDistributedCache
 
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
-		return (int)await _database.KeyDeleteAsync(keys.Select(key => (RedisKey)GetKey(key)).ToArray());
+
+		var entries = keys.Where(key => !string.IsNullOrEmpty(key)).Select(key => (RedisKey)GetKey(key)).ToArray();
+
+		if(entries.Length == 0)
+			return 0;
+
+		var tasks = new Task<bool>[entries.Length];
+
+		for(int i = 0; i < entries.Length; i++)
+			tasks[i] = _database.KeyDeleteAsync(entries[i]);
+
+		var results = await Task.WhenAll(tasks).WaitAsync(cancellation);
+		var count = 0;
+
+		for(int i = 0; i < results.Length; i++)
+		{
+			if(results[i])
+				count++;
+		}
+
+		return count;
 	}
 
 	public bool Rename(string oldKey, string newKey)
@@ -293,7 +378,7 @@ partial class RedisService : IDistributedCache
 
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
-		return await _database.KeyRenameAsync(GetKey(oldKey), GetKey(newKey), When.Always);
+		return await _database.KeyRenameAsync(GetKey(oldKey), GetKey(newKey), When.Always).WaitAsync(cancellation);
 	}
 	#endregion
 
@@ -307,12 +392,19 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		this.Connect();
 
-		if(typeof(T) == typeof(ISet<string>))
-			return (T)(ISet<string>)new RedisHashset(_database, GetKey(key));
-		if(typeof(T) == typeof(IDictionary<string, string>))
-			return (T)(IDictionary<string, string>)new RedisDictionary(_database, GetKey(key));
+		var entryKey = GetKey(key);
 
-		return _database.StringGet(GetKey(key)).GetValue<T>();
+		if(typeof(T) == typeof(object))
+			return (T)this.GetEntry(key);
+		if(IsStringList(typeof(T)))
+			return _database.KeyExists(entryKey) ? GetStringList<T>(_database.ListRange(entryKey)) : default;
+
+		if(typeof(T) == typeof(ISet<string>))
+			return _database.KeyExists(entryKey) ? (T)(ISet<string>)new RedisHashset(_database, entryKey, this.GetKeyPrefix()) : default;
+		if(typeof(T) == typeof(IDictionary<string, string>))
+			return _database.KeyExists(entryKey) ? (T)(IDictionary<string, string>)new RedisDictionary(_database, entryKey) : default;
+
+		return _database.StringGet(entryKey).GetValue<T>();
 	}
 
 	public object GetValue(string key, out TimeSpan? expiry) => GetValue<object>(key, out expiry);
@@ -324,19 +416,47 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		this.Connect();
 
+		var entryKey = GetKey(key);
+
+		if(typeof(T) == typeof(object))
+			return (T)this.GetEntry(key, out _, out expiry);
+		if(IsStringList(typeof(T)))
+		{
+			if(!_database.KeyExists(entryKey))
+			{
+				expiry = null;
+				return default;
+			}
+
+			expiry = _database.KeyTimeToLive(entryKey);
+			return GetStringList<T>(_database.ListRange(entryKey));
+		}
+
 		if(typeof(T) == typeof(ISet<string>))
 		{
-			expiry = _database.KeyTimeToLive(GetKey(key));
-			return (T)(ISet<string>)new RedisHashset(_database, GetKey(key));
+			if(!_database.KeyExists(entryKey))
+			{
+				expiry = null;
+				return default;
+			}
+
+			expiry = _database.KeyTimeToLive(entryKey);
+			return (T)(ISet<string>)new RedisHashset(_database, entryKey, this.GetKeyPrefix());
 		}
 
 		if(typeof(T) == typeof(IDictionary<string, string>))
 		{
-			expiry = _database.KeyTimeToLive(GetKey(key));
-			return (T)(IDictionary<string, string>)new RedisDictionary(_database, GetKey(key));
+			if(!_database.KeyExists(entryKey))
+			{
+				expiry = null;
+				return default;
+			}
+
+			expiry = _database.KeyTimeToLive(entryKey);
+			return (T)(IDictionary<string, string>)new RedisDictionary(_database, entryKey);
 		}
 
-		var result = _database.StringGetWithExpiry(GetKey(key));
+		var result = _database.StringGetWithExpiry(entryKey);
 		expiry = result.Expiry;
 		return result.Value.GetValue<T>();
 	}
@@ -350,12 +470,22 @@ partial class RedisService : IDistributedCache
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
 
-		if(typeof(T) == typeof(ISet<string>))
-			return (T)(ISet<string>)new RedisHashset(_database, GetKey(key));
-		if(typeof(T) == typeof(IDictionary<string, string>))
-			return (T)(IDictionary<string, string>)new RedisDictionary(_database, GetKey(key));
+		var entryKey = GetKey(key);
 
-		return (await _database.StringGetAsync(GetKey(key))).GetValue<T>();
+		if(typeof(T) == typeof(object))
+		{
+			var result = await this.GetEntryAsync(key, cancellation);
+			return (T)result.value;
+		}
+		if(IsStringList(typeof(T)))
+			return await _database.KeyExistsAsync(entryKey).WaitAsync(cancellation) ? GetStringList<T>(await _database.ListRangeAsync(entryKey).WaitAsync(cancellation)) : default;
+
+		if(typeof(T) == typeof(ISet<string>))
+			return await _database.KeyExistsAsync(entryKey).WaitAsync(cancellation) ? (T)(ISet<string>)new RedisHashset(_database, entryKey, this.GetKeyPrefix()) : default;
+		if(typeof(T) == typeof(IDictionary<string, string>))
+			return await _database.KeyExistsAsync(entryKey).WaitAsync(cancellation) ? (T)(IDictionary<string, string>)new RedisDictionary(_database, entryKey) : default;
+
+		return (await _database.StringGetAsync(entryKey).WaitAsync(cancellation)).GetValue<T>();
 	}
 
 	public ValueTask<(object Value, TimeSpan? Expiry)> GetValueExpiryAsync(string key, CancellationToken cancellation = default) => this.GetValueExpiryAsync<object>(key, cancellation);
@@ -367,13 +497,38 @@ partial class RedisService : IDistributedCache
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
 
+		var entryKey = GetKey(key);
+
+		if(typeof(T) == typeof(object))
+		{
+			var objectResult = await this.GetEntryAsync(key, cancellation);
+			return ((T)objectResult.value, objectResult.expiry);
+		}
+		if(IsStringList(typeof(T)))
+		{
+			if(!await _database.KeyExistsAsync(entryKey).WaitAsync(cancellation))
+				return (default, null);
+
+			return (GetStringList<T>(await _database.ListRangeAsync(entryKey).WaitAsync(cancellation)), await _database.KeyTimeToLiveAsync(entryKey).WaitAsync(cancellation));
+		}
+
 		if(typeof(T) == typeof(ISet<string>))
-			return ((T)(ISet<string>)new RedisHashset(_database, GetKey(key)), await _database.KeyTimeToLiveAsync(GetKey(key)));
+		{
+			if(!await _database.KeyExistsAsync(entryKey).WaitAsync(cancellation))
+				return (default, null);
+
+			return ((T)(ISet<string>)new RedisHashset(_database, entryKey, this.GetKeyPrefix()), await _database.KeyTimeToLiveAsync(entryKey).WaitAsync(cancellation));
+		}
 
 		if(typeof(T) == typeof(IDictionary<string, string>))
-			return ((T)(IDictionary<string, string>)new RedisDictionary(_database, GetKey(key)), await _database.KeyTimeToLiveAsync(GetKey(key)));
+		{
+			if(!await _database.KeyExistsAsync(entryKey).WaitAsync(cancellation))
+				return (default, null);
 
-		var result = await _database.StringGetWithExpiryAsync(GetKey(key));
+			return ((T)(IDictionary<string, string>)new RedisDictionary(_database, entryKey), await _database.KeyTimeToLiveAsync(entryKey).WaitAsync(cancellation));
+		}
+
+		var result = await _database.StringGetWithExpiryAsync(entryKey).WaitAsync(cancellation);
 		return (result.Value.GetValue<T>(), result.Expiry);
 	}
 
@@ -385,19 +540,36 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		this.Connect();
 
+		var entryKey = GetKey(key);
+
+		if(typeof(T) == typeof(object))
+		{
+			var objectResult = this.GetEntry(key);
+			value = (T)objectResult;
+			return objectResult != null;
+		}
+		if(IsStringList(typeof(T)))
+		{
+			var exists = _database.KeyExists(entryKey);
+			value = exists ? GetStringList<T>(_database.ListRange(entryKey)) : default;
+			return exists;
+		}
+
 		if(typeof(T) == typeof(ISet<string>))
 		{
-			value = (T)(ISet<string>)new RedisHashset(_database, GetKey(key));
-			return true;
+			var exists = _database.KeyExists(entryKey);
+			value = exists ? (T)(ISet<string>)new RedisHashset(_database, entryKey, this.GetKeyPrefix()) : default;
+			return exists;
 		}
 
 		if(typeof(T) == typeof(IDictionary<string, string>))
 		{
-			value = (T)(IDictionary<string, string>)new RedisDictionary(_database, GetKey(key));
-			return true;
+			var exists = _database.KeyExists(entryKey);
+			value = exists ? (T)(IDictionary<string, string>)new RedisDictionary(_database, entryKey) : default;
+			return exists;
 		}
 
-		var result = _database.StringGet(GetKey(key));
+		var result = _database.StringGet(entryKey);
 		value = result.HasValue ? result.GetValue<T>() : default;
 		return result.HasValue;
 	}
@@ -410,22 +582,40 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		this.Connect();
 
+		var entryKey = GetKey(key);
+
+		if(typeof(T) == typeof(object))
+		{
+			var objectResult = this.GetEntry(key, out _, out expiry);
+			value = (T)objectResult;
+			return objectResult != null;
+		}
+		if(IsStringList(typeof(T)))
+		{
+			var exists = _database.KeyExists(entryKey);
+			value = exists ? GetStringList<T>(_database.ListRange(entryKey)) : default;
+			expiry = exists ? _database.KeyTimeToLive(entryKey) : null;
+			return exists;
+		}
+
 		if(typeof(T) == typeof(ISet<string>))
 		{
-			value = (T)(ISet<string>)new RedisHashset(_database, GetKey(key));
-			expiry = _database.KeyTimeToLive(GetKey(key));
-			return true;
+			var exists = _database.KeyExists(entryKey);
+			value = exists ? (T)(ISet<string>)new RedisHashset(_database, entryKey, this.GetKeyPrefix()) : default;
+			expiry = exists ? _database.KeyTimeToLive(entryKey) : null;
+			return exists;
 		}
 
 		if(typeof(T) == typeof(IDictionary<string, string>))
 		{
-			value = (T)(IDictionary<string, string>)new RedisDictionary(_database, GetKey(key));
-			expiry = _database.KeyTimeToLive(GetKey(key));
-			return true;
+			var exists = _database.KeyExists(entryKey);
+			value = exists ? (T)(IDictionary<string, string>)new RedisDictionary(_database, entryKey) : default;
+			expiry = exists ? _database.KeyTimeToLive(entryKey) : null;
+			return exists;
 		}
 
-		var result = _database.StringGetWithExpiry(GetKey(key));
-		value = result.Expiry.HasValue ? result.Value.GetValue<T>() : default;
+		var result = _database.StringGetWithExpiry(entryKey);
+		value = result.Value.HasValue ? result.Value.GetValue<T>() : default;
 		expiry = result.Expiry;
 		return result.Value.HasValue;
 	}
@@ -439,19 +629,32 @@ partial class RedisService : IDistributedCache
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
 
+		var entryKey = GetKey(key);
+
+		if(typeof(T) == typeof(object))
+		{
+			var objectResult = await this.GetEntryAsync(key, cancellation);
+			return (objectResult.value != null, (T)objectResult.value);
+		}
+		if(IsStringList(typeof(T)))
+		{
+			var exists = await _database.KeyExistsAsync(entryKey).WaitAsync(cancellation);
+			return (exists, exists ? GetStringList<T>(await _database.ListRangeAsync(entryKey).WaitAsync(cancellation)) : default);
+		}
+
 		if(typeof(T) == typeof(ISet<string>))
 		{
-			var hashset = (T)(ISet<string>)new RedisHashset(_database, GetKey(key));
-			return (true, hashset);
+			var exists = await _database.KeyExistsAsync(entryKey).WaitAsync(cancellation);
+			return (exists, exists ? (T)(ISet<string>)new RedisHashset(_database, entryKey, this.GetKeyPrefix()) : default);
 		}
 
 		if(typeof(T) == typeof(IDictionary<string, string>))
 		{
-			var hashset = (T)(IDictionary<string, string>)new RedisDictionary(_database, GetKey(key));
-			return (true, hashset);
+			var exists = await _database.KeyExistsAsync(entryKey).WaitAsync(cancellation);
+			return (exists, exists ? (T)(IDictionary<string, string>)new RedisDictionary(_database, entryKey) : default);
 		}
 
-		var result = await _database.StringGetAsync(GetKey(key));
+		var result = await _database.StringGetAsync(entryKey).WaitAsync(cancellation);
 		return (result.HasValue, result.HasValue ? result.GetValue<T>() : default);
 	}
 	#endregion
@@ -497,6 +700,60 @@ partial class RedisService : IDistributedCache
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
 		return await this.SetEntryAsync(key, value, expiry, requisite, cancellation);
+	}
+	#endregion
+
+	#region 私有方法
+	private IEnumerable<IServer> GetServers()
+	{
+		foreach(var endpoint in _connection.GetEndPoints())
+		{
+			var server = _connection.GetServer(endpoint);
+
+			if(server.IsConnected && !server.IsReplica)
+				yield return server;
+		}
+	}
+
+	private IEnumerable<RedisKey> ScanKeys(RedisValue pattern)
+	{
+		foreach(var server in this.GetServers())
+		{
+			foreach(var key in server.Keys(_database.Database, pattern))
+				yield return key;
+		}
+	}
+
+	private async IAsyncEnumerable<RedisKey> ScanKeysAsync(RedisValue pattern, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellation)
+	{
+		foreach(var server in this.GetServers())
+		{
+			await foreach(var key in server.KeysAsync(_database.Database, pattern).WithCancellation(cancellation))
+				yield return key;
+		}
+	}
+
+	private string GetLogicalKey(RedisKey key)
+	{
+		var text = (string)key;
+		var prefix = this.GetKeyPrefix();
+
+		return string.IsNullOrEmpty(prefix) || string.IsNullOrEmpty(text) || !text.StartsWith(prefix, StringComparison.Ordinal) ? text : text[prefix.Length..];
+	}
+
+	private static bool IsStringList(Type type) =>
+		type == typeof(string[]) ||
+		type == typeof(List<string>) ||
+		type == typeof(IList<string>) ||
+		type == typeof(ICollection<string>) ||
+		type == typeof(IEnumerable<string>) ||
+		type == typeof(IReadOnlyList<string>) ||
+		type == typeof(IReadOnlyCollection<string>);
+
+	private static T GetStringList<T>(RedisValue[] values)
+	{
+		var array = GetStringValues(values);
+		return typeof(T) == typeof(string[]) ? (T)(object)array : (T)(object)new List<string>(array);
 	}
 	#endregion
 }

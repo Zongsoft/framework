@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Redis library.
  *
@@ -40,6 +40,10 @@ namespace Zongsoft.Externals.Redis.Messaging;
 
 public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisConnectionSettings>
 {
+	#region 常量定义
+	private const int DEFAULT_MAXIMUM_LENGTH = 100000;
+	#endregion
+
 	#region 成员字段
 	private IDatabase _database;
 	private IConnectionMultiplexer _connection;
@@ -53,12 +57,23 @@ public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisC
 
 		_connection = ConnectionMultiplexer.Connect(settings.GetOptions());
 		_database = _connection.GetDatabase();
+		this.MaximumLength = settings.MaximumLength == 0 ? DEFAULT_MAXIMUM_LENGTH : settings.MaximumLength;
+		this.UseApproximateMaximumLength = settings.UseApproximateMaximumLength;
 	}
 
 	public RedisQueue(string name, IDatabase database, Configuration.RedisConnectionSettings settings = null) : base(name, settings)
 	{
 		_database = database ?? throw new ArgumentNullException(nameof(database));
+		this.MaximumLength = settings == null || settings.MaximumLength == 0 ? DEFAULT_MAXIMUM_LENGTH : settings.MaximumLength;
+		this.UseApproximateMaximumLength = settings?.UseApproximateMaximumLength ?? true;
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取或设置消息流保留的最大消息数，非正数表示不进行裁剪。</summary>
+	public int MaximumLength { get; set; }
+	/// <summary>获取或设置是否使用近似裁剪消息流。</summary>
+	public bool UseApproximateMaximumLength { get; set; }
 	#endregion
 
 	#region 内部属性
@@ -73,7 +88,11 @@ public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisC
 			throw new ArgumentNullException(nameof(topic));
 
 		cancellation.ThrowIfCancellationRequested();
-		return await this.Database.StreamAddAsync(this.GetQueueName(topic), RedisQueueUtility.GetMessagePayload(data, tags)).WaitAsync(cancellation);
+		return await this.Database.StreamAddAsync(
+			this.GetQueueName(topic),
+			RedisQueueUtility.GetMessagePayload(data, tags),
+			maxLength: this.MaximumLength > 0 ? this.MaximumLength : null,
+			useApproximateMaxLength: this.UseApproximateMaximumLength).WaitAsync(cancellation);
 	}
 	#endregion
 
@@ -99,7 +118,16 @@ public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisC
 		if(disposing)
 		{
 			foreach(var subscriber in this.Subscribers)
-				subscriber.DisposeAsync().AsTask().GetAwaiter().GetResult();
+			{
+				try
+				{
+					subscriber.DisposeAsync().AsTask().GetAwaiter().GetResult();
+				}
+				catch(Exception exception)
+				{
+					Zongsoft.Diagnostics.Logging.GetLogging(typeof(RedisQueue)).Error(exception);
+				}
+			}
 
 			Interlocked.Exchange(ref _database, null);
 			Interlocked.Exchange(ref _connection, null)?.Dispose();

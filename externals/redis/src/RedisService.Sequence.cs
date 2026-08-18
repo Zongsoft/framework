@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -44,9 +44,9 @@ partial class RedisService : ISequence
 	private const string INCREMENT_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('set', KEYS[1], ARGV[2], 'NX') end return redis.call('incrby', KEYS[1], ARGV[1])";
 	private const string INCREMENT_FLOAT_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('set', KEYS[1], ARGV[2], 'NX') end return redis.call('incrbyfloat', KEYS[1], ARGV[1])";
 
-	private const string DECREMENT_EXPIRY_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('setex', KEYS[1], ARGV[3], ARGV[2]) end return redis.call('decrby', KEYS[1], ARGV[1])";
-	private const string INCREMENT_EXPIRY_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('setex', KEYS[1], ARGV[3], ARGV[2]) end return redis.call('incrby', KEYS[1], ARGV[1])";
-	private const string INCREMENT_FLOAT_EXPIRY_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('setex', KEYS[1], ARGV[3], ARGV[2]) end return redis.call('incrbyfloat', KEYS[1], ARGV[1])";
+	private const string DECREMENT_EXPIRY_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('set', KEYS[1], ARGV[2], 'PX', ARGV[3], 'NX') end return redis.call('decrby', KEYS[1], ARGV[1])";
+	private const string INCREMENT_EXPIRY_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('set', KEYS[1], ARGV[2], 'PX', ARGV[3], 'NX') end return redis.call('incrby', KEYS[1], ARGV[1])";
+	private const string INCREMENT_FLOAT_EXPIRY_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('set', KEYS[1], ARGV[2], 'PX', ARGV[3], 'NX') end return redis.call('incrbyfloat', KEYS[1], ARGV[1])";
 	#endregion
 
 	#region 公共方法
@@ -67,12 +67,12 @@ partial class RedisService : ISequence
 			return (long)_database.StringGet(GetKey(key));
 
 		if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
-			return (long)_database.ScriptEvaluate(INCREMENT_EXPIRY_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed, unchecked((int)expiry.Value.TotalSeconds) });
+			return (long)_database.ScriptEvaluate(INCREMENT_EXPIRY_SCRIPT, [(RedisKey)GetKey(key)], [interval, seed, GetExpiryMilliseconds(expiry.Value)]);
 
 		if(seed == 0)
 			return _database.StringIncrement(GetKey(key), interval);
 
-		return (long)_database.ScriptEvaluate(INCREMENT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
+		return (long)_database.ScriptEvaluate(INCREMENT_SCRIPT, [(RedisKey)GetKey(key)], [interval, seed]);
 	}
 
 	public double Increase(string key, double interval, double seed = 0, TimeSpan? expiry = null)
@@ -87,12 +87,12 @@ partial class RedisService : ISequence
 			return (double)_database.StringGet(GetKey(key));
 
 		if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
-			return (double)_database.ScriptEvaluate(INCREMENT_FLOAT_EXPIRY_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed, unchecked((int)expiry.Value.TotalSeconds) });
+			return (double)_database.ScriptEvaluate(INCREMENT_FLOAT_EXPIRY_SCRIPT, [(RedisKey)GetKey(key)], [interval, seed, GetExpiryMilliseconds(expiry.Value)]);
 
 		if(seed == 0)
 			return _database.StringIncrement(GetKey(key), interval);
 
-		return (double)_database.ScriptEvaluate(INCREMENT_FLOAT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
+		return (double)_database.ScriptEvaluate(INCREMENT_FLOAT_SCRIPT, [(RedisKey)GetKey(key)], [interval, seed]);
 	}
 
 	public async ValueTask<long> IncreaseAsync(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default)
@@ -104,15 +104,15 @@ partial class RedisService : ISequence
 		await this.ConnectAsync(cancellation);
 
 		if(interval == 0)
-			return (long)_database.StringGet(GetKey(key));
+			return (long)await _database.StringGetAsync(GetKey(key)).WaitAsync(cancellation);
 
 		if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
-			return (long)await _database.ScriptEvaluateAsync(INCREMENT_EXPIRY_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed, unchecked((int)expiry.Value.TotalSeconds) });
+			return (long)await _database.ScriptEvaluateAsync(INCREMENT_EXPIRY_SCRIPT, [(RedisKey)GetKey(key)], [interval, seed, GetExpiryMilliseconds(expiry.Value)]).WaitAsync(cancellation);
 
 		if(seed == 0)
-			return await _database.StringIncrementAsync(GetKey(key), interval);
+			return await _database.StringIncrementAsync(GetKey(key), interval).WaitAsync(cancellation);
 
-		return (long)await _database.ScriptEvaluateAsync(INCREMENT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
+		return (long)await _database.ScriptEvaluateAsync(INCREMENT_SCRIPT, [(RedisKey)GetKey(key)], [interval, seed]).WaitAsync(cancellation);
 	}
 
 	public async ValueTask<double> IncreaseAsync(string key, double interval, double seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default)
@@ -124,15 +124,15 @@ partial class RedisService : ISequence
 		await this.ConnectAsync(cancellation);
 
 		if(interval == 0)
-			return (double)_database.StringGet(GetKey(key));
+			return (double)await _database.StringGetAsync(GetKey(key)).WaitAsync(cancellation);
 
 		if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
-			return (double)await _database.ScriptEvaluateAsync(INCREMENT_FLOAT_EXPIRY_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed, unchecked((int)expiry.Value.TotalSeconds) });
+			return (double)await _database.ScriptEvaluateAsync(INCREMENT_FLOAT_EXPIRY_SCRIPT, [(RedisKey)GetKey(key)], [interval, seed, GetExpiryMilliseconds(expiry.Value)]).WaitAsync(cancellation);
 
 		if(seed == 0)
-			return await _database.StringIncrementAsync(GetKey(key), interval);
+			return await _database.StringIncrementAsync(GetKey(key), interval).WaitAsync(cancellation);
 
-		return (double)await _database.ScriptEvaluateAsync(INCREMENT_FLOAT_SCRIPT, new[] { (RedisKey)GetKey(key) }, new RedisValue[] { interval, seed });
+		return (double)await _database.ScriptEvaluateAsync(INCREMENT_FLOAT_SCRIPT, [(RedisKey)GetKey(key)], [interval, seed]).WaitAsync(cancellation);
 	}
 
 	void ISequence.Reset(string key, int value, TimeSpan? expiry)
@@ -143,7 +143,7 @@ partial class RedisService : ISequence
 		//确保连接成功
 		this.Connect();
 
-		_database.StringSet(GetKey(key), value, expiry, When.Exists, CommandFlags.None);
+		_database.StringSet(GetKey(key), value, expiry > TimeSpan.Zero ? expiry : null, When.Exists, CommandFlags.None);
 	}
 
 	void ISequence.Reset(string key, double value, TimeSpan? expiry)
@@ -154,7 +154,7 @@ partial class RedisService : ISequence
 		//确保连接成功
 		this.Connect();
 
-		_database.StringSet(GetKey(key), value, expiry, When.Exists, CommandFlags.None);
+		_database.StringSet(GetKey(key), value, expiry > TimeSpan.Zero ? expiry : null, When.Exists, CommandFlags.None);
 	}
 
 	async ValueTask ISequence.ResetAsync(string key, int value, TimeSpan? expiry, CancellationToken cancellation)
@@ -164,7 +164,7 @@ partial class RedisService : ISequence
 
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
-		await _database.StringSetAsync(GetKey(key), value, expiry, When.Exists, CommandFlags.None);
+		await _database.StringSetAsync(GetKey(key), value, expiry > TimeSpan.Zero ? expiry : null, When.Exists, CommandFlags.None).WaitAsync(cancellation);
 	}
 
 	async ValueTask ISequence.ResetAsync(string key, double value, TimeSpan? expiry, CancellationToken cancellation)
@@ -174,7 +174,9 @@ partial class RedisService : ISequence
 
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
-		await _database.StringSetAsync(GetKey(key), value, expiry, When.Exists, CommandFlags.None);
+		await _database.StringSetAsync(GetKey(key), value, expiry > TimeSpan.Zero ? expiry : null, When.Exists, CommandFlags.None).WaitAsync(cancellation);
 	}
 	#endregion
+
+	private static long GetExpiryMilliseconds(TimeSpan expiry) => Math.Max(1L, checked((long)Math.Ceiling(expiry.TotalMilliseconds)));
 }

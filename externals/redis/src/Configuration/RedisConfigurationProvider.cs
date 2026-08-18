@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -105,13 +105,16 @@ public class RedisConfigurationProvider : ConfigurationProvider
 		{
 			get
 			{
-				var result = new List<string>();
+				var keys = _server.Scan(_database.Database, GetPattern(_namespace)).ToArray();
 
-				foreach(var key in _server.Scan(_database.Database, GetPattern(_namespace)))
-				{
-					var value = _database.StringGet(key);
-					result.Add(value);
-				}
+				if(keys.Length == 0)
+					return Array.Empty<string>();
+
+				var values = this.GetValues(keys);
+				var result = new string[values.Length];
+
+				for(int i = 0; i < values.Length; i++)
+					result[i] = values[i];
 
 				return result;
 			}
@@ -119,7 +122,7 @@ public class RedisConfigurationProvider : ConfigurationProvider
 
 		public void Add(string key, string value)
 		{
-			if(!_database.StringSet(key, value, when: When.NotExists))
+			if(!_database.StringSet(GetKey(key), value, when: When.NotExists))
 				throw new ArgumentException($"The specified '{key}' key already exists in the '{_namespace}' dictionary.");
 		}
 
@@ -147,27 +150,52 @@ public class RedisConfigurationProvider : ConfigurationProvider
 
 		public void CopyTo(KeyValuePair<string, string>[] array, int arrayIndex)
 		{
-			if(array == null)
-				throw new ArgumentNullException(nameof(array));
-			if(arrayIndex < 0 || arrayIndex >= array.Length - 1)
+			ArgumentNullException.ThrowIfNull(array);
+
+			if(arrayIndex < 0 || arrayIndex > array.Length)
 				throw new ArgumentOutOfRangeException(nameof(arrayIndex));
 
-			foreach(var key in _server.Scan(_database.Database, GetPattern(_namespace)))
-			{
-				if(arrayIndex < array.Length)
-					array[arrayIndex++] = new KeyValuePair<string, string>(key, _database.StringGet(key));
-				else
-					break;
-			}
+			var keys = _server.Scan(_database.Database, GetPattern(_namespace)).ToArray();
+
+			if(keys.Length > array.Length - arrayIndex)
+				throw new ArgumentException("The destination array does not have enough available space.", nameof(array));
+
+			var values = this.GetValues(keys);
+
+			for(int i = 0; i < keys.Length; i++)
+				array[arrayIndex + i] = new KeyValuePair<string, string>(((string)keys[i])[(_namespace.Length + 1)..], values[i]);
 		}
 
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
 		{
-			foreach(var key in _server.Scan(_database.Database, GetPattern(_namespace)))
-			{
-				yield return new(((string)key)[(_namespace.Length + 1)..], _database.StringGet(key));
-			}
+			var keys = _server.Scan(_database.Database, GetPattern(_namespace)).ToArray();
+			var values = this.GetValues(keys);
+
+			for(int i = 0; i < keys.Length; i++)
+				yield return new(((string)keys[i])[(_namespace.Length + 1)..], values[i]);
+		}
+
+		private RedisValue[] GetValues(RedisKey[] keys)
+		{
+			if(keys == null || keys.Length == 0)
+				return Array.Empty<RedisValue>();
+
+			var batch = _database.CreateBatch();
+			var tasks = new System.Threading.Tasks.Task<RedisValue>[keys.Length];
+
+			for(int i = 0; i < keys.Length; i++)
+				tasks[i] = batch.StringGetAsync(keys[i]);
+
+			batch.Execute();
+			System.Threading.Tasks.Task.WaitAll(tasks);
+
+			var values = new RedisValue[keys.Length];
+
+			for(int i = 0; i < tasks.Length; i++)
+				values[i] = tasks[i].Result;
+
+			return values;
 		}
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]

@@ -23,3 +23,7 @@
 - 将 Redis 查询、修改、计数、搜索和锁命令挂载到 Zongsoft 命令树。
 
 加载 `Zongsoft.Externals.Redis.plugin`，并配置 `/Externals/Redis/ConnectionSettings`。消息连接可在 `/Messaging/ConnectionSettings` 下单独配置，两者均使用 `Redis` 驱动器。完整用法可参考[分布式锁示例](samples/distributedlock)、[消息示例](samples/messaging)和[测试项目](test)。
+
+消息流默认保留最多 `100000` 条消息，并使用 Redis 的近似裁剪。可通过消息连接设置中的 `MaximumLength` 和 `UseApproximateMaximumLength` 调整；将 `MaximumLength` 设为负数可禁用裁剪。死信搬运使用同槽 Lua 脚本原子完成写入和确认。
+
+缓存变化订阅要求 Redis 启用键空间通知（推荐 `notify-keyspace-events KA`）。通知采用 Redis Pub/Sub 的至多一次语义，断线期间不会重放。

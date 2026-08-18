@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -189,7 +190,71 @@ public class RedisQueueTests
 	}
 
 	[Fact]
-	public async Task UnacknowledgedMessageMovesToDeadLetterStream()
+	public void QueueRetentionProperties_DefaultAndConfiguredValuesAreHonored()
+	{
+		if(!RedisTestUtility.IsTestingEnabled)
+			return;
+
+		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+
+		var key = $"tests:retention:settings:{Guid.NewGuid():N}";
+		var settings = Configuration.RedisConnectionSettingsDriver.Instance.GetSettings("retention",
+			$"server={RedisTestUtility.Server};password={RedisTestUtility.Password};maximumLength=7;useApproximateMaximumLength=false;");
+
+		using var connection = ConnectionMultiplexer.Connect($"{RedisTestUtility.Server},password={RedisTestUtility.Password}");
+		var database = connection.GetDatabase();
+		using var defaults = new RedisQueue(key, database);
+		using var configured = new RedisQueue(key, database, settings);
+
+		Assert.Equal(100000, defaults.MaximumLength);
+		Assert.True(defaults.UseApproximateMaximumLength);
+		Assert.Equal(7, settings.MaximumLength);
+		Assert.False(settings.UseApproximateMaximumLength);
+		Assert.Equal(7, configured.MaximumLength);
+		Assert.False(configured.UseApproximateMaximumLength);
+
+		settings.MaximumLength = 0;
+		using var fallback = new RedisQueue(key, database, settings);
+		Assert.Equal(100000, fallback.MaximumLength);
+	}
+
+	[Fact]
+	public async Task ProduceAsync_ExactMaximumLengthBoundsStream()
+	{
+		if(!RedisTestUtility.IsTestingEnabled)
+			return;
+
+		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+
+		var key = $"tests:retention:exact:{Guid.NewGuid():N}";
+		using var connection = ConnectionMultiplexer.Connect($"{RedisTestUtility.Server},password={RedisTestUtility.Password}");
+		var database = connection.GetDatabase();
+		using var queue = new RedisQueue(key, database)
+		{
+			MaximumLength = 3,
+			UseApproximateMaximumLength = false,
+		};
+
+		try
+		{
+			for(var index = 0; index < 5; index++)
+				await queue.ProduceAsync(Encoding.UTF8.GetBytes($"message-{index}"));
+
+			var entries = await database.StreamRangeAsync(key);
+			Assert.Equal(3, entries.Length);
+			Assert.Equal(["message-2", "message-3", "message-4"],
+				entries.Select(entry => Encoding.UTF8.GetString((byte[])entry.Values[0].Value)).ToArray());
+		}
+		finally
+		{
+			await database.KeyDeleteAsync(key);
+		}
+	}
+
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task UnacknowledgedMessageMovesToDeadLetterStream(bool hasHashTag)
 	{
 		if(!RedisTestUtility.IsTestingEnabled)
 			return;
@@ -197,11 +262,11 @@ public class RedisQueueTests
 		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
 
 		var identity = Guid.NewGuid().ToString("N");
-		var name = $"tests-{identity}";
+		var name = hasHashTag ? $"{{tests-{identity}}}" : $"tests-{identity}";
 		var topic = $"dead-{identity}";
 		var group = $"group-{identity}";
 		var key = RedisTestUtility.GetQueueKey(name, topic);
-		var deadKey = $"{key}:DEAD!";
+		var deadKey = hasHashTag ? $"{key}:DEAD!" : $"{{{key}}}:DEAD!";
 
 		using var administration = ConnectionMultiplexer.Connect($"{RedisTestUtility.Server},password={RedisTestUtility.Password}");
 		var database = administration.GetDatabase();

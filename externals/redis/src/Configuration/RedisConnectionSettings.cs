@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -71,6 +71,24 @@ public sealed class RedisConnectionSettings : ConnectionSettingsBase<RedisConnec
 	public TimeSpan IdleTimeout
 	{
 		get => this.GetValue<TimeSpan>();
+		set => this.SetValue(value);
+	}
+
+	/// <summary>获取或设置消息流保留的最大消息数，零表示使用默认值，负数表示不限制。</summary>
+	[DefaultValue(100000)]
+	[ConnectionSetting(Ignored = true)]
+	public int MaximumLength
+	{
+		get => this.GetValue<int>();
+		set => this.SetValue(value);
+	}
+
+	/// <summary>获取或设置是否使用近似裁剪消息流。</summary>
+	[DefaultValue(true)]
+	[ConnectionSetting(Ignored = true)]
+	public bool UseApproximateMaximumLength
+	{
+		get => this.GetValue<bool>();
 		set => this.SetValue(value);
 	}
 

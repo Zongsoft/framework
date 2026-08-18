@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -38,6 +37,8 @@ namespace Zongsoft.Externals.Redis;
 
 public class RedisDictionary : IDictionary<string, string>
 {
+	private const string REMOVE_SCRIPT = "if redis.call('hget',KEYS[1],ARGV[1])==ARGV[2] then return redis.call('hdel',KEYS[1],ARGV[1]) else return 0 end";
+
 	private readonly IDatabase _database;
 	private readonly string _name;
 
@@ -65,7 +66,10 @@ public class RedisDictionary : IDictionary<string, string>
 				return Array.Empty<string>();
 
 			var result = new string[keys.Length];
-			Array.Copy(keys, result, keys.Length);
+
+			for(int i = 0; i < keys.Length; i++)
+				result[i] = keys[i];
+
 			return result;
 		}
 	}
@@ -79,7 +83,10 @@ public class RedisDictionary : IDictionary<string, string>
 				return Array.Empty<string>();
 
 			var result = new string[values.Length];
-			Array.Copy(values, result, values.Length);
+
+			for(int i = 0; i < values.Length; i++)
+				result[i] = values[i];
+
 			return result;
 		}
 	}
@@ -93,11 +100,19 @@ public class RedisDictionary : IDictionary<string, string>
 	void ICollection<KeyValuePair<string, string>>.Add(KeyValuePair<string, string> field) => this.Add(field.Key, field.Value);
 	public void Clear() => _database.KeyDelete(_name);
 	public bool Remove(string key) => _database.HashDelete(_name, key);
-	bool ICollection<KeyValuePair<string, string>>.Remove(KeyValuePair<string, string> field) => this.Remove(field.Key);
+	bool ICollection<KeyValuePair<string, string>>.Remove(KeyValuePair<string, string> field)
+	{
+		var result = _database.ScriptEvaluate(REMOVE_SCRIPT, [(RedisKey)_name], [field.Key, field.Value]);
+		return (long)result != 0;
+	}
 
 	public bool Contains(string key) => _database.HashExists(_name, key);
 	bool IDictionary<string, string>.ContainsKey(string key) => this.Contains(key);
-	bool ICollection<KeyValuePair<string, string>>.Contains(KeyValuePair<string, string> field) => this.Contains(field.Key);
+	bool ICollection<KeyValuePair<string, string>>.Contains(KeyValuePair<string, string> field)
+	{
+		var value = _database.HashGet(_name, field.Key);
+		return value.HasValue && value == field.Value;
+	}
 
 	public bool TryGetValue(string key, out string value)
 	{
@@ -108,25 +123,24 @@ public class RedisDictionary : IDictionary<string, string>
 
 	public void CopyTo(KeyValuePair<string, string>[] array, int arrayIndex)
 	{
-		if(array == null)
-			throw new ArgumentNullException(nameof(array));
-		if(arrayIndex < 0 || arrayIndex >= array.Length - 1)
+		ArgumentNullException.ThrowIfNull(array);
+
+		if(arrayIndex < 0 || arrayIndex > array.Length)
 			throw new ArgumentOutOfRangeException(nameof(arrayIndex));
 
-		var entries = _database.HashScan(_name);
+		var entries = _database.HashGetAll(_name);
 
-		foreach(var entry in entries)
-		{
-			if(arrayIndex < array.Length)
-				array[arrayIndex++] = new KeyValuePair<string, string>(entry.Name, entry.Value);
-			else
-				break;
-		}
+		if(entries.Length > array.Length - arrayIndex)
+			throw new ArgumentException("The destination array does not have enough available space.", nameof(array));
+
+		for(int i = 0; i < entries.Length; i++)
+			array[arrayIndex + i] = new KeyValuePair<string, string>(entries[i].Name, entries[i].Value);
 	}
 
 	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-	public IEnumerator<KeyValuePair<string, string>> GetEnumerator() =>
-		_database.HashScan(_name)
-			.Select(entry => new KeyValuePair<string, string>(entry.Name, entry.Value))
-			.GetEnumerator();
+	public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
+	{
+		foreach(var entry in _database.HashScan(_name))
+			yield return new KeyValuePair<string, string>(entry.Name, entry.Value);
+	}
 }

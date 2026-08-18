@@ -30,6 +30,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections;
@@ -58,6 +59,8 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 	private readonly SemaphoreSlim _connectionLock = new SemaphoreSlim(1, 1);
 	private readonly SemaphoreSlim _subscriptionLock = new SemaphoreSlim(1, 1);
 	private readonly ConcurrentDictionary<RedisCacheSubscription, byte> _subscriptions = new();
+	private readonly object _disposeLock = new();
+	private Task _disposeTask;
 	private int _disposed;
 	#endregion
 
@@ -249,7 +252,7 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 
 		await this.ConnectAsync(cancellation);
 
-		return await _database.KeyTypeAsync(GetKey(key)) switch
+		return await _database.KeyTypeAsync(GetKey(key)).WaitAsync(cancellation) switch
 		{
 			RedisType.String => RedisEntryType.String,
 			RedisType.Hash => RedisEntryType.Dictionary,
@@ -284,11 +287,11 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 
 		return entryType switch
 		{
-			RedisEntryType.String => _database.StringGet(entryKey),
+			RedisEntryType.String => _database.StringGet(entryKey).GetValue<object>(),
 			RedisEntryType.Dictionary => new RedisDictionary(_database, entryKey),
-			RedisEntryType.List => throw new NotSupportedException(),
-			RedisEntryType.Set => new RedisHashset(_database, entryKey),
-			RedisEntryType.SortedSet => throw new NotSupportedException(),
+			RedisEntryType.List => GetStringValues(_database.ListRange(entryKey)),
+			RedisEntryType.Set => new RedisHashset(_database, entryKey, this.GetKeyPrefix()),
+			RedisEntryType.SortedSet => GetStringValues(_database.SortedSetRangeByRank(entryKey)),
 			RedisEntryType.Stream => new Messaging.RedisQueue(entryKey, _database),
 			_ => null,
 		};
@@ -318,11 +321,11 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 
 		return entryType switch
 		{
-			RedisEntryType.String => _database.StringGet(entryKey),
+			RedisEntryType.String => _database.StringGet(entryKey).GetValue<object>(),
 			RedisEntryType.Dictionary => new RedisDictionary(_database, entryKey),
-			RedisEntryType.List => throw new NotSupportedException(),
-			RedisEntryType.Set => new RedisHashset(_database, entryKey),
-			RedisEntryType.SortedSet => throw new NotSupportedException(),
+			RedisEntryType.List => GetStringValues(_database.ListRange(entryKey)),
+			RedisEntryType.Set => new RedisHashset(_database, entryKey, this.GetKeyPrefix()),
+			RedisEntryType.SortedSet => GetStringValues(_database.SortedSetRangeByRank(entryKey)),
 			RedisEntryType.Stream => new Messaging.RedisQueue(entryKey, _database),
 			_ => null,
 		};
@@ -337,8 +340,12 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 		await this.ConnectAsync(cancellation);
 
 		var entryKey = this.GetKey(key);
-		var expiry = await _database.KeyTimeToLiveAsync(entryKey);
-		var entryType = await _database.KeyTypeAsync(entryKey) switch
+		var expiryTask = _database.KeyTimeToLiveAsync(entryKey);
+		var typeTask = _database.KeyTypeAsync(entryKey);
+		await Task.WhenAll(expiryTask, typeTask).WaitAsync(cancellation);
+
+		var expiry = await expiryTask;
+		var entryType = await typeTask switch
 		{
 			RedisType.String => RedisEntryType.String,
 			RedisType.Hash => RedisEntryType.Dictionary,
@@ -351,11 +358,11 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 
 		object value = entryType switch
 		{
-			RedisEntryType.String => await _database.StringGetAsync(entryKey),
+			RedisEntryType.String => (await _database.StringGetAsync(entryKey).WaitAsync(cancellation)).GetValue<object>(),
 			RedisEntryType.Dictionary => new RedisDictionary(_database, entryKey),
-			RedisEntryType.List => throw new NotSupportedException(),
-			RedisEntryType.Set => new RedisHashset(_database, entryKey),
-			RedisEntryType.SortedSet => throw new NotSupportedException(),
+			RedisEntryType.List => GetStringValues(await _database.ListRangeAsync(entryKey).WaitAsync(cancellation)),
+			RedisEntryType.Set => new RedisHashset(_database, entryKey, this.GetKeyPrefix()),
+			RedisEntryType.SortedSet => GetStringValues(await _database.SortedSetRangeByRankAsync(entryKey).WaitAsync(cancellation)),
 			RedisEntryType.Stream => new Messaging.RedisQueue(entryKey, _database),
 			_ => null,
 		};
@@ -367,33 +374,34 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 	{
 		if(string.IsNullOrEmpty(key))
 			throw new ArgumentNullException(nameof(key));
+		if(expiry < TimeSpan.Zero)
+			throw new ArgumentOutOfRangeException(nameof(expiry));
 
 		this.Connect();
+		key = this.GetKey(key);
 
 		if(value == null)
 			return _database.KeyDelete(key);
-
-		key = this.GetKey(key);
 
 		if(value is MemoryStream memory)
 			return _database.StringSet(key, RedisValue.CreateFrom(memory), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None);
 
 		if(value is byte[] buffer)
-		{
-			using(var memoryStream = new MemoryStream(buffer))
-				return _database.StringSet(key, RedisValue.CreateFrom(memoryStream), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None);
-		}
+			return _database.StringSet(key, buffer, expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None);
 
-		if(TypeExtension.IsDictionary(value, out var fields))
+		if(TryGetDictionaryEntries(value, out var entries))
 		{
 			var transaction = _database.CreateTransaction();
 
 			if(TryGetCondition(key, requisite, out var condition))
 				transaction.AddCondition(condition);
 
-			transaction.HashSetAsync(key, fields.Select(p => new HashEntry(RedisValue.Unbox(p.Key), RedisValue.Unbox(p.Value))).ToArray());
+			transaction.KeyDeleteAsync(key);
 
-			if(expiry > TimeSpan.Zero)
+			if(entries.Length > 0)
+				transaction.HashSetAsync(key, entries);
+
+			if(entries.Length > 0 && expiry > TimeSpan.Zero)
 				transaction.KeyExpireAsync(key, expiry);
 
 			return transaction.Execute();
@@ -411,9 +419,12 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 			foreach(var item in (IEnumerable)value)
 				values.Add(RedisValue.Unbox(item));
 
-			transaction.SetAddAsync(key, values.ToArray());
+			transaction.KeyDeleteAsync(key);
 
-			if(expiry > TimeSpan.Zero)
+			if(values.Count > 0)
+				transaction.SetAddAsync(key, values.ToArray());
+
+			if(values.Count > 0 && expiry > TimeSpan.Zero)
 				transaction.KeyExpireAsync(key, expiry);
 
 			return transaction.Execute();
@@ -431,9 +442,12 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 			foreach(var item in (IEnumerable)value)
 				values.Add(RedisValue.Unbox(item));
 
-			transaction.ListRightPushAsync(key, values.ToArray());
+			transaction.KeyDeleteAsync(key);
 
-			if(expiry > TimeSpan.Zero)
+			if(values.Count > 0)
+				transaction.ListRightPushAsync(key, values.ToArray());
+
+			if(values.Count > 0 && expiry > TimeSpan.Zero)
 				transaction.KeyExpireAsync(key, expiry);
 
 			return transaction.Execute();
@@ -446,37 +460,38 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 	{
 		if(string.IsNullOrEmpty(key))
 			throw new ArgumentNullException(nameof(key));
+		if(expiry < TimeSpan.Zero)
+			throw new ArgumentOutOfRangeException(nameof(expiry));
 
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
-
-		if(value == null)
-			return await _database.KeyDeleteAsync(key);
-
 		key = this.GetKey(key);
 
+		if(value == null)
+			return await _database.KeyDeleteAsync(key).WaitAsync(cancellation);
+
 		if(value is MemoryStream memory)
-			return await _database.StringSetAsync(key, RedisValue.CreateFrom(memory), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None);
+			return await _database.StringSetAsync(key, RedisValue.CreateFrom(memory), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None).WaitAsync(cancellation);
 
 		if(value is byte[] buffer)
-		{
-			using(var memoryStream = new MemoryStream(buffer))
-				return await _database.StringSetAsync(key, RedisValue.CreateFrom(memoryStream), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None);
-		}
+			return await _database.StringSetAsync(key, buffer, expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None).WaitAsync(cancellation);
 
-		if(TypeExtension.IsDictionary(value, out var fields))
+		if(TryGetDictionaryEntries(value, out var entries))
 		{
 			var transaction = _database.CreateTransaction();
 
 			if(TryGetCondition(key, requisite, out var condition))
 				transaction.AddCondition(condition);
 
-			await transaction.HashSetAsync(key, fields.Select(p => new HashEntry(RedisValue.Unbox(p.Key), RedisValue.Unbox(p.Value))).ToArray());
+			_ = transaction.KeyDeleteAsync(key);
 
-			if(expiry > TimeSpan.Zero)
-				await transaction.KeyExpireAsync(key, expiry);
+			if(entries.Length > 0)
+				_ = transaction.HashSetAsync(key, entries);
 
-			return await transaction.ExecuteAsync();
+			if(entries.Length > 0 && expiry > TimeSpan.Zero)
+				_ = transaction.KeyExpireAsync(key, expiry);
+
+			return await transaction.ExecuteAsync().WaitAsync(cancellation);
 		}
 
 		if(value.GetType().IsHashset())
@@ -491,12 +506,15 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 			foreach(var item in (IEnumerable)value)
 				values.Add(RedisValue.Unbox(item));
 
-			await transaction.SetAddAsync(key, values.ToArray());
+			_ = transaction.KeyDeleteAsync(key);
 
-			if(expiry > TimeSpan.Zero)
-				await transaction.KeyExpireAsync(key, expiry);
+			if(values.Count > 0)
+				_ = transaction.SetAddAsync(key, values.ToArray());
 
-			return await transaction.ExecuteAsync();
+			if(values.Count > 0 && expiry > TimeSpan.Zero)
+				_ = transaction.KeyExpireAsync(key, expiry);
+
+			return await transaction.ExecuteAsync().WaitAsync(cancellation);
 		}
 
 		if(value.GetType().IsList())
@@ -511,15 +529,18 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 			foreach(var item in (IEnumerable)value)
 				values.Add(RedisValue.Unbox(item));
 
-			await transaction.ListRightPushAsync(key, values.ToArray());
+			_ = transaction.KeyDeleteAsync(key);
 
-			if(expiry > TimeSpan.Zero)
-				await transaction.KeyExpireAsync(key, expiry);
+			if(values.Count > 0)
+				_ = transaction.ListRightPushAsync(key, values.ToArray());
 
-			return await transaction.ExecuteAsync();
+			if(values.Count > 0 && expiry > TimeSpan.Zero)
+				_ = transaction.KeyExpireAsync(key, expiry);
+
+			return await transaction.ExecuteAsync().WaitAsync(cancellation);
 		}
 
-		return await _database.StringSetAsync(key, RedisValue.Unbox(value), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None);
+		return await _database.StringSetAsync(key, RedisValue.Unbox(value), expiry > TimeSpan.Zero ? expiry : (TimeSpan?)null, GetWhen(requisite), CommandFlags.None).WaitAsync(cancellation);
 	}
 
 	public IDictionary<string, string> CreateDictionary(string name)
@@ -528,6 +549,8 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 			throw new ArgumentNullException(nameof(name));
 
 		this.Connect();
+
+		name = this.GetKey(name);
 
 		if(_database.KeyExists(name))
 			throw new InvalidOperationException($"The specified '{name}' key already exists.");
@@ -542,32 +565,57 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 
 		this.Connect();
 
+		name = this.GetKey(name);
+
 		if(_database.KeyExists(name))
 			throw new InvalidOperationException($"The specified '{name}' key already exists.");
 
-		return new RedisHashset(_database, name);
+		return new RedisHashset(_database, name, this.GetKeyPrefix());
 	}
 	#endregion
 
 	#region 处置方法
 	public void Dispose() => this.DisposeAsync().AsTask().GetAwaiter().GetResult();
-	public async ValueTask DisposeAsync()
+	public ValueTask DisposeAsync()
 	{
-		if(Interlocked.Exchange(ref _disposed, 1) != 0)
-			return;
+		lock(_disposeLock)
+			return new ValueTask(_disposeTask ??= this.DisposeAsyncCore());
+	}
+
+	private async Task DisposeAsyncCore()
+	{
+		Interlocked.Exchange(ref _disposed, 1);
 
 		await _subscriptionLock.WaitAsync();
 		try
 		{
 			foreach(var subscription in _subscriptions.Keys)
-				await subscription.DisposeAsync();
+			{
+				try
+				{
+					await subscription.DisposeAsync();
+				}
+				catch(Exception exception)
+				{
+					Zongsoft.Diagnostics.Logging.GetLogging(typeof(RedisService)).Error(exception);
+				}
+			}
 
 			_subscriptions.Clear();
-			_database = null;
 
-			var connection = Interlocked.Exchange(ref _connection, null);
-			if(connection != null)
-				await connection.DisposeAsync();
+			await _connectionLock.WaitAsync();
+			try
+			{
+				_database = null;
+
+				var connection = Interlocked.Exchange(ref _connection, null);
+				if(connection != null)
+					await connection.DisposeAsync();
+			}
+			finally
+			{
+				_connectionLock.Release();
+			}
 		}
 		finally
 		{
@@ -581,6 +629,32 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 	#region 私有方法
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private string GetKey(string key) => string.IsNullOrEmpty(_namespace) ? key : $"{_namespace}:{key}";
+
+	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+	private string GetKeyPrefix() => string.IsNullOrEmpty(_namespace) ? string.Empty : _namespace + ":";
+
+	private string GetKeyPattern(string pattern)
+	{
+		if(string.IsNullOrEmpty(_namespace))
+			return pattern;
+
+		StringBuilder builder = null;
+
+		for(int i = 0; i < _namespace.Length; i++)
+		{
+			var character = _namespace[i];
+
+			if(character is '*' or '?' or '[' or ']' or '\\')
+			{
+				builder ??= new StringBuilder(_namespace.Length + 8).Append(_namespace, 0, i);
+				builder.Append('\\');
+			}
+
+			builder?.Append(character);
+		}
+
+		return $"{builder?.ToString() ?? _namespace}:{pattern}";
+	}
 
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private void ThrowIfDisposed()
@@ -619,6 +693,55 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 		}
 	}
 
+	private static bool TryGetDictionaryEntries(object value, out HashEntry[] entries)
+	{
+		if(value is IDictionary dictionary)
+		{
+			entries = new HashEntry[dictionary.Count];
+			var index = 0;
+
+			foreach(DictionaryEntry entry in dictionary)
+				entries[index++] = new HashEntry(RedisValue.Unbox(entry.Key), RedisValue.Unbox(entry.Value));
+
+			return true;
+		}
+
+		if(value == null || !value.GetType().IsDictionary() || value is not IEnumerable enumerable)
+		{
+			entries = null;
+			return false;
+		}
+
+		var result = new List<HashEntry>();
+
+		foreach(var item in enumerable)
+		{
+			if(item == null)
+				continue;
+
+			var type = item.GetType();
+			var key = type.GetProperty("Key")?.GetValue(item);
+			var data = type.GetProperty("Value")?.GetValue(item);
+			result.Add(new HashEntry(RedisValue.Unbox(key), RedisValue.Unbox(data)));
+		}
+
+		entries = result.ToArray();
+		return true;
+	}
+
+	private static string[] GetStringValues(RedisValue[] values)
+	{
+		if(values == null || values.Length == 0)
+			return Array.Empty<string>();
+
+		var result = new string[values.Length];
+
+		for(int i = 0; i < values.Length; i++)
+			result[i] = values[i];
+
+		return result;
+	}
+
 	private RedisServiceInfo GetInfoCore()
 	{
 		var info = new RedisServiceInfo(_name, _namespace, this.DatabaseId, this.Settings);
@@ -647,10 +770,20 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 
 		try
 		{
+			this.ThrowIfDisposed();
+
 			if(_database == null)
 			{
-				_connection = ConnectionMultiplexer.Connect(options);
-				_database = _connection.GetDatabase(databaseId);
+				var connection = ConnectionMultiplexer.Connect(options);
+
+				if(Volatile.Read(ref _disposed) != 0)
+				{
+					connection.Dispose();
+					this.ThrowIfDisposed();
+				}
+
+				_connection = connection;
+				_database = connection.GetDatabase(databaseId);
 			}
 		}
 		finally
@@ -674,15 +807,48 @@ public partial class RedisService : IDisposable, IAsyncDisposable
 
 		try
 		{
+			this.ThrowIfDisposed();
+
 			if(_database == null)
 			{
-				_connection = await ConnectionMultiplexer.ConnectAsync(options);
-				_database = _connection.GetDatabase(databaseId);
+				var task = ConnectionMultiplexer.ConnectAsync(options);
+				ConnectionMultiplexer connection;
+
+				try
+				{
+					connection = await task.WaitAsync(cancellation);
+				}
+				catch(OperationCanceledException)
+				{
+					_ = DisposeConnectionAsync(task);
+					throw;
+				}
+
+				if(Volatile.Read(ref _disposed) != 0)
+				{
+					await connection.DisposeAsync();
+					this.ThrowIfDisposed();
+				}
+
+				_connection = connection;
+				_database = connection.GetDatabase(databaseId);
 			}
 		}
 		finally
 		{
 			_connectionLock.Release();
+		}
+	}
+
+	private static async Task DisposeConnectionAsync(Task<ConnectionMultiplexer> task)
+	{
+		try
+		{
+			var connection = await task;
+			await connection.DisposeAsync();
+		}
+		catch
+		{
 		}
 	}
 	#endregion

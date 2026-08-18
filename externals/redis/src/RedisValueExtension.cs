@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Globalization;
 using StackExchange.Redis;
 
 namespace Zongsoft.Externals.Redis;
@@ -47,20 +48,41 @@ internal static class RedisValueExtension
 		switch(Type.GetTypeCode(typeof(T)))
 		{
 			case TypeCode.Byte:
+				if(value.TryParse(out int byteValue))
+					return (T)(object)checked((byte)byteValue);
+				break;
 			case TypeCode.SByte:
+				if(value.TryParse(out int sbyteValue))
+					return (T)(object)checked((sbyte)sbyteValue);
+				break;
 			case TypeCode.Int16:
+				if(value.TryParse(out int shortValue))
+					return (T)(object)checked((short)shortValue);
+				break;
 			case TypeCode.Int32:
-			case TypeCode.UInt16:
 				if(value.TryParse(out int integer))
 					return (T)(object)integer;
 				break;
+			case TypeCode.UInt16:
+				if(value.TryParse(out int ushortValue))
+					return (T)(object)checked((ushort)ushortValue);
+				break;
 			case TypeCode.Int64:
-			case TypeCode.UInt32:
-			case TypeCode.UInt64:
 				if(value.TryParse(out long biginteger))
 					return (T)(object)biginteger;
 				break;
+			case TypeCode.UInt32:
+				if(value.TryParse(out long uintValue))
+					return (T)(object)checked((uint)uintValue);
+				break;
+			case TypeCode.UInt64:
+				if(ulong.TryParse(value.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var ulongValue))
+					return (T)(object)ulongValue;
+				break;
 			case TypeCode.Single:
+				if(value.TryParse(out double singleValue))
+					return (T)(object)(float)singleValue;
+				break;
 			case TypeCode.Double:
 				if(value.TryParse(out double number))
 					return (T)(object)number;

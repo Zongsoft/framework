@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Redis library.
  *
@@ -56,6 +56,8 @@ public class RedisSubscriber : MessageConsumerBase<RedisQueue>
 	private const long TICKS_PERSECOND = 10000000;
 	private const long TICKS_PERHOUR   = TICKS_PERSECOND * 60 * 60;
 	private const int CLAIM_BATCH_SIZE = 100;
+	private const string DEAD_SUFFIX = ":DEAD!";
+	private const string DEAD_SCRIPT = "local entries=redis.call('XRANGE',KEYS[1],ARGV[2],ARGV[2],'COUNT',1); if #entries==0 then return false end; local id=redis.call('XADD',KEYS[2],'MAXLEN','~',ARGV[3],'*',unpack(entries[1][2])); if id then redis.call('XACK',KEYS[1],ARGV[1],ARGV[2]) end; return id";
 	#endregion
 
 	#region 私有字段
@@ -255,51 +257,47 @@ public class RedisSubscriber : MessageConsumerBase<RedisQueue>
 			cancellation.ThrowIfCancellationRequested();
 			await this.Queue.Database.StreamAcknowledgeAsync(this.Queue.GetQueueName(this.Topic), _group, entry.Id).WaitAsync(cancellation);
 		}
+
+		static DateTime GetTimestamp(RedisValue identifier)
+		{
+			var text = (string)identifier;
+			var index = text?.IndexOf('-') ?? -1;
+
+			if(index > 0 && long.TryParse(text.AsSpan(0, index), out var milliseconds))
+			{
+				try
+				{
+					return DateTimeOffset.FromUnixTimeMilliseconds(milliseconds).UtcDateTime;
+				}
+				catch(ArgumentOutOfRangeException)
+				{
+				}
+			}
+
+			return DateTime.UtcNow;
+		}
 	}
 
 	private string Dead(IDatabase database, string key, string id)
 	{
-		const string DEAD_SUFFIX = ":DEAD!";
-
 		//如果指定队列就是死信队列则返回空
-		if(key.EndsWith(DEAD_SUFFIX))
+		if(key.EndsWith(DEAD_SUFFIX, StringComparison.Ordinal))
 			return null;
 
-		var task = database.StreamRangeAsync(key, id, id, 1);
-		var message = this.GetReceiveResult(task, CancellationToken.None);
+		var result = database.ScriptEvaluate(
+			DEAD_SCRIPT,
+			[(RedisKey)key, GetDeadQueueKey(key)],
+			[_group, id, this.Queue.MaximumLength > 0 ? this.Queue.MaximumLength : 100000]);
 
-		//如果消息获取失败则返回
-		if(message.IsEmpty)
-			return null;
+		return result.IsNull ? null : (string)result;
 
-		//将消息转发到死信队列
-		var result = database.StreamAdd($"{key}{DEAD_SUFFIX}", RedisQueueUtility.GetMessagePayload(message.Data, message.Tags), maxLength: 100000);
-
-		//如果死信队列转发成功则将该消息应答
-		if(result.HasValue)
-			message.Acknowledge();
-
-		//返回死信消息编号
-		return result;
-	}
-
-	private static DateTime GetTimestamp(RedisValue identifier)
-	{
-		var text = (string)identifier;
-		var index = text?.IndexOf('-') ?? -1;
-
-		if(index > 0 && long.TryParse(text.AsSpan(0, index), out var milliseconds))
+		static RedisKey GetDeadQueueKey(string key)
 		{
-			try
-			{
-				return DateTimeOffset.FromUnixTimeMilliseconds(milliseconds).UtcDateTime;
-			}
-			catch(ArgumentOutOfRangeException)
-			{
-			}
-		}
+			var opening = key.IndexOf('{');
+			var closing = opening < 0 ? -1 : key.IndexOf('}', opening + 1);
 
-		return DateTime.UtcNow;
+			return opening >= 0 && closing > opening + 1 ? key + DEAD_SUFFIX : $"{{{key}}}{DEAD_SUFFIX}";
+		}
 	}
 	#endregion
 
