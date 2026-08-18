@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -40,8 +40,12 @@ namespace Zongsoft.Caching;
 public interface IDistributedCache
 {
 	#region 事件定义
-	/// <summary>表示缓存发生改变的事件。</summary>
-	event EventHandler<CacheChangedEventArgs> Changed;
+	/// <summary>表示缓存过期的事件。</summary>
+	event EventHandler<DistributedCacheEventArgs> Expired;
+	/// <summary>表示缓存被移除的事件。</summary>
+	event EventHandler<DistributedCacheEventArgs> Removed;
+	/// <summary>表示缓存被更新的事件。</summary>
+	event EventHandler<DistributedCacheEventArgs> Updated;
 	#endregion
 
 	#region 属性定义

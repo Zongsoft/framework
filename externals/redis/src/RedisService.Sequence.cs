@@ -37,7 +37,7 @@ using StackExchange.Redis;
 
 namespace Zongsoft.Externals.Redis;
 
-public partial class RedisService : ISequence
+partial class RedisService : ISequence
 {
 	#region 常量定义
 	private const string DECREMENT_SCRIPT = @"if redis.call('exists', KEYS[1])==0 then redis.call('set', KEYS[1], ARGV[2], 'NX') end return redis.call('decrby', KEYS[1], ARGV[1])";

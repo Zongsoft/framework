@@ -30,7 +30,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Microsoft.Extensions.Primitives;
 using Microsoft.Extensions.Caching.Memory;
@@ -71,7 +70,7 @@ public class MemoryCache : IDisposable
 	public MemoryCacheOptions Options => _options;
 
 	#if NET9_0_OR_GREATER
-	public IEnumerable<object> Keys => _cache?.Keys ?? [];
+	public System.Collections.Generic.IEnumerable<object> Keys => _cache?.Keys ?? [];
 	#endif
 	#endregion
 
