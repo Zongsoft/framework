@@ -25,10 +25,10 @@ public class RedisNotificationHubTests
 
 		using var connection = CreateConnection();
 		var prefix = $"Zongsoft.Tests.Hub.{Guid.NewGuid():N}:";
-		var first = await RedisCacheNotificationHub.GetAsync(connection, 0, prefix, default);
-		var same = await RedisCacheNotificationHub.GetAsync(connection, 0, prefix, default);
-		var otherDatabase = await RedisCacheNotificationHub.GetAsync(connection, 1, prefix, default);
-		var otherNamespace = await RedisCacheNotificationHub.GetAsync(connection, 0, prefix + "other:", default);
+		var first = await RedisService.DistributedCacheNotificationHub.GetAsync(connection, 0, prefix, default);
+		var same = await RedisService.DistributedCacheNotificationHub.GetAsync(connection, 0, prefix, default);
+		var otherDatabase = await RedisService.DistributedCacheNotificationHub.GetAsync(connection, 1, prefix, default);
+		var otherNamespace = await RedisService.DistributedCacheNotificationHub.GetAsync(connection, 0, prefix + "other:", default);
 
 		Assert.Same(first, same);
 		Assert.NotSame(first, otherDatabase);
@@ -38,22 +38,20 @@ public class RedisNotificationHubTests
 	[Theory]
 	[InlineData(DistributedCacheNotificationOverflowPolicy.DropOldest, new[] { "first", "third", "fourth" })]
 	[InlineData(DistributedCacheNotificationOverflowPolicy.DropNewest, new[] { "first", "second", "third" })]
-	public async Task FullQueue_AppliesOverflowPolicyAndUpdatesCounters(
-		DistributedCacheNotificationOverflowPolicy overflowPolicy,
-		string[] expected)
+	public async Task FullQueue_AppliesOverflowPolicyAndUpdatesCounters(DistributedCacheNotificationOverflowPolicy overflowPolicy, string[] expected)
 	{
 		EnsureRedis();
 
 		using var connection = CreateConnection();
 		await using var cache = CreateCache();
-		var hub = await RedisCacheNotificationHub.GetAsync(connection, 0, $"Zongsoft.Tests.Hub.{Guid.NewGuid():N}:", default);
+		var hub = await RedisService.DistributedCacheNotificationHub.GetAsync(connection, 0, $"Zongsoft.Tests.Hub.{Guid.NewGuid():N}:", default);
 		using var handler = new BlockingNotificationHandler();
 		var options = new DistributedCacheSubscriptionOptions
 		{
 			Capacity = 2,
 			OverflowPolicy = overflowPolicy,
 		};
-		await using var subscription = new RedisCacheSubscription(cache, hub, handler, options);
+		await using var subscription = new RedisService.DistributedCacheSubscription(cache, hub, handler, options);
 		await subscription.SubscribeAsync(default);
 
 		subscription.Enqueue(DistributedCacheNotificationKind.Updated, "first");
@@ -84,10 +82,9 @@ public class RedisNotificationHubTests
 		using var connection = CreateConnection();
 		await using var cache = CreateCache();
 		var prefix = $"Zongsoft.Tests.Hub.{Guid.NewGuid():N}:";
-		var firstHub = await RedisCacheNotificationHub.GetAsync(connection, 0, prefix, default);
+		var firstHub = await RedisService.DistributedCacheNotificationHub.GetAsync(connection, 0, prefix, default);
 		using var handler = new BlockingNotificationHandler();
-		var subscription = new RedisCacheSubscription(cache, firstHub, handler,
-			new DistributedCacheSubscriptionOptions { Capacity = 2 });
+		var subscription = new RedisService.DistributedCacheSubscription(cache, firstHub, handler, new DistributedCacheSubscriptionOptions { Capacity = 2 });
 		await subscription.SubscribeAsync(default);
 
 		subscription.Enqueue(DistributedCacheNotificationKind.Updated, "first");
@@ -98,20 +95,20 @@ public class RedisNotificationHubTests
 		await subscription.DisposeAsync();
 		Assert.True(subscription.IsDisposed);
 		Assert.Equal(0, subscription.PendingCount);
-		var replacementHub = await RedisCacheNotificationHub.GetAsync(connection, 0, prefix, default);
+		var replacementHub = await RedisService.DistributedCacheNotificationHub.GetAsync(connection, 0, prefix, default);
 		Assert.NotSame(firstHub, replacementHub);
 	}
 
 	private static ConnectionMultiplexer CreateConnection() =>
-		ConnectionMultiplexer.Connect($"{RedisTestUtility.Server},password={RedisTestUtility.Password},connectTimeout=2000");
+		ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password},connectTimeout=2000");
 
 	private static RedisService CreateCache() => new($"hub-{Guid.NewGuid():N}",
-		$"server={RedisTestUtility.Server};password={RedisTestUtility.Password};timeout=5s;");
+		$"server={Global.Server};password={Global.Password};timeout=5s;");
 
 	private static void EnsureRedis()
 	{
-		Assert.SkipUnless(RedisTestUtility.IsTestingEnabled, TESTS_DISABLED);
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsTestingEnabled, TESTS_DISABLED);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 	}
 
 	private sealed class BlockingNotificationHandler : HandlerBase<DistributedCacheNotification>, IDisposable

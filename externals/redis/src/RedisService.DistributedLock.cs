@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Redis library.
  *
@@ -74,7 +74,7 @@ partial class RedisService : IDistributedLockManager
 			throw new ArgumentNullException(nameof(key));
 		ArgumentNullException.ThrowIfNull(options);
 		if(options.RenewalInterval < TimeSpan.Zero || options.RenewalInterval >= options.Expiry)
-			throw new ArgumentOutOfRangeException(nameof(options), "The renewal interval must be positive and shorter than the lock expiry.");
+			throw new ArgumentOutOfRangeException(nameof(options), Properties.Resources.RenewalIntervalOutOfRange_Message);
 
 		cancellation.ThrowIfCancellationRequested();
 

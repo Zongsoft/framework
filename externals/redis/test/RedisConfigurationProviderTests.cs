@@ -1,9 +1,7 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-
-using Microsoft.Extensions.Primitives;
+using System.Collections.Generic;
 
 using StackExchange.Redis;
 
@@ -158,7 +156,7 @@ public class RedisConfigurationProviderTests
 	{
 		cacheNamespace = $"Zongsoft.Tests.Configuration.{Guid.NewGuid():N}";
 		return new RedisService($"configuration-{Guid.NewGuid():N}",
-			$"server={RedisTestUtility.Server};password={RedisTestUtility.Password};timeout=5s;")
+			$"server={Global.Server};password={Global.Password};timeout=5s;")
 		{
 			Namespace = cacheNamespace,
 		};
@@ -166,8 +164,8 @@ public class RedisConfigurationProviderTests
 
 	private static void EnsureRedisNotifications()
 	{
-		Assert.SkipUnless(RedisTestUtility.IsTestingEnabled, TESTS_DISABLED);
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsTestingEnabled, TESTS_DISABLED);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 		Assert.SkipUnless(HasRedisNotifications(), NOTIFICATIONS_UNAVAILABLE);
 	}
 
@@ -175,7 +173,7 @@ public class RedisConfigurationProviderTests
 	{
 		try
 		{
-			using var connection = ConnectionMultiplexer.Connect($"{RedisTestUtility.Server},password={RedisTestUtility.Password},connectTimeout=2000,allowAdmin=true");
+			using var connection = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password},connectTimeout=2000,allowAdmin=true");
 			var server = connection.GetServer(connection.GetEndPoints()[0]);
 			var value = (string)server.ConfigGet("notify-keyspace-events").FirstOrDefault().Value;
 			return value?.Contains('K') == true && value.Contains('A');

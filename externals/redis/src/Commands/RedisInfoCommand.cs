@@ -36,8 +36,8 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Redis.Commands;
 
-[DisplayName("Text.RedisInfoCommand.Name")]
-[Description("Text.RedisInfoCommand.Description")]
+[DisplayName("RedisInfoCommand.Name")]
+[Description("RedisInfoCommand.Description")]
 public class RedisInfoCommand : CommandBase<CommandContext>
 {
 	#region 构造函数
@@ -47,7 +47,7 @@ public class RedisInfoCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException(Properties.Resources.MissingRequiredRedisService_Message);
 		var info = await redis.GetInfoAsync(cancellation);
 
 		var content = CommandOutletContent
@@ -72,15 +72,15 @@ public class RedisInfoCommand : CommandBase<CommandContext>
 					   .Append(CommandOutletColor.DarkYellow, info.Servers[i].ServerType.ToString())
 					   .Append(CommandOutletColor.DarkGreen, " " + info.Servers[i].EndPoint.ToString())
 					   .Append(CommandOutletColor.DarkGray, "(")
-					   .Append(CommandOutletColor.DarkYellow, "ver " + info.Servers[i].Version.ToString())
+					   .Append(CommandOutletColor.DarkYellow, Properties.Resources.Version + " " + info.Servers[i].Version.ToString())
 					   .Append(CommandOutletColor.DarkGray, ") ")
-					   .Append(CommandOutletColor.DarkMagenta, info.Servers[i].IsSlave ? "Slave" : "Master")
+					   .Append(CommandOutletColor.DarkMagenta, info.Servers[i].IsSlave ? Properties.Resources.Replica : Properties.Resources.Master)
 					   .Append(CommandOutletColor.DarkGray, ":");
 
 				if(info.Servers[i].IsConnected)
-					content.AppendLine(CommandOutletColor.Green, "Connected");
+					content.AppendLine(CommandOutletColor.Green, Properties.Resources.Connected);
 				else
-					content.AppendLine(CommandOutletColor.DarkRed, "Unconnected");
+					content.AppendLine(CommandOutletColor.DarkRed, Properties.Resources.Disconnected);
 			}
 		}
 

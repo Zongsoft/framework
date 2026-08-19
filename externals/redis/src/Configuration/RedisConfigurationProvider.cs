@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Redis library.
  *
@@ -66,6 +66,17 @@ public class RedisConfigurationProvider : ConfigurationProvider, IDisposable, IA
 	}
 	#endregion
 
+	#region 内部属性
+	internal Task SubscriptionTask
+	{
+		get
+		{
+			lock(_sync)
+				return _subscriptionTask ?? Task.CompletedTask;
+		}
+	}
+	#endregion
+
 	#region 加载方法
 	public override void Load()
 	{
@@ -92,48 +103,7 @@ public class RedisConfigurationProvider : ConfigurationProvider, IDisposable, IA
 	}
 	#endregion
 
-	internal Task SubscriptionTask
-	{
-		get
-		{
-			lock(_sync)
-				return _subscriptionTask ?? Task.CompletedTask;
-		}
-	}
-
-	#region 通知与释放
-	public void Dispose() => this.DisposeAsync().AsTask().GetAwaiter().GetResult();
-	public async ValueTask DisposeAsync()
-	{
-		if(Interlocked.Exchange(ref _disposed, 1) != 0)
-			return;
-
-		_lifetime.Cancel();
-		Task subscriptionTask;
-		Task reloadTask;
-		lock(_sync)
-		{
-			subscriptionTask = _subscriptionTask;
-			reloadTask = _reloadTask;
-		}
-
-		if(subscriptionTask != null)
-		{
-			try { await subscriptionTask; }
-			catch(OperationCanceledException) { }
-		}
-		if(reloadTask != null)
-		{
-			try { await reloadTask; }
-			catch(OperationCanceledException) { }
-		}
-		if(_subscription != null)
-			await _subscription.DisposeAsync();
-
-		_lifetime.Dispose();
-		GC.SuppressFinalize(this);
-	}
-
+	#region 通知方法
 	private async Task SubscribeAsync()
 	{
 		try
@@ -143,7 +113,7 @@ public class RedisConfigurationProvider : ConfigurationProvider, IDisposable, IA
 			this.LoadCore();
 			this.OnReload();
 		}
-		catch(OperationCanceledException) when (_lifetime.IsCancellationRequested)
+		catch(OperationCanceledException) when(_lifetime.IsCancellationRequested)
 		{
 		}
 		catch(Exception exception)
@@ -175,13 +145,47 @@ public class RedisConfigurationProvider : ConfigurationProvider, IDisposable, IA
 			this.LoadCore();
 			this.OnReload();
 		}
-		catch(OperationCanceledException) when (cancellation.IsCancellationRequested)
+		catch(OperationCanceledException) when(cancellation.IsCancellationRequested)
 		{
 		}
 		catch(Exception exception)
 		{
 			Zongsoft.Diagnostics.Logging.GetLogging(typeof(RedisConfigurationProvider)).Error(exception);
 		}
+	}
+	#endregion
+
+	#region 释放方法
+	public void Dispose() => this.DisposeAsync().AsTask().GetAwaiter().GetResult();
+	public async ValueTask DisposeAsync()
+	{
+		if(Interlocked.Exchange(ref _disposed, 1) != 0)
+			return;
+
+		_lifetime.Cancel();
+		Task subscriptionTask;
+		Task reloadTask;
+		lock(_sync)
+		{
+			subscriptionTask = _subscriptionTask;
+			reloadTask = _reloadTask;
+		}
+
+		if(subscriptionTask != null)
+		{
+			try { await subscriptionTask; }
+			catch(OperationCanceledException) { }
+		}
+		if(reloadTask != null)
+		{
+			try { await reloadTask; }
+			catch(OperationCanceledException) { }
+		}
+		if(_subscription != null)
+			await _subscription.DisposeAsync();
+
+		_lifetime.Dispose();
+		GC.SuppressFinalize(this);
 	}
 	#endregion
 
@@ -238,7 +242,7 @@ public class RedisConfigurationProvider : ConfigurationProvider, IDisposable, IA
 		public void Add(string key, string value)
 		{
 			if(!_database.StringSet(GetKey(key), value, when: When.NotExists))
-				throw new ArgumentException($"The specified '{key}' key already exists in the '{_namespace}' dictionary.");
+				throw new ArgumentException(string.Format(Properties.Resources.DictionaryKeyAlreadyExists_Message, key, _namespace));
 		}
 
 		void ICollection<KeyValuePair<string, string>>.Add(KeyValuePair<string, string> field) => this.Add(field.Key, field.Value);
@@ -273,25 +277,12 @@ public class RedisConfigurationProvider : ConfigurationProvider, IDisposable, IA
 			var keys = _server.Scan(_database.Database, GetPattern(_namespace)).ToArray();
 
 			if(keys.Length > array.Length - arrayIndex)
-				throw new ArgumentException("The destination array does not have enough available space.", nameof(array));
+				throw new ArgumentException(Properties.Resources.DestinationArrayInsufficient_Message, nameof(array));
 
 			var values = this.GetValues(keys);
 
 			for(int i = 0; i < keys.Length; i++)
 				array[arrayIndex + i] = new KeyValuePair<string, string>(((string)keys[i])[(_namespace.Length + 1)..], values[i]);
-		}
-
-		internal IDictionary<string, string> Snapshot()
-		{
-			var keys = _server.Scan(_database.Database, GetPattern(_namespace)).ToArray();
-			var result = new Dictionary<string, string>(keys.Length, StringComparer.OrdinalIgnoreCase);
-			if(keys.Length == 0)
-				return result;
-
-			var values = this.GetValues(keys);
-			for(int i = 0; i < keys.Length; i++)
-				result[((string)keys[i])[(_namespace.Length + 1)..]] = values[i];
-			return result;
 		}
 
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();

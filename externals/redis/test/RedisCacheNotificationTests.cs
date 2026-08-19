@@ -91,7 +91,7 @@ public class RedisCacheNotificationTests
 	[MemberData(nameof(SupportedNotificationTypes))]
 	public void TryGetNotificationKind_SupportedType_ReturnsMappedKind(KeyNotificationType type, DistributedCacheNotificationKind expected)
 	{
-		Assert.True(RedisCacheSubscription.TryGetNotificationKind(type, out var actual));
+		Assert.True(RedisService.DistributedCacheSubscription.TryGetNotificationKind(type, out var actual));
 		Assert.Equal(expected, actual);
 	}
 
@@ -99,7 +99,7 @@ public class RedisCacheNotificationTests
 	[MemberData(nameof(IgnoredNotificationTypes))]
 	public void TryGetNotificationKind_MetadataOrUnknownType_IsIgnored(KeyNotificationType type)
 	{
-		Assert.False(RedisCacheSubscription.TryGetNotificationKind(type, out var kind));
+		Assert.False(RedisService.DistributedCacheSubscription.TryGetNotificationKind(type, out var kind));
 		Assert.Equal(DistributedCacheNotificationKind.None, kind);
 	}
 
@@ -133,8 +133,8 @@ public class RedisCacheNotificationTests
 	[Fact]
 	public async Task SubscribeAsync_CanceledBeforeEstablishment_ThrowsOperationCanceledException()
 	{
-		Assert.SkipUnless(RedisTestUtility.IsTestingEnabled, TESTS_DISABLED);
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsTestingEnabled, TESTS_DISABLED);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 
 		await using var cache = CreateCache(out _);
 		using var cancellation = new CancellationTokenSource();
@@ -383,19 +383,19 @@ public class RedisCacheNotificationTests
 	{
 		cacheNamespace = $"Zongsoft.Tests.Cache.{Guid.NewGuid():N}";
 		return new RedisService($"cache-tests-{Guid.NewGuid():N}",
-			$"server={RedisTestUtility.Server};password={RedisTestUtility.Password};timeout=5s;")
+			$"server={Global.Server};password={Global.Password};timeout=5s;")
 		{
 			Namespace = cacheNamespace,
 		};
 	}
 
 	private static ConnectionMultiplexer CreateConnection() =>
-		ConnectionMultiplexer.Connect($"{RedisTestUtility.Server},password={RedisTestUtility.Password},connectTimeout=2000,allowAdmin=true");
+		ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password},connectTimeout=2000,allowAdmin=true");
 
 	private static void EnsureRedisNotifications()
 	{
-		Assert.SkipUnless(RedisTestUtility.IsTestingEnabled, TESTS_DISABLED);
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsTestingEnabled, TESTS_DISABLED);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 		Assert.SkipUnless(HasRedisNotifications(), NOTIFICATIONS_UNAVAILABLE);
 	}
 

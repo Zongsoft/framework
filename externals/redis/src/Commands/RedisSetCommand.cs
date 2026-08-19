@@ -36,10 +36,10 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Redis.Commands;
 
-[DisplayName("Text.RedisSetCommand.Name")]
-[Description("Text.RedisSetCommand.Description")]
-[CommandOption(REQUISITE_OPTION, typeof(Caching.CacheRequisite), DefaultValue = Caching.CacheRequisite.Always, Description = "Text.RedisSetCommand.Options.Requisite")]
-[CommandOption(EXPIRY_OPTION, 'x', typeof(TimeSpan?), DefaultValue = null, Description = "Text.RedisSetCommand.Options.Expiry")]
+[DisplayName("RedisSetCommand.Name")]
+[Description("RedisSetCommand.Description")]
+[CommandOption(REQUISITE_OPTION, typeof(Caching.CacheRequisite), DefaultValue = Caching.CacheRequisite.Always, Description = "RedisSetCommand.Options.Requisite")]
+[CommandOption(EXPIRY_OPTION, 'x', typeof(TimeSpan?), DefaultValue = null, Description = "RedisSetCommand.Options.Expiry")]
 public class RedisSetCommand : CommandBase<CommandContext>
 {
 	#region 常量定义
@@ -55,9 +55,9 @@ public class RedisSetCommand : CommandBase<CommandContext>
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(context.Arguments.IsEmpty)
-			throw new CommandException("Missing arguments.");
+			throw new CommandException(Properties.Resources.MissingArguments_Message);
 
-		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException(Properties.Resources.MissingRequiredRedisService_Message);
 		var expiry = context.Options.GetValue<TimeSpan?>(EXPIRY_OPTION) ?? TimeSpan.Zero;
 		var requisite = context.Options.GetValue<Caching.CacheRequisite>(REQUISITE_OPTION);
 
@@ -66,7 +66,7 @@ public class RedisSetCommand : CommandBase<CommandContext>
 			if(context.Value != null)
 				return await redis.SetValueAsync(context.Arguments[0], context.Value, expiry, requisite, cancellation);
 
-			throw new CommandException("Missing arguments.");
+			throw new CommandException(Properties.Resources.MissingArguments_Message);
 		}
 
 		return await redis.SetValueAsync(context.Arguments[0], context.Arguments[1], expiry, requisite, cancellation);

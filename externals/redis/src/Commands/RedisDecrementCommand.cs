@@ -36,11 +36,11 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Redis.Commands;
 
-[DisplayName("Text.RedisDecreaseCommand.Name")]
-[Description("Text.RedisDecreaseCommand.Description")]
-[CommandOption("seed", typeof(int), DefaultValue = 0, Description = "Text.RedisDecreaseCommand.Options.Seed")]
-[CommandOption("interval", typeof(int), DefaultValue = 1, Description = "Text.RedisDecreaseCommand.Options.Interval")]
-[CommandOption("expiry", 'x', typeof(TimeSpan), Description = "Text.RedisDecreaseCommand.Options.Expiry")]
+[DisplayName("RedisDecreaseCommand.Name")]
+[Description("RedisDecreaseCommand.Description")]
+[CommandOption("seed", typeof(int), DefaultValue = 0, Description = "RedisDecreaseCommand.Options.Seed")]
+[CommandOption("interval", typeof(int), DefaultValue = 1, Description = "RedisDecreaseCommand.Options.Interval")]
+[CommandOption("expiry", 'x', typeof(TimeSpan), Description = "RedisDecreaseCommand.Options.Expiry")]
 public class RedisDecrementCommand : CommandBase<CommandContext>
 {
 	#region 构造函数
@@ -51,7 +51,7 @@ public class RedisDecrementCommand : CommandBase<CommandContext>
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(context.Arguments.IsEmpty)
-			throw new CommandException("Missing arguments.");
+			throw new CommandException(Properties.Resources.MissingArguments_Message);
 
 		int seed = context.Options.GetValue<int>("seed");
 		var interval = context.Options.GetValue<int>("interval");
@@ -60,7 +60,7 @@ public class RedisDecrementCommand : CommandBase<CommandContext>
 
 		for(int i = 0; i < context.Arguments.Count; i++)
 		{
-			var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+			var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException(Properties.Resources.MissingRequiredRedisService_Message);
 			result[i] = await redis.DecreaseAsync(context.Arguments[i], interval, seed, expiry, cancellation);
 			context.Output.WriteLine(result[i].ToString());
 		}

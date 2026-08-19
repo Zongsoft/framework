@@ -36,8 +36,8 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Redis.Commands;
 
-[DisplayName("Text.RedisCountCommand.Name")]
-[Description("Text.RedisCountCommand.Description")]
+[DisplayName("RedisCountCommand.Name")]
+[Description("RedisCountCommand.Description")]
 public class RedisCountCommand : CommandBase<CommandContext>
 {
 	#region 构造函数
@@ -47,7 +47,7 @@ public class RedisCountCommand : CommandBase<CommandContext>
 	#region 执行方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException(Properties.Resources.MissingRequiredRedisService_Message);
 		var count = await redis.GetCountAsync(cancellation);
 		context.Output.WriteLine(count.ToString());
 		return count;

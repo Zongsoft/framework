@@ -60,7 +60,7 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 	private volatile ConnectionMultiplexer _connection;
 	private RedisConnectionLease _connectionLease;
 	private readonly SemaphoreSlim _gate = new(1, 1);
-	private readonly ConcurrentDictionary<RedisCacheSubscription, byte> _subscriptions = new();
+	private readonly ConcurrentDictionary<DistributedCacheSubscription, byte> _subscriptions = new();
 	private TaskCompletionSource<bool> _disposal;
 	#endregion
 
@@ -117,7 +117,7 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 					return;
 
 				if(Volatile.Read(ref _activated) != 0)
-					throw new InvalidOperationException("The Redis cache namespace cannot be changed after the service has been activated. Use WithNamespace() to create another scope.");
+					throw new InvalidOperationException(Properties.Resources.RedisNamespaceChangeNotAllowed_Message);
 
 				_namespace = @namespace;
 			}
@@ -195,7 +195,7 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 				return;
 
 			if(Volatile.Read(ref _activated) != 0)
-				throw new InvalidOperationException("The Redis cache database cannot be changed after the service has been activated. Use WithDatabase() to create another scope.");
+				throw new InvalidOperationException(Properties.Resources.RedisDatabaseChangeNotAllowed_Message);
 
 			_databaseId = databaseId;
 		}
@@ -219,7 +219,7 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 				return;
 
 			if(Volatile.Read(ref _activated) != 0)
-				throw new InvalidOperationException("The Redis cache database cannot be changed after the service has been activated. Use WithDatabase() to create another scope.");
+				throw new InvalidOperationException(Properties.Resources.RedisDatabaseChangeNotAllowed_Message);
 
 			_databaseId = databaseId;
 		}
@@ -571,7 +571,7 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 		name = this.GetKey(name);
 
 		if(_database.KeyExists(name))
-			throw new InvalidOperationException($"The specified '{name}' key already exists.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.RedisKeyAlreadyExists_Message, name));
 
 		return new RedisDictionary(_database, name);
 	}
@@ -586,9 +586,36 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 		name = this.GetKey(name);
 
 		if(_database.KeyExists(name))
-			throw new InvalidOperationException($"The specified '{name}' key already exists.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.RedisKeyAlreadyExists_Message, name));
 
 		return new RedisHashset(_database, name, this.GetKeyPrefix());
+	}
+
+	/// <summary>创建使用指定数据库的不可变作用域视图。</summary>
+	/// <param name="databaseId">要使用的数据库编号。</param>
+	public RedisService WithDatabase(int databaseId)
+	{
+		if(databaseId < 0)
+			throw new ArgumentOutOfRangeException(nameof(databaseId));
+
+		return new RedisService(_name, _settings)
+		{
+			_databaseId = databaseId,
+			_namespace = _namespace,
+			_activated = 1,
+		};
+	}
+
+	/// <summary>创建使用指定键命名空间的不可变作用域视图。</summary>
+	/// <param name="namespace">要使用的键命名空间。</param>
+	public RedisService WithNamespace(string @namespace)
+	{
+		return new RedisService(_name, _settings)
+		{
+			_databaseId = _databaseId,
+			_namespace = string.IsNullOrWhiteSpace(@namespace) ? string.Empty : @namespace.Trim(),
+			_activated = 1,
+		};
 	}
 	#endregion
 
@@ -646,31 +673,6 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 		{
 			_gate.Release();
 		}
-	}
-
-	/// <summary>创建使用指定数据库的不可变作用域视图。</summary>
-	public RedisService WithDatabase(int databaseId)
-	{
-		if(databaseId < 0)
-			throw new ArgumentOutOfRangeException(nameof(databaseId));
-
-		return new RedisService(_name, _settings)
-		{
-			_databaseId = databaseId,
-			_namespace = _namespace,
-			_activated = 1,
-		};
-	}
-
-	/// <summary>创建使用指定键命名空间的不可变作用域视图。</summary>
-	public RedisService WithNamespace(string @namespace)
-	{
-		return new RedisService(_name, _settings)
-		{
-			_databaseId = _databaseId,
-			_namespace = string.IsNullOrWhiteSpace(@namespace) ? string.Empty : @namespace.Trim(),
-			_activated = 1,
-		};
 	}
 	#endregion
 
@@ -730,7 +732,7 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 			throw new ObjectDisposedException(this.GetType().Name);
 	}
 
-	internal void Unregister(RedisCacheSubscription subscription) => _subscriptions.TryRemove(subscription, out _);
+	internal void Unregister(DistributedCacheSubscription subscription) => _subscriptions.TryRemove(subscription, out _);
 
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private static When GetWhen(CacheRequisite requisite)
@@ -887,7 +889,7 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 			databaseId = _databaseId;
 
 		using var activity = RedisDiagnostics.ActivitySource.StartActivity("redis.connect", System.Diagnostics.ActivityKind.Client);
-		var options = this.Options ?? throw new InvalidOperationException($"The connection string for the redis named '{_name}' is not configured.");
+		var options = this.Options ?? throw new InvalidOperationException(string.Format(Properties.Resources.RedisConnectionStringNotConfigured_Message, _name));
 		var lease = RedisConnectionPool.Acquire(options);
 		var connection = lease.Connection;
 
@@ -913,7 +915,7 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 			databaseId = _databaseId;
 
 		using var activity = RedisDiagnostics.ActivitySource.StartActivity("redis.connect", System.Diagnostics.ActivityKind.Client);
-		var options = this.Options ?? throw new InvalidOperationException($"The connection string for the redis named '{_name}' is not configured.");
+		var options = this.Options ?? throw new InvalidOperationException(string.Format(Properties.Resources.RedisConnectionStringNotConfigured_Message, _name));
 		var lease = await RedisConnectionPool.AcquireAsync(options, cancellation);
 		var connection = lease.Connection;
 

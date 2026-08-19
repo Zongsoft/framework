@@ -85,7 +85,7 @@ public static class RedisQueueUtility
 	}
 
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private static ArgumentException IllegalId(ReadOnlySpan<char> id) => new ArgumentException($"The specified '{id}' is an invalid message id value.");
+	private static ArgumentException IllegalId(ReadOnlySpan<char> id) => new ArgumentException(string.Format(Properties.Resources.InvalidMessageId_Message, id.ToString()));
 
 	internal static string GetQueueName(string name, string topic) => string.IsNullOrWhiteSpace(topic) ? $"Zongsoft.Queue:{name}" : $"Zongsoft.Queue:{name}:{topic}";
 

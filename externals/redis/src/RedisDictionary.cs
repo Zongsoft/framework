@@ -94,7 +94,7 @@ public class RedisDictionary : IDictionary<string, string>
 	public void Add(string key, string value)
 	{
 		if(!_database.HashSet(_name, key, value, When.NotExists))
-			throw new ArgumentException($"The specified '{key}' key already exists in the '{_name}' dictionary.");
+			throw new ArgumentException(string.Format(Properties.Resources.DictionaryKeyAlreadyExists_Message, key, _name));
 	}
 
 	void ICollection<KeyValuePair<string, string>>.Add(KeyValuePair<string, string> field) => this.Add(field.Key, field.Value);
@@ -131,7 +131,7 @@ public class RedisDictionary : IDictionary<string, string>
 		var entries = _database.HashGetAll(_name);
 
 		if(entries.Length > array.Length - arrayIndex)
-			throw new ArgumentException("The destination array does not have enough available space.", nameof(array));
+			throw new ArgumentException(Properties.Resources.DestinationArrayInsufficient_Message, nameof(array));
 
 		for(int i = 0; i < entries.Length; i++)
 			array[arrayIndex + i] = new KeyValuePair<string, string>(entries[i].Name, entries[i].Value);

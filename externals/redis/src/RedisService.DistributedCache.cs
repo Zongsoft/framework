@@ -43,11 +43,11 @@ namespace Zongsoft.Externals.Redis;
 
 partial class RedisService : IDistributedCache
 {
-	#region 普通方法
+	#region 订阅方法
 	public async ValueTask<IDistributedCacheSubscription> SubscribeAsync(IHandler<DistributedCacheNotification> handler, DistributedCacheSubscriptionOptions options = null, CancellationToken cancellation = default)
 	{
 		ArgumentNullException.ThrowIfNull(handler);
-		RedisCacheSubscription subscription = null;
+		DistributedCacheSubscription subscription = null;
 		var snapshot = (options ?? DistributedCacheSubscriptionOptions.Default).Snapshot();
 
 		await _gate.WaitAsync(cancellation);
@@ -60,8 +60,8 @@ partial class RedisService : IDistributedCache
 			var @namespace = string.IsNullOrEmpty(_namespace) ? string.Empty : _namespace + ":";
 			while(true)
 			{
-				var hub = await RedisCacheNotificationHub.GetAsync(_connection, _database.Database, @namespace, cancellation);
-				subscription = new RedisCacheSubscription(this, hub, handler, snapshot);
+				var hub = await DistributedCacheNotificationHub.GetAsync(_connection, _database.Database, @namespace, cancellation);
+				subscription = new DistributedCacheSubscription(this, hub, handler, snapshot);
 				if(await subscription.SubscribeAsync(cancellation))
 					break;
 
@@ -70,7 +70,7 @@ partial class RedisService : IDistributedCache
 			}
 
 			if(!_subscriptions.TryAdd(subscription, 0))
-				throw new InvalidOperationException("The Redis cache notification subscription could not be registered.");
+				throw new InvalidOperationException(Properties.Resources.CacheNotificationSubscriptionRegistrationFailed_Message);
 
 			return subscription;
 		}
@@ -86,7 +86,9 @@ partial class RedisService : IDistributedCache
 			_gate.Release();
 		}
 	}
+	#endregion
 
+	#region 普通方法
 	public long GetCount()
 	{
 		//确保连接成功

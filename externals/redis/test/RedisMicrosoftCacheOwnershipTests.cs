@@ -25,7 +25,7 @@ public class RedisMicrosoftCacheOwnershipTests
 		EnsureRedis();
 
 		var identity = Guid.NewGuid().ToString("N");
-		var connectionString = $"server={RedisTestUtility.Server};password={RedisTestUtility.Password};timeout=5s;client={identity};";
+		var connectionString = $"server={Global.Server};password={Global.Password};timeout=5s;client={identity};";
 		var service = new RedisService($"microsoft-{identity}", connectionString) { Namespace = $"Zongsoft.Tests.Microsoft.{identity}" };
 		var settings = RedisConnectionSettingsDriver.Instance.GetSettings($"queue-{identity}", connectionString);
 		var queue = new RedisQueue($"queue-{identity}", settings);
@@ -48,7 +48,7 @@ public class RedisMicrosoftCacheOwnershipTests
 		var queueKey = RedisTestUtility.GetQueueKey(queue.Name, queueTopic);
 		var serviceKey = $"{service.Namespace}:service";
 
-		using var administration = ConnectionMultiplexer.Connect($"{RedisTestUtility.Server},password={RedisTestUtility.Password}");
+		using var administration = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password}");
 		var database = administration.GetDatabase();
 
 		try
@@ -82,7 +82,7 @@ public class RedisMicrosoftCacheOwnershipTests
 
 	private static void EnsureRedis()
 	{
-		Assert.SkipUnless(RedisTestUtility.IsTestingEnabled, TESTS_DISABLED);
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsTestingEnabled, TESTS_DISABLED);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 	}
 }

@@ -36,8 +36,8 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Redis.Commands;
 
-[DisplayName("Text.RedisCommand.Name")]
-[Description("Text.RedisCommand.Description")]
+[DisplayName("RedisCommand.Name")]
+[Description("RedisCommand.Description")]
 [CommandOption("name", 'n')]
 public class RedisCommand : CommandBase<CommandContext>
 {
@@ -63,10 +63,10 @@ public class RedisCommand : CommandBase<CommandContext>
 		var name = context.Options.GetValue<string>("name");
 
 		if(!string.IsNullOrEmpty(name))
-			_redis = RedisServiceProvider.GetRedis(name) ?? throw new CommandException(string.Format(Properties.Resources.Text_CannotObtainCommandTarget, name));
+			_redis = RedisServiceProvider.GetRedis(name) ?? throw new CommandException(string.Format(Properties.Resources.CannotObtainCommandTarget_Message, name));
 
 		if(_redis == null)
-			context.Output.WriteLine(CommandOutletColor.Magenta, Properties.Resources.Text_NoRedis);
+			context.Output.WriteLine(CommandOutletColor.Magenta, Properties.Resources.NoRedis_Message);
 		else
 			context.Output.WriteLine(CommandOutletColor.Green, _redis.Settings);
 

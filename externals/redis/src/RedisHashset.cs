@@ -133,7 +133,7 @@ public class RedisHashset : ISet<string>, ICollection<string>
 		var items = _database.SetMembers(_name);
 
 		if(items.Length > array.Length - arrayIndex)
-			throw new ArgumentException("The destination array does not have enough available space.", nameof(array));
+			throw new ArgumentException(Properties.Resources.DestinationArrayInsufficient_Message, nameof(array));
 
 		for(int i = 0; i < items.Length; i++)
 			array[arrayIndex + i] = (string)items[i];

@@ -178,7 +178,7 @@ public class RedisDistributedLockTests
 	{
 		cacheNamespace = $"Zongsoft.Tests.Lock.{Guid.NewGuid():N}";
 		return new RedisService($"lock-{Guid.NewGuid():N}",
-			$"server={RedisTestUtility.Server};password={RedisTestUtility.Password};timeout=5s;")
+			$"server={Global.Server};password={Global.Password};timeout=5s;")
 		{
 			Namespace = cacheNamespace,
 		};
@@ -198,7 +198,7 @@ public class RedisDistributedLockTests
 
 	private static void EnsureRedis()
 	{
-		Assert.SkipUnless(RedisTestUtility.IsTestingEnabled, TESTS_DISABLED);
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsTestingEnabled, TESTS_DISABLED);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 	}
 }

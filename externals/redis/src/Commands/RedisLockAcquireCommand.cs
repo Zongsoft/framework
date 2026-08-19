@@ -38,8 +38,8 @@ using Zongsoft.Services.Distributing;
 
 namespace Zongsoft.Externals.Redis.Commands;
 
-[DisplayName("Text.RedisLockAcquireCommand.Name")]
-[Description("Text.RedisLockAcquireCommand.Description")]
+[DisplayName("RedisLockAcquireCommand.Name")]
+[Description("RedisLockAcquireCommand.Description")]
 [CommandOption(EXPIRY_OPTION, 'x', typeof(TimeSpan), "60s")]
 public class RedisLockAcquireCommand : CommandBase<CommandContext>
 {
@@ -56,10 +56,10 @@ public class RedisLockAcquireCommand : CommandBase<CommandContext>
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(context.Arguments.IsEmpty)
-			throw new CommandException();
+			throw new CommandException(Properties.Resources.MissingArguments_Message);
 
 		var expiry = context.Options.GetValue(EXPIRY_OPTION, TimeSpan.FromSeconds(60));
-		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException(Properties.Resources.MissingRequiredRedisService_Message);
 		var lockers = new List<IDistributedLock>(context.Arguments.Count);
 
 		for(int i = 0; i < context.Arguments.Count; i++)

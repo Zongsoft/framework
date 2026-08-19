@@ -37,8 +37,8 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Redis.Commands;
 
-[DisplayName("Text.RedisLockReleaseCommand.Name")]
-[Description("Text.RedisLockReleaseCommand.Description")]
+[DisplayName("RedisLockReleaseCommand.Name")]
+[Description("RedisLockReleaseCommand.Description")]
 public class RedisLockReleaseCommand : CommandBase<CommandContext>
 {
 	#region 构造函数
@@ -49,7 +49,7 @@ public class RedisLockReleaseCommand : CommandBase<CommandContext>
 	#region 重写方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException(Properties.Resources.MissingRequiredRedisService_Message);
 
 		if(context.Value is IDisposable disposable)
 		{
@@ -77,9 +77,9 @@ public class RedisLockReleaseCommand : CommandBase<CommandContext>
 	private static bool Print(ICommandOutlet output, bool result)
 	{
 		if(result)
-			output.WriteLine(CommandOutletColor.Green, "Succeed.");
+			output.WriteLine(CommandOutletColor.Green, Properties.Resources.Succeeded);
 		else
-			output.WriteLine(CommandOutletColor.DarkRed, "Faild.");
+			output.WriteLine(CommandOutletColor.DarkRed, Properties.Resources.Failed);
 
 		return result;
 	}

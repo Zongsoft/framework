@@ -10,8 +10,8 @@
 
 namespace Zongsoft.Externals.Redis.Properties {
     using System;
-    
-    
+
+
     /// <summary>
     ///   一个强类型的资源类，用于查找本地化的字符串等。
     /// </summary>
@@ -19,19 +19,19 @@ namespace Zongsoft.Externals.Redis.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   返回此类使用的缓存的 ResourceManager 实例。
         /// </summary>
@@ -45,7 +45,7 @@ namespace Zongsoft.Externals.Redis.Properties {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
         ///   重写当前线程的 CurrentUICulture 属性，对
         ///   使用此强类型资源类的所有资源查找执行重写。
@@ -59,283 +59,544 @@ namespace Zongsoft.Externals.Redis.Properties {
                 resourceCulture = value;
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 无法获得命令的操作目标：{0}。 的本地化字符串。
+        ///   查找类似 The cache notification subscription is already registered. 的本地化字符串。
         /// </summary>
-        internal static string Text_CannotObtainCommandTarget {
+        internal static string CacheNotificationSubscriptionAlreadyRegistered_Message {
             get {
-                return ResourceManager.GetString("Text.CannotObtainCommandTarget", resourceCulture);
+                return ResourceManager.GetString("CacheNotificationSubscriptionAlreadyRegistered.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 没有Redis服务。 的本地化字符串。
+        ///   查找类似 The Redis cache notification subscription could not be registered. 的本地化字符串。
         /// </summary>
-        internal static string Text_NoRedis {
+        internal static string CacheNotificationSubscriptionRegistrationFailed_Message {
             get {
-                return ResourceManager.GetString("Text.NoRedis", resourceCulture);
+                return ResourceManager.GetString("CacheNotificationSubscriptionRegistrationFailed.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 为其他 Redis 命令提供宿主环境。 的本地化字符串。
+        ///   查找类似 Unable to obtain the command target: {0}. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisCommand_Description {
+        internal static string CannotObtainCommandTarget_Message {
             get {
-                return ResourceManager.GetString("Text.RedisCommand.Description", resourceCulture);
+                return ResourceManager.GetString("CannotObtainCommandTarget.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 Redis 命令 的本地化字符串。
+        ///   查找类似 Connected 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisCommand_Name {
+        internal static string Connected {
             get {
-                return ResourceManager.GetString("Text.RedisCommand.Name", resourceCulture);
+                return ResourceManager.GetString("Connected", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 获取当前数据库的记录数。 的本地化字符串。
+        ///   查找类似 The destination array does not have enough available space. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisCountCommand_Description {
+        internal static string DestinationArrayInsufficient_Message {
             get {
-                return ResourceManager.GetString("Text.RedisCountCommand.Description", resourceCulture);
+                return ResourceManager.GetString("DestinationArrayInsufficient.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 计数命令 的本地化字符串。
+        ///   查找类似 The dictionary &apos;{0}&apos; contains {1} entries. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisCountCommand_Name {
+        internal static string DictionaryEntryCount_Message {
             get {
-                return ResourceManager.GetString("Text.RedisCountCommand.Name", resourceCulture);
+                return ResourceManager.GetString("DictionaryEntryCount.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 以原子方式递减指定键的数值。 的本地化字符串。
+        ///   查找类似 The specified key &apos;{0}&apos; already exists in the &apos;{1}&apos; dictionary. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisDecreaseCommand_Description {
+        internal static string DictionaryKeyAlreadyExists_Message {
             get {
-                return ResourceManager.GetString("Text.RedisDecreaseCommand.Description", resourceCulture);
+                return ResourceManager.GetString("DictionaryKeyAlreadyExists.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 递减命令 的本地化字符串。
+        ///   查找类似 Disconnected 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisDecreaseCommand_Name {
+        internal static string Disconnected {
             get {
-                return ResourceManager.GetString("Text.RedisDecreaseCommand.Name", resourceCulture);
+                return ResourceManager.GetString("Disconnected", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 递减的步长，默认为1。 的本地化字符串。
+        ///   查找类似 The entry &apos;{0}&apos; does not exist. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisDecreaseCommand_Options_Interval {
+        internal static string EntryNotFound_Message {
             get {
-                return ResourceManager.GetString("Text.RedisDecreaseCommand.Options.Interval", resourceCulture);
+                return ResourceManager.GetString("EntryNotFound.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 种子数，当指定键值不存在时设置的初始值，默认为0。 的本地化字符串。
+        ///   查找类似 Failed. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisDecreaseCommand_Options_Seed {
+        internal static string Failed {
             get {
-                return ResourceManager.GetString("Text.RedisDecreaseCommand.Options.Seed", resourceCulture);
+                return ResourceManager.GetString("Failed", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 按指定的搜索模式进行查找。 的本地化字符串。
+        ///   查找类似 The hash set &apos;{0}&apos; contains {1} entries. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisFindCommand_Description {
+        internal static string HashSetEntryCount_Message {
             get {
-                return ResourceManager.GetString("Text.RedisFindCommand.Description", resourceCulture);
+                return ResourceManager.GetString("HashSetEntryCount.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 查找命令 的本地化字符串。
+        ///   查找类似 Invalid command arguments. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisFindCommand_Name {
+        internal static string InvalidCommandArguments_Message {
             get {
-                return ResourceManager.GetString("Text.RedisFindCommand.Name", resourceCulture);
+                return ResourceManager.GetString("InvalidCommandArguments.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 返回的最多记录数，默认为100。 的本地化字符串。
+        ///   查找类似 The specified &apos;{0}&apos; is an invalid message ID. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisFindCommand_Options_Count {
+        internal static string InvalidMessageId_Message {
             get {
-                return ResourceManager.GetString("Text.RedisFindCommand.Options.Count", resourceCulture);
+                return ResourceManager.GetString("InvalidMessageId.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 获取指定键名的内容。 的本地化字符串。
+        ///   查找类似 The list (queue) &apos;{0}&apos; contains {1} entries. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisGetCommand_Description {
+        internal static string ListEntryCount_Message {
             get {
-                return ResourceManager.GetString("Text.RedisGetCommand.Description", resourceCulture);
+                return ResourceManager.GetString("ListEntryCount.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 获取命令 的本地化字符串。
+        ///   查找类似 Master 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisGetCommand_Name {
+        internal static string Master {
             get {
-                return ResourceManager.GetString("Text.RedisGetCommand.Name", resourceCulture);
+                return ResourceManager.GetString("Master", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 以原子方式递增指定键的数值。 的本地化字符串。
+        ///   查找类似 Missing arguments. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisIncreaseCommand_Description {
+        internal static string MissingArguments_Message {
             get {
-                return ResourceManager.GetString("Text.RedisIncreaseCommand.Description", resourceCulture);
+                return ResourceManager.GetString("MissingArguments.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 递增命令 的本地化字符串。
+        ///   查找类似 The default Redis connection setting is missing. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisIncreaseCommand_Name {
+        internal static string MissingDefaultRedisConnectionSetting_Message {
             get {
-                return ResourceManager.GetString("Text.RedisIncreaseCommand.Name", resourceCulture);
+                return ResourceManager.GetString("MissingDefaultRedisConnectionSetting.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 递增的步长，默认为1。 的本地化字符串。
+        ///   查找类似 Redis connection settings are missing. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisIncreaseCommand_Options_Interval {
+        internal static string MissingRedisConnectionSettings_Message {
             get {
-                return ResourceManager.GetString("Text.RedisIncreaseCommand.Options.Interval", resourceCulture);
+                return ResourceManager.GetString("MissingRedisConnectionSettings.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 种子数，当指定键值不存在时设置的初始值，默认为0。 的本地化字符串。
+        ///   查找类似 The required Redis service is missing. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisIncreaseCommand_Options_Seed {
+        internal static string MissingRequiredRedisService_Message {
             get {
-                return ResourceManager.GetString("Text.RedisIncreaseCommand.Options.Seed", resourceCulture);
+                return ResourceManager.GetString("MissingRequiredRedisService.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 查看 Redis 服务信息。 的本地化字符串。
+        ///   查找类似 No Redis service is available. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisInfoCommand_Description {
+        internal static string NoRedis_Message {
             get {
-                return ResourceManager.GetString("Text.RedisInfoCommand.Description", resourceCulture);
+                return ResourceManager.GetString("NoRedis.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 信息命令 的本地化字符串。
+        ///   查找类似 Provides a host environment for other Redis commands. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisInfoCommand_Name {
+        internal static string RedisCommand_Description {
             get {
-                return ResourceManager.GetString("Text.RedisInfoCommand.Name", resourceCulture);
+                return ResourceManager.GetString("RedisCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 请求获取一个或多个分布式锁。 的本地化字符串。
+        ///   查找类似 Redis Command 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisLockAcquireCommand_Description {
+        internal static string RedisCommand_Name {
             get {
-                return ResourceManager.GetString("Text.RedisLockAcquireCommand.Description", resourceCulture);
+                return ResourceManager.GetString("RedisCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 获取锁命令 的本地化字符串。
+        ///   查找类似 The Redis connection setting named &apos;{0}&apos; does not exist, and no default Redis connection setting is defined. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisLockAcquireCommand_Name {
+        internal static string RedisConnectionSettingNotFound_Message {
             get {
-                return ResourceManager.GetString("Text.RedisLockAcquireCommand.Name", resourceCulture);
+                return ResourceManager.GetString("RedisConnectionSettingNotFound.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 释放一个或多个分布式锁。 的本地化字符串。
+        ///   查找类似 The connection string for the Redis service named &apos;{0}&apos; is not configured. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisLockReleaseCommand_Description {
+        internal static string RedisConnectionStringNotConfigured_Message {
             get {
-                return ResourceManager.GetString("Text.RedisLockReleaseCommand.Description", resourceCulture);
+                return ResourceManager.GetString("RedisConnectionStringNotConfigured.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 释放锁命令 的本地化字符串。
+        ///   查找类似 Gets the number of entries in the current database. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisLockReleaseCommand_Name {
+        internal static string RedisCountCommand_Description {
             get {
-                return ResourceManager.GetString("Text.RedisLockReleaseCommand.Name", resourceCulture);
+                return ResourceManager.GetString("RedisCountCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 删除一个或多个对应键名的项目。 的本地化字符串。
+        ///   查找类似 Count Command 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisRemoveCommand_Description {
+        internal static string RedisCountCommand_Name {
             get {
-                return ResourceManager.GetString("Text.RedisRemoveCommand.Description", resourceCulture);
+                return ResourceManager.GetString("RedisCountCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 删除命令 的本地化字符串。
+        ///   查找类似 The Redis cache database cannot be changed after the service has been activated. Use WithDatabase() to create another scope. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisRemoveCommand_Name {
+        internal static string RedisDatabaseChangeNotAllowed_Message {
             get {
-                return ResourceManager.GetString("Text.RedisRemoveCommand.Name", resourceCulture);
+                return ResourceManager.GetString("RedisDatabaseChangeNotAllowed.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 设置指定的键值到 Redis 数据库中。 的本地化字符串。
+        ///   查找类似 Atomically decrements the value of the specified key. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisSetCommand_Description {
+        internal static string RedisDecreaseCommand_Description {
             get {
-                return ResourceManager.GetString("Text.RedisSetCommand.Description", resourceCulture);
+                return ResourceManager.GetString("RedisDecreaseCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 设置命令 的本地化字符串。
+        ///   查找类似 Decrease Command 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisSetCommand_Name {
+        internal static string RedisDecreaseCommand_Name {
             get {
-                return ResourceManager.GetString("Text.RedisSetCommand.Name", resourceCulture);
+                return ResourceManager.GetString("RedisDecreaseCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 设置的过期时长，默认为永不过期。 的本地化字符串。
+        ///   查找类似 The expiration duration applied when a new key is created. By default, the key never expires. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisSetCommand_Options_Expiry {
+        internal static string RedisDecreaseCommand_Options_Expiry {
             get {
-                return ResourceManager.GetString("Text.RedisSetCommand.Options.Expiry", resourceCulture);
+                return ResourceManager.GetString("RedisDecreaseCommand.Options.Expiry", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 设置的必要条件。 的本地化字符串。
+        ///   查找类似 The decrement step. The default is 1. 的本地化字符串。
         /// </summary>
-        internal static string Text_RedisSetCommand_Options_Requisite {
+        internal static string RedisDecreaseCommand_Options_Interval {
             get {
-                return ResourceManager.GetString("Text.RedisSetCommand.Options.Requisite", resourceCulture);
+                return ResourceManager.GetString("RedisDecreaseCommand.Options.Interval", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The initial value used when the specified key does not exist. The default is 0. 的本地化字符串。
+        /// </summary>
+        internal static string RedisDecreaseCommand_Options_Seed {
+            get {
+                return ResourceManager.GetString("RedisDecreaseCommand.Options.Seed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Finds keys using the specified search pattern. 的本地化字符串。
+        /// </summary>
+        internal static string RedisFindCommand_Description {
+            get {
+                return ResourceManager.GetString("RedisFindCommand.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Find Command 的本地化字符串。
+        /// </summary>
+        internal static string RedisFindCommand_Name {
+            get {
+                return ResourceManager.GetString("RedisFindCommand.Name", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The maximum number of entries to return. The default is 100. 的本地化字符串。
+        /// </summary>
+        internal static string RedisFindCommand_Options_Count {
+            get {
+                return ResourceManager.GetString("RedisFindCommand.Options.Count", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Gets the value of the specified key. 的本地化字符串。
+        /// </summary>
+        internal static string RedisGetCommand_Description {
+            get {
+                return ResourceManager.GetString("RedisGetCommand.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Get Command 的本地化字符串。
+        /// </summary>
+        internal static string RedisGetCommand_Name {
+            get {
+                return ResourceManager.GetString("RedisGetCommand.Name", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Atomically increments the value of the specified key. 的本地化字符串。
+        /// </summary>
+        internal static string RedisIncreaseCommand_Description {
+            get {
+                return ResourceManager.GetString("RedisIncreaseCommand.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Increase Command 的本地化字符串。
+        /// </summary>
+        internal static string RedisIncreaseCommand_Name {
+            get {
+                return ResourceManager.GetString("RedisIncreaseCommand.Name", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The expiration duration applied when a new key is created. By default, the key never expires. 的本地化字符串。
+        /// </summary>
+        internal static string RedisIncreaseCommand_Options_Expiry {
+            get {
+                return ResourceManager.GetString("RedisIncreaseCommand.Options.Expiry", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The increment step. The default is 1. 的本地化字符串。
+        /// </summary>
+        internal static string RedisIncreaseCommand_Options_Interval {
+            get {
+                return ResourceManager.GetString("RedisIncreaseCommand.Options.Interval", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The initial value used when the specified key does not exist. The default is 0. 的本地化字符串。
+        /// </summary>
+        internal static string RedisIncreaseCommand_Options_Seed {
+            get {
+                return ResourceManager.GetString("RedisIncreaseCommand.Options.Seed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Displays Redis service information. 的本地化字符串。
+        /// </summary>
+        internal static string RedisInfoCommand_Description {
+            get {
+                return ResourceManager.GetString("RedisInfoCommand.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Info Command 的本地化字符串。
+        /// </summary>
+        internal static string RedisInfoCommand_Name {
+            get {
+                return ResourceManager.GetString("RedisInfoCommand.Name", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The specified key &apos;{0}&apos; already exists. 的本地化字符串。
+        /// </summary>
+        internal static string RedisKeyAlreadyExists_Message {
+            get {
+                return ResourceManager.GetString("RedisKeyAlreadyExists.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Acquires one or more distributed locks. 的本地化字符串。
+        /// </summary>
+        internal static string RedisLockAcquireCommand_Description {
+            get {
+                return ResourceManager.GetString("RedisLockAcquireCommand.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Acquire Lock Command 的本地化字符串。
+        /// </summary>
+        internal static string RedisLockAcquireCommand_Name {
+            get {
+                return ResourceManager.GetString("RedisLockAcquireCommand.Name", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Releases one or more distributed locks. 的本地化字符串。
+        /// </summary>
+        internal static string RedisLockReleaseCommand_Description {
+            get {
+                return ResourceManager.GetString("RedisLockReleaseCommand.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Release Lock Command 的本地化字符串。
+        /// </summary>
+        internal static string RedisLockReleaseCommand_Name {
+            get {
+                return ResourceManager.GetString("RedisLockReleaseCommand.Name", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The Redis cache namespace cannot be changed after the service has been activated. Use WithNamespace() to create another scope. 的本地化字符串。
+        /// </summary>
+        internal static string RedisNamespaceChangeNotAllowed_Message {
+            get {
+                return ResourceManager.GetString("RedisNamespaceChangeNotAllowed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Removes one or more entries by key. 的本地化字符串。
+        /// </summary>
+        internal static string RedisRemoveCommand_Description {
+            get {
+                return ResourceManager.GetString("RedisRemoveCommand.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Remove Command 的本地化字符串。
+        /// </summary>
+        internal static string RedisRemoveCommand_Name {
+            get {
+                return ResourceManager.GetString("RedisRemoveCommand.Name", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Sets the specified key and value in the Redis database. 的本地化字符串。
+        /// </summary>
+        internal static string RedisSetCommand_Description {
+            get {
+                return ResourceManager.GetString("RedisSetCommand.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Set Command 的本地化字符串。
+        /// </summary>
+        internal static string RedisSetCommand_Name {
+            get {
+                return ResourceManager.GetString("RedisSetCommand.Name", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The expiration duration. By default, the key never expires. 的本地化字符串。
+        /// </summary>
+        internal static string RedisSetCommand_Options_Expiry {
+            get {
+                return ResourceManager.GetString("RedisSetCommand.Options.Expiry", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The condition required to set the value. 的本地化字符串。
+        /// </summary>
+        internal static string RedisSetCommand_Options_Requisite {
+            get {
+                return ResourceManager.GetString("RedisSetCommand.Options.Requisite", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The renewal interval must be positive and shorter than the lock expiry. 的本地化字符串。
+        /// </summary>
+        internal static string RenewalIntervalOutOfRange_Message {
+            get {
+                return ResourceManager.GetString("RenewalIntervalOutOfRange.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Replica 的本地化字符串。
+        /// </summary>
+        internal static string Replica {
+            get {
+                return ResourceManager.GetString("Replica", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Succeeded. 的本地化字符串。
+        /// </summary>
+        internal static string Succeeded {
+            get {
+                return ResourceManager.GetString("Succeeded", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 ver 的本地化字符串。
+        /// </summary>
+        internal static string Version {
+            get {
+                return ResourceManager.GetString("Version", resourceCulture);
             }
         }
     }

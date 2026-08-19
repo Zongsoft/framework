@@ -408,18 +408,18 @@ public class RedisServiceCorrectnessTests
 	{
 		cacheNamespace = $"Zongsoft.Tests.Correctness.{Guid.NewGuid():N}";
 		return new RedisService($"correctness-{Guid.NewGuid():N}",
-			$"server={RedisTestUtility.Server};password={RedisTestUtility.Password};timeout=5s;")
+			$"server={Global.Server};password={Global.Password};timeout=5s;")
 		{
 			Namespace = cacheNamespace,
 		};
 	}
 
 	private static ConnectionMultiplexer CreateConnection() =>
-		ConnectionMultiplexer.Connect($"{RedisTestUtility.Server},password={RedisTestUtility.Password},connectTimeout=2000");
+		ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password},connectTimeout=2000");
 
 	private static void EnsureRedis()
 	{
-		Assert.SkipUnless(RedisTestUtility.IsTestingEnabled, TESTS_DISABLED);
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsTestingEnabled, TESTS_DISABLED);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 	}
 }

@@ -37,9 +37,9 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Redis.Commands;
 
-[DisplayName("Text.RedisFindCommand.Name")]
-[Description("Text.RedisFindCommand.Description")]
-[CommandOption(COUNT_OPTION, typeof(int), DefaultValue = 100, Description = "Text.RedisFindCommand.Options.Count")]
+[DisplayName("RedisFindCommand.Name")]
+[Description("RedisFindCommand.Description")]
+[CommandOption(COUNT_OPTION, typeof(int), DefaultValue = 100, Description = "RedisFindCommand.Options.Count")]
 public class RedisFindCommand : CommandBase<CommandContext>
 {
 	#region 常量定义
@@ -54,9 +54,9 @@ public class RedisFindCommand : CommandBase<CommandContext>
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(context.Arguments.IsEmpty)
-			throw new CommandException("Missing arguments.");
+			throw new CommandException(Properties.Resources.MissingArguments_Message);
 
-		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException(Properties.Resources.MissingRequiredRedisService_Message);
 
 		//查找指定模式的键名集
 		var result = redis.FindAsync(context.Arguments[0], cancellation);

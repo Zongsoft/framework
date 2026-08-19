@@ -22,7 +22,7 @@ public class RedisRoundTripTests
 		EnsureRedis();
 
 		await using var cache = new RedisService($"roundtrip-{Guid.NewGuid():N}",
-			$"server={RedisTestUtility.Server};password={RedisTestUtility.Password};timeout=5s;")
+			$"server={Global.Server};password={Global.Password};timeout=5s;")
 		{
 			Namespace = $"Zongsoft.Tests.RoundTrip.{Guid.NewGuid():N}",
 		};
@@ -56,7 +56,7 @@ public class RedisRoundTripTests
 
 	private static void EnsureRedis()
 	{
-		Assert.SkipUnless(RedisTestUtility.IsTestingEnabled, TESTS_DISABLED);
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsTestingEnabled, TESTS_DISABLED);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 	}
 }

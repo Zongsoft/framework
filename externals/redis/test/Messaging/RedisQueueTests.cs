@@ -1,15 +1,20 @@
 using System;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 using StackExchange.Redis;
 
 using Xunit;
 
-using Zongsoft.Externals.Redis.Messaging;
+using Zongsoft.Components;
 
-namespace Zongsoft.Externals.Redis.Tests;
+using Global = Zongsoft.Externals.Redis.Tests.Global;
+using RedisTestUtility = Zongsoft.Externals.Redis.Tests.RedisTestUtility;
+
+namespace Zongsoft.Externals.Redis.Messaging.Tests;
 
 public class RedisQueueTests
 {
@@ -18,10 +23,10 @@ public class RedisQueueTests
 	[Fact]
 	public async Task PublishAndConsumeMessage()
 	{
-		if(!RedisTestUtility.IsTestingEnabled)
+		if(!Global.IsTestingEnabled)
 			return;
 
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 
 		var identity = Guid.NewGuid().ToString("N");
 		var name = $"tests-{identity}";
@@ -29,7 +34,7 @@ public class RedisQueueTests
 		var group = $"group-{identity}";
 		var key = RedisTestUtility.GetQueueKey(name, topic);
 
-		using var administration = ConnectionMultiplexer.Connect($"{RedisTestUtility.Server},password={RedisTestUtility.Password}");
+		using var administration = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password}");
 		var database = administration.GetDatabase();
 		using var queue = RedisTestUtility.CreateQueue(name, group, $"client-{identity}");
 		using var messages = new RedisMessageBuffer();
@@ -70,10 +75,10 @@ public class RedisQueueTests
 	[Fact]
 	public async Task ExistingConsumerGroupCanSubscribeAgain()
 	{
-		if(!RedisTestUtility.IsTestingEnabled)
+		if(!Global.IsTestingEnabled)
 			return;
 
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 
 		var identity = Guid.NewGuid().ToString("N");
 		var name = $"tests-{identity}";
@@ -81,7 +86,7 @@ public class RedisQueueTests
 		var group = $"group-{identity}";
 		var key = RedisTestUtility.GetQueueKey(name, topic);
 
-		using var administration = ConnectionMultiplexer.Connect($"{RedisTestUtility.Server},password={RedisTestUtility.Password}");
+		using var administration = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password}");
 		var database = administration.GetDatabase();
 
 		try
@@ -116,17 +121,17 @@ public class RedisQueueTests
 	[Fact]
 	public async Task BroadcastSubscriptionDoesNotRequireConsumerGroup()
 	{
-		if(!RedisTestUtility.IsTestingEnabled)
+		if(!Global.IsTestingEnabled)
 			return;
 
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 
 		var identity = Guid.NewGuid().ToString("N");
 		var name = $"tests-{identity}";
 		var topic = $"broadcast-{identity}";
 		var key = RedisTestUtility.GetQueueKey(name, topic);
 
-		using var administration = ConnectionMultiplexer.Connect($"{RedisTestUtility.Server},password={RedisTestUtility.Password}");
+		using var administration = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password}");
 		var database = administration.GetDatabase();
 		using var queue = RedisTestUtility.CreateQueue(name, client: $"client-{identity}");
 		using var messages = new RedisMessageBuffer();
@@ -157,13 +162,13 @@ public class RedisQueueTests
 	[Fact]
 	public async Task InjectedDatabaseUsesExactStreamAndRemainsOwnedByCaller()
 	{
-		if(!RedisTestUtility.IsTestingEnabled)
+		if(!Global.IsTestingEnabled)
 			return;
 
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 
 		var key = $"tests:exact:{Guid.NewGuid():N}";
-		using var connection = ConnectionMultiplexer.Connect($"{RedisTestUtility.Server},password={RedisTestUtility.Password}");
+		using var connection = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password}");
 		var database = connection.GetDatabase();
 		using var messages = new RedisMessageBuffer();
 		var identifier = await database.StreamAddAsync(key, "Data", "exact stream");
@@ -192,16 +197,16 @@ public class RedisQueueTests
 	[Fact]
 	public void QueueRetentionProperties_DefaultAndConfiguredValuesAreHonored()
 	{
-		if(!RedisTestUtility.IsTestingEnabled)
+		if(!Global.IsTestingEnabled)
 			return;
 
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 
 		var key = $"tests:retention:settings:{Guid.NewGuid():N}";
 		var settings = Configuration.RedisConnectionSettingsDriver.Instance.GetSettings("retention",
-			$"server={RedisTestUtility.Server};password={RedisTestUtility.Password};maximumLength=7;useApproximateMaximumLength=false;");
+			$"server={Global.Server};password={Global.Password};maximumLength=7;useApproximateMaximumLength=false;");
 
-		using var connection = ConnectionMultiplexer.Connect($"{RedisTestUtility.Server},password={RedisTestUtility.Password}");
+		using var connection = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password}");
 		var database = connection.GetDatabase();
 		using var defaults = new RedisQueue(key, database);
 		using var configured = new RedisQueue(key, database, settings);
@@ -221,13 +226,13 @@ public class RedisQueueTests
 	[Fact]
 	public async Task ProduceAsync_ExactMaximumLengthBoundsStream()
 	{
-		if(!RedisTestUtility.IsTestingEnabled)
+		if(!Global.IsTestingEnabled)
 			return;
 
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 
 		var key = $"tests:retention:exact:{Guid.NewGuid():N}";
-		using var connection = ConnectionMultiplexer.Connect($"{RedisTestUtility.Server},password={RedisTestUtility.Password}");
+		using var connection = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password}");
 		var database = connection.GetDatabase();
 		using var queue = new RedisQueue(key, database)
 		{
@@ -256,10 +261,10 @@ public class RedisQueueTests
 	[InlineData(true)]
 	public async Task UnacknowledgedMessageMovesToDeadLetterStream(bool hasHashTag)
 	{
-		if(!RedisTestUtility.IsTestingEnabled)
+		if(!Global.IsTestingEnabled)
 			return;
 
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 
 		var identity = Guid.NewGuid().ToString("N");
 		var name = hasHashTag ? $"{{tests-{identity}}}" : $"tests-{identity}";
@@ -268,7 +273,7 @@ public class RedisQueueTests
 		var key = RedisTestUtility.GetQueueKey(name, topic);
 		var deadKey = hasHashTag ? $"{key}:DEAD!" : $"{{{key}}}:DEAD!";
 
-		using var administration = ConnectionMultiplexer.Connect($"{RedisTestUtility.Server},password={RedisTestUtility.Password}");
+		using var administration = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password}");
 		var database = administration.GetDatabase();
 		using var queue = RedisTestUtility.CreateQueue(name, group, $"client-{identity}", 2, "1s");
 		using var messages = new RedisMessageBuffer(false);
@@ -308,16 +313,58 @@ public class RedisQueueTests
 	[Fact]
 	public void FactoryCreatesRedisQueue()
 	{
-		if(!RedisTestUtility.IsTestingEnabled)
+		if(!Global.IsTestingEnabled)
 			return;
 
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 
 		var factory = new RedisQueueFactory();
-		using var queue = factory.Create("factory", $"server={RedisTestUtility.Server};password={RedisTestUtility.Password};group=factory;client=factory;");
+		using var queue = factory.Create("factory", $"server={Global.Server};password={Global.Password};group=factory;client=factory;");
 
 		Assert.Equal("Redis", factory.Name);
 		Assert.IsType<RedisQueue>(queue);
 		Assert.Equal("factory", queue.Name);
+	}
+
+	internal sealed class RedisMessageBuffer : HandlerBase<Zongsoft.Messaging.Message>, IDisposable
+	{
+		private readonly ConcurrentQueue<Zongsoft.Messaging.Message> _messages = new();
+		private readonly SemaphoreSlim _signal = new(0);
+		private readonly bool _acknowledge;
+		private int _acknowledgementCount;
+
+		public RedisMessageBuffer(bool acknowledge = true) => _acknowledge = acknowledge;
+
+		public int AcknowledgementCount => _acknowledgementCount;
+
+		public async Task<Zongsoft.Messaging.Message?> ReceiveAsync(TimeSpan timeout)
+		{
+			using var cancellation = new CancellationTokenSource(timeout);
+
+			try
+			{
+				await _signal.WaitAsync(cancellation.Token);
+			}
+			catch(OperationCanceledException)
+			{
+				return null;
+			}
+
+			return _messages.TryDequeue(out var message) ? message : null;
+		}
+
+		public void Dispose() => _signal.Dispose();
+
+		protected override async ValueTask OnHandleAsync(Zongsoft.Messaging.Message message, Collections.Parameters parameters, CancellationToken cancellation)
+		{
+			if(_acknowledge)
+			{
+				await message.AcknowledgeAsync(cancellation);
+				Interlocked.Increment(ref _acknowledgementCount);
+			}
+
+			_messages.Enqueue(message);
+			_signal.Release();
+		}
 	}
 }

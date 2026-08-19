@@ -7,12 +7,14 @@ using StackExchange.Redis;
 
 using Xunit;
 
-using Zongsoft.Collections;
-using Zongsoft.Components;
-using Zongsoft.Externals.Redis.Messaging;
 using Zongsoft.Messaging;
+using Zongsoft.Components;
+using Zongsoft.Collections;
 
-namespace Zongsoft.Externals.Redis.Tests;
+using Global= Zongsoft.Externals.Redis.Tests.Global;
+using RedisTestUtility = Zongsoft.Externals.Redis.Tests.RedisTestUtility;
+
+namespace Zongsoft.Externals.Redis.Messaging.Tests;
 
 public class RedisQueueAsyncTests
 {
@@ -21,10 +23,10 @@ public class RedisQueueAsyncTests
 	[Fact]
 	public async Task EquivalentQueues_ShareConnectionAndReleaseItAfterLastAsyncDispose()
 	{
-		if(!RedisTestUtility.IsTestingEnabled)
+		if(!Global.IsTestingEnabled)
 			return;
 
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 
 		var identity = Guid.NewGuid().ToString("N");
 		var name = $"tests-{identity}";
@@ -33,7 +35,7 @@ public class RedisQueueAsyncTests
 		var group = $"group-{identity}";
 		var client = $"client-{identity}";
 
-		using var administration = ConnectionMultiplexer.Connect($"{RedisTestUtility.Server},password={RedisTestUtility.Password}");
+		using var administration = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password}");
 		var database = administration.GetDatabase();
 		var first = RedisTestUtility.CreateQueue(name, group, client);
 		var second = RedisTestUtility.CreateQueue(name, group, client);
@@ -64,17 +66,17 @@ public class RedisQueueAsyncTests
 	[Fact]
 	public async Task BlockedReceive_DisposeAsyncCancelsPromptlyAndStopsDelivery()
 	{
-		if(!RedisTestUtility.IsTestingEnabled)
+		if(!Global.IsTestingEnabled)
 			return;
 
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 
 		var identity = Guid.NewGuid().ToString("N");
 		var name = $"tests-{identity}";
 		var topic = $"cancel-{identity}";
 		var key = RedisTestUtility.GetQueueKey(name, topic);
 
-		using var administration = ConnectionMultiplexer.Connect($"{RedisTestUtility.Server},password={RedisTestUtility.Password}");
+		using var administration = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password}");
 		var database = administration.GetDatabase();
 		await using var queue = RedisTestUtility.CreateQueue(name, $"group-{identity}", $"client-{identity}");
 		var handler = new CountingHandler();
@@ -100,17 +102,17 @@ public class RedisQueueAsyncTests
 	[Fact]
 	public async Task AsyncHandler_IsAwaitedAndMessagesAreDeliveredSerially()
 	{
-		if(!RedisTestUtility.IsTestingEnabled)
+		if(!Global.IsTestingEnabled)
 			return;
 
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 
 		var identity = Guid.NewGuid().ToString("N");
 		var name = $"tests-{identity}";
 		var topic = $"serial-{identity}";
 		var key = RedisTestUtility.GetQueueKey(name, topic);
 
-		using var administration = ConnectionMultiplexer.Connect($"{RedisTestUtility.Server},password={RedisTestUtility.Password}");
+		using var administration = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password}");
 		var database = administration.GetDatabase();
 		await using var queue = RedisTestUtility.CreateQueue(name, $"group-{identity}", $"client-{identity}");
 		var handler = new SerialHandler();

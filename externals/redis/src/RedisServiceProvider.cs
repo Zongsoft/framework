@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Redis library.
  *
@@ -65,7 +65,7 @@ public class RedisServiceProvider :
 		{
 			var settings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingsCollection>("/Externals/Redis/ConnectionSettings");
 			if(settings == null || settings.Count == 0)
-				throw new ConfigurationException($"Missing redis connection settings.");
+				throw new ConfigurationException(Properties.Resources.MissingRedisConnectionSettings_Message);
 
 			if(!string.IsNullOrEmpty(name) && settings.TryGetValue(name, Configuration.RedisConnectionSettingsDriver.NAME, out var setting))
 				return setting;
@@ -73,8 +73,8 @@ public class RedisServiceProvider :
 			setting = settings.GetDefault();
 			if(setting == null)
 				throw new ConfigurationException(string.IsNullOrEmpty(name) ?
-					$"Missing the default redis connection setting." :
-					$"The specified '{name}' redis connection setting does not exist and the default redis connection setting is not defined.");
+					Properties.Resources.MissingDefaultRedisConnectionSetting_Message :
+					string.Format(Properties.Resources.RedisConnectionSettingNotFound_Message, name));
 
 			return setting;
 		}

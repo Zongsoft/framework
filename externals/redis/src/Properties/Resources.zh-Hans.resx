@@ -118,183 +118,183 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="CannotObtainCommandTarget.Message" xml:space="preserve">
-    <value>Unable to obtain the command target: {0}.</value>
+    <value>无法获得命令的操作目标：{0}。</value>
   </data>
   <data name="CacheNotificationSubscriptionAlreadyRegistered.Message" xml:space="preserve">
-    <value>The cache notification subscription is already registered.</value>
+    <value>缓存通知订阅已注册。</value>
   </data>
   <data name="CacheNotificationSubscriptionRegistrationFailed.Message" xml:space="preserve">
-    <value>The Redis cache notification subscription could not be registered.</value>
+    <value>无法注册 Redis 缓存通知订阅。</value>
   </data>
   <data name="Connected" xml:space="preserve">
-    <value>Connected</value>
+    <value>已连接</value>
   </data>
   <data name="DestinationArrayInsufficient.Message" xml:space="preserve">
-    <value>The destination array does not have enough available space.</value>
+    <value>目标数组没有足够的可用空间。</value>
   </data>
   <data name="DictionaryEntryCount.Message" xml:space="preserve">
-    <value>The dictionary '{0}' contains {1} entries.</value>
+    <value>字典“{0}”包含 {1} 个条目。</value>
   </data>
   <data name="DictionaryKeyAlreadyExists.Message" xml:space="preserve">
-    <value>The specified key '{0}' already exists in the '{1}' dictionary.</value>
+    <value>指定的键“{0}”已存在于字典“{1}”中。</value>
   </data>
   <data name="Disconnected" xml:space="preserve">
-    <value>Disconnected</value>
+    <value>未连接</value>
   </data>
   <data name="EntryNotFound.Message" xml:space="preserve">
-    <value>The entry '{0}' does not exist.</value>
+    <value>条目“{0}”不存在。</value>
   </data>
   <data name="Failed" xml:space="preserve">
-    <value>Failed.</value>
+    <value>失败。</value>
   </data>
   <data name="HashSetEntryCount.Message" xml:space="preserve">
-    <value>The hash set '{0}' contains {1} entries.</value>
+    <value>哈希集“{0}”包含 {1} 个条目。</value>
   </data>
   <data name="InvalidCommandArguments.Message" xml:space="preserve">
-    <value>Invalid command arguments.</value>
+    <value>命令参数无效。</value>
   </data>
   <data name="InvalidMessageId.Message" xml:space="preserve">
-    <value>The specified '{0}' is an invalid message ID.</value>
+    <value>指定的“{0}”不是有效的消息标识。</value>
   </data>
   <data name="ListEntryCount.Message" xml:space="preserve">
-    <value>The list (queue) '{0}' contains {1} entries.</value>
+    <value>列表（队列）“{0}”包含 {1} 个条目。</value>
   </data>
   <data name="Master" xml:space="preserve">
-    <value>Master</value>
+    <value>主节点</value>
   </data>
   <data name="MissingArguments.Message" xml:space="preserve">
-    <value>Missing arguments.</value>
+    <value>缺少参数。</value>
   </data>
   <data name="MissingDefaultRedisConnectionSetting.Message" xml:space="preserve">
-    <value>The default Redis connection setting is missing.</value>
+    <value>缺少默认的 Redis 连接设置。</value>
   </data>
   <data name="MissingRedisConnectionSettings.Message" xml:space="preserve">
-    <value>Redis connection settings are missing.</value>
+    <value>缺少 Redis 连接设置。</value>
   </data>
   <data name="MissingRequiredRedisService.Message" xml:space="preserve">
-    <value>The required Redis service is missing.</value>
+    <value>缺少必需的 Redis 服务。</value>
   </data>
   <data name="NoRedis.Message" xml:space="preserve">
-    <value>No Redis service is available.</value>
+    <value>没有可用的 Redis 服务。</value>
   </data>
   <data name="RedisConnectionSettingNotFound.Message" xml:space="preserve">
-    <value>The Redis connection setting named '{0}' does not exist, and no default Redis connection setting is defined.</value>
+    <value>名为“{0}”的 Redis 连接设置不存在，并且没有定义默认的 Redis 连接设置。</value>
   </data>
   <data name="RedisConnectionStringNotConfigured.Message" xml:space="preserve">
-    <value>The connection string for the Redis service named '{0}' is not configured.</value>
+    <value>尚未配置名为“{0}”的 Redis 服务连接字符串。</value>
   </data>
   <data name="RedisCommand.Description" xml:space="preserve">
-    <value>Provides a host environment for other Redis commands.</value>
+    <value>为其他 Redis 命令提供宿主环境。</value>
   </data>
   <data name="RedisCommand.Name" xml:space="preserve">
-    <value>Redis Command</value>
+    <value>Redis 命令</value>
   </data>
   <data name="RedisCountCommand.Description" xml:space="preserve">
-    <value>Gets the number of entries in the current database.</value>
+    <value>获取当前数据库的记录数。</value>
   </data>
   <data name="RedisCountCommand.Name" xml:space="preserve">
-    <value>Count Command</value>
+    <value>计数命令</value>
   </data>
   <data name="RedisDatabaseChangeNotAllowed.Message" xml:space="preserve">
-    <value>The Redis cache database cannot be changed after the service has been activated. Use WithDatabase() to create another scope.</value>
+    <value>Redis 缓存服务激活后不能更改数据库，请使用 WithDatabase() 创建其他作用域。</value>
   </data>
   <data name="RedisDecreaseCommand.Description" xml:space="preserve">
-    <value>Atomically decrements the value of the specified key.</value>
+    <value>以原子方式递减指定键的数值。</value>
   </data>
   <data name="RedisDecreaseCommand.Name" xml:space="preserve">
-    <value>Decrease Command</value>
+    <value>递减命令</value>
   </data>
   <data name="RedisDecreaseCommand.Options.Expiry" xml:space="preserve">
-    <value>The expiration duration applied when a new key is created. By default, the key never expires.</value>
+    <value>创建新键时设置的过期时长，默认为永不过期。</value>
   </data>
   <data name="RedisDecreaseCommand.Options.Interval" xml:space="preserve">
-    <value>The decrement step. The default is 1.</value>
+    <value>递减的步长，默认为 1。</value>
   </data>
   <data name="RedisDecreaseCommand.Options.Seed" xml:space="preserve">
-    <value>The initial value used when the specified key does not exist. The default is 0.</value>
+    <value>指定键不存在时使用的初始值，默认为 0。</value>
   </data>
   <data name="RedisFindCommand.Description" xml:space="preserve">
-    <value>Finds keys using the specified search pattern.</value>
+    <value>按指定的搜索模式查找键。</value>
   </data>
   <data name="RedisFindCommand.Name" xml:space="preserve">
-    <value>Find Command</value>
+    <value>查找命令</value>
   </data>
   <data name="RedisFindCommand.Options.Count" xml:space="preserve">
-    <value>The maximum number of entries to return. The default is 100.</value>
+    <value>返回的最多记录数，默认为 100。</value>
   </data>
   <data name="RedisGetCommand.Description" xml:space="preserve">
-    <value>Gets the value of the specified key.</value>
+    <value>获取指定键的值。</value>
   </data>
   <data name="RedisGetCommand.Name" xml:space="preserve">
-    <value>Get Command</value>
+    <value>获取命令</value>
   </data>
   <data name="RedisIncreaseCommand.Description" xml:space="preserve">
-    <value>Atomically increments the value of the specified key.</value>
+    <value>以原子方式递增指定键的数值。</value>
   </data>
   <data name="RedisIncreaseCommand.Name" xml:space="preserve">
-    <value>Increase Command</value>
+    <value>递增命令</value>
   </data>
   <data name="RedisIncreaseCommand.Options.Expiry" xml:space="preserve">
-    <value>The expiration duration applied when a new key is created. By default, the key never expires.</value>
+    <value>创建新键时设置的过期时长，默认为永不过期。</value>
   </data>
   <data name="RedisIncreaseCommand.Options.Interval" xml:space="preserve">
-    <value>The increment step. The default is 1.</value>
+    <value>递增的步长，默认为 1。</value>
   </data>
   <data name="RedisIncreaseCommand.Options.Seed" xml:space="preserve">
-    <value>The initial value used when the specified key does not exist. The default is 0.</value>
+    <value>指定键不存在时使用的初始值，默认为 0。</value>
   </data>
   <data name="RedisInfoCommand.Description" xml:space="preserve">
-    <value>Displays Redis service information.</value>
+    <value>查看 Redis 服务信息。</value>
   </data>
   <data name="RedisInfoCommand.Name" xml:space="preserve">
-    <value>Info Command</value>
+    <value>信息命令</value>
   </data>
   <data name="RedisKeyAlreadyExists.Message" xml:space="preserve">
-    <value>The specified key '{0}' already exists.</value>
+    <value>指定的键“{0}”已存在。</value>
   </data>
   <data name="RedisLockAcquireCommand.Description" xml:space="preserve">
-    <value>Acquires one or more distributed locks.</value>
+    <value>获取一个或多个分布式锁。</value>
   </data>
   <data name="RedisLockAcquireCommand.Name" xml:space="preserve">
-    <value>Acquire Lock Command</value>
+    <value>获取锁命令</value>
   </data>
   <data name="RedisLockReleaseCommand.Description" xml:space="preserve">
-    <value>Releases one or more distributed locks.</value>
+    <value>释放一个或多个分布式锁。</value>
   </data>
   <data name="RedisLockReleaseCommand.Name" xml:space="preserve">
-    <value>Release Lock Command</value>
+    <value>释放锁命令</value>
   </data>
   <data name="RedisNamespaceChangeNotAllowed.Message" xml:space="preserve">
-    <value>The Redis cache namespace cannot be changed after the service has been activated. Use WithNamespace() to create another scope.</value>
+    <value>Redis 缓存服务激活后不能更改命名空间，请使用 WithNamespace() 创建其他作用域。</value>
   </data>
   <data name="RedisRemoveCommand.Description" xml:space="preserve">
-    <value>Removes one or more entries by key.</value>
+    <value>按键删除一个或多个条目。</value>
   </data>
   <data name="RedisRemoveCommand.Name" xml:space="preserve">
-    <value>Remove Command</value>
+    <value>删除命令</value>
   </data>
   <data name="RedisSetCommand.Description" xml:space="preserve">
-    <value>Sets the specified key and value in the Redis database.</value>
+    <value>在 Redis 数据库中设置指定的键和值。</value>
   </data>
   <data name="RedisSetCommand.Name" xml:space="preserve">
-    <value>Set Command</value>
+    <value>设置命令</value>
   </data>
   <data name="RedisSetCommand.Options.Expiry" xml:space="preserve">
-    <value>The expiration duration. By default, the key never expires.</value>
+    <value>设置的过期时长，默认为永不过期。</value>
   </data>
   <data name="RedisSetCommand.Options.Requisite" xml:space="preserve">
-    <value>The condition required to set the value.</value>
+    <value>设置值所需的条件。</value>
   </data>
   <data name="RenewalIntervalOutOfRange.Message" xml:space="preserve">
-    <value>The renewal interval must be positive and shorter than the lock expiry.</value>
+    <value>续期间隔必须为正数并且小于锁的有效期。</value>
   </data>
   <data name="Replica" xml:space="preserve">
-    <value>Replica</value>
+    <value>副本节点</value>
   </data>
   <data name="Succeeded" xml:space="preserve">
-    <value>Succeeded.</value>
+    <value>成功。</value>
   </data>
   <data name="Version" xml:space="preserve">
-    <value>ver</value>
+    <value>版本</value>
   </data>
 </root>

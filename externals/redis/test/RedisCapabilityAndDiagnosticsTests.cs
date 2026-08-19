@@ -1,11 +1,12 @@
 using System;
-using System.Collections.Concurrent;
+using System.Linq;
+using System.Text;
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
-using System.Linq;
 using System.Reflection;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 using StackExchange.Redis;
 
@@ -56,7 +57,7 @@ public class RedisCapabilityAndDiagnosticsTests
 		EnsureRedis();
 
 		await using var cache = new RedisService($"capabilities-{Guid.NewGuid():N}",
-			$"server={RedisTestUtility.Server};password={RedisTestUtility.Password};timeout=5s;");
+			$"server={Global.Server};password={Global.Password};timeout=5s;");
 		var info = await cache.GetInfoAsync();
 		var primaries = info.Servers.Where(server => !server.IsSlave).ToArray();
 
@@ -72,7 +73,7 @@ public class RedisCapabilityAndDiagnosticsTests
 	{
 		EnsureRedis();
 
-		var options = ConfigurationOptions.Parse($"{RedisTestUtility.Server},password={RedisTestUtility.Password},connectTimeout=2000");
+		var options = ConfigurationOptions.Parse($"{Global.Server},password={Global.Password},connectTimeout=2000");
 		options.ClientName = $"diagnostics-{Guid.NewGuid():N}";
 		var measurements = new ConcurrentQueue<long>();
 		using var listener = new MeterListener();
@@ -105,7 +106,7 @@ public class RedisCapabilityAndDiagnosticsTests
 	{
 		EnsureRedis();
 
-		var options = ConfigurationOptions.Parse($"{RedisTestUtility.Server},password={RedisTestUtility.Password},connectTimeout=2000");
+		var options = ConfigurationOptions.Parse($"{Global.Server},password={Global.Password},connectTimeout=2000");
 		options.ClientName = $"event-wiring-{Guid.NewGuid():N}";
 		await using var lease = await RedisConnectionPool.AcquireAsync(options);
 		var handlers = lease.Connection.GetType()
@@ -136,7 +137,7 @@ public class RedisCapabilityAndDiagnosticsTests
 		ActivitySource.AddActivityListener(listener);
 
 		var identity = Guid.NewGuid().ToString("N");
-		var connectionString = $"server={RedisTestUtility.Server};password={RedisTestUtility.Password};timeout=5s;";
+		var connectionString = $"server={Global.Server};password={Global.Password};timeout=5s;";
 		await using var cache = new RedisService($"diagnostics-{identity}", connectionString) { Namespace = $"Zongsoft.Tests.Diagnostics.{identity}" };
 		await using var queue = RedisTestUtility.CreateQueue($"diagnostics-{identity}");
 		var queueKey = RedisTestUtility.GetQueueKey($"diagnostics-{identity}", "activity");
@@ -159,7 +160,7 @@ public class RedisCapabilityAndDiagnosticsTests
 
 	private static void EnsureRedis()
 	{
-		Assert.SkipUnless(RedisTestUtility.IsTestingEnabled, TESTS_DISABLED);
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsTestingEnabled, TESTS_DISABLED);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 	}
 }

@@ -38,8 +38,8 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Externals.Redis.Commands;
 
-[DisplayName("Text.RedisGetCommand.Name")]
-[Description("Text.RedisGetCommand.Description")]
+[DisplayName("RedisGetCommand.Name")]
+[Description("RedisGetCommand.Description")]
 public class RedisGetCommand : CommandBase<CommandContext>
 {
 	#region 构造函数
@@ -50,10 +50,10 @@ public class RedisGetCommand : CommandBase<CommandContext>
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(context.Arguments.IsEmpty)
-			throw new CommandException("Missing arguments.");
+			throw new CommandException(Properties.Resources.MissingArguments_Message);
 
 		int index = 0;
-		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException($"Missing the required redis service.");
+		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException(Properties.Resources.MissingRequiredRedisService_Message);
 		var result = new List<object>(context.Arguments.Count);
 
 		for(int i = 0; i < context.Arguments.Count; i++)
@@ -61,7 +61,7 @@ public class RedisGetCommand : CommandBase<CommandContext>
 			(var entry, var entryType, var expiry) = await redis.GetEntryAsync(context.Arguments[i], cancellation);
 			if(entryType == RedisEntryType.None)
 			{
-				context.Output.WriteLine(CommandOutletColor.Red, $"The '{context.Arguments[i]}' entry is not existed.");
+				context.Output.WriteLine(CommandOutletColor.Red, string.Format(Properties.Resources.EntryNotFound_Message, context.Arguments[i]));
 			}
 			else
 			{
@@ -77,7 +77,7 @@ public class RedisGetCommand : CommandBase<CommandContext>
 						context.Output.WriteLine(entry);
 						break;
 					case RedisEntryType.Dictionary:
-						context.Output.WriteLine(CommandOutletColor.DarkYellow, $"The '{context.Arguments[i]}' dictionary have {((IDictionary<string, string>)entry).Count} entries.");
+						context.Output.WriteLine(CommandOutletColor.DarkYellow, string.Format(Properties.Resources.DictionaryEntryCount_Message, context.Arguments[i], ((IDictionary<string, string>)entry).Count));
 
 						foreach(KeyValuePair<string, string> item in (IDictionary<string, string>)entry)
 						{
@@ -89,7 +89,7 @@ public class RedisGetCommand : CommandBase<CommandContext>
 
 						break;
 					case RedisEntryType.List:
-						context.Output.WriteLine(CommandOutletColor.DarkYellow, $"The '{context.Arguments[i]}' list(queue) have {((ICollection<string>)entry).Count} entries.");
+						context.Output.WriteLine(CommandOutletColor.DarkYellow, string.Format(Properties.Resources.ListEntryCount_Message, context.Arguments[i], ((ICollection<string>)entry).Count));
 
 						foreach(object item in (IEnumerable)entry)
 						{
@@ -104,7 +104,7 @@ public class RedisGetCommand : CommandBase<CommandContext>
 						break;
 					case RedisEntryType.Set:
 					case RedisEntryType.SortedSet:
-						context.Output.WriteLine(CommandOutletColor.DarkYellow, $"The '{context.Arguments[i]}' hashset have {((ISet<string>)entry).Count} entries.");
+						context.Output.WriteLine(CommandOutletColor.DarkYellow, string.Format(Properties.Resources.HashSetEntryCount_Message, context.Arguments[i], ((ISet<string>)entry).Count));
 
 						foreach(object item in (IEnumerable)entry)
 						{

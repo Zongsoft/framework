@@ -135,7 +135,7 @@ public class RedisHashsetTests
 		EnsureRedis();
 
 		using var cache = CreateCache(out var cacheNamespace);
-		using var connection = ConnectionMultiplexer.Connect($"{RedisTestUtility.Server},password={RedisTestUtility.Password},connectTimeout=2000");
+		using var connection = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password},connectTimeout=2000");
 		var database = connection.GetDatabase();
 		var destination = $"destination-{Guid.NewGuid():N}";
 
@@ -181,7 +181,7 @@ public class RedisHashsetTests
 	{
 		cacheNamespace = $"Zongsoft.Tests.Hashset.{Guid.NewGuid():N}";
 		return new RedisService($"hashset-{Guid.NewGuid():N}",
-			$"server={RedisTestUtility.Server};password={RedisTestUtility.Password};timeout=5s;")
+			$"server={Global.Server};password={Global.Password};timeout=5s;")
 		{
 			Namespace = cacheNamespace,
 		};
@@ -189,7 +189,7 @@ public class RedisHashsetTests
 
 	private static void AssertNoTemporaryKeys(string cacheNamespace, string key)
 	{
-		using var connection = ConnectionMultiplexer.Connect($"{RedisTestUtility.Server},password={RedisTestUtility.Password},connectTimeout=2000");
+		using var connection = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password},connectTimeout=2000");
 		var database = connection.GetDatabase();
 		var server = connection.GetServer(database.IdentifyEndpoint());
 		Assert.Empty(server.Keys(database.Database, $"{cacheNamespace}:{key}:*"));
@@ -197,7 +197,7 @@ public class RedisHashsetTests
 
 	private static void EnsureRedis()
 	{
-		Assert.SkipUnless(RedisTestUtility.IsTestingEnabled, TESTS_DISABLED);
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsTestingEnabled, TESTS_DISABLED);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 	}
 }

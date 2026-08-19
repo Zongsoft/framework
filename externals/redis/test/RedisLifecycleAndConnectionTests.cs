@@ -31,8 +31,8 @@ public class RedisLifecycleAndConnectionTests
 	public void ApprovedHotPathImplementationTypes_AreSealed()
 	{
 		Assert.True(typeof(RedisConnectionLease).IsSealed);
-		Assert.True(typeof(RedisCacheNotificationHub).IsSealed);
-		Assert.True(typeof(RedisCacheSubscription).IsSealed);
+		Assert.True(typeof(RedisService.DistributedCacheNotificationHub).IsSealed);
+		Assert.True(typeof(RedisService.DistributedCacheSubscription).IsSealed);
 
 		var poller = typeof(Messaging.RedisSubscriber).GetNestedType("Poller", BindingFlags.NonPublic);
 		Assert.NotNull(poller);
@@ -149,18 +149,18 @@ public class RedisLifecycleAndConnectionTests
 	}
 
 	private static RedisService CreateCache() => new($"lifecycle-{Guid.NewGuid():N}",
-		$"server={RedisTestUtility.Server};password={RedisTestUtility.Password};timeout=5s;");
+		$"server={Global.Server};password={Global.Password};timeout=5s;");
 
 	private static ConfigurationOptions CreateOptions()
 	{
-		var options = ConfigurationOptions.Parse($"{RedisTestUtility.Server},password={RedisTestUtility.Password},connectTimeout=2000");
+		var options = ConfigurationOptions.Parse($"{Global.Server},password={Global.Password},connectTimeout=2000");
 		options.ClientName = $"pool-tests-{Guid.NewGuid():N}";
 		return options;
 	}
 
 	private static void EnsureRedis()
 	{
-		Assert.SkipUnless(RedisTestUtility.IsTestingEnabled, TESTS_DISABLED);
-		Assert.SkipUnless(RedisTestUtility.IsAvailable(), REDIS_UNAVAILABLE);
+		Assert.SkipUnless(Global.IsTestingEnabled, TESTS_DISABLED);
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 	}
 }
