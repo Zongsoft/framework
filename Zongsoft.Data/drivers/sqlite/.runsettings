@@ -2,8 +2,8 @@
 <RunSettings>
 	<RunConfiguration>
 		<EnvironmentVariables>
-			<!-- 默认不启用集成测试；如需在非调试模式下运行测试，请将值改为 1。 -->
-			<ZONGSOFT_DATA_TESTS>0</ZONGSOFT_DATA_TESTS>
+			<!-- 默认启用集成测试；如需跳过则将值改为 false。 -->
+			<ZONGSOFT_DATA_TESTS>true</ZONGSOFT_DATA_TESTS>
 		</EnvironmentVariables>
 	</RunConfiguration>
 </RunSettings>
