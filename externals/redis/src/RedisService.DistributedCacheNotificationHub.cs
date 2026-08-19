@@ -130,8 +130,12 @@ partial class RedisService
 				if(_queue != null)
 					return true;
 
+				//注：命名空间为空时不能使用 RedisChannel.KeySpacePrefix，StackExchange.Redis 3.x 会拒绝空前缀
 				RedisKey prefix = _scope.Namespace;
-				var operation = _subscriber.SubscribeAsync(RedisChannel.KeySpacePrefix(in prefix, _scope.Database));
+				var operation = string.IsNullOrEmpty(_scope.Namespace) ?
+					_subscriber.SubscribeAsync(RedisChannel.Pattern($"__keyspace@{_scope.Database}__:*")) :
+					_subscriber.SubscribeAsync(RedisChannel.KeySpacePrefix(in prefix, _scope.Database));
+
 				try
 				{
 					_queue = await operation.WaitAsync(cancellation);
@@ -142,10 +146,12 @@ partial class RedisService
 				{
 					_closed = true;
 					_registry.TryRemove(new(_scope, this));
+
 					if(operation.IsCompletedSuccessfully)
 						await operation.Result.UnsubscribeAsync();
 					else if(!operation.IsFaulted)
 						_ = UnsubscribeWhenCompletedAsync(operation);
+
 					throw;
 				}
 			}
@@ -161,9 +167,7 @@ partial class RedisService
 					var queue = await operation;
 					await queue.UnsubscribeAsync();
 				}
-				catch
-				{
-				}
+				catch { }
 			}
 		}
 
