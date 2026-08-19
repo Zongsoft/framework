@@ -56,18 +56,18 @@ public class DistributedCacheSubscriptionOptions : INotifyPropertyChanged, INoti
 	/// <summary>初始化默认订阅选项。</summary>
 	public DistributedCacheSubscriptionOptions()
 	{
-		_kind = DistributedCacheNotificationKind.All;
 		_capacity = 1024;
+		_kind = DistributedCacheNotificationKind.All;
 	}
 
 	/// <summary>初始化指定逻辑键前缀和通知种类的订阅选项。</summary>
 	/// <param name="prefix">大小写敏感的逻辑缓存键前缀。</param>
 	/// <param name="kind">要接收的通知种类组合。</param>
 	public DistributedCacheSubscriptionOptions(string prefix, DistributedCacheNotificationKind kind = DistributedCacheNotificationKind.All)
-		: this()
 	{
-		this.Prefix = prefix;
+		_capacity = 1024;
 		this.Kind = kind;
+		this.Prefix = prefix;
 	}
 
 	/// <summary>使用指定的订阅选项创建一个经过验证的副本。</summary>
@@ -77,8 +77,8 @@ public class DistributedCacheSubscriptionOptions : INotifyPropertyChanged, INoti
 	public DistributedCacheSubscriptionOptions(DistributedCacheSubscriptionOptions options)
 	{
 		ArgumentNullException.ThrowIfNull(options);
-		this.Prefix = options.Prefix;
 		this.Kind = options.Kind;
+		this.Prefix = options.Prefix;
 		this.Capacity = options.Capacity;
 		this.OverflowPolicy = options.OverflowPolicy;
 	}
@@ -174,8 +174,8 @@ public class DistributedCacheSubscriptionOptions : INotifyPropertyChanged, INoti
 		public ImmutableOptions() { }
 		public ImmutableOptions(DistributedCacheSubscriptionOptions options)
 		{
-			_prefix = options.Prefix;
 			_kind = options.Kind;
+			_prefix = options.Prefix;
 			_capacity = options.Capacity;
 			_overflowPolicy = options.OverflowPolicy;
 		}
