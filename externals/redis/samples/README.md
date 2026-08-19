@@ -10,7 +10,8 @@
 | Project | Purpose |
 | --- | --- |
 | [messaging](messaging) | Demonstrates Redis-backed message publishing, tagged subscriptions, acknowledgment, and queue inspection. |
-| [distributedlock](distributedlock) | Validates mutual exclusion and expiry behavior with multiple processes competing for a Redis distributed lock. |
+| [distributedcache](distributedcache) | Demonstrates Redis distributed cache operations, expiry management, and keyspace change notifications. |
+| [distributedlock](distributedlock) | Validates mutual exclusion, expiry behavior, automatic renewal, and fencing tokens with multiple processes competing for a Redis distributed lock. |
 
 All projects target .NET 10 and require a reachable Redis server. Review the connection strings in each sample before running them; the messaging sample defaults to `127.0.0.1:6379` with password `xxxxxx`.
 
@@ -79,6 +80,10 @@ unsubscribe alerts
 ```
 
 You should observe three received messages and an `alerts` subscription tagged `urgent` before it is removed.
+
+## Distributed Cache Sample
+
+The distributed-cache sample is an interactive client for key/value operations, expiry management, and change notifications. See its [complete instructions](distributedcache/README.md) for the command reference and a two-terminal notification scenario.
 
 ## Distributed Lock Sample
 

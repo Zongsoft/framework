@@ -6,6 +6,11 @@
 	<Folder Name="/samples/messaging/">
 		<Project Path="samples/messaging/Zongsoft.Externals.Redis.Messaging.Samples.csproj" />
 	</Folder>
+	<Folder Name="/samples/distributed-cache/">
+		<File Path="samples/distributedcache/README.md" />
+		<File Path="samples/distributedcache/README.zh-Hans.md" />
+		<Project Path="samples/distributedcache/Zongsoft.Externals.Redis.DistributedCache.Samples.csproj" />
+	</Folder>
 	<Folder Name="/samples/distributed-lock/">
 		<File Path="samples/distributedlock/README.md" />
 		<File Path="samples/distributedlock/README.zh-Hans.md" />

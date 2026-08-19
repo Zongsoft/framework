@@ -21,8 +21,10 @@ internal sealed class ReportCommand : CommandBase<CommandContext>
 		var completed = await Utility.ReadCounterAsync(redis, Utility.Keys.Completed, cancellation);
 		var violations = await Utility.ReadCounterAsync(redis, Utility.Keys.Violations, cancellation);
 		var active = await Utility.ReadCounterAsync(redis, Utility.Keys.Active, cancellation);
+		var fencing = await Utility.ReadCounterAsync(redis, Utility.Keys.Fence, cancellation);
+		var stale = await Utility.ReadCounterAsync(redis, Utility.Keys.Stale, cancellation);
 
-		Write(context.Output, expected, entered, completed, violations, active);
+		Write(context.Output, expected, entered, completed, violations, active, fencing, stale);
 
 		if(expected <= 0)
 			return 0;
@@ -31,14 +33,15 @@ internal sealed class ReportCommand : CommandBase<CommandContext>
 			entered == expected &&
 			completed == expected &&
 			active == 0 &&
-			(expectViolations ? violations > 0 : violations == 0);
+			(expectViolations ? violations > 0 : violations == 0) &&
+			(expectViolations ? stale > 0 : stale == 0);
 
 		context.Output.WriteLine(success ? CommandOutletColor.DarkGreen : CommandOutletColor.DarkRed, success ? "Result     : PASS" : "Result     : FAIL");
 
 		return success ? 0 : 2;
 	}
 
-	public static void Write(ICommandOutlet output, int expected, long entered, long completed, long violations, long active, int failures = 0, System.TimeSpan? elapsed = null)
+	public static void Write(ICommandOutlet output, int expected, long entered, long completed, long violations, long active, long fencing, long stale, int failures = 0, System.TimeSpan? elapsed = null)
 	{
 		output.WriteLine();
 		output.WriteLine(CommandOutletStyles.Bold, CommandOutletColor.Cyan, "Summary");
@@ -53,6 +56,8 @@ internal sealed class ReportCommand : CommandBase<CommandContext>
 		Utility.WritePair(output, "Completed", completed);
 		Utility.WritePair(output, "Violations", violations, violations == 0 ? CommandOutletColor.DarkGreen : CommandOutletColor.DarkRed);
 		Utility.WritePair(output, "Active", active, active == 0 ? CommandOutletColor.DarkGreen : CommandOutletColor.DarkRed);
+		Utility.WritePair(output, "Fencing", fencing);
+		Utility.WritePair(output, "Stale", stale, stale == 0 ? CommandOutletColor.DarkGreen : CommandOutletColor.DarkRed);
 		Utility.WritePair(output, "Failures", failures, failures == 0 ? CommandOutletColor.DarkGreen : CommandOutletColor.DarkRed);
 	}
 }

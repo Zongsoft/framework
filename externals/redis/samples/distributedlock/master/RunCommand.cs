@@ -34,17 +34,20 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 		var completed = await Utility.ReadCounterAsync(redis, Utility.Keys.Completed, cancellation);
 		var violations = await Utility.ReadCounterAsync(redis, Utility.Keys.Violations, cancellation);
 		var active = await Utility.ReadCounterAsync(redis, Utility.Keys.Active, cancellation);
+		var fencing = await Utility.ReadCounterAsync(redis, Utility.Keys.Fence, cancellation);
+		var stale = await Utility.ReadCounterAsync(redis, Utility.Keys.Stale, cancellation);
 		var failures = workers.Count(worker => worker.ExitCode != 0);
 
 		WriteWorkerOutput(context.Output, workers);
-		ReportCommand.Write(context.Output, expected, entered, completed, violations, active, failures, stopwatch.Elapsed);
+		ReportCommand.Write(context.Output, expected, entered, completed, violations, active, fencing, stale, failures, stopwatch.Elapsed);
 
 		var success =
 			failures == 0 &&
 			entered == expected &&
 			completed == expected &&
 			active == 0 &&
-			(settings.ExpectViolations ? violations > 0 : violations == 0);
+			(settings.ExpectViolations ? violations > 0 : violations == 0) &&
+			(settings.ExpectViolations ? stale > 0 : stale == 0);
 
 		context.Output.WriteLine(success ? CommandOutletColor.DarkGreen : CommandOutletColor.DarkRed, success ? "Result     : PASS" : "Result     : FAIL");
 
@@ -87,6 +90,7 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 		Utility.WritePair(output, "Iterations", settings.Iterations);
 		Utility.WritePair(output, "Expiry", settings.Expiry);
 		Utility.WritePair(output, "Hold", settings.Hold);
+		Utility.WritePair(output, "Renewal", settings.RenewalInterval.HasValue ? settings.RenewalInterval.Value.ToString() : "Disabled");
 		Utility.WritePair(output, "Slaver", Utility.ResolveSlaverExecutable(settings.Slaver));
 		output.WriteLine(CommandOutletColor.Yellow, new string('-', 64));
 	}
@@ -114,6 +118,7 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 		public TimeSpan Expiry { get; private set; }
 		public TimeSpan Hold { get; private set; }
 		public TimeSpan Timeout { get; private set; }
+		public TimeSpan? RenewalInterval { get; private set; }
 		public bool ExpectViolations { get; private set; }
 
 		public static RunSettings Get(CommandContext context)
@@ -130,6 +135,7 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 				Expiry = context.Options.GetValue<TimeSpan>("expiry", TimeSpan.FromSeconds(5)),
 				Hold = context.Options.GetValue<TimeSpan>("hold", TimeSpan.FromMilliseconds(50)),
 				Timeout = context.Options.GetValue<TimeSpan>("timeout", TimeSpan.FromMinutes(5)),
+				RenewalInterval = context.Options.Contains("renewal-interval") ? context.Options.GetValue<TimeSpan>("renewal-interval") : (TimeSpan?)null,
 				ExpectViolations = context.Options.Switch("expect-violations"),
 			};
 
@@ -138,6 +144,12 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 				settings.Expiry = TimeSpan.FromMilliseconds(300);
 				settings.Hold = TimeSpan.FromMilliseconds(900);
 				settings.ExpectViolations = true;
+			}
+			else if(string.Equals(scenario, "renew", StringComparison.OrdinalIgnoreCase))
+			{
+				settings.Expiry = TimeSpan.FromMilliseconds(300);
+				settings.Hold = TimeSpan.FromMilliseconds(900);
+				settings.RenewalInterval ??= TimeSpan.FromMilliseconds(100);
 			}
 
 			return settings;
@@ -153,6 +165,9 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 			yield return $"--expiry:{this.Expiry}";
 			yield return $"--hold:{this.Hold}";
 			yield return $"--timeout:{this.Timeout}";
+
+			if(this.RenewalInterval.HasValue)
+				yield return $"--renewal-interval:{this.RenewalInterval.Value}";
 		}
 	}
 

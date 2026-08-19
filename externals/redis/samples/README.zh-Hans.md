@@ -10,7 +10,8 @@
 | 项目 | 用途 |
 | --- | --- |
 | [messaging](messaging) | 演示基于 Redis 的消息发布、标签订阅、消息确认和队列信息查看。 |
-| [distributedlock](distributedlock) | 通过多个进程竞争 Redis 分布式锁，验证互斥与锁过期行为。 |
+| [distributedcache](distributedcache) | 演示 Redis 分布式缓存的键值操作、过期管理与键空间变化通知。 |
+| [distributedlock](distributedlock) | 通过多个进程竞争 Redis 分布式锁，验证互斥、锁过期行为、自动续期与栅栏令牌。 |
 
 所有项目均面向 .NET 10，并要求 Redis 服务可连接。运行前请检查各范例中的连接字符串；消息范例默认连接 `127.0.0.1:6379`，密码为 `xxxxxx`。
 
@@ -79,6 +80,10 @@ unsubscribe alerts
 ```
 
 应观察到三条接收消息，并在取消前看到带有 `urgent` 标签的 `alerts` 订阅。
+
+## 分布式缓存范例
+
+分布式缓存范例是键值操作、过期管理与变化通知的交互式客户端。命令参考及双终端通知场景参见其[完整说明](distributedcache/README.zh-Hans.md)。
 
 ## 分布式锁范例
 

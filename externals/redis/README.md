@@ -22,7 +22,7 @@
 - Supplies a Microsoft configuration provider and distributed-cache integration.
 - Adds Redis inspection, mutation, counter, search, and lock commands to the Zongsoft command tree.
 
-Load `Zongsoft.Externals.Redis.plugin` and configure `/Externals/Redis/ConnectionSettings`. Messaging connections can be configured separately under `/Messaging/ConnectionSettings`; both use the `Redis` driver. See the [distributed-lock sample](samples/distributedlock), the [messaging sample](samples/messaging), and the [tests](test) for working examples.
+Load `Zongsoft.Externals.Redis.plugin` and configure `/Externals/Redis/ConnectionSettings`. Messaging connections can be configured separately under `/Messaging/ConnectionSettings`; both use the `Redis` driver. See the [distributed-lock sample](samples/distributedlock), the [distributed-cache sample](samples/distributedcache), the [messaging sample](samples/messaging), and the [tests](test) for working examples.
 
 Redis streams retain up to `100000` messages by default and use approximate trimming. Configure `MaximumLength` and `UseApproximateMaximumLength` in the messaging connection settings to change this behavior; use a negative `MaximumLength` to disable trimming. Dead-letter transfer atomically appends and acknowledges through a same-slot Lua script.
 

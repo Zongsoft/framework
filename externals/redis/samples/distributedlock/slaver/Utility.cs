@@ -64,5 +64,7 @@ internal static class Utility
 		public const string Entered = "entered";
 		public const string Completed = "completed";
 		public const string Violations = "violations";
+		public const string Fence = "fence";
+		public const string Stale = "stale";
 	}
 }
