@@ -148,7 +148,7 @@ public abstract class SchemaMemberBase : IEquatable<SchemaMemberBase>
 		public static readonly SortingComparer Instance = new();
 		private SortingComparer() { }
 		public bool Equals(Sorting x, Sorting y) => string.Equals(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
-		public int GetHashCode(Sorting sorting) => sorting.Name.ToLowerInvariant().GetHashCode();
+		public int GetHashCode(Sorting sorting) => sorting.Name == null ? 0 : StringComparer.OrdinalIgnoreCase.GetHashCode(sorting.Name);
 	}
 	#endregion
 }

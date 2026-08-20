@@ -196,11 +196,9 @@ sorting ::=
 
 > **启用映射文件的XML智能提示：**
 >
-> **方法一：** 在**业务模块**项目中添加一个名为“`{业务模块}.mapping`”的 XML 文件（譬如：[`Zongsoft.Security.mapping`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Security/src/Zongsoft.Security.mapping) 或 [`Zongsoft.Discussions.mapping`](https://github.com/Zongsoft/discussions/blob/main/src/Zongsoft.Discussions.mapping)）。打开该映射文件后，点击 **V**isual **S**tudio 的“XML”-“架构”菜单，在弹出的对话框中点击“添加”，选择 [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) 文件即可。
->
-> **方法二：** 将 [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) 拷贝到 **V**isual **S**tudio 的 XML Schemas 模板目录中，譬如：
-> - **V**isual **S**tudio 2019 _(Enterprise Edition)_ <br />
-> 	`C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Xml\Schemas`
+> 将 [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) 和 [Zongsoft.Data.catalog.xml](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.catalog.xml) 文件拷贝到 **V**isual **S**tudio 的 XML Schemas 模板目录中，譬如：
+> - **V**isual **S**tudio 2026 _(Enterprise Edition)_ <br />
+> 	`C:\Program Files\Microsoft Visual Studio\18\Enterprise\Xml\Schemas`
 
 
 > 虽然可以用工具生成映射文件，但我们仍建议手写：
