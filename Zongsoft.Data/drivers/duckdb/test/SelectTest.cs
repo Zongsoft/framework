@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -175,6 +175,69 @@ public class SelectTest(DatabaseFixture database)
 	}
 
 	[Fact]
+	public async Task SelectAsync_WithOneToManyLimitAndSortings()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var roleId = 9900U + (uint)Environment.Version.Major;
+		var roleCriteria = Condition.Equal(nameof(RoleModel.RoleId), roleId);
+		var memberCriteria = Condition.Equal(nameof(MemberModel.RoleId), roleId);
+
+		await accessor.DeleteAsync<MemberModel>(memberCriteria);
+		await accessor.DeleteAsync<RoleModel>(roleCriteria);
+
+		try
+		{
+			var role = Model.Build<RoleModel>(model =>
+			{
+				model.RoleId = roleId;
+				model.Name = "$LimitAndSortings";
+				model.Children =
+				[
+					Model.Build<MemberModel>(member => { member.MemberId = 101; member.MemberType = MemberType.User; }),
+					Model.Build<MemberModel>(member => { member.MemberId = 202; member.MemberType = MemberType.Role; }),
+					Model.Build<MemberModel>(member => { member.MemberId = 303; member.MemberType = MemberType.User; }),
+					Model.Build<MemberModel>(member => { member.MemberId = 404; member.MemberType = MemberType.Role; }),
+					Model.Build<MemberModel>(member => { member.MemberId = 505; member.MemberType = MemberType.User; }),
+				];
+			});
+
+			var count = await accessor.InsertAsync(
+				role,
+				$"*,{nameof(RoleModel.Children)}{{*}}",
+				DataInsertOptions.Sequence(DataSequenceBehavior.Never));
+			Assert.Equal(6, count);
+
+			var result = accessor.SelectAsync<RoleModel>(
+				roleCriteria,
+				$"*,{nameof(RoleModel.Children)}:2(~{nameof(MemberModel.MemberType)},~{nameof(MemberModel.MemberId)}){{*}}")
+				.ToBlockingEnumerable().Single();
+
+			Assert.NotNull(result.Children);
+			Assert.Collection(result.Children,
+				member =>
+				{
+					Assert.Equal(roleId, member.RoleId);
+					Assert.Equal(404U, member.MemberId);
+					Assert.Equal(MemberType.Role, member.MemberType);
+				},
+				member =>
+				{
+					Assert.Equal(roleId, member.RoleId);
+					Assert.Equal(202U, member.MemberId);
+					Assert.Equal(MemberType.Role, member.MemberType);
+				});
+		}
+		finally
+		{
+			await accessor.DeleteAsync<MemberModel>(memberCriteria);
+			await accessor.DeleteAsync<RoleModel>(roleCriteria);
+		}
+	}
+
+	[Fact]
 	public async Task SelectAsync_WithOneToMany1()
 	{
 		if(!Global.IsTestingEnabled)
@@ -217,6 +280,43 @@ public class SelectTest(DatabaseFixture database)
 
 		await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
 		await accessor.DeleteAsync<MemberModel>(Condition.Equal(nameof(MemberModel.RoleId), 1));
+	}
+
+	[Theory]
+	[InlineData(30)]
+	[InlineData(-1)]
+	public async Task SelectAsync_WithComputedMember(int expectedAge)
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		var userId = 9800U + (uint)(Environment.Version.Major * 10) + (expectedAge < 0 ? 0U : 1U);
+		var criteria = Condition.Equal(nameof(Employee.TenantId), 1) & Condition.Equal(nameof(Employee.UserId), userId);
+
+		await accessor.DeleteAsync<Employee>(criteria);
+
+		try
+		{
+			var employee = Model.Build<Employee>(model =>
+			{
+				model.TenantId = 1;
+				model.UserId = userId;
+				model.Birthdate = DateTime.Today.AddYears(expectedAge < 0 ? 1 : -expectedAge);
+			});
+
+			Assert.Equal(1, await accessor.InsertAsync(employee));
+
+			var result = accessor.SelectAsync<Employee>(criteria,
+				$"{nameof(Employee.TenantId)},{nameof(Employee.UserId)},{nameof(Employee.Birthdate)},{nameof(Employee.Age)}")
+				.ToBlockingEnumerable().Single();
+
+			Assert.Equal((short)expectedAge, result.Age);
+		}
+		finally
+		{
+			await accessor.DeleteAsync<Employee>(criteria);
+		}
 	}
 
 	[Fact]

@@ -36,16 +36,37 @@ namespace Zongsoft.Data;
 /// <summary>表示数据模式中的成员。</summary>
 public interface ISchemaMember
 {
+	/// <summary>获取模式成员的名称。</summary>
 	string Name { get; }
+
+	/// <summary>获取模式成员所在的父级路径，根成员的路径为空字符串。</summary>
 	string Path { get; }
+
+	/// <summary>获取包含当前成员名称的完整路径。</summary>
 	string FullPath { get; }
+
+	/// <summary>获取模式成员的父成员，根成员的父成员为空。</summary>
 	ISchemaMember Parent { get; }
+
+	/// <summary>获取模式成员对应的模型字段或属性，未绑定模型成员则为空。</summary>
 	MemberInfo Member { get; }
+
+	/// <summary>获取模式成员对应的数据实体属性，非持久化成员则为空。</summary>
 	Metadata.IDataEntityProperty Property { get; }
+
+	/// <summary>获取一个值，指示该模式成员是否忽略持久化。</summary>
 	bool Ignored { get; }
-	Paging Paging { get; }
+
+	/// <summary>获取一对多模式成员的最大记录数，小于或等于零表示不限。</summary>
+	int Limit { get; }
+
+	/// <summary>获取一对多模式成员的排序规则集，未指定排序规则则为空。</summary>
 	Sorting[] Sortings { get; }
+
+	/// <summary>获取一个值，指示该模式成员是否包含子成员。</summary>
 	bool HasChildren { get; }
+
+	/// <summary>获取模式成员的子成员集。</summary>
 	IEnumerable<ISchemaMember> Children { get; }
 }
 

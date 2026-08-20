@@ -159,12 +159,7 @@ public class SelectStatementBuilder : IStatementBuilder<DataSelectContext>
 	internal static void GenerateSchema(Aliaser aliaser, SelectStatement statement, ISource origin, SchemaMember member)
 	{
 		if(member.Ignored)
-		{
-			foreach(var dependency in member.Dependencies)
-				GenerateSchema(aliaser, statement, origin, dependency);
-
 			return;
-		}
 
 		if(member.Ancestors != null)
 		{
@@ -181,7 +176,7 @@ public class SelectStatementBuilder : IStatementBuilder<DataSelectContext>
 			//一对多的导航属性对应一个新语句（新语句别名即为该导航属性的全称）
 			if(complex.Multiplicity == DataAssociationMultiplicity.Many)
 			{
-				var slave = new SelectStatement(complex.Foreign, member.FullPath) { Paging = member.Paging };
+				var slave = new SelectStatement(complex.Foreign, member.FullPath) { Paging = member.Limit > 0 ? Paging.Limit(member.Limit) : null };
 				var table = slave.Table;
 
 				if(complex.ForeignProperty != null)

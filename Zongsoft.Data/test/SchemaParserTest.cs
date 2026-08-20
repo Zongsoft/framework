@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Linq;
+using System.Reflection;
 using System.Collections.Generic;
 
 using Xunit;
@@ -18,33 +19,32 @@ public class SchemaParserTest : IDisposable
 	public SchemaParserTest()
 	{
 		AddMappings();
-		_parser = new EmployeeSchemaParser();
+		_parser = SchemaParser.Instance;
 	}
 
-	[Fact]
-	public void Parse_ExplicitComputedMember_CreatesIgnoredMemberWithMappedDependencies()
+	[Theory]
+	[InlineData(nameof(Employee.FullName), MemberTypes.Property)]
+	[InlineData(nameof(Employee.ComputedCode), MemberTypes.Field)]
+	public void Parse_ExplicitUnmappedModelMember_CreatesIgnoredMember(string name, MemberTypes memberType)
 	{
-		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "Id,FullName", typeof(Employee)));
-		var computed = schema.Members["FullName"];
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", $"Id,{name}", typeof(Employee)));
+		var computed = schema.Members[name];
 
 		Assert.True(computed.Ignored);
 		Assert.Null(computed.Property);
-		Assert.Equal(nameof(Employee.FullName), computed.Member.Name);
-		Assert.Equal([nameof(Employee.FirstName), nameof(Employee.LastName)], computed.Dependencies.Select(member => member.Name));
-		Assert.All(computed.Dependencies, dependency => Assert.False(dependency.Ignored));
-		Assert.Equal("Id,FullName", schema.Text);
+		Assert.Equal(name, computed.Member.Name);
+		Assert.Equal(memberType, computed.Member.MemberType);
 	}
 
 	[Fact]
-	public void Parse_ComputedMemberDependencyPath_CreatesIsolatedDependencyTree()
+	public void Parse_ExplicitUnmappedModelMember_IsCaseInsensitive()
 	{
-		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", nameof(Employee.UserLabel), typeof(Employee)));
-		var computed = schema.Members[nameof(Employee.UserLabel)];
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "fullname", typeof(Employee)));
+		var computed = Assert.Single(schema.Members);
 
-		var user = Assert.Single(computed.Dependencies);
-		Assert.Equal(nameof(Employee.User), user.Name);
-		Assert.Equal(nameof(User.Name), Assert.Single(user.Children).Name);
-		Assert.False(schema.Contains("User.Name"));
+		Assert.Equal("fullname", computed.Name);
+		Assert.Equal(nameof(Employee.FullName), computed.Member.Name);
+		Assert.True(computed.Ignored);
 	}
 
 	[Fact]
@@ -56,28 +56,25 @@ public class SchemaParserTest : IDisposable
 		Assert.NotNull(computed);
 		Assert.True(computed.Ignored);
 		Assert.Equal(typeof(Profile).GetProperty(nameof(Profile.DisplayAvatar)), computed.Member);
-		Assert.Equal(nameof(Profile.Avatar), Assert.Single(computed.Dependencies).Name);
 	}
 
 	[Fact]
-	public void Parse_Wildcard_AddsEveryEnumeratedComputedMember()
+	public void Parse_Wildcard_DoesNotAddUnmappedModelMembers()
 	{
 		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "*", typeof(Employee)));
 
 		Assert.True(schema.Contains(nameof(Employee.Id)));
 		Assert.True(schema.Contains(nameof(Employee.FirstName)));
-		Assert.True(schema.Contains(nameof(Employee.FullName)));
-		Assert.True(schema.Contains(nameof(Employee.Initials)));
+		Assert.False(schema.Contains(nameof(Employee.FullName)));
+		Assert.False(schema.Contains(nameof(Employee.ComputedCode)));
 		Assert.False(schema.Contains(nameof(Employee.ExplicitOnly)));
-		Assert.True(schema.Find(nameof(Employee.FullName)).Ignored);
 		Assert.False(schema.Find(nameof(Employee.FirstName)).Ignored);
-		Assert.Null(schema.Find(nameof(Employee.FirstName)).Descriptor);
 	}
 
 	[Fact]
-	public void SelectBuilder_IgnoredMembers_SelectOnlyDistinctMappedDependencies()
+	public void SelectBuilder_IgnoredMembers_DoNotEmitFields()
 	{
-		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "*", typeof(Employee)));
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "FirstName,LastName,FullName", typeof(Employee)));
 		var statement = new SelectStatement(schema.Entity);
 		var aliaser = new Aliaser();
 
@@ -86,22 +83,59 @@ public class SchemaParserTest : IDisposable
 
 		var fields = statement.Select.Members.Cast<FieldIdentifier>().ToArray();
 		Assert.DoesNotContain(fields, field => string.Equals(field.Name, nameof(Employee.FullName), StringComparison.OrdinalIgnoreCase));
-		Assert.DoesNotContain(fields, field => string.Equals(field.Name, nameof(Employee.Initials), StringComparison.OrdinalIgnoreCase));
-		Assert.Equal(fields.Length, fields.Distinct().Count());
-		Assert.Equal(
-			schema.Members.Where(member => !member.Ignored && member.Property.IsSimplex).Select(member => member.Name),
-			fields.Select(field => field.Token.Property.Name));
+		Assert.Equal([nameof(Employee.FirstName), nameof(Employee.LastName)], fields.Select(field => field.Token.Property.Name));
+	}
+
+	[Theory]
+	[InlineData("Posts:12{*}", 12)]
+	[InlineData("Posts:0{*}", 0)]
+	[InlineData("Posts:*{*}", 0)]
+	public void SelectBuilder_CollectionLimit_AppliesOnlyPositiveLimits(string expression, int expected)
+	{
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", expression, typeof(Employee)));
+		var statement = new SelectStatement(schema.Entity);
+		var member = schema.Members[nameof(Employee.Posts)];
+
+		SelectStatementBuilder.GenerateSchema(new Aliaser(), statement, statement.Table, member);
+
+		var slave = Assert.IsType<SelectStatement>(Assert.Single(statement.Slaves));
+		Assert.Equal(expected, member.Limit);
+
+		if(expected > 0)
+		{
+			Assert.NotNull(slave.Paging);
+			Assert.True(slave.Paging.IsLimited(out var count, out var offset));
+			Assert.Equal(expected, count);
+			Assert.Equal(0, offset);
+		}
+		else
+			Assert.Null(slave.Paging);
 	}
 
 	[Fact]
-	public void Parse_MappedMemberWinsOverParserExtension()
+	public void SelectBuilder_NegativeCollectionLimit_IsUnlimited()
+	{
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "Posts:1{*}", typeof(Employee)));
+		var statement = new SelectStatement(schema.Entity);
+		var member = schema.Members[nameof(Employee.Posts)];
+		var property = typeof(SchemaMemberBase).GetProperty(nameof(ISchemaMember.Limit));
+
+		property.SetValue(member, -1);
+		SelectStatementBuilder.GenerateSchema(new Aliaser(), statement, statement.Table, member);
+
+		var slave = Assert.IsType<SelectStatement>(Assert.Single(statement.Slaves));
+		Assert.Equal(-1, member.Limit);
+		Assert.Null(slave.Paging);
+	}
+
+	[Fact]
+	public void Parse_MappedMemberWinsOverUnrecognizedFallback()
 	{
 		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", nameof(Employee.FirstName), typeof(Employee)));
 		var member = schema.Members[nameof(Employee.FirstName)];
 
 		Assert.False(member.Ignored);
 		Assert.NotNull(member.Property);
-		Assert.Null(member.Descriptor);
 	}
 
 	[Fact]
@@ -115,32 +149,39 @@ public class SchemaParserTest : IDisposable
 	}
 
 	[Fact]
-	public void Parse_DerivedParserOverridesExplicitMemberResolution()
+	public void Parse_DerivedParserHandlesUnrecognizedMember()
 	{
-		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", nameof(Employee.Alias), typeof(Employee)));
-		Assert.Equal(nameof(Employee.Alias), schema.Members[nameof(Employee.Alias)].Member.Name);
+		var parser = new CustomSchemaParser();
+		var schema = Assert.IsType<Schema>(parser.Parse($"{Namespace}.Employee", "ProjectedName", typeof(Employee)));
+		var member = schema.Members["ProjectedName"];
+
+		Assert.True(member.Ignored);
+		Assert.Equal(nameof(Employee.FullName), member.Member.Name);
 	}
 
 	[Fact]
-	public void Parse_UnknownMemberWithoutParserExtension_ThrowsSchemaArgument()
+	public void Parse_UnknownMember_ThrowsSchemaArgument()
 	{
 		var exception = Assert.Throws<DataArgumentException>(() => _parser.Parse($"{Namespace}.Employee", "Misspelled", typeof(Employee)));
+		Assert.Equal("$schema", exception.Name);
 		Assert.Contains("Misspelled", exception.Message);
 	}
 
 	[Fact]
-	public void Parse_DefaultParserDoesNotResolveComputedMember()
+	public void Parse_DefaultParserResolvesExplicitComputedMember()
 	{
-		var exception = Assert.Throws<DataArgumentException>(() => SchemaParser.Instance.Parse($"{Namespace}.Employee", nameof(Employee.FullName), typeof(Employee)));
-		Assert.Contains(nameof(Employee.FullName), exception.Message);
+		var schema = Assert.IsType<Schema>(SchemaParser.Instance.Parse($"{Namespace}.Employee", nameof(Employee.FullName), typeof(Employee)));
+		Assert.True(schema.Members[nameof(Employee.FullName)].Ignored);
 	}
 
-	[Fact]
-	public void Parse_ComputedDependencyCycle_ThrowsSchemaArgument()
+	[Theory]
+	[InlineData("StaticValue")]
+	[InlineData("Secret")]
+	[InlineData("Item")]
+	public void Parse_NonPublicInstanceModelMember_ThrowsSchemaArgument(string name)
 	{
-		var parser = new CyclicSchemaParser();
-		var exception = Assert.Throws<DataArgumentException>(() => parser.Parse($"{Namespace}.Employee", nameof(Employee.CycleA), typeof(Employee)));
-		Assert.Contains("cycle", exception.Message, StringComparison.OrdinalIgnoreCase);
+		var exception = Assert.Throws<DataArgumentException>(() => _parser.Parse($"{Namespace}.Employee", name, typeof(Employee)));
+		Assert.Contains(name, exception.Message);
 	}
 
 	[Theory]
@@ -272,52 +313,14 @@ public class SchemaParserTest : IDisposable
 		Mapping.Entities.Add(employee);
 	}
 
-	private sealed class EmployeeSchemaParser : SchemaParser
+	private sealed class CustomSchemaParser : SchemaParser
 	{
-		protected override bool TryResolve(SchemaMemberResolverContext context, out SchemaMemberDescriptor descriptor)
+		protected override MemberInfo OnUnrecognized(IDataEntity entity, Type modelType, ISchemaMember parent, string name)
 		{
-			descriptor = context.ModelType == typeof(Employee) ? context.Name switch
-			{
-				nameof(Employee.FullName) => Describe(typeof(Employee), nameof(Employee.FullName), nameof(Employee.FirstName), nameof(Employee.LastName)),
-				nameof(Employee.Initials) => Describe(typeof(Employee), nameof(Employee.Initials), nameof(Employee.FirstName), nameof(Employee.LastName)),
-				nameof(Employee.UserLabel) => Describe(typeof(Employee), nameof(Employee.UserLabel), $"{nameof(Employee.User)}.{nameof(User.Name)}"),
-				nameof(Employee.ExplicitOnly) => Describe(typeof(Employee), nameof(Employee.ExplicitOnly)),
-				nameof(Employee.Alias) => Describe(typeof(Employee), nameof(Employee.Alias)),
-				_ => null,
-			} : context.ModelType == typeof(Profile) && context.Name == nameof(Profile.DisplayAvatar) ?
-				Describe(typeof(Profile), nameof(Profile.DisplayAvatar), nameof(Profile.Avatar)) : null;
+			if(modelType == typeof(Employee) && name == "ProjectedName")
+				return typeof(Employee).GetProperty(nameof(Employee.FullName));
 
-			return descriptor != null;
-		}
-
-		protected override IEnumerable<SchemaMemberDescriptor> GetMembers(SchemaMemberResolverContext context)
-		{
-			if(context.ModelType == typeof(Employee))
-			{
-				yield return Describe(typeof(Employee), nameof(Employee.FirstName));
-				yield return Describe(typeof(Employee), nameof(Employee.FullName), nameof(Employee.FirstName), nameof(Employee.LastName));
-				yield return Describe(typeof(Employee), nameof(Employee.Initials), nameof(Employee.FirstName), nameof(Employee.LastName));
-			}
-			else if(context.ModelType == typeof(Profile))
-				yield return Describe(typeof(Profile), nameof(Profile.DisplayAvatar), nameof(Profile.Avatar));
-		}
-
-		private static SchemaMemberDescriptor Describe(Type type, string name, params string[] dependencies) =>
-			new(name, type.GetProperty(name), dependencies);
-	}
-
-	private sealed class CyclicSchemaParser : SchemaParser
-	{
-		protected override bool TryResolve(SchemaMemberResolverContext context, out SchemaMemberDescriptor descriptor)
-		{
-			descriptor = context.Name switch
-			{
-				nameof(Employee.CycleA) => new(nameof(Employee.CycleA), typeof(Employee).GetProperty(nameof(Employee.CycleA)), [nameof(Employee.CycleB)]),
-				nameof(Employee.CycleB) => new(nameof(Employee.CycleB), typeof(Employee).GetProperty(nameof(Employee.CycleB)), [nameof(Employee.CycleA)]),
-				_ => null,
-			};
-
-			return descriptor != null;
+			return base.OnUnrecognized(entity, modelType, parent, name);
 		}
 	}
 
@@ -342,12 +345,16 @@ public class SchemaParserTest : IDisposable
 		public ICollection<Field> Fields { get; set; }
 		public ICollection<Asset> Assets { get; set; }
 		public string FullName => $"{this.FirstName} {this.LastName}";
+		public string ComputedCode = string.Empty;
 		public string Initials => $"{this.FirstName?[0]}{this.LastName?[0]}";
 		public string UserLabel => this.User?.Name;
 		public string ExplicitOnly => this.FullName.ToUpperInvariant();
 		public string Alias => this.FullName;
 		public string CycleA => this.CycleB;
 		public string CycleB => this.CycleA;
+		public static string StaticValue { get; set; }
+		private string Secret { get; set; }
+		public string this[int index] => index.ToString();
 	}
 
 	private sealed class User

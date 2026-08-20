@@ -76,19 +76,13 @@ schema ::=
     * |
     ! |
     !identifier |
-    identifier [paging] [sorting] ["{" schema [,...n] "}"]
+    identifier [limit] [sorting] ["{" schema [,...n] "}"]
 } [,...n]
 
 identifier ::= [_A-Za-z][_A-Za-z0-9]*
 number ::= [0-9]+
 
-paging ::= ":"{
-    "?" |
-    "*" |
-    number |
-    number "/" number |
-    number "/" "?"
-}
+limit ::= ":"(number | "*")
 
 sorting ::=
 "("
@@ -105,28 +99,27 @@ sorting ::=
 - Exclamation(`!`): excludes fields. A bare `!` clears all members at the current level; `!Name` excludes the named property.
 - Identifiers are composed of letters, digits, and underscores, must not start with a digit, and are case-insensitive.
 - Multiple members are separated by commas(`,`); the sub-schema _（inside the braces）_ uses the same syntax, so nesting is allowed at any depth. Empty comma segments and leading/trailing commas are ignored.
-- Whitespace is not allowed inside an identifier, but is allowed between members, after the asterisk, and between an identifier and the sub-schema/sorting/paging tokens, e.g. `Users {*}`、`Users :1/20`、`* , Users`.
-- Whitespace is not allowed inside a page number or right after the colon(`:`); it is not allowed inside the sorting parentheses or a sorting field, but is allowed between sorting fields _（after a comma）_.
+- Whitespace is not allowed inside an identifier, but is allowed between members, after the asterisk, and between an identifier and the sub-schema/sorting/limit tokens, e.g. `Users {*}`、`Users :20`、`* , Users`.
+- Whitespace is not allowed inside a limit or right after the colon(`:`); it is not allowed inside the sorting parentheses or a sorting field, but is allowed between sorting fields _（after a comma）_.
 
 <a name="schema-paging"></a>
-#### Paging and Sorting
+#### Limit and Sorting
 
-Paging is written after the member name and starts with a colon(`:`):
+A limit is written after the member name and starts with a colon(`:`). It controls the maximum number of records loaded for a one-to-many member:
 
 | Syntax | Meaning |
 | --- | --- |
-| `:N` | page 1 with `N` rows per page |
-| `:N/S` | page `N` with `S` rows per page |
-| `:N/?` | page `N` with the default page size _（20 rows）_ |
-| `:?` | clears the paging settings |
-| `:*` | disables paging |
+| omitted | unlimited _（the default）_ |
+| `:N` | at most `N` records when `N > 0` |
+| `:0` | unlimited |
+| `:*` | unlimited |
 
-> **Note:** A number right after the colon _without_ a slash(`/`) is the **page size**, and the page index is fixed to 1; only with a slash(`/`) is the number before the slash the **page index**.
+The parsed `ISchemaMember.Limit` is an integer. Any value less than or equal to zero means unlimited; canonical schema text omits an unlimited limit. Schema expressions accept only unsigned numbers or `*` after the colon.
 
-Sorting is written after the paging and wrapped in parentheses; sorting fields are separated by commas, a `~` or `!` prefix means descending, and no prefix means ascending:
+Sorting is written after the optional limit and wrapped in parentheses; sorting fields are separated by commas, a `~` or `!` prefix means descending, and no prefix means ascending:
 
 ```
-Users:1/20(~CreatedTime,Grade){*}
+Users:20(~CreatedTime,Grade){*}
 ```
 
 Every sorting field may carry its own `~`/`!` prefix. If a field is declared more than once, the last declaration determines its direction and position.
@@ -154,32 +147,27 @@ Every sorting field may carry its own `~`/`!` prefix. If a field is declared mor
 ```graphql
 *, Users{*}
 ```
-> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, without sorting or paging.
+> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, without sorting or a record limit.
 
 ```graphql
 *, Users:1{*}
 ```
-> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, paged as page 1 with page size 1.
+> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, limited to at most 1 record.
 
 ```graphql
-*, Users:1/?{*}
+*, Users:20{*}
 ```
-> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, paged as page 1 with the default page size.
-
-```graphql
-*, Users:1/20{*}
-```
-> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, paged as page 1 with 20 rows per page.
+> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, limited to at most 20 records.
 
 ```graphql
 *, Users:*{*}
 ```
-> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_ with paging explicitly disabled.
+> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_ with an explicitly unlimited record count.
 
 ```graphql
-*, Users:1/20(~CreatedTime,Grade){*}
+*, Users:20(~CreatedTime,Grade){*}
 ```
-> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, sorted by `CreatedTime` descending and `Grade` ascending, then paged as page 1 with 20 rows per page.
+> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, sorted by `CreatedTime` descending and `Grade` ascending, then limited to at most 20 records.
 
 <a name="schema-api"></a>
 ### Schema Object Model
@@ -193,24 +181,23 @@ The `schema` text argument is parsed into an `ISchema` object by the schema pars
 | [ISchema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema.cs) | Interface of the parsed data schema: `Name`、`Text`、`ModelType`、`IsEmpty`、`IsReadOnly`; `Clear()`、`Contains(path)`、`Find(path)`、`Include(path)`、`Exclude(path)`. Paths are separated by a dot(`.`) or slash(`/`). |
 | [ISchema&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema%601.cs) | Generic version which adds the `Members` collection property. |
 | [Schema&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Schema.cs) | Reusable implementation of schema-tree operations, including deep `Contains`/`Find`/`Include`/`Exclude` and pruning of empty parent nodes. |
-| [ISchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaMember.cs) | Read-only member contract. `Ignored` is true when `Property` is null, meaning that the member is part of the model projection but is not persisted. |
+| [ISchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaMember.cs) | Read-only member contract. `Ignored` is true when `Property` is null, meaning that the member is part of the model projection but is not persisted; `Limit` is the maximum record count of a one-to-many member, with values less than or equal to zero meaning unlimited. |
 | [ISchemaParser](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaParser.cs) / [ISchemaParser&lt;TEntry&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaParser%601.cs) | Interface of the schema parser: `Parse(name, expression, entityType)`. |
 | [SchemaParserBase&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaParserBase.cs) | The state-machine base class of the schema parser, implementing the lexical and syntactic analysis of the grammar above and delegating member resolution to its subclass. |
-| [SchemaMemberBase](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberBase.cs) | Base class of schema members: `Name`, `Path`, `FullPath`, `Member`, `Property`, `Ignored`, `Paging`, `Sortings`, and `HasChildren`. |
+| [SchemaMemberBase](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberBase.cs) | Base class of schema members: `Name`, `Path`, `FullPath`, `Member`, `Property`, `Ignored`, `Limit`, `Sortings`, and `HasChildren`. |
 | [SchemaMemberCollection&lt;T&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberCollection.cs) | Collection of schema members keyed by member name, case-insensitive. |
-| [SchemaMemberDescriptor](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberDescriptor.cs) | Describes an extension member, its CLR member, and the mapped member paths required to calculate it. |
 
 **Implementations** in the data engine ([`Zongsoft.Data/src`](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/src)):
 
 | Type | Description |
 | --- | --- |
-| [SchemaParser](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaParser.cs) | Implementation of `SchemaParserBase<SchemaMember>`; resolves mapped members first and exposes protected virtual methods for rare computed-member extensions. It supports inherited entities, navigation hops, and dependency-cycle detection. |
+| [SchemaParser](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaParser.cs) | Implementation of `SchemaParserBase<SchemaMember>`; resolves mapped members first, then looks for a same-named public instance property or field on the corresponding model type when an explicit member is unmapped. It also supports inherited entities and navigation hops. |
 | [Schema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Schema.cs) | Data-engine specialization of `Schema<SchemaMember>` bound to an `IDataEntity`. |
-| [SchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaMember.cs) | Implementation of `SchemaMemberBase` carrying a mapped `Token`, or an extension `Descriptor` and its `Dependencies`. An extension member has `Property == null` and therefore `Ignored == true`. |
+| [SchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaMember.cs) | Implementation of `SchemaMemberBase`. A mapped member carries both mapping metadata and a model member, while a computed member carries only its model member; the latter has `Property == null` and therefore `Ignored == true`. |
 
-Mapped metadata always takes precedence over parser extensions. The result tree does not preserve whether a member came from `*`: the protected `GetMembers` method defines wildcard participation, while `TryResolve` defines explicit-name participation. Query builders do not emit a database field for an ignored member; they select its declared mapped dependencies instead. Mutation builders skip ignored members.
+Mapped metadata always takes precedence over model members. The `*` wildcard expands mapped simplex properties only; computed-member handling runs only for an unmapped name explicitly declared in the schema. When normal resolution misses, `SchemaParserBase` invokes `OnUnrecognized`. A derived `SchemaParser` may handle the name first; otherwise the default behavior performs a case-insensitive lookup for a public instance property or field on the current model type, creates an `Ignored=true` member when found, and throws `DataArgumentException` when no such member exists.
 
-Computed-member support is intentionally a weak extension point. Derive from `SchemaParser`, override `TryResolve` and/or `GetMembers`, and let a specialized `DataAccess` return that parser from `CreateSchema`; the default `DataAccess` always uses `SchemaParser.Instance` and does not discover member resolvers from the application service container.
+Query and mutation builders do not emit database fields for computed members. The schema must explicitly include any mapped inputs required by a computed property; for example, use `Birthdate,Age` when age depends on the birth date. Rare alias or special-binding scenarios may derive from `SchemaParser` and override `OnUnrecognized`.
 
 
 <a name="mapping"></a>

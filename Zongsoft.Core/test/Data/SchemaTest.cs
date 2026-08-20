@@ -21,17 +21,15 @@ public class SchemaTest
 	}
 
 	[Fact]
-	public void Parse_NestedPagingAndSorting_PreservesModifiersAndLastSorting()
+	public void Parse_NestedLimitsAndSorting_PreservesModifiersAndLastSorting()
 	{
-		var members = Parser.Instance.ParseExpression("Forums:20,Users:2/10(~Created,Name,!Name,Code){Profile(Name){Avatar}}");
+		var members = Parser.Instance.ParseExpression("Forums:20,Users:10(~Created,Name,!Name,Code){Profile(Name){Avatar}}");
 
 		Assert.Equal(2, members.Count);
-		Assert.Equal(1, members["Forums"].Paging.Index);
-		Assert.Equal(20, members["Forums"].Paging.Size);
+		Assert.Equal(20, members["Forums"].Limit);
 
 		var users = members["Users"];
-		Assert.Equal(2, users.Paging.Index);
-		Assert.Equal(10, users.Paging.Size);
+		Assert.Equal(10, users.Limit);
 		Assert.Collection(users.Sortings,
 			sorting => { Assert.Equal("Created", sorting.Name); Assert.Equal(SortingMode.Descending, sorting.Mode); },
 			sorting => { Assert.Equal("Name", sorting.Name); Assert.Equal(SortingMode.Descending, sorting.Mode); },
@@ -40,33 +38,29 @@ public class SchemaTest
 	}
 
 	[Fact]
-	public void Parse_PagingBeforeClosingBrace_PreservesPageAndSize()
+	public void Parse_LimitBeforeClosingBrace_PreservesLimit()
 	{
-		var members = Parser.Instance.ParseExpression("Root{Children:2/10}");
-		var paging = members["Root"].Children["Children"].Paging;
+		var members = Parser.Instance.ParseExpression("Root{Children:10}");
+		var limit = members["Root"].Children["Children"].Limit;
 
-		Assert.Equal(2, paging.Index);
-		Assert.Equal(10, paging.Size);
+		Assert.Equal(10, limit);
 	}
 
 	[Theory]
-	[InlineData("Root:9", 1, 9)]
-	[InlineData("Root:2/7", 2, 7)]
-	[InlineData("Root:2/?", 2, 20)]
-	[InlineData("Root:*", 0, 0)]
-	public void Parse_PagingVariants_PreserveTheirMeaning(string expression, int index, int size)
+	[InlineData("Root", 0)]
+	[InlineData("Root:9", 9)]
+	[InlineData("Root:0", 0)]
+	[InlineData("Root:*", 0)]
+	public void Parse_LimitVariants_PreserveTheirMeaning(string expression, int expected)
 	{
-		var paging = Parser.Instance.ParseExpression(expression)["Root"].Paging;
-		Assert.NotNull(paging);
-		Assert.Equal(index, paging.Index);
-		Assert.Equal(size, paging.Size);
+		Assert.Equal(expected, Parser.Instance.ParseExpression(expression)["Root"].Limit);
 	}
 
 	[Fact]
-	public void Parse_PagingQuestion_ClearsExistingPaging()
+	public void Parse_UnlimitedLimit_ClearsExistingLimit()
 	{
-		var member = Parser.Instance.ParseExpression("Root:9,Root:?")["Root"];
-		Assert.Null(member.Paging);
+		var member = Parser.Instance.ParseExpression("Root:9,Root:*")["Root"];
+		Assert.Equal(0, member.Limit);
 	}
 
 	[Theory]
@@ -75,7 +69,11 @@ public class SchemaTest
 	[InlineData("Users:999999999999999999999")]
 	[InlineData("1Users")]
 	[InlineData("Users:")]
+	[InlineData("Users:?")]
+	[InlineData("Users:-1")]
 	[InlineData("Users:2/")]
+	[InlineData("Users:2/10")]
+	[InlineData("Users:2/?")]
 	[InlineData("Users()")]
 	[InlineData("Users(Name,)")]
 	[InlineData("Users{Profile")]
@@ -109,10 +107,10 @@ public class SchemaTest
 	[Fact]
 	public void Schema_ToString_WritesCanonicalCurrentTree()
 	{
-		var schema = new TestSchema("Root:2/10(Name,~Created){Child:*{Leaf}},Other", " original ");
+		var schema = new TestSchema("Root:10(Name,~Created){Child:*{Leaf}},Other", " original ");
 		var text = schema.ToString();
 
-		Assert.Equal("Root:2/10(Name,~Created){Child:*{Leaf}},Other", text);
+		Assert.Equal("Root:10(Name,~Created){Child{Leaf}},Other", text);
 		Assert.Equal(text, new TestSchema(text, text).ToString());
 		Assert.Equal(" original ", schema.Text);
 	}

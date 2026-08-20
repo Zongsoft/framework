@@ -69,6 +69,29 @@ public abstract class Employee
 	/// <summary>获取或设置出生日期。</summary>
 	public abstract DateTime? Birthdate { get; set; }
 
+	/// <summary>获取年龄，负数表示不确定。</summary>
+	public short Age
+	{
+		get
+		{
+			if(!this.Birthdate.HasValue)
+				return -1;
+
+			var today = DateTime.Today;
+			var birthdate = this.Birthdate.Value.Date;
+
+			if(birthdate > today)
+				return -1;
+
+			var age = today.Year - birthdate.Year;
+
+			if(birthdate > today.AddYears(-age))
+				age--;
+
+			return age <= short.MaxValue ? (short)age : (short)-1;
+		}
+	}
+
 	/// <summary>获取或设置照片路径。</summary>
 	public abstract string PhotoPath { get; set; }
 

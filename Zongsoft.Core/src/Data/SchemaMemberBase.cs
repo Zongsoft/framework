@@ -89,7 +89,7 @@ public abstract class SchemaMemberBase : ISchemaMember, IEquatable<SchemaMemberB
 		}
 	}
 
-	public Paging Paging { get; internal set; }
+	public int Limit { get; internal set; }
 	public Sorting[] Sortings => _sortingArray;
 	public virtual MemberInfo Member => null;
 	public virtual Metadata.IDataEntityProperty Property => null;

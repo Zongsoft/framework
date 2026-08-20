@@ -50,7 +50,7 @@ public class SchemaParser : SchemaParserBase<SchemaMember>
 		if(string.IsNullOrWhiteSpace(expression))
 			expression = "*";
 
-		var data = new SchemaData(entity, entityType ?? typeof(object), new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+		var data = new SchemaData(entity, entityType ?? typeof(object));
 		return new Schema(this, expression, entity, entityType, base.Parse(expression, data));
 	}
 
@@ -70,20 +70,6 @@ public class SchemaParser : SchemaParserBase<SchemaMember>
 					members.TryAdd(mapped.Property.Name, new SchemaMember(mapped));
 
 				current = current.GetBaseEntity();
-			}
-
-			var wildcardContext = new SchemaMemberResolverContext(entity, modelType, token.Parent, null);
-
-			var descriptors = this.GetMembers(wildcardContext);
-			if(descriptors != null)
-			{
-				foreach(var memberDescriptor in descriptors)
-				{
-					if(memberDescriptor == null || members.ContainsKey(memberDescriptor.Name))
-						continue;
-
-					members.Add(memberDescriptor.Name, this.CreateComputed(memberDescriptor, entity, modelType, token.Parent, data));
-				}
 			}
 
 			return members.Values;
@@ -107,63 +93,41 @@ public class SchemaParser : SchemaParserBase<SchemaMember>
 				ancestors.Add(currentEntity);
 		}
 
-		var explicitContext = new SchemaMemberResolverContext(entity, modelType, token.Parent, token.Name);
-
-		if(this.TryResolve(explicitContext, out var descriptor) && descriptor != null)
-			return [this.CreateComputed(descriptor, entity, modelType, token.Parent, data)];
-
-		throw new DataArgumentException("$schema", string.Format(Properties.Resources.Schema_PropertyNotFound_Message, token.Name, entity?.Name ?? modelType.Name));
+		return null;
 	}
 	#endregion
 
 	#region 虚拟方法
-	protected virtual bool TryResolve(SchemaMemberResolverContext context, out SchemaMemberDescriptor descriptor)
+	protected sealed override IEnumerable<SchemaMember> OnUnrecognized(SchemaEntryToken token)
 	{
-		descriptor = null;
-		return false;
+		var data = (SchemaData)token.Data;
+		var (entity, modelType) = GetScope(data.Entity, data.ModelType, token.Parent);
+		var member = this.OnUnrecognized(entity, modelType, token.Parent, token.Name) ?? FindMember(modelType, token.Name);
+
+		if(member == null)
+			throw new DataArgumentException("$schema", string.Format(Properties.Resources.Schema_PropertyNotFound_Message, token.Name, entity?.Name ?? modelType.Name));
+
+		return [new SchemaMember(token.Name, member)];
 	}
 
-	protected virtual IEnumerable<SchemaMemberDescriptor> GetMembers(SchemaMemberResolverContext context) => [];
+	/// <summary>处理未映射的显式模式成员。</summary>
+	/// <param name="entity">当前数据实体。</param>
+	/// <param name="modelType">当前模型类型。</param>
+	/// <param name="parent">当前父成员，根成员则为空。</param>
+	/// <param name="name">未识别的成员名称。</param>
+	/// <returns>返回对应的公共实例字段或属性；不处理则返回空，由基类按名称从模型类型中查找。</returns>
+	protected virtual MemberInfo OnUnrecognized(IDataEntity entity, Type modelType, ISchemaMember parent, string name) => null;
 	#endregion
 
 	#region 内部方法
 	internal IEnumerable<SchemaMember> Append(Schema schema, string expression)
 	{
-		var data = new SchemaData(schema.Entity, schema.ModelType ?? typeof(object), new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+		var data = new SchemaData(schema.Entity, schema.ModelType ?? typeof(object));
 		return base.Parse(expression, data, schema.Members);
 	}
 	#endregion
 
 	#region 私有方法
-	private SchemaMember CreateComputed(SchemaMemberDescriptor descriptor, IDataEntity entity, Type modelType, SchemaMember parent, SchemaData data)
-	{
-		if(descriptor == null || string.IsNullOrWhiteSpace(descriptor.Name))
-			throw new DataArgumentException("$schema", "The schema parser returned an invalid member descriptor.");
-
-		var dependencies = Array.Empty<SchemaMember>();
-
-		if(descriptor.HasDependencies)
-		{
-			var scope = $"{entity?.Name ?? modelType.FullName}:{parent?.FullPath}:{descriptor.Name}";
-
-			if(!data.Resolving.Add(scope))
-				throw new DataArgumentException("$schema", $"The computed schema member dependency contains a cycle at '{scope}'.");
-
-			try
-			{
-				var expressions = descriptor.Dependencies.Select(ConvertPath);
-				var dependencyData = new SchemaData(entity, modelType, data.Resolving);
-				dependencies = base.Parse(string.Join(',', expressions), dependencyData)?.ToArray() ?? [];
-			}
-			finally
-			{
-				data.Resolving.Remove(scope);
-			}
-		}
-
-		return new SchemaMember(descriptor, dependencies);
-	}
-
 	private static (IDataEntity Entity, Type ModelType) GetScope(IDataEntity entity, Type modelType, SchemaMember parent)
 	{
 		if(parent == null)
@@ -171,7 +135,7 @@ public class SchemaParser : SchemaParserBase<SchemaMember>
 
 		if(parent.Ignored)
 		{
-			var type = Zongsoft.Common.TypeExtension.GetElementType(parent.Descriptor?.Type) ?? parent.Descriptor?.Type;
+			var type = GetMemberType(parent.Member);
 
 			if(type == null || Zongsoft.Common.TypeExtension.IsScalarType(type))
 				throw new DataArgumentException("$schema", string.Format(Properties.Resources.Schema_ComplexPropertyRequired_Message, parent));
@@ -194,6 +158,61 @@ public class SchemaParser : SchemaParserBase<SchemaMember>
 		return (entity, GetMemberType(parent.Token.Member) ?? typeof(object));
 	}
 
+	private static MemberInfo FindMember(Type type, string name)
+	{
+		if(type == null || string.IsNullOrEmpty(name))
+			return null;
+
+		if(Zongsoft.Common.TypeExtension.IsNullable(type, out var underlyingType))
+			type = underlyingType;
+
+		var members = type.GetMember(name, MemberTypes.Field | MemberTypes.Property, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+		var member = SelectMember(members, name);
+
+		if(member != null || !type.IsInterface)
+			return member;
+
+		foreach(var contract in type.GetInterfaces())
+		{
+			members = contract.GetMember(name, MemberTypes.Field | MemberTypes.Property, BindingFlags.Public | BindingFlags.Instance | BindingFlags.IgnoreCase);
+			member = SelectMember(members, name);
+
+			if(member != null)
+				return member;
+		}
+
+		return null;
+	}
+
+	private static MemberInfo SelectMember(MemberInfo[] members, string name)
+	{
+		if(members == null || members.Length == 0)
+			return null;
+
+		foreach(var member in members)
+		{
+			if(string.Equals(member.Name, name, StringComparison.Ordinal) && IsValid(member))
+				return member;
+		}
+
+		foreach(var member in members)
+		{
+			if(IsValid(member))
+				return member;
+		}
+
+		return null;
+	}
+
+	private static bool IsValid(MemberInfo member) => member switch
+	{
+		FieldInfo field => !field.IsStatic,
+		PropertyInfo property => property.GetIndexParameters().Length == 0 &&
+			(property.GetMethod == null || !property.GetMethod.IsStatic) &&
+			(property.SetMethod == null || !property.SetMethod.IsStatic),
+		_ => false,
+	};
+
 	private static Type GetMemberType(MemberInfo member)
 	{
 		var type = member switch
@@ -208,33 +227,13 @@ public class SchemaParser : SchemaParserBase<SchemaMember>
 		return type == null ? null : Zongsoft.Common.TypeExtension.GetElementType(type) ?? type;
 	}
 
-	private static string ConvertPath(string path)
-	{
-		if(string.IsNullOrWhiteSpace(path))
-			throw new DataArgumentException("$schema", "A computed schema member contains an empty dependency.");
-
-		var count = 0;
-		var characters = path.ToCharArray();
-
-		for(int i = 0; i < characters.Length; i++)
-		{
-			if(characters[i] == '.' || characters[i] == '/')
-			{
-				characters[i] = '{';
-				count++;
-			}
-		}
-
-		return count == 0 ? path : new string(characters) + new string('}', count);
-	}
 	#endregion
 
 	#region 嵌套子类
-	private sealed class SchemaData(IDataEntity entity, Type modelType, HashSet<string> resolving)
+	private sealed class SchemaData(IDataEntity entity, Type modelType)
 	{
 		public IDataEntity Entity { get; } = entity;
 		public Type ModelType { get; } = modelType;
-		public HashSet<string> Resolving { get; } = resolving;
 	}
 	#endregion
 }

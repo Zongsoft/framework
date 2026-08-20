@@ -58,20 +58,16 @@ public class SchemaMember : SchemaMemberBase
 		_name = token.Property?.Name ?? throw new ArgumentException("The mapped schema token requires a property.", nameof(token));
 	}
 
-	internal SchemaMember(SchemaMemberDescriptor descriptor, IEnumerable<SchemaMember> dependencies = null)
+	internal SchemaMember(string name, MemberInfo member)
 	{
-		this.Descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
-		this.Token = new DataEntityPropertyToken(null, descriptor.Member);
-		this.Dependencies = dependencies == null ? [] : [.. dependencies];
-		_name = descriptor.Name;
+		this.Token = new DataEntityPropertyToken(null, member ?? throw new ArgumentNullException(nameof(member)));
+		_name = string.IsNullOrEmpty(name) ? member.Name : name;
 	}
 	#endregion
 
 	#region 公共属性
 	public override string Name => _name;
 	public override bool Ignored => this.Token.Property == null;
-	public SchemaMemberDescriptor Descriptor { get; }
-	public IReadOnlyList<SchemaMember> Dependencies { get; } = [];
 	public override MemberInfo Member => this.Token.Member;
 	public override IDataEntityProperty Property => this.Token.Property;
 	public DataEntityPropertyToken Token { get; }
@@ -117,8 +113,8 @@ public class SchemaMember : SchemaMemberBase
 	{
 		var text = this.Name;
 
-		if(this.Paging != null && this.Paging.IsPaged(out var page, out var size))
-			text += $":{(page == 1 ? $"{size}" : $"{page}/{size}")}";
+		if(this.Limit > 0)
+			text += $":{this.Limit}";
 
 		if(this.Sortings != null && this.Sortings.Length > 0)
 		{

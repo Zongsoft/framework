@@ -76,19 +76,13 @@ schema ::=
     * |
     ! |
     !identifier |
-    identifier [paging] [sorting] ["{" schema [,...n] "}"]
+    identifier [limit] [sorting] ["{" schema [,...n] "}"]
 } [,...n]
 
 identifier ::= [_A-Za-z][_A-Za-z0-9]*
 number ::= [0-9]+
 
-paging ::= ":"{
-    "?" |
-    "*" |
-    number |
-    number "/" number |
-    number "/" "?"
-}
+limit ::= ":"(number | "*")
 
 sorting ::=
 "("
@@ -105,28 +99,27 @@ sorting ::=
 - 叹号(`!`)：表示排除。单独的 `!` 表示清除当前层级的全部成员；`!名称` 表示排除指定名称的属性。
 - 标识符由字母、数字和下划线组成，不能以数字开头，不区分大小写。
 - 多个成员之间使用逗号(`,`)分隔；子模式 _（大括号内的部分）_ 沿用相同的语法，因此可以任意层级嵌套。解析器会忽略连续逗号产生的空段以及首尾逗号。
-- 标识符内部不能含有空白字符；但成员之间、星号之后、标识符与子模式/排序/分页符号之间可以包含空白字符，例如 `Users {*}`、`Users :1/20`、`* , Users`。
-- 分页数字内部以及冒号(`:`)之后不允许空白；排序括号内、字段内部不允许空白，但排序字段之间 _（逗号之后）_ 允许空白。
+- 标识符内部不能含有空白字符；但成员之间、星号之后、标识符与子模式/排序/限量符号之间可以包含空白字符，例如 `Users {*}`、`Users :20`、`* , Users`。
+- 限量数字内部以及冒号(`:`)之后不允许空白；排序括号内、字段内部不允许空白，但排序字段之间 _（逗号之后）_ 允许空白。
 
 <a name="schema-paging"></a>
-#### 分页与排序
+#### 限量与排序
 
-分页写在成员名之后、以冒号(`:`)开头，具体写法及含义如下：
+限量写在成员名之后、以冒号(`:`)开头，表示一对多成员最多加载的记录数：
 
 | 写法 | 含义 |
 | --- | --- |
-| `:N` | 第 1 页，每页 `N` 条 |
-| `:N/S` | 第 `N` 页，每页 `S` 条 |
-| `:N/?` | 第 `N` 页，页大小使用默认值 _（20 条）_ |
-| `:?` | 清除分页设置 |
-| `:*` | 禁用分页 |
+| 缺省 | 不限 _（默认值）_ |
+| `:N` | `N > 0` 时最多加载 `N` 条 |
+| `:0` | 不限 |
+| `:*` | 不限 |
 
-> **注意：** 冒号后不带斜杠(`/`)的数字表示**页大小**，页号固定为第 1 页；只有带斜杠(`/`)时，斜杠前的数字才是**页号**。
+解析后的 `ISchemaMember.Limit` 是一个整数，任何小于或等于零的值都表示不限；规范化模式文本会省略不限的限量。模式表达式的冒号后只接受无符号数字或 `*`。
 
-排序写在分页之后、以一对圆括号包裹；排序字段之间使用逗号分隔，`~` 或 `!` 前缀表示倒序，无前缀表示正序：
+排序写在可选限量之后、以一对圆括号包裹；排序字段之间使用逗号分隔，`~` 或 `!` 前缀表示倒序，无前缀表示正序：
 
 ```
-Users:1/20(~CreatedTime,Grade){*}
+Users:20(~CreatedTime,Grade){*}
 ```
 
 每个排序字段都可以单独使用 `~`/`!` 前缀。同一字段重复声明时，以最后一次声明的方向和位置为准。
@@ -154,32 +147,27 @@ Users:1/20(~CreatedTime,Grade){*}
 ```graphql
 *, Users{*}
 ```
-> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合不排序也不分页。
+> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合不排序也不限量。
 
 ```graphql
 *, Users:1{*}
 ```
-> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合分页为第 1 页、每页 1 条。
+> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合最多加载 1 条。
 
 ```graphql
-*, Users:1/?{*}
+*, Users:20{*}
 ```
-> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合分页为第 1 页、页大小使用默认值。
-
-```graphql
-*, Users:1/20{*}
-```
-> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合分页为第 1 页、每页 20 条。
+> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合最多加载 20 条。
 
 ```graphql
 *, Users:*{*}
 ```
-> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合明确禁用分页。
+> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合显式不限量。
 
 ```graphql
-*, Users:1/20(~CreatedTime,Grade){*}
+*, Users:20(~CreatedTime,Grade){*}
 ```
-> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_；该集合先按 `CreatedTime` 倒序、`Grade` 正序排序，再分页为第 1 页、每页 20 条。
+> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_；该集合先按 `CreatedTime` 倒序、`Grade` 正序排序，再最多加载 20 条。
 
 <a name="schema-api"></a>
 ### 模式对象模型
@@ -193,24 +181,23 @@ Users:1/20(~CreatedTime,Grade){*}
 | [ISchema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema.cs) | 解析后的数据模式接口：`Name`、`Text`、`ModelType`、`IsEmpty`、`IsReadOnly`；`Clear()`、`Contains(path)`、`Find(path)`、`Include(path)`、`Exclude(path)`。路径以句点(`.`)或斜杠(`/`)分隔。 |
 | [ISchema&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema%601.cs) | 泛型版本，新增 `Members` 成员集合属性。 |
 | [Schema&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Schema.cs) | 模式树操作的通用实现，包含深层 `Contains`/`Find`/`Include`/`Exclude` 以及空父节点裁剪。 |
-| [ISchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaMember.cs) | 只读成员契约。`Property` 为空时 `Ignored` 为真，表示该成员属于模型投影但不参与持久化。 |
+| [ISchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaMember.cs) | 只读成员契约。`Property` 为空时 `Ignored` 为真，表示该成员属于模型投影但不参与持久化；`Limit` 表示一对多成员的最大记录数，小于或等于零表示不限。 |
 | [ISchemaParser](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaParser.cs) / [ISchemaParser&lt;TEntry&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaParser%601.cs) | 模式解析器接口：`Parse(name, expression, entityType)`。 |
 | [SchemaParserBase&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaParserBase.cs) | 模式解析器的状态机基类，实现上述语法的词法与语法分析，并将成员解析交给子类。 |
-| [SchemaMemberBase](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberBase.cs) | 模式成员基类：`Name`、`Path`、`FullPath`、`Member`、`Property`、`Ignored`、`Paging`、`Sortings`、`HasChildren`。 |
+| [SchemaMemberBase](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberBase.cs) | 模式成员基类：`Name`、`Path`、`FullPath`、`Member`、`Property`、`Ignored`、`Limit`、`Sortings`、`HasChildren`。 |
 | [SchemaMemberCollection&lt;T&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberCollection.cs) | 模式成员集合，按键 _（成员名）_ 索引，不区分大小写。 |
-| [SchemaMemberDescriptor](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberDescriptor.cs) | 描述扩展成员、对应的 CLR 成员及计算它所需的映射成员路径。 |
 
 **数据引擎**（[`Zongsoft.Data/src`](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/src)）中的实现：
 
 | 类型 | 说明 |
 | --- | --- |
-| [SchemaParser](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaParser.cs) | `SchemaParserBase<SchemaMember>` 的实现；先解析映射成员，并为少量计算成员扩展提供受保护的虚方法，同时支持继承实体、导航跳板和依赖环检测。 |
+| [SchemaParser](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaParser.cs) | `SchemaParserBase<SchemaMember>` 的实现；先解析映射成员，显式成员未映射时再从对应模型类型查找同名公共实例属性或字段，同时支持继承实体和导航跳板。 |
 | [Schema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Schema.cs) | 绑定 `IDataEntity` 的 `Schema<SchemaMember>` 数据引擎特化实现。 |
-| [SchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaMember.cs) | `SchemaMemberBase` 的实现：映射成员持有 `Token`，扩展成员持有 `Descriptor` 和 `Dependencies`；扩展成员的 `Property` 为空，因此 `Ignored` 为真。 |
+| [SchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaMember.cs) | `SchemaMemberBase` 的实现：映射成员持有映射属性和模型成员，计算成员只持有模型成员；计算成员的 `Property` 为空，因此 `Ignored` 为真。 |
 
-映射元数据的优先级始终高于解析器扩展。解析结果不保留成员是否来自 `*`：受保护的 `GetMembers` 方法决定通配符包含范围，`TryResolve` 决定显式名称的解析范围。查询构建器不会为忽略成员生成数据库字段，而会选取其声明的映射依赖；写操作构建器会跳过忽略成员。
+映射元数据的优先级始终高于模型成员。通配符 `*` 只展开映射中的简单属性；只有 schema 中显式声明的未映射名称才会进入计算成员处理。`SchemaParserBase` 在普通解析未命中时调用 `OnUnrecognized`，`SchemaParser` 允许派生类先处理该名称；派生类不处理时，默认按名称（不区分大小写）查找当前模型类型上的公共实例属性或字段，找到后创建 `Ignored=true` 的成员，找不到则抛出 `DataArgumentException`。
 
-计算成员被有意设计成弱扩展点：派生 `SchemaParser` 并重写 `TryResolve` 和/或 `GetMembers`，再由特化的 `DataAccess` 通过 `CreateSchema` 返回该解析器。默认 `DataAccess` 始终使用 `SchemaParser.Instance`，不会从应用服务容器发现成员解析器。
+查询和写操作构建器都不会为计算成员生成数据库字段；计算属性所需的映射字段应在 schema 中显式声明。例如年龄属性依赖出生日期时可写成 `Birthdate,Age`。极少数需要别名或特殊绑定的场景可以派生 `SchemaParser` 并重写 `OnUnrecognized`。
 
 
 <a name="mapping"></a>

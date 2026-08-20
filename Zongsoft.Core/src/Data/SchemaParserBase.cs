@@ -44,6 +44,13 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 	protected abstract IEnumerable<TMember> Resolve(SchemaEntryToken token);
 	#endregion
 
+	#region 虚拟方法
+	/// <summary>处理无法由 <see cref="Resolve(SchemaEntryToken)"/> 识别的模式成员。</summary>
+	/// <param name="token">无法识别的模式成员标记。</param>
+	/// <returns>返回处理得到的模式成员集；不处理则返回空。</returns>
+	protected virtual IEnumerable<TMember> OnUnrecognized(SchemaEntryToken token) => null;
+	#endregion
+
 	#region 保护方法
 	protected bool TryParse(string expression, out IEnumerable<TMember> result, object data, IEnumerable<TMember> members = null)
 	{
@@ -60,7 +67,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 		if(string.IsNullOrEmpty(expression))
 			return null;
 
-		var context = new StateContext(expression.Length, this.Resolve, onError, data, members);
+		var context = new StateContext(expression.Length, this.Resolve, this.OnUnrecognized, onError, data, members);
 
 		for(int i = 0; i < expression.Length; i++)
 		{
@@ -89,13 +96,8 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 						return null;
 
 					break;
-				case State.PagingCount:
-					if(!DoPagingCount(ref context))
-						return null;
-
-					break;
-				case State.PagingSize:
-					if(!DoPagingSize(ref context))
+				case State.Limit:
+					if(!DoLimit(ref context))
 						return null;
 
 					break;
@@ -238,7 +240,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 				break;
 			case ':':
 				context.Include();
-				context.State = State.PagingCount;
+				context.State = State.Limit;
 				break;
 			case '(':
 				context.Include();
@@ -281,85 +283,44 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 		return true;
 	}
 
-	private static bool DoPagingCount(ref StateContext context)
+	private static bool DoLimit(ref StateContext context)
 	{
-		string buffer;
-
 		switch(context.Character)
 		{
 			case ',':
-				if(!context.TrySetPagingCount())
+				if(!context.TrySetLimit())
 					return false;
 
 				context.State = State.None;
 				return true;
 			case '}':
-				if(!context.TrySetPagingCount())
+				if(!context.TrySetLimit())
 					return false;
 
 				context.Pop();
 				context.State = State.None;
 				return true;
-			case '?':
-				if(context.HasBuffer())
-				{
-					context.OnError("SyntaxError: The pagination number format of the data schema is incorrect.");
+			case '(':
+				if(!context.TrySetLimit())
 					return false;
-				}
 
-				context.Current.Paging = null;
-				context.State = State.Include;
+				context.State = State.SortingField;
+				return true;
+			case '{':
+				if(!context.TrySetLimit())
+					return false;
+
+				context.Push();
+				context.State = State.None;
 				return true;
 			case '*':
 				if(context.HasBuffer())
 				{
-					context.OnError("SyntaxError: The pagination number format of the data schema is incorrect.");
+					context.OnError("SyntaxError: The limit format of the data schema is incorrect.");
 					return false;
 				}
 
-				context.Current.Paging = Paging.Disabled;
-				context.State = State.Include;
-				return true;
-			case '/':
-				if(!context.TryGetBuffer(out buffer))
-				{
-					context.OnError("SyntaxError: Expected pagination number in the data schema, but missing.");
-					return false;
-				}
-
-				if(!context.TryParseNumber(buffer, out var page))
-					return false;
-
-				context.Current.Paging = Paging.Page(page);
-				context.State = State.PagingSize;
-
-				return true;
-			case '(':
-				if(!context.TryGetBuffer(out buffer))
-				{
-					context.OnError("SyntaxError: Expected pagination number in the data schema, but missing.");
-					return false;
-				}
-
-				if(!context.TryParseNumber(buffer, out var pageSize))
-					return false;
-
-				context.Current.Paging = Paging.Page(1, pageSize);
-				context.State = State.SortingField;
-				return true;
-			case '{':
-				if(!context.TryGetBuffer(out buffer))
-				{
-					context.OnError("SyntaxError: Expected pagination number in the data schema, but missing.");
-					return false;
-				}
-
-				if(!context.TryParseNumber(buffer, out var count))
-					return false;
-
-				context.Current.Paging = Paging.Page(1, count);
-				context.Push();
-				context.State = State.None;
+				context.Accept();
 				return true;
 			default:
 				if(char.IsDigit(context.Character))
@@ -368,101 +329,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 					return true;
 				}
 
-				context.OnError($"SyntaxError: The pagination number of the data schema contains '{context.Character}' illegal character.");
-				return false;
-		}
-	}
-
-	private static bool DoPagingSize(ref StateContext context)
-	{
-		string buffer;
-
-		switch(context.Character)
-		{
-			case '}':
-				if(!context.TryGetBuffer(out buffer))
-				{
-					context.OnError("SyntaxError: Expected pagination size in the data schema, but missing.");
-					return false;
-				}
-
-				if(buffer != "?")
-				{
-					if(!context.TryParseNumber(buffer, out var closingSize))
-						return false;
-
-					context.Current.Paging.Size = closingSize;
-				}
-
-				context.Pop();
-				context.State = State.None;
-				return true;
-			case '?':
-				if(context.HasBuffer())
-				{
-					context.OnError("SyntaxError: The pagination size format of the data schema is incorrect.");
-					return false;
-				}
-
-				context.Current.Paging.Size = 20;
-				context.State = State.Include;
-				return true;
-			case ',':
-				if(!context.TryGetBuffer(out buffer))
-				{
-					context.OnError("SyntaxError: Expected pagination size in the data schema, but missing.");
-					return false;
-				}
-
-				if(!context.TryParseNumber(buffer, out var pageSize))
-					return false;
-
-				context.Current.Paging.Size = pageSize;
-				context.State = State.None;
-				return true;
-			case '(':
-				if(!context.TryGetBuffer(out buffer))
-				{
-					context.OnError("SyntaxError: Expected pagination size in the data schema, but missing.");
-					return false;
-				}
-
-				if(buffer != "?")
-				{
-					if(!context.TryParseNumber(buffer, out var sortingSize))
-						return false;
-
-					context.Current.Paging.Size = sortingSize;
-				}
-
-				context.State = State.SortingField;
-				return true;
-			case '{':
-				if(!context.TryGetBuffer(out buffer))
-				{
-					context.OnError("SyntaxError: Expected pagination size in the data schema, but missing.");
-					return false;
-				}
-
-				if(buffer != "?")
-				{
-					if(!context.TryParseNumber(buffer, out var childSize))
-						return false;
-
-					context.Current.Paging.Size = childSize;
-				}
-
-				context.Push();
-				context.State = State.None;
-				return true;
-			default:
-				if(char.IsDigit(context.Character))
-				{
-					context.Accept();
-					return true;
-				}
-
-				context.OnError($"SyntaxError: The pagination size of the data schema contains '{context.Character}' illegal character.");
+				context.OnError($"SyntaxError: The limit of the data schema contains '{context.Character}' illegal character.");
 				return false;
 		}
 	}
@@ -558,6 +425,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 		private readonly char[] _buffer;
 		private readonly Action<string> _onError;
 		private readonly Func<SchemaEntryToken, IEnumerable<TMember>> _mapper;
+		private readonly Func<SchemaEntryToken, IEnumerable<TMember>> _unrecognized;
 		private readonly SchemaEntryToken _token;
 		private SchemaMemberBase _current;
 		private Stack<SchemaMemberBase> _stack;
@@ -572,12 +440,13 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 		#endregion
 
 		#region 构造函数
-		public StateContext(int length, Func<SchemaEntryToken, IEnumerable<TMember>> mapper, Action<string> onError, object data, IEnumerable<TMember> members)
+		public StateContext(int length, Func<SchemaEntryToken, IEnumerable<TMember>> mapper, Func<SchemaEntryToken, IEnumerable<TMember>> unrecognized, Action<string> onError, object data, IEnumerable<TMember> members)
 		{
 			_bufferIndex = 0;
 			_buffer = new char[length];
 			_current = null;
 			_mapper = mapper;
+			_unrecognized = unrecognized;
 			_onError = onError;
 			_token = new SchemaEntryToken(data);
 			_stack = new Stack<SchemaMemberBase>();
@@ -735,28 +604,28 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 			return true;
 		}
 
-		public bool TryParseNumber(string text, out int number)
-		{
-			if(int.TryParse(text, out number))
-				return true;
-
-			this.OnError($"SyntaxError: The pagination number '{text}' of the data schema is invalid or overflowed.");
-			return false;
-		}
-
-		public bool TrySetPagingCount()
+		public bool TrySetLimit()
 		{
 			if(!this.TryGetBuffer(out var buffer))
 			{
-				this.OnError("SyntaxError: Expected pagination number in the data schema, but missing.");
+				this.OnError("SyntaxError: Expected limit in the data schema, but missing.");
 				return false;
 			}
 
-			if(!this.TryParseNumber(buffer, out var count))
-				return false;
+			if(buffer == "*")
+			{
+				_current.Limit = 0;
+				return true;
+			}
 
-			_current.Paging = Paging.Page(1, count);
-			return true;
+			if(int.TryParse(buffer, out var limit))
+			{
+				_current.Limit = limit;
+				return true;
+			}
+
+			this.OnError($"SyntaxError: The limit '{buffer}' of the data schema is invalid or overflowed.");
+			return false;
 		}
 
 		public bool Complete(out IEnumerable<TMember> members)
@@ -785,34 +654,9 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 				case State.Include:
 					this.Include();
 					break;
-				case State.PagingCount:
-					if(_bufferIndex == 0)
-					{
-						this.OnError("SyntaxError: Expected pagination number in the data schema, but missing.");
+				case State.Limit:
+					if(!this.TrySetLimit())
 						return false;
-					}
-
-					if(!this.TryParseNumber(new string(_buffer, 0, _bufferIndex), out var count))
-						return false;
-
-					_current.Paging = Paging.Page(1, count);
-					break;
-				case State.PagingSize:
-					if(_bufferIndex == 0)
-					{
-						this.OnError("SyntaxError: Expected pagination size in the data schema, but missing.");
-						return false;
-					}
-
-					var buffer = new string(_buffer, 0, _bufferIndex);
-
-					if(buffer != "?")
-					{
-						if(!this.TryParseNumber(buffer, out var size))
-							return false;
-
-						_current.Paging.Size = size;
-					}
 
 					break;
 				default:
@@ -834,7 +678,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 			_token.Name = name;
 			_token.Parent = (TMember)parent;
 
-			var items = _mapper(_token);
+			var items = _mapper(_token) ?? _unrecognized(_token);
 
 			if(items == null)
 				return;
@@ -901,8 +745,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 		Asterisk,
 		Include,
 		Exclude,
-		PagingCount,
-		PagingSize,
+		Limit,
 		SortingField,
 		SortingGutter,
 	}

@@ -232,12 +232,10 @@ public abstract class Schema<TMember> : ISchema<TMember> where TMember : SchemaM
 	{
 		text.Append(member.Name);
 
-		if(member.Paging != null)
+		if(member.Limit > 0)
 		{
-			if(object.ReferenceEquals(member.Paging, Paging.Disabled))
-				text.Append(":*");
-			else if(member.Paging.IsPaged(out var page, out var size))
-				text.Append(page == 1 ? $":{size}" : $":{page}/{size}");
+			text.Append(':');
+			text.Append(member.Limit);
 		}
 
 		if(member.Sortings != null && member.Sortings.Length > 0)
