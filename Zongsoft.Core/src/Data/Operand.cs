@@ -38,10 +38,7 @@ namespace Zongsoft.Data;
 public abstract class Operand
 {
 	#region 构造函数
-	protected Operand(OperandType type)
-	{
-		this.Type = type;
-	}
+	protected Operand(OperandType type) => this.Type = type;
 	#endregion
 
 	#region 公共属性
@@ -64,51 +61,51 @@ public abstract class Operand
 		_ => string.Empty,
 	};
 
-	public static FieldOperand Field(string name) => new FieldOperand(name);
-	public static ConstantOperand<T> Constant<T>(T value) => new ConstantOperand<T>(value);
-	public static FunctionOperand Function(string name, params Operand[] arguments) => new FunctionOperand(name, arguments);
-	public static AggregateOperand Aggregate(DataAggregateFunction aggregate, string member, bool distinct = false) => new AggregateOperand(aggregate, member, null, distinct);
-	public static AggregateOperand Aggregate(DataAggregateFunction aggregate, string member, ICondition filter, bool distinct = false) => new AggregateOperand(aggregate, member, filter, distinct);
+	public static FieldOperand Field(string name) => new(name);
+	public static ConstantOperand<T> Constant<T>(T value) => new(value);
+	public static FunctionOperand Function(string name, params Operand[] arguments) => new(name, arguments);
+	public static AggregateOperand Aggregate(DataAggregateFunction aggregate, string member, bool distinct = false) => new(aggregate, member, null, distinct);
+	public static AggregateOperand Aggregate(DataAggregateFunction aggregate, string member, ICondition filter, bool distinct = false) => new(aggregate, member, filter, distinct);
 	#endregion
 
 	#region 聚合运元
-	public static AggregateOperand Count(ICondition filter = null, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Count, null, filter, distinct);
-	public static AggregateOperand Count(string member, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Count, member, null, distinct);
-	public static AggregateOperand Count(string member, ICondition filter, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Count, member, filter, distinct);
-	public static AggregateOperand Sum(string member, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Sum, member, null, distinct);
-	public static AggregateOperand Sum(string member, ICondition filter, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Sum, member, filter, distinct);
+	public static AggregateOperand Count(ICondition filter = null, bool distinct = false) => new(DataAggregateFunction.Count, null, filter, distinct);
+	public static AggregateOperand Count(string member, bool distinct = false) => new(DataAggregateFunction.Count, member, null, distinct);
+	public static AggregateOperand Count(string member, ICondition filter, bool distinct = false) => new(DataAggregateFunction.Count, member, filter, distinct);
+	public static AggregateOperand Sum(string member, bool distinct = false) => new(DataAggregateFunction.Sum, member, null, distinct);
+	public static AggregateOperand Sum(string member, ICondition filter, bool distinct = false) => new(DataAggregateFunction.Sum, member, filter, distinct);
 	public static FunctionOperand Sum<T>(string member, T defaultValue, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Sum, member, null, distinct), Constant(defaultValue));
 	public static FunctionOperand Sum<T>(string member, T defaultValue, ICondition filter, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Sum, member, filter, distinct), Constant(defaultValue));
-	public static AggregateOperand Average(string member, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Average, member, null, distinct);
-	public static AggregateOperand Average(string member, ICondition filter, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Average, member, filter, distinct);
+	public static AggregateOperand Average(string member, bool distinct = false) => new(DataAggregateFunction.Average, member, null, distinct);
+	public static AggregateOperand Average(string member, ICondition filter, bool distinct = false) => new(DataAggregateFunction.Average, member, filter, distinct);
 	public static FunctionOperand Average<T>(string member, T defaultValue, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Average, member, null, distinct), Constant(defaultValue));
 	public static FunctionOperand Average<T>(string member, T defaultValue, ICondition filter, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Average, member, filter, distinct), Constant(defaultValue));
-	public static AggregateOperand Median(string member, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Median, member, null, distinct);
-	public static AggregateOperand Median(string member, ICondition filter, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Median, member, filter, distinct);
+	public static AggregateOperand Median(string member, bool distinct = false) => new(DataAggregateFunction.Median, member, null, distinct);
+	public static AggregateOperand Median(string member, ICondition filter, bool distinct = false) => new(DataAggregateFunction.Median, member, filter, distinct);
 	public static FunctionOperand Median<T>(string member, T defaultValue, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Median, member, null, distinct), Constant(defaultValue));
 	public static FunctionOperand Median<T>(string member, T defaultValue, ICondition filter, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Median, member, filter, distinct), Constant(defaultValue));
-	public static AggregateOperand Maximum(string member, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Maximum, member, null, distinct);
-	public static AggregateOperand Maximum(string member, ICondition filter, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Maximum, member, filter, distinct);
+	public static AggregateOperand Maximum(string member, bool distinct = false) => new(DataAggregateFunction.Maximum, member, null, distinct);
+	public static AggregateOperand Maximum(string member, ICondition filter, bool distinct = false) => new(DataAggregateFunction.Maximum, member, filter, distinct);
 	public static FunctionOperand Maximum<T>(string member, T defaultValue, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Maximum, member, null, distinct), Constant(defaultValue));
 	public static FunctionOperand Maximum<T>(string member, T defaultValue, ICondition filter, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Maximum, member, filter, distinct), Constant(defaultValue));
-	public static AggregateOperand Minimum(string member, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Minimum, member, null, distinct);
-	public static AggregateOperand Minimum(string member, ICondition filter, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Minimum, member, filter, distinct);
+	public static AggregateOperand Minimum(string member, bool distinct = false) => new(DataAggregateFunction.Minimum, member, null, distinct);
+	public static AggregateOperand Minimum(string member, ICondition filter, bool distinct = false) => new(DataAggregateFunction.Minimum, member, filter, distinct);
 	public static FunctionOperand Minimum<T>(string member, T defaultValue, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Minimum, member, null, distinct), Constant(defaultValue));
 	public static FunctionOperand Minimum<T>(string member, T defaultValue, ICondition filter, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Minimum, member, filter, distinct), Constant(defaultValue));
-	public static AggregateOperand Deviation(string member, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Deviation, member, null, distinct);
-	public static AggregateOperand Deviation(string member, ICondition filter, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Deviation, member, filter, distinct);
+	public static AggregateOperand Deviation(string member, bool distinct = false) => new(DataAggregateFunction.Deviation, member, null, distinct);
+	public static AggregateOperand Deviation(string member, ICondition filter, bool distinct = false) => new(DataAggregateFunction.Deviation, member, filter, distinct);
 	public static FunctionOperand Deviation<T>(string member, T defaultValue, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Deviation, member, null, distinct), Constant(defaultValue));
 	public static FunctionOperand Deviation<T>(string member, T defaultValue, ICondition filter, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Deviation, member, filter, distinct), Constant(defaultValue));
-	public static AggregateOperand DeviationPopulation(string member, bool distinct = false) => new AggregateOperand(DataAggregateFunction.DeviationPopulation, member, null, distinct);
-	public static AggregateOperand DeviationPopulation(string member, ICondition filter, bool distinct = false) => new AggregateOperand(DataAggregateFunction.DeviationPopulation, member, filter, distinct);
+	public static AggregateOperand DeviationPopulation(string member, bool distinct = false) => new(DataAggregateFunction.DeviationPopulation, member, null, distinct);
+	public static AggregateOperand DeviationPopulation(string member, ICondition filter, bool distinct = false) => new(DataAggregateFunction.DeviationPopulation, member, filter, distinct);
 	public static FunctionOperand DeviationPopulation<T>(string member, T defaultValue, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.DeviationPopulation, member, null, distinct), Constant(defaultValue));
 	public static FunctionOperand DeviationPopulation<T>(string member, T defaultValue, ICondition filter, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.DeviationPopulation, member, filter, distinct), Constant(defaultValue));
-	public static AggregateOperand Variance(string member, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Variance, member, null, distinct);
-	public static AggregateOperand Variance(string member, ICondition filter, bool distinct = false) => new AggregateOperand(DataAggregateFunction.Variance, member, filter, distinct);
+	public static AggregateOperand Variance(string member, bool distinct = false) => new(DataAggregateFunction.Variance, member, null, distinct);
+	public static AggregateOperand Variance(string member, ICondition filter, bool distinct = false) => new(DataAggregateFunction.Variance, member, filter, distinct);
 	public static FunctionOperand Variance<T>(string member, T defaultValue, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Variance, member, null, distinct), Constant(defaultValue));
 	public static FunctionOperand Variance<T>(string member, T defaultValue, ICondition filter, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.Variance, member, filter, distinct), Constant(defaultValue));
-	public static AggregateOperand VariancePopulation(string member, bool distinct = false) => new AggregateOperand(DataAggregateFunction.VariancePopulation, member, null, distinct);
-	public static AggregateOperand VariancePopulation(string member, ICondition filter, bool distinct = false) => new AggregateOperand(DataAggregateFunction.VariancePopulation, member, filter, distinct);
+	public static AggregateOperand VariancePopulation(string member, bool distinct = false) => new(DataAggregateFunction.VariancePopulation, member, null, distinct);
+	public static AggregateOperand VariancePopulation(string member, ICondition filter, bool distinct = false) => new(DataAggregateFunction.VariancePopulation, member, filter, distinct);
 	public static FunctionOperand VariancePopulation<T>(string member, T defaultValue, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.VariancePopulation, member, null, distinct), Constant(defaultValue));
 	public static FunctionOperand VariancePopulation<T>(string member, T defaultValue, ICondition filter, bool distinct = false) => IsNull(new AggregateOperand(DataAggregateFunction.VariancePopulation, member, filter, distinct), Constant(defaultValue));
 	#endregion
