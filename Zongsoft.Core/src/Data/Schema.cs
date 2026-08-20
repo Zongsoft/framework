@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,139 +28,161 @@
  */
 
 using System;
-using System.Reflection;
-using System.Linq.Expressions;
+using System.Text;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示特定类型的数据模式。
-/// </summary>
-/// <typeparam name="T">特定类型的泛型参数。</typeparam>
-public abstract class Schema<T> : ISchemaMemberProvider
+/// <summary>表示由指定成员类型构成的数据模式。</summary>
+/// <typeparam name="TMember">数据模式成员类型。</typeparam>
+public abstract class Schema<TMember> : ISchema<TMember> where TMember : SchemaMemberBase
 {
-	#region 成员字段
-	private readonly SchemaMemberCollection _members;
+	#region 构造函数
+	protected Schema(string name, string text, Type modelType, IEnumerable<TMember> members = null)
+	{
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
+
+		this.Name = name;
+		this.Text = text ?? throw new ArgumentNullException(nameof(text));
+		this.ModelType = modelType;
+		this.Members = new SchemaMemberCollection<TMember>(members);
+	}
 	#endregion
 
-	#region 构造函数
-	protected Schema()
-	{
-		_members = new SchemaMemberCollection();
-	}
+	#region 公共属性
+	public string Name { get; }
+	public string Text { get; }
+	public Type ModelType { get; }
+	public bool IsReadOnly { get; set; }
+	public bool IsEmpty => this.Members == null || this.Members.Count == 0;
+	public SchemaMemberCollection<TMember> Members { get; }
 	#endregion
 
 	#region 公共方法
-	/// <summary>清空当前模式的成员。</summary>
-	/// <returns>返回当前模式。</returns>
-	public Schema<T> Clear()
+	public void Clear()
 	{
-		_members.Clear();
+		if(!this.IsReadOnly)
+			this.Members?.Clear();
+	}
+
+	public bool Contains(string path) => this.Find(path) != null;
+
+	public TMember Find(string path)
+	{
+		if(!TryGetParts(path, out var parts) || this.IsEmpty)
+			return null;
+
+		TMember current = null;
+
+		for(int i = 0; i < parts.Length; i++)
+		{
+			if(i == 0)
+			{
+				if(!this.Members.TryGetValue(parts[i], out current))
+					return null;
+			}
+			else if(!current.TryGetChild(parts[i], out var child) || child is not TMember member)
+				return null;
+			else
+				current = member;
+		}
+
+		return current;
+	}
+
+	public ISchema<TMember> Include(string expression)
+	{
+		if(this.IsReadOnly || string.IsNullOrWhiteSpace(expression))
+			return this;
+
+		var count = 0;
+		var characters = expression.ToCharArray();
+
+		for(int i = 0; i < characters.Length; i++)
+		{
+			if(characters[i] == '.' || characters[i] == '/')
+			{
+				characters[i] = '{';
+				count++;
+			}
+		}
+
+		var members = this.OnInclude(count == 0 ? expression : new string(characters) + new string('}', count));
+
+		if(members != null)
+		{
+			foreach(var member in members)
+			{
+				if(member != null && !this.Members.Contains(member.Name))
+					this.Members.Add(member);
+			}
+		}
+
 		return this;
 	}
 
-	/// <summary>将指定 Lambda 表达式中的成员访问式添加到当前模式成员中。</summary>
-	/// <typeparam name="TMember">泛型参数，表示成员访问表达式类型。</typeparam>
-	/// <param name="expression">指定的包含成员访问的 Lambda 表达式。</param>
-	/// <returns>返回当前模式。</returns>
-	/// <example>
-	/// <code>
-	/// Schema.Empty&lt;Apartment&gt;()
-	///		.Include(p => p.ApartmentId)
-	///		.Include(p => p.ApartmentNo)
-	///		.Include(p => p.Building.BuildingId)
-	///		.Include(p => p.Building.BuildingNo)
-	///		.Include(p => p.Building.ParkId)
-	///		.Include(p => p.Building.Park.ParkId)
-	///		.Include(p => p.Building.Park.ParkNo)
-	///		.Include(p => p.Building.Park.Name)
-	/// </code>
-	/// </example>
-	public Schema<T> Include<TMember>(Expression<Func<T, TMember>> expression)
+	public ISchema<TMember> Exclude(string path)
 	{
-		ISchemaMember parent = null;
-		var members = GetMembers(expression);
-
-		foreach(var member in members)
-		{
-			var children = parent == null ? _members : parent.Children;
-
-			if(!children.TryGetValue(member.Name, out var child))
-			{
-				child = this.GetMember(member.Name, parent);
-
-				if(child == null)
-					throw new DataArgumentException(member.Name);
-
-				children.Add(child);
-			}
-
-			parent = child;
-		}
-
+		this.Exclude(path, out _);
 		return this;
 	}
 
-	/// <summary>将指定 Lambda 表达式中的成员访问式从当前模式成员中移除。</summary>
-	/// <typeparam name="TMember">泛型参数，表示成员访问表达式类型。</typeparam>
-	/// <param name="expression">指定的包含成员访问的 Lambda 表达式。</param>
-	/// <returns>返回当前模式。</returns>
-	/// <example>
-	/// <code>
-	/// Schema.Empty&lt;Apartment&gt;()
-	///		.Exclude(p => p.ApartmentId)
-	///		.Exclude(p => p.ApartmentNo)
-	///		.Exclude(p => p.Building.BuildingId)
-	///		.Exclude(p => p.Building.BuildingNo)
-	///		.Exclude(p => p.Building.Park)
-	/// </code>
-	/// </example>
-	public Schema<T> Exclude<TMember>(Expression<Func<T, TMember>> expression)
+	public bool Exclude(string path, out TMember member)
 	{
-		var members = GetMembers(expression);
-		ISchemaMember parent = null, child = null;
+		member = null;
 
-		foreach(var member in members)
+		if(this.IsReadOnly || !TryGetParts(path, out var parts) || this.IsEmpty)
+			return false;
+
+		TMember parent = null;
+		TMember current = null;
+
+		for(int i = 0; i < parts.Length; i++)
 		{
-			if(child != null)
-				parent = child;
-
-			if(parent == null)
+			if(i == 0)
 			{
-				if(!_members.TryGetValue(member.Name, out child))
-					return this;
+				if(!this.Members.TryGetValue(parts[i], out current))
+					return false;
 			}
-			else if(!parent.HasChildren || !parent.Children.TryGetValue(member.Name, out child))
-				return this;
+			else if(!current.TryGetChild(parts[i], out var child) || child is not TMember nested)
+				return false;
+			else
+			{
+				parent = current;
+				current = nested;
+			}
 		}
 
-		if(child != null)
+		if(parent == null)
 		{
-			if(parent == null)
-				_members.Remove(child);
-			else if(parent.HasChildren)
-				parent.Children.Remove(child);
+			if(!this.Members.Remove(current.Name))
+				return false;
+		}
+		else
+		{
+			parent.RemoveChild(current.Name);
+			this.Prune(parent);
 		}
 
-		return this;
+		member = current;
+		return true;
 	}
 	#endregion
 
-	#region 抽象方法
-	protected abstract ISchemaMember GetMember(string name, ISchemaMember parent);
+	#region 保护方法
+	protected abstract IEnumerable<TMember> OnInclude(string expression);
 	#endregion
 
 	#region 重写方法
 	public override string ToString()
 	{
-		if(_members == null || _members.Count == 0)
+		if(this.IsEmpty)
 			return string.Empty;
 
-		var text = new System.Text.StringBuilder();
+		var text = new StringBuilder();
 
-		foreach(var member in _members)
+		foreach(var member in this.Members)
 		{
 			if(text.Length > 0)
 				text.Append(',');
@@ -173,34 +195,50 @@ public abstract class Schema<T> : ISchemaMemberProvider
 	#endregion
 
 	#region 私有方法
-	private static IEnumerable<MemberInfo> GetMembers(Expression expression)
+	private void Prune(TMember member)
 	{
-		switch(expression.NodeType)
+		while(member != null && !member.HasChildren)
 		{
-			case ExpressionType.MemberAccess:
-				yield return ((MemberExpression)expression).Member;
+			if(member.Parent is not TMember parent)
+			{
+				this.Members.Remove(member.Name);
+				return;
+			}
 
-				if(((MemberExpression)expression).Expression != null)
-				{
-					foreach(var member in GetMembers(((MemberExpression)expression).Expression))
-						yield return member;
-				}
-
-				break;
-			case ExpressionType.Lambda:
-				foreach(var member in GetMembers(((LambdaExpression)expression).Body))
-					yield return member;
-
-				break;
+			parent.RemoveChild(member.Name);
+			member = parent;
 		}
 	}
 
-	private static void WriteMember(System.Text.StringBuilder text, ISchemaMember member)
+	private static bool TryGetParts(string path, out string[] parts)
+	{
+		parts = null;
+
+		if(string.IsNullOrWhiteSpace(path))
+			return false;
+
+		parts = path.Split(['.', '/'], StringSplitOptions.None);
+
+		for(int i = 0; i < parts.Length; i++)
+		{
+			if(string.IsNullOrWhiteSpace(parts[i]))
+				return false;
+		}
+
+		return parts.Length > 0;
+	}
+
+	private static void WriteMember(StringBuilder text, SchemaMemberBase member)
 	{
 		text.Append(member.Name);
 
-		if(member.Paging != null && member.Paging.IsPaged(out var index, out var size))
-			text.Append($":{index}/{size}");
+		if(member.Paging != null)
+		{
+			if(object.ReferenceEquals(member.Paging, Paging.Disabled))
+				text.Append(":*");
+			else if(member.Paging.IsPaged(out var page, out var size))
+				text.Append(page == 1 ? $":{size}" : $":{page}/{size}");
+		}
 
 		if(member.Sortings != null && member.Sortings.Length > 0)
 		{
@@ -211,69 +249,47 @@ public abstract class Schema<T> : ISchemaMemberProvider
 				if(i > 0)
 					text.Append(',');
 
-				text.Append(member.Sortings[i].ToString());
+				if(member.Sortings[i].Mode == SortingMode.Descending)
+					text.Append('~');
+
+				text.Append(member.Sortings[i].Name);
 			}
 
 			text.Append(')');
 		}
 
-		if(member.Criteria != null)
-		{
-			text.Append('?');
-			text.Append(member.Criteria.ToString());
-		}
-
 		if(member.HasChildren)
 		{
+			var index = 0;
 			text.Append('{');
-			WriteMembers(text, member.Children);
+
+			foreach(var child in member.Children)
+			{
+				if(index++ > 0)
+					text.Append(',');
+
+				WriteMember(text, (SchemaMemberBase)child);
+			}
+
 			text.Append('}');
 		}
 	}
+	#endregion
 
-	private static void WriteMembers(System.Text.StringBuilder text, IEnumerable<ISchemaMember> members)
+	#region 显式实现
+	SchemaMemberBase ISchema.Find(string path) => this.Find(path);
+	ISchema ISchema.Include(string path) => this.Include(path);
+	ISchema ISchema.Exclude(string path) => this.Exclude(path);
+	bool ISchema.Exclude(string path, out SchemaMemberBase member)
 	{
-		var index = 0;
-
-		foreach(var member in members)
+		if(this.Exclude(path, out var result))
 		{
-			if(index++ > 0)
-				text.Append(',');
-
-			WriteMember(text, member);
+			member = result;
+			return true;
 		}
+
+		member = null;
+		return false;
 	}
 	#endregion
-
-	#region 显式接口
-	ISchemaMember ISchemaMemberProvider.GetMember(string name, ISchemaMember parent) => this.GetMember(name, parent);
-	#endregion
-}
-
-public class SchemaMemberCollection : KeyedCollection<string, ISchemaMember>
-{
-	public SchemaMemberCollection() : base(StringComparer.OrdinalIgnoreCase) { }
-	protected override string GetKeyForItem(ISchemaMember member) => member.Name;
-}
-
-public interface ISchemaMember
-{
-	string Name { get; }
-	string Path { get; }
-	string FullPath { get; }
-	ISchemaMember Parent { get; }
-	MemberInfo Member { get; }
-	Metadata.IDataEntityProperty Property { get; }
-
-	Paging Paging { get; }
-	Sorting[] Sortings { get; }
-	ICondition Criteria { get; }
-
-	bool HasChildren { get; }
-	SchemaMemberCollection Children { get; }
-}
-
-public interface ISchemaMemberProvider
-{
-	ISchemaMember GetMember(string name, ISchemaMember parent);
 }

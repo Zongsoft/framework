@@ -104,7 +104,7 @@ sorting ::=
 - 星号(`*`)：表示包含所有简单属性，不包含导航属性；如果要包含导航属性，必须显式写出。
 - 叹号(`!`)：表示排除。单独的 `!` 表示清除当前层级的全部成员；`!名称` 表示排除指定名称的属性。
 - 标识符由字母、数字和下划线组成，不能以数字开头，不区分大小写。
-- 多个成员之间使用逗号(`,`)分隔；子模式 _（大括号内的部分）_ 沿用相同的语法，因此可以任意层级嵌套。
+- 多个成员之间使用逗号(`,`)分隔；子模式 _（大括号内的部分）_ 沿用相同的语法，因此可以任意层级嵌套。解析器会忽略连续逗号产生的空段以及首尾逗号。
 - 标识符内部不能含有空白字符；但成员之间、星号之后、标识符与子模式/排序/分页符号之间可以包含空白字符，例如 `Users {*}`、`Users :1/20`、`* , Users`。
 - 分页数字内部以及冒号(`:`)之后不允许空白；排序括号内、字段内部不允许空白，但排序字段之间 _（逗号之后）_ 允许空白。
 
@@ -129,7 +129,7 @@ sorting ::=
 Users:1/20(~CreatedTime,Grade){*}
 ```
 
-> **注意：** 当前解析器只允许排序列表中的**第一个**字段使用 `~`/`!` 前缀，多字段排序时排在后面的字段不能带前缀 _（这是解析器状态机的已知限制，重构时需修复）_。也就是说 `(Grade,~CreatedTime)` 会解析失败，应改写为 `(~CreatedTime,Grade)`。
+每个排序字段都可以单独使用 `~`/`!` 前缀。同一字段重复声明时，以最后一次声明的方向和位置为准。
 
 <a name="schema-sample"></a>
 ### 示例说明
@@ -192,20 +192,25 @@ Users:1/20(~CreatedTime,Grade){*}
 | --- | --- |
 | [ISchema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema.cs) | 解析后的数据模式接口：`Name`、`Text`、`ModelType`、`IsEmpty`、`IsReadOnly`；`Clear()`、`Contains(path)`、`Find(path)`、`Include(path)`、`Exclude(path)`。路径以句点(`.`)或斜杠(`/`)分隔。 |
 | [ISchema&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema%601.cs) | 泛型版本，新增 `Members` 成员集合属性。 |
+| [Schema&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Schema.cs) | 模式树操作的通用实现，包含深层 `Contains`/`Find`/`Include`/`Exclude` 以及空父节点裁剪。 |
+| [ISchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaMember.cs) | 只读成员契约。`Property` 为空时 `Ignored` 为真，表示该成员属于模型投影但不参与持久化。 |
 | [ISchemaParser](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaParser.cs) / [ISchemaParser&lt;TEntry&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaParser%601.cs) | 模式解析器接口：`Parse(name, expression, entityType)`。 |
-| [SchemaParserBase&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaParserBase.cs) | 模式解析器的状态机基类，实现上述语法的词法与语法分析，通过回调把解析出的元素名映射为成员对象。 |
-| [SchemaMemberBase](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberBase.cs) | 模式成员基类：`Name`、`Path`、`FullPath`、`Paging`、`Sortings`、`Property`、`HasChildren`。 |
+| [SchemaParserBase&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaParserBase.cs) | 模式解析器的状态机基类，实现上述语法的词法与语法分析，并将成员解析交给子类。 |
+| [SchemaMemberBase](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberBase.cs) | 模式成员基类：`Name`、`Path`、`FullPath`、`Member`、`Property`、`Ignored`、`Paging`、`Sortings`、`HasChildren`。 |
 | [SchemaMemberCollection&lt;T&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberCollection.cs) | 模式成员集合，按键 _（成员名）_ 索引，不区分大小写。 |
+| [SchemaMemberDescriptor](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberDescriptor.cs) | 描述扩展成员、对应的 CLR 成员及计算它所需的映射成员路径。 |
 
 **数据引擎**（[`Zongsoft.Data/src`](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/src)）中的实现：
 
 | 类型 | 说明 |
 | --- | --- |
-| [SchemaParser](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaParser.cs) | `SchemaParserBase<SchemaMember>` 的实现，单例 `SchemaParser.Instance`；根据实体元数据把模式元素名解析为实体属性（支持继承实体与导航跳板）。 |
-| [Schema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Schema.cs) | `ISchema`、`ISchema<SchemaMember>` 的实现。 |
-| [SchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaMember.cs) | `SchemaMemberBase` 的实现，持有 `Token` _（[DataEntityPropertyToken](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Metadata/DataEntityPropertyToken.cs)）_ 与 `Ancestors` 继承链。 |
+| [SchemaParser](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaParser.cs) | `SchemaParserBase<SchemaMember>` 的实现；先解析映射成员，并为少量计算成员扩展提供受保护的虚方法，同时支持继承实体、导航跳板和依赖环检测。 |
+| [Schema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Schema.cs) | 绑定 `IDataEntity` 的 `Schema<SchemaMember>` 数据引擎特化实现。 |
+| [SchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaMember.cs) | `SchemaMemberBase` 的实现：映射成员持有 `Token`，扩展成员持有 `Descriptor` 和 `Dependencies`；扩展成员的 `Property` 为空，因此 `Ignored` 为真。 |
 
-> **说明：** 核心库中的 [Schema&lt;T&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Schema.cs) 及其 [ISchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Schema.cs) 接口是基于 Lambda 表达式程序化构建模式的早期形态（`Schema.Empty<T>().Include(p => p.Name)`），目前引擎统一使用文本表达式 + `SchemaParserBase` 解析，两者并行保留。
+映射元数据的优先级始终高于解析器扩展。解析结果不保留成员是否来自 `*`：受保护的 `GetMembers` 方法决定通配符包含范围，`TryResolve` 决定显式名称的解析范围。查询构建器不会为忽略成员生成数据库字段，而会选取其声明的映射依赖；写操作构建器会跳过忽略成员。
+
+计算成员被有意设计成弱扩展点：派生 `SchemaParser` 并重写 `TryResolve` 和/或 `GetMembers`，再由特化的 `DataAccess` 通过 `CreateSchema` 返回该解析器。默认 `DataAccess` 始终使用 `SchemaParser.Instance`，不会从应用服务容器发现成员解析器。
 
 
 <a name="mapping"></a>

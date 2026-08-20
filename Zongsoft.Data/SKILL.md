@@ -20,33 +20,37 @@ description: 开发、重构、测试或审查 Zongsoft.Data ORM 数据引擎及
 
 Schema 代码分两层，改动前先确认所属层：
 
-- **核心库**（`Zongsoft.Core/src/Data/`）——接口与通用解析器：
+- **核心库**（`Zongsoft.Core/src/Data/`）——接口、模式树与通用解析器：
   - `ISchema`：解析后的模式对象（`Name`、`Text`、`ModelType`、`IsEmpty`、`IsReadOnly`，方法 `Clear/Contains/Find/Include/Exclude`）。
   - `ISchema<TMember>`：泛型成员版本，新增 `Members` 集合。
+  - `Schema<TMember>`：唯一的模式树通用实现，负责深层路径查找、增删合并和空父节点裁剪。
   - `ISchemaParser` / `ISchemaParser<TEntry>`：解析器接口，`Parse(name, expression, entityType)`。
-  - `SchemaParserBase<TMember>`：文本 → 成员树的状态机解析器（词法/语法分析），通过 `SchemaEntryToken` 回调（`mapper`）把元素名解析为成员；`Parse(expression, mapper, data, members)` 是受保护入口，`TryParse` 用于容错场景。
-  - `SchemaMemberBase`：成员基类（`Name`、`Path`、`FullPath`、`Paging`、`Sortings`、`Property`、`HasChildren`）。
+  - `SchemaParserBase<TMember>`：文本 → 成员树的状态机解析器（词法/语法分析），通过子类重写的 `Resolve(SchemaEntryToken)` 把元素名解析为成员；`Parse(expression, data, members)` 是受保护入口，`TryParse` 用于容错场景。
+  - `ISchemaMember` / `SchemaMemberBase`：只读成员契约及基类；`Property` 为空时 `Ignored` 为真，表示模型投影成员不参与数据库持久化。
   - `SchemaMemberCollection<T>`：以成员名（不区分大小写）为键的集合。
-  - `Schema<T>`（Lambda 版）与 `ISchemaMember`/`ISchemaMemberProvider`：基于 `Expression<Func<T, TMember>>` 程序化构建模式的早期形态（`Schema.Empty<T>().Include(p => p.Name)`），目前与文本解析体系并行保留，改动前先确认引用范围。
+  - `SchemaMemberDescriptor` / `SchemaMemberResolverContext`：映射之外模型成员的描述对象，以及派生解析器扩展时使用的上下文。
 - **引擎库**（`Zongsoft.Data/src/`）——实现与元数据绑定：
-  - `SchemaParser`（`SchemaParserBase<SchemaMember>` 单例 `SchemaParser.Instance`）：`Resolve` 回调把元素名解析为实体属性元数据。
-  - `Schema`：`ISchema`、`ISchema<SchemaMember>` 的实现。
-  - `SchemaMember`：`SchemaMemberBase` 实现，持有 `Token`（`DataEntityPropertyToken`，含属性元数据、绑定成员与转换器）与 `Ancestors`（继承实体链）。
+  - `SchemaParser`：`SchemaParserBase<SchemaMember>` 的实现；先解析实体属性元数据，并通过受保护的 `TryResolve` / `GetMembers` 虚方法提供低频扩展。
+  - `Schema`：绑定 `IDataEntity` 的 `Schema<SchemaMember>` 特化实现。
+  - `SchemaMember`：映射成员持有 `Token` 和 `Ancestors`；扩展成员持有 `Descriptor` 和 `Dependencies`。
 
 ### 解析流程
 
 1. `DataAccessBase` 的每个数据访问方法（`Select/Insert/Update/Upsert/Delete`）在创建上下文时调用 `this.Schema.Parse(name, schemaText, entityType)` 把文本解析为 `ISchema`；空文本默认解析为 `"*"`（`SchemaParser.Parse` 中处理）。
 2. `SchemaParser.Parse` 从 `Mapping.Entities[name]` 取实体，用 `new SchemaData(entity, entityType)` 作为回调数据，调用 `SchemaParserBase.Parse`。
-3. `Resolve(token)` 按元素名在实体元数据中查找属性：
+3. `Resolve(token)` 先按元素名在实体元数据中查找属性：
    - 父级为导航属性时切换到外部实体（`complex.Foreign`），并沿 `ForeignProperty` 链继续切换（导航跳板）。
    - 目标类型（`ModelType`）非标量时用 `entity.GetTokens(modelType)`（按模型成员裁剪）查找；标量类型时按 `entity.Properties` 查找。
    - 支持继承实体：沿 `GetBaseEntity()` 逐级向上查找，`*` 会展开所有继承层的简单属性。
-   - 未找到抛出 `DataArgumentException`。
+   - 显式名称未找到映射时，调用派生解析器的 `TryResolve`；未处理才抛出 `DataArgumentException`。
+   - `*` 先展开映射中的简单属性，再合并派生解析器 `GetMembers` 返回的扩展成员；解析结果不记录成员是否源自通配符。
+   - 映射成员始终优先于同名扩展成员。
+   - 扩展描述中的依赖路径按普通 Schema 规则解析，并检测循环依赖。
 4. 解析结果写入 `SchemaMemberCollection<SchemaMember>`；已存在同名的成员会复用并追加子成员（`Include` 语义），排除用 `Exclude` 移除。
 5. 语句构建器消费 `context.Schema.Members`：
-   - `SelectStatementBuilder`：为简单成员生成 `SELECT` 字段，复杂成员生成 `JOIN`（`?`/`!`）或独立子查询（`*`，经 `statement.Slaves` 惰性加载，`DataSelectExecutor.PopulateSlaves` 填充）。
-   - `InsertStatementBuilder` / `UpdateStatementBuilder` / `UpsertStatementBuilder`：按模式决定写入成员与级联子表（一对多子记录按 UPSERT 语义）。
-   - `DeleteStatementBuilder`：按模式生成级联删除子表语句。
+   - `SelectStatementBuilder`：为映射简单成员生成 `SELECT` 字段，复杂成员生成 `JOIN`（`?`/`!`）或独立子查询（`*`，经 `statement.Slaves` 惰性加载，`DataSelectExecutor.PopulateSlaves` 填充）；忽略成员不生成同名字段，只选择其声明的映射依赖。
+   - `InsertStatementBuilder` / `UpdateStatementBuilder` / `UpsertStatementBuilder`：按模式决定写入成员与级联子表（一对多子记录按 UPSERT 语义），跳过忽略成员。
+   - `DeleteStatementBuilder`：按模式生成级联删除子表语句，跳过忽略成员。
    - 模式成员的 `Paging`/`Sortings` 应用到对应子查询。
 
 ### 表达式语法要点
@@ -63,18 +67,21 @@ sorting ::= "(" { ["~"|"!"]identifier } [,...n] ")"
 
 - `*` 只展开简单属性（不含导航属性）；`!` 单独使用（或 `!*`）清除当前层级全部成员，`!名称` 移除指定成员。
 - 分页：冒号后不带 `/` 的数字表示**页大小**（页号为 1）；`N/S` 中 `N` 是页号、`S` 是页大小；`?` 表示默认页大小（20）；`*` 表示禁用分页；单独的 `?` 清除分页设置。
-- 排序：`~` 或 `!` 前缀表示倒序。**已知限制**：当前解析器只允许排序列表的第一个字段带 `~/!` 前缀（`State.SortingGutter` 只接受字母/下划线或空白开头的后续字段），多字段排序时后续字段不能带前缀；重构时应修复。
+- 排序：`~` 或 `!` 前缀表示倒序；每一项均可指定前缀，同名排序以最后一次声明的方向和位置为准。
 - 空白：标识符内部不允许空白；成员之间、`*` 之后、标识符与 `{`/`(`/`:`/`,`/`}` 之间允许空白；冒号之后与排序字段内部不允许空白（排序字段之间的逗号后允许空白）。
 - 标识符不能以数字开头；成员名不区分大小写。
 - 解析错误统一抛出 `DataArgumentException`（消息前缀 `SyntaxError:`/`ParsingError:`）。
 - 解析器对成员名的查找（`Resolve`）不在 `SchemaParserBase` 内，而在 `SchemaParser` 中；`SchemaParserBase` 保持与元数据无关。
+- 为兼容现有 HTTP Schema，连续逗号产生的空段及首尾逗号继续被容忍。
 
 ### 重构注意事项
 
 - 保持「`SchemaParserBase`（通用文本解析）→ `SchemaParser`（元数据解析）→ 语句构建器（SQL 生成）」的分层，不要把元数据逻辑下沉到基类。
 - 状态机位于 `SchemaParserBase.StateContext`（`None/Asterisk/Include/Exclude/PagingCount/PagingSize/SortingField/SortingGutter`），重构词法或语法时先跑 `Zongsoft.Core/test/Data/SchemaTest.cs` 中的回归用例。
 - 已确认的 XSD 与加载器差异（重构时统一）：`complexProperty` 的 `immutable` XSD 缺省 `true`、加载器缺省 `false`；`command` 的 `mutability` XSD 缺省 `none`、加载器缺省 `Delete|Insert|Update`。
-- 已确认的解析器限制：多字段排序仅首字段支持 `~/!` 前缀；`Users(1Name)` 这类以数字开头的排序字段因长度大于 1 不会被拒绝；重复/尾随逗号（如 `Users,,`）被容忍。
+- `SchemaParser.GetMembers` 的返回结果本身就是通配符范围，不要添加额外的通配符标记，也不要在解析后的 Schema 中保留 `*` 来源。
+- `SchemaMember.Ignored` 是唯一的持久化判别属性，由 `Property == null` 推导；不要再引入与它重叠的成员种类枚举。
+- 派生解析器的扩展方法只负责声明成员和依赖，不应直接生成 SQL；依赖必须是可由映射或该派生解析器解析的 Schema 路径。
 - 模式解析属于高频路径（每次数据访问都解析），缓存或编译模式时应评估 `SchemaParserBase` 的状态机分配。
 
 ## 驱动与语句扩展点

@@ -37,9 +37,7 @@ using Microsoft.Extensions.Primitives;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据访问的公共接口。
-/// </summary>
+/// <summary>表示数据访问的公共接口。</summary>
 /// <remarks>
 /// 	<para>关于“schema”查询参数的简要说明：</para>
 /// 	<para>表示要包含和排除的属性名列表，如果指定的是多个属性则属性名之间使用逗号(,)分隔；要排除的属性以感叹号(!)打头，单独一个星号(*)表示所有属性，单独一个感叹号(!)表示排除所有属性；如果未指定该参数则默认只会获取所有单值属性而不会获取导航属性。</para>

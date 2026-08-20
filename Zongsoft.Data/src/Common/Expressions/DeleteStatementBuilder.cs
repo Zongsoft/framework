@@ -68,6 +68,9 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 			//依次生成各个数据成员的关联（包括它的继承链、子元素集）
 			foreach(var schema in context.Schema.Members)
 			{
+				if(schema.Ignored)
+					continue;
+
 				Join(context.Aliaser, statement, statement.Table, schema);
 			}
 		}
@@ -94,6 +97,9 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 		{
 			foreach(var member in context.Schema.Members)
 			{
+				if(member.Ignored)
+					continue;
+
 				if(member.Token.Property.IsSimplex)
 					continue;
 
@@ -191,6 +197,9 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 		{
 			foreach(var child in schema.Children)
 			{
+				if(child.Ignored)
+					continue;
+
 				if(child.Token.Property.IsSimplex)
 					continue;
 
@@ -248,6 +257,9 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 		{
 			foreach(var child in schema.Children)
 			{
+				if(child.Ignored)
+					continue;
+
 				if(joins != null)
 				{
 					join = joins.FirstOrDefault(j => ((TableIdentifier)j.Target).Entity == child.Token.Property.Entity);

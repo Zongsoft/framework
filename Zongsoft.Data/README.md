@@ -104,7 +104,7 @@ sorting ::=
 - Asterisk(`*`): includes all scalar properties. Navigation properties are not included unless you name them explicitly.
 - Exclamation(`!`): excludes fields. A bare `!` clears all members at the current level; `!Name` excludes the named property.
 - Identifiers are composed of letters, digits, and underscores, must not start with a digit, and are case-insensitive.
-- Multiple members are separated by commas(`,`); the sub-schema _（inside the braces）_ uses the same syntax, so nesting is allowed at any depth.
+- Multiple members are separated by commas(`,`); the sub-schema _（inside the braces）_ uses the same syntax, so nesting is allowed at any depth. Empty comma segments and leading/trailing commas are ignored.
 - Whitespace is not allowed inside an identifier, but is allowed between members, after the asterisk, and between an identifier and the sub-schema/sorting/paging tokens, e.g. `Users {*}`、`Users :1/20`、`* , Users`.
 - Whitespace is not allowed inside a page number or right after the colon(`:`); it is not allowed inside the sorting parentheses or a sorting field, but is allowed between sorting fields _（after a comma）_.
 
@@ -129,7 +129,7 @@ Sorting is written after the paging and wrapped in parentheses; sorting fields a
 Users:1/20(~CreatedTime,Grade){*}
 ```
 
-> **Note:** The current parser only allows the **first** sorting field to carry the `~`/`!` prefix; later fields in a multi-field sort cannot carry a prefix _（a known limitation of the parser state machine that should be fixed during refactoring）_. So `(Grade,~CreatedTime)` fails to parse and should be rewritten as `(~CreatedTime,Grade)`.
+Every sorting field may carry its own `~`/`!` prefix. If a field is declared more than once, the last declaration determines its direction and position.
 
 <a name="schema-sample"></a>
 ### Sample description
@@ -192,20 +192,25 @@ The `schema` text argument is parsed into an `ISchema` object by the schema pars
 | --- | --- |
 | [ISchema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema.cs) | Interface of the parsed data schema: `Name`、`Text`、`ModelType`、`IsEmpty`、`IsReadOnly`; `Clear()`、`Contains(path)`、`Find(path)`、`Include(path)`、`Exclude(path)`. Paths are separated by a dot(`.`) or slash(`/`). |
 | [ISchema&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema%601.cs) | Generic version which adds the `Members` collection property. |
+| [Schema&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Schema.cs) | Reusable implementation of schema-tree operations, including deep `Contains`/`Find`/`Include`/`Exclude` and pruning of empty parent nodes. |
+| [ISchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaMember.cs) | Read-only member contract. `Ignored` is true when `Property` is null, meaning that the member is part of the model projection but is not persisted. |
 | [ISchemaParser](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaParser.cs) / [ISchemaParser&lt;TEntry&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaParser%601.cs) | Interface of the schema parser: `Parse(name, expression, entityType)`. |
-| [SchemaParserBase&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaParserBase.cs) | The state-machine base class of the schema parser, implementing the lexical and syntactic analysis of the grammar above and mapping each parsed member name to a member object through a callback. |
-| [SchemaMemberBase](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberBase.cs) | Base class of schema members: `Name`、`Path`、`FullPath`、`Paging`、`Sortings`、`Property`、`HasChildren`. |
+| [SchemaParserBase&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaParserBase.cs) | The state-machine base class of the schema parser, implementing the lexical and syntactic analysis of the grammar above and delegating member resolution to its subclass. |
+| [SchemaMemberBase](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberBase.cs) | Base class of schema members: `Name`, `Path`, `FullPath`, `Member`, `Property`, `Ignored`, `Paging`, `Sortings`, and `HasChildren`. |
 | [SchemaMemberCollection&lt;T&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberCollection.cs) | Collection of schema members keyed by member name, case-insensitive. |
+| [SchemaMemberDescriptor](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberDescriptor.cs) | Describes an extension member, its CLR member, and the mapped member paths required to calculate it. |
 
 **Implementations** in the data engine ([`Zongsoft.Data/src`](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/src)):
 
 | Type | Description |
 | --- | --- |
-| [SchemaParser](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaParser.cs) | Implementation of `SchemaParserBase<SchemaMember>` as the singleton `SchemaParser.Instance`; resolves schema member names to entity properties against the entity metadata（supporting inherited entities and navigation hops）. |
-| [Schema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Schema.cs) | Implementation of `ISchema` and `ISchema<SchemaMember>`. |
-| [SchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaMember.cs) | Implementation of `SchemaMemberBase` carrying a `Token` _（[DataEntityPropertyToken](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Metadata/DataEntityPropertyToken.cs)）_ and the `Ancestors` inheritance chain. |
+| [SchemaParser](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaParser.cs) | Implementation of `SchemaParserBase<SchemaMember>`; resolves mapped members first and exposes protected virtual methods for rare computed-member extensions. It supports inherited entities, navigation hops, and dependency-cycle detection. |
+| [Schema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Schema.cs) | Data-engine specialization of `Schema<SchemaMember>` bound to an `IDataEntity`. |
+| [SchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaMember.cs) | Implementation of `SchemaMemberBase` carrying a mapped `Token`, or an extension `Descriptor` and its `Dependencies`. An extension member has `Property == null` and therefore `Ignored == true`. |
 
-> **Note:** The [Schema&lt;T&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Schema.cs) class and its [ISchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Schema.cs) interface in the core library are the early form of programmatic schema building via lambda expressions（`Schema.Empty<T>().Include(p => p.Name)`）. The engine now uniformly uses text expressions parsed by `SchemaParserBase`; the two coexist.
+Mapped metadata always takes precedence over parser extensions. The result tree does not preserve whether a member came from `*`: the protected `GetMembers` method defines wildcard participation, while `TryResolve` defines explicit-name participation. Query builders do not emit a database field for an ignored member; they select its declared mapped dependencies instead. Mutation builders skip ignored members.
+
+Computed-member support is intentionally a weak extension point. Derive from `SchemaParser`, override `TryResolve` and/or `GetMembers`, and let a specialized `DataAccess` return that parser from `CreateSchema`; the default `DataAccess` always uses `SchemaParser.Instance` and does not discover member resolvers from the application service container.
 
 
 <a name="mapping"></a>

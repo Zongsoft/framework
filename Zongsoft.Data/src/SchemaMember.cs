@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -28,9 +28,9 @@
  */
 
 using System;
+using System.Reflection;
 using System.Collections.Generic;
 
-using Zongsoft.Collections;
 using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data;
@@ -40,6 +40,7 @@ public class SchemaMember : SchemaMemberBase
 	#region 成员字段
 	private SchemaMember _parent;
 	private SchemaMemberCollection<SchemaMember> _children;
+	private readonly string _name;
 	#endregion
 
 	#region 构造函数
@@ -47,28 +48,43 @@ public class SchemaMember : SchemaMemberBase
 	{
 		this.Token = new DataEntityPropertyToken(property);
 		this.Ancestors = ancestors;
+		_name = property?.Name ?? throw new ArgumentNullException(nameof(property));
 	}
 
 	internal SchemaMember(DataEntityPropertyToken token, IEnumerable<IDataEntity> ancestors = null)
 	{
 		this.Token = token;
 		this.Ancestors = ancestors;
+		_name = token.Property?.Name ?? throw new ArgumentException("The mapped schema token requires a property.", nameof(token));
+	}
+
+	internal SchemaMember(SchemaMemberDescriptor descriptor, IEnumerable<SchemaMember> dependencies = null)
+	{
+		this.Descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
+		this.Token = new DataEntityPropertyToken(null, descriptor.Member);
+		this.Dependencies = dependencies == null ? [] : [.. dependencies];
+		_name = descriptor.Name;
 	}
 	#endregion
 
 	#region 公共属性
-	public override string Name => this.Token.Property.Name;
+	public override string Name => _name;
+	public override bool Ignored => this.Token.Property == null;
+	public SchemaMemberDescriptor Descriptor { get; }
+	public IReadOnlyList<SchemaMember> Dependencies { get; } = [];
+	public override MemberInfo Member => this.Token.Member;
 	public override IDataEntityProperty Property => this.Token.Property;
 	public DataEntityPropertyToken Token { get; }
-	public SchemaMember Parent => _parent;
+	public new SchemaMember Parent => _parent;
 	public IEnumerable<IDataEntity> Ancestors { get; }
 	public override bool HasChildren => _children != null && _children.Count > 0;
-	public SchemaMemberCollection<SchemaMember> Children => _children;
+	public new SchemaMemberCollection<SchemaMember> Children => _children;
 	#endregion
 
 	#region 重写方法
 	protected override SchemaMemberBase GetParent() => _parent;
 	protected override void SetParent(SchemaMemberBase parent) => _parent = (parent as SchemaMember) ?? throw new ArgumentException();
+	protected override IEnumerable<SchemaMemberBase> GetChildren() => _children ?? [];
 
 	protected override bool TryGetChild(string name, out SchemaMemberBase child)
 	{

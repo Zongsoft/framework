@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -32,7 +32,6 @@ using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
 
-using Zongsoft.Data.Common;
 using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data;
@@ -51,116 +50,191 @@ public class SchemaParser : SchemaParserBase<SchemaMember>
 		if(string.IsNullOrWhiteSpace(expression))
 			expression = "*";
 
-		return new Schema(this, expression, entity, entityType, base.Parse(expression, Resolve, new SchemaData(entity, entityType)));
+		var data = new SchemaData(entity, entityType ?? typeof(object), new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+		return new Schema(this, expression, entity, entityType, base.Parse(expression, data));
 	}
 
-	private static IEnumerable<SchemaMember> Resolve(SchemaEntryToken token)
+	protected override IEnumerable<SchemaMember> Resolve(SchemaEntryToken token)
 	{
 		var data = (SchemaData)token.Data;
-		var current = data.Entity;
-
-		if(token.Parent != null)
-		{
-			var parent = token.Parent;
-
-			if(parent.Token.Property.IsSimplex)
-				throw new DataArgumentException("schema", string.Format(Properties.Resources.Schema_ComplexPropertyRequired_Message, parent));
-
-			var complex = (IDataEntityComplexProperty)parent.Token.Property;
-			data.Entity = complex.Foreign;
-
-			while(complex.ForeignProperty != null && complex.ForeignProperty.IsComplex)
-			{
-				complex = (IDataEntityComplexProperty)complex.ForeignProperty;
-				data.Entity = complex.Foreign;
-			}
-
-			if(parent.Token.Member != null)
-			{
-				switch(parent.Token.Member.MemberType)
-				{
-					case MemberTypes.Field:
-						data.EntityType = Zongsoft.Common.TypeExtension.GetElementType(((FieldInfo)parent.Token.Member).FieldType) ??
-						                  ((FieldInfo)parent.Token.Member).FieldType;
-						break;
-					case MemberTypes.Property:
-						data.EntityType = Zongsoft.Common.TypeExtension.GetElementType(((PropertyInfo)parent.Token.Member).PropertyType) ??
-						                  ((PropertyInfo)parent.Token.Member).PropertyType;
-						break;
-					case MemberTypes.Method:
-						data.EntityType = Zongsoft.Common.TypeExtension.GetElementType(((MethodInfo)parent.Token.Member).ReturnType) ??
-						                  ((MethodInfo)parent.Token.Member).ReturnType;
-						break;
-					default:
-						throw new DataArgumentException("schema", string.Format(Properties.Resources.Schema_InvalidMemberKind_Message, parent.Token.Member));
-				}
-			}
-		}
+		var (entity, modelType) = GetScope(data.Entity, data.ModelType, token.Parent);
 
 		if(token.Name == "*")
 		{
-			//return data.Entity.GetTokens(data.EntityType)
-			//				  .Where(p => p.Property.IsSimplex)
-			//				  .Select(p => new SchemaMember(p));
-
-			current = data.Entity;
-			var members = new List<SchemaMember>();
+			var members = new Dictionary<string, SchemaMember>(StringComparer.OrdinalIgnoreCase);
+			var current = entity;
 
 			while(current != null)
 			{
-				members.AddRange(
-					current.GetTokens(data.EntityType)
-					       .Where(p => p.Property.IsSimplex)
-					       .Select(p => new SchemaMember(p)));
+				foreach(var mapped in current.GetTokens(modelType).Where(token => token.Property.IsSimplex))
+					members.TryAdd(mapped.Property.Name, new SchemaMember(mapped));
 
 				current = current.GetBaseEntity();
 			}
 
-			return members;
+			var wildcardContext = new SchemaMemberResolverContext(entity, modelType, token.Parent, null);
+
+			var descriptors = this.GetMembers(wildcardContext);
+			if(descriptors != null)
+			{
+				foreach(var memberDescriptor in descriptors)
+				{
+					if(memberDescriptor == null || members.ContainsKey(memberDescriptor.Name))
+						continue;
+
+					members.Add(memberDescriptor.Name, this.CreateComputed(memberDescriptor, entity, modelType, token.Parent, data));
+				}
+			}
+
+			return members.Values;
 		}
 
-		current = data.Entity;
+		var currentEntity = entity;
 		List<IDataEntity> ancestors = null;
 
-		while(current != null)
+		while(currentEntity != null)
 		{
-			if(Zongsoft.Common.TypeExtension.IsScalarType(data.EntityType) && current.Properties.TryGetValue(token.Name, out var property))
+			if(Zongsoft.Common.TypeExtension.IsScalarType(modelType) && currentEntity.Properties.TryGetValue(token.Name, out var property))
 				return [new SchemaMember(property, ancestors)];
 
-			if(current.GetTokens(data.EntityType).TryGetValue(token.Name, out var stub))
-				return [new SchemaMember(stub, ancestors)];
+			if(currentEntity.GetTokens(modelType).TryGetValue(token.Name, out var mapped))
+				return [new SchemaMember(mapped, ancestors)];
 
-			if(ancestors == null)
-				ancestors = new List<IDataEntity>();
+			ancestors ??= [];
+			currentEntity = currentEntity.GetBaseEntity();
 
-			current = current.GetBaseEntity();
-
-			if(current != null)
-				ancestors.Add(current);
+			if(currentEntity != null)
+				ancestors.Add(currentEntity);
 		}
 
-		throw new DataArgumentException("schema", string.Format(Properties.Resources.Schema_PropertyNotFound_Message, token.Name, data.Entity.Name));
+		var explicitContext = new SchemaMemberResolverContext(entity, modelType, token.Parent, token.Name);
+
+		if(this.TryResolve(explicitContext, out var descriptor) && descriptor != null)
+			return [this.CreateComputed(descriptor, entity, modelType, token.Parent, data)];
+
+		throw new DataArgumentException("$schema", string.Format(Properties.Resources.Schema_PropertyNotFound_Message, token.Name, entity?.Name ?? modelType.Name));
 	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual bool TryResolve(SchemaMemberResolverContext context, out SchemaMemberDescriptor descriptor)
+	{
+		descriptor = null;
+		return false;
+	}
+
+	protected virtual IEnumerable<SchemaMemberDescriptor> GetMembers(SchemaMemberResolverContext context) => [];
 	#endregion
 
 	#region 内部方法
-	internal void Append(Schema schema, string expression)
+	internal IEnumerable<SchemaMember> Append(Schema schema, string expression)
 	{
-		var entries = base.Parse(expression, Resolve, new SchemaData(schema.Entity, schema.ModelType), schema.Members);
+		var data = new SchemaData(schema.Entity, schema.ModelType ?? typeof(object), new HashSet<string>(StringComparer.OrdinalIgnoreCase));
+		return base.Parse(expression, data, schema.Members);
 	}
 	#endregion
 
-	#region 嵌套结构
-	private struct SchemaData
+	#region 私有方法
+	private SchemaMember CreateComputed(SchemaMemberDescriptor descriptor, IDataEntity entity, Type modelType, SchemaMember parent, SchemaData data)
 	{
-		public IDataEntity Entity;
-		public Type EntityType;
+		if(descriptor == null || string.IsNullOrWhiteSpace(descriptor.Name))
+			throw new DataArgumentException("$schema", "The schema parser returned an invalid member descriptor.");
 
-		public SchemaData(IDataEntity entity, Type entityType)
+		var dependencies = Array.Empty<SchemaMember>();
+
+		if(descriptor.HasDependencies)
 		{
-			this.Entity = entity;
-			this.EntityType = entityType ?? typeof(object);
+			var scope = $"{entity?.Name ?? modelType.FullName}:{parent?.FullPath}:{descriptor.Name}";
+
+			if(!data.Resolving.Add(scope))
+				throw new DataArgumentException("$schema", $"The computed schema member dependency contains a cycle at '{scope}'.");
+
+			try
+			{
+				var expressions = descriptor.Dependencies.Select(ConvertPath);
+				var dependencyData = new SchemaData(entity, modelType, data.Resolving);
+				dependencies = base.Parse(string.Join(',', expressions), dependencyData)?.ToArray() ?? [];
+			}
+			finally
+			{
+				data.Resolving.Remove(scope);
+			}
 		}
+
+		return new SchemaMember(descriptor, dependencies);
+	}
+
+	private static (IDataEntity Entity, Type ModelType) GetScope(IDataEntity entity, Type modelType, SchemaMember parent)
+	{
+		if(parent == null)
+			return (entity, modelType ?? typeof(object));
+
+		if(parent.Ignored)
+		{
+			var type = Zongsoft.Common.TypeExtension.GetElementType(parent.Descriptor?.Type) ?? parent.Descriptor?.Type;
+
+			if(type == null || Zongsoft.Common.TypeExtension.IsScalarType(type))
+				throw new DataArgumentException("$schema", string.Format(Properties.Resources.Schema_ComplexPropertyRequired_Message, parent));
+
+			return (null, type);
+		}
+
+		if(parent.Token.Property.IsSimplex)
+			throw new DataArgumentException("$schema", string.Format(Properties.Resources.Schema_ComplexPropertyRequired_Message, parent));
+
+		var complex = (IDataEntityComplexProperty)parent.Token.Property;
+		entity = complex.Foreign;
+
+		while(complex.ForeignProperty != null && complex.ForeignProperty.IsComplex)
+		{
+			complex = (IDataEntityComplexProperty)complex.ForeignProperty;
+			entity = complex.Foreign;
+		}
+
+		return (entity, GetMemberType(parent.Token.Member) ?? typeof(object));
+	}
+
+	private static Type GetMemberType(MemberInfo member)
+	{
+		var type = member switch
+		{
+			FieldInfo field => field.FieldType,
+			PropertyInfo property => property.PropertyType,
+			MethodInfo method => method.ReturnType,
+			null => null,
+			_ => throw new DataArgumentException("$schema", string.Format(Properties.Resources.Schema_InvalidMemberKind_Message, member)),
+		};
+
+		return type == null ? null : Zongsoft.Common.TypeExtension.GetElementType(type) ?? type;
+	}
+
+	private static string ConvertPath(string path)
+	{
+		if(string.IsNullOrWhiteSpace(path))
+			throw new DataArgumentException("$schema", "A computed schema member contains an empty dependency.");
+
+		var count = 0;
+		var characters = path.ToCharArray();
+
+		for(int i = 0; i < characters.Length; i++)
+		{
+			if(characters[i] == '.' || characters[i] == '/')
+			{
+				characters[i] = '{';
+				count++;
+			}
+		}
+
+		return count == 0 ? path : new string(characters) + new string('}', count);
+	}
+	#endregion
+
+	#region 嵌套子类
+	private sealed class SchemaData(IDataEntity entity, Type modelType, HashSet<string> resolving)
+	{
+		public IDataEntity Entity { get; } = entity;
+		public Type ModelType { get; } = modelType;
+		public HashSet<string> Resolving { get; } = resolving;
 	}
 	#endregion
 }

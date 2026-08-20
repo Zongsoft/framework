@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -30,202 +30,22 @@
 using System;
 using System.Collections.Generic;
 
+using Zongsoft.Data.Metadata;
+
 namespace Zongsoft.Data;
 
-public class Schema : ISchema, ISchema<SchemaMember>
+/// <summary>表示由数据映射元数据绑定的模式。</summary>
+public class Schema : Schema<SchemaMember>
 {
-	#region 成员字段
-	private SchemaParser _parser;
-	private SchemaMemberCollection<SchemaMember> _members;
-	#endregion
+	private readonly SchemaParser _parser;
 
-	#region 构造函数
-	internal Schema(SchemaParser parser, string text, Metadata.IDataEntity entity, Type modelType, IEnumerable<SchemaMember> entries)
+	internal Schema(SchemaParser parser, string text, IDataEntity entity, Type modelType, IEnumerable<SchemaMember> entries) : base(entity?.Name, text, modelType, entries)
 	{
 		_parser = parser ?? throw new ArgumentNullException(nameof(parser));
-		this.Text = text ?? throw new ArgumentNullException(nameof(text));
 		this.Entity = entity ?? throw new ArgumentNullException(nameof(entity));
-		this.ModelType = modelType;
-		_members = new SchemaMemberCollection<SchemaMember>(entries);
-	}
-	#endregion
-
-	#region 公共属性
-	public string Name { get => this.Entity.Name; }
-	public string Text { get; }
-	public Metadata.IDataEntity Entity { get; }
-	public Type ModelType { get; }
-	public bool IsReadOnly { get; set; }
-	public bool IsEmpty { get => _members == null || _members.Count == 0; }
-	public SchemaMemberCollection<SchemaMember> Members { get => _members; }
-	#endregion
-
-	#region 公共方法
-	public void Clear()
-	{
-		if(!this.IsReadOnly && _members != null)
-			_members.Clear();
 	}
 
-	public bool Contains(string path)
-	{
-		if(string.IsNullOrEmpty(path) || this.IsEmpty)
-			return false;
+	public IDataEntity Entity { get; }
 
-		var parts = path.Split('.', '/');
-		var members = _members;
-
-		for(int i = 0; i < parts.Length; i++)
-		{
-			if(members == null)
-				return false;
-
-			if(string.IsNullOrEmpty(parts[i]))
-				continue;
-
-			if(members.TryGetValue(parts[i], out var member))
-				members = member.Children;
-			else
-				return false;
-		}
-
-		return true;
-	}
-
-	public SchemaMember Find(string path)
-	{
-		if(string.IsNullOrEmpty(path) || this.IsEmpty)
-			return null;
-
-		var parts = path.Split('.', '/');
-		var members = _members;
-		var member = (SchemaMember)null;
-
-		for(int i = 0; i < parts.Length; i++)
-		{
-			if(members == null)
-				return null;
-
-			if(string.IsNullOrEmpty(parts[i]))
-				continue;
-
-			if(members.TryGetValue(parts[i], out member))
-				members = member.Children;
-			else
-				return null;
-		}
-
-		return member;
-	}
-
-	public ISchema<SchemaMember> Include(string path)
-	{
-		if(this.IsReadOnly || string.IsNullOrEmpty(path))
-			return this;
-
-		var count = 0;
-		var chars = new char[path.Length];
-
-		for(int i = 0; i < chars.Length; i++)
-		{
-			if(path[i] == '.' || path[i] == '/')
-			{
-				chars[i] = '{';
-				count++;
-			}
-			else
-			{
-				chars[i] = path[i];
-			}
-		}
-
-		//由解析器统一进行解析处理
-		_parser.Append(this, count == 0 ? path : new string(chars) + new string('}', count));
-
-		return this;
-	}
-
-	public ISchema<SchemaMember> Exclude(string path)
-	{
-		this.Exclude(path, out _);
-		return this;
-	}
-
-	public bool Exclude(string path, out SchemaMember member)
-	{
-		//设置输出参数默认值
-		member = null;
-
-		if(this.IsReadOnly || string.IsNullOrEmpty(path))
-			return false;
-
-		bool Remove(SchemaMember owner, string name, out SchemaMember removedMember)
-		{
-			var members = owner == null ? _members : (owner.HasChildren ? owner.Children : null);
-
-			if(members != null && members.TryGetValue(name, out removedMember) && members.Remove(name))
-			{
-				if(owner != null && !owner.HasChildren)
-					Remove(owner.Parent, owner.Name, out _);
-
-				return true;
-			}
-
-			removedMember = null;
-			return false;
-		}
-
-		int last = 0;
-		SchemaMember current = null;
-
-		for(int i = 0; i < path.Length; i++)
-		{
-			if(path[i] == '.' || path[i] == '/' && i > last)
-			{
-				var part = path.Substring(last, i - last);
-
-				if(current == null)
-				{
-					if(!_members.TryGetValue(part, out current))
-						return false;
-				}
-				else
-				{
-					if(current.HasChildren)
-					{
-						if(!_members.TryGetValue(part, out current))
-							return false;
-					}
-					else
-						return false;
-				}
-
-				last = i + 1;
-			}
-		}
-
-		if(last < path.Length)
-			return Remove(current, path.Substring(last), out member);
-
-		return false;
-	}
-	#endregion
-
-	#region 显式实现
-	SchemaMemberBase ISchema.Find(string path) => this.Find(path);
-	ISchema ISchema.Include(string path) => this.Include(path);
-	ISchema ISchema.Exclude(string path) => this.Exclude(path);
-	bool ISchema.Exclude(string path, out SchemaMemberBase member)
-	{
-		member = null;
-
-		if(this.Exclude(path, out var value))
-		{
-			member = value;
-			return true;
-		}
-
-		return false;
-	}
-	#endregion
+	protected override IEnumerable<SchemaMember> OnInclude(string expression) => _parser.Append(this, expression);
 }

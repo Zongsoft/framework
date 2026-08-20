@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -40,29 +40,31 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 	#endregion
 
 	#region 抽象方法
-	public abstract ISchema<TMember> Parse(string name, string expression, Type entityType);
+	public abstract ISchema<TMember> Parse(string name, string expression, Type modelType);
+	protected abstract IEnumerable<TMember> Resolve(SchemaEntryToken token);
 	#endregion
 
 	#region 保护方法
-	protected bool TryParse(string expression, out IEnumerable<TMember> result, Func<SchemaEntryToken, IEnumerable<TMember>> mapper, object data, IEnumerable<TMember> members = null)
+	protected bool TryParse(string expression, out IEnumerable<TMember> result, object data, IEnumerable<TMember> members = null)
 	{
-		return (result = this.Parse(expression, mapper, null, data, members)) != null;
+		return (result = this.Parse(expression, null, data, members)) != null;
 	}
 
-	protected IEnumerable<TMember> Parse(string expression, Func<SchemaEntryToken, IEnumerable<TMember>> mapper, object data, IEnumerable<TMember> members = null)
+	protected IEnumerable<TMember> Parse(string expression, object data, IEnumerable<TMember> members = null)
 	{
-		return this.Parse(expression, mapper, message => throw new DataArgumentException("$schema", message), data, members);
+		return this.Parse(expression, message => throw new DataArgumentException("$schema", message), data, members);
 	}
 
-	private IEnumerable<TMember> Parse(string expression, Func<SchemaEntryToken, IEnumerable<TMember>> mapper, Action<string> onError, object data, IEnumerable<TMember> members = null)
+	private IEnumerable<TMember> Parse(string expression, Action<string> onError, object data, IEnumerable<TMember> members = null)
 	{
 		if(string.IsNullOrEmpty(expression))
 			return null;
 
-		var context = new StateContext(expression.Length, mapper, onError, data, members);
+		var context = new StateContext(expression.Length, this.Resolve, onError, data, members);
 
 		for(int i = 0; i < expression.Length; i++)
 		{
+			context.Position = i;
 			context.Character = expression[i];
 
 			switch(context.State)
@@ -183,6 +185,15 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 				context.Pop();
 				context.State = State.None;
 				break;
+			case '*':
+				if(context.HasBuffer())
+				{
+					context.OnError("SyntaxError: The exclusion wildcard of the data schema is invalid.");
+					return false;
+				}
+
+				context.Accept();
+				break;
 			default:
 				if(context.IsLetterOrDigitOrUnderscore())
 				{
@@ -276,6 +287,19 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 
 		switch(context.Character)
 		{
+			case ',':
+				if(!context.TrySetPagingCount())
+					return false;
+
+				context.State = State.None;
+				return true;
+			case '}':
+				if(!context.TrySetPagingCount())
+					return false;
+
+				context.Pop();
+				context.State = State.None;
+				return true;
 			case '?':
 				if(context.HasBuffer())
 				{
@@ -303,7 +327,10 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 					return false;
 				}
 
-				context.Current.Paging = Paging.Page(int.Parse(buffer));
+				if(!context.TryParseNumber(buffer, out var page))
+					return false;
+
+				context.Current.Paging = Paging.Page(page);
 				context.State = State.PagingSize;
 
 				return true;
@@ -314,7 +341,10 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 					return false;
 				}
 
-				context.Current.Paging = Paging.Page(1, int.Parse(buffer));
+				if(!context.TryParseNumber(buffer, out var pageSize))
+					return false;
+
+				context.Current.Paging = Paging.Page(1, pageSize);
 				context.State = State.SortingField;
 				return true;
 			case '{':
@@ -324,7 +354,10 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 					return false;
 				}
 
-				context.Current.Paging = Paging.Page(1, int.Parse(buffer));
+				if(!context.TryParseNumber(buffer, out var count))
+					return false;
+
+				context.Current.Paging = Paging.Page(1, count);
 				context.Push();
 				context.State = State.None;
 				return true;
@@ -346,6 +379,24 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 
 		switch(context.Character)
 		{
+			case '}':
+				if(!context.TryGetBuffer(out buffer))
+				{
+					context.OnError("SyntaxError: Expected pagination size in the data schema, but missing.");
+					return false;
+				}
+
+				if(buffer != "?")
+				{
+					if(!context.TryParseNumber(buffer, out var closingSize))
+						return false;
+
+					context.Current.Paging.Size = closingSize;
+				}
+
+				context.Pop();
+				context.State = State.None;
+				return true;
 			case '?':
 				if(context.HasBuffer())
 				{
@@ -363,7 +414,10 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 					return false;
 				}
 
-				context.Current.Paging.Size = int.Parse(buffer);
+				if(!context.TryParseNumber(buffer, out var pageSize))
+					return false;
+
+				context.Current.Paging.Size = pageSize;
 				context.State = State.None;
 				return true;
 			case '(':
@@ -374,7 +428,12 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 				}
 
 				if(buffer != "?")
-					context.Current.Paging.Size = int.Parse(buffer);
+				{
+					if(!context.TryParseNumber(buffer, out var sortingSize))
+						return false;
+
+					context.Current.Paging.Size = sortingSize;
+				}
 
 				context.State = State.SortingField;
 				return true;
@@ -386,7 +445,12 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 				}
 
 				if(buffer != "?")
-					context.Current.Paging.Size = int.Parse(buffer);
+				{
+					if(!context.TryParseNumber(buffer, out var childSize))
+						return false;
+
+					context.Current.Paging.Size = childSize;
+				}
 
 				context.Push();
 				context.State = State.None;
@@ -450,7 +514,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 		if(context.IsWhitespace())
 			return true;
 
-		if(context.IsLetterOrUnderscore())
+		if(context.IsLetterOrUnderscore() || context.Character == '~' || context.Character == '!')
 		{
 			context.Accept();
 			context.State = State.SortingField;
@@ -463,13 +527,11 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 	#endregion
 
 	#region 显式实现
-	ISchema ISchemaParser.Parse(string name, string expression, Type entityType) => this.Parse(name, expression, entityType);
+	ISchema ISchemaParser.Parse(string name, string expression, Type modelType) => this.Parse(name, expression, modelType);
 	#endregion
 
 	#region 嵌套子类
-	/// <summary>
-	/// 表示数据模式解析中的元素描述类。
-	/// </summary>
+	/// <summary>表示数据模式解析中的元素描述类。</summary>
 	protected class SchemaEntryToken
 	{
 		#region 构造函数
@@ -504,6 +566,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 
 		#region 公共字段
 		public State State;
+		public int Position;
 		public char Character;
 		public StateVector Flags;
 		#endregion
@@ -520,6 +583,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 			_stack = new Stack<SchemaMemberBase>();
 
 			this.Character = '\0';
+			this.Position = 0;
 			this.State = State.None;
 			this.Flags = new StateVector();
 
@@ -535,13 +599,13 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 
 		#region 公共方法
 		public void Accept() => _buffer[_bufferIndex++] = Character;
-		public void OnError(string message) => _onError?.Invoke(message);
+		public void OnError(string message) => _onError?.Invoke($"{message} (at position {this.Position}).");
 		public SchemaMemberBase Peek() => _stack.Count > 0 ? _stack.Peek() : null;
 		public SchemaMemberBase Pop()
 		{
 			if(_stack == null || _stack.Count == 0)
 			{
-				_onError?.Invoke("ParsingError: The parsing stack is empty.");
+				this.OnError("ParsingError: The parsing stack is empty.");
 				return null;
 			}
 
@@ -618,7 +682,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 
 			if(_bufferIndex == 0)
 			{
-				_onError?.Invoke("SyntaxError: Expected sorting fields in the data schema, but missing.");
+				this.OnError("SyntaxError: Expected sorting fields in the data schema, but missing.");
 				return false;
 			}
 
@@ -626,14 +690,16 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 			{
 				if(_buffer[0] == '~' || _buffer[0] == '!')
 				{
-					_onError?.Invoke("SyntaxError: Expected sorting descending field in the data schema, but missing.");
+					this.OnError("SyntaxError: Expected sorting descending field in the data schema, but missing.");
 					return false;
 				}
-				else if(char.IsDigit(_buffer[0]))
-				{
-					_onError?.Invoke("SyntaxError: The sorting field of the data schema cannot start with a digit.");
-					return false;
-				}
+			}
+
+			var nameIndex = _buffer[0] == '~' || _buffer[0] == '!' ? 1 : 0;
+			if(nameIndex >= _bufferIndex || char.IsDigit(_buffer[nameIndex]))
+			{
+				this.OnError("SyntaxError: The sorting field of the data schema cannot start with a digit.");
+				return false;
 			}
 
 			var sorting = _buffer[0] == '~' || _buffer[0] == '!' ?
@@ -669,13 +735,37 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 			return true;
 		}
 
+		public bool TryParseNumber(string text, out int number)
+		{
+			if(int.TryParse(text, out number))
+				return true;
+
+			this.OnError($"SyntaxError: The pagination number '{text}' of the data schema is invalid or overflowed.");
+			return false;
+		}
+
+		public bool TrySetPagingCount()
+		{
+			if(!this.TryGetBuffer(out var buffer))
+			{
+				this.OnError("SyntaxError: Expected pagination number in the data schema, but missing.");
+				return false;
+			}
+
+			if(!this.TryParseNumber(buffer, out var count))
+				return false;
+
+			_current.Paging = Paging.Page(1, count);
+			return true;
+		}
+
 		public bool Complete(out IEnumerable<TMember> members)
 		{
 			members = null;
 
 			if(_stack != null && _stack.Count > 0)
 			{
-				_onError?.Invoke("SyntaxError: The data schema is empty.");
+				this.OnError("SyntaxError: The data schema contains an unclosed member block.");
 				return false;
 			}
 
@@ -698,27 +788,35 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 				case State.PagingCount:
 					if(_bufferIndex == 0)
 					{
-						_onError?.Invoke("SyntaxError: Expected pagination number in the data schema, but missing.");
+						this.OnError("SyntaxError: Expected pagination number in the data schema, but missing.");
 						return false;
 					}
 
-					_current.Paging = Paging.Page(1, int.Parse(new string(_buffer, 0, _bufferIndex)));
+					if(!this.TryParseNumber(new string(_buffer, 0, _bufferIndex), out var count))
+						return false;
+
+					_current.Paging = Paging.Page(1, count);
 					break;
 				case State.PagingSize:
 					if(_bufferIndex == 0)
 					{
-						_onError?.Invoke("SyntaxError: Expected pagination size in the data schema, but missing.");
+						this.OnError("SyntaxError: Expected pagination size in the data schema, but missing.");
 						return false;
 					}
 
 					var buffer = new string(_buffer, 0, _bufferIndex);
 
 					if(buffer != "?")
-						_current.Paging.Size = int.Parse(buffer);
+					{
+						if(!this.TryParseNumber(buffer, out var size))
+							return false;
+
+						_current.Paging.Size = size;
+					}
 
 					break;
 				default:
-					_onError?.Invoke($"SyntaxError: The data schema expression is incorrect({State}).");
+					this.OnError($"SyntaxError: The data schema expression is incorrect({State}).");
 					return false;
 			}
 
@@ -745,8 +843,8 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 			{
 				foreach(var item in items)
 				{
-					if(_members.ContainsKey(item.Name))
-						_current = item;
+					if(_members.TryGetValue(item.Name, out var existed))
+						_current = existed;
 					else
 					{
 						_current = item;
@@ -758,8 +856,8 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 			{
 				foreach(var item in items)
 				{
-					if(_token.Parent.TryGetChild(item.Name, out _))
-						_current = item;
+					if(_token.Parent.TryGetChild(item.Name, out var existed))
+						_current = existed;
 					else
 						_token.Parent.AddChild(_current = item);
 				}

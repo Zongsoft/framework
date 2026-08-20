@@ -63,7 +63,7 @@ public class SelectStatementBuilder : IStatementBuilder<DataSelectContext>
 			{
 				foreach(var member in context.Schema.Members)
 				{
-					if(member.Token.Property.IsComplex)
+					if(!member.Ignored && member.Token.Property.IsComplex)
 						GenerateSchema(context.Aliaser, statement, statement.Table, member);
 				}
 			}
@@ -156,8 +156,16 @@ public class SelectStatementBuilder : IStatementBuilder<DataSelectContext>
 		}
 	}
 
-	private static void GenerateSchema(Aliaser aliaser, SelectStatement statement, ISource origin, SchemaMember member)
+	internal static void GenerateSchema(Aliaser aliaser, SelectStatement statement, ISource origin, SchemaMember member)
 	{
+		if(member.Ignored)
+		{
+			foreach(var dependency in member.Dependencies)
+				GenerateSchema(aliaser, statement, origin, dependency);
+
+			return;
+		}
+
 		if(member.Ancestors != null)
 		{
 			foreach(var ancestor in member.Ancestors)
@@ -271,7 +279,8 @@ public class SelectStatementBuilder : IStatementBuilder<DataSelectContext>
 					field.Alias = Zongsoft.Common.StringExtension.TrimStart(member.FullPath, statement.Alias + ".", StringComparison.OrdinalIgnoreCase);
 			}
 
-			statement.Select.Members.Add(field);
+			if(!statement.Select.Members.Contains(field))
+				statement.Select.Members.Add(field);
 		}
 
 		if(member.HasChildren)

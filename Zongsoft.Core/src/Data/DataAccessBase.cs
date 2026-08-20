@@ -40,9 +40,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据访问的抽象基类。
-/// </summary>
+/// <summary>表示数据访问的抽象基类。</summary>
 [System.Reflection.DefaultMember(nameof(Filters))]
 public abstract partial class DataAccessBase : IDataAccess, IDisposable
 {

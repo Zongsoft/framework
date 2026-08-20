@@ -28,11 +28,24 @@
  */
 
 using System;
+using System.Reflection;
+using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>表示数据模式解析器的接口。</summary>
-public interface ISchemaParser<TEntry> : ISchemaParser where TEntry : SchemaMemberBase
+/// <summary>表示数据模式中的成员。</summary>
+public interface ISchemaMember
 {
-	new ISchema<TEntry> Parse(string name, string expression, Type modelType = null);
+	string Name { get; }
+	string Path { get; }
+	string FullPath { get; }
+	ISchemaMember Parent { get; }
+	MemberInfo Member { get; }
+	Metadata.IDataEntityProperty Property { get; }
+	bool Ignored { get; }
+	Paging Paging { get; }
+	Sorting[] Sortings { get; }
+	bool HasChildren { get; }
+	IEnumerable<ISchemaMember> Children { get; }
 }
+

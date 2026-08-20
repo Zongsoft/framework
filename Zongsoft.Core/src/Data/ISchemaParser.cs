@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -31,10 +31,8 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据模式解析器的接口。
-/// </summary>
+/// <summary>表示数据模式解析器的接口。</summary>
 public interface ISchemaParser
 {
-	ISchema Parse(string name, string expression, Type entityType = null);
+	ISchema Parse(string name, string expression, Type modelType = null);
 }

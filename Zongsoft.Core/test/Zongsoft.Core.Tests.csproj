@@ -7,7 +7,6 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<Compile Remove="Data\SchemaTest.cs" />
 		<Compile Remove="IO\FileSystemTest.cs" />
 	</ItemGroup>
 

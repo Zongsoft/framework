@@ -28,11 +28,12 @@
  */
 
 using System;
+using System.Reflection;
 using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-public abstract class SchemaMemberBase : IEquatable<SchemaMemberBase>
+public abstract class SchemaMemberBase : ISchemaMember, IEquatable<SchemaMemberBase>
 {
 	#region 单例字段
 	internal static readonly SchemaMemberBase Ignores = new EmptyMember();
@@ -40,7 +41,7 @@ public abstract class SchemaMemberBase : IEquatable<SchemaMemberBase>
 
 	#region 成员字段
 	private Sorting[] _sortingArray;
-	private HashSet<Sorting> _sortings;
+	private List<Sorting> _sortings;
 	#endregion
 
 	#region 构造函数
@@ -56,6 +57,7 @@ public abstract class SchemaMemberBase : IEquatable<SchemaMemberBase>
 
 	#region 公共属性
 	public virtual string Name { get; }
+	public SchemaMemberBase Parent => this.GetParent();
 	public string Path
 	{
 		get
@@ -89,13 +91,28 @@ public abstract class SchemaMemberBase : IEquatable<SchemaMemberBase>
 
 	public Paging Paging { get; internal set; }
 	public Sorting[] Sortings => _sortingArray;
+	public virtual MemberInfo Member => null;
 	public virtual Metadata.IDataEntityProperty Property => null;
+	public virtual bool Ignored => this.Property == null;
 	public abstract bool HasChildren { get; }
+	public IEnumerable<ISchemaMember> Children
+	{
+		get
+		{
+			foreach(var child in this.GetChildren())
+				yield return child;
+		}
+	}
+	#endregion
+
+	#region 显式属性
+	ISchemaMember ISchemaMember.Parent => this.Parent;
 	#endregion
 
 	#region 抽象方法
 	protected abstract SchemaMemberBase GetParent();
 	protected abstract void SetParent(SchemaMemberBase parent);
+	protected virtual IEnumerable<SchemaMemberBase> GetChildren() => [];
 
 	internal protected abstract bool TryGetChild(string name, out SchemaMemberBase child);
 	internal protected abstract void AddChild(SchemaMemberBase child);
@@ -107,14 +124,16 @@ public abstract class SchemaMemberBase : IEquatable<SchemaMemberBase>
 	internal void AddSorting(Sorting sorting)
 	{
 		if(_sortings == null)
-			System.Threading.Interlocked.CompareExchange(ref _sortings, new HashSet<Sorting>(SortingComparer.Instance), null);
+			System.Threading.Interlocked.CompareExchange(ref _sortings, [], null);
 
-		if(_sortings.Add(sorting))
+		for(int i = _sortings.Count - 1; i >= 0; i--)
 		{
-			var array = new Sorting[_sortings.Count];
-			_sortings.CopyTo(array);
-			_sortingArray = array;
+			if(string.Equals(_sortings[i].Name, sorting.Name, StringComparison.OrdinalIgnoreCase))
+				_sortings.RemoveAt(i);
 		}
+
+		_sortings.Add(sorting);
+		_sortingArray = [.. _sortings];
 	}
 	#endregion
 
@@ -126,7 +145,7 @@ public abstract class SchemaMemberBase : IEquatable<SchemaMemberBase>
 	#endregion
 
 	#region 嵌套子类
-	private class EmptyMember : SchemaMemberBase
+	private sealed class EmptyMember : SchemaMemberBase
 	{
 		public override string Name => "?";
 		public override bool HasChildren => false;
@@ -141,14 +160,6 @@ public abstract class SchemaMemberBase : IEquatable<SchemaMemberBase>
 			child = null;
 			return false;
 		}
-	}
-
-	private sealed class SortingComparer : IEqualityComparer<Sorting>
-	{
-		public static readonly SortingComparer Instance = new();
-		private SortingComparer() { }
-		public bool Equals(Sorting x, Sorting y) => string.Equals(x.Name, y.Name, StringComparison.OrdinalIgnoreCase);
-		public int GetHashCode(Sorting sorting) => sorting.Name == null ? 0 : StringComparer.OrdinalIgnoreCase.GetHashCode(sorting.Name);
 	}
 	#endregion
 }

@@ -582,6 +582,9 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 	{
 		foreach(var member in schema.Members)
 		{
+			if(member.Ignored)
+				continue;
+
 			if(member.Token.Property.IsSimplex(out var simplex) && simplex.Sequence != null && simplex.Sequence.IsBuiltin)
 				yield return member;
 		}

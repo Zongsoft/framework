@@ -95,6 +95,9 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 
 			foreach(var schema in schemas)
 			{
+				if(schema.Ignored)
+					continue;
+
 				if(!inherit.Properties.Contains(schema.Name))
 					continue;
 

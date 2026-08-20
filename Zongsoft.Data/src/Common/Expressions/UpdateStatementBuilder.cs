@@ -127,6 +127,9 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 	#region 私有方法
 	private void BuildSchema(DataUpdateContext context, UpdateStatement statement, TableIdentifier table, object data, SchemaMember member)
 	{
+		if(member.Ignored)
+			return;
+
 		//如果不允许更新主键，则忽略对主键修改的构建
 		if(member.Token.Property.IsPrimaryKey() && !context.Options.HasBehaviors(UpdateBehaviors.PrimaryKey))
 			return;
