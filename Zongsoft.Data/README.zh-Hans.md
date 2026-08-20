@@ -102,7 +102,7 @@ sorting ::=
 #### 说明
 
 - 星号(`*`)：表示包含所有简单属性，不包含导航属性；如果要包含导航属性，必须显式写出。
-- 叹号(`!`)：表示排除。单独的 `!` _（或 `!*`）_ 表示清除当前层级的全部成员；`!名称` 表示排除指定名称的属性。
+- 叹号(`!`)：表示排除。单独的 `!` 表示清除当前层级的全部成员；`!名称` 表示排除指定名称的属性。
 - 标识符由字母、数字和下划线组成，不能以数字开头，不区分大小写。
 - 多个成员之间使用逗号(`,`)分隔；子模式 _（大括号内的部分）_ 沿用相同的语法，因此可以任意层级嵌套。
 - 标识符内部不能含有空白字符；但成员之间、星号之后、标识符与子模式/排序/分页符号之间可以包含空白字符，例如 `Users {*}`、`Users :1/20`、`* , Users`。
@@ -339,7 +339,7 @@ Users:1/20(~CreatedTime,Grade){*}
 - 聚合操作元 `AggregateOperand`
 - 一元操作元 `UnaryOperand`，包括：
 > - `!` 逻辑非
-> - `~` 逻辑非 _（与 `!` 等价）_
+> - `~` 按位取反
 > - `-` 算术负号
 - 二元操作元 `BinaryOperand`，包括：
 > - `+` 加法
@@ -1198,13 +1198,11 @@ this.DataAccess.Insert(forum, "*, Users{*}");
 上述新增大致生成如下 SQL：
 
 ```sql
-/* 注：该 SQL 以 MySQL 驱动为例。 */
-
-/* 主表插入语句执行一次。 */
+/* 主表插入语句 */
 INSERT INTO Forum (SiteId,ForumId,GroupId,Name,...) VALUES (@p1,@p2,@p3,@p4,...);
 
-/* 子表插入语句按集合项执行多次。 */
-INSERT INTO ForumUser (SiteId,ForumId,UserId,Permission,IsModerator) VALUES (@p1,@p2,@p3,@p4,@p5);
+/* 从表插入语句（批量） */
+INSERT INTO ForumUser (SiteId,ForumId,UserId,Permission,IsModerator) VALUES (...),(...),(...);
 ```
 
 <a name="usage-import"></a>

@@ -102,7 +102,7 @@ sorting ::=
 #### Schema Overview
 
 - Asterisk(`*`): includes all scalar properties. Navigation properties are not included unless you name them explicitly.
-- Exclamation(`!`): excludes fields. A bare `!` _(or `!*`)_ clears all members at the current level; `!Name` excludes the named property.
+- Exclamation(`!`): excludes fields. A bare `!` clears all members at the current level; `!Name` excludes the named property.
 - Identifiers are composed of letters, digits, and underscores, must not start with a digit, and are case-insensitive.
 - Multiple members are separated by commas(`,`); the sub-schema _（inside the braces）_ uses the same syntax, so nesting is allowed at any depth.
 - Whitespace is not allowed inside an identifier, but is allowed between members, after the asterisk, and between an identifier and the sub-schema/sorting/paging tokens, e.g. `Users {*}`、`Users :1/20`、`* , Users`.
@@ -341,7 +341,7 @@ Operands can be used in conditions (`Condition`) and in values written to fields
 - Aggregation operand `AggregateOperand`
 - Unary operand `UnaryOperand`, including:
 > - `!` logical `NOT`
-> - `~` logical `NOT` _（equivalent to `!`）_
+> - `~` bitwise `NOT`
 > - `-` arithmetic negation
 - Binary operand `BinaryOperand`, including:
 > - `+` addition
@@ -1199,14 +1199,14 @@ forum.Users = new ForumUser[]
 this.DataAccess.Insert(forum, "*, Users{*}");
 ```
 
-The insert above roughly generates SQL like this(_MySQL_):
+The insert above roughly generates SQL like this:
 
 ```sql
-/* Insert the master row once. */
+/* Insert statement for the master table. */
 INSERT INTO Forum (SiteId,ForumId,GroupId,Name,...) VALUES (@p1,@p2,@p3,@p4,...);
 
-/* Insert child rows multiple times. */
-INSERT INTO ForumUser (SiteId,ForumId,UserId,Permission,IsModerator) VALUES (@p1,@p2,@p3,@p4,@p5);
+/* Insert statement for the slaves table(batch). */
+INSERT INTO ForumUser (SiteId,ForumId,UserId,Permission,IsModerator) VALUES (...),(...),(...);
 ```
 
 <a name="usage-import"></a>
