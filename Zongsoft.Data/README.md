@@ -76,24 +76,25 @@ schema ::=
     * |
     ! |
     !identifier |
-    identifier[paging][sorting]["{"schema [,...n]"}"]
+    identifier [paging] [sorting] ["{" schema [,...n] "}"]
 } [,...n]
 
 identifier ::= [_A-Za-z][_A-Za-z0-9]*
 number ::= [0-9]+
-pageIndex ::= number
-pageSize ::= number
 
 paging ::= ":"{
-    *|
-    pageIndex[/pageSize]
+    "?" |
+    "*" |
+    number |
+    number "/" number |
+    number "/" "?"
 }
 
 sorting ::=
 "("
     {
-        [~|!]identifier
-    }[,...n]
+        ["~"|"!"]identifier
+    } [,...n]
 ")"
 ```
 
@@ -101,11 +102,39 @@ sorting ::=
 #### Schema Overview
 
 - Asterisk(`*`): includes all scalar properties. Navigation properties are not included unless you name them explicitly.
+- Exclamation(`!`): excludes fields. A bare `!` _(or `!*`)_ clears all members at the current level; `!Name` excludes the named property.
+- Identifiers are composed of letters, digits, and underscores, must not start with a digit, and are case-insensitive.
+- Multiple members are separated by commas(`,`); the sub-schema _（inside the braces）_ uses the same syntax, so nesting is allowed at any depth.
+- Whitespace is not allowed inside an identifier, but is allowed between members, after the asterisk, and between an identifier and the sub-schema/sorting/paging tokens, e.g. `Users {*}`、`Users :1/20`、`* , Users`.
+- Whitespace is not allowed inside a page number or right after the colon(`:`); it is not allowed inside the sorting parentheses or a sorting field, but is allowed between sorting fields _（after a comma）_.
 
-- Exclamation(`!`): excludes fields. A single `!` excludes the previous definition; `!Name` excludes the named property.
+<a name="schema-paging"></a>
+#### Paging and Sorting
+
+Paging is written after the member name and starts with a colon(`:`):
+
+| Syntax | Meaning |
+| --- | --- |
+| `:N` | page 1 with `N` rows per page |
+| `:N/S` | page `N` with `S` rows per page |
+| `:N/?` | page `N` with the default page size _（20 rows）_ |
+| `:?` | clears the paging settings |
+| `:*` | disables paging |
+
+> **Note:** A number right after the colon _without_ a slash(`/`) is the **page size**, and the page index is fixed to 1; only with a slash(`/`) is the number before the slash the **page index**.
+
+Sorting is written after the paging and wrapped in parentheses; sorting fields are separated by commas, a `~` or `!` prefix means descending, and no prefix means ascending:
+
+```
+Users:1/20(~CreatedTime,Grade){*}
+```
+
+> **Note:** The current parser only allows the **first** sorting field to carry the `~`/`!` prefix; later fields in a multi-field sort cannot carry a prefix _（a known limitation of the parser state machine that should be fixed during refactoring）_. So `(Grade,~CreatedTime)` fails to parse and should be rewritten as `(~CreatedTime,Grade)`.
 
 <a name="schema-sample"></a>
 ### Sample description
+
+> Tip: The property names in the examples below are taken from the entities of the forum project and are only used to demonstrate the syntax, e.g. `Creator` is a navigation property of the `Thread` entity and `Users` is a navigation property of the `Forum` entity.
 
 ```graphql
 *, !CreatorId, !CreatedTime
@@ -118,9 +147,9 @@ sorting ::=
 > **Note:** All scalar properties plus the `Creator` navigation property, including all scalar properties of `Creator`.
 
 ```graphql
-*, Creator{Name,FullName}
+*, Creator{Name,Nickname}
 ```
-> **Note:** All scalar properties plus the `Creator` navigation property, but only `Name` and `FullName` are loaded for `Creator`.
+> **Note:** All scalar properties plus the `Creator` navigation property, but only `Name` and `Nickname` are loaded for `Creator`.
 
 ```graphql
 *, Users{*}
@@ -130,7 +159,12 @@ sorting ::=
 ```graphql
 *, Users:1{*}
 ```
-> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, paged as page 1 with page size 1. Use `Users:1/?{*}` for page 1 with the default page size.
+> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, paged as page 1 with page size 1.
+
+```graphql
+*, Users:1/?{*}
+```
+> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, paged as page 1 with the default page size.
 
 ```graphql
 *, Users:1/20{*}
@@ -138,9 +172,40 @@ sorting ::=
 > **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, paged as page 1 with 20 rows per page.
 
 ```graphql
-*, Users:1/20(Grade,~CreatedTime){*}
+*, Users:*{*}
 ```
-> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, sorted by `Grade` ascending and `CreatedTime` descending, then paged as page 1 with 20 rows per page.
+> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_ with paging explicitly disabled.
+
+```graphql
+*, Users:1/20(~CreatedTime,Grade){*}
+```
+> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, sorted by `CreatedTime` descending and `Grade` ascending, then paged as page 1 with 20 rows per page.
+
+<a name="schema-api"></a>
+### Schema Object Model
+
+The `schema` text argument is parsed into an `ISchema` object by the schema parser of the data accessor, which is then consumed by the statement builders to generate query or write clauses. The schema-related types live in two layers:
+
+**Abstractions and interfaces** in the core library ([`Zongsoft.Core/src/Data`](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Core/src/Data)):
+
+| Type | Description |
+| --- | --- |
+| [ISchema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema.cs) | Interface of the parsed data schema: `Name`、`Text`、`ModelType`、`IsEmpty`、`IsReadOnly`; `Clear()`、`Contains(path)`、`Find(path)`、`Include(path)`、`Exclude(path)`. Paths are separated by a dot(`.`) or slash(`/`). |
+| [ISchema&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema%601.cs) | Generic version which adds the `Members` collection property. |
+| [ISchemaParser](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaParser.cs) / [ISchemaParser&lt;TEntry&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaParser%601.cs) | Interface of the schema parser: `Parse(name, expression, entityType)`. |
+| [SchemaParserBase&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaParserBase.cs) | The state-machine base class of the schema parser, implementing the lexical and syntactic analysis of the grammar above and mapping each parsed member name to a member object through a callback. |
+| [SchemaMemberBase](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberBase.cs) | Base class of schema members: `Name`、`Path`、`FullPath`、`Paging`、`Sortings`、`Property`、`HasChildren`. |
+| [SchemaMemberCollection&lt;T&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberCollection.cs) | Collection of schema members keyed by member name, case-insensitive. |
+
+**Implementations** in the data engine ([`Zongsoft.Data/src`](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/src)):
+
+| Type | Description |
+| --- | --- |
+| [SchemaParser](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaParser.cs) | Implementation of `SchemaParserBase<SchemaMember>` as the singleton `SchemaParser.Instance`; resolves schema member names to entity properties against the entity metadata（supporting inherited entities and navigation hops）. |
+| [Schema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Schema.cs) | Implementation of `ISchema` and `ISchema<SchemaMember>`. |
+| [SchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaMember.cs) | Implementation of `SchemaMemberBase` carrying a `Token` _（[DataEntityPropertyToken](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Metadata/DataEntityPropertyToken.cs)）_ and the `Ancestors` inheritance chain. |
+
+> **Note:** The [Schema&lt;T&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Schema.cs) class and its [ISchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Schema.cs) interface in the core library are the early form of programmatic schema building via lambda expressions（`Schema.Empty<T>().Include(p => p.Name)`）. The engine now uniformly uses text expressions parsed by `SchemaParserBase`; the two coexist.
 
 
 <a name="mapping"></a>
@@ -175,14 +240,14 @@ The mapping file root is `schema`, and each `container` represents one metadata 
 
 Common mapping elements:
 
-- `entity` maps an application entity to a table. `table` is the physical table name, `inherits` points to a parent entity, `driver` limits the entity to a specific data driver, and `immutable="true"` makes the entity read-only except for insert operations.
+- `entity` maps an application entity to a table. `table` is the physical table name（when omitted it defaults to `namespace_entity`, or the entity name when the namespace is empty; `alias` is also accepted as an alternative to `table`）, `inherits` points to a parent entity, `driver` limits the entity to a specific data driver, and `immutable="true"` makes the entity read-only except for insert operations.
 - `property` maps a scalar member to a field. Important attributes include `type`, `field`, `nullable`, `length`, `precision`, `scale`, `default`, `sequence`, `sortable`, and `immutable`.
-- `sequence="*"` means the database built-in identity/sequence is used. `sequence="#"` means the Zongsoft default external sequencer is used. `sequence="#Name"` means a named external sequencer. `sequence="#(ParentId)"` means an external sequencer grouped by the specified reference property.
-- `complexProperty` defines a navigation property. Its `port` points to the target entity, or to a target entity's navigation property such as `ForumUser:User`. `multiplicity` supports `?`, `!`, and `*`; `link` maps foreign key properties to the current entity, and `constraints` add fixed navigation filters.
-- `command` defines a named SQL command or stored procedure. Commands are executed through `Execute`, `Execute<T>`, or `ExecuteScalar`.
+- `sequence="*"` means the database built-in identity/sequence is used. `sequence="#"` means the Zongsoft default external sequencer is used. `sequence="#Name"` means a named external sequencer; `sequence="#Name@seed/interval"` also specifies the seed and interval; `sequence="#(ParentId)"` means an external sequencer grouped by the specified reference property; `sequence="Entity:Property"` references the sequencer of another entity's property.
+- `complexProperty` defines a navigation property. Its `port` points to the target entity, or to a target entity's navigation property such as `ForumUser:User`. `multiplicity` supports `?`（zero-or-one，default）、`!`（exactly one）、`*`（one-to-many）; `link` maps foreign key properties to the current entity（`anchor` specifies the anchor on the current side and defaults to the `port` name when omitted）, and `constraints` add fixed navigation filters（when `actor` is omitted it is inferred from the multiplicity: `Foreign` for one-to-many, otherwise `Principal`）.
+- `command` defines a named SQL command or stored procedure. Commands are executed through `Execute`, `Execute<T>`, or `ExecuteScalar`. `type` supports `text`（default）and `procedure`; `mutability` declares the data changeability of the command, where `none` means read-only and `delete`、`insert`、`update`、`upsert` mean write commands. The loader parses these enum values case-insensitively, but use lowercase to pass XSD validation.
 
 ```xml
-<command name="Forum.GetStatistics" type="Text" mutability="None">
+<command name="Forum.GetStatistics" type="text" mutability="none">
     <parameter name="SiteId" type="uint" />
     <parameter name="ForumId" type="ushort" />
     <script driver="MySql"><![CDATA[
@@ -196,11 +261,9 @@ Common mapping elements:
 
 > **Enable XML IntelliSense for mapping files:**
 >
-> **Method 1：** Add an XML file named "`{module}.mapping`" to the business module project(for example: [`Zongsoft.Security.mapping`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Security/src/Zongsoft.Security.mapping) or [`Zongsoft.Discussions.mapping`](https://github.com/Zongsoft/discussions/blob/main/src/Zongsoft.Discussions.mapping)). Open the mapping file in **V**isual **S**tudio, choose "XML" -> "Schemas", click "Add", and select [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd).
->
-> **Method 2：** Copy [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) to the XML Schemas template directory in Visual Studio, for example:
-> - **V**isual **S**tudio 2019 _(Enterprise Edition)_ <br />
-> 	`C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Xml\Schemas`
+> Copy [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.xsd) and [Zongsoft.Data.catalog.xml](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/Zongsoft.Data.catalog.xml) to the XML Schemas template directory of **V**isual **S**tudio, for example:
+> - **V**isual **S**tudio 2026 _(Enterprise Edition)_ <br />
+> 	`C:\Program Files\Microsoft Visual Studio\18\Enterprise\Xml\Schemas`
 
 
 > Although some developers like generating mapping files, we recommend writing them by hand:
@@ -278,7 +341,7 @@ Operands can be used in conditions (`Condition`) and in values written to fields
 - Aggregation operand `AggregateOperand`
 - Unary operand `UnaryOperand`, including:
 > - `!` logical `NOT`
-> - `~` bitwise `NOT`
+> - `~` logical `NOT` _（equivalent to `!`）_
 > - `-` arithmetic negation
 - Binary operand `BinaryOperand`, including:
 > - `+` addition
@@ -511,17 +574,17 @@ Scalar queries return a single field value. They avoid loading unused fields and
 **Call description:**
 
 1. Set the generic type to the field type, or to a type that the field can be converted to;
-2. Specify the entity name with the method's `name` argument;
+2. Specify the entity name with the method's `name` argument _（it must be the qualified name registered in the mapping file, i.e. `container.entity`; when the container name is empty, the bare entity name can be used — `Discussions.UserProfile` below is the qualified name from the forum module's mapping file）_;
 3. Specify exactly one property name with the method's `schema` argument.
 
 ```csharp
-var email = this.DataAccess.Select<string>("UserProfile",
+var email = this.DataAccess.Select<string>("Discussions.UserProfile",
     Condition.Equal("UserId", this.User.UserId),
     "Email" // Load only the Email field, which is a string.
 ).FirstOrDefault();
 
 /* Return a scalar value set(IEnumerable<uint>) */
-var counts = this.DataAccess.Select<uint>("History",
+var counts = this.DataAccess.Select<uint>("Discussions.History",
     Condition.Equal("UserId", this.User.UserId),
     "ViewedCount" // Load only the ViewedCount field.
 );
@@ -531,6 +594,8 @@ var counts = this.DataAccess.Select<uint>("History",
 #### Multi-field query
 
 Multi-field queries load several fields and can return many target shapes: class, interface, struct, dynamic object(`ExpandoObject`), or dictionary.
+
+> **Note:** Navigation properties _（complex properties）_ are only populated when the target type is an entity model class _（class/interface/struct）_; with a dictionary or `ExpandoObject` target type, only scalar fields are returned and navigation properties do not appear in the result.
 
 ```csharp
 struct UserToken
@@ -544,7 +609,7 @@ struct UserToken
  * The engine uses the intersection between the entity metadata and the target type members.
  */
 var tokens = this.DataAccess.Select<UserToken>(
-    "UserProfile",
+    "Discussions.UserProfile",
     Condition.Equal("SiteId", this.User.SiteId),
     "UserId, Name"
 );
@@ -553,9 +618,9 @@ var tokens = this.DataAccess.Select<UserToken>(
 ```csharp
 /*
  * When the target type name differs from the entity name,
- * use ModelAttribute to specify the mapped entity name.
+ * use ModelAttribute to specify the mapped entity name (qualified name).
  */
-[Zongsoft.Data.Model("UserProfile")]
+[Zongsoft.Data.Model("Discussions.UserProfile")]
 struct UserToken
 {
     public uint UserId;
@@ -574,7 +639,7 @@ var tokens = this.DataAccess.Select<UserToken>(
  * 2) The schema argument selects the returned fields. If omitted or set to *, all fields are returned.
  */
 var items = this.DataAccess.Select<IDictionary<string, object>>(
-    "UserProfile",
+    "Discussions.UserProfile",
     Condition.Equal("SiteId", this.User.SiteId) &
     Condition.GreaterThan("TotalThreads", 0),
     "UserId,Name,TotalThreads,TotalPosts");
@@ -592,7 +657,7 @@ foreach(var item in items)
 /*
  * The generic type specifies ExpandoObject, so each row can be accessed dynamically.
  */
-var items = this.DataAccess.Select<System.Dynamic.ExpandoObject>("UserProfile");
+var items = this.DataAccess.Select<System.Dynamic.ExpandoObject>("Discussions.UserProfile");
 
 foreach(dynamic item in items)
 {
@@ -776,12 +841,12 @@ public struct ForumUser : IEquatable<ForumUser>
 
 ```csharp
 var forum = this.DataAccess.Select<Forum>(
-    Condition.Equal("SiteId", this.User.SiteId) &
-    Condition.Equal("ForumId", 100),
-    "*, Users{*}, Moderators{*, User{*}}"
+  Condition.Equal("SiteId", this.User.SiteId) &
+  Condition.Equal("ForumId", 100),
+  "*, Users{*, User{Name,Email,Avatar}}, Moderators{Name,Email,Avatar}"
 ).FirstOrDefault();
 
-// moderator is UserProfile.
+// moderator is UserProfile (the navigation hop returns UserProfile directly, so just list its scalar properties).
 foreach(var moderator in forum.Moderators)
 {
     Console.Write(moderator.Name);
@@ -789,7 +854,7 @@ foreach(var moderator in forum.Moderators)
     Console.Write(moderator.Avatar);
 }
 
-// member is ForumUser.
+// member is ForumUser; its User navigation property leads to UserProfile.
 foreach(var member in forum.Users)
 {
     Console.Write(member.Permission);
@@ -955,7 +1020,7 @@ For example, the `Tags` field in the `Thread` table is `nvarchar`, but the `Tags
 <a name="usage-execute"></a>
 ### Execute operation
 
-`Execute` runs a named `command` defined in a mapping file. Use it for SQL statements, stored procedures, and commands that do not naturally map to one entity operation. `mutability="None"` is treated as read-only, while `Insert`, `Update`, `Delete`, and `Upsert` are treated as write commands and participate in read/write source selection.
+`Execute` runs a named `command` defined in a mapping file. Use it for SQL statements, stored procedures, and commands that do not naturally map to one entity operation. `mutability="none"` is treated as read-only, while `insert`, `update`, `delete`, and `upsert` are treated as write commands and participate in read/write source selection. A command without an explicit `mutability` is treated as writable _（`Delete|Insert|Update`）_, so there is usually no need to declare it.
 
 ```csharp
 public sealed class ForumStatistics
@@ -975,13 +1040,13 @@ var rows = this.DataAccess.Execute<ForumStatistics>(
 var statistics = rows.FirstOrDefault();
 ```
 
-For stored procedures, define `type="Procedure"` in the mapping file. Output and return parameters are written back to the supplied `Parameter` objects after execution.
+For stored procedures, define `type="procedure"` in the mapping file（`alias` specifies the actual stored procedure name）. Output and return parameters are written back to the supplied `Parameter` objects after execution. The parameter direction `direction` supports `input`、`output`、`both`、`return`（the loader also accepts shorthand like `in`、`out`、`result`, but use the standard forms to pass XSD validation）.
 
 ```xml
-<command name="Forum.RefreshStatistics" alias="Discussions_Forum_RefreshStatistics" type="Procedure" mutability="Update">
+<command name="Forum.RefreshStatistics" alias="Discussions_Forum_RefreshStatistics" type="procedure" mutability="update">
     <parameter name="SiteId" type="uint" />
     <parameter name="ForumId" type="uint" />
-    <parameter name="Total" type="int" direction="out" />
+    <parameter name="Total" type="int" direction="output" />
 </command>
 ```
 
@@ -1184,7 +1249,7 @@ var user = Model.Build<UserProfile>();
 
 user.UserId = 100;
 user.Name = "Popeye";
-user.FullName = "Popeye Zhong";
+user.Nickname = "Popeye Zhong";
 user.Gender = Gender.Male;
 
 this.DataAccess.Update(user);
@@ -1196,7 +1261,7 @@ The update above roughly generates SQL like this:
 /* Unmodified properties are not generated into the SET clause. */
 
 UPDATE UserProfile SET
-Name=@p1, FullName=@p2, Gender=@p3
+Name=@p1, Nickname=@p2, Gender=@p3
 WHERE UserId=@p4;
 ```
 
@@ -1209,7 +1274,7 @@ The value to write can be an anonymous object, dynamic object _(`ExpandoObject`)
 this.DataAccess.Update<UserProfile>(
     new {
         Name="Popeye",
-        FullName="Popeye Zhong",
+        Nickname="Popeye Zhong",
         Gender=Gender.Male,
     },
     Condition.Equal("UserId", 100)

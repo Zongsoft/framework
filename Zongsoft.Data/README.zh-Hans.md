@@ -76,24 +76,25 @@ schema ::=
     * |
     ! |
     !identifier |
-    identifier[paging][sorting]["{"schema [,...n]"}"]
+    identifier [paging] [sorting] ["{" schema [,...n] "}"]
 } [,...n]
 
 identifier ::= [_A-Za-z][_A-Za-z0-9]*
 number ::= [0-9]+
-pageIndex ::= number
-pageSize ::= number
 
 paging ::= ":"{
-    *|
-    pageIndex[/pageSize]
+    "?" |
+    "*" |
+    number |
+    number "/" number |
+    number "/" "?"
 }
 
 sorting ::=
 "("
     {
-        [~|!]identifier
-    }[,...n]
+        ["~"|"!"]identifier
+    } [,...n]
 ")"
 ```
 
@@ -101,11 +102,39 @@ sorting ::=
 #### 说明
 
 - 星号(`*`)：表示包含所有简单属性，不包含导航属性；如果要包含导航属性，必须显式写出。
-- 叹号(`!`)：表示排除。单个 `!` 排除前面的定义，`!名称` 排除指定名称的属性。
+- 叹号(`!`)：表示排除。单独的 `!` _（或 `!*`）_ 表示清除当前层级的全部成员；`!名称` 表示排除指定名称的属性。
+- 标识符由字母、数字和下划线组成，不能以数字开头，不区分大小写。
+- 多个成员之间使用逗号(`,`)分隔；子模式 _（大括号内的部分）_ 沿用相同的语法，因此可以任意层级嵌套。
+- 标识符内部不能含有空白字符；但成员之间、星号之后、标识符与子模式/排序/分页符号之间可以包含空白字符，例如 `Users {*}`、`Users :1/20`、`* , Users`。
+- 分页数字内部以及冒号(`:`)之后不允许空白；排序括号内、字段内部不允许空白，但排序字段之间 _（逗号之后）_ 允许空白。
 
+<a name="schema-paging"></a>
+#### 分页与排序
+
+分页写在成员名之后、以冒号(`:`)开头，具体写法及含义如下：
+
+| 写法 | 含义 |
+| --- | --- |
+| `:N` | 第 1 页，每页 `N` 条 |
+| `:N/S` | 第 `N` 页，每页 `S` 条 |
+| `:N/?` | 第 `N` 页，页大小使用默认值 _（20 条）_ |
+| `:?` | 清除分页设置 |
+| `:*` | 禁用分页 |
+
+> **注意：** 冒号后不带斜杠(`/`)的数字表示**页大小**，页号固定为第 1 页；只有带斜杠(`/`)时，斜杠前的数字才是**页号**。
+
+排序写在分页之后、以一对圆括号包裹；排序字段之间使用逗号分隔，`~` 或 `!` 前缀表示倒序，无前缀表示正序：
+
+```
+Users:1/20(~CreatedTime,Grade){*}
+```
+
+> **注意：** 当前解析器只允许排序列表中的**第一个**字段使用 `~`/`!` 前缀，多字段排序时排在后面的字段不能带前缀 _（这是解析器状态机的已知限制，重构时需修复）_。也就是说 `(Grade,~CreatedTime)` 会解析失败，应改写为 `(~CreatedTime,Grade)`。
 
 <a name="schema-sample"></a>
 ### 示例说明
+
+> 提示：以下示例中的属性名取自论坛项目的实体，仅用于演示语法，例如 `Creator` 是 `Thread` 实体的导航属性，`Users` 是 `Forum` 实体的导航属性。
 
 ```graphql
 *, !CreatorId, !CreatedTime
@@ -118,9 +147,9 @@ sorting ::=
 > 表示所有简单属性，并包含 `Creator` 导航属性的所有简单属性。
 
 ```graphql
-*, Creator{Name,FullName}
+*, Creator{Name,Nickname}
 ```
-> 表示所有简单属性，并且只加载 `Creator` 导航属性的 `Name` 和 `FullName`。
+> 表示所有简单属性，并且只加载 `Creator` 导航属性的 `Name` 和 `Nickname`。
 
 ```graphql
 *, Users{*}
@@ -130,7 +159,12 @@ sorting ::=
 ```graphql
 *, Users:1{*}
 ```
-> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合分页为第 1 页、每页 1 条。如果要表示第 1 页且使用默认页大小，请写作 `Users:1/?{*}`。
+> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合分页为第 1 页、每页 1 条。
+
+```graphql
+*, Users:1/?{*}
+```
+> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合分页为第 1 页、页大小使用默认值。
 
 ```graphql
 *, Users:1/20{*}
@@ -138,9 +172,40 @@ sorting ::=
 > 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合分页为第 1 页、每页 20 条。
 
 ```graphql
-*, Users:1/20(Grade,~CreatedTime){*}
+*, Users:*{*}
 ```
-> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_；该集合先按 `Grade` 正序、`CreatedTime` 倒序排序，再分页为第 1 页、每页 20 条。
+> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合明确禁用分页。
+
+```graphql
+*, Users:1/20(~CreatedTime,Grade){*}
+```
+> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_；该集合先按 `CreatedTime` 倒序、`Grade` 正序排序，再分页为第 1 页、每页 20 条。
+
+<a name="schema-api"></a>
+### 模式对象模型
+
+`schema` 文本参数由数据访问器的模式解析器解析为 `ISchema` 对象，随后供语句构建器生成查询或写入子句。与模式相关的类型分为两层：
+
+**核心库**（[`Zongsoft.Core/src/Data`](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Core/src/Data)）中的抽象与接口：
+
+| 类型 | 说明 |
+| --- | --- |
+| [ISchema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema.cs) | 解析后的数据模式接口：`Name`、`Text`、`ModelType`、`IsEmpty`、`IsReadOnly`；`Clear()`、`Contains(path)`、`Find(path)`、`Include(path)`、`Exclude(path)`。路径以句点(`.`)或斜杠(`/`)分隔。 |
+| [ISchema&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema%601.cs) | 泛型版本，新增 `Members` 成员集合属性。 |
+| [ISchemaParser](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaParser.cs) / [ISchemaParser&lt;TEntry&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaParser%601.cs) | 模式解析器接口：`Parse(name, expression, entityType)`。 |
+| [SchemaParserBase&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaParserBase.cs) | 模式解析器的状态机基类，实现上述语法的词法与语法分析，通过回调把解析出的元素名映射为成员对象。 |
+| [SchemaMemberBase](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberBase.cs) | 模式成员基类：`Name`、`Path`、`FullPath`、`Paging`、`Sortings`、`Property`、`HasChildren`。 |
+| [SchemaMemberCollection&lt;T&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberCollection.cs) | 模式成员集合，按键 _（成员名）_ 索引，不区分大小写。 |
+
+**数据引擎**（[`Zongsoft.Data/src`](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/src)）中的实现：
+
+| 类型 | 说明 |
+| --- | --- |
+| [SchemaParser](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaParser.cs) | `SchemaParserBase<SchemaMember>` 的实现，单例 `SchemaParser.Instance`；根据实体元数据把模式元素名解析为实体属性（支持继承实体与导航跳板）。 |
+| [Schema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Schema.cs) | `ISchema`、`ISchema<SchemaMember>` 的实现。 |
+| [SchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaMember.cs) | `SchemaMemberBase` 的实现，持有 `Token` _（[DataEntityPropertyToken](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Metadata/DataEntityPropertyToken.cs)）_ 与 `Ancestors` 继承链。 |
+
+> **说明：** 核心库中的 [Schema&lt;T&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Schema.cs) 及其 [ISchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Schema.cs) 接口是基于 Lambda 表达式程序化构建模式的早期形态（`Schema.Empty<T>().Include(p => p.Name)`），目前引擎统一使用文本表达式 + `SchemaParserBase` 解析，两者并行保留。
 
 
 <a name="mapping"></a>
@@ -175,14 +240,14 @@ sorting ::=
 
 常用映射元素如下：
 
-- `entity` 定义实体到数据表的映射。`table` 是物理表名，`inherits` 指向父实体，`driver` 将实体限定到指定数据驱动，`immutable="true"` 表示除新增外不允许变更。
+- `entity` 定义实体到数据表的映射。`table` 是物理表名（省略时默认使用 `命名空间_实体名`，命名空间为空则使用实体名，也支持 `alias` 作为表名的别名写法）；`inherits` 指向父实体；`driver` 将实体限定到指定数据驱动；`immutable="true"` 表示除新增外不允许变更。
 - `property` 定义简单属性到字段的映射。常用属性包括 `type`、`field`、`nullable`、`length`、`precision`、`scale`、`default`、`sequence`、`sortable`、`immutable`。
-- `sequence="*"` 表示使用数据库内置自增或序列；`sequence="#"` 表示使用 Zongsoft 默认外部序号器；`sequence="#Name"` 表示指定名称的外部序号器；`sequence="#(ParentId)"` 表示按指定引用属性分组的外部序号器。
-- `complexProperty` 定义导航属性。`port` 指向目标实体，也可以指向目标实体的导航属性，譬如 `ForumUser:User`。`multiplicity` 支持 `?`、`!`、`*`；`link` 定义外键属性与当前实体的关联，`constraints` 可添加固定的导航过滤条件。
-- `command` 定义命名 SQL 命令或存储过程，可通过 `Execute`、`Execute<T>`、`ExecuteScalar` 调用。
+- `sequence="*"` 表示使用数据库内置自增或序列；`sequence="#"` 表示使用 Zongsoft 默认外部序号器；`sequence="#Name"` 表示指定名称的外部序号器；`sequence="#Name@seed/interval"` 可同时指定序号器的种子值与递增量；`sequence="#(ParentId)"` 表示按指定引用属性分组的外部序号器；`sequence="Entity:Property"` 表示引用另一实体属性的序号器。
+- `complexProperty` 定义导航属性。`port` 指向目标实体，也可以指向目标实体的导航属性，譬如 `ForumUser:User`。`multiplicity` 支持 `?`（一对零或一，默认）、`!`（一对一）、`*`（一对多）；`link` 定义外键属性与当前实体的关联（`anchor` 指定本体实体侧的锚点，省略时与 `port` 同名）；`constraints` 可添加固定的导航过滤条件（`actor` 省略时按多重性推断：一对多默认为 `Foreign`，其余为 `Principal`）。
+- `command` 定义命名 SQL 命令或存储过程，可通过 `Execute`、`Execute<T>`、`ExecuteScalar` 调用。`type` 支持 `text`（默认）与 `procedure`；`mutability` 声明命令对数据的变更性，`none` 表示只读命令，`delete`、`insert`、`update`、`upsert` 表示写命令。加载器对枚举值的解析不区分大小写，但为通过 XSD 校验，建议统一使用小写。
 
 ```xml
-<command name="Forum.GetStatistics" type="Text" mutability="None">
+<command name="Forum.GetStatistics" type="text" mutability="none">
     <parameter name="SiteId" type="uint" />
     <parameter name="ForumId" type="ushort" />
     <script driver="MySql"><![CDATA[
@@ -274,7 +339,7 @@ sorting ::=
 - 聚合操作元 `AggregateOperand`
 - 一元操作元 `UnaryOperand`，包括：
 > - `!` 逻辑非
-> - `~` 按位取反
+> - `~` 逻辑非 _（与 `!` 等价）_
 > - `-` 算术负号
 - 二元操作元 `BinaryOperand`，包括：
 > - `+` 加法
@@ -508,17 +573,17 @@ var totalViews = this.DataAccess.Sum<Thread, long>(
 **调用说明：**
 
 1. 泛型参数指定为字段类型，或字段可转换到的类型；
-1. 通过方法的 `name` 参数显式指定实体名；
+1. 通过方法的 `name` 参数显式指定实体名 _（须为映射文件中注册的限定名，即 `容器名.实体名`；容器名为空时可直接使用实体名，下例中的 `Discussions.UserProfile` 即论坛模块映射文件中的限定名）_；
 1. 通过方法的 `schema` 参数显式指定一个具体属性名。
 
 ```csharp
-var email = this.DataAccess.Select<string>("UserProfile",
+var email = this.DataAccess.Select<string>("Discussions.UserProfile",
     Condition.Equal("UserId", this.User.UserId),
     "Email" // 只获取 Email 字段，该字段为字符串类型
 ).FirstOrDefault();
 
 /* 返回标量集(IEnumerable<uint>) */
-var counts = this.DataAccess.Select<uint>("History",
+var counts = this.DataAccess.Select<uint>("Discussions.History",
     Condition.Equal("UserId", this.User.UserId),
     "ViewedCount" // 只获取 ViewedCount 字段
 );
@@ -528,6 +593,8 @@ var counts = this.DataAccess.Select<uint>("History",
 #### 多列查询
 
 多列查询可返回多个字段，并支持多种目标类型：类、接口、结构、动态对象(`ExpandoObject`)和字典。
+
+> **注意：** 导航属性 _（复合属性）_ 只会在使用实体模型类 _（类/接口/结构）_ 作为目标类型时填充；以字典或 `ExpandoObject` 为目标类型时，只返回简单字段，导航属性不会出现在结果中。
 
 ```csharp
 struct UserToken
@@ -541,7 +608,7 @@ struct UserToken
  * 引擎会取实体元数据与目标类型成员的交集作为返回字段。
  */
 var tokens = this.DataAccess.Select<UserToken>(
-    "UserProfile",
+    "Discussions.UserProfile",
     Condition.Equal("SiteId", this.User.SiteId),
     "UserId, Name"
 );
@@ -550,9 +617,9 @@ var tokens = this.DataAccess.Select<UserToken>(
 ```csharp
 /*
  * 当目标类型名与实体名不一致时，
- * 可通过 ModelAttribute 指定它对应的映射实体名。
+ * 可通过 ModelAttribute 指定它对应的映射实体名（限定名）。
  */
-[Zongsoft.Data.Model("UserProfile")]
+[Zongsoft.Data.Model("Discussions.UserProfile")]
 struct UserToken
 {
     public uint UserId;
@@ -571,7 +638,7 @@ var tokens = this.DataAccess.Select<UserToken>(
  * 2) schema 参数指定返回字段；省略或写为星号(*)时，默认返回所有字段。
  */
 var items = this.DataAccess.Select<IDictionary<string, object>>(
-    "UserProfile",
+    "Discussions.UserProfile",
     Condition.Equal("SiteId", this.User.SiteId) &
     Condition.GreaterThan("TotalThreads", 0),
     "UserId,Name,TotalThreads,TotalPosts");
@@ -589,7 +656,7 @@ foreach(var item in items)
 /*
  * 泛型参数指定为 ExpandoObject 后，可用动态方式访问返回对象。
  */
-var items = this.DataAccess.Select<System.Dynamic.ExpandoObject>("UserProfile");
+var items = this.DataAccess.Select<System.Dynamic.ExpandoObject>("Discussions.UserProfile");
 
 foreach(dynamic item in items)
 {
@@ -773,10 +840,10 @@ public struct ForumUser : IEquatable<ForumUser>
 var forum = this.DataAccess.Select<Forum>(
   Condition.Equal("SiteId", this.User.SiteId) &
   Condition.Equal("ForumId", 100),
-  "*, Users{*}, Moderators{*, User{*}}"
+  "*, Users{*, User{Name,Email,Avatar}}, Moderators{Name,Email,Avatar}"
 ).FirstOrDefault();
 
-// moderator 的类型是 UserProfile。
+// moderator 的类型是 UserProfile（导航跳板直接返回 UserProfile，因此只需列出其简单属性）。
 foreach(var moderator in forum.Moderators)
 {
   Console.Write(moderator.Name);
@@ -784,7 +851,7 @@ foreach(var moderator in forum.Moderators)
   Console.Write(moderator.Avatar);
 }
 
-// member 的类型是 ForumUser。
+// member 的类型是 ForumUser，可通过其 User 导航属性再访问 UserProfile。
 foreach(var member in forum.Users)
 {
   Console.Write(member.Permission);
@@ -950,7 +1017,7 @@ WHERE
 <a name="usage-execute"></a>
 ### 执行操作
 
-`Execute` 用于执行映射文件中定义的命名 `command`。适合 SQL 语句、存储过程，以及无法自然归入某个实体 CRUD 操作的命令。`mutability="None"` 会被视为只读命令；`Insert`、`Update`、`Delete`、`Upsert` 会被视为写命令，并参与读写数据源选择。
+`Execute` 用于执行映射文件中定义的命名 `command`。适合 SQL 语句、存储过程，以及无法自然归入某个实体 CRUD 操作的命令。`mutability="none"` 会被视为只读命令；`insert`、`update`、`delete`、`upsert` 会被视为写命令，并参与读写数据源选择。未声明 `mutability` 的命令会被视为可写命令 _（按 `Delete|Insert|Update` 处理）_，如无必要不必显式声明。
 
 ```csharp
 public sealed class ForumStatistics
@@ -970,13 +1037,13 @@ var rows = this.DataAccess.Execute<ForumStatistics>(
 var statistics = rows.FirstOrDefault();
 ```
 
-如果是存储过程，请在映射文件中设置 `type="Procedure"`。输出参数和返回参数会在命令执行后写回传入的 `Parameter` 对象。
+如果是存储过程，请在映射文件中设置 `type="procedure"`（`alias` 指定存储过程的实际名称）。输出参数和返回参数会在命令执行后写回传入的 `Parameter` 对象；参数方向 `direction` 支持 `input`、`output`、`both`、`return`（加载器也接受 `in`、`out`、`result` 等简写，但为通过 XSD 校验建议使用标准写法）。
 
 ```xml
-<command name="Forum.RefreshStatistics" alias="Discussions_Forum_RefreshStatistics" type="Procedure" mutability="Update">
+<command name="Forum.RefreshStatistics" alias="Discussions_Forum_RefreshStatistics" type="procedure" mutability="update">
     <parameter name="SiteId" type="uint" />
     <parameter name="ForumId" type="uint" />
-    <parameter name="Total" type="int" direction="out" />
+    <parameter name="Total" type="int" direction="output" />
 </command>
 ```
 
@@ -1180,7 +1247,7 @@ var user = Model.Build<UserProfile>();
 
 user.UserId = 100;
 user.Name = "Popeye";
-user.FullName = "Popeye Zhong";
+user.Nickname = "Popeye Zhong";
 user.Gender = Gender.Male;
 
 this.DataAccess.Update(user);
@@ -1192,7 +1259,7 @@ this.DataAccess.Update(user);
 /* 注：未修改的属性不会生成到 SET 子句。 */
 
 UPDATE UserProfile SET
-Name=@p1, FullName=@p2, Gender=@p3
+Name=@p1, Nickname=@p2, Gender=@p3
 WHERE UserId=@p4;
 ```
 
@@ -1205,7 +1272,7 @@ WHERE UserId=@p4;
 this.DataAccess.Update<UserProfile>(
     new {
         Name="Popeye",
-        FullName="Popeye Zhong",
+        Nickname="Popeye Zhong",
         Gender=Gender.Male,
     },
     Condition.Equal("UserId", 100)

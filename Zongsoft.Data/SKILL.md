@@ -1,6 +1,6 @@
 ---
 name: zongsoft-data
-description: 开发、重构、测试或审查 Zongsoft.Data ORM 数据引擎及其数据库驱动，并创建、编辑或校验 `.mapping` XML 数据映射文件。当 Codex 需要处理驱动扩展点、语句构建/绑定/插槽、数据连接与连接故障保护、数据导入、驱动单元测试及 Podman 数据库测试环境，或依据 `Zongsoft.Data.xsd` 建模实体和命令时使用。
+description: 开发、重构、测试或审查 Zongsoft.Data ORM 数据引擎及其数据库驱动，并创建、编辑或校验 `.mapping` XML 数据映射文件。当 Codex 需要处理数据模式(Schema)的解析与表达式、驱动扩展点、语句构建/绑定/插槽、数据连接与连接故障保护、数据导入、驱动单元测试及 Podman 数据库测试环境，或依据 `Zongsoft.Data.xsd` 建模实体和命令时使用。
 ---
 
 # Zongsoft.Data 数据引擎
@@ -11,6 +11,71 @@ description: 开发、重构、测试或审查 Zongsoft.Data ORM 数据引擎及
 - 优先通过已有的专用扩展点解决驱动差异；只有多个驱动共享相同语义时才考虑提升到公共抽象。
 - 修改文本文件时保持 CRLF 换行，修改代码和 XML 时使用 Tab 缩进。
 - 保留工作区中与当前任务无关的用户修改，不要重置或覆盖脏工作树。
+
+## 数据模式(Schema)
+
+数据模式是数据引擎的核心 DSL：数据访问方法的 `schema` 文本参数描述要读取或写入的字段形状，引擎解析后生成 SQL。重构 Schema 子系统前先通读本节。
+
+### 架构分层
+
+Schema 代码分两层，改动前先确认所属层：
+
+- **核心库**（`Zongsoft.Core/src/Data/`）——接口与通用解析器：
+  - `ISchema`：解析后的模式对象（`Name`、`Text`、`ModelType`、`IsEmpty`、`IsReadOnly`，方法 `Clear/Contains/Find/Include/Exclude`）。
+  - `ISchema<TMember>`：泛型成员版本，新增 `Members` 集合。
+  - `ISchemaParser` / `ISchemaParser<TEntry>`：解析器接口，`Parse(name, expression, entityType)`。
+  - `SchemaParserBase<TMember>`：文本 → 成员树的状态机解析器（词法/语法分析），通过 `SchemaEntryToken` 回调（`mapper`）把元素名解析为成员；`Parse(expression, mapper, data, members)` 是受保护入口，`TryParse` 用于容错场景。
+  - `SchemaMemberBase`：成员基类（`Name`、`Path`、`FullPath`、`Paging`、`Sortings`、`Property`、`HasChildren`）。
+  - `SchemaMemberCollection<T>`：以成员名（不区分大小写）为键的集合。
+  - `Schema<T>`（Lambda 版）与 `ISchemaMember`/`ISchemaMemberProvider`：基于 `Expression<Func<T, TMember>>` 程序化构建模式的早期形态（`Schema.Empty<T>().Include(p => p.Name)`），目前与文本解析体系并行保留，改动前先确认引用范围。
+- **引擎库**（`Zongsoft.Data/src/`）——实现与元数据绑定：
+  - `SchemaParser`（`SchemaParserBase<SchemaMember>` 单例 `SchemaParser.Instance`）：`Resolve` 回调把元素名解析为实体属性元数据。
+  - `Schema`：`ISchema`、`ISchema<SchemaMember>` 的实现。
+  - `SchemaMember`：`SchemaMemberBase` 实现，持有 `Token`（`DataEntityPropertyToken`，含属性元数据、绑定成员与转换器）与 `Ancestors`（继承实体链）。
+
+### 解析流程
+
+1. `DataAccessBase` 的每个数据访问方法（`Select/Insert/Update/Upsert/Delete`）在创建上下文时调用 `this.Schema.Parse(name, schemaText, entityType)` 把文本解析为 `ISchema`；空文本默认解析为 `"*"`（`SchemaParser.Parse` 中处理）。
+2. `SchemaParser.Parse` 从 `Mapping.Entities[name]` 取实体，用 `new SchemaData(entity, entityType)` 作为回调数据，调用 `SchemaParserBase.Parse`。
+3. `Resolve(token)` 按元素名在实体元数据中查找属性：
+   - 父级为导航属性时切换到外部实体（`complex.Foreign`），并沿 `ForeignProperty` 链继续切换（导航跳板）。
+   - 目标类型（`ModelType`）非标量时用 `entity.GetTokens(modelType)`（按模型成员裁剪）查找；标量类型时按 `entity.Properties` 查找。
+   - 支持继承实体：沿 `GetBaseEntity()` 逐级向上查找，`*` 会展开所有继承层的简单属性。
+   - 未找到抛出 `DataArgumentException`。
+4. 解析结果写入 `SchemaMemberCollection<SchemaMember>`；已存在同名的成员会复用并追加子成员（`Include` 语义），排除用 `Exclude` 移除。
+5. 语句构建器消费 `context.Schema.Members`：
+   - `SelectStatementBuilder`：为简单成员生成 `SELECT` 字段，复杂成员生成 `JOIN`（`?`/`!`）或独立子查询（`*`，经 `statement.Slaves` 惰性加载，`DataSelectExecutor.PopulateSlaves` 填充）。
+   - `InsertStatementBuilder` / `UpdateStatementBuilder` / `UpsertStatementBuilder`：按模式决定写入成员与级联子表（一对多子记录按 UPSERT 语义）。
+   - `DeleteStatementBuilder`：按模式生成级联删除子表语句。
+   - 模式成员的 `Paging`/`Sortings` 应用到对应子查询。
+
+### 表达式语法要点
+
+语法（详见 `README.zh-Hans.md` 的「数据模式」章节）：
+
+```text
+schema ::= { * | ! | !identifier | identifier [paging] [sorting] ["{" schema "}"] } [,...n]
+paging ::= ":"{ "?" | "*" | number | number "/" number | number "/" "?" }
+sorting ::= "(" { ["~"|"!"]identifier } [,...n] ")"
+```
+
+要点与已知行为：
+
+- `*` 只展开简单属性（不含导航属性）；`!` 单独使用（或 `!*`）清除当前层级全部成员，`!名称` 移除指定成员。
+- 分页：冒号后不带 `/` 的数字表示**页大小**（页号为 1）；`N/S` 中 `N` 是页号、`S` 是页大小；`?` 表示默认页大小（20）；`*` 表示禁用分页；单独的 `?` 清除分页设置。
+- 排序：`~` 或 `!` 前缀表示倒序。**已知限制**：当前解析器只允许排序列表的第一个字段带 `~/!` 前缀（`State.SortingGutter` 只接受字母/下划线或空白开头的后续字段），多字段排序时后续字段不能带前缀；重构时应修复。
+- 空白：标识符内部不允许空白；成员之间、`*` 之后、标识符与 `{`/`(`/`:`/`,`/`}` 之间允许空白；冒号之后与排序字段内部不允许空白（排序字段之间的逗号后允许空白）。
+- 标识符不能以数字开头；成员名不区分大小写。
+- 解析错误统一抛出 `DataArgumentException`（消息前缀 `SyntaxError:`/`ParsingError:`）。
+- 解析器对成员名的查找（`Resolve`）不在 `SchemaParserBase` 内，而在 `SchemaParser` 中；`SchemaParserBase` 保持与元数据无关。
+
+### 重构注意事项
+
+- 保持「`SchemaParserBase`（通用文本解析）→ `SchemaParser`（元数据解析）→ 语句构建器（SQL 生成）」的分层，不要把元数据逻辑下沉到基类。
+- 状态机位于 `SchemaParserBase.StateContext`（`None/Asterisk/Include/Exclude/PagingCount/PagingSize/SortingField/SortingGutter`），重构词法或语法时先跑 `Zongsoft.Core/test/Data/SchemaTest.cs` 中的回归用例。
+- 已确认的 XSD 与加载器差异（重构时统一）：`complexProperty` 的 `immutable` XSD 缺省 `true`、加载器缺省 `false`；`command` 的 `mutability` XSD 缺省 `none`、加载器缺省 `Delete|Insert|Update`。
+- 已确认的解析器限制：多字段排序仅首字段支持 `~/!` 前缀；`Users(1Name)` 这类以数字开头的排序字段因长度大于 1 不会被拒绝；重复/尾随逗号（如 `Users,,`）被容忍。
+- 模式解析属于高频路径（每次数据访问都解析），缓存或编译模式时应评估 `SchemaParserBase` 的状态机分配。
 
 ## 驱动与语句扩展点
 
@@ -168,7 +233,7 @@ rg --files Zongsoft.Data/drivers | rg -- "-pod\.yaml$|Tests\.csproj$"
 - `port` 通常命名目标实体。
 - `port="JoinEntity:TargetNavigation"` 表示通过中间实体路由到该实体上的导航/属性。
 - `multiplicity` 默认为 `?`（零或一）。使用 `!` 表示恰好一个，使用 `*` 表示集合。
-- 复合属性的 `immutable` 默认为 `true`。当集合或导航属性需要可变时设置 `immutable="false"`。
+- 复合属性 `immutable` 的默认值存在已知不一致：`Zongsoft.Data.xsd` 声明的缺省值为 `true`，但映射加载器 `MetadataFileResolver` 实际按 `false`（可写）处理。因此**不要依赖缺省值**，需要可写集合时显式写 `immutable="false"`，只读关联显式写 `immutable="true"`；重构时应统一 XSD 与加载器。
 - `behaviors="principal"` 标记目标为主控端；明细或子类型记录指向其所有者时常见。
 
 链接把目标端口连接到当前实体锚点：
@@ -207,9 +272,9 @@ rg --files Zongsoft.Data/drivers | rg -- "-pod\.yaml$|Tests\.csproj$"
 - `name` 必填。
 - `alias` 可用于指定存储过程、函数或视图名称。
 - `type` 可以是 `text` 或 `procedure`；样例项目中省略的命令都是 SQL 文本。
-- `mutability` 默认为 `none`；只有命令会改变数据且调用方需要该元数据时，才设置为 `insert`、`update`、`delete` 或 `upsert`。
-- 添加 `parameter` 子节点，必填 `name` 和 `type`；除非确实需要输出、双向或返回参数，否则使用 `direction="input"`。
-- 添加一个或多个 `script` 子节点，必填 `driver`；为提升可读性并避免转义问题，将 SQL 包在 CDATA 中。
+- `mutability` 声明命令对数据的变更性：`none` 表示只读命令（会路由到只读数据源），`insert`、`update`、`delete`、`upsert` 表示写命令。注意：XSD 声明的缺省值为 `none`，但映射加载器 `MetadataFileResolver` 对未声明 `mutability` 的命令实际按 `Delete|Insert|Update`（可写）处理，因此**显式声明 `mutability`**，只读命令务必写 `mutability="none"`。加载器对 `type`/`mutability` 的解析不区分大小写，但为通过 XSD 校验应统一使用小写。
+- 添加 `parameter` 子节点，必填 `name` 和 `type`；`direction` 使用 `input`（默认）、`output`、`both`、`return`（加载器也接受 `in`、`out`、`result` 等简写，但 XSD 校验只认标准写法）。
+- 添加一个或多个 `script` 子节点，必填 `driver`；为提升可读性并避免转义问题，将 SQL 包在 CDATA 中。也可以不写 `script`，而在映射文件同目录提供名为 `{命令名}-{驱动名}.sql` 的脚本文件（加载器自动装载）。
 
 ```xml
 <command name="SetDeviceMetricMappedCode" mutability="update">
