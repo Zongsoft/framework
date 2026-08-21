@@ -43,22 +43,7 @@ ClickHouse | [/drivers/clickhouse](https://github.com/Zongsoft/framework/tree/ma
 InfluxDB | [/drivers/influx](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/influx) | _**A**vailable_ |
 TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/tdengine) | _**A**vailable_ |
 
-> Tip: If you need a driver that is not listed here or commercial support, please contact us ([zongsoft@qq.com](mailto:zongsoft@qq.com)).
-
-
-<a name="environment"></a>
-### Environment
-
-- .NET 8.0
-- .NET 9.0
-- .NET 10.0
-
-<a name="download"></a>
-## Download
-
-### Source code compilation
-
-For source builds, we recommend creating a **_Zongsoft_** directory outside the system partition and cloning [Guidelines](https://github.com/Zongsoft/guidelines), [Zongsoft.Core](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Core), and [Zongsoft.Data](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data) into it.
+> 💡 Tip: If you need a driver that is not listed here or commercial support, please contact us ([zongsoft@qq.com](mailto:zongsoft@qq.com)).
 
 <a name="schema"></a>
 ## The data schema
@@ -135,55 +120,60 @@ Every sorting field may carry its own prefix. `+CreatedTime` is exactly equivale
 <a name="schema-sample"></a>
 ### Sample description
 
-> Tip: The property names in the examples below are taken from the entities of the forum project and are only used to demonstrate the syntax, e.g. `Creator` is a navigation property of the `Thread` entity and `Users` is a navigation property of the `Forum` entity.
+- **Note:** All scalar properties except `CreatorId` and `CreatedTime`.
 
-```graphql
-*, !CreatorId, !CreatedTime
-```
-> **Note:** All scalar properties except `CreatorId` and `CreatedTime`.
+	> ```graphql
+	> *, !CreatorId, !CreatedTime
+	> ```
 
-```graphql
-*, Creator{*}
-```
-> **Note:** All scalar properties plus the `Creator` navigation property, including all scalar properties of `Creator`.
+- **Note:** All scalar properties plus the `Creator` navigation property, including all scalar properties of `Creator`.
 
-The following forms are equivalent:
+	> ```graphql
+	> *, Creator{*}
+	> ```
 
-```graphql
-*, Creator
-*, Creator.*
-*, Creator{*}
-```
+	The following forms are equivalent:
+	> ```graphql
+	> *, Creator
+	> *, Creator.*
+	> *, Creator{*}
+	> ```
 
-```graphql
-*, Creator{Name,Nickname}
-```
-> **Note:** All scalar properties plus the `Creator` navigation property, but only `Name` and `Nickname` are loaded for `Creator`.
+- **Note:** All scalar properties plus the `Creator` navigation property, but only `Name` and `Nickname` are loaded for `Creator`.
 
-```graphql
-*, Users{*}
-```
-> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, without sorting or a record limit.
+	> ```graphql
+	> *, Creator{Name,Nickname}
+	> ```
 
-```graphql
-*, Users:1{*}
-```
-> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, limited to at most 1 record.
+- **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, without sorting or a record limit.
 
-```graphql
-*, Users:20{*}
-```
-> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, limited to at most 20 records.
+	> ```graphql
+	> *, Users{*}
+	> ```
 
-```graphql
-*, Users:*{*}
-```
-> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_ with an explicitly unlimited record count.
+- **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, limited to at most 1 record.
 
-```graphql
-*, Users:20(-CreatedTime,+Grade){*}
-```
-> **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, sorted by `CreatedTime` descending and `Grade` ascending, then limited to at most 20 records.
+	> ```graphql
+	> *, Users:1{*}
+	> ```
+
+- **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, limited to at most 20 records.
+
+	> ```graphql
+	> *, Users:20{*}
+	> ```
+
+- **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_ with an explicitly unlimited record count.
+
+	> ```graphql
+	> *, Users:*{*}
+	> ```
+
+- **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, sorted by `CreatedTime` descending and `Grade` ascending, then limited to at most 20 records.
+
+	> ```graphql
+	> *, Users:20(-CreatedTime,+Grade){*}
+	> ```
 
 -----
 

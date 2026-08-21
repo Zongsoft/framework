@@ -43,22 +43,7 @@ ClickHouse | [/drivers/clickhouse](https://github.com/Zongsoft/framework/tree/ma
 InfluxDB | [/drivers/influx](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/influx) | _**A**vailable_ |
 TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/tdengine) | _**A**vailable_ |
 
-> 提示：如果需要未列出的驱动或商业技术支持，请联系我们（[zongsoft@qq.com](mailto:zongsoft@qq.com)）。
-
-
-<a name="environment"></a>
-### 开发环境
-
-- .NET 8.0
-- .NET 9.0
-- .NET 10.0<br />
-
-<a name="download"></a>
-## 下载
-
-- **源码编译方式**
-
-源码编译时，建议在非系统分区建立一个 **_Zongsoft_** 目录，并将 [Guidelines](https://github.com/Zongsoft/guidelines)、[Zongsoft.Core](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Core) 和 [Zongsoft.Data](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data) 克隆到该目录中。
+> 💡 提示：如果需要未列出的驱动或商业技术支持，请联系我们（[zongsoft@qq.com](mailto:zongsoft@qq.com)）。
 
 <a name="schema"></a>
 ## 数据模式
@@ -135,55 +120,60 @@ Users:20(-CreatedTime,+Grade){*}
 <a name="schema-sample"></a>
 ### 示例说明
 
-> 提示：以下示例中的属性名取自论坛项目的实体，仅用于演示语法，例如 `Creator` 是 `Thread` 实体的导航属性，`Users` 是 `Forum` 实体的导航属性。
+- 表示所有简单属性，但排除 `CreatorId` 和 `CreatedTime`。
 
-```graphql
-*, !CreatorId, !CreatedTime
-```
-> 表示所有简单属性，但排除 `CreatorId` 和 `CreatedTime`。
+	> ```graphql
+	> *, !CreatorId, !CreatedTime
+	> ```
 
-```graphql
-*, Creator{*}
-```
-> 表示所有简单属性，并包含 `Creator` 导航属性的所有简单属性。
+- 表示所有简单属性，并包含 `Creator` 导航属性的所有简单属性。
 
-以下写法等价：
+	> ```graphql
+	> *, Creator{*}
+	> ```
 
-```graphql
-*, Creator
-*, Creator.*
-*, Creator{*}
-```
+	以下写法等价：
+	> ```graphql
+	> *, Creator
+	> *, Creator.*
+	> *, Creator{*}
+	> ```
 
-```graphql
-*, Creator{Name,Nickname}
-```
-> 表示所有简单属性，并且只加载 `Creator` 导航属性的 `Name` 和 `Nickname`。
+- 表示所有简单属性，并且只加载 `Creator` 导航属性的 `Name` 和 `Nickname`。
 
-```graphql
-*, Users{*}
-```
-> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合不排序也不限量。
+	> ```graphql
+	> *, Creator{Name,Nickname}
+	> ```
 
-```graphql
-*, Users:1{*}
-```
-> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合最多加载 1 条。
+- 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合不排序也不限量。
 
-```graphql
-*, Users:20{*}
-```
-> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合最多加载 20 条。
+	> ```graphql
+	> *, Users{*}
+	> ```
 
-```graphql
-*, Users:*{*}
-```
-> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合显式不限量。
+- 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合最多加载 1 条。
 
-```graphql
-*, Users:20(-CreatedTime,+Grade){*}
-```
-> 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_；该集合先按 `CreatedTime` 倒序、`Grade` 正序排序，再最多加载 20 条。
+	> ```graphql
+	> *, Users:1{*}
+	> ```
+
+- 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合最多加载 20 条。
+
+	> ```graphql
+	> *, Users:20{*}
+	> ```
+
+- 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合显式不限量。
+
+	> ```graphql
+	> *, Users:*{*}
+	> ```
+
+- 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_；该集合先按 `CreatedTime` 倒序、`Grade` 正序排序，再最多加载 20 条。
+
+	> ```graphql
+	> *, Users:20(-CreatedTime,+Grade){*}
+	> ```
 
 -----
 
