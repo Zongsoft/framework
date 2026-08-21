@@ -9,6 +9,7 @@
 	<xs:element name="schema">
 		<xs:annotation>
 			<xs:documentation xml:lang="zh">数据映射根节点。</xs:documentation>
+			<xs:documentation xml:lang="en">Data mapping root element.</xs:documentation>
 		</xs:annotation>
 
 		<xs:complexType>
@@ -16,6 +17,7 @@
 				<xs:element name="container" minOccurs="0" maxOccurs="1">
 					<xs:annotation>
 						<xs:documentation xml:lang="zh">数据容器。</xs:documentation>
+						<xs:documentation xml:lang="en">Data container.</xs:documentation>
 					</xs:annotation>
 
 					<xs:complexType>
@@ -23,19 +25,22 @@
 							<xs:element name="entity" type="Entity" minOccurs="0" maxOccurs="unbounded">
 								<xs:annotation>
 									<xs:documentation xml:lang="zh">数据实体。</xs:documentation>
+									<xs:documentation xml:lang="en">Data entity.</xs:documentation>
 								</xs:annotation>
 							</xs:element>
 
 							<xs:element name="command" type="Command" minOccurs="0" maxOccurs="unbounded">
 								<xs:annotation>
 									<xs:documentation xml:lang="zh">数据命令。</xs:documentation>
+									<xs:documentation xml:lang="en">Data command.</xs:documentation>
 								</xs:annotation>
 							</xs:element>
 						</xs:sequence>
 
 						<xs:attribute name="name" type="xs:string" use="optional">
 							<xs:annotation>
-								<xs:documentation xml:lang="zh">数据容器名称，即容器所承载的实体和命令的所属命名空间，默认为空。</xs:documentation>
+								<xs:documentation xml:lang="zh">数据容器名称，即容器所承载的实体和命令的所属命名空间（通常对应业务系统的模块名），默认为空。</xs:documentation>
+								<xs:documentation xml:lang="en">The data container name, which is the namespace of the entities and commands hosted by the container(usually corresponding to a module name in the business system). Defaults to empty.</xs:documentation>
 							</xs:annotation>
 						</xs:attribute>
 					</xs:complexType>
@@ -55,6 +60,7 @@
 			<xs:attribute name="name" type="xs:string" use="optional">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">应用程序名称，默认为空。</xs:documentation>
+					<xs:documentation xml:lang="en">Application name. Defaults to empty.</xs:documentation>
 				</xs:annotation>
 			</xs:attribute>
 		</xs:complexType>
@@ -65,42 +71,49 @@
 			<xs:element name="parameter" minOccurs="0" maxOccurs="unbounded">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">命令参数定义。</xs:documentation>
+					<xs:documentation xml:lang="en">Command parameter definition.</xs:documentation>
 				</xs:annotation>
 
 				<xs:complexType>
 					<xs:attribute name="name" type="xs:string" use="required">
 						<xs:annotation>
 							<xs:documentation xml:lang="zh">参数名称。</xs:documentation>
+							<xs:documentation xml:lang="en">Parameter name.</xs:documentation>
 						</xs:annotation>
 					</xs:attribute>
 
 					<xs:attribute name="type" type="FieldType" use="required">
 						<xs:annotation>
 							<xs:documentation xml:lang="zh">参数类型。</xs:documentation>
+							<xs:documentation xml:lang="en">Parameter type.</xs:documentation>
 						</xs:annotation>
 					</xs:attribute>
 
 					<xs:attribute name="alias" type="xs:string" use="optional">
 						<xs:annotation>
 							<xs:documentation xml:lang="zh">参数别名，如果未指定则与参数名相同。</xs:documentation>
+							<xs:documentation xml:lang="en">Parameter alias. If omitted, the parameter name is used.</xs:documentation>
 						</xs:annotation>
 					</xs:attribute>
 
 					<xs:attribute name="length" type="xs:integer" use="optional">
 						<xs:annotation>
 							<xs:documentation xml:lang="zh">文本最大长度，零表示不限制。</xs:documentation>
+							<xs:documentation xml:lang="en">Maximum text length. Zero means unlimited.</xs:documentation>
 						</xs:annotation>
 					</xs:attribute>
 
 					<xs:attribute name="direction" type="ParameterDirection" use="optional">
 						<xs:annotation>
 							<xs:documentation xml:lang="zh">参数方向，默认为Input。</xs:documentation>
+							<xs:documentation xml:lang="en">Parameter direction. Defaults to Input.</xs:documentation>
 						</xs:annotation>
 					</xs:attribute>
 
 					<xs:attribute name="value" type="xs:string" use="optional">
 						<xs:annotation>
 							<xs:documentation xml:lang="zh">参数的默认值。</xs:documentation>
+							<xs:documentation xml:lang="en">Default value of the parameter.</xs:documentation>
 						</xs:annotation>
 					</xs:attribute>
 				</xs:complexType>
@@ -109,6 +122,7 @@
 			<xs:element name="script" minOccurs="0" maxOccurs="unbounded">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">命令脚本。</xs:documentation>
+					<xs:documentation xml:lang="en">Command script.</xs:documentation>
 				</xs:annotation>
 
 				<xs:complexType>
@@ -124,24 +138,28 @@
 		<xs:attribute name="name" type="xs:string" use="required">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">命令名称。</xs:documentation>
+				<xs:documentation xml:lang="en">Command name.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="alias" type="xs:string" use="optional">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">命令别名，即对应数据库存储过程、函数或视图的完整限定名。</xs:documentation>
+				<xs:documentation xml:lang="en">The command alias, i.e. the fully qualified name of the corresponding database stored procedure, function, or view.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="type" type="CommandType" use="optional">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">命令类型。</xs:documentation>
+				<xs:documentation xml:lang="en">Command type.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="mutability" type="CommandMutability" use="optional" default="none">
 			<xs:annotation>
-				<xs:documentation xml:lang="zh">指示该命令对数据的变化性。</xs:documentation>
+				<xs:documentation xml:lang="zh">声明该命令对数据的读写特性，并作为读写分离场景中数据源选择器的路由依据；none 选择可读数据源，其他值选择可写数据源。</xs:documentation>
+				<xs:documentation xml:lang="en">Declares whether the command reads or writes data and provides the routing basis for data source selection in read/write splitting scenarios; none selects a readable source, while other values select a writable source.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 	</xs:complexType>
@@ -151,6 +169,7 @@
 			<xs:element name="key" minOccurs="0" maxOccurs="1">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">实体主键。</xs:documentation>
+					<xs:documentation xml:lang="en">Entity primary key.</xs:documentation>
 				</xs:annotation>
 
 				<xs:complexType>
@@ -158,12 +177,14 @@
 						<xs:element name="member" minOccurs="1" maxOccurs="unbounded">
 							<xs:annotation>
 								<xs:documentation xml:lang="zh">主键成员。</xs:documentation>
+								<xs:documentation xml:lang="en">Primary key member.</xs:documentation>
 							</xs:annotation>
 
 							<xs:complexType>
 								<xs:attribute name="name" type="xs:string" use="required">
 									<xs:annotation>
 										<xs:documentation xml:lang="zh">主键成员名，即主键成员对应的属性名。</xs:documentation>
+										<xs:documentation xml:lang="en">The primary key member name, i.e. the name of the corresponding property.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
 							</xs:complexType>
@@ -175,12 +196,14 @@
 			<xs:element name="property" type="SimplexProperty" minOccurs="1" maxOccurs="unbounded">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">简单属性。</xs:documentation>
+					<xs:documentation xml:lang="en">Scalar property.</xs:documentation>
 				</xs:annotation>
 			</xs:element>
 
 			<xs:element name="complexProperty" type="ComplexProperty" minOccurs="0" maxOccurs="unbounded">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">复合属性，又名导航属性。</xs:documentation>
+					<xs:documentation xml:lang="en">Complex property, also known as a navigation property.</xs:documentation>
 				</xs:annotation>
 			</xs:element>
 		</xs:sequence>
@@ -188,30 +211,35 @@
 		<xs:attribute name="name" type="xs:string" use="required">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">实体名称。</xs:documentation>
+				<xs:documentation xml:lang="en">Entity name.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="table" type="xs:string" use="optional">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">数据库表名，如果未指定则与实体名相同。</xs:documentation>
+				<xs:documentation xml:lang="en">Database table name. If omitted, the entity name is used.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="inherits" type="xs:string" use="optional">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">继承的父实体名称，如果父实体与当前实体不在同一个命名空间内，则必须为完整名称。</xs:documentation>
+				<xs:documentation xml:lang="en">Name of the inherited base entity. If the base entity is in a different namespace, the fully qualified name is required.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="driver" type="xs:string" use="optional">
 			<xs:annotation>
-				<xs:documentation xml:lang="zh">支持的驱动，譬如：MySQL、MSSQL、PostgreSQL、ClickHouse、InfluxDB、TDengine 等。</xs:documentation>
+				<xs:documentation xml:lang="zh">支持的驱动，譬如：MySQL、MSSQL、PostgreSQL、SQLite、DuckDB、ClickHouse、InfluxDB、TDengine 等。</xs:documentation>
+				<xs:documentation xml:lang="en">Supported driver, such as MySQL, MSSQL, PostgreSQL, SQLite, DuckDB, ClickHouse, InfluxDB, or TDengine.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="immutable" type="xs:boolean" use="optional" default="false">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">是否为不可变实体，默认为假(可变)。不可变实体只支持读取和新增操作，不支持更改、删除等其他写操作。</xs:documentation>
+				<xs:documentation xml:lang="en">Indicates whether the entity is immutable. Defaults to false (mutable). An immutable entity supports select and insert operations only, and does not support update, delete, or other write operations.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 	</xs:complexType>
@@ -220,48 +248,56 @@
 		<xs:attribute name="name" type="xs:string" use="required">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">属性名称。</xs:documentation>
+				<xs:documentation xml:lang="en">Property name.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="type" type="FieldType" use="required">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">字段类型。</xs:documentation>
+				<xs:documentation xml:lang="en">Field type.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="hint" type="xs:string" use="optional">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">驱动提示，具体语法和含义由所属数据驱动定义。</xs:documentation>
+				<xs:documentation xml:lang="en">Driver-specific hint; its syntax and semantics are defined by the corresponding data driver.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="field" type="xs:string" use="optional">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">字段名，如果未指定则与属性名相同。</xs:documentation>
+				<xs:documentation xml:lang="en">Field name. If omitted, the property name is used.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="length" type="xs:integer" use="optional">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">文本最大长度，零或负一表示不限制。</xs:documentation>
+				<xs:documentation xml:lang="en">Maximum text length. Zero or negative one means unlimited.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="precision" type="xs:byte" use="optional">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">数字类型的精度(数字总位数)。</xs:documentation>
+				<xs:documentation xml:lang="en">Precision of a numeric type (total number of digits).</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="scale" type="xs:byte" use="optional">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">数字类型的小数点位数。</xs:documentation>
+				<xs:documentation xml:lang="en">Number of decimal places for a numeric type.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="nullable" type="xs:boolean" use="optional" default="true">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">是否允许空值，默认为真(可以为空)。</xs:documentation>
+				<xs:documentation xml:lang="en">Indicates whether null is allowed. Defaults to true (nullable).</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
@@ -270,24 +306,28 @@
 				<xs:documentation xml:lang="zh">
 				属性的默认值。如果未指定则且 nullable 为真则默认值为空，否则为零。支持 now()、today()、random() 等函数。
 				</xs:documentation>
+				<xs:documentation xml:lang="en">The default value of the property. If omitted, the default is null when nullable is true; otherwise zero. Functions such as now(), today(), and random() are supported.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="sequence" type="xs:string" use="optional">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">序列号表达式。星号(*)表示数据库内置序号器；井号(#)表示外部序号器，井号接属性名则表示为子级序号。</xs:documentation>
+				<xs:documentation xml:lang="en">Sequence expression. An asterisk (*) denotes a database built-in sequencer; a hash sign (#) denotes an external sequencer; a hash sign followed by a property name denotes a child sequence.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="immutable" type="xs:boolean" use="optional" default="false">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">是否为不可变属性，默认为假(可变)。不可变属性只能在新增操作中设置其值，不支持更改操作。</xs:documentation>
+				<xs:documentation xml:lang="en">Indicates whether the property is immutable. Defaults to false (mutable). An immutable property can only be set during insert operations and cannot be updated.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="sortable" type="xs:boolean" use="optional" default="false">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">是否可参与排序，默认为假(不能参与排序)。</xs:documentation>
+				<xs:documentation xml:lang="en">Indicates whether the property can participate in sorting. Defaults to false.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 	</xs:complexType>
@@ -297,18 +337,21 @@
 			<xs:element name="link" minOccurs="1" maxOccurs="unbounded">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">导航属性的联接。</xs:documentation>
+					<xs:documentation xml:lang="en">Join definition of the navigation property.</xs:documentation>
 				</xs:annotation>
 
 				<xs:complexType>
 					<xs:attribute name="port" type="xs:string" use="required">
 						<xs:annotation>
 							<xs:documentation xml:lang="zh">联接端口，即外键实体的属性名。</xs:documentation>
+							<xs:documentation xml:lang="en">Join port, i.e. the property name on the foreign entity.</xs:documentation>
 						</xs:annotation>
 					</xs:attribute>
 
 					<xs:attribute name="anchor" type="xs:string" use="optional">
 						<xs:annotation>
 							<xs:documentation xml:lang="zh">本体实体的锚点，可以是导航属性。</xs:documentation>
+							<xs:documentation xml:lang="en">Anchor on the principal entity; it may be a navigation property.</xs:documentation>
 						</xs:annotation>
 					</xs:attribute>
 				</xs:complexType>
@@ -317,6 +360,7 @@
 			<xs:element name="constraints" minOccurs="0" maxOccurs="1">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">导航属性的约束集。</xs:documentation>
+					<xs:documentation xml:lang="en">Constraint collection of the navigation property.</xs:documentation>
 				</xs:annotation>
 
 				<xs:complexType>
@@ -324,24 +368,28 @@
 						<xs:element name="constraint" minOccurs="1" maxOccurs="unbounded">
 							<xs:annotation>
 								<xs:documentation xml:lang="zh">导航属性的约束项。</xs:documentation>
+								<xs:documentation xml:lang="en">Constraint item of the navigation property.</xs:documentation>
 							</xs:annotation>
 
 							<xs:complexType>
 								<xs:attribute name="name" type="xs:string" use="required">
 									<xs:annotation>
 										<xs:documentation xml:lang="zh">约束项的属性名。</xs:documentation>
+										<xs:documentation xml:lang="en">Property name of the constraint item.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
 
 								<xs:attribute name="actor" type="ConstraintActor" use="optional">
 									<xs:annotation>
 										<xs:documentation xml:lang="zh">约束项的归属者。</xs:documentation>
+										<xs:documentation xml:lang="en">Actor to which the constraint item belongs.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
 
 								<xs:attribute name="value" type="xs:string" use="required">
 									<xs:annotation>
 										<xs:documentation xml:lang="zh">约束项的值。</xs:documentation>
+										<xs:documentation xml:lang="en">Value of the constraint item.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
 							</xs:complexType>
@@ -354,36 +402,42 @@
 		<xs:attribute name="name" type="xs:string" use="required">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">属性名称。</xs:documentation>
+				<xs:documentation xml:lang="en">Property name.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="port" type="xs:string" use="required">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">复合属性(导航属性)的目标。目标通常为实体名，但也可以是实体的复合属性（实体名与复合属性名以冒号间隔）。</xs:documentation>
+				<xs:documentation xml:lang="en">Target of the complex (navigation) property. The target is usually an entity name, but may also be a complex property of an entity, with the entity name and property name separated by a colon.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="hint" type="xs:string" use="optional">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">驱动提示，具体语法和含义由所属数据驱动定义。</xs:documentation>
+				<xs:documentation xml:lang="en">Driver-specific hint; its syntax and semantics are defined by the corresponding data driver.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="behaviors" type="ComplexPropertyBehaviors" use="optional">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">复合属性(导航属性)的特性。</xs:documentation>
+				<xs:documentation xml:lang="en">Behaviors of the complex (navigation) property.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="multiplicity" type="Multiplicity" use="optional" default="?">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">多重性设置，默认为一对零或一。</xs:documentation>
+				<xs:documentation xml:lang="en">Multiplicity setting. Defaults to zero or one.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 
 		<xs:attribute name="immutable" type="xs:boolean" use="optional" default="true">
 			<xs:annotation>
 				<xs:documentation xml:lang="zh">是否为不可变属性，默认为真(不可变)。不可变属性只能在新增操作中设置其值，不支持更改操作。</xs:documentation>
+				<xs:documentation xml:lang="en">Indicates whether the property is immutable. Defaults to true (immutable). An immutable property can only be set during insert operations and cannot be updated.</xs:documentation>
 			</xs:annotation>
 		</xs:attribute>
 	</xs:complexType>
@@ -393,12 +447,14 @@
 			<xs:enumeration value="Principal">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">本键</xs:documentation>
+					<xs:documentation xml:lang="en">Principal.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 
 			<xs:enumeration value="Foreign">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">外链</xs:documentation>
+					<xs:documentation xml:lang="en">Foreign.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 		</xs:restriction>
@@ -409,12 +465,14 @@
 			<xs:enumeration value="none">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">无</xs:documentation>
+					<xs:documentation xml:lang="en">None.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 
 			<xs:enumeration value="principal">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">主表(主实体)</xs:documentation>
+					<xs:documentation xml:lang="en">Principal table (principal entity).</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 		</xs:restriction>
@@ -425,18 +483,21 @@
 			<xs:enumeration value="?">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">一对零或一</xs:documentation>
+					<xs:documentation xml:lang="en">Zero or one.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 
 			<xs:enumeration value="!">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">一对一</xs:documentation>
+					<xs:documentation xml:lang="en">Exactly one.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 
 			<xs:enumeration value="*">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">一对多</xs:documentation>
+					<xs:documentation xml:lang="en">One-to-many.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 		</xs:restriction>
@@ -451,161 +512,191 @@
 			<xs:enumeration value="string">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">可变长度的 Unicode 字符串(string, nvarchar)。</xs:documentation>
+					<xs:documentation xml:lang="en">Variable-length Unicode string (string, nvarchar).</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="nvarchar">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">可变长度的 Unicode 字符串(string, nvarchar)。</xs:documentation>
+					<xs:documentation xml:lang="en">Variable-length Unicode string (string, nvarchar).</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 
 			<xs:enumeration value="varchar">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">可变长度的非 Unicode 字符串(ansiString, varchar)。</xs:documentation>
+					<xs:documentation xml:lang="en">Variable-length non-Unicode string (ansiString, varchar).</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="ansiString">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">可变长度的非 Unicode 字符串(ansiString, varchar)。</xs:documentation>
+					<xs:documentation xml:lang="en">Variable-length non-Unicode string (ansiString, varchar).</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 
 			<xs:enumeration value="char">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">固定长度的非 Unicode 字符串。</xs:documentation>
+					<xs:documentation xml:lang="en">Fixed-length non-Unicode string.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="nchar">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">固定长度的 Unicode 字符串。</xs:documentation>
+					<xs:documentation xml:lang="en">Fixed-length Unicode string.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 
 			<xs:enumeration value="bool">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">布尔值，表示真(true)或假(false)。</xs:documentation>
+					<xs:documentation xml:lang="en">Boolean value, either true or false.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="boolean">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">布尔值，表示真(true)或假(false)。</xs:documentation>
+					<xs:documentation xml:lang="en">Boolean value, either true or false.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 
 			<xs:enumeration value="byte">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">字节，无符号的8位整型数（取值范围：0 ~ 255）。</xs:documentation>
+					<xs:documentation xml:lang="en">Byte, an unsigned 8-bit integer (range: 0 to 255).</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="sbyte">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">字节，有符号的8位整型数（取值范围：-128 ~ 127）。</xs:documentation>
+					<xs:documentation xml:lang="en">SByte, a signed 8-bit integer (range: -128 to 127).</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="short">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">短整型，有符号的16位整型数（取值范围：-32768 ~ 32767）。</xs:documentation>
+					<xs:documentation xml:lang="en">Short integer, a signed 16-bit integer (range: -32768 to 32767).</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="int">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">整型，有符号的32位整型数（取值范围：-2147483648 ~ 2147483647）。</xs:documentation>
+					<xs:documentation xml:lang="en">Integer, a signed 32-bit integer (range: -2147483648 to 2147483647).</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="long">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">长整型，有符号的64位整型数。</xs:documentation>
+					<xs:documentation xml:lang="en">Long integer, a signed 64-bit integer.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="ushort">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">短整型，无符号的16位整型数（取值范围：0 ~ 65535）。</xs:documentation>
+					<xs:documentation xml:lang="en">Unsigned short integer, an unsigned 16-bit integer (range: 0 to 65535).</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="uint">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">整型，无符号的32位整型数（取值范围：0 ~ 4294967295）。</xs:documentation>
+					<xs:documentation xml:lang="en">Unsigned integer, an unsigned 32-bit integer (range: 0 to 4294967295).</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="ulong">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">长整型，无符号的64位整型数。</xs:documentation>
+					<xs:documentation xml:lang="en">Unsigned long integer, an unsigned 64-bit integer.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 
 			<xs:enumeration value="float">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">单精度浮点数(float, single)。</xs:documentation>
+					<xs:documentation xml:lang="en">Single-precision floating-point number (float, single).</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="single">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">单精度浮点数(float, single)。</xs:documentation>
+					<xs:documentation xml:lang="en">Single-precision floating-point number (float, single).</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="double">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">双精度浮点数。</xs:documentation>
+					<xs:documentation xml:lang="en">Double-precision floating-point number.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 
 			<xs:enumeration value="decimal">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">定点小数，必须指定精度和小数点位数。</xs:documentation>
+					<xs:documentation xml:lang="en">Fixed-point decimal number; precision and scale must be specified.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="money">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">定点小数，必须指定精度和小数点位数。</xs:documentation>
+					<xs:documentation xml:lang="en">Fixed-point decimal number; precision and scale must be specified.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="currency">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">定点小数，必须指定精度和小数点位数。</xs:documentation>
+					<xs:documentation xml:lang="en">Fixed-point decimal number; precision and scale must be specified.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 
 			<xs:enumeration value="date">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">日期类型。</xs:documentation>
+					<xs:documentation xml:lang="en">Date type.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="time">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">时间类型。</xs:documentation>
+					<xs:documentation xml:lang="en">Time type.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="datetime">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">日期时间类型(datetime, timestamp)。</xs:documentation>
+					<xs:documentation xml:lang="en">Date-time type (datetime, timestamp).</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="timestamp">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">日期时间类型(datetime, timestamp)。</xs:documentation>
+					<xs:documentation xml:lang="en">Date-time type (datetime, timestamp).</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 
 			<xs:enumeration value="guid">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">全局唯一标识(GUID, UUID)。</xs:documentation>
+					<xs:documentation xml:lang="en">Globally unique identifier (GUID, UUID).</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="uuid">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">全局唯一标识(GUID, UUID)。</xs:documentation>
+					<xs:documentation xml:lang="en">Globally unique identifier (GUID, UUID).</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 
 			<xs:enumeration value="binary">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">字节数组。</xs:documentation>
+					<xs:documentation xml:lang="en">Byte array.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 
 			<xs:enumeration value="xml">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">已分析的 XML 文档或片断的表示形式。</xs:documentation>
+					<xs:documentation xml:lang="en">Representation of a parsed XML document or fragment.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 		</xs:restriction>
@@ -616,11 +707,13 @@
 			<xs:enumeration value="text">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">命令脚本。</xs:documentation>
+					<xs:documentation xml:lang="en">Command script.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="procedure">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">函数或存储过程。</xs:documentation>
+					<xs:documentation xml:lang="en">Function or stored procedure.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 		</xs:restriction>
@@ -631,26 +724,31 @@
 			<xs:enumeration value="none">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">无变化，即只读。</xs:documentation>
+					<xs:documentation xml:lang="en">No mutation; read-only.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="delete">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">删除。</xs:documentation>
+					<xs:documentation xml:lang="en">Delete.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="insert">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">新增。</xs:documentation>
+					<xs:documentation xml:lang="en">Insert.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="update">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">修改。</xs:documentation>
+					<xs:documentation xml:lang="en">Update.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="upsert">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">增改，即新增和修改。</xs:documentation>
+					<xs:documentation xml:lang="en">Upsert, i.e. insert or update.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 		</xs:restriction>
@@ -661,21 +759,25 @@
 			<xs:enumeration value="input">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">输入参数。</xs:documentation>
+					<xs:documentation xml:lang="en">Input parameter.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="output">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">输出参数。</xs:documentation>
+					<xs:documentation xml:lang="en">Output parameter.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="both">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">双向参数（输入和输出）。</xs:documentation>
+					<xs:documentation xml:lang="en">Bidirectional parameter (input and output).</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 			<xs:enumeration value="return">
 				<xs:annotation>
 					<xs:documentation xml:lang="zh">返回参数。</xs:documentation>
+					<xs:documentation xml:lang="en">Return parameter.</xs:documentation>
 				</xs:annotation>
 			</xs:enumeration>
 		</xs:restriction>
