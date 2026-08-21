@@ -698,7 +698,214 @@ namespace Zongsoft.Properties {
                 return ResourceManager.GetString("OperationException.Unsupported.Message", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   查找类似 ParsingError: The parsing stack is empty. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_EmptyParsingStack_Message {
+            get {
+                return ResourceManager.GetString("Schema.EmptyParsingStack.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 {0} (at position {1}). 的本地化字符串。
+        /// </summary>
+        internal static string Schema_ErrorPosition_Message {
+            get {
+                return ResourceManager.GetString("Schema.ErrorPosition.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 SyntaxError: The identifier of the data schema contains whitespace characters. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_IdentifierContainsWhitespace_Message {
+            get {
+                return ResourceManager.GetString("Schema.IdentifierContainsWhitespace.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 SyntaxError: The identifier of the data schema contains &apos;{0}&apos; illegal character. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_IdentifierIllegalCharacter_Message {
+            get {
+                return ResourceManager.GetString("Schema.IdentifierIllegalCharacter.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 SyntaxError: The identifier of the data schema cannot start with a digit. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_IdentifierStartsWithDigit_Message {
+            get {
+                return ResourceManager.GetString("Schema.IdentifierStartsWithDigit.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 SyntaxError: Contains the illegal character &apos;{0}&apos; in the data schema. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_IllegalCharacter_Message {
+            get {
+                return ResourceManager.GetString("Schema.IllegalCharacter.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 SyntaxError: Contains the illegal character &apos;{0}&apos; after sorting in the data schema. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_IllegalCharacterAfterSorting_Message {
+            get {
+                return ResourceManager.GetString("Schema.IllegalCharacterAfterSorting.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 SyntaxError: The data schema expression is incorrect({0}). 的本地化字符串。
+        /// </summary>
+        internal static string Schema_IncorrectExpression_Message {
+            get {
+                return ResourceManager.GetString("Schema.IncorrectExpression.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 SyntaxError: The exclusion wildcard of the data schema is invalid. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_InvalidExclusionWildcard_Message {
+            get {
+                return ResourceManager.GetString("Schema.InvalidExclusionWildcard.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 SyntaxError: The limit format of the data schema is incorrect. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_InvalidLimitFormat_Message {
+            get {
+                return ResourceManager.GetString("Schema.InvalidLimitFormat.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 SyntaxError: The limit &apos;{0}&apos; of the data schema is invalid or overflowed. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_InvalidOrOverflowedLimit_Message {
+            get {
+                return ResourceManager.GetString("Schema.InvalidOrOverflowedLimit.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 SyntaxError: The limit of the data schema contains &apos;{0}&apos; illegal character. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_LimitIllegalCharacter_Message {
+            get {
+                return ResourceManager.GetString("Schema.LimitIllegalCharacter.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 SyntaxError: Expected an exclusion member identifier after the period in the data schema, but found &apos;{0}&apos;. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_MissingExclusionMemberAfterPeriod_Message {
+            get {
+                return ResourceManager.GetString("Schema.MissingExclusionMemberAfterPeriod.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 SyntaxError: Expected an identifier before the period in the data schema. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_MissingIdentifierBeforePeriod_Message {
+            get {
+                return ResourceManager.GetString("Schema.MissingIdentifierBeforePeriod.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 SyntaxError: Expected limit in the data schema, but missing. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_MissingLimit_Message {
+            get {
+                return ResourceManager.GetString("Schema.MissingLimit.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 SyntaxError: Expected a member identifier after the period in the data schema, but found &apos;{0}&apos;. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_MissingMemberAfterPeriod_Message {
+            get {
+                return ResourceManager.GetString("Schema.MissingMemberAfterPeriod.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 SyntaxError: Expected a member identifier before the period in the data schema. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_MissingMemberBeforePeriod_Message {
+            get {
+                return ResourceManager.GetString("Schema.MissingMemberBeforePeriod.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 SyntaxError: Expected sorting field in the data schema, but missing. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_MissingSortingField_Message {
+            get {
+                return ResourceManager.GetString("Schema.MissingSortingField.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 SyntaxError: Expected sorting fields in the data schema, but missing. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_MissingSortingFields_Message {
+            get {
+                return ResourceManager.GetString("Schema.MissingSortingFields.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 SyntaxError: The sorting field of the data schema contains &apos;{0}&apos; illegal character. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_SortingFieldIllegalCharacter_Message {
+            get {
+                return ResourceManager.GetString("Schema.SortingFieldIllegalCharacter.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 SyntaxError: The sorting field of the data schema cannot start with a digit. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_SortingFieldStartsWithDigit_Message {
+            get {
+                return ResourceManager.GetString("Schema.SortingFieldStartsWithDigit.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 SyntaxError: The data schema contains an unclosed member block. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_UnclosedMemberBlock_Message {
+            get {
+                return ResourceManager.GetString("Schema.UnclosedMemberBlock.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 ParsingError: The &apos;{0}&apos; member of the data schema is unrecognized. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_UnrecognizedMember_Message {
+            get {
+                return ResourceManager.GetString("Schema.UnrecognizedMember.Message", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   查找类似 The verification code generation operation is being called too frequently. Please wait a moment and try again later. 的本地化字符串。
         /// </summary>

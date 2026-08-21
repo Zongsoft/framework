@@ -98,6 +98,7 @@ public class SchemaParser : SchemaParserBase<SchemaMember>
 	#endregion
 
 	#region 虚拟方法
+	protected override bool ShouldExpand(SchemaMember member) => member?.Property?.IsComplex == true;
 	protected sealed override IEnumerable<SchemaMember> OnUnrecognized(SchemaEntryToken token)
 	{
 		var data = (SchemaData)token.Data;

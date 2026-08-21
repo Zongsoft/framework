@@ -256,7 +256,7 @@ public abstract class Schema<TMember> : ISchema<TMember> where TMember : SchemaM
 			text.Append(')');
 		}
 
-		if(member.HasChildren)
+		if(member.HasChildren || member.Property?.IsComplex == true)
 		{
 			var index = 0;
 			text.Append('{');

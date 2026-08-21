@@ -59,6 +59,164 @@ public class SchemaParserTest : IDisposable
 	}
 
 	[Fact]
+	public void Parse_NavigationShorthands_ProduceEquivalentTrees()
+	{
+		var bare = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "Department", typeof(Employee)));
+		var dotted = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "Department.*", typeof(Employee)));
+		var braced = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "Department{*}", typeof(Employee)));
+
+		Assert.Equal(braced.ToString(), bare.ToString());
+		Assert.Equal(braced.ToString(), dotted.ToString());
+		Assert.True(bare.Contains("Department.Id"));
+		Assert.True(bare.Contains("Department.Name"));
+		Assert.False(bare.Contains("Department.Manager"));
+	}
+
+	[Fact]
+	public void Parse_DottedNestedExpression_MatchesBracedExpression()
+	{
+		const string dottedExpression = "*,User,Department.*,Department.Manager.Name,Department.Manager.FullName,Department.Manager.Gender,!Department.Manager.Secret";
+		const string bracedExpression = "*,User{*},Department{*,Manager{Name,FullName,Gender,!Secret}}";
+		var dotted = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", dottedExpression, typeof(Employee)));
+		var braced = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", bracedExpression, typeof(Employee)));
+
+		Assert.Equal(braced.ToString(), dotted.ToString());
+		Assert.True(dotted.Contains("Department.Manager.Name"));
+		Assert.True(dotted.Contains("Department.Manager.FullName"));
+		Assert.True(dotted.Contains("Department.Manager.Gender"));
+		Assert.False(dotted.Contains("Department.Manager.Secret"));
+		Assert.Equal(dottedExpression, dotted.Text);
+	}
+
+	[Fact]
+	public void Parse_DottedPath_IsCaseInsensitiveAndAllowsWhitespace()
+	{
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", " department . MANAGER . name ", typeof(Employee)));
+
+		Assert.True(schema.Contains("Department.Manager.Name"));
+		Assert.Equal("Department{Manager{Name}}", schema.ToString());
+	}
+
+	[Fact]
+	public void Parse_NavigationExclusions_RemoveEntireMember()
+	{
+		var named = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "User,!User", typeof(Employee)));
+		var cleared = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "User{!}", typeof(Employee)));
+
+		Assert.True(named.IsEmpty);
+		Assert.True(cleared.IsEmpty);
+		Assert.Equal(named.ToString(), cleared.ToString());
+	}
+
+	[Fact]
+	public void Parse_ClearThenIncludeInNavigation_RetainsNavigation()
+	{
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "User{!,Name}", typeof(Employee)));
+
+		Assert.True(schema.Contains("User.Name"));
+		Assert.False(schema.Contains("User.Id"));
+		Assert.Equal("User{Name}", schema.ToString());
+	}
+
+	[Theory]
+	[InlineData("Posts:10", "Posts:10{*}")]
+	[InlineData("Posts(~Approved)", "Posts(~Approved){*}")]
+	[InlineData("Posts(-Approved)", "Posts(~Approved){*}")]
+	[InlineData("Posts(+Approved)", "Posts(Approved){*}")]
+	[InlineData("Posts:10(~Approved)", "Posts:10(~Approved){*}")]
+	public void Parse_TerminalNavigationModifier_ExpandsWildcard(string shorthand, string explicitWildcard)
+	{
+		var actual = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", shorthand, typeof(Employee)));
+		var expected = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", explicitWildcard, typeof(Employee)));
+
+		Assert.Equal(expected.ToString(), actual.ToString());
+		Assert.True(actual.Contains("Posts.Id"));
+		Assert.True(actual.Contains("Posts.Approved"));
+	}
+
+	[Fact]
+	public void Parse_TerminalNavigationModifiers_ExpandWildcard()
+	{
+		var shorthand = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "Posts:12(-Approved)", typeof(Employee)));
+		var explicitWildcard = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "Posts:12(~Approved){*}", typeof(Employee)));
+		var member = shorthand.Members[nameof(Employee.Posts)];
+
+		Assert.Equal(explicitWildcard.ToString(), shorthand.ToString());
+		Assert.Equal(12, member.Limit);
+		Assert.True(shorthand.Contains("Posts.Id"));
+		Assert.True(shorthand.Contains("Posts.Approved"));
+		Assert.Collection(member.Sortings, sorting =>
+		{
+			Assert.Equal(nameof(Post.Approved), sorting.Name);
+			Assert.Equal(SortingMode.Descending, sorting.Mode);
+		});
+
+		var statement = new SelectStatement(shorthand.Entity);
+		SelectStatementBuilder.GenerateSchema(new Aliaser(), statement, statement.Table, member);
+		var slave = Assert.IsType<SelectStatement>(Assert.Single(statement.Slaves));
+		Assert.True(slave.Paging.IsLimited(out var count, out var offset));
+		Assert.Equal(12, count);
+		Assert.Equal(0, offset);
+		Assert.Contains(slave.Select.Members.Cast<FieldIdentifier>(), field => field.Token.Property.Name == nameof(Post.Approved));
+		Assert.Contains(slave.OrderBy.Members, sorting => sorting.Field.Token.Property.Name == nameof(Post.Approved) && sorting.Mode == SortingMode.Descending);
+	}
+
+	[Theory]
+	[InlineData("Id.Value")]
+	[InlineData("!Misspelled")]
+	[InlineData("!Department.Misspelled.Name")]
+	[InlineData("!Department.Manager.Misspelled")]
+	[InlineData("!Department.Manager.*")]
+	[InlineData("Department.!Manager")]
+	[InlineData("Posts:10.Manager")]
+	[InlineData("Posts:10(~Approved).Manager")]
+	[InlineData("Department.*:10")]
+	[InlineData("User{!*}")]
+	public void Parse_InvalidDottedOrExclusionMember_ThrowsSchemaArgument(string expression)
+	{
+		var exception = Assert.Throws<DataArgumentException>(() => _parser.Parse($"{Namespace}.Employee", expression, typeof(Employee)));
+		Assert.Equal("$schema", exception.Name);
+	}
+
+	[Fact]
+	public void Parse_DottedExclusionOfAbsentValidMember_IsNoOp()
+	{
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "Id,!Department.Manager.Secret", typeof(Employee)));
+
+		Assert.Single(schema.Members);
+		Assert.True(schema.Contains(nameof(Employee.Id)));
+		Assert.False(schema.Contains(nameof(Employee.Department)));
+	}
+
+	[Fact]
+	public void Parse_DottedLeafExclusion_PreservesEmptyParentsAndCanonicalTree()
+	{
+		const string expression = "Department.Manager.Name,!Department.Manager.Name";
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", expression, typeof(Employee)));
+		var canonical = schema.ToString();
+
+		Assert.True(schema.Contains("Department.Manager"));
+		Assert.False(schema.Contains("Department.Manager.Name"));
+		Assert.True(schema.Find("Department.Manager").Property.IsComplex);
+		Assert.Equal("Department{Manager{}}", canonical);
+		Assert.Equal(canonical, _parser.Parse($"{Namespace}.Employee", canonical, typeof(Employee)).ToString());
+	}
+
+	[Fact]
+	public void Parse_DottedComputedMember_UsesNavigationModelScope()
+	{
+		const string expression = "ComputedProfile.DisplayAvatar";
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", expression, typeof(Employee)));
+		var computed = schema.Find(expression);
+
+		Assert.NotNull(computed);
+		Assert.True(computed.Ignored);
+		Assert.Equal(typeof(Profile).GetProperty(nameof(Profile.DisplayAvatar)), computed.Member);
+		Assert.Equal(expression, schema.Text);
+		Assert.Equal("ComputedProfile{DisplayAvatar}", schema.ToString());
+	}
+
+	[Fact]
 	public void Parse_Wildcard_DoesNotAddUnmappedModelMembers()
 	{
 		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "*", typeof(Employee)));
@@ -229,6 +387,8 @@ public class SchemaParserTest : IDisposable
 		Mapping.Entities.Remove($"{Namespace}.Branch");
 		Mapping.Entities.Remove($"{Namespace}.Member");
 		Mapping.Entities.Remove($"{Namespace}.Role");
+		Mapping.Entities.Remove($"{Namespace}.Department");
+		Mapping.Entities.Remove($"{Namespace}.Manager");
 	}
 
 	private static void AddMappings()
@@ -245,7 +405,7 @@ public class SchemaParserTest : IDisposable
 
 		var post = new DataEntity(Namespace, "Post");
 		post.Properties.Simplex(nameof(Post.Id), DataType.Int64, false);
-		post.Properties.Simplex(nameof(Post.Approved), DataType.Boolean, false);
+		post.Properties.Simplex(nameof(Post.Approved), DataType.Boolean, false).Sortable = true;
 
 		var component = new DataEntity(Namespace, "Component");
 		component.Properties.Simplex(nameof(Component.Id), DataType.Int64, false);
@@ -276,6 +436,18 @@ public class SchemaParserTest : IDisposable
 		member.Properties.Simplex(nameof(Member.RoleId), DataType.Int64, false);
 		member.Properties.Complex(nameof(Member.Role), "Role");
 
+		var manager = new DataEntity(Namespace, "Manager");
+		manager.Properties.Simplex(nameof(Manager.Id), DataType.Int64, false);
+		manager.Properties.Simplex(nameof(Manager.Name), DataType.String, 50, true);
+		manager.Properties.Simplex(nameof(Manager.FullName), DataType.String, 100, true);
+		manager.Properties.Simplex(nameof(Manager.Gender), DataType.String, 20, true);
+		manager.Properties.Simplex(nameof(Manager.Secret), DataType.String, 100, true);
+
+		var department = new DataEntity(Namespace, "Department");
+		department.Properties.Simplex(nameof(Department.Id), DataType.Int64, false);
+		department.Properties.Simplex(nameof(Department.Name), DataType.String, 50, true);
+		department.Properties.Complex(nameof(Department.Manager), "Manager");
+
 		var baseEmployee = new DataEntity(Namespace, "BaseEmployee");
 		baseEmployee.Properties.Simplex(nameof(Employee.BaseCode), DataType.String, 50, true);
 		baseEmployee.Properties.Simplex(nameof(Employee.FirstName), DataType.String, 50, true);
@@ -296,6 +468,7 @@ public class SchemaParserTest : IDisposable
 		employee.Properties.Complex(nameof(Employee.Message), "Post");
 		employee.Properties.Complex(nameof(Employee.Post), "Post");
 		employee.Properties.Complex(nameof(Employee.Metric), "Profile");
+		employee.Properties.Complex(nameof(Employee.Department), "Department");
 		employee.Properties.Complex(nameof(Employee.Fields), "Field", false, DataAssociationMultiplicity.Many);
 		employee.Properties.Complex(nameof(Employee.Assets), "Asset", false, DataAssociationMultiplicity.Many);
 
@@ -310,6 +483,8 @@ public class SchemaParserTest : IDisposable
 		Mapping.Entities.Add(branchMember);
 		Mapping.Entities.Add(role);
 		Mapping.Entities.Add(member);
+		Mapping.Entities.Add(manager);
+		Mapping.Entities.Add(department);
 		Mapping.Entities.Add(employee);
 	}
 
@@ -342,6 +517,8 @@ public class SchemaParserTest : IDisposable
 		public Post Message { get; set; }
 		public Post Post { get; set; }
 		public Profile Metric { get; set; }
+		public Profile ComputedProfile => this.Metric;
+		public Department Department { get; set; }
 		public ICollection<Field> Fields { get; set; }
 		public ICollection<Asset> Assets { get; set; }
 		public string FullName => $"{this.FirstName} {this.LastName}";
@@ -419,6 +596,22 @@ public class SchemaParserTest : IDisposable
 	{
 		public long Id { get; set; }
 		public string Name { get; set; }
+	}
+
+	private sealed class Department
+	{
+		public long Id { get; set; }
+		public string Name { get; set; }
+		public Manager Manager { get; set; }
+	}
+
+	private sealed class Manager
+	{
+		public long Id { get; set; }
+		public string Name { get; set; }
+		public string FullName { get; set; }
+		public string Gender { get; set; }
+		public string Secret { get; set; }
 	}
 }
 

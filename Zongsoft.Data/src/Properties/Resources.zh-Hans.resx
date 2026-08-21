@@ -408,4 +408,7 @@
   <data name="DataProvider.ExecutionFailed.Message" xml:space="preserve">
     <value>执行数据操作时发生错误。</value>
   </data>
+  <data name="Schema.MappedTokenPropertyRequired.Message" xml:space="preserve">
+    <value>映射模式令牌必须包含属性。</value>
+  </data>
 </root>

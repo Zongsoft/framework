@@ -24,19 +24,19 @@ Schema 代码分两层，改动前先确认所属层：
   - `ISchema`：解析后的模式对象（`Name`、`Text`、`ModelType`、`IsEmpty`、`IsReadOnly`，方法 `Clear/Contains/Find/Include/Exclude`）。
   - `ISchema<TMember>`：泛型成员版本，新增 `Members` 集合。
   - `Schema<TMember>`：唯一的模式树通用实现，负责深层路径查找、增删合并和空父节点裁剪。
-  - `ISchemaParser` / `ISchemaParser<TEntry>`：解析器接口，`Parse(name, expression, entityType)`。
-  - `SchemaParserBase<TMember>`：文本 → 成员树的状态机解析器（词法/语法分析），通过子类重写的 `Resolve(SchemaEntryToken)` 把元素名解析为成员；`Parse(expression, data, members)` 是受保护入口，`TryParse` 用于容错场景。
+  - `ISchemaParser` / `ISchemaParser<TEntry>`：解析器接口，`Parse(name, expression, modelType)`。
+  - `SchemaParserBase<TMember>`：文本 → 成员树的状态机解析器（词法/语法分析），通过子类重写的 `Resolve(SchemaEntryToken)` 把元素名解析为成员；`ShouldExpand(TMember)` 决定终止成员是否自动展开默认子成员；`Parse(expression, data, members)` 是受保护入口，`TryParse` 用于容错场景。
   - `ISchemaMember` / `SchemaMemberBase`：只读成员契约及基类；`Property` 为空时 `Ignored` 为真，表示模型投影成员不参与数据库持久化。
   - `SchemaMemberCollection<T>`：以成员名（不区分大小写）为键的集合。
 - **引擎库**（`Zongsoft.Data/src/`）——实现与元数据绑定：
-  - `SchemaParser`：`SchemaParserBase<SchemaMember>` 的实现；先解析实体属性元数据，显式名称未映射时查找模型上的同名公共实例属性或字段，并通过受保护的 `OnUnrecognized` 虚方法提供低频扩展。
+  - `SchemaParser`：`SchemaParserBase<SchemaMember>` 的实现；先解析实体属性元数据，显式名称未映射时查找模型上的同名公共实例属性或字段，并通过受保护的 `OnUnrecognized` 虚方法提供低频扩展；仅对映射导航属性重写 `ShouldExpand` 返回真。
   - `Schema`：绑定 `IDataEntity` 的 `Schema<SchemaMember>` 特化实现。
   - `SchemaMember`：映射成员持有 `Token` 和 `Ancestors`；计算成员只持有模型字段或属性，其 `Property` 为空且 `Ignored` 为真。
 
 ### 解析流程
 
-1. `DataAccessBase` 的每个数据访问方法（`Select/Insert/Update/Upsert/Delete`）在创建上下文时调用 `this.Schema.Parse(name, schemaText, entityType)` 把文本解析为 `ISchema`；空文本默认解析为 `"*"`（`SchemaParser.Parse` 中处理）。
-2. `SchemaParser.Parse` 从 `Mapping.Entities[name]` 取实体，用 `new SchemaData(entity, entityType)` 作为回调数据，调用 `SchemaParserBase.Parse`。
+1. `DataAccessBase` 的每个数据访问方法（`Select/Insert/Update/Upsert/Delete`）在创建上下文时调用 `this.Schema.Parse(name, schemaText, modelType)` 把文本解析为 `ISchema`；空文本默认解析为 `"*"`（`SchemaParser.Parse` 中处理）。
+2. `SchemaParser.Parse` 从 `Mapping.Entities[name]` 取实体，用 `new SchemaData(entity, modelType)` 作为回调数据，调用 `SchemaParserBase.Parse`。
 3. `Resolve(token)` 先按元素名在实体元数据中查找属性：
    - 父级为导航属性时切换到外部实体（`complex.Foreign`），并沿 `ForeignProperty` 链继续切换（导航跳板）。
    - 目标类型（`ModelType`）非标量时用 `entity.GetTokens(modelType)`（按模型成员裁剪）查找；标量类型时按 `entity.Properties` 查找。
@@ -56,16 +56,23 @@ Schema 代码分两层，改动前先确认所属层：
 语法（详见 `README.zh-Hans.md` 的「数据模式」章节）：
 
 ```text
-schema ::= { * | ! | !identifier | identifier [limit] [sorting] ["{" schema "}"] } [,...n]
+schema ::= { * | ! | exclusion | inclusion } [,...n]
+path ::= identifier {"." identifier}
+exclusion ::= "!" path
+inclusion ::= path [limit] [sorting] ["{" schema "}"] | path ".*"
 limit ::= ":"(number | "*")
-sorting ::= "(" { ["~"|"!"]identifier } [,...n] ")"
+sorting ::= "(" { ["~"|"-"|"+"]identifier } [,...n] ")"
 ```
 
 要点与已知行为：
 
-- `*` 只展开简单属性（不含导航属性）；`!` 单独使用（或 `!*`）清除当前层级全部成员，`!名称` 移除指定成员。
+- `*` 只展开简单属性（不含导航属性）；`!` 单独使用时清除当前层级全部成员，`!名称` 或 `!导航.成员` 移除指定成员。连续的 `!*` 以及 `!路径.*` 均为非法语法。
+- 点路径与花括号生成同一成员树并可混用，例如 `Department.Manager{Name}`；句点两侧允许空白，首尾点、连续点、`Path.*.Name` 和 `Path.!Name` 非法。斜杠只用于 `ISchema` 对象的路径 API，不属于文本 DSL。
+- 映射导航属性作为终止成员时自动展开其简单属性，因此 `Department`、`Department.*`、`Department{*}` 等价；解析结果不保留点路径、花括号或通配符来源。
+- `!Navigation` 与 `Navigation{!}` 都移除整个导航；命名排除会逐段解析并验证，未知的根段、中间段或末段均抛出 `DataArgumentException`，合法但尚未包含的路径不修改成员树。
 - 限量：冒号后只接受无符号数字或 `*`；正数表示一对多成员最多加载的记录数，`0`、`*` 以及对象模型中的任何负值均表示不限。
-- 排序：`~` 或 `!` 前缀表示倒序；每一项均可指定前缀，同名排序以最后一次声明的方向和位置为准。
+- 排序：`~` 或 `-` 前缀表示倒序，`+` 或无前缀表示正序；`+Name` 与 `Name` 完全等价。每一项均可指定前缀，同名排序以最后一次声明的方向和位置为准；规范化输出使用 `~` 表示倒序并省略正序的 `+`。
+- 限量或排序会终止点路径；终止导航仍自动展开简单属性，但修饰符之后继续写句点属于非法语法。
 - 空白：标识符内部不允许空白；成员之间、`*` 之后、标识符与 `{`/`(`/`:`/`,`/`}` 之间允许空白；冒号之后与排序字段内部不允许空白（排序字段之间的逗号后允许空白）。
 - 标识符不能以数字开头；成员名不区分大小写。
 - 解析错误统一抛出 `DataArgumentException`（消息前缀 `SyntaxError:`/`ParsingError:`）。
@@ -75,9 +82,10 @@ sorting ::= "(" { ["~"|"!"]identifier } [,...n] ")"
 ### 重构注意事项
 
 - 保持「`SchemaParserBase`（通用文本解析）→ `SchemaParser`（元数据解析）→ 语句构建器（SQL 生成）」的分层，不要把元数据逻辑下沉到基类。
-- 状态机位于 `SchemaParserBase.StateContext`（`None/Asterisk/Include/Exclude/Limit/SortingField/SortingGutter`），重构词法或语法时先跑 `Zongsoft.Core/test/Data/SchemaTest.cs` 中的回归用例。
+- 状态机位于 `SchemaParserBase.StateContext`（包括普通成员、点路径、排除、限量与排序状态），重构词法或语法时先跑 `Zongsoft.Core/test/Data/SchemaTest.cs` 中的回归用例。
 - 已确认的 XSD 与加载器差异（重构时统一）：`complexProperty` 的 `immutable` XSD 缺省 `true`、加载器缺省 `false`；`command` 的 `mutability` XSD 缺省 `none`、加载器缺省 `Delete|Insert|Update`。
 - 通配符只展开映射中的简单属性，不自动枚举模型计算成员，也不要在解析后的 Schema 中保留 `*` 来源。
+- `Schema.Text` 保留原始表达式，`Schema.ToString()` 输出当前成员树的规范化花括号文本；空的映射导航输出 `{}` 以避免再次解析时被当作裸导航自动展开。
 - `SchemaMember.Ignored` 是唯一的持久化判别属性，由 `Property == null` 推导；不要再引入与它重叠的成员种类枚举。
 - 派生解析器的 `OnUnrecognized` 只负责返回特殊绑定的模型字段或属性，不应直接生成 SQL；派生类不处理时由默认反射逻辑继续查找。
 - 模式解析属于高频路径（每次数据访问都解析），缓存或编译模式时应评估 `SchemaParserBase` 的状态机分配。
@@ -277,7 +285,7 @@ rg --files Zongsoft.Data/drivers | rg -- "-pod\.yaml$|Tests\.csproj$"
 - `name` 必填。
 - `alias` 可用于指定存储过程、函数或视图名称。
 - `type` 可以是 `text` 或 `procedure`；样例项目中省略的命令都是 SQL 文本。
-- `mutability` 声明命令对数据的变更性：`none` 表示只读命令（会路由到只读数据源），`insert`、`update`、`delete`、`upsert` 表示写命令。注意：XSD 声明的缺省值为 `none`，但映射加载器 `MetadataFileResolver` 对未声明 `mutability` 的命令实际按 `Delete|Insert|Update`（可写）处理，因此**显式声明 `mutability`**，只读命令务必写 `mutability="none"`。加载器对 `type`/`mutability` 的解析不区分大小写，但为通过 XSD 校验应统一使用小写。
+- `mutability` 声明命令对数据的读写特性，也是读写分离场景中的数据源路由依据。`DataSourceSelector.DataSourceWeighter.Get` 对 `Execute` 上下文直接读取 `Command.Mutability`：`none` 选择可读数据源，`insert`、`update`、`delete`、`upsert` 选择可写数据源，不会分析 SQL 脚本来推断。注意：XSD 声明的缺省值为 `none`，但映射加载器 `MetadataFileResolver` 对未声明 `mutability` 的命令实际按 `Delete|Insert|Update`（可写）处理，因此**显式声明 `mutability`**，只读命令务必写 `mutability="none"`。加载器对 `type`/`mutability` 的解析不区分大小写，但为通过 XSD 校验应统一使用小写。
 - 添加 `parameter` 子节点，必填 `name` 和 `type`；`direction` 使用 `input`（默认）、`output`、`both`、`return`（加载器也接受 `in`、`out`、`result` 等简写，但 XSD 校验只认标准写法）。
 - 添加一个或多个 `script` 子节点，必填 `driver`；为提升可读性并避免转义问题，将 SQL 包在 CDATA 中。也可以不写 `script`，而在映射文件同目录提供名为 `{命令名}-{驱动名}.sql` 的脚本文件（加载器自动装载）。
 

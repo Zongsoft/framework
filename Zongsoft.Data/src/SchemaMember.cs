@@ -55,7 +55,7 @@ public class SchemaMember : SchemaMemberBase
 	{
 		this.Token = token;
 		this.Ancestors = ancestors;
-		_name = token.Property?.Name ?? throw new ArgumentException("The mapped schema token requires a property.", nameof(token));
+		_name = token.Property?.Name ?? throw new ArgumentException(Properties.Resources.Schema_MappedTokenPropertyRequired_Message, nameof(token));
 	}
 
 	internal SchemaMember(string name, MemberInfo member)
@@ -150,6 +150,8 @@ public class SchemaMember : SchemaMemberBase
 
 			text += "}";
 		}
+		else if(this.Property?.IsComplex == true)
+			text += "{}";
 
 		return text;
 	}

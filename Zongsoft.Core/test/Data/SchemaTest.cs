@@ -13,7 +13,6 @@ public class SchemaTest
 	[InlineData(" ,  ,  *, ,,!a, !c, !f, c", "b,d,e,c")]
 	[InlineData("*, !, a, !b, c, a", "a,c")]
 	[InlineData("a,,,b,", "a,b")]
-	[InlineData("*,!*", "")]
 	public void Parse_TolerantCompatibilityExpressions_ReturnsExpectedMembers(string expression, string expected)
 	{
 		var members = Parser.Instance.ParseExpression(expression);
@@ -21,9 +20,64 @@ public class SchemaTest
 	}
 
 	[Fact]
+	public void Parse_DottedAndBracedSyntax_ProduceEquivalentTree()
+	{
+		var dotted = new TestSchema("Department.Manager.Name,Department.Manager.Gender", "dotted");
+		var braced = new TestSchema("Department{Manager{Name,Gender}}", "braced");
+		var mixed = new TestSchema("Department.Manager{Name,Gender}", "mixed");
+		var inverseMixed = new TestSchema("Department{Manager.Name,Manager.Gender}", "inverse-mixed");
+
+		Assert.Equal(braced.ToString(), dotted.ToString());
+		Assert.Equal(braced.ToString(), mixed.ToString());
+		Assert.Equal(braced.ToString(), inverseMixed.ToString());
+		Assert.Equal("Department{Manager{Name,Gender}}", dotted.ToString());
+	}
+
+	[Fact]
+	public void Parse_DottedSyntax_MergesAndExcludesInOrder()
+	{
+		var schema = new TestSchema(
+			"Department.Manager.Name,Department.Manager.Secret,!Department.Manager.Secret,Department.Manager.Gender,!Department.Manager.Name,Department.Manager.Name",
+			"ordered");
+
+		Assert.True(schema.Contains("Department.Manager.Gender"));
+		Assert.True(schema.Contains("Department.Manager.Name"));
+		Assert.False(schema.Contains("Department.Manager.Secret"));
+		Assert.Equal("Department{Manager{Gender,Name}}", schema.ToString());
+	}
+
+	[Fact]
+	public void Parse_DottedSyntax_AllowsWhitespaceAroundPeriod()
+	{
+		var schema = new TestSchema(" Department . Manager . Name ", "spaced");
+
+		Assert.True(schema.Contains("Department.Manager.Name"));
+		Assert.Equal("Department{Manager{Name}}", schema.ToString());
+	}
+
+	[Theory]
+	[InlineData(".Root")]
+	[InlineData("Root.")]
+	[InlineData("Root..Child")]
+	[InlineData("Root.*.Leaf")]
+	[InlineData("Root.*:10")]
+	[InlineData("!Root.*")]
+	[InlineData("Root.!Child")]
+	[InlineData("Root:10.Child")]
+	[InlineData("Root(Name).Child")]
+	[InlineData("!*")]
+	[InlineData("Root{!*}")]
+	public void Parse_InvalidDottedExpression_ThrowsSchemaArgument(string expression)
+	{
+		var exception = Assert.Throws<DataArgumentException>(() => Parser.Instance.ParseExpression(expression));
+		Assert.Equal("$schema", exception.Name);
+		Assert.Matches(@"\d+[)）][.。]$", exception.Message);
+	}
+
+	[Fact]
 	public void Parse_NestedLimitsAndSorting_PreservesModifiersAndLastSorting()
 	{
-		var members = Parser.Instance.ParseExpression("Forums:20,Users:10(~Created,Name,!Name,Code){Profile(Name){Avatar}}");
+		var members = Parser.Instance.ParseExpression("Forums:20,Users:10(~Created,+Name,-Name,Code){Profile(Name){Avatar}}");
 
 		Assert.Equal(2, members.Count);
 		Assert.Equal(20, members["Forums"].Limit);
@@ -35,6 +89,27 @@ public class SchemaTest
 			sorting => { Assert.Equal("Name", sorting.Name); Assert.Equal(SortingMode.Descending, sorting.Mode); },
 			sorting => { Assert.Equal("Code", sorting.Name); Assert.Equal(SortingMode.Ascending, sorting.Mode); });
 		Assert.Equal("Users.Profile.Avatar", users.Children["Profile"].Children["Avatar"].FullPath);
+	}
+
+	[Fact]
+	public void Parse_ExplicitAscendingSortingPrefix_EqualsUnprefixedSorting()
+	{
+		var prefixed = new TestSchema("Users(+Created,+Name)", "prefixed");
+		var unprefixed = new TestSchema("Users(Created,Name)", "unprefixed");
+
+		Assert.Equal(unprefixed.ToString(), prefixed.ToString());
+		Assert.Equal("Users(Created,Name)", prefixed.ToString());
+		Assert.All(prefixed.Members["Users"].Sortings, sorting => Assert.Equal(SortingMode.Ascending, sorting.Mode));
+	}
+
+	[Theory]
+	[InlineData("Users(!Name)")]
+	[InlineData("Users(Name,!Created)")]
+	public void Parse_LegacyExclamationSortingPrefix_ThrowsSchemaArgument(string expression)
+	{
+		var exception = Assert.Throws<DataArgumentException>(() => Parser.Instance.ParseExpression(expression));
+		Assert.Equal("$schema", exception.Name);
+		Assert.Matches(@"\d+[)）][.。]$", exception.Message);
 	}
 
 	[Fact]
@@ -66,6 +141,8 @@ public class SchemaTest
 	[Theory]
 	[InlineData("Users(1Name)")]
 	[InlineData("Users(~)")]
+	[InlineData("Users(-)")]
+	[InlineData("Users(+)")]
 	[InlineData("Users:999999999999999999999")]
 	[InlineData("1Users")]
 	[InlineData("Users:")]
@@ -81,7 +158,7 @@ public class SchemaTest
 	public void Parse_InvalidExpression_ThrowsSchemaArgument(string expression)
 	{
 		var exception = Assert.Throws<DataArgumentException>(() => Parser.Instance.ParseExpression(expression));
-		Assert.Contains("position", exception.Message, StringComparison.OrdinalIgnoreCase);
+		Assert.Matches(@"\d+[)）][.。]$", exception.Message);
 	}
 
 	[Fact]

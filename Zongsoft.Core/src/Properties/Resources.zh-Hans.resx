@@ -420,4 +420,73 @@
   <data name="TransactionEventChannel.DispatchClosed" xml:space="preserve">
     <value>无法投递已提交的事件“{0}”，因为事务事件通道已关闭。</value>
   </data>
+  <data name="Schema.EmptyParsingStack.Message" xml:space="preserve">
+    <value>解析错误：解析栈为空。</value>
+  </data>
+  <data name="Schema.ErrorPosition.Message" xml:space="preserve">
+    <value>{0}（位置：{1}）。</value>
+  </data>
+  <data name="Schema.IdentifierContainsWhitespace.Message" xml:space="preserve">
+    <value>语法错误：数据模式标识符中包含空白字符。</value>
+  </data>
+  <data name="Schema.IdentifierIllegalCharacter.Message" xml:space="preserve">
+    <value>语法错误：数据模式标识符中包含非法字符“{0}”。</value>
+  </data>
+  <data name="Schema.IdentifierStartsWithDigit.Message" xml:space="preserve">
+    <value>语法错误：数据模式标识符不能以数字开头。</value>
+  </data>
+  <data name="Schema.IllegalCharacter.Message" xml:space="preserve">
+    <value>语法错误：数据模式中包含非法字符“{0}”。</value>
+  </data>
+  <data name="Schema.IllegalCharacterAfterSorting.Message" xml:space="preserve">
+    <value>语法错误：数据模式的排序项之后包含非法字符“{0}”。</value>
+  </data>
+  <data name="Schema.IncorrectExpression.Message" xml:space="preserve">
+    <value>语法错误：数据模式表达式不正确（{0}）。</value>
+  </data>
+  <data name="Schema.InvalidExclusionWildcard.Message" xml:space="preserve">
+    <value>语法错误：数据模式的排除通配符无效。</value>
+  </data>
+  <data name="Schema.InvalidLimitFormat.Message" xml:space="preserve">
+    <value>语法错误：数据模式的限量格式不正确。</value>
+  </data>
+  <data name="Schema.InvalidOrOverflowedLimit.Message" xml:space="preserve">
+    <value>语法错误：数据模式的限量“{0}”无效或溢出。</value>
+  </data>
+  <data name="Schema.LimitIllegalCharacter.Message" xml:space="preserve">
+    <value>语法错误：数据模式的限量中包含非法字符“{0}”。</value>
+  </data>
+  <data name="Schema.MissingExclusionMemberAfterPeriod.Message" xml:space="preserve">
+    <value>语法错误：数据模式的句点后缺少排除成员标识符，却发现“{0}”。</value>
+  </data>
+  <data name="Schema.MissingIdentifierBeforePeriod.Message" xml:space="preserve">
+    <value>语法错误：数据模式的句点前缺少标识符。</value>
+  </data>
+  <data name="Schema.MissingLimit.Message" xml:space="preserve">
+    <value>语法错误：数据模式中缺少限量值。</value>
+  </data>
+  <data name="Schema.MissingMemberAfterPeriod.Message" xml:space="preserve">
+    <value>语法错误：数据模式的句点后缺少成员标识符，却发现“{0}”。</value>
+  </data>
+  <data name="Schema.MissingMemberBeforePeriod.Message" xml:space="preserve">
+    <value>语法错误：数据模式的句点前缺少成员标识符。</value>
+  </data>
+  <data name="Schema.MissingSortingField.Message" xml:space="preserve">
+    <value>语法错误：数据模式中缺少排序字段。</value>
+  </data>
+  <data name="Schema.MissingSortingFields.Message" xml:space="preserve">
+    <value>语法错误：数据模式中缺少排序字段集。</value>
+  </data>
+  <data name="Schema.SortingFieldIllegalCharacter.Message" xml:space="preserve">
+    <value>语法错误：数据模式的排序字段中包含非法字符“{0}”。</value>
+  </data>
+  <data name="Schema.SortingFieldStartsWithDigit.Message" xml:space="preserve">
+    <value>语法错误：数据模式的排序字段不能以数字开头。</value>
+  </data>
+  <data name="Schema.UnclosedMemberBlock.Message" xml:space="preserve">
+    <value>语法错误：数据模式中包含未闭合的成员块。</value>
+  </data>
+  <data name="Schema.UnrecognizedMember.Message" xml:space="preserve">
+    <value>解析错误：无法识别数据模式成员“{0}”。</value>
+  </data>
 </root>

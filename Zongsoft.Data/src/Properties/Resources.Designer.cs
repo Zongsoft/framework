@@ -727,6 +727,15 @@ namespace Zongsoft.Data.Properties {
         }
         
         /// <summary>
+        ///   查找类似 The mapped schema token requires a property. 的本地化字符串。
+        /// </summary>
+        internal static string Schema_MappedTokenPropertyRequired_Message {
+            get {
+                return ResourceManager.GetString("Schema.MappedTokenPropertyRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 The specified &apos;{0}&apos; property does not exist in the &apos;{1}&apos; entity. 的本地化字符串。
         /// </summary>
         internal static string Schema_PropertyNotFound_Message {

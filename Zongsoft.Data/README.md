@@ -65,7 +65,7 @@ For source builds, we recommend creating a **_Zongsoft_** directory outside the 
 
 The data **schema** is a DSL(**D**omain **S**pecific **L**anguage) that describes which fields are queried or written _(**D**elete/**I**nsert/**U**pdate/**U**psert)_. It looks similar to [GraphQL](https://graphql.org/), but it does not need a server-side GraphQL definition. It is used to choose fields, include navigation properties, and control cascade scopes.
 
-The `schema` argument in a data access method is the schema text. The [ISchema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema.cs) interface represents the parsed schema expression.
+The `schema` argument in a data access method is the schema text.
 
 <a name="schema-syntax"></a>
 ### Schema Syntax
@@ -75,19 +75,23 @@ schema ::=
 {
     * |
     ! |
-    !identifier |
-    identifier [limit] [sorting] ["{" schema [,...n] "}"]
+    exclusion |
+    inclusion
 } [,...n]
 
 identifier ::= [_A-Za-z][_A-Za-z0-9]*
 number ::= [0-9]+
+
+path ::= identifier {"." identifier}
+exclusion ::= "!" path
+inclusion ::= path [limit] [sorting] ["{" schema [,...n] "}"] | path ".*"
 
 limit ::= ":"(number | "*")
 
 sorting ::=
 "("
     {
-        ["~"|"!"]identifier
+        ["~"|"-"|"+"]identifier
     } [,...n]
 ")"
 ```
@@ -97,10 +101,14 @@ sorting ::=
 
 - Asterisk(`*`): includes all scalar properties. Navigation properties are not included unless you name them explicitly.
 - Exclamation(`!`): excludes fields. A bare `!` clears all members at the current level; `!Name` excludes the named property.
+- A dot(`.`) joins nested member names. `Department.Manager.Name` is equivalent to `Department{Manager{Name}}`, and dotted paths may be mixed with braces. Whitespace is allowed on both sides of a dot.
+- A terminal mapped navigation property automatically includes its scalar properties. Therefore `Department`, `Department.*`, and `Department{*}` produce the same member tree. The `.*` form is terminal and cannot be followed by another path segment.
+- A dotted exclusion such as `!Department.Manager.Secret` validates every segment and removes only the target member. `!Department` removes the whole navigation member and is equivalent to `Department{!}`. The `!*` form and `!path.*` are invalid.
 - Identifiers are composed of letters, digits, and underscores, must not start with a digit, and are case-insensitive.
 - Multiple members are separated by commas(`,`); the sub-schema _（inside the braces）_ uses the same syntax, so nesting is allowed at any depth. Empty comma segments and leading/trailing commas are ignored.
 - Whitespace is not allowed inside an identifier, but is allowed between members, after the asterisk, and between an identifier and the sub-schema/sorting/limit tokens, e.g. `Users {*}`、`Users :20`、`* , Users`.
 - Whitespace is not allowed inside a limit or right after the colon(`:`); it is not allowed inside the sorting parentheses or a sorting field, but is allowed between sorting fields _（after a comma）_.
+- A limit or sorting expression finishes the dotted path. For example, `Departments:10(~Name)` includes the navigation's scalar properties, while `Departments:10.Manager` and `Departments:10(~Name).Manager` are invalid.
 
 <a name="schema-paging"></a>
 #### Limit and Sorting
@@ -114,15 +122,15 @@ A limit is written after the member name and starts with a colon(`:`). It contro
 | `:0` | unlimited |
 | `:*` | unlimited |
 
-The parsed `ISchemaMember.Limit` is an integer. Any value less than or equal to zero means unlimited; canonical schema text omits an unlimited limit. Schema expressions accept only unsigned numbers or `*` after the colon.
+The parsed limit is an integer. Any value less than or equal to zero means unlimited; canonical schema text omits an unlimited limit. Schema expressions accept only unsigned numbers or `*` after the colon.
 
-Sorting is written after the optional limit and wrapped in parentheses; sorting fields are separated by commas, a `~` or `!` prefix means descending, and no prefix means ascending:
+Sorting is written after the optional limit and wrapped in parentheses; sorting fields are separated by commas. A `~` or `-` prefix means descending, while a `+` prefix or no prefix means ascending:
 
 ```
-Users:20(~CreatedTime,Grade){*}
+Users:20(-CreatedTime,+Grade){*}
 ```
 
-Every sorting field may carry its own `~`/`!` prefix. If a field is declared more than once, the last declaration determines its direction and position.
+Every sorting field may carry its own prefix. `+CreatedTime` is exactly equivalent to `CreatedTime`. If a field is declared more than once, the last declaration determines its direction and position.
 
 <a name="schema-sample"></a>
 ### Sample description
@@ -139,10 +147,25 @@ Every sorting field may carry its own `~`/`!` prefix. If a field is declared mor
 ```
 > **Note:** All scalar properties plus the `Creator` navigation property, including all scalar properties of `Creator`.
 
+The following forms are equivalent:
+
+```graphql
+*, Creator
+*, Creator.*
+*, Creator{*}
+```
+
 ```graphql
 *, Creator{Name,Nickname}
 ```
 > **Note:** All scalar properties plus the `Creator` navigation property, but only `Name` and `Nickname` are loaded for `Creator`.
+
+Nested braces can be replaced or mixed with dotted paths. The following expressions produce the same member tree:
+
+```graphql
+*, User, Department.*, Department.Manager.Name, Department.Manager.FullName, Department.Manager.Gender, !Department.Manager.Secret
+*, User{*}, Department{*, Manager{Name,FullName,Gender,!Secret}}
+```
 
 ```graphql
 *, Users{*}
@@ -165,39 +188,16 @@ Every sorting field may carry its own `~`/`!` prefix. If a field is declared mor
 > **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_ with an explicitly unlimited record count.
 
 ```graphql
-*, Users:20(~CreatedTime,Grade){*}
+*, Users:20(-CreatedTime,+Grade){*}
 ```
 > **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, sorted by `CreatedTime` descending and `Grade` ascending, then limited to at most 20 records.
 
-<a name="schema-api"></a>
-### Schema Object Model
+<a name="schema-computed"></a>
+### Computed Members
 
-The `schema` text argument is parsed into an `ISchema` object by the schema parser of the data accessor, which is then consumed by the statement builders to generate query or write clauses. The schema-related types live in two layers:
+An explicitly named member that is not mapped may still be used when the corresponding model defines a public instance property or field with that name. Such a computed member participates in the returned model shape but does not generate a database field. An unknown name that exists in neither the mapping nor the model is invalid. The `*` wildcard includes mapped scalar properties only and never adds computed members automatically.
 
-**Abstractions and interfaces** in the core library ([`Zongsoft.Core/src/Data`](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Core/src/Data)):
-
-| Type | Description |
-| --- | --- |
-| [ISchema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema.cs) | Interface of the parsed data schema: `Name`、`Text`、`ModelType`、`IsEmpty`、`IsReadOnly`; `Clear()`、`Contains(path)`、`Find(path)`、`Include(path)`、`Exclude(path)`. Paths are separated by a dot(`.`) or slash(`/`). |
-| [ISchema&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema%601.cs) | Generic version which adds the `Members` collection property. |
-| [Schema&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Schema.cs) | Reusable implementation of schema-tree operations, including deep `Contains`/`Find`/`Include`/`Exclude` and pruning of empty parent nodes. |
-| [ISchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaMember.cs) | Read-only member contract. `Ignored` is true when `Property` is null, meaning that the member is part of the model projection but is not persisted; `Limit` is the maximum record count of a one-to-many member, with values less than or equal to zero meaning unlimited. |
-| [ISchemaParser](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaParser.cs) / [ISchemaParser&lt;TEntry&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaParser%601.cs) | Interface of the schema parser: `Parse(name, expression, entityType)`. |
-| [SchemaParserBase&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaParserBase.cs) | The state-machine base class of the schema parser, implementing the lexical and syntactic analysis of the grammar above and delegating member resolution to its subclass. |
-| [SchemaMemberBase](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberBase.cs) | Base class of schema members: `Name`, `Path`, `FullPath`, `Member`, `Property`, `Ignored`, `Limit`, `Sortings`, and `HasChildren`. |
-| [SchemaMemberCollection&lt;T&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberCollection.cs) | Collection of schema members keyed by member name, case-insensitive. |
-
-**Implementations** in the data engine ([`Zongsoft.Data/src`](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/src)):
-
-| Type | Description |
-| --- | --- |
-| [SchemaParser](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaParser.cs) | Implementation of `SchemaParserBase<SchemaMember>`; resolves mapped members first, then looks for a same-named public instance property or field on the corresponding model type when an explicit member is unmapped. It also supports inherited entities and navigation hops. |
-| [Schema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Schema.cs) | Data-engine specialization of `Schema<SchemaMember>` bound to an `IDataEntity`. |
-| [SchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaMember.cs) | Implementation of `SchemaMemberBase`. A mapped member carries both mapping metadata and a model member, while a computed member carries only its model member; the latter has `Property == null` and therefore `Ignored == true`. |
-
-Mapped metadata always takes precedence over model members. The `*` wildcard expands mapped simplex properties only; computed-member handling runs only for an unmapped name explicitly declared in the schema. When normal resolution misses, `SchemaParserBase` invokes `OnUnrecognized`. A derived `SchemaParser` may handle the name first; otherwise the default behavior performs a case-insensitive lookup for a public instance property or field on the current model type, creates an `Ignored=true` member when found, and throws `DataArgumentException` when no such member exists.
-
-Query and mutation builders do not emit database fields for computed members. The schema must explicitly include any mapped inputs required by a computed property; for example, use `Birthdate,Age` when age depends on the birth date. Rare alias or special-binding scenarios may derive from `SchemaParser` and override `OnUnrecognized`.
+Any mapped inputs required by a computed property must be included explicitly. For example, use `Birthdate,Age` when `Age` is computed from `Birthdate`.
 
 
 <a name="mapping"></a>
@@ -236,7 +236,7 @@ Common mapping elements:
 - `property` maps a scalar member to a field. Important attributes include `type`, `field`, `nullable`, `length`, `precision`, `scale`, `default`, `sequence`, `sortable`, and `immutable`.
 - `sequence="*"` means the database built-in identity/sequence is used. `sequence="#"` means the Zongsoft default external sequencer is used. `sequence="#Name"` means a named external sequencer; `sequence="#Name@seed/interval"` also specifies the seed and interval; `sequence="#(ParentId)"` means an external sequencer grouped by the specified reference property; `sequence="Entity:Property"` references the sequencer of another entity's property.
 - `complexProperty` defines a navigation property. Its `port` points to the target entity, or to a target entity's navigation property such as `ForumUser:User`. `multiplicity` supports `?`（zero-or-one，default）、`!`（exactly one）、`*`（one-to-many）; `link` maps foreign key properties to the current entity（`anchor` specifies the anchor on the current side and defaults to the `port` name when omitted）, and `constraints` add fixed navigation filters（when `actor` is omitted it is inferred from the multiplicity: `Foreign` for one-to-many, otherwise `Principal`）.
-- `command` defines a named SQL command or stored procedure. Commands are executed through `Execute`, `Execute<T>`, or `ExecuteScalar`. `type` supports `text`（default）and `procedure`; `mutability` declares the data changeability of the command, where `none` means read-only and `delete`、`insert`、`update`、`upsert` mean write commands. The loader parses these enum values case-insensitively, but use lowercase to pass XSD validation.
+- `command` defines a named SQL command or stored procedure. Commands are executed through `Execute`, `Execute<T>`, or `ExecuteScalar`. `type` supports `text`（default）and `procedure`; `mutability` declares whether the command reads or writes data. It is not merely descriptive metadata: when read/write splitting is configured, the data source selector uses it as the routing basis—`none` selects a readable source, while `delete`、`insert`、`update`、`upsert` select a writable source. The selector does not infer mutability by analyzing the SQL text. The loader parses these enum values case-insensitively, but use lowercase to pass XSD validation.
 
 ```xml
 <command name="Forum.GetStatistics" type="text" mutability="none">
@@ -1012,7 +1012,7 @@ For example, the `Tags` field in the `Thread` table is `nvarchar`, but the `Tags
 <a name="usage-execute"></a>
 ### Execute operation
 
-`Execute` runs a named `command` defined in a mapping file. Use it for SQL statements, stored procedures, and commands that do not naturally map to one entity operation. `mutability="none"` is treated as read-only, while `insert`, `update`, `delete`, and `upsert` are treated as write commands and participate in read/write source selection. A command without an explicit `mutability` is treated as writable _（`Delete|Insert|Update`）_, so there is usually no need to declare it.
+`Execute` runs a named `command` defined in a mapping file. Use it for SQL statements, stored procedures, and commands that do not naturally map to one entity operation. The declared `mutability` is the data source selector's basis for read/write routing: `mutability="none"` selects a readable source, while `insert`, `update`, `delete`, and `upsert` select a writable source; the selector does not inspect the SQL script to determine this. A command without an explicit `mutability` is treated as writable _（`Delete|Insert|Update`）_, so there is usually no need to declare it.
 
 ```csharp
 public sealed class ForumStatistics

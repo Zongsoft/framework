@@ -420,4 +420,73 @@
   <data name="TransactionEventChannel.DispatchClosed" xml:space="preserve">
     <value>The committed event '{0}' cannot be dispatched because the transaction event channel is closed.</value>
   </data>
+  <data name="Schema.EmptyParsingStack.Message" xml:space="preserve">
+    <value>ParsingError: The parsing stack is empty.</value>
+  </data>
+  <data name="Schema.ErrorPosition.Message" xml:space="preserve">
+    <value>{0} (at position {1}).</value>
+  </data>
+  <data name="Schema.IdentifierContainsWhitespace.Message" xml:space="preserve">
+    <value>SyntaxError: The identifier of the data schema contains whitespace characters.</value>
+  </data>
+  <data name="Schema.IdentifierIllegalCharacter.Message" xml:space="preserve">
+    <value>SyntaxError: The identifier of the data schema contains '{0}' illegal character.</value>
+  </data>
+  <data name="Schema.IdentifierStartsWithDigit.Message" xml:space="preserve">
+    <value>SyntaxError: The identifier of the data schema cannot start with a digit.</value>
+  </data>
+  <data name="Schema.IllegalCharacter.Message" xml:space="preserve">
+    <value>SyntaxError: Contains the illegal character '{0}' in the data schema.</value>
+  </data>
+  <data name="Schema.IllegalCharacterAfterSorting.Message" xml:space="preserve">
+    <value>SyntaxError: Contains the illegal character '{0}' after sorting in the data schema.</value>
+  </data>
+  <data name="Schema.IncorrectExpression.Message" xml:space="preserve">
+    <value>SyntaxError: The data schema expression is incorrect({0}).</value>
+  </data>
+  <data name="Schema.InvalidExclusionWildcard.Message" xml:space="preserve">
+    <value>SyntaxError: The exclusion wildcard of the data schema is invalid.</value>
+  </data>
+  <data name="Schema.InvalidLimitFormat.Message" xml:space="preserve">
+    <value>SyntaxError: The limit format of the data schema is incorrect.</value>
+  </data>
+  <data name="Schema.InvalidOrOverflowedLimit.Message" xml:space="preserve">
+    <value>SyntaxError: The limit '{0}' of the data schema is invalid or overflowed.</value>
+  </data>
+  <data name="Schema.LimitIllegalCharacter.Message" xml:space="preserve">
+    <value>SyntaxError: The limit of the data schema contains '{0}' illegal character.</value>
+  </data>
+  <data name="Schema.MissingExclusionMemberAfterPeriod.Message" xml:space="preserve">
+    <value>SyntaxError: Expected an exclusion member identifier after the period in the data schema, but found '{0}'.</value>
+  </data>
+  <data name="Schema.MissingIdentifierBeforePeriod.Message" xml:space="preserve">
+    <value>SyntaxError: Expected an identifier before the period in the data schema.</value>
+  </data>
+  <data name="Schema.MissingLimit.Message" xml:space="preserve">
+    <value>SyntaxError: Expected limit in the data schema, but missing.</value>
+  </data>
+  <data name="Schema.MissingMemberAfterPeriod.Message" xml:space="preserve">
+    <value>SyntaxError: Expected a member identifier after the period in the data schema, but found '{0}'.</value>
+  </data>
+  <data name="Schema.MissingMemberBeforePeriod.Message" xml:space="preserve">
+    <value>SyntaxError: Expected a member identifier before the period in the data schema.</value>
+  </data>
+  <data name="Schema.MissingSortingField.Message" xml:space="preserve">
+    <value>SyntaxError: Expected sorting field in the data schema, but missing.</value>
+  </data>
+  <data name="Schema.MissingSortingFields.Message" xml:space="preserve">
+    <value>SyntaxError: Expected sorting fields in the data schema, but missing.</value>
+  </data>
+  <data name="Schema.SortingFieldIllegalCharacter.Message" xml:space="preserve">
+    <value>SyntaxError: The sorting field of the data schema contains '{0}' illegal character.</value>
+  </data>
+  <data name="Schema.SortingFieldStartsWithDigit.Message" xml:space="preserve">
+    <value>SyntaxError: The sorting field of the data schema cannot start with a digit.</value>
+  </data>
+  <data name="Schema.UnclosedMemberBlock.Message" xml:space="preserve">
+    <value>SyntaxError: The data schema contains an unclosed member block.</value>
+  </data>
+  <data name="Schema.UnrecognizedMember.Message" xml:space="preserve">
+    <value>ParsingError: The '{0}' member of the data schema is unrecognized.</value>
+  </data>
 </root>

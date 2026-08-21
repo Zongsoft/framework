@@ -65,7 +65,7 @@ TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Z
 
 数据模式(**S**chema)是一种 DSL(**D**omain **S**pecific **L**anguage)，用来描述查询或写入 _(**D**elete/**I**nsert/**U**pdate/**U**psert)_ 时要处理哪些字段。它的写法类似 [GraphQL](https://graphql.cn/)，但不需要预先定义服务端 GraphQL 类型。它可用于选择字段、包含导航属性、控制级联范围等。
 
-数据访问方法中的 `schema` 参数就是数据模式文本，[ISchema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema.cs) 接口表示解析后的模式表达式。
+数据访问方法中的 `schema` 参数就是数据模式文本。
 
 <a name="schema-syntax"></a>
 ### 语法定义
@@ -75,19 +75,23 @@ schema ::=
 {
     * |
     ! |
-    !identifier |
-    identifier [limit] [sorting] ["{" schema [,...n] "}"]
+    exclusion |
+    inclusion
 } [,...n]
 
 identifier ::= [_A-Za-z][_A-Za-z0-9]*
 number ::= [0-9]+
+
+path ::= identifier {"." identifier}
+exclusion ::= "!" path
+inclusion ::= path [limit] [sorting] ["{" schema [,...n] "}"] | path ".*"
 
 limit ::= ":"(number | "*")
 
 sorting ::=
 "("
     {
-        ["~"|"!"]identifier
+        ["~"|"-"|"+"]identifier
     } [,...n]
 ")"
 ```
@@ -95,12 +99,16 @@ sorting ::=
 <a name="schema-overview"></a>
 #### 说明
 
-- 星号(`*`)：表示包含所有简单属性，不包含导航属性；如果要包含导航属性，必须显式写出。
+- 星号(`*`)：表示包含所有简单属性，不包含导航属性；如果要包含导航属性，必须显式指定。
 - 叹号(`!`)：表示排除。单独的 `!` 表示清除当前层级的全部成员；`!名称` 表示排除指定名称的属性。
+- 句点(`.`)用于连接嵌套成员名。`Department.Manager.Name` 等价于 `Department{Manager{Name}}`，点路径可以与花括号混用，句点两侧允许空白。
+- 以映射导航属性作为终止成员时，自动包含该导航的简单属性，因此 `Department`、`Department.*` 和 `Department{*}` 会生成相同的成员树。`.*` 只能位于路径末尾，之后不能再接路径段。
+- `!Department.Manager.Secret` 这类点路径排除会逐段验证成员，仅移除目标成员。`!Department` 会移除整个导航成员，等价于 `Department{!}`。`!*` 和 `!路径.*` 都是非法格式。
 - 标识符由字母、数字和下划线组成，不能以数字开头，不区分大小写。
 - 多个成员之间使用逗号(`,`)分隔；子模式 _（大括号内的部分）_ 沿用相同的语法，因此可以任意层级嵌套。解析器会忽略连续逗号产生的空段以及首尾逗号。
 - 标识符内部不能含有空白字符；但成员之间、星号之后、标识符与子模式/排序/限量符号之间可以包含空白字符，例如 `Users {*}`、`Users :20`、`* , Users`。
 - 限量数字内部以及冒号(`:`)之后不允许空白；排序括号内、字段内部不允许空白，但排序字段之间 _（逗号之后）_ 允许空白。
+- 限量或排序会终止点路径。例如 `Departments:10(~Name)` 会包含该导航的简单属性，而 `Departments:10.Manager` 和 `Departments:10(~Name).Manager` 都是非法格式。
 
 <a name="schema-paging"></a>
 #### 限量与排序
@@ -114,15 +122,15 @@ sorting ::=
 | `:0` | 不限 |
 | `:*` | 不限 |
 
-解析后的 `ISchemaMember.Limit` 是一个整数，任何小于或等于零的值都表示不限；规范化模式文本会省略不限的限量。模式表达式的冒号后只接受无符号数字或 `*`。
+解析后的限量是一个整数，任何小于或等于零的值都表示不限；规范化模式文本会省略不限的限量。模式表达式的冒号后只接受无符号数字或 `*`。
 
-排序写在可选限量之后、以一对圆括号包裹；排序字段之间使用逗号分隔，`~` 或 `!` 前缀表示倒序，无前缀表示正序：
+排序写在可选限量之后、以一对圆括号包裹；排序字段之间使用逗号分隔。`~` 或 `-` 前缀表示倒序，`+` 前缀或无前缀表示正序：
 
 ```
-Users:20(~CreatedTime,Grade){*}
+Users:20(-CreatedTime,+Grade){*}
 ```
 
-每个排序字段都可以单独使用 `~`/`!` 前缀。同一字段重复声明时，以最后一次声明的方向和位置为准。
+每个排序字段都可以单独使用前缀，`+CreatedTime` 与 `CreatedTime` 完全等价。同一字段重复声明时，以最后一次声明的方向和位置为准。
 
 <a name="schema-sample"></a>
 ### 示例说明
@@ -139,10 +147,25 @@ Users:20(~CreatedTime,Grade){*}
 ```
 > 表示所有简单属性，并包含 `Creator` 导航属性的所有简单属性。
 
+以下写法等价：
+
+```graphql
+*, Creator
+*, Creator.*
+*, Creator{*}
+```
+
 ```graphql
 *, Creator{Name,Nickname}
 ```
 > 表示所有简单属性，并且只加载 `Creator` 导航属性的 `Name` 和 `Nickname`。
+
+嵌套花括号可以改写为点路径，也可以与点路径混用。以下表达式会生成相同的成员树：
+
+```graphql
+*, User, Department.*, Department.Manager.Name, Department.Manager.FullName, Department.Manager.Gender, !Department.Manager.Secret
+*, User{*}, Department{*, Manager{Name,FullName,Gender,!Secret}}
+```
 
 ```graphql
 *, Users{*}
@@ -165,39 +188,16 @@ Users:20(~CreatedTime,Grade){*}
 > 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_，该集合显式不限量。
 
 ```graphql
-*, Users:20(~CreatedTime,Grade){*}
+*, Users:20(-CreatedTime,+Grade){*}
 ```
 > 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_；该集合先按 `CreatedTime` 倒序、`Grade` 正序排序，再最多加载 20 条。
 
-<a name="schema-api"></a>
-### 模式对象模型
+<a name="schema-computed"></a>
+### 计算成员
 
-`schema` 文本参数由数据访问器的模式解析器解析为 `ISchema` 对象，随后供语句构建器生成查询或写入子句。与模式相关的类型分为两层：
+如果 schema 中显式声明的成员没有映射，但对应模型中定义了同名的公共实例属性或字段，仍可将它作为计算成员使用。计算成员会参与返回的模型形状，但不会生成数据库字段；既不存在于映射、也不存在于模型中的名称是非法成员。通配符 `*` 只包含映射的简单属性，不会自动加入计算成员。
 
-**核心库**（[`Zongsoft.Core/src/Data`](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Core/src/Data)）中的抽象与接口：
-
-| 类型 | 说明 |
-| --- | --- |
-| [ISchema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema.cs) | 解析后的数据模式接口：`Name`、`Text`、`ModelType`、`IsEmpty`、`IsReadOnly`；`Clear()`、`Contains(path)`、`Find(path)`、`Include(path)`、`Exclude(path)`。路径以句点(`.`)或斜杠(`/`)分隔。 |
-| [ISchema&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchema%601.cs) | 泛型版本，新增 `Members` 成员集合属性。 |
-| [Schema&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Schema.cs) | 模式树操作的通用实现，包含深层 `Contains`/`Find`/`Include`/`Exclude` 以及空父节点裁剪。 |
-| [ISchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaMember.cs) | 只读成员契约。`Property` 为空时 `Ignored` 为真，表示该成员属于模型投影但不参与持久化；`Limit` 表示一对多成员的最大记录数，小于或等于零表示不限。 |
-| [ISchemaParser](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaParser.cs) / [ISchemaParser&lt;TEntry&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/ISchemaParser%601.cs) | 模式解析器接口：`Parse(name, expression, entityType)`。 |
-| [SchemaParserBase&lt;TMember&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaParserBase.cs) | 模式解析器的状态机基类，实现上述语法的词法与语法分析，并将成员解析交给子类。 |
-| [SchemaMemberBase](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberBase.cs) | 模式成员基类：`Name`、`Path`、`FullPath`、`Member`、`Property`、`Ignored`、`Limit`、`Sortings`、`HasChildren`。 |
-| [SchemaMemberCollection&lt;T&gt;](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/SchemaMemberCollection.cs) | 模式成员集合，按键 _（成员名）_ 索引，不区分大小写。 |
-
-**数据引擎**（[`Zongsoft.Data/src`](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/src)）中的实现：
-
-| 类型 | 说明 |
-| --- | --- |
-| [SchemaParser](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaParser.cs) | `SchemaParserBase<SchemaMember>` 的实现；先解析映射成员，显式成员未映射时再从对应模型类型查找同名公共实例属性或字段，同时支持继承实体和导航跳板。 |
-| [Schema](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Schema.cs) | 绑定 `IDataEntity` 的 `Schema<SchemaMember>` 数据引擎特化实现。 |
-| [SchemaMember](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/SchemaMember.cs) | `SchemaMemberBase` 的实现：映射成员持有映射属性和模型成员，计算成员只持有模型成员；计算成员的 `Property` 为空，因此 `Ignored` 为真。 |
-
-映射元数据的优先级始终高于模型成员。通配符 `*` 只展开映射中的简单属性；只有 schema 中显式声明的未映射名称才会进入计算成员处理。`SchemaParserBase` 在普通解析未命中时调用 `OnUnrecognized`，`SchemaParser` 允许派生类先处理该名称；派生类不处理时，默认按名称（不区分大小写）查找当前模型类型上的公共实例属性或字段，找到后创建 `Ignored=true` 的成员，找不到则抛出 `DataArgumentException`。
-
-查询和写操作构建器都不会为计算成员生成数据库字段；计算属性所需的映射字段应在 schema 中显式声明。例如年龄属性依赖出生日期时可写成 `Birthdate,Age`。极少数需要别名或特殊绑定的场景可以派生 `SchemaParser` 并重写 `OnUnrecognized`。
+计算属性依赖的映射字段必须显式包含在 schema 中。例如 `Age` 由 `Birthdate` 计算时，应写成 `Birthdate,Age`。
 
 
 <a name="mapping"></a>
@@ -236,7 +236,7 @@ Users:20(~CreatedTime,Grade){*}
 - `property` 定义简单属性到字段的映射。常用属性包括 `type`、`field`、`nullable`、`length`、`precision`、`scale`、`default`、`sequence`、`sortable`、`immutable`。
 - `sequence="*"` 表示使用数据库内置自增或序列；`sequence="#"` 表示使用 Zongsoft 默认外部序号器；`sequence="#Name"` 表示指定名称的外部序号器；`sequence="#Name@seed/interval"` 可同时指定序号器的种子值与递增量；`sequence="#(ParentId)"` 表示按指定引用属性分组的外部序号器；`sequence="Entity:Property"` 表示引用另一实体属性的序号器。
 - `complexProperty` 定义导航属性。`port` 指向目标实体，也可以指向目标实体的导航属性，譬如 `ForumUser:User`。`multiplicity` 支持 `?`（一对零或一，默认）、`!`（一对一）、`*`（一对多）；`link` 定义外键属性与当前实体的关联（`anchor` 指定本体实体侧的锚点，省略时与 `port` 同名）；`constraints` 可添加固定的导航过滤条件（`actor` 省略时按多重性推断：一对多默认为 `Foreign`，其余为 `Principal`）。
-- `command` 定义命名 SQL 命令或存储过程，可通过 `Execute`、`Execute<T>`、`ExecuteScalar` 调用。`type` 支持 `text`（默认）与 `procedure`；`mutability` 声明命令对数据的变更性，`none` 表示只读命令，`delete`、`insert`、`update`、`upsert` 表示写命令。加载器对枚举值的解析不区分大小写，但为通过 XSD 校验，建议统一使用小写。
+- `command` 定义命名 SQL 命令或存储过程，可通过 `Execute`、`Execute<T>`、`ExecuteScalar` 调用。`type` 支持 `text`（默认）与 `procedure`；`mutability` 用来声明命令对数据的读写特性，它不只是描述性元数据，也是配置读写分离后数据源选择器的路由依据：`none` 选择可读数据源，`delete`、`insert`、`update`、`upsert` 选择可写数据源。选择器不会通过分析 SQL 文本来推断读写特性。加载器对枚举值的解析不区分大小写，但为通过 XSD 校验，建议统一使用小写。
 
 ```xml
 <command name="Forum.GetStatistics" type="text" mutability="none">
@@ -310,7 +310,7 @@ Users:20(~CreatedTime,Grade){*}
 - 计数操作： `int Count(...)` 
 - 聚合操作： `TValue? Aggregate(...)`
 - 存在操作： `bool Exists(...)` 
-- 执行存储过程： `IEnumerable<T> Execute<T>(...)` `object ExecuteScalar(...)` 
+- 执行操作： `IEnumerable<T> Execute<T>(...)` `object ExecuteScalar(...)` 
 - 导入操作： `int Import(...)`
 - 删除操作： `int Delete(...)` 
 - 新增操作： `int Insert(...)` `int InsertMany(...)` 
@@ -1009,7 +1009,7 @@ WHERE
 <a name="usage-execute"></a>
 ### 执行操作
 
-`Execute` 用于执行映射文件中定义的命名 `command`。适合 SQL 语句、存储过程，以及无法自然归入某个实体 CRUD 操作的命令。`mutability="none"` 会被视为只读命令；`insert`、`update`、`delete`、`upsert` 会被视为写命令，并参与读写数据源选择。未声明 `mutability` 的命令会被视为可写命令 _（按 `Delete|Insert|Update` 处理）_，如无必要不必显式声明。
+`Execute` 用于执行映射文件中定义的命名 `command`。适合 SQL 语句、存储过程，以及无法自然归入某个实体 CRUD 操作的命令。声明的 `mutability` 是数据源选择器进行读写路由的依据：`mutability="none"` 选择可读数据源，`insert`、`update`、`delete`、`upsert` 选择可写数据源；选择器不会检查 SQL 脚本来判断读写特性。未声明 `mutability` 的命令会被视为可写命令 _（按 `Delete|Insert|Update` 处理）_，如无必要不必显式声明。
 
 ```csharp
 public sealed class ForumStatistics

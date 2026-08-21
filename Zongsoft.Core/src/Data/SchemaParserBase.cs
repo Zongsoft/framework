@@ -49,6 +49,11 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 	/// <param name="token">无法识别的模式成员标记。</param>
 	/// <returns>返回处理得到的模式成员集；不处理则返回空。</returns>
 	protected virtual IEnumerable<TMember> OnUnrecognized(SchemaEntryToken token) => null;
+
+	/// <summary>确定指定成员在没有显式子模式时是否应展开默认成员。</summary>
+	/// <param name="member">待确定的模式成员。</param>
+	/// <returns>如果应以通配符展开该成员的默认子成员则返回真，否则返回假。</returns>
+	protected virtual bool ShouldExpand(TMember member) => false;
 	#endregion
 
 	#region 保护方法
@@ -67,7 +72,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 		if(string.IsNullOrEmpty(expression))
 			return null;
 
-		var context = new StateContext(expression.Length, this.Resolve, this.OnUnrecognized, onError, data, members);
+		var context = new StateContext(expression.Length, this.Resolve, this.OnUnrecognized, this.ShouldExpand, onError, data, members);
 
 		for(int i = 0; i < expression.Length; i++)
 		{
@@ -91,6 +96,16 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 						return null;
 
 					break;
+				case State.Path:
+					if(!DoPath(ref context))
+						return null;
+
+					break;
+				case State.ExcludePath:
+					if(!DoExcludePath(ref context))
+						return null;
+
+					break;
 				case State.Include:
 					if(!DoInclude(ref context))
 						return null;
@@ -108,6 +123,11 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 					break;
 				case State.SortingGutter:
 					if(!DoSortingGutter(ref context))
+						return null;
+
+					break;
+				case State.Sorted:
+					if(!DoSorted(ref context))
 						return null;
 
 					break;
@@ -147,7 +167,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 					return true;
 				}
 
-				context.OnError($"SyntaxError: Contains the illegal character '{context.Character}' in the data schema.");
+				context.OnError(string.Format(Properties.Resources.Schema_IllegalCharacter_Message, context.Character));
 				return false;
 		}
 	}
@@ -161,15 +181,17 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 		{
 			case ',':
 				context.Include("*");
+				context.EndItem();
 				context.State = State.None;
 				return true;
 			case '}':
 				context.Include("*");
+				context.EndItem();
 				context.Pop();
 				context.State = State.None;
 				return true;
 			default:
-				context.OnError($"SyntaxError: Contains the illegal character '{context.Character}' in the data schema.");
+				context.OnError(string.Format(Properties.Resources.Schema_IllegalCharacter_Message, context.Character));
 				return false;
 		}
 	}
@@ -179,37 +201,48 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 		switch(context.Character)
 		{
 			case ',':
-				context.Exclude();
+				if(!context.Exclude())
+					return false;
+
+				context.EndItem();
 				context.State = State.None;
 				break;
 			case '}':
-				context.Exclude();
+				if(!context.Exclude())
+					return false;
+
+				context.EndItem();
 				context.Pop();
 				context.State = State.None;
 				break;
 			case '*':
-				if(context.HasBuffer())
+				context.OnError(Properties.Resources.Schema_InvalidExclusionWildcard_Message);
+				return false;
+			case '.':
+				if(!context.HasBuffer())
 				{
-					context.OnError("SyntaxError: The exclusion wildcard of the data schema is invalid.");
+					context.OnError(Properties.Resources.Schema_MissingIdentifierBeforePeriod_Message);
 					return false;
 				}
 
 				context.Accept();
-				break;
+				context.Flags.HasWhitespace(false);
+				context.State = State.ExcludePath;
+				return true;
 			default:
 				if(context.IsLetterOrDigitOrUnderscore())
 				{
 					//如果首字符是数字，则激发错误
 					if(char.IsDigit(context.Character) && !context.HasBuffer())
 					{
-						context.OnError("SyntaxError: The identifier of the data schema cannot start with a digit.");
+						context.OnError(Properties.Resources.Schema_IdentifierStartsWithDigit_Message);
 						return false;
 					}
 
 					//判断标识中间是否含有空白字符
 					if(context.Flags.HasWhitespace())
 					{
-						context.OnError("SyntaxError: The identifier of the data schema contains whitespace characters.");
+						context.OnError(Properties.Resources.Schema_IdentifierContainsWhitespace_Message);
 						return false;
 					}
 
@@ -217,7 +250,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 				}
 				else if(!context.IsWhitespace())
 				{
-					context.OnError($"SyntaxError: The identifier of the data schema contains '{context.Character}' illegal character.");
+					context.OnError(string.Format(Properties.Resources.Schema_IdentifierIllegalCharacter_Message, context.Character));
 					return false;
 				}
 
@@ -230,20 +263,67 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 		return true;
 	}
 
+	private static bool DoPath(ref StateContext context)
+	{
+		if(context.IsWhitespace())
+			return true;
+
+		if(context.IsLetterOrUnderscore())
+		{
+			context.Accept();
+			context.State = State.Include;
+			return true;
+		}
+
+		if(context.Character == '*')
+		{
+			context.State = State.Asterisk;
+			return true;
+		}
+
+		context.OnError(string.Format(Properties.Resources.Schema_MissingMemberAfterPeriod_Message, context.Character));
+		return false;
+	}
+
+	private static bool DoExcludePath(ref StateContext context)
+	{
+		if(context.IsWhitespace())
+			return true;
+
+		if(context.IsLetterOrUnderscore())
+		{
+			context.Accept();
+			context.State = State.Exclude;
+			return true;
+		}
+
+		context.OnError(string.Format(Properties.Resources.Schema_MissingExclusionMemberAfterPeriod_Message, context.Character));
+		return false;
+	}
+
 	private static bool DoInclude(ref StateContext context)
 	{
 		switch(context.Character)
 		{
 			case ',':
-				context.Include();
+				context.CompleteInclude();
 				context.State = State.None;
+				break;
+			case '.':
+				if(!context.IncludePath())
+					return false;
+
+				context.Flags.HasWhitespace(false);
+				context.State = State.Path;
 				break;
 			case ':':
 				context.Include();
+				context.SealPath();
 				context.State = State.Limit;
 				break;
 			case '(':
 				context.Include();
+				context.SealPath();
 				context.State = State.SortingField;
 				break;
 			case '{':
@@ -252,7 +332,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 				context.State = State.None;
 				break;
 			case '}':
-				context.Include();
+				context.CompleteInclude();
 				context.Pop();
 				context.State = State.None;
 				break;
@@ -262,7 +342,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 					//判断标识中间是否含有空白字符
 					if(context.Flags.HasWhitespace())
 					{
-						context.OnError("SyntaxError: The identifier of the data schema contains whitespace characters.");
+						context.OnError(Properties.Resources.Schema_IdentifierContainsWhitespace_Message);
 						return false;
 					}
 
@@ -270,7 +350,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 				}
 				else if(!context.IsWhitespace())
 				{
-					context.OnError($"SyntaxError: The identifier of the data schema contains '{context.Character}' illegal character.");
+					context.OnError(string.Format(Properties.Resources.Schema_IdentifierIllegalCharacter_Message, context.Character));
 					return false;
 				}
 
@@ -291,12 +371,15 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 				if(!context.TrySetLimit())
 					return false;
 
+				context.CompleteCurrent();
 				context.State = State.None;
 				return true;
 			case '}':
 				if(!context.TrySetLimit())
 					return false;
 
+				context.CompleteCurrent();
+				context.EndItem();
 				context.Pop();
 				context.State = State.None;
 				return true;
@@ -316,7 +399,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 			case '*':
 				if(context.HasBuffer())
 				{
-					context.OnError("SyntaxError: The limit format of the data schema is incorrect.");
+					context.OnError(Properties.Resources.Schema_InvalidLimitFormat_Message);
 					return false;
 				}
 
@@ -329,7 +412,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 					return true;
 				}
 
-				context.OnError($"SyntaxError: The limit of the data schema contains '{context.Character}' illegal character.");
+				context.OnError(string.Format(Properties.Resources.Schema_LimitIllegalCharacter_Message, context.Character));
 				return false;
 		}
 	}
@@ -339,10 +422,11 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 		switch(context.Character)
 		{
 			case '~':
-			case '!':
+			case '-':
+			case '+':
 				if(context.HasBuffer())
 				{
-					context.OnError("SyntaxError: Expected sorting field in the data schema, but missing.");
+					context.OnError(Properties.Resources.Schema_MissingSortingField_Message);
 					return false;
 				}
 
@@ -359,7 +443,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 			case ')':
 				if(context.AddSorting())
 				{
-					context.State = State.Include;
+					context.State = State.Sorted;
 					return true;
 				}
 
@@ -371,7 +455,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 					return true;
 				}
 
-				context.OnError($"SyntaxError: The sorting field of the data schema contains '{context.Character}' illegal character.");
+				context.OnError(string.Format(Properties.Resources.Schema_SortingFieldIllegalCharacter_Message, context.Character));
 				return false;
 		}
 	}
@@ -381,15 +465,42 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 		if(context.IsWhitespace())
 			return true;
 
-		if(context.IsLetterOrUnderscore() || context.Character == '~' || context.Character == '!')
+		if(context.IsLetterOrUnderscore() || context.Character == '~' || context.Character == '-' || context.Character == '+')
 		{
 			context.Accept();
 			context.State = State.SortingField;
 			return true;
 		}
 
-		context.OnError($"SyntaxError: Contains the illegal character '{context.Character}' in the data schema.");
+		context.OnError(string.Format(Properties.Resources.Schema_IllegalCharacter_Message, context.Character));
 		return false;
+	}
+
+	private static bool DoSorted(ref StateContext context)
+	{
+		if(context.IsWhitespace())
+			return true;
+
+		switch(context.Character)
+		{
+			case ',':
+				context.CompleteCurrent();
+				context.State = State.None;
+				return true;
+			case '{':
+				context.Push();
+				context.State = State.None;
+				return true;
+			case '}':
+				context.CompleteCurrent();
+				context.EndItem();
+				context.Pop();
+				context.State = State.None;
+				return true;
+			default:
+				context.OnError(string.Format(Properties.Resources.Schema_IllegalCharacterAfterSorting_Message, context.Character));
+				return false;
+		}
 	}
 	#endregion
 
@@ -426,9 +537,11 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 		private readonly Action<string> _onError;
 		private readonly Func<SchemaEntryToken, IEnumerable<TMember>> _mapper;
 		private readonly Func<SchemaEntryToken, IEnumerable<TMember>> _unrecognized;
+		private readonly Func<TMember, bool> _expander;
 		private readonly SchemaEntryToken _token;
 		private SchemaMemberBase _current;
-		private Stack<SchemaMemberBase> _stack;
+		private SchemaMemberBase _pathParent;
+		private Stack<Scope> _stack;
 		private IDictionary<string, TMember> _members;
 		#endregion
 
@@ -440,16 +553,18 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 		#endregion
 
 		#region 构造函数
-		public StateContext(int length, Func<SchemaEntryToken, IEnumerable<TMember>> mapper, Func<SchemaEntryToken, IEnumerable<TMember>> unrecognized, Action<string> onError, object data, IEnumerable<TMember> members)
+		public StateContext(int length, Func<SchemaEntryToken, IEnumerable<TMember>> mapper, Func<SchemaEntryToken, IEnumerable<TMember>> unrecognized, Func<TMember, bool> expander, Action<string> onError, object data, IEnumerable<TMember> members)
 		{
 			_bufferIndex = 0;
 			_buffer = new char[length];
 			_current = null;
+			_pathParent = null;
 			_mapper = mapper;
 			_unrecognized = unrecognized;
+			_expander = expander;
 			_onError = onError;
 			_token = new SchemaEntryToken(data);
-			_stack = new Stack<SchemaMemberBase>();
+			_stack = new Stack<Scope>();
 
 			this.Character = '\0';
 			this.Position = 0;
@@ -468,52 +583,84 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 
 		#region 公共方法
 		public void Accept() => _buffer[_bufferIndex++] = Character;
-		public void OnError(string message) => _onError?.Invoke($"{message} (at position {this.Position}).");
-		public SchemaMemberBase Peek() => _stack.Count > 0 ? _stack.Peek() : null;
+		public void OnError(string message) => _onError?.Invoke(string.Format(Properties.Resources.Schema_ErrorPosition_Message, message, this.Position));
+		public SchemaMemberBase Peek() => _stack.Count > 0 ? _stack.Peek().Member : null;
 		public SchemaMemberBase Pop()
 		{
 			if(_stack == null || _stack.Count == 0)
 			{
-				this.OnError("ParsingError: The parsing stack is empty.");
+				this.OnError(Properties.Resources.Schema_EmptyParsingStack_Message);
 				return null;
 			}
 
-			return _stack.Pop();
+			var scope = _stack.Pop();
+			_current = null;
+			_pathParent = null;
+
+			if(scope.Cleared && !scope.Member.HasChildren && !object.ReferenceEquals(scope.Member, SchemaMemberBase.Ignores))
+				this.Remove(scope.Member);
+
+			return scope.Member;
 		}
 
-		public void Push() => _stack.Push(_current ?? SchemaMemberBase.Ignores);
+		public void Push()
+		{
+			_stack.Push(new Scope(_current ?? SchemaMemberBase.Ignores));
+			_current = null;
+			_pathParent = null;
+		}
+
+		public void EndItem()
+		{
+			_bufferIndex = 0;
+			_current = null;
+			_pathParent = null;
+			this.Flags.HasWhitespace(false);
+		}
+
+		public void SealPath() => _pathParent = null;
 		public readonly bool IsWhitespace() => char.IsWhiteSpace(Character);
 		public readonly bool IsLetterOrUnderscore() => (Character >= 'a' && Character <= 'z') || (Character >= 'A' && Character <= 'Z') || Character == '_';
 		public readonly bool IsLetterOrDigitOrUnderscore() => (Character >= 'a' && Character <= 'z') || (Character >= 'A' && Character <= 'Z') || (Character >= '0' && Character <= '9') || Character == '_';
 
-		public void Exclude(string name = null)
+		public bool Exclude(string name = null)
 		{
 			var parent = this.Peek();
 
 			if(string.IsNullOrEmpty(name))
 				name = this.GetBuffer();
 
-			if(string.IsNullOrEmpty(name) || name == "!" || name == "*")
+			if(string.IsNullOrEmpty(name) || name == "!")
 			{
 				if(parent == null)
 					_members.Clear();
-				else if(parent.HasChildren)
-					parent.ClearChildren();
-			}
-			else
-			{
-				if(parent == null)
-					_members.Remove(name);
-				else if(parent.HasChildren)
-					parent.RemoveChild(name);
+				else
+				{
+					if(parent.HasChildren)
+						parent.ClearChildren();
+
+					_stack.Peek().Cleared = true;
+				}
+
+				_current = null;
+				_pathParent = null;
+				return true;
 			}
 
+			var parts = name.Split('.');
+
+			if(!this.Validate(parts, parent))
+				return false;
+
+			this.Remove(parts, parent);
 			_current = null;
+			_pathParent = null;
+			return true;
 		}
 
 		public void Include(string name = null)
 		{
-			var parent = this.Peek();
+			var parent = _pathParent ?? this.Peek();
 			TMember current;
 
 			if(string.IsNullOrEmpty(name))
@@ -542,6 +689,42 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 				else
 					this.Map(name, parent);
 			}
+
+			if(_stack.Count > 0 && object.ReferenceEquals(parent, _stack.Peek().Member))
+				_stack.Peek().Cleared = false;
+		}
+
+		public bool IncludePath()
+		{
+			this.Include();
+
+			if(_current == null)
+			{
+				this.OnError(Properties.Resources.Schema_MissingMemberBeforePeriod_Message);
+				return false;
+			}
+
+			_pathParent = _current;
+			_current = null;
+			return true;
+		}
+
+		public void CompleteInclude()
+		{
+			this.Include();
+			this.CompleteCurrent();
+		}
+
+		public void CompleteCurrent()
+		{
+			if(_current is TMember member && _expander(member))
+			{
+				var current = _current;
+				this.Map("*", current);
+				_current = current;
+			}
+
+			this.EndItem();
 		}
 
 		public bool AddSorting()
@@ -551,29 +734,29 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 
 			if(_bufferIndex == 0)
 			{
-				this.OnError("SyntaxError: Expected sorting fields in the data schema, but missing.");
+				this.OnError(Properties.Resources.Schema_MissingSortingFields_Message);
 				return false;
 			}
 
 			if(_bufferIndex == 1)
 			{
-				if(_buffer[0] == '~' || _buffer[0] == '!')
+				if(_buffer[0] == '~' || _buffer[0] == '-' || _buffer[0] == '+')
 				{
-					this.OnError("SyntaxError: Expected sorting descending field in the data schema, but missing.");
+					this.OnError(Properties.Resources.Schema_MissingSortingField_Message);
 					return false;
 				}
 			}
 
-			var nameIndex = _buffer[0] == '~' || _buffer[0] == '!' ? 1 : 0;
+			var nameIndex = _buffer[0] == '~' || _buffer[0] == '-' || _buffer[0] == '+' ? 1 : 0;
 			if(nameIndex >= _bufferIndex || char.IsDigit(_buffer[nameIndex]))
 			{
-				this.OnError("SyntaxError: The sorting field of the data schema cannot start with a digit.");
+				this.OnError(Properties.Resources.Schema_SortingFieldStartsWithDigit_Message);
 				return false;
 			}
 
-			var sorting = _buffer[0] == '~' || _buffer[0] == '!' ?
-						  Sorting.Descending(new string(_buffer, 1, _bufferIndex - 1)) :
-						  Sorting.Ascending(new string(_buffer, 0, _bufferIndex));
+			var sorting = _buffer[0] == '~' || _buffer[0] == '-' ?
+						  Sorting.Descending(new string(_buffer, nameIndex, _bufferIndex - nameIndex)) :
+						  Sorting.Ascending(new string(_buffer, nameIndex, _bufferIndex - nameIndex));
 
 			_bufferIndex = 0;
 
@@ -608,7 +791,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 		{
 			if(!this.TryGetBuffer(out var buffer))
 			{
-				this.OnError("SyntaxError: Expected limit in the data schema, but missing.");
+				this.OnError(Properties.Resources.Schema_MissingLimit_Message);
 				return false;
 			}
 
@@ -624,7 +807,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 				return true;
 			}
 
-			this.OnError($"SyntaxError: The limit '{buffer}' of the data schema is invalid or overflowed.");
+			this.OnError(string.Format(Properties.Resources.Schema_InvalidOrOverflowedLimit_Message, buffer));
 			return false;
 		}
 
@@ -634,7 +817,7 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 
 			if(_stack != null && _stack.Count > 0)
 			{
-				this.OnError("SyntaxError: The data schema contains an unclosed member block.");
+				this.OnError(Properties.Resources.Schema_UnclosedMemberBlock_Message);
 				return false;
 			}
 
@@ -647,20 +830,28 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 					return true;
 				case State.Asterisk:
 					this.Include("*");
+					this.EndItem();
 					break;
 				case State.Exclude:
-					this.Exclude();
+					if(!this.Exclude())
+						return false;
+
+					this.EndItem();
 					break;
 				case State.Include:
-					this.Include();
+					this.CompleteInclude();
 					break;
 				case State.Limit:
 					if(!this.TrySetLimit())
 						return false;
 
+					this.CompleteCurrent();
+					break;
+				case State.Sorted:
+					this.CompleteCurrent();
 					break;
 				default:
-					this.OnError($"SyntaxError: The data schema expression is incorrect({State}).");
+					this.OnError(string.Format(Properties.Resources.Schema_IncorrectExpression_Message, State));
 					return false;
 			}
 
@@ -670,6 +861,74 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 		#endregion
 
 		#region 私有方法
+		private bool Validate(string[] parts, SchemaMemberBase parent)
+		{
+			for(int i = 0; i < parts.Length; i++)
+			{
+				_token.Name = parts[i];
+				_token.Parent = (TMember)parent;
+
+				var items = _mapper(_token) ?? _unrecognized(_token);
+				TMember resolved = null;
+
+				if(items != null)
+				{
+					foreach(var item in items)
+					{
+						if(string.Equals(item.Name, parts[i], StringComparison.OrdinalIgnoreCase))
+						{
+							resolved = item;
+							break;
+						}
+					}
+				}
+
+				if(resolved == null)
+				{
+					this.OnError(string.Format(Properties.Resources.Schema_UnrecognizedMember_Message, parts[i]));
+					return false;
+				}
+
+				parent = resolved;
+			}
+
+			return true;
+		}
+
+		private void Remove(string[] parts, SchemaMemberBase parent)
+		{
+			SchemaMemberBase current = null;
+
+			for(int i = 0; i < parts.Length; i++)
+			{
+				if(parent == null)
+				{
+					if(!_members.TryGetValue(parts[i], out var member))
+						return;
+
+					current = member;
+				}
+				else if(!parent.TryGetChild(parts[i], out current))
+					return;
+
+				if(i == parts.Length - 1)
+				{
+					this.Remove(current);
+					return;
+				}
+
+				parent = current;
+			}
+		}
+
+		private void Remove(SchemaMemberBase member)
+		{
+			if(member.Parent == null)
+				_members.Remove(member.Name);
+			else
+				member.Parent.RemoveChild(member.Name);
+		}
+
 		private void Map(string name, SchemaMemberBase parent)
 		{
 			//重置当前段
@@ -706,6 +965,14 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 						_token.Parent.AddChild(_current = item);
 				}
 			}
+		}
+		#endregion
+
+		#region 嵌套子类
+		private sealed class Scope(SchemaMemberBase member)
+		{
+			public SchemaMemberBase Member { get; } = member;
+			public bool Cleared { get; set; }
 		}
 		#endregion
 	}
@@ -745,9 +1012,12 @@ public abstract class SchemaParserBase<TMember> : ISchemaParser, ISchemaParser<T
 		Asterisk,
 		Include,
 		Exclude,
+		Path,
+		ExcludePath,
 		Limit,
 		SortingField,
 		SortingGutter,
+		Sorted,
 	}
 	#endregion
 }
