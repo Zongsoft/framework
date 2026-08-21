@@ -1,4 +1,4 @@
-# Zongsoft.Messaging.ZeroMQ Message Queue Plugin Library
+# Zongsoft.Messaging.ZeroMQ Message Queue Plugin
 
 ![License](https://img.shields.io/github/license/Zongsoft/framework)
 ![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Messaging.ZeroMQ)
@@ -10,101 +10,217 @@
 
 -----
 
-## Samples
+<a name="abstract"></a>
+## Abstract
 
-The `samples` directory contains two interactive .NET 10 applications:
+Zongsoft.Messaging.ZeroMQ is a [NetMQ](https://github.com/zeromq/netmq)-based adapter for the messaging and communication abstractions in [Zongsoft.Core](../../Zongsoft.Core). It provides topic publishing and subscription through `IMessageQueue`, and also supplies request/response and event-channel adapters.
 
-- [Server sample](samples/server/Program.cs) starts the ZeroMQ message exchange powered by `ZeroQueueServer`.
-- [Client sample](samples/client/Program.cs) connects through `ZeroQueue` and can subscribe, unsubscribe, publish, and receive messages.
+The included `ZeroQueueServer` is a lightweight XPUB/XSUB exchange. Clients first query its discovery endpoint, then connect to the returned publisher and subscriber endpoints. The exchange is stateless and is intended for low-latency, transient message distribution rather than durable queueing.
 
-The server listens for exchange discovery requests on port `7969` and starts the sample data channels on ports `32101` and `32102`. The client connects to `127.0.0.1:7969` and uses the `Demo` message group by default.
+<a name="features"></a>
+## Features
 
-> The Server sample binds to all network interfaces without authentication or encryption. Use it only in a trusted development or test environment.
+- Implements the Zongsoft `IMessageQueue`, `IRequester`, `IResponder`, and `IEventChannel` abstractions;
+- Supports multiple publishers and subscribers through an XPUB/XSUB exchange;
+- Supports topic prefixes, optional message groups, instance filtering, and heartbeats;
+- Supports Brotli payload compression above a configurable threshold;
+- Supports standalone use and Zongsoft plugin-based hosting;
+- Targets .NET 8, .NET 9, and .NET 10.
 
-### Prerequisites and build
+<a name="installation"></a>
+## Installation
 
-Install the .NET 10 SDK. From the repository root, build the core library first and then the ZeroMQ solution:
+Install the NuGet package:
 
 ```shell
-dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -f net10.0
+dotnet add package Zongsoft.Messaging.ZeroMQ
+```
+
+To build from this repository, build Zongsoft.Core first:
+
+```shell
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj
 dotnet build messaging/zero/Zongsoft.Messaging.ZeroMQ.slnx
 ```
 
-### 1. Start the Server
+<a name="topology"></a>
+## Exchange Topology
 
-Open the first terminal and run:
+| Endpoint | Default in packaged configuration | Purpose |
+| --- | :---: | --- |
+| Discovery | `7969` | Clients request the two data endpoint ports. |
+| Publisher ingress | `32101` | Application publishers connect here. |
+| Subscriber egress | `32102` | Application subscribers connect here. |
 
-```shell
-dotnet run --project messaging/zero/samples/server/Zongsoft.Messaging.ZeroMQ.Samples.Server.csproj
+`7969` is the built-in discovery-port default. The two data ports are configurable; when they are omitted, `ZeroQueueServer` binds random ports and returns them through discovery. Prefer fixed data ports in deployments so existing clients can reconnect to the same endpoints after an exchange restart.
+
+The server binds TCP endpoints on all network interfaces and does not configure authentication or encryption. Restrict access at the host or network boundary, or add an authenticated transport before using it across an untrusted network.
+
+<a name="configuration"></a>
+## Configuration
+
+### Server
+
+The packaged daemon plugin starts `ZeroQueueServer` automatically. Configure its data endpoints under `/Messaging/ZeroMQ/Servers`:
+
+```xml
+<configuration>
+	<option path="/Messaging/ZeroMQ">
+		<servers port="32101,32102">
+			<server server.name="unnamed" port="*" />
+		</servers>
+	</option>
+</configuration>
 ```
 
-The exchange starts automatically with management port `7969`, incoming data port `32101`, and outgoing data port `32102`.
+The collection-level `port` is used by the default server or when no matching named server entry exists. A matching `<server>` entry supplies its own pair. The first number is publisher ingress and the second is subscriber egress; `*` selects random data ports.
 
-| Command | Description |
+For standalone applications, start the exchange directly:
+
+```csharp
+using var server = new ZeroQueueServer();
+await server.StartAsync(["--incoming:32101", "--outgoing:32102"]);
+```
+
+### Client Connection
+
+Define a `ZeroMQ` connection under `/Messaging/ConnectionSettings`:
+
+```xml
+<configuration>
+	<option path="/Messaging">
+		<connectionSettings default="ZeroMQ">
+			<connectionSetting connectionSetting.name="ZeroMQ"
+			                   driver="ZeroMQ"
+			                   value="server=127.0.0.1;port=7969;group=Demo;client=MyApplication;" />
+		</connectionSettings>
+	</option>
+</configuration>
+```
+
+| Setting | Default | Description |
+| --- | --- | --- |
+| `Server` | required | Host name or IP address of the discovery endpoint. Do not include `tcp://`. |
+| `Port` | `7969` | Discovery endpoint port. |
+| `Topic` | empty | Topic used when `ProduceAsync` or `SubscribeAsync` omits a topic. |
+| `Group` | empty | Prefix added as `Group:Topic` to isolate applications sharing an exchange. |
+| `Client` | empty | Stable client name used as part of an automatically generated instance identifier. |
+| `Instance` | generated | Explicit producer instance identifier. Empty or `*` generates a unique identifier. |
+| `Filter` | excludes self | Comma-separated instance filter controlling which producers are accepted. |
+| `Timeout` | `10s` | Discovery and subscription-synchronization timeout. |
+| `Heartbeat` | `10s` | Heartbeat interval. A value less than or equal to zero disables heartbeats. |
+
+The default filter excludes messages produced by the same queue instance. Use `Filter=*` to accept every instance, `Filter=.` (or `~`) to accept only the current instance, ordinary identifiers as an allow list, and `!identifier` entries as exclusions.
+
+<a name="usage"></a>
+## Usage
+
+### Publish and Subscribe
+
+Create a queue directly when the application does not use the Zongsoft plugin container:
+
+```csharp
+using System.Text;
+using Zongsoft.Messaging.ZeroMQ;
+using Zongsoft.Messaging.ZeroMQ.Configuration;
+
+var settings = ZeroConnectionSettingsDriver.Instance.GetSettings(
+	"ZeroMQ",
+	"server=127.0.0.1;port=7969;group=Demo;client=Sample;");
+
+using var queue = new ZeroQueue("ZeroMQ", settings);
+
+var consumer = await queue.SubscribeAsync("orders/created", message =>
+	Console.WriteLine(Encoding.UTF8.GetString(message.Data.Span)));
+
+await queue.ProduceAsync("orders/created", "Order #1001".AsMemory());
+
+await consumer.UnsubscribeAsync();
+```
+
+When hosted as a plugin, resolve the named queue from the `ZeroMQ` `IMessageQueueProvider` and use the same `ProduceAsync` and `SubscribeAsync` APIs.
+
+Subscriptions use prefix matching. One `ZeroQueue` keeps one consumer for each effective topic; subscribing to the same effective topic again returns the existing consumer and does not replace its handler or options. With `Group=Demo`, the effective topic and the `Message.Topic` received by the handler are both prefixed, for example `Demo:orders/created`.
+
+### Compression
+
+Set the `Compressive` property to the minimum payload size, in bytes, at which Brotli compression is enabled:
+
+```csharp
+var options = new MessageEnqueueOptions();
+options.Properties["Compressive"] = 4 * 1024;
+
+await queue.ProduceAsync("documents/updated", payload, options);
+```
+
+Compression is currently the only `MessageEnqueueOptions` behavior implemented by this adapter.
+
+| Messaging option | Support |
 | --- | --- |
-| `info` | Show the Server state and management port. |
-| `stop` | Stop the exchange and release all three ports. |
-| `start --incoming:32101 --outgoing:32102` | Restart the exchange with the sample data ports. |
+| `Properties["Compressive"]` | Supported; enables Brotli above the specified byte threshold. |
+| Tags | Not used by the ZeroMQ adapter. |
+| Delay and expiration | Not implemented. |
+| Priority | Not implemented. |
+| Reliability | The transport remains transient, best-effort PUB/SUB. |
+| Subscription reliability and fallback | Not implemented by the current handler dispatcher. |
 
-### 2. Start a subscriber
+### Request and Response
 
-Open a second terminal and start the Client sample:
+`ZeroRequester` and `ZeroResponder` adapt queue topics to the Zongsoft communication interfaces. A request is published to its URL topic, and responses use the `<url>/reply` topic by default:
 
-```shell
-dotnet run --project messaging/zero/samples/client/Zongsoft.Messaging.ZeroMQ.Samples.Client.csproj
+```csharp
+var requester = new ZeroRequester { Queue = queue };
+var token = await requester.RequestAsync("services/ping", "Ping"u8.ToArray());
+
+foreach(var response in token.GetResponses(TimeSpan.FromSeconds(3)))
+	Console.WriteLine(Encoding.UTF8.GetString(response.Data.Span));
 ```
 
-Subscribe to a test topic:
+A responder subscribes to the URLs exposed by its registered handlers:
 
-```text
-subscribe samples/demo
+```csharp
+var responder = new ZeroResponder { Queue = queue };
+responder.Handlers.Add(new PingHandler());
+await responder.StartAsync([]);
 ```
 
-The client adds the configured `Demo` group to the network topic automatically. All Client sample instances use the same group and can communicate with each other.
+The handler receives an `IRequest` and can return data through the supplied `IResponder`. See [requester tests](test/ZeroRequesterTests.cs) and [responder tests](test/ZeroResponderTests.cs) for complete handler examples.
 
-### 3. Publish and verify a message
+### Event Channel
 
-Open a third terminal and start another Client sample with the same `dotnet run` command. Each queue derives a unique instance identifier, so both clients can remain connected. Publish a message:
+`ZeroQueueEventChannel` connects an `EventExchanger` to queue topics under `Events/...`:
 
-```text
-produce --topic:samples/demo "Hello from the ZeroMQ sample"
+```csharp
+await using var channel = new ZeroQueueEventChannel(queue);
+await channel.OpenAsync(exchanger);
+await channel.SendAsync(eventContext);
 ```
 
-The alias `send` can be used instead of `produce`. The publishing client prints the topic and elapsed time. The subscriber terminal should display output similar to:
+The plugin manifest registers this channel automatically for hosted applications. In the current implementation, leave `Group` empty for request/response and event-channel queues; grouped physical topics are not normalized by these adapters.
 
-```text
-[Received]#1 Topic:Demo:samples/demo
-[1]Hello from the ZeroMQ sample
-```
+<a name="semantics"></a>
+## Delivery Semantics
 
-### Batch verification
+This adapter follows ZeroMQ PUB/SUB behavior:
 
-Use the `round` option to publish the same payload repeatedly:
+- Messages are transient and are not persisted by `ZeroQueueServer`;
+- There is no broker acknowledgement, consumer acknowledgement, retry, deduplication, or replay;
+- Messages may be dropped while peers connect or reconnect, when no matching subscription has propagated, or when a socket high-water mark is reached;
+- `ProduceAsync` completes after the message is accepted by the queue's local send path, not after a subscriber receives or handles it;
+- `SubscribeAsync` synchronizes the subscriber connection, but does not establish an end-to-end delivery acknowledgement with publishers;
+- Empty payloads should be avoided with the current release.
 
-```text
-produce --topic:samples/demo --round:1000 "Load test message"
-```
+Use a durable broker or add an application-level acknowledgement protocol when loss is not acceptable.
 
-The subscriber displays every received message with an incrementing counter, and the publishing client reports the total elapsed time for a quick throughput check.
+<a name="samples"></a>
+## Samples and Troubleshooting
 
-### Restart verification
+The [.NET 10 samples](samples) contain an interactive exchange server and client. Start the server first, then run one client as a subscriber and another as a publisher. See the [sample guide](samples/README.md) for commands.
 
-Keep both clients running, then enter the following commands in the Server terminal:
+If messages are not received:
 
-```text
-stop
-start --incoming:32101 --outgoing:32102
-```
-
-The NetMQ sockets reconnect to the restored endpoints automatically. Publish another message and verify that the existing subscriber receives it without subscribing again.
-
-### Client commands
-
-| Command | Description |
-| --- | --- |
-| `info` | Show the queue instance identifier, connection settings, and active subscriptions. |
-| `subscribe <topic> [...]` | Subscribe to one or more topics. Alias: `sub`. |
-| `unsubscribe <topic> [...]` | Remove one or more subscriptions. Alias: `unsub`. |
-| `produce --topic:<topic> [--round:<count>] <message> [...]` | Publish one or more messages. Alias: `send`. |
-| `reset` | Reset the displayed receive counter. |
-| `close` | Dispose the ZeroMQ queue; restart the Client sample to continue testing. |
+1. Verify that the discovery port and both returned data ports are reachable in the required directions;
+2. Verify that publisher and subscriber use the same `Group` and compatible topic prefixes;
+3. Check the `Filter` setting—self-produced messages are excluded by default;
+4. Start subscriptions before publishing and allow for PUB/SUB subscription propagation;
+5. Keep data ports fixed across server restarts, or recreate queues so they perform discovery again.
