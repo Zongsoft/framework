@@ -160,13 +160,6 @@ The following forms are equivalent:
 ```
 > **Note:** All scalar properties plus the `Creator` navigation property, but only `Name` and `Nickname` are loaded for `Creator`.
 
-Nested braces can be replaced or mixed with dotted paths. The following expressions produce the same member tree:
-
-```graphql
-*, User, Department.*, Department.Manager.Name, Department.Manager.FullName, Department.Manager.Gender, !Department.Manager.Secret
-*, User{*}, Department{*, Manager{Name,FullName,Gender,!Secret}}
-```
-
 ```graphql
 *, Users{*}
 ```
@@ -192,12 +185,29 @@ Nested braces can be replaced or mixed with dotted paths. The following expressi
 ```
 > **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, sorted by `CreatedTime` descending and `Grade` ascending, then limited to at most 20 records.
 
+-----
+
+💡 Nested braces can be replaced or mixed with dotted paths. The following expressions produce the same member tree:
+
+```graphql
+*, User,
+Department.*,
+Department.Manager.Name,
+Department.Manager.Gender,
+Department.Manager.FullName,
+!Department.Manager.Secret
+```
+
+```graphql
+*, User{*}, Department{*, Manager{Name,Gender,FullName,!Secret}}
+```
+
 <a name="schema-computed"></a>
 ### Computed Members
 
 An explicitly named member that is not mapped may still be used when the corresponding model defines a public instance property or field with that name. Such a computed member participates in the returned model shape but does not generate a database field. An unknown name that exists in neither the mapping nor the model is invalid. The `*` wildcard includes mapped scalar properties only and never adds computed members automatically.
 
-Any mapped inputs required by a computed property must be included explicitly. For example, use `Birthdate,Age` when `Age` is computed from `Birthdate`.
+💡 **Note:** Any mapped inputs required by a computed property must be included explicitly.
 
 
 <a name="mapping"></a>

@@ -160,13 +160,6 @@ Users:20(-CreatedTime,+Grade){*}
 ```
 > 表示所有简单属性，并且只加载 `Creator` 导航属性的 `Name` 和 `Nickname`。
 
-嵌套花括号可以改写为点路径，也可以与点路径混用。以下表达式会生成相同的成员树：
-
-```graphql
-*, User, Department.*, Department.Manager.Name, Department.Manager.FullName, Department.Manager.Gender, !Department.Manager.Secret
-*, User{*}, Department{*, Manager{Name,FullName,Gender,!Secret}}
-```
-
 ```graphql
 *, Users{*}
 ```
@@ -192,12 +185,29 @@ Users:20(-CreatedTime,+Grade){*}
 ```
 > 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_；该集合先按 `CreatedTime` 倒序、`Grade` 正序排序，再最多加载 20 条。
 
+-----
+
+💡 嵌套花括号可以改写为点路径，也可以与点路径混用。以下表达式会生成相同的成员树：
+
+```graphql
+*, User,
+Department.*,
+Department.Manager.Name,
+Department.Manager.Gender,
+Department.Manager.FullName,
+!Department.Manager.Secret
+```
+
+```graphql
+*, User{*}, Department{*, Manager{Name,Gender,FullName,!Secret}}
+```
+
 <a name="schema-computed"></a>
 ### 计算成员
 
 如果 schema 中显式声明的成员没有映射，但对应模型中定义了同名的公共实例属性或字段，仍可将它作为计算成员使用。计算成员会参与返回的模型形状，但不会生成数据库字段；既不存在于映射、也不存在于模型中的名称是非法成员。通配符 `*` 只包含映射的简单属性，不会自动加入计算成员。
 
-计算属性依赖的映射字段必须显式包含在 schema 中。例如 `Age` 由 `Birthdate` 计算时，应写成 `Birthdate,Age`。
+💡 提示：计算属性依赖的映射字段必须显式包含在 schema 中。
 
 
 <a name="mapping"></a>
