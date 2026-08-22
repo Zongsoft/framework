@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Etcd library.
  *
@@ -28,24 +28,31 @@
  */
 
 using System;
-using System.Net;
 using System.ComponentModel;
-using System.Collections.Generic;
 
-using Zongsoft.Components;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Etcd.Configuration;
 
-internal class EtcdConnectionSettings : ConnectionSettingsBase<EtcdConnectionSettingsDriver>
+public sealed class EtcdConnectionSettings : ConnectionSettingsBase<EtcdConnectionSettingsDriver>
 {
-	#region 构造函数
 	public EtcdConnectionSettings(EtcdConnectionSettingsDriver driver, string settings) : base(driver, settings) { }
 	public EtcdConnectionSettings(EtcdConnectionSettingsDriver driver, string name, string settings) : base(driver, name, settings) { }
-	#endregion
 
-	#region 公共属性
-	public ICollection<EndPoint> Servers { get; set; }
+	[ConnectionSetting(true)]
+	[DefaultValue("127.0.0.1")]
+	public string Server
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
+	[DefaultValue(2379)]
+	public int Port
+	{
+		get => this.GetValue<int>();
+		set => this.SetValue(value);
+	}
 
 	public string UserName
 	{
@@ -79,5 +86,4 @@ internal class EtcdConnectionSettings : ConnectionSettingsBase<EtcdConnectionSet
 		get => this.GetValue<TimeSpan>();
 		set => this.SetValue(value);
 	}
-	#endregion
 }

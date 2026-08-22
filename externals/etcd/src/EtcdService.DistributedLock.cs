@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Etcd library.
  *
@@ -28,14 +28,9 @@
  */
 
 using System;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
-using dotnet_etcd;
-using dotnet_etcd.interfaces;
 using Google.Protobuf;
 
 using Zongsoft.Services;
@@ -46,71 +41,288 @@ namespace Zongsoft.Externals.Etcd;
 [Service<IDistributedLock>(Tags = "etcd")]
 partial class EtcdService : IDistributedLockManager
 {
-	#region 公共属性
 	public IDistributedLockTokenizer Tokenizer { get; set; }
-	#endregion
 
-	#region 公共方法
-	public async ValueTask<IDistributedLock> AcquireAsync(string key, TimeSpan expiry, CancellationToken cancellation = default)
+	async ValueTask<TimeSpan?> IDistributedLockManager.GetExpiryAsync(string key, CancellationToken cancellation)
 	{
-		var request = new Etcdserverpb.LeaseGrantRequest()
-		{
-			TTL = (long)expiry.TotalSeconds
-		};
+		if(string.IsNullOrEmpty(key))
+			return null;
 
-		var response = await _client.LeaseGrantAsync(request, null, null, cancellation);
-		var req = new V3Lockpb.LockRequest()
-		{
-			Name = ByteString.CopyFromUtf8(key),
-			Lease = response.ID
-		};
+		cancellation.ThrowIfCancellationRequested();
+		var client = await this.ConnectAsync(cancellation);
+		var response = await client.GetAsync(GetKey(key), null, null, cancellation);
+		if(response.Kvs.Count == 0 || response.Kvs[0].Lease == 0)
+			return null;
 
-		try
+		var lease = await client.LeaseTimeToLiveAsync(new Etcdserverpb.LeaseTimeToLiveRequest
 		{
-			var res = await _client.LockAsync(req, null, null, cancellation);
-			res.Key.ToStringUtf8();
-			return new DistributedLock(this, key, res.ToByteArray(), expiry, true);
-		}
-		catch(Grpc.Core.RpcException ex) when(ex.StatusCode == Grpc.Core.StatusCode.DeadlineExceeded)
-		{
-			throw;
-		}
+			ID = response.Kvs[0].Lease,
+			Keys = false,
+		}, null, null, cancellation);
+		return lease.TTL > 0 ? TimeSpan.FromSeconds(lease.TTL) : null;
 	}
 
-	public async ValueTask<TimeSpan?> GetExpiryAsync(string key, CancellationToken cancellation = default)
-	{
-		var request = new Etcdserverpb.LeaseTimeToLiveRequest()
-		{
-			Keys = false,
-		};
+	public ValueTask<IDistributedLock> AcquireAsync(string key, TimeSpan expiry, CancellationToken cancellation = default) =>
+		this.AcquireAsync(key, new DistributedLockOptions(expiry), cancellation);
 
-		var response = await _client.LeaseTimeToLiveAsync(new Etcdserverpb.LeaseTimeToLiveRequest(), null, null, cancellation);
-		return response.TTL > 0 ? TimeSpan.FromSeconds(response.TTL) : null;
+	public async ValueTask<IDistributedLock> AcquireAsync(string key, DistributedLockOptions options, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(key))
+			throw new ArgumentNullException(nameof(key));
+		ArgumentNullException.ThrowIfNull(options);
+		if(options.RenewalInterval < TimeSpan.Zero || options.RenewalInterval >= options.Expiry)
+			throw new ArgumentOutOfRangeException(nameof(options));
+
+		var tokenizer = this.Tokenizer ??= DistributedLockTokenizer.Random;
+		var token = tokenizer.Tokenize();
+		var fencingToken = await this.AcquireAsync(key, token, options.Expiry, cancellation);
+		return new DistributedLock(this, key, token, options.Expiry, fencingToken, options.RenewalInterval);
+	}
+
+	internal async ValueTask<long> AcquireAsync(string key, byte[] token, TimeSpan expiry, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(key))
+			throw new ArgumentNullException(nameof(key));
+		if(token == null || token.Length == 0)
+			throw new ArgumentNullException(nameof(token));
+		if(expiry <= TimeSpan.Zero)
+			throw new ArgumentOutOfRangeException(nameof(expiry));
+
+		cancellation.ThrowIfCancellationRequested();
+		var client = await this.ConnectAsync(cancellation);
+		var lease = await client.LeaseGrantAsync(new Etcdserverpb.LeaseGrantRequest { TTL = GetLeaseSeconds(expiry) }, null, null, cancellation);
+		var lockKey = ByteString.CopyFromUtf8(GetKey(key));
+		try
+		{
+			var response = await client.TransactionAsync(new Etcdserverpb.TxnRequest
+			{
+				Compare =
+				{
+					new Etcdserverpb.Compare
+					{
+						Key = lockKey,
+						Target = Etcdserverpb.Compare.Types.CompareTarget.Create,
+						Result = Etcdserverpb.Compare.Types.CompareResult.Equal,
+						CreateRevision = 0,
+					},
+				},
+				Success =
+				{
+					new Etcdserverpb.RequestOp
+					{
+						RequestPut = new Etcdserverpb.PutRequest
+						{
+							Key = lockKey,
+							Value = ByteString.CopyFrom(token),
+							Lease = lease.ID,
+						},
+					},
+				},
+			}, null, null, cancellation);
+
+			if(response.Succeeded)
+				return response.Header.Revision;
+		}
+		catch
+		{
+			await RevokeLeaseAsync(client, lease.ID);
+			throw;
+		}
+
+		await RevokeLeaseAsync(client, lease.ID);
+		return 0;
+	}
+
+	internal async ValueTask<bool> RenewAsync(string key, byte[] token, TimeSpan expiry, CancellationToken cancellation)
+	{
+		cancellation.ThrowIfCancellationRequested();
+		var client = await this.ConnectAsync(cancellation);
+		var physicalKey = GetKey(key);
+		var current = await client.GetAsync(physicalKey, null, null, cancellation);
+		if(current.Kvs.Count == 0 || !current.Kvs[0].Value.Span.SequenceEqual(token))
+			return false;
+
+		var entry = current.Kvs[0];
+		var lease = await client.LeaseGrantAsync(new Etcdserverpb.LeaseGrantRequest { TTL = GetLeaseSeconds(expiry) }, null, null, cancellation);
+		var lockKey = ByteString.CopyFromUtf8(physicalKey);
+		try
+		{
+			var response = await client.TransactionAsync(new Etcdserverpb.TxnRequest
+			{
+				Compare =
+				{
+					new Etcdserverpb.Compare
+					{
+						Key = lockKey,
+						Target = Etcdserverpb.Compare.Types.CompareTarget.Mod,
+						Result = Etcdserverpb.Compare.Types.CompareResult.Equal,
+						ModRevision = entry.ModRevision,
+					},
+					new Etcdserverpb.Compare
+					{
+						Key = lockKey,
+						Target = Etcdserverpb.Compare.Types.CompareTarget.Value,
+						Result = Etcdserverpb.Compare.Types.CompareResult.Equal,
+						Value = ByteString.CopyFrom(token),
+					},
+				},
+				Success =
+				{
+					new Etcdserverpb.RequestOp
+					{
+						RequestPut = new Etcdserverpb.PutRequest { Key = lockKey, Value = ByteString.CopyFrom(token), Lease = lease.ID },
+					},
+				},
+			}, null, null, cancellation);
+
+			if(!response.Succeeded)
+			{
+				await RevokeLeaseAsync(client, lease.ID);
+				return false;
+			}
+		}
+		catch
+		{
+			await RevokeLeaseAsync(client, lease.ID);
+			throw;
+		}
+
+		if(entry.Lease != 0)
+			await RevokeLeaseAsync(client, entry.Lease);
+		return true;
 	}
 
 	public async ValueTask<bool> ReleaseAsync(string key, byte[] token, CancellationToken cancellation = default)
 	{
-		var response = await _client.UnlockAsync(key, null, null, cancellation);
-		return response != null;
-	}
-	#endregion
-
-	#region 内部方法
-	internal async ValueTask<bool> AcquireAsync(string key, byte[] token, TimeSpan expiry, CancellationToken cancellation = default)
-	{
-		if(string.IsNullOrEmpty(key))
-			throw new ArgumentNullException(nameof(key));
+		if(string.IsNullOrEmpty(key) || token == null || token.Length == 0)
+			return false;
 
 		cancellation.ThrowIfCancellationRequested();
+		var client = await this.ConnectAsync(cancellation);
+		var physicalKey = GetKey(key);
+		var current = await client.GetAsync(physicalKey, null, null, cancellation);
+		if(current.Kvs.Count == 0 || !current.Kvs[0].Value.Span.SequenceEqual(token))
+			return false;
 
+		var entry = current.Kvs[0];
+		var lockKey = ByteString.CopyFromUtf8(physicalKey);
+		var response = await client.TransactionAsync(new Etcdserverpb.TxnRequest
+		{
+			Compare =
+			{
+				new Etcdserverpb.Compare
+				{
+					Key = lockKey,
+					Target = Etcdserverpb.Compare.Types.CompareTarget.Value,
+					Result = Etcdserverpb.Compare.Types.CompareResult.Equal,
+					Value = ByteString.CopyFrom(token),
+				},
+			},
+			Success =
+			{
+				new Etcdserverpb.RequestOp
+				{
+					RequestDeleteRange = new Etcdserverpb.DeleteRangeRequest { Key = lockKey },
+				},
+			},
+		}, null, null, cancellation);
+
+		if(!response.Succeeded)
+			return false;
+		if(entry.Lease != 0)
+			await RevokeLeaseAsync(client, entry.Lease);
 		return true;
 	}
-	#endregion
 
-	#region 嵌套子类
-	private sealed class DistributedLock(EtcdService service, string key, byte[] token, TimeSpan expiry, bool isHeld) : DistributedLockBase<EtcdService>(service, key, token, expiry, isHeld)
+	private static long GetLeaseSeconds(TimeSpan expiry) => Math.Max(1L, checked((long)Math.Ceiling(expiry.TotalSeconds)));
+	private static async ValueTask RevokeLeaseAsync(dotnet_etcd.EtcdClient client, long leaseId)
 	{
-		protected override ValueTask<bool> OnEnterAsync(CancellationToken cancellation) => this.Manager?.AcquireAsync(this.Key, this.Token, this.Expiry, cancellation) ?? ValueTask.FromResult(false);
+		try { await client.LeaseRevokeAsync(new Etcdserverpb.LeaseRevokeRequest { ID = leaseId }); }
+		catch { }
 	}
-	#endregion
+
+	private sealed class DistributedLock : DistributedLockBase<EtcdService>
+	{
+		private readonly TimeSpan? _renewalInterval;
+		private CancellationTokenSource _renewalCancellation;
+		private Task _renewalTask;
+
+		public DistributedLock(EtcdService service, string key, byte[] token, TimeSpan expiry, long fencingToken, TimeSpan? renewalInterval) : base(service, key, token, expiry, fencingToken > 0, fencingToken)
+		{
+			_renewalInterval = renewalInterval > TimeSpan.Zero ? renewalInterval : null;
+			this.StartRenewal();
+		}
+
+		protected override void OnEntered() => this.StartRenewal();
+		protected override async ValueTask<bool> OnEnterAsync(CancellationToken cancellation)
+		{
+			var token = this.Manager == null ? 0 : await this.Manager.AcquireAsync(this.Key, this.Token, this.Expiry, cancellation);
+			this.FencingToken = token;
+			return token > 0;
+		}
+
+		protected override ValueTask<bool> OnRenewAsync(CancellationToken cancellation) =>
+			this.Manager?.RenewAsync(this.Key, this.Token, this.Expiry, cancellation) ?? ValueTask.FromResult(false);
+
+		protected override void Dispose(bool disposing)
+		{
+			if(disposing)
+				this.StopRenewalAsync().AsTask().GetAwaiter().GetResult();
+			base.Dispose(disposing);
+		}
+
+		protected override async ValueTask DisposeAsync(bool disposing)
+		{
+			if(disposing)
+				await this.StopRenewalAsync();
+			await base.DisposeAsync(disposing);
+		}
+
+		private void StartRenewal()
+		{
+			if(_renewalTask?.IsCompleted == true)
+			{
+				Interlocked.Exchange(ref _renewalTask, null);
+				Interlocked.Exchange(ref _renewalCancellation, null)?.Dispose();
+			}
+
+			if(!_renewalInterval.HasValue || !this.IsLocked || _renewalTask != null)
+				return;
+
+			_renewalCancellation = new CancellationTokenSource();
+			_renewalTask = this.RenewalLoopAsync(_renewalCancellation.Token);
+		}
+
+		private async ValueTask StopRenewalAsync()
+		{
+			var source = Interlocked.Exchange(ref _renewalCancellation, null);
+			source?.Cancel();
+			var task = Interlocked.Exchange(ref _renewalTask, null);
+			if(task != null)
+			{
+				try { await task; }
+				catch(OperationCanceledException) when(source?.IsCancellationRequested == true) { }
+			}
+			source?.Dispose();
+		}
+
+		private async Task RenewalLoopAsync(CancellationToken cancellation)
+		{
+			try
+			{
+				while(true)
+				{
+					await Task.Delay(_renewalInterval.Value, cancellation);
+					if(!await this.RenewAsync(cancellation))
+						return;
+				}
+			}
+			catch(OperationCanceledException) when(cancellation.IsCancellationRequested) { }
+			catch(Exception exception)
+			{
+				this.Lose();
+				Zongsoft.Diagnostics.Logging.GetLogging(typeof(DistributedLock)).Error(exception);
+			}
+		}
+	}
 }

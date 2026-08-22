@@ -1,3 +1,20 @@
 <Solution>
 	<Project Path="src/Zongsoft.Externals.Etcd.csproj" />
+	<Project Path="test/Zongsoft.Externals.Etcd.Tests.csproj" />
+
+	<Folder Name="/samples/sequence/">
+		<File Path="samples/sequence/README.md" />
+		<File Path="samples/sequence/README.zh-Hans.md" />
+		<Project Path="samples/sequence/Zongsoft.Externals.Etcd.Sequence.Samples.csproj" />
+	</Folder>
+	<Folder Name="/samples/distributed-lock/">
+		<File Path="samples/distributedlock/README.md" />
+		<File Path="samples/distributedlock/README.zh-Hans.md" />
+		<Project Path="samples/distributedlock/master/Zongsoft.Externals.Etcd.DistributedLock.Master.csproj" />
+		<Project Path="samples/distributedlock/slaver/Zongsoft.Externals.Etcd.DistributedLock.Slaver.csproj" />
+		<File Path="samples/distributedlock/master/README.md" />
+		<File Path="samples/distributedlock/master/README.zh-Hans.md" />
+		<File Path="samples/distributedlock/slaver/README.md" />
+		<File Path="samples/distributedlock/slaver/README.zh-Hans.md" />
+	</Folder>
 </Solution>

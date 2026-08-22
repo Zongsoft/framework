@@ -28,27 +28,21 @@
  */
 
 using System;
-using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
 
 using Zongsoft.Common;
-using Zongsoft.Caching;
 using Zongsoft.Services;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Etcd;
 
 [Service(
-	//typeof(IServiceProvider<ISequence>),
-	//typeof(IServiceProvider<IDistributedCache>),
+	typeof(IServiceProvider<ISequence>),
+	typeof(IServiceProvider<ISequenceBase>),
 	typeof(IServiceProvider<Services.Distributing.IDistributedLockManager>))]
 public class EtcdServiceProvider :
-	//IServiceProvider<ISequence>,
-	//IServiceProvider<IDistributedCache>,
+	IServiceProvider<ISequence>,
+	IServiceProvider<ISequenceBase>,
 	IServiceProvider<Services.Distributing.IDistributedLockManager>
 {
 	#region 静态字段
@@ -84,8 +78,8 @@ public class EtcdServiceProvider :
 	#endregion
 
 	#region 显式实现
-	//ISequence IServiceProvider<ISequence>.GetService(string name) => GetEtcd(name);
-	//IDistributedCache IServiceProvider<IDistributedCache>.GetService(string name) => GetEtcd(name);
+	ISequence IServiceProvider<ISequence>.GetService(string name) => GetEtcd(name);
+	ISequenceBase IServiceProvider<ISequenceBase>.GetService(string name) => GetEtcd(name);
 	Services.Distributing.IDistributedLockManager IServiceProvider<Services.Distributing.IDistributedLockManager>.GetService(string name) => GetEtcd(name);
 	#endregion
 }

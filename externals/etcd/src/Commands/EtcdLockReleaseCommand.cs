@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Etcd library.
  *
@@ -28,23 +28,29 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
-using Zongsoft.Common;
-using Zongsoft.Configuration;
+using Zongsoft.Components;
+using Zongsoft.Services.Distributing;
 
-namespace Zongsoft.Externals.Etcd.Configuration;
+namespace Zongsoft.Externals.Etcd.Commands;
 
-public sealed class EtcdConnectionSettingsDriver : ConnectionSettingsDriver<EtcdConnectionSettings>
+public sealed class EtcdLockReleaseCommand() : EtcdCommandBase("Release")
 {
-	#region 常量定义
-	public const string NAME = "Etcd";
-	#endregion
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	{
+		if(context.Value is IAsyncDisposable asyncDisposable)
+			await asyncDisposable.DisposeAsync();
+		else if(context.Value is IEnumerable<IDistributedLock> locks)
+		{
+			foreach(var locker in locks)
+				await locker.DisposeAsync();
+		}
 
-	#region 单例字段
-	public static readonly EtcdConnectionSettingsDriver Instance = new();
-	#endregion
-
-	#region 私有构造
-	private EtcdConnectionSettingsDriver() : base(NAME) { }
-	#endregion
+		if(context.Arguments.Count != 2)
+			return false;
+		return await GetEtcd(context).ReleaseAsync(context.Arguments[0], Convert.FromHexString(context.Arguments[1]), cancellation);
+	}
 }

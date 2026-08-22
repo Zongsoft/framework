@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Etcd library.
  *
@@ -27,24 +27,25 @@
  * along with the Zongsoft.Externals.Etcd library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
+using System.Threading;
+using System.Threading.Tasks;
 
-using Zongsoft.Common;
-using Zongsoft.Configuration;
+using Zongsoft.Components;
 
-namespace Zongsoft.Externals.Etcd.Configuration;
+namespace Zongsoft.Externals.Etcd.Commands;
 
-public sealed class EtcdConnectionSettingsDriver : ConnectionSettingsDriver<EtcdConnectionSettings>
+public sealed class EtcdGetCommand() : EtcdCommandBase("Get")
 {
-	#region 常量定义
-	public const string NAME = "Etcd";
-	#endregion
-
-	#region 单例字段
-	public static readonly EtcdConnectionSettingsDriver Instance = new();
-	#endregion
-
-	#region 私有构造
-	private EtcdConnectionSettingsDriver() : base(NAME) { }
-	#endregion
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	{
+		RequireArguments(context);
+		var etcd = GetEtcd(context);
+		var values = new string[context.Arguments.Count];
+		for(var index = 0; index < values.Length; index++)
+		{
+			values[index] = await etcd.GetValueAsync(context.Arguments[index], cancellation);
+			context.Output.WriteLine(values[index] ?? "NULL");
+		}
+		return values.Length == 1 ? values[0] : values;
+	}
 }

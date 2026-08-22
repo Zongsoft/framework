@@ -60,7 +60,7 @@ public class EtcdCommand : CommandBase<CommandContext>, IServiceAccessor<EtcdSer
 	#region 重写方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		var name = context.GetOptions().GetValue<string>("name");
+		var name = context.Options.GetValue<string>("name");
 
 		if(!string.IsNullOrEmpty(name))
 			_etcd = EtcdServiceProvider.GetEtcd(name) ?? throw new CommandException();
@@ -73,4 +73,16 @@ public class EtcdCommand : CommandBase<CommandContext>, IServiceAccessor<EtcdSer
 		return ValueTask.FromResult<object>(_etcd);
 	}
 	#endregion
+}
+
+public abstract class EtcdCommandBase(string name) : CommandBase<CommandContext>(name)
+{
+	protected static EtcdService GetEtcd(CommandContext context) =>
+		context.Find<EtcdCommand>(true)?.Etcd ?? throw new CommandException("Missing the required etcd service.");
+
+	protected static void RequireArguments(CommandContext context)
+	{
+		if(context.Arguments.IsEmpty)
+			throw new CommandException("Missing command arguments.");
+	}
 }

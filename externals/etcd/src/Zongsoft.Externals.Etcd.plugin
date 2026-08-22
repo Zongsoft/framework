@@ -39,6 +39,8 @@
 		<object name="Find" type="Zongsoft.Externals.Etcd.Commands.EtcdFindCommand, Zongsoft.Externals.Etcd" />
 		<object name="Count" type="Zongsoft.Externals.Etcd.Commands.EtcdCountCommand, Zongsoft.Externals.Etcd" />
 		<object name="Remove" type="Zongsoft.Externals.Etcd.Commands.EtcdRemoveCommand, Zongsoft.Externals.Etcd" />
+		<object name="Increase" type="Zongsoft.Externals.Etcd.Commands.EtcdIncrementCommand, Zongsoft.Externals.Etcd" />
+		<object name="Decrease" type="Zongsoft.Externals.Etcd.Commands.EtcdDecrementCommand, Zongsoft.Externals.Etcd" />
 
 		<object name="Lock">
 			<lock.command>

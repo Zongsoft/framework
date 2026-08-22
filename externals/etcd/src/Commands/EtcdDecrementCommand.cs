@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Externals.Etcd library.
  *
@@ -28,23 +28,17 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
-using Zongsoft.Common;
-using Zongsoft.Configuration;
+using Zongsoft.Components;
 
-namespace Zongsoft.Externals.Etcd.Configuration;
+namespace Zongsoft.Externals.Etcd.Commands;
 
-public sealed class EtcdConnectionSettingsDriver : ConnectionSettingsDriver<EtcdConnectionSettings>
+[CommandOption("seed", typeof(int), DefaultValue = 0)]
+[CommandOption("interval", typeof(int), DefaultValue = 1)]
+[CommandOption("expiry", 'x', typeof(TimeSpan?))]
+public sealed class EtcdDecrementCommand() : EtcdCommandBase("Decrease")
 {
-	#region 常量定义
-	public const string NAME = "Etcd";
-	#endregion
-
-	#region 单例字段
-	public static readonly EtcdConnectionSettingsDriver Instance = new();
-	#endregion
-
-	#region 私有构造
-	private EtcdConnectionSettingsDriver() : base(NAME) { }
-	#endregion
+	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation) => EtcdIncrementCommand.ChangeAsync(context, true, cancellation);
 }
