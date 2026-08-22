@@ -10,11 +10,11 @@
 	<Folder Name="/samples/distributed-lock/">
 		<File Path="samples/distributedlock/README.md" />
 		<File Path="samples/distributedlock/README.zh-Hans.md" />
-		<Project Path="samples/distributedlock/master/Zongsoft.Externals.Etcd.DistributedLock.Master.csproj" />
-		<Project Path="samples/distributedlock/slaver/Zongsoft.Externals.Etcd.DistributedLock.Slaver.csproj" />
 		<File Path="samples/distributedlock/master/README.md" />
 		<File Path="samples/distributedlock/master/README.zh-Hans.md" />
 		<File Path="samples/distributedlock/slaver/README.md" />
 		<File Path="samples/distributedlock/slaver/README.zh-Hans.md" />
+		<Project Path="samples/distributedlock/master/Zongsoft.Externals.Etcd.DistributedLock.Master.csproj" />
+		<Project Path="samples/distributedlock/slaver/Zongsoft.Externals.Etcd.DistributedLock.Slaver.csproj" />
 	</Folder>
 </Solution>
