@@ -147,13 +147,13 @@ bin\Release\net10.0\win-x64\publish\Zongsoft.Upgrading.Deployer.exe
 
 	```cmd
 	podman ps -a --pod
-	podman logs zongsoft-framework
+	podman logs zongsoft.framework
 	```
 
-2. Enter the `zongsoft-framework` container:
+2. Enter the `zongsoft.framework` container:
 
 	```cmd
-	podman exec --workdir /Zongsoft/framework/upgrading/deployer -it zongsoft-framework sh
+	podman exec --workdir /Zongsoft/framework/upgrading/deployer -it zongsoft.framework sh
 	```
 
 3. Publish the _**L**inux_ `x64` deployer:
@@ -173,7 +173,7 @@ bin\Release\net10.0\win-x64\publish\Zongsoft.Upgrading.Deployer.exe
 
 	```cmd
 	podman ps -a --pod
-	podman logs zongsoft-framework
+	podman logs zongsoft.framework
 	```
 
 2. Run one of the publish scripts:

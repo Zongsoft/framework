@@ -147,13 +147,13 @@ bin\Release\net10.0\win-x64\publish\Zongsoft.Upgrading.Deployer.exe
 
 	```cmd
 	podman ps -a --pod
-	podman logs zongsoft-framework
+	podman logs zongsoft.framework
 	```
 
-2. 进入名为 `zongsoft-framework` 的容器：
+2. 进入名为 `zongsoft.framework` 的容器：
 
 	```cmd
-	podman exec --workdir /Zongsoft/framework/upgrading/deployer -it zongsoft-framework sh
+	podman exec --workdir /Zongsoft/framework/upgrading/deployer -it zongsoft.framework sh
 	```
 
 3. 发布 _**L**inux_ `x64` 版本部署器：
@@ -173,7 +173,7 @@ bin\Release\net10.0\win-x64\publish\Zongsoft.Upgrading.Deployer.exe
 
 	```cmd
 	podman ps -a --pod
-	podman logs zongsoft-framework
+	podman logs zongsoft.framework
 	```
 
 2. 运行下列发布脚本之一：

@@ -79,18 +79,18 @@ dotnet publish "Zongsoft.Upgrading.Deployer.csproj" ^
 
 Linux x64 AOT 单文件制作需要先启动 Podman 容器。优先参考 `README.md` 的 Publishing/Linux 章节，并保留以下流程：
 
-1. 从仓库根目录或 `upgrading` 工作目录启动 `../../framework-start.cmd` 或 `../framework-start.cmd`，它使用 `framework.linux-x64.yaml` 启动 `zongsoft-framework` 容器。
+1. 从仓库根目录或 `upgrading` 工作目录启动 `../../framework-start.cmd` 或 `../framework-start.cmd`，它使用 `framework.linux-x64.yaml` 启动 `zongsoft.framework` 容器。
 2. 确认容器已完成加载：
 
 ```cmd
 podman ps -a --pod
-podman logs zongsoft-framework
+podman logs zongsoft.framework
 ```
 
 3. 进入容器内发布：
 
 ```cmd
-podman exec --workdir /Zongsoft/framework/upgrading/deployer -it zongsoft-framework sh
+podman exec --workdir /Zongsoft/framework/upgrading/deployer -it zongsoft.framework sh
 ```
 
 ```shell

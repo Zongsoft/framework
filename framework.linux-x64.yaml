@@ -6,7 +6,7 @@ metadata:
     app: zongsoft
 spec:
   containers:
-  - name: framework
+  - name: musl
     image: mcr.microsoft.com/dotnet/sdk:10.0-alpine
     command: ["/bin/sh"]
     args: 
