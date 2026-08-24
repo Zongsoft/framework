@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<Version>1.9.0</Version>
 		<Product>Zongsoft ZeroMQ Library</Product>
@@ -8,7 +8,7 @@
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/Zongsoft.Messaging.ZeroMQ</RepositoryUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/messaging/zero</RepositoryUrl>
 	</PropertyGroup>
 
 	<PropertyGroup>

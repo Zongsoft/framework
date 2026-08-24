@@ -8,7 +8,7 @@
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/Zongsoft.Messaging.Mqtt</RepositoryUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/messaging/mqtt</RepositoryUrl>
 	</PropertyGroup>
 
 	<ItemGroup>
