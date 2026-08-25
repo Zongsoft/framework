@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Messaging.ZeroMQ library.
  *
@@ -32,7 +32,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using Zongsoft.Services;
 using Zongsoft.Components;
 using Zongsoft.Collections;
 using Zongsoft.Communication;
@@ -45,7 +44,6 @@ public class ZeroResponder : WorkerBase, IResponder
 {
 	#region 私有字段
 	private ZeroQueue _queue;
-	private Adapter _adapter;
 	private List<ZeroSubscriber> _subscribers;
 	#endregion
 
@@ -95,7 +93,6 @@ public class ZeroResponder : WorkerBase, IResponder
 			}
 
 			//全部订阅成功后再发布到实例字段，避免失败启动留下半初始化状态。
-			_adapter = adapter;
 			_subscribers = subscribers;
 		}
 		catch
@@ -110,8 +107,6 @@ public class ZeroResponder : WorkerBase, IResponder
 	{
 		var subscribers = _subscribers;
 		_subscribers = null;
-		_adapter = null;
-
 		await UnsubscribeAsync(subscribers, cancellation);
 	}
 

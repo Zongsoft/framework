@@ -21,7 +21,7 @@ Use this skill for work in `messaging/zero`. Preserve the contracts established 
 
 - `ZeroQueueServer` exposes a discovery REP endpoint, binds an XSUB endpoint for application publishers and an XPUB endpoint for application subscribers, and joins the data endpoints with a NetMQ `Proxy`.
 - `ZeroQueue` is the public facade. Its private nested `ZeroQueue.Transport` command Actor owns discovery, the application `PublisherSocket`, subscriber sockets, heartbeats, sends, and teardown on the Poller thread. Do not introduce a transport interface unless a second production transport actually requires one.
-- `ZeroSubscriber` has one `SubscriberSocket` for one physical topic and a bounded, ordered handler channel. `MessageQueueBase` caches only successfully initialized consumers by logical topic.
+- `ZeroSubscriber` has one `SubscriberSocket` for one physical topic and a bounded, ordered handler channel. `MessageQueueBase.Subscribers` owns the single logical-topic registry: initializing entries are shared but hidden, and only successfully initialized consumers appear in its public active view.
 - `ZeroRequester`/`ZeroResponder` map communication URLs to queue topics. `ZeroQueueEventChannel` maps events to `Events/...` topics.
 - The daemon plugin starts `ZeroQueueServer`; the main plugin registers the connection driver, event transport, requester, and responder.
 
@@ -32,7 +32,7 @@ Use this skill for work in `messaging/zero`. Preserve the contracts established 
 - Preserve the current transient, best-effort PUB/SUB contract unless the user explicitly approves a new reliability protocol. PUB/SUB has no persistence, acknowledgement, retry, deduplication, or replay.
 - `ProduceAsync` snapshots payload memory and completes after the Actor invokes the local Socket send. This is not a remote acknowledgement or subscription-readiness signal.
 - Define `ProduceAsync` completion and payload ownership together. If sending remains deferred, snapshot borrowed memory before returning or document and enforce an equivalent lifetime contract.
-- Roll back and dispose a newly created subscriber when subscription initialization fails or is cancelled. Never leave a failed subscriber in `MessageQueueBase.Subscribers`.
+- Roll back and dispose a newly created subscriber when subscription initialization fails or is cancelled. Keep initialization and active state in the same `MessageQueueBase.Subscribers` registry; never introduce a second topic dictionary or expose a failed/initializing subscriber through the active view.
 - Closing or disposing a queue must close its consumers, detach handlers, stop asynchronous work, and release sockets without racing the poller.
 - Keep logical topics separate from physical grouped topics. Add `Group` exactly once, and normalize it before event or request/response routing.
 - Keep per-subscriber dispatch bounded and ordered. Capacity pressure pauses only that subscriber socket and resumes it through an Actor command when the handler frees space.

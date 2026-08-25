@@ -167,13 +167,12 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 	private string GetPhysicalTopic(string topic) => string.IsNullOrEmpty(_options.Group) ? topic : $"{_options.Group}:{topic}";
 	private string[] GetHeartbeatTopics()
 	{
-		var topics = new string[this.Subscribers.Count];
-		var index = 0;
+		var topics = new List<string>();
 
 		foreach(var subscriber in this.Subscribers)
-			topics[index++] = this.GetPhysicalTopic(subscriber.Topic);
+			topics.Add(this.GetPhysicalTopic(subscriber.Topic));
 
-		return index == topics.Length ? topics : topics[..index];
+		return topics.ToArray();
 	}
 
 	private static (HashSet<string> inclusion, HashSet<string> exclusion) CreateFilter(string filter, string instance)

@@ -24,6 +24,15 @@
 - [x] R03 删除伪传输测试，改用真实 Server/Actor 路径验证负载快照、初始化失败重试、设置快照和有界背压。
 - [x] R04 重新完成三目标构建、完整测试及文本格式校验。
 
+### Core 单注册表复核清单（2026-08-25）
+
+- [x] S01 将 `MessageQueueBase` 的初始化缓存与 `Subscribers` 活动缓存合并为 `SubscriberCollection` 内的一份 Topic 注册表。
+- [x] S02 保持 `Subscribers` 只展示活动消费者，并覆盖共享初始化、失败回滚、调用方取消、关闭和同 Topic 重订阅。
+- [x] S03 审计 ZeroMQ 相似状态；确认 Actor Socket 索引和 Requester 所有权记录职责独立，不做错误合并。
+- [x] S04 移除 `ZeroResponder._adapter` 冗余状态，并消除心跳主题对动态 `Count` 与枚举结果一致性的依赖。
+- [x] S05 将 Core Communication/Messaging 遗漏的异常与警告日志，以及 Core 固定日志文本迁入中英文资源。
+- [x] S06 完成 Core/ZeroMQ 三目标构建及完整测试。
+
 ## 1. 结论摘要
 
 ### 1.1 共同稳定化实施结果（2026-08-24）
@@ -35,6 +44,26 @@
 下列问题已在本轮修复：ZMQ-001、ZMQ-003～ZMQ-013、ZMQ-015、ZMQ-016，以及 ZMQ-020 的仓库元数据和确定性测试部分。ZMQ-002、ZMQ-014、ZMQ-017～ZMQ-019 保留为协议、恢复能力或部署安全的后续事项；未实现的 Core 选项继续通过 README 能力表明确说明。
 
 当前插件已经形成完整的 Zongsoft 消息队列适配层：`ZeroQueueServer` 提供 XPUB/XSUB 交换与端点发现，`ZeroQueue`/`ZeroSubscriber` 实现发布订阅，`ZeroRequester`/`ZeroResponder` 实现请求响应，`ZeroQueueEventChannel` 对接事件交换器。基本构建和大多数集成场景可工作，但其生命周期、线程模型和投递语义尚未收敛为可以证明的状态机。
+
+### 1.2 Core 单注册表与 ZeroMQ 状态复核（2026-08-25）
+
+`MessageQueueBase` 原先用 `_subscriptions` 保存初始化任务，再把成功消费者转移到 `Subscribers` 的另一个字典。两份 Topic 索引表达同一订阅生命周期，转移需要先移除、后添加或先添加、后移除，无法形成单一原子状态。本次将注册表收进 `SubscriberCollection`：每个条目在同一对象内从 `Initializing` 转为 `Active` 或 `Removed`，并发调用共享其初始化任务；公共 `Count`、索引和枚举只投影 `Active` 条目。失败、共享初始化异常、单调用方取消、Queue 关闭和 Consumer 关闭均按“Topic + 条目实例”回滚，旧条目不能删除同 Topic 的新重试条目。
+
+对 ZeroMQ 的相似字段审计如下：
+
+| 状态组合 | 结论 | 处理 |
+| --- | --- | --- |
+| `ZeroQueue._initialization` / Transport `_publisher` | 前者是共享启动事务，后者是 Actor 所有的 Socket 资源，不是重复权威状态。 | 保留隔离，调用方取消不取消共享启动。 |
+| Core `Subscribers` / Transport `_subscribers` | 前者是成功逻辑订阅视图，后者是 Poller Socket 所有权索引；初始化期间允许只存在于后者。 | 不合并，维持线程归属边界。 |
+| `ZeroRequester._subscriptions` / Queue `Subscribers` | 前者记录 Requester 所有权并等待在途订阅以便确定性释放，后者是 Queue 全局活动视图。 | 不合并，避免 Dispose 漏掉初始化中的响应订阅。 |
+| `ZeroSubscriber._channel` / Transport Socket 值 | Subscriber 负责 Attach/Detach，Transport 负责 Poller 注册与销毁次序。 | 不合并，避免跨线程读取替代 Actor 索引。 |
+| `ZeroResponder._adapter` / Subscriber.Handler | `_adapter` 仅写入和清空，从未作为状态读取。 | 删除冗余字段。 |
+
+此外，心跳主题原先先读取活动视图的动态 `Count` 分配数组，再二次枚举；并发激活可能使枚举项多于数组长度。本次改为单次枚举收集后生成数组，不再要求两个时刻的视图一致。
+
+本次同时复核了直接相关的 Core Communication/Messaging 异常与日志文本，并扫描 Core 的显式日志调用：5 条异常消息、1 条消息队列警告和 1 条重复固定错误日志已迁入默认及简体中文资源。该复核针对本次消息通信改动及日志入口，不把 Core 其他子系统历年来的内部参数校验文本机械纳入 ZeroMQ 重构范围。
+
+最终验证结果：Core 消息测试在 net8.0、net9.0、net10.0 各 10/10 通过；ZeroMQ 三目标构建均为 0 警告、0 错误；启用 `ZONGSOFT_MESSAGING_TESTS=true` 后，完整集成套件在三个目标框架各 40/40 通过。
 
 “初始化后延迟 100ms，首条消息仍偶发丢失”的直接原因已经定位：
 
