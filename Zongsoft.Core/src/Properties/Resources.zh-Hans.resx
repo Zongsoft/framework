@@ -489,4 +489,25 @@
   <data name="Schema.UnrecognizedMember.Message" xml:space="preserve">
     <value>解析错误：无法识别数据模式成员“{0}”。</value>
   </data>
+  <data name="Communication.ListenerHandlerMismatch.Message" xml:space="preserve">
+    <value>指定的“{0}”处理器类型不匹配。</value>
+  </data>
+  <data name="Communication.ListenerPacketizerRequired.Message" xml:space="preserve">
+    <value>接收操作缺少必需的封包器。</value>
+  </data>
+  <data name="Messaging.ConnectionSettingsNotFound.Message" xml:space="preserve">
+    <value>找不到名为“{1}”的 {0} 消息队列连接设置。</value>
+  </data>
+  <data name="Messaging.ConnectionSettingsTypeMismatch.Message" xml:space="preserve">
+    <value>指定的“{0}”连接设置不是所需的“{1}”设置类型。</value>
+  </data>
+  <data name="Messaging.GuarderQueueMissing.Warning" xml:space="preserve">
+    <value>无法启动名为“{0}”的消息队列守护器，因为其“{1}”属性为空。</value>
+  </data>
+  <data name="Messaging.QueueUndefined.Message" xml:space="preserve">
+    <value>{0}：未定义指定的“{1}”消息队列。</value>
+  </data>
+  <data name="ErrorOccurred.Message" xml:space="preserve">
+    <value>发生错误。</value>
+  </data>
 </root>

@@ -347,7 +347,7 @@ public partial class CommandExecutor : ICommandExecutor
 					_logging.Error(buffer.ToString());
 					break;
 				default:
-					_logging.Error("An error occurred.", value);
+					_logging.Error(Properties.Resources.ErrorOccurred_Message, value);
 					break;
 			}
 		}
@@ -369,7 +369,7 @@ public partial class CommandExecutor : ICommandExecutor
 					_logging.Error(buffer.ToString() + Environment.NewLine);
 					break;
 				default:
-					_logging.Error("An error occurred.", value);
+					_logging.Error(Properties.Resources.ErrorOccurred_Message, value);
 					break;
 			}
 		}

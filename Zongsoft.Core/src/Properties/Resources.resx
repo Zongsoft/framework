@@ -489,4 +489,25 @@
   <data name="Schema.UnrecognizedMember.Message" xml:space="preserve">
     <value>ParsingError: The '{0}' member of the data schema is unrecognized.</value>
   </data>
+  <data name="Communication.ListenerHandlerMismatch.Message" xml:space="preserve">
+    <value>The specified '{0}' handler does not match.</value>
+  </data>
+  <data name="Communication.ListenerPacketizerRequired.Message" xml:space="preserve">
+    <value>Missing the required packetizer for the receive operation.</value>
+  </data>
+  <data name="Messaging.ConnectionSettingsNotFound.Message" xml:space="preserve">
+    <value>The specified {0} message queue connection setting named '{1}' was not found.</value>
+  </data>
+  <data name="Messaging.ConnectionSettingsTypeMismatch.Message" xml:space="preserve">
+    <value>The specified '{0}' connection setting is not of the required '{1}' settings type.</value>
+  </data>
+  <data name="Messaging.GuarderQueueMissing.Warning" xml:space="preserve">
+    <value>The message queue guarder named '{0}' cannot be started because its '{1}' property is null.</value>
+  </data>
+  <data name="Messaging.QueueUndefined.Message" xml:space="preserve">
+    <value>{0}: The specified '{1}' message queue is not defined.</value>
+  </data>
+  <data name="ErrorOccurred.Message" xml:space="preserve">
+    <value>An error occurred.</value>
+  </data>
 </root>

@@ -1175,5 +1175,68 @@ namespace Zongsoft.Properties {
                 return ResourceManager.GetString("Zongsoft.Security.Privileges.MemberType.User", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   查找类似 The specified '{0}' handler does not match. 的本地化字符串。
+        /// </summary>
+        internal static string Communication_ListenerHandlerMismatch_Message {
+            get {
+                return ResourceManager.GetString("Communication.ListenerHandlerMismatch.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing the required packetizer for the receive operation. 的本地化字符串。
+        /// </summary>
+        internal static string Communication_ListenerPacketizerRequired_Message {
+            get {
+                return ResourceManager.GetString("Communication.ListenerPacketizerRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The specified {0} message queue connection setting named '{1}' was not found. 的本地化字符串。
+        /// </summary>
+        internal static string Messaging_ConnectionSettingsNotFound_Message {
+            get {
+                return ResourceManager.GetString("Messaging.ConnectionSettingsNotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The specified '{0}' connection setting is not of the required '{1}' settings type. 的本地化字符串。
+        /// </summary>
+        internal static string Messaging_ConnectionSettingsTypeMismatch_Message {
+            get {
+                return ResourceManager.GetString("Messaging.ConnectionSettingsTypeMismatch.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The message queue guarder named '{0}' cannot be started because its '{1}' property is null. 的本地化字符串。
+        /// </summary>
+        internal static string Messaging_GuarderQueueMissing_Warning {
+            get {
+                return ResourceManager.GetString("Messaging.GuarderQueueMissing.Warning", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 {0}: The specified '{1}' message queue is not defined. 的本地化字符串。
+        /// </summary>
+        internal static string Messaging_QueueUndefined_Message {
+            get {
+                return ResourceManager.GetString("Messaging.QueueUndefined.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 An error occurred. 的本地化字符串。
+        /// </summary>
+        internal static string ErrorOccurred_Message {
+            get {
+                return ResourceManager.GetString("ErrorOccurred.Message", resourceCulture);
+            }
+        }
     }
 }

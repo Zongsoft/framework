@@ -83,7 +83,7 @@ public abstract class MessageQueueProviderBase : IMessageQueueProvider
 		WeakReference<IMessageQueue> Create(string name, IEnumerable<KeyValuePair<string, string>> settings)
 		{
 			//创建指定名称的消息队列，如果创建失败则抛出异常
-			var queue = this.OnCreate(name, settings) ?? throw new InvalidOperationException($"{this.Name}: The specified '{name}' message queue is not defined.");
+			var queue = this.OnCreate(name, settings) ?? throw new InvalidOperationException(string.Format(Properties.Resources.Messaging_QueueUndefined_Message, this.Name, name));
 
 			//以弱引用的方式
 			return new WeakReference<IMessageQueue>(queue);
@@ -100,7 +100,7 @@ public abstract class MessageQueueProviderBase : IMessageQueueProvider
 	{
 		var connectionSettings = ApplicationContext.Current?.Configuration.GetConnectionSettings(SETTINGS_PATH, name, this.Name);
 		if(connectionSettings == null)
-			throw new ConfigurationException($"The specified {this.Name} message queue connection setting named '{name}' was not found.");
+			throw new ConfigurationException(string.Format(Properties.Resources.Messaging_ConnectionSettingsNotFound_Message, this.Name, name));
 
 		if(settings != null)
 		{
@@ -108,7 +108,7 @@ public abstract class MessageQueueProviderBase : IMessageQueueProvider
 				connectionSettings[setting.Key] = setting.Value;
 		}
 
-		return connectionSettings as TSettings ?? throw new InvalidOperationException($"The specified '{SETTINGS_PATH}/{name}@{this.Name}' connection setting is not of the required '{typeof(TSettings).FullName}' settings type.");
+		return connectionSettings as TSettings ?? throw new InvalidOperationException(string.Format(Properties.Resources.Messaging_ConnectionSettingsTypeMismatch_Message, $"{SETTINGS_PATH}/{name}@{this.Name}", typeof(TSettings).FullName));
 	}
 	#endregion
 

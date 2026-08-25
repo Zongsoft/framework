@@ -54,7 +54,7 @@ public abstract class ListenerBase<T> : WorkerBase, IListener<T>, IReceiver, IHa
 	public virtual bool IsListening => this.State == WorkerState.Running;
 	public virtual IPacketizer<T> Packetizer { get; }
 	public IHandler<T> Handler { get => _handler; set => _handler = value; }
-	IHandler IHandleable.Handler { get => _handler; set => _handler = value as IHandler<T> ?? throw new ArgumentException($"The specified ‘{value}’ handler does not match."); }
+	IHandler IHandleable.Handler { get => _handler; set => _handler = value as IHandler<T> ?? throw new ArgumentException(string.Format(Properties.Resources.Communication_ListenerHandlerMismatch_Message, value)); }
 	#endregion
 
 	#region 虚拟方法
@@ -82,7 +82,7 @@ public abstract class ListenerBase<T> : WorkerBase, IListener<T>, IReceiver, IHa
 		var packetizer = this.Packetizer;
 
 		if(packetizer == null)
-			throw new InvalidOperationException("Missing the required packetizer for the receive operation.");
+			throw new InvalidOperationException(Properties.Resources.Communication_ListenerPacketizerRequired_Message);
 
 		return packetizer.Unpack(ref data, out result);
 	}

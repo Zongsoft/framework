@@ -63,7 +63,7 @@ public class MessageQueueGuarder : WorkerBase
 		var queue = this.Queue;
 		if(queue == null)
 		{
-			Zongsoft.Diagnostics.Logging.GetLogging(this).Warn($"The message queue guarder named '{this.Name}' cannot be started because its '{nameof(this.Queue)}' property is null.");
+			Zongsoft.Diagnostics.Logging.GetLogging(this).Warn(string.Format(Properties.Resources.Messaging_GuarderQueueMissing_Warning, this.Name, nameof(this.Queue)));
 			return;
 		}
 
