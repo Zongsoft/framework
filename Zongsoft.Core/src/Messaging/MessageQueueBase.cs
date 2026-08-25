@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -49,6 +49,8 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 
 	#region 成员字段
 	private volatile int _disposing;
+	private readonly CancellationTokenSource _cancellation = new();
+	private readonly ConcurrentDictionary<string, Lazy<Task<TSubscriber>>> _subscriptions = new();
 	#endregion
 
 	#region 构造函数
@@ -124,33 +126,98 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 
 	public async ValueTask<TSubscriber> SubscribeAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation = default)
 	{
+		if(_disposing != 0)
+			throw new ObjectDisposedException(this.GetType().Name);
+
 		//确保主题不为空
 		topic = this.GetTopic(topic) ?? string.Empty;
 
 		if(this.Subscribers.TryGetValue(topic, out var subscriber))
 			return subscriber;
 
-		if(this.Subscribers.TryAdd(topic, subscriber = await this.CreateSubscriberAsync(topic, tags, handler, options, cancellation)))
-		{
-			//执行订阅操作，如果订阅成功则挂载其订阅取消事件
-			if(await this.OnSubscribeAsync(subscriber, cancellation))
-				subscriber.Closed += OnClosed;
+		var initialization = _subscriptions.GetOrAdd(topic, key => new Lazy<Task<TSubscriber>>(
+			() => this.InitializeSubscriberAsync(key, tags, handler, options),
+			LazyThreadSafetyMode.ExecutionAndPublication));
+		var task = initialization.Value;
 
-			//返回新建的订阅者
+		_ = task.ContinueWith(completed =>
+		{
+			if(completed.IsFaulted)
+				_ = completed.Exception;
+
+			_subscriptions.TryRemove(new KeyValuePair<string, Lazy<Task<TSubscriber>>>(topic, initialization));
+		}, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+
+		try
+		{
+			return cancellation.CanBeCanceled ?
+				await task.WaitAsync(cancellation) :
+				await task;
+		}
+		finally
+		{
+			if(initialization.IsValueCreated && initialization.Value.IsCompleted)
+				_subscriptions.TryRemove(new KeyValuePair<string, Lazy<Task<TSubscriber>>>(topic, initialization));
+		}
+	}
+
+	private async Task<TSubscriber> InitializeSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options)
+	{
+		TSubscriber subscriber = default;
+
+		try
+		{
+			subscriber = await this.CreateSubscriberAsync(topic, tags, handler, options, _cancellation.Token);
+			if(subscriber == null)
+				return default;
+
+			subscriber.Closed += OnClosed;
+
+			if(!await this.OnSubscribeAsync(subscriber, _cancellation.Token) || subscriber.IsClosed)
+			{
+				subscriber.Closed -= OnClosed;
+				await subscriber.DisposeAsync();
+				return default;
+			}
+
+			if(!this.Subscribers.TryAdd(topic, subscriber))
+			{
+				subscriber.Closed -= OnClosed;
+				await subscriber.DisposeAsync();
+				return this.Subscribers.TryGetValue(topic, out var existing) ? existing : default;
+			}
+
+			if(subscriber.IsClosed && this.Subscribers.Remove(topic, subscriber, out var removed))
+			{
+				removed.Closed -= OnClosed;
+				this.OnUnsubscribed(removed);
+				await removed.DisposeAsync();
+				return default;
+			}
+
 			return subscriber;
 		}
+		catch
+		{
+			if(subscriber != null)
+			{
+				subscriber.Closed -= OnClosed;
+				this.Subscribers.Remove(topic, subscriber, out _);
+				await subscriber.DisposeAsync();
+			}
 
-		return this.Subscribers.TryGetValue(topic, out subscriber) ? subscriber : default;
+			throw;
+		}
 
 		void OnClosed(object sender, EventArgs args)
 		{
-			if(sender is IMessageConsumer consumer)
-			{
-				consumer.Closed -= OnClosed;
+			if(sender is not TSubscriber consumer)
+				return;
 
-				if(consumer.Topic != null && this.Subscribers.Remove(consumer.Topic, out var subscriber))
-					this.OnUnsubscribed(subscriber);
-			}
+			consumer.Closed -= OnClosed;
+
+			if(this.Subscribers.Remove(topic, consumer, out var removed))
+				this.OnUnsubscribed(removed);
 		}
 	}
 
@@ -177,11 +244,13 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 
 		try
 		{
+			_cancellation.Cancel();
 			this.Dispose(true);
 			GC.SuppressFinalize(this);
 		}
 		finally
 		{
+			_cancellation.Dispose();
 			_disposing = DISPOSED;
 		}
 	}
@@ -206,6 +275,17 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 		#region 内部方法
 		internal bool TryAdd(string topic, TSubscriber subscriber) => _subscribers.TryAdd(topic, subscriber);
 		internal bool Remove(string topic, out TSubscriber subscriber) => _subscribers.TryRemove(topic, out subscriber);
+		internal bool Remove(string topic, TSubscriber subscriber, out TSubscriber removed)
+		{
+			if(((ICollection<KeyValuePair<string, TSubscriber>>)_subscribers).Remove(new(topic, subscriber)))
+			{
+				removed = subscriber;
+				return true;
+			}
+
+			removed = default;
+			return false;
+		}
 		#endregion
 
 		#region 枚举遍历
