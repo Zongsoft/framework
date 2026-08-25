@@ -64,7 +64,7 @@ public sealed class ServerOptions
 				   TryGetPort(text.AsSpan()[(index + 1)..], out var outgoing))
 					return new ServerPort(incoming, outgoing);
 
-				throw new FormatException($"Invalid server port format: {text}");
+				throw new FormatException(string.Format(Properties.Resources.ServerOptions_InvalidPortFormat_Message, text));
 			}
 
 			return base.ConvertFrom(context, culture, value);

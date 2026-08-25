@@ -1,10 +1,38 @@
 # Zongsoft.Messaging.ZeroMQ 重构评估报告
 
-> 评估日期：2026-08-21<br />
+> 评估日期：2026-08-21；实施更新：2026-08-24<br />
 > 评估范围：`Zongsoft.Core/src/Messaging`、`Zongsoft.Core/src/Communication`、`messaging/zero/src`、`messaging/zero/test`、范例及插件清单<br />
-> 本报告只记录问题与方案，不代表相关生产代码已经修复。
+> 本报告保留重构前证据，并通过任务清单和“实施结果”记录当前修复状态；历史问题描述不应再被理解为现行实现。
+
+## 实施任务清单
+
+> 勾选项表示对应实现已经通过专项验证；未勾选项仍在实施或等待验证。
+
+- [x] T01 建立测试研究、计划和状态记录，登记当前 16/17 基线及首发竞态证据。
+- [x] T02 修复 Core 的并发订阅事务、失败回滚和竞争对象释放。
+- [x] T03 建立 NetMQ Actor、共享异步初始化及发布完成语义。
+- [x] T04 重构订阅分发、背压、主题转换和防御性协议解析。
+- [x] T05 完成 Queue、Subscriber、Requester、Responder 和 Server 的生命周期治理。
+- [x] T06 更新中英文 README、技能文档和重构报告。
+- [x] T07 完成三目标构建和测试；hosting 因未部署本地插件未运行并已记录。
+- [x] T08 汇总未解决事项及后续可靠性协议决策门。
+
+### 评审纠偏清单（2026-08-24）
+
+- [x] R01 恢复整文件重写时被误改的既有 C# 版权头。
+- [x] R02 删除仅为测试注入引入的 `IZeroQueueTransport`，将实现收敛为 `ZeroQueue.Transport` 私有嵌套类。
+- [x] R03 删除伪传输测试，改用真实 Server/Actor 路径验证负载快照、初始化失败重试、设置快照和有界背压。
+- [x] R04 重新完成三目标构建、完整测试及文本格式校验。
 
 ## 1. 结论摘要
+
+### 1.1 共同稳定化实施结果（2026-08-24）
+
+本轮选择方案 A，继续提供瞬态、尽力而为的 PUB/SUB。现已完成共享异步初始化、Queue/Server Poller Actor、确定性订阅事务与关闭、本地发送完成语义、负载快照、有界顺序背压、逻辑/物理主题分离、防御性双帧解析，以及 Requester 的释放和可等待响应队列。Queue Actor 实现为 `ZeroQueue.Transport` 私有嵌套类；当前只有 NetMQ 一种生产传输，不额外设置传输接口或测试注入构造器。
+
+`ProduceAsync` 成功只说明 Actor 已调用本地 Socket 发送；它不证明 TCP 已传递、订阅传播完成或 Handler 已执行。ZMQ-002 所述 slow joiner 窗口因此仍是所选语义的一部分，而不是通过固定延迟掩盖。
+
+下列问题已在本轮修复：ZMQ-001、ZMQ-003～ZMQ-013、ZMQ-015、ZMQ-016，以及 ZMQ-020 的仓库元数据和确定性测试部分。ZMQ-002、ZMQ-014、ZMQ-017～ZMQ-019 保留为协议、恢复能力或部署安全的后续事项；未实现的 Core 选项继续通过 README 能力表明确说明。
 
 当前插件已经形成完整的 Zongsoft 消息队列适配层：`ZeroQueueServer` 提供 XPUB/XSUB 交换与端点发现，`ZeroQueue`/`ZeroSubscriber` 实现发布订阅，`ZeroRequester`/`ZeroResponder` 实现请求响应，`ZeroQueueEventChannel` 对接事件交换器。基本构建和大多数集成场景可工作，但其生命周期、线程模型和投递语义尚未收敛为可以证明的状态机。
 
@@ -62,14 +90,14 @@ dotnet test messaging\zero\test\Zongsoft.Messaging.ZeroMQ.Tests.csproj `
 	-f net10.0 --blame-hang-timeout 2m
 ```
 
-- ZeroMQ 源项目的三个目标框架均构建通过，0 警告、0 错误；作为前置依赖构建的 Core 在 net8.0/net9.0 各有 4 个既有警告，net10.0 为 0 警告，均无错误；
+- ZeroMQ 源项目的三个目标框架均构建通过，0 警告、0 错误；作为前置依赖构建的 Core 在三个目标框架各有 4 个既有警告，均无错误；
 - 调研阶段一次完整 net10.0 测试运行共 17 项，16 项通过，1 项失败；失败项为 `ZeroQueueConcurrencyTests.ConcurrentProduceOnSingleQueueIsThreadSafe`，20 秒内未收到全部 64 条并发首次发布消息；
 - 本报告交付前再次运行完整套件为 17/17 通过，该并发用例耗时约 470ms；
 - 随后对同一用例隔离重复 10 次，结果为 10/10 通过，单次约 527–622ms。历史完整套件失败与当前重复通过共同说明该问题具有明显的顺序和负载敏感性，重跑通过不能推翻已观测的失败证据。
 
 集成测试仅在附加调试器或设置 `ZONGSOFT_MESSAGING_TESTS` 后执行，并且程序集禁用并行化、跨目标框架也串行运行。现有测试中广泛使用固定等待、重复发布和重试以规避 slow joiner，这些做法适合作为集成测试缓冲，但也会降低首发问题的可见性。
 
-## 3. 当前实现模型
+## 3. 重构前实现模型
 
 ### 3.1 服务端
 
@@ -97,7 +125,7 @@ NetMQ `Proxy` 在 XSUB 与 XPUB 之间双向转发业务消息和订阅命令。
 - `ZeroQueueEventChannel` 使用 `Events/<qualified-name>` 主题；
 - 压缩通过 `MessageEnqueueOptions.Properties["Compressive"]` 启用，线上帧标记为 `Compressor:Brotli`。
 
-## 4. 问题清单
+## 4. 重构前问题清单
 
 严重级别定义：
 
@@ -349,13 +377,13 @@ NetMQ `Proxy` 在 XSUB 与 XPUB 之间双向转发业务消息和订阅命令。
 
 ## 6. 推荐路线与决策门
 
-### 阶段 0：文档和可重复证据
+### 阶段 0：文档和可重复证据（已完成）
 
 - 保持 README 的能力矩阵和投递语义；
 - 保留并发首发失败用例，并新增可控制订阅传播的确定性测试夹具；
 - 在 CI 明确启用集成测试并验证实际执行数量。
 
-### 阶段 1：稳定化
+### 阶段 1：稳定化（已完成）
 
 - 实现共享初始化任务和 Socket Actor；
 - 修复 Core 订阅失败回滚、Queue/Requester/Responder 释放；
@@ -375,9 +403,17 @@ NetMQ `Proxy` 在 XSUB 与 XPUB 之间双向转发业务消息和订阅命令。
 
 若答案只要求降低偶发丢失且允许瞬态语义，选择方案 A。若要求“成功订阅后首发不受 slow joiner 影响”，选择方案 B。若要求业务处理可证明且可重试，选择方案 C 或成熟持久化 Broker。
 
-## 7. 预计接口影响
+## 7. 接口与兼容性影响
 
-本轮文档交付不修改接口。未来重构可能产生以下影响：
+本轮没有改变消息双帧协议和主要方法签名，但存在以下公开语义变化：
+
+- `ZeroRequester` 新增 `IDisposable` 和 `IAsyncDisposable`；
+- `ProduceAsync` 改为复制负载并等待 Actor 调用本地 Socket 发送；
+- 设置了 Group 时，`Message.Topic` 返回不含分组前缀的逻辑主题；
+- Requester 首次订阅后禁止替换为不同 Queue；
+- Queue 构造后对原设置对象的修改不再影响其运行快照。
+
+后续可靠性方案可能产生以下影响：
 
 | 变化 | 方案 A | 方案 B | 方案 C |
 | --- | --- | --- | --- |
@@ -434,3 +470,30 @@ NetMQ `Proxy` 在 XSUB 与 XPUB 之间双向转发业务消息和订阅命令。
 - `AGENTS.md` 更适合始终生效的仓库工作约定，并且只沿“项目根到当前工作目录”组成指令链；若从仓库根启动，位于 `messaging/zero` 的文件不会自动进入该链。[OpenAI AGENTS.md 文档](https://learn.chatgpt.com/docs/agent-configuration/agents-md)
 
 技能应保持技术约束稳定，并链接本报告获取会持续变化的问题状态；问题修复后更新报告状态，而不是继续在技能中累积历史补丁说明。
+
+## 10. 实施验证与遗留事项
+
+### 10.1 最终验证
+
+2026-08-24 在 Windows、.NET SDK 10.0.400 下完成：
+
+- Core 和 ZeroMQ 源项目的 net8.0、net9.0、net10.0 构建全部成功；ZeroMQ 为 0 警告，Core 三个目标框架各保留 4 个与本次修改无关的既有警告；
+- `MessageQueueBaseTest` 与 `MessageConsumerBaseTest` 在每个目标框架均为 8/8 通过；
+- 评审纠偏前，设置 `ZONGSOFT_MESSAGING_TESTS=true` 后，ZeroMQ 完整套件在每个目标框架均为 42/42 通过；删除 6 个伪传输测试并增加 4 个真实 Server/Actor 行为测试后，net8.0、net9.0、net10.0 最终均为 40/40 通过；
+- 原并发首发测试已改为“建立可观察路径后的网络突发”测试；Queue 初始化、负载快照和失败重试均经真实 Server/Actor 路径验证，不再为确定性门闩引入仅供测试使用的传输接口，也不再用远端首发必达断言错误描述尽力而为语义；
+- 中英文 README 章节、配置名、示例和内部链接已对应；技能 YAML 前言保持可发现；本轮文本文件均为 CRLF。
+
+`D:\Zongsoft\hosting` 当前未发现已经部署的 ZeroMQ 插件或配置。为避免修改宿主仓库或把已安装包误当成本地代码，本轮未运行 terminal/daemon/web；完成隔离部署授权后，按 8.3 节执行宿主冒烟。
+
+### 10.2 明确保留的事项
+
+- **ZMQ-002**：slow joiner 和订阅传播窗口仍可能丢失首条消息，这是方案 A 的既定尽力而为语义；
+- **ZMQ-014**：Broker 使用随机数据端口重启后，客户端不会重新发现，生产环境继续要求固定数据端口；
+- **ZMQ-017**：业务帧仍为 v1 双帧格式，没有版本协商、原始长度或端到端校验；
+- **ZMQ-018**：除压缩外的延迟、过期、优先级、可靠性和回退选项仍未实现；
+- **ZMQ-019**：认证、授权和传输加密仍依赖后续安全方案及部署边界；
+- 超大载荷限制、随机端口重发现、真实断网、高水位跨进程压力和 hosting 生命周期需要后续专项环境验证。
+
+### 10.3 下一决策门
+
+只有在产品明确要求“订阅传播完成后首发不丢”时才进入方案 B（XPUB/控制面就绪）；只有在明确要求可确认、重试和去重时才进入方案 C（版本化至少一次协议）。在此之前不得重新引入固定延迟或把本地发送成功解释为远端接收。

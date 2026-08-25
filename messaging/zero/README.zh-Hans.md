@@ -140,7 +140,9 @@ await consumer.UnsubscribeAsync();
 
 插件化宿主可从名为 `ZeroMQ` 的 `IMessageQueueProvider` 中获取命名队列，然后使用相同的 `ProduceAsync` 和 `SubscribeAsync` API。
 
-主题订阅采用前缀匹配。一个 `ZeroQueue` 对每个有效主题只保留一个消费者；再次订阅同一个有效主题会返回已有消费者，不会替换处理器或选项。设置 `Group=Demo` 后，有效主题及处理器收到的 `Message.Topic` 都会包含前缀，例如 `Demo:orders/created`。
+主题订阅采用前缀匹配。一个 `ZeroQueue` 对每个逻辑主题只保留一个消费者；再次订阅同一个主题会返回已有消费者，不会替换处理器或选项。设置 `Group=Demo` 后，网络上的物理主题为 `Demo:orders/created`，处理器收到的 `Message.Topic` 仍为逻辑主题 `orders/created`。
+
+同一订阅内的处理器按接收顺序串行执行。待处理队列达到容量后，该订阅会暂停从 Poller 接收，消费腾出空间后再恢复；背压只作用于相应订阅，不会阻塞其他 Socket。
 
 ### 压缩
 
@@ -169,7 +171,7 @@ await queue.ProduceAsync("documents/updated", payload, options);
 `ZeroRequester` 和 `ZeroResponder` 将队列主题适配到 Zongsoft 通信接口。请求发布到 URL 主题，响应默认使用 `<url>/reply` 主题：
 
 ```csharp
-var requester = new ZeroRequester { Queue = queue };
+await using var requester = new ZeroRequester { Queue = queue };
 var token = await requester.RequestAsync("services/ping", "Ping"u8.ToArray());
 
 foreach(var response in token.GetResponses(TimeSpan.FromSeconds(3)))
@@ -196,7 +198,7 @@ await channel.OpenAsync(exchanger);
 await channel.SendAsync(eventContext);
 ```
 
-插件清单会为宿主应用自动注册该通道。当前版本中，请让请求响应及事件通道使用的队列保持 `Group` 为空；这些适配器尚未规范化带分组前缀的物理主题。
+插件清单会为宿主应用自动注册该通道。请求响应和事件通道支持 `Group`；分组前缀只在网络边界添加，适配器始终使用逻辑主题。
 
 <a name="semantics"></a>
 ## 投递语义
@@ -206,7 +208,8 @@ await channel.SendAsync(eventContext);
 - 消息是瞬态的，`ZeroQueueServer` 不会持久化消息；
 - 不提供 Broker 确认、消费者确认、重试、去重或重放；
 - 对端正在连接或重连、匹配订阅尚未传播、或者套接字达到高水位时，消息都可能被丢弃；
-- `ProduceAsync` 在消息进入队列的本地发送路径后完成，不代表订阅者已经收到或处理；
+- `ProduceAsync` 会复制调用方负载，并在 Actor 已调用本地 Socket 发送后完成；它不代表订阅者已经收到或处理；
+- Queue 在构造时快照连接、端口、分组、过滤、超时和心跳设置；运行中修改原设置对象不会改变既有连接；
 - `SubscribeAsync` 会同步订阅端连接，但不会与发布端建立端到端投递确认；
 - 当前版本应避免发送空载荷。
 

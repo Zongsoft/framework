@@ -140,7 +140,9 @@ await consumer.UnsubscribeAsync();
 
 When hosted as a plugin, resolve the named queue from the `ZeroMQ` `IMessageQueueProvider` and use the same `ProduceAsync` and `SubscribeAsync` APIs.
 
-Subscriptions use prefix matching. One `ZeroQueue` keeps one consumer for each effective topic; subscribing to the same effective topic again returns the existing consumer and does not replace its handler or options. With `Group=Demo`, the effective topic and the `Message.Topic` received by the handler are both prefixed, for example `Demo:orders/created`.
+Subscriptions use prefix matching. One `ZeroQueue` keeps one consumer for each logical topic; subscribing to the same topic again returns the existing consumer and does not replace its handler or options. With `Group=Demo`, the physical wire topic is `Demo:orders/created`, while handlers receive the logical `Message.Topic` value `orders/created`.
+
+Each subscriber invokes its handler sequentially in receive order. When its bounded pending queue reaches capacity, that subscriber pauses Poller reads and resumes after the handler frees capacity; other sockets remain responsive.
 
 ### Compression
 
@@ -169,7 +171,7 @@ Compression is currently the only `MessageEnqueueOptions` behavior implemented b
 `ZeroRequester` and `ZeroResponder` adapt queue topics to the Zongsoft communication interfaces. A request is published to its URL topic, and responses use the `<url>/reply` topic by default:
 
 ```csharp
-var requester = new ZeroRequester { Queue = queue };
+await using var requester = new ZeroRequester { Queue = queue };
 var token = await requester.RequestAsync("services/ping", "Ping"u8.ToArray());
 
 foreach(var response in token.GetResponses(TimeSpan.FromSeconds(3)))
@@ -196,7 +198,7 @@ await channel.OpenAsync(exchanger);
 await channel.SendAsync(eventContext);
 ```
 
-The plugin manifest registers this channel automatically for hosted applications. In the current implementation, leave `Group` empty for request/response and event-channel queues; grouped physical topics are not normalized by these adapters.
+The plugin manifest registers this channel automatically for hosted applications. Request/response and event channels support `Group`; the prefix is applied only at the network boundary and adapters always use logical topics.
 
 <a name="semantics"></a>
 ## Delivery Semantics
@@ -206,7 +208,8 @@ This adapter follows ZeroMQ PUB/SUB behavior:
 - Messages are transient and are not persisted by `ZeroQueueServer`;
 - There is no broker acknowledgement, consumer acknowledgement, retry, deduplication, or replay;
 - Messages may be dropped while peers connect or reconnect, when no matching subscription has propagated, or when a socket high-water mark is reached;
-- `ProduceAsync` completes after the message is accepted by the queue's local send path, not after a subscriber receives or handles it;
+- `ProduceAsync` snapshots the caller's payload and completes after the Actor invokes the local Socket send; it does not mean that a subscriber received or handled the message;
+- A queue snapshots its connection, ports, group, filter, timeout, and heartbeat settings at construction; mutating the original settings object does not reconfigure a running queue;
 - `SubscribeAsync` synchronizes the subscriber connection, but does not establish an end-to-end delivery acknowledgement with publishers;
 - Empty payloads should be avoided with the current release.
 

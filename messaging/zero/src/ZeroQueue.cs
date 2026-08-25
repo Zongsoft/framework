@@ -32,9 +32,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using NetMQ;
-using NetMQ.Sockets;
-
 using Zongsoft.Common;
 using Zongsoft.Components;
 
@@ -42,23 +39,13 @@ namespace Zongsoft.Messaging.ZeroMQ;
 
 public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configuration.ZeroConnectionSettings>
 {
-	#region 常量定义
-	private const int BATCH_SIZE = 1024;
-	#endregion
-
-	#region 私有变量
-	private ushort _publisherPort;
-	private ushort _subscriberPort;
-	private readonly object _locker;
-	private HashSet<string> _exclusion;
-	private HashSet<string> _inclusion;
-	#endregion
-
 	#region 成员字段
-	private NetMQTimer _timer;
-	private NetMQPoller _poller;
-	private NetMQQueue<Packet> _queue;
-	private PublisherSocket _publisher;
+	private readonly object _locker = new();
+	private readonly Transport _transport;
+	private readonly ZeroQueueRuntimeOptions _options;
+	private readonly HashSet<string> _exclusion;
+	private readonly HashSet<string> _inclusion;
+	private Task _initialization;
 	#endregion
 
 	#region 构造函数
@@ -67,78 +54,57 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 		if(settings == null)
 			throw new ArgumentNullException(nameof(settings));
 
-		if(string.IsNullOrEmpty(settings.Server))
-			throw new ArgumentException($"The required server address is missing in the connection settings.");
+		if(string.IsNullOrWhiteSpace(settings.Server))
+			throw new ArgumentException(Properties.Resources.ZeroQueue_ServerRequired_Message, nameof(settings));
 
-		//如果未指定远程队列服务器端口号则设置默认端口号
-		if(settings.Port == 0)
-			settings.Port = ZeroQueueServer.PORT;
+		_options = new ZeroQueueRuntimeOptions(
+			settings.Server,
+			settings.Port == 0 ? ZeroQueueServer.PORT : settings.Port,
+			settings.Timeout > TimeSpan.Zero ? settings.Timeout : TimeSpan.FromSeconds(10),
+			settings.Heartbeat,
+			settings.Group,
+			settings.Topic);
 
-		//生成当前消息队列的实例标识
 		this.Instance = GenerateIdentifier(settings);
-
-		//初始化消息实例过滤器
-		this.SetFilter(settings.Filter, this.Instance);
-
-		_locker = new();
-		_queue = new NetMQQueue<Packet>();
-		_queue.ReceiveReady += this.OnQueueReady;
-		_poller = new NetMQPoller() { _queue };
-
-		//如果没有指定心跳间隔则采用配置默认值(10秒)，如果显式指定了心跳间隔小于等于零则表示不启用心跳
-		if(settings.Heartbeat > TimeSpan.Zero)
-		{
-			_timer = new NetMQTimer(settings.Heartbeat);
-			_timer.Elapsed += this.OnElapsed;
-			_poller.Add(_timer);
-		}
+		(_inclusion, _exclusion) = CreateFilter(settings.Filter, this.Instance);
+		_transport = new Transport(_options, this.Instance, () => this.GetHeartbeatTopics());
 	}
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取当前队列的实例标识。</summary>
 	public string Instance { get; }
 	#endregion
 
 	#region 订阅方法
-	protected override ValueTask<ZeroSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation) => ValueTask.FromResult(new ZeroSubscriber(this, topic, handler, options));
+	protected override ValueTask<ZeroSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation) =>
+		ValueTask.FromResult(new ZeroSubscriber(this, topic, handler, options));
+
 	protected override async ValueTask<bool> OnSubscribeAsync(ZeroSubscriber subscriber, CancellationToken cancellation = default)
 	{
-		//确保初始化完成
-		this.Initialize();
-
-		//执行网络订阅方法
-		var channel = subscriber.Subscribe(ZeroUtility.GetTcpAddress(this.Settings.Server, _publisherPort));
-
-		//将订阅成功的网络通道加入到轮询器中
-		if(channel != null)
-			_poller.Add(channel);
-
-		var timeout = this.Settings.Timeout > TimeSpan.Zero ? this.Settings.Timeout : TimeSpan.FromSeconds(10);
-		await subscriber.SynchronizeAsync(timeout, cancellation);
-
+		await this.EnsureInitializedAsync(cancellation);
+		await _transport.SubscribeAsync(subscriber, this.GetPhysicalTopic(subscriber.Topic), cancellation);
+		await subscriber.SynchronizeAsync(_options.Timeout, cancellation);
 		return true;
 	}
 
-	protected override void OnUnsubscribed(ZeroSubscriber subscriber) => this.Unregister(subscriber.Channel);
+	protected override void OnUnsubscribed(ZeroSubscriber subscriber) { }
 	#endregion
 
 	#region 发布方法
 	protected override async ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
 	{
-		//确保初始化完成
-		//注意：如果是首次发布则必须等待片刻确保发布者连接就绪
-		if(this.Initialize())
-			await Task.Delay(100, cancellation);
+		await this.EnsureInitializedAsync(cancellation);
+		var payload = data.ToArray();
+		var threshold = Packetizer.GetCompressionThreshold(options, payload.Length);
 
 		if(string.IsNullOrEmpty(topic))
 		{
 			foreach(var subscriber in this.Subscribers)
-				_queue.Enqueue(new Packet(subscriber.Topic, data, options));
+				await _transport.PublishAsync(this.GetPhysicalTopic(subscriber.Topic), this.Instance, payload, threshold, cancellation);
 		}
 		else
 		{
-			_queue.Enqueue(new Packet(topic, data, options));
+			await _transport.PublishAsync(this.GetPhysicalTopic(topic), this.Instance, payload, threshold, cancellation);
 		}
 
 		return null;
@@ -154,192 +120,69 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 		return _inclusion == null || _inclusion.Count == 0 || _inclusion.Contains(identifier);
 	}
 
-	internal void Unregister(SubscriberSocket channel)
+	internal string GetLogicalTopic(string topic)
 	{
-		if(channel != null && !channel.IsDisposed)
-		{
-			var poller = _poller;
+		if(string.IsNullOrEmpty(_options.Group) || string.IsNullOrEmpty(topic))
+			return topic;
 
-			if(poller == null || poller.IsDisposed)
-				channel.Dispose();
-			else
-			{
-				//将指定的通道从轮询器中移除并由轮询器负责释放
-				poller.RemoveAndDispose(channel);
-			}
-		}
+		var prefix = _options.Group + ":";
+		return topic.StartsWith(prefix, StringComparison.Ordinal) ? topic[prefix.Length..] : topic;
 	}
+
+	internal ValueTask UnsubscribeAsync(ZeroSubscriber subscriber, CancellationToken cancellation) =>
+		_transport.UnsubscribeAsync(subscriber, cancellation);
+
+	internal void Pause(ZeroSubscriber subscriber, Message message) => _transport.Pause(subscriber, message);
+	internal void Resume(ZeroSubscriber subscriber) => _transport.Resume(subscriber);
+	internal TimeSpan Timeout => _options.Timeout;
 	#endregion
 
 	#region 重写方法
 	protected override string GetTopic(string topic)
 	{
-		topic = base.GetTopic(topic);
-
-		if(topic == "*")
-			topic = string.Empty;
-
-		return string.IsNullOrEmpty(this.Settings.Group) ? topic : $"{this.Settings.Group}:{topic}";
+		topic = string.IsNullOrEmpty(topic) ? _options.Topic ?? string.Empty : topic;
+		return topic == "*" ? string.Empty : topic;
 	}
 	#endregion
 
-	#region 事件处理
-	private void OnElapsed(object sender, NetMQTimerEventArgs e)
+	#region 私有方法
+	private async ValueTask EnsureInitializedAsync(CancellationToken cancellation)
 	{
-		if(this.IsDisposed)
-			return;
-
-		_queue.Enqueue(default);
-	}
-
-	private void OnQueueReady(object sender, NetMQQueueEventArgs<Packet> e)
-	{
-		if(this.IsDisposed)
-			return;
-
-		if(e.Queue == null || e.Queue.IsDisposed)
-			return;
-
-		//轮询器回调可能与 Dispose() 交叉执行，后续发送必须固定到同一个局部发布者实例。
-		var publisher = _publisher;
-
-		if(publisher == null || publisher.IsDisposed)
-			return;
-
-		//一次回调最多处理一批消息，降低突发发布时的 poller 唤醒成本，同时避免长时间独占 poller 线程。
-		for(int i = 0; i < BATCH_SIZE && e.Queue.TryDequeue(out var packet, TimeSpan.Zero); i++)
-		{
-			if(!this.Send(publisher, packet))
-				return;
-		}
-	}
-	#endregion
-
-	#region 初始方法
-	private bool Initialize()
-	{
-		if(_publisher != null)
-			return false;
+		Task initialization;
 
 		lock(_locker)
 		{
-			if(_publisher != null)
-				return false;
+			if(_initialization == null || _initialization.IsCanceled || _initialization.IsFaulted)
+				_initialization = _transport.StartAsync(CancellationToken.None).AsTask();
 
-			//获取队列交换器的发布和订阅端口号
-			(_publisherPort, _subscriberPort) = GetExchangePorts(this.Settings);
-
-			//如果队列交换器的端口信息获取失败则抛出异常
-			if(_publisherPort == 0 || _subscriberPort == 0)
-				throw new InvalidOperationException($"Failed to acquire queue exchange information from the '{this.Settings.Server}:{this.Settings.Port}' server.");
-
-			PublisherSocket publisher = null;
-			var assigned = false;
-
-			try
-			{
-				//创建一个发布者套接字
-				publisher = new PublisherSocket();
-
-				publisher.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
-				publisher.Connect(ZeroUtility.GetTcpAddress(this.Settings.Server, _subscriberPort));
-
-				//确保发布者套接字已经连接就绪
-				//注意：如果发布者未就绪，轮询器将无法正常运行
-				if(!SpinWait.SpinUntil(() => publisher.HasOut && publisher.TrySignalOK(), 1000))
-					throw new InvalidOperationException($"Failed to connect to the publisher at '{this.Settings.Server}:{_subscriberPort}'.");
-
-				//先保存已经连接就绪的发布者，避免轮询器启动后定时器回调看到空发布者。
-				_publisher = publisher;
-				publisher = null;
-				assigned = true;
-
-				//启动网络轮询器
-				if(!_poller.IsRunning)
-					_poller.RunAsync($"{nameof(ZeroQueue)}#{this.Instance}.Poller", true);
-			}
-			catch
-			{
-				//如果 RunAsync() 或后续初始化失败，需要回滚已经发布给字段的 socket。
-				if(assigned)
-				{
-					var assignedPublisher = _publisher;
-					_publisher = null;
-
-					if(assignedPublisher != null && !assignedPublisher.IsDisposed)
-						assignedPublisher.Dispose();
-				}
-
-				if(publisher != null && !publisher.IsDisposed)
-					publisher.Dispose();
-
-				throw;
-			}
-
-			//返回初始化成功
-			return true;
-		}
-	}
-
-	private static (ushort publisherPort, ushort subscriberPort) GetExchangePorts(Configuration.ZeroConnectionSettings settings)
-	{
-		using var requester = new RequestSocket(ZeroUtility.GetTcpAddress(settings.Server, settings.Port));
-
-		//发送请求获取交换器端口号
-		requester.SendFrameEmpty();
-
-		//获取连接超时
-		var timeout = settings.Timeout > TimeSpan.Zero ? settings.Timeout : TimeSpan.FromSeconds(10);
-
-		//定义请求的响应内容
-		string response = null;
-
-		//接收返回的请求响应信息
-		//注意：TryReceiveFrame(...) 方法并不会等待指定的超时，因此需要通过 SpinWait 轮询响应内容
-		SpinWait.SpinUntil(() => requester.TryReceiveFrameString(timeout, out response), timeout);
-
-		//如果请求的响应内容为空则返回失败
-		if(string.IsNullOrEmpty(response))
-			return default;
-
-		ushort publisherPort = 0, subscriberPort = 0;
-		var entries = response.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-
-		foreach(var entry in entries)
-		{
-			int index = entry.IndexOf('=');
-
-			if(index > 0 && index < entry.Length - 1)
-			{
-				var span = entry.AsSpan();
-
-				switch(span[..index])
-				{
-					case "publisher":
-					case "Publisher":
-						if(ushort.TryParse(span[(index + 1)..], out var port1))
-							publisherPort = port1;
-						break;
-					case "subscriber":
-					case "Subscriber":
-						if(ushort.TryParse(span[(index + 1)..], out var port2))
-							subscriberPort = port2;
-						break;
-				}
-			}
+			initialization = _initialization;
 		}
 
-		return (publisherPort, subscriberPort);
+		if(cancellation.CanBeCanceled)
+			await initialization.WaitAsync(cancellation);
+		else
+			await initialization;
 	}
 
-	private void SetFilter(string filter, string instance)
+	private string GetPhysicalTopic(string topic) => string.IsNullOrEmpty(_options.Group) ? topic : $"{_options.Group}:{topic}";
+	private string[] GetHeartbeatTopics()
 	{
+		var topics = new string[this.Subscribers.Count];
+		var index = 0;
+
+		foreach(var subscriber in this.Subscribers)
+			topics[index++] = this.GetPhysicalTopic(subscriber.Topic);
+
+		return index == topics.Length ? topics : topics[..index];
+	}
+
+	private static (HashSet<string> inclusion, HashSet<string> exclusion) CreateFilter(string filter, string instance)
+	{
+		HashSet<string> inclusion = null;
+		HashSet<string> exclusion = null;
+
 		if(string.IsNullOrWhiteSpace(filter))
-		{
-			_inclusion = null;
-			_exclusion = new HashSet<string>([instance]);
-			return;
-		}
+			return (null, new HashSet<string>([instance]));
 
 		var parts = filter.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
@@ -348,101 +191,47 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 			switch(parts[i])
 			{
 				case "*":
-					_exclusion?.Clear();
-					_inclusion?.Clear();
+					exclusion?.Clear();
+					inclusion?.Clear();
 					break;
 				case ".":
 				case "~":
-					_exclusion?.Remove(instance);
-
-					if(_inclusion == null)
-						_inclusion = new HashSet<string>([instance]);
-					else
-						_inclusion.Add(instance);
-
+					exclusion?.Remove(instance);
+					(inclusion ??= new HashSet<string>()).Add(instance);
 					break;
 				default:
 					if(parts[i][0] == '!')
 					{
 						if(parts[i].Length == 1)
-							_exclusion?.Clear();
+							exclusion?.Clear();
 						else
 						{
-							var part = parts[i][1..];
+							var value = parts[i][1..];
+							if(value is "." or "~")
+								value = instance;
 
-							if(part == "." || part == "~")
-								part = instance;
-
-							if(_exclusion == null)
-								_exclusion = new HashSet<string>([part]);
-							else
-								_exclusion.Add(part);
+							(exclusion ??= new HashSet<string>()).Add(value);
 						}
 					}
 					else
 					{
-						_exclusion?.Remove(parts[i]);
-
-						if(_inclusion == null)
-							_inclusion = new HashSet<string>([parts[i]]);
-						else
-							_inclusion.Add(parts[i]);
+						exclusion?.Remove(parts[i]);
+						(inclusion ??= new HashSet<string>()).Add(parts[i]);
 					}
 					break;
 			}
 		}
-	}
 
-	private bool Send(PublisherSocket publisher, in Packet packet)
-	{
-		if(publisher == null || publisher.IsDisposed)
-			return false;
-
-		try
-		{
-			//如果主题为空则直接发送心跳包
-			if(string.IsNullOrEmpty(packet.Topic))
-			{
-				//方案一：直接发送空包
-				//publisher.SendMoreFrameEmpty().SendFrameEmpty();
-
-				//方案二：依次向所有订阅者发送匿名空包
-				foreach(var subscriber in this.Subscribers)
-				{
-					if(publisher.IsDisposed)
-						return false;
-
-					publisher.SendMoreFrame(Packetizer.Pack(subscriber.Topic)).SendFrameEmpty();
-				}
-
-				return true;
-			}
-
-			var head = Packetizer.Pack(this.Instance, packet.Topic, packet.Data, packet.Options, out var compressor);
-			var data = string.IsNullOrEmpty(compressor) ? packet.Data.ToArray() : IO.Compression.Compressor.Compress(compressor, packet.Data.ToArray());
-			publisher.SendMoreFrame(head).SendFrame(data);
-
-			return true;
-		}
-		catch(ObjectDisposedException)
-		{
-			//Dispose() 可能与 poller 发送回调并发，停止本批发送即可。
-			return false;
-		}
-		catch(TerminatingException)
-		{
-			//NetMQ 上下文终止时不再继续使用当前 socket。
-			return false;
-		}
+		return (inclusion, exclusion);
 	}
 
 	private static string GenerateIdentifier(Configuration.ZeroConnectionSettings settings)
 	{
 		if(string.IsNullOrEmpty(settings.Instance) || settings.Instance == "*")
 		{
-			return string.IsNullOrEmpty(settings?.Client) ?
+			return string.IsNullOrEmpty(settings.Client) ?
 				Randomizer.GenerateString(10) :
-				$"{settings.Client}-{Math.Abs(Randomizer.GenerateInt32()):X}";
+				$"{settings.Client}-{unchecked((uint)Randomizer.GenerateInt32()):X}";
 		}
 
 		return settings.Instance;
@@ -452,44 +241,15 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 	#region 处置方法
 	protected override void Dispose(bool disposing)
 	{
-		if(disposing)
-		{
-			var poller = _poller;
-			if(poller != null && !poller.IsDisposed)
-				poller.Dispose();
+		if(!disposing)
+			return;
 
-			var timer = _timer;
-			if(timer != null)
-			{
-				timer.Enable = false;
-				timer.Elapsed -= this.OnElapsed;
-			}
+		foreach(var subscriber in this.Subscribers)
+			subscriber.DisposeAsync().AsTask().GetAwaiter().GetResult();
 
-			var queue = _queue;
-			if(queue != null && !queue.IsDisposed)
-			{
-				queue.ReceiveReady -= this.OnQueueReady;
-				queue.Dispose();
-			}
-
-			var publisher = _publisher;
-			if(publisher != null && !publisher.IsDisposed)
-				publisher.Dispose();
-		}
-
-		_timer = null;
-		_queue = null;
-		_poller = null;
-		_publisher = null;
-	}
-	#endregion
-
-	#region 嵌套结构
-	private readonly struct Packet(string topic, ReadOnlyMemory<byte> data, MessageEnqueueOptions options)
-	{
-		public readonly string Topic = topic;
-		public readonly ReadOnlyMemory<byte> Data = data;
-		public readonly MessageEnqueueOptions Options = options;
+		_transport.DisposeAsync().AsTask().GetAwaiter().GetResult();
 	}
 	#endregion
 }
+
+internal readonly record struct ZeroQueueRuntimeOptions(string Server, ushort Port, TimeSpan Timeout, TimeSpan Heartbeat, string Group, string Topic);

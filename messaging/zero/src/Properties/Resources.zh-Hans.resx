@@ -163,4 +163,40 @@
 • 如果仅接受本实例发送者的消息则设置为点号(.)或波浪线(~)；
 • 如果需要拒绝指定实例发送者的消息，则以惊叹号接实例标识（如：!1234, !5678)。</value>
   </data>
+  <data name="ZeroQueue.ServerRequired.Message" xml:space="preserve">
+    <value>连接设置中缺少必需的服务器地址。</value>
+  </data>
+  <data name="ZeroQueue.ExchangeUnavailable.Message" xml:space="preserve">
+    <value>无法从“{0}:{1}”服务器获取消息队列交换端口信息。</value>
+  </data>
+  <data name="ZeroQueue.PublisherUninitialized.Message" xml:space="preserve">
+    <value>ZeroMQ 发布器尚未初始化。</value>
+  </data>
+  <data name="ZeroQueueServer.PortImmutable.Message" xml:space="preserve">
+    <value>服务器运行期间不能更改发现端口。</value>
+  </data>
+  <data name="ZeroQueueServer.DataPortOutOfRange.Message" xml:space="preserve">
+    <value>数据端口必须介于 0 和 {0} 之间。</value>
+  </data>
+  <data name="ZeroQueueServer.DataPortsConflict.Message" xml:space="preserve">
+    <value>传入端口和传出端口不能相同。</value>
+  </data>
+  <data name="ZeroQueueServer.DiscoveryPortConflict.Message" xml:space="preserve">
+    <value>数据端口不能与发现端口相同。</value>
+  </data>
+  <data name="ZeroQueueServer.NamedPortOutOfRange.Message" xml:space="preserve">
+    <value>“{0}”端口必须介于 0 和 {1} 之间。</value>
+  </data>
+  <data name="ZeroQueueEventChannel.QueueRequired.Message" xml:space="preserve">
+    <value>必须先指定消息队列，才能打开或发送事件。</value>
+  </data>
+  <data name="ZeroRequester.QueueReplacementNotAllowed.Message" xml:space="preserve">
+    <value>请求器订阅响应主题后不能更换消息队列。</value>
+  </data>
+  <data name="ZeroResponse.TypeUnsupported.Message" xml:space="preserve">
+    <value>不支持“{0}”响应类型。</value>
+  </data>
+  <data name="ServerOptions.InvalidPortFormat.Message" xml:space="preserve">
+    <value>无效的服务器端口格式：{0}。</value>
+  </data>
 </root>

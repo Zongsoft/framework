@@ -42,32 +42,30 @@ namespace Zongsoft.Messaging.ZeroMQ;
 
 [System.Reflection.DefaultMember(nameof(Handlers))]
 [System.ComponentModel.DefaultProperty(nameof(Handlers))]
-public class ZeroRequester : IRequester
+public class ZeroRequester : IRequester, IDisposable, IAsyncDisposable
 {
-	#region 常量定义
-	//表示待删除令牌的缓存过期时长
+	#region 静态常量
 	private static readonly TimeSpan PENDING_EXPIRATION = TimeSpan.FromSeconds(600);
-	private static readonly TimeSpan SUBSCRIPTION_DELAY = TimeSpan.FromMilliseconds(100);
 	#endregion
 
-	#region 私有字段
+	#region 成员字段
 	private ZeroQueue _queue;
 	private readonly Adapter _adapter;
-	private readonly ConcurrentDictionary<string, Token> _tokens;
-	private readonly ConcurrentDictionary<string, Task> _subscriptions;
 	private readonly MemoryCache _pending;
+	private readonly ConcurrentDictionary<string, Token> _tokens;
+	private readonly ConcurrentDictionary<string, Task<ZeroSubscriber>> _subscriptions;
+	private int _disposed;
 	#endregion
 
 	#region 构造函数
 	public ZeroRequester()
 	{
 		_adapter = new Adapter(this);
-		_tokens = new ConcurrentDictionary<string, Token>();
-		_subscriptions = new ConcurrentDictionary<string, Task>();
-		this.Handlers = new List<IHandler>();
-
-		_pending = new MemoryCache();
+		_subscriptions = new();
+		_tokens = new();
+		_pending = new();
 		_pending.Evicted += this.OnEvicted;
+		this.Handlers = new List<IHandler>();
 	}
 	#endregion
 
@@ -78,8 +76,17 @@ public class ZeroRequester : IRequester
 		get => _queue;
 		set
 		{
-			_queue = value ?? throw new ArgumentNullException(nameof(value));
-			_subscriptions.Clear();
+			if(Volatile.Read(ref _disposed) != 0)
+				throw new ObjectDisposedException(nameof(ZeroRequester));
+
+			if(value == null)
+				throw new ArgumentNullException(nameof(value));
+			var current = _queue;
+
+			if(current != null && !ReferenceEquals(current, value) && !_subscriptions.IsEmpty)
+				throw new InvalidOperationException(Properties.Resources.ZeroRequester_QueueReplacementNotAllowed_Message);
+
+			_queue = value;
 		}
 	}
 
@@ -89,12 +96,14 @@ public class ZeroRequester : IRequester
 	#region 公共方法
 	public async ValueTask<IRequestToken> RequestAsync(string url, ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
 	{
+		if(Volatile.Read(ref _disposed) != 0)
+			throw new ObjectDisposedException(nameof(ZeroRequester));
+
 		var queue = this.Queue;
 		if(queue == null)
 			return null;
 
 		var request = new ZeroRequest(url, data);
-		var reply = url + "/reply";
 		var token = new Token(request, request => this.Remove(request.Identifier));
 
 		if(!_tokens.TryAdd(request.Identifier, token))
@@ -102,7 +111,7 @@ public class ZeroRequester : IRequester
 
 		try
 		{
-			await this.SubscribeAsync(queue, reply, cancellation);
+			await this.SubscribeAsync(queue, url + "/reply", cancellation);
 			await queue.ProduceAsync(url, request.Pack(), null, cancellation);
 			return token;
 		}
@@ -112,85 +121,92 @@ public class ZeroRequester : IRequester
 			throw;
 		}
 	}
+	#endregion
 
+	#region 应答处理
 	ValueTask IRequester.OnRespondedAsync(IResponse response, CancellationToken cancellation) => this.OnRespondedAsync(response as ZeroResponse, cancellation);
 	private async ValueTask OnRespondedAsync(ZeroResponse response, CancellationToken cancellation)
 	{
 		var identifier = response?.Request?.Identifier;
-		if(identifier == null)
+		if(identifier == null || !_tokens.TryGetValue(identifier, out var token))
 			return;
 
-		if(_tokens.TryGetValue(identifier, out var token))
-		{
-			//设置请求令牌对应的响应
-			token.Response(response);
+		token.Response(response);
+		_pending.SetValue(identifier, (object)null, PENDING_EXPIRATION);
 
-			//将当前响应对应的请求令牌加入到待删除缓存中
-			_pending.SetValue(identifier, (object)null, PENDING_EXPIRATION);
-
-			//获取响应的处理器
-			var handler = HandlerSelector.Default.GetHandler(this.Handlers, response.Url);
-
-			if(handler != null)
-				await handler.HandleAsync(response, cancellation);
-		}
+		var handler = HandlerSelector.Default.GetHandler(this.Handlers, response.Url);
+		if(handler != null)
+			await handler.HandleAsync(response, cancellation);
 	}
 	#endregion
 
 	#region 私有方法
 	private async ValueTask SubscribeAsync(ZeroQueue queue, string topic, CancellationToken cancellation)
 	{
-		var task = _subscriptions.GetOrAdd(topic, topic =>
-		{
-			var task = SubscribeAsync(queue, topic, _adapter, cancellation);
-
-			//首次订阅任务被取消或失败后不能永久缓存，否则后续请求无法重新订阅该回复主题。
-			_ = task.ContinueWith(task =>
-			{
-				if(task.IsCanceled || task.IsFaulted)
-					_subscriptions.TryRemove(new KeyValuePair<string, Task>(topic, task));
-			}, TaskScheduler.Default);
-
-			return task;
-		});
+		var task = _subscriptions.GetOrAdd(topic, key => queue.SubscribeAsync(key, _adapter, CancellationToken.None).AsTask());
 
 		try
 		{
-			await task.WaitAsync(cancellation);
+			if(cancellation.CanBeCanceled)
+				await task.WaitAsync(cancellation);
+			else
+				await task;
 		}
 		catch
 		{
 			if(task.IsFaulted || task.IsCanceled)
-				_subscriptions.TryRemove(new KeyValuePair<string, Task>(topic, task));
+				_subscriptions.TryRemove(new KeyValuePair<string, Task<ZeroSubscriber>>(topic, task));
 
 			throw;
-		}
-
-		static async Task SubscribeAsync(ZeroQueue queue, string topic, IHandler<Message> handler, CancellationToken cancellation)
-		{
-			await queue.SubscribeAsync(topic, handler, cancellation);
-			await Task.Delay(SUBSCRIPTION_DELAY, cancellation);
 		}
 	}
 
 	private void Remove(string identifier)
 	{
-		if(identifier != null)
-		{
-			_pending.Remove(identifier);
-			_tokens.Remove(identifier, out _);
-		}
+		if(identifier == null)
+			return;
+
+		_pending.Remove(identifier);
+		_tokens.Remove(identifier, out _);
 	}
 
 	private void OnEvicted(object sender, CacheEvictedEventArgs args) => this.Remove(args.Key as string);
 	private ZeroRequest GetRequest(string identifier) => identifier != null && _tokens.TryGetValue(identifier, out var token) ? token.Request : null;
 	#endregion
 
-	#region 嵌套子类
+	#region 释放资源
+	public void Dispose() => this.DisposeAsync().AsTask().GetAwaiter().GetResult();
+	public async ValueTask DisposeAsync()
+	{
+		if(Interlocked.Exchange(ref _disposed, 1) != 0)
+			return;
+
+		foreach(var token in _tokens.Values)
+			token.Dispose();
+
+		_tokens.Clear();
+
+		foreach(var subscription in _subscriptions.Values)
+		{
+			try
+			{
+				var subscriber = await subscription;
+				if(subscriber != null)
+					await subscriber.DisposeAsync();
+			}
+			catch { }
+		}
+
+		_subscriptions.Clear();
+		_pending.Evicted -= this.OnEvicted;
+		_pending.Dispose();
+		_queue = null;
+		GC.SuppressFinalize(this);
+	}
+	#endregion
+
 	private sealed class Adapter(ZeroRequester requester) : HandlerBase<Message>
 	{
-		public readonly ZeroRequester _requester = requester;
-
 		protected override ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
 		{
 			if(message.IsEmpty)
@@ -200,115 +216,86 @@ public class ZeroRequester : IRequester
 			if(string.IsNullOrEmpty(identifier))
 				return ValueTask.CompletedTask;
 
-			var request = _requester.GetRequest(identifier);
-			if(request == null)
-				return ValueTask.CompletedTask;
-
-			return _requester.OnRespondedAsync(request.Response(message.Topic, data), cancellation);
+			var request = requester.GetRequest(identifier);
+			return request == null ? ValueTask.CompletedTask : requester.OnRespondedAsync(request.Response(message.Topic, data), cancellation);
 		}
 	}
 
 	private sealed class Token : IRequestToken, IDisposable
 	{
-		#region 私有字段
 		private Action<ZeroRequest> _disposed;
-		private CancellationTokenSource _cancellation;
-		private ConcurrentBag<ZeroResponse> _responses;
-		#endregion
+		private ConcurrentQueue<ZeroResponse> _responses = new();
+		private readonly SemaphoreSlim _signal = new(0);
 
-		#region 构造函数
 		public Token(ZeroRequest request, Action<ZeroRequest> disposed)
 		{
 			this.Request = request ?? throw new ArgumentNullException(nameof(request));
 			_disposed = disposed ?? throw new ArgumentNullException(nameof(disposed));
-			_responses = new();
 		}
-		#endregion
 
-		#region 公共属性
 		IRequest IRequestToken.Request => this.Request;
 		public ZeroRequest Request { get; }
-		#endregion
 
-		#region 内部方法
 		internal void Response(ZeroResponse response)
 		{
 			var responses = _responses;
+			if(response == null || responses == null)
+				return;
 
-			if(response != null && responses != null)
-				responses.Add(response);
+			responses.Enqueue(response);
+			_signal.Release();
 		}
-		#endregion
 
-		#region 公共方法
 		public IEnumerable<IResponse> GetResponses(CancellationToken cancellation = default) => this.GetResponses(TimeSpan.Zero, cancellation);
 		public IEnumerable<IResponse> GetResponses(TimeSpan timeout, CancellationToken cancellation = default)
 		{
-			if(cancellation.IsCancellationRequested)
+			var responses = _responses;
+			if(responses == null || cancellation.IsCancellationRequested)
 				yield break;
 
-			var source = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
-			var original = Interlocked.Exchange(ref _cancellation, source);
-			original?.Dispose();
-
-			try
+			if(timeout <= TimeSpan.Zero)
 			{
-				if(timeout > TimeSpan.Zero)
+				while(responses.TryDequeue(out var response))
 				{
-					source.CancelAfter(timeout);
-
-					while(!source.IsCancellationRequested)
-					{
-						var responses = _responses;
-
-						if(responses == null)
-							yield break;
-
-						if(responses.TryTake(out var response))
-							yield return response;
-						else
-							SpinWait.SpinUntil(() => !responses.IsEmpty || source.IsCancellationRequested, 1);
-					}
+					_signal.Wait(0);
+					yield return response;
 				}
-				else
-				{
-					while(!source.IsCancellationRequested)
-					{
-						var responses = _responses;
 
-						if(responses == null || !responses.TryTake(out var response))
-							yield break;
-
-						yield return response;
-					}
-				}
+				yield break;
 			}
-			finally
+
+			var deadline = DateTime.UtcNow + timeout;
+			while(_responses != null && !cancellation.IsCancellationRequested)
 			{
-				if(Interlocked.CompareExchange(ref _cancellation, null, source) == source)
-					source.Dispose();
+				if(responses.TryDequeue(out var response))
+				{
+					_signal.Wait(0);
+					yield return response;
+					continue;
+				}
+
+				var remaining = deadline - DateTime.UtcNow;
+				if(remaining <= TimeSpan.Zero)
+					yield break;
+
+				bool signaled;
+				try { signaled = _signal.Wait(remaining, cancellation); }
+				catch(OperationCanceledException) { yield break; }
+
+				if(!signaled)
+					yield break;
 			}
 		}
-		#endregion
 
-		#region 处置方法
 		public void Dispose()
 		{
-			var cancellation = Interlocked.Exchange(ref _cancellation, null);
-
-			if(cancellation != null)
-			{
-				cancellation.Cancel();
-				cancellation.Dispose();
-			}
-
 			var responses = Interlocked.Exchange(ref _responses, null);
-			responses?.Clear();
+			if(responses == null)
+				return;
 
-			var disposed = Interlocked.Exchange(ref _disposed, null);
-			disposed?.Invoke(this.Request);
+			responses.Clear();
+			_signal.Release();
+			Interlocked.Exchange(ref _disposed, null)?.Invoke(this.Request);
 		}
-		#endregion
 	}
-	#endregion
 }

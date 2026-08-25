@@ -30,6 +30,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Channels;
 
 using NetMQ;
 using NetMQ.Sockets;
@@ -39,161 +40,195 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 
-public sealed class ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Message> handler, MessageSubscribeOptions options = null) : MessageConsumerBase<ZeroQueue>(queue, topic, handler, options)
+public sealed class ZeroSubscriber : MessageConsumerBase<ZeroQueue>
 {
-	#region 成员字段
-	private volatile SubscriberSocket _channel;
+	#region 常量定义
+	private const int CAPACITY = 1000;
+	#endregion
+
+	#region 私有成员
+	private readonly Channel<Message> _messages;
+	private readonly CancellationTokenSource _cancellation = new();
+	private readonly Task _worker;
+	private SubscriberSocket _channel;
 	private TaskCompletionSource _synchronization;
+	private Message? _pending;
+	private int _closed;
 	#endregion
 
-	#region 内部属性
-	public SubscriberSocket Channel => _channel;
-	#endregion
-
-	#region 订阅方法
-	internal SubscriberSocket Subscribe(string address)
+	#region 构造函数
+	internal ZeroSubscriber(ZeroQueue queue, string topic, IHandler<Message> handler, MessageSubscribeOptions options = null) : base(queue, topic, handler, options)
 	{
-		if(_channel != null && !_channel.IsDisposed)
-			return _channel;
-
-		lock(this)
+		_messages = System.Threading.Channels.Channel.CreateBounded<Message>(new BoundedChannelOptions(CAPACITY)
 		{
-			if(_channel == null || _channel.IsDisposed)
-			{
-				var channel = new SubscriberSocket();
-				channel.Options.ReceiveHighWatermark = 1000;
-				channel.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
-				channel.ReceiveReady += this.OnReceiveReady;
-				channel.Subscribe(this.Topic);
-				channel.Subscribe(ZeroQueueServer.WELCOME_MESSAGE);
-				channel.Connect(address);
-
-				_synchronization = new(TaskCreationOptions.RunContinuationsAsynchronously);
-				_channel = channel;
-			}
-
-			return _channel;
-		}
-	}
-
-	internal SubscriberSocket Resubscribe(string address)
-	{
-		lock(this)
-		{
-			var channel = Interlocked.Exchange(ref _channel, null);
-
-			if(channel != null && !channel.IsDisposed)
-			{
-				channel.ReceiveReady -= this.OnReceiveReady;
-				this.Queue.Unregister(channel);
-			}
-
-			return this.Subscribe(address);
-		}
+			SingleReader = true,
+			SingleWriter = true,
+			FullMode = BoundedChannelFullMode.Wait,
+		});
+		_worker = Task.Run(this.ProcessAsync);
 	}
 	#endregion
 
-	#region 同步方法
-	/// <summary>等待服务器欢迎消息，以确认当前订阅通道已经连接就绪。</summary>
-	/// <param name="timeout">等待订阅通道就绪的超时时长。</param>
-	/// <param name="cancellation">用于取消等待操作的凭证。</param>
+	#region 公共属性
+	internal SubscriberSocket Channel => Volatile.Read(ref _channel);
+	#endregion
+
+	#region 内部方法
+	internal SubscriberSocket Attach(string topic, string address)
+	{
+		var channel = new SubscriberSocket();
+		channel.Options.ReceiveHighWatermark = CAPACITY;
+		channel.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
+		channel.ReceiveReady += this.OnReceiveReady;
+		channel.Subscribe(topic);
+		channel.Subscribe(ZeroQueueServer.WELCOME_MESSAGE);
+		channel.Connect(address);
+
+		_synchronization = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		Volatile.Write(ref _channel, channel);
+		return channel;
+	}
+
+	internal SubscriberSocket Detach()
+	{
+		Interlocked.Exchange(ref _synchronization, null)?.TrySetCanceled();
+		return Interlocked.Exchange(ref _channel, null);
+	}
+
 	internal async ValueTask SynchronizeAsync(TimeSpan timeout, CancellationToken cancellation)
 	{
 		var synchronization = _synchronization;
 		if(synchronization != null)
 			await synchronization.Task.WaitAsync(timeout, cancellation);
 	}
+
+	internal void SetPending(Message message) => _pending = message;
+	internal void MarkSynchronized() => Interlocked.Exchange(ref _synchronization, null)?.TrySetResult();
+	internal bool Dispatch(Message message)
+	{
+		if(_messages.Writer.TryWrite(message))
+			return true;
+
+		this.Queue.Pause(this, message);
+		return false;
+	}
+
+	internal bool TryDispatchPending()
+	{
+		if(!_pending.HasValue || !_messages.Writer.TryWrite(_pending.Value))
+			return false;
+
+		_pending = null;
+		return true;
+	}
 	#endregion
 
-	#region 取消订阅
-	protected override ValueTask OnCloseAsync(CancellationToken cancellation)
+	#region 重写方法
+	protected override async ValueTask OnCloseAsync(CancellationToken cancellation)
 	{
-		//取消订阅同步信号
+		if(Interlocked.Exchange(ref _closed, 1) != 0)
+			return;
+
 		Interlocked.Exchange(ref _synchronization, null)?.TrySetCanceled(cancellation);
+		await this.Queue.UnsubscribeAsync(this, CancellationToken.None);
+		_messages.Writer.TryComplete();
+		_cancellation.Cancel();
 
-		//将当前通道对应设置为空
-		var channel = Interlocked.Exchange(ref _channel, null);
+		try { await _worker.WaitAsync(this.Queue.Timeout); }
+		catch(OperationCanceledException) { }
+		catch(TimeoutException exception) { Diagnostics.Logging.GetLogging(this).Warn(exception.Message); }
 
-		if(channel != null && !channel.IsDisposed)
-		{
-			channel.ReceiveReady -= this.OnReceiveReady;
-
-			//必须通过队列的注销方法将当前订阅的通道从轮询器中移除并释放
-			this.Queue.Unregister(channel);
-		}
-
-		return ValueTask.CompletedTask;
+		_cancellation.Dispose();
 	}
 	#endregion
 
 	#region 事件处理
-	private void OnReceiveReady(object sender, NetMQSocketEventArgs args)
+	internal void OnReceiveReady(object sender, NetMQSocketEventArgs args)
 	{
-		var round = Math.Max(args.Socket.Options.ReceiveHighWatermark, 100);
-
-		for(int i = 0; i < round; i++)
+		try
 		{
-			//尝试接收首帧消息
-			if(!args.Socket.TryReceiveFrameString(out var header, out var more))
-				break;
+			var round = Math.Max(args.Socket.Options.ReceiveHighWatermark, 100);
 
-			//如果是空帧则忽略
-			if(string.IsNullOrEmpty(header))
+			for(var index = 0; index < round; index++)
 			{
-				//外部客户端可能发送多帧空头消息，必须清掉剩余帧，避免下一轮把数据帧误当成头帧
-				SkipRemainingFrames(args.Socket, more);
-				continue;
+				if(!args.Socket.TryReceiveFrameString(out var header, out var more))
+					break;
+
+				if(!more)
+				{
+					if(header == ZeroQueueServer.WELCOME_MESSAGE)
+						Interlocked.Exchange(ref _synchronization, null)?.TrySetResult();
+					continue;
+				}
+
+				if(string.IsNullOrEmpty(header) || !Packetizer.TryUnpack(header, out var identifier, out var topic, out var options))
+				{
+					SkipRemainingFrames(args.Socket, more);
+					continue;
+				}
+
+				if(!args.Socket.TryReceiveFrameBytes(out var data, out more))
+					break;
+
+				if(more)
+				{
+					SkipRemainingFrames(args.Socket, true);
+					continue;
+				}
+
+				if(!this.Queue.Validate(identifier))
+					continue;
+
+				if(string.IsNullOrEmpty(identifier) && (data == null || data.Length == 0))
+					continue;
+
+				if(Packetizer.Options.TryGetValue(options, Packetizer.Options.Compressor, out var compressor))
+				{
+					if(!string.Equals(compressor, nameof(IO.Compression.Compressor.Brotli), StringComparison.OrdinalIgnoreCase))
+						continue;
+
+					data = IO.Compression.Compressor.Decompress(compressor, data);
+				}
+
+				if(!this.Dispatch(new Message(this.Queue.GetLogicalTopic(topic), data ?? [])))
+					return;
+
+				if(!args.Socket.HasIn)
+					break;
 			}
-
-			//欢迎消息是单帧协议控制消息，必须同时校验帧边界，避免将同内容的多帧业务消息误判为订阅同步信号
-			if(!more && header == ZeroQueueServer.WELCOME_MESSAGE)
-			{
-				//尝试设置订阅同步信号为完成
-				Interlocked.Exchange(ref _synchronization, null)?.TrySetResult();
-				continue;
-			}
-
-			//解包收到的首帧消息
-			var identifier = Packetizer.Unpack(header, out var topic, out var options);
-
-			//如果接收到的消息需要排除则跳过后续数据帧
-			if(!this.Queue.Validate(identifier))
-			{
-				//被过滤的消息仍然可能有多帧载荷，只跳一帧会污染后续消息边界
-				SkipRemainingFrames(args.Socket, more);
-				continue;
-			}
-
-			//接收数据帧的内容
-			if(!args.Socket.TryReceiveFrameBytes(out var data, out more))
-				break;
-
-			//如果是匿名消息并且数据帧内容为空则当作心跳消息处理（即忽略它）
-			if(string.IsNullOrEmpty(identifier) && data == null || data.Length == 0)
-			{
-				//保持原有心跳判断不变，仅确保异常多帧心跳不会留下尾帧
-				SkipRemainingFrames(args.Socket, more);
-				continue;
-			}
-
-			//如果接收到的首帧消息包含压缩选项，则必须对收到的消息内容进行解压
-			if(Packetizer.Options.TryGetValue(options, Packetizer.Options.Compressor, out var compressor))
-				data = Zongsoft.IO.Compression.Compressor.Decompress(compressor, data);
-
-			//本库发送的是两帧消息，但外部 ZeroMQ 发布者可能附加更多帧；处理首个数据帧后丢弃尾帧
-			SkipRemainingFrames(args.Socket, more);
-
-			//调用处理器进行消息处理
-			this.Handler.FireAndForget(new Message(topic, data));
-
-			if(!args.Socket.HasIn)
-				break;
+		}
+		catch(Exception exception)
+		{
+			Diagnostics.Logging.GetLogging(this).Error(exception);
 		}
 
 		static void SkipRemainingFrames(NetMQSocket socket, bool more)
 		{
 			while(more && socket.TrySkipFrame(out more)) { }
 		}
+	}
+	#endregion
+
+	#region 私有方法
+	private async Task ProcessAsync()
+	{
+		try
+		{
+			await foreach(var message in _messages.Reader.ReadAllAsync(_cancellation.Token))
+			{
+				this.Queue.Resume(this);
+
+				try
+				{
+					var handler = this.Handler;
+					if(handler != null)
+						await handler.HandleAsync(message, null, _cancellation.Token);
+				}
+				catch(OperationCanceledException) when(_cancellation.IsCancellationRequested) { }
+				catch(Exception exception) { Diagnostics.Logging.GetLogging(this).Error(exception); }
+			}
+		}
+		catch(OperationCanceledException) when(_cancellation.IsCancellationRequested) { }
 	}
 	#endregion
 }

@@ -1,16 +1,114 @@
 using System;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 using NetMQ;
 using NetMQ.Sockets;
 
 using Xunit;
 
+using Zongsoft.Collections;
+using Zongsoft.Components;
+
 namespace Zongsoft.Messaging.ZeroMQ.Tests;
 
 public class ZeroQueueSubscriptionTests
 {
+	[Fact]
+	public async Task SubscriberPreservesOrderThroughBoundedBackpressure()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		using var server = await ZeroServerScope.StartAsync();
+		using var queue = ZeroTestUtility.CreateQueue(server.Port, "backpressure-subscriber");
+		var handler = new BlockingHandler();
+		var subscriber = await queue.SubscribeAsync("topic/backpressure", handler);
+
+		Assert.True(subscriber.Dispatch(CreateMessage(0)));
+		await handler.Started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+		for(var index = 1; index <= 1000; index++)
+			Assert.True(subscriber.Dispatch(CreateMessage(index)));
+
+		Assert.False(subscriber.Dispatch(CreateMessage(1001)));
+		handler.Release();
+		await handler.Completed.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
+		Assert.Equal(System.Linq.Enumerable.Range(0, 1002), handler.Identifiers);
+		await subscriber.DisposeAsync();
+
+		static Message CreateMessage(int identifier) => new("topic/backpressure", BitConverter.GetBytes(identifier));
+	}
+
+	[Fact]
+	public async Task DisposingQueueClosesActiveSubscriber()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		using var server = await ZeroServerScope.StartAsync();
+		var queue = ZeroTestUtility.CreateQueue(server.Port, "dispose-active");
+		var consumer = await queue.SubscribeAsync("topic/dispose", new MessageCollector());
+		var channel = consumer.Channel;
+
+		queue.Dispose();
+
+		Assert.True(queue.IsDisposed);
+		Assert.Empty(queue.Subscribers);
+		Assert.True(consumer.IsClosed);
+		Assert.True(consumer.IsDisposed);
+		Assert.Null(consumer.Handler);
+		Assert.Null(consumer.Channel);
+		Assert.True(channel.IsDisposed);
+	}
+
+	[Fact]
+	public async Task EmptyBusinessPayloadIsDelivered()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		using var server = await ZeroServerScope.StartAsync();
+		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "empty-publisher");
+		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "empty-subscriber");
+		using var handler = new MessageBuffer();
+		var topic = "topic/empty";
+		await subscriber.SubscribeAsync(topic, handler);
+
+		Message? message = null;
+		var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+		do
+		{
+			await publisher.ProduceAsync(topic, ReadOnlyMemory<byte>.Empty);
+			message = await handler.TryReceiveAsync(TimeSpan.FromMilliseconds(250));
+		}
+		while(!message.HasValue && DateTime.UtcNow < deadline);
+
+		Assert.True(message.HasValue);
+		Assert.Equal(topic, message.Value.Topic);
+		Assert.Empty(message.Value.Data);
+	}
+
+	[Fact]
+	public async Task GroupedMessagesExposeLogicalTopic()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		using var server = await ZeroServerScope.StartAsync();
+		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "group-publisher", settings => settings.Group = "tenant");
+		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "group-subscriber", settings => settings.Group = "tenant");
+		using var handler = new MessageBuffer();
+		var topic = "topic/grouped";
+		await subscriber.SubscribeAsync(topic, handler);
+
+		var message = await PublishUntilReceivedAsync(publisher, handler, topic, "grouped", TimeSpan.FromSeconds(10));
+		Assert.Equal(topic, message.Topic);
+	}
+
 	[Fact]
 	public async Task SubscribeAndDisposeCanRepeatAndReceiveAfterResubscribe()
 	{
@@ -168,6 +266,11 @@ public class ZeroQueueSubscriptionTests
 		var unexpected = await handler.TryReceiveAsync(TimeSpan.FromMilliseconds(500));
 		Assert.Null(unexpected);
 
+		publisher.SendMoreFrame($"{topic}@external\nBroken").SendFrame("invalid-option");
+		publisher.SendMoreFrame($"{topic}@external\nCompressor:Unknown").SendFrame("unknown-compressor");
+		publisher.SendMoreFrame($"{topic}@external\nCompressor:Brotli").SendFrame([0xFF, 0xFF, 0xFF, 0xFF]);
+		Assert.Null(await handler.TryReceiveAsync(TimeSpan.FromMilliseconds(500)));
+
 		//再发送合法外部消息，验证前一条畸形消息不会破坏后续消息边界。
 		for(int i = 0; i < 3; i++)
 		{
@@ -215,5 +318,30 @@ public class ZeroQueueSubscriptionTests
 		while(DateTime.UtcNow < deadline);
 
 		throw new TimeoutException($"Timed out waiting for message '{text}' on topic '{topic}'.");
+	}
+
+	private sealed class BlockingHandler : HandlerBase<Message>
+	{
+		private readonly TaskCompletionSource _release = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		private readonly ConcurrentQueue<int> _identifiers = new();
+		private int _count;
+
+		public int[] Identifiers => _identifiers.ToArray();
+		public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		public TaskCompletionSource Completed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		public void Release() => _release.TrySetResult();
+
+		protected override async ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
+		{
+			_identifiers.Enqueue(BitConverter.ToInt32(message.Data));
+			if(Interlocked.Increment(ref _count) == 1)
+			{
+				Started.TrySetResult();
+				await _release.Task.WaitAsync(cancellation);
+			}
+
+			if(Volatile.Read(ref _count) == 1002)
+				Completed.TrySetResult();
+		}
 	}
 }

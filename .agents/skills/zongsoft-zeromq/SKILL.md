@@ -20,8 +20,8 @@ Use this skill for work in `messaging/zero`. Preserve the contracts established 
 ## Architecture
 
 - `ZeroQueueServer` exposes a discovery REP endpoint, binds an XSUB endpoint for application publishers and an XPUB endpoint for application subscribers, and joins the data endpoints with a NetMQ `Proxy`.
-- `ZeroQueue` discovers both data ports, owns the application `PublisherSocket`, translates logical topics, queues outgoing packets, filters producer instances, and manages subscribers.
-- `ZeroSubscriber` owns one `SubscriberSocket` for one effective topic. `MessageQueueBase` caches one consumer per effective topic.
+- `ZeroQueue` is the public facade. Its private nested `ZeroQueue.Transport` command Actor owns discovery, the application `PublisherSocket`, subscriber sockets, heartbeats, sends, and teardown on the Poller thread. Do not introduce a transport interface unless a second production transport actually requires one.
+- `ZeroSubscriber` has one `SubscriberSocket` for one physical topic and a bounded, ordered handler channel. `MessageQueueBase` caches only successfully initialized consumers by logical topic.
 - `ZeroRequester`/`ZeroResponder` map communication URLs to queue topics. `ZeroQueueEventChannel` maps events to `Events/...` topics.
 - The daemon plugin starts `ZeroQueueServer`; the main plugin registers the connection driver, event transport, requester, and responder.
 
@@ -30,10 +30,12 @@ Use this skill for work in `messaging/zero`. Preserve the contracts established 
 - Keep every `NetMQSocket` confined to one owning poller/actor thread for creation-dependent operations, send/receive, and deterministic teardown. Cross-thread callers must submit commands through `NetMQQueue`, a channel, or an actor boundary.
 - Do not use a fixed delay, `HasOut`, or a successful local send as proof that a remote subscription has propagated. Distinguish transport connected, subscription propagated, message accepted locally, message sent, and handler completed.
 - Preserve the current transient, best-effort PUB/SUB contract unless the user explicitly approves a new reliability protocol. PUB/SUB has no persistence, acknowledgement, retry, deduplication, or replay.
+- `ProduceAsync` snapshots payload memory and completes after the Actor invokes the local Socket send. This is not a remote acknowledgement or subscription-readiness signal.
 - Define `ProduceAsync` completion and payload ownership together. If sending remains deferred, snapshot borrowed memory before returning or document and enforce an equivalent lifetime contract.
 - Roll back and dispose a newly created subscriber when subscription initialization fails or is cancelled. Never leave a failed subscriber in `MessageQueueBase.Subscribers`.
 - Closing or disposing a queue must close its consumers, detach handlers, stop asynchronous work, and release sockets without racing the poller.
 - Keep logical topics separate from physical grouped topics. Add `Group` exactly once, and normalize it before event or request/response routing.
+- Keep per-subscriber dispatch bounded and ordered. Capacity pressure pauses only that subscriber socket and resumes it through an Actor command when the handler frees space.
 - Bound handler concurrency and define ordering/backpressure behavior. Do not create an unbounded `Task.Run` for every received message.
 - Parse untrusted frames defensively: validate frame count, header delimiters, option values, compression, payload size, and empty-payload semantics without terminating the poller.
 - Do not silently claim support for Core options. Implement or explicitly document tags, delay, expiration, priority, reliability, and fallback behavior.
@@ -87,6 +89,7 @@ dotnet test messaging\zero\test\Zongsoft.Messaging.ZeroMQ.Tests.csproj -f net10.
 ## Documentation and Style
 
 - Keep `README.md` and `README.zh-Hans.md` user-oriented and synchronized. Put implementation analysis in `REFACTORING.zh-Hans.md`.
+- Put user-facing exceptions and diagnostic text in `src/Properties/Resources.resx` with matching `Resources.zh-Hans.resx` entries; keep protocol tokens, topic names, endpoint schemes, and wire-field names culture-invariant.
 - Use CRLF in repository text files and Tab indentation in code and fenced code examples, except Unix scripts that require LF.
 - When runtime behavior changes, update the README support matrix, delivery semantics, tests, and the assessment status in the same change.
 

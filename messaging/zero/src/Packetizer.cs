@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Messaging.ZeroMQ library.
  *
@@ -36,7 +36,19 @@ internal static class Packetizer
 {
 	private const char Delimiter = '\n';
 
+	public static int GetCompressionThreshold(MessageEnqueueOptions options, int length)
+	{
+		if(options != null && options.Properties.TryGetValue(Options.Compressive, out var value) && Zongsoft.Common.Convert.TryConvertValue<int>(value, out var threshold) && threshold > 0 && length > threshold)
+			return threshold;
+
+		return 0;
+	}
+
 	public static string Pack(string topic) => $"{topic}@";
+	public static string Pack(string identifier, string topic, string compressor) => string.IsNullOrEmpty(compressor) ?
+		$"{topic}@{identifier}" :
+		$"{topic}@{identifier}{Delimiter}{Options.Compressor}:{compressor}";
+
 	public static string Pack(string identifier, string topic, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, out string compressor)
 	{
 		if(options != null && options.Properties.TryGetValue(Options.Compressive, out var value) && Zongsoft.Common.Convert.TryConvertValue<int>(value, out var integer) && integer > 0 && data.Length > integer)
@@ -47,6 +59,55 @@ internal static class Packetizer
 
 		compressor = null;
 		return $"{topic}@{identifier}";
+	}
+
+	public static bool TryUnpack(ReadOnlySpan<char> header, out string identifier, out string topic, out IReadOnlyList<KeyValuePair<string, string>> options)
+	{
+		identifier = null;
+		topic = null;
+		options = [];
+
+		if(header.IsEmpty)
+			return false;
+
+		var delimiter = header.IndexOf(Delimiter);
+		var address = delimiter < 0 ? header : header[..delimiter];
+		var separator = address.LastIndexOf('@');
+
+		if(separator <= 0)
+			return false;
+
+		topic = address[..separator].ToString();
+		identifier = address[(separator + 1)..].ToString();
+
+		if(delimiter < 0)
+			return true;
+
+		var result = new List<KeyValuePair<string, string>>();
+		var text = header[(delimiter + 1)..];
+
+		while(!text.IsEmpty)
+		{
+			var end = text.IndexOf(Delimiter);
+			var entry = end < 0 ? text : text[..end];
+			entry = entry.Trim();
+
+			if(entry.IsEmpty)
+				return false;
+
+			var index = entry.IndexOf(':');
+			if(index <= 0 || index == entry.Length - 1)
+				return false;
+
+			result.Add(new(entry[..index].ToString(), entry[(index + 1)..].ToString()));
+			if(end < 0)
+				break;
+
+			text = text[(end + 1)..];
+		}
+
+		options = result;
+		return true;
 	}
 
 	public static string Unpack(ReadOnlySpan<char> header, out string topic, out IEnumerable<KeyValuePair<string, string>> options)

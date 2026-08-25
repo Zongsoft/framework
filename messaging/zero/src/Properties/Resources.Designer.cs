@@ -61,6 +61,15 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Invalid server port format: {0} 的本地化字符串。
+        /// </summary>
+        internal static string ServerOptions_InvalidPortFormat_Message {
+            get {
+                return ResourceManager.GetString("ServerOptions.InvalidPortFormat.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 Client 的本地化字符串。
         /// </summary>
         internal static string ZeroMQ_Settings_Client {
@@ -187,6 +196,105 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
         internal static string ZeroMQ_Settings_Topic {
             get {
                 return ResourceManager.GetString("ZeroMQ.Settings.Topic", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Failed to acquire queue exchange information from the &apos;{0}:{1}&apos; server. 的本地化字符串。
+        /// </summary>
+        internal static string ZeroQueue_ExchangeUnavailable_Message {
+            get {
+                return ResourceManager.GetString("ZeroQueue.ExchangeUnavailable.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The ZeroMQ publisher has not been initialized. 的本地化字符串。
+        /// </summary>
+        internal static string ZeroQueue_PublisherUninitialized_Message {
+            get {
+                return ResourceManager.GetString("ZeroQueue.PublisherUninitialized.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The required server address is missing in the connection settings. 的本地化字符串。
+        /// </summary>
+        internal static string ZeroQueue_ServerRequired_Message {
+            get {
+                return ResourceManager.GetString("ZeroQueue.ServerRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 A message queue must be specified before opening or sending events. 的本地化字符串。
+        /// </summary>
+        internal static string ZeroQueueEventChannel_QueueRequired_Message {
+            get {
+                return ResourceManager.GetString("ZeroQueueEventChannel.QueueRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Data ports must be between 0 and {0}. 的本地化字符串。
+        /// </summary>
+        internal static string ZeroQueueServer_DataPortOutOfRange_Message {
+            get {
+                return ResourceManager.GetString("ZeroQueueServer.DataPortOutOfRange.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The incoming and outgoing ports must be different. 的本地化字符串。
+        /// </summary>
+        internal static string ZeroQueueServer_DataPortsConflict_Message {
+            get {
+                return ResourceManager.GetString("ZeroQueueServer.DataPortsConflict.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 A data port cannot equal the discovery port. 的本地化字符串。
+        /// </summary>
+        internal static string ZeroQueueServer_DiscoveryPortConflict_Message {
+            get {
+                return ResourceManager.GetString("ZeroQueueServer.DiscoveryPortConflict.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; port must be between 0 and {1}. 的本地化字符串。
+        /// </summary>
+        internal static string ZeroQueueServer_NamedPortOutOfRange_Message {
+            get {
+                return ResourceManager.GetString("ZeroQueueServer.NamedPortOutOfRange.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Cannot change the discovery port while the server is running. 的本地化字符串。
+        /// </summary>
+        internal static string ZeroQueueServer_PortImmutable_Message {
+            get {
+                return ResourceManager.GetString("ZeroQueueServer.PortImmutable.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The queue cannot be replaced after the requester has subscribed to a reply topic. 的本地化字符串。
+        /// </summary>
+        internal static string ZeroRequester_QueueReplacementNotAllowed_Message {
+            get {
+                return ResourceManager.GetString("ZeroRequester.QueueReplacementNotAllowed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; type of response is not supported. 的本地化字符串。
+        /// </summary>
+        internal static string ZeroResponse_TypeUnsupported_Message {
+            get {
+                return ResourceManager.GetString("ZeroResponse.TypeUnsupported.Message", resourceCulture);
             }
         }
     }

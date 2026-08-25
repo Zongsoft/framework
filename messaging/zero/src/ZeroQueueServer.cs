@@ -42,47 +42,32 @@ namespace Zongsoft.Messaging.ZeroMQ;
 
 public sealed class ZeroQueueServer : WorkerBase
 {
-	#region 常量定义
-	/// <summary>消息队列交换器的默认监听端口号。</summary>
+	#region 公共常量
 	public const ushort PORT = 7969;
-
-	/// <summary>表示队列交换协议的版本号。</summary>
-	internal const string PROTOCOL_VERSION = "1.0";
-	/// <summary>消息队列交换协议的欢迎消息。</summary>
-	internal const string WELCOME_MESSAGE = $"\0Zongsoft.Messaging.ZeroMQ\nProtocol-Version:{PROTOCOL_VERSION}\0";
 	#endregion
 
-	#region 私有变量
-	private int _publisherPort;
-	private int _subscriberPort;
+	#region 内部常量
+	internal const string PROTOCOL_VERSION = "1.0";
+	internal const string WELCOME_MESSAGE = $"\0Zongsoft.Messaging.ZeroMQ\nProtocol-Version:{PROTOCOL_VERSION}\0";
 	#endregion
 
 	#region 成员字段
 	private ushort _port;
-	private Proxy _proxy;
-	private NetMQPoller _poller;
-	private ResponseSocket _responser;
-	private XPublisherSocket _publisher;
-	private XSubscriberSocket _subscriber;
+	private ServerAgent _agent;
 	#endregion
 
 	#region 构造函数
-	public ZeroQueueServer(string name = null) : base(name)
-	{
-		//设置默认的端口号
-		_port = PORT;
-	}
+	public ZeroQueueServer(string name = null) : base(name) => _port = PORT;
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取或设置服务器侦听的端口号，默认值为：<see cref="PORT"/>。</summary>
 	public ushort Port
 	{
 		get => _port;
 		set
 		{
 			if(this.State != WorkerState.Stopped)
-				throw new InvalidOperationException();
+				throw new InvalidOperationException(Properties.Resources.ZeroQueueServer_PortImmutable_Message);
 
 			_port = value > 0 ? value : PORT;
 		}
@@ -90,71 +75,249 @@ public sealed class ZeroQueueServer : WorkerBase
 	#endregion
 
 	#region 重写方法
-	protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
+	protected override async Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
+		var (incoming, outgoing) = GetPorts(this.Name, args);
+		ValidatePorts(_port, incoming, outgoing);
+
+		var agent = new ServerAgent(_port, incoming, outgoing);
 		try
 		{
-			this.Initialize();
-
-			if(!_poller.IsRunning)
-			{
-				(var incoming, var outgoing) = GetPorts(this.Name, args);
-
-				_responser.Bind($"tcp://*:{_port}");
-				_publisherPort = Bind(_publisher, outgoing);
-				_subscriberPort = Bind(_subscriber, incoming);
-
-				_poller.RunAsync();
-			}
-
-			_proxy.Start();
-			return Task.CompletedTask;
+			await agent.StartAsync(cancellation);
+			_agent = agent;
 		}
 		catch
 		{
-			//任意端口绑定或 proxy 启动失败都必须释放已创建的 socket，否则后续重试会继续占用端口
-			this.Release();
+			await agent.DisposeAsync();
 			throw;
 		}
 
-		static (int incoming, int outgoing) GetPorts(string name, string[] args)
+		static void ValidatePorts(ushort discovery, int incoming, int outgoing)
 		{
-			if(args != null && args.Length > 0)
+			if(incoming is < 0 or > ushort.MaxValue || outgoing is < 0 or > ushort.MaxValue)
+				throw new ArgumentOutOfRangeException(nameof(incoming), string.Format(Properties.Resources.ZeroQueueServer_DataPortOutOfRange_Message, ushort.MaxValue));
+
+			if(incoming > 0 && outgoing > 0 && incoming == outgoing)
+				throw new ArgumentException(Properties.Resources.ZeroQueueServer_DataPortsConflict_Message);
+
+			if(incoming == discovery || outgoing == discovery)
+				throw new ArgumentException(Properties.Resources.ZeroQueueServer_DiscoveryPortConflict_Message);
+		}
+	}
+
+	protected override async Task OnStopAsync(string[] args, CancellationToken cancellation)
+	{
+		var agent = Interlocked.Exchange(ref _agent, null);
+		if(agent != null)
+			await agent.DisposeAsync();
+	}
+	#endregion
+
+	#region 释放资源
+	protected override void Dispose(bool disposing)
+	{
+		if(disposing)
+		{
+			base.Dispose(disposing);
+			Interlocked.Exchange(ref _agent, null)?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+		}
+	}
+	#endregion
+
+	#region 私有方法
+	private static (int incoming, int outgoing) GetPorts(string name, string[] args)
+	{
+		var incoming = 0;
+		var outgoing = 0;
+
+		if(args != null)
+		{
+			for(var index = 0; index < args.Length; index++)
 			{
-				var incoming = 0;
-				var outgoing = 0;
+				var parts = args[index].Split(['=', ':'], 2, StringSplitOptions.TrimEntries);
+				if(parts.Length != 2)
+					continue;
 
-				for(int i = 0; i < args.Length; i++)
-				{
-					var parts = args[i].Split(['=', ':'], StringSplitOptions.TrimEntries);
+				var key = parts[0].StartsWith("--", StringComparison.Ordinal) ? parts[0][2..] : parts[0];
+				if(!key.Equals("incoming", StringComparison.OrdinalIgnoreCase) && !key.Equals("outgoing", StringComparison.OrdinalIgnoreCase))
+					continue;
 
-					if(parts.Length == 2)
-					{
-						if(parts[0].StartsWith("--"))
-							parts[0] = parts[0][2..];
+				if(!int.TryParse(parts[1], out var port) || port is < 0 or > ushort.MaxValue)
+					throw new ArgumentException(string.Format(Properties.Resources.ZeroQueueServer_NamedPortOutOfRange_Message, key, ushort.MaxValue), nameof(args));
 
-						if(parts[0].StartsWith("incoming", StringComparison.OrdinalIgnoreCase))
-							incoming = int.Parse(parts[1]);
-						else if(parts[0].StartsWith("outgoing", StringComparison.OrdinalIgnoreCase))
-							outgoing = int.Parse(parts[1]);
-					}
-				}
-
-				if(incoming > 0 && outgoing > 0)
-					return (incoming, outgoing);
+				if(key.Equals("incoming", StringComparison.OrdinalIgnoreCase))
+					incoming = port;
+				else
+					outgoing = port;
 			}
-
-			var servers = ApplicationContext.Current?.Configuration.GetOption<Configuration.ServerOptionsCollection>("/Messaging/ZeroMQ/Servers");
-			if(servers == null)
-				return default;
-
-			if(name != null && servers.TryGetValue(name, out var server))
-				return (server.Port.Incoming, server.Port.Outgoing);
-
-			return (servers.Port.Incoming, servers.Port.Outgoing);
 		}
 
-		static int Bind(NetMQSocket socket, int port)
+		if(incoming > 0 || outgoing > 0)
+			return (incoming, outgoing);
+
+		var servers = ApplicationContext.Current?.Configuration.GetOption<Configuration.ServerOptionsCollection>("/Messaging/ZeroMQ/Servers");
+		if(servers == null)
+			return default;
+
+		if(name != null && servers.TryGetValue(name, out var server))
+			return (server.Port.Incoming, server.Port.Outgoing);
+
+		return (servers.Port.Incoming, servers.Port.Outgoing);
+	}
+	#endregion
+
+	#region 嵌套子类
+	private sealed class ServerAgent : IAsyncDisposable
+	{
+		#region 私有成员
+		private readonly ushort _port;
+		private readonly int _incoming;
+		private readonly int _outgoing;
+		private readonly NetMQQueue<Command> _commands;
+		private readonly NetMQPoller _poller;
+		private readonly Task _runner;
+		private ResponseSocket _responser;
+		private XPublisherSocket _publisher;
+		private XSubscriberSocket _subscriber;
+		private int _publisherPort;
+		private int _subscriberPort;
+		private int _disposed;
+		#endregion
+
+		#region 构造函数
+		public ServerAgent(ushort port, int incoming, int outgoing)
+		{
+			_port = port;
+			_incoming = incoming;
+			_outgoing = outgoing;
+			_commands = new NetMQQueue<Command>();
+			_commands.ReceiveReady += this.OnCommandReady;
+			_poller = new NetMQPoller() { _commands };
+			_runner = Task.Factory.StartNew(() =>
+			{
+				if(Thread.CurrentThread.Name == null)
+					Thread.CurrentThread.Name = $"{nameof(ZeroQueueServer)}#{port}.Actor";
+
+				_poller.Run(new SynchronizationContext());
+			}, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+		}
+		#endregion
+
+		#region 公共方法
+		public ValueTask StartAsync(CancellationToken cancellation)
+		{
+			var command = new StartCommand(cancellation);
+			_commands.Enqueue(command);
+			return new ValueTask(command.Completion.Task);
+		}
+		#endregion
+
+		#region 事件处理
+		private void OnPublisherReady(object sender, NetMQSocketEventArgs args) => this.Forward(args.Socket, _subscriber);
+		private void OnSubscriberReady(object sender, NetMQSocketEventArgs args) => this.Forward(args.Socket, _publisher);
+
+		private void OnReceiveReady(object sender, NetMQSocketEventArgs args)
+		{
+			var command = args.Socket.ReceiveFrameString();
+			if(string.IsNullOrEmpty(command) || command is "port" or "ports")
+				args.Socket.SendFrame($"Publisher={_publisherPort};Subscriber={_subscriberPort}");
+			else
+				args.Socket.SendFrameEmpty();
+		}
+
+		private void OnCommandReady(object sender, NetMQQueueEventArgs<Command> args)
+		{
+			while(args.Queue.TryDequeue(out var command, TimeSpan.Zero))
+			{
+				try
+				{
+					if(command.Cancellation.IsCancellationRequested)
+						command.Completion.TrySetCanceled(command.Cancellation);
+					else if(command is StartCommand)
+					{
+						this.Start();
+						command.Completion.TrySetResult();
+					}
+					else
+					{
+						this.Stop();
+						command.Completion.TrySetResult();
+					}
+				}
+				catch(Exception exception)
+				{
+					command.Completion.TrySetException(exception);
+				}
+			}
+		}
+		#endregion
+
+		#region 命令执行
+		private void Forward(NetMQSocket source, NetMQSocket destination)
+		{
+			try
+			{
+				var message = new NetMQMessage();
+				while(source.TryReceiveMultipartMessage(ref message))
+				{
+					destination.SendMultipartMessage(message);
+					message = new NetMQMessage();
+				}
+			}
+			catch(Exception exception) { Diagnostics.Logging.GetLogging(this).Error(exception); }
+		}
+
+		private void Start()
+		{
+			_responser = new ResponseSocket();
+			_publisher = new XPublisherSocket();
+			_subscriber = new XSubscriberSocket();
+
+			try
+			{
+				_responser.ReceiveReady += this.OnReceiveReady;
+				_publisher.ReceiveReady += this.OnPublisherReady;
+				_subscriber.ReceiveReady += this.OnSubscriberReady;
+				_publisher.SetWelcomeMessage(WELCOME_MESSAGE);
+				_responser.Bind($"tcp://*:{_port}");
+				_publisherPort = Bind(_publisher, _outgoing);
+				_subscriberPort = Bind(_subscriber, _incoming);
+				_poller.Add(_responser);
+				_poller.Add(_publisher);
+				_poller.Add(_subscriber);
+			}
+			catch
+			{
+				this.ReleaseSockets();
+				throw;
+			}
+		}
+
+		private void Stop() => this.ReleaseSockets();
+		private void ReleaseSockets()
+		{
+			Release(ref _responser, socket => socket.ReceiveReady -= this.OnReceiveReady);
+			Release(ref _publisher, socket => socket.ReceiveReady -= this.OnPublisherReady);
+			Release(ref _subscriber, socket => socket.ReceiveReady -= this.OnSubscriberReady);
+
+			_publisherPort = 0;
+			_subscriberPort = 0;
+
+			void Release<TSocket>(ref TSocket socket, Action<TSocket> releasing = null) where TSocket : NetMQSocket
+			{
+				var current = socket;
+				socket = null;
+				if(current == null || current.IsDisposed)
+					return;
+
+				releasing?.Invoke(current);
+				_poller.RemoveAndDispose(current);
+			}
+		}
+		#endregion
+
+		#region 私有方法
+		private static int Bind(NetMQSocket socket, int port)
 		{
 			if(port > 0)
 			{
@@ -164,110 +327,46 @@ public sealed class ZeroQueueServer : WorkerBase
 
 			return socket.BindRandomPort("tcp://*");
 		}
-	}
+		#endregion
 
-	protected override Task OnStopAsync(string[] args, CancellationToken cancellation)
-	{
-		this.Release();
-		return Task.CompletedTask;
-	}
-	#endregion
-
-	#region 事件处理
-	private void Responser_ReceiveReady(object sender, NetMQSocketEventArgs args)
-	{
-		var command = args.Socket.ReceiveFrameString();
-		if(string.IsNullOrEmpty(command))
-			command = "port";
-
-		switch(command)
+		#region 异步释放
+		public async ValueTask DisposeAsync()
 		{
-			case "port":
-			case "ports":
-				args.Socket.SendFrame($"Publisher={_publisherPort};Subscriber={_subscriberPort}");
-				break;
-			default:
-				args.Socket.SendFrameEmpty();
-				break;
+			if(Interlocked.Exchange(ref _disposed, 1) != 0)
+				return;
+
+			var command = new StopCommand();
+			_commands.Enqueue(command);
+			await command.Completion.Task;
+
+			if(_poller.IsRunning)
+				_poller.Stop();
+
+			await _runner;
+
+			_commands.ReceiveReady -= this.OnCommandReady;
+			_poller.Remove(_commands);
+			_commands.Dispose();
+			_poller.Dispose();
 		}
-	}
-	#endregion
+		#endregion
 
-	#region 私有方法
-	private void Initialize()
-	{
-		if(_poller != null && !_poller.IsDisposed)
-			return;
-
-		_responser = new ResponseSocket();
-		_responser.ReceiveReady += this.Responser_ReceiveReady;
-
-		_publisher = new XPublisherSocket();
-		_publisher.SetWelcomeMessage(WELCOME_MESSAGE);
-		_subscriber = new XSubscriberSocket();
-		_poller = new NetMQPoller() { _responser, _subscriber, _publisher };
-		_proxy = new Proxy(_subscriber, _publisher, null, null, _poller);
-	}
-
-	private void Release()
-	{
-		var proxy = _proxy;
-		if(proxy != null)
+		#region 嵌套子类
+		private abstract class Command
 		{
-			try { proxy.Stop(); }
-			catch(InvalidOperationException) { }
+			protected Command(CancellationToken cancellation = default)
+			{
+				this.Cancellation = cancellation;
+				this.Completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+			}
+
+			public CancellationToken Cancellation { get; }
+			public TaskCompletionSource Completion { get; }
 		}
 
-		var poller = _poller;
-		if(poller != null && !poller.IsDisposed)
-		{
-			if(poller.IsRunning)
-				poller.Stop();
-
-			poller.Dispose();
-		}
-
-		var responser = _responser;
-		if(responser != null)
-		{
-			responser.ReceiveReady -= this.Responser_ReceiveReady;
-
-			if(!responser.IsDisposed)
-				responser.Dispose();
-		}
-
-		var publisher = _publisher;
-		if(publisher != null && !publisher.IsDisposed)
-			publisher.Dispose();
-
-		var subscriber = _subscriber;
-		if(subscriber != null && !subscriber.IsDisposed)
-			subscriber.Dispose();
-
-		_proxy = null;
-		_poller = null;
-		_responser = null;
-		_publisher = null;
-		_subscriber = null;
-		_publisherPort = 0;
-		_subscriberPort = 0;
-	}
-	#endregion
-
-	#region 处置方法
-	protected override void Dispose(bool disposing)
-	{
-		if(disposing)
-		{
-			base.Dispose(disposing);
-			this.Release();
-		}
-
-		_proxy = null;
-		_poller = null;
-		_responser = null;
-		_publisher = null;
-		_subscriber = null;
+		private sealed class StopCommand : Command;
+		private sealed class StartCommand(CancellationToken cancellation) : Command(cancellation);
+		#endregion
 	}
 	#endregion
 }

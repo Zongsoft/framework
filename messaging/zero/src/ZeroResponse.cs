@@ -64,7 +64,7 @@ partial class ZeroResponse
 		if(response is ZeroResponse resp)
 			return Pack(resp.Request.Identifier, resp.Data);
 		else
-			throw new ArgumentException($"The '{response.GetType().FullName}' type of response is not supported.");
+			throw new ArgumentException(string.Format(Properties.Resources.ZeroResponse_TypeUnsupported_Message, response.GetType().FullName));
 	}
 
 	public static ReadOnlyMemory<byte> Pack(string identifier, ReadOnlyMemory<byte> data)

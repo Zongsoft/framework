@@ -163,4 +163,40 @@
 • Set to dot(.) or (~) if only messages from the sender of this instance are accepted ;
 • If you need to reject messages from the specified instance sender, follow the instance identifier with an exclamation mark (e.g. !1234, !5678).</value>
   </data>
+  <data name="ZeroQueue.ServerRequired.Message" xml:space="preserve">
+    <value>The required server address is missing in the connection settings.</value>
+  </data>
+  <data name="ZeroQueue.ExchangeUnavailable.Message" xml:space="preserve">
+    <value>Failed to acquire queue exchange information from the '{0}:{1}' server.</value>
+  </data>
+  <data name="ZeroQueue.PublisherUninitialized.Message" xml:space="preserve">
+    <value>The ZeroMQ publisher has not been initialized.</value>
+  </data>
+  <data name="ZeroQueueServer.PortImmutable.Message" xml:space="preserve">
+    <value>Cannot change the discovery port while the server is running.</value>
+  </data>
+  <data name="ZeroQueueServer.DataPortOutOfRange.Message" xml:space="preserve">
+    <value>Data ports must be between 0 and {0}.</value>
+  </data>
+  <data name="ZeroQueueServer.DataPortsConflict.Message" xml:space="preserve">
+    <value>The incoming and outgoing ports must be different.</value>
+  </data>
+  <data name="ZeroQueueServer.DiscoveryPortConflict.Message" xml:space="preserve">
+    <value>A data port cannot equal the discovery port.</value>
+  </data>
+  <data name="ZeroQueueServer.NamedPortOutOfRange.Message" xml:space="preserve">
+    <value>The '{0}' port must be between 0 and {1}.</value>
+  </data>
+  <data name="ZeroQueueEventChannel.QueueRequired.Message" xml:space="preserve">
+    <value>A message queue must be specified before opening or sending events.</value>
+  </data>
+  <data name="ZeroRequester.QueueReplacementNotAllowed.Message" xml:space="preserve">
+    <value>The queue cannot be replaced after the requester has subscribed to a reply topic.</value>
+  </data>
+  <data name="ZeroResponse.TypeUnsupported.Message" xml:space="preserve">
+    <value>The '{0}' type of response is not supported.</value>
+  </data>
+  <data name="ServerOptions.InvalidPortFormat.Message" xml:space="preserve">
+    <value>Invalid server port format: {0}</value>
+  </data>
 </root>

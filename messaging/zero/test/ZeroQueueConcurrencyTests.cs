@@ -51,6 +51,9 @@ public class ZeroQueueConcurrencyTests
 		try
 		{
 			consumers = await Task.WhenAll(subscribers.Select((queue, index) => queue.SubscribeAsync(topic, audits[index]).AsTask()));
+			await WarmupAsync(publishers, topic, audits);
+			foreach(var audit in audits)
+				audit.Reset();
 
 			stopwatch.Start();
 			await Task.WhenAll(publishers.Select((queue, publisher) =>
@@ -103,6 +106,9 @@ public class ZeroQueueConcurrencyTests
 		try
 		{
 			consumer = await subscriber.SubscribeAsync(topic, audit);
+			await WarmupAsync([publisher], topic, [audit]);
+			audit.Reset();
+
 			var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 			var publications = Enumerable.Range(0, PUBLICATION_COUNT).Select(async index =>
 			{
@@ -170,6 +176,9 @@ public class ZeroQueueConcurrencyTests
 		try
 		{
 			consumers = await Task.WhenAll(subscribers.Select((queue, index) => queue.SubscribeAsync(topic, audits[index]).AsTask()));
+			await WarmupAsync(publishers, topic, audits);
+			foreach(var audit in audits)
+				audit.Reset();
 
 			await Task.WhenAll(publishers.Select((queue, publisher) =>
 				PublishBatchAsync(queue, topic, "before", publisher, FIRST_WAVE_PER_PUBLISHER)));
@@ -253,6 +262,26 @@ public class ZeroQueueConcurrencyTests
 		await subscriber.UnsubscribeAsync();
 	}
 
+	private static async Task WarmupAsync(ZeroQueue[] publishers, string topic, ZeroMessageAudit[] audits)
+	{
+		for(var index = 0; index < publishers.Length; index++)
+		{
+			var marker = $"warmup:{index}";
+			var deadline = DateTime.UtcNow + TEST_TIMEOUT;
+
+			do
+			{
+				await publishers[index].ProduceAsync(topic, Encoding.UTF8.GetBytes(marker));
+				if(await ZeroTestUtility.WaitUntilAsync(() => audits.All(audit => audit.Contains(marker)), TimeSpan.FromMilliseconds(250)))
+					break;
+			}
+			while(DateTime.UtcNow < deadline);
+
+			if(!audits.All(audit => audit.Contains(marker)))
+				throw new TimeoutException($"Timed out warming publisher {index} for '{topic}'.");
+		}
+	}
+
 	private static string[] CreatePayloads(string prefix, int publisherCount, int messageCount, bool includePublisher = true) =>
 		Enumerable.Range(0, publisherCount)
 			.SelectMany(publisher => Enumerable.Range(0, messageCount)
@@ -309,6 +338,15 @@ public class ZeroQueueConcurrencyTests
 
 		public Task<bool> WaitForCountAsync(int count, TimeSpan timeout) =>
 			ZeroTestUtility.WaitUntilAsync(() => this.Count >= count, timeout);
+		public bool Contains(string payload) => _payloads.ContainsKey(payload);
+
+		public void Reset()
+		{
+			_payloads.Clear();
+			Volatile.Write(ref _count, 0);
+			Volatile.Write(ref _duplicateCount, 0);
+			Volatile.Write(ref _invalidTopicCount, 0);
+		}
 
 		protected override ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
 		{

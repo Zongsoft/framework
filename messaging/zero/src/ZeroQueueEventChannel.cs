@@ -79,11 +79,15 @@ public class ZeroQueueEventChannel : ChannelBase, IEventChannel
 	public MessageEnqueueOptions Options { get; set; }
 	#endregion
 
+	#region 内部方法
+	internal static string GetEventName(string topic) => topic != null && topic.Length > TOPIC.Length + 1 && topic.StartsWith(TOPIC + "/", StringComparison.Ordinal) ? topic[(TOPIC.Length + 1)..] : null;
+	#endregion
+
 	#region 公共方法
 	public async ValueTask OpenAsync(EventExchanger exchanger, CancellationToken cancellation = default)
 	{
 		if(_queue == null)
-			throw new InvalidOperationException();
+			throw new InvalidOperationException(Properties.Resources.ZeroQueueEventChannel_QueueRequired_Message);
 
 		_subscriber = await _queue.SubscribeAsync(TOPIC, new Handler(exchanger), cancellation);
 	}
@@ -91,7 +95,7 @@ public class ZeroQueueEventChannel : ChannelBase, IEventChannel
 	public async ValueTask SendAsync(EventContext context, CancellationToken cancellation = default)
 	{
 		if(_queue == null)
-			throw new InvalidOperationException();
+			throw new InvalidOperationException(Properties.Resources.ZeroQueueEventChannel_QueueRequired_Message);
 
 		if(await this.Filtering.PredicateAsync(context, cancellation))
 			await _queue.ProduceAsync($"{TOPIC}/{context.QualifiedName}", Events.Marshaler.Marshal(context), this.Options, cancellation);
@@ -131,8 +135,6 @@ public class ZeroQueueEventChannel : ChannelBase, IEventChannel
 			//通过事件交换器重放接收到事件
 			return _exchanger.RaiseAsync(name, argument, parameters, cancellation);
 		}
-
-		private static string GetEventName(string topic) => topic != null && topic.Length > TOPIC.Length + 1 && topic.StartsWith(TOPIC) ? topic[(TOPIC.Length + 1)..] : null;
 	}
 	#endregion
 }
