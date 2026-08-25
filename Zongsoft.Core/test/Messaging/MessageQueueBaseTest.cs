@@ -13,7 +13,7 @@ namespace Zongsoft.Messaging.Tests;
 public class MessageQueueBaseTest
 {
 	[Fact]
-	public async Task ConcurrentSubscribersShareOneInitialization()
+	public async Task ConcurrentSubscribersShareOneInitializationAndExposeOnlyActiveConsumer()
 	{
 		using var queue = new TestQueue();
 		queue.BlockInitialization();
@@ -25,11 +25,14 @@ public class MessageQueueBaseTest
 		await queue.InitializationStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
 		Assert.Equal(1, queue.CreateCount);
 		Assert.Equal(1, queue.SubscribeCount);
+		Assert.Empty(queue.Subscribers);
 
 		queue.ReleaseInitialization();
 		var consumers = await Task.WhenAll(subscriptions);
+		var repeated = await queue.SubscribeAsync("tests/shared", new TestHandler());
 
 		Assert.All(consumers, consumer => Assert.Same(consumers[0], consumer));
+		Assert.Same(consumers[0], repeated);
 		Assert.Single(queue.Subscribers);
 		Assert.Equal(1, queue.CreateCount);
 		Assert.Equal(1, queue.SubscribeCount);
@@ -95,6 +98,23 @@ public class MessageQueueBaseTest
 	}
 
 	[Fact]
+	public async Task QueueDisposalDuringInitializationRollsBackConsumer()
+	{
+		var queue = new TestQueue();
+		queue.BlockInitialization();
+
+		var subscription = queue.SubscribeAsync("tests/disposal", new TestHandler()).AsTask();
+		await queue.InitializationStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
+		queue.Dispose();
+
+		await Assert.ThrowsAnyAsync<OperationCanceledException>(() => subscription);
+		Assert.Empty(queue.Subscribers);
+		Assert.Equal(1, queue.DisposedCount);
+		Assert.Equal(0, queue.UnsubscribedCount);
+	}
+
+	[Fact]
 	public async Task FailedInitializationIsRemovedAfterAllWaitersCancel()
 	{
 		using var queue = new TestQueue();
@@ -136,6 +156,30 @@ public class MessageQueueBaseTest
 		Assert.Null(subscriber);
 		Assert.Empty(queue.Subscribers);
 		Assert.Equal(1, queue.DisposedCount);
+		Assert.Equal(0, queue.UnsubscribedCount);
+	}
+
+	[Fact]
+	public async Task ActiveConsumerCloseRemovesEntryAndAllowsResubscribe()
+	{
+		using var queue = new TestQueue();
+		var first = await queue.SubscribeAsync("tests/resubscribe", new TestHandler());
+
+		Assert.NotNull(first);
+		Assert.Single(queue.Subscribers);
+
+		await first.DisposeAsync();
+
+		Assert.Empty(queue.Subscribers);
+		Assert.Equal(1, queue.UnsubscribedCount);
+
+		var second = await queue.SubscribeAsync("tests/resubscribe", new TestHandler());
+
+		Assert.NotNull(second);
+		Assert.NotSame(first, second);
+		Assert.Single(queue.Subscribers);
+		Assert.Equal(2, queue.CreateCount);
+		Assert.Equal(2, queue.SubscribeCount);
 	}
 
 	private sealed class TestQueue() : MessageQueueBase<TestConsumer>("Tests")
@@ -143,12 +187,14 @@ public class MessageQueueBaseTest
 		private int _created;
 		private int _subscribed;
 		private int _disposed;
+		private int _unsubscribed;
 		private TaskCompletionSource _initialization;
 		private readonly ConcurrentQueue<object> _results = new();
 
 		public int CreateCount => _created;
 		public int SubscribeCount => _subscribed;
 		public int DisposedCount => _disposed;
+		public int UnsubscribedCount => _unsubscribed;
 		public bool CloseDuringInitialization { get; set; }
 		public TaskCompletionSource InitializationStarted { get; private set; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -190,6 +236,8 @@ public class MessageQueueBaseTest
 			Interlocked.Increment(ref _created);
 			return ValueTask.FromResult(new TestConsumer(this, topic, handler));
 		}
+
+		protected override void OnUnsubscribed(TestConsumer subscriber) => Interlocked.Increment(ref _unsubscribed);
 	}
 
 	private sealed class TestConsumer : MessageConsumerBase<TestQueue>

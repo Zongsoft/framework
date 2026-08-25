@@ -50,7 +50,6 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 	#region 成员字段
 	private volatile int _disposing;
 	private readonly CancellationTokenSource _cancellation = new();
-	private readonly ConcurrentDictionary<string, Lazy<Task<TSubscriber>>> _subscriptions = new();
 	#endregion
 
 	#region 构造函数
@@ -135,89 +134,85 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 		if(this.Subscribers.TryGetValue(topic, out var subscriber))
 			return subscriber;
 
-		var initialization = _subscriptions.GetOrAdd(topic, key => new Lazy<Task<TSubscriber>>(
-			() => this.InitializeSubscriberAsync(key, tags, handler, options),
-			LazyThreadSafetyMode.ExecutionAndPublication));
-		var task = initialization.Value;
+		var subscription = this.Subscribers.GetOrAdd(topic, key => new Subscription(entry => InitializeSubscriberAsync(key, tags, handler, options, entry)));
+		var task = subscription.GetTask();
 
-		_ = task.ContinueWith(completed =>
+		return cancellation.CanBeCanceled ?
+			await task.WaitAsync(cancellation) :
+			await task;
+
+		async Task<TSubscriber> InitializeSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, Subscription subscription)
 		{
-			if(completed.IsFaulted)
-				_ = completed.Exception;
+			TSubscriber subscriber = default;
 
-			_subscriptions.TryRemove(new KeyValuePair<string, Lazy<Task<TSubscriber>>>(topic, initialization));
-		}, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
-
-		try
-		{
-			return cancellation.CanBeCanceled ?
-				await task.WaitAsync(cancellation) :
-				await task;
-		}
-		finally
-		{
-			if(initialization.IsValueCreated && initialization.Value.IsCompleted)
-				_subscriptions.TryRemove(new KeyValuePair<string, Lazy<Task<TSubscriber>>>(topic, initialization));
-		}
-	}
-
-	private async Task<TSubscriber> InitializeSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options)
-	{
-		TSubscriber subscriber = default;
-
-		try
-		{
-			subscriber = await this.CreateSubscriberAsync(topic, tags, handler, options, _cancellation.Token);
-			if(subscriber == null)
-				return default;
-
-			subscriber.Closed += OnClosed;
-
-			if(!await this.OnSubscribeAsync(subscriber, _cancellation.Token) || subscriber.IsClosed)
+			try
 			{
-				subscriber.Closed -= OnClosed;
-				await subscriber.DisposeAsync();
-				return default;
+				subscriber = await this.CreateSubscriberAsync(topic, tags, handler, options, _cancellation.Token);
+				if(subscriber == null)
+					return default;
+
+				subscriber.Closed += OnClosed;
+
+				if(!await this.OnSubscribeAsync(subscriber, _cancellation.Token) || subscriber.IsClosed)
+				{
+					subscriber.Closed -= OnClosed;
+					await subscriber.DisposeAsync();
+					return default;
+				}
+
+				if(!subscription.TryActivate(subscriber))
+				{
+					subscriber.Closed -= OnClosed;
+					await subscriber.DisposeAsync();
+					return this.Subscribers.TryGetValue(topic, out var existing) ? existing : default;
+				}
+
+				if(subscriber.IsClosed)
+				{
+					subscriber.Closed -= OnClosed;
+
+					if(this.Remove(topic, subscription, out var removed))
+						this.OnUnsubscribed(removed);
+
+					await subscriber.DisposeAsync();
+					return default;
+				}
+
+				return subscriber;
+			}
+			catch
+			{
+				if(subscriber != null)
+				{
+					subscriber.Closed -= OnClosed;
+
+					if(this.Remove(topic, subscription, out var removed))
+						this.OnUnsubscribed(removed);
+
+					await subscriber.DisposeAsync();
+				}
+
+				throw;
+			}
+			finally
+			{
+				if(!subscription.IsActive)
+				{
+					this.Subscribers.Remove(topic, subscription);
+					subscription.TryRemove(out _);
+				}
 			}
 
-			if(!this.Subscribers.TryAdd(topic, subscriber))
+			void OnClosed(object sender, EventArgs args)
 			{
-				subscriber.Closed -= OnClosed;
-				await subscriber.DisposeAsync();
-				return this.Subscribers.TryGetValue(topic, out var existing) ? existing : default;
+				if(sender is not TSubscriber consumer)
+					return;
+
+				consumer.Closed -= OnClosed;
+
+				if(this.Remove(topic, subscription, out var removed))
+					this.OnUnsubscribed(removed);
 			}
-
-			if(subscriber.IsClosed && this.Subscribers.Remove(topic, subscriber, out var removed))
-			{
-				removed.Closed -= OnClosed;
-				this.OnUnsubscribed(removed);
-				await removed.DisposeAsync();
-				return default;
-			}
-
-			return subscriber;
-		}
-		catch
-		{
-			if(subscriber != null)
-			{
-				subscriber.Closed -= OnClosed;
-				this.Subscribers.Remove(topic, subscriber, out _);
-				await subscriber.DisposeAsync();
-			}
-
-			throw;
-		}
-
-		void OnClosed(object sender, EventArgs args)
-		{
-			if(sender is not TSubscriber consumer)
-				return;
-
-			consumer.Closed -= OnClosed;
-
-			if(this.Subscribers.Remove(topic, consumer, out var removed))
-				this.OnUnsubscribed(removed);
 		}
 	}
 
@@ -232,6 +227,19 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 
 	#region 重写方法
 	public override string ToString() => $"[{this.GetType().Name}]{this.Name}";
+	#endregion
+
+	#region 私有方法
+	private bool Remove(string topic, Subscription subscription, out TSubscriber subscriber)
+	{
+		if(!this.Subscribers.Remove(topic, subscription))
+		{
+			subscriber = default;
+			return false;
+		}
+
+		return subscription.TryRemove(out subscriber);
+	}
 	#endregion
 
 	#region 资源释放
@@ -260,37 +268,133 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 	public sealed class SubscriberCollection : IReadOnlyCollection<TSubscriber>
 	{
 		#region 成员字段
-		private readonly ConcurrentDictionary<string, TSubscriber> _subscribers = new();
+		private readonly ConcurrentDictionary<string, Subscription> _entries = new();
 		#endregion
 
 		#region 公共属性
-		public int Count => _subscribers.Count;
-		public TSubscriber this[string topic] => _subscribers[topic];
+		public int Count
+		{
+			get
+			{
+				var count = 0;
+
+				foreach(var subscription in _entries.Values)
+				{
+					if(subscription.TryGetValue(out _))
+						count++;
+				}
+
+				return count;
+			}
+		}
+
+		public TSubscriber this[string topic] => this.TryGetValue(topic, out var subscriber) ? subscriber : throw new KeyNotFoundException();
 		#endregion
 
 		#region 公共方法
-		public bool TryGetValue(string topic, out TSubscriber subscriber) => _subscribers.TryGetValue(topic, out subscriber);
-		#endregion
-
-		#region 内部方法
-		internal bool TryAdd(string topic, TSubscriber subscriber) => _subscribers.TryAdd(topic, subscriber);
-		internal bool Remove(string topic, out TSubscriber subscriber) => _subscribers.TryRemove(topic, out subscriber);
-		internal bool Remove(string topic, TSubscriber subscriber, out TSubscriber removed)
+		public bool TryGetValue(string topic, out TSubscriber subscriber)
 		{
-			if(((ICollection<KeyValuePair<string, TSubscriber>>)_subscribers).Remove(new(topic, subscriber)))
-			{
-				removed = subscriber;
-				return true;
-			}
+			ArgumentNullException.ThrowIfNull(topic);
 
-			removed = default;
+			if(_entries.TryGetValue(topic, out var subscription))
+				return subscription.TryGetValue(out subscriber);
+
+			subscriber = default;
 			return false;
 		}
 		#endregion
 
+		#region 内部方法
+		internal Subscription GetOrAdd(string topic, Func<string, Subscription> factory) => _entries.GetOrAdd(topic, factory);
+		internal bool Remove(string topic, Subscription subscription) => _entries.TryRemove(new KeyValuePair<string, Subscription>(topic, subscription));
+		#endregion
+
 		#region 枚举遍历
-		public IEnumerator<TSubscriber> GetEnumerator() => _subscribers.Values.GetEnumerator();
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		public IEnumerator<TSubscriber> GetEnumerator()
+		{
+			foreach(var subscription in _entries.Values)
+			{
+				if(subscription.TryGetValue(out var subscriber))
+					yield return subscriber;
+			}
+		}
+		#endregion
+	}
+
+	internal sealed class Subscription
+	{
+		#region 状态常量
+		private const int INITIALIZING = 0;
+		private const int ACTIVE = 1;
+		private const int REMOVED = 2;
+		#endregion
+
+		#region 成员字段
+		private int _state;
+		private int _observed;
+		private TSubscriber _subscriber;
+		private readonly Lazy<Task<TSubscriber>> _initialization;
+		#endregion
+
+		#region 构造函数
+		public Subscription(Func<Subscription, Task<TSubscriber>> initialize)
+		{
+			ArgumentNullException.ThrowIfNull(initialize);
+			_initialization = new Lazy<Task<TSubscriber>>(() => initialize(this), LazyThreadSafetyMode.ExecutionAndPublication);
+		}
+		#endregion
+
+		#region 公共属性
+		public bool IsActive => Volatile.Read(ref _state) == ACTIVE;
+		#endregion
+
+		#region 公共方法
+		public Task<TSubscriber> GetTask()
+		{
+			var task = _initialization.Value;
+
+			if(Interlocked.Exchange(ref _observed, 1) == 0)
+			{
+				_ = task.ContinueWith(
+					completed => _ = completed.Exception,
+					CancellationToken.None,
+					TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.OnlyOnFaulted,
+					TaskScheduler.Default);
+			}
+
+			return task;
+		}
+
+		public bool TryActivate(TSubscriber subscriber)
+		{
+			_subscriber = subscriber;
+			return Interlocked.CompareExchange(ref _state, ACTIVE, INITIALIZING) == INITIALIZING;
+		}
+
+		public bool TryGetValue(out TSubscriber subscriber)
+		{
+			if(Volatile.Read(ref _state) == ACTIVE)
+			{
+				subscriber = _subscriber;
+				return true;
+			}
+
+			subscriber = default;
+			return false;
+		}
+
+		public bool TryRemove(out TSubscriber subscriber)
+		{
+			if(Interlocked.Exchange(ref _state, REMOVED) == ACTIVE)
+			{
+				subscriber = _subscriber;
+				return true;
+			}
+
+			subscriber = default;
+			return false;
+		}
 		#endregion
 	}
 
