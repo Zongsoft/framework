@@ -77,6 +77,10 @@ public class KafkaQueue : MessageQueueBase<KafkaSubscriber, Configuration.KafkaC
 	}
 	#endregion
 
+	#region 重写方法
+	protected override MessageReliability Reliability => MessageReliability.LeastOnce;
+	#endregion
+
 	#region 资源释放
 	protected override void Dispose(bool disposing)
 	{

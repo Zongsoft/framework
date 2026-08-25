@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
@@ -16,11 +17,12 @@ public class MessageQueueBaseTest
 	public async Task ConcurrentSubscribersShareOneInitializationAndExposeOnlyActiveConsumer()
 	{
 		using var queue = new TestQueue();
+		var handler = new TestHandler();
 		queue.BlockInitialization();
 
 		var subscriptions = new Task<TestConsumer>[64];
 		for(var index = 0; index < subscriptions.Length; index++)
-			subscriptions[index] = queue.SubscribeAsync("tests/shared", new TestHandler()).AsTask();
+			subscriptions[index] = queue.SubscribeAsync("tests/shared", handler).AsTask();
 
 		await queue.InitializationStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
 		Assert.Equal(1, queue.CreateCount);
@@ -29,7 +31,7 @@ public class MessageQueueBaseTest
 
 		queue.ReleaseInitialization();
 		var consumers = await Task.WhenAll(subscriptions);
-		var repeated = await queue.SubscribeAsync("tests/shared", new TestHandler());
+		var repeated = await queue.SubscribeAsync("tests/shared", handler);
 
 		Assert.All(consumers, consumer => Assert.Same(consumers[0], consumer));
 		Assert.Same(consumers[0], repeated);
@@ -80,10 +82,11 @@ public class MessageQueueBaseTest
 	{
 		using var queue = new TestQueue();
 		using var cancellation = new CancellationTokenSource();
+		var handler = new TestHandler();
 		queue.BlockInitialization();
 
-		var cancelled = queue.SubscribeAsync("tests/cancel", new TestHandler(), cancellation.Token).AsTask();
-		var survivor = queue.SubscribeAsync("tests/cancel", new TestHandler()).AsTask();
+		var cancelled = queue.SubscribeAsync("tests/cancel", handler, cancellation.Token).AsTask();
+		var survivor = queue.SubscribeAsync("tests/cancel", handler).AsTask();
 		await queue.InitializationStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
 		cancellation.Cancel();
@@ -182,12 +185,99 @@ public class MessageQueueBaseTest
 		Assert.Equal(2, queue.SubscribeCount);
 	}
 
+	[Fact]
+	public async Task ConflictingSubscriptionDoesNotReplaceExistingConsumer()
+	{
+		using var queue = new TestQueue();
+		var handler = new TestHandler();
+		var first = await queue.SubscribeAsync("tests/conflict", "alpha,beta", handler, new MessageSubscribeOptions(MessageReliability.MostOnce));
+
+		await Assert.ThrowsAsync<InvalidOperationException>(() => queue.SubscribeAsync("tests/conflict", "alpha,beta", new TestHandler(), new MessageSubscribeOptions(MessageReliability.MostOnce)).AsTask());
+		await Assert.ThrowsAsync<InvalidOperationException>(() => queue.SubscribeAsync("tests/conflict", "alpha", handler, new MessageSubscribeOptions(MessageReliability.MostOnce)).AsTask());
+		await Assert.ThrowsAsync<InvalidOperationException>(() => queue.SubscribeAsync("tests/conflict", "alpha,beta", handler, new MessageSubscribeOptions(MessageReliability.LeastOnce)).AsTask());
+
+		Assert.Same(first, queue.Subscribers["tests/conflict"]);
+		Assert.Equal(1, queue.CreateCount);
+		Assert.Equal(1, queue.SubscribeCount);
+	}
+
+	[Fact]
+	public async Task UnsupportedReliabilityFailsBeforeDriverOperation()
+	{
+		using var queue = new TestQueue { MaximumReliability = MessageReliability.LeastOnce };
+		var options = new MessageEnqueueOptions(MessageReliability.ExactlyOnce);
+
+		await Assert.ThrowsAsync<NotSupportedException>(() => queue.ProduceAsync("tests/reliability", new byte[] { 1, 2, 3 }, options).AsTask());
+		await Assert.ThrowsAsync<NotSupportedException>(() => queue.ProduceAsync("tests/reliability", "payload".AsMemory(), options).AsTask());
+		await Assert.ThrowsAsync<NotSupportedException>(() => queue.SubscribeAsync("tests/reliability", new TestHandler(), new MessageSubscribeOptions(MessageReliability.ExactlyOnce)).AsTask());
+
+		Assert.Equal(0, queue.ProduceCount);
+		Assert.Equal(0, queue.CreateCount);
+		Assert.Empty(queue.Subscribers);
+	}
+
+	[Fact]
+	public async Task AllProducerOverloadsUseTheSameReliabilityUpperBound()
+	{
+		using var queue = new TestQueue { MaximumReliability = MessageReliability.LeastOnce };
+		var options = new MessageEnqueueOptions(MessageReliability.ExactlyOnce);
+		var bytes = new byte[] { 1, 2, 3 }.AsMemory();
+		var text = "payload".AsMemory();
+
+		await Assert.ThrowsAsync<NotSupportedException>(() => queue.ProduceAsync(bytes, options).AsTask());
+		await Assert.ThrowsAsync<NotSupportedException>(() => queue.ProduceAsync(text, options).AsTask());
+		await Assert.ThrowsAsync<NotSupportedException>(() => queue.ProduceAsync(text, Encoding.Unicode, options).AsTask());
+		await Assert.ThrowsAsync<NotSupportedException>(() => queue.ProduceAsync("tests/reliability", bytes, options).AsTask());
+		await Assert.ThrowsAsync<NotSupportedException>(() => queue.ProduceAsync("tests/reliability", "tag", bytes, options).AsTask());
+		await Assert.ThrowsAsync<NotSupportedException>(() => queue.ProduceAsync("tests/reliability", text, options).AsTask());
+		await Assert.ThrowsAsync<NotSupportedException>(() => queue.ProduceAsync("tests/reliability", text, Encoding.Unicode, options).AsTask());
+		await Assert.ThrowsAsync<NotSupportedException>(() => queue.ProduceAsync("tests/reliability", "tag", text, options).AsTask());
+		await Assert.ThrowsAsync<NotSupportedException>(() => queue.ProduceAsync("tests/reliability", "tag", text, Encoding.Unicode, options).AsTask());
+
+		Assert.Equal(0, queue.ProduceCount);
+	}
+
+	[Fact]
+	public async Task AllSubscriberOverloadsUseTheSameReliabilityUpperBound()
+	{
+		using var queue = new TestQueue { MaximumReliability = MessageReliability.LeastOnce };
+		IMessageQueue contract = queue;
+		var options = new MessageSubscribeOptions(MessageReliability.ExactlyOnce);
+		var handler = new TestHandler();
+		Action<Message> action = _ => { };
+
+		await Assert.ThrowsAsync<NotSupportedException>(() => contract.SubscribeAsync(action, options).AsTask());
+		await Assert.ThrowsAsync<NotSupportedException>(() => contract.SubscribeAsync(handler, options).AsTask());
+		await Assert.ThrowsAsync<NotSupportedException>(() => contract.SubscribeAsync("tests/action", action, options).AsTask());
+		await Assert.ThrowsAsync<NotSupportedException>(() => contract.SubscribeAsync("tests/handler", handler, options).AsTask());
+		await Assert.ThrowsAsync<NotSupportedException>(() => contract.SubscribeAsync("tests/tagged-action", "tag", action, options).AsTask());
+		await Assert.ThrowsAsync<NotSupportedException>(() => contract.SubscribeAsync("tests/tagged-handler", "tag", handler, options).AsTask());
+
+		Assert.Equal(0, queue.CreateCount);
+		Assert.Empty(queue.Subscribers);
+	}
+
+	[Fact]
+	public async Task ReliabilityUpperBoundAllowsLowerAndEqualValues()
+	{
+		using var queue = new TestQueue { MaximumReliability = MessageReliability.LeastOnce };
+
+		await queue.ProduceAsync("tests/most", ReadOnlyMemory<byte>.Empty, new MessageEnqueueOptions(MessageReliability.MostOnce));
+		await queue.ProduceAsync("tests/least", ReadOnlyMemory<byte>.Empty, new MessageEnqueueOptions(MessageReliability.LeastOnce));
+		Assert.NotNull(await queue.SubscribeAsync("tests/most", new TestHandler(), new MessageSubscribeOptions(MessageReliability.MostOnce)));
+		Assert.NotNull(await queue.SubscribeAsync("tests/least", new TestHandler(), new MessageSubscribeOptions(MessageReliability.LeastOnce)));
+
+		Assert.Equal(2, queue.ProduceCount);
+		Assert.Equal(2, queue.CreateCount);
+	}
+
 	private sealed class TestQueue() : MessageQueueBase<TestConsumer>("Tests")
 	{
 		private int _created;
 		private int _subscribed;
 		private int _disposed;
 		private int _unsubscribed;
+		private int _produced;
 		private TaskCompletionSource _initialization;
 		private readonly ConcurrentQueue<object> _results = new();
 
@@ -195,6 +285,8 @@ public class MessageQueueBaseTest
 		public int SubscribeCount => _subscribed;
 		public int DisposedCount => _disposed;
 		public int UnsubscribedCount => _unsubscribed;
+		public int ProduceCount => _produced;
+		public MessageReliability MaximumReliability { get; set; } = MessageReliability.ExactlyOnce;
 		public bool CloseDuringInitialization { get; set; }
 		public TaskCompletionSource InitializationStarted { get; private set; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -209,7 +301,13 @@ public class MessageQueueBaseTest
 		public void EnqueueResult(Exception exception) => _results.Enqueue(exception);
 		public void OnDisposed() => Interlocked.Increment(ref _disposed);
 
-		protected override ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation) => ValueTask.FromResult(string.Empty);
+		protected override ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
+		{
+			Interlocked.Increment(ref _produced);
+			return ValueTask.FromResult(string.Empty);
+		}
+
+		protected override MessageReliability Reliability => this.MaximumReliability;
 
 		protected override async ValueTask<bool> OnSubscribeAsync(TestConsumer subscriber, CancellationToken cancellation)
 		{
@@ -234,7 +332,7 @@ public class MessageQueueBaseTest
 		protected override ValueTask<TestConsumer> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation)
 		{
 			Interlocked.Increment(ref _created);
-			return ValueTask.FromResult(new TestConsumer(this, topic, handler));
+			return ValueTask.FromResult(new TestConsumer(this, topic, tags, handler, options));
 		}
 
 		protected override void OnUnsubscribed(TestConsumer subscriber) => Interlocked.Increment(ref _unsubscribed);
@@ -244,7 +342,7 @@ public class MessageQueueBaseTest
 	{
 		private readonly TestQueue _queue;
 
-		public TestConsumer(TestQueue queue, string topic, IHandler<Message> handler) : base(queue, topic, handler) => _queue = queue;
+		public TestConsumer(TestQueue queue, string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options) : base(queue, topic, tags, handler, options) => _queue = queue;
 
 		protected override ValueTask OnCloseAsync(CancellationToken cancellation)
 		{

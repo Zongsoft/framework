@@ -153,4 +153,19 @@
   <data name="Mqtt.Settings.Topic" xml:space="preserve">
     <value>默认主题</value>
   </data>
+  <data name="MqttQueueServer.StorageImmutable.Message" xml:space="preserve">
+    <value>MQTT 服务器运行期间不能更换消息存储。</value>
+  </data>
+  <data name="MqttQueue.PublishFailed.Message" xml:space="preserve">
+    <value>MQTT 消息发布失败：{0}({1})。</value>
+  </data>
+  <data name="MqttQueue.ConnectFailed.Message" xml:space="preserve">
+    <value>MQTT 服务器连接失败：{0}({1})。</value>
+  </data>
+  <data name="MqttQueue.SubscriptionRestoreFailed.Message" xml:space="preserve">
+    <value>MQTT 订阅“{0}”恢复失败。</value>
+  </data>
+  <data name="MqttQueueServer.PortImmutable.Message" xml:space="preserve">
+    <value>MQTT 服务器运行期间不能更改端口。</value>
+  </data>
 </root>

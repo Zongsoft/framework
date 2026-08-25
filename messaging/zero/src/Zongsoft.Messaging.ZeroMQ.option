@@ -9,7 +9,7 @@
 	</option>
 
 	<option path="/Messaging/ZeroMQ">
-		<servers port="32101,32102">
+		<servers port="32100,32101,32102">
 			<server server.name="unnamed" port="*" />
 		</servers>
 	</option>

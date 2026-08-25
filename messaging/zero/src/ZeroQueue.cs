@@ -41,7 +41,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 {
 	#region 成员字段
 	private readonly object _locker = new();
-	private readonly Transport _transport;
+	private Transport _transport;
 	private readonly ZeroQueueRuntimeOptions _options;
 	private readonly HashSet<string> _exclusion;
 	private readonly HashSet<string> _inclusion;
@@ -62,12 +62,14 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 			settings.Port == 0 ? ZeroQueueServer.PORT : settings.Port,
 			settings.Timeout > TimeSpan.Zero ? settings.Timeout : TimeSpan.FromSeconds(10),
 			settings.Heartbeat,
+			settings.ReconnectInterval > TimeSpan.Zero ? settings.ReconnectInterval : TimeSpan.FromSeconds(1),
+			settings.Client,
+			settings.Instance,
 			settings.Group,
 			settings.Topic);
 
 		this.Instance = GenerateIdentifier(settings);
 		(_inclusion, _exclusion) = CreateFilter(settings.Filter, this.Instance);
-		_transport = new Transport(_options, this.Instance, () => this.GetHeartbeatTopics());
 	}
 	#endregion
 
@@ -82,8 +84,11 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 	protected override async ValueTask<bool> OnSubscribeAsync(ZeroSubscriber subscriber, CancellationToken cancellation = default)
 	{
 		await this.EnsureInitializedAsync(cancellation);
+		if(subscriber.Options?.Reliability == MessageReliability.LeastOnce && !_transport.HasControl)
+			throw new InvalidOperationException(Properties.Resources.ZeroQueue_ControlUnavailable_Message);
 		await _transport.SubscribeAsync(subscriber, this.GetPhysicalTopic(subscriber.Topic), cancellation);
-		await subscriber.SynchronizeAsync(_options.Timeout, cancellation);
+		if(subscriber.Options?.Reliability != MessageReliability.LeastOnce)
+			await subscriber.SynchronizeAsync(_options.Timeout, cancellation);
 		return true;
 	}
 
@@ -93,21 +98,30 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 	#region 发布方法
 	protected override async ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
 	{
-		await this.EnsureInitializedAsync(cancellation);
 		var payload = data.ToArray();
 		var threshold = Packetizer.GetCompressionThreshold(options, payload.Length);
+		var identifier = Guid.NewGuid().ToString("N");
+		var reliability = options?.Reliability ?? MessageReliability.MostOnce;
+		await this.EnsureInitializedAsync(cancellation);
+		if(reliability == MessageReliability.LeastOnce)
+		{
+			if(!_transport.HasControl)
+				throw new InvalidOperationException(Properties.Resources.ZeroQueue_ControlUnavailable_Message);
+			return await _transport.PublishAsync(identifier, this.GetPhysicalTopic(topic), this.Instance, tags, payload, threshold, options.Expiration, reliability, cancellation);
+		}
 
+		var published = false;
 		if(string.IsNullOrEmpty(topic))
 		{
 			foreach(var subscriber in this.Subscribers)
-				await _transport.PublishAsync(this.GetPhysicalTopic(subscriber.Topic), this.Instance, payload, threshold, cancellation);
+				published |= await _transport.PublishAsync(identifier, this.GetPhysicalTopic(subscriber.Topic), this.Instance, tags, payload, threshold, TimeSpan.Zero, reliability, cancellation) != null;
 		}
 		else
 		{
-			await _transport.PublishAsync(this.GetPhysicalTopic(topic), this.Instance, payload, threshold, cancellation);
+			published = await _transport.PublishAsync(identifier, this.GetPhysicalTopic(topic), this.Instance, tags, payload, threshold, TimeSpan.Zero, reliability, cancellation) != null;
 		}
 
-		return null;
+		return published ? identifier : null;
 	}
 	#endregion
 
@@ -130,14 +144,16 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 	}
 
 	internal ValueTask UnsubscribeAsync(ZeroSubscriber subscriber, CancellationToken cancellation) =>
-		_transport.UnsubscribeAsync(subscriber, cancellation);
+		_transport == null ? ValueTask.CompletedTask : _transport.UnsubscribeAsync(subscriber, cancellation);
 
-	internal void Pause(ZeroSubscriber subscriber, Message message) => _transport.Pause(subscriber, message);
-	internal void Resume(ZeroSubscriber subscriber) => _transport.Resume(subscriber);
+	internal void Pause(ZeroSubscriber subscriber, Message message) => _transport?.Pause(subscriber, message);
+	internal void Resume(ZeroSubscriber subscriber) => _transport?.Resume(subscriber);
 	internal TimeSpan Timeout => _options.Timeout;
 	#endregion
 
 	#region 重写方法
+	protected override MessageReliability Reliability => MessageReliability.LeastOnce;
+
 	protected override string GetTopic(string topic)
 	{
 		topic = string.IsNullOrEmpty(topic) ? _options.Topic ?? string.Empty : topic;
@@ -152,6 +168,8 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 
 		lock(_locker)
 		{
+			_transport ??= new Transport(_options, this.Instance, () => this.GetHeartbeatTopics());
+
 			if(_initialization == null || _initialization.IsCanceled || _initialization.IsFaulted)
 				_initialization = _transport.StartAsync(CancellationToken.None).AsTask();
 
@@ -246,9 +264,18 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 		foreach(var subscriber in this.Subscribers)
 			subscriber.DisposeAsync().AsTask().GetAwaiter().GetResult();
 
-		_transport.DisposeAsync().AsTask().GetAwaiter().GetResult();
+		_transport?.DisposeAsync().AsTask().GetAwaiter().GetResult();
 	}
 	#endregion
 }
 
-internal readonly record struct ZeroQueueRuntimeOptions(string Server, ushort Port, TimeSpan Timeout, TimeSpan Heartbeat, string Group, string Topic);
+internal readonly record struct ZeroQueueRuntimeOptions(
+	string Server,
+	ushort Port,
+	TimeSpan Timeout,
+	TimeSpan Heartbeat,
+	TimeSpan ReconnectInterval,
+	string Client,
+	string Instance,
+	string Group,
+	string Topic);

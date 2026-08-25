@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -97,7 +97,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 		{
 			Topic = topic,
 			NoLocal = true,
-			QualityOfServiceLevel = options == null ? MqttQualityOfServiceLevel.AtLeastOnce : options.Reliability.ToQoS(),
+			QualityOfServiceLevel = (options?.Reliability ?? MessageReliability.MostOnce).ToQoS(),
 		});
 
 		return ValueTask.FromResult(subscriber);
@@ -127,7 +127,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 		var builder = new MqttApplicationMessageBuilder()
 			.WithTopic(topic)
 			.WithPayloadSegment(data)
-			.WithQualityOfServiceLevel(options == null ? MqttQualityOfServiceLevel.AtLeastOnce : options.Reliability.ToQoS());
+			.WithQualityOfServiceLevel((options?.Reliability ?? MessageReliability.MostOnce).ToQoS());
 
 		if(options != null && _connection.Options.ProtocolVersion == MQTTnet.Formatter.MqttProtocolVersion.V500)
 		{
@@ -152,7 +152,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 		{
 			var result = await client.PublishAsync(builder.Build(), cancellation);
 			if(!result.IsSuccess)
-				throw new InvalidOperationException($"Failed to publish MQTT message: {result.ReasonCode}({result.ReasonString}).");
+				throw new InvalidOperationException(string.Format(Properties.Resources.MqttQueue_PublishFailed_Message, result.ReasonCode, result.ReasonString));
 
 			return result.PacketIdentifier?.ToString();
 		}
@@ -237,6 +237,8 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 	#endregion
 
 	#region 重写方法
+	protected override MessageReliability Reliability => MessageReliability.ExactlyOnce;
+
 	public override string ToString()
 	{
 		var settings = this.Settings;
@@ -415,7 +417,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 
 				var result = await client.ConnectAsync(_options, cancellation);
 				if(result.ResultCode != MqttClientConnectResultCode.Success)
-					throw new InvalidOperationException($"Failed to connect MQTT server: {result.ResultCode}({result.ReasonString}).");
+					throw new InvalidOperationException(string.Format(Properties.Resources.MqttQueue_ConnectFailed_Message, result.ResultCode, result.ReasonString));
 
 				foreach(var subscriber in _queue.Subscribers)
 				{
@@ -424,7 +426,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 
 					var subscription = await client.SubscribeAsync(subscriber.Subscription, cancellation);
 					if(!subscription.IsSuccessful())
-						throw new InvalidOperationException($"Failed to restore MQTT subscription '{subscriber.Topic}'.");
+						throw new InvalidOperationException(string.Format(Properties.Resources.MqttQueue_SubscriptionRestoreFailed_Message, subscriber.Topic));
 				}
 			}
 			finally

@@ -15,7 +15,7 @@
 
 Zongsoft.Messaging.ZeroMQ 是基于 [NetMQ](https://github.com/zeromq/netmq) 的消息队列适配器，用于对接 [Zongsoft.Core](../../Zongsoft.Core) 中的消息和通信抽象。它通过 `IMessageQueue` 提供主题发布与订阅，并提供请求响应和事件通道适配器。
 
-本项目包含一个轻量的 XPUB/XSUB 消息交换服务 `ZeroQueueServer`。客户端先查询其发现端点，再连接返回的发布和订阅数据端点。交换服务不保存状态，适合低延迟的瞬态消息分发，不属于持久化消息队列。
+本项目包含 `ZeroQueueServer`：它以 XPUB/XSUB 处理最多一次消息，并以持久化确认通道处理至少一次消息。客户端会自动发现当前 Broker 代次及运行端点。
 
 <a name="features"></a>
 ## 功能特性
@@ -24,6 +24,7 @@ Zongsoft.Messaging.ZeroMQ 是基于 [NetMQ](https://github.com/zeromq/netmq) 的
 - 通过 XPUB/XSUB 交换服务支持多个发布者和订阅者；
 - 支持主题前缀、可选消息分组、实例过滤和心跳；
 - 支持超过指定阈值后使用 Brotli 压缩消息载荷；
+- 支持即时最多一次广播，以及由 Broker 持久接纳、显式确认和竞争消费的至少一次投递；
 - 支持独立运行以及 Zongsoft 插件化宿主；
 - 支持 .NET 8、.NET 9 和 .NET 10。
 
@@ -48,11 +49,12 @@ dotnet build messaging/zero/Zongsoft.Messaging.ZeroMQ.slnx
 
 | 端点 | 随包配置的默认值 | 用途 |
 | --- | :---: | --- |
-| 发现端点 | `7969` | 客户端查询两个数据端点的端口。 |
-| 发布者入口 | `32101` | 应用发布者连接此端点。 |
-| 订阅者出口 | `32102` | 应用订阅者连接此端点。 |
+| 发现端点 | `7969` | 客户端查询 Broker 代次和运行端点。 |
+| 可靠性控制端点 | `32100` | 可靠订阅登记、投递和确认。 |
+| 发布者进站端点 | `32101` | 应用发布者连接此端点。 |
+| 订阅者出站端点 | `32102` | 应用订阅者连接此端点。 |
 
-`7969` 是内置的发现端口默认值。两个数据端口均可配置；未指定时，`ZeroQueueServer` 会绑定随机端口并通过发现端点返回。部署时建议固定数据端口，以便交换服务重启后现有客户端能重新连接原端点。
+`7969` 是内置发现端口。运行端点未配置时会随机选择，Broker 重启后客户端会重新发现。生产环境仍建议固定三个运行端口，以简化防火墙与运维配置。
 
 服务器会在所有网络接口上绑定 TCP 端点，且不会配置身份认证或传输加密。跨不可信网络使用前，请通过主机或网络边界限制访问，或另行增加经过认证的安全传输层。
 
@@ -66,20 +68,21 @@ dotnet build messaging/zero/Zongsoft.Messaging.ZeroMQ.slnx
 ```xml
 <configuration>
 	<option path="/Messaging/ZeroMQ">
-		<servers port="32101,32102">
+		<servers port="32100,32101,32102">
 			<server server.name="unnamed" port="*" />
 		</servers>
 	</option>
 </configuration>
 ```
 
-默认服务器或没有匹配到命名服务器条目时使用集合级 `port`；匹配到的 `<server>` 条目使用自己的端口对。第一个数字是发布者入口，第二个数字是订阅者出口；`*` 表示随机选择数据端口。
+三个数字依次表示可靠性控制、发布者进站和订阅者出站端口。两段式配置仍表示 `Incoming,Outgoing`，此时 Control 配置值为零，Server 挂载 Storage 后会随机绑定 Control 端口；仅当 Server 已挂载 `IMessageStorage` 时才会启动 Control 端点。`*` 表示运行端点使用随机端口。
 
 独立应用可以直接启动交换服务：
 
 ```csharp
 using var server = new ZeroQueueServer();
-await server.StartAsync(["--incoming:32101", "--outgoing:32102"]);
+server.Storage = ResolveMessageStorage(); // 由独立存储插件提供；仅 LeastOnce 需要。
+await server.StartAsync(["--control:32100", "--incoming:32101", "--outgoing:32102"]);
 ```
 
 ### 客户端连接
@@ -109,6 +112,7 @@ await server.StartAsync(["--incoming:32101", "--outgoing:32102"]);
 | `Filter` | 排除自身 | 以逗号分隔的实例过滤表达式，用于控制接收哪些生产者的消息。 |
 | `Timeout` | `10s` | 发现和订阅同步的超时时长。 |
 | `Heartbeat` | `10s` | 心跳间隔；小于等于零时禁用心跳。 |
+| `ReconnectInterval` | `1s` | 重新发现端点的最小间隔。 |
 
 默认过滤规则会排除当前队列实例自己发布的消息。`Filter=*` 接受所有实例；`Filter=.`（或 `~`）仅接受当前实例；普通实例标识组成允许列表，`!identifier` 表示排除指定实例。
 
@@ -133,7 +137,9 @@ using var queue = new ZeroQueue("ZeroMQ", settings);
 var consumer = await queue.SubscribeAsync("orders/created", message =>
 	Console.WriteLine(Encoding.UTF8.GetString(message.Data.Span)));
 
-await queue.ProduceAsync("orders/created", "订单 #1001".AsMemory());
+var identifier = await queue.ProduceAsync("orders/created", "订单 #1001".AsMemory());
+if(identifier == null)
+	Console.WriteLine("发送瞬间没有可见的匹配订阅，消息未发送。");
 
 await consumer.UnsubscribeAsync();
 ```
@@ -155,16 +161,49 @@ options.Properties["Compressive"] = 4 * 1024;
 await queue.ProduceAsync("documents/updated", payload, options);
 ```
 
-压缩是当前适配器唯一实现的 `MessageEnqueueOptions` 行为。
+### 至少一次投递
+
+订阅和发布都要显式选择 `LeastOnce`。只有 Broker 必须挂载 `IMessageStorage`；发布端不存储消息。处理器正常返回不代表确认，必须调用 `AcknowledgeAsync`。
+
+```csharp
+var subscriptionOptions = new MessageSubscribeOptions(MessageReliability.LeastOnce);
+var enqueueOptions = new MessageEnqueueOptions(MessageReliability.LeastOnce)
+{
+	Expiration = TimeSpan.FromMinutes(5),
+};
+
+server.Storage = ResolveMessageStorage(); // 由独立存储插件提供
+
+var consumer = await queue.SubscribeAsync("orders/created", new ReliableOrderHandler(), subscriptionOptions);
+
+var identifier = await queue.ProduceAsync("orders/created", payload, enqueueOptions);
+
+sealed class ReliableOrderHandler : HandlerBase<Message>
+{
+	protected override async ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
+	{
+		await SaveOrderAsync(message.Data, cancellation);
+		await message.AcknowledgeAsync(cancellation);
+	}
+}
+```
+
+Broker 只在发送瞬间存在在线匹配订阅时接纳消息：没有订阅返回 `null` 且不写入 Storage；存在订阅则先持久化 Pending，再返回消息标识。之后按主题在在线订阅者间竞争投递，任一消费者确认即删除 Pending。未确认会沿用同一 `Message.Identifier` 重投，也可能改投另一个消费者，因此处理器必须保证业务幂等。
+
+`ZeroQueueServer.Storage` 只能在 Server 停止时赋值。外部 Storage 的生命周期由插件容器管理，Server 不会释放它。Broker 未配置 Storage 时仍提供 `MostOnce` Broadcast，但不启动可靠 Control 端点，发现响应返回 `Control:0`；此时 `LeastOnce` 操作会失败。
 
 | 消息选项 | 支持情况 |
 | --- | --- |
 | `Properties["Compressive"]` | 支持；超过指定字节阈值后启用 Brotli。 |
-| 标签 | ZeroMQ 适配器未使用。 |
-| 延迟和过期时间 | 未实现。 |
+| 标签 | `LeastOnce` 保留并传递；`MostOnce` 双帧格式暂不传递。 |
+| 延迟 | 未实现。 |
+| 过期时间 | `LeastOnce` 支持；零表示永不过期。 |
 | 优先级 | 未实现。 |
-| 可靠性 | 传输仍是瞬态、尽力而为的 PUB/SUB。 |
-| 订阅可靠性和失败策略 | 当前处理器调度器未实现。 |
+| `MostOnce` | 支持；发送瞬间无匹配订阅返回 `null`，否则本地发送一次。 |
+| `LeastOnce` | 支持 Broker 持久接纳、竞争消费、显式确认和同标识重投。 |
+| `ExactlyOnce` | 不支持，并在创建传输状态前失败。 |
+| 订阅失败策略 | 当前处理器调度器未实现。 |
+| 压缩 | `MostOnce` 支持；可靠控制通道暂不压缩。 |
 
 ### 请求与响应
 
@@ -203,17 +242,18 @@ await channel.SendAsync(eventContext);
 <a name="semantics"></a>
 ## 投递语义
 
-本适配器遵循 ZeroMQ PUB/SUB 行为：
+投递契约由 `MessageReliability` 决定：
 
-- 消息是瞬态的，`ZeroQueueServer` 不会持久化消息；
-- 不提供 Broker 确认、消费者确认、重试、去重或重放；
-- 对端正在连接或重连、匹配订阅尚未传播、或者套接字达到高水位时，消息都可能被丢弃；
-- `ProduceAsync` 会复制调用方负载，并在 Actor 已调用本地 Socket 发送后完成；它不代表订阅者已经收到或处理；
+- `MostOnce` 是瞬态广播。发送瞬间 XPUB 未观察到匹配订阅时返回 `null` 且不发送；否则本地发送一次并返回唯一标识。多个广播订阅者收到同一标识，但非空标识不表示远端或 Handler 已收到。
+- `LeastOnce` 在没有在线匹配订阅时返回 `null` 且不持久化；Broker 先持久化 Pending 后立即向发布者返回唯一标识，不等待 Handler 确认。
+- Broker 在在线订阅者间竞争投递；未确认时使用同一标识重投，任一有效确认即删除 Pending。全部订阅者离线后，已接纳消息继续保留，待订阅恢复后再投递。
+- `LeastOnce` 允许处理器重复执行，不会对业务副作用自动去重，也不提供精确一次。
+- Control 超时、调用取消或断线可能导致发布者无法判断 Broker 是否已经接纳；这些操作只停止本地等待，不能撤销已经开始的 Broker 接纳，业务重试仍可能产生重复。
+- 可靠消息过期后从 Broker Pending 删除并记录诊断，不保留 Terminal 分区。
 - Queue 在构造时快照连接、端口、分组、过滤、超时和心跳设置；运行中修改原设置对象不会改变既有连接；
-- `SubscribeAsync` 会同步订阅端连接，但不会与发布端建立端到端投递确认；
-- 当前版本应避免发送空载荷。
+- 支持空业务载荷。
 
-如果业务不能接受消息丢失，应选择持久化消息 Broker，或者增加应用层确认协议。
+消息存储是独立插件，不属于 ZeroMQ 驱动。本包不提供默认文件存储；需要 `LeastOnce` 时，应用必须为每个 Broker Server 赋予独立的 `IMessageStorage` 实例。`Name` 表示存储实现名称，`Settings` 决定该实例的连接和数据作用域，实例生命周期由插件容器管理。选择实现时应确认它能在 `SetAsync` 返回前持有消息快照，并满足所需的进程重启耐久性。
 
 <a name="samples"></a>
 ## 范例与排障
@@ -222,8 +262,9 @@ await channel.SendAsync(eventContext);
 
 无法收到消息时：
 
-1. 确认发现端口和返回的两个数据端口在所需方向上均可访问；
+1. 确认发现、可靠性控制、发布者进站和订阅者出站端口均可访问；
 2. 确认发布者与订阅者使用相同的 `Group` 和兼容的主题前缀；
 3. 检查 `Filter` 设置——默认不会接收本实例发布的消息；
-4. 先建立订阅再发布，并为 PUB/SUB 订阅传播预留时间；
-5. 服务端重启时保持数据端口不变，或者重建队列以重新执行端点发现。
+4. `ProduceAsync` 返回 `null` 时，确认发布瞬间 Broker 已能看到匹配订阅；业务可按自身策略决定是否重试；
+5. 使用 `LeastOnce` 时检查 Server 的 `Storage`、Control 端口、显式确认和过期时间；
+6. 可靠投递长期未完成时检查 Broker 的 Pending 数据、在线订阅和消费者幂等处理。

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -503,6 +503,15 @@
   </data>
   <data name="Messaging.GuarderQueueMissing.Warning" xml:space="preserve">
     <value>The message queue guarder named '{0}' cannot be started because its '{1}' property is null.</value>
+  </data>
+  <data name="Messaging.ReliabilityNotSupported.Message" xml:space="preserve">
+    <value>The '{0}' message reliability is not supported by the '{1}' message queue.</value>
+  </data>
+  <data name="Messaging.SubscriptionConflict.Message" xml:space="preserve">
+    <value>The existing subscription for the '{0}' topic has a different handler, tags, or options.</value>
+  </data>
+  <data name="Messaging.StorageSettingsInvalid.Message" xml:space="preserve">
+    <value>The '{0}' connection settings cannot be assigned to a message storage that requires '{1}'.</value>
   </data>
   <data name="Messaging.QueueUndefined.Message" xml:space="preserve">
     <value>{0}: The specified '{1}' message queue is not defined.</value>

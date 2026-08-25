@@ -40,20 +40,22 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 
-public sealed class ZeroQueueServer : WorkerBase
+public sealed partial class ZeroQueueServer : WorkerBase
 {
 	#region 公共常量
 	public const ushort PORT = 7969;
 	#endregion
 
 	#region 内部常量
-	internal const string PROTOCOL_VERSION = "1.0";
-	internal const string WELCOME_MESSAGE = $"\0Zongsoft.Messaging.ZeroMQ\nProtocol-Version:{PROTOCOL_VERSION}\0";
+	internal const string PROTOCOL_NAME = "Zongsoft.Messaging.ZeroMQ";
+	internal const string PROTOCOL_VERSION = Packetizer.ProtocolVersion;
+	internal const string WELCOME_PREFIX = $"\0{PROTOCOL_NAME}\n";
 	#endregion
 
 	#region 成员字段
 	private ushort _port;
 	private ServerAgent _agent;
+	private IMessageStorage _storage;
 	#endregion
 
 	#region 构造函数
@@ -72,15 +74,33 @@ public sealed class ZeroQueueServer : WorkerBase
 			_port = value > 0 ? value : PORT;
 		}
 	}
+
+	public IMessageStorage Storage
+	{
+		get => _storage;
+		set
+		{
+			if(this.State != WorkerState.Stopped)
+				throw new InvalidOperationException(Properties.Resources.ZeroQueueServer_StorageImmutable_Message);
+			_storage = value;
+		}
+	}
 	#endregion
 
 	#region 重写方法
 	protected override async Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
-		var (incoming, outgoing) = GetPorts(this.Name, args);
-		ValidatePorts(_port, incoming, outgoing);
+		var (control, incoming, outgoing) = GetPorts(this.Name, args);
+		ValidatePorts(_port, control, incoming, outgoing);
+		var storage = _storage;
+		var pending = new System.Collections.Generic.List<Message>();
+		if(storage != null)
+		{
+			await foreach(var entry in storage.GetAsync(cancellation))
+				pending.Add(entry);
+		}
 
-		var agent = new ServerAgent(_port, incoming, outgoing);
+		var agent = new ServerAgent(_port, control, incoming, outgoing, storage, pending);
 		try
 		{
 			await agent.StartAsync(cancellation);
@@ -92,15 +112,15 @@ public sealed class ZeroQueueServer : WorkerBase
 			throw;
 		}
 
-		static void ValidatePorts(ushort discovery, int incoming, int outgoing)
+		static void ValidatePorts(ushort discovery, int control, int incoming, int outgoing)
 		{
-			if(incoming is < 0 or > ushort.MaxValue || outgoing is < 0 or > ushort.MaxValue)
+			if(incoming is < 0 or > ushort.MaxValue || outgoing is < 0 or > ushort.MaxValue || control is < 0 or > ushort.MaxValue)
 				throw new ArgumentOutOfRangeException(nameof(incoming), string.Format(Properties.Resources.ZeroQueueServer_DataPortOutOfRange_Message, ushort.MaxValue));
 
-			if(incoming > 0 && outgoing > 0 && incoming == outgoing)
+			if(incoming > 0 && outgoing > 0 && incoming == outgoing || incoming > 0 && incoming == control || outgoing > 0 && outgoing == control)
 				throw new ArgumentException(Properties.Resources.ZeroQueueServer_DataPortsConflict_Message);
 
-			if(incoming == discovery || outgoing == discovery)
+			if(incoming == discovery || outgoing == discovery || control == discovery)
 				throw new ArgumentException(Properties.Resources.ZeroQueueServer_DiscoveryPortConflict_Message);
 		}
 	}
@@ -125,10 +145,13 @@ public sealed class ZeroQueueServer : WorkerBase
 	#endregion
 
 	#region 私有方法
-	private static (int incoming, int outgoing) GetPorts(string name, string[] args)
+	internal static string GetWelcomeMessage(string epoch) => $"\0{PROTOCOL_NAME}\nProtocol-Version:{PROTOCOL_VERSION}\nEpoch:{epoch}\0";
+
+	private static (int control, int incoming, int outgoing) GetPorts(string name, string[] args)
 	{
 		var incoming = 0;
 		var outgoing = 0;
+		var control = 0;
 
 		if(args != null)
 		{
@@ -139,7 +162,7 @@ public sealed class ZeroQueueServer : WorkerBase
 					continue;
 
 				var key = parts[0].StartsWith("--", StringComparison.Ordinal) ? parts[0][2..] : parts[0];
-				if(!key.Equals("incoming", StringComparison.OrdinalIgnoreCase) && !key.Equals("outgoing", StringComparison.OrdinalIgnoreCase))
+				if(!key.Equals("incoming", StringComparison.OrdinalIgnoreCase) && !key.Equals("outgoing", StringComparison.OrdinalIgnoreCase) && !key.Equals("control", StringComparison.OrdinalIgnoreCase))
 					continue;
 
 				if(!int.TryParse(parts[1], out var port) || port is < 0 or > ushort.MaxValue)
@@ -147,52 +170,52 @@ public sealed class ZeroQueueServer : WorkerBase
 
 				if(key.Equals("incoming", StringComparison.OrdinalIgnoreCase))
 					incoming = port;
-				else
+				else if(key.Equals("outgoing", StringComparison.OrdinalIgnoreCase))
 					outgoing = port;
+				else
+					control = port;
 			}
 		}
 
-		if(incoming > 0 || outgoing > 0)
-			return (incoming, outgoing);
+		if(incoming > 0 || outgoing > 0 || control > 0)
+			return (control, incoming, outgoing);
 
 		var servers = ApplicationContext.Current?.Configuration.GetOption<Configuration.ServerOptionsCollection>("/Messaging/ZeroMQ/Servers");
 		if(servers == null)
 			return default;
 
 		if(name != null && servers.TryGetValue(name, out var server))
-			return (server.Port.Incoming, server.Port.Outgoing);
+			return (server.Port.Control, server.Port.Incoming, server.Port.Outgoing);
 
-		return (servers.Port.Incoming, servers.Port.Outgoing);
+		return (servers.Port.Control, servers.Port.Incoming, servers.Port.Outgoing);
 	}
 	#endregion
 
 	#region 嵌套子类
-	private sealed class ServerAgent : IAsyncDisposable
+	private sealed partial class ServerAgent : IAsyncDisposable
 	{
 		#region 私有成员
 		private readonly ushort _port;
-		private readonly int _incoming;
-		private readonly int _outgoing;
 		private readonly NetMQQueue<Command> _commands;
 		private readonly NetMQPoller _poller;
+		private readonly ZeroBroadcastServer _broadcast;
+		private readonly ZeroControlServer _control;
 		private readonly Task _runner;
+		private readonly string _epoch;
 		private ResponseSocket _responser;
-		private XPublisherSocket _publisher;
-		private XSubscriberSocket _subscriber;
-		private int _publisherPort;
-		private int _subscriberPort;
 		private int _disposed;
 		#endregion
 
 		#region 构造函数
-		public ServerAgent(ushort port, int incoming, int outgoing)
+		public ServerAgent(ushort port, int control, int incoming, int outgoing, IMessageStorage storage, System.Collections.Generic.IReadOnlyList<Message> pendingEntries)
 		{
 			_port = port;
-			_incoming = incoming;
-			_outgoing = outgoing;
+			_epoch = Guid.NewGuid().ToString("N");
 			_commands = new NetMQQueue<Command>();
 			_commands.ReceiveReady += this.OnCommandReady;
 			_poller = new NetMQPoller() { _commands };
+			_broadcast = new ZeroBroadcastServer(incoming, outgoing, _epoch, _poller);
+			_control = new ZeroControlServer(control, storage, pendingEntries, _poller, action => _commands.Enqueue(new ActionCommand(action)));
 			_runner = Task.Factory.StartNew(() =>
 			{
 				if(Thread.CurrentThread.Name == null)
@@ -213,16 +236,16 @@ public sealed class ZeroQueueServer : WorkerBase
 		#endregion
 
 		#region 事件处理
-		private void OnPublisherReady(object sender, NetMQSocketEventArgs args) => this.Forward(args.Socket, _subscriber);
-		private void OnSubscriberReady(object sender, NetMQSocketEventArgs args) => this.Forward(args.Socket, _publisher);
-
 		private void OnReceiveReady(object sender, NetMQSocketEventArgs args)
 		{
-			var command = args.Socket.ReceiveFrameString();
-			if(string.IsNullOrEmpty(command) || command is "port" or "ports")
-				args.Socket.SendFrame($"Publisher={_publisherPort};Subscriber={_subscriberPort}");
-			else
-				args.Socket.SendFrameEmpty();
+			var request = args.Socket.ReceiveFrameString();
+			if(!TryParseDiscoveryRequest(request))
+			{
+				args.Socket.SendFrame($"{PROTOCOL_NAME}\nProtocol-Version:{PROTOCOL_VERSION}\nError:InvalidRequest");
+				return;
+			}
+
+			args.Socket.SendFrame($"{PROTOCOL_NAME}\nProtocol-Version:{PROTOCOL_VERSION}\nEpoch:{_epoch}\nControl:{_control.Port}\nIncoming:{_broadcast.Incoming}\nOutgoing:{_broadcast.Outgoing}");
 		}
 
 		private void OnCommandReady(object sender, NetMQQueueEventArgs<Command> args)
@@ -238,6 +261,11 @@ public sealed class ZeroQueueServer : WorkerBase
 						this.Start();
 						command.Completion.TrySetResult();
 					}
+					else if(command is ActionCommand action)
+					{
+						action.Action();
+						command.Completion.TrySetResult();
+					}
 					else
 					{
 						this.Stop();
@@ -246,6 +274,8 @@ public sealed class ZeroQueueServer : WorkerBase
 				}
 				catch(Exception exception)
 				{
+					if(command is ActionCommand)
+						Diagnostics.Logging.GetLogging(this).Error(exception);
 					command.Completion.TrySetException(exception);
 				}
 			}
@@ -253,38 +283,17 @@ public sealed class ZeroQueueServer : WorkerBase
 		#endregion
 
 		#region 命令执行
-		private void Forward(NetMQSocket source, NetMQSocket destination)
-		{
-			try
-			{
-				var message = new NetMQMessage();
-				while(source.TryReceiveMultipartMessage(ref message))
-				{
-					destination.SendMultipartMessage(message);
-					message = new NetMQMessage();
-				}
-			}
-			catch(Exception exception) { Diagnostics.Logging.GetLogging(this).Error(exception); }
-		}
-
 		private void Start()
 		{
 			_responser = new ResponseSocket();
-			_publisher = new XPublisherSocket();
-			_subscriber = new XSubscriberSocket();
 
 			try
 			{
 				_responser.ReceiveReady += this.OnReceiveReady;
-				_publisher.ReceiveReady += this.OnPublisherReady;
-				_subscriber.ReceiveReady += this.OnSubscriberReady;
-				_publisher.SetWelcomeMessage(WELCOME_MESSAGE);
 				_responser.Bind($"tcp://*:{_port}");
-				_publisherPort = Bind(_publisher, _outgoing);
-				_subscriberPort = Bind(_subscriber, _incoming);
 				_poller.Add(_responser);
-				_poller.Add(_publisher);
-				_poller.Add(_subscriber);
+				_broadcast.Start();
+				_control.Start();
 			}
 			catch
 			{
@@ -296,12 +305,9 @@ public sealed class ZeroQueueServer : WorkerBase
 		private void Stop() => this.ReleaseSockets();
 		private void ReleaseSockets()
 		{
+			_control.Stop();
+			_broadcast.Stop();
 			Release(ref _responser, socket => socket.ReceiveReady -= this.OnReceiveReady);
-			Release(ref _publisher, socket => socket.ReceiveReady -= this.OnPublisherReady);
-			Release(ref _subscriber, socket => socket.ReceiveReady -= this.OnSubscriberReady);
-
-			_publisherPort = 0;
-			_subscriberPort = 0;
 
 			void Release<TSocket>(ref TSocket socket, Action<TSocket> releasing = null) where TSocket : NetMQSocket
 			{
@@ -327,6 +333,34 @@ public sealed class ZeroQueueServer : WorkerBase
 
 			return socket.BindRandomPort("tcp://*");
 		}
+
+		private static bool TryParseDiscoveryRequest(string request)
+		{
+			if(string.IsNullOrWhiteSpace(request))
+				return false;
+
+			var lines = request.Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+			if(lines.Length < 3 || !string.Equals(lines[0], PROTOCOL_NAME, StringComparison.Ordinal))
+				return false;
+
+			var version = false;
+			var command = false;
+			for(var index = 1; index < lines.Length; index++)
+			{
+				var separator = lines[index].IndexOf(':');
+				if(separator <= 0 || separator == lines[index].Length - 1)
+					return false;
+
+				var name = lines[index].AsSpan(0, separator);
+				var value = lines[index].AsSpan(separator + 1);
+				if(name.SequenceEqual("Protocol-Version"))
+					version = value.SequenceEqual(PROTOCOL_VERSION);
+				else if(name.SequenceEqual("Command"))
+					command = value.SequenceEqual("Discover");
+			}
+
+			return version && command;
+		}
 		#endregion
 
 		#region 异步释放
@@ -344,6 +378,7 @@ public sealed class ZeroQueueServer : WorkerBase
 
 			await _runner;
 
+			await _control.DisposeAsync();
 			_commands.ReceiveReady -= this.OnCommandReady;
 			_poller.Remove(_commands);
 			_commands.Dispose();
@@ -366,6 +401,10 @@ public sealed class ZeroQueueServer : WorkerBase
 
 		private sealed class StopCommand : Command;
 		private sealed class StartCommand(CancellationToken cancellation) : Command(cancellation);
+		private sealed class ActionCommand(Action action) : Command
+		{
+			public Action Action { get; } = action ?? throw new ArgumentNullException(nameof(action));
+		}
 		#endregion
 	}
 	#endregion

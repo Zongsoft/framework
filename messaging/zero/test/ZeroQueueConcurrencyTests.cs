@@ -125,7 +125,8 @@ public class ZeroQueueConcurrencyTests
 			stopwatch.Stop();
 
 			Assert.Equal(PUBLICATION_COUNT, identifiers.Length);
-			Assert.All(identifiers, Assert.Null);
+			Assert.All(identifiers, identifier => Assert.False(string.IsNullOrWhiteSpace(identifier)));
+			Assert.Equal(PUBLICATION_COUNT, identifiers.Distinct(StringComparer.Ordinal).Count());
 			Assert.Equal(PUBLICATION_COUNT, audit.Count);
 			Assert.Equal(0, audit.DuplicateCount);
 			Assert.Equal(0, audit.InvalidTopicCount);

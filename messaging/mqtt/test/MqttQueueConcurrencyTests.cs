@@ -61,7 +61,7 @@ public class MqttQueueConcurrencyTests
 
 			Assert.All(completed, received => Assert.True(received, $"An MQTT subscriber did not receive all {MESSAGE_COUNT} messages."));
 			Assert.Equal(MESSAGE_COUNT, identifiers.Length);
-			Assert.All(identifiers, identifier => Assert.False(string.IsNullOrEmpty(identifier)));
+			Assert.All(identifiers, Assert.Null);
 
 			foreach(var audit in audits)
 			{

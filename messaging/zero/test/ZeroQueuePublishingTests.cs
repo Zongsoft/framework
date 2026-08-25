@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Xunit;
@@ -9,6 +11,74 @@ namespace Zongsoft.Messaging.ZeroMQ.Tests;
 
 public class ZeroQueuePublishingTests
 {
+	[Fact]
+	public async Task PublishWithoutSubscriberReturnsNullImmediately()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		using var server = await ZeroServerScope.StartAsync();
+		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "missing-publisher");
+		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "missing-subscriber");
+		using var handler = new MessageBuffer();
+		var topic = "topic/missing";
+
+		Assert.Null(await publisher.ProduceAsync(topic, Encoding.UTF8.GetBytes("missing")));
+		var started = DateTime.UtcNow;
+		Assert.Null(await publisher.ProduceAsync(topic, Encoding.UTF8.GetBytes("missing-again")));
+		Assert.True(DateTime.UtcNow - started < TimeSpan.FromSeconds(1));
+
+		await subscriber.SubscribeAsync(topic, handler);
+		Assert.Null(await handler.TryReceiveAsync(TimeSpan.FromMilliseconds(300)));
+	}
+
+	[Fact]
+	public async Task SuccessfulBroadcastReturnsDeliveredIdentifier()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		using var server = await ZeroServerScope.StartAsync();
+		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "identifier-publisher");
+		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "identifier-subscriber");
+		using var handler = new MessageBuffer();
+		var topic = "topic/identifier";
+
+		await subscriber.SubscribeAsync(topic, handler);
+		var identifier = await ZeroTestUtility.PublishUntilAcceptedAsync(publisher, topic, Encoding.UTF8.GetBytes("identified"));
+		var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
+
+		Assert.False(string.IsNullOrWhiteSpace(identifier));
+		Assert.Equal(identifier, message.Identifier);
+		Assert.Equal(publisher.Instance, message.Identity);
+	}
+
+	[Fact]
+	public async Task ConcurrentBroadcastPublishesReturnUniqueIdentifiers()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		using var server = await ZeroServerScope.StartAsync();
+		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "concurrent-publisher");
+		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "concurrent-subscriber");
+		using var handler = new MessageBuffer();
+		var topic = "topic/concurrent";
+
+		await subscriber.SubscribeAsync(topic, handler);
+		await ZeroTestUtility.PublishUntilAcceptedAsync(publisher, topic, Encoding.UTF8.GetBytes("probe"));
+		await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
+		var publications = Enumerable.Range(0, 64)
+			.Select(index => publisher.ProduceAsync(topic, Encoding.UTF8.GetBytes($"message-{index}")).AsTask())
+			.ToArray();
+		var identifiers = await Task.WhenAll(publications);
+		var messages = await handler.ReceiveManyAsync(64, TimeSpan.FromSeconds(5));
+
+		Assert.All(identifiers, identifier => Assert.False(string.IsNullOrWhiteSpace(identifier)));
+		Assert.Equal(64, identifiers.Distinct(StringComparer.Ordinal).Count());
+		Assert.Equal(identifiers.OrderBy(identifier => identifier), messages.Select(message => message.Identifier).OrderBy(identifier => identifier));
+	}
+
 	[Fact]
 	public async Task ProduceSnapshotsPayloadBeforeLocalSendCompletes()
 	{
@@ -22,10 +92,8 @@ public class ZeroQueuePublishingTests
 		var topic = "topic/snapshot";
 
 		await subscriber.SubscribeAsync(topic, handler);
-		await PublishUntilReceivedAsync(publisher, handler, topic, "warmup");
-
 		var payload = Encoding.UTF8.GetBytes("original");
-		await publisher.ProduceAsync(topic, payload);
+		await ZeroTestUtility.PublishUntilAcceptedAsync(publisher, topic, payload);
 		Array.Fill(payload, (byte)'x');
 
 		var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
@@ -42,7 +110,7 @@ public class ZeroQueuePublishingTests
 		using var publisher = ZeroTestUtility.CreateQueue(port, "retry-publisher", settings => settings.Timeout = TimeSpan.FromMilliseconds(100));
 		var server = new ZeroQueueServer { Port = port };
 
-		await Assert.ThrowsAsync<InvalidOperationException>(() =>
+		await Assert.ThrowsAsync<TimeoutException>(() =>
 			publisher.ProduceAsync("topic/retry", ReadOnlyMemory<byte>.Empty).AsTask());
 
 		try
@@ -52,7 +120,8 @@ public class ZeroQueuePublishingTests
 			using var handler = new MessageBuffer();
 			await subscriber.SubscribeAsync("topic/retry", handler);
 
-			var message = await PublishUntilReceivedAsync(publisher, handler, "topic/retry", "retried");
+			await ZeroTestUtility.PublishUntilAcceptedAsync(publisher, "topic/retry", Encoding.UTF8.GetBytes("retried"));
+			var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
 			Assert.Equal("retried", Encoding.UTF8.GetString(message.Data));
 		}
 		finally
@@ -79,21 +148,17 @@ public class ZeroQueuePublishingTests
 		using var handler = new MessageBuffer();
 		await subscriber.SubscribeAsync("original", handler);
 
-		var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
+		string identifier;
 		do
 		{
-			await publisher.ProduceAsync(Encoding.UTF8.GetBytes("snapshot"));
-			var message = await handler.TryReceiveAsync(TimeSpan.FromMilliseconds(250));
-			if(message.HasValue)
-			{
-				Assert.Equal("original", message.Value.Topic);
-				Assert.Equal("snapshot", Encoding.UTF8.GetString(message.Value.Data));
-				return;
-			}
+			identifier = await publisher.ProduceAsync(Encoding.UTF8.GetBytes("snapshot"));
+			if(identifier == null)
+				await Task.Delay(25);
 		}
-		while(DateTime.UtcNow < deadline);
-
-		throw new TimeoutException("Timed out waiting for the snapshotted default topic and group.");
+		while(identifier == null);
+		var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
+		Assert.Equal("original", message.Topic);
+		Assert.Equal("snapshot", Encoding.UTF8.GetString(message.Data));
 	}
 
 	[Fact]
@@ -109,7 +174,8 @@ public class ZeroQueuePublishingTests
 		using var handler = new MessageBuffer();
 
 		await subscriber.SubscribeAsync("topic/heartbeat", handler);
-		var message = await PublishUntilReceivedAsync(publisher, handler, "topic/heartbeat", "heartbeat");
+		await ZeroTestUtility.PublishUntilAcceptedAsync(publisher, "topic/heartbeat", Encoding.UTF8.GetBytes("heartbeat"));
+		var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
 
 		Assert.Equal("heartbeat", Encoding.UTF8.GetString(message.Data));
 	}
@@ -128,9 +194,9 @@ public class ZeroQueuePublishingTests
 		var count = 100;
 
 		await subscriber.SubscribeAsync(topic, handler);
-		await PublishUntilReceivedAsync(publisher, handler, topic, "warmup");
-
-		//突发发送覆盖 ZeroQueue.OnQueueReady() 的批量 drain 逻辑。
+		await ZeroTestUtility.PublishUntilAcceptedAsync(publisher, topic, Encoding.UTF8.GetBytes("probe"));
+		await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
+		//突发发送覆盖传输 Actor 的批量命令及即时发布路径。
 		for(int i = 0; i < count; i++)
 			await publisher.ProduceAsync(topic, Encoding.UTF8.GetBytes($"burst-{i}"));
 
@@ -141,21 +207,5 @@ public class ZeroQueuePublishingTests
 
 		for(int i = 0; i < count; i++)
 			Assert.Contains($"burst-{i}", payloads);
-	}
-
-	private static async Task<Message> PublishUntilReceivedAsync(ZeroQueue publisher, MessageBuffer handler, string topic, string payload)
-	{
-		var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
-
-		do
-		{
-			await publisher.ProduceAsync(topic, Encoding.UTF8.GetBytes(payload));
-			var message = await handler.TryReceiveAsync(TimeSpan.FromMilliseconds(250));
-			if(message.HasValue && Encoding.UTF8.GetString(message.Value.Data) == payload)
-				return message.Value;
-		}
-		while(DateTime.UtcNow < deadline);
-
-		throw new TimeoutException($"Timed out warming topic '{topic}'.");
 	}
 }

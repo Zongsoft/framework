@@ -68,7 +68,7 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 
 	#region 生产方法
 	public ValueTask<string> ProduceAsync(ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) =>
-		this.OnProduceAsync(this.GetTopic(null), null, data, options, cancellation);
+		this.ProduceAsyncCore(this.GetTopic(null), null, data, options, cancellation);
 
 	public ValueTask<string> ProduceAsync(ReadOnlyMemory<char> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) =>
 		this.ProduceAsync(null, null, data, Encoding.UTF8, options, cancellation);
@@ -77,10 +77,10 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 		this.ProduceAsync(null, null, data, encoding, options, cancellation);
 
 	public ValueTask<string> ProduceAsync(string topic, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) =>
-		this.OnProduceAsync(this.GetTopic(topic), null, data, options, cancellation);
+		this.ProduceAsyncCore(this.GetTopic(topic), null, data, options, cancellation);
 
 	public ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) =>
-		this.OnProduceAsync(this.GetTopic(topic), tags, data, options, cancellation);
+		this.ProduceAsyncCore(this.GetTopic(topic), tags, data, options, cancellation);
 
 	public ValueTask<string> ProduceAsync(string topic, ReadOnlyMemory<char> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) =>
 		this.ProduceAsync(topic, null, data, Encoding.UTF8, options, cancellation);
@@ -92,7 +92,19 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 		this.ProduceAsync(topic, tags, data, Encoding.UTF8, options, cancellation);
 
 	public ValueTask<string> ProduceAsync(string topic, string tags, ReadOnlyMemory<char> data, Encoding encoding, MessageEnqueueOptions options = null, CancellationToken cancellation = default) =>
-		this.OnProduceAsync(this.GetTopic(topic), tags, encoding.GetBytes(data.ToString()), options, cancellation);
+		this.ProduceAsyncCore(this.GetTopic(topic), tags, encoding.GetBytes(data.ToString()), options, cancellation);
+
+	private ValueTask<string> ProduceAsyncCore(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
+	{
+		if(_disposing != 0)
+			throw new ObjectDisposedException(this.GetType().Name);
+
+		var reliability = options?.Reliability ?? MessageReliability.MostOnce;
+		if(reliability > this.Reliability)
+			throw new NotSupportedException(string.Format(Properties.Resources.Messaging_ReliabilityNotSupported_Message, reliability, this.GetType().Name));
+
+		return this.OnProduceAsync(topic, tags, data, options, cancellation);
+	}
 
 	protected abstract ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation);
 	#endregion
@@ -128,18 +140,28 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 		if(_disposing != 0)
 			throw new ObjectDisposedException(this.GetType().Name);
 
+		var reliability = options?.Reliability ?? MessageReliability.MostOnce;
+		var fallback = options?.FallbackBehavior ?? MessageFallbackBehavior.Backoff;
+		if(reliability > this.Reliability)
+			throw new NotSupportedException(string.Format(Properties.Resources.Messaging_ReliabilityNotSupported_Message, reliability, this.GetType().Name));
+
 		//确保主题不为空
 		topic = this.GetTopic(topic) ?? string.Empty;
+		options = new MessageSubscribeOptions(reliability, fallback);
 
-		if(this.Subscribers.TryGetValue(topic, out var subscriber))
-			return subscriber;
+		var candidate = new Subscription(handler, Slice(tags), options, entry => InitializeSubscriberAsync(topic, tags, handler, options, entry));
+		var subscription = this.Subscribers.GetOrAdd(topic, _ => candidate);
+		if(!subscription.Matches(handler, candidate.Tags, options))
+			throw new InvalidOperationException(string.Format(Properties.Resources.Messaging_SubscriptionConflict_Message, topic));
 
-		var subscription = this.Subscribers.GetOrAdd(topic, key => new Subscription(entry => InitializeSubscriberAsync(key, tags, handler, options, entry)));
 		var task = subscription.GetTask();
 
 		return cancellation.CanBeCanceled ?
 			await task.WaitAsync(cancellation) :
 			await task;
+
+		static string[] Slice(string text) => string.IsNullOrWhiteSpace(text) ? [] :
+			text.Split([',', ';'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
 		async Task<TSubscriber> InitializeSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, Subscription subscription)
 		{
@@ -223,6 +245,7 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 
 	#region 虚拟方法
 	protected virtual string GetTopic(string topic) => topic ?? string.Empty;
+	protected virtual MessageReliability Reliability => MessageReliability.MostOnce;
 	#endregion
 
 	#region 重写方法
@@ -338,15 +361,21 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 		#endregion
 
 		#region 构造函数
-		public Subscription(Func<Subscription, Task<TSubscriber>> initialize)
+		public Subscription(IHandler<Message> handler, string[] tags, MessageSubscribeOptions options, Func<Subscription, Task<TSubscriber>> initialize)
 		{
 			ArgumentNullException.ThrowIfNull(initialize);
+			this.Handler = handler;
+			this.Tags = tags ?? [];
+			this.Options = options ?? MessageSubscribeOptions.Default;
 			_initialization = new Lazy<Task<TSubscriber>>(() => initialize(this), LazyThreadSafetyMode.ExecutionAndPublication);
 		}
 		#endregion
 
 		#region 公共属性
 		public bool IsActive => Volatile.Read(ref _state) == ACTIVE;
+		public string[] Tags { get; }
+		public IHandler<Message> Handler { get; }
+		public MessageSubscribeOptions Options { get; }
 		#endregion
 
 		#region 公共方法
@@ -364,6 +393,27 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 			}
 
 			return task;
+		}
+
+		public bool Matches(IHandler<Message> handler, string[] tags, MessageSubscribeOptions options)
+		{
+			if(!HandlerEquals(this.Handler, handler) || this.Options.Reliability != options.Reliability || this.Options.FallbackBehavior != options.FallbackBehavior)
+				return false;
+
+			tags ??= [];
+			if(this.Tags.Length != tags.Length)
+				return false;
+
+			for(var index = 0; index < tags.Length; index++)
+			{
+				if(!string.Equals(this.Tags[index], tags[index], StringComparison.OrdinalIgnoreCase))
+					return false;
+			}
+
+			return true;
+
+			static bool HandlerEquals(IHandler<Message> x, IHandler<Message> y) =>
+				ReferenceEquals(x, y) || x is HandlerAdapter first && y is HandlerAdapter second && first.Handler == second.Handler;
 		}
 
 		public bool TryActivate(TSubscriber subscriber)
@@ -401,6 +451,7 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 	private sealed class HandlerAdapter(Action<Message> handler) : HandlerBase<Message>
 	{
 		private readonly Action<Message> _handler = handler ?? throw new ArgumentNullException(nameof(handler));
+		public Action<Message> Handler => _handler;
 
 		protected override ValueTask OnHandleAsync(Message argument, Parameters parameters, CancellationToken cancellation)
 		{

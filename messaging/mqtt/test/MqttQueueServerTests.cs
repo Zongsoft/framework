@@ -2,13 +2,16 @@ using System;
 using System.Net;
 using System.Text;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using MQTTnet;
 using MQTTnet.Server;
 
 using Zongsoft.Components;
 using Zongsoft.Communication;
+using Zongsoft.Configuration;
 
 using Xunit;
 
@@ -16,6 +19,26 @@ namespace Zongsoft.Messaging.Mqtt.Tests;
 
 public class MqttQueueServerTests
 {
+	[Fact]
+	public async Task ServerStorageCanChangeOnlyWhileStopped()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		using var server = new MqttQueueServer { Port = MqttTestUtility.GetFreePort() };
+		var first = new TestMessageStorage();
+		server.Storage = first;
+		Assert.Same(first, server.Storage);
+
+		await server.StartAsync([]);
+		Assert.Throws<InvalidOperationException>(() => server.Storage = new TestMessageStorage());
+
+		await server.StopAsync([]);
+		var second = new TestMessageStorage();
+		server.Storage = second;
+		Assert.Same(second, server.Storage);
+	}
+
 	[Fact]
 	public async Task ServerStopReleasesPortAndAllowsRestart()
 	{
@@ -199,5 +222,20 @@ public class MqttQueueServerTests
 	{
 		public bool HasServer => this.Server != null;
 		public Task UpdateRetainedMessageAsync(MqttApplicationMessage message) => this.Server.UpdateRetainedMessageAsync(message);
+	}
+
+	private sealed class TestMessageStorage : IMessageStorage
+	{
+		public string Name => "test";
+		public IConnectionSettings Settings { get; set; } = new ConnectionSettings();
+
+		public ValueTask SetAsync(Message message, TimeSpan expiry = default, CancellationToken cancellation = default) => ValueTask.CompletedTask;
+		public ValueTask<bool> RemoveAsync(string identifier, CancellationToken cancellation = default) => ValueTask.FromResult(false);
+
+		public async IAsyncEnumerable<Message> GetAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellation = default)
+		{
+			await Task.CompletedTask;
+			yield break;
+		}
 	}
 }

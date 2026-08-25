@@ -117,6 +117,7 @@ public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisC
 	#endregion
 
 	#region 重写方法
+	protected override MessageReliability Reliability => MessageReliability.LeastOnce;
 	protected override string GetTopic(string topic) => this.Settings == null ? topic ?? string.Empty : base.GetTopic(topic);
 	#endregion
 

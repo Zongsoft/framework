@@ -17,7 +17,7 @@ public class ZeroQueueServerTests
 			return;
 
 		var port = ZeroTestUtility.GetFreePort();
-		var server = new ZeroQueueServer { Port = port };
+		var server = new ZeroQueueServer { Port = port, Storage = new MemoryMessageStorage() };
 
 		try
 		{
@@ -42,6 +42,36 @@ public class ZeroQueueServerTests
 	}
 
 	[Fact]
+	public async Task QueueServerWithoutStorageDoesNotStartControlChannel()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var port = ZeroTestUtility.GetFreePort();
+		var control = ZeroTestUtility.GetFreePort();
+		var server = new ZeroQueueServer { Port = port };
+
+		try
+		{
+			await server.StartAsync([$"--control:{control}"]);
+			Assert.Equal(0, ZeroTestUtility.GetServerPorts(port).Control);
+			Assert.True(ZeroTestUtility.CanBindZeroMq(control));
+			Assert.Throws<InvalidOperationException>(() => server.Storage = new MemoryMessageStorage());
+
+			await server.StopAsync([]);
+			server.Storage = new MemoryMessageStorage();
+			await server.StartAsync([$"--control:{control}"]);
+			Assert.Equal(control, ZeroTestUtility.GetServerPorts(port).Control);
+			Assert.False(ZeroTestUtility.CanBindZeroMq(control));
+		}
+		finally
+		{
+			await server.StopAsync([]);
+			((IDisposable)server).Dispose();
+		}
+	}
+
+	[Fact]
 	public async Task QueueServerStartWithExplicitExchangePortsBindsAndForwardsMessages()
 	{
 		if(!Global.IsTestingEnabled)
@@ -50,30 +80,27 @@ public class ZeroQueueServerTests
 		var port = ZeroTestUtility.GetFreePort();
 		var incoming = ZeroTestUtility.GetFreePort();
 		var outgoing = ZeroTestUtility.GetFreePort();
-		var server = new ZeroQueueServer { Port = port };
+		var control = ZeroTestUtility.GetFreePort();
+		var server = new ZeroQueueServer { Port = port, Storage = new MemoryMessageStorage() };
 
 		try
 		{
-			await server.StartAsync([$"--incoming:{incoming}", $"--outgoing:{outgoing}"]);
+			await server.StartAsync([$"--incoming:{incoming}", $"--outgoing:{outgoing}", $"--control:{control}"]);
 
 			var ports = ZeroTestUtility.GetServerPorts(port);
-			Assert.Equal(outgoing, ports.Publisher);
-			Assert.Equal(incoming, ports.Subscriber);
+			Assert.Equal(control, ports.Control);
+			Assert.Equal(incoming, ports.Incoming);
+			Assert.Equal(outgoing, ports.Outgoing);
 			Assert.False(ZeroTestUtility.CanBindZeroMq(incoming));
 			Assert.False(ZeroTestUtility.CanBindZeroMq(outgoing));
+			Assert.False(ZeroTestUtility.CanBindZeroMq(control));
 
 			using var publisher = ZeroTestUtility.CreateQueue(port, "publisher");
 			using var subscriber = ZeroTestUtility.CreateQueue(port, "subscriber");
 			using var handler = new MessageBuffer();
 
 			await subscriber.SubscribeAsync("topic/explicit", handler);
-			await Task.Delay(750);
-
-			for(int i = 0; i < 3; i++)
-			{
-				await publisher.ProduceAsync("topic/explicit", Encoding.UTF8.GetBytes("explicit"));
-				await Task.Delay(100);
-			}
+			await ZeroTestUtility.PublishUntilAcceptedAsync(publisher, "topic/explicit", Encoding.UTF8.GetBytes("explicit"));
 
 			var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
 			Assert.Equal("explicit", Encoding.UTF8.GetString(message.Data));

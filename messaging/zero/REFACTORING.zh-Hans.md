@@ -1,6 +1,6 @@
 # Zongsoft.Messaging.ZeroMQ 重构评估报告
 
-> 评估日期：2026-08-21；实施更新：2026-08-24<br />
+> 评估日期：2026-08-21；实施更新：2026-08-25；协议设计更新：2026-08-25<br />
 > 评估范围：`Zongsoft.Core/src/Messaging`、`Zongsoft.Core/src/Communication`、`messaging/zero/src`、`messaging/zero/test`、范例及插件清单<br />
 > 本报告保留重构前证据，并通过任务清单和“实施结果”记录当前修复状态；历史问题描述不应再被理解为现行实现。
 
@@ -33,6 +33,21 @@
 - [x] S05 将 Core Communication/Messaging 遗漏的异常与警告日志，以及 Core 固定日志文本迁入中英文资源。
 - [x] S06 完成 Core/ZeroMQ 三目标构建及完整测试。
 
+### 2.0 协议设计清单（2026-08-25）
+
+- [x] P10 确认采用方案 B，目标是订阅传播到实际发送 Socket 后再发送。
+- [x] P11 确认不兼容 1.0 协议，不考虑新旧 Broker 或客户端混用。
+- [x] P12 选择应用端 XPUB 直接观察订阅控制帧，不新增独立控制端口。
+- [x] P13 完成 2.0 发现、Broker Epoch、Welcome、业务帧和发布等待状态机草案。
+- [x] P14 完成配置、错误语义、故障恢复及测试验收设计。
+- [x] P15 确认无订阅发布等待超时失败，并覆盖 Broker 随机端口重启恢复。
+- [x] P16 设计评审通过，进入协议实现。
+- [x] P17 横向审计 Core、RabbitMQ、Kafka、MQTT、Redis 和阿里云驱动的可靠性与确认边界。
+- [x] P18 将 `MostOnce` 与 `LeastOnce` 拆分为 2A/2B 里程碑，并记录 Core 共性提取方案。
+- [x] P19 确认 `LeastOnce` 纳入本次 2.0 重构，以发布时全部逻辑订阅为确认范围，并要求跨进程/Broker 重启持久化恢复。
+
+完整设计见 [PROTOCOL-2.0.zh-Hans.md](PROTOCOL-2.0.zh-Hans.md)。本清单完成不表示 2.0 已实现，README 仍描述当前 1.0 行为。
+
 ## 1. 结论摘要
 
 ### 1.1 共同稳定化实施结果（2026-08-24）
@@ -64,6 +79,22 @@
 本次同时复核了直接相关的 Core Communication/Messaging 异常与日志文本，并扫描 Core 的显式日志调用：5 条异常消息、1 条消息队列警告和 1 条重复固定错误日志已迁入默认及简体中文资源。该复核针对本次消息通信改动及日志入口，不把 Core 其他子系统历年来的内部参数校验文本机械纳入 ZeroMQ 重构范围。
 
 最终验证结果：Core 消息测试在 net8.0、net9.0、net10.0 各 10/10 通过；ZeroMQ 三目标构建均为 0 警告、0 错误；启用 `ZONGSOFT_MESSAGING_TESTS=true` 后，完整集成套件在三个目标框架各 40/40 通过。
+
+### 1.3 方案 B 设计状态（2026-08-25）
+
+产品已确认下一阶段采用订阅传播就绪方案，并明确不兼容 1.0、不考虑新旧客户端混用。设计选定应用发布端 XPUB 直接观察订阅控制帧：只有匹配物理主题的订阅已经到达实际发送 Socket，Actor 才释放业务发布命令。该方案不新增控制端口，仍不提供远端接收或 Handler 确认。
+
+2.0 设计草案已经覆盖发现协议、Broker Epoch、Welcome Message、业务帧版本、按主题有界等待、超时取消、断线失效、重连恢复和三目标测试矩阵，详见 [PROTOCOL-2.0.zh-Hans.md](PROTOCOL-2.0.zh-Hans.md)。当前仍是设计阶段，运行时代码和 README 尚未切换到 2.0。
+
+### 1.4 可靠性与跨驱动复核（2026-08-25）
+
+`MessageQueueBase` 已统一生产/订阅入口和订阅事务，`MessageConsumerBase` 保存 Handler 与订阅选项，`Message` 已提供传输无关的显式确认回调。不过 Core 尚未统一归一化可靠性默认值、声明驱动生产/订阅能力，也未处理同 Topic 的后续订阅请求携带不同 Handler、Tags 或可靠性选项时的冲突。
+
+横向结果表明，确认的载体必须留在驱动：RabbitMQ 使用 Delivery Tag 确认，Kafka 提交消费位置，Redis Streams 执行 `XACK`，阿里云队列支持带延迟确认，MQTT 把可靠性映射到 QoS。多数驱动当前还会忽略一部分 `MessageEnqueueOptions` 或 `MessageSubscribeOptions`，MQTT 甚至在选项为 `null` 时使用 AtLeastOnce，与 Core 的 `MostOnce` 默认值不一致。这不是 ZeroMQ 层应复制解决的问题。
+
+因此建议把可靠性支持纳入同一个 2.0 重构总体目标，但拆成两个独立验收里程碑：2A 只实现 `MostOnce` 的订阅传播就绪；2B 才实现 `LeastOnce` 的确认和重投。`ExactlyOnce` 在 ZeroMQ 生产和订阅入口始终显式拒绝，不改变其他驱动已有的能力映射。2A 完成而 2B 尚未完成期间，`LeastOnce` 也必须显式失败，不能静默降级。
+
+Core 的后续公共改动限定为：在 `MessageQueueBase` 统一选项入口和本地化能力校验、解决重复订阅选项一致性，并保留驱动可覆写的能力/验证钩子。ACK 令牌、待确认窗口、重投、持久化和 Socket 状态仍由具体驱动实现；在至少两个驱动出现相同且语义一致的代码之前，不为 ZeroMQ 单独把协议状态机上提到 Core。
 
 “初始化后延迟 100ms，首条消息仍偶发丢失”的直接原因已经定位：
 
@@ -355,33 +386,36 @@ NetMQ `Proxy` 在 XSUB 与 XPUB 之间双向转发业务消息和订阅命令。
 
 **目标**：订阅成功后，新发布者针对已存在订阅的第一条消息不因连接或订阅传播窗口丢失；仍不保证 Handler 已处理，也不提供持久化。
 
-**关键约束**：普通 PUB Socket 无法读取订阅命令，因此仅在客户端等待连接事件不够。需要控制面掌握“主题订阅已经到达发布侧”的事实。
+**关键约束**：普通 PUB Socket 无法读取订阅命令，因此仅等待连接事件不够。就绪状态必须在实际发送业务消息的 Socket 上可观察，不能通过另一条连接上的 Broker 确认间接推断。
 
-**可行设计**：
+**选定设计（2026-08-25）**：
 
-- 服务端显式读取 XPUB 订阅/取消订阅命令并维护带引用计数的主题注册表；
-- 发布者使用独立控制通道注册实例并查询/等待指定主题的订阅代次；
-- 订阅返回前，客户端等待服务端确认该订阅代次已转发到 XSUB；
-- 发布者初始化后等待自己连接代次与目标主题订阅代次对齐；
-- 定义“没有订阅者”时立即发送、等待、失败或允许丢弃中的一种策略；
-- 服务端重启会推进代次，客户端必须重新发现、重连和重新订阅。
+- 应用发布端由 PUB 改为 XPUB，在 Queue Actor 线程直接接收 Broker XSUB 转发的订阅/取消订阅帧；
+- 发布命令仅在该 XPUB 已观察到匹配物理主题前缀后发送，否则进入按主题有界 FIFO；
+- 发现响应和 Welcome Message 携带 Broker Epoch，断线或 Epoch 变化立即清空旧订阅状态；
+- 无订阅命令按待确认策略等待或失败，不使用固定延迟；
+- 不新增控制端口，也不维护订阅者身份或确认集合；
+- 发现、Welcome 和业务头统一升级为 2.0，不兼容 1.0，也不提供降级分支。
 
-**兼容性**：数据帧可以保持 v1，但需要新增控制协议和混合版本降级规则。
+详细帧格式、状态机、配置及验收规则见 [2.0 可靠性协议设计](PROTOCOL-2.0.zh-Hans.md)。
+
+**兼容性**：产品已明确不兼容 1.0，不考虑新旧客户端混用；2.0 客户端只接受 2.0 Broker。
 
 **代价**：中高。
 
 **限制**：只证明订阅传播/连接状态，不证明消息已经进入 SUB 队列或 Handler 完成。
 
-### 5.4 方案 C：端到端至少一次
+### 5.4 方案 C：端到端至少一次（建议作为 2B）
 
-**目标**：调用方可知道消息是否被至少一个目标接收方确认；超时后重试，接收端按消息标识去重。
+**目标**：调用方可知道消息是否达到约定的接收方确认范围；超时后使用同一消息标识重投，公开允许重复投递。
 
 **可行设计**：
 
 - 新增协议 v2，使用 ROUTER/DEALER 或明确的确认控制通道；
 - 每条消息包含不可重复标识、发送者、主题、截止时间和协议版本；
 - Broker 或消费者返回确认；生产者维护有界待确认窗口和退避重试；
-- 消费者维护有时限的去重表，并定义 Handler 成功前确认还是成功后确认；
+- `Message.AcknowledgeAsync` 绑定驱动确认回调，沿用其他消息驱动的显式确认范式；
+- 重投可能再次进入 Handler，业务处理器负责必要的幂等；有限去重只能作为优化，不能宣称 `ExactlyOnce`；
 - 定义无消费者、部分消费者确认、广播确认集合、重试耗尽和毒消息策略；
 - 若要求进程或 Broker 重启后仍不丢失，必须增加持久化日志，或者改用已有的持久化消息 Broker。
 
@@ -395,14 +429,14 @@ NetMQ `Proxy` 在 XSUB 与 XPUB 之间双向转发业务消息和订阅命令。
 
 | 维度 | 方案 A：尽力而为 | 方案 B：订阅就绪 | 方案 C：至少一次 |
 | --- | :---: | :---: | :---: |
-| 保持现有数据协议 | 是 | 基本可以 | 否/需版本化 |
+| 保持现有数据协议 | 是 | 否，选定设计统一升级 2.0 | 否/需版本化 |
 | 消除当前并发初始化竞态 | 是 | 是 | 是 |
 | 避免订阅传播导致的首发丢失 | 否 | 是 | 是 |
 | 证明远端接收 | 否 | 否 | 是，取决于确认点 |
-| 支持重试/去重 | 否 | 否 | 是 |
+| 支持重试/允许重复投递 | 否 | 否 | 是 |
 | 支持 Broker 重启后恢复 | 仅固定端点重连 | 需重建控制状态 | 需控制状态；持久化另议 |
 | 实施风险 | 中 | 中高 | 高 |
-| 与现有客户端兼容 | 高 | 中高 | 低 |
+| 与现有客户端兼容 | 高 | 不考虑 | 低 |
 
 ## 6. 推荐路线与决策门
 
@@ -420,17 +454,19 @@ NetMQ `Proxy` 在 XSUB 与 XPUB 之间双向转发业务消息和订阅命令。
 - 引入有界 Handler 调度；
 - 定义 `ProduceAsync` 完成点和内存所有权。
 
-### 决策门：投递目标
+### 决策门：可靠性阶段
 
-阶段 1 完成后，产品负责人必须从以下问题给出明确答案，才能进入协议实现：
+2026-08-25 已确认选择方案 B，并明确不兼容 1.0、不会出现新旧客户端混用。设计进一步选定“订阅控制帧到达实际发送业务消息的应用 XPUB”为 `MostOnce` 就绪点；不等待 SUB 入队或 Handler 成功。
 
-1. “第一条不丢”是指订阅命令已传播、SUB Socket 已入队，还是业务 Handler 已成功？
-2. 没有订阅者时发布应立即成功、等待订阅者、返回失败，还是丢弃？
-3. 广播给多个订阅者时，需要任一确认、全部确认，还是指定数量确认？
-4. Broker 或消费者重启后是否仍要求恢复未确认消息？
-5. 是否接受新驱动名/新端点带来的兼容性切换？
+进入实现前仍需确认：
 
-若答案只要求降低偶发丢失且允许瞬态语义，选择方案 A。若要求“成功订阅后首发不受 slow joiner 影响”，选择方案 B。若要求业务处理可证明且可重试，选择方案 C 或成熟持久化 Broker。
+1. 没有匹配订阅时，是否采用“等待 `ReadinessTimeout`，超时失败”的推荐策略；
+2. 是否在 2A 同时实现 Broker 随机数据端口变化后的自动重新发现、Socket 重建和重订阅；
+3. 是否接受将 `LeastOnce` 纳入同一次 2.0 重构，但作为 2B 独立验收；
+4. `LeastOnce` 是确认发布时的全部逻辑订阅，还是任意一个消费者；
+5. `LeastOnce` 是否要求跨发布者、Broker 或订阅者进程重启保证。若要求，2B 必须包含持久化待确认日志。
+
+2A 的多订阅者只要求“至少一个匹配订阅已传播”，不增加消息确认、重试或持久化。这个条件不能直接套用到 2B 的确认范围。完整待确认项见协议设计的 D04、D06、D09 和第 13 节。
 
 ## 7. 接口与兼容性影响
 
@@ -449,16 +485,18 @@ NetMQ `Proxy` 在 XSUB 与 XPUB 之间双向转发业务消息和订阅命令。
 | `ZeroQueue` 内部状态机/Actor | 内部变化 | 内部变化 | 内部变化 |
 | `ProduceAsync` 文档契约 | 必须明确 | 必须明确 | 可能扩展确认结果 |
 | 新增就绪/健康状态接口 | 可选 | 建议 | 建议 |
-| 控制协议 | 无 | 新增 | 新增 |
-| 业务帧版本 | 保持 v1 | 可保持 v1 | 建议 v2 |
-| 新配置项 | 容量/关闭超时 | 再加就绪超时/无订阅策略 | 再加确认、重试、去重和持久化策略 |
+| 订阅就绪机制 | 无 | 应用 XPUB 直接观察 | 确认控制协议 |
+| 业务帧版本 | 保持 v1 | 统一升级 v2 | 复用并扩展 v2 |
+| 新配置项 | 容量/关闭超时 | 再加就绪超时/无订阅策略 | 再加确认、重试、耗尽和持久化策略 |
 
-不要把可靠性模式塞入现有 `MessageReliability` 后静默改变行为；应先定义每个枚举值在 ZeroMQ 驱动中的精确含义和不支持值的失败方式。
+Core 先在 `MessageQueueBase` 统一选项归一化、驱动能力校验及重复订阅选项一致性；ZeroMQ 再实现具体映射。`MostOnce` 在 2A 完成，`LeastOnce` 在 2B 完成，`ExactlyOnce` 始终不支持。任何尚未完成的值都必须显式失败，不能降级或静默忽略。
 
 ## 8. 测试与验收建议
 
 ### 8.1 确定性测试
 
+- Core 的所有生产/订阅重载进入同一可靠性校验；驱动能力不支持时在创建 Socket 或缓存订阅前失败；
+- 同 Topic 的重复订阅若 Handler、Tags 或可靠性选项不一致，不得静默返回与请求不符的既有消费者；
 - 64 个并发调用共享同一初始化任务，初始化逻辑只执行一次；
 - 在连接、订阅传播和允许发送三个状态点使用测试门闩，证明发送不会越过选定的就绪点；
 - 初始化失败或取消后，所有等待者收到一致错误，下一次调用可重试；
@@ -477,7 +515,7 @@ NetMQ `Proxy` 在 XSUB 与 XPUB 之间双向转发业务消息和订阅命令。
 - Broker 在固定端口重启；Broker 在新端口重启并触发重新发现；
 - 发布者或订阅者断网后重连；高水位达到；慢 Handler；
 - net8.0、net9.0、net10.0 串行运行；
-- 方案 B 应验证订阅代次和无订阅策略；方案 C 应验证确认丢失、重复消息、重试耗尽和去重过期。
+- 2A 应验证订阅代次和无订阅策略；2B 应验证确认丢失、重复消息、重试耗尽、确认范围和已承诺的持久化故障边界。
 
 ### 8.3 宿主验证
 
@@ -516,13 +554,164 @@ NetMQ `Proxy` 在 XSUB 与 XPUB 之间双向转发业务消息和订阅命令。
 
 ### 10.2 明确保留的事项
 
-- **ZMQ-002**：slow joiner 和订阅传播窗口仍可能丢失首条消息，这是方案 A 的既定尽力而为语义；
-- **ZMQ-014**：Broker 使用随机数据端口重启后，客户端不会重新发现，生产环境继续要求固定数据端口；
-- **ZMQ-017**：业务帧仍为 v1 双帧格式，没有版本协商、原始长度或端到端校验；
-- **ZMQ-018**：除压缩外的延迟、过期、优先级、可靠性和回退选项仍未实现；
+- **ZMQ-002（已修复）**：2.0 应用 XPUB 观察订阅控制帧后才释放首发消息；确定性首发与 64 路并发测试不再依赖延迟或重复发送；
+- **ZMQ-014（已修复）**：Broker Epoch、Socket Monitor 和周期发现共同支持固定或随机运行端口重建与重订阅；
+- **ZMQ-017（已修复）**：发现、Welcome 和业务头均严格要求 2.0，帧数、选项、压缩器及大小执行防御性校验；
+- **ZMQ-018（部分保留）**：已实现 `MostOnce` 和 `LeastOnce`，`ExactlyOnce` 明确不支持；延迟、优先级和订阅回退策略仍未实现；
 - **ZMQ-019**：认证、授权和传输加密仍依赖后续安全方案及部署边界；
-- 超大载荷限制、随机端口重发现、真实断网、高水位跨进程压力和 hosting 生命周期需要后续专项环境验证。
+- 持久化操作通过容量 1024 的单读者串行执行器运行，避免逐消息 `Task.Run` 并保证“先落盘、后投递”的顺序；Broker Actor 在关键落盘点等待结果，因此高延迟远程存储仍需专项压测；
+- 真实断网、高水位跨进程压力和 hosting 生命周期仍需要后续专项环境验证。
 
 ### 10.3 下一决策门
 
-只有在产品明确要求“订阅传播完成后首发不丢”时才进入方案 B（XPUB/控制面就绪）；只有在明确要求可确认、重试和去重时才进入方案 C（版本化至少一次协议）。在此之前不得重新引入固定延迟或把本地发送成功解释为远端接收。
+2.0 的产品决策门已经关闭，2A 与 2B 运行时均已实现。剩余门槛是 P27/P28/P32 的三目标回归、文档一致性、CRLF/Tab 校验和可用宿主冒烟；在这些验收完成前不把本节的历史基线替换为最终证据。
+
+## 11. 2.0 实施结果（2026-08-25）
+
+- Core：`MessageQueueBase` 用单一可靠性上限统一校验全部生产和订阅入口，并以唯一 `Subscribers` 注册表共享并发初始化；Core 提供传输无关的 `IMessageStorage`、`MessageStorageBase`，不解释 ZeroMQ 会话或 ACK 数据。
+- Broadcast：发现响应和 Welcome 携带 Broker Epoch；内部 `ZeroBroadcast` 使用 XPUB 观察真实订阅传播，无订阅按 `ReadinessTimeout` 失败，等待队列有界且同主题 FIFO；内部 `ZeroBroadcastServer` 管理 XSUB/XPUB 双向转发，断线后支持随机端口重新发现。
+- Control：ROUTER/DEALER 控制端点登记稳定逻辑订阅，Broker 在接受发布时快照全部匹配目标；`Message.AcknowledgeAsync` 显式确认，未确认目标使用同一标识重投。Requester/Responder 仍保持独立的请求应答语义，不复用可靠 Control。
+- 持久化：发布端发送前把完整 `Message` 写入外部 Storage，Broker 投递前持久化目标与确认集合；Pending→Terminal 先写后删。Broker、发布者或订阅者重启后按相同消息/订阅身份恢复，过期消息进入终止分区。
+- 存储解耦：ZeroMQ 不提供默认文件实现，也不拥有外部 Storage 生命周期。Queue 与 Server 通过 `Storage` 属性或命名配置挂载独立存储插件；Broker 无 Storage 时仅启动 Broadcast 并返回 `Control:0`。
+- 最终三目标证据：Core Messaging 聚焦测试在 net8.0、net9.0、net10.0 各 14/14；ZeroMQ 完整套件各 62/62；2B 专项测试覆盖显式确认、同标识重投、全目标确认、Broker 重启、发布者本地日志重建、订阅者身份恢复、新订阅不重放、身份冲突、实例过滤、就绪超时和过期终止。
+
+## 12. ZeroMQ 语义拆分与消息存储解耦实施清单
+
+- [x] N01 登记本轮决策、当前 62/62 ZeroMQ 基线、工作树已有修改和新任务映射。
+- [x] N02 重构 Core 可靠性上限，删除枚举定义校验和双 `Supports*`，完成所有消息驱动的能力声明与 MQTT 默认值统一。
+- [x] N03 新增 `IMessageStorage` 和 `MessageStorageBase`，删除 `IMessageStore`、`MessageStoreBase`、`MessageStoreEntry` 及失效资源。
+- [x] N04 为 ZeroMQ/MQTT 增加 Storage 属性和命名解析入口，删除 `ZeroMessageStore`、`StoragePath`、默认文件存储及所有权逻辑。
+- [x] N05 提取内部 `ZeroBroadcast`，迁移 XPUB 发布、订阅传播就绪、按主题有界 FIFO、心跳、SubscriberSocket、暂停恢复和重连状态。
+- [x] N06 提取内部 `ZeroBroadcastServer`，迁移 XSUB/XPUB 绑定、Welcome、双向转发和 Broadcast Socket 生命周期。
+- [x] N07 将 `ZeroQueue.Transport` 和 `ZeroQueueServer.ServerAgent` 收敛为纯 `LeastOnce`/Control 实现，删除两个 `.Reliability.cs` 分部文件。
+- [x] N08 用 `Message` 重写 ZeroMQ 发布端与 Broker 持久化映射，保持目标快照、ACK 集合、重投次数和过期状态为 ZeroMQ 私有载荷。
+- [x] N09 完成 Queue/Server 组合生命周期：单一 Subscribers 注册表、共享 Poller 线程、Broadcast 与 Control 分别启停、异常回滚及确定性释放。
+- [x] N10 保持 `ZeroRequester`、`ZeroResponder` 行为不变，完成请求应答、事件通道和 Group 语义回归。
+- [x] N11 同步 README、协议、重构报告、技能文档、配置示例和本地化资源，明确 Broadcast、LeastOnce、Storage 与 Control 边界。
+- [x] N12 完成三目标构建、完整测试、格式校验和可用宿主冒烟，并登记四种存储插件的后续里程碑。
+
+### 12.1 N01 证据
+
+- 2026-08-25 在现有工作树上设置 `ZONGSOFT_MESSAGING_TESTS=true`，运行 ZeroMQ net10.0 完整套件，结果 62/62 通过。
+- 工作树包含上一阶段的 Core、ZeroMQ、文档、资源和测试修改，以及尚未跟踪的 2.0 可靠性实现；本轮在其上继续，不回退项目文件或部署清单。
+- 本轮不兼容旧存储类型、旧持久化文件或旧协议；`ExactlyOnce` 能力由驱动声明，ZeroMQ 上限为 `LeastOnce`。
+
+### 12.2 N02 证据
+
+- `MessageQueueBaseTest` net10.0 为 13/13，通过生产与订阅全部带选项入口、上限内低值/等值以及超上限拒绝。
+- ZeroMQ、MQTT、RabbitMQ、Kafka、Redis Streams、阿里云 MNS 的 net10.0 构建均通过；MQTT 空选项映射为 `MostOnce`。
+- Core 不再调用 `Enum.IsDefined`，也不再区分生产与订阅的 `Supports*` 能力。
+
+### 12.3 N03 证据
+
+- `MessageStorageBaseTest` 验证存储区名、完整 `Message` 字段、TTL、参数校验、取消和异步枚举；与队列基类测试合计 net10.0 15/15 通过。
+- Core 已不存在 `IMessageStore`、`MessageStoreBase`、`MessageStoreEntry` 或对应失效枚举校验资源。
+
+### 12.4 N04 证据
+
+- `ZeroQueue`、`ZeroQueueServer`、`MqttQueue` 和 `MqttQueueServer` 均通过公共 `Storage` 属性接入外部 `IMessageStorage`；命名配置由队列基类使用现有服务提供程序解析。
+- ZeroMQ 不再包含 `ZeroMessageStore`、`StoragePath`、默认目录或外部 Storage 的释放逻辑；Broker 未配置 Storage 时仅启动 Broadcast，发现响应返回 `Control:0`。
+- ZeroMQ 可靠性与 Server 聚焦测试 net10.0 为 18/18，MQTT Storage 状态测试为 2/2。转储定位并修复了可靠订阅错误依赖客户端 Storage 的问题：订阅者可以连接 Control，只有 `LeastOnce` 发布端强制要求 Storage。
+
+### 12.5 N05 证据
+
+- 内部 `ZeroBroadcast` 与 Transport 共享唯一 Poller，集中管理应用 XPUB、SubscriberSocket、订阅传播、按主题有界 FIFO、心跳、单订阅暂停恢复和 Broadcast 重连状态。
+- `ZeroBroadcast` 只保存物理 Socket 与待发送状态，不维护第二份 Core 逻辑 Topic 注册表；逻辑订阅仍以 `MessageQueueBase.Subscribers` 为准。
+- ZeroMQ 发布、订阅与并发聚焦测试 net10.0 为 22/22，包含首条及并发发布、容量、FIFO、超时、取消、背压、Group、固定/随机端口重连。
+
+### 12.6 N06 证据
+
+- 内部 `ZeroBroadcastServer` 与 `ServerAgent` 共享唯一 Poller，集中管理 XSUB/XPUB 的绑定、Welcome、双向转发和 Broadcast Socket 释放。
+- `ServerAgent` 保留发现 REP 与可靠 Control；发现响应从 Broadcast 子系统读取 Ingress/Egress，从 Control 子系统读取 Control，故障和端口状态彼此独立。
+- Server、发布、订阅与并发聚焦测试 net10.0 为 26/26；Broker 无 Storage、固定/随机数据端口重启和 Broadcast 发布订阅均通过。
+
+### 12.7 N07/N08 证据
+
+- 原 `ZeroQueue.Transport.Reliability.cs` 和 `ZeroQueueServer.Reliability.cs` 已删除；可靠通道代码改以 `Control` 命名，Transport/ServerAgent 负责发现与 `LeastOnce` Control，Broadcast Socket 细节分别留在两个内部组件。
+- 发布端和 Broker 直接把完整 `Message` 写入 `IMessageStorage`。外层保存 Identifier、Topic、Identity、Tags、Timestamp；客户端私有载荷只含业务 Data、绝对过期和 Readiness 截止，Broker 私有载荷只含 Data、过期、目标快照、ACK 集合、重投次数和状态。
+- Control 的 PUBLISH/DELIVER 同步传递 Tags 与首次产生 Timestamp，订阅者恢复出的 `Message` 同时保留生产者 Identity；不保留旧帧兼容分支。
+- ZeroMQ 源项目 net10.0 构建为 0 警告，可靠性与 Server 聚焦测试为 19/19，包含端到端元数据、显式 ACK、同标识重投、发布者/Broker 恢复和 Terminal 优先恢复。
+
+### 12.8 N09/N10 证据
+
+- Queue 与 Server 各自只有一个 Actor/Poller；Broadcast 与 Control 分别启停、分别释放 Socket，外部 Storage 不由驱动释放。Transport 初始化仍由所有调用共享，失败后可在同一 Actor 上重新发现。
+- 同一 Queue 可同时持有 Broadcast 与 Control 订阅，两者共同使用 `MessageQueueBase.Subscribers` 唯一注册表；关闭订阅、Queue 或 Server 时按“订阅处理器 → Broadcast/Control Socket → Actor → 持久化执行器”的顺序确定性退出。
+- ZeroMQ net10.0 完整套件最终为 68/68；Requester、Responder、EventChannel 与 Group 聚焦回归为 14/14。默认事件通道在 Queue 和 Server 均无 Storage 时实际经 Broadcast 投递，未访问 Control。
+
+### 12.9 N11 证据
+
+- README 中英文的概述、配置、使用、能力矩阵、语义和排障章节一一对应；删除 `StoragePath`、默认文件日志、`ZeroMessageStore` 和旧 Store API，增加命名/直接 Storage 挂载与 `Control:0` 行为。
+- 2.0 协议记录内部 Broadcast、独立 LeastOnce Control、完整 Message 元数据帧、Pending→Terminal 顺序和无旧帧兼容分支；技能文档同步当前文件与职责边界。
+- Core、ZeroMQ、MQTT 的默认与简体中文资源键分别为 133/133、39/39、18/18，全部对齐；新增用户异常均来自资源。按既定要求未为本地化文本新增单元测试。
+- ZeroMQ 与 MQTT 源项目 net10.0 构建均为 0 警告，旧 `IMessageStore`、`ZeroMessageStore`、`StoragePath` 和 `.Reliability.cs` 只在报告的删除说明中出现。
+
+### 12.10 N12 最终验收
+
+- Core 与 ZeroMQ 的 net8.0、net9.0、net10.0 构建全部成功；ZeroMQ 均为 0 警告，Core net8/net9 各保留 4 个与本次无关的既有安全模块警告。
+- Core Messaging 聚焦测试三目标各 15/15；设置 `ZONGSOFT_MESSAGING_TESTS=true` 后，ZeroMQ 完整套件三目标各 68/68，MQTT 完整套件三目标各 18/18。
+- RabbitMQ、Kafka、Redis Streams、阿里云 MNS 的全部目标框架构建均为 0 警告；MQTT 显式 `ExactlyOnce` 映射 QoS2，空选项 `MostOnce` 映射 QoS0。
+- 所有本轮文本均为 CRLF，手写 C# 缩进为 Tab；资源键、README 本地链接、旧符号扫描和 `git diff --check` 通过，既有文件头版权文本未被改动。
+- `D:\Zongsoft\hosting` 只读审计发现 `packages` 中的 `Zongsoft.Messaging.ZeroMQ@1.8.1`，不是本地构建；按“不复制、不部署”约束未运行会加载旧包的 terminal/daemon/web。`zongsoft.pod-redis.yaml` 已确认存在，但测试内存 Storage 已完整验证可靠流程，未无必要启动 Podman。
+
+### 12.11 独立 Storage 插件后续里程碑
+
+1. **SQLite（优先）**：定义 Message 列映射、WAL/同步级别、主键与分区名、TTL 清理、单机多进程锁和崩溃恢复测试，适合作为嵌入式耐久存储。
+2. **Redis（优先）**：定义 Hash/Sorted Set 或 Stream 布局、Lua 幂等更新、TTL、AOF/RDB 耐久等级、连接池与背压；使用 hosting 的 Podman Redis 做故障恢复测试。
+3. **DuckDB（受限）**：先明确其分析型、单写者特征，不默认用于消息热路径；仅在批量归档/审计场景评估分区、检查点和写入并发。
+4. **etcd（受限）**：明确值大小、写吞吐和配额限制，优先用于小型控制状态而非大消息载荷；评估事务、租约 TTL、压缩和 watch 恢复。
+
+四个项目都只实现 Core `IMessageStorage`，不得引用 ZeroMQ、MQTT 或其他队列驱动；插件容器负责实例命名和生命周期。SQLite/Redis 完成契约与耐久测试后再进入实现，DuckDB/etcd 必须先通过适用性决策门。
+
+## 13. 投递契约简化与 Control 组件化
+
+本节取代 12.2～12.10 中关于“等待订阅就绪、发布端持久化、目标快照和全部目标确认”的实施结论；前节保留为决策演进记录，不再表示当前运行契约。
+
+- [x] S01 登记新的 MostOnce/LeastOnce 完成契约和当前测试基线。
+- [x] S02 补齐 `IMessageStorage` 与 `MessageStorageBase` XML 文档，保留 `name` 参数。
+- [x] S03 删除 ZeroMQ 客户端 Storage、ReadinessTimeout、PendingCapacity 和相关状态。
+- [x] S04 简化 `ZeroBroadcast` 为即时订阅检测和一次发送，并贯通消息唯一标识。
+- [x] S05 提取客户端 `ZeroControl`，消除 Transport 中的 Reliability 后缀方法。
+- [x] S06 提取服务端 `ZeroControlServer`，实现 Broker 持久接纳和竞争消费。
+- [x] S07 删除发布者日志、Terminal、全部目标确认和未来订阅等待协议。
+- [x] S08 更新协议、本地化资源、中英文 README、技能文档和重构报告。
+- [x] S09 完成三目标构建、完整测试、格式检查和旧符号扫描。
+
+本阶段把 `ProduceAsync` 恢复为 Core 已声明的结果契约：成功返回唯一消息标识，无可投递订阅返回空。`MostOnce` 只在发送瞬间检查 XPUB 已知订阅并本地发送一次；`LeastOnce` 在 Broker 持久接纳后即完成生产调用，由 Broker 在后台竞争投递并重试到任一显式 ACK。发布端不再持久化或恢复消息，Broker 不再维护 Terminal、全部目标快照或 ACK 集合。
+
+S03～S07 已由 net10.0 聚焦测试 23/23 及完整测试 65/65 验证。客户端不再暴露或解析 Storage；Broadcast 无等待队列，在无匹配订阅时不发送并返回空；每次成功发布的 Identifier 会进入广播帧或 Control 帧。`ZeroControl` 与 `ZeroControlServer` 分别拥有 DEALER/ROUTER 状态，但共享外层 Poller。Broker 只保存 Pending，按主题轮询选择一个在线订阅者，任一有效 ACK 删除记录；超时、取消或断线造成的接纳结果不确定仍向发布者抛出异常。测试进一步证明：Storage 写入已经开始后，客户端超时或取消并不能撤销 Broker 随后完成的持久接纳；畸形 Control 命令也不会终止 Broker Poller。
+
+S08 已同步中英文 README、2.0 协议、仓库技能和本报告：客户端配置删除 Storage、ReadinessTimeout 和 PendingCapacity；用户文档明确说明两种 `null` 结果、成功标识的边界、Broker-only Storage、竞争消费与业务幂等要求。Control 超时异常及可靠消息过期诊断使用中英文资源；已删除不再引用的就绪等待、客户端 Storage 和稳定身份资源键，默认与简体中文资源均为 39 项。
+
+S09 验收结果：Core Messaging 聚焦测试在 net8.0、net9.0、net10.0 各 15/15；启用 `ZONGSOFT_MESSAGING_TESTS=true` 后 ZeroMQ 完整真实 Socket 套件三个目标各 65/65；MQTT 三目标各 18/18。Core、ZeroMQ 三目标构建成功，ZeroMQ 为 0 警告；Core 的 4 个 Security 警告为既有弃用／未使用警告。RabbitMQ、Kafka、Redis Streams、阿里云 MNS 和 MQTT 的全部目标框架构建均为 0 警告。CRLF、手写 C# Tab、资源键、Markdown 本地链接、旧运行符号和 `git diff --check` 均通过。
+
+hosting 仍只有已部署的旧 NuGet 插件且本轮没有复制／部署授权，因此未用旧包冒充本地改动完成宿主冒烟；该限制不影响真实 Socket 集成测试结论，待本地插件获准部署后再运行 terminal/daemon 加载与关闭验证。
+
+## 14. 存储契约、Control 异步化与端口命名清理
+
+本阶段以第 13 节已确认的 `MostOnce`/`LeastOnce` 契约为基线。当前 net10.0 ZeroMQ 完整套件为 65/65；工作树包含用户已调整的 `Zongsoft.Messaging.ZeroMQ.option` 默认端口，本阶段保留该改动并在其上增量实施。
+
+- [x] C01 登记本轮决策、当前 65/65 ZeroMQ 基线和用户已有工作树修改。
+- [x] C02 重构 `IMessageStorage` 与 `MessageStorageBase<TSettings>`，删除逻辑分区参数。
+- [x] C03 删除 `ResolveStorage`、MQTT 客户端 Storage 链路及相关失效资源和测试。
+- [x] C04 清理 Packetizer 旧方法及本轮新增代码中的无引用符号。
+- [x] C05 将 `ZeroPersistenceExecutor` 合并为非阻塞的 `ZeroControlServer.StorageWorker`。
+- [x] C06 重写可靠接纳、ACK、过期、失败和关闭期间的存储完成状态机。
+- [x] C07 将端口顺序改为 `Control,Incoming,Outgoing` 并统一 `Incoming/Outgoing` 术语。
+- [x] C08 更新中英文 README、协议、技能文档、重构报告、本地化资源和测试记录。
+- [x] C09 完成三目标构建、完整测试、格式及旧符号扫描，登记剩余后续事项。
+
+第 12 节中的发布端存储、Terminal 分区、全部目标确认和 Ingress/Egress 术语均是已废止的历史设计，仅作决策演进记录；本节与当前协议文档表示最终运行契约。
+
+C02～C04 已由 Core `MessageStorageBaseTest` 4/4、MQTT Server Storage 1/1 及三个 net10.0 测试项目构建验证。`IMessageStorage` 以 `Name` 表示实现名，以 `Settings` 界定独立实例的连接和数据作用域；所有存储方法已删除逻辑分区参数。MQTT 客户端空 Storage 链路已删除，仅保留 Server 的后续扩展点；`ResolveStorage`、Packetizer 旧解析链和相关失效资源无运行残留。
+
+C07 已由 `ServerOptionsTests` 11/11 和 ZeroMQ Reliability/Server/Subscription/ServerOptions 聚焦套件 39/39 验证。三段配置与发现响应统一为 `Control,Incoming,Outgoing`，两段配置保持 `Incoming,Outgoing` 并在有 Storage 时随机绑定 Control。
+
+C05/C06 已由四个新增真实 Socket 测试逐项通过并组合重复两轮，`ZeroQueueReliabilityTests` 为 19/19。阻塞 `SetAsync` 期间发现与 MostOnce Broadcast 仍能工作；ACK 后首次删除失败会停止当前进程重投并后台重试；Stop 会等待已接纳存储工作排空，重启后恢复持久消息；原生 DEALER 连续发送 1026 个 `PUBLISH` 可稳定触发 `StorageBusy`，被拒绝标识不会落盘。
+
+C08 已同步中英文 README、2.0 协议、仓库技能文档和本报告。Core、MQTT、ZeroMQ 默认／简体中文资源键分别为 134/134、17/17、37/37；README 中英文各 8 个二级章节，本地 Markdown 链接均可解析。本地化文本未单独新增单元测试。
+
+C09 最终验收结果：Core、ZeroMQ、MQTT 源项目在 net8.0、net9.0、net10.0 均构建成功；ZeroMQ 与 MQTT 为 0 警告，Core 仅保留 4 个与本次无关的既有 Security 警告。Core Messaging 聚焦测试三个目标各 17/17；启用 `ZONGSOFT_MESSAGING_TESTS=true` 后，ZeroMQ 完整真实 Socket 套件三个目标各 80/80，MQTT 完整套件三个目标各 17/17。RabbitMQ、Kafka、Redis Streams、阿里云 MNS 的全部目标框架构建均为 0 警告、0 错误。
+
+最终旧符号扫描确认运行时代码中不存在 `ResolveStorage`、`ZeroPersistenceExecutor`、`GetStoreName`、逻辑分区参数、旧 Storage 类型、Reliability 后缀方法、`Ingress/Egress` 或 Terminal 协议状态，也不存在 Poller 对 Storage I/O 的同步等待。hosting 仍只部署旧 NuGet 插件，按“不复制、不部署”约束未用旧包冒充本地成果；本地插件获准部署后的 terminal/daemon 加载与关闭冒烟，以及 Redis/SQLite 等独立 Storage 插件，继续作为后续里程碑。
+
+变更前 net10.0 ZeroMQ 完整套件为 68/68；当前工作树包含上一阶段尚未提交的 Core、ZeroMQ、MQTT 与文档成果，本阶段保留并在其上增量实施。

@@ -3,6 +3,8 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
+using System.Collections.Generic;
 using System.Collections.Concurrent;
 
 using NetMQ;
@@ -13,6 +15,7 @@ using Xunit;
 using Zongsoft.Collections;
 using Zongsoft.Communication;
 using Zongsoft.Components;
+using Zongsoft.Configuration;
 
 namespace Zongsoft.Messaging.ZeroMQ.Tests;
 
@@ -55,12 +58,14 @@ internal static class ZeroTestUtility
 		{
 			using var socket = new RequestSocket();
 			socket.Connect($"tcp://127.0.0.1:{port}");
-			socket.SendFrameEmpty();
+			socket.SendFrame(GetDiscoveryRequest());
 
 			return socket.TryReceiveFrameString(TimeSpan.FromMilliseconds(250), out var response) &&
 				response != null &&
-				response.Contains("Publisher=", StringComparison.OrdinalIgnoreCase) &&
-				response.Contains("Subscriber=", StringComparison.OrdinalIgnoreCase);
+				response.StartsWith("Zongsoft.Messaging.ZeroMQ\nProtocol-Version:2.0\n", StringComparison.Ordinal) &&
+				response.Contains("\nIncoming:", StringComparison.Ordinal) &&
+				response.Contains("\nOutgoing:", StringComparison.Ordinal) &&
+				response.Contains("\nControl:", StringComparison.Ordinal);
 		}
 		catch
 		{
@@ -68,22 +73,23 @@ internal static class ZeroTestUtility
 		}
 	}
 
-	public static (ushort Publisher, ushort Subscriber) GetServerPorts(ushort port)
+	public static (ushort Control, ushort Incoming, ushort Outgoing) GetServerPorts(ushort port)
 	{
 		//部分测试需要绕过 ZeroQueue，使用原生 NetMQ socket 注入非本库格式的消息。
 		using var socket = new RequestSocket();
 		socket.Connect($"tcp://127.0.0.1:{port}");
-		socket.SendFrameEmpty();
+		socket.SendFrame(GetDiscoveryRequest());
 
 		if(!socket.TryReceiveFrameString(TimeSpan.FromSeconds(5), out var response) || string.IsNullOrEmpty(response))
 			throw new InvalidOperationException($"Failed to query ZeroMQ server ports from '{port}'.");
 
-		ushort publisher = 0;
-		ushort subscriber = 0;
+		ushort control = 0;
+		ushort incoming = 0;
+		ushort outgoing = 0;
 
-		foreach(var entry in response.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+		foreach(var entry in response.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
 		{
-			var index = entry.IndexOf('=');
+			var index = entry.IndexOf(':');
 
 			if(index <= 0 || index >= entry.Length - 1)
 				continue;
@@ -91,17 +97,21 @@ internal static class ZeroTestUtility
 			var name = entry[..index];
 			var value = entry[(index + 1)..];
 
-			if(string.Equals(name, "Publisher", StringComparison.OrdinalIgnoreCase))
-				ushort.TryParse(value, out publisher);
-			else if(string.Equals(name, "Subscriber", StringComparison.OrdinalIgnoreCase))
-				ushort.TryParse(value, out subscriber);
+			if(string.Equals(name, "Control", StringComparison.Ordinal))
+				ushort.TryParse(value, out control);
+			else if(string.Equals(name, "Incoming", StringComparison.Ordinal))
+				ushort.TryParse(value, out incoming);
+			else if(string.Equals(name, "Outgoing", StringComparison.Ordinal))
+				ushort.TryParse(value, out outgoing);
 		}
 
-		if(publisher == 0 || subscriber == 0)
+		if(incoming == 0 || outgoing == 0)
 			throw new InvalidOperationException($"Invalid ZeroMQ server port response: '{response}'.");
 
-		return (publisher, subscriber);
+		return (control, incoming, outgoing);
 	}
+
+	private static string GetDiscoveryRequest() => $"Zongsoft.Messaging.ZeroMQ\nProtocol-Version:2.0\nCommand:Discover\nInstance:tests-{Guid.NewGuid():N}";
 
 	public static async Task<bool> WaitUntilAsync(Func<bool> predicate, TimeSpan timeout)
 	{
@@ -119,6 +129,87 @@ internal static class ZeroTestUtility
 		return predicate();
 	}
 
+	public static async Task<string> PublishUntilAcceptedAsync(ZeroQueue queue, string topic, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, TimeSpan timeout = default)
+	{
+		var deadline = DateTime.UtcNow + (timeout > TimeSpan.Zero ? timeout : TimeSpan.FromSeconds(5));
+		do
+		{
+			var identifier = await queue.ProduceAsync(topic, data, options);
+			if(identifier != null)
+				return identifier;
+
+			await Task.Delay(25);
+		}
+		while(DateTime.UtcNow < deadline);
+
+		throw new TimeoutException($"No subscription for topic '{topic}' became visible before the test timeout.");
+	}
+
+	public static async Task<T[]> CollectAsync<T>(IAsyncEnumerable<T> source)
+	{
+		var result = new List<T>();
+		await foreach(var item in source)
+			result.Add(item);
+		return result.ToArray();
+	}
+
+}
+
+internal sealed class MemoryMessageStorage : IMessageStorage
+{
+	private readonly ConcurrentDictionary<string, Entry> _messages = new(StringComparer.Ordinal);
+	private int _setCount;
+	private int _removeCount;
+	private int _getCount;
+
+	public string Name => "memory";
+	public IConnectionSettings Settings { get; set; } = new ConnectionSettings();
+	public int SetCount => _setCount;
+	public int RemoveCount => _removeCount;
+	public int GetCount => _getCount;
+
+	public ValueTask SetAsync(Message message, TimeSpan expiry = default, CancellationToken cancellation = default)
+	{
+		cancellation.ThrowIfCancellationRequested();
+		ArgumentException.ThrowIfNullOrWhiteSpace(message.Identifier);
+		var expiration = expiry > TimeSpan.Zero ? DateTime.UtcNow + expiry : default;
+		_messages[message.Identifier] = new Entry(Clone(message), expiration);
+		Interlocked.Increment(ref _setCount);
+		return ValueTask.CompletedTask;
+	}
+
+	public ValueTask<bool> RemoveAsync(string identifier, CancellationToken cancellation = default)
+	{
+		cancellation.ThrowIfCancellationRequested();
+		Interlocked.Increment(ref _removeCount);
+		return ValueTask.FromResult(_messages.TryRemove(identifier, out _));
+	}
+
+	public async IAsyncEnumerable<Message> GetAsync([EnumeratorCancellation] CancellationToken cancellation = default)
+	{
+		Interlocked.Increment(ref _getCount);
+		await Task.Yield();
+		foreach(var entry in _messages)
+		{
+			cancellation.ThrowIfCancellationRequested();
+			if(entry.Value.Expiration != default && entry.Value.Expiration <= DateTime.UtcNow)
+			{
+				_messages.TryRemove(entry.Key, out _);
+				continue;
+			}
+
+			yield return Clone(entry.Value.Message);
+		}
+	}
+
+	private static Message Clone(Message message) => new(message.Identifier, message.Topic, message.Data == null ? null : (byte[])message.Data.Clone())
+	{
+		Identity = message.Identity,
+		Tags = message.Tags,
+		Timestamp = message.Timestamp,
+	};
+
+	private readonly record struct Entry(Message Message, DateTime Expiration);
 }
 
 internal sealed class ZeroServerScope : IDisposable

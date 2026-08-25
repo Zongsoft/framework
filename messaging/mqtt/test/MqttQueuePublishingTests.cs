@@ -28,10 +28,31 @@ public class MqttQueuePublishingTests
 		var identifier = await publisher.ProduceAsync(topic, Encoding.UTF8.GetBytes("Hello MQTTnet 5"));
 		var message = await messages.ReceiveAsync(TimeSpan.FromSeconds(5));
 
-		Assert.False(string.IsNullOrEmpty(identifier));
+		Assert.Null(identifier);
 		Assert.Equal(topic, message.Topic);
 		Assert.Equal("Hello MQTTnet 5", Encoding.UTF8.GetString(message.Data));
+		Assert.Null(message.Identifier);
+	}
+
+	[Fact]
+	public async Task ExplicitExactlyOnceUsesBrokerPacketIdentifier()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		using var server = await MqttServerScope.StartAsync();
+		using var publisher = MqttTestUtility.CreateQueue(server.Port, "exact-publisher");
+		using var subscriber = MqttTestUtility.CreateQueue(server.Port, "exact-subscriber");
+		using var messages = new MqttMessageBuffer();
+		var topic = $"tests/exact/{Guid.NewGuid():N}";
+		await subscriber.SubscribeAsync(topic, messages, new MessageSubscribeOptions(MessageReliability.ExactlyOnce));
+
+		var identifier = await publisher.ProduceAsync(topic, Encoding.UTF8.GetBytes("exact"), new MessageEnqueueOptions(MessageReliability.ExactlyOnce));
+		var message = await messages.ReceiveAsync(TimeSpan.FromSeconds(5));
+
+		Assert.False(string.IsNullOrEmpty(identifier));
 		Assert.False(string.IsNullOrEmpty(message.Identifier));
+		Assert.Equal("exact", Encoding.UTF8.GetString(message.Data));
 	}
 
 	[Fact]
@@ -96,7 +117,7 @@ public class MqttQueuePublishingTests
 
 		Assert.Equal(count, received.Length);
 		Assert.Equal(count, received.Select(message => BitConverter.ToInt32(message.Data)).Distinct().Count());
-		Assert.All(publishing, task => Assert.False(string.IsNullOrEmpty(task.Result)));
+		Assert.All(publishing, task => Assert.Null(task.Result));
 		Assert.InRange(stopwatch.Elapsed, TimeSpan.Zero, TimeSpan.FromSeconds(30));
 		Assert.True(count / stopwatch.Elapsed.TotalSeconds >= 1,
 			$"MQTT concurrent producer throughput was below 1 publication/s; {count} published-and-received payloads took {stopwatch.Elapsed}.");

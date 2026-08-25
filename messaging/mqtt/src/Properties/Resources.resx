@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
 		Microsoft ResX Schema
@@ -132,5 +132,20 @@
   </data>
   <data name="Mqtt.Settings.Topic" xml:space="preserve">
     <value>Topic</value>
+  </data>
+  <data name="MqttQueueServer.StorageImmutable.Message" xml:space="preserve">
+    <value>The message storage cannot be changed while the MQTT server is running.</value>
+  </data>
+  <data name="MqttQueue.PublishFailed.Message" xml:space="preserve">
+    <value>Failed to publish the MQTT message: {0}({1}).</value>
+  </data>
+  <data name="MqttQueue.ConnectFailed.Message" xml:space="preserve">
+    <value>Failed to connect to the MQTT server: {0}({1}).</value>
+  </data>
+  <data name="MqttQueue.SubscriptionRestoreFailed.Message" xml:space="preserve">
+    <value>Failed to restore the MQTT subscription '{0}'.</value>
+  </data>
+  <data name="MqttQueueServer.PortImmutable.Message" xml:space="preserve">
+    <value>The MQTT server port cannot be changed while the server is running.</value>
   </data>
 </root>

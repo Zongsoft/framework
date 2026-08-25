@@ -110,16 +110,28 @@ public class ZeroRequesterTests
 		using var server = await ZeroServerScope.StartAsync();
 		using var first = ZeroTestUtility.CreateQueue(server.Port, "requester-first");
 		using var second = ZeroTestUtility.CreateQueue(server.Port, "requester-second");
+		using var responderQueue = ZeroTestUtility.CreateQueue(server.Port, "requester-responder");
+		var responder = new ZeroResponder { Queue = responderQueue };
+		responder.Handlers.Add(new EchoHandler());
+		await responder.StartAsync([]);
 		var requester = new ZeroRequester { Queue = first };
 
-		using(await requester.RequestAsync("rpc/dispose", Encoding.UTF8.GetBytes("dispose"))) { }
-		Assert.Single(first.Subscribers);
-		Assert.Throws<InvalidOperationException>(() => requester.Queue = second);
+		try
+		{
+			using(await requester.RequestAsync("rpc/echo", Encoding.UTF8.GetBytes("dispose"))) { }
+			Assert.Single(first.Subscribers);
+			Assert.Throws<InvalidOperationException>(() => requester.Queue = second);
 
-		await requester.DisposeAsync();
+			await requester.DisposeAsync();
 
-		Assert.Empty(first.Subscribers);
-		await Assert.ThrowsAsync<ObjectDisposedException>(() => requester.RequestAsync("rpc/disposed", ReadOnlyMemory<byte>.Empty).AsTask());
+			Assert.Empty(first.Subscribers);
+			await Assert.ThrowsAsync<ObjectDisposedException>(() => requester.RequestAsync("rpc/disposed", ReadOnlyMemory<byte>.Empty).AsTask());
+		}
+		finally
+		{
+			await responder.StopAsync([]);
+			((IDisposable)responder).Dispose();
+		}
 	}
 
 	[Fact]

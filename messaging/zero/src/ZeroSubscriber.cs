@@ -44,6 +44,7 @@ public sealed class ZeroSubscriber : MessageConsumerBase<ZeroQueue>
 {
 	#region 常量定义
 	private const int CAPACITY = 1000;
+	private static readonly System.Text.UTF8Encoding UTF8 = new(false, true);
 	#endregion
 
 	#region 私有成员
@@ -52,6 +53,7 @@ public sealed class ZeroSubscriber : MessageConsumerBase<ZeroQueue>
 	private readonly Task _worker;
 	private SubscriberSocket _channel;
 	private TaskCompletionSource _synchronization;
+	private string _welcome;
 	private Message? _pending;
 	private int _closed;
 	#endregion
@@ -71,19 +73,21 @@ public sealed class ZeroSubscriber : MessageConsumerBase<ZeroQueue>
 
 	#region 公共属性
 	internal SubscriberSocket Channel => Volatile.Read(ref _channel);
+	internal ZeroQueue Owner => this.Queue;
 	#endregion
 
 	#region 内部方法
-	internal SubscriberSocket Attach(string topic, string address)
+	internal SubscriberSocket Attach(string topic, string address, string epoch)
 	{
 		var channel = new SubscriberSocket();
 		channel.Options.ReceiveHighWatermark = CAPACITY;
 		channel.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
 		channel.ReceiveReady += this.OnReceiveReady;
 		channel.Subscribe(topic);
-		channel.Subscribe(ZeroQueueServer.WELCOME_MESSAGE);
+		channel.Subscribe(ZeroQueueServer.WELCOME_PREFIX);
 		channel.Connect(address);
 
+		_welcome = ZeroQueueServer.GetWelcomeMessage(epoch);
 		_synchronization = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		Volatile.Write(ref _channel, channel);
 		return channel;
@@ -91,6 +95,7 @@ public sealed class ZeroSubscriber : MessageConsumerBase<ZeroQueue>
 
 	internal SubscriberSocket Detach()
 	{
+		_welcome = null;
 		Interlocked.Exchange(ref _synchronization, null)?.TrySetCanceled();
 		return Interlocked.Exchange(ref _channel, null);
 	}
@@ -151,12 +156,26 @@ public sealed class ZeroSubscriber : MessageConsumerBase<ZeroQueue>
 
 			for(var index = 0; index < round; index++)
 			{
-				if(!args.Socket.TryReceiveFrameString(out var header, out var more))
+				if(!args.Socket.TryReceiveFrameBytes(out var headerData, out var more))
 					break;
+
+				if(headerData == null || headerData.Length > Packetizer.MaxHeaderSize)
+				{
+					SkipRemainingFrames(args.Socket, more);
+					continue;
+				}
+
+				string header;
+				try { header = UTF8.GetString(headerData); }
+				catch(System.Text.DecoderFallbackException)
+				{
+					SkipRemainingFrames(args.Socket, more);
+					continue;
+				}
 
 				if(!more)
 				{
-					if(header == ZeroQueueServer.WELCOME_MESSAGE)
+					if(header == _welcome)
 						Interlocked.Exchange(ref _synchronization, null)?.TrySetResult();
 					continue;
 				}
@@ -176,10 +195,16 @@ public sealed class ZeroSubscriber : MessageConsumerBase<ZeroQueue>
 					continue;
 				}
 
+				if(data != null && data.Length > Packetizer.MaxPayloadSize)
+					continue;
+
 				if(!this.Queue.Validate(identifier))
 					continue;
 
 				if(string.IsNullOrEmpty(identifier) && (data == null || data.Length == 0))
+					continue;
+
+				if(!Packetizer.Options.TryGetValue(options, Packetizer.Options.Identifier, out var messageIdentifier) || string.IsNullOrWhiteSpace(messageIdentifier))
 					continue;
 
 				if(Packetizer.Options.TryGetValue(options, Packetizer.Options.Compressor, out var compressor))
@@ -188,9 +213,11 @@ public sealed class ZeroSubscriber : MessageConsumerBase<ZeroQueue>
 						continue;
 
 					data = IO.Compression.Compressor.Decompress(compressor, data);
+					if(data != null && data.Length > Packetizer.MaxPayloadSize)
+						continue;
 				}
 
-				if(!this.Dispatch(new Message(this.Queue.GetLogicalTopic(topic), data ?? [])))
+				if(!this.Dispatch(new Message(messageIdentifier, this.Queue.GetLogicalTopic(topic), data ?? []) { Identity = identifier }))
 					return;
 
 				if(!args.Socket.HasIn)

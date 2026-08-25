@@ -29,12 +29,19 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 
 internal static class Packetizer
 {
 	private const char Delimiter = '\n';
+	public const string ProtocolVersion = "2.0";
+	public const int MaxHeaderSize = 16 * 1024;
+	public const int MaxTopicSize = 1024;
+	public const int MaxIdentifierSize = 256;
+	public const int MaxOptionCount = 32;
+	public const int MaxPayloadSize = 64 * 1024 * 1024;
 
 	public static int GetCompressionThreshold(MessageEnqueueOptions options, int length)
 	{
@@ -44,22 +51,10 @@ internal static class Packetizer
 		return 0;
 	}
 
-	public static string Pack(string topic) => $"{topic}@";
-	public static string Pack(string identifier, string topic, string compressor) => string.IsNullOrEmpty(compressor) ?
-		$"{topic}@{identifier}" :
-		$"{topic}@{identifier}{Delimiter}{Options.Compressor}:{compressor}";
-
-	public static string Pack(string identifier, string topic, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, out string compressor)
-	{
-		if(options != null && options.Properties.TryGetValue(Options.Compressive, out var value) && Zongsoft.Common.Convert.TryConvertValue<int>(value, out var integer) && integer > 0 && data.Length > integer)
-		{
-			compressor = nameof(IO.Compression.Compressor.Brotli);
-			return $"{topic}@{identifier}{Delimiter}{Options.Compressor}:{compressor}";
-		}
-
-		compressor = null;
-		return $"{topic}@{identifier}";
-	}
+	public static string Pack(string topic) => $"{topic}@{Delimiter}{Options.ProtocolVersion}:{ProtocolVersion}";
+	public static string Pack(string identity, string identifier, string topic, string compressor) => string.IsNullOrEmpty(compressor) ?
+		$"{topic}@{identity}{Delimiter}{Options.ProtocolVersion}:{ProtocolVersion}{Delimiter}{Options.Identifier}:{identifier}" :
+		$"{topic}@{identity}{Delimiter}{Options.ProtocolVersion}:{ProtocolVersion}{Delimiter}{Options.Identifier}:{identifier}{Delimiter}{Options.Compressor}:{compressor}";
 
 	public static bool TryUnpack(ReadOnlySpan<char> header, out string identifier, out string topic, out IReadOnlyList<KeyValuePair<string, string>> options)
 	{
@@ -67,7 +62,7 @@ internal static class Packetizer
 		topic = null;
 		options = [];
 
-		if(header.IsEmpty)
+		if(header.IsEmpty || header.Length > MaxHeaderSize)
 			return false;
 
 		var delimiter = header.IndexOf(Delimiter);
@@ -79,15 +74,21 @@ internal static class Packetizer
 
 		topic = address[..separator].ToString();
 		identifier = address[(separator + 1)..].ToString();
+		if(Encoding.UTF8.GetByteCount(topic) > MaxTopicSize || Encoding.UTF8.GetByteCount(identifier) > MaxIdentifierSize)
+			return false;
 
 		if(delimiter < 0)
-			return true;
+			return false;
 
 		var result = new List<KeyValuePair<string, string>>();
+		var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		var text = header[(delimiter + 1)..];
 
 		while(!text.IsEmpty)
 		{
+			if(result.Count >= MaxOptionCount)
+				return false;
+
 			var end = text.IndexOf(Delimiter);
 			var entry = end < 0 ? text : text[..end];
 			entry = entry.Trim();
@@ -99,7 +100,11 @@ internal static class Packetizer
 			if(index <= 0 || index == entry.Length - 1)
 				return false;
 
-			result.Add(new(entry[..index].ToString(), entry[(index + 1)..].ToString()));
+			var name = entry[..index].ToString();
+			if(!names.Add(name))
+				return false;
+
+			result.Add(new(name, entry[(index + 1)..].ToString()));
 			if(end < 0)
 				break;
 
@@ -107,77 +112,15 @@ internal static class Packetizer
 		}
 
 		options = result;
-		return true;
-	}
-
-	public static string Unpack(ReadOnlySpan<char> header, out string topic, out IEnumerable<KeyValuePair<string, string>> options)
-	{
-		if(!header.IsEmpty)
-		{
-			var index = header.IndexOf(Delimiter);
-
-			if(index < 0)
-			{
-				options = [];
-				return Parse(header, out topic);
-			}
-			else
-			{
-				options = ParseOptions(header[(index + 1)..].ToString());
-				return Parse(header[..index], out topic);
-			}
-		}
-
-		topic = header.ToString();
-		options = [];
-		return null;
-	}
-
-	private static string Parse(ReadOnlySpan<char> url, out string topic)
-	{
-		if(!url.IsEmpty)
-		{
-			var index = url.LastIndexOf('@');
-
-			if(index > 0 && index < url.Length)
-			{
-				topic = url[..index].ToString();
-				return url[(index + 1)..].ToString();
-			}
-		}
-
-		topic = url.ToString();
-		return null;
-	}
-
-	private static IEnumerable<KeyValuePair<string, string>> ParseOptions(string text)
-	{
-		if(string.IsNullOrEmpty(text))
-			yield break;
-
-		var parts = text.Split(Delimiter, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-
-		foreach(var part in parts)
-		{
-			var index = part.IndexOf(':');
-
-			switch(index)
-			{
-				case 0:
-					yield return new KeyValuePair<string, string>(string.Empty, part[(index + 1)..]);
-					break;
-				case < 0:
-					yield return new KeyValuePair<string, string>(part, null);
-					break;
-				case > 0:
-					yield return new KeyValuePair<string, string>(part[..index], part[(index + 1)..]);
-					break;
-			}
-		}
+		return Options.TryGetValue(result, Options.ProtocolVersion, out var version) && string.Equals(version, ProtocolVersion, StringComparison.Ordinal);
 	}
 
 	public sealed class Options
 	{
+		/// <summary>协议版本的选项。</summary>
+		public const string ProtocolVersion = "Protocol-Version";
+		/// <summary>消息标识的选项。</summary>
+		public const string Identifier = nameof(Identifier);
 		/// <summary>压缩器名称的选项。</summary>
 		public const string Compressor = nameof(Compressor);
 		/// <summary>压缩阈值的选项，单位为字节。</summary>

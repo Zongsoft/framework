@@ -205,6 +205,10 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber, Configuration.Rabb
 	}
 	#endregion
 
+	#region 重写方法
+	protected override MessageReliability Reliability => MessageReliability.MostOnce;
+	#endregion
+
 	#region 资源释放
 	protected override void Dispose(bool disposing)
 	{

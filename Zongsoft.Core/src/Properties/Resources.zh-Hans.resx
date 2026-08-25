@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -503,6 +503,15 @@
   </data>
   <data name="Messaging.GuarderQueueMissing.Warning" xml:space="preserve">
     <value>无法启动名为“{0}”的消息队列守护器，因为其“{1}”属性为空。</value>
+  </data>
+  <data name="Messaging.ReliabilityNotSupported.Message" xml:space="preserve">
+    <value>“{1}”消息队列不支持“{0}”消息可靠性。</value>
+  </data>
+  <data name="Messaging.SubscriptionConflict.Message" xml:space="preserve">
+    <value>主题“{0}”的现有订阅具有不同的处理器、标签或选项。</value>
+  </data>
+  <data name="Messaging.StorageSettingsInvalid.Message" xml:space="preserve">
+    <value>无法将“{0}”连接设置赋给需要“{1}”连接设置的消息存储器。</value>
   </data>
   <data name="Messaging.QueueUndefined.Message" xml:space="preserve">
     <value>{0}：未定义指定的“{1}”消息队列。</value>

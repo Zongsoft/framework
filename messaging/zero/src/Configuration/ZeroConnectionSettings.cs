@@ -100,5 +100,12 @@ public sealed class ZeroConnectionSettings : ConnectionSettingsBase<ZeroConnecti
 		get => this.GetValue<TimeSpan>();
 		set => this.SetValue(value);
 	}
+
+	[DefaultValue("1s")]
+	public TimeSpan ReconnectInterval
+	{
+		get => this.GetValue<TimeSpan>();
+		set => this.SetValue(value);
+	}
 	#endregion
 }

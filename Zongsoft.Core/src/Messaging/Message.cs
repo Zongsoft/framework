@@ -166,4 +166,16 @@ public struct Message
 		return acknowledger.Method.GetParameters().Length == 1 ? (ValueTask)_acknowledger.DynamicInvoke(cancellation) : (ValueTask)_acknowledger.DynamicInvoke(delay, cancellation);
 	}
 	#endregion
+
+	#region 重写方法
+	public override readonly string ToString()
+	{
+		if(string.IsNullOrEmpty(this.Topic))
+			return "<NoTopic>";
+
+		return string.IsNullOrEmpty(this.Tags) ?
+			$"[#{this.Identifier}@{this.Timestamp}] {this.Topic}":
+			$"[#{this.Identifier}@{this.Timestamp}] {this.Topic} ({this.Tags})";
+	}
+	#endregion
 }

@@ -78,18 +78,10 @@ public class ZeroQueueSubscriptionTests
 		var topic = "topic/empty";
 		await subscriber.SubscribeAsync(topic, handler);
 
-		Message? message = null;
-		var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(10);
-		do
-		{
-			await publisher.ProduceAsync(topic, ReadOnlyMemory<byte>.Empty);
-			message = await handler.TryReceiveAsync(TimeSpan.FromMilliseconds(250));
-		}
-		while(!message.HasValue && DateTime.UtcNow < deadline);
-
-		Assert.True(message.HasValue);
-		Assert.Equal(topic, message.Value.Topic);
-		Assert.Empty(message.Value.Data);
+		await ZeroTestUtility.PublishUntilAcceptedAsync(publisher, topic, ReadOnlyMemory<byte>.Empty);
+		var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
+		Assert.Equal(topic, message.Topic);
+		Assert.Empty(message.Data);
 	}
 
 	[Fact]
@@ -105,7 +97,8 @@ public class ZeroQueueSubscriptionTests
 		var topic = "topic/grouped";
 		await subscriber.SubscribeAsync(topic, handler);
 
-		var message = await PublishUntilReceivedAsync(publisher, handler, topic, "grouped", TimeSpan.FromSeconds(10));
+		await ZeroTestUtility.PublishUntilAcceptedAsync(publisher, topic, Encoding.UTF8.GetBytes("grouped"));
+		var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
 		Assert.Equal(topic, message.Topic);
 	}
 
@@ -140,9 +133,7 @@ public class ZeroQueueSubscriptionTests
 		var finalConsumer = await subscriber.SubscribeAsync("topic/repeat", handler);
 		var finalChannel = finalConsumer.Channel;
 		Assert.NotNull(finalChannel);
-		await Task.Delay(750);
-
-		await PublishRepeatedlyAsync(publisher, "topic/repeat", "ready");
+		await ZeroTestUtility.PublishUntilAcceptedAsync(publisher, "topic/repeat", Encoding.UTF8.GetBytes("ready"));
 		var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
 
 		Assert.False(message.IsEmpty);
@@ -170,16 +161,11 @@ public class ZeroQueueSubscriptionTests
 		using var server = await ZeroServerScope.StartAsync();
 		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "publisher");
 		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "subscriber");
-		using(var disposable = ZeroTestUtility.CreateQueue(server.Port, "disposable"))
-		{
-			await disposable.ProduceAsync("topic/warmup", Encoding.UTF8.GetBytes("warmup"));
-		}
+		using(var disposable = ZeroTestUtility.CreateQueue(server.Port, "disposable")) { }
 
 		var handler = new MessageCollector();
 		await subscriber.SubscribeAsync("topic/live", handler);
-		await Task.Delay(750);
-
-		await PublishRepeatedlyAsync(publisher, "topic/live", "live");
+		await ZeroTestUtility.PublishUntilAcceptedAsync(publisher, "topic/live", Encoding.UTF8.GetBytes("live"));
 		var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
 
 		Assert.False(message.IsEmpty);
@@ -195,40 +181,82 @@ public class ZeroQueueSubscriptionTests
 		var port = ZeroTestUtility.GetFreePort();
 		var incoming = ZeroTestUtility.GetFreePort();
 		var outgoing = ZeroTestUtility.GetFreePort();
-		var args = new[] { $"--incoming:{incoming}", $"--outgoing:{outgoing}" };
+		var control = ZeroTestUtility.GetFreePort();
+		var args = new[] { $"--incoming:{incoming}", $"--outgoing:{outgoing}", $"--control:{control}" };
 		var topic = "topic/restart";
-		var server = new ZeroQueueServer { Port = port };
+		var server = new ZeroQueueServer { Port = port, Storage = new MemoryMessageStorage() };
 
 		try
 		{
 			await server.StartAsync(args);
 			var original = ZeroTestUtility.GetServerPorts(port);
 
-			Assert.Equal(outgoing, original.Publisher);
-			Assert.Equal(incoming, original.Subscriber);
+			Assert.Equal(control, original.Control);
+			Assert.Equal(incoming, original.Incoming);
+			Assert.Equal(outgoing, original.Outgoing);
 
 			using var publisher = CreateRestartQueue(port, "publisher");
 			using var subscriber = CreateRestartQueue(port, "subscriber");
 			using var handler = new MessageBuffer();
 
 			await subscriber.SubscribeAsync(topic, handler);
-			await Task.Delay(750);
-
-			await PublishRepeatedlyAsync(publisher, topic, "before");
+			await ZeroTestUtility.PublishUntilAcceptedAsync(publisher, topic, Encoding.UTF8.GetBytes("before"));
 			var before = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
 
 			Assert.Equal("before", Encoding.UTF8.GetString(before.Data));
 
 			await server.StopAsync([]);
 			Assert.True(await ZeroTestUtility.WaitUntilAsync(() => !ZeroTestUtility.CanQueryServer(port), TimeSpan.FromSeconds(5)));
+			Assert.True(await ZeroTestUtility.WaitUntilAsync(() =>
+				ZeroTestUtility.CanBindZeroMq(original.Control) && ZeroTestUtility.CanBindZeroMq(original.Incoming) && ZeroTestUtility.CanBindZeroMq(original.Outgoing), TimeSpan.FromSeconds(5)));
 
 			await server.StartAsync(args);
 			var restarted = ZeroTestUtility.GetServerPorts(port);
 
 			Assert.Equal(original, restarted);
 
-			var after = await PublishUntilReceivedAsync(publisher, handler, topic, "after-restart", TimeSpan.FromSeconds(10));
+			await ZeroTestUtility.PublishUntilAcceptedAsync(publisher, topic, Encoding.UTF8.GetBytes("after-restart"), timeout: TimeSpan.FromSeconds(10));
+			var after = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
 			Assert.Equal("after-restart", Encoding.UTF8.GetString(after.Data));
+		}
+		finally
+		{
+			await server.StopAsync([]);
+			((IDisposable)server).Dispose();
+		}
+	}
+
+	[Fact]
+	public async Task SubscribersRediscoverRandomExchangePortsAfterServerRestart()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var port = ZeroTestUtility.GetFreePort();
+		var topic = "topic/random-restart";
+		var server = new ZeroQueueServer { Port = port };
+
+		try
+		{
+			await server.StartAsync([]);
+			var original = ZeroTestUtility.GetServerPorts(port);
+			using var publisher = CreateRestartQueue(port, "random-publisher");
+			using var subscriber = CreateRestartQueue(port, "random-subscriber");
+			using var handler = new MessageBuffer();
+
+			await subscriber.SubscribeAsync(topic, handler);
+			await ZeroTestUtility.PublishUntilAcceptedAsync(publisher, topic, Encoding.UTF8.GetBytes("before"));
+			Assert.Equal("before", Encoding.UTF8.GetString((await handler.ReceiveAsync(TimeSpan.FromSeconds(5))).Data));
+
+			await server.StopAsync([]);
+			Assert.True(await ZeroTestUtility.WaitUntilAsync(() =>
+				ZeroTestUtility.CanBindZeroMq(original.Control) && ZeroTestUtility.CanBindZeroMq(original.Incoming) && ZeroTestUtility.CanBindZeroMq(original.Outgoing), TimeSpan.FromSeconds(5)));
+			await server.StartAsync([]);
+			Assert.NotEqual(default, ZeroTestUtility.GetServerPorts(port));
+
+			await ZeroTestUtility.PublishUntilAcceptedAsync(publisher, topic, Encoding.UTF8.GetBytes("after"), timeout: TimeSpan.FromSeconds(10));
+			var after = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
+			Assert.Equal("after", Encoding.UTF8.GetString(after.Data));
 		}
 		finally
 		{
@@ -249,16 +277,14 @@ public class ZeroQueueSubscriptionTests
 		var topic = "topic/malformed";
 
 		await subscriber.SubscribeAsync(topic, handler);
-		await Task.Delay(750);
-
 		var ports = ZeroTestUtility.GetServerPorts(server.Port);
-		using var publisher = new PublisherSocket();
-		publisher.Connect($"tcp://127.0.0.1:{ports.Subscriber}");
-		await Task.Delay(1000);
+		using var publisher = new XPublisherSocket();
+		publisher.Connect($"tcp://127.0.0.1:{ports.Incoming}");
+		Assert.True(WaitForSubscription(publisher, topic, TimeSpan.FromSeconds(5)));
 
 		//先发送一个合法头帧但带额外尾帧的畸形 multipart，验证 subscriber 不会把尾帧当作新消息。
 		publisher
-			.SendMoreFrame($"{topic}@{subscriber.Instance}")
+			.SendMoreFrame($"{topic}@{subscriber.Instance}\nProtocol-Version:2.0")
 			.SendMoreFrame("ignored")
 			.SendMoreFrame("fake-topic")
 			.SendFrame(Encoding.UTF8.GetBytes("fake-data"));
@@ -267,32 +293,31 @@ public class ZeroQueueSubscriptionTests
 		Assert.Null(unexpected);
 
 		publisher.SendMoreFrame($"{topic}@external\nBroken").SendFrame("invalid-option");
-		publisher.SendMoreFrame($"{topic}@external\nCompressor:Unknown").SendFrame("unknown-compressor");
-		publisher.SendMoreFrame($"{topic}@external\nCompressor:Brotli").SendFrame([0xFF, 0xFF, 0xFF, 0xFF]);
+		publisher.SendMoreFrame($"{topic}@external\nProtocol-Version:2.0\nCompressor:Unknown").SendFrame("unknown-compressor");
+		publisher.SendMoreFrame($"{topic}@external\nProtocol-Version:2.0\nCompressor:Brotli").SendFrame([0xFF, 0xFF, 0xFF, 0xFF]);
 		Assert.Null(await handler.TryReceiveAsync(TimeSpan.FromMilliseconds(500)));
 
 		//再发送合法外部消息，验证前一条畸形消息不会破坏后续消息边界。
-		for(int i = 0; i < 3; i++)
-		{
-			publisher
-				.SendMoreFrame($"{topic}@external")
-				.SendFrame(Encoding.UTF8.GetBytes("valid"));
-
-			await Task.Delay(100);
-		}
+		publisher
+			.SendMoreFrame($"{topic}@external\nProtocol-Version:2.0\nIdentifier:{Guid.NewGuid():N}")
+			.SendFrame(Encoding.UTF8.GetBytes("valid"));
 
 		var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
 		Assert.Equal(topic, message.Topic);
 		Assert.Equal("valid", Encoding.UTF8.GetString(message.Data));
-	}
 
-	private static async Task PublishRepeatedlyAsync(ZeroQueue publisher, string topic, string text)
-	{
-		// NetMQ PUB/SUB 在订阅刚建立时仍可能处于 slow-joiner 窗口，测试通过短重试避免把时序抖动误判为功能失败。
-		for(int i = 0; i < 3; i++)
+		static bool WaitForSubscription(XPublisherSocket publisher, string topic, TimeSpan timeout)
 		{
-			await publisher.ProduceAsync(topic, Encoding.UTF8.GetBytes(text));
-			await Task.Delay(100);
+			var deadline = DateTime.UtcNow + timeout;
+			while(DateTime.UtcNow < deadline)
+			{
+				if(!publisher.TryReceiveFrameBytes(TimeSpan.FromMilliseconds(100), out var frame))
+					continue;
+				if(frame is { Length: > 1 } && frame[0] == 1 && Encoding.UTF8.GetString(frame, 1, frame.Length - 1) == topic)
+					return true;
+			}
+
+			return false;
 		}
 	}
 
@@ -302,23 +327,6 @@ public class ZeroQueueSubscriptionTests
 			settings.Timeout = TimeSpan.FromMilliseconds(500);
 			settings.Heartbeat = TimeSpan.FromMilliseconds(200);
 		});
-
-	private static async Task<Message> PublishUntilReceivedAsync(ZeroQueue publisher, MessageBuffer handler, string topic, string text, TimeSpan timeout)
-	{
-		var deadline = DateTime.UtcNow + timeout;
-
-		do
-		{
-			await publisher.ProduceAsync(topic, Encoding.UTF8.GetBytes(text));
-
-			var message = await handler.TryReceiveAsync(TimeSpan.FromMilliseconds(250));
-			if(message.HasValue && !message.Value.IsEmpty && Encoding.UTF8.GetString(message.Value.Data) == text)
-				return message.Value;
-		}
-		while(DateTime.UtcNow < deadline);
-
-		throw new TimeoutException($"Timed out waiting for message '{text}' on topic '{topic}'.");
-	}
 
 	private sealed class BlockingHandler : HandlerBase<Message>
 	{

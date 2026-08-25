@@ -230,6 +230,10 @@ public class MessageQueue : MessageQueueBase<MessageQueue.Consumer>
 	internal string GetRequestUrl(params string[] parts) => MessageQueueUtility.GetRequestUrl(this.Name, parts);
 	#endregion
 
+	#region 重写方法
+	protected override MessageReliability Reliability => MessageReliability.LeastOnce;
+	#endregion
+
 	#region 资源释放
 	protected override void Dispose(bool disposing)
 	{

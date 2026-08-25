@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -38,31 +38,42 @@ public sealed class ServerOptions
 	public string Name { get; set; }
 	public ServerPort Port { get; set; }
 
-	[TypeConverter(typeof(ServcerPortConverter))]
-	public readonly struct ServerPort(int incoming, int outgoing)
+	[TypeConverter(typeof(ServerPortConverter))]
+	public readonly struct ServerPort
 	{
-		public readonly int Incoming = incoming;
-		public readonly int Outgoing = outgoing;
-		public override string ToString() => this.Incoming == 0 && this.Outgoing == 0 ? "*" : $"{this.Incoming}|{this.Outgoing}";
+		public ServerPort(int incoming, int outgoing) : this(0, incoming, outgoing) { }
+		public ServerPort(int control, int incoming, int outgoing)
+		{
+			this.Control = control;
+			this.Incoming = incoming;
+			this.Outgoing = outgoing;
+		}
+
+		public readonly int Control;
+		public readonly int Incoming;
+		public readonly int Outgoing;
+		public override string ToString() => this.Control == 0 ?
+			this.Incoming == 0 && this.Outgoing == 0 ? "*" : $"{this.Incoming}|{this.Outgoing}" :
+			$"{this.Control}|{this.Incoming}|{this.Outgoing}";
 	}
 
-	private sealed class ServcerPortConverter : TypeConverter
+	private sealed class ServerPortConverter : TypeConverter
 	{
 		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
 		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
 
 		public override object ConvertFrom(ITypeDescriptorContext context, System.Globalization.CultureInfo culture, object value)
 		{
-			if (value is string text)
+			if(value is string text)
 			{
 				if(string.IsNullOrWhiteSpace(text) || text.Trim() == "*")
 					return default(ServerPort);
 
-				var index = text.IndexOfAny([',', ';', '|']);
-				if(index > 0 && index < text.Length - 1 &&
-				   TryGetPort(text.AsSpan()[..index], out var incoming) &&
-				   TryGetPort(text.AsSpan()[(index + 1)..], out var outgoing))
+				var parts = text.Split([',', ';', '|'], StringSplitOptions.TrimEntries);
+				if(parts.Length == 2 && TryGetPort(parts[0], out var incoming) && TryGetPort(parts[1], out var outgoing))
 					return new ServerPort(incoming, outgoing);
+				if(parts.Length == 3 && TryGetPort(parts[0], out var control) && TryGetPort(parts[1], out incoming) && TryGetPort(parts[2], out outgoing))
+					return new ServerPort(control, incoming, outgoing);
 
 				throw new FormatException(string.Format(Properties.Resources.ServerOptions_InvalidPortFormat_Message, text));
 			}

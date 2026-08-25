@@ -50,6 +50,7 @@ public partial class MqttQueueServer : ListenerBase<Message>
 	#region 成员字段
 	private ushort _port;
 	private MqttServer _server;
+	private IMessageStorage _storage;
 	#endregion
 
 	#region 构造函数
@@ -69,7 +70,7 @@ public partial class MqttQueueServer : ListenerBase<Message>
 		set
 		{
 			if(this.State != WorkerState.Stopped)
-				throw new InvalidOperationException();
+				throw new InvalidOperationException(Properties.Resources.MqttQueueServer_PortImmutable_Message);
 
 			_port = value > 0 ? value : PORT;
 		}
@@ -77,6 +78,18 @@ public partial class MqttQueueServer : ListenerBase<Message>
 
 	/// <summary>获取一个值，指示是否启用 MQTTnet 内部日志。</summary>
 	public bool Logable { get; set; }
+
+	public IMessageStorage Storage
+	{
+		get => _storage;
+		set
+		{
+			if(this.State != WorkerState.Stopped)
+				throw new InvalidOperationException(Properties.Resources.MqttQueueServer_StorageImmutable_Message);
+
+			_storage = value;
+		}
+	}
 
 	/// <summary>获取当前连接到服务器的客户端通道集合。</summary>
 	public ChannelCollection Channels { get; }

@@ -172,6 +172,33 @@
   <data name="ZeroQueue.PublisherUninitialized.Message" xml:space="preserve">
     <value>ZeroMQ 发布器尚未初始化。</value>
   </data>
+  <data name="ZeroQueue.DiscoveryInvalid.Message" xml:space="preserve">
+    <value>ZeroMQ 服务器发现响应无效。</value>
+  </data>
+  <data name="ZeroQueue.DiscoveryTimeout.Message" xml:space="preserve">
+    <value>ZeroMQ 服务器发现操作超时。</value>
+  </data>
+  <data name="ZeroQueue.ControlTimeout.Message" xml:space="preserve">
+    <value>ZeroMQ 控制操作超时前交换服务器未能确认是否已接纳该消息。</value>
+  </data>
+  <data name="ZeroQueue.SubscriptionTopicImmutable.Message" xml:space="preserve">
+    <value>不能更改活动 ZeroMQ 订阅的主题。</value>
+  </data>
+  <data name="ZeroQueue.ReliableExpired.Message" xml:space="preserve">
+    <value>已接纳的至少一次消息“{0}”在消费者确认前已过期。</value>
+  </data>
+  <data name="ZeroQueue.ReliableProtocolError.Message" xml:space="preserve">
+    <value>ZeroMQ 可靠性协议返回错误码“{0}”。</value>
+  </data>
+  <data name="ZeroQueue.ReliableEntryInvalid.Message" xml:space="preserve">
+    <value>存储器“{1}”中的可靠消息条目“{0}”无效，已忽略该条目。</value>
+  </data>
+  <data name="ZeroQueue.StorageSetFailed.Message" xml:space="preserve">
+    <value>消息存储器“{0}”持久化消息“{1}”失败。</value>
+  </data>
+  <data name="ZeroQueue.StorageRemoveFailed.Message" xml:space="preserve">
+    <value>消息存储器“{0}”删除消息“{1}”失败，稍后将重试。</value>
+  </data>
   <data name="ZeroQueueServer.PortImmutable.Message" xml:space="preserve">
     <value>服务器运行期间不能更改发现端口。</value>
   </data>
@@ -198,5 +225,11 @@
   </data>
   <data name="ServerOptions.InvalidPortFormat.Message" xml:space="preserve">
     <value>无效的服务器端口格式：{0}。</value>
+  </data>
+  <data name="ZeroQueue.ControlUnavailable.Message" xml:space="preserve">
+    <value>ZeroMQ 交换服务器的可靠控制通道不可用，请为服务器配置消息存储。</value>
+  </data>
+  <data name="ZeroQueueServer.StorageImmutable.Message" xml:space="preserve">
+    <value>ZeroMQ 服务器运行期间不能更换消息存储。</value>
   </data>
 </root>

@@ -15,7 +15,7 @@
 
 Zongsoft.Messaging.ZeroMQ is a [NetMQ](https://github.com/zeromq/netmq)-based adapter for the messaging and communication abstractions in [Zongsoft.Core](../../Zongsoft.Core). It provides topic publishing and subscription through `IMessageQueue`, and also supplies request/response and event-channel adapters.
 
-The included `ZeroQueueServer` is a lightweight XPUB/XSUB exchange. Clients first query its discovery endpoint, then connect to the returned publisher and subscriber endpoints. The exchange is stateless and is intended for low-latency, transient message distribution rather than durable queueing.
+The included `ZeroQueueServer` combines an XPUB/XSUB exchange for at-most-once traffic with a durable acknowledgement path for at-least-once traffic. Clients discover the current Broker epoch and all runtime endpoints automatically.
 
 <a name="features"></a>
 ## Features
@@ -24,6 +24,7 @@ The included `ZeroQueueServer` is a lightweight XPUB/XSUB exchange. Clients firs
 - Supports multiple publishers and subscribers through an XPUB/XSUB exchange;
 - Supports topic prefixes, optional message groups, instance filtering, and heartbeats;
 - Supports Brotli payload compression above a configurable threshold;
+- Supports immediate at-most-once broadcast and Broker-persisted, explicitly acknowledged competing at-least-once delivery;
 - Supports standalone use and Zongsoft plugin-based hosting;
 - Targets .NET 8, .NET 9, and .NET 10.
 
@@ -48,11 +49,12 @@ dotnet build messaging/zero/Zongsoft.Messaging.ZeroMQ.slnx
 
 | Endpoint | Default in packaged configuration | Purpose |
 | --- | :---: | --- |
-| Discovery | `7969` | Clients request the two data endpoint ports. |
-| Publisher ingress | `32101` | Application publishers connect here. |
-| Subscriber egress | `32102` | Application subscribers connect here. |
+| Discovery | `7969` | Clients request the Broker epoch and runtime endpoint ports. |
+| Reliability control | `32100` | Reliable subscription registration, delivery, and acknowledgement. |
+| Publisher incoming | `32101` | Application publishers connect here. |
+| Subscriber outgoing | `32102` | Application subscribers connect here. |
 
-`7969` is the built-in discovery-port default. The two data ports are configurable; when they are omitted, `ZeroQueueServer` binds random ports and returns them through discovery. Prefer fixed data ports in deployments so existing clients can reconnect to the same endpoints after an exchange restart.
+`7969` is the built-in discovery-port default. Omitted runtime ports are selected dynamically and rediscovered after a Broker restart. Fixed control, incoming, and outgoing ports are still recommended for predictable firewall and operations configuration.
 
 The server binds TCP endpoints on all network interfaces and does not configure authentication or encryption. Restrict access at the host or network boundary, or add an authenticated transport before using it across an untrusted network.
 
@@ -66,20 +68,21 @@ The packaged daemon plugin starts `ZeroQueueServer` automatically. Configure its
 ```xml
 <configuration>
 	<option path="/Messaging/ZeroMQ">
-		<servers port="32101,32102">
+		<servers port="32100,32101,32102">
 			<server server.name="unnamed" port="*" />
 		</servers>
 	</option>
 </configuration>
 ```
 
-The collection-level `port` is used by the default server or when no matching named server entry exists. A matching `<server>` entry supplies its own pair. The first number is publisher ingress and the second is subscriber egress; `*` selects random data ports.
+The three values are reliability control, publisher incoming, and subscriber outgoing. Two-value configurations remain `Incoming,Outgoing` with the configured Control port set to zero, so a random Control port is selected when Storage is available. The Control endpoint starts only when the Server has an `IMessageStorage`; `*` selects random runtime ports.
 
 For standalone applications, start the exchange directly:
 
 ```csharp
 using var server = new ZeroQueueServer();
-await server.StartAsync(["--incoming:32101", "--outgoing:32102"]);
+server.Storage = ResolveMessageStorage(); // Supplied by an independent storage plugin; only LeastOnce needs it.
+await server.StartAsync(["--control:32100", "--incoming:32101", "--outgoing:32102"]);
 ```
 
 ### Client Connection
@@ -109,6 +112,7 @@ Define a `ZeroMQ` connection under `/Messaging/ConnectionSettings`:
 | `Filter` | excludes self | Comma-separated instance filter controlling which producers are accepted. |
 | `Timeout` | `10s` | Discovery and subscription-synchronization timeout. |
 | `Heartbeat` | `10s` | Heartbeat interval. A value less than or equal to zero disables heartbeats. |
+| `ReconnectInterval` | `1s` | Minimum interval between endpoint rediscovery attempts. |
 
 The default filter excludes messages produced by the same queue instance. Use `Filter=*` to accept every instance, `Filter=.` (or `~`) to accept only the current instance, ordinary identifiers as an allow list, and `!identifier` entries as exclusions.
 
@@ -133,7 +137,9 @@ using var queue = new ZeroQueue("ZeroMQ", settings);
 var consumer = await queue.SubscribeAsync("orders/created", message =>
 	Console.WriteLine(Encoding.UTF8.GetString(message.Data.Span)));
 
-await queue.ProduceAsync("orders/created", "Order #1001".AsMemory());
+var identifier = await queue.ProduceAsync("orders/created", "Order #1001".AsMemory());
+if(identifier == null)
+	Console.WriteLine("No matching subscription was visible at send time; nothing was sent.");
 
 await consumer.UnsubscribeAsync();
 ```
@@ -155,16 +161,49 @@ options.Properties["Compressive"] = 4 * 1024;
 await queue.ProduceAsync("documents/updated", payload, options);
 ```
 
-Compression is currently the only `MessageEnqueueOptions` behavior implemented by this adapter.
+### At-least-once delivery
+
+Set `LeastOnce` on both the subscription and publication. Only the Broker requires an `IMessageStorage`; publishers do not persist messages. A handler must call `AcknowledgeAsync`; returning normally is not an acknowledgement.
+
+```csharp
+var subscriptionOptions = new MessageSubscribeOptions(MessageReliability.LeastOnce);
+var enqueueOptions = new MessageEnqueueOptions(MessageReliability.LeastOnce)
+{
+	Expiration = TimeSpan.FromMinutes(5),
+};
+
+server.Storage = ResolveMessageStorage(); // Supplied by an independent storage plugin.
+
+var consumer = await queue.SubscribeAsync("orders/created", new ReliableOrderHandler(), subscriptionOptions);
+
+var identifier = await queue.ProduceAsync("orders/created", payload, enqueueOptions);
+
+sealed class ReliableOrderHandler : HandlerBase<Message>
+{
+	protected override async ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
+	{
+		await SaveOrderAsync(message.Data, cancellation);
+		await message.AcknowledgeAsync(cancellation);
+	}
+}
+```
+
+The Broker accepts a publication only when an online matching subscription exists. No match returns `null` without writing Storage. With a match, the Broker persists Pending first and then returns the identifier. Delivery competes among online subscribers; any one acknowledgement removes Pending. Retries reuse `Message.Identifier` and may choose another consumer, so handlers must be idempotent.
+
+Assign `ZeroQueueServer.Storage` only while the Server is stopped. The plugin container owns injected storage lifetimes; the Server does not dispose them. A Broker without Storage still serves `MostOnce` Broadcast traffic but advertises `Control:0` and does not start the reliable Control endpoint, so `LeastOnce` operations fail.
 
 | Messaging option | Support |
 | --- | --- |
 | `Properties["Compressive"]` | Supported; enables Brotli above the specified byte threshold. |
-| Tags | Not used by the ZeroMQ adapter. |
-| Delay and expiration | Not implemented. |
+| Tags | Preserved by `LeastOnce`; the `MostOnce` two-frame format does not currently carry them. |
+| Delay | Not implemented. |
+| Expiration | Supported by `LeastOnce`; zero means no expiration. |
 | Priority | Not implemented. |
-| Reliability | The transport remains transient, best-effort PUB/SUB. |
-| Subscription reliability and fallback | Not implemented by the current handler dispatcher. |
+| `MostOnce` | Supported; returns `null` when no subscription is visible at send time, otherwise sends locally once. |
+| `LeastOnce` | Supported with Broker persistence, competing consumers, explicit acknowledgement, and same-identifier retry. |
+| `ExactlyOnce` | Not supported and fails before transport state is created. |
+| Subscription fallback | Not implemented by the current handler dispatcher. |
+| Compression | Supported on `MostOnce`; not applied to the reliable control path. |
 
 ### Request and Response
 
@@ -203,17 +242,18 @@ The plugin manifest registers this channel automatically for hosted applications
 <a name="semantics"></a>
 ## Delivery Semantics
 
-This adapter follows ZeroMQ PUB/SUB behavior:
+The selected `MessageReliability` determines the contract:
 
-- Messages are transient and are not persisted by `ZeroQueueServer`;
-- There is no broker acknowledgement, consumer acknowledgement, retry, deduplication, or replay;
-- Messages may be dropped while peers connect or reconnect, when no matching subscription has propagated, or when a socket high-water mark is reached;
-- `ProduceAsync` snapshots the caller's payload and completes after the Actor invokes the local Socket send; it does not mean that a subscriber received or handled the message;
+- `MostOnce` is transient broadcast. If the application XPUB sees no matching subscription at send time, `ProduceAsync` returns `null` without sending. Otherwise it sends locally once and returns a unique identifier. Every broadcast recipient sees that identifier, but it is not remote or Handler acknowledgement.
+- `LeastOnce` returns `null` without persistence when no online matching subscription exists. Otherwise the Broker persists Pending first and immediately returns the unique identifier without waiting for a Handler acknowledgement.
+- The Broker selects one online consumer per attempt. It retries the same identifier until any valid acknowledgement removes Pending. If all consumers disconnect after acceptance, Pending remains until a subscription returns.
+- `LeastOnce` permits duplicate handler invocations. It does not deduplicate business effects and does not provide exactly-once delivery.
+- A Control timeout, caller cancellation, or disconnect may leave the publisher unable to determine whether the Broker accepted the message. These stop only local waiting and cannot revoke acceptance already in progress; a business retry can still produce a duplicate.
+- Expired reliable messages are removed from Broker Pending with a diagnostic record; there is no Terminal partition.
 - A queue snapshots its connection, ports, group, filter, timeout, and heartbeat settings at construction; mutating the original settings object does not reconfigure a running queue;
-- `SubscribeAsync` synchronizes the subscriber connection, but does not establish an end-to-end delivery acknowledgement with publishers;
-- Empty payloads should be avoided with the current release.
+- Empty business payloads are supported.
 
-Use a durable broker or add an application-level acknowledgement protocol when loss is not acceptable.
+Message storage is an independent plugin concept, not part of the ZeroMQ driver. This package provides no default file store. Applications using `LeastOnce` must assign an independent `IMessageStorage` instance to each Broker Server. `Name` identifies the implementation, while `Settings` defines that instance's connection and data scope. The plugin container owns the instance lifetime. An implementation must hold a message snapshot before `SetAsync` returns and provide the required restart durability.
 
 <a name="samples"></a>
 ## Samples and Troubleshooting
@@ -222,8 +262,9 @@ The [.NET 10 samples](samples) contain an interactive exchange server and client
 
 If messages are not received:
 
-1. Verify that the discovery port and both returned data ports are reachable in the required directions;
+1. Verify that discovery, control, incoming, and outgoing ports are reachable in the required directions;
 2. Verify that publisher and subscriber use the same `Group` and compatible topic prefixes;
 3. Check the `Filter` setting—self-produced messages are excluded by default;
-4. Start subscriptions before publishing and allow for PUB/SUB subscription propagation;
-5. Keep data ports fixed across server restarts, or recreate queues so they perform discovery again.
+4. If `ProduceAsync` returns `null`, verify that a matching subscription was visible to the Broker at that instant and apply the application's retry policy if appropriate;
+5. For `LeastOnce`, verify Server `Storage`, the Control endpoint, explicit acknowledgement, and expiration;
+6. Inspect Broker Pending data, online subscriptions, and consumer idempotency when reliable delivery remains unresolved.
