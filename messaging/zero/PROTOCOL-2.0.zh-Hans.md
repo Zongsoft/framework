@@ -1,6 +1,6 @@
 # Zongsoft.Messaging.ZeroMQ 2.0 投递协议
 
-本文是当前 ZeroMQ 驱动的协议与投递契约说明。2.0 不兼容旧 Control 帧或旧持久化数据，也不支持新旧客户端混用。
+本文说明当前 ZeroMQ 驱动的协议、组件边界与投递契约。
 
 ## 1. 语义边界
 
@@ -55,7 +55,7 @@ Application XPUB → Broker XSUB → Broker XPUB → Application SUB
 
 应用 XPUB 接收 Broker 传播的标准订阅控制帧，并维护当前 Epoch 下的物理主题前缀集合：首字节 `0x01` 表示订阅，`0x00` 表示取消，其余字节为 UTF-8 前缀。物理主题 `T` 在存在前缀 `P` 满足 `T.StartsWith(P, Ordinal)` 时视为当前可投递；空前缀匹配所有主题。
 
-该集合只是发送瞬间的路由可见性，不是远端收件确认。取消订阅、断线或 Epoch 变化会立即影响后续发布，不保留待发送 FIFO，也不等待未来订阅。
+该集合只是发送瞬间的路由可见性，不是远端收件确认。取消订阅、断线或 Epoch 变化会立即影响后续发布；没有匹配前缀的发布即时返回 `null`。
 
 ### 4.2 业务帧
 
@@ -69,6 +69,7 @@ Frame 1 (binary): payload
 - `Identifier` 为每次发布生成的唯一标识，必须非空；所有广播接收者得到相同的 `Message.Identifier`。
 - `physical-topic` 是逻辑主题精确添加一次 `Group:` 前缀后的值；接收端移除该精确前缀，`Message.Topic` 始终是逻辑主题。
 - `Compressor:Brotli` 表示第二帧需要解压；未知压缩器或损坏载荷只丢弃当前消息。
+- 生产者通过 `MessageEnqueueOptions.Compression` 指定启用压缩的最小载荷字节数，非正数表示关闭。
 - 空业务载荷合法。只有匿名实例且空载荷的内部帧才可视为心跳。
 - 帧数、主题头、选项、标识、大小或 UTF-8 不合法时，只记录本地化诊断并丢弃当前消息，不得终止 Poller。
 
@@ -122,7 +123,7 @@ Broker 收到 `PUBLISH` 后：
 
 存储 I/O 由有界单读取器工作队列串行执行，完成结果通过 Actor 命令返回 Poller，Poller 不同步等待 Storage。工作队列已满时返回 `StorageBusy`，不建立 Pending。
 
-如果相同 Identifier 已在接纳中或 Pending 且消息内容一致，Broker 共享或幂等返回 `ACCEPTED`；内容不一致则返回 `IdentifierConflict`。发布者不持有 Storage，不保存或恢复 Pending，也不接收 `COMPLETE`。
+如果相同 Identifier 已在接纳中或 Pending 且消息内容一致，Broker 共享或幂等返回 `ACCEPTED`；内容不一致则返回 `IdentifierConflict`。发布者不持有 Storage，Broker 是可靠消息持久状态的唯一所有者。
 
 ### 5.3 竞争投递与确认
 
@@ -133,7 +134,7 @@ Broker 收到 `PUBLISH` 后：
 - Storage 删除暂时失败时保留待删除状态并后台重试；ACK 与持久删除之间崩溃仍可能在重启后导致重复投递。
 - 实例过滤命中排除规则时不调用 Handler，由驱动确认该次投递，避免 Pending 永久阻塞。
 - 全部订阅者离线不会删除已接纳消息；订阅恢复后继续竞争投递。
-- 新注册订阅可以消费已有 Pending，不存在“发布时目标快照”。运行期 Session 和 Subscription 只用于路由与 ACK，不要求稳定的 `Client` 或 `Instance`。
+- 新注册订阅可以消费已有 Pending。运行期 Session 和 Subscription 只用于路由与 ACK，不要求稳定的 `Client` 或 `Instance`。
 
 重复投递是正常行为。消费者必须用 `Message.Identifier` 实现业务幂等。
 
@@ -141,13 +142,13 @@ Broker 收到 `PUBLISH` 后：
 
 只有 `ZeroQueueServer.Storage` 参与 ZeroMQ 可靠投递。Storage 的生命周期由注入它的插件或应用拥有，Server 不释放；运行中的 Server 不允许替换 Storage。
 
-`IMessageStorage.Name` 表示 Redis、SQLite 等存储实现名称，`Settings` 决定单个存储实例的连接和数据作用域。每个 Broker Server 使用独立实例，ZeroMQ 不再派生或传递逻辑分区名。外层 `Message` 保存 Identifier、Topic、Identity、Tags、Timestamp；私有二进制载荷只保存业务 Data 和绝对 Expiration，不保存目标集合、ACK 集合、Terminal 或发布者日志。
+`IMessageStorage.Name` 表示 Redis、SQLite 等存储实现名称，`Settings` 决定单个存储实例的连接和数据作用域。每个 Broker Server 使用独立实例。外层 `Message` 保存 Identifier、Topic、Identity、Tags、Timestamp；私有二进制载荷保存业务 Data 和绝对 Expiration。
 
-Broker 启动时枚举 Pending 并恢复投递。消息到达绝对过期时间时，从 Pending 删除并记录本地化诊断；不建立 Terminal 分区。
+Broker 启动时枚举 Pending 并恢复投递。消息到达绝对过期时间时，从 Pending 删除并记录本地化诊断。
 
 ## 6. 配置
 
-客户端运行快照包括 `Server`、`Port`、`Topic`、`Group`、`Client`、`Instance`、`Filter`、`Timeout`、`Heartbeat` 和 `ReconnectInterval`。不存在 `ReadinessTimeout`、`PendingCapacity` 或客户端 `Storage` 设置。
+客户端运行快照包括 `Server`、`Port`、`Topic`、`Group`、`Client`、`Instance`、`Filter`、`Timeout`、`Heartbeat` 和 `ReconnectInterval`。
 
 `Timeout` 用于发现、订阅同步与 Control 接纳结果等待；`Heartbeat` 控制心跳；`ReconnectInterval` 控制重新发现节流。运行中修改原设置对象不会改变既有 Queue。
 
@@ -159,4 +160,4 @@ Broker 启动时枚举 Pending 并恢复投递。消息到达绝对过期时间�
 - LeastOnce：无订阅不落盘；Storage 写入完成后立即成功；竞争消费；同标识重投；任一 ACK 删除；消费者离线与替换；Broker 重启恢复；过期清理；Storage 异常隔离。
 - 生命周期：断线、随机端口重发现、Epoch 失效、背压暂停恢复、关闭期间拒绝命令和 Socket 在线程内释放。
 - 回归：Requester/Responder、事件通道、实例过滤和逻辑 Group Topic。
-- 验证：net8.0、net9.0、net10.0 构建与真实 Socket 测试串行通过；资源键、CRLF、Tab、链接及旧符号扫描通过。
+- 验证：net8.0、net9.0、net10.0 构建与真实 Socket 测试串行通过；资源键、CRLF、Tab 和链接检查通过。

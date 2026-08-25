@@ -152,11 +152,10 @@ await consumer.UnsubscribeAsync();
 
 ### 压缩
 
-通过 `Compressive` 属性指定启用 Brotli 压缩的最小消息字节数：
+通过 `MessageEnqueueOptions.Compression` 指定启用 Brotli 压缩的最小消息字节数，非正数表示不压缩：
 
 ```csharp
-var options = new MessageEnqueueOptions();
-options.Properties["Compressive"] = 4 * 1024;
+var options = new MessageEnqueueOptions() { Compression = 4 * 1024 };
 
 await queue.ProduceAsync("documents/updated", payload, options);
 ```
@@ -194,16 +193,15 @@ Broker 只在发送瞬间存在在线匹配订阅时接纳消息：没有订阅�
 
 | 消息选项 | 支持情况 |
 | --- | --- |
-| `Properties["Compressive"]` | 支持；超过指定字节阈值后启用 Brotli。 |
+| `Compression` | `MostOnce` 支持；超过指定字节阈值后启用 Brotli，可靠 Control 通道不压缩。 |
 | 标签 | `LeastOnce` 保留并传递；`MostOnce` 双帧格式暂不传递。 |
-| 延迟 | 未实现。 |
+| `Delay` | 不支持；正数请求由 Core 根据 `Features` 在进入驱动前拒绝。 |
 | 过期时间 | `LeastOnce` 支持；零表示永不过期。 |
 | 优先级 | 未实现。 |
 | `MostOnce` | 支持；发送瞬间无匹配订阅返回 `null`，否则本地发送一次。 |
 | `LeastOnce` | 支持 Broker 持久接纳、竞争消费、显式确认和同标识重投。 |
 | `ExactlyOnce` | 不支持，并在创建传输状态前失败。 |
 | 订阅失败策略 | 当前处理器调度器未实现。 |
-| 压缩 | `MostOnce` 支持；可靠控制通道暂不压缩。 |
 
 ### 请求与响应
 
@@ -249,7 +247,7 @@ await channel.SendAsync(eventContext);
 - Broker 在在线订阅者间竞争投递；未确认时使用同一标识重投，任一有效确认即删除 Pending。全部订阅者离线后，已接纳消息继续保留，待订阅恢复后再投递。
 - `LeastOnce` 允许处理器重复执行，不会对业务副作用自动去重，也不提供精确一次。
 - Control 超时、调用取消或断线可能导致发布者无法判断 Broker 是否已经接纳；这些操作只停止本地等待，不能撤销已经开始的 Broker 接纳，业务重试仍可能产生重复。
-- 可靠消息过期后从 Broker Pending 删除并记录诊断，不保留 Terminal 分区。
+- 可靠消息过期后从 Broker Pending 删除并记录诊断。
 - Queue 在构造时快照连接、端口、分组、过滤、超时和心跳设置；运行中修改原设置对象不会改变既有连接；
 - 支持空业务载荷。
 

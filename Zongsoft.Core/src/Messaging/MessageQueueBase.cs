@@ -35,6 +35,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
+using Zongsoft.Common;
 using Zongsoft.Components;
 using Zongsoft.Collections;
 
@@ -56,13 +57,15 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 	protected MessageQueueBase(string name)
 	{
 		this.Name = name ?? string.Empty;
-		this.Subscribers = new SubscriberCollection();
+		this.Features = new();
+		this.Subscribers = new();
 	}
 	#endregion
 
 	#region 公共属性
 	public string Name { get; }
 	public SubscriberCollection Subscribers { get; }
+	public MessageQueueFeatureCollection Features { get; }
 	public bool IsDisposed => _disposing == DISPOSED;
 	#endregion
 
@@ -102,6 +105,8 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 		var reliability = options?.Reliability ?? MessageReliability.MostOnce;
 		if(reliability > this.Reliability)
 			throw new NotSupportedException(string.Format(Properties.Resources.Messaging_ReliabilityNotSupported_Message, reliability, this.GetType().Name));
+		if(options != null && options.Delay > TimeSpan.Zero && !this.Features.Contains(MessageQueueFeature.Delay))
+			throw OperationException.Unsupported(string.Format(Properties.Resources.Messaging_FeatureNotSupported_Message, MessageQueueFeature.Delay.Name, this.GetType().Name));
 
 		return this.OnProduceAsync(topic, tags, data, options, cancellation);
 	}

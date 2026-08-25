@@ -152,11 +152,10 @@ Each subscriber invokes its handler sequentially in receive order. When its boun
 
 ### Compression
 
-Set the `Compressive` property to the minimum payload size, in bytes, at which Brotli compression is enabled:
+Set `MessageEnqueueOptions.Compression` to the minimum payload size, in bytes, at which Brotli compression is enabled. A non-positive value disables compression:
 
 ```csharp
-var options = new MessageEnqueueOptions();
-options.Properties["Compressive"] = 4 * 1024;
+var options = new MessageEnqueueOptions() { Compression = 4 * 1024 };
 
 await queue.ProduceAsync("documents/updated", payload, options);
 ```
@@ -194,16 +193,15 @@ Assign `ZeroQueueServer.Storage` only while the Server is stopped. The plugin co
 
 | Messaging option | Support |
 | --- | --- |
-| `Properties["Compressive"]` | Supported; enables Brotli above the specified byte threshold. |
+| `Compression` | Supported by `MostOnce`; enables Brotli above the specified byte threshold. The reliable Control path is not compressed. |
 | Tags | Preserved by `LeastOnce`; the `MostOnce` two-frame format does not currently carry them. |
-| Delay | Not implemented. |
+| `Delay` | Unsupported; Core checks `Features` and rejects a positive delay before entering the driver. |
 | Expiration | Supported by `LeastOnce`; zero means no expiration. |
 | Priority | Not implemented. |
 | `MostOnce` | Supported; returns `null` when no subscription is visible at send time, otherwise sends locally once. |
 | `LeastOnce` | Supported with Broker persistence, competing consumers, explicit acknowledgement, and same-identifier retry. |
 | `ExactlyOnce` | Not supported and fails before transport state is created. |
 | Subscription fallback | Not implemented by the current handler dispatcher. |
-| Compression | Supported on `MostOnce`; not applied to the reliable control path. |
 
 ### Request and Response
 
@@ -249,7 +247,7 @@ The selected `MessageReliability` determines the contract:
 - The Broker selects one online consumer per attempt. It retries the same identifier until any valid acknowledgement removes Pending. If all consumers disconnect after acceptance, Pending remains until a subscription returns.
 - `LeastOnce` permits duplicate handler invocations. It does not deduplicate business effects and does not provide exactly-once delivery.
 - A Control timeout, caller cancellation, or disconnect may leave the publisher unable to determine whether the Broker accepted the message. These stop only local waiting and cannot revoke acceptance already in progress; a business retry can still produce a duplicate.
-- Expired reliable messages are removed from Broker Pending with a diagnostic record; there is no Terminal partition.
+- Expired reliable messages are removed from Broker Pending with a diagnostic record.
 - A queue snapshots its connection, ports, group, filter, timeout, and heartbeat settings at construction; mutating the original settings object does not reconfigure a running queue;
 - Empty business payloads are supported.
 

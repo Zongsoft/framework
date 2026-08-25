@@ -1231,6 +1231,15 @@ namespace Zongsoft.Properties {
         }
 
         /// <summary>
+        ///   查找类似 The '{0}' feature is not supported by the '{1}' message queue. 的本地化字符串。
+        /// </summary>
+        internal static string Messaging_FeatureNotSupported_Message {
+            get {
+                return ResourceManager.GetString("Messaging.FeatureNotSupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 The existing subscription for the '{0}' topic has a different handler, tags, or options. 的本地化字符串。
         /// </summary>
         internal static string Messaging_SubscriptionConflict_Message {

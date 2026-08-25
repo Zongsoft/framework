@@ -6,6 +6,15 @@ namespace Zongsoft.Messaging.ZeroMQ.Tests;
 
 public class PacketizerTests
 {
+	[Fact]
+	public void ZeroQueueDoesNotAdvertiseDelay()
+	{
+		var settings = Configuration.ZeroConnectionSettingsDriver.Instance.GetSettings("Features", "server=127.0.0.1");
+		using var queue = new ZeroQueue("Features", settings);
+
+		Assert.False(queue.Features.Contains(MessageQueueFeature.Delay.Name));
+	}
+
 	[Theory]
 	[InlineData("")]
 	[InlineData("topic")]

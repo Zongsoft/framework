@@ -43,14 +43,6 @@ internal static class Packetizer
 	public const int MaxOptionCount = 32;
 	public const int MaxPayloadSize = 64 * 1024 * 1024;
 
-	public static int GetCompressionThreshold(MessageEnqueueOptions options, int length)
-	{
-		if(options != null && options.Properties.TryGetValue(Options.Compressive, out var value) && Zongsoft.Common.Convert.TryConvertValue<int>(value, out var threshold) && threshold > 0 && length > threshold)
-			return threshold;
-
-		return 0;
-	}
-
 	public static string Pack(string topic) => $"{topic}@{Delimiter}{Options.ProtocolVersion}:{ProtocolVersion}";
 	public static string Pack(string identity, string identifier, string topic, string compressor) => string.IsNullOrEmpty(compressor) ?
 		$"{topic}@{identity}{Delimiter}{Options.ProtocolVersion}:{ProtocolVersion}{Delimiter}{Options.Identifier}:{identifier}" :
@@ -123,9 +115,6 @@ internal static class Packetizer
 		public const string Identifier = nameof(Identifier);
 		/// <summary>压缩器名称的选项。</summary>
 		public const string Compressor = nameof(Compressor);
-		/// <summary>压缩阈值的选项，单位为字节。</summary>
-		public const string Compressive = nameof(Compressive);
-
 		public static bool TryGetValue(IEnumerable<KeyValuePair<string, string>> options, string name, out string value)
 		{
 			if(options != null)

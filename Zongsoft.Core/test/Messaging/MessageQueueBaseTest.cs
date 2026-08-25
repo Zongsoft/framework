@@ -8,11 +8,78 @@ using Xunit;
 
 using Zongsoft.Components;
 using Zongsoft.Collections;
+using Zongsoft.Common;
 
 namespace Zongsoft.Messaging.Tests;
 
 public class MessageQueueBaseTest
 {
+	[Fact]
+	public void MessageEnqueueOptionsSupportsCompressionThreshold()
+	{
+		var options = new MessageEnqueueOptions();
+
+		Assert.Equal(0, options.Compression);
+
+		options.Compression = 4 * 1024;
+
+		Assert.Equal(4 * 1024, options.Compression);
+	}
+
+	[Fact]
+	public void MessageQueueFeaturesAreNamedValuesAndCaseInsensitiveKeys()
+	{
+		Assert.Throws<ArgumentNullException>(() => new MessageQueueFeature(null));
+		Assert.Throws<ArgumentNullException>(() => new MessageQueueFeature("  "));
+
+		var delay = new MessageQueueFeature(" Delay ");
+		var feature = new MessageQueueFeature("DELAY");
+		var features = new MessageQueueFeatureCollection() { delay };
+
+		Assert.Equal("delay", delay.Name);
+		Assert.Equal(delay, feature);
+		Assert.Equal(delay.GetHashCode(), feature.GetHashCode());
+		Assert.True(features.Contains("delay"));
+		Assert.True(features.Contains("DELAY"));
+		Assert.Same(delay, features["Delay"]);
+	}
+
+	[Fact]
+	public void MessageQueueInterfaceExposesBaseFeatureCollection()
+	{
+		using var queue = new TestQueue();
+		IMessageQueue contract = queue;
+
+		Assert.Same(queue.Features, contract.Features);
+		Assert.Empty(contract.Features);
+	}
+
+	[Fact]
+	public async Task UnsupportedDelayFailsBeforeDriverOperation()
+	{
+		using var queue = new TestQueue();
+		var options = new MessageEnqueueOptions(TimeSpan.FromSeconds(1));
+
+		var exception = await Assert.ThrowsAsync<OperationException>(() => queue.ProduceAsync("tests/delay", ReadOnlyMemory<byte>.Empty, options).AsTask());
+
+		Assert.Equal(nameof(OperationException.Unsupported), exception.Reason);
+		Assert.Contains(MessageQueueFeature.Delay.Name, exception.Message);
+		Assert.Equal(0, queue.ProduceCount);
+	}
+
+	[Fact]
+	public async Task SupportedDelayReachesDriverOperation()
+	{
+		using var queue = new TestQueue();
+		queue.Features.Add(MessageQueueFeature.Delay);
+
+		var options = new MessageEnqueueOptions(TimeSpan.FromSeconds(1));
+		await queue.ProduceAsync("tests/delay", ReadOnlyMemory<byte>.Empty, options);
+
+		Assert.Equal(1, queue.ProduceCount);
+		Assert.Same(options, queue.ProducedOptions);
+	}
+
 	[Fact]
 	public async Task ConcurrentSubscribersShareOneInitializationAndExposeOnlyActiveConsumer()
 	{
@@ -286,6 +353,7 @@ public class MessageQueueBaseTest
 		public int DisposedCount => _disposed;
 		public int UnsubscribedCount => _unsubscribed;
 		public int ProduceCount => _produced;
+		public MessageEnqueueOptions ProducedOptions { get; private set; }
 		public MessageReliability MaximumReliability { get; set; } = MessageReliability.ExactlyOnce;
 		public bool CloseDuringInitialization { get; set; }
 		public TaskCompletionSource InitializationStarted { get; private set; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -304,6 +372,7 @@ public class MessageQueueBaseTest
 		protected override ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
 		{
 			Interlocked.Increment(ref _produced);
+			this.ProducedOptions = options;
 			return ValueTask.FromResult(string.Empty);
 		}
 

@@ -507,6 +507,9 @@
   <data name="Messaging.ReliabilityNotSupported.Message" xml:space="preserve">
     <value>“{1}”消息队列不支持“{0}”消息可靠性。</value>
   </data>
+  <data name="Messaging.FeatureNotSupported.Message" xml:space="preserve">
+    <value>“{1}”消息队列不支持“{0}”功能。</value>
+  </data>
   <data name="Messaging.SubscriptionConflict.Message" xml:space="preserve">
     <value>主题“{0}”的现有订阅具有不同的处理器、标签或选项。</value>
   </data>

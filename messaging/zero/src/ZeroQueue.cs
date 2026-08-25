@@ -99,7 +99,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 	protected override async ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
 	{
 		var payload = data.ToArray();
-		var threshold = Packetizer.GetCompressionThreshold(options, payload.Length);
+		var threshold = options?.Compression > 0 ? options.Compression : 0;
 		var identifier = Guid.NewGuid().ToString("N");
 		var reliability = options?.Reliability ?? MessageReliability.MostOnce;
 		await this.EnsureInitializedAsync(cancellation);

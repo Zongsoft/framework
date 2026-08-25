@@ -5,6 +5,9 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
+using NetMQ;
+using NetMQ.Sockets;
+
 using Xunit;
 
 namespace Zongsoft.Messaging.ZeroMQ.Tests;
@@ -51,6 +54,33 @@ public class ZeroQueuePublishingTests
 		Assert.False(string.IsNullOrWhiteSpace(identifier));
 		Assert.Equal(identifier, message.Identifier);
 		Assert.Equal(publisher.Instance, message.Identity);
+	}
+
+	[Fact]
+	public async Task MostOnceCompressionUsesTypedThreshold()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		using var server = await ZeroServerScope.StartAsync();
+		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "compression-publisher");
+		using var subscriber = new SubscriberSocket();
+		var topic = "topic/compression";
+		var payload = Enumerable.Repeat((byte)'A', 16 * 1024).ToArray();
+		var options = new MessageEnqueueOptions() { Compression = 1 };
+		var ports = ZeroTestUtility.GetServerPorts(server.Port);
+
+		subscriber.Connect($"tcp://127.0.0.1:{ports.Outgoing}");
+		subscriber.Subscribe(topic);
+		var identifier = await ZeroTestUtility.PublishUntilAcceptedAsync(publisher, topic, payload, options);
+		var message = new NetMQMessage();
+
+		Assert.True(subscriber.TryReceiveMultipartMessage(TimeSpan.FromSeconds(5), ref message));
+		Assert.Equal(2, message.FrameCount);
+		Assert.Contains($"Identifier:{identifier}", message[0].ConvertToString());
+		Assert.Contains("Compressor:Brotli", message[0].ConvertToString());
+		Assert.True(message[1].BufferSize < payload.Length);
+		Assert.Equal(payload, IO.Compression.Compressor.Decompress("Brotli", message[1].ToByteArray()));
 	}
 
 	[Fact]

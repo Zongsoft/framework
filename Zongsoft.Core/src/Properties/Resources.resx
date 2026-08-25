@@ -507,6 +507,9 @@
   <data name="Messaging.ReliabilityNotSupported.Message" xml:space="preserve">
     <value>The '{0}' message reliability is not supported by the '{1}' message queue.</value>
   </data>
+  <data name="Messaging.FeatureNotSupported.Message" xml:space="preserve">
+    <value>The '{0}' feature is not supported by the '{1}' message queue.</value>
+  </data>
   <data name="Messaging.SubscriptionConflict.Message" xml:space="preserve">
     <value>The existing subscription for the '{0}' topic has a different handler, tags, or options.</value>
   </data>

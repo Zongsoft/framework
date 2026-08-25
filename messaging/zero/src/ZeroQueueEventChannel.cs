@@ -58,8 +58,7 @@ public class ZeroQueueEventChannel : ChannelBase, IEventChannel
 
 		if(options == null)
 		{
-			options = new MessageEnqueueOptions();
-			options.Properties[Packetizer.Options.Compressive] = 4 * 1024; //开启压缩的阈值(4KB)
+			options = new MessageEnqueueOptions() { Compression = 4 * 1024 };
 		}
 
 		this.Options = options;

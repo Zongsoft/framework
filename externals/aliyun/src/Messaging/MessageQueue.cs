@@ -54,6 +54,8 @@ public class MessageQueue : MessageQueueBase<MessageQueue.Consumer>
 	#region 构造函数
 	public MessageQueue(string name) : base(name)
 	{
+		this.Features.Add(MessageQueueFeature.Delay);
+
 		var certificate = MessageQueueUtility.GetCertificate(name);
 		_http = new HttpClient(new HttpClientHandler(certificate, MessageAuthenticator.Instance));
 		_http.DefaultRequestHeaders.Add("x-mns-version", "2015-06-06");

@@ -37,6 +37,7 @@ public class RabbitQueueFactoryTests
 		var rabbit = Assert.IsType<RabbitQueue>(queue);
 		Assert.Equal("RabbitMQ", rabbit.Name);
 		Assert.Same(settings, rabbit.Settings);
+		Assert.False(rabbit.Features.Contains(MessageQueueFeature.Delay.Name));
 	}
 
 	[Fact]
