@@ -36,6 +36,7 @@ public class MqttQueueFactoryTests
 		using var queue = factory.Create(settings);
 		var mqtt = Assert.IsType<MqttQueue>(queue);
 		Assert.False(mqtt.Features.Contains(MessageQueueFeature.Delay.Name));
+		Assert.True(mqtt.Features.Contains(MessageQueueFeature.Compression.Name));
 	}
 
 	[Fact]

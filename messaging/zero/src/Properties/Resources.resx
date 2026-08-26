@@ -232,4 +232,7 @@
   <data name="ZeroQueueServer.StorageImmutable.Message" xml:space="preserve">
     <value>The message storage cannot be changed while the ZeroMQ server is running.</value>
   </data>
+  <data name="ZeroQueue.HeaderValueInvalid.Message" xml:space="preserve">
+    <value>The '{0}' message header value cannot contain a carriage return or line feed.</value>
+  </data>
 </root>

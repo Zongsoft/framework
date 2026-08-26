@@ -47,6 +47,7 @@ public class KafkaQueueFactoryTests
 		Assert.Equal("Kafka", kafka.Name);
 		Assert.Same(settings, kafka.Settings);
 		Assert.False(kafka.Features.Contains(MessageQueueFeature.Delay.Name));
+		Assert.True(kafka.Features.Contains(MessageQueueFeature.Compression.Name));
 	}
 
 	[Fact]

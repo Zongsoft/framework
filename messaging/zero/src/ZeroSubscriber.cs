@@ -83,10 +83,10 @@ public sealed class ZeroSubscriber : MessageConsumerBase<ZeroQueue>
 		channel.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
 		channel.ReceiveReady += this.OnReceiveReady;
 		channel.Subscribe(topic);
-		channel.Subscribe(ZeroUtility.WELCOME_PREFIX);
+		channel.Subscribe(Protocol.WelcomePrefix);
 		channel.Connect(address);
 
-		_welcome = ZeroUtility.GetWelcomeMessage(epoch);
+		_welcome = Protocol.GetWelcome(epoch);
 		_synchronization = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		Volatile.Write(ref _channel, channel);
 		return channel;
@@ -158,7 +158,7 @@ public sealed class ZeroSubscriber : MessageConsumerBase<ZeroQueue>
 				if(!args.Socket.TryReceiveFrameBytes(out var headerData, out var more))
 					break;
 
-				if(headerData == null || headerData.Length > Packetizer.MaxHeaderSize)
+				if(headerData == null || headerData.Length > Protocol.MaxHeaderSize)
 				{
 					SkipRemainingFrames(args.Socket, more);
 					continue;
@@ -179,7 +179,7 @@ public sealed class ZeroSubscriber : MessageConsumerBase<ZeroQueue>
 					continue;
 				}
 
-				if(string.IsNullOrEmpty(header) || !Packetizer.TryUnpack(header, out var identifier, out var topic, out var options))
+				if(string.IsNullOrEmpty(header) || !Packetizer.TryUnpack(header, out var topic, out var options))
 				{
 					SkipRemainingFrames(args.Socket, more);
 					continue;
@@ -194,29 +194,25 @@ public sealed class ZeroSubscriber : MessageConsumerBase<ZeroQueue>
 					continue;
 				}
 
-				if(data != null && data.Length > Packetizer.MaxPayloadSize)
+				if(data != null && data.Length > Protocol.MaxPayloadSize)
 					continue;
 
-				if(!this.Queue.Validate(identifier))
+				if(!Packetizer.TryGetValue(options, Protocol.Headers.Identifier, out var messageIdentifier) || string.IsNullOrWhiteSpace(messageIdentifier))
+					continue;
+				if(messageIdentifier.Length > Protocol.MaxIdentifierSize ||
+				   !Packetizer.TryGetValue(options, Protocol.Headers.Identity, out var identity) || string.IsNullOrWhiteSpace(identity) ||
+				   !this.Queue.Validate(identity))
 					continue;
 
-				if(string.IsNullOrEmpty(identifier) && (data == null || data.Length == 0))
-					continue;
-
-				if(!Packetizer.Options.TryGetValue(options, Packetizer.Options.Identifier, out var messageIdentifier) || string.IsNullOrWhiteSpace(messageIdentifier))
-					continue;
-
-				if(Packetizer.Options.TryGetValue(options, Packetizer.Options.Compressor, out var compressor))
+				if(Packetizer.TryGetValue(options, Protocol.Headers.Compression, out var compression))
 				{
-					if(!string.Equals(compressor, nameof(IO.Compression.Compressor.Brotli), StringComparison.OrdinalIgnoreCase))
-						continue;
-
-					data = IO.Compression.Compressor.Decompress(compressor, data);
-					if(data != null && data.Length > Packetizer.MaxPayloadSize)
+					data = MessageCompression.Decompress(compression, data);
+					if(data != null && data.Length > Protocol.MaxPayloadSize)
 						continue;
 				}
 
-				if(!this.Dispatch(new Message(messageIdentifier, this.Queue.GetLogicalTopic(topic), data ?? []) { Identity = identifier }))
+				Packetizer.TryGetValue(options, Protocol.Headers.Tags, out var tags);
+				if(!this.Dispatch(new Message(messageIdentifier, this.Queue.GetLogicalTopic(topic), data ?? []) { Identity = identity, Tags = tags }))
 					return;
 
 				if(!args.Socket.HasIn)

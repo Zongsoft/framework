@@ -249,9 +249,14 @@ public class RedisSubscriber : MessageConsumerBase<RedisQueue>
 
 		//构建接收到的消息
 		var entry = result[0];
+		var data = (byte[])entry.GetMessageData();
+		var compression = (string)entry.GetMessageCompression();
+		if(!string.IsNullOrEmpty(compression))
+			data = MessageCompression.Decompress(compression, data);
+
 		var message = string.IsNullOrEmpty(_group) ?
-			new Message(entry.Id, this.Topic, entry.GetMessageData()) { Tags = entry.GetMessageTags() } :
-			new Message(entry.Id, this.Topic, entry.GetMessageData(), entry.GetMessageTags(), Acknowledge);
+			new Message(entry.Id, this.Topic, data) { Tags = entry.GetMessageTags() } :
+			new Message(entry.Id, this.Topic, data, entry.GetMessageTags(), Acknowledge);
 
 		message.Timestamp = GetTimestamp(entry.Id);
 		return message;

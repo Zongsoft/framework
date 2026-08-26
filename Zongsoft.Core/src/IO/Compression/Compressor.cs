@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -35,6 +35,15 @@ namespace Zongsoft.IO.Compression;
 
 public static class Compressor
 {
+	/// <summary>确定指定名称的压缩算法是否受支持。</summary>
+	/// <param name="name">指定的压缩算法名称。</param>
+	/// <returns>如果指定算法受支持则返回真，否则返回假。</returns>
+	public static bool IsSupported(string name) => name?.Trim().ToLowerInvariant() switch
+	{
+		"br" or "brotli" or "gzip" or "zlib" or "deflate" => true,
+		_ => false,
+	};
+
 	#region 常量定义
 	public const string Brotli = nameof(Brotli);
 	public const string GZip = nameof(GZip);
@@ -113,7 +122,7 @@ public static class Compressor
 			"gzip" => new GZipStream(destination, level, true),
 			"zlib" => new ZLibStream(destination, level, true),
 			"deflate" => new DeflateStream(destination, level, true),
-			_ => throw new InvalidOperationException($"The specified '{name}' compressor is undefined."),
+			_ => throw Common.OperationException.Unsupported(string.Format(Properties.Resources.Compressor_Undefined_Message, name)),
 		};
 	}
 
@@ -128,7 +137,7 @@ public static class Compressor
 			"gzip" => new GZipStream(source, CompressionMode.Decompress),
 			"zlib" => new ZLibStream(source, CompressionMode.Decompress),
 			"deflate" => new DeflateStream(source, CompressionMode.Decompress),
-			_ => throw new InvalidOperationException($"The specified '{name}' decompressor is undefined."),
+			_ => throw Common.OperationException.Unsupported(string.Format(Properties.Resources.Compressor_Undefined_Message, name)),
 		};
 	}
 	#endregion

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace Zongsoft.Messaging;
 
@@ -77,8 +77,8 @@ public class MessageEnqueueOptions
 	/// <summary>获取或设置入队的延迟时长。</summary>
 	public TimeSpan Delay { get; set; }
 
-	/// <summary>获取或设置启用消息压缩的最小载荷字节数，非正数表示不压缩。</summary>
-	public int Compression { get; set; }
+	/// <summary>获取或设置消息负载的压缩设置。</summary>
+	public MessageCompression Compression { get; set; }
 
 	/// <summary>获取或设置消息的有效时长。</summary>
 	public TimeSpan Expiration { get; set; }

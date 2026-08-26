@@ -98,7 +98,7 @@ public sealed partial class ZeroQueue
 					publisher.ReceiveReady += this.OnSubscriptionReady;
 					monitor = new NetMQMonitor(publisher, $"inproc://{nameof(ZeroQueue)}-{_identifier}-{Guid.NewGuid():N}", SocketEvents.Disconnected);
 					monitor.Disconnected += this.OnPublisherDisconnected;
-					publisher.Connect(ZeroUtility.GetTcpAddress(_options.Server, incoming));
+					publisher.Connect(Protocol.GetAddress(_options.Server, incoming));
 					_poller.Add(publisher);
 					monitor.AttachToPoller(_poller);
 					_publisher = publisher;
@@ -209,9 +209,9 @@ public sealed partial class ZeroQueue
 			private void Send(PublishCommand command)
 			{
 				var publisher = _publisher ?? throw new InvalidOperationException(Properties.Resources.ZeroQueue_PublisherUninitialized_Message);
-				var compressor = command.CompressionThreshold > 0 && command.Data.Length > command.CompressionThreshold ? nameof(IO.Compression.Compressor.Brotli) : null;
-				var header = Packetizer.Pack(command.Identity, command.Identifier, command.Topic, compressor);
-				var data = compressor == null ? command.Data : IO.Compression.Compressor.Compress(compressor, command.Data);
+				var compressed = command.Compression.CanCompress(command.Data.Length);
+				var header = Packetizer.Pack(command.Identity, command.Identifier, command.Topic, command.Tags, compressed ? command.Compression.Name : null);
+				var data = compressed ? command.Compression.Compress(command.Data) : command.Data;
 				publisher.SendMoreFrame(header).SendFrame(data);
 			}
 
@@ -220,7 +220,7 @@ public sealed partial class ZeroQueue
 				if(string.IsNullOrEmpty(_epoch) || _outgoingPort == 0 || _subscribers.ContainsKey(subscriber))
 					return;
 
-				var channel = subscriber.Attach(topic, ZeroUtility.GetTcpAddress(_options.Server, _outgoingPort), _epoch);
+				var channel = subscriber.Attach(topic, Protocol.GetAddress(_options.Server, _outgoingPort), _epoch);
 				_subscribers.Add(subscriber, channel);
 				_poller.Add(channel);
 			}

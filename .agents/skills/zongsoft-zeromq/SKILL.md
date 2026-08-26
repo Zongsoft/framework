@@ -43,29 +43,29 @@ Use this skill for work in `messaging/zero`. Preserve the contracts established 
 - Put transport-neutral option normalization, reliability capability validation, and duplicate-subscription consistency in Core `MessageQueueBase`. Keep delivery tags, offset commits, ACK routing, retry windows, persistence, and Socket state in the driver. Before extracting more behavior, compare RabbitMQ, Kafka, MQTT, Redis, and Aliyun implementations and require genuinely identical semantics.
 - Preserve explicit acknowledgement through `Message.AcknowledgeAsync`; do not treat a Handler returning successfully as an implicit acknowledgement unless Core changes that contract for every driver.
 
-## Current 2.0 Wire Format
+## Current 1.0 Wire Format
 
-- Discovery is a versioned text request/response carrying `Epoch`, `Control`, `Incoming`, and `Outgoing`.
+- Discovery is a versioned text request/response carrying `Epoch` and one `Ports` header. Ports are `Control,Incoming,Outgoing` with Control enabled, otherwise `Incoming,Outgoing`.
 - Data messages contain two frames:
-  1. UTF-8 header: `<effective-topic>@<instance>` followed by `Protocol-Version:2.0`, `Identifier:<id>`, and optional newline-delimited `Key:Value` entries.
+  1. UTF-8 header: `<effective-topic>` followed by `Protocol-Version:1.0`, `Identifier:<id>`, `Identity:<instance>`, optional `Tags:<tags>`, and optional `Compression:<algorithm>`.
   2. Binary payload.
-- Compression uses header option `Compressor:Brotli`; producers enable it with the byte threshold in `MessageEnqueueOptions.Compression`.
-- Every business header contains `Protocol-Version:2.0`. The XPUB welcome frame includes the same Broker Epoch as discovery.
+- `MessageEnqueueOptions.Compression` is a `MessageCompression` value. Its `Name` is the algorithm and its integer `Value` is the byte threshold; text parsing and formatting use `<algorithm>:<threshold>`. The value type does not define a transport envelope; drivers that cannot carry compression metadata separately own their private payload framing. Brotli, GZip, ZLib, and Deflate are supported. Compression applies only to business `Message.Data`.
+- Every business header contains `Protocol-Version:1.0`. The XPUB welcome frame includes the same Broker Epoch as discovery.
 - Heartbeats are anonymous messages with an empty payload. Do not conflate them with valid empty business messages.
 - Requests prefix the payload with `<request-identifier>\n`; responses use the same identifier prefix and normally publish to `<url>/reply`.
 
-LeastOnce uses ROUTER/DEALER commands `REGISTER`, `UNREGISTER`, `PING`, `PUBLISH`, `DELIVER`, `ACK`, `ACCEPTED`, `UNROUTABLE`, and `ERROR`. `PUBLISH` and `DELIVER` carry Identifier, physical Topic, producer Identity, Tags, original Timestamp, expiration/attempt fields, and payload. Session and subscription identifiers are runtime routing identities, not durable business identities.
+LeastOnce uses ROUTER/DEALER commands `REGISTER`, `UNREGISTER`, `PING`, `PUBLISH`, `DELIVER`, `ACK`, `ACCEPTED`, `UNROUTABLE`, and `ERROR`. `PUBLISH` and `DELIVER` carry Identifier, physical Topic, producer Identity, Tags, original Timestamp, expiration/attempt fields, Compression, and payload. The Broker validates but does not decompress business payloads. Session and subscription identifiers are runtime routing identities, not durable business identities.
 
-## 2.0 Reliability Implementation
+## Reliability Implementation
 
-- The normative design and implementation status are in `messaging/zero/PROTOCOL-2.0.zh-Hans.md` and `.testagent/status.md`.
+- The normative wire definitions are in `messaging/zero/PROTOCOL.md` and `messaging/zero/PROTOCOL.zh-Hans.md`; implementation status is in `.testagent/status.md`.
 - Stage 2A implements `MessageReliability.MostOnce` with immediate application-XPUB subscription detection. It sends only when that exact XPUB currently knows a matching prefix, and has no acknowledgement or retry.
 - Subscription propagation is routing visibility only. Do not wait for a future subscription or infer remote receipt from it.
 - Discovery and Welcome carry a Broker Epoch. Disconnect or Epoch change invalidates cached subscription readiness; fixed and random runtime ports are rediscovered.
 - A MostOnce publish with no matching prefix returns `null` immediately and is never sent later.
 - Stage 2B implements `LeastOnce` through addressable runtime sessions, explicit `Message.AcknowledgeAsync`, Broker-only persistence, competing consumers, and retry with the same identifier. Duplicates are part of the contract.
 - Broker acceptance requires an online matching subscription, persists Pending before returning `ACCEPTED`, and does not wait for Handler ACK. Each attempt chooses one online consumer; any valid ACK removes Pending. New or returning subscriptions may consume already accepted Pending.
-- Core owns the transport-neutral `IMessageStorage` and `MessageStorageBase<TSettings>` contracts. Storage implementations are independent plugins; each Broker uses an independently configured instance and the ZeroMQ driver must not dispose injected Storage. Persist complete outer `Message` metadata and keep ZeroMQ expiration and retry envelopes private.
+- Core owns the transport-neutral `IMessageStorage` and `MessageStorageBase<TSettings>` contracts. Storage implementations are independent plugins; each Broker uses an independently configured instance. The base class funnels all-message and exact-topic reads/clears through one template method, using a null topic as the no-filter sentinel and an empty string as the default topic. A Server disposes Storage only when `Disposable=true`, preferring `IAsyncDisposable`; Stop never disposes it. Persist complete outer `Message` metadata and keep ZeroMQ expiration, protocol version, compression, and retry envelopes private.
 - `ExactlyOnce` is unsupported and must fail before transport state is created.
 
 ## Configuration Facts
@@ -74,8 +74,8 @@ LeastOnce uses ROUTER/DEALER commands `REGISTER`, `UNREGISTER`, `PING`, `PUBLISH
 - `Server` is required; discovery `Port` defaults to `7969`; `Timeout` and `Heartbeat` default to `10s`.
 - `Topic`, `Group`, `Client`, `Instance`, and `Filter` alter routing or identity. The default filter excludes the current instance; `Filter=*` accepts all instances.
 - `ReconnectInterval` controls rediscovery.
-- Server ports live under `/Messaging/ZeroMQ/Servers`. Three values use `Control,Incoming,Outgoing`; two values remain `Incoming,Outgoing` with the configured Control port set to zero, which binds randomly when Storage is present. Omitted ports are random and supported across Broker restart; fixed ports remain operationally preferable.
-- Server Storage can change only while stopped. A Broker without Storage advertises `Control:0` and still serves Broadcast. `IMessageStorage.Name` identifies the provider and `Settings` defines the independent instance's connection and data scope.
+- Server ports live under `/Messaging/ZeroMQ/Servers`. Three values use `Control,Incoming,Outgoing`; two values use `Incoming,Outgoing` and bind Control randomly when Storage is present. Resolution prefers startup arguments, the named server's own Port, then the collection default; unresolved ports are random.
+- Server Storage can change only while stopped. A Broker without Storage omits Control from the discovery `Ports` list and still serves Broadcast. `IMessageStorage.Name` identifies the provider, `Settings` defines the independent instance's connection and data scope, and exact-topic read/clear operations are available.
 - Server TCP endpoints bind all interfaces and the adapter does not configure authentication or encryption.
 
 ## Validation

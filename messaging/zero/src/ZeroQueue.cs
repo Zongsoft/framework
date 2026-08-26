@@ -70,6 +70,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 
 		this.Instance = GenerateIdentifier(settings);
 		(_inclusion, _exclusion) = CreateFilter(settings.Filter, this.Instance);
+		this.Features.Add(MessageQueueFeature.Compression);
 	}
 	#endregion
 
@@ -99,7 +100,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 	protected override async ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation)
 	{
 		var payload = data.ToArray();
-		var threshold = options?.Compression > 0 ? options.Compression : 0;
+		var compression = options?.Compression ?? default;
 		var identifier = Guid.NewGuid().ToString("N");
 		var reliability = options?.Reliability ?? MessageReliability.MostOnce;
 
@@ -110,7 +111,7 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 			if(!_transport.HasControl)
 				throw new InvalidOperationException(Properties.Resources.ZeroQueue_ControlUnavailable_Message);
 
-			return await _transport.PublishAsync(identifier, this.GetPhysicalTopic(topic), this.Instance, tags, payload, threshold, options.Expiration, reliability, cancellation);
+			return await _transport.PublishAsync(identifier, this.GetPhysicalTopic(topic), this.Instance, tags, payload, compression, options.Expiration, reliability, cancellation);
 		}
 
 		var published = false;
@@ -118,11 +119,11 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 		if(string.IsNullOrEmpty(topic))
 		{
 			foreach(var subscriber in this.Subscribers)
-				published |= await _transport.PublishAsync(identifier, this.GetPhysicalTopic(subscriber.Topic), this.Instance, tags, payload, threshold, TimeSpan.Zero, reliability, cancellation) != null;
+				published |= await _transport.PublishAsync(identifier, this.GetPhysicalTopic(subscriber.Topic), this.Instance, tags, payload, compression, TimeSpan.Zero, reliability, cancellation) != null;
 		}
 		else
 		{
-			published = await _transport.PublishAsync(identifier, this.GetPhysicalTopic(topic), this.Instance, tags, payload, threshold, TimeSpan.Zero, reliability, cancellation) != null;
+			published = await _transport.PublishAsync(identifier, this.GetPhysicalTopic(topic), this.Instance, tags, payload, compression, TimeSpan.Zero, reliability, cancellation) != null;
 		}
 
 		return published ? identifier : null;

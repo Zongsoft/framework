@@ -232,4 +232,7 @@
   <data name="ZeroQueueServer.StorageImmutable.Message" xml:space="preserve">
     <value>ZeroMQ 服务器运行期间不能更换消息存储。</value>
   </data>
+  <data name="ZeroQueue.HeaderValueInvalid.Message" xml:space="preserve">
+    <value>消息头“{0}”的值不能包含回车符或换行符。</value>
+  </data>
 </root>

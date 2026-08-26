@@ -63,6 +63,7 @@ public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisC
 		this.Capabilities = GetCapabilities(_connection);
 		this.MaximumLength = settings.MaximumLength == 0 ? DEFAULT_MAXIMUM_LENGTH : settings.MaximumLength;
 		this.UseApproximateMaximumLength = settings.UseApproximateMaximumLength;
+		this.Features.Add(MessageQueueFeature.Compression);
 	}
 
 	public RedisQueue(string name, IDatabase database, Configuration.RedisConnectionSettings settings = null) : base(name, settings)
@@ -71,6 +72,7 @@ public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisC
 		this.Capabilities = GetCapabilities(database.Multiplexer);
 		this.MaximumLength = settings == null || settings.MaximumLength == 0 ? DEFAULT_MAXIMUM_LENGTH : settings.MaximumLength;
 		this.UseApproximateMaximumLength = settings?.UseApproximateMaximumLength ?? true;
+		this.Features.Add(MessageQueueFeature.Compression);
 	}
 	#endregion
 
@@ -95,10 +97,19 @@ public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisC
 			throw new ArgumentNullException(nameof(topic));
 
 		cancellation.ThrowIfCancellationRequested();
+		var payload = data.ToArray();
+		var compression = options?.Compression ?? default;
+		var compressor = default(string);
+		if(compression.CanCompress(payload.Length))
+		{
+			payload = compression.Compress(payload);
+			compressor = compression.Name;
+		}
+
 		using var activity = RedisDiagnostics.ActivitySource.StartActivity("redis.queue.produce", System.Diagnostics.ActivityKind.Producer);
 		return await this.Database.StreamAddAsync(
 			this.GetQueueName(topic),
-			RedisQueueUtility.GetMessagePayload(data, tags),
+			RedisQueueUtility.GetMessagePayload(payload, tags, compressor),
 			maxLength: this.MaximumLength > 0 ? this.MaximumLength : null,
 			useApproximateMaxLength: this.UseApproximateMaximumLength).WaitAsync(cancellation);
 	}

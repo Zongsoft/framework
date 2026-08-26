@@ -74,7 +74,7 @@ public sealed partial class ZeroQueueServer
 				{
 					_publisher.ReceiveReady += this.OnPublisherReady;
 					_subscriber.ReceiveReady += this.OnSubscriberReady;
-					_publisher.SetWelcomeMessage(ZeroUtility.GetWelcomeMessage(_epoch));
+					_publisher.SetWelcomeMessage(Protocol.GetWelcome(_epoch));
 					this.Outgoing = Bind(_publisher, _outgoing);
 					this.Incoming = Bind(_subscriber, _incoming);
 					_poller.Add(_publisher);

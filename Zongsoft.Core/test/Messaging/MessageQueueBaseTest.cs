@@ -15,15 +15,16 @@ namespace Zongsoft.Messaging.Tests;
 public class MessageQueueBaseTest
 {
 	[Fact]
-	public void MessageEnqueueOptionsSupportsCompressionThreshold()
+	public void MessageEnqueueOptionsSupportsCompressionSetting()
 	{
 		var options = new MessageEnqueueOptions();
 
-		Assert.Equal(0, options.Compression);
+		Assert.True(options.Compression.IsEmpty);
 
-		options.Compression = 4 * 1024;
+		options.Compression = new MessageCompression("Brotli", 4096);
 
-		Assert.Equal(4 * 1024, options.Compression);
+		Assert.Equal(new MessageCompression("brotli", 4096), options.Compression);
+		Assert.Equal(4096, options.Compression.Value);
 	}
 
 	[Fact]
@@ -75,6 +76,32 @@ public class MessageQueueBaseTest
 
 		var options = new MessageEnqueueOptions(TimeSpan.FromSeconds(1));
 		await queue.ProduceAsync("tests/delay", ReadOnlyMemory<byte>.Empty, options);
+
+		Assert.Equal(1, queue.ProduceCount);
+		Assert.Same(options, queue.ProducedOptions);
+	}
+
+	[Fact]
+	public async Task UnsupportedCompressionFailsBeforeDriverOperation()
+	{
+		using var queue = new TestQueue();
+		var options = new MessageEnqueueOptions() { Compression = new("Brotli", 4096) };
+
+		var exception = await Assert.ThrowsAsync<OperationException>(() => queue.ProduceAsync("tests/compression", new byte[4096], options).AsTask());
+
+		Assert.Equal(nameof(OperationException.Unsupported), exception.Reason);
+		Assert.Contains(MessageQueueFeature.Compression.Name, exception.Message);
+		Assert.Equal(0, queue.ProduceCount);
+	}
+
+	[Fact]
+	public async Task SupportedCompressionReachesDriverOperation()
+	{
+		using var queue = new TestQueue();
+		queue.Features.Add(MessageQueueFeature.Compression);
+
+		var options = new MessageEnqueueOptions() { Compression = new("GZip", 1024) };
+		await queue.ProduceAsync("tests/compression", new byte[1024], options);
 
 		Assert.Equal(1, queue.ProduceCount);
 		Assert.Same(options, queue.ProducedOptions);

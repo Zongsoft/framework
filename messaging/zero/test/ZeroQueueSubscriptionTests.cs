@@ -284,7 +284,7 @@ public class ZeroQueueSubscriptionTests
 
 		//先发送一个合法头帧但带额外尾帧的畸形 multipart，验证 subscriber 不会把尾帧当作新消息。
 		publisher
-			.SendMoreFrame($"{topic}@{subscriber.Instance}\nProtocol-Version:2.0")
+			.SendMoreFrame(Packetizer.Pack(subscriber.Instance, Guid.NewGuid().ToString("N"), topic, null, null))
 			.SendMoreFrame("ignored")
 			.SendMoreFrame("fake-topic")
 			.SendFrame(Encoding.UTF8.GetBytes("fake-data"));
@@ -292,14 +292,14 @@ public class ZeroQueueSubscriptionTests
 		var unexpected = await handler.TryReceiveAsync(TimeSpan.FromMilliseconds(500));
 		Assert.Null(unexpected);
 
-		publisher.SendMoreFrame($"{topic}@external\nBroken").SendFrame("invalid-option");
-		publisher.SendMoreFrame($"{topic}@external\nProtocol-Version:2.0\nCompressor:Unknown").SendFrame("unknown-compressor");
-		publisher.SendMoreFrame($"{topic}@external\nProtocol-Version:2.0\nCompressor:Brotli").SendFrame([0xFF, 0xFF, 0xFF, 0xFF]);
+		publisher.SendMoreFrame($"{topic}\nBroken").SendFrame("invalid-option");
+		publisher.SendMoreFrame(Packetizer.Pack("external", Guid.NewGuid().ToString("N"), topic, null, "Unknown")).SendFrame("unknown-compressor");
+		publisher.SendMoreFrame(Packetizer.Pack("external", Guid.NewGuid().ToString("N"), topic, null, "Brotli")).SendFrame([0xFF, 0xFF, 0xFF, 0xFF]);
 		Assert.Null(await handler.TryReceiveAsync(TimeSpan.FromMilliseconds(500)));
 
 		//再发送合法外部消息，验证前一条畸形消息不会破坏后续消息边界。
 		publisher
-			.SendMoreFrame($"{topic}@external\nProtocol-Version:2.0\nIdentifier:{Guid.NewGuid():N}")
+			.SendMoreFrame(Packetizer.Pack("external", Guid.NewGuid().ToString("N"), topic, null, null))
 			.SendFrame(Encoding.UTF8.GetBytes("valid"));
 
 		var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));

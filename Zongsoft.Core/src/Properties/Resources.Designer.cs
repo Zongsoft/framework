@@ -1240,6 +1240,15 @@ namespace Zongsoft.Properties {
         }
 
         /// <summary>
+        ///   查找类似 The specified '{0}' message compression algorithm is not supported. 的本地化字符串。
+        /// </summary>
+        internal static string Compressor_Undefined_Message {
+            get {
+                return ResourceManager.GetString("Compressor.Undefined.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 The existing subscription for the '{0}' topic has a different handler, tags, or options. 的本地化字符串。
         /// </summary>
         internal static string Messaging_SubscriptionConflict_Message {

@@ -117,7 +117,7 @@ public partial class MqttQueueServer : ListenerBase<Message>
 			return default;
 
 		var message = await server.GetRetainedMessageAsync(topic);
-		return message == null ? default : new Message(message.Topic, message.Payload.ToArray());
+		return message == null ? default : new Message(message.Topic, message.GetPayload());
 	}
 
 	/// <summary>获取服务器中的所有 MQTT 保留消息。</summary>
@@ -137,7 +137,7 @@ public partial class MqttQueueServer : ListenerBase<Message>
 		for(int i = 0; i < messages.Count; i++)
 		{
 			var message = messages[i];
-			result[i] = message == null ? default : new Message(message.Topic, message.Payload.ToArray());
+			result[i] = message == null ? default : new Message(message.Topic, message.GetPayload());
 		}
 
 		return result;
@@ -202,7 +202,15 @@ public partial class MqttQueueServer : ListenerBase<Message>
 		if(args?.ApplicationMessage == null)
 			return;
 
-		var message = new Message(args.ApplicationMessage.Topic, args.ApplicationMessage.Payload.ToArray())
+		byte[] payload;
+		try { payload = args.ApplicationMessage.GetPayload(); }
+		catch(Exception exception)
+		{
+			await Zongsoft.Diagnostics.Logging.GetLogging<MqttQueueServer>().ErrorAsync(exception);
+			return;
+		}
+
+		var message = new Message(args.ApplicationMessage.Topic, payload)
 		{
 			Identity = args.ClientId,
 		};
@@ -232,18 +240,36 @@ public partial class MqttQueueServer : ListenerBase<Message>
 	{
 		if(disposing)
 		{
-			this.Stop();
-			base.Dispose(disposing);
-			this.Channels.BindAsync(null).GetAwaiter().GetResult();
-			this.Sessions.BindAsync(null).GetAwaiter().GetResult();
-
-			var server = Interlocked.Exchange(ref _server, null);
-			if(server != null)
+			try
 			{
-				server.InterceptingPublishAsync -= this.OnMessageReceivedAsync;
-				server.Dispose();
+				this.Stop();
+				base.Dispose(disposing);
+				this.Channels.BindAsync(null).GetAwaiter().GetResult();
+				this.Sessions.BindAsync(null).GetAwaiter().GetResult();
+
+				var server = Interlocked.Exchange(ref _server, null);
+				if(server != null)
+				{
+					server.InterceptingPublishAsync -= this.OnMessageReceivedAsync;
+					server.Dispose();
+				}
+			}
+			finally
+			{
+				DisposeStorage(Interlocked.Exchange(ref _storage, null));
 			}
 		}
+	}
+
+	private static void DisposeStorage(IMessageStorage storage)
+	{
+		if(storage?.Disposable != true)
+			return;
+
+		if(storage is IAsyncDisposable asynchronous)
+			asynchronous.DisposeAsync().AsTask().GetAwaiter().GetResult();
+		else if(storage is IDisposable disposable)
+			disposable.Dispose();
 	}
 	#endregion
 }

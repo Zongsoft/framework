@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -241,17 +242,18 @@ public class ZeroQueueReliabilityTests
 		using(var socket = new DealerSocket())
 		{
 			socket.Connect($"tcp://127.0.0.1:{control}");
-			socket.SendMoreFrame("PUBLISH").SendFrame("too-few-frames");
-			socket.SendMoreFrame("PUBLISH")
+			socket.SendMoreFrame(Protocol.Commands.Publish).SendFrame("too-few-frames");
+			socket.SendMoreFrame(Protocol.Commands.Publish)
 				.SendMoreFrame(Guid.NewGuid().ToString("N"))
 				.SendMoreFrame("topic/malformed-control")
 				.SendMoreFrame("producer")
 				.SendMoreFrameEmpty()
 				.SendMoreFrame("not-a-timestamp")
 				.SendMoreFrame("not-an-expiration")
+				.SendMoreFrameEmpty()
 				.SendFrameEmpty();
 			Assert.True(socket.TryReceiveFrameString(TimeSpan.FromSeconds(5), out var response));
-			Assert.Equal("ERROR", response);
+			Assert.Equal(Protocol.Commands.Error, response);
 		}
 
 		using var publisher = CreateQueue(scope.Port, "valid-publisher", null);
@@ -533,13 +535,14 @@ public class ZeroQueueReliabilityTests
 
 		for(var index = 0; index < count; index++)
 		{
-			socket.SendMoreFrame("PUBLISH")
+			socket.SendMoreFrame(Protocol.Commands.Publish)
 				.SendMoreFrame($"capacity-{index}")
 				.SendMoreFrame(topic)
 				.SendMoreFrame("capacity-producer")
 				.SendMoreFrameEmpty()
 				.SendMoreFrame(timestamp)
 				.SendMoreFrame(expiration)
+				.SendMoreFrameEmpty()
 				.SendFrame(BitConverter.GetBytes(index));
 		}
 
@@ -549,8 +552,8 @@ public class ZeroQueueReliabilityTests
 			var response = new NetMQMessage();
 			if(socket.TryReceiveMultipartMessage(ref response) &&
 			   response.FrameCount == 3 &&
-			   string.Equals(response[0].ConvertToString(), "ERROR", StringComparison.Ordinal) &&
-			   string.Equals(response[1].ConvertToString(), "StorageBusy", StringComparison.Ordinal))
+			   string.Equals(response[0].ConvertToString(), Protocol.Commands.Error, StringComparison.Ordinal) &&
+			   string.Equals(response[1].ConvertToString(), Protocol.Errors.StorageBusy, StringComparison.Ordinal))
 				return response[2].ConvertToString();
 
 			Thread.Sleep(10);
@@ -632,7 +635,11 @@ public class ZeroQueueReliabilityTests
 	private sealed class FailingMessageStorage : IMessageStorage
 	{
 		public string Name => "failure";
+		public bool Disposable => false;
 		public IConnectionSettings Settings { get; set; } = new ConnectionSettings();
+
+		public ValueTask<int> ClearAsync(CancellationToken cancellation = default) => ValueTask.FromResult(0);
+		public ValueTask<int> ClearAsync(string topic, CancellationToken cancellation = default) => ValueTask.FromResult(0);
 
 		public ValueTask SetAsync(Message message, TimeSpan expiry = default, CancellationToken cancellation = default) =>
 			ValueTask.FromException(new InvalidOperationException("Storage failure."));
@@ -644,6 +651,49 @@ public class ZeroQueueReliabilityTests
 			await Task.CompletedTask;
 			yield break;
 		}
+
+		public async IAsyncEnumerable<Message> GetAsync(string topic, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellation = default)
+		{
+			await Task.CompletedTask;
+			yield break;
+		}
+	}
+
+	[Fact]
+	public async Task LeastOnceCompressedPayloadIsPersistedRecoveredAndDelivered()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		await using var scope = await ReliableServerScope.StartAsync();
+		using var publisher = CreateQueue(scope.Port, "compressed-publisher", "publisher");
+		using var subscriber = CreateQueue(scope.Port, "compressed-subscriber", "subscriber");
+		var handler = new AcknowledgingHandler(2, false);
+		await subscriber.SubscribeAsync("topic/compressed", handler, ReliableSubscribeOptions());
+		var payload = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Repeat((byte)'A', 16 * 1024));
+		var options = ReliableEnqueueOptions(TimeSpan.FromSeconds(20));
+		options.Compression = new MessageCompression("Brotli", 1);
+
+		var identifier = await publisher.ProduceAsync("topic/compressed", "kind:compressed", payload, options);
+		var first = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
+		var stored = Assert.Single(await GetPendingAsync(scope));
+		using(var document = JsonDocument.Parse(stored.Data))
+		{
+			Assert.Equal(Protocol.Version, document.RootElement.GetProperty("Version").GetString());
+			Assert.Equal("Brotli", document.RootElement.GetProperty("Compression").GetString());
+			Assert.True(document.RootElement.GetProperty("Data").GetBytesFromBase64().Length < payload.Length);
+		}
+
+		Assert.Equal(identifier, first.Identifier);
+		Assert.Equal(payload, first.Data);
+		Assert.Equal("kind:compressed", first.Tags);
+
+		await scope.RestartAsync();
+		var second = await handler.ReceiveAsync(TimeSpan.FromSeconds(10));
+		Assert.Equal(identifier, second.Identifier);
+		Assert.Equal(payload, second.Data);
+		await second.AcknowledgeAsync();
+		Assert.True(await WaitForPendingCountAsync(scope, 0, TimeSpan.FromSeconds(5)));
 	}
 
 	private sealed class BlockingMessageStorage : IMessageStorage
@@ -652,6 +702,7 @@ public class ZeroQueueReliabilityTests
 
 		public MemoryMessageStorage Inner { get; } = new();
 		public string Name => this.Inner.Name;
+		public bool Disposable => false;
 		public IConnectionSettings Settings
 		{
 			get => this.Inner.Settings;
@@ -659,6 +710,9 @@ public class ZeroQueueReliabilityTests
 		}
 		public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		public void Release() => _release.TrySetResult();
+
+		public ValueTask<int> ClearAsync(CancellationToken cancellation = default) => this.Inner.ClearAsync(cancellation);
+		public ValueTask<int> ClearAsync(string topic, CancellationToken cancellation = default) => this.Inner.ClearAsync(topic, cancellation);
 
 		public async ValueTask SetAsync(Message message, TimeSpan expiry = default, CancellationToken cancellation = default)
 		{
@@ -672,6 +726,9 @@ public class ZeroQueueReliabilityTests
 
 		public IAsyncEnumerable<Message> GetAsync(CancellationToken cancellation = default) =>
 			this.Inner.GetAsync(cancellation);
+
+		public IAsyncEnumerable<Message> GetAsync(string topic, CancellationToken cancellation = default) =>
+			this.Inner.GetAsync(topic, cancellation);
 	}
 
 	private sealed class RetryingRemoveMessageStorage : IMessageStorage
@@ -681,6 +738,7 @@ public class ZeroQueueReliabilityTests
 
 		public MemoryMessageStorage Inner { get; } = new();
 		public string Name => this.Inner.Name;
+		public bool Disposable => false;
 		public IConnectionSettings Settings
 		{
 			get => this.Inner.Settings;
@@ -690,6 +748,9 @@ public class ZeroQueueReliabilityTests
 		public TaskCompletionSource FirstRemoveFailed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		public TaskCompletionSource RetryStarted { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		public void ReleaseRetry() => _release.TrySetResult();
+
+		public ValueTask<int> ClearAsync(CancellationToken cancellation = default) => this.Inner.ClearAsync(cancellation);
+		public ValueTask<int> ClearAsync(string topic, CancellationToken cancellation = default) => this.Inner.ClearAsync(topic, cancellation);
 
 		public ValueTask SetAsync(Message message, TimeSpan expiry = default, CancellationToken cancellation = default) =>
 			this.Inner.SetAsync(message, expiry, cancellation);
@@ -709,6 +770,9 @@ public class ZeroQueueReliabilityTests
 
 		public IAsyncEnumerable<Message> GetAsync(CancellationToken cancellation = default) =>
 			this.Inner.GetAsync(cancellation);
+
+		public IAsyncEnumerable<Message> GetAsync(string topic, CancellationToken cancellation = default) =>
+			this.Inner.GetAsync(topic, cancellation);
 	}
 
 	private sealed class ReliableServerScope : IAsyncDisposable

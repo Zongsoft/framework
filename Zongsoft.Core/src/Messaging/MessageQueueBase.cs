@@ -107,6 +107,8 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 			throw new NotSupportedException(string.Format(Properties.Resources.Messaging_ReliabilityNotSupported_Message, reliability, this.GetType().Name));
 		if(options != null && options.Delay > TimeSpan.Zero && !this.Features.Contains(MessageQueueFeature.Delay))
 			throw OperationException.Unsupported(string.Format(Properties.Resources.Messaging_FeatureNotSupported_Message, MessageQueueFeature.Delay.Name, this.GetType().Name));
+		if(options != null && !options.Compression.IsEmpty && !this.Features.Contains(MessageQueueFeature.Compression))
+			throw OperationException.Unsupported(string.Format(Properties.Resources.Messaging_FeatureNotSupported_Message, MessageQueueFeature.Compression.Name, this.GetType().Name));
 
 		return this.OnProduceAsync(topic, tags, data, options, cancellation);
 	}

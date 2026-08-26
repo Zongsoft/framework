@@ -46,11 +46,6 @@ public sealed partial class ZeroQueueServer : WorkerBase
 	public const ushort PORT = 7969;
 	#endregion
 
-	#region 内部常量
-	internal const string PROTOCOL_NAME = "Zongsoft.Messaging.ZeroMQ";
-	internal const string PROTOCOL_VERSION = Packetizer.ProtocolVersion;
-	#endregion
-
 	#region 成员字段
 	private ushort _port;
 	private ServerAgent _agent;
@@ -139,13 +134,31 @@ public sealed partial class ZeroQueueServer : WorkerBase
 	{
 		if(disposing)
 		{
-			base.Dispose(disposing);
-			Interlocked.Exchange(ref _agent, null)?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+			try
+			{
+				base.Dispose(disposing);
+				Interlocked.Exchange(ref _agent, null)?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+			}
+			finally
+			{
+				DisposeStorage(Interlocked.Exchange(ref _storage, null));
+			}
 		}
 	}
 	#endregion
 
 	#region 私有方法
+	private static void DisposeStorage(IMessageStorage storage)
+	{
+		if(storage?.Disposable != true)
+			return;
+
+		if(storage is IAsyncDisposable asynchronous)
+			asynchronous.DisposeAsync().AsTask().GetAwaiter().GetResult();
+		else if(storage is IDisposable disposable)
+			disposable.Dispose();
+	}
+
 	private static (int control, int incoming, int outgoing) GetPorts(string name, string[] args)
 	{
 		var control = 0;
@@ -240,13 +253,13 @@ public sealed partial class ZeroQueueServer : WorkerBase
 		private void OnReceiveReady(object sender, NetMQSocketEventArgs args)
 		{
 			var request = args.Socket.ReceiveFrameString();
-			if(!TryParseDiscoveryRequest(request))
+			if(!Protocol.TryParseDiscoveryRequest(request))
 			{
-				args.Socket.SendFrame($"{PROTOCOL_NAME}\nProtocol-Version:{PROTOCOL_VERSION}\nError:InvalidRequest");
+				args.Socket.SendFrame(Protocol.GetDiscoveryError(Protocol.Errors.InvalidRequest));
 				return;
 			}
 
-			args.Socket.SendFrame($"{PROTOCOL_NAME}\nProtocol-Version:{PROTOCOL_VERSION}\nEpoch:{_epoch}\nControl:{_control.Port}\nIncoming:{_broadcast.Incoming}\nOutgoing:{_broadcast.Outgoing}");
+			args.Socket.SendFrame(Protocol.GetDiscoveryResponse(_epoch, _control.Port, _broadcast.Incoming, _broadcast.Outgoing));
 		}
 
 		private void OnCommandReady(object sender, NetMQQueueEventArgs<Command> args)
@@ -335,33 +348,6 @@ public sealed partial class ZeroQueueServer : WorkerBase
 			return socket.BindRandomPort("tcp://*");
 		}
 
-		private static bool TryParseDiscoveryRequest(string request)
-		{
-			if(string.IsNullOrWhiteSpace(request))
-				return false;
-
-			var lines = request.Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-			if(lines.Length < 3 || !string.Equals(lines[0], PROTOCOL_NAME, StringComparison.Ordinal))
-				return false;
-
-			var version = false;
-			var command = false;
-			for(var index = 1; index < lines.Length; index++)
-			{
-				var separator = lines[index].IndexOf(':');
-				if(separator <= 0 || separator == lines[index].Length - 1)
-					return false;
-
-				var name = lines[index].AsSpan(0, separator);
-				var value = lines[index].AsSpan(separator + 1);
-				if(name.SequenceEqual("Protocol-Version"))
-					version = value.SequenceEqual(PROTOCOL_VERSION);
-				else if(name.SequenceEqual("Command"))
-					command = value.SequenceEqual("Discover");
-			}
-
-			return version && command;
-		}
 		#endregion
 
 		#region 异步释放

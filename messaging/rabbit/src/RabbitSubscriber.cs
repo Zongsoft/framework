@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -115,9 +115,20 @@ public class RabbitSubscriber : MessageConsumerBase<RabbitQueue>, IAsyncBasicCon
 		if(channel == null)
 			return;
 
+		byte[] payload;
+		try
+		{
+			payload = string.IsNullOrEmpty(properties?.ContentEncoding) ? data.ToArray() : MessageCompression.Decompress(properties.ContentEncoding, data.Span);
+		}
+		catch(Exception exception)
+		{
+			Diagnostics.Logging.GetLogging(this).Error(exception);
+			return;
+		}
+
 		var message = properties == null || string.IsNullOrEmpty(properties.MessageId) ?
-			new Message(topic, data.ToArray(), cancellation => channel.BasicAckAsync(delivery, false, cancellation)) :
-			new Message(properties.MessageId, topic, data.ToArray(), cancellation => channel.BasicAckAsync(delivery, false, cancellation));
+			new Message(topic, payload, cancellation => channel.BasicAckAsync(delivery, false, cancellation)) :
+			new Message(properties.MessageId, topic, payload, cancellation => channel.BasicAckAsync(delivery, false, cancellation));
 
 		await this.Handler.HandleAsync(message, cancellation);
 	}

@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -56,6 +56,8 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#region 构造函数
 		public MessageTopic(string name) : base(name)
 		{
+			this.Features.Add(MessageQueueFeature.Compression);
+
 			//初始化相关操作的URL常量
 			MESSAGE_SEND_URL = MessageTopicUtility.GetRequestUrl(name, "messages");
 
@@ -76,7 +78,9 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 			if(data.IsEmpty)
 				return null;
 
-			var response = await _http.PostAsync(MESSAGE_SEND_URL, CreateMessageRequest(data.Span, string.IsNullOrEmpty(tags) ? Array.Empty<string>() : tags.Split(new[] { ',', ';' }, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)), cancellation);
+			var compression = options?.Compression ?? default;
+			var payload = compression.CanCompress(data.Length) ? MessageUtility.Pack(compression, data.Span) : data.ToArray();
+			var response = await _http.PostAsync(MESSAGE_SEND_URL, CreateMessageRequest(payload, string.IsNullOrEmpty(tags) ? Array.Empty<string>() : tags.Split(new[] { ',', ';' }, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)), cancellation);
 
 			if(cancellation.IsCancellationRequested)
 				return null;

@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -40,6 +40,10 @@ namespace Zongsoft.Messaging.Kafka;
 
 public class KafkaQueue : MessageQueueBase<KafkaSubscriber, Configuration.KafkaConnectionSettings>
 {
+	#region 常量定义
+	internal const string COMPRESSION_HEADER = "Zongsoft-Compression";
+	#endregion
+
 	#region 成员字段
 	private IProducer<Null, byte[]> _producer;
 	private ConsumerBuilder<string, byte[]> _builder;
@@ -50,6 +54,7 @@ public class KafkaQueue : MessageQueueBase<KafkaSubscriber, Configuration.KafkaC
 	{
 		_producer = new ProducerBuilder<Null, byte[]>(settings.GetProducerOptions()).Build();
 		_builder = new ConsumerBuilder<string, byte[]>(settings.GetConsumerOptions());
+		this.Features.Add(MessageQueueFeature.Compression);
 	}
 	#endregion
 
@@ -59,7 +64,16 @@ public class KafkaQueue : MessageQueueBase<KafkaSubscriber, Configuration.KafkaC
 		if(string.IsNullOrEmpty(topic))
 			throw new ArgumentNullException(nameof(topic));
 
-		var result = await _producer.ProduceAsync(topic, new Message<Null, byte[]> { Value = data.ToArray() }, cancellation);
+		var payload = data.ToArray();
+		var message = new Message<Null, byte[]> { Value = payload };
+		var compression = options?.Compression ?? default;
+		if(compression.CanCompress(payload.Length))
+		{
+			message.Value = compression.Compress(payload);
+			message.Headers = new Headers { new Header(COMPRESSION_HEADER, System.Text.Encoding.UTF8.GetBytes(compression.Name)) };
+		}
+
+		var result = await _producer.ProduceAsync(topic, message, cancellation);
 		return result.TopicPartition.ToString();
 	}
 	#endregion

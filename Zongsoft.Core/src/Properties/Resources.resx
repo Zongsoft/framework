@@ -519,6 +519,9 @@
   <data name="Messaging.QueueUndefined.Message" xml:space="preserve">
     <value>{0}: The specified '{1}' message queue is not defined.</value>
   </data>
+  <data name="Compressor.Undefined.Message" xml:space="preserve">
+    <value>The specified '{0}' message compression algorithm is not supported.</value>
+  </data>
   <data name="ErrorOccurred.Message" xml:space="preserve">
     <value>An error occurred.</value>
   </data>

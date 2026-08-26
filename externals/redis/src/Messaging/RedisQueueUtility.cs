@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -91,13 +91,20 @@ public static class RedisQueueUtility
 
 	internal static RedisValue GetMessageData(this StreamEntry entry) => RedisUtility.GetValue(entry, "Data");
 	internal static RedisValue GetMessageTags(this StreamEntry entry) => RedisUtility.GetValue(entry, "Tags");
-	internal static NameValueEntry[] GetMessagePayload(ReadOnlyMemory<byte> data, string tags) =>
-		string.IsNullOrEmpty(tags) ?
-		[
-			new("Data", data)
-		] :
-		[
-			new NameValueEntry("Data", data),
-			new NameValueEntry("Tags", tags),
-		];
+	internal static RedisValue GetMessageCompression(this StreamEntry entry) => RedisUtility.GetValue(entry, "Compression");
+	internal static NameValueEntry[] GetMessagePayload(ReadOnlyMemory<byte> data, string tags, string compression)
+	{
+		var tagged = !string.IsNullOrEmpty(tags);
+		var compressed = !string.IsNullOrEmpty(compression);
+		var result = new NameValueEntry[1 + (tagged ? 1 : 0) + (compressed ? 1 : 0)];
+		result[0] = new("Data", data);
+
+		var index = 1;
+		if(tagged)
+			result[index++] = new("Tags", tags);
+		if(compressed)
+			result[index] = new("Compression", compression);
+
+		return result;
+	}
 }

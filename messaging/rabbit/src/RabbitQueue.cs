@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -62,6 +62,7 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber, Configuration.Rabb
 	public RabbitQueue(string name, Configuration.RabbitConnectionSettings settings) : base(name, settings)
 	{
 		_connectionFactory = settings.GetOptions();
+		this.Features.Add(MessageQueueFeature.Compression);
 	}
 	#endregion
 
@@ -87,6 +88,7 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber, Configuration.Rabb
 		{
 			MessageId = Common.Randomizer.GenerateString(12),
 		};
+		var payload = data;
 
 		if(options != null)
 		{
@@ -110,12 +112,19 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber, Configuration.Rabb
 			}
 		}
 
+		var compression = options?.Compression ?? default;
+		if(compression.CanCompress(data.Length))
+		{
+			payload = compression.Compress(data.Span);
+			properties.ContentEncoding = compression.Name;
+		}
+
 		await _publishing.WaitAsync(cancellation);
 
 		try
 		{
 			//发送消息
-			await _channel.BasicPublishAsync(this.Exchanger, topic, false, properties, data, cancellation);
+			await _channel.BasicPublishAsync(this.Exchanger, topic, false, properties, payload, cancellation);
 		}
 		finally
 		{

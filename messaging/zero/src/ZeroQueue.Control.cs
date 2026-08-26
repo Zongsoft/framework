@@ -69,15 +69,17 @@ public sealed partial class ZeroQueue
 			#endregion
 
 			#region 发布确认
-			public async ValueTask<string> PublishAsync(string identifier, string topic, string identity, string tags, byte[] data, TimeSpan expiration, CancellationToken cancellation)
+			public async ValueTask<string> PublishAsync(string identifier, string topic, string identity, string tags, byte[] data, MessageCompression compression, TimeSpan expiration, CancellationToken cancellation)
 			{
 				var timestamp = DateTime.UtcNow;
+				var compressed = compression.CanCompress(data.Length);
 				var command = new PublishControlCommand(
 					identifier,
 					topic,
 					identity,
 					tags,
-					data,
+					compressed ? compression.Compress(data) : data,
+					compressed ? compression.Name : null,
 					timestamp,
 					expiration > TimeSpan.Zero ? timestamp + expiration : default,
 					timestamp + _options.Timeout,
@@ -120,7 +122,7 @@ public sealed partial class ZeroQueue
 					dealer.Options.Identity = Encoding.UTF8.GetBytes(_session);
 					dealer.Options.HeartbeatInterval = PING_INTERVAL;
 					dealer.ReceiveReady += this.OnReceiveReady;
-					dealer.Connect(ZeroUtility.GetTcpAddress(_options.Server, port));
+					dealer.Connect(Protocol.GetAddress(_options.Server, port));
 					_poller.Add(dealer);
 					_dealer = dealer;
 					_nextPing = DateTime.UtcNow + PING_INTERVAL;
@@ -197,7 +199,7 @@ public sealed partial class ZeroQueue
 
 				subscription.Command?.Completion.TrySetCanceled();
 				if(_dealer != null && !_dealer.IsDisposed)
-					_dealer.SendMoreFrame("UNREGISTER").SendMoreFrame(_session).SendFrame(subscription.Identifier);
+					_dealer.SendMoreFrame(Protocol.Commands.Unregister).SendMoreFrame(_session).SendFrame(subscription.Identifier);
 				return true;
 			}
 
@@ -215,7 +217,7 @@ public sealed partial class ZeroQueue
 			private bool Acknowledge(AcknowledgeControlCommand command)
 			{
 				var dealer = _dealer ?? throw new InvalidOperationException(Properties.Resources.ZeroQueue_PublisherUninitialized_Message);
-				dealer.SendMoreFrame("ACK").SendMoreFrame(_session).SendMoreFrame(command.Subscription).SendFrame(command.Identifier);
+				dealer.SendMoreFrame(Protocol.Commands.Acknowledge).SendMoreFrame(_session).SendMoreFrame(command.Subscription).SendFrame(command.Identifier);
 				return true;
 			}
 
@@ -236,7 +238,7 @@ public sealed partial class ZeroQueue
 				if(_dealer == null || _dealer.IsDisposed)
 					return;
 
-				_dealer.SendMoreFrame("REGISTER").SendMoreFrame(_session).SendMoreFrame(subscription.Identifier).SendFrame(subscription.Topic);
+				_dealer.SendMoreFrame(Protocol.Commands.Register).SendMoreFrame(_session).SendMoreFrame(subscription.Identifier).SendFrame(subscription.Topic);
 			}
 
 			private void Send(PublishControlCommand command)
@@ -244,13 +246,14 @@ public sealed partial class ZeroQueue
 				if(_dealer == null || _dealer.IsDisposed)
 					return;
 
-				_dealer.SendMoreFrame("PUBLISH")
+				_dealer.SendMoreFrame(Protocol.Commands.Publish)
 					.SendMoreFrame(command.Identifier)
 					.SendMoreFrame(command.Topic)
 					.SendMoreFrame(command.Identity)
 					.SendMoreFrame(command.Tags ?? string.Empty)
 					.SendMoreFrame(command.Timestamp.Ticks.ToString(System.Globalization.CultureInfo.InvariantCulture))
 					.SendMoreFrame(command.Expiration == default ? "0" : command.Expiration.Ticks.ToString(System.Globalization.CultureInfo.InvariantCulture))
+					.SendMoreFrame(command.Compression ?? string.Empty)
 					.SendFrame(command.Data);
 			}
 
@@ -272,7 +275,7 @@ public sealed partial class ZeroQueue
 
 				switch(message[0].ConvertToString())
 				{
-					case "REGISTERED" when message.FrameCount == 2:
+					case Protocol.Commands.Registered when message.FrameCount == 2:
 					{
 						var identifier = message[1].ConvertToString();
 						if(_subscriptions.TryGetValue(identifier, out var subscription))
@@ -283,7 +286,7 @@ public sealed partial class ZeroQueue
 						}
 						break;
 					}
-					case "DELIVER" when message.FrameCount == 9:
+					case Protocol.Commands.Deliver when message.FrameCount == 10:
 					{
 						var subscription = message[1].ConvertToString();
 						if(!_subscriptions.TryGetValue(subscription, out var registration))
@@ -295,13 +298,21 @@ public sealed partial class ZeroQueue
 						var tags = message[5].ConvertToString();
 						var timestamp = long.TryParse(message[6].ConvertToString(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var ticks) ?
 							new DateTime(ticks, DateTimeKind.Utc) : DateTime.UtcNow;
-						var data = message[8].ToByteArray();
-						if(string.IsNullOrWhiteSpace(identifier) || topic == null || data.Length > Packetizer.MaxPayloadSize)
+						var compression = message[8].ConvertToString();
+						var data = message[9].ToByteArray();
+						if(string.IsNullOrWhiteSpace(identifier) || identifier.Length > Protocol.MaxIdentifierSize || topic == null ||
+						   Encoding.UTF8.GetByteCount(topic) > Protocol.MaxTopicSize || data.Length > Protocol.MaxPayloadSize)
 							break;
+						if(!string.IsNullOrEmpty(compression))
+						{
+							data = MessageCompression.Decompress(compression, data);
+							if(data.Length > Protocol.MaxPayloadSize)
+								break;
+						}
 
 						if(!registration.Subscriber.Owner.Validate(producer))
 						{
-							_dealer.SendMoreFrame("ACK").SendMoreFrame(_session).SendMoreFrame(subscription).SendFrame(identifier);
+							_dealer.SendMoreFrame(Protocol.Commands.Acknowledge).SendMoreFrame(_session).SendMoreFrame(subscription).SendFrame(identifier);
 							break;
 						}
 
@@ -313,13 +324,13 @@ public sealed partial class ZeroQueue
 						});
 						break;
 					}
-					case "ACCEPTED" when message.FrameCount == 2:
+					case Protocol.Commands.Accepted when message.FrameCount == 2:
 						this.Complete(message[1].ConvertToString(), true);
 						break;
-					case "UNROUTABLE" when message.FrameCount == 2:
+					case Protocol.Commands.Unroutable when message.FrameCount == 2:
 						this.Complete(message[1].ConvertToString(), false);
 						break;
-					case "ERROR" when message.FrameCount == 3:
+					case Protocol.Commands.Error when message.FrameCount == 3:
 					{
 						var code = message[1].ConvertToString();
 						var identifier = message[2].ConvertToString();
@@ -366,7 +377,7 @@ public sealed partial class ZeroQueue
 				foreach(var subscription in _subscriptions.Values)
 				{
 					if(subscription.Registered)
-						_dealer.SendMoreFrame("PING").SendMoreFrame(_session).SendFrame(subscription.Identifier);
+						_dealer.SendMoreFrame(Protocol.Commands.Ping).SendMoreFrame(_session).SendFrame(subscription.Identifier);
 					else
 						this.Register(subscription);
 				}
@@ -399,13 +410,14 @@ public sealed partial class ZeroQueue
 				public bool Registered;
 			}
 
-			private sealed class PublishControlCommand(string identifier, string topic, string identity, string tags, byte[] data, DateTime timestamp, DateTime expiration, DateTime deadline, CancellationToken cancellation) : ControlCommand(cancellation)
+			private sealed class PublishControlCommand(string identifier, string topic, string identity, string tags, byte[] data, string compression, DateTime timestamp, DateTime expiration, DateTime deadline, CancellationToken cancellation) : ControlCommand(cancellation)
 			{
 				public readonly string Identifier = identifier;
 				public readonly string Topic = topic;
 				public readonly string Identity = identity;
 				public readonly string Tags = tags;
 				public readonly byte[] Data = data;
+				public readonly string Compression = compression;
 				public readonly DateTime Timestamp = timestamp;
 				public readonly DateTime Expiration = expiration;
 				public readonly DateTime Deadline = deadline;

@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -131,8 +131,12 @@ public class KafkaSubscriber : MessageConsumerBase<KafkaQueue>
 		if(result.IsPartitionEOF)
 			return Message.Empty;
 
+		var data = result.Message.Value;
+		if(result.Message.Headers?.TryGetLastBytes(KafkaQueue.COMPRESSION_HEADER, out var compression) == true && compression?.Length > 0)
+			data = MessageCompression.Decompress(System.Text.Encoding.UTF8.GetString(compression), data);
+
 		//构建接收到的消息
-		return new Message(result.Message.Key, result.Topic, result.Message.Value, () => this.Commit(result))
+		return new Message(result.Message.Key, result.Topic, data, () => this.Commit(result))
 		{
 			Timestamp = result.Message.Timestamp.UtcDateTime,
 		};

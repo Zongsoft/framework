@@ -38,6 +38,7 @@ public class RabbitQueueFactoryTests
 		Assert.Equal("RabbitMQ", rabbit.Name);
 		Assert.Same(settings, rabbit.Settings);
 		Assert.False(rabbit.Features.Contains(MessageQueueFeature.Delay.Name));
+		Assert.True(rabbit.Features.Contains(MessageQueueFeature.Compression.Name));
 	}
 
 	[Fact]

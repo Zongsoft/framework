@@ -39,43 +39,42 @@ internal static class Packetizer
 	private const char Delimiter = '\n';
 	#endregion
 
-	#region 公共常量
-	public const string ProtocolVersion = "2.0";
-	public const int MaxHeaderSize = 16 * 1024;
-	public const int MaxTopicSize = 1024;
-	public const int MaxIdentifierSize = 256;
-	public const int MaxOptionCount = 32;
-	public const int MaxPayloadSize = 64 * 1024 * 1024;
-	#endregion
-
 	#region 公共方法
-	public static string Pack(string topic) => $"{topic}@{Delimiter}{Options.ProtocolVersion}:{ProtocolVersion}";
-	public static string Pack(string identity, string identifier, string topic, string compressor) => string.IsNullOrEmpty(compressor) ?
-		$"{topic}@{identity}{Delimiter}{Options.ProtocolVersion}:{ProtocolVersion}{Delimiter}{Options.Identifier}:{identifier}" :
-		$"{topic}@{identity}{Delimiter}{Options.ProtocolVersion}:{ProtocolVersion}{Delimiter}{Options.Identifier}:{identifier}{Delimiter}{Options.Compressor}:{compressor}";
-
-	public static bool TryUnpack(ReadOnlySpan<char> header, out string identifier, out string topic, out IReadOnlyList<KeyValuePair<string, string>> options)
+	public static string Pack(string topic) => $"{topic}{Delimiter}{Protocol.Headers.Version}:{Protocol.Version}";
+	public static string Pack(string identity, string identifier, string topic, string tags, string compression)
 	{
-		identifier = null;
+		Validate(topic, nameof(topic));
+		Validate(identity, nameof(identity));
+		Validate(identifier, nameof(identifier));
+		Validate(tags, nameof(tags));
+		Validate(compression, nameof(compression));
+		if(Encoding.UTF8.GetByteCount(topic) > Protocol.MaxTopicSize)
+			throw new ArgumentOutOfRangeException(nameof(topic));
+		if(identifier?.Length > Protocol.MaxIdentifierSize)
+			throw new ArgumentOutOfRangeException(nameof(identifier));
+
+		var result = $"{topic}{Delimiter}{Protocol.Headers.Version}:{Protocol.Version}{Delimiter}{Protocol.Headers.Identifier}:{identifier}{Delimiter}{Protocol.Headers.Identity}:{identity}";
+		if(!string.IsNullOrEmpty(tags))
+			result += $"{Delimiter}{Protocol.Headers.Tags}:{tags}";
+		if(!string.IsNullOrEmpty(compression))
+			result += $"{Delimiter}{Protocol.Headers.Compression}:{compression}";
+		return result;
+	}
+
+	public static bool TryUnpack(ReadOnlySpan<char> header, out string topic, out IReadOnlyList<KeyValuePair<string, string>> options)
+	{
 		topic = null;
 		options = [];
 
-		if(header.IsEmpty || header.Length > MaxHeaderSize)
+		if(header.IsEmpty || header.Length > Protocol.MaxHeaderSize || header.IndexOf('\r') >= 0)
 			return false;
 
 		var delimiter = header.IndexOf(Delimiter);
-		var address = delimiter < 0 ? header : header[..delimiter];
-		var separator = address.LastIndexOf('@');
-
-		if(separator <= 0)
-			return false;
-
-		topic = address[..separator].ToString();
-		identifier = address[(separator + 1)..].ToString();
-		if(Encoding.UTF8.GetByteCount(topic) > MaxTopicSize || Encoding.UTF8.GetByteCount(identifier) > MaxIdentifierSize)
-			return false;
-
 		if(delimiter < 0)
+			return false;
+
+		topic = header[..delimiter].ToString();
+		if(Encoding.UTF8.GetByteCount(topic) > Protocol.MaxTopicSize)
 			return false;
 
 		var result = new List<KeyValuePair<string, string>>();
@@ -84,7 +83,7 @@ internal static class Packetizer
 
 		while(!text.IsEmpty)
 		{
-			if(result.Count >= MaxOptionCount)
+			if(result.Count >= Protocol.MaxOptionCount)
 				return false;
 
 			var end = text.IndexOf(Delimiter);
@@ -110,37 +109,33 @@ internal static class Packetizer
 		}
 
 		options = result;
-		return Options.TryGetValue(result, Options.ProtocolVersion, out var version) && string.Equals(version, ProtocolVersion, StringComparison.Ordinal);
+		return TryGetValue(result, Protocol.Headers.Version, out var version) && string.Equals(version, Protocol.Version, StringComparison.Ordinal);
+	}
+
+	public static bool TryGetValue(IEnumerable<KeyValuePair<string, string>> options, string name, out string value)
+	{
+		if(options != null)
+		{
+			foreach(var option in options)
+			{
+				if(string.Equals(option.Key, name, StringComparison.OrdinalIgnoreCase))
+				{
+					value = option.Value;
+					return true;
+				}
+			}
+		}
+
+		value = null;
+		return false;
 	}
 	#endregion
 
-	#region 嵌套子类
-	public sealed class Options
+	#region 私有方法
+	private static void Validate(string value, string name)
 	{
-		/// <summary>协议版本的选项。</summary>
-		public const string ProtocolVersion = "Protocol-Version";
-		/// <summary>消息标识的选项。</summary>
-		public const string Identifier = nameof(Identifier);
-		/// <summary>压缩器名称的选项。</summary>
-		public const string Compressor = nameof(Compressor);
-
-		public static bool TryGetValue(IEnumerable<KeyValuePair<string, string>> options, string name, out string value)
-		{
-			if(options != null)
-			{
-				foreach(var option in options)
-				{
-					if(string.Equals(option.Key, name, StringComparison.OrdinalIgnoreCase))
-					{
-						value = option.Value;
-						return true;
-					}
-				}
-			}
-
-			value = null;
-			return false;
-		}
+		if(value?.IndexOfAny(['\r', '\n']) >= 0)
+			throw new ArgumentException(Properties.Resources.ZeroQueue_HeaderValueInvalid_Message, name);
 	}
 	#endregion
 }

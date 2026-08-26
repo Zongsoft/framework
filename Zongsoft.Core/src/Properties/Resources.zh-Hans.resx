@@ -519,6 +519,9 @@
   <data name="Messaging.QueueUndefined.Message" xml:space="preserve">
     <value>{0}：未定义指定的“{1}”消息队列。</value>
   </data>
+  <data name="Compressor.Undefined.Message" xml:space="preserve">
+    <value>不支持指定的“{0}”消息压缩算法。</value>
+  </data>
   <data name="ErrorOccurred.Message" xml:space="preserve">
     <value>发生错误。</value>
   </data>

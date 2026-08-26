@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -30,6 +30,7 @@
 using System;
 using System.IO;
 using System.Xml;
+using System.Text;
 using System.Text.RegularExpressions;
 
 using Zongsoft.Services;
@@ -43,6 +44,7 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 		#region 常量定义
 		public const string QueueNotExist = "QueueNotExist";
 		public const string MessageNotExist = "MessageNotExist";
+		private static ReadOnlySpan<byte> CompressionMagic => "ZCMP"u8;
 
 		private static readonly Regex _error_regex = new Regex(@"\<(?'tag'(Code|Message))\>\s*(?<value>[^<>]+)\s*\<\/\k'tag'\>", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace);
 		#endregion
@@ -107,11 +109,55 @@ namespace Zongsoft.Externals.Aliyun.Messaging
 				}
 			}
 
+			var data = string.IsNullOrWhiteSpace(body) ? null : Convert.FromBase64String(body);
+			if(data != null && TryDecompress(data, out var decompressed))
+				data = decompressed;
+
 			return new Message(
 				id,
 				null,
-				string.IsNullOrWhiteSpace(body) ? null : Convert.FromBase64String(body),
+				data,
 				(delay, cancellation) => queue.AcknowledgeAsync(ackId, delay, cancellation));
+		}
+
+		internal static byte[] Pack(MessageCompression compression, ReadOnlySpan<byte> data)
+		{
+			if(compression.IsEmpty)
+				throw new InvalidOperationException();
+
+			var name = Encoding.UTF8.GetBytes(compression.Name);
+			if(name.Length > byte.MaxValue)
+				throw Common.OperationException.Unsupported();
+
+			var payload = compression.Compress(data);
+			var result = new byte[CompressionMagic.Length + 2 + name.Length + payload.Length];
+			CompressionMagic.CopyTo(result);
+			result[CompressionMagic.Length] = 1;
+			result[CompressionMagic.Length + 1] = (byte)name.Length;
+			name.CopyTo(result, CompressionMagic.Length + 2);
+			payload.CopyTo(result, CompressionMagic.Length + 2 + name.Length);
+			return result;
+		}
+
+		private static bool TryDecompress(ReadOnlySpan<byte> source, out byte[] data)
+		{
+			var offset = CompressionMagic.Length;
+			if(source.Length < offset || !source[..offset].SequenceEqual(CompressionMagic))
+			{
+				data = null;
+				return false;
+			}
+
+			if(source.Length <= offset + 2 || source[offset] != 1)
+				throw new FormatException();
+
+			var length = source[offset + 1];
+			if(length == 0 || source.Length <= offset + 2 + length)
+				throw new FormatException();
+
+			var name = Encoding.UTF8.GetString(source.Slice(offset + 2, length));
+			data = MessageCompression.Decompress(name, source[(offset + 2 + length)..]);
+			return true;
 		}
 
 		public static MessageTopicInfo ResolveTopicInfo(Stream stream)

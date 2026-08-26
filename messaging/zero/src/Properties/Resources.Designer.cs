@@ -379,6 +379,15 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
             }
         }
 
+		/// <summary>
+		///   查找类似 The '{0}' message header value cannot contain a carriage return or line feed. 的本地化字符串。
+		/// </summary>
+		internal static string ZeroQueue_HeaderValueInvalid_Message {
+			get {
+				return ResourceManager.GetString("ZeroQueue.HeaderValueInvalid.Message", resourceCulture);
+			}
+		}
+
         /// <summary>
         ///   查找类似 The queue cannot be replaced after the requester has subscribed to a reply topic. 的本地化字符串。
         /// </summary>

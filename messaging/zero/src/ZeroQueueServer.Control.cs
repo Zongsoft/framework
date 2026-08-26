@@ -184,19 +184,19 @@ public sealed partial class ZeroQueueServer
 				var route = message[0].ToByteArray();
 				switch(message[1].ConvertToString())
 				{
-					case "REGISTER" when message.FrameCount == 5:
+					case Protocol.Commands.Register when message.FrameCount == 5:
 						this.Register(route, message[2].ConvertToString(), message[3].ConvertToString(), message[4].ConvertToString());
 						break;
-					case "UNREGISTER" when message.FrameCount == 4:
+					case Protocol.Commands.Unregister when message.FrameCount == 4:
 						this.Unregister(message[2].ConvertToString(), message[3].ConvertToString());
 						break;
-					case "PING" when message.FrameCount == 4:
+					case Protocol.Commands.Ping when message.FrameCount == 4:
 						this.Ping(route, message[2].ConvertToString(), message[3].ConvertToString());
 						break;
-					case "PUBLISH" when message.FrameCount == 9:
-						this.Publish(route, message[2].ConvertToString(), message[3].ConvertToString(), message[4].ConvertToString(), message[5].ConvertToString(), message[6].ConvertToString(), message[7].ConvertToString(), message[8].ToByteArray());
+					case Protocol.Commands.Publish when message.FrameCount == 10:
+						this.Publish(route, message[2].ConvertToString(), message[3].ConvertToString(), message[4].ConvertToString(), message[5].ConvertToString(), message[6].ConvertToString(), message[7].ConvertToString(), message[8].ConvertToString(), message[9].ToByteArray());
 						break;
-					case "ACK" when message.FrameCount == 5:
+					case Protocol.Commands.Acknowledge when message.FrameCount == 5:
 						this.Acknowledge(message[2].ConvertToString(), message[3].ConvertToString(), message[4].ConvertToString());
 						break;
 				}
@@ -204,11 +204,12 @@ public sealed partial class ZeroQueueServer
 
 			private void Register(byte[] route, string session, string identifier, string topic)
 			{
-				if(string.IsNullOrWhiteSpace(session) || string.IsNullOrWhiteSpace(identifier) || topic == null)
+				if(string.IsNullOrWhiteSpace(session) || string.IsNullOrWhiteSpace(identifier) || identifier.Length > Protocol.MaxIdentifierSize ||
+				   topic == null || System.Text.Encoding.UTF8.GetByteCount(topic) > Protocol.MaxTopicSize)
 					return;
 
 				_registrations[identifier] = new Registration(route, session, identifier, topic, DateTime.UtcNow);
-				this.Send(route, "REGISTERED", identifier);
+				this.Send(route, Protocol.Commands.Registered, identifier);
 
 				foreach(var envelope in _pending.Values)
 				{
@@ -232,18 +233,21 @@ public sealed partial class ZeroQueueServer
 				}
 			}
 
-			private void Publish(byte[] route, string identifier, string topic, string producer, string tags, string timestampText, string expirationText, byte[] data)
+			private void Publish(byte[] route, string identifier, string topic, string producer, string tags, string timestampText, string expirationText, string compression, byte[] data)
 			{
-				if(string.IsNullOrWhiteSpace(identifier) || topic == null || string.IsNullOrWhiteSpace(producer) || data == null || data.Length > Packetizer.MaxPayloadSize ||
+				if(string.IsNullOrWhiteSpace(identifier) || identifier.Length > Protocol.MaxIdentifierSize || topic == null ||
+				   System.Text.Encoding.UTF8.GetByteCount(topic) > Protocol.MaxTopicSize || string.IsNullOrWhiteSpace(producer) ||
+				   data == null || data.Length > Protocol.MaxPayloadSize ||
+				   (!string.IsNullOrEmpty(compression) && !IO.Compression.Compressor.IsSupported(compression)) ||
 				   !long.TryParse(timestampText, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var timestampTicks) ||
 				   !long.TryParse(expirationText, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var expirationTicks))
 				{
-					this.Send(route, "ERROR", "InvalidPublish", identifier ?? string.Empty);
+					this.Send(route, Protocol.Commands.Error, Protocol.Errors.InvalidPublish, identifier ?? string.Empty);
 					return;
 				}
 
 				var expiration = expirationTicks <= 0 ? default : new DateTime(expirationTicks, DateTimeKind.Utc);
-				var envelope = new DurableEnvelope(identifier, topic, producer, tags, data, new DateTime(timestampTicks, DateTimeKind.Utc), expiration)
+				var envelope = new DurableEnvelope(identifier, topic, producer, tags, compression, data, new DateTime(timestampTicks, DateTimeKind.Utc), expiration)
 				{
 					NextAttempt = DateTime.MinValue,
 				};
@@ -251,10 +255,10 @@ public sealed partial class ZeroQueueServer
 				if(_pending.TryGetValue(identifier, out var current))
 				{
 					if(!current.Equals(envelope))
-						this.Send(route, "ERROR", "IdentifierConflict", identifier);
+						this.Send(route, Protocol.Commands.Error, Protocol.Errors.IdentifierConflict, identifier);
 					else
 					{
-						this.Send(route, "ACCEPTED", identifier);
+						this.Send(route, Protocol.Commands.Accepted, identifier);
 						if(current.Removal == RemovalReason.None)
 							current.NextAttempt = DateTime.MinValue;
 					}
@@ -264,7 +268,7 @@ public sealed partial class ZeroQueueServer
 				if(_accepting.TryGetValue(identifier, out var accepting))
 				{
 					if(!accepting.Envelope.Equals(envelope))
-						this.Send(route, "ERROR", "IdentifierConflict", identifier);
+						this.Send(route, Protocol.Commands.Error, Protocol.Errors.IdentifierConflict, identifier);
 					else
 						accepting.Add(route);
 					return;
@@ -272,13 +276,13 @@ public sealed partial class ZeroQueueServer
 
 				if(!this.HasRegistration(topic))
 				{
-					this.Send(route, "UNROUTABLE", identifier);
+					this.Send(route, Protocol.Commands.Unroutable, identifier);
 					return;
 				}
 
 				if(expiration != default && expiration <= DateTime.UtcNow)
 				{
-					this.Send(route, "ERROR", "Expired", identifier);
+					this.Send(route, Protocol.Commands.Error, Protocol.Errors.Expired, identifier);
 					return;
 				}
 
@@ -287,7 +291,7 @@ public sealed partial class ZeroQueueServer
 				if(!_worker.TryExecute(() => _storage.SetAsync(GetStorageMessage(envelope), GetExpiry(envelope)), exception => this.Dispatch(() => this.OnPersisted(identifier, exception))))
 				{
 					_accepting.Remove(identifier);
-					this.Send(route, "ERROR", "StorageBusy", identifier);
+					this.Send(route, Protocol.Commands.Error, Protocol.Errors.StorageBusy, identifier);
 				}
 			}
 
@@ -300,13 +304,13 @@ public sealed partial class ZeroQueueServer
 				{
 					Diagnostics.Logging.GetLogging(this).Error(exception, string.Format(Properties.Resources.ZeroQueue_StorageSetFailed_Message, _storage.Name, identifier));
 					foreach(var route in accepting.Routes)
-						this.Send(route, "ERROR", "StorageFailure", identifier);
+						this.Send(route, Protocol.Commands.Error, Protocol.Errors.StorageFailure, identifier);
 					return;
 				}
 
 				_pending.Add(identifier, accepting.Envelope);
 				foreach(var route in accepting.Routes)
-					this.Send(route, "ACCEPTED", identifier);
+					this.Send(route, Protocol.Commands.Accepted, identifier);
 				this.Deliver(accepting.Envelope);
 			}
 
@@ -363,7 +367,7 @@ public sealed partial class ZeroQueueServer
 				try
 				{
 					_router.SendMoreFrame(registration.Route)
-						.SendMoreFrame("DELIVER")
+						.SendMoreFrame(Protocol.Commands.Deliver)
 						.SendMoreFrame(registration.Identifier)
 						.SendMoreFrame(envelope.Identifier)
 						.SendMoreFrame(envelope.Topic)
@@ -371,6 +375,7 @@ public sealed partial class ZeroQueueServer
 						.SendMoreFrame(envelope.Tags ?? string.Empty)
 						.SendMoreFrame(envelope.Timestamp.Ticks.ToString(System.Globalization.CultureInfo.InvariantCulture))
 						.SendMoreFrame(envelope.Attempt.ToString(System.Globalization.CultureInfo.InvariantCulture))
+						.SendMoreFrame(envelope.Compression ?? string.Empty)
 						.SendFrame(envelope.Data);
 				}
 				catch(NetMQException) { }
@@ -481,6 +486,8 @@ public sealed partial class ZeroQueueServer
 				envelope.Topic,
 				JsonSerializer.SerializeToUtf8Bytes(new DurablePayload
 				{
+					Version = Protocol.Version,
+					Compression = envelope.Compression,
 					Data = envelope.Data,
 					Expiration = envelope.Expiration,
 				}))
@@ -495,13 +502,15 @@ public sealed partial class ZeroQueueServer
 				try
 				{
 					var payload = JsonSerializer.Deserialize<DurablePayload>(message.Data);
-					if(payload?.Data == null || string.IsNullOrWhiteSpace(message.Identifier) || message.Topic == null || string.IsNullOrWhiteSpace(message.Identity))
+					if(payload?.Data == null || !string.Equals(payload.Version, Protocol.Version, StringComparison.Ordinal) ||
+					   (!string.IsNullOrEmpty(payload.Compression) && !IO.Compression.Compressor.IsSupported(payload.Compression)) ||
+					   string.IsNullOrWhiteSpace(message.Identifier) || message.Topic == null || string.IsNullOrWhiteSpace(message.Identity))
 					{
 						envelope = null;
 						return false;
 					}
 
-					envelope = new DurableEnvelope(message.Identifier, message.Topic, message.Identity, message.Tags, payload.Data, message.Timestamp, payload.Expiration);
+					envelope = new DurableEnvelope(message.Identifier, message.Topic, message.Identity, message.Tags, payload.Compression, payload.Data, message.Timestamp, payload.Expiration);
 					return true;
 				}
 				catch(JsonException)
@@ -563,12 +572,13 @@ public sealed partial class ZeroQueueServer
 				}
 			}
 
-			private sealed class DurableEnvelope(string identifier, string topic, string producer, string tags, byte[] data, DateTime timestamp, DateTime expiration)
+			private sealed class DurableEnvelope(string identifier, string topic, string producer, string tags, string compression, byte[] data, DateTime timestamp, DateTime expiration)
 			{
 				public readonly string Identifier = identifier;
 				public readonly string Topic = topic;
 				public readonly string Producer = producer;
 				public readonly string Tags = string.IsNullOrEmpty(tags) ? null : tags;
+				public readonly string Compression = string.IsNullOrEmpty(compression) ? null : compression;
 				public readonly byte[] Data = data;
 				public readonly DateTime Timestamp = timestamp;
 				public readonly DateTime Expiration = expiration;
@@ -584,12 +594,15 @@ public sealed partial class ZeroQueueServer
 					string.Equals(this.Topic, other.Topic, StringComparison.Ordinal) &&
 					string.Equals(this.Producer, other.Producer, StringComparison.Ordinal) &&
 					string.Equals(this.Tags, other.Tags, StringComparison.Ordinal) &&
+					string.Equals(this.Compression, other.Compression, StringComparison.OrdinalIgnoreCase) &&
 					this.Timestamp == other.Timestamp && this.Expiration == other.Expiration &&
 					this.Data.AsSpan().SequenceEqual(other.Data);
 			}
 
 			private sealed class DurablePayload
 			{
+				public string Version { get; set; }
+				public string Compression { get; set; }
 				public byte[] Data { get; set; }
 				public DateTime Expiration { get; set; }
 			}

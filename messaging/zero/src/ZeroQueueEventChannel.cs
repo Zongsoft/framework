@@ -58,7 +58,7 @@ public class ZeroQueueEventChannel : ChannelBase, IEventChannel
 
 		if(options == null)
 		{
-			options = new MessageEnqueueOptions() { Compression = 4 * 1024 };
+			options = new MessageEnqueueOptions() { Compression = new MessageCompression(IO.Compression.Compressor.Brotli, 4096) };
 		}
 
 		this.Options = options;

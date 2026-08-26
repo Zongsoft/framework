@@ -23,7 +23,7 @@ The included `ZeroQueueServer` combines an XPUB/XSUB exchange for at-most-once t
 - Implements the Zongsoft `IMessageQueue`, `IRequester`, `IResponder`, and `IEventChannel` abstractions;
 - Supports multiple publishers and subscribers through an XPUB/XSUB exchange;
 - Supports topic prefixes, optional message groups, instance filtering, and heartbeats;
-- Supports Brotli payload compression above a configurable threshold;
+- Supports Brotli, GZip, ZLib, or Deflate payload compression above a configurable threshold;
 - Supports immediate at-most-once broadcast and Broker-persisted, explicitly acknowledged competing at-least-once delivery;
 - Supports standalone use and Zongsoft plugin-based hosting;
 - Targets .NET 8, .NET 9, and .NET 10.
@@ -69,13 +69,13 @@ The packaged daemon plugin starts `ZeroQueueServer` automatically. Configure its
 <configuration>
 	<option path="/Messaging/ZeroMQ">
 		<servers port="32100,32101,32102">
-			<server server.name="unnamed" port="*" />
+			<server server.name="unnamed" />
 		</servers>
 	</option>
 </configuration>
 ```
 
-The three values are reliability control, publisher incoming, and subscriber outgoing. Two-value configurations remain `Incoming,Outgoing` with the configured Control port set to zero, so a random Control port is selected when Storage is available. The Control endpoint starts only when the Server has an `IMessageStorage`; `*` selects random runtime ports.
+The three values are reliability control, publisher incoming, and subscriber outgoing. A two-value configuration is `Incoming,Outgoing`; when Storage is available, Control is selected dynamically. Control starts only when the Server has an `IMessageStorage`. Port precedence is: explicit startup arguments, the named server's own `Port`, the collection-level `Servers.Port`, then dynamic selection. `*` explicitly requests dynamic ports.
 
 For standalone applications, start the exchange directly:
 
@@ -125,6 +125,7 @@ Create a queue directly when the application does not use the Zongsoft plugin co
 
 ```csharp
 using System.Text;
+using Zongsoft.Messaging;
 using Zongsoft.Messaging.ZeroMQ;
 using Zongsoft.Messaging.ZeroMQ.Configuration;
 
@@ -152,13 +153,18 @@ Each subscriber invokes its handler sequentially in receive order. When its boun
 
 ### Compression
 
-Set `MessageEnqueueOptions.Compression` to the minimum payload size, in bytes, at which Brotli compression is enabled. A non-positive value disables compression:
+Set `MessageEnqueueOptions.Compression` to an algorithm and the minimum payload size that enables compression. `MessageCompression.Value` is an integer byte threshold; its text format is `<algorithm>:<threshold>`. Zero compresses every non-empty payload and the default value disables compression:
 
 ```csharp
-var options = new MessageEnqueueOptions() { Compression = 4 * 1024 };
+var options = new MessageEnqueueOptions()
+{
+	Compression = MessageCompression.Parse("Brotli:4096"),
+};
 
 await queue.ProduceAsync("documents/updated", payload, options);
 ```
+
+The equivalent strongly typed construction is `new MessageCompression("Brotli", 4096)`.
 
 ### At-least-once delivery
 
@@ -189,12 +195,12 @@ sealed class ReliableOrderHandler : HandlerBase<Message>
 
 The Broker accepts a publication only when an online matching subscription exists. No match returns `null` without writing Storage. With a match, the Broker persists Pending first and then returns the identifier. Delivery competes among online subscribers; any one acknowledgement removes Pending. Retries reuse `Message.Identifier` and may choose another consumer, so handlers must be idempotent.
 
-Assign `ZeroQueueServer.Storage` only while the Server is stopped. The plugin container owns injected storage lifetimes; the Server does not dispose them. A Broker without Storage still serves `MostOnce` Broadcast traffic but advertises `Control:0` and does not start the reliable Control endpoint, so `LeastOnce` operations fail.
+Assign `ZeroQueueServer.Storage` only while the Server is stopped. With `Storage.Disposable=false`, the container or application owns it. With `true`, the Server disposes it when the Server itself is disposed, preferring `IAsyncDisposable`; ordinary Stop does not dispose Storage, so the Server can restart. A Broker without Storage still serves `MostOnce` Broadcast, but does not start Control and returns only `Incoming,Outgoing` in discovery `Ports`; `LeastOnce` operations then fail.
 
 | Messaging option | Support |
 | --- | --- |
-| `Compression` | Supported by `MostOnce`; enables Brotli above the specified byte threshold. The reliable Control path is not compressed. |
-| Tags | Preserved by `LeastOnce`; the `MostOnce` two-frame format does not currently carry them. |
+| `Compression` | Supported by both `MostOnce` and `LeastOnce` with Brotli, GZip, ZLib, or Deflate; only `Message.Data` is compressed. |
+| Tags and identity | Both modes carry `Identifier`, `Identity`, and `Tags` as independent metadata. |
 | `Delay` | Unsupported; Core checks `Features` and rejects a positive delay before entering the driver. |
 | Expiration | Supported by `LeastOnce`; zero means no expiration. |
 | Priority | Not implemented. |
@@ -251,7 +257,9 @@ The selected `MessageReliability` determines the contract:
 - A queue snapshots its connection, ports, group, filter, timeout, and heartbeat settings at construction; mutating the original settings object does not reconfigure a running queue;
 - Empty business payloads are supported.
 
-Message storage is an independent plugin concept, not part of the ZeroMQ driver. This package provides no default file store. Applications using `LeastOnce` must assign an independent `IMessageStorage` instance to each Broker Server. `Name` identifies the implementation, while `Settings` defines that instance's connection and data scope. The plugin container owns the instance lifetime. An implementation must hold a message snapshot before `SetAsync` returns and provide the required restart durability.
+Message storage is an independent plugin concept, not part of the ZeroMQ driver. This package provides no default file store. Applications using `LeastOnce` must assign an independent `IMessageStorage` instance to each Broker Server. `Name` identifies the implementation, while `Settings` defines that instance's connection and data scope. Storage supports exact-topic reads and clears. An implementation must hold a message snapshot before `SetAsync` returns and provide the required restart durability.
+
+See the [ZeroMQ 1.0 protocol](PROTOCOL.md) for the complete Discovery, Broadcast, and Control frame definitions.
 
 <a name="samples"></a>
 ## Samples and Troubleshooting

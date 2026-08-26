@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -55,6 +55,7 @@ public class MessageQueue : MessageQueueBase<MessageQueue.Consumer>
 	public MessageQueue(string name) : base(name)
 	{
 		this.Features.Add(MessageQueueFeature.Delay);
+		this.Features.Add(MessageQueueFeature.Compression);
 
 		var certificate = MessageQueueUtility.GetCertificate(name);
 		_http = new HttpClient(new HttpClientHandler(certificate, MessageAuthenticator.Instance));
@@ -146,8 +147,10 @@ public class MessageQueue : MessageQueueBase<MessageQueue.Consumer>
 		if(options.Delay.TotalDays > 7)
 			options.Delay = TimeSpan.FromDays(7);
 
+		var compression = options.Compression;
+		var payload = compression.CanCompress(data.Length) ? MessageUtility.Pack(compression, data) : data;
 		var text = @"<Message xmlns=""http://mqs.aliyuncs.com/doc/v1/""><MessageBody>" +
-			System.Convert.ToBase64String(data) +
+			System.Convert.ToBase64String(payload) +
 			"</MessageBody><DelaySeconds>" +
 			((int)options.Delay.TotalSeconds).ToString() +
 			"</DelaySeconds><Priority>" + options.Priority.ToString() + "</Priority></Message>";

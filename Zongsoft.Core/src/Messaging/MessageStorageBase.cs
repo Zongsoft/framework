@@ -85,6 +85,43 @@ public abstract class MessageStorageBase<TSettings> : IMessageStorage where TSet
 	#endregion
 
 	#region 公共方法
+	/// <summary>清除当前存储器中的全部消息。</summary>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回表示异步清除操作的任务，其结果为实际删除的消息数量。</returns>
+	/// <exception cref="OperationCanceledException">异步操作已由 <paramref name="cancellation"/> 取消。</exception>
+	public ValueTask<int> ClearAsync(CancellationToken cancellation = default) => this.ClearAsync(null, cancellation);
+
+	/// <summary>清除当前存储器中指定主题的全部消息。</summary>
+	/// <param name="topic">指定要清除的消息主题；为 <see langword="null"/> 表示清除所有消息，空字符串表示默认主题。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回表示异步清除操作的任务，其结果为实际删除的消息数量。</returns>
+	/// <exception cref="OperationCanceledException">异步操作已由 <paramref name="cancellation"/> 取消。</exception>
+	/// <remarks>非空主题采用区分大小写的精确匹配；传入 <see langword="null"/> 与调用 <see cref="ClearAsync(CancellationToken)"/> 等效。</remarks>
+	public ValueTask<int> ClearAsync(string topic, CancellationToken cancellation = default)
+	{
+		cancellation.ThrowIfCancellationRequested();
+		return this.OnClearAsync(topic, cancellation);
+	}
+
+	/// <summary>获取当前存储器中的消息。</summary>
+	/// <param name="cancellation">指定的异步枚举取消标记。</param>
+	/// <returns>返回当前存储器中尚未过期的消息异步序列。</returns>
+	/// <exception cref="OperationCanceledException">异步枚举已由 <paramref name="cancellation"/> 取消。</exception>
+	/// <remarks>返回的消息必须是独立快照且不得包含确认回调；枚举顺序由具体存储实现定义。</remarks>
+	public IAsyncEnumerable<Message> GetAsync(CancellationToken cancellation = default) => this.GetAsync(null, cancellation);
+
+	/// <summary>获取当前存储器中指定主题的消息。</summary>
+	/// <param name="topic">指定要获取的消息主题；为 <see langword="null"/> 表示不限主题，空字符串表示默认主题。</param>
+	/// <param name="cancellation">指定的异步枚举取消标记。</param>
+	/// <returns>返回指定主题中尚未过期的消息异步序列。</returns>
+	/// <exception cref="OperationCanceledException">异步枚举已由 <paramref name="cancellation"/> 取消。</exception>
+	/// <remarks>非空主题采用区分大小写的精确匹配；传入 <see langword="null"/> 与调用 <see cref="GetAsync(CancellationToken)"/> 等效。返回的消息必须是独立快照且不得包含确认回调。</remarks>
+	public IAsyncEnumerable<Message> GetAsync(string topic, CancellationToken cancellation = default)
+	{
+		cancellation.ThrowIfCancellationRequested();
+		return this.OnGetAsync(topic, cancellation);
+	}
+
 	/// <summary>新增或更新指定的消息。</summary>
 	/// <param name="message">指定要保存的消息。</param>
 	/// <param name="expiry">指定消息的生存时长，小于或等于零表示永久保存。</param>
@@ -116,20 +153,17 @@ public abstract class MessageStorageBase<TSettings> : IMessageStorage where TSet
 		cancellation.ThrowIfCancellationRequested();
 		return this.OnRemoveAsync(identifier, cancellation);
 	}
-
-	/// <summary>获取当前存储器中的消息。</summary>
-	/// <param name="cancellation">指定的异步枚举取消标记。</param>
-	/// <returns>返回当前存储器中尚未过期的消息异步序列。</returns>
-	/// <exception cref="OperationCanceledException">异步枚举已由 <paramref name="cancellation"/> 取消。</exception>
-	/// <remarks>派生实现返回的消息必须是独立快照且不得包含确认回调。</remarks>
-	public IAsyncEnumerable<Message> GetAsync(CancellationToken cancellation = default)
-	{
-		cancellation.ThrowIfCancellationRequested();
-		return this.OnGetAsync(cancellation);
-	}
 	#endregion
 
 	#region 抽象方法
+	/// <summary>由派生类清除指定主题的全部消息。</summary>
+	/// <param name="topic">指定要清除的消息主题；为 <see langword="null"/> 表示清除所有消息，空字符串表示默认主题。</param>
+	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>返回表示异步清除操作的任务，其结果为实际删除的消息数量。</returns>
+	/// <exception cref="OperationCanceledException">异步操作已由 <paramref name="cancellation"/> 取消。</exception>
+	/// <remarks>非空主题采用区分大小写的精确匹配。</remarks>
+	protected abstract ValueTask<int> OnClearAsync(string topic, CancellationToken cancellation);
+
 	/// <summary>由派生类新增或更新指定的消息。</summary>
 	/// <param name="message">指定要保存的消息。</param>
 	/// <param name="expiry">指定消息的生存时长，小于或等于零表示永久保存。</param>
@@ -146,11 +180,12 @@ public abstract class MessageStorageBase<TSettings> : IMessageStorage where TSet
 	/// <exception cref="OperationCanceledException">异步操作已由 <paramref name="cancellation"/> 取消。</exception>
 	protected abstract ValueTask<bool> OnRemoveAsync(string identifier, CancellationToken cancellation);
 
-	/// <summary>由派生类获取当前存储器中的消息。</summary>
+	/// <summary>由派生类获取指定主题的消息。</summary>
+	/// <param name="topic">指定要获取的消息主题；为 <see langword="null"/> 表示不限主题，空字符串表示默认主题。</param>
 	/// <param name="cancellation">指定的异步枚举取消标记。</param>
-	/// <returns>返回当前存储器中尚未过期的消息异步序列。</returns>
+	/// <returns>返回指定主题中尚未过期的消息异步序列。</returns>
 	/// <exception cref="OperationCanceledException">异步枚举已由 <paramref name="cancellation"/> 取消。</exception>
-	/// <remarks>实现返回的消息必须是独立快照且不得包含确认回调；枚举顺序由实现定义。</remarks>
-	protected abstract IAsyncEnumerable<Message> OnGetAsync(CancellationToken cancellation);
+	/// <remarks>非空主题采用区分大小写的精确匹配；实现返回的消息必须是独立快照且不得包含确认回调，枚举顺序由实现定义。</remarks>
+	protected abstract IAsyncEnumerable<Message> OnGetAsync(string topic, CancellationToken cancellation);
 	#endregion
 }

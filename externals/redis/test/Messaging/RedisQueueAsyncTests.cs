@@ -21,6 +21,44 @@ public class RedisQueueAsyncTests
 	private const string REDIS_UNAVAILABLE = "Redis is unavailable at 127.0.0.1:6379.";
 
 	[Fact]
+	public async Task CompressedPayloadRoundTripsThroughRedisStream()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
+		var identity = Guid.NewGuid().ToString("N");
+		var name = $"tests-{identity}";
+		var topic = $"compression-{identity}";
+		var key = RedisTestUtility.GetQueueKey(name, topic);
+		var payload = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Repeat((byte)'A', 16 * 1024));
+		using var administration = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password}");
+		var database = administration.GetDatabase();
+		await using var queue = RedisTestUtility.CreateQueue(name, $"group-{identity}", $"client-{identity}");
+		var handler = new CaptureHandler();
+		var subscriber = await queue.SubscribeAsync(topic, handler);
+
+		try
+		{
+			var options = new MessageEnqueueOptions { Compression = new MessageCompression("GZip", 1) };
+			await queue.ProduceAsync(topic, "kind:compressed", payload, options);
+			var message = await handler.Completion.Task.WaitAsync(TimeSpan.FromSeconds(10));
+			var entry = Assert.Single(await database.StreamRangeAsync(key));
+
+			Assert.Equal(payload, message.Data);
+			Assert.Equal("kind:compressed", message.Tags);
+			Assert.Equal("GZip", (string)entry.GetMessageCompression());
+			Assert.True(((byte[])entry.GetMessageData()).Length < payload.Length);
+			await message.AcknowledgeAsync();
+		}
+		finally
+		{
+			await subscriber.DisposeAsync();
+			await database.KeyDeleteAsync(key);
+		}
+	}
+
+	[Fact]
 	public async Task EquivalentQueues_ShareConnectionAndReleaseItAfterLastAsyncDispose()
 	{
 		if(!Global.IsTestingEnabled)
@@ -149,6 +187,17 @@ public class RedisQueueAsyncTests
 		protected override ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
 		{
 			Interlocked.Increment(ref _count);
+			return ValueTask.CompletedTask;
+		}
+	}
+
+	private sealed class CaptureHandler : HandlerBase<Message>
+	{
+		public TaskCompletionSource<Message> Completion { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+		protected override ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
+		{
+			this.Completion.TrySetResult(message);
 			return ValueTask.CompletedTask;
 		}
 	}

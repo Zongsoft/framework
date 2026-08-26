@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 using MQTTnet;
 using MQTTnet.Server;
@@ -19,6 +20,71 @@ namespace Zongsoft.Messaging.Mqtt.Tests;
 
 public class MqttQueueServerTests
 {
+	[Fact]
+	public void QueueServerDisposesOwnedSynchronousStorageOnce()
+	{
+		var storage = new SynchronousStorage(true);
+		var server = new MqttQueueServer { Storage = storage };
+
+		((IDisposable)server).Dispose();
+		((IDisposable)server).Dispose();
+
+		Assert.Equal(1, storage.DisposeCount);
+	}
+
+	[Fact]
+	public void QueueServerDisposesOwnedAsynchronousStorageOnce()
+	{
+		var storage = new AsynchronousStorage(true);
+		var server = new MqttQueueServer { Storage = storage };
+
+		((IDisposable)server).Dispose();
+		((IDisposable)server).Dispose();
+
+		Assert.Equal(1, storage.AsyncDisposeCount);
+		Assert.Equal(0, storage.DisposeCount);
+	}
+
+	[Fact]
+	public void QueueServerDoesNotDisposeExternalStorage()
+	{
+		var storage = new AsynchronousStorage(false);
+		var server = new MqttQueueServer { Storage = storage };
+
+		((IDisposable)server).Dispose();
+
+		Assert.Equal(0, storage.AsyncDisposeCount);
+		Assert.Equal(0, storage.DisposeCount);
+	}
+
+	[Fact]
+	public async Task QueueServerStopDoesNotDisposeStorageAndAllowsRestart()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var storage = new AsynchronousStorage(true);
+		var server = new MqttQueueServer { Port = MqttTestUtility.GetFreePort(), Storage = storage };
+
+		try
+		{
+			await server.StartAsync([]);
+			await server.StopAsync([]);
+			Assert.Equal(0, storage.AsyncDisposeCount);
+
+			await server.StartAsync([]);
+			await server.StopAsync([]);
+			Assert.Equal(0, storage.AsyncDisposeCount);
+		}
+		finally
+		{
+			((IDisposable)server).Dispose();
+		}
+
+		Assert.Equal(1, storage.AsyncDisposeCount);
+		Assert.Equal(0, storage.DisposeCount);
+	}
+
 	[Fact]
 	public async Task ServerStorageCanChangeOnlyWhileStopped()
 	{
@@ -224,18 +290,49 @@ public class MqttQueueServerTests
 		public Task UpdateRetainedMessageAsync(MqttApplicationMessage message) => this.Server.UpdateRetainedMessageAsync(message);
 	}
 
-	private sealed class TestMessageStorage : IMessageStorage
+	private class TestMessageStorage(bool disposable = false) : IMessageStorage
 	{
 		public string Name => "test";
+		public bool Disposable { get; } = disposable;
 		public IConnectionSettings Settings { get; set; } = new ConnectionSettings();
 
+		public ValueTask<int> ClearAsync(CancellationToken cancellation = default) => ValueTask.FromResult(0);
+		public ValueTask<int> ClearAsync(string topic, CancellationToken cancellation = default) => ValueTask.FromResult(0);
 		public ValueTask SetAsync(Message message, TimeSpan expiry = default, CancellationToken cancellation = default) => ValueTask.CompletedTask;
 		public ValueTask<bool> RemoveAsync(string identifier, CancellationToken cancellation = default) => ValueTask.FromResult(false);
 
-		public async IAsyncEnumerable<Message> GetAsync([System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellation = default)
+		public async IAsyncEnumerable<Message> GetAsync([EnumeratorCancellation] CancellationToken cancellation = default)
 		{
 			await Task.CompletedTask;
 			yield break;
+		}
+
+		public async IAsyncEnumerable<Message> GetAsync(string topic, [EnumeratorCancellation] CancellationToken cancellation = default)
+		{
+			await Task.CompletedTask;
+			yield break;
+		}
+	}
+
+	private sealed class SynchronousStorage(bool disposable) : TestMessageStorage(disposable), IDisposable
+	{
+		private int _disposeCount;
+		public int DisposeCount => _disposeCount;
+		public void Dispose() => Interlocked.Increment(ref _disposeCount);
+	}
+
+	private sealed class AsynchronousStorage(bool disposable) : TestMessageStorage(disposable), IDisposable, IAsyncDisposable
+	{
+		private int _disposeCount;
+		private int _asyncDisposeCount;
+
+		public int DisposeCount => _disposeCount;
+		public int AsyncDisposeCount => _asyncDisposeCount;
+		public void Dispose() => Interlocked.Increment(ref _disposeCount);
+		public ValueTask DisposeAsync()
+		{
+			Interlocked.Increment(ref _asyncDisposeCount);
+			return ValueTask.CompletedTask;
 		}
 	}
 }

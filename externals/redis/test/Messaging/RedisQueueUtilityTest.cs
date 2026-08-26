@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -8,6 +8,29 @@ namespace Zongsoft.Externals.Redis.Messaging.Tests;
 
 public class RedisQueueUtilityTest
 {
+	[Fact]
+	public void MessagePayloadKeepsCompressionMetadataSeparate()
+	{
+		var payload = RedisQueueUtility.GetMessagePayload(new byte[] { 1, 2, 3 }, "kind:sample", "Brotli");
+
+		Assert.Collection(payload,
+			entry =>
+			{
+				Assert.Equal("Data", entry.Name);
+				Assert.Equal(new byte[] { 1, 2, 3 }, (byte[])entry.Value);
+			},
+			entry =>
+			{
+				Assert.Equal("Tags", entry.Name);
+				Assert.Equal("kind:sample", (string)entry.Value);
+			},
+			entry =>
+			{
+				Assert.Equal("Compression", entry.Name);
+				Assert.Equal("Brotli", (string)entry.Value);
+			});
+	}
+
 	[Fact]
 	public void TestIncreaseId()
 	{

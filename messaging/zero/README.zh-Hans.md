@@ -23,7 +23,7 @@ Zongsoft.Messaging.ZeroMQ 是基于 [NetMQ](https://github.com/zeromq/netmq) 的
 - 实现 Zongsoft 的 `IMessageQueue`、`IRequester`、`IResponder` 和 `IEventChannel` 抽象；
 - 通过 XPUB/XSUB 交换服务支持多个发布者和订阅者；
 - 支持主题前缀、可选消息分组、实例过滤和心跳；
-- 支持超过指定阈值后使用 Brotli 压缩消息载荷；
+- 支持超过指定阈值后使用 Brotli、GZip、ZLib 或 Deflate 压缩消息负载；
 - 支持即时最多一次广播，以及由 Broker 持久接纳、显式确认和竞争消费的至少一次投递；
 - 支持独立运行以及 Zongsoft 插件化宿主；
 - 支持 .NET 8、.NET 9 和 .NET 10。
@@ -69,13 +69,13 @@ dotnet build messaging/zero/Zongsoft.Messaging.ZeroMQ.slnx
 <configuration>
 	<option path="/Messaging/ZeroMQ">
 		<servers port="32100,32101,32102">
-			<server server.name="unnamed" port="*" />
+			<server server.name="unnamed" />
 		</servers>
 	</option>
 </configuration>
 ```
 
-三个数字依次表示可靠性控制、发布者进站和订阅者出站端口。两段式配置仍表示 `Incoming,Outgoing`，此时 Control 配置值为零，Server 挂载 Storage 后会随机绑定 Control 端口；仅当 Server 已挂载 `IMessageStorage` 时才会启动 Control 端点。`*` 表示运行端点使用随机端口。
+三个数字依次表示可靠性控制、发布者进站和订阅者出站端口。两段式配置表示 `Incoming,Outgoing`，此时 Server 挂载 Storage 后会随机绑定 Control 端口；仅当 Server 已挂载 `IMessageStorage` 时才启动 Control。端口优先级依次为启动参数、命名服务器自身的 `Port`、`Servers.Port` 默认值，仍未定义时才随机选择；`*` 明确要求随机端口。
 
 独立应用可以直接启动交换服务：
 
@@ -125,6 +125,7 @@ await server.StartAsync(["--control:32100", "--incoming:32101", "--outgoing:3210
 
 ```csharp
 using System.Text;
+using Zongsoft.Messaging;
 using Zongsoft.Messaging.ZeroMQ;
 using Zongsoft.Messaging.ZeroMQ.Configuration;
 
@@ -152,13 +153,18 @@ await consumer.UnsubscribeAsync();
 
 ### 压缩
 
-通过 `MessageEnqueueOptions.Compression` 指定启用 Brotli 压缩的最小消息字节数，非正数表示不压缩：
+通过 `MessageEnqueueOptions.Compression` 指定压缩算法和启用压缩的最小负载字节数。`MessageCompression.Value` 是以字节为单位的整数阈值，其文本格式为 `<algorithm>:<threshold>`；阈值为零时压缩所有非空负载，默认值表示不压缩：
 
 ```csharp
-var options = new MessageEnqueueOptions() { Compression = 4 * 1024 };
+var options = new MessageEnqueueOptions()
+{
+	Compression = MessageCompression.Parse("Brotli:4096"),
+};
 
 await queue.ProduceAsync("documents/updated", payload, options);
 ```
+
+对应的强类型构造方式为 `new MessageCompression("Brotli", 4096)`。
 
 ### 至少一次投递
 
@@ -189,12 +195,12 @@ sealed class ReliableOrderHandler : HandlerBase<Message>
 
 Broker 只在发送瞬间存在在线匹配订阅时接纳消息：没有订阅返回 `null` 且不写入 Storage；存在订阅则先持久化 Pending，再返回消息标识。之后按主题在在线订阅者间竞争投递，任一消费者确认即删除 Pending。未确认会沿用同一 `Message.Identifier` 重投，也可能改投另一个消费者，因此处理器必须保证业务幂等。
 
-`ZeroQueueServer.Storage` 只能在 Server 停止时赋值。外部 Storage 的生命周期由插件容器管理，Server 不会释放它。Broker 未配置 Storage 时仍提供 `MostOnce` Broadcast，但不启动可靠 Control 端点，发现响应返回 `Control:0`；此时 `LeastOnce` 操作会失败。
+`ZeroQueueServer.Storage` 只能在 Server 停止时赋值。`Storage.Disposable=false` 时由插件容器或应用释放；为真时 Server 在自身释放时优先调用 `IAsyncDisposable.DisposeAsync`，否则调用 `IDisposable.Dispose`。普通 Stop 不释放 Storage，因此 Server 可以重新启动。Broker 未配置 Storage 时仍提供 `MostOnce` Broadcast，但不启动 Control，发现响应的 `Ports` 只包含 `Incoming,Outgoing`；此时 `LeastOnce` 操作会失败。
 
 | 消息选项 | 支持情况 |
 | --- | --- |
-| `Compression` | `MostOnce` 支持；超过指定字节阈值后启用 Brotli，可靠 Control 通道不压缩。 |
-| 标签 | `LeastOnce` 保留并传递；`MostOnce` 双帧格式暂不传递。 |
+| `Compression` | `MostOnce` 与 `LeastOnce` 均支持 Brotli、GZip、ZLib、Deflate，只压缩 `Message.Data`。 |
+| 标签与身份 | 两种模式都独立传递 `Identifier`、`Identity` 和 `Tags` 元数据。 |
 | `Delay` | 不支持；正数请求由 Core 根据 `Features` 在进入驱动前拒绝。 |
 | 过期时间 | `LeastOnce` 支持；零表示永不过期。 |
 | 优先级 | 未实现。 |
@@ -251,7 +257,9 @@ await channel.SendAsync(eventContext);
 - Queue 在构造时快照连接、端口、分组、过滤、超时和心跳设置；运行中修改原设置对象不会改变既有连接；
 - 支持空业务载荷。
 
-消息存储是独立插件，不属于 ZeroMQ 驱动。本包不提供默认文件存储；需要 `LeastOnce` 时，应用必须为每个 Broker Server 赋予独立的 `IMessageStorage` 实例。`Name` 表示存储实现名称，`Settings` 决定该实例的连接和数据作用域，实例生命周期由插件容器管理。选择实现时应确认它能在 `SetAsync` 返回前持有消息快照，并满足所需的进程重启耐久性。
+消息存储是独立插件，不属于 ZeroMQ 驱动。本包不提供默认文件存储；需要 `LeastOnce` 时，应用必须为每个 Broker Server 赋予独立的 `IMessageStorage` 实例。`Name` 表示存储实现名称，`Settings` 决定该实例的连接和数据作用域。Storage 支持按精确主题读取和清理；选择实现时应确认它能在 `SetAsync` 返回前持有消息快照，并满足所需的进程重启耐久性。
+
+完整的发现、Broadcast 和 Control 帧定义参见 [ZeroMQ 1.0 协议](PROTOCOL.zh-Hans.md)。
 
 <a name="samples"></a>
 ## 范例与排障

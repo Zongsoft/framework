@@ -48,12 +48,20 @@ public class ZeroQueuePublishingTests
 		var topic = "topic/identifier";
 
 		await subscriber.SubscribeAsync(topic, handler);
-		var identifier = await ZeroTestUtility.PublishUntilAcceptedAsync(publisher, topic, Encoding.UTF8.GetBytes("identified"));
+		string identifier;
+		do
+		{
+			identifier = await publisher.ProduceAsync(topic, "kind:sample,format:text", Encoding.UTF8.GetBytes("identified"));
+			if(identifier == null)
+				await Task.Delay(25);
+		}
+		while(identifier == null);
 		var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
 
 		Assert.False(string.IsNullOrWhiteSpace(identifier));
 		Assert.Equal(identifier, message.Identifier);
 		Assert.Equal(publisher.Instance, message.Identity);
+		Assert.Equal("kind:sample,format:text", message.Tags);
 	}
 
 	[Fact]
@@ -67,7 +75,7 @@ public class ZeroQueuePublishingTests
 		using var subscriber = new SubscriberSocket();
 		var topic = "topic/compression";
 		var payload = Enumerable.Repeat((byte)'A', 16 * 1024).ToArray();
-		var options = new MessageEnqueueOptions() { Compression = 1 };
+		var options = new MessageEnqueueOptions() { Compression = new MessageCompression("Brotli", 1) };
 		var ports = ZeroTestUtility.GetServerPorts(server.Port);
 
 		subscriber.Connect($"tcp://127.0.0.1:{ports.Outgoing}");
@@ -78,7 +86,7 @@ public class ZeroQueuePublishingTests
 		Assert.True(subscriber.TryReceiveMultipartMessage(TimeSpan.FromSeconds(5), ref message));
 		Assert.Equal(2, message.FrameCount);
 		Assert.Contains($"Identifier:{identifier}", message[0].ConvertToString());
-		Assert.Contains("Compressor:Brotli", message[0].ConvertToString());
+		Assert.Contains("Compression:Brotli", message[0].ConvertToString());
 		Assert.True(message[1].BufferSize < payload.Length);
 		Assert.Equal(payload, IO.Compression.Compressor.Decompress("Brotli", message[1].ToByteArray()));
 	}

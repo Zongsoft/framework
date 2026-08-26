@@ -60,12 +60,7 @@ internal static class ZeroTestUtility
 			socket.Connect($"tcp://127.0.0.1:{port}");
 			socket.SendFrame(GetDiscoveryRequest());
 
-			return socket.TryReceiveFrameString(TimeSpan.FromMilliseconds(250), out var response) &&
-				response != null &&
-				response.StartsWith("Zongsoft.Messaging.ZeroMQ\nProtocol-Version:2.0\n", StringComparison.Ordinal) &&
-				response.Contains("\nIncoming:", StringComparison.Ordinal) &&
-				response.Contains("\nOutgoing:", StringComparison.Ordinal) &&
-				response.Contains("\nControl:", StringComparison.Ordinal);
+			return socket.TryReceiveFrameString(TimeSpan.FromMilliseconds(250), out var response) && TryGetServerPorts(response, out _);
 		}
 		catch
 		{
@@ -83,35 +78,28 @@ internal static class ZeroTestUtility
 		if(!socket.TryReceiveFrameString(TimeSpan.FromSeconds(5), out var response) || string.IsNullOrEmpty(response))
 			throw new InvalidOperationException($"Failed to query ZeroMQ server ports from '{port}'.");
 
-		ushort control = 0;
-		ushort incoming = 0;
-		ushort outgoing = 0;
-
-		foreach(var entry in response.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-		{
-			var index = entry.IndexOf(':');
-
-			if(index <= 0 || index >= entry.Length - 1)
-				continue;
-
-			var name = entry[..index];
-			var value = entry[(index + 1)..];
-
-			if(string.Equals(name, "Control", StringComparison.Ordinal))
-				ushort.TryParse(value, out control);
-			else if(string.Equals(name, "Incoming", StringComparison.Ordinal))
-				ushort.TryParse(value, out incoming);
-			else if(string.Equals(name, "Outgoing", StringComparison.Ordinal))
-				ushort.TryParse(value, out outgoing);
-		}
-
-		if(incoming == 0 || outgoing == 0)
+		if(!TryGetServerPorts(response, out var ports))
 			throw new InvalidOperationException($"Invalid ZeroMQ server port response: '{response}'.");
 
-		return (control, incoming, outgoing);
+		return ports;
 	}
 
-	private static string GetDiscoveryRequest() => $"Zongsoft.Messaging.ZeroMQ\nProtocol-Version:2.0\nCommand:Discover\nInstance:tests-{Guid.NewGuid():N}";
+	private static string GetDiscoveryRequest() => Protocol.GetDiscoveryRequest($"tests-{Guid.NewGuid():N}");
+
+	private static bool TryGetServerPorts(string response, out (ushort Control, ushort Incoming, ushort Outgoing) result)
+	{
+		result = default;
+		if(string.IsNullOrEmpty(response))
+			return false;
+
+		var lines = response.Split('\n', StringSplitOptions.TrimEntries);
+		if(lines.Length != 4 || Array.Exists(lines, string.IsNullOrEmpty) ||
+		   !Protocol.TryParseDiscoveryResponse(response, out _, out var control, out var incoming, out var outgoing))
+			return false;
+
+		result = (control, incoming, outgoing);
+		return true;
+	}
 
 	public static async Task<bool> WaitUntilAsync(Func<bool> predicate, TimeSpan timeout)
 	{
@@ -163,10 +151,33 @@ internal sealed class MemoryMessageStorage : IMessageStorage
 	private int _getCount;
 
 	public string Name => "memory";
+	public bool Disposable => false;
 	public IConnectionSettings Settings { get; set; } = new ConnectionSettings();
 	public int SetCount => _setCount;
 	public int RemoveCount => _removeCount;
 	public int GetCount => _getCount;
+
+	public ValueTask<int> ClearAsync(CancellationToken cancellation = default)
+	{
+		cancellation.ThrowIfCancellationRequested();
+		var count = _messages.Count;
+		_messages.Clear();
+		return ValueTask.FromResult(count);
+	}
+
+	public ValueTask<int> ClearAsync(string topic, CancellationToken cancellation = default)
+	{
+		ArgumentNullException.ThrowIfNull(topic);
+		cancellation.ThrowIfCancellationRequested();
+		var count = 0;
+		foreach(var entry in _messages)
+		{
+			if(string.Equals(entry.Value.Message.Topic, topic, StringComparison.Ordinal) && _messages.TryRemove(entry.Key, out _))
+				count++;
+		}
+
+		return ValueTask.FromResult(count);
+	}
 
 	public ValueTask SetAsync(Message message, TimeSpan expiry = default, CancellationToken cancellation = default)
 	{
@@ -199,6 +210,25 @@ internal sealed class MemoryMessageStorage : IMessageStorage
 			}
 
 			yield return Clone(entry.Value.Message);
+		}
+	}
+
+	public async IAsyncEnumerable<Message> GetAsync(string topic, [EnumeratorCancellation] CancellationToken cancellation = default)
+	{
+		ArgumentNullException.ThrowIfNull(topic);
+		Interlocked.Increment(ref _getCount);
+		await Task.Yield();
+		foreach(var entry in _messages)
+		{
+			cancellation.ThrowIfCancellationRequested();
+			if(entry.Value.Expiration != default && entry.Value.Expiration <= DateTime.UtcNow)
+			{
+				_messages.TryRemove(entry.Key, out _);
+				continue;
+			}
+
+			if(string.Equals(entry.Value.Message.Topic, topic, StringComparison.Ordinal))
+				yield return Clone(entry.Value.Message);
 		}
 	}
 

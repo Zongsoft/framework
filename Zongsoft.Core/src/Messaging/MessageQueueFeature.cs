@@ -38,6 +38,8 @@ public class MessageQueueFeature : IEquatable<MessageQueueFeature>
 	#region 公共字段
 	/// <summary>表示消息延迟入队功能。</summary>
 	public static readonly MessageQueueFeature Delay = new(nameof(Delay));
+	/// <summary>表示消息负载压缩功能。</summary>
+	public static readonly MessageQueueFeature Compression = new(nameof(Compression));
 	#endregion
 
 	#region 成员字段

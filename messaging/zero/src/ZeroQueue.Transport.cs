@@ -93,12 +93,12 @@ public sealed partial class ZeroQueue
 		#endregion
 
 		#region 公共方法
-		public async ValueTask<string> PublishAsync(string identifier, string topic, string identity, string tags, byte[] data, int compressionThreshold, TimeSpan expiration, MessageReliability reliability, CancellationToken cancellation)
+		public async ValueTask<string> PublishAsync(string identifier, string topic, string identity, string tags, byte[] data, MessageCompression compression, TimeSpan expiration, MessageReliability reliability, CancellationToken cancellation)
 		{
 			if(reliability == MessageReliability.LeastOnce)
-				return await _control.PublishAsync(identifier, topic, identity, tags, data, expiration, cancellation);
+				return await _control.PublishAsync(identifier, topic, identity, tags, data, compression, expiration, cancellation);
 
-			var command = new PublishCommand(identifier, topic, identity, data, compressionThreshold, cancellation);
+			var command = new PublishCommand(identifier, topic, identity, tags, data, compression, cancellation);
 			await this.Enqueue(command);
 			return command.Published ? identifier : null;
 		}
@@ -196,11 +196,11 @@ public sealed partial class ZeroQueue
 			{
 				requester.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
 				requester.ReceiveReady += this.OnDiscoveryReady;
-				requester.Connect(ZeroUtility.GetTcpAddress(_options.Server, _options.Port));
+				requester.Connect(Protocol.GetAddress(_options.Server, _options.Port));
 				_poller.Add(requester);
 				_discovery = requester;
 				_discoveryDeadline = DateTime.UtcNow + _options.Timeout;
-				requester.SendFrame($"{ZeroQueueServer.PROTOCOL_NAME}\nProtocol-Version:{ZeroQueueServer.PROTOCOL_VERSION}\nCommand:Discover\nInstance:{_identifier}");
+				requester.SendFrame(Protocol.GetDiscoveryRequest(_identifier));
 			}
 			catch
 			{
@@ -216,7 +216,7 @@ public sealed partial class ZeroQueue
 				var response = args.Socket.ReceiveFrameString();
 				this.ReleaseDiscovery(args.Socket as RequestSocket);
 
-				if(!TryParseDiscovery(response, out var epoch, out var control, out var incoming, out var outgoing))
+			if(!Protocol.TryParseDiscoveryResponse(response, out var epoch, out var control, out var incoming, out var outgoing))
 					throw new InvalidOperationException(Properties.Resources.ZeroQueue_DiscoveryInvalid_Message);
 
 				var changed = !string.Equals(_epoch, epoch, StringComparison.Ordinal) || _controlPort != control || _incomingPort != incoming || _outgoingPort != outgoing;
@@ -389,46 +389,6 @@ public sealed partial class ZeroQueue
 		}
 		#endregion
 
-		#region 协议解析
-		private static bool TryParseDiscovery(string response, out string epoch, out ushort control, out ushort incoming, out ushort outgoing)
-		{
-			epoch = null;
-			control = 0;
-			incoming = 0;
-			outgoing = 0;
-			if(string.IsNullOrWhiteSpace(response))
-				return false;
-
-			var lines = response.Split('\n', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-			if(lines.Length < 4 || !string.Equals(lines[0], ZeroQueueServer.PROTOCOL_NAME, StringComparison.Ordinal))
-				return false;
-
-			var version = false;
-			for(var index = 1; index < lines.Length; index++)
-			{
-				var separator = lines[index].IndexOf(':');
-				if(separator <= 0 || separator == lines[index].Length - 1)
-					return false;
-
-				var name = lines[index].AsSpan(0, separator);
-				var value = lines[index].AsSpan(separator + 1);
-				if(name.SequenceEqual("Protocol-Version"))
-					version = value.SequenceEqual(ZeroQueueServer.PROTOCOL_VERSION);
-				else if(name.SequenceEqual("Epoch"))
-					epoch = value.ToString();
-				else if(name.SequenceEqual("Control"))
-					ushort.TryParse(value, out control);
-				else if(name.SequenceEqual("Incoming"))
-					ushort.TryParse(value, out incoming);
-				else if(name.SequenceEqual("Outgoing"))
-					ushort.TryParse(value, out outgoing);
-			}
-
-			return version && epoch?.Length == 32 && incoming > 0 && outgoing > 0 && incoming != outgoing &&
-				(control == 0 || incoming != control && outgoing != control);
-		}
-		#endregion
-
 		#region 嵌套子类
 		private abstract class Command(CancellationToken cancellation = default)
 		{
@@ -439,13 +399,14 @@ public sealed partial class ZeroQueue
 		private sealed class StopCommand : Command;
 		private sealed class StartCommand(CancellationToken cancellation) : Command(cancellation);
 
-		private sealed class PublishCommand(string identifier, string topic, string identity, byte[] data, int compressionThreshold, CancellationToken cancellation) : Command(cancellation)
+		private sealed class PublishCommand(string identifier, string topic, string identity, string tags, byte[] data, MessageCompression compression, CancellationToken cancellation) : Command(cancellation)
 		{
 			public string Identifier { get; } = identifier;
 			public string Topic { get; } = topic;
 			public string Identity { get; } = identity;
+			public string Tags { get; } = tags;
 			public byte[] Data { get; } = data;
-			public int CompressionThreshold { get; } = compressionThreshold;
+			public MessageCompression Compression { get; } = compression;
 			public bool Published { get; set; }
 		}
 

@@ -61,6 +61,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 
 		_dispatchers = new SemaphoreSlim(HandlerConcurrency, HandlerConcurrency);
 		_cancellation = new CancellationTokenSource();
+		this.Features.Add(MessageQueueFeature.Compression);
 		_connection = new ConnectionManager(this, settings, _cancellation.Token);
 	}
 	#endregion
@@ -126,8 +127,8 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 
 		var builder = new MqttApplicationMessageBuilder()
 			.WithTopic(topic)
-			.WithPayloadSegment(data)
 			.WithQualityOfServiceLevel((options?.Reliability ?? MessageReliability.MostOnce).ToQoS());
+		builder.SetPayload(data, options?.Compression ?? default, _connection.Options.ProtocolVersion == MQTTnet.Formatter.MqttProtocolVersion.V500);
 
 		if(options != null && _connection.Options.ProtocolVersion == MQTTnet.Formatter.MqttProtocolVersion.V500)
 		{
@@ -169,7 +170,15 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 		//关闭自动应答，由 Message.AcknowledgeAsync() 显式完成 MQTT QoS 应答。
 		args.AutoAcknowledge = false;
 
-		var message = new Message(args.ApplicationMessage.Topic, args.ApplicationMessage.Payload.ToArray(), AcknowledgeAsync)
+		byte[] payload;
+		try { payload = args.ApplicationMessage.GetPayload(); }
+		catch(Exception exception)
+		{
+			Diagnostics.Logging.GetLogging(this).Error(exception);
+			return;
+		}
+
+		var message = new Message(args.ApplicationMessage.Topic, payload, AcknowledgeAsync)
 		{
 			Identity = args.ClientId,
 			Identifier = args.PacketIdentifier == 0 ? null : args.PacketIdentifier.ToString(),
