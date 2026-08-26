@@ -88,9 +88,11 @@ public sealed partial class ZeroQueue
 		}
 		#endregion
 
-		#region 公共方法
+		#region 公共属性
 		public bool HasControl => _controlPort > 0;
-		public ValueTask StartAsync(CancellationToken cancellation) => this.Enqueue(new StartCommand(cancellation));
+		#endregion
+
+		#region 公共方法
 		public async ValueTask<string> PublishAsync(string identifier, string topic, string identity, string tags, byte[] data, int compressionThreshold, TimeSpan expiration, MessageReliability reliability, CancellationToken cancellation)
 		{
 			if(reliability == MessageReliability.LeastOnce)
@@ -100,8 +102,10 @@ public sealed partial class ZeroQueue
 			await this.Enqueue(command);
 			return command.Published ? identifier : null;
 		}
+
 		public ValueTask SubscribeAsync(ZeroSubscriber subscriber, string topic, CancellationToken cancellation) => this.Enqueue(new SubscribeCommand(subscriber, topic, cancellation));
 		public ValueTask UnsubscribeAsync(ZeroSubscriber subscriber, CancellationToken cancellation) => this.Enqueue(new UnsubscribeCommand(subscriber, cancellation));
+		public ValueTask StartAsync(CancellationToken cancellation) => this.Enqueue(new StartCommand(cancellation));
 		public void Pause(ZeroSubscriber subscriber, Message message) => this.PostUnobserved(new PauseCommand(subscriber, message));
 		public void Resume(ZeroSubscriber subscriber) => this.PostUnobserved(new ResumeCommand(subscriber));
 		#endregion
@@ -170,7 +174,7 @@ public sealed partial class ZeroQueue
 		}
 		#endregion
 
-		#region 启动与发现
+		#region 启动发现
 		private bool Start(StartCommand command)
 		{
 			if(_broadcast.IsConnected)
@@ -285,7 +289,7 @@ public sealed partial class ZeroQueue
 		}
 		#endregion
 
-		#region 发布与订阅
+		#region 发布订阅
 		private bool Publish(PublishCommand command)
 		{
 			command.Published = _broadcast.Publish(command);
@@ -309,7 +313,7 @@ public sealed partial class ZeroQueue
 		}
 		#endregion
 
-		#region 维护
+		#region 维护管理
 		private void EnsureTimer()
 		{
 			if(_timer != null)
@@ -347,7 +351,7 @@ public sealed partial class ZeroQueue
 		}
 		#endregion
 
-		#region 停止与释放
+		#region 停止释放
 		private bool Stop()
 		{
 			_control.Stop();

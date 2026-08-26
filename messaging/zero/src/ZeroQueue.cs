@@ -78,21 +78,21 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 	#endregion
 
 	#region 订阅方法
-	protected override ValueTask<ZeroSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation) =>
-		ValueTask.FromResult(new ZeroSubscriber(this, topic, handler, options));
-
+	protected override ValueTask<ZeroSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation) => ValueTask.FromResult(new ZeroSubscriber(this, topic, handler, options));
 	protected override async ValueTask<bool> OnSubscribeAsync(ZeroSubscriber subscriber, CancellationToken cancellation = default)
 	{
 		await this.EnsureInitializedAsync(cancellation);
+
 		if(subscriber.Options?.Reliability == MessageReliability.LeastOnce && !_transport.HasControl)
 			throw new InvalidOperationException(Properties.Resources.ZeroQueue_ControlUnavailable_Message);
+
 		await _transport.SubscribeAsync(subscriber, this.GetPhysicalTopic(subscriber.Topic), cancellation);
+
 		if(subscriber.Options?.Reliability != MessageReliability.LeastOnce)
 			await subscriber.SynchronizeAsync(_options.Timeout, cancellation);
+
 		return true;
 	}
-
-	protected override void OnUnsubscribed(ZeroSubscriber subscriber) { }
 	#endregion
 
 	#region 发布方法
@@ -102,15 +102,19 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 		var threshold = options?.Compression > 0 ? options.Compression : 0;
 		var identifier = Guid.NewGuid().ToString("N");
 		var reliability = options?.Reliability ?? MessageReliability.MostOnce;
+
 		await this.EnsureInitializedAsync(cancellation);
+
 		if(reliability == MessageReliability.LeastOnce)
 		{
 			if(!_transport.HasControl)
 				throw new InvalidOperationException(Properties.Resources.ZeroQueue_ControlUnavailable_Message);
+
 			return await _transport.PublishAsync(identifier, this.GetPhysicalTopic(topic), this.Instance, tags, payload, threshold, options.Expiration, reliability, cancellation);
 		}
 
 		var published = false;
+
 		if(string.IsNullOrEmpty(topic))
 		{
 			foreach(var subscriber in this.Subscribers)
@@ -278,4 +282,5 @@ internal readonly record struct ZeroQueueRuntimeOptions(
 	string Client,
 	string Instance,
 	string Group,
-	string Topic);
+	string Topic
+);

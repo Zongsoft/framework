@@ -47,6 +47,10 @@ public interface IMessageStorage
 	/// <value>返回非空的存储实现名称。</value>
 	string Name { get; }
 
+	/// <summary>指示当前存储器是否由托管者释放。</summary>
+	/// <value>如果存储器由托管者释放则为真(<c>True</c>)，否则为假(<c>False</c>)。</value>
+	bool Disposable { get; }
+
 	/// <summary>获取或设置当前存储器的连接设置。</summary>
 	/// <value>当前存储器独占的连接设置，不能为空。</value>
 	/// <remarks>应在存储器挂载到队列或服务器之前完成设置，运行期间是否允许更换由具体实现决定。</remarks>

@@ -323,7 +323,7 @@ public sealed partial class ZeroQueueServer
 			}
 			#endregion
 
-			#region 投递与维护
+			#region 投递维护
 			private bool HasRegistration(string topic)
 			{
 				foreach(var registration in _registrations.Values)
@@ -466,7 +466,7 @@ public sealed partial class ZeroQueueServer
 			}
 			#endregion
 
-			#region 序列化
+			#region 消息封装
 			private static TimeSpan GetExpiry(DurableEnvelope envelope)
 			{
 				if(envelope.Expiration == default)

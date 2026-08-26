@@ -52,6 +52,9 @@ public sealed class ServerOptions
 		public readonly int Control;
 		public readonly int Incoming;
 		public readonly int Outgoing;
+
+		public bool IsEmpty => this.Control == 0 && this.Incoming == 0 && this.Outgoing == 0;
+
 		public override string ToString() => this.Control == 0 ?
 			this.Incoming == 0 && this.Outgoing == 0 ? "*" : $"{this.Incoming}|{this.Outgoing}" :
 			$"{this.Control}|{this.Incoming}|{this.Outgoing}";

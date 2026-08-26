@@ -28,21 +28,27 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Text;
+using System.Collections.Generic;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 
 internal static class Packetizer
 {
+	#region 私有常量
 	private const char Delimiter = '\n';
+	#endregion
+
+	#region 公共常量
 	public const string ProtocolVersion = "2.0";
 	public const int MaxHeaderSize = 16 * 1024;
 	public const int MaxTopicSize = 1024;
 	public const int MaxIdentifierSize = 256;
 	public const int MaxOptionCount = 32;
 	public const int MaxPayloadSize = 64 * 1024 * 1024;
+	#endregion
 
+	#region 公共方法
 	public static string Pack(string topic) => $"{topic}@{Delimiter}{Options.ProtocolVersion}:{ProtocolVersion}";
 	public static string Pack(string identity, string identifier, string topic, string compressor) => string.IsNullOrEmpty(compressor) ?
 		$"{topic}@{identity}{Delimiter}{Options.ProtocolVersion}:{ProtocolVersion}{Delimiter}{Options.Identifier}:{identifier}" :
@@ -106,7 +112,9 @@ internal static class Packetizer
 		options = result;
 		return Options.TryGetValue(result, Options.ProtocolVersion, out var version) && string.Equals(version, ProtocolVersion, StringComparison.Ordinal);
 	}
+	#endregion
 
+	#region 嵌套子类
 	public sealed class Options
 	{
 		/// <summary>协议版本的选项。</summary>
@@ -115,6 +123,7 @@ internal static class Packetizer
 		public const string Identifier = nameof(Identifier);
 		/// <summary>压缩器名称的选项。</summary>
 		public const string Compressor = nameof(Compressor);
+
 		public static bool TryGetValue(IEnumerable<KeyValuePair<string, string>> options, string name, out string value)
 		{
 			if(options != null)
@@ -133,4 +142,5 @@ internal static class Packetizer
 			return false;
 		}
 	}
+	#endregion
 }

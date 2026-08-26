@@ -35,7 +35,6 @@ using System.Threading.Channels;
 using NetMQ;
 using NetMQ.Sockets;
 
-using Zongsoft.Services;
 using Zongsoft.Components;
 
 namespace Zongsoft.Messaging.ZeroMQ;
@@ -84,10 +83,10 @@ public sealed class ZeroSubscriber : MessageConsumerBase<ZeroQueue>
 		channel.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
 		channel.ReceiveReady += this.OnReceiveReady;
 		channel.Subscribe(topic);
-		channel.Subscribe(ZeroQueueServer.WELCOME_PREFIX);
+		channel.Subscribe(ZeroUtility.WELCOME_PREFIX);
 		channel.Connect(address);
 
-		_welcome = ZeroQueueServer.GetWelcomeMessage(epoch);
+		_welcome = ZeroUtility.GetWelcomeMessage(epoch);
 		_synchronization = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		Volatile.Write(ref _channel, channel);
 		return channel;

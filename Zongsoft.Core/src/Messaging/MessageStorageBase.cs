@@ -56,6 +56,10 @@ public abstract class MessageStorageBase<TSettings> : IMessageStorage where TSet
 	/// <value>返回非空的存储实现名称。</value>
 	public abstract string Name { get; }
 
+	/// <summary>指示当前存储器是否由托管者释放。</summary>
+	/// <value>如果存储器由托管者释放则为真(<c>True</c>)，否则为假(<c>False</c>)。</value>
+	public virtual bool Disposable => _settings != null && _settings.TryGetValue<bool>(nameof(this.Disposable), out var value) && value;
+
 	/// <summary>获取或设置当前存储器的强类型连接设置。</summary>
 	/// <value>当前存储器独占的连接设置，不能为空。</value>
 	/// <exception cref="ArgumentNullException">设置值为空。</exception>

@@ -49,7 +49,6 @@ public sealed partial class ZeroQueueServer : WorkerBase
 	#region 内部常量
 	internal const string PROTOCOL_NAME = "Zongsoft.Messaging.ZeroMQ";
 	internal const string PROTOCOL_VERSION = Packetizer.ProtocolVersion;
-	internal const string WELCOME_PREFIX = $"\0{PROTOCOL_NAME}\n";
 	#endregion
 
 	#region 成员字段
@@ -91,9 +90,11 @@ public sealed partial class ZeroQueueServer : WorkerBase
 	protected override async Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
 		var (control, incoming, outgoing) = GetPorts(this.Name, args);
-		ValidatePorts(_port, control, incoming, outgoing);
+		Validate(_port, control, incoming, outgoing);
+
 		var storage = _storage;
 		var pending = new System.Collections.Generic.List<Message>();
+
 		if(storage != null)
 		{
 			await foreach(var entry in storage.GetAsync(cancellation))
@@ -112,7 +113,7 @@ public sealed partial class ZeroQueueServer : WorkerBase
 			throw;
 		}
 
-		static void ValidatePorts(ushort discovery, int control, int incoming, int outgoing)
+		static void Validate(ushort discovery, int control, int incoming, int outgoing)
 		{
 			if(incoming is < 0 or > ushort.MaxValue || outgoing is < 0 or > ushort.MaxValue || control is < 0 or > ushort.MaxValue)
 				throw new ArgumentOutOfRangeException(nameof(incoming), string.Format(Properties.Resources.ZeroQueueServer_DataPortOutOfRange_Message, ushort.MaxValue));
@@ -145,13 +146,11 @@ public sealed partial class ZeroQueueServer : WorkerBase
 	#endregion
 
 	#region 私有方法
-	internal static string GetWelcomeMessage(string epoch) => $"\0{PROTOCOL_NAME}\nProtocol-Version:{PROTOCOL_VERSION}\nEpoch:{epoch}\0";
-
 	private static (int control, int incoming, int outgoing) GetPorts(string name, string[] args)
 	{
+		var control = 0;
 		var incoming = 0;
 		var outgoing = 0;
-		var control = 0;
 
 		if(args != null)
 		{
@@ -162,7 +161,9 @@ public sealed partial class ZeroQueueServer : WorkerBase
 					continue;
 
 				var key = parts[0].StartsWith("--", StringComparison.Ordinal) ? parts[0][2..] : parts[0];
-				if(!key.Equals("incoming", StringComparison.OrdinalIgnoreCase) && !key.Equals("outgoing", StringComparison.OrdinalIgnoreCase) && !key.Equals("control", StringComparison.OrdinalIgnoreCase))
+				if(!key.Equals("control", StringComparison.OrdinalIgnoreCase) &&
+				   !key.Equals("incoming", StringComparison.OrdinalIgnoreCase) &&
+				   !key.Equals("outgoing", StringComparison.OrdinalIgnoreCase))
 					continue;
 
 				if(!int.TryParse(parts[1], out var port) || port is < 0 or > ushort.MaxValue)
@@ -184,7 +185,7 @@ public sealed partial class ZeroQueueServer : WorkerBase
 		if(servers == null)
 			return default;
 
-		if(name != null && servers.TryGetValue(name, out var server))
+		if(name != null && servers.TryGetValue(name, out var server) && !server.Port.IsEmpty)
 			return (server.Port.Control, server.Port.Incoming, server.Port.Outgoing);
 
 		return (servers.Port.Control, servers.Port.Incoming, servers.Port.Outgoing);

@@ -33,8 +33,8 @@ using System.Threading;
 using System.Collections.Generic;
 
 using NetMQ;
-using NetMQ.Monitoring;
 using NetMQ.Sockets;
+using NetMQ.Monitoring;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 
@@ -82,6 +82,7 @@ public sealed partial class ZeroQueue
 			#endregion
 
 			#region 连接管理
+			public void Stop() => this.Disconnect(true);
 			public void Connect(string epoch, ushort incoming, ushort outgoing)
 			{
 				this.Disconnect(false);
@@ -166,7 +167,7 @@ public sealed partial class ZeroQueue
 			}
 			#endregion
 
-			#region 发布与订阅
+			#region 发布订阅
 			public bool Publish(PublishCommand command)
 			{
 				if(!this.IsReady(command.Topic))
@@ -283,7 +284,7 @@ public sealed partial class ZeroQueue
 
 			#endregion
 
-			#region 背压与维护
+			#region 背压维护
 			public bool Pause(ZeroSubscriber subscriber, Message message)
 			{
 				if(!_subscribers.TryGetValue(subscriber, out var channel) || !_paused.Add(subscriber))
@@ -320,13 +321,6 @@ public sealed partial class ZeroQueue
 					}
 					catch(Exception exception) { Diagnostics.Logging.GetLogging(this).Error(exception); }
 				}
-			}
-			#endregion
-
-			#region 停止
-			public void Stop()
-			{
-				this.Disconnect(true);
 			}
 			#endregion
 		}

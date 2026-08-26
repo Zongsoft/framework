@@ -68,7 +68,7 @@ public sealed partial class ZeroQueue
 			}
 			#endregion
 
-			#region 发布与确认
+			#region 发布确认
 			public async ValueTask<string> PublishAsync(string identifier, string topic, string identity, string tags, byte[] data, TimeSpan expiration, CancellationToken cancellation)
 			{
 				var timestamp = DateTime.UtcNow;
@@ -346,7 +346,7 @@ public sealed partial class ZeroQueue
 			}
 			#endregion
 
-			#region 维护与停止
+			#region 维护管理
 			public void Tick(DateTime now)
 			{
 				foreach(var entry in new List<KeyValuePair<string, PublishControlCommand>>(_publishes))

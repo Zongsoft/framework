@@ -35,4 +35,7 @@ internal static class ZeroUtility
 {
 	public static string GetTcpAddress(string server, ushort port) => port == 0 ? $"tcp://{server}" : $"tcp://{server}:{port}";
 	public static string GetTcpAddress(string server, string port) => string.IsNullOrEmpty(port) ? $"tcp://{server}" : $"tcp://{server}:{port}";
+
+	internal const string WELCOME_PREFIX = $"\0{ZeroQueueServer.PROTOCOL_NAME}\n";
+	internal static string GetWelcomeMessage(string epoch) => $"\0{ZeroQueueServer.PROTOCOL_NAME}\nProtocol-Version:{ZeroQueueServer.PROTOCOL_VERSION}\nEpoch:{epoch}\0";
 }
