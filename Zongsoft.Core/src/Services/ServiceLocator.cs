@@ -140,6 +140,7 @@ public static class ServiceLocator
 		#endregion
 
 		#region 构造函数
+		public Converter() { }
 		public Converter(Type serviceType) => _serviceType = serviceType;
 		#endregion
 

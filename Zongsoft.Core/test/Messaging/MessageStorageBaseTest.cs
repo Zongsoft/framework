@@ -212,7 +212,7 @@ public class MessageStorageBaseTest
 		Assert.Equal(2, storage.GetCount);
 	}
 
-	private sealed class TestStorage(StorageSettings settings) : MessageStorageBase<StorageSettings>(settings)
+	private sealed class TestStorage(StorageSettings settings) : MessageStorageBase<StorageSettings>("memory", settings)
 	{
 		private readonly Dictionary<string, Message> _messages = new();
 
