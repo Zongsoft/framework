@@ -61,6 +61,14 @@ public static class Convert
 		if(member == null)
 			return null;
 
+		var memberType = member switch
+		{
+			PropertyInfo property => property.PropertyType,
+			FieldInfo field => field.FieldType,
+			MethodInfo method => method.ReturnType,
+			_ => null,
+		};
+
 		var attribute = member.GetCustomAttribute<TypeConverterAttribute>(true);
 
 		if(attribute != null && !string.IsNullOrEmpty(attribute.ConverterTypeName))
@@ -80,16 +88,11 @@ public static class Convert
 				return null;
 			}, null);
 
+			if(memberType != null && type.GetConstructor([typeof(Type)]) != null)
+				return Activator.CreateInstance(type, memberType) as TypeConverter;
+
 			return Activator.CreateInstance(type) as TypeConverter;
 		}
-
-		var memberType = member switch
-		{
-			PropertyInfo property => property.PropertyType,
-			FieldInfo field => field.FieldType,
-			MethodInfo method => method.ReturnType,
-			_ => null,
-		};
 
 		if(memberType == null)
 			return null;
