@@ -59,7 +59,15 @@ public class RedisServiceProvider :
 		if(ApplicationContext.Current?.Configuration == null)
 			return null;
 
-		return _services.GetOrAdd(name ?? string.Empty, key => new RedisService(key, GetConnectionSettings(key)));
+		try
+		{
+			return _services.GetOrAdd(name ?? string.Empty, key => new RedisService(key, GetConnectionSettings(key)));
+		}
+		catch(ConfigurationException exception)
+		{
+			Zongsoft.Diagnostics.Logging.GetLogging(typeof(RedisServiceProvider)).Warn(exception.Message);
+			return null;
+		}
 
 		static IConnectionSettings GetConnectionSettings(string name)
 		{
