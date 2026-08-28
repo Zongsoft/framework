@@ -48,13 +48,22 @@ public abstract class MessageStorageBase<TSettings> : IMessageStorage where TSet
 	/// <summary>初始化消息存储基类。</summary>
 	/// <param name="settings">指定的连接设置。</param>
 	/// <exception cref="ArgumentNullException"><paramref name="settings"/> 为空。</exception>
-	protected MessageStorageBase(TSettings settings) => _settings = settings ?? throw new ArgumentNullException(nameof(settings));
+	protected MessageStorageBase(TSettings settings = default) : this(null, settings) { }
+
+	/// <summary>初始化消息存储基类。</summary>
+	/// <param name="name">指定的存储器名称。</param>
+	/// <param name="settings">指定的连接设置。</param>
+	/// <exception cref="ArgumentNullException"><paramref name="settings"/> 为空。</exception>
+	protected MessageStorageBase(string name, TSettings settings = default)
+	{
+		_settings = settings;
+		this.Name = string.IsNullOrEmpty(name) ? settings?.Name : name.Trim();
+	}
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取存储器的实现名称。</summary>
-	/// <value>返回非空的存储实现名称。</value>
-	public abstract string Name { get; }
+	/// <summary>获取存储器的名称。</summary>
+	public virtual string Name { get; }
 
 	/// <summary>指示当前存储器是否由托管者释放。</summary>
 	/// <value>如果存储器由托管者释放则为真(<c>True</c>)，否则为假(<c>False</c>)。</value>

@@ -44,8 +44,7 @@ namespace Zongsoft.Messaging;
 public interface IMessageStorage
 {
 	#region 属性定义
-	/// <summary>获取存储器的实现名称，如 <c>redis</c> 或 <c>sqlite</c>。</summary>
-	/// <value>返回非空的存储实现名称。</value>
+	/// <summary>获取存储器的名称。</summary>
 	string Name { get; }
 
 	/// <summary>指示当前存储器是否由托管者释放。</summary>
