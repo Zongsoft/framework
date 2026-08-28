@@ -76,6 +76,7 @@ public sealed partial class ZeroQueueServer : WorkerBase
 		{
 			if(this.State != WorkerState.Stopped)
 				throw new InvalidOperationException(Properties.Resources.ZeroQueueServer_StorageImmutable_Message);
+
 			_storage = value;
 		}
 	}

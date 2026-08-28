@@ -191,18 +191,23 @@ public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisC
 	}
 	#endregion
 
+	#region 私有方法
 	private static RedisCapabilities GetCapabilities(IConnectionMultiplexer connection)
 	{
-		var result = (RedisCapabilities)(-1);
 		var found = false;
+		var result = (RedisCapabilities)(-1);
+
 		foreach(var endpoint in connection.GetEndPoints())
 		{
 			var server = connection.GetServer(endpoint);
 			if(server.IsReplica)
 				continue;
+
 			result &= RedisCapabilityMatrix.GetCapabilities(server.Version);
 			found = true;
 		}
+
 		return found ? result : RedisCapabilities.None;
 	}
+	#endregion
 }

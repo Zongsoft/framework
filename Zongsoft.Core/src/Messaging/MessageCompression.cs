@@ -90,7 +90,6 @@ public readonly struct MessageCompression : IEquatable<MessageCompression>, IPar
 	/// <returns>返回解压后的消息负载。</returns>
 	/// <exception cref="Common.OperationException">指定的压缩算法不受支持。</exception>
 	public static byte[] Decompress(string name, ReadOnlySpan<byte> data) => IO.Compression.Compressor.Decompress(name, data.ToArray());
-
 	#endregion
 
 	#region 解析方法
