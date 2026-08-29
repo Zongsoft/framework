@@ -37,7 +37,6 @@ public class MessageStorageBaseTest
 		var storage = new TestStorage(settings);
 		var abstraction = (IMessageStorage)storage;
 
-		Assert.Throws<ArgumentNullException>(() => new TestStorage(null));
 		Assert.Throws<ArgumentNullException>(() => storage.Settings = null);
 		Assert.Throws<ArgumentNullException>(() => abstraction.Settings = null);
 		Assert.Throws<ArgumentException>(() => abstraction.Settings = new ConnectionSettings());

@@ -47,13 +47,11 @@ public abstract class MessageStorageBase<TSettings> : IMessageStorage where TSet
 	#region 构造函数
 	/// <summary>初始化消息存储基类。</summary>
 	/// <param name="settings">指定的连接设置。</param>
-	/// <exception cref="ArgumentNullException"><paramref name="settings"/> 为空。</exception>
 	protected MessageStorageBase(TSettings settings = default) : this(null, settings) { }
 
 	/// <summary>初始化消息存储基类。</summary>
 	/// <param name="name">指定的存储器名称。</param>
 	/// <param name="settings">指定的连接设置。</param>
-	/// <exception cref="ArgumentNullException"><paramref name="settings"/> 为空。</exception>
 	protected MessageStorageBase(string name, TSettings settings = default)
 	{
 		_settings = settings;

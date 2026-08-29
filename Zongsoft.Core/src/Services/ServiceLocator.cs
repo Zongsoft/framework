@@ -51,7 +51,7 @@ public static class ServiceLocator
 	/// <param name="services">指定要查找的服务容器。</param>
 	/// <param name="qualifiedName">指定服务限定名，其格式为：<c>name@container</c>；如果为空则按服务类型直接解析。</param>
 	/// <returns>返回定位到的服务；如果指定的服务不存在则返回空(<c>null</c>)。</returns>
-	/// <exception cref="ArgumentNullException"><paramref name="services"/>为空。</exception>
+	/// <exception cref="ArgumentNullException"><paramref name="services"/> 为空。</exception>
 	public static T Locate<T>(this IServiceProvider services, string qualifiedName) where T : class
 	{
 		ArgumentNullException.ThrowIfNull(services);
@@ -79,6 +79,7 @@ public static class ServiceLocator
 	/// <param name="qualifiedName">指定服务限定名，其格式为：<c>name@container</c>；如果为空则按服务类型直接解析。</param>
 	/// <param name="serviceType">指定要定位的服务类型。</param>
 	/// <returns>返回定位到的服务；如果指定的服务不存在则返回空(<c>null</c>)。</returns>
+	/// <exception cref="ArgumentNullException"><paramref name="serviceType"/> 为空。</exception>
 	public static object Locate(string qualifiedName, Type serviceType) => Locate(ApplicationContext.Current?.Services, qualifiedName, serviceType);
 
 	/// <summary>从指定的服务容器中定位指定类型的服务。</summary>
@@ -86,10 +87,11 @@ public static class ServiceLocator
 	/// <param name="qualifiedName">指定服务限定名，其格式为：<c>name@container</c>；如果为空则按服务类型直接解析。</param>
 	/// <param name="serviceType">指定要定位的服务类型。</param>
 	/// <returns>返回定位到的服务；如果指定的服务不存在则返回空(<c>null</c>)。</returns>
-	/// <exception cref="ArgumentNullException"><paramref name="services"/>为空。</exception>
+	/// <exception cref="ArgumentNullException"><paramref name="services"/> 或 <paramref name="serviceType"/> 为空。</exception>
 	public static object Locate(this IServiceProvider services, string qualifiedName, Type serviceType)
 	{
 		ArgumentNullException.ThrowIfNull(services);
+		ArgumentNullException.ThrowIfNull(serviceType);
 
 		if(string.IsNullOrWhiteSpace(qualifiedName))
 			return services.Resolve(serviceType);
