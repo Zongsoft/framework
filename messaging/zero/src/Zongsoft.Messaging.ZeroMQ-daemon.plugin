@@ -16,7 +16,13 @@
 		</dependencies>
 	</manifest>
 
+	<extension path="/Workbench/Messaging/Zero">
+		<object name="QueueServer" type="Zongsoft.Messaging.ZeroMQ.ZeroQueueServer, Zongsoft.Messaging.ZeroMQ">
+			<expose name="Storage" value="{path:../@Storage}" />
+		</object>
+	</extension>
+
 	<extension path="/Workbench/Startup">
-		<object name="ZeroExchanger" type="Zongsoft.Messaging.ZeroMQ.ZeroQueueServer, Zongsoft.Messaging.ZeroMQ" />
+		<object value="{path:/Workbench/Messaging/Zero/QueueServer}" />
 	</extension>
 </plugin>
