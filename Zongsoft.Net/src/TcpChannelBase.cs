@@ -119,6 +119,7 @@ public abstract class TcpChannelBase<T> : ChannelBase, ISender, ISender<T>
 		{
 			var writer = _transport?.Output ?? throw new ObjectDisposedException(this.GetType().FullName);
 			this.Pack(writer, package);
+			await writer.FlushAsync(cancellation);
 		}
 		finally
 		{
@@ -142,7 +143,7 @@ public abstract class TcpChannelBase<T> : ChannelBase, ISender, ISender<T>
 		try
 		{
 			var writer = _transport?.Output ?? throw new ObjectDisposedException(this.GetType().FullName);
-			var result = writer.WriteAsync(data, cancellation);
+			var result = this.OnSendAsync(writer, data, cancellation);
 
 			if(result.IsCompletedSuccessfully)
 				return default;
@@ -159,12 +160,12 @@ public abstract class TcpChannelBase<T> : ChannelBase, ISender, ISender<T>
 
 	private async ValueTask SendSlowAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation)
 	{
-		await _singleWriter.WaitAsync();
+		await _singleWriter.WaitAsync(cancellation);
 
 		try
 		{
 			var writer = _transport?.Output ?? throw new ObjectDisposedException(this.GetType().FullName);
-			await writer.WriteAsync(data, cancellation);
+			await this.OnSendAsync(writer, data, cancellation);
 		}
 		finally
 		{

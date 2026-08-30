@@ -1,3 +1,9 @@
 <Solution>
 	<Project Path="src/Zongsoft.Net.csproj" />
+	<Project Path="test/Zongsoft.Net.Tests.csproj" />
+
+	<Folder Name="/samples/">
+		<Project Path="samples/client/Zongsoft.Net.Samples.Client.csproj" />
+		<Project Path="samples/server/Zongsoft.Net.Samples.Server.csproj" />
+	</Folder>
 </Solution>

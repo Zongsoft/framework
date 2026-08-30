@@ -121,7 +121,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 			if(result.Files != null)
 			{
 				foreach(var file in result.Files)
-					yield return new IO.FileInfo(file.Name, file.Size, file.Creation, file.Modification);
+					yield return new IO.FileInfo(file.Name, file.Size, file.Type, file.Creation, file.Modification);
 			}
 		}
 
@@ -145,7 +145,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 			if(result.Files != null)
 			{
 				foreach(var file in result.Files)
-					yield return new IO.FileInfo(file.Name, file.Size, file.Creation, file.Modification);
+					yield return new IO.FileInfo(file.Name, file.Size, file.Type, file.Creation, file.Modification);
 			}
 		}
 
@@ -245,11 +245,11 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 			if(response == null || !response.IsSuccessStatusCode)
 				return null;
 
-			var name = response.Headers.TryGetValues("X-Directory-Name", out var value);
-			var creation = response.Headers.TryGetValues("X-Directory-Creation", out value) && DateTime.TryParse(value.ToString(), out var datetime) ? datetime : DateTime.MinValue;
-			var modification = response.Headers.TryGetValues("X-Directory-Modification", out value) && DateTime.TryParse(value.ToString(), out datetime) ? datetime : DateTime.MinValue;
+			var name = GetHeader(response, "X-Directory-Name");
+			var creation = DateTime.TryParse(GetHeader(response, "X-Directory-Creation"), out var datetime) ? datetime : DateTime.MinValue;
+			var modification = DateTime.TryParse(GetHeader(response, "X-Directory-Modification"), out datetime) ? datetime : DateTime.MinValue;
 
-			return new IO.DirectoryInfo(name.ToString(), creation, modification);
+			return new IO.DirectoryInfo(name, creation, modification);
 		}
 
 		private static IEnumerable<Zongsoft.IO.DirectoryInfo> GetDirectoryInfos(HttpContent content)
@@ -279,7 +279,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 			var stream = content.ReadAsStream();
 			var infos = System.Text.Json.JsonSerializer.Deserialize<FileInfo[]>(stream);
-			return infos.Select(info => new IO.FileInfo(info.Name, info.Size, info.Creation, info.Modification));
+			return infos.Select(info => new IO.FileInfo(info.Name, info.Size, info.Type, info.Creation, info.Modification));
 		}
 
 		private static async IAsyncEnumerable<Zongsoft.IO.FileInfo> GetFileInfosAsync(HttpContent content, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
@@ -289,7 +289,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 			var infos = await content.ReadFromJsonAsync<FileInfo[]>(cancellation);
 			foreach(var info in infos)
-				yield return new IO.FileInfo(info.Name, info.Size, info.Creation, info.Modification);
+				yield return new IO.FileInfo(info.Name, info.Size, info.Type, info.Creation, info.Modification);
 		}
 
 		private sealed class Result
@@ -432,13 +432,13 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 			if(response == null || !response.IsSuccessStatusCode)
 				return null;
 
-			var name = response.Headers.TryGetValues("X-File-Name", out var value);
-			var size = response.Headers.TryGetValues("X-File-Size", out value) && long.TryParse(value.ToString(), out var number) ? number : 0;
-			var type = response.Headers.TryGetValues("X-File-Type", out value) ? value.ToString() : null;
-			var creation = response.Headers.TryGetValues("X-File-Creation", out value) && DateTime.TryParse(value.ToString(), out var datetime) ? datetime : DateTime.MinValue;
-			var modification = response.Headers.TryGetValues("X-File-Modification", out value) && DateTime.TryParse(value.ToString(), out datetime) ? datetime : DateTime.MinValue;
+			var name = GetHeader(response, "X-File-Name");
+			var size = long.TryParse(GetHeader(response, "X-File-Size"), out var number) ? number : 0;
+			var type = GetHeader(response, "X-File-Type");
+			var creation = DateTime.TryParse(GetHeader(response, "X-File-Creation"), out var datetime) ? datetime : DateTime.MinValue;
+			var modification = DateTime.TryParse(GetHeader(response, "X-File-Modification"), out datetime) ? datetime : DateTime.MinValue;
 
-			return new IO.FileInfo(name.ToString(), size, creation, modification);
+			return new IO.FileInfo(name, size, type, creation, modification);
 		}
 
 		private struct FileInfo
@@ -450,6 +450,9 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 			public DateTimeOffset Modification { get; set; }
 		}
 	}
+
+	private static string GetHeader(HttpResponseMessage response, string name) =>
+		response.Headers.TryGetValues(name, out var values) ? values.FirstOrDefault() : null;
 
 	private sealed class WebUploadStream : Stream
 	{

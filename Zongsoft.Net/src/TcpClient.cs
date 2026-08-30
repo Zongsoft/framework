@@ -114,7 +114,7 @@ public class TcpClient<T> : IHandleable<T>, ISender<T>
 		_channel = this.CreateChannel(await SocketConnection.ConnectAsync(address), address);
 	}
 
-	public async void DisconnectAsync(CancellationToken cancellation = default)
+	public async ValueTask DisconnectAsync(CancellationToken cancellation = default)
 	{
 		var channel = _channel;
 

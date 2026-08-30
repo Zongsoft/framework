@@ -66,26 +66,36 @@ public class TcpServerChannel<T> : TcpChannelBase<T>, IEquatable<TcpServerChanne
 	protected override void OnReceiving() => _manager.Add(this);
 	protected sealed override ValueTask OnReceiveAsync(in T package)
 	{
-		static void DisposeOnCompletion(ValueTask task, in T message)
-		{
-			if(message is IDisposable)
-				task.AsTask().ContinueWith((t, m) => ((IDisposable)m)?.Dispose(), message);
-		}
+		ValueTask task;
 
 		try
 		{
-			var pendingAction = _manager.HandleAsync(this, package, CancellationToken.None);
-
-			if(!pendingAction.IsCompletedSuccessfully)
-				DisposeOnCompletion(pendingAction, in package);
+			task = _manager.HandleAsync(this, package, CancellationToken.None);
 		}
-		finally
+		catch
 		{
 			if(package is IDisposable disposable)
 				disposable.Dispose();
+
+			throw;
 		}
 
-		return default;
+		if(package is not IDisposable resource)
+			return task;
+
+		if(task.IsCompletedSuccessfully)
+		{
+			resource.Dispose();
+			return ValueTask.CompletedTask;
+		}
+
+		return AwaitAndDisposeAsync(task, resource);
+
+		static async ValueTask AwaitAndDisposeAsync(ValueTask task, IDisposable disposable)
+		{
+			try { await task; }
+			finally { disposable.Dispose(); }
+		}
 	}
 	#endregion
 

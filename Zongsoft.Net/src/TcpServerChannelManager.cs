@@ -44,14 +44,14 @@ namespace Zongsoft.Net;
 public class TcpServerChannelManager<T> : SocketServer, IReadOnlyCollection<TcpServerChannel<T>>
 {
 	#region 成员字段
-	private readonly ConcurrentBag<TcpServerChannel<T>> _channels;
+	private readonly ConcurrentDictionary<IPEndPoint, ChannelEntry> _channels;
 	#endregion
 
 	#region 构造函数
 	public TcpServerChannelManager(TcpServer<T> server)
 	{
 		this.Server = server ?? throw new ArgumentNullException(nameof(server));
-		_channels = new ConcurrentBag<TcpServerChannel<T>>();
+		_channels = new ConcurrentDictionary<IPEndPoint, ChannelEntry>();
 	}
 	#endregion
 
@@ -75,21 +75,42 @@ public class TcpServerChannelManager<T> : SocketServer, IReadOnlyCollection<TcpS
 	#endregion
 
 	#region 内部方法
-	internal void Add(TcpServerChannel<T> channel) { if(channel != null) _channels.Add(channel); }
-	internal bool Remove(TcpServerChannel<T> channel) => channel != null && _channels.TryTake(out _);
+	internal void Add(TcpServerChannel<T> channel)
+	{
+		if(channel?.Address is IPEndPoint address)
+			_channels.TryAdd(address, new ChannelEntry(channel));
+	}
+
+	internal bool Remove(TcpServerChannel<T> channel)
+	{
+		if(channel?.Address is not IPEndPoint address ||
+		   !_channels.TryGetValue(address, out var entry) ||
+		   !ReferenceEquals(entry.Channel, channel))
+			return false;
+
+		return this.TryRemove(address, entry);
+	}
+
+	private bool TryRemove(IPEndPoint address, ChannelEntry entry) =>
+		((ICollection<KeyValuePair<IPEndPoint, ChannelEntry>>)_channels).Remove(new(address, entry));
 	#endregion
 
 	#region 枚举遍历
-	public IEnumerator<TcpServerChannel<T>> GetEnumerator() => _channels.GetEnumerator();
-	IEnumerator IEnumerable.GetEnumerator() => _channels.GetEnumerator();
+	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+	public IEnumerator<TcpServerChannel<T>> GetEnumerator()
+	{
+		foreach(var entry in _channels.Values)
+			yield return entry.Channel;
+	}
 	#endregion
 
 	#region 处置方法
 	protected override void Dispose(bool disposing)
 	{
-		while(_channels.TryTake(out var channel))
+		foreach(var entry in _channels)
 		{
-			DisposeAsync(channel);
+			if(this.TryRemove(entry.Key, entry.Value))
+				DisposeAsync(entry.Value.Channel);
 		}
 
 		base.Dispose(disposing);
@@ -105,6 +126,13 @@ public class TcpServerChannelManager<T> : SocketServer, IReadOnlyCollection<TcpS
 			}
 			catch { }
 		}
+	}
+	#endregion
+
+	#region 嵌套类型
+	private sealed class ChannelEntry(TcpServerChannel<T> channel)
+	{
+		public readonly TcpServerChannel<T> Channel = channel;
 	}
 	#endregion
 }
