@@ -1,6 +1,7 @@
 artifacts/Zongsoft.Messaging.ZeroMQ.option
 artifacts/Zongsoft.Messaging.ZeroMQ.plugin
 artifacts/Zongsoft.Messaging.ZeroMQ-$(site).plugin
+artifacts/Zongsoft.Messaging.ZeroMQ.Storage.plugin
 
 lib/$(Framework)/Zongsoft.Messaging.ZeroMQ.*
 lib/$(Framework)/*/Zongsoft.Messaging.ZeroMQ.resources.*

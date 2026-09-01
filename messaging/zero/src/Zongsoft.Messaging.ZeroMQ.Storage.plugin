@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Messaging.ZeroMQ.Storage"
+        title="Zongsoft.Messaging.ZeroMQ.Storage Plugin"
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2015-2026. All rights reserved."
+        description="Created Date: 2026-09-01 by Popeye Zhong">
+
+	<manifest>
+		<dependencies>
+			<dependency name="Zongsoft.Messaging.ZeroMQ" />
+		</dependencies>
+	</manifest>
+
+	<extension path="/Workbench/Messaging/Zero">
+		<QueueServer.Storage>local@redis</QueueServer.Storage>
+	</extension>
+</plugin>
