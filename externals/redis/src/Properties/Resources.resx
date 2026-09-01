@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -177,6 +177,108 @@
   <data name="NoRedis.Message" xml:space="preserve">
     <value>No Redis service is available.</value>
   </data>
+  <data name="Redis.Settings.Application" xml:space="preserve">
+    <value>Application name</value>
+  </data>
+  <data name="Redis.Settings.Application.Description" xml:space="preserve">
+    <value>The application identifier of the Redis connection.</value>
+  </data>
+  <data name="Redis.Settings.Client" xml:space="preserve">
+    <value>Client name</value>
+  </data>
+  <data name="Redis.Settings.Client.Description" xml:space="preserve">
+    <value>The client name reported by the Redis connection.</value>
+  </data>
+  <data name="Redis.Settings.Database" xml:space="preserve">
+    <value>Database</value>
+  </data>
+  <data name="Redis.Settings.Database.Description" xml:space="preserve">
+    <value>The Redis logical database number.</value>
+  </data>
+  <data name="Redis.Settings.Deadline" xml:space="preserve">
+    <value>Read deadline</value>
+  </data>
+  <data name="Redis.Settings.Deadline.Description" xml:space="preserve">
+    <value>The blocking read deadline in milliseconds. The default value is 10000 milliseconds.</value>
+  </data>
+  <data name="Redis.Settings.Group" xml:space="preserve">
+    <value>Group identifier</value>
+  </data>
+  <data name="Redis.Settings.Group.Description" xml:space="preserve">
+    <value>The Redis message consumer group identifier.</value>
+  </data>
+  <data name="Redis.Settings.Heartbeat" xml:space="preserve">
+    <value>Heartbeat interval</value>
+  </data>
+  <data name="Redis.Settings.Heartbeat.Description" xml:space="preserve">
+    <value>The Redis connection heartbeat interval. The default value is 15 seconds.</value>
+  </data>
+  <data name="Redis.Settings.IdleTimeout" xml:space="preserve">
+    <value>Idle timeout</value>
+  </data>
+  <data name="Redis.Settings.IdleTimeout.Description" xml:space="preserve">
+    <value>The idle duration after which an unacknowledged stream message can be claimed. The default value is 30 seconds.</value>
+  </data>
+  <data name="Redis.Settings.KeepAlive" xml:space="preserve">
+    <value>Keep-alive interval</value>
+  </data>
+  <data name="Redis.Settings.KeepAlive.Description" xml:space="preserve">
+    <value>The interval in seconds between keep-alive messages. A negative value uses the client default.</value>
+  </data>
+  <data name="Redis.Settings.MaximumLength" xml:space="preserve">
+    <value>Maximum stream length</value>
+  </data>
+  <data name="Redis.Settings.MaximumLength.Description" xml:space="preserve">
+    <value>The maximum number of messages retained in a Redis stream. Zero uses the default value and a negative value disables trimming.</value>
+  </data>
+  <data name="Redis.Settings.Namespace" xml:space="preserve">
+    <value>Namespace</value>
+  </data>
+  <data name="Redis.Settings.Namespace.Description" xml:space="preserve">
+    <value>The logical Redis key namespace used by message storage. When omitted, the connection setting name is used.</value>
+  </data>
+  <data name="Redis.Settings.Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="Redis.Settings.Password.Description" xml:space="preserve">
+    <value>The password used to authenticate the Redis connection.</value>
+  </data>
+  <data name="Redis.Settings.RetryCount" xml:space="preserve">
+    <value>Connection retry count</value>
+  </data>
+  <data name="Redis.Settings.RetryCount.Description" xml:space="preserve">
+    <value>The number of times to retry establishing a Redis connection.</value>
+  </data>
+  <data name="Redis.Settings.Server" xml:space="preserve">
+    <value>Server address</value>
+  </data>
+  <data name="Redis.Settings.Server.Description" xml:space="preserve">
+    <value>One or more Redis server endpoints to connect to.</value>
+  </data>
+  <data name="Redis.Settings.Timeout" xml:space="preserve">
+    <value>Timeout</value>
+  </data>
+  <data name="Redis.Settings.Timeout.Description" xml:space="preserve">
+    <value>The timeout for connecting to Redis and executing synchronous or asynchronous operations. The default value is 10 seconds.</value>
+  </data>
+  <data name="Redis.Settings.Topic" xml:space="preserve">
+    <value>Default topic</value>
+  </data>
+  <data name="Redis.Settings.Topic.Description" xml:space="preserve">
+    <value>The default Redis message queue topic.</value>
+  </data>
+  <data name="Redis.Settings.UseApproximateMaximumLength" xml:space="preserve">
+    <value>Approximate stream trimming</value>
+  </data>
+  <data name="Redis.Settings.UseApproximateMaximumLength.Description" xml:space="preserve">
+    <value>Indicates whether Redis stream trimming uses approximate maximum-length semantics. The default value is true.</value>
+  </data>
+  <data name="Redis.Settings.UserName" xml:space="preserve">
+    <value>User name</value>
+  </data>
+  <data name="Redis.Settings.UserName.Description" xml:space="preserve">
+    <value>The user name used to authenticate the Redis connection.</value>
+  </data>
   <data name="RedisConnectionSettingNotFound.Message" xml:space="preserve">
     <value>The Redis connection setting named '{0}' does not exist, and no default Redis connection setting is defined.</value>
   </data>
@@ -266,6 +368,27 @@
   </data>
   <data name="RedisNamespaceChangeNotAllowed.Message" xml:space="preserve">
     <value>The Redis cache namespace cannot be changed after the service has been activated. Use WithNamespace() to create another scope.</value>
+  </data>
+  <data name="RedisMessageStorageRecordEmpty.Message" xml:space="preserve">
+    <value>The stored Redis message record is empty.</value>
+  </data>
+  <data name="RedisMessageStorageRecordIdentifierMissing.Message" xml:space="preserve">
+    <value>The stored Redis message identifier is missing.</value>
+  </data>
+  <data name="RedisMessageStorageRecordMalformed.Message" xml:space="preserve">
+    <value>The stored Redis message record is malformed.</value>
+  </data>
+  <data name="RedisMessageStorageRecordVersionUnsupported.Message" xml:space="preserve">
+    <value>The stored Redis message version '{0}' is not supported.</value>
+  </data>
+  <data name="RedisMessageStorageSettingsImmutable.Message" xml:space="preserve">
+    <value>The Redis message storage settings cannot be changed after the storage has been activated.</value>
+  </data>
+  <data name="RedisMessageStorageSettingsUnavailable.Message" xml:space="preserve">
+    <value>The Redis message storage settings are unavailable.</value>
+  </data>
+  <data name="RedisMessageStorageWriteRejected.Message" xml:space="preserve">
+    <value>Redis rejected the message storage operation.</value>
   </data>
   <data name="RedisRemoveCommand.Description" xml:space="preserve">
     <value>Removes one or more entries by key.</value>

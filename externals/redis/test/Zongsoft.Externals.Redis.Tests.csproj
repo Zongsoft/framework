@@ -13,10 +13,18 @@
 		<PackageReference Include="xunit.v3.runner.msbuild" />
 		<PackageReference Include="xunit.runner.visualstudio" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" />
+		<PackageReference Include="Microsoft.Extensions.FileProviders.Abstractions" />
+		<PackageReference Include="Microsoft.Extensions.FileProviders.Physical" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\src\Zongsoft.Externals.Redis.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="Messaging\RedisMessageStorage.option" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 
 	<ItemGroup>

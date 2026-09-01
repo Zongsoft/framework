@@ -241,6 +241,312 @@ namespace Zongsoft.Externals.Redis.Properties {
         }
 
         /// <summary>
+        ///   查找类似 Application name 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Application {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Application", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The application identifier of the Redis connection. 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Application_Description {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Application.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Client name 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Client {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Client", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The client name reported by the Redis connection. 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Client_Description {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Client.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Database 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Database {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Database", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The Redis logical database number. 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Database_Description {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Database.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Read deadline 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Deadline {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Deadline", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The blocking read deadline in milliseconds. The default value is 10000 milliseconds. 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Deadline_Description {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Deadline.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Group identifier 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Group {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Group", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The Redis message consumer group identifier. 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Group_Description {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Group.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Heartbeat interval 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Heartbeat {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Heartbeat", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The Redis connection heartbeat interval. The default value is 15 seconds. 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Heartbeat_Description {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Heartbeat.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Idle timeout 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_IdleTimeout {
+            get {
+                return ResourceManager.GetString("Redis.Settings.IdleTimeout", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The idle duration after which an unacknowledged stream message can be claimed. The default value is 30 seconds. 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_IdleTimeout_Description {
+            get {
+                return ResourceManager.GetString("Redis.Settings.IdleTimeout.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Keep-alive interval 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_KeepAlive {
+            get {
+                return ResourceManager.GetString("Redis.Settings.KeepAlive", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The interval in seconds between keep-alive messages. A negative value uses the client default. 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_KeepAlive_Description {
+            get {
+                return ResourceManager.GetString("Redis.Settings.KeepAlive.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Maximum stream length 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_MaximumLength {
+            get {
+                return ResourceManager.GetString("Redis.Settings.MaximumLength", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The maximum number of messages retained in a Redis stream. Zero uses the default value and a negative value disables trimming. 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_MaximumLength_Description {
+            get {
+                return ResourceManager.GetString("Redis.Settings.MaximumLength.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Namespace 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Namespace {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Namespace", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The logical Redis key namespace used by message storage. When omitted, the connection setting name is used. 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Namespace_Description {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Namespace.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Password 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Password {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Password", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The password used to authenticate the Redis connection. 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Password_Description {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Password.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Connection retry count 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_RetryCount {
+            get {
+                return ResourceManager.GetString("Redis.Settings.RetryCount", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The number of times to retry establishing a Redis connection. 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_RetryCount_Description {
+            get {
+                return ResourceManager.GetString("Redis.Settings.RetryCount.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Server address 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Server {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Server", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 One or more Redis server endpoints to connect to. 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Server_Description {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Server.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Timeout 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Timeout {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Timeout", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The timeout for connecting to Redis and executing synchronous or asynchronous operations. The default value is 10 seconds. 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Timeout_Description {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Timeout.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Default topic 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Topic {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Topic", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The default Redis message queue topic. 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_Topic_Description {
+            get {
+                return ResourceManager.GetString("Redis.Settings.Topic.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Approximate stream trimming 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_UseApproximateMaximumLength {
+            get {
+                return ResourceManager.GetString("Redis.Settings.UseApproximateMaximumLength", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Indicates whether Redis stream trimming uses approximate maximum-length semantics. The default value is true. 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_UseApproximateMaximumLength_Description {
+            get {
+                return ResourceManager.GetString("Redis.Settings.UseApproximateMaximumLength.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 User name 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_UserName {
+            get {
+                return ResourceManager.GetString("Redis.Settings.UserName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The user name used to authenticate the Redis connection. 的本地化字符串。
+        /// </summary>
+        internal static string Redis_Settings_UserName_Description {
+            get {
+                return ResourceManager.GetString("Redis.Settings.UserName.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 Provides a host environment for other Redis commands. 的本地化字符串。
         /// </summary>
         internal static string RedisCommand_Description {
@@ -498,6 +804,69 @@ namespace Zongsoft.Externals.Redis.Properties {
         internal static string RedisLockReleaseCommand_Name {
             get {
                 return ResourceManager.GetString("RedisLockReleaseCommand.Name", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The stored Redis message record is empty. 的本地化字符串。
+        /// </summary>
+        internal static string RedisMessageStorageRecordEmpty_Message {
+            get {
+                return ResourceManager.GetString("RedisMessageStorageRecordEmpty.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The stored Redis message identifier is missing. 的本地化字符串。
+        /// </summary>
+        internal static string RedisMessageStorageRecordIdentifierMissing_Message {
+            get {
+                return ResourceManager.GetString("RedisMessageStorageRecordIdentifierMissing.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The stored Redis message record is malformed. 的本地化字符串。
+        /// </summary>
+        internal static string RedisMessageStorageRecordMalformed_Message {
+            get {
+                return ResourceManager.GetString("RedisMessageStorageRecordMalformed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The stored Redis message version &apos;{0}&apos; is not supported. 的本地化字符串。
+        /// </summary>
+        internal static string RedisMessageStorageRecordVersionUnsupported_Message {
+            get {
+                return ResourceManager.GetString("RedisMessageStorageRecordVersionUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The Redis message storage settings cannot be changed after the storage has been activated. 的本地化字符串。
+        /// </summary>
+        internal static string RedisMessageStorageSettingsImmutable_Message {
+            get {
+                return ResourceManager.GetString("RedisMessageStorageSettingsImmutable.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The Redis message storage settings are unavailable. 的本地化字符串。
+        /// </summary>
+        internal static string RedisMessageStorageSettingsUnavailable_Message {
+            get {
+                return ResourceManager.GetString("RedisMessageStorageSettingsUnavailable.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Redis rejected the message storage operation. 的本地化字符串。
+        /// </summary>
+        internal static string RedisMessageStorageWriteRejected_Message {
+            get {
+                return ResourceManager.GetString("RedisMessageStorageWriteRejected.Message", resourceCulture);
             }
         }
 

@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <!-- 
     Microsoft ResX Schema 
@@ -177,6 +177,108 @@
   <data name="NoRedis.Message" xml:space="preserve">
     <value>没有可用的 Redis 服务。</value>
   </data>
+  <data name="Redis.Settings.Application" xml:space="preserve">
+    <value>应用名称</value>
+  </data>
+  <data name="Redis.Settings.Application.Description" xml:space="preserve">
+    <value>Redis 连接的应用标识。</value>
+  </data>
+  <data name="Redis.Settings.Client" xml:space="preserve">
+    <value>客户端名</value>
+  </data>
+  <data name="Redis.Settings.Client.Description" xml:space="preserve">
+    <value>Redis 连接所报告的客户端名称。</value>
+  </data>
+  <data name="Redis.Settings.Database" xml:space="preserve">
+    <value>数据库</value>
+  </data>
+  <data name="Redis.Settings.Database.Description" xml:space="preserve">
+    <value>Redis 逻辑数据库编号。</value>
+  </data>
+  <data name="Redis.Settings.Deadline" xml:space="preserve">
+    <value>读取期限</value>
+  </data>
+  <data name="Redis.Settings.Deadline.Description" xml:space="preserve">
+    <value>阻塞读取的期限，以毫秒为单位，默认值为 10000 毫秒。</value>
+  </data>
+  <data name="Redis.Settings.Group" xml:space="preserve">
+    <value>组别标识</value>
+  </data>
+  <data name="Redis.Settings.Group.Description" xml:space="preserve">
+    <value>Redis 消息消费者的组别标识。</value>
+  </data>
+  <data name="Redis.Settings.Heartbeat" xml:space="preserve">
+    <value>心跳间隔</value>
+  </data>
+  <data name="Redis.Settings.Heartbeat.Description" xml:space="preserve">
+    <value>Redis 连接的心跳间隔，默认值为 15 秒。</value>
+  </data>
+  <data name="Redis.Settings.IdleTimeout" xml:space="preserve">
+    <value>空闲超时</value>
+  </data>
+  <data name="Redis.Settings.IdleTimeout.Description" xml:space="preserve">
+    <value>未确认的流消息可被重新认领前的空闲时长，默认值为 30 秒。</value>
+  </data>
+  <data name="Redis.Settings.KeepAlive" xml:space="preserve">
+    <value>保活间隔</value>
+  </data>
+  <data name="Redis.Settings.KeepAlive.Description" xml:space="preserve">
+    <value>保活消息的发送间隔，以秒为单位；负值表示使用客户端默认值。</value>
+  </data>
+  <data name="Redis.Settings.MaximumLength" xml:space="preserve">
+    <value>流最大长度</value>
+  </data>
+  <data name="Redis.Settings.MaximumLength.Description" xml:space="preserve">
+    <value>Redis 流保留的最大消息数；零表示使用默认值，负值表示不裁剪。</value>
+  </data>
+  <data name="Redis.Settings.Namespace" xml:space="preserve">
+    <value>命名空间</value>
+  </data>
+  <data name="Redis.Settings.Namespace.Description" xml:space="preserve">
+    <value>消息存储所使用的 Redis 逻辑键命名空间；未设置时使用连接设置名称。</value>
+  </data>
+  <data name="Redis.Settings.Password" xml:space="preserve">
+    <value>密码</value>
+  </data>
+  <data name="Redis.Settings.Password.Description" xml:space="preserve">
+    <value>Redis 连接身份验证所使用的密码。</value>
+  </data>
+  <data name="Redis.Settings.RetryCount" xml:space="preserve">
+    <value>连接重试次数</value>
+  </data>
+  <data name="Redis.Settings.RetryCount.Description" xml:space="preserve">
+    <value>建立 Redis 连接时的重试次数。</value>
+  </data>
+  <data name="Redis.Settings.Server" xml:space="preserve">
+    <value>服务器地址</value>
+  </data>
+  <data name="Redis.Settings.Server.Description" xml:space="preserve">
+    <value>要连接的一个或多个 Redis 服务器端点。</value>
+  </data>
+  <data name="Redis.Settings.Timeout" xml:space="preserve">
+    <value>超时时长</value>
+  </data>
+  <data name="Redis.Settings.Timeout.Description" xml:space="preserve">
+    <value>连接 Redis 以及执行同步或异步操作的超时时长，默认值为 10 秒。</value>
+  </data>
+  <data name="Redis.Settings.Topic" xml:space="preserve">
+    <value>默认主题</value>
+  </data>
+  <data name="Redis.Settings.Topic.Description" xml:space="preserve">
+    <value>Redis 消息队列的默认主题。</value>
+  </data>
+  <data name="Redis.Settings.UseApproximateMaximumLength" xml:space="preserve">
+    <value>近似裁剪</value>
+  </data>
+  <data name="Redis.Settings.UseApproximateMaximumLength.Description" xml:space="preserve">
+    <value>是否使用 Redis 流的近似最大长度裁剪语义，默认值为真。</value>
+  </data>
+  <data name="Redis.Settings.UserName" xml:space="preserve">
+    <value>用户名</value>
+  </data>
+  <data name="Redis.Settings.UserName.Description" xml:space="preserve">
+    <value>Redis 连接身份验证所使用的用户名。</value>
+  </data>
   <data name="RedisConnectionSettingNotFound.Message" xml:space="preserve">
     <value>名为“{0}”的 Redis 连接设置不存在，并且没有定义默认的 Redis 连接设置。</value>
   </data>
@@ -266,6 +368,27 @@
   </data>
   <data name="RedisNamespaceChangeNotAllowed.Message" xml:space="preserve">
     <value>Redis 缓存服务激活后不能更改命名空间，请使用 WithNamespace() 创建其他作用域。</value>
+  </data>
+  <data name="RedisMessageStorageRecordEmpty.Message" xml:space="preserve">
+    <value>Redis 中存储的消息记录为空。</value>
+  </data>
+  <data name="RedisMessageStorageRecordIdentifierMissing.Message" xml:space="preserve">
+    <value>Redis 中存储的消息记录缺少消息标识。</value>
+  </data>
+  <data name="RedisMessageStorageRecordMalformed.Message" xml:space="preserve">
+    <value>Redis 中存储的消息记录格式错误。</value>
+  </data>
+  <data name="RedisMessageStorageRecordVersionUnsupported.Message" xml:space="preserve">
+    <value>不支持 Redis 中存储的消息记录版本“{0}”。</value>
+  </data>
+  <data name="RedisMessageStorageSettingsImmutable.Message" xml:space="preserve">
+    <value>Redis 消息存储器激活后不能更改其连接设置。</value>
+  </data>
+  <data name="RedisMessageStorageSettingsUnavailable.Message" xml:space="preserve">
+    <value>Redis 消息存储器的连接设置不可用。</value>
+  </data>
+  <data name="RedisMessageStorageWriteRejected.Message" xml:space="preserve">
+    <value>Redis 拒绝了消息存储操作。</value>
   </data>
   <data name="RedisRemoveCommand.Description" xml:space="preserve">
     <value>按键删除一个或多个条目。</value>

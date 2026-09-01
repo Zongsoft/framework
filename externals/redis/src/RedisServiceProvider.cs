@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -34,18 +34,21 @@ using System.Collections.Concurrent;
 using Zongsoft.Common;
 using Zongsoft.Caching;
 using Zongsoft.Services;
+using Zongsoft.Messaging;
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Redis;
 
-[Service(
+[Service("Redis",
 	typeof(IServiceProvider<ISequence>),
 	typeof(IServiceProvider<ISequenceBase>),
+	typeof(IServiceProvider<IMessageStorage>),
 	typeof(IServiceProvider<IDistributedCache>),
 	typeof(IServiceProvider<Services.Distributing.IDistributedLockManager>))]
 public class RedisServiceProvider :
 	IServiceProvider<ISequence>,
 	IServiceProvider<ISequenceBase>,
+	IServiceProvider<IMessageStorage>,
 	IServiceProvider<IDistributedCache>,
 	IServiceProvider<Services.Distributing.IDistributedLockManager>
 {
@@ -94,5 +97,14 @@ public class RedisServiceProvider :
 	ISequenceBase IServiceProvider<ISequenceBase>.GetService(string name) => GetRedis(name);
 	IDistributedCache IServiceProvider<IDistributedCache>.GetService(string name) => GetRedis(name);
 	Services.Distributing.IDistributedLockManager IServiceProvider<Services.Distributing.IDistributedLockManager>.GetService(string name) => GetRedis(name);
+
+	IMessageStorage IServiceProvider<IMessageStorage>.GetService(string name)
+	{
+		var settings = ApplicationContext.Current?.Configuration.GetConnectionSettings(
+			"/Externals/Redis/ConnectionSettings", name,
+			Configuration.RedisConnectionSettingsDriver.NAME);
+
+		return settings is Configuration.RedisConnectionSettings redis ? new Messaging.RedisMessageStorage(redis) : null;
+	}
 	#endregion
 }

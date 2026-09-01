@@ -58,6 +58,14 @@ public sealed class RedisConnectionSettings : ConnectionSettingsBase<RedisConnec
 		set => this.SetValue(value);
 	}
 
+	/// <summary>获取或设置 Redis 键的逻辑命名空间。</summary>
+	[ConnectionSetting(Ignored = true)]
+	public string Namespace
+	{
+		get => this.GetValue<string>();
+		set => this.SetValue(value);
+	}
+
 	[DefaultValue(10000)]
 	[ConnectionSetting(Ignored = true)]
 	public int Deadline
