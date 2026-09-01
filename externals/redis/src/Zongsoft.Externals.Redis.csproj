@@ -22,7 +22,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="StackExchange.Redis" VersionOverride="3.1.13" />
+		<PackageReference Include="StackExchange.Redis" VersionOverride="3.1.31" />
 	</ItemGroup>
 
 	<Choose>
