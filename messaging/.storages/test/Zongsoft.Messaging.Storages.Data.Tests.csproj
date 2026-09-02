@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<IsPackable>false</IsPackable>
+		<IsTestProject>true</IsTestProject>
+		<RootNamespace>Zongsoft.Messaging.Storages.Data.Tests</RootNamespace>
+		<GenerateDocumentationFile>false</GenerateDocumentationFile>
+		<TestTfmsInParallel>false</TestTfmsInParallel>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Reference Include="Zongsoft.Core">
+			<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+		</Reference>
+		<Reference Include="Zongsoft.Data">
+			<HintPath>..\..\..\Zongsoft.Data\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Data.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\src\Zongsoft.Messaging.Storages.Data.csproj" />
+		<ProjectReference Include="..\..\..\Zongsoft.Data\drivers\mssql\src\Zongsoft.Data.MsSql.csproj" />
+		<ProjectReference Include="..\..\..\Zongsoft.Data\drivers\mysql\src\Zongsoft.Data.MySql.csproj" />
+		<ProjectReference Include="..\..\..\Zongsoft.Data\drivers\sqlite\src\Zongsoft.Data.SQLite.csproj" />
+		<ProjectReference Include="..\..\..\Zongsoft.Data\drivers\postgres\src\Zongsoft.Data.PostgreSql.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Caching.Memory" VersionOverride="9.0.13" Condition="'$(TargetFramework)'!='net10.0'" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Condition="'$(TargetFramework)'=='net10.0'" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+		<PackageReference Include="Microsoft.Extensions.FileProviders.Physical" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+		<PackageReference Include="Microsoft.NET.Test.Sdk" />
+		<PackageReference Include="xunit.v3" />
+		<PackageReference Include="xunit.v3.core" />
+		<PackageReference Include="xunit.v3.assert" />
+		<PackageReference Include="xunit.analyzers" />
+		<PackageReference Include="xunit.v3.runner.msbuild" />
+		<PackageReference Include="xunit.runner.visualstudio" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\src\Zongsoft.Messaging.Storages.mapping" Link="Zongsoft.Messaging.Storages.mapping" CopyToOutputDirectory="PreserveNewest" />
+		<None Include="..\src\scripts\**\*.sql" Link="scripts\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+		<None Include="..\src\Zongsoft.Messaging.Storages.Data.plugin" Link="Zongsoft.Messaging.Storages.Data.plugin" CopyToOutputDirectory="PreserveNewest" />
+		<None Include="..\database\**\*" Link="database\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+		<None Include="options\*.option" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+</Project>

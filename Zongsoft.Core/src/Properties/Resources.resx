@@ -516,6 +516,9 @@
   <data name="Messaging.StorageSettingsInvalid.Message" xml:space="preserve">
     <value>The '{0}' connection settings cannot be assigned to a message storage that requires '{1}'.</value>
   </data>
+  <data name="Messaging.StorageCreationFailed.Message" xml:space="preserve">
+    <value>The message storage factory failed to create storage for the '{0}' broker.</value>
+  </data>
   <data name="Messaging.QueueUndefined.Message" xml:space="preserve">
     <value>{0}: The specified '{1}' message queue is not defined.</value>
   </data>

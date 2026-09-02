@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 
 <plugin name="Zongsoft.Messaging.ZeroMQ.Daemon"
         title="Zongsoft.Messaging.ZeroMQ.Daemon Plugin"
@@ -18,7 +18,7 @@
 
 	<extension path="/Workbench/Messaging/Zero">
 		<object name="QueueServer" type="Zongsoft.Messaging.ZeroMQ.ZeroQueueServer, Zongsoft.Messaging.ZeroMQ">
-			<expose name="Storage" value="{path:../@Storage}" />
+			<expose name="Storages" value="{path:../@Storages}" />
 		</object>
 	</extension>
 

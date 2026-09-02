@@ -1,0 +1,9 @@
+artifacts/Zongsoft.Messaging.Storages.Data.option
+artifacts/Zongsoft.Messaging.Storages.Data.plugin
+artifacts/Zongsoft.Messaging.Storages.mapping
+artifacts/scripts/**/*
+
+lib/$(Framework)/Zongsoft.Messaging.Storages.Data.*
+lib/$(Framework)/*/Zongsoft.Messaging.Storages.Data.resources.*
+
+database/**/*

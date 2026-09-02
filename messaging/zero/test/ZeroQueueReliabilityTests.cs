@@ -635,8 +635,6 @@ public class ZeroQueueReliabilityTests
 	private sealed class FailingMessageStorage : IMessageStorage
 	{
 		public string Name => "failure";
-		public bool Disposable => false;
-		public IConnectionSettings Settings { get; set; } = new ConnectionSettings();
 
 		public ValueTask<int> ClearAsync(CancellationToken cancellation = default) => ValueTask.FromResult(0);
 		public ValueTask<int> ClearAsync(string topic, CancellationToken cancellation = default) => ValueTask.FromResult(0);
@@ -702,12 +700,6 @@ public class ZeroQueueReliabilityTests
 
 		public MemoryMessageStorage Inner { get; } = new();
 		public string Name => this.Inner.Name;
-		public bool Disposable => false;
-		public IConnectionSettings Settings
-		{
-			get => this.Inner.Settings;
-			set => this.Inner.Settings = value;
-		}
 		public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		public void Release() => _release.TrySetResult();
 
@@ -738,12 +730,6 @@ public class ZeroQueueReliabilityTests
 
 		public MemoryMessageStorage Inner { get; } = new();
 		public string Name => this.Inner.Name;
-		public bool Disposable => false;
-		public IConnectionSettings Settings
-		{
-			get => this.Inner.Settings;
-			set => this.Inner.Settings = value;
-		}
 		public int RemoveAttempts => Volatile.Read(ref _removeAttempts);
 		public TaskCompletionSource FirstRemoveFailed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		public TaskCompletionSource RetryStarted { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -778,17 +764,23 @@ public class ZeroQueueReliabilityTests
 	private sealed class ReliableServerScope : IAsyncDisposable
 	{
 		private readonly ZeroQueueServer _server;
+		private readonly IMessageStorage _storage;
 
-		private ReliableServerScope(ZeroQueueServer server) => _server = server;
+		private ReliableServerScope(ZeroQueueServer server, IMessageStorage storage)
+		{
+			_server = server;
+			_storage = storage;
+		}
 
 		public ushort Port => _server.Port;
-		public MemoryMessageStorage Storage => _server.Storage as MemoryMessageStorage;
+		public MemoryMessageStorage Storage => _storage as MemoryMessageStorage;
 
 		public static async Task<ReliableServerScope> StartAsync(IMessageStorage storage = null)
 		{
-			var server = new ZeroQueueServer { Port = ZeroTestUtility.GetFreePort(), Storage = storage ?? new MemoryMessageStorage() };
+			storage ??= new MemoryMessageStorage();
+			var server = new ZeroQueueServer { Port = ZeroTestUtility.GetFreePort(), Storages = new TestMessageStorageFactory(storage) };
 			await server.StartAsync([]);
-			return new ReliableServerScope(server);
+			return new ReliableServerScope(server, storage);
 		}
 
 		public async Task RestartAsync()

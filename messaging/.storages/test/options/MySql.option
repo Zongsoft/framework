@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<options>
+	<option path="/Data">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="QueueServer" driver="MySql"
+			                   value="Server=127.0.0.1;Database=zongsoft;UserName=program;Password=xxxxxx" />
+		</connectionSettings>
+	</option>
+</options>

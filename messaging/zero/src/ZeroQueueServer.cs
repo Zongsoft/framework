@@ -50,6 +50,7 @@ public sealed partial class ZeroQueueServer : WorkerBase
 	private ushort _port;
 	private ServerAgent _agent;
 	private IMessageStorage _storage;
+	private IMessageStorageFactory _storages;
 	#endregion
 
 	#region 构造函数
@@ -69,15 +70,19 @@ public sealed partial class ZeroQueueServer : WorkerBase
 		}
 	}
 
-	public IMessageStorage Storage
+	public IMessageStorageFactory Storages
 	{
-		get => _storage;
+		get => _storages;
 		set
 		{
 			if(this.State != WorkerState.Stopped)
 				throw new InvalidOperationException(Properties.Resources.ZeroQueueServer_StorageImmutable_Message);
 
-			_storage = value;
+			if(ReferenceEquals(_storages, value))
+				return;
+
+			_storages = value;
+			DisposeStorage(Interlocked.Exchange(ref _storage, null));
 		}
 	}
 	#endregion
@@ -89,23 +94,31 @@ public sealed partial class ZeroQueueServer : WorkerBase
 		Validate(_port, control, incoming, outgoing);
 
 		var storage = _storage;
-		var pending = new System.Collections.Generic.List<Message>();
-
-		if(storage != null)
-		{
-			await foreach(var entry in storage.GetAsync(cancellation))
-				pending.Add(entry);
-		}
-
-		var agent = new ServerAgent(_port, control, incoming, outgoing, storage, pending);
+		ServerAgent agent = null;
 		try
 		{
+			if(storage == null && _storages != null)
+				_storage = storage = _storages.Create(this.Name);
+
+			var pending = new System.Collections.Generic.List<Message>();
+			if(storage != null)
+			{
+				await foreach(var entry in storage.GetAsync(cancellation))
+					pending.Add(entry);
+			}
+
+			agent = new ServerAgent(_port, control, incoming, outgoing, storage, pending);
 			await agent.StartAsync(cancellation);
 			_agent = agent;
 		}
 		catch
 		{
-			await agent.DisposeAsync();
+			if(agent != null)
+				await agent.DisposeAsync();
+
+			if(storage != null && ReferenceEquals(Interlocked.CompareExchange(ref _storage, null, storage), storage))
+				await DisposeStorageAsync(storage);
+
 			throw;
 		}
 
@@ -143,6 +156,7 @@ public sealed partial class ZeroQueueServer : WorkerBase
 			finally
 			{
 				DisposeStorage(Interlocked.Exchange(ref _storage, null));
+				_storages = null;
 			}
 		}
 	}
@@ -151,11 +165,16 @@ public sealed partial class ZeroQueueServer : WorkerBase
 	#region 私有方法
 	private static void DisposeStorage(IMessageStorage storage)
 	{
-		if(storage?.Disposable != true)
-			return;
-
 		if(storage is IAsyncDisposable asynchronous)
 			asynchronous.DisposeAsync().AsTask().GetAwaiter().GetResult();
+		else if(storage is IDisposable disposable)
+			disposable.Dispose();
+	}
+
+	private static async ValueTask DisposeStorageAsync(IMessageStorage storage)
+	{
+		if(storage is IAsyncDisposable asynchronous)
+			await asynchronous.DisposeAsync();
 		else if(storage is IDisposable disposable)
 			disposable.Dispose();
 	}

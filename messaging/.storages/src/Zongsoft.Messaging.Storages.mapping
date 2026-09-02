@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<schema xmlns="http://schemas.zongsoft.com/data">
+	<container name="Messaging.Storages">
+		<command name="Set" mutability="upsert">
+			<parameter name="Namespace" type="string" length="128" />
+			<parameter name="Identifier" type="string" length="512" />
+			<parameter name="Topic" type="string" length="512" />
+			<parameter name="Identity" type="string" />
+			<parameter name="IdentityIsNull" type="boolean" />
+			<parameter name="Tags" type="string" />
+			<parameter name="TagsIsNull" type="boolean" />
+			<parameter name="Timestamp" type="datetime" />
+			<parameter name="Expiration" type="datetime" />
+			<parameter name="ExpirationIsNull" type="boolean" />
+			<parameter name="Data" type="binary" />
+			<parameter name="DataIsNull" type="boolean" />
+		</command>
+
+		<command name="Get">
+			<parameter name="Namespace" type="string" length="128" />
+			<parameter name="Timestamp" type="datetime" />
+		</command>
+
+		<command name="GetByTopic">
+			<parameter name="Namespace" type="string" length="128" />
+			<parameter name="Topic" type="string" length="512" />
+			<parameter name="Timestamp" type="datetime" />
+		</command>
+
+		<command name="Remove" mutability="delete">
+			<parameter name="Namespace" type="string" length="128" />
+			<parameter name="Identifier" type="string" length="512" />
+		</command>
+
+		<command name="Clear" mutability="delete">
+			<parameter name="Namespace" type="string" length="128" />
+		</command>
+
+		<command name="ClearByTopic" mutability="delete">
+			<parameter name="Namespace" type="string" length="128" />
+			<parameter name="Topic" type="string" length="512" />
+		</command>
+	</container>
+</schema>
+

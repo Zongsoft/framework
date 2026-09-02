@@ -32,29 +32,18 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using Zongsoft.Configuration;
-
 namespace Zongsoft.Messaging;
 
 /// <summary>表示提供消息存储功能的接口。</summary>
 /// <remarks>
 /// <para>消息存储独立于消息队列驱动，每个队列或队列服务器应使用独立的存储实例。</para>
-/// <para>存储数据的隔离范围由 <see cref="Settings"/> 决定；当 <see cref="Disposable"/> 为真时，挂载该实例的消息队列服务器负责在自身释放时释放它。</para>
+/// <para>存储实例由<see cref="IMessageStorageFactory"/>创建并由挂载它的消息队列服务器负责释放。</para>
 /// </remarks>
 public interface IMessageStorage
 {
 	#region 属性定义
 	/// <summary>获取存储器的名称。</summary>
 	string Name { get; }
-
-	/// <summary>指示当前存储器是否由托管者释放。</summary>
-	/// <value>如果存储器由托管者释放则为真(<c>True</c>)，否则为假(<c>False</c>)。</value>
-	bool Disposable { get; }
-
-	/// <summary>获取或设置当前存储器的连接设置。</summary>
-	/// <value>当前存储器独占的连接设置，不能为空。</value>
-	/// <remarks>应在存储器挂载到队列或服务器之前完成设置，运行期间是否允许更换由具体实现决定。</remarks>
-	IConnectionSettings Settings { get; set; }
 	#endregion
 
 	#region 方法定义

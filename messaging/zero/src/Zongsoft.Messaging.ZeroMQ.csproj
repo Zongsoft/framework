@@ -45,6 +45,7 @@
 		<None Include="$(MSBuildProjectName).option" Pack="true" PackagePath="\artifacts" />
 		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
 		<None Include="$(MSBuildProjectName)-daemon.plugin" Pack="true" PackagePath="\artifacts" />
+		<None Include="$(MSBuildProjectName).Storage.plugin" Pack="true" PackagePath="\artifacts" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -9,29 +9,40 @@ using NetMQ.Sockets;
 
 using Xunit;
 
-using Zongsoft.Configuration;
-
 namespace Zongsoft.Messaging.ZeroMQ.Tests;
 
 public class ZeroQueueServerTests
 {
 	[Fact]
-	public void QueueServerDisposesOwnedSynchronousStorageOnce()
+	public async Task QueueServerDisposesOwnedSynchronousStorageOnce()
 	{
-		var storage = new SynchronousStorage(true);
-		var server = new ZeroQueueServer { Storage = storage };
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var storage = new SynchronousStorage();
+		var factory = new TestMessageStorageFactory(storage);
+		var server = new ZeroQueueServer { Port = ZeroTestUtility.GetFreePort(), Storages = factory };
+		await server.StartAsync([]);
+		await server.StopAsync([]);
 
 		((IDisposable)server).Dispose();
 		((IDisposable)server).Dispose();
 
 		Assert.Equal(1, storage.DisposeCount);
+		Assert.Equal(1, factory.Count);
+		Assert.Equal(server.Name, factory.LastName);
 	}
 
 	[Fact]
-	public void QueueServerDisposesOwnedAsynchronousStorageOnce()
+	public async Task QueueServerDisposesOwnedAsynchronousStorageOnce()
 	{
-		var storage = new AsynchronousStorage(true);
-		var server = new ZeroQueueServer { Storage = storage };
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var storage = new AsynchronousStorage();
+		var server = new ZeroQueueServer { Port = ZeroTestUtility.GetFreePort(), Storages = new TestMessageStorageFactory(storage) };
+		await server.StartAsync([]);
+		await server.StopAsync([]);
 
 		((IDisposable)server).Dispose();
 		((IDisposable)server).Dispose();
@@ -41,13 +52,15 @@ public class ZeroQueueServerTests
 	}
 
 	[Fact]
-	public void QueueServerDoesNotDisposeExternalStorage()
+	public void QueueServerDoesNotCreateStorageBeforeStart()
 	{
-		var storage = new AsynchronousStorage(false);
-		var server = new ZeroQueueServer { Storage = storage };
+		var storage = new AsynchronousStorage();
+		var factory = new TestMessageStorageFactory(storage);
+		var server = new ZeroQueueServer { Storages = factory };
 
 		((IDisposable)server).Dispose();
 
+		Assert.Equal(0, factory.Count);
 		Assert.Equal(0, storage.AsyncDisposeCount);
 		Assert.Equal(0, storage.DisposeCount);
 	}
@@ -58,8 +71,9 @@ public class ZeroQueueServerTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		var storage = new AsynchronousStorage(true);
-		var server = new ZeroQueueServer { Port = ZeroTestUtility.GetFreePort(), Storage = storage };
+		var storage = new AsynchronousStorage();
+		var factory = new TestMessageStorageFactory(storage);
+		var server = new ZeroQueueServer { Port = ZeroTestUtility.GetFreePort(), Storages = factory };
 
 		try
 		{
@@ -78,6 +92,40 @@ public class ZeroQueueServerTests
 
 		Assert.Equal(1, storage.AsyncDisposeCount);
 		Assert.Equal(0, storage.DisposeCount);
+		Assert.Equal(1, factory.Count);
+	}
+
+	[Fact]
+	public async Task ReplacingFactoryWhileStoppedDisposesActiveStorage()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var first = new AsynchronousStorage();
+		var second = new AsynchronousStorage();
+		var server = new ZeroQueueServer
+		{
+			Port = ZeroTestUtility.GetFreePort(),
+			Storages = new TestMessageStorageFactory(first),
+		};
+
+		try
+		{
+			await server.StartAsync([]);
+			await server.StopAsync([]);
+			server.Storages = new TestMessageStorageFactory(second);
+			Assert.Equal(1, first.AsyncDisposeCount);
+
+			await server.StartAsync([]);
+			await server.StopAsync([]);
+			Assert.Equal(0, second.AsyncDisposeCount);
+		}
+		finally
+		{
+			((IDisposable)server).Dispose();
+		}
+
+		Assert.Equal(1, second.AsyncDisposeCount);
 	}
 
 	[Fact]
@@ -87,7 +135,7 @@ public class ZeroQueueServerTests
 			return;
 
 		var port = ZeroTestUtility.GetFreePort();
-		var server = new ZeroQueueServer { Port = port, Storage = new MemoryMessageStorage() };
+		var server = new ZeroQueueServer { Port = port, Storages = new TestMessageStorageFactory(new MemoryMessageStorage()) };
 
 		try
 		{
@@ -126,10 +174,10 @@ public class ZeroQueueServerTests
 			await server.StartAsync([$"--control:{control}"]);
 			Assert.Equal(0, ZeroTestUtility.GetServerPorts(port).Control);
 			Assert.True(ZeroTestUtility.CanBindZeroMq(control));
-			Assert.Throws<InvalidOperationException>(() => server.Storage = new MemoryMessageStorage());
+			Assert.Throws<InvalidOperationException>(() => server.Storages = new TestMessageStorageFactory(new MemoryMessageStorage()));
 
 			await server.StopAsync([]);
-			server.Storage = new MemoryMessageStorage();
+			server.Storages = new TestMessageStorageFactory(new MemoryMessageStorage());
 			await server.StartAsync([$"--control:{control}"]);
 			Assert.Equal(control, ZeroTestUtility.GetServerPorts(port).Control);
 			Assert.False(ZeroTestUtility.CanBindZeroMq(control));
@@ -151,7 +199,7 @@ public class ZeroQueueServerTests
 		var incoming = ZeroTestUtility.GetFreePort();
 		var outgoing = ZeroTestUtility.GetFreePort();
 		var control = ZeroTestUtility.GetFreePort();
-		var server = new ZeroQueueServer { Port = port, Storage = new MemoryMessageStorage() };
+		var server = new ZeroQueueServer { Port = port, Storages = new TestMessageStorageFactory(new MemoryMessageStorage()) };
 
 		try
 		{
@@ -189,7 +237,9 @@ public class ZeroQueueServerTests
 			return;
 
 		var port = ZeroTestUtility.GetFreePort();
-		var server = new ZeroQueueServer { Port = port };
+		var storage = new AsynchronousStorage();
+		var factory = new TestMessageStorageFactory(storage);
+		var server = new ZeroQueueServer { Port = port, Storages = factory };
 
 		using var blocker = new ResponseSocket();
 		blocker.Bind($"tcp://*:{port}");
@@ -199,6 +249,8 @@ public class ZeroQueueServerTests
 			await server.StartAsync([]);
 
 			Assert.Equal(Zongsoft.Components.WorkerState.Stopped, server.State);
+			Assert.Equal(1, factory.Count);
+			Assert.Equal(1, storage.AsyncDisposeCount);
 		}
 		finally
 		{
@@ -206,11 +258,9 @@ public class ZeroQueueServerTests
 		}
 	}
 
-	private abstract class TestStorage(bool disposable) : IMessageStorage
+	private abstract class TestStorage : IMessageStorage
 	{
 		public string Name => "test";
-		public bool Disposable { get; } = disposable;
-		public IConnectionSettings Settings { get; set; } = new ConnectionSettings();
 
 		public ValueTask<int> ClearAsync(CancellationToken cancellation = default) => ValueTask.FromResult(0);
 		public ValueTask<int> ClearAsync(string topic, CancellationToken cancellation = default) => ValueTask.FromResult(0);
@@ -230,14 +280,14 @@ public class ZeroQueueServerTests
 		}
 	}
 
-	private sealed class SynchronousStorage(bool disposable) : TestStorage(disposable), IDisposable
+	private sealed class SynchronousStorage : TestStorage, IDisposable
 	{
 		private int _disposeCount;
 		public int DisposeCount => _disposeCount;
 		public void Dispose() => Interlocked.Increment(ref _disposeCount);
 	}
 
-	private sealed class AsynchronousStorage(bool disposable) : TestStorage(disposable), IDisposable, IAsyncDisposable
+	private sealed class AsynchronousStorage : TestStorage, IDisposable, IAsyncDisposable
 	{
 		private int _disposeCount;
 		private int _asyncDisposeCount;

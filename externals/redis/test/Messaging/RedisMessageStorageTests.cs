@@ -28,30 +28,27 @@ public sealed class RedisMessageStorageCollection
 [Collection(RedisMessageStorageCollection.Name)]
 public sealed class RedisMessageStorageTests
 {
+	private const string IDENTIFIER_ENVIRONMENT_VARIABLE = "ZONGSOFT_MESSAGING_STORAGE_IDENTIFIER";
+
 	[Fact]
-	public void ConstructorsAndSettings_ExposeRedisContractAndRemainMutableBeforeActivation()
+	public void Constructor_ExposesRedisContractWithFrozenPartition()
 	{
-		var settings = CreateSettings("typed", "typed-namespace");
-		using var storage = new RedisMessageStorage(settings);
+		var settings = CreateSettings("typed");
+		using var storage = new RedisMessageStorage("test", settings, "Zongsoft.Messaging.Storage:typed:identifier-one");
 
-		Assert.Equal("Redis", storage.Name);
-		Assert.True(storage.Disposable);
-		Assert.Same(settings, storage.Settings);
-		Assert.Same(settings, ((IMessageStorage)storage).Settings);
-
-		var replacement = CreateSettings("replacement", "replacement-namespace");
-		storage.Settings = replacement;
-		Assert.Same(replacement, storage.Settings);
-
-		using var convenient = new RedisMessageStorage("convenient", GetConnectionString());
-		Assert.Equal("convenient", convenient.Settings.Name);
-		Assert.Throws<ArgumentNullException>(() => new RedisMessageStorage(null));
+		Assert.Equal("test", storage.Name);
+		Assert.Same(settings, storage.ConnectionSettings);
+		Assert.Equal("Zongsoft.Messaging.Storage:typed:identifier-one", storage.Partition);
+		Assert.Null(typeof(IMessageStorage).GetProperty("Disposable"));
+		Assert.Null(typeof(IMessageStorage).GetProperty("Settings"));
+		Assert.Throws<ArgumentNullException>(() => new RedisMessageStorage("test", null, "partition"));
+		Assert.Throws<ArgumentNullException>(() => new RedisMessageStorage("test", settings, null));
 	}
 
 	[Fact]
 	public async Task Operations_PreCanceledTokenDoNotActivateStorage()
 	{
-		using var storage = new RedisMessageStorage(CreateSettings("cancelled", "cancelled-namespace"));
+		using var storage = CreateStorage("cancelled", "identifier-cancelled");
 		using var source = new CancellationTokenSource();
 		source.Cancel();
 
@@ -64,21 +61,16 @@ public sealed class RedisMessageStorageTests
 		Assert.Equal(source.Token, set.CancellationToken);
 		Assert.Equal(source.Token, remove.CancellationToken);
 		Assert.Equal(source.Token, get.CancellationToken);
-
-		var replacement = CreateSettings("replacement", "replacement-namespace");
-		storage.Settings = replacement;
-		Assert.Same(replacement, storage.Settings);
 	}
 
 	[Fact]
 	public async Task Dispose_BeforeActivationMakesStorageUnavailableAndIsIdempotent()
 	{
-		var storage = new RedisMessageStorage(CreateSettings("disposed", "disposed-namespace"));
+		var storage = CreateStorage("disposed", "identifier-disposed");
 
 		await storage.DisposeAsync();
 		await storage.DisposeAsync();
 
-		Assert.Throws<ObjectDisposedException>(() => storage.Settings = CreateSettings("other", "other-namespace"));
 		await Assert.ThrowsAsync<ObjectDisposedException>(async () => await storage.SetAsync(CreateMessage("disposed", "topic", [1])));
 	}
 
@@ -141,62 +133,41 @@ public sealed class RedisMessageStorageTests
 	}
 
 	[Fact]
-	public void ServiceProvider_LocalAtRedisRegistrationUsesExactNamedSettingsAndIndependentInstances()
+	public void Factory_UsesExactNamedSettingsAndCreatesIndependentInstances()
 	{
+		using var environment = new EnvironmentVariableScope("constructor-identifier");
 		var configuration = new ConfigurationBuilder()
 			.AddOptionFile(Path.Combine(AppContext.BaseDirectory, "Messaging", "RedisMessageStorage.option"))
 			.Build();
 
-		var services = new ServiceCollection();
-		services.AddSingleton<IConfigurationRoot>(configuration);
-		services.Register(typeof(RedisServiceProvider).Assembly, configuration);
-
+		var services = new ServiceCollection().AddSingleton<IConfigurationRoot>(configuration);
 		using var scope = new ServiceScope(new ServiceProviderFactory().CreateServiceProvider(services));
 		using var application = new ApplicationScope(scope.Provider);
-		var provider = Assert.IsAssignableFrom<IServiceProvider<IMessageStorage>>(scope.Provider.Resolve("redis"));
-		var first = Assert.IsType<RedisMessageStorage>(provider.GetService("local"));
-		var second = Assert.IsType<RedisMessageStorage>(provider.GetService("local"));
-		var nullable = Assert.IsType<RedisMessageStorage>(provider.GetService(null));
-		var empty = Assert.IsType<RedisMessageStorage>(provider.GetService(string.Empty));
+		var factory = RedisMessageStorageFactory.Instance;
+		Environment.SetEnvironmentVariable(IDENTIFIER_ENVIRONMENT_VARIABLE, "  redis-test-identifier  ");
+		RedisMessageStorage first = factory.Create("QueueServer");
+		Environment.SetEnvironmentVariable(IDENTIFIER_ENVIRONMENT_VARIABLE, "changed-identifier");
+		RedisMessageStorage second = factory.Create("QueueServer");
 
 		Assert.NotSame(first, second);
-		Assert.Equal("local", first.Settings.Name);
-		Assert.Equal("local", nullable.Settings.Name);
-		Assert.Equal("local", empty.Settings.Name);
-		Assert.Null(provider.GetService("missing"));
-		Assert.Null(provider.GetService(" local "));
+		Assert.Equal("QueueServer", first.ConnectionSettings.Name);
+		Assert.Equal("Zongsoft.Messaging.Storage:QueueServer:redis-test-identifier", first.Partition);
+		Assert.Equal(first.Partition, second.Partition);
+		Assert.Throws<ConfigurationException>(() => factory.Create("missing"));
+		Assert.Throws<ArgumentNullException>(() => factory.Create(null));
 
 		first.Dispose();
 		second.Dispose();
-		nullable.Dispose();
-		empty.Dispose();
 	}
 
 	[Fact]
-	public void ServiceLocator_LocalAtRedisResolvesRegisteredStorageProvider()
+	public void RedisServiceProviderNoLongerProvidesMessageStorage()
 	{
-		var configuration = new ConfigurationBuilder()
-			.AddOptionFile(Path.Combine(AppContext.BaseDirectory, "Messaging", "RedisMessageStorage.option"))
-			.Build();
+		Assert.DoesNotContain(typeof(RedisServiceProvider).GetInterfaces(), contract =>
+			contract.IsGenericType && contract.GetGenericTypeDefinition() == typeof(Zongsoft.Services.IServiceProvider<>) && contract.GenericTypeArguments[0] == typeof(IMessageStorage));
 
-		var services = new ServiceCollection();
-		services.AddSingleton<IConfigurationRoot>(configuration);
-		services.Register(typeof(RedisServiceProvider).Assembly, configuration);
-
-		using var scope = new ServiceScope(new ServiceProviderFactory().CreateServiceProvider(services));
-		using var application = new ApplicationScope(scope.Provider);
-		var provider = Assert.IsType<RedisServiceProvider>(scope.Provider.Resolve("redis"));
 		var contracts = Assert.Single(typeof(RedisServiceProvider).GetCustomAttributes<ServiceAttribute>()).Contracts;
-
-		Assert.Same(provider, scope.Provider.Resolve("Redis"));
-		foreach(var contract in contracts)
-			Assert.Same(provider, scope.Provider.GetRequiredService(contract));
-
-		using var storage = Assert.IsType<RedisMessageStorage>(scope.Provider.Locate<IMessageStorage>("local@redis"));
-
-		Assert.Equal("local", storage.Settings.Name);
-		Assert.Equal("locator-local", storage.Settings.Namespace);
-		Assert.Null(scope.Provider.Locate<IMessageStorage>("missing@redis"));
+		Assert.DoesNotContain(typeof(Zongsoft.Services.IServiceProvider<IMessageStorage>), contracts);
 	}
 
 	public static IEnumerable<object[]> InvalidSnapshots =>
@@ -208,8 +179,11 @@ public sealed class RedisMessageStorageTests
 		[Encoding.UTF8.GetBytes("{\"version\":1,\"identifier\":\" \",\"topic\":\"topic\"}")],
 	];
 
-	private static RedisConnectionSettings CreateSettings(string name, string @namespace) =>
-		RedisConnectionSettingsDriver.Instance.GetSettings(name, $"{GetConnectionString()};namespace={@namespace}");
+	private static RedisMessageStorage CreateStorage(string name, string identifier) =>
+		new("test", CreateSettings(name), $"Zongsoft.Messaging.Storage:{name}:{identifier}");
+
+	private static RedisConnectionSettings CreateSettings(string name) =>
+		RedisConnectionSettingsDriver.Instance.GetSettings(name, GetConnectionString());
 
 	private static string GetConnectionString() => $"server={Global.Server};password={Global.Password};timeout=5s";
 	private static Message CreateMessage(string identifier, string topic, byte[] data) => new(identifier, topic, data) { Timestamp = DateTime.UtcNow };
@@ -240,5 +214,18 @@ public sealed class RedisMessageStorageTests
 	}
 
 	private sealed class TestApplicationContext(IServiceProvider services) : ApplicationContext(services) { }
+
+	private sealed class EnvironmentVariableScope : IDisposable
+	{
+		private readonly string _original;
+
+		public EnvironmentVariableScope(string value)
+		{
+			_original = Environment.GetEnvironmentVariable(IDENTIFIER_ENVIRONMENT_VARIABLE);
+			Environment.SetEnvironmentVariable(IDENTIFIER_ENVIRONMENT_VARIABLE, value);
+		}
+
+		public void Dispose() => Environment.SetEnvironmentVariable(IDENTIFIER_ENVIRONMENT_VARIABLE, _original);
+	}
 
 }

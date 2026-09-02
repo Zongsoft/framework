@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: zongsoft.messaging.database.mysql
+  labels:
+    app: zongsoft.messaging.database.mysql
+spec:
+  containers:
+    - name: mysql
+      image: mysql:8.4.8
+      ports:
+        - containerPort: 3306
+          protocol: TCP
+          hostPort: 3306
+      env:
+        - name: LANG
+          value: C.UTF-8
+        - name: MYSQL_USER
+          value: program
+        - name: MYSQL_PASSWORD
+          value: "xxxxxx"
+        - name: MYSQL_ALLOW_EMPTY_PASSWORD
+          value: "yes"
+        - name: MYSQL_DATABASE
+          value: zongsoft
+        - name: MYSQL_CHARSET
+          value: utf8mb4
+        - name: MYSQL_COLLATION
+          value: utf8mb4_bin

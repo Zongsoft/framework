@@ -403,24 +403,6 @@ namespace Zongsoft.Externals.Redis.Properties {
         }
 
         /// <summary>
-        ///   查找类似 Namespace 的本地化字符串。
-        /// </summary>
-        internal static string Redis_Settings_Namespace {
-            get {
-                return ResourceManager.GetString("Redis.Settings.Namespace", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   查找类似 The logical Redis key namespace used by message storage. When omitted, the connection setting name is used. 的本地化字符串。
-        /// </summary>
-        internal static string Redis_Settings_Namespace_Description {
-            get {
-                return ResourceManager.GetString("Redis.Settings.Namespace.Description", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   查找类似 Password 的本地化字符串。
         /// </summary>
         internal static string Redis_Settings_Password {

@@ -263,9 +263,6 @@ public partial class MqttQueueServer : ListenerBase<Message>
 
 	private static void DisposeStorage(IMessageStorage storage)
 	{
-		if(storage?.Disposable != true)
-			return;
-
 		if(storage is IAsyncDisposable asynchronous)
 			asynchronous.DisposeAsync().AsTask().GetAwaiter().GetResult();
 		else if(storage is IDisposable disposable)

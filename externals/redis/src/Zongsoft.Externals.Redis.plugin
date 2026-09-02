@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 
 <plugin name="Zongsoft.Externals.Redis"
         title="Zongsoft.Externals.Redis Plugin"
@@ -15,6 +15,11 @@
 	<!-- 挂载服务提供程序 -->
 	<extension path="/Workspace/Externals/Redis">
 		<object name="RedisProvider" type="Zongsoft.Externals.Redis.RedisServiceProvider, Zongsoft.Externals.Redis" />
+	</extension>
+
+	<!-- 挂载消息存储器工厂 -->
+	<extension path="/Workspace/Messaging/Storages">
+		<object name="Redis" value="{static:Zongsoft.Externals.Redis.Messaging.RedisMessageStorageFactory.Instance, Zongsoft.Externals.Redis}" />
 	</extension>
 
 	<!-- 挂载连接设置驱动器 -->

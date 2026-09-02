@@ -231,12 +231,6 @@
   <data name="Redis.Settings.MaximumLength.Description" xml:space="preserve">
     <value>Redis 流保留的最大消息数；零表示使用默认值，负值表示不裁剪。</value>
   </data>
-  <data name="Redis.Settings.Namespace" xml:space="preserve">
-    <value>命名空间</value>
-  </data>
-  <data name="Redis.Settings.Namespace.Description" xml:space="preserve">
-    <value>消息存储所使用的 Redis 逻辑键命名空间；未设置时使用连接设置名称。</value>
-  </data>
   <data name="Redis.Settings.Password" xml:space="preserve">
     <value>密码</value>
   </data>

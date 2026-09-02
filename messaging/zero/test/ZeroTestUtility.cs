@@ -151,8 +151,6 @@ internal sealed class MemoryMessageStorage : IMessageStorage
 	private int _getCount;
 
 	public string Name => "memory";
-	public bool Disposable => false;
-	public IConnectionSettings Settings { get; set; } = new ConnectionSettings();
 	public int SetCount => _setCount;
 	public int RemoveCount => _removeCount;
 	public int GetCount => _getCount;
@@ -240,6 +238,25 @@ internal sealed class MemoryMessageStorage : IMessageStorage
 	};
 
 	private readonly record struct Entry(Message Message, DateTime Expiration);
+}
+
+internal sealed class TestMessageStorageFactory : IMessageStorageFactory
+{
+	private readonly Func<string, IMessageStorage> _creator;
+
+	public TestMessageStorageFactory(IMessageStorage storage) : this(_ => storage) { }
+	public TestMessageStorageFactory(Func<string, IMessageStorage> creator) => _creator = creator ?? throw new ArgumentNullException(nameof(creator));
+
+	public int Count { get; private set; }
+	public string LastName { get; private set; }
+	public IMessageStorage Storage { get; private set; }
+
+	public IMessageStorage Create(string name)
+	{
+		this.Count++;
+		this.LastName = name;
+		return this.Storage = _creator(name);
+	}
 }
 
 internal sealed class ZeroServerScope : IDisposable

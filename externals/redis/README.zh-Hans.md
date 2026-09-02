@@ -19,10 +19,35 @@
 - 根据 `Redis` 连接设置注册具名 Redis 服务；
 - 提供键值、字典、哈希集合、序列和分布式锁操作；
 - 基于 Redis 实现框架的消息队列及订阅抽象；
+- 在 `/Workspace/Messaging/Storages/Redis` 提供可靠消息存储器工厂；
 - 提供 Microsoft 配置提供程序和分布式缓存集成；
 - 将 Redis 查询、修改、计数、搜索和锁命令挂载到 Zongsoft 命令树。
 
 加载 `Zongsoft.Externals.Redis.plugin`，并配置 `/Externals/Redis/ConnectionSettings`。消息连接可在 `/Messaging/ConnectionSettings` 下单独配置，两者均使用 `Redis` 驱动器。完整用法可参考[分布式锁示例](samples/distributedlock)、[分布式缓存示例](samples/distributedcache)、[消息示例](samples/messaging)和[测试项目](test)。
+
+使用可靠 Broker 存储时，Redis 连接必须与 Broker 严格同名，并通过插件路径注入工厂。守护插件创建的 ZeroMQ Broker 名为 `QueueServer`：
+
+在进程启动前设置稳定的存储标识：
+
+```powershell
+$env:ZONGSOFT_MESSAGING_STORAGE_IDENTIFIER = "broker-storage-01"
+```
+
+```xml
+<option path="/Externals/Redis">
+	<connectionSettings>
+		<connectionSetting connectionSetting.name="QueueServer" driver="Redis"
+		                   value="server=127.0.0.1:6379;password=;" />
+	</connectionSettings>
+</option>
+<extension path="/Workbench/Messaging/Zero">
+	<QueueServer.Storages>{path:/Workspace/Messaging/Storages/Redis}</QueueServer.Storages>
+</extension>
+```
+
+工厂不会回退默认连接。工厂首次使用时冻结 `ZONGSOFT_MESSAGING_STORAGE_IDENTIFIER` 环境变量；该变量为空时回退到 `Environment.MachineName`。存储键以 `Zongsoft.Messaging.Storage:{ConnectionSettings.Name}:{StorageIdentifier}` 为前缀，超长分区使用稳定的 SHA-256 形式。
+
+从旧版 `nodeId` 选项升级时，必须在启动 Broker 前将相同值设置到 `ZONGSOFT_MESSAGING_STORAGE_IDENTIFIER`。值不变时分区文本保持兼容；若未设置，系统可能改用机器名分区，使旧可靠消息留在原前缀下。
 
 消息流默认保留最多 `100000` 条消息，并使用 Redis 的近似裁剪。可通过消息连接设置中的 `MaximumLength` 和 `UseApproximateMaximumLength` 调整；将 `MaximumLength` 设为负数可禁用裁剪。死信搬运使用同槽 Lua 脚本原子完成写入和确认。
 

@@ -19,10 +19,35 @@
 - Registers named Redis services from `Redis` connection settings.
 - Provides key/value, dictionary, hash-set, sequence, and distributed-lock operations.
 - Implements the framework's message queue and subscription abstractions with Redis.
+- Provides a reliable-message storage factory at `/Workspace/Messaging/Storages/Redis`.
 - Supplies a Microsoft configuration provider and distributed-cache integration.
 - Adds Redis inspection, mutation, counter, search, and lock commands to the Zongsoft command tree.
 
 Load `Zongsoft.Externals.Redis.plugin` and configure `/Externals/Redis/ConnectionSettings`. Messaging connections can be configured separately under `/Messaging/ConnectionSettings`; both use the `Redis` driver. See the [distributed-lock sample](samples/distributedlock), the [distributed-cache sample](samples/distributedcache), the [messaging sample](samples/messaging), and the [tests](test) for working examples.
+
+For reliable Broker storage, name the Redis connection exactly after the Broker and inject the factory path. The daemon-created ZeroMQ Broker is named `QueueServer`:
+
+Set a stable storage identifier before the process starts:
+
+```powershell
+$env:ZONGSOFT_MESSAGING_STORAGE_IDENTIFIER = "broker-storage-01"
+```
+
+```xml
+<option path="/Externals/Redis">
+	<connectionSettings>
+		<connectionSetting connectionSetting.name="QueueServer" driver="Redis"
+		                   value="server=127.0.0.1:6379;password=;" />
+	</connectionSettings>
+</option>
+<extension path="/Workbench/Messaging/Zero">
+	<QueueServer.Storages>{path:/Workspace/Messaging/Storages/Redis}</QueueServer.Storages>
+</extension>
+```
+
+The factory never falls back to a default connection. It freezes `ZONGSOFT_MESSAGING_STORAGE_IDENTIFIER` on first use and falls back to `Environment.MachineName` when the variable is empty. Storage keys use `Zongsoft.Messaging.Storage:{ConnectionSettings.Name}:{StorageIdentifier}` as their prefix; overlong partitions use a stable SHA-256 form.
+
+When upgrading from the former `nodeId` option, set `ZONGSOFT_MESSAGING_STORAGE_IDENTIFIER` to the same value before starting the Broker. The partition text remains compatible when the value is unchanged; omitting it may select the machine-name partition and leave previous reliable messages under the old prefix.
 
 Redis streams retain up to `100000` messages by default and use approximate trimming. Configure `MaximumLength` and `UseApproximateMaximumLength` in the messaging connection settings to change this behavior; use a negative `MaximumLength` to disable trimming. Dead-letter transfer atomically appends and acknowledges through a same-slot Lua script.
 

@@ -81,7 +81,7 @@ For standalone applications, start the exchange directly:
 
 ```csharp
 using var server = new ZeroQueueServer();
-server.Storage = ResolveMessageStorage(); // Supplied by an independent storage plugin; only LeastOnce needs it.
+server.Storages = ResolveMessageStorageFactory(); // Supplied by an independent storage plugin; only LeastOnce needs it.
 await server.StartAsync(["--control:32100", "--incoming:32101", "--outgoing:32102"]);
 ```
 
@@ -177,7 +177,7 @@ var enqueueOptions = new MessageEnqueueOptions(MessageReliability.LeastOnce)
 	Expiration = TimeSpan.FromMinutes(5),
 };
 
-server.Storage = ResolveMessageStorage(); // Supplied by an independent storage plugin.
+server.Storages = ResolveMessageStorageFactory(); // Supplied by an independent storage plugin.
 
 var consumer = await queue.SubscribeAsync("orders/created", new ReliableOrderHandler(), subscriptionOptions);
 
@@ -195,7 +195,7 @@ sealed class ReliableOrderHandler : HandlerBase<Message>
 
 The Broker accepts a publication only when an online matching subscription exists. No match returns `null` without writing Storage. With a match, the Broker persists Pending first and then returns the identifier. Delivery competes among online subscribers; any one acknowledgement removes Pending. Retries reuse `Message.Identifier` and may choose another consumer, so handlers must be idempotent.
 
-Assign `ZeroQueueServer.Storage` only while the Server is stopped. With `Storage.Disposable=false`, the container or application owns it. With `true`, the Server disposes it when the Server itself is disposed, preferring `IAsyncDisposable`; ordinary Stop does not dispose Storage, so the Server can restart. A Broker without Storage still serves `MostOnce` Broadcast, but does not start Control and returns only `Incoming,Outgoing` in discovery `Ports`; `LeastOnce` operations then fail.
+Assign `ZeroQueueServer.Storages` only while the Server is stopped. On first start, the Server calls `Storages.Create(Name)` and owns the returned storage. Ordinary Stop retains that storage for restart; replacing the factory, a failed start, or disposing the Server releases it, preferring `IAsyncDisposable`. A Broker without a storage factory still serves `MostOnce` Broadcast, but does not start Control and returns only `Incoming,Outgoing` in discovery `Ports`; `LeastOnce` operations then fail.
 
 | Messaging option | Support |
 | --- | --- |
@@ -257,7 +257,7 @@ The selected `MessageReliability` determines the contract:
 - A queue snapshots its connection, ports, group, filter, timeout, and heartbeat settings at construction; mutating the original settings object does not reconfigure a running queue;
 - Empty business payloads are supported.
 
-Message storage is an independent plugin concept, not part of the ZeroMQ driver. This package provides no default file store. Applications using `LeastOnce` must assign an independent `IMessageStorage` instance to each Broker Server. `Name` identifies the implementation, while `Settings` defines that instance's connection and data scope. Storage supports exact-topic reads and clears. An implementation must hold a message snapshot before `SetAsync` returns and provide the required restart durability.
+Message storage is an independent plugin concept, not part of the ZeroMQ driver. This package provides no default file store. Applications using `LeastOnce` inject an `IMessageStorageFactory`; the factory looks up a connection with the same name as the Broker and creates its exclusive storage. Storage supports exact-topic reads and clears. An implementation must hold a message snapshot before `SetAsync` returns and provide the required restart durability.
 
 See the [ZeroMQ 1.0 protocol](PROTOCOL.md) for the complete Discovery, Broadcast, and Control frame definitions.
 

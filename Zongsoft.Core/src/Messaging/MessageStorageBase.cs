@@ -40,22 +40,18 @@ namespace Zongsoft.Messaging;
 /// <typeparam name="TSettings">指定的连接设置类型。</typeparam>
 public abstract class MessageStorageBase<TSettings> : IMessageStorage where TSettings : IConnectionSettings
 {
-	#region 成员字段
-	private TSettings _settings;
-	#endregion
-
 	#region 构造函数
 	/// <summary>初始化消息存储基类。</summary>
 	/// <param name="settings">指定的连接设置。</param>
-	protected MessageStorageBase(TSettings settings = default) : this(null, settings) { }
+	protected MessageStorageBase(TSettings settings) : this(null, settings) { }
 
 	/// <summary>初始化消息存储基类。</summary>
 	/// <param name="name">指定的存储器名称。</param>
 	/// <param name="settings">指定的连接设置。</param>
-	protected MessageStorageBase(string name, TSettings settings = default)
+	protected MessageStorageBase(string name, TSettings settings)
 	{
-		_settings = settings;
-		this.Name = string.IsNullOrEmpty(name) ? settings?.Name : name.Trim();
+		this.Settings = settings ?? throw new ArgumentNullException(nameof(settings));
+		this.Name = string.IsNullOrEmpty(name) ? settings.Name : name.Trim();
 	}
 	#endregion
 
@@ -63,32 +59,11 @@ public abstract class MessageStorageBase<TSettings> : IMessageStorage where TSet
 	/// <summary>获取存储器的名称。</summary>
 	public virtual string Name { get; }
 
-	/// <summary>指示当前存储器是否由托管者释放。</summary>
-	/// <value>如果存储器由托管者释放则为真(<c>True</c>)，否则为假(<c>False</c>)。</value>
-	public virtual bool Disposable => _settings != null && _settings.TryGetValue<bool>(nameof(this.Disposable), out var value) && value;
+	#endregion
 
-	/// <summary>获取或设置当前存储器的强类型连接设置。</summary>
-	/// <value>当前存储器独占的连接设置，不能为空。</value>
-	/// <exception cref="ArgumentNullException">设置值为空。</exception>
-	public virtual TSettings Settings
-	{
-		get => _settings;
-		set => _settings = value ?? throw new ArgumentNullException(nameof(value));
-	}
-
-	IConnectionSettings IMessageStorage.Settings
-	{
-		get => this.Settings;
-		set
-		{
-			if(value == null)
-				throw new ArgumentNullException(nameof(value));
-			if(value is not TSettings settings)
-				throw new ArgumentException(string.Format(Properties.Resources.Messaging_StorageSettingsInvalid_Message, value.GetType().Name, typeof(TSettings).Name), nameof(value));
-
-			this.Settings = settings;
-		}
-	}
+	#region 保护属性
+	/// <summary>获取构造当前存储器时指定的连接设置。</summary>
+	protected TSettings Settings { get; }
 	#endregion
 
 	#region 公共方法

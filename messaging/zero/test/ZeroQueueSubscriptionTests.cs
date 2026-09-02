@@ -184,7 +184,7 @@ public class ZeroQueueSubscriptionTests
 		var control = ZeroTestUtility.GetFreePort();
 		var args = new[] { $"--incoming:{incoming}", $"--outgoing:{outgoing}", $"--control:{control}" };
 		var topic = "topic/restart";
-		var server = new ZeroQueueServer { Port = port, Storage = new MemoryMessageStorage() };
+		var server = new ZeroQueueServer { Port = port, Storages = new TestMessageStorageFactory(new MemoryMessageStorage()) };
 
 		try
 		{

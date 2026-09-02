@@ -108,6 +108,12 @@ partial class RedisMessageStorage
 		};
 		#endregion
 
+		#region 重写方法
+		public override string ToString() => string.IsNullOrEmpty(this.Tags) ?
+			$"[{this.Identifier}@{this.Timestamp}]{this.Topic}" :
+			$"[{this.Identifier}@{this.Timestamp}]{this.Topic}({this.Tags})";
+		#endregion
+
 		#region 私有方法
 		private static DateTime Normalize(DateTime timestamp) => timestamp.Kind switch
 		{

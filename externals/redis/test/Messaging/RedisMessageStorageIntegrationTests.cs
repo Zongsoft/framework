@@ -150,15 +150,15 @@ public sealed class RedisMessageStorageIntegrationTests
 	}
 
 	[Fact]
-	public async Task Namespace_ExplicitAndFallbackScopesIsolateIdentifiersAndEscapePatterns()
+	public async Task Partitions_IsolateIdentifiersAndEscapeScanPatterns()
 	{
 		EnsureRedis();
 		var sharedName = $"shared-{Guid.NewGuid():N}";
-		var wildcardNamespace = $"tenant[*]?-{Guid.NewGuid():N}";
-		await using var first = CreateStorage(sharedName, wildcardNamespace);
+		var wildcardNode = $"tenant[*]?-{Guid.NewGuid():N}";
+		await using var first = CreateStorage(sharedName, wildcardNode);
 		await using var second = CreateStorage(sharedName, $"tenant-b-{Guid.NewGuid():N}");
-		await using var fallbackWriter = CreateStorage(sharedName, null);
-		await using var fallbackReader = CreateStorage(sharedName, null);
+		await using var fallbackWriter = CreateStorage(sharedName, "shared-node");
+		await using var fallbackReader = CreateStorage(sharedName, "shared-node");
 
 		try
 		{
@@ -190,7 +190,7 @@ public sealed class RedisMessageStorageIntegrationTests
 		await using var storage = CreateStorage(out var settings);
 		await using var lease = await RedisConnectionPool.AcquireAsync(settings.GetOptions());
 		var database = lease.Connection.GetDatabase(settings.Database);
-		var key = $"Zongsoft.Messaging.Storage:{settings.Namespace}:corrupt";
+		var key = $"{storage.Partition}:corrupt";
 		await database.StringSetAsync(key, payload);
 
 		try
@@ -204,20 +204,19 @@ public sealed class RedisMessageStorageIntegrationTests
 	}
 
 	[Fact]
-	public async Task Activation_FreezesSettingsAndDisposeReleasesOwnedPoolLease()
+	public async Task ConstructorSnapshotsConnectionOptionsAndDisposeReleasesOwnedPoolLease()
 	{
 		EnsureRedis();
 		var client = $"storage-client-{Guid.NewGuid():N}";
-		var settings = CreateSettings($"owned-{Guid.NewGuid():N}", $"owned-{Guid.NewGuid():N}", client);
-		var storage = new RedisMessageStorage(settings);
+		var name = $"owned-{Guid.NewGuid():N}";
+		var settings = CreateSettings(name, client);
+		var storage = new RedisMessageStorage("test", settings, $"Zongsoft.Messaging.Storage:{name}:owned-identifier");
 		await storage.SetAsync(CreateMessage("owned", "lifecycle", [1]));
 
 		var field = typeof(RedisMessageStorage).GetField("_lease", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
 		var lease = Assert.IsType<RedisConnectionLease>(field.GetValue(storage));
 		var connection = lease.Connection;
 
-		Assert.Throws<InvalidOperationException>(() => storage.Settings = CreateSettings("replacement", "replacement"));
-		settings.Namespace = "changed-after-activation";
 		Assert.Equal("owned", Assert.Single(await ReadAsync(storage.GetAsync())).Identifier);
 		Assert.True(connection.IsConnected);
 		await storage.ClearAsync();
@@ -228,16 +227,17 @@ public sealed class RedisMessageStorageIntegrationTests
 
 	private static RedisMessageStorage CreateStorage(out RedisConnectionSettings settings)
 	{
-		settings = CreateSettings($"storage-{Guid.NewGuid():N}", $"namespace-{Guid.NewGuid():N}");
-		return new RedisMessageStorage(settings);
+		var name = $"storage-{Guid.NewGuid():N}";
+		settings = CreateSettings(name);
+		return new RedisMessageStorage("test", settings, $"Zongsoft.Messaging.Storage:{name}:test-identifier");
 	}
 
-	private static RedisMessageStorage CreateStorage(string name, string @namespace) => new(CreateSettings(name, @namespace));
-	private static RedisConnectionSettings CreateSettings(string name, string @namespace, string client = null)
+	private static RedisMessageStorage CreateStorage(string name, string identifier) =>
+		new("test", CreateSettings(name), $"Zongsoft.Messaging.Storage:{name}:{identifier}");
+
+	private static RedisConnectionSettings CreateSettings(string name, string client = null)
 	{
 		var text = $"server={Global.Server};password={Global.Password};timeout=5s";
-		if(!string.IsNullOrEmpty(@namespace))
-			text += $";namespace={@namespace}";
 		if(!string.IsNullOrEmpty(client))
 			text += $";client={client}";
 

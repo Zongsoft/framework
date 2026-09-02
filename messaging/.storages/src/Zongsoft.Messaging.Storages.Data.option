@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<options>
+	<!--
+	Data message storage first reuses connection settings under /Data/ConnectionSettings,
+	then falls back to /Messaging/Storages/ConnectionSettings.
+	No connection is enabled by this package. The following is a non-effective template:
+
+	<option path="/Data">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="QueueServer" driver="SQLite"
+			                   value="DataSource=broker.db;" />
+		</connectionSettings>
+	</option>
+
+	Set ZONGSOFT_MESSAGING_STORAGE_IDENTIFIER before starting the process when a stable
+	storage identifier other than Environment.MachineName is required. See README.md
+	for driver-specific examples, migration notes, and schema deployment instructions.
+	-->
+</options>

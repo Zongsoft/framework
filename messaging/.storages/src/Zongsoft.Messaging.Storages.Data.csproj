@@ -1,0 +1,65 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<Version>1.0.0</Version>
+		<Product>Zongsoft Messaging Data Storage Library</Product>
+		<Description>This library provides a high-performance relational database storage for Zongsoft messaging.</Description>
+		<RootNamespace>Zongsoft.Messaging.Storages</RootNamespace>
+		<IsPackable>true</IsPackable>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/messaging/.storages</RepositoryUrl>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+	</ItemGroup>
+
+	<Choose>
+		<When Condition="$(Configuration)=='Debug'">
+			<ItemGroup>
+				<Reference Include="Zongsoft.Core">
+					<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+				</Reference>
+				<Reference Include="Zongsoft.Data">
+					<HintPath>..\..\..\Zongsoft.Data\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Data.dll</HintPath>
+				</Reference>
+			</ItemGroup>
+		</When>
+		<Otherwise>
+			<ItemGroup>
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.58.0" />
+				<PackageReference Include="Zongsoft.Data" VersionOverride="7.27.0" />
+			</ItemGroup>
+		</Otherwise>
+	</Choose>
+
+	<ItemGroup>
+		<None Include="..\README.md" Link="README.md" Pack="true" PackagePath="\" />
+		<None Include="..\README.zh-Hans.md" Link="README.zh-Hans.md" Pack="true" PackagePath="\" />
+		<None Include="$(MSBuildProjectName).deploy" Link=".deploy" Pack="true" PackagePath="\.deploy" />
+		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
+		<None Include="$(MSBuildProjectName).option" Pack="true" PackagePath="\artifacts" />
+		<None Include="Zongsoft.Messaging.Storages.mapping" Pack="true" PackagePath="\artifacts" />
+		<None Include="scripts\**\*.sql" Link="%(RecursiveDir)%(Filename)%(Extension)" Pack="true" PackagePath="\artifacts\scripts" />
+		<None Include="..\database\**\*" Link="%(RecursiveDir)%(Filename)%(Extension)" Pack="true" PackagePath="\database" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Compile Update="Properties\Resources.Designer.cs">
+			<DesignTime>True</DesignTime>
+			<AutoGen>True</AutoGen>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
+	</ItemGroup>
+
+	<ItemGroup>
+		<EmbeddedResource Update="Properties\Resources.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
+	</ItemGroup>
+</Project>

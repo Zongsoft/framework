@@ -1,0 +1,4 @@
+<Solution>
+	<Project Path="src/Zongsoft.Messaging.Storages.Data.csproj" />
+	<Project Path="test/Zongsoft.Messaging.Storages.Data.Tests.csproj" />
+</Solution>

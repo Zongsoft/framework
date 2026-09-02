@@ -13,50 +13,23 @@ namespace Zongsoft.Messaging.Tests;
 public class MessageStorageBaseTest
 {
 	[Fact]
-	public void StorageExposesNameAndStronglyTypedSettingsThroughInterface()
+	public void StorageExposesNameAndConstructorBoundSettings()
 	{
 		var first = new StorageSettings("server=first");
-		var second = new StorageSettings("server=second");
 		var storage = new TestStorage(first);
 		var abstraction = (IMessageStorage)storage;
 
 		Assert.Equal("memory", storage.Name);
 		Assert.Equal(storage.Name, abstraction.Name);
-		Assert.Same(first, storage.Settings);
-		Assert.Same(first, abstraction.Settings);
-
-		abstraction.Settings = second;
-		Assert.Same(second, storage.Settings);
-		Assert.Same(second, abstraction.Settings);
+		Assert.Same(first, storage.ConnectionSettings);
+		Assert.Null(typeof(IMessageStorage).GetProperty("Settings"));
+		Assert.Null(typeof(IMessageStorage).GetProperty("Disposable"));
 	}
 
 	[Fact]
-	public void InterfaceSettingsRejectsNullOrIncompatibleSettings()
+	public void ConstructorRejectsNullSettings()
 	{
-		var settings = new StorageSettings();
-		var storage = new TestStorage(settings);
-		var abstraction = (IMessageStorage)storage;
-
-		Assert.Throws<ArgumentNullException>(() => storage.Settings = null);
-		Assert.Throws<ArgumentNullException>(() => abstraction.Settings = null);
-		Assert.Throws<ArgumentException>(() => abstraction.Settings = new ConnectionSettings());
-		Assert.Same(settings, storage.Settings);
-		Assert.Same(settings, abstraction.Settings);
-	}
-
-	[Fact]
-	public void StorageDisposableReflectsSettings()
-	{
-		var storage = new TestStorage(new StorageSettings());
-		Assert.False(storage.Disposable);
-		Assert.False(((IMessageStorage)storage).Disposable);
-
-		storage.Settings = new StorageSettings("Disposable=true");
-		Assert.True(storage.Disposable);
-		Assert.True(((IMessageStorage)storage).Disposable);
-
-		storage.Settings = new StorageSettings("Disposable=false");
-		Assert.False(storage.Disposable);
+		Assert.Throws<ArgumentNullException>(() => new TestStorage(null));
 	}
 
 	[Fact]
@@ -223,6 +196,7 @@ public class MessageStorageBaseTest
 		public string LastTopic { get; private set; }
 		public TimeSpan Expiry { get; private set; }
 		public IReadOnlyDictionary<string, Message> Messages => _messages;
+		public StorageSettings ConnectionSettings => base.Settings;
 
 		protected override ValueTask<int> OnClearAsync(string topic, CancellationToken cancellation)
 		{

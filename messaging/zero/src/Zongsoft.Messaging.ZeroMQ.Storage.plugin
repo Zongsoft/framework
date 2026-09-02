@@ -13,6 +13,6 @@
 	</manifest>
 
 	<extension path="/Workbench/Messaging/Zero">
-		<QueueServer.Storage>local@redis</QueueServer.Storage>
+		<QueueServer.Storages>{path:/Workspace/Messaging/Storages/Redis}</QueueServer.Storages>
 	</extension>
 </plugin>

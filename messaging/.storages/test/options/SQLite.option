@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<options>
+	<option path="/Data">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="QueueServer" driver="SQLite"
+			                   value="DataSource=provider.db" />
+		</connectionSettings>
+	</option>
+</options>

@@ -2,9 +2,9 @@
 
 <options>
 	<option path="/Externals/Redis">
-		<connectionSettings default="local">
-			<connectionSetting connectionSetting.name="local" driver="redis"
-			                   value="server=127.0.0.1:6379;password=xxxxxx;timeout=5s;namespace=locator-local" />
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="QueueServer" driver="redis"
+			                   value="server=127.0.0.1:6379;password=xxxxxx;timeout=5s" />
 		</connectionSettings>
 	</option>
 </options>

@@ -516,6 +516,9 @@
   <data name="Messaging.StorageSettingsInvalid.Message" xml:space="preserve">
     <value>无法将“{0}”连接设置赋给需要“{1}”连接设置的消息存储器。</value>
   </data>
+  <data name="Messaging.StorageCreationFailed.Message" xml:space="preserve">
+    <value>消息存储工厂无法为“{0}”消息代理创建存储器。</value>
+  </data>
   <data name="Messaging.QueueUndefined.Message" xml:space="preserve">
     <value>{0}：未定义指定的“{1}”消息队列。</value>
   </data>

@@ -45,45 +45,32 @@ namespace Zongsoft.Externals.Redis.Messaging;
 public sealed partial class RedisMessageStorage : MessageStorageBase<RedisConnectionSettings>, IDisposable, IAsyncDisposable
 {
 	#region 常量定义
-	private const string PREFIX = "Zongsoft.Messaging.Storage";
 	private const int BATCH_SIZE = 100;
 	#endregion
 
 	#region 成员字段
-	private readonly object _sync = new();
 	private readonly SemaphoreSlim _semaphore = new(1, 1);
-	private int _activated;
+	private readonly ConfigurationOptions _options;
+	private readonly string _partition;
 	private int _disposed;
-	private string _prefix;
 	private IDatabase _database;
 	private RedisConnectionLease _lease;
-	private ConfigurationOptions _options;
 	#endregion
 
 	#region 构造函数
-	public RedisMessageStorage(RedisConnectionSettings settings) : base(settings ?? throw new ArgumentNullException(nameof(settings))) { }
-	public RedisMessageStorage(string name, string connectionString) : this(RedisConnectionSettingsDriver.Instance.GetSettings(name, connectionString)) { }
+	internal RedisMessageStorage(string name, RedisConnectionSettings settings, string partition) : base(name, settings ?? throw new ArgumentNullException(nameof(settings)))
+	{
+		if(string.IsNullOrWhiteSpace(partition))
+			throw new ArgumentNullException(nameof(partition));
+
+		_partition = partition.Trim();
+		_options = settings.GetOptions();
+	}
 	#endregion
 
-	#region 公共属性
-	public override string Name => RedisConnectionSettingsDriver.NAME;
-	public override bool Disposable => true;
-	public override RedisConnectionSettings Settings
-	{
-		get => base.Settings;
-		set
-		{
-			lock(_sync)
-			{
-				this.ThrowIfDisposed();
-
-				if(Volatile.Read(ref _activated) != 0)
-					throw new InvalidOperationException(Properties.Resources.RedisMessageStorageSettingsImmutable_Message);
-
-				base.Settings = value;
-			}
-		}
-	}
+	#region 内部属性
+	internal string Partition => _partition;
+	internal RedisConnectionSettings ConnectionSettings => this.Settings;
 	#endregion
 
 	#region 重写方法
@@ -178,32 +165,30 @@ public sealed partial class RedisMessageStorage : MessageStorageBase<RedisConnec
 	#endregion
 
 	#region 私有方法
-	private void Activate()
+	private RedisKey GetKey(string identifier) => $"{_partition}:{identifier}";
+
+	private static string EscapePattern(string value)
 	{
-		if(Volatile.Read(ref _activated) != 0)
+		StringBuilder builder = null;
+
+		for(int i = 0; i < value.Length; i++)
 		{
-			this.ThrowIfDisposed();
-			return;
+			var character = value[i];
+			if(character is '*' or '?' or '[' or ']' or '\\')
+			{
+				builder ??= new StringBuilder(value.Length + 8).Append(value, 0, i);
+				builder.Append('\\');
+			}
+
+			builder?.Append(character);
 		}
 
-		lock(_sync)
-		{
-			this.ThrowIfDisposed();
-			if(Volatile.Read(ref _activated) != 0)
-				return;
-
-			var settings = base.Settings ?? throw new InvalidOperationException(Properties.Resources.RedisMessageStorageSettingsUnavailable_Message);
-			var @namespace = string.IsNullOrWhiteSpace(settings.Namespace) ? settings.Name : settings.Namespace;
-
-			_options = settings.GetOptions();
-			_prefix = $"{PREFIX}:{(string.IsNullOrWhiteSpace(@namespace) ? string.Empty : @namespace.Trim())}";
-			Volatile.Write(ref _activated, 1);
-		}
+		return builder?.ToString() ?? value;
 	}
 
 	private async ValueTask<IDatabase> GetDatabaseAsync(CancellationToken cancellation)
 	{
-		this.Activate();
+		this.ThrowIfDisposed();
 		var database = Volatile.Read(ref _database);
 		if(database != null)
 			return database;
@@ -236,21 +221,9 @@ public sealed partial class RedisMessageStorage : MessageStorageBase<RedisConnec
 		}
 	}
 
-	private RedisKey GetKey(string identifier)
-	{
-		this.Activate();
-		return $"{_prefix}:{identifier}";
-	}
-
-	private RedisValue GetPattern()
-	{
-		this.Activate();
-		return EscapePattern(_prefix + ":") + "*";
-	}
-
 	private async IAsyncEnumerable<RedisKey> ScanKeysAsync(IDatabase database, [EnumeratorCancellation] CancellationToken cancellation)
 	{
-		var pattern = this.GetPattern();
+		var pattern = EscapePattern(_partition + ":") + "*";
 		var keys = new HashSet<RedisKey>();
 
 		foreach(var endpoint in database.Multiplexer.GetEndPoints())
@@ -283,24 +256,6 @@ public sealed partial class RedisMessageStorage : MessageStorageBase<RedisConnec
 		}
 
 		return count;
-	}
-
-	private static string EscapePattern(string value)
-	{
-		StringBuilder builder = null;
-		for(int i = 0; i < value.Length; i++)
-		{
-			var character = value[i];
-			if(character is '*' or '?' or '[' or ']' or '\\')
-			{
-				builder ??= new StringBuilder(value.Length + 8).Append(value, 0, i);
-				builder.Append('\\');
-			}
-
-			builder?.Append(character);
-		}
-
-		return builder?.ToString() ?? value;
 	}
 
 	private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);

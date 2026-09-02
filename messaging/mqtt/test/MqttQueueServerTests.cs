@@ -23,7 +23,7 @@ public class MqttQueueServerTests
 	[Fact]
 	public void QueueServerDisposesOwnedSynchronousStorageOnce()
 	{
-		var storage = new SynchronousStorage(true);
+		var storage = new SynchronousStorage();
 		var server = new MqttQueueServer { Storage = storage };
 
 		((IDisposable)server).Dispose();
@@ -35,7 +35,7 @@ public class MqttQueueServerTests
 	[Fact]
 	public void QueueServerDisposesOwnedAsynchronousStorageOnce()
 	{
-		var storage = new AsynchronousStorage(true);
+		var storage = new AsynchronousStorage();
 		var server = new MqttQueueServer { Storage = storage };
 
 		((IDisposable)server).Dispose();
@@ -46,14 +46,14 @@ public class MqttQueueServerTests
 	}
 
 	[Fact]
-	public void QueueServerDoesNotDisposeExternalStorage()
+	public void QueueServerOwnsAndDisposesAssignedStorage()
 	{
-		var storage = new AsynchronousStorage(false);
+		var storage = new AsynchronousStorage();
 		var server = new MqttQueueServer { Storage = storage };
 
 		((IDisposable)server).Dispose();
 
-		Assert.Equal(0, storage.AsyncDisposeCount);
+		Assert.Equal(1, storage.AsyncDisposeCount);
 		Assert.Equal(0, storage.DisposeCount);
 	}
 
@@ -63,7 +63,7 @@ public class MqttQueueServerTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		var storage = new AsynchronousStorage(true);
+		var storage = new AsynchronousStorage();
 		var server = new MqttQueueServer { Port = MqttTestUtility.GetFreePort(), Storage = storage };
 
 		try
@@ -290,11 +290,9 @@ public class MqttQueueServerTests
 		public Task UpdateRetainedMessageAsync(MqttApplicationMessage message) => this.Server.UpdateRetainedMessageAsync(message);
 	}
 
-	private class TestMessageStorage(bool disposable = false) : IMessageStorage
+	private class TestMessageStorage : IMessageStorage
 	{
 		public string Name => "test";
-		public bool Disposable { get; } = disposable;
-		public IConnectionSettings Settings { get; set; } = new ConnectionSettings();
 
 		public ValueTask<int> ClearAsync(CancellationToken cancellation = default) => ValueTask.FromResult(0);
 		public ValueTask<int> ClearAsync(string topic, CancellationToken cancellation = default) => ValueTask.FromResult(0);
@@ -314,14 +312,14 @@ public class MqttQueueServerTests
 		}
 	}
 
-	private sealed class SynchronousStorage(bool disposable) : TestMessageStorage(disposable), IDisposable
+	private sealed class SynchronousStorage : TestMessageStorage, IDisposable
 	{
 		private int _disposeCount;
 		public int DisposeCount => _disposeCount;
 		public void Dispose() => Interlocked.Increment(ref _disposeCount);
 	}
 
-	private sealed class AsynchronousStorage(bool disposable) : TestMessageStorage(disposable), IDisposable, IAsyncDisposable
+	private sealed class AsynchronousStorage : TestMessageStorage, IDisposable, IAsyncDisposable
 	{
 		private int _disposeCount;
 		private int _asyncDisposeCount;

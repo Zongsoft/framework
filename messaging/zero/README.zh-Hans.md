@@ -81,7 +81,7 @@ dotnet build messaging/zero/Zongsoft.Messaging.ZeroMQ.slnx
 
 ```csharp
 using var server = new ZeroQueueServer();
-server.Storage = ResolveMessageStorage(); // 由独立存储插件提供；仅 LeastOnce 需要。
+server.Storages = ResolveMessageStorageFactory(); // 由独立存储插件提供；仅 LeastOnce 需要。
 await server.StartAsync(["--control:32100", "--incoming:32101", "--outgoing:32102"]);
 ```
 
@@ -177,7 +177,7 @@ var enqueueOptions = new MessageEnqueueOptions(MessageReliability.LeastOnce)
 	Expiration = TimeSpan.FromMinutes(5),
 };
 
-server.Storage = ResolveMessageStorage(); // 由独立存储插件提供
+server.Storages = ResolveMessageStorageFactory(); // 由独立存储插件提供
 
 var consumer = await queue.SubscribeAsync("orders/created", new ReliableOrderHandler(), subscriptionOptions);
 
@@ -195,7 +195,7 @@ sealed class ReliableOrderHandler : HandlerBase<Message>
 
 Broker 只在发送瞬间存在在线匹配订阅时接纳消息：没有订阅返回 `null` 且不写入 Storage；存在订阅则先持久化 Pending，再返回消息标识。之后按主题在在线订阅者间竞争投递，任一消费者确认即删除 Pending。未确认会沿用同一 `Message.Identifier` 重投，也可能改投另一个消费者，因此处理器必须保证业务幂等。
 
-`ZeroQueueServer.Storage` 只能在 Server 停止时赋值。`Storage.Disposable=false` 时由插件容器或应用释放；为真时 Server 在自身释放时优先调用 `IAsyncDisposable.DisposeAsync`，否则调用 `IDisposable.Dispose`。普通 Stop 不释放 Storage，因此 Server 可以重新启动。Broker 未配置 Storage 时仍提供 `MostOnce` Broadcast，但不启动 Control，发现响应的 `Ports` 只包含 `Incoming,Outgoing`；此时 `LeastOnce` 操作会失败。
+`ZeroQueueServer.Storages` 只能在 Server 停止时赋值。首次启动时 Server 调用 `Storages.Create(Name)`，并取得返回存储器的所有权；普通 Stop 保留它以供重启复用，替换工厂、启动失败或释放 Server 时优先调用 `IAsyncDisposable` 释放。Broker 未配置存储工厂时仍提供 `MostOnce` Broadcast，但不启动 Control，发现响应的 `Ports` 只包含 `Incoming,Outgoing`；此时 `LeastOnce` 操作会失败。
 
 | 消息选项 | 支持情况 |
 | --- | --- |
@@ -257,7 +257,7 @@ await channel.SendAsync(eventContext);
 - Queue 在构造时快照连接、端口、分组、过滤、超时和心跳设置；运行中修改原设置对象不会改变既有连接；
 - 支持空业务载荷。
 
-消息存储是独立插件，不属于 ZeroMQ 驱动。本包不提供默认文件存储；需要 `LeastOnce` 时，应用必须为每个 Broker Server 赋予独立的 `IMessageStorage` 实例。`Name` 表示存储实现名称，`Settings` 决定该实例的连接和数据作用域。Storage 支持按精确主题读取和清理；选择实现时应确认它能在 `SetAsync` 返回前持有消息快照，并满足所需的进程重启耐久性。
+消息存储是独立插件，不属于 ZeroMQ 驱动。本包不提供默认文件存储；需要 `LeastOnce` 时，应用注入 `IMessageStorageFactory`，工厂按 Broker 名查找同名连接并创建其独占存储器。Storage 支持按精确主题读取和清理；选择实现时应确认它能在 `SetAsync` 返回前持有消息快照，并满足所需的进程重启耐久性。
 
 完整的发现、Broadcast 和 Control 帧定义参见 [ZeroMQ 1.0 协议](PROTOCOL.zh-Hans.md)。
 

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Messaging.Storages.Data"
+		title="Zongsoft.Messaging.Storages.Data Plugin"
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2010-2026. All rights reserved."
+        description="Provides relational database storage for Zongsoft messaging.">
+
+	<manifest>
+		<dependencies>
+			<dependency name="Zongsoft.Data" />
+		</dependencies>
+
+		<assemblies>
+			<assembly name="Zongsoft.Messaging.Storages.Data" />
+		</assemblies>
+	</manifest>
+
+	<extension path="/Workspace/Messaging/Storages">
+		<object name="MsSql" value="{static:Zongsoft.Messaging.Storages.DataMessageStorageFactory.MsSql, Zongsoft.Messaging.Storages.Data}" />
+		<object name="MySql" value="{static:Zongsoft.Messaging.Storages.DataMessageStorageFactory.MySql, Zongsoft.Messaging.Storages.Data}" />
+		<object name="Sqlite" value="{static:Zongsoft.Messaging.Storages.DataMessageStorageFactory.Sqlite, Zongsoft.Messaging.Storages.Data}" />
+		<object name="PostgreSql" value="{static:Zongsoft.Messaging.Storages.DataMessageStorageFactory.PostgreSql, Zongsoft.Messaging.Storages.Data}" />
+	</extension>
+</plugin>
