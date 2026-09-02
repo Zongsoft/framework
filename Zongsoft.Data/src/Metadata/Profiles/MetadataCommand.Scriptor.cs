@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -41,24 +41,54 @@ partial class MetadataCommand
 			if(string.IsNullOrEmpty(directory) || !Directory.Exists(directory))
 				return;
 
-			var files = Directory.GetFiles(directory, $"{this.Command.Name}-*.sql", SearchOption.AllDirectories);
-			for(int i = 0; i < files.Length; i++)
-				LoadFile(files[i]);
+			directory = Path.TrimEndingDirectorySeparator(Path.GetFullPath(directory));
 
-			bool LoadFile(string filePath)
+			//Load the legacy unqualified scripts first, then let qualified scripts override them.
+			LoadFiles(this.Command.Name);
+
+			if(!string.Equals(this.Command.Name, this.Command.QualifiedName, StringComparison.OrdinalIgnoreCase))
+				LoadFiles(this.Command.QualifiedName);
+
+			void LoadFiles(string name)
+			{
+				var files = Directory.GetFiles(directory, $"{name}-*.sql", SearchOption.AllDirectories);
+				for(int i = 0; i < files.Length; i++)
+					LoadFile(files[i], false);
+
+				files = Directory.GetFiles(directory, $"{name}.sql", SearchOption.AllDirectories);
+				for(int i = 0; i < files.Length; i++)
+					LoadFile(files[i], true);
+			}
+
+			bool LoadFile(string filePath, bool directoryNamed)
 			{
 				var driver = string.Empty;
-				var fileName = Path.GetFileNameWithoutExtension(filePath);
-				var index = fileName.LastIndexOf('-');
+				var index = -1;
 
-				if(index > 0)
-					driver = fileName[(index + 1)..];
+				if(directoryNamed)
+				{
+					var parent = Path.TrimEndingDirectorySeparator(Path.GetDirectoryName(filePath));
+
+					if(string.Equals(parent, directory, StringComparison.OrdinalIgnoreCase))
+						return false;
+
+					driver = Path.GetFileName(parent);
+
+					if(string.Equals(driver, "scripts", StringComparison.OrdinalIgnoreCase))
+						return false;
+
+					index = driver.LastIndexOf('-');
+
+					if(index > 0)
+						driver = driver[(index + 1)..];
+				}
 				else
 				{
-					var directory = Path.GetDirectoryName(filePath);
-					index = directory.LastIndexOf('-');
+					var fileName = Path.GetFileNameWithoutExtension(filePath);
+					index = fileName.LastIndexOf('-');
+
 					if(index > 0)
-						driver = directory[(index + 1)..];
+						driver = fileName[(index + 1)..];
 				}
 
 				return !string.IsNullOrEmpty(driver) && this.SetScript(driver, File.ReadAllText(filePath));

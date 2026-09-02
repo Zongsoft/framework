@@ -80,9 +80,14 @@ public class DataSourceSelector : IDataSourceSelector
 	#region 私有方法
 	private string GetDriver(IDataAccessContextBase context)
 	{
-		if(context is DataExecuteContextBase exectution && exectution.Command != null)
+		if(context is DataExecuteContextBase execution && execution.Command != null)
 		{
-			foreach(var driver in exectution.Command.Scriptor.Drivers)
+			var drivers = execution.Command.Scriptor.Drivers;
+
+			if(!string.IsNullOrEmpty(_defaultDriver) && drivers.Contains(_defaultDriver) && _weighters.ContainsKey(_defaultDriver))
+				return _defaultDriver;
+
+			foreach(var driver in drivers)
 			{
 				if(_weighters.ContainsKey(driver))
 					return driver;
