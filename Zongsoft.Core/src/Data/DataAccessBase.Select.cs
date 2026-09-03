@@ -182,11 +182,7 @@ partial class DataAccessBase
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
 
-		//创建数据访问上下文对象
-		var context = this.CreateSelectContext(name, typeof(T), criteria, null, schema, paging, sortings, options);
-
-		//执行查询方法
-		return this.SelectAsync<T>(context, selecting, selected, cancellation);
+		return this.SelectAsync<T>(name, typeof(T), criteria, null, schema, paging, sortings, options, selecting, selected, cancellation);
 	}
 	#endregion
 
@@ -284,11 +280,7 @@ partial class DataAccessBase
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
 
-		//创建数据访问上下文对象
-		var context = this.CreateSelectContext(name, typeof(T), criteria, grouping, schema, paging, sortings, options);
-
-		//执行查询方法
-		return this.SelectAsync<T>(context, selecting, selected, cancellation);
+		return this.SelectAsync<T>(name, typeof(T), criteria, grouping, schema, paging, sortings, options, selecting, selected, cancellation);
 	}
 	#endregion
 
@@ -331,40 +323,43 @@ partial class DataAccessBase
 		return result;
 	}
 
-	private IAsyncEnumerable<T> SelectAsync<T>(DataSelectContextBase context, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected, CancellationToken cancellation)
+	private async IAsyncEnumerable<T> SelectAsync<T>(string name, Type entityType, ICondition criteria, Grouping grouping, ISchema schema, Paging paging, Sorting[] sortings, IDataSelectOptions options, Func<DataSelectContextBase, bool> selecting, Action<DataSelectContextBase> selected, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
 	{
 		//确实是否已处置
 		this.EnsureDisposed();
 
+		//创建数据访问上下文对象，其生命周期与本次异步枚举一致
+		using var context = this.CreateSelectContext(name, entityType, criteria, grouping, schema, paging, sortings, options);
+		IAsyncEnumerable<T> result;
+
 		//处理数据访问操作前的回调
 		if(selecting != null && selecting(context))
-			return ToAsyncEnumerable<T>(context.Result, cancellation);
+			result = ToAsyncEnumerable<T>(context.Result, cancellation);
+		else if(this.OnSelecting(context))
+			result = ToAsyncEnumerable<T>(context.Result, cancellation);
+		else
+		{
+			//调用数据访问过滤器前事件
+			this.OnFiltering(context);
 
-		//激发“Selecting”事件，如果被中断则返回
-		if(this.OnSelecting(context))
-			return ToAsyncEnumerable<T>(context.Result, cancellation);
+			//执行数据查询操作
+			await this.OnSelectAsync(context, cancellation).ConfigureAwait(false);
 
-		//调用数据访问过滤器前事件
-		this.OnFiltering(context);
+			//调用数据访问过滤器后事件
+			this.OnFiltered(context);
 
-		//执行数据查询操作
-		this.OnSelectAsync(context, cancellation).AsTask().GetAwaiter().GetResult();
+			//激发“Selected”事件
+			this.OnSelected(context);
 
-		//调用数据访问过滤器后事件
-		this.OnFiltered(context);
+			//处理数据访问操作后的回调
+			selected?.Invoke(context);
 
-		//激发“Selected”事件
-		this.OnSelected(context);
+			//转换为异步枚举结果
+			result = ToAsyncEnumerable<T>(context.Result, cancellation);
+		}
 
-		//处理数据访问操作后的回调
-		selected?.Invoke(context);
-
-		var result = ToAsyncEnumerable<T>(context.Result, cancellation);
-
-		//处置上下文资源
-		context.Dispose();
-
-		return result;
+		await foreach(var item in result.WithCancellation(cancellation).ConfigureAwait(false))
+			yield return item;
 	}
 
 	protected abstract void OnSelect(DataSelectContextBase context);

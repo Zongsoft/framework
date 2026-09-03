@@ -19,105 +19,171 @@ namespace Zongsoft.Common;
 public sealed class Locker : IAsyncDisposable
 {
 	private static readonly ObjectPool<SemaphoreSlim> _semaphorePool = new DefaultObjectPool<SemaphoreSlim>(new SemaphoreSlimPooledObjectPolicy(), 100);
-	private AsyncLocal<SemaphoreSlim> _currentSemaphore;
-	private SemaphoreSlim _topmostSemaphore;
-	private bool _isDisposed;
+	private readonly object _syncRoot = new();
+	private readonly AsyncLocal<SemaphoreRelease> _currentRelease;
+	private SemaphoreSlim _rootSemaphore;
+	private Task _disposeTask;
 
 	public Locker()
 	{
-		_topmostSemaphore = _semaphorePool.Get();
-		_currentSemaphore = new AsyncLocal<SemaphoreSlim>();
+		_rootSemaphore = _semaphorePool.Get();
+		_currentRelease = new AsyncLocal<SemaphoreRelease>();
 	}
 
 	public ValueTask<IAsyncDisposable> LockAsync(CancellationToken cancellation = default)
 	{
-		ObjectDisposedException.ThrowIf(_isDisposed, this);
+		lock(_syncRoot)
+		{
+			ObjectDisposedException.ThrowIf(_disposeTask != null, this);
 
-		_currentSemaphore.Value ??= _topmostSemaphore;
-		SemaphoreSlim current = _currentSemaphore.Value;
-		var next = _semaphorePool.Get();
-		_currentSemaphore.Value = next;
-		var release = new SemaphoreRelease(current, next, this);
-		return TakeLockCoreAsync(current, release, cancellation);
+			var parent = this.GetCurrentRelease();
+			var current = parent?.NextSemaphore ?? _rootSemaphore;
+			var next = _semaphorePool.Get();
+			var release = new SemaphoreRelease(current, next, parent, this);
+			_currentRelease.Value = release;
+			return TakeLockCoreAsync(current, release, cancellation);
+		}
 
 		static async ValueTask<IAsyncDisposable> TakeLockCoreAsync(SemaphoreSlim currentSemaphore, SemaphoreRelease release, CancellationToken cancellation)
 		{
-			await currentSemaphore.WaitAsync(cancellation);
-			return release;
+			try
+			{
+				await currentSemaphore.WaitAsync(cancellation);
+				release.Acquire();
+				return release;
+			}
+			catch
+			{
+				release.Cancel();
+				throw;
+			}
 		}
 	}
 
 	public IDisposable Lock()
 	{
-		ObjectDisposedException.ThrowIf(_isDisposed, this);
+		lock(_syncRoot)
+		{
+			ObjectDisposedException.ThrowIf(_disposeTask != null, this);
 
-		_currentSemaphore.Value ??= _topmostSemaphore;
-		SemaphoreSlim currentSem = _currentSemaphore.Value;
-		currentSem.Wait();
-		var nextSem = _semaphorePool.Get();
-		_currentSemaphore.Value = nextSem;
-		return new SemaphoreRelease(currentSem, nextSem, this);
+			var parent = this.GetCurrentRelease();
+			var current = parent?.NextSemaphore ?? _rootSemaphore;
+			current.Wait();
+
+			var release = new SemaphoreRelease(current, _semaphorePool.Get(), parent, this);
+			release.Acquire();
+			_currentRelease.Value = release;
+			return release;
+		}
 	}
 
-	public async ValueTask DisposeAsync()
+	public ValueTask DisposeAsync()
 	{
-		if(_isDisposed)
-			return;
+		lock(_syncRoot)
+			return new ValueTask(_disposeTask ??= this.DisposeCoreAsync());
+	}
 
-		_isDisposed = true;
+	private async Task DisposeCoreAsync()
+	{
 		// Ensure the lock isn't held. If it is, wait for it to be released
 		// before completing the dispose.
-		await _topmostSemaphore.WaitAsync();
-		_topmostSemaphore.Release();
-		_semaphorePool.Return(_topmostSemaphore);
-		_topmostSemaphore = null;
+		await _rootSemaphore.WaitAsync();
+		_rootSemaphore.Release();
+		_semaphorePool.Return(_rootSemaphore);
+		_rootSemaphore = null;
 	}
 
-	private struct SemaphoreRelease(SemaphoreSlim currentSemaphore, SemaphoreSlim nextSemaphore, Locker locker) : IAsyncDisposable, IDisposable
+	private SemaphoreRelease GetCurrentRelease()
 	{
-		private SemaphoreSlim _currentSemaphore = currentSemaphore;
-		private SemaphoreSlim _nextSemaphore = nextSemaphore;
-		private Locker _locker = locker;
+		var release = _currentRelease.Value;
+
+		while(release != null && !release.IsActive)
+			release = release.Parent;
+
+		_currentRelease.Value = release;
+		return release;
+	}
+
+	private void Pop(SemaphoreRelease release)
+	{
+		if(ReferenceEquals(_currentRelease.Value, release))
+			_currentRelease.Value = release.Parent;
+	}
+
+	private sealed class SemaphoreRelease(SemaphoreSlim currentSemaphore, SemaphoreSlim nextSemaphore, SemaphoreRelease parent, Locker locker) : IAsyncDisposable, IDisposable
+	{
+		private const int PENDING = 0;
+		private const int ACQUIRED = 1;
+		private const int RELEASING = 2;
+		private const int RELEASED = 3;
+
+		private readonly SemaphoreSlim _currentSemaphore = currentSemaphore;
+		private readonly SemaphoreSlim _nextSemaphore = nextSemaphore;
+		private readonly Locker _locker = locker;
+		private int _state;
+
+		public SemaphoreRelease Parent { get; } = parent;
+		public SemaphoreSlim NextSemaphore => _nextSemaphore;
+		public bool IsActive => Volatile.Read(ref _state) <= ACQUIRED;
+
+		public void Acquire()
+		{
+			if(Interlocked.CompareExchange(ref _state, ACQUIRED, PENDING) != PENDING)
+				throw new InvalidOperationException("The lock acquisition is no longer active.");
+		}
+
+		public void Cancel()
+		{
+			if(Interlocked.CompareExchange(ref _state, RELEASED, PENDING) == PENDING)
+				_semaphorePool.Return(_nextSemaphore);
+		}
 
 		public ValueTask DisposeAsync()
 		{
-			System.Diagnostics.Debug.Assert(_nextSemaphore == _locker._currentSemaphore.Value, "_nextSemaphore was expected to by the current semaphore");
+			if(Interlocked.CompareExchange(ref _state, RELEASING, ACQUIRED) != ACQUIRED)
+				return ValueTask.CompletedTask;
 
-			// Update _asyncLock._currentSemaphore in the calling ExecutionContext
-			// and defer any awaits to DisposeCoreAsync(). If this isn't done, the
-			// update will happen in a copy of the ExecutionContext and the caller
-			// won't see the changes.
-			if(_currentSemaphore == _locker._topmostSemaphore)
-				_locker._currentSemaphore.Value = null;
-			else
-				_locker._currentSemaphore.Value = _currentSemaphore;
-
-			return this.DisposeCoreAsync();
+			_locker.Pop(this);
+			return this.ReleaseAsync();
 		}
 
-		private async ValueTask DisposeCoreAsync()
+		private async ValueTask ReleaseAsync()
 		{
-			await _nextSemaphore.WaitAsync();
-			_currentSemaphore.Release();
-			_nextSemaphore.Release();
-			_semaphorePool.Return(_nextSemaphore);
+			try
+			{
+				await _nextSemaphore.WaitAsync();
+				_currentSemaphore.Release();
+				_nextSemaphore.Release();
+				_semaphorePool.Return(_nextSemaphore);
+			}
+			finally
+			{
+				Volatile.Write(ref _state, RELEASED);
+			}
 		}
 
 		public void Dispose()
 		{
-			if(_currentSemaphore == _locker._topmostSemaphore)
-				_locker._currentSemaphore.Value = null;
-			else
-				_locker._currentSemaphore.Value = _currentSemaphore;
+			if(Interlocked.CompareExchange(ref _state, RELEASING, ACQUIRED) != ACQUIRED)
+				return;
 
-			_nextSemaphore.Wait();
-			_currentSemaphore.Release();
-			_nextSemaphore.Release();
-			_semaphorePool.Return(_nextSemaphore);
+			_locker.Pop(this);
+
+			try
+			{
+				_nextSemaphore.Wait();
+				_currentSemaphore.Release();
+				_nextSemaphore.Release();
+				_semaphorePool.Return(_nextSemaphore);
+			}
+			finally
+			{
+				Volatile.Write(ref _state, RELEASED);
+			}
 		}
 	}
 
-	private class SemaphoreSlimPooledObjectPolicy : PooledObjectPolicy<SemaphoreSlim>
+	private sealed class SemaphoreSlimPooledObjectPolicy : PooledObjectPolicy<SemaphoreSlim>
 	{
 		public override SemaphoreSlim Create() => new(1);
 		public override bool Return(SemaphoreSlim semaphore)

@@ -44,6 +44,7 @@ public readonly partial struct Checksum : IEquatable<Checksum>, IParsable<Checks
 {
 	#region 私有字段
 	private readonly int _hashcode;
+	private readonly byte[] _value;
 	#endregion
 
 	#region 构造函数
@@ -51,11 +52,11 @@ public readonly partial struct Checksum : IEquatable<Checksum>, IParsable<Checks
 	public Checksum(string name, byte[] value)
 	{
 		this.Name = (string.IsNullOrEmpty(name) ? Determine(value) : name) ?? string.Empty;
-		this.Value = value ?? [];
+		_value = value == null ? [] : (byte[])value.Clone();
 
 		var hash = new HashCode();
-		hash.Add(this.Name);
-		hash.AddBytes(this.Value);
+		hash.Add(this.Name, StringComparer.OrdinalIgnoreCase);
+		hash.AddBytes(_value);
 		_hashcode = hash.ToHashCode();
 	}
 	#endregion
@@ -63,13 +64,13 @@ public readonly partial struct Checksum : IEquatable<Checksum>, IParsable<Checks
 	#region 公共字段
 	/// <summary>校验算法名称。</summary>
 	public readonly string Name;
-	/// <summary>校验码的码值。</summary>
-	public readonly byte[] Value;
 	#endregion
 
 	#region 公共属性
+	/// <summary>获取校验码的只读码值。</summary>
+	public ReadOnlyMemory<byte> Value => _value ?? [];
 	/// <summary>获取一个值，指示当前验证码是否为空。</summary>
-	public bool IsEmpty => string.IsNullOrEmpty(this.Name) || this.Value == null || this.Value.Length == 0;
+	public bool IsEmpty => string.IsNullOrEmpty(this.Name) || this.Value.IsEmpty;
 	#endregion
 
 	#region 公共方法
@@ -226,10 +227,10 @@ public readonly partial struct Checksum : IEquatable<Checksum>, IParsable<Checks
 	#endregion
 
 	#region 重写方法
-	public bool Equals(Checksum other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && MemoryExtensions.SequenceEqual(this.Value ?? [], other.Value ?? []);
+	public bool Equals(Checksum other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && MemoryExtensions.SequenceEqual(_value ?? [], other._value ?? []);
 	public override bool Equals(object obj) => obj is Checksum other && this.Equals(other);
 	public override int GetHashCode() => _hashcode;
-	public override string ToString() => this.IsEmpty ? string.Empty : $"{this.Name}:{System.Convert.ToHexString(this.Value)}";
+	public override string ToString() => this.IsEmpty ? string.Empty : $"{this.Name}:{System.Convert.ToHexString(_value)}";
 	#endregion
 
 	#region 符号重写

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -33,6 +33,7 @@ using System.Buffers;
 using System.Buffers.Binary;
 using System.Threading;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Common;
 
@@ -65,7 +66,12 @@ public static class Buffer
 		else if(length > source.Length)
 			throw new ArgumentOutOfRangeException(nameof(length));
 
-		return length == 0 ? Empty<T>() : new ArrayPoolOwner<T>(source, length);
+		if(length == 0)
+			return Empty<T>();
+
+		var buffer = ArrayPool<T>.Shared.Rent(length);
+		source.AsSpan(0, length).CopyTo(buffer);
+		return new ArrayPoolOwner<T>(buffer, length, ArrayPool<T>.Shared);
 	}
 
 	/// <summary>寄存指定的内存区域。</summary>
@@ -80,7 +86,7 @@ public static class Buffer
 		int length = checked((int)source.Length);
 		var buffer = ArrayPool<T>.Shared.Rent(length);
 		source.CopyTo(buffer);
-		return new ArrayPoolOwner<T>(buffer, length);
+		return new ArrayPoolOwner<T>(buffer, length, ArrayPool<T>.Shared);
 	}
 	#endregion
 
@@ -407,12 +413,14 @@ public static class Buffer
 	private sealed class ArrayPoolOwner<T> : IMemoryOwner<T>
 	{
 		private readonly int _length;
+		private readonly ArrayPool<T> _pool;
 		private T[] _buffer;
 
-		internal ArrayPoolOwner(T[] buffer, int length)
+		internal ArrayPoolOwner(T[] buffer, int length, ArrayPool<T> pool = null)
 		{
-			_buffer = buffer;
+			_buffer = buffer ?? throw new ArgumentNullException(nameof(buffer));
 			_length = length;
+			_pool = pool ?? ArrayPool<T>.Shared;
 		}
 
 		public Memory<T> Memory => new Memory<T>(this.GetArray(), 0, _length);
@@ -427,7 +435,10 @@ public static class Buffer
 
 			var buffer = Interlocked.Exchange(ref _buffer, null);
 			if(buffer != null)
-				ArrayPool<T>.Shared.Return(buffer);
+			{
+				buffer.AsSpan(0, _length).Clear();
+				_pool.Return(buffer, RuntimeHelpers.IsReferenceOrContainsReferences<T>());
+			}
 		}
 	}
 	#endregion

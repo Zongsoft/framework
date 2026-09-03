@@ -165,8 +165,26 @@ public partial class Settings : ISettings, IReadOnlyDictionary<string, string>, 
 
 	public bool Equals(ISettings settings) => settings is Settings other && this.Equals(other);
 	public override bool Equals(object obj) => obj is Settings other && this.Equals(other);
-	public override int GetHashCode() => HashCode.Combine(this.Name.ToLowerInvariant(), string.Join(';', _entries.Select(entry => $"{entry.Key}={entry.Value}")));
 	public override string ToString() => string.IsNullOrEmpty(this.Name) ? this.Value : $"[{this.Name}]{this.Value}";
+
+	public override int GetHashCode()
+	{
+		var entriesHash = 0;
+
+		foreach(var entry in _entries)
+		{
+			var entryHash = new HashCode();
+			entryHash.Add(entry.Key, StringComparer.OrdinalIgnoreCase);
+			entryHash.Add(entry.Value, StringComparer.Ordinal);
+			entriesHash ^= entryHash.ToHashCode();
+		}
+
+		var hash = new HashCode();
+		hash.Add(this.Name, StringComparer.OrdinalIgnoreCase);
+		hash.Add(_entries.Count);
+		hash.Add(entriesHash);
+		return hash.ToHashCode();
+	}
 	#endregion
 
 	#region 私有方法

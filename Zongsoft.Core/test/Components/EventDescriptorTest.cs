@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Xunit;
 
@@ -10,6 +11,20 @@ namespace Zongsoft.Components.Tests;
 public class EventDescriptorTest
 {
 	private MyEventTrigger _trigger = new();
+
+	[Fact]
+	public void Equality_IgnoresCaseAndUsesCompatibleHashCode()
+	{
+		var first = new EventDescriptor("Target.Changed");
+		var second = new EventDescriptor("target.changed");
+		var descriptors = new Dictionary<EventDescriptor, string> { [first] = "registered" };
+
+		Assert.True(first.Equals(second));
+		Assert.True(first.Equals((object)second));
+		Assert.False(first.Equals(null));
+		Assert.Equal(first.GetHashCode(), second.GetHashCode());
+		Assert.Equal("registered", descriptors[second]);
+	}
 
 	[Fact]
 	public void TestEventHandler1()

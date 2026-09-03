@@ -125,7 +125,14 @@ public class EventFiltering : IPredication<EventContext>, IList<EventFiltering.E
 			string.Equals(this.EventName, other.EventName, StringComparison.OrdinalIgnoreCase);
 
 		public override bool Equals(object obj) => obj is Entry other && this.Equals(other);
-		public override int GetHashCode() => HashCode.Combine(this.Kind, this.RegistryName, this.EventName);
+		public override int GetHashCode()
+		{
+			var hash = new HashCode();
+			hash.Add(this.Kind);
+			hash.Add(this.RegistryName, StringComparer.OrdinalIgnoreCase);
+			hash.Add(this.EventName, StringComparer.OrdinalIgnoreCase);
+			return hash.ToHashCode();
+		}
 		public override string ToString()
 		{
 			if(IsEmpty(this.RegistryName) && IsEmpty(this.EventName))

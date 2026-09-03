@@ -8,6 +8,18 @@ namespace Zongsoft.Data.Tests;
 public class OperandTest
 {
 	[Fact]
+	public void AggregateOperand_Equality_IgnoresMemberCaseAndUsesCompatibleHashCode()
+	{
+		var first = new Operand.AggregateOperand(DataAggregateFunction.Count, "Identifier", distinct: true);
+		var second = new Operand.AggregateOperand(DataAggregateFunction.Count, "identifier", distinct: true);
+		var operands = new Dictionary<Operand.AggregateOperand, string> { [first] = "aggregate" };
+
+		Assert.Equal(first, second);
+		Assert.Equal(first.GetHashCode(), second.GetHashCode());
+		Assert.Equal("aggregate", operands[second]);
+	}
+
+	[Fact]
 	public void Test1()
 	{
 		var a = Operand.Constant(1);

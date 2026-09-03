@@ -5,6 +5,13 @@ using Xunit;
 
 namespace Zongsoft.Data.Tests;
 
+[CollectionDefinition(Name)]
+public sealed class MappingCollection
+{
+	public const string Name = nameof(MappingCollection);
+}
+
+[Collection(MappingCollection.Name)]
 public class MappingTest
 {
 	[Fact]

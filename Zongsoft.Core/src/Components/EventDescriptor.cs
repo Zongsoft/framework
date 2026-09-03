@@ -140,9 +140,9 @@ public class EventDescriptor : IEquatable<EventDescriptor>
 	#endregion
 
 	#region 重写方法
-	public bool Equals(EventDescriptor other) => string.Equals(this.QualifiedName, other.QualifiedName, StringComparison.OrdinalIgnoreCase);
+	public bool Equals(EventDescriptor other) => other is not null && string.Equals(this.QualifiedName, other.QualifiedName, StringComparison.OrdinalIgnoreCase);
 	public override bool Equals(object obj) => obj is EventDescriptor other && this.Equals(other);
-	public override int GetHashCode() => this.QualifiedName.GetHashCode();
+	public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode(this.QualifiedName);
 	public override string ToString() => string.IsNullOrEmpty(this.Title) ? this.QualifiedName : $"{this.QualifiedName}[{this.Title}]";
 	#endregion
 

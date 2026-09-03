@@ -37,7 +37,7 @@ namespace Zongsoft.Security;
 /// <remarks>
 /// 	<para>
 /// 	文本格式：<c>algorithm#exponent:nonce|value</c>，如果 <c>exponent</c> 为零，则该部分可省略。<br />
-/// 	譬如：<c>SHA1:1A2B3C4D5E6F7890|Base64String</c> 或 <c>SHA1#10:1A2B3C4D5E6F7890|Base64String</c>。
+/// 	譬如：<c>SHA256:1A2B3C4D5E6F7890|Base64String</c> 或 <c>SHA256#10:1A2B3C4D5E6F7890|Base64String</c>。
 /// 	</para>
 /// 	<para>字节格式：</para>
 /// 	<list type="bullet">
@@ -106,7 +106,13 @@ public readonly partial struct Password : IEquatable<Password>
 		_data.AsSpan().SequenceEqual(other._data);
 
 	public override bool Equals(object obj) => obj is Password other && this.Equals(other);
-	public override int GetHashCode() => HashCode.Combine(_data);
+	public override int GetHashCode()
+	{
+		var hash = new HashCode();
+		hash.AddBytes(_data ?? []);
+		return hash.ToHashCode();
+	}
+
 	public override string ToString()
 	{
 		if(_data == null || _data.Length == 0)
@@ -119,7 +125,7 @@ public readonly partial struct Password : IEquatable<Password>
 	#endregion
 
 	#region 符号重写
-	public static implicit operator byte[](Password password) => password._data;
+	public static implicit operator byte[](Password password) => password._data == null ? null : (byte[])password._data.Clone();
 	public static bool operator ==(Password left, Password right) => left.Equals(right);
 	public static bool operator !=(Password left, Password right) => !(left == right);
 	#endregion
@@ -245,10 +251,10 @@ public readonly partial struct Password : IEquatable<Password>
 		return true;
 	}
 
-	public static Password Generate(string password, string algorithm = "SHA1") => Generate(password, [], 10, algorithm);
-	public static Password Generate(string password, int exponent, string algorithm = "SHA1") => Generate(password, [], exponent, algorithm);
-	public static Password Generate(string password, ReadOnlySpan<byte> nonce, string algorithm = "SHA1") => Generate(password, nonce, 10, algorithm);
-	public static Password Generate(string password, ReadOnlySpan<byte> nonce, int exponent, string algorithm = "SHA1")
+	public static Password Generate(string password, string algorithm = "SHA256") => Generate(password, [], 10, algorithm);
+	public static Password Generate(string password, int exponent, string algorithm = "SHA256") => Generate(password, [], exponent, algorithm);
+	public static Password Generate(string password, ReadOnlySpan<byte> nonce, string algorithm = "SHA256") => Generate(password, nonce, 10, algorithm);
+	public static Password Generate(string password, ReadOnlySpan<byte> nonce, int exponent, string algorithm = "SHA256")
 	{
 		if(string.IsNullOrEmpty(password))
 			return default;

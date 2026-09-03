@@ -244,8 +244,8 @@ public sealed partial class DataType : IEquatable<DataType>
 
 	#region 重写方法
 	public bool Equals(DataType other) => other is not null && this.IsArray == other.IsArray && string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
-	public override bool Equals(object obj) => this.Equals(obj is DataType);
-	public override int GetHashCode() => HashCode.Combine(this.Name, this.IsArray);
+	public override bool Equals(object obj) => obj is DataType other && this.Equals(other);
+	public override int GetHashCode() => HashCode.Combine(StringComparer.OrdinalIgnoreCase.GetHashCode(this.Name), this.IsArray);
 	public override string ToString() => this.IsArray ? $"{this.Name}[]" : this.Name;
 	#endregion
 

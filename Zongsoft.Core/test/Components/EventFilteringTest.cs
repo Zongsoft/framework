@@ -1,4 +1,6 @@
+using System;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Xunit;
 
@@ -6,6 +8,18 @@ namespace Zongsoft.Components.Tests;
 
 public class EventFilteringTest
 {
+	[Fact]
+	public void Entry_Equality_IgnoresNamesCaseAndUsesCompatibleHashCode()
+	{
+		var first = new EventFiltering.Entry(EventFiltering.EntryKind.Exclusive, "ModuleA", "Target.Changed");
+		var second = new EventFiltering.Entry(EventFiltering.EntryKind.Exclusive, "modulea", "target.changed");
+		var entries = new HashSet<EventFiltering.Entry> { first };
+
+		Assert.Equal(first, second);
+		Assert.Equal(first.GetHashCode(), second.GetHashCode());
+		Assert.Contains(second, entries);
+	}
+
 	[Fact]
 	public async Task PredicateAsync_EmptyEntries_ReturnsTrue()
 	{

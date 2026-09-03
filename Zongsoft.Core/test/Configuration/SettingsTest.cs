@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Collections.Generic;
 
 using Xunit;
 
@@ -7,6 +8,24 @@ namespace Zongsoft.Configuration.Tests;
 
 public class SettingsTest
 {
+	[Fact]
+	public void Equality_EquivalentEntriesWithDifferentOrderAndCase_HaveCompatibleHashCode()
+	{
+		var first = new Settings("Profile");
+		first["Alpha"] = "1";
+		first["Beta"] = "2";
+
+		var second = new Settings("profile");
+		second["BETA"] = "2";
+		second["ALPHA"] = "1";
+
+		var settings = new Dictionary<Settings, string> { [first] = "matched" };
+
+		Assert.Equal(first, second);
+		Assert.Equal(first.GetHashCode(), second.GetHashCode());
+		Assert.Equal("matched", settings[second]);
+	}
+
 	[Fact]
 	public void Test()
 	{

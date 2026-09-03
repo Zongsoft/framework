@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -401,8 +401,16 @@ public abstract class Operand
 
 		public bool Equals(Operand operand) => operand is AggregateOperand aggregate && this.Equals(aggregate);
 		public override bool Equals(object obj) => obj is AggregateOperand aggregate && this.Equals(aggregate);
-		public override int GetHashCode() => HashCode.Combine(this.Function, this.Member, this.Distinct, this.Filter);
 		public override string ToString() => $"{this.Function}({this.Member})";
+		public override int GetHashCode()
+		{
+			var hash = new HashCode();
+			hash.Add(this.Function);
+			hash.Add(this.Member, StringComparer.OrdinalIgnoreCase);
+			hash.Add(this.Distinct);
+			hash.Add(this.Filter);
+			return hash.ToHashCode();
+		}
 		#endregion
 	}
 

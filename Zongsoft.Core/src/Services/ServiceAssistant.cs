@@ -29,6 +29,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 using Microsoft.Extensions.DependencyInjection;
 
@@ -36,46 +37,22 @@ namespace Zongsoft.Services;
 
 internal static class ServiceAssistant
 {
-	private static readonly Dictionary<IServiceCollection, Dictionary<string, TaggedServiceDescriptor>> _collections = new();
-	private static readonly Dictionary<IServiceProvider, Dictionary<string, TaggedServiceDescriptor>> _providers = new();
+	private static readonly ConditionalWeakTable<IServiceCollection, Dictionary<string, TaggedServiceDescriptor>> _collections = new();
+	private static readonly ConditionalWeakTable<IServiceProvider, Dictionary<string, TaggedServiceDescriptor>> _providers = new();
 
 	public static TaggedServiceDescriptor GetTagged(IServiceCollection collection, string tag)
 	{
 		if(collection == null)
 			throw new ArgumentNullException(nameof(collection));
 
-		if(_collections.TryGetValue(collection, out var descriptors))
+		var descriptors = _collections.GetValue(collection, static _ => new Dictionary<string, TaggedServiceDescriptor>(StringComparer.OrdinalIgnoreCase));
+
+		lock(descriptors)
 		{
 			if(descriptors.TryGetValue(tag, out var descriptor))
 				return descriptor;
 
-			lock(_collections)
-			{
-				if(descriptors.TryGetValue(tag, out descriptor))
-					return descriptor;
-
-				return descriptors[tag] = new TaggedServiceDescriptor(tag);
-			}
-		}
-
-		lock(_collections)
-		{
-			if(_collections.TryGetValue(collection, out descriptors))
-			{
-				if(descriptors.TryGetValue(tag, out var descriptor))
-					return descriptor;
-				else
-					return descriptors[tag] = new TaggedServiceDescriptor(tag);
-			}
-
-			var result = new TaggedServiceDescriptor(tag);
-
-			_collections[collection] = new Dictionary<string, TaggedServiceDescriptor>(StringComparer.OrdinalIgnoreCase)
-			{
-				{ tag, result }
-			};
-
-			return result;
+			return descriptors[tag] = new TaggedServiceDescriptor(tag);
 		}
 	}
 
@@ -84,16 +61,25 @@ internal static class ServiceAssistant
 		if(provider == null)
 			throw new ArgumentNullException(nameof(provider));
 
-		return _providers.TryGetValue(provider, out var descriptors) && 
-			   tag != null && descriptors.TryGetValue(tag, out var descriptor) ? 
-			   descriptor : 
-			   null;
+		if(tag == null || !_providers.TryGetValue(provider, out var descriptors))
+			return null;
+
+		lock(descriptors)
+			return descriptors.TryGetValue(tag, out var descriptor) ? descriptor : null;
 	}
 
 	public static void Make(IServiceCollection collection, IServiceProvider provider)
 	{
-		if(collection != null && provider != null && _collections.Remove(collection, out var descriptors))
-			_providers[provider] = descriptors;
+		if(collection == null || provider == null || !_collections.TryGetValue(collection, out var descriptors))
+			return;
+
+		_collections.Remove(collection);
+
+		lock(_providers)
+		{
+			_providers.Remove(provider);
+			_providers.Add(provider, descriptors);
+		}
 	}
 
 	public sealed class TaggedServiceDescriptor(string tag)
@@ -106,10 +92,14 @@ internal static class ServiceAssistant
 			if(serviceType == null)
 				throw new ArgumentNullException(nameof(serviceType));
 
-			if(this.Services.TryGetValue(serviceType, out var hashset))
-				hashset.UnionWith(contracts);
+			lock(this.Services)
+			{
+				if(!this.Services.TryGetValue(serviceType, out var hashset))
+					this.Services.Add(serviceType, hashset = [serviceType]);
 
-			this.Services[serviceType] = new HashSet<Type>([serviceType, ..contracts]);
+				if(contracts != null)
+					hashset.UnionWith(contracts);
+			}
 		}
 	}
 }

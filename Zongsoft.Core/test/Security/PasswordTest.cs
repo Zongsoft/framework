@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 using Xunit;
 
@@ -6,6 +7,35 @@ namespace Zongsoft.Security.Tests;
 
 public class PasswordTest
 {
+	[Fact]
+	public void EqualParsedValues_HaveContentHashAndWorkAsDictionaryKeys()
+	{
+		var original = Password.Generate("correct horse", [1, 2, 3, 4, 5, 6, 7, 8], 0, "SHA256");
+		Assert.True(Password.TryParse(original.ToString(), out var first));
+		Assert.True(Password.TryParse(original.ToString(), out var second));
+		var passwords = new Dictionary<Password, string> { [first] = "credential" };
+
+		Assert.Equal(first, second);
+		Assert.Equal(first.GetHashCode(), second.GetHashCode());
+		Assert.Equal("credential", passwords[second]);
+	}
+
+	[Fact]
+	public void ByteArrayConversion_ReturnsIndependentCopies()
+	{
+		const string text = "correct horse";
+		var password = Password.Generate(text, [1, 2, 3, 4, 5, 6, 7, 8], 0, "SHA256");
+		byte[] first = password;
+		byte[] second = password;
+
+		Assert.NotSame(first, second);
+		first[0] = 0;
+
+		Assert.True(password.Verify(text));
+		Assert.Equal((byte)'Z', second[0]);
+		Assert.Equal(second, (byte[])password);
+	}
+
 	[Fact]
 	public void TestGenerateEmpty()
 	{
@@ -21,6 +51,27 @@ public class PasswordTest
 		Assert.Equal(result, empty);
 		result = Password.Generate(string.Empty);
 		Assert.Equal(result, empty);
+	}
+
+	[Fact]
+	public void Generate_WithoutAlgorithm_UsesSHA256()
+	{
+		const string PASSWORD = "123456";
+		byte[] nonce = [1, 2, 3, 4, 5, 6, 7, 8];
+		Password[] results =
+		[
+			Password.Generate(PASSWORD),
+			Password.Generate(PASSWORD, 0),
+			Password.Generate(PASSWORD, nonce),
+			Password.Generate(PASSWORD, nonce, 0),
+		];
+
+		Assert.All(results, result =>
+		{
+			Assert.Equal("SHA256", result.Algorithm);
+			Assert.Equal(32, result.Value.Length);
+			Assert.True(result.Verify(PASSWORD));
+		});
 	}
 
 	[Fact]
@@ -163,9 +214,11 @@ public class PasswordTest
 		Assert.False(Password.TryParse("1A2B3C4D5E6F7890", out _));
 
 		const string PASSWORD = "ABC1234567890XYZ";
-		var older = Password.Generate(PASSWORD, 0);
+		var older = Password.Generate(PASSWORD, [1, 2, 3, 4, 5, 6, 7, 8], 0, "SHA1");
 		Assert.True(Password.TryParse(older.ToString(), out var newer));
 		Assert.Equal(older, newer);
+		Assert.Equal("SHA1", newer.Algorithm);
+		Assert.True(newer.Verify(PASSWORD));
 
 		older = Password.Generate(PASSWORD);
 		Assert.True(Password.TryParse(older.ToString(), out newer));

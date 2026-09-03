@@ -37,13 +37,27 @@ namespace Zongsoft.Communication;
 
 public static class SenderExtension
 {
-	public static void Send(this ISender sender, byte[] data) => sender.SendAsync(data).AsTask().GetAwaiter().GetResult();
-	public static void Send(this ISender sender, byte[] data, int offset) => sender.SendAsync(data.AsMemory(offset)).AsTask().GetAwaiter().GetResult();
-	public static void Send(this ISender sender, byte[] data, int offset, int count) => sender.SendAsync(data.AsMemory(offset, count)).AsTask().GetAwaiter().GetResult();
+	public static void Send(this ISender sender, byte[] data)
+	{
+		ArgumentNullException.ThrowIfNull(sender);
+		ArgumentNullException.ThrowIfNull(data);
+		sender.SendAsync(data).AsTask().GetAwaiter().GetResult();
+	}
+	public static void Send(this ISender sender, byte[] data, int offset)
+	{
+		ArgumentNullException.ThrowIfNull(sender);
+		ArgumentNullException.ThrowIfNull(data);
+		sender.SendAsync(data.AsMemory(offset)).AsTask().GetAwaiter().GetResult();
+	}
+	public static void Send(this ISender sender, byte[] data, int offset, int count)
+	{
+		ArgumentNullException.ThrowIfNull(sender);
+		ArgumentNullException.ThrowIfNull(data);
+		sender.SendAsync(data.AsMemory(offset, count)).AsTask().GetAwaiter().GetResult();
+	}
 	public static void Send(this ISender sender, string text, Encoding encoding = null)
 	{
-		if(sender == null)
-			throw new ArgumentNullException(nameof(sender));
+		ArgumentNullException.ThrowIfNull(sender);
 
 		if(string.IsNullOrEmpty(text))
 			return;
@@ -54,18 +68,18 @@ public static class SenderExtension
 
 		try
 		{
-			encoding.GetBytes(text, 0, text.Length, buffer, 0);
-			sender.SendAsync(buffer).AsTask().GetAwaiter().GetResult();
+			var written = encoding.GetBytes(text.AsSpan(), buffer);
+			sender.SendAsync(buffer.AsMemory(0, written)).AsTask().GetAwaiter().GetResult();
 		}
 		finally
 		{
-			ArrayPool<byte>.Shared.Return(buffer);
+			ArrayPool<byte>.Shared.Return(buffer, true);
 		}
 	}
 	public static void Send(this ISender sender, IMemoryOwner<byte> data)
 	{
-		if(data == null)
-			throw new ArgumentNullException(nameof(data));
+		ArgumentNullException.ThrowIfNull(sender);
+		ArgumentNullException.ThrowIfNull(data);
 
 		try
 		{
@@ -74,13 +88,27 @@ public static class SenderExtension
 		finally { data.Dispose(); }
 	}
 
-	public static ValueTask SendAsync(this ISender sender, byte[] data, CancellationToken cancellation = default) => sender.SendAsync(data.AsMemory(), cancellation);
-	public static ValueTask SendAsync(this ISender sender, byte[] data, int offset, CancellationToken cancellation = default) => sender.SendAsync(data.AsMemory(offset), cancellation);
-	public static ValueTask SendAsync(this ISender sender, byte[] data, int offset, int count, CancellationToken cancellation = default) => sender.SendAsync(data.AsMemory(offset, count), cancellation);
+	public static ValueTask SendAsync(this ISender sender, byte[] data, CancellationToken cancellation = default)
+	{
+		ArgumentNullException.ThrowIfNull(sender);
+		ArgumentNullException.ThrowIfNull(data);
+		return sender.SendAsync(data.AsMemory(), cancellation);
+	}
+	public static ValueTask SendAsync(this ISender sender, byte[] data, int offset, CancellationToken cancellation = default)
+	{
+		ArgumentNullException.ThrowIfNull(sender);
+		ArgumentNullException.ThrowIfNull(data);
+		return sender.SendAsync(data.AsMemory(offset), cancellation);
+	}
+	public static ValueTask SendAsync(this ISender sender, byte[] data, int offset, int count, CancellationToken cancellation = default)
+	{
+		ArgumentNullException.ThrowIfNull(sender);
+		ArgumentNullException.ThrowIfNull(data);
+		return sender.SendAsync(data.AsMemory(offset, count), cancellation);
+	}
 	public static async ValueTask SendAsync(this ISender sender, string text, Encoding encoding = null, CancellationToken cancellation = default)
 	{
-		if(sender == null)
-			throw new ArgumentNullException(nameof(sender));
+		ArgumentNullException.ThrowIfNull(sender);
 
 		if(string.IsNullOrEmpty(text))
 			return;
@@ -91,12 +119,12 @@ public static class SenderExtension
 
 		try
 		{
-			encoding.GetBytes(text, 0, text.Length, buffer, 0);
-			await sender.SendAsync(buffer, cancellation);
+			var written = encoding.GetBytes(text.AsSpan(), buffer);
+			await sender.SendAsync(buffer.AsMemory(0, written), cancellation);
 		}
 		finally
 		{
-			ArrayPool<byte>.Shared.Return(buffer);
+			ArrayPool<byte>.Shared.Return(buffer, true);
 		}
 	}
 	public static ValueTask SendAsync(this ISender sender, IMemoryOwner<byte> data, CancellationToken cancellation = default)
@@ -109,8 +137,8 @@ public static class SenderExtension
 			}
 		}
 
-		if(data == null)
-			throw new ArgumentNullException(nameof(data));
+		ArgumentNullException.ThrowIfNull(sender);
+		ArgumentNullException.ThrowIfNull(data);
 
 		try
 		{
