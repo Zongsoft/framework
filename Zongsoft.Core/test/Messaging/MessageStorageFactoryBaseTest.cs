@@ -1,9 +1,9 @@
 using System;
-using System.Collections.Generic;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Security.Cryptography;
 
 using Xunit;
 
@@ -118,9 +118,9 @@ public class MessageStorageFactoryBaseTest
 		using var environment = new EnvironmentVariableScope("identifier");
 		var factory = new TestFactory();
 
-		Assert.True(Assert.Throws<Common.OperationException>(() => factory.BuildPartition(null)).IsArgument);
-		Assert.True(Assert.Throws<Common.OperationException>(() => factory.BuildPartition(string.Empty)).IsArgument);
-		Assert.True(Assert.Throws<Common.OperationException>(() => factory.BuildPartition(" \t ")).IsArgument);
+		Assert.Throws<ArgumentNullException>(() => factory.BuildPartition(null));
+		Assert.Throws<ArgumentNullException>(() => factory.BuildPartition(string.Empty));
+		Assert.Throws<ArgumentNullException>(() => factory.BuildPartition(" \t "));
 	}
 
 	[Fact]
