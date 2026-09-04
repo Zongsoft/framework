@@ -1,0 +1,119 @@
+name: Publish NuGet Packages
+
+run-name: Publish ${{ inputs.project }} to nuget.org
+
+on:
+  workflow_dispatch:
+    inputs:
+      project:
+        description: Project directory to publish
+        required: true
+        type: choice
+        options:
+          - Zongsoft.Core
+          - Zongsoft.Data
+          - Zongsoft.Data.MsSql
+          - Zongsoft.Data.MySql
+          - Zongsoft.Data.SQLite
+          - Zongsoft.Data.DuckDB
+          - Zongsoft.Data.Influx
+          - Zongsoft.Data.TDengine
+          - Zongsoft.Data.PostgreSql
+          - Zongsoft.Data.ClickHouse
+          - Zongsoft.Net
+          - Zongsoft.Web
+          - Zongsoft.Plugins
+          - Zongsoft.Plugins.Web
+          - Zongsoft.Commands
+          - Zongsoft.Security
+          - Zongsoft.Reporting
+          - Zongsoft.Diagnostics
+          - Zongsoft.Intelligences
+          - Zongsoft.Hardwares
+          - messaging/zero
+          - messaging/mqtt
+          - messaging/kafka
+          - messaging/rabbit
+          - upgrading/upgrader
+          - upgrading/tool
+          - upgrading/web
+          - externals/aliyun
+          - externals/amazon
+          - externals/redis
+          - externals/polly
+          - externals/wechat
+          - externals/closedxml
+          - externals/etcd
+          - externals/garnet
+          - externals/hangfire
+          - externals/scriban
+          - externals/python
+          - externals/lua
+          - externals/opc
+
+concurrency:
+  group: nuget-publishing
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: release
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Install .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Restore .NET tools
+        run: dotnet tool restore
+
+      - name: NuGet login
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ secrets.NUGET_USER }}
+
+      - name: Build and publish
+        if: inputs.project != 'Zongsoft.Data' && startsWith(inputs.project, 'Zongsoft.Data.') == false
+        working-directory: ${{ inputs.project }}
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: dotnet cake --edition Release --target pack
+
+      - name: Build and publish data package
+        if: inputs.project == 'Zongsoft.Data'
+        working-directory: Zongsoft.Data
+        env:
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: dotnet cake --edition Release --target pack --drivers none
+
+      - name: Build and publish data driver
+        if: startsWith(inputs.project, 'Zongsoft.Data.')
+        working-directory: Zongsoft.Data
+        env:
+          DATA_PACKAGE: ${{ inputs.project }}
+          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
+        run: |
+          driver="${DATA_PACKAGE##*.}"
+          driver="${driver,,}"
+
+          if [ "$driver" = "postgresql" ]; then
+            driver="postgres"
+          fi
+
+          dotnet cake --edition Release --target pack --drivers="$driver"

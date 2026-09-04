@@ -12,6 +12,8 @@
 
 > 💡 在 `clone` 本项目源码后，需要使用 `git submodule update` 命令来更新 [子模块](.gitmodules)。
 
+> 📦 维护者发布包前，请先阅读 [NuGet 发布指南](PUBLISHING.zh-Hans.md)。
+
 ## 项目列表
 
 - [_**Z**ongsoft.**C**ore_](Zongsoft.Core) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Core)](https://nuget.org/packages/Zongsoft.Core)

@@ -1,6 +1,6 @@
 var target = Argument("target", "default");
 var edition = Argument("edition", "Debug");
-var drivers = Argument("drivers", "*");
+var drivers = Argument("drivers", string.Empty);
 
 var solutionFile = "Zongsoft.Data.slnx";
 var providerFiles = drivers == "*" ? new List<string>(
@@ -120,7 +120,7 @@ Task("pack")
 
 	foreach(var package in packages)
 	{
-		if(!IsIncluded(package))
+		if(!IsIncluded(package, providerFiles.Count == 0))
 			continue;
 
 		DotNetNuGetPush(package.FullPath, new DotNetNuGetPushSettings
@@ -138,7 +138,7 @@ Task("default")
 
 RunTarget(target);
 
-bool IsIncluded(FilePath filePath)
+bool IsIncluded(FilePath filePath, bool includePrimary = true)
 {
 	(var fileName, _) = GetPackageInfo(filePath);
 
@@ -146,7 +146,7 @@ bool IsIncluded(FilePath filePath)
 		fileName = fileName[..^".Tests".Length];
 
 	if(string.Equals(fileName, System.IO.Path.GetFileNameWithoutExtension(solutionFile)))
-		return true;
+		return includePrimary;
 
 	foreach(var providerFile in providerFiles)
 	{

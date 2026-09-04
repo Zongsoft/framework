@@ -12,6 +12,8 @@ The ecosystem of pluggable applications is a big strength of _**Z**ongsoft_, hel
 
 > 💡 After cloning this project's source code, you need to use the `git submodule update` command to update the [submodules](.gitmodules).
 
+> 📦 Maintainers should read the [NuGet publishing guide](PUBLISHING.md) before releasing packages.
+
 ## Projects
 
 - [_**Z**ongsoft.**C**ore_](Zongsoft.Core) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Core)](https://nuget.org/packages/Zongsoft.Core)
