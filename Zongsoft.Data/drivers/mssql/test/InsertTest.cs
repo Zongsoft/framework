@@ -149,6 +149,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			log.BranchId = 0;
 		});
 
+		var timestamp = (Local: DateTime.Now.AddSeconds(-1), Universal: DateTime.UtcNow.AddSeconds(-1));
 		var count = await accessor.InsertAsync(log);
 		Assert.Equal(1, count);
 		Assert.True(log.LogId > 0);
@@ -163,7 +164,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(log.UserId, model.UserId);
 		Assert.Equal(log.Target, model.Target);
 		Assert.Equal(log.Action, model.Action);
-		Assert.True(model.Timestamp >= DateTime.Today);
+		AssertCurrentTimestamp(model.Timestamp, timestamp);
 		Assert.NotNull(model.User);
 		Assert.NotNull(model.User.Name);
 		Assert.NotEmpty(model.User.Name);
@@ -195,6 +196,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			log.BranchId = 0;
 		}).ToArray();
 
+		var timestamp = (Local: DateTime.Now.AddSeconds(-1), Universal: DateTime.UtcNow.AddSeconds(-1));
 		var count = await accessor.InsertManyAsync(logs);
 		Assert.Equal(COUNT, count);
 
@@ -208,7 +210,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		{
 			Assert.NotNull(model);
 			Assert.True(model.LogId > 0);
-			Assert.True(model.Timestamp >= DateTime.Today);
+			AssertCurrentTimestamp(model.Timestamp, timestamp);
 			Assert.StartsWith("MyTarget", model.Target);
 			Assert.StartsWith("MyAction", model.Action);
 		}
@@ -829,6 +831,14 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		await accessor.DeleteAsync<Branch>(
 			Condition.Equal(nameof(Department.TenantId), 1) &
 			Condition.In(nameof(Department.BranchId), branchIds), nameof(Branch.Departments));
+	}
+
+	private static void AssertCurrentTimestamp(DateTime value, (DateTime Local, DateTime Universal) minimum)
+	{
+		var maximum = (Local: DateTime.Now.AddSeconds(1), Universal: DateTime.UtcNow.AddSeconds(1));
+		Assert.True(
+			value >= minimum.Local && value <= maximum.Local ||
+			value >= minimum.Universal && value <= maximum.Universal);
 	}
 
 	void IDisposable.Dispose()
