@@ -764,7 +764,7 @@ internal abstract class ModelEmitterBase
 	{
 		names = builder.DefineField(PROPERTY_NAMES_VARIABLE, typeof(string[]), FieldAttributes.Private | FieldAttributes.Static | FieldAttributes.InitOnly);
 		tokens = builder.DefineField(PROPERTY_TOKENS_VARIABLE, typeof(Dictionary<,>).MakeGenericType(typeof(string), PROPERTY_TOKEN_TYPE), FieldAttributes.Private | FieldAttributes.Static | FieldAttributes.InitOnly);
-		var entityType = _module.GetType(builder.UnderlyingSystemType.FullName);
+		var modelType = _module.GetType(builder.UnderlyingSystemType.FullName);
 
 		//定义只读属性的递增数量
 		var timesReadOnly = 0;

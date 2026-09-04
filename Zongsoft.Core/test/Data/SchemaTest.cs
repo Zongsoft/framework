@@ -269,7 +269,7 @@ public class SchemaTest
 			new(base.Parse(expression, null, members));
 
 		public IEnumerable<Member> Append(string expression, IEnumerable<Member> members) => base.Parse(expression, null, members);
-		public override ISchema<Member> Parse(string name, string expression, Type entityType) => throw new NotSupportedException();
+		public override ISchema<Member> Parse(string name, string expression, Type modelType) => throw new NotSupportedException();
 
 		protected override IEnumerable<Member> Resolve(SchemaEntryToken token) => token.Name == "*" ?
 			[new("a"), new("b"), new("c"), new("d"), new("e"), new("f")] :

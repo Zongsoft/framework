@@ -181,11 +181,11 @@ public class ModelDescriptorServiceTest
 		public string Expression { get; private set; }
 		public Type ModelType { get; private set; }
 
-		public ISchema Parse(string name, string expression, Type entityType = null)
+		public ISchema Parse(string name, string expression, Type modelType = null)
 		{
 			this.Name = name;
 			this.Expression = expression;
-			this.ModelType = entityType;
+			this.ModelType = modelType;
 			return schema;
 		}
 	}
