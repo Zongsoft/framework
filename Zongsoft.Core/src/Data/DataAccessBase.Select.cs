@@ -31,6 +31,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Data;
 
@@ -335,39 +336,149 @@ partial class DataAccessBase
 	{
 		//确实是否已处置
 		this.EnsureDisposed();
+		var ownsContext = true;
 
-		//处理数据访问操作前的回调
-		if(selecting != null && selecting(context))
-			return ToAsyncEnumerable<T>(context.Result, cancellation);
+		try
+		{
+			//在执行任何查询准备操作前响应取消
+			cancellation.ThrowIfCancellationRequested();
 
-		//激发“Selecting”事件，如果被中断则返回
-		if(this.OnSelecting(context))
-			return ToAsyncEnumerable<T>(context.Result, cancellation);
+			//处理数据访问操作前的回调
+			if(selecting != null && selecting(context))
+				return ToAsyncEnumerable<T>(context.Result, cancellation);
 
-		//调用数据访问过滤器前事件
-		this.OnFiltering(context);
+			//激发“Selecting”事件，如果被中断则返回
+			if(this.OnSelecting(context))
+				return ToAsyncEnumerable<T>(context.Result, cancellation);
 
-		//执行数据查询操作
-		this.OnSelectAsync(context, cancellation).AsTask().GetAwaiter().GetResult();
+			//调用数据访问过滤器前事件
+			this.OnFiltering(context);
 
-		//调用数据访问过滤器后事件
-		this.OnFiltered(context);
+			//启动异步查询准备并将上下文的所有权移交给异步结果集
+			var result = new AsyncSelectResult<T>(this, context, this.OnSelectAsync(context, cancellation), selected, cancellation);
 
-		//激发“Selected”事件
-		this.OnSelected(context);
-
-		//处理数据访问操作后的回调
-		selected?.Invoke(context);
-
-		var result = ToAsyncEnumerable<T>(context.Result, cancellation);
-
-		//处置上下文资源
-		context.Dispose();
-
-		return result;
+			//将上下文的所有权移交给异步结果集
+			ownsContext = false;
+			return result;
+		}
+		finally
+		{
+			if(ownsContext)
+				context.Dispose();
+		}
 	}
 
 	protected abstract void OnSelect(DataSelectContextBase context);
 	protected abstract ValueTask OnSelectAsync(DataSelectContextBase context, CancellationToken cancellation);
+	#endregion
+
+	#region 异步结果
+	private sealed class AsyncSelectResult<T> : IAsyncEnumerable<T>, IPageable
+	{
+		#region 事件声明
+		public event EventHandler<PagingEventArgs> Paginated;
+		#endregion
+
+		#region 成员字段
+		private int _prepared;
+		private IPageable _pageable;
+		private readonly bool _suppressed;
+		private readonly CancellationToken _cancellation;
+		private readonly Task<IAsyncEnumerable<T>> _preparation;
+		#endregion
+
+		#region 构造函数
+		public AsyncSelectResult(DataAccessBase accessor, DataSelectContextBase context, ValueTask operation, Action<DataSelectContextBase> selected, CancellationToken cancellation)
+		{
+			_cancellation = cancellation;
+			_suppressed = context.Paging == null || !context.Paging.IsPaged();
+			_preparation = this.PrepareAsync(accessor, context, operation, selected);
+
+			//异步结果集可能永远不会被枚举，仍需观察准备任务的异常
+			_ = _preparation.ContinueWith(
+				static task => _ = task.Exception,
+				CancellationToken.None,
+				TaskContinuationOptions.ExecuteSynchronously | TaskContinuationOptions.OnlyOnFaulted,
+				TaskScheduler.Default);
+		}
+		#endregion
+
+		#region 公共属性
+		public bool Suppressed
+		{
+			get
+			{
+				var pageable = Volatile.Read(ref _pageable);
+				return pageable?.Suppressed ?? (Volatile.Read(ref _prepared) != 0 || _suppressed);
+			}
+		}
+		#endregion
+
+		#region 公共方法
+		public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation = default) => this.EnumerateAsync(cancellation).GetAsyncEnumerator();
+		#endregion
+
+		#region 私有方法
+		private void OnPaginated(object sender, PagingEventArgs args) => this.Paginated?.Invoke(this, args);
+		private async Task<IAsyncEnumerable<T>> PrepareAsync(DataAccessBase accessor, DataSelectContextBase context, ValueTask operation, Action<DataSelectContextBase> selected)
+		{
+			try
+			{
+				//执行数据查询操作
+				await operation.ConfigureAwait(false);
+
+				//调用数据访问过滤器后事件
+				accessor.OnFiltered(context);
+
+				//激发“Selected”事件
+				accessor.OnSelected(context);
+
+				//处理数据访问操作后的回调
+				selected?.Invoke(context);
+
+				var result = ToAsyncEnumerable<T>(context.Result, _cancellation);
+
+				if(result is IPageable pageable)
+				{
+					pageable.Paginated += this.OnPaginated;
+					Volatile.Write(ref _pageable, pageable);
+				}
+
+				Volatile.Write(ref _prepared, 1);
+				return result;
+			}
+			finally
+			{
+				context.Dispose();
+			}
+		}
+
+		private async IAsyncEnumerable<T> EnumerateAsync([EnumeratorCancellation] CancellationToken cancellation)
+		{
+			var token = GetCancellation(_cancellation, cancellation, out var source);
+
+			using(source)
+			{
+				token.ThrowIfCancellationRequested();
+				var result = await _preparation.WaitAsync(token).ConfigureAwait(false);
+
+				await foreach(var item in result.WithCancellation(token).ConfigureAwait(false))
+					yield return item;
+			}
+
+			static CancellationToken GetCancellation(CancellationToken first, CancellationToken second, out CancellationTokenSource source)
+			{
+				source = null;
+
+				if(!first.CanBeCanceled)
+					return second;
+				if(!second.CanBeCanceled || first == second)
+					return first;
+
+				return (source = CancellationTokenSource.CreateLinkedTokenSource(first, second)).Token;
+			}
+		}
+		#endregion
+	}
 	#endregion
 }
