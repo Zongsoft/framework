@@ -1,9 +1,11 @@
 ---
-name: web
+name: zongsoft-upgrading-web
 description: 处理 upgrading/web 下的 Zongsoft.Upgrading.Web 包管理器。用于修改或审查发布仓库 API、应用/版本分支/发布/实例服务、manifest 导入、包上传与存储、发布状态、升级器发现端点、评估器注册、数据库映射/脚本、HTTP 文档，或 Zongsoft 自动升级 Web 模块打包相关工作。
 ---
 
 # Zongsoft Upgrading Web
+
+开始工作前先阅读 [AGENTS.md](AGENTS.md) 和 [../AGENTS.md](../AGENTS.md)。
 
 ## 入手位置
 

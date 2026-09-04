@@ -1,9 +1,11 @@
 ---
-name: upgrader
+name: zongsoft-upgrading-client
 description: 处理 upgrading/upgrader 下的 Zongsoft.Upgrading.Upgrader 客户端组件。用于修改或审查自动升级发现、File/Web fetcher、发布选择、包下载与校验和验证、解压、.deployment 交接生成、worker 启动调度、deployer 启动行为、upgrader plugin/option/deploy 产物、执行器注册，或 Zongsoft 自动升级 upgrader 文档。
 ---
 
 # Zongsoft Upgrading Upgrader
+
+开始工作前先阅读 [AGENTS.md](AGENTS.md) 和 [../AGENTS.md](../AGENTS.md)。
 
 ## 入手位置
 

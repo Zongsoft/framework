@@ -1,9 +1,11 @@
 ---
-name: tool
+name: zongsoft-upgrading-tool
 description: 处理 upgrading/tool 下的 Zongsoft.Tools.Upgrader dotnet-upgrade 命令行工具。用于修改或审查 pack、checksum、publish 命令，发布 manifest 生成，ZIP 条目选择和重复处理，变量替换，执行器选项，runtime 命名，Amazon S3 或 Web 发布，本地化命令资源，NuGet 工具打包，或 Zongsoft 自动升级 tool 文档。
 ---
 
 # Zongsoft Tools Upgrader
+
+开始工作前先阅读 [AGENTS.md](AGENTS.md) 和 [../AGENTS.md](../AGENTS.md)。
 
 ## 入手位置
 

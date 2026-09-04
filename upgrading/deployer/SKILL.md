@@ -1,9 +1,11 @@
 ---
-name: deployer
+name: zongsoft-upgrading-deployer
 description: 处理 upgrading/deployer 下的 Zongsoft.Upgrading.Deployer Native AOT 可执行程序。用于修改或审查 .deployment 描述文件处理、完整/增量文件部署、清理/复制规则、部署执行器事件、服务/Web/终端重启启动器、平台相关发布脚本、Visual Studio 发布配置，或 Zongsoft 自动升级 deployer 文档。
 ---
 
 # Zongsoft Upgrading Deployer
+
+开始工作前先阅读 [AGENTS.md](AGENTS.md) 和 [../AGENTS.md](../AGENTS.md)。
 
 ## 入手位置
 

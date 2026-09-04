@@ -5,6 +5,8 @@ description: 开发、重构、测试或审查 Zongsoft.Data ORM 数据引擎及
 
 # Zongsoft.Data 数据引擎
 
+开始工作前先阅读 [AGENTS.md](AGENTS.md)；涉及数据库驱动时再阅读 [drivers/AGENTS.md](drivers/AGENTS.md)。本技能保存数据引擎中需要跨文件理解的契约和已确认实现事实，README 负责用户用法。
+
 ## 基本原则
 
 - 先判断问题属于数据引擎通用能力还是特定数据库行为。不要为了单一驱动的小需求轻易扩充 `IDataDriver` 等通用接口。
