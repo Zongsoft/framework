@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -280,7 +280,13 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 	#endregion
 
 	#region 嵌套子类
-	private class LazyCollection<T> : IPageable, IAsyncEnumerable<T>, IEnumerable<T>, IEnumerable
+	private interface ILazyCollection : IEnumerable
+	{
+		IEnumerable Materialize(bool array);
+		ValueTask<IEnumerable> MaterializeAsync(bool array, CancellationToken cancellation);
+	}
+
+	private sealed class LazyCollection<T> : ILazyCollection, IPageable, IAsyncEnumerable<T>, IEnumerable<T>
 	{
 		#region 事件定义
 		public event EventHandler<PagingEventArgs> Paginated;
@@ -342,7 +348,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 
 		public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation)
 		{
-			var reader = await _command.ExecuteReaderAsync(cancellation);
+			var reader = await _command.ExecuteReaderAsync(cancellation).ConfigureAwait(false);
 			LazyIterator iterator;
 
 			try
@@ -351,29 +357,45 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 				if(_paging != null && _paging.IsPaged())
 				{
 					//首先执行分页查询
-					if(await reader.ReadAsync(cancellation))
+					if(await reader.ReadAsync(cancellation).ConfigureAwait(false))
 						_paging.Total = (long)Convert.ChangeType(reader.GetValue(0), typeof(long));
 
 					//将读取器移到数据查询
-					await reader.NextResultAsync(cancellation);
+					await reader.NextResultAsync(cancellation).ConfigureAwait(false);
 
 					//激发分页完成事件
 					this.Paginated?.Invoke(this, new PagingEventArgs(_context.Name, _paging));
 				}
 
-				iterator = new LazyIterator(_context, _statement, reader, _skip);
+				iterator = new LazyIterator(_context, _statement, reader, _skip, cancellation);
 			}
 			catch
 			{
-				await reader.DisposeAsync();
+				await reader.DisposeAsync().ConfigureAwait(false);
 				throw;
 			}
 
-			await using(iterator)
+			await using(iterator.ConfigureAwait(false))
 			{
-				while(await iterator.MoveNextAsync())
+				while(await iterator.MoveNextAsync().ConfigureAwait(false))
 					yield return iterator.Current;
 			}
+		}
+
+		public IEnumerable Materialize(bool array)
+		{
+			var items = new List<T>(this);
+			return array ? items.ToArray() : items;
+		}
+
+		public async ValueTask<IEnumerable> MaterializeAsync(bool array, CancellationToken cancellation)
+		{
+			var items = new List<T>();
+
+			await foreach(var item in this.WithCancellation(cancellation).ConfigureAwait(false))
+				items.Add(item);
+
+			return array ? items.ToArray() : items;
 		}
 		#endregion
 
@@ -381,16 +403,18 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 		private class LazyIterator : IEnumerator<T>, IAsyncEnumerator<T>
 		{
 			#region 成员变量
+			private T _current;
 			private DbDataReader _reader;
 			private readonly int _skip;
 			private readonly IDataPopulator _populator;
 			private readonly DataSelectContext _context;
 			private readonly SelectStatement _statement;
+			private readonly CancellationToken _cancellation;
 			private readonly IDictionary<string, SlaveToken> _slaves;
 			#endregion
 
 			#region 构造函数
-			public LazyIterator(DataSelectContext context, SelectStatement statement, DbDataReader reader, int skip)
+			public LazyIterator(DataSelectContext context, SelectStatement statement, DbDataReader reader, int skip, CancellationToken cancellation = default)
 			{
 				var entity = context.Entity;
 
@@ -408,6 +432,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 				_statement = statement;
 				_reader = reader;
 				_skip = skip;
+				_cancellation = cancellation;
 				_slaves = GetSlaves(_context, _statement, _reader);
 
 				if(Zongsoft.Common.TypeExtension.IsNullable(typeof(T), out var underlyingType))
@@ -418,26 +443,28 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 			#endregion
 
 			#region 公共成员
-			public T Current
-			{
-				get
-				{
-					var model = _populator.Populate<T>(_reader);
-
-					if(model == null)
-						return default;
-
-					if(_statement.HasSlaves)
-						this.PopulateSlaves(model);
-
-					return model;
-				}
-			}
+			public T Current => _current;
 
 			public bool MoveNext()
 			{
-				if(_reader.Read())
-					return true;
+				var reader = _reader;
+
+				if(reader == null)
+					return false;
+
+				try
+				{
+					if(reader.Read())
+					{
+						_current = this.Populate();
+						return true;
+					}
+				}
+				catch
+				{
+					this.Dispose();
+					throw;
+				}
 
 				this.Dispose();
 				return false;
@@ -445,51 +472,49 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 
 			public async ValueTask<bool> MoveNextAsync()
 			{
-				if(await _reader.ReadAsync())
-					return true;
+				var reader = _reader;
 
-				await this.DisposeAsync();
+				if(reader == null)
+					return false;
+
+				try
+				{
+					if(await reader.ReadAsync(_cancellation).ConfigureAwait(false))
+					{
+						_current = await this.PopulateAsync().ConfigureAwait(false);
+						return true;
+					}
+				}
+				catch
+				{
+					await this.DisposeAsync().ConfigureAwait(false);
+					throw;
+				}
+
+				await this.DisposeAsync().ConfigureAwait(false);
 				return false;
 			}
 			#endregion
 
 			#region 私有方法
-			private static Dictionary<string, SlaveToken> GetSlaves(DataSelectContext context, IStatementBase statement, IDataReader reader)
+			private T Populate()
 			{
-				static IEnumerable<ParameterToken> GetParameters(IDataReader reader, string path)
-				{
-					if(string.IsNullOrEmpty(path))
-						yield break;
+				var model = _populator.Populate<T>(_reader);
 
-					for(int i = 0; i < reader.FieldCount; i++)
-					{
-						var name = reader.GetName(i);
+				if(model != null && _slaves != null)
+					this.PopulateSlaves(model);
 
-						if(name.StartsWith("$" + path + ":"))
-							yield return new ParameterToken(name.Substring(path.Length + 2), i);
-					}
-				}
+				return model;
+			}
 
-				if(statement.HasSlaves)
-				{
-					var tokens = new Dictionary<string, SlaveToken>(statement.Slaves.Count);
+			private async ValueTask<T> PopulateAsync()
+			{
+				var model = _populator.Populate<T>(_reader);
 
-					foreach(var slave in statement.Slaves)
-					{
-						if(slave is SelectStatementBase selection && !string.IsNullOrEmpty(selection.Alias))
-						{
-							var schema = context.Schema.Find(selection.Alias);
+				if(model != null && _slaves != null)
+					await this.PopulateSlavesAsync(model).ConfigureAwait(false);
 
-							if(schema != null)
-								tokens.Add(selection.Alias, new SlaveToken(schema, GetParameters(reader, selection.Alias)));
-						}
-					}
-
-					if(tokens.Count > 0)
-						return tokens;
-				}
-
-				return null;
+				return model;
 			}
 
 			private void PopulateSlaves(T model)
@@ -515,22 +540,49 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 						}
 
 						//创建一个新的查询结果集
-						var results = CreateResults(Zongsoft.Common.TypeExtension.GetElementType(token.Schema.Token.MemberType), _context, selection, command, _skip + 1);
+						var results = (ILazyCollection)CreateResults(Zongsoft.Common.TypeExtension.GetElementType(token.Schema.Token.MemberType), _context, selection, command, _skip + 1);
+						IEnumerable value = results;
 
 						//如果要设置的目标成员类型是一个数组或者集合，则需要将动态的查询结果集转换为固定的列表
 						if(Zongsoft.Common.TypeExtension.IsCollection(token.Schema.Token.MemberType))
-						{
-							var list = Activator.CreateInstance(
-								typeof(List<>).MakeGenericType(Zongsoft.Common.TypeExtension.GetElementType(token.Schema.Token.MemberType)),
-								[results]);
+							value = results.Materialize(token.Schema.Token.MemberType.IsArray);
 
-							if(token.Schema.Token.MemberType.IsArray)
-								results = (IEnumerable)list.GetType().GetMethod("ToArray").Invoke(list, Array.Empty<object>());
-							else
-								results = (IEnumerable)list;
+						token.Schema.Token.SetValue(ref container, value);
+					}
+				}
+			}
+
+			private async ValueTask PopulateSlavesAsync(T model)
+			{
+				foreach(var slave in _statement.Slaves)
+				{
+					if(slave is SelectStatement selection && _slaves.TryGetValue(selection.Alias, out var token))
+					{
+						if(token.Schema.Token.MemberType == null)
+							continue;
+
+						object container = GetCurrentContainer(model, token, _skip);
+
+						if(container == null)
+							continue;
+
+						//生成子查询语句对应的命令
+						var command = _context.Session.Build(_context, slave);
+
+						foreach(var parameter in token.Parameters)
+						{
+							command.Parameters[parameter.Name].Value = _reader.GetValue(parameter.Ordinal);
 						}
 
-						token.Schema.Token.SetValue(ref container, results);
+						//创建一个新的查询结果集
+						var results = (ILazyCollection)CreateResults(Zongsoft.Common.TypeExtension.GetElementType(token.Schema.Token.MemberType), _context, selection, command, _skip + 1);
+						IEnumerable value = results;
+
+						//集合成员必须异步物化，避免在异步查询路径中同步读取数据库
+						if(Zongsoft.Common.TypeExtension.IsCollection(token.Schema.Token.MemberType))
+							value = await results.MaterializeAsync(token.Schema.Token.MemberType.IsArray, _cancellation).ConfigureAwait(false);
+
+						token.Schema.Token.SetValue(ref container, value);
 					}
 				}
 			}
@@ -565,6 +617,44 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 
 				return container;
 			}
+
+			private static Dictionary<string, SlaveToken> GetSlaves(DataSelectContext context, IStatementBase statement, IDataReader reader)
+			{
+				if(statement.HasSlaves)
+				{
+					var tokens = new Dictionary<string, SlaveToken>(statement.Slaves.Count);
+
+					foreach(var slave in statement.Slaves)
+					{
+						if(slave is SelectStatementBase selection && !string.IsNullOrEmpty(selection.Alias))
+						{
+							var schema = context.Schema.Find(selection.Alias);
+
+							if(schema != null)
+								tokens.Add(selection.Alias, new SlaveToken(schema, GetParameters(reader, selection.Alias)));
+						}
+					}
+
+					if(tokens.Count > 0)
+						return tokens;
+				}
+
+				return null;
+
+				static IEnumerable<ParameterToken> GetParameters(IDataReader reader, string path)
+				{
+					if(string.IsNullOrEmpty(path))
+						yield break;
+
+					for(int i = 0; i < reader.FieldCount; i++)
+					{
+						var name = reader.GetName(i);
+
+						if(name.StartsWith("$" + path + ":"))
+							yield return new ParameterToken(name.Substring(path.Length + 2), i);
+					}
+				}
+			}
 			#endregion
 
 			#region 显式实现
@@ -586,7 +676,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 				var reader = Interlocked.Exchange(ref _reader, null);
 
 				if(reader != null)
-					await reader.DisposeAsync();
+					await reader.DisposeAsync().ConfigureAwait(false);
 			}
 			#endregion
 		}
