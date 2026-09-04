@@ -189,6 +189,170 @@ public class EnumerableTest
 		Assert.Equal(1, source.DisposalCount);
 	}
 
+	[Theory]
+	[InlineData((int)AsyncAdapterCancellation.AsynchronizeEnumerator)]
+	[InlineData((int)AsyncAdapterCancellation.EnumerateAsyncMethod)]
+	[InlineData((int)AsyncAdapterCancellation.EnumerateAsyncEnumerator)]
+	public async Task AsyncAdapters_Cancellation_ThrowsAndDisposesSourceOnce(int modeValue)
+	{
+		var mode = (AsyncAdapterCancellation)modeValue;
+		using var methodCancellation = new CancellationTokenSource();
+		using var enumeratorCancellation = new CancellationTokenSource();
+		var source = new TrackingEnumerable<int>([1, 2]);
+		var result = mode == AsyncAdapterCancellation.AsynchronizeEnumerator ?
+			Enumerable.Asynchronize(source) :
+			Enumerable.EnumerateAsync<int>(source, methodCancellation.Token);
+		var iterator = result.GetAsyncEnumerator(enumeratorCancellation.Token);
+
+		try
+		{
+			Assert.True(await iterator.MoveNextAsync());
+			Assert.Equal(1, iterator.Current);
+
+			if(mode == AsyncAdapterCancellation.EnumerateAsyncMethod)
+				methodCancellation.Cancel();
+			else
+				enumeratorCancellation.Cancel();
+
+			await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await iterator.MoveNextAsync());
+		}
+		finally
+		{
+			await iterator.DisposeAsync();
+		}
+
+		Assert.Equal(1, source.DisposalCount);
+	}
+
+	[Fact]
+	public void Enumerate_DisposingSingleValueEnumerator_DoesNotDisposeElement()
+	{
+		var item = new DisposableItem();
+		var iterator = Enumerable.Enumerate<DisposableItem>(item).GetEnumerator();
+
+		Assert.True(iterator.MoveNext());
+		Assert.Same(item, iterator.Current);
+		iterator.Dispose();
+
+		Assert.Equal(0, item.DisposalCount);
+	}
+
+	[Fact]
+	public async Task EnumerateAdapters_PrioritizeCollectionsAndConvertScalarValues()
+	{
+		var items = new List<int>([1, 2]);
+		var syncObjects = Enumerable.Enumerate<object>(items);
+		var asyncObjects = Enumerable.EnumerateAsync<object>(items);
+		var syncDecimals = Enumerable.Enumerate<decimal>(10);
+		var asyncDecimals = Enumerable.EnumerateAsync<decimal>(10);
+
+		Assert.Collection(syncObjects,
+			item => Assert.Equal(1, item),
+			item => Assert.Equal(2, item));
+		Assert.Collection(await CollectAsync(asyncObjects),
+			item => Assert.Equal(1, item),
+			item => Assert.Equal(2, item));
+		Assert.Equal([10m], syncDecimals);
+		Assert.Equal([10m], await CollectAsync(asyncDecimals));
+	}
+
+	[Theory]
+	[InlineData((int)PageableAdapter.Asynchronize)]
+	[InlineData((int)PageableAdapter.EnumerateAsync)]
+	[InlineData((int)PageableAdapter.Synchronize)]
+	public async Task ShapeAdapters_PageableSource_PreservesPagingContract(int adapterValue)
+	{
+		var eventArgs = new PagingEventArgs("EnumerableTest", Paging.Page(1, 2));
+		object result;
+		Action<bool> setSuppressed;
+		Func<Task> enumerate;
+
+		switch((PageableAdapter)adapterValue)
+		{
+			case PageableAdapter.Asynchronize:
+				var asynchronizeSource = new PageableEnumerable<int>([1, 2], eventArgs);
+				var asynchronized = Enumerable.Asynchronize(asynchronizeSource);
+				result = asynchronized;
+				setSuppressed = value => asynchronizeSource.Suppressed = value;
+				enumerate = async () => Assert.Equal([1, 2], await CollectAsync(asynchronized));
+				break;
+			case PageableAdapter.EnumerateAsync:
+				var enumerateSource = new PageableEnumerable<int>([1, 2], eventArgs);
+				var enumerated = Enumerable.EnumerateAsync<int>(enumerateSource);
+				result = enumerated;
+				setSuppressed = value => enumerateSource.Suppressed = value;
+				enumerate = async () => Assert.Equal([1, 2], await CollectAsync(enumerated));
+				break;
+			case PageableAdapter.Synchronize:
+				var synchronizeSource = new PageableAsyncEnumerable<int>([1, 2], eventArgs, suppressed: false);
+				var synchronized = Enumerable.Synchronize(synchronizeSource);
+				result = synchronized;
+				setSuppressed = value => synchronizeSource.Suppressed = value;
+				enumerate = () =>
+				{
+					Assert.Equal([1, 2], Collect(synchronized));
+					return Task.CompletedTask;
+				};
+				break;
+			default:
+				throw new ArgumentOutOfRangeException(nameof(adapterValue));
+		}
+
+		var pageable = Assert.IsAssignableFrom<IPageable>(result);
+		object sender = null;
+		PagingEventArgs observed = null;
+		pageable.Paginated += (source, args) => (sender, observed) = (source, args);
+		Assert.False(pageable.Suppressed);
+		setSuppressed(true);
+		Assert.True(pageable.Suppressed);
+
+		await enumerate();
+
+		Assert.Same(result, sender);
+		Assert.Same(eventArgs, observed);
+	}
+
+	[Fact]
+	public void CastAsync_SourceEnumeratorFactoryFailure_PreservesException()
+	{
+		var failure = new InvalidOperationException("Enumerator factory failed.");
+		var source = new ThrowingAsyncEnumerable<int>(failure);
+		using var methodCancellation = new CancellationTokenSource();
+		using var enumeratorCancellation = new CancellationTokenSource();
+		var result = Enumerable.Cast<int, int>(source, methodCancellation.Token);
+
+		var exception = Assert.Throws<InvalidOperationException>(() => result.GetAsyncEnumerator(enumeratorCancellation.Token));
+
+		Assert.Same(failure, exception);
+		Assert.True(source.Cancellation.CanBeCanceled);
+		Assert.NotEqual(methodCancellation.Token, source.Cancellation);
+		Assert.NotEqual(enumeratorCancellation.Token, source.Cancellation);
+	}
+
+	[Fact]
+	public void ArrayEnumerator_CurrentReflectsIterationState()
+	{
+		using var iterator = Enumerable.GetEnumerator([1, 2]);
+		var nongeneric = (IEnumerator)iterator;
+
+		Assert.Throws<InvalidOperationException>(() => { _ = iterator.Current; });
+		Assert.Throws<InvalidOperationException>(() => { _ = nongeneric.Current; });
+		Assert.True(iterator.MoveNext());
+		Assert.Equal(1, iterator.Current);
+		Assert.Equal(1, nongeneric.Current);
+
+		iterator.Reset();
+		Assert.Throws<InvalidOperationException>(() => { _ = iterator.Current; });
+		Assert.True(iterator.MoveNext());
+		Assert.True(iterator.MoveNext());
+		Assert.Equal(2, iterator.Current);
+		Assert.False(iterator.MoveNext());
+		Assert.Throws<InvalidOperationException>(() => { _ = iterator.Current; });
+		Assert.Throws<InvalidOperationException>(() => { _ = nongeneric.Current; });
+	}
+
+	private static List<T> Collect<T>(IEnumerable<T> source) => new(source);
+
 	private static async Task<List<T>> CollectAsync<T>(IAsyncEnumerable<T> source)
 	{
 		var result = new List<T>();
@@ -257,7 +421,7 @@ public class EnumerableTest
 	private sealed class PageableAsyncEnumerable<T>(IEnumerable<T> items, PagingEventArgs eventArgs, bool suppressed) : IAsyncEnumerable<T>, IPageable
 	{
 		public event EventHandler<PagingEventArgs> Paginated;
-		public bool Suppressed { get; } = suppressed;
+		public bool Suppressed { get; set; } = suppressed;
 
 		public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation = default)
 		{
@@ -275,6 +439,59 @@ public class EnumerableTest
 
 				yield return item;
 				await Task.CompletedTask;
+			}
+		}
+	}
+
+	private sealed class PageableEnumerable<T>(IEnumerable<T> items, PagingEventArgs eventArgs) : IEnumerable<T>, IPageable
+	{
+		public event EventHandler<PagingEventArgs> Paginated;
+		public bool Suppressed { get; set; }
+
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		public IEnumerator<T> GetEnumerator() => this.Enumerate().GetEnumerator();
+
+		private IEnumerable<T> Enumerate()
+		{
+			var notified = false;
+
+			foreach(var item in items)
+			{
+				if(!notified)
+				{
+					notified = true;
+					this.Paginated?.Invoke(this, eventArgs);
+				}
+
+				yield return item;
+			}
+		}
+	}
+
+	private sealed class TrackingEnumerable<T>(IReadOnlyList<T> items) : IEnumerable<T>
+	{
+		public int DisposalCount { get; private set; }
+
+		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		public IEnumerator<T> GetEnumerator() => new Enumerator(items, () => this.DisposalCount++);
+
+		private sealed class Enumerator(IReadOnlyList<T> items, Action dispose) : IEnumerator<T>
+		{
+			private int _index = -1;
+			private bool _disposed;
+
+			object IEnumerator.Current => this.Current;
+			public T Current => items[_index];
+			public bool MoveNext() => ++_index < items.Count;
+			public void Reset() => _index = -1;
+
+			public void Dispose()
+			{
+				if(!_disposed)
+				{
+					_disposed = true;
+					dispose();
+				}
 			}
 		}
 	}
@@ -314,6 +531,37 @@ public class EnumerableTest
 				return ValueTask.CompletedTask;
 			}
 		}
+	}
+
+	private sealed class ThrowingAsyncEnumerable<T>(Exception failure) : IAsyncEnumerable<T>
+	{
+		public CancellationToken Cancellation { get; private set; }
+
+		public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation = default)
+		{
+			this.Cancellation = cancellation;
+			throw failure;
+		}
+	}
+
+	private sealed class DisposableItem : IDisposable
+	{
+		public int DisposalCount { get; private set; }
+		public void Dispose() => this.DisposalCount++;
+	}
+
+	private enum AsyncAdapterCancellation
+	{
+		AsynchronizeEnumerator,
+		EnumerateAsyncMethod,
+		EnumerateAsyncEnumerator,
+	}
+
+	private enum PageableAdapter
+	{
+		Asynchronize,
+		EnumerateAsync,
+		Synchronize,
 	}
 
 	private enum CancellationScope

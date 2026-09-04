@@ -52,8 +52,16 @@ public static class Enumerable
 		if(source == null)
 			throw new ArgumentNullException(nameof(source));
 
-		await using var enumerator = source.GetAsyncEnumerator(cancellation);
-		return await enumerator.MoveNextAsync() ? enumerator.Current : throw new InvalidOperationException($"Sequence contains no elements.");
+		var enumerator = source.GetAsyncEnumerator(cancellation);
+
+		try
+		{
+			return await enumerator.MoveNextAsync().ConfigureAwait(false) ? enumerator.Current : throw new InvalidOperationException("Sequence contains no elements.");
+		}
+		finally
+		{
+			await enumerator.DisposeAsync().ConfigureAwait(false);
+		}
 	}
 
 	public static async ValueTask<T> FirstOrDefault<T>(this IAsyncEnumerable<T> source, CancellationToken cancellation = default)
@@ -61,79 +69,28 @@ public static class Enumerable
 		if(source == null)
 			throw new ArgumentNullException(nameof(source));
 
-		await using var enumerator = source.GetAsyncEnumerator(cancellation);
-		return await enumerator.MoveNextAsync() ? enumerator.Current : default;
+		var enumerator = source.GetAsyncEnumerator(cancellation);
+
+		try
+		{
+			return await enumerator.MoveNextAsync().ConfigureAwait(false) ? enumerator.Current : default;
+		}
+		finally
+		{
+			await enumerator.DisposeAsync().ConfigureAwait(false);
+		}
 	}
 
 	public static IEnumerable<T> Synchronize<T>(this IAsyncEnumerable<T> source, CancellationToken cancellation = default)
 	{
-		#if NET7_0_OR_GREATER
-		return source.ToBlockingEnumerable(cancellation);
-		#else
-		var iterator = source.GetAsyncEnumerator(cancellation);
-
-		while(true)
-		{
-			var task = iterator.MoveNextAsync();
-			var succeed = task.IsCompletedSuccessfully ? task.Result : task.AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-
-			if(succeed)
-				yield return iterator.Current;
-			else
-				break;
-		}
-
-		Dispose(iterator);
-
-		static async void Dispose(IAsyncEnumerator<T> enumerator)
-		{
-			try
-			{
-				await enumerator.DisposeAsync();
-			}
-			catch { }
-		}
-		#endif
-	}
-
-	public static IAsyncEnumerable<T> Asynchronize<T>(this IEnumerable<T> source) =>
-		source is IAsyncEnumerable<T> enumerable ? enumerable : (source == null ? EmptyEnumerable<T>.Instance : new AsyncEnumerable<T>(source));
-
-	public static bool IsAsyncEnumerable(object source)
-	{
 		if(source == null)
-			return false;
+			throw new ArgumentNullException(nameof(source));
 
-		var contracts = source.GetType().GetInterfaces();
-		for(int i = 0; i < contracts.Length; i++)
-		{
-			if(contracts[i].IsGenericType && contracts[i].GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>))
-				return true;
-		}
-
-		return false;
+		var result = source.ToBlockingEnumerable(cancellation);
+		return Data.Pageable.Wrap(result, source as Data.IPageable);
 	}
 
-	public static bool IsAsyncEnumerable(object source, out Type elementType)
-	{
-		if(source != null)
-		{
-			var contracts = source.GetType().GetInterfaces();
-			for(int i = 0; i < contracts.Length; i++)
-			{
-				if(contracts[i].IsGenericType && contracts[i].GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>))
-				{
-					elementType = contracts[i].GenericTypeArguments[0];
-					return true;
-				}
-			}
-		}
-
-		elementType = null;
-		return false;
-	}
-
-	public static IAsyncEnumerable<T> EnumerateAsync<T>(object source, CancellationToken cancellation = default)
+	public static IAsyncEnumerable<T> Asynchronize<T>(this IEnumerable<T> source)
 	{
 		if(source == null)
 			return EmptyEnumerable<T>.Instance;
@@ -141,13 +98,30 @@ public static class Enumerable
 		if(source is IAsyncEnumerable<T> enumerable)
 			return enumerable;
 
-		if(source is IEnumerable<T> e)
-			return new AsyncEnumerable<T>(e);
+		var result = new AsyncEnumerable<T>(source, default);
+		return Data.Pageable.Wrap(result, source as Data.IPageable);
+	}
 
-		else if(source is T item)
-			return new AsyncEnumerable<T>([item]);
+	public static bool IsAsyncEnumerable(object source) => TryGetAsyncEnumerableElementType(source, out _);
+	public static bool IsAsyncEnumerable(object source, out Type elementType) => TryGetAsyncEnumerableElementType(source, out elementType);
 
-		throw new InvalidOperationException($"The '{source.GetType()}' type cannot be convert to '{typeof(IAsyncEnumerable<T>)}' type.");
+	public static IAsyncEnumerable<T> EnumerateAsync<T>(object source, CancellationToken cancellation = default)
+	{
+		if(source == null)
+			return cancellation.CanBeCanceled ? ForwardAsync(EmptyEnumerable<T>.Instance, cancellation) : EmptyEnumerable<T>.Instance;
+
+		if(source is IAsyncEnumerable<T> enumerable)
+		{
+			if(!cancellation.CanBeCanceled)
+				return enumerable;
+
+			var result = ForwardAsync(enumerable, cancellation);
+			return Data.Pageable.Wrap(result, source as Data.IPageable);
+		}
+
+		var items = Enumerate<T>(source);
+		var adapter = new AsyncEnumerable<T>(items, cancellation);
+		return Data.Pageable.Wrap(adapter, source as Data.IPageable);
 	}
 
 	public static IEnumerable<T> Enumerate<T>(object source)
@@ -157,8 +131,10 @@ public static class Enumerable
 
 		if(source is IEnumerable<T> items)
 			return items;
+		if(source is IAsyncEnumerable<T> enumerable)
+			return enumerable.Synchronize();
 
-		return (IEnumerable<T>)System.Activator.CreateInstance(typeof(TypedEnumerable<>).MakeGenericType(typeof(T)), [source]);
+		return new TypedEnumerable<T>(source);
 	}
 
 	public static IEnumerable Enumerate(object source, Type elementType)
@@ -177,7 +153,7 @@ public static class Enumerable
 		if(array == null)
 			throw new ArgumentNullException(nameof(array));
 
-		return new ArrayEnumerator<T>(array);
+		return ((IEnumerable<T>)array).GetEnumerator();
 	}
 
 	#pragma warning disable CS8424
@@ -219,19 +195,57 @@ public static class Enumerable
 	#pragma warning restore CS8424
 	#endregion
 
-	#region 嵌套子类
-	private sealed class ArrayEnumerator<T>(T[] array) : IEnumerator<T>
+	#region 私有方法
+	private static bool TryGetAsyncEnumerableElementType(object source, out Type elementType)
 	{
-		private int _index = -1;
-		private T[] _array = array ?? throw new ArgumentNullException(nameof(array));
+		if(source != null)
+		{
+			var contracts = source.GetType().GetInterfaces();
 
-		public T Current => _index >= 0 && _index < _array.Length ? _array[_index] : default;
-		object IEnumerator.Current => this.Current;
-		public bool MoveNext() => ++_index < _array.Length;
-		public void Reset() => _index = -1;
-		public void Dispose() => _array = null;
+			for(int i = 0; i < contracts.Length; i++)
+			{
+				if(contracts[i].IsGenericType && contracts[i].GetGenericTypeDefinition() == typeof(IAsyncEnumerable<>))
+				{
+					elementType = contracts[i].GenericTypeArguments[0];
+					return true;
+				}
+			}
+		}
+
+		elementType = null;
+		return false;
 	}
 
+	private static async IAsyncEnumerable<T> ForwardAsync<T>(IAsyncEnumerable<T> source, CancellationToken cancellation, [EnumeratorCancellation] CancellationToken iteration = default)
+	{
+		var token = GetCancellation(cancellation, iteration, out var registration);
+
+		using(registration)
+		{
+			token.ThrowIfCancellationRequested();
+
+			await foreach(var item in source.WithCancellation(token).ConfigureAwait(false))
+			{
+				token.ThrowIfCancellationRequested();
+				yield return item;
+			}
+		}
+	}
+
+	private static CancellationToken GetCancellation(CancellationToken first, CancellationToken second, out CancellationTokenSource source)
+	{
+		source = null;
+
+		if(!first.CanBeCanceled)
+			return second;
+		if(!second.CanBeCanceled || first == second)
+			return first;
+
+		return (source = CancellationTokenSource.CreateLinkedTokenSource(first, second)).Token;
+	}
+	#endregion
+
+	#region 嵌套子类
 	private sealed class EmptyEnumerable<T> : IEnumerable<T>, IOrderedEnumerable<T>, IAsyncEnumerable<T>, IAsyncEnumerator<T>
 	{
 		public static readonly EmptyEnumerable<T> Instance = new();
@@ -259,12 +273,12 @@ public static class Enumerable
 		{
 			if(source is IEnumerable items && (source.GetType() != typeof(string) || typeof(T) == typeof(char)))
 				_iterator = () => new MultitapEnumerator(items.GetEnumerator());
+			else if(source is IAsyncEnumerable<T> enumerable)
+				_iterator = () => enumerable.Synchronize().GetEnumerator();
 			else
 			{
 				if(Zongsoft.Common.Convert.TryConvertValue<T>(source, out var element))
 					_iterator = () => new SimulateEnumerator(element);
-				else if(IsAsyncEnumerable(source))
-					_iterator = () => ((IAsyncEnumerable<T>)source).Synchronize().GetEnumerator();
 				else
 					throw new InvalidOperationException($"The '{source.GetType()}' type cannot be convert to '{typeof(T)}' type.");
 			}
@@ -277,9 +291,9 @@ public static class Enumerable
 		#endregion
 
 		#region 迭代实现
-		private class SimulateEnumerator(T element) : IEnumerator<T>
+		private sealed class SimulateEnumerator(T element) : IEnumerator<T>
 		{
-			private volatile int _flag;
+			private int _flag;
 			private readonly T _element = element;
 
 			public T Current
@@ -300,25 +314,21 @@ public static class Enumerable
 
 			public bool MoveNext()
 			{
-				var original = Interlocked.CompareExchange(ref _flag, 1, 0);
-
-				if(original == 0)
+				if(_flag == 0)
+				{
+					_flag = 1;
 					return true;
+				}
 
-				Interlocked.CompareExchange(ref _flag, 2, 1);
+				_flag = 2;
 				return false;
 			}
 
 			public void Reset() => _flag = 0;
-
-			public void Dispose()
-			{
-				if(_element is IDisposable disposable)
-					disposable.Dispose();
-			}
+			public void Dispose() { }
 		}
 
-		private class MultitapEnumerator(IEnumerator enumerator) : IEnumerator<T>
+		private sealed class MultitapEnumerator(IEnumerator enumerator) : IEnumerator<T>
 		{
 			private readonly IEnumerator _enumerator = enumerator;
 
@@ -336,23 +346,58 @@ public static class Enumerable
 		#endregion
 	}
 
-	private sealed class AsyncEnumerable<T>(IEnumerable<T> items) : IAsyncEnumerable<T>
+	private sealed class AsyncEnumerable<T>(IEnumerable<T> items, CancellationToken cancellation) : IAsyncEnumerable<T>
 	{
 		private readonly IEnumerable<T> _items = items;
+		private readonly CancellationToken _cancellation = cancellation;
 
-		public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation = default) => new AsyncEnumerator(_items.GetEnumerator(), cancellation);
-
-		private class AsyncEnumerator(IEnumerator<T> source, CancellationToken cancellation) : IAsyncEnumerator<T>
+		public IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation = default)
 		{
-			private readonly IEnumerator<T> _source = source;
+			var token = GetCancellation(_cancellation, cancellation, out var registration);
+
+			try
+			{
+				return new AsyncEnumerator(_items.GetEnumerator(), token, registration);
+			}
+			catch
+			{
+				registration?.Dispose();
+				throw;
+			}
+		}
+
+		private sealed class AsyncEnumerator(IEnumerator<T> source, CancellationToken cancellation, CancellationTokenSource registration) : IAsyncEnumerator<T>
+		{
+			private IEnumerator<T> _source = source;
+			private CancellationTokenSource _registration = registration;
 			private readonly CancellationToken _cancellation = cancellation;
 
 			public T Current => _source.Current;
-			public ValueTask<bool> MoveNextAsync() => _cancellation.IsCancellationRequested ? ValueTask.FromResult(false) : ValueTask.FromResult(_source.MoveNext());
+			public ValueTask<bool> MoveNextAsync()
+			{
+				var source = _source;
+
+				if(source == null)
+					return ValueTask.FromResult(false);
+
+				_cancellation.ThrowIfCancellationRequested();
+				return ValueTask.FromResult(source.MoveNext());
+			}
+
 			public ValueTask DisposeAsync()
 			{
-				_source.Dispose();
-				return ValueTask.CompletedTask;
+				var source = Interlocked.Exchange(ref _source, null);
+				var registration = Interlocked.Exchange(ref _registration, null);
+
+				try
+				{
+					source?.Dispose();
+					return ValueTask.CompletedTask;
+				}
+				finally
+				{
+					registration?.Dispose();
+				}
 			}
 		}
 	}
@@ -367,27 +412,25 @@ public static class Enumerable
 
 		public IAsyncEnumerator<TDestination> GetAsyncEnumerator(CancellationToken cancellation = default)
 		{
-			var token = GetCancellation(_cancellation, cancellation, out var source);
-			return new AsyncCastEnumerator(_source.GetAsyncEnumerator(token), _converter, source);
+			var token = GetCancellation(_cancellation, cancellation, out var registration);
+
+			try
+			{
+				return new AsyncCastEnumerator(_source.GetAsyncEnumerator(token), _converter, token, registration);
+			}
+			catch
+			{
+				registration?.Dispose();
+				throw;
+			}
 		}
 
-		private static CancellationToken GetCancellation(CancellationToken first, CancellationToken second, out CancellationTokenSource source)
-		{
-			source = null;
-
-			if(!first.CanBeCanceled)
-				return second;
-			if(!second.CanBeCanceled || first == second)
-				return first;
-
-			return (source = CancellationTokenSource.CreateLinkedTokenSource(first, second)).Token;
-		}
-
-		private sealed class AsyncCastEnumerator(IAsyncEnumerator<TSource> source, TryConverter<TSource, TDestination> converter, CancellationTokenSource cancellation) : IAsyncEnumerator<TDestination>
+		private sealed class AsyncCastEnumerator(IAsyncEnumerator<TSource> source, TryConverter<TSource, TDestination> converter, CancellationToken cancellation, CancellationTokenSource registration) : IAsyncEnumerator<TDestination>
 		{
 			private TDestination _current;
 			private IAsyncEnumerator<TSource> _source = source;
-			private CancellationTokenSource _cancellation = cancellation;
+			private CancellationTokenSource _registration = registration;
+			private readonly CancellationToken _cancellation = cancellation;
 			private readonly TryConverter<TSource, TDestination> _converter = converter;
 
 			public TDestination Current => _current;
@@ -396,29 +439,36 @@ public static class Enumerable
 			{
 				var source = _source;
 
-				while(source != null && await source.MoveNextAsync().ConfigureAwait(false))
+				while(source != null)
 				{
+					_cancellation.ThrowIfCancellationRequested();
+
+					if(!await source.MoveNextAsync().ConfigureAwait(false))
+						break;
+
 					if(_converter(source.Current, out _current))
 						return true;
 				}
 
+				_current = default;
 				return false;
 			}
 
 			public ValueTask DisposeAsync()
 			{
 				var source = Interlocked.Exchange(ref _source, null);
-				var cancellation = Interlocked.Exchange(ref _cancellation, null);
+				var registration = Interlocked.Exchange(ref _registration, null);
+				_current = default;
 
 				if(source == null)
 				{
-					cancellation?.Dispose();
+					registration?.Dispose();
 					return ValueTask.CompletedTask;
 				}
 
-				return DisposeAsync(source, cancellation);
+				return DisposeAsync(source, registration);
 
-				static async ValueTask DisposeAsync(IAsyncEnumerator<TSource> source, CancellationTokenSource cancellation)
+				static async ValueTask DisposeAsync(IAsyncEnumerator<TSource> source, CancellationTokenSource registration)
 				{
 					try
 					{
@@ -426,7 +476,7 @@ public static class Enumerable
 					}
 					finally
 					{
-						cancellation?.Dispose();
+						registration?.Dispose();
 					}
 				}
 			}

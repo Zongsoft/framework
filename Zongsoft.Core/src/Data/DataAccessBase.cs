@@ -298,13 +298,9 @@ public abstract partial class DataAccessBase : IDataAccess, IDisposable
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private static IEnumerable<T> ToEnumerable<T>(object result) => Collections.Enumerable.Enumerate<T>(result);
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private static IAsyncEnumerable<T> ToAsyncEnumerable<T>(object result, CancellationToken cancellation) => Collections.Enumerable.EnumerateAsync<T>(result, cancellation);
+	private static IAsyncEnumerable<T> ToAsyncEnumerable<T>(object result, CancellationToken cancellation) => result is IAsyncEnumerable<T> enumerable ? enumerable : Collections.Enumerable.EnumerateAsync<T>(result, cancellation);
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private void EnsureDisposed()
-	{
-		if(this.IsDisposed)
-			throw new ObjectDisposedException($"[{this.GetType().Name}]{_name}");
-	}
+	private void EnsureDisposed() => ObjectDisposedException.ThrowIf(this.IsDisposed, this);
 	#endregion
 
 	#region 嵌套子类
