@@ -1,5 +1,7 @@
 # Database message storage integration tests
 
+[English](README.md) | [简体中文](README.zh-Hans.md)
+
 SQLite contract tests run by default against a temporary file database.
 
 Set `ZONGSOFT_MESSAGING_DATABASE_TESTS=1` to enable the MySQL, PostgreSQL and SQL Server integration cases. Override their connections with:

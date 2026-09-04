@@ -54,11 +54,11 @@ podman exec -it ollama ollama pull qwen3:0.6b
 > ```bash
 > # List local models
 > podman exec -it ollama ollama list
-> 
+>
 > # Run the qwen3:0.6b model
 > # When it starts successfully, it enters interactive mode. Use /bye to exit.
 > podman exec -it ollama ollama run qwen3:0.6b
-> 
+>
 > # List running models
 > podman exec -it ollama ollama ps
 > ```
@@ -93,13 +93,13 @@ This extension library provides both _command-line_ and _**REST**ful **API**_ ac
 	> ```bash
 	> # List local models
 	> ai.assistant.model.list
-	> 
+	>
 	> # List running models
 	> ai.assistant.model.list --running
-	> 
+	>
 	> # Show model information
 	> ai.assistant.model.info "qwen3:0.6b"
-	> 
+	>
 	> # Download and install a model
 	> ai.assistant.model.install "qwen3:0.6b"
 	> # Delete and uninstall a model
@@ -112,17 +112,17 @@ This extension library provides both _command-line_ and _**REST**ful **API**_ ac
 	> ai.assistant.chat.open
 	> # Enter a specific session
 	> ai.assistant.chat.open 'session|chatroom'
-	> 
+	>
 	> # Close the current session
 	> ai.assistant.chat.close
 	> # Close a specific session
 	> ai.assistant.chat.close 'session|chatroom'
-	> 
+	>
 	> # Clear the current session history
 	> ai.assistant.chat.clear
 	> # Clear a specific session history
 	> ai.assistant.chat.clear 'session|chatroom'
-	> 
+	>
 	> # Show the current session history
 	> ai.assistant.chat.history
 	> # Show a specific session history
@@ -135,12 +135,12 @@ This extension library provides both _command-line_ and _**REST**ful **API**_ ac
 	> ai.assistant.chat "content"
 	> # Chat and return plain text
 	> ai.assistant.chat --format:text "content"
-	> 
+	>
 	> # Chat with asynchronous streaming
 	> ai.assistant.chat --streaming "content"
 	> # Chat with asynchronous streaming in plain text
 	> ai.assistant.chat --streaming --format:text "content"
-	> 
+	>
 	> # Enter interactive chat mode
 	> ai.assistant.chat --interactive
 	> ```

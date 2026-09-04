@@ -170,4 +170,4 @@ openapi/
 
 ## License
 
-The **Zongsoft.Web.OpenApi** library is released under the [GNU Lesser General Public License v3.0](LICENSE).
+The **Zongsoft.Web.OpenApi** library is released under the [GNU Lesser General Public License v3.0](../../LICENSE).

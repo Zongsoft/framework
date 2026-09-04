@@ -18,10 +18,10 @@
 > ```csharp
 > var phoneNumber = "+8618012345678";
 > var template    = "authencode";
-> 
+>
 > // 发送验证码通知短信
 > CommandExecutor.Execute($"phone.send {phoneNumber} --template:{template}", { code = "1234" });
-> 
+>
 > // 拨打验证码通知语音电话
 > CommandExecutor.Execute($"phone.call {phoneNumber} --template:{template}", { code = "1234" });
 > ```

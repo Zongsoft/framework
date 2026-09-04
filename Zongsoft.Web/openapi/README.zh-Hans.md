@@ -170,4 +170,4 @@ openapi/
 
 ## 许可证
 
-**Zongsoft.Web.OpenApi** 库基于 [GNU 宽通用公共许可证 v3.0](LICENSE) 发布。
+**Zongsoft.Web.OpenApi** 库基于 [GNU 宽通用公共许可证 v3.0](../../LICENSE) 发布。

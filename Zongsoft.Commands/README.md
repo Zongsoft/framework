@@ -18,10 +18,10 @@
 > ```csharp
 > var phoneNumber = "+8618012345678";
 > var template    = "authencode";
-> 
+>
 > // Send an SMS verification-code notification
 > CommandExecutor.Execute($"phone.send {phoneNumber} --template:{template}", { code = "1234" });
-> 
+>
 > // Make a voice call for verification-code notification
 > CommandExecutor.Execute($"phone.call {phoneNumber} --template:{template}", { code = "1234" });
 > ```

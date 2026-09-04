@@ -54,11 +54,11 @@ podman exec -it ollama ollama pull qwen3:0.6b
 > ```bash
 > # 查看本地模型库列表
 > podman exec -it ollama ollama list
-> 
+>
 > # 运行 qwen3:0.6b 模型
 > # 运行成功后自动进入交互模式，可通过 `/bye` 命令退出
 > podman exec -it ollama ollama run qwen3:0.6b
-> 
+>
 > # 查看正在运行的模型列表
 > podman exec -it ollama ollama ps
 > ```
@@ -93,13 +93,13 @@ podman exec -it ollama ollama pull qwen3:0.6b
 	> ```bash
 	> # 查看本地模型库列表
 	> ai.assistant.model.list
-	> 
+	>
 	> # 查看正在运行的模型列表
 	> ai.assistant.model.list --running
-	> 
+	>
 	> # 查看指定的模型信息
 	> ai.assistant.model.info "qwen3:0.6b"
-	> 
+	>
 	> # 下载并安装指定的大语言模型
 	> ai.assistant.model.install "qwen3:0.6b"
 	> # 删除并卸载指定的大语言模型
@@ -112,17 +112,17 @@ podman exec -it ollama ollama pull qwen3:0.6b
 	> ai.assistant.chat.open
 	> # 进入指定的会话
 	> ai.assistant.chat.open 'session|chatroom'
-	> 
+	>
 	> # 关闭当前会话
 	> ai.assistant.chat.close
 	> # 关闭指定会话
 	> ai.assistant.chat.close 'session|chatroom'
-	> 
+	>
 	> # 清空当前会话的历史记录
 	> ai.assistant.chat.clear
 	> # 清空指定会话的历史记录
 	> ai.assistant.chat.clear 'session|chatroom'
-	> 
+	>
 	> # 查看当前会话的历史纪录
 	> ai.assistant.chat.history
 	> # 查看指定会话的历史记录
@@ -135,12 +135,12 @@ podman exec -it ollama ollama pull qwen3:0.6b
 	> ai.assistant.chat "内容"
 	> # 对话：结果为纯文本
 	> ai.assistant.chat --format:text "内容"
-	> 
+	>
 	> # 对话：结果为异步流
 	> ai.assistant.chat --streaming "内容"
 	> # 对话：结果为纯文本的异步流
 	> ai.assistant.chat --streaming --format:text "内容"
-	> 
+	>
 	> # 进入交互对话模式
 	> ai.assistant.chat --interactive
 	> ```
