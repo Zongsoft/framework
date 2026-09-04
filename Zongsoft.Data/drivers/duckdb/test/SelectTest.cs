@@ -37,6 +37,22 @@ public class SelectTest(DatabaseFixture database)
 	}
 
 	[Fact]
+	public void Select_CurrentReturnsSameModelInstance()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		using var enumerator = accessor.Select<UserModel>().GetEnumerator();
+
+		Assert.True(enumerator.MoveNext());
+		var user = enumerator.Current;
+
+		Assert.NotNull(user);
+		Assert.Same(user, enumerator.Current);
+	}
+
+	[Fact]
 	public async Task SelectWithPagedAsync()
 	{
 		const int COUNT = 100;
@@ -446,12 +462,12 @@ public class SelectTest(DatabaseFixture database)
 		count = await accessor.InsertAsync(role, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(3, count);
 
-		var result = accessor.SelectAsync<RoleModel>(
+		var result = await Zongsoft.Collections.Enumerable.FirstOrDefault(accessor.SelectAsync<RoleModel>(
 			Condition.Equal(nameof(RoleModel.RoleId), role.RoleId),
 			$"*,{nameof(RoleModel.Children)}{{*," +
 				$"{nameof(MemberModel.MemberRole)}{{*}}," +
 				$"{nameof(MemberModel.MemberUser)}{{*}}," +
-			$"}}").ToBlockingEnumerable().FirstOrDefault();
+			$"}}"));
 
 		Assert.NotNull(result);
 		Assert.Equal(role.RoleId, result.RoleId);

@@ -468,6 +468,29 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 	}
 
 	[Fact]
+	public async Task SelectResultCancellationAfterFirstRowReleasesReaderAsync()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var accessor = _database.Accessor;
+		using var transaction = new Transaction();
+		using var cancellation = new CancellationTokenSource();
+		var enumerator = accessor.SelectAsync<UserModel>().GetAsyncEnumerator(cancellation.Token);
+
+		Assert.True(await enumerator.MoveNextAsync());
+		cancellation.Cancel();
+
+		var exception = await Record.ExceptionAsync(() => enumerator.MoveNextAsync().AsTask());
+		await enumerator.DisposeAsync();
+
+		var session = GetSession(transaction);
+		RollbackAndAssertSessionReleased(transaction, session);
+
+		Assert.IsAssignableFrom<OperationCanceledException>(exception);
+	}
+
+	[Fact]
 	public async Task ExecuteResultEarlyBreakReleasesReaderAsync()
 	{
 		if(!Global.IsTestingEnabled)
