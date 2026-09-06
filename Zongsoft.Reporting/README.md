@@ -39,14 +39,16 @@ Also install a reporting provider that implements `IReportResourceResolver` and 
 
 ## Definition Example
 
+The framework's [FileReportDescriptor](src/ReportDescriptor.cs) is a concrete reference for opening a definition through the framework file system. Its `Open` implementation is:
+
 ```csharp
-using Zongsoft.Reporting;
-
-IReportDescriptor descriptor = new FileReportDescriptor("reports/sales.report");
-
-await using var source = descriptor.Open();
-Console.WriteLine($"{descriptor.Name} ({descriptor.Type})");
+public Stream Open()
+{
+	return Zongsoft.IO.FileSystem.File.Open(this.FilePath, FileMode.Open, FileAccess.Read);
+}
 ```
+
+This is a source excerpt, not a bundled report demo. Neither this package nor the Grapecity adapter includes a ready-to-run report definition. Supply a trusted definition supported by your deployed provider; its format, data sources, and parameters must come from that actual definition.
 
 A descriptor only opens the definition; it does not instantiate a report. Use the provider's report-opening API (for example, [Grapecity's `Report.Open`](../externals/grapecity/README.md)) to obtain an `IReport`. `IReportResourceResolver.Resolve` instead produces an `IReportResource` for an asset such as an image; it is not a report factory. Only call rendering/export operations that the chosen provider actually implements.
 

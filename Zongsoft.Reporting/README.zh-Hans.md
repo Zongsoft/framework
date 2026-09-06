@@ -39,14 +39,16 @@ dotnet add package Zongsoft.Reporting
 
 ## 定义示例
 
+框架中的 [FileReportDescriptor](src/ReportDescriptor.cs) 是通过框架文件系统打开定义的真实参考。它的 `Open` 实现如下：
+
 ```csharp
-using Zongsoft.Reporting;
-
-IReportDescriptor descriptor = new FileReportDescriptor("reports/sales.report");
-
-await using var source = descriptor.Open();
-Console.WriteLine($"{descriptor.Name} ({descriptor.Type})");
+public Stream Open()
+{
+	return Zongsoft.IO.FileSystem.File.Open(this.FilePath, FileMode.Open, FileAccess.Read);
+}
 ```
+
+这是源码摘录，不是随包提供的报表示例。本包和 Grapecity 适配器均未附带可直接运行的报表定义。使用时必须准备部署的提供程序所支持的可信定义；格式、数据源和参数均应以该实际定义为准。
 
 描述符只打开定义，不实例化报表。应通过提供程序的报表打开 API（例如 [Grapecity 的 `Report.Open`](../externals/grapecity/README.zh-Hans.md)）获得 `IReport`。`IReportResourceResolver.Resolve` 返回的是图片等资源对应的 `IReportResource`，不是报表工厂。渲染和导出只应调用所选提供程序确实实现的操作。
 

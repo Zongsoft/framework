@@ -50,7 +50,7 @@ dotnet add package Zongsoft.Data.DuckDB
 
 消费模块通过 `ApplicationContext.Current.Services` 或应用定义的 `Module.Current.Services` 取得 `IServiceProvider<IDataAccess>`，再按连接名 `Analytics` 获取访问器。引擎根据连接配置选择 DuckDB，业务模块只依赖公共契约。
 
-包含清单、连接、映射与实际查询的完整例子见 [Data 插件最小闭环](../../README.zh-Hans.md#plugin-quickstart)。用于 DuckDB 时，把驱动键和命令脚本的 driver 改为 `DuckDB`，并使用上文的连接；不要把独立工具的底层连接写法搬进业务服务。
+取得访问器不等于查询成功。真实业务装配请参阅 [Data 中的 Discussions 用例](../../README.zh-Hans.md#plugin-quickstart)，并沿其中的模块、映射及服务源码阅读。该用例不表示 Discussions 已兼容本驱动；数据库结构、字段类型和所需操作必须逐项验证，不能只改驱动名就推定可移植。业务服务通过公共契约调用，不自行构造数据库连接。
 
 ## 最小连接验证
 

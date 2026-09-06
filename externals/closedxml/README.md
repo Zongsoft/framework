@@ -35,7 +35,7 @@ The package targets the same supported frameworks as Zongsoft Framework and curr
 
 The data boundary is an **Excel Table**, not a Defined Name or the worksheet's used range. The [current naming rule](src/Spreadsheet.cs) is `__{model.QualifiedName}__`: two underscores at each end, with the module included in the qualified model name.
 
-For example, an unqualified `User` maps to `__User__`, while `Sales.User` maps to `__Sales.User__`. The generator sets this name automatically; hand-authored templates must follow it too. A CLR namespace is not automatically the model's module name; see [ModelDescriptor](../../Zongsoft.Core/src/Data/ModelDescriptor.cs).
+The actual [test User model](test/Models/User.cs) and [Templates fixture](test/Templates.cs) demonstrate an unqualified model; the real [Discussions Forum model](../../../discussions/src/Models/Forum.cs) belongs to the Discussions module. The generator uses the descriptor’s qualified name, not an arbitrary CLR namespace. A CLR namespace alone does not declare the module; see [ModelDescriptor](../../Zongsoft.Core/src/Data/ModelDescriptor.cs).
 
 The worksheet name is only a display or grouping concern. The generator uses a nonblank `model.Title`, otherwise `model.Name`; the extractor searches all worksheets by default. Set `DataArchiveExtractorOptions.Source` to a worksheet name to restrict lookup; this does not change the internal Table name.
 
@@ -70,44 +70,36 @@ Keep notes and unrelated content outside the table's column band: content below 
 
 ## Exporting Data
 
-Inside a command or application service of a running host with the ClosedXml plugin loaded, match the public contract by format name `Spreadsheet`. A module can use `Module.Current.Services` instead. This self-contained plain-model example needs no database:
+Inside a command or application service of a running host with the ClosedXml plugin loaded, match the public contract by format name `Spreadsheet`. A module can use `Module.Current.Services` instead.
+
+This adaptation uses the existing [Discussions Forum](../../../discussions/src/Models/Forum.cs) type, not a new User class. Execute it in a Discussions consumer after host composition; an empty array generates a blank entry workbook without reading live records:
 
 ```csharp
 using Zongsoft.Data;
 using Zongsoft.Data.Archiving;
 using Zongsoft.Services;
+using Zongsoft.Discussions.Models;
 
 var generator = ApplicationContext.Current.Services
 	.FindRequired<IDataArchiveGenerator>("Spreadsheet");
-var model = Model.GetDescriptor<User>();
-var users = new[]
-{
-	new User { UserId = 1, Name = "Alice", Balance = 12.50m, Email = "alice@example.invalid" },
-};
+var model = Model.GetDescriptor<Forum>();
+var forums = Array.Empty<Forum>();
 
-await using var output = File.Create("users.xlsx");
-await generator.GenerateAsync(output, model, users);
-
-public class User
-{
-	public int UserId { get; set; }
-	public string Name { get; set; }
-	public decimal Balance { get; set; }
-	public string Email { get; set; }
-}
+using var output = new MemoryStream();
+await generator.GenerateAsync(output, model, forums);
 ```
 
-The caller owns the output stream; do not dispose a container-owned service after each operation. For an actual data service, use `service.GetDescriptor()` to include mapping metadata such as keys and lengths; `Model.GetDescriptor<User>()` alone reflects type declarations.
+The caller owns the output stream; do not dispose a container-owned service after each operation. For an actual data service, use `service.GetDescriptor()` to include mapping metadata such as keys and lengths; `Model.GetDescriptor<Forum>()` alone reflects type declarations.
 
-💡 This shared-interface path passed an in-memory round trip in an isolated terminal host: a User in the Docs module produced `__Docs.User__`, and extraction preserved the record count and field values. No user workbook was read or written. This does not replace testing large files, template expressions or every cell type.
+💡 The repository’s reproducible round-trip case is [SpreadsheetExtractorTest](test/SpreadsheetExtractorTest.cs), using the User data and descriptor from [Templates](test/Templates.cs). Read its assertions rather than relying on an unavailable temporary probe. Test data is fixture data, not a user workbook.
 
 At the `GenerateAsync` call above, use `DataArchiveGeneratorOptions` to select fields:
 
 ```csharp
 using Zongsoft.Data.Archiving;
 
-var options = new DataArchiveGeneratorOptions(nameof(User.UserId), nameof(User.Name));
-await generator.GenerateAsync(output, model, users, options);
+var options = new DataArchiveGeneratorOptions(nameof(Forum.ForumId), nameof(Forum.Name));
+await generator.GenerateAsync(output, model, forums, options);
 ```
 
 For explicit column presentation, pass `DataArchiveField` instances. Widths use typographic points (1/72 inch), with zero meaning unspecified; font sizes follow the same zero-as-unspecified convention. Colors are technology-neutral ARGB values from `Zongsoft.Components.Color`, while a null color means unspecified; and `Format` is a .NET format specifier rather than an Excel number-format code:
@@ -117,20 +109,20 @@ using Zongsoft.Components;
 using Zongsoft.Data.Archiving;
 
 var options = new DataArchiveGeneratorOptions(
-	new DataArchiveField(nameof(User.UserId))
+	new DataArchiveField(nameof(Forum.ForumId))
 	{
 		Width = 72,
 		Alignment = DataArchiveFieldAlignment.Center,
 		FontStyle = DataArchiveFontStyle.Bold,
 		ForegroundColor = Color.Maroon,
 	},
-	new DataArchiveField(nameof(User.Balance))
+	new DataArchiveField(nameof(Forum.TotalThreads))
 	{
 		Width = 90,
 		Alignment = DataArchiveFieldAlignment.Right,
-		Format = "N2",
+		Format = "N0",
 	},
-	new DataArchiveField(nameof(User.Email))
+	new DataArchiveField(nameof(Forum.Description))
 	{
 		Width = 180,
 		TextMode = DataArchiveFieldTextMode.Wrap,
@@ -143,21 +135,16 @@ The complete generated internal Table name must satisfy Excel's table-name rules
 
 ## Extracting Data
 
-`IDataArchiveExtractor` obtains the model from extraction options, locates its internal Table, and maps columns back to model properties. The following uses the `User` type from the previous section:
+`IDataArchiveExtractor` obtains the model from extraction options, locates its internal Table, and maps columns back to model properties. The following uses the `Forum` type from the previous section:
 
 ```csharp
-using Zongsoft.Data;
-using Zongsoft.Data.Archiving;
-using Zongsoft.Services;
-
 var extractor = ApplicationContext.Current.Services
 	.FindRequired<IDataArchiveExtractor>("Spreadsheet");
-var model = Model.GetDescriptor<User>();
-var options = new DataArchiveExtractorOptions(model);
+output.Position = 0;
+var extractionOptions = new DataArchiveExtractorOptions(model);
 
-await using var input = File.OpenRead("users.xlsx");
-await foreach(var user in extractor.ExtractAsync<User>(input, options))
-	Console.WriteLine($"{user.UserId}: {user.Name}");
+await foreach(var forum in extractor.ExtractAsync<Forum>(output, extractionOptions))
+	Console.WriteLine($"{forum.ForumId}: {forum.Name}");
 ```
 
 To restrict lookup to a specific worksheet:
@@ -165,7 +152,7 @@ To restrict lookup to a specific worksheet:
 ```csharp
 var options = new DataArchiveExtractorOptions(model)
 {
-	Source = "Import",
+	Source = string.IsNullOrWhiteSpace(model.Title) ? model.Name : model.Title,
 };
 ```
 
@@ -181,27 +168,22 @@ The generator and extractor are registered as `IDataArchiveGenerator` and `IData
 
 `SpreadsheetRenderer` renders an `.xlsx` template using ClosedXML.Report variables. `SpreadsheetTemplateProvider` recursively discovers `.xlsx` files and indexes each template by its filename without the extension:
 
+The real [SpreadsheetRendererTest](test/SpreadsheetRendererTest.cs) renders [apartment.usages.xlsx](test/templates/apartment.usages.xlsx) with the [Templates.ApartmentUsage](test/Templates.cs) fixture. The following is the rendering part of that test; `_renderer` and `Templates` belong to the test project, not the public package:
+
 ```csharp
-using Zongsoft.Data.Archiving;
-using Zongsoft.Services;
-
-var services = ApplicationContext.Current.Services;
-var provider = services.FindRequired<IDataTemplateProvider>("Spreadsheet");
-var renderer = services.FindRequired<IDataTemplateRenderer>("Spreadsheet");
-var template = provider.GetTemplate("invoice")
-	?? throw new InvalidOperationException("Template not found.");
-
-var invoice = new { Number = "DEMO-001", Total = 12.50m };
-var parameters = new Dictionary<string, object>
+using var output = new MemoryStream();
+var data = new { Templates.ApartmentUsage.Usages };
+var parameters = new[]
 {
-	["GeneratedAt"] = DateTimeOffset.Now,
+	new KeyValuePair<string, object>(nameof(Templates.ApartmentUsage.Park), Templates.ApartmentUsage.Park),
 };
 
-using var output = new MemoryStream();
-await renderer.RenderAsync(output, template, invoice, parameters);
+await _renderer.RenderAsync(output, Templates.ApartmentUsage.Template, data, parameters);
 ```
 
-On first lookup, the default template provider recursively scans the application directory for `.xlsx` files and caches the index; it does not read a `templates` setting or continuously watch for new files. Place a uniquely named `invoice.xlsx` beforehand, using cells such as `{{Number}}`, `{{Total}}` and `{{GeneratedAt}}`. Duplicate filenames are not isolated by directory. The example writes to memory to avoid overwriting a template or discovering generated output as a template. A custom root requires a host-composed provider; business modules still consume the shared interface.
+The test checks the park heading, apartment/asset fields, dates and quantity total in the rendered cells. Hosted consumers obtain `IDataTemplateProvider` and `IDataTemplateRenderer` by the `Spreadsheet` format name through their service container, and supply data matching the deployed template.
+
+The default provider scans the application directory recursively on first lookup and caches the index; it does not watch files continuously or read a `templates` setting. Deploy a unique template filename before lookup. The test fixture deliberately uses its own test-template directory. Keep output outside template discovery or in memory, and never overwrite source workbooks.
 
 🚨 Workbook processing expands files in memory. A `ValueTask` return type does not imply fully asynchronous or interruptible processing. Limit upload size, row count and concurrency; Excel validation is not server-side business validation.
 

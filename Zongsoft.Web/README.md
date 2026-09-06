@@ -31,33 +31,28 @@ See the [ASP.NET Core MVC overview](https://learn.microsoft.com/aspnet/core/mvc/
 dotnet add package Zongsoft.Web
 ```
 
-## Minimal Controller
+## Real Controller: Discussions Forums
+
+[ForumController](../../discussions/src/api/Controllers/ForumController.cs) exposes the forum domain service over HTTP. This excerpt contains its declaration and moderator-query action, not invented models or the complete source file:
 
 ```csharp
-using Microsoft.AspNetCore.Mvc;
-using Zongsoft.Data;
-using Zongsoft.Web;
-
-[ApiController]
-[Route("api/products")]
-public sealed class ProductController(IDataService<Product> service) :
-	ServiceController<Product, IDataService<Product>>
+[ControllerName("Forums")]
+public class ForumController : ServiceController<Forum, ForumService>
 {
-	protected override IDataService<Product> GetService() => service;
-}
-
-public sealed class Product
-{
-	public int ProductId { get; set; }
-	public string Name { get; set; } = string.Empty;
+	[ActionName("Moderators")]
+	[HttpGet("{id}/[action]")]
+	public IEnumerable<UserProfile> GetModerators(ushort id)
+	{
+		return this.DataService.GetModerators(id, this.Request.Headers.GetDataSchema());
+	}
 }
 ```
 
-The base exposes count, existence, query, create, update, upsert, and delete workflows according to the data service's capabilities. Override protected hooks or disable operations instead of duplicating the action set.
+Models come from [Discussions Models](../../discussions/src/Models/) and the service from [ForumService](../../discussions/src/Services/ForumService.cs). The base provides standard operations according to service capabilities; the derived controller adds forum-specific actions. `GetDataSchema()` passes the request schema to the service.
 
-The controller above consumes an existing data service: the application must register its `IDataService<Product>` implementation, entity mapping and connection. Copying the controller alone does not create a working database. In a plugin application, place it in the application's own assembly and manifest for host discovery and container injection; do not construct a data engine or driver inside the controller. See the [complete Plugins.Web example](../Zongsoft.Plugins.Web/README.md) for a runnable HTTP workflow without a database.
+Deploy the complete domain and Web plugins and configure data, security and site dependencies before calling these actions; do not construct drivers in controllers. See the [real Plugins.Web use case](../Zongsoft.Plugins.Web/README.md) for composition and request templates.
 
-> 💡 Controller conventions and attributes affect final routes. Generate OpenAPI or inspect controller descriptors rather than constructing client URLs from class names.
+💡 Final routes combine module ownership, `ControllerName`, the base `[area]/[controller]` route and action templates. Use source, existing [.http requests](../../discussions/docs/http/forum.http) and host descriptors instead of inventing a product API.
 
 ## HTTP Conventions
 

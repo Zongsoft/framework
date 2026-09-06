@@ -64,7 +64,7 @@ var data = provider.GetService("Application")
 Console.WriteLine(data.Name);
 ```
 
-Obtaining an accessor does not prove that a database connection or SQL execution succeeded. Next, invoke a query from a deployed mapping. See the [complete Data plugin workflow](../../README.md#plugin-quickstart) for manifests, connection settings, mapping, a named command and its result. That example uses SQLite; for this driver, retain the interface pattern and replace the connection and dialect-specific script. Business modules need not construct database connections; a module can use `Module.Current.Services`.
+Obtaining an accessor does not prove query execution succeeded. Follow the [real Discussions composition in the Data guide](../../README.md#plugin-quickstart) through its module, mapping and services. That walkthrough does not establish Discussions compatibility with this driver: verify database structures, field types and required operations, rather than assuming a driver-name change makes the application portable. Business services use shared contracts instead of constructing database connections.
 
 ## Runtime Behavior
 
@@ -110,4 +110,4 @@ Additional artifacts listed by the deployment manifest include `Zongsoft.Data.SQ
 
 ### Native Dependency Troubleshooting
 
-Windows x64 manual deployment was verified with a matching `e_sqlite3.dll` discoverable beside the managed components. Do not assume a plugin's nested `runtimes` directory automatically joins native search paths; see the [Data verification notes](../../README.md#plugin-quickstart). The project references Microsoft.Data.Sqlite `10.0.10`, while the deployment manifest still selects `10.0.7`. A targeted build also reported `NU1903` for SQLitePCLRaw.lib.e_sqlite3 `2.1.11`. Review actual dependencies and vulnerability information before deployment; a passing local constant query does not establish production suitability.
+Windows x64 manual deployment was verified with a matching `e_sqlite3.dll` discoverable beside the managed components. Do not assume a plugin's nested `runtimes` directory automatically joins native search paths. The project references Microsoft.Data.Sqlite `10.0.10`, while the deployment manifest still selects `10.0.7`. A targeted build also reported `NU1903` for SQLitePCLRaw.lib.e_sqlite3 `2.1.11`. Review actual dependencies and vulnerability information before deployment; a passing local constant query does not establish production suitability.

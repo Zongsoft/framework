@@ -65,34 +65,30 @@ Redis locks expose monotonically increasing fencing tokens and explicit renewal.
 
 Business modules only reference Core's [IDistributedCache](../../Zongsoft.Core/src/Caching/IDistributedCache.cs); the deployment composition selects the Redis plugin. RedisService construction is not the default business entry point.
 
-Put the connection and selection setting in the option file with the same stem as your application plugin. The password-free address below is **only for an isolated local test service**. Supply real credentials through environment-specific configuration, not committed files:
+This host-option adaptation uses the `Redis` connection name from the [actual distributed-cache sample](samples/distributedcache/Program.cs). Supply your isolated test endpoint and credentials through environment-specific configuration. It does not add an Orders business module or a custom cache-selection key:
 
 ```xml
 <options>
-	<option path="/">
-		<orders cache="Orders@Redis" />
-	</option>
 	<option path="/Externals/Redis">
 		<connectionSettings>
-			<connectionSetting connectionSetting.name="Orders" driver="Redis"
-			                   value="server=127.0.0.1:6379;database=15" />
+			<connectionSetting connectionSetting.name="Redis" driver="Redis"
+			                   value="server=REPLACE_WITH_HOST:REPLACE_WITH_PORT;password=REPLACE_WITH_PASSWORD;database=15" />
 		</connectionSettings>
 	</option>
 </options>
 ```
 
-After host initialization, run this in a business service/command:
+This is a host-based adaptation of the sample’s cache read/write operations, using only the shared contract. The sample itself is a standalone process that owns its RedisService. After host initialization, run the fragment in a service/command:
 
 ```csharp
 using Zongsoft.Caching;
 using Zongsoft.Services;
 
 var application = ApplicationContext.Current;
-var qualifiedName = application.Configuration["Orders:Cache"]
-	?? throw new InvalidOperationException("Orders:Cache is missing.");
+var qualifiedName = "Redis@Redis";
 var cache = application.Services.Locate<IDistributedCache>(qualifiedName)
 	?? throw new InvalidOperationException("The configured cache is unavailable.");
-var key = "orders:demo:" + Guid.NewGuid().ToString("N");
+var key = "Zongsoft.Externals.Redis.Samples:" + Guid.NewGuid().ToString("N");
 
 try
 {
@@ -109,7 +105,7 @@ The expected output is `hello`. Only this call's generated key is removed; the e
 
 ### Provider Name versus Connection Name
 
-In `Orders@Redis`, `Redis` is the registered provider alias and `Orders` is the connection name passed to its `GetService(name)`; Redis is not a module container here. You can also resolve `Zongsoft.Services.IServiceProvider<IDistributedCache>` and call `GetService("Orders")`, but explicitly select the provider when several coexist instead of relying on registration order.
+In `Redis@Redis`, `Redis` is the registered provider alias and `Redis` is the connection name passed to its `GetService(name)`; Redis is not a module container here. You can also resolve `Zongsoft.Services.IServiceProvider<IDistributedCache>` and call `GetService("Redis")`, but explicitly select the provider when several coexist instead of relying on registration order.
 
 [RedisServiceProvider](src/RedisServiceProvider.cs) reuses services by name. Ordinary cache/sequence/lock lookup tries the default connection when a named connection is missing. **Reliable message storage factories instead require an exact name.** A misspelled connection can therefore fall back unexpectedly. Check selected settings during startup without printing complete connection strings.
 

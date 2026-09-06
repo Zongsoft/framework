@@ -77,17 +77,18 @@ The packaged daemon plugin starts `ZeroQueueServer` automatically. Configure its
 
 The three values are reliability control, publisher incoming, and subscriber outgoing. A two-value configuration is `Incoming,Outgoing`; when Storage is available, Control is selected dynamically. Control starts only when the Server has an `IMessageStorage`. Port precedence is: explicit startup arguments, the named server's own `Port`, the collection-level `Servers.Port`, then dynamic selection. `*` explicitly requests dynamic ports.
 
-For standalone applications, start the exchange directly:
+The [actual server sample](samples/server/Program.cs) starts a broadcast server without persistent storage. Its startup excerpt is below; see the plugin/storage sections for reliable broker composition:
 
 ```csharp
 using var server = new ZeroQueueServer();
-server.Storages = ResolveMessageStorageFactory(); // Supplied by an independent storage plugin; only LeastOnce needs it.
-await server.StartAsync(["--control:32100", "--incoming:32101", "--outgoing:32102"]);
+await server.StartAsync(["--incoming:32101", "--outgoing:32102"]);
 ```
 
 ### Client Connection
 
 Define a `ZeroMQ` connection under `/Messaging/ConnectionSettings`:
+
+The client name and group come from the [sample client](samples/client/Program.cs), expressed here in host option format:
 
 ```xml
 <configuration>
@@ -95,7 +96,7 @@ Define a `ZeroMQ` connection under `/Messaging/ConnectionSettings`:
 		<connectionSettings default="ZeroMQ">
 			<connectionSetting connectionSetting.name="ZeroMQ"
 			                   driver="ZeroMQ"
-			                   value="server=127.0.0.1;port=7969;group=Demo;client=MyApplication;" />
+			                   value="server=127.0.0.1;port=7969;group=Demo;client=Zongsoft.Messaging.ZeroMQ.Sample;" />
 		</connectionSettings>
 	</option>
 </configuration>
@@ -153,7 +154,7 @@ finally
 
 The provider reuses named queues; business operations must not dispose a shared queue. This example cancels only its own unique-topic subscription and waits for its handler before exiting. A non-null publish identifier still does not mean business processing completed. A standalone tool that constructs `ZeroQueue` directly owns its entire lifetime.
 
-Subscriptions use prefix matching. One `ZeroQueue` keeps one consumer for each logical topic; subscribing to the same topic again returns the existing consumer and does not replace its handler or options. With `Group=Demo`, the physical wire topic is `Demo:orders/created`, while handlers receive the logical `Message.Topic` value `orders/created`.
+Subscriptions use prefix matching. One `ZeroQueue` keeps one consumer for each logical topic; subscribing to the same topic again returns the existing consumer and does not replace its handler or options. With `Group=Demo`, the physical wire topic is `Demo:topic/reliable`, while handlers receive the logical `Message.Topic` value `topic/reliable`.
 
 Each subscriber invokes its handler sequentially in receive order. When its bounded pending queue reaches capacity, that subscriber pauses Poller reads and resumes after the handler frees capacity; other sockets remain responsive.
 
@@ -176,28 +177,27 @@ The equivalent strongly typed construction is `new MessageCompression("Brotli", 
 
 Set `LeastOnce` on both the subscription and publication. Only the Broker requires an `IMessageStorage`; publishers do not persist messages. A handler must call `AcknowledgeAsync`; returning normally is not an acknowledgement.
 
+The following is from [ZeroQueueReliabilityTests.LeastOnceCompletesAfterBrokerAcceptanceBeforeAcknowledge](test/ZeroQueueReliabilityTests.cs). `ReliableServerScope`, `CreateQueue` and `AcknowledgingHandler` are real fixtures in that test file. Read or run them in the original test project; they are not application plugin types:
+
 ```csharp
-var subscriptionOptions = new MessageSubscribeOptions(MessageReliability.LeastOnce);
-var enqueueOptions = new MessageEnqueueOptions(MessageReliability.LeastOnce)
-{
-	Expiration = TimeSpan.FromMinutes(5),
-};
+await using var scope = await ReliableServerScope.StartAsync();
+using var publisher = CreateQueue(scope.Port, "publisher", "publisher");
+using var subscriber = CreateQueue(scope.Port, "subscriber", "subscriber");
+var handler = new AcknowledgingHandler(1, false);
+await subscriber.SubscribeAsync("topic/reliable", handler, ReliableSubscribeOptions());
 
-server.Storages = ResolveMessageStorageFactory(); // Supplied by an independent storage plugin.
+var identifier = await publisher.ProduceAsync("topic/reliable", Encoding.UTF8.GetBytes("reliable"), ReliableEnqueueOptions()).AsTask().WaitAsync(TimeSpan.FromSeconds(5));
+var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
 
-var consumer = await queue.SubscribeAsync("orders/created", new ReliableOrderHandler(), subscriptionOptions);
+Assert.False(string.IsNullOrWhiteSpace(identifier));
+Assert.Equal(identifier, message.Identifier);
+Assert.Single(await GetPendingAsync(scope));
 
-var identifier = await queue.ProduceAsync("orders/created", payload, enqueueOptions);
-
-sealed class ReliableOrderHandler : HandlerBase<Message>
-{
-	protected override async ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
-	{
-		await SaveOrderAsync(message.Data, cancellation);
-		await message.AcknowledgeAsync(cancellation);
-	}
-}
+await message.AcknowledgeAsync();
+Assert.True(await WaitForPendingCountAsync(scope, 0, TimeSpan.FromSeconds(5)));
 ```
+
+The fixture checks that Pending remains before acknowledgement and is removed afterwards. It is not an order-storage implementation or proof of idempotent business effects. Its in-process test storage does not establish production restart durability.
 
 The Broker accepts a publication only when an online matching subscription exists. No match returns `null` without writing Storage. With a match, the Broker persists Pending first and then returns the identifier. Delivery competes among online subscribers; any one acknowledgement removes Pending. Retries reuse `Message.Identifier` and may choose another consumer, so handlers must be idempotent.
 
@@ -217,25 +217,9 @@ Assign `ZeroQueueServer.Storages` only while the Server is stopped. On first sta
 
 ### Request and Response
 
-`ZeroRequester` and `ZeroResponder` adapt queue topics to the Zongsoft communication interfaces. A request is published to its URL topic, and responses use the `<url>/reply` topic by default:
+`ZeroRequester` and `ZeroResponder` exchange requests through logical URL topics; the default reply topic is `<url>/reply`. The real [ZeroRequesterTests.RequesterReceivesImmediateResponses](test/ZeroRequesterTests.cs) starts separate requester/responder queues, registers the same file's `EchoHandler`, sends to `rpc/echo`, and checks payload and request-identifier correlation. It stops/disposes the responder in `finally` and also disposes each request token.
 
-```csharp
-await using var requester = new ZeroRequester { Queue = queue };
-var token = await requester.RequestAsync("services/ping", "Ping"u8.ToArray());
-
-foreach(var response in token.GetResponses(TimeSpan.FromSeconds(3)))
-	Console.WriteLine(Encoding.UTF8.GetString(response.Data.Span));
-```
-
-A responder subscribes to the URLs exposed by its registered handlers:
-
-```csharp
-var responder = new ZeroResponder { Queue = queue };
-responder.Handlers.Add(new PingHandler());
-await responder.StartAsync([]);
-```
-
-The handler receives an `IRequest` and can return data through the supplied `IResponder`. See [requester tests](test/ZeroRequesterTests.cs) and [responder tests](test/ZeroResponderTests.cs) for complete handler examples.
+[ZeroResponderTests](test/ZeroResponderTests.cs) additionally checks subscription rollback on startup failure. No nonexistent `PingHandler` is supplied here. Applications use shared communication contracts and host composition; standalone tests own their directly constructed instances.
 
 ### Event Channel
 

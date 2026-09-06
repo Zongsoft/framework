@@ -81,13 +81,14 @@ dotnet build messaging/zero/Zongsoft.Messaging.ZeroMQ.slnx
 
 ```csharp
 using var server = new ZeroQueueServer();
-server.Storages = ResolveMessageStorageFactory(); // 由独立存储插件提供；仅 LeastOnce 需要。
-await server.StartAsync(["--control:32100", "--incoming:32101", "--outgoing:32102"]);
+await server.StartAsync(["--incoming:32101", "--outgoing:32102"]);
 ```
 
 ### 客户端连接
 
 在 `/Messaging/ConnectionSettings` 下定义 `ZeroMQ` 连接：
+
+客户端名称与分组沿用[样例客户端](samples/client/Program.cs)的连接设置；这里转换成宿主选项格式：
 
 ```xml
 <configuration>
@@ -95,7 +96,7 @@ await server.StartAsync(["--control:32100", "--incoming:32101", "--outgoing:3210
 		<connectionSettings default="ZeroMQ">
 			<connectionSetting connectionSetting.name="ZeroMQ"
 			                   driver="ZeroMQ"
-			                   value="server=127.0.0.1;port=7969;group=Demo;client=MyApplication;" />
+			                   value="server=127.0.0.1;port=7969;group=Demo;client=Zongsoft.Messaging.ZeroMQ.Sample;" />
 		</connectionSettings>
 	</option>
 </configuration>
@@ -153,7 +154,7 @@ finally
 
 提供者按名复用队列，业务操作不要释放共享队列。示例仅取消自己创建的唯一主题订阅，并等待处理器完成后才退出；发送返回非空标识仍不等于业务处理完成。独立工具若直接构造 `ZeroQueue`，才由工具负责其完整生命周期。
 
-主题订阅采用前缀匹配。一个 `ZeroQueue` 对每个逻辑主题只保留一个消费者；再次订阅同一个主题会返回已有消费者，不会替换处理器或选项。设置 `Group=Demo` 后，网络上的物理主题为 `Demo:orders/created`，处理器收到的 `Message.Topic` 仍为逻辑主题 `orders/created`。
+主题订阅采用前缀匹配。一个 `ZeroQueue` 对每个逻辑主题只保留一个消费者；再次订阅同一个主题会返回已有消费者，不会替换处理器或选项。设置 `Group=Demo` 后，网络上的物理主题为 `Demo:topic/reliable`，处理器收到的 `Message.Topic` 仍为逻辑主题 `topic/reliable`。
 
 同一订阅内的处理器按接收顺序串行执行。待处理队列达到容量后，该订阅会暂停从 Poller 接收，消费腾出空间后再恢复；背压只作用于相应订阅，不会阻塞其他 Socket。
 
@@ -176,28 +177,27 @@ await queue.ProduceAsync("documents/updated", payload, options);
 
 订阅和发布都要显式选择 `LeastOnce`。只有 Broker 必须挂载 `IMessageStorage`；发布端不存储消息。处理器正常返回不代表确认，必须调用 `AcknowledgeAsync`。
 
+下面摘自 [ZeroQueueReliabilityTests.LeastOnceCompletesAfterBrokerAcceptanceBeforeAcknowledge](test/ZeroQueueReliabilityTests.cs)。`ReliableServerScope`、`CreateQueue`、`AcknowledgingHandler` 等都是同一测试文件中的真实夹具；应在原测试项目中阅读或执行，不是可直接粘贴到业务插件的类型：
+
 ```csharp
-var subscriptionOptions = new MessageSubscribeOptions(MessageReliability.LeastOnce);
-var enqueueOptions = new MessageEnqueueOptions(MessageReliability.LeastOnce)
-{
-	Expiration = TimeSpan.FromMinutes(5),
-};
+await using var scope = await ReliableServerScope.StartAsync();
+using var publisher = CreateQueue(scope.Port, "publisher", "publisher");
+using var subscriber = CreateQueue(scope.Port, "subscriber", "subscriber");
+var handler = new AcknowledgingHandler(1, false);
+await subscriber.SubscribeAsync("topic/reliable", handler, ReliableSubscribeOptions());
 
-server.Storages = ResolveMessageStorageFactory(); // 由独立存储插件提供
+var identifier = await publisher.ProduceAsync("topic/reliable", Encoding.UTF8.GetBytes("reliable"), ReliableEnqueueOptions()).AsTask().WaitAsync(TimeSpan.FromSeconds(5));
+var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
 
-var consumer = await queue.SubscribeAsync("orders/created", new ReliableOrderHandler(), subscriptionOptions);
+Assert.False(string.IsNullOrWhiteSpace(identifier));
+Assert.Equal(identifier, message.Identifier);
+Assert.Single(await GetPendingAsync(scope));
 
-var identifier = await queue.ProduceAsync("orders/created", payload, enqueueOptions);
-
-sealed class ReliableOrderHandler : HandlerBase<Message>
-{
-	protected override async ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
-	{
-		await SaveOrderAsync(message.Data, cancellation);
-		await message.AcknowledgeAsync(cancellation);
-	}
-}
+await message.AcknowledgeAsync();
+Assert.True(await WaitForPendingCountAsync(scope, 0, TimeSpan.FromSeconds(5)));
 ```
+
+该夹具验证确认前 Pending 仍存在、确认后清除；它不是订单入库实现，也不证明业务副作用具有幂等性。测试存储的进程内行为不代表生产存储具备重启耐久性。
 
 Broker 只在发送瞬间存在在线匹配订阅时接纳消息：没有订阅返回 `null` 且不写入 Storage；存在订阅则先持久化 Pending，再返回消息标识。之后按主题在在线订阅者间竞争投递，任一消费者确认即删除 Pending。未确认会沿用同一 `Message.Identifier` 重投，也可能改投另一个消费者，因此处理器必须保证业务幂等。
 
@@ -217,25 +217,9 @@ Broker 只在发送瞬间存在在线匹配订阅时接纳消息：没有订阅�
 
 ### 请求与响应
 
-`ZeroRequester` 和 `ZeroResponder` 将队列主题适配到 Zongsoft 通信接口。请求发布到 URL 主题，响应默认使用 `<url>/reply` 主题：
+`ZeroRequester` 与 `ZeroResponder` 通过逻辑 URL 主题交换请求，默认回复主题为 `<url>/reply`。真实用例见 [ZeroRequesterTests.RequesterReceivesImmediateResponses](test/ZeroRequesterTests.cs)：它启动独立请求与响应队列，注册同文件内的 `EchoHandler`，向 `rpc/echo` 发送消息并检查内容与请求标识一致。测试在 `finally` 中停止、释放响应器，请求令牌也单独释放。
 
-```csharp
-await using var requester = new ZeroRequester { Queue = queue };
-var token = await requester.RequestAsync("services/ping", "Ping"u8.ToArray());
-
-foreach(var response in token.GetResponses(TimeSpan.FromSeconds(3)))
-	Console.WriteLine(Encoding.UTF8.GetString(response.Data.Span));
-```
-
-响应器会订阅已注册处理器所公开的 URL：
-
-```csharp
-var responder = new ZeroResponder { Queue = queue };
-responder.Handlers.Add(new PingHandler());
-await responder.StartAsync([]);
-```
-
-处理器接收 `IRequest`，并可通过传入的 `IResponder` 返回数据。完整的处理器范例参见[请求器测试](test/ZeroRequesterTests.cs)和[响应器测试](test/ZeroResponderTests.cs)。
+[ZeroResponderTests](test/ZeroResponderTests.cs)进一步验证启动失败时回滚已建立的订阅。这里不提供不存在的 `PingHandler`；应用应通过公共通信契约和宿主装配使用响应器，独立测试才自行拥有实例生命周期。
 
 ### 事件通道
 

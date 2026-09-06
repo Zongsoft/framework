@@ -39,7 +39,7 @@
 
 ## 从插件服务容器使用
 
-消费序号或锁的业务模块只需引用 `Zongsoft.Core`。以下代码运行在已加载 Etcd 插件及上述配置的宿主命令或应用服务中，并假设该容器只注册了一个序号提供者：
+消费序号或锁的业务模块只需引用 `Zongsoft.Core`。以下将[真实序列样例](samples/sequence/Program.cs)改为具有超时、唯一过期键的宿主调用，运行在已加载 Etcd 插件及上述配置的宿主命令或应用服务中，并假设该容器只注册了一个序号提供者：
 
 ```csharp
 using Zongsoft.Common;
@@ -69,27 +69,20 @@ Console.WriteLine(value);
 
 以下是自行拥有客户端生命周期的低层工具用法，不是模块间协作的默认方式。基础 KV 方法是 Etcd 专有能力；公共序号与锁消费者应采用上一节的接口路径。
 
+以下摘自真实的[序列样例](samples/sequence/Program.cs)，其中 `orders` 和 `score` 是样例输入，不代表已实现的订单处理服务：
+
 ```csharp
 using Zongsoft.Externals.Etcd;
-using Zongsoft.Services.Distributing;
 
-using var etcd = new EtcdService("local", "server=127.0.0.1;port=2379")
-{
-	Namespace = "orders"
-};
+var connectionString = args.Length > 0 ? args[0] : "server=127.0.0.1;port=2379";
+using var sequence = new EtcdService("sample", connectionString) { Namespace = "samples:sequence" };
 
-await etcd.SetValueAsync("status", "ready");
-var orderNumber = await etcd.IncreaseAsync("number", seed: 1000);
-
-var options = new DistributedLockOptions(TimeSpan.FromSeconds(10))
-{
-	RenewalInterval = TimeSpan.FromSeconds(3)
-};
-
-await using var locker = await etcd.AcquireAsync("writer", options);
-await locker.EnterAsync();
-Console.WriteLine($"栅栏令牌：{locker.FencingToken}");
+var number = await sequence.IncreaseAsync("orders", seed: 1000);
+var fraction = await sequence.IncreaseAsync("score", 0.25, 1.5);
 ```
+
+锁获取与续期见独立的[分布式锁样例](samples/distributedlock/master/Program.cs)。
+
 
 `AcquireAsync` 不会等待竞争锁，竞争失败时返回未持有对象；需要等待锁时请调用 `EnterAsync`。只有设置 `RenewalInterval` 才会自动续期，受保护的存储还应拒绝过期的栅栏令牌。
 

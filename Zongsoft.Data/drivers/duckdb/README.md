@@ -50,7 +50,7 @@ A file database persists across connections; `DataSource=:memory:` is useful for
 
 The consumer obtains `IServiceProvider<IDataAccess>` through `ApplicationContext.Current.Services` or the application's `Module.Current.Services`, then selects the `Analytics` accessor. The engine chooses DuckDB from connection settings; business modules depend only on shared contracts.
 
-See the [complete Data plugin workflow](../../README.md#plugin-quickstart) for manifests, connection settings, mapping and a real query. For DuckDB, change both the connection driver and command script driver to `DuckDB` and use the connection above. Do not move the standalone low-level connection pattern into business services.
+Obtaining an accessor does not prove query execution succeeded. Follow the [real Discussions composition in the Data guide](../../README.md#plugin-quickstart) through its module, mapping and services. That walkthrough does not establish Discussions compatibility with this driver: verify database structures, field types and required operations, rather than assuming a driver-name change makes the application portable. Business services use shared contracts instead of constructing database connections.
 
 ## Minimal Connection Check
 

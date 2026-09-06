@@ -35,7 +35,7 @@ dotnet add package Zongsoft.Core
 
 数据边界由 **Excel 表格（Table）** 定义，而不是名称（Defined Name）或工作表的已用区域。[当前命名规则](src/Spreadsheet.cs)为 `__{model.QualifiedName}__`：两端各有两个下划线，限定名包含所属模块。
 
-例如无模块的 `User` 对应 `__User__`，`Sales.User` 对应 `__Sales.User__`。生成器自动设置该名称；人工制作模板时也必须遵守。不要把 CLR 命名空间直接当作模型模块名，限定名的来源见 [ModelDescriptor](../../Zongsoft.Core/src/Data/ModelDescriptor.cs)。
+真实的[测试 User 模型](test/Models/User.cs)及 [Templates 夹具](test/Templates.cs)展示无模块模型；真实的 [Discussions Forum 模型](../../../discussions/src/Models/Forum.cs)属于 Discussions 模块。生成器使用描述器限定名，而非任意 CLR 命名空间。CLR 命名空间本身不能声明模块归属，见 [ModelDescriptor](../../Zongsoft.Core/src/Data/ModelDescriptor.cs)。
 
 工作表名只用于展示或分组。生成器使用非空白的 `model.Title`，否则使用 `model.Name`；提取器默认搜索全部工作表。仅当需要限制查找范围时，才把 `DataArchiveExtractorOptions.Source` 设置为工作表名；这不会改变内部表格名。
 
@@ -70,44 +70,36 @@ dotnet add package Zongsoft.Core
 
 ## 导出数据
 
-在已启动并加载 ClosedXml 插件的命令或应用服务中，通过格式名 `Spreadsheet` 匹配公共接口；模块内可改用 `Module.Current.Services`。以下示例导出一个自包含的普通模型，不需要数据库：
+在已启动并加载 ClosedXml 插件的命令或应用服务中，通过格式名 `Spreadsheet` 匹配公共接口；模块内可改用 `Module.Current.Services`。
+
+以下按现有 [Discussions Forum](../../../discussions/src/Models/Forum.cs) 类型改写，不另建 User 类。在宿主装配完成后的 Discussions 消费模块中使用；空数组用于生成空白录入工作簿，不读取真实业务记录：
 
 ```csharp
 using Zongsoft.Data;
 using Zongsoft.Data.Archiving;
 using Zongsoft.Services;
+using Zongsoft.Discussions.Models;
 
 var generator = ApplicationContext.Current.Services
 	.FindRequired<IDataArchiveGenerator>("Spreadsheet");
-var model = Model.GetDescriptor<User>();
-var users = new[]
-{
-	new User { UserId = 1, Name = "Alice", Balance = 12.50m, Email = "alice@example.invalid" },
-};
+var model = Model.GetDescriptor<Forum>();
+var forums = Array.Empty<Forum>();
 
-await using var output = File.Create("users.xlsx");
-await generator.GenerateAsync(output, model, users);
-
-public class User
-{
-	public int UserId { get; set; }
-	public string Name { get; set; }
-	public decimal Balance { get; set; }
-	public string Email { get; set; }
-}
+using var output = new MemoryStream();
+await generator.GenerateAsync(output, model, forums);
 ```
 
-调用方负责输出流的生命周期；不要为一次操作释放容器共享的服务。实际数据服务应使用 `service.GetDescriptor()`，这样映射中的主键、长度等信息才会纳入描述器；单独的 `Model.GetDescriptor<User>()` 只反映类型声明。
+调用方负责输出流的生命周期；不要为一次操作释放容器共享的服务。实际数据服务应使用 `service.GetDescriptor()`，这样映射中的主键、长度等信息才会纳入描述器；单独的 `Model.GetDescriptor<Forum>()` 只反映类型声明。
 
-💡 该公共接口路径已在隔离终端宿主中完成内存流往返验证：属于 Docs 模块的 User 生成 `__Docs.User__` 表格，提取后记录数量及字段值一致。没有读写用户工作簿；这不代替大文件、模板表达式或所有单元格类型的测试。
+💡 仓库内可追踪的往返用例见 [SpreadsheetExtractorTest](test/SpreadsheetExtractorTest.cs)，使用 [Templates](test/Templates.cs) 中的 User 数据与描述器。应阅读这些断言，不依赖仓库外临时探针。这里的数据是测试夹具，不是用户工作簿。
 
 可在上述 `GenerateAsync` 调用处通过 `DataArchiveGeneratorOptions` 选择字段：
 
 ```csharp
 using Zongsoft.Data.Archiving;
 
-var options = new DataArchiveGeneratorOptions(nameof(User.UserId), nameof(User.Name));
-await generator.GenerateAsync(output, model, users, options);
+var options = new DataArchiveGeneratorOptions(nameof(Forum.ForumId), nameof(Forum.Name));
+await generator.GenerateAsync(output, model, forums, options);
 ```
 
 如果要显式控制列的显示方式，可传入 `DataArchiveField`。宽度统一使用排版点（1/72 英寸），零表示未指定；字体大小同样约定零表示未指定。颜色使用 `Zongsoft.Components.Color` 提供的技术无关 ARGB 值，空值表示未指定颜色；`Format` 是 .NET 格式说明符，而不是 Excel 数字格式代码：
@@ -117,20 +109,20 @@ using Zongsoft.Components;
 using Zongsoft.Data.Archiving;
 
 var options = new DataArchiveGeneratorOptions(
-	new DataArchiveField(nameof(User.UserId))
+	new DataArchiveField(nameof(Forum.ForumId))
 	{
 		Width = 72,
 		Alignment = DataArchiveFieldAlignment.Center,
 		FontStyle = DataArchiveFontStyle.Bold,
 		ForegroundColor = Color.Maroon,
 	},
-	new DataArchiveField(nameof(User.Balance))
+	new DataArchiveField(nameof(Forum.TotalThreads))
 	{
 		Width = 90,
 		Alignment = DataArchiveFieldAlignment.Right,
-		Format = "N2",
+		Format = "N0",
 	},
-	new DataArchiveField(nameof(User.Email))
+	new DataArchiveField(nameof(Forum.Description))
 	{
 		Width = 180,
 		TextMode = DataArchiveFieldTextMode.Wrap,
@@ -143,21 +135,16 @@ var options = new DataArchiveGeneratorOptions(
 
 ## 提取数据
 
-`IDataArchiveExtractor` 从提取选项中取得模型，定位内部表格，并把表格列映射回模型属性。下面沿用上一节的 `User` 类型：
+`IDataArchiveExtractor` 从提取选项中取得模型，定位内部表格，并把表格列映射回模型属性。下面沿用上一节的 `Forum` 类型：
 
 ```csharp
-using Zongsoft.Data;
-using Zongsoft.Data.Archiving;
-using Zongsoft.Services;
-
 var extractor = ApplicationContext.Current.Services
 	.FindRequired<IDataArchiveExtractor>("Spreadsheet");
-var model = Model.GetDescriptor<User>();
-var options = new DataArchiveExtractorOptions(model);
+output.Position = 0;
+var extractionOptions = new DataArchiveExtractorOptions(model);
 
-await using var input = File.OpenRead("users.xlsx");
-await foreach(var user in extractor.ExtractAsync<User>(input, options))
-	Console.WriteLine($"{user.UserId}: {user.Name}");
+await foreach(var forum in extractor.ExtractAsync<Forum>(output, extractionOptions))
+	Console.WriteLine($"{forum.ForumId}: {forum.Name}");
 ```
 
 将查找范围限制到指定工作表：
@@ -165,7 +152,7 @@ await foreach(var user in extractor.ExtractAsync<User>(input, options))
 ```csharp
 var options = new DataArchiveExtractorOptions(model)
 {
-	Source = "Import",
+	Source = string.IsNullOrWhiteSpace(model.Title) ? model.Name : model.Title,
 };
 ```
 
@@ -181,27 +168,22 @@ var options = new DataArchiveExtractorOptions(model)
 
 `SpreadsheetRenderer` 使用 ClosedXML.Report 变量渲染 `.xlsx` 模板。`SpreadsheetTemplateProvider` 会递归发现 `.xlsx` 文件，并以不含扩展名的文件名作为模板索引：
 
+真实的 [SpreadsheetRendererTest](test/SpreadsheetRendererTest.cs) 使用 [Templates.ApartmentUsage](test/Templates.cs) 夹具渲染 [apartment.usages.xlsx](test/templates/apartment.usages.xlsx)。以下摘录其渲染部分；`_renderer`、`Templates` 属于测试项目，不是公共包类型：
+
 ```csharp
-using Zongsoft.Data.Archiving;
-using Zongsoft.Services;
-
-var services = ApplicationContext.Current.Services;
-var provider = services.FindRequired<IDataTemplateProvider>("Spreadsheet");
-var renderer = services.FindRequired<IDataTemplateRenderer>("Spreadsheet");
-var template = provider.GetTemplate("invoice")
-	?? throw new InvalidOperationException("Template not found.");
-
-var invoice = new { Number = "DEMO-001", Total = 12.50m };
-var parameters = new Dictionary<string, object>
+using var output = new MemoryStream();
+var data = new { Templates.ApartmentUsage.Usages };
+var parameters = new[]
 {
-	["GeneratedAt"] = DateTimeOffset.Now,
+	new KeyValuePair<string, object>(nameof(Templates.ApartmentUsage.Park), Templates.ApartmentUsage.Park),
 };
 
-using var output = new MemoryStream();
-await renderer.RenderAsync(output, template, invoice, parameters);
+await _renderer.RenderAsync(output, Templates.ApartmentUsage.Template, data, parameters);
 ```
 
-默认模板提供者在首次查找时递归扫描应用目录下的 `.xlsx`，并缓存索引；不是自动读取 `templates` 配置，也不会持续监视新文件。预先放置唯一命名的 `invoice.xlsx`，其中可以使用 `{{Number}}`、`{{Total}}` 和 `{{GeneratedAt}}`；同名文件不会按目录隔离。示例输出使用内存流，避免覆盖模板或让输出文件被误认为模板。自定义根目录应由宿主组合专用提供者，业务模块仍消费公共接口。
+测试断言生成单元格中的园区标题、房间/设备字段、日期及用量合计。宿主消费者通过服务容器按 `Spreadsheet` 格式名取得 `IDataTemplateProvider` 与 `IDataTemplateRenderer`，并提供与已部署模板匹配的数据，不能假定存在发票模板字段。
+
+默认提供者在首次查找时递归扫描应用目录并缓存索引，不持续监视文件，也不读取 `templates` 配置。查找前部署唯一文件名的模板；测试夹具则显式使用自己的测试模板目录。输出应放在模板扫描范围之外或内存中，绝不能覆盖源工作簿。
 
 🚨 工作簿处理会在内存中展开文件；`ValueTask` 返回类型不表示完全异步或支持随时中断。限制上传大小、行数及并发，不把 Excel 数据验证当作服务端业务校验。
 

@@ -119,8 +119,10 @@ if(!retained.IsEmpty)
 
 `MqttQueueServer` 继承自 `ListenerBase<Message>`，可以通过设置 `Handler` 属性处理所有进入 Broker 的消息：
 
+[真实服务端样例](samples/server/Program.cs)使用同一源码文件中定义的 `Handler.Instance`，向终端输出收到的消息：
+
 ```csharp
-server.Handler = new MyMessageHandler();
+using var server = new MqttQueueServer() { Handler = Handler.Instance };
 await server.StartAsync([]);
 ```
 

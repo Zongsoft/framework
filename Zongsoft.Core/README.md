@@ -122,49 +122,35 @@ The default attribute scanner registers service implementations as singletons. A
 
 Optional forms `Resolve`, `Find` and `Locate` may return null. In applications with multiple providers, make selection explicit; do not let registration order choose the database, queue or cache unintentionally. The [lookup implementation](src/Services/ServiceProviderExtension.cs) defines the matching rules.
 
-### Example: Select an Evaluator through Configuration
+### Example: A Real Module's Service Lookup
 
-Assume a plugin host has deployed a language adapter and the application owns this option fragment:
-
-```xml
-<option path="/">
-	<rules evaluator="Scriban" />
-</option>
-```
-
-Place this fragment inside the `<options>` root of an option file with the same stem as a loaded plugin. The attribute produces the `Rules:Evaluator` key. In the current XML provider, the text in `<evaluator>Scriban</evaluator>` represents a collection item, not that scalar setting. See the [XML configuration parser](src/Configuration/Xml/XmlStreamConfigurationProvider.cs).
-
-Run the following in an initialized application service/command, not before the host exists:
+[Discussions Module](../../discussions/src/Module.cs) declares its module identity in assembly metadata and obtains its data accessor through a Core contract. The following members are an excerpt, not a new module implementation:
 
 ```csharp
-using Zongsoft.Expressions;
-using Zongsoft.Services;
+[assembly: ApplicationModule(Zongsoft.Discussions.Module.NAME)]
 
-var application = ApplicationContext.Current
-	?? throw new InvalidOperationException("The application host is not initialized.");
-var name = application.Configuration["Rules:Evaluator"]
-	?? throw new InvalidOperationException("Rules:Evaluator is missing.");
-var evaluator = application.Services.FindRequired<IExpressionEvaluator>(name);
-var result = evaluator.Evaluate("x + y", new Dictionary<string, object>
-{
-	["x"] = 20,
-	["y"] = 22,
-});
-Console.WriteLine(result);
+public const string NAME = nameof(Discussions);
+public static readonly Module Current = new();
+
+private IDataAccess _accessor;
+public IDataAccess Accessor => _accessor ??=
+	this.Services.ResolveRequired<IDataAccessProvider>().GetAccessor(this.Name);
 ```
 
-The consumer references the expression contract, not ScribanExpressionEvaluator. Another provider must support the application's expression language before it can be substituted. Within a known module, use its `Module.Current.Services.FindRequired<IExpressionEvaluator>(name)` instead. Do not wrap the resolved evaluator in `using`: its registered lifetime belongs to the host.
+The [plugin manifest](../../discussions/src/Zongsoft.Discussions.plugin) contributes `Module.Current` to `/Workbench/Modules`. The [option file](../../discussions/src/Zongsoft.Discussions.option) owns `/Discussions/General` settings; the host supplies the named database connection. [ThreadService.Posting](../../discussions/src/Services/ThreadService.cs) resolves `PostService` through `this.ServiceProvider.ResolveRequired<PostService>()` rather than constructing it.
+
+This shows module ownership, shared contracts and configuration as separate responsibilities. For expression-provider matching, use the real [Scriban adapter](../externals/scriban/README.md); there is no built-in `Rules:Evaluator` setting or Rules application in Core.
 
 ### Example: A Named Cache from a Provider
 
-A provider is an extra level of indirection: one Redis provider can supply several configured caches. After the Redis plugin and a connection named `Orders` are configured:
+The connection name below follows the [real Redis cache sample](../externals/redis/samples/distributedcache/Program.cs); the lookup is adapted to a plugin host. A provider is an extra level of indirection: one Redis provider can supply several configured caches. After the Redis plugin and a connection named `Redis` are configured:
 
 ```csharp
 using Zongsoft.Caching;
 using Zongsoft.Services;
 
 var services = ApplicationContext.Current.Services;
-IDistributedCache cache = services.Locate<IDistributedCache>("Orders@Redis")
+IDistributedCache cache = services.Locate<IDistributedCache>("Redis@Redis")
 	?? throw new InvalidOperationException("The configured cache is unavailable.");
 Console.WriteLine(cache.GetType().Name);
 ```
@@ -173,11 +159,11 @@ The string can be an application option rather than a source-code constant. This
 
 ### Registering and Injecting Module Contracts
 
-Provider implementations use `[Service<TContract>]` or `IServiceRegistration`; plugins can also compose objects with service expressions. An assembly's `[ApplicationModule("Orders")]` identifies module ownership for service registration. Modules and their extension nodes must still be contributed by the application's manifest.
+Provider implementations use `[Service<TContract>]` or `IServiceRegistration`; plugins can also compose objects with service expressions. An assembly's `[ApplicationModule(Zongsoft.Discussions.Module.NAME)]` identifies module ownership for service registration. Modules and their extension nodes must still be contributed by the application's manifest.
 
 `[ServiceDependency]` can inject a contract. A non-empty ServiceName asks an `IServiceProvider<T>` for a named instance; `~` or `.` means the owning module name. Provider selects the module container, while `/` or `*` means the application container. See [ServiceDependencyAttribute](src/Services/ServiceDependencyAttribute.cs).
 
-💡 The `@...` in plugin expressions such as `{service:~@Orders}` selects a **module container**. The `@Redis` in `ServiceLocator`'s `Orders@Redis` selects a **named service provider**. They are different syntaxes and must not be interchanged.
+💡 The `@...` in plugin expressions such as `{service:~@Discussions}` selects a **module container**. The `@Redis` in `ServiceLocator`'s `Redis@Redis` selects a **named service provider**. They are different syntaxes and must not be interchanged.
 
 ### Configuration and Lifetime Checklist
 

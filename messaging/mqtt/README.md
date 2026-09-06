@@ -119,8 +119,10 @@ if(!retained.IsEmpty)
 
 `MqttQueueServer` derives from `ListenerBase<Message>`. Assign its `Handler` property to process every message entering the Broker:
 
+The [actual server sample](samples/server/Program.cs) uses its own `Handler.Instance`; the handler is defined in that source file and prints received messages:
+
 ```csharp
-server.Handler = new MyMessageHandler();
+using var server = new MqttQueueServer() { Handler = Handler.Instance };
 await server.StartAsync([]);
 ```
 

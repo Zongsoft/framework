@@ -34,9 +34,11 @@ dotnet add package Zongsoft.Diagnostics.Protocols.Server
 
 通常通过插件树把处理器注册到对应 Processor 的 `Handlers` 集合。每个批次使用 `Parallel.ForEachAsync` 并发分发；单个处理器异常会被记录并隔离，不阻断其他处理器，请求取消信号会继续传递。
 
+以下摘自[实际样例清单](samples/Zongsoft.Diagnostics.Protocols.Server.Samples.plugin)。其 [MetricHandler](samples/MetricHandler.cs) 仅向终端输出指标；需部署样例程序集，不是持久化处理器。
+
 ```xml
 <extension path="/Workbench/Diagnostics/Telemetry/Listener/Metrics">
-	<object type="MyCompany.Telemetry.MetricHandler, MyCompany.Telemetry" />
+	<object name="MetricHandler" type="Zongsoft.Diagnostics.Protocols.Server.Samples.MetricHandler, Zongsoft.Diagnostics.Protocols.Server.Samples" />
 </extension>
 ```
 

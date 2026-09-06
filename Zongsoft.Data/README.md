@@ -46,75 +46,40 @@ TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Z
 > 💡 Tip: If you need a driver that is not listed here or commercial support, please contact us ([zongsoft@qq.com](mailto:zongsoft@qq.com)).
 
 <a name="plugin-quickstart"></a>
-## Minimal Plugin Workflow
+## A Real Plugin Workflow: Discussions
 
-Distinguish three names: the provider contract is `IServiceProvider<IDataAccess>`, the accessor/connection is `Docs`, and the qualified mapping command is `Docs.Answer`. The engine selects an implementation using the connection's `driver`; business code does not reference SQLite types.
+The [Discussions module](../../discussions/src/Module.cs) obtains its accessor through the Core contract `IDataAccessProvider`. The module name is `Discussions`; its [mapping](../../discussions/src/Zongsoft.Discussions.mapping) uses the same container name. The engine and driver are composed by the host, not constructed by each business service.
 
-### 1. Deploy the Engine and Driver
+### 1. Deploy the Module, Engine, and Driver
 
-Extend the existing host manifest from the [plugin terminal guide](../Zongsoft.Plugins/README.md):
-
+Add the following packages to an existing host deployment manifest; retain its Main, Web/Terminal and Security dependencies. See [plugin composition](../Zongsoft.Plugins/README.md).
 ```ini
 [plugins zongsoft data]
 nuget:Zongsoft.Data
 
-[plugins zongsoft data sqlite]
-nuget:Zongsoft.Data.SQLite
+[plugins zongsoft data mysql]
+nuget:Zongsoft.Data.MySql
+
+[plugins zongsoft discussions]
+nuget:Zongsoft.Discussions
 ```
 
-The consumer plugin only needs `Zongsoft.Core`. Retain Main, Terminal and host dependencies, and deploy the business DLL with its own `.plugin` to `plugins/docs/`. The consumer manifest lists the business assembly; a Data dependency declares the data-capability prerequisite without depending on a particular database driver.
+### 2. Prepare the Actual Data and Configuration
 
-### 2. Configure the Connection and Deploy a Mapping
+Follow the [Discussions database documentation](../../discussions/database/Zongsoft.Discussions.md) and [module deployment manifest](../../discussions/src/Zongsoft.Discussions.deploy). Deploy the complete mapping and plugin, including validators and filters. Configure a named `Discussions` connection under `/Data/ConnectionSettings`, and configure the site and file storage using [the module option file](../../discussions/src/Zongsoft.Discussions.option). Mapping files describe existing structures; loading one does not initialize a database.
 
-Place this in an `.option` file with the same stem as the business manifest:
+### 3. Locate the Accessor from the Module
 
-```xml
-<options>
-	<option path="/Data">
-		<connectionSettings>
-			<connectionSetting connectionSetting.name="Docs" driver="SQLite"
-			                   value="Database=:memory:;Mode=Memory" />
-		</connectionSettings>
-	</option>
-</options>
-```
-
-Place `Docs.mapping` beside the business plugin. The default mapping loader searches the application directory recursively for `.mapping`; a mapping file does not create database tables.
-
-```xml
-<schema xmlns="http://schemas.zongsoft.com/data">
-	<container name="Docs">
-		<command name="Answer" type="text" mutability="none">
-			<script driver="SQLite">SELECT 42</script>
-		</command>
-	</container>
-</schema>
-```
-
-This example only queries a constant in memory. It needs no table, credentials or persistent writes. The command's `mutability="none"` declares read-only behavior and influences data-source selection; the engine does not infer this by parsing the SQL.
-
-### 3. Call from a Business Command or Service
-
-Execute after the host has started and plugin composition is complete:
-
+This is the accessor property from `Module.cs`, not a standalone program:
 ```csharp
-using Zongsoft.Data;
-using Zongsoft.Services;
-
-var provider = ApplicationContext.Current.Services
-	.ResolveRequired<Zongsoft.Services.IServiceProvider<IDataAccess>>();
-var data = provider.GetService("Docs")
-	?? throw new InvalidOperationException("Data accessor not found.");
-
-using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-Console.WriteLine(await data.ExecuteScalarAsync("Docs.Answer", cancellation.Token));
+private IDataAccess _accessor;
+public IDataAccess Accessor => _accessor ??=
+	this.Services.ResolveRequired<IDataAccessProvider>().GetAccessor(this.Name);
 ```
 
-Expect `42`. This path was verified in an isolated .NET 10 terminal host. Inside a module, obtain the provider from `Module.Current.Services` where appropriate. Do not construct `DataAccess`, concrete drivers or database connections in ordinary business methods, or dispose a shared accessor after each operation.
+[ForumService](../../discussions/src/Services/ForumService.cs) and [ThreadService](../../discussions/src/Services/ThreadService.cs) inherit `DataServiceBase<T>` and operate through `this.DataAccess`. Read their methods together with [DataValidator](../../discussions/src/Data/DataValidator.cs), which supplies the module's data boundary.
 
-💡 The SQLite script is a composition check. Real applications need entity mappings and database structures, or command scripts matching the target driver. Changing a connection driver does not automatically translate handwritten SQL.
-
-🚨 Native dependencies must be discoverable by the runtime. In a Windows x64 manual-copy deployment, keeping only `runtimes/win-x64/native/e_sqlite3.dll` below the plugin failed to load it; placing that matching-architecture file beside the SQLite managed components passed verification. Do not overwrite it with another architecture. Check the RID/manifest layout of a real deployment. An SQLite in-memory connection is not a persistent cross-connection database.
+🚨 This is a source walkthrough, not a claim that a fresh Discussions deployment has passed integration testing. Use an isolated database with initialized site/user data and the appropriate identity. Do not bypass validators to make an example run, or dispose a container-owned accessor after each request.
 
 <a name="schema"></a>
 ## The data schema
@@ -152,6 +117,8 @@ sorting ::=
 ")"
 ```
 
+💡 The `Department.Manager` / `Secret` grammar examples below come from the actual [SchemaParserTest](test/SchemaParserTest.cs) fixture and [Core SchemaTest](../Zongsoft.Core/test/Data/SchemaTest.cs). They test parsing, not a Discussions organization module.
+
 <a name="schema-overview"></a>
 #### Schema Overview
 
@@ -183,7 +150,7 @@ The parsed limit is an integer. Any value less than or equal to zero means unlim
 Sorting is written after the optional limit and wrapped in parentheses; sorting fields are separated by commas. A `~` or `-` prefix means descending, while a `+` prefix or no prefix means ascending:
 
 ```
-Users:20(-CreatedTime,+Grade){*}
+Users:20(-IsModerator,+UserId){*}
 ```
 
 Every sorting field may carry its own prefix. `+CreatedTime` is exactly equivalent to `CreatedTime`. If a field is declared more than once, the last declaration determines its direction and position.
@@ -240,10 +207,10 @@ Every sorting field may carry its own prefix. `+CreatedTime` is exactly equivale
 	> *, Users:*{*}
 	> ```
 
-- **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, sorted by `CreatedTime` descending and `Grade` ascending, then limited to at most 20 records.
+- **Note:** All scalar properties plus the `Users` collection navigation property _(one-to-many)_, sorted by `IsModerator` descending and `UserId` ascending, then limited to at most 20 records.
 
 	> ```graphql
-	> *, Users:20(-CreatedTime,+Grade){*}
+	> *, Users:20(-IsModerator,+UserId){*}
 	> ```
 
 -----
@@ -280,6 +247,8 @@ The [Zongsoft.Data.xsd](https://github.com/Zongsoft/framework/blob/main/Zongsoft
 
 The mapping file root is `schema`, and each `container` represents one metadata namespace. Most business modules have one container whose `name` matches the module name.
 
+The following is a partial excerpt of the [Discussions mapping](../../discussions/src/Zongsoft.Discussions.mapping); deploy the original complete file, not this shortened fragment.
+
 ```xml
 <schema xmlns="http://schemas.zongsoft.com/data">
 	<container name="Discussions">
@@ -290,8 +259,8 @@ The mapping file root is `schema`, and each `container` represents one metadata 
 			</key>
 			<property name="SiteId" type="uint" nullable="false" />
 			<property name="ForumId" type="ushort" nullable="false" sequence="#(SiteId)" />
-			<property name="GroupId" type="ushort" nullable="false" sortable="true" />
-			<property name="Name" type="string" length="50" nullable="false" />
+			<property name="GroupId" type="ushort" nullable="false" />
+			<property name="Name" type="nvarchar" length="50" nullable="false" />
 			<complexProperty name="Users" port="ForumUser" multiplicity="*" immutable="false">
 				<link port="SiteId" />
 				<link port="ForumId" />
@@ -309,17 +278,7 @@ Common mapping elements:
 - `complexProperty` defines a navigation property. Its `port` points to the target entity, or to a target entity's navigation property such as `ForumUser:User`. `multiplicity` supports `?`（zero-or-one，default）、`!`（exactly one）、`*`（one-to-many）; `link` maps foreign key properties to the current entity（`anchor` specifies the anchor on the current side and defaults to the `port` name when omitted）, and `constraints` add fixed navigation filters（when `actor` is omitted it is inferred from the multiplicity: `Foreign` for one-to-many, otherwise `Principal`）.
 - `command` defines a named SQL command or stored procedure. Commands are executed through `Execute`, `Execute<T>`, or `ExecuteScalar`. `type` supports `text`（default）and `procedure`; `mutability` declares whether the command reads or writes data. It is not merely descriptive metadata: when read/write splitting is configured, the data source selector uses it as the routing basis—`none` selects a readable source, while `delete`、`insert`、`update`、`upsert` select a writable source. The selector does not infer mutability by analyzing the SQL text. The loader parses these enum values case-insensitively, but use lowercase to pass XSD validation.
 
-```xml
-<command name="Forum.GetStatistics" type="text" mutability="none">
-	<parameter name="SiteId" type="uint" />
-	<parameter name="ForumId" type="ushort" />
-	<script driver="MySql"><![CDATA[
-		SELECT TotalThreads, TotalPosts
-		FROM Discussions_Forum
-		WHERE SiteId=@SiteId AND ForumId=@ForumId
-	]]></script>
-</command>
-```
+The current Discussions mapping does not define a forum statistics command or stored procedure. For the command contract, refer to [MetadataCommand](src/Metadata/Profiles/MetadataCommand.cs) and [the XSD](Zongsoft.Data.xsd); do not call a name that has not been deployed.
 
 
 > **Enable XML IntelliSense for mapping files:**
@@ -338,41 +297,21 @@ Common mapping elements:
 <a name="connection"></a>
 ## Connection Settings
 
-The connection setting name must match the `DataAccess` name. One `DataAccess` can have multiple data sources. Use `#` to separate the `DataAccess` name from the data source name; for example, `Discussions#master` and `Discussions#slave_1`. This is mainly used for read/write splitting.
+The connection name is resolved by [DataAccessProviderBase](../Zongsoft.Core/src/Data/DataAccessProviderBase.cs). Discussions requests its module name; configure that name explicitly instead of accidentally falling back to another module's default connection.
 
-> - **MySQL** connection string reference: https://mysqlconnector.net/connection-options/
-> - **ADO.NET** connection string reference: https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/connection-string-syntax
-
-- Configuration for a single data source:
+Use the following configuration shape with deployment-supplied values. `REPLACE_WITH_*` marks required environment values, not a shipped account or database.
 ```xml
-<configuration>
-	<option path="/Data">
-		<connectionSettings default="Discussions">
-			<connectionSetting connectionSetting.name="Discussions" driver="MySql"
-								 value="server=127.0.0.1;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-		</connectionSettings>
-	</option>
-</configuration>
-```
-
-- Configuration of multiple data sources(read-write separation mode):
-```xml
-<configuration>
+<options>
 	<option path="/Data">
 		<connectionSettings>
-			<connectionSetting connectionSetting.name="Discussions#master" driver="MySql" mode="WriteOnly"
-								 value="server=192.168.0.10;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-			<connectionSetting connectionSetting.name="Discussions#slave_1" driver="MySql" mode="ReadOnly"
-								 value="server=192.168.0.11;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-			<connectionSetting connectionSetting.name="Discussions#slave_2" driver="MySql" mode="ReadOnly"
-								 value="server=192.168.0.12;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-			<connectionSetting connectionSetting.name="Discussions#slave_3" driver="MySql" mode="ReadOnly"
-								 value="server=192.168.0.13;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+			<connectionSetting connectionSetting.name="Discussions" driver="MySql"
+				value="Server=REPLACE_WITH_HOST;Database=REPLACE_WITH_DATABASE;UserName=REPLACE_WITH_USER;Password=REPLACE_WITH_PASSWORD" />
 		</connectionSettings>
 	</option>
-</configuration>
+</options>
 ```
 
+For read/write separation, use `accessor#source` names and `ReadOnly`/`WriteOnly` modes. This is an engine capability, not a claim that Discussions ships a replicated database topology. See [DataSourceSelector](src/Common/DataSourceSelector.cs) and the [MySQL driver](drivers/mysql/README.md). Replication, consistency and credentials remain deployment responsibilities.
 
 <a name="usage"></a>
 ## Usages
@@ -390,9 +329,7 @@ All data operations go through the [`Zongsoft.Data.IDataAccess`](https://github.
 - `int Upsert(...)` `int UpsertMany(...)`
 - `IEnumerable<T> Select<T>(...)`
 
-**Reminder:**
-> The following examples are based on the [Zongsoft.Discussions](https://github.com/Zongsoft/discussions) open source project, a complete .NET backend for a community forum. Before reading the examples, it is helpful to read its [database table design document](https://github.com/Zongsoft/discussions/blob/main/database/Zongsoft.Discussions.md).
-
+💡 Examples use the real [Discussions models](../../discussions/src/Models/Thread.cs) and [mapping](../../discussions/src/Zongsoft.Discussions.mapping). Code explicitly marked as an excerpt comes from the linked service. Other queries are local API adaptations against those models, not additional deployed services. They run inside a module service after plugin composition; `siteId` and `userId` denote validated caller identity values, not user-supplied authorization overrides. See the [database design](../../discussions/database/Zongsoft.Discussions.md) before trying writes.
 
 <a name="operand"></a>
 ### Operand
@@ -418,174 +355,45 @@ Operands can be used in conditions (`Condition`) and in values written to fields
 
 #### Examples
 
-- Field reference:
+[ThreadService.OnGet](../../discussions/src/Services/ThreadService.cs) increments the persisted view count after its access checks. The following is its update fragment:
 ```csharp
-var forums = this.DataAccess.Select<Forum>(
-	Condition.Equal("SiteId", this.User.SiteId) &
-	Condition.Equal("MostRecentThreadAuthorId", Operand.Field("MostRecentPostAuthorId"))
-);
+this.DataAccess.Update<Thread>(new
+{
+	TotalViews = Operand.Field(nameof(Thread.TotalViews)) + 1,
+	ViewedTime = DateTime.Now,
+}, Condition.Equal(nameof(Thread.ThreadId), thread.ThreadId));
 ```
 
-- Constant value:
-```csharp
-/* The following two calls are equivalent. */
-this.DataAccess.Update<OrderDetail>(
-	new {
-		Discount = Operand.Constant(10)
-	},
-	Condition.Between("Quantity", Range.Create(100, 200))
-);
+`Operand.Field` refers to the stored value; `+ 1` is evaluated by the database rather than by a client-side read/modify/write loop. Keep the surrounding authorization and history handling when reading this service.
 
-this.DataAccess.Update<OrderDetail>(
-	new {
-		Discount = 10
-	},
-	Condition.Between("Quantity", 100, 200)
-);
+For operator precedence without a database, [OperandTest.Test1](../Zongsoft.Core/test/Data/OperandTest.cs) constructs the expression below and checks its tree. These constants are test inputs, not an order-processing application:
+```csharp
+Operand a = Operand.Constant(1);
+Operand b = Operand.Constant(2);
+Operand c = Operand.Constant(3);
+Operand d = Operand.Constant(4);
+Operand e = Operand.Constant(5);
+
+var expression = (a + b) * (c - d) / e;
 ```
 
-- Unary operators:
-```csharp
-this.DataAccess.Update<OrderDetail>(
-	new {
-		Discount = -Operand.Field("Discount")
-	},
-	Condition.LessThan("Discount", 0)
-);
-
-this.DataAccess.Update<Thread>(
-	new {
-		Visible = !Operand.Field("Visible")
-	},
-	Condition.Equal("ForumId", 404)
-);
-```
-
-- Binary operators:
-```csharp
-/* Increment */
-this.DataAccess.Update<Thread>(
-	new {
-		TotalReplies = Operand.Field("TotalReplies") + 1
-	},
-	Condition.Equal("ThreadId", 404)
-);
-
-/* Arithmetic */
-this.DataAccess.Update<OrderDetail>(
-	new {
-		Amount = Operand.Field("UnitPrice") * Operand.Field("Quantity") - Operand.Field("Discount")
-	},
-	Condition.Equal("OrderId", 404)
-);
-
-/* Bitwise AND */
-this.DataAccess.Select<User>(
-	Condition.Equal(Operand.Field("Flags") & 0x74, 0x74)
-);
-```
-
-- Function call:
-```csharp
-this.DataAccess.Update<OrderDetail>(
-	new {
-		Quantity = Operand.Function("Abs", Operand.Field("Quantity")),
-		UnitPrice = Operand.Function("Abs", Operand.Field("UnitPrice"))
-	},
-	Condition.Equal("OrderId", 404)
-);
-```
-
-- Aggregate value:
-```csharp
-/* The following two calls are equivalent. */
-this.DataAccess.Update<Order>(
-	new {
-		Amount = Operand.Aggregate(DataAggregateFunction.Sum, "Details.Amount")
-	},
-	Condition.Equal("OrderId", 404)
-);
-
-this.DataAccess.Update<Order>(
-	new {
-		Amount = Operand.Sum("Details.Amount")
-	},
-	Condition.Equal("OrderId", 404)
-);
-```
-
-```csharp
-/* The following three calls are equivalent. */
-this.DataAccess.Update<Order>(
-	new {
-		Amount = Operand.Function("COALESCE",
-			Operand.Aggregate(DataAggregateFunction.Sum, "Details.Amount"), Operand.Constant(0))
-			+ Operand.Field("Surcharge")
-			+ Operand.Field("Taxes")
-			- Operand.Field("Discount")
-	},
-	Condition.Equal("OrderId", 404)
-);
-
-this.DataAccess.Update<Order>(
-	new {
-		Amount = Operand.IsNull(Operand.Sum("Details.Amount"), 0)
-			+ Operand.Field("Surcharge")
-			+ Operand.Field("Taxes")
-			- Operand.Field("Discount")
-	},
-	Condition.Equal("OrderId", 404)
-);
-
-this.DataAccess.Update<Order>(
-	new {
-		Amount = Operand.Sum("Details.Amount", 0)
-			+ Operand.Field("Surcharge")
-			+ Operand.Field("Taxes")
-			- Operand.Field("Discount")
-	},
-	Condition.Equal("OrderId", 404)
-);
-```
+Function and aggregate operands are defined by [Operand](../Zongsoft.Core/src/Data/Operand.cs); database support depends on the selected driver.
 
 <a name="condition"></a>
 ### Condition
 
-`Condition` is the common expression object used by `Select`, `Exists`, `Aggregate`, `Delete`, `Update`, and `Upsert`. It supports equality, comparison, `Like`, `Between`, `In`, `NotIn`, `Exists`, and `NotExists`. Use `&` and `|` to combine conditions.
+`Condition` represents predicates for queries and writes. Combine conditions with `&` and `|`; keep authorization constraints outside any business `OR` group.
 
+The actual [ForumService.GetThreads](../../discussions/src/Services/ForumService.cs) starts with:
 ```csharp
 var criteria =
-	Condition.Equal("SiteId", this.User.SiteId) &
-	Condition.Like("Title", "%Zongsoft%") &
-	Condition.Between("CreatedTime", Range.Create(DateTime.Today.AddDays(-7), DateTime.Today)) &
-	(
-		Condition.Equal("IsPinned", true) |
-		Condition.Equal("IsValued", true)
-	);
-
-var threads = this.DataAccess.Select<Thread>(criteria, "ThreadId,Title,CreatedTime");
+	Condition.Equal(nameof(Thread.ForumId), forumId) &
+	Condition.Equal(nameof(Thread.Visible), true);
 ```
 
-For search DTOs, use `Criteria.Transform(...)` to turn changed model members into conditions. `ConditionAttribute` can rename the target member, force an operator, ignore empty values, or plug in a custom converter.
+The method then excludes the separately loaded topmost threads on the first page before calling `Select<Thread>`. See the complete method for paging behavior.
 
-```csharp
-public abstract class ThreadCriteria : CriteriaBase
-{
-	public abstract uint? SiteId { get; set; }
-
-	[Condition(ConditionOperator.Like)]
-	public abstract string Title { get; set; }
-
-	[Condition(ConditionOperator.Between, nameof(Thread.CreatedTime))]
-	public abstract Range<DateTime>? CreatedTime { get; set; }
-}
-
-var criteria = Criteria.Transform<ThreadCriteria>(
-	"siteId:1+title:%Zongsoft%+createdTime:(2026-01-01,2026-12-31)"
-);
-
-var threads = this.DataAccess.Select<Thread>(criteria);
-```
+Search DTOs are also real models: [ThreadCriteria in Thread.cs](../../discussions/src/Models/Thread.cs) declares nullable fields and a `Range<DateTime>?` time range; its `Title` property uses `[Condition(ConditionOperator.Like)]`. [ThreadService](../../discussions/src/Services/ThreadService.cs) selects that type with `[DataService(typeof(ThreadCriteria))]`. Do not redefine a different DTO with the same name. The Core [Criteria](../Zongsoft.Core/src/Data/Criteria.cs) API supplies parsing and transformation.
 
 <a name="usage-query"></a>
 ### Query operation
@@ -601,12 +409,12 @@ var threads = this.DataAccess.Select<Thread>(criteria);
 ```csharp
 // Query all scalar fields that match the condition(lazy loading).
 var threads = this.DataAccess.Select<Thread>(
-	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.Equal("SiteId", siteId) &
 	Condition.Equal("Visible", true));
 
 // Query one entity and load only selected fields.
 var forum = this.DataAccess.Select<Forum>(
-	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.Equal("SiteId", siteId) &
 	Condition.Equal("ForumId", 100),
 	"SiteId,ForumId,Name,Description,CoverPicturePath").FirstOrDefault();
 ```
@@ -642,93 +450,32 @@ Scalar queries return a single field value. They avoid loading unused fields and
 
 ```csharp
 var email = this.DataAccess.Select<string>("Discussions.UserProfile",
-	Condition.Equal("UserId", this.User.UserId),
+	Condition.Equal("UserId", userId),
 	"Email" // Load only the Email field, which is a string.
 ).FirstOrDefault();
 
 /* Return a scalar value set(IEnumerable<uint>) */
 var counts = this.DataAccess.Select<uint>("Discussions.History",
-	Condition.Equal("UserId", this.User.UserId),
+	Condition.Equal("UserId", userId),
 	"ViewedCount" // Load only the ViewedCount field.
 );
 ```
 
 <a name="usage-query-3"></a>
-#### Multi-field query
+#### Multi-field Query
 
-Multi-field queries load several fields and can return many target shapes: class, interface, struct, dynamic object(`ExpandoObject`), or dictionary.
-
-> **Note:** Navigation properties _（complex properties）_ are only populated when the target type is an entity model class _（class/interface/struct）_; with a dictionary or `ExpandoObject` target type, only scalar fields are returned and navigation properties do not appear in the result.
-
+[ThreadService.SetMostRecentThread](../../discussions/src/Services/ThreadService.cs) loads only the author fields needed to update the forum's latest-thread summary. This excerpt uses the real `UserProfile` model:
 ```csharp
-struct UserToken
-{
-	public uint UserId;
-	public string Name;
-}
-
-/*
- * Note: The schema argument can be omitted or left empty here.
- * The engine uses the intersection between the entity metadata and the target type members.
- */
-var tokens = this.DataAccess.Select<UserToken>(
-	"Discussions.UserProfile",
-	Condition.Equal("SiteId", this.User.SiteId),
-	"UserId, Name"
-);
+var userId = data.GetValue(p => p.CreatorId, this.Principal.Identity.GetIdentifier<uint>());
+var user = this.DataAccess.Select<UserProfile>(
+	Condition.Equal(nameof(UserProfile.UserId), userId),
+	$"{nameof(UserProfile.UserId)}," +
+	$"{nameof(UserProfile.Name)}," +
+	$"{nameof(UserProfile.Nickname)}," +
+	$"{nameof(UserProfile.Avatar)}").FirstOrDefault();
 ```
 
-```csharp
-/*
- * When the target type name differs from the entity name,
- * use ModelAttribute to specify the mapped entity name (qualified name).
- */
-[Zongsoft.Data.Model("Discussions.UserProfile")]
-struct UserToken
-{
-	public uint UserId;
-	public string Name;
-}
-
-// Because the target type declares the mapped entity name, the name argument can be omitted.
-var tokens = this.DataAccess.Select<UserToken>(
-	Condition.Equal("SiteId", this.User.SiteId)
-);
-```
-
-```csharp
-/*
- * 1) The generic type specifies that each row is returned as a dictionary.
- * 2) The schema argument selects the returned fields. If omitted or set to *, all fields are returned.
- */
-var items = this.DataAccess.Select<IDictionary<string, object>>(
-	"Discussions.UserProfile",
-	Condition.Equal("SiteId", this.User.SiteId) &
-	Condition.GreaterThan("TotalThreads", 0),
-	"UserId,Name,TotalThreads,TotalPosts");
-
-foreach(var item in items)
-{
-	item.TryGetValue("UserId", out var userId); // true
-	item.TryGetValue("Name", out var name);     // true
-	item.TryGetValue("Avatar", out var avatar); // false
-	item.TryGetValue("TotalThreads", out var totalThreads); // true
-}
-```
-
-```csharp
-/*
- * The generic type specifies ExpandoObject, so each row can be accessed dynamically.
- */
-var items = this.DataAccess.Select<System.Dynamic.ExpandoObject>("Discussions.UserProfile");
-
-foreach(dynamic item in items)
-{
-	Console.WriteLine(item.UserId); // OK
-	Console.WriteLine(item.Name);   // OK
-	Console.WriteLine(item.Fake);   // Compiled successfully, but runtime error
-}
-```
+`data` is the method's `IDataDictionary<Thread>` argument. This is a member-level excerpt, not a complete replacement for the method. Dictionaries and `ExpandoObject` are also supported for scalar projections; see [DictionaryPopulatorProvider](src/Common/DictionaryPopulatorProvider.cs). Navigation population requires a model-shaped target; do not expect nested navigation objects in dictionary projections.
 
 <a name="usage-query-4"></a>
 #### Paging query
@@ -740,7 +487,7 @@ Pass a `paging` argument to [`Select`](https://github.com/Zongsoft/framework/blo
 var paging = Paging.Page(2, 25);
 
 var threads = this.DataAccess.Select<Thread>(
-	Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
+	Condition.Equal(nameof(Thread.SiteId), siteId) &
 	Condition.Equal(nameof(Thread.ForumId), 100),
 	paging
 );
@@ -759,7 +506,7 @@ Pass `Sorting` values to [`Select`](https://github.com/Zongsoft/framework/blob/m
 
 ```csharp
 var threads = this.DataAccess.Select<Thread>(
-	Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
+	Condition.Equal(nameof(Thread.SiteId), siteId) &
 	Condition.Equal(nameof(Thread.ForumId), 100),
 	Paging.Disabled, /* Disable paging for this query. You can pass a Paging object instead. */
 	Sorting.Descending("TotalViews"),   // 1.Descending for TotalViews
@@ -803,7 +550,7 @@ var thread = this.DataAccess.Select<Thread>(
  * Note: * means all scalar properties only. Navigation properties must be named explicitly.
  */
 var groups = this.DataAccess.Select<ForumGroup>(
-	Condition.Equal("SiteId", this.User.SiteId),
+	Condition.Equal("SiteId", siteId),
 	"*,Forums{*, Moderators{*}, MostRecentThread{*, Creator{*}}}"
 );
 ```
@@ -827,7 +574,7 @@ For one-to-many navigation properties, you often need to filter the child collec
 	<property name="SiteId" type="uint" nullable="false" />
 	<property name="ForumId" type="ushort" nullable="false" sequence="#(SiteId)" />
 	<property name="GroupId" type="ushort" nullable="false" />
-	<property name="Name" type="string" length="50" nullable="false" />
+	<property name="Name" type="nvarchar" length="50" nullable="false" />
 
 	<complexProperty name="Users" port="ForumUser" multiplicity="*" immutable="false">
 		<link port="SiteId" />
@@ -875,7 +622,7 @@ Sometimes a navigation property should return the target of another navigation p
 
 > Note: A moderator does not need to expose the forum member's `Permission` field. Returning [`UserProfile`](https://github.com/Zongsoft/discussions/blob/main/src/Models/UserProfile.cs) is simpler than returning `ForumUser` and then reading `ForumUser.User`. Therefore `Moderators` uses `port="ForumUser:User"`.
 >
-> Compare the `Users` and `Moderators` property types in the [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) class:
+> Compare the `Users` and `Moderators` property types in the [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) class. This member excerpt preserves the nested `Forum.ForumUser` type; constructors, equality methods, and unrelated members are omitted:
 
 ```csharp
 public abstract class Forum
@@ -887,24 +634,24 @@ public abstract class Forum
 
 	public abstract IEnumerable<ForumUser> Users { get; set; }
 	public abstract IEnumerable<UserProfile> Moderators { get; set; }
-}
 
-public struct ForumUser : IEquatable<ForumUser>
-{
-	public uint SiteId;
-	public ushort ForumId;
-	public uint UserId;
-	public Permission Permission;
-	public bool IsModerator;
+	public struct ForumUser : IEquatable<ForumUser>
+	{
+		public uint SiteId;
+		public ushort ForumId;
+		public uint UserId;
+		public Permission Permission;
+		public bool IsModerator;
 
-	public Forum Forum;
-	public UserProfile User;
+		public Forum Forum;
+		public UserProfile User;
+	}
 }
 ```
 
 ```csharp
 var forum = this.DataAccess.Select<Forum>(
-	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.Equal("SiteId", siteId) &
 	Condition.Equal("ForumId", 100),
 	"*, Users{*, User{Name,Email,Avatar}}, Moderators{Name,Email,Avatar}"
 ).FirstOrDefault();
@@ -929,57 +676,13 @@ foreach(var member in forum.Users)
 ```
 
 <a name="usage-query-11"></a>
-#### Group query
+#### Group Queries
 
-Grouping queries support aggregate functions for relational databases.
+[Grouping](../Zongsoft.Core/src/Data/Grouping.cs) describes grouping keys, aggregate functions and result aliases. It is separate from row paging and sorting.
 
-```csharp
-struct ForumStatistic
-{
-	public uint SiteId;
-	public ushort ForumId;
-	public int TotalThreads;
-	public int TotalViews;
-	public int TotalPosts;
-	public Forum Forum;
-}
+Discussions defines per-forum counters on [Forum](../../discussions/src/Models/Forum.cs), but it does not define a `ForumStatistic` projection or a grouped statistics service. Its real workflow updates those counters in [ThreadService.SetMostRecentThread](../../discussions/src/Services/ThreadService.cs) and [PostService](../../discussions/src/Services/PostService.cs). Read that workflow before adding a separate aggregate query: stored counters and on-demand aggregates have different cost and consistency characteristics.
 
-var statistics = this.DataAccess.Select<ForumStatistic>(
-	"Thread",
-	Grouping
-		.Group("SiteId", "ForumId")
-		.Count("*", "TotalThreads")
-		.Sum("TotalViews")
-		.Sum("TotalPosts"),
-	Condition.Equal("SiteId", this.User.SiteId) &
-	Condition.Equal("Visible", true),
-	"Forum{Name}"
-);
-```
-
-The query above roughly generates SQL like this:
-
-```sql
-SELECT
-	tt.*,
-	f.Name AS 'Forum.Name'
-FROM
-(
-	SELECT
-		t.SiteId,
-		t.ForumId,
-		COUNT(*) AS 'TotalThreads',
-		SUM(t.TotalViews) AS 'TotalViews',
-		SUM(t.TotalPosts) AS 'TotalPosts'
-	FROM Thread AS t
-	WHERE t.SiteId = @p1 AND
-			t.Visible = @p3
-	GROUP BY t.SiteId, t.ForumId
-) AS tt
-	LEFT JOIN Forum f ON
-		tt.SiteId = f.SiteId AND
-		tt.ForumId = f.ForumId;
-```
+For grouping support itself, follow the `IDataAccess.Select` overloads accepting `Grouping` in [the public contract](../Zongsoft.Core/src/Data/IDataAccess.cs), and the selected [database driver](#driver). Choose fields from the actual mapping and a result shape matching the keys/aliases; there is no preinstalled forum statistics command to call.
 
 <a name="usage-query-12"></a>
 ### Navigation condition
@@ -1009,68 +712,20 @@ var histories = this.DataAccess.Select<History>(
 );
 ```
 
-The query above roughly generates SQL like this:
-
-```sql
-SELECT h.*
-FROM History h
-	LEFT JOIN Thread t ON
-		t.ThreadId = h.ThreadId
-WHERE t.IsValued = @p1 AND
-	(
-		h.FirstViewedTime BETWEEN @p2 AND @p3 OR
-		h.LastViewedTime BETWEEN @p4 AND @p5
-	);
-```
 
 <a name="usage-query-13"></a>
-#### Subquery filtering
+#### Subquery Filtering
 
-Filtering a one-to-many navigation property is expressed with the `Exists` operator and becomes a SQL subquery.
-
-> The following query gets forums in the current user's site. `Internal` and `All` forums are included directly. For `Specified` forums, the current user must be a moderator or have member permissions.
-
+[ThreadService.GetIsModeratorCriteria](../../discussions/src/Services/ThreadService.cs) uses a real navigation subquery to check forum membership:
 ```csharp
-var forums = this.DataAccess.Select<Forum>(
-	Condition.Equal("SiteId", this.User.SiteId) &
-	Condition.In("Visibility", Visibility.Internal, Visibility.All) |
-	(
-		Condition.Equal("Visibility", Visibility.Specified) &
-		Condition.Exists("Users",
-							Condition.Equal("UserId", this.User.UserId) &
-							(
-								Condition.Equal("IsModerator", true) |
-								Condition.NotEqual("Permission", Permission.None)
-							)
-						)
-	)
-);
+return Condition.Exists("Forum.Users",
+	Condition.Equal(nameof(Forum.ForumUser.UserId), this.Principal.Identity.GetIdentifier<uint>()) &
+	Condition.Equal(nameof(Forum.ForumUser.IsModerator), true));
 ```
 
-The query above roughly generates SQL like this:
+`Approve`, `Visible` and other restricted methods combine this predicate with the target thread condition. For a more complex `OR` expression, read [ForumService.OnValidate](../../discussions/src/Services/ForumService.cs): it calls the base validation first, then applies the whole visibility expression with `criteria.And(...)`.
 
-```sql
-SELECT t.*
-FROM Forum t
-WHERE
-	t.SiteId = @p1 AND
-	t.Visibility IN (@p2, @p3) OR
-	(
-		t.Visibility = @p4 AND
-		EXISTS
-		(
-				SELECT u.SiteId, u.ForumId, u.UserId
-				FROM ForumUser u
-				WHERE u.SiteId = t.SiteId AND
-						u.ForumId = t.ForumId AND
-						u.UserId = @p5 AND
-						(
-							u.IsModerator = @p6 OR
-							u.Permission != @p7
-						)
-		)
-	);
-```
+🚨 Do not rewrite this as `siteCondition & publicCondition | privateCondition`: the second branch would no longer be constrained by `siteCondition`. Retain the [module validator](../../discussions/src/Data/DataValidator.cs) and service authorization when adapting these excerpts.
 
 <a name="usage-query-14"></a>
 #### Type conversion
@@ -1085,69 +740,23 @@ For example, the `Tags` field in the `Thread` table is `nvarchar`, but the `Tags
 
 `Execute` runs a named `command` defined in a mapping file. Use it for SQL statements, stored procedures, and commands that do not naturally map to one entity operation. The declared `mutability` is the data source selector's basis for read/write routing: `mutability="none"` selects a readable source, while `insert`, `update`, `delete`, and `upsert` select a writable source; the selector does not inspect the SQL script to determine this. A command without an explicit `mutability` is treated as writable _（`Delete|Insert|Update`）_, so there is usually no need to declare it.
 
-```csharp
-public sealed class ForumStatistics
-{
-	public int TotalThreads { get; set; }
-	public int TotalPosts { get; set; }
-}
+Discussions currently uses entity operations rather than mapped forum-statistics commands. There is no deployed `Forum.GetStatistics` or `Forum.RefreshStatistics` in its mapping. Do not invoke those names.
 
-var rows = this.DataAccess.Execute<ForumStatistics>(
-	"Forum.GetStatistics",
-	new []
-	{
-		new Parameter("SiteId", this.User.SiteId),
-		new Parameter("ForumId", forumId),
-	});
-
-var statistics = rows.FirstOrDefault();
-```
-
-For stored procedures, define `type="procedure"` in the mapping file（`alias` specifies the actual stored procedure name）. Output and return parameters are written back to the supplied `Parameter` objects after execution. The parameter direction `direction` supports `input`、`output`、`both`、`return`（the loader also accepts shorthand like `in`、`out`、`result`, but use the standard forms to pass XSD validation）.
-
-```xml
-<command name="Forum.RefreshStatistics" alias="Discussions_Forum_RefreshStatistics" type="procedure" mutability="update">
-	<parameter name="SiteId" type="uint" />
-	<parameter name="ForumId" type="uint" />
-	<parameter name="Total" type="int" direction="output" />
-</command>
-```
-
-```csharp
-var total = Parameter.Output("Total");
-
-this.DataAccess.Execute(
-	"Forum.RefreshStatistics",
-	new []
-	{
-		new Parameter("SiteId", this.User.SiteId),
-		new Parameter("ForumId", forumId),
-		total,
-	});
-
-var totalValue = total.Value;
-```
+For an implementation reference, [MetadataCommand](src/Metadata/Profiles/MetadataCommand.cs) owns the command name, alias, parameters and driver-specific scripts. [Zongsoft.Data.xsd](Zongsoft.Data.xsd) defines valid XML. A stored procedure uses `type="procedure"` and an alias naming an existing procedure; output parameters use the declared direction and are returned through the supplied `Parameter` objects. These are extension contracts, not additional Discussions features.
 
 <a name="usage-delete"></a>
 ### Delete operation
 
+This fragment uses the real [Post model](../../discussions/src/Models/Post.cs), with caller-supplied `postId` and an authorized `userId`; it is not an excerpt of the Discussions deletion service. Use that service in application code so its authorization and attachment-cleanup workflow remain active.
+
 ```csharp
 this.DataAccess.Delete<Post>(
 	Condition.Equal("Visible", false) &
-	Condition.Equal("Creator.Email", "zongsoft@qq.com")
+	Condition.Equal("CreatorId", userId) &
+	Condition.Equal("PostId", postId)
 );
 ```
 
-The delete above roughly generates SQL like this:
-
-```sql
-DELETE t
-FROM Post AS t
-	LEFT JOIN UserProfile AS u ON
-		t.CreatorId = u.UserId
-WHERE t.Visible=0 AND
-		u.Email='zongsoft@qq.com';
-```
 
 <a name="usage-delete-cascade"></a>
 #### Cascade deletion
@@ -1161,35 +770,15 @@ this.DataAccess.Delete<Post>(
 );
 ```
 
-The delete above roughly generates SQL like this(_SQL Server_):
-
-```sql
-CREATE TABLE #TMP
-(
-	PostId bigint
-);
-
-/* Delete the master row and write the associated key values to a temporary table. */
-DELETE FROM Post
-OUTPUT DELETED.PostId INTO #TMP
-WHERE PostId=@p1;
-
-/* Delete child rows by using the keys captured from the deleted master row. */
-DELETE FROM PostVoting
-WHERE PostId IN
-(
-	SELECT PostId FROM #TMP
-);
-```
 
 <a name="usage-insert"></a>
 ### Insert operation
 
 ```csharp
-this.DataAccess.Insert("Forum", new {
-	SiteId = this.User.SiteId,
+this.DataAccess.Insert("Discussions.Forum", new {
+	SiteId = siteId,
 	GroupId = 100,
-	Name = "xxxx"
+	Name = forumName
 });
 ```
 
@@ -1204,9 +793,9 @@ this.DataAccess.Insert("Forum", new {
 - `SuppressValidator()` disables validators registered for this insert operation.
 
 ```csharp
-var count = this.DataAccess.Insert<ForumUser>(
+var count = this.DataAccess.Insert<Forum.ForumUser>(
 	new {
-		SiteId = this.User.SiteId,
+		SiteId = siteId,
 		ForumId = 100,
 		UserId = 100,
 		Permission = Permission.Read,
@@ -1214,16 +803,6 @@ var count = this.DataAccess.Insert<ForumUser>(
 	DataInsertOptions.IgnoreConstraint());
 ```
 
-The insert above roughly generates SQL like this:
-
-```sql
-/* MySQL, ClickHouse */
-INSERT IGNORE INTO ForumUser (SiteId,ForumId,UserId,Permission) VALUES (@p1,@p2,@p3,@p4);
-
-/* PostgreSQL, SQLite */
-INSERT INTO ForumUser (SiteId,ForumId,UserId,Permission) VALUES (@p1,@p2,@p3,@p4)
-ON CONFLICT DO NOTHING;
-```
 
 If you also provide a value for a sequence field, chain the sequence option:
 
@@ -1233,7 +812,7 @@ var options = DataInsertOptions
 	.IgnoreConstraint();
 
 this.DataAccess.Insert<Forum>(new {
-	SiteId = this.User.SiteId,
+	SiteId = siteId,
 	ForumId = 100,
 	GroupId = 10,
 	Name = "General",
@@ -1248,29 +827,20 @@ Related one-to-one and one-to-many navigation values can be inserted together.
 ```csharp
 var forum = Model.Build<Forum>();
 
-forum.SiteId = this.User.SiteId;
+forum.SiteId = siteId;
 forum.GroupId = 100;
-forum.Name = "xxxx";
+forum.Name = forumName;
 
-forum.Users = new ForumUser[]
+forum.Users = new Forum.ForumUser[]
 {
-	new ForumUser { UserId = 100, IsModerator = true },
-	new ForumUser { UserId = 101, Permission = Permission.Read },
-	new ForumUser { UserId = 102, Permission = Permission.Write }
+	new Forum.ForumUser { UserId = 100, IsModerator = true },
+	new Forum.ForumUser { UserId = 101, Permission = Permission.Read },
+	new Forum.ForumUser { UserId = 102, Permission = Permission.Write }
 };
 
 this.DataAccess.Insert(forum, "*, Users{*}");
 ```
 
-The insert above roughly generates SQL like this:
-
-```sql
-/* Insert statement for the master table. */
-INSERT INTO Forum (SiteId,ForumId,GroupId,Name,...) VALUES (@p1,@p2,@p3,@p4,...);
-
-/* Insert statement for the slaves table(batch). */
-INSERT INTO ForumUser (SiteId,ForumId,UserId,Permission,IsModerator) VALUES (...),(...),(...);
-```
 
 <a name="usage-import"></a>
 ### Import operation
@@ -1280,12 +850,12 @@ INSERT INTO ForumUser (SiteId,ForumId,UserId,Permission,IsModerator) VALUES (...
 ```csharp
 var users = new []
 {
-	new { SiteId = this.User.SiteId, ForumId = 100, UserId = 100, Permission = Permission.Read },
-	new { SiteId = this.User.SiteId, ForumId = 100, UserId = 101, Permission = Permission.Write },
+	new { SiteId = siteId, ForumId = 100, UserId = 100, Permission = Permission.Read },
+	new { SiteId = siteId, ForumId = 100, UserId = 101, Permission = Permission.Write },
 };
 
 var count = this.DataAccess.Import(
-	"ForumUser",
+	"Discussions.ForumUser",
 	users,
 	"SiteId,ForumId,UserId,Permission".Split(','));
 ```
@@ -1294,11 +864,10 @@ Use `DataImportOptions.IgnoreConstraint()` when duplicated rows should be skippe
 
 ```csharp
 var options = DataImportOptions
-	.Parameter("SkipSynchronization")
 	.IgnoreConstraint();
 
 var count = this.DataAccess.Import(
-	"ForumUser",
+	"Discussions.ForumUser",
 	users,
 	"SiteId,ForumId,UserId,Permission".Split(','),
 	options);
@@ -1311,22 +880,13 @@ var count = this.DataAccess.Import(
 var user = Model.Build<UserProfile>();
 
 user.UserId = 100;
-user.Name = "Popeye";
-user.Nickname = "Popeye Zhong";
+user.Name = name;
+user.Nickname = nickname;
 user.Gender = Gender.Male;
 
 this.DataAccess.Update(user);
 ```
 
-The update above roughly generates SQL like this:
-
-```sql
-/* Unmodified properties are not generated into the SET clause. */
-
-UPDATE UserProfile SET
-Name=@p1, Nickname=@p2, Gender=@p3
-WHERE UserId=@p4;
-```
 
 <a name="usage-update-dynamic"></a>
 #### Anonymous class
@@ -1336,8 +896,8 @@ The value to write can be an anonymous object, dynamic object _(`ExpandoObject`)
 ```csharp
 this.DataAccess.Update<UserProfile>(
 	new {
-		Name="Popeye",
-		Nickname="Popeye Zhong",
+		Name=name,
+		Nickname=nickname,
 		Gender=Gender.Male,
 	},
 	Condition.Equal("UserId", 100)
@@ -1370,20 +930,15 @@ this.DataAccess.Update<UserProfile>(
 ```
 
 <a name="usage-update-complex"></a>
-#### Associated update
+#### Associated Updates
 
-Related one-to-one and one-to-many navigation values can be written **together**. For one-to-many collections, child rows are written with **UPSERT** semantics.
-
+The real [ThreadService.Approve](../../discussions/src/Services/ThreadService.cs) updates the thread and its content post in one operation:
 ```csharp
 public bool Approve(ulong threadId)
 {
-	var criteria =
-		Condition.Equal(nameof(Thread.ThreadId), threadId) &
-		Condition.Equal(nameof(Thread.Approved), false) &
-		Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
-		Condition.Exists("Forum.Users",
-			Condition.Equal(nameof(Forum.ForumUser.UserId), this.User.UserId) &
-			Condition.Equal(nameof(Forum.ForumUser.IsModerator), true));
+	var criteria = Condition.Equal(nameof(Thread.ThreadId), threadId) &
+	               Condition.Equal(nameof(Thread.Approved), false) &
+	               GetIsModeratorCriteria();
 
 	return this.DataAccess.Update<Thread>(new
 	{
@@ -1397,73 +952,16 @@ public bool Approve(ulong threadId)
 }
 ```
 
-The update above roughly generates SQL like this(_SQL Server_):
-
-```sql
-CREATE TABLE #TMP
-(
-	PostId bigint NOT NULL
-);
-
-UPDATE T SET
-	T.[Approved]=@p1,
-	T.[ApprovedTime]=@p2
-OUTPUT DELETED.PostId INTO #TMP
-FROM [Discussions_Thread] AS T
-	LEFT JOIN [Discussions_Forum] AS T1 ON /* Forum */
-		T1.[SiteId]=T.[SiteId] AND
-		T1.[ForumId]=T.[ForumId]
-WHERE
-	T.[ThreadId]=@p3 AND
-	T.[Approved]=@p4 AND
-	T.[SiteId]=@p5 AND EXISTS (
-		SELECT [SiteId],[ForumId] FROM [Discussions_ForumUser]
-		WHERE [SiteId]=T1.[SiteId] AND [ForumId]=T1.[ForumId] AND [UserId]=@p6 AND [IsModerator]=@p7
-	);
-
-UPDATE T SET
-	T.[Approved]=@p1
-FROM [Discussions_Post] AS T
-WHERE EXISTS (
-	SELECT [PostId]
-	FROM #TMP
-	WHERE [PostId]=T.[PostId]);
-```
+`GetIsModeratorCriteria()` is the private helper in the same class, shown under [subquery filtering](#usage-query-13). The schema `*,Post{Approved}` explicitly includes the post's approval field. Do not remove the moderator predicate or the module's validator. One-to-many associated writes use upsert semantics; the exact SQL belongs to the selected driver.
 
 <a name="usage-upsert"></a>
-### Upsert operation
+### Upsert Operations
 
-**Upsert** inserts a row when it does not exist, or updates it when it already exists. It maps to the database provider's native upsert support where possible.
+Upsert inserts a row when its key does not exist and updates it when it does. A real use is the browsing-history update in [ThreadService.SetHistory](../../discussions/src/Services/ThreadService.cs), keyed by user and thread and incrementing `ViewedCount`.
 
-> In this example, if a `History` row with `UserId=100` and `ThreadId=2001` exists, `ViewedCount` is incremented. Otherwise, a new row is inserted with `ViewedCount` set to `1`.
+🚨 The current source has a discrepancy: that method writes `MostRecentViewedTime`, while [History](../../discussions/src/Models/History.cs) and [the mapping](../../discussions/src/Zongsoft.Discussions.mapping) define `LastViewedTime`. This document does not present the method as a verified runnable example or silently correct the implementation. Align the service/model/mapping before reusing that path.
 
-```csharp
-this.DataAccess.Upsert<History>(
-	new {
-		UserId = 100,
-		ThreadId = 2001,
-		ViewedCount = Operand.Field(nameof(History.ViewedCount)) + 1,
-		LastViewedTime = DateTime.Now,
-	}
-);
-```
-
-The upsert above roughly generates SQL like this:
-
-```sql
-/* MySQL syntax */
-INSERT INTO History (UserId,ThreadId,ViewedCount,LastViewedTime) VALUES (@p1,@p2,@p3,@p4)
-ON DUPLICATE KEY UPDATE ViewedCount=ViewedCount + @p3, LastViewedTime=@p4;
-
-/* SQL syntax for SQL Server or PostgreSQL support for MERGE statement */
-MERGE History AS target
-USING (SELECT @p1,@p2,@p3,@p4) AS source (UserId,ThreadId,ViewedCount,LastViewedTime)
-ON (target.UserId=source.UserId AND target.ThreadId=source.ThreadId)
-WHEN MATCHED THEN
-	UPDATE SET target.ViewedCount=target.ViewedCount+@p3, LastViewedTime=@p4
-WHEN NOT MATCHED THEN
-	INSERT (UserId,ThreadId,ViewedCount,LastViewedTime) VALUES (@p1,@p2,@p3,@p4);
-```
+For the upsert contract and driver restrictions, see [IDataAccess](../Zongsoft.Core/src/Data/IDataAccess.cs), [DataUpsertOptions](../Zongsoft.Core/src/Data/DataUpsertOptions.cs) and the selected driver's README. Key matching, sequence generation, defaults on insertion and updates to existing rows must be considered separately.
 
 <a name="usage-returning"></a>
 ### Returning values
@@ -1495,7 +993,7 @@ var totalViews = this.DataAccess.Increase<Thread>(
 	Condition.Equal(nameof(Thread.ThreadId), threadId));
 ```
 
-The delete option returns older values:
+The following adaptation uses the real PostAttachment model to inspect returned IDs only; it does not implement file deletion:
 
 ```csharp
 var options = DataDeleteOptions.Return(nameof(PostAttachment.AttachmentId));
@@ -1507,7 +1005,7 @@ this.DataAccess.Delete<PostAttachment>(
 foreach(var row in options.Returning.Rows)
 {
 	if(row.TryGetValue(nameof(PostAttachment.AttachmentId), out var value))
-		DeletePhysicalAttachment(Convert.ToUInt64(value));
+		Console.WriteLine(value);
 }
 ```
 
@@ -1545,104 +1043,27 @@ Write option members:
 | `DataUpdateOptions.SuppressValidator(UpdateBehaviors.PrimaryKey)` | Allows primary key fields to be included in an update. This is for repair or migration code, not normal business updates. |
 | `DataUpsertOptions.IgnoreConstraint()` | Applies the same conflict-ignore intent to upsert statements. |
 
-`Parameter(...)` is commonly used to pass transient state to validators, filters, or service overrides. For example, a synchronization filter can skip its side effect when the caller sets a flag:
+A real operation parameter is `"Thread"`, read by [PostService.OnInsert](../../discussions/src/Services/PostService.cs). The service accepts either a `Thread` model or `IDataDictionary<Thread>`, resolves `ForumService` through its service provider, then decides whether the new post is approved. Read the complete method for null handling and file-content storage. These options are operation context, not SQL parameters; there is no built-in `SkipSynchronization` or `SkipAudit` switch.
 
+Before/after callbacks, `IDataAccess` events and filters expose operation stages. [ThreadFilter](../../discussions/src/Data/ThreadFilter.cs) is a real result-filtering example: `OnFiltered` wraps results through [FilteredResult](../../discussions/src/Data/FilteredResult.cs), hiding unapproved content from unauthorized readers or reading externally stored content. The wrapper preserves synchronous/asynchronous enumeration and paging notifications; read both files together.
+
+For transaction scope, the following excerpt is the transaction body of [ThreadService.OnInsert](../../discussions/src/Services/ThreadService.cs), after content validation and schema preparation:
 ```csharp
-var options = DataUpdateOptions
-	.Parameter("SkipSynchronization")
-	.SuppressValidator();
+using(var transaction = new Transaction())
+{
+	var count = base.OnInsert(data, schema, options);
 
-this.DataAccess.Update<Thread>(
-	new { TotalViews = Operand.Field(nameof(Thread.TotalViews)) + 1 },
-	Condition.Equal(nameof(Thread.ThreadId), threadId),
-	options);
+	if(count < 1)
+		return count;
+
+	this.SetMostRecentThread(data);
+	transaction.Commit();
+
+	return count;
+}
 ```
 
-The filter or service hook reads the flag from the operation context:
-
-```csharp
-if(context.Options.Parameters.Contains("SkipSynchronization"))
-	return;
-```
-
-`Parameter(...)` can also carry an object needed by a service hook:
-
-```csharp
-var options = DataInsertOptions.Parameter("Thread", thread);
-
-this.DataAccess.Insert<Post>(
-	new {
-		ThreadId = thread.ThreadId,
-		CreatorId = this.User.UserId,
-		Content = content,
-	},
-	options);
-```
-
-For mapped commands, keep SQL or stored procedure parameters in the `Execute` argument. Put only operation-context flags in `DataExecuteOptions`:
-
-```csharp
-var options = DataExecuteOptions.Parameter("SkipAudit");
-
-this.DataAccess.Execute(
-	"Forum.RefreshStatistics",
-	new []
-	{
-		new Parameter("SiteId", this.User.SiteId),
-		new Parameter("ForumId", forumId),
-	},
-	options);
-```
-
-Use `Distinct()` for scalar lookups:
-
-```csharp
-var creatorIds = this.DataAccess.Select<uint>(
-	nameof(Thread),
-	Condition.Equal(nameof(Thread.ForumId), forumId),
-	nameof(Thread.CreatorId),
-	DataSelectOptions.Distinct());
-```
-
-Use `SuppressValidator()` when an internal operation intentionally bypasses normal validator rules:
-
-```csharp
-var exists = this.DataAccess.Exists<UserProfile>(
-	Condition.Equal(nameof(UserProfile.UserId), userId),
-	DataExistsOptions.SuppressValidator());
-```
-
-Use `UpdateBehaviors.PrimaryKey` only when a primary key must be repaired:
-
-```csharp
-this.DataAccess.Update<UserProfile>(
-	new { UserId = newUserId },
-	Condition.Equal(nameof(UserProfile.UserId), oldUserId),
-	nameof(UserProfile.UserId),
-	new DataUpdateOptions(UpdateBehaviors.PrimaryKey));
-```
-
-Every operation also has before/after callbacks and matching `IDataAccess` events, such as `Selecting`/`Selected`, `Inserting`/`Inserted`, and `Executing`/`Executed`. Filters registered in `IDataAccess.Filters` run between the before event and the provider execution, which is the common place for cross-cutting behaviors.
-
-Use `Transaction` when several operations must share one ambient data session and commit or rollback together.
-
-```csharp
-using var transaction = Transaction.ReadCommitted();
-
-this.DataAccess.Update<Thread>(
-	new { Approved = true, ApprovedTime = DateTime.Now },
-	Condition.Equal(nameof(Thread.ThreadId), threadId));
-
-this.DataAccess.Upsert<History>(new {
-	UserId = this.User.UserId,
-	ThreadId = threadId,
-	ViewedCount = Operand.Field(nameof(History.ViewedCount)) + 1,
-	FirstViewedTime = DateTime.Now,
-	LastViewedTime = DateTime.Now,
-});
-
-transaction.Commit();
-```
+The private `SetMostRecentThread` helper belongs to that class. The transaction groups insertion and the related summary updates; it does not roll back external file/object-storage writes. Keep authorization and validators enabled in normal application calls.
 
 <a name="usage-other"></a>
 ### Other

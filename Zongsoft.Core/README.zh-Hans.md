@@ -122,49 +122,35 @@ Zongsoft.Core 基于 [LGPL-3.0-or-later](https://github.com/Zongsoft/framework/b
 
 可选形式 `Resolve`、`Find`、`Locate` 可能返回 null。存在多个提供者时应明确选择，不要让注册顺序意外决定数据库、队列或缓存。[定位实现](src/Services/ServiceProviderExtension.cs)定义了匹配规则。
 
-### 示例：通过配置选择求值器
+### 示例：真实模块的服务定位
 
-假设插件宿主已部署语言适配器，应用拥有以下选项片段：
-
-```xml
-<option path="/">
-	<rules evaluator="Scriban" />
-</option>
-```
-
-将此片段放入已加载插件同名的 `.option` 文件的 `<options>` 根节点内。属性生成 `Rules:Evaluator` 配置键；`<evaluator>Scriban</evaluator>` 的文本节点在当前 XML 提供程序中表示集合项，不等价于该标量配置。详见 [XML 配置解析器](src/Configuration/Xml/XmlStreamConfigurationProvider.cs)。
-
-在已初始化的应用服务/命令中运行以下代码，而不是在宿主创建之前运行：
+[Discussions Module](../../discussions/src/Module.cs) 在程序集元数据中声明模块身份，并通过 Core 契约获取数据访问器。以下为成员摘录，不是新造的模块实现：
 
 ```csharp
-using Zongsoft.Expressions;
-using Zongsoft.Services;
+[assembly: ApplicationModule(Zongsoft.Discussions.Module.NAME)]
 
-var application = ApplicationContext.Current
-	?? throw new InvalidOperationException("The application host is not initialized.");
-var name = application.Configuration["Rules:Evaluator"]
-	?? throw new InvalidOperationException("Rules:Evaluator is missing.");
-var evaluator = application.Services.FindRequired<IExpressionEvaluator>(name);
-var result = evaluator.Evaluate("x + y", new Dictionary<string, object>
-{
-	["x"] = 20,
-	["y"] = 22,
-});
-Console.WriteLine(result);
+public const string NAME = nameof(Discussions);
+public static readonly Module Current = new();
+
+private IDataAccess _accessor;
+public IDataAccess Accessor => _accessor ??=
+	this.Services.ResolveRequired<IDataAccessProvider>().GetAccessor(this.Name);
 ```
 
-消费方引用表达式契约，而不是 ScribanExpressionEvaluator。替换提供者前还必须确认其支持应用使用的表达式语言。在已知模块内，改用自身 `Module.Current.Services.FindRequired<IExpressionEvaluator>(name)` 即可。不要给解析出的求值器套 `using`，其注册生命周期属于宿主。
+[插件清单](../../discussions/src/Zongsoft.Discussions.plugin)将 `Module.Current` 挂载到 `/Workbench/Modules`；[选项文件](../../discussions/src/Zongsoft.Discussions.option)拥有 `/Discussions/General` 配置，宿主提供具名数据库连接。[ThreadService.Posting](../../discussions/src/Services/ThreadService.cs) 通过 `this.ServiceProvider.ResolveRequired<PostService>()` 取得 `PostService`，而非自行构造。
+
+该用例区分模块归属、公共契约与约定配置。表达式提供者匹配请参阅真实的 [Scriban 适配器](../externals/scriban/README.zh-Hans.md)；Core 不包含内建的 `Rules:Evaluator` 配置或 Rules 应用。
 
 ### 示例：通过提供者取得具名缓存
 
-提供者是额外一层间接定位：一个 Redis 提供者可供应多个已配置缓存。部署 Redis 插件并配置名为 `Orders` 的连接后：
+以下连接名沿用[真实 Redis 缓存样例](../externals/redis/samples/distributedcache/Program.cs)，定位代码改为插件宿主方式。提供者是额外一层间接定位：一个 Redis 提供者可供应多个已配置缓存。部署 Redis 插件并配置名为 `Redis` 的连接后：
 
 ```csharp
 using Zongsoft.Caching;
 using Zongsoft.Services;
 
 var services = ApplicationContext.Current.Services;
-IDistributedCache cache = services.Locate<IDistributedCache>("Orders@Redis")
+IDistributedCache cache = services.Locate<IDistributedCache>("Redis@Redis")
 	?? throw new InvalidOperationException("The configured cache is unavailable.");
 Console.WriteLine(cache.GetType().Name);
 ```
@@ -173,11 +159,11 @@ Console.WriteLine(cache.GetType().Name);
 
 ### 注册与注入模块契约
 
-提供者实现使用 `[Service<TContract>]` 或 `IServiceRegistration`，插件也可通过服务表达式装配对象。程序集上的 `[ApplicationModule("Orders")]` 标明服务注册的模块归属，模块及扩展节点仍需由应用清单贡献。
+提供者实现使用 `[Service<TContract>]` 或 `IServiceRegistration`，插件也可通过服务表达式装配对象。程序集上的 `[ApplicationModule(Zongsoft.Discussions.Module.NAME)]` 标明服务注册的模块归属，模块及扩展节点仍需由应用清单贡献。
 
 `[ServiceDependency]` 可注入契约。非空 ServiceName 表示向 `IServiceProvider<T>` 请求具名实例，`~` 或 `.` 表示所属模块名。Provider 选择模块容器，`/` 或 `*` 表示应用容器，详见 [ServiceDependencyAttribute](src/Services/ServiceDependencyAttribute.cs)。
 
-💡 插件表达式 `{service:~@Orders}` 中的 `@...` 选择**模块容器**；ServiceLocator 的 `Orders@Redis` 中 `@Redis` 选择**具名服务提供者**。它们是两种不同语法，不能混用。
+💡 插件表达式 `{service:~@Discussions}` 中的 `@...` 选择**模块容器**；ServiceLocator 的 `Redis@Redis` 中 `@Redis` 选择**具名服务提供者**。它们是两种不同语法，不能混用。
 
 ### 配置与生命周期检查
 

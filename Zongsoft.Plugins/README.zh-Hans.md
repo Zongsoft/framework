@@ -60,27 +60,33 @@ await Application.Terminal(args).RunAsync();
 
 ## 声明插件
 
-```xml
-<?xml version="1.0" encoding="utf-8" ?>
-<plugin name="Acme.Inventory" title="Inventory Module">
-	<manifest>
-		<dependencies>
-			<dependency name="Main" />
-		</dependencies>
-		<assemblies>
-			<assembly name="Acme.Inventory" />
-		</assemblies>
-	</manifest>
+以真实的 [Discussions 业务清单](../../discussions/src/Zongsoft.Discussions.plugin)为例。下面摘录程序集、依赖和模块节点；它不是完整清单，部署时保留原文件中的验证器、数据过滤器和身份扩展：
 
-	<extension path="/Workbench/Modules">
-		<object name="Inventory" type="Acme.Inventory.Module, Acme.Inventory" />
-	</extension>
-</plugin>
+```xml
+<manifest>
+	<assemblies>
+		<assembly name="Zongsoft.Discussions" />
+	</assemblies>
+	<dependencies>
+		<dependency name="Zongsoft.Data" />
+		<dependency name="Zongsoft.Security" />
+	</dependencies>
+</manifest>
+
+<extension path="/Workbench/Modules">
+	<object name="Discussions" value="{static:Zongsoft.Discussions.Module.Current, Zongsoft.Discussions}">
+		<expose name="Accessor" value="{path:../@Accessor}">
+			<expose name="Filters" value="{path:../@Filters}" />
+		</expose>
+		<expose name="Events" value="{path:../@Events}" />
+		<expose name="Properties" value="{path:../@Properties}" />
+	</object>
+</extension>
 ```
 
-依赖项使用的 `name` 必须与目标插件名称完全一致；程序集文件必须位于已部署的插件位置，或能够被宿主解析。
+插件名为 `Zongsoft.Discussions`，模块名为 `Discussions`；两者不是可以互换的名称。程序集定义见[项目文件](../../discussions/src/Zongsoft.Discussions.csproj)，模块对象见 [Module.cs](../../discussions/src/Module.cs)。业务库引用 Core 的公共契约，数据引擎与安全实现通过运行时插件依赖提供。
 
-> 🚨 项目编译成功并不代表插件一定能加载，因为清单是运行时契约。插件名、依赖名、程序集名、扩展路径和部署文件必须保持同步。
+🚨 不要只复制这个摘录替代完整清单，否则会漏掉站点约束、帖子过滤和身份转换。编译成功也不能证明依赖插件、程序集和配置已正确部署。
 
 ## 插件化部署：从宿主到运行能力
 
@@ -94,73 +100,29 @@ await Application.Terminal(args).RunAsync();
 
 宿主是启动器，不是业务模块。[Zongsoft/hosting](https://github.com/Zongsoft/hosting) 提供现成的终端、后台及 Web 启动器，其部署清单独立于宿主源码组合各项能力。
 
-### 完整的本地终端示例
+### 真实项目的部署组成
 
-准备临时工作目录和 .NET 10 SDK。以下是供读者执行的步骤，不应直接用于现有应用目录：
+[Main.plugin](plugins/Main.plugin) 和 [Terminal.plugin](plugins/Terminal.plugin) 是框架现有的基础清单。论坛业务模块则由 Discussions 的[领域部署清单](../../discussions/src/Zongsoft.Discussions.deploy)和 [Web 部署清单](../../discussions/src/api/Zongsoft.Discussions.Web.deploy)交付。
 
-```shell
-dotnet new console -n PluginDemo -f net10.0
-cd PluginDemo
-dotnet add package Zongsoft.Plugins
-```
-
-将 Program.cs 替换为以下完整入口：
-
-```csharp
-using Microsoft.Extensions.Hosting;
-using Zongsoft.Plugins.Hosting;
-
-Application.Terminal("PluginDemo", args).Run();
-```
-
-在项目目录创建以下 `.deploy`。以空格分隔的章节表示目标路径：
+在兼容的已有测试宿主部署方案中加入以下组合片段；它只表示两个业务包的部署目标，不代替宿主完整清单：
 
 ```ini
-[plugins]
-nuget:Zongsoft.Plugins/plugins/Main.plugin
-nuget:Zongsoft.Plugins/plugins/Terminal.plugin
+[plugins zongsoft discussions]
+nuget:Zongsoft.Discussions
 
-[plugins zongsoft commands]
-nuget:Zongsoft.Commands
+[plugins zongsoft discussions web]
+nuget:Zongsoft.Discussions.Web
 ```
 
-按需安装[部署工具](https://github.com/Zongsoft/tools/tree/main/deployer)，发布启动器，再部署功能插件：
-
-```shell
-dotnet tool install -g Zongsoft.Tools.Deployer
-dotnet publish -c Release -f net10.0 -o out
-dotnet deploy --destination:./out --framework:net10.0 --edition:Release --platform:win --architecture:x64
-cd out
-dotnet PluginDemo.dll
-```
-
-上述平台/架构表示 Windows x64 示例，含原生依赖的插件应使用真实目标。选择兼容包版本，并在可复现部署中用 `package@version` 固定版本。已安装工具时不必重复安装。
-
-进入交互提示符后执行 `help`、`echo hello`、`plugin.list`。宿主项目并未引用 Zongsoft.Commands，该能力通过部署及清单加入。用 `exit` 停止程序。
-
-相关产物结构如下：
-
-```text
-out/
-	PluginDemo.dll
-	PluginDemo.deps.json
-	PluginDemo.runtimeconfig.json
-	plugins/
-		Main.plugin
-		Terminal.plugin
-		zongsoft/
-			commands/
-				Zongsoft.Commands.plugin
-				Zongsoft.Commands.dll
-```
-
-图中省略了其它宿主依赖与附属资源，不代表部署时可以省略。
+领域包实际包含 `Zongsoft.Discussions.dll`、同名 `.plugin`、`.option`、`.mapping`；Web 包包含 `Zongsoft.Discussions.Web.dll`、同名 `.plugin` 和归档模板。包根 `.deploy` 从 `artifacts/` 与 `lib/$(Framework)/` 复制这些文件，不应把包内路径当作源码目录路径。
 
 ### 加入业务插件
 
-业务代码放在独立类库中，清单声明程序集、依赖及扩展贡献；前面的 Inventory 清单展示这种结构，其中 Inventory.Module 类型需要由应用定义。把类库和清单部署到 `plugins` 下，并按需配套选项、映射，宿主 Program.cs 无需改变。
+宿主负责启动；Discussions 负责论坛领域；Web 包负责 HTTP 适配。部署时还需显式组合 Data、Security、数据库驱动及所选文件存储提供者，不能只增加两行业务包就认为所有依赖齐备。连接、站点与文件路径的前置条件见 [Data 真实业务用例](../Zongsoft.Data/README.zh-Hans.md#plugin-quickstart)。
 
-文件系统层级决定插件父子关系，而 `/Workbench/Modules` 等扩展路径是另一套逻辑层级，不要随意扁平化既有部署。依赖名称在已加载树中查找，比较时忽略大小写；仍应保留规范拼写并避免重名。
+插件的文件系统层级与 `/Workbench/Modules` 等逻辑扩展路径不同。保留部署方案的目录布局和清单中的依赖关系；启动后检查插件树与 `Discussions` 模块，再验证实际接口，不要改写宿主入口来硬编码业务依赖。
+
+💡 本地验证使用独立部署目录、测试数据库及测试身份。具体宿主启动和部署命令见[已有宿主说明](https://github.com/Zongsoft/hosting)与[部署工具](https://github.com/Zongsoft/tools/tree/main/deployer)；这里不另造一个不存在于仓库中的演示宿主项目。
 
 ### 包部署清单与源码构建
 
@@ -189,125 +151,41 @@ out/
 
 更大的多插件应用可参考[宿主部署范例](https://github.com/Zongsoft/hosting)与[部署器语法和选项](https://github.com/Zongsoft/tools/tree/main/deployer)。
 
-## 完整消费插件：只依赖公共接口
+## 真实消费插件：Discussions 的模块与服务
 
-这里在前面的 PluginDemo 终端宿主中增加一个计算命令。消费类库只引用 Core，语言提供者由部署方案选择；宿主入口不改动。
+### 模块容器定位公共契约
 
-### 1. 编写应用模块
-
-在 PluginDemo 的同级目录创建 `Acme.Rules` 类库：
-
-```shell
-dotnet new classlib -n Acme.Rules -f net10.0
-cd Acme.Rules
-dotnet add package Zongsoft.Core
-```
-
-选择与宿主兼容的 Core 版本。将以下完整代码保存为 `EvaluateCommand.cs`，再执行 `dotnet build -c Debug`：
+[Module.cs](../../discussions/src/Module.cs) 在程序集上声明 `ApplicationModule(Module.NAME)`，并定义模块单例。以下是类内部的实际成员摘录：
 
 ```csharp
-using Zongsoft.Components;
-using Zongsoft.Expressions;
-using Zongsoft.Services;
+public const string NAME = nameof(Discussions);
+public static readonly Module Current = new();
 
-[assembly: ApplicationModule("Rules")]
+public Module() : base(NAME) { }
 
-namespace Acme.Rules;
-
-public sealed class Module : ApplicationModule
-{
-	public static readonly Module Current = new();
-	private Module() : base("Rules") { }
-}
-
-public sealed class EvaluateCommand : CommandBase<CommandContext>
-{
-	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
-	{
-		var name = ApplicationContext.Current.Configuration["Rules:Evaluator"]
-			?? throw new InvalidOperationException("Rules:Evaluator is missing.");
-		var evaluator = Module.Current.Services.FindRequired<IExpressionEvaluator>(name);
-		var result = evaluator.Evaluate("x + y", new Dictionary<string, object>
-		{
-			["x"] = 20,
-			["y"] = 22,
-		});
-		context.Output.WriteLine(result);
-		return ValueTask.FromResult(result);
-	}
-}
+private IDataAccess _accessor;
+public IDataAccess Accessor => _accessor ??=
+	this.Services.ResolveRequired<IDataAccessProvider>().GetAccessor(this.Name);
 ```
 
-`Module.Current` 是此应用定义的模块入口。程序集上的模块注解决定服务归属，清单中的模块节点把该模块加入当前应用。模块容器优先查找自己的注册，找不到时回退应用共享服务；并不要求把每个提供者重新注册到各个模块。
+模块通过自己的 `Services` 解析 Core 的 `IDataAccessProvider`，按模块名取得访问器；没有直接构建数据库驱动。完整模块还定义事件注册表，不能把这个成员摘录当作完整类文件。服务容器的模块优先、共享回退与所有权规则见 [Core](../Zongsoft.Core/README.zh-Hans.md)。
 
-### 2. 声明清单与选项
+### 清单、配置与数据映射各司其职
 
-类库目录中的 `Acme.Rules.plugin`：
+- [业务清单](../../discussions/src/Zongsoft.Discussions.plugin)将模块、验证器、过滤器和身份扩展装配到插件树。
+- [业务选项](../../discussions/src/Zongsoft.Discussions.option)在 `/Discussions` 下提供 `general` 的 `siteId`、`basePath`；XML 属性形成标量配置键。仓库中的站点值和存储路径不是生产配置。
+- [数据映射](../../discussions/src/Zongsoft.Discussions.mapping)定义实际论坛实体及关系；[数据库脚本](../../discussions/database/)负责对应数据库的结构。
+- [ForumService](../../discussions/src/Services/ForumService.cs)通过 `[Service]` 注册并使用 Core 的数据服务基类；[ForumController](../../discussions/src/api/Controllers/ForumController.cs)消费该领域服务。
 
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<plugin name="Acme.Rules">
-	<manifest>
-		<assemblies>
-			<assembly name="Acme.Rules" />
-		</assemblies>
-		<dependencies>
-			<dependency name="Main" />
-		</dependencies>
-	</manifest>
-	<extension path="/Workbench/Modules">
-		<object name="Rules" value="{static:Acme.Rules.Module.Current, Acme.Rules}" />
-	</extension>
-	<extension path="/Workbench/Executor/Commands">
-		<object name="Evaluate" type="Acme.Rules.EvaluateCommand, Acme.Rules" />
-	</extension>
-</plugin>
-```
+### 从源码追踪一次调用
 
-同目录 `Acme.Rules.option`：
+以获取版主为例：控制器读取请求中的数据模式，调用 `ForumService.GetModerators`；服务使用 `IDataAccess.Select<UserProfile>` 查询 `ForumUser` 关系。数据引擎、连接与驱动由宿主部署和配置提供，业务对象不持有具体数据库客户端。安全和站点处理需要完整插件链路，不能把单个查询片段当成独立的授权边界。
 
-```xml
-<options>
-	<option path="/">
-		<rules evaluator="Scriban" />
-	</option>
-</options>
-```
+### 验证与所有权
 
-`rules` 的 `evaluator` **属性**生成 `Rules:Evaluator` 键。XML 文本节点在此配置提供程序中表示集合项，不能把 `<evaluator>Scriban</evaluator>` 当成同一标量键。
+核对现有 [.http 请求](../../discussions/docs/http/forum.http)中的路径模板，用实际测试站点和论坛标识替换参数；不要复制其中的身份或服务地址。验证插件加载、容器解析、配置、映射、数据库和权限后再判断业务结果。本节引用当前源码，不声称一次历史隔离探针已验证 Discussions 的完整业务链路。
 
-### 3. 部署并调用
-
-在 PluginDemo 现有 `.deploy` 末尾补充：
-
-```ini
-[plugins zongsoft externals scriban]
-nuget:Zongsoft.Externals.Scriban
-
-[plugins acme rules]
-../Acme.Rules/bin/Debug/net10.0/Acme.Rules.dll
-../Acme.Rules/Acme.Rules.plugin
-../Acme.Rules/Acme.Rules.option
-```
-
-停止宿主后，从 PluginDemo 项目目录再次执行前文的部署命令，然后在 `out` 目录启动宿主并输入 `evaluate`，预期输出 `42`。部署后目录包含独立的 Scriban 实现插件及 Acme.Rules 消费插件；消费代码不需要 `using Zongsoft.Externals.Scriban`。
-
-本例使用纯本地算术，不需要数据库或云服务。结束后用 `exit -yes` 关闭；可删除自己创建的示例部署目录，不要清理现有业务宿主。
-
-### 4. 注入、选择与所有权
-
-如果业务对象拥有 `IExpressionEvaluator Evaluator { get; set; }` 公共属性，装配层也可以用 `Evaluator="{service:Scriban@}"` 注入应用容器中的具名求值器；`{service:@Rules}` 返回 Rules 模块容器本身。XML 负责选择和装配，业务代码仍面向接口。
-
-配置切换只有在双方实现同一契约**且满足应用语义**时成立：Lua 使用自己的表达式语法，不能仅改名称就认为所有 Scriban 脚本可执行。求值器是共享注册，不对解析结果逐次 `Dispose()`。缓存/序号等需要具名实例的场景，使用提供者的 `GetService(name)` 或 `Locate<T>("name@provider")`，详见 [Core 服务定位](../Zongsoft.Core/README.zh-Hans.md)与[Redis 完整示例](../externals/redis/README.zh-Hans.md)。
-
-### 本地验证记录与边界
-
-.NET 10 Windows 隔离部署中，已使用 Zongsoft 与 Automao 的终端启动器验证：配置读取、按名称取得 Scriban、结果 `42`、模块回退共享实例、插件属性注入及具名 Redis 缓存读写/清理。验证消费插件只引用 Core 契约，没有更改宿主业务代码；这不代表所有插件或真实业务流程均已验证。
-
-- Windows 终端宿主及当前部署工具需要有效控制台句柄；自动化运行应分配 PTY/ConPTY，不能假定普通管道与交互式控制台等价。
-- 从部署目录启动，或显式配置内容根。DLL 绝对路径本身不改变工作目录。
-- 手工复制宿主输出时保留 `runtimes/` 等依赖子目录；更新 Core 相关插件时核对宿主根目录的 Core 版本。
-- 部署工具可能以退出码 0 结束但在输出中记录条目错误。检查错误信息、预期文件及首次接口调用。
+Windows 终端自动化需要有效控制台句柄；从部署目录启动并保留宿主 `runtimes/` 等依赖。共享容器返回的服务不由单次消费代码释放。更新程序集后重启隔离宿主，退出后仅清理自己创建的测试资源。
 
 ## 加载与生命周期
 

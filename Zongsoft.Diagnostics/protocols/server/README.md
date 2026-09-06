@@ -34,9 +34,11 @@ Deploy the plugin and option artifacts. The supplied option defines an HTTP/2 Ke
 
 Register handlers on the relevant processor's `Handlers` collection, normally through the plugin tree. Each batch is dispatched to handlers concurrently with `Parallel.ForEachAsync`. A handler exception is logged and isolated so another handler can still run; request cancellation is propagated.
 
+The following comes from the [actual sample manifest](samples/Zongsoft.Diagnostics.Protocols.Server.Samples.plugin). Its [MetricHandler](samples/MetricHandler.cs) only prints metrics to the terminal; deploy the sample assembly, and do not treat it as a persistence handler.
+
 ```xml
 <extension path="/Workbench/Diagnostics/Telemetry/Listener/Metrics">
-	<object type="MyCompany.Telemetry.MetricHandler, MyCompany.Telemetry" />
+	<object name="MetricHandler" type="Zongsoft.Diagnostics.Protocols.Server.Samples.MetricHandler, Zongsoft.Diagnostics.Protocols.Server.Samples" />
 </extension>
 ```
 

@@ -60,27 +60,33 @@ The builder loads application configuration, discovers the plugin directory, bui
 
 ## Declaring a Plugin
 
-```xml
-<?xml version="1.0" encoding="utf-8" ?>
-<plugin name="Acme.Inventory" title="Inventory Module">
-	<manifest>
-		<dependencies>
-			<dependency name="Main" />
-		</dependencies>
-		<assemblies>
-			<assembly name="Acme.Inventory" />
-		</assemblies>
-	</manifest>
+Use the real [Discussions business manifest](../../discussions/src/Zongsoft.Discussions.plugin). This excerpt shows assemblies, dependencies and module nodes; it is not the complete manifest. Preserve the original validators, data filters and identity extensions when deploying:
 
-	<extension path="/Workbench/Modules">
-		<object name="Inventory" type="Acme.Inventory.Module, Acme.Inventory" />
-	</extension>
-</plugin>
+```xml
+<manifest>
+	<assemblies>
+		<assembly name="Zongsoft.Discussions" />
+	</assemblies>
+	<dependencies>
+		<dependency name="Zongsoft.Data" />
+		<dependency name="Zongsoft.Security" />
+	</dependencies>
+</manifest>
+
+<extension path="/Workbench/Modules">
+	<object name="Discussions" value="{static:Zongsoft.Discussions.Module.Current, Zongsoft.Discussions}">
+		<expose name="Accessor" value="{path:../@Accessor}">
+			<expose name="Filters" value="{path:../@Filters}" />
+		</expose>
+		<expose name="Events" value="{path:../@Events}" />
+		<expose name="Properties" value="{path:../@Properties}" />
+	</object>
+</extension>
 ```
 
-The `name` used by a dependency must match the target plugin's name exactly. Assembly files must be present in the deployed plugin location or resolvable by the host.
+The plugin is named `Zongsoft.Discussions`; its module is `Discussions`. These names are not interchangeable. See the [project file](../../discussions/src/Zongsoft.Discussions.csproj) and [Module.cs](../../discussions/src/Module.cs). The business library references Core contracts; runtime plugin dependencies supply data-engine and security implementations.
 
-> 🚨 A project that compiles successfully can still fail during plugin loading because manifests are runtime contracts. Keep plugin names, dependencies, assembly names, extension paths, and deployment files synchronized.
+🚨 Do not replace the complete manifest with this excerpt: that would omit site constraints, post filtering and identity transformation. A successful build does not prove that dependency plugins, assemblies and configuration were deployed correctly.
 
 ## Plugin Deployment: From Host to Running Features
 
@@ -94,73 +100,29 @@ The `name` used by a dependency must match the target plugin's name exactly. Ass
 
 A host is a launcher, not a business module. Ready-made terminal, daemon and Web launchers are maintained in [Zongsoft/hosting](https://github.com/Zongsoft/hosting). Their deployment manifests compose features independently of the host's source code.
 
-### A Complete Local Terminal Example
+### Deployment Composition from Real Projects
 
-Use a disposable working directory with .NET 10 SDK. These are instructions for the reader, not steps to run against an existing application:
+[Main.plugin](plugins/Main.plugin) and [Terminal.plugin](plugins/Terminal.plugin) are the framework's existing base manifests. Discussions ships its forum module through the [domain deployment manifest](../../discussions/src/Zongsoft.Discussions.deploy) and [Web deployment manifest](../../discussions/src/api/Zongsoft.Discussions.Web.deploy).
 
-```shell
-dotnet new console -n PluginDemo -f net10.0
-cd PluginDemo
-dotnet add package Zongsoft.Plugins
-```
-
-Replace Program.cs with this complete entry point:
-
-```csharp
-using Microsoft.Extensions.Hosting;
-using Zongsoft.Plugins.Hosting;
-
-Application.Terminal("PluginDemo", args).Run();
-```
-
-Create a project-local `.deploy` with the following contents. The space-separated section is a destination path:
+Add this composition fragment to a compatible existing test host's deployment plan. It specifies destinations for the two business packages, not the host's complete manifest:
 
 ```ini
-[plugins]
-nuget:Zongsoft.Plugins/plugins/Main.plugin
-nuget:Zongsoft.Plugins/plugins/Terminal.plugin
+[plugins zongsoft discussions]
+nuget:Zongsoft.Discussions
 
-[plugins zongsoft commands]
-nuget:Zongsoft.Commands
+[plugins zongsoft discussions web]
+nuget:Zongsoft.Discussions.Web
 ```
 
-Install [the deployment tool](https://github.com/Zongsoft/tools/tree/main/deployer) if needed, publish the launcher, then deploy its features:
+The domain package contains `Zongsoft.Discussions.dll` and matching `.plugin`, `.option`, and `.mapping` files. The Web package contains `Zongsoft.Discussions.Web.dll`, its manifest and archive templates. Their package-root `.deploy` files copy from `artifacts/` and `lib/$(Framework)/`; these are package paths, not source-directory paths.
 
-```shell
-dotnet tool install -g Zongsoft.Tools.Deployer
-dotnet publish -c Release -f net10.0 -o out
-dotnet deploy --destination:./out --framework:net10.0 --edition:Release --platform:win --architecture:x64
-cd out
-dotnet PluginDemo.dll
-```
+### Adding the Business Plugin
 
-The platform/architecture values above describe a Windows x64 example; use the actual target for native-dependent plugins. Select compatible package versions and pin them with `package@version` for reproducible deployments. Do not install the tool again if it is already available.
+The host owns startup, Discussions owns the forum domain, and the Web package owns HTTP adaptation. Explicitly compose Data, Security, a database driver and the selected file-storage provider too; the two business-package entries alone are not a complete dependency set. Connection, site and storage prerequisites are explained in the [real Data workflow](../Zongsoft.Data/README.md#plugin-quickstart).
 
-At the interactive prompt, run `help`, `echo hello` and `plugin.list`. The host did not reference Zongsoft.Commands in its project; that feature was added through deployment and its manifest. Use `exit` to stop it.
+Filesystem nesting differs from logical extension paths such as `/Workbench/Modules`. Preserve deployment layout and manifest dependencies. After startup, inspect the plugin tree and the `Discussions` module before exercising actual APIs; do not hard-code business dependencies into the host entry point.
 
-The relevant output layout is:
-
-```text
-out/
-	PluginDemo.dll
-	PluginDemo.deps.json
-	PluginDemo.runtimeconfig.json
-	plugins/
-		Main.plugin
-		Terminal.plugin
-		zongsoft/
-			commands/
-				Zongsoft.Commands.plugin
-				Zongsoft.Commands.dll
-```
-
-Other host dependencies and satellite resources are omitted from this diagram, not from deployment.
-
-### Adding a Business Plugin
-
-Keep business code in its own class library. Its manifest declares its assembly, dependencies and extension contributions; the earlier Inventory manifest illustrates this structure and requires an application-defined Inventory.Module type. Deploy both that library and its manifest under `plugins`, with options/mappings alongside as required. The host's Program.cs stays unchanged.
-
-The filesystem hierarchy establishes parent/child plugin relationships; extension paths such as `/Workbench/Modules` are a different, logical hierarchy. Do not flatten an existing deployment. Dependency names are resolved across the loaded tree and compared case-insensitively; retain canonical spelling and avoid duplicate names.
+💡 Use an isolated deployment, test database and test identity. Startup and deployment commands belong to the [existing host guide](https://github.com/Zongsoft/hosting) and [deployment tool](https://github.com/Zongsoft/tools/tree/main/deployer); this guide does not introduce a host project absent from the repository.
 
 ### Deployment Manifest versus Source Build
 
@@ -189,125 +151,41 @@ Do not depend on an incidental ordering of multiple plugins defining the same co
 
 See the [host deployment examples](https://github.com/Zongsoft/hosting) and [deployer syntax and options](https://github.com/Zongsoft/tools/tree/main/deployer) for larger multi-plugin applications.
 
-## Complete Consumer Plugin: Depend Only on Contracts
+## Real Consumer Plugin: Discussions Modules and Services
 
-This example adds a calculation command to the PluginDemo terminal host above. The consumer library references only Core; deployment selects the language provider. The host entry point does not change.
+### Resolve Public Contracts through the Module Container
 
-### 1. Implement the Application Module
-
-Create an `Acme.Rules` class library next to PluginDemo:
-
-```shell
-dotnet new classlib -n Acme.Rules -f net10.0
-cd Acme.Rules
-dotnet add package Zongsoft.Core
-```
-
-Select a Core version compatible with the host. Save this complete code as `EvaluateCommand.cs`, then run `dotnet build -c Debug`:
+[Module.cs](../../discussions/src/Module.cs) declares the assembly's `ApplicationModule(Module.NAME)` and defines the module singleton. These are actual members excerpted from that class:
 
 ```csharp
-using Zongsoft.Components;
-using Zongsoft.Expressions;
-using Zongsoft.Services;
+public const string NAME = nameof(Discussions);
+public static readonly Module Current = new();
 
-[assembly: ApplicationModule("Rules")]
+public Module() : base(NAME) { }
 
-namespace Acme.Rules;
-
-public sealed class Module : ApplicationModule
-{
-	public static readonly Module Current = new();
-	private Module() : base("Rules") { }
-}
-
-public sealed class EvaluateCommand : CommandBase<CommandContext>
-{
-	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
-	{
-		var name = ApplicationContext.Current.Configuration["Rules:Evaluator"]
-			?? throw new InvalidOperationException("Rules:Evaluator is missing.");
-		var evaluator = Module.Current.Services.FindRequired<IExpressionEvaluator>(name);
-		var result = evaluator.Evaluate("x + y", new Dictionary<string, object>
-		{
-			["x"] = 20,
-			["y"] = 22,
-		});
-		context.Output.WriteLine(result);
-		return ValueTask.FromResult(result);
-	}
-}
+private IDataAccess _accessor;
+public IDataAccess Accessor => _accessor ??=
+	this.Services.ResolveRequired<IDataAccessProvider>().GetAccessor(this.Name);
 ```
 
-`Module.Current` is an entry point defined by this application. The assembly attribute identifies service ownership, while the manifest adds the module to the current application. Its container searches module registrations before falling back to shared application services; providers do not need to be registered again for every module.
+The module resolves Core's `IDataAccessProvider` through its own `Services` and selects an accessor by module name, without constructing a database driver. The full module also defines an event registry; this member excerpt is not a complete class file. See [Core](../Zongsoft.Core/README.md) for module-first lookup, shared fallback and ownership.
 
-### 2. Declare the Manifest and Options
+### Separate Manifests, Configuration and Mappings
 
-Create `Acme.Rules.plugin` in the library directory:
+- The [business manifest](../../discussions/src/Zongsoft.Discussions.plugin) composes the module, validators, filters and identity extensions.
+- The [business options](../../discussions/src/Zongsoft.Discussions.option) provide `general.siteId` and `general.basePath` under `/Discussions`; XML attributes become scalar configuration keys. Repository site values and storage paths are not production configuration.
+- The [data mapping](../../discussions/src/Zongsoft.Discussions.mapping) defines real forum entities and relationships; [database scripts](../../discussions/database/) define database structures.
+- [ForumService](../../discussions/src/Services/ForumService.cs) registers through `[Service]` and uses Core's data-service base; [ForumController](../../discussions/src/api/Controllers/ForumController.cs) consumes that domain service.
 
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<plugin name="Acme.Rules">
-	<manifest>
-		<assemblies>
-			<assembly name="Acme.Rules" />
-		</assemblies>
-		<dependencies>
-			<dependency name="Main" />
-		</dependencies>
-	</manifest>
-	<extension path="/Workbench/Modules">
-		<object name="Rules" value="{static:Acme.Rules.Module.Current, Acme.Rules}" />
-	</extension>
-	<extension path="/Workbench/Executor/Commands">
-		<object name="Evaluate" type="Acme.Rules.EvaluateCommand, Acme.Rules" />
-	</extension>
-</plugin>
-```
+### Trace an Actual Call
 
-Create `Acme.Rules.option` beside it:
+For moderator lookup, the controller reads the request's data schema and calls `ForumService.GetModerators`. The service queries the `ForumUser` relationship through `IDataAccess.Select<UserProfile>`. Host deployment and configuration supply the data engine, connection and driver; business objects do not own concrete database clients. Security and site handling require the complete plugin chain, not an isolated query excerpt.
 
-```xml
-<options>
-	<option path="/">
-		<rules evaluator="Scriban" />
-	</option>
-</options>
-```
+### Verification and Ownership
 
-The `evaluator` **attribute** on `rules` produces `Rules:Evaluator`. This configuration provider treats XML text nodes as collection items; `<evaluator>Scriban</evaluator>` does not produce the same scalar key.
+Use the route templates in the existing [.http requests](../../discussions/docs/http/forum.http), substituting identifiers from your test site and forum. Do not copy identities or service addresses. Check plugin loading, container resolution, configuration, mappings, database and permissions before interpreting results. This section references current source; a historical isolated probe does not certify the complete Discussions business workflow.
 
-### 3. Deploy and Invoke
-
-Append to PluginDemo's existing `.deploy`:
-
-```ini
-[plugins zongsoft externals scriban]
-nuget:Zongsoft.Externals.Scriban
-
-[plugins acme rules]
-../Acme.Rules/bin/Debug/net10.0/Acme.Rules.dll
-../Acme.Rules/Acme.Rules.plugin
-../Acme.Rules/Acme.Rules.option
-```
-
-Stop the host, rerun the deployment command above from the PluginDemo project directory, then start the host from `out` and enter `evaluate`. The expected output is `42`. Scriban and Acme.Rules are separate implementation and consumer plugins; consumer code does not need `using Zongsoft.Externals.Scriban`.
-
-This example performs local arithmetic without a database or cloud service. Exit with `exit -yes`; remove only the sample deployment you created, never an existing business host.
-
-### 4. Injection, Selection, and Ownership
-
-For a business object with a public `IExpressionEvaluator Evaluator { get; set; }` property, the composition layer can use `Evaluator="{service:Scriban@}"` to inject the named evaluator from the application container. `{service:@Rules}` returns the Rules module container itself. XML selects and composes implementations while business code stays contract-based.
-
-Switching configuration is valid only when both implementations satisfy the same contract **and application semantics**. Lua has its own expression syntax; changing a provider name does not make arbitrary Scriban scripts portable. Evaluators are shared registrations and are not disposed per lookup. For named cache/sequence instances, use the provider's `GetService(name)` or `Locate<T>("name@provider")`; see [Core service lookup](../Zongsoft.Core/README.md) and the [complete Redis example](../externals/redis/README.md).
-
-### Local Verification and Its Limits
-
-Isolated .NET 10 Windows deployments using the Zongsoft and Automao terminal launchers verified configuration reading, named Scriban lookup, the result `42`, module fallback to a shared instance, plugin property injection, and named Redis cache reads/writes/cleanup. The verification consumer referenced only Core contracts and did not change host business code. This does not certify all plugins or real business workflows.
-
-- Windows terminal hosts and the current deployer require valid console handles. Automation should allocate PTY/ConPTY; ordinary pipes are not equivalent to interactive consoles.
-- Start from the deployment directory or explicitly configure the content root. An absolute DLL path does not change the working directory.
-- Preserve dependency subdirectories such as `runtimes/` when copying host output. Check the host-root Core version when updating plugins compiled against Core.
-- The deployer can exit with code 0 while reporting entry errors. Inspect errors, expected files, and the first contract-level operation.
+Windows terminal automation needs valid console handles. Start from the deployment directory and preserve dependencies such as `runtimes/`. Individual consumers do not dispose shared container services. Restart the isolated host after assembly changes, and clean only resources created for your test.
 
 ## Loading and Lifecycle
 

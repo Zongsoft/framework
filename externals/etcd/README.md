@@ -39,7 +39,7 @@ Load `Zongsoft.Externals.Etcd.plugin` and configure `/Externals/Etcd/ConnectionS
 
 ## Use Through the Plugin Service Container
 
-Business modules consuming sequences or locks only need `Zongsoft.Core`. Run the following in a host command or application service after the Etcd plugin and configuration above are loaded. It assumes this container has only one sequence provider:
+Business modules consuming sequences or locks only need `Zongsoft.Core`. The following adapts the [real sequence sample](samples/sequence/Program.cs) to a bounded host call with a unique expiring key. Run it in a host command or application service after the Etcd plugin and configuration above are loaded. It assumes this container has only one sequence provider:
 
 ```csharp
 using Zongsoft.Common;
@@ -69,27 +69,20 @@ Sequences and locks solve different problems. A sequence allocates values atomic
 
 The following low-level example owns its client lifetime; it is not the default pattern for collaboration between modules. Basic KV methods are Etcd-specific. Shared sequence and lock consumers should follow the interface-based approach above.
 
+This is the actual [sequence sample](samples/sequence/Program.cs). Its `orders` and `score` keys are sample inputs, not an implemented order-processing service:
+
 ```csharp
 using Zongsoft.Externals.Etcd;
-using Zongsoft.Services.Distributing;
 
-using var etcd = new EtcdService("local", "server=127.0.0.1;port=2379")
-{
-	Namespace = "orders"
-};
+var connectionString = args.Length > 0 ? args[0] : "server=127.0.0.1;port=2379";
+using var sequence = new EtcdService("sample", connectionString) { Namespace = "samples:sequence" };
 
-await etcd.SetValueAsync("status", "ready");
-var orderNumber = await etcd.IncreaseAsync("number", seed: 1000);
-
-var options = new DistributedLockOptions(TimeSpan.FromSeconds(10))
-{
-	RenewalInterval = TimeSpan.FromSeconds(3)
-};
-
-await using var locker = await etcd.AcquireAsync("writer", options);
-await locker.EnterAsync();
-Console.WriteLine($"Fence: {locker.FencingToken}");
+var number = await sequence.IncreaseAsync("orders", seed: 1000);
+var fraction = await sequence.IncreaseAsync("score", 0.25, 1.5);
 ```
+
+For lock acquisition and renewal, see the separate [distributed-lock sample](samples/distributedlock/master/Program.cs).
+
 
 `AcquireAsync` is non-blocking and may return an unheld lock. Call `EnterAsync` when the caller should wait until ownership is obtained. Automatic renewal is disabled unless `RenewalInterval` is set. Protected storage should reject stale fencing tokens.
 

@@ -22,8 +22,10 @@ dotnet add package Zongsoft.Externals.Velopack.Web
 
 请部署 Web 插件，并把 Feed JSON 及其引用的包文件放入宿主管理的发布位置。元数据端点为：
 
+下面直接使用本项目 [VelopackController](VelopackController.cs) 的无筛选入口，不假定存在某个已发布的应用包：
+
 ```http
-GET /Velopack/Releases?id=MyApplication
+GET /Velopack/Releases
 Accept: application/json
 ```
 

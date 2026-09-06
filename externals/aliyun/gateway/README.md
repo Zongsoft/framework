@@ -31,13 +31,12 @@ Register stable handler names in the plugin tree used by `FallbackExecutor`; `{n
 The current gateway manifest binds its `Handlers` node to the executor itself, not its dictionary. Expose the executor's `Handlers` property before appending entries to that collection. The consumer manifest must depend on `Zongsoft.Externals.Aliyun.Gateway` and list the application assembly implementing the handler.
 
 ```xml
-<extension path="/Workbench/Externals/Aliyun/Fallback/Handlers">
-	<expose name="Items" value="{path:../@Handlers}" />
-</extension>
-<extension path="/Workbench/Externals/Aliyun/Fallback/Handlers/Items">
-	<object name="Notification" type="MyCompany.Aliyun.NotificationHandler, MyCompany.Aliyun" />
+<extension path="/Workbench/Externals/Aliyun/Fallback">
+	<object name="Handlers" value="{static:Zongsoft.Externals.Aliyun.Gateway.FallbackExecutor.Instance, Zongsoft.Externals.Aliyun.Gateway}" />
 </extension>
 ```
+
+This excerpt is from the [actual gateway manifest](Zongsoft.Externals.Aliyun.Gateway.plugin) and mounts only the executor. [FallbackExecutor](FallbackExecutor.cs) looks up the requested name in its `Handlers` dictionary. This project does not ship a business notification handler; no nonexistent type or unrelated handler is substituted here. Implement the service-specific callback contract, then compose that handler through the collection boundary described above and list its assembly in the consumer plugin.
 
 > 💡 Acknowledge quickly when the provider retries on timeout. Move long-running idempotent work to a durable internal queue after signature validation.
 

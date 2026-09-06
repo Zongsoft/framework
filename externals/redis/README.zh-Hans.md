@@ -65,34 +65,30 @@ Redis 分布式锁提供单调递增的栅栏令牌及显式续期。自动续�
 
 业务模块只需引用 Core 中的 [IDistributedCache](../../Zongsoft.Core/src/Caching/IDistributedCache.cs)，由部署方案选择 Redis 插件。不要把 RedisService 的构造函数作为默认业务入口。
 
-在应用插件同名的 `.option` 中提供连接与选择项；下面的无密码地址**仅用于本机隔离测试服务**，实际凭据由环境配置注入，不提交到仓库：
+以下宿主选项改写沿用[真实分布式缓存样例](samples/distributedcache/Program.cs)中的 `Redis` 连接名。隔离测试地址与凭据由环境配置提供；这里不另造 Orders 业务模块或缓存选择配置键：
 
 ```xml
 <options>
-	<option path="/">
-		<orders cache="Orders@Redis" />
-	</option>
 	<option path="/Externals/Redis">
 		<connectionSettings>
-			<connectionSetting connectionSetting.name="Orders" driver="Redis"
-			                   value="server=127.0.0.1:6379;database=15" />
+			<connectionSetting connectionSetting.name="Redis" driver="Redis"
+			                   value="server=REPLACE_WITH_HOST:REPLACE_WITH_PORT;password=REPLACE_WITH_PASSWORD;database=15" />
 		</connectionSettings>
 	</option>
 </options>
 ```
 
-宿主初始化后，在业务服务/命令中执行：
+下面把样例的缓存读写操作改为通过公共契约在宿主中使用；原样例是自行拥有 RedisService 的独立进程。宿主初始化后，可在服务/命令中使用此片段：
 
 ```csharp
 using Zongsoft.Caching;
 using Zongsoft.Services;
 
 var application = ApplicationContext.Current;
-var qualifiedName = application.Configuration["Orders:Cache"]
-	?? throw new InvalidOperationException("Orders:Cache is missing.");
+var qualifiedName = "Redis@Redis";
 var cache = application.Services.Locate<IDistributedCache>(qualifiedName)
 	?? throw new InvalidOperationException("The configured cache is unavailable.");
-var key = "orders:demo:" + Guid.NewGuid().ToString("N");
+var key = "Zongsoft.Externals.Redis.Samples:" + Guid.NewGuid().ToString("N");
 
 try
 {
@@ -109,7 +105,7 @@ finally
 
 ### 提供者名与连接名
 
-`Orders@Redis` 的 `Redis` 是注册的提供者别名，`Orders` 是传给其 `GetService(name)` 的连接名；不是名为 Redis 的模块容器。也可显式取得 `Zongsoft.Services.IServiceProvider<IDistributedCache>` 再调用 `GetService("Orders")`，但多个提供者共存时应明确选择提供者，避免注册顺序决定结果。
+`Redis@Redis` 的 `Redis` 是注册的提供者别名，`Redis` 是传给其 `GetService(name)` 的连接名；不是名为 Redis 的模块容器。也可显式取得 `Zongsoft.Services.IServiceProvider<IDistributedCache>` 再调用 `GetService("Redis")`，但多个提供者共存时应明确选择提供者，避免注册顺序决定结果。
 
 [RedisServiceProvider](src/RedisServiceProvider.cs) 按名称复用服务。普通缓存/序号/锁服务找不到具名连接时会尝试默认连接；**这不适用于要求严格同名的可靠消息存储工厂**。连接拼写错误可能错误回退，启动检查应核对选定配置，不输出完整连接串。
 

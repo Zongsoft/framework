@@ -31,13 +31,12 @@ dotnet add package Zongsoft.Externals.Aliyun.Gateway
 注意当前网关清单把名为 `Handlers` 的节点绑定到了执行器本身，而不是其字典。因此消费插件应先暴露执行器的 `Handlers` 属性，再把处理器追加到该集合；消费插件的 manifest 需声明对 `Zongsoft.Externals.Aliyun.Gateway` 的依赖，并列出实现处理器的应用程序集。
 
 ```xml
-<extension path="/Workbench/Externals/Aliyun/Fallback/Handlers">
-	<expose name="Items" value="{path:../@Handlers}" />
-</extension>
-<extension path="/Workbench/Externals/Aliyun/Fallback/Handlers/Items">
-	<object name="Notification" type="MyCompany.Aliyun.NotificationHandler, MyCompany.Aliyun" />
+<extension path="/Workbench/Externals/Aliyun/Fallback">
+	<object name="Handlers" value="{static:Zongsoft.Externals.Aliyun.Gateway.FallbackExecutor.Instance, Zongsoft.Externals.Aliyun.Gateway}" />
 </extension>
 ```
+
+上面是[网关实际清单](Zongsoft.Externals.Aliyun.Gateway.plugin)的摘录，只挂载执行器；[FallbackExecutor](FallbackExecutor.cs) 从 `Handlers` 字典按请求名称查找处理器。当前项目没有随包提供业务通知处理器，因此这里不填入不存在的类型，也不把其他项目的非回调处理器冒充阿里云实现。完成服务专属处理器后再按上述集合边界装配，并列入业务插件程序集。
 
 > 💡 如果提供商在超时后重试，应尽快应答。完成签名验证后，把长耗时且幂等的工作放入内部可靠队列。
 

@@ -64,7 +64,7 @@ var data = provider.GetService("Application")
 Console.WriteLine(data.Name);
 ```
 
-取得访问器尚未证明数据库连接或 SQL 成功；下一步应调用已部署映射中的查询。完整的“清单、连接、映射、命名命令、实际结果”见 [Data 插件最小闭环](../../README.zh-Hans.md#plugin-quickstart)。该示例使用 SQLite；接入本驱动时保留接口用法，替换连接及适用方言脚本。业务模块不需要直接构造数据库连接，模块内可改用 `Module.Current.Services`。
+取得访问器不等于查询成功。真实业务装配请参阅 [Data 中的 Discussions 用例](../../README.zh-Hans.md#plugin-quickstart)，并沿其中的模块、映射及服务源码阅读。该用例不表示 Discussions 已兼容本驱动；数据库结构、字段类型和所需操作必须逐项验证，不能只改驱动名就推定可移植。业务服务通过公共契约调用，不自行构造数据库连接。
 
 ## 运行行为
 

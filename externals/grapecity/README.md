@@ -29,13 +29,20 @@ Load `Zongsoft.Externals.Grapecity.plugin` after `Zongsoft.Reporting`. ActiveRep
 dotnet add package Zongsoft.Externals.Grapecity
 ```
 
-```csharp
-using Zongsoft.Externals.Grapecity.Reporting;
+For a concrete reference, follow the adapter's [Report.Open(IReportDescriptor)](src/Reporting/Report.cs) implementation:
 
-using var report = Report.Open("reports/sales.rdlx");
-Console.WriteLine($"{report.Name}: {report.Type}");
-report.Parameters["Title"].Value = "Monthly sales";
+```csharp
+public static Report Open(IReportDescriptor descriptor)
+{
+	if(descriptor == null)
+		throw new ArgumentNullException(nameof(descriptor));
+
+	using var stream = descriptor.Open();
+	return stream == null ? null : Open(stream);
+}
 ```
+
+This source excerpt shows the boundary between a framework descriptor and the vendor engine; it is not an application service to construct manually. The repository does not include a sales RDLX template or a predefined `Title` parameter. Deploy a trusted ActiveReports definition and use only parameters actually declared in it. For host-side viewer/designer composition, follow the [Web package](api/README.md).
 
 `Report.Open` accepts a framework file path, stream, or `IReportDescriptor`. It wraps an ActiveReports `PageReport`, classifies the first report item as fixed-page (`FPL`) or continuous-page (`CPL`), and projects ActiveReports parameters/data sources into Zongsoft reporting contracts.
 

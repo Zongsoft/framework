@@ -31,33 +31,28 @@
 dotnet add package Zongsoft.Web
 ```
 
-## 最小控制器
+## 真实控制器：Discussions 论坛
+
+[ForumController](../../discussions/src/api/Controllers/ForumController.cs) 将论坛领域服务暴露为 HTTP；下面是其类声明及版主查询动作的摘录，不是新建模型或完整源文件：
 
 ```csharp
-using Microsoft.AspNetCore.Mvc;
-using Zongsoft.Data;
-using Zongsoft.Web;
-
-[ApiController]
-[Route("api/products")]
-public sealed class ProductController(IDataService<Product> service) :
-	ServiceController<Product, IDataService<Product>>
+[ControllerName("Forums")]
+public class ForumController : ServiceController<Forum, ForumService>
 {
-	protected override IDataService<Product> GetService() => service;
-}
-
-public sealed class Product
-{
-	public int ProductId { get; set; }
-	public string Name { get; set; } = string.Empty;
+	[ActionName("Moderators")]
+	[HttpGet("{id}/[action]")]
+	public IEnumerable<UserProfile> GetModerators(ushort id)
+	{
+		return this.DataService.GetModerators(id, this.Request.Headers.GetDataSchema());
+	}
 }
 ```
 
-基类会按数据服务能力暴露计数、存在性、查询、新增、更新、保存和删除流程。需要定制时重写受保护钩子或禁用操作，无需复制整套 Action。
+模型来自 [Discussions Models](../../discussions/src/Models/)，服务来自 [ForumService](../../discussions/src/Services/ForumService.cs)。基类按服务能力提供常规操作，派生控制器只增加论坛专有动作。请求中的数据模式通过 `GetDataSchema()` 传入服务。
 
-这是消费既有数据服务的控制器骨架：应用需要先注册自己的 `IDataService<Product>` 实现、实体映射和连接，不能仅复制此类就得到可用数据库。插件化应用把控制器放在自己的类库及 manifest 中，由宿主扫描和容器注入；不在控制器内构造数据引擎或数据库驱动。无需数据库的可运行 HTTP 接入例子见 [Plugins.Web 完整示例](../Zongsoft.Plugins.Web/README.zh-Hans.md)。
+部署完整业务与 Web 插件，并配置数据、安全和站点依赖后，才能调用这些动作；不在控制器中构造驱动。具体装配和请求模板见 [Plugins.Web 真实用例](../Zongsoft.Plugins.Web/README.zh-Hans.md)。
 
-> 💡 控制器约定与特性都会影响最终路由。应生成 OpenAPI 或检查控制器描述符，不要仅凭类名拼接客户端 URL。
+💡 最终路由由模块归属、`ControllerName`、基类 `[area]/[controller]` 和动作模板共同决定。以源码、现有 [.http 请求](../../discussions/docs/http/forum.http)及宿主描述符为依据，不凭空命名产品 API。
 
 ## HTTP 约定
 

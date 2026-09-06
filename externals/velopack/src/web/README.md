@@ -22,8 +22,10 @@ dotnet add package Zongsoft.Externals.Velopack.Web
 
 Deploy the Web plugin and place feed JSON plus the package files referenced by it under the host's managed release location. The metadata endpoint is:
 
+The request below uses this project’s [VelopackController](VelopackController.cs) without filtering; it does not assume a particular published application package exists:
+
 ```http
-GET /Velopack/Releases?id=MyApplication
+GET /Velopack/Releases
 Accept: application/json
 ```
 

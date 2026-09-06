@@ -72,68 +72,40 @@ Only positive numeric or duration values override Hangfire defaults. When the wo
 
 ## Register a handler
 
-Jobs are addressed by handler name. Implement `IHandler` (usually by deriving from `HandlerBase<TArgument>`) and register the instance under `/Workbench/Scheduler/Handlers`:
-
-```csharp
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-
-using Zongsoft.Components;
-using Zongsoft.Collections;
-
-public sealed class ReportHandler : HandlerBase<int>
-{
-	protected override ValueTask OnHandleAsync(
-		int reportId,
-		Parameters parameters,
-		CancellationToken cancellation)
-	{
-		Console.WriteLine($"Generating report {reportId}.");
-		return ValueTask.CompletedTask;
-	}
-}
-```
+The real [sample plugin](samples/Zongsoft.Externals.Hangfire.Samples.plugin) registers [MyHandler](samples/MyHandler.cs), a `HandlerBase<object>` that logs its argument, parameters and process-local invocation count:
 
 ```xml
 <extension path="/Workbench/Scheduler/Handlers">
-	<object name="Report" type="Example.ReportHandler, Example" />
+	<object name="MyHandler" type="Zongsoft.Externals.Hangfire.Samples.MyHandler, Zongsoft.Externals.Hangfire.Samples" />
 </extension>
 ```
 
-Every running Hangfire `Server` whose handler collection contains `Report` receives the dispatched job. Keep handler names stable because persisted Hangfire jobs store that name.
+Deploy the sample assembly and its full manifest, not just this extension fragment. Each running server whose collection contains that name receives dispatched jobs. The name is persisted with jobs; changing it can orphan queued work. This sample does not generate business reports.
 
 ## Schedule jobs
 
-Resolve or inject the typed scheduler that matches the trigger mode:
+The following API adaptation schedules the existing `MyHandler` sample through the public scheduler contract. Run it only after daemon/storage/sample plugin composition, with isolated test storage:
 
 ```csharp
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-
+using Zongsoft.Services;
 using Zongsoft.Scheduling;
 
-public sealed class ReportScheduler(IScheduler<TriggerOptions.Cron> cron,
-	IScheduler<TriggerOptions.Latency> latency)
-{
-	public ValueTask<string> ScheduleDailyAsync(CancellationToken cancellation = default) =>
-		cron.ScheduleAsync(
-			"Report",
-			42,
-			new TriggerOptions.Cron("daily-report", "0 2 * * *", TimeZoneInfo.Utc),
-			cancellation);
+var services = ApplicationContext.Current.Services;
+var cron = services.ResolveRequired<IScheduler<TriggerOptions.Cron>>();
+var latency = services.ResolveRequired<IScheduler<TriggerOptions.Latency>>();
 
-	public ValueTask<string> ScheduleOnceAsync(CancellationToken cancellation = default) =>
-		latency.ScheduleAsync(
-			"Report",
-			42,
-			new TriggerOptions.Latency(TimeSpan.FromMinutes(5)),
-			cancellation);
-}
+var recurringId = await cron.ScheduleAsync(
+	"MyHandler", "Zongsoft.Externals.Hangfire.Samples",
+	new TriggerOptions.Cron("hangfire-samples", "0 2 * * *", TimeZoneInfo.Utc),
+	CancellationToken.None);
+
+var delayedId = await latency.ScheduleAsync(
+	"MyHandler", "Zongsoft.Externals.Hangfire.Samples",
+	new TriggerOptions.Latency(TimeSpan.FromMinutes(5)),
+	CancellationToken.None);
 ```
 
-The returned string is the Hangfire job identifier. Use `RescheduleAsync(identifier)` to trigger it again and `UnscheduleAsync(identifier)` to remove it.
+These are alternative trigger modes; schedule only the one needed. The result is a job identifier: retain it for `RescheduleAsync` or `UnscheduleAsync`. Clean up recurring test jobs explicitly. The framework's real [ScheduleCommand](../../Zongsoft.Commands/src/Scheduling/ScheduleCommand.cs) also passes handler names, pipeline values and trigger options to `IScheduler.ScheduleAsync`; it does not require a ReportScheduler wrapper.
 
 ## Command integration
 

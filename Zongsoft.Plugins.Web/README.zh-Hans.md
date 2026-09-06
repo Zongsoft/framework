@@ -61,104 +61,68 @@ await application.RunAsync();
 
 内置 `PluginController` 为框架工具提供插件信息。该端点属于运行元数据，应按部署环境的授权策略加以保护。
 
-## 完整示例：部署一个解耦的 Web 插件
+## 真实用例：Discussions Web 插件
 
-以下使用已有的 [Zongsoft Web 宿主](https://github.com/Zongsoft/hosting/tree/main/web/default)，宿主保持原样。业务插件只依赖 Core 的表达式接口与 ASP.NET Core；Scriban 是部署时选用的实现，不是业务项目引用。
+### 1. 从现有控制器理解消费边界
 
-### 1. 创建消费插件
-
-创建 `Acme.Rules.Web` 类库，选择与宿主匹配的目标框架，启用隐式 using，并引用 `Zongsoft.Core` 与 `Microsoft.AspNetCore.App` FrameworkReference。宿主自身才需要引用 Plugins.Web。控制器如下：
+[ForumController](../../discussions/src/api/Controllers/ForumController.cs) 位于真实的 [Web 类库](../../discussions/src/api/Zongsoft.Discussions.Web.csproj)，继承框架服务控制器。下面保留该类的一个实际动作，其余动作省略：
 
 ```csharp
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using Zongsoft.Expressions;
-using Zongsoft.Services;
-
-namespace Acme.Rules.Web;
-
-[ApiController]
-[AllowAnonymous]
-[Route("rules/probe")]
-public class ProbeController : ControllerBase
+[ControllerName("Forums")]
+public class ForumController : ServiceController<Forum, ForumService>
 {
-	[HttpGet]
-	public IActionResult Get()
+	[ActionName("Moderators")]
+	[HttpGet("{id}/[action]")]
+	public IEnumerable<UserProfile> GetModerators(ushort id)
 	{
-		var context = ApplicationContext.Current;
-		var evaluator = context.Services.FindRequired<IExpressionEvaluator>(
-			context.Configuration["Rules:Evaluator"]);
-		var value = evaluator.Evaluate("x + y", new Dictionary<string, object>
-		{
-			["x"] = 20,
-			["y"] = 22,
-		});
-		return this.Ok(new { Value = value });
+		return this.DataService.GetModerators(id, this.Request.Headers.GetDataSchema());
 	}
 }
 ```
 
-这里只计算固定表达式，不接受客户端脚本。模块所属控制器可使用应用定义的 `Module.Current.Services` 或属性注入；详见 [Core 服务定位](../Zongsoft.Core/README.zh-Hans.md)。不要在控制器内创建、缓存或释放具体求值器。
+`Forum`、`UserProfile` 和 `ForumService` 都来自 Discussions，而不是本文新造的类型。控制器通过基类的 `DataService` 消费领域服务，传递请求数据模式，不构造数据引擎、数据库驱动或缓存实现。服务实现见 [ForumService.cs](../../discussions/src/Services/ForumService.cs)。
 
-### 2. 部署清单和配置
+### 2. 使用真实清单与部署产物
 
-将编译后的 `Acme.Rules.Web.dll` 与下列两个同名配置产物一起部署到 `plugins/acme/rules/web/`。程序集名称需要与项目实际输出一致。
-
-`Acme.Rules.Web.plugin`：
+[Zongsoft.Discussions.Web.plugin](../../discussions/src/api/Zongsoft.Discussions.Web.plugin) 的 manifest 摘录：
 
 ```xml
-<?xml version="1.0" encoding="utf-8"?>
-<plugin name="Acme.Rules.Web">
-	<manifest>
-		<assemblies>
-			<assembly name="Acme.Rules.Web" />
-		</assemblies>
-		<dependencies>
-			<dependency name="Main" />
-		</dependencies>
-	</manifest>
-</plugin>
+<manifest>
+	<dependencies>
+		<dependency name="Zongsoft.Discussions" />
+	</dependencies>
+	<assemblies>
+		<assembly name="Zongsoft.Discussions.Web" />
+	</assemblies>
+</manifest>
 ```
 
-`Acme.Rules.Web.option`：
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<options>
-	<option path="/">
-		<rules evaluator="Scriban" />
-	</option>
-</options>
-```
-
-在宿主已有 `.deploy` 中加入 [Scriban](../externals/scriban/README.zh-Hans.md) 部署片段：
+部署使用[领域清单](../../discussions/src/Zongsoft.Discussions.deploy)和 [Web 清单](../../discussions/src/api/Zongsoft.Discussions.Web.deploy)，保留业务 `.option`、`.mapping`、身份扩展和模板。包组合片段如下，宿主自身及 Data、Security、数据库驱动、文件存储仍需按完整方案部署：
 
 ```ini
-[plugins zongsoft externals scriban]
-nuget:Zongsoft.Externals.Scriban
+[plugins zongsoft discussions]
+nuget:Zongsoft.Discussions
+
+[plugins zongsoft discussions web]
+nuget:Zongsoft.Discussions.Web
 ```
 
-保留 Main 清单、宿主依赖和运行时资源。业务清单不必依赖 Scriban 的插件名；配置与公共接口约定负责选择实现，部署组成负责保证它存在。部署工具命令及目录布局见[插件入门](../Zongsoft.Plugins/README.zh-Hans.md)。
+Web 清单依赖领域插件，领域项目只面向其公共依赖；数据提供者由配置与插件体系定位。详细模块装配见[插件框架](../Zongsoft.Plugins/README.zh-Hans.md)。
 
-### 3. 发起请求并验证
+### 3. 核对真实请求与前置条件
 
-从隔离部署目录启动宿主，只绑定本机回环地址；示例端口需未被占用：
+[forum.http](../../discussions/docs/http/forum.http) 提供已维护的论坛请求模板；其中的列表路由为 `/Discussions/Forums`。版主动作在基类路由上增加 `{id}/Moderators`，实际完整路由以宿主控制器描述符为准。
 
-```shell
-dotnet Zongsoft.Hosting.Web.dll --urls=http://127.0.0.1:51873
-curl http://127.0.0.1:51873/rules/probe
-```
+运行前准备兼容宿主、专用数据库与初始化结构、`Discussions` 连接、测试站点、相应身份及需要的存储。使用当前测试数据中的论坛标识，不假设固定编号存在。本节是源码引用用例，不是无需数据库的探针，也不保证未初始化环境返回成功。
 
-预期为 `200 OK`，JSON 中的 `Value` 为 `42`。检查完毕后按 Ctrl+C 停止宿主。隔离本地验证已覆盖“插件程序集发现 → 属性路由 → 配置读取 → 公共接口匹配 → HTTP 返回”；没有使用数据库、Redis 或外部模型服务。
-
-🚨 `[AllowAnonymous]` 仅用于这个不接受输入的本地探针，不是业务 API 的授权模板。实际端点应配置身份验证、授权、输入限制和适合部署环境的 CORS 策略。
+🚨 不能为“跑通示例”移除身份转换、数据验证器或业务权限。只读请求也可能暴露论坛数据，应使用隔离身份和站点，避免将仓库中的地址或凭据直接用于实际请求。
 
 ### 常见误区
 
-- 文件已复制但控制器不存在：核对插件 manifest 的程序集条目、依赖能否加载，以及程序集是否实际引用 ASP.NET Core。仅将 DLL 放进目录不会自动成为插件 Web 部件。
-- 控制器已发现但 URL 返回 404：`Area`、`HttpGet` 本身不保证存在路由模板。默认宿主使用 `MapControllers()`，需要显式属性路由或应用配置的路由约定。
-- 首次请求找不到提供者：检查选项文件名称、`Rules:Evaluator` 实际值、提供者程序集与服务扫描；包引用不会自动代替实现插件的部署。
-- 不要通过把业务控制器或实现类注册全部搬进宿主 `Program.cs` 来掩盖装配问题。
+- DLL 已复制但控制器未发现：核对 manifest 的程序集条目和依赖、Web 类库实际引用的 ASP.NET Core 组件。
+- 控制器已发现但 URL 返回 404：核对 `ControllerName`、模块归属、基类路由与动作模板；只看类名不足以确定 URL。
+- 首次调用找不到服务或数据：检查服务扫描、模块、连接、映射及数据库，不要把这些实现硬编码到宿主入口。
+- 取消订阅、关闭工作器和数据资源按宿主生命周期处理；停止测试宿主后仅清理本次测试资源。
 
 ## 请求上下文
 

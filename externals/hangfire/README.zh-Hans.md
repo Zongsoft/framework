@@ -72,68 +72,40 @@ dotnet add package Zongsoft.Externals.Hangfire.Web
 
 ## 注册处理器
 
-作业通过处理器名称寻址。实现 `IHandler`（通常继承 `HandlerBase<TArgument>`），并将实例注册到 `/Workbench/Scheduler/Handlers`：
-
-```csharp
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-
-using Zongsoft.Components;
-using Zongsoft.Collections;
-
-public sealed class ReportHandler : HandlerBase<int>
-{
-	protected override ValueTask OnHandleAsync(
-		int reportId,
-		Parameters parameters,
-		CancellationToken cancellation)
-	{
-		Console.WriteLine($"Generating report {reportId}.");
-		return ValueTask.CompletedTask;
-	}
-}
-```
+真实的[样例插件](samples/Zongsoft.Externals.Hangfire.Samples.plugin)注册 [MyHandler](samples/MyHandler.cs)。它继承 `HandlerBase<object>`，记录参数、附加参数及进程内调用次数：
 
 ```xml
 <extension path="/Workbench/Scheduler/Handlers">
-	<object name="Report" type="Example.ReportHandler, Example" />
+	<object name="MyHandler" type="Zongsoft.Externals.Hangfire.Samples.MyHandler, Zongsoft.Externals.Hangfire.Samples" />
 </extension>
 ```
 
-处理器集合中包含 `Report` 的每个运行中 Hangfire `Server` 都会收到分派的作业。由于持久化的 Hangfire 作业会保存处理器名称，因此应保持名称稳定。
+部署样例程序集与完整清单，不要只复制此扩展片段。处理器集合包含该名称的各运行中 Server 都会接收分派的作业。作业会持久化名称，改名可能让已有任务失去处理器。这个样例不生成业务报表。
 
 ## 调度作业
 
-解析或注入与触发模式对应的强类型调度器：
+以下 API 改写通过公共调度契约调度已有的 `MyHandler` 样例。在 daemon、存储和样例插件装配完成后，使用隔离测试存储：
 
 ```csharp
-using System;
-using System.Threading;
-using System.Threading.Tasks;
-
+using Zongsoft.Services;
 using Zongsoft.Scheduling;
 
-public sealed class ReportScheduler(IScheduler<TriggerOptions.Cron> cron,
-	IScheduler<TriggerOptions.Latency> latency)
-{
-	public ValueTask<string> ScheduleDailyAsync(CancellationToken cancellation = default) =>
-		cron.ScheduleAsync(
-			"Report",
-			42,
-			new TriggerOptions.Cron("daily-report", "0 2 * * *", TimeZoneInfo.Utc),
-			cancellation);
+var services = ApplicationContext.Current.Services;
+var cron = services.ResolveRequired<IScheduler<TriggerOptions.Cron>>();
+var latency = services.ResolveRequired<IScheduler<TriggerOptions.Latency>>();
 
-	public ValueTask<string> ScheduleOnceAsync(CancellationToken cancellation = default) =>
-		latency.ScheduleAsync(
-			"Report",
-			42,
-			new TriggerOptions.Latency(TimeSpan.FromMinutes(5)),
-			cancellation);
-}
+var recurringId = await cron.ScheduleAsync(
+	"MyHandler", "Zongsoft.Externals.Hangfire.Samples",
+	new TriggerOptions.Cron("hangfire-samples", "0 2 * * *", TimeZoneInfo.Utc),
+	CancellationToken.None);
+
+var delayedId = await latency.ScheduleAsync(
+	"MyHandler", "Zongsoft.Externals.Hangfire.Samples",
+	new TriggerOptions.Latency(TimeSpan.FromMinutes(5)),
+	CancellationToken.None);
 ```
 
-返回的字符串是 Hangfire 作业标识。可通过 `RescheduleAsync(identifier)` 再次触发作业，通过 `UnscheduleAsync(identifier)` 删除作业。
+两种触发模式可按需选择，不必同时创建。返回值为作业标识，请保留以便 `RescheduleAsync` 或 `UnscheduleAsync`，测试后的周期作业需显式清理。框架真实的 [ScheduleCommand](../../Zongsoft.Commands/src/Scheduling/ScheduleCommand.cs)同样将处理器名、管道值和触发选项传给 `IScheduler.ScheduleAsync`，不需要另造 ReportScheduler 包装类。
 
 ## 命令集成
 

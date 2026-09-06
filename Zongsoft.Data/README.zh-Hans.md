@@ -46,75 +46,42 @@ TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Z
 > 💡 提示：如果需要未列出的驱动或商业技术支持，请联系我们（[zongsoft@qq.com](mailto:zongsoft@qq.com)）。
 
 <a name="plugin-quickstart"></a>
-## 插件化最小闭环
+## 真实插件用例：Discussions
 
-先区分三个名字：提供者契约是 `IServiceProvider<IDataAccess>`，访问器/连接名是 `Docs`，映射命令限定名是 `Docs.Answer`。数据引擎内部根据连接的 `driver` 选择数据库实现，业务代码不引用 SQLite 类型。
+[Discussions 模块](../../discussions/src/Module.cs)通过 Core 中的 `IDataAccessProvider` 契约获取访问器。模块名为 `Discussions`，[映射文件](../../discussions/src/Zongsoft.Discussions.mapping)也使用该容器名。宿主负责装配引擎和驱动，业务服务不自行构造具体实现。
 
-### 1. 部署引擎和驱动
+### 1. 部署模块、引擎与驱动
 
-在[插件终端入门](../Zongsoft.Plugins/README.zh-Hans.md)的现有宿主部署清单中增加：
+将以下包加入现有宿主部署清单，并保留 Main、Web/Terminal、安全等依赖。完整过程见[插件装配说明](../Zongsoft.Plugins/README.zh-Hans.md)。
 
 ```ini
 [plugins zongsoft data]
 nuget:Zongsoft.Data
 
-[plugins zongsoft data sqlite]
-nuget:Zongsoft.Data.SQLite
+[plugins zongsoft data mysql]
+nuget:Zongsoft.Data.MySql
+
+[plugins zongsoft discussions]
+nuget:Zongsoft.Discussions
 ```
 
-消费插件只需引用 `Zongsoft.Core`。保留 Main、Terminal 和宿主依赖；将业务 DLL 及它自己的 `.plugin` 部署到 `plugins/docs/`。消费插件 manifest 列出业务程序集；依赖 Data 是为了声明数据能力的组合前提，不需要直接依赖具体数据库驱动。
+### 2. 准备真实数据与配置
 
-### 2. 配置连接并部署映射
+按照 [Discussions 数据库说明](../../discussions/database/Zongsoft.Discussions.md)及[模块部署清单](../../discussions/src/Zongsoft.Discussions.deploy)准备数据库，完整部署映射、插件及其中的校验器和过滤器。在 `/Data/ConnectionSettings` 中配置命名为 `Discussions` 的连接，并参考[模块选项](../../discussions/src/Zongsoft.Discussions.option)配置站点和文件存储。映射描述已有结构，加载映射不会初始化数据库。
 
-在业务清单同主文件名的 `.option` 中写入：
+### 3. 从模块定位访问器
 
-```xml
-<options>
-	<option path="/Data">
-		<connectionSettings>
-			<connectionSetting connectionSetting.name="Docs" driver="SQLite"
-			                   value="Database=:memory:;Mode=Memory" />
-		</connectionSettings>
-	</option>
-</options>
-```
-
-将下列 `Docs.mapping` 放在业务插件旁。默认映射加载器会递归搜索应用目录中的 `.mapping`；文件存在本身不会创建数据库表。
-
-```xml
-<schema xmlns="http://schemas.zongsoft.com/data">
-	<container name="Docs">
-		<command name="Answer" type="text" mutability="none">
-			<script driver="SQLite">SELECT 42</script>
-		</command>
-	</container>
-</schema>
-```
-
-此例只执行内存库中的常量查询，没有数据表、凭据或持久写入。命令标记为 `mutability="none"`，表示只读；这影响数据源选择，不是由引擎分析 SQL 推断出来的。
-
-### 3. 从业务命令或服务调用
-
-在宿主已经启动、插件完成装配后执行：
+以下摘自 `Module.cs` 的访问器属性，不是独立程序：
 
 ```csharp
-using Zongsoft.Data;
-using Zongsoft.Services;
-
-var provider = ApplicationContext.Current.Services
-	.ResolveRequired<Zongsoft.Services.IServiceProvider<IDataAccess>>();
-var data = provider.GetService("Docs")
-	?? throw new InvalidOperationException("Data accessor not found.");
-
-using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
-Console.WriteLine(await data.ExecuteScalarAsync("Docs.Answer", cancellation.Token));
+private IDataAccess _accessor;
+public IDataAccess Accessor => _accessor ??=
+	this.Services.ResolveRequired<IDataAccessProvider>().GetAccessor(this.Name);
 ```
 
-预期输出 `42`。该链路已在隔离的 .NET 10 终端宿主中验证。模块内可使用 `Module.Current.Services` 取得提供者；不要在普通业务方法中构造 `DataAccess`、具体驱动或数据库连接，也不要逐次释放共享访问器。
+[ForumService](../../discussions/src/Services/ForumService.cs) 和 [ThreadService](../../discussions/src/Services/ThreadService.cs) 继承 `DataServiceBase<T>`，通过 `this.DataAccess` 操作数据。应结合提供模块数据边界的 [DataValidator](../../discussions/src/Data/DataValidator.cs) 阅读。
 
-💡 上面的 SQLite 脚本用于快速验证装配。实际业务应部署对应实体映射和数据库结构，或为命名命令提供匹配目标驱动的脚本。更换连接驱动并不自动翻译你手写的 SQL。
-
-🚨 原生依赖必须可被运行时找到。Windows x64 手工复制构建输出时，仅保留插件下的 `runtimes/win-x64/native/e_sqlite3.dll` 曾出现加载失败；将这个匹配架构的文件放到 SQLite 托管组件旁后验证通过。不要复制其他架构覆盖它；正式部署应检查自己的 RID/清单布局。SQLite 内存连接也不是跨连接持久数据库。
+🚨 这里是源码导读，不表示全新部署的 Discussions 已通过集成验证。请使用隔离数据库，先初始化站点、用户及身份上下文，不要为跑通示例绕过校验器，也不要在每个请求结束时释放容器持有的访问器。
 
 <a name="schema"></a>
 ## 数据模式
@@ -152,6 +119,8 @@ sorting ::=
 ")"
 ```
 
+💡 下文 `Department.Manager` / `Secret` 语法示例来自真实的 [SchemaParserTest](test/SchemaParserTest.cs) 夹具及 [Core SchemaTest](../Zongsoft.Core/test/Data/SchemaTest.cs)，用于测试解析，不表示 Discussions 包含组织管理模块。
+
 <a name="schema-overview"></a>
 #### 说明
 
@@ -183,7 +152,7 @@ sorting ::=
 排序写在可选限量之后、以一对圆括号包裹；排序字段之间使用逗号分隔。`~` 或 `-` 前缀表示倒序，`+` 前缀或无前缀表示正序：
 
 ```
-Users:20(-CreatedTime,+Grade){*}
+Users:20(-IsModerator,+UserId){*}
 ```
 
 每个排序字段都可以单独使用前缀，`+CreatedTime` 与 `CreatedTime` 完全等价。同一字段重复声明时，以最后一次声明的方向和位置为准。
@@ -240,10 +209,10 @@ Users:20(-CreatedTime,+Grade){*}
 	> *, Users:*{*}
 	> ```
 
-- 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_；该集合先按 `CreatedTime` 倒序、`Grade` 正序排序，再最多加载 20 条。
+- 表示所有简单属性，并包含 `Users` 集合导航属性 _（一对多）_；该集合先按 `IsModerator` 倒序、`UserId` 正序排序，再最多加载 20 条。
 
 	> ```graphql
-	> *, Users:20(-CreatedTime,+Grade){*}
+	> *, Users:20(-IsModerator,+UserId){*}
 	> ```
 
 -----
@@ -280,6 +249,8 @@ Department.Manager.FullName,
 
 映射文件的根节点是 `schema`，每个 `container` 表示一个元数据命名空间。一般一个业务模块定义一个容器，其 `name` 与模块名保持一致。
 
+以下为 [Discussions 映射](../../discussions/src/Zongsoft.Discussions.mapping)的局部摘录；部署时使用完整原文件，不能以此片段替代。
+
 ```xml
 <schema xmlns="http://schemas.zongsoft.com/data">
 	<container name="Discussions">
@@ -290,8 +261,8 @@ Department.Manager.FullName,
 			</key>
 			<property name="SiteId" type="uint" nullable="false" />
 			<property name="ForumId" type="ushort" nullable="false" sequence="#(SiteId)" />
-			<property name="GroupId" type="ushort" nullable="false" sortable="true" />
-			<property name="Name" type="string" length="50" nullable="false" />
+			<property name="GroupId" type="ushort" nullable="false" />
+			<property name="Name" type="nvarchar" length="50" nullable="false" />
 			<complexProperty name="Users" port="ForumUser" multiplicity="*" immutable="false">
 				<link port="SiteId" />
 				<link port="ForumId" />
@@ -309,17 +280,7 @@ Department.Manager.FullName,
 - `complexProperty` 定义导航属性。`port` 指向目标实体，也可以指向目标实体的导航属性，譬如 `ForumUser:User`。`multiplicity` 支持 `?`（一对零或一，默认）、`!`（一对一）、`*`（一对多）；`link` 定义外键属性与当前实体的关联（`anchor` 指定本体实体侧的锚点，省略时与 `port` 同名）；`constraints` 可添加固定的导航过滤条件（`actor` 省略时按多重性推断：一对多默认为 `Foreign`，其余为 `Principal`）。
 - `command` 定义命名 SQL 命令或存储过程，可通过 `Execute`、`Execute<T>`、`ExecuteScalar` 调用。`type` 支持 `text`（默认）与 `procedure`；`mutability` 用来声明命令对数据的读写特性，它不只是描述性元数据，也是配置读写分离后数据源选择器的路由依据：`none` 选择可读数据源，`delete`、`insert`、`update`、`upsert` 选择可写数据源。选择器不会通过分析 SQL 文本来推断读写特性。加载器对枚举值的解析不区分大小写，但为通过 XSD 校验，建议统一使用小写。
 
-```xml
-<command name="Forum.GetStatistics" type="text" mutability="none">
-	<parameter name="SiteId" type="uint" />
-	<parameter name="ForumId" type="ushort" />
-	<script driver="MySql"><![CDATA[
-		SELECT TotalThreads, TotalPosts
-		FROM Discussions_Forum
-		WHERE SiteId=@SiteId AND ForumId=@ForumId
-	]]></script>
-</command>
-```
+当前 Discussions 映射没有定义论坛统计命令或存储过程。命令契约请参阅 [MetadataCommand](src/Metadata/Profiles/MetadataCommand.cs) 和 [XSD](Zongsoft.Data.xsd)，不要调用尚未部署的命令名。
 
 
 > **启用映射文件的XML智能提示：**
@@ -337,41 +298,22 @@ Department.Manager.FullName,
 <a name="connection"></a>
 ## 连接配置
 
-数据连接配置项的名称必须与 `DataAccess` 的名称匹配。一个 `DataAccess` 可以配置多个数据源，使用井号 `#` 分隔 `DataAccess` 名称和数据源名称，譬如 `Discussions#master`、`Discussions#slave_1`。这种写法主要用于读写分离。
+连接名称由 [DataAccessProviderBase](../Zongsoft.Core/src/Data/DataAccessProviderBase.cs) 解析。Discussions 请求自身模块名，应显式配置同名连接，避免意外回退到其他模块的默认连接。
 
-> - **MySQL** 连接字符串参考：https://mysqlconnector.net/connection-options/
-> - **ADO.NET** 连接字符串语法：https://learn.microsoft.com/zh-cn/dotnet/framework/data/adonet/connection-string-syntax
+以下沿用真实模块的配置结构，`REPLACE_WITH_*` 是部署时必须提供的环境值，不代表随包提供的账号或数据库。
 
-- 单数据源的配置：
 ```xml
-<configuration>
-	<option path="/Data">
-		<connectionSettings default="Discussions">
-			<connectionSetting connectionSetting.name="Discussions" driver="MySql"
-								 value="server=127.0.0.1;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-		</connectionSettings>
-	</option>
-</configuration>
-```
-
-- 多数据源（读写分离）的配置：
-```xml
-<configuration>
+<options>
 	<option path="/Data">
 		<connectionSettings>
-			<connectionSetting connectionSetting.name="Discussions#master" driver="MySql" mode="WriteOnly"
-								 value="server=192.168.0.10;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-			<connectionSetting connectionSetting.name="Discussions#slave_1" driver="MySql" mode="ReadOnly"
-								 value="server=192.168.0.11;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-			<connectionSetting connectionSetting.name="Discussions#slave_2" driver="MySql" mode="ReadOnly"
-								 value="server=192.168.0.12;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-			<connectionSetting connectionSetting.name="Discussions#slave_3" driver="MySql" mode="ReadOnly"
-								 value="server=192.168.0.13;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+			<connectionSetting connectionSetting.name="Discussions" driver="MySql"
+				value="Server=REPLACE_WITH_HOST;Database=REPLACE_WITH_DATABASE;UserName=REPLACE_WITH_USER;Password=REPLACE_WITH_PASSWORD" />
 		</connectionSettings>
 	</option>
-</configuration>
+</options>
 ```
 
+读写分离使用 `访问器名#数据源名` 及 `ReadOnly`/`WriteOnly` 模式。这是引擎能力，不表示 Discussions 随包提供数据库复制拓扑。参阅 [DataSourceSelector](src/Common/DataSourceSelector.cs) 与 [MySQL 驱动](drivers/mysql/README.zh-Hans.md)；复制、一致性和凭据由部署方负责。
 
 <a name="usage"></a>
 ## 使用
@@ -389,8 +331,7 @@ Department.Manager.FullName,
 - 新增更新： `int Upsert(...)` `int UpsertMany(...)` 
 - 查询操作： `IEnumerable<T> Select<T>(...)` 
 
-**提醒：**
-> 下面的范例均基于 [Zongsoft.Discussions](https://github.com/Zongsoft/discussions) 开源项目。它是一个完整的论坛社区后台程序。阅读范例前，建议先查看该项目的[数据库表结构设计文档](https://github.com/Zongsoft/discussions/blob/main/database/Zongsoft.Discussions.md)，这样更容易理解实体之间的关系。
+💡 示例使用真实的 [Discussions 模型](../../discussions/src/Models/Thread.cs)与[映射](../../discussions/src/Zongsoft.Discussions.mapping)。标注“摘录”的代码来自所链接服务；其余查询是按真实模型改写的局部 API 用法，不代表额外部署的服务。它们位于插件装配完成后的模块服务中，`siteId`、`userId` 表示经过校验的调用方身份值，不是任意请求参数。尝试写入前请先阅读[数据库设计](../../discussions/database/Zongsoft.Discussions.md)。
 
 <a name="operand"></a>
 ### 操作元
@@ -414,178 +355,50 @@ Department.Manager.FullName,
 > - `|` 逻辑或或按位或
 > - `^` 异或
 
-#### 范例
+#### 示例
 
-- 字段引用
-```csharp
-var forums = this.DataAccess.Select<Forum>(
-	Condition.Equal("SiteId", this.User.SiteId) &
-	Condition.Equal("MostRecentThreadAuthorId", Operand.Field("MostRecentPostAuthorId"))
-);
-```
-
-- 常量操作
-```csharp
-/* 以下两种写法等价 */
-this.DataAccess.Update<OrderDetail>(
-	new {
-		Discount = Operand.Constant(10)
-	},
-	Condition.Between("Quantity", Range.Create(100, 200))
-);
-
-this.DataAccess.Update<OrderDetail>(
-	new {
-		Discount = 10
-	},
-	Condition.Between("Quantity", 100, 200)
-);
-```
-
-- 一元运算
-```csharp
-/* 一元运算：算术取反 */
-this.DataAccess.Update<OrderDetail>(
-	new {
-		Discount = -Operand.Field("Discount")
-	},
-	Condition.LessThan("Discount", 0)
-);
-
-/* 一元运算：逻辑取反 */
-this.DataAccess.Update<Thread>(
-	new {
-		Visible = !Operand.Field("Visible")
-	},
-	Condition.Equal("ForumId", 404)
-);
-```
-
-- 二元运算
-```csharp
-/* 递增 */
-this.DataAccess.Update<Thread>(
-	new {
-		TotalReplies = Operand.Field("TotalReplies") + 1
-	},
-	Condition.Equal("ThreadId", 404)
-);
-
-/* 算术运算 */
-this.DataAccess.Update<OrderDetail>(
-	new {
-		Amount = Operand.Field("UnitPrice") * Operand.Field("Quantity") - Operand.Field("Discount")
-	},
-	Condition.Equal("OrderId", 404)
-);
-
-/* 位与运算 */
-this.DataAccess.Select<User>(
-	Condition.Equal(Operand.Field("Flags") & 0x74, 0x74)
-);
-```
-
-- 函数运算
-```csharp
-this.DataAccess.Update<OrderDetail>(
-	new {
-		Quantity = Operand.Function("Abs", Operand.Field("Quantity")),
-		UnitPrice = Operand.Function("Abs", Operand.Field("UnitPrice"))
-	},
-	Condition.Equal("OrderId", 404)
-);
-```
-
-- 聚合运算
-```csharp
-/* 以下两种写法等价 */
-this.DataAccess.Update<Order>(
-	new {
-		Amount = Operand.Aggregate(DataAggregateFunction.Sum, "Details.Amount")
-	},
-	Condition.Equal("OrderId", 404)
-);
-
-this.DataAccess.Update<Order>(
-	new {
-		Amount = Operand.Sum("Details.Amount")
-	},
-	Condition.Equal("OrderId", 404)
-);
-```
+[ThreadService.OnGet](../../discussions/src/Services/ThreadService.cs) 在访问检查之后递增持久化阅读量。以下摘录其更新片段：
 
 ```csharp
-/* 以下三种写法等价 */
-this.DataAccess.Update<Order>(
-	new {
-		Amount = Operand.Function("COALESCE",
-			Operand.Aggregate(DataAggregateFunction.Sum, "Details.Amount"), Operand.Constant(0))
-			+ Operand.Field("Surcharge")
-			+ Operand.Field("Taxes")
-			- Operand.Field("Discount")
-	},
-	Condition.Equal("OrderId", 404)
-);
-
-this.DataAccess.Update<Order>(
-	new {
-		Amount = Operand.IsNull(Operand.Sum("Details.Amount"), 0)
-			+ Operand.Field("Surcharge")
-			+ Operand.Field("Taxes")
-			- Operand.Field("Discount")
-	},
-	Condition.Equal("OrderId", 404)
-);
-
-this.DataAccess.Update<Order>(
-	new {
-		Amount = Operand.Sum("Details.Amount", 0)
-			+ Operand.Field("Surcharge")
-			+ Operand.Field("Taxes")
-			- Operand.Field("Discount")
-	},
-	Condition.Equal("OrderId", 404)
-);
+this.DataAccess.Update<Thread>(new
+{
+	TotalViews = Operand.Field(nameof(Thread.TotalViews)) + 1,
+	ViewedTime = DateTime.Now,
+}, Condition.Equal(nameof(Thread.ThreadId), thread.ThreadId));
 ```
+
+`Operand.Field` 引用数据库中的原值，`+ 1` 由数据库执行，而非客户端先读再写。阅读完整服务时需保留周围的授权和历史记录处理。
+
+不依赖数据库的运算优先级用例见 [OperandTest.Test1](../Zongsoft.Core/test/Data/OperandTest.cs)：它构造下列表达式并断言语法树。常量是测试输入，不是订单业务：
+
+```csharp
+Operand a = Operand.Constant(1);
+Operand b = Operand.Constant(2);
+Operand c = Operand.Constant(3);
+Operand d = Operand.Constant(4);
+Operand e = Operand.Constant(5);
+
+var expression = (a + b) * (c - d) / e;
+```
+
+函数和聚合操作数见 [Operand](../Zongsoft.Core/src/Data/Operand.cs)，数据库支持取决于所选驱动。
 
 <a name="condition"></a>
 ### 条件
 
-`Condition` 是 `Select`、`Exists`、`Aggregate`、`Delete`、`Update`、`Upsert` 通用的条件表达对象。它支持等值、比较、`Like`、`Between`、`In`、`NotIn`、`Exists`、`NotExists` 等条件，可用 `&` 和 `|` 组合多个条件。
+`Condition` 表示查询与写入条件，通过 `&` 和 `|` 组合；授权约束必须作用于整个业务 `OR` 分组。
+
+真实的 [ForumService.GetThreads](../../discussions/src/Services/ForumService.cs) 从以下条件开始：
 
 ```csharp
 var criteria =
-	Condition.Equal("SiteId", this.User.SiteId) &
-	Condition.Like("Title", "%Zongsoft%") &
-	Condition.Between("CreatedTime", Range.Create(DateTime.Today.AddDays(-7), DateTime.Today)) &
-	(
-		Condition.Equal("IsPinned", true) |
-		Condition.Equal("IsValued", true)
-	);
-
-var threads = this.DataAccess.Select<Thread>(criteria, "ThreadId,Title,CreatedTime");
+	Condition.Equal(nameof(Thread.ForumId), forumId) &
+	Condition.Equal(nameof(Thread.Visible), true);
 ```
 
-对于搜索条件 DTO，可使用 `Criteria.Transform(...)` 将模型中已变更的成员转换成查询条件。`ConditionAttribute` 可用于重命名目标成员、指定运算符、忽略空值，或接入自定义条件转换器。
+该方法会在第一页排除单独加载的顶部主题，然后调用 `Select<Thread>`；分页细节请阅读完整方法。
 
-```csharp
-public abstract class ThreadCriteria : CriteriaBase
-{
-	public abstract uint? SiteId { get; set; }
-
-	[Condition(ConditionOperator.Like)]
-	public abstract string Title { get; set; }
-
-	[Condition(ConditionOperator.Between, nameof(Thread.CreatedTime))]
-	public abstract Range<DateTime>? CreatedTime { get; set; }
-}
-
-var criteria = Criteria.Transform<ThreadCriteria>(
-	"siteId:1+title:%Zongsoft%+createdTime:(2026-01-01,2026-12-31)"
-);
-
-var threads = this.DataAccess.Select<Thread>(criteria);
-```
+查询 DTO 同样采用真实模型：[Thread.cs 中的 ThreadCriteria](../../discussions/src/Models/Thread.cs) 定义可空字段与 `Range<DateTime>?` 时间范围，`Title` 使用 `[Condition(ConditionOperator.Like)]`。[ThreadService](../../discussions/src/Services/ThreadService.cs) 通过 `[DataService(typeof(ThreadCriteria))]` 指定它，不要另建一个字段不同的同名 DTO。解析与转换由 Core 的 [Criteria](../Zongsoft.Core/src/Data/Criteria.cs) 提供。
 
 <a name="usage-query"></a>
 ### 查询操作
@@ -600,12 +413,12 @@ var threads = this.DataAccess.Select<Thread>(criteria);
 ```csharp
 // 查询满足条件的实体集，默认加载全部简单字段（延迟加载）。
 var threads = this.DataAccess.Select<Thread>(
-	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.Equal("SiteId", siteId) &
 	Condition.Equal("Visible", true));
 
 // 查询单个实体，并只加载指定字段。
 var forum = this.DataAccess.Select<Forum>(
-	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.Equal("SiteId", siteId) &
 	Condition.Equal("ForumId", 100),
 	"SiteId,ForumId,Name,Description,CoverPicturePath").FirstOrDefault();
 ```
@@ -641,93 +454,33 @@ var totalViews = this.DataAccess.Sum<Thread, long>(
 
 ```csharp
 var email = this.DataAccess.Select<string>("Discussions.UserProfile",
-	Condition.Equal("UserId", this.User.UserId),
+	Condition.Equal("UserId", userId),
 	"Email" // 只获取 Email 字段，该字段为字符串类型
 ).FirstOrDefault();
 
 /* 返回标量集(IEnumerable<uint>) */
 var counts = this.DataAccess.Select<uint>("Discussions.History",
-	Condition.Equal("UserId", this.User.UserId),
+	Condition.Equal("UserId", userId),
 	"ViewedCount" // 只获取 ViewedCount 字段
 );
 ```
 
 <a name="usage-query-3"></a>
-#### 多列查询
+#### 多字段查询
 
-多列查询可返回多个字段，并支持多种目标类型：类、接口、结构、动态对象(`ExpandoObject`)和字典。
-
-> **注意：** 导航属性 _（复合属性）_ 只会在使用实体模型类 _（类/接口/结构）_ 作为目标类型时填充；以字典或 `ExpandoObject` 为目标类型时，只返回简单字段，导航属性不会出现在结果中。
+[ThreadService.SetMostRecentThread](../../discussions/src/Services/ThreadService.cs) 只加载更新论坛最新主题摘要所需的作者字段。以下摘录使用真实的 `UserProfile` 模型：
 
 ```csharp
-struct UserToken
-{
-	public uint UserId;
-	public string Name;
-}
-
-/*
- * 注：这里可以省略 schema 参数，或将其设为空。
- * 引擎会取实体元数据与目标类型成员的交集作为返回字段。
- */
-var tokens = this.DataAccess.Select<UserToken>(
-	"Discussions.UserProfile",
-	Condition.Equal("SiteId", this.User.SiteId),
-	"UserId, Name"
-);
+var userId = data.GetValue(p => p.CreatorId, this.Principal.Identity.GetIdentifier<uint>());
+var user = this.DataAccess.Select<UserProfile>(
+	Condition.Equal(nameof(UserProfile.UserId), userId),
+	$"{nameof(UserProfile.UserId)}," +
+	$"{nameof(UserProfile.Name)}," +
+	$"{nameof(UserProfile.Nickname)}," +
+	$"{nameof(UserProfile.Avatar)}").FirstOrDefault();
 ```
 
-```csharp
-/*
- * 当目标类型名与实体名不一致时，
- * 可通过 ModelAttribute 指定它对应的映射实体名（限定名）。
- */
-[Zongsoft.Data.Model("Discussions.UserProfile")]
-struct UserToken
-{
-	public uint UserId;
-	public string Name;
-}
-
-// 因为目标类型已声明映射实体名，所以可省略 name 参数：
-var tokens = this.DataAccess.Select<UserToken>(
-	Condition.Equal("SiteId", this.User.SiteId)
-);
-```
-
-```csharp
-/*
- * 1) 泛型参数指定每行以字典形式返回。
- * 2) schema 参数指定返回字段；省略或写为星号(*)时，默认返回所有字段。
- */
-var items = this.DataAccess.Select<IDictionary<string, object>>(
-	"Discussions.UserProfile",
-	Condition.Equal("SiteId", this.User.SiteId) &
-	Condition.GreaterThan("TotalThreads", 0),
-	"UserId,Name,TotalThreads,TotalPosts");
-
-foreach(var item in items)
-{
-	item.TryGetValue("UserId", out var userId); // true
-	item.TryGetValue("Name", out var name);     // true
-	item.TryGetValue("Avatar", out var avatar); // false
-	item.TryGetValue("TotalThreads", out var totalThreads); // true
-}
-```
-
-```csharp
-/*
- * 泛型参数指定为 ExpandoObject 后，可用动态方式访问返回对象。
- */
-var items = this.DataAccess.Select<System.Dynamic.ExpandoObject>("Discussions.UserProfile");
-
-foreach(dynamic item in items)
-{
-	Console.WriteLine(item.UserId); // OK
-	Console.WriteLine(item.Name);   // OK
-	Console.WriteLine(item.Fake);   // Compiled successfully, but runtime error
-}
-```
+`data` 是该方法的 `IDataDictionary<Thread>` 参数；这只是局部摘录，不能替代整个方法。标量投影也支持字典与 `ExpandoObject`，参阅 [DictionaryPopulatorProvider](src/Common/DictionaryPopulatorProvider.cs)。导航属性填充需要模型形状的目标，不能指望字典投影返回嵌套导航对象。
 
 <a name="usage-query-4"></a>
 #### 分页查询
@@ -739,7 +492,7 @@ foreach(dynamic item in items)
 var paging = Paging.Page(2, 25);
 
 var threads = this.DataAccess.Select<Thread>(
-	Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
+	Condition.Equal(nameof(Thread.SiteId), siteId) &
 	Condition.Equal(nameof(Thread.ForumId), 100),
 	paging
 );
@@ -758,7 +511,7 @@ var threads = this.DataAccess.Select<Thread>(
 
 ```csharp
 var threads = this.DataAccess.Select<Thread>(
-	Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
+	Condition.Equal(nameof(Thread.SiteId), siteId) &
 	Condition.Equal(nameof(Thread.ForumId), 100),
 	Paging.Disabled, /* 此处指定不分页；也可以传入具体的分页设置。 */
 	Sorting.Descending("TotalViews"),   // 1.倒序：累计阅读数
@@ -801,7 +554,7 @@ var thread = this.DataAccess.Select<Thread>(
  * 注意：星号(*)只表示所有简单属性，不包含导航属性；导航属性必须显式指定。
  */
 var groups = this.DataAccess.Select<ForumGroup>(
-	Condition.Equal("SiteId", this.User.SiteId),
+	Condition.Equal("SiteId", siteId),
 	"*,Forums{*, Moderators{*}, MostRecentThread{*, Creator{*}}}"
 );
 ```
@@ -825,7 +578,7 @@ var groups = this.DataAccess.Select<ForumGroup>(
 	<property name="SiteId" type="uint" nullable="false" />
 	<property name="ForumId" type="ushort" nullable="false" sequence="#(SiteId)" />
 	<property name="GroupId" type="ushort" nullable="false" />
-	<property name="Name" type="string" length="50" nullable="false" />
+	<property name="Name" type="nvarchar" length="50" nullable="false" />
 
 	<complexProperty name="Users" port="ForumUser" multiplicity="*" immutable="false">
 		<link port="SiteId" />
@@ -872,7 +625,7 @@ var groups = this.DataAccess.Select<ForumGroup>(
 
 > 说明：版主列表并不需要暴露论坛成员的 `Permission` 字段，直接返回 [`UserProfile`](https://github.com/Zongsoft/discussions/blob/main/src/Models/UserProfile.cs) 会更简洁，也避免调用方再通过 `ForumUser.User` 跳转。因此 `Moderators` 设置为 `port="ForumUser:User"`。
 >
-> 对照上面的映射片段，可以看到 [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) 类中 `Users` 和 `Moderators` 的属性类型不同：
+> 对照上面的映射片段，可以看到 [Forum](https://github.com/Zongsoft/discussions/blob/main/src/Models/Forum.cs) 类中 `Users` 和 `Moderators` 的属性类型不同。以下成员摘录保留 `Forum.ForumUser` 的嵌套关系，省略构造函数、相等性方法和无关成员：
 
 ```csharp
 public abstract class Forum
@@ -884,24 +637,24 @@ public abstract class Forum
 
 	public abstract IEnumerable<ForumUser> Users { get; set; }
 	public abstract IEnumerable<UserProfile> Moderators { get; set; }
-}
 
-public struct ForumUser : IEquatable<ForumUser>
-{
-	public uint SiteId;
-	public ushort ForumId;
-	public uint UserId;
-	public Permission Permission;
-	public bool IsModerator;
+	public struct ForumUser : IEquatable<ForumUser>
+	{
+		public uint SiteId;
+		public ushort ForumId;
+		public uint UserId;
+		public Permission Permission;
+		public bool IsModerator;
 
-	public Forum Forum;
-	public UserProfile User;
+		public Forum Forum;
+		public UserProfile User;
+	}
 }
 ```
 
 ```csharp
 var forum = this.DataAccess.Select<Forum>(
-	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.Equal("SiteId", siteId) &
 	Condition.Equal("ForumId", 100),
 	"*, Users{*, User{Name,Email,Avatar}}, Moderators{Name,Email,Avatar}"
 ).FirstOrDefault();
@@ -928,55 +681,11 @@ foreach(var member in forum.Users)
 <a name="usage-query-11"></a>
 #### 分组查询
 
-分组查询支持关系型数据库的聚合函数。
+[Grouping](../Zongsoft.Core/src/Data/Grouping.cs) 描述分组键、聚合函数与结果别名，和行级分页、排序是不同概念。
 
-```csharp
-struct ForumStatistic
-{
-	public uint SiteId;
-	public ushort ForumId;
-	public int TotalThreads;
-	public int TotalViews;
-	public int TotalPosts;
-	public Forum Forum;
-}
+Discussions 在 [Forum](../../discussions/src/Models/Forum.cs) 上定义论坛统计字段，但没有 `ForumStatistic` 投影类型或分组统计服务。真实流程在 [ThreadService.SetMostRecentThread](../../discussions/src/Services/ThreadService.cs) 和 [PostService](../../discussions/src/Services/PostService.cs) 中更新统计值。增加聚合查询前应先阅读该流程：持久化计数器与即时聚合的成本、一致性含义不同。
 
-var statistics = this.DataAccess.Select<ForumStatistic>(
-	"Thread",
-	Grouping
-		.Group("SiteId", "ForumId")
-		.Count("*", "TotalThreads")
-		.Sum("TotalViews")
-		.Sum("TotalPosts"),
-	Condition.Equal("SiteId", this.User.SiteId) &
-	Condition.Equal("Visible", true),
-	"Forum{Name}"
-);
-```
-
-上述查询大致生成如下 SQL：
-
-```sql
-SELECT
-	tt.*,
-	f.Name AS 'Forum.Name'
-FROM
-(
-	SELECT
-		t.SiteId,
-		t.ForumId,
-		COUNT(*) AS 'TotalThreads',
-		SUM(t.TotalViews) AS 'TotalViews',
-		SUM(t.TotalPosts) AS 'TotalPosts'
-	FROM Thread AS t
-	WHERE t.SiteId = @p1 AND
-			t.Visible = @p3
-	GROUP BY t.SiteId, t.ForumId
-) AS tt
-	LEFT JOIN Forum f ON
-		tt.SiteId = f.SiteId AND
-		tt.ForumId = f.ForumId;
-```
+分组能力本身可沿[公共契约](../Zongsoft.Core/src/Data/IDataAccess.cs)中接受 `Grouping` 的 `Select` 重载及具体[数据库驱动](#driver)阅读。字段必须来自真实映射，结果形状需匹配分组键和别名；这里没有预装的论坛统计命令可供调用。
 
 <a name="usage-query-12"></a>
 ### 导航条件
@@ -1007,68 +716,21 @@ var histories = this.DataAccess.Select<History>(
 );
 ```
 
-上述查询大致生成如下 SQL：
-
-```sql
-SELECT h.*
-FROM History h
-	LEFT JOIN Thread t ON
-		t.ThreadId = h.ThreadId
-WHERE t.IsValued = @p1 AND
-	(
-		h.FirstViewedTime BETWEEN @p2 AND @p3 OR
-		h.LastViewedTime BETWEEN @p4 AND @p5
-	);
-```
 
 <a name="usage-query-13"></a>
 #### 子查询过滤
 
-一对多导航属性的条件过滤可用 `Exists` 运算符表达，生成 SQL 时对应为子查询。
-
-> 下面的查询获取当前用户所属站点下的论坛：`Internal` 和 `All` 可见性的论坛直接返回；如果可见性为 `Specified`，则要求当前用户是版主或拥有论坛成员权限。
+[ThreadService.GetIsModeratorCriteria](../../discussions/src/Services/ThreadService.cs) 使用真实导航子查询检查版主身份：
 
 ```csharp
-var forums = this.DataAccess.Select<Forum>(
-	Condition.Equal("SiteId", this.User.SiteId) &
-	Condition.In("Visibility", Visibility.Internal, Visibility.All) |
-	(
-		Condition.Equal("Visibility", Visibility.Specified) &
-		Condition.Exists("Users",
-							Condition.Equal("UserId", this.User.UserId) &
-							(
-								Condition.Equal("IsModerator", true) |
-								Condition.NotEqual("Permission", Permission.None)
-							)
-						)
-	)
-);
+return Condition.Exists("Forum.Users",
+	Condition.Equal(nameof(Forum.ForumUser.UserId), this.Principal.Identity.GetIdentifier<uint>()) &
+	Condition.Equal(nameof(Forum.ForumUser.IsModerator), true));
 ```
 
-上述查询大致生成如下 SQL：
+`Approve`、`Visible` 等受限方法将该条件与目标主题条件组合。更复杂的 `OR` 表达式可阅读 [ForumService.OnValidate](../../discussions/src/Services/ForumService.cs)：先调用基类校验，再用 `criteria.And(...)` 附加整个可见性表达式。
 
-```sql
-SELECT t.*
-FROM Forum t
-WHERE
-	t.SiteId = @p1 AND
-	t.Visibility IN (@p2, @p3) OR
-	(
-		t.Visibility = @p4 AND
-		EXISTS
-		(
-				SELECT u.SiteId, u.ForumId, u.UserId
-				FROM ForumUser u
-				WHERE u.SiteId = t.SiteId AND
-						u.ForumId = t.ForumId AND
-						u.UserId = @p5 AND
-						(
-							u.IsModerator = @p6 OR
-							u.Permission != @p7
-						)
-		)
-	);
-```
+🚨 不要改写成 `siteCondition & publicCondition | privateCondition`，否则后一分支不再受站点条件限制。借鉴这些片段时必须保留[模块校验器](../../discussions/src/Data/DataValidator.cs)与服务授权。
 
 <a name="usage-query-14"></a>
 #### 类型转换
@@ -1082,69 +744,23 @@ WHERE
 
 `Execute` 用于执行映射文件中定义的命名 `command`。适合 SQL 语句、存储过程，以及无法自然归入某个实体 CRUD 操作的命令。声明的 `mutability` 是数据源选择器进行读写路由的依据：`mutability="none"` 选择可读数据源，`insert`、`update`、`delete`、`upsert` 选择可写数据源；选择器不会检查 SQL 脚本来判断读写特性。未声明 `mutability` 的命令会被视为可写命令 _（按 `Delete|Insert|Update` 处理）_，如无必要不必显式声明。
 
-```csharp
-public sealed class ForumStatistics
-{
-	public int TotalThreads { get; set; }
-	public int TotalPosts { get; set; }
-}
+Discussions 当前采用实体操作，并未部署论坛统计命令；映射中不存在 `Forum.GetStatistics` 或 `Forum.RefreshStatistics`，不能直接调用这些名称。
 
-var rows = this.DataAccess.Execute<ForumStatistics>(
-	"Forum.GetStatistics",
-	new []
-	{
-		new Parameter("SiteId", this.User.SiteId),
-		new Parameter("ForumId", forumId),
-	});
-
-var statistics = rows.FirstOrDefault();
-```
-
-如果是存储过程，请在映射文件中设置 `type="procedure"`（`alias` 指定存储过程的实际名称）。输出参数和返回参数会在命令执行后写回传入的 `Parameter` 对象；参数方向 `direction` 支持 `input`、`output`、`both`、`return`（加载器也接受 `in`、`out`、`result` 等简写，但为通过 XSD 校验建议使用标准写法）。
-
-```xml
-<command name="Forum.RefreshStatistics" alias="Discussions_Forum_RefreshStatistics" type="procedure" mutability="update">
-	<parameter name="SiteId" type="uint" />
-	<parameter name="ForumId" type="uint" />
-	<parameter name="Total" type="int" direction="output" />
-</command>
-```
-
-```csharp
-var total = Parameter.Output("Total");
-
-this.DataAccess.Execute(
-	"Forum.RefreshStatistics",
-	new []
-	{
-		new Parameter("SiteId", this.User.SiteId),
-		new Parameter("ForumId", forumId),
-		total,
-	});
-
-var totalValue = total.Value;
-```
+实现参考见 [MetadataCommand](src/Metadata/Profiles/MetadataCommand.cs)：它拥有命令名、别名、参数及各驱动脚本；有效 XML 由 [Zongsoft.Data.xsd](Zongsoft.Data.xsd) 定义。存储过程采用 `type="procedure"`，别名必须对应已有过程；输出参数按照声明的方向回写传入的 `Parameter` 对象。这些是扩展契约，不是 Discussions 已实现的附加功能。
 
 <a name="usage-delete"></a>
 ### 删除操作
 
+此片段使用真实的 [Post 模型](../../discussions/src/Models/Post.cs)，`postId` 由调用方提供，`userId` 必须经过权限校验；它不是 Discussions 删除服务的源码摘录。应用中应调用对应服务，以保留授权和附件清理流程。
+
 ```csharp
 this.DataAccess.Delete<Post>(
 	Condition.Equal("Visible", false) &
-	Condition.Equal("Creator.Email", "zongsoft@qq.com")
+	Condition.Equal("CreatorId", userId) &
+	Condition.Equal("PostId", postId)
 );
 ```
 
-上述删除大致生成如下 SQL：
-
-```sql
-DELETE t
-FROM Post AS t
-	LEFT JOIN UserProfile AS u ON
-		t.CreatorId = u.UserId
-WHERE t.Visible=0 AND
-		u.Email='zongsoft@qq.com';
-```
 
 <a name="usage-delete-cascade"></a>
 #### 级联删除
@@ -1157,35 +773,15 @@ this.DataAccess.Delete<Post>(
 );
 ```
 
-上述删除大致生成如下 SQL（_SQL Server_）：
-
-```sql
-CREATE TABLE #TMP
-(
-	PostId bigint
-);
-
-/* 删除主表记录，并将关联键值写入临时表。 */
-DELETE FROM Post
-OUTPUT DELETED.PostId INTO #TMP
-WHERE PostId=@p1;
-
-/* 根据临时表中的键值删除从表记录。 */
-DELETE FROM PostVoting
-WHERE PostId IN
-(
-	SELECT PostId FROM #TMP
-);
-```
 
 <a name="usage-insert"></a>
 ### 新增操作
 
 ```csharp
-this.DataAccess.Insert("Forum", new {
-	SiteId = this.User.SiteId,
+this.DataAccess.Insert("Discussions.Forum", new {
+	SiteId = siteId,
 	GroupId = 100,
-	Name = "xxxx"
+	Name = forumName
 });
 ```
 
@@ -1200,9 +796,9 @@ this.DataAccess.Insert("Forum", new {
 - `SuppressValidator()` 禁用本次新增操作注册的数据验证器。
 
 ```csharp
-var count = this.DataAccess.Insert<ForumUser>(
+var count = this.DataAccess.Insert<Forum.ForumUser>(
 	new {
-		SiteId = this.User.SiteId,
+		SiteId = siteId,
 		ForumId = 100,
 		UserId = 100,
 		Permission = Permission.Read,
@@ -1210,16 +806,6 @@ var count = this.DataAccess.Insert<ForumUser>(
 	DataInsertOptions.IgnoreConstraint());
 ```
 
-上述新增大致生成如下 SQL：
-
-```sql
-/* MySQL、ClickHouse */
-INSERT IGNORE INTO ForumUser (SiteId,ForumId,UserId,Permission) VALUES (@p1,@p2,@p3,@p4);
-
-/* PostgreSQL、SQLite */
-INSERT INTO ForumUser (SiteId,ForumId,UserId,Permission) VALUES (@p1,@p2,@p3,@p4)
-ON CONFLICT DO NOTHING;
-```
 
 如果同时显式提供了序号字段的值，可链式设置序号选项：
 
@@ -1229,7 +815,7 @@ var options = DataInsertOptions
 	.IgnoreConstraint();
 
 this.DataAccess.Insert<Forum>(new {
-	SiteId = this.User.SiteId,
+	SiteId = siteId,
 	ForumId = 100,
 	GroupId = 10,
 	Name = "General",
@@ -1244,29 +830,20 @@ this.DataAccess.Insert<Forum>(new {
 ```csharp
 var forum = Model.Build<Forum>();
 
-forum.SiteId = this.User.SiteId;
+forum.SiteId = siteId;
 forum.GroupId = 100;
-forum.Name = "xxxx";
+forum.Name = forumName;
 
-forum.Users = new ForumUser[]
+forum.Users = new Forum.ForumUser[]
 {
-	new ForumUser { UserId = 100, IsModerator = true },
-	new ForumUser { UserId = 101, Permission = Permission.Read },
-	new ForumUser { UserId = 102, Permission = Permission.Write }
+	new Forum.ForumUser { UserId = 100, IsModerator = true },
+	new Forum.ForumUser { UserId = 101, Permission = Permission.Read },
+	new Forum.ForumUser { UserId = 102, Permission = Permission.Write }
 };
 
 this.DataAccess.Insert(forum, "*, Users{*}");
 ```
 
-上述新增大致生成如下 SQL：
-
-```sql
-/* 主表插入语句 */
-INSERT INTO Forum (SiteId,ForumId,GroupId,Name,...) VALUES (@p1,@p2,@p3,@p4,...);
-
-/* 从表插入语句（批量） */
-INSERT INTO ForumUser (SiteId,ForumId,UserId,Permission,IsModerator) VALUES (...),(...),(...);
-```
 
 <a name="usage-import"></a>
 ### 导入操作
@@ -1276,12 +853,12 @@ INSERT INTO ForumUser (SiteId,ForumId,UserId,Permission,IsModerator) VALUES (...
 ```csharp
 var users = new []
 {
-	new { SiteId = this.User.SiteId, ForumId = 100, UserId = 100, Permission = Permission.Read },
-	new { SiteId = this.User.SiteId, ForumId = 100, UserId = 101, Permission = Permission.Write },
+	new { SiteId = siteId, ForumId = 100, UserId = 100, Permission = Permission.Read },
+	new { SiteId = siteId, ForumId = 100, UserId = 101, Permission = Permission.Write },
 };
 
 var count = this.DataAccess.Import(
-	"ForumUser",
+	"Discussions.ForumUser",
 	users,
 	"SiteId,ForumId,UserId,Permission".Split(','));
 ```
@@ -1290,11 +867,10 @@ var count = this.DataAccess.Import(
 
 ```csharp
 var options = DataImportOptions
-	.Parameter("SkipSynchronization")
 	.IgnoreConstraint();
 
 var count = this.DataAccess.Import(
-	"ForumUser",
+	"Discussions.ForumUser",
 	users,
 	"SiteId,ForumId,UserId,Permission".Split(','),
 	options);
@@ -1307,22 +883,13 @@ var count = this.DataAccess.Import(
 var user = Model.Build<UserProfile>();
 
 user.UserId = 100;
-user.Name = "Popeye";
-user.Nickname = "Popeye Zhong";
+user.Name = name;
+user.Nickname = nickname;
 user.Gender = Gender.Male;
 
 this.DataAccess.Update(user);
 ```
 
-上述更新大致生成如下 SQL：
-
-```sql
-/* 注：未修改的属性不会生成到 SET 子句。 */
-
-UPDATE UserProfile SET
-Name=@p1, Nickname=@p2, Gender=@p3
-WHERE UserId=@p4;
-```
 
 <a name="usage-update-dynamic"></a>
 #### 匿名类
@@ -1332,8 +899,8 @@ WHERE UserId=@p4;
 ```csharp
 this.DataAccess.Update<UserProfile>(
 	new {
-		Name="Popeye",
-		Nickname="Popeye Zhong",
+		Name=name,
+		Nickname=nickname,
 		Gender=Gender.Male,
 	},
 	Condition.Equal("UserId", 100)
@@ -1368,18 +935,14 @@ this.DataAccess.Update<UserProfile>(
 <a name="usage-update-complex"></a>
 #### 关联更新
 
-一对一和一对多导航属性可以和主实体**一起写入**。对于一对多集合，子记录会按 **UPSERT** 语义写入。
+真实的 [ThreadService.Approve](../../discussions/src/Services/ThreadService.cs) 在一次操作中更新主题及其内容帖：
 
 ```csharp
 public bool Approve(ulong threadId)
 {
-	var criteria =
-		Condition.Equal(nameof(Thread.ThreadId), threadId) &
-		Condition.Equal(nameof(Thread.Approved), false) &
-		Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
-		Condition.Exists("Forum.Users",
-			Condition.Equal(nameof(Forum.ForumUser.UserId), this.User.UserId) &
-			Condition.Equal(nameof(Forum.ForumUser.IsModerator), true));
+	var criteria = Condition.Equal(nameof(Thread.ThreadId), threadId) &
+	               Condition.Equal(nameof(Thread.Approved), false) &
+	               GetIsModeratorCriteria();
 
 	return this.DataAccess.Update<Thread>(new
 	{
@@ -1393,73 +956,16 @@ public bool Approve(ulong threadId)
 }
 ```
 
-上述更新大致生成如下 SQL(_SQL Server_)：
-
-```sql
-CREATE TABLE #TMP
-(
-	PostId bigint NOT NULL
-);
-
-UPDATE T SET
-	T.[Approved]=@p1,
-	T.[ApprovedTime]=@p2
-OUTPUT DELETED.PostId INTO #TMP
-FROM [Discussions_Thread] AS T
-	LEFT JOIN [Discussions_Forum] AS T1 ON /* Forum */
-		T1.[SiteId]=T.[SiteId] AND
-		T1.[ForumId]=T.[ForumId]
-WHERE
-	T.[ThreadId]=@p3 AND
-	T.[Approved]=@p4 AND
-	T.[SiteId]=@p5 AND EXISTS (
-		SELECT [SiteId],[ForumId] FROM [Discussions_ForumUser]
-		WHERE [SiteId]=T1.[SiteId] AND [ForumId]=T1.[ForumId] AND [UserId]=@p6 AND [IsModerator]=@p7
-	);
-
-UPDATE T SET
-	T.[Approved]=@p1
-FROM [Discussions_Post] AS T
-WHERE EXISTS (
-	SELECT [PostId]
-	FROM #TMP
-	WHERE [PostId]=T.[PostId]);
-```
+`GetIsModeratorCriteria()` 是同一类中的私有方法，见[子查询过滤](#usage-query-13)。`*,Post{Approved}` 显式纳入内容帖的审核字段，不能删除版主条件或模块校验器。一对多关联写入使用 Upsert 语义，具体 SQL 由驱动决定。
 
 <a name="usage-upsert"></a>
-### 新增更新
+### 增改操作
 
-新增更新(**Upsert**)表示：记录不存在时插入，记录已存在时更新。数据引擎会尽量使用数据库提供的原生 upsert 能力。
+Upsert 在主键不存在时插入、存在时更新。真实用例是 [ThreadService.SetHistory](../../discussions/src/Services/ThreadService.cs) 按用户和主题维护浏览历史，并递增 `ViewedCount`。
 
-> 在下面的例子中，如果 `History` 表中已存在 `UserId=100` 且 `ThreadId=2001` 的记录，则递增 `ViewedCount`；否则新增一条记录，并将 `ViewedCount` 设为 `1`。
+🚨 当前源码存在不一致：该方法写入 `MostRecentViewedTime`，而 [History 模型](../../discussions/src/Models/History.cs)与[映射](../../discussions/src/Zongsoft.Discussions.mapping)定义的是 `LastViewedTime`。本文不将其展示为已验证可运行示例，也不悄悄修改实现；复用这条路径前需先对齐服务、模型与映射。
 
-```csharp
-this.DataAccess.Upsert<History>(
-	new {
-		UserId = 100,
-		ThreadId = 2001,
-		ViewedCount = Operand.Field(nameof(History.ViewedCount)) + 1,
-		LastViewedTime = DateTime.Now,
-	}
-);
-```
-
-上述写入大致生成如下 SQL：
-
-```sql
-/* MySQL 语法 */
-INSERT INTO History (UserId,ThreadId,ViewedCount,LastViewedTime) VALUES (@p1,@p2,@p3,@p4)
-ON DUPLICATE KEY UPDATE ViewedCount=ViewedCount + @p3, LastViewedTime=@p4;
-
-/* SQL Server 或 PostgreSQL 支持 MERGE 语句的数据库语法 */
-MERGE History AS target
-USING (SELECT @p1,@p2,@p3,@p4) AS source (UserId,ThreadId,ViewedCount,LastViewedTime)
-ON (target.UserId=source.UserId AND target.ThreadId=source.ThreadId)
-WHEN MATCHED THEN
-	UPDATE SET target.ViewedCount=target.ViewedCount+@p3, LastViewedTime=@p4
-WHEN NOT MATCHED THEN
-	INSERT (UserId,ThreadId,ViewedCount,LastViewedTime) VALUES (@p1,@p2,@p3,@p4);
-```
+Upsert 契约与驱动限制见 [IDataAccess](../Zongsoft.Core/src/Data/IDataAccess.cs)、[DataUpsertOptions](../Zongsoft.Core/src/Data/DataUpsertOptions.cs) 和所选驱动 README。主键匹配、序号生成、新增时默认值、已有行更新需分别考虑。
 
 <a name="usage-returning"></a>
 ### 返回写入值
@@ -1503,7 +1009,7 @@ this.DataAccess.Delete<PostAttachment>(
 foreach(var row in options.Returning.Rows)
 {
 	if(row.TryGetValue(nameof(PostAttachment.AttachmentId), out var value))
-		DeletePhysicalAttachment(Convert.ToUInt64(value));
+		Console.WriteLine(value);
 }
 ```
 
@@ -1541,104 +1047,28 @@ foreach(var row in options.Returning.Rows)
 | `DataUpdateOptions.SuppressValidator(UpdateBehaviors.PrimaryKey)` | 允许更新语句包含主键字段。它只适合修复或迁移数据，不适合普通业务更新。 |
 | `DataUpsertOptions.IgnoreConstraint()` | 对增改语句表达同样的忽略约束冲突意图。 |
 
-`Parameter(...)` 常用于把临时状态传给验证器、过滤器或服务重写方法。譬如，某个同步过滤器在调用方设置标记时跳过副作用：
+真实的操作参数包括 [PostService.OnInsert](../../discussions/src/Services/PostService.cs) 读取的 `"Thread"`：服务接受 `Thread` 模型或 `IDataDictionary<Thread>`，再从服务容器定位 `ForumService` 并判断新帖审核状态。空值处理和文件内容存储需阅读完整方法。这些选项属于操作上下文，不是 SQL 参数；不存在内建的 `SkipSynchronization` 或 `SkipAudit` 开关。
+
+前后回调、`IDataAccess` 事件及过滤器提供操作阶段扩展。[ThreadFilter](../../discussions/src/Data/ThreadFilter.cs) 是真实的结果过滤用例：`OnFiltered` 通过 [FilteredResult](../../discussions/src/Data/FilteredResult.cs) 包装结果，屏蔽无权查看的未审核内容，或读取外部存储的帖子内容。包装器保留同步/异步枚举及分页通知，请结合两个文件阅读。
+
+事务范围可参考 [ThreadService.OnInsert](../../discussions/src/Services/ThreadService.cs)。以下摘自内容校验、模式准备之后的事务主体：
 
 ```csharp
-var options = DataUpdateOptions
-	.Parameter("SkipSynchronization")
-	.SuppressValidator();
+using(var transaction = new Transaction())
+{
+	var count = base.OnInsert(data, schema, options);
 
-this.DataAccess.Update<Thread>(
-	new { TotalViews = Operand.Field(nameof(Thread.TotalViews)) + 1 },
-	Condition.Equal(nameof(Thread.ThreadId), threadId),
-	options);
+	if(count < 1)
+		return count;
+
+	this.SetMostRecentThread(data);
+	transaction.Commit();
+
+	return count;
+}
 ```
 
-过滤器或服务钩子可从操作上下文读取该标记：
-
-```csharp
-if(context.Options.Parameters.Contains("SkipSynchronization"))
-	return;
-```
-
-`Parameter(...)` 也可以携带服务钩子需要的对象：
-
-```csharp
-var options = DataInsertOptions.Parameter("Thread", thread);
-
-this.DataAccess.Insert<Post>(
-	new {
-		ThreadId = thread.ThreadId,
-		CreatorId = this.User.UserId,
-		Content = content,
-	},
-	options);
-```
-
-对于映射命令，SQL 或存储过程参数仍然放在 `Execute` 参数中；`DataExecuteOptions` 只放操作上下文标记：
-
-```csharp
-var options = DataExecuteOptions.Parameter("SkipAudit");
-
-this.DataAccess.Execute(
-	"Forum.RefreshStatistics",
-	new []
-	{
-		new Parameter("SiteId", this.User.SiteId),
-		new Parameter("ForumId", forumId),
-	},
-	options);
-```
-
-`Distinct()` 适合标量查询：
-
-```csharp
-var creatorIds = this.DataAccess.Select<uint>(
-	nameof(Thread),
-	Condition.Equal(nameof(Thread.ForumId), forumId),
-	nameof(Thread.CreatorId),
-	DataSelectOptions.Distinct());
-```
-
-内部操作明确需要绕开普通验证规则时，可使用 `SuppressValidator()`：
-
-```csharp
-var exists = this.DataAccess.Exists<UserProfile>(
-	Condition.Equal(nameof(UserProfile.UserId), userId),
-	DataExistsOptions.SuppressValidator());
-```
-
-只有在必须修复主键时，才使用 `UpdateBehaviors.PrimaryKey`：
-
-```csharp
-this.DataAccess.Update<UserProfile>(
-	new { UserId = newUserId },
-	Condition.Equal(nameof(UserProfile.UserId), oldUserId),
-	nameof(UserProfile.UserId),
-	new DataUpdateOptions(UpdateBehaviors.PrimaryKey));
-```
-
-每类操作也都有前后回调和对应的 `IDataAccess` 事件，譬如 `Selecting`/`Selected`、`Inserting`/`Inserted`、`Executing`/`Executed`。注册到 `IDataAccess.Filters` 的过滤器会在前置事件之后、数据提供程序执行之前运行，适合承载通用横切逻辑。
-
-当多个操作必须共享同一个环境数据会话，并一起提交或回滚时，可使用 `Transaction`。
-
-```csharp
-using var transaction = Transaction.ReadCommitted();
-
-this.DataAccess.Update<Thread>(
-	new { Approved = true, ApprovedTime = DateTime.Now },
-	Condition.Equal(nameof(Thread.ThreadId), threadId));
-
-this.DataAccess.Upsert<History>(new {
-	UserId = this.User.UserId,
-	ThreadId = threadId,
-	ViewedCount = Operand.Field(nameof(History.ViewedCount)) + 1,
-	FirstViewedTime = DateTime.Now,
-	LastViewedTime = DateTime.Now,
-});
-
-transaction.Commit();
-```
+私有方法 `SetMostRecentThread` 属于该类。事务将新增和关联摘要更新组合起来，但不能回滚文件或对象存储写入。普通应用调用应保留授权与校验器。
 
 <a name="usage-other"></a>
 ### 其他

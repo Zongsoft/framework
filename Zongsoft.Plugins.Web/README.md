@@ -61,104 +61,68 @@ The `ApplicationConvention` integrates plugin components with MVC application mo
 
 The built-in `PluginController` exposes plugin information for framework tooling. Treat that endpoint as operational metadata and protect it according to the deployment's authorization policy.
 
-## Complete Example: Deploy a Decoupled Web Plugin
+## Real Use Case: The Discussions Web Plugin
 
-This example uses the existing [Zongsoft web host](https://github.com/Zongsoft/hosting/tree/main/web/default) without changing it. The business plugin depends only on Core's expression contract and ASP.NET Core. Scriban is a deployment-time implementation choice, not a business-project reference.
+### 1. Understand the Existing Controller's Consumption Boundary
 
-### 1. Create the Consumer Plugin
-
-Create an `Acme.Rules.Web` class library targeting a framework compatible with the host, enable implicit usings, and reference `Zongsoft.Core` plus the `Microsoft.AspNetCore.App` FrameworkReference. Only the host itself needs Plugins.Web. Add this controller:
+[ForumController](../../discussions/src/api/Controllers/ForumController.cs) belongs to the real [Web class library](../../discussions/src/api/Zongsoft.Discussions.Web.csproj) and inherits the framework's service controller. This excerpt preserves one actual action and omits the others:
 
 ```csharp
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
-using Zongsoft.Expressions;
-using Zongsoft.Services;
-
-namespace Acme.Rules.Web;
-
-[ApiController]
-[AllowAnonymous]
-[Route("rules/probe")]
-public class ProbeController : ControllerBase
+[ControllerName("Forums")]
+public class ForumController : ServiceController<Forum, ForumService>
 {
-	[HttpGet]
-	public IActionResult Get()
+	[ActionName("Moderators")]
+	[HttpGet("{id}/[action]")]
+	public IEnumerable<UserProfile> GetModerators(ushort id)
 	{
-		var context = ApplicationContext.Current;
-		var evaluator = context.Services.FindRequired<IExpressionEvaluator>(
-			context.Configuration["Rules:Evaluator"]);
-		var value = evaluator.Evaluate("x + y", new Dictionary<string, object>
-		{
-			["x"] = 20,
-			["y"] = 22,
-		});
-		return this.Ok(new { Value = value });
+		return this.DataService.GetModerators(id, this.Request.Headers.GetDataSchema());
 	}
 }
 ```
 
-It evaluates a fixed expression, not client-supplied scripts. Module-owned controllers can use the application's `Module.Current.Services` or property injection; see [Core service resolution](../Zongsoft.Core/README.md). Do not construct, cache or dispose a concrete evaluator inside the controller.
+`Forum`, `UserProfile` and `ForumService` come from Discussions rather than types invented for this guide. The controller consumes its domain service through the base `DataService` property and passes the request schema. It constructs no data engine, database driver or cache implementation. See [ForumService.cs](../../discussions/src/Services/ForumService.cs).
 
-### 2. Deploy the Manifest and Configuration
+### 2. Use Real Manifests and Deployment Artifacts
 
-Deploy the built `Acme.Rules.Web.dll` and the following two matching files to `plugins/acme/rules/web/`. The assembly name must match the actual project output.
-
-`Acme.Rules.Web.plugin`:
+The manifest excerpt from [Zongsoft.Discussions.Web.plugin](../../discussions/src/api/Zongsoft.Discussions.Web.plugin):
 
 ```xml
-<?xml version="1.0" encoding="utf-8"?>
-<plugin name="Acme.Rules.Web">
-	<manifest>
-		<assemblies>
-			<assembly name="Acme.Rules.Web" />
-		</assemblies>
-		<dependencies>
-			<dependency name="Main" />
-		</dependencies>
-	</manifest>
-</plugin>
+<manifest>
+	<dependencies>
+		<dependency name="Zongsoft.Discussions" />
+	</dependencies>
+	<assemblies>
+		<assembly name="Zongsoft.Discussions.Web" />
+	</assemblies>
+</manifest>
 ```
 
-`Acme.Rules.Web.option`:
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<options>
-	<option path="/">
-		<rules evaluator="Scriban" />
-	</option>
-</options>
-```
-
-Add the [Scriban](../externals/scriban/README.md) fragment to the host's existing `.deploy`:
+Use the [domain deployment manifest](../../discussions/src/Zongsoft.Discussions.deploy) and [Web deployment manifest](../../discussions/src/api/Zongsoft.Discussions.Web.deploy), preserving business options, mappings, identity extensions and templates. This package-composition fragment still requires the host, Data, Security, a database driver and file storage from the complete deployment plan:
 
 ```ini
-[plugins zongsoft externals scriban]
-nuget:Zongsoft.Externals.Scriban
+[plugins zongsoft discussions]
+nuget:Zongsoft.Discussions
+
+[plugins zongsoft discussions web]
+nuget:Zongsoft.Discussions.Web
 ```
 
-Retain Main, host dependencies and runtime resources. The business manifest need not depend on Scriban's plugin name: configuration and the shared contract select the implementation, while deployment composition ensures its availability. See the [plugin guide](../Zongsoft.Plugins/README.md) for deployment commands and directory layout.
+The Web manifest depends on the domain plugin, whose project targets its public dependencies. Configuration and plugins locate data providers. See the [plugin guide](../Zongsoft.Plugins/README.md) for module composition.
 
-### 3. Send a Request and Verify
+### 3. Check Actual Requests and Prerequisites
 
-Start the host from the isolated deployment directory, binding only to loopback. The example port must be available:
+[forum.http](../../discussions/docs/http/forum.http) contains maintained forum request templates, including the list route `/Discussions/Forums`. The moderator action appends `{id}/Moderators` to the base route; confirm the complete route through host controller descriptors.
 
-```shell
-dotnet Zongsoft.Hosting.Web.dll --urls=http://127.0.0.1:51873
-curl http://127.0.0.1:51873/rules/probe
-```
+Prepare a compatible host, dedicated initialized database, `Discussions` connection, test site, appropriate identity and required storage. Use forum identifiers from your test data rather than assuming a fixed ID exists. This is a source-backed use case, not a database-free probe or a promise of success in an uninitialized environment.
 
-Expect `200 OK` with `Value` equal to `42` in the JSON response. Press Ctrl+C to stop the host afterward. Isolated local verification covered assembly discovery, attribute routing, configuration reading, shared-interface matching and the HTTP response. It used no database, Redis or external model service.
-
-🚨 `[AllowAnonymous]` is only for this input-free local probe, not an authorization template for business APIs. Real endpoints need authentication, authorization, input limits and an environment-appropriate CORS policy.
+🚨 Do not remove identity transformation, data validators or business permissions to make an example succeed. Even read requests may expose forum data. Use an isolated identity/site and never copy repository addresses or credentials into real requests.
 
 ### Common Pitfalls
 
-- Copied files but no controller: check manifest assembly entries, loadable dependencies and actual ASP.NET Core assembly references. A DLL placed in a directory is not automatically a plugin Web part.
-- Discovered controller but HTTP 404: `Area` and `HttpGet` alone do not guarantee a route template. The default host uses `MapControllers()`, requiring attribute routes or explicitly configured application conventions.
-- Provider not found on the first request: inspect the option filename, actual `Rules:Evaluator` value, provider assembly and service scanning. A package reference does not deploy an implementation plugin.
-- Do not hide composition problems by moving business controllers or all implementation registrations into the host's `Program.cs`.
+- DLL copied but controller absent: check manifest assembly entries, dependencies and the Web library's actual ASP.NET Core references.
+- Controller discovered but HTTP 404: check `ControllerName`, module ownership, base routes and action templates; class names alone do not determine URLs.
+- Service or data unavailable on first call: inspect service scanning, modules, connections, mappings and the database rather than hard-coding implementations into host startup.
+- Subscription, worker and data-resource shutdown follow host lifecycle; stop the test host before cleaning only its test resources.
 
 ## Request Context
 

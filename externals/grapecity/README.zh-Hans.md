@@ -29,13 +29,20 @@
 dotnet add package Zongsoft.Externals.Grapecity
 ```
 
-```csharp
-using Zongsoft.Externals.Grapecity.Reporting;
+真实参考可从适配器的 [Report.Open(IReportDescriptor)](src/Reporting/Report.cs) 实现入手：
 
-using var report = Report.Open("reports/sales.rdlx");
-Console.WriteLine($"{report.Name}: {report.Type}");
-report.Parameters["Title"].Value = "月度销售";
+```csharp
+public static Report Open(IReportDescriptor descriptor)
+{
+	if(descriptor == null)
+		throw new ArgumentNullException(nameof(descriptor));
+
+	using var stream = descriptor.Open();
+	return stream == null ? null : Open(stream);
+}
 ```
+
+这段源码展示框架描述符与厂商引擎之间的边界，并不是要求使用者手动构造应用服务。仓库未附带销售报表 RDLX 模板，也没有预定义的 `Title` 参数。请部署可信的 ActiveReports 定义，并只使用其中实际声明的参数。宿主中的查看器和设计器组合方式见 [Web 包](api/README.zh-Hans.md)。
 
 `Report.Open` 接受框架文件路径、数据流或 `IReportDescriptor`。它包装 ActiveReports `PageReport`，按第一个报表项分类为固定页（`FPL`）或连续页（`CPL`），并把 ActiveReports 参数/数据源投射到 Zongsoft 报表契约。
 
