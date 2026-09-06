@@ -89,3 +89,11 @@ info
 
 3. Run `info` in the server and confirm that the client channel and session are listed.
 4. Run `stop` and `start` in the server to observe the client connection lifecycle, then run `unsubscribe demo` in the client.
+
+## Boundaries and Cleanup
+
+[server/Program.cs](server/Program.cs) starts an embedded broker; [client/Program.cs](client/Program.cs) owns its diagnostic queue. For application use, follow the [plugin and public queue-provider guide](../README.md). Wait for subscription completion before publishing and inspect received output before unsubscribing; a printed send result alone does not prove application processing or exactly-once business effects.
+
+🚨 Use a dedicated local broker, isolate its listener port, and publish only fake data on unique test topics. The sample startup does not configure a production authentication/TLS policy or durable message storage.
+
+Unsubscribe in the client, run `close`, then `exit` and confirm. Run `stop` and `exit` in the sample server. If you instead connected to an external broker, client shutdown does not remove that broker's retained messages or persisted sessions: clean only test resources owned by this run, not the shared broker.

@@ -11,6 +11,7 @@ description: 实现、审查、调试、测试或重构 Zongsoft.Externals.Etcd 
 
 - `EtcdService` 是唯一公共门面，拥有一个延迟创建的 `EtcdClient`；激活后冻结 `Namespace`，并且只释放客户端一次。
 - 配置实例通过 `EtcdServiceProvider` 解析。它必须提供 `IServiceProvider<ISequence>`、`IServiceProvider<ISequenceBase>` 和 `IServiceProvider<IDistributedLockManager>`。
+- 提供者没有 Etcd 别名或 IMatchable 名称匹配；多个同契约提供者并存时由应用组合选择，不能在 README 编造 `name@Etcd`。按名缓存实例会回退默认连接，但不自动把服务名写入 Namespace。
 - 物理键统一添加 `<Namespace>:` 前缀；公共查找结果只移除该前缀。
 - README 面向使用者；算法、不变量、风险和维护说明保留在本技能中。
 

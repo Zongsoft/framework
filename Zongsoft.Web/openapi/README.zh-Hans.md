@@ -171,3 +171,25 @@ openapi/
 ## 许可证
 
 **Zongsoft.Web.OpenApi** 库基于 [GNU 宽通用公共许可证 v3.0](../../LICENSE) 发布。
+
+## 插件化接入
+
+优先通过宿主组合本能力；包引用用于编译，而插件加载还需要部署清单和运行产物。完整流程见[插件化入门](../../Zongsoft.Plugins/README.zh-Hans.md)。
+
+使用 Plugins.Web 宿主，其初始化流程发现本包服务注册，并按部署选项映射 OpenAPI/Scalar。公开文档端点前确认暴露范围与身份验证。
+
+| 运行产物 | 源码依据 |
+| --- | --- |
+| `Zongsoft.Web.OpenApi` | [Zongsoft.Web.OpenApi.plugin](Zongsoft.Web.OpenApi.plugin) |
+| 文件复制及依赖 | [Zongsoft.Web.OpenApi.deploy](Zongsoft.Web.OpenApi.deploy) |
+
+在已有宿主的 `.deploy` 中加入以下片段（保留宿主原有 Main 等基础清单，不要用片段覆盖整份文件）：
+
+```ini
+[plugins zongsoft web openapi]
+nuget:Zongsoft.Web.OpenApi
+```
+
+按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
+
+清单列出的附属产物包括：`Zongsoft.Web.OpenApi.option`、`Zongsoft.Web.OpenApi.plugin`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。

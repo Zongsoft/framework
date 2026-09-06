@@ -25,15 +25,49 @@
 加载 `Zongsoft.Externals.Etcd.plugin`，并配置 `/Externals/Etcd/ConnectionSettings`：
 
 ```xml
-<connectionSettings>
-	<connectionSetting connectionSetting.name="local" driver="etcd"
-	                   value="server=127.0.0.1;port=2379;timeout=10s" />
-</connectionSettings>
+<options>
+	<option path="/Externals/Etcd">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="local" driver="etcd"
+			                   value="server=127.0.0.1;port=2379;timeout=10s" />
+		</connectionSettings>
+	</option>
+</options>
 ```
 
 `server` 也可填写逗号分隔的端点列表；`username` 和 `password` 用于启用 etcd 身份验证。请在首次操作前设置 `Namespace` 以隔离逻辑键，服务激活后不能再改变该值。
 
-## 直接使用
+## 从插件服务容器使用
+
+消费序号或锁的业务模块只需引用 `Zongsoft.Core`。以下代码运行在已加载 Etcd 插件及上述配置的宿主命令或应用服务中，并假设该容器只注册了一个序号提供者：
+
+```csharp
+using Zongsoft.Common;
+using Zongsoft.Services;
+
+var provider = ApplicationContext.Current.Services
+	.ResolveRequired<Zongsoft.Services.IServiceProvider<ISequence>>();
+var sequence = provider.GetService("local")
+	?? throw new InvalidOperationException("Sequence service not found.");
+
+using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+var key = $"docs:sequence:{Guid.NewGuid():N}";
+var value = await sequence.IncreaseAsync(key, seed: 1000,
+	expiry: TimeSpan.FromMinutes(1), cancellation: cancellation.Token);
+Console.WriteLine(value);
+```
+
+新键首次返回 `1001`，测试键约一分钟后过期。按名解析的是连接设置 `local`，不是插件名；调用方不要释放容器共享的提供者或服务。模块内可改用 `Module.Current.Services`。
+
+💡 当前 Etcd 提供者没有注册名为 `Etcd` 的服务别名，也没有实现按该名字匹配；不能照搬 Redis 的 `local@Redis` 写法为 `local@Etcd`。若同一容器同时部署多个 `IServiceProvider<ISequence>`，由应用组合层明确选择/注入所需提供者，不依赖枚举顺序。
+
+序号和锁解决不同问题：序号保证原子分配，但不保证业务事务提交或无间断编号；锁用租约限制持有时间，进程暂停或失联后仍可能继续执行旧代码，因此受保护的写入端还必须检查单调[栅栏令牌](../../Zongsoft.Core/src/Services/Distributing/IDistributedLock.cs)。只在调用方获取锁而不在资源端校验令牌，不能阻止过期持有者写入。
+
+🚨 连接名称只选择服务实例，不会自动成为键前缀。公共接口调用方应使用约定的业务键前缀；如果需要 `EtcdService.Namespace`，应由组合层在首次操作前统一设置。不要在每次业务调用时强转实现类并修改共享配置。
+
+## 独立工具中的直接使用
+
+以下是自行拥有客户端生命周期的低层工具用法，不是模块间协作的默认方式。基础 KV 方法是 Etcd 专有能力；公共序号与锁消费者应采用上一节的接口路径。
 
 ```csharp
 using Zongsoft.Externals.Etcd;
@@ -73,3 +107,25 @@ Podman 配置位于 `D:\Zongsoft\hosting\zongsoft.pod-etcd.yaml`，也可在 hos
 - [dotnet-etcd 文档](https://github.com/shubhamranjan/dotnet-etcd/tree/main/docs)
 - [etcd 官方文档](https://etcd.io/docs)
 - [etcd 中文文档](https://github.com/FlamingTree/etcd-doc-zh/tree/master/documentation)
+
+## 插件化接入
+
+优先通过宿主组合本能力；包引用用于编译，而插件加载还需要部署清单和运行产物。完整流程见[插件化入门](../../Zongsoft.Plugins/README.zh-Hans.md)。
+
+清单注册 Etcd 提供程序、设置驱动与命令组。配置具名设置后，通过提供程序解析序号或锁契约；命名空间及租约选项仍属于应用契约。
+
+| 运行产物 | 源码依据 |
+| --- | --- |
+| `Zongsoft.Externals.Etcd` | [Zongsoft.Externals.Etcd.plugin](src/Zongsoft.Externals.Etcd.plugin) |
+| 文件复制及依赖 | [Zongsoft.Externals.Etcd.deploy](src/Zongsoft.Externals.Etcd.deploy) |
+
+在已有宿主的 `.deploy` 中加入以下片段（保留宿主原有 Main 等基础清单，不要用片段覆盖整份文件）：
+
+```ini
+[plugins zongsoft externals etcd]
+nuget:Zongsoft.Externals.Etcd
+```
+
+按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
+
+清单列出的附属产物包括：`Zongsoft.Externals.Etcd.option`、`Zongsoft.Externals.Etcd.plugin`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。

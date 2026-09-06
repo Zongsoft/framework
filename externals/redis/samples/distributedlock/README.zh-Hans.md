@@ -1,5 +1,7 @@
 # Redis 分布式锁范例
 
+[English](README.md) | [简体中文](README.zh-Hans.md)
+
 该范例用于验证 `RedisService.DistributedLock.cs` 中的 Redis 分布式锁实现。
 
 范例包含两个可执行项目：
@@ -35,8 +37,8 @@
 先构建两个项目：
 
 ```pwsh
-dotnet build externals\redis\samples\DistributedLock\master\Zongsoft.Externals.Redis.DistributedLock.Master.csproj -c Debug
-dotnet build externals\redis\samples\DistributedLock\slaver\Zongsoft.Externals.Redis.DistributedLock.Slaver.csproj -c Debug
+dotnet build externals\redis\samples\distributedlock\master\Zongsoft.Externals.Redis.DistributedLock.Master.csproj -c Debug
+dotnet build externals\redis\samples\distributedlock\slaver\Zongsoft.Externals.Redis.DistributedLock.Slaver.csproj -c Debug
 ```
 
 默认 Redis 地址为 `127.0.0.1:6379`，数据库为 `15`，密码优先读取 `REDIS_PASSWORD` 环境变量，未设置时使用 `xxxxxx`。
@@ -52,19 +54,19 @@ master 可以自动启动多个 slaver 进程。
 正常互斥场景：
 
 ```pwsh
-dotnet run --project externals\redis\samples\DistributedLock\master\Zongsoft.Externals.Redis.DistributedLock.Master.csproj -c Debug -- run --workers:8 --iterations:80
+dotnet run --project externals\redis\samples\distributedlock\master\Zongsoft.Externals.Redis.DistributedLock.Master.csproj -c Debug -- run --workers:8 --iterations:80
 ```
 
 锁过期风险场景：
 
 ```pwsh
-dotnet run --project externals\redis\samples\DistributedLock\master\Zongsoft.Externals.Redis.DistributedLock.Master.csproj -c Debug -- run --scenario:expiry --workers:8 --iterations:12
+dotnet run --project externals\redis\samples\distributedlock\master\Zongsoft.Externals.Redis.DistributedLock.Master.csproj -c Debug -- run --scenario:expiry --workers:8 --iterations:12
 ```
 
 自动续期场景（临界区超过有效期，但自动续期维持锁）：
 
 ```pwsh
-dotnet run --project externals\redis\samples\DistributedLock\master\Zongsoft.Externals.Redis.DistributedLock.Master.csproj -c Debug -- run --scenario:renew --workers:8 --iterations:12
+dotnet run --project externals\redis\samples\distributedlock\master\Zongsoft.Externals.Redis.DistributedLock.Master.csproj -c Debug -- run --scenario:renew --workers:8 --iterations:12
 ```
 
 ## 人工验证
@@ -74,39 +76,39 @@ dotnet run --project externals\redis\samples\DistributedLock\master\Zongsoft.Ext
 1. 在 master 终端重置状态：
 
 ```pwsh
-dotnet run --project externals\redis\samples\DistributedLock\master\Zongsoft.Externals.Redis.DistributedLock.Master.csproj -c Debug -- reset --run-id:manual-001 --scenario:mutex
+dotnet run --project externals\redis\samples\distributedlock\master\Zongsoft.Externals.Redis.DistributedLock.Master.csproj -c Debug -- reset --run-id:manual-001 --scenario:mutex
 ```
 
 2. 打开多个 slaver 终端，每个终端使用不同的 `worker-id`：
 
 ```pwsh
-dotnet run --project externals\redis\samples\DistributedLock\slaver\Zongsoft.Externals.Redis.DistributedLock.Slaver.csproj -c Debug -- run --run-id:manual-001 --scenario:mutex --worker-id:1 --iterations:40
-dotnet run --project externals\redis\samples\DistributedLock\slaver\Zongsoft.Externals.Redis.DistributedLock.Slaver.csproj -c Debug -- run --run-id:manual-001 --scenario:mutex --worker-id:2 --iterations:40
-dotnet run --project externals\redis\samples\DistributedLock\slaver\Zongsoft.Externals.Redis.DistributedLock.Slaver.csproj -c Debug -- run --run-id:manual-001 --scenario:mutex --worker-id:3 --iterations:40
+dotnet run --project externals\redis\samples\distributedlock\slaver\Zongsoft.Externals.Redis.DistributedLock.Slaver.csproj -c Debug -- run --run-id:manual-001 --scenario:mutex --worker-id:1 --iterations:40
+dotnet run --project externals\redis\samples\distributedlock\slaver\Zongsoft.Externals.Redis.DistributedLock.Slaver.csproj -c Debug -- run --run-id:manual-001 --scenario:mutex --worker-id:2 --iterations:40
+dotnet run --project externals\redis\samples\distributedlock\slaver\Zongsoft.Externals.Redis.DistributedLock.Slaver.csproj -c Debug -- run --run-id:manual-001 --scenario:mutex --worker-id:3 --iterations:40
 ```
 
 3. slaver 全部结束后，在 master 终端汇总。`expected` 为 `worker-count * iterations`：
 
 ```pwsh
-dotnet run --project externals\redis\samples\DistributedLock\master\Zongsoft.Externals.Redis.DistributedLock.Master.csproj -c Debug -- report --run-id:manual-001 --scenario:mutex --expected:120
+dotnet run --project externals\redis\samples\distributedlock\master\Zongsoft.Externals.Redis.DistributedLock.Master.csproj -c Debug -- report --run-id:manual-001 --scenario:mutex --expected:120
 ```
 
 验证锁过期风险时，reset、slaver、report 命令都改用 `--scenario:expiry`。report 会预期出现 violations 和过期写入：
 
 ```pwsh
-dotnet run --project externals\redis\samples\DistributedLock\master\Zongsoft.Externals.Redis.DistributedLock.Master.csproj -c Debug -- reset --run-id:manual-expiry --scenario:expiry
-dotnet run --project externals\redis\samples\DistributedLock\slaver\Zongsoft.Externals.Redis.DistributedLock.Slaver.csproj -c Debug -- run --run-id:manual-expiry --scenario:expiry --worker-id:1 --iterations:8
-dotnet run --project externals\redis\samples\DistributedLock\slaver\Zongsoft.Externals.Redis.DistributedLock.Slaver.csproj -c Debug -- run --run-id:manual-expiry --scenario:expiry --worker-id:2 --iterations:8
-dotnet run --project externals\redis\samples\DistributedLock\master\Zongsoft.Externals.Redis.DistributedLock.Master.csproj -c Debug -- report --run-id:manual-expiry --scenario:expiry --expected:16
+dotnet run --project externals\redis\samples\distributedlock\master\Zongsoft.Externals.Redis.DistributedLock.Master.csproj -c Debug -- reset --run-id:manual-expiry --scenario:expiry
+dotnet run --project externals\redis\samples\distributedlock\slaver\Zongsoft.Externals.Redis.DistributedLock.Slaver.csproj -c Debug -- run --run-id:manual-expiry --scenario:expiry --worker-id:1 --iterations:8
+dotnet run --project externals\redis\samples\distributedlock\slaver\Zongsoft.Externals.Redis.DistributedLock.Slaver.csproj -c Debug -- run --run-id:manual-expiry --scenario:expiry --worker-id:2 --iterations:8
+dotnet run --project externals\redis\samples\distributedlock\master\Zongsoft.Externals.Redis.DistributedLock.Master.csproj -c Debug -- report --run-id:manual-expiry --scenario:expiry --expected:16
 ```
 
 验证自动续期时，改用 `--scenario:renew`。report 预期不会出现 violations 和过期写入：
 
 ```pwsh
-dotnet run --project externals\redis\samples\DistributedLock\master\Zongsoft.Externals.Redis.DistributedLock.Master.csproj -c Debug -- reset --run-id:manual-renew --scenario:renew
-dotnet run --project externals\redis\samples\DistributedLock\slaver\Zongsoft.Externals.Redis.DistributedLock.Slaver.csproj -c Debug -- run --run-id:manual-renew --scenario:renew --worker-id:1 --iterations:8
-dotnet run --project externals\redis\samples\DistributedLock\slaver\Zongsoft.Externals.Redis.DistributedLock.Slaver.csproj -c Debug -- run --run-id:manual-renew --scenario:renew --worker-id:2 --iterations:8
-dotnet run --project externals\redis\samples\DistributedLock\master\Zongsoft.Externals.Redis.DistributedLock.Master.csproj -c Debug -- report --run-id:manual-renew --scenario:renew --expected:16
+dotnet run --project externals\redis\samples\distributedlock\master\Zongsoft.Externals.Redis.DistributedLock.Master.csproj -c Debug -- reset --run-id:manual-renew --scenario:renew
+dotnet run --project externals\redis\samples\distributedlock\slaver\Zongsoft.Externals.Redis.DistributedLock.Slaver.csproj -c Debug -- run --run-id:manual-renew --scenario:renew --worker-id:1 --iterations:8
+dotnet run --project externals\redis\samples\distributedlock\slaver\Zongsoft.Externals.Redis.DistributedLock.Slaver.csproj -c Debug -- run --run-id:manual-renew --scenario:renew --worker-id:2 --iterations:8
+dotnet run --project externals\redis\samples\distributedlock\master\Zongsoft.Externals.Redis.DistributedLock.Master.csproj -c Debug -- report --run-id:manual-renew --scenario:renew --expected:16
 ```
 
 任意命令都可以通过 `--connection` 指定完整 Redis 连接字符串：
@@ -126,3 +128,11 @@ dotnet run --project externals\redis\samples\DistributedLock\master\Zongsoft.Ext
 | `--verbose` | slaver run | 打印每次进入临界区和栅栏写入的详细信息。 |
 | `--expected:<count>` | report | 预期的 `entered`/`completed` 数量（`workers * iterations`）。 |
 | `--expect-violations` | report | 将 violations 和过期写入视为预期结果；`--scenario:expiry` 默认启用。 |
+
+## 结果边界与清理
+
+🚨 master 的 `reset` 会清理所选运行标识对应的测试状态。使用专用数据库和每次唯一的 `run-id`，不要在其他 worker 仍运行时重置，也不要把这里的演示密码用于实际部署。
+
+场景中的零冲突、过期冲突和过期写入是预期观察值，不是任意网络延迟、进程暂停或调度条件下的保证。一次 `renew` 成功不能证明永久持有锁；业务存储必须验证栅栏令牌，不能只依赖锁对象的本地状态。
+
+等待本次 master 与全部 slaver 结束后，再使用相同 `run-id` 和 `scenario` 的 `reset` 清理本次状态；不要清空数据库或其他运行前缀。关键调度与统计代码见 [master/Program.cs](master/Program.cs) 和 [slaver/Program.cs](slaver/Program.cs)。应用侧通过公共锁管理器使用插件的方式见[类库说明](../../README.zh-Hans.md)。

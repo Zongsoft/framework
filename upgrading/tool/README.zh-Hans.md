@@ -12,7 +12,7 @@
 
 ## 概述
 
-[**Z**ongsoft.**T**ools.**U**pgrader](https://github.com/Zongsoft/framework/tree/main/upgrading/tool/Zongsoft.Tools.Upgrader) 是 [_**Z**ongsoft_](https://github.com/Zongsoft/framework) 开源框架的自动升级插件库打包器，提供了打包、校验与发布三个子命令。
+[**Z**ongsoft.**T**ools.**U**pgrader](https://github.com/Zongsoft/framework/tree/main/upgrading/tool) 是 [_**Z**ongsoft_](https://github.com/Zongsoft/framework) 开源框架的自动升级插件库打包器，提供了打包、校验与发布三个子命令。
 
 ### 基本用法
 

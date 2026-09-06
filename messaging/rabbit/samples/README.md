@@ -66,7 +66,7 @@ close
 
 ## Suggested Scenario
 
-Run these commands in order:
+Run these commands individually, allowing the subscription to become ready before publishing and waiting for received output before unsubscribing:
 
 ```text
 subscribe demo
@@ -76,3 +76,9 @@ unsubscribe demo
 ```
 
 You should observe three received messages; the handler acknowledges each one after printing it. The `demo` subscription should no longer appear after the final command.
+
+## Boundaries and Cleanup
+
+[Program.cs](Program.cs) is a standalone diagnostic program that owns its queue; applications should use the plugin deployment and public provider workflow in the [library guide](../README.md). Three received messages are expected for an isolated topic with no other producers and a ready subscription, not a guarantee of exactly-once delivery under arbitrary network conditions. Calling the acknowledgment API is not a business transaction commit; see the driver guide for durability and acknowledgment semantics.
+
+🚨 Use a dedicated local broker and a unique test topic, never a production topic. Unsubscribe this run's subscriptions, run `close`, then `exit` and confirm. Client shutdown does not delete broker-side topics, queues, consumer state, or durable messages. If cleanup is needed, use the broker's management tools only for test resources created by this run; never purge a shared broker.

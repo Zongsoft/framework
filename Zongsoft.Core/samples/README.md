@@ -80,3 +80,17 @@ dotnet run --project Zongsoft.Core/samples/superviser/Zongsoft.Samples.Supervise
 ```
 
 Use `create`, `open`, `close`, `pause`, `resume`, `error`, `reset`, and `info` to exercise object states. See the [complete superviser scenarios](superviser/README.md) for command sequences covering inactivity, permitted failures, persistent supervision, and manual removal.
+
+## Background and Safe Experiment Size
+
+An event exchanger dispatches registered events through channels; a spooler groups pending items into batches; a superviser observes activity and failures; cache scanning triggers expiration observation. These mechanisms solve different lifecycle problems and are not interchangeable durable queues.
+
+The samples use local in-process objects. Start with a few dozen events/items before the larger examples above. Their timing output is an interactive observation, not a reproducible performance benchmark.
+
+## Code and Cleanup
+
+Each project has its own Program.cs: [events](eventexchanger/Program.cs), [cache](memorycache/Program.cs), [spooler](spooler/Program.cs), [superviser](superviser/Program.cs). Read initialization and shutdown together when adapting a sample.
+
+Use `stop` where offered, then `exit`; the samples dispose their in-process workers and timers. There are no application databases to erase. Counters and cache state reset when a process ends.
+
+💡 A delayed eviction callback is not necessarily a failed expiration: timer scheduling and explicit scanning affect when the sample reports it. Do not turn console timing into a strict unit-test assertion.

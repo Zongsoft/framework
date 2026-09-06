@@ -121,31 +121,37 @@ The default filter excludes messages produced by the same queue instance. Use `F
 
 ### Publish and Subscribe
 
-Create a queue directly when the application does not use the Zongsoft plugin container:
+In a host with the ZeroMQ plugin deployed, obtain the shared queue by provider and connection name. This uses the `ZeroMQ` connection above; for this in-process loopback example set `filter=*` on that connection and start a compatible broker beforehand. The consumer module references only Core:
 
 ```csharp
 using System.Text;
+using Zongsoft.Services;
 using Zongsoft.Messaging;
-using Zongsoft.Messaging.ZeroMQ;
-using Zongsoft.Messaging.ZeroMQ.Configuration;
 
-var settings = ZeroConnectionSettingsDriver.Instance.GetSettings(
-	"ZeroMQ",
-	"server=127.0.0.1;port=7969;group=Demo;client=Sample;");
+var provider = ApplicationContext.Current.Services
+	.FindRequired<IMessageQueueProvider>("ZeroMQ");
+var queue = provider.Queue("ZeroMQ");
+var received = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+var topic = $"docs/{Guid.NewGuid():N}";
 
-using var queue = new ZeroQueue("ZeroMQ", settings);
+var consumer = await queue.SubscribeAsync(topic, message =>
+	received.TrySetResult(Encoding.UTF8.GetString(message.Data.Span)));
 
-var consumer = await queue.SubscribeAsync("orders/created", message =>
-	Console.WriteLine(Encoding.UTF8.GetString(message.Data.Span)));
+try
+{
+	var identifier = await queue.ProduceAsync(topic, "demo".AsMemory());
+	if(identifier == null)
+		throw new InvalidOperationException("No matching subscription was visible.");
 
-var identifier = await queue.ProduceAsync("orders/created", "Order #1001".AsMemory());
-if(identifier == null)
-	Console.WriteLine("No matching subscription was visible at send time; nothing was sent.");
-
-await consumer.UnsubscribeAsync();
+	Console.WriteLine(await received.Task.WaitAsync(TimeSpan.FromSeconds(10)));
+}
+finally
+{
+	await consumer.UnsubscribeAsync();
+}
 ```
 
-When hosted as a plugin, resolve the named queue from the `ZeroMQ` `IMessageQueueProvider` and use the same `ProduceAsync` and `SubscribeAsync` APIs.
+The provider reuses named queues; business operations must not dispose a shared queue. This example cancels only its own unique-topic subscription and waits for its handler before exiting. A non-null publish identifier still does not mean business processing completed. A standalone tool that constructs `ZeroQueue` directly owns its entire lifetime.
 
 Subscriptions use prefix matching. One `ZeroQueue` keeps one consumer for each logical topic; subscribing to the same topic again returns the existing consumer and does not replace its handler or options. With `Group=Demo`, the physical wire topic is `Demo:orders/created`, while handlers receive the logical `Message.Topic` value `orders/created`.
 
@@ -274,3 +280,27 @@ If messages are not received:
 4. If `ProduceAsync` returns `null`, verify that a matching subscription was visible to the Broker at that instant and apply the application's retry policy if appropriate;
 5. For `LeastOnce`, verify Server `Storage`, the Control endpoint, explicit acknowledgement, and expiration;
 6. Inspect Broker Pending data, online subscriptions, and consumer idempotency when reliable delivery remains unresolved.
+
+## Plugin-Based Integration
+
+Compose this feature through the host; a package reference supplies compile-time APIs, while plugin loading also requires deployed manifests and runtime assets. See [the complete plugin workflow](../../Zongsoft.Plugins/README.md).
+
+The deployment manifest selects `Zongsoft.Messaging.ZeroMQ-$(site).plugin`. `site=daemon` includes the broker startup contribution; client-only and broker hosts must be deliberately distinguished. Configure the endpoint and storage factory before starting the broker.
+
+| Runtime artifact | Source of truth |
+| --- | --- |
+| `Zongsoft.Messaging.ZeroMQ.Daemon` | [Zongsoft.Messaging.ZeroMQ-daemon.plugin](src/Zongsoft.Messaging.ZeroMQ-daemon.plugin) |
+| `Zongsoft.Messaging.ZeroMQ` | [Zongsoft.Messaging.ZeroMQ.plugin](src/Zongsoft.Messaging.ZeroMQ.plugin) |
+| `Zongsoft.Messaging.ZeroMQ.Storage` | [Zongsoft.Messaging.ZeroMQ.Storage.plugin](src/Zongsoft.Messaging.ZeroMQ.Storage.plugin) |
+| File copying and dependencies | [Zongsoft.Messaging.ZeroMQ.deploy](src/Zongsoft.Messaging.ZeroMQ.deploy) |
+
+Add this fragment to an existing host `.deploy` (retain Main and the host’s other base manifests; do not replace the whole file):
+
+```ini
+[plugins zongsoft messaging zeromq]
+nuget:Zongsoft.Messaging.ZeroMQ
+```
+
+Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
+
+Additional artifacts listed by the deployment manifest include `Zongsoft.Messaging.ZeroMQ.option`, `Zongsoft.Messaging.ZeroMQ.plugin`, `Zongsoft.Messaging.ZeroMQ-$(site).plugin`, `Zongsoft.Messaging.ZeroMQ.Storage.plugin`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.

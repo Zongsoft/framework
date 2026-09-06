@@ -47,3 +47,17 @@ dotnet run --project Zongsoft.Net/samples/client/Zongsoft.Net.Samples.Client.csp
 2. 在客户端执行 `connect` 和 `send Hello Zongsoft.Net`；
 3. 确认服务端显示消息，客户端收到 `ACK: Hello Zongsoft.Net`；
 4. 在服务端执行 `broadcast Maintenance starts soon`，确认客户端收到广播。
+
+## 分帧与关键代码
+
+TCP 是字节流，不是消息队列。带头分帧器加入四字节长度前缀，使接收方可拼合分次读取并拆分相邻消息。两端必须使用相同分帧规则，替换任一端前先读[类库指南](../README.zh-Hans.md)。
+
+命令注册与处理器见 [client/Program.cs](client/Program.cs) 和 [server/Program.cs](server/Program.cs)。ACK 文本只是样例应用数据，不是持久协议确认。
+
+## 前置条件与清理
+
+需要 .NET 10 与交互终端。Debug 构建可能需要本地 Core 产物；缺少引用程序集时先构建 `Zongsoft.Core/src/Zongsoft.Core.csproj -f net10.0`。
+
+退出终端前在客户端执行 `disconnect`、服务端执行 `stop`。样例不创建数据库或消息文件。端口被占用通常意味着之前的服务器进程仍在运行。
+
+🚨 绑定 `0.0.0.0` 会暴露所有接口。本演示没有身份验证及加密，应使用 loopback，不能当作生产安全传输。

@@ -1,5 +1,7 @@
 # Redis 分布式缓存范例
 
+[English](README.md) | [简体中文](README.zh-Hans.md)
+
 该范例演示 `RedisService.DistributedCache.cs` 中的 Redis 分布式缓存实现。它是一个交互式终端客户端，将缓存操作暴露为命令，写法与[消息范例](../messaging)保持一致。
 
 范例覆盖以下内容：
@@ -67,7 +69,9 @@ find gre*
 info
 ```
 
-`count` 统计命名空间内的条目数，`find` 列出匹配模式的键（默认为 `*`），`info` 显示服务名、命名空间、数据库、条目数和订阅状态。`purge` 删除命名空间内的所有条目：
+`count` 扫描并统计命名空间内的条目数，`find` 列出显式模式匹配的键（全部使用 `find *`；无参数时不执行查询），`info` 显示服务名、命名空间、数据库、条目数和订阅状态。`purge` 删除命名空间内的所有条目：
+
+🚨 `purge` 影响共享该命名空间的所有客户端，不仅是本进程创建的记录。如果删除范例的命名空间赋值，清理范围可能扩展到所选数据库。只在专用测试命名空间、数据库中使用；一般清理应按明确的测试键名删除。大命名空间的计数、扫描不是常量时间操作。
 
 ```text
 purge
@@ -90,7 +94,7 @@ subscribe --kind:updated --prefix:telemetry:
 打开两个终端。第一个终端订阅，然后使用第二个终端修改条目并观察通知：
 
 ```text
-subscribe --kind:updated
+subscribe --kind:all
 ```
 
 ```text
@@ -100,3 +104,9 @@ remove orders:1001
 ```
 
 第一个终端应观察到两条 `set` 命令产生的 `Updated` 通知和一条 `remove` 命令产生的 `Removed` 通知。使用 `info` 确认订阅状态，最后用 `unsubscribe` 停止接收通知。
+
+## 退出与清理
+
+在 `close` 释放客户端之前，仅删除本次剩余的测试键（上述示例为 `greeting`、`token`、`config` 和 `orders:1002`）。然后在各终端执行 `exit` 并确认退出提示。带 TTL 的测试键可等待其过期；不要清空共享命名空间。键空间通知是瞬时观察机制，不是持久事件日志。
+
+独立范例的 [Program.cs](Program.cs) 自行持有 Redis 客户端。应用代码请采用[插件与公共缓存接口示例](../../README.zh-Hans.md)，不要构造或释放共享提供者实例。

@@ -181,3 +181,25 @@ This extension library provides both _command-line_ and _**REST**ful **API**_ ac
 > For the complete _**API**_, see [_`Zongsoft.Intelligences.Web.http`_](./api/Zongsoft.Intelligences.Web.http) in the [api](./api/) project.
 > - `{name}` is the assistant name, such as `ollama`.
 > - `{id}` is the session ID.
+
+## Plugin-Based Integration
+
+Compose this feature through the host; a package reference supplies compile-time APIs, while plugin loading also requires deployed manifests and runtime assets. See [the complete plugin workflow](../Zongsoft.Plugins/README.md).
+
+The manifest registers connection-setting drivers and the `AI` command group. Configure the provider/model before resolving an assistant; add the Web package only on HTTP hosts. The current source `.deploy` still lists older AI dependencies: compare it with the selected package's `.csproj`/lockfile before deployment rather than assuming those versions match the current API.
+
+| Runtime artifact | Source of truth |
+| --- | --- |
+| `Zongsoft.Intelligences` | [Zongsoft.Intelligences.plugin](src/Zongsoft.Intelligences.plugin) |
+| File copying and dependencies | [Zongsoft.Intelligences.deploy](src/Zongsoft.Intelligences.deploy) |
+
+Add this fragment to an existing host `.deploy` (retain Main and the host’s other base manifests; do not replace the whole file):
+
+```ini
+[plugins zongsoft intelligences]
+nuget:Zongsoft.Intelligences
+```
+
+Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
+
+Additional artifacts listed by the deployment manifest include `Zongsoft.Intelligences.option`, `Zongsoft.Intelligences.plugin`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.

@@ -1,5 +1,7 @@
 # Redis Distributed Cache
 
+[English](README.md) | [简体中文](README.zh-Hans.md)
+
 This sample demonstrates the Redis distributed cache implementation in `RedisService.DistributedCache.cs`. It is an interactive terminal client that exposes cache operations as commands, following the style of the [messaging](../messaging) sample.
 
 The sample covers:
@@ -67,7 +69,9 @@ find gre*
 info
 ```
 
-`count` reports the number of entries in the namespace, `find` lists keys matching a pattern (default `*`), and `info` shows the service name, namespace, database, entry count, and subscription state. `purge` removes every entry in the namespace:
+`count` scans and counts entries in the namespace, `find` lists keys matching an explicit pattern (use `find *` for all; no argument does nothing), and `info` shows the service name, namespace, database, entry count, and subscription state. `purge` removes every entry in the namespace:
+
+🚨 `purge` affects all clients sharing this namespace, not just records created by this process. If you remove the sample's namespace assignment, clearing can span the selected database. Use only a dedicated test namespace/database; normal cleanup should remove explicitly named test keys instead. Counting/scanning a large namespace is not a constant-time operation.
 
 ```text
 purge
@@ -90,7 +94,7 @@ After subscribing, every matching change — from this process or any other proc
 Open two terminals. In the first terminal subscribe, then use the second terminal to change entries and watch the notifications:
 
 ```text
-subscribe --kind:updated
+subscribe --kind:all
 ```
 
 ```text
@@ -100,3 +104,9 @@ remove orders:1001
 ```
 
 You should observe `Updated` notifications for the two `set` commands and a `Removed` notification for the `remove` command in the first terminal. Use `info` to confirm the subscription state, then `unsubscribe` to stop receiving notifications.
+
+## Exit and Cleanup
+
+Remove only this run's remaining keys (for the examples above: `greeting`, `token`, `config`, and `orders:1002`) before `close` disposes the client. Use `exit` and confirm the exit prompt in each terminal. Wait for a test key's TTL if it has already expired; do not purge a shared namespace. Keyspace notifications are transient observations, not a durable event log.
+
+The standalone [Program.cs](Program.cs) owns its Redis client. For application code, follow the [plugin and public cache interface example](../../README.md) instead of constructing or disposing a shared provider instance.

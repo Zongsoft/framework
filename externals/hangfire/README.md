@@ -146,3 +146,26 @@ Loading `Zongsoft.Externals.Hangfire.Web.plugin` registers Hangfire with the ASP
 ## Samples
 
 See the [sample project](samples) for a minimal handler plugin. Storage-specific and web-specific projects are available under [storages](storages) and [web](web).
+
+## Plugin-Based Integration
+
+Compose this feature through the host; a package reference supplies compile-time APIs, while plugin loading also requires deployed manifests and runtime assets. See [the complete plugin workflow](../../Zongsoft.Plugins/README.md).
+
+The manifest selects `Zongsoft.Externals.Hangfire-$(site).plugin`; the daemon variant contributes the scheduler and startup worker. Deploy a storage adapter such as Redis and configure it before enabling the worker. A Web dashboard is a separate package, not a worker host.
+
+| Runtime artifact | Source of truth |
+| --- | --- |
+| `Zongsoft.Externals.Hangfire.Daemon` | [Zongsoft.Externals.Hangfire-daemon.plugin](src/Zongsoft.Externals.Hangfire-daemon.plugin) |
+| `Zongsoft.Externals.Hangfire` | [Zongsoft.Externals.Hangfire.plugin](src/Zongsoft.Externals.Hangfire.plugin) |
+| File copying and dependencies | [Zongsoft.Externals.Hangfire.deploy](src/Zongsoft.Externals.Hangfire.deploy) |
+
+Add this fragment to an existing host `.deploy` (retain Main and the host’s other base manifests; do not replace the whole file):
+
+```ini
+[plugins zongsoft externals hangfire]
+nuget:Zongsoft.Externals.Hangfire
+```
+
+Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
+
+Additional artifacts listed by the deployment manifest include `Zongsoft.Externals.Hangfire.option`, `Zongsoft.Externals.Hangfire.plugin`, `Zongsoft.Externals.Hangfire-$(site).plugin`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.

@@ -29,3 +29,17 @@ Deploy the generated assembly together with `Zongsoft.Diagnostics.Protocols.Serv
 4. Confirm that `MetricHandler` writes each received meter and its contents to the terminal.
 
 If no output appears, verify the OTLP endpoint, transport security, server plugin activation, and the `/Workbench/Diagnostics/Telemetry/Listener/Metrics` registration path.
+
+## Background and Key Code
+
+OTLP is OpenTelemetry's transport protocol. This sample consumes already-converted framework meter collections, not raw protobuf bytes. [MetricHandler.cs](MetricHandler.cs) derives from a typed HandlerBase and prints entries; it contains no database storage or retry queue.
+
+The host must support gRPC over HTTP/2. Use a local test endpoint and synthetic metrics without user identifiers. Source generation depends on the checked-out proto submodule, which must remain unmodified.
+
+## Expected Scope and Cleanup
+
+A printed meter proves that this request reached the sample handler. It does not prove lossless conversion of all metric types/resources, nor persistence. Review the [server limitations](../README.md) before using it to evaluate a receiver.
+
+After testing, stop the exporter first, then stop the host and remove only this sample's assembly/manifest from the test host's plugin directory if no longer needed. Protect redirected console output; no sample-owned database requires cleanup.
+
+💡 No console output can also mean that no matching metric was emitted. Start with one explicitly recorded synthetic measurement before investigating batches.

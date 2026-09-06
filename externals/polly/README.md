@@ -50,7 +50,7 @@ These three execution modes correspond to three [execution pipelines, `IFeatureP
 
 Because [**P**olly](https://github.com/App-vNext/Polly) _[version `8.6.5`](https://www.nuget.org/packages/Polly.Core/8.6.5)_ does not include the original execution argument in the corresponding strategy callbacks, the `Opened` callbacks of [`BreakerFeature<TArgument>`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Components/Features/BreakerFeature.cs#L95) and [`BreakerFeature<TArgument, TResult>`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Components/Features/BreakerFeature.cs#L125) cannot obtain the corresponding `BreakerOpenedArgument<TArgument>.Value` and `BreakerOpenedArgument<TArgument, TResult>.Value` values. The same limitation applies to their `Closed` callbacks.
 
-This plugin library overrides the [throttling](https://github.com/Zongsoft/framework/blob/main/externals/polly/src/Strategies/ThrottleStrategy.cs) and [fallback](https://github.com/Zongsoft/framework/blob/main/externals/polly/src/Strategies/FallbackStrategy.cs) strategies, so their callback methods can access the original execution argument through the [`Argument<T>.Value`](https://github.com/Zongsoft/framework/blob/execution/Zongsoft.Core/src/Components/Features/Argument.cs#L60) or [`Argument<T, TResult>.Value`](https://github.com/Zongsoft/framework/blob/execution/Zongsoft.Core/src/Components/Features/Argument.cs#L60) property.
+This plugin library overrides the [throttling](https://github.com/Zongsoft/framework/blob/main/externals/polly/src/Strategies/ThrottleStrategy.cs) and [fallback](https://github.com/Zongsoft/framework/blob/main/externals/polly/src/Strategies/FallbackStrategy.cs) strategies, so their callback methods can access the original execution argument through the [`Argument<T>.Value`](../../Zongsoft.Core/src/Components/Features/Argument.cs) or [`Argument<T, TResult>.Value`](../../Zongsoft.Core/src/Components/Features/Argument.cs) property.
 
 - [`ThrottleFeature<TArgument>.Rejected`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Components/Features/ThrottleFeature.cs#L91) and [`ThrottleFeature<TArgument, TResult>.Rejected`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Components/Features/ThrottleFeature.cs#L109)
 - [`FallbackFeature<TArgument>.Fallback`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Components/Features/FallbackFeature.cs#L76) and [`FallbackFeature<TArgument, TResult>.Fallback`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Components/Features/FallbackFeature.cs#L98)
@@ -70,3 +70,25 @@ This plugin library overrides the [throttling](https://github.com/Zongsoft/frame
 ## Examples
 
 See the [samples](https://github.com/Zongsoft/framework/tree/main/externals/polly/samples) [README.md](https://github.com/Zongsoft/framework/blob/main/externals/polly/samples/README.md) for examples.
+
+## Plugin-Based Integration
+
+Compose this feature through the host; a package reference supplies compile-time APIs, while plugin loading also requires deployed manifests and runtime assets. See [the complete plugin workflow](../../Zongsoft.Plugins/README.md).
+
+The manifest installs `FeaturePipelineBuilder.Instance` into the executor's Pipelines property at `/Workbench/Externals/Polly`. Configure resilience features through framework execution options; avoid separately overwriting that global binding.
+
+| Runtime artifact | Source of truth |
+| --- | --- |
+| `Zongsoft.Externals.Polly` | [Zongsoft.Externals.Polly.plugin](src/Zongsoft.Externals.Polly.plugin) |
+| File copying and dependencies | [Zongsoft.Externals.Polly.deploy](src/Zongsoft.Externals.Polly.deploy) |
+
+Add this fragment to an existing host `.deploy` (retain Main and the host’s other base manifests; do not replace the whole file):
+
+```ini
+[plugins zongsoft externals polly]
+nuget:Zongsoft.Externals.Polly
+```
+
+Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
+
+Additional artifacts listed by the deployment manifest include `Zongsoft.Externals.Polly.plugin`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.

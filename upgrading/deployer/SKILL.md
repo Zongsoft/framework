@@ -70,18 +70,18 @@ Windows x64 发布命令应保持包含这些关键属性：
 
 ```cmd
 dotnet publish "Zongsoft.Upgrading.Deployer.csproj" ^
-  -c Release ^
-  -f net10.0 ^
-  -r win-x64 ^
-  --self-contained true ^
-  -p:PublishSingleFile=true ^
-  -p:PublishReadyToRun=true ^
-  -p:PublishAot=true
+	-c Release ^
+	-f net10.0 ^
+	-r win-x64 ^
+	--self-contained true ^
+	-p:PublishSingleFile=true ^
+	-p:PublishReadyToRun=true ^
+	-p:PublishAot=true
 ```
 
 Linux x64 AOT 单文件制作需要先启动 Podman 容器。优先参考 `README.md` 的 Publishing/Linux 章节，并保留以下流程：
 
-1. 从仓库根目录或 `upgrading` 工作目录启动 `../../framework-start.cmd` 或 `../framework-start.cmd`，它使用 `framework.linux-x64.yaml` 启动 `zongsoft.framework` 容器。
+1. 获得容器发布授权后，从 framework 根目录调用 `./framework-start.cmd`；从 `upgrading` 调用 `../framework-start.cmd`；从 `upgrading/deployer` 调用 `../../framework-start.cmd`。该脚本使用 `framework.linux-x64.yaml` 启动 `zongsoft.framework` 容器。
 2. 确认容器已完成加载：
 
 ```cmd

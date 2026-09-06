@@ -45,6 +45,77 @@ TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Z
 
 > 💡 提示：如果需要未列出的驱动或商业技术支持，请联系我们（[zongsoft@qq.com](mailto:zongsoft@qq.com)）。
 
+<a name="plugin-quickstart"></a>
+## 插件化最小闭环
+
+先区分三个名字：提供者契约是 `IServiceProvider<IDataAccess>`，访问器/连接名是 `Docs`，映射命令限定名是 `Docs.Answer`。数据引擎内部根据连接的 `driver` 选择数据库实现，业务代码不引用 SQLite 类型。
+
+### 1. 部署引擎和驱动
+
+在[插件终端入门](../Zongsoft.Plugins/README.zh-Hans.md)的现有宿主部署清单中增加：
+
+```ini
+[plugins zongsoft data]
+nuget:Zongsoft.Data
+
+[plugins zongsoft data sqlite]
+nuget:Zongsoft.Data.SQLite
+```
+
+消费插件只需引用 `Zongsoft.Core`。保留 Main、Terminal 和宿主依赖；将业务 DLL 及它自己的 `.plugin` 部署到 `plugins/docs/`。消费插件 manifest 列出业务程序集；依赖 Data 是为了声明数据能力的组合前提，不需要直接依赖具体数据库驱动。
+
+### 2. 配置连接并部署映射
+
+在业务清单同主文件名的 `.option` 中写入：
+
+```xml
+<options>
+	<option path="/Data">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="Docs" driver="SQLite"
+			                   value="Database=:memory:;Mode=Memory" />
+		</connectionSettings>
+	</option>
+</options>
+```
+
+将下列 `Docs.mapping` 放在业务插件旁。默认映射加载器会递归搜索应用目录中的 `.mapping`；文件存在本身不会创建数据库表。
+
+```xml
+<schema xmlns="http://schemas.zongsoft.com/data">
+	<container name="Docs">
+		<command name="Answer" type="text" mutability="none">
+			<script driver="SQLite">SELECT 42</script>
+		</command>
+	</container>
+</schema>
+```
+
+此例只执行内存库中的常量查询，没有数据表、凭据或持久写入。命令标记为 `mutability="none"`，表示只读；这影响数据源选择，不是由引擎分析 SQL 推断出来的。
+
+### 3. 从业务命令或服务调用
+
+在宿主已经启动、插件完成装配后执行：
+
+```csharp
+using Zongsoft.Data;
+using Zongsoft.Services;
+
+var provider = ApplicationContext.Current.Services
+	.ResolveRequired<Zongsoft.Services.IServiceProvider<IDataAccess>>();
+var data = provider.GetService("Docs")
+	?? throw new InvalidOperationException("Data accessor not found.");
+
+using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+Console.WriteLine(await data.ExecuteScalarAsync("Docs.Answer", cancellation.Token));
+```
+
+预期输出 `42`。该链路已在隔离的 .NET 10 终端宿主中验证。模块内可使用 `Module.Current.Services` 取得提供者；不要在普通业务方法中构造 `DataAccess`、具体驱动或数据库连接，也不要逐次释放共享访问器。
+
+💡 上面的 SQLite 脚本用于快速验证装配。实际业务应部署对应实体映射和数据库结构，或为命名命令提供匹配目标驱动的脚本。更换连接驱动并不自动翻译你手写的 SQL。
+
+🚨 原生依赖必须可被运行时找到。Windows x64 手工复制构建输出时，仅保留插件下的 `runtimes/win-x64/native/e_sqlite3.dll` 曾出现加载失败；将这个匹配架构的文件放到 SQLite 托管组件旁后验证通过。不要复制其他架构覆盖它；正式部署应检查自己的 RID/清单布局。SQLite 内存连接也不是跨连接持久数据库。
+
 <a name="schema"></a>
 ## 数据模式
 
@@ -211,22 +282,22 @@ Department.Manager.FullName,
 
 ```xml
 <schema xmlns="http://schemas.zongsoft.com/data">
-    <container name="Discussions">
-        <entity name="Forum" table="Discussions_Forum">
-            <key>
-                <member name="SiteId" />
-                <member name="ForumId" />
-            </key>
-            <property name="SiteId" type="uint" nullable="false" />
-            <property name="ForumId" type="ushort" nullable="false" sequence="#(SiteId)" />
-            <property name="GroupId" type="ushort" nullable="false" sortable="true" />
-            <property name="Name" type="string" length="50" nullable="false" />
-            <complexProperty name="Users" port="ForumUser" multiplicity="*" immutable="false">
-                <link port="SiteId" />
-                <link port="ForumId" />
-            </complexProperty>
-        </entity>
-    </container>
+	<container name="Discussions">
+		<entity name="Forum" table="Discussions_Forum">
+			<key>
+				<member name="SiteId" />
+				<member name="ForumId" />
+			</key>
+			<property name="SiteId" type="uint" nullable="false" />
+			<property name="ForumId" type="ushort" nullable="false" sequence="#(SiteId)" />
+			<property name="GroupId" type="ushort" nullable="false" sortable="true" />
+			<property name="Name" type="string" length="50" nullable="false" />
+			<complexProperty name="Users" port="ForumUser" multiplicity="*" immutable="false">
+				<link port="SiteId" />
+				<link port="ForumId" />
+			</complexProperty>
+		</entity>
+	</container>
 </schema>
 ```
 
@@ -240,13 +311,13 @@ Department.Manager.FullName,
 
 ```xml
 <command name="Forum.GetStatistics" type="text" mutability="none">
-    <parameter name="SiteId" type="uint" />
-    <parameter name="ForumId" type="ushort" />
-    <script driver="MySql"><![CDATA[
-        SELECT TotalThreads, TotalPosts
-        FROM Discussions_Forum
-        WHERE SiteId=@SiteId AND ForumId=@ForumId
-    ]]></script>
+	<parameter name="SiteId" type="uint" />
+	<parameter name="ForumId" type="ushort" />
+	<script driver="MySql"><![CDATA[
+		SELECT TotalThreads, TotalPosts
+		FROM Discussions_Forum
+		WHERE SiteId=@SiteId AND ForumId=@ForumId
+	]]></script>
 </command>
 ```
 
@@ -274,30 +345,30 @@ Department.Manager.FullName,
 - 单数据源的配置：
 ```xml
 <configuration>
-    <option path="/Data">
-        <connectionSettings default="Discussions">
-            <connectionSetting connectionSetting.name="Discussions" driver="MySql"
-                               value="server=127.0.0.1;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-        </connectionSettings>
-    </option>
+	<option path="/Data">
+		<connectionSettings default="Discussions">
+			<connectionSetting connectionSetting.name="Discussions" driver="MySql"
+								 value="server=127.0.0.1;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+		</connectionSettings>
+	</option>
 </configuration>
 ```
 
 - 多数据源（读写分离）的配置：
 ```xml
 <configuration>
-    <option path="/Data">
-        <connectionSettings>
-            <connectionSetting connectionSetting.name="Discussions#master" driver="MySql" mode="WriteOnly"
-                               value="server=192.168.0.10;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-            <connectionSetting connectionSetting.name="Discussions#slave_1" driver="MySql" mode="ReadOnly"
-                               value="server=192.168.0.11;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-            <connectionSetting connectionSetting.name="Discussions#slave_2" driver="MySql" mode="ReadOnly"
-                               value="server=192.168.0.12;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-            <connectionSetting connectionSetting.name="Discussions#slave_3" driver="MySql" mode="ReadOnly"
-                               value="server=192.168.0.13;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-        </connectionSettings>
-    </option>
+	<option path="/Data">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="Discussions#master" driver="MySql" mode="WriteOnly"
+								 value="server=192.168.0.10;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+			<connectionSetting connectionSetting.name="Discussions#slave_1" driver="MySql" mode="ReadOnly"
+								 value="server=192.168.0.11;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+			<connectionSetting connectionSetting.name="Discussions#slave_2" driver="MySql" mode="ReadOnly"
+								 value="server=192.168.0.12;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+			<connectionSetting connectionSetting.name="Discussions#slave_3" driver="MySql" mode="ReadOnly"
+								 value="server=192.168.0.13;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+		</connectionSettings>
+	</option>
 </configuration>
 ```
 
@@ -348,8 +419,8 @@ Department.Manager.FullName,
 - 字段引用
 ```csharp
 var forums = this.DataAccess.Select<Forum>(
-    Condition.Equal("SiteId", this.User.SiteId) &
-    Condition.Equal("MostRecentThreadAuthorId", Operand.Field("MostRecentPostAuthorId"))
+	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.Equal("MostRecentThreadAuthorId", Operand.Field("MostRecentPostAuthorId"))
 );
 ```
 
@@ -357,17 +428,17 @@ var forums = this.DataAccess.Select<Forum>(
 ```csharp
 /* 以下两种写法等价 */
 this.DataAccess.Update<OrderDetail>(
-    new {
-        Discount = Operand.Constant(10)
-    },
-    Condition.Between("Quantity", Range.Create(100, 200))
+	new {
+		Discount = Operand.Constant(10)
+	},
+	Condition.Between("Quantity", Range.Create(100, 200))
 );
 
 this.DataAccess.Update<OrderDetail>(
-    new {
-        Discount = 10
-    },
-    Condition.Between("Quantity", 100, 200)
+	new {
+		Discount = 10
+	},
+	Condition.Between("Quantity", 100, 200)
 );
 ```
 
@@ -375,18 +446,18 @@ this.DataAccess.Update<OrderDetail>(
 ```csharp
 /* 一元运算：算术取反 */
 this.DataAccess.Update<OrderDetail>(
-    new {
-        Discount = -Operand.Field("Discount")
-    },
-    Condition.LessThan("Discount", 0)
+	new {
+		Discount = -Operand.Field("Discount")
+	},
+	Condition.LessThan("Discount", 0)
 );
 
 /* 一元运算：逻辑取反 */
 this.DataAccess.Update<Thread>(
-    new {
-        Visible = !Operand.Field("Visible")
-    },
-    Condition.Equal("ForumId", 404)
+	new {
+		Visible = !Operand.Field("Visible")
+	},
+	Condition.Equal("ForumId", 404)
 );
 ```
 
@@ -394,34 +465,34 @@ this.DataAccess.Update<Thread>(
 ```csharp
 /* 递增 */
 this.DataAccess.Update<Thread>(
-    new {
-        TotalReplies = Operand.Field("TotalReplies") + 1
-    },
-    Condition.Equal("ThreadId", 404)
+	new {
+		TotalReplies = Operand.Field("TotalReplies") + 1
+	},
+	Condition.Equal("ThreadId", 404)
 );
 
 /* 算术运算 */
 this.DataAccess.Update<OrderDetail>(
-    new {
-        Amount = Operand.Field("UnitPrice") * Operand.Field("Quantity") - Operand.Field("Discount")
-    },
-    Condition.Equal("OrderId", 404)
+	new {
+		Amount = Operand.Field("UnitPrice") * Operand.Field("Quantity") - Operand.Field("Discount")
+	},
+	Condition.Equal("OrderId", 404)
 );
 
 /* 位与运算 */
 this.DataAccess.Select<User>(
-    Condition.Equal(Operand.Field("Flags") & 0x74, 0x74)
+	Condition.Equal(Operand.Field("Flags") & 0x74, 0x74)
 );
 ```
 
 - 函数运算
 ```csharp
 this.DataAccess.Update<OrderDetail>(
-    new {
-        Quantity = Operand.Function("Abs", Operand.Field("Quantity")),
-        UnitPrice = Operand.Function("Abs", Operand.Field("UnitPrice"))
-    },
-    Condition.Equal("OrderId", 404)
+	new {
+		Quantity = Operand.Function("Abs", Operand.Field("Quantity")),
+		UnitPrice = Operand.Function("Abs", Operand.Field("UnitPrice"))
+	},
+	Condition.Equal("OrderId", 404)
 );
 ```
 
@@ -429,51 +500,51 @@ this.DataAccess.Update<OrderDetail>(
 ```csharp
 /* 以下两种写法等价 */
 this.DataAccess.Update<Order>(
-    new {
-        Amount = Operand.Aggregate(DataAggregateFunction.Sum, "Details.Amount")
-    },
-    Condition.Equal("OrderId", 404)
+	new {
+		Amount = Operand.Aggregate(DataAggregateFunction.Sum, "Details.Amount")
+	},
+	Condition.Equal("OrderId", 404)
 );
 
 this.DataAccess.Update<Order>(
-    new {
-        Amount = Operand.Sum("Details.Amount")
-    },
-    Condition.Equal("OrderId", 404)
+	new {
+		Amount = Operand.Sum("Details.Amount")
+	},
+	Condition.Equal("OrderId", 404)
 );
 ```
 
 ```csharp
 /* 以下三种写法等价 */
 this.DataAccess.Update<Order>(
-    new {
-        Amount = Operand.Function("COALESCE",
-            Operand.Aggregate(DataAggregateFunction.Sum, "Details.Amount"), Operand.Constant(0))
-            + Operand.Field("Surcharge")
-            + Operand.Field("Taxes")
-            - Operand.Field("Discount")
-    },
-    Condition.Equal("OrderId", 404)
+	new {
+		Amount = Operand.Function("COALESCE",
+			Operand.Aggregate(DataAggregateFunction.Sum, "Details.Amount"), Operand.Constant(0))
+			+ Operand.Field("Surcharge")
+			+ Operand.Field("Taxes")
+			- Operand.Field("Discount")
+	},
+	Condition.Equal("OrderId", 404)
 );
 
 this.DataAccess.Update<Order>(
-    new {
-        Amount = Operand.IsNull(Operand.Sum("Details.Amount"), 0)
-            + Operand.Field("Surcharge")
-            + Operand.Field("Taxes")
-            - Operand.Field("Discount")
-    },
-    Condition.Equal("OrderId", 404)
+	new {
+		Amount = Operand.IsNull(Operand.Sum("Details.Amount"), 0)
+			+ Operand.Field("Surcharge")
+			+ Operand.Field("Taxes")
+			- Operand.Field("Discount")
+	},
+	Condition.Equal("OrderId", 404)
 );
 
 this.DataAccess.Update<Order>(
-    new {
-        Amount = Operand.Sum("Details.Amount", 0)
-            + Operand.Field("Surcharge")
-            + Operand.Field("Taxes")
-            - Operand.Field("Discount")
-    },
-    Condition.Equal("OrderId", 404)
+	new {
+		Amount = Operand.Sum("Details.Amount", 0)
+			+ Operand.Field("Surcharge")
+			+ Operand.Field("Taxes")
+			- Operand.Field("Discount")
+	},
+	Condition.Equal("OrderId", 404)
 );
 ```
 
@@ -484,13 +555,13 @@ this.DataAccess.Update<Order>(
 
 ```csharp
 var criteria =
-    Condition.Equal("SiteId", this.User.SiteId) &
-    Condition.Like("Title", "%Zongsoft%") &
-    Condition.Between("CreatedTime", Range.Create(DateTime.Today.AddDays(-7), DateTime.Today)) &
-    (
-        Condition.Equal("IsPinned", true) |
-        Condition.Equal("IsValued", true)
-    );
+	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.Like("Title", "%Zongsoft%") &
+	Condition.Between("CreatedTime", Range.Create(DateTime.Today.AddDays(-7), DateTime.Today)) &
+	(
+		Condition.Equal("IsPinned", true) |
+		Condition.Equal("IsValued", true)
+	);
 
 var threads = this.DataAccess.Select<Thread>(criteria, "ThreadId,Title,CreatedTime");
 ```
@@ -500,17 +571,17 @@ var threads = this.DataAccess.Select<Thread>(criteria, "ThreadId,Title,CreatedTi
 ```csharp
 public abstract class ThreadCriteria : CriteriaBase
 {
-    public abstract uint? SiteId { get; set; }
+	public abstract uint? SiteId { get; set; }
 
-    [Condition(ConditionOperator.Like)]
-    public abstract string Title { get; set; }
+	[Condition(ConditionOperator.Like)]
+	public abstract string Title { get; set; }
 
-    [Condition(ConditionOperator.Between, nameof(Thread.CreatedTime))]
-    public abstract Range<DateTime>? CreatedTime { get; set; }
+	[Condition(ConditionOperator.Between, nameof(Thread.CreatedTime))]
+	public abstract Range<DateTime>? CreatedTime { get; set; }
 }
 
 var criteria = Criteria.Transform<ThreadCriteria>(
-    "siteId:1+title:%Zongsoft%+createdTime:(2026-01-01,2026-12-31)"
+	"siteId:1+title:%Zongsoft%+createdTime:(2026-01-01,2026-12-31)"
 );
 
 var threads = this.DataAccess.Select<Thread>(criteria);
@@ -529,14 +600,14 @@ var threads = this.DataAccess.Select<Thread>(criteria);
 ```csharp
 // 查询满足条件的实体集，默认加载全部简单字段（延迟加载）。
 var threads = this.DataAccess.Select<Thread>(
-    Condition.Equal("SiteId", this.User.SiteId) &
-    Condition.Equal("Visible", true));
+	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.Equal("Visible", true));
 
 // 查询单个实体，并只加载指定字段。
 var forum = this.DataAccess.Select<Forum>(
-    Condition.Equal("SiteId", this.User.SiteId) &
-    Condition.Equal("ForumId", 100),
-    "SiteId,ForumId,Name,Description,CoverPicturePath").FirstOrDefault();
+	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.Equal("ForumId", 100),
+	"SiteId,ForumId,Name,Description,CoverPicturePath").FirstOrDefault();
 ```
 
 <a name="usage-query-exists"></a>
@@ -546,15 +617,15 @@ var forum = this.DataAccess.Select<Forum>(
 
 ```csharp
 var exists = this.DataAccess.Exists<Thread>(
-    Condition.Equal(nameof(Thread.ThreadId), threadId) &
-    Condition.Equal(nameof(Thread.Visible), true));
+	Condition.Equal(nameof(Thread.ThreadId), threadId) &
+	Condition.Equal(nameof(Thread.Visible), true));
 
 var totalThreads = this.DataAccess.Count<Thread>(
-    Condition.Equal(nameof(Thread.ForumId), forumId));
+	Condition.Equal(nameof(Thread.ForumId), forumId));
 
 var totalViews = this.DataAccess.Sum<Thread, long>(
-    nameof(Thread.TotalViews),
-    Condition.Equal(nameof(Thread.ForumId), forumId));
+	nameof(Thread.TotalViews),
+	Condition.Equal(nameof(Thread.ForumId), forumId));
 ```
 
 <a name="usage-query-2"></a>
@@ -570,14 +641,14 @@ var totalViews = this.DataAccess.Sum<Thread, long>(
 
 ```csharp
 var email = this.DataAccess.Select<string>("Discussions.UserProfile",
-    Condition.Equal("UserId", this.User.UserId),
-    "Email" // 只获取 Email 字段，该字段为字符串类型
+	Condition.Equal("UserId", this.User.UserId),
+	"Email" // 只获取 Email 字段，该字段为字符串类型
 ).FirstOrDefault();
 
 /* 返回标量集(IEnumerable<uint>) */
 var counts = this.DataAccess.Select<uint>("Discussions.History",
-    Condition.Equal("UserId", this.User.UserId),
-    "ViewedCount" // 只获取 ViewedCount 字段
+	Condition.Equal("UserId", this.User.UserId),
+	"ViewedCount" // 只获取 ViewedCount 字段
 );
 ```
 
@@ -591,8 +662,8 @@ var counts = this.DataAccess.Select<uint>("Discussions.History",
 ```csharp
 struct UserToken
 {
-    public uint UserId;
-    public string Name;
+	public uint UserId;
+	public string Name;
 }
 
 /*
@@ -600,9 +671,9 @@ struct UserToken
  * 引擎会取实体元数据与目标类型成员的交集作为返回字段。
  */
 var tokens = this.DataAccess.Select<UserToken>(
-    "Discussions.UserProfile",
-    Condition.Equal("SiteId", this.User.SiteId),
-    "UserId, Name"
+	"Discussions.UserProfile",
+	Condition.Equal("SiteId", this.User.SiteId),
+	"UserId, Name"
 );
 ```
 
@@ -614,13 +685,13 @@ var tokens = this.DataAccess.Select<UserToken>(
 [Zongsoft.Data.Model("Discussions.UserProfile")]
 struct UserToken
 {
-    public uint UserId;
-    public string Name;
+	public uint UserId;
+	public string Name;
 }
 
 // 因为目标类型已声明映射实体名，所以可省略 name 参数：
 var tokens = this.DataAccess.Select<UserToken>(
-    Condition.Equal("SiteId", this.User.SiteId)
+	Condition.Equal("SiteId", this.User.SiteId)
 );
 ```
 
@@ -630,17 +701,17 @@ var tokens = this.DataAccess.Select<UserToken>(
  * 2) schema 参数指定返回字段；省略或写为星号(*)时，默认返回所有字段。
  */
 var items = this.DataAccess.Select<IDictionary<string, object>>(
-    "Discussions.UserProfile",
-    Condition.Equal("SiteId", this.User.SiteId) &
-    Condition.GreaterThan("TotalThreads", 0),
-    "UserId,Name,TotalThreads,TotalPosts");
+	"Discussions.UserProfile",
+	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.GreaterThan("TotalThreads", 0),
+	"UserId,Name,TotalThreads,TotalPosts");
 
 foreach(var item in items)
 {
-    item.TryGetValue("UserId", out var userId); // true
-    item.TryGetValue("Name", out var name);     // true
-    item.TryGetValue("Avatar", out var avatar); // false
-    item.TryGetValue("TotalThreads", out var totalThreads); // true
+	item.TryGetValue("UserId", out var userId); // true
+	item.TryGetValue("Name", out var name);     // true
+	item.TryGetValue("Avatar", out var avatar); // false
+	item.TryGetValue("TotalThreads", out var totalThreads); // true
 }
 ```
 
@@ -652,9 +723,9 @@ var items = this.DataAccess.Select<System.Dynamic.ExpandoObject>("Discussions.Us
 
 foreach(dynamic item in items)
 {
-    Console.WriteLine(item.UserId); // OK
-    Console.WriteLine(item.Name);   // OK
-    Console.WriteLine(item.Fake);   // Compiled successfully, but runtime error
+	Console.WriteLine(item.UserId); // OK
+	Console.WriteLine(item.Name);   // OK
+	Console.WriteLine(item.Fake);   // Compiled successfully, but runtime error
 }
 ```
 
@@ -668,9 +739,9 @@ foreach(dynamic item in items)
 var paging = Paging.Page(2, 25);
 
 var threads = this.DataAccess.Select<Thread>(
-    Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
-    Condition.Equal(nameof(Thread.ForumId), 100),
-    paging
+	Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
+	Condition.Equal(nameof(Thread.ForumId), 100),
+	paging
 );
 
 /*
@@ -687,12 +758,12 @@ var threads = this.DataAccess.Select<Thread>(
 
 ```csharp
 var threads = this.DataAccess.Select<Thread>(
-    Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
-    Condition.Equal(nameof(Thread.ForumId), 100),
-    Paging.Disabled, /* 此处指定不分页；也可以传入具体的分页设置。 */
-    Sorting.Descending("TotalViews"),   // 1.倒序：累计阅读数
-    Sorting.Descending("TotalReplies"), // 2.倒序：累计回帖数
-    Sorting.Ascending("CreatedTime")    // 3.正序：创建时间
+	Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
+	Condition.Equal(nameof(Thread.ForumId), 100),
+	Paging.Disabled, /* 此处指定不分页；也可以传入具体的分页设置。 */
+	Sorting.Descending("TotalViews"),   // 1.倒序：累计阅读数
+	Sorting.Descending("TotalReplies"), // 2.倒序：累计回帖数
+	Sorting.Ascending("CreatedTime")    // 3.正序：创建时间
 );
 ```
 
@@ -713,8 +784,8 @@ var threads = this.DataAccess.Select<Thread>(
  *    在映射文件(.mapping)中为 multiplicity="?"，因此生成的 SQL 使用 LEFT JOIN。
  */
 var thread = this.DataAccess.Select<Thread>(
-    Condition.Equal("ThreadId", 100001),
-    "*,Post{*},MostRecentPost{*}"
+	Condition.Equal("ThreadId", 100001),
+	"*,Post{*},MostRecentPost{*}"
 ).FirstOrDefault();
 ```
 
@@ -730,8 +801,8 @@ var thread = this.DataAccess.Select<Thread>(
  * 注意：星号(*)只表示所有简单属性，不包含导航属性；导航属性必须显式指定。
  */
 var groups = this.DataAccess.Select<ForumGroup>(
-    Condition.Equal("SiteId", this.User.SiteId),
-    "*,Forums{*, Moderators{*}, MostRecentThread{*, Creator{*}}}"
+	Condition.Equal("SiteId", this.User.SiteId),
+	"*,Forums{*, Moderators{*}, MostRecentThread{*, Creator{*}}}"
 );
 ```
 
@@ -806,51 +877,51 @@ var groups = this.DataAccess.Select<ForumGroup>(
 ```csharp
 public abstract class Forum
 {
-    public abstract uint SiteId { get; set; }
-    public abstract ushort ForumId { get; set; }
-    public abstract ushort GroupId { get; set; }
-    public abstract string Name { get; set; }
+	public abstract uint SiteId { get; set; }
+	public abstract ushort ForumId { get; set; }
+	public abstract ushort GroupId { get; set; }
+	public abstract string Name { get; set; }
 
-    public abstract IEnumerable<ForumUser> Users { get; set; }
-    public abstract IEnumerable<UserProfile> Moderators { get; set; }
+	public abstract IEnumerable<ForumUser> Users { get; set; }
+	public abstract IEnumerable<UserProfile> Moderators { get; set; }
 }
 
 public struct ForumUser : IEquatable<ForumUser>
 {
-    public uint SiteId;
-    public ushort ForumId;
-    public uint UserId;
-    public Permission Permission;
-    public bool IsModerator;
+	public uint SiteId;
+	public ushort ForumId;
+	public uint UserId;
+	public Permission Permission;
+	public bool IsModerator;
 
-    public Forum Forum;
-    public UserProfile User;
+	public Forum Forum;
+	public UserProfile User;
 }
 ```
 
 ```csharp
 var forum = this.DataAccess.Select<Forum>(
-  Condition.Equal("SiteId", this.User.SiteId) &
-  Condition.Equal("ForumId", 100),
-  "*, Users{*, User{Name,Email,Avatar}}, Moderators{Name,Email,Avatar}"
+	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.Equal("ForumId", 100),
+	"*, Users{*, User{Name,Email,Avatar}}, Moderators{Name,Email,Avatar}"
 ).FirstOrDefault();
 
 // moderator 的类型是 UserProfile（导航跳板直接返回 UserProfile，因此只需列出其简单属性）。
 foreach(var moderator in forum.Moderators)
 {
-  Console.Write(moderator.Name);
-  Console.Write(moderator.Email);
-  Console.Write(moderator.Avatar);
+	Console.Write(moderator.Name);
+	Console.Write(moderator.Email);
+	Console.Write(moderator.Avatar);
 }
 
 // member 的类型是 ForumUser，可通过其 User 导航属性再访问 UserProfile。
 foreach(var member in forum.Users)
 {
-  Console.Write(member.Permission);
+	Console.Write(member.Permission);
 
-  Console.Write(member.User.Name);
-  Console.Write(member.User.Email);
-  Console.Write(member.User.Avatar);
+	Console.Write(member.User.Name);
+	Console.Write(member.User.Email);
+	Console.Write(member.User.Avatar);
 }
 ```
 
@@ -862,24 +933,24 @@ foreach(var member in forum.Users)
 ```csharp
 struct ForumStatistic
 {
-    public uint SiteId;
-    public ushort ForumId;
-    public int TotalThreads;
-    public int TotalViews;
-    public int TotalPosts;
-    public Forum Forum;
+	public uint SiteId;
+	public ushort ForumId;
+	public int TotalThreads;
+	public int TotalViews;
+	public int TotalPosts;
+	public Forum Forum;
 }
 
 var statistics = this.DataAccess.Select<ForumStatistic>(
-    "Thread",
-    Grouping
-        .Group("SiteId", "ForumId")
-        .Count("*", "TotalThreads")
-        .Sum("TotalViews")
-        .Sum("TotalPosts"),
-    Condition.Equal("SiteId", this.User.SiteId) &
-    Condition.Equal("Visible", true),
-    "Forum{Name}"
+	"Thread",
+	Grouping
+		.Group("SiteId", "ForumId")
+		.Count("*", "TotalThreads")
+		.Sum("TotalViews")
+		.Sum("TotalPosts"),
+	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.Equal("Visible", true),
+	"Forum{Name}"
 );
 ```
 
@@ -887,24 +958,24 @@ var statistics = this.DataAccess.Select<ForumStatistic>(
 
 ```sql
 SELECT
-    tt.*,
-    f.Name AS 'Forum.Name'
+	tt.*,
+	f.Name AS 'Forum.Name'
 FROM
 (
-    SELECT
-        t.SiteId,
-        t.ForumId,
-        COUNT(*) AS 'TotalThreads',
-        SUM(t.TotalViews) AS 'TotalViews',
-        SUM(t.TotalPosts) AS 'TotalPosts'
-    FROM Thread AS t
-    WHERE t.SiteId = @p1 AND
-          t.Visible = @p3
-    GROUP BY t.SiteId, t.ForumId
+	SELECT
+		t.SiteId,
+		t.ForumId,
+		COUNT(*) AS 'TotalThreads',
+		SUM(t.TotalViews) AS 'TotalViews',
+		SUM(t.TotalPosts) AS 'TotalPosts'
+	FROM Thread AS t
+	WHERE t.SiteId = @p1 AND
+			t.Visible = @p3
+	GROUP BY t.SiteId, t.ForumId
 ) AS tt
-    LEFT JOIN Forum f ON
-        tt.SiteId = f.SiteId AND
-        tt.ForumId = f.ForumId;
+	LEFT JOIN Forum f ON
+		tt.SiteId = f.SiteId AND
+		tt.ForumId = f.ForumId;
 ```
 
 <a name="usage-query-12"></a>
@@ -919,20 +990,20 @@ FROM
  * 2) 首次或最后浏览时间位于最近 30 天内。
  */
 var histories = this.DataAccess.Select<History>(
-    Condition.Equal("Thread.IsValued", true) & /* 导航条件 */
-    (
-        Condition.Between("FirstViewedTime", DateTime.Today.AddDays(-30), DateTime.Now) |
-        Condition.Between("LastViewedTime", DateTime.Today.AddDays(-30), DateTime.Now)
-    )
+	Condition.Equal("Thread.IsValued", true) & /* 导航条件 */
+	(
+		Condition.Between("FirstViewedTime", DateTime.Today.AddDays(-30), DateTime.Now) |
+		Condition.Between("LastViewedTime", DateTime.Today.AddDays(-30), DateTime.Now)
+	)
 );
 
 /* 与上面的查询等价，只是改用 Range.Timing 构造时间范围。 */
 var histories = this.DataAccess.Select<History>(
-    Condition.Equal("Thread.IsValued", true) & /* 导航条件 */
-    (
-        Condition.Between("FirstViewedTime", Range.Timing.Last(30, 'D')) |
-        Condition.Between("LastViewedTime", Range.Timing.Last(30, 'D'))
-    )
+	Condition.Equal("Thread.IsValued", true) & /* 导航条件 */
+	(
+		Condition.Between("FirstViewedTime", Range.Timing.Last(30, 'D')) |
+		Condition.Between("LastViewedTime", Range.Timing.Last(30, 'D'))
+	)
 );
 ```
 
@@ -941,13 +1012,13 @@ var histories = this.DataAccess.Select<History>(
 ```sql
 SELECT h.*
 FROM History h
-    LEFT JOIN Thread t ON
-        t.ThreadId = h.ThreadId
+	LEFT JOIN Thread t ON
+		t.ThreadId = h.ThreadId
 WHERE t.IsValued = @p1 AND
-    (
-        h.FirstViewedTime BETWEEN @p2 AND @p3 OR
-        h.LastViewedTime BETWEEN @p4 AND @p5
-    );
+	(
+		h.FirstViewedTime BETWEEN @p2 AND @p3 OR
+		h.LastViewedTime BETWEEN @p4 AND @p5
+	);
 ```
 
 <a name="usage-query-13"></a>
@@ -959,18 +1030,18 @@ WHERE t.IsValued = @p1 AND
 
 ```csharp
 var forums = this.DataAccess.Select<Forum>(
-    Condition.Equal("SiteId", this.User.SiteId) &
-    Condition.In("Visibility", Visibility.Internal, Visibility.All) |
-    (
-        Condition.Equal("Visibility", Visibility.Specified) &
-        Condition.Exists("Users",
-                          Condition.Equal("UserId", this.User.UserId) &
-                          (
-                              Condition.Equal("IsModerator", true) |
-                              Condition.NotEqual("Permission", Permission.None)
-                          )
-                        )
-    )
+	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.In("Visibility", Visibility.Internal, Visibility.All) |
+	(
+		Condition.Equal("Visibility", Visibility.Specified) &
+		Condition.Exists("Users",
+							Condition.Equal("UserId", this.User.UserId) &
+							(
+								Condition.Equal("IsModerator", true) |
+								Condition.NotEqual("Permission", Permission.None)
+							)
+						)
+	)
 );
 ```
 
@@ -980,23 +1051,23 @@ var forums = this.DataAccess.Select<Forum>(
 SELECT t.*
 FROM Forum t
 WHERE
-    t.SiteId = @p1 AND
-    t.Visibility IN (@p2, @p3) OR
-    (
-        t.Visibility = @p4 AND
-        EXISTS
-        (
-                SELECT u.SiteId, u.ForumId, u.UserId
-                FROM ForumUser u
-                WHERE u.SiteId = t.SiteId AND
-                      u.ForumId = t.ForumId AND
-                      u.UserId = @p5 AND
-                      (
-                          u.IsModerator = @p6 OR
-                          u.Permission != @p7
-                      )
-        )
-    );
+	t.SiteId = @p1 AND
+	t.Visibility IN (@p2, @p3) OR
+	(
+		t.Visibility = @p4 AND
+		EXISTS
+		(
+				SELECT u.SiteId, u.ForumId, u.UserId
+				FROM ForumUser u
+				WHERE u.SiteId = t.SiteId AND
+						u.ForumId = t.ForumId AND
+						u.UserId = @p5 AND
+						(
+							u.IsModerator = @p6 OR
+							u.Permission != @p7
+						)
+		)
+	);
 ```
 
 <a name="usage-query-14"></a>
@@ -1014,17 +1085,17 @@ WHERE
 ```csharp
 public sealed class ForumStatistics
 {
-    public int TotalThreads { get; set; }
-    public int TotalPosts { get; set; }
+	public int TotalThreads { get; set; }
+	public int TotalPosts { get; set; }
 }
 
 var rows = this.DataAccess.Execute<ForumStatistics>(
-    "Forum.GetStatistics",
-    new []
-    {
-        new Parameter("SiteId", this.User.SiteId),
-        new Parameter("ForumId", forumId),
-    });
+	"Forum.GetStatistics",
+	new []
+	{
+		new Parameter("SiteId", this.User.SiteId),
+		new Parameter("ForumId", forumId),
+	});
 
 var statistics = rows.FirstOrDefault();
 ```
@@ -1033,9 +1104,9 @@ var statistics = rows.FirstOrDefault();
 
 ```xml
 <command name="Forum.RefreshStatistics" alias="Discussions_Forum_RefreshStatistics" type="procedure" mutability="update">
-    <parameter name="SiteId" type="uint" />
-    <parameter name="ForumId" type="uint" />
-    <parameter name="Total" type="int" direction="output" />
+	<parameter name="SiteId" type="uint" />
+	<parameter name="ForumId" type="uint" />
+	<parameter name="Total" type="int" direction="output" />
 </command>
 ```
 
@@ -1043,13 +1114,13 @@ var statistics = rows.FirstOrDefault();
 var total = Parameter.Output("Total");
 
 this.DataAccess.Execute(
-    "Forum.RefreshStatistics",
-    new []
-    {
-        new Parameter("SiteId", this.User.SiteId),
-        new Parameter("ForumId", forumId),
-        total,
-    });
+	"Forum.RefreshStatistics",
+	new []
+	{
+		new Parameter("SiteId", this.User.SiteId),
+		new Parameter("ForumId", forumId),
+		total,
+	});
 
 var totalValue = total.Value;
 ```
@@ -1059,8 +1130,8 @@ var totalValue = total.Value;
 
 ```csharp
 this.DataAccess.Delete<Post>(
-    Condition.Equal("Visible", false) &
-    Condition.Equal("Creator.Email", "zongsoft@qq.com")
+	Condition.Equal("Visible", false) &
+	Condition.Equal("Creator.Email", "zongsoft@qq.com")
 );
 ```
 
@@ -1069,10 +1140,10 @@ this.DataAccess.Delete<Post>(
 ```sql
 DELETE t
 FROM Post AS t
-    LEFT JOIN UserProfile AS u ON
-        t.CreatorId = u.UserId
+	LEFT JOIN UserProfile AS u ON
+		t.CreatorId = u.UserId
 WHERE t.Visible=0 AND
-      u.Email='zongsoft@qq.com';
+		u.Email='zongsoft@qq.com';
 ```
 
 <a name="usage-delete-cascade"></a>
@@ -1081,8 +1152,8 @@ WHERE t.Visible=0 AND
 级联删除可删除通过一对零或一、一对一、一对多导航属性关联的子表记录。
 ```csharp
 this.DataAccess.Delete<Post>(
-    Condition.Equal("PostId", 100023),
-    "Votes"
+	Condition.Equal("PostId", 100023),
+	"Votes"
 );
 ```
 
@@ -1091,7 +1162,7 @@ this.DataAccess.Delete<Post>(
 ```sql
 CREATE TABLE #TMP
 (
-    PostId bigint
+	PostId bigint
 );
 
 /* 删除主表记录，并将关联键值写入临时表。 */
@@ -1103,7 +1174,7 @@ WHERE PostId=@p1;
 DELETE FROM PostVoting
 WHERE PostId IN
 (
-    SELECT PostId FROM #TMP
+	SELECT PostId FROM #TMP
 );
 ```
 
@@ -1112,9 +1183,9 @@ WHERE PostId IN
 
 ```csharp
 this.DataAccess.Insert("Forum", new {
-    SiteId = this.User.SiteId,
-    GroupId = 100,
-    Name = "xxxx"
+	SiteId = this.User.SiteId,
+	GroupId = 100,
+	Name = "xxxx"
 });
 ```
 
@@ -1130,13 +1201,13 @@ this.DataAccess.Insert("Forum", new {
 
 ```csharp
 var count = this.DataAccess.Insert<ForumUser>(
-    new {
-        SiteId = this.User.SiteId,
-        ForumId = 100,
-        UserId = 100,
-        Permission = Permission.Read,
-    },
-    DataInsertOptions.IgnoreConstraint());
+	new {
+		SiteId = this.User.SiteId,
+		ForumId = 100,
+		UserId = 100,
+		Permission = Permission.Read,
+	},
+	DataInsertOptions.IgnoreConstraint());
 ```
 
 上述新增大致生成如下 SQL：
@@ -1154,14 +1225,14 @@ ON CONFLICT DO NOTHING;
 
 ```csharp
 var options = DataInsertOptions
-    .Sequence(DataSequenceBehavior.Never)
-    .IgnoreConstraint();
+	.Sequence(DataSequenceBehavior.Never)
+	.IgnoreConstraint();
 
 this.DataAccess.Insert<Forum>(new {
-    SiteId = this.User.SiteId,
-    ForumId = 100,
-    GroupId = 10,
-    Name = "General",
+	SiteId = this.User.SiteId,
+	ForumId = 100,
+	GroupId = 10,
+	Name = "General",
 }, options);
 ```
 
@@ -1179,9 +1250,9 @@ forum.Name = "xxxx";
 
 forum.Users = new ForumUser[]
 {
-    new ForumUser { UserId = 100, IsModerator = true },
-    new ForumUser { UserId = 101, Permission = Permission.Read },
-    new ForumUser { UserId = 102, Permission = Permission.Write }
+	new ForumUser { UserId = 100, IsModerator = true },
+	new ForumUser { UserId = 101, Permission = Permission.Read },
+	new ForumUser { UserId = 102, Permission = Permission.Write }
 };
 
 this.DataAccess.Insert(forum, "*, Users{*}");
@@ -1205,28 +1276,28 @@ INSERT INTO ForumUser (SiteId,ForumId,UserId,Permission,IsModerator) VALUES (...
 ```csharp
 var users = new []
 {
-    new { SiteId = this.User.SiteId, ForumId = 100, UserId = 100, Permission = Permission.Read },
-    new { SiteId = this.User.SiteId, ForumId = 100, UserId = 101, Permission = Permission.Write },
+	new { SiteId = this.User.SiteId, ForumId = 100, UserId = 100, Permission = Permission.Read },
+	new { SiteId = this.User.SiteId, ForumId = 100, UserId = 101, Permission = Permission.Write },
 };
 
 var count = this.DataAccess.Import(
-    "ForumUser",
-    users,
-    "SiteId,ForumId,UserId,Permission".Split(','));
+	"ForumUser",
+	users,
+	"SiteId,ForumId,UserId,Permission".Split(','));
 ```
 
 如果导入时希望跳过重复记录，可使用 `DataImportOptions.IgnoreConstraint()`。如果过滤器或服务还需要读取本次操作的上下文标记，也可以继续链式设置 `Parameter(...)`：
 
 ```csharp
 var options = DataImportOptions
-    .Parameter("SkipSynchronization")
-    .IgnoreConstraint();
+	.Parameter("SkipSynchronization")
+	.IgnoreConstraint();
 
 var count = this.DataAccess.Import(
-    "ForumUser",
-    users,
-    "SiteId,ForumId,UserId,Permission".Split(','),
-    options);
+	"ForumUser",
+	users,
+	"SiteId,ForumId,UserId,Permission".Split(','),
+	options);
 ```
 
 <a name="usage-update"></a>
@@ -1260,12 +1331,12 @@ WHERE UserId=@p4;
 
 ```csharp
 this.DataAccess.Update<UserProfile>(
-    new {
-        Name="Popeye",
-        Nickname="Popeye Zhong",
-        Gender=Gender.Male,
-    },
-    Condition.Equal("UserId", 100)
+	new {
+		Name="Popeye",
+		Nickname="Popeye Zhong",
+		Gender=Gender.Male,
+	},
+	Condition.Equal("UserId", 100)
 );
 ```
 
@@ -1280,8 +1351,8 @@ this.DataAccess.Update<UserProfile>(
  * 其他字段即使发生变化，也不会被写入。
  */
 this.DataAccess.Update<UserProfile>(
-    user,
-    "Name, Gender"
+	user,
+	"Name, Gender"
 );
 
 /*
@@ -1289,8 +1360,8 @@ this.DataAccess.Update<UserProfile>(
  * 即使 user 对象中包含这两个属性值，也不会为它们生成 SET 子句。
  */
 this.DataAccess.Update<UserProfile>(
-    user,
-    "*, !CreatorId, !CreatedTime"
+	user,
+	"*, !CreatorId, !CreatedTime"
 );
 ```
 
@@ -1302,23 +1373,23 @@ this.DataAccess.Update<UserProfile>(
 ```csharp
 public bool Approve(ulong threadId)
 {
-    var criteria =
-        Condition.Equal(nameof(Thread.ThreadId), threadId) &
-        Condition.Equal(nameof(Thread.Approved), false) &
-        Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
-        Condition.Exists("Forum.Users",
-            Condition.Equal(nameof(Forum.ForumUser.UserId), this.User.UserId) &
-            Condition.Equal(nameof(Forum.ForumUser.IsModerator), true));
+	var criteria =
+		Condition.Equal(nameof(Thread.ThreadId), threadId) &
+		Condition.Equal(nameof(Thread.Approved), false) &
+		Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
+		Condition.Exists("Forum.Users",
+			Condition.Equal(nameof(Forum.ForumUser.UserId), this.User.UserId) &
+			Condition.Equal(nameof(Forum.ForumUser.IsModerator), true));
 
-    return this.DataAccess.Update<Thread>(new
-    {
-        Approved = true,
-        ApprovedTime = DateTime.Now,
-        Post = new
-        {
-            Approved = true,
-        }
-    }, criteria, "*,Post{Approved}") > 0;
+	return this.DataAccess.Update<Thread>(new
+	{
+		Approved = true,
+		ApprovedTime = DateTime.Now,
+		Post = new
+		{
+			Approved = true,
+		}
+	}, criteria, "*,Post{Approved}") > 0;
 }
 ```
 
@@ -1327,32 +1398,32 @@ public bool Approve(ulong threadId)
 ```sql
 CREATE TABLE #TMP
 (
-    PostId bigint NOT NULL
+	PostId bigint NOT NULL
 );
 
 UPDATE T SET
-    T.[Approved]=@p1,
-    T.[ApprovedTime]=@p2
+	T.[Approved]=@p1,
+	T.[ApprovedTime]=@p2
 OUTPUT DELETED.PostId INTO #TMP
 FROM [Discussions_Thread] AS T
-    LEFT JOIN [Discussions_Forum] AS T1 ON /* Forum */
-        T1.[SiteId]=T.[SiteId] AND
-        T1.[ForumId]=T.[ForumId]
+	LEFT JOIN [Discussions_Forum] AS T1 ON /* Forum */
+		T1.[SiteId]=T.[SiteId] AND
+		T1.[ForumId]=T.[ForumId]
 WHERE
-    T.[ThreadId]=@p3 AND
-    T.[Approved]=@p4 AND
-    T.[SiteId]=@p5 AND EXISTS (
-        SELECT [SiteId],[ForumId] FROM [Discussions_ForumUser]
-        WHERE [SiteId]=T1.[SiteId] AND [ForumId]=T1.[ForumId] AND [UserId]=@p6 AND [IsModerator]=@p7
-    );
+	T.[ThreadId]=@p3 AND
+	T.[Approved]=@p4 AND
+	T.[SiteId]=@p5 AND EXISTS (
+		SELECT [SiteId],[ForumId] FROM [Discussions_ForumUser]
+		WHERE [SiteId]=T1.[SiteId] AND [ForumId]=T1.[ForumId] AND [UserId]=@p6 AND [IsModerator]=@p7
+	);
 
 UPDATE T SET
-    T.[Approved]=@p1
+	T.[Approved]=@p1
 FROM [Discussions_Post] AS T
 WHERE EXISTS (
-    SELECT [PostId]
-    FROM #TMP
-    WHERE [PostId]=T.[PostId]);
+	SELECT [PostId]
+	FROM #TMP
+	WHERE [PostId]=T.[PostId]);
 ```
 
 <a name="usage-upsert"></a>
@@ -1364,12 +1435,12 @@ WHERE EXISTS (
 
 ```csharp
 this.DataAccess.Upsert<History>(
-    new {
-        UserId = 100,
-        ThreadId = 2001,
-        ViewedCount = Operand.Field(nameof(History.ViewedCount)) + 1,
-        LastViewedTime = DateTime.Now,
-    }
+	new {
+		UserId = 100,
+		ThreadId = 2001,
+		ViewedCount = Operand.Field(nameof(History.ViewedCount)) + 1,
+		LastViewedTime = DateTime.Now,
+	}
 );
 ```
 
@@ -1385,9 +1456,9 @@ MERGE History AS target
 USING (SELECT @p1,@p2,@p3,@p4) AS source (UserId,ThreadId,ViewedCount,LastViewedTime)
 ON (target.UserId=source.UserId AND target.ThreadId=source.ThreadId)
 WHEN MATCHED THEN
-    UPDATE SET target.ViewedCount=target.ViewedCount+@p3, LastViewedTime=@p4
+	UPDATE SET target.ViewedCount=target.ViewedCount+@p3, LastViewedTime=@p4
 WHEN NOT MATCHED THEN
-    INSERT (UserId,ThreadId,ViewedCount,LastViewedTime) VALUES (@p1,@p2,@p3,@p4);
+	INSERT (UserId,ThreadId,ViewedCount,LastViewedTime) VALUES (@p1,@p2,@p3,@p4);
 ```
 
 <a name="usage-returning"></a>
@@ -1399,16 +1470,16 @@ WHEN NOT MATCHED THEN
 var options = DataUpdateOptions.Return(ReturningKind.Newer, nameof(Thread.TotalViews));
 
 this.DataAccess.Update<Thread>(
-    new {
-        TotalViews = Operand.Field(nameof(Thread.TotalViews)) + 1,
-    },
-    Condition.Equal(nameof(Thread.ThreadId), threadId),
-    options);
+	new {
+		TotalViews = Operand.Field(nameof(Thread.TotalViews)) + 1,
+	},
+	Condition.Equal(nameof(Thread.ThreadId), threadId),
+	options);
 
 if(options.Returning.Rows.Count > 0 &&
-   options.Returning.Rows[0].TryGetValue(nameof(Thread.TotalViews), ReturningKind.Newer, out var value))
+	 options.Returning.Rows[0].TryGetValue(nameof(Thread.TotalViews), ReturningKind.Newer, out var value))
 {
-    var totalViews = Convert.ToInt64(value);
+	var totalViews = Convert.ToInt64(value);
 }
 ```
 
@@ -1416,8 +1487,8 @@ if(options.Returning.Rows.Count > 0 &&
 
 ```csharp
 var totalViews = this.DataAccess.Increase<Thread>(
-    nameof(Thread.TotalViews),
-    Condition.Equal(nameof(Thread.ThreadId), threadId));
+	nameof(Thread.TotalViews),
+	Condition.Equal(nameof(Thread.ThreadId), threadId));
 ```
 
 删除选项返回的是删除前的值：
@@ -1426,13 +1497,13 @@ var totalViews = this.DataAccess.Increase<Thread>(
 var options = DataDeleteOptions.Return(nameof(PostAttachment.AttachmentId));
 
 this.DataAccess.Delete<PostAttachment>(
-    Condition.Equal(nameof(PostAttachment.PostId), postId),
-    options);
+	Condition.Equal(nameof(PostAttachment.PostId), postId),
+	options);
 
 foreach(var row in options.Returning.Rows)
 {
-    if(row.TryGetValue(nameof(PostAttachment.AttachmentId), out var value))
-        DeletePhysicalAttachment(Convert.ToUInt64(value));
+	if(row.TryGetValue(nameof(PostAttachment.AttachmentId), out var value))
+		DeletePhysicalAttachment(Convert.ToUInt64(value));
 }
 ```
 
@@ -1474,20 +1545,20 @@ foreach(var row in options.Returning.Rows)
 
 ```csharp
 var options = DataUpdateOptions
-    .Parameter("SkipSynchronization")
-    .SuppressValidator();
+	.Parameter("SkipSynchronization")
+	.SuppressValidator();
 
 this.DataAccess.Update<Thread>(
-    new { TotalViews = Operand.Field(nameof(Thread.TotalViews)) + 1 },
-    Condition.Equal(nameof(Thread.ThreadId), threadId),
-    options);
+	new { TotalViews = Operand.Field(nameof(Thread.TotalViews)) + 1 },
+	Condition.Equal(nameof(Thread.ThreadId), threadId),
+	options);
 ```
 
 过滤器或服务钩子可从操作上下文读取该标记：
 
 ```csharp
 if(context.Options.Parameters.Contains("SkipSynchronization"))
-    return;
+	return;
 ```
 
 `Parameter(...)` 也可以携带服务钩子需要的对象：
@@ -1496,12 +1567,12 @@ if(context.Options.Parameters.Contains("SkipSynchronization"))
 var options = DataInsertOptions.Parameter("Thread", thread);
 
 this.DataAccess.Insert<Post>(
-    new {
-        ThreadId = thread.ThreadId,
-        CreatorId = this.User.UserId,
-        Content = content,
-    },
-    options);
+	new {
+		ThreadId = thread.ThreadId,
+		CreatorId = this.User.UserId,
+		Content = content,
+	},
+	options);
 ```
 
 对于映射命令，SQL 或存储过程参数仍然放在 `Execute` 参数中；`DataExecuteOptions` 只放操作上下文标记：
@@ -1510,41 +1581,41 @@ this.DataAccess.Insert<Post>(
 var options = DataExecuteOptions.Parameter("SkipAudit");
 
 this.DataAccess.Execute(
-    "Forum.RefreshStatistics",
-    new []
-    {
-        new Parameter("SiteId", this.User.SiteId),
-        new Parameter("ForumId", forumId),
-    },
-    options);
+	"Forum.RefreshStatistics",
+	new []
+	{
+		new Parameter("SiteId", this.User.SiteId),
+		new Parameter("ForumId", forumId),
+	},
+	options);
 ```
 
 `Distinct()` 适合标量查询：
 
 ```csharp
 var creatorIds = this.DataAccess.Select<uint>(
-    nameof(Thread),
-    Condition.Equal(nameof(Thread.ForumId), forumId),
-    nameof(Thread.CreatorId),
-    DataSelectOptions.Distinct());
+	nameof(Thread),
+	Condition.Equal(nameof(Thread.ForumId), forumId),
+	nameof(Thread.CreatorId),
+	DataSelectOptions.Distinct());
 ```
 
 内部操作明确需要绕开普通验证规则时，可使用 `SuppressValidator()`：
 
 ```csharp
 var exists = this.DataAccess.Exists<UserProfile>(
-    Condition.Equal(nameof(UserProfile.UserId), userId),
-    DataExistsOptions.SuppressValidator());
+	Condition.Equal(nameof(UserProfile.UserId), userId),
+	DataExistsOptions.SuppressValidator());
 ```
 
 只有在必须修复主键时，才使用 `UpdateBehaviors.PrimaryKey`：
 
 ```csharp
 this.DataAccess.Update<UserProfile>(
-    new { UserId = newUserId },
-    Condition.Equal(nameof(UserProfile.UserId), oldUserId),
-    nameof(UserProfile.UserId),
-    new DataUpdateOptions(UpdateBehaviors.PrimaryKey));
+	new { UserId = newUserId },
+	Condition.Equal(nameof(UserProfile.UserId), oldUserId),
+	nameof(UserProfile.UserId),
+	new DataUpdateOptions(UpdateBehaviors.PrimaryKey));
 ```
 
 每类操作也都有前后回调和对应的 `IDataAccess` 事件，譬如 `Selecting`/`Selected`、`Inserting`/`Inserted`、`Executing`/`Executed`。注册到 `IDataAccess.Filters` 的过滤器会在前置事件之后、数据提供程序执行之前运行，适合承载通用横切逻辑。
@@ -1555,15 +1626,15 @@ this.DataAccess.Update<UserProfile>(
 using var transaction = Transaction.ReadCommitted();
 
 this.DataAccess.Update<Thread>(
-    new { Approved = true, ApprovedTime = DateTime.Now },
-    Condition.Equal(nameof(Thread.ThreadId), threadId));
+	new { Approved = true, ApprovedTime = DateTime.Now },
+	Condition.Equal(nameof(Thread.ThreadId), threadId));
 
 this.DataAccess.Upsert<History>(new {
-    UserId = this.User.UserId,
-    ThreadId = threadId,
-    ViewedCount = Operand.Field(nameof(History.ViewedCount)) + 1,
-    FirstViewedTime = DateTime.Now,
-    LastViewedTime = DateTime.Now,
+	UserId = this.User.UserId,
+	ThreadId = threadId,
+	ViewedCount = Operand.Field(nameof(History.ViewedCount)) + 1,
+	FirstViewedTime = DateTime.Now,
+	LastViewedTime = DateTime.Now,
 });
 
 transaction.Commit();
@@ -1588,3 +1659,25 @@ Zongsoft.Data 追求的是性能、可维护性和易用性的平衡，而不是
 由于数据结构关系是声明式表达的，引擎可以把调用意图转换为表达式树，再生成不同数据提供程序的 SQL。应用代码更聚焦，数据提供程序也有更多优化空间。
 
 实现层面使用 **E**mitting 和动态编译技术，提前准备实体组装(**P**opulate)、参数绑定等路径。可通过 [ModelEmitter](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Common/ModelMemberEmitter.cs) 等相关类了解细节。
+
+## 插件化接入
+
+优先通过宿主组合本能力；包引用用于编译，而插件加载还需要部署清单和运行产物。完整流程见[插件化入门](../Zongsoft.Plugins/README.zh-Hans.md)。
+
+清单挂载 Data 环境及驱动集合。还需数据库驱动插件、具名连接及应用 `.mapping`；只安装引擎既不会选择数据库，也不会创建表。
+
+| 运行产物 | 源码依据 |
+| --- | --- |
+| `Zongsoft.Data` | [Zongsoft.Data.plugin](src/Zongsoft.Data.plugin) |
+| 文件复制及依赖 | [Zongsoft.Data.deploy](src/Zongsoft.Data.deploy) |
+
+在已有宿主的 `.deploy` 中加入以下片段（保留宿主原有 Main 等基础清单，不要用片段覆盖整份文件）：
+
+```ini
+[plugins zongsoft data]
+nuget:Zongsoft.Data
+```
+
+按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
+
+清单列出的附属产物包括：`Zongsoft.Data.plugin`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。

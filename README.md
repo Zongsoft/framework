@@ -14,6 +14,23 @@ The ecosystem of pluggable applications is a big strength of _**Z**ongsoft_, hel
 
 > 📦 Maintainers should read the [NuGet publishing guide](PUBLISHING.md) before releasing packages.
 
+## Where to Start
+
+A typical Zongsoft application consists of a host, business plugins and capability plugins. The host owns startup and lifecycle; business modules compile against Core or shared contracts; deployment manifests and configuration compose implementations for databases, caching, messaging and expressions.
+
+| Your task | Starting point |
+| --- | --- |
+| Understand application/module containers, named providers and injection | [Core guide](Zongsoft.Core/README.md) |
+| Create a host, deploy capabilities and write a decoupled consumer plugin | [Plugin runtime guide](Zongsoft.Plugins/README.md) |
+| Deploy a controller as a plugin and verify HTTP requests | [Complete Web plugin example](Zongsoft.Plugins.Web/README.md) |
+| Configure model mappings and database drivers | [Data engine](Zongsoft.Data/README.md) |
+| Select message drivers, subscriptions and reliable storage | [Message drivers](messaging/) and [Core messaging contracts](Zongsoft.Core/src/Messaging/) |
+| Change framework implementations or collaborate with AI | [AGENTS.md](AGENTS.md) and [skill routing](SKILL.md) |
+
+💡 `dotnet add package` supplies compile-time references; it does not deploy plugins. Applications normally obtain shared interfaces through `ApplicationContext.Current.Services`, an application-defined `Module.Current.Services` and agreed configuration, without constructing each third-party implementation in business modules.
+
+🚨 Plugins execute with host privileges, not in a sandbox. Deployment manifests can overwrite files, while databases, cloud services, brokers and model calls can have side effects. Verify in isolation before connecting real workloads.
+
 ## Projects
 
 - [_**Z**ongsoft.**C**ore_](Zongsoft.Core) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Core)](https://nuget.org/packages/Zongsoft.Core)

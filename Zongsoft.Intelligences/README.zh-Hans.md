@@ -181,3 +181,25 @@ podman exec -it ollama ollama pull qwen3:0.6b
 > 完整 _**API**_ 请参考 [api](./api/) 项目中的 [_`Zongsoft.Intelligences.Web.http`_](./api/Zongsoft.Intelligences.Web.http) 文档。
 > - `{name}` 表示助手名字，譬如：`ollama`；
 > - `{id}`   表示会话编号。
+
+## 插件化接入
+
+优先通过宿主组合本能力；包引用用于编译，而插件加载还需要部署清单和运行产物。完整流程见[插件化入门](../Zongsoft.Plugins/README.zh-Hans.md)。
+
+清单注册连接设置驱动和 `AI` 命令组。解析助手前先配置提供程序与模型，仅 HTTP 宿主需要 Web 包。当前源码 `.deploy` 仍列有旧 AI 依赖，部署前应与所选包的 `.csproj`/锁定依赖比对，不能假设这些版本匹配当前 API。
+
+| 运行产物 | 源码依据 |
+| --- | --- |
+| `Zongsoft.Intelligences` | [Zongsoft.Intelligences.plugin](src/Zongsoft.Intelligences.plugin) |
+| 文件复制及依赖 | [Zongsoft.Intelligences.deploy](src/Zongsoft.Intelligences.deploy) |
+
+在已有宿主的 `.deploy` 中加入以下片段（保留宿主原有 Main 等基础清单，不要用片段覆盖整份文件）：
+
+```ini
+[plugins zongsoft intelligences]
+nuget:Zongsoft.Intelligences
+```
+
+按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
+
+清单列出的附属产物包括：`Zongsoft.Intelligences.option`、`Zongsoft.Intelligences.plugin`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。

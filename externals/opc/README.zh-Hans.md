@@ -75,3 +75,25 @@ openssl pkcs12 -inkey certificate.private.pem -in certificate.der -export -out c
 ```bash
 openssl pkcs12 -inkey certificate.private.pem -passin pass:"password" -in certificate.der -export -out certificate.pfx -passout pass:"password" -name "FriendlyName"
 ```
+
+## 插件化接入
+
+优先通过宿主组合本能力；包引用用于编译，而插件加载还需要部署清单和运行产物。完整流程见[插件化入门](../../Zongsoft.Plugins/README.zh-Hans.md)。
+
+插件使 OPC 适配器及 SDK 可用，应用仍需配置端点、证书信任及会话/订阅生命周期；复制清单不代表已经建立 OPC 连接。
+
+| 运行产物 | 源码依据 |
+| --- | --- |
+| `Zongsoft.Externals.Opc` | [Zongsoft.Externals.Opc.plugin](src/Zongsoft.Externals.Opc.plugin) |
+| 文件复制及依赖 | [Zongsoft.Externals.Opc.deploy](src/Zongsoft.Externals.Opc.deploy) |
+
+在已有宿主的 `.deploy` 中加入以下片段（保留宿主原有 Main 等基础清单，不要用片段覆盖整份文件）：
+
+```ini
+[plugins zongsoft externals opc]
+nuget:Zongsoft.Externals.Opc
+```
+
+按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
+
+清单列出的附属产物包括：`Zongsoft.Externals.Opc.plugin`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。

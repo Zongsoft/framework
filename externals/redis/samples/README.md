@@ -20,8 +20,11 @@ All projects target .NET 10 and require a reachable Redis server. Review the con
 Run the interactive messaging client from the repository root:
 
 ```shell
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -c Debug -f net10.0 -p:GeneratePackageOnBuild=false
 dotnet run --project externals/redis/samples/messaging/Zongsoft.Externals.Redis.Messaging.Samples.csproj
 ```
+
+The Debug project references the locally built Core DLL. [messaging/Program.cs](messaging/Program.cs) owns a concrete diagnostic queue; application consumers should use the [plugin and public provider workflow](../README.md).
 
 ### Subscribe and Unsubscribe
 
@@ -70,7 +73,7 @@ close
 
 ### Suggested Scenario
 
-Run the following commands with matching tags:
+Run the following commands individually with matching tags. Wait for subscription completion before publishing, and for received output before unsubscribing:
 
 ```text
 subscribe --tags:urgent alerts
@@ -80,6 +83,12 @@ unsubscribe alerts
 ```
 
 You should observe three received messages and an `alerts` subscription tagged `urgent` before it is removed.
+
+💡 All sample processes use the same consumer group by default. Multiple clients therefore compete for stream entries rather than each receiving all three messages. Use one consuming client and a unique test topic for this observation; the displayed count is not an exactly-once delivery guarantee.
+
+### Safety and Cleanup
+
+🚨 Use only a dedicated local Redis database and fake messages. Streams, groups, and pending entries can remain after client shutdown; acknowledgment does not imply deletion of the stream. After canceling this run's subscriptions, execute `close`, then `exit` and confirm. If persistent cleanup is required, inspect the actual stream keys and remove only resources created for this test using Redis management tools; never use a shared-database flush.
 
 ## Distributed Cache Sample
 

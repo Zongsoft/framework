@@ -121,31 +121,37 @@ await server.StartAsync(["--control:32100", "--incoming:32101", "--outgoing:3210
 
 ### 发布与订阅
 
-不使用 Zongsoft 插件容器时，可以直接创建队列：
+在已经部署 ZeroMQ 插件的宿主中，按提供者名和连接名取得公共队列。以下沿用上文的 `ZeroMQ` 连接；同一进程自发自收的演示需在该连接中配置 `filter=*`，并提前启动兼容 Broker。消费模块只引用 Core：
 
 ```csharp
 using System.Text;
+using Zongsoft.Services;
 using Zongsoft.Messaging;
-using Zongsoft.Messaging.ZeroMQ;
-using Zongsoft.Messaging.ZeroMQ.Configuration;
 
-var settings = ZeroConnectionSettingsDriver.Instance.GetSettings(
-	"ZeroMQ",
-	"server=127.0.0.1;port=7969;group=Demo;client=Sample;");
+var provider = ApplicationContext.Current.Services
+	.FindRequired<IMessageQueueProvider>("ZeroMQ");
+var queue = provider.Queue("ZeroMQ");
+var received = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+var topic = $"docs/{Guid.NewGuid():N}";
 
-using var queue = new ZeroQueue("ZeroMQ", settings);
+var consumer = await queue.SubscribeAsync(topic, message =>
+	received.TrySetResult(Encoding.UTF8.GetString(message.Data.Span)));
 
-var consumer = await queue.SubscribeAsync("orders/created", message =>
-	Console.WriteLine(Encoding.UTF8.GetString(message.Data.Span)));
+try
+{
+	var identifier = await queue.ProduceAsync(topic, "demo".AsMemory());
+	if(identifier == null)
+		throw new InvalidOperationException("No matching subscription was visible.");
 
-var identifier = await queue.ProduceAsync("orders/created", "订单 #1001".AsMemory());
-if(identifier == null)
-	Console.WriteLine("发送瞬间没有可见的匹配订阅，消息未发送。");
-
-await consumer.UnsubscribeAsync();
+	Console.WriteLine(await received.Task.WaitAsync(TimeSpan.FromSeconds(10)));
+}
+finally
+{
+	await consumer.UnsubscribeAsync();
+}
 ```
 
-插件化宿主可从名为 `ZeroMQ` 的 `IMessageQueueProvider` 中获取命名队列，然后使用相同的 `ProduceAsync` 和 `SubscribeAsync` API。
+提供者按名复用队列，业务操作不要释放共享队列。示例仅取消自己创建的唯一主题订阅，并等待处理器完成后才退出；发送返回非空标识仍不等于业务处理完成。独立工具若直接构造 `ZeroQueue`，才由工具负责其完整生命周期。
 
 主题订阅采用前缀匹配。一个 `ZeroQueue` 对每个逻辑主题只保留一个消费者；再次订阅同一个主题会返回已有消费者，不会替换处理器或选项。设置 `Group=Demo` 后，网络上的物理主题为 `Demo:orders/created`，处理器收到的 `Message.Topic` 仍为逻辑主题 `orders/created`。
 
@@ -274,3 +280,27 @@ await channel.SendAsync(eventContext);
 4. `ProduceAsync` 返回 `null` 时，确认发布瞬间 Broker 已能看到匹配订阅；业务可按自身策略决定是否重试；
 5. 使用 `LeastOnce` 时检查 Server 的 `Storage`、Control 端口、显式确认和过期时间；
 6. 可靠投递长期未完成时检查 Broker 的 Pending 数据、在线订阅和消费者幂等处理。
+
+## 插件化接入
+
+优先通过宿主组合本能力；包引用用于编译，而插件加载还需要部署清单和运行产物。完整流程见[插件化入门](../../Zongsoft.Plugins/README.zh-Hans.md)。
+
+部署清单按 `Zongsoft.Messaging.ZeroMQ-$(site).plugin` 选择附加插件；`site=daemon` 包含 Broker 启动贡献，必须明确区分纯客户端与 Broker 宿主。启动前配置端点及存储工厂。
+
+| 运行产物 | 源码依据 |
+| --- | --- |
+| `Zongsoft.Messaging.ZeroMQ.Daemon` | [Zongsoft.Messaging.ZeroMQ-daemon.plugin](src/Zongsoft.Messaging.ZeroMQ-daemon.plugin) |
+| `Zongsoft.Messaging.ZeroMQ` | [Zongsoft.Messaging.ZeroMQ.plugin](src/Zongsoft.Messaging.ZeroMQ.plugin) |
+| `Zongsoft.Messaging.ZeroMQ.Storage` | [Zongsoft.Messaging.ZeroMQ.Storage.plugin](src/Zongsoft.Messaging.ZeroMQ.Storage.plugin) |
+| 文件复制及依赖 | [Zongsoft.Messaging.ZeroMQ.deploy](src/Zongsoft.Messaging.ZeroMQ.deploy) |
+
+在已有宿主的 `.deploy` 中加入以下片段（保留宿主原有 Main 等基础清单，不要用片段覆盖整份文件）：
+
+```ini
+[plugins zongsoft messaging zeromq]
+nuget:Zongsoft.Messaging.ZeroMQ
+```
+
+按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
+
+清单列出的附属产物包括：`Zongsoft.Messaging.ZeroMQ.option`、`Zongsoft.Messaging.ZeroMQ.plugin`、`Zongsoft.Messaging.ZeroMQ-$(site).plugin`、`Zongsoft.Messaging.ZeroMQ.Storage.plugin`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。

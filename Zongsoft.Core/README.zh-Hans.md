@@ -96,3 +96,91 @@ dotnet cake build.cake --target=test --edition=Release
 ## 许可
 
 Zongsoft.Core 基于 [LGPL-3.0-or-later](https://github.com/Zongsoft/framework/blob/main/LICENSE) 许可证发布。
+
+## 服务：不引用具体实现也能使用能力
+
+### 应用容器与模块容器
+
+插件宿主扫描部署的程序集并注册服务。应用代码依赖 Core 契约或共享模块契约程序集，不必引用每个提供者的实现包。部署另一个兼容提供者改变的是装配，而不是消费方的业务代码。
+
+- `ApplicationContext.Current.Services` 是应用服务容器，宿主初始化后可用。
+- `Module.Current.Services` 是应用自定义模块常用的入口。这里 `Module` 是你的模块类，不是 Core 通用单例。[ApplicationModule.Services](src/Services/ApplicationModule.cs) 优先解析模块注册，再回退共享应用服务。
+- 构造函数注入和 `[ServiceDependency]` 可让宿主直接提供契约，无需反复查找。模块自己的选择使用模块容器，不要在单例中保留 HTTP 请求服务。
+
+默认特性扫描器将服务实现注册为单例。模块容器不会自动实现租户隔离，也不等于请求作用域。不要在每次操作后释放从容器取得的共享服务。
+
+### 选择正确的定位方式
+
+| 需求 | API | 含义 |
+| --- | --- | --- |
+| 一个已注册契约 | `ResolveRequired<T>()` | 契约不可用时抛出错误 |
+| 所有实现 | `ResolveAll<T>()` | 枚举已注册的契约实现 |
+| 符合条件的实现 | `FindRequired<T>(argument)` | 使用匹配器行为或契约 Name 匹配 |
+| 注册的服务别名 | `ResolveRequired("name")` | 解析注册时建立的别名 |
+| 提供者供应的实例 | `IServiceProvider<T>.GetService(name)` | 选择配置中的具名服务，不是另一个 DI 容器 |
+| 配置中的限定名 | `services.Locate<T>("name@provider")` | 先选具名提供者，再获取它的具名实例 |
+
+可选形式 `Resolve`、`Find`、`Locate` 可能返回 null。存在多个提供者时应明确选择，不要让注册顺序意外决定数据库、队列或缓存。[定位实现](src/Services/ServiceProviderExtension.cs)定义了匹配规则。
+
+### 示例：通过配置选择求值器
+
+假设插件宿主已部署语言适配器，应用拥有以下选项片段：
+
+```xml
+<option path="/">
+	<rules evaluator="Scriban" />
+</option>
+```
+
+将此片段放入已加载插件同名的 `.option` 文件的 `<options>` 根节点内。属性生成 `Rules:Evaluator` 配置键；`<evaluator>Scriban</evaluator>` 的文本节点在当前 XML 提供程序中表示集合项，不等价于该标量配置。详见 [XML 配置解析器](src/Configuration/Xml/XmlStreamConfigurationProvider.cs)。
+
+在已初始化的应用服务/命令中运行以下代码，而不是在宿主创建之前运行：
+
+```csharp
+using Zongsoft.Expressions;
+using Zongsoft.Services;
+
+var application = ApplicationContext.Current
+	?? throw new InvalidOperationException("The application host is not initialized.");
+var name = application.Configuration["Rules:Evaluator"]
+	?? throw new InvalidOperationException("Rules:Evaluator is missing.");
+var evaluator = application.Services.FindRequired<IExpressionEvaluator>(name);
+var result = evaluator.Evaluate("x + y", new Dictionary<string, object>
+{
+	["x"] = 20,
+	["y"] = 22,
+});
+Console.WriteLine(result);
+```
+
+消费方引用表达式契约，而不是 ScribanExpressionEvaluator。替换提供者前还必须确认其支持应用使用的表达式语言。在已知模块内，改用自身 `Module.Current.Services.FindRequired<IExpressionEvaluator>(name)` 即可。不要给解析出的求值器套 `using`，其注册生命周期属于宿主。
+
+### 示例：通过提供者取得具名缓存
+
+提供者是额外一层间接定位：一个 Redis 提供者可供应多个已配置缓存。部署 Redis 插件并配置名为 `Orders` 的连接后：
+
+```csharp
+using Zongsoft.Caching;
+using Zongsoft.Services;
+
+var services = ApplicationContext.Current.Services;
+IDistributedCache cache = services.Locate<IDistributedCache>("Orders@Redis")
+	?? throw new InvalidOperationException("The configured cache is unavailable.");
+Console.WriteLine(cache.GetType().Name);
+```
+
+字符串可来自应用选项，而不是源码常量。示例只定位服务，不访问服务器。[Redis 配置](../externals/redis/README.zh-Hans.md)定义具名连接的选择及回退行为。不是每个提供者都有注册别名，使用 `@provider` 前应核对注册。
+
+### 注册与注入模块契约
+
+提供者实现使用 `[Service<TContract>]` 或 `IServiceRegistration`，插件也可通过服务表达式装配对象。程序集上的 `[ApplicationModule("Orders")]` 标明服务注册的模块归属，模块及扩展节点仍需由应用清单贡献。
+
+`[ServiceDependency]` 可注入契约。非空 ServiceName 表示向 `IServiceProvider<T>` 请求具名实例，`~` 或 `.` 表示所属模块名。Provider 选择模块容器，`/` 或 `*` 表示应用容器，详见 [ServiceDependencyAttribute](src/Services/ServiceDependencyAttribute.cs)。
+
+💡 插件表达式 `{service:~@Orders}` 中的 `@...` 选择**模块容器**；ServiceLocator 的 `Orders@Redis` 中 `@Redis` 选择**具名服务提供者**。它们是两种不同语法，不能混用。
+
+### 配置与生命周期检查
+
+提供者名、连接名和扩展路径放在应用拥有的配置/程序集元数据中。依次确认提供者插件已加载、请求契约已注册、具名配置存在。缺失服务应产生可定位的启动错误，而不是静默构造默认实现。
+
+仅对简单 Core 值对象，或所有权明确的独立适配场景直接构造具体类型。数据库连接、队列、表达式运行时等共享实现通常应通过配置的提供者获得。部署和宿主准备见 [Plugins](../Zongsoft.Plugins/README.zh-Hans.md)。

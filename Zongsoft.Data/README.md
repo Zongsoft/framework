@@ -45,6 +45,77 @@ TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Z
 
 > 💡 Tip: If you need a driver that is not listed here or commercial support, please contact us ([zongsoft@qq.com](mailto:zongsoft@qq.com)).
 
+<a name="plugin-quickstart"></a>
+## Minimal Plugin Workflow
+
+Distinguish three names: the provider contract is `IServiceProvider<IDataAccess>`, the accessor/connection is `Docs`, and the qualified mapping command is `Docs.Answer`. The engine selects an implementation using the connection's `driver`; business code does not reference SQLite types.
+
+### 1. Deploy the Engine and Driver
+
+Extend the existing host manifest from the [plugin terminal guide](../Zongsoft.Plugins/README.md):
+
+```ini
+[plugins zongsoft data]
+nuget:Zongsoft.Data
+
+[plugins zongsoft data sqlite]
+nuget:Zongsoft.Data.SQLite
+```
+
+The consumer plugin only needs `Zongsoft.Core`. Retain Main, Terminal and host dependencies, and deploy the business DLL with its own `.plugin` to `plugins/docs/`. The consumer manifest lists the business assembly; a Data dependency declares the data-capability prerequisite without depending on a particular database driver.
+
+### 2. Configure the Connection and Deploy a Mapping
+
+Place this in an `.option` file with the same stem as the business manifest:
+
+```xml
+<options>
+	<option path="/Data">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="Docs" driver="SQLite"
+			                   value="Database=:memory:;Mode=Memory" />
+		</connectionSettings>
+	</option>
+</options>
+```
+
+Place `Docs.mapping` beside the business plugin. The default mapping loader searches the application directory recursively for `.mapping`; a mapping file does not create database tables.
+
+```xml
+<schema xmlns="http://schemas.zongsoft.com/data">
+	<container name="Docs">
+		<command name="Answer" type="text" mutability="none">
+			<script driver="SQLite">SELECT 42</script>
+		</command>
+	</container>
+</schema>
+```
+
+This example only queries a constant in memory. It needs no table, credentials or persistent writes. The command's `mutability="none"` declares read-only behavior and influences data-source selection; the engine does not infer this by parsing the SQL.
+
+### 3. Call from a Business Command or Service
+
+Execute after the host has started and plugin composition is complete:
+
+```csharp
+using Zongsoft.Data;
+using Zongsoft.Services;
+
+var provider = ApplicationContext.Current.Services
+	.ResolveRequired<Zongsoft.Services.IServiceProvider<IDataAccess>>();
+var data = provider.GetService("Docs")
+	?? throw new InvalidOperationException("Data accessor not found.");
+
+using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+Console.WriteLine(await data.ExecuteScalarAsync("Docs.Answer", cancellation.Token));
+```
+
+Expect `42`. This path was verified in an isolated .NET 10 terminal host. Inside a module, obtain the provider from `Module.Current.Services` where appropriate. Do not construct `DataAccess`, concrete drivers or database connections in ordinary business methods, or dispose a shared accessor after each operation.
+
+💡 The SQLite script is a composition check. Real applications need entity mappings and database structures, or command scripts matching the target driver. Changing a connection driver does not automatically translate handwritten SQL.
+
+🚨 Native dependencies must be discoverable by the runtime. In a Windows x64 manual-copy deployment, keeping only `runtimes/win-x64/native/e_sqlite3.dll` below the plugin failed to load it; placing that matching-architecture file beside the SQLite managed components passed verification. Do not overwrite it with another architecture. Check the RID/manifest layout of a real deployment. An SQLite in-memory connection is not a persistent cross-connection database.
+
 <a name="schema"></a>
 ## The data schema
 
@@ -211,22 +282,22 @@ The mapping file root is `schema`, and each `container` represents one metadata 
 
 ```xml
 <schema xmlns="http://schemas.zongsoft.com/data">
-    <container name="Discussions">
-        <entity name="Forum" table="Discussions_Forum">
-            <key>
-                <member name="SiteId" />
-                <member name="ForumId" />
-            </key>
-            <property name="SiteId" type="uint" nullable="false" />
-            <property name="ForumId" type="ushort" nullable="false" sequence="#(SiteId)" />
-            <property name="GroupId" type="ushort" nullable="false" sortable="true" />
-            <property name="Name" type="string" length="50" nullable="false" />
-            <complexProperty name="Users" port="ForumUser" multiplicity="*" immutable="false">
-                <link port="SiteId" />
-                <link port="ForumId" />
-            </complexProperty>
-        </entity>
-    </container>
+	<container name="Discussions">
+		<entity name="Forum" table="Discussions_Forum">
+			<key>
+				<member name="SiteId" />
+				<member name="ForumId" />
+			</key>
+			<property name="SiteId" type="uint" nullable="false" />
+			<property name="ForumId" type="ushort" nullable="false" sequence="#(SiteId)" />
+			<property name="GroupId" type="ushort" nullable="false" sortable="true" />
+			<property name="Name" type="string" length="50" nullable="false" />
+			<complexProperty name="Users" port="ForumUser" multiplicity="*" immutable="false">
+				<link port="SiteId" />
+				<link port="ForumId" />
+			</complexProperty>
+		</entity>
+	</container>
 </schema>
 ```
 
@@ -240,13 +311,13 @@ Common mapping elements:
 
 ```xml
 <command name="Forum.GetStatistics" type="text" mutability="none">
-    <parameter name="SiteId" type="uint" />
-    <parameter name="ForumId" type="ushort" />
-    <script driver="MySql"><![CDATA[
-        SELECT TotalThreads, TotalPosts
-        FROM Discussions_Forum
-        WHERE SiteId=@SiteId AND ForumId=@ForumId
-    ]]></script>
+	<parameter name="SiteId" type="uint" />
+	<parameter name="ForumId" type="ushort" />
+	<script driver="MySql"><![CDATA[
+		SELECT TotalThreads, TotalPosts
+		FROM Discussions_Forum
+		WHERE SiteId=@SiteId AND ForumId=@ForumId
+	]]></script>
 </command>
 ```
 
@@ -275,30 +346,30 @@ The connection setting name must match the `DataAccess` name. One `DataAccess` c
 - Configuration for a single data source:
 ```xml
 <configuration>
-    <option path="/Data">
-        <connectionSettings default="Discussions">
-            <connectionSetting connectionSetting.name="Discussions" driver="MySql"
-                               value="server=127.0.0.1;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-        </connectionSettings>
-    </option>
+	<option path="/Data">
+		<connectionSettings default="Discussions">
+			<connectionSetting connectionSetting.name="Discussions" driver="MySql"
+								 value="server=127.0.0.1;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+		</connectionSettings>
+	</option>
 </configuration>
 ```
 
 - Configuration of multiple data sources(read-write separation mode):
 ```xml
 <configuration>
-    <option path="/Data">
-        <connectionSettings>
-            <connectionSetting connectionSetting.name="Discussions#master" driver="MySql" mode="WriteOnly"
-                               value="server=192.168.0.10;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-            <connectionSetting connectionSetting.name="Discussions#slave_1" driver="MySql" mode="ReadOnly"
-                               value="server=192.168.0.11;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-            <connectionSetting connectionSetting.name="Discussions#slave_2" driver="MySql" mode="ReadOnly"
-                               value="server=192.168.0.12;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-            <connectionSetting connectionSetting.name="Discussions#slave_3" driver="MySql" mode="ReadOnly"
-                               value="server=192.168.0.13;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
-        </connectionSettings>
-    </option>
+	<option path="/Data">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="Discussions#master" driver="MySql" mode="WriteOnly"
+								 value="server=192.168.0.10;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+			<connectionSetting connectionSetting.name="Discussions#slave_1" driver="MySql" mode="ReadOnly"
+								 value="server=192.168.0.11;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+			<connectionSetting connectionSetting.name="Discussions#slave_2" driver="MySql" mode="ReadOnly"
+								 value="server=192.168.0.12;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+			<connectionSetting connectionSetting.name="Discussions#slave_3" driver="MySql" mode="ReadOnly"
+								 value="server=192.168.0.13;userName=MyName;password=xxxxxx;database=MyDatabase;charset=utf8mb4" />
+		</connectionSettings>
+	</option>
 </configuration>
 ```
 
@@ -350,8 +421,8 @@ Operands can be used in conditions (`Condition`) and in values written to fields
 - Field reference:
 ```csharp
 var forums = this.DataAccess.Select<Forum>(
-    Condition.Equal("SiteId", this.User.SiteId) &
-    Condition.Equal("MostRecentThreadAuthorId", Operand.Field("MostRecentPostAuthorId"))
+	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.Equal("MostRecentThreadAuthorId", Operand.Field("MostRecentPostAuthorId"))
 );
 ```
 
@@ -359,34 +430,34 @@ var forums = this.DataAccess.Select<Forum>(
 ```csharp
 /* The following two calls are equivalent. */
 this.DataAccess.Update<OrderDetail>(
-    new {
-        Discount = Operand.Constant(10)
-    },
-    Condition.Between("Quantity", Range.Create(100, 200))
+	new {
+		Discount = Operand.Constant(10)
+	},
+	Condition.Between("Quantity", Range.Create(100, 200))
 );
 
 this.DataAccess.Update<OrderDetail>(
-    new {
-        Discount = 10
-    },
-    Condition.Between("Quantity", 100, 200)
+	new {
+		Discount = 10
+	},
+	Condition.Between("Quantity", 100, 200)
 );
 ```
 
 - Unary operators:
 ```csharp
 this.DataAccess.Update<OrderDetail>(
-    new {
-        Discount = -Operand.Field("Discount")
-    },
-    Condition.LessThan("Discount", 0)
+	new {
+		Discount = -Operand.Field("Discount")
+	},
+	Condition.LessThan("Discount", 0)
 );
 
 this.DataAccess.Update<Thread>(
-    new {
-        Visible = !Operand.Field("Visible")
-    },
-    Condition.Equal("ForumId", 404)
+	new {
+		Visible = !Operand.Field("Visible")
+	},
+	Condition.Equal("ForumId", 404)
 );
 ```
 
@@ -394,34 +465,34 @@ this.DataAccess.Update<Thread>(
 ```csharp
 /* Increment */
 this.DataAccess.Update<Thread>(
-    new {
-        TotalReplies = Operand.Field("TotalReplies") + 1
-    },
-    Condition.Equal("ThreadId", 404)
+	new {
+		TotalReplies = Operand.Field("TotalReplies") + 1
+	},
+	Condition.Equal("ThreadId", 404)
 );
 
 /* Arithmetic */
 this.DataAccess.Update<OrderDetail>(
-    new {
-        Amount = Operand.Field("UnitPrice") * Operand.Field("Quantity") - Operand.Field("Discount")
-    },
-    Condition.Equal("OrderId", 404)
+	new {
+		Amount = Operand.Field("UnitPrice") * Operand.Field("Quantity") - Operand.Field("Discount")
+	},
+	Condition.Equal("OrderId", 404)
 );
 
 /* Bitwise AND */
 this.DataAccess.Select<User>(
-    Condition.Equal(Operand.Field("Flags") & 0x74, 0x74)
+	Condition.Equal(Operand.Field("Flags") & 0x74, 0x74)
 );
 ```
 
 - Function call:
 ```csharp
 this.DataAccess.Update<OrderDetail>(
-    new {
-        Quantity = Operand.Function("Abs", Operand.Field("Quantity")),
-        UnitPrice = Operand.Function("Abs", Operand.Field("UnitPrice"))
-    },
-    Condition.Equal("OrderId", 404)
+	new {
+		Quantity = Operand.Function("Abs", Operand.Field("Quantity")),
+		UnitPrice = Operand.Function("Abs", Operand.Field("UnitPrice"))
+	},
+	Condition.Equal("OrderId", 404)
 );
 ```
 
@@ -429,51 +500,51 @@ this.DataAccess.Update<OrderDetail>(
 ```csharp
 /* The following two calls are equivalent. */
 this.DataAccess.Update<Order>(
-    new {
-        Amount = Operand.Aggregate(DataAggregateFunction.Sum, "Details.Amount")
-    },
-    Condition.Equal("OrderId", 404)
+	new {
+		Amount = Operand.Aggregate(DataAggregateFunction.Sum, "Details.Amount")
+	},
+	Condition.Equal("OrderId", 404)
 );
 
 this.DataAccess.Update<Order>(
-    new {
-        Amount = Operand.Sum("Details.Amount")
-    },
-    Condition.Equal("OrderId", 404)
+	new {
+		Amount = Operand.Sum("Details.Amount")
+	},
+	Condition.Equal("OrderId", 404)
 );
 ```
 
 ```csharp
 /* The following three calls are equivalent. */
 this.DataAccess.Update<Order>(
-    new {
-        Amount = Operand.Function("COALESCE",
-            Operand.Aggregate(DataAggregateFunction.Sum, "Details.Amount"), Operand.Constant(0))
-            + Operand.Field("Surcharge")
-            + Operand.Field("Taxes")
-            - Operand.Field("Discount")
-    },
-    Condition.Equal("OrderId", 404)
+	new {
+		Amount = Operand.Function("COALESCE",
+			Operand.Aggregate(DataAggregateFunction.Sum, "Details.Amount"), Operand.Constant(0))
+			+ Operand.Field("Surcharge")
+			+ Operand.Field("Taxes")
+			- Operand.Field("Discount")
+	},
+	Condition.Equal("OrderId", 404)
 );
 
 this.DataAccess.Update<Order>(
-    new {
-        Amount = Operand.IsNull(Operand.Sum("Details.Amount"), 0)
-            + Operand.Field("Surcharge")
-            + Operand.Field("Taxes")
-            - Operand.Field("Discount")
-    },
-    Condition.Equal("OrderId", 404)
+	new {
+		Amount = Operand.IsNull(Operand.Sum("Details.Amount"), 0)
+			+ Operand.Field("Surcharge")
+			+ Operand.Field("Taxes")
+			- Operand.Field("Discount")
+	},
+	Condition.Equal("OrderId", 404)
 );
 
 this.DataAccess.Update<Order>(
-    new {
-        Amount = Operand.Sum("Details.Amount", 0)
-            + Operand.Field("Surcharge")
-            + Operand.Field("Taxes")
-            - Operand.Field("Discount")
-    },
-    Condition.Equal("OrderId", 404)
+	new {
+		Amount = Operand.Sum("Details.Amount", 0)
+			+ Operand.Field("Surcharge")
+			+ Operand.Field("Taxes")
+			- Operand.Field("Discount")
+	},
+	Condition.Equal("OrderId", 404)
 );
 ```
 
@@ -484,13 +555,13 @@ this.DataAccess.Update<Order>(
 
 ```csharp
 var criteria =
-    Condition.Equal("SiteId", this.User.SiteId) &
-    Condition.Like("Title", "%Zongsoft%") &
-    Condition.Between("CreatedTime", Range.Create(DateTime.Today.AddDays(-7), DateTime.Today)) &
-    (
-        Condition.Equal("IsPinned", true) |
-        Condition.Equal("IsValued", true)
-    );
+	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.Like("Title", "%Zongsoft%") &
+	Condition.Between("CreatedTime", Range.Create(DateTime.Today.AddDays(-7), DateTime.Today)) &
+	(
+		Condition.Equal("IsPinned", true) |
+		Condition.Equal("IsValued", true)
+	);
 
 var threads = this.DataAccess.Select<Thread>(criteria, "ThreadId,Title,CreatedTime");
 ```
@@ -500,17 +571,17 @@ For search DTOs, use `Criteria.Transform(...)` to turn changed model members int
 ```csharp
 public abstract class ThreadCriteria : CriteriaBase
 {
-    public abstract uint? SiteId { get; set; }
+	public abstract uint? SiteId { get; set; }
 
-    [Condition(ConditionOperator.Like)]
-    public abstract string Title { get; set; }
+	[Condition(ConditionOperator.Like)]
+	public abstract string Title { get; set; }
 
-    [Condition(ConditionOperator.Between, nameof(Thread.CreatedTime))]
-    public abstract Range<DateTime>? CreatedTime { get; set; }
+	[Condition(ConditionOperator.Between, nameof(Thread.CreatedTime))]
+	public abstract Range<DateTime>? CreatedTime { get; set; }
 }
 
 var criteria = Criteria.Transform<ThreadCriteria>(
-    "siteId:1+title:%Zongsoft%+createdTime:(2026-01-01,2026-12-31)"
+	"siteId:1+title:%Zongsoft%+createdTime:(2026-01-01,2026-12-31)"
 );
 
 var threads = this.DataAccess.Select<Thread>(criteria);
@@ -530,14 +601,14 @@ var threads = this.DataAccess.Select<Thread>(criteria);
 ```csharp
 // Query all scalar fields that match the condition(lazy loading).
 var threads = this.DataAccess.Select<Thread>(
-    Condition.Equal("SiteId", this.User.SiteId) &
-    Condition.Equal("Visible", true));
+	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.Equal("Visible", true));
 
 // Query one entity and load only selected fields.
 var forum = this.DataAccess.Select<Forum>(
-    Condition.Equal("SiteId", this.User.SiteId) &
-    Condition.Equal("ForumId", 100),
-    "SiteId,ForumId,Name,Description,CoverPicturePath").FirstOrDefault();
+	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.Equal("ForumId", 100),
+	"SiteId,ForumId,Name,Description,CoverPicturePath").FirstOrDefault();
 ```
 
 <a name="usage-query-exists"></a>
@@ -547,15 +618,15 @@ Use `Exists` when you only need to know whether a row exists. Use `Count`, `Sum`
 
 ```csharp
 var exists = this.DataAccess.Exists<Thread>(
-    Condition.Equal(nameof(Thread.ThreadId), threadId) &
-    Condition.Equal(nameof(Thread.Visible), true));
+	Condition.Equal(nameof(Thread.ThreadId), threadId) &
+	Condition.Equal(nameof(Thread.Visible), true));
 
 var totalThreads = this.DataAccess.Count<Thread>(
-    Condition.Equal(nameof(Thread.ForumId), forumId));
+	Condition.Equal(nameof(Thread.ForumId), forumId));
 
 var totalViews = this.DataAccess.Sum<Thread, long>(
-    nameof(Thread.TotalViews),
-    Condition.Equal(nameof(Thread.ForumId), forumId));
+	nameof(Thread.TotalViews),
+	Condition.Equal(nameof(Thread.ForumId), forumId));
 ```
 
 <a name="usage-query-2"></a>
@@ -571,14 +642,14 @@ Scalar queries return a single field value. They avoid loading unused fields and
 
 ```csharp
 var email = this.DataAccess.Select<string>("Discussions.UserProfile",
-    Condition.Equal("UserId", this.User.UserId),
-    "Email" // Load only the Email field, which is a string.
+	Condition.Equal("UserId", this.User.UserId),
+	"Email" // Load only the Email field, which is a string.
 ).FirstOrDefault();
 
 /* Return a scalar value set(IEnumerable<uint>) */
 var counts = this.DataAccess.Select<uint>("Discussions.History",
-    Condition.Equal("UserId", this.User.UserId),
-    "ViewedCount" // Load only the ViewedCount field.
+	Condition.Equal("UserId", this.User.UserId),
+	"ViewedCount" // Load only the ViewedCount field.
 );
 ```
 
@@ -592,8 +663,8 @@ Multi-field queries load several fields and can return many target shapes: class
 ```csharp
 struct UserToken
 {
-    public uint UserId;
-    public string Name;
+	public uint UserId;
+	public string Name;
 }
 
 /*
@@ -601,9 +672,9 @@ struct UserToken
  * The engine uses the intersection between the entity metadata and the target type members.
  */
 var tokens = this.DataAccess.Select<UserToken>(
-    "Discussions.UserProfile",
-    Condition.Equal("SiteId", this.User.SiteId),
-    "UserId, Name"
+	"Discussions.UserProfile",
+	Condition.Equal("SiteId", this.User.SiteId),
+	"UserId, Name"
 );
 ```
 
@@ -615,13 +686,13 @@ var tokens = this.DataAccess.Select<UserToken>(
 [Zongsoft.Data.Model("Discussions.UserProfile")]
 struct UserToken
 {
-    public uint UserId;
-    public string Name;
+	public uint UserId;
+	public string Name;
 }
 
 // Because the target type declares the mapped entity name, the name argument can be omitted.
 var tokens = this.DataAccess.Select<UserToken>(
-    Condition.Equal("SiteId", this.User.SiteId)
+	Condition.Equal("SiteId", this.User.SiteId)
 );
 ```
 
@@ -631,17 +702,17 @@ var tokens = this.DataAccess.Select<UserToken>(
  * 2) The schema argument selects the returned fields. If omitted or set to *, all fields are returned.
  */
 var items = this.DataAccess.Select<IDictionary<string, object>>(
-    "Discussions.UserProfile",
-    Condition.Equal("SiteId", this.User.SiteId) &
-    Condition.GreaterThan("TotalThreads", 0),
-    "UserId,Name,TotalThreads,TotalPosts");
+	"Discussions.UserProfile",
+	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.GreaterThan("TotalThreads", 0),
+	"UserId,Name,TotalThreads,TotalPosts");
 
 foreach(var item in items)
 {
-    item.TryGetValue("UserId", out var userId); // true
-    item.TryGetValue("Name", out var name);     // true
-    item.TryGetValue("Avatar", out var avatar); // false
-    item.TryGetValue("TotalThreads", out var totalThreads); // true
+	item.TryGetValue("UserId", out var userId); // true
+	item.TryGetValue("Name", out var name);     // true
+	item.TryGetValue("Avatar", out var avatar); // false
+	item.TryGetValue("TotalThreads", out var totalThreads); // true
 }
 ```
 
@@ -653,9 +724,9 @@ var items = this.DataAccess.Select<System.Dynamic.ExpandoObject>("Discussions.Us
 
 foreach(dynamic item in items)
 {
-    Console.WriteLine(item.UserId); // OK
-    Console.WriteLine(item.Name);   // OK
-    Console.WriteLine(item.Fake);   // Compiled successfully, but runtime error
+	Console.WriteLine(item.UserId); // OK
+	Console.WriteLine(item.Name);   // OK
+	Console.WriteLine(item.Fake);   // Compiled successfully, but runtime error
 }
 ```
 
@@ -669,9 +740,9 @@ Pass a `paging` argument to [`Select`](https://github.com/Zongsoft/framework/blo
 var paging = Paging.Page(2, 25);
 
 var threads = this.DataAccess.Select<Thread>(
-    Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
-    Condition.Equal(nameof(Thread.ForumId), 100),
-    paging
+	Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
+	Condition.Equal(nameof(Thread.ForumId), 100),
+	paging
 );
 
 /*
@@ -688,12 +759,12 @@ Pass `Sorting` values to [`Select`](https://github.com/Zongsoft/framework/blob/m
 
 ```csharp
 var threads = this.DataAccess.Select<Thread>(
-    Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
-    Condition.Equal(nameof(Thread.ForumId), 100),
-    Paging.Disabled, /* Disable paging for this query. You can pass a Paging object instead. */
-    Sorting.Descending("TotalViews"),   // 1.Descending for TotalViews
-    Sorting.Descending("TotalReplies"), // 2.Descending for TotalReplies
-    Sorting.Ascending("CreatedTime")    // 3.Ascending for CreatedTime
+	Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
+	Condition.Equal(nameof(Thread.ForumId), 100),
+	Paging.Disabled, /* Disable paging for this query. You can pass a Paging object instead. */
+	Sorting.Descending("TotalViews"),   // 1.Descending for TotalViews
+	Sorting.Descending("TotalReplies"), // 2.Descending for TotalReplies
+	Sorting.Ascending("CreatedTime")    // 3.Ascending for CreatedTime
 );
 ```
 
@@ -714,8 +785,8 @@ Navigation(complex) properties are included through the `schema` argument. They 
  *    In the mapping file this is multiplicity="?", so the generated SQL uses LEFT JOIN.
  */
 var thread = this.DataAccess.Select<Thread>(
-    Condition.Equal("ThreadId", 100001),
-    "*,Post{*},MostRecentPost{*}"
+	Condition.Equal("ThreadId", 100001),
+	"*,Post{*},MostRecentPost{*}"
 ).FirstOrDefault();
 ```
 
@@ -732,8 +803,8 @@ var thread = this.DataAccess.Select<Thread>(
  * Note: * means all scalar properties only. Navigation properties must be named explicitly.
  */
 var groups = this.DataAccess.Select<ForumGroup>(
-    Condition.Equal("SiteId", this.User.SiteId),
-    "*,Forums{*, Moderators{*}, MostRecentThread{*, Creator{*}}}"
+	Condition.Equal("SiteId", this.User.SiteId),
+	"*,Forums{*, Moderators{*}, MostRecentThread{*, Creator{*}}}"
 );
 ```
 
@@ -809,51 +880,51 @@ Sometimes a navigation property should return the target of another navigation p
 ```csharp
 public abstract class Forum
 {
-    public abstract uint SiteId { get; set; }
-    public abstract ushort ForumId { get; set; }
-    public abstract ushort GroupId { get; set; }
-    public abstract string Name { get; set; }
+	public abstract uint SiteId { get; set; }
+	public abstract ushort ForumId { get; set; }
+	public abstract ushort GroupId { get; set; }
+	public abstract string Name { get; set; }
 
-    public abstract IEnumerable<ForumUser> Users { get; set; }
-    public abstract IEnumerable<UserProfile> Moderators { get; set; }
+	public abstract IEnumerable<ForumUser> Users { get; set; }
+	public abstract IEnumerable<UserProfile> Moderators { get; set; }
 }
 
 public struct ForumUser : IEquatable<ForumUser>
 {
-    public uint SiteId;
-    public ushort ForumId;
-    public uint UserId;
-    public Permission Permission;
-    public bool IsModerator;
+	public uint SiteId;
+	public ushort ForumId;
+	public uint UserId;
+	public Permission Permission;
+	public bool IsModerator;
 
-    public Forum Forum;
-    public UserProfile User;
+	public Forum Forum;
+	public UserProfile User;
 }
 ```
 
 ```csharp
 var forum = this.DataAccess.Select<Forum>(
-  Condition.Equal("SiteId", this.User.SiteId) &
-  Condition.Equal("ForumId", 100),
-  "*, Users{*, User{Name,Email,Avatar}}, Moderators{Name,Email,Avatar}"
+	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.Equal("ForumId", 100),
+	"*, Users{*, User{Name,Email,Avatar}}, Moderators{Name,Email,Avatar}"
 ).FirstOrDefault();
 
 // moderator is UserProfile (the navigation hop returns UserProfile directly, so just list its scalar properties).
 foreach(var moderator in forum.Moderators)
 {
-    Console.Write(moderator.Name);
-    Console.Write(moderator.Email);
-    Console.Write(moderator.Avatar);
+	Console.Write(moderator.Name);
+	Console.Write(moderator.Email);
+	Console.Write(moderator.Avatar);
 }
 
 // member is ForumUser; its User navigation property leads to UserProfile.
 foreach(var member in forum.Users)
 {
-    Console.Write(member.Permission);
+	Console.Write(member.Permission);
 
-    Console.Write(member.User.Name);
-    Console.Write(member.User.Email);
-    Console.Write(member.User.Avatar);
+	Console.Write(member.User.Name);
+	Console.Write(member.User.Email);
+	Console.Write(member.User.Avatar);
 }
 ```
 
@@ -865,24 +936,24 @@ Grouping queries support aggregate functions for relational databases.
 ```csharp
 struct ForumStatistic
 {
-    public uint SiteId;
-    public ushort ForumId;
-    public int TotalThreads;
-    public int TotalViews;
-    public int TotalPosts;
-    public Forum Forum;
+	public uint SiteId;
+	public ushort ForumId;
+	public int TotalThreads;
+	public int TotalViews;
+	public int TotalPosts;
+	public Forum Forum;
 }
 
 var statistics = this.DataAccess.Select<ForumStatistic>(
-    "Thread",
-    Grouping
-        .Group("SiteId", "ForumId")
-        .Count("*", "TotalThreads")
-        .Sum("TotalViews")
-        .Sum("TotalPosts"),
-    Condition.Equal("SiteId", this.User.SiteId) &
-    Condition.Equal("Visible", true),
-    "Forum{Name}"
+	"Thread",
+	Grouping
+		.Group("SiteId", "ForumId")
+		.Count("*", "TotalThreads")
+		.Sum("TotalViews")
+		.Sum("TotalPosts"),
+	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.Equal("Visible", true),
+	"Forum{Name}"
 );
 ```
 
@@ -890,24 +961,24 @@ The query above roughly generates SQL like this:
 
 ```sql
 SELECT
-    tt.*,
-    f.Name AS 'Forum.Name'
+	tt.*,
+	f.Name AS 'Forum.Name'
 FROM
 (
-    SELECT
-        t.SiteId,
-        t.ForumId,
-        COUNT(*) AS 'TotalThreads',
-        SUM(t.TotalViews) AS 'TotalViews',
-        SUM(t.TotalPosts) AS 'TotalPosts'
-    FROM Thread AS t
-    WHERE t.SiteId = @p1 AND
-          t.Visible = @p3
-    GROUP BY t.SiteId, t.ForumId
+	SELECT
+		t.SiteId,
+		t.ForumId,
+		COUNT(*) AS 'TotalThreads',
+		SUM(t.TotalViews) AS 'TotalViews',
+		SUM(t.TotalPosts) AS 'TotalPosts'
+	FROM Thread AS t
+	WHERE t.SiteId = @p1 AND
+			t.Visible = @p3
+	GROUP BY t.SiteId, t.ForumId
 ) AS tt
-    LEFT JOIN Forum f ON
-        tt.SiteId = f.SiteId AND
-        tt.ForumId = f.ForumId;
+	LEFT JOIN Forum f ON
+		tt.SiteId = f.SiteId AND
+		tt.ForumId = f.ForumId;
 ```
 
 <a name="usage-query-12"></a>
@@ -921,20 +992,20 @@ Navigation conditions filter by fields on associated entities.
  * and whose first or most recent view time is within the last 30 days.
  */
 var histories = this.DataAccess.Select<History>(
-    Condition.Equal("Thread.IsValued", true) & /* Navigation condition */
-    (
-        Condition.Between("FirstViewedTime", DateTime.Today.AddDays(-30), DateTime.Now) |
-        Condition.Between("LastViewedTime", DateTime.Today.AddDays(-30), DateTime.Now)
-    )
+	Condition.Equal("Thread.IsValued", true) & /* Navigation condition */
+	(
+		Condition.Between("FirstViewedTime", DateTime.Today.AddDays(-30), DateTime.Now) |
+		Condition.Between("LastViewedTime", DateTime.Today.AddDays(-30), DateTime.Now)
+	)
 );
 
 /* Same query, using Range.Timing to build the time range. */
 var histories = this.DataAccess.Select<History>(
-    Condition.Equal("Thread.IsValued", true) & /* Navigation condition */
-    (
-        Condition.Between("FirstViewedTime", Range.Timing.Last(30, 'D')) |
-        Condition.Between("LastViewedTime", Range.Timing.Last(30, 'D'))
-    )
+	Condition.Equal("Thread.IsValued", true) & /* Navigation condition */
+	(
+		Condition.Between("FirstViewedTime", Range.Timing.Last(30, 'D')) |
+		Condition.Between("LastViewedTime", Range.Timing.Last(30, 'D'))
+	)
 );
 ```
 
@@ -943,13 +1014,13 @@ The query above roughly generates SQL like this:
 ```sql
 SELECT h.*
 FROM History h
-    LEFT JOIN Thread t ON
-        t.ThreadId = h.ThreadId
+	LEFT JOIN Thread t ON
+		t.ThreadId = h.ThreadId
 WHERE t.IsValued = @p1 AND
-    (
-        h.FirstViewedTime BETWEEN @p2 AND @p3 OR
-        h.LastViewedTime BETWEEN @p4 AND @p5
-    );
+	(
+		h.FirstViewedTime BETWEEN @p2 AND @p3 OR
+		h.LastViewedTime BETWEEN @p4 AND @p5
+	);
 ```
 
 <a name="usage-query-13"></a>
@@ -961,18 +1032,18 @@ Filtering a one-to-many navigation property is expressed with the `Exists` opera
 
 ```csharp
 var forums = this.DataAccess.Select<Forum>(
-    Condition.Equal("SiteId", this.User.SiteId) &
-    Condition.In("Visibility", Visibility.Internal, Visibility.All) |
-    (
-        Condition.Equal("Visibility", Visibility.Specified) &
-        Condition.Exists("Users",
-                          Condition.Equal("UserId", this.User.UserId) &
-                          (
-                              Condition.Equal("IsModerator", true) |
-                              Condition.NotEqual("Permission", Permission.None)
-                          )
-                        )
-    )
+	Condition.Equal("SiteId", this.User.SiteId) &
+	Condition.In("Visibility", Visibility.Internal, Visibility.All) |
+	(
+		Condition.Equal("Visibility", Visibility.Specified) &
+		Condition.Exists("Users",
+							Condition.Equal("UserId", this.User.UserId) &
+							(
+								Condition.Equal("IsModerator", true) |
+								Condition.NotEqual("Permission", Permission.None)
+							)
+						)
+	)
 );
 ```
 
@@ -982,23 +1053,23 @@ The query above roughly generates SQL like this:
 SELECT t.*
 FROM Forum t
 WHERE
-    t.SiteId = @p1 AND
-    t.Visibility IN (@p2, @p3) OR
-    (
-        t.Visibility = @p4 AND
-        EXISTS
-        (
-                SELECT u.SiteId, u.ForumId, u.UserId
-                FROM ForumUser u
-                WHERE u.SiteId = t.SiteId AND
-                      u.ForumId = t.ForumId AND
-                      u.UserId = @p5 AND
-                      (
-                          u.IsModerator = @p6 OR
-                          u.Permission != @p7
-                      )
-        )
-    );
+	t.SiteId = @p1 AND
+	t.Visibility IN (@p2, @p3) OR
+	(
+		t.Visibility = @p4 AND
+		EXISTS
+		(
+				SELECT u.SiteId, u.ForumId, u.UserId
+				FROM ForumUser u
+				WHERE u.SiteId = t.SiteId AND
+						u.ForumId = t.ForumId AND
+						u.UserId = @p5 AND
+						(
+							u.IsModerator = @p6 OR
+							u.Permission != @p7
+						)
+		)
+	);
 ```
 
 <a name="usage-query-14"></a>
@@ -1017,17 +1088,17 @@ For example, the `Tags` field in the `Thread` table is `nvarchar`, but the `Tags
 ```csharp
 public sealed class ForumStatistics
 {
-    public int TotalThreads { get; set; }
-    public int TotalPosts { get; set; }
+	public int TotalThreads { get; set; }
+	public int TotalPosts { get; set; }
 }
 
 var rows = this.DataAccess.Execute<ForumStatistics>(
-    "Forum.GetStatistics",
-    new []
-    {
-        new Parameter("SiteId", this.User.SiteId),
-        new Parameter("ForumId", forumId),
-    });
+	"Forum.GetStatistics",
+	new []
+	{
+		new Parameter("SiteId", this.User.SiteId),
+		new Parameter("ForumId", forumId),
+	});
 
 var statistics = rows.FirstOrDefault();
 ```
@@ -1036,9 +1107,9 @@ For stored procedures, define `type="procedure"` in the mapping file（`alias` s
 
 ```xml
 <command name="Forum.RefreshStatistics" alias="Discussions_Forum_RefreshStatistics" type="procedure" mutability="update">
-    <parameter name="SiteId" type="uint" />
-    <parameter name="ForumId" type="uint" />
-    <parameter name="Total" type="int" direction="output" />
+	<parameter name="SiteId" type="uint" />
+	<parameter name="ForumId" type="uint" />
+	<parameter name="Total" type="int" direction="output" />
 </command>
 ```
 
@@ -1046,13 +1117,13 @@ For stored procedures, define `type="procedure"` in the mapping file（`alias` s
 var total = Parameter.Output("Total");
 
 this.DataAccess.Execute(
-    "Forum.RefreshStatistics",
-    new []
-    {
-        new Parameter("SiteId", this.User.SiteId),
-        new Parameter("ForumId", forumId),
-        total,
-    });
+	"Forum.RefreshStatistics",
+	new []
+	{
+		new Parameter("SiteId", this.User.SiteId),
+		new Parameter("ForumId", forumId),
+		total,
+	});
 
 var totalValue = total.Value;
 ```
@@ -1062,8 +1133,8 @@ var totalValue = total.Value;
 
 ```csharp
 this.DataAccess.Delete<Post>(
-    Condition.Equal("Visible", false) &
-    Condition.Equal("Creator.Email", "zongsoft@qq.com")
+	Condition.Equal("Visible", false) &
+	Condition.Equal("Creator.Email", "zongsoft@qq.com")
 );
 ```
 
@@ -1072,10 +1143,10 @@ The delete above roughly generates SQL like this:
 ```sql
 DELETE t
 FROM Post AS t
-    LEFT JOIN UserProfile AS u ON
-        t.CreatorId = u.UserId
+	LEFT JOIN UserProfile AS u ON
+		t.CreatorId = u.UserId
 WHERE t.Visible=0 AND
-        u.Email='zongsoft@qq.com';
+		u.Email='zongsoft@qq.com';
 ```
 
 <a name="usage-delete-cascade"></a>
@@ -1085,8 +1156,8 @@ Cascade deletion can delete child records associated through zero-or-one, one-to
 
 ```csharp
 this.DataAccess.Delete<Post>(
-    Condition.Equal("PostId", 100023),
-    "Votes"
+	Condition.Equal("PostId", 100023),
+	"Votes"
 );
 ```
 
@@ -1095,7 +1166,7 @@ The delete above roughly generates SQL like this(_SQL Server_):
 ```sql
 CREATE TABLE #TMP
 (
-    PostId bigint
+	PostId bigint
 );
 
 /* Delete the master row and write the associated key values to a temporary table. */
@@ -1107,7 +1178,7 @@ WHERE PostId=@p1;
 DELETE FROM PostVoting
 WHERE PostId IN
 (
-    SELECT PostId FROM #TMP
+	SELECT PostId FROM #TMP
 );
 ```
 
@@ -1116,9 +1187,9 @@ WHERE PostId IN
 
 ```csharp
 this.DataAccess.Insert("Forum", new {
-    SiteId = this.User.SiteId,
-    GroupId = 100,
-    Name = "xxxx"
+	SiteId = this.User.SiteId,
+	GroupId = 100,
+	Name = "xxxx"
 });
 ```
 
@@ -1134,13 +1205,13 @@ this.DataAccess.Insert("Forum", new {
 
 ```csharp
 var count = this.DataAccess.Insert<ForumUser>(
-    new {
-        SiteId = this.User.SiteId,
-        ForumId = 100,
-        UserId = 100,
-        Permission = Permission.Read,
-    },
-    DataInsertOptions.IgnoreConstraint());
+	new {
+		SiteId = this.User.SiteId,
+		ForumId = 100,
+		UserId = 100,
+		Permission = Permission.Read,
+	},
+	DataInsertOptions.IgnoreConstraint());
 ```
 
 The insert above roughly generates SQL like this:
@@ -1158,14 +1229,14 @@ If you also provide a value for a sequence field, chain the sequence option:
 
 ```csharp
 var options = DataInsertOptions
-    .Sequence(DataSequenceBehavior.Never)
-    .IgnoreConstraint();
+	.Sequence(DataSequenceBehavior.Never)
+	.IgnoreConstraint();
 
 this.DataAccess.Insert<Forum>(new {
-    SiteId = this.User.SiteId,
-    ForumId = 100,
-    GroupId = 10,
-    Name = "General",
+	SiteId = this.User.SiteId,
+	ForumId = 100,
+	GroupId = 10,
+	Name = "General",
 }, options);
 ```
 
@@ -1183,9 +1254,9 @@ forum.Name = "xxxx";
 
 forum.Users = new ForumUser[]
 {
-    new ForumUser { UserId = 100, IsModerator = true },
-    new ForumUser { UserId = 101, Permission = Permission.Read },
-    new ForumUser { UserId = 102, Permission = Permission.Write }
+	new ForumUser { UserId = 100, IsModerator = true },
+	new ForumUser { UserId = 101, Permission = Permission.Read },
+	new ForumUser { UserId = 102, Permission = Permission.Write }
 };
 
 this.DataAccess.Insert(forum, "*, Users{*}");
@@ -1209,28 +1280,28 @@ INSERT INTO ForumUser (SiteId,ForumId,UserId,Permission,IsModerator) VALUES (...
 ```csharp
 var users = new []
 {
-    new { SiteId = this.User.SiteId, ForumId = 100, UserId = 100, Permission = Permission.Read },
-    new { SiteId = this.User.SiteId, ForumId = 100, UserId = 101, Permission = Permission.Write },
+	new { SiteId = this.User.SiteId, ForumId = 100, UserId = 100, Permission = Permission.Read },
+	new { SiteId = this.User.SiteId, ForumId = 100, UserId = 101, Permission = Permission.Write },
 };
 
 var count = this.DataAccess.Import(
-    "ForumUser",
-    users,
-    "SiteId,ForumId,UserId,Permission".Split(','));
+	"ForumUser",
+	users,
+	"SiteId,ForumId,UserId,Permission".Split(','));
 ```
 
 Use `DataImportOptions.IgnoreConstraint()` when duplicated rows should be skipped during import. It can be chained with `Parameter(...)` when filters or services need operation-level flags:
 
 ```csharp
 var options = DataImportOptions
-    .Parameter("SkipSynchronization")
-    .IgnoreConstraint();
+	.Parameter("SkipSynchronization")
+	.IgnoreConstraint();
 
 var count = this.DataAccess.Import(
-    "ForumUser",
-    users,
-    "SiteId,ForumId,UserId,Permission".Split(','),
-    options);
+	"ForumUser",
+	users,
+	"SiteId,ForumId,UserId,Permission".Split(','),
+	options);
 ```
 
 <a name="usage-update"></a>
@@ -1264,12 +1335,12 @@ The value to write can be an anonymous object, dynamic object _(`ExpandoObject`)
 
 ```csharp
 this.DataAccess.Update<UserProfile>(
-    new {
-        Name="Popeye",
-        Nickname="Popeye Zhong",
-        Gender=Gender.Male,
-    },
-    Condition.Equal("UserId", 100)
+	new {
+		Name="Popeye",
+		Nickname="Popeye Zhong",
+		Gender=Gender.Male,
+	},
+	Condition.Equal("UserId", 100)
 );
 ```
 
@@ -1284,8 +1355,8 @@ Use `schema` to choose the fields to update, or to exclude fields.
  * Other fields are ignored even if their values changed.
  */
 this.DataAccess.Update<UserProfile>(
-    user,
-    "Name, Gender"
+	user,
+	"Name, Gender"
 );
 
 /*
@@ -1293,8 +1364,8 @@ this.DataAccess.Update<UserProfile>(
  * Even if user contains values for these two properties, no SET clauses are generated for them.
  */
 this.DataAccess.Update<UserProfile>(
-    user,
-    "*, !CreatorId, !CreatedTime"
+	user,
+	"*, !CreatorId, !CreatedTime"
 );
 ```
 
@@ -1306,23 +1377,23 @@ Related one-to-one and one-to-many navigation values can be written **together**
 ```csharp
 public bool Approve(ulong threadId)
 {
-    var criteria =
-        Condition.Equal(nameof(Thread.ThreadId), threadId) &
-        Condition.Equal(nameof(Thread.Approved), false) &
-        Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
-        Condition.Exists("Forum.Users",
-            Condition.Equal(nameof(Forum.ForumUser.UserId), this.User.UserId) &
-            Condition.Equal(nameof(Forum.ForumUser.IsModerator), true));
+	var criteria =
+		Condition.Equal(nameof(Thread.ThreadId), threadId) &
+		Condition.Equal(nameof(Thread.Approved), false) &
+		Condition.Equal(nameof(Thread.SiteId), this.User.SiteId) &
+		Condition.Exists("Forum.Users",
+			Condition.Equal(nameof(Forum.ForumUser.UserId), this.User.UserId) &
+			Condition.Equal(nameof(Forum.ForumUser.IsModerator), true));
 
-    return this.DataAccess.Update<Thread>(new
-    {
-        Approved = true,
-        ApprovedTime = DateTime.Now,
-        Post = new
-        {
-            Approved = true,
-        }
-    }, criteria, "*,Post{Approved}") > 0;
+	return this.DataAccess.Update<Thread>(new
+	{
+		Approved = true,
+		ApprovedTime = DateTime.Now,
+		Post = new
+		{
+			Approved = true,
+		}
+	}, criteria, "*,Post{Approved}") > 0;
 }
 ```
 
@@ -1331,32 +1402,32 @@ The update above roughly generates SQL like this(_SQL Server_):
 ```sql
 CREATE TABLE #TMP
 (
-    PostId bigint NOT NULL
+	PostId bigint NOT NULL
 );
 
 UPDATE T SET
-    T.[Approved]=@p1,
-    T.[ApprovedTime]=@p2
+	T.[Approved]=@p1,
+	T.[ApprovedTime]=@p2
 OUTPUT DELETED.PostId INTO #TMP
 FROM [Discussions_Thread] AS T
-    LEFT JOIN [Discussions_Forum] AS T1 ON /* Forum */
-        T1.[SiteId]=T.[SiteId] AND
-        T1.[ForumId]=T.[ForumId]
+	LEFT JOIN [Discussions_Forum] AS T1 ON /* Forum */
+		T1.[SiteId]=T.[SiteId] AND
+		T1.[ForumId]=T.[ForumId]
 WHERE
-    T.[ThreadId]=@p3 AND
-    T.[Approved]=@p4 AND
-    T.[SiteId]=@p5 AND EXISTS (
-        SELECT [SiteId],[ForumId] FROM [Discussions_ForumUser]
-        WHERE [SiteId]=T1.[SiteId] AND [ForumId]=T1.[ForumId] AND [UserId]=@p6 AND [IsModerator]=@p7
-    );
+	T.[ThreadId]=@p3 AND
+	T.[Approved]=@p4 AND
+	T.[SiteId]=@p5 AND EXISTS (
+		SELECT [SiteId],[ForumId] FROM [Discussions_ForumUser]
+		WHERE [SiteId]=T1.[SiteId] AND [ForumId]=T1.[ForumId] AND [UserId]=@p6 AND [IsModerator]=@p7
+	);
 
 UPDATE T SET
-    T.[Approved]=@p1
+	T.[Approved]=@p1
 FROM [Discussions_Post] AS T
 WHERE EXISTS (
-    SELECT [PostId]
-    FROM #TMP
-    WHERE [PostId]=T.[PostId]);
+	SELECT [PostId]
+	FROM #TMP
+	WHERE [PostId]=T.[PostId]);
 ```
 
 <a name="usage-upsert"></a>
@@ -1368,12 +1439,12 @@ WHERE EXISTS (
 
 ```csharp
 this.DataAccess.Upsert<History>(
-    new {
-        UserId = 100,
-        ThreadId = 2001,
-        ViewedCount = Operand.Field(nameof(History.ViewedCount)) + 1,
-        LastViewedTime = DateTime.Now,
-    }
+	new {
+		UserId = 100,
+		ThreadId = 2001,
+		ViewedCount = Operand.Field(nameof(History.ViewedCount)) + 1,
+		LastViewedTime = DateTime.Now,
+	}
 );
 ```
 
@@ -1389,9 +1460,9 @@ MERGE History AS target
 USING (SELECT @p1,@p2,@p3,@p4) AS source (UserId,ThreadId,ViewedCount,LastViewedTime)
 ON (target.UserId=source.UserId AND target.ThreadId=source.ThreadId)
 WHEN MATCHED THEN
-    UPDATE SET target.ViewedCount=target.ViewedCount+@p3, LastViewedTime=@p4
+	UPDATE SET target.ViewedCount=target.ViewedCount+@p3, LastViewedTime=@p4
 WHEN NOT MATCHED THEN
-    INSERT (UserId,ThreadId,ViewedCount,LastViewedTime) VALUES (@p1,@p2,@p3,@p4);
+	INSERT (UserId,ThreadId,ViewedCount,LastViewedTime) VALUES (@p1,@p2,@p3,@p4);
 ```
 
 <a name="usage-returning"></a>
@@ -1403,16 +1474,16 @@ Delete, insert, update, and upsert options can request returned values from the 
 var options = DataUpdateOptions.Return(ReturningKind.Newer, nameof(Thread.TotalViews));
 
 this.DataAccess.Update<Thread>(
-    new {
-        TotalViews = Operand.Field(nameof(Thread.TotalViews)) + 1,
-    },
-    Condition.Equal(nameof(Thread.ThreadId), threadId),
-    options);
+	new {
+		TotalViews = Operand.Field(nameof(Thread.TotalViews)) + 1,
+	},
+	Condition.Equal(nameof(Thread.ThreadId), threadId),
+	options);
 
 if(options.Returning.Rows.Count > 0 &&
-   options.Returning.Rows[0].TryGetValue(nameof(Thread.TotalViews), ReturningKind.Newer, out var value))
+	 options.Returning.Rows[0].TryGetValue(nameof(Thread.TotalViews), ReturningKind.Newer, out var value))
 {
-    var totalViews = Convert.ToInt64(value);
+	var totalViews = Convert.ToInt64(value);
 }
 ```
 
@@ -1420,8 +1491,8 @@ For simple counters, the `Increase` and `Decrease` helpers wrap this pattern:
 
 ```csharp
 var totalViews = this.DataAccess.Increase<Thread>(
-    nameof(Thread.TotalViews),
-    Condition.Equal(nameof(Thread.ThreadId), threadId));
+	nameof(Thread.TotalViews),
+	Condition.Equal(nameof(Thread.ThreadId), threadId));
 ```
 
 The delete option returns older values:
@@ -1430,13 +1501,13 @@ The delete option returns older values:
 var options = DataDeleteOptions.Return(nameof(PostAttachment.AttachmentId));
 
 this.DataAccess.Delete<PostAttachment>(
-    Condition.Equal(nameof(PostAttachment.PostId), postId),
-    options);
+	Condition.Equal(nameof(PostAttachment.PostId), postId),
+	options);
 
 foreach(var row in options.Returning.Rows)
 {
-    if(row.TryGetValue(nameof(PostAttachment.AttachmentId), out var value))
-        DeletePhysicalAttachment(Convert.ToUInt64(value));
+	if(row.TryGetValue(nameof(PostAttachment.AttachmentId), out var value))
+		DeletePhysicalAttachment(Convert.ToUInt64(value));
 }
 ```
 
@@ -1478,20 +1549,20 @@ Write option members:
 
 ```csharp
 var options = DataUpdateOptions
-    .Parameter("SkipSynchronization")
-    .SuppressValidator();
+	.Parameter("SkipSynchronization")
+	.SuppressValidator();
 
 this.DataAccess.Update<Thread>(
-    new { TotalViews = Operand.Field(nameof(Thread.TotalViews)) + 1 },
-    Condition.Equal(nameof(Thread.ThreadId), threadId),
-    options);
+	new { TotalViews = Operand.Field(nameof(Thread.TotalViews)) + 1 },
+	Condition.Equal(nameof(Thread.ThreadId), threadId),
+	options);
 ```
 
 The filter or service hook reads the flag from the operation context:
 
 ```csharp
 if(context.Options.Parameters.Contains("SkipSynchronization"))
-    return;
+	return;
 ```
 
 `Parameter(...)` can also carry an object needed by a service hook:
@@ -1500,12 +1571,12 @@ if(context.Options.Parameters.Contains("SkipSynchronization"))
 var options = DataInsertOptions.Parameter("Thread", thread);
 
 this.DataAccess.Insert<Post>(
-    new {
-        ThreadId = thread.ThreadId,
-        CreatorId = this.User.UserId,
-        Content = content,
-    },
-    options);
+	new {
+		ThreadId = thread.ThreadId,
+		CreatorId = this.User.UserId,
+		Content = content,
+	},
+	options);
 ```
 
 For mapped commands, keep SQL or stored procedure parameters in the `Execute` argument. Put only operation-context flags in `DataExecuteOptions`:
@@ -1514,41 +1585,41 @@ For mapped commands, keep SQL or stored procedure parameters in the `Execute` ar
 var options = DataExecuteOptions.Parameter("SkipAudit");
 
 this.DataAccess.Execute(
-    "Forum.RefreshStatistics",
-    new []
-    {
-        new Parameter("SiteId", this.User.SiteId),
-        new Parameter("ForumId", forumId),
-    },
-    options);
+	"Forum.RefreshStatistics",
+	new []
+	{
+		new Parameter("SiteId", this.User.SiteId),
+		new Parameter("ForumId", forumId),
+	},
+	options);
 ```
 
 Use `Distinct()` for scalar lookups:
 
 ```csharp
 var creatorIds = this.DataAccess.Select<uint>(
-    nameof(Thread),
-    Condition.Equal(nameof(Thread.ForumId), forumId),
-    nameof(Thread.CreatorId),
-    DataSelectOptions.Distinct());
+	nameof(Thread),
+	Condition.Equal(nameof(Thread.ForumId), forumId),
+	nameof(Thread.CreatorId),
+	DataSelectOptions.Distinct());
 ```
 
 Use `SuppressValidator()` when an internal operation intentionally bypasses normal validator rules:
 
 ```csharp
 var exists = this.DataAccess.Exists<UserProfile>(
-    Condition.Equal(nameof(UserProfile.UserId), userId),
-    DataExistsOptions.SuppressValidator());
+	Condition.Equal(nameof(UserProfile.UserId), userId),
+	DataExistsOptions.SuppressValidator());
 ```
 
 Use `UpdateBehaviors.PrimaryKey` only when a primary key must be repaired:
 
 ```csharp
 this.DataAccess.Update<UserProfile>(
-    new { UserId = newUserId },
-    Condition.Equal(nameof(UserProfile.UserId), oldUserId),
-    nameof(UserProfile.UserId),
-    new DataUpdateOptions(UpdateBehaviors.PrimaryKey));
+	new { UserId = newUserId },
+	Condition.Equal(nameof(UserProfile.UserId), oldUserId),
+	nameof(UserProfile.UserId),
+	new DataUpdateOptions(UpdateBehaviors.PrimaryKey));
 ```
 
 Every operation also has before/after callbacks and matching `IDataAccess` events, such as `Selecting`/`Selected`, `Inserting`/`Inserted`, and `Executing`/`Executed`. Filters registered in `IDataAccess.Filters` run between the before event and the provider execution, which is the common place for cross-cutting behaviors.
@@ -1559,15 +1630,15 @@ Use `Transaction` when several operations must share one ambient data session an
 using var transaction = Transaction.ReadCommitted();
 
 this.DataAccess.Update<Thread>(
-    new { Approved = true, ApprovedTime = DateTime.Now },
-    Condition.Equal(nameof(Thread.ThreadId), threadId));
+	new { Approved = true, ApprovedTime = DateTime.Now },
+	Condition.Equal(nameof(Thread.ThreadId), threadId));
 
 this.DataAccess.Upsert<History>(new {
-    UserId = this.User.UserId,
-    ThreadId = threadId,
-    ViewedCount = Operand.Field(nameof(History.ViewedCount)) + 1,
-    FirstViewedTime = DateTime.Now,
-    LastViewedTime = DateTime.Now,
+	UserId = this.User.UserId,
+	ThreadId = threadId,
+	ViewedCount = Operand.Field(nameof(History.ViewedCount)) + 1,
+	FirstViewedTime = DateTime.Now,
+	LastViewedTime = DateTime.Now,
 });
 
 transaction.Commit();
@@ -1592,3 +1663,25 @@ Zongsoft.Data aims for balanced performance, maintainability, and usability inst
 Because data relationships are described declaratively, the engine can turn user intent into expression trees and then into provider-specific SQL. This keeps application code focused and leaves more room for provider-level optimization.
 
 The implementation uses **emitting** and dynamic compilation to prepare model population and parameter binding paths ahead of time. See [ModelEmitter](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Common/ModelMemberEmitter.cs) and related classes for details.
+
+## Plugin-Based Integration
+
+Compose this feature through the host; a package reference supplies compile-time APIs, while plugin loading also requires deployed manifests and runtime assets. See [the complete plugin workflow](../Zongsoft.Plugins/README.md).
+
+The manifest mounts the Data environment and driver collection. Add a database-driver plugin, a named connection and the application's `.mapping`; installing the engine alone neither selects a database nor creates tables.
+
+| Runtime artifact | Source of truth |
+| --- | --- |
+| `Zongsoft.Data` | [Zongsoft.Data.plugin](src/Zongsoft.Data.plugin) |
+| File copying and dependencies | [Zongsoft.Data.deploy](src/Zongsoft.Data.deploy) |
+
+Add this fragment to an existing host `.deploy` (retain Main and the host’s other base manifests; do not replace the whole file):
+
+```ini
+[plugins zongsoft data]
+nuget:Zongsoft.Data
+```
+
+Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
+
+Additional artifacts listed by the deployment manifest include `Zongsoft.Data.plugin`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.

@@ -23,21 +23,21 @@
 
 ## 安装
 
-安装 NuGet 包：
+应用插件只需引用公共归档契约；实现包由宿主[插件部署](#插件化接入)，不要求业务模块直接依赖 ClosedXML：
 
 ```shell
-dotnet add package Zongsoft.Externals.ClosedXml
+dotnet add package Zongsoft.Core
 ```
 
 该包面向 Zongsoft Framework 所支持的目标框架，当前使用 ClosedXML `0.105.1` 和 ClosedXML.Report `0.2.12`。
 
 ## 工作簿约定
 
-数据边界由 **Excel 表格（Table）** 定义，而不是名称（Defined Name）或工作表的已用区域。表格名必须等于模型描述器的 `Name`。
+数据边界由 **Excel 表格（Table）** 定义，而不是名称（Defined Name）或工作表的已用区域。[当前命名规则](src/Spreadsheet.cs)为 `__{model.QualifiedName}__`：两端各有两个下划线，限定名包含所属模块。
 
-例如模型名为 `User`，工作簿中就必须包含名为 `User` 的 Excel 表格。通过这个约定，`Zongsoft.Data` 和 `Zongsoft.Web` 中的 `Import`/`ImportAsync` 端点可以直接根据当前模型定位数据集，不需要生成内部名称或增加额外配置。
+例如无模块的 `User` 对应 `__User__`，`Sales.User` 对应 `__Sales.User__`。生成器自动设置该名称；人工制作模板时也必须遵守。不要把 CLR 命名空间直接当作模型模块名，限定名的来源见 [ModelDescriptor](../../Zongsoft.Core/src/Data/ModelDescriptor.cs)。
 
-工作表名只用于展示或分组。生成器使用 `model.Title ?? model.Name` 作为工作表名，提取器默认会搜索全部工作表。仅当需要将搜索限制在某个工作表时，才把 `DataArchiveExtractorOptions.Source` 设置为工作表名；其中的表格仍必须以模型名命名。
+工作表名只用于展示或分组。生成器使用非空白的 `model.Title`，否则使用 `model.Name`；提取器默认搜索全部工作表。仅当需要限制查找范围时，才把 `DataArchiveExtractorOptions.Source` 设置为工作表名；这不会改变内部表格名。
 
 生成的布局如下：
 
@@ -66,24 +66,42 @@ dotnet add package Zongsoft.Externals.ClosedXml
 
 请把备注和无关内容放在表格列带之外：这些列下方的内容可能会被有意识别为追加记录。启用汇总行后，提取器只读取表格声明的数据区域。
 
-如果文件仅包含模型级名称、无效引用，或者只有与模型同名的工作表，提取器会明确拒绝该文件。请创建一个实际的 Excel 表格，并把表格名设置为模型名。
+🚨 工作表或 Defined Name 不能代替实际 Excel 表格。旧模板中普通的 `User` 表格名不会自动回退匹配，应先改为与目标模型对应的内部表格名。
 
 ## 导出数据
 
-`SpreadsheetGenerator` 会在一次操作中创建工作簿和模型表格：
+在已启动并加载 ClosedXml 插件的命令或应用服务中，通过格式名 `Spreadsheet` 匹配公共接口；模块内可改用 `Module.Current.Services`。以下示例导出一个自包含的普通模型，不需要数据库：
 
 ```csharp
 using Zongsoft.Data;
-using Zongsoft.Externals.ClosedXml;
+using Zongsoft.Data.Archiving;
+using Zongsoft.Services;
 
+var generator = ApplicationContext.Current.Services
+	.FindRequired<IDataArchiveGenerator>("Spreadsheet");
 var model = Model.GetDescriptor<User>();
-var users = GetUsers();
+var users = new[]
+{
+	new User { UserId = 1, Name = "Alice", Balance = 12.50m, Email = "alice@example.invalid" },
+};
 
 await using var output = File.Create("users.xlsx");
-await new SpreadsheetGenerator().GenerateAsync(output, model, users);
+await generator.GenerateAsync(output, model, users);
+
+public class User
+{
+	public int UserId { get; set; }
+	public string Name { get; set; }
+	public decimal Balance { get; set; }
+	public string Email { get; set; }
+}
 ```
 
-可通过 `DataArchiveGeneratorOptions` 选择要导出的字段：
+调用方负责输出流的生命周期；不要为一次操作释放容器共享的服务。实际数据服务应使用 `service.GetDescriptor()`，这样映射中的主键、长度等信息才会纳入描述器；单独的 `Model.GetDescriptor<User>()` 只反映类型声明。
+
+💡 该公共接口路径已在隔离终端宿主中完成内存流往返验证：属于 Docs 模块的 User 生成 `__Docs.User__` 表格，提取后记录数量及字段值一致。没有读写用户工作簿；这不代替大文件、模板表达式或所有单元格类型的测试。
+
+可在上述 `GenerateAsync` 调用处通过 `DataArchiveGeneratorOptions` 选择字段：
 
 ```csharp
 using Zongsoft.Data.Archiving;
@@ -121,22 +139,24 @@ var options = new DataArchiveGeneratorOptions(
 
 未指定的选项继续使用根据模型元数据推导的样式。`None`、`Wrap` 和 `Shrink` 分别对应 Excel 原生的不换行、自动换行和缩小字体行为。由于 Excel 单元格无法在不改变实际值的情况下原生显示末尾省略号，因此不提供省略号模式。
 
-由于模型名会成为 Excel 表格名，因此必须满足 Excel 的表格命名规则。如果名称无效，生成器会报告本地化的验证错误。
+生成后的完整内部表格名必须满足 Excel 表格命名规则。如果名称无效，生成器会报告本地化的验证错误。
 
 ## 提取数据
 
-`SpreadsheetExtractor` 从提取选项中取得模型，定位以该模型命名的表格，并把表格列映射回模型属性：
+`IDataArchiveExtractor` 从提取选项中取得模型，定位内部表格，并把表格列映射回模型属性。下面沿用上一节的 `User` 类型：
 
 ```csharp
 using Zongsoft.Data;
 using Zongsoft.Data.Archiving;
-using Zongsoft.Externals.ClosedXml;
+using Zongsoft.Services;
 
+var extractor = ApplicationContext.Current.Services
+	.FindRequired<IDataArchiveExtractor>("Spreadsheet");
 var model = Model.GetDescriptor<User>();
 var options = new DataArchiveExtractorOptions(model);
 
 await using var input = File.OpenRead("users.xlsx");
-await foreach(var user in new SpreadsheetExtractor().ExtractAsync<User>(input, options))
+await foreach(var user in extractor.ExtractAsync<User>(input, options))
 	Console.WriteLine($"{user.UserId}: {user.Name}");
 ```
 
@@ -153,29 +173,37 @@ var options = new DataArchiveExtractorOptions(model)
 
 ## Zongsoft.Web 集成
 
-生成器和提取器分别注册为 `IDataArchiveGenerator` 和 `IDataArchiveExtractor` 服务。应用加载该扩展后，`ServiceController` 的导入操作会把当前模型描述器提供给提取器。因此默认端点的契约很简单：上传的工作簿中必须包含以当前模型名命名的 Excel 表格。
+生成器和提取器分别注册为 `IDataArchiveGenerator` 和 `IDataArchiveExtractor`。应用加载该扩展后，`ServiceController` 的导入操作把当前模型描述器提供给提取器；上传的工作簿必须包含与该描述器的 `QualifiedName` 对应的内部 Excel 表格。
 
-不需要使用私有生成的表格名；自定义工作表名也不会改变模型表格的命名约定。
+💡 优先使用同一模型的导出模板作为导入起点，避免手工猜测表格名、字段和元数据。重命名工作表不等于重命名 Excel 表格。
 
 ## 渲染模板
 
 `SpreadsheetRenderer` 使用 ClosedXML.Report 变量渲染 `.xlsx` 模板。`SpreadsheetTemplateProvider` 会递归发现 `.xlsx` 文件，并以不含扩展名的文件名作为模板索引：
 
 ```csharp
-using Zongsoft.Externals.ClosedXml;
+using Zongsoft.Data.Archiving;
+using Zongsoft.Services;
 
-var provider = new SpreadsheetTemplateProvider("templates");
+var services = ApplicationContext.Current.Services;
+var provider = services.FindRequired<IDataTemplateProvider>("Spreadsheet");
+var renderer = services.FindRequired<IDataTemplateRenderer>("Spreadsheet");
 var template = provider.GetTemplate("invoice")
 	?? throw new InvalidOperationException("Template not found.");
 
+var invoice = new { Number = "DEMO-001", Total = 12.50m };
 var parameters = new Dictionary<string, object>
 {
 	["GeneratedAt"] = DateTimeOffset.Now,
 };
 
-await using var output = File.Create("invoice.xlsx");
-await new SpreadsheetRenderer().RenderAsync(output, template, invoice, parameters);
+using var output = new MemoryStream();
+await renderer.RenderAsync(output, template, invoice, parameters);
 ```
+
+默认模板提供者在首次查找时递归扫描应用目录下的 `.xlsx`，并缓存索引；不是自动读取 `templates` 配置，也不会持续监视新文件。预先放置唯一命名的 `invoice.xlsx`，其中可以使用 `{{Number}}`、`{{Total}}` 和 `{{GeneratedAt}}`；同名文件不会按目录隔离。示例输出使用内存流，避免覆盖模板或让输出文件被误认为模板。自定义根目录应由宿主组合专用提供者，业务模块仍消费公共接口。
+
+🚨 工作簿处理会在内存中展开文件；`ValueTask` 返回类型不表示完全异步或支持随时中断。限制上传大小、行数及并发，不把 Excel 数据验证当作服务端业务校验。
 
 模板变量和表达式遵循 [ClosedXML.Report](https://github.com/ClosedXML/ClosedXML.Report) 语法。
 
@@ -215,3 +243,27 @@ dotnet test externals/closedxml/test/Zongsoft.Externals.ClosedXml.Tests.csproj -
 ## 许可证
 
 本项目采用 [GNU 宽通用公共许可证](../../LICENSE)。
+
+## 插件化接入
+
+优先通过宿主组合本能力；包引用用于编译，而插件加载还需要部署清单和运行产物。完整流程见[插件化入门](../../Zongsoft.Plugins/README.zh-Hans.md)。
+
+服务扫描注册归档生成器、提取器、模板提供者与渲染器；按 `Spreadsheet` 匹配公共接口。模板和数据由应用提供，插件加载不会自动生成工作簿。
+
+| 运行产物 | 源码依据 |
+| --- | --- |
+| `Zongsoft.Externals.ClosedXml` | [Zongsoft.Externals.ClosedXml.plugin](src/Zongsoft.Externals.ClosedXml.plugin) |
+| 文件复制及依赖 | [Zongsoft.Externals.ClosedXml.deploy](src/Zongsoft.Externals.ClosedXml.deploy) |
+
+在已有宿主的 `.deploy` 中加入以下片段（保留宿主原有 Main 等基础清单，不要用片段覆盖整份文件）：
+
+```ini
+[plugins zongsoft externals closedxml]
+nuget:Zongsoft.Externals.ClosedXml
+```
+
+按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
+
+🚨 当前源码的 `.csproj` 引用 ClosedXML `0.105.1` / ClosedXML.Report `0.2.12`，但 `.deploy` 仍指定 `0.102.2` / `0.2.10`。不能将该清单视为当前源码构建的完整依赖集合；隔离验证时使用与构建资产一致的依赖，并检查最终 DLL 版本。补齐依赖前不要据此直接投产。
+
+清单列出的附属产物包括：`Zongsoft.Externals.ClosedXml.plugin`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。

@@ -75,3 +75,25 @@ openssl pkcs12 -inkey certificate.private.pem -in certificate.der -export -out c
 ```bash
 openssl pkcs12 -inkey certificate.private.pem -passin pass:"password" -in certificate.der -export -out certificate.pfx -passout pass:"password" -name "FriendlyName"
 ```
+
+## Plugin-Based Integration
+
+Compose this feature through the host; a package reference supplies compile-time APIs, while plugin loading also requires deployed manifests and runtime assets. See [the complete plugin workflow](../../Zongsoft.Plugins/README.md).
+
+The plugin makes the OPC adapter and SDK available. Application code configures endpoints, certificate trust and session/subscription lifetimes; no OPC connection is implied by copying the manifest.
+
+| Runtime artifact | Source of truth |
+| --- | --- |
+| `Zongsoft.Externals.Opc` | [Zongsoft.Externals.Opc.plugin](src/Zongsoft.Externals.Opc.plugin) |
+| File copying and dependencies | [Zongsoft.Externals.Opc.deploy](src/Zongsoft.Externals.Opc.deploy) |
+
+Add this fragment to an existing host `.deploy` (retain Main and the host’s other base manifests; do not replace the whole file):
+
+```ini
+[plugins zongsoft externals opc]
+nuget:Zongsoft.Externals.Opc
+```
+
+Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
+
+Additional artifacts listed by the deployment manifest include `Zongsoft.Externals.Opc.plugin`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.

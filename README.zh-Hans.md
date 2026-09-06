@@ -14,6 +14,23 @@
 
 > 📦 维护者发布包前，请先阅读 [NuGet 发布指南](PUBLISHING.zh-Hans.md)。
 
+## 从哪里开始
+
+Zongsoft 的典型应用由“宿主 + 业务插件 + 能力插件”组成。宿主负责启动和生命周期；业务模块针对 Core 或公共契约编译；数据库、缓存、消息和表达式等实现由部署清单与配置组合。
+
+| 你要做什么 | 阅读入口 |
+| --- | --- |
+| 理解应用容器、模块容器、具名提供者与注入 | [Core 使用指南](Zongsoft.Core/README.zh-Hans.md) |
+| 创建宿主、部署能力并编写解耦的消费插件 | [插件运行时入门](Zongsoft.Plugins/README.zh-Hans.md) |
+| 将控制器作为插件部署并验证 HTTP 请求 | [Web 插件完整示例](Zongsoft.Plugins.Web/README.zh-Hans.md) |
+| 配置模型映射和数据库驱动 | [数据引擎](Zongsoft.Data/README.zh-Hans.md) |
+| 选择消息驱动、订阅与可靠存储 | [消息驱动目录](messaging/)与 [Core 消息契约](Zongsoft.Core/src/Messaging/) |
+| 修改框架实现或开展 AI 协作 | [AGENTS.md](AGENTS.md) 与 [技能路由](SKILL.md) |
+
+💡 `dotnet add package` 解决编译引用，不能替代插件部署。应用通常通过 `ApplicationContext.Current.Services`、应用定义的 `Module.Current.Services` 和约定配置取得公共接口；无需在业务模块中逐一构造第三方实现。
+
+🚨 插件以宿主权限执行，并非沙箱。部署清单可能覆盖文件，数据库、云服务、消息代理和模型调用也可能产生副作用；先在隔离环境验证，再接入真实业务。
+
 ## 项目列表
 
 - [_**Z**ongsoft.**C**ore_](Zongsoft.Core) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Core)](https://nuget.org/packages/Zongsoft.Core)

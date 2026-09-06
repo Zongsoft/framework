@@ -62,3 +62,25 @@
 
 - WeChat Pay certificate tool
 	> https://wx.gtimg.com/mch/files/WXCertUtil.exe
+
+## Plugin-Based Integration
+
+Compose this feature through the host; a package reference supplies compile-time APIs, while plugin loading also requires deployed manifests and runtime assets. See [the complete plugin workflow](../../Zongsoft.Plugins/README.md).
+
+The manifest exposes the Wechat components and services. Keep account, certificate and payment settings under application-owned options. API and callback gateway plugins are optional, separate host contributions.
+
+| Runtime artifact | Source of truth |
+| --- | --- |
+| `Zongsoft.Externals.Wechat` | [Zongsoft.Externals.Wechat.plugin](src/Zongsoft.Externals.Wechat.plugin) |
+| File copying and dependencies | [Zongsoft.Externals.Wechat.deploy](src/Zongsoft.Externals.Wechat.deploy) |
+
+Add this fragment to an existing host `.deploy` (retain Main and the host’s other base manifests; do not replace the whole file):
+
+```ini
+[plugins zongsoft externals wechat]
+nuget:Zongsoft.Externals.Wechat
+```
+
+Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
+
+Additional artifacts listed by the deployment manifest include `Zongsoft.Externals.Wechat.plugin`, `Zongsoft.Externals.Wechat.option`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.

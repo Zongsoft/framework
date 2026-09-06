@@ -14,6 +14,13 @@ description: 开发、重构、测试或审查 Zongsoft.Data ORM 数据引擎及
 - 修改文本文件时保持 CRLF 换行，修改代码和 XML 时使用 Tab 缩进。
 - 保留工作区中与当前任务无关的用户修改，不要重置或覆盖脏工作树。
 
+## 插件、容器与首次数据访问
+
+- [DataAccessProvider](src/DataAccessProvider.cs) 通过 ServiceAttribute 的 Members 注册静态 Instance，公共消费契约是 `IServiceProvider<IDataAccess>`，不是自动注册的 `IDataAccessProvider`。创建具名访问器后优先使用同名模块容器注入，缺少模块时回到应用容器。
+- [MetadataFileLoader](src/Metadata/Profiles/MetadataFileLoader.cs) 默认递归搜索 ApplicationPath 的 `.mapping`；别把部署了映射等同于创建物理表。命名命令由 container 与 name 组成限定名，mutability 控制读写源选择。
+- 驱动清单分别注册数据驱动与连接设置驱动；两者之一缺失都会影响首次查询。README 的[插件最小闭环](README.zh-Hans.md#plugin-quickstart)验证了公共接口到 SQLite 映射命令的实际调用。
+- 手工调试部署要核对最终 SDK/原生依赖。Windows x64 SQLite 在插件内仅保留嵌套 runtimes 时可能找不到 e_sqlite3，隔离验证采用匹配架构原生 DLL 与托管包装器同目录。不要把构建输出复制成功作为原生库可加载的证明。
+
 ## 数据模式(Schema)
 
 数据模式是数据引擎的核心 DSL：数据访问方法的 `schema` 文本参数描述要读取或写入的字段形状，引擎解析后生成 SQL。重构 Schema 子系统前先通读本节。
@@ -144,9 +151,9 @@ rg --files Zongsoft.Data/drivers | rg -- "-pod\.yaml$|Tests\.csproj$"
 ```
 
 - SQLite 和 DuckDB 是进程内数据库，运行其单元测试不需要启动数据库服务器容器。
-- 其他驱动的测试目录中如果存在 `*-pod.yaml`，表示测试依赖由 Podman pod 托管的数据库服务器。运行测试前先检查对应 pod/容器是否已经存在并处于运行状态；如果尚未启动，则根据该 YAML 启动 pod，并等待数据库服务真正就绪后再运行测试。Pod 处于 Running 不一定表示数据库已经接受连接。
+- 其他驱动测试目录的 `*-pod.yaml` 描述 Podman 数据库依赖。先检查已有服务与运行授权；用户允许启用测试容器时才按 YAML 启动缺失服务，并等待数据库真正可连接。Running 不等于 Ready，不停止或删除非本次创建的资源。
 - 当前仓库中的 MSSQL、MySQL、PostgreSQL 和 TDengine 测试目录包含 `*-pod.yaml`；仍应每次动态扫描，不要把该列表视为永久不变。
-- 使用本机 Pod 容器的数据库进行测试，可以在源代码文件中的连接字符串中包含用户名和密码，测试输出摘要或提交记录。
+- 本机容器不豁免凭据规则。真实用户名、密码及完整连接串不写入源码、文档、测试输出摘要或提交记录；通过本地环境配置注入，使用唯一测试数据库/表或键前缀，清理仅限本次测试数据。
 - 先运行与改动直接相关的测试，再运行对应驱动项目的完整测试。使用 `--blame-hang` 和合理的 `--blame-hang-timeout` 防止连接失败测试无限挂起。
 - 多目标框架项目按 `net8.0`、`net9.0`、`net10.0` 分别还原和测试。中央包版本按目标框架定义；发生 NU1605 时先检查 `Directory.Packages.props` 与数据库提供程序的传递依赖约束。
 - MSSQL 测试项目在 net9.0 下不要直接固定 `Microsoft.Extensions.Caching.Memory` 9.0.2，因为 `Microsoft.Data.SqlClient 7.0.2` 要求至少 9.0.13；net8.0 和 net10.0 仍需要各自匹配的直接运行时依赖。

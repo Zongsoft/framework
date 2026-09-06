@@ -157,3 +157,25 @@ Wait for the client's reconnect interval, which defaults to two seconds, and pub
 | `produce --topic:<topic> [--round:<count>] <message> [...]` | Publish one or more messages. Alias: `send`. |
 | `reset` | Reset the displayed receive counter. |
 | `close` | Dispose the MQTT queue; restart the Client sample to continue testing. |
+
+## Plugin-Based Integration
+
+Compose this feature through the host; a package reference supplies compile-time APIs, while plugin loading also requires deployed manifests and runtime assets. See [the complete plugin workflow](../../Zongsoft.Plugins/README.md).
+
+The manifest registers the connection-settings driver, and service discovery registers the queue provider. Configure a named connection before resolving IMessageQueueProvider. The broker is external; loading the plugin does not create topics, users or a broker service.
+
+| Runtime artifact | Source of truth |
+| --- | --- |
+| `Zongsoft.Messaging.Mqtt` | [Zongsoft.Messaging.Mqtt.plugin](src/Zongsoft.Messaging.Mqtt.plugin) |
+| File copying and dependencies | [Zongsoft.Messaging.Mqtt.deploy](src/Zongsoft.Messaging.Mqtt.deploy) |
+
+Add this fragment to an existing host `.deploy` (retain Main and the host’s other base manifests; do not replace the whole file):
+
+```ini
+[plugins zongsoft messaging mqtt]
+nuget:Zongsoft.Messaging.Mqtt
+```
+
+Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
+
+Additional artifacts listed by the deployment manifest include `Zongsoft.Messaging.Mqtt.plugin`, `Zongsoft.Messaging.Mqtt.option`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.

@@ -12,7 +12,7 @@
 | [server](server) | Starts an OPC UA server with an in-memory address space containing folders, variables, objects, and arrays. |
 | [client](client) | Connects to an OPC UA server and exercises browsing, reading, writing, subscriptions, and monitoring. |
 
-Both projects target .NET 10. The server uses the OPC UA endpoint settings supplied on its command line; with no additional arguments, the client connects to `opc.tcp://localhost:4840`.
+Both projects target .NET 10. The server uses the OPC UA endpoint settings supplied on its command line; the client's `connect` command defaults to `opc.tcp://localhost:4840` with the additional identity settings declared in its source.
 
 ## Run
 
@@ -75,3 +75,11 @@ disconnect
 ```
 
 See the [complete client instructions](client/README.md) for all command arguments, aliases, file-based bulk subscriptions, and output options. Certificate and authentication settings must match when security is enabled.
+
+## Safety, Expected Result, and Cleanup
+
+🚨 These commands can write node values. Use only the in-memory sample address space, not a production industrial endpoint. Starting the client does not establish a session; `connect` without arguments uses the defaults in [client/Program.cs](client/Program.cs), including its user/certificate fields. To request anonymous local access explicitly, use `connect 'opc.tcp://localhost:4840'` if permitted by the server.
+
+Browse an existing numeric variable, subscribe to it, and use the server's `set` command on that same identifier. The client should observe the changed value while listening. Leave `listen` with `Ctrl+C` before issuing cleanup commands.
+
+Unsubscribe and disconnect the client, then run `exit` and confirm. Run `stop` and `exit` in the server terminal. Values initialized by [server/Program.cs](server/Program.cs) are in-memory; do not remove certificate files or trust stores shared by other applications. For application-side provider selection and certificate concepts, see the [library guide](../README.md).

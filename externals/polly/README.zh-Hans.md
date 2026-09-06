@@ -50,7 +50,7 @@
 
 由于 [**P**olly](https://github.com/App-vNext/Polly) 库 _[`8.6.5` 版本](https://www.nuget.org/packages/Polly.Core/8.6.5)_ 在相应策略回调中并没有包含原始执行参数，所以在 [`BreakerFeature<TArgument>`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Components/Features/BreakerFeature.cs#L95) 和 [`BreakerFeature<TArgument, TResult>`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Components/Features/BreakerFeature.cs#L125) 的 `Opened` 回调函数中的，是无法获得对应 `BreakerOpenedArgument<TArgument>.Value` 和 `BreakerOpenedArgument<TArgument, TResult>.Value` 属性值，其 `Closed` 回调函数亦同样如此。
 
-由于本插件库重写了 [限流](https://github.com/Zongsoft/framework/blob/main/externals/polly/src/Strategies/ThrottleStrategy.cs) 和 [回退](https://github.com/Zongsoft/framework/blob/main/externals/polly/src/Strategies/FallbackStrategy.cs) 两种策略，因此可以在它们的回调方法中获取到原始执行参数的值，即通过 [`Argument<T>.Value`](https://github.com/Zongsoft/framework/blob/execution/Zongsoft.Core/src/Components/Features/Argument.cs#L60) 或 [`Argument<T, TResult>.Value`](https://github.com/Zongsoft/framework/blob/execution/Zongsoft.Core/src/Components/Features/Argument.cs#L60) 属性。
+由于本插件库重写了 [限流](https://github.com/Zongsoft/framework/blob/main/externals/polly/src/Strategies/ThrottleStrategy.cs) 和 [回退](https://github.com/Zongsoft/framework/blob/main/externals/polly/src/Strategies/FallbackStrategy.cs) 两种策略，因此可以在它们的回调方法中获取到原始执行参数的值，即通过 [`Argument<T>.Value`](../../Zongsoft.Core/src/Components/Features/Argument.cs) 或 [`Argument<T, TResult>.Value`](../../Zongsoft.Core/src/Components/Features/Argument.cs) 属性。
 
 - [`ThrottleFeature<TArgument>.Rejected`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Components/Features/ThrottleFeature.cs#L91) 和 [`ThrottleFeature<TArgument, TResult>.Rejected`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Components/Features/ThrottleFeature.cs#L109)
 - [`FallbackFeature<TArgument>.Fallback`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Components/Features/FallbackFeature.cs#L76) 和 [`FallbackFeature<TArgument, TResult>.Fallback`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Components/Features/FallbackFeature.cs#L98)
@@ -70,3 +70,25 @@
 ## 使用范例
 
 请参考本插件库的 [samples](https://github.com/Zongsoft/framework/tree/main/externals/polly/samples) 范例的 [README.md](https://github.com/Zongsoft/framework/blob/main/externals/polly/samples/README.md) 文档。
+
+## 插件化接入
+
+优先通过宿主组合本能力；包引用用于编译，而插件加载还需要部署清单和运行产物。完整流程见[插件化入门](../../Zongsoft.Plugins/README.zh-Hans.md)。
+
+清单通过 `/Workbench/Externals/Polly` 将 `FeaturePipelineBuilder.Instance` 绑定到执行器的 Pipelines 属性。通过框架执行选项配置韧性特性，避免另行覆盖该全局绑定。
+
+| 运行产物 | 源码依据 |
+| --- | --- |
+| `Zongsoft.Externals.Polly` | [Zongsoft.Externals.Polly.plugin](src/Zongsoft.Externals.Polly.plugin) |
+| 文件复制及依赖 | [Zongsoft.Externals.Polly.deploy](src/Zongsoft.Externals.Polly.deploy) |
+
+在已有宿主的 `.deploy` 中加入以下片段（保留宿主原有 Main 等基础清单，不要用片段覆盖整份文件）：
+
+```ini
+[plugins zongsoft externals polly]
+nuget:Zongsoft.Externals.Polly
+```
+
+按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
+
+清单列出的附属产物包括：`Zongsoft.Externals.Polly.plugin`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。

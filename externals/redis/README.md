@@ -60,3 +60,96 @@ Notifications use one Redis subscription per scope and one bounded local queue p
 Redis locks expose monotonically increasing fencing tokens and explicit renewal. Automatic renewal is disabled by default and is enabled only through `DistributedLockOptions.RenewalInterval`; an uncertain connection or failed renewal is treated as loss of ownership, so protected writes should validate fencing tokens.
 
 `RedisServiceInfo.Capabilities` and `RedisQueue.Capabilities` expose the conservative intersection across primary nodes: `XAUTOCLAIM` at Redis 6.2, `XACKDEL`/group-aware trimming at 8.2, and Stream IDMP at 8.6. Older servers retain the existing fallback behavior. The `Zongsoft.Externals.Redis` diagnostics source provides both `ActivitySource` and `Meter` without requiring an additional telemetry package.
+
+## Getting Started through the Cache Contract
+
+Business modules only reference Core's [IDistributedCache](../../Zongsoft.Core/src/Caching/IDistributedCache.cs); the deployment composition selects the Redis plugin. RedisService construction is not the default business entry point.
+
+Put the connection and selection setting in the option file with the same stem as your application plugin. The password-free address below is **only for an isolated local test service**. Supply real credentials through environment-specific configuration, not committed files:
+
+```xml
+<options>
+	<option path="/">
+		<orders cache="Orders@Redis" />
+	</option>
+	<option path="/Externals/Redis">
+		<connectionSettings>
+			<connectionSetting connectionSetting.name="Orders" driver="Redis"
+			                   value="server=127.0.0.1:6379;database=15" />
+		</connectionSettings>
+	</option>
+</options>
+```
+
+After host initialization, run this in a business service/command:
+
+```csharp
+using Zongsoft.Caching;
+using Zongsoft.Services;
+
+var application = ApplicationContext.Current;
+var qualifiedName = application.Configuration["Orders:Cache"]
+	?? throw new InvalidOperationException("Orders:Cache is missing.");
+var cache = application.Services.Locate<IDistributedCache>(qualifiedName)
+	?? throw new InvalidOperationException("The configured cache is unavailable.");
+var key = "orders:demo:" + Guid.NewGuid().ToString("N");
+
+try
+{
+	await cache.SetValueAsync(key, "hello", TimeSpan.FromMinutes(1));
+	Console.WriteLine(await cache.GetValueAsync<string>(key));
+}
+finally
+{
+	await cache.RemoveAsync(key);
+}
+```
+
+The expected output is `hello`. Only this call's generated key is removed; the example does not clear the database. Module code can use its own `Module.Current.Services`. Do not dispose the shared cache per operation.
+
+### Provider Name versus Connection Name
+
+In `Orders@Redis`, `Redis` is the registered provider alias and `Orders` is the connection name passed to its `GetService(name)`; Redis is not a module container here. You can also resolve `Zongsoft.Services.IServiceProvider<IDistributedCache>` and call `GetService("Orders")`, but explicitly select the provider when several coexist instead of relying on registration order.
+
+[RedisServiceProvider](src/RedisServiceProvider.cs) reuses services by name. Ordinary cache/sequence/lock lookup tries the default connection when a named connection is missing. **Reliable message storage factories instead require an exact name.** A misspelled connection can therefore fall back unexpectedly. Check selected settings during startup without printing complete connection strings.
+
+### Deployment Versions and First-Connection Troubleshooting
+
+🚨 The current [deployment manifest](src/Zongsoft.Externals.Redis.deploy) deploys StackExchange.Redis before the Microsoft cache adapter. The latter's transitive dependency can overwrite the DLL with an older version. In local .NET 10 verification, 2.7.27 overwrote 3.1.31 and first use failed with a missing `ConfigurationOptions.get_SentinelUser` method. Appearing in `plugin.list` does not prove that the first connection will succeed.
+
+For the current source version, after plugin deployment and **with the host stopped**, use a separate supplemental manifest to deploy the required version into the same plugin directory:
+
+```ini
+[plugins zongsoft externals redis]
+nuget:StackExchange.Redis@3.1.31
+```
+
+```shell
+dotnet deploy redis-runtime.deploy --destination:./out --framework:net10.0 --overwrite:alway
+```
+
+Save the INI above as `redis-runtime.deploy`. This command overwrites files, so target a verified test deployment. The [project file](src/Zongsoft.Externals.Redis.csproj) owns the required version; do not perpetually reuse an old workaround. Check the final DLL version, restart, and verify contract-level reads and writes.
+
+For connection failures, check plugin dependency versions, named settings and driver, Windows/container addressing, port and credentials, then database permissions. A Windows host uses `127.0.0.1` with the published port; `localhost` inside a container refers to that container, not Windows.
+
+## Plugin-Based Integration
+
+Compose this feature through the host; a package reference supplies compile-time APIs, while plugin loading also requires deployed manifests and runtime assets. See [the complete plugin workflow](../../Zongsoft.Plugins/README.md).
+
+The manifest registers the Redis service provider, settings driver, commands and message-storage factory. Configure named connections and resolve cache/sequence/lock contracts through the provider; applications should not recreate the shared connection per operation.
+
+| Runtime artifact | Source of truth |
+| --- | --- |
+| `Zongsoft.Externals.Redis` | [Zongsoft.Externals.Redis.plugin](src/Zongsoft.Externals.Redis.plugin) |
+| File copying and dependencies | [Zongsoft.Externals.Redis.deploy](src/Zongsoft.Externals.Redis.deploy) |
+
+Add this fragment to an existing host `.deploy` (retain Main and the host’s other base manifests; do not replace the whole file):
+
+```ini
+[plugins zongsoft externals redis]
+nuget:Zongsoft.Externals.Redis
+```
+
+Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
+
+Additional artifacts listed by the deployment manifest include `Zongsoft.Externals.Redis.plugin`, `Zongsoft.Externals.Redis.option`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.

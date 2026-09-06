@@ -80,3 +80,17 @@ dotnet run --project Zongsoft.Core/samples/superviser/Zongsoft.Samples.Supervise
 ```
 
 使用 `create`、`open`、`close`、`pause`、`resume`、`error`、`reset` 和 `info` 演示对象状态。有关失活、允许失败、持续督管和手动移除的完整命令顺序，请参阅[督管器范例说明](superviser/README.zh-Hans.md)。
+
+## 基础概念与安全实验规模
+
+事件交换器通过通道分派注册事件，Spooler 将待处理项归为批次，Superviser 观察活动及失败，缓存扫描触发过期观察。这些机制解决不同的生命周期问题，不是可互换的持久队列。
+
+样例使用本地进程内对象。先用几十个事件/条目，再尝试前面的大批量示例。时间输出只是交互观察，不是可复现性能基准。
+
+## 关键代码与清理
+
+各项目有独立 Program.cs：[事件](eventexchanger/Program.cs)、[缓存](memorycache/Program.cs)、[批处理](spooler/Program.cs)、[监视器](superviser/Program.cs)。改写样例时应同时阅读初始化与退出路径。
+
+提供 `stop` 的程序先停止，再执行 `exit`，样例会释放进程内工作器和定时器，没有应用数据库需要删除。计数器及缓存状态随进程结束重置。
+
+💡 过期通知稍晚不一定代表过期失败，定时调度及显式扫描都会影响打印时机，不应把控制台时间变成严格单元测试断言。

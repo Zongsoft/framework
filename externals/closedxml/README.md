@@ -23,21 +23,21 @@ The archive format is named `Spreadsheet`, uses the `.xlsx` extension, and has t
 
 ## Installation
 
-Install the NuGet package:
+Application plugins reference the shared archiving contracts. Deploy the implementation through the [plugin host](#plugin-based-integration), without making business modules depend on ClosedXML:
 
 ```shell
-dotnet add package Zongsoft.Externals.ClosedXml
+dotnet add package Zongsoft.Core
 ```
 
 The package targets the same supported frameworks as Zongsoft Framework and currently uses ClosedXML `0.105.1` and ClosedXML.Report `0.2.12`.
 
 ## Workbook Convention
 
-The data boundary is an **Excel Table**, not a Defined Name or the worksheet's used range. The table name must be the model descriptor's `Name`.
+The data boundary is an **Excel Table**, not a Defined Name or the worksheet's used range. The [current naming rule](src/Spreadsheet.cs) is `__{model.QualifiedName}__`: two underscores at each end, with the module included in the qualified model name.
 
-For a model whose name is `User`, the workbook therefore contains an Excel Table named `User`. This convention lets `Zongsoft.Data` and the `Import`/`ImportAsync` endpoints in `Zongsoft.Web` locate the dataset directly from the current model without requiring a generated internal name or extra configuration.
+For example, an unqualified `User` maps to `__User__`, while `Sales.User` maps to `__Sales.User__`. The generator sets this name automatically; hand-authored templates must follow it too. A CLR namespace is not automatically the model's module name; see [ModelDescriptor](../../Zongsoft.Core/src/Data/ModelDescriptor.cs).
 
-The worksheet name is only a display or grouping concern. The generator uses `model.Title ?? model.Name` for it, while the extractor searches all worksheets by default. Set `DataArchiveExtractorOptions.Source` to a worksheet name only when the search must be restricted to that worksheet; the table inside it must still be named after the model.
+The worksheet name is only a display or grouping concern. The generator uses a nonblank `model.Title`, otherwise `model.Name`; the extractor searches all worksheets by default. Set `DataArchiveExtractorOptions.Source` to a worksheet name to restrict lookup; this does not change the internal Table name.
 
 The generated layout is:
 
@@ -66,24 +66,42 @@ Excel users sometimes append records below a table without expanding it. When th
 
 Keep notes and unrelated content outside the table's column band: content below those columns can intentionally be interpreted as an appended record. When a totals row is enabled, only the table's declared data range is extracted.
 
-Files that contain only a model-level Defined Name, an invalid reference, or merely a worksheet named after the model are intentionally rejected. Create an actual Excel Table whose name is the model name.
+🚨 A worksheet or Defined Name cannot replace an actual Excel Table. Legacy Tables simply named `User` are not matched as a fallback; update their internal Table name to match the target model.
 
 ## Exporting Data
 
-`SpreadsheetGenerator` creates a workbook and its model table in one operation:
+Inside a command or application service of a running host with the ClosedXml plugin loaded, match the public contract by format name `Spreadsheet`. A module can use `Module.Current.Services` instead. This self-contained plain-model example needs no database:
 
 ```csharp
 using Zongsoft.Data;
-using Zongsoft.Externals.ClosedXml;
+using Zongsoft.Data.Archiving;
+using Zongsoft.Services;
 
+var generator = ApplicationContext.Current.Services
+	.FindRequired<IDataArchiveGenerator>("Spreadsheet");
 var model = Model.GetDescriptor<User>();
-var users = GetUsers();
+var users = new[]
+{
+	new User { UserId = 1, Name = "Alice", Balance = 12.50m, Email = "alice@example.invalid" },
+};
 
 await using var output = File.Create("users.xlsx");
-await new SpreadsheetGenerator().GenerateAsync(output, model, users);
+await generator.GenerateAsync(output, model, users);
+
+public class User
+{
+	public int UserId { get; set; }
+	public string Name { get; set; }
+	public decimal Balance { get; set; }
+	public string Email { get; set; }
+}
 ```
 
-Use `DataArchiveGeneratorOptions` to select exported fields:
+The caller owns the output stream; do not dispose a container-owned service after each operation. For an actual data service, use `service.GetDescriptor()` to include mapping metadata such as keys and lengths; `Model.GetDescriptor<User>()` alone reflects type declarations.
+
+💡 This shared-interface path passed an in-memory round trip in an isolated terminal host: a User in the Docs module produced `__Docs.User__`, and extraction preserved the record count and field values. No user workbook was read or written. This does not replace testing large files, template expressions or every cell type.
+
+At the `GenerateAsync` call above, use `DataArchiveGeneratorOptions` to select fields:
 
 ```csharp
 using Zongsoft.Data.Archiving;
@@ -121,22 +139,24 @@ var options = new DataArchiveGeneratorOptions(
 
 Unspecified options continue to use styles inferred from model metadata. `None`, `Wrap`, and `Shrink` map to Excel's native text-display behaviors. An ellipsis mode is intentionally absent because Excel cells cannot display a native trailing ellipsis without changing the stored value.
 
-Because the model name becomes an Excel Table name, it must satisfy Excel's table-name rules. The generator reports a localized validation error when it does not.
+The complete generated internal Table name must satisfy Excel's table-name rules. The generator reports a localized validation error when it does not.
 
 ## Extracting Data
 
-`SpreadsheetExtractor` obtains the model from the extraction options, locates the table named after that model, and maps its columns back to model properties:
+`IDataArchiveExtractor` obtains the model from extraction options, locates its internal Table, and maps columns back to model properties. The following uses the `User` type from the previous section:
 
 ```csharp
 using Zongsoft.Data;
 using Zongsoft.Data.Archiving;
-using Zongsoft.Externals.ClosedXml;
+using Zongsoft.Services;
 
+var extractor = ApplicationContext.Current.Services
+	.FindRequired<IDataArchiveExtractor>("Spreadsheet");
 var model = Model.GetDescriptor<User>();
 var options = new DataArchiveExtractorOptions(model);
 
 await using var input = File.OpenRead("users.xlsx");
-await foreach(var user in new SpreadsheetExtractor().ExtractAsync<User>(input, options))
+await foreach(var user in extractor.ExtractAsync<User>(input, options))
 	Console.WriteLine($"{user.UserId}: {user.Name}");
 ```
 
@@ -153,29 +173,37 @@ The extractor reports a localized error when the worksheet, model table, or requ
 
 ## Zongsoft.Web Integration
 
-The generator and extractor are registered as Zongsoft services for `IDataArchiveGenerator` and `IDataArchiveExtractor`. Once this extension is loaded by the application, a `ServiceController` import operation supplies its current model descriptor to the extractor. The default endpoint contract is therefore simple: upload a workbook containing an Excel Table whose name is the current model name.
+The generator and extractor are registered as `IDataArchiveGenerator` and `IDataArchiveExtractor`. After the extension is loaded, a `ServiceController` import operation supplies its current model descriptor; the workbook must contain the internal Excel Table corresponding to that descriptor's `QualifiedName`.
 
-No private generated table name is required, and a custom worksheet name does not change the model-table convention.
+💡 Start imports from an exported template for the same model, avoiding guesses about Table names, fields and metadata. Renaming a worksheet does not rename its Excel Table.
 
 ## Rendering Templates
 
 `SpreadsheetRenderer` renders an `.xlsx` template using ClosedXML.Report variables. `SpreadsheetTemplateProvider` recursively discovers `.xlsx` files and indexes each template by its filename without the extension:
 
 ```csharp
-using Zongsoft.Externals.ClosedXml;
+using Zongsoft.Data.Archiving;
+using Zongsoft.Services;
 
-var provider = new SpreadsheetTemplateProvider("templates");
+var services = ApplicationContext.Current.Services;
+var provider = services.FindRequired<IDataTemplateProvider>("Spreadsheet");
+var renderer = services.FindRequired<IDataTemplateRenderer>("Spreadsheet");
 var template = provider.GetTemplate("invoice")
 	?? throw new InvalidOperationException("Template not found.");
 
+var invoice = new { Number = "DEMO-001", Total = 12.50m };
 var parameters = new Dictionary<string, object>
 {
 	["GeneratedAt"] = DateTimeOffset.Now,
 };
 
-await using var output = File.Create("invoice.xlsx");
-await new SpreadsheetRenderer().RenderAsync(output, template, invoice, parameters);
+using var output = new MemoryStream();
+await renderer.RenderAsync(output, template, invoice, parameters);
 ```
+
+On first lookup, the default template provider recursively scans the application directory for `.xlsx` files and caches the index; it does not read a `templates` setting or continuously watch for new files. Place a uniquely named `invoice.xlsx` beforehand, using cells such as `{{Number}}`, `{{Total}}` and `{{GeneratedAt}}`. Duplicate filenames are not isolated by directory. The example writes to memory to avoid overwriting a template or discovering generated output as a template. A custom root requires a host-composed provider; business modules still consume the shared interface.
+
+🚨 Workbook processing expands files in memory. A `ValueTask` return type does not imply fully asynchronous or interruptible processing. Limit upload size, row count and concurrency; Excel validation is not server-side business validation.
 
 Template variables and expressions follow the [ClosedXML.Report](https://github.com/ClosedXML/ClosedXML.Report) syntax.
 
@@ -215,3 +243,27 @@ dotnet test externals/closedxml/test/Zongsoft.Externals.ClosedXml.Tests.csproj -
 ## License
 
 This project is licensed under the [GNU Lesser General Public License](../../LICENSE).
+
+## Plugin-Based Integration
+
+Compose this feature through the host; a package reference supplies compile-time APIs, while plugin loading also requires deployed manifests and runtime assets. See [the complete plugin workflow](../../Zongsoft.Plugins/README.md).
+
+Service scanning registers archive generators, extractors, template providers and renderers; match their shared interfaces by `Spreadsheet`. Templates and data are application inputs, not workbooks generated by plugin loading.
+
+| Runtime artifact | Source of truth |
+| --- | --- |
+| `Zongsoft.Externals.ClosedXml` | [Zongsoft.Externals.ClosedXml.plugin](src/Zongsoft.Externals.ClosedXml.plugin) |
+| File copying and dependencies | [Zongsoft.Externals.ClosedXml.deploy](src/Zongsoft.Externals.ClosedXml.deploy) |
+
+Add this fragment to an existing host `.deploy` (retain Main and the host’s other base manifests; do not replace the whole file):
+
+```ini
+[plugins zongsoft externals closedxml]
+nuget:Zongsoft.Externals.ClosedXml
+```
+
+Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
+
+🚨 The current `.csproj` references ClosedXML `0.105.1` / ClosedXML.Report `0.2.12`, but `.deploy` still specifies `0.102.2` / `0.2.10`. That manifest is not a complete dependency recipe for a build of the current source. In isolated verification, use dependencies matching the build assets and check the final DLL versions. Resolve this mismatch before production deployment.
+
+Additional artifacts listed by the deployment manifest include `Zongsoft.Externals.ClosedXml.plugin`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.

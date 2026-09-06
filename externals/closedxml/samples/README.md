@@ -49,3 +49,11 @@ verify -c:25 -l:zh-CN roundtrip.xlsx
 ```
 
 Confirm that the reported imported record count matches `--count` and inspect the displayed values for the selected culture.
+
+## Source, Safety, and Cleanup
+
+[Program.cs](Program.cs) owns the concrete generator/extractor instances for this standalone diagnostic tool. In a plugin application, use the public archive interfaces resolved from the service container as shown in the [library guide](../README.md).
+
+🚨 Export opens the destination for creation and can overwrite an existing file. Use unique names in a disposable directory, small fake datasets, and no production workbooks. Import prints every record, so do not feed it sensitive data.
+
+After a round trip, use `exit` and confirm the exit prompt. Remove only the `.xlsx` files created for this run after inspecting them; `verify` does not automatically delete its output. No external service or database cleanup is needed.

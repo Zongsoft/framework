@@ -4,6 +4,8 @@
 
 ## 工作边界
 
+实现流程、源码路由与跨项目风险见 [SKILL.md](SKILL.md)；使用者教程维护在双语 README 中。
+
 - 主库负责框架诊断能力，`protocols/client` 与 `protocols/server` 负责协议传输，详细规则见 [protocols/AGENTS.md](protocols/AGENTS.md)。
 - 保持 Activity、Metric、Log 数据映射、资源属性、批处理和生命周期语义稳定。
 - 修改配置或插件入口时同步 `.option`、`.plugin`、`.deploy` 和 README。

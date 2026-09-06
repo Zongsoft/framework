@@ -20,8 +20,11 @@
 在仓库根目录运行交互式消息客户端：
 
 ```shell
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -c Debug -f net10.0 -p:GeneratePackageOnBuild=false
 dotnet run --project externals/redis/samples/messaging/Zongsoft.Externals.Redis.Messaging.Samples.csproj
 ```
+
+Debug 项目引用本地构建的 Core DLL。[messaging/Program.cs](messaging/Program.cs) 自行持有具体的诊断队列；应用消费者应采用[插件与公共提供者方式](../README.zh-Hans.md)。
 
 ### 订阅与取消订阅
 
@@ -70,7 +73,7 @@ close
 
 ### 建议场景
 
-使用匹配标签依次执行：
+使用匹配标签逐条执行。发布前等待订阅完成，取消订阅前等待接收输出：
 
 ```text
 subscribe --tags:urgent alerts
@@ -80,6 +83,12 @@ unsubscribe alerts
 ```
 
 应观察到三条接收消息，并在取消前看到带有 `urgent` 标签的 `alerts` 订阅。
+
+💡 各范例进程默认使用同一个消费者组，多个客户端会竞争流条目，而不是每个客户端都收到三条消息。这个观察场景使用一个消费客户端和唯一测试主题；显示的计数不是恰好一次投递保证。
+
+### 安全与清理
+
+🚨 仅使用专用本地 Redis 数据库和虚拟消息。客户端退出后流、组和待确认条目可能仍然存在；确认消息不代表删除流。取消本次订阅后执行 `close`，再执行 `exit` 并确认。如需清理持久资源，先检查实际流键，再通过 Redis 管理工具仅删除本次测试创建的资源；不要清空共享数据库。
 
 ## 分布式缓存范例
 

@@ -77,15 +77,31 @@ Use `info` in the client to display its settings and active subscriptions, `rese
 
 ## Suggested Scenario
 
-1. Start the server and then the client.
-2. Run the following commands in the client:
+1. Start the server and two client processes. The unmodified [client/Program.cs](client/Program.cs) uses `Group=Demo` and the default filter, which excludes messages produced by the same queue instance. A single client cannot demonstrate loopback reception with these settings.
+2. In client A, subscribe and wait for the command to complete:
 
 ```text
 subscribe demo
+```
+
+3. In client B, publish:
+
+```text
 produce --topic:demo --round:3 "Hello ZeroMQ"
+```
+
+4. Observe received output in client A before inspecting and removing its subscription:
+
+```text
 info
 unsubscribe demo
 ```
 
-3. Confirm that three messages are received and that `demo` disappears from the subscription list.
-4. Run `stop`, `info`, and `start --incoming:32101 --outgoing:32102` in the server to exercise its lifecycle.
+5. Three received messages are expected with a ready matching route and no other producers; `MostOnce` is not an acknowledgment or replay guarantee. A null publication identifier means there was no matching route at publication time. See the [delivery and filter rules](../README.md) before interpreting the output.
+6. Run `stop`, `info`, and `start --incoming:32101 --outgoing:32102` in the server to exercise its lifecycle.
+
+## Safety and Cleanup
+
+🚨 The [sample server](server/Program.cs) has no message storage attached and does not establish authentication or encryption. Its listeners bind network interfaces; isolate the ports with your local environment/firewall and never expose them publicly. This sample demonstrates broadcast delivery, not durable recovery.
+
+Unsubscribe in the clients, then run `close` and `exit` (confirm the prompt). Run `stop` and `exit` in the server. This sample creates no persistent message store to erase. For plugin deployment and public queue-provider use, follow the [library guide](../README.md); concrete queue construction here belongs to a standalone diagnostic tool.

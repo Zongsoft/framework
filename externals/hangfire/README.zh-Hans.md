@@ -146,3 +146,26 @@ public sealed class ReportScheduler(IScheduler<TriggerOptions.Cron> cron,
 ## 示例
 
 最小处理器插件请参阅[示例项目](samples)。存储和 Web 相关项目分别位于 [storages](storages) 与 [web](web) 目录。
+
+## 插件化接入
+
+优先通过宿主组合本能力；包引用用于编译，而插件加载还需要部署清单和运行产物。完整流程见[插件化入门](../../Zongsoft.Plugins/README.zh-Hans.md)。
+
+清单按 `Zongsoft.Externals.Hangfire-$(site).plugin` 选择附加插件，daemon 变体贡献调度器及启动工作器。启用前部署 Redis 等存储适配并完成配置，Web 仪表盘是独立包，不等于工作器宿主。
+
+| 运行产物 | 源码依据 |
+| --- | --- |
+| `Zongsoft.Externals.Hangfire.Daemon` | [Zongsoft.Externals.Hangfire-daemon.plugin](src/Zongsoft.Externals.Hangfire-daemon.plugin) |
+| `Zongsoft.Externals.Hangfire` | [Zongsoft.Externals.Hangfire.plugin](src/Zongsoft.Externals.Hangfire.plugin) |
+| 文件复制及依赖 | [Zongsoft.Externals.Hangfire.deploy](src/Zongsoft.Externals.Hangfire.deploy) |
+
+在已有宿主的 `.deploy` 中加入以下片段（保留宿主原有 Main 等基础清单，不要用片段覆盖整份文件）：
+
+```ini
+[plugins zongsoft externals hangfire]
+nuget:Zongsoft.Externals.Hangfire
+```
+
+按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
+
+清单列出的附属产物包括：`Zongsoft.Externals.Hangfire.option`、`Zongsoft.Externals.Hangfire.plugin`、`Zongsoft.Externals.Hangfire-$(site).plugin`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。

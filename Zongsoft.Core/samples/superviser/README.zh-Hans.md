@@ -36,3 +36,23 @@
 
 1. 执行 `create key --lifecycle:1h --errors:-1 | open key` 命令，确保名为 `key` 的被监视对象被监视；
 2. 执行 `close key` 命令，确保名为 `key` 的被监视对象被剔除出监视器。
+
+## 前置条件与运行
+
+这是 .NET 10 交互样例，不需要服务器或数据库。在 framework 根目录执行：
+
+```shell
+dotnet run --project Zongsoft.Core/samples/superviser/Zongsoft.Samples.Superviser.csproj
+```
+
+[Program.cs](Program.cs) 注册终端命令，[MySupervisable.cs](MySupervisable.cs) 通过定时器产生观察值，并向观察者报告错误或完成。
+
+## 活动不等于查看
+
+按名称获取对象或遍历监视器不会报告活动。`open` 开启周期观察，`pause` 暂停，`resume` 恢复，`close` 报告完成。前面的测试正是为了区分这两类操作。
+
+由于扫描与调度，过期时间是近似值。S1–S5 的初始配置请以当前 Program.cs 选项为准，不要把原有耗时叙述视为严格截止时间。
+
+## 清理方式
+
+用 `reset` 清理样例监视对象，或用 `exit` 释放监视器。没有文件或外部资源产生。避免过大的 `error --round`，大量输出可能淹没交互终端。

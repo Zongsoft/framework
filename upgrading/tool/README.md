@@ -12,7 +12,7 @@
 
 ## Overview
 
-[**Z**ongsoft.**T**ools.**U**pgrader](https://github.com/Zongsoft/framework/tree/main/upgrading/tool/Zongsoft.Tools.Upgrader) is the automatic upgrade plugin library packager of the [_**Z**ongsoft_](https://github.com/Zongsoft/framework) open-source framework, providing three subcommands: **pack**, **checksum**, and **publish**.
+[**Z**ongsoft.**T**ools.**U**pgrader](https://github.com/Zongsoft/framework/tree/main/upgrading/tool) is the automatic upgrade plugin library packager of the [_**Z**ongsoft_](https://github.com/Zongsoft/framework) open-source framework, providing three subcommands: **pack**, **checksum**, and **publish**.
 
 ### Basic Usage
 

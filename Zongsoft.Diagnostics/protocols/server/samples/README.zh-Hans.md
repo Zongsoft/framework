@@ -29,3 +29,17 @@ dotnet build Zongsoft.Diagnostics/protocols/server/samples/Zongsoft.Diagnostics.
 4. 确认 `MetricHandler` 将每个指标计量器及其内容写入终端。
 
 如果没有输出，请检查 OTLP 端点、传输安全设置、服务端插件是否启用，以及 `/Workbench/Diagnostics/Telemetry/Listener/Metrics` 注册路径。
+
+## 背景与关键代码
+
+OTLP 是 OpenTelemetry 的传输协议。本样例消费已经转换好的框架指标集合，而不是原始 protobuf 字节。[MetricHandler.cs](MetricHandler.cs) 继承类型化 HandlerBase 并打印条目，不包含数据库存储或重试队列。
+
+宿主必须支持 HTTP/2 上的 gRPC。使用本地测试端点及不含用户标识的合成指标。代码生成依赖已检出的 proto 子模块，不能修改其内容。
+
+## 预期范围与清理
+
+打印指标只证明此次请求到达样例处理器，不证明所有指标类型/资源都被无损转换，也不证明已持久化。评估接收器前请阅读[服务端限制](../README.zh-Hans.md)。
+
+测试后先停止导出器，再停止宿主；不再需要时只从测试宿主插件目录移除本样例程序集和清单。保护重定向控制台输出，没有样例自有数据库需要清理。
+
+💡 无控制台输出也可能是没有产生匹配指标。先显式记录一个合成测量值，再排查批次。

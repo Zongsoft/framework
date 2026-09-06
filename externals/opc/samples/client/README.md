@@ -5,6 +5,20 @@
 
 -----
 
+## Purpose and Startup
+
+This .NET 10 interactive client exercises OPC UA connection, subscription, and monitoring. Start the [local sample server](../README.md) first and verify its endpoint and security settings, then run the following command from the repository root:
+
+```shell
+dotnet run --project externals/opc/samples/client/Zongsoft.Externals.Opc.Samples.Client.csproj
+```
+
+[Program.cs](Program.cs) owns the client and registers the commands below. These are sample-terminal commands, not Bash scripts. Starting the program does not itself connect a session. Explicitly run `connect`; without arguments it uses the source's default connection string, including user/certificate settings, rather than guaranteeing anonymous access. An explicit endpoint-only argument demonstrates anonymous access if the server permits it.
+
+🚨 Use only a local test server, not an industrial device. Replace the credential placeholders with a dedicated test account when required; do not paste real connection strings or `info` output into shared logs. Node IDs below illustrate syntax and may not exist on your server: discover actual identifiers with `browse` before subscribing. Authentication and certificate trust must be configured independently of node discovery.
+
+## Commands
+
 ### Connect Command `connect`
 
 Connects to the specified OPC.UA server. If no argument is specified, it connects to the local machine by default.
@@ -12,17 +26,17 @@ Connects to the specified OPC.UA server. If no argument is specified, it connect
 - Connect to a server anonymously:
 
 ```bash
-connect 'opc.tcp://192.168.2.74:49320'
+connect 'opc.tcp://127.0.0.1:4840'
 ```
 
 - Connect to a server with a specified user:
 ```bash
-connect 'server=opc.tcp://192.168.2.74:49320;username=admin;password=xxxxxx'
+connect 'server=opc.tcp://127.0.0.1:4840;username=test-user;password=REPLACE_WITH_TEST_PASSWORD'
 ```
 
 - Connect to a server with a specified certificate file:
 ```bash
-connect 'server=opc.tcp://192.168.2.74:49320;Certificate=zfs.local:./certificates/certificate.pfx;CertificateSecret=xxxxxx'
+connect 'server=opc.tcp://127.0.0.1:4840;Certificate=zfs.local:./certificates/certificate.pfx;CertificateSecret=REPLACE_WITH_TEST_CERTIFICATE_PASSWORD'
 ```
 
 ### Disconnect Command `disconnect`
@@ -102,7 +116,7 @@ subscribe -directory        filename1.txt filename2.txt filenameN.txt
 subscribe -directory:subdir filename1.txt filename2.txt filenameN.txt
 ```
 
-> - If the `directory` option is not specified, its value defaults to `subscription`.
+> - If the `directory` option is present without a value, its value defaults to `subscription` under the application's output directory. Omitting the option selects direct node arguments instead.
 > - If no file names are specified, all `.txt` files in that subdirectory are loaded by default.
 
 ### Unsubscribe Command `unsubscribe`
@@ -147,3 +161,9 @@ listen
 listen -spooling -limit:10000
 listen -spooling -limit:10000 -distinct
 ```
+
+## Expected Result and Cleanup
+
+After a successful connection and subscription to an existing variable, changing it in the local server should produce a value notification in `listen`. A successful connection alone does not prove the node exists or that the account can access it.
+
+Press `Ctrl+C` to leave listening mode, then run `unsubscribe`, `disconnect`, and `exit` (confirm the exit prompt). Stop the sample server separately. Keep certificate trust files unless you deliberately created a disposable test store; never delete a shared certificate directory as routine cleanup.

@@ -88,3 +88,25 @@ OTLP/JSON 在线路表示方面的附加要求参见 [JSON Protobuf 编码规范
 - 批准者：[OpenTelemetry Specification Sponsors](https://github.com/open-telemetry/community/blob/main/community-members.md#specifications-and-proto)
 
 角色说明参见 OpenTelemetry 社区的[成员指南](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#maintainer)。
+
+## 插件化接入
+
+优先通过宿主组合本能力；包引用用于编译，而插件加载还需要部署清单和运行产物。完整流程见[插件化入门](../Zongsoft.Plugins/README.zh-Hans.md)。
+
+插件贡献诊断配置及启动组件。通过同主文件名 `.option` 选择过滤器和导出器；加载后可能启用遥测导出，只使用受控目标。
+
+| 运行产物 | 源码依据 |
+| --- | --- |
+| `Zongsoft.Diagnostics` | [Zongsoft.Diagnostics.plugin](src/Zongsoft.Diagnostics.plugin) |
+| 文件复制及依赖 | [Zongsoft.Diagnostics.deploy](src/Zongsoft.Diagnostics.deploy) |
+
+在已有宿主的 `.deploy` 中加入以下片段（保留宿主原有 Main 等基础清单，不要用片段覆盖整份文件）：
+
+```ini
+[plugins zongsoft diagnostics]
+nuget:Zongsoft.Diagnostics
+```
+
+按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
+
+清单列出的附属产物包括：`Zongsoft.Diagnostics.option`、`Zongsoft.Diagnostics.plugin`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。

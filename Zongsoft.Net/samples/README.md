@@ -47,3 +47,17 @@ On the server, use `start [address] [port]`, `stop`, `info`, and `broadcast <mes
 2. Run `connect` and `send Hello Zongsoft.Net` in the client.
 3. Confirm that the server prints the message and the client receives `ACK: Hello Zongsoft.Net`.
 4. Run `broadcast Maintenance starts soon` in the server and confirm that the client receives it.
+
+## Framing and Key Code
+
+TCP is a byte stream, not a message queue. The headed packetizer adds a four-byte length prefix so a receiver can join split reads and separate adjacent messages. Both peers must use the same packetizer. See [the library guide](../README.md) before replacing either side with another client.
+
+Read [client/Program.cs](client/Program.cs) and [server/Program.cs](server/Program.cs) for command registration and handlers. The ACK text is sample application data, not a durable protocol acknowledgment.
+
+## Prerequisites and Cleanup
+
+Use .NET 10 and an interactive terminal. Debug builds may require the local Core output; build `Zongsoft.Core/src/Zongsoft.Core.csproj -f net10.0` first if that referenced assembly is missing.
+
+Run `disconnect` on clients and `stop` on the server before exiting the terminals. No database or message files are created. A port-in-use failure usually means a previous server process remains.
+
+🚨 Binding to `0.0.0.0` exposes all interfaces. Use loopback for this unauthenticated, unencrypted demonstration; it is not a production secure transport.

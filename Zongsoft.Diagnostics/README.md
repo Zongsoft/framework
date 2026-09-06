@@ -88,3 +88,25 @@ The upstream project does not guarantee the stability of code produced by any pa
 - Approvers: [OpenTelemetry Specification Sponsors](https://github.com/open-telemetry/community/blob/main/community-members.md#specifications-and-proto)
 
 See the OpenTelemetry community [membership guide](https://github.com/open-telemetry/community/blob/main/guides/contributor/membership.md#maintainer) for role details.
+
+## Plugin-Based Integration
+
+Compose this feature through the host; a package reference supplies compile-time APIs, while plugin loading also requires deployed manifests and runtime assets. See [the complete plugin workflow](../Zongsoft.Plugins/README.md).
+
+The plugin contributes diagnostics configuration and a startup component. Select filters/exporters in its same-stem `.option`; loading it can activate telemetry exporters, so use controlled destinations.
+
+| Runtime artifact | Source of truth |
+| --- | --- |
+| `Zongsoft.Diagnostics` | [Zongsoft.Diagnostics.plugin](src/Zongsoft.Diagnostics.plugin) |
+| File copying and dependencies | [Zongsoft.Diagnostics.deploy](src/Zongsoft.Diagnostics.deploy) |
+
+Add this fragment to an existing host `.deploy` (retain Main and the host’s other base manifests; do not replace the whole file):
+
+```ini
+[plugins zongsoft diagnostics]
+nuget:Zongsoft.Diagnostics
+```
+
+Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
+
+Additional artifacts listed by the deployment manifest include `Zongsoft.Diagnostics.option`, `Zongsoft.Diagnostics.plugin`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.

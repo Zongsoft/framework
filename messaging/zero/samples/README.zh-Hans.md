@@ -77,15 +77,31 @@ send --topic:telemetry --round:2 value-1 value-2
 
 ## 建议场景
 
-1. 启动服务端，再启动客户端；
-2. 在客户端依次执行：
+1. 启动服务端和两个客户端进程。未修改的 [client/Program.cs](client/Program.cs) 使用 `Group=Demo` 和默认过滤规则，会排除同一队列实例发布的消息；按此配置，单个客户端无法演示自身发布消息的回环接收。
+2. 在客户端 A 订阅，并等待命令完成：
 
 ```text
 subscribe demo
+```
+
+3. 在客户端 B 发布：
+
+```text
 produce --topic:demo --round:3 "Hello ZeroMQ"
+```
+
+4. 在客户端 A 观察接收输出，再查看和取消订阅：
+
+```text
 info
 unsubscribe demo
 ```
 
-3. 确认收到三条消息，并且 `demo` 已从订阅列表中消失；
-4. 在服务端依次执行 `stop`、`info` 和 `start --incoming:32101 --outgoing:32102`，观察其生命周期。
+5. 匹配路由就绪且没有其他生产者时，预期收到三条消息；`MostOnce` 不提供确认或补发保证。发布标识为空表示发布当时没有匹配路由。解释输出前先阅读[投递与过滤规则](../README.zh-Hans.md)。
+6. 在服务端依次执行 `stop`、`info` 和 `start --incoming:32101 --outgoing:32102`，观察其生命周期。
+
+## 安全与清理
+
+🚨 [示例服务端](server/Program.cs) 未挂载消息存储，也未建立身份认证或加密。监听器绑定网络接口，请通过本地环境、防火墙隔离端口，不要对公网开放。这个范例演示广播投递，不是持久化恢复。
+
+客户端取消订阅后执行 `close`、`exit`（确认退出提示）；服务端执行 `stop`、`exit`。该范例未创建需要擦除的持久消息存储。插件部署和公共队列提供者用法见[类库说明](../README.zh-Hans.md)；此处直接构造队列仅属于独立诊断工具的用法。

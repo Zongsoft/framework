@@ -96,3 +96,91 @@ The `samples` directory contains small console applications that exercise real A
 ## License
 
 Zongsoft.Core is released under the [LGPL-3.0-or-later](https://github.com/Zongsoft/framework/blob/main/LICENSE) license.
+
+## Services: Using Implementations without Referencing Them
+
+### Application and Module Containers
+
+The plugin host scans deployed assemblies and registers their services. Application code depends on Core contracts or a shared module contract assembly; it does not need to reference each provider's implementation package. Deploying another compatible provider changes composition, not the consumer's business code.
+
+- `ApplicationContext.Current.Services` is the application container, available after host initialization.
+- `Module.Current.Services` is the usual application-defined module entry point. Here `Module` is your module class, not a universal Core singleton. [ApplicationModule.Services](src/Services/ApplicationModule.cs) resolves module-specific registrations before falling back to shared application services.
+- Constructor injection and `[ServiceDependency]` let the host supply contracts without repeated lookups. Use a module container for module-owned decisions; do not retain HTTP request services in a singleton.
+
+The default attribute scanner registers service implementations as singletons. A module container is not automatic tenant isolation and is not the same as a request scope. Do not dispose a shared service obtained from a container per operation.
+
+### Choosing the Right Lookup
+
+| Need | API | Meaning |
+| --- | --- | --- |
+| One registered contract | `ResolveRequired<T>()` | Fails when the contract is unavailable |
+| All implementations | `ResolveAll<T>()` | Enumerates registered contract implementations |
+| A matching implementation | `FindRequired<T>(argument)` | Uses matcher behavior or the contract's Name matching |
+| A registered service alias | `ResolveRequired("name")` | Resolves the alias established at registration |
+| An instance supplied by a provider | `IServiceProvider<T>.GetService(name)` | Selects a configured named service, not another DI container |
+| A configured qualified name | `services.Locate<T>("name@provider")` | Selects a named provider, then its named instance |
+
+Optional forms `Resolve`, `Find` and `Locate` may return null. In applications with multiple providers, make selection explicit; do not let registration order choose the database, queue or cache unintentionally. The [lookup implementation](src/Services/ServiceProviderExtension.cs) defines the matching rules.
+
+### Example: Select an Evaluator through Configuration
+
+Assume a plugin host has deployed a language adapter and the application owns this option fragment:
+
+```xml
+<option path="/">
+	<rules evaluator="Scriban" />
+</option>
+```
+
+Place this fragment inside the `<options>` root of an option file with the same stem as a loaded plugin. The attribute produces the `Rules:Evaluator` key. In the current XML provider, the text in `<evaluator>Scriban</evaluator>` represents a collection item, not that scalar setting. See the [XML configuration parser](src/Configuration/Xml/XmlStreamConfigurationProvider.cs).
+
+Run the following in an initialized application service/command, not before the host exists:
+
+```csharp
+using Zongsoft.Expressions;
+using Zongsoft.Services;
+
+var application = ApplicationContext.Current
+	?? throw new InvalidOperationException("The application host is not initialized.");
+var name = application.Configuration["Rules:Evaluator"]
+	?? throw new InvalidOperationException("Rules:Evaluator is missing.");
+var evaluator = application.Services.FindRequired<IExpressionEvaluator>(name);
+var result = evaluator.Evaluate("x + y", new Dictionary<string, object>
+{
+	["x"] = 20,
+	["y"] = 22,
+});
+Console.WriteLine(result);
+```
+
+The consumer references the expression contract, not ScribanExpressionEvaluator. Another provider must support the application's expression language before it can be substituted. Within a known module, use its `Module.Current.Services.FindRequired<IExpressionEvaluator>(name)` instead. Do not wrap the resolved evaluator in `using`: its registered lifetime belongs to the host.
+
+### Example: A Named Cache from a Provider
+
+A provider is an extra level of indirection: one Redis provider can supply several configured caches. After the Redis plugin and a connection named `Orders` are configured:
+
+```csharp
+using Zongsoft.Caching;
+using Zongsoft.Services;
+
+var services = ApplicationContext.Current.Services;
+IDistributedCache cache = services.Locate<IDistributedCache>("Orders@Redis")
+	?? throw new InvalidOperationException("The configured cache is unavailable.");
+Console.WriteLine(cache.GetType().Name);
+```
+
+The string can be an application option rather than a source-code constant. This example only resolves the service; it does not contact a server. [Redis configuration](../externals/redis/README.md) defines how the named connection is selected, including fallback behavior. Do not assume every provider has a registered alias: check its registration before using `@provider`.
+
+### Registering and Injecting Module Contracts
+
+Provider implementations use `[Service<TContract>]` or `IServiceRegistration`; plugins can also compose objects with service expressions. An assembly's `[ApplicationModule("Orders")]` identifies module ownership for service registration. Modules and their extension nodes must still be contributed by the application's manifest.
+
+`[ServiceDependency]` can inject a contract. A non-empty ServiceName asks an `IServiceProvider<T>` for a named instance; `~` or `.` means the owning module name. Provider selects the module container, while `/` or `*` means the application container. See [ServiceDependencyAttribute](src/Services/ServiceDependencyAttribute.cs).
+
+💡 The `@...` in plugin expressions such as `{service:~@Orders}` selects a **module container**. The `@Redis` in `ServiceLocator`'s `Orders@Redis` selects a **named service provider**. They are different syntaxes and must not be interchanged.
+
+### Configuration and Lifetime Checklist
+
+Keep provider names, connection names and extension paths in application-owned configuration/assembly metadata. Check that the provider plugin is loaded, that the requested contract is registered, and that its named configuration exists. Missing services should produce an actionable startup error, not silently construct a default implementation.
+
+Use concrete construction for simple Core values or explicitly standalone adapters only where their ownership is intentional. Database connections, queues, expression runtimes and other shared implementations should normally be resolved through the configured provider. Deployment and host setup are explained in [Plugins](../Zongsoft.Plugins/README.md).
