@@ -100,7 +100,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS "UX_Upgrading_Release_Key" ON "Upgrading_Relea
 
 COMMENT ON TABLE "Upgrading_Release" IS '发布表';
 COMMENT ON COLUMN "Upgrading_Release"."ReleaseId"        IS '主键，发布编号';
-COMMENT ON COLUMN "Upgrading_Release"."ApplicationId"    IS '应用编号';
 COMMENT ON COLUMN "Upgrading_Release"."Name"             IS '应用名称';
 COMMENT ON COLUMN "Upgrading_Release"."Edition"          IS '版本名';
 COMMENT ON COLUMN "Upgrading_Release"."Version"          IS '版本号';
