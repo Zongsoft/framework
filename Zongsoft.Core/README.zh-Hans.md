@@ -63,7 +63,7 @@ Zongsoft.Core/
   src/        主类库源码。
   test/       覆盖核心行为的 xUnit 测试。
   samples/    MemoryCache、Spooler、Superviser 和 EventExchanger 控制台示例。
-  benchmark/  针对反射和数据模型辅助类型的 BenchmarkDotNet 基准测试。
+  benchmark/  针对反射、数据模型辅助类型和 Spooler 批处理的 BenchmarkDotNet 基准测试。
 ```
 
 ## 构建与测试

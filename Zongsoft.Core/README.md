@@ -63,7 +63,7 @@ Zongsoft.Core/
   src/        Main library source code.
   test/       xUnit tests for core behaviors.
   samples/    Console samples for MemoryCache, Spooler, Superviser, and EventExchanger.
-  benchmark/  BenchmarkDotNet benchmarks for reflection and data model helpers.
+  benchmark/  BenchmarkDotNet benchmarks for reflection, data model helpers, and Spooler batching.
 ```
 
 ## Build and Test
