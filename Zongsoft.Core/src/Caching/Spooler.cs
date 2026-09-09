@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -48,7 +48,7 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 	#endregion
 
 	#region 私有变量
-	private int _flushing;
+	private SemaphoreSlim _flushing;
 	private Common.Timer _timer;
 	private Channel<T> _channel;
 	private Func<IEnumerable<T>, CancellationToken, ValueTask> _flusher;
@@ -100,41 +100,70 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 		while(this.GetChannel(out var channel) && channel.Reader.TryRead(out _));
 	}
 
-	public async ValueTask PutAsync(T value, CancellationToken cancellation = default)
+	public ValueTask PutAsync(T value, CancellationToken cancellation = default)
 	{
-		if(this.GetChannel(out var channel) && channel.Writer.TryWrite(value))
-			return;
+		var channel = _channel;
+		if(channel == null)
+			return ValueTask.FromException(new ObjectDisposedException(nameof(Spooler<T>)));
 
-		await this.FlushAsync(cancellation);
-		await channel.Writer.WaitToWriteAsync(cancellation);
-		await channel.Writer.WriteAsync(value, cancellation);
+		return channel.Writer.TryWrite(value) ? ValueTask.CompletedTask : this.PutCoreAsync(value, cancellation);
 	}
 
-	public async ValueTask FlushAsync(CancellationToken cancellation = default)
+	[System.Runtime.CompilerServices.AsyncMethodBuilder(typeof(System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder))]
+	private async ValueTask PutCoreAsync(T value, CancellationToken cancellation)
 	{
-		if(cancellation.IsCancellationRequested)
-			return;
-
-		while(!this.IsEmpty)
+		while(true)
 		{
 			cancellation.ThrowIfCancellationRequested();
+			var consumed = await this.FlushCoreAsync(cancellation, true);
+			cancellation.ThrowIfCancellationRequested();
 
-			if(Interlocked.CompareExchange(ref _flushing, 1, 0) == 0)
-			{
-				try
-				{
-					if(!this.IsEmpty)
-						await this.OnFlushAsync(new Iterable(this.GetChannel().Reader, _limit), cancellation);
-				}
-				finally
-				{
-					Volatile.Write(ref _flushing, 0);
-				}
-
+			if(this.GetChannel(out var channel) && channel.Writer.TryWrite(value))
 				return;
-			}
 
-			await Task.Yield();
+			// A callback which declines to consume must not turn backpressure into polling.
+			if(!consumed)
+				await channel.Writer.WaitToWriteAsync(cancellation);
+		}
+	}
+
+	public ValueTask FlushAsync(CancellationToken cancellation = default)
+	{
+		var pending = this.FlushCoreAsync(cancellation);
+		if(!pending.IsCompletedSuccessfully)
+			return new ValueTask(pending.AsTask());
+
+		pending.GetAwaiter().GetResult();
+		return ValueTask.CompletedTask;
+	}
+
+	[System.Runtime.CompilerServices.AsyncMethodBuilder(typeof(System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder<>))]
+	private async ValueTask<bool> FlushCoreAsync(CancellationToken cancellation, bool full = false)
+	{
+		if(cancellation.IsCancellationRequested || this.IsEmpty)
+			return true;
+
+		var flushing = LazyInitializer.EnsureInitialized(ref _flushing, static () => new SemaphoreSlim(1, 1));
+		await flushing.WaitAsync(cancellation);
+
+		try
+		{
+			cancellation.ThrowIfCancellationRequested();
+			var reader = this.GetChannel().Reader;
+			var count = reader.Count;
+
+			// A waiting writer may now have room; do not flush an unnecessary partial batch.
+			if(count == 0 || (full && count < _limit))
+				return true;
+
+			var batch = new Iterable(reader, _limit);
+			await this.OnFlushAsync(batch, cancellation);
+			return batch.Consumed;
+		}
+		finally
+		{
+			// Dispose can run while callbacks or waiters still need this managed gate.
+			flushing.Release();
 		}
 	}
 	#endregion
@@ -181,28 +210,53 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 
 	#region 枚举遍历
 	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-	public IEnumerator<T> GetEnumerator() => new Iterable.Iterator(_channel?.Reader, _limit);
+	public IEnumerator<T> GetEnumerator() => new Iterator(_channel?.Reader, _limit);
 	#endregion
 
 	#region 嵌套子类
-	private sealed class Iterable(ChannelReader<T> reader, int limit) : IEnumerable<T>
+	// The first enumeration reuses the batch itself, avoiding a second allocation.
+	private sealed class Iterable(ChannelReader<T> reader, int limit) : Iterator(reader, limit), IEnumerable<T>
 	{
+		private readonly ChannelReader<T> _reader = reader;
+		private readonly int _limit = limit;
+		private int _enumerated;
+		private List<Iterator> _iterators;
+
+		public bool Consumed => this.HasConsumed || (_iterators?.Exists(iterator => iterator.HasConsumed) ?? false);
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-		public IEnumerator<T> GetEnumerator() => new Iterator(reader, limit);
-
-		internal sealed class Iterator(ChannelReader<T> reader, int limit) : IEnumerator<T>
+		public IEnumerator<T> GetEnumerator()
 		{
-			private T _value;
-			private int _count = 0;
-			private readonly int _limit = limit;
-			private ChannelReader<T> _reader = reader;
+			if(Interlocked.Exchange(ref _enumerated, 1) == 0)
+				return this;
 
-			public T Current => _value;
-			object IEnumerator.Current => _value;
+			var iterator = new Iterator(_reader, _limit);
+			lock(this)
+				(_iterators ??= []).Add(iterator);
 
-			public void Dispose() => _reader = null;
-			public bool MoveNext() => _reader != null && (_limit <= 0 || _count++ < _limit) && _reader.TryRead(out _value);
-			public void Reset() { }
+			return iterator;
+		}
+	}
+
+	private class Iterator(ChannelReader<T> reader, int limit) : IEnumerator<T>
+	{
+		private T _value;
+		private int _count;
+		private readonly int _limit = limit;
+		private ChannelReader<T> _reader = reader;
+
+		public bool HasConsumed => _count != 0;
+		public T Current => _value;
+		object IEnumerator.Current => _value;
+
+		public void Reset() { }
+		public void Dispose() => _reader = null;
+		public bool MoveNext()
+		{
+			if(_reader == null || (_limit > 0 && _count >= _limit) || !_reader.TryRead(out _value))
+				return false;
+
+			_count = _limit > 0 ? _count + 1 : 1;
+			return true;
 		}
 	}
 	#endregion
