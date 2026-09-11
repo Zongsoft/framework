@@ -318,19 +318,19 @@ public class ApplicationIdentifierTest : IDisposable
 		var missing = System.IO.Path.Combine(_directory, "missing");
 		var path = System.IO.Path.Combine(_directory, ".version");
 
-		Assert.Equal(default, ApplicationIdentifier.Load(_directory));
-		Assert.Null(ApplicationIdentifier.Save(missing, "App", null, new Version(1, 0)));
+		Assert.Equal(default, ApplicationIdentifier.Load(path: _directory));
+		Assert.Null(ApplicationIdentifier.Save(path: missing, "App", null, new Version(1, 0)));
 		Assert.False(Directory.Exists(missing));
-		Assert.Null(ApplicationIdentifier.Save(_directory, null, null, null));
+		Assert.Null(ApplicationIdentifier.Save(path: _directory, null, null, null));
 		Assert.False(File.Exists(path));
 
-		Assert.Equal(path, ApplicationIdentifier.Save(_directory, "App", "Community", new Version(1, 2, 3)));
+		Assert.Equal(path, ApplicationIdentifier.Save(path: _directory, "App", "Community", new Version(1, 2, 3)));
 		Assert.Equal(Encoding.UTF8.GetBytes("App-Community@1.2.3"), File.ReadAllBytes(path));
-		var identifier = ApplicationIdentifier.Load(_directory);
+		var identifier = ApplicationIdentifier.Load(path: _directory);
 		Assert.Equal("App", identifier.Name);
 		Assert.Equal("Community", identifier.Edition);
 		Assert.Equal(new Version(1, 2, 3), identifier.Version);
-		Assert.Null(ApplicationIdentifier.Save(_directory, null, null, null));
+		Assert.Null(ApplicationIdentifier.Save(path: _directory, null, null, null));
 		Assert.Equal("App-Community@1.2.3", File.ReadAllText(path));
 		Assert.Equal(default, ApplicationIdentifier.Load((IApplicationModule)null));
 	}
@@ -344,7 +344,68 @@ public class ApplicationIdentifierTest : IDisposable
 		var bytes = Encoding.UTF8.GetBytes("App@1.0\n" + new string(' ', size - 8));
 		File.WriteAllBytes(System.IO.Path.Combine(_directory, ".version"), bytes);
 
-		var identifier = ApplicationIdentifier.Load(_directory);
+		var identifier = ApplicationIdentifier.Load(path: _directory);
+
+		Assert.Equal(empty, identifier.IsEmpty);
+		if(empty)
+			Assert.Equal(default, identifier);
+		else
+		{
+			Assert.Equal("App", identifier.Name);
+			Assert.Equal(new Version(1, 0), identifier.Version);
+		}
+	}
+
+	[Fact]
+	public void PathOperations_UseExistingFileDirectly()
+	{
+		Directory.CreateDirectory(_directory);
+		var path = System.IO.Path.Combine(_directory, "deployment.identity");
+		var sibling = System.IO.Path.Combine(_directory, ".version");
+		File.WriteAllText(path, "Original-Community@1.0", new UTF8Encoding(false));
+		File.WriteAllText(sibling, "Other@9.0", new UTF8Encoding(false));
+
+		var identifier = ApplicationIdentifier.Load(path: path);
+		Assert.Equal("Original", identifier.Name);
+		Assert.Equal("Community", identifier.Edition);
+		Assert.Equal(new Version(1, 0), identifier.Version);
+
+		Assert.Equal(path, ApplicationIdentifier.Save(path: path, name: "Replacement", edition: "Enterprise", version: new Version(2, 3, 4)));
+		Assert.Equal(Encoding.UTF8.GetBytes("Replacement-Enterprise@2.3.4"), File.ReadAllBytes(path));
+		Assert.Equal("Other@9.0", File.ReadAllText(sibling));
+		identifier = ApplicationIdentifier.Load(path: path);
+		Assert.Equal("Replacement", identifier.Name);
+		Assert.Equal("Enterprise", identifier.Edition);
+		Assert.Equal(new Version(2, 3, 4), identifier.Version);
+	}
+
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public void PathOperations_MissingPathsAreNotCreated(bool missingParent)
+	{
+		Directory.CreateDirectory(_directory);
+		var path = missingParent ?
+			System.IO.Path.Combine(_directory, "missing", "deployment.identity") :
+			System.IO.Path.Combine(_directory, "deployment.identity");
+
+		Assert.Equal(default, ApplicationIdentifier.Load(path: path));
+		Assert.Null(ApplicationIdentifier.Save(path: path, name: "App", edition: null, version: new Version(1, 0)));
+		Assert.False(File.Exists(path));
+		Assert.False(Directory.Exists(path));
+		Assert.Empty(Directory.EnumerateFileSystemEntries(_directory));
+	}
+
+	[Theory]
+	[InlineData(16384, false)]
+	[InlineData(16385, true)]
+	public void Load_FilePathKeepsFileSizeLimit(int size, bool empty)
+	{
+		Directory.CreateDirectory(_directory);
+		var path = System.IO.Path.Combine(_directory, "deployment.identity");
+		File.WriteAllBytes(path, Encoding.UTF8.GetBytes("App@1.0\n" + new string(' ', size - 8)));
+
+		var identifier = ApplicationIdentifier.Load(path: path);
 
 		Assert.Equal(empty, identifier.IsEmpty);
 		if(empty)

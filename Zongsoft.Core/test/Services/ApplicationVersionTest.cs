@@ -120,7 +120,7 @@ public class ApplicationVersionTest : IDisposable
 		Assert.Equal(new Version(1, 2, 3), application.Editions["COMMUNITY"].Version);
 		Assert.Equal(new Version(2, 3, 4), application.Editions[1].Version);
 
-		application.Save(GetPath());
+		application.Save(_directory);
 		Assert.Equal("MyApplication\r\n\r\n[Community]\r\n1.2.3\r\n\r\n[Professional]\r\n2.3.4\r\n", File.ReadAllText(GetPath()));
 	}
 
@@ -189,20 +189,20 @@ public class ApplicationVersionTest : IDisposable
 	{
 		var application = new ApplicationVersion("App", new Version(1, 0));
 		application.Version = new Version(1, 1);
-		application.Save(GetPath());
+		application.Save(_directory);
 		Assert.Equal("App@1.1\r\n", File.ReadAllText(GetPath()));
 
 		application.Version = null;
 		application.Editions.Add(new("Community", new Version(2, 0)));
 		application.Version = null;
-		application.Save(GetPath());
+		application.Save(_directory);
 		Assert.Equal("App\r\n\r\n[Community]\r\n2.0\r\n", File.ReadAllText(GetPath()));
 
 		application.Editions.Clear();
 		Assert.Empty(application.Editions);
 		Assert.Throws<KeyNotFoundException>(() => application.Editions["Community"]);
 		application.Version = new Version(3, 0);
-		application.Save(GetPath());
+		application.Save(_directory);
 		Assert.Equal("App@3.0\r\n", File.ReadAllText(GetPath()));
 	}
 
@@ -305,7 +305,7 @@ public class ApplicationVersionTest : IDisposable
 	[InlineData("2147483647.2147483647.2147483647.2147483647")]
 	public void Save_SingleVersion(string version)
 	{
-		new ApplicationVersion("示例应用", Version.Parse(version)).Save(GetPath());
+		new ApplicationVersion("示例应用", Version.Parse(version)).Save(_directory);
 
 		Assert.Equal(Encoding.UTF8.GetBytes("示例应用@" + version + "\r\n"), File.ReadAllBytes(GetPath()));
 		var loaded = ApplicationVersion.Load(GetPath());
@@ -321,7 +321,7 @@ public class ApplicationVersionTest : IDisposable
 		application.Editions.Add(new("Professional", new Version(1, 1, 0)));
 		application.Editions.Add(new("社区版", new Version(1, 0, 1)));
 		application.Editions.Add(new("Enterprise", new Version(1, 1, 2)));
-		application.Save(GetPath());
+		application.Save(_directory);
 
 		Assert.Equal(Encoding.UTF8.GetBytes("示例应用\r\n\r\n[Professional]\r\n1.1.0\r\n\r\n[社区版]\r\n1.0.1\r\n\r\n[Enterprise]\r\n1.1.2\r\n"), File.ReadAllBytes(GetPath()));
 		var loaded = ApplicationVersion.Load(GetPath());
@@ -335,7 +335,7 @@ public class ApplicationVersionTest : IDisposable
 	public void Save_TruncatesPreviousContent()
 	{
 		Write(new string('x', 4096));
-		new ApplicationVersion("App", new Version(1, 0)).Save(GetPath());
+		new ApplicationVersion("App", new Version(1, 0)).Save(_directory);
 
 		Assert.Equal(Encoding.UTF8.GetBytes("App@1.0\r\n"), File.ReadAllBytes(GetPath()));
 		Assert.Equal(new Version(1, 0), ApplicationVersion.Load(GetPath()).Version);
@@ -353,23 +353,37 @@ public class ApplicationVersionTest : IDisposable
 		Assert.False(File.Exists(GetPath("new.version")));
 	}
 
-	[Fact]
-	public void FileOperations_PropagateMissingPaths()
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public void FileOperations_MissingPathsAreNotCreated(bool missingParent)
 	{
-		var path = System.IO.Path.Combine(_directory, "missing", ".version");
-		Assert.Throws<FileNotFoundException>(() => ApplicationVersion.Load(GetPath()));
-		Assert.Throws<DirectoryNotFoundException>(() => ApplicationVersion.Load(path));
-		Assert.Throws<DirectoryNotFoundException>(() => new ApplicationVersion("App", new Version(1, 0)).Save(path));
-		Assert.False(Directory.Exists(System.IO.Path.GetDirectoryName(path)));
+		var path = missingParent ? System.IO.Path.Combine(_directory, "missing", ".version") : GetPath();
+
+		Assert.Null(ApplicationVersion.Load(path: path));
+		new ApplicationVersion("App", new Version(1, 0)).Save(path: path);
+		Assert.False(File.Exists(path));
+		Assert.Empty(Directory.EnumerateFileSystemEntries(_directory));
+		Assert.Throws<InvalidOperationException>(() => new ApplicationVersion("App").Save(path: path));
+		Assert.Empty(Directory.EnumerateFileSystemEntries(_directory));
 	}
 
 	[Fact]
-	public void FileOperations_RejectDirectoryPaths()
+	public void FileOperations_DirectoryUsesVersionFile()
 	{
-		Assert.Throws<UnauthorizedAccessException>(() => ApplicationVersion.Load(_directory));
-		Assert.Throws<UnauthorizedAccessException>(() => new ApplicationVersion("App", new Version(1, 0)).Save(_directory));
-		Assert.True(Directory.Exists(_directory));
+		Assert.Null(ApplicationVersion.Load(path: _directory));
+		Assert.Throws<InvalidOperationException>(() => new ApplicationVersion("App").Save(path: _directory));
 		Assert.Empty(Directory.EnumerateFileSystemEntries(_directory));
+
+		new ApplicationVersion("App", new Version(1, 2, 3)).Save(path: _directory);
+
+		Assert.Equal(Encoding.UTF8.GetBytes("App@1.2.3\r\n"), File.ReadAllBytes(GetPath()));
+		var loaded = ApplicationVersion.Load(path: _directory);
+		Assert.Equal("App", loaded.Name);
+		Assert.Equal(new Version(1, 2, 3), loaded.Version);
+		Assert.Empty(loaded.Editions);
+		Assert.Throws<InvalidOperationException>(() => new ApplicationVersion("App").Save(path: _directory));
+		Assert.Equal("App@1.2.3\r\n", File.ReadAllText(GetPath()));
 	}
 
 	[Theory]
@@ -378,13 +392,13 @@ public class ApplicationVersionTest : IDisposable
 	public void Names_PreserveUnreservedPunctuation(string name, string editionName)
 	{
 		var application = new ApplicationVersion(name, new Version(1, 0));
-		application.Save(GetPath());
+		application.Save(_directory);
 		Assert.Equal(name + "@1.0\r\n", File.ReadAllText(GetPath()));
 		Assert.Equal(name, ApplicationVersion.Load(GetPath()).Name);
 
 		application.Version = null;
 		application.Editions.Add(new(editionName, new Version(2, 0)));
-		application.Save(GetPath());
+		application.Save(_directory);
 		Assert.Equal(name + "\r\n\r\n[" + editionName + "]\r\n2.0\r\n", File.ReadAllText(GetPath()));
 		var loaded = ApplicationVersion.Load(GetPath());
 		Assert.Equal(name, loaded.Name);
@@ -395,12 +409,25 @@ public class ApplicationVersionTest : IDisposable
 	[Theory]
 	[InlineData(null)]
 	[InlineData("")]
-	[InlineData(" \t")]
-	public void FileOperations_RejectEmptyPaths(string path)
+	public void FileOperations_EmptyPathUsesBaseDirectoryWithoutWriting(string path)
 	{
-		Assert.ThrowsAny<ArgumentException>(() => ApplicationVersion.Load(path));
-		Assert.ThrowsAny<ArgumentException>(() => new ApplicationVersion("App", new Version(1, 0)).Save(path));
-		Assert.Empty(Directory.EnumerateFileSystemEntries(_directory));
+		ApplicationVersion expected = null;
+		var expectedError = Record.Exception(() => expected = ApplicationVersion.Load(path: AppContext.BaseDirectory));
+		ApplicationVersion actual = null;
+		var actualError = Record.Exception(() => actual = ApplicationVersion.Load(path: path));
+
+		Assert.Equal(expectedError?.GetType(), actualError?.GetType());
+		if(expectedError == null && expected != null)
+		{
+			Assert.NotNull(actual);
+			Assert.Equal(expected.Name, actual.Name);
+			Assert.Equal(expected.Version, actual.Version);
+			Assert.Equal(expected.Editions.ToArray(), actual.Editions.ToArray());
+		}
+		else
+			Assert.Null(actual);
+
+		Assert.Throws<InvalidOperationException>(() => new ApplicationVersion("App").Save(path: path));
 	}
 
 	[Fact]
@@ -411,7 +438,7 @@ public class ApplicationVersionTest : IDisposable
 		Assert.Equal("App", application.Name);
 		Assert.Equal(new Version(1, 2, 3), application.Version);
 		Assert.Empty(application.Editions);
-		application.Save(GetPath());
+		application.Save(_directory);
 		Assert.Equal("App@1.2.3\r\n", File.ReadAllText(GetPath()));
 	}
 
@@ -419,7 +446,7 @@ public class ApplicationVersionTest : IDisposable
 	public void FileOperations_RoundTripBeyondSixteenKilobytes()
 	{
 		var name = new string('A', 32768) + "-应用";
-		new ApplicationVersion(name, new Version(1, 2, 3)).Save(GetPath());
+		new ApplicationVersion(name, new Version(1, 2, 3)).Save(_directory);
 
 		Assert.Equal(Encoding.UTF8.GetBytes(name + "@1.2.3\r\n"), File.ReadAllBytes(GetPath()));
 		var loaded = ApplicationVersion.Load(GetPath());
@@ -698,6 +725,43 @@ public class ApplicationVersionTest : IDisposable
 		Assert.Equal("custom newline", writer.NewLine);
 		writer.Write('!');
 		Assert.Equal("original!", writer.ToString());
+	}
+
+	[Fact]
+	public void FileOperations_ExistingFileUsesExactPathAndTruncates()
+	{
+		var path = GetPath("deployment.identity");
+		File.WriteAllText(path, "Original\r\n\r\n[Community]\r\n1.0.1\r\n\r\n[Enterprise]\r\n2.0.3\r\n", new UTF8Encoding(false));
+		Write("Sibling@9.0\r\n");
+
+		var application = ApplicationVersion.Load(path: path);
+		Assert.Equal("Original", application.Name);
+		Assert.Null(application.Version);
+		Assert.Equal(new[] { "Community", "Enterprise" }, application.Editions.Select(edition => edition.Name));
+		Assert.Equal(new Version(1, 0, 1), application.Editions[0].Version);
+		Assert.Equal(new Version(2, 0, 3), application.Editions[1].Version);
+
+		new ApplicationVersion("App", new Version(1, 0)).Save(path: path);
+
+		Assert.Equal(Encoding.UTF8.GetBytes("App@1.0\r\n"), File.ReadAllBytes(path));
+		Assert.Equal("Sibling@9.0\r\n", File.ReadAllText(GetPath()));
+		var loaded = ApplicationVersion.Load(path: path);
+		Assert.Equal("App", loaded.Name);
+		Assert.Equal(new Version(1, 0), loaded.Version);
+		Assert.Empty(loaded.Editions);
+	}
+
+	[Fact]
+	public void FileOperations_PropagateIoFailures()
+	{
+		var path = Write("App@1.0\r\n");
+		using(var locked = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+		{
+			Assert.Throws<IOException>(() => ApplicationVersion.Load(path: path));
+			Assert.Throws<IOException>(() => new ApplicationVersion("App", new Version(2, 0)).Save(path: path));
+		}
+
+		Assert.Equal("App@1.0\r\n", File.ReadAllText(path));
 	}
 
 	private sealed class ObservedStream : Stream

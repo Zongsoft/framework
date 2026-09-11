@@ -68,6 +68,10 @@ namespace Zongsoft.Services;
 /// </example>
 public class ApplicationVersion
 {
+	#region 常量定义
+	private const string FILE_NAME = ".version";
+	#endregion
+
 	#region 成员字段
 	private Version _version;
 	#endregion
@@ -110,16 +114,22 @@ public class ApplicationVersion
 	#endregion
 
 	#region 公共方法
-	/// <summary>从指定文件加载应用版本信息。</summary>
-	/// <param name="path">版本文件的绝对或相对路径，例如 <c>.version</c>；不接受应用目录，也不自动追加文件名。</param>
-	/// <returns>从文件中读取的应用版本信息。</returns>
-	/// <exception cref="ArgumentNullException"><paramref name="path"/> 为 <see langword="null"/>。</exception>
-	/// <exception cref="ArgumentException"><paramref name="path"/> 为空或仅包含空白。</exception>
+	/// <summary>从指定目录中的版本文件或指定文件加载应用版本信息。</summary>
+	/// <param name="path">指定的目录或文件路径；为空(<c>null</c>)或空串时默认为当前应用的根目录。路径为现有目录时读取其中的 <c>.version</c> 文件，否则读取指定的现有文件。</param>
+	/// <returns>从文件中读取的应用版本信息；文件不存在时返回 <see langword="null"/>。</returns>
 	/// <exception cref="FormatException">文件为空或内容不符合应用版本格式，异常信息包含行号。</exception>
-	/// <remarks>文件格式及示例见 <see cref="ApplicationVersion"/>。缺少版本号、重复版本名或混用两种格式均视为格式错误；文件不存在、权限不足等文件系统异常直接向调用方传播。</remarks>
+	/// <remarks>文件格式及示例见 <see cref="ApplicationVersion"/>。缺少版本号、重复版本名或混用两种格式均视为格式错误；打开和读取文件时的文件系统异常直接向调用方传播。</remarks>
 	public static ApplicationVersion Load(string path)
 	{
-		ArgumentException.ThrowIfNullOrWhiteSpace(path);
+		if(string.IsNullOrEmpty(path))
+			path = AppContext.BaseDirectory;
+
+		if(Directory.Exists(path))
+			path = Path.Combine(path, FILE_NAME);
+
+		if(!File.Exists(path))
+			return null;
+
 		using var reader = File.OpenText(path);
 		return Load(reader);
 	}
@@ -150,19 +160,24 @@ public class ApplicationVersion
 		return Parse(reader.ReadToEnd().AsSpan());
 	}
 
-	/// <summary>将应用版本信息保存到指定文件，覆盖原有内容。</summary>
-	/// <param name="path">版本文件的绝对或相对路径，例如 <c>.version</c>；父目录必须存在，不自动追加文件名。</param>
-	/// <exception cref="ArgumentNullException"><paramref name="path"/> 为 <see langword="null"/>。</exception>
-	/// <exception cref="ArgumentException"><paramref name="path"/> 为空或仅包含空白。</exception>
+	/// <summary>将应用版本信息保存到指定目录中的版本文件或指定文件，覆盖原有内容。</summary>
+	/// <param name="path">指定的目录或文件路径；为空(<c>null</c>)或空串时默认为当前应用的根目录。路径为现有目录时保存到其中的 <c>.version</c> 文件，否则保存到指定的现有文件。</param>
 	/// <exception cref="InvalidOperationException">未设置顶层版本号且版本集为空。</exception>
 	/// <remarks>
 	/// <para>设置了 <see cref="Version"/> 时保存为 <c>name@version</c>；否则按 <see cref="Editions"/> 的顺序输出应用名称及版本段落，格式示例见 <see cref="ApplicationVersion"/>。</para>
-	/// <para>打开文件前检查版本信息是否完整；通过检查后创建或截断目标文件，不自动创建父目录。输出 UTF-8 无 BOM 文本和 CRLF 换行，不保留原文件的注释和空白布局；文件系统异常直接向调用方传播。</para>
+	/// <para>首先检查版本信息是否完整；指定路径既不是现有目录也不是现有文件时不执行写入。现有目录中的 <c>.version</c> 文件可自动创建，现有目标文件会被截断，不自动创建父目录。输出 UTF-8 无 BOM 文本和 CRLF 换行，不保留原文件的注释和空白布局；打开和写入文件时的文件系统异常直接向调用方传播。</para>
 	/// </remarks>
 	public void Save(string path)
 	{
-		ArgumentException.ThrowIfNullOrWhiteSpace(path);
 		this.ValidateVersion();
+
+		if(string.IsNullOrEmpty(path))
+			path = AppContext.BaseDirectory;
+
+		if(Directory.Exists(path))
+			path = Path.Combine(path, FILE_NAME);
+		else if(!File.Exists(path))
+			return;
 
 		using var writer = new StreamWriter(path, false, new UTF8Encoding(false));
 		this.Save(writer);

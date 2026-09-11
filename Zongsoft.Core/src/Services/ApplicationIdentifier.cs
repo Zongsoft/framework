@@ -135,17 +135,20 @@ public readonly struct ApplicationIdentifier
 		}
 	}
 
-	/// <summary>从指定的目录中的版本文件中加载应用标识信息。</summary>
-	/// <param name="directory">指定的目录路径。</param>
+	/// <summary>从指定目录中的版本文件或指定文件中加载应用标识信息。</summary>
+	/// <param name="path">指定的目录或文件路径；为空(<c>null</c>)或空串时默认为当前应用的根目录。路径为现有目录时读取其中的 <c>.version</c> 文件，否则读取指定的现有文件。</param>
 	/// <returns>返回加载完成的应用标识；文件不存在、超过 16 KiB 或没有非空行时返回空标识。</returns>
-	/// <remarks>读取 <c>.version</c> 文件中的第一个非空行，并按 <see cref="Parse(ReadOnlySpan{char})"/> 的规则解析。</remarks>
-	public static ApplicationIdentifier Load(string directory = null)
+	/// <remarks>读取文件中的第一个非空行，并按 <see cref="Parse(ReadOnlySpan{char})"/> 的规则解析。</remarks>
+	public static ApplicationIdentifier Load(string path = null)
 	{
-		if(string.IsNullOrEmpty(directory))
-			directory = AppContext.BaseDirectory;
+		if(string.IsNullOrEmpty(path))
+			path = AppContext.BaseDirectory;
+
+		if(Directory.Exists(path))
+			path = Path.Combine(path, FILE_NAME);
 
 		//定义版本文件信息
-		var info = new FileInfo(Path.Combine(directory, FILE_NAME));
+		var info = new FileInfo(path);
 
 		//如果文件不存在或者文件大小超过指定大小，则认为该文件无效
 		if(!info.Exists || info.Length > 1024 * 16)
@@ -217,24 +220,26 @@ public readonly struct ApplicationIdentifier
 	}
 
 	/// <summary>将指定的应用标识信息保存到文件中。</summary>
-	/// <param name="directory">指定要保存的目标目录，如果为空(<c>null</c>)则默认为当前应用的根目录。</param>
+	/// <param name="path">指定的目录或文件路径；为空(<c>null</c>)或空串时默认为当前应用的根目录。路径为现有目录时保存到其中的 <c>.version</c> 文件，否则保存到指定的现有文件。</param>
 	/// <param name="name">指定要保存的应用名称。</param>
 	/// <param name="edition">指定要保存的应用版本名。</param>
 	/// <param name="version">指定要保存的应用版本号。</param>
-	/// <returns>如果保存成功则返回保存文件的完整路径，否则返回空(<c>null</c>)。</returns>
-	public static string Save(string directory, string name, string edition, Version version)
+	/// <returns>如果保存成功则返回保存文件的完整路径；标识为空或指定路径既不是现有目录也不是现有文件时返回空(<c>null</c>)。</returns>
+	public static string Save(string path, string name, string edition, Version version)
 	{
 		var identifier = new ApplicationIdentifier(name, edition, version);
 		if(identifier.IsEmpty)
 			return null;
 
-		if(string.IsNullOrEmpty(directory))
-			directory = AppContext.BaseDirectory;
+		if(string.IsNullOrEmpty(path))
+			path = AppContext.BaseDirectory;
 
-		if(!Directory.Exists(directory))
+		if(Directory.Exists(path))
+			path = Path.Combine(path, FILE_NAME);
+		else if(!File.Exists(path))
 			return null;
 
-		using var stream = File.OpenWrite(Path.Combine(directory, FILE_NAME));
+		using var stream = File.OpenWrite(path);
 		identifier.Save(stream);
 		return stream.Name;
 	}
