@@ -29,6 +29,7 @@
 
 using System;
 using System.IO;
+using System.Text;
 
 namespace Zongsoft.Services;
 
@@ -136,7 +137,8 @@ public readonly struct ApplicationIdentifier
 
 	/// <summary>从指定的目录中的版本文件中加载应用标识信息。</summary>
 	/// <param name="directory">指定的目录路径。</param>
-	/// <returns>返回加载完成的应用标识。</returns>
+	/// <returns>返回加载完成的应用标识；文件不存在、超过 16 KiB 或没有非空行时返回空标识。</returns>
+	/// <remarks>读取 <c>.version</c> 文件中的第一个非空行，并按 <see cref="Parse(ReadOnlySpan{char})"/> 的规则解析。</remarks>
 	public static ApplicationIdentifier Load(string directory = null)
 	{
 		if(string.IsNullOrEmpty(directory))
@@ -149,15 +151,44 @@ public readonly struct ApplicationIdentifier
 		if(!info.Exists || info.Length > 1024 * 16)
 			return default;
 
-		string text;
 		using var reader = info.OpenText();
+		return Load(reader);
+	}
+
+	/// <summary>从指定流加载应用标识信息。</summary>
+	/// <param name="stream">可读取的流，从当前位置开始读取，不要求支持定位。</param>
+	/// <returns>第一个非空行对应的应用标识；没有非空行时返回空标识。</returns>
+	/// <exception cref="ArgumentNullException"><paramref name="stream"/> 为 <see langword="null"/>。</exception>
+	/// <exception cref="ArgumentException"><paramref name="stream"/> 不支持读取。</exception>
+	/// <exception cref="FormatException">第一个非空行不是有效的应用标识。</exception>
+	/// <remarks>
+	///		<para>默认按 UTF-8 解码，并通过 BOM 检测编码；此重载不检查流的大小。无论成功或失败均不关闭传入的流，由调用方负责释放；读取异常直接向调用方传播。</para>
+	///		<para>内部读取器可能预读后续内容，使底层流位置超过被解析的行。需要连续读取多行时，应复用读取器并调用 <see cref="Load(TextReader)"/>。</para>
+	/// </remarks>
+	public static ApplicationIdentifier Load(Stream stream)
+	{
+		ArgumentNullException.ThrowIfNull(stream);
+		using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true);
+		return Load(reader);
+	}
+
+	/// <summary>从指定文本读取器加载应用标识信息。</summary>
+	/// <param name="reader">文本读取器，从当前位置开始读取。</param>
+	/// <returns>第一个非空行对应的应用标识；没有非空行时返回空标识。</returns>
+	/// <exception cref="ArgumentNullException"><paramref name="reader"/> 为 <see langword="null"/>。</exception>
+	/// <exception cref="FormatException">第一个非空行不是有效的应用标识。</exception>
+	/// <remarks>跳过空白行，仅解析第一个非空行并移除其两端的空白，其余行留给调用方读取。编码由读取器决定，无论成功或失败均不关闭读取器；读取异常直接向调用方传播。</remarks>
+	public static ApplicationIdentifier Load(TextReader reader)
+	{
+		ArgumentNullException.ThrowIfNull(reader);
+		string text;
 
 		while((text = reader.ReadLine()) != null)
 		{
 			if(string.IsNullOrWhiteSpace(text))
 				continue;
 
-			return Parse(text.Trim());
+			return Parse(text.AsSpan().Trim());
 		}
 
 		return default;
@@ -193,8 +224,8 @@ public readonly struct ApplicationIdentifier
 	/// <returns>如果保存成功则返回保存文件的完整路径，否则返回空(<c>null</c>)。</returns>
 	public static string Save(string directory, string name, string edition, Version version)
 	{
-		var identifier = ToString(name, edition, version);
-		if(string.IsNullOrEmpty(identifier))
+		var identifier = new ApplicationIdentifier(name, edition, version);
+		if(identifier.IsEmpty)
 			return null;
 
 		if(string.IsNullOrEmpty(directory))
@@ -203,9 +234,38 @@ public readonly struct ApplicationIdentifier
 		if(!Directory.Exists(directory))
 			return null;
 
-		using var writer = File.OpenWrite(Path.Combine(directory, FILE_NAME));
-		writer.Write(System.Text.Encoding.UTF8.GetBytes(identifier));
-		return writer.Name;
+		using var stream = File.OpenWrite(Path.Combine(directory, FILE_NAME));
+		identifier.Save(stream);
+		return stream.Name;
+	}
+
+	/// <summary>将当前应用标识信息保存到指定流。</summary>
+	/// <param name="stream">可写入的流，从当前位置写入，不重置位置或截断内容。</param>
+	/// <exception cref="ArgumentNullException"><paramref name="stream"/> 为 <see langword="null"/>。</exception>
+	/// <exception cref="ArgumentException">标识非空时，<paramref name="stream"/> 不支持写入。</exception>
+	/// <remarks>按 <see cref="ToString()"/> 的格式输出 UTF-8 无 BOM 文本，不附加换行，完成后刷新缓冲区。空标识不写入或刷新流；流不必支持定位。无论成功或失败均不关闭传入的流，由调用方负责释放；写入和刷新异常直接向调用方传播。</remarks>
+	public void Save(Stream stream)
+	{
+		ArgumentNullException.ThrowIfNull(stream);
+		if(this.IsEmpty)
+			return;
+
+		using var writer = new StreamWriter(stream, new UTF8Encoding(false), bufferSize: 1024, leaveOpen: true);
+		this.Save(writer);
+	}
+
+	/// <summary>将当前应用标识信息保存到指定文本写入器。</summary>
+	/// <param name="writer">接收应用标识信息的文本写入器，编码由写入器决定。</param>
+	/// <exception cref="ArgumentNullException"><paramref name="writer"/> 为 <see langword="null"/>。</exception>
+	/// <remarks>按 <see cref="ToString()"/> 的格式输出文本，不附加换行，也不改变 <see cref="TextWriter.NewLine"/>；完成后调用 <see cref="TextWriter.Flush()"/>。空标识不写入或刷新写入器。无论成功或失败均不关闭写入器，由调用方负责释放；写入和刷新异常直接向调用方传播。</remarks>
+	public void Save(TextWriter writer)
+	{
+		ArgumentNullException.ThrowIfNull(writer);
+		if(this.IsEmpty)
+			return;
+
+		writer.Write(this.ToString());
+		writer.Flush();
 	}
 
 	/// <summary>将当前应用标识信息保存到文件中。</summary>
