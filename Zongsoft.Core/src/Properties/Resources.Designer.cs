@@ -1292,5 +1292,53 @@ namespace Zongsoft.Properties {
                 return ResourceManager.GetString("Zongsoft.Security.Privileges.MemberType.User", resourceCulture);
             }
         }
+
+		/// <summary>查找类似 The application version and named editions are mutually exclusive. 的本地化字符串。</summary>
+		internal static string Services_ApplicationVersion_Conflict_Message => ResourceManager.GetString("Services.ApplicationVersion.Conflict.Message", resourceCulture);
+
+		/// <summary>查找类似 An application version or at least one named edition is required. 的本地化字符串。</summary>
+		internal static string Services_ApplicationVersion_VersionRequired_Message => ResourceManager.GetString("Services.ApplicationVersion.VersionRequired.Message", resourceCulture);
+
+		/// <summary>查找类似 The version number exceeds the formatting buffer. 的本地化字符串。</summary>
+		internal static string Services_ApplicationVersion_FormattingBufferExceeded_Message => ResourceManager.GetString("Services.ApplicationVersion.FormattingBufferExceeded.Message", resourceCulture);
+
+		/// <summary>查找类似 An application name is required and must not contain reserved characters. 的本地化字符串。</summary>
+		internal static string Services_ApplicationVersion_ApplicationNameInvalid_Message => ResourceManager.GetString("Services.ApplicationVersion.ApplicationNameInvalid.Message", resourceCulture);
+
+		/// <summary>查找类似 The application version number is invalid. 的本地化字符串。</summary>
+		internal static string Services_ApplicationVersion_VersionInvalid_Message => ResourceManager.GetString("Services.ApplicationVersion.VersionInvalid.Message", resourceCulture);
+
+		/// <summary>查找类似 A name@version header cannot be followed by editions or additional content. 的本地化字符串。</summary>
+		internal static string Services_ApplicationVersion_UnexpectedContent_Message => ResourceManager.GetString("Services.ApplicationVersion.UnexpectedContent.Message", resourceCulture);
+
+		/// <summary>查找类似 The edition has no version number. 的本地化字符串。</summary>
+		internal static string Services_ApplicationVersion_EditionVersionRequired_Message => ResourceManager.GetString("Services.ApplicationVersion.EditionVersionRequired.Message", resourceCulture);
+
+		/// <summary>查找类似 The edition section header is invalid. 的本地化字符串。</summary>
+		internal static string Services_ApplicationVersion_EditionHeaderInvalid_Message => ResourceManager.GetString("Services.ApplicationVersion.EditionHeaderInvalid.Message", resourceCulture);
+
+		/// <summary>查找类似 The edition name is invalid. 的本地化字符串。</summary>
+		internal static string Services_ApplicationVersion_EditionNameInvalid_Message => ResourceManager.GetString("Services.ApplicationVersion.EditionNameInvalid.Message", resourceCulture);
+
+		/// <summary>查找类似 An edition section header was expected. 的本地化字符串。</summary>
+		internal static string Services_ApplicationVersion_EditionHeaderRequired_Message => ResourceManager.GetString("Services.ApplicationVersion.EditionHeaderRequired.Message", resourceCulture);
+
+		/// <summary>查找类似 A bare version number was expected. 的本地化字符串。</summary>
+		internal static string Services_ApplicationVersion_BareVersionRequired_Message => ResourceManager.GetString("Services.ApplicationVersion.BareVersionRequired.Message", resourceCulture);
+
+		/// <summary>查找类似 The edition name is duplicated. 的本地化字符串。</summary>
+		internal static string Services_ApplicationVersion_EditionDuplicated_Message => ResourceManager.GetString("Services.ApplicationVersion.EditionDuplicated.Message", resourceCulture);
+
+		/// <summary>查找类似 An application name and version information are required. 的本地化字符串。</summary>
+		internal static string Services_ApplicationVersion_InformationRequired_Message => ResourceManager.GetString("Services.ApplicationVersion.InformationRequired.Message", resourceCulture);
+
+		/// <summary>查找类似 Invalid application version format at line {0}: {1} 的本地化字符串。</summary>
+		internal static string Services_ApplicationVersion_InvalidFormat_Message => ResourceManager.GetString("Services.ApplicationVersion.InvalidFormat.Message", resourceCulture);
+
+		/// <summary>查找类似 The name is empty or contains characters reserved by the application version format. 的本地化字符串。</summary>
+		internal static string Services_ApplicationVersion_NameInvalid_Message => ResourceManager.GetString("Services.ApplicationVersion.NameInvalid.Message", resourceCulture);
+
+		/// <summary>查找类似 An initialized edition with a name and version number is required. 的本地化字符串。</summary>
+		internal static string Services_ApplicationVersion_EditionInvalid_Message => ResourceManager.GetString("Services.ApplicationVersion.EditionInvalid.Message", resourceCulture);
     }
 }
