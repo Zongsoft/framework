@@ -35,8 +35,36 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Services;
 
-/// <summary>表示应用版本文件中的名称、版本号和版本集。</summary>
-/// <remarks>顶层版本号与具名版本集互斥。本类型及其版本集不保证线程安全。</remarks>
+/// <summary>表示应用 <c>.version</c> 文件中的名称、版本号和版本集，并提供文件加载和保存功能。</summary>
+/// <remarks>
+///		<para><c>.version</c> 是采用 INI 段落形式的文本文件，支持以下两种互斥的格式：</para>
+///		<list type="bullet">
+///			<item><description>不区分版本名时，首个有效行采用 <c>name@version</c> 格式，分别对应 <see cref="Name"/> 和 <see cref="Version"/>，<see cref="Editions"/> 为空；其后只能包含空行或整行注释。</description></item>
+///			<item><description>区分版本名时，首个有效行只能包含应用名称，不能附加 <c>@version</c>。随后每个 <c>[edition]</c> 段落包含且仅包含一个裸版本号，分别对应 <see cref="Edition.Name"/> 和 <see cref="Edition.Version"/>；顶层 <see cref="Version"/> 为 <see langword="null"/>。</description></item>
+///		</list>
+///		<para>版本号采用 <see cref="System.Version"/> 支持的两段、三段或四段数字格式。版本名不区分大小写且必须唯一，段落顺序保留在 <see cref="Editions"/> 中；文件不指定当前或默认版本名。</para>
+///		<para>读取时忽略空行、行及名称两端的空白，以及以 <c>;</c> 或 <c>#</c> 开始的整行注释；接受文件开头的 BOM 和 CRLF、LF、CR 换行。不支持 <c>Version=1.0.1</c> 这样的键值项、嵌套段落或行尾注释。名称中的非行首注释符作为普通字符处理。</para>
+///		<para>应用名称和版本名均不能为空，且不能包含换行、方括号、空字符或 BOM；应用名称另不能包含 <c>@</c>，也不能以 <c>;</c> 或 <c>#</c> 开始。</para>
+///		<para>保存时输出 UTF-8 无 BOM 文本和 CRLF 换行，文件末尾保留换行；应用名称与首个段落之间、段落之间保留一个空行，不保留原文件的注释或空白布局。</para>
+///		<para>顶层版本号与非空的具名版本集互斥，切换表示方式前须先清空原有表示。允许暂时不设置任何版本信息，但保存时必须具有顶层版本号或至少一个具名版本。本类型及其版本集不保证线程安全。</para>
+/// </remarks>
+/// <example>
+///		<para>不区分版本名的 <c>.version</c> 文件：</para>
+///		<code language="ini">MyApplicationName@1.0.1</code>
+///		<para>包含多个具名版本的 <c>.version</c> 文件：</para>
+///		<code language="ini">
+///			MyApplicationName
+///
+///			[Community]
+///			1.0.1
+///
+///			[Professional]
+///			1.1.0
+///
+///			[Enterprise]
+///			1.1.2
+///		</code>
+/// </example>
 public class ApplicationVersion
 {
 	#region 成员字段
@@ -45,6 +73,10 @@ public class ApplicationVersion
 
 	#region 构造函数
 	/// <summary>初始化应用版本信息；未指定版本号时，可随后添加具名版本。</summary>
+	/// <param name="name">应用名称，自动移除两端的空白。</param>
+	/// <param name="version">不区分版本名时的版本号；为 <see langword="null"/> 时，可通过 <see cref="Editions"/> 添加具名版本。</param>
+	/// <exception cref="ArgumentNullException"><paramref name="name"/> 为 <see langword="null"/>。</exception>
+	/// <exception cref="ArgumentException"><paramref name="name"/> 为空白或包含文件格式的保留字符。</exception>
 	public ApplicationVersion(string name, Version version = null)
 	{
 		this.Name = ValidateName(name, true);
@@ -57,6 +89,7 @@ public class ApplicationVersion
 	/// <summary>获取应用名称。</summary>
 	public string Name { get; }
 	/// <summary>获取或设置不区分版本名时的版本号。</summary>
+	/// <value>单行格式中 <c>@</c> 后的版本号；包含具名版本时为 <see langword="null"/>。</value>
 	/// <exception cref="InvalidOperationException">版本集非空时设置非空版本号。</exception>
 	public Version Version
 	{
@@ -71,14 +104,18 @@ public class ApplicationVersion
 	}
 
 	/// <summary>获取按添加顺序排列的具名版本集。</summary>
+	/// <remarks>每个条目对应文件中的一个版本段落；不区分版本名时此集合为空。</remarks>
 	public EditionCollection Editions { get; }
 	#endregion
 
 	#region 公共方法
 	/// <summary>从指定文件加载应用版本信息。</summary>
-	/// <param name="path">版本文件的路径，不是应用目录。</param>
+	/// <param name="path">版本文件的绝对或相对路径，例如 <c>.version</c>；不接受应用目录，也不自动追加文件名。</param>
+	/// <returns>从文件中读取的应用版本信息。</returns>
+	/// <exception cref="ArgumentNullException"><paramref name="path"/> 为 <see langword="null"/>。</exception>
+	/// <exception cref="ArgumentException"><paramref name="path"/> 为空或仅包含空白。</exception>
 	/// <exception cref="FormatException">文件为空或内容不符合应用版本格式，异常信息包含行号。</exception>
-	/// <remarks>接受空行和以分号或井号开始的整行注释；文件系统异常直接向调用方传播。</remarks>
+	/// <remarks>文件格式及示例见 <see cref="ApplicationVersion"/>。缺少版本号、重复版本名或混用两种格式均视为格式错误；文件不存在、权限不足等文件系统异常直接向调用方传播。</remarks>
 	public static ApplicationVersion Load(string path)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(path);
@@ -86,9 +123,14 @@ public class ApplicationVersion
 	}
 
 	/// <summary>将应用版本信息保存到指定文件，覆盖原有内容。</summary>
-	/// <param name="path">版本文件的路径，不是应用目录；父目录必须存在。</param>
+	/// <param name="path">版本文件的绝对或相对路径，例如 <c>.version</c>；父目录必须存在，不自动追加文件名。</param>
+	/// <exception cref="ArgumentNullException"><paramref name="path"/> 为 <see langword="null"/>。</exception>
+	/// <exception cref="ArgumentException"><paramref name="path"/> 为空或仅包含空白。</exception>
 	/// <exception cref="InvalidOperationException">未设置顶层版本号且版本集为空。</exception>
-	/// <remarks>输出 UTF-8 无 BOM 文本和 CRLF 换行，不保留原文件的注释和空白。</remarks>
+	/// <remarks>
+	/// <para>设置了 <see cref="Version"/> 时保存为 <c>name@version</c>；否则按 <see cref="Editions"/> 的顺序输出应用名称及版本段落，格式示例见 <see cref="ApplicationVersion"/>。</para>
+	/// <para>打开文件前检查版本信息是否完整；通过检查后创建或截断目标文件，不自动创建父目录。输出 UTF-8 无 BOM 文本和 CRLF 换行，不保留原文件的注释和空白布局；文件系统异常直接向调用方传播。</para>
+	/// </remarks>
 	public void Save(string path)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(path);
@@ -249,9 +291,14 @@ public class ApplicationVersion
 
 	#region 嵌套结构
 	/// <summary>表示一个具名应用版本。</summary>
+	/// <remarks>对应 <c>.version</c> 文件中的一个段落：段落标题为 <see cref="Name"/>，段落内的裸版本号为 <see cref="Version"/>。</remarks>
 	public readonly struct Edition
 	{
 		/// <summary>初始化具有非空名称和版本号的具名版本。</summary>
+		/// <param name="name">段落中的版本名，不包含外围的方括号，自动移除两端的空白。</param>
+		/// <param name="version">该版本名对应的版本号。</param>
+		/// <exception cref="ArgumentNullException"><paramref name="name"/> 或 <paramref name="version"/> 为 <see langword="null"/>。</exception>
+		/// <exception cref="ArgumentException"><paramref name="name"/> 为空白或包含文件格式的保留字符。</exception>
 		public Edition(string name, Version version)
 		{
 			this.Name = ValidateName(name, false);
@@ -263,13 +310,15 @@ public class ApplicationVersion
 		/// <summary>获取版本号。</summary>
 		public Version Version { get; }
 
+		/// <summary>返回 <c>版本名@版本号</c> 形式的文本表示。</summary>
+		/// <remarks>此文本用于表示单个具名版本，不是 <c>.version</c> 文件的段落格式。</remarks>
 		public override string ToString() => $"{this.Name}@{this.Version}";
 	}
 	#endregion
 
 	#region 嵌套集合
 	/// <summary>表示保持添加顺序、版本名不区分大小写的可变版本集。</summary>
-	/// <remarks>版本名必须唯一；不保证线程安全。</remarks>
+	/// <remarks>每个条目对应 <c>.version</c> 文件中的一个段落，按添加顺序枚举和保存。版本名必须唯一，名称查找不移除两端的空白；不保证线程安全。</remarks>
 	public sealed class EditionCollection : ICollection<Edition>
 	{
 		private readonly ApplicationVersion _application;
@@ -278,6 +327,7 @@ public class ApplicationVersion
 
 		internal EditionCollection(ApplicationVersion application) => _application = application;
 
+		/// <summary>获取具名版本的数量。</summary>
 		public int Count => _items.Count;
 		bool ICollection<Edition>.IsReadOnly => false;
 		/// <summary>获取一个值，指示版本集是否为空。</summary>
@@ -289,6 +339,8 @@ public class ApplicationVersion
 		public Edition this[string name] => _names[name];
 
 		/// <summary>添加具名版本，拒绝未初始化的版本或重复名称。</summary>
+		/// <param name="item">要添加的具名版本。</param>
+		/// <exception cref="ArgumentException"><paramref name="item"/> 未初始化或其名称已存在（忽略大小写）。</exception>
 		/// <exception cref="InvalidOperationException">应用已设置顶层版本号。</exception>
 		public void Add(Edition item)
 		{
@@ -315,9 +367,13 @@ public class ApplicationVersion
 		}
 
 		/// <summary>确定是否包含名称（忽略大小写）和版本号均相同的条目。</summary>
+		/// <param name="item">要查找的具名版本。</param>
+		/// <returns>名称和版本号均匹配时返回真，否则返回假。</returns>
 		public bool Contains(Edition item) => this.TryGetValue(item.Name, out var edition) && Equals(edition.Version, item.Version);
 
 		/// <summary>移除名称（忽略大小写）和版本号均相同的条目。</summary>
+		/// <param name="item">要移除的具名版本。</param>
+		/// <returns>找到并移除匹配条目时返回真，否则返回假。</returns>
 		public bool Remove(Edition item)
 		{
 			if(!this.Contains(item))
@@ -336,6 +392,7 @@ public class ApplicationVersion
 			return true;
 		}
 
+		/// <summary>移除所有具名版本。</summary>
 		public void Clear()
 		{
 			_items.Clear();
