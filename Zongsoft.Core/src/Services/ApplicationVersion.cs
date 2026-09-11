@@ -35,7 +35,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Services;
 
-/// <summary>表示应用 <c>.version</c> 文件中的名称、版本号和版本集，并提供文件加载和保存功能。</summary>
+/// <summary>表示应用 <c>.version</c> 文件中的名称、版本号和版本集，并提供文件、流及文本读写器的加载和保存功能。</summary>
 /// <remarks>
 ///		<para><c>.version</c> 是采用 INI 段落形式的文本文件，支持以下两种互斥的格式：</para>
 ///		<list type="bullet">
@@ -45,7 +45,8 @@ namespace Zongsoft.Services;
 ///		<para>版本号采用 <see cref="System.Version"/> 支持的两段、三段或四段数字格式。版本名不区分大小写且必须唯一，段落顺序保留在 <see cref="Editions"/> 中；文件不指定当前或默认版本名。</para>
 ///		<para>读取时忽略空行、行及名称两端的空白，以及以 <c>;</c> 或 <c>#</c> 开始的整行注释；接受文件开头的 BOM 和 CRLF、LF、CR 换行。不支持 <c>Version=1.0.1</c> 这样的键值项、嵌套段落或行尾注释。名称中的非行首注释符作为普通字符处理。</para>
 ///		<para>应用名称和版本名均不能为空，且不能包含换行、方括号、空字符或 BOM；应用名称另不能包含 <c>@</c>，也不能以 <c>;</c> 或 <c>#</c> 开始。</para>
-///		<para>保存时输出 UTF-8 无 BOM 文本和 CRLF 换行，文件末尾保留换行；应用名称与首个段落之间、段落之间保留一个空行，不保留原文件的注释或空白布局。</para>
+///		<para>保存到文件或流时输出 UTF-8 无 BOM 文本；保存到文本写入器时编码由写入器决定。所有保存方式均使用 CRLF 换行，文件末尾保留换行；应用名称与首个段落之间、段落之间保留一个空行，不保留原文件的注释或空白布局。</para>
+///		<para>传入的流和文本读写器由调用方负责释放，加载或保存不会关闭它们。加载从当前位置读取至结尾，保存从当前位置写入；流重载不重置位置或截断内容，也不要求支持定位。</para>
 ///		<para>顶层版本号与非空的具名版本集互斥，切换表示方式前须先清空原有表示。允许暂时不设置任何版本信息，但保存时必须具有顶层版本号或至少一个具名版本。本类型及其版本集不保证线程安全。</para>
 /// </remarks>
 /// <example>
@@ -119,7 +120,34 @@ public class ApplicationVersion
 	public static ApplicationVersion Load(string path)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(path);
-		return Parse(File.ReadAllText(path).AsSpan());
+		using var reader = File.OpenText(path);
+		return Load(reader);
+	}
+
+	/// <summary>从指定流加载应用版本信息。</summary>
+	/// <param name="stream">可读取的流，从当前位置读取至结尾，不要求支持定位。</param>
+	/// <returns>从流中读取的应用版本信息。</returns>
+	/// <exception cref="ArgumentNullException"><paramref name="stream"/> 为 <see langword="null"/>。</exception>
+	/// <exception cref="ArgumentException"><paramref name="stream"/> 不支持读取。</exception>
+	/// <exception cref="FormatException">内容为空或不符合应用版本格式，异常信息包含行号。</exception>
+	/// <remarks>默认按 UTF-8 解码，并通过 BOM 检测编码。无论成功或失败均不关闭传入的流，由调用方负责释放；读取异常直接向调用方传播。格式及示例见 <see cref="ApplicationVersion"/>。</remarks>
+	public static ApplicationVersion Load(Stream stream)
+	{
+		ArgumentNullException.ThrowIfNull(stream);
+		using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true);
+		return Load(reader);
+	}
+
+	/// <summary>从指定文本读取器加载应用版本信息。</summary>
+	/// <param name="reader">文本读取器，从当前位置读取至结尾。</param>
+	/// <returns>从读取器中读取的应用版本信息。</returns>
+	/// <exception cref="ArgumentNullException"><paramref name="reader"/> 为 <see langword="null"/>。</exception>
+	/// <exception cref="FormatException">内容为空或不符合应用版本格式，异常信息包含行号。</exception>
+	/// <remarks>编码由读取器决定；无论成功或失败均不关闭读取器，由调用方负责释放。读取异常直接向调用方传播。格式及示例见 <see cref="ApplicationVersion"/>。</remarks>
+	public static ApplicationVersion Load(TextReader reader)
+	{
+		ArgumentNullException.ThrowIfNull(reader);
+		return Parse(reader.ReadToEnd().AsSpan());
 	}
 
 	/// <summary>将应用版本信息保存到指定文件，覆盖原有内容。</summary>
@@ -134,12 +162,37 @@ public class ApplicationVersion
 	public void Save(string path)
 	{
 		ArgumentException.ThrowIfNullOrWhiteSpace(path);
-
-		if(_version == null && this.Editions.IsEmpty)
-			throw new InvalidOperationException(Properties.Resources.Services_ApplicationVersion_VersionRequired_Message);
+		this.ValidateVersion();
 
 		using var writer = new StreamWriter(path, false, new UTF8Encoding(false));
-		writer.NewLine = "\r\n";
+		this.Save(writer);
+	}
+
+	/// <summary>将应用版本信息保存到指定流。</summary>
+	/// <param name="stream">可写入的流，从当前位置写入，不重置位置或截断内容。</param>
+	/// <exception cref="ArgumentNullException"><paramref name="stream"/> 为 <see langword="null"/>。</exception>
+	/// <exception cref="ArgumentException"><paramref name="stream"/> 不支持写入。</exception>
+	/// <exception cref="InvalidOperationException">未设置顶层版本号且版本集为空。</exception>
+	/// <remarks>写入前检查版本信息是否完整。输出 UTF-8 无 BOM 文本和 CRLF 换行，完成后刷新缓冲区；不要求流支持定位。无论成功或失败均不关闭传入的流，由调用方负责释放；写入和刷新异常直接向调用方传播。</remarks>
+	public void Save(Stream stream)
+	{
+		ArgumentNullException.ThrowIfNull(stream);
+		this.ValidateVersion();
+
+		using var writer = new StreamWriter(stream, new UTF8Encoding(false), bufferSize: 1024, leaveOpen: true);
+		this.Save(writer);
+	}
+
+	/// <summary>将应用版本信息保存到指定文本写入器。</summary>
+	/// <param name="writer">接收版本信息的文本写入器，编码由写入器决定。</param>
+	/// <exception cref="ArgumentNullException"><paramref name="writer"/> 为 <see langword="null"/>。</exception>
+	/// <exception cref="InvalidOperationException">未设置顶层版本号且版本集为空。</exception>
+	/// <remarks>写入前检查版本信息是否完整。始终输出 CRLF 换行，不改变写入器的 <see cref="TextWriter.NewLine"/> 属性；完成后调用 <see cref="TextWriter.Flush()"/>。无论成功或失败均不关闭写入器，由调用方负责释放；写入和刷新异常直接向调用方传播。</remarks>
+	public void Save(TextWriter writer)
+	{
+		ArgumentNullException.ThrowIfNull(writer);
+		this.ValidateVersion();
+
 		writer.Write(this.Name);
 
 		//四个非负 Int32 分量以及三个分隔点最多占用 43 个字符。
@@ -152,28 +205,36 @@ public class ApplicationVersion
 		}
 		else
 		{
-			writer.WriteLine();
+			writer.Write("\r\n");
 
 			foreach(var edition in this.Editions)
 			{
-				writer.WriteLine();
+				writer.Write("\r\n");
 				writer.Write('[');
 				writer.Write(edition.Name);
-				writer.WriteLine(']');
+				writer.Write("]\r\n");
 				WriteVersion(writer, edition.Version, buffer);
 			}
 		}
+
+		writer.Flush();
 	}
 	#endregion
 
 	#region 私有方法
-	private static void WriteVersion(StreamWriter writer, Version version, Span<char> buffer)
+	private void ValidateVersion()
+	{
+		if(_version == null && this.Editions.IsEmpty)
+			throw new InvalidOperationException(Properties.Resources.Services_ApplicationVersion_VersionRequired_Message);
+	}
+
+	private static void WriteVersion(TextWriter writer, Version version, Span<char> buffer)
 	{
 		if(!version.TryFormat(buffer, out var count))
 			throw new InvalidOperationException(Properties.Resources.Services_ApplicationVersion_FormattingBufferExceeded_Message);
 
 		writer.Write(buffer[..count]);
-		writer.WriteLine();
+		writer.Write("\r\n");
 	}
 
 	private static ApplicationVersion Parse(ReadOnlySpan<char> text)

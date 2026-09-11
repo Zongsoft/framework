@@ -489,6 +489,321 @@ public class ApplicationVersionTest : IDisposable
 		Assert.Empty(editions);
 	}
 
+	[Fact]
+	public void StreamOverloads_RejectNullArguments()
+	{
+		var application = new ApplicationVersion("App", new Version(1, 0));
+
+		Assert.Throws<ArgumentNullException>("stream", () => ApplicationVersion.Load((Stream)null));
+		Assert.Throws<ArgumentNullException>("reader", () => ApplicationVersion.Load((TextReader)null));
+		Assert.Throws<ArgumentNullException>("stream", () => application.Save((Stream)null));
+		Assert.Throws<ArgumentNullException>("writer", () => application.Save((TextWriter)null));
+	}
+
+	[Theory]
+	[InlineData("utf-8", false)]
+	[InlineData("utf-8", true)]
+	[InlineData("utf-16", true)]
+	public void Load_StreamReadsCurrentPositionAndDetectsBom(string encodingName, bool bom)
+	{
+		var encoding = Encoding.GetEncoding(encodingName);
+		var prefix = Encoding.ASCII.GetBytes("not a version file:");
+		using var stream = new MemoryStream();
+		stream.Write(prefix);
+		if(bom)
+			stream.Write(encoding.GetPreamble());
+		stream.Write(encoding.GetBytes("应用@1.2.3\r\n"));
+		stream.Position = prefix.Length;
+
+		var application = ApplicationVersion.Load(stream);
+
+		Assert.Equal("应用", application.Name);
+		Assert.Equal(new Version(1, 2, 3), application.Version);
+		Assert.Empty(application.Editions);
+		Assert.True(stream.CanRead);
+		Assert.Equal(stream.Length, stream.Position);
+		Assert.Equal(-1, stream.ReadByte());
+	}
+
+	[Fact]
+	public void Load_TextReaderReadsCurrentPositionAndLeavesOpen()
+	{
+		using var reader = new StringReader("skip this line\n应用\n[Community]\n1.0.1\n[Enterprise]\n2.0.3");
+		Assert.Equal("skip this line", reader.ReadLine());
+
+		var application = ApplicationVersion.Load(reader);
+
+		Assert.Equal("应用", application.Name);
+		Assert.Null(application.Version);
+		Assert.Equal(new[] { "Community", "Enterprise" }, application.Editions.Select(edition => edition.Name));
+		Assert.Equal(new Version(1, 0, 1), application.Editions[0].Version);
+		Assert.Equal(new Version(2, 0, 3), application.Editions[1].Version);
+		Assert.Equal(-1, reader.Peek());
+	}
+
+	[Fact]
+	public void Load_NonSeekableStreamLeavesOpen()
+	{
+		using var stream = new ObservedStream(Encoding.UTF8.GetBytes("应用\n[Community]\n1.0\n[Enterprise]\n3.0"));
+
+		var application = ApplicationVersion.Load(stream);
+
+		Assert.Equal("应用", application.Name);
+		Assert.Equal(new Version(1, 0), application.Editions["Community"].Version);
+		Assert.Equal(new Version(3, 0), application.Editions["Enterprise"].Version);
+		Assert.False(stream.IsDisposed);
+		Assert.Equal(-1, stream.ReadByte());
+	}
+
+	[Fact]
+	public void Load_InvalidFormatLeavesInputsOpen()
+	{
+		using var stream = new MemoryStream(Encoding.UTF8.GetBytes("App@invalid"));
+		using var reader = new StringReader("App\n[Community]");
+
+		Assert.Throws<FormatException>(() => ApplicationVersion.Load(stream));
+		Assert.True(stream.CanRead);
+		Assert.Equal(stream.Length, stream.Position);
+		Assert.Throws<FormatException>(() => ApplicationVersion.Load(reader));
+		Assert.Equal(-1, reader.Peek());
+	}
+
+	[Fact]
+	public void Load_IoFailuresLeaveInputsOpen()
+	{
+		using var stream = new ObservedStream(Encoding.UTF8.GetBytes("App@1.0")) { FailRead = true };
+		using var reader = new FailingReader();
+
+		Assert.Same(stream.Error, Assert.Throws<IOException>(() => ApplicationVersion.Load(stream)));
+		Assert.False(stream.IsDisposed);
+		stream.FailRead = false;
+		Assert.Equal((int)'A', stream.ReadByte());
+		Assert.Same(reader.Error, Assert.Throws<IOException>(() => ApplicationVersion.Load(reader)));
+		Assert.False(reader.IsDisposed);
+	}
+
+	[Fact]
+	public void Save_StreamPreservesPrefixAndTail()
+	{
+		using var stream = new MemoryStream();
+		stream.Write(Encoding.UTF8.GetBytes("prefix:" + new string('x', 9) + "tail"));
+		stream.Position = 7;
+
+		new ApplicationVersion("App", new Version(1, 0)).Save(stream);
+
+		Assert.Equal(Encoding.UTF8.GetBytes("prefix:App@1.0\r\ntail"), stream.ToArray());
+		Assert.Equal(16, stream.Position);
+		Assert.True(stream.CanWrite);
+		stream.WriteByte((byte)'T');
+		Assert.Equal(Encoding.UTF8.GetBytes("prefix:App@1.0\r\nTail"), stream.ToArray());
+	}
+
+	[Fact]
+	public void Save_NonSeekableStreamFlushesAndLeavesOpen()
+	{
+		using var stream = new ObservedStream();
+		var application = new ApplicationVersion("应用");
+		application.Editions.Add(new("Community", new Version(1, 2, 3)));
+		application.Editions.Add(new("Enterprise", new Version(4, 5, 6)));
+
+		application.Save(stream);
+
+		Assert.Equal(Encoding.UTF8.GetBytes("应用\r\n\r\n[Community]\r\n1.2.3\r\n\r\n[Enterprise]\r\n4.5.6\r\n"), stream.ToArray());
+		Assert.True(stream.FlushCount > 0);
+		Assert.False(stream.IsDisposed);
+		stream.WriteByte((byte)'!');
+		Assert.Equal((byte)'!', stream.ToArray()[^1]);
+	}
+
+	[Fact]
+	public void Save_TextWriterPreservesNewLineAndFlushes()
+	{
+		using var writer = new ObservedWriter { NewLine = "custom newline" };
+		writer.Write("prefix:");
+		var application = new ApplicationVersion("App");
+		application.Editions.Add(new("Community", new Version(1, 0)));
+		application.Editions.Add(new("Enterprise", new Version(3, 0)));
+
+		application.Save(writer);
+
+		Assert.Equal("prefix:App\r\n\r\n[Community]\r\n1.0\r\n\r\n[Enterprise]\r\n3.0\r\n", writer.ToString());
+		Assert.Equal("custom newline", writer.NewLine);
+		Assert.True(writer.FlushCount > 0);
+		Assert.False(writer.IsDisposed);
+		writer.Write('!');
+		Assert.EndsWith("\r\n!", writer.ToString());
+	}
+
+	[Fact]
+	public void Save_TextWriterUsesCallerEncoding()
+	{
+		using var stream = new MemoryStream();
+		using var writer = new StreamWriter(stream, new UnicodeEncoding(false, false), 1024, true) { NewLine = "\n" };
+
+		new ApplicationVersion("应用", new Version(1, 2)).Save(writer);
+
+		Assert.Equal(Encoding.Unicode.GetBytes("应用@1.2\r\n"), stream.ToArray());
+		Assert.Equal("\n", writer.NewLine);
+		writer.Write('!');
+		writer.Flush();
+		Assert.Equal(Encoding.Unicode.GetBytes("应用@1.2\r\n!"), stream.ToArray());
+	}
+
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public void Save_IoFailuresLeaveOutputsOpen(bool flushFailure)
+	{
+		using var stream = new ObservedStream { FailWrite = !flushFailure, FailFlush = flushFailure };
+		using var writer = new ObservedWriter { FailWrite = !flushFailure, FailFlush = flushFailure, NewLine = "custom newline" };
+		var application = new ApplicationVersion("App", new Version(1, 0));
+
+		Assert.Same(stream.Error, Assert.Throws<IOException>(() => application.Save(stream)));
+		Assert.False(stream.IsDisposed);
+		stream.FailWrite = false;
+		stream.FailFlush = false;
+		stream.WriteByte((byte)'!');
+		Assert.Equal((byte)'!', stream.ToArray()[^1]);
+
+		Assert.Same(writer.Error, Assert.Throws<IOException>(() => application.Save(writer)));
+		Assert.False(writer.IsDisposed);
+		Assert.Equal("custom newline", writer.NewLine);
+		writer.FailWrite = false;
+		writer.FailFlush = false;
+		writer.Write('!');
+		Assert.EndsWith("!", writer.ToString());
+	}
+
+	[Fact]
+	public void Save_InvalidStateDoesNotTouchOutputs()
+	{
+		using var stream = new ObservedStream(Encoding.UTF8.GetBytes("original"));
+		using var writer = new ObservedWriter { NewLine = "custom newline" };
+		writer.Write("original");
+		var writes = writer.WriteCount;
+		var application = new ApplicationVersion("App");
+
+		Assert.Throws<InvalidOperationException>(() => application.Save(stream));
+		Assert.Equal(Encoding.UTF8.GetBytes("original"), stream.ToArray());
+		Assert.Equal(0, stream.WriteCount);
+		Assert.Equal(0, stream.FlushCount);
+		Assert.False(stream.IsDisposed);
+		Assert.Equal((int)'o', stream.ReadByte());
+
+		Assert.Throws<InvalidOperationException>(() => application.Save(writer));
+		Assert.Equal("original", writer.ToString());
+		Assert.Equal(writes, writer.WriteCount);
+		Assert.Equal(0, writer.FlushCount);
+		Assert.False(writer.IsDisposed);
+		Assert.Equal("custom newline", writer.NewLine);
+		writer.Write('!');
+		Assert.Equal("original!", writer.ToString());
+	}
+
+	private sealed class ObservedStream : Stream
+	{
+		private readonly MemoryStream _stream = new();
+		public ObservedStream(byte[] content = null)
+		{
+			if(content != null)
+				_stream.Write(content);
+			_stream.Position = 0;
+		}
+
+		public IOException Error { get; } = new("Test stream failure.");
+		public bool FailRead { get; set; }
+		public bool FailWrite { get; set; }
+		public bool FailFlush { get; set; }
+		public bool IsDisposed { get; private set; }
+		public int WriteCount { get; private set; }
+		public int FlushCount { get; private set; }
+		public override bool CanRead => !IsDisposed;
+		public override bool CanWrite => !IsDisposed;
+		public override bool CanSeek => false;
+		public override long Length => throw new NotSupportedException();
+		public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+		public byte[] ToArray() => _stream.ToArray();
+		public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+		public override void SetLength(long value) => throw new NotSupportedException();
+		public override int Read(byte[] buffer, int offset, int count) => FailRead ? throw Error : _stream.Read(buffer, offset, count);
+		public override void Write(byte[] buffer, int offset, int count)
+		{
+			WriteCount++;
+			if(FailWrite)
+				throw Error;
+			_stream.Write(buffer, offset, count);
+		}
+		public override void Flush()
+		{
+			FlushCount++;
+			if(FailFlush)
+				throw Error;
+			_stream.Flush();
+		}
+		protected override void Dispose(bool disposing)
+		{
+			IsDisposed = true;
+			if(disposing)
+				_stream.Dispose();
+			base.Dispose(disposing);
+		}
+	}
+
+	private sealed class FailingReader : TextReader
+	{
+		public IOException Error { get; } = new("Test reader failure.");
+		public bool IsDisposed { get; private set; }
+		public override string ReadToEnd() => throw Error;
+		protected override void Dispose(bool disposing)
+		{
+			IsDisposed = true;
+			base.Dispose(disposing);
+		}
+	}
+
+	private sealed class ObservedWriter : StringWriter
+	{
+		public IOException Error { get; } = new("Test writer failure.");
+		public bool FailWrite { get; set; }
+		public bool FailFlush { get; set; }
+		public bool IsDisposed { get; private set; }
+		public int FlushCount { get; private set; }
+		public int WriteCount { get; private set; }
+		public override void Write(char value)
+		{
+			WriteCount++;
+			if(FailWrite)
+				throw Error;
+			base.Write(value);
+		}
+		public override void Write(string value)
+		{
+			WriteCount++;
+			if(FailWrite)
+				throw Error;
+			base.Write(value);
+		}
+		public override void Write(ReadOnlySpan<char> buffer)
+		{
+			WriteCount++;
+			if(FailWrite)
+				throw Error;
+			base.Write(buffer);
+		}
+		public override void Flush()
+		{
+			FlushCount++;
+			if(FailFlush)
+				throw Error;
+			base.Flush();
+		}
+		protected override void Dispose(bool disposing)
+		{
+			IsDisposed = true;
+			base.Dispose(disposing);
+		}
+	}
+
 	private string GetPath(string name = ".version") => System.IO.Path.Combine(_directory, name);
 	private string Write(string content)
 	{
