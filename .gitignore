@@ -368,3 +368,5 @@ externals/grapecity/src/api/Properties/launchSettings.json
 
 # The app.${environment}.option files
 hosting/.deploy/options/*/app.*.option
+
+.testagent/
