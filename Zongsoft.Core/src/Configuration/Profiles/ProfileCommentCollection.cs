@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -42,10 +42,23 @@ public class ProfileCommentCollection : ProfileItemCollection<ProfileComment>
 	public ProfileComment Add(string text, int lineNumber = -1)
 	{
 		var comment = this.Section == null ?
-			ProfileComment.GetComment(this.Profile, text, lineNumber) :
-			ProfileComment.GetComment(this.Section, text, lineNumber);
+			new ProfileComment(this.Profile, text, lineNumber) :
+			new ProfileComment(this.Section, text, lineNumber);
 
 		this.Add(comment);
+		return comment;
+	}
+	#endregion
+
+	#region 内部方法
+	internal ProfileComment AddParsed(string text, int lineNumber)
+	{
+		var comment = this.Section == null ?
+			new ProfileComment(this.Profile, text, lineNumber) :
+			new ProfileComment(this.Section, text, lineNumber);
+
+		this.Items.Add(comment);
+		this.Profile.Declare(comment, true);
 		return comment;
 	}
 	#endregion

@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<Version>7.59.0</Version>
 		<Product>Zongsoft Core Library</Product>
@@ -30,6 +30,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Include="../docs/profiles.md;../docs/profiles.zh-Hans.md" Link="docs/%(Filename)%(Extension)" Pack="true" PackagePath="docs/" />
+		<None Include="../PROFILE-WRITER-TASKS.md" Pack="true" PackagePath="/" />
+		<None Include="../PROFILE-BUILTIN-IMPORT-TASKS.md" Pack="true" PackagePath="/" />
 		<None Include="..\README.md" Link="README.md" Pack="true" PackagePath="\" />
 		<None Include="..\README.zh-Hans.md" Link="README.zh-Hans.md" Pack="true" PackagePath="\" />
 	</ItemGroup>

@@ -403,15 +403,6 @@ namespace Zongsoft.Properties {
         }
 
         /// <summary>
-        ///   查找类似 Credential error: The specified credential is invalid or has expired. 的本地化字符串。
-        /// </summary>
-        internal static string CredentialException_Message {
-            get {
-                return ResourceManager.GetString("CredentialException.Message", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   查找类似 Invalid data parameters or values. 的本地化字符串。
         /// </summary>
         internal static string DataArgumentException_Message {
@@ -547,15 +538,6 @@ namespace Zongsoft.Properties {
         }
 
         /// <summary>
-        ///   查找类似 This operation cannot be repeated. 的本地化字符串。
-        /// </summary>
-        internal static string Error_RepeatedOperation {
-            get {
-                return ResourceManager.GetString("Error.RepeatedOperation", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   查找类似 Unable to create an instance of type &quot;{0}&quot; because multidimensional arrays are not supported. 的本地化字符串。
         /// </summary>
         internal static string Error_UnsupportedMultidimensionalArray {
@@ -655,24 +637,6 @@ namespace Zongsoft.Properties {
         }
 
         /// <summary>
-        ///   查找类似 This is a background service program that listens to message queues. It continuously polls the message queue in a blocking manner (It repeatedly calls the dequeue method of the message queue in a blocking manner). Once a message becomes available in the queue, it immediately dequeues the message and passes it to the executor in the listener for execution. 的本地化字符串。
-        /// </summary>
-        internal static string MessageQueueListener_Description {
-            get {
-                return ResourceManager.GetString("MessageQueueListener.Description", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   查找类似 Message queue listener 的本地化字符串。
-        /// </summary>
-        internal static string MessageQueueListener_Title {
-            get {
-                return ResourceManager.GetString("MessageQueueListener.Title", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   查找类似 The specified {0} message queue connection setting named &apos;{1}&apos; was not found. 的本地化字符串。
         /// </summary>
         internal static string Messaging_ConnectionSettingsNotFound_Message {
@@ -732,15 +696,6 @@ namespace Zongsoft.Properties {
         internal static string Messaging_StorageCreationFailed_Message {
             get {
                 return ResourceManager.GetString("Messaging.StorageCreationFailed.Message", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   查找类似 The &apos;{0}&apos; connection settings cannot be assigned to a message storage that requires &apos;{1}&apos;. 的本地化字符串。
-        /// </summary>
-        internal static string Messaging_StorageSettingsInvalid_Message {
-            get {
-                return ResourceManager.GetString("Messaging.StorageSettingsInvalid.Message", resourceCulture);
             }
         }
 
@@ -817,11 +772,56 @@ namespace Zongsoft.Properties {
         }
 
         /// <summary>
+        ///   查找类似 This profile is already being saved. 的本地化字符串。
+        /// </summary>
+        internal static string Profiles_AlreadySaving {
+            get {
+                return ResourceManager.GetString("Profiles_AlreadySaving", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Profile blank line positions must be nonnegative and increasing. 的本地化字符串。
+        /// </summary>
+        internal static string Profiles_BlanksInvalid {
+            get {
+                return ResourceManager.GetString("Profiles_BlanksInvalid", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 Circular profile import: {0}. Referenced from {1}, line {2}. 的本地化字符串。
         /// </summary>
         internal static string Profiles_CircularImport {
             get {
                 return ResourceManager.GetString("Profiles_CircularImport", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The comment cannot be represented consistently as a profile declaration. 的本地化字符串。
+        /// </summary>
+        internal static string Profiles_CommentInvalid {
+            get {
+                return ResourceManager.GetString("Profiles_CommentInvalid", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 An entry named &apos;{0}&apos; is already declared in this profile. 的本地化字符串。
+        /// </summary>
+        internal static string Profiles_EntryDuplicate {
+            get {
+                return ResourceManager.GetString("Profiles_EntryDuplicate", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The entry &apos;{0}&apos; cannot be represented in a profile. 的本地化字符串。
+        /// </summary>
+        internal static string Profiles_EntryInvalid {
+            get {
+                return ResourceManager.GetString("Profiles_EntryInvalid", resourceCulture);
             }
         }
 
@@ -844,11 +844,83 @@ namespace Zongsoft.Properties {
         }
 
         /// <summary>
+        ///   查找类似 The profile file is read-only: &apos;{0}&apos;. 的本地化字符串。
+        /// </summary>
+        internal static string Profiles_ReadOnly {
+            get {
+                return ResourceManager.GetString("Profiles_ReadOnly", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 Relative import &quot;{0}&quot; requires a source file path (line {1}). 的本地化字符串。
         /// </summary>
         internal static string Profiles_RelativeImportRequiresFile {
             get {
                 return ResourceManager.GetString("Profiles_RelativeImportRequiresFile", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Conflicting modified profiles target the same file: &apos;{0}&apos;. 的本地化字符串。
+        /// </summary>
+        internal static string Profiles_SaveConflict {
+            get {
+                return ResourceManager.GetString("Profiles_SaveConflict", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Failed to save &apos;{0}&apos;. Completed files: {1}. 的本地化字符串。
+        /// </summary>
+        internal static string Profiles_SaveFailed {
+            get {
+                return ResourceManager.GetString("Profiles_SaveFailed", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Profiles must not be modified during saving. 的本地化字符串。
+        /// </summary>
+        internal static string Profiles_SaveMutation {
+            get {
+                return ResourceManager.GetString("Profiles_SaveMutation", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 A section with the same name already exists. 的本地化字符串。
+        /// </summary>
+        internal static string Profiles_SectionDuplicate {
+            get {
+                return ResourceManager.GetString("Profiles_SectionDuplicate", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The section name cannot be represented in a profile: &apos;{0}&apos;. 的本地化字符串。
+        /// </summary>
+        internal static string Profiles_SectionInvalid {
+            get {
+                return ResourceManager.GetString("Profiles_SectionInvalid", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Edit the declaration through its source profile and section. 的本地化字符串。
+        /// </summary>
+        internal static string Profiles_SourceEdit {
+            get {
+                return ResourceManager.GetString("Profiles_SourceEdit", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The modified profile has no source file path. 的本地化字符串。
+        /// </summary>
+        internal static string Profiles_SourceRequired {
+            get {
+                return ResourceManager.GetString("Profiles_SourceRequired", resourceCulture);
             }
         }
 
@@ -1326,24 +1398,6 @@ namespace Zongsoft.Properties {
         internal static string TransactionEventChannel_DispatchingTimeout {
             get {
                 return ResourceManager.GetString("TransactionEventChannel.DispatchingTimeout", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   查找类似 Tip: Press Ctrl+C to exit listening mode. 的本地化字符串。
-        /// </summary>
-        internal static string WorkerListenCommand_Prompt {
-            get {
-                return ResourceManager.GetString("WorkerListenCommand.Prompt", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   查找类似 Welcome to {0} listening mode. 的本地化字符串。
-        /// </summary>
-        internal static string WorkerListenCommand_Welcome {
-            get {
-                return ResourceManager.GetString("WorkerListenCommand.Welcome", resourceCulture);
             }
         }
 

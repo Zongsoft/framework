@@ -36,16 +36,6 @@ namespace Zongsoft.Configuration.Profiles;
 
 internal sealed class ProfileReader
 {
-	#region 枚举定义
-	private enum LineType
-	{
-		Blank,
-		Entry,
-		Section,
-		Comment,
-	}
-	#endregion
-
 	#region 成员字段
 	private readonly HashSet<string> _active = new(OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
 	private readonly List<string> _paths = [];
@@ -54,6 +44,7 @@ internal sealed class ProfileReader
 	#region 构造函数
 	public ProfileReader(ProfileOptions options)
 	{
+		//所有递归导入共享此快照，不受调用方随后修改原选项的影响。
 		this.Options = options?.Clone() ?? new ProfileOptions(false);
 	}
 	#endregion
@@ -63,7 +54,12 @@ internal sealed class ProfileReader
 	#endregion
 
 	#region 读取方法
-	public Profile Read(string path, int maximumDepth = int.MaxValue, bool optional = false, Action<string> loading = null, Action<Profile> loaded = null, ProfileReadingContext context = null)
+	public Profile Read(string path) => this.ReadFile(path, null);
+	public Profile Read(Stream stream, Encoding encoding) => this.ReadCore(stream, encoding, stream is FileStream file ? file.Name : string.Empty, null);
+	#endregion
+
+	#region 私有方法
+	private Profile ReadFile(string path, Context context)
 	{
 		if(string.IsNullOrWhiteSpace(path))
 			throw new ArgumentNullException(nameof(path));
@@ -79,36 +75,34 @@ internal sealed class ProfileReader
 		path = Path.GetFullPath(path);
 		FileStream stream;
 
+		//仅在打开阶段忽略可选导入的缺失文件；解析和回调抛出的同类异常必须传播。
 		try
 		{
 			stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
 		}
-		catch(FileNotFoundException) when(optional)
+		catch(FileNotFoundException) when(context != null)
 		{
 			return null;
 		}
-		catch(DirectoryNotFoundException) when(optional)
+		catch(DirectoryNotFoundException) when(context != null)
 		{
 			return null;
 		}
 
-		return this.ReadCore(stream, null, path, maximumDepth, loading, loaded, context);
+		return this.ReadCore(stream, null, path, context);
 	}
 
-	public Profile Read(Stream stream, Encoding encoding, Action<string> loading = null, Action<Profile> loaded = null) =>
-		this.ReadCore(stream, encoding, stream is FileStream file ? file.Name : string.Empty, int.MaxValue, loading, loaded, null);
-	#endregion
-
-	#region 私有方法
-	private Profile ReadCore(Stream stream, Encoding encoding, string path, int maximumDepth, Action<string> loading, Action<Profile> loaded, ProfileReadingContext context)
+	private Profile ReadCore(Stream stream, Encoding encoding, string path, Context context)
 	{
 		using(stream)
 		{
-			var identity = string.IsNullOrEmpty(path) ? null : GetIdentity(path);
+			var identity = string.IsNullOrEmpty(path) ? null : ProfileUtility.GetIdentity(path);
 
-			if(_paths.Count >= maximumDepth)
+			//入栈前检查层数；根文件也占一层，被拒绝的文件不触发导入通知。
+			if(_paths.Count >= this.Options.MaximumDepth)
 				throw this.CreateException(Properties.Resources.Profiles_MaximumDepth, path, context);
 
+			//只检测当前活动链，允许已经退出活动链的文件再次导入。
 			if(identity != null && !_active.Add(identity))
 				throw this.CreateException(Properties.Resources.Profiles_CircularImport, path, context);
 
@@ -116,16 +110,24 @@ internal sealed class ProfileReader
 
 			try
 			{
-				loading?.Invoke(path);
+				//根读取没有引用者；前后上下文分别创建，保留的前置上下文不会被更新。
+				if(context != null)
+					this.Options.Importing?.Invoke(new ProfileContext(path, _paths.Count, context.Profile));
 
 				var profile = this.Parse(stream, encoding);
 
-				loaded?.Invoke(profile);
+				if(context != null)
+				{
+					//先合并并登记来源，再通知完成；回调失败不回滚已发生的合并。
+					context.Profile.Import(profile);
+					this.Options.Imported?.Invoke(new ProfileContext(path, _paths.Count, context.Profile, profile));
+				}
 
 				return profile;
 			}
 			finally
 			{
+				//解析、合并或通知失败均须退出活动链，使同一读取器能够重试。
 				_paths.RemoveAt(_paths.Count - 1);
 
 				if(identity != null)
@@ -138,8 +140,10 @@ internal sealed class ProfileReader
 	{
 		List<int> blanks = [];
 		Profile profile = new Profile(stream is FileStream fileStream ? fileStream.Name : string.Empty);
-		ProfileReadingContext context = new ProfileReadingContext(profile, stream, this);
+		var context = new Context(profile);
 		var options = this.Options;
+
+		profile.BeginRead();
 
 		using(var reader = new StreamReader(stream, encoding ?? Encoding.UTF8))
 		{
@@ -149,13 +153,13 @@ internal sealed class ProfileReader
 			while((text = reader.ReadLine()) != null)
 			{
 				//解析读取到的行文本
-				switch(ParseLine(text, out var content))
+				switch(ProfileUtility.ParseLine(text, out var content))
 				{
-					case LineType.Blank:
-						if(options != null && options.ReservedBlanks)
+					case ProfileUtility.LineType.Blank:
+						if(options != null && options.PreserveBlanks)
 							blanks.Add(context.LineNumber);
 						break;
-					case LineType.Section:
+					case ProfileUtility.LineType.Section:
 						var parts = content.Split(' ', '\t', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
 
 						if(parts == null || parts.Length == 0)
@@ -169,40 +173,42 @@ internal sealed class ProfileReader
 								if(sections.TryGetValue(parts[i], out var section))
 									context.Section = section;
 								else
-									context.Section = sections.Add(parts[i], context.LineNumber);
+									context.Section = sections.GetOrAdd(parts[i], context.LineNumber);
 
 								sections = context.Section.Sections;
 							}
 						}
 
+						profile.DeclareSection(context.Section, context.LineNumber, true);
 						break;
-					case LineType.Entry:
+					case ProfileUtility.LineType.Entry:
 						var index = content.IndexOf('=');
 
 						if(context.Section == null)
 						{
 							if(index < 0)
-								profile.Entries.Add(context.LineNumber, content);
+								profile.Entries.AddParsed(context.LineNumber, content);
 							else
-								profile.Entries.Add(context.LineNumber, content[..index], content[(index + 1)..]);
+								profile.Entries.AddParsed(context.LineNumber, content[..index], content[(index + 1)..]);
 						}
 						else
 						{
 							if(index < 0)
-								context.Section.Entries.Add(context.LineNumber, content);
+								context.Section.Entries.AddParsed(context.LineNumber, content);
 							else
-								context.Section.Entries.Add(context.LineNumber, content[..index], content[(index + 1)..]);
+								context.Section.Entries.AddParsed(context.LineNumber, content[..index], content[(index + 1)..]);
 						}
 
 						break;
-					case LineType.Comment:
-						var comment = context.Section == null ?
-							profile.Comments.Add(content, context.LineNumber) :
-							context.Section.Comments.Add(content, context.LineNumber);
+					case ProfileUtility.LineType.Comment:
+						var comments = context.Section == null ? profile.Comments : context.Section.Comments;
+						comments.AddParsed(content, context.LineNumber);
 
-						//如果是指令项则调用指令的读方法
-						if(comment is ProfileDirective directive)
-							context.OnRead(options, directive.Name, directive.Argument);
+						if(ProfileUtility.TryGetImport(content, out var argument))
+						{
+							foreach(var path in argument.Split([' ', '\t', '|'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+								this.ReadFile(path, context);
+						}
 
 						break;
 				}
@@ -213,60 +219,22 @@ internal sealed class ProfileReader
 		}
 
 		//更新配置文件中的空行集
-		profile.Blanks = [.. blanks];
+		profile.CompleteRead([.. blanks]);
 
 		//返回加载成功的配置文件
 		return profile;
 	}
 
-	private static LineType ParseLine(ReadOnlySpan<char> text, out string result)
-	{
-		result = null;
-
-		if(text.IsEmpty || text.IsWhiteSpace())
-			return LineType.Blank;
-
-		text = text.Trim();
-
-		if(text[0] == ';' || text[0] == '#')
-		{
-			result = text[1..].ToString();
-			return LineType.Comment;
-		}
-
-		if(text[0] == '[' && text[^1] == ']')
-		{
-			result = text[1..^1].ToString();
-			return LineType.Section;
-		}
-
-		if(text[0] == '=')
-			throw new ProfileException("Invalid format.");
-
-		result = text.ToString();
-		return LineType.Entry;
-	}
-
-	private ProfileException CreateException(string message, string path, ProfileReadingContext context) => new(string.Format(
+	private ProfileException CreateException(string message, string path, Context context) => new(string.Format(
 		message, string.Join(" -> ", _paths) + " -> " + path, context?.Profile.FilePath, (context?.LineNumber ?? -1) + 1));
+	#endregion
 
-	private static string GetIdentity(string path)
+	#region 嵌套类型
+	private sealed class Context(Profile profile)
 	{
-		path = Path.GetFullPath(path);
-
-		var root = Path.GetPathRoot(path);
-		var current = root;
-
-		foreach(var part in path[root.Length..].Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries))
-		{
-			current = Path.Combine(current, part);
-			FileSystemInfo info = Directory.Exists(current) ? new DirectoryInfo(current) : new FileInfo(current);
-
-			if(info.LinkTarget != null)
-				current = info.ResolveLinkTarget(true)?.FullName ?? throw new IOException(string.Format(Properties.Resources.Profiles_LinkResolutionFailed, current));
-		}
-
-		return current;
+		public Profile Profile { get; } = profile;
+		public int LineNumber { get; set; }
+		public ProfileSection Section { get; set; }
 	}
 	#endregion
 }

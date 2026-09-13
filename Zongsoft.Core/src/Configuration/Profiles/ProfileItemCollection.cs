@@ -56,4 +56,41 @@ public class ProfileItemCollection<TItem> : Collection<TItem> where TItem : Prof
 	internal Profile Profile => _profile;
 	internal ProfileSection Section => _section;
 	#endregion
+
+	#region 重写方法
+	protected override void InsertItem(int index, TItem item)
+	{
+		this.Profile.VerifyOwner(item, this.Section);
+		base.InsertItem(index, item);
+		this.Profile.Declare(item);
+	}
+
+	protected override void SetItem(int index, TItem item)
+	{
+		this.Profile.VerifyOwner(item, this.Section);
+		var previous = this.Items[index];
+		this.Profile.VerifyOwner(previous, this.Section);
+		base.SetItem(index, item);
+		this.Profile.ReplaceDeclaration(previous, item);
+	}
+
+	protected override void RemoveItem(int index)
+	{
+		var item = this.Items[index];
+		this.Profile.VerifyOwner(item, this.Section);
+		base.RemoveItem(index);
+		this.Profile.RemoveDeclaration(item);
+	}
+
+	protected override void ClearItems()
+	{
+		foreach(var item in this.Items)
+			this.Profile.VerifyOwner(item, this.Section);
+
+		foreach(var item in this.Items)
+			this.Profile.RemoveDeclaration(item);
+
+		base.ClearItems();
+	}
+	#endregion
 }

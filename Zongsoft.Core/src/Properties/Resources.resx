@@ -153,9 +153,6 @@
   <data name="Error.PropertyNotExists" xml:space="preserve">
     <value>There is no property named "{1}" in the "{0}" type.</value>
   </data>
-  <data name="Error.RepeatedOperation" xml:space="preserve">
-    <value>This operation cannot be repeated.</value>
-  </data>
   <data name="Error.UnsupportedMultidimensionalArray" xml:space="preserve">
     <value>Unable to create an instance of type "{0}" because multidimensional arrays are not supported.</value>
   </data>
@@ -231,9 +228,6 @@
   <data name="CommandNotFound.Message" xml:space="preserve">
     <value>The specified '{0}' command was not found.</value>
   </data>
-  <data name="CredentialException.Message" xml:space="preserve">
-    <value>Credential error: The specified credential is invalid or has expired.</value>
-  </data>
   <data name="DataArgumentException.Message" xml:space="preserve">
     <value>Invalid data parameters or values.</value>
   </data>
@@ -264,12 +258,6 @@
   <data name="LinePositionInfo" xml:space="preserve">
     <value>Row {0}, column {1}.</value>
   </data>
-  <data name="MessageQueueListener.Description" xml:space="preserve">
-    <value>This is a background service program that listens to message queues. It continuously polls the message queue in a blocking manner (It repeatedly calls the dequeue method of the message queue in a blocking manner). Once a message becomes available in the queue, it immediately dequeues the message and passes it to the executor in the listener for execution.</value>
-  </data>
-  <data name="MessageQueueListener.Title" xml:space="preserve">
-    <value>Message queue listener</value>
-  </data>
   <data name="MissingCommandOption" xml:space="preserve">
     <value>The command option '{0}' is missing. A value must be provided for this option.</value>
   </data>
@@ -284,12 +272,6 @@
   </data>
   <data name="ShellCommand.Options.Timeout" xml:space="preserve">
     <value>Timeout for running commands, unit: milliseconds.</value>
-  </data>
-  <data name="WorkerListenCommand.Prompt" xml:space="preserve">
-    <value>Tip: Press Ctrl+C to exit listening mode.</value>
-  </data>
-  <data name="WorkerListenCommand.Welcome" xml:space="preserve">
-    <value>Welcome to {0} listening mode.</value>
   </data>
   <data name="WorkerPauseCommand.Name" xml:space="preserve">
     <value>Pause command</value>
@@ -513,9 +495,6 @@
   <data name="Messaging.SubscriptionConflict.Message" xml:space="preserve">
     <value>The existing subscription for the '{0}' topic has a different handler, tags, or options.</value>
   </data>
-  <data name="Messaging.StorageSettingsInvalid.Message" xml:space="preserve">
-    <value>The '{0}' connection settings cannot be assigned to a message storage that requires '{1}'.</value>
-  </data>
   <data name="Messaging.StorageCreationFailed.Message" xml:space="preserve">
     <value>The message storage factory failed to create storage for the '{0}' broker.</value>
   </data>
@@ -587,5 +566,44 @@
   </data>
   <data name="Profiles_LinkResolutionFailed" xml:space="preserve">
     <value>Unable to resolve the profile path link: {0}.</value>
+  </data>
+  <data name="Profiles_SourceRequired" xml:space="preserve">
+    <value>The modified profile has no source file path.</value>
+  </data>
+  <data name="Profiles_SourceEdit" xml:space="preserve">
+    <value>Edit the declaration through its source profile and section.</value>
+  </data>
+  <data name="Profiles_AlreadySaving" xml:space="preserve">
+    <value>This profile is already being saved.</value>
+  </data>
+  <data name="Profiles_SaveConflict" xml:space="preserve">
+    <value>Conflicting modified profiles target the same file: '{0}'.</value>
+  </data>
+  <data name="Profiles_SaveFailed" xml:space="preserve">
+    <value>Failed to save '{0}'. Completed files: {1}.</value>
+  </data>
+  <data name="Profiles_SaveMutation" xml:space="preserve">
+    <value>Profiles must not be modified during saving.</value>
+  </data>
+  <data name="Profiles_ReadOnly" xml:space="preserve">
+    <value>The profile file is read-only: '{0}'.</value>
+  </data>
+  <data name="Profiles_SectionInvalid" xml:space="preserve">
+    <value>The section name cannot be represented in a profile: '{0}'.</value>
+  </data>
+  <data name="Profiles_EntryInvalid" xml:space="preserve">
+    <value>The entry '{0}' cannot be represented in a profile.</value>
+  </data>
+  <data name="Profiles_CommentInvalid" xml:space="preserve">
+    <value>The comment cannot be represented consistently as a profile declaration.</value>
+  </data>
+  <data name="Profiles_BlanksInvalid" xml:space="preserve">
+    <value>Profile blank line positions must be nonnegative and increasing.</value>
+  </data>
+  <data name="Profiles_EntryDuplicate" xml:space="preserve">
+    <value>An entry named '{0}' is already declared in this profile.</value>
+  </data>
+  <data name="Profiles_SectionDuplicate" xml:space="preserve">
+    <value>A section with the same name already exists.</value>
   </data>
 </root>

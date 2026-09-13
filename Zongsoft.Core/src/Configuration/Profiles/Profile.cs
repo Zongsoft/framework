@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -46,9 +46,9 @@ namespace Zongsoft.Configuration.Profiles;
 ///		<para>Entry: INI所包含的最基本的“元素”就是 Entry/Parameter，每一个“条目”都由一个名称和一个值组成(值可选)，名称与值由等号“=”分隔，名称在等号的左边；值在等号右边，值的内容可省略。譬如：name=value 或者只有名称部分。注意：在同一个设置节中，条目名称必须唯一。</para>
 ///		<para>Section: 所有的“条目”都是以“节”为单位结合在一起的。“节”名字都被方括号包围着。在“节”声明后的所有“条目”都是属于该“节”。对于一个“节”没有明显的结束标志符，一个“节”的开始就是上一个“节”的结束。</para>
 ///		<para>注意：节是支持分层嵌套的，即在配置节中以空格或制表符(Tab)来分隔节的层级关系。</para>
-///		<para>Comment: 在INI文件中注释语句是以分号“;”或者“#”开始的。所有的注释语句不管多长都是独占一行直到结束的，在注释符和行结束符之间的所有内容都是被忽略的。</para>
+///		<para>Comment: 在INI文件中注释语句是以分号“;”或者“#”开始的，独占一行。读取器识别紧接注释符的 @import 导入语句，其余内容作为普通注释保留。</para>
 /// </remarks>
-public class Profile : IEnumerable<ProfileItem>
+public partial class Profile : IEnumerable<ProfileItem>
 {
 	#region 构造函数
 	public Profile(string filePath = null)
@@ -95,7 +95,7 @@ public class Profile : IEnumerable<ProfileItem>
 		if(string.IsNullOrWhiteSpace(this.FilePath))
 			throw new InvalidOperationException();
 
-		this.Save(this.FilePath, options);
+		new ProfileWriter(options).Write(this);
 	}
 
 	public void Save(string filePath, ProfileOptions options = null) => this.Save(filePath, null, options);
@@ -106,10 +106,7 @@ public class Profile : IEnumerable<ProfileItem>
 		if(string.IsNullOrWhiteSpace(filePath))
 			throw new ArgumentNullException(nameof(filePath));
 
-		using(var stream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
-		{
-			this.Save(stream, encoding, options);
-		}
+		new ProfileWriter(options).Write(this, filePath, encoding);
 	}
 
 	public void Save(Stream stream, ProfileOptions options = null) => this.Save(stream, null, options);
@@ -118,10 +115,7 @@ public class Profile : IEnumerable<ProfileItem>
 		if(stream == null)
 			throw new ArgumentNullException(nameof(stream));
 
-		using(var writer = new StreamWriter(stream, encoding ?? Encoding.UTF8))
-		{
-			this.Save(writer, options);
-		}
+		new ProfileWriter(options).Write(this, stream, encoding);
 	}
 
 	public void Save(TextWriter writer, ProfileOptions options = null)
@@ -129,32 +123,7 @@ public class Profile : IEnumerable<ProfileItem>
 		if(writer == null)
 			throw new ArgumentNullException(nameof(writer));
 
-		var context = new ProfileWritingContext(this, writer);
-
-		foreach(var item in this.GetItems())
-		{
-			//忽略非本配置文件的条目
-			if(item == null || item.Profile != this)
-				continue;
-
-			switch(item.ItemType)
-			{
-				case ProfileItemType.Entry:
-					this.WriteEntry(writer, (ProfileEntry)item);
-					break;
-				case ProfileItemType.Section:
-					this.WriteSection(writer, (ProfileSection)item);
-					break;
-				case ProfileItemType.Comment:
-					this.WriteComment(writer, (ProfileComment)item);
-
-					//如果是指令项则调用指令的写方法
-					if(item is ProfileDirective directive)
-						context.OnWrite(options, directive.Name, directive.Argument);
-
-					break;
-			}
-		}
+		new ProfileWriter(options).Write(this, writer);
 	}
 	#endregion
 
@@ -317,72 +286,6 @@ public class Profile : IEnumerable<ProfileItem>
 					Zongsoft.Common.Convert.ConvertValue<string>(entryKey),
 					Zongsoft.Common.Convert.ConvertValue<string>(entryValue));
 			}
-		}
-	}
-
-	private void WriteEntry(TextWriter writer, ProfileEntry entry)
-	{
-		if(entry == null || entry.Profile != this)
-			return;
-
-		if(string.IsNullOrWhiteSpace(entry.Value))
-			writer.WriteLine(entry.Name);
-		else
-			writer.WriteLine(entry.Name + "=" + entry.Value);
-	}
-
-	private void WriteComment(TextWriter writer, ProfileComment comment)
-	{
-		if(comment == null || comment.Profile != this)
-			return;
-
-		foreach(var line in comment.Lines)
-			writer.WriteLine($"#{line}");
-	}
-
-	private void WriteSection(TextWriter writer, ProfileSection section)
-	{
-		if(section == null || section.Profile != this)
-			return;
-
-		var sections = new List<ProfileSection>();
-
-		if(CanWrite(section))
-		{
-			writer.WriteLine();
-			writer.WriteLine($"[{section.FullName}]");
-		}
-
-		foreach(var item in section.GetItems())
-		{
-			switch(item.ItemType)
-			{
-				case ProfileItemType.Section:
-					sections.Add((ProfileSection)item);
-					break;
-				case ProfileItemType.Entry:
-					this.WriteEntry(writer, (ProfileEntry)item);
-					break;
-				case ProfileItemType.Comment:
-					this.WriteComment(writer, (ProfileComment)item);
-					break;
-			}
-		}
-
-		if(sections.Count > 0)
-		{
-			foreach(var child in sections)
-				this.WriteSection(writer, child);
-		}
-
-		static bool CanWrite(ProfileSection section)
-		{
-			if(section.Entries.Count > 0 && section.Entries.Any(entry => entry.Profile == section.Profile))
-				return true;
-			if(section.Comments.Count > 0 && section.Comments.Any(comment => comment.Profile == section.Profile))
-				return true;
-
-			return false;
 		}
 	}
 	#endregion

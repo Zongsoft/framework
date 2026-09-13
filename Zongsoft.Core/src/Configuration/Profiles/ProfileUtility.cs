@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -28,12 +28,28 @@
  */
 
 using System;
+using System.IO;
 using System.Collections.Generic;
 
 namespace Zongsoft.Configuration.Profiles;
 
 internal static class ProfileUtility
 {
+	#region 枚举定义
+	internal enum LineType
+	{
+		Blank,
+		Entry,
+		Section,
+		Comment,
+	}
+	#endregion
+
+	#region 内部属性
+	internal static StringComparer PathComparer { get; } = OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
+	#endregion
+
+	#region 枚举方法
 	public static IReadOnlyList<ProfileItem> GetItems(this Profile profile)
 	{
 		if(profile == null)
@@ -61,4 +77,69 @@ internal static class ProfileUtility
 
 		return list;
 	}
+	#endregion
+
+	#region 语法解析
+	internal static bool TryGetImport(ReadOnlySpan<char> text, out string argument)
+	{
+		const string keyword = "@import";
+		argument = null;
+
+		if(!text.StartsWith(keyword, StringComparison.OrdinalIgnoreCase) ||
+			text.Length > keyword.Length && text[keyword.Length] is not (' ' or '\t'))
+			return false;
+
+		argument = text[keyword.Length..].Trim().ToString();
+		return true;
+	}
+
+	internal static LineType ParseLine(ReadOnlySpan<char> text, out string result)
+	{
+		result = null;
+
+		if(text.IsEmpty || text.IsWhiteSpace())
+			return LineType.Blank;
+
+		text = text.Trim();
+
+		if(text[0] == ';' || text[0] == '#')
+		{
+			result = text[1..].ToString();
+			return LineType.Comment;
+		}
+
+		if(text[0] == '[' && text[^1] == ']')
+		{
+			result = text[1..^1].ToString();
+			return LineType.Section;
+		}
+
+		if(text[0] == '=')
+			throw new ProfileException("Invalid format.");
+
+		result = text.ToString();
+		return LineType.Entry;
+	}
+	#endregion
+
+	#region 路径解析
+	internal static string GetIdentity(string path)
+	{
+		path = Path.GetFullPath(path);
+
+		var root = Path.GetPathRoot(path);
+		var current = root;
+
+		foreach(var part in path[root.Length..].Split(Path.DirectorySeparatorChar, StringSplitOptions.RemoveEmptyEntries))
+		{
+			current = Path.Combine(current, part);
+			FileSystemInfo info = Directory.Exists(current) ? new DirectoryInfo(current) : new FileInfo(current);
+
+			if(info.LinkTarget != null)
+				current = info.ResolveLinkTarget(true)?.FullName ?? throw new IOException(string.Format(Properties.Resources.Profiles_LinkResolutionFailed, current));
+		}
+
+		return current;
+	}
+	#endregion
 }

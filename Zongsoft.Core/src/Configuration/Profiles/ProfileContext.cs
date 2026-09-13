@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -27,48 +27,33 @@
  * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.IO;
-
 namespace Zongsoft.Configuration.Profiles;
 
-public abstract class ProfileContextBase
-{
-	protected ProfileContextBase(Profile profile)
-	{
-		this.Profile = profile ?? throw new ArgumentNullException(nameof(profile));
-	}
-
-	public Profile Profile { get; }
-}
-
-public class ProfileReadingContext : ProfileContextBase
+/// <summary>提供一次导入通知的上下文信息。</summary>
+/// <remarks>导入前后分别创建上下文；属性引用的配置模型仍可修改。</remarks>
+public sealed class ProfileContext
 {
 	#region 构造函数
-	internal ProfileReadingContext(Profile profile, Stream input, ProfileReader reader) : base(profile)
+	internal ProfileContext(string filePath, int depth, Profile referer, Profile profile = null)
 	{
-		this.Input = input ?? throw new ArgumentNullException(nameof(input));
-		this.Reader = reader ?? throw new ArgumentNullException(nameof(reader));
+		this.FilePath = filePath;
+		this.Depth = depth;
+		this.Referer = referer;
+		this.Profile = profile;
 	}
 	#endregion
 
 	#region 公共属性
-	public Stream Input { get; }
-	public int LineNumber { get; internal set; }
-	public ProfileSection Section { get; internal set; }
+	/// <summary>获取本次导入文件规范化后的绝对加载路径。</summary>
+	public string FilePath { get; }
+
+	/// <summary>获取当前加载层数；根文件为第一层，直接导入为第二层。</summary>
+	public int Depth { get; }
+
+	/// <summary>获取包含本次导入声明的直接引用者。</summary>
+	public Profile Referer { get; }
+
+	/// <summary>获取本次导入结果；导入前为空(<c>null</c>)，导入后为已解析并合并到引用者的配置。</summary>
+	public Profile Profile { get; }
 	#endregion
-
-	#region 内部属性
-	internal ProfileReader Reader { get; }
-	#endregion
-}
-
-public class ProfileWritingContext : ProfileContextBase
-{
-	internal ProfileWritingContext(Profile profile, TextWriter writer) : base(profile)
-	{
-		this.Writer = writer ?? throw new ArgumentNullException(nameof(writer));
-	}
-
-	public TextWriter Writer { get; }
 }

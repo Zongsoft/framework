@@ -36,6 +36,7 @@ public class ProfileEntryCollection : ProfileItemCollection<ProfileEntry>
 {
 	#region 成员字段
 	private readonly Dictionary<string, ProfileEntry> _dictionary;
+	private readonly Dictionary<string, ProfileEntry> _declarations = new(StringComparer.OrdinalIgnoreCase);
 	#endregion
 
 	#region 构造函数
@@ -53,13 +54,11 @@ public class ProfileEntryCollection : ProfileItemCollection<ProfileEntry>
 
 	public bool Remove(string name, out ProfileEntry entry)
 	{
-		if(_dictionary.Remove(name, out entry))
-		{
-			base.Items.Remove(entry);
-			return true;
-		}
+		if(!_dictionary.TryGetValue(name, out entry))
+			return false;
 
-		return false;
+		this.Remove(entry);
+		return true;
 	}
 
 	public ProfileEntry Add(string name, string value = null)
@@ -75,39 +74,103 @@ public class ProfileEntryCollection : ProfileItemCollection<ProfileEntry>
 		this.Add(entry);
 		return entry;
 	}
+	#endregion
 
+	#region 内部方法
+	internal ProfileEntry AddParsed(int lineNumber, string name, string value = null)
+	{
+		var entry = this.Section == null ?
+			new ProfileEntry(this.Profile, lineNumber, name, value) :
+			new ProfileEntry(this.Section, lineNumber, name, value);
+
+		this.CheckDuplicate(entry.Name);
+		this.Import(entry);
+		_declarations.Add(entry.Name, entry);
+		this.Profile.Declare(entry, true);
+		return entry;
+	}
+
+	internal void Import(ProfileEntry entry)
+	{
+		if(_dictionary.TryGetValue(entry.Name, out var previous))
+			this.Items[this.Items.IndexOf(previous)] = entry;
+		else
+			this.Items.Add(entry);
+
+		_dictionary[entry.Name] = entry;
+	}
 	#endregion
 
 	#region 重写方法
 	protected override void InsertItem(int index, ProfileEntry entry)
 	{
-		if(entry == null)
-			throw new ArgumentNullException(nameof(entry));
+		this.Profile.VerifyOwner(entry, this.Section);
+		this.CheckDuplicate(entry.Name);
 
-		_dictionary.Add(entry.Name, entry);
-		base.InsertItem(index, entry);
+		if(_dictionary.TryGetValue(entry.Name, out var previous))
+			this.Items[this.Items.IndexOf(previous)] = entry;
+		else
+			this.Items.Insert(index, entry);
+
+		_dictionary[entry.Name] = entry;
+		_declarations.Add(entry.Name, entry);
+		this.Profile.Declare(entry);
 	}
 
 	protected override void SetItem(int index, ProfileEntry entry)
 	{
-		if(entry == null)
-			throw new ArgumentNullException(nameof(entry));
+		this.Profile.VerifyOwner(entry, this.Section);
+		var previous = this.Items[index];
+		this.Profile.VerifyOwner(previous, this.Section);
 
-		_dictionary[entry.Name] = entry;
-		base.SetItem(index, entry);
+		if(ReferenceEquals(previous, entry))
+			return;
+
+		if(!string.Equals(previous.Name, entry.Name, StringComparison.OrdinalIgnoreCase))
+		{
+			this.CheckDuplicate(entry.Name);
+
+			if(_dictionary.ContainsKey(entry.Name))
+				throw new ArgumentException(string.Format(Properties.Resources.Profiles_EntryDuplicate, entry.Name), nameof(entry));
+		}
+
+		this.Items[index] = entry;
+		_dictionary.Remove(previous.Name);
+		_dictionary.Add(entry.Name, entry);
+		_declarations.Remove(previous.Name);
+		_declarations.Add(entry.Name, entry);
+		this.Profile.ReplaceDeclaration(previous, entry);
 	}
 
 	protected override void RemoveItem(int index)
 	{
-		var item = base.Items[index];
-		base.RemoveItem(index);
-		_dictionary.Remove(item.Name);
+		var entry = this.Items[index];
+		this.Profile.VerifyOwner(entry, this.Section);
+		this.Items.RemoveAt(index);
+		_dictionary.Remove(entry.Name);
+		_declarations.Remove(entry.Name);
+		this.Profile.RemoveDeclaration(entry);
 	}
 
 	protected override void ClearItems()
 	{
+		foreach(var entry in this.Items)
+			this.Profile.VerifyOwner(entry, this.Section);
+
+		foreach(var entry in this.Items)
+			this.Profile.RemoveDeclaration(entry);
+
+		this.Items.Clear();
 		_dictionary.Clear();
-		base.ClearItems();
+		_declarations.Clear();
+	}
+	#endregion
+
+	#region 私有方法
+	private void CheckDuplicate(string name)
+	{
+		if(_declarations.ContainsKey(name))
+			throw new ArgumentException(string.Format(Properties.Resources.Profiles_EntryDuplicate, name), nameof(name));
 	}
 	#endregion
 }

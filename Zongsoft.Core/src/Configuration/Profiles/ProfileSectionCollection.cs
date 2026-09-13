@@ -75,13 +75,11 @@ public class ProfileSectionCollection : ProfileItemCollection<ProfileSection>
 
 	public bool Remove(string name, out ProfileSection section)
 	{
-		if(_dictionary.Remove(name, out section))
-		{
-			base.Items.Remove(section);
-			return true;
-		}
+		if(!_dictionary.TryGetValue(name, out section))
+			return false;
 
-		return false;
+		this.Remove(section);
+		return true;
 	}
 
 	public ProfileSection Add(string name, int lineNumber = -1)
@@ -92,36 +90,76 @@ public class ProfileSectionCollection : ProfileItemCollection<ProfileSection>
 	}
 	#endregion
 
-	#region 重写方法
-	protected override void InsertItem(int index, ProfileSection entry)
+	#region 内部方法
+	internal ProfileSection GetOrAdd(string name, int lineNumber = -1)
 	{
-		if(entry == null)
-			throw new ArgumentNullException(nameof(entry));
+		if(_dictionary.TryGetValue(name, out var section))
+			return section;
 
-		_dictionary.Add(entry.Name, entry);
-		base.InsertItem(index, entry);
+		section = this.Section == null ? new(this.Profile, name, lineNumber) : new(this.Section, name, lineNumber);
+		_dictionary.Add(section.Name, section);
+		this.Items.Add(section);
+		return section;
+	}
+	#endregion
+
+	#region 重写方法
+	protected override void InsertItem(int index, ProfileSection section)
+	{
+		this.Profile.VerifyOwner(section, this.Section);
+		_dictionary.Add(section.Name, section);
+		this.Items.Insert(index, section);
+		this.Profile.DeclareTree(section);
 	}
 
-	protected override void SetItem(int index, ProfileSection entry)
+	protected override void SetItem(int index, ProfileSection section)
 	{
-		if(entry == null)
-			throw new ArgumentNullException(nameof(entry));
+		this.Profile.VerifyOwner(section, this.Section);
+		var previous = this.Items[index];
+		VerifyRemoval(previous);
 
-		_dictionary[entry.Name] = entry;
-		base.SetItem(index, entry);
+		if(ReferenceEquals(previous, section))
+			return;
+
+		if(!string.Equals(previous.Name, section.Name, StringComparison.OrdinalIgnoreCase) && _dictionary.ContainsKey(section.Name))
+			throw new ArgumentException(Properties.Resources.Profiles_SectionDuplicate, nameof(section));
+
+		this.Items[index] = section;
+		_dictionary.Remove(previous.Name);
+		_dictionary.Add(section.Name, section);
+		this.Profile.ReplaceTree(previous, section);
 	}
 
 	protected override void RemoveItem(int index)
 	{
-		var item = base.Items[index];
-		base.RemoveItem(index);
-		_dictionary.Remove(item.Name);
+		var section = this.Items[index];
+		VerifyRemoval(section);
+		this.Items.RemoveAt(index);
+		_dictionary.Remove(section.Name);
+		this.Profile.RemoveDeclaration(section);
 	}
 
 	protected override void ClearItems()
 	{
+		foreach(var section in this.Items)
+			VerifyRemoval(section);
+
+		foreach(var section in this.Items)
+			this.Profile.RemoveDeclaration(section);
+
+		this.Items.Clear();
 		_dictionary.Clear();
-		base.ClearItems();
+	}
+	#endregion
+
+	#region 私有方法
+	private static void VerifyRemoval(ProfileSection section)
+	{
+		foreach(var entry in section.Entries)
+			section.Profile.VerifyOwner(entry, section);
+
+		foreach(var child in section.Sections)
+			VerifyRemoval(child);
 	}
 	#endregion
 }

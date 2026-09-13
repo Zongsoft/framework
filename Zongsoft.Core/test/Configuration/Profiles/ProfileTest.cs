@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Linq;
 
 using Zongsoft.Configuration.Profiles;
@@ -116,19 +116,17 @@ public class ProfileTest
 
 		var comment = section.Comments[0];
 		Assert.NotNull(comment);
-		Assert.IsType<ProfileDirective>(comment);
+		Assert.IsType<ProfileComment>(comment);
 		Assert.Equal("Profile-3.ini", comment.Profile.FileName);
-		var directive = (ProfileDirective)comment;
-		Assert.Equal("import", directive.Name);
-		Assert.Equal("./Profile-1.ini", directive.Argument);
+		Assert.Equal("@import ./Profile-1.ini", comment.Text);
+		Assert.Equal(["@import ./Profile-1.ini"], comment.Lines);
 
 		comment = section.Comments[1];
 		Assert.NotNull(comment);
-		Assert.IsType<ProfileDirective>(comment);
+		Assert.IsType<ProfileComment>(comment);
 		Assert.Equal("Profile-3.ini", comment.Profile.FileName);
-		directive = (ProfileDirective)comment;
-		Assert.Equal("import", directive.Name);
-		Assert.Equal("./Profile-2.ini", directive.Argument);
+		Assert.Equal("@import ./Profile-2.ini", comment.Text);
+		Assert.Equal(["@import ./Profile-2.ini"], comment.Lines);
 
 		section = profile.Sections.Find("Plugins Zongsoft Data");
 		Assert.NotNull(section);
@@ -158,11 +156,10 @@ public class ProfileTest
 
 		var comment = profile.Comments[0];
 		Assert.NotNull(comment);
-		Assert.IsType<ProfileDirective>(comment);
+		Assert.IsType<ProfileComment>(comment);
 		Assert.Equal("Profile-4.ini", comment.Profile.FileName);
-		var directive = (ProfileDirective)comment;
-		Assert.Equal("import", directive.Name);
-		Assert.Equal("./Profile-3.ini", directive.Argument);
+		Assert.Equal("@import ./Profile-3.ini", comment.Text);
+		Assert.Equal(["@import ./Profile-3.ini"], comment.Lines);
 
 		var entry = profile.Entries[0];
 		Assert.NotNull(entry);

@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -42,13 +42,13 @@ public class ProfileComment : ProfileItem
 	internal ProfileComment(Profile profile, string text, int lineNumber = -1) : base(profile, lineNumber)
 	{
 		_text = text ?? string.Empty;
-		_lines = string.IsNullOrEmpty(text) ? [] : text.Split('\n');
+		_lines = string.IsNullOrEmpty(text) ? [] : text.Replace("\r\n", "\n").Split('\n');
 	}
 
 	internal ProfileComment(ProfileSection section, string text, int lineNumber = -1) : base(section, lineNumber)
 	{
 		_text = text ?? string.Empty;
-		_lines = string.IsNullOrEmpty(text) ? [] : text.Split('\n');
+		_lines = string.IsNullOrEmpty(text) ? [] : text.Replace("\r\n", "\n").Split('\n');
 	}
 	#endregion
 
@@ -61,27 +61,5 @@ public class ProfileComment : ProfileItem
 
 	#region 重写方法
 	public override string ToString() => _text;
-	#endregion
-
-	#region 静态方法
-	internal static ProfileComment GetComment(Profile profile, string text, int lineNumber = -1)
-	{
-		(var name, var argument) = ProfileDirective.Parse(text);
-
-		if(string.IsNullOrEmpty(name))
-			return new ProfileComment(profile, text, lineNumber);
-		else
-			return new ProfileDirective(profile, name, argument, lineNumber);
-	}
-
-	internal static ProfileComment GetComment(ProfileSection section, string text, int lineNumber = -1)
-	{
-		(var name, var argument) = ProfileDirective.Parse(text);
-
-		if(string.IsNullOrEmpty(name))
-			return new ProfileComment(section, text, lineNumber);
-		else
-			return new ProfileDirective(section, name, argument, lineNumber);
-	}
 	#endregion
 }
