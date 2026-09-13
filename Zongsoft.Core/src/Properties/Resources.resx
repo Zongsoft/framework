@@ -576,4 +576,16 @@
   <data name="Services.ApplicationVersion.EditionInvalid.Message" xml:space="preserve">
     <value>An initialized edition with a name and version number is required.</value>
   </data>
+  <data name="Profiles_CircularImport" xml:space="preserve">
+    <value>Circular profile import: {0}. Referenced from {1}, line {2}.</value>
+  </data>
+  <data name="Profiles_MaximumDepth" xml:space="preserve">
+    <value>Maximum profile import depth exceeded: {0}. Referenced from {1}, line {2}.</value>
+  </data>
+  <data name="Profiles_RelativeImportRequiresFile" xml:space="preserve">
+    <value>Relative import "{0}" requires a source file path (line {1}).</value>
+  </data>
+  <data name="Profiles_LinkResolutionFailed" xml:space="preserve">
+    <value>Unable to resolve the profile path link: {0}.</value>
+  </data>
 </root>

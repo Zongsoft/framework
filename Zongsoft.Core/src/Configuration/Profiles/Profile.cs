@@ -50,16 +50,6 @@ namespace Zongsoft.Configuration.Profiles;
 /// </remarks>
 public class Profile : IEnumerable<ProfileItem>
 {
-	#region 枚举定义
-	private enum LineType
-	{
-		Blank,
-		Entry,
-		Section,
-		Comment,
-	}
-	#endregion
-
 	#region 构造函数
 	public Profile(string filePath = null)
 	{
@@ -74,7 +64,7 @@ public class Profile : IEnumerable<ProfileItem>
 	#region 公共属性
 	public string FileName { get; }
 	public string FilePath { get; }
-	public int[] Blanks { get; private set; }
+	public int[] Blanks { get; internal set; }
 	public ProfileEntryCollection Entries { get; }
 	public ProfileCommentCollection Comments { get; }
 	public ProfileSectionCollection Sections { get; }
@@ -86,10 +76,7 @@ public class Profile : IEnumerable<ProfileItem>
 		if(string.IsNullOrWhiteSpace(filePath))
 			throw new ArgumentNullException(nameof(filePath));
 
-		using(var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read))
-		{
-			return Load(stream, null, options);
-		}
+		return new ProfileReader(options).Read(filePath);
 	}
 
 	public static Profile Load(Stream stream, ProfileOptions options = null) => Load(stream, null, options);
@@ -98,86 +85,7 @@ public class Profile : IEnumerable<ProfileItem>
 		if(stream == null)
 			throw new ArgumentNullException(nameof(stream));
 
-		List<int> blanks = [];
-		Profile profile = new Profile(stream is FileStream fileStream ? fileStream.Name : string.Empty);
-		ProfileReadingContext context = new ProfileReadingContext(profile, stream);
-
-		using(var reader = new StreamReader(stream, encoding ?? Encoding.UTF8))
-		{
-			string text;
-			context.LineNumber = 0;
-
-			while((text = reader.ReadLine()) != null)
-			{
-				//解析读取到的行文本
-				switch(ParseLine(text, out var content))
-				{
-					case LineType.Blank:
-						if(options != null && options.ReservedBlanks)
-							blanks.Add(context.LineNumber);
-						break;
-					case LineType.Section:
-						var parts = content.Split(' ', '\t', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-
-						if(parts == null || parts.Length == 0)
-							context.Section = null;
-						else
-						{
-							var sections = profile.Sections;
-
-							for(int i = 0; i < parts.Length; i++)
-							{
-								if(sections.TryGetValue(parts[i], out var section))
-									context.Section = section;
-								else
-									context.Section = sections.Add(parts[i], context.LineNumber);
-
-								sections = context.Section.Sections;
-							}
-						}
-
-						break;
-					case LineType.Entry:
-						var index = content.IndexOf('=');
-
-						if(context.Section == null)
-						{
-							if(index < 0)
-								profile.Entries.Add(context.LineNumber, content);
-							else
-								profile.Entries.Add(context.LineNumber, content[..index], content[(index + 1)..]);
-						}
-						else
-						{
-							if(index < 0)
-								context.Section.Entries.Add(context.LineNumber, content);
-							else
-								context.Section.Entries.Add(context.LineNumber, content[..index], content[(index + 1)..]);
-						}
-
-						break;
-					case LineType.Comment:
-						var comment = context.Section == null ?
-							profile.Comments.Add(content, context.LineNumber) :
-							context.Section.Comments.Add(content, context.LineNumber);
-
-						//如果是指令项则调用指令的读方法
-						if(comment is ProfileDirective directive)
-							context.OnRead(options, directive.Name, directive.Argument);
-
-						break;
-				}
-
-				//递增行号
-				context.LineNumber++;
-			}
-		}
-
-		//更新配置文件中的空行集
-		profile.Blanks = blanks.ToArray();
-
-		//返回加载成功的配置文件
-		return profile;
+		return new ProfileReader(options).Read(stream, encoding);
 	}
 	#endregion
 
@@ -476,34 +384,6 @@ public class Profile : IEnumerable<ProfileItem>
 
 			return false;
 		}
-	}
-
-	private static LineType ParseLine(string text, out string result)
-	{
-		result = null;
-
-		if(string.IsNullOrWhiteSpace(text))
-			return LineType.Blank;
-
-		text = text.Trim();
-
-		if(text[0] == ';' || text[0] == '#')
-		{
-			result = text[1..];
-			return LineType.Comment;
-		}
-
-		if(text[0] == '[' && text[^1] == ']')
-		{
-			result = text[1..^1];
-			return LineType.Section;
-		}
-
-		if(text[0] == '=')
-			throw new ProfileException("Invalid format.");
-
-		result = text;
-		return LineType.Entry;
 	}
 	#endregion
 }

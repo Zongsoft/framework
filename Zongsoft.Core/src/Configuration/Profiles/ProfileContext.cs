@@ -44,20 +44,28 @@ public abstract class ProfileContextBase
 
 public class ProfileReadingContext : ProfileContextBase
 {
-	public ProfileReadingContext(Profile profile, Stream input, int lineNumber = 0) : base(profile)
+	#region 构造函数
+	internal ProfileReadingContext(Profile profile, Stream input, ProfileReader reader) : base(profile)
 	{
 		this.Input = input ?? throw new ArgumentNullException(nameof(input));
-		this.LineNumber = lineNumber;
+		this.Reader = reader ?? throw new ArgumentNullException(nameof(reader));
 	}
+	#endregion
 
+	#region 公共属性
 	public Stream Input { get; }
 	public int LineNumber { get; internal set; }
 	public ProfileSection Section { get; internal set; }
+	#endregion
+
+	#region 内部属性
+	internal ProfileReader Reader { get; }
+	#endregion
 }
 
 public class ProfileWritingContext : ProfileContextBase
 {
-	public ProfileWritingContext(Profile profile, TextWriter writer) : base(profile)
+	internal ProfileWritingContext(Profile profile, TextWriter writer) : base(profile)
 	{
 		this.Writer = writer ?? throw new ArgumentNullException(nameof(writer));
 	}

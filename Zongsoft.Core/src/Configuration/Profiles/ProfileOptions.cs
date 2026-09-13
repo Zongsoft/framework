@@ -35,18 +35,15 @@ namespace Zongsoft.Configuration.Profiles;
 public class ProfileOptions
 {
 	#region 构造函数
+	public ProfileOptions(bool reservedBlanks) : this(reservedBlanks, null) { }
 	public ProfileOptions(params IEnumerable<IProfileDirective> directives) : this(true, directives) { }
 	public ProfileOptions(bool reservedBlanks, params IEnumerable<IProfileDirective> directives)
 	{
 		this.ReservedBlanks = reservedBlanks;
-		this.Directives = new ProfileDirectiveProvider(directives);
-	}
+		this.Directives = new(directives);
 
-	public ProfileOptions(params ReadOnlySpan<IProfileDirective> directives) : this(true, directives) { }
-	public ProfileOptions(bool reservedBlanks, params ReadOnlySpan<IProfileDirective> directives)
-	{
-		this.ReservedBlanks = reservedBlanks;
-		this.Directives = new ProfileDirectiveProvider(directives);
+		if(this.Directives.Count == 0)
+			this.Directives.Add(Profiles.Directives.ImportDirective.Default);
 	}
 	#endregion
 
@@ -54,7 +51,11 @@ public class ProfileOptions
 	/// <summary>获取或设置一个值，指示是否保留空行。</summary>
 	public bool ReservedBlanks { get; set; }
 
-	/// <summary>获取或设置指令提供程序。</summary>
-	public IProfileDirectiveProvider Directives { get; set; }
+	/// <summary>获取指令集合，可通过清空集合禁用全部指令。</summary>
+	public ProfileDirectiveCollection Directives { get; }
+	#endregion
+
+	#region 内部方法
+	internal ProfileOptions Clone() => (ProfileOptions)this.MemberwiseClone();
 	#endregion
 }

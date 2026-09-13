@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 namespace Zongsoft.Configuration.Profiles;
 
@@ -39,8 +38,10 @@ internal static class ProfileContextUtility
 		if(context == null || string.IsNullOrEmpty(name))
 			return;
 
-		var provider = options?.Directives ?? ProfileDirectiveProvider.Default;
-		provider.GetDirective(name)?.OnRead(context, argument);
+		var directives = options?.Directives ?? [ Directives.ImportDirective.Default ];
+
+		if(directives.TryGetValue(name, out var directive))
+			directive.OnRead(context, argument);
 	}
 
 	internal static void OnWrite(this ProfileWritingContext context, ProfileOptions options, string name, string argument)
@@ -48,7 +49,9 @@ internal static class ProfileContextUtility
 		if(context == null || string.IsNullOrEmpty(name))
 			return;
 
-		var provider = options?.Directives ?? ProfileDirectiveProvider.Default;
-		provider.GetDirective(name)?.OnWrite(context, argument);
+		var directives = options?.Directives ?? [Directives.ImportDirective.Default];
+
+		if(directives.TryGetValue(name, out var directive))
+			directive.OnWrite(context, argument);
 	}
 }

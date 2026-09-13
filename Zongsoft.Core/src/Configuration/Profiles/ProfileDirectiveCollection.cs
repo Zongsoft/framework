@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -28,10 +28,26 @@
  */
 
 using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Configuration.Profiles;
 
-public interface IProfileDirectiveProvider
+/// <summary>提供按名称忽略大小写查找的配置指令集合。</summary>
+public class ProfileDirectiveCollection : KeyedCollection<string, IProfileDirective>
 {
-	IProfileDirective GetDirective(string name);
+	#region 构造函数
+	public ProfileDirectiveCollection(params IEnumerable<IProfileDirective> directives) : base(StringComparer.OrdinalIgnoreCase)
+	{
+		if(directives != null)
+		{
+			foreach(var directive in directives)
+				this.Add(directive);
+		}
+	}
+	#endregion
+
+	#region 重写方法
+	protected override string GetKeyForItem(IProfileDirective directive) => directive.Name;
+	#endregion
 }

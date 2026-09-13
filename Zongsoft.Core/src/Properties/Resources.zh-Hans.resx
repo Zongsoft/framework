@@ -576,4 +576,16 @@
   <data name="Services.ApplicationVersion.EditionInvalid.Message" xml:space="preserve">
     <value>必须提供已初始化且具有名称和版本号的具名版本。</value>
   </data>
+  <data name="Profiles_CircularImport" xml:space="preserve">
+    <value>配置文件循环导入：{0}。引用位置：{1}，第 {2} 行。</value>
+  </data>
+  <data name="Profiles_MaximumDepth" xml:space="preserve">
+    <value>配置文件导入深度超过上限：{0}。引用位置：{1}，第 {2} 行。</value>
+  </data>
+  <data name="Profiles_RelativeImportRequiresFile" xml:space="preserve">
+    <value>相对导入“{0}”需要源文件路径（第 {1} 行）。</value>
+  </data>
+  <data name="Profiles_LinkResolutionFailed" xml:space="preserve">
+    <value>无法解析配置文件路径链接：{0}。</value>
+  </data>
 </root>
