@@ -24,6 +24,7 @@ description: 在 Zongsoft framework 仓库中进行修改、审查或排障前�
 
 - Core 是底层契约；先检查目标项目的 `Choose`：很多 Debug 构建通过 HintPath 引用本机 Core 输出，Release 使用 NuGet；不能把重新编译插件当成已同步宿主公共程序集。
 - 默认目标框架由 `Directory.Build.props` 定义，项目可覆盖；样例和宿主可能仅使用 net10.0。包版本有中央定义也有项目级 `VersionOverride`，以实际项目为准。
+- `Zongsoft.CodeAnalysis` 为集中版本管理的 NuGet 分析器包，源码与规则在 guidelines 维护；接入与检查方式详见 [代码规范检查](README.zh-Hans.md#code-analysis)。
 - `Zongsoft.Diagnostics/proto` 是外部子模块，除非任务明确要求，否则不修改上游协议内容。
 - 双语 README、资源文件和插件清单属于用户可见契约；行为变化时检查同步需要。
 

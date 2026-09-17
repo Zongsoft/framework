@@ -28,10 +28,13 @@
 
 - 未经明确要求，不运行发布、推包、部署、升级、安装、容器启停或会接触真实外部服务的脚本。
 - 不提交或输出真实密钥、令牌、证书私钥、连接字符串和云平台凭据。
+- 分析器、构建规则和 C# 诊断配置由 guidelines 维护并通过 `Zongsoft.CodeAnalysis` NuGet 包分发；升级中央包版本即可更新，见 [代码规范检查](README.zh-Hans.md#code-analysis)。
 - `Zongsoft.Diagnostics/proto` 是 Git 子模块；不要把生成物或无关上游变更写入其中。
 - 保留工作区中的用户修改，不重置、不覆盖与当前任务无关的差异。
 
 ## 验证
+
+- 编码风格与构建诊断按 [代码规范检查](README.zh-Hans.md#code-analysis) 执行；保留只读检查选项，自动修正仅限本次修改文件。
 
 - 文档改动检查 `git diff --check`、链接、CRLF 和内容差异。
 - 代码改动先构建受影响的具体 `.csproj` 或 `.slnx`；公共契约变化再验证直接下游。

@@ -753,11 +753,7 @@ public class EmployeeCollection(Department department) : KeyedCollection<string,
 {
 	private readonly Department _department = department;
 
-	public void AddRange(params Employee[] employees)
-	{
-		this.AddRange((IEnumerable<Employee>)employees);
-	}
-
+	public void AddRange(params Employee[] employees) => this.AddRange((IEnumerable<Employee>)employees);
 	public void AddRange(IEnumerable<Employee> employees)
 	{
 		if(employees == null)

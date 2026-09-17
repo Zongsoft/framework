@@ -12,7 +12,8 @@ The ecosystem of pluggable applications is a big strength of _**Z**ongsoft_, hel
 
 > 💡 After cloning this project's source code, you need to use the `git submodule update` command to update the [submodules](.gitmodules).
 
-> 📦 Maintainers should read the [NuGet publishing guide](PUBLISHING.md) before releasing packages.
+> - 🛠️ Contributors can use the [code analysis checks](#code-analysis) to verify coding style and build diagnostics.
+> - 📦 Maintainers should read the [NuGet publishing guide](PUBLISHING.md) before releasing packages.
 
 ## Where to Start
 
@@ -121,6 +122,64 @@ A typical Zongsoft application consists of a host, business plugins and capabili
 		> Provides [**S**criban](https://github.com/lunet-io/scriban) expression parsing and _calculation_, text template _rendering_, and other functions based on the [**S**criban](https://github.com/scriban/scriban) open source project's plugin architecture.
 	- [_wechat_](externals/wechat/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Externals.Wechat)](https://nuget.org/packages/Zongsoft.Externals.Wechat)
 		> Provides [_WeChat_](https://weixin.qq.com) authentication, [_WeChat **P**ay_](https://pay.weixin.qq.com), [_WeChat **M**edia **P**latform_](https://mp.weixin.qq.com), and other related functions, implemented based on the _WeChat **REST**ful API_ interface.
+
+<a id="code-analysis"></a>
+
+## Code Analysis
+
+Framework uses the [`Zongsoft.CodeAnalysis` NuGet package](https://github.com/Zongsoft/Guidelines/blob/main/analysis/README.md). [`Directory.Build.props`](Directory.Build.props) adds a development-only reference to C# projects, and [`Directory.Packages.props`](Directory.Packages.props) controls the version. Analyzer sources, tests, build settings and C# rules are maintained only in [guidelines](https://github.com/Zongsoft/Guidelines/tree/main/analysis) and update with the package. The root [`.editorconfig`](.editorconfig) retains editor settings and existing VB preferences. See the [coding guidelines](https://github.com/Zongsoft/Guidelines/blob/main/zongsoft.csharp.guidelines.md) and [coverage guide](https://github.com/Zongsoft/Guidelines/blob/main/README.md#code-analysis) for the complete rules and limitations.
+
+[Check commands](#check-commands) · [EditorConfig synchronization](#editorconfig-synchronization) · [Restore and upgrade](#restore-and-upgrade)
+
+### Check commands
+
+After restoring the target project, run these checks from the repository root. This example checks Core; replace the project and file paths for your change:
+
+```powershell
+dotnet build ./Zongsoft.Core/src/Zongsoft.Core.csproj --no-restore -p:GeneratePackageOnBuild=false
+dotnet format whitespace ./Zongsoft.Core/src/Zongsoft.Core.csproj --no-restore --verify-no-changes --include ./Zongsoft.Core/src/Components/Handler.cs
+dotnet format style ./Zongsoft.Core/src/Zongsoft.Core.csproj --no-restore --verify-no-changes --diagnostics IDE0049
+```
+
+These commands do not rewrite source files. `--include` paths are relative to the working directory. Normal builds report configured style violations as warnings. ZS0005 replaces IDE0005 and permits ordinary `using System;`; unused-import checks still require XML documentation generation; `CS4014` and `CA2012` remain errors. `IDE0049` does not run during builds, so the editor or the separate `dotnet format style` check is needed. Use `dotnet restore` for the target project before the first check.
+
+For projects whose existing violations have been resolved, append `-p:ZongsoftCodeStyleStrict=true` to the build command to promote the configured style warnings to errors. This checks the entire project and any project references actually built, not just changed lines. Existing framework code still has outstanding style diagnostics. Builds follow the project's configured target frameworks; formatting checks do not replace compilation and analysis for each target. CI must check build and IDE0049 verification exit codes.
+
+> 💡 `dotnet format whitespace` compares formatted text directly and does not apply diagnostic suppressors. It may still report permitted directive indentation or compact try/catch/finally blocks; loaded-analyzer build diagnostics govern these exceptions. Keep `--verify-no-changes` for verification. Limit intentional formatting fixes to changed files and inspect the diff. Do not run unrestricted repository-wide formatting, import organization or public API renaming.
+
+Using aliases, production global imports, dependency grouping and import length ordering, Chinese region labels, field qualification by visibility, and design contracts still require review. Standard import organizers use alphabetical ordering and cannot implement the guideline's length ordering.
+
+C# rules update with the package; do not duplicate them in the root EditorConfig. New text files default to CRLF, with LF for shell scripts. Preserve existing encodings and BOMs; existing LF files need a local EditorConfig override to prevent editor-driven line-ending conversion.
+
+### EditorConfig synchronization
+
+`Directory.Build.props` sets the synchronization destination to the framework root:
+
+```xml
+<ZongsoftGuidelinesSynchronization>$(MSBuildThisFileDirectory)</ZongsoftGuidelinesSynchronization>
+```
+
+With `Zongsoft.CodeAnalysis` **0.2.0 or later**, actual builds automatically synchronize the root `.editorconfig` from the package template. Files with matching sizes and modification times are skipped, and subdirectory overrides are preserved. No manual synchronization or check command is needed; review and commit changes.
+
+VS fast up-to-date checking remains enabled. If VS skips a project, use Rebuild or Clean followed by Build. Standalone clean, restore and design-time builds do not synchronize. Restore a package version that includes this synchronization implementation. See the [synchronization guide](https://github.com/Zongsoft/Guidelines/blob/main/analysis/README.md#editorconfig-synchronization).
+
+### Restore and upgrade
+
+Ensure the required version has been published to a configured NuGet source, then restore the project normally. The package automatically loads the analyzer, build settings and global C# rules. No copied sources, manual props imports or submodule are required. `PrivateAssets="all"` prevents the framework's business packages from imposing this analyzer on downstream consumers; business systems reference it explicitly.
+
+Before the first publication, validate a local package:
+
+```powershell
+dotnet pack ../guidelines/analysis/analyzers/src/Zongsoft.CodeAnalysis.Analyzers.csproj -c Release
+dotnet restore ./Zongsoft.Core/src/Zongsoft.Core.csproj --source ../guidelines/analysis --source 'https://api.nuget.org/v3/index.json'
+dotnet build ./Zongsoft.Core/src/Zongsoft.Core.csproj --no-restore -p:GeneratePackageOnBuild=false
+```
+
+The local source is only for pre-publication validation and is not added to repository configuration. An unpublished version cannot be restored from public feeds in a fresh checkout or CI. Once published to an accessible feed, normal development does not require an adjacent guidelines directory.
+
+For upgrades, change, validate and publish the package in guidelines, then update its version in `Directory.Packages.props`, restore and build. Roll back by selecting an earlier package version. Synchronize the package's `.editorconfig` template when basic editor settings change.
+
+The packaged Global AnalyzerConfig controls C# diagnostics. Matching local EditorConfig settings take precedence, so retain only intentional project overrides. Both repositories now have identical root EditorConfig files without duplicated C# rules. See [Microsoft's configuration documentation](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/configuration-files) for precedence and package distribution.
 
 <a name="contribution"></a>
 ## Contributing

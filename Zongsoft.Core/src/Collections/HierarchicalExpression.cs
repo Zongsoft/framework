@@ -80,7 +80,7 @@ public class HierarchicalExpression
 				if(segments == null || segments.Length == 0)
 					this.Path = string.Empty;
 				else
-					this.Path = string.Join(HierarchicalNode.PathSeparator, Segments);
+					this.Path = string.Join(HierarchicalNode.PathSeparator, this.Segments);
 				break;
 		}
 	}

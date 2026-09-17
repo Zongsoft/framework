@@ -149,6 +149,7 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 
 		var reliability = options?.Reliability ?? MessageReliability.MostOnce;
 		var fallback = options?.FallbackBehavior ?? MessageFallbackBehavior.Backoff;
+
 		if(reliability > this.Reliability)
 			throw new NotSupportedException(string.Format(Properties.Resources.Messaging_ReliabilityNotSupported_Message, reliability, this.GetType().Name));
 
@@ -158,6 +159,7 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 
 		var candidate = new Subscription(handler, Slice(tags), options, entry => InitializeSubscriberAsync(topic, tags, handler, options, entry));
 		var subscription = this.Subscribers.GetOrAdd(topic, _ => candidate);
+
 		if(!subscription.Matches(handler, candidate.Tags, options))
 			throw new InvalidOperationException(string.Format(Properties.Resources.Messaging_SubscriptionConflict_Message, topic));
 

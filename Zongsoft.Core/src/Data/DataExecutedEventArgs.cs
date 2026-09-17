@@ -29,15 +29,12 @@
 
 using System;
 
-namespace Zongsoft.Data
+namespace Zongsoft.Data;
+
+/// <summary>为数据访问的执行事件提供数据。</summary>
+public class DataExecutedEventArgs : DataAccessEventArgs<DataExecuteContextBase>
 {
-	/// <summary>
-	/// 为数据访问的执行事件提供数据。
-	/// </summary>
-	public class DataExecutedEventArgs : DataAccessEventArgs<DataExecuteContextBase>
-	{
-		#region 构造函数
-		public DataExecutedEventArgs(DataExecuteContextBase context) : base(context) { }
-		#endregion
-	}
+	#region 构造函数
+	public DataExecutedEventArgs(DataExecuteContextBase context) : base(context) { }
+	#endregion
 }

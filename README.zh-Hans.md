@@ -12,7 +12,8 @@
 
 > 💡 在 `clone` 本项目源码后，需要使用 `git submodule update` 命令来更新 [子模块](.gitmodules)。
 
-> 📦 维护者发布包前，请先阅读 [NuGet 发布指南](PUBLISHING.zh-Hans.md)。
+> - 🛠️ 开发时使用 [代码规范检查](#code-analysis) 核对编码风格与构建诊断。
+> - 📦 维护者发布包前，请先阅读 [NuGet 发布指南](PUBLISHING.zh-Hans.md)。
 
 ## 从哪里开始
 
@@ -121,6 +122,64 @@ Zongsoft 的典型应用由“宿主 + 业务插件 + 能力插件”组成。�
 		> 提供了 [**S**criban](https://github.com/lunet-io/scriban) 表达式解析计算、_文本模板渲染_ 等功能，基于 [**S**criban](https://github.com/scriban/scriban) 开源项目的插件化。
 	- [wechat](externals/wechat/) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Externals.Wechat)](https://nuget.org/packages/Zongsoft.Externals.Wechat)
 		> 提供了[_微信_](https://weixin.qq.com)认证、[_微信支付_](https://pay.weixin.qq.com)、[_微信公众号_](https://mp.weixin.qq.com) 等相关功能，基于微信 _**REST**full API_ 接口实现。
+
+<a id="code-analysis"></a>
+
+## 代码规范检查
+
+本仓库通过 [`Zongsoft.CodeAnalysis` NuGet 包](https://github.com/Zongsoft/Guidelines/blob/main/analysis/README.zh-Hans.md) 执行规范检查。[公共构建配置](Directory.Build.props) 为 C# 项目添加开发期包引用，[中央包配置](Directory.Packages.props) 管理版本。分析器源码、测试、构建开关和 C# 规则只在 [guidelines](https://github.com/Zongsoft/Guidelines/tree/main/analysis) 维护，升级包即可更新。根 [`.editorconfig`](.editorconfig) 保留编辑器设置与既有 VB 偏好；完整规则与覆盖范围见 [开发规范](https://github.com/Zongsoft/Guidelines/blob/main/zongsoft.csharp.guidelines.md) 和 [配套说明](https://github.com/Zongsoft/Guidelines/blob/main/README.zh-Hans.md#code-analysis)。
+
+[检查命令](#检查命令) · [EditorConfig 同步](#editorconfig-同步) · [获取与升级](#获取与升级)
+
+### 检查命令
+
+在仓库根目录完成目标项目还原后，可执行以下只读源码检查；以 Core 为例，其他项目替换路径：
+
+```powershell
+dotnet build ./Zongsoft.Core/src/Zongsoft.Core.csproj --no-restore -p:GeneratePackageOnBuild=false
+dotnet format whitespace ./Zongsoft.Core/src/Zongsoft.Core.csproj --no-restore --verify-no-changes --include ./Zongsoft.Core/src/Components/Handler.cs
+dotnet format style ./Zongsoft.Core/src/Zongsoft.Core.csproj --no-restore --verify-no-changes --diagnostics IDE0049
+```
+
+`--include` 路径相对于当前工作目录，将示例文件替换为实际修改文件。普通构建将明确的风格问题报告为警告；未使用引用改用 `ZS0005`，允许普通 `using System;`，此项检查仍要求开启 XML 文档生成；`CS4014` 与 `CA2012` 保持为错误。`IDE0049` 不在构建时运行，必须由编辑器或上面的 `dotnet format style` 命令补充检查。首次使用前可用 `dotnet restore` 还原目标项目。
+
+对已整理完成的项目，在构建命令追加 `-p:ZongsoftCodeStyleStrict=true`，将配置指定的风格警告升级为错误。严格模式检查整个项目及实际构建的项目引用，不能限制为 Git 修改行；当前历史代码仍有存量诊断。多目标编译按项目的实际目标框架执行，局部格式检查不替代各目标框架验证。CI 必须检查构建和 IDE0049 验证命令的退出码。
+
+> 💡 `dotnet format whitespace` 直接检查格式化结果，不应用分析器的诊断抑制，仍可能报告合法条件编译缩进和单行 try/catch/finally 的排版差异；这些例外以加载配套分析器的构建诊断为准。只读检查保留 `--verify-no-changes`。需要修正时限定本次修改文件并检查差异；不要对全仓执行无范围限制的格式修正、整理导入或公共 API 重命名。
+
+`using` 别名、正式项目的全局引用限制、依赖分组及组内长度排序、中文职责分段、字段 `this.` 的可见性差异和设计契约仍需按开发规范审查。标准导入整理器使用字母顺序，不能实现本规范的长度排序。
+
+C# 规则随包更新；不要在根 EditorConfig 重复维护包内规则。新增文本默认 CRLF，`.sh` 遵循 LF，已有编码与 BOM 保留；已有 LF 文件需在就近 EditorConfig 中明确覆盖，避免编辑器统一换行。
+
+### EditorConfig 同步
+
+`Directory.Build.props` 已设置以下属性，将同步目录指向 framework 根目录：
+
+```xml
+<ZongsoftGuidelinesSynchronization>$(MSBuildThisFileDirectory)</ZongsoftGuidelinesSynchronization>
+```
+
+使用 `Zongsoft.CodeAnalysis` **0.2.0 或后续版本**后，实际构建会自动用包内模板同步根 `.editorconfig`，大小和修改时间都相同时跳过复制；子目录配置保持不变。无需手动同步或检查命令，更新后检查并提交差异。
+
+保留 VS 快速最新检查；若项目已是最新而被跳过，可执行“重新生成”，或先“清理”再“生成”。单独清理、还原或设计时构建不触发同步。需还原包含此同步实现的包版本。详见 [同步说明](https://github.com/Zongsoft/Guidelines/blob/main/analysis/README.zh-Hans.md#editorconfig-同步)。
+
+### 获取与升级
+
+正式使用时，确保配置的 NuGet 源已发布所需版本，然后正常还原项目。包自动加载分析器、构建设置和全局 C# 规则；不需要源码副本、手工导入 props 或子模块。包引用使用 `PrivateAssets="all"`，不经框架业务包强制传递给下游；业务系统应自行引用该分析器包。
+
+首次发布前，在本机验证已打包的产物：
+
+```powershell
+dotnet pack ../guidelines/analysis/analyzers/src/Zongsoft.CodeAnalysis.Analyzers.csproj -c Release
+dotnet restore ./Zongsoft.Core/src/Zongsoft.Core.csproj --source ../guidelines/analysis --source 'https://api.nuget.org/v3/index.json'
+dotnet build ./Zongsoft.Core/src/Zongsoft.Core.csproj --no-restore -p:GeneratePackageOnBuild=false
+```
+
+本地包源仅用于发布前验证，不写入仓库配置。版本未发布时，全新工作区或 CI 无法仅从公共源还原；发布到业务项目可访问的源后，日常开发不需要相邻 guidelines 目录。
+
+以后先在 guidelines 修改、验证并发布新包，再更新 `Directory.Packages.props` 中的版本，执行还原和构建。回退使用此前的包版本。编辑器通用设置变化时，执行同步目标更新包内 `.editorconfig` 模板。
+
+包内 Global AnalyzerConfig 管理 C# 检测规则，本地 EditorConfig 同名配置优先；保留有意的项目例外即可。两仓库根 EditorConfig 已移除重复的 C# 规则，内容仍保持一致。配置优先级与包分发方式见 [Microsoft 文档](https://learn.microsoft.com/en-us/dotnet/fundamentals/code-analysis/configuration-files)。
 
 <a name="contribution"></a>
 ## 贡献
