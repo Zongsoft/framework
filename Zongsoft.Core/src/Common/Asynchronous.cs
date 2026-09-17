@@ -106,7 +106,6 @@ public static class Asynchronous
 
 	private static void OnError(Exception exception, Action<Exception> onError)
 	{
-		try { onError?.Invoke(exception); }
-		catch { }
+		try { onError?.Invoke(exception); } catch { }
 	}
 }

@@ -44,8 +44,10 @@ public static class TimeSpanUtility
 		if(minimum > maximum)
 			throw new ArgumentException($"The minimum value '{minimum}' cannot be granter than maximum value '{maximum}'.");
 
-		if(value < minimum) return minimum;
-		if(value > maximum) return maximum;
+		if(value < minimum)
+			return minimum;
+		if(value > maximum)
+			return maximum;
 
 		return value;
 	}

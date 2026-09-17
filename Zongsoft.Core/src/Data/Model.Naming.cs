@@ -63,7 +63,7 @@ partial class Model
 			{
 				name = null;
 				return false;
-			}	
+			}
 
 			return _mapping.TryRemove(modelType, out name);
 		}

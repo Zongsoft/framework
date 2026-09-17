@@ -82,14 +82,15 @@ internal static class ProfileUtility
 	#region 语法解析
 	internal static bool TryGetImport(ReadOnlySpan<char> text, out string argument)
 	{
-		const string keyword = "@import";
+		const string KEYWORD = "@import";
+
 		argument = null;
 
-		if(!text.StartsWith(keyword, StringComparison.OrdinalIgnoreCase) ||
-			text.Length > keyword.Length && text[keyword.Length] is not (' ' or '\t'))
+		if(!text.StartsWith(KEYWORD, StringComparison.OrdinalIgnoreCase) ||
+			text.Length > KEYWORD.Length && text[KEYWORD.Length] is not (' ' or '\t'))
 			return false;
 
-		argument = text[keyword.Length..].Trim().ToString();
+		argument = text[KEYWORD.Length..].Trim().ToString();
 		return true;
 	}
 

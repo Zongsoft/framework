@@ -149,7 +149,7 @@ public class Timer : IDisposable
 			}
 		}
 		catch(OperationCanceledException) { }
-		catch(ObjectDisposedException) when (cancellation.IsCancellationRequested || Volatile.Read(ref _timer) == null) { }
+		catch(ObjectDisposedException) when(cancellation.IsCancellationRequested || Volatile.Read(ref _timer) == null) { }
 		catch(Exception ex) { Zongsoft.Diagnostics.Logging.GetLogging<Timer>().Error(ex); }
 		finally
 		{

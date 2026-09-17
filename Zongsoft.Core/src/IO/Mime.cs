@@ -487,7 +487,10 @@ public static class Mime
 			//加载 MIME 映射文件
 			profile = Profile.Load(path);
 		}
-		catch { yield break; }
+		catch
+		{
+			yield break;
+		}
 
 		foreach(var entry in profile.Entries)
 		{

@@ -108,9 +108,9 @@ public partial class Certificate
 			public ICertificate Resolve(byte[] data, string secret = null, CertificateDescriptor descriptor = default)
 			{
 				#if NET9_0_OR_GREATER
-					return new X509(string.IsNullOrEmpty(secret) ? X509CertificateLoader.LoadCertificate(data) : X509CertificateLoader.LoadPkcs12(data, secret), descriptor);
+				return new X509(string.IsNullOrEmpty(secret) ? X509CertificateLoader.LoadCertificate(data) : X509CertificateLoader.LoadPkcs12(data, secret), descriptor);
 				#else
-					return new X509(string.IsNullOrEmpty(secret) ? new X509Certificate2(data) : new X509Certificate2(data, secret), descriptor);
+				return new X509(string.IsNullOrEmpty(secret) ? new X509Certificate2(data) : new X509Certificate2(data, secret), descriptor);
 				#endif
 			}
 

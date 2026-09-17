@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -156,7 +156,8 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 
 			_lock.EnterWriteLock();
 
-			try {
+			try
+			{
 				return _dictionary.TryGetValue(key, out existedValue) ? existedValue : _dictionary[key] = value;
 			}
 			finally { _lock.ExitWriteLock(); }
@@ -179,7 +180,8 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 
 			_lock.EnterWriteLock();
 
-			try {
+			try
+			{
 				return _dictionary.TryGetValue(key, out existedValue) ? existedValue :
 					_dictionary[key] = valueFactory(key);
 			}
@@ -203,9 +205,10 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 
 			_lock.EnterWriteLock();
 
-			try {
+			try
+			{
 				return _dictionary.TryGetValue(key, out existedValue) ? existedValue :
-					_dictionary[key] = valueFactory(key, state);
+				       _dictionary[key] = valueFactory(key, state);
 			}
 			finally { _lock.ExitWriteLock(); }
 		}
@@ -455,7 +458,7 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 					_dictionary[key] = factory(key, existingValue);
 					return true;
 				}
-				finally{ _lock.ExitWriteLock(); }
+				finally { _lock.ExitWriteLock(); }
 			}
 
 			return false;

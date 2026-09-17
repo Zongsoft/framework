@@ -112,6 +112,7 @@ public static class FieldInfoExtension
 		return (Getter)method.CreateDelegate(typeof(Getter));
 	}
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
 	public static Setter GenerateSetter(this FieldInfo field)
 	{
 		if(field == null)
@@ -263,6 +264,7 @@ public static class FieldInfoExtension
 		return (Getter<T>)method.CreateDelegate(typeof(Getter<T>));
 	}
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
 	public static Setter<T> GenerateSetter<T>(this FieldInfo field)
 	{
 		if(field == null)

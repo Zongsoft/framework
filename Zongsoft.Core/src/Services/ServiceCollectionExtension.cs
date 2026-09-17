@@ -41,8 +41,8 @@ namespace Zongsoft.Services;
 public static class ServiceCollectionExtension
 {
 	#region 私有变量
-	private static readonly TypeInfo ObjectType = typeof(object).GetTypeInfo();
-	private static readonly MethodInfo ConfigureMethod = typeof(OptionsConfigurationExtension)
+	private static readonly TypeInfo _ObjectType_ = typeof(object).GetTypeInfo();
+	private static readonly MethodInfo _ConfigureMethod_ = typeof(OptionsConfigurationExtension)
 		.GetMethod(nameof(OptionsConfigurationExtension.Configure), 1,
 			BindingFlags.Public | BindingFlags.Static,
 			null,
@@ -104,7 +104,7 @@ public static class ServiceCollectionExtension
 
 				if(attribute != null)
 				{
-					var method = ConfigureMethod.MakeGenericMethod(GetOptionType(property.PropertyType));
+					var method = _ConfigureMethod_.MakeGenericMethod(GetOptionType(property.PropertyType));
 					method.Invoke(null, new object[] { services, attribute.Name, configuration.GetSection(Configuration.ConfigurationUtility.GetConfigurationPath(attribute.Path)) });
 				}
 			}
@@ -117,13 +117,13 @@ public static class ServiceCollectionExtension
 
 				if(attribute != null)
 				{
-					var method = ConfigureMethod.MakeGenericMethod(GetOptionType(field.FieldType));
+					var method = _ConfigureMethod_.MakeGenericMethod(GetOptionType(field.FieldType));
 					method.Invoke(null, new object[] { services, attribute.Name, configuration.GetSection(Configuration.ConfigurationUtility.GetConfigurationPath(attribute.Path)) });
 				}
 			}
 
 			type = type.BaseType?.GetTypeInfo();
-		} while(type != null && type.GetTypeInfo() != ObjectType);
+		} while(type != null && type.GetTypeInfo() != _ObjectType_);
 	}
 
 	private static bool RegisterServices(IServiceCollection services, TypeInfo type, IConfiguration configuration)

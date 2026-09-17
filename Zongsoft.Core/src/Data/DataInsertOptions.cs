@@ -147,7 +147,7 @@ public class DataInsertOptions : DataMutateOptions, IDataInsertOptions
 		public Builder IgnoreConstraint() { this.ConstraintIgnored = true; return this; }
 		public Builder UnignoreConstraint() { this.ConstraintIgnored = false; return this; }
 		public Builder SuppressValidator() { this.ValidatorSuppressed = true; return this; }
-		public Builder UnsuppressValidator() { this.ValidatorSuppressed = false; return this;}
+		public Builder UnsuppressValidator() { this.ValidatorSuppressed = false; return this; }
 		#endregion
 
 		#region 构建方法

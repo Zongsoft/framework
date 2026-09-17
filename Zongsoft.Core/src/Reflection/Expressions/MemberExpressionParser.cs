@@ -595,7 +595,7 @@ internal static class MemberExpressionParser
 			void Add(ICollection<IMemberExpression> parameters, string content, TypeCode type)
 			{
 				parameters.Add(MemberExpression.Constant(content, type));
-			};
+			}
 
 			if(owner is IndexerExpression indexer)
 				Add(indexer.Arguments, this.GetBufferContent(), Flags.GetConstantType());

@@ -39,8 +39,10 @@ public sealed class DataArchiveFormat : IEquatable<DataArchiveFormat>, IEquatabl
 	#region 构造函数
 	public DataArchiveFormat(string name, string type, string extension = null)
 	{
-		if(string.IsNullOrEmpty(name)) throw new ArgumentNullException(nameof(name));
-		if(string.IsNullOrEmpty(type)) throw new ArgumentNullException(nameof(type));
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
+		if(string.IsNullOrEmpty(type))
+			throw new ArgumentNullException(nameof(type));
 
 		this.Name = name;
 		this.Type = type;

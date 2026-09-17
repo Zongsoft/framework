@@ -142,7 +142,7 @@ public static partial class Events
 		}
 
 		registry = GetEventRegistry(module);
-		return registry == null ?[] : registry.Events;
+		return registry == null ? [] : registry.Events;
 	}
 	#endregion
 

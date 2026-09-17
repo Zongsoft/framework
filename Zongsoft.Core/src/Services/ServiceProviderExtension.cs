@@ -300,8 +300,8 @@ public static class ServiceProviderExtension
 	#endregion
 
 	#region 动态编译
-	private static readonly MethodInfo StringEqualsMethod = typeof(string).GetMethod(nameof(string.Equals), BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(string), typeof(string), typeof(StringComparison) }, null);
-	private static readonly MethodInfo ObjectToStringMethod = typeof(object).GetMethod(nameof(object.ToString), BindingFlags.Public | BindingFlags.Instance);
+	private static readonly MethodInfo _StringEqualsMethod_ = typeof(string).GetMethod(nameof(string.Equals), BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(string), typeof(string), typeof(StringComparison) }, null);
+	private static readonly MethodInfo _ObjectToStringMethod_ = typeof(object).GetMethod(nameof(object.ToString), BindingFlags.Public | BindingFlags.Instance);
 
 	private static ServiceMatcher Compile(Type serviceType)
 	{
@@ -331,9 +331,9 @@ public static class ServiceProviderExtension
 		var serviceParameter = Expression.Parameter(serviceType, "service");
 		var parameterParameter = Expression.Parameter(typeof(object), "parameter");
 		var parameterNullCheck = Expression.NotEqual(parameterParameter, Expression.Constant(null));
-		var parameterToString = Expression.Call(parameterParameter, ObjectToStringMethod);
+		var parameterToString = Expression.Call(parameterParameter, _ObjectToStringMethod_);
 
-		var equalsCall = Expression.Call(StringEqualsMethod,
+		var equalsCall = Expression.Call(_StringEqualsMethod_,
 			Expression.Property(serviceParameter, property),
 			parameterToString,
 			Expression.Constant(StringComparison.OrdinalIgnoreCase));
@@ -366,9 +366,9 @@ public static class ServiceProviderExtension
 		var serviceParameter = Expression.Parameter(typeof(object), "service");
 		var parameterParameter = Expression.Parameter(typeof(object), "parameter");
 		var parameterNullCheck = Expression.NotEqual(parameterParameter, Expression.Constant(null));
-		var parameterToString = Expression.Call(parameterParameter, ObjectToStringMethod);
+		var parameterToString = Expression.Call(parameterParameter, _ObjectToStringMethod_);
 
-		var equalsCall = Expression.Call(StringEqualsMethod,
+		var equalsCall = Expression.Call(_StringEqualsMethod_,
 			Expression.Property(Expression.Convert(serviceParameter, serviceType), property),
 			parameterToString,
 			Expression.Constant(StringComparison.OrdinalIgnoreCase));

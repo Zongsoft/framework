@@ -153,7 +153,7 @@ public static class SenderExtension
 		}
 		finally
 		{
-			using(data) { }
+			data?.Dispose();
 		}
 	}
 }

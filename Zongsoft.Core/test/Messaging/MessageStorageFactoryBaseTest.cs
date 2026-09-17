@@ -84,19 +84,20 @@ public class MessageStorageFactoryBaseTest
 	[Fact]
 	public void PartitionHonorsLengthBoundaryAndUsesStableSha256Fallback()
 	{
+		const string PREFIX = "Zongsoft.Messaging.Storage";
+		const string IDENTIFIER = "identifier";
+
 		using var environment = new EnvironmentVariableScope("identifier");
-		const string prefix = "Zongsoft.Messaging.Storage";
-		const string identifier = "identifier";
-		var boundaryName = new string('a', 128 - prefix.Length - identifier.Length - 2);
+		var boundaryName = new string('a', 128 - PREFIX.Length - IDENTIFIER.Length - 2);
 		var factory = new TestFactory();
 
 		var boundary = factory.Create(boundaryName);
 		Assert.Equal(128, boundary.Partition.Length);
-		Assert.Equal($"{prefix}:{boundaryName}:{identifier}", boundary.Partition);
+		Assert.Equal($"{PREFIX}:{boundaryName}:{IDENTIFIER}", boundary.Partition);
 
 		var overflowName = boundaryName + "b";
-		var raw = $"{prefix}:{overflowName}:{identifier}";
-		var expected = $"{prefix}:sha256:{Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(raw))).ToLowerInvariant()}";
+		var raw = $"{PREFIX}:{overflowName}:{IDENTIFIER}";
+		var expected = $"{PREFIX}:sha256:{Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(raw))).ToLowerInvariant()}";
 		var overflow = factory.Create(overflowName);
 
 		Assert.Equal(expected, overflow.Partition);

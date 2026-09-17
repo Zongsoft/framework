@@ -59,7 +59,7 @@ public class ConnectionSettingsCollection() : KeyedCollection<string, IConnectio
 	{
 		if(this.TryGetValue(name, out settings) && settings != null && !string.IsNullOrEmpty(driver))
 			settings = string.Equals(settings.Driver?.Name, driver, StringComparison.OrdinalIgnoreCase) ||
-			         (settings.Driver != null && settings.Driver.IsDriver(driver))? settings : null;
+			         (settings.Driver != null && settings.Driver.IsDriver(driver)) ? settings : null;
 
 		return settings != null;
 	}

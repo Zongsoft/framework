@@ -37,10 +37,10 @@ public class TypeConverter : JsonConverter<Type>
 {
 	public static readonly JsonConverterFactory Factory = new TypeConverterFactory();
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
 	private class TypeConverterFactory : JsonConverterFactory
 	{
 		private static readonly TypeConverter Default = new();
-
 		public override bool CanConvert(Type type) => typeof(Type).IsAssignableFrom(type);
 		public override JsonConverter CreateConverter(Type type, JsonSerializerOptions options) => Default;
 	}

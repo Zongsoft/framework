@@ -251,7 +251,7 @@ internal class ClassicDictionary(IDictionary dictionary) : IDataDictionary
 				_dictionary.Remove(name);
 				return true;
 			}
-			catch {}
+			catch { }
 		}
 
 		return false;
@@ -728,7 +728,7 @@ internal class GenericDictionary(IDictionary<string, object> dictionary) : IData
 		_dictionary.Add(key.ToString(), value);
 	}
 
-	void IDictionary.Clear() =>_dictionary.Clear();
+	void IDictionary.Clear() => _dictionary.Clear();
 	void IDictionary.Remove(object key)
 	{
 		if(key != null)
@@ -754,7 +754,7 @@ internal class GenericDictionary(IDictionary<string, object> dictionary) : IData
 	ICollection<string> IDictionary<string, object>.Keys => _dictionary.Keys;
 	ICollection<object> IDictionary<string, object>.Values => _dictionary.Values;
 	bool IDictionary<string, object>.ContainsKey(string key) => _dictionary.ContainsKey(key);
-	void IDictionary<string, object>.Add(string key, object value) =>_dictionary.Add(key, value);
+	void IDictionary<string, object>.Add(string key, object value) => _dictionary.Add(key, value);
 	bool IDictionary<string, object>.Remove(string key) => _dictionary.Remove(key);
 	bool IDictionary<string, object>.TryGetValue(string key, out object value) => _dictionary.TryGetValue(key, out value);
 	void ICollection<KeyValuePair<string, object>>.Add(KeyValuePair<string, object> item) => _dictionary.Add(item.Key, item.Value);

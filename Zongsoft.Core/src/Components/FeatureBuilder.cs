@@ -38,7 +38,7 @@ public class FeatureBuilder : IFeatureBuilder, IEnumerable<IFeature>
 	#region 构造函数
 	public FeatureBuilder(params IEnumerable<IFeature> features)
 	{
-		this.Features = [..features];
+		this.Features = [.. features];
 	}
 	#endregion
 

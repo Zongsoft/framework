@@ -121,7 +121,7 @@ public class DataCommandCollection() : ICollection<IDataCommand>
 			{
 				Span<byte> data = stackalloc byte[count];
 				var size = Encoding.UTF8.GetBytes(text, data);
-				return Hash(data[.. size]);
+				return Hash(data[..size]);
 			}
 
 			var bytes = ArrayPool<byte>.Shared.Rent(count);
@@ -130,7 +130,7 @@ public class DataCommandCollection() : ICollection<IDataCommand>
 			{
 				var data = bytes.AsSpan(0, count);
 				var size = Encoding.UTF8.GetBytes(text, data);
-				return Hash(data[.. size]);
+				return Hash(data[..size]);
 			}
 			finally
 			{

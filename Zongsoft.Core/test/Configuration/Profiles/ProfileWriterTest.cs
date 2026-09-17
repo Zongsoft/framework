@@ -264,13 +264,13 @@ public class ProfileWriterTest
 	[Fact]
 	public void Save_DeclarationOrderNullEmptySectionsAndRootScopeRoundTrip()
 	{
-		const string content = "first=\n# between\nflag\n[empty]\n[group]\none=1\n# inside\n[group nested]\nnested=2\n[group]\ntwo=3\n[]\nlast=4\n#\n";
-		var profile = Read(content);
+		const string CONTENT = "first=\n# between\nflag\n[empty]\n[group]\none=1\n# inside\n[group nested]\nnested=2\n[group]\ntwo=3\n[]\nlast=4\n#\n";
+		var profile = Read(CONTENT);
 
 		var output = Write(profile);
 		var reloaded = Read(output);
 
-		Assert.Equal(content, output);
+		Assert.Equal(CONTENT, output);
 		Assert.Equal(string.Empty, reloaded.Entries["first"].Value);
 		Assert.Null(reloaded.Entries["flag"].Value);
 		Assert.Equal("4", reloaded.Entries["last"].Value);
@@ -405,12 +405,12 @@ public class ProfileWriterTest
 	[Fact]
 	public void Save_UnknownAnnotationsRemainOrdinaryCommentsInDeclarationOrder()
 	{
-		const string content = "#@trace first\n[group]\n#@trace second\n[group nested]\n#@trace third\n[]\n#@trace fourth\n#@unknown retained\n";
-		var profile = Read(content);
+		const string CONTENT = "#@trace first\n[group]\n#@trace second\n[group nested]\n#@trace third\n[]\n#@trace fourth\n#@unknown retained\n";
 
+		var profile = Read(CONTENT);
 		var output = Write(profile);
 
-		Assert.Equal(content, output);
+		Assert.Equal(CONTENT, output);
 		Assert.All(profile.Comments, comment => Assert.IsType<ProfileComment>(comment));
 		Assert.IsType<ProfileComment>(Assert.Single(profile.Sections["group"].Comments));
 		Assert.IsType<ProfileComment>(Assert.Single(profile.Sections.Find("group/nested").Comments));

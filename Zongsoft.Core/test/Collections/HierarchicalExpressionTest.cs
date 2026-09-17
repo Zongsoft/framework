@@ -13,8 +13,8 @@ public class HierarchicalExpressionTest
 	[Fact]
 	public void Test1()
 	{
-		var TEXT = @"/";
-		var expression = HierarchicalExpressionParser.Parse(TEXT);
+		var text = @"/";
+		var expression = HierarchicalExpressionParser.Parse(text);
 
 		Assert.NotNull(expression);
 		Assert.Null(expression.Accessor);
@@ -22,8 +22,8 @@ public class HierarchicalExpressionTest
 		Assert.Equal("/", expression.Path);
 		Assert.True(expression.Segments == null || expression.Segments.Length == 0);
 
-		TEXT = @"./";
-		expression = HierarchicalExpressionParser.Parse(TEXT);
+		text = @"./";
+		expression = HierarchicalExpressionParser.Parse(text);
 
 		Assert.NotNull(expression);
 		Assert.Null(expression.Accessor);
@@ -31,8 +31,8 @@ public class HierarchicalExpressionTest
 		Assert.Equal(".", expression.Path);
 		Assert.True(expression.Segments == null || expression.Segments.Length == 0);
 
-		TEXT = @".. /";
-		expression = HierarchicalExpressionParser.Parse(TEXT);
+		text = @".. /";
+		expression = HierarchicalExpressionParser.Parse(text);
 
 		Assert.NotNull(expression);
 		Assert.Null(expression.Accessor);
@@ -40,8 +40,8 @@ public class HierarchicalExpressionTest
 		Assert.Equal("..", expression.Path);
 		Assert.True(expression.Segments == null || expression.Segments.Length == 0);
 
-		TEXT = @"segment1/segment2/segment3";
-		expression = HierarchicalExpressionParser.Parse(TEXT);
+		text = @"segment1/segment2/segment3";
+		expression = HierarchicalExpressionParser.Parse(text);
 
 		Assert.NotNull(expression);
 		Assert.Null(expression.Accessor);
@@ -53,8 +53,8 @@ public class HierarchicalExpressionTest
 		Assert.Equal("segment2", expression.Segments[1]);
 		Assert.Equal("segment3", expression.Segments[2]);
 
-		TEXT = @" / segment1 / segment2/segment3";
-		expression = HierarchicalExpressionParser.Parse(TEXT);
+		text = @" / segment1 / segment2/segment3";
+		expression = HierarchicalExpressionParser.Parse(text);
 
 		Assert.NotNull(expression);
 		Assert.Null(expression.Accessor);
@@ -66,8 +66,8 @@ public class HierarchicalExpressionTest
 		Assert.Equal("segment2", expression.Segments[1]);
 		Assert.Equal("segment3", expression.Segments[2]);
 
-		TEXT = @". /segment1/segment2 / segment3 ";
-		expression = HierarchicalExpressionParser.Parse(TEXT);
+		text = @". /segment1/segment2 / segment3 ";
+		expression = HierarchicalExpressionParser.Parse(text);
 
 		Assert.NotNull(expression);
 		Assert.Null(expression.Accessor);
@@ -79,8 +79,8 @@ public class HierarchicalExpressionTest
 		Assert.Equal("segment2", expression.Segments[1]);
 		Assert.Equal("segment3", expression.Segments[2]);
 
-		TEXT = @"../segment1/segment2/segment3";
-		expression = HierarchicalExpressionParser.Parse(TEXT);
+		text = @"../segment1/segment2/segment3";
+		expression = HierarchicalExpressionParser.Parse(text);
 
 		Assert.NotNull(expression);
 		Assert.Null(expression.Accessor);
@@ -96,8 +96,8 @@ public class HierarchicalExpressionTest
 	[Fact]
 	public void Test2()
 	{
-		var TEXT = @"   / segment1  /segment2/ segment3  @ property1  ";
-		var expression = HierarchicalExpressionParser.Parse(TEXT);
+		var text = @"   / segment1  /segment2/ segment3  @ property1  ";
+		var expression = HierarchicalExpressionParser.Parse(text);
 
 		Assert.NotNull(expression);
 		Assert.Equal(PathAnchor.Root, expression.Anchor);
@@ -113,8 +113,8 @@ public class HierarchicalExpressionTest
 		Assert.Equal("property1", ((IdentifierExpression)expression.Accessor).Name);
 		Assert.Null(expression.Accessor.Next);
 
-		TEXT = @"  .. / segment1  /segment2/ segment3  [100]  ";
-		expression = HierarchicalExpressionParser.Parse(TEXT);
+		text = @"  .. / segment1  /segment2/ segment3  [100]  ";
+		expression = HierarchicalExpressionParser.Parse(text);
 
 		Assert.NotNull(expression);
 		Assert.Equal(PathAnchor.Parent, expression.Anchor);
@@ -132,8 +132,8 @@ public class HierarchicalExpressionTest
 		Assert.Equal(MemberExpressionType.Constant, parameters[0].ExpressionType);
 		Assert.Equal(100, (int)((ConstantExpression)parameters[0]).Value);
 
-		TEXT = @"   segment1  /segment2/ segment3 @property1 [100] . property2  ";
-		expression = HierarchicalExpressionParser.Parse(TEXT);
+		text = @"   segment1  /segment2/ segment3 @property1 [100] . property2  ";
+		expression = HierarchicalExpressionParser.Parse(text);
 
 		Assert.NotNull(expression);
 		Assert.Equal(PathAnchor.None, expression.Anchor);

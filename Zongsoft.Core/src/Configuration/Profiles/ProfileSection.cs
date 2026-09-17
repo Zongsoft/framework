@@ -36,7 +36,7 @@ namespace Zongsoft.Configuration.Profiles;
 public class ProfileSection : ProfileItem, IEnumerable<ProfileItem>
 {
 	#region 静态常量
-	private static readonly char[] IllegalCharacters = ['/', '\\', '|', ':', '*', '?', '!', '@', '#', '%', '^', '&'];
+	private static readonly char[] _illegalCharacters = ['/', '\\', '|', ':', '*', '?', '!', '@', '#', '%', '^', '&'];
 	#endregion
 
 	#region 构造函数
@@ -45,7 +45,7 @@ public class ProfileSection : ProfileItem, IEnumerable<ProfileItem>
 		if(string.IsNullOrWhiteSpace(name))
 			throw new ArgumentNullException(nameof(name));
 
-		if(name.IndexOfAny(IllegalCharacters) >= 0)
+		if(name.IndexOfAny(_illegalCharacters) >= 0)
 			throw new ArgumentException($"The specified '{name}' section name contains illegal characters.");
 
 		this.Name = name.Trim();
@@ -60,7 +60,7 @@ public class ProfileSection : ProfileItem, IEnumerable<ProfileItem>
 		if(string.IsNullOrWhiteSpace(name))
 			throw new ArgumentNullException(nameof(name));
 
-		if(name.IndexOfAny(IllegalCharacters) >= 0)
+		if(name.IndexOfAny(_illegalCharacters) >= 0)
 			throw new ArgumentException($"The specified '{name}' section name contains illegal characters.");
 
 		this.Name = name.Trim();

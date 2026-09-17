@@ -392,7 +392,7 @@ public abstract class Operand
 				(
 					(string.IsNullOrEmpty(this.Member) && string.IsNullOrEmpty(other.Member)) ||
 					string.Equals(this.Member, other.Member, StringComparison.OrdinalIgnoreCase)
-				)&&
+				) &&
 				(
 					(this.Filter is null && other.Filter is null) ||
 					(this.Filter is not null && this.Filter.Equals(other.Filter))

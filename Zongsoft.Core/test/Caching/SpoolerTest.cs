@@ -153,15 +153,18 @@ public class SpoolerTest
 		using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
 		var flusher = new PausingFlusher(enumerations);
 		using var spooler = new Spooler<int>(flusher.OnFlushAsync, TimeSpan.FromDays(1), limit);
+
 		for(int value = 0; value < limit; value++)
 			await spooler.PutAsync(value, cancellation.Token);
 
 		var pending = spooler.PutAsync(limit * 2, cancellation.Token).AsTask();
+
 		try
 		{
 			await flusher.Entered.WaitAsync(TimeSpan.FromSeconds(5), cancellation.Token);
 			for(int value = limit; value < limit * 2; value++)
 				await spooler.PutAsync(value, cancellation.Token);
+
 			Assert.Equal(limit, spooler.Count);
 			flusher.Resume();
 
@@ -371,6 +374,7 @@ public class SpoolerTest
 		var replenish = true;
 		var next = limit;
 		Spooler<int> spooler = null;
+
 		using var instance = spooler = new Spooler<int>((items, cancellation) =>
 		{
 			var count = 0;
@@ -387,11 +391,14 @@ public class SpoolerTest
 			}
 			return ValueTask.CompletedTask;
 		}, TimeSpan.FromDays(1), limit);
+
 		for(int value = 0; value < limit; value++)
 			await spooler.PutAsync(value, TestContext.Current.CancellationToken);
+
 		await spooler.FlushAsync(TestContext.Current.CancellationToken);
 		Assert.Equal(limit, spooler.Count);
 		Assert.Equal(Enumerable.Range(0, limit), values);
+
 		replenish = false;
 		await spooler.FlushAsync(TestContext.Current.CancellationToken);
 		Assert.True(spooler.IsEmpty);
@@ -409,14 +416,19 @@ public class SpoolerTest
 		var seen = new bool[COUNT];
 		var active = 0;
 		var consumed = 0;
+
 		using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
 		cancellation.CancelAfter(TimeSpan.FromSeconds(15));
+
 		using var spooler = new Spooler<int>(async (items, token) =>
 		{
 			Assert.Equal(1, Interlocked.Increment(ref active));
+
 			try
 			{
-				if(asynchronous) await Task.Yield();
+				if(asynchronous)
+					await Task.Yield();
+
 				foreach(var value in items)
 				{
 					Assert.False(seen[value]);
@@ -424,17 +436,24 @@ public class SpoolerTest
 					consumed++;
 				}
 			}
-			finally { Interlocked.Decrement(ref active); }
+			finally
+			{
+				Interlocked.Decrement(ref active);
+			}
 		}, TimeSpan.FromDays(1), limit);
+
 		var tasks = Enumerable.Range(0, producers).Select(producer => Task.Run(async () =>
 		{
 			for(int value = producer; value < COUNT; value += producers)
 				await spooler.PutAsync(value, cancellation.Token);
 		}, cancellation.Token)).ToArray();
+
 		await Task.WhenAll(tasks).WaitAsync(TimeSpan.FromSeconds(20), cancellation.Token);
-		while(!spooler.IsEmpty) await spooler.FlushAsync(cancellation.Token);
+		while(!spooler.IsEmpty)
+			await spooler.FlushAsync(cancellation.Token);
+
 		Assert.Equal(COUNT, consumed);
-		Assert.All(seen, value => Assert.True(value));
+		Assert.All(seen, Assert.True);
 		Assert.Equal(0, active);
 	}
 
@@ -473,11 +492,16 @@ public class SpoolerTest
 			values.Add(iterator.Current);
 			return ValueTask.CompletedTask;
 		}, TimeSpan.FromDays(1), 3);
+
 		for(int value = 0; value < 10; value++)
 			await spooler.PutAsync(value, TestContext.Current.CancellationToken).AsTask().WaitAsync(TimeSpan.FromSeconds(5));
+
 		Assert.Equal(3, spooler.Count);
 		Assert.Equal(Enumerable.Range(0, 7), values);
-		while(!spooler.IsEmpty) await spooler.FlushAsync(TestContext.Current.CancellationToken);
+
+		while(!spooler.IsEmpty)
+			await spooler.FlushAsync(TestContext.Current.CancellationToken);
+
 		Assert.Equal(Enumerable.Range(0, 10), values);
 	}
 
@@ -489,6 +513,7 @@ public class SpoolerTest
 		var failure = new InvalidOperationException("Asynchronous consumer failure.");
 		var calls = 0;
 		var values = new List<int>();
+
 		using var spooler = new Spooler<int>(async (items, _) =>
 		{
 			if(++calls == 1)
@@ -499,9 +524,11 @@ public class SpoolerTest
 			}
 			values.AddRange(items);
 		}, TimeSpan.FromDays(1), 3);
+
 		await spooler.PutAsync(42, TestContext.Current.CancellationToken);
 		var owner = spooler.FlushAsync(TestContext.Current.CancellationToken).AsTask();
 		Task waiter;
+
 		try
 		{
 			await entered.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
@@ -509,6 +536,7 @@ public class SpoolerTest
 			Assert.False(waiter.IsCompleted);
 		}
 		finally { release.TrySetResult(); }
+
 		Assert.Same(failure, await Assert.ThrowsAsync<InvalidOperationException>(() => owner.WaitAsync(TimeSpan.FromSeconds(5))));
 		await waiter.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
 		Assert.Equal(2, calls);
@@ -534,17 +562,24 @@ public class SpoolerTest
 			Assert.True(iterator.MoveNext());
 			values.Add(iterator.Current);
 		}, TimeSpan.FromDays(1), 3);
+
 		for(int value = 0; value < 3; value++)
 			await spooler.PutAsync(value, TestContext.Current.CancellationToken);
+
 		var owner = spooler.FlushAsync(TestContext.Current.CancellationToken).AsTask();
 		Task pending;
+
 		try
 		{
 			await entered.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
 			pending = spooler.PutAsync(3, TestContext.Current.CancellationToken).AsTask();
 			Assert.False(pending.IsCompleted);
 		}
-		finally { release.TrySetResult(); }
+		finally
+		{
+			release.TrySetResult();
+		}
+
 		await Task.WhenAll(owner, pending).WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
 		Assert.Equal(1, calls);
 		Assert.Equal(new[] { 0 }, values);
@@ -580,8 +615,10 @@ public class SpoolerTest
 				_entered.TrySetResult();
 				await _release.Task;
 			}
+
 			for(int index = 1; index < enumerations; index++)
 				values.GetEnumerator().Dispose();
+
 			this.Values.AddRange(values);
 			if(first && readBeforePause)
 			{

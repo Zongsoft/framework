@@ -171,13 +171,13 @@ public class VersionNumberTest
 	[Fact]
 	public void TestNumericConversion()
 	{
+		const ulong PACKED = 0x0001_0002_0003_0004UL;
 		var version = new Version.Number(1, 2, 3, 4);
-		const ulong Packed = 0x0001_0002_0003_0004UL;
 
-		Assert.Equal(Packed, (ulong)version);
-		Assert.Equal((long)Packed, (long)version);
-		Assert.Equal(version, (Version.Number)Packed);
-		Assert.Equal(version, (Version.Number)(long)Packed);
+		Assert.Equal(PACKED, (ulong)version);
+		Assert.Equal((long)PACKED, (long)version);
+		Assert.Equal(version, (Version.Number)PACKED);
+		Assert.Equal(version, (Version.Number)(long)PACKED);
 
 		version = new Version.Number(ushort.MaxValue, ushort.MaxValue, ushort.MaxValue, ushort.MaxValue);
 		Assert.Equal(ulong.MaxValue, (ulong)version);
@@ -214,9 +214,10 @@ public class VersionNumberTest
 	[Fact]
 	public void TestTypeConverter()
 	{
+		const ulong PACKED = 0x0001_0002_0003_0004UL;
+
 		var converter = TypeDescriptor.GetConverter(typeof(Version.Number));
 		var version = new Version.Number(1, 2, 3, 4);
-		const ulong Packed = 0x0001_0002_0003_0004UL;
 
 		Assert.True(converter.CanConvertFrom(typeof(string)));
 		Assert.True(converter.CanConvertFrom(typeof(long)));
@@ -226,11 +227,11 @@ public class VersionNumberTest
 		Assert.True(converter.CanConvertTo(typeof(ulong)));
 
 		Assert.Equal(version, converter.ConvertFrom("1.2.3.4"));
-		Assert.Equal(version, converter.ConvertFrom((long)Packed));
-		Assert.Equal(version, converter.ConvertFrom(Packed));
+		Assert.Equal(version, converter.ConvertFrom((long)PACKED));
+		Assert.Equal(version, converter.ConvertFrom(PACKED));
 		Assert.Equal("1.2.3.4", converter.ConvertTo(version, typeof(string)));
-		Assert.Equal((long)Packed, converter.ConvertTo(version, typeof(long)));
-		Assert.Equal(Packed, converter.ConvertTo(version, typeof(ulong)));
+		Assert.Equal((long)PACKED, converter.ConvertTo(version, typeof(long)));
+		Assert.Equal(PACKED, converter.ConvertTo(version, typeof(ulong)));
 		Assert.True(converter.IsValid(version));
 		Assert.True(converter.IsValid("1.2"));
 		Assert.False(converter.IsValid("1"));

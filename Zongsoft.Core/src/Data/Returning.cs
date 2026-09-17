@@ -68,7 +68,7 @@ public class Returning
 	internal Returning(params IEnumerable<Column> columns)
 	{
 		this.Columns = new(null, columns);
-		this.Rows= new(this.Columns);
+		this.Rows = new(this.Columns);
 	}
 	#endregion
 

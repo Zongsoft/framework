@@ -238,19 +238,19 @@ public class EventDescriptorTest
 			this.Value = value;
 		}
 
-			public string Name { get; set; }
+		public string Name { get; set; }
 		public object Value { get; set; }
 	}
 
 	public class MyEventArgs : EventArgs
 	{
-			public MyEventArgs(string name, object value)
-			{
-				this.Name = name;
+		public MyEventArgs(string name, object value)
+		{
+			this.Name = name;
 			this.Value = value;
-			}
+		}
 
-			public string Name { get; set; }
+		public string Name { get; set; }
 		public object Value { get; set; }
 	}
 
@@ -316,13 +316,13 @@ public class EventDescriptorTest
 
 	public class MyHandlerException : ApplicationException
 	{
-			public MyHandlerException(object argument, Collections.Parameters parameters = null) : base($"The handler error.")
-			{
+		public MyHandlerException(object argument, Collections.Parameters parameters = null) : base($"The handler error.")
+		{
 			this.Argument = argument;
 			this.Parameters = parameters;
-			}
+		}
 
-			public object Argument { get; }
+		public object Argument { get; }
 		public Collections.Parameters Parameters { get; }
 	}
 }

@@ -41,22 +41,22 @@ public static class JsonReaderExtension
 	#region 静态构造
 	static JsonReaderExtension()
 	{
-		JsonGetterTemplate<string>.Get = new Getter<string>(delegate (in Utf8JsonReader reader) { return reader.GetString(); });
-		JsonGetterTemplate<bool>.Get = new Getter<bool>(delegate (in Utf8JsonReader reader) { return reader.GetBoolean(); });
-		JsonGetterTemplate<byte>.Get = new Getter<byte>(delegate (in Utf8JsonReader reader) { return reader.GetByte(); });
-		JsonGetterTemplate<sbyte>.Get = new Getter<sbyte>(delegate (in Utf8JsonReader reader) { return reader.GetSByte(); });
-		JsonGetterTemplate<short>.Get = new Getter<short>(delegate (in Utf8JsonReader reader) { return reader.GetInt16(); });
-		JsonGetterTemplate<ushort>.Get = new Getter<ushort>(delegate (in Utf8JsonReader reader) { return reader.GetUInt16(); });
-		JsonGetterTemplate<int>.Get = new Getter<int>(delegate (in Utf8JsonReader reader) { return reader.GetInt32(); });
-		JsonGetterTemplate<uint>.Get = new Getter<uint>(delegate (in Utf8JsonReader reader) { return reader.GetUInt32(); });
-		JsonGetterTemplate<long>.Get = new Getter<long>(delegate (in Utf8JsonReader reader) { return reader.GetInt64(); });
-		JsonGetterTemplate<ulong>.Get = new Getter<ulong>(delegate (in Utf8JsonReader reader) { return reader.GetUInt64(); });
-		JsonGetterTemplate<float>.Get = new Getter<float>(delegate (in Utf8JsonReader reader) { return reader.GetSingle(); });
-		JsonGetterTemplate<double>.Get = new Getter<double>(delegate (in Utf8JsonReader reader) { return reader.GetDouble(); });
-		JsonGetterTemplate<decimal>.Get = new Getter<decimal>(delegate (in Utf8JsonReader reader) { return reader.GetDecimal(); });
-		JsonGetterTemplate<DateTime>.Get = new Getter<DateTime>(delegate (in Utf8JsonReader reader) { return reader.GetDateTime(); });
-		JsonGetterTemplate<DateTimeOffset>.Get = new Getter<DateTimeOffset>(delegate (in Utf8JsonReader reader) { return reader.GetDateTimeOffset(); });
-		JsonGetterTemplate<Guid>.Get = new Getter<Guid>(delegate (in Utf8JsonReader reader) { return reader.GetGuid(); });
+		JsonGetterTemplate<string>.Get = new Getter<string>((in reader) => reader.GetString());
+		JsonGetterTemplate<bool>.Get = new Getter<bool>((in reader) => reader.GetBoolean());
+		JsonGetterTemplate<byte>.Get = new Getter<byte>((in reader) => reader.GetByte());
+		JsonGetterTemplate<sbyte>.Get = new Getter<sbyte>((in reader) => reader.GetSByte());
+		JsonGetterTemplate<short>.Get = new Getter<short>((in reader) => reader.GetInt16());
+		JsonGetterTemplate<ushort>.Get = new Getter<ushort>((in reader) => reader.GetUInt16());
+		JsonGetterTemplate<int>.Get = new Getter<int>((in reader) => reader.GetInt32());
+		JsonGetterTemplate<uint>.Get = new Getter<uint>((in reader) => reader.GetUInt32());
+		JsonGetterTemplate<long>.Get = new Getter<long>((in reader) => reader.GetInt64());
+		JsonGetterTemplate<ulong>.Get = new Getter<ulong>((in reader) => reader.GetUInt64());
+		JsonGetterTemplate<float>.Get = new Getter<float>((in reader) => reader.GetSingle());
+		JsonGetterTemplate<double>.Get = new Getter<double>((in reader) => reader.GetDouble());
+		JsonGetterTemplate<decimal>.Get = new Getter<decimal>((in reader) => reader.GetDecimal());
+		JsonGetterTemplate<DateTime>.Get = new Getter<DateTime>((in reader) => reader.GetDateTime());
+		JsonGetterTemplate<DateTimeOffset>.Get = new Getter<DateTimeOffset>((in reader) => reader.GetDateTimeOffset());
+		JsonGetterTemplate<Guid>.Get = new Getter<Guid>((in reader) => reader.GetGuid());
 	}
 	#endregion
 

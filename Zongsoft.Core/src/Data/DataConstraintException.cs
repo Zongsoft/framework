@@ -47,7 +47,7 @@ public class DataConstraintException : DataAccessException
 		if(!string.IsNullOrEmpty(table))
 			this.Principal = new Actor(table, fields);
 
-		if(!string.IsNullOrEmpty(foreignTable) )
+		if(!string.IsNullOrEmpty(foreignTable))
 			this.Foreigner = new Actor(foreignTable, foreignFields);
 	}
 

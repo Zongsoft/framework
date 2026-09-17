@@ -328,11 +328,12 @@ public class Department
 	#endregion
 }
 
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
 public class Person : IPerson, INotifyPropertyChanged, ICloneable
 {
 	#region 静态字段
-	protected static string[] __NAMES__ = new string[] { "Name", "Gender", "Birthdate", "BloodType", "HomeAddress" };
-	protected static readonly Dictionary<string, PropertyToken<Person>> __TOKENS__ = new Dictionary<string, PropertyToken<Person>>()
+	protected static string[] __NAMES__ = ["Name", "Gender", "Birthdate", "BloodType", "HomeAddress"];
+	protected static readonly Dictionary<string, PropertyToken<Person>> __TOKENS__ = new()
 	{
 		{ "Name", new PropertyToken<Person>(0, target => target._name, (target, value) => target.Name = (string) value) },
 		{ "Gender", new PropertyToken<Person>(1, target => target._gender, (target, value) => target.Gender = (Gender?) value) },
@@ -558,6 +559,7 @@ public class Employee : Person, IEmployee
 	#endregion
 
 	#region 标记变量
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
 	protected ushort _MASK_INT16_;
 	#endregion
 

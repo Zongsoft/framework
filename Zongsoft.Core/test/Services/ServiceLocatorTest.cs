@@ -18,10 +18,10 @@ public sealed class ServiceLocatorCollection
 [Collection(ServiceLocatorCollection.Name)]
 public sealed class ServiceLocatorTest
 {
-	private const string DirectServiceName = "service-locator-direct";
-	private const string WrongDirectServiceName = "service-locator-wrong-direct";
-	private const string PrimaryContainerName = "service-locator-primary-container";
-	private const string WrongContainerName = "service-locator-wrong-container";
+	private const string DIRECT_SERVICE_NAME = "service-locator-direct";
+	private const string WRONG_DIRECT_SERVICE_NAME = "service-locator-wrong-direct";
+	private const string PRIMARY_CONTAINER_NAME = "service-locator-primary-container";
+	private const string WRONG_CONTAINER_NAME = "service-locator-wrong-container";
 
 	[Fact]
 	public void Locate_EmptyQualifiedName_GenericAndRuntimeOverloadsReturnSameService()
@@ -39,8 +39,8 @@ public sealed class ServiceLocatorTest
 	[Fact]
 	public void Locate_Name_UsesDirectRegistrationBeforeOtherStrategies()
 	{
-		var matched = new NamedService(DirectServiceName, "matched");
-		var fallback = new NamedProvider(new NamedService(DirectServiceName, "fallback"));
+		var matched = new NamedService(DIRECT_SERVICE_NAME, "matched");
+		var fallback = new NamedProvider(new NamedService(DIRECT_SERVICE_NAME, "fallback"));
 		using var services = CreateServices(collection =>
 		{
 			collection.AddSingleton<ITestService>(matched);
@@ -50,50 +50,52 @@ public sealed class ServiceLocatorTest
 		var expected = services.Provider.Resolve<DirectService>();
 
 		Assert.NotNull(expected);
-		Assert.Same(expected, services.Provider.Locate<ITestService>(DirectServiceName));
-		Assert.Same(expected, services.Provider.Locate(DirectServiceName, typeof(ITestService)));
+		Assert.Same(expected, services.Provider.Locate<ITestService>(DIRECT_SERVICE_NAME));
+		Assert.Same(expected, services.Provider.Locate(DIRECT_SERVICE_NAME, typeof(ITestService)));
 		Assert.Equal(0, fallback.CallCount);
 	}
 
 	[Fact]
 	public void Locate_Name_FindsMatchingServiceBeforeProviderFallback()
 	{
-		const string name = "service-locator-matched";
-		var expected = new NamedService(name, "matched");
-		var fallback = new NamedProvider(new NamedService(name, "fallback"));
+		const string NAME = "service-locator-matched";
+
+		var expected = new NamedService(NAME, "matched");
+		var fallback = new NamedProvider(new NamedService(NAME, "fallback"));
 		using var services = CreateServices(collection =>
 		{
 			collection.AddSingleton<ITestService>(expected);
 			collection.AddSingleton<Zongsoft.Services.IServiceProvider<ITestService>>(fallback);
 		});
 
-		Assert.Same(expected, services.Provider.Locate<ITestService>(name));
-		Assert.Same(expected, services.Provider.Locate(name, typeof(ITestService)));
+		Assert.Same(expected, services.Provider.Locate<ITestService>(NAME));
+		Assert.Same(expected, services.Provider.Locate(NAME, typeof(ITestService)));
 		Assert.Equal(0, fallback.CallCount);
 	}
 
 	[Fact]
 	public void Locate_Name_IgnoresWrongTypedDirectRegistrationAndFindsTypedService()
 	{
-		var expected = new NamedService(WrongDirectServiceName, "matched");
+		var expected = new NamedService(WRONG_DIRECT_SERVICE_NAME, "matched");
 		using var services = CreateServices(collection => collection.AddSingleton<ITestService>(expected), registerAttributedServices: true);
 
-		Assert.IsType<WrongDirectService>(services.Provider.Resolve(WrongDirectServiceName));
-		Assert.Same(expected, services.Provider.Locate<ITestService>(WrongDirectServiceName));
-		Assert.Same(expected, services.Provider.Locate(WrongDirectServiceName, typeof(ITestService)));
+		Assert.IsType<WrongDirectService>(services.Provider.Resolve(WRONG_DIRECT_SERVICE_NAME));
+		Assert.Same(expected, services.Provider.Locate<ITestService>(WRONG_DIRECT_SERVICE_NAME));
+		Assert.Same(expected, services.Provider.Locate(WRONG_DIRECT_SERVICE_NAME, typeof(ITestService)));
 	}
 
 	[Fact]
 	public void Locate_Name_FallsBackToCovariantServiceProvider()
 	{
-		const string name = "service-locator-provided";
-		var expected = new NamedService(name, "provided");
+		const string NAME = "service-locator-provided";
+
+		var expected = new NamedService(NAME, "provided");
 		var provider = new NamedProvider(expected);
 		using var services = CreateServices(collection =>
 			collection.AddSingleton<Zongsoft.Services.IServiceProvider<ITestService>>(provider));
 
-		Assert.Same(expected, services.Provider.Locate<ITestService>(name));
-		Assert.Same(expected, services.Provider.Locate(name, typeof(ITestService)));
+		Assert.Same(expected, services.Provider.Locate<ITestService>(NAME));
+		Assert.Same(expected, services.Provider.Locate(NAME, typeof(ITestService)));
 		Assert.Equal(2, provider.CallCount);
 	}
 
@@ -102,7 +104,7 @@ public sealed class ServiceLocatorTest
 	{
 		using var services = CreateServices(registerAttributedServices: true);
 		var container = services.Provider.Resolve<PrimaryContainerProvider>();
-		var qualifiedName = $" contained @ {PrimaryContainerName} ";
+		var qualifiedName = $" contained @ {PRIMARY_CONTAINER_NAME} ";
 
 		Assert.NotNull(container);
 		Assert.Same(container.Service, services.Provider.Locate<ITestService>(qualifiedName));
@@ -114,11 +116,11 @@ public sealed class ServiceLocatorTest
 	public void Locate_QualifiedName_IgnoresWrongTypedContainerAndFindsCompatibleProvider()
 	{
 		var expected = new NamedService("contained", "compatible");
-		var compatible = new MatchingProvider(WrongContainerName, expected);
+		var compatible = new MatchingProvider(WRONG_CONTAINER_NAME, expected);
 		using var services = CreateServices(collection =>
 			collection.AddSingleton<Zongsoft.Services.IServiceProvider<ITestService>>(compatible), registerAttributedServices: true);
 		var wrong = services.Provider.Resolve<WrongContainerProvider>();
-		var qualifiedName = $"contained@{WrongContainerName}";
+		var qualifiedName = $"contained@{WRONG_CONTAINER_NAME}";
 
 		Assert.NotNull(wrong);
 		Assert.Same(expected, services.Provider.Locate<ITestService>(qualifiedName));
@@ -169,8 +171,9 @@ public sealed class ServiceLocatorTest
 	[Fact]
 	public void Converter_ConvertFrom_UsesPropertyDescriptorServiceType()
 	{
-		const string name = "service-locator-contextual-converter";
-		var expected = new NamedService(name, "contextual");
+		const string NAME = "service-locator-contextual-converter";
+
+		var expected = new NamedService(NAME, "contextual");
 		using var services = CreateServices(collection =>
 			collection.AddSingleton<Zongsoft.Services.IServiceProvider<ITestService>>(new NamedProvider(expected)));
 		using var application = new ApplicationScope(services.Provider);
@@ -178,14 +181,15 @@ public sealed class ServiceLocatorTest
 		var context = new DescriptorContext(descriptor);
 		var converter = new ServiceLocator.Converter();
 
-		Assert.Same(expected, converter.ConvertFrom(context, CultureInfo.InvariantCulture, name));
+		Assert.Same(expected, converter.ConvertFrom(context, CultureInfo.InvariantCulture, NAME));
 	}
 
 	[Fact]
 	public void Converter_ConvertFrom_ExplicitServiceTypeTakesPrecedenceOverContext()
 	{
-		const string name = "service-locator-explicit-precedence";
-		var expected = new NamedService(name, "explicit");
+		const string NAME = "service-locator-explicit-precedence";
+
+		var expected = new NamedService(NAME, "explicit");
 		using var services = CreateServices(collection =>
 			collection.AddSingleton<Zongsoft.Services.IServiceProvider<ITestService>>(new NamedProvider(expected)));
 		using var application = new ApplicationScope(services.Provider);
@@ -193,14 +197,15 @@ public sealed class ServiceLocatorTest
 		var context = new DescriptorContext(descriptor);
 		var converter = new ServiceLocator.Converter(typeof(ITestService));
 
-		Assert.Same(expected, converter.ConvertFrom(context, CultureInfo.InvariantCulture, name));
+		Assert.Same(expected, converter.ConvertFrom(context, CultureInfo.InvariantCulture, NAME));
 	}
 
 	[Fact]
 	public void GetTypeConverter_ExplicitConverter_UsesTypeConstructorWithoutContext()
 	{
-		const string name = "service-locator-explicit-converter";
-		var expected = new NamedService(name, "explicit");
+		const string NAME = "service-locator-explicit-converter";
+
+		var expected = new NamedService(NAME, "explicit");
 		using var services = CreateServices(collection =>
 			collection.AddSingleton<Zongsoft.Services.IServiceProvider<ITestService>>(new NamedProvider(expected)));
 		using var application = new ApplicationScope(services.Provider);
@@ -209,14 +214,13 @@ public sealed class ServiceLocatorTest
 
 		Assert.IsType<ServiceLocator.Converter>(converter);
 		Assert.True(converter.CanConvertFrom(null, typeof(string)));
-		Assert.Same(expected, converter.ConvertFrom(null, CultureInfo.InvariantCulture, name));
+		Assert.Same(expected, converter.ConvertFrom(null, CultureInfo.InvariantCulture, NAME));
 	}
 
 	[Fact]
 	public void Converter_ConvertFrom_WithoutServiceType_DelegatesToBase()
 	{
 		var converter = new ServiceLocator.Converter();
-
 		Assert.Throws<NotSupportedException>(() => converter.ConvertFrom(null, CultureInfo.InvariantCulture, "missing"));
 	}
 
@@ -239,17 +243,17 @@ public sealed class ServiceLocatorTest
 
 	public interface IOtherService { }
 
-	[Service(DirectServiceName, typeof(ITestService))]
+	[Service(DIRECT_SERVICE_NAME, typeof(ITestService))]
 	public sealed class DirectService : ITestService
 	{
-		public string Name => DirectServiceName;
+		public string Name => DIRECT_SERVICE_NAME;
 		public string Value => "direct";
 	}
 
-	[Service(WrongDirectServiceName)]
+	[Service(WRONG_DIRECT_SERVICE_NAME)]
 	public sealed class WrongDirectService { }
 
-	[Service(PrimaryContainerName, typeof(Zongsoft.Services.IServiceProvider<ITestService>))]
+	[Service(PRIMARY_CONTAINER_NAME, typeof(Zongsoft.Services.IServiceProvider<ITestService>))]
 	public sealed class PrimaryContainerProvider : Zongsoft.Services.IServiceProvider<ITestService>
 	{
 		private int _callCount;
@@ -264,7 +268,7 @@ public sealed class ServiceLocatorTest
 		}
 	}
 
-	[Service(WrongContainerName)]
+	[Service(WRONG_CONTAINER_NAME)]
 	public sealed class WrongContainerProvider : Zongsoft.Services.IServiceProvider<IOtherService>
 	{
 		private int _callCount;
@@ -339,7 +343,7 @@ public sealed class ServiceLocatorTest
 
 	private sealed class ApplicationScope : IDisposable
 	{
-		private static readonly FieldInfo CurrentField = typeof(ApplicationContext).GetField("_current", BindingFlags.Static | BindingFlags.NonPublic);
+		private static readonly FieldInfo _CurrentField_ = typeof(ApplicationContext).GetField("_current", BindingFlags.Static | BindingFlags.NonPublic);
 
 		private readonly IApplicationContext _previous;
 		private readonly TestApplicationContext _current;
@@ -353,7 +357,7 @@ public sealed class ServiceLocatorTest
 		public void Dispose()
 		{
 			_current.Dispose();
-			CurrentField.SetValue(null, _previous);
+			_CurrentField_.SetValue(null, _previous);
 		}
 	}
 

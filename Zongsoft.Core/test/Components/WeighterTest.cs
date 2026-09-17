@@ -10,7 +10,7 @@ public class WeighterTest
 	[Fact]
 	public void TestGet1()
 	{
-		var servers = new []
+		var servers = new[]
 		{
 			new Server("A", 4),
 			new Server("B", 2),

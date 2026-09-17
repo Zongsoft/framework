@@ -86,7 +86,7 @@ public readonly struct DataPropertySequence : IParsable<DataPropertySequence>
 	#endregion
 
 	#region 构造函数
-	public DataPropertySequence(string name, params string[] references) : this(name, 0, 1, references)	{ }
+	public DataPropertySequence(string name, params string[] references) : this(name, 0, 1, references) { }
 	public DataPropertySequence(string name, int seed, int interval, params string[] references)
 	{
 		this.Name = name?.Trim();

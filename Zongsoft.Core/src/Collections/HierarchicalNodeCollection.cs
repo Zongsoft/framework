@@ -80,6 +80,6 @@ public abstract class HierarchicalNodeCollection<TNode>(TNode owner) :
 	#endregion
 
 	#region 抽象方法
-	protected  abstract void SetOwner(TNode owner, TNode node);
+	protected abstract void SetOwner(TNode owner, TNode node);
 	#endregion
 }

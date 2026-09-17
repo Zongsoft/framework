@@ -37,7 +37,7 @@ namespace Zongsoft.Data.Archiving;
 public interface IDataArchiveExtractorOptions
 {
 	/// <summary>获取模型元信息。</summary>
-	ModelDescriptor Model {  get; }
+	ModelDescriptor Model { get; }
 
 	/// <summary>获取或设置提取来源。</summary>
 	object Source { get; set; }

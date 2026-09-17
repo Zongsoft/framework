@@ -351,7 +351,7 @@ partial class Hardware
 				}
 
 				if(string.IsNullOrEmpty(name))
-				throw new JsonException(string.Format(System.Globalization.CultureInfo.CurrentCulture, global::Zongsoft.Properties.Resources.Hardware_RequiredProperty_Message, nameof(IHardware.Name)));
+					throw new JsonException(string.Format(System.Globalization.CultureInfo.CurrentCulture, global::Zongsoft.Properties.Resources.Hardware_RequiredProperty_Message, nameof(IHardware.Name)));
 
 				var hardware = string.IsNullOrWhiteSpace(identifier) ?
 					new Hardware(name, code, typeName, model, serie, category, manufacturer, description, null, properties, components) :

@@ -10,7 +10,7 @@ public class ReflectorTest
 	[Fact]
 	public void TestValueType()
 	{
-		var Today = DateTime.Today;
+		var today = DateTime.Today;
 		var target = new MyValue(5);
 
 		Assert.Equal(100, (int)Reflector.GetValue(ref target, nameof(MyValue.IntegerField)));
@@ -36,10 +36,10 @@ public class ReflectorTest
 		Assert.Equal("NewStringField", (string)Reflector.GetValue(ref target, nameof(MyValue.StringField)));
 		Assert.Equal("NewStringProperty", (string)Reflector.GetValue(ref target, nameof(MyValue.StringProperty)));
 
-		Reflector.SetValue(ref target, nameof(MyValue.NullableField), Today);
-		Assert.Equal(Today, Reflector.GetValue(ref target, nameof(MyValue.NullableField)));
-		Reflector.SetValue(ref target, nameof(MyValue.NullableProperty), Today);
-		Assert.Equal(Today, Reflector.GetValue(ref target, nameof(MyValue.NullableProperty)));
+		Reflector.SetValue(ref target, nameof(MyValue.NullableField), today);
+		Assert.Equal(today, Reflector.GetValue(ref target, nameof(MyValue.NullableField)));
+		Reflector.SetValue(ref target, nameof(MyValue.NullableProperty), today);
+		Assert.Equal(today, Reflector.GetValue(ref target, nameof(MyValue.NullableProperty)));
 
 		Reflector.SetValue(ref target, nameof(MyValue.NullableField), null);
 		Assert.Null(Reflector.GetValue(ref target, nameof(MyValue.NullableField)));
@@ -58,10 +58,10 @@ public class ReflectorTest
 		Assert.Equal("MyStringField", (string)Reflector.GetValue(ref obj, nameof(MyValue.StringField)));
 		Assert.Equal("MyStringProperty", (string)Reflector.GetValue(ref obj, nameof(MyValue.StringProperty)));
 
-		Reflector.SetValue(ref obj, nameof(MyValue.NullableField), Today);
-		Assert.Equal(Today, Reflector.GetValue(ref obj, nameof(MyValue.NullableField)));
-		Reflector.SetValue(ref obj, nameof(MyValue.NullableProperty), Today);
-		Assert.Equal(Today, Reflector.GetValue(ref obj, nameof(MyValue.NullableProperty)));
+		Reflector.SetValue(ref obj, nameof(MyValue.NullableField), today);
+		Assert.Equal(today, Reflector.GetValue(ref obj, nameof(MyValue.NullableField)));
+		Reflector.SetValue(ref obj, nameof(MyValue.NullableProperty), today);
+		Assert.Equal(today, Reflector.GetValue(ref obj, nameof(MyValue.NullableProperty)));
 
 		Reflector.SetValue(ref obj, nameof(MyValue.NullableField), null);
 		Assert.Null(Reflector.GetValue(ref obj, nameof(MyValue.NullableField)));
@@ -72,7 +72,7 @@ public class ReflectorTest
 	[Fact]
 	public void TestClassType()
 	{
-		var Today = DateTime.Today;
+		var today = DateTime.Today;
 		var target = new MyClass(5);
 
 		Assert.Equal(100, (int)Reflector.GetValue(ref target, nameof(MyClass.IntegerField)));
@@ -98,10 +98,10 @@ public class ReflectorTest
 		Assert.Equal("NewStringField", (string)Reflector.GetValue(ref target, nameof(MyClass.StringField)));
 		Assert.Equal("NewStringProperty", (string)Reflector.GetValue(ref target, nameof(MyClass.StringProperty)));
 
-		Reflector.SetValue(ref target, nameof(MyClass.NullableField), Today);
-		Assert.Equal(Today, Reflector.GetValue(ref target, nameof(MyClass.NullableField)));
-		Reflector.SetValue(ref target, nameof(MyClass.NullableProperty), Today);
-		Assert.Equal(Today, Reflector.GetValue(ref target, nameof(MyClass.NullableProperty)));
+		Reflector.SetValue(ref target, nameof(MyClass.NullableField), today);
+		Assert.Equal(today, Reflector.GetValue(ref target, nameof(MyClass.NullableField)));
+		Reflector.SetValue(ref target, nameof(MyClass.NullableProperty), today);
+		Assert.Equal(today, Reflector.GetValue(ref target, nameof(MyClass.NullableProperty)));
 
 		Reflector.SetValue(ref target, nameof(MyClass.NullableField), null);
 		Assert.Null(Reflector.GetValue(ref target, nameof(MyClass.NullableField)));
@@ -120,10 +120,10 @@ public class ReflectorTest
 		Assert.Equal("MyStringField", (string)Reflector.GetValue(ref obj, nameof(MyClass.StringField)));
 		Assert.Equal("MyStringProperty", (string)Reflector.GetValue(ref obj, nameof(MyClass.StringProperty)));
 
-		Reflector.SetValue(ref obj, nameof(MyClass.NullableField), Today);
-		Assert.Equal(Today, Reflector.GetValue(ref obj, nameof(MyClass.NullableField)));
-		Reflector.SetValue(ref obj, nameof(MyClass.NullableProperty), Today);
-		Assert.Equal(Today, Reflector.GetValue(ref obj, nameof(MyClass.NullableProperty)));
+		Reflector.SetValue(ref obj, nameof(MyClass.NullableField), today);
+		Assert.Equal(today, Reflector.GetValue(ref obj, nameof(MyClass.NullableField)));
+		Reflector.SetValue(ref obj, nameof(MyClass.NullableProperty), today);
+		Assert.Equal(today, Reflector.GetValue(ref obj, nameof(MyClass.NullableProperty)));
 
 		Reflector.SetValue(ref obj, nameof(MyClass.NullableField), null);
 		Assert.Null(Reflector.GetValue(ref obj, nameof(MyClass.NullableField)));

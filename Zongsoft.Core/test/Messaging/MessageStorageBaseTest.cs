@@ -48,6 +48,7 @@ public class MessageStorageBaseTest
 		await storage.SetAsync(message, expiry);
 		message.Data[0] = 9;
 		message.Tags = "changed";
+
 		var loaded = new List<Message>();
 		await foreach(var item in storage.GetAsync())
 			loaded.Add(item);

@@ -147,7 +147,7 @@ public partial class Parameters : IDictionary<object, object>
 		object value;
 
 		return key is Type type ?
-			parameters.TryGetValue(type, out value) ? value : this.Find(type):
+			parameters.TryGetValue(type, out value) ? value : this.Find(type) :
 			parameters.TryGetValue(key ?? string.Empty, out value) ? value : null;
 	}
 
@@ -275,8 +275,10 @@ public partial class Parameters : IDictionary<object, object>
 	bool ICollection<KeyValuePair<object, object>>.Remove(KeyValuePair<object, object> entry) => this.Remove(entry.Key);
 	void ICollection<KeyValuePair<object, object>>.CopyTo(KeyValuePair<object, object>[] array, int index)
 	{
-		if(array == null) throw new ArgumentNullException(nameof(array));
-		if(index < 0 || index >= array.Length) throw new ArgumentOutOfRangeException(nameof(index));
+		if(array == null)
+			throw new ArgumentNullException(nameof(array));
+		if(index < 0 || index >= array.Length)
+			throw new ArgumentOutOfRangeException(nameof(index));
 
 		if(_cache == null)
 			return;

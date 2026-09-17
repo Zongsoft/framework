@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Diagnostics.Telemetry.Metrics;
 
-partial class Metric 
+partial class Metric
 {
 	public sealed class Counter : Metric
 	{

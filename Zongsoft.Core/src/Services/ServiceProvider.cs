@@ -40,7 +40,7 @@ namespace Zongsoft.Services;
 internal class ServiceProvider : IServiceProvider, IDisposable
 {
 	#region 静态字段
-	private static readonly MethodInfo GetFacotryMethod = typeof(ServiceProvider).GetMethod(nameof(GetFactory), 1, (BindingFlags.Static | BindingFlags.NonPublic), null, Array.Empty<Type>(), null);
+	private static readonly MethodInfo _GetFacotryMethod_ = typeof(ServiceProvider).GetMethod(nameof(GetFactory), 1, (BindingFlags.Static | BindingFlags.NonPublic), null, Array.Empty<Type>(), null);
 	#endregion
 
 	#region 成员字段
@@ -60,7 +60,7 @@ internal class ServiceProvider : IServiceProvider, IDisposable
 
 			if(descriptor.ImplementationType != null && descriptor.ImplementationType.IsInjectable())
 			{
-				var method = GetFacotryMethod.MakeGenericMethod(descriptor.ImplementationType);
+				var method = _GetFacotryMethod_.MakeGenericMethod(descriptor.ImplementationType);
 				var factory = (Func<IServiceProvider, object>)method.Invoke(null, Array.Empty<object>());
 				services[i] = new ServiceDescriptor(descriptor.ServiceType, factory, descriptor.Lifetime);
 			}

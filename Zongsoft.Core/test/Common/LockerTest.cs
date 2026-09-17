@@ -10,7 +10,7 @@ namespace Zongsoft.Common.Tests;
 public class LockerTest
 {
 	const int COUNT = 500;
-	private const string DoubleDisposeProbeEnvironment = "ZONGSOFT_LOCKER_DOUBLE_DISPOSE_PROBE";
+	private const string DOUBLE_DISPOSE_PROBE_ENVIRONMENT = "ZONGSOFT_LOCKER_DOUBLE_DISPOSE_PROBE";
 
 	[Fact]
 	public async Task LockAsync_CanceledWhileWaiting_DoesNotSplitFutureLock()
@@ -54,7 +54,7 @@ public class LockerTest
 	[Fact]
 	public async Task Releaser_DisposedTwice_ChildProcessPreservesMutualExclusion()
 	{
-		if(string.Equals(Environment.GetEnvironmentVariable(DoubleDisposeProbeEnvironment), "1", StringComparison.Ordinal))
+		if(string.Equals(Environment.GetEnvironmentVariable(DOUBLE_DISPOSE_PROBE_ENVIRONMENT), "1", StringComparison.Ordinal))
 		{
 			await RunDoubleDisposeProbeAsync();
 			return;
@@ -73,7 +73,7 @@ public class LockerTest
 		start.ArgumentList.Add($"{typeof(LockerTest).FullName}.{nameof(Releaser_DisposedTwice_ChildProcessPreservesMutualExclusion)}");
 		start.ArgumentList.Add("-parallel");
 		start.ArgumentList.Add("none");
-		start.Environment[DoubleDisposeProbeEnvironment] = "1";
+		start.Environment[DOUBLE_DISPOSE_PROBE_ENVIRONMENT] = "1";
 
 		using var process = Process.Start(start);
 		Assert.NotNull(process);

@@ -89,7 +89,7 @@ public class DataCommandBase<TScriptor> : IDataCommand where TScriptor : IDataCo
 
 	#region 重写方法
 	public override string ToString() => this.Mutability == DataCommandMutability.None ?
-		$"{this.QualifiedName}({(this.Parameters.Count > 0 ? "..." : null)})":
+		$"{this.QualifiedName}({(this.Parameters.Count > 0 ? "..." : null)})" :
 		$"{this.QualifiedName}({(this.Parameters.Count > 0 ? "..." : null)}):{this.Mutability}";
 	#endregion
 }

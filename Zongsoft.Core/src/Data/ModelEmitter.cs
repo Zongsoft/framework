@@ -96,11 +96,11 @@ internal abstract class ModelEmitterBase
 		if(countWritable <= 8)
 			mask = builder.DefineField(MASK_VARIABLE, typeof(byte), FieldAttributes.Private);
 		else if(countWritable <= 16)
-			mask = builder.DefineField(MASK_VARIABLE, typeof(UInt16), FieldAttributes.Private);
+			mask = builder.DefineField(MASK_VARIABLE, typeof(ushort), FieldAttributes.Private);
 		else if(countWritable <= 32)
-			mask = builder.DefineField(MASK_VARIABLE, typeof(UInt32), FieldAttributes.Private);
+			mask = builder.DefineField(MASK_VARIABLE, typeof(uint), FieldAttributes.Private);
 		else if(countWritable <= 64)
-			mask = builder.DefineField(MASK_VARIABLE, typeof(UInt64), FieldAttributes.Private);
+			mask = builder.DefineField(MASK_VARIABLE, typeof(ulong), FieldAttributes.Private);
 		else
 			mask = builder.DefineField(MASK_VARIABLE, typeof(byte[]), FieldAttributes.Private);
 
@@ -265,6 +265,7 @@ internal abstract class ModelEmitterBase
 	#endregion
 
 	#region 生成方法
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
 	private void GenerateProperties(TypeBuilder builder, FieldBuilder mask, IList<PropertyMetadata> properties, MemberInfo propertyChanged, out MethodToken[] methods)
 	{
 		//生成嵌套匿名委托静态类
@@ -482,8 +483,10 @@ internal abstract class ModelEmitterBase
 				generator.Emit(OpCodes.Callvirt, getter);
 			else
 				generator.Emit(OpCodes.Ldfld, field);
+
 			if(properties[i].PropertyType.IsValueType)
 				generator.Emit(OpCodes.Box, properties[i].PropertyType);
+
 			generator.Emit(OpCodes.Ret);
 
 			MethodBuilder setMethod = null;
@@ -760,6 +763,7 @@ internal abstract class ModelEmitterBase
 		}
 	}
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
 	private void GenerateTypeInitializer(TypeBuilder builder, IList<PropertyMetadata> properties, MethodToken[] methods, out FieldBuilder names, out FieldBuilder tokens)
 	{
 		names = builder.DefineField(PROPERTY_NAMES_VARIABLE, typeof(string[]), FieldAttributes.Private | FieldAttributes.Static | FieldAttributes.InitOnly);
@@ -981,6 +985,7 @@ internal abstract class ModelEmitterBase
 		PROPERTY_TOKEN_TYPE = builder.CreateType();
 	}
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
 	private void GenerateGetCountMethod(TypeBuilder builder, FieldBuilder mask, int count)
 	{
 		var method = this.DefineGetCountMethod(builder);
@@ -1106,6 +1111,7 @@ internal abstract class ModelEmitterBase
 		generator.Emit(OpCodes.Ret);
 	}
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
 	private void GenerateResetMethod(TypeBuilder builder, FieldBuilder mask, FieldBuilder tokens)
 	{
 		var method = this.DefineResetMethod(builder);
@@ -1264,6 +1270,7 @@ internal abstract class ModelEmitterBase
 		generator.Emit(OpCodes.Ret);
 	}
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
 	private void GenerateResetManyMethod(TypeBuilder builder, FieldBuilder mask, FieldBuilder tokens)
 	{
 		var method = this.DefineResetManyMethod(builder);
@@ -1462,6 +1469,7 @@ internal abstract class ModelEmitterBase
 		generator.Emit(OpCodes.Ret);
 	}
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
 	private void GenerateHasChangesMethod(TypeBuilder builder, FieldBuilder mask, FieldBuilder names, FieldBuilder tokens)
 	{
 		var method = this.DefineHasChangesMethod(builder);
@@ -1643,6 +1651,7 @@ internal abstract class ModelEmitterBase
 		generator.Emit(OpCodes.Ret);
 	}
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
 	private void GenerateGetChangesMethod(TypeBuilder builder, FieldBuilder mask, FieldBuilder names, FieldBuilder tokens)
 	{
 		var method = this.DefineGetChangesMethod(builder);
@@ -1785,6 +1794,7 @@ internal abstract class ModelEmitterBase
 		}
 	}
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
 	private void GenerateTryGetValueMethod(TypeBuilder builder, FieldBuilder mask, FieldBuilder tokens)
 	{
 		var method = this.DefineTryGetValueMethod(builder);
@@ -1879,6 +1889,7 @@ internal abstract class ModelEmitterBase
 		generator.Emit(OpCodes.Ret);
 	}
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
 	private void GenerateTrySetValueMethod(TypeBuilder builder, FieldBuilder tokens)
 	{
 		var method = this.DefineTrySetValueMethod(builder);
@@ -2082,7 +2093,7 @@ internal abstract class ModelEmitterBase
 				return;
 			case TypeCode.Char:
 				if(value == null || (char)Convert.ChangeType(value, TypeCode.Char) == '\0')
-					generator.Emit(OpCodes.Ldsfld, typeof(Char).GetField("MinValue", BindingFlags.Public | BindingFlags.Static));
+					generator.Emit(OpCodes.Ldsfld, typeof(char).GetField("MinValue", BindingFlags.Public | BindingFlags.Static));
 				else
 					generator.Emit(OpCodes.Ldc_I4_S, (char)Convert.ChangeType(value, TypeCode.Char));
 				return;
@@ -2092,27 +2103,27 @@ internal abstract class ModelEmitterBase
 				else
 				{
 					generator.Emit(OpCodes.Ldc_I8, ((DateTime)Convert.ChangeType(value, TypeCode.DateTime)).Ticks);
-					generator.Emit(OpCodes.Newobj, typeof(DateTime).GetConstructor(new Type[] { typeof(long) }));
+					generator.Emit(OpCodes.Newobj, typeof(DateTime).GetConstructor([typeof(long)]));
 				}
 
 				return;
 			case TypeCode.Decimal:
 				if(value == null)
-					generator.Emit(OpCodes.Ldsfld, typeof(Decimal).GetField("Zero", BindingFlags.Public | BindingFlags.Static));
+					generator.Emit(OpCodes.Ldsfld, typeof(decimal).GetField("Zero", BindingFlags.Public | BindingFlags.Static));
 				else
 				{
 					switch(Type.GetTypeCode(value.GetType()))
 					{
 						case TypeCode.Single:
 							generator.Emit(OpCodes.Ldc_R4, (float)Convert.ChangeType(value, typeof(float)));
-							generator.Emit(OpCodes.Newobj, typeof(Decimal).GetConstructor(new Type[] { typeof(float) }));
+							generator.Emit(OpCodes.Newobj, typeof(decimal).GetConstructor([typeof(float)]));
 							break;
 						case TypeCode.Double:
 							generator.Emit(OpCodes.Ldc_R8, (double)Convert.ChangeType(value, typeof(double)));
-							generator.Emit(OpCodes.Newobj, typeof(Decimal).GetConstructor(new Type[] { typeof(double) }));
+							generator.Emit(OpCodes.Newobj, typeof(decimal).GetConstructor([typeof(double)]));
 							break;
 						case TypeCode.Decimal:
-							var bits = Decimal.GetBits((decimal)Convert.ChangeType(value, TypeCode.Decimal));
+							var bits = decimal.GetBits((decimal)Convert.ChangeType(value, TypeCode.Decimal));
 							generator.Emit(OpCodes.Ldc_I4_S, bits.Length);
 							generator.Emit(OpCodes.Newarr, typeof(int));
 
@@ -2124,18 +2135,18 @@ internal abstract class ModelEmitterBase
 								generator.Emit(OpCodes.Stelem_I4);
 							}
 
-							generator.Emit(OpCodes.Newobj, typeof(Decimal).GetConstructor(new Type[] { typeof(int[]) }));
+							generator.Emit(OpCodes.Newobj, typeof(decimal).GetConstructor([typeof(int[])]));
 
 							break;
 						case TypeCode.SByte:
 						case TypeCode.Int16:
 						case TypeCode.Int32:
 							generator.Emit(OpCodes.Ldc_I4, (int)Convert.ChangeType(value, typeof(int)));
-							generator.Emit(OpCodes.Newobj, typeof(Decimal).GetConstructor(new Type[] { typeof(int) }));
+							generator.Emit(OpCodes.Newobj, typeof(decimal).GetConstructor([typeof(int)]));
 							break;
 						case TypeCode.Int64:
 							generator.Emit(OpCodes.Ldc_I8, (long)Convert.ChangeType(value, typeof(long)));
-							generator.Emit(OpCodes.Newobj, typeof(Decimal).GetConstructor(new Type[] { typeof(long) }));
+							generator.Emit(OpCodes.Newobj, typeof(decimal).GetConstructor([typeof(long)]));
 							break;
 						case TypeCode.Byte:
 						case TypeCode.Char:
@@ -2143,12 +2154,12 @@ internal abstract class ModelEmitterBase
 						case TypeCode.UInt32:
 							generator.Emit(OpCodes.Ldc_I4, (int)Convert.ChangeType(value, typeof(int)));
 							generator.Emit(OpCodes.Conv_U4);
-							generator.Emit(OpCodes.Newobj, typeof(Decimal).GetConstructor(new Type[] { typeof(uint) }));
+							generator.Emit(OpCodes.Newobj, typeof(decimal).GetConstructor([typeof(uint)]));
 							break;
 						case TypeCode.UInt64:
 							generator.Emit(OpCodes.Ldc_I8, (long)Convert.ChangeType(value, typeof(long)));
 							generator.Emit(OpCodes.Conv_U8);
-							generator.Emit(OpCodes.Newobj, typeof(Decimal).GetConstructor(new Type[] { typeof(ulong) }));
+							generator.Emit(OpCodes.Newobj, typeof(decimal).GetConstructor([typeof(ulong)]));
 							break;
 						default:
 							throw new InvalidOperationException($"Unable to convert '{value.GetType()}' type to decimal type.");
@@ -2229,6 +2240,7 @@ internal abstract class ModelEmitterBase
 
 			if(prototype == typeof(ISet<>))
 				return typeof(HashSet<>).MakeGenericType(type.GetGenericArguments());
+
 			if(prototype == typeof(System.Collections.Specialized.INotifyCollectionChanged))
 				return typeof(System.Collections.ObjectModel.ObservableCollection<>).MakeGenericType(type.GetGenericArguments());
 			else if(prototype == typeof(IDictionary<,>))
@@ -2505,6 +2517,7 @@ internal sealed class ModelContractEmitter(ModuleBuilder module) : ModelEmitterB
 		return result;
 	}
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
 	private static FieldBuilder GeneratePropertyChangedEvent(TypeBuilder builder)
 	{
 		var exchangeMethod = typeof(Interlocked)
@@ -2770,32 +2783,32 @@ internal sealed class ModelAbstractEmitter(ModuleBuilder module) : ModelEmitterB
 		return propertyBuilder;
 	}
 
-	protected override MethodBuilder DefineResetMethod(TypeBuilder builder) => IsImplement<IModel>(builder.BaseType) ? 
-		DefineOverrideMethod(builder, nameof(IModel.Reset), new Type[] { typeof(string), typeof(object).MakeByRefType() }) :
+	protected override MethodBuilder DefineResetMethod(TypeBuilder builder) => IsImplement<IModel>(builder.BaseType) ?
+		DefineOverrideMethod(builder, nameof(IModel.Reset), [typeof(string), typeof(object).MakeByRefType()]) :
 		base.DefineResetMethod(builder);
 
-	protected override MethodBuilder DefineResetManyMethod(TypeBuilder builder) => IsImplement<IModel>(builder.BaseType) ? 
-		DefineOverrideMethod(builder, nameof(IModel.Reset), new Type[] { typeof(string[]) }) :
+	protected override MethodBuilder DefineResetManyMethod(TypeBuilder builder) => IsImplement<IModel>(builder.BaseType) ?
+		DefineOverrideMethod(builder, nameof(IModel.Reset), [typeof(string[])]) :
 		base.DefineResetManyMethod(builder);
 
 	protected override MethodBuilder DefineGetCountMethod(TypeBuilder builder) => IsImplement<IModel>(builder.BaseType) ?
 		DefineOverrideMethod(builder, nameof(IModel.GetCount)) :
 		base.DefineGetCountMethod(builder);
 
-	protected override MethodBuilder DefineHasChangesMethod(TypeBuilder builder) => IsImplement<IModel>(builder.BaseType) ? 
-		DefineOverrideMethod(builder, nameof(IModel.HasChanges), new Type[] { typeof(string[]) }) :
+	protected override MethodBuilder DefineHasChangesMethod(TypeBuilder builder) => IsImplement<IModel>(builder.BaseType) ?
+		DefineOverrideMethod(builder, nameof(IModel.HasChanges), [typeof(string[])]) :
 		base.DefineHasChangesMethod(builder);
 
-	protected override MethodBuilder DefineGetChangesMethod(TypeBuilder builder) => IsImplement<IModel>(builder.BaseType) ? 
+	protected override MethodBuilder DefineGetChangesMethod(TypeBuilder builder) => IsImplement<IModel>(builder.BaseType) ?
 		DefineOverrideMethod(builder, nameof(IModel.GetChanges)) :
 		base.DefineGetChangesMethod(builder);
 
-	protected override MethodBuilder DefineTryGetValueMethod(TypeBuilder builder) => IsImplement<IModel>(builder.BaseType) ? 
-		DefineOverrideMethod(builder, nameof(IModel.TryGetValue), new Type[] { typeof(string), typeof(object).MakeByRefType() }) :
+	protected override MethodBuilder DefineTryGetValueMethod(TypeBuilder builder) => IsImplement<IModel>(builder.BaseType) ?
+		DefineOverrideMethod(builder, nameof(IModel.TryGetValue), [typeof(string), typeof(object).MakeByRefType()]) :
 		base.DefineTryGetValueMethod(builder);
 
-	protected override MethodBuilder DefineTrySetValueMethod(TypeBuilder builder) => IsImplement<IModel>(builder.BaseType) ? 
-		DefineOverrideMethod(builder, nameof(IModel.TrySetValue), new Type[] { typeof(string), typeof(object) }) :
+	protected override MethodBuilder DefineTrySetValueMethod(TypeBuilder builder) => IsImplement<IModel>(builder.BaseType) ?
+		DefineOverrideMethod(builder, nameof(IModel.TrySetValue), [typeof(string), typeof(object)]) :
 		base.DefineTrySetValueMethod(builder);
 	#endregion
 

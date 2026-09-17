@@ -128,7 +128,7 @@ public partial class HardwareProfile : IReadOnlyCollection<IHardware>
 				}
 
 				if(data != null && data.Count > 0)
-					field = Convert.ToHexString(System.Security.Cryptography.MD5.HashData([..data]));
+					field = Convert.ToHexString(System.Security.Cryptography.MD5.HashData([.. data]));
 			}
 
 			return field;

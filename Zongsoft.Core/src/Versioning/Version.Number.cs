@@ -121,13 +121,16 @@ partial class Version
 		public int CompareTo(Number other)
 		{
 			var result = this.Major.CompareTo(other.Major);
-			if(result != 0) return result;
+			if(result != 0)
+				return result;
 
 			result = this.Minor.CompareTo(other.Minor);
-			if(result != 0) return result;
+			if(result != 0)
+				return result;
 
 			result = this.Patch.CompareTo(other.Patch);
-			if(result != 0) return result;
+			if(result != 0)
+				return result;
 
 			return this.Revision.CompareTo(other.Revision);
 		}

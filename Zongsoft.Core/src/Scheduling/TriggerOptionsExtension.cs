@@ -51,7 +51,7 @@ public static class TriggerOptionsExtension
 			return cron;
 		}
 
-		return options is null ? new (expression) : new(options.Identifier, expression);
+		return options is null ? new(expression) : new(options.Identifier, expression);
 	}
 
 	public static TriggerOptions.Latency Delay(this ITriggerOptions options, TimeSpan duration)
@@ -62,6 +62,6 @@ public static class TriggerOptionsExtension
 			return latency;
 		}
 
-		return options is null ? new (duration) : new(options.Identifier, duration);
+		return options is null ? new(duration) : new(options.Identifier, duration);
 	}
 }

@@ -151,7 +151,7 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 		}
 
 		public readonly string GetPath() => ConfigurationPath.Combine(this.Paths.Reverse());
-		public readonly string GetPath(string part) => ConfigurationPath.Combine([..this.Paths.Reverse(), part]);
+		public readonly string GetPath(string part) => ConfigurationPath.Combine([.. this.Paths.Reverse(), part]);
 
 		public readonly void Clear() => this.Paths.Clear();
 		public readonly void Indent(string path) => this.Paths.Push(path);

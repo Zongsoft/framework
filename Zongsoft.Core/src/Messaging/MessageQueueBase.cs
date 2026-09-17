@@ -76,7 +76,7 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 	public ValueTask<string> ProduceAsync(ReadOnlyMemory<char> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) =>
 		this.ProduceAsync(null, null, data, Encoding.UTF8, options, cancellation);
 
-	public ValueTask<string> ProduceAsync(ReadOnlyMemory<char> data, Encoding encoding, MessageEnqueueOptions options = null, CancellationToken cancellation = default)=>
+	public ValueTask<string> ProduceAsync(ReadOnlyMemory<char> data, Encoding encoding, MessageEnqueueOptions options = null, CancellationToken cancellation = default) =>
 		this.ProduceAsync(null, null, data, encoding, options, cancellation);
 
 	public ValueTask<string> ProduceAsync(string topic, ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) =>
@@ -123,7 +123,7 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 	async ValueTask<IMessageConsumer> IMessageQueue.SubscribeAsync(IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation) => await this.SubscribeAsync(null, null, handler, options, cancellation);
 	async ValueTask<IMessageConsumer> IMessageQueue.SubscribeAsync(string topic, Action<Message> handler, CancellationToken cancellation) => await this.SubscribeAsync(topic, null, new HandlerAdapter(handler), null, cancellation);
 	async ValueTask<IMessageConsumer> IMessageQueue.SubscribeAsync(string topic, Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation) => await this.SubscribeAsync(topic, null, new HandlerAdapter(handler), options, cancellation);
-	async ValueTask<IMessageConsumer> IMessageQueue.SubscribeAsync(string topic, IHandler<Message> handler, CancellationToken cancellation) =>await this.SubscribeAsync(topic, null, handler, null, cancellation);
+	async ValueTask<IMessageConsumer> IMessageQueue.SubscribeAsync(string topic, IHandler<Message> handler, CancellationToken cancellation) => await this.SubscribeAsync(topic, null, handler, null, cancellation);
 	async ValueTask<IMessageConsumer> IMessageQueue.SubscribeAsync(string topic, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation) => await this.SubscribeAsync(topic, null, handler, options, cancellation);
 	async ValueTask<IMessageConsumer> IMessageQueue.SubscribeAsync(string topic, string tags, Action<Message> handler, CancellationToken cancellation) => await this.SubscribeAsync(topic, tags, new HandlerAdapter(handler), null, cancellation);
 	async ValueTask<IMessageConsumer> IMessageQueue.SubscribeAsync(string topic, string tags, Action<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation) => await this.SubscribeAsync(topic, tags, new HandlerAdapter(handler), options, cancellation);

@@ -11,12 +11,12 @@ namespace Zongsoft.Data.Tests;
 
 public class DataTypeTest
 {
-	private const string EqualsProbeEnvironment = "ZONGSOFT_DATATYPE_EQUALS_PROBE";
+	private const string EQUALS_PROBE_ENVIRONMENT = "ZONGSOFT_DATATYPE_EQUALS_PROBE";
 
 	[Fact]
 	public async Task Equals_ObjectWithEquivalentDataType_ChildProcessExitsSuccessfully()
 	{
-		if(string.Equals(Environment.GetEnvironmentVariable(EqualsProbeEnvironment), "1", StringComparison.Ordinal))
+		if(string.Equals(Environment.GetEnvironmentVariable(EQUALS_PROBE_ENVIRONMENT), "1", StringComparison.Ordinal))
 		{
 			object first = DataType.Get(typeof(int));
 			object second = DataType.Get(typeof(int));
@@ -40,7 +40,7 @@ public class DataTypeTest
 		start.ArgumentList.Add($"{typeof(DataTypeTest).FullName}.{nameof(Equals_ObjectWithEquivalentDataType_ChildProcessExitsSuccessfully)}");
 		start.ArgumentList.Add("-parallel");
 		start.ArgumentList.Add("none");
-		start.Environment[EqualsProbeEnvironment] = "1";
+		start.Environment[EQUALS_PROBE_ENVIRONMENT] = "1";
 
 		using var process = Process.Start(start);
 		Assert.NotNull(process);

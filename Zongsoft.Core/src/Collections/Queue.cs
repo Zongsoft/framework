@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -402,16 +402,16 @@ public class Queue : Zongsoft.Collections.IQueue
 	#region 重写方法
 	/// <summary>返回当前队列的信息文本。</summary>
 	/// <returns>
-	///		<para>该方法重写了<seealso cref="System.Object"/>的同名方法，该重写返回如下格式的文本信息：</para>
+	///		<para>该方法重写了 <seealso cref="object"/> 的同名方法，该重写返回如下格式的文本信息：</para>
 	///		<para>(队头位置-队尾位置)[大小/容量]{最大限制, 最小成长量}</para>
 	/// </returns>
 	public override string ToString()
 	{
 		return string.Format("{0}({1}-{2}) [{3}/{4}] {{{5}, {6}}}",
-		                     _name + Environment.NewLine,
-							 _head, _tail,
-							 _size, _buffer.Length,
-							 _maximumLimit, _minimumGrow);
+			_name + Environment.NewLine,
+			_head, _tail,
+			_size, _buffer.Length,
+			_maximumLimit, _minimumGrow);
 	}
 	#endregion
 

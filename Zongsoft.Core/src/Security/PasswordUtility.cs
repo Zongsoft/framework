@@ -40,7 +40,7 @@ namespace Zongsoft.Security;
 public static class PasswordUtility
 {
 	#region 私有变量
-	private static readonly char[] PasswordSymbols = ['-', '+', '#', '@', '~', '$', '&', '.'];
+	private static readonly char[] _PasswordSymbols_ = ['-', '+', '#', '@', '~', '$', '&', '.'];
 	#endregion
 
 	#region 公共方法
@@ -67,7 +67,7 @@ public static class PasswordUtility
 			else if(index >= 36 && index < 62)
 				password[i] = (char)((byte)'a' + (index - 36));
 			else
-				password[i] = PasswordSymbols[index - 62];
+				password[i] = _PasswordSymbols_[index - 62];
 		}
 
 		return new string(password);

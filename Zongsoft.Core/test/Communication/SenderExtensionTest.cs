@@ -12,11 +12,12 @@ public class SenderExtensionTest
 	[Fact]
 	public void Send_Text_TransmitsOnlyEncodedUtf8Bytes()
 	{
-		const string text = "中€";
-		var expected = Encoding.UTF8.GetBytes(text);
+		const string TEXT = "中€";
+
+		var expected = Encoding.UTF8.GetBytes(TEXT);
 		var sender = new RecordingSender();
 
-		sender.Send(text, Encoding.UTF8);
+		sender.Send(TEXT, Encoding.UTF8);
 
 		Assert.Equal(1, sender.CallCount);
 		Assert.Equal(expected.Length, sender.Snapshot.Length);
@@ -26,11 +27,12 @@ public class SenderExtensionTest
 	[Fact]
 	public async Task SendAsync_Text_TransmitsOnlyEncodedUtf8Bytes()
 	{
-		const string text = "中€";
-		var expected = Encoding.UTF8.GetBytes(text);
+		const string TEXT = "中€";
+
+		var expected = Encoding.UTF8.GetBytes(TEXT);
 		var sender = new RecordingSender();
 
-		await sender.SendAsync(text, Encoding.UTF8);
+		await sender.SendAsync(TEXT, Encoding.UTF8);
 
 		Assert.Equal(1, sender.CallCount);
 		Assert.Equal(expected.Length, sender.Snapshot.Length);
@@ -40,11 +42,12 @@ public class SenderExtensionTest
 	[Fact]
 	public async Task SendAsync_Text_KeepsBufferAliveUntilSenderCompletes()
 	{
-		const string text = "异步发送";
-		var expected = Encoding.UTF8.GetBytes(text);
+		const string TEXT = "异步发送";
+
+		var expected = Encoding.UTF8.GetBytes(TEXT);
 		var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 		var sender = new RecordingSender((_, _) => new ValueTask(completion.Task));
-		var sending = sender.SendAsync(text, Encoding.UTF8).AsTask();
+		var sending = sender.SendAsync(TEXT, Encoding.UTF8).AsTask();
 
 		await sender.Invoked.Task.WaitAsync(TimeSpan.FromSeconds(5));
 

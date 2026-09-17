@@ -13,8 +13,8 @@ namespace Zongsoft.Configuration.Tests;
 
 public class ConnectionSettingsTest
 {
-	private static readonly DateTime DATE = new(1979, 5, 15);
-	private static readonly string ConnectionString = $" ;; server=192.168.0.1:8080, localhost:8088  ; Integer=100 ; enabled ; double= 1.23; ;  boolean= true ; text= MyString; dateTime={DATE:yyyy-M-d}; ; mapping=s1:t1,s2 = t2, same ";
+	private static readonly DateTime _Date_ = new(1979, 5, 15);
+	private static readonly string _ConnectionString_ = $" ;; server=192.168.0.1:8080, localhost:8088  ; Integer=100 ; enabled ; double= 1.23; ;  boolean= true ; text= MyString; dateTime={_Date_:yyyy-M-d}; ; mapping=s1:t1,s2 = t2, same ";
 
 	[Fact]
 	public void TestConnectionDescriptor()
@@ -81,7 +81,7 @@ public class ConnectionSettingsTest
 	[Fact]
 	public void TestConnectionSettingsGetValueAndSetValue()
 	{
-		var settings = new ConnectionSettings("MyConnectionSettings", ConnectionString);
+		var settings = new ConnectionSettings("MyConnectionSettings", _ConnectionString_);
 		Assert.NotEmpty(settings);
 		Assert.NotNull(settings.Value);
 		Assert.NotEmpty(settings.Value);
@@ -91,7 +91,7 @@ public class ConnectionSettingsTest
 		Assert.Equal(1.23, settings.GetValue<double>("double"));
 		Assert.True(settings.GetValue<bool>("boolean"));
 		Assert.Equal("MyString", settings.GetValue<string>("Text"));
-		Assert.Equal(DATE, settings.GetValue<DateTime>("DateTime"));
+		Assert.Equal(_Date_, settings.GetValue<DateTime>("DateTime"));
 
 		Assert.Null(settings.GetValue<bool?>("enabled"));
 		Assert.True(settings.SetValue("enabled", true));
@@ -112,7 +112,7 @@ public class ConnectionSettingsTest
 	[Fact]
 	public void TestConnectionSettings()
 	{
-		var settings = MyDriver.Instance.GetSettings(ConnectionString);
+		var settings = MyDriver.Instance.GetSettings(_ConnectionString_);
 		Assert.NotNull(settings);
 		Assert.NotNull(settings.Value);
 		Assert.NotEmpty(settings.Value);
@@ -124,8 +124,8 @@ public class ConnectionSettingsTest
 		Assert.Equal(100, settings.Integer);
 		Assert.Equal(1.23, settings.Double);
 		Assert.Equal("MyString", settings.Text, true);
-		Assert.Equal(DATE, settings.Birthday);
-		Assert.Equal(DateTime.Today.Year - DATE.Year, settings.Age);
+		Assert.Equal(_Date_, settings.Birthday);
+		Assert.Equal(DateTime.Today.Year - _Date_.Year, settings.Age);
 
 		Assert.NotNull(settings.Mapping);
 		Assert.NotEmpty(settings.Mapping);
@@ -190,18 +190,18 @@ public class ConnectionSettingsTest
 	[Fact]
 	public void TestConnectionSettingsGetOptions()
 	{
-		var TIMEOUT = TimeSpan.FromMinutes(1);
+		var duration = TimeSpan.FromMinutes(1);
 
-		var settings = MyDriver.Instance.GetSettings(ConnectionString);
+		var settings = MyDriver.Instance.GetSettings(_ConnectionString_);
 		Assert.NotNull(settings);
-		Assert.Equal(DATE, settings.Birthday);
-		Assert.Equal(TIMEOUT, settings.Timeout);
+		Assert.Equal(_Date_, settings.Birthday);
+		Assert.Equal(duration, settings.Timeout);
 
 		var options = settings.GetOptions();
 		Assert.NotNull(options);
-		Assert.Equal(DATE, options.DateTime);
-		Assert.Equal(TIMEOUT, options.ConnectionTimeout);
-		Assert.Equal(TIMEOUT, options.ExecutionTimeout);
+		Assert.Equal(_Date_, options.DateTime);
+		Assert.Equal(duration, options.ConnectionTimeout);
+		Assert.Equal(duration, options.ExecutionTimeout);
 
 		var date = DateTime.Today;
 		var timeout = TimeSpan.Parse("1:2:3");
@@ -274,12 +274,12 @@ public class ConnectionSettingsTest
 	[Fact]
 	public void TestGetSettings1()
 	{
-		var settings1 = MyDriver.Instance.GetSettings(ConnectionString);
+		var settings1 = MyDriver.Instance.GetSettings(_ConnectionString_);
 		Assert.NotNull(settings1);
 		Assert.NotEmpty(settings1);
 		Assert.Empty(settings1.Name);
 
-		var settings2 = ConnectionSettingsUtility.GetSettings(MyDriver.Instance, ConnectionString);
+		var settings2 = ConnectionSettingsUtility.GetSettings(MyDriver.Instance, _ConnectionString_);
 		Assert.NotNull(settings2);
 		Assert.NotEmpty(settings2);
 		Assert.Empty(settings2.Name);
@@ -308,12 +308,12 @@ public class ConnectionSettingsTest
 	{
 		const string NAME = "MySettings";
 
-		var settings1 = MyDriver.Instance.GetSettings(NAME, ConnectionString);
+		var settings1 = MyDriver.Instance.GetSettings(NAME, _ConnectionString_);
 		Assert.NotNull(settings1);
 		Assert.NotEmpty(settings1);
 		Assert.Equal(NAME, settings1.Name);
 
-		var settings2 = ConnectionSettingsUtility.GetSettings(MyDriver.Instance, NAME, ConnectionString);
+		var settings2 = ConnectionSettingsUtility.GetSettings(MyDriver.Instance, NAME, _ConnectionString_);
 		Assert.NotNull(settings2);
 		Assert.NotEmpty(settings2);
 		Assert.Equal(NAME, settings2.Name);

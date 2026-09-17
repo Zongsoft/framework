@@ -104,10 +104,10 @@ public readonly struct DataServiceMutability : IEquatable<DataServiceMutability>
 	public static DataServiceMutability None => default;
 
 	/// <summary>获取一个具有全部的可变性，支持“删除”、“新增”、“更新”、“增改”。</summary>
-	public static DataServiceMutability All => new (DELETABLE_VALUE | UPDATABLE_VALUE | INSERTABLE_VALUE | UPSERTABLE_VALUE);
+	public static DataServiceMutability All => new(DELETABLE_VALUE | UPDATABLE_VALUE | INSERTABLE_VALUE | UPSERTABLE_VALUE);
 
 	/// <summary>获取一个默认的可变性，支持“新增”和“更新”。</summary>
-	public static DataServiceMutability Default => new (UPDATABLE_VALUE | INSERTABLE_VALUE);
+	public static DataServiceMutability Default => new(UPDATABLE_VALUE | INSERTABLE_VALUE);
 	#endregion
 
 	#region 解析方法

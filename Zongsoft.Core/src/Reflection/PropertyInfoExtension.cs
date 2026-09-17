@@ -82,6 +82,7 @@ public static class PropertyInfoExtension
 		return _properties.GetOrAdd(property, info => new PropertyToken(GenerateGetter(info), GenerateSetter(info))).Setter;
 	}
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
 	public static Getter GenerateGetter(this PropertyInfo property)
 	{
 		if(property == null)
@@ -138,7 +139,7 @@ public static class PropertyInfoExtension
 			//throw new ArgumentException("...");
 			generator.MarkLabel(ERROR_LABEL);
 			generator.Emit(OpCodes.Ldstr, $"The count of {property.Name} property indexer parameters is not enough.");
-			generator.Emit(OpCodes.Newobj, typeof(ArgumentException).GetConstructor(new Type[] { typeof(string) }));
+			generator.Emit(OpCodes.Newobj, typeof(ArgumentException).GetConstructor([typeof(string)]));
 			generator.Emit(OpCodes.Throw);
 
 			generator.MarkLabel(NORMAL_LABEL);
@@ -171,6 +172,7 @@ public static class PropertyInfoExtension
 		return (Getter)method.CreateDelegate(typeof(Getter));
 	}
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
 	public static Setter GenerateSetter(this PropertyInfo property)
 	{
 		if(property == null)
@@ -338,6 +340,7 @@ public static class PropertyInfoExtension
 		return (Setter<T>)token.Setter;
 	}
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
 	public static Getter<T> GenerateGetter<T>(this PropertyInfo property)
 	{
 		if(property == null)
@@ -420,6 +423,7 @@ public static class PropertyInfoExtension
 		return (Getter<T>)method.CreateDelegate(typeof(Getter<T>));
 	}
 
+	[System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006")]
 	public static Setter<T> GenerateSetter<T>(this PropertyInfo property)
 	{
 		if(property == null)

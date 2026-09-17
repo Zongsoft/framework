@@ -23,15 +23,16 @@ public class PasswordTest
 	[Fact]
 	public void ByteArrayConversion_ReturnsIndependentCopies()
 	{
-		const string text = "correct horse";
-		var password = Password.Generate(text, [1, 2, 3, 4, 5, 6, 7, 8], 0, "SHA256");
+		const string TEXT = "correct horse";
+
+		var password = Password.Generate(TEXT, [1, 2, 3, 4, 5, 6, 7, 8], 0, "SHA256");
 		byte[] first = password;
 		byte[] second = password;
 
 		Assert.NotSame(first, second);
 		first[0] = 0;
 
-		Assert.True(password.Verify(text));
+		Assert.True(password.Verify(TEXT));
 		Assert.Equal((byte)'Z', second[0]);
 		Assert.Equal(second, (byte[])password);
 	}
@@ -169,34 +170,34 @@ public class PasswordTest
 		Assert.True(empty.Verify(null));
 		Assert.True(empty.Verify(string.Empty));
 
-		string PASSWORD = Common.Randomizer.GenerateString();
-		var result = Password.Generate(PASSWORD, "SHA1");
-		Assert.True(result.Verify(PASSWORD));
+		string password = Common.Randomizer.GenerateString();
+		var result = Password.Generate(password, "SHA1");
+		Assert.True(result.Verify(password));
 		Assert.False(result.Verify(null));
 		Assert.False(result.Verify(" "));
 		Assert.False(result.Verify(string.Empty));
-		Assert.False(result.Verify(PASSWORD + '!'));
+		Assert.False(result.Verify(password + '!'));
 
-		result = Password.Generate(PASSWORD, "SHA256");
-		Assert.True(result.Verify(PASSWORD));
+		result = Password.Generate(password, "SHA256");
+		Assert.True(result.Verify(password));
 		Assert.False(result.Verify(null));
 		Assert.False(result.Verify(" "));
 		Assert.False(result.Verify(string.Empty));
-		Assert.False(result.Verify(PASSWORD + '!'));
+		Assert.False(result.Verify(password + '!'));
 
-		result = Password.Generate(PASSWORD, "SHA384");
-		Assert.True(result.Verify(PASSWORD));
+		result = Password.Generate(password, "SHA384");
+		Assert.True(result.Verify(password));
 		Assert.False(result.Verify(null));
 		Assert.False(result.Verify(" "));
 		Assert.False(result.Verify(string.Empty));
-		Assert.False(result.Verify(PASSWORD + '!'));
+		Assert.False(result.Verify(password + '!'));
 
-		result = Password.Generate(PASSWORD, "SHA512");
-		Assert.True(result.Verify(PASSWORD));
+		result = Password.Generate(password, "SHA512");
+		Assert.True(result.Verify(password));
 		Assert.False(result.Verify(null));
 		Assert.False(result.Verify(" "));
 		Assert.False(result.Verify(string.Empty));
-		Assert.False(result.Verify(PASSWORD + '!'));
+		Assert.False(result.Verify(password + '!'));
 	}
 
 	[Fact]

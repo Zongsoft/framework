@@ -91,7 +91,7 @@ public class CommandOptionDescriptor
 
 		if(this.Symbol == '\0')
 			return defaultValue == null ?
-				$"{this.Name}:{Common.TypeAlias.GetAlias(this.Type)}{(this.Required ? "(required)" : null)}":
+				$"{this.Name}:{Common.TypeAlias.GetAlias(this.Type)}{(this.Required ? "(required)" : null)}" :
 				$"{this.Name}:{Common.TypeAlias.GetAlias(this.Type)}={defaultValue}{(this.Required ? "(required)" : null)}";
 		else
 			return defaultValue == null ?

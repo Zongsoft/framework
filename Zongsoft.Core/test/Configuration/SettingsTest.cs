@@ -129,7 +129,7 @@ public class SettingsTest
 	[Fact]
 	public void TestParse()
 	{
-		var TEXT = @" key1=value1; key2 = value2; key3 = ; key 4 = value 4 ; key5; key 6 = ' value\t;\nEnd\\'; ";
+		const string TEXT = @" key1=value1; key2 = value2; key3 = ; key 4 = value 4 ; key5; key 6 = ' value\t;\nEnd\\'; ";
 
 		Assert.True(Settings.TryParse(TEXT, out var settings));
 		Assert.NotNull(settings);
