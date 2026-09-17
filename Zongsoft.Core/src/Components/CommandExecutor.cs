@@ -279,7 +279,7 @@ public partial class CommandExecutor : ICommandExecutor
 			if(context == null)
 				throw new ArgumentNullException(nameof(context));
 
-			return context.Command != null ? context.Command.ExecuteAsync(context, cancellation) : throw new InvalidOperationException("Missing executable commands.");
+			return context.Command != null ? context.Command.ExecuteAsync(context, cancellation) : throw new InvalidOperationException(Properties.Resources.CommandExecutor_MissingCommand_Message);
 		}
 	}
 

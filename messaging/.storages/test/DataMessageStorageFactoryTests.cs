@@ -32,7 +32,7 @@ public sealed class DataMessageStorageFactoryTests(SQLiteDatabaseFixture fixture
 	public void Create_ExactNamedConnectionCreatesIndependentStorages(string option)
 	{
 		var factory = GetFactory(option);
-		using var scope = CreateScope(option, out var provider);
+		using var scope = this.CreateScope(option, out var provider);
 		using var application = new ApplicationScope(scope.Provider);
 
 		DataMessageStorage first = factory.Create("QueueServer");
@@ -65,7 +65,7 @@ public sealed class DataMessageStorageFactoryTests(SQLiteDatabaseFixture fixture
 	[Fact]
 	public void DriverMismatchThrowsConfigurationExceptionWithoutRequestingAccessor()
 	{
-		using var scope = CreateScope("SQLite", out var provider);
+		using var scope = this.CreateScope("SQLite", out var provider);
 		using var application = new ApplicationScope(scope.Provider);
 
 		var exception = Assert.Throws<ConfigurationException>(() => DataMessageStorageFactory.MySql.Create("QueueServer"));

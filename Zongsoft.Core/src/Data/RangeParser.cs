@@ -77,7 +77,7 @@ internal static class RangeParser
 		{
 			//未正常关闭圆括号
 			if(context.HasFlags(Flags.Parenthesis))
-				return new RangeParserResult("Missing the closing parenthesis.");
+				return new RangeParserResult(Properties.Resources.RangeParser_MissingClosingParenthesis_Message);
 
 			//必须移动指针到最后，以便Reset正确计算内容值
 			context.Move(-1);
@@ -129,7 +129,7 @@ internal static class RangeParser
 	private static void DoFinal(ref RangeParserContext context)
 	{
 		if(!context.IsWhitespace)
-			context.Error("The range expression contains redundant content.");
+			context.Error(Properties.Resources.RangeParser_RedundantContent_Message);
 	}
 
 	private static void DoMinimum(ref RangeParserContext context, out string value)
@@ -465,7 +465,7 @@ internal static class DateTimeRangeParser
 			case State.Final:
 				break;
 			default:
-				return new DateTimeRangeParserResult($"Invalid datetime range expression format.");
+				return new DateTimeRangeParserResult(Properties.Resources.RangeParser_InvalidDateTimeFormat_Message);
 		}
 
 		switch(name.ToLowerInvariant())
@@ -490,42 +490,42 @@ internal static class DateTimeRangeParser
 				return new DateTimeRangeParserResult(Range.Timing.LastYear());
 			case "ago":
 				if(arguments == null || arguments.Count < 1)
-					return new DateTimeRangeParserResult($"The Ago range function is missing a required parameter.");
+					return new DateTimeRangeParserResult(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_MissingArguments_Message, nameof(Range.Timing.Ago)));
 
 				if(arguments.Count > 1)
-					return new DateTimeRangeParserResult($"The Ago range function has too many parameters.");
+					return new DateTimeRangeParserResult(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_TooManyArguments_Message, nameof(Range.Timing.Ago)));
 
 				return new DateTimeRangeParserResult(Range.Timing.Ago(arguments[0].Value, arguments[0].Unit));
 			case "last":
 				if(arguments == null || arguments.Count < 1)
-					return new DateTimeRangeParserResult($"The Last range function is missing a required parameter.");
+					return new DateTimeRangeParserResult(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_MissingArguments_Message, nameof(Range.Timing.Last)));
 
 				if(arguments.Count > 1)
-					return new DateTimeRangeParserResult($"The Last range function has too many parameters.");
+					return new DateTimeRangeParserResult(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_TooManyArguments_Message, nameof(Range.Timing.Last)));
 
 				return new DateTimeRangeParserResult(Range.Timing.Last(arguments[0].Value, arguments[0].Unit));
 			case "year":
 				if(arguments == null || arguments.Count < 1)
-					return new DateTimeRangeParserResult($"The Year range function is missing a required parameter.");
+					return new DateTimeRangeParserResult(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_MissingArguments_Message, nameof(Range.Timing.Year)));
 
 				if(arguments.Count > 1)
-					return new DateTimeRangeParserResult($"The Year range function has too many parameters.");
+					return new DateTimeRangeParserResult(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_TooManyArguments_Message, nameof(Range.Timing.Year)));
 
 				return new DateTimeRangeParserResult(Range.Timing.Year(arguments[0].Value));
 			case "month":
 				if(arguments == null || arguments.Count < 2)
-					return new DateTimeRangeParserResult($"The Month range function is missing required parameters.");
+					return new DateTimeRangeParserResult(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_MissingArguments_Message, nameof(Range.Timing.Month)));
 
 				if(arguments.Count > 2)
-					return new DateTimeRangeParserResult($"The Month range function has too many parameters.");
+					return new DateTimeRangeParserResult(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_TooManyArguments_Message, nameof(Range.Timing.Month)));
 
 				return new DateTimeRangeParserResult(Range.Timing.Month(arguments[0].Value, arguments[1].Value));
 			case "day":
 				if(arguments == null || arguments.Count < 3)
-					return new DateTimeRangeParserResult($"The Day range function is missing required parameters.");
+					return new DateTimeRangeParserResult(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_MissingArguments_Message, nameof(Range.Timing.Day)));
 
 				if(arguments.Count > 3)
-					return new DateTimeRangeParserResult($"The Day range function has too many parameters.");
+					return new DateTimeRangeParserResult(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_TooManyArguments_Message, nameof(Range.Timing.Day)));
 
 				return new DateTimeRangeParserResult(Range.Timing.Day(arguments[0].Value, arguments[1].Value, arguments[2].Value));
 			default:
@@ -549,7 +549,7 @@ internal static class DateTimeRangeParser
 	private static void DoFinal(ref DataTimeRangeParserContext context)
 	{
 		if(!context.IsWhitespace)
-			context.Error("The datatime range expression contains redundant content.");
+			context.Error(Properties.Resources.RangeParser_RedundantContent_Message);
 	}
 
 	private static void DoIdentifier(ref DataTimeRangeParserContext context, out string name)
@@ -584,7 +584,7 @@ internal static class DateTimeRangeParser
 		if(context.Character == '(')
 			context.Reset(State.Method);
 		else
-			context.Error($"Invalid datetime range expression format.");
+			context.Error(Properties.Resources.RangeParser_InvalidDateTimeFormat_Message);
 	}
 
 	private static void DoMethod(ref DataTimeRangeParserContext context)
@@ -647,7 +647,7 @@ internal static class DateTimeRangeParser
 				if(context.IsDigit)
 					context.Accept(State.Number);
 				else
-					context.Error($"The argument in the datetime range expression must be a number.");
+					context.Error(Properties.Resources.RangeParser_NumericArgumentRequired_Message);
 
 				value = 0;
 				unit = '\0';

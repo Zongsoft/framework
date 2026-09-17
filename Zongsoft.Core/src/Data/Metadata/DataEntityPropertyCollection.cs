@@ -187,7 +187,7 @@ public class DataEntityPropertyCollection(IDataEntity entity) : ICollection<IDat
 		else if(!ReferenceEquals(entity, property.Entity))
 		{
 			failure?.Invoke(property, state);
-			throw new InvalidOperationException($"The entity property cannot be added or updated to the properties because the entity to which this property belongs cannot be set.");
+			throw new InvalidOperationException(Properties.Resources.DataEntityProperty_OwnerReadOnly_Message);
 		}
 	}
 	#endregion

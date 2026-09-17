@@ -52,7 +52,7 @@ partial class Profile
 	internal void BeginWrite()
 	{
 		if(_writing)
-			throw new InvalidOperationException(Properties.Resources.Profiles_AlreadySaving);
+			throw new InvalidOperationException(Properties.Resources.Profiles_AlreadySaving_Message);
 
 		_writing = true;
 	}
@@ -157,7 +157,7 @@ partial class Profile
 			throw new ArgumentNullException(nameof(item));
 
 		if(item.Profile != this || item.Section != section)
-			throw new InvalidOperationException(Properties.Resources.Profiles_SourceEdit);
+			throw new InvalidOperationException(Properties.Resources.Profiles_SourceEdit_Message);
 	}
 
 	internal string[] Snapshot()

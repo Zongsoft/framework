@@ -95,7 +95,7 @@ partial class TypeAlias
 		else if(context.IsWhitespace)
 			context.Skip();
 		else
-			context.Error($"The type name or namespace must begin with a letter or an underscore.");
+			context.Error(Properties.Resources.TypeAlias_InvalidFirstCharacter_Message);
 	}
 
 	private static bool DoType(ref AliasContext context)
@@ -111,7 +111,7 @@ partial class TypeAlias
 					if(context.IsLetter || context.Character == '_')
 						context.Accept();
 					else
-						context.Error($"The type name or namespace must begin with a letter or an underscore.");
+						context.Error(Properties.Resources.TypeAlias_InvalidFirstCharacter_Message);
 				}
 				break;
 			case '@':
@@ -267,7 +267,7 @@ partial class TypeAlias
 		if(context.IsLetter || context.Character == '_')
 			context.Accept(AliasState.Type);
 		else
-			context.Error($"The type name or namespace must begin with a letter or an underscore.");
+			context.Error(Properties.Resources.TypeAlias_InvalidFirstCharacter_Message);
 	}
 
 	private static void DoGenericStart(ref AliasContext context)
@@ -287,7 +287,7 @@ partial class TypeAlias
 				if(context.IsLetter || context.Character == '_')
 					context.Accept(AliasState.Type);
 				else
-					context.Error($"The type name or namespace must begin with a letter or an underscore.");
+					context.Error(Properties.Resources.TypeAlias_InvalidFirstCharacter_Message);
 				break;
 		}
 	}

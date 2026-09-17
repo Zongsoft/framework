@@ -47,6 +47,6 @@ public class CommandOptionException : CommandException
 
 	#region 公共属性
 	public string OptionName { get; }
-	public override string Message => this.HasMessage ? base.Message : string.Format(Properties.Resources.InvalidCommandOption, this.OptionName);
+	public override string Message => this.HasMessage ? base.Message : string.Format(Properties.Resources.InvalidCommandOption_Message, this.OptionName);
 	#endregion
 }

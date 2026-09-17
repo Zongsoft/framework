@@ -56,7 +56,7 @@ public class StringTokenizer : ITokenizer
 			chr = (char)valueRead;
 
 			if(chr == '\n' || chr == '\r')
-				throw new SyntaxException("The string literal contains new-line symbol.");
+				throw new SyntaxException(Properties.Resources.StringTokenizer_NewLine_Message);
 
 			if(escaping)
 			{

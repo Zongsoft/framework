@@ -101,7 +101,7 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 	public async ValueTask HeartbeatAsync(CancellationToken cancellation = default)
 	{
 		var client = await this.ConnectAsync(cancellation);
-		await client.GetAsync(GetKey("__heartbeat__"), null, null, cancellation);
+		await client.GetAsync(this.GetKey("__heartbeat__"), null, null, cancellation);
 	}
 
 	public bool Exists(string key) => this.ExistsAsync(key).AsTask().GetAwaiter().GetResult();
@@ -111,7 +111,7 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 			return false;
 
 		var client = await this.ConnectAsync(cancellation);
-		var response = await client.GetAsync(GetKey(key), null, null, cancellation);
+		var response = await client.GetAsync(this.GetKey(key), null, null, cancellation);
 		return response.Count > 0;
 	}
 
@@ -122,7 +122,7 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 			throw new ArgumentNullException(nameof(key));
 
 		var client = await this.ConnectAsync(cancellation);
-		var response = await client.GetAsync(GetKey(key), null, null, cancellation);
+		var response = await client.GetAsync(this.GetKey(key), null, null, cancellation);
 		return response.Kvs.Count == 0 ? null : response.Kvs[0].Value.ToStringUtf8();
 	}
 
@@ -144,7 +144,7 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 
 			await client.PutAsync(new Etcdserverpb.PutRequest
 			{
-				Key = ByteString.CopyFromUtf8(GetKey(key)),
+				Key = ByteString.CopyFromUtf8(this.GetKey(key)),
 				Value = ByteString.CopyFromUtf8(value ?? string.Empty),
 				Lease = leaseId,
 			}, null, null, cancellation);
@@ -164,7 +164,7 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 			return false;
 
 		var client = await this.ConnectAsync(cancellation);
-		var response = await client.DeleteAsync(GetKey(key), null, null, cancellation);
+		var response = await client.DeleteAsync(this.GetKey(key), null, null, cancellation);
 		return response.Deleted > 0;
 	}
 
@@ -172,7 +172,7 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 	public async ValueTask<IReadOnlyDictionary<string, string>> FindAsync(string prefix = null, CancellationToken cancellation = default)
 	{
 		var client = await this.ConnectAsync(cancellation);
-		var physicalPrefix = GetKey(prefix ?? string.Empty);
+		var physicalPrefix = this.GetKey(prefix ?? string.Empty);
 		var response = await client.GetAsync(new Etcdserverpb.RangeRequest
 		{
 			Key = ByteString.CopyFromUtf8(physicalPrefix),
@@ -194,7 +194,7 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 	public async ValueTask<long> CountAsync(string prefix = null, CancellationToken cancellation = default)
 	{
 		var client = await this.ConnectAsync(cancellation);
-		var physicalPrefix = GetKey(prefix ?? string.Empty);
+		var physicalPrefix = this.GetKey(prefix ?? string.Empty);
 		var response = await client.GetAsync(new Etcdserverpb.RangeRequest
 		{
 			Key = ByteString.CopyFromUtf8(physicalPrefix),

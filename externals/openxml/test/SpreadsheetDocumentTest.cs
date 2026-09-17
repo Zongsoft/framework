@@ -26,7 +26,7 @@ namespace Zongsoft.Externals.OpenXml.Tests
 			Assert.Equal("MySheet", document.Sheets[1].Name);
 
 			//测试单元格的数据读写
-			TestCells(document);
+			this.TestCells(document);
 
 			document.Save();
 			document.Dispose();
@@ -51,7 +51,7 @@ namespace Zongsoft.Externals.OpenXml.Tests
 			Assert.Equal("MySheet", document.Sheets[1].Name);
 
 			//测试单元格的数据读写
-			TestCells(document);
+			this.TestCells(document);
 		}
 
 		private void TestCells(SpreadsheetDocument document)

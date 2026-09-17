@@ -40,7 +40,7 @@ internal static class ExpressionUtility
 	internal static MemberToken GetMember(Expression expression)
 	{
 		var token = ResolveMemberExpression(expression, new Stack<MemberInfo>());
-		return token ?? throw new ArgumentException("Invalid member expression.");
+		return token ?? throw new ArgumentException(Properties.Resources.MemberExpression_Invalid_Message);
 	}
 
 	private static MemberToken? ResolveMemberExpression(Expression expression, Stack<MemberInfo> stack)

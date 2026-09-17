@@ -96,7 +96,7 @@ public static partial class Authentication
 	public static async ValueTask<CredentialPrincipal> AuthenticateAsync(string scheme, string key, object data, string scenario, Parameters parameters, CancellationToken cancellation = default)
 	{
 		CredentialPrincipal principal = null;
-		var authority = Authority ?? throw new InvalidOperationException($"Missing the required credential provider.");
+		var authority = Authority ?? throw new InvalidOperationException(Properties.Resources.Authentication_MissingAuthority_Message);
 
 		//激发“Authenticating”事件
 		OnAuthenticating(new AuthenticatingEventArgs(scheme, data, scenario, parameters));
@@ -142,7 +142,7 @@ public static partial class Authentication
 	{
 		//获取身份验证器
 		var authenticator = GetAuthenticator(scheme) ??
-			throw new AuthenticationException(SecurityReasons.InvalidArgument, $"Invalid authenticator scheme.");
+			throw new AuthenticationException(SecurityReasons.InvalidArgument, Properties.Resources.Authentication_InvalidScheme_Message);
 
 		//校验身份
 		var result = await authenticator.VerifyAsync(key, data, scenario, parameters, cancellation);

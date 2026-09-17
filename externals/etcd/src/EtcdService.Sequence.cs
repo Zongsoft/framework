@@ -71,7 +71,7 @@ partial class EtcdService : ISequence
 
 		cancellation.ThrowIfCancellationRequested();
 		var client = await this.ConnectAsync(cancellation);
-		var physicalKey = GetKey(key);
+		var physicalKey = this.GetKey(key);
 		var keyBytes = ByteString.CopyFromUtf8(physicalKey);
 
 		while(true)

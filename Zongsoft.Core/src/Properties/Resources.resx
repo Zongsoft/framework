@@ -120,43 +120,43 @@
   <data name="Disabled" xml:space="preserve">
     <value>Disabled</value>
   </data>
-  <data name="Error.FailedBinding" xml:space="preserve">
+  <data name="Error.FailedBinding.Message" xml:space="preserve">
     <value>The configuration value at "{0}" cannot be converted to type "{1}".</value>
   </data>
-  <data name="Error.FailedToActivate" xml:space="preserve">
+  <data name="Error.FailedToActivate.Message" xml:space="preserve">
     <value>Unable to create an instance of type "{0}".</value>
   </data>
-  <data name="Error.IllegalConfigurationAttributeName" xml:space="preserve">
+  <data name="Error.IllegalConfigurationAttributeName.Message" xml:space="preserve">
     <value>The configuration property name "{0}" is invalid. Located at: {1}</value>
   </data>
-  <data name="Error.IllegalConfigurationKeyValue" xml:space="preserve">
+  <data name="Error.IllegalConfigurationKeyValue.Message" xml:space="preserve">
     <value>The value "{0}" of the illegal configuration element cannot contain characters such as '/', '\', ':', '*', or '?'. Located at: {1}</value>
   </data>
-  <data name="Error.IllegalRootNodeName" xml:space="preserve">
+  <data name="Error.IllegalRootNodeName.Message" xml:space="preserve">
     <value>The root node name "{0}" is invalid. {1}</value>
   </data>
-  <data name="Error.InvalidOptionConfigurationFileFormat" xml:space="preserve">
+  <data name="Error.InvalidOptionConfigurationFileFormat.Message" xml:space="preserve">
     <value>Invalid option configuration file format. The configuration elements must be located within the &lt;option&gt; element. Located at: {0}</value>
   </data>
-  <data name="Error.InvalidUnrecognizedProperty" xml:space="preserve">
+  <data name="Error.InvalidUnrecognizedProperty.Message" xml:space="preserve">
     <value>The specified "{0}" is an invalid unrecognized property. The type of unrecognized properties must be a dictionary with string keys.</value>
   </data>
-  <data name="Error.KeyIsDuplicated" xml:space="preserve">
+  <data name="Error.KeyIsDuplicated.Message" xml:space="preserve">
     <value>Duplicate "{0}" key found. Located at: {1}</value>
   </data>
-  <data name="Error.NamespaceIsNotSupported" xml:space="preserve">
+  <data name="Error.NamespaceIsNotSupported.Message" xml:space="preserve">
     <value>XML namespaces are not supported. Located at: {0}</value>
   </data>
-  <data name="Error.PropertyCannotRead" xml:space="preserve">
+  <data name="Error.PropertyCannotRead.Message" xml:space="preserve">
     <value>The "{1}" property of type "{0}" is not readable.</value>
   </data>
-  <data name="Error.PropertyNotExists" xml:space="preserve">
+  <data name="Error.PropertyNotExists.Message" xml:space="preserve">
     <value>There is no property named "{1}" in the "{0}" type.</value>
   </data>
-  <data name="Error.UnsupportedMultidimensionalArray" xml:space="preserve">
+  <data name="Error.UnsupportedMultidimensionalArray.Message" xml:space="preserve">
     <value>Unable to create an instance of type "{0}" because multidimensional arrays are not supported.</value>
   </data>
-  <data name="Error.UnsupportedNodeType" xml:space="preserve">
+  <data name="Error.UnsupportedNodeType.Message" xml:space="preserve">
     <value>Unsupported node type "{0}" detected. {1}</value>
   </data>
   <data name="OperationException.Argument.Message" xml:space="preserve">
@@ -249,16 +249,16 @@
   <data name="ExitCommand.Options.Confirm" xml:space="preserve">
     <value>Exit directly without prompting for confirmation.</value>
   </data>
-  <data name="InvalidCommandOption" xml:space="preserve">
+  <data name="InvalidCommandOption.Message" xml:space="preserve">
     <value>The specified '{0}' is an invalid command option.</value>
   </data>
-  <data name="InvalidCommandOptionValue" xml:space="preserve">
+  <data name="InvalidCommandOptionValue.Message" xml:space="preserve">
     <value>The specified '{1}' is an invalid '{0}' command option value.</value>
   </data>
   <data name="LinePositionInfo" xml:space="preserve">
     <value>Row {0}, column {1}.</value>
   </data>
-  <data name="MissingCommandOption" xml:space="preserve">
+  <data name="MissingCommandOption.Message" xml:space="preserve">
     <value>The command option '{0}' is missing. A value must be provided for this option.</value>
   </data>
   <data name="SecretGenerateTooFrequently.Message" xml:space="preserve">
@@ -555,55 +555,268 @@
   <data name="Services.ApplicationVersion.EditionInvalid.Message" xml:space="preserve">
     <value>An initialized edition with a name and version number is required.</value>
   </data>
-  <data name="Profiles_CircularImport" xml:space="preserve">
+  <data name="Profiles.CircularImport.Message" xml:space="preserve">
     <value>Circular profile import: {0}. Referenced from {1}, line {2}.</value>
   </data>
-  <data name="Profiles_MaximumDepth" xml:space="preserve">
+  <data name="Profiles.MaximumDepth.Message" xml:space="preserve">
     <value>Maximum profile import depth exceeded: {0}. Referenced from {1}, line {2}.</value>
   </data>
-  <data name="Profiles_RelativeImportRequiresFile" xml:space="preserve">
+  <data name="Profiles.RelativeImportRequiresFile.Message" xml:space="preserve">
     <value>Relative import "{0}" requires a source file path (line {1}).</value>
   </data>
-  <data name="Profiles_LinkResolutionFailed" xml:space="preserve">
+  <data name="Profiles.LinkResolutionFailed.Message" xml:space="preserve">
     <value>Unable to resolve the profile path link: {0}.</value>
   </data>
-  <data name="Profiles_SourceRequired" xml:space="preserve">
+  <data name="Profiles.SourceRequired.Message" xml:space="preserve">
     <value>The modified profile has no source file path.</value>
   </data>
-  <data name="Profiles_SourceEdit" xml:space="preserve">
+  <data name="Profiles.SourceEdit.Message" xml:space="preserve">
     <value>Edit the declaration through its source profile and section.</value>
   </data>
-  <data name="Profiles_AlreadySaving" xml:space="preserve">
+  <data name="Profiles.AlreadySaving.Message" xml:space="preserve">
     <value>This profile is already being saved.</value>
   </data>
-  <data name="Profiles_SaveConflict" xml:space="preserve">
+  <data name="Profiles.SaveConflict.Message" xml:space="preserve">
     <value>Conflicting modified profiles target the same file: '{0}'.</value>
   </data>
-  <data name="Profiles_SaveFailed" xml:space="preserve">
+  <data name="Profiles.SaveFailed.Message" xml:space="preserve">
     <value>Failed to save '{0}'. Completed files: {1}.</value>
   </data>
-  <data name="Profiles_SaveMutation" xml:space="preserve">
+  <data name="Profiles.SaveMutation.Message" xml:space="preserve">
     <value>Profiles must not be modified during saving.</value>
   </data>
-  <data name="Profiles_ReadOnly" xml:space="preserve">
+  <data name="Profiles.ReadOnly.Message" xml:space="preserve">
     <value>The profile file is read-only: '{0}'.</value>
   </data>
-  <data name="Profiles_SectionInvalid" xml:space="preserve">
+  <data name="Profiles.SectionInvalid.Message" xml:space="preserve">
     <value>The section name cannot be represented in a profile: '{0}'.</value>
   </data>
-  <data name="Profiles_EntryInvalid" xml:space="preserve">
+  <data name="Profiles.EntryInvalid.Message" xml:space="preserve">
     <value>The entry '{0}' cannot be represented in a profile.</value>
   </data>
-  <data name="Profiles_CommentInvalid" xml:space="preserve">
+  <data name="Profiles.CommentInvalid.Message" xml:space="preserve">
     <value>The comment cannot be represented consistently as a profile declaration.</value>
   </data>
-  <data name="Profiles_BlanksInvalid" xml:space="preserve">
+  <data name="Profiles.BlanksInvalid.Message" xml:space="preserve">
     <value>Profile blank line positions must be nonnegative and increasing.</value>
   </data>
-  <data name="Profiles_EntryDuplicate" xml:space="preserve">
+  <data name="Profiles.EntryDuplicate.Message" xml:space="preserve">
     <value>An entry named '{0}' is already declared in this profile.</value>
   </data>
-  <data name="Profiles_SectionDuplicate" xml:space="preserve">
+  <data name="Profiles.SectionDuplicate.Message" xml:space="preserve">
     <value>A section with the same name already exists.</value>
+  </data>
+  <data name="NumberTokenizer.InvalidLongSuffix.Message" xml:space="preserve">
+    <value>Illegal long integer suffix symbol(L), because it's a float numeric literal.</value>
+  </data>
+  <data name="NumberTokenizer.TrailingDot.Message" xml:space="preserve">
+    <value>Illegal numeric literal, cann't end with a dot(.) symbol.</value>
+  </data>
+  <data name="NumberTokenizer.MultipleDots.Message" xml:space="preserve">
+    <value>Illegal numeric literal, it contains multiple dot(.) symbol.</value>
+  </data>
+  <data name="Secretor.InvalidCaptcha.Message" xml:space="preserve">
+    <value>Invalid captch format.</value>
+  </data>
+  <data name="InvalidFormat.Message" xml:space="preserve">
+    <value>Invalid format.</value>
+  </data>
+  <data name="MemberExpression.Invalid.Message" xml:space="preserve">
+    <value>Invalid member expression.</value>
+  </data>
+  <data name="ServiceInjector.InvalidMemberType.Message" xml:space="preserve">
+    <value>Invalid member type.</value>
+  </data>
+  <data name="Path.InvalidCharacter.Message" xml:space="preserve">
+    <value>Invalid path, it contains a illegal character.</value>
+  </data>
+  <data name="Secretor.InvalidPattern.Message" xml:space="preserve">
+    <value>Invalid secret pattern.</value>
+  </data>
+  <data name="Sorting.InvalidFormat.Message" xml:space="preserve">
+    <value>Invalid sorting format.</value>
+  </data>
+  <data name="CommandExecutor.MissingCommand.Message" xml:space="preserve">
+    <value>Missing executable commands.</value>
+  </data>
+  <data name="Authentication.MissingIdentity.Message" xml:space="preserve">
+    <value>Missing identity.</value>
+  </data>
+  <data name="WorkerCommand.MissingWorker.Message" xml:space="preserve">
+    <value>Missing required worker of depends on.</value>
+  </data>
+  <data name="DataSearcher.MissingMembers.Message" xml:space="preserve">
+    <value>Missing specified search member definitions.</value>
+  </data>
+  <data name="RangeParser.MissingClosingParenthesis.Message" xml:space="preserve">
+    <value>Missing the closing parenthesis.</value>
+  </data>
+  <data name="DataSearcher.MissingResolver.Message" xml:space="preserve">
+    <value>Missing the required keyword condition resolver.</value>
+  </data>
+  <data name="Searcher.ParentAfterWildcard.Message" xml:space="preserve">
+    <value>Parent segments cannot follow a wildcard segment.</value>
+  </data>
+  <data name="Enumerable.Empty.Message" xml:space="preserve">
+    <value>Sequence contains no elements.</value>
+  </data>
+  <data name="DataService.DeleteRequiresCriteria.Message" xml:space="preserve">
+    <value>The criteria cann't is null on delete operation.</value>
+  </data>
+  <data name="Stream.NotWritable.Message" xml:space="preserve">
+    <value>The destination stream does not support writing.</value>
+  </data>
+  <data name="Enumerable.NotStarted.Message" xml:space="preserve">
+    <value>The iterator has not yet started, please call the MoveNext() method first.</value>
+  </data>
+  <data name="Enumerable.Completed.Message" xml:space="preserve">
+    <value>The iterator has terminated.</value>
+  </data>
+  <data name="Locker.AcquisitionInactive.Message" xml:space="preserve">
+    <value>The lock acquisition is no longer active.</value>
+  </data>
+  <data name="HierarchicalNode.InvalidName.Message" xml:space="preserve">
+    <value>The name contains illegal character(s).</value>
+  </data>
+  <data name="CacheSubscription.InvalidKind.Message" xml:space="preserve">
+    <value>The notification kinds must contain only defined flags and cannot be None.</value>
+  </data>
+  <data name="CacheSubscription.InvalidCapacity.Message" xml:space="preserve">
+    <value>The notification queue capacity must be positive.</value>
+  </data>
+  <data name="UserService.PasswordAnswersFailed.Message" xml:space="preserve">
+    <value>The password answers verify failed.</value>
+  </data>
+  <data name="UserService.PasswordAnswersCountMismatch.Message" xml:space="preserve">
+    <value>The password questions and answers count is not equals.</value>
+  </data>
+  <data name="RangeParser.RedundantContent.Message" xml:space="preserve">
+    <value>The range expression contains redundant content.</value>
+  </data>
+  <data name="Searcher.RelativePatternRequired.Message" xml:space="preserve">
+    <value>The search pattern must be relative to the directory.</value>
+  </data>
+  <data name="Secretor.InvalidArgument.Message" xml:space="preserve">
+    <value>The secret argument contains illegal characters.</value>
+  </data>
+  <data name="Searcher.LinkTargetMissing.Message" xml:space="preserve">
+    <value>The selected link target does not exist.</value>
+  </data>
+  <data name="StringTokenizer.NewLine.Message" xml:space="preserve">
+    <value>The string literal contains new-line symbol.</value>
+  </data>
+  <data name="UserService.EmptyName.Message" xml:space="preserve">
+    <value>The user name is empty.</value>
+  </data>
+  <data name="UserService.InvalidStoredAnswer.Message" xml:space="preserve">
+    <value>Illegal format for stored password-answer.</value>
+  </data>
+  <data name="DataServiceMutability.InvalidFormat.Message" xml:space="preserve">
+    <value>Illegal format parameter value.</value>
+  </data>
+  <data name="Paging.InvalidFormat.Message" xml:space="preserve">
+    <value>Illegal paging format.</value>
+  </data>
+  <data name="Authentication.InvalidScheme.Message" xml:space="preserve">
+    <value>Invalid authenticator scheme.</value>
+  </data>
+  <data name="Checksum.InvalidFormat.Message" xml:space="preserve">
+    <value>Invalid checksum text format.</value>
+  </data>
+  <data name="RangeParser.InvalidDateTimeFormat.Message" xml:space="preserve">
+    <value>Invalid datetime range expression format.</value>
+  </data>
+  <data name="Identifier.InvalidFormat.Message" xml:space="preserve">
+    <value>Invalid format of the identifier.</value>
+  </data>
+  <data name="Path.InvalidAnchor.Message" xml:space="preserve">
+    <value>Invalid path anchor.</value>
+  </data>
+  <data name="StateHandler.InvalidContext.Message" xml:space="preserve">
+    <value>Invalid type of the state context.</value>
+  </data>
+  <data name="DataAccess.MissingConnections.Message" xml:space="preserve">
+    <value>Missing database connection settings.</value>
+  </data>
+  <data name="DataAccess.MissingSequence.Message" xml:space="preserve">
+    <value>Missing required Sequence service.</value>
+  </data>
+  <data name="Authentication.MissingToken.Message" xml:space="preserve">
+    <value>Missing the required authentication token.</value>
+  </data>
+  <data name="Authentication.MissingAuthority.Message" xml:space="preserve">
+    <value>Missing the required credential provider.</value>
+  </data>
+  <data name="UserService.MissingSecretor.Message" xml:space="preserve">
+    <value>Missing the required secretor.</value>
+  </data>
+  <data name="Hardware.RequiredProperty.Message" xml:space="preserve">
+    <value>The '{0}' property is required.</value>
+  </data>
+  <data name="RangeParser.NumericArgumentRequired.Message" xml:space="preserve">
+    <value>The argument in the datetime range expression must be a number.</value>
+  </data>
+  <data name="Attempter.SequenceNotSupported.Message" xml:space="preserve">
+    <value>The cache of authentication failover does not support the increment(ISequence) operation.</value>
+  </data>
+  <data name="DistributedLock.Released.Message" xml:space="preserve">
+    <value>The distributed lock has been released.</value>
+  </data>
+  <data name="DataEntityProperty.OwnerReadOnly.Message" xml:space="preserve">
+    <value>The entity property cannot be added or updated to the properties because the entity to which this property belongs cannot be set.</value>
+  </data>
+  <data name="Path.InvalidFirstCharacter.Message" xml:space="preserve">
+    <value>The first character must be a letter, number or underscore.</value>
+  </data>
+  <data name="Path.AnchorRequired.Message" xml:space="preserve">
+    <value>The path separator must be followed by the path anchor.</value>
+  </data>
+  <data name="CommandAlias.InvalidCharacters.Message" xml:space="preserve">
+    <value>The specified alias contains illegal characters.</value>
+  </data>
+  <data name="Command.InvalidName.Message" xml:space="preserve">
+    <value>The specified command name contains illegal characters.</value>
+  </data>
+  <data name="Parameters.NullForNonNullable.Message" xml:space="preserve">
+    <value>The specified parameter value is null, but the declared type is not the Nullable type.</value>
+  </data>
+  <data name="TypeAlias.InvalidFirstCharacter.Message" xml:space="preserve">
+    <value>The type name or namespace must begin with a letter or an underscore.</value>
+  </data>
+  <data name="Serialization.Immutable.Message" xml:space="preserve">
+    <value>The serialization options is immutable.</value>
+  </data>
+  <data name="MemberExpression.UnknownError.Message" xml:space="preserve">
+    <value>An unknown error occurred in the parser.</value>
+  </data>
+  <data name="MemoryCache.ImmutableOptions.Message" xml:space="preserve">
+    <value>The current memory cache options is immutable.</value>
+  </data>
+  <data name="EventBinder.ArgumentTypeMismatch.Message" xml:space="preserve">
+    <value>The bound event argument type do not match.</value>
+  </data>
+  <data name="HierarchicalNode.RootAsChild.Message" xml:space="preserve">
+    <value>The root node cannot be added to the child nodes.</value>
+  </data>
+  <data name="Password.NonceTooLong.Message" xml:space="preserve">
+    <value>The length of nonce is too long.</value>
+  </data>
+  <data name="Password.NonceTooShort.Message" xml:space="preserve">
+    <value>The length of nonce is too short(must be greater than or equal to 4).</value>
+  </data>
+  <data name="RangeParser.MissingArguments.Message" xml:space="preserve">
+    <value>The {0} range function is missing required parameters.</value>
+  </data>
+  <data name="RangeParser.TooManyArguments.Message" xml:space="preserve">
+    <value>The {0} range function has too many parameters.</value>
+  </data>
+  <data name="DataService.OperationNotAllowed.Message" xml:space="preserve">
+    <value>The {0} operation is not allowed.</value>
+  </data>
+  <data name="Security.BuiltinName.Message" xml:space="preserve">
+    <value>The specified name cannot be a built-in name.</value>
+  </data>
+  <data name="Type.ValueTypeRequired.Message" xml:space="preserve">
+    <value>The specified '{0}' parameter must be a value type.</value>
   </data>
 </root>

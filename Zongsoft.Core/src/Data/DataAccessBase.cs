@@ -341,7 +341,7 @@ public abstract partial class DataAccessBase : IDataAccess, IDisposable
 			if(sequence == null && !string.IsNullOrEmpty(this.Name))
 				sequence = provider.GetService(string.Empty);
 
-			return sequence ?? throw new InvalidOperationException($"Missing required Sequence service.");
+			return sequence ?? throw new InvalidOperationException(Properties.Resources.DataAccess_MissingSequence_Message);
 		}
 		#endregion
 

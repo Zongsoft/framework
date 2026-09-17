@@ -209,8 +209,6 @@ public static class EventBinder
 	#region 私有方法
 	private static (object adapter, Delegate trigger) GetAdapter(this EventDescriptor descriptor, Type delegateType)
 	{
-		const string EVENT_BINDING_ERROR_MESSAGE = @"The bound event argument type do not match.";
-
 		static bool IsParametersType(Type type) => typeof(Collections.Parameters).IsAssignableFrom(type);
 
 		if(delegateType == typeof(Action))
@@ -223,7 +221,7 @@ public static class EventBinder
 		if(delegateType == typeof(EventHandler))
 		{
 			if(descriptor.GetArgumentType() != typeof(EventArgs))
-				throw new InvalidOperationException(EVENT_BINDING_ERROR_MESSAGE);
+				throw new InvalidOperationException(Properties.Resources.EventBinder_ArgumentTypeMismatch_Message);
 
 			var adapter = new EventHandlerAdapter(descriptor as EventDescriptor<EventArgs>);
 			var trigger = new EventHandler(adapter.Raise);
@@ -237,7 +235,7 @@ public static class EventBinder
 			if(prototype == typeof(EventHandler<>))
 			{
 				if(descriptor.GetArgumentType() != delegateType.GenericTypeArguments[0])
-					throw new InvalidOperationException(EVENT_BINDING_ERROR_MESSAGE);
+					throw new InvalidOperationException(Properties.Resources.EventBinder_ArgumentTypeMismatch_Message);
 
 				var adapter = Activator.CreateInstance(
 					typeof(EventHandlerAdapter<>).MakeGenericType(delegateType.GenericTypeArguments[0]),
@@ -249,7 +247,7 @@ public static class EventBinder
 			if(prototype == typeof(Action<,,>))
 			{
 				if(descriptor.GetArgumentType() != delegateType.GenericTypeArguments[1])
-					throw new InvalidOperationException(EVENT_BINDING_ERROR_MESSAGE);
+					throw new InvalidOperationException(Properties.Resources.EventBinder_ArgumentTypeMismatch_Message);
 
 				if(delegateType.GenericTypeArguments[0] == typeof(object) &&
 				   IsParametersType(delegateType.GenericTypeArguments[2]))
@@ -265,7 +263,7 @@ public static class EventBinder
 			if(prototype == typeof(Action<,>))
 			{
 				if(descriptor.GetArgumentType() != delegateType.GenericTypeArguments[1])
-					throw new InvalidOperationException(EVENT_BINDING_ERROR_MESSAGE);
+					throw new InvalidOperationException(Properties.Resources.EventBinder_ArgumentTypeMismatch_Message);
 
 				if(delegateType.GenericTypeArguments[0] == typeof(object))
 				{
@@ -280,7 +278,7 @@ public static class EventBinder
 			if(prototype == typeof(Action<>))
 			{
 				if(descriptor.GetArgumentType() != delegateType.GenericTypeArguments[0])
-					throw new InvalidOperationException(EVENT_BINDING_ERROR_MESSAGE);
+					throw new InvalidOperationException(Properties.Resources.EventBinder_ArgumentTypeMismatch_Message);
 
 				var adapter = Activator.CreateInstance(
 					typeof(ActionAdapter<>).MakeGenericType(delegateType.GenericTypeArguments[0]),

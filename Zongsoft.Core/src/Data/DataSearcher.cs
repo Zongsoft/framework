@@ -134,7 +134,7 @@ public class DataSearcher<TModel> : IDataSearcher<TModel>, IDataSearcher
 		var conditioner = this.Conditioner;
 
 		if(conditioner == null)
-			throw new InvalidOperationException("Missing the required keyword condition resolver.");
+			throw new InvalidOperationException(Properties.Resources.DataSearcher_MissingResolver_Message);
 
 		return conditioner.Resolve(method, keyword, options);
 	}
@@ -311,7 +311,7 @@ public class DataSearcher<TModel> : IDataSearcher<TModel>, IDataSearcher
 				}
 
 				if(tokens.Count == 0)
-					throw new InvalidOperationException("Missing specified search member definitions.");
+					throw new InvalidOperationException(Properties.Resources.DataSearcher_MissingMembers_Message);
 
 				return new ConditionToken(tokens.ToArray());
 			}

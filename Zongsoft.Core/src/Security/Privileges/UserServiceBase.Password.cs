@@ -80,7 +80,7 @@ partial class UserServiceBase<TUser>
 
 		//确认验证失败是否超出限制数，如果超出则抛出账号被禁用的异常
 		if(attempter != null && !await attempter.CheckAsync($"{ATTEMPTER_PREFIX}#{identifier.Value}", cancellation))
-			throw new SecurityException(nameof(SecurityReasons.AccountSuspended));
+			throw new SecurityException(Properties.Resources.Security_AccountSuspended_Message);
 
 		//获取用户密钥信息
 		var cipher = await this.Passworder.GetAsync(identifier, cancellation);
@@ -115,7 +115,7 @@ partial class UserServiceBase<TUser>
 		if(string.IsNullOrEmpty(identity))
 			throw new ArgumentNullException(nameof(identity));
 
-		var secretor = this.Secretor ?? throw new InvalidOperationException($"Missing the required secretor.");
+		var secretor = this.Secretor ?? throw new InvalidOperationException(Properties.Resources.UserService_MissingSecretor_Message);
 
 		//获取指定标识的用户
 		var user = this.Accessor.SelectAsync<TUser>(this.Name, this.GetCriteria(identity, @namespace, out var identityType), cancellation).Synchronize(cancellation).FirstOrDefault();
@@ -139,7 +139,7 @@ partial class UserServiceBase<TUser>
 		if(string.IsNullOrEmpty(secret))
 			return false;
 
-		var secretor = this.Secretor ?? throw new InvalidOperationException($"Missing the required secretor.");
+		var secretor = this.Secretor ?? throw new InvalidOperationException(Properties.Resources.UserService_MissingSecretor_Message);
 
 		//执行校验码验证
 		(var succeed, var extra) = await secretor.VerifyAsync(token, secret, cancellation);
@@ -180,16 +180,16 @@ partial class UserServiceBase<TUser>
 
 		//如果密码问答的答案验证失败，则抛出安全异常
 		if(passwordAnswers.Length != answers.Count)
-			throw new SecurityException("Verification:PasswordAnswers", "The password answers verify failed.");
+			throw new SecurityException("Verification:PasswordAnswers", Properties.Resources.UserService_PasswordAnswersFailed_Message);
 
 		//如果密码问答的答案验证失败，则抛出安全异常
 		for(int i = 0; i < passwordAnswers.Length; i++)
 		{
 			if(!Password.TryParse(answers[i], out var password))
-				throw new InvalidOperationException($"Illegal format for stored password-answer.");
+				throw new InvalidOperationException(Properties.Resources.UserService_InvalidStoredAnswer_Message);
 
 			if(!password.Verify(passwordAnswers[i]))
-				throw new SecurityException("Verification:PasswordAnswers", "The password answers verify failed.");
+				throw new SecurityException("Verification:PasswordAnswers", Properties.Resources.UserService_PasswordAnswersFailed_Message);
 		}
 
 		//确认新密码是否符合密码规则
@@ -247,7 +247,7 @@ partial class UserServiceBase<TUser>
 			throw new ArgumentNullException(nameof(passwordAnswers));
 
 		if(passwordQuestions.Length != passwordAnswers.Length)
-			throw new ArgumentException("The password questions and answers count is not equals.");
+			throw new ArgumentException(Properties.Resources.UserService_PasswordAnswersCountMismatch_Message);
 
 		//确认指定的用户标识是否有效
 		identifier = EnsureIdentity(identifier);
@@ -257,7 +257,7 @@ partial class UserServiceBase<TUser>
 
 		//确认验证失败是否超出限制数，如果超出则抛出账号被禁用的异常
 		if(attempter != null && !await attempter.CheckAsync($"{ATTEMPTER_PREFIX}#{identifier.Value}", cancellation))
-			throw new SecurityException(nameof(SecurityReasons.AccountSuspended));
+			throw new SecurityException(Properties.Resources.Security_AccountSuspended_Message);
 
 		//获取用户密钥信息
 		var cipher = await this.Passworder.GetAsync(identifier, cancellation);
@@ -372,7 +372,7 @@ partial class UserServiceBase<TUser>
 		}
 
 		if(questions.Length != answers.Length)
-			throw new ArgumentException($"The specified '{nameof(questions)}' parameter does not match the length of the '{nameof(answers)}' parameter.");
+			throw new ArgumentException(Properties.Resources.UserService_PasswordAnswersCountMismatch_Message);
 
 		if(questions.Length > 5)
 			throw new ArgumentOutOfRangeException(nameof(questions));

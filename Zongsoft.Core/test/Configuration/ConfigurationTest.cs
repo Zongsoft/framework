@@ -24,8 +24,8 @@ public class ConfigurationTest
 		Assert.NotNull(configuration);
 		Assert.NotEmpty(configuration.Providers);
 
-		TestGeneral(configuration.GetOption<General>("/general"));
-		TestMobile(configuration.GetOption<Mobile>("mobile"));
+		this.TestGeneral(configuration.GetOption<General>("/general"));
+		this.TestMobile(configuration.GetOption<Mobile>("mobile"));
 	}
 
 	[Fact]
@@ -36,9 +36,9 @@ public class ConfigurationTest
 		Assert.NotNull(configuration);
 		Assert.NotEmpty(configuration.Providers);
 
-		TestGeneral(configuration.GetOption<General>("/general"));
-		TestMobile(configuration.GetOption<Mobile>("mobile"));
-		TestStorage(configuration.GetOption<Storage>("storage"));
+		this.TestGeneral(configuration.GetOption<General>("/general"));
+		this.TestMobile(configuration.GetOption<Mobile>("mobile"));
+		this.TestStorage(configuration.GetOption<Storage>("storage"));
 	}
 
 	[Fact]

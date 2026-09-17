@@ -73,7 +73,7 @@ public class JsonOutputFormatter : TextOutputFormatter
 			throw new ArgumentNullException(nameof(selectedEncoding));
 
 		var httpContext = context.HttpContext;
-		var writeStream = GetWriteStream(httpContext, selectedEncoding, out var options);
+		var writeStream = this.GetWriteStream(httpContext, selectedEncoding, out var options);
 
 		try
 		{
@@ -208,7 +208,7 @@ public class JsonOutputFormatter : TextOutputFormatter
 				throw new ArgumentOutOfRangeException(nameof(count));
 
 			var bufferSegment = new ArraySegment<byte>(buffer, offset, count);
-			return WriteAsync(bufferSegment, cancellation);
+			return this.WriteAsync(bufferSegment, cancellation);
 		}
 
 		private async Task WriteAsync( ArraySegment<byte> bufferSegment, CancellationToken cancellation)
@@ -229,7 +229,7 @@ public class JsonOutputFormatter : TextOutputFormatter
 
 				if(!decoderCompleted)
 				{
-					await WriteBufferAsync(cancellation);
+					await this.WriteBufferAsync(cancellation);
 				}
 			}
 		}
@@ -260,7 +260,7 @@ public class JsonOutputFormatter : TextOutputFormatter
 
 		public async Task FinalWriteAsync(CancellationToken cancellation)
 		{
-			await WriteBufferAsync(cancellation);
+			await this.WriteBufferAsync(cancellation);
 			var byteBuffer = ArrayPool<byte>.Shared.Rent(_maxByteBufferSize);
 			var encoderCompleted = false;
 

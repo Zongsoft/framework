@@ -106,7 +106,7 @@ public static class ConfigurationBinder
 		if(Common.Convert.TryConvertValue(value, type, out var result))
 			return result;
 
-		throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedBinding, path, type));
+		throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedBinding_Message, path, type));
 	}
 
 	public static void SetOption(this IConfiguration configuration, object instance, string path = null, Action<ConfigurationBinderOptions> configureOptions = null)

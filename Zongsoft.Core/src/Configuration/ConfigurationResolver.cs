@@ -104,7 +104,7 @@ public class ConfigurationResolver : IConfigurationResolver
 				if(property.SetValue(instance, section.Value))
 					return;
 
-				throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedBinding, section.Path, property.PropertyType));
+				throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedBinding_Message, section.Path, property.PropertyType));
 			}
 
 			this.OnUnrecognized(instance, properties, section, options);
@@ -240,7 +240,7 @@ public class ConfigurationResolver : IConfigurationResolver
 		if(type.IsArray)
 		{
 			if(type.GetArrayRank() > 1)
-				throw new InvalidOperationException(string.Format(Properties.Resources.Error_UnsupportedMultidimensionalArray, type));
+				throw new InvalidOperationException(string.Format(Properties.Resources.Error_UnsupportedMultidimensionalArray_Message, type));
 
 			return Array.CreateInstance(type.GetElementType(), 0);
 		}
@@ -290,7 +290,7 @@ public class ConfigurationResolver : IConfigurationResolver
 		}
 		catch(Exception ex)
 		{
-			throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedToActivate, type), ex);
+			throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedToActivate_Message, type), ex);
 		}
 
 		static object[] GetConstructorArguments(Type type, IConfigurationSection section)

@@ -249,7 +249,7 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 
 		this.Connect();
 
-		return _database.KeyType(GetKey(key)) switch
+		return _database.KeyType(this.GetKey(key)) switch
 		{
 			RedisType.String => RedisEntryType.String,
 			RedisType.Hash => RedisEntryType.Dictionary,
@@ -270,7 +270,7 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 
 		await this.ConnectAsync(cancellation);
 
-		return await _database.KeyTypeAsync(GetKey(key)).WaitAsync(cancellation) switch
+		return await _database.KeyTypeAsync(this.GetKey(key)).WaitAsync(cancellation) switch
 		{
 			RedisType.String => RedisEntryType.String,
 			RedisType.Hash => RedisEntryType.Dictionary,

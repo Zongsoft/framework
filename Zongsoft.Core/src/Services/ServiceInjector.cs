@@ -219,7 +219,7 @@ public static class ServiceInjector
 			{
 				PropertyInfo property => property.PropertyType,
 				FieldInfo field => field.FieldType,
-				_ => throw new ArgumentException("Invalid member type."),
+				_ => throw new ArgumentException(Properties.Resources.ServiceInjector_InvalidMemberType_Message),
 			};
 
 			if(!memberType.IsGenericType || memberType.GetGenericTypeDefinition() != typeof(IOptions<>))

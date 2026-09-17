@@ -34,10 +34,6 @@ namespace Zongsoft.Reflection.Expressions;
 
 internal static class MemberExpressionParser
 {
-	#region 常量定义
-	private const string EXCEPTION_UNKNOWN_MESSAGE = "An unknown error occurred in the parser.";
-	#endregion
-
 	#region 公共方法
 	public static bool TryParse(ReadOnlySpan<char> text, out IMemberExpression expression) => (expression = Parse(text, null)) != null;
 	public static IMemberExpression Parse(ReadOnlySpan<char> text) => Parse(text, message => throw new InvalidOperationException(message));
@@ -400,7 +396,7 @@ internal static class MemberExpressionParser
 
 				if(ownerState != State.Indexer && ownerState != State.Method)
 				{
-					context.OnError(EXCEPTION_UNKNOWN_MESSAGE);
+					context.OnError(Properties.Resources.MemberExpression_UnknownError_Message);
 					return false;
 				}
 
@@ -594,7 +590,7 @@ internal static class MemberExpressionParser
 		public void AppendParameterConstant(IMemberExpression owner)
 		{
 			if(owner == null)
-				throw new InvalidOperationException(EXCEPTION_UNKNOWN_MESSAGE);
+				throw new InvalidOperationException(Properties.Resources.MemberExpression_UnknownError_Message);
 
 			void Add(ICollection<IMemberExpression> parameters, string content, TypeCode type)
 			{
@@ -602,16 +598,16 @@ internal static class MemberExpressionParser
 			};
 
 			if(owner is IndexerExpression indexer)
-				Add(indexer.Arguments, GetBufferContent(), Flags.GetConstantType());
+				Add(indexer.Arguments, this.GetBufferContent(), Flags.GetConstantType());
 			else if(owner is MethodExpression method)
-				Add(method.Arguments, GetBufferContent(), Flags.GetConstantType());
+				Add(method.Arguments, this.GetBufferContent(), Flags.GetConstantType());
 			else
-				throw new InvalidOperationException(EXCEPTION_UNKNOWN_MESSAGE);
+				throw new InvalidOperationException(Properties.Resources.MemberExpression_UnknownError_Message);
 		}
 
 		public IdentifierExpression AppendIdentifier(IMemberExpression owner)
 		{
-			var current = MemberExpression.Identifier(GetBufferContent());
+			var current = MemberExpression.Identifier(this.GetBufferContent());
 
 			if(owner == null)
 			{
@@ -628,7 +624,7 @@ internal static class MemberExpressionParser
 				if(Flags.IsAttaching())
 				{
 					if(indexer.Arguments.Count == 0 || indexer.Arguments[indexer.Arguments.Count - 1].ExpressionType != MemberExpressionType.Identifier)
-						throw new InvalidOperationException(EXCEPTION_UNKNOWN_MESSAGE);
+						throw new InvalidOperationException(Properties.Resources.MemberExpression_UnknownError_Message);
 
 					return ((MemberExpression)((IdentifierExpression)indexer.Arguments[indexer.Arguments.Count - 1]).Last()).Append(current);
 				}
@@ -641,7 +637,7 @@ internal static class MemberExpressionParser
 				if(Flags.IsAttaching())
 				{
 					if(method.Arguments.Count == 0 || method.Arguments[method.Arguments.Count - 1].ExpressionType != MemberExpressionType.Identifier)
-						throw new InvalidOperationException(EXCEPTION_UNKNOWN_MESSAGE);
+						throw new InvalidOperationException(Properties.Resources.MemberExpression_UnknownError_Message);
 
 					return ((MemberExpression)((IdentifierExpression)method.Arguments[method.Arguments.Count - 1]).Last()).Append(current);
 				}
@@ -650,7 +646,7 @@ internal static class MemberExpressionParser
 				return current;
 			}
 
-			throw new InvalidOperationException(EXCEPTION_UNKNOWN_MESSAGE);
+			throw new InvalidOperationException(Properties.Resources.MemberExpression_UnknownError_Message);
 		}
 
 		public IndexerExpression AppendIndexer()
@@ -670,7 +666,7 @@ internal static class MemberExpressionParser
 				else if(owner is MethodExpression method)
 					method.Arguments.Add(expression);
 				else
-					throw new InvalidOperationException(EXCEPTION_UNKNOWN_MESSAGE);
+					throw new InvalidOperationException(Properties.Resources.MemberExpression_UnknownError_Message);
 			}
 
 			Stack.Push(expression);
@@ -682,7 +678,7 @@ internal static class MemberExpressionParser
 		{
 			if(Stack == null || Stack.Count == 0)
 			{
-				var current = MemberExpression.Method(GetBufferContent());
+				var current = MemberExpression.Method(this.GetBufferContent());
 
 				if(Head == null)
 					Head = current;
@@ -694,7 +690,7 @@ internal static class MemberExpressionParser
 				return current;
 			}
 
-			var expression = MemberExpression.Method(GetBufferContent());
+			var expression = MemberExpression.Method(this.GetBufferContent());
 			var owner = Stack.Peek();
 
 			if(owner is IndexerExpression indexer)
@@ -702,7 +698,7 @@ internal static class MemberExpressionParser
 			else if(owner is MethodExpression method)
 				method.Arguments.Add(expression);
 			else
-				throw new InvalidOperationException(EXCEPTION_UNKNOWN_MESSAGE);
+				throw new InvalidOperationException(Properties.Resources.MemberExpression_UnknownError_Message);
 
 			Stack.Push(expression);
 
@@ -792,13 +788,13 @@ internal static class MemberExpressionParser
 		#endregion
 
 		#region 公共方法
-		public readonly bool IsEscaping() => IsMarked(STRING_ESCAPING_FLAG);
-		public void IsEscaping(bool enabled) => Mark(STRING_ESCAPING_FLAG, enabled);
-		public readonly bool IsAttaching() => IsMarked(IDENTIFIER_ATTACHING_FLAG);
+		public readonly bool IsEscaping() => this.IsMarked(STRING_ESCAPING_FLAG);
+		public void IsEscaping(bool enabled) => this.Mark(STRING_ESCAPING_FLAG, enabled);
+		public readonly bool IsAttaching() => this.IsMarked(IDENTIFIER_ATTACHING_FLAG);
 
-		public void IsAttaching(bool enabled) => Mark(IDENTIFIER_ATTACHING_FLAG, enabled);
-		public readonly bool HasWhitespace() => IsMarked(IDENTIFIER_WHITESPACE_FLAG);
-		public void HasWhitespace(bool enabled) => Mark(IDENTIFIER_WHITESPACE_FLAG, enabled);
+		public void IsAttaching(bool enabled) => this.Mark(IDENTIFIER_ATTACHING_FLAG, enabled);
+		public readonly bool HasWhitespace() => this.IsMarked(IDENTIFIER_WHITESPACE_FLAG);
+		public void HasWhitespace(bool enabled) => this.Mark(IDENTIFIER_WHITESPACE_FLAG, enabled);
 
 		public readonly TypeCode GetConstantType() => (_data & CONSTANT_TYPE_FLAG) switch
 		{
@@ -818,25 +814,25 @@ internal static class MemberExpressionParser
 			switch(type)
 			{
 				case TypeCode.Int32:
-					Mark(CONSTANT_TYPE_INT32_FLAG, true);
+					this.Mark(CONSTANT_TYPE_INT32_FLAG, true);
 					break;
 				case TypeCode.Int64:
-					Mark(CONSTANT_TYPE_INT64_FLAG, true);
+					this.Mark(CONSTANT_TYPE_INT64_FLAG, true);
 					break;
 				case TypeCode.Single:
-					Mark(CONSTANT_TYPE_SINGLE_FLAG, true);
+					this.Mark(CONSTANT_TYPE_SINGLE_FLAG, true);
 					break;
 				case TypeCode.Double:
-					Mark(CONSTANT_TYPE_DOUBLE_FLAG, true);
+					this.Mark(CONSTANT_TYPE_DOUBLE_FLAG, true);
 					break;
 				case TypeCode.Decimal:
-					Mark(CONSTANT_TYPE_DECIMAL_FLAG, true);
+					this.Mark(CONSTANT_TYPE_DECIMAL_FLAG, true);
 					break;
 			}
 		}
 
-		public readonly char GetStringQuote() => IsMarked(STRING_QUOTATION_FLAG) ? '"' : '\'';
-		public void SetStringQuote(char chr) => Mark(STRING_QUOTATION_FLAG, chr == '"');
+		public readonly char GetStringQuote() => this.IsMarked(STRING_QUOTATION_FLAG) ? '"' : '\'';
+		public void SetStringQuote(char chr) => this.Mark(STRING_QUOTATION_FLAG, chr == '"');
 		#endregion
 
 		#region 私有方法

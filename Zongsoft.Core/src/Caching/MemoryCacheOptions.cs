@@ -114,11 +114,9 @@ public class MemoryCacheOptions : INotifyPropertyChanged, INotifyPropertyChangin
 	#region 嵌套子类
 	private sealed class ImmutableOptions(TimeSpan frequency, int limit = 0) : MemoryCacheOptions(frequency, limit)
 	{
-		const string ERROR_MESSAGE = "The current memory cache options is immutable.";
-
 		public override string ToString() => $"[Immutability] {base.ToString()}";
-		protected override void OnPropertyChanged(string name) => throw new InvalidOperationException(ERROR_MESSAGE);
-		protected override void OnPropertyChanging(string name) => throw new InvalidOperationException(ERROR_MESSAGE);
+		protected override void OnPropertyChanged(string name) => throw new InvalidOperationException(Properties.Resources.MemoryCache_ImmutableOptions_Message);
+		protected override void OnPropertyChanging(string name) => throw new InvalidOperationException(Properties.Resources.MemoryCache_ImmutableOptions_Message);
 	}
 	#endregion
 }

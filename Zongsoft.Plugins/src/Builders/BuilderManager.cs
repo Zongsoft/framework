@@ -101,7 +101,7 @@ namespace Zongsoft.Plugins.Builders
 				//如果构建结果不为空并且不取消后续构建操作的话，则继续构建子集
 				if((context.Settings == null || !context.Settings.HasFlags(BuilderSettingsFlags.IgnoreChildren)) && context.Result != null && !context.Cancel)
 				{
-					BuildChildren(context.Node, context.Depth, context.Result, context.Node);
+					this.BuildChildren(context.Node, context.Depth, context.Result, context.Node);
 				}
 
 				//设置当前构件为构建已完成标志

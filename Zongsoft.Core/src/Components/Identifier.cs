@@ -155,7 +155,7 @@ public readonly struct Identifier(Type type, object value, string label = null, 
 	#endregion
 
 	#region 解析方法
-	public static Identifier Parse(ReadOnlySpan<char> text) => TryParse(text, out var result) ? result : throw new InvalidOperationException($"Invalid format of the identifier.");
+	public static Identifier Parse(ReadOnlySpan<char> text) => TryParse(text, out var result) ? result : throw new InvalidOperationException(Properties.Resources.Identifier_InvalidFormat_Message);
 	public static bool TryParse(ReadOnlySpan<char> text, out Identifier result)
 	{
 		if(text.IsEmpty)
@@ -305,7 +305,7 @@ public readonly struct Identifier<T>(Type type, T value, string label = null, st
 	#endregion
 
 	#region 解析方法
-	public static Identifier<T> Parse(ReadOnlySpan<char> text) => TryParse(text, out var result) ? result : throw new InvalidOperationException($"Invalid format of the identifier.");
+	public static Identifier<T> Parse(ReadOnlySpan<char> text) => TryParse(text, out var result) ? result : throw new InvalidOperationException(Properties.Resources.Identifier_InvalidFormat_Message);
 	public static bool TryParse(ReadOnlySpan<char> text, out Identifier<T> result)
 	{
 		result = default;

@@ -50,7 +50,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 			if(!string.IsNullOrEmpty(connectionString))
 			{
 				var parts = Zongsoft.Common.StringExtension.Slice(connectionString, ';');
-				Settings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+				this.Settings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
 				foreach(var part in parts)
 				{
@@ -63,9 +63,9 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 							var key = part.Substring(0, index);
 
 							if(index >= part.Length - 1)
-								Settings.Add(key, null);
+								this.Settings.Add(key, null);
 							else
-								Settings.Add(key, part.Substring(index + 1));
+								this.Settings.Add(key, part.Substring(index + 1));
 						}
 					}
 				}

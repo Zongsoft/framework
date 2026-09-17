@@ -202,7 +202,7 @@ public class JsonInputFormatter : TextInputFormatter, IInputFormatterExceptionPo
 
 			if(_charBuffer.Count == 0)
 			{
-				await ReadInputChars(cancellation);
+				await this.ReadInputChars(cancellation);
 			}
 
 			var operationStatus = Utf8.FromUtf16(_charBuffer, readBuffer, out var charsRead, out var bytesWritten, isFinalBlock: false);

@@ -129,7 +129,7 @@ public sealed class Locker : IAsyncDisposable
 		public void Acquire()
 		{
 			if(Interlocked.CompareExchange(ref _state, ACQUIRED, PENDING) != PENDING)
-				throw new InvalidOperationException("The lock acquisition is no longer active.");
+				throw new InvalidOperationException(Properties.Resources.Locker_AcquisitionInactive_Message);
 		}
 
 		public void Cancel()

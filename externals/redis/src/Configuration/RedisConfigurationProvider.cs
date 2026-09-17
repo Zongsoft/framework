@@ -212,8 +212,8 @@ public class RedisConfigurationProvider : ConfigurationProvider, IDisposable, IA
 
 		public string this[string key]
 		{
-			get => _database.StringGet(GetKey(key));
-			set => _database.StringSet(GetKey(key), value);
+			get => _database.StringGet(this.GetKey(key));
+			set => _database.StringSet(this.GetKey(key), value);
 		}
 
 		public ICollection<string> Keys => _server.Scan(_database.Database, GetPattern(_namespace))
@@ -241,13 +241,13 @@ public class RedisConfigurationProvider : ConfigurationProvider, IDisposable, IA
 
 		public void Add(string key, string value)
 		{
-			if(!_database.StringSet(GetKey(key), value, when: When.NotExists))
+			if(!_database.StringSet(this.GetKey(key), value, when: When.NotExists))
 				throw new ArgumentException(string.Format(Properties.Resources.DictionaryKeyAlreadyExists_Message, key, _namespace));
 		}
 
 		void ICollection<KeyValuePair<string, string>>.Add(KeyValuePair<string, string> field) => this.Add(field.Key, field.Value);
 
-		public bool Remove(string key) => _database.KeyDelete(GetKey(key));
+		public bool Remove(string key) => _database.KeyDelete(this.GetKey(key));
 		bool ICollection<KeyValuePair<string, string>>.Remove(KeyValuePair<string, string> field) => this.Remove(field.Key);
 
 		public void Clear()
@@ -256,13 +256,13 @@ public class RedisConfigurationProvider : ConfigurationProvider, IDisposable, IA
 				_database.KeyDelete(key);
 		}
 
-		public bool Contains(string key) => _database.KeyExists(GetKey(key));
+		public bool Contains(string key) => _database.KeyExists(this.GetKey(key));
 		bool IDictionary<string, string>.ContainsKey(string key) => this.Contains(key);
 		bool ICollection<KeyValuePair<string, string>>.Contains(KeyValuePair<string, string> field) => this.Contains(field.Key);
 
 		public bool TryGetValue(string key, out string value)
 		{
-			var result = _database.StringGet(GetKey(key));
+			var result = _database.StringGet(this.GetKey(key));
 			value = result;
 			return result.HasValue;
 		}

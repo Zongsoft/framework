@@ -33,10 +33,6 @@ namespace Zongsoft.Serialization;
 
 public class SerializationOptions : IEquatable<SerializationOptions>
 {
-	#region 常量定义
-	internal const string IMMUTABLE_EXCEPTION = $"The serialization options is immutable.";
-	#endregion
-
 	#region 成员字段
 	private int _maximumDepth;
 	private Ignoring _ignoring;
@@ -66,35 +62,35 @@ public class SerializationOptions : IEquatable<SerializationOptions>
 	public int MaximumDepth
 	{
 		get => _maximumDepth;
-		set => _maximumDepth = this.Immutable ? throw new InvalidOperationException(IMMUTABLE_EXCEPTION) : Math.Max(0, value);
+		set => _maximumDepth = this.Immutable ? throw new InvalidOperationException(Properties.Resources.Serialization_Immutable_Message) : Math.Max(0, value);
 	}
 
 	/// <summary>获取或设置一个值，指示是否忽略空值(<c>null</c>)。</summary>
 	public bool IgnoreNull
 	{
 		get => (_ignoring & Ignoring.Null) == Ignoring.Null;
-		set => _ignoring |= this.Immutable ? throw new InvalidOperationException(IMMUTABLE_EXCEPTION) : (value ? Ignoring.Null : Ignoring.None);
+		set => _ignoring |= this.Immutable ? throw new InvalidOperationException(Properties.Resources.Serialization_Immutable_Message) : (value ? Ignoring.Null : Ignoring.None);
 	}
 
 	/// <summary>获取或设置一个值，指示是否忽略零。</summary>
 	public bool IgnoreZero
 	{
 		get => (_ignoring & Ignoring.Zero) == Ignoring.Zero;
-		set => _ignoring = this.Immutable ? throw new InvalidOperationException(IMMUTABLE_EXCEPTION) : (value ? Ignoring.Zero : Ignoring.None);
+		set => _ignoring = this.Immutable ? throw new InvalidOperationException(Properties.Resources.Serialization_Immutable_Message) : (value ? Ignoring.Zero : Ignoring.None);
 	}
 
 	/// <summary>获取或设置一个值，指示是否忽略空集和空字符串。</summary>
 	public bool IgnoreEmpty
 	{
 		get => (_ignoring & Ignoring.Empty) == Ignoring.Empty;
-		set => _ignoring |= this.Immutable ? throw new InvalidOperationException(IMMUTABLE_EXCEPTION) : (value ? Ignoring.Empty : Ignoring.None);
+		set => _ignoring |= this.Immutable ? throw new InvalidOperationException(Properties.Resources.Serialization_Immutable_Message) : (value ? Ignoring.Empty : Ignoring.None);
 	}
 
 	/// <summary>获取或设置一个值，指示是否包含字段。</summary>
 	public bool IncludeFields
 	{
 		get => _includeFields;
-		set => _includeFields = this.Immutable ? throw new InvalidOperationException(IMMUTABLE_EXCEPTION) : value;
+		set => _includeFields = this.Immutable ? throw new InvalidOperationException(Properties.Resources.Serialization_Immutable_Message) : value;
 	}
 	#endregion
 

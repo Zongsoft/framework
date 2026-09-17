@@ -54,13 +54,13 @@ public static class Searcher
 		ArgumentException.ThrowIfNullOrEmpty(pattern);
 
 		if(System.IO.Path.IsPathRooted(pattern))
-			throw new ArgumentException("The search pattern must be relative to the directory.", nameof(pattern));
+			throw new ArgumentException(Properties.Resources.Searcher_RelativePatternRequired_Message, nameof(pattern));
 
 		var wildcard = false;
 		foreach(var part in Split(pattern))
 		{
 			if(wildcard && part == "..")
-				throw new ArgumentException("Parent segments cannot follow a wildcard segment.", nameof(pattern));
+				throw new ArgumentException(Properties.Resources.Searcher_ParentAfterWildcard_Message, nameof(pattern));
 
 			wildcard |= IsWildcard(part);
 		}
@@ -241,7 +241,7 @@ public static class Searcher
 				if(info == null)
 				{
 					if(linked)
-						throw new FileNotFoundException("The selected link target does not exist.", path);
+						throw new FileNotFoundException(Properties.Resources.Searcher_LinkTargetMissing_Message, path);
 
 					return null;
 				}
@@ -249,7 +249,7 @@ public static class Searcher
 				if(info.LinkTarget == null)
 					continue;
 
-				var target = info.ResolveLinkTarget(true) ?? throw new FileNotFoundException("The selected link target does not exist.", path);
+				var target = info.ResolveLinkTarget(true) ?? throw new FileNotFoundException(Properties.Resources.Searcher_LinkTargetMissing_Message, path);
 				candidate = System.IO.Path.Combine([target.FullName, .. parts.Skip(i + 1)]);
 
 				linked = true;

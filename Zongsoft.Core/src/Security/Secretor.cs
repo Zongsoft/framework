@@ -231,12 +231,12 @@ public class Secretor : ISecretor
 			if(int.TryParse(pattern.AsSpan(1), out var count))
 				return Randomizer.GenerateString(count, pattern[0] == '#');
 
-			throw new ArgumentException("Invalid secret pattern.");
+			throw new ArgumentException(Properties.Resources.Secretor_InvalidPattern_Message);
 		}
 		else
 		{
 			if(pattern.Contains(':') | pattern.Contains('|'))
-				throw new ArgumentException("The secret argument contains illegal characters.");
+				throw new ArgumentException(Properties.Resources.Secretor_InvalidArgument_Message);
 		}
 
 		return pattern.Trim();
@@ -343,7 +343,7 @@ public class Secretor : ISecretor
 					var index = captcha.IndexOfAny([':', '=', ' ', '\t']);
 
 					if(index <= 0 || index >= captcha.Length - 1)
-						throw new SecurityException("Captcha", "Invalid captch format.");
+						throw new SecurityException("Captcha", Properties.Resources.Secretor_InvalidCaptcha_Message);
 
 					if(!_captchas.TryGetValue(captcha[..index], out var verifier))
 						throw new SecurityException("Captcha", $"The specified '{captcha[..index]}' CAPTCHA is invalid.");

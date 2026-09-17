@@ -109,7 +109,7 @@ namespace Zongsoft.Plugins
 				_plugin = value;
 
 				//激发“PropertyChanged”事件
-				this.OnPropertyChanged(nameof(Plugin));
+				this.OnPropertyChanged(nameof(this.Plugin));
 			}
 		}
 		#endregion

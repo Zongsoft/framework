@@ -122,7 +122,7 @@ public class ProfileSectionCollection : ProfileItemCollection<ProfileSection>
 			return;
 
 		if(!string.Equals(previous.Name, section.Name, StringComparison.OrdinalIgnoreCase) && _dictionary.ContainsKey(section.Name))
-			throw new ArgumentException(Properties.Resources.Profiles_SectionDuplicate, nameof(section));
+			throw new ArgumentException(Properties.Resources.Profiles_SectionDuplicate_Message, nameof(section));
 
 		this.Items[index] = section;
 		_dictionary.Remove(previous.Name);

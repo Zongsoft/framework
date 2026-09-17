@@ -52,7 +52,7 @@ internal sealed class CommandAliaser(CommandNode root) : ICommandAliaser, IEnume
 			throw new ArgumentOutOfRangeException(nameof(alias));
 
 		if(alias.Contains('.') || alias.Contains('/') || alias.Contains('\\'))
-			throw new ArgumentException($"The specified alias contains illegal characters.", nameof(alias));
+			throw new ArgumentException(Properties.Resources.CommandAlias_InvalidCharacters_Message, nameof(alias));
 
 		var node = _root.Find(path);
 		return node != null && node.Aliases.Add(alias);

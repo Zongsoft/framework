@@ -153,7 +153,7 @@ partial class HardwareComponent
 			}
 
 			if(string.IsNullOrEmpty(name))
-				throw new JsonException($"The '{nameof(HardwareComponent.Name)}' property is required.");
+				throw new JsonException(string.Format(System.Globalization.CultureInfo.CurrentCulture, global::Zongsoft.Properties.Resources.Hardware_RequiredProperty_Message, nameof(HardwareComponent.Name)));
 
 			return new HardwareComponent(name, code, typeName, description, properties, components);
 		}

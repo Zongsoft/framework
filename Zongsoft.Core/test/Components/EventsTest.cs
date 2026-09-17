@@ -373,7 +373,7 @@ public class MetricCollection : KeyedCollection<string, Metric>
 
 	public bool TryAdd(string key, string code, object value, out Metric result)
 	{
-		if(Contains(key))
+		if(this.Contains(key))
 		{
 			result = default;
 			return false;

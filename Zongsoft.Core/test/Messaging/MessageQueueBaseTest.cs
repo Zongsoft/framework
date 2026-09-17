@@ -388,7 +388,7 @@ public class MessageQueueBaseTest
 		public void BlockInitialization()
 		{
 			_initialization = new(TaskCreationOptions.RunContinuationsAsynchronously);
-			InitializationStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
+			this.InitializationStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		}
 
 		public void ReleaseInitialization() => _initialization?.TrySetResult();
@@ -408,7 +408,7 @@ public class MessageQueueBaseTest
 		protected override async ValueTask<bool> OnSubscribeAsync(TestConsumer subscriber, CancellationToken cancellation)
 		{
 			Interlocked.Increment(ref _subscribed);
-			InitializationStarted.TrySetResult();
+			this.InitializationStarted.TrySetResult();
 
 			if(_initialization != null)
 				await _initialization.Task.WaitAsync(cancellation);

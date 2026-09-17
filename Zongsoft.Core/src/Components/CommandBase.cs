@@ -74,7 +74,7 @@ public abstract class CommandBase : ICommand, Services.IMatchable, INotifyProper
 				throw new ArgumentOutOfRangeException(nameof(value));
 
 			if(value.Contains('.') || value.Contains('/') || value.Contains('\\'))
-				throw new ArgumentException($"The specified command name contains illegal characters.", nameof(value));
+				throw new ArgumentException(Properties.Resources.Command_InvalidName_Message, nameof(value));
 
 			if(string.Equals(_name, value, StringComparison.Ordinal))
 				return;

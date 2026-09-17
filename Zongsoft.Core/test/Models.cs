@@ -374,7 +374,7 @@ public class Person : IPerson, INotifyPropertyChanged, ICloneable
 
 			_name = value;
 			_MASK_ |= 1;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Name)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Name)));
 		}
 	}
 
@@ -388,7 +388,7 @@ public class Person : IPerson, INotifyPropertyChanged, ICloneable
 
 			_gender = value;
 			_MASK_ |= 2;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Gender)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Gender)));
 		}
 	}
 
@@ -402,7 +402,7 @@ public class Person : IPerson, INotifyPropertyChanged, ICloneable
 
 			_birthdate = value;
 			_MASK_ |= 4;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Birthdate)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Birthdate)));
 		}
 	}
 
@@ -416,7 +416,7 @@ public class Person : IPerson, INotifyPropertyChanged, ICloneable
 
 			_bloodType = value;
 			_MASK_ |= 8;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BloodType)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.BloodType)));
 		}
 	}
 
@@ -430,7 +430,7 @@ public class Person : IPerson, INotifyPropertyChanged, ICloneable
 
 			_homeAddress = value;
 			_MASK_ |= 16;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HomeAddress)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.HomeAddress)));
 		}
 	}
 	#endregion
@@ -585,7 +585,7 @@ public class Employee : Person, IEmployee
 
 			_employeeId = value;
 			_MASK_INT16_ |= 32;
-			this.RaisePropertyChanged(nameof(EmployeeId));
+			this.RaisePropertyChanged(nameof(this.EmployeeId));
 		}
 	}
 
@@ -600,7 +600,7 @@ public class Employee : Person, IEmployee
 
 			_department = value;
 			_MASK_INT16_ |= 64;
-			this.RaisePropertyChanged(nameof(Department));
+			this.RaisePropertyChanged(nameof(this.Department));
 		}
 	}
 
@@ -615,7 +615,7 @@ public class Employee : Person, IEmployee
 
 			_officeAddress = value;
 			_MASK_INT16_ |= 128;
-			this.RaisePropertyChanged(nameof(OfficeAddress));
+			this.RaisePropertyChanged(nameof(this.OfficeAddress));
 		}
 	}
 
@@ -630,7 +630,7 @@ public class Employee : Person, IEmployee
 
 			_salary = value;
 			_MASK_INT16_ |= 256;
-			this.RaisePropertyChanged(nameof(Salary));
+			this.RaisePropertyChanged(nameof(this.Salary));
 		}
 	}
 	#endregion
@@ -743,7 +743,7 @@ public class Customer : Person, ICustomer
 
 			_level = value;
 			_MASK_ |= 32;
-			this.RaisePropertyChanged(nameof(Level));
+			this.RaisePropertyChanged(nameof(this.Level));
 		}
 	}
 	#endregion
@@ -1023,7 +1023,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property01 = value;
 			//_MASK_[0 / 8] |= (byte)Math.Pow(2, 0 % 8);
 			_MASKS_[0] |= 1;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property01)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property01)));
 		}
 	}
 	public int Property02
@@ -1037,7 +1037,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property02 = value;
 			//_MASK_[1 / 8] |= (byte)Math.Pow(2, 1 % 8);
 			_MASKS_[0] |= 2;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property02)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property02)));
 		}
 	}
 	public int Property03
@@ -1051,7 +1051,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property03 = value;
 			//_MASK_[2 / 8] |= (byte)Math.Pow(2, 2 % 8);
 			_MASKS_[0] |= 4;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property03)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property03)));
 		}
 	}
 	public int Property04
@@ -1065,7 +1065,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property04 = value;
 			//_MASK_[3 / 8] |= (byte)Math.Pow(2, 3 % 8);
 			_MASKS_[0] |= 8;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property04)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property04)));
 		}
 	}
 	public int Property05
@@ -1079,7 +1079,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property05 = value;
 			//_MASK_[4 / 8] |= (byte)Math.Pow(2, 4 % 8);
 			_MASKS_[0] |= 16;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property05)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property05)));
 		}
 	}
 	public int Property06
@@ -1093,7 +1093,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property06 = value;
 			//_MASK_[5 / 8] |= (byte)Math.Pow(2, 5 % 8);
 			_MASKS_[0] |= 32;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property06)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property06)));
 		}
 	}
 	public int Property07
@@ -1107,7 +1107,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property07 = value;
 			//_MASK_[6 / 8] |= (byte)Math.Pow(2, 6 % 8);
 			_MASKS_[0] |= 64;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property07)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property07)));
 		}
 	}
 	public int Property08
@@ -1121,7 +1121,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property08 = value;
 			//_MASK_[7 / 8] |= (byte)Math.Pow(2, 7 % 8);
 			_MASKS_[0] |= 128;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property08)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property08)));
 		}
 	}
 	public int Property09
@@ -1135,7 +1135,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property09 = value;
 			//_MASK_[8 / 8] |= (byte)Math.Pow(2, 8 % 8);
 			_MASKS_[1] |= 1;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property09)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property09)));
 		}
 	}
 	public int Property10
@@ -1149,7 +1149,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property10 = value;
 			//_MASK_[9 / 8] |= (byte)Math.Pow(2, 9 % 8);
 			_MASKS_[1] |= 2;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property10)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property10)));
 		}
 	}
 	public int Property11
@@ -1163,7 +1163,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property11 = value;
 			//_MASK_[10 / 8] |= (byte)Math.Pow(2, 10 % 8);
 			_MASKS_[1] |= 4;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property11)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property11)));
 		}
 	}
 	public int Property12
@@ -1177,7 +1177,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property12 = value;
 			//_MASK_[11 / 8] |= (byte)Math.Pow(2, 11 % 8);
 			_MASKS_[1] |= 8;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property12)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property12)));
 		}
 	}
 	public int Property13
@@ -1191,7 +1191,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property13 = value;
 			//_MASK_[12 / 8] |= (byte)Math.Pow(2, 12 % 8);
 			_MASKS_[1] |= 16;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property13)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property13)));
 		}
 	}
 	public int Property14
@@ -1205,7 +1205,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property14 = value;
 			//_MASK_[13 / 8] |= (byte)Math.Pow(2, 13 % 8);
 			_MASKS_[1] |= 32;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property14)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property14)));
 		}
 	}
 	public int Property15
@@ -1219,7 +1219,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property15 = value;
 			//_MASK_[14 / 8] |= (byte)Math.Pow(2, 14 % 8);
 			_MASKS_[1] |= 64;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property15)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property15)));
 		}
 	}
 	public int Property16
@@ -1233,7 +1233,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property16 = value;
 			//_MASK_[15 / 8] |= (byte)Math.Pow(2, 15 % 8);
 			_MASKS_[1] |= 128;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property16)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property16)));
 		}
 	}
 	public int Property17
@@ -1247,7 +1247,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property17 = value;
 			//_MASK_[16 / 8] |= (byte)Math.Pow(2, 16 % 8);
 			_MASKS_[2] |= 1;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property17)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property17)));
 		}
 	}
 	public int Property18
@@ -1261,7 +1261,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property18 = value;
 			//_MASK_[17 / 8] |= (byte)Math.Pow(2, 17 % 8);
 			_MASKS_[2] |= 2;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property18)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property18)));
 		}
 	}
 	public int Property19
@@ -1275,7 +1275,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property19 = value;
 			//_MASK_[18 / 8] |= (byte)Math.Pow(2, 18 % 8);
 			_MASKS_[2] |= 4;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property19)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property19)));
 		}
 	}
 	public int Property20
@@ -1289,7 +1289,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property20 = value;
 			//_MASK_[19 / 8] |= (byte)Math.Pow(2, 19 % 8);
 			_MASKS_[2] |= 8;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property20)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property20)));
 		}
 	}
 	public int Property21
@@ -1303,7 +1303,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property21 = value;
 			//_MASK_[20 / 8] |= (byte)Math.Pow(2, 20 % 8);
 			_MASKS_[2] |= 16;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property21)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property21)));
 		}
 	}
 	public int Property22
@@ -1317,7 +1317,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property22 = value;
 			//_MASK_[21 / 8] |= (byte)Math.Pow(2, 21 % 8);
 			_MASKS_[2] |= 32;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property22)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property22)));
 		}
 	}
 	public int Property23
@@ -1331,7 +1331,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property23 = value;
 			//_MASK_[22 / 8] |= (byte)Math.Pow(2, 22 % 8);
 			_MASKS_[2] |= 64;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property23)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property23)));
 		}
 	}
 	public int Property24
@@ -1345,7 +1345,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property24 = value;
 			//_MASK_[23 / 8] |= (byte)Math.Pow(2, 23 % 8);
 			_MASKS_[2] |= 128;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property24)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property24)));
 		}
 	}
 	public int Property25
@@ -1359,7 +1359,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property25 = value;
 			//_MASK_[24 / 8] |= (byte)Math.Pow(2, 24 % 8);
 			_MASKS_[3] |= 1;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property25)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property25)));
 		}
 	}
 	public int Property26
@@ -1373,7 +1373,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property26 = value;
 			//_MASK_[25 / 8] |= (byte)Math.Pow(2, 25 % 8);
 			_MASKS_[3] |= 2;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property26)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property26)));
 		}
 	}
 	public int Property27
@@ -1387,7 +1387,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property27 = value;
 			//_MASK_[26 / 8] |= (byte)Math.Pow(2, 26 % 8);
 			_MASKS_[3] |= 4;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property27)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property27)));
 		}
 	}
 	public int Property28
@@ -1401,7 +1401,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property28 = value;
 			//_MASK_[27 / 8] |= (byte)Math.Pow(2, 27 % 8);
 			_MASKS_[3] |= 8;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property28)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property28)));
 		}
 	}
 	public int Property29
@@ -1415,7 +1415,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property29 = value;
 			//_MASK_[28 / 8] |= (byte)Math.Pow(2, 28 % 8);
 			_MASKS_[3] |= 16;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property29)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property29)));
 		}
 	}
 	public int Property30
@@ -1429,7 +1429,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property30 = value;
 			//_MASK_[29 / 8] |= (byte)Math.Pow(2, 29 % 8);
 			_MASKS_[3] |= 32;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property30)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property30)));
 		}
 	}
 	public int Property31
@@ -1443,7 +1443,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property31 = value;
 			//_MASK_[30 / 8] |= (byte)Math.Pow(2, 30 % 8);
 			_MASKS_[3] |= 64;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property31)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property31)));
 		}
 	}
 	public int Property32
@@ -1457,7 +1457,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property32 = value;
 			//_MASK_[31 / 8] |= (byte)Math.Pow(2, 31 % 8);
 			_MASKS_[3] |= 128;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property32)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property32)));
 		}
 	}
 	public int Property33
@@ -1471,7 +1471,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property33 = value;
 			//_MASK_[32 / 8] |= (byte)Math.Pow(2, 32 % 8);
 			_MASKS_[4] |= 1;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property33)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property33)));
 		}
 	}
 	public int Property34
@@ -1485,7 +1485,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property34 = value;
 			//_MASK_[33 / 8] |= (byte)Math.Pow(2, 33 % 8);
 			_MASKS_[4] |= 2;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property34)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property34)));
 		}
 	}
 	public int Property35
@@ -1499,7 +1499,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property35 = value;
 			//_MASK_[34 / 8] |= (byte)Math.Pow(2, 34 % 8);
 			_MASKS_[4] |= 4;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property35)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property35)));
 		}
 	}
 	public int Property36
@@ -1513,7 +1513,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property36 = value;
 			//_MASK_[35 / 8] |= (byte)Math.Pow(2, 35 % 8);
 			_MASKS_[4] |= 8;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property36)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property36)));
 		}
 	}
 	public int Property37
@@ -1527,7 +1527,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property37 = value;
 			//_MASK_[36 / 8] |= (byte)Math.Pow(2, 36 % 8);
 			_MASKS_[4] |= 16;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property37)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property37)));
 		}
 	}
 	public int Property38
@@ -1541,7 +1541,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property38 = value;
 			//_MASK_[37 / 8] |= (byte)Math.Pow(2, 37 % 8);
 			_MASKS_[4] |= 32;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property38)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property38)));
 		}
 	}
 	public int Property39
@@ -1555,7 +1555,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property39 = value;
 			//_MASK_[38 / 8] |= (byte)Math.Pow(2, 38 % 8);
 			_MASKS_[4] |= 64;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property39)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property39)));
 		}
 	}
 	public int Property40
@@ -1569,7 +1569,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property40 = value;
 			//_MASK_[39 / 8] |= (byte)Math.Pow(2, 39 % 8);
 			_MASKS_[4] |= 128;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property40)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property40)));
 		}
 	}
 	public int Property41
@@ -1583,7 +1583,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property41 = value;
 			//_MASK_[40 / 8] |= (byte)Math.Pow(2, 40 % 8);
 			_MASKS_[5] |= 1;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property41)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property41)));
 		}
 	}
 	public int Property42
@@ -1597,7 +1597,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property42 = value;
 			//_MASK_[41 / 8] |= (byte)Math.Pow(2, 41 % 8);
 			_MASKS_[5] |= 2;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property42)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property42)));
 		}
 	}
 	public int Property43
@@ -1611,7 +1611,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property43 = value;
 			//_MASK_[42 / 8] |= (byte)Math.Pow(2, 42 % 8);
 			_MASKS_[5] |= 4;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property43)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property43)));
 		}
 	}
 	public int Property44
@@ -1625,7 +1625,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property44 = value;
 			//_MASK_[43 / 8] |= (byte)Math.Pow(2, 43 % 8);
 			_MASKS_[5] |= 8;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property44)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property44)));
 		}
 	}
 	public int Property45
@@ -1639,7 +1639,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property45 = value;
 			//_MASK_[44 / 8] |= (byte)Math.Pow(2, 44 % 8);
 			_MASKS_[5] |= 16;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property45)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property45)));
 		}
 	}
 	public int Property46
@@ -1653,7 +1653,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property46 = value;
 			//_MASK_[45 / 8] |= (byte)Math.Pow(2, 45 % 8);
 			_MASKS_[5] |= 32;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property46)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property46)));
 		}
 	}
 	public int Property47
@@ -1667,7 +1667,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property47 = value;
 			//_MASK_[46 / 8] |= (byte)Math.Pow(2, 46 % 8);
 			_MASKS_[5] |= 64;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property47)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property47)));
 		}
 	}
 	public int Property48
@@ -1681,7 +1681,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property48 = value;
 			//_MASK_[47 / 8] |= (byte)Math.Pow(2, 47 % 8);
 			_MASKS_[5] |= 128;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property48)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property48)));
 		}
 	}
 	public int Property49
@@ -1695,7 +1695,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property49 = value;
 			//_MASK_[48 / 8] |= (byte)Math.Pow(2, 48 % 8);
 			_MASKS_[6] |= 1;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property49)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property49)));
 		}
 	}
 	public int Property50
@@ -1709,7 +1709,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property50 = value;
 			//_MASK_[49 / 8] |= (byte)Math.Pow(2, 49 % 8);
 			_MASKS_[6] |= 2;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property50)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property50)));
 		}
 	}
 	public int Property51
@@ -1723,7 +1723,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property51 = value;
 			//_MASK_[50 / 8] |= (byte)Math.Pow(2, 50 % 8);
 			_MASKS_[6] |= 4;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property51)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property51)));
 		}
 	}
 	public int Property52
@@ -1737,7 +1737,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property52 = value;
 			//_MASK_[51 / 8] |= (byte)Math.Pow(2, 51 % 8);
 			_MASKS_[6] |= 8;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property52)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property52)));
 		}
 	}
 	public int Property53
@@ -1751,7 +1751,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property53 = value;
 			//_MASK_[52 / 8] |= (byte)Math.Pow(2, 52 % 8);
 			_MASKS_[6] |= 16;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property53)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property53)));
 		}
 	}
 	public int Property54
@@ -1765,7 +1765,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property54 = value;
 			//_MASK_[53 / 8] |= (byte)Math.Pow(2, 53 % 8);
 			_MASKS_[6] |= 32;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property54)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property54)));
 		}
 	}
 	public int Property55
@@ -1779,7 +1779,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property55 = value;
 			//_MASK_[54 / 8] |= (byte)Math.Pow(2, 54 % 8);
 			_MASKS_[6] |= 64;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property55)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property55)));
 		}
 	}
 	public int Property56
@@ -1793,7 +1793,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_property56 = value;
 			//_MASK_[55 / 8] |= (byte)Math.Pow(2, 55 % 8);
 			_MASKS_[6] |= 128;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Property56)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Property56)));
 		}
 	}
 
@@ -1808,7 +1808,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_employeeId = value;
 			//_MASK_[56 / 8] |= (byte)Math.Pow(2, 56 % 8);
 			_MASKS_[7] |= 1;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(EmployeeId)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.EmployeeId)));
 		}
 	}
 	public Department Department
@@ -1822,7 +1822,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_department = value;
 			//_MASK_[57 / 8] |= (byte)Math.Pow(2, 57 % 8);
 			_MASKS_[7] |= 2;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Department)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Department)));
 		}
 	}
 	public Address OfficeAddress
@@ -1836,7 +1836,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_officeAddress = value;
 			//_MASK_[58 / 8] |= (byte)Math.Pow(2, 58 % 8);
 			_MASKS_[7] |= 4;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(OfficeAddress)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.OfficeAddress)));
 		}
 	}
 	public decimal Salary
@@ -1850,7 +1850,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_salary = value;
 			//_MASK_[59 / 8] |= (byte)Math.Pow(2, 59 % 8);
 			_MASKS_[7] |= 8;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Salary)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Salary)));
 		}
 	}
 
@@ -1865,7 +1865,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_name = value;
 			//_MASK_[60 / 8] |= (byte)Math.Pow(2, 60 % 8);
 			_MASKS_[7] |= 16;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Name)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Name)));
 		}
 	}
 	public Gender? Gender
@@ -1879,7 +1879,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_gender = value;
 			//_MASK_[61 / 8] |= (byte)Math.Pow(2, 61 % 8);
 			_MASKS_[7] |= 32;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Gender)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Gender)));
 		}
 	}
 	public DateTime Birthdate
@@ -1893,7 +1893,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_birthdate = value;
 			//_MASK_[62 / 8] |= (byte)Math.Pow(2, 62 % 8);
 			_MASKS_[7] |= 64;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(Birthdate)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.Birthdate)));
 		}
 	}
 	public string BloodType
@@ -1907,7 +1907,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_bloodType = value;
 			//_MASK_[63 / 8] |= (byte)Math.Pow(2, 63 % 8);
 			_MASKS_[7] |= 128;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(BloodType)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.BloodType)));
 		}
 	}
 	public Address HomeAddress
@@ -1921,7 +1921,7 @@ public class SpecialEmployee : ISpecialEmployee, INotifyPropertyChanged
 			_homeAddress = value;
 			//_MASK_[64 / 8] |= (byte)Math.Pow(2, 64 % 8);
 			_MASKS_[8] |= 1;
-			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(HomeAddress)));
+			this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.HomeAddress)));
 		}
 	}
 	#endregion

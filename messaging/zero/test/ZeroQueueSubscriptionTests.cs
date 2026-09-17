@@ -344,12 +344,12 @@ public class ZeroQueueSubscriptionTests
 			_identifiers.Enqueue(BitConverter.ToInt32(message.Data));
 			if(Interlocked.Increment(ref _count) == 1)
 			{
-				Started.TrySetResult();
+				this.Started.TrySetResult();
 				await _release.Task.WaitAsync(cancellation);
 			}
 
 			if(Volatile.Read(ref _count) == 1002)
-				Completed.TrySetResult();
+				this.Completed.TrySetResult();
 		}
 	}
 }

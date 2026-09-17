@@ -59,7 +59,7 @@ namespace Zongsoft.Externals.Wechat
 				throw new ArgumentNullException(nameof(account));
 
 			this.Account = account;
-			this.Membership = new Membership(Account);
+			this.Membership = new Membership(this.Account);
 		}
 		#endregion
 

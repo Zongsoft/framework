@@ -131,7 +131,7 @@ public class ProfileEntryCollection : ProfileItemCollection<ProfileEntry>
 			this.CheckDuplicate(entry.Name);
 
 			if(_dictionary.ContainsKey(entry.Name))
-				throw new ArgumentException(string.Format(Properties.Resources.Profiles_EntryDuplicate, entry.Name), nameof(entry));
+				throw new ArgumentException(string.Format(Properties.Resources.Profiles_EntryDuplicate_Message, entry.Name), nameof(entry));
 		}
 
 		this.Items[index] = entry;
@@ -170,7 +170,7 @@ public class ProfileEntryCollection : ProfileItemCollection<ProfileEntry>
 	private void CheckDuplicate(string name)
 	{
 		if(_declarations.ContainsKey(name))
-			throw new ArgumentException(string.Format(Properties.Resources.Profiles_EntryDuplicate, name), nameof(name));
+			throw new ArgumentException(string.Format(Properties.Resources.Profiles_EntryDuplicate_Message, name), nameof(name));
 	}
 	#endregion
 }

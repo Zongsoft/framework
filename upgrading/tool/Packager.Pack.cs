@@ -437,7 +437,7 @@ partial class Packager
 					return;
 				}
 
-				_entries.Add(new Entry(CreateExpression(source, pattern)));
+				_entries.Add(new Entry(this.CreateExpression(source, pattern)));
 			}
 
 			private Regex CreateExpression(string source, string pattern)

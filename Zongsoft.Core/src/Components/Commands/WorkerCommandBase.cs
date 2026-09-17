@@ -68,7 +68,7 @@ public abstract class WorkerCommandBase : CommandBase<CommandContext>
 			_worker = value;
 
 			//激发“PropertyChanged”事件
-			this.OnPropertyChanged(nameof(Worker));
+			this.OnPropertyChanged(nameof(this.Worker));
 		}
 	}
 

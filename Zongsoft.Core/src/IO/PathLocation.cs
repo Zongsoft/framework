@@ -58,7 +58,7 @@ public readonly struct PathLocation : IEquatable<PathLocation>
 
 	#region 重写方法
 	public bool Equals(PathLocation other) => string.Equals(this.Path, other.Path);
-	public override bool Equals(object obj) => obj is PathLocation other && Equals(other);
+	public override bool Equals(object obj) => obj is PathLocation other && this.Equals(other);
 	public override int GetHashCode() => this.Path.GetHashCode();
 	public override string ToString() => this.Path;
 	#endregion

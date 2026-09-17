@@ -129,7 +129,7 @@ public readonly struct Member : IIdentifiable, IEquatable<Member>
 			return Parse(name, type);
 		}
 
-		throw new InvalidOperationException($"Invalid format.");
+		throw new InvalidOperationException(Properties.Resources.InvalidFormat_Message);
 
 		static Member Parse(ReadOnlySpan<char> name, ReadOnlySpan<char> type)
 		{

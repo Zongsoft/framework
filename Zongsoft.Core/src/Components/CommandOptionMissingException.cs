@@ -33,5 +33,5 @@ namespace Zongsoft.Components;
 
 public class CommandOptionMissingException : CommandOptionException
 {
-	public CommandOptionMissingException(string optionName) : base(optionName, string.Format(Properties.Resources.MissingCommandOption, optionName)) { }
+	public CommandOptionMissingException(string optionName) : base(optionName, string.Format(Properties.Resources.MissingCommandOption_Message, optionName)) { }
 }

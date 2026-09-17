@@ -144,10 +144,10 @@ namespace Zongsoft.Externals.Wechat
 
 				public Template ToTemplate()
 				{
-					var industries = string.IsNullOrEmpty(PrimaryIndustry) ? null :
+					var industries = string.IsNullOrEmpty(this.PrimaryIndustry) ? null :
 						new string[] { this.PrimaryIndustry, this.DeputyIndustry };
 
-					return new Template(this.Name, this.Title, this.Content, industries, Example);
+					return new Template(this.Name, this.Title, this.Content, industries, this.Example);
 				}
 			}
 		}

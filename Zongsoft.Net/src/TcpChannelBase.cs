@@ -100,7 +100,7 @@ public abstract class TcpChannelBase<T> : ChannelBase, ISender, ISender<T>
 
 		try
 		{
-			var writer = _transport?.Output ?? throw new ObjectDisposedException(ToString());
+			var writer = _transport?.Output ?? throw new ObjectDisposedException(this.ToString());
 			this.Pack(writer, package);
 			await writer.FlushAsync(cancellation);
 		}
@@ -184,7 +184,7 @@ public abstract class TcpChannelBase<T> : ChannelBase, ISender, ISender<T>
 	#region 接收消息
 	protected async Task ReceiveAsync(CancellationToken cancellation = default)
 	{
-		var reader = _transport?.Input ?? throw new ObjectDisposedException(ToString());
+		var reader = _transport?.Input ?? throw new ObjectDisposedException(this.ToString());
 
 		try
 		{

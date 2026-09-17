@@ -59,8 +59,8 @@ public class PythonExpressionEvaluator : ExpressionEvaluatorBase
 		this.Global = new Variables(_engine.Runtime.Globals);
 
 		_engine.Runtime.Globals.SetVariable(nameof(Json), new Json());
-		_engine.Runtime.Globals.SetVariable("error", (Delegate)Error);
-		_engine.Runtime.Globals.SetVariable("print", (Delegate)Print);
+		_engine.Runtime.Globals.SetVariable("error", (Delegate)this.Error);
+		_engine.Runtime.Globals.SetVariable("print", (Delegate)this.Print);
 	}
 	#endregion
 

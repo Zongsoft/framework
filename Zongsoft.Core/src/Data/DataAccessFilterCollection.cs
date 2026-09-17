@@ -201,49 +201,49 @@ public class DataAccessFilterCollection : ICollection<object>
 
 					if(type == typeof(DataExistContextBase))
 					{
-						EnsureFilters(ref _exists);
+						this.EnsureFilters(ref _exists);
 						_exists.Add((IDataAccessFilter<DataExistContextBase>)instance);
 						count++;
 					}
 					else if(type == typeof(DataSelectContextBase))
 					{
-						EnsureFilters(ref _selects);
+						this.EnsureFilters(ref _selects);
 						_selects.Add((IDataAccessFilter<DataSelectContextBase>)instance);
 						count++;
 					}
 					else if(type == typeof(DataDeleteContextBase))
 					{
-						EnsureFilters(ref _deletes);
+						this.EnsureFilters(ref _deletes);
 						_deletes.Add((IDataAccessFilter<DataDeleteContextBase>)instance);
 						count++;
 					}
 					else if(type == typeof(DataInsertContextBase))
 					{
-						EnsureFilters(ref _inserts);
+						this.EnsureFilters(ref _inserts);
 						_inserts.Add((IDataAccessFilter<DataInsertContextBase>)instance);
 						count++;
 					}
 					else if(type == typeof(DataUpsertContextBase))
 					{
-						EnsureFilters(ref _upserts);
+						this.EnsureFilters(ref _upserts);
 						_upserts.Add((IDataAccessFilter<DataUpsertContextBase>)instance);
 						count++;
 					}
 					else if(type == typeof(DataUpdateContextBase))
 					{
-						EnsureFilters(ref _updates);
+						this.EnsureFilters(ref _updates);
 						_updates.Add((IDataAccessFilter<DataUpdateContextBase>)instance);
 						count++;
 					}
 					else if(type == typeof(DataExecuteContextBase))
 					{
-						EnsureFilters(ref _executes);
+						this.EnsureFilters(ref _executes);
 						_executes.Add((IDataAccessFilter<DataExecuteContextBase>)instance);
 						count++;
 					}
 					else if(type == typeof(DataAggregateContextBase))
 					{
-						EnsureFilters(ref _aggregates);
+						this.EnsureFilters(ref _aggregates);
 						_aggregates.Add((IDataAccessFilter<DataAggregateContextBase>)instance);
 						count++;
 					}

@@ -178,7 +178,7 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 		public WorkerProcess(Process process)
 		{
 			_process = process;
-			this.Completion = CompleteAsync(process);
+			this.Completion = this.CompleteAsync(process);
 		}
 
 		public Task Completion { get; }

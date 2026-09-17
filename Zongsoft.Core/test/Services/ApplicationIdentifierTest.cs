@@ -434,32 +434,32 @@ public class ApplicationIdentifierTest : IDisposable
 		public bool IsDisposed { get; private set; }
 		public int WriteCount { get; private set; }
 		public int FlushCount { get; private set; }
-		public override bool CanRead => !IsDisposed;
-		public override bool CanWrite => !IsDisposed;
+		public override bool CanRead => !this.IsDisposed;
+		public override bool CanWrite => !this.IsDisposed;
 		public override bool CanSeek => false;
 		public override long Length => throw new NotSupportedException();
 		public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
 		public byte[] ToArray() => _stream.ToArray();
 		public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
 		public override void SetLength(long value) => throw new NotSupportedException();
-		public override int Read(byte[] buffer, int offset, int count) => FailRead ? throw Error : _stream.Read(buffer, offset, count);
+		public override int Read(byte[] buffer, int offset, int count) => this.FailRead ? throw this.Error : _stream.Read(buffer, offset, count);
 		public override void Write(byte[] buffer, int offset, int count)
 		{
-			WriteCount++;
-			if(FailWrite)
-				throw Error;
+			this.WriteCount++;
+			if(this.FailWrite)
+				throw this.Error;
 			_stream.Write(buffer, offset, count);
 		}
 		public override void Flush()
 		{
-			FlushCount++;
-			if(FailFlush)
-				throw Error;
+			this.FlushCount++;
+			if(this.FailFlush)
+				throw this.Error;
 			_stream.Flush();
 		}
 		protected override void Dispose(bool disposing)
 		{
-			IsDisposed = true;
+			this.IsDisposed = true;
 			if(disposing)
 				_stream.Dispose();
 			base.Dispose(disposing);
@@ -470,10 +470,10 @@ public class ApplicationIdentifierTest : IDisposable
 	{
 		public IOException Error { get; } = new("Test reader failure.");
 		public bool IsDisposed { get; private set; }
-		public override string ReadLine() => throw Error;
+		public override string ReadLine() => throw this.Error;
 		protected override void Dispose(bool disposing)
 		{
-			IsDisposed = true;
+			this.IsDisposed = true;
 			base.Dispose(disposing);
 		}
 	}
@@ -488,35 +488,35 @@ public class ApplicationIdentifierTest : IDisposable
 		public int WriteCount { get; private set; }
 		public override void Write(char value)
 		{
-			WriteCount++;
-			if(FailWrite)
-				throw Error;
+			this.WriteCount++;
+			if(this.FailWrite)
+				throw this.Error;
 			base.Write(value);
 		}
 		public override void Write(string value)
 		{
-			WriteCount++;
-			if(FailWrite)
-				throw Error;
+			this.WriteCount++;
+			if(this.FailWrite)
+				throw this.Error;
 			base.Write(value);
 		}
 		public override void Write(ReadOnlySpan<char> buffer)
 		{
-			WriteCount++;
-			if(FailWrite)
-				throw Error;
+			this.WriteCount++;
+			if(this.FailWrite)
+				throw this.Error;
 			base.Write(buffer);
 		}
 		public override void Flush()
 		{
-			FlushCount++;
-			if(FailFlush)
-				throw Error;
+			this.FlushCount++;
+			if(this.FailFlush)
+				throw this.Error;
 			base.Flush();
 		}
 		protected override void Dispose(bool disposing)
 		{
-			IsDisposed = true;
+			this.IsDisposed = true;
 			base.Dispose(disposing);
 		}
 	}

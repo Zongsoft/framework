@@ -56,7 +56,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public bool Create(string fullPath, IEnumerable<KeyValuePair<string, string>> properties = null)
 		{
-			var client = GetClient(fullPath, out var path);
+			var client = this.GetClient(fullPath, out var path);
 			var request = new HttpRequestMessage(HttpMethod.Post, path);
 			var response = client.Send(request);
 			return response.IsSuccessStatusCode;
@@ -64,14 +64,14 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public async ValueTask<bool> CreateAsync(string fullPath, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default)
 		{
-			var client = GetClient(fullPath, out var path);
+			var client = this.GetClient(fullPath, out var path);
 			var response = await client.PostAsync(path, null, cancellation);
 			return response.IsSuccessStatusCode;
 		}
 
 		public bool Delete(string fullPath)
 		{
-			var client = GetClient(fullPath, out var path);
+			var client = this.GetClient(fullPath, out var path);
 			var request = new HttpRequestMessage(HttpMethod.Delete, path);
 			var response = client.Send(request);
 			return response.IsSuccessStatusCode;
@@ -79,14 +79,14 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public async ValueTask<bool> DeleteAsync(string fullPath, CancellationToken cancellation = default)
 		{
-			var client = GetClient(fullPath, out var path);
+			var client = this.GetClient(fullPath, out var path);
 			var response = await client.DeleteAsync(path, cancellation);
 			return response.IsSuccessStatusCode;
 		}
 
 		public bool Exists(string fullPath)
 		{
-			var client = GetClient(fullPath, out var path);
+			var client = this.GetClient(fullPath, out var path);
 			var request = new HttpRequestMessage(HttpMethod.Head, path);
 			var response = client.Send(request);
 			return response.IsSuccessStatusCode;
@@ -94,7 +94,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public async ValueTask<bool> ExistsAsync(string fullPath, CancellationToken cancellation = default)
 		{
-			var client = GetClient(fullPath, out var path);
+			var client = this.GetClient(fullPath, out var path);
 			var request = new HttpRequestMessage(HttpMethod.Head, path);
 			var response = await client.SendAsync(request, cancellation);
 			return response.IsSuccessStatusCode;
@@ -102,7 +102,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public IEnumerable<PathInfo> GetChildren(string fullPath, string pattern, bool recursive = false)
 		{
-			var client = GetClient(fullPath, out var path);
+			var client = this.GetClient(fullPath, out var path);
 			var request = new HttpRequestMessage(HttpMethod.Get, $"{path}?pattern={pattern}&recursive={recursive}");
 			var response = client.Send(request);
 
@@ -127,7 +127,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public async IAsyncEnumerable<PathInfo> GetChildrenAsync(string fullPath, string pattern, bool recursive, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 		{
-			var client = GetClient(fullPath, out var path);
+			var client = this.GetClient(fullPath, out var path);
 			var response = await client.GetAsync($"{path}?pattern={pattern}&recursive={recursive}", cancellation);
 
 			if(response.Content.Headers.ContentLength == null || response.Content.Headers.ContentLength.Value == 0)
@@ -151,7 +151,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public IEnumerable<IO.DirectoryInfo> GetDirectories(string fullPath, string pattern, bool recursive = false)
 		{
-			var client = GetClient(fullPath, out var path);
+			var client = this.GetClient(fullPath, out var path);
 			var request = new HttpRequestMessage(HttpMethod.Get, $"{path}?mode=directory&pattern={pattern}&recursive={recursive}");
 			var response = client.Send(request);
 			return response.IsSuccessStatusCode ? GetDirectoryInfos(response.Content) : [];
@@ -159,7 +159,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public async IAsyncEnumerable<IO.DirectoryInfo> GetDirectoriesAsync(string fullPath, string pattern, bool recursive, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 		{
-			var client = GetClient(fullPath, out var path);
+			var client = this.GetClient(fullPath, out var path);
 			var response = await client.GetAsync($"{path}?mode=directory&pattern={pattern}&recursive={recursive}", cancellation);
 
 			if(response.IsSuccessStatusCode)
@@ -172,7 +172,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public IEnumerable<IO.FileInfo> GetFiles(string fullPath, string pattern, bool recursive = false)
 		{
-			var client = GetClient(fullPath, out var path);
+			var client = this.GetClient(fullPath, out var path);
 			var request = new HttpRequestMessage(HttpMethod.Get, $"{path}?mode=file&pattern={pattern}&recursive={recursive}");
 			var response = client.Send(request);
 			return response.IsSuccessStatusCode ? GetFileInfos(response.Content) : [];
@@ -180,7 +180,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public async IAsyncEnumerable<IO.FileInfo> GetFilesAsync(string fullPath, string pattern, bool recursive, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 		{
-			var client = GetClient(fullPath, out var path);
+			var client = this.GetClient(fullPath, out var path);
 			var response = await client.GetAsync($"{path}?mode=file&pattern={pattern}&recursive={recursive}", cancellation);
 
 			if(response.IsSuccessStatusCode)
@@ -193,7 +193,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public IO.DirectoryInfo GetInfo(string fullPath)
 		{
-			var client = GetClient(fullPath, out var path);
+			var client = this.GetClient(fullPath, out var path);
 			var request = new HttpRequestMessage(HttpMethod.Head, path);
 			var response = client.Send(request);
 			return GetDirectoryInfo(response);
@@ -201,7 +201,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public async ValueTask<IO.DirectoryInfo> GetInfoAsync(string fullPath, CancellationToken cancellation = default)
 		{
-			var client = GetClient(fullPath, out var path);
+			var client = this.GetClient(fullPath, out var path);
 			var request = new HttpRequestMessage(HttpMethod.Head, path);
 			var response = await client.SendAsync(request, cancellation);
 			return GetDirectoryInfo(response);
@@ -328,7 +328,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public bool Delete(string fullPath)
 		{
-			var client = GetClient(fullPath, out var path);
+			var client = this.GetClient(fullPath, out var path);
 			var request = new HttpRequestMessage(HttpMethod.Delete, path);
 			var response = client.Send(request);
 			return response.IsSuccessStatusCode;
@@ -336,14 +336,14 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public async ValueTask<bool> DeleteAsync(string fullPath, CancellationToken cancellation = default)
 		{
-			var client = GetClient(fullPath, out var path);
+			var client = this.GetClient(fullPath, out var path);
 			var response = await client.DeleteAsync(path, cancellation);
 			return response.IsSuccessStatusCode;
 		}
 
 		public bool Exists(string fullPath)
 		{
-			var client = GetClient(fullPath, out var path);
+			var client = this.GetClient(fullPath, out var path);
 			var request = new HttpRequestMessage(HttpMethod.Head, path);
 			var response = client.Send(request);
 			return response.IsSuccessStatusCode;
@@ -351,7 +351,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public async ValueTask<bool> ExistsAsync(string fullPath, CancellationToken cancellation = default)
 		{
-			var client = GetClient(fullPath, out var path);
+			var client = this.GetClient(fullPath, out var path);
 			var request = new HttpRequestMessage(HttpMethod.Head, path);
 			var response = await client.SendAsync(request, cancellation);
 			return response.IsSuccessStatusCode;
@@ -359,7 +359,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public Zongsoft.IO.FileInfo GetInfo(string fullPath)
 		{
-			var client = GetClient(fullPath, out var path);
+			var client = this.GetClient(fullPath, out var path);
 			var request = new HttpRequestMessage(HttpMethod.Head, path);
 			var response = client.Send(request);
 			return GetFileInfo(response);
@@ -367,7 +367,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public async ValueTask<Zongsoft.IO.FileInfo> GetInfoAsync(string fullPath, CancellationToken cancellation = default)
 		{
-			var client = GetClient(fullPath, out var path);
+			var client = this.GetClient(fullPath, out var path);
 			var request = new HttpRequestMessage(HttpMethod.Head, path);
 			var response = await client.SendAsync(request, cancellation);
 			return GetFileInfo(response);
@@ -375,7 +375,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public Stream Open(string path, FileMode mode, FileAccess access, FileShare share, IEnumerable<KeyValuePair<string, string>> properties = null)
 		{
-			var client = GetClient(path, out var p);
+			var client = this.GetClient(path, out var p);
 			bool writable = (mode != FileMode.Open) || (access & FileAccess.Write) == FileAccess.Write;
 
 			if(writable)
@@ -388,7 +388,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public async ValueTask<Stream> OpenAsync(string path, FileMode mode, FileAccess access, FileShare share, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default)
 		{
-			var client = GetClient(path, out var p);
+			var client = this.GetClient(path, out var p);
 			bool writable = (mode != FileMode.Open) || (access & FileAccess.Write) == FileAccess.Write;
 
 			if(writable)

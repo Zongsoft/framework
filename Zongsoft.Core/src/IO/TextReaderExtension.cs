@@ -50,7 +50,7 @@ public static class TextReaderExtension
 			throw new ArgumentNullException(nameof(destination));
 
 		if(!destination.CanWrite)
-			throw new NotSupportedException("The destination stream does not support writing.");
+			throw new NotSupportedException(Properties.Resources.Stream_NotWritable_Message);
 
 		if(encoding == null)
 			encoding = Encoding.UTF8;
@@ -82,7 +82,7 @@ public static class TextReaderExtension
 			throw new ArgumentNullException(nameof(destination));
 
 		if(!destination.CanWrite)
-			throw new NotSupportedException("The destination stream does not support writing.");
+			throw new NotSupportedException(Properties.Resources.Stream_NotWritable_Message);
 
 		if(encoding == null)
 			encoding = Encoding.UTF8;

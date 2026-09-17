@@ -96,7 +96,7 @@ namespace Zongsoft.Plugins
 							ResolveBuilders(reader, plugin);
 							break;
 						case "extension":
-							ResolveExtension(reader, plugin);
+							this.ResolveExtension(reader, plugin);
 							break;
 						default:
 							throw new PluginFileException("Invalid '" + reader.Name + "' of element in this plugin file.");
@@ -124,7 +124,7 @@ namespace Zongsoft.Plugins
 					throw new PluginException(string.Format("This '{0}' plugin file format is invalid.", filePath));
 
 				//创建Plugin类实例
-				Plugin plugin = new Plugin(PluginTree, reader.GetAttribute("name"), filePath, parent);
+				Plugin plugin = new Plugin(this.PluginTree, reader.GetAttribute("name"), filePath, parent);
 
 				plugin.Manifest.Author = reader.GetAttribute("author");
 				plugin.Manifest.Title = reader.GetAttribute("title");
@@ -293,7 +293,7 @@ namespace Zongsoft.Plugins
 		private void ResolveExtendedElement(XmlReader reader, Plugin plugin, string path)
 		{
 			var parts = reader.Name.Split('.');
-			var node = PluginTree.EnsurePath(PluginPath.Combine(path, parts[0]));
+			var node = this.PluginTree.EnsurePath(PluginPath.Combine(path, parts[0]));
 
 			if(node == null)
 				throw new PluginException($"Invalid '{path}/{parts[0]}' ExtendedElement is not exists in '{plugin.FilePath}' plugin.");

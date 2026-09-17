@@ -32,7 +32,7 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 		};
 		var result = new PageableAsyncEnumerable([1, 2, 3], suppressed: suppressedAfterPreparation);
 		using var accessor = new TestDataAccess(result, delayProvider: true);
-		var selecting = Task.Run(() => Select(accessor, paging));
+		var selecting = Task.Run(() => this.Select(accessor, paging));
 
 		await accessor.ProviderEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
 		IAsyncEnumerable<int> sequence = null;
@@ -64,7 +64,7 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 	{
 		var result = new TestAsyncEnumerable([1, 2]);
 		using var accessor = new TestDataAccess(result);
-		var sequence = Select(accessor, Paging.Page(1, 2));
+		var sequence = this.Select(accessor, Paging.Page(1, 2));
 		var pageable = Assert.IsAssignableFrom<IPageable>(sequence);
 
 		var first = await CollectAsync(sequence);
@@ -90,7 +90,7 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 		var eventArgs = new PagingEventArgs(_entityName, paging);
 		var result = new PageableAsyncEnumerable([1, 2], eventArgs);
 		using var accessor = new TestDataAccess(result, delayProvider: true);
-		var sequence = Select(accessor, paging);
+		var sequence = this.Select(accessor, paging);
 		var pageable = Assert.IsAssignableFrom<IPageable>(sequence);
 		object sender = null;
 		PagingEventArgs observed = null;
@@ -127,7 +127,7 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 			args.Cancel = true;
 		};
 
-		var sequence = Select(accessor, cancellation: cancellation.Token);
+		var sequence = this.Select(accessor, cancellation: cancellation.Token);
 
 		Assert.Same(result, sequence);
 		Assert.False(sequence is IPageable);
@@ -145,7 +145,7 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 		cancellation.Cancel();
 		using var accessor = new TestDataAccess(delayProvider: true);
 
-		var exception = Assert.ThrowsAny<OperationCanceledException>(() => Select(accessor, cancellation: cancellation.Token));
+		var exception = Assert.ThrowsAny<OperationCanceledException>(() => this.Select(accessor, cancellation: cancellation.Token));
 
 		Assert.Equal(cancellation.Token, exception.CancellationToken);
 		Assert.Equal(0, accessor.ProviderCalls);
@@ -160,7 +160,7 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 	{
 		using var cancellation = new CancellationTokenSource();
 		using var accessor = new TestDataAccess(delayProvider: true);
-		var sequence = Select(accessor, cancellation: cancellation.Token);
+		var sequence = this.Select(accessor, cancellation: cancellation.Token);
 		await accessor.ProviderEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
 		try
@@ -187,7 +187,7 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 		var result = new TestAsyncEnumerable([1, 2, 3]);
 		using var accessor = new TestDataAccess(result);
 		using var cancellation = new CancellationTokenSource();
-		var sequence = Select(accessor);
+		var sequence = this.Select(accessor);
 		var enumerator = sequence.GetAsyncEnumerator(cancellation.Token);
 
 		try
@@ -215,7 +215,7 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 	{
 		using var cancellation = new CancellationTokenSource();
 		using var accessor = new TestDataAccess(delayProvider: true);
-		var sequence = Select(accessor);
+		var sequence = this.Select(accessor);
 		var enumerator = sequence.GetAsyncEnumerator(cancellation.Token);
 		var moving = enumerator.MoveNextAsync().AsTask();
 
@@ -246,7 +246,7 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 		var failure = new InvalidOperationException("Expected pre-provider filter failure.");
 		using var accessor = new TestDataAccess { FilteringFailure = failure };
 
-		var exception = Assert.Throws<InvalidOperationException>(() => Select(accessor));
+		var exception = Assert.Throws<InvalidOperationException>(() => this.Select(accessor));
 
 		Assert.Same(failure, exception);
 		Assert.Equal(0, accessor.ProviderCalls);
@@ -260,7 +260,7 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 	{
 		var failure = new InvalidOperationException("Expected post-provider filter failure.");
 		using var accessor = new TestDataAccess { FilteredFailure = failure };
-		var sequence = Select(accessor);
+		var sequence = this.Select(accessor);
 
 		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => CollectAsync(sequence));
 
@@ -276,7 +276,7 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 	{
 		var failure = new InvalidOperationException("Expected provider failure.");
 		using var accessor = new TestDataAccess { ProviderFailure = failure };
-		var sequence = Select(accessor);
+		var sequence = this.Select(accessor);
 
 		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => CollectAsync(sequence));
 
@@ -294,7 +294,7 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 		var failure = new InvalidOperationException("Expected selected callback failure.");
 		var result = new TestAsyncEnumerable([1]);
 		using var accessor = new TestDataAccess(result);
-		var sequence = Select(accessor, selected: _ => throw failure);
+		var sequence = this.Select(accessor, selected: _ => throw failure);
 
 		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => CollectAsync(sequence));
 

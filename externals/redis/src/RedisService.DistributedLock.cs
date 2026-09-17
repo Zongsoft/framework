@@ -60,7 +60,7 @@ partial class RedisService : IDistributedLockManager
 		//确保连接成功
 		await this.ConnectAsync(cancellation);
 
-		return await _database.KeyTimeToLiveAsync(GetKey(key), CommandFlags.None).WaitAsync(cancellation);
+		return await _database.KeyTimeToLiveAsync(this.GetKey(key), CommandFlags.None).WaitAsync(cancellation);
 	}
 
 	public async ValueTask<IDistributedLock> AcquireAsync(string key, TimeSpan expiry, CancellationToken cancellation = default)
@@ -103,7 +103,7 @@ partial class RedisService : IDistributedLockManager
 		//确保连接成功
 		await this.ConnectAsync(cancellation);
 
-		var lockKey = GetKey(key);
+		var lockKey = this.GetKey(key);
 		if(!await _database.StringSetAsync(lockKey, token, expiry, When.NotExists, CommandFlags.None).WaitAsync(cancellation))
 			return 0;
 
@@ -123,7 +123,7 @@ partial class RedisService : IDistributedLockManager
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
 		var milliseconds = checked((long)Math.Ceiling(expiry.TotalMilliseconds));
-		var result = await _database.ScriptEvaluateAsync(RENEW_SCRIPT, [(RedisKey)GetKey(key)], [token, milliseconds]).WaitAsync(cancellation);
+		var result = await _database.ScriptEvaluateAsync(RENEW_SCRIPT, [(RedisKey)this.GetKey(key)], [token, milliseconds]).WaitAsync(cancellation);
 		return (long)result != 0;
 	}
 
@@ -137,7 +137,7 @@ partial class RedisService : IDistributedLockManager
 		//确保连接成功
 		await this.ConnectAsync(cancellation);
 
-		var result = await _database.ScriptEvaluateAsync(RELEASE_SCRIPT, [(RedisKey)GetKey(key)], [token]).WaitAsync(cancellation);
+		var result = await _database.ScriptEvaluateAsync(RELEASE_SCRIPT, [(RedisKey)this.GetKey(key)], [token]).WaitAsync(cancellation);
 		return ((int)result) != 0;
 	}
 	#endregion

@@ -74,7 +74,7 @@ public class CommandOutletDumperOptions
 		public bool CanTrack(object value) => value != null && value is not string && value.GetType().IsClass;
 		public bool Track(object value)
 		{
-			if(!CanTrack(value))
+			if(!this.CanTrack(value))
 				throw new InvalidOperationException();
 
 			if(_hashset.Add(value))

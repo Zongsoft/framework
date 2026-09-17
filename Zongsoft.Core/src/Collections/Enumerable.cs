@@ -56,7 +56,7 @@ public static class Enumerable
 
 		try
 		{
-			return await enumerator.MoveNextAsync().ConfigureAwait(false) ? enumerator.Current : throw new InvalidOperationException("Sequence contains no elements.");
+			return await enumerator.MoveNextAsync().ConfigureAwait(false) ? enumerator.Current : throw new InvalidOperationException(Properties.Resources.Enumerable_Empty_Message);
 		}
 		finally
 		{
@@ -304,9 +304,9 @@ public static class Enumerable
 						return _element;
 
 					if(_flag == 0)
-						throw new InvalidOperationException("The iterator has not yet started, please call the MoveNext() method first.");
+						throw new InvalidOperationException(Properties.Resources.Enumerable_NotStarted_Message);
 					else
-						throw new InvalidOperationException("The iterator has terminated.");
+						throw new InvalidOperationException(Properties.Resources.Enumerable_Completed_Message);
 				}
 			}
 

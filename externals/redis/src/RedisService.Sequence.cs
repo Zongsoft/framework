@@ -64,15 +64,15 @@ partial class RedisService : ISequence
 		this.Connect();
 
 		if(interval == 0)
-			return (long)_database.StringGet(GetKey(key));
+			return (long)_database.StringGet(this.GetKey(key));
 
 		if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
-			return (long)_database.ScriptEvaluate(INCREMENT_EXPIRY_SCRIPT, [(RedisKey)GetKey(key)], [interval, seed, GetExpiryMilliseconds(expiry.Value)]);
+			return (long)_database.ScriptEvaluate(INCREMENT_EXPIRY_SCRIPT, [(RedisKey)this.GetKey(key)], [interval, seed, GetExpiryMilliseconds(expiry.Value)]);
 
 		if(seed == 0)
-			return _database.StringIncrement(GetKey(key), interval);
+			return _database.StringIncrement(this.GetKey(key), interval);
 
-		return (long)_database.ScriptEvaluate(INCREMENT_SCRIPT, [(RedisKey)GetKey(key)], [interval, seed]);
+		return (long)_database.ScriptEvaluate(INCREMENT_SCRIPT, [(RedisKey)this.GetKey(key)], [interval, seed]);
 	}
 
 	public double Increase(string key, double interval, double seed = 0, TimeSpan? expiry = null)
@@ -84,15 +84,15 @@ partial class RedisService : ISequence
 		this.Connect();
 
 		if(interval == 0)
-			return (double)_database.StringGet(GetKey(key));
+			return (double)_database.StringGet(this.GetKey(key));
 
 		if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
-			return (double)_database.ScriptEvaluate(INCREMENT_FLOAT_EXPIRY_SCRIPT, [(RedisKey)GetKey(key)], [interval, seed, GetExpiryMilliseconds(expiry.Value)]);
+			return (double)_database.ScriptEvaluate(INCREMENT_FLOAT_EXPIRY_SCRIPT, [(RedisKey)this.GetKey(key)], [interval, seed, GetExpiryMilliseconds(expiry.Value)]);
 
 		if(seed == 0)
-			return _database.StringIncrement(GetKey(key), interval);
+			return _database.StringIncrement(this.GetKey(key), interval);
 
-		return (double)_database.ScriptEvaluate(INCREMENT_FLOAT_SCRIPT, [(RedisKey)GetKey(key)], [interval, seed]);
+		return (double)_database.ScriptEvaluate(INCREMENT_FLOAT_SCRIPT, [(RedisKey)this.GetKey(key)], [interval, seed]);
 	}
 
 	public async ValueTask<long> IncreaseAsync(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default)
@@ -104,15 +104,15 @@ partial class RedisService : ISequence
 		await this.ConnectAsync(cancellation);
 
 		if(interval == 0)
-			return (long)await _database.StringGetAsync(GetKey(key)).WaitAsync(cancellation);
+			return (long)await _database.StringGetAsync(this.GetKey(key)).WaitAsync(cancellation);
 
 		if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
-			return (long)await _database.ScriptEvaluateAsync(INCREMENT_EXPIRY_SCRIPT, [(RedisKey)GetKey(key)], [interval, seed, GetExpiryMilliseconds(expiry.Value)]).WaitAsync(cancellation);
+			return (long)await _database.ScriptEvaluateAsync(INCREMENT_EXPIRY_SCRIPT, [(RedisKey)this.GetKey(key)], [interval, seed, GetExpiryMilliseconds(expiry.Value)]).WaitAsync(cancellation);
 
 		if(seed == 0)
-			return await _database.StringIncrementAsync(GetKey(key), interval).WaitAsync(cancellation);
+			return await _database.StringIncrementAsync(this.GetKey(key), interval).WaitAsync(cancellation);
 
-		return (long)await _database.ScriptEvaluateAsync(INCREMENT_SCRIPT, [(RedisKey)GetKey(key)], [interval, seed]).WaitAsync(cancellation);
+		return (long)await _database.ScriptEvaluateAsync(INCREMENT_SCRIPT, [(RedisKey)this.GetKey(key)], [interval, seed]).WaitAsync(cancellation);
 	}
 
 	public async ValueTask<double> IncreaseAsync(string key, double interval, double seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default)
@@ -124,15 +124,15 @@ partial class RedisService : ISequence
 		await this.ConnectAsync(cancellation);
 
 		if(interval == 0)
-			return (double)await _database.StringGetAsync(GetKey(key)).WaitAsync(cancellation);
+			return (double)await _database.StringGetAsync(this.GetKey(key)).WaitAsync(cancellation);
 
 		if(expiry.HasValue && expiry.Value > TimeSpan.Zero)
-			return (double)await _database.ScriptEvaluateAsync(INCREMENT_FLOAT_EXPIRY_SCRIPT, [(RedisKey)GetKey(key)], [interval, seed, GetExpiryMilliseconds(expiry.Value)]).WaitAsync(cancellation);
+			return (double)await _database.ScriptEvaluateAsync(INCREMENT_FLOAT_EXPIRY_SCRIPT, [(RedisKey)this.GetKey(key)], [interval, seed, GetExpiryMilliseconds(expiry.Value)]).WaitAsync(cancellation);
 
 		if(seed == 0)
-			return await _database.StringIncrementAsync(GetKey(key), interval).WaitAsync(cancellation);
+			return await _database.StringIncrementAsync(this.GetKey(key), interval).WaitAsync(cancellation);
 
-		return (double)await _database.ScriptEvaluateAsync(INCREMENT_FLOAT_SCRIPT, [(RedisKey)GetKey(key)], [interval, seed]).WaitAsync(cancellation);
+		return (double)await _database.ScriptEvaluateAsync(INCREMENT_FLOAT_SCRIPT, [(RedisKey)this.GetKey(key)], [interval, seed]).WaitAsync(cancellation);
 	}
 
 	void ISequence.Reset(string key, int value, TimeSpan? expiry)
@@ -143,7 +143,7 @@ partial class RedisService : ISequence
 		//确保连接成功
 		this.Connect();
 
-		_database.StringSet(GetKey(key), value, expiry > TimeSpan.Zero ? expiry : null, When.Exists, CommandFlags.None);
+		_database.StringSet(this.GetKey(key), value, expiry > TimeSpan.Zero ? expiry : null, When.Exists, CommandFlags.None);
 	}
 
 	void ISequence.Reset(string key, double value, TimeSpan? expiry)
@@ -154,7 +154,7 @@ partial class RedisService : ISequence
 		//确保连接成功
 		this.Connect();
 
-		_database.StringSet(GetKey(key), value, expiry > TimeSpan.Zero ? expiry : null, When.Exists, CommandFlags.None);
+		_database.StringSet(this.GetKey(key), value, expiry > TimeSpan.Zero ? expiry : null, When.Exists, CommandFlags.None);
 	}
 
 	async ValueTask ISequence.ResetAsync(string key, int value, TimeSpan? expiry, CancellationToken cancellation)
@@ -164,7 +164,7 @@ partial class RedisService : ISequence
 
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
-		await _database.StringSetAsync(GetKey(key), value, expiry > TimeSpan.Zero ? expiry : null, When.Exists, CommandFlags.None).WaitAsync(cancellation);
+		await _database.StringSetAsync(this.GetKey(key), value, expiry > TimeSpan.Zero ? expiry : null, When.Exists, CommandFlags.None).WaitAsync(cancellation);
 	}
 
 	async ValueTask ISequence.ResetAsync(string key, double value, TimeSpan? expiry, CancellationToken cancellation)
@@ -174,7 +174,7 @@ partial class RedisService : ISequence
 
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
-		await _database.StringSetAsync(GetKey(key), value, expiry > TimeSpan.Zero ? expiry : null, When.Exists, CommandFlags.None).WaitAsync(cancellation);
+		await _database.StringSetAsync(this.GetKey(key), value, expiry > TimeSpan.Zero ? expiry : null, When.Exists, CommandFlags.None).WaitAsync(cancellation);
 	}
 	#endregion
 

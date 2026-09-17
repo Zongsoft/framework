@@ -49,7 +49,7 @@ public static class BinaryReaderExtension
 			throw new ArgumentNullException(nameof(destination));
 
 		if(!destination.CanWrite)
-			throw new NotSupportedException("The destination stream does not support writing.");
+			throw new NotSupportedException(Properties.Resources.Stream_NotWritable_Message);
 
 		var buffer = ArrayPool<byte>.Shared.Rent(Math.Max(bufferSize, BUFFER_SIZE));
 
@@ -76,7 +76,7 @@ public static class BinaryReaderExtension
 			throw new ArgumentNullException(nameof(destination));
 
 		if(!destination.CanWrite)
-			throw new NotSupportedException("The destination stream does not support writing.");
+			throw new NotSupportedException(Properties.Resources.Stream_NotWritable_Message);
 
 		var buffer = ArrayPool<byte>.Shared.Rent(Math.Max(bufferSize, BUFFER_SIZE));
 

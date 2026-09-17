@@ -55,9 +55,9 @@ namespace Zongsoft.Plugins
 			if(dictionary != null)
 				return dictionary.TryGetValue(name, out value);
 
-			foreach(var item in Items)
+			foreach(var item in this.Items)
 			{
-				if(this.Comparer.Equals(GetKeyForItem(item), name))
+				if(this.Comparer.Equals(this.GetKeyForItem(item), name))
 				{
 					value = item;
 					return true;

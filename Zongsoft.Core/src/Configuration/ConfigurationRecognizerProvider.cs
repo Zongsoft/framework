@@ -76,10 +76,10 @@ public class ConfigurationRecognizerProvider : IConfigurationRecognizerProvider
 			return default;
 
 		var unrecognizedProperty = type.GetProperty(attribute.UnrecognizedProperty) ??
-			throw new ArgumentException(string.Format(Zongsoft.Properties.Resources.Error_PropertyNotExists, type, attribute.UnrecognizedProperty));
+			throw new ArgumentException(string.Format(Zongsoft.Properties.Resources.Error_PropertyNotExists_Message, type, attribute.UnrecognizedProperty));
 
 		if(!unrecognizedProperty.CanRead)
-			throw new InvalidOperationException(string.Format(Zongsoft.Properties.Resources.Error_PropertyCannotRead, type, attribute.UnrecognizedProperty));
+			throw new InvalidOperationException(string.Format(Zongsoft.Properties.Resources.Error_PropertyCannotRead_Message, type, attribute.UnrecognizedProperty));
 
 		return unrecognizedProperty;
 	}

@@ -37,10 +37,6 @@ public abstract class HierarchicalNodeCollection<TNode>(TNode owner) :
 	IHierarchicalNodeCollection<TNode>
 	where TNode : IHierarchicalNode<TNode>
 {
-	#region 常量定义
-	private const string ROOTED_ERROR_MESSAGE = @"The root node cannot be added to the child nodes.";
-	#endregion
-
 	#region 成员字段
 	private readonly TNode _owner = owner;
 	#endregion
@@ -64,7 +60,7 @@ public abstract class HierarchicalNodeCollection<TNode>(TNode owner) :
 			throw new ArgumentNullException(nameof(node));
 
 		if(node.IsRoot())
-			throw new ArgumentException(ROOTED_ERROR_MESSAGE);
+			throw new ArgumentException(Properties.Resources.HierarchicalNode_RootAsChild_Message);
 
 		base.InsertItem(index, node);
 		this.SetOwner(_owner, node);
@@ -76,7 +72,7 @@ public abstract class HierarchicalNodeCollection<TNode>(TNode owner) :
 			throw new ArgumentNullException(nameof(node));
 
 		if(node.IsRoot())
-			throw new ArgumentException(ROOTED_ERROR_MESSAGE);
+			throw new ArgumentException(Properties.Resources.HierarchicalNode_RootAsChild_Message);
 
 		base.SetItem(index, node);
 		this.SetOwner(_owner, node);

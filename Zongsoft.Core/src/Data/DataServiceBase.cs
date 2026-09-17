@@ -877,28 +877,28 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	private void EnsureDelete(IDataDeleteOptions options)
 	{
 		if(!this.CanDelete && !Options.Allowed(options))
-			throw new InvalidOperationException("The delete operation is not allowed.");
+			throw new InvalidOperationException(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.DataService_OperationNotAllowed_Message, nameof(DataAccessMethod.Delete)));
 	}
 
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private void EnsureInsert(IDataInsertOptions options)
 	{
 		if(!this.CanInsert && !Options.Allowed(options))
-			throw new InvalidOperationException("The insert operation is not allowed.");
+			throw new InvalidOperationException(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.DataService_OperationNotAllowed_Message, nameof(DataAccessMethod.Insert)));
 	}
 
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private void EnsureUpdate(IDataUpdateOptions options)
 	{
 		if(!this.CanUpdate && !Options.Allowed(options))
-			throw new InvalidOperationException("The update operation is not allowed.");
+			throw new InvalidOperationException(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.DataService_OperationNotAllowed_Message, nameof(DataAccessMethod.Update)));
 	}
 
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private void EnsureUpsert(IDataUpsertOptions options)
 	{
 		if(!this.CanUpsert && !Options.Allowed(options))
-			throw new InvalidOperationException("The upsert operation is not allowed.");
+			throw new InvalidOperationException(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.DataService_OperationNotAllowed_Message, nameof(DataAccessMethod.Upsert)));
 	}
 
 	private static object ConvertValue(object value, DbType dbType)

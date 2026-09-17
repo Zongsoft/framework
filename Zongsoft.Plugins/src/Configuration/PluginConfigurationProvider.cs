@@ -133,8 +133,8 @@ public class PluginConfigurationProvider : ICompositeConfigurationProvider, ICon
 	{
 		if(disposing)
 		{
-			_pluginTree.Loader.PluginLoaded -= PluginLoader_PluginLoaded;
-			_pluginTree.Loader.PluginUnloaded -= PluginLoader_PluginUnloaded;
+			_pluginTree.Loader.PluginLoaded -= this.PluginLoader_PluginLoaded;
+			_pluginTree.Loader.PluginUnloaded -= this.PluginLoader_PluginUnloaded;
 
 			foreach(var plugin in _providers.Keys)
 			{

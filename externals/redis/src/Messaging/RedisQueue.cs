@@ -154,7 +154,7 @@ public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisC
 			var candidate = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 			disposal = Interlocked.CompareExchange(ref _disposal, candidate, null) ?? candidate;
 			if(ReferenceEquals(disposal, candidate))
-				_ = DisposeAsyncCore(candidate);
+				_ = this.DisposeAsyncCore(candidate);
 		}
 
 		return disposal.Task;

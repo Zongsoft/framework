@@ -51,7 +51,7 @@ public class DictionaryPopulatorProvider : IDataPopulatorProvider
 		for(int i = 0; i < record.FieldCount; i++)
 		{
 			//获取字段名对应的属性名（注意：由查询引擎确保返回的记录列名就是属性名）
-			properties[i] = GetProperty(entity, record.GetName(i));
+			properties[i] = this.GetProperty(entity, record.GetName(i));
 		}
 
 		return new DictionaryPopulator(type, properties);

@@ -48,7 +48,7 @@ public static class Range
 			throw new ArgumentNullException(nameof(type));
 
 		if(!type.IsValueType)
-			throw new ArgumentException($"The specified '{nameof(type)}' parameter must be a value type.");
+			throw new ArgumentException(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Type_ValueTypeRequired_Message, nameof(type)));
 
 		if(type.IsGenericType)
 		{
@@ -67,7 +67,7 @@ public static class Range
 			throw new ArgumentNullException(nameof(type));
 
 		if(!type.IsValueType)
-			throw new ArgumentException($"The specified '{nameof(type)}' parameter must be a value type.");
+			throw new ArgumentException(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Type_ValueTypeRequired_Message, nameof(type)));
 
 		if(type.IsGenericType)
 		{

@@ -94,7 +94,7 @@ partial class Authentication
 		public async ValueTask<string> VerifyAsync(string key, string data, string scenario, Parameters parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(data))
-				throw new AuthenticationException(SecurityReasons.InvalidArgument, $"Missing the required authentication token.");
+				throw new AuthenticationException(SecurityReasons.InvalidArgument, Properties.Resources.Authentication_MissingToken_Message);
 
 			//获取验证失败的解决器
 			var attempter = this.Attempter;

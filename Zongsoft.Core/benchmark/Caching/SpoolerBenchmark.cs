@@ -72,8 +72,8 @@ public abstract class SpoolerBenchmarkBase
 			_path = Path.Combine(_directory, "records.log");
 		}
 
-		_spooler = new Spooler<int>(ConsumeBatchAsync, TimeSpan.FromDays(1), this.BatchSize);
-		_writers = [ConsumeSingleAsync, PutBatchAsync, value => _spooler.PutAsync(value)];
+		_spooler = new Spooler<int>(this.ConsumeBatchAsync, TimeSpan.FromDays(1), this.BatchSize);
+		_writers = [this.ConsumeSingleAsync, this.PutBatchAsync, value => _spooler.PutAsync(value)];
 
 		// Exact identity checks and file reads run only during setup, never in timed iterations.
 		foreach(var count in new[] { 0, 1, this.BatchSize, this.BatchSize + 1, this.BatchSize * 2 + 3, RecordCount }.Distinct())
@@ -81,11 +81,11 @@ public abstract class SpoolerBenchmarkBase
 			for(int method = 0; method < _writers.Length; method++)
 			{
 				_seen = new bool[count];
-				await RunAsync(method, count);
+				await this.RunAsync(method, count);
 				if(_seen.Any(seen => !seen))
 					throw new InvalidOperationException("A record was not consumed.");
 				if(this.WritesFile)
-					ValidateFile(count);
+					this.ValidateFile(count);
 				if(count == RecordCount)
 					Console.WriteLine($"VALIDATED {this.GetType().Name} Method={method} BatchSize={this.BatchSize} Producers={this.Producers} Records={_consumed} Calls={_calls} Checksum={_checksum}");
 			}
@@ -99,13 +99,13 @@ public abstract class SpoolerBenchmarkBase
 
 	// One BDN operation is one complete workload, including final consumption, not one enqueue.
 	[Benchmark(Baseline = true)]
-	public Task<long> Direct() => RunAsync(0, RecordCount);
+	public Task<long> Direct() => this.RunAsync(0, RecordCount);
 
 	[Benchmark]
-	public Task<long> ManualBatch() => RunAsync(1, RecordCount);
+	public Task<long> ManualBatch() => this.RunAsync(1, RecordCount);
 
 	[Benchmark]
-	public Task<long> Spooler() => RunAsync(2, RecordCount);
+	public Task<long> Spooler() => this.RunAsync(2, RecordCount);
 
 	private async Task<long> RunAsync(int method, int count)
 	{
@@ -137,7 +137,7 @@ public abstract class SpoolerBenchmarkBase
 
 		if(method == 1 && _batchCount > 0)
 		{
-			await ConsumeBatchAsync(new ArraySegment<int>(_batch, 0, _batchCount));
+			await this.ConsumeBatchAsync(new ArraySegment<int>(_batch, 0, _batchCount));
 			_batchCount = 0;
 		}
 		else if(method == 2)
@@ -174,7 +174,7 @@ public abstract class SpoolerBenchmarkBase
 			_batch[_batchCount++] = value;
 			if(_batchCount == _batch.Length)
 			{
-				await ConsumeBatchAsync(new ArraySegment<int>(_batch, 0, _batchCount));
+				await this.ConsumeBatchAsync(new ArraySegment<int>(_batch, 0, _batchCount));
 				_batchCount = 0;
 			}
 		}
@@ -190,8 +190,8 @@ public abstract class SpoolerBenchmarkBase
 		try
 		{
 			_calls++;
-			using var stream = OpenFile();
-			await ConsumeRecordAsync(value, stream);
+			using var stream = this.OpenFile();
+			await this.ConsumeRecordAsync(value, stream);
 		}
 		finally
 		{
@@ -205,9 +205,9 @@ public abstract class SpoolerBenchmarkBase
 		try
 		{
 			_calls++;
-			using var stream = OpenFile();
+			using var stream = this.OpenFile();
 			foreach(var value in values)
-				await ConsumeRecordAsync(value, stream);
+				await this.ConsumeRecordAsync(value, stream);
 		}
 		finally
 		{

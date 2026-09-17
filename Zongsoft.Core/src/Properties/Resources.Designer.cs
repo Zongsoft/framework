@@ -19,7 +19,7 @@ namespace Zongsoft.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -47,8 +47,8 @@ namespace Zongsoft.Properties {
         }
 
         /// <summary>
-        ///   使用此强类型资源类，为所有资源查找
-        ///   重写当前线程的 CurrentUICulture 属性。
+        ///   重写当前线程的 CurrentUICulture 属性，对
+        ///   使用此强类型资源类的所有资源查找执行重写。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -57,6 +57,51 @@ namespace Zongsoft.Properties {
             }
             set {
                 resourceCulture = value;
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The cache of authentication failover does not support the increment(ISequence) operation. 的本地化字符串。
+        /// </summary>
+        internal static string Attempter_SequenceNotSupported_Message {
+            get {
+                return ResourceManager.GetString("Attempter.SequenceNotSupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid authenticator scheme. 的本地化字符串。
+        /// </summary>
+        internal static string Authentication_InvalidScheme_Message {
+            get {
+                return ResourceManager.GetString("Authentication.InvalidScheme.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing the required credential provider. 的本地化字符串。
+        /// </summary>
+        internal static string Authentication_MissingAuthority_Message {
+            get {
+                return ResourceManager.GetString("Authentication.MissingAuthority.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing identity. 的本地化字符串。
+        /// </summary>
+        internal static string Authentication_MissingIdentity_Message {
+            get {
+                return ResourceManager.GetString("Authentication.MissingIdentity.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing the required authentication token. 的本地化字符串。
+        /// </summary>
+        internal static string Authentication_MissingToken_Message {
+            get {
+                return ResourceManager.GetString("Authentication.MissingToken.Message", resourceCulture);
             }
         }
 
@@ -75,6 +120,33 @@ namespace Zongsoft.Properties {
         internal static string AuthorizationException_Message {
             get {
                 return ResourceManager.GetString("AuthorizationException.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The notification queue capacity must be positive. 的本地化字符串。
+        /// </summary>
+        internal static string CacheSubscription_InvalidCapacity_Message {
+            get {
+                return ResourceManager.GetString("CacheSubscription.InvalidCapacity.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The notification kinds must contain only defined flags and cannot be None. 的本地化字符串。
+        /// </summary>
+        internal static string CacheSubscription_InvalidKind_Message {
+            get {
+                return ResourceManager.GetString("CacheSubscription.InvalidKind.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid checksum text format. 的本地化字符串。
+        /// </summary>
+        internal static string Checksum_InvalidFormat_Message {
+            get {
+                return ResourceManager.GetString("Checksum.InvalidFormat.Message", resourceCulture);
             }
         }
 
@@ -115,6 +187,15 @@ namespace Zongsoft.Properties {
         }
 
         /// <summary>
+        ///   查找类似 The specified command name contains illegal characters. 的本地化字符串。
+        /// </summary>
+        internal static string Command_InvalidName_Message {
+            get {
+                return ResourceManager.GetString("Command.InvalidName.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 Timeout 的本地化字符串。
         /// </summary>
         internal static string Command_Options_Timeout {
@@ -124,11 +205,29 @@ namespace Zongsoft.Properties {
         }
 
         /// <summary>
+        ///   查找类似 The specified alias contains illegal characters. 的本地化字符串。
+        /// </summary>
+        internal static string CommandAlias_InvalidCharacters_Message {
+            get {
+                return ResourceManager.GetString("CommandAlias.InvalidCharacters.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 Command error:  的本地化字符串。
         /// </summary>
         internal static string CommandError_Label {
             get {
                 return ResourceManager.GetString("CommandError.Label", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing executable commands. 的本地化字符串。
+        /// </summary>
+        internal static string CommandExecutor_MissingCommand_Message {
+            get {
+                return ResourceManager.GetString("CommandExecutor.MissingCommand.Message", resourceCulture);
             }
         }
 
@@ -403,6 +502,24 @@ namespace Zongsoft.Properties {
         }
 
         /// <summary>
+        ///   查找类似 Missing database connection settings. 的本地化字符串。
+        /// </summary>
+        internal static string DataAccess_MissingConnections_Message {
+            get {
+                return ResourceManager.GetString("DataAccess.MissingConnections.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing required Sequence service. 的本地化字符串。
+        /// </summary>
+        internal static string DataAccess_MissingSequence_Message {
+            get {
+                return ResourceManager.GetString("DataAccess.MissingSequence.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 Invalid data parameters or values. 的本地化字符串。
         /// </summary>
         internal static string DataArgumentException_Message {
@@ -430,6 +547,60 @@ namespace Zongsoft.Properties {
         }
 
         /// <summary>
+        ///   查找类似 The entity property cannot be added or updated to the properties because the entity to which this property belongs cannot be set. 的本地化字符串。
+        /// </summary>
+        internal static string DataEntityProperty_OwnerReadOnly_Message {
+            get {
+                return ResourceManager.GetString("DataEntityProperty.OwnerReadOnly.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing specified search member definitions. 的本地化字符串。
+        /// </summary>
+        internal static string DataSearcher_MissingMembers_Message {
+            get {
+                return ResourceManager.GetString("DataSearcher.MissingMembers.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing the required keyword condition resolver. 的本地化字符串。
+        /// </summary>
+        internal static string DataSearcher_MissingResolver_Message {
+            get {
+                return ResourceManager.GetString("DataSearcher.MissingResolver.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The criteria cann&apos;t is null on delete operation. 的本地化字符串。
+        /// </summary>
+        internal static string DataService_DeleteRequiresCriteria_Message {
+            get {
+                return ResourceManager.GetString("DataService.DeleteRequiresCriteria.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The {0} operation is not allowed. 的本地化字符串。
+        /// </summary>
+        internal static string DataService_OperationNotAllowed_Message {
+            get {
+                return ResourceManager.GetString("DataService.OperationNotAllowed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Illegal format parameter value. 的本地化字符串。
+        /// </summary>
+        internal static string DataServiceMutability_InvalidFormat_Message {
+            get {
+                return ResourceManager.GetString("DataServiceMutability.InvalidFormat.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 Disabled 的本地化字符串。
         /// </summary>
         internal static string Disabled {
@@ -439,119 +610,155 @@ namespace Zongsoft.Properties {
         }
 
         /// <summary>
+        ///   查找类似 The distributed lock has been released. 的本地化字符串。
+        /// </summary>
+        internal static string DistributedLock_Released_Message {
+            get {
+                return ResourceManager.GetString("DistributedLock.Released.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The iterator has terminated. 的本地化字符串。
+        /// </summary>
+        internal static string Enumerable_Completed_Message {
+            get {
+                return ResourceManager.GetString("Enumerable.Completed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Sequence contains no elements. 的本地化字符串。
+        /// </summary>
+        internal static string Enumerable_Empty_Message {
+            get {
+                return ResourceManager.GetString("Enumerable.Empty.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The iterator has not yet started, please call the MoveNext() method first. 的本地化字符串。
+        /// </summary>
+        internal static string Enumerable_NotStarted_Message {
+            get {
+                return ResourceManager.GetString("Enumerable.NotStarted.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 The configuration value at &quot;{0}&quot; cannot be converted to type &quot;{1}&quot;. 的本地化字符串。
         /// </summary>
-        internal static string Error_FailedBinding {
+        internal static string Error_FailedBinding_Message {
             get {
-                return ResourceManager.GetString("Error.FailedBinding", resourceCulture);
+                return ResourceManager.GetString("Error.FailedBinding.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 Unable to create an instance of type &quot;{0}&quot;. 的本地化字符串。
         /// </summary>
-        internal static string Error_FailedToActivate {
+        internal static string Error_FailedToActivate_Message {
             get {
-                return ResourceManager.GetString("Error.FailedToActivate", resourceCulture);
+                return ResourceManager.GetString("Error.FailedToActivate.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 The configuration property name &quot;{0}&quot; is invalid. Located at: {1} 的本地化字符串。
         /// </summary>
-        internal static string Error_IllegalConfigurationAttributeName {
+        internal static string Error_IllegalConfigurationAttributeName_Message {
             get {
-                return ResourceManager.GetString("Error.IllegalConfigurationAttributeName", resourceCulture);
+                return ResourceManager.GetString("Error.IllegalConfigurationAttributeName.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 The value &quot;{0}&quot; of the illegal configuration element cannot contain characters such as &apos;/&apos;, &apos;\&apos;, &apos;:&apos;, &apos;*&apos;, or &apos;?&apos;. Located at: {1} 的本地化字符串。
         /// </summary>
-        internal static string Error_IllegalConfigurationKeyValue {
+        internal static string Error_IllegalConfigurationKeyValue_Message {
             get {
-                return ResourceManager.GetString("Error.IllegalConfigurationKeyValue", resourceCulture);
+                return ResourceManager.GetString("Error.IllegalConfigurationKeyValue.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 The root node name &quot;{0}&quot; is invalid. {1} 的本地化字符串。
         /// </summary>
-        internal static string Error_IllegalRootNodeName {
+        internal static string Error_IllegalRootNodeName_Message {
             get {
-                return ResourceManager.GetString("Error.IllegalRootNodeName", resourceCulture);
+                return ResourceManager.GetString("Error.IllegalRootNodeName.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 Invalid option configuration file format. The configuration elements must be located within the &lt;option&gt; element. Located at: {0} 的本地化字符串。
         /// </summary>
-        internal static string Error_InvalidOptionConfigurationFileFormat {
+        internal static string Error_InvalidOptionConfigurationFileFormat_Message {
             get {
-                return ResourceManager.GetString("Error.InvalidOptionConfigurationFileFormat", resourceCulture);
+                return ResourceManager.GetString("Error.InvalidOptionConfigurationFileFormat.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 The specified &quot;{0}&quot; is an invalid unrecognized property. The type of unrecognized properties must be a dictionary with string keys. 的本地化字符串。
         /// </summary>
-        internal static string Error_InvalidUnrecognizedProperty {
+        internal static string Error_InvalidUnrecognizedProperty_Message {
             get {
-                return ResourceManager.GetString("Error.InvalidUnrecognizedProperty", resourceCulture);
+                return ResourceManager.GetString("Error.InvalidUnrecognizedProperty.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 Duplicate &quot;{0}&quot; key found. Located at: {1} 的本地化字符串。
         /// </summary>
-        internal static string Error_KeyIsDuplicated {
+        internal static string Error_KeyIsDuplicated_Message {
             get {
-                return ResourceManager.GetString("Error.KeyIsDuplicated", resourceCulture);
+                return ResourceManager.GetString("Error.KeyIsDuplicated.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 XML namespaces are not supported. Located at: {0} 的本地化字符串。
         /// </summary>
-        internal static string Error_NamespaceIsNotSupported {
+        internal static string Error_NamespaceIsNotSupported_Message {
             get {
-                return ResourceManager.GetString("Error.NamespaceIsNotSupported", resourceCulture);
+                return ResourceManager.GetString("Error.NamespaceIsNotSupported.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 The &quot;{1}&quot; property of type &quot;{0}&quot; is not readable. 的本地化字符串。
         /// </summary>
-        internal static string Error_PropertyCannotRead {
+        internal static string Error_PropertyCannotRead_Message {
             get {
-                return ResourceManager.GetString("Error.PropertyCannotRead", resourceCulture);
+                return ResourceManager.GetString("Error.PropertyCannotRead.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 There is no property named &quot;{1}&quot; in the &quot;{0}&quot; type. 的本地化字符串。
         /// </summary>
-        internal static string Error_PropertyNotExists {
+        internal static string Error_PropertyNotExists_Message {
             get {
-                return ResourceManager.GetString("Error.PropertyNotExists", resourceCulture);
+                return ResourceManager.GetString("Error.PropertyNotExists.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 Unable to create an instance of type &quot;{0}&quot; because multidimensional arrays are not supported. 的本地化字符串。
         /// </summary>
-        internal static string Error_UnsupportedMultidimensionalArray {
+        internal static string Error_UnsupportedMultidimensionalArray_Message {
             get {
-                return ResourceManager.GetString("Error.UnsupportedMultidimensionalArray", resourceCulture);
+                return ResourceManager.GetString("Error.UnsupportedMultidimensionalArray.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 Unsupported node type &quot;{0}&quot; detected. {1} 的本地化字符串。
         /// </summary>
-        internal static string Error_UnsupportedNodeType {
+        internal static string Error_UnsupportedNodeType_Message {
             get {
-                return ResourceManager.GetString("Error.UnsupportedNodeType", resourceCulture);
+                return ResourceManager.GetString("Error.UnsupportedNodeType.Message", resourceCulture);
             }
         }
 
@@ -570,6 +777,15 @@ namespace Zongsoft.Properties {
         internal static string ErrorOccurred_Message {
             get {
                 return ResourceManager.GetString("ErrorOccurred.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The bound event argument type do not match. 的本地化字符串。
+        /// </summary>
+        internal static string EventBinder_ArgumentTypeMismatch_Message {
+            get {
+                return ResourceManager.GetString("EventBinder.ArgumentTypeMismatch.Message", resourceCulture);
             }
         }
 
@@ -610,20 +826,65 @@ namespace Zongsoft.Properties {
         }
 
         /// <summary>
+        ///   查找类似 The &apos;{0}&apos; property is required. 的本地化字符串。
+        /// </summary>
+        internal static string Hardware_RequiredProperty_Message {
+            get {
+                return ResourceManager.GetString("Hardware.RequiredProperty.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The name contains illegal character(s). 的本地化字符串。
+        /// </summary>
+        internal static string HierarchicalNode_InvalidName_Message {
+            get {
+                return ResourceManager.GetString("HierarchicalNode.InvalidName.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The root node cannot be added to the child nodes. 的本地化字符串。
+        /// </summary>
+        internal static string HierarchicalNode_RootAsChild_Message {
+            get {
+                return ResourceManager.GetString("HierarchicalNode.RootAsChild.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid format of the identifier. 的本地化字符串。
+        /// </summary>
+        internal static string Identifier_InvalidFormat_Message {
+            get {
+                return ResourceManager.GetString("Identifier.InvalidFormat.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 The specified &apos;{0}&apos; is an invalid command option. 的本地化字符串。
         /// </summary>
-        internal static string InvalidCommandOption {
+        internal static string InvalidCommandOption_Message {
             get {
-                return ResourceManager.GetString("InvalidCommandOption", resourceCulture);
+                return ResourceManager.GetString("InvalidCommandOption.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 The specified &apos;{1}&apos; is an invalid &apos;{0}&apos; command option value. 的本地化字符串。
         /// </summary>
-        internal static string InvalidCommandOptionValue {
+        internal static string InvalidCommandOptionValue_Message {
             get {
-                return ResourceManager.GetString("InvalidCommandOptionValue", resourceCulture);
+                return ResourceManager.GetString("InvalidCommandOptionValue.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid format. 的本地化字符串。
+        /// </summary>
+        internal static string InvalidFormat_Message {
+            get {
+                return ResourceManager.GetString("InvalidFormat.Message", resourceCulture);
             }
         }
 
@@ -633,6 +894,42 @@ namespace Zongsoft.Properties {
         internal static string LinePositionInfo {
             get {
                 return ResourceManager.GetString("LinePositionInfo", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The lock acquisition is no longer active. 的本地化字符串。
+        /// </summary>
+        internal static string Locker_AcquisitionInactive_Message {
+            get {
+                return ResourceManager.GetString("Locker.AcquisitionInactive.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid member expression. 的本地化字符串。
+        /// </summary>
+        internal static string MemberExpression_Invalid_Message {
+            get {
+                return ResourceManager.GetString("MemberExpression.Invalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 An unknown error occurred in the parser. 的本地化字符串。
+        /// </summary>
+        internal static string MemberExpression_UnknownError_Message {
+            get {
+                return ResourceManager.GetString("MemberExpression.UnknownError.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The current memory cache options is immutable. 的本地化字符串。
+        /// </summary>
+        internal static string MemoryCache_ImmutableOptions_Message {
+            get {
+                return ResourceManager.GetString("MemoryCache.ImmutableOptions.Message", resourceCulture);
             }
         }
 
@@ -711,9 +1008,36 @@ namespace Zongsoft.Properties {
         /// <summary>
         ///   查找类似 The command option &apos;{0}&apos; is missing. A value must be provided for this option. 的本地化字符串。
         /// </summary>
-        internal static string MissingCommandOption {
+        internal static string MissingCommandOption_Message {
             get {
-                return ResourceManager.GetString("MissingCommandOption", resourceCulture);
+                return ResourceManager.GetString("MissingCommandOption.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Illegal long integer suffix symbol(L), because it&apos;s a float numeric literal. 的本地化字符串。
+        /// </summary>
+        internal static string NumberTokenizer_InvalidLongSuffix_Message {
+            get {
+                return ResourceManager.GetString("NumberTokenizer.InvalidLongSuffix.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Illegal numeric literal, it contains multiple dot(.) symbol. 的本地化字符串。
+        /// </summary>
+        internal static string NumberTokenizer_MultipleDots_Message {
+            get {
+                return ResourceManager.GetString("NumberTokenizer.MultipleDots.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Illegal numeric literal, cann&apos;t end with a dot(.) symbol. 的本地化字符串。
+        /// </summary>
+        internal static string NumberTokenizer_TrailingDot_Message {
+            get {
+                return ResourceManager.GetString("NumberTokenizer.TrailingDot.Message", resourceCulture);
             }
         }
 
@@ -772,155 +1096,281 @@ namespace Zongsoft.Properties {
         }
 
         /// <summary>
+        ///   查找类似 Illegal paging format. 的本地化字符串。
+        /// </summary>
+        internal static string Paging_InvalidFormat_Message {
+            get {
+                return ResourceManager.GetString("Paging.InvalidFormat.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The specified parameter value is null, but the declared type is not the Nullable type. 的本地化字符串。
+        /// </summary>
+        internal static string Parameters_NullForNonNullable_Message {
+            get {
+                return ResourceManager.GetString("Parameters.NullForNonNullable.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The length of nonce is too long. 的本地化字符串。
+        /// </summary>
+        internal static string Password_NonceTooLong_Message {
+            get {
+                return ResourceManager.GetString("Password.NonceTooLong.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The length of nonce is too short(must be greater than or equal to 4). 的本地化字符串。
+        /// </summary>
+        internal static string Password_NonceTooShort_Message {
+            get {
+                return ResourceManager.GetString("Password.NonceTooShort.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The path separator must be followed by the path anchor. 的本地化字符串。
+        /// </summary>
+        internal static string Path_AnchorRequired_Message {
+            get {
+                return ResourceManager.GetString("Path.AnchorRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid path anchor. 的本地化字符串。
+        /// </summary>
+        internal static string Path_InvalidAnchor_Message {
+            get {
+                return ResourceManager.GetString("Path.InvalidAnchor.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid path, it contains a illegal character. 的本地化字符串。
+        /// </summary>
+        internal static string Path_InvalidCharacter_Message {
+            get {
+                return ResourceManager.GetString("Path.InvalidCharacter.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The first character must be a letter, number or underscore. 的本地化字符串。
+        /// </summary>
+        internal static string Path_InvalidFirstCharacter_Message {
+            get {
+                return ResourceManager.GetString("Path.InvalidFirstCharacter.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 This profile is already being saved. 的本地化字符串。
         /// </summary>
-        internal static string Profiles_AlreadySaving {
+        internal static string Profiles_AlreadySaving_Message {
             get {
-                return ResourceManager.GetString("Profiles_AlreadySaving", resourceCulture);
+                return ResourceManager.GetString("Profiles.AlreadySaving.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 Profile blank line positions must be nonnegative and increasing. 的本地化字符串。
         /// </summary>
-        internal static string Profiles_BlanksInvalid {
+        internal static string Profiles_BlanksInvalid_Message {
             get {
-                return ResourceManager.GetString("Profiles_BlanksInvalid", resourceCulture);
+                return ResourceManager.GetString("Profiles.BlanksInvalid.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 Circular profile import: {0}. Referenced from {1}, line {2}. 的本地化字符串。
         /// </summary>
-        internal static string Profiles_CircularImport {
+        internal static string Profiles_CircularImport_Message {
             get {
-                return ResourceManager.GetString("Profiles_CircularImport", resourceCulture);
+                return ResourceManager.GetString("Profiles.CircularImport.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 The comment cannot be represented consistently as a profile declaration. 的本地化字符串。
         /// </summary>
-        internal static string Profiles_CommentInvalid {
+        internal static string Profiles_CommentInvalid_Message {
             get {
-                return ResourceManager.GetString("Profiles_CommentInvalid", resourceCulture);
+                return ResourceManager.GetString("Profiles.CommentInvalid.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 An entry named &apos;{0}&apos; is already declared in this profile. 的本地化字符串。
         /// </summary>
-        internal static string Profiles_EntryDuplicate {
+        internal static string Profiles_EntryDuplicate_Message {
             get {
-                return ResourceManager.GetString("Profiles_EntryDuplicate", resourceCulture);
+                return ResourceManager.GetString("Profiles.EntryDuplicate.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 The entry &apos;{0}&apos; cannot be represented in a profile. 的本地化字符串。
         /// </summary>
-        internal static string Profiles_EntryInvalid {
+        internal static string Profiles_EntryInvalid_Message {
             get {
-                return ResourceManager.GetString("Profiles_EntryInvalid", resourceCulture);
+                return ResourceManager.GetString("Profiles.EntryInvalid.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 Unable to resolve the profile path link: {0}. 的本地化字符串。
         /// </summary>
-        internal static string Profiles_LinkResolutionFailed {
+        internal static string Profiles_LinkResolutionFailed_Message {
             get {
-                return ResourceManager.GetString("Profiles_LinkResolutionFailed", resourceCulture);
+                return ResourceManager.GetString("Profiles.LinkResolutionFailed.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 Maximum profile import depth exceeded: {0}. Referenced from {1}, line {2}. 的本地化字符串。
         /// </summary>
-        internal static string Profiles_MaximumDepth {
+        internal static string Profiles_MaximumDepth_Message {
             get {
-                return ResourceManager.GetString("Profiles_MaximumDepth", resourceCulture);
+                return ResourceManager.GetString("Profiles.MaximumDepth.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 The profile file is read-only: &apos;{0}&apos;. 的本地化字符串。
         /// </summary>
-        internal static string Profiles_ReadOnly {
+        internal static string Profiles_ReadOnly_Message {
             get {
-                return ResourceManager.GetString("Profiles_ReadOnly", resourceCulture);
+                return ResourceManager.GetString("Profiles.ReadOnly.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 Relative import &quot;{0}&quot; requires a source file path (line {1}). 的本地化字符串。
         /// </summary>
-        internal static string Profiles_RelativeImportRequiresFile {
+        internal static string Profiles_RelativeImportRequiresFile_Message {
             get {
-                return ResourceManager.GetString("Profiles_RelativeImportRequiresFile", resourceCulture);
+                return ResourceManager.GetString("Profiles.RelativeImportRequiresFile.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 Conflicting modified profiles target the same file: &apos;{0}&apos;. 的本地化字符串。
         /// </summary>
-        internal static string Profiles_SaveConflict {
+        internal static string Profiles_SaveConflict_Message {
             get {
-                return ResourceManager.GetString("Profiles_SaveConflict", resourceCulture);
+                return ResourceManager.GetString("Profiles.SaveConflict.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 Failed to save &apos;{0}&apos;. Completed files: {1}. 的本地化字符串。
         /// </summary>
-        internal static string Profiles_SaveFailed {
+        internal static string Profiles_SaveFailed_Message {
             get {
-                return ResourceManager.GetString("Profiles_SaveFailed", resourceCulture);
+                return ResourceManager.GetString("Profiles.SaveFailed.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 Profiles must not be modified during saving. 的本地化字符串。
         /// </summary>
-        internal static string Profiles_SaveMutation {
+        internal static string Profiles_SaveMutation_Message {
             get {
-                return ResourceManager.GetString("Profiles_SaveMutation", resourceCulture);
+                return ResourceManager.GetString("Profiles.SaveMutation.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 A section with the same name already exists. 的本地化字符串。
         /// </summary>
-        internal static string Profiles_SectionDuplicate {
+        internal static string Profiles_SectionDuplicate_Message {
             get {
-                return ResourceManager.GetString("Profiles_SectionDuplicate", resourceCulture);
+                return ResourceManager.GetString("Profiles.SectionDuplicate.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 The section name cannot be represented in a profile: &apos;{0}&apos;. 的本地化字符串。
         /// </summary>
-        internal static string Profiles_SectionInvalid {
+        internal static string Profiles_SectionInvalid_Message {
             get {
-                return ResourceManager.GetString("Profiles_SectionInvalid", resourceCulture);
+                return ResourceManager.GetString("Profiles.SectionInvalid.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 Edit the declaration through its source profile and section. 的本地化字符串。
         /// </summary>
-        internal static string Profiles_SourceEdit {
+        internal static string Profiles_SourceEdit_Message {
             get {
-                return ResourceManager.GetString("Profiles_SourceEdit", resourceCulture);
+                return ResourceManager.GetString("Profiles.SourceEdit.Message", resourceCulture);
             }
         }
 
         /// <summary>
         ///   查找类似 The modified profile has no source file path. 的本地化字符串。
         /// </summary>
-        internal static string Profiles_SourceRequired {
+        internal static string Profiles_SourceRequired_Message {
             get {
-                return ResourceManager.GetString("Profiles_SourceRequired", resourceCulture);
+                return ResourceManager.GetString("Profiles.SourceRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid datetime range expression format. 的本地化字符串。
+        /// </summary>
+        internal static string RangeParser_InvalidDateTimeFormat_Message {
+            get {
+                return ResourceManager.GetString("RangeParser.InvalidDateTimeFormat.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The {0} range function is missing required parameters. 的本地化字符串。
+        /// </summary>
+        internal static string RangeParser_MissingArguments_Message {
+            get {
+                return ResourceManager.GetString("RangeParser.MissingArguments.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing the closing parenthesis. 的本地化字符串。
+        /// </summary>
+        internal static string RangeParser_MissingClosingParenthesis_Message {
+            get {
+                return ResourceManager.GetString("RangeParser.MissingClosingParenthesis.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The argument in the datetime range expression must be a number. 的本地化字符串。
+        /// </summary>
+        internal static string RangeParser_NumericArgumentRequired_Message {
+            get {
+                return ResourceManager.GetString("RangeParser.NumericArgumentRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The range expression contains redundant content. 的本地化字符串。
+        /// </summary>
+        internal static string RangeParser_RedundantContent_Message {
+            get {
+                return ResourceManager.GetString("RangeParser.RedundantContent.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The {0} range function has too many parameters. 的本地化字符串。
+        /// </summary>
+        internal static string RangeParser_TooManyArguments_Message {
+            get {
+                return ResourceManager.GetString("RangeParser.TooManyArguments.Message", resourceCulture);
             }
         }
 
@@ -1132,11 +1582,65 @@ namespace Zongsoft.Properties {
         }
 
         /// <summary>
+        ///   查找类似 The selected link target does not exist. 的本地化字符串。
+        /// </summary>
+        internal static string Searcher_LinkTargetMissing_Message {
+            get {
+                return ResourceManager.GetString("Searcher.LinkTargetMissing.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Parent segments cannot follow a wildcard segment. 的本地化字符串。
+        /// </summary>
+        internal static string Searcher_ParentAfterWildcard_Message {
+            get {
+                return ResourceManager.GetString("Searcher.ParentAfterWildcard.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The search pattern must be relative to the directory. 的本地化字符串。
+        /// </summary>
+        internal static string Searcher_RelativePatternRequired_Message {
+            get {
+                return ResourceManager.GetString("Searcher.RelativePatternRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 The verification code generation operation is being called too frequently. Please wait a moment and try again later. 的本地化字符串。
         /// </summary>
         internal static string SecretGenerateTooFrequently_Message {
             get {
                 return ResourceManager.GetString("SecretGenerateTooFrequently.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The secret argument contains illegal characters. 的本地化字符串。
+        /// </summary>
+        internal static string Secretor_InvalidArgument_Message {
+            get {
+                return ResourceManager.GetString("Secretor.InvalidArgument.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid captch format. 的本地化字符串。
+        /// </summary>
+        internal static string Secretor_InvalidCaptcha_Message {
+            get {
+                return ResourceManager.GetString("Secretor.InvalidCaptcha.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid secret pattern. 的本地化字符串。
+        /// </summary>
+        internal static string Secretor_InvalidPattern_Message {
+            get {
+                return ResourceManager.GetString("Secretor.InvalidPattern.Message", resourceCulture);
             }
         }
 
@@ -1164,6 +1668,15 @@ namespace Zongsoft.Properties {
         internal static string Security_AccountUnapproved_Message {
             get {
                 return ResourceManager.GetString("Security.AccountUnapproved.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The specified name cannot be a built-in name. 的本地化字符串。
+        /// </summary>
+        internal static string Security_BuiltinName_Message {
+            get {
+                return ResourceManager.GetString("Security.BuiltinName.Message", resourceCulture);
             }
         }
 
@@ -1209,6 +1722,24 @@ namespace Zongsoft.Properties {
         internal static string Security_Unknown_Message {
             get {
                 return ResourceManager.GetString("Security.Unknown.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The serialization options is immutable. 的本地化字符串。
+        /// </summary>
+        internal static string Serialization_Immutable_Message {
+            get {
+                return ResourceManager.GetString("Serialization.Immutable.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid member type. 的本地化字符串。
+        /// </summary>
+        internal static string ServiceInjector_InvalidMemberType_Message {
+            get {
+                return ResourceManager.GetString("ServiceInjector.InvalidMemberType.Message", resourceCulture);
             }
         }
 
@@ -1384,6 +1915,42 @@ namespace Zongsoft.Properties {
         }
 
         /// <summary>
+        ///   查找类似 Invalid sorting format. 的本地化字符串。
+        /// </summary>
+        internal static string Sorting_InvalidFormat_Message {
+            get {
+                return ResourceManager.GetString("Sorting.InvalidFormat.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid type of the state context. 的本地化字符串。
+        /// </summary>
+        internal static string StateHandler_InvalidContext_Message {
+            get {
+                return ResourceManager.GetString("StateHandler.InvalidContext.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The destination stream does not support writing. 的本地化字符串。
+        /// </summary>
+        internal static string Stream_NotWritable_Message {
+            get {
+                return ResourceManager.GetString("Stream.NotWritable.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The string literal contains new-line symbol. 的本地化字符串。
+        /// </summary>
+        internal static string StringTokenizer_NewLine_Message {
+            get {
+                return ResourceManager.GetString("StringTokenizer.NewLine.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 The committed event &apos;{0}&apos; cannot be dispatched because the transaction event channel is closed. 的本地化字符串。
         /// </summary>
         internal static string TransactionEventChannel_DispatchClosed {
@@ -1398,6 +1965,78 @@ namespace Zongsoft.Properties {
         internal static string TransactionEventChannel_DispatchingTimeout {
             get {
                 return ResourceManager.GetString("TransactionEventChannel.DispatchingTimeout", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; parameter must be a value type. 的本地化字符串。
+        /// </summary>
+        internal static string Type_ValueTypeRequired_Message {
+            get {
+                return ResourceManager.GetString("Type.ValueTypeRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The type name or namespace must begin with a letter or an underscore. 的本地化字符串。
+        /// </summary>
+        internal static string TypeAlias_InvalidFirstCharacter_Message {
+            get {
+                return ResourceManager.GetString("TypeAlias.InvalidFirstCharacter.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The user name is empty. 的本地化字符串。
+        /// </summary>
+        internal static string UserService_EmptyName_Message {
+            get {
+                return ResourceManager.GetString("UserService.EmptyName.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Illegal format for stored password-answer. 的本地化字符串。
+        /// </summary>
+        internal static string UserService_InvalidStoredAnswer_Message {
+            get {
+                return ResourceManager.GetString("UserService.InvalidStoredAnswer.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing the required secretor. 的本地化字符串。
+        /// </summary>
+        internal static string UserService_MissingSecretor_Message {
+            get {
+                return ResourceManager.GetString("UserService.MissingSecretor.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The password questions and answers count is not equals. 的本地化字符串。
+        /// </summary>
+        internal static string UserService_PasswordAnswersCountMismatch_Message {
+            get {
+                return ResourceManager.GetString("UserService.PasswordAnswersCountMismatch.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The password answers verify failed. 的本地化字符串。
+        /// </summary>
+        internal static string UserService_PasswordAnswersFailed_Message {
+            get {
+                return ResourceManager.GetString("UserService.PasswordAnswersFailed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing required worker of depends on. 的本地化字符串。
+        /// </summary>
+        internal static string WorkerCommand_MissingWorker_Message {
+            get {
+                return ResourceManager.GetString("WorkerCommand.MissingWorker.Message", resourceCulture);
             }
         }
 

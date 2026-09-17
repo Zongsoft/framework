@@ -282,7 +282,7 @@ public readonly struct Path : IEquatable<Path>
 					case '|':
 					case '<':
 					case '>':
-						throw new ArgumentException("Invalid path, it contains a illegal character.");
+						throw new ArgumentException(Properties.Resources.Path_InvalidCharacter_Message);
 					default:
 						if(spaces > 0)
 						{
@@ -436,7 +436,7 @@ public readonly struct Path : IEquatable<Path>
 				if(context.IsLetterOrDigit || context.Character == '_')
 					context.Accept(PathState.First);
 				else
-					context.Error($"The first character must be a letter, number or underscore.");
+					context.Error(Properties.Resources.Path_InvalidFirstCharacter_Message);
 
 				anchor = PathAnchor.None;
 				return false;
@@ -452,7 +452,7 @@ public readonly struct Path : IEquatable<Path>
 				context.Accept(PathState.Anchor, out var count);
 
 				if(count > 2)
-					context.Error($"Invalid path anchor.");
+					context.Error(Properties.Resources.Path_InvalidAnchor_Message);
 
 				return true;
 			case '/':
@@ -474,7 +474,7 @@ public readonly struct Path : IEquatable<Path>
 				return true;
 			default:
 				anchor = PathAnchor.None;
-				context.Error($"The path separator must be followed by the path anchor.");
+				context.Error(Properties.Resources.Path_AnchorRequired_Message);
 				return false;
 		}
 	}

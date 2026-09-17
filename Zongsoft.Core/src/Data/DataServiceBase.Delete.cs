@@ -111,7 +111,7 @@ partial class DataServiceBase<TModel>
 	protected virtual int OnDelete(ICondition criteria, ISchema schema, DataDeleteOptions options)
 	{
 		if(criteria == null)
-			throw new NotSupportedException("The criteria cann't is null on delete operation.");
+			throw new NotSupportedException(Properties.Resources.DataService_DeleteRequiresCriteria_Message);
 
 		return this.DataAccess.Delete(this.Name, criteria, schema, options, ctx => this.OnDeleting(ctx), ctx => this.OnDeleted(ctx));
 	}
@@ -192,7 +192,7 @@ partial class DataServiceBase<TModel>
 	protected virtual ValueTask<int> OnDeleteAsync(ICondition criteria, ISchema schema, DataDeleteOptions options, CancellationToken cancellation)
 	{
 		if(criteria == null)
-			throw new NotSupportedException("The criteria cann't is null on delete operation.");
+			throw new NotSupportedException(Properties.Resources.DataService_DeleteRequiresCriteria_Message);
 
 		return this.DataAccess.DeleteAsync(this.Name, criteria, schema, options, ctx => this.OnDeleting(ctx), ctx => this.OnDeleted(ctx), cancellation);
 	}

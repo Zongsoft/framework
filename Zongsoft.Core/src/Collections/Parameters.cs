@@ -197,7 +197,7 @@ public partial class Parameters : IDictionary<object, object>
 				return;
 
 			if(type.IsValueType && !Common.TypeExtension.IsNullable(type))
-				throw new ArgumentException($"The specified parameter value is null, but the declared type is not the Nullable type.");
+				throw new ArgumentException(Properties.Resources.Parameters_NullForNonNullable_Message);
 		}
 		else
 		{

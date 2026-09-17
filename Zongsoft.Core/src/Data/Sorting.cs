@@ -86,7 +86,7 @@ public readonly struct Sorting : IEquatable<Sorting>
 		if(TryParse(text, out var result))
 			return result;
 
-		throw new ArgumentException("Invalid sorting format.");
+		throw new ArgumentException(Properties.Resources.Sorting_InvalidFormat_Message);
 	}
 
 	/// <summary>尝试将排序设置规则的字符串表示形式解析为其等效的<see cref="Sorting"/>。</summary>

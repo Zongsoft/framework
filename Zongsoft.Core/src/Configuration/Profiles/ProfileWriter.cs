@@ -63,7 +63,7 @@ internal sealed class ProfileWriter
 				continue;
 
 			if(string.IsNullOrWhiteSpace(source.FilePath))
-				throw new ProfileException(Properties.Resources.Profiles_SourceRequired);
+				throw new ProfileException(Properties.Resources.Profiles_SourceRequired_Message);
 
 			var path = ProfileUtility.GetIdentity(source.FilePath);
 			var snapshot = source.Snapshot();
@@ -71,7 +71,7 @@ internal sealed class ProfileWriter
 			if(targets.TryGetValue(path, out var output))
 			{
 				if(!snapshot.SequenceEqual(output.Snapshot))
-					throw new ProfileException(string.Format(Properties.Resources.Profiles_SaveConflict, path));
+					throw new ProfileException(string.Format(Properties.Resources.Profiles_SaveConflict_Message, path));
 
 				output.Sources.Add(source);
 			}
@@ -170,7 +170,7 @@ internal sealed class ProfileWriter
 				}
 				catch(Exception exception) when(exception is IOException or UnauthorizedAccessException)
 				{
-					var error = new ProfileException(string.Format(Properties.Resources.Profiles_SaveFailed, output.Path, string.Join(", ", completed)), exception);
+					var error = new ProfileException(string.Format(Properties.Resources.Profiles_SaveFailed_Message, output.Path, string.Join(", ", completed)), exception);
 					error.Data["FailedPath"] = output.Path;
 					error.Data["CompletedPaths"] = completed.ToArray();
 					throw error;
@@ -262,7 +262,7 @@ internal sealed class ProfileWriter
 	private static void VerifyUnchanged(Profile profile, string[] snapshot)
 	{
 		if(!profile.Snapshot().SequenceEqual(snapshot))
-			throw new ProfileException(Properties.Resources.Profiles_SaveMutation);
+			throw new ProfileException(Properties.Resources.Profiles_SaveMutation_Message);
 	}
 
 	private static void WriteSection(TextWriter writer, ProfileSection section) => writer.WriteLine("[" + section?.FullName + "]");
@@ -281,7 +281,7 @@ internal sealed class ProfileWriter
 	private static void VerifyTarget(string path)
 	{
 		if(File.Exists(path) && (File.GetAttributes(path) & FileAttributes.ReadOnly) != 0)
-			throw new UnauthorizedAccessException(string.Format(Properties.Resources.Profiles_ReadOnly, path));
+			throw new UnauthorizedAccessException(string.Format(Properties.Resources.Profiles_ReadOnly_Message, path));
 	}
 
 	private static void Validate(Profile profile)
@@ -291,7 +291,7 @@ internal sealed class ProfileWriter
 			for(var section = statement.Section; section != null; section = section.Section)
 			{
 				if(section.Name.Any(char.IsWhiteSpace))
-					throw new ProfileException(string.Format(Properties.Resources.Profiles_SectionInvalid, section.Name));
+					throw new ProfileException(string.Format(Properties.Resources.Profiles_SectionInvalid_Message, section.Name));
 			}
 
 			if(statement.Item is ProfileEntry entry)
@@ -301,14 +301,14 @@ internal sealed class ProfileWriter
 				if(line.Contains('\r') || line.Contains('\n') || entry.Name.Contains('=') ||
 					entry.Value != null && entry.Value != entry.Value.Trim() ||
 					ProfileUtility.ParseLine(line, out _) != ProfileUtility.LineType.Entry)
-					throw new ProfileException(string.Format(Properties.Resources.Profiles_EntryInvalid, entry.Name));
+					throw new ProfileException(string.Format(Properties.Resources.Profiles_EntryInvalid_Message, entry.Name));
 			}
 			else if(statement.Item is ProfileComment comment)
 			{
 				foreach(var line in comment.Lines)
 				{
 					if(line == null || line.Contains('\r') || line.Contains('\n'))
-						throw new ProfileException(Properties.Resources.Profiles_CommentInvalid);
+						throw new ProfileException(Properties.Resources.Profiles_CommentInvalid_Message);
 				}
 			}
 		}
@@ -320,7 +320,7 @@ internal sealed class ProfileWriter
 			foreach(var blank in profile.Blanks)
 			{
 				if(blank <= previous)
-					throw new ProfileException(Properties.Resources.Profiles_BlanksInvalid);
+					throw new ProfileException(Properties.Resources.Profiles_BlanksInvalid_Message);
 
 				previous = blank;
 			}

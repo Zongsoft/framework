@@ -115,7 +115,7 @@ internal static class ProfileUtility
 		}
 
 		if(text[0] == '=')
-			throw new ProfileException("Invalid format.");
+			throw new ProfileException(Properties.Resources.InvalidFormat_Message);
 
 		result = text.ToString();
 		return LineType.Entry;
@@ -136,7 +136,7 @@ internal static class ProfileUtility
 			FileSystemInfo info = Directory.Exists(current) ? new DirectoryInfo(current) : new FileInfo(current);
 
 			if(info.LinkTarget != null)
-				current = info.ResolveLinkTarget(true)?.FullName ?? throw new IOException(string.Format(Properties.Resources.Profiles_LinkResolutionFailed, current));
+				current = info.ResolveLinkTarget(true)?.FullName ?? throw new IOException(string.Format(Properties.Resources.Profiles_LinkResolutionFailed_Message, current));
 		}
 
 		return current;

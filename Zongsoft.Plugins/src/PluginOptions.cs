@@ -75,7 +75,7 @@ namespace Zongsoft.Plugins
 			{
 				this.ApplicationDirectory = applicationDirectory.Trim();
 
-				if(!Path.IsPathRooted(ApplicationDirectory))
+				if(!Path.IsPathRooted(this.ApplicationDirectory))
 					throw new ArgumentException($"The specified '{applicationDirectory}' application directory is not an absolute path.");
 			}
 

@@ -95,7 +95,7 @@ public class TextSerializationOptionsBuilder
 	#endregion
 
 	#region 公共方法
-	public TextSerializationOptions Indented(string ignores = null) => Indented(false, ignores);
+	public TextSerializationOptions Indented(string ignores = null) => this.Indented(false, ignores);
 	public TextSerializationOptions Indented(bool typified, string ignores = null)
 	{
 		var flags = IMMUTABLE_FLAG | INDENTED_FLAG;
@@ -118,7 +118,7 @@ public class TextSerializationOptionsBuilder
 		}, (typified, ignores));
 	}
 
-	public TextSerializationOptions Typified(string ignores = null) => Typified(false, ignores);
+	public TextSerializationOptions Typified(string ignores = null) => this.Typified(false, ignores);
 	public TextSerializationOptions Typified(bool indented, string ignores = null)
 	{
 		var flags = IMMUTABLE_FLAG | TYPIFIED_FLAG;
@@ -141,7 +141,7 @@ public class TextSerializationOptionsBuilder
 		}, (indented, ignores));
 	}
 
-	public TextSerializationOptions Camel(string ignores = null) => Camel(false, ignores);
+	public TextSerializationOptions Camel(string ignores = null) => this.Camel(false, ignores);
 	public TextSerializationOptions Camel(bool typified, string ignores = null)
 	{
 		var flags = IMMUTABLE_FLAG | NAMING_CAMEL_FLAG;
@@ -164,7 +164,7 @@ public class TextSerializationOptionsBuilder
 		}, (typified, ignores));
 	}
 
-	public TextSerializationOptions Pascal(string ignores = null) => Pascal(false, ignores);
+	public TextSerializationOptions Pascal(string ignores = null) => this.Pascal(false, ignores);
 	public TextSerializationOptions Pascal(bool typified, string ignores = null)
 	{
 		var flags = IMMUTABLE_FLAG | NAMING_PASCAL_FLAG;

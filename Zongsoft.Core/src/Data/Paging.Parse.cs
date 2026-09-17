@@ -40,7 +40,7 @@ partial class Paging
 		TimeSpan.FromMilliseconds(1000));
 	#endregion
 
-	public static Paging Parse(ReadOnlySpan<char> text) => TryParse(text, out Paging result) ? result : throw new ArgumentException($"Illegal paging format.");
+	public static Paging Parse(ReadOnlySpan<char> text) => TryParse(text, out Paging result) ? result : throw new ArgumentException(Properties.Resources.Paging_InvalidFormat_Message);
 	public static bool TryParse(ReadOnlySpan<char> text, out Paging result)
 	{
 		if(text.IsEmpty)

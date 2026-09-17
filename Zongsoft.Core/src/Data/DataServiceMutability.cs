@@ -111,7 +111,7 @@ public readonly struct DataServiceMutability : IEquatable<DataServiceMutability>
 	#endregion
 
 	#region 解析方法
-	public static DataServiceMutability Parse(string text) => TryParse(text, out var result) ? result : throw new ArgumentException($"Illegal format parameter value.", nameof(text));
+	public static DataServiceMutability Parse(string text) => TryParse(text, out var result) ? result : throw new ArgumentException(Properties.Resources.DataServiceMutability_InvalidFormat_Message, nameof(text));
 	public static bool TryParse(string text, out DataServiceMutability result)
 	{
 		if(string.IsNullOrEmpty(text))

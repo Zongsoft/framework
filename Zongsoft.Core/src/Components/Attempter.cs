@@ -90,7 +90,7 @@ public class Attempter : IAttempter
 			return false;
 
 		if(this.Cache is not ISequence sequence)
-			throw new InvalidOperationException($"The cache of authentication failover does not support the increment(ISequence) operation.");
+			throw new InvalidOperationException(Properties.Resources.Attempter_SequenceNotSupported_Message);
 
 		if(!_options.HasLimit(out var limit, out var window, out var period))
 			return false;

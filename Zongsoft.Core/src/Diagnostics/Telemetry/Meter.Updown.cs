@@ -57,7 +57,7 @@ public static partial class MeterExtension
 		if(type == null)
 			throw new ArgumentNullException(nameof(type));
 		if(!type.IsValueType)
-			throw new ArgumentException("The type must be a value type.", nameof(type));
+			throw new ArgumentException(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Type_ValueTypeRequired_Message, nameof(type)), nameof(type));
 
 		return (Instrument)_UpDownCounterMethod_.MakeGenericMethod(type).Invoke(meter, [name, unit, description, tags]);
 	}

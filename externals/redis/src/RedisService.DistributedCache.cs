@@ -98,7 +98,7 @@ partial class RedisService : IDistributedCache
 		{
 			long count = 0;
 
-			foreach(var key in this.ScanKeys(GetKeyPattern("*")))
+			foreach(var key in this.ScanKeys(this.GetKeyPattern("*")))
 				count++;
 
 			return count;
@@ -120,7 +120,7 @@ partial class RedisService : IDistributedCache
 		{
 			long count = 0;
 
-			await foreach(var key in this.ScanKeysAsync(GetKeyPattern("*"), cancellation))
+			await foreach(var key in this.ScanKeysAsync(this.GetKeyPattern("*"), cancellation))
 				count++;
 
 			return count;
@@ -142,7 +142,7 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		this.Connect();
 
-		return _database.KeyExists(GetKey(key));
+		return _database.KeyExists(this.GetKey(key));
 	}
 
 	public async ValueTask<bool> ExistsAsync(string key, CancellationToken cancellation = default)
@@ -152,7 +152,7 @@ partial class RedisService : IDistributedCache
 
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
-		return await _database.KeyExistsAsync(GetKey(key)).WaitAsync(cancellation);
+		return await _database.KeyExistsAsync(this.GetKey(key)).WaitAsync(cancellation);
 	}
 
 	public IEnumerable<string> Find(string pattern)
@@ -164,7 +164,7 @@ partial class RedisService : IDistributedCache
 
 		IEnumerable<string> FindCore(string pattern)
 		{
-			foreach(var key in this.ScanKeys(GetKeyPattern(pattern)))
+			foreach(var key in this.ScanKeys(this.GetKeyPattern(pattern)))
 				yield return this.GetLogicalKey(key);
 		}
 	}
@@ -174,7 +174,7 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		await this.ConnectAsync(cancellation);
 
-		await foreach(var key in this.ScanKeysAsync(GetKeyPattern(string.IsNullOrEmpty(pattern) ? "*" : pattern), cancellation))
+		await foreach(var key in this.ScanKeysAsync(this.GetKeyPattern(string.IsNullOrEmpty(pattern) ? "*" : pattern), cancellation))
 			yield return this.GetLogicalKey(key);
 	}
 	#endregion
@@ -188,7 +188,7 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		this.Connect();
 
-		return _database.KeyTimeToLive(GetKey(key));
+		return _database.KeyTimeToLive(this.GetKey(key));
 	}
 
 	public async ValueTask<TimeSpan?> GetExpiryAsync(string key, CancellationToken cancellation = default)
@@ -198,7 +198,7 @@ partial class RedisService : IDistributedCache
 
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
-		return await _database.KeyTimeToLiveAsync(GetKey(key)).WaitAsync(cancellation);
+		return await _database.KeyTimeToLiveAsync(this.GetKey(key)).WaitAsync(cancellation);
 	}
 
 	public bool SetExpiry(string key, TimeSpan expiry)
@@ -211,7 +211,7 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		this.Connect();
 
-		return expiry == TimeSpan.Zero ? _database.KeyPersist(GetKey(key)) : _database.KeyExpire(GetKey(key), expiry);
+		return expiry == TimeSpan.Zero ? _database.KeyPersist(this.GetKey(key)) : _database.KeyExpire(this.GetKey(key), expiry);
 	}
 
 	public async ValueTask<bool> SetExpiryAsync(string key, TimeSpan expiry, CancellationToken cancellation = default)
@@ -224,8 +224,8 @@ partial class RedisService : IDistributedCache
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
 		return expiry == TimeSpan.Zero ?
-			await _database.KeyPersistAsync(GetKey(key)).WaitAsync(cancellation) :
-			await _database.KeyExpireAsync(GetKey(key), expiry).WaitAsync(cancellation);
+			await _database.KeyPersistAsync(this.GetKey(key)).WaitAsync(cancellation) :
+			await _database.KeyExpireAsync(this.GetKey(key), expiry).WaitAsync(cancellation);
 	}
 	#endregion
 
@@ -239,7 +239,7 @@ partial class RedisService : IDistributedCache
 
 		var keys = new List<RedisKey>(BATCH_SIZE);
 
-		foreach(var key in this.ScanKeys(GetKeyPattern("*")))
+		foreach(var key in this.ScanKeys(this.GetKeyPattern("*")))
 		{
 			keys.Add(key);
 
@@ -265,7 +265,7 @@ partial class RedisService : IDistributedCache
 
 		var tasks = new List<Task<bool>>(BATCH_SIZE);
 
-		await foreach(var key in this.ScanKeysAsync(GetKeyPattern("*"), cancellation))
+		await foreach(var key in this.ScanKeysAsync(this.GetKeyPattern("*"), cancellation))
 		{
 			tasks.Add(_database.KeyDeleteAsync(key));
 
@@ -288,7 +288,7 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		this.Connect();
 
-		return _database.KeyDelete(GetKey(key));
+		return _database.KeyDelete(this.GetKey(key));
 	}
 
 	public bool Remove(string key, out object value)
@@ -299,7 +299,7 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		this.Connect();
 
-		var result = _database.StringGetDelete(GetKey(key));
+		var result = _database.StringGetDelete(this.GetKey(key));
 		value = result.HasValue ? result.GetValue<object>() : default;
 		return result.HasValue;
 	}
@@ -312,7 +312,7 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		this.Connect();
 
-		var entries = keys.Where(key => !string.IsNullOrEmpty(key)).Select(key => (RedisKey)GetKey(key)).ToArray();
+		var entries = keys.Where(key => !string.IsNullOrEmpty(key)).Select(key => (RedisKey)this.GetKey(key)).ToArray();
 		var count = 0;
 
 		foreach(var entry in entries)
@@ -331,7 +331,7 @@ partial class RedisService : IDistributedCache
 
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
-		return await _database.KeyDeleteAsync(GetKey(key)).WaitAsync(cancellation);
+		return await _database.KeyDeleteAsync(this.GetKey(key)).WaitAsync(cancellation);
 	}
 
 	public async ValueTask<int> RemoveAsync(IEnumerable<string> keys, CancellationToken cancellation = default)
@@ -342,7 +342,7 @@ partial class RedisService : IDistributedCache
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
 
-		var entries = keys.Where(key => !string.IsNullOrEmpty(key)).Select(key => (RedisKey)GetKey(key)).ToArray();
+		var entries = keys.Where(key => !string.IsNullOrEmpty(key)).Select(key => (RedisKey)this.GetKey(key)).ToArray();
 
 		if(entries.Length == 0)
 			return 0;
@@ -375,7 +375,7 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		this.Connect();
 
-		return _database.KeyRename(GetKey(oldKey), GetKey(newKey), When.Always);
+		return _database.KeyRename(this.GetKey(oldKey), this.GetKey(newKey), When.Always);
 	}
 
 	public async ValueTask<bool> RenameAsync(string oldKey, string newKey, CancellationToken cancellation = default)
@@ -388,7 +388,7 @@ partial class RedisService : IDistributedCache
 
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
-		return await _database.KeyRenameAsync(GetKey(oldKey), GetKey(newKey), When.Always).WaitAsync(cancellation);
+		return await _database.KeyRenameAsync(this.GetKey(oldKey), this.GetKey(newKey), When.Always).WaitAsync(cancellation);
 	}
 	#endregion
 
@@ -402,7 +402,7 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		this.Connect();
 
-		var entryKey = GetKey(key);
+		var entryKey = this.GetKey(key);
 
 		if(typeof(T) == typeof(object))
 			return (T)this.GetEntry(key);
@@ -417,7 +417,7 @@ partial class RedisService : IDistributedCache
 		return _database.StringGet(entryKey).GetValue<T>();
 	}
 
-	public object GetValue(string key, out TimeSpan? expiry) => GetValue<object>(key, out expiry);
+	public object GetValue(string key, out TimeSpan? expiry) => this.GetValue<object>(key, out expiry);
 	public T GetValue<T>(string key, out TimeSpan? expiry)
 	{
 		if(string.IsNullOrEmpty(key))
@@ -426,7 +426,7 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		this.Connect();
 
-		var entryKey = GetKey(key);
+		var entryKey = this.GetKey(key);
 
 		if(typeof(T) == typeof(object))
 			return (T)this.GetEntry(key, out _, out expiry);
@@ -480,7 +480,7 @@ partial class RedisService : IDistributedCache
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
 
-		var entryKey = GetKey(key);
+		var entryKey = this.GetKey(key);
 
 		if(typeof(T) == typeof(object))
 		{
@@ -507,7 +507,7 @@ partial class RedisService : IDistributedCache
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
 
-		var entryKey = GetKey(key);
+		var entryKey = this.GetKey(key);
 
 		if(typeof(T) == typeof(object))
 		{
@@ -550,7 +550,7 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		this.Connect();
 
-		var entryKey = GetKey(key);
+		var entryKey = this.GetKey(key);
 
 		if(typeof(T) == typeof(object))
 		{
@@ -592,7 +592,7 @@ partial class RedisService : IDistributedCache
 		//确保连接成功
 		this.Connect();
 
-		var entryKey = GetKey(key);
+		var entryKey = this.GetKey(key);
 
 		if(typeof(T) == typeof(object))
 		{
@@ -639,7 +639,7 @@ partial class RedisService : IDistributedCache
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
 
-		var entryKey = GetKey(key);
+		var entryKey = this.GetKey(key);
 
 		if(typeof(T) == typeof(object))
 		{

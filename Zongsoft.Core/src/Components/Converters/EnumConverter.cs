@@ -75,14 +75,14 @@ public class EnumConverter : System.ComponentModel.EnumConverter
 				foreach(var part in parts)
 				{
 					if(!string.IsNullOrWhiteSpace(part))
-						convertedValue |= GetEnumValue(part, true);
+						convertedValue |= this.GetEnumValue(part, true);
 				}
 
 				return Enum.ToObject(this.EnumType, convertedValue);
 			}
 			else
 			{
-				return Enum.ToObject(this.EnumType, GetEnumValue(valueString, true));
+				return Enum.ToObject(this.EnumType, this.GetEnumValue(valueString, true));
 			}
 		}
 		else if(value.GetType().IsPrimitive || value.GetType() == typeof(decimal))

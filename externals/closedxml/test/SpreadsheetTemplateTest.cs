@@ -13,7 +13,7 @@ public class SpreadsheetTemplateTest : IDisposable
 	[Fact]
 	public void Create_ExistingWorkbook_LoadsMetadataAndOpensContent()
 	{
-		var path = CreateWorkbook("invoice.xlsx", "Invoice Report", "Monthly invoice template");
+		var path = this.CreateWorkbook("invoice.xlsx", "Invoice Report", "Monthly invoice template");
 		var template = SpreadsheetTemplate.Create(path);
 
 		Assert.NotNull(template);
@@ -32,7 +32,7 @@ public class SpreadsheetTemplateTest : IDisposable
 	[Fact]
 	public void Create_SamePath_ProducesEqualTemplatesWithEqualHashCodes()
 	{
-		var path = CreateWorkbook("same.xlsx", null, null);
+		var path = this.CreateWorkbook("same.xlsx", null, null);
 		var first = SpreadsheetTemplate.Create(path);
 		var second = SpreadsheetTemplate.Create(path);
 
@@ -54,7 +54,7 @@ public class SpreadsheetTemplateTest : IDisposable
 	public void Provider_NestedWorkbook_FindsCaseInsensitivelyAndFiltersFormat()
 	{
 		var nested = Directory.CreateDirectory(Path.Combine(_directory, "nested")).FullName;
-		var path = CreateWorkbook(Path.Combine("nested", "monthly.xlsx"), "Monthly", "Nested template");
+		var path = this.CreateWorkbook(Path.Combine("nested", "monthly.xlsx"), "Monthly", "Nested template");
 		var provider = new SpreadsheetTemplateProvider(_directory);
 
 		var template = provider.GetTemplate("MONTHLY", Spreadsheet.Format.Name);

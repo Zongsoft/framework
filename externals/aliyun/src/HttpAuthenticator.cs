@@ -80,7 +80,7 @@ namespace Zongsoft.Externals.Aliyun
 				algorithm.Key = Encoding.UTF8.GetBytes(secret);
 
 				//计算当前请求的签名数据
-				var data = Encoding.UTF8.GetBytes(Canonicalize(request));
+				var data = Encoding.UTF8.GetBytes(this.Canonicalize(request));
 
 				//计算加密后的散列值（签名内容）
 				return System.Convert.ToBase64String(algorithm.ComputeHash(data));

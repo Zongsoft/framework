@@ -146,7 +146,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 		#region 事件处理
 		private void Document_LocateCredentials(object sender, LocateCredentialsEventArgs args)
 		{
-			_report.Document.LocateDataSource += Document_LocateDataSource;
+			_report.Document.LocateDataSource += this.Document_LocateDataSource;
 		}
 
 		private void Document_LocateDataSource(object sender, LocateDataSourceEventArgs args)
@@ -165,7 +165,7 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 				}
 			}
 
-			_report.Document.LocateCredentials += Document_LocateCredentials;
+			_report.Document.LocateCredentials += this.Document_LocateCredentials;
 		}
 		#endregion
 
@@ -189,8 +189,8 @@ namespace Zongsoft.Externals.Grapecity.Reporting
 				{
 					if(report.Document != null)
 					{
-						report.Document.LocateDataSource -= Document_LocateDataSource;
-						report.Document.LocateCredentials -= Document_LocateCredentials;
+						report.Document.LocateDataSource -= this.Document_LocateDataSource;
+						report.Document.LocateCredentials -= this.Document_LocateCredentials;
 					}
 
 					report.Dispose();

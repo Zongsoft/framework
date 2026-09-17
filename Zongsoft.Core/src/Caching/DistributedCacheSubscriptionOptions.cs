@@ -92,7 +92,7 @@ public class DistributedCacheSubscriptionOptions : INotifyPropertyChanged, INoti
 		set
 		{
 			if(value <= 0)
-				throw new ArgumentOutOfRangeException(nameof(value), value, "The notification queue capacity must be positive.");
+				throw new ArgumentOutOfRangeException(nameof(value), value, Properties.Resources.CacheSubscription_InvalidCapacity_Message);
 
 			if(_capacity == value)
 				return;
@@ -127,7 +127,7 @@ public class DistributedCacheSubscriptionOptions : INotifyPropertyChanged, INoti
 		set
 		{
 			if(!DistributedCacheNotification.IsValid(value))
-				throw new ArgumentOutOfRangeException(nameof(value), value, "The notification kinds must contain only defined flags and cannot be None.");
+				throw new ArgumentOutOfRangeException(nameof(value), value, Properties.Resources.CacheSubscription_InvalidKind_Message);
 
 			if(_kind == value)
 				return;

@@ -55,12 +55,12 @@ public abstract class StateHandlerBase<TKey, TValue> : IStateHandler<TKey, TValu
 	#region 显式实现
 	void IStateHandler<TKey, TValue>.Handle(IStateContext<TKey, TValue> context)
 	{
-		this.OnHandle(context as StateContext<TKey, TValue> ?? throw new InvalidOperationException($"Invalid type of the state context."));
+		this.OnHandle(context as StateContext<TKey, TValue> ?? throw new InvalidOperationException(Properties.Resources.StateHandler_InvalidContext_Message));
 	}
 
 	void IStateHandler<TKey, TValue>.Finish(IStateContext<TKey, TValue> context)
 	{
-		this.OnFinish(context as StateContext<TKey, TValue> ?? throw new InvalidOperationException($"Invalid type of the state context."));
+		this.OnFinish(context as StateContext<TKey, TValue> ?? throw new InvalidOperationException(Properties.Resources.StateHandler_InvalidContext_Message));
 	}
 	#endregion
 }

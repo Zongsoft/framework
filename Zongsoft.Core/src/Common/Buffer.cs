@@ -427,7 +427,7 @@ public static class Buffer
 
 		private T[] GetArray() =>
 			Interlocked.CompareExchange(ref _buffer, null, null)
-			?? throw new ObjectDisposedException(ToString());
+			?? throw new ObjectDisposedException(this.ToString());
 
 		public void Dispose()
 		{

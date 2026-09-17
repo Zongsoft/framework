@@ -349,7 +349,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		if(string.IsNullOrWhiteSpace(user.Name))
 		{
 			if(string.IsNullOrWhiteSpace(user.Phone) && string.IsNullOrWhiteSpace(user.Email))
-				throw new ArgumentException("The user name is empty.");
+				throw new ArgumentException(Properties.Resources.UserService_EmptyName_Message);
 
 			//虽然用户名为空但是指定了绑定的“Phone”或“Email”，则将用户名设置为随机值
 			user.Name = "$U" + Randomizer.GenerateString();
@@ -363,7 +363,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 	{
 		//验证指定的名称是否为系统内置名
 		if(string.Equals(name, IUser.Administrator, StringComparison.OrdinalIgnoreCase))
-			throw new SecurityException("username.illegality", "The user name specified to be update cannot be a built-in name.");
+			throw new SecurityException("username.illegality", Properties.Resources.Security_BuiltinName_Message);
 
 		var validator = this.Services?.Find<IValidator<string>>("user.name");
 		validator?.Validate(name, message => throw new SecurityException("username.illegality", message));

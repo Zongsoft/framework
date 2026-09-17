@@ -301,7 +301,7 @@ namespace Zongsoft.Plugins
 				if(depend.Plugin.IsMaster)
 					masters.Add(depend.Plugin);
 				else
-					AddMasters(depend.Plugin, masters);
+					this.AddMasters(depend.Plugin, masters);
 			}
 		}
 
@@ -538,7 +538,7 @@ namespace Zongsoft.Plugins
 				if(File.Exists(assemblyPath))
 					_resolver = new AssemblyDependencyResolver(assemblyPath);
 
-				Default.Resolving += Default_Resolving;
+				Default.Resolving += this.Default_Resolving;
 			}
 			#endregion
 

@@ -63,7 +63,7 @@ public abstract class HierarchicalNode : IHierarchicalNode, INotifyPropertyChang
 			throw new ArgumentNullException(nameof(name));
 
 		if(name.IndexOfAny(IllegalCharacters) >= 0)
-			throw new ArgumentException("The name contains illegal character(s).");
+			throw new ArgumentException(Properties.Resources.HierarchicalNode_InvalidName_Message);
 
 		_name = name.Trim();
 	}

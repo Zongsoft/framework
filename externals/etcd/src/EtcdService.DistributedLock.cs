@@ -50,7 +50,7 @@ partial class EtcdService : IDistributedLockManager
 
 		cancellation.ThrowIfCancellationRequested();
 		var client = await this.ConnectAsync(cancellation);
-		var response = await client.GetAsync(GetKey(key), null, null, cancellation);
+		var response = await client.GetAsync(this.GetKey(key), null, null, cancellation);
 		if(response.Kvs.Count == 0 || response.Kvs[0].Lease == 0)
 			return null;
 
@@ -91,7 +91,7 @@ partial class EtcdService : IDistributedLockManager
 		cancellation.ThrowIfCancellationRequested();
 		var client = await this.ConnectAsync(cancellation);
 		var lease = await client.LeaseGrantAsync(new Etcdserverpb.LeaseGrantRequest { TTL = GetLeaseSeconds(expiry) }, null, null, cancellation);
-		var lockKey = ByteString.CopyFromUtf8(GetKey(key));
+		var lockKey = ByteString.CopyFromUtf8(this.GetKey(key));
 		try
 		{
 			var response = await client.TransactionAsync(new Etcdserverpb.TxnRequest
@@ -137,7 +137,7 @@ partial class EtcdService : IDistributedLockManager
 	{
 		cancellation.ThrowIfCancellationRequested();
 		var client = await this.ConnectAsync(cancellation);
-		var physicalKey = GetKey(key);
+		var physicalKey = this.GetKey(key);
 		var current = await client.GetAsync(physicalKey, null, null, cancellation);
 		if(current.Kvs.Count == 0 || !current.Kvs[0].Value.Span.SequenceEqual(token))
 			return false;
@@ -199,7 +199,7 @@ partial class EtcdService : IDistributedLockManager
 
 		cancellation.ThrowIfCancellationRequested();
 		var client = await this.ConnectAsync(cancellation);
-		var physicalKey = GetKey(key);
+		var physicalKey = this.GetKey(key);
 		var current = await client.GetAsync(physicalKey, null, null, cancellation);
 		if(current.Kvs.Count == 0 || !current.Kvs[0].Value.Span.SequenceEqual(token))
 			return false;

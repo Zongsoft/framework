@@ -67,7 +67,7 @@ namespace Zongsoft.Plugins
 				this.Root.Children.Clear();
 			};
 
-			AssemblyLoadContext.Default.Resolving += Default_Resolving;
+			AssemblyLoadContext.Default.Resolving += this.Default_Resolving;
 		}
 		#endregion
 

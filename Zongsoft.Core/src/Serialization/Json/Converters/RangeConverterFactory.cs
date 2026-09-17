@@ -45,7 +45,7 @@ public class RangeConverterFactory : JsonConverterFactory
 			switch(reader.TokenType)
 			{
 				case JsonTokenType.Number:
-					return (T)Data.Range.Create(type, GetValue(ref reader, type.GenericTypeArguments[0]));
+					return (T)Data.Range.Create(type, this.GetValue(ref reader, type.GenericTypeArguments[0]));
 				case JsonTokenType.String:
 					return (T)Common.Convert.ConvertValue(reader.GetString(), type);
 				case JsonTokenType.StartObject:
@@ -62,9 +62,9 @@ public class RangeConverterFactory : JsonConverterFactory
 						var name = reader.GetString();
 
 						if(string.Equals(name, "minimum", StringComparison.OrdinalIgnoreCase))
-							minimum = GetValue(ref reader, type.GenericTypeArguments[0]);
+							minimum = this.GetValue(ref reader, type.GenericTypeArguments[0]);
 						else if(string.Equals(name, "maximum", StringComparison.OrdinalIgnoreCase))
-							maximum = GetValue(ref reader, type.GenericTypeArguments[0]);
+							maximum = this.GetValue(ref reader, type.GenericTypeArguments[0]);
 					}
 
 					return (T)Data.Range.Create(type, minimum, maximum);

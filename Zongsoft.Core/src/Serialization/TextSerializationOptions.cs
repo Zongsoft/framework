@@ -53,21 +53,21 @@ public partial class TextSerializationOptions : SerializationOptions, IEquatable
 	public bool Indented
 	{
 		get => _indented;
-		set => _indented = this.Immutable ? throw new InvalidOperationException(IMMUTABLE_EXCEPTION) : value;
+		set => _indented = this.Immutable ? throw new InvalidOperationException(Properties.Resources.Serialization_Immutable_Message) : value;
 	}
 
 	/// <summary>获取或设置一个值，指示序列化的对象是否写入类型信息。</summary>
 	public bool Typified
 	{
 		get => _typified;
-		set => _typified = this.Immutable ? throw new InvalidOperationException(IMMUTABLE_EXCEPTION) : value;
+		set => _typified = this.Immutable ? throw new InvalidOperationException(Properties.Resources.Serialization_Immutable_Message) : value;
 	}
 
 	/// <summary>获取或设置一个值，指示序列化成员的命名转换方式。</summary>
 	public SerializationNamingConvention NamingConvention
 	{
 		get => _naming;
-		set => _naming = this.Immutable ? throw new InvalidOperationException(IMMUTABLE_EXCEPTION) : value;
+		set => _naming = this.Immutable ? throw new InvalidOperationException(Properties.Resources.Serialization_Immutable_Message) : value;
 	}
 	#endregion
 

@@ -70,7 +70,7 @@ public abstract class DataAccessProviderBase<TDataAccess> : IDataAccessProvider,
 	private static string GetName(string name)
 	{
 		var connectionSettings = GetConnectionSettings() ??
-			throw new DataException($"Missing database connection settings.");
+			throw new DataException(Properties.Resources.DataAccess_MissingConnections_Message);
 
 		if(!string.IsNullOrEmpty(name) && connectionSettings.Contains(name))
 			return name;

@@ -53,12 +53,12 @@ public static partial class MeterExtension
 		if(type == null)
 			throw new ArgumentNullException(nameof(type));
 		if(!type.IsValueType)
-			throw new ArgumentException("The type must be a value type.", nameof(type));
+			throw new ArgumentException(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Type_ValueTypeRequired_Message, nameof(type)), nameof(type));
 
 		return (Instrument)_CounterMethod_.MakeGenericMethod(type).Invoke(meter, [name, unit, description]);
 	}
 
-#if NET8_0_OR_GREATER
+	#if NET8_0_OR_GREATER
 	private static readonly MethodInfo _CountTagsMethod_ = typeof(Meter).GetMethod(
 		nameof(Meter.CreateCounter),
 		1,
@@ -77,9 +77,9 @@ public static partial class MeterExtension
 		if(type == null)
 			throw new ArgumentNullException(nameof(type));
 		if(!type.IsValueType)
-			throw new ArgumentException("The type must be a value type.", nameof(type));
+			throw new ArgumentException(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.Type_ValueTypeRequired_Message, nameof(type)), nameof(type));
 
 		return (Instrument)_CountTagsMethod_.MakeGenericMethod(type).Invoke(meter, [name, unit, description, tags]);
 	}
-#endif
+	#endif
 }

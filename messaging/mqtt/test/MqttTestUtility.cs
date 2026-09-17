@@ -186,7 +186,7 @@ internal sealed class ConcurrentMessageHandler(int expectedCount) : HandlerBase<
 	protected override async ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
 	{
 		var active = Interlocked.Increment(ref _active);
-		UpdateMaximum(active);
+		this.UpdateMaximum(active);
 
 		try
 		{

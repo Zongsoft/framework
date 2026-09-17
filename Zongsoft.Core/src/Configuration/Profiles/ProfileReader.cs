@@ -67,7 +67,7 @@ internal sealed class ProfileReader
 		if(context != null && !Path.IsPathFullyQualified(path))
 		{
 			if(string.IsNullOrEmpty(context.Profile.FilePath))
-				throw new ProfileException(string.Format(Properties.Resources.Profiles_RelativeImportRequiresFile, path, context.LineNumber + 1));
+				throw new ProfileException(string.Format(Properties.Resources.Profiles_RelativeImportRequiresFile_Message, path, context.LineNumber + 1));
 
 			path = Path.Combine(Path.GetDirectoryName(context.Profile.FilePath), path);
 		}
@@ -100,11 +100,11 @@ internal sealed class ProfileReader
 
 			//入栈前检查层数；根文件也占一层，被拒绝的文件不触发导入通知。
 			if(_paths.Count >= this.Options.MaximumDepth)
-				throw this.CreateException(Properties.Resources.Profiles_MaximumDepth, path, context);
+				throw this.CreateException(Properties.Resources.Profiles_MaximumDepth_Message, path, context);
 
 			//只检测当前活动链，允许已经退出活动链的文件再次导入。
 			if(identity != null && !_active.Add(identity))
-				throw this.CreateException(Properties.Resources.Profiles_CircularImport, path, context);
+				throw this.CreateException(Properties.Resources.Profiles_CircularImport_Message, path, context);
 
 			_paths.Add(path);
 

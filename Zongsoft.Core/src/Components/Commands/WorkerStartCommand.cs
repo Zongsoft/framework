@@ -55,7 +55,7 @@ public class WorkerStartCommand : CommandBase<CommandContext>
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		//向上查找工作者命令对象，如果找到则获取其对应的工作者对象
-		var worker = context.Find<WorkerCommandBase>(true)?.Worker ?? throw new CommandException("Missing required worker of depends on.");
+		var worker = context.Find<WorkerCommandBase>(true)?.Worker ?? throw new CommandException(Properties.Resources.WorkerCommand_MissingWorker_Message);
 
 		//获取是否开启了强制启动选项
 		var force = context.Options.GetValue<bool>(KEY_FORCE_OPTION);

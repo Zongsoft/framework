@@ -623,7 +623,7 @@ public class ZeroQueueReliabilityTests
 
 		protected override async ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
 		{
-			Identifiers.Enqueue(message.Identifier);
+			this.Identifiers.Enqueue(message.Identifier);
 			_messages.Enqueue(message);
 			Interlocked.Increment(ref _received);
 			_signal.Release();

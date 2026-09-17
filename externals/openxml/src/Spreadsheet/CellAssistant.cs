@@ -55,7 +55,7 @@ namespace Zongsoft.Externals.OpenXml.Spreadsheet
 		public string GetText(int row, int column) => this.GetText(new CellAddress(row, column));
 		public string GetText(CellAddress address)
 		{
-			var cell = GetCell(address, out _);
+			var cell = this.GetCell(address, out _);
 			if(cell == null)
 				return null;
 
@@ -127,7 +127,7 @@ namespace Zongsoft.Externals.OpenXml.Spreadsheet
 		public void SetValue(int row, int column, string value) => this.SetValue(new CellAddress(row, column), value);
 		public void SetValue(CellAddress address, string value)
 		{
-			var cell = GetCell(address, out var row) ?? CreateCell(address, row);
+			var cell = this.GetCell(address, out var row) ?? this.CreateCell(address, row);
 
 			if(cell == null)
 				return;
@@ -208,7 +208,7 @@ namespace Zongsoft.Externals.OpenXml.Spreadsheet
 
 		private void SetValue(CellAddress address, Action<Cell> onValue)
 		{
-			var cell = GetCell(address, out var row) ?? CreateCell(address, row);
+			var cell = this.GetCell(address, out var row) ?? this.CreateCell(address, row);
 
 			if(cell == null)
 				return;

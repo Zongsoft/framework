@@ -81,7 +81,7 @@ public abstract class DistributedLockBase<TManager> : IDistributedLock, IDisposa
 	public async ValueTask EnterAsync(CancellationToken cancellation = default)
 	{
 		//如果当前锁已经释放则抛出异常
-		var manager = Volatile.Read(ref _manager) ?? throw new InvalidOperationException($"The distributed lock has been released.");
+		var manager = Volatile.Read(ref _manager) ?? throw new InvalidOperationException(Properties.Resources.DistributedLock_Released_Message);
 
 		while(this.IsUnheld)
 		{

@@ -88,7 +88,7 @@ partial class Authentication
 			if(string.IsNullOrWhiteSpace(requirement.Identity))
 			{
 				if(string.IsNullOrEmpty(key))
-					throw new AuthenticationException(SecurityReasons.InvalidIdentity, "Missing identity.");
+					throw new AuthenticationException(SecurityReasons.InvalidIdentity, Properties.Resources.Authentication_MissingIdentity_Message);
 
 				requirement.Identity = key;
 			}

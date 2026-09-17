@@ -1027,7 +1027,7 @@ namespace Zongsoft.Externals.Wechat.Paying
 					if(request is PaymentRequest.TicketRequest ticketRequest)
 					{
 						if(ticketRequest.Business.HasValue)
-							return await PayOfflineTicketAsync(ticketRequest, cancellation);
+							return await this.PayOfflineTicketAsync(ticketRequest, cancellation);
 						else
 							return await _compatibility.PayAsync(request, scenario, cancellation);
 					}

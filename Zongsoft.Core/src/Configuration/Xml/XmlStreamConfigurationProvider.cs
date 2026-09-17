@@ -68,7 +68,7 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 
 		//确认根节点的名称是否合法
 		if(reader.LocalName != "configuration" && reader.LocalName != "options")
-			throw new FormatException(string.Format(Properties.Resources.Error_IllegalRootNodeName, reader.LocalName, GetLineInfo(reader)));
+			throw new FormatException(string.Format(Properties.Resources.Error_IllegalRootNodeName_Message, reader.LocalName, GetLineInfo(reader)));
 
 		var context = new Context(reader);
 
@@ -96,7 +96,7 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 				case XmlNodeType.Whitespace:
 					break;
 				default:
-					throw new FormatException(string.Format(Properties.Resources.Error_UnsupportedNodeType, reader.NodeType, GetLineInfo(reader)));
+					throw new FormatException(string.Format(Properties.Resources.Error_UnsupportedNodeType_Message, reader.NodeType, GetLineInfo(reader)));
 			}
 
 			context.Next();
@@ -164,7 +164,7 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 		{
 			//确保配置元素必须位于<option>节点之内
 			if(this.Reader.LocalName != XML_OPTION_ELEMENT)
-				throw new FormatException(string.Format(Properties.Resources.Error_InvalidOptionConfigurationFileFormat, GetLineInfo(this.Reader)));
+				throw new FormatException(string.Format(Properties.Resources.Error_InvalidOptionConfigurationFileFormat_Message, GetLineInfo(this.Reader)));
 
 			this.Clear();
 			var path = this.Reader.GetAttribute(XML_OPTION_PATH_ATTRIBUTE);
@@ -188,14 +188,14 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 				this.Reader.MoveToAttribute(i);
 
 				if(!string.IsNullOrEmpty(this.Reader.NamespaceURI))
-					throw new FormatException(string.Format(Properties.Resources.Error_NamespaceIsNotSupported, GetLineInfo(this.Reader)));
+					throw new FormatException(string.Format(Properties.Resources.Error_NamespaceIsNotSupported_Message, GetLineInfo(this.Reader)));
 
 				if(i == 0 &&
 				   string.Equals(this.Reader.LocalName, elementName + "." + XML_KEY_ATTRIBUTE, StringComparison.OrdinalIgnoreCase) ||
 				   string.Equals(this.Reader.LocalName, elementName + "." + XML_NAME_ATTRIBUTE, StringComparison.OrdinalIgnoreCase))
 				{
 					if(this.Reader.Value.IndexOfAny(ILLEGAL_CHARACTERS) >= 0)
-						throw new FormatException(string.Format(Properties.Resources.Error_IllegalConfigurationKeyValue, this.Reader.Value, GetLineInfo(this.Reader)));
+						throw new FormatException(string.Format(Properties.Resources.Error_IllegalConfigurationKeyValue_Message, this.Reader.Value, GetLineInfo(this.Reader)));
 
 					this.Dedent();
 
@@ -208,14 +208,14 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 				else
 				{
 					if(this.Reader.LocalName.Contains('.'))
-						throw new FormatException(string.Format(Properties.Resources.Error_IllegalConfigurationAttributeName, this.Reader.LocalName, GetLineInfo(this.Reader)));
+						throw new FormatException(string.Format(Properties.Resources.Error_IllegalConfigurationAttributeName_Message, this.Reader.LocalName, GetLineInfo(this.Reader)));
 
 					this.Indent(this.Reader.LocalName);
 				}
 
 				var key = this.GetPath();
 				if(this.Data.ContainsKey(key))
-					throw new FormatException(string.Format(Properties.Resources.Error_KeyIsDuplicated, key, GetLineInfo(this.Reader)));
+					throw new FormatException(string.Format(Properties.Resources.Error_KeyIsDuplicated_Message, key, GetLineInfo(this.Reader)));
 
 				this.Data[key] = this.Reader.Value;
 
@@ -265,7 +265,7 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 				key = ConfigurationPath.Combine(key, $"[{this.Reader.Value.Trim()}]");
 
 			if(this.Data.ContainsKey(key))
-				throw new FormatException(string.Format(Properties.Resources.Error_KeyIsDuplicated, key, GetLineInfo(this.Reader)));
+				throw new FormatException(string.Format(Properties.Resources.Error_KeyIsDuplicated_Message, key, GetLineInfo(this.Reader)));
 
 			this.Data[key] = this.Reader.Value;
 		}

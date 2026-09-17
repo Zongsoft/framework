@@ -5,11 +5,11 @@ public class User
 	public User() { }
 	public User(int userId, string name, string nickname, Gender? gender = null, DateTime? birthday = null)
 	{
-		UserId = userId;
-		Name = name;
-		Nickname = nickname;
-		Gender = gender;
-		Birthday = birthday;
+		this.UserId = userId;
+		this.Name = name;
+		this.Nickname = nickname;
+		this.Gender = gender;
+		this.Birthday = birthday;
 	}
 
 	public int UserId { get; set; }

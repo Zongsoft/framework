@@ -49,7 +49,7 @@ public class ConfigurationRecognizer : IConfigurationRecognizer
 		_dictionaryType = ConfigurationUtility.GetImplementedContract(unrecognizedProperty.PropertyType, typeof(IDictionary<,>))?.GetTypeInfo();
 
 		if(_dictionaryType == null || _dictionaryType.GenericTypeArguments[0] != typeof(string))
-			throw new InvalidOperationException(string.Format(Properties.Resources.Error_InvalidUnrecognizedProperty, unrecognizedProperty.Name));
+			throw new InvalidOperationException(string.Format(Properties.Resources.Error_InvalidUnrecognizedProperty_Message, unrecognizedProperty.Name));
 	}
 	#endregion
 
@@ -72,7 +72,7 @@ public class ConfigurationRecognizer : IConfigurationRecognizer
 				var dictionaryType = ConfigurationUtility.GetImplementedContract(unrecognizedProperty.PropertyType, typeof(IDictionary<,>))?.GetTypeInfo();
 
 				if(dictionaryType == null || dictionaryType.GenericTypeArguments[0] != typeof(string))
-					throw new InvalidOperationException(string.Format(Properties.Resources.Error_InvalidUnrecognizedProperty, unrecognizedProperty.Name));
+					throw new InvalidOperationException(string.Format(Properties.Resources.Error_InvalidUnrecognizedProperty_Message, unrecognizedProperty.Name));
 
 				dictionary = Activator.CreateInstance(typeof(Dictionary<,>).MakeGenericType(typeof(string), dictionaryType.GenericTypeArguments[1]), new object[] { StringComparer.OrdinalIgnoreCase });
 			}

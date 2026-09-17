@@ -160,7 +160,7 @@ public readonly partial struct Checksum : IEquatable<Checksum>, IParsable<Checks
 	}
 
 	public static Checksum Parse(string text, IFormatProvider provider = null) => string.IsNullOrEmpty(text) ? default :
-		TryParse(text, out var result) ? result : throw new InvalidOperationException($"Invalid checksum text format.");
+		TryParse(text, out var result) ? result : throw new InvalidOperationException(Properties.Resources.Checksum_InvalidFormat_Message);
 
 	public static bool TryParse(string text, out Checksum result) => TryParse(text, null, out result);
 	public static bool TryParse(string text, IFormatProvider provider, out Checksum result)

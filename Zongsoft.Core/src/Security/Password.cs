@@ -260,10 +260,10 @@ public readonly partial struct Password : IEquatable<Password>
 			return default;
 
 		if(nonce.Length > byte.MaxValue)
-			throw new ArgumentOutOfRangeException("The length of nonce is too long.", nameof(nonce));
+			throw new ArgumentOutOfRangeException(nameof(nonce), Properties.Resources.Password_NonceTooLong_Message);
 
 		if(nonce.Length > 0 && nonce.Length < 4)
-			throw new ArgumentOutOfRangeException("The length of nonce is too short(must be greater than or equal to 4).", nameof(nonce));
+			throw new ArgumentOutOfRangeException(nameof(nonce), Properties.Resources.Password_NonceTooShort_Message);
 
 		//获取哈希算法名及对应的算法代号和哈希值长度
 		var name = GetAlgorithm(algorithm, out var code, out var length);

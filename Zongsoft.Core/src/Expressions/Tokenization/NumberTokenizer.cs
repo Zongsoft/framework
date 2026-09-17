@@ -59,14 +59,14 @@ public class NumberTokenizer : ITokenizer
 			else if(chr == '.')
 			{
 				if(number.Contains('.'))
-					throw new SyntaxException("Illegal numeric literal, it contains multiple dot(.) symbol.");
+					throw new SyntaxException(Properties.Resources.NumberTokenizer_MultipleDots_Message);
 
 				number += chr;
 			}
 			else if(chr == 'L')
 			{
 				if(number.Contains('.'))
-					throw new SyntaxException("Illegal long integer suffix symbol(L), because it's a float numeric literal.");
+					throw new SyntaxException(Properties.Resources.NumberTokenizer_InvalidLongSuffix_Message);
 
 				return new TokenResult(0, new Token(TokenType.Constant, long.Parse(number)));
 			}
@@ -85,7 +85,7 @@ public class NumberTokenizer : ITokenizer
 			else
 			{
 				if(number[number.Length - 1] == '.')
-					throw new SyntaxException("Illegal numeric literal, cann't end with a dot(.) symbol.");
+					throw new SyntaxException(Properties.Resources.NumberTokenizer_TrailingDot_Message);
 
 				return new TokenResult(-1, CreateToken(number));
 			}
