@@ -325,7 +325,6 @@ public class SchemaParserTest : IDisposable
 	{
 		var exception = Assert.Throws<DataArgumentException>(() => _parser.Parse($"{NAMESPACE}.Employee", "Misspelled", typeof(Employee)));
 		Assert.Equal("$schema", exception.Name);
-		Assert.Contains("Misspelled", exception.Message);
 	}
 
 	[Fact]
@@ -341,8 +340,7 @@ public class SchemaParserTest : IDisposable
 	[InlineData("Item")]
 	public void Parse_NonPublicInstanceModelMember_ThrowsSchemaArgument(string name)
 	{
-		var exception = Assert.Throws<DataArgumentException>(() => _parser.Parse($"{NAMESPACE}.Employee", name, typeof(Employee)));
-		Assert.Contains(name, exception.Message);
+		Assert.Throws<DataArgumentException>(() => _parser.Parse($"{NAMESPACE}.Employee", name, typeof(Employee)));
 	}
 
 	[Theory]

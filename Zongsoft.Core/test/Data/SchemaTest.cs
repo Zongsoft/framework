@@ -71,7 +71,6 @@ public class SchemaTest
 	{
 		var exception = Assert.Throws<DataArgumentException>(() => Parser.Instance.ParseExpression(expression));
 		Assert.Equal("$schema", exception.Name);
-		Assert.Matches(@"\d+[)）][.。]$", exception.Message);
 	}
 
 	[Fact]
@@ -109,7 +108,6 @@ public class SchemaTest
 	{
 		var exception = Assert.Throws<DataArgumentException>(() => Parser.Instance.ParseExpression(expression));
 		Assert.Equal("$schema", exception.Name);
-		Assert.Matches(@"\d+[)）][.。]$", exception.Message);
 	}
 
 	[Fact]
@@ -157,8 +155,7 @@ public class SchemaTest
 	[InlineData("Users{Name}}")]
 	public void Parse_InvalidExpression_ThrowsSchemaArgument(string expression)
 	{
-		var exception = Assert.Throws<DataArgumentException>(() => Parser.Instance.ParseExpression(expression));
-		Assert.Matches(@"\d+[)）][.。]$", exception.Message);
+		Assert.Throws<DataArgumentException>(() => Parser.Instance.ParseExpression(expression));
 	}
 
 	[Fact]

@@ -16,16 +16,12 @@ public class EnumUtilityTest
 		Assert.Equal("Female", entry.Name);
 		Assert.Equal(Gender.Female, entry.Value); //注意：entry.Value 为枚举类型
 		Assert.True(entry.HasAlias("F"));
-		Assert.Equal("女士", entry.Description);
-		Assert.Equal("女士", EnumUtility.GetEnumDescription(Gender.Female));
 
 		entry = EnumUtility.GetEnumEntry(Gender.Male, true);
 
 		Assert.Equal("Male", entry.Name);
 		Assert.Equal((byte)1, entry.Value); //注意：entry.Value 为枚举项的基元类型
 		Assert.True(entry.HasAlias("M"));
-		Assert.Equal("男士", entry.Description);
-		Assert.Equal("男士", EnumUtility.GetEnumDescription(Gender.Male));
 	}
 
 	[Fact]

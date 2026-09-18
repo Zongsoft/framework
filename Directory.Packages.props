@@ -22,7 +22,7 @@
 		<PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration.FileExtensions" Version="8.0.1" />
 		<PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
-		<PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.1" />
+		<PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
 		<PackageVersion Include="Microsoft.Extensions.Localization" Version="8.0.13" />
 		<PackageVersion Include="Microsoft.Extensions.Localization.Abstractions" Version="8.0.13" />
 		<PackageVersion Include="Microsoft.Extensions.Options" Version="8.0.2" />
@@ -91,6 +91,17 @@
 		<PackageVersion Include="Microsoft.Extensions.Diagnostics" Version="10.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Diagnostics.Abstractions" Version="10.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Diagnostics.ResourceMonitoring" Version="10.0.0" />
+	</ItemGroup>
+
+	<!-- SQL Server 驱动的传递依赖要求内存缓存包至少为 9.0.13。 -->
+	<ItemGroup Condition="'$(MSBuildProjectName)' == 'Zongsoft.Messaging.Storages.Data.Tests' And ('$(TargetFramework)' == 'net8.0' Or '$(TargetFramework)' == 'net9.0')">
+		<PackageVersion Update="Microsoft.Extensions.Caching.Memory" Version="9.0.20" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageVersion Include="Microsoft.Extensions.AI" Version="10.10.0" />
+		<PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="10.10.0" />
+		<PackageVersion Include="Microsoft.Extensions.VectorData.Abstractions" Version="10.10.0" />
 	</ItemGroup>
 
 	<ItemGroup>

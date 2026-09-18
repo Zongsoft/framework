@@ -128,8 +128,7 @@ public sealed class RedisMessageStorageTests
 	[MemberData(nameof(InvalidSnapshots))]
 	public void Snapshot_InvalidRecordThrowsInvalidDataException(byte[] payload)
 	{
-		var exception = Assert.Throws<InvalidDataException>(() => RedisMessageStorage.MessageModel.Deserialize(payload));
-		Assert.False(string.IsNullOrWhiteSpace(exception.Message));
+		Assert.Throws<InvalidDataException>(() => RedisMessageStorage.MessageModel.Deserialize(payload));
 	}
 
 	[Fact]

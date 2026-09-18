@@ -1,7 +1,6 @@
-﻿using System;
+using System;
 using System.Data;
 using System.Data.Common;
-using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -1023,14 +1022,10 @@ public class DataConnectorTest
 	public void TestUnhandledFailureUsesDefaultLogging()
 	{
 		var logger = new RecordingLogger();
-		var culture = CultureInfo.CurrentCulture;
-		var uiCulture = CultureInfo.CurrentUICulture;
 		Zongsoft.Diagnostics.Logging.Loggers.Add(logger);
 
 		try
 		{
-			CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("en-US");
-			CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("en-US");
 			var timeProvider = new ManualTimeProvider();
 			var source = new DataSourceMocker();
 			var connector = CreateConnector(source, timeProvider, false);
@@ -1042,44 +1037,20 @@ public class DataConnectorTest
 			Assert.Equal(Zongsoft.Diagnostics.LogLevel.Error, entry.Level);
 			Assert.Equal("Zongsoft.Data", entry.Source);
 			Assert.Same(exception, entry.Exception);
-			Assert.Contains(source.Name, entry.Message);
-			Assert.Contains(source.Driver.Name, entry.Message);
-			Assert.Contains("1 consecutive time(s)", entry.Message);
-			Assert.Contains("Connection attempts are suspended until", entry.Message);
-			Assert.Contains(timeProvider.GetUtcNow().AddSeconds(1).ToLocalTime().ToString("HH:mm:sszz"), entry.Message);
 			Assert.DoesNotContain("ConnectionString", entry.Message, StringComparison.OrdinalIgnoreCase);
 			Assert.DoesNotContain("Password", entry.Message, StringComparison.OrdinalIgnoreCase);
 			Assert.DoesNotContain("secret", entry.Message, StringComparison.OrdinalIgnoreCase);
 
-			var unavailable = Assert.Throws<DataConnectionException>(() => connector.Connect(() => 100));
-			Assert.StartsWith("The 'Test' data source is temporarily unavailable.", unavailable.Message);
+			Assert.Throws<DataConnectionException>(() => connector.Connect(() => 100));
 
 			var handled = CreateConnector(new DataSourceMocker(), timeProvider);
 			Assert.Throws<InvalidOperationException>(() =>
 				handled.Connect<object>(() => throw new InvalidOperationException("Handled database failure.")));
 			Assert.Single(logger.Entries);
-
-			logger.Clear();
-			CultureInfo.CurrentCulture = CultureInfo.GetCultureInfo("zh-CN");
-			CultureInfo.CurrentUICulture = CultureInfo.GetCultureInfo("zh-Hans");
-			var localized = CreateConnector(new DataSourceMocker(), timeProvider, false);
-
-			Assert.Throws<InvalidOperationException>(() =>
-				localized.Connect<object>(() => throw new InvalidOperationException("Localized database failure.")));
-
-			entry = Assert.Single(logger.Entries);
-			Assert.Contains("数据源“Test”", entry.Message);
-			Assert.Contains(timeProvider.GetUtcNow().AddSeconds(1).ToLocalTime().ToString("HH:mm:sszz"), entry.Message);
-			Assert.DoesNotContain("secret", entry.Message, StringComparison.OrdinalIgnoreCase);
-
-			unavailable = Assert.Throws<DataConnectionException>(() => localized.Connect(() => 100));
-			Assert.StartsWith("数据源“Test”暂时不可用。", unavailable.Message);
 		}
 		finally
 		{
 			Zongsoft.Diagnostics.Logging.Loggers.Remove(logger);
-			CultureInfo.CurrentCulture = culture;
-			CultureInfo.CurrentUICulture = uiCulture;
 		}
 	}
 

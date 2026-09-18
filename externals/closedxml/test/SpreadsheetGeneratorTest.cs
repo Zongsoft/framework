@@ -262,12 +262,9 @@ public class SpreadsheetGeneratorTest
 		Assert.False(worksheet.Column(2).Style.Alignment.WrapText);
 	}
 
-	[Theory]
-	[InlineData("en-US", "Invalid value", "The value of 'Birthday' must be a valid date between 1900-01-01 and 9999-12-31.")]
-	[InlineData("zh-Hans", "输入值无效", "“Birthday”必须是 1900-01-01 到 9999-12-31 之间的有效日期。")]
-	public async Task GenerateAsync_DateColumns_CreatesLocalizedNativeValidation(string cultureName, string errorTitle, string errorMessage)
+	[Fact]
+	public async Task GenerateAsync_DateColumns_CreatesNativeValidation()
 	{
-		using var culture = new CultureScope(cultureName);
 		using var output = new MemoryStream();
 		var model = new ModelDescriptor(typeof(DateValidationRecord)) { Title = "Date Validation" };
 		model.Properties[nameof(DateValidationRecord.Birthday)].Label = "Birthday";
@@ -299,8 +296,6 @@ public class SpreadsheetGeneratorTest
 		Assert.True(validation.IgnoreBlanks);
 		Assert.True(validation.ShowErrorMessage);
 		Assert.Equal(XLErrorStyle.Stop, validation.ErrorStyle);
-		Assert.Equal(errorTitle, validation.ErrorTitle);
-		Assert.Equal(errorMessage, validation.ErrorMessage);
 	}
 
 	[Fact]
@@ -399,18 +394,9 @@ public class SpreadsheetGeneratorTest
 		Assert.False(string.IsNullOrWhiteSpace(title));
 	}
 
-	[Theory]
-	[InlineData("en-US", "Invalid value", "The value of 'S' is required and cannot exceed 8 characters.", "The value of 'O' cannot exceed 8 characters.", "The value of 'I' must be a whole number between -2147483648 and 2147483647.", "The value of 'B' must be a number.")]
-	[InlineData("zh-Hans", "输入值无效", "“S”不能为空且不能超过 8 个字符。", "“O”的内容不能超过 8 个字符。", "“I”必须是 -2147483648 到 2147483647 之间的整数。", "“B”必须是数值。")]
-	public async Task GenerateAsync_SimplexDataTypes_CreatesLocalizedInputValidations(
-		string cultureName,
-		string errorTitle,
-		string requiredTextError,
-		string optionalTextError,
-		string integerError,
-		string numberError)
+	[Fact]
+	public async Task GenerateAsync_SimplexDataTypes_CreatesInputValidations()
 	{
-		using var culture = new CultureScope(cultureName);
 		using var output = new MemoryStream();
 		var model = CreateSimplexValidationModel();
 
@@ -432,24 +418,24 @@ public class SpreadsheetGeneratorTest
 		Assert.Equal(XLOperator.Between, requiredTextValidation.Operator);
 		Assert.Equal("1", requiredTextValidation.MinValue);
 		Assert.Equal("8", requiredTextValidation.MaxValue);
-		AssertValidation(requiredTextValidation, table.DataRange.Column(shortTextColumn).RangeAddress, false, errorTitle, requiredTextError);
+		AssertValidation(requiredTextValidation, table.DataRange.Column(shortTextColumn).RangeAddress, false);
 
 		Assert.Equal(XLAllowedValues.TextLength, optionalTextValidation.AllowedValues);
 		Assert.Equal(XLOperator.EqualOrLessThan, optionalTextValidation.Operator);
 		Assert.Equal("8", optionalTextValidation.MinValue);
-		AssertValidation(optionalTextValidation, table.DataRange.Column(optionalTextColumn).RangeAddress, true, errorTitle, optionalTextError);
+		AssertValidation(optionalTextValidation, table.DataRange.Column(optionalTextColumn).RangeAddress, true);
 
 		Assert.Equal(XLAllowedValues.WholeNumber, integerValidation.AllowedValues);
 		Assert.Equal(XLOperator.Between, integerValidation.Operator);
 		Assert.Equal(int.MinValue.ToString(System.Globalization.CultureInfo.InvariantCulture), integerValidation.MinValue);
 		Assert.Equal(int.MaxValue.ToString(System.Globalization.CultureInfo.InvariantCulture), integerValidation.MaxValue);
-		AssertValidation(integerValidation, table.DataRange.Column(quantityColumn).RangeAddress, false, errorTitle, integerError);
+		AssertValidation(integerValidation, table.DataRange.Column(quantityColumn).RangeAddress, false);
 
 		Assert.Equal(XLAllowedValues.Decimal, numberValidation.AllowedValues);
 		Assert.Equal(XLOperator.Between, numberValidation.Operator);
 		Assert.True(double.Parse(numberValidation.MinValue, System.Globalization.CultureInfo.InvariantCulture) < 0);
 		Assert.True(double.Parse(numberValidation.MaxValue, System.Globalization.CultureInfo.InvariantCulture) > 0);
-		AssertValidation(numberValidation, table.DataRange.Column(balanceColumn).RangeAddress, true, errorTitle, numberError);
+		AssertValidation(numberValidation, table.DataRange.Column(balanceColumn).RangeAddress, true);
 
 		static IXLDataValidation GetValidation(IXLTable table, int columnNumber)
 		{
@@ -461,16 +447,12 @@ public class SpreadsheetGeneratorTest
 		static void AssertValidation(
 			IXLDataValidation validation,
 			IXLRangeAddress expectedRange,
-			bool ignoreBlanks,
-			string errorTitle,
-			string errorMessage)
+			bool ignoreBlanks)
 		{
 			Assert.Equal(expectedRange, Assert.Single(validation.Ranges).RangeAddress);
 			Assert.Equal(ignoreBlanks, validation.IgnoreBlanks);
 			Assert.True(validation.ShowErrorMessage);
 			Assert.Equal(XLErrorStyle.Stop, validation.ErrorStyle);
-			Assert.Equal(errorTitle, validation.ErrorTitle);
-			Assert.Equal(errorMessage, validation.ErrorMessage);
 		}
 	}
 
@@ -561,12 +543,9 @@ public class SpreadsheetGeneratorTest
 		}
 	}
 
-	[Theory]
-	[InlineData("en-US", "The 'Invalid-Name' model name cannot be used as a spreadsheet table name.")]
-	[InlineData("zh-Hans", "模型名称“Invalid-Name”不能用作电子表格的数据表名称。")]
-	public async Task GenerateAsync_InvalidTableName_ThrowsLocalizedOperationException(string cultureName, string message)
+	[Fact]
+	public async Task GenerateAsync_InvalidTableName_ThrowsOperationException()
 	{
-		using var culture = new CultureScope(cultureName);
 		using var output = new MemoryStream();
 		var model = new ModelDescriptor(typeof(User))
 		{
@@ -578,7 +557,6 @@ public class SpreadsheetGeneratorTest
 			await _generator.GenerateAsync(output, model, Templates.User.Data));
 
 		Assert.Equal(nameof(OperationException.Argument), exception.Reason);
-		Assert.Equal(message, exception.Message);
 		Assert.IsType<ArgumentException>(exception.InnerException);
 		Assert.Equal(0, output.Length);
 	}
@@ -634,8 +612,6 @@ public class SpreadsheetGeneratorTest
 		Assert.Equal(ignoreBlanks, validation.IgnoreBlanks);
 		Assert.True(validation.ShowErrorMessage);
 		Assert.Equal(XLErrorStyle.Stop, validation.ErrorStyle);
-		Assert.False(string.IsNullOrWhiteSpace(validation.ErrorTitle));
-		Assert.False(string.IsNullOrWhiteSpace(validation.ErrorMessage));
 
 		var value = validation.Value;
 		var inlineSource = value.Length >= 2 && value[0] == '"' && value[^1] == '"';

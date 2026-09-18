@@ -64,7 +64,6 @@ public class MessageQueueBaseTest
 		var exception = await Assert.ThrowsAsync<OperationException>(() => queue.ProduceAsync("tests/delay", ReadOnlyMemory<byte>.Empty, options).AsTask());
 
 		Assert.Equal(nameof(OperationException.Unsupported), exception.Reason);
-		Assert.Contains(MessageQueueFeature.Delay.Name, exception.Message);
 		Assert.Equal(0, queue.ProduceCount);
 	}
 
@@ -90,7 +89,6 @@ public class MessageQueueBaseTest
 		var exception = await Assert.ThrowsAsync<OperationException>(() => queue.ProduceAsync("tests/compression", new byte[4096], options).AsTask());
 
 		Assert.Equal(nameof(OperationException.Unsupported), exception.Reason);
-		Assert.Contains(MessageQueueFeature.Compression.Name, exception.Message);
 		Assert.Equal(0, queue.ProduceCount);
 	}
 

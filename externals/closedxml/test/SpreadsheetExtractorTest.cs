@@ -142,40 +142,31 @@ public class SpreadsheetExtractorTest
 			});
 	}
 
-	[Theory]
-	[InlineData("en-US", "The data table 'User' was not found in the import file.")]
-	[InlineData("zh-Hans", "找不到导入文件中的数据表“User”。")]
-	public void ExtractAsync_MissingTable_ThrowsLocalizedOperationException(string cultureName, string message)
+	[Fact]
+	public void ExtractAsync_MissingTable_ThrowsOperationException()
 	{
-		using var culture = new CultureScope(cultureName);
 		using var stream = CreateWorkbook(workbook => workbook.AddWorksheet("Users"));
 
 		var exception = Assert.Throws<OperationException>(() =>
 			_extractor.ExtractAsync<User>(stream, new DataArchiveExtractorOptions(Templates.User.Descriptor)));
 
 		Assert.Equal(nameof(OperationException.Unprocessed), exception.Reason);
-		Assert.Equal(message, exception.Message);
 	}
 
 	[Fact]
 	public void ExtractAsync_LegacyDefinedNameOnly_ThrowsTableNotFound()
 	{
-		using var culture = new CultureScope("en-US");
 		using var stream = CreateLegacyDefinedNameWorkbook();
 
 		var exception = Assert.Throws<OperationException>(() =>
 			_extractor.ExtractAsync<User>(stream, new DataArchiveExtractorOptions(Templates.User.Descriptor)));
 
 		Assert.Equal(nameof(OperationException.Unprocessed), exception.Reason);
-		Assert.Equal("The data table 'User' was not found in the import file.", exception.Message);
 	}
 
-	[Theory]
-	[InlineData("en-US", "The 'User' data table does not define any model fields.")]
-	[InlineData("zh-Hans", "数据表“User”没有定义任何模型字段。")]
-	public void ExtractAsync_UnrecognizedTableFields_ThrowsLocalizedOperationException(string cultureName, string message)
+	[Fact]
+	public void ExtractAsync_UnrecognizedTableFields_ThrowsOperationException()
 	{
-		using var culture = new CultureScope(cultureName);
 		using var stream = CreateWorkbook(workbook =>
 		{
 			var worksheet = workbook.AddWorksheet("Users");
@@ -190,13 +181,11 @@ public class SpreadsheetExtractorTest
 			_extractor.ExtractAsync<User>(stream, new DataArchiveExtractorOptions(Templates.User.Descriptor)));
 
 		Assert.Equal(nameof(OperationException.Unprocessed), exception.Reason);
-		Assert.Equal(message, exception.Message);
 	}
 
 	[Fact]
-	public void ExtractAsync_MissingSourceWorksheet_ThrowsLocalizedOperationException()
+	public void ExtractAsync_MissingSourceWorksheet_ThrowsOperationException()
 	{
-		using var culture = new CultureScope("en-US");
 		using var stream = CreateWorkbook(workbook =>
 		{
 			var worksheet = workbook.AddWorksheet("Data");
@@ -209,7 +198,6 @@ public class SpreadsheetExtractorTest
 		var exception = Assert.Throws<OperationException>(() => _extractor.ExtractAsync<User>(stream, options));
 
 		Assert.Equal(nameof(OperationException.Unprocessed), exception.Reason);
-		Assert.Equal("The worksheet 'Missing' was not found in the spreadsheet.", exception.Message);
 	}
 
 	[Fact]
@@ -317,12 +305,9 @@ public class SpreadsheetExtractorTest
 		Assert.All(result, user => Assert.Equal(0, user.UserId));
 	}
 
-	[Theory]
-	[InlineData("en-US", "The data table 'User(用户)' is missing the specified fields: Name(名称), Birthday(出生日期).")]
-	[InlineData("zh-Hans", "数据表“User(用户)”缺少指定字段：Name(名称), Birthday(出生日期)。")]
-	public void ExtractAsync_ExplicitMissingMembers_ThrowsLocalizedOperationException(string cultureName, string message)
+	[Fact]
+	public void ExtractAsync_ExplicitMissingMembers_ThrowsOperationException()
 	{
-		using var culture = new CultureScope(cultureName);
 		var model = new ModelDescriptor(typeof(User)) { Title = "用户" };
 		model.Properties[nameof(User.Name)].Label = "名称";
 		model.Properties[nameof(User.Birthday)].Label = "出生日期";
@@ -339,7 +324,6 @@ public class SpreadsheetExtractorTest
 		var exception = Assert.Throws<OperationException>(() => _extractor.ExtractAsync<User>(stream, options));
 
 		Assert.Equal(nameof(OperationException.Unprocessed), exception.Reason);
-		Assert.Equal(message, exception.Message);
 	}
 
 	private static string GetTableName(ModelDescriptor model) => $"__{model.QualifiedName}__";

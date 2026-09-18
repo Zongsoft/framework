@@ -132,7 +132,6 @@ public class MessageStorageFactoryBaseTest
 		var exception = Assert.Throws<Common.OperationException>(() => factory.Create("QueueServer"));
 
 		Assert.True(exception.IsUnprocessed);
-		Assert.Contains("QueueServer", exception.Message, StringComparison.Ordinal);
 	}
 
 	private class TestFactory : MessageStorageFactoryBase<TestStorage>

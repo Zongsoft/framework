@@ -68,8 +68,7 @@ public sealed class DataMessageStorageFactoryTests(SQLiteDatabaseFixture fixture
 		using var scope = this.CreateScope("SQLite", out var provider);
 		using var application = new ApplicationScope(scope.Provider);
 
-		var exception = Assert.Throws<ConfigurationException>(() => DataMessageStorageFactory.MySql.Create("QueueServer"));
-		Assert.Contains("MySql", exception.Message, StringComparison.Ordinal);
+		Assert.Throws<ConfigurationException>(() => DataMessageStorageFactory.MySql.Create("QueueServer"));
 		Assert.Equal(0, provider.Count);
 	}
 

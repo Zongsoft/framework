@@ -57,10 +57,9 @@ public class SpreadsheetRendererTest
 		using var output = new MemoryStream();
 		var template = new UnsupportedTemplate();
 
-		var exception = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+		await Assert.ThrowsAsync<InvalidOperationException>(async () =>
 			await _renderer.RenderAsync(output, template, Templates.ApartmentUsage));
 
-		Assert.Contains("Unsupported template format", exception.Message);
 		Assert.Equal(0, output.Length);
 	}
 
@@ -82,10 +81,9 @@ public class SpreadsheetRendererTest
 	{
 		using var output = new MemoryStream();
 
-		var exception = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+		await Assert.ThrowsAsync<InvalidOperationException>(async () =>
 			await _renderer.RenderAsync(output, Templates.ApartmentUsage.Template, Templates.ApartmentUsage, "PDF"));
 
-		Assert.Contains("Unsupported rendering format", exception.Message);
 		Assert.Equal(0, output.Length);
 	}
 

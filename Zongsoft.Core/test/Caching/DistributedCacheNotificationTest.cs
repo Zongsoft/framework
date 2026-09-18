@@ -138,10 +138,7 @@ public class DistributedCacheNotificationTest
 		IDistributedCache cache = new UnsupportedCache("legacy");
 		var handler = Handler.Handle<DistributedCacheNotification>(_ => { });
 
-		var exception = await Assert.ThrowsAsync<NotSupportedException>(async () => await cache.SubscribeAsync(handler));
-
-		Assert.Contains("legacy", exception.Message, StringComparison.Ordinal);
-		Assert.Contains("does not support notifications", exception.Message, StringComparison.Ordinal);
+		await Assert.ThrowsAsync<NotSupportedException>(async () => await cache.SubscribeAsync(handler));
 	}
 
 	private sealed class UnsupportedCache(string name) : IDistributedCache

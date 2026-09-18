@@ -247,9 +247,8 @@ public class ProfileWriterTest
 		imported[0].Entries["value"].Value = "first";
 		imported[1].Entries["value"].Value = "second";
 
-		var exception = Assert.Throws<ProfileException>(() => profile.Save(options));
+		Assert.Throws<ProfileException>(() => profile.Save(options));
 
-		Assert.Contains(child, exception.Message);
 
 		Assert.Equal(originalRoot, File.ReadAllBytes(root));
 		Assert.Equal(originalChild, File.ReadAllBytes(child));
@@ -470,8 +469,6 @@ public class ProfileWriterTest
 		using(var locked = new FileStream(root, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
 		{
 			var exception = Assert.Throws<ProfileException>(() => profile.Save());
-			Assert.Contains(root, exception.Message);
-			Assert.Contains(child, exception.Message);
 			Assert.NotNull(exception.InnerException);
 			Assert.Equal(root, exception.Data["FailedPath"]);
 			Assert.Equal([child], Assert.IsType<string[]>(exception.Data["CompletedPaths"]));

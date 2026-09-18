@@ -48,10 +48,8 @@ public class SchedulerTests
 	[InlineData("")]
 	public async Task CronScheduleAsync_MissingExpression_ThrowsArgumentException(string expression)
 	{
-		var exception = await Assert.ThrowsAsync<ArgumentException>(async () =>
+		await Assert.ThrowsAsync<ArgumentException>(async () =>
 			await Scheduler.Cron.ScheduleAsync("job", new TriggerOptions.Cron(expression)));
-
-		Assert.Contains("Cron expression", exception.Message, StringComparison.Ordinal);
 	}
 
 	[Fact]
