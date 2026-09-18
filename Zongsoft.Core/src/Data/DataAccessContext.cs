@@ -487,7 +487,7 @@ internal static class DataContextUtility
 		if(Mapping.Entities.TryGetValue(name, out var entity))
 			return entity;
 
-		throw new DataException($"The specified '{name}' entity mapping does not exist.");
+		throw new DataException(string.Format(Properties.Resources.DataEntity_NotFound_Message, name));
 	}
 
 	public static Metadata.IDataCommand GetCommand(this IDataAccess _, string name)
@@ -495,6 +495,6 @@ internal static class DataContextUtility
 		if(Mapping.Commands.TryGetValue(name, out var command))
 			return command;
 
-		throw new DataException($"The specified '{name}' command mapping does not exist.");
+		throw new DataException(string.Format(Properties.Resources.DataCommand_NotFound_Message, name));
 	}
 }

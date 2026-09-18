@@ -173,7 +173,7 @@ public static class ServiceInjector
 					_valueFactory = (provider, target) =>
 					{
 						if(ModularServiceUtility.TryGetModularServiceType(target, serviceType, out var modularType))
-							return ((IModularService)provider.GetRequiredService(modularType)).GetValue(provider) ?? throw new InvalidOperationException($"No service for type '{serviceType}' has been registered.");
+							return ((IModularService)provider.GetRequiredService(modularType)).GetValue(provider) ?? throw new InvalidOperationException(string.Format(Properties.Resources.Services_TypeNotRegistered_Message, serviceType));
 						else
 							return provider.GetRequiredService(serviceType);
 					};
@@ -183,7 +183,7 @@ public static class ServiceInjector
 					_valueFactory = (provider, target) =>
 					{
 						if(ModularServiceUtility.TryGetModularServiceType(attribute.Provider, serviceType, out var modularType))
-							return ((IModularService)provider.GetRequiredService(modularType)).GetValue(provider) ?? throw new InvalidOperationException(@"No service for type '{serviceType}' has been registered.");
+							return ((IModularService)provider.GetRequiredService(modularType)).GetValue(provider) ?? throw new InvalidOperationException(string.Format(Properties.Resources.Services_TypeNotRegistered_Message, serviceType));
 						else
 							return provider.GetRequiredService(serviceType);
 					};
@@ -273,7 +273,7 @@ public static class ServiceInjector
 		{
 			PropertyInfo property => property.PropertyType,
 			FieldInfo field => field.FieldType,
-			_ => throw new InvalidOperationException($"The '{member.ReflectedType.FullName}.{member.Name}' member is an unsupported injection member."),
+			_ => throw new InvalidOperationException(string.Format(Properties.Resources.ServiceInjector_UnsupportedMember_Message, member.ReflectedType.FullName, member.Name)),
 		};
 
 		private static Type GetServiceType(MemberInfo member, Type serviceType)
@@ -306,7 +306,7 @@ public static class ServiceInjector
 			serviceProvider.GetService<IServiceProvider<T>>()?.GetService(name);
 
 		public static object GetRequiredService(IServiceProvider serviceProvider, string name) =>
-			serviceProvider.GetRequiredService<IServiceProvider<T>>().GetService(name) ?? throw new InvalidOperationException($"No service named '{name}' was found in the service provider of type '{typeof(IServiceProvider<T>).FullName}'.");
+			serviceProvider.GetRequiredService<IServiceProvider<T>>().GetService(name) ?? throw new InvalidOperationException(string.Format(Properties.Resources.Services_NamedServiceNotFound_Message, name, typeof(IServiceProvider<T>).FullName));
 	}
 
 	private static class ServiceProviderInvoker

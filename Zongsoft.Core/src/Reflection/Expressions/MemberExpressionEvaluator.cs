@@ -138,7 +138,7 @@ public class MemberExpressionEvaluator
 				}
 			}
 
-			throw new MissingMemberException($"The type '{type}' does not have a member named '{name}'.");
+			throw new MissingMemberException(string.Format(Properties.Resources.Reflection_MemberNotFound_Message, name, type));
 		}
 
 		return members[0];

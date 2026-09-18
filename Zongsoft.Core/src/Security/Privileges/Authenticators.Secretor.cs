@@ -179,7 +179,7 @@ partial class Authentication
 					}
 			}
 
-			throw new InvalidOperationException($"The identity verification data type '{data.GetType().FullName}' is not supported.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.Authentication_UnsupportedDataType_Message, data.GetType().FullName));
 		}
 		#endregion
 	}

@@ -200,7 +200,7 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 					this.Dedent();
 
 					if(string.IsNullOrWhiteSpace(this.Reader.Value))
-						throw new ConfigurationException($"Missing name or key for '{this.Paths.Reverse()}' configuration entry. Located: {GetLineInfo(this.Reader)}");
+						throw new ConfigurationException(string.Format(Properties.Resources.Configuration_EntryNameRequired_Message, this.Paths.Reverse(), GetLineInfo(this.Reader)));
 
 					this.Indent(this.Reader.Value);
 					this.Indent(this.Reader.LocalName[(elementName.Length + 1)..]);

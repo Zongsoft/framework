@@ -62,7 +62,7 @@ public class WorkerStartCommand : CommandBase<CommandContext>
 
 		//如果没有开启强制启动选项并且当前工作器不可用，则抛出异常
 		if(!force && !worker.Enabled)
-			throw new CommandException($"The '{worker.Name}' worker are disabled.");
+			throw new CommandException(string.Format(Properties.Resources.Worker_Disabled_Message, worker.Name));
 
 		//启动工作者
 		worker.Start(context.Arguments);

@@ -167,7 +167,7 @@ partial class Authentication
 				Memory<byte> memory => await Serializer.Json.DeserializeAsync<Requirement>(memory.Span, cancellation),
 				ReadOnlyMemory<byte> memory => await Serializer.Json.DeserializeAsync<Requirement>(memory.Span, cancellation),
 				IReadOnlyDictionary<string, object> dictionary => Requirement.GetRequirement(dictionary),
-				_ => throw new InvalidOperationException($"The identity verification data type '{data.GetType().FullName}' is not supported."),
+				_ => throw new InvalidOperationException(string.Format(Properties.Resources.Authentication_UnsupportedDataType_Message, data.GetType().FullName)),
 			};
 		}
 		#endregion

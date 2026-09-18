@@ -162,7 +162,7 @@ partial class ModelPropertyDescriptor
 				if(Link.TryParse(array[i], out var link))
 					result.Add(link);
 				else
-					throw new InvalidOperationException($"The association link '{array[i]}' for the specified '{member.DeclaringType.FullName}.{member.Name}' model property is invalid.");
+					throw new InvalidOperationException(string.Format(Properties.Resources.Model_InvalidAssociationLink_Message, array[i], member.DeclaringType.FullName, member.Name));
 			}
 
 			return [.. result];
@@ -183,7 +183,7 @@ partial class ModelPropertyDescriptor
 				if(Constraint.TryParse(array[i], out var constraint))
 					result.Add(constraint);
 				else
-					throw new InvalidOperationException($"The association constraint '{array[i]}' for the specified '{member.DeclaringType.FullName}.{member.Name}' model property is invalid.");
+					throw new InvalidOperationException(string.Format(Properties.Resources.Model_InvalidAssociationConstraint_Message, array[i], member.DeclaringType.FullName, member.Name));
 			}
 
 			return [.. result];

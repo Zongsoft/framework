@@ -69,7 +69,7 @@ public abstract class HandlerBase<TArgument> : IHandler<TArgument>, IHandler
 		if(argument == null)
 			return default;
 
-		return Common.Convert.TryConvertValue<TArgument>(argument, out var value) ? value : throw new ArgumentException($"The specified argument cannot be converted to '{typeof(TArgument).FullName}' type.", nameof(argument));
+		return Common.Convert.TryConvertValue<TArgument>(argument, out var value) ? value : throw new ArgumentException(string.Format(Properties.Resources.Conversion_ArgumentType_Message, typeof(TArgument).FullName), nameof(argument));
 	}
 	#endregion
 }

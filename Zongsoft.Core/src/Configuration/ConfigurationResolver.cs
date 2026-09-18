@@ -89,7 +89,7 @@ public class ConfigurationResolver : IConfigurationResolver
 			if(Collections.CollectionUtility.TryAdd(instance, section.Value))
 				return;
 
-			throw new ConfigurationException($"Failed to add `{section.Path}={section.Value}` configuration collection entry");
+			throw new ConfigurationException(string.Format(Properties.Resources.Configuration_CollectionEntryFailed_Message, section.Path, section.Value));
 		}
 
 		var properties = this.GetProperties(instance.GetType().GetTypeInfo());
@@ -140,7 +140,7 @@ public class ConfigurationResolver : IConfigurationResolver
 
 			//如果字典键类型不是字符串并且配置键文本转换失败则抛出异常
 			if(dictionaryType.GenericTypeArguments[0] != typeof(string) && !Common.Convert.TryConvertValue(key, dictionaryType.GenericTypeArguments[0], out key))
-				throw new ConfigurationException($"Unable to convert the ‘{key}’ configuration key to a dictionary key type of ‘{dictionaryType.GenericTypeArguments[0].FullName}’ type.");
+				throw new ConfigurationException(string.Format(Properties.Resources.Configuration_DictionaryKeyConversion_Message, key, dictionaryType.GenericTypeArguments[0].FullName));
 
 			var valueType = dictionaryType.GenericTypeArguments[1];
 			var setter = dictionaryType.GetTypeInfo().GetDeclaredProperty("Item");
@@ -377,7 +377,7 @@ public class ConfigurationResolver : IConfigurationResolver
 				return;
 
 			if(options != null && options.UnrecognizedError)
-				throw new ConfigurationException($"The specified '{configuration.Path}' configuration section cannot be bound to a member of the '{target.GetType()}' type.");
+				throw new ConfigurationException(string.Format(Properties.Resources.Configuration_SectionBindingFailed_Message, configuration.Path, target.GetType()));
 
 			return;
 		}
@@ -393,16 +393,16 @@ public class ConfigurationResolver : IConfigurationResolver
 				if(this.ResolveDefaultProperty(target, properties[unrecognizedProperty.Name], properties, configuration, options))
 					return;
 
-				throw new ConfigurationException($"The {unrecognizedProperty.Name} property of type '{target.GetType().FullName}' is annotated as the default collection, but the binding for this property fails.");
+				throw new ConfigurationException(string.Format(Properties.Resources.Configuration_DefaultCollectionBindingFailed_Message, unrecognizedProperty.Name, target.GetType().FullName));
 			}
 		}
 
 		var recognizers = this.Recognizers ?? ConfigurationRecognizerProvider.Default;
 		var recognizer = recognizers.GetRecognize(target.GetType()) ??
-			throw new ConfigurationException($"Unable to get a recognizer of type '{target.GetType().FullName}'.");
+			throw new ConfigurationException(string.Format(Properties.Resources.Configuration_RecognizerNotFound_Message, target.GetType().FullName));
 
 		if(!recognizer.Recognize(target, configuration, options) && (options != null && options.UnrecognizedError))
-			throw new ConfigurationException($"The '{configuration.Path}' configuration section is not recognized.");
+			throw new ConfigurationException(string.Format(Properties.Resources.Configuration_SectionUnrecognized_Message, configuration.Path));
 	}
 	#endregion
 
@@ -422,7 +422,7 @@ public class ConfigurationResolver : IConfigurationResolver
 			value = this.CreateInstance(property.PropertyType, configuration);
 
 			if(!property.SetValue(instance, value))
-				throw new ConfigurationException($"The default collection property {property.Name} of '{instance.GetType().FullName}' type is null and it cannot be set.");
+				throw new ConfigurationException(string.Format(Properties.Resources.Configuration_DefaultCollectionReadOnly_Message, property.Name, instance.GetType().FullName));
 		}
 
 		return this.ResolveCollection(value, configuration, this.GetProperties(value.GetType().GetTypeInfo()), options);

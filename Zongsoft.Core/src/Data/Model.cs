@@ -224,14 +224,14 @@ public static partial class Model
 		if(type.IsInterface)
 		{
 			if(type.GetEvents().Length > 0)
-				throw new ArgumentException($"The '{type.FullName}' model interface cannot define any events.");
+				throw new ArgumentException(string.Format(Properties.Resources.Model_EventsNotAllowed_Message, type.FullName));
 
 			if(type.GetMethods().Length > type.GetProperties().Length * 2)
-				throw new ArgumentException($"The '{type.FullName}' model interface cannot define any methods.");
+				throw new ArgumentException(string.Format(Properties.Resources.Model_MethodsNotAllowed_Message, type.FullName));
 		}
 		else if(!type.IsAbstract)
 		{
-			throw new ArgumentException($"The '{type.FullName}' model type must be an interface or abstract class.");
+			throw new ArgumentException(string.Format(Properties.Resources.Model_InterfaceOrAbstractRequired_Message, type.FullName));
 		}
 
 		try

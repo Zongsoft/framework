@@ -210,7 +210,7 @@ public readonly struct Color : IEquatable<Color>, IParsable<Color>
 	#endregion
 
 	#region 静态方法
-	public static Color Parse(ReadOnlySpan<char> text) => TryParse(text, out var result) ? result : throw new FormatException($"The specified '{text.ToString()}' is not a valid color.");
+	public static Color Parse(ReadOnlySpan<char> text) => TryParse(text, out var result) ? result : throw new FormatException(string.Format(Properties.Resources.Color_InvalidValue_Message, text.ToString()));
 	public static bool TryParse(ReadOnlySpan<char> text, out Color result)
 	{
 		text = text.Trim();

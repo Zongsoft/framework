@@ -100,7 +100,7 @@ public readonly partial struct Checksum : IEquatable<Checksum>, IParsable<Checks
 			"SHA3-256" => new(HashAlgorithmName.SHA3_256.Name, SHA3_256.HashData(data)),
 			"SHA3-384" => new(HashAlgorithmName.SHA3_384.Name, SHA3_384.HashData(data)),
 			"SHA3-512" => new(HashAlgorithmName.SHA3_512.Name, SHA3_512.HashData(data)),
-			_ => throw new InvalidOperationException($"The specified '{name}' is an invalid hash algorithm."),
+			_ => throw new InvalidOperationException(string.Format(Properties.Resources.Checksum_UnsupportedAlgorithm_Message, name)),
 		};
 	}
 
@@ -127,7 +127,7 @@ public readonly partial struct Checksum : IEquatable<Checksum>, IParsable<Checks
 			"SHA3-256" => new(HashAlgorithmName.SHA3_256.Name, SHA3_256.HashData(data)),
 			"SHA3-384" => new(HashAlgorithmName.SHA3_384.Name, SHA3_384.HashData(data)),
 			"SHA3-512" => new(HashAlgorithmName.SHA3_512.Name, SHA3_512.HashData(data)),
-			_ => throw new InvalidOperationException($"The specified '{name}' is an invalid hash algorithm."),
+			_ => throw new InvalidOperationException(string.Format(Properties.Resources.Checksum_UnsupportedAlgorithm_Message, name)),
 		};
 	}
 
@@ -155,7 +155,7 @@ public readonly partial struct Checksum : IEquatable<Checksum>, IParsable<Checks
 			"SHA3-256" => new(HashAlgorithmName.SHA3_256.Name, await SHA3_256.HashDataAsync(data, cancellation)),
 			"SHA3-384" => new(HashAlgorithmName.SHA3_384.Name, await SHA3_384.HashDataAsync(data, cancellation)),
 			"SHA3-512" => new(HashAlgorithmName.SHA3_512.Name, await SHA3_512.HashDataAsync(data, cancellation)),
-			_ => throw new InvalidOperationException($"The specified '{name}' is an invalid hash algorithm."),
+			_ => throw new InvalidOperationException(string.Format(Properties.Resources.Checksum_UnsupportedAlgorithm_Message, name)),
 		};
 	}
 

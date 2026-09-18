@@ -239,7 +239,7 @@ public static class FieldInfoExtension
 			throw new ArgumentNullException(nameof(field));
 
 		if(!typeof(T).IsAssignableFrom(field.ReflectedType))
-			throw new TargetException($"The specified '{typeof(T).FullName}' of the target does not define the '{field.Name}' field.");
+			throw new TargetException(string.Format(Properties.Resources.Reflection_FieldNotFound_Message, typeof(T).FullName, field.Name));
 
 		var method = new DynamicMethod("dynamic:" + typeof(T).FullName + "!Get" + field.Name + "#1",
 			typeof(object),
@@ -271,7 +271,7 @@ public static class FieldInfoExtension
 			throw new ArgumentNullException(nameof(field));
 
 		if(!typeof(T).IsAssignableFrom(field.ReflectedType))
-			throw new TargetException($"The specified '{typeof(T).FullName}' of the target does not define the '{field.Name}' field.");
+			throw new TargetException(string.Format(Properties.Resources.Reflection_FieldNotFound_Message, typeof(T).FullName, field.Name));
 
 		//如果字段为只读则返回空
 		if(field.IsInitOnly)

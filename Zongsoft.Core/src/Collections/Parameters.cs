@@ -204,7 +204,7 @@ public partial class Parameters : IDictionary<object, object>
 			if(type == null)
 				type = value.GetType();
 			else if(!type.IsAssignableFrom(value.GetType()))
-				throw new ArgumentException($"The specified parameter value cannot be converted to the declared type '{type.FullName}'.");
+				throw new ArgumentException(string.Format(Properties.Resources.Conversion_ArgumentType_Message, type.FullName));
 		}
 
 		this.SetValue((object)type, value);

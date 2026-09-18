@@ -57,7 +57,7 @@ public class CommandDescriptor
 			throw new ArgumentNullException(nameof(commandType));
 
 		if(!typeof(ICommand).IsAssignableFrom(commandType))
-			throw new ArgumentException($"The specified ‘{commandType.FullName}’ type is not a command type.");
+			throw new ArgumentException(string.Format(Properties.Resources.Command_InvalidType_Message, commandType.FullName));
 
 		return _cache.GetOrAdd(commandType, commandType =>
 		{

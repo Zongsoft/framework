@@ -103,7 +103,7 @@ public class ConditionAttribute : Attribute
 	public Type ConverterType
 	{
 		get => _converterType;
-		set => _converterType = value == null || typeof(IConditionConverter).IsAssignableFrom(value) ? value : throw new ArgumentException($"The specified '{value}' type is not an unimplemented '{nameof(IConditionConverter)}' interface.");
+		set => _converterType = value == null || typeof(IConditionConverter).IsAssignableFrom(value) ? value : throw new ArgumentException(string.Format(Properties.Resources.Type_InterfaceRequired_Message, value, nameof(IConditionConverter)));
 	}
 	#endregion
 }

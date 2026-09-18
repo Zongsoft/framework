@@ -137,7 +137,7 @@ public partial class Certificate : ICertificate, IEquatable<Certificate>
 			"sha384" => HashAlgorithmName.SHA384,
 			"SHA512" => HashAlgorithmName.SHA512,
 			"sha512" => HashAlgorithmName.SHA512,
-			_ => throw new ArgumentException($"The specified '{algorithm}' is an unrecognized hash-algorithm."),
+			_ => throw new ArgumentException(string.Format(Properties.Resources.Checksum_UnsupportedAlgorithm_Message, algorithm)),
 		};
 	}
 	#endregion

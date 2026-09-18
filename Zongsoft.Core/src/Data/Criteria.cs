@@ -94,7 +94,7 @@ public static class Criteria
 			return null;
 
 		if(!typeof(IModel).IsAssignableFrom(criteriaType))
-			throw new ArgumentException($"The specified ‘{criteriaType.FullName}’ type is not a valid criteria type.");
+			throw new ArgumentException(string.Format(Properties.Resources.Criteria_InvalidType_Message, criteriaType.FullName));
 
 		var instance = (IModel)(criteriaType.IsAbstract ? Model.Build(criteriaType) : Activator.CreateInstance(criteriaType));
 
@@ -149,7 +149,7 @@ public static class Criteria
 			});
 
 			if(!succeed && strict)
-				throw new DataArgumentException(member.Key, $"The specified ‘{member.Key}’ condition is undefined in the '{criteriaType.FullName}' type.");
+				throw new DataArgumentException(member.Key, string.Format(Properties.Resources.Criteria_UndefinedCondition_Message, member.Key, criteriaType.FullName));
 		}
 
 		return Transform(instance);

@@ -58,7 +58,7 @@ public interface IDistributedCache
 	///		<para>缓存通知采用至多一次和尽力而为语义，断开连接期间的通知可能丢失；它仅适用于缓存失效、刷新提示和监控，不得用于审计、可靠消息或事务协调。</para>
 	///		<para>未支持通知的分布式缓存在调用本方法时将得到<see cref="NotSupportedException"/>异常；连接、权限和参数错误应保留各自的异常类型。</para>
 	/// </remarks>
-	ValueTask<IDistributedCacheSubscription> SubscribeAsync(IHandler<DistributedCacheNotification> handler, DistributedCacheSubscriptionOptions options = null, CancellationToken cancellation = default) => ValueTask.FromException<IDistributedCacheSubscription>(new NotSupportedException($"The distributed cache '{this.Name}' does not support notifications."));
+	ValueTask<IDistributedCacheSubscription> SubscribeAsync(IHandler<DistributedCacheNotification> handler, DistributedCacheSubscriptionOptions options = null, CancellationToken cancellation = default) => ValueTask.FromException<IDistributedCacheSubscription>(new NotSupportedException(string.Format(Properties.Resources.DistributedCache_NotificationsUnsupported_Message, this.Name)));
 	#endregion
 
 	#region 常用方法

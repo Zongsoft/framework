@@ -41,7 +41,7 @@ public class DateOnlyConverter : JsonConverter<DateOnly>
 	{
 		JsonTokenType.Number => DateOnly.FromDayNumber(reader.GetInt32()),
 		JsonTokenType.String => DateOnly.Parse(reader.GetString()),
-		_ => throw new JsonException($"Unable to convert '{reader.TokenType}' JSON node to '{nameof(DateOnly)}' type."),
+		_ => throw new JsonException(string.Format(Properties.Resources.Serialization_JsonNodeConversion_Message, reader.TokenType, nameof(DateOnly))),
 	};
 
 	public override void Write(Utf8JsonWriter writer, DateOnly value, JsonSerializerOptions options) => writer.WriteStringValue(value.ToString("yyyy-MM-dd"));

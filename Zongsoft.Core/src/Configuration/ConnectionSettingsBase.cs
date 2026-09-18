@@ -375,7 +375,7 @@ public abstract class ConnectionSettingsBase<TDriver> : ConnectionSettingsBase, 
 		if(_driver.Descriptors.TryGetValue(name, out var descriptor))
 			return this.GetValue<T>(descriptor);
 
-		throw new InvalidOperationException($"The setting named '{name}' is illegal in connection Settings of the '{_driver.Name}' driver type.");
+		throw new InvalidOperationException(string.Format(global::Zongsoft.Properties.Resources.ConnectionSettings_InvalidName_Message, name, _driver.Name));
 	}
 
 	internal bool TryGetValue<T>(string name, out T value)

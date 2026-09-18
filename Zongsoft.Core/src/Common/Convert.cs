@@ -149,7 +149,7 @@ public static class Convert
 		if(defaultValueThunk != null)
 			return defaultValueThunk();
 
-		throw new InvalidOperationException($"Unable to convert {value} to {typeof(T)} type.");
+		throw new InvalidOperationException(string.Format(Properties.Resources.Conversion_ValueType_Message, value, typeof(T)));
 	}
 
 	public static T ConvertValue<T>(object value, Func<TypeConverter> converterFactory) => (T)ConvertValue(value, typeof(T), converterFactory);
@@ -163,7 +163,7 @@ public static class Convert
 		if(defaultValueThunk != null)
 			return defaultValueThunk();
 
-		throw new InvalidOperationException($"Unable to convert {value} to {typeof(T)} type.");
+		throw new InvalidOperationException(string.Format(Properties.Resources.Conversion_ValueType_Message, value, typeof(T)));
 	}
 
 	public static object ConvertValue(object value, Type conversionType)
@@ -171,7 +171,7 @@ public static class Convert
 		if(TryConvertValue(value, conversionType, out var result))
 			return result;
 
-		throw new InvalidOperationException($"Unable to convert {value} to {conversionType} type.");
+		throw new InvalidOperationException(string.Format(Properties.Resources.Conversion_ValueType_Message, value, conversionType));
 	}
 
 	public static object ConvertValue(object value, Type conversionType, object defaultValue) => TryConvertValue(value, conversionType, out var result) ? result : defaultValue;
@@ -184,7 +184,7 @@ public static class Convert
 		if(defaultValueThunk != null)
 			return defaultValueThunk();
 
-		throw new InvalidOperationException($"Unable to convert {value} to {conversionType} type.");
+		throw new InvalidOperationException(string.Format(Properties.Resources.Conversion_ValueType_Message, value, conversionType));
 	}
 
 	public static object ConvertValue(object value, Type conversionType, Func<TypeConverter> converterFactory)
@@ -192,7 +192,7 @@ public static class Convert
 		if(TryConvertValue(value, conversionType, converterFactory, out var result))
 			return result;
 
-		throw new InvalidOperationException($"Unable to convert {value} to {conversionType} type.");
+		throw new InvalidOperationException(string.Format(Properties.Resources.Conversion_ValueType_Message, value, conversionType));
 	}
 
 	public static object ConvertValue(object value, Type conversionType, Func<TypeConverter> converterFactory, object defaultValue) =>
@@ -206,7 +206,7 @@ public static class Convert
 		if(defaultValueThunk != null)
 			return defaultValueThunk();
 
-		throw new InvalidOperationException($"Unable to convert {value} to {conversionType} type.");
+		throw new InvalidOperationException(string.Format(Properties.Resources.Conversion_ValueType_Message, value, conversionType));
 	}
 
 	public static bool TryConvertValue<T>(object value, out T result) => TryConvertValue<T>(value, null, out result);

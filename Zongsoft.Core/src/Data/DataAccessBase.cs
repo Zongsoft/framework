@@ -128,7 +128,7 @@ public abstract partial class DataAccessBase : IDataAccess, IDisposable
 		var name = Model.Naming.Get(type);
 
 		if(string.IsNullOrEmpty(name))
-			throw new InvalidOperationException($"Missing data access name mapping of the '{type.FullName}' type.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.DataAccess_NameMappingRequired_Message, type.FullName));
 
 		return name;
 	}
@@ -349,13 +349,13 @@ public abstract partial class DataAccessBase : IDataAccess, IDisposable
 		private static Metadata.IDataEntitySimplexProperty GetProperty(string name, string field)
 		{
 			if(!Mapping.Entities.TryGetValue(name, out var entity))
-				throw new InvalidOperationException($"The entity specified with the name '{name}' does not exist.");
+				throw new InvalidOperationException(string.Format(Properties.Resources.DataEntity_NotFound_Message, name));
 
 			if(!entity.Properties.TryGetValue(field, out var property))
-				throw new InvalidOperationException($"The '{name}' entity does not contains the '{field}' property.");
+				throw new InvalidOperationException(string.Format(Properties.Resources.DataEntity_PropertyNotFound_Message, name, field));
 
 			if(!property.IsSimplex)
-				throw new InvalidOperationException($"This '{property.Entity.Name}.{property.Name}' property is not a simplex property and does not support sequence feature.");
+				throw new InvalidOperationException(string.Format(Properties.Resources.DataEntity_SequenceRequiresSimplex_Message, property.Entity.Name, property.Name));
 
 			return (Metadata.IDataEntitySimplexProperty)property;
 		}

@@ -52,7 +52,7 @@ public class DataCommandCollection() : ICollection<IDataCommand>
 	{
 		ArgumentNullException.ThrowIfNull(command);
 		if(!_dictionary.TryAdd(command.QualifiedName, command))
-			throw new InvalidOperationException($"The specified '{command.QualifiedName}' data command already exists in the collection.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.DataCommand_Duplicate_Message, command.QualifiedName));
 	}
 
 	public bool TryAdd(IDataCommand command) => command != null && _dictionary.TryAdd(command.QualifiedName, command);

@@ -117,7 +117,7 @@ public static class FileSystem
 		if(fileSystem == null)
 		{
 			if(throwException)
-				throw new IOException($"Can not obtain the File or Directory provider by the '{text}'.");
+				throw new IOException(string.Format(Properties.Resources.FileSystem_ProviderNotFound_Message, text));
 
 			return null;
 		}

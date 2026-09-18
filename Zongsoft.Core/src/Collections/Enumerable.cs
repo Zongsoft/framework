@@ -280,7 +280,7 @@ public static class Enumerable
 				if(Zongsoft.Common.Convert.TryConvertValue<T>(source, out var element))
 					_iterator = () => new SimulateEnumerator(element);
 				else
-					throw new InvalidOperationException($"The '{source.GetType()}' type cannot be convert to '{typeof(T)}' type.");
+					throw new InvalidOperationException(string.Format(Properties.Resources.Conversion_Type_Message, source.GetType(), typeof(T)));
 			}
 		}
 		#endregion

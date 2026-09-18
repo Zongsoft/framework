@@ -53,7 +53,7 @@ public class DataEntityPropertyCollection(IDataEntity entity) : ICollection<IDat
 		if(_dictionary.TryAdd(property.Name, property))
 			SetEntity(_entity, property, (property, dictionary) => dictionary.Remove(property.Name), _dictionary);
 		else
-			throw new InvalidOperationException($"The specified '{property.Name}' entity property already exists in the properties.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.DataEntity_DuplicateProperty_Message, property.Name));
 	}
 
 	public bool TryAdd(IDataEntityProperty property)

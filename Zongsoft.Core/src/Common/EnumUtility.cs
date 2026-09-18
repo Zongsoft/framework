@@ -63,7 +63,7 @@ public static class EnumUtility
 		if(enumValue == null)
 			throw new ArgumentNullException(nameof(enumValue));
 
-		return TryGetEnumEntry(enumValue, underlyingType, out var entry) ? entry : throw new ArgumentException($"The specified '{enumValue}' enumeration value is undefined.");
+		return TryGetEnumEntry(enumValue, underlyingType, out var entry) ? entry : throw new ArgumentException(string.Format(Properties.Resources.Enum_UndefinedValue_Message, enumValue));
 	}
 
 	public static bool TryGetEnumAlias(this Enum enumValue, out string alias)

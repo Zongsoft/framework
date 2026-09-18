@@ -78,7 +78,7 @@ public abstract class ExecutorBase<TArgument> : IExecutor<TArgument>, IHandler<T
 	{
 		IExecutorContext<TArgument> context => context,
 		TArgument argument => this.CreateContext(argument, parameters),
-		_ => throw new InvalidOperationException($"Unrecognized execution parameter: {data}"),
+		_ => throw new InvalidOperationException(string.Format(Properties.Resources.Executor_InvalidArgument_Message, data)),
 	};
 	protected virtual IHandler GetHandler(IExecutorContext<TArgument> context) => this.Locator?.Locate(context);
 	protected virtual ValueTask OnExecuteAsync(IExecutorContext<TArgument> context, CancellationToken cancellation = default) => this.GetHandler(context) switch
@@ -99,13 +99,13 @@ public abstract class ExecutorBase<TArgument> : IExecutor<TArgument>, IHandler<T
 	{
 		TArgument argument => this.ExecuteAsync(argument, null, cancellation),
 		IExecutorContext<TArgument> context => this.ExecuteAsync(context, cancellation),
-		_ => data == null ? this.ExecuteAsync(default, null, cancellation) : throw new InvalidOperationException($"Unrecognized execution parameter: {data}"),
+		_ => data == null ? this.ExecuteAsync(default, null, cancellation) : throw new InvalidOperationException(string.Format(Properties.Resources.Executor_InvalidArgument_Message, data)),
 	};
 	ValueTask IExecutor.ExecuteAsync(object data, Collections.Parameters parameters, CancellationToken cancellation) => data switch
 	{
 		TArgument argument => this.ExecuteAsync(argument, parameters, cancellation),
 		IExecutorContext<TArgument> context => this.ExecuteAsync(context, cancellation),
-		_ => data == null ? this.ExecuteAsync(default, parameters, cancellation) : throw new InvalidOperationException($"Unrecognized execution parameter: {data}"),
+		_ => data == null ? this.ExecuteAsync(default, parameters, cancellation) : throw new InvalidOperationException(string.Format(Properties.Resources.Executor_InvalidArgument_Message, data)),
 	};
 
 	ValueTask IHandler.HandleAsync(object data, CancellationToken cancellation) => this.ExecuteAsync(this.CreateContext(data, null), cancellation);

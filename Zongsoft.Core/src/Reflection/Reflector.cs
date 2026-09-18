@@ -49,7 +49,7 @@ public static class Reflector
 			throw new ArgumentNullException(nameof(property));
 
 		if(!property.CanRead)
-			throw new InvalidOperationException($"The '{property.Name}' property does not support reading.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.Error_PropertyCannotRead_Message, property.DeclaringType, property.Name));
 
 		return property.GetGetter().Invoke(ref target, parameters);
 	}
@@ -67,12 +67,12 @@ public static class Reflector
 				var property = (PropertyInfo)member;
 
 				if(!property.CanRead)
-					throw new InvalidOperationException($"The '{property.Name}' property does not support reading.");
+					throw new InvalidOperationException(string.Format(Properties.Resources.Error_PropertyCannotRead_Message, property.DeclaringType, property.Name));
 
 				return property.GetGetter().Invoke(ref target, parameters);
 		}
 
-		throw new NotSupportedException($"The {member.MemberType.ToString()} of member that is not supported.");
+		throw new NotSupportedException(string.Format(Properties.Resources.Reflection_UnsupportedMemberKind_Message, member.MemberType.ToString()));
 	}
 
 	public static object GetValue(ref object target, string name, params object[] parameters)
@@ -86,7 +86,7 @@ public static class Reflector
 			type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase);
 
 		if(members == null || members.Length == 0)
-			throw new ArgumentException($"A member named '{name}' does not exist in the '{type.FullName}'.");
+			throw new ArgumentException(string.Format(Properties.Resources.Reflection_MemberNotFound_Message, name, type.FullName));
 
 		return GetValue(members[0], ref target, parameters);
 	}
@@ -105,7 +105,7 @@ public static class Reflector
 			throw new ArgumentNullException(nameof(property));
 
 		if(!property.CanRead)
-			throw new InvalidOperationException($"The '{property.Name}' property does not support reading.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.Error_PropertyCannotRead_Message, property.DeclaringType, property.Name));
 
 		return property.GetGetter<T>().Invoke(ref target, parameters);
 	}
@@ -123,12 +123,12 @@ public static class Reflector
 				var property = (PropertyInfo)member;
 
 				if(!property.CanRead)
-					throw new InvalidOperationException($"The '{property.Name}' property does not support reading.");
+					throw new InvalidOperationException(string.Format(Properties.Resources.Error_PropertyCannotRead_Message, property.DeclaringType, property.Name));
 
 				return property.GetGetter<T>().Invoke(ref target, parameters);
 		}
 
-		throw new NotSupportedException($"The {member.MemberType.ToString()} of member that is not supported.");
+		throw new NotSupportedException(string.Format(Properties.Resources.Reflection_UnsupportedMemberKind_Message, member.MemberType.ToString()));
 	}
 
 	public static object GetValue<T>(ref T target, string name, params object[] parameters)
@@ -142,7 +142,7 @@ public static class Reflector
 			type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase);
 
 		if(members == null || members.Length == 0)
-			throw new ArgumentException($"A member named '{name}' does not exist in the '{type.FullName}'.");
+			throw new ArgumentException(string.Format(Properties.Resources.Reflection_MemberNotFound_Message, name, type.FullName));
 
 		return GetValue(members[0], ref target, parameters);
 	}
@@ -338,7 +338,7 @@ public static class Reflector
 
 				return property.CanWrite;
 			default:
-				throw new NotSupportedException($"The {member.MemberType} of member that is not supported.");
+				throw new NotSupportedException(string.Format(Properties.Resources.Reflection_UnsupportedMemberKind_Message, member.MemberType));
 		}
 	}
 
@@ -354,7 +354,7 @@ public static class Reflector
 			type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase);
 
 		if(members == null || members.Length == 0)
-			throw new ArgumentException($"A member named '{name}' does not exist in the '{type.FullName}'.");
+			throw new ArgumentException(string.Format(Properties.Resources.Reflection_MemberNotFound_Message, name, type.FullName));
 
 		return SetValue(members[0], ref target, valueFactory?.Invoke(members[0].GetMemberType()), parameters);
 	}
@@ -408,7 +408,7 @@ public static class Reflector
 
 				return property.CanWrite;
 			default:
-				throw new NotSupportedException($"The {member.MemberType} of member that is not supported.");
+				throw new NotSupportedException(string.Format(Properties.Resources.Reflection_UnsupportedMemberKind_Message, member.MemberType));
 		}
 	}
 
@@ -424,7 +424,7 @@ public static class Reflector
 			type.GetMember(name, MemberTypes.Property | MemberTypes.Field, BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.IgnoreCase);
 
 		if(members == null || members.Length == 0)
-			throw new ArgumentException($"A member named '{name}' does not exist in the '{type.FullName}'.");
+			throw new ArgumentException(string.Format(Properties.Resources.Reflection_MemberNotFound_Message, name, type.FullName));
 
 		return SetValue(members[0], ref target, valueFactory?.Invoke(members[0].GetMemberType()), parameters);
 	}

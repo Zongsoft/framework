@@ -65,7 +65,7 @@ public abstract class HierarchicalNode<TNode> : HierarchicalNode, IHierarchicalN
 
 			//如果当前节点是否已经在遍历的栈中，则抛出循环引用的异常
 			if(stack.Contains(current))
-				throw new InvalidOperationException($"The “{this.Name}” {this.GetType().Name} has circular references in the hierarchy tree.");
+				throw new InvalidOperationException(string.Format(Properties.Resources.HierarchicalNode_CircularReference_Message, this.Name, this.GetType().Name));
 
 			//将当前节点加入到遍历栈中
 			stack.Push(current);

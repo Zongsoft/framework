@@ -152,7 +152,7 @@ public class EnumConverter : System.ComponentModel.EnumConverter
 			return result;
 
 		if(throwExceptions)
-			throw new FormatException(string.Format("Can not from this '{0}' string convert to '{1}' enum.", valueText, this.EnumType.AssemblyQualifiedName));
+			throw new FormatException(string.Format(Properties.Resources.Conversion_ValueType_Message, valueText, this.EnumType.AssemblyQualifiedName));
 
 		return 0;
 	}

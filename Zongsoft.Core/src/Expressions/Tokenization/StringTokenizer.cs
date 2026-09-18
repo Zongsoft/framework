@@ -84,7 +84,7 @@ public class StringTokenizer : ITokenizer
 			escaping = chr == '\\' && (!escaping);
 		}
 
-		throw new SyntaxException($"Missing a closing symbol({quote}) of string.");
+		throw new SyntaxException(string.Format(Properties.Resources.StringTokenizer_ClosingQuoteRequired_Message, quote));
 	}
 	#endregion
 

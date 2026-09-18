@@ -109,7 +109,7 @@ public readonly struct ModelPropertyRole : IEquatable<ModelPropertyRole>
 			if(aliases.TryGetValue(alias, out var existed))
 			{
 				if(!string.Equals(existed, role, StringComparison.Ordinal))
-					throw new InvalidOperationException($"The '{alias}' model property role alias is already assigned to the '{existed}' role.");
+					throw new InvalidOperationException(string.Format(Properties.Resources.Model_PropertyRoleAliasConflict_Message, alias, existed));
 
 				return;
 			}

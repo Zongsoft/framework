@@ -225,7 +225,7 @@ public abstract class WorkerBase : IWorker, IDisposable
 
 		//如果不支持暂停继续则抛出异常
 		if(!_canPauseAndContinue)
-			throw new NotSupportedException($"The {_name} worker does not support the Pause/Resume operation.");
+			throw new NotSupportedException(string.Format(Properties.Resources.Worker_PauseResumeUnsupported_Message, _name));
 
 		if(_state != (int)WorkerState.Running)
 			return;
@@ -284,7 +284,7 @@ public abstract class WorkerBase : IWorker, IDisposable
 
 		//如果不支持暂停继续则抛出异常
 		if(!_canPauseAndContinue)
-			throw new NotSupportedException($"The {_name} worker does not support the Pause/Resume operation.");
+			throw new NotSupportedException(string.Format(Properties.Resources.Worker_PauseResumeUnsupported_Message, _name));
 
 		if(_state != (int)WorkerState.Paused)
 			return;

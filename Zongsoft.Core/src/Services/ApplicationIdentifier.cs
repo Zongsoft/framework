@@ -68,7 +68,7 @@ public readonly struct ApplicationIdentifier
 	/// <returns>返回解析成功后的应用标识。</returns>
 	/// <exception cref="FormatException">当指定的 <paramref name="text"/> 参数不是一个有效的应用标识文本。</exception>
 	public static ApplicationIdentifier Parse(ReadOnlySpan<char> text) => text.IsEmpty || text.IsWhiteSpace() ? default :
-		TryParse(text, out var result) ? result : throw new FormatException($"The specified '{text}' is an invalid application identifier format.");
+		TryParse(text, out var result) ? result : throw new FormatException(string.Format(Properties.Resources.ApplicationIdentifier_InvalidValue_Message, text.ToString()));
 
 	/// <summary>尝试将指定的字符串解析为应用标识。</summary>
 	/// <param name="text">指定待解析的字符串，如果为空或空串则返回失败。</param>

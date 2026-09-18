@@ -127,7 +127,7 @@ public class CommandOptionAttribute : Attribute
 				return;
 
 			if(value != null && !typeof(TypeConverter).IsAssignableFrom(value))
-				throw new ArgumentException($"The '{value.FullName}' type is not TypeConverter.");
+				throw new ArgumentException(string.Format(Properties.Resources.CommandOption_InvalidConverter_Message, value.FullName));
 
 			_converterType = value;
 			_converter = null;

@@ -54,7 +54,7 @@ public class ExitCommand : CommandBase<CommandContext>
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		var terminal = context.GetTerminal() ??
-			throw new NotSupportedException($"The `{this.Name}` command is only supported running in a terminal executor.");
+			throw new NotSupportedException(string.Format(Properties.Resources.Terminal_CommandRequiresTerminal_Message, this.Name));
 
 		if(context.Options.Switch(YES_OPTION))
 			throw new Terminal.ExitException();

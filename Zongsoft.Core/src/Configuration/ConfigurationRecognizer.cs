@@ -65,7 +65,7 @@ public class ConfigurationRecognizer : IConfigurationRecognizer
 		if(dictionary == null)
 		{
 			if(!unrecognizedProperty.CanWrite)
-				throw new ConfigurationException($"The {unrecognizedProperty.Name} unrecognized property value is null and it is read-only.");
+				throw new ConfigurationException(string.Format(Properties.Resources.Configuration_UnrecognizedPropertyReadOnly_Message, unrecognizedProperty.Name));
 
 			if(unrecognizedProperty.PropertyType.IsAbstract)
 			{

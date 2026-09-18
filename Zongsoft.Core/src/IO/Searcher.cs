@@ -261,7 +261,7 @@ public static class Searcher
 				return GetInfo(current);
 		}
 
-		throw new IOException($"The selected link contains a cycle: '{path}'.");
+		throw new IOException(string.Format(Properties.Resources.Searcher_LinkCycle_Message, path));
 	}
 	#endregion
 

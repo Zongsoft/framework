@@ -46,7 +46,7 @@ public class ProfileSection : ProfileItem, IEnumerable<ProfileItem>
 			throw new ArgumentNullException(nameof(name));
 
 		if(name.IndexOfAny(_illegalCharacters) >= 0)
-			throw new ArgumentException($"The specified '{name}' section name contains illegal characters.");
+			throw new ArgumentException(string.Format(Properties.Resources.Profiles_InvalidSectionName_Message, name));
 
 		this.Name = name.Trim();
 		this.FullName = this.Name;
@@ -61,7 +61,7 @@ public class ProfileSection : ProfileItem, IEnumerable<ProfileItem>
 			throw new ArgumentNullException(nameof(name));
 
 		if(name.IndexOfAny(_illegalCharacters) >= 0)
-			throw new ArgumentException($"The specified '{name}' section name contains illegal characters.");
+			throw new ArgumentException(string.Format(Properties.Resources.Profiles_InvalidSectionName_Message, name));
 
 		this.Name = name.Trim();
 		this.FullName = section.FullName + ' ' + this.Name;

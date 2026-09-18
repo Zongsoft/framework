@@ -60,9 +60,9 @@ public class DataEntityPropertySequence : IDataEntityPropertySequence
 				else
 				{
 					if(property == null)
-						throw new DataException($"The specified '{_sequence.References[i]}' member of the '{this.Name}' sequence is a property that does not exist.");
+						throw new DataException(string.Format(Properties.Resources.DataSequence_MemberNotFound_Message, _sequence.References[i], this.Name));
 					else
-						throw new DataException($"The specified '{_sequence.References[i]}' member of the '{this.Name}' sequence must be a simplex property.");
+						throw new DataException(string.Format(Properties.Resources.DataSequence_SimplexMemberRequired_Message, _sequence.References[i], this.Name));
 				}
 			}
 
@@ -103,7 +103,7 @@ public class DataEntityPropertySequence : IDataEntityPropertySequence
 		if(DataPropertySequence.TryParse(text, out var sequence))
 			return Create(property, sequence);
 
-		throw new DataException($"The specified '{text}' is an invalid sequence within the '{property.Entity?.QualifiedName}.{property.Name}' entity property.");
+		throw new DataException(string.Format(Properties.Resources.DataSequence_InvalidDefinition_Message, text, property.Entity?.QualifiedName, property.Name));
 	}
 
 	public static IDataEntityPropertySequence Create(IDataEntitySimplexProperty property, DataPropertySequence sequence)
@@ -118,7 +118,7 @@ public class DataEntityPropertySequence : IDataEntityPropertySequence
 			if(index > 0 && index < sequence.Name.Length - 1)
 				return new Proxy(property, sequence.Name[..index].TrimStart('#'), sequence.Name[(index + 1)..]);
 
-			throw new DataException($"The specified '{sequence.Name}' is an invalid sequence reference.");
+			throw new DataException(string.Format(Properties.Resources.DataSequence_InvalidReference_Message, sequence.Name));
 		}
 
 		return new DataEntityPropertySequence(
@@ -196,13 +196,13 @@ public class DataEntityPropertySequence : IDataEntityPropertySequence
 						if(entity != null && entity.Properties.TryGetValue(_destinationProperty, out var property) && property.IsSimplex)
 						{
 							_destination = ((IDataEntitySimplexProperty)property).Sequence ??
-								throw new DataException($"The '{_destinationEntity}:{_destinationProperty}' sequence referenced by the '{_host.Entity.Name}:{_host.Name}' property does not exist.");
+								throw new DataException(string.Format(Properties.Resources.DataSequence_ReferenceNotFound_Message, _destinationEntity, _destinationProperty, _host.Entity.Name, _host.Name));
 
 							if(_destination.References != null && _destination.References.Length > 0)
-								throw new DataException($"The sequence referenced by the '{_host.Entity.Name}:{_host.Name}' property cannot contain dependencies.");
+								throw new DataException(string.Format(Properties.Resources.DataSequence_ReferenceDependencies_Message, _host.Entity.Name, _host.Name));
 						}
 						else
-							throw new DataException($"The '{_destinationEntity}:{_destinationProperty}' sequence reference specified by the '{_host.Entity.Name}:{_host.Name}' property does not exist.");
+							throw new DataException(string.Format(Properties.Resources.DataSequence_ReferenceNotFound_Message, _destinationEntity, _destinationProperty, _host.Entity.Name, _host.Name));
 					}
 				}
 			}

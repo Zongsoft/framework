@@ -80,8 +80,8 @@ public static class Predication
 		public ValueTask<bool> PredicateAsync(TArgument argument, CancellationToken cancellation = default) => _predicator(argument, null, cancellation);
 		public ValueTask<bool> PredicateAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default) => _predicator(argument, parameters, cancellation);
 		public ValueTask<bool> PredicateAsync(object argument, CancellationToken cancellation = default) =>
-			argument is TArgument target ? this.PredicateAsync(target, cancellation) : throw new InvalidOperationException($"Unable to convert '{argument}' argument value to '{typeof(TArgument)}' type.");
+			argument is TArgument target ? this.PredicateAsync(target, cancellation) : throw new InvalidOperationException(string.Format(Properties.Resources.Conversion_ValueType_Message, argument, typeof(TArgument)));
 		public ValueTask<bool> PredicateAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation = default) =>
-			argument is TArgument target ? this.PredicateAsync(target, parameters, cancellation) : throw new InvalidOperationException($"Unable to convert '{argument}' argument value to '{typeof(TArgument)}' type.");
+			argument is TArgument target ? this.PredicateAsync(target, parameters, cancellation) : throw new InvalidOperationException(string.Format(Properties.Resources.Conversion_ValueType_Message, argument, typeof(TArgument)));
 	}
 }

@@ -346,10 +346,10 @@ public class Secretor : ISecretor
 						throw new SecurityException("Captcha", Properties.Resources.Secretor_InvalidCaptcha_Message);
 
 					if(!_captchas.TryGetValue(captcha[..index], out var verifier))
-						throw new SecurityException("Captcha", $"The specified '{captcha[..index]}' CAPTCHA is invalid.");
+						throw new SecurityException("Captcha", string.Format(Properties.Resources.Secretor_CaptchaInvalid_Message, captcha[..index]));
 
 					if(!await verifier.VerifyAsync(captcha[(index + 1)..], cancellation))
-						throw new SecurityException("Captcha", $"The specified '{verifier.Scheme}' CAPTCHA failed to validate.");
+						throw new SecurityException("Captcha", string.Format(Properties.Resources.Secretor_CaptchaValidationFailed_Message, verifier.Scheme));
 				}
 
 				var token = GetKey(scheme, destination, template, scenario, channel);

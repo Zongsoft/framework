@@ -60,7 +60,7 @@ public class LocalFileSystem : IFileSystem
 	#endregion
 
 	#region 路径解析
-	public static string GetLocalPath(string text) => TryGetLocalPath(Path.Parse(text), out var path) ? path : throw new PathException($"Illegal path format: `{text}`.");
+	public static string GetLocalPath(string text) => TryGetLocalPath(Path.Parse(text), out var path) ? path : throw new PathException(string.Format(Properties.Resources.Path_InvalidFormat_Message, text));
 
 	private static bool TryGetLocalPath(Path path, out string result)
 	{

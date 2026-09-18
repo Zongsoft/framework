@@ -295,7 +295,7 @@ internal abstract class ModelEmitterBase
 						if(metadata.Type != null)
 						{
 							if(!properties[i].PropertyType.IsAssignableFrom(metadata.Type))
-								throw new InvalidOperationException($"The '{metadata.Type}' type of the '{properties[i].Name}' PropertyAttribute does not implement '{properties[i].PropertyType}' interface or class.");
+								throw new InvalidOperationException(string.Format(Properties.Resources.Model_PropertyTypeMismatch_Message, metadata.Type, properties[i].Name, properties[i].PropertyType));
 
 							fieldType = metadata.Type;
 						}
@@ -305,10 +305,10 @@ internal abstract class ModelEmitterBase
 						if(metadata.Type != null && !properties[i].SingletonFactoryEnabled)
 						{
 							if(metadata.Type.IsValueType)
-								throw new InvalidOperationException($"The {metadata.Type} type of singleton cannot be a value type.");
+								throw new InvalidOperationException(string.Format(Properties.Resources.Model_SingletonValueType_Message, metadata.Type));
 
 							if(!properties[i].PropertyType.IsAssignableFrom(metadata.Type))
-								throw new InvalidOperationException($"The '{metadata.Type}' type of the '{properties[i].Name}' PropertyAttribute does not implement '{properties[i].PropertyType}' interface or class.");
+								throw new InvalidOperationException(string.Format(Properties.Resources.Model_PropertyTypeMismatch_Message, metadata.Type, properties[i].Name, properties[i].PropertyType));
 
 							fieldType = metadata.Type;
 						}
@@ -316,7 +316,7 @@ internal abstract class ModelEmitterBase
 						break;
 					case Model.PropertyImplementationMode.Extension:
 						if(metadata.Type == null)
-							throw new InvalidOperationException($"Missing type of the '{properties[i].Name}' property attribute.");
+							throw new InvalidOperationException(string.Format(Properties.Resources.Model_PropertyAttributeTypeRequired_Message, properties[i].Name));
 
 						break;
 				}
@@ -351,10 +351,10 @@ internal abstract class ModelEmitterBase
 							 metadata.Type.GetMethod("Get" + properties[i].Name, BindingFlags.Public | BindingFlags.Static, null, new Type[] { properties[i].DeclaringType }, null);
 
 				if(method == null)
-					throw new InvalidOperationException($"Not found the extension method of the {properties[i].Name} property in the {metadata.Type.FullName} extension type.");
+					throw new InvalidOperationException(string.Format(Properties.Resources.Model_ExtensionMethodNotFound_Message, properties[i].Name, metadata.Type.FullName));
 
 				if(method.ReturnType == null || method.ReturnType == typeof(void) || !properties[i].PropertyType.IsAssignableFrom(method.ReturnType))
-					throw new InvalidOperationException($"The return type of the '{method}' extension method is missing or invalid.");
+					throw new InvalidOperationException(string.Format(Properties.Resources.Model_ExtensionReturnTypeInvalid_Message, method));
 
 				generator.Emit(OpCodes.Ldarg_0);
 
@@ -391,7 +391,7 @@ internal abstract class ModelEmitterBase
 						ctor = implementationType.GetConstructor(Type.EmptyTypes);
 
 						if(ctor == null)
-							throw new InvalidOperationException($"The '{implementationType}' type of the '{properties[i].Name}' property is missing the default constructor.");
+							throw new InvalidOperationException(string.Format(Properties.Resources.Model_PropertyDefaultConstructorRequired_Message, implementationType, properties[i].Name));
 					}
 
 					generator.DeclareLocal(typeof(object)); // for synchrolock variable
@@ -522,7 +522,7 @@ internal abstract class ModelEmitterBase
 					else
 					{
 						if(extensionMethod.ReturnType != typeof(bool))
-							throw new InvalidOperationException($"Invalid '{extensionMethod}' extension method, it's return type must be boolean type.");
+							throw new InvalidOperationException(string.Format(Properties.Resources.Model_ExtensionBooleanRequired_Message, extensionMethod));
 
 						//定义扩展方法的输出参数类型(即当前属性类型)的本地变量
 						generator.DeclareLocal(properties[i].PropertyType);
@@ -850,7 +850,7 @@ internal abstract class ModelEmitterBase
 		else
 		{
 			var ctor = builder.BaseType.GetConstructor(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, Type.EmptyTypes, null) ??
-				throw new InvalidOperationException($"The {builder.BaseType} data model base class is missing the default constructor.");
+				throw new InvalidOperationException(string.Format(Properties.Resources.Model_BaseDefaultConstructorRequired_Message, builder.BaseType));
 
 			generator.Emit(OpCodes.Call, ctor);
 		}
@@ -894,10 +894,10 @@ internal abstract class ModelEmitterBase
 					if(valueType != null && property.PropertyType != typeof(Type))
 					{
 						if(!valueType.IsClass || valueType.IsAbstract)
-							throw new InvalidOperationException($"The specified '{valueType.FullName}' type must be a non-abstract class when generate a default value via DefaultValueAttribute of the '{property.Name}' property.");
+							throw new InvalidOperationException(string.Format(Properties.Resources.Model_DefaultValueConcreteTypeRequired_Message, valueType.FullName, property.Name));
 
 						if(!property.Field.FieldType.IsAssignableFrom(valueType))
-							throw new InvalidOperationException($"The specified '{valueType}' default value type cannot be converted to the '{property.Field.FieldType}' type of property.");
+							throw new InvalidOperationException(string.Format(Properties.Resources.Model_DefaultValueTypeConversion_Message, valueType, property.Field.FieldType));
 
 						generator.Emit(OpCodes.Ldarg_0);
 						generator.Emit(OpCodes.Newobj, valueType.GetConstructor(Type.EmptyTypes));
@@ -906,7 +906,7 @@ internal abstract class ModelEmitterBase
 					else
 					{
 						if(!Common.Convert.TryConvertValue(property.DefaultValueAttribute.Value, property.PropertyType, out value))
-							throw new InvalidOperationException($"The '{property.DefaultValueAttribute.Value}' default value cannot be converted to the '{property.PropertyType}' type of property.");
+							throw new InvalidOperationException(string.Format(Properties.Resources.Model_DefaultValueConversion_Message, property.DefaultValueAttribute.Value, property.PropertyType));
 
 						generator.Emit(OpCodes.Ldarg_0);
 						LoadDefaultValue(generator, property.PropertyType, value);
@@ -931,10 +931,10 @@ internal abstract class ModelEmitterBase
 						else
 						{
 							if(!valueType.IsClass || valueType.IsAbstract)
-								throw new InvalidOperationException($"The specified '{valueType.FullName}' type must be a non-abstract class when generate a default value via DefaultValueAttribute of the '{property.Name}' property.");
+								throw new InvalidOperationException(string.Format(Properties.Resources.Model_DefaultValueConcreteTypeRequired_Message, valueType.FullName, property.Name));
 
 							if(!property.Field.FieldType.IsAssignableFrom(valueType))
-								throw new InvalidOperationException($"The specified '{valueType}' default value type cannot be converted to the '{property.Field.FieldType}' type of field.");
+								throw new InvalidOperationException(string.Format(Properties.Resources.Model_DefaultValueTypeConversion_Message, valueType, property.Field.FieldType));
 
 							generator.Emit(OpCodes.Ldarg_0);
 							generator.Emit(OpCodes.Newobj, valueType.GetConstructor(Type.EmptyTypes));
@@ -944,7 +944,7 @@ internal abstract class ModelEmitterBase
 					else
 					{
 						if(!Common.Convert.TryConvertValue(property.DefaultValueAttribute.Value, property.Field.FieldType, out value))
-							throw new InvalidOperationException($"The '{property.DefaultValueAttribute.Value}' default value cannot be converted to the '{property.Field.FieldType}' type of field.");
+							throw new InvalidOperationException(string.Format(Properties.Resources.Model_DefaultValueConversion_Message, property.DefaultValueAttribute.Value, property.Field.FieldType));
 
 						generator.Emit(OpCodes.Ldarg_0);
 						LoadDefaultValue(generator, property.Field.FieldType, value);
@@ -2162,7 +2162,7 @@ internal abstract class ModelEmitterBase
 							generator.Emit(OpCodes.Newobj, typeof(decimal).GetConstructor([typeof(ulong)]));
 							break;
 						default:
-							throw new InvalidOperationException($"Unable to convert '{value.GetType()}' type to decimal type.");
+							throw new InvalidOperationException(string.Format(Properties.Resources.Conversion_Type_Message, value.GetType(), typeof(decimal)));
 					}
 				}
 
@@ -2229,7 +2229,7 @@ internal abstract class ModelEmitterBase
 	private static Type GetCollectionImplementationType(Type type)
 	{
 		if(type.IsClass && type.IsAbstract)
-			throw new NotSupportedException($"The '{type}' type cannot be an abstract class and must be a deterministic class or interface.");
+			throw new NotSupportedException(string.Format(Properties.Resources.Model_ConcreteOrInterfaceRequired_Message, type));
 
 		if(type.IsValueType || type.IsClass)
 			return type;
@@ -2264,7 +2264,7 @@ internal abstract class ModelEmitterBase
 				return typeof(List<object>);
 		}
 
-		throw new InvalidOperationException($"The '{type}' type is not a specific or supported collection type.");
+		throw new InvalidOperationException(string.Format(Properties.Resources.Model_UnsupportedCollection_Message, type));
 	}
 
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -2371,10 +2371,10 @@ internal abstract class ModelEmitterBase
 						 factoryType.GetMethod("Get" + _property.Name, BindingFlags.Public | BindingFlags.Static, null, Type.EmptyTypes, null);
 
 			if(method == null)
-				throw new InvalidOperationException($"Not found the 'Get{_property.Name}(...)' factory method in the '{factoryType}' extension class.");
+				throw new InvalidOperationException(string.Format(Properties.Resources.Model_FactoryMethodNotFound_Message, _property.Name, factoryType));
 
 			if(method.ReturnType == null || method.ReturnType == typeof(void) || !_property.PropertyType.IsAssignableFrom(method.ReturnType))
-				throw new InvalidOperationException($"The return type of the 'Get{_property.Name}(...)' factory method in the '{factoryType}' extension class is missing or invliad.");
+				throw new InvalidOperationException(string.Format(Properties.Resources.Model_FactoryReturnTypeInvalid_Message, _property.Name, factoryType));
 
 			return method;
 		}
@@ -2821,7 +2821,7 @@ internal sealed class ModelAbstractEmitter(ModuleBuilder module) : ModelEmitterB
 			return null;
 
 		if(!method.IsVirtual && !method.IsAbstract)
-			throw new InvalidOperationException($"The {name} method of the {method.DeclaringType.FullName} data model is not a virtual method or an abstract method.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.Model_VirtualMethodRequired_Message, name, method.DeclaringType.FullName));
 
 		var methodBuilder = builder.DefineMethod(
 			method.Name,

@@ -283,7 +283,7 @@ public static class Mapping
 			if(_commands.TryAdd(command))
 				return;
 
-			throw new DataException($"The specified '{command}' data command mapping cannot be defined repeatedly, in the '{identifier}' container.");
+			throw new DataException(string.Format(Properties.Resources.DataCommand_DuplicateMapping_Message, command, identifier));
 		}
 		#endregion
 

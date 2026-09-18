@@ -87,7 +87,7 @@ public abstract class DataEntityPropertyFunction
 		if(Builders.TryGetValue(function.Name, out var builder))
 			return builder.Build(function.Arguments);
 
-		throw new DataException($"Unrecognized {function.Name} function.");
+		throw new DataException(string.Format(Properties.Resources.DataFunction_Unrecognized_Message, function.Name));
 	}
 
 	public static bool TryGet(ReadOnlySpan<char> text, out DataEntityPropertyFunction result)
@@ -116,7 +116,7 @@ public abstract class DataEntityPropertyFunction
 
 	#region 私有方法
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private static DataException GetNotSupportedArgumentsEexception(string name, string[] arguments) => new($"The '{name}' function does not support the specified '({string.Join(',', arguments)})' argument(s).");
+	private static DataException GetNotSupportedArgumentsEexception(string name, string[] arguments) => new(string.Format(Properties.Resources.DataFunction_UnsupportedArguments_Message, name, string.Join(',', arguments)));
 	#endregion
 
 	#region 嵌套子类

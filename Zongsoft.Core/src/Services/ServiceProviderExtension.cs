@@ -79,7 +79,7 @@ public static class ServiceProviderExtension
 		if(_naming.TryGetValue(name, out var type))
 			return serviceProvider.GetRequiredService(type);
 
-		throw new InvalidOperationException($"The service named '{name}' does not exist.");
+		throw new InvalidOperationException(string.Format(Properties.Resources.Services_NameNotFound_Message, name));
 	}
 	#endregion
 
@@ -188,7 +188,7 @@ public static class ServiceProviderExtension
 			}
 		}
 
-		return required ? throw new InvalidOperationException($"No service for type '{typeof(TService)}' has been registered.") : default;
+		return required ? throw new InvalidOperationException(string.Format(Properties.Resources.Services_TypeNotRegistered_Message, typeof(TService))) : default;
 	}
 
 	private static IEnumerable<TService> MatchServices<TService>(this IServiceProvider serviceProvider, object argument)
@@ -260,7 +260,7 @@ public static class ServiceProviderExtension
 			}
 		}
 
-		return required ? throw new InvalidOperationException($"No service for type '{serviceType}' has been registered.") : default;
+		return required ? throw new InvalidOperationException(string.Format(Properties.Resources.Services_TypeNotRegistered_Message, serviceType)) : default;
 	}
 
 	private static IEnumerable<object> MatchServices(this IServiceProvider serviceProvider, Type serviceType, object argument)

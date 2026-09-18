@@ -41,7 +41,7 @@ public class TimeOnlyConverter : JsonConverter<TimeOnly>
 	{
 		JsonTokenType.Number => new TimeOnly(reader.GetInt64()),
 		JsonTokenType.String => TimeOnly.Parse(reader.GetString()),
-		_ => throw new JsonException($"Unable to convert '{reader.TokenType}' JSON node to '{nameof(TimeOnly)}' type."),
+		_ => throw new JsonException(string.Format(Properties.Resources.Serialization_JsonNodeConversion_Message, reader.TokenType, nameof(TimeOnly))),
 	};
 
 	public override void Write(Utf8JsonWriter writer, TimeOnly value, JsonSerializerOptions options) => writer.WriteStringValue(value.ToString("HH:mm:ss.fffffff"));

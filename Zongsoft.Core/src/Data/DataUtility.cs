@@ -54,7 +54,7 @@ public static class DataUtility
 		DbType.DateTimeOffset => typeof(DateTimeOffset),
 		DbType.Guid => typeof(Guid),
 		DbType.Object => typeof(object),
-		_ => throw new NotSupportedException($"Invalid DbType value:'{dbType}'."),
+		_ => throw new NotSupportedException(string.Format(Properties.Resources.DataType_InvalidDbType_Message, dbType)),
 	};
 
 	public static bool IsNumeric(this DbType dbType) => IsInteger(dbType) || IsFloating(dbType);

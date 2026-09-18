@@ -83,13 +83,13 @@ public class DataAssociationLink
 				entity = ((IDataEntityComplexProperty)property).Foreign;
 			}
 			else
-				throw new DataException($"The link anchor value '{_anchor}' in the '{_owner}' complex property is invalid.");
+				throw new DataException(string.Format(Properties.Resources.DataAssociation_InvalidAnchor_Message, _anchor, _owner));
 		}
 
 		if(entity.Properties.TryGetValue(parts[^1], out property) && property.IsSimplex)
 			result[^1] = property;
 		else
-			throw new DataException($"The link anchor value '{_anchor}' in the '{_owner}' complex property is invalid.");
+			throw new DataException(string.Format(Properties.Resources.DataAssociation_InvalidAnchor_Message, _anchor, _owner));
 
 		return result;
 	}

@@ -291,7 +291,7 @@ public sealed partial class DataType : IEquatable<DataType>
 		System.Data.DbType.Xml => Xml,
 		System.Data.DbType.Object => Object,
 		System.Data.DbType.VarNumeric => VarNumeric,
-		_ => throw new ArgumentException($"Invalid DbType value: '{type}'."),
+		_ => throw new ArgumentException(string.Format(Properties.Resources.DataType_InvalidDbType_Message, type)),
 	};
 	#endregion
 

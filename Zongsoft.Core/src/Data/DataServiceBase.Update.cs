@@ -182,7 +182,7 @@ partial class DataServiceBase<TModel>
 			criteria = this.GetUpdateKey(dictionary);
 
 			if(criteria == null)
-				throw new DataOperationException($"The update operation of the specified ‘{this.Name}’ entity missing required conditions.");
+				throw new DataOperationException(string.Format(Properties.Resources.DataService_UpdateRequiresCriteria_Message, this.Name));
 		}
 
 		//执行更新操作
@@ -343,7 +343,7 @@ partial class DataServiceBase<TModel>
 			criteria = this.GetUpdateKey(dictionary);
 
 			if(criteria == null)
-				throw new DataOperationException($"The update operation of the specified ‘{this.Name}’ entity missing required conditions.");
+				throw new DataOperationException(string.Format(Properties.Resources.DataService_UpdateRequiresCriteria_Message, this.Name));
 		}
 
 		//执行更新操作

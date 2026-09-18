@@ -50,7 +50,7 @@ public class DataEntityCollection : ICollection<IDataEntity>
 	{
 		ArgumentNullException.ThrowIfNull(entity);
 		if(!_dictionary.TryAdd(entity.QualifiedName, entity))
-			throw new InvalidOperationException($"The specified '{entity.QualifiedName}' data entity already exists in the collection.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.DataEntity_Duplicate_Message, entity.QualifiedName));
 	}
 
 	public bool TryAdd(IDataEntity entity) => entity != null && _dictionary.TryAdd(entity.QualifiedName, entity);

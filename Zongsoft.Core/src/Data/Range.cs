@@ -176,7 +176,7 @@ public static class Range
 		if(IsRange(target.GetType(), out var underlyingType))
 			return _tokens.GetOrAdd(underlyingType, type => new RangeToken(type)).IsEmpty(target);
 
-		throw new InvalidOperationException($"The specified '{nameof(target)}' parameter of type '{target.GetType()}' is not a Rang type and this operation is not supported.");
+		throw new InvalidOperationException(string.Format(Properties.Resources.Range_InvalidTargetType_Message, nameof(target), target.GetType()));
 	}
 
 	public static bool HasValue(object target) => !IsEmpty(target);
@@ -328,7 +328,7 @@ public static class Range
 				throw new ArgumentNullException(nameof(underlyingType));
 
 			if(!underlyingType.IsValueType)
-				throw new ArgumentException($"The specified 'underlyingType({underlyingType.FullName})' parameter must be a value type.");
+				throw new ArgumentException(string.Format(Properties.Resources.Type_ValueTypeRequired_Message, $"{nameof(underlyingType)}({underlyingType.FullName})"));
 
 			_underlyingType = underlyingType.IsEnum ? Enum.GetUnderlyingType(underlyingType) : underlyingType;
 		}

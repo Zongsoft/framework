@@ -142,6 +142,6 @@ public static class DataEntityUtility
 		}
 
 		return Mapping.Entities.TryGetValue(name, @namespace, out var result) ?
-			result : throw new System.Collections.Generic.KeyNotFoundException($"The specified data entity '{locator}' was not found in the mapping.");
+			result : throw new System.Collections.Generic.KeyNotFoundException(string.Format(Properties.Resources.DataEntity_NotFound_Message, locator));
 	}
 }

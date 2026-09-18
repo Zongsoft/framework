@@ -139,11 +139,11 @@ public readonly struct Member : IIdentifiable, IEquatable<Member>
 				{
 					MemberType.Role => new(new Identifier(typeof(IRole), name.ToString()), memberType),
 					MemberType.User => new(new Identifier(typeof(IUser), name.ToString()), memberType),
-					_ => throw new InvalidOperationException($"The specified '{type}' is an undefined entry of the {typeof(MemberType).Name} enum type."),
+					_ => throw new InvalidOperationException(string.Format(Properties.Resources.Enum_UndefinedTypedValue_Message, type.ToString(), typeof(MemberType).Name)),
 				};
 			}
 
-			throw new InvalidOperationException($"Cannot resolve '{type}' to {typeof(MemberType).Name} type.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.Conversion_ValueType_Message, type.ToString(), typeof(MemberType).Name));
 		}
 	}
 

@@ -43,7 +43,7 @@ public class TimeSpanConverter : JsonConverter<TimeSpan>
 			return TimeSpan.FromSeconds(reader.GetDouble());
 
 		var text = reader.GetString();
-		return Common.TimeSpanUtility.TryParse(text, out var value) ? value : throw new InvalidOperationException($"The '{text}' value is an invalid TimeSpan type format.");
+		return Common.TimeSpanUtility.TryParse(text, out var value) ? value : throw new InvalidOperationException(string.Format(Properties.Resources.TimeSpan_InvalidValue_Message, text));
 	}
 
 	public override void Write(Utf8JsonWriter writer, TimeSpan value, JsonSerializerOptions options) => writer.WriteStringValue(value.ToString());

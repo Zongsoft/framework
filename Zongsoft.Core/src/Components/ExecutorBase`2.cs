@@ -81,7 +81,7 @@ public abstract class ExecutorBase<TArgument, TResult> : IExecutor<TArgument, TR
 	{
 		IExecutorContext<TArgument, TResult> context => context,
 		TArgument argument => this.CreateContext(argument, parameters),
-		_ => throw new InvalidOperationException($"Unrecognized execution parameter: {data}"),
+		_ => throw new InvalidOperationException(string.Format(Properties.Resources.Executor_InvalidArgument_Message, data)),
 	};
 	protected virtual IHandler GetHandler(IExecutorContext<TArgument, TResult> context) => this.Locator?.Locate(context);
 	protected virtual async ValueTask<TResult> OnExecuteAsync(IExecutorContext<TArgument, TResult> context, CancellationToken cancellation = default)
@@ -132,7 +132,7 @@ public abstract class ExecutorBase<TArgument, TResult> : IExecutor<TArgument, TR
 				if(data == null)
 					await this.ExecuteAsync(default, null, cancellation);
 				else
-					throw new InvalidOperationException($"Unrecognized execution parameter: {data}");
+					throw new InvalidOperationException(string.Format(Properties.Resources.Executor_InvalidArgument_Message, data));
 
 				break;
 		}
@@ -151,7 +151,7 @@ public abstract class ExecutorBase<TArgument, TResult> : IExecutor<TArgument, TR
 				if(data == null)
 					await this.ExecuteAsync(default, parameters, cancellation);
 				else
-					throw new InvalidOperationException($"Unrecognized execution parameter: {data}");
+					throw new InvalidOperationException(string.Format(Properties.Resources.Executor_InvalidArgument_Message, data));
 
 				break;
 		}

@@ -943,7 +943,7 @@ internal class ObjectDictionary : IDataDictionary
 			throw new ArgumentNullException(nameof(valueFactory));
 
 		if(!_members.TryGetValue(name, out var member))
-			throw new KeyNotFoundException($"The specified '{name}' is not a member of the '{_data.GetType().FullName}' type.");
+			throw new KeyNotFoundException(string.Format(Properties.Resources.Reflection_MemberNotFound_Message, name, _data.GetType().FullName));
 
 		if(predicate == null || predicate((TValue)Convert.ChangeType(member.GetValue(ref _data), typeof(TValue))))
 			member.SetValue(ref _data, valueFactory());

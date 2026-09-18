@@ -819,4 +819,304 @@
   <data name="Type.ValueTypeRequired.Message" xml:space="preserve">
     <value>The specified '{0}' parameter must be a value type.</value>
   </data>
+  <data name="ApplicationIdentifier.InvalidValue.Message" xml:space="preserve">
+    <value>The value '{0}' is not a valid application identifier.</value>
+  </data>
+  <data name="Authentication.UnsupportedDataType.Message" xml:space="preserve">
+    <value>The identity verification data type '{0}' is not supported.</value>
+  </data>
+  <data name="Checksum.UnsupportedAlgorithm.Message" xml:space="preserve">
+    <value>The hash algorithm '{0}' is not supported.</value>
+  </data>
+  <data name="Color.InvalidValue.Message" xml:space="preserve">
+    <value>The value '{0}' is not a valid color.</value>
+  </data>
+  <data name="Command.InvalidType.Message" xml:space="preserve">
+    <value>The type '{0}' is not a command type.</value>
+  </data>
+  <data name="CommandOption.DuplicateName.Message" xml:space="preserve">
+    <value>Duplicate command option name: '{0}'.</value>
+  </data>
+  <data name="CommandOption.DuplicateNameOrSymbol.Message" xml:space="preserve">
+    <value>Duplicate command option name or abbreviation: '{0}' or '{1}'.</value>
+  </data>
+  <data name="CommandOption.InvalidConverter.Message" xml:space="preserve">
+    <value>The type '{0}' must derive from TypeConverter.</value>
+  </data>
+  <data name="CommandOption.NotFound.Message" xml:space="preserve">
+    <value>The command option '{0}' was not found.</value>
+  </data>
+  <data name="Configuration.CollectionEntryFailed.Message" xml:space="preserve">
+    <value>Failed to add the configuration collection entry '{0}={1}'.</value>
+  </data>
+  <data name="Configuration.DefaultCollectionBindingFailed.Message" xml:space="preserve">
+    <value>The default collection property '{0}' of type '{1}' could not be bound.</value>
+  </data>
+  <data name="Configuration.DefaultCollectionReadOnly.Message" xml:space="preserve">
+    <value>The default collection property '{0}' of type '{1}' is null and cannot be set.</value>
+  </data>
+  <data name="Configuration.DictionaryKeyConversion.Message" xml:space="preserve">
+    <value>Cannot convert configuration key '{0}' to dictionary key type '{1}'.</value>
+  </data>
+  <data name="Configuration.EntryNameRequired.Message" xml:space="preserve">
+    <value>The configuration entry '{0}' is missing a name or key. Location: {1}</value>
+  </data>
+  <data name="Configuration.RecognizerNotFound.Message" xml:space="preserve">
+    <value>No configuration recognizer was found for type '{0}'.</value>
+  </data>
+  <data name="Configuration.SectionBindingFailed.Message" xml:space="preserve">
+    <value>Cannot bind configuration section '{0}' to a member of type '{1}'.</value>
+  </data>
+  <data name="Configuration.SectionUnrecognized.Message" xml:space="preserve">
+    <value>The configuration section '{0}' is not recognized.</value>
+  </data>
+  <data name="Configuration.UnrecognizedPropertyReadOnly.Message" xml:space="preserve">
+    <value>The unrecognized-property collection '{0}' is null and read-only.</value>
+  </data>
+  <data name="ConnectionSettings.InvalidName.Message" xml:space="preserve">
+    <value>The setting '{0}' is invalid for connection settings of driver '{1}'.</value>
+  </data>
+  <data name="Conversion.ArgumentType.Message" xml:space="preserve">
+    <value>The specified argument cannot be converted to type '{0}'.</value>
+  </data>
+  <data name="Conversion.Type.Message" xml:space="preserve">
+    <value>Cannot convert type '{0}' to type '{1}'.</value>
+  </data>
+  <data name="Conversion.ValueType.Message" xml:space="preserve">
+    <value>Cannot convert '{0}' to type '{1}'.</value>
+  </data>
+  <data name="Criteria.InvalidType.Message" xml:space="preserve">
+    <value>The type '{0}' is not a valid criteria type.</value>
+  </data>
+  <data name="Criteria.UndefinedCondition.Message" xml:space="preserve">
+    <value>The condition '{0}' is undefined in type '{1}'.</value>
+  </data>
+  <data name="DataAccess.NameMappingRequired.Message" xml:space="preserve">
+    <value>No data access name mapping exists for type '{0}'.</value>
+  </data>
+  <data name="DataAssociation.InvalidAnchor.Message" xml:space="preserve">
+    <value>The link anchor '{0}' of complex property '{1}' is invalid.</value>
+  </data>
+  <data name="DataCommand.Duplicate.Message" xml:space="preserve">
+    <value>The data command '{0}' already exists in the collection.</value>
+  </data>
+  <data name="DataCommand.DuplicateMapping.Message" xml:space="preserve">
+    <value>The data command mapping '{0}' is already defined in container '{1}'.</value>
+  </data>
+  <data name="DataCommand.NotFound.Message" xml:space="preserve">
+    <value>The data command mapping '{0}' was not found.</value>
+  </data>
+  <data name="DataEntity.Duplicate.Message" xml:space="preserve">
+    <value>The data entity '{0}' already exists in the collection.</value>
+  </data>
+  <data name="DataEntity.DuplicateProperty.Message" xml:space="preserve">
+    <value>The entity property '{0}' already exists in the collection.</value>
+  </data>
+  <data name="DataEntity.NotFound.Message" xml:space="preserve">
+    <value>The data entity mapping '{0}' was not found.</value>
+  </data>
+  <data name="DataEntity.PropertyNotFound.Message" xml:space="preserve">
+    <value>The entity '{0}' does not contain property '{1}'.</value>
+  </data>
+  <data name="DataEntity.SequenceRequiresSimplex.Message" xml:space="preserve">
+    <value>The property '{0}.{1}' is not a simplex property and does not support sequences.</value>
+  </data>
+  <data name="DataFunction.Unrecognized.Message" xml:space="preserve">
+    <value>Unrecognized function '{0}'.</value>
+  </data>
+  <data name="DataFunction.UnsupportedArguments.Message" xml:space="preserve">
+    <value>The function '{0}' does not support arguments '({1})'.</value>
+  </data>
+  <data name="DataSequence.InvalidDefinition.Message" xml:space="preserve">
+    <value>The sequence '{0}' in entity property '{1}.{2}' is invalid.</value>
+  </data>
+  <data name="DataSequence.InvalidReference.Message" xml:space="preserve">
+    <value>The sequence reference '{0}' is invalid.</value>
+  </data>
+  <data name="DataSequence.MemberNotFound.Message" xml:space="preserve">
+    <value>The member '{0}' referenced by sequence '{1}' is not an existing property.</value>
+  </data>
+  <data name="DataSequence.ReferenceDependencies.Message" xml:space="preserve">
+    <value>The sequence referenced by property '{0}:{1}' cannot contain dependencies.</value>
+  </data>
+  <data name="DataSequence.ReferenceNotFound.Message" xml:space="preserve">
+    <value>The sequence '{0}:{1}' referenced by property '{2}:{3}' does not exist.</value>
+  </data>
+  <data name="DataSequence.SimplexMemberRequired.Message" xml:space="preserve">
+    <value>The member '{0}' referenced by sequence '{1}' must be a simplex property.</value>
+  </data>
+  <data name="DataService.UpdateRequiresCriteria.Message" xml:space="preserve">
+    <value>The update operation for entity '{0}' is missing required conditions.</value>
+  </data>
+  <data name="DataType.InvalidDbType.Message" xml:space="preserve">
+    <value>Invalid DbType value: '{0}'.</value>
+  </data>
+  <data name="DistributedCache.NotificationsUnsupported.Message" xml:space="preserve">
+    <value>The distributed cache '{0}' does not support notifications.</value>
+  </data>
+  <data name="Enum.UndefinedTypedValue.Message" xml:space="preserve">
+    <value>The value '{0}' is undefined in enumeration '{1}'.</value>
+  </data>
+  <data name="Enum.UndefinedValue.Message" xml:space="preserve">
+    <value>The enumeration value '{0}' is undefined.</value>
+  </data>
+  <data name="EventBinder.DelegateRequired.Message" xml:space="preserve">
+    <value>The member '{0}' of type '{1}' cannot be bound to an event because its type is not a delegate.</value>
+  </data>
+  <data name="EventBinder.UnsupportedMember.Message" xml:space="preserve">
+    <value>The member '{0}' of type '{1}' is not a property, field, or event and cannot be bound to an event.</value>
+  </data>
+  <data name="Executor.InvalidArgument.Message" xml:space="preserve">
+    <value>Unrecognized execution argument: '{0}'.</value>
+  </data>
+  <data name="FileSystem.ProviderNotFound.Message" xml:space="preserve">
+    <value>No file or directory provider was found for '{0}'.</value>
+  </data>
+  <data name="HierarchicalNode.CircularReference.Message" xml:space="preserve">
+    <value>The '{0}' node of type '{1}' has a circular reference in the hierarchy.</value>
+  </data>
+  <data name="Model.BaseDefaultConstructorRequired.Message" xml:space="preserve">
+    <value>The model base class '{0}' is missing a default constructor.</value>
+  </data>
+  <data name="Model.ConcreteOrInterfaceRequired.Message" xml:space="preserve">
+    <value>The type '{0}' must be a concrete class or an interface, not an abstract class.</value>
+  </data>
+  <data name="Model.DefaultValueConcreteTypeRequired.Message" xml:space="preserve">
+    <value>The type '{0}' must be a non-abstract class to generate a default value for property '{1}'.</value>
+  </data>
+  <data name="Model.DefaultValueConversion.Message" xml:space="preserve">
+    <value>The default value '{0}' cannot be converted to member type '{1}'.</value>
+  </data>
+  <data name="Model.DefaultValueTypeConversion.Message" xml:space="preserve">
+    <value>The default value type '{0}' cannot be converted to member type '{1}'.</value>
+  </data>
+  <data name="Model.EventsNotAllowed.Message" xml:space="preserve">
+    <value>The model interface '{0}' cannot define events.</value>
+  </data>
+  <data name="Model.ExtensionBooleanRequired.Message" xml:space="preserve">
+    <value>The extension method '{0}' must return a Boolean value.</value>
+  </data>
+  <data name="Model.ExtensionMethodNotFound.Message" xml:space="preserve">
+    <value>No extension method for property '{0}' was found in extension type '{1}'.</value>
+  </data>
+  <data name="Model.ExtensionReturnTypeInvalid.Message" xml:space="preserve">
+    <value>The return type of extension method '{0}' is missing or invalid.</value>
+  </data>
+  <data name="Model.FactoryMethodNotFound.Message" xml:space="preserve">
+    <value>The factory method 'Get{0}(...)' was not found in extension class '{1}'.</value>
+  </data>
+  <data name="Model.FactoryReturnTypeInvalid.Message" xml:space="preserve">
+    <value>The return type of factory method 'Get{0}(...)' in extension class '{1}' is missing or invalid.</value>
+  </data>
+  <data name="Model.InterfaceOrAbstractRequired.Message" xml:space="preserve">
+    <value>The model type '{0}' must be an interface or an abstract class.</value>
+  </data>
+  <data name="Model.InvalidAssociationConstraint.Message" xml:space="preserve">
+    <value>The association constraint '{0}' of model property '{1}.{2}' is invalid.</value>
+  </data>
+  <data name="Model.InvalidAssociationLink.Message" xml:space="preserve">
+    <value>The association link '{0}' of model property '{1}.{2}' is invalid.</value>
+  </data>
+  <data name="Model.InvalidPropertyMember.Message" xml:space="preserve">
+    <value>The member '{0}' is not a valid model property member.</value>
+  </data>
+  <data name="Model.MethodsNotAllowed.Message" xml:space="preserve">
+    <value>The model interface '{0}' cannot define methods.</value>
+  </data>
+  <data name="Model.MultipleContracts.Message" xml:space="preserve">
+    <value>The data service '{0}' implements multiple model contracts.</value>
+  </data>
+  <data name="Model.PropertyAttributeTypeRequired.Message" xml:space="preserve">
+    <value>The property attribute on '{0}' is missing its type.</value>
+  </data>
+  <data name="Model.PropertyDefaultConstructorRequired.Message" xml:space="preserve">
+    <value>The type '{0}' of property '{1}' is missing a default constructor.</value>
+  </data>
+  <data name="Model.PropertyRoleAliasConflict.Message" xml:space="preserve">
+    <value>The model property role alias '{0}' is already assigned to role '{1}'.</value>
+  </data>
+  <data name="Model.PropertyTypeMismatch.Message" xml:space="preserve">
+    <value>The type '{0}' specified by PropertyAttribute on '{1}' does not implement or derive from '{2}'.</value>
+  </data>
+  <data name="Model.SingletonValueType.Message" xml:space="preserve">
+    <value>The singleton type '{0}' cannot be a value type.</value>
+  </data>
+  <data name="Model.UnsupportedCollection.Message" xml:space="preserve">
+    <value>The type '{0}' is not a concrete or supported collection type.</value>
+  </data>
+  <data name="Model.VirtualMethodRequired.Message" xml:space="preserve">
+    <value>The method '{0}' of model '{1}' must be virtual or abstract.</value>
+  </data>
+  <data name="Path.InvalidFormat.Message" xml:space="preserve">
+    <value>Invalid path format: '{0}'.</value>
+  </data>
+  <data name="Profiles.InvalidSectionName.Message" xml:space="preserve">
+    <value>The section name '{0}' contains invalid characters.</value>
+  </data>
+  <data name="Range.InvalidTargetType.Message" xml:space="preserve">
+    <value>The parameter '{0}' of type '{1}' is not a Range and does not support this operation.</value>
+  </data>
+  <data name="Range.MinimumExceedsMaximum.Message" xml:space="preserve">
+    <value>The minimum value '{0}' cannot exceed the maximum value '{1}'.</value>
+  </data>
+  <data name="Reflection.FieldNotFound.Message" xml:space="preserve">
+    <value>The target type '{0}' does not define field '{1}'.</value>
+  </data>
+  <data name="Reflection.MemberNotFound.Message" xml:space="preserve">
+    <value>The member '{0}' does not exist in type '{1}'.</value>
+  </data>
+  <data name="Reflection.UnsupportedMemberKind.Message" xml:space="preserve">
+    <value>Member kind '{0}' is not supported.</value>
+  </data>
+  <data name="Searcher.LinkCycle.Message" xml:space="preserve">
+    <value>The selected link contains a cycle: '{0}'.</value>
+  </data>
+  <data name="Secretor.CaptchaInvalid.Message" xml:space="preserve">
+    <value>The CAPTCHA '{0}' is invalid.</value>
+  </data>
+  <data name="Secretor.CaptchaValidationFailed.Message" xml:space="preserve">
+    <value>Validation failed for CAPTCHA scheme '{0}'.</value>
+  </data>
+  <data name="Serialization.JsonConversion.Message" xml:space="preserve">
+    <value>Cannot convert the JSON value to type '{0}'.</value>
+  </data>
+  <data name="Serialization.JsonNodeConversion.Message" xml:space="preserve">
+    <value>Cannot convert JSON node '{0}' to type '{1}'.</value>
+  </data>
+  <data name="ServiceInjector.UnsupportedMember.Message" xml:space="preserve">
+    <value>The member '{0}.{1}' does not support service injection.</value>
+  </data>
+  <data name="Services.NameNotFound.Message" xml:space="preserve">
+    <value>The service named '{0}' does not exist.</value>
+  </data>
+  <data name="Services.NamedServiceNotFound.Message" xml:space="preserve">
+    <value>No service named '{0}' was found in provider type '{1}'.</value>
+  </data>
+  <data name="Services.TypeNotRegistered.Message" xml:space="preserve">
+    <value>No service for type '{0}' has been registered.</value>
+  </data>
+  <data name="StringTokenizer.ClosingQuoteRequired.Message" xml:space="preserve">
+    <value>The string is missing its closing delimiter '{0}'.</value>
+  </data>
+  <data name="Terminal.CommandRequiresTerminal.Message" xml:space="preserve">
+    <value>The command '{0}' must run in a terminal executor.</value>
+  </data>
+  <data name="Terminal.UnsupportedOperatingSystem.Message" xml:space="preserve">
+    <value>The operating system '{0}' is not supported.</value>
+  </data>
+  <data name="TimeSpan.InvalidValue.Message" xml:space="preserve">
+    <value>The value '{0}' is not a valid TimeSpan.</value>
+  </data>
+  <data name="TokenScanner.IllegalCharacter.Message" xml:space="preserve">
+    <value>Invalid character '{0}' at position {1} in the expression.</value>
+  </data>
+  <data name="Type.InterfaceRequired.Message" xml:space="preserve">
+    <value>The type '{0}' must implement the '{1}' interface.</value>
+  </data>
+  <data name="Worker.Disabled.Message" xml:space="preserve">
+    <value>The worker '{0}' is disabled.</value>
+  </data>
+  <data name="Worker.PauseResumeUnsupported.Message" xml:space="preserve">
+    <value>The worker '{0}' does not support pause and resume operations.</value>
+  </data>
 </root>

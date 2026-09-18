@@ -69,7 +69,7 @@ partial class Model
 				if(modelType == null)
 					modelType = type;
 				else if(modelType != type)
-					throw new InvalidOperationException($"The specified '{service.GetType().FullName}' data service implements multiple model contracts.");
+					throw new InvalidOperationException(string.Format(Properties.Resources.Model_MultipleContracts_Message, service.GetType().FullName));
 			}
 		}
 

@@ -87,7 +87,7 @@ public class TokenScanner : IEnumerable<Token>, IDisposable
 		}
 
 		if(_reader.Peek() > 0)
-			throw new SyntaxException($"Illegal '{(char)_reader.Read()}' at {_reader.Position + 1} character in the expression.");
+			throw new SyntaxException(string.Format(Properties.Resources.TokenScanner_IllegalCharacter_Message, (char)_reader.Read(), _reader.Position + 1));
 
 		return null;
 	}

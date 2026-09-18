@@ -60,7 +60,7 @@ partial class Terminal
 	{
 		//获取当前命令执行器对应的终端
 		var terminal = context.GetTerminal() ??
-			throw new NotSupportedException($"The {context.Command?.Name} command must be run in terminal environment.");
+			throw new NotSupportedException(string.Format(Properties.Resources.Terminal_CommandRequiresTerminal_Message, context.Command?.Name));
 
 		//创建信号量，默认为堵塞状态
 		using var semaphore = new AutoResetEvent(false);

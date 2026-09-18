@@ -90,7 +90,7 @@ public static class EventBinder
 			throw new ArgumentNullException(nameof(field));
 
 		if(!field.FieldType.IsSubclassOf(typeof(Delegate)))
-			throw new InvalidOperationException($"The '{field.Name}' field of type '{field.FieldType}' cannot be event-bound because its type is not a delegate type.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.EventBinder_DelegateRequired_Message, field.Name, field.FieldType));
 
 		(_, var trigger) = GetAdapter(descriptor, field.FieldType);
 		field.SetValue(target, trigger);
@@ -106,7 +106,7 @@ public static class EventBinder
 			throw new ArgumentNullException(nameof(property));
 
 		if(!property.PropertyType.IsSubclassOf(typeof(Delegate)))
-			throw new InvalidOperationException($"The '{property.Name}' property of type '{property.PropertyType}' cannot be event-bound because its type is not a delegate type.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.EventBinder_DelegateRequired_Message, property.Name, property.PropertyType));
 
 		(_, var trigger) = GetAdapter(descriptor, property.PropertyType);
 		property.SetValue(target, trigger);
@@ -172,7 +172,7 @@ public static class EventBinder
 			throw new ArgumentNullException(nameof(field));
 
 		if(!field.FieldType.IsSubclassOf(typeof(Delegate)))
-			throw new InvalidOperationException($"The '{field.Name}' field of type '{field.FieldType}' cannot be event-bound because its type is not a delegate type.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.EventBinder_DelegateRequired_Message, field.Name, field.FieldType));
 
 		field.SetValue(target, null);
 		_binding.Remove(descriptor);
@@ -187,7 +187,7 @@ public static class EventBinder
 			throw new ArgumentNullException(nameof(property));
 
 		if(!property.PropertyType.IsSubclassOf(typeof(Delegate)))
-			throw new InvalidOperationException($"The '{property.Name}' property of type '{property.PropertyType}' cannot be event-bound because its type is not a delegate type.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.EventBinder_DelegateRequired_Message, property.Name, property.PropertyType));
 
 		property.SetValue(target, null);
 		_binding.Remove(descriptor);
@@ -302,14 +302,14 @@ public static class EventBinder
 		MemberInfo[] members = type.GetMember(name, BindingFlags.Public | BindingFlags.Static | BindingFlags.Instance);
 
 		if(members == null || members.Length == 0)
-			throw new InvalidOperationException($"The specified '{name}' member is undefined in the '{type}' type.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.Reflection_MemberNotFound_Message, name, type));
 
 		return members[0].MemberType switch
 		{
 			MemberTypes.Field => (FieldInfo)members[0],
 			MemberTypes.Property => (PropertyInfo)members[0],
 			MemberTypes.Event => (EventInfo)members[0],
-			_ => throw new InvalidOperationException($"The '{name}' member of type '{type}' cannot be event-bound because the member is not a property, field, or event."),
+			_ => throw new InvalidOperationException(string.Format(Properties.Resources.EventBinder_UnsupportedMember_Message, name, type)),
 		};
 	}
 

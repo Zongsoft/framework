@@ -51,7 +51,7 @@ public class EndpointConverter : TypeConverter
 				if(int.TryParse(text.AsSpan()[(index + 1)..], out var port))
 					return new DnsEndPoint(text[..index], port);
 
-				throw new InvalidOperationException($"The specified '{text}' cannot be converted to the EndPoint type.");
+				throw new InvalidOperationException(string.Format(Properties.Resources.Conversion_ValueType_Message, text, typeof(global::System.Net.EndPoint)));
 			}
 
 			return new DnsEndPoint(text, 0);

@@ -42,7 +42,7 @@ public static class TimeSpanUtility
 	public static TimeSpan Clamp(this TimeSpan value, TimeSpan minimum, TimeSpan maximum)
 	{
 		if(minimum > maximum)
-			throw new ArgumentException($"The minimum value '{minimum}' cannot be granter than maximum value '{maximum}'.");
+			throw new ArgumentException(string.Format(Properties.Resources.Range_MinimumExceedsMaximum_Message, minimum, maximum));
 
 		if(value < minimum)
 			return minimum;
@@ -60,15 +60,15 @@ public static class TimeSpanUtility
 			throw new ArgumentNullException(nameof(maximum));
 
 		if(!TryParse(minimum, out var min))
-			throw new ArgumentException($"Unable to convert '{minimum}' to TimeSpan type.");
+			throw new ArgumentException(string.Format(Properties.Resources.Conversion_ValueType_Message, minimum.ToString(), typeof(TimeSpan)));
 		if(!TryParse(maximum, out var max))
-			throw new ArgumentException($"Unable to convert '{maximum}' to TimeSpan type.");
+			throw new ArgumentException(string.Format(Properties.Resources.Conversion_ValueType_Message, maximum.ToString(), typeof(TimeSpan)));
 
 		return Clamp(value, min, max);
 	}
 
-	public static TimeSpan Parse(string text) => TryParse(text, out var result) ? result : throw new FormatException($"String '{text}' was not recognized as a valid TimeSpan.");
-	public static TimeSpan Parse(ReadOnlySpan<char> text) => TryParse(text, out var result) ? result : throw new FormatException($"String '{text}' was not recognized as a valid TimeSpan.");
+	public static TimeSpan Parse(string text) => TryParse(text, out var result) ? result : throw new FormatException(string.Format(Properties.Resources.TimeSpan_InvalidValue_Message, text));
+	public static TimeSpan Parse(ReadOnlySpan<char> text) => TryParse(text, out var result) ? result : throw new FormatException(string.Format(Properties.Resources.TimeSpan_InvalidValue_Message, text.ToString()));
 
 	public static bool TryParse(string text, out TimeSpan value) => TryParse(string.IsNullOrEmpty(text) ? default : text.AsSpan(), out value);
 	public static bool TryParse(ReadOnlySpan<char> text, out TimeSpan value)

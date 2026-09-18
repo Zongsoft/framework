@@ -171,7 +171,7 @@ partial class CommandLine
 			if(_descriptor.Options.TryGetValue(name, out var descriptor))
 				return descriptor.DefaultValue;
 
-			throw new ArgumentException($"The command option named '{name}' was not found.");
+			throw new ArgumentException(string.Format(Properties.Resources.CommandOption_NotFound_Message, name));
 		}
 
 		public T GetValue<T>(string name)
@@ -185,7 +185,7 @@ partial class CommandLine
 			if(_descriptor.Options.TryGetValue(name, out var descriptor))
 				return Common.Convert.ConvertValue<T>(descriptor.DefaultValue, descriptor.GetConverter);
 
-			throw new ArgumentException($"The command option named '{name}' was not found.");
+			throw new ArgumentException(string.Format(Properties.Resources.CommandOption_NotFound_Message, name));
 		}
 
 		public T GetValue<T>(string name, T defaultValue)

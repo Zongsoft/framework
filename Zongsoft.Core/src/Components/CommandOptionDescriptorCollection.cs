@@ -120,8 +120,8 @@ public class CommandOptionDescriptorCollection : Collection<CommandOptionDescrip
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private static ArgumentException ThrowDuplicated(CommandOptionDescriptor option) =>
 		option.Symbol == '\0' ?
-			new ArgumentException($"Duplicate option name: “{option.Name}”.", nameof(option)) :
-			new ArgumentException($"Duplicate option name or abbreviation: “{option.Name}” or ‘{option.Symbol}’.", nameof(option));
+			new ArgumentException(string.Format(Properties.Resources.CommandOption_DuplicateName_Message, option.Name), nameof(option)) :
+			new ArgumentException(string.Format(Properties.Resources.CommandOption_DuplicateNameOrSymbol_Message, option.Name, option.Symbol), nameof(option));
 
 	private bool TryAdd(CommandOptionDescriptor option)
 	{

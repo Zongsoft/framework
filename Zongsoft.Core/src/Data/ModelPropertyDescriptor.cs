@@ -252,6 +252,6 @@ partial class ModelPropertyDescriptor
 	{
 		FieldInfo info => info.FieldType,
 		PropertyInfo info => info.PropertyType,
-		_ => throw new ArgumentException($"The specified '{member.Name}' member is not a valid model property member."),
+		_ => throw new ArgumentException(string.Format(Properties.Resources.Model_InvalidPropertyMember_Message, member.Name)),
 	};
 }

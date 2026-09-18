@@ -347,7 +347,7 @@ public static class PropertyInfoExtension
 			throw new ArgumentNullException(nameof(property));
 
 		if(!typeof(T).IsAssignableFrom(property.ReflectedType))
-			throw new TargetException($"The specified '{typeof(T).FullName}' of the target does not define the '{property.Name}' property.");
+			throw new TargetException(string.Format(Properties.Resources.Error_PropertyNotExists_Message, typeof(T).FullName, property.Name));
 
 		//如果属性不可读则返回空
 		if(!property.CanRead)
@@ -430,7 +430,7 @@ public static class PropertyInfoExtension
 			throw new ArgumentNullException(nameof(property));
 
 		if(!typeof(T).IsAssignableFrom(property.ReflectedType))
-			throw new TargetException($"The specified '{typeof(T).FullName}' of the target does not define the '{property.Name}' property.");
+			throw new TargetException(string.Format(Properties.Resources.Error_PropertyNotExists_Message, typeof(T).FullName, property.Name));
 
 		//如果属性不可写则返回空
 		if(!property.CanWrite)

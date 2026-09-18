@@ -66,7 +66,7 @@ partial class DataType
 		{
 			JsonTokenType.Null => null,
 			JsonTokenType.String => DataType.Get(reader.GetString()),
-			_ => throw new JsonException($"Unable to convert the JSON value to a {typeof(DataType).FullName} object.")
+			_ => throw new JsonException(string.Format(Properties.Resources.Serialization_JsonConversion_Message, typeof(DataType).FullName))
 		};
 
 		public override void Write(Utf8JsonWriter writer, DataType value, JsonSerializerOptions options)
