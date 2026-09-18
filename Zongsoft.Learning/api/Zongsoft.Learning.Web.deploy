@@ -1,3 +1,0 @@
-artifacts/Zongsoft.Learning.Web.plugin
-lib/$(Framework)/Zongsoft.Learning.Web.*
-lib/$(Framework)/*/Zongsoft.Learning.Web.resources.*
