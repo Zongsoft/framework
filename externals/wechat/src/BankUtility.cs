@@ -35,140 +35,139 @@ using System.Text.Json.Serialization;
 
 using Zongsoft.Data;
 
-namespace Zongsoft.Externals.Wechat
+namespace Zongsoft.Externals.Wechat;
+
+public static class BankUtility
 {
-	public static class BankUtility
+	public static async ValueTask<IEnumerable<Bank>> GetBanksAsync(this IAuthority authority, BankKind kind, Paging page = null, CancellationToken cancellation = default)
 	{
-		public static async ValueTask<IEnumerable<Bank>> GetBanksAsync(this IAuthority authority, BankKind kind, Paging page = null, CancellationToken cancellation = default)
-		{
-			if(authority == null)
-				throw new ArgumentNullException(nameof(authority));
+		if(authority == null)
+			throw new ArgumentNullException(nameof(authority));
 
-			if(!page.IsLimited(out var limit, out var offset))
+		if(!page.IsLimited(out var limit, out var offset))
+		{
+			if(page.IsPaged(out var index, out var size))
 			{
-				if(page.IsPaged(out var index, out var size))
-				{
-					limit = size;
-					offset = (index - 1) * size;
-				}
-				else
-				{
-					limit = 100;
-					offset = 0;
-				}
+				limit = size;
+				offset = (index - 1) * size;
 			}
-
-			var response = kind == BankKind.Personal ?
-				await Paying.HttpClientFactory.GetHttpClient(authority.Certificate).GetAsync($"capital/capitallhh/banks/personal-banking?offset={offset}&limit={limit}", cancellation) :
-				await Paying.HttpClientFactory.GetHttpClient(authority.Certificate).GetAsync($"capital/capitallhh/banks/corporate-banking?offset={offset}&limit={limit}", cancellation);
-
-			var result = await response.GetResultAsync<Result<Bank>>(cancellation);
-
-			if(result.HasData)
+			else
 			{
-				if(page != null)
-					page.Total = result.Total;
-
-				return result.Data;
+				limit = 100;
+				offset = 0;
 			}
-
-			return null;
 		}
 
-		public static async ValueTask<IEnumerable<BankBranch>> GetBranchesAsync(this IAuthority authority, string id, string city, Paging page = null, CancellationToken cancellation = default)
-		{
-			if(authority == null)
-				throw new ArgumentNullException(nameof(authority));
+		var response = kind == BankKind.Personal ?
+			await Paying.HttpClientFactory.GetHttpClient(authority.Certificate).GetAsync($"capital/capitallhh/banks/personal-banking?offset={offset}&limit={limit}", cancellation) :
+			await Paying.HttpClientFactory.GetHttpClient(authority.Certificate).GetAsync($"capital/capitallhh/banks/corporate-banking?offset={offset}&limit={limit}", cancellation);
 
-			if(!page.IsLimited(out var limit, out var offset))
+		var result = await response.GetResultAsync<Result<Bank>>(cancellation);
+
+		if(result.HasData)
+		{
+			if(page != null)
+				page.Total = result.Total;
+
+			return result.Data;
+		}
+
+		return null;
+	}
+
+	public static async ValueTask<IEnumerable<BankBranch>> GetBranchesAsync(this IAuthority authority, string id, string city, Paging page = null, CancellationToken cancellation = default)
+	{
+		if(authority == null)
+			throw new ArgumentNullException(nameof(authority));
+
+		if(!page.IsLimited(out var limit, out var offset))
+		{
+			if(page.IsPaged(out var index, out var size))
 			{
-				if(page.IsPaged(out var index, out var size))
-				{
-					limit = size;
-					offset = (index - 1) * size;
-				}
-				else
-				{
-					limit = 100;
-					offset = 0;
-				}
+				limit = size;
+				offset = (index - 1) * size;
 			}
-
-			var response = await Paying.HttpClientFactory.GetHttpClient(authority.Certificate).GetAsync($"capital/capitallhh/banks/{id}/branches?city_code={city}&offset={offset}&limit={limit}", cancellation);
-			var result = await response.GetResultAsync<Result<BankBranch>>(cancellation);
-
-			if(result.HasData)
+			else
 			{
-				if(page != null)
-					page.Total = result.Total;
-
-				return result.Data;
+				limit = 100;
+				offset = 0;
 			}
-
-			return null;
 		}
 
-		public static async ValueTask<Bank?> FindAsync(this IAuthority authority, string code, CancellationToken cancellation = default)
+		var response = await Paying.HttpClientFactory.GetHttpClient(authority.Certificate).GetAsync($"capital/capitallhh/banks/{id}/branches?city_code={city}&offset={offset}&limit={limit}", cancellation);
+		var result = await response.GetResultAsync<Result<BankBranch>>(cancellation);
+
+		if(result.HasData)
 		{
-			if(authority == null)
-				throw new ArgumentNullException(nameof(authority));
+			if(page != null)
+				page.Total = result.Total;
 
-			if(string.IsNullOrEmpty(code))
-				throw new ArgumentNullException(nameof(code));
-
-			var account = Convert.ToBase64String(authority.Certificate.Encrypt(code));
-			var response = await Paying.HttpClientFactory.GetHttpClient(authority.Certificate).GetAsync($"capital/capitallhh/banks/search-banks-by-bank-account?account_number={account}", cancellation);
-			var result = await Paying.HttpUtility.GetResultAsync<Result<Bank>>(response, cancellation);
-
-			return result.HasData ? result.Data[0] : null;
+			return result.Data;
 		}
 
-		private struct Result<T>
-		{
-			[JsonPropertyName("total_count")]
-			public int Total { get; set; }
-			[JsonPropertyName("count")]
-			public int Count { get; set; }
-			[JsonPropertyName("offset")]
-			public int Offset { get; set; }
-			[JsonPropertyName("data")]
-			public T[] Data { get; set; }
+		return null;
+	}
 
-			[JsonIgnore]
-			[Serialization.SerializationMember(Ignored = true)]
-			public bool HasData => this.Data != null && this.Data.Length > 0;
-		}
+	public static async ValueTask<Bank?> FindAsync(this IAuthority authority, string code, CancellationToken cancellation = default)
+	{
+		if(authority == null)
+			throw new ArgumentNullException(nameof(authority));
 
-		public enum BankKind
-		{
-			Personal,
-			Corporational,
-		}
+		if(string.IsNullOrEmpty(code))
+			throw new ArgumentNullException(nameof(code));
 
-		public struct Bank
-		{
-			[JsonPropertyName("account_bank_code")]
-			public uint Id { get; set; }
+		var account = Convert.ToBase64String(authority.Certificate.Encrypt(code));
+		var response = await Paying.HttpClientFactory.GetHttpClient(authority.Certificate).GetAsync($"capital/capitallhh/banks/search-banks-by-bank-account?account_number={account}", cancellation);
+		var result = await Paying.HttpUtility.GetResultAsync<Result<Bank>>(response, cancellation);
 
-			[JsonPropertyName("account_bank")]
-			public string Name { get; set; }
+		return result.HasData ? result.Data[0] : null;
+	}
 
-			[JsonPropertyName("bank_alias_code")]
-			public string Code { get; set; }
+	private struct Result<T>
+	{
+		[JsonPropertyName("total_count")]
+		public int Total { get; set; }
+		[JsonPropertyName("count")]
+		public int Count { get; set; }
+		[JsonPropertyName("offset")]
+		public int Offset { get; set; }
+		[JsonPropertyName("data")]
+		public T[] Data { get; set; }
 
-			[JsonPropertyName("bank_alias")]
-			public string Alias { get; set; }
+		[JsonIgnore]
+		[Serialization.SerializationMember(Ignored = true)]
+		public bool HasData => this.Data != null && this.Data.Length > 0;
+	}
 
-			[JsonPropertyName("need_bank_branch")]
-			public bool Branched { get; set; }
-		}
+	public enum BankKind
+	{
+		Personal,
+		Corporational,
+	}
 
-		public struct BankBranch
-		{
-			[JsonPropertyName("bank_branch_id")]
-			public string Code { get; set; }
-			[JsonPropertyName("bank_branch_name")]
-			public string Name { get; set; }
-		}
+	public struct Bank
+	{
+		[JsonPropertyName("account_bank_code")]
+		public uint Id { get; set; }
+
+		[JsonPropertyName("account_bank")]
+		public string Name { get; set; }
+
+		[JsonPropertyName("bank_alias_code")]
+		public string Code { get; set; }
+
+		[JsonPropertyName("bank_alias")]
+		public string Alias { get; set; }
+
+		[JsonPropertyName("need_bank_branch")]
+		public bool Branched { get; set; }
+	}
+
+	public struct BankBranch
+	{
+		[JsonPropertyName("bank_branch_id")]
+		public string Code { get; set; }
+		[JsonPropertyName("bank_branch_name")]
+		public string Name { get; set; }
 	}
 }

@@ -144,7 +144,7 @@
   <data name="Text.Message.MissingCommandArguments" xml:space="preserve">
     <value>没有指定命令参数，请至少指定一个命令参数。</value>
   </data>
-  <data name="Text.Message.PluginNodeNotFound" xml:space="preserve">
+  <data name="Plugin.NodeNotFound.Message" xml:space="preserve">
     <value>指定的“{0}”插件路径是不存在的。</value>
   </data>
   <data name="Text.TreeCommand.Description" xml:space="preserve">
@@ -159,4 +159,157 @@
   <data name="Text.TreeCommand.Options.Path" xml:space="preserve">
     <value>显示插件树节点的完整全路径。</value>
   </data>
+	<data name="Plugin.ManifestElementInvalid.Message" xml:space="preserve">
+		<value>插件清单中包含无效元素“{0}”。</value>
+	</data>
+	<data name="Plugin.ElementInvalid.Message" xml:space="preserve">
+		<value>插件文件中包含无效元素“{0}”。</value>
+	</data>
+	<data name="Plugin.ConstructorNotFound.Message" xml:space="preserve">
+		<value>无法在“{1}”中构造“{0}”类型的实例：未找到匹配参数的构造函数。</value>
+	</data>
+	<data name="Command.ExecutorUnavailable.Message" xml:space="preserve">
+		<value>无法从 CommandExecutor.Default 获取命令执行器。</value>
+	</data>
+	<data name="Builtin.TypeInvalid.Message" xml:space="preserve">
+		<value>无法从内置元素“{1}”的文本“{0}”解析类型。</value>
+	</data>
+	<data name="Predication.SyntaxInvalid.Message" xml:space="preserve">
+		<value>断言解析失败：语法错误。</value>
+	</data>
+	<data name="Predication.TextRequired.Message" xml:space="preserve">
+		<value>断言解析失败：解析文本为空。</value>
+	</data>
+	<data name="Predication.ParseFailed.Message" xml:space="preserve">
+		<value>断言解析失败。</value>
+	</data>
+	<data name="Plugin.ElementTypeUnsupported.Message" xml:space="preserve">
+		<value>不支持“{0}”元素类型。</value>
+	</data>
+	<data name="Builtin.ConstructionFailed.Message" xml:space="preserve">
+		<value>创建“{0}”类型的对象失败，构造函数参数为：{1}。</value>
+	</data>
+	<data name="Workbench.CreationFailed.Message" xml:space="preserve">
+		<value>创建工作台失败。</value>
+	</data>
+	<data name="Builtin.ExtensionInvalid.Message" xml:space="preserve">
+		<value>“{1}”中的扩展元素“{0}”无效。</value>
+	</data>
+	<data name="Plugin.ExtensionNotFound.Message" xml:space="preserve">
+		<value>插件“{2}”中不存在扩展元素“{0}/{1}”。</value>
+	</data>
+	<data name="Builtin.Invalid.Message" xml:space="preserve">
+		<value>内置元素无效。</value>
+	</data>
+	<data name="Parser.ExpressionInvalid.Message" xml:space="preserve">
+		<value>解析表达式“{0}”的格式无效。</value>
+	</data>
+	<data name="Type.QualifiedNameInvalid.Message" xml:space="preserve">
+		<value>限定名称“{0}”无效。</value>
+	</data>
+	<data name="Plugin.PropertyInvalid.Message" xml:space="preserve">
+		<value>插件扩展属性的值无效。</value>
+	</data>
+	<data name="Plugin.PathInvalid.Message" xml:space="preserve">
+		<value>插件路径“{0}”无效。</value>
+	</data>
+	<data name="Parser.PathArgumentRequired.Message" xml:space="preserve">
+		<value>缺少路径解析器参数。</value>
+	</data>
+	<data name="Type.AssemblyNameRequired.Message" xml:space="preserve">
+		<value>限定名称“{0}”中缺少程序集名称。</value>
+	</data>
+	<data name="Builtin.ConstructorRequired.Message" xml:space="preserve">
+		<value>未找到内置元素“{0}”的匹配构造函数。</value>
+	</data>
+	<data name="Terminal.ExecutorRequired.Message" xml:space="preserve">
+		<value>缺少终端所需的命令执行器。</value>
+	</data>
+	<data name="Type.StaticMemberNotFound.Message" xml:space="preserve">
+		<value>“{1}”类型中未找到名为“{0}”的静态字段或属性。</value>
+	</data>
+	<data name="Type.AssemblyNotFound.Message" xml:space="preserve">
+		<value>解析限定类型名“{1}”时，未找到程序集“{0}”。</value>
+	</data>
+	<data name="Builtin.BuilderNotFound.Message" xml:space="preserve">
+		<value>未找到内置元素“{0}”({1}) 的构建器。</value>
+	</data>
+	<data name="Plugin.InstanceCreationFailed.Message" xml:space="preserve">
+		<value>在“{1}”中创建“{0}”类型的实例时发生异常。</value>
+	</data>
+	<data name="Predication.ServiceProviderNotFound.Message" xml:space="preserve">
+		<value>解析断言时未找到服务提供程序“{0}”。</value>
+	</data>
+	<data name="Plugin.AssemblyFileNotFound.Message" xml:space="preserve">
+		<value>插件“{1}”中指定的程序集文件“{0}”不存在。</value>
+	</data>
+	<data name="File.NotFound.Message" xml:space="preserve">
+		<value>文件“{0}”不存在。</value>
+	</data>
+	<data name="Plugin.FileUnreadable.Message" xml:space="preserve">
+		<value>无法读取插件文件“{0}”。</value>
+	</data>
+	<data name="Plugin.FileResolveFailed.Message" xml:space="preserve">
+		<value>解析插件文件“{0}”失败。</value>
+	</data>
+	<data name="Plugin.DependencyNotFound.Message" xml:space="preserve">
+		<value>插件“{0}”加载失败：依赖的插件“{1}”不存在。</value>
+	</data>
+	<data name="Plugin.DirectoryNotFound.Message" xml:space="preserve">
+		<value>插件目录“{0}”不存在。</value>
+	</data>
+	<data name="Plugin.TypeResolveFailed.Message" xml:space="preserve">
+		<value>无法在 {1} 中解析类型“{0}”。</value>
+	</data>
+	<data name="Plugin.HiddenDependenciesInvalid.Message" xml:space="preserve">
+		<value>不能在隐藏插件文件“{0}”中定义依赖。</value>
+	</data>
+	<data name="Plugin.DuplicateName.Message" xml:space="preserve">
+		<value>名为“{0}”的插件已存在，其路径为“{1}”。</value>
+	</data>
+	<data name="Plugin.ElementNameInvalid.Message" xml:space="preserve">
+		<value>插件元素名称“{0}”包含非法字符。</value>
+	</data>
+	<data name="Application.AbsolutePathRequired.Message" xml:space="preserve">
+		<value>应用目录“{0}”不是绝对路径。</value>
+	</data>
+	<data name="Type.StaticExpressionInvalid.Message" xml:space="preserve">
+		<value>“{0}”不是有效的静态成员表达式。</value>
+	</data>
+	<data name="Parser.NotFound.Message" xml:space="preserve">
+		<value>未找到解析器“{0}”。</value>
+	</data>
+	<data name="Builtin.ExtensionTypeRequired.Message" xml:space="preserve">
+		<value>扩展元素“{0}”所依赖的内置类型为空。</value>
+	</data>
+	<data name="Builtin.BehaviorChildrenInvalid.Message" xml:space="preserve">
+		<value>“{1}”中的内置行为元素“{0}”不能包含子元素。</value>
+	</data>
+	<data name="Plugin.ElementValidationFailed.Message" xml:space="preserve">
+		<value>插件元素“{0}”验证失败。</value>
+	</data>
+	<data name="Plugin.FileFormatInvalid.Message" xml:space="preserve">
+		<value>插件文件“{0}”的格式无效。</value>
+	</data>
+	<data name="Type.NotConstructible.Message" xml:space="preserve">
+		<value>无法创建类型“{0}”的实例，因为它是接口或抽象类。</value>
+	</data>
+	<data name="Builtin.TypeRequired.Message" xml:space="preserve">
+		<value>无法确定内置元素“{0}”的目标类型。</value>
+	</data>
+	<data name="Type.StaticMemberResolveFailed.Message" xml:space="preserve">
+		<value>无法解析程序集“{1}”中的静态成员“{0}”。</value>
+	</data>
+	<data name="Plugin.ElementUndefined.Message" xml:space="preserve">
+		<value>插件文件中包含未定义的元素“{0}”。</value>
+	</data>
+	<data name="Plugin.BuilderNotFound.Message" xml:space="preserve">
+		<value>插件“{1}”中未找到名为“{0}”的构建器。{3}{2}</value>
+	</data>
+	<data name="AppenderBehavior.Replacement.Description" xml:space="preserve">
+		<value>替换</value>
+	</data>
+	<data name="AppenderBehavior.Appending.Description" xml:space="preserve">
+		<value>追加</value>
+	</data>
 </root>

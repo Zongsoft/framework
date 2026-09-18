@@ -32,15 +32,14 @@ using System.Collections.Generic;
 
 using Zongsoft.Data;
 
-namespace Zongsoft.Reporting
-{
-	public interface IReportDataModel
-	{
-		string Name { get; }
-		string Schema { get; set; }
-		Paging Paging { get; set; }
+namespace Zongsoft.Reporting;
 
-		IReportDataSource Source { get; }
-		IDictionary<string, string> Settings { get; }
-	}
+public interface IReportDataModel
+{
+	string Name { get; }
+	string Schema { get; set; }
+	Paging Paging { get; set; }
+
+	IReportDataSource Source { get; }
+	IDictionary<string, string> Settings { get; }
 }

@@ -30,25 +30,24 @@
 using System;
 using System.IO;
 
-namespace Zongsoft.Reporting
+namespace Zongsoft.Reporting;
+
+public interface IReport
 {
-	public interface IReport
-	{
-		string Name { get; }
-		string Type { get; }
-		string Icon { get; set; }
-		string Title { get; set; }
-		string Description { get; set; }
-		IReportParameterCollection Parameters { get; }
-		IReportDataLocator Locator { get; set; }
+	string Name { get; }
+	string Type { get; }
+	string Icon { get; set; }
+	string Title { get; set; }
+	string Description { get; set; }
+	IReportParameterCollection Parameters { get; }
+	IReportDataLocator Locator { get; set; }
 
-		T AsReport<T>() where T : class;
+	T AsReport<T>() where T : class;
 
-		void Save(Stream stream);
-		void Render(Stream stream, IReportRenderOptions options);
-		void RenderToFile(string filePath, IReportRenderOptions options);
+	void Save(Stream stream);
+	void Render(Stream stream, IReportRenderOptions options);
+	void RenderToFile(string filePath, IReportRenderOptions options);
 
-		void Export(Stream stream, IReportExportOptions options);
-		void ExportToFile(string filePath, IReportExportOptions options);
-	}
+	void Export(Stream stream, IReportExportOptions options);
+	void ExportToFile(string filePath, IReportExportOptions options);
 }

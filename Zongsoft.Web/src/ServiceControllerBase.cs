@@ -65,7 +65,7 @@ public abstract class ServiceControllerBase<TModel, TService> : ControllerBase w
 	protected virtual bool CanUpsert => this.CanCreate && this.CanUpdate && this.DataService.CanUpsert;
 	protected virtual bool CanImport => this.DataService is IDataImportable importable && importable.CanImport;
 	protected virtual bool CanExport => this.DataService is IDataExportable exportable && exportable.CanExport;
-	protected TService DataService => _dataService ??= this.GetService() ?? throw new InvalidOperationException("Missing required data service.");
+	protected TService DataService => _dataService ??= this.GetService() ?? throw new InvalidOperationException(Properties.Resources.Data_ServiceRequired_Message);
 	internal DataOptionsBuilder OptionsBuilder { get; }
 	#endregion
 
@@ -187,7 +187,7 @@ public abstract class ServiceControllerBase<TModel, TService> : ControllerBase w
 			throw new ArgumentNullException(nameof(path));
 
 		if(!Path.TryParse(path, out var pathInfo))
-			throw new ArgumentException($"Invalid path format.");
+			throw new ArgumentException(Properties.Resources.Path_FormatInvalid_Message);
 
 		//如果上传的内容为空，则返回文件信息的空集
 		if(this.Request.Body == null || this.Request.ContentLength == null || this.Request.ContentLength == 0)
@@ -235,7 +235,7 @@ public abstract class ServiceControllerBase<TModel, TService> : ControllerBase w
 			throw new ArgumentNullException(nameof(path));
 
 		if(!Path.TryParse(path, out var pathInfo))
-			throw new ArgumentException($"Invalid path format.");
+			throw new ArgumentException(Properties.Resources.Path_FormatInvalid_Message);
 
 		if(uploaded == null)
 			throw new ArgumentNullException(nameof(uploaded));
@@ -323,7 +323,7 @@ public abstract class ServiceControllerBase<TModel, TService> : ControllerBase w
 			}
 		}
 
-		return (TService)this.HttpContext.RequestServices.GetService(typeof(TService)) ?? throw new InvalidOperationException("Missing the required service.");
+		return (TService)this.HttpContext.RequestServices.GetService(typeof(TService)) ?? throw new InvalidOperationException(Properties.Resources.Service_Required_Message);
 	}
 
 	protected virtual ValueTask<object> OnGetAsync(string key, Paging page, Sorting[] sort, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)

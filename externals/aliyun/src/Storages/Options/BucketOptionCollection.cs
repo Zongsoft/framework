@@ -30,10 +30,9 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Externals.Aliyun.Storages.Options
+namespace Zongsoft.Externals.Aliyun.Storages.Options;
+
+public class BucketOptionCollection() : KeyedCollection<string, BucketOption>(StringComparer.OrdinalIgnoreCase)
 {
-	public class BucketOptionCollection() : KeyedCollection<string, BucketOption>(StringComparer.OrdinalIgnoreCase)
-	{
-		protected override string GetKeyForItem(BucketOption item) => item.Name;
-	}
+	protected override string GetKeyForItem(BucketOption item) => item.Name;
 }

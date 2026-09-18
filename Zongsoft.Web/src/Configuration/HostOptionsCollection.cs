@@ -33,7 +33,7 @@ using System.Collections.ObjectModel;
 
 namespace Zongsoft.Web.Configuration;
 
-public class HostOptionsCollection() : KeyedCollection<string,  HostOptions>(StringComparer.OrdinalIgnoreCase), IWebHostCollection
+public class HostOptionsCollection() : KeyedCollection<string, HostOptions>(StringComparer.OrdinalIgnoreCase), IWebHostCollection
 {
 	#region 公共属性
 	public string Default { get; set; }

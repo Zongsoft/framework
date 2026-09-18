@@ -29,13 +29,12 @@
 
 using System;
 
-namespace Zongsoft.Plugins.Parsers
+namespace Zongsoft.Plugins.Parsers;
+
+public class ParserException : PluginException
 {
-	public class ParserException : PluginException
-	{
-		#region 构造函数
-		public ParserException(string message) : base(message) { }
-		public ParserException(string message, Exception innerException) : base(message, innerException) { }
-		#endregion
-	}
+	#region 构造函数
+	public ParserException(string message) : base(message) { }
+	public ParserException(string message, Exception innerException) : base(message, innerException) { }
+	#endregion
 }

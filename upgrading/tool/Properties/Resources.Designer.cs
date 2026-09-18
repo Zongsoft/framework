@@ -10,8 +10,8 @@
 
 namespace Zongsoft.Upgrading.Properties {
     using System;
-    
-    
+
+
     /// <summary>
     ///   一个强类型的资源类，用于查找本地化的字符串等。
     /// </summary>
@@ -19,19 +19,19 @@ namespace Zongsoft.Upgrading.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   返回此类使用的缓存的 ResourceManager 实例。
         /// </summary>
@@ -45,10 +45,10 @@ namespace Zongsoft.Upgrading.Properties {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
-        ///   重写当前线程的 CurrentUICulture 属性，对
-        ///   使用此强类型资源类的所有资源查找执行重写。
+        ///   使用此强类型资源类，为所有资源查找
+        ///   重写当前线程的 CurrentUICulture 属性。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -59,7 +59,7 @@ namespace Zongsoft.Upgrading.Properties {
                 resourceCulture = value;
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Checksum the “{0}” package file and update it to the “{1}” manifest file. 的本地化字符串。
         /// </summary>
@@ -68,7 +68,7 @@ namespace Zongsoft.Upgrading.Properties {
                 return ResourceManager.GetString("ChecksumSuccessfully.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 The command line is empty. 的本地化字符串。
         /// </summary>
@@ -77,7 +77,7 @@ namespace Zongsoft.Upgrading.Properties {
                 return ResourceManager.GetString("CommandLineEmpty.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 The file &apos;{0}&apos; does not exist. 的本地化字符串。
         /// </summary>
@@ -86,7 +86,25 @@ namespace Zongsoft.Upgrading.Properties {
                 return ResourceManager.GetString("FileNotExist.Message", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   查找类似 The manifest file &apos;{0}&apos; did not import any release. 的本地化字符串。
+        /// </summary>
+        internal static string Manifest_NoReleasesImported_Message {
+            get {
+                return ResourceManager.GetString("Manifest.NoReleasesImported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The web service returned an invalid release id for manifest file &apos;{0}&apos;. 的本地化字符串。
+        /// </summary>
+        internal static string Manifest_ReleaseIdInvalid_Message {
+            get {
+                return ResourceManager.GetString("Manifest.ReleaseIdInvalid.Message", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   查找类似 The &apos;{0}&apos; manifest file generated successfully. 的本地化字符串。
         /// </summary>
@@ -95,7 +113,7 @@ namespace Zongsoft.Upgrading.Properties {
                 return ResourceManager.GetString("ManifestGeneratedSuccessfully.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 The &apos;{0}&apos; manifest file published successfully. 的本地化字符串。
         /// </summary>
@@ -104,7 +122,7 @@ namespace Zongsoft.Upgrading.Properties {
                 return ResourceManager.GetString("ManifestPublishedSuccessfully.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Missing the required argument(s). 的本地化字符串。
         /// </summary>
@@ -113,7 +131,7 @@ namespace Zongsoft.Upgrading.Properties {
                 return ResourceManager.GetString("MissingRequiredArgments", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 The &apos;{0}&apos; package file generated successfully. 的本地化字符串。
         /// </summary>
@@ -122,7 +140,7 @@ namespace Zongsoft.Upgrading.Properties {
                 return ResourceManager.GetString("PackageGeneratedSuccessfully.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 The &apos;{0}&apos; package file published successfully. 的本地化字符串。
         /// </summary>
@@ -131,7 +149,7 @@ namespace Zongsoft.Upgrading.Properties {
                 return ResourceManager.GetString("PackagePublishedSuccessfully.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Packing in progress, please wait... 的本地化字符串。
         /// </summary>
@@ -140,7 +158,7 @@ namespace Zongsoft.Upgrading.Properties {
                 return ResourceManager.GetString("Packing.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Packing the ‘{0}’ file conflicts with the existing ‘{1}’ file, both located at ‘{2}’ in the package. 的本地化字符串。
         /// </summary>
@@ -149,7 +167,7 @@ namespace Zongsoft.Upgrading.Properties {
                 return ResourceManager.GetString("PackingConflict.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Tip: Please verify that the contents of the ‘{0}’ file match those of the ‘{1}’ file. 的本地化字符串。
         /// </summary>
@@ -158,7 +176,7 @@ namespace Zongsoft.Upgrading.Properties {
                 return ResourceManager.GetString("PackingConflict.Tip", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Tip: 的本地化字符串。
         /// </summary>
@@ -167,7 +185,7 @@ namespace Zongsoft.Upgrading.Properties {
                 return ResourceManager.GetString("Tip.Label", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 The command &apos;{0}&apos; is not recognized. 的本地化字符串。
         /// </summary>
@@ -176,7 +194,7 @@ namespace Zongsoft.Upgrading.Properties {
                 return ResourceManager.GetString("UnrecognizedCommand.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 The &apos;{0}&apos; variable in the &apos;{1}&apos; expression is undefined. 的本地化字符串。
         /// </summary>

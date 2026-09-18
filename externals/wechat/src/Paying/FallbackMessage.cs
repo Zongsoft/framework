@@ -31,40 +31,39 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Zongsoft.Externals.Wechat.Paying
+namespace Zongsoft.Externals.Wechat.Paying;
+
+public class FallbackMessage
 {
-	public class FallbackMessage
+	[JsonPropertyName("id")]
+	public string Identifier { get; set; }
+
+	[JsonPropertyName("create_time")]
+	public DateTime Timestamp { get; set; }
+
+	[JsonPropertyName("event_type")]
+	public string Status { get; set; }
+
+	[JsonPropertyName("summary")]
+	public string Description { get; set; }
+
+	[JsonPropertyName("resource_type")]
+	public string ResourceType { get; set; }
+
+	[JsonPropertyName("resource")]
+	public ResourceInfo Resource { get; set; }
+
+	public struct ResourceInfo
 	{
-		[JsonPropertyName("id")]
-		public string Identifier { get; set; }
-
-		[JsonPropertyName("create_time")]
-		public DateTime Timestamp { get; set; }
-
-		[JsonPropertyName("event_type")]
-		public string Status { get; set; }
-
-		[JsonPropertyName("summary")]
-		public string Description { get; set; }
-
-		[JsonPropertyName("resource_type")]
-		public string ResourceType { get; set; }
-
-		[JsonPropertyName("resource")]
-		public ResourceInfo Resource { get; set; }
-
-		public struct ResourceInfo
-		{
-			[JsonPropertyName("original_type")]
-			public string Source { get; set; }
-			[JsonPropertyName("algorithm")]
-			public string Algorithm { get; set; }
-			[JsonPropertyName("nonce")]
-			public string Nonce { get; set; }
-			[JsonPropertyName("associated_data")]
-			public string AssociatedData { get; set; }
-			[JsonPropertyName("ciphertext")]
-			public string Ciphertext { get; set; }
-		}
+		[JsonPropertyName("original_type")]
+		public string Source { get; set; }
+		[JsonPropertyName("algorithm")]
+		public string Algorithm { get; set; }
+		[JsonPropertyName("nonce")]
+		public string Nonce { get; set; }
+		[JsonPropertyName("associated_data")]
+		public string AssociatedData { get; set; }
+		[JsonPropertyName("ciphertext")]
+		public string Ciphertext { get; set; }
 	}
 }

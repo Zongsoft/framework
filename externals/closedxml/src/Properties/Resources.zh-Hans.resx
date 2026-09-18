@@ -54,4 +54,10 @@
 	<data name="SpreadsheetGenerator.ValidationError.Date.Message" xml:space="preserve">
 		<value>“{0}”必须是 1900-01-01 到 9999-12-31 之间的有效日期。</value>
 	</data>
+	<data name="Spreadsheet.RenderingFormatUnsupported.Message" xml:space="preserve">
+		<value>不支持的呈现格式：“{0}”。</value>
+	</data>
+	<data name="Spreadsheet.TemplateFormatUnsupported.Message" xml:space="preserve">
+		<value>不支持的模板格式：“{0}”。</value>
+	</data>
 </root>

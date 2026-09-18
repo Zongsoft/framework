@@ -30,46 +30,45 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Externals.Wechat
+namespace Zongsoft.Externals.Wechat;
+
+public class AccountCollection : KeyedCollection<string, Account>
 {
-	public class AccountCollection : KeyedCollection<string, Account>
+	#region 构造函数
+	public AccountCollection(Account @default)
 	{
-		#region 构造函数
-		public AccountCollection(Account @default)
-		{
-			this.Default = @default;
-		}
-
-		internal AccountCollection(Options.AppOptionsCollection options) : base()
-		{
-			if(options != null && options.Count > 0)
-			{
-				var applets = Utility.GetOptions<Options.AppletOptionsCollection>($"/Externals/Wechat/Applets");
-				var channels = Utility.GetOptions<Options.ChannelOptionsCollection>($"/Externals/Wechat/Channels");
-
-				foreach(var option in options)
-				{
-					if(option.Type == AccountType.Applet)
-						this.Add(applets.TryGetValue(option.Name, out var applet) ? Account.Applet(applet.Name, applet.Secret) : throw new WechatException($"The configured '{option.Name}' WeChat applet is not defined."));
-					else
-						this.Add(channels.TryGetValue(option.Name, out var channel) ? Account.Channel(channel.Name, channel.Secret) : throw new WechatException($"The configured '{option.Name}' WeChat channel is not defined."));
-				}
-
-				this.Default = options.Default != null && this.TryGetValue(options.Default, out var account) ? account : (this.Count > 0 ? this[0] : default);
-			}
-		}
-		#endregion
-
-		#region 公共属性
-		public Account Default { get; }
-		#endregion
-
-		#region 公共方法
-		public Account Get(string code) => string.IsNullOrEmpty(code) ? this.Default : this.TryGetValue(code, out var account) ? account : default;
-		#endregion
-
-		#region 重写方法
-		protected override string GetKeyForItem(Account item) => item.Code;
-		#endregion
+		this.Default = @default;
 	}
+
+	internal AccountCollection(Options.AppOptionsCollection options) : base()
+	{
+		if(options != null && options.Count > 0)
+		{
+			var applets = Utility.GetOptions<Options.AppletOptionsCollection>($"/Externals/Wechat/Applets");
+			var channels = Utility.GetOptions<Options.ChannelOptionsCollection>($"/Externals/Wechat/Channels");
+
+			foreach(var option in options)
+			{
+				if(option.Type == AccountType.Applet)
+					this.Add(applets.TryGetValue(option.Name, out var applet) ? Account.Applet(applet.Name, applet.Secret) : throw new WechatException(string.Format(Properties.Resources.Wechat_AppletNotFound_Message, option.Name)));
+				else
+					this.Add(channels.TryGetValue(option.Name, out var channel) ? Account.Channel(channel.Name, channel.Secret) : throw new WechatException(string.Format(Properties.Resources.Wechat_ChannelNotFound_Message, option.Name)));
+			}
+
+			this.Default = options.Default != null && this.TryGetValue(options.Default, out var account) ? account : (this.Count > 0 ? this[0] : default);
+		}
+	}
+	#endregion
+
+	#region 公共属性
+	public Account Default { get; }
+	#endregion
+
+	#region 公共方法
+	public Account Get(string code) => string.IsNullOrEmpty(code) ? this.Default : this.TryGetValue(code, out var account) ? account : default;
+	#endregion
+
+	#region 重写方法
+	protected override string GetKeyForItem(Account item) => item.Code;
+	#endregion
 }

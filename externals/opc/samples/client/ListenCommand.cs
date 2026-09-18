@@ -30,7 +30,7 @@ public sealed class ListenCommand(OpcClient client) : CommandBase<CommandContext
 	private ValueTask OnEnterAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(!_client.IsConnected)
-			throw new CommandException($"The {nameof(OpcClient)}({_client.Name}) is not connected.");
+			throw new CommandException(string.Format(Properties.Resources.Opc_ClientNotConnected_Message, nameof(OpcClient), _client.Name));
 
 		var subscribers = new List<Subscriber>();
 
@@ -59,7 +59,7 @@ public sealed class ListenCommand(OpcClient client) : CommandBase<CommandContext
 		}
 
 		if(subscribers.Count == 0)
-			throw new CommandException($"No subscriptions.");
+			throw new CommandException(Properties.Resources.Subscription_Required_Message);
 
 		if(context.Options.Contains("spooling"))
 			_spooler = new(

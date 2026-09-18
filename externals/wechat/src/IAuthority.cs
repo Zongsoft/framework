@@ -29,14 +29,13 @@
 
 using System;
 
-namespace Zongsoft.Externals.Wechat
+namespace Zongsoft.Externals.Wechat;
+
+public interface IAuthority : IEquatable<IAuthority>
 {
-	public interface IAuthority : IEquatable<IAuthority>
-	{
-		string Name { get; }
-		string Code { get; }
-		string Secret { get; }
-		Zongsoft.Security.ICertificate Certificate { get; }
-		AccountCollection Accounts { get; }
-	}
+	string Name { get; }
+	string Code { get; }
+	string Secret { get; }
+	Zongsoft.Security.ICertificate Certificate { get; }
+	AccountCollection Accounts { get; }
 }

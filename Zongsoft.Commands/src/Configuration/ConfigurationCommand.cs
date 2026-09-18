@@ -126,7 +126,7 @@ public class ConfigurationCommand : CommandBase<CommandContext>
 				var content = simplify ?
 					CommandOutletContent.Create("") :
 					CommandOutletContent.Create(CommandOutletColor.DarkGreen, ConfigurationPath.GetParentPath(section.Path))
-					                    .Append(CommandOutletColor.DarkCyan, ":");
+										.Append(CommandOutletColor.DarkCyan, ":");
 
 				output.WriteLine(content
 					.Append(CommandOutletColor.Green, section.Key)

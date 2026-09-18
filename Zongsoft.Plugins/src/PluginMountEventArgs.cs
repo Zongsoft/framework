@@ -29,24 +29,23 @@
 
 using System;
 
-namespace Zongsoft.Plugins
+namespace Zongsoft.Plugins;
+
+public class PluginMountEventArgs : EventArgs
 {
-	public class PluginMountEventArgs : EventArgs
+	#region 构造函数
+	public PluginMountEventArgs(string path, object value)
 	{
-		#region 构造函数
-		public PluginMountEventArgs(string path, object value)
-		{
-			if (string.IsNullOrEmpty(path))
-				throw new ArgumentNullException(nameof(path));
+		if(string.IsNullOrEmpty(path))
+			throw new ArgumentNullException(nameof(path));
 
-			this.Path = path;
-			this.Value = value;
-		}
-		#endregion
-
-		#region 公共属性
-		public string Path { get; }
-		public object Value { get; }
-		#endregion
+		this.Path = path;
+		this.Value = value;
 	}
+	#endregion
+
+	#region 公共属性
+	public string Path { get; }
+	public object Value { get; }
+	#endregion
 }

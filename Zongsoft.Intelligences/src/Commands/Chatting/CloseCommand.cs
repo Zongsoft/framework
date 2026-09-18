@@ -45,7 +45,7 @@ public class CloseCommand() : CommandBase<CommandContext>("Close")
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		var service = (context.Find<IServiceAccessor<IChatService>>(true)?.Value) ??
-			throw new CommandException("The chat service required by this command was not found.");
+			throw new CommandException(Properties.Resources.Chat_ServiceRequired_Message);
 
 		var identifier = context.Options.GetValue<string>(SESSION_OPTION) ?? context.Arguments[0];
 		if(string.IsNullOrEmpty(identifier))

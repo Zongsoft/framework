@@ -25,7 +25,8 @@ public class UpdateTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(0, await accessor.UpdateAsync<RoleModel>(null, $"*, {nameof(RoleModel.Children)}{{*}}"));
 		Assert.Equal(0, await accessor.UpdateAsync<Employee>(null, $"*, {nameof(Employee.User)}{{*}}"));
 
-		await accessor.InsertAsync(Model.Build<UserModel>(model => {
+		await accessor.InsertAsync(Model.Build<UserModel>(model =>
+		{
 			model.UserId = 100;
 			model.Name = "Popeye";
 		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
@@ -77,14 +78,16 @@ public class UpdateTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
-		var count = await accessor.InsertAsync(Model.Build<UserModel>(model => {
+		var count = await accessor.InsertAsync(Model.Build<UserModel>(model =>
+		{
 			model.UserId = 100;
 			model.Name = "Popeye";
 			model.Nickname = "Popeye Zhong";
 		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
 		Assert.Equal(1, count);
 
-		count = await accessor.InsertAsync(Model.Build<Employee>(model => {
+		count = await accessor.InsertAsync(Model.Build<Employee>(model =>
+		{
 			model.TenantId = 1;
 			model.BranchId = 0;
 			model.UserId = 100;

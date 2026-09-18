@@ -68,7 +68,7 @@ public class FindCommand : CommandBase<CommandContext>
 			var node = _pluginTree.Find(context.Arguments[i]);
 
 			if(node == null)
-				context.Output.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.Text_Message_PluginNodeNotFound, context.Arguments[i]));
+				context.Output.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.Plugin_NodeNotFound_Message, context.Arguments[i]));
 			else
 			{
 				var mode = context.Options.GetValue<ObtainMode>("obtain");

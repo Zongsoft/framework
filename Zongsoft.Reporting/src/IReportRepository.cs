@@ -30,15 +30,14 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Reporting
-{
-	public interface IReportRepository
-	{
-		bool Delete(string key);
+namespace Zongsoft.Reporting;
 
-		string Create(IReport report, ReportRepositoryOptions options = null);
-		string Create(string name, string type, byte[] data, ReportRepositoryOptions options = null);
-		string Update(string key, IReport report);
-		string Update(string key, string type, byte[] data);
-	}
+public interface IReportRepository
+{
+	bool Delete(string key);
+
+	string Create(IReport report, ReportRepositoryOptions options = null);
+	string Create(string name, string type, byte[] data, ReportRepositoryOptions options = null);
+	string Update(string key, IReport report);
+	string Update(string key, string type, byte[] data);
 }

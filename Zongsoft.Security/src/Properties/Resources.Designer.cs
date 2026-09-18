@@ -10,8 +10,8 @@
 
 namespace Zongsoft.Security.Properties {
     using System;
-    
-    
+
+
     /// <summary>
     ///   一个强类型的资源类，用于查找本地化的字符串等。
     /// </summary>
@@ -19,19 +19,19 @@ namespace Zongsoft.Security.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   返回此类使用的缓存的 ResourceManager 实例。
         /// </summary>
@@ -45,10 +45,10 @@ namespace Zongsoft.Security.Properties {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
-        ///   重写当前线程的 CurrentUICulture 属性，对
-        ///   使用此强类型资源类的所有资源查找执行重写。
+        ///   使用此强类型资源类，为所有资源查找
+        ///   重写当前线程的 CurrentUICulture 属性。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -59,90 +59,108 @@ namespace Zongsoft.Security.Properties {
                 resourceCulture = value;
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 表示读取或查询数据的操作。 的本地化字符串。
+        ///   查找类似 Represents a read or query operation. 的本地化字符串。
         /// </summary>
         internal static string Read_Description {
             get {
                 return ResourceManager.GetString("Read.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 读取操作 的本地化字符串。
+        ///   查找类似 Read operation 的本地化字符串。
         /// </summary>
         internal static string Read_Title {
             get {
                 return ResourceManager.GetString("Read.Title", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 提供角色创建、修改等功能。 的本地化字符串。
+        ///   查找类似 Provides role creation and editing features. 的本地化字符串。
         /// </summary>
         internal static string Role_Description {
             get {
                 return ResourceManager.GetString("Role.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 角色管理 的本地化字符串。
+        ///   查找类似 The specified &apos;{0}&apos; value cannot be converted to a role identifier. 的本地化字符串。
+        /// </summary>
+        internal static string Role_IdentifierInvalid_Message {
+            get {
+                return ResourceManager.GetString("Role.IdentifierInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Role management 的本地化字符串。
         /// </summary>
         internal static string Role_Title {
             get {
                 return ResourceManager.GetString("Role.Title", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 提供用户、角色、权限、身份验证与授权等安全管理功能。 的本地化字符串。
+        ///   查找类似 Provides security management for users, roles, permissions, authentication, and authorization. 的本地化字符串。
         /// </summary>
         internal static string Security_Description {
             get {
                 return ResourceManager.GetString("Security.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 安全管理 的本地化字符串。
+        ///   查找类似 Security management 的本地化字符串。
         /// </summary>
         internal static string Security_Title {
             get {
                 return ResourceManager.GetString("Security.Title", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 提供用户创建、修改、密码重置等功能。 的本地化字符串。
+        ///   查找类似 Provides user creation, editing, and password reset features. 的本地化字符串。
         /// </summary>
         internal static string User_Description {
             get {
                 return ResourceManager.GetString("User.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 用户管理 的本地化字符串。
+        ///   查找类似 The specified &apos;{0}&apos; value cannot be converted to a user identifier. 的本地化字符串。
+        /// </summary>
+        internal static string User_IdentifierInvalid_Message {
+            get {
+                return ResourceManager.GetString("User.IdentifierInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 User management 的本地化字符串。
         /// </summary>
         internal static string User_Title {
             get {
                 return ResourceManager.GetString("User.Title", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 表示新增、修改、删除的写入操作。 的本地化字符串。
+        ///   查找类似 Represents a write operation, including creation, modification, and deletion. 的本地化字符串。
         /// </summary>
         internal static string Write_Description {
             get {
                 return ResourceManager.GetString("Write.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 写入操作 的本地化字符串。
+        ///   查找类似 Write operation 的本地化字符串。
         /// </summary>
         internal static string Write_Title {
             get {

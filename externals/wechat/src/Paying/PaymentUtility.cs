@@ -30,32 +30,31 @@
 using System;
 using System.ComponentModel;
 
-namespace Zongsoft.Externals.Wechat.Paying
-{
-	public static class PaymentUtility
-	{
-		public static PaymentKind GetKind(string text) => text?.ToUpperInvariant() switch
-		{
-			"JSAPI" => PaymentKind.Web,
-			"APP" => PaymentKind.App,
-			"NATIVE" => PaymentKind.Native,
-			"MICROPAY" => PaymentKind.Paycode,
-			"MWEB" => PaymentKind.Mobile,
-			"FACEPAY" => PaymentKind.Facepay,
-			_ => PaymentKind.Web,
-		};
+namespace Zongsoft.Externals.Wechat.Paying;
 
-		public static PaymentStatus GetStatus(string text) => text?.ToUpperInvariant() switch
-		{
-			"FAIL" => PaymentStatus.Failed,
-			"NOTPAY" => PaymentStatus.None,
-			"SUCCESS" => PaymentStatus.Succeed,
-			"REFUND" => PaymentStatus.Refund,
-			"CLOSED" => PaymentStatus.Cancelled,
-			"REVOKED" => PaymentStatus.Revoked,
-			"USERPAYING" => PaymentStatus.Paying,
-			"PAYERROR" => PaymentStatus.Failed,
-			_ => PaymentStatus.None,
-		};
-	}
+public static class PaymentUtility
+{
+	public static PaymentKind GetKind(string text) => text?.ToUpperInvariant() switch
+	{
+		"JSAPI" => PaymentKind.Web,
+		"APP" => PaymentKind.App,
+		"NATIVE" => PaymentKind.Native,
+		"MICROPAY" => PaymentKind.Paycode,
+		"MWEB" => PaymentKind.Mobile,
+		"FACEPAY" => PaymentKind.Facepay,
+		_ => PaymentKind.Web,
+	};
+
+	public static PaymentStatus GetStatus(string text) => text?.ToUpperInvariant() switch
+	{
+		"FAIL" => PaymentStatus.Failed,
+		"NOTPAY" => PaymentStatus.None,
+		"SUCCESS" => PaymentStatus.Succeed,
+		"REFUND" => PaymentStatus.Refund,
+		"CLOSED" => PaymentStatus.Cancelled,
+		"REVOKED" => PaymentStatus.Revoked,
+		"USERPAYING" => PaymentStatus.Paying,
+		"PAYERROR" => PaymentStatus.Failed,
+		_ => PaymentStatus.None,
+	};
 }

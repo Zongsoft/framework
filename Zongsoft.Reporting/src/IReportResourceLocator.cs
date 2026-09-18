@@ -30,11 +30,10 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Reporting
+namespace Zongsoft.Reporting;
+
+public interface IReportResourceLocator
 {
-	public interface IReportResourceLocator
-	{
-		IReportResource GetResource(string name);
-		IEnumerable<IReportResource> GetResources(string type);
-	}
+	IReportResource GetResource(string name);
+	IEnumerable<IReportResource> GetResources(string type);
 }

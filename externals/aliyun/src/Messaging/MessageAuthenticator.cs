@@ -30,28 +30,27 @@
 using System;
 using System.Net.Http;
 
-namespace Zongsoft.Externals.Aliyun.Messaging
+namespace Zongsoft.Externals.Aliyun.Messaging;
+
+internal class MessageAuthenticator : HttpAuthenticator
 {
-	internal class MessageAuthenticator : HttpAuthenticator
+	#region 单例字段
+	public static MessageAuthenticator Instance = new MessageAuthenticator("MNS");
+	#endregion
+
+	#region 私有构造
+	private MessageAuthenticator(string name) : base(name, HttpSignatureMode.Header) { }
+	#endregion
+
+	#region 重写方法
+	protected override bool IsCanonicalizedHeader(string name)
 	{
-		#region 单例字段
-		public static MessageAuthenticator Instance = new MessageAuthenticator("MNS");
-		#endregion
-
-		#region 私有构造
-		private MessageAuthenticator(string name) : base(name, HttpSignatureMode.Header) { }
-		#endregion
-
-		#region 重写方法
-		protected override bool IsCanonicalizedHeader(string name)
-		{
-			return name.StartsWith("x-mns-");
-		}
-
-		protected override string CanonicalizeResource(HttpRequestMessage request)
-		{
-			return request.RequestUri.PathAndQuery;
-		}
-		#endregion
+		return name.StartsWith("x-mns-");
 	}
+
+	protected override string CanonicalizeResource(HttpRequestMessage request)
+	{
+		return request.RequestUri.PathAndQuery;
+	}
+	#endregion
 }

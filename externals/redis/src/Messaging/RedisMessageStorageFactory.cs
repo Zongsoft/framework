@@ -53,7 +53,7 @@ public sealed class RedisMessageStorageFactory : Zongsoft.Messaging.MessageStora
 			"/Messaging/Storages/ConnectionSettings", Configuration.RedisConnectionSettingsDriver.NAME);
 
 		if(settings is not Configuration.RedisConnectionSettings redis)
-			throw new ConfigurationException($"The '{name}' Redis connection setting does not exist or its driver does not match Redis.");
+			throw new ConfigurationException(string.Format(Properties.Resources.Redis_ConnectionSettingInvalid_Message, name));
 
 		return new RedisMessageStorage(name, redis, this.GetPartition(redis.Name));
 	}

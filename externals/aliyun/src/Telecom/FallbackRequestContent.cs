@@ -33,52 +33,51 @@ using System.Text.Json.Serialization;
 
 using Zongsoft.Serialization;
 
-namespace Zongsoft.Externals.Aliyun.Telecom
+namespace Zongsoft.Externals.Aliyun.Telecom;
+
+public class FallbackRequestContent
 {
-	public class FallbackRequestContent
-	{
-		[JsonPropertyName("role")]
-		[SerializationMember("role")]
-		public string Actor { get; set; }
+	[JsonPropertyName("role")]
+	[SerializationMember("role")]
+	public string Actor { get; set; }
 
-		[JsonPropertyName("identity")]
-		[SerializationMember("identity")]
-		public string Identity { get; set; }
+	[JsonPropertyName("identity")]
+	[SerializationMember("identity")]
+	public string Identity { get; set; }
 
-		[JsonPropertyName("words")]
-		[SerializationMember("words")]
-		public string Value { get; set; }
+	[JsonPropertyName("words")]
+	[SerializationMember("words")]
+	public string Value { get; set; }
 
-		[JsonPropertyName("is_playing")]
-		[SerializationMember("is_playing")]
-		public bool Playing { get; set; }
+	[JsonPropertyName("is_playing")]
+	[SerializationMember("is_playing")]
+	public bool Playing { get; set; }
 
-		[JsonPropertyName("current_media_code")]
-		[SerializationMember("current_media_code")]
-		public string VoiceCode { get; set; }
+	[JsonPropertyName("current_media_code")]
+	[SerializationMember("current_media_code")]
+	public string VoiceCode { get; set; }
 
-		[JsonPropertyName("dynamic_id")]
-		[SerializationMember("dynamic_id")]
-		public string Extra { get; set; }
+	[JsonPropertyName("dynamic_id")]
+	[SerializationMember("dynamic_id")]
+	public string Extra { get; set; }
 
-		[JsonPropertyName("dtmf_digits")]
-		[SerializationMember("dtmf_digits")]
-		public string Digits { get; set; }
+	[JsonPropertyName("dtmf_digits")]
+	[SerializationMember("dtmf_digits")]
+	public string Digits { get; set; }
 
-		[JsonPropertyName("cc_name")]
-		[SerializationMember("cc_name")]
-		public string TransferName { get; set; }
+	[JsonPropertyName("cc_name")]
+	[SerializationMember("cc_name")]
+	public string TransferName { get; set; }
 
-		[JsonPropertyName("transfer_status")]
-		[SerializationMember("transfer_status")]
-		public string TransferStatus { get; set; }
+	[JsonPropertyName("transfer_status")]
+	[SerializationMember("transfer_status")]
+	public string TransferStatus { get; set; }
 
-		[JsonPropertyName("fail_cause")]
-		[SerializationMember("fail_cause")]
-		public string TransferReason { get; set; }
+	[JsonPropertyName("fail_cause")]
+	[SerializationMember("fail_cause")]
+	public string TransferReason { get; set; }
 
-		[JsonPropertyName("is_monitor\t")]
-		[SerializationMember("is_monitor\t")]
-		public bool IsTransferMonitor { get; set; }
-	}
+	[JsonPropertyName("is_monitor\t")]
+	[SerializationMember("is_monitor\t")]
+	public bool IsTransferMonitor { get; set; }
 }

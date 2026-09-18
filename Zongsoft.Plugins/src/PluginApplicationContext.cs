@@ -33,156 +33,155 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Zongsoft.Plugins
+namespace Zongsoft.Plugins;
+
+public class PluginApplicationContext : Zongsoft.Services.ApplicationContext
 {
-	public class PluginApplicationContext : Zongsoft.Services.ApplicationContext
+	#region 事件声明
+	public event EventHandler WorkbenchCreated;
+	#endregion
+
+	#region 私有变量
+	private readonly object _syncRoot;
+	private IWorkbenchBase _workbench;
+	#endregion
+
+	#region 构造函数
+	protected PluginApplicationContext(IServiceProvider services, PluginOptions options) : base(services)
 	{
-		#region 事件声明
-		public event EventHandler WorkbenchCreated;
-		#endregion
+		_syncRoot = new object();
+		this.Options = options ?? services.GetService<PluginOptions>();
+		this.PluginTree = PluginTree.Get(this.Options);
+	}
+	#endregion
 
-		#region 私有变量
-		private readonly object _syncRoot;
-		private IWorkbenchBase _workbench;
-		#endregion
+	#region 公共属性
+	/// <summary>获取当前插件上下文对应的设置。</summary>
+	public PluginOptions Options { get; }
 
-		#region 构造函数
-		protected PluginApplicationContext(IServiceProvider services, PluginOptions options) : base(services)
+	/// <summary>获取当前插件运行时的插件树。</summary>
+	public PluginTree PluginTree { get; }
+
+	/// <summary>获取加载的根插件集。</summary>
+	public IEnumerable<Plugin> Plugins => this.PluginTree.Plugins;
+
+	/// <summary>获取当前应用程序的主控台(工作台)。</summary>
+	public IWorkbenchBase Workbench
+	{
+		get
 		{
-			_syncRoot = new object();
-			this.Options = options ?? services.GetService<PluginOptions>();
-			this.PluginTree = PluginTree.Get(this.Options);
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取当前插件上下文对应的设置。</summary>
-		public PluginOptions Options { get; }
-
-		/// <summary>获取当前插件运行时的插件树。</summary>
-		public PluginTree PluginTree { get; }
-
-		/// <summary>获取加载的根插件集。</summary>
-		public IEnumerable<Plugin> Plugins => this.PluginTree.Plugins;
-
-		/// <summary>获取当前应用程序的主控台(工作台)。</summary>
-		public IWorkbenchBase Workbench
-		{
-			get
+			if(_workbench == null)
 			{
-				if(_workbench == null)
+				lock(_syncRoot)
 				{
-					lock(_syncRoot)
+					if(_workbench == null)
 					{
-						if(_workbench == null)
-						{
-							//创建工作台对象
-							_workbench = this.CreateWorkbench(out var node) ?? throw new InvalidOperationException("Failed to create the Workbench.");
+						//创建工作台对象
+						_workbench = this.CreateWorkbench(out var node) ?? throw new InvalidOperationException(global::Zongsoft.Plugins.Properties.Resources.Workbench_CreationFailed_Message);
 
-							//将当前工作台对象挂载到插件结构中
-							this.PluginTree.Mount(node, _workbench);
+						//将当前工作台对象挂载到插件结构中
+						this.PluginTree.Mount(node, _workbench);
 
-							//查找“Startup”启动目录节点
-							var startup = this.PluginTree.Find(this.Options.GetStartupMountion());
+						//查找“Startup”启动目录节点
+						var startup = this.PluginTree.Find(this.Options.GetStartupMountion());
 
-							//确认工作台路径及其下属所有节点均已构建完成
-							//注意：忽略“Startup”节点及其子节点，必须将“Startup”节点置于最后构建
-							BuildWorkbenchChildren(node, n => n == startup);
+						//确认工作台路径及其下属所有节点均已构建完成
+						//注意：忽略“Startup”节点及其子节点，必须将“Startup”节点置于最后构建
+						BuildWorkbenchChildren(node, n => n == startup);
 
-							//激发“WorkbenchCreated”事件
-							this.OnWorkbenchCreated();
-						}
+						//激发“WorkbenchCreated”事件
+						this.OnWorkbenchCreated();
 					}
 				}
-
-				return _workbench;
-			}
-		}
-		#endregion
-
-		#region 虚拟方法
-		/// <summary>创建一个主控台对象。</summary>
-		/// <returns>返回的主控台对象。</returns>
-		protected virtual IWorkbenchBase CreateWorkbench(out PluginTreeNode node)
-		{
-			node = this.PluginTree.EnsurePath(this.Options.GetWorkbenchMountion());
-
-			if(node != null && node.NodeType == PluginTreeNodeType.Builtin)
-				return node.UnwrapValue(ObtainMode.Auto) as IWorkbenchBase;
-			else
-				return null;
-		}
-		#endregion
-
-		#region 初始方法
-		public override bool Initialize()
-		{
-			//首先调用基类的初始化
-			if(!base.Initialize())
-				return false;
-
-			//加载插件树
-			this.PluginTree.Load();
-
-			//挂载当前应用上下文
-			this.PluginTree.Mount(this.Options.GetApplicationContextMountion(), this);
-
-			//返回初始化完成
-			return true;
-		}
-		#endregion
-
-		#region 重写方法
-		protected override void OnStarted()
-		{
-			this.Workbench.Open();
-			base.OnStarted();
-		}
-
-		protected override void OnStopping()
-		{
-			this.Workbench.Close();
-			base.OnStopping();
-		}
-		#endregion
-
-		#region 处置方法
-		protected override void Dispose(bool disposing)
-		{
-			if(disposing)
-			{
-				if(_workbench is IDisposable disposable)
-					disposable.Dispose();
-				else
-					_workbench?.Close();
 			}
 
-			//执行基类的处置操作
-			base.Dispose(disposing);
+			return _workbench;
 		}
-		#endregion
-
-		#region 激发事件
-		protected virtual void OnWorkbenchCreated(EventArgs args = null) => this.WorkbenchCreated?.Invoke(this, args ?? EventArgs.Empty);
-		#endregion
-
-		#region 私有方法
-		private static void BuildWorkbenchChildren(PluginTreeNode node, Predicate<PluginTreeNode> predicate)
-		{
-			if(node == null || predicate(node))
-				return;
-
-			if(node.NodeType == PluginTreeNodeType.Builtin)
-			{
-				var builtin = (Builtin)node.Value;
-
-				if(!builtin.IsBuilded)
-					builtin.Build();
-			}
-
-			foreach(var child in node.Children)
-				BuildWorkbenchChildren(child, predicate);
-		}
-		#endregion
 	}
+	#endregion
+
+	#region 虚拟方法
+	/// <summary>创建一个主控台对象。</summary>
+	/// <returns>返回的主控台对象。</returns>
+	protected virtual IWorkbenchBase CreateWorkbench(out PluginTreeNode node)
+	{
+		node = this.PluginTree.EnsurePath(this.Options.GetWorkbenchMountion());
+
+		if(node != null && node.NodeType == PluginTreeNodeType.Builtin)
+			return node.UnwrapValue(ObtainMode.Auto) as IWorkbenchBase;
+		else
+			return null;
+	}
+	#endregion
+
+	#region 初始方法
+	public override bool Initialize()
+	{
+		//首先调用基类的初始化
+		if(!base.Initialize())
+			return false;
+
+		//加载插件树
+		this.PluginTree.Load();
+
+		//挂载当前应用上下文
+		this.PluginTree.Mount(this.Options.GetApplicationContextMountion(), this);
+
+		//返回初始化完成
+		return true;
+	}
+	#endregion
+
+	#region 重写方法
+	protected override void OnStarted()
+	{
+		this.Workbench.Open();
+		base.OnStarted();
+	}
+
+	protected override void OnStopping()
+	{
+		this.Workbench.Close();
+		base.OnStopping();
+	}
+	#endregion
+
+	#region 处置方法
+	protected override void Dispose(bool disposing)
+	{
+		if(disposing)
+		{
+			if(_workbench is IDisposable disposable)
+				disposable.Dispose();
+			else
+				_workbench?.Close();
+		}
+
+		//执行基类的处置操作
+		base.Dispose(disposing);
+	}
+	#endregion
+
+	#region 激发事件
+	protected virtual void OnWorkbenchCreated(EventArgs args = null) => this.WorkbenchCreated?.Invoke(this, args ?? EventArgs.Empty);
+	#endregion
+
+	#region 私有方法
+	private static void BuildWorkbenchChildren(PluginTreeNode node, Predicate<PluginTreeNode> predicate)
+	{
+		if(node == null || predicate(node))
+			return;
+
+		if(node.NodeType == PluginTreeNodeType.Builtin)
+		{
+			var builtin = (Builtin)node.Value;
+
+			if(!builtin.IsBuilded)
+				builtin.Build();
+		}
+
+		foreach(var child in node.Children)
+			BuildWorkbenchChildren(child, predicate);
+	}
+	#endregion
 }

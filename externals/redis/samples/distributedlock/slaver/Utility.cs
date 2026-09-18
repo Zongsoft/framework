@@ -25,7 +25,7 @@ internal static class Utility
 		var scenario = context.Options.GetValue<string>("scenario", "mutex");
 
 		if(string.IsNullOrWhiteSpace(runId))
-			throw new CommandException("Missing the run-id option. Specify --run-id:<id> or --namespace:<namespace>.");
+			throw new CommandException(global::Zongsoft.Externals.Redis.DistributedLock.Slaver.Properties.Resources.Sample_RunIdRequired_Message);
 
 		return $"DistributedLock:{runId}:{scenario}";
 	}

@@ -11,7 +11,7 @@ using Zongsoft.Messaging;
 using Zongsoft.Components;
 using Zongsoft.Collections;
 
-using Global= Zongsoft.Externals.Redis.Tests.Global;
+using Global = Zongsoft.Externals.Redis.Tests.Global;
 using RedisTestUtility = Zongsoft.Externals.Redis.Tests.RedisTestUtility;
 
 namespace Zongsoft.Externals.Redis.Messaging.Tests;

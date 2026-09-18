@@ -44,7 +44,7 @@ internal sealed class RegionEndpointConverter : TypeConverter
 			if(string.IsNullOrEmpty(text))
 				return null;
 
-			return RegionEndpoint.GetBySystemName(text) ?? throw new FormatException($"The specified region '{text}' is not valid.");
+			return RegionEndpoint.GetBySystemName(text) ?? throw new FormatException(string.Format(Properties.Resources.Storage_RegionInvalid_Message, text));
 		}
 
 		return base.ConvertFrom(context, culture, value);

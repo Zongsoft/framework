@@ -29,25 +29,24 @@
 
 using System;
 
-namespace Zongsoft.Externals.Aliyun.Pushing
-{
-	public class PushingResult
-	{
-		#region 构造函数
-		public PushingResult() { }
-		public PushingResult(string code, string message)
-		{
-			this.Code = code;
-			this.Message = message;
-		}
-		#endregion
+namespace Zongsoft.Externals.Aliyun.Pushing;
 
-		#region 公共属性
-		public string RequestId { get; set; }
-		public string MessageId { get; set; }
-		public string Code { get; set; }
-		public string Message { get; set; }
-		public bool IsSucceed => string.IsNullOrWhiteSpace(this.Code);
-		#endregion
+public class PushingResult
+{
+	#region 构造函数
+	public PushingResult() { }
+	public PushingResult(string code, string message)
+	{
+		this.Code = code;
+		this.Message = message;
 	}
+	#endregion
+
+	#region 公共属性
+	public string RequestId { get; set; }
+	public string MessageId { get; set; }
+	public string Code { get; set; }
+	public string Message { get; set; }
+	public bool IsSucceed => string.IsNullOrWhiteSpace(this.Code);
+	#endregion
 }

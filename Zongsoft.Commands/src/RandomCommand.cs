@@ -89,7 +89,7 @@ public class RandomCommand : CommandBase<CommandContext>
 
 					if(minimum.HasValue || maximum.HasValue)
 					{
-						for(int i=0; i< bytes.Length; i++)
+						for(int i = 0; i < bytes.Length; i++)
 							bytes[i] = Clamp(bytes[i], minimum, maximum);
 					}
 
@@ -246,7 +246,7 @@ public class RandomCommand : CommandBase<CommandContext>
 						Common.Randomizer.GenerateSecret(size):
 						Common.Randomizer.GenerateString(size));
 			default:
-				throw new CommandException($"The '{TYPE_OPTION}' option of this command does not support the specified '{type.Name}' value.");
+				throw new CommandException(string.Format(Properties.Resources.Command_OptionValueUnsupported_Message, TYPE_OPTION, type.Name));
 		}
 	}
 	#endregion

@@ -84,7 +84,7 @@ public abstract class UserModel : IUser, IIdentifiable, IIdentifiable<uint>, IEq
 					this.Identify(id.Value);
 				break;
 			default:
-				throw new InvalidOperationException($"The specified '{value}' value cannot be converted to a user identifier.");
+				throw new InvalidOperationException(string.Format(Properties.Resources.User_IdentifierInvalid_Message, value));
 		}
 	}
 	#endregion

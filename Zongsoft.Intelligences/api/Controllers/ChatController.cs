@@ -95,9 +95,9 @@ partial class AssistantController
 		public IActionResult Exit(string name, string id)
 		{
 			if(string.IsNullOrEmpty(name))
-				throw new BadHttpRequestException($"Unspecified the AI assistant.");
+				throw new BadHttpRequestException(Properties.Resources.Chat_AssistantRequired_Message);
 			if(string.IsNullOrEmpty(id))
-				throw new BadHttpRequestException($"Unspecified the chat session identifier.");
+				throw new BadHttpRequestException(Properties.Resources.Chat_SessionIdRequired_Message);
 
 			var assistant = AssistantManager.GetAssistant(name);
 			if(assistant == null)
@@ -113,13 +113,13 @@ partial class AssistantController
 		public async Task ChatAsync(string name, string id, [FromQuery]string role = null, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(name))
-				throw new BadHttpRequestException($"Unspecified the AI assistant.");
+				throw new BadHttpRequestException(Properties.Resources.Chat_AssistantRequired_Message);
 
 			var content = await this.Request.ReadAsStringAsync(cancellation);
 			if(string.IsNullOrWhiteSpace(content))
-				throw new BadHttpRequestException($"Missing the chat content.");
+				throw new BadHttpRequestException(Properties.Resources.Chat_ContentRequired_Message);
 
-			var assistant = AssistantManager.GetAssistant(name) ?? throw new BadHttpRequestException($"The specified '{name}' AI assistant was not found.");
+			var assistant = AssistantManager.GetAssistant(name) ?? throw new BadHttpRequestException(string.Format(Properties.Resources.Chat_AssistantNotFound_Message, name));
 			var session = string.IsNullOrEmpty(id) ? null : assistant.Chatting.Sessions.Get(id);
 			var results = session != null ?
 				session.ChatAsync(role, content, cancellation) :           //有对话历史

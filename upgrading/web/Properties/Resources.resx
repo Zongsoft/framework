@@ -123,4 +123,7 @@
   <data name="Evaluator.Default.Description" xml:space="preserve">
     <value>Provide settings for configuring match evaluation.</value>
   </data>
+	<data name="Command.ParameterRequired.Message" xml:space="preserve">
+		<value>The '{0}' parameter is required.</value>
+	</data>
 </root>

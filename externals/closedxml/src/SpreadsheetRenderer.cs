@@ -61,11 +61,11 @@ public class SpreadsheetRenderer : IDataTemplateRenderer, Services.IMatchable
 
 		//确保模板类型是受支持的电子表格类型
 		if(!Spreadsheet.Format.Equals(template.Format))
-			throw new InvalidOperationException($"Unsupported template format: '{template.Format}'.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.Spreadsheet_TemplateFormatUnsupported_Message, template.Format));
 
 		//确保指定的渲染格式是受支持的电子表格类型
 		if(!string.IsNullOrEmpty(format) && !Spreadsheet.Format.Equals(format))
-			throw new InvalidOperationException($"Unsupported rendering format: '{format}'.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.Spreadsheet_RenderingFormatUnsupported_Message, format));
 
 		using var stream = template.Open();
 		using var report = new XLTemplate(stream);

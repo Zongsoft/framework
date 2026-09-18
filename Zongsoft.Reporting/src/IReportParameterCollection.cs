@@ -30,14 +30,13 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Reporting
-{
-	public interface IReportParameterCollection : ICollection<IReportParameter>
-	{
-		IReportParameter this[string name] { get; }
+namespace Zongsoft.Reporting;
 
-		bool Contains(string name);
-		bool Remove(string name);
-		bool TryGetValue(string name, out IReportParameter parameter);
-	}
+public interface IReportParameterCollection : ICollection<IReportParameter>
+{
+	IReportParameter this[string name] { get; }
+
+	bool Contains(string name);
+	bool Remove(string name);
+	bool TryGetValue(string name, out IReportParameter parameter);
 }

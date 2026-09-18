@@ -30,17 +30,16 @@
 using System;
 using System.ComponentModel;
 
-namespace Zongsoft.Plugins
-{
-	/// <summary>
-	/// 表示固定元件的类型。
-	/// </summary>
-	public enum FixedElementType
-	{
-		/// <summary>构建器，指实现了 <seealso cref="Zongsoft.Plugins.IBuilder"/> 接口的类。</summary>
-		Builder = 0,
+namespace Zongsoft.Plugins;
 
-		/// <summary>解析器，指实现了 <seealso cref="Zongsoft.Plugins.IParser"/> 接口的类。</summary>
-		Parser = 1,
-	}
+/// <summary>
+/// 表示固定元件的类型。
+/// </summary>
+public enum FixedElementType
+{
+	/// <summary>构建器，指实现了 <seealso cref="Zongsoft.Plugins.IBuilder"/> 接口的类。</summary>
+	Builder = 0,
+
+	/// <summary>解析器，指实现了 <seealso cref="Zongsoft.Plugins.IParser"/> 接口的类。</summary>
+	Parser = 1,
 }

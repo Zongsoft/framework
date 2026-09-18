@@ -30,26 +30,25 @@
 using System;
 using System.ComponentModel;
 
-namespace Zongsoft.Externals.Aliyun.Pushing
+namespace Zongsoft.Externals.Aliyun.Pushing;
+
+/// <summary>
+/// 关于移动推送目标种类(推送方式)的枚举。
+/// </summary>
+public enum PushingTargetType
 {
-	/// <summary>
-	/// 关于移动推送目标种类(推送方式)的枚举。
-	/// </summary>
-	public enum PushingTargetType
-	{
-		/// <summary>所有</summary>
-		All,
+	/// <summary>所有</summary>
+	All,
 
-		/// <summary>设备</summary>
-		Device,
+	/// <summary>设备</summary>
+	Device,
 
-		/// <summary>账号</summary>
-		Account,
+	/// <summary>账号</summary>
+	Account,
 
-		/// <summary>别名</summary>
-		Alias,
+	/// <summary>别名</summary>
+	Alias,
 
-		/// <summary>标签</summary>
-		Tag,
-	}
+	/// <summary>标签</summary>
+	Tag,
 }

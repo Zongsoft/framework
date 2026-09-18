@@ -10,8 +10,8 @@
 
 namespace Zongsoft.Data.Influx.Properties {
     using System;
-    
-    
+
+
     /// <summary>
     ///   一个强类型的资源类，用于查找本地化的字符串等。
     /// </summary>
@@ -19,19 +19,19 @@ namespace Zongsoft.Data.Influx.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   返回此类使用的缓存的 ResourceManager 实例。
         /// </summary>
@@ -45,10 +45,10 @@ namespace Zongsoft.Data.Influx.Properties {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
-        ///   重写当前线程的 CurrentUICulture 属性，对
-        ///   使用此强类型资源类的所有资源查找执行重写。
+        ///   使用此强类型资源类，为所有资源查找
+        ///   重写当前线程的 CurrentUICulture 属性。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -59,7 +59,43 @@ namespace Zongsoft.Data.Influx.Properties {
                 resourceCulture = value;
             }
         }
-        
+
+        /// <summary>
+        ///   查找类似 Invalid &apos;{0}&apos; aggregate method. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_AggregateInvalid_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.AggregateInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Unsupported &apos;{0}&apos; data type. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_DataTypeUnsupported_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.DataTypeUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The Influx driver does not support the &apos;{0}&apos; sequence function. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_SequenceUnsupported_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.SequenceUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Not supported &apos;{0}&apos; statement. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_StatementUnsupported_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.StatementUnsupported.Message", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   查找类似 Database 的本地化字符串。
         /// </summary>
@@ -68,7 +104,7 @@ namespace Zongsoft.Data.Influx.Properties {
                 return ResourceManager.GetString("Influx.Settings.Database", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Organization 的本地化字符串。
         /// </summary>
@@ -77,7 +113,7 @@ namespace Zongsoft.Data.Influx.Properties {
                 return ResourceManager.GetString("Influx.Settings.Organization", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Timestamp Precision 的本地化字符串。
         /// </summary>
@@ -86,7 +122,7 @@ namespace Zongsoft.Data.Influx.Properties {
                 return ResourceManager.GetString("Influx.Settings.Precision", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Server 的本地化字符串。
         /// </summary>
@@ -95,7 +131,7 @@ namespace Zongsoft.Data.Influx.Properties {
                 return ResourceManager.GetString("Influx.Settings.Server", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Timeout 的本地化字符串。
         /// </summary>
@@ -104,13 +140,22 @@ namespace Zongsoft.Data.Influx.Properties {
                 return ResourceManager.GetString("Influx.Settings.Timeout", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Token 的本地化字符串。
         /// </summary>
         internal static string Influx_Settings_Token {
             get {
                 return ResourceManager.GetString("Influx.Settings.Token", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing required fields in the insert statement. 的本地化字符串。
+        /// </summary>
+        internal static string InsertStatement_MissingFields_Message {
+            get {
+                return ResourceManager.GetString("InsertStatement.MissingFields.Message", resourceCulture);
             }
         }
     }

@@ -43,9 +43,9 @@ public class UnscheduleCommand : CommandBase<CommandContext>
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(context.Arguments == null || context.Arguments.IsEmpty)
-			throw new CommandException($"Missing the required arguments.");
+			throw new CommandException(Properties.Resources.Command_ArgumentsRequired_Message);
 
-		var scheduler = context.Find<SchedulerCommand>(true)?.Scheduler ?? throw new CommandException($"Missing the required scheduler.");
+		var scheduler = context.Find<SchedulerCommand>(true)?.Scheduler ?? throw new CommandException(Properties.Resources.Scheduler_Required_Message);
 
 		for(int i = 0; i < context.Arguments.Count; i++)
 		{

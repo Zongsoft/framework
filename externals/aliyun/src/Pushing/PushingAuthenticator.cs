@@ -30,41 +30,40 @@
 using System;
 using System.Net.Http;
 
-namespace Zongsoft.Externals.Aliyun.Pushing
+namespace Zongsoft.Externals.Aliyun.Pushing;
+
+public class PushingAuthenticator : HttpAuthenticator
 {
-	public class PushingAuthenticator : HttpAuthenticator
+	#region 单例字段
+	public static readonly PushingAuthenticator Instance = new();
+	#endregion
+
+	#region 私有构造
+	private PushingAuthenticator() : base("Signature", HttpSignatureMode.Parameter)
 	{
-		#region 单例字段
-		public static readonly PushingAuthenticator Instance = new();
-		#endregion
-
-		#region 私有构造
-		private PushingAuthenticator() : base("Signature", HttpSignatureMode.Parameter)
-		{
-		}
-		#endregion
-
-		#region 重写方法
-		public override string Signature(HttpRequestMessage request, string secret)
-		{
-			return base.Signature(request, secret + "&");
-		}
-
-		protected override string Canonicalize(HttpRequestMessage request)
-		{
-			var canonicalizedString = base.Canonicalize(request);
-			return request.Method.Method + "&%2F&" + Uri.EscapeDataString(canonicalizedString);
-		}
-
-		protected override string CanonicalizeHeaders(HttpRequestMessage request)
-		{
-			return null;
-		}
-
-		protected override string CanonicalizeResource(HttpRequestMessage request)
-		{
-			return CanonicalizeQuery(request.RequestUri, tx => tx.Replace("%2A", "*").Replace("%7E", "~"));
-		}
-		#endregion
 	}
+	#endregion
+
+	#region 重写方法
+	public override string Signature(HttpRequestMessage request, string secret)
+	{
+		return base.Signature(request, secret + "&");
+	}
+
+	protected override string Canonicalize(HttpRequestMessage request)
+	{
+		var canonicalizedString = base.Canonicalize(request);
+		return request.Method.Method + "&%2F&" + Uri.EscapeDataString(canonicalizedString);
+	}
+
+	protected override string CanonicalizeHeaders(HttpRequestMessage request)
+	{
+		return null;
+	}
+
+	protected override string CanonicalizeResource(HttpRequestMessage request)
+	{
+		return CanonicalizeQuery(request.RequestUri, tx => tx.Replace("%2A", "*").Replace("%7E", "~"));
+	}
+	#endregion
 }

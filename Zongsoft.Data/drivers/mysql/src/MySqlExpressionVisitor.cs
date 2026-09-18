@@ -103,7 +103,7 @@ public class MySqlExpressionVisitor : ExpressionVisitorBase
 				MySqlExecutionStatementVisitor.Instance.Visit(context, execution);
 				break;
 			default:
-				throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.StatementUnsupported.Message"), statement));
+				throw new DataException(string.Format(Properties.Resources.ExpressionVisitor_StatementUnsupported_Message, statement));
 		}
 	}
 
@@ -209,7 +209,7 @@ public class MySqlExpressionVisitor : ExpressionVisitorBase
 			DbType.VarNumeric => $"numeric({precision},{scale})",
 			DbType.Xml => "text",
 			DbType.Object => type.ToString(),
-			_ => throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.DataTypeUnsupported.Message"), type)),
+			_ => throw new DataException(string.Format(Properties.Resources.ExpressionVisitor_DataTypeUnsupported_Message, type)),
 		};
 
 		public string GetMethodName(MethodExpression method)
@@ -253,14 +253,14 @@ public class MySqlExpressionVisitor : ExpressionVisitorBase
 			DataAggregateFunction.DeviationPopulation => "STDEV_POP",
 			DataAggregateFunction.Variance => "VARIANCE",
 			DataAggregateFunction.VariancePopulation => "VAR_POP",
-			_ => throw new NotSupportedException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.AggregateInvalid.Message"), function)),
+			_ => throw new NotSupportedException(string.Format(Properties.Resources.ExpressionVisitor_AggregateInvalid_Message, function)),
 		};
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private static string GetSequenceName(SequenceExpression sequence)
 		{
 			if(sequence.Method != SequenceMethod.Current)
-				throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.SequenceUnsupported.Message"), MySqlDriver.NAME, sequence.Method));
+				throw new DataException(string.Format(Properties.Resources.ExpressionVisitor_SequenceUnsupported_Message, MySqlDriver.NAME, sequence.Method));
 
 			return "LAST_INSERT_ID";
 		}

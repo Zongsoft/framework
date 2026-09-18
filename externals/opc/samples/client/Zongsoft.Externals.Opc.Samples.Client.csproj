@@ -26,4 +26,20 @@
 			</ItemGroup>
 		</Otherwise>
 	</Choose>
+
+	<ItemGroup>
+		<Compile Include="..\Properties\Resources.Designer.cs" Link="Properties\Resources.Designer.cs">
+			<AutoGen>true</AutoGen>
+			<DesignTime>true</DesignTime>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
+		<EmbeddedResource Include="..\Properties\Resources.resx" Link="Properties\Resources.resx">
+			<LogicalName>Zongsoft.Externals.Opc.Samples.Properties.Resources.resources</LogicalName>
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
+		<EmbeddedResource Include="..\Properties\Resources.zh-Hans.resx" Link="Properties\Resources.zh-Hans.resx">
+			<LogicalName>Zongsoft.Externals.Opc.Samples.Properties.Resources.zh-Hans.resources</LogicalName>
+		</EmbeddedResource>
+	</ItemGroup>
 </Project>

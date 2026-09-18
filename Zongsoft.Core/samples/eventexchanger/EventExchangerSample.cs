@@ -23,7 +23,7 @@ public class EventExchangerSample
 		var queue = new ZeroQueue("ZeroMQ", Zongsoft.Messaging.ZeroMQ.Configuration.ZeroConnectionSettingsDriver.Instance.GetSettings(CONNECTION_STRING));
 
 		//添加事件交换器通道
-		EventExchanger.Instance.Channels.Add(queue.Channel);
+		EventExchanger.Instance.Channels.Add(queue.Channel());
 
 		EventExchanger.Instance.Locator = (e) =>
 		{
@@ -82,7 +82,7 @@ public class EventExchangerSample
 			if(metrics == null || metrics.Count == 0)
 				return;
 
-			for(int i= 0; i<metrics.Count; i++)
+			for(int i = 0; i < metrics.Count; i++)
 			{
 				text.AppendLine();
 				text.Append($"  [{i + 1}]{metrics[i]}");

@@ -34,83 +34,82 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Wechat
+namespace Zongsoft.Externals.Wechat;
+
+internal static class XmlUtility
 {
-	internal static class XmlUtility
+	#region 私有变量
+	private static readonly XmlReaderSettings _settings = new()
 	{
-		#region 私有变量
-		private static readonly XmlReaderSettings _settings = new()
+		IgnoreComments = true,
+		IgnoreWhitespace = true,
+		IgnoreProcessingInstructions = true,
+		ValidationType = ValidationType.None,
+	};
+	#endregion
+
+	#region 公共方法
+	public static StringContent CreateXmlContent(this IEnumerable<KeyValuePair<string, object>> data)
+	{
+		var text = new System.Text.StringBuilder();
+		text.AppendLine("<xml>");
+
+		foreach(var entry in data)
 		{
-			IgnoreComments = true,
-			IgnoreWhitespace = true,
-			IgnoreProcessingInstructions = true,
-			ValidationType = ValidationType.None,
-		};
-		#endregion
+			if(entry.Value == null)
+				continue;
 
-		#region 公共方法
-		public static StringContent CreateXmlContent(this IEnumerable<KeyValuePair<string, object>> data)
-		{
-			var text = new System.Text.StringBuilder();
-			text.AppendLine("<xml>");
-
-			foreach(var entry in data)
-			{
-				if(entry.Value == null)
-					continue;
-
-				text.AppendLine($"<{entry.Key}>{entry.Value}</{entry.Key}>");
-			}
-
-			text.AppendLine("</xml>");
-			return new StringContent(text.ToString(), System.Text.Encoding.UTF8, "application/xml");
+			text.AppendLine($"<{entry.Key}>{entry.Value}</{entry.Key}>");
 		}
 
-		public static IDictionary<string, string> GetXmlContent(this HttpResponseMessage response, CancellationToken cancellation = default)
-		{
-			if(response == null || response.Content.Headers.ContentLength <= 0)
-				return null;
-
-			return Resolve(response.Content.ReadAsStream(cancellation));
-		}
-
-		public static async ValueTask<IDictionary<string, string>> GetXmlContentAsync(this HttpResponseMessage response, CancellationToken cancellation = default)
-		{
-			if(response == null || response.Content.Headers.ContentLength <= 0)
-				return null;
-
-			return Resolve(await response.Content.ReadAsStreamAsync(cancellation));
-		}
-		#endregion
-
-		#region 私有方法
-		private static IDictionary<string, string> Resolve(System.IO.Stream stream, XmlReaderSettings settings = null)
-		{
-			if(stream == null || !stream.CanRead)
-				return null;
-
-			using var reader = XmlReader.Create(stream, settings ?? _settings);
-
-			if(reader.Read())
-			{
-				var result = new Dictionary<string, string>();
-
-				while(reader.Read())
-				{
-					if(reader.NodeType == XmlNodeType.Element && !reader.IsEmptyElement)
-					{
-						var key = reader.LocalName;
-
-						if(reader.Read() && (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.CDATA))
-							result[key] = reader.Value;
-					}
-				}
-
-				return result;
-			}
-
-			return null;
-		}
-		#endregion
+		text.AppendLine("</xml>");
+		return new StringContent(text.ToString(), System.Text.Encoding.UTF8, "application/xml");
 	}
+
+	public static IDictionary<string, string> GetXmlContent(this HttpResponseMessage response, CancellationToken cancellation = default)
+	{
+		if(response == null || response.Content.Headers.ContentLength <= 0)
+			return null;
+
+		return Resolve(response.Content.ReadAsStream(cancellation));
+	}
+
+	public static async ValueTask<IDictionary<string, string>> GetXmlContentAsync(this HttpResponseMessage response, CancellationToken cancellation = default)
+	{
+		if(response == null || response.Content.Headers.ContentLength <= 0)
+			return null;
+
+		return Resolve(await response.Content.ReadAsStreamAsync(cancellation));
+	}
+	#endregion
+
+	#region 私有方法
+	private static IDictionary<string, string> Resolve(System.IO.Stream stream, XmlReaderSettings settings = null)
+	{
+		if(stream == null || !stream.CanRead)
+			return null;
+
+		using var reader = XmlReader.Create(stream, settings ?? _settings);
+
+		if(reader.Read())
+		{
+			var result = new Dictionary<string, string>();
+
+			while(reader.Read())
+			{
+				if(reader.NodeType == XmlNodeType.Element && !reader.IsEmptyElement)
+				{
+					var key = reader.LocalName;
+
+					if(reader.Read() && (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.CDATA))
+						result[key] = reader.Value;
+				}
+			}
+
+			return result;
+		}
+
+		return null;
+	}
+	#endregion
 }

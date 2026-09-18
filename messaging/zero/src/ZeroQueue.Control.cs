@@ -276,54 +276,54 @@ public sealed partial class ZeroQueue
 				switch(message[0].ConvertToString())
 				{
 					case Protocol.Commands.Registered when message.FrameCount == 2:
-					{
-						var identifier = message[1].ConvertToString();
-						if(_subscriptions.TryGetValue(identifier, out var subscription))
 						{
-							subscription.Registered = true;
-							subscription.Command?.Completion.TrySetResult();
-							subscription.Command = null;
+							var identifier = message[1].ConvertToString();
+							if(_subscriptions.TryGetValue(identifier, out var subscription))
+							{
+								subscription.Registered = true;
+								subscription.Command?.Completion.TrySetResult();
+								subscription.Command = null;
+							}
+							break;
 						}
-						break;
-					}
 					case Protocol.Commands.Deliver when message.FrameCount == 10:
-					{
-						var subscription = message[1].ConvertToString();
-						if(!_subscriptions.TryGetValue(subscription, out var registration))
-							break;
-
-						var identifier = message[2].ConvertToString();
-						var topic = message[3].ConvertToString();
-						var producer = message[4].ConvertToString();
-						var tags = message[5].ConvertToString();
-						var timestamp = long.TryParse(message[6].ConvertToString(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var ticks) ?
-							new DateTime(ticks, DateTimeKind.Utc) : DateTime.UtcNow;
-						var compression = message[8].ConvertToString();
-						var data = message[9].ToByteArray();
-						if(string.IsNullOrWhiteSpace(identifier) || identifier.Length > Protocol.MaxIdentifierSize || topic == null ||
-						   Encoding.UTF8.GetByteCount(topic) > Protocol.MaxTopicSize || data.Length > Protocol.MaxPayloadSize)
-							break;
-						if(!string.IsNullOrEmpty(compression))
 						{
-							data = MessageCompression.Decompress(compression, data);
-							if(data.Length > Protocol.MaxPayloadSize)
+							var subscription = message[1].ConvertToString();
+							if(!_subscriptions.TryGetValue(subscription, out var registration))
 								break;
-						}
 
-						if(!registration.Subscriber.Owner.Validate(producer))
-						{
-							_dealer.SendMoreFrame(Protocol.Commands.Acknowledge).SendMoreFrame(_session).SendMoreFrame(subscription).SendFrame(identifier);
+							var identifier = message[2].ConvertToString();
+							var topic = message[3].ConvertToString();
+							var producer = message[4].ConvertToString();
+							var tags = message[5].ConvertToString();
+							var timestamp = long.TryParse(message[6].ConvertToString(), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var ticks) ?
+								new DateTime(ticks, DateTimeKind.Utc) : DateTime.UtcNow;
+							var compression = message[8].ConvertToString();
+							var data = message[9].ToByteArray();
+							if(string.IsNullOrWhiteSpace(identifier) || identifier.Length > Protocol.MaxIdentifierSize || topic == null ||
+						   Encoding.UTF8.GetByteCount(topic) > Protocol.MaxTopicSize || data.Length > Protocol.MaxPayloadSize)
+								break;
+							if(!string.IsNullOrEmpty(compression))
+							{
+								data = MessageCompression.Decompress(compression, data);
+								if(data.Length > Protocol.MaxPayloadSize)
+									break;
+							}
+
+							if(!registration.Subscriber.Owner.Validate(producer))
+							{
+								_dealer.SendMoreFrame(Protocol.Commands.Acknowledge).SendMoreFrame(_session).SendMoreFrame(subscription).SendFrame(identifier);
+								break;
+							}
+
+							registration.Subscriber.Dispatch(new Message(identifier, registration.Subscriber.Owner.GetLogicalTopic(topic), data, tags,
+								(delay, cancellation) => this.AcknowledgeAsync(subscription, identifier, delay, cancellation))
+							{
+								Identity = producer,
+								Timestamp = timestamp,
+							});
 							break;
 						}
-
-						registration.Subscriber.Dispatch(new Message(identifier, registration.Subscriber.Owner.GetLogicalTopic(topic), data, tags,
-							(delay, cancellation) => this.AcknowledgeAsync(subscription, identifier, delay, cancellation))
-						{
-							Identity = producer,
-							Timestamp = timestamp,
-						});
-						break;
-					}
 					case Protocol.Commands.Accepted when message.FrameCount == 2:
 						this.Complete(message[1].ConvertToString(), true);
 						break;
@@ -331,18 +331,18 @@ public sealed partial class ZeroQueue
 						this.Complete(message[1].ConvertToString(), false);
 						break;
 					case Protocol.Commands.Error when message.FrameCount == 3:
-					{
-						var code = message[1].ConvertToString();
-						var identifier = message[2].ConvertToString();
-						if(_subscriptions.TryGetValue(identifier, out var subscription))
-							subscription.Command?.Completion.TrySetException(new InvalidOperationException(string.Format(Properties.Resources.ZeroQueue_ReliableProtocolError_Message, code)));
-						if(_publishes.Remove(identifier, out var command))
 						{
-							command.CancellationRegistration.Dispose();
-							command.Completion.TrySetException(new InvalidOperationException(string.Format(Properties.Resources.ZeroQueue_ReliableProtocolError_Message, code)));
+							var code = message[1].ConvertToString();
+							var identifier = message[2].ConvertToString();
+							if(_subscriptions.TryGetValue(identifier, out var subscription))
+								subscription.Command?.Completion.TrySetException(new InvalidOperationException(string.Format(Properties.Resources.ZeroQueue_ReliableProtocolError_Message, code)));
+							if(_publishes.Remove(identifier, out var command))
+							{
+								command.CancellationRegistration.Dispose();
+								command.Completion.TrySetException(new InvalidOperationException(string.Format(Properties.Resources.ZeroQueue_ReliableProtocolError_Message, code)));
+							}
+							break;
 						}
-						break;
-					}
 				}
 			}
 

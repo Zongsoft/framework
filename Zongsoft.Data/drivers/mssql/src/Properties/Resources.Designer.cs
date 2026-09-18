@@ -8,62 +8,326 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Zongsoft.Data.MsSql.Properties
-{
-	using System;
+namespace Zongsoft.Data.MsSql.Properties {
+    using System;
 
-	/// <summary>
-	///   一个强类型的资源类，用于查找本地化的字符串等。
-	/// </summary>
-	[global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
-	[global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-	[global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-	internal class Resources
-	{
-		private static global::System.Resources.ResourceManager resourceMan;
-		private static global::System.Globalization.CultureInfo resourceCulture;
 
-		internal Resources() { }
+    /// <summary>
+    ///   一个强类型的资源类，用于查找本地化的字符串等。
+    /// </summary>
+    // 此类是由 StronglyTypedResourceBuilder
+    // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
+    // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
+    // (以 /str 作为命令选项)，或重新生成 VS 项目。
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+    [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+    internal class Resources {
 
-		[global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-		internal static global::System.Resources.ResourceManager ResourceManager
-		{
-			get
-			{
-				if(object.ReferenceEquals(resourceMan, null))
-					resourceMan = new global::System.Resources.ResourceManager("Zongsoft.Data.MsSql.Properties.Resources", typeof(Resources).Assembly);
+        private static global::System.Resources.ResourceManager resourceMan;
 
-				return resourceMan;
-			}
-		}
+        private static global::System.Globalization.CultureInfo resourceCulture;
 
-		[global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-		internal static global::System.Globalization.CultureInfo Culture
-		{
-			get => resourceCulture;
-			set => resourceCulture = value;
-		}
+        [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
+        internal Resources() {
+        }
 
-		internal static string MsSql_Settings_Client => ResourceManager.GetString("MsSql.Settings.Client", resourceCulture);
-		internal static string MsSql_Settings_ConnectRetryCount => ResourceManager.GetString("MsSql.Settings.ConnectRetryCount", resourceCulture);
-		internal static string MsSql_Settings_ConnectRetryInterval => ResourceManager.GetString("MsSql.Settings.ConnectRetryInterval", resourceCulture);
-		internal static string MsSql_Settings_Database => ResourceManager.GetString("MsSql.Settings.Database", resourceCulture);
-		internal static string MsSql_Settings_Enlist => ResourceManager.GetString("MsSql.Settings.Enlist", resourceCulture);
-		internal static string MsSql_Settings_HostNameInCertificate => ResourceManager.GetString("MsSql.Settings.HostNameInCertificate", resourceCulture);
-		internal static string MsSql_Settings_IntegratedSecurity => ResourceManager.GetString("MsSql.Settings.IntegratedSecurity", resourceCulture);
-		internal static string MsSql_Settings_Language => ResourceManager.GetString("MsSql.Settings.Language", resourceCulture);
-		internal static string MsSql_Settings_LoadBalanceTimeout => ResourceManager.GetString("MsSql.Settings.LoadBalanceTimeout", resourceCulture);
-		internal static string MsSql_Settings_MaximumPoolSize => ResourceManager.GetString("MsSql.Settings.MaximumPoolSize", resourceCulture);
-		internal static string MsSql_Settings_MinimumPoolSize => ResourceManager.GetString("MsSql.Settings.MinimumPoolSize", resourceCulture);
-		internal static string MsSql_Settings_MultipleActiveResultSets => ResourceManager.GetString("MsSql.Settings.MultipleActiveResultSets", resourceCulture);
-		internal static string MsSql_Settings_Password => ResourceManager.GetString("MsSql.Settings.Password", resourceCulture);
-		internal static string MsSql_Settings_Pooling => ResourceManager.GetString("MsSql.Settings.Pooling", resourceCulture);
-		internal static string MsSql_Settings_Replication => ResourceManager.GetString("MsSql.Settings.Replication", resourceCulture);
-		internal static string MsSql_Settings_Server => ResourceManager.GetString("MsSql.Settings.Server", resourceCulture);
-		internal static string MsSql_Settings_ServerCertificate => ResourceManager.GetString("MsSql.Settings.ServerCertificate", resourceCulture);
-		internal static string MsSql_Settings_Timeout => ResourceManager.GetString("MsSql.Settings.Timeout", resourceCulture);
-		internal static string MsSql_Settings_TrustServerCertificate => ResourceManager.GetString("MsSql.Settings.TrustServerCertificate", resourceCulture);
-		internal static string MsSql_Settings_UserName => ResourceManager.GetString("MsSql.Settings.UserName", resourceCulture);
-		internal static string MsSql_Settings_WorkstationId => ResourceManager.GetString("MsSql.Settings.WorkstationId", resourceCulture);
-	}
+        /// <summary>
+        ///   返回此类使用的缓存的 ResourceManager 实例。
+        /// </summary>
+        [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
+        internal static global::System.Resources.ResourceManager ResourceManager {
+            get {
+                if (object.ReferenceEquals(resourceMan, null)) {
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Zongsoft.Data.MsSql.Properties.Resources", typeof(Resources).Assembly);
+                    resourceMan = temp;
+                }
+                return resourceMan;
+            }
+        }
+
+        /// <summary>
+        ///   使用此强类型资源类，为所有资源查找
+        ///   重写当前线程的 CurrentUICulture 属性。
+        /// </summary>
+        [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
+        internal static global::System.Globalization.CultureInfo Culture {
+            get {
+                return resourceCulture;
+            }
+            set {
+                resourceCulture = value;
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid &apos;{0}&apos; aggregate method. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_AggregateInvalid_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.AggregateInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Unsupported &apos;{0}&apos; data type. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_DataTypeUnsupported_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.DataTypeUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The SQL Server driver does not support the &apos;{0}&apos; sequence function with a name argument. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_SequenceWithNameUnsupported_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.SequenceWithNameUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The SQL Server driver does not support the &apos;{0}&apos; sequence function without a name argument. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_SequenceWithoutNameUnsupported_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.SequenceWithoutNameUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Not supported &apos;{0}&apos; statement. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_StatementUnsupported_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.StatementUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; entity must have a key to ignore insert conflicts. 的本地化字符串。
+        /// </summary>
+        internal static string InsertStatement_EntityKeyRequired_Message {
+            get {
+                return ResourceManager.GetString("InsertStatement.EntityKeyRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing required fields in the insert statement. 的本地化字符串。
+        /// </summary>
+        internal static string InsertStatement_MissingFields_Message {
+            get {
+                return ResourceManager.GetString("InsertStatement.MissingFields.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Client 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_Client {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.Client", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Connect Retry Count 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_ConnectRetryCount {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.ConnectRetryCount", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Connect Retry Interval 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_ConnectRetryInterval {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.ConnectRetryInterval", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Database 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_Database {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.Database", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Enlist 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_Enlist {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.Enlist", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Host Name in Certificate 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_HostNameInCertificate {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.HostNameInCertificate", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Integrated Security 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_IntegratedSecurity {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.IntegratedSecurity", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Language 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_Language {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.Language", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Load Balance Timeout 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_LoadBalanceTimeout {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.LoadBalanceTimeout", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Maximum Pool Size 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_MaximumPoolSize {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.MaximumPoolSize", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Minimum Pool Size 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_MinimumPoolSize {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.MinimumPoolSize", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Multiple Active Result Sets 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_MultipleActiveResultSets {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.MultipleActiveResultSets", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Password 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_Password {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.Password", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Pooling 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_Pooling {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.Pooling", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Replication 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_Replication {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.Replication", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Server 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_Server {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.Server", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Server Certificate 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_ServerCertificate {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.ServerCertificate", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Timeout 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_Timeout {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.Timeout", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Trust Server Certificate 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_TrustServerCertificate {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.TrustServerCertificate", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 User Name 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_UserName {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.UserName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Workstation ID 的本地化字符串。
+        /// </summary>
+        internal static string MsSql_Settings_WorkstationId {
+            get {
+                return ResourceManager.GetString("MsSql.Settings.WorkstationId", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The generated UPDATE statement is invalid because the data engine does not support multi-table updates. 的本地化字符串。
+        /// </summary>
+        internal static string UpdateStatement_MultiTableUnsupported_Message {
+            get {
+                return ResourceManager.GetString("UpdateStatement.MultiTableUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing required fields in the upsert statement. 的本地化字符串。
+        /// </summary>
+        internal static string UpsertStatement_MissingFields_Message {
+            get {
+                return ResourceManager.GetString("UpsertStatement.MissingFields.Message", resourceCulture);
+            }
+        }
+    }
 }

@@ -65,7 +65,7 @@ public sealed class ChatSessionPreludeLoader : IChatSessionLifetime
 					preludes.Add(prelude);
 			}
 
-			session.Options.Preludes = [..preludes];
+			session.Options.Preludes = [.. preludes];
 		}
 	}
 

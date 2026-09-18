@@ -30,22 +30,21 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Aliyun.Pushing.Options
+namespace Zongsoft.Externals.Aliyun.Pushing.Options;
+
+/// <summary>
+/// 表示移动推送相关的配置选项。
+/// </summary>
+public class PushingOptions
 {
-	/// <summary>
-	/// 表示移动推送相关的配置选项。
-	/// </summary>
-	public class PushingOptions
-	{
-		public PushingOptions() => this.Apps = new();
+	public PushingOptions() => this.Apps = new();
 
-		/// <summary>获取或设置移动推送运营商区域。</summary>
-		public ServiceCenterName? Region { get; set; }
+	/// <summary>获取或设置移动推送运营商区域。</summary>
+	public ServiceCenterName? Region { get; set; }
 
-		/// <summary>获取或设置关联的凭证名。</summary>
-		public string Certificate { get; set; }
+	/// <summary>获取或设置关联的凭证名。</summary>
+	public string Certificate { get; set; }
 
-		/// <summary>获取移动推送的应用配置项集合。</summary>
-		public PushingAppOptionCollection Apps { get; }
-	}
+	/// <summary>获取移动推送的应用配置项集合。</summary>
+	public PushingAppOptionCollection Apps { get; }
 }

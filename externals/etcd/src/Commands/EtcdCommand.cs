@@ -78,11 +78,11 @@ public class EtcdCommand : CommandBase<CommandContext>, IServiceAccessor<EtcdSer
 public abstract class EtcdCommandBase(string name) : CommandBase<CommandContext>(name)
 {
 	protected static EtcdService GetEtcd(CommandContext context) =>
-		context.Find<EtcdCommand>(true)?.Etcd ?? throw new CommandException("Missing the required etcd service.");
+		context.Find<EtcdCommand>(true)?.Etcd ?? throw new CommandException(Properties.Resources.Etcd_ServiceRequired_Message);
 
 	protected static void RequireArguments(CommandContext context)
 	{
 		if(context.Arguments.IsEmpty)
-			throw new CommandException("Missing command arguments.");
+			throw new CommandException(Properties.Resources.Command_ArgumentsRequired_Message);
 	}
 }

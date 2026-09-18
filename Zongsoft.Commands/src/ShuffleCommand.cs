@@ -40,7 +40,7 @@ namespace Zongsoft.Commands;
 
 public class ShuffleCommand : CommandBase<CommandContext>
 {
-	static readonly Lazy<MethodInfo> ShuffleMethod = new(() =>
+	static readonly Lazy<MethodInfo> _ShuffleMethod_ = new(() =>
 	{
 		var methods = typeof(Random).GetMethods(BindingFlags.Public | BindingFlags.Instance);
 
@@ -63,9 +63,9 @@ public class ShuffleCommand : CommandBase<CommandContext>
 		if(context.Value == null)
 			return default;
 
-		if(context.Value.GetType().IsArray && ShuffleMethod.Value != null)
+		if(context.Value.GetType().IsArray && _ShuffleMethod_.Value != null)
 		{
-			var method = ShuffleMethod.Value.MakeGenericMethod(context.Value.GetType().GetElementType());
+			var method = _ShuffleMethod_.Value.MakeGenericMethod(context.Value.GetType().GetElementType());
 			method.Invoke(Random.Shared, [context.Value]);
 			return ValueTask.FromResult(context.Value);
 		}

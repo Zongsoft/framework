@@ -260,7 +260,8 @@ public class SelectTest(DatabaseFixture database)
 			return;
 
 		var accessor = _database.Accessor;
-		await accessor.InsertAsync(Model.Build<UserModel>(model => {
+		await accessor.InsertAsync(Model.Build<UserModel>(model =>
+		{
 			model.UserId = 100;
 			model.Name = "Popeye";
 			model.Email = new Email("Popeye", "zongsoft.com");
@@ -342,7 +343,8 @@ public class SelectTest(DatabaseFixture database)
 			return;
 
 		var accessor = _database.Accessor;
-		await accessor.InsertAsync(Model.Build<UserModel>(model => {
+		await accessor.InsertAsync(Model.Build<UserModel>(model =>
+		{
 			model.UserId = 100;
 			model.Name = "Popeye";
 			model.Email = new Email("Popeye", "zongsoft.com");
@@ -389,7 +391,8 @@ public class SelectTest(DatabaseFixture database)
 			return;
 
 		var accessor = _database.Accessor;
-		await accessor.InsertAsync(Model.Build<UserModel>(model => {
+		await accessor.InsertAsync(Model.Build<UserModel>(model =>
+		{
 			model.UserId = 100;
 			model.Name = "Popeye";
 			model.Email = new Email("Popeye", "zongsoft.com");

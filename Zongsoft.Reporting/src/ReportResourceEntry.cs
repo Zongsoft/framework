@@ -30,26 +30,25 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Reporting
+namespace Zongsoft.Reporting;
+
+public struct ReportResourceEntry
 {
-	public struct ReportResourceEntry
+	#region 构造函数
+	public ReportResourceEntry(string name, string type, object value)
 	{
-		#region 构造函数
-		public ReportResourceEntry(string name, string type, object value)
-		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
 
-			this.Name = name;
-			this.Type = string.IsNullOrEmpty(type) ? null : type;
-			this.Value = value;
-		}
-		#endregion
-
-		#region 公共属性
-		public string Name { get; }
-		public string Type { get; }
-		public object Value { get; set; }
-		#endregion
+		this.Name = name;
+		this.Type = string.IsNullOrEmpty(type) ? null : type;
+		this.Value = value;
 	}
+	#endregion
+
+	#region 公共属性
+	public string Name { get; }
+	public string Type { get; }
+	public object Value { get; set; }
+	#endregion
 }

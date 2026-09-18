@@ -29,47 +29,46 @@
 
 using System;
 
-namespace Zongsoft.Plugins.Parsers
+namespace Zongsoft.Plugins.Parsers;
+
+public class PluginPathParser : Parser
 {
-	public class PluginPathParser : Parser
+	#region 公共方法
+	public override Type GetValueType(ParserContext context)
 	{
-		#region 公共方法
-		public override Type GetValueType(ParserContext context)
-		{
-			if(string.IsNullOrWhiteSpace(context.Text))
-				return null;
-
-			//处理特殊路径表达式，即获取插件文件路径或目录
-			if(context.Text.StartsWith('~'))
-				return typeof(string);
-
-			var expression = Collections.HierarchicalExpression.Parse(PluginPath.PreparePathText(context.Text));
-			var node = context.Node.Find(expression.Path);
-
-			if(node != null && node.ValueType != null)
-				return PluginUtility.GetMemberType(expression.Accessor, node.ValueType);
-
+		if(string.IsNullOrWhiteSpace(context.Text))
 			return null;
-		}
 
-		public override object Parse(ParserContext context)
-		{
-			if(string.IsNullOrWhiteSpace(context.Text))
-				return null;
+		//处理特殊路径表达式，即获取插件文件路径或目录
+		if(context.Text.StartsWith('~'))
+			return typeof(string);
 
-			//处理特殊路径表达式，即获取插件文件路径或目录
-			if(context.Text == "~")
-				return context.Plugin.FilePath;
-			else if(context.Text == "~/")
-				return System.IO.Path.GetDirectoryName(context.Plugin.FilePath);
+		var expression = Collections.HierarchicalExpression.Parse(PluginPath.PreparePathText(context.Text));
+		var node = context.Node.Find(expression.Path);
 
-			var text = PluginPath.PreparePathText(context.Text, out var mode);
+		if(node != null && node.ValueType != null)
+			return PluginUtility.GetMemberType(expression.Accessor, node.ValueType);
 
-			if(string.IsNullOrWhiteSpace(text))
-				throw new PluginException($"Missing argument of the path parser.");
-
-			return context.Node.Resolve(text, mode, context.MemberType);
-		}
-		#endregion
+		return null;
 	}
+
+	public override object Parse(ParserContext context)
+	{
+		if(string.IsNullOrWhiteSpace(context.Text))
+			return null;
+
+		//处理特殊路径表达式，即获取插件文件路径或目录
+		if(context.Text == "~")
+			return context.Plugin.FilePath;
+		else if(context.Text == "~/")
+			return System.IO.Path.GetDirectoryName(context.Plugin.FilePath);
+
+		var text = PluginPath.PreparePathText(context.Text, out var mode);
+
+		if(string.IsNullOrWhiteSpace(text))
+			throw new PluginException(Properties.Resources.Parser_PathArgumentRequired_Message);
+
+		return context.Node.Resolve(text, mode, context.MemberType);
+	}
+	#endregion
 }

@@ -29,19 +29,18 @@
 
 using System;
 
-namespace Zongsoft.Plugins
-{
-	public class PluginLoadEventArgs : EventArgs
-	{
-		#region 构造函数
-		public PluginLoadEventArgs(PluginOptions options)
-		{
-			this.Options = options ?? throw new ArgumentNullException(nameof(options));
-		}
-		#endregion
+namespace Zongsoft.Plugins;
 
-		#region 公共属性
-		public PluginOptions Options { get; }
-		#endregion
+public class PluginLoadEventArgs : EventArgs
+{
+	#region 构造函数
+	public PluginLoadEventArgs(PluginOptions options)
+	{
+		this.Options = options ?? throw new ArgumentNullException(nameof(options));
 	}
+	#endregion
+
+	#region 公共属性
+	public PluginOptions Options { get; }
+	#endregion
 }

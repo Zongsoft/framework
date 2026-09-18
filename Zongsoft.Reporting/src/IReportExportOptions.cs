@@ -30,9 +30,8 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Reporting
+namespace Zongsoft.Reporting;
+
+public interface IReportExportOptions
 {
-	public interface IReportExportOptions
-	{
-	}
 }

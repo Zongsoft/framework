@@ -30,30 +30,29 @@
 using System;
 using System.ComponentModel;
 
-namespace Zongsoft.Plugins
+namespace Zongsoft.Plugins;
+
+public class PluginUnloadingEventArgs : CancelEventArgs
 {
-	public class PluginUnloadingEventArgs : CancelEventArgs
+	#region 构造函数
+	public PluginUnloadingEventArgs(Plugin plugin) : this(plugin, false)
 	{
-		#region 构造函数
-		public PluginUnloadingEventArgs(Plugin plugin) : this(plugin, false)
-		{
-		}
-
-		public PluginUnloadingEventArgs(Plugin plugin, bool cancel) : base(cancel)
-		{
-			if(plugin == null)
-				throw new ArgumentNullException("plugin");
-
-			this.Plugin = plugin;
-		}
-		#endregion
-
-		#region 公共属性
-		public Plugin Plugin
-		{
-			get;
-			private set;
-		}
-		#endregion
 	}
+
+	public PluginUnloadingEventArgs(Plugin plugin, bool cancel) : base(cancel)
+	{
+		if(plugin == null)
+			throw new ArgumentNullException("plugin");
+
+		this.Plugin = plugin;
+	}
+	#endregion
+
+	#region 公共属性
+	public Plugin Plugin
+	{
+		get;
+		private set;
+	}
+	#endregion
 }

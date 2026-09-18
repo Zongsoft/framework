@@ -36,7 +36,7 @@ internal class Program
 		executor.Command("broadcast", async (context, cancellation) =>
 		{
 			if(context.Arguments.IsEmpty)
-				throw new CommandException("Missing the message to broadcast.");
+				throw new CommandException(global::Zongsoft.Net.Samples.Server.Properties.Resources.Network_BroadcastMessageRequired_Message);
 
 			var message = Encoding.UTF8.GetBytes(string.Join(' ', context.Arguments));
 			var count = await server.BroadcastAsync(new ReadOnlySequence<byte>(message), cancellation);

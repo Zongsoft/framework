@@ -48,7 +48,7 @@ public class TDengineStatementBuilder : StatementBuilderBase
 	protected override IStatementBuilder<DataSelectContext> CreateSelectStatementBuilder() => new TDengineSelectStatementBuilder();
 	protected override IStatementBuilder<DataDeleteContext> CreateDeleteStatementBuilder() => new TDengineDeleteStatementBuilder();
 	protected override IStatementBuilder<DataInsertContext> CreateInsertStatementBuilder() => new TDengineInsertStatementBuilder();
-	protected override IStatementBuilder<DataUpdateContext> CreateUpdateStatementBuilder() => throw new NotSupportedException(Properties.Resources.ResourceManager.GetString("Statement.UpdateUnsupported.Message"));
+	protected override IStatementBuilder<DataUpdateContext> CreateUpdateStatementBuilder() => throw new NotSupportedException(Properties.Resources.Statement_UpdateUnsupported_Message);
 	protected override IStatementBuilder<DataUpsertContext> CreateUpsertStatementBuilder() => new TDengineUpsertStatementBuilder();
 	protected override IStatementBuilder<DataAggregateContext> CreateAggregateStatementBuilder() => new TDengineAggregateStatementBuilder();
 	protected override IStatementBuilder<DataExistContext> CreateExistStatementBuilder() => new TDengineExistStatementBuilder();

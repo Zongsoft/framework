@@ -54,7 +54,7 @@ public class QueueSubscribeCommand : CommandBase<CommandContext>
 
 	private async ValueTask OnEnterAsync(CommandContext context, CancellationToken cancellation)
 	{
-		var queue = context.Find<QueueCommand>(true)?.Queue ?? throw new CommandException($"Not found the required queue object.");
+		var queue = context.Find<QueueCommand>(true)?.Queue ?? throw new CommandException(Properties.Resources.Messaging_QueueRequired_Message);
 
 		context.Output.WriteLine(CommandOutletColor.Green, string.Format(Properties.Resources.QueueSubscribeCommand_Welcome, queue.Name));
 		context.Output.WriteLine(CommandOutletColor.DarkYellow, Properties.Resources.QueueSubscribeCommand_Prompt + Environment.NewLine);

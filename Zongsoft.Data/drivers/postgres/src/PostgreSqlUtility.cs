@@ -68,7 +68,7 @@ internal static class PostgreSqlUtility
 		DbType.VarNumeric => NpgsqlDbType.Numeric,
 		DbType.Xml => NpgsqlDbType.Xml,
 		DbType.Object => NpgsqlDbType.Unknown,
-		_ => throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.DataTypeUnsupported.Message"), dbType)),
+		_ => throw new DataException(string.Format(Properties.Resources.ExpressionVisitor_DataTypeUnsupported_Message, dbType)),
 	};
 
 	public static NpgsqlDbType GetDataType(this DataType type)

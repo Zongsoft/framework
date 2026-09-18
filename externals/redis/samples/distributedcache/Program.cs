@@ -31,7 +31,7 @@ internal class Program
 			var requisite = GetRequisite(context.Options.GetValue<string>("requisite"));
 
 			if(context.Arguments.IsEmpty)
-				throw new CommandException("Missing the value to set.");
+				throw new CommandException(Properties.Resources.Cache_ValueRequired_Message);
 
 			var value = string.Join(" ", context.Arguments);
 			var expiry = context.Options.Contains("expiry") ? context.Options.GetValue<TimeSpan>("expiry") : (TimeSpan?)null;
@@ -238,7 +238,7 @@ internal class Program
 		var key = context.Options.GetValue<string>("key");
 
 		if(string.IsNullOrEmpty(key))
-			throw new CommandOptionException("key", "The key is required.");
+			throw new CommandOptionException("key", Properties.Resources.Cache_KeyRequired_Message);
 
 		return key;
 	}

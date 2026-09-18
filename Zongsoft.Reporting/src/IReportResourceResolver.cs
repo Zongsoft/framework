@@ -31,12 +31,11 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 
-namespace Zongsoft.Reporting
-{
-	public interface IReportResourceResolver
-	{
-		string Name { get; }
+namespace Zongsoft.Reporting;
 
-		IReportResource Resolve(string name, Stream stream, string title = null, string description = null);
-	}
+public interface IReportResourceResolver
+{
+	string Name { get; }
+
+	IReportResource Resolve(string name, Stream stream, string title = null, string description = null);
 }

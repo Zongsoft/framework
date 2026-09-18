@@ -140,4 +140,10 @@
 	<data name="SpreadsheetGenerator.ValidationError.Date.Message" xml:space="preserve">
 		<value>The value of '{0}' must be a valid date between 1900-01-01 and 9999-12-31.</value>
 	</data>
+	<data name="Spreadsheet.RenderingFormatUnsupported.Message" xml:space="preserve">
+		<value>Unsupported rendering format: '{0}'.</value>
+	</data>
+	<data name="Spreadsheet.TemplateFormatUnsupported.Message" xml:space="preserve">
+		<value>Unsupported template format: '{0}'.</value>
+	</data>
 </root>

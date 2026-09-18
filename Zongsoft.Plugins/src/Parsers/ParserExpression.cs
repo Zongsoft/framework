@@ -30,237 +30,236 @@
 using System;
 using System.IO;
 
-namespace Zongsoft.Plugins.Parsers
+namespace Zongsoft.Plugins.Parsers;
+
+public class ParserExpression
 {
-	public class ParserExpression
+	#region 私有枚举
+	private enum ParserExpressionState
 	{
-		#region 私有枚举
-		private enum ParserExpressionState
+		None,
+		Scheme,
+		Content,
+	}
+	#endregion
+
+	#region 成员字段
+	private string _scheme;
+	private string _content;
+	private ParserExpression _next;
+	#endregion
+
+	#region 构造函数
+	internal ParserExpression(string scheme, string content, ParserExpression next = null)
+	{
+		if(string.IsNullOrWhiteSpace(scheme))
+			throw new ArgumentNullException(nameof(scheme));
+
+		_scheme = scheme.ToLowerInvariant().Trim();
+		_content = content?.Trim();
+		_next = next;
+	}
+	#endregion
+
+	#region 公共属性
+	public string Scheme => _scheme;
+	public string Content
+	{
+		get => _content;
+		set => _content = value;
+	}
+	public ParserExpression Next
+	{
+		get => _next;
+		set => _next = value;
+	}
+	#endregion
+
+	#region 静态方法
+	public static ParserExpression Parse(string text)
+	{
+		if(string.IsNullOrWhiteSpace(text))
+			return null;
+
+		ParserExpression result = null;
+		ParserExpression current = null;
+
+		using(var reader = new StringReader(text))
 		{
-			None,
-			Scheme,
-			Content,
-		}
-		#endregion
-
-		#region 成员字段
-		private string _scheme;
-		private string _content;
-		private ParserExpression _next;
-		#endregion
-
-		#region 构造函数
-		internal ParserExpression(string scheme, string content, ParserExpression next = null)
-		{
-			if(string.IsNullOrWhiteSpace(scheme))
-				throw new ArgumentNullException(nameof(scheme));
-
-			_scheme = scheme.ToLowerInvariant().Trim();
-			_content = content?.Trim();
-			_next = next;
-		}
-		#endregion
-
-		#region 公共属性
-		public string Scheme => _scheme;
-		public string Content
-		{
-			get => _content;
-			set => _content = value;
-		}
-		public ParserExpression Next
-		{
-			get => _next;
-			set => _next = value;
-		}
-		#endregion
-
-		#region 静态方法
-		public static ParserExpression Parse(string text)
-		{
-			if(string.IsNullOrWhiteSpace(text))
-				return null;
-
-			ParserExpression result = null;
-			ParserExpression current = null;
-
-			using(var reader = new StringReader(text))
+			while(reader.Peek() > 0)
 			{
-				while(reader.Peek() > 0)
+				current = ParseCore(reader, message =>
 				{
-					current = ParseCore(reader, message =>
+					throw new ParserException(message);
+				});
+
+				if(result == null)
+					result = current;
+				else //线性查找命令表达式的管道链，并更新其指向
+				{
+					var item = result;
+
+					while(item.Next != null)
 					{
-						throw new ParserException(message);
-					});
-
-					if(result == null)
-						result = current;
-					else //线性查找命令表达式的管道链，并更新其指向
-					{
-						var item = result;
-
-						while(item.Next != null)
-						{
-							item = item.Next;
-						}
-
-						item.Next = current;
+						item = item.Next;
 					}
+
+					item.Next = current;
 				}
 			}
-
-			return result;
 		}
 
-		public static bool TryParse(string text, out ParserExpression result)
+		return result;
+	}
+
+	public static bool TryParse(string text, out ParserExpression result)
+	{
+		result = null;
+
+		if(string.IsNullOrWhiteSpace(text))
+			return false;
+
+		using(var reader = new StringReader(text))
 		{
-			result = null;
-
-			if(string.IsNullOrWhiteSpace(text))
-				return false;
-
-			using(var reader = new StringReader(text))
+			while(reader.Peek() > 0)
 			{
-				while(reader.Peek() > 0)
+				var isFailed = false;
+				var current = ParseCore(reader, _ => isFailed = true);
+
+				//如果解析失败则重置输出参数为空并返回假
+				if(isFailed)
 				{
-					var isFailed = false;
-					var current = ParseCore(reader, _ => isFailed = true);
+					result = null;
+					return false;
+				}
 
-					//如果解析失败则重置输出参数为空并返回假
-					if(isFailed)
+				if(current == null)
+					continue;
+
+				if(result == null)
+					result = current;
+				else
+				{
+					var item = result;
+
+					while(item.Next != null)
 					{
-						result = null;
-						return false;
+						item = item.Next;
 					}
 
-					if(current == null)
-						continue;
-
-					if(result == null)
-						result = current;
-					else
-					{
-						var item = result;
-
-						while(item.Next != null)
-						{
-							item = item.Next;
-						}
-
-						item.Next = current;
-					}
+					item.Next = current;
 				}
 			}
-
-			return true;
 		}
 
-		private static ParserExpression ParseCore(TextReader reader, Action<string> onFailed)
+		return true;
+	}
+
+	private static ParserExpression ParseCore(TextReader reader, Action<string> onFailed)
+	{
+		if(reader == null)
+			throw new ArgumentNullException(nameof(reader));
+
+		if(onFailed == null)
+			throw new ArgumentNullException(nameof(onFailed));
+
+		var isEscaping = false;
+		var state = ParserExpressionState.None;
+		var valueRead = 0;
+
+		var scheme = string.Empty;
+		var content = string.Empty;
+
+		while((valueRead = reader.Read()) > 0)
 		{
-			if(reader == null)
-				throw new ArgumentNullException(nameof(reader));
+			var chr = (char)valueRead;
 
-			if(onFailed == null)
-				throw new ArgumentNullException(nameof(onFailed));
-
-			var isEscaping = false;
-			var state = ParserExpressionState.None;
-			var valueRead = 0;
-
-			var scheme = string.Empty;
-			var content = string.Empty;
-
-			while((valueRead = reader.Read()) > 0)
+			switch(chr)
 			{
-				var chr = (char)valueRead;
-
-				switch(chr)
-				{
-					case '{':
-						if(state == ParserExpressionState.None)
-							state = ParserExpressionState.Scheme;
-						else if(state == ParserExpressionState.Scheme)
-						{
-							onFailed("The scheme of parser contains a '{' illegal character.");
+				case '{':
+					if(state == ParserExpressionState.None)
+						state = ParserExpressionState.Scheme;
+					else if(state == ParserExpressionState.Scheme)
+					{
+						onFailed("The scheme of parser contains a '{' illegal character.");
+						return null;
+					}
+					break;
+				case '}':
+					switch(state)
+					{
+						case ParserExpressionState.None:
+							onFailed("Invalid parser expression.");
 							return null;
-						}
-						break;
-					case '}':
-						switch(state)
-						{
-							case ParserExpressionState.None:
-								onFailed("Invalid parser expression.");
-								return null;
-							case ParserExpressionState.Scheme:
-							case ParserExpressionState.Content:
-								if(string.IsNullOrWhiteSpace(scheme))
-								{
-									onFailed("Missing scheme of parser.");
-									return null;
-								}
-
-								return new ParserExpression(scheme, content);
-						}
-						break;
-					case ':':
-						if(state == ParserExpressionState.Scheme)
-						{
+						case ParserExpressionState.Scheme:
+						case ParserExpressionState.Content:
 							if(string.IsNullOrWhiteSpace(scheme))
 							{
 								onFailed("Missing scheme of parser.");
 								return null;
 							}
 
-							state = ParserExpressionState.Content;
-						}
-						break;
-					case '|':
-						switch(state)
+							return new ParserExpression(scheme, content);
+					}
+					break;
+				case ':':
+					if(state == ParserExpressionState.Scheme)
+					{
+						if(string.IsNullOrWhiteSpace(scheme))
 						{
-							case ParserExpressionState.None:
-								return null;
-							case ParserExpressionState.Scheme:
-								{
-									onFailed("The scheme of parser contains a '|' illegal character.");
-									return null;
-								}
-						}
-
-						break;
-					case '\\':
-						//设置转义状态
-						isEscaping = state == ParserExpressionState.Content && (!isEscaping);
-
-						if(state != ParserExpressionState.Content)
-						{
-							onFailed("The parser expression contains illegal character.");
+							onFailed("Missing scheme of parser.");
 							return null;
 						}
 
-						break;
-					default:
-						break;
-				}
+						state = ParserExpressionState.Content;
+					}
+					break;
+				case '|':
+					switch(state)
+					{
+						case ParserExpressionState.None:
+							return null;
+						case ParserExpressionState.Scheme:
+							{
+								onFailed("The scheme of parser contains a '|' illegal character.");
+								return null;
+							}
+					}
 
-				//设置转义状态：即当前字符为转义符并且当前状态不为转义状态
-				isEscaping = chr == '\\' && (!isEscaping);
+					break;
+				case '\\':
+					//设置转义状态
+					isEscaping = state == ParserExpressionState.Content && (!isEscaping);
 
-				if(isEscaping)
-					continue;
+					if(state != ParserExpressionState.Content)
+					{
+						onFailed("The parser expression contains illegal character.");
+						return null;
+					}
 
-				switch(state)
-				{
-					case ParserExpressionState.Scheme:
-						scheme += chr;
-						break;
-					case ParserExpressionState.Content:
-						content += chr;
-						break;
-				}
+					break;
+				default:
+					break;
 			}
 
-			return new ParserExpression(scheme, content);
+			//设置转义状态：即当前字符为转义符并且当前状态不为转义状态
+			isEscaping = chr == '\\' && (!isEscaping);
+
+			if(isEscaping)
+				continue;
+
+			switch(state)
+			{
+				case ParserExpressionState.Scheme:
+					scheme += chr;
+					break;
+				case ParserExpressionState.Content:
+					content += chr;
+					break;
+			}
 		}
-		#endregion
+
+		return new ParserExpression(scheme, content);
 	}
+	#endregion
 }

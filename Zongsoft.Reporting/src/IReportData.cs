@@ -30,36 +30,35 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Reporting
+namespace Zongsoft.Reporting;
+
+public interface IReportData
 {
-	public interface IReportData
+	IList<ReportModelData> Models { get; }
+}
+
+public struct ReportModelData
+{
+	#region 构造函数
+	public ReportModelData(string name, object value = null)
 	{
-		IList<ReportModelData> Models { get; }
+		this.Name = name;
+		this.Value = value;
 	}
+	#endregion
 
-	public struct ReportModelData
+	#region 公共属性
+	public string Name { get; }
+	public object Value { get; set; }
+	#endregion
+
+	#region 重写方法
+	public override string ToString()
 	{
-		#region 构造函数
-		public ReportModelData(string name, object value = null)
-		{
-			this.Name = name;
-			this.Value = value;
-		}
-		#endregion
-
-		#region 公共属性
-		public string Name { get; }
-		public object Value { get; set; }
-		#endregion
-
-		#region 重写方法
-		public override string ToString()
-		{
-			if(string.IsNullOrEmpty(this.Name))
-				return this.Value?.ToString();
-			else
-				return $"[{this.Name}]{this.Value}";
-		}
-		#endregion
+		if(string.IsNullOrEmpty(this.Name))
+			return this.Value?.ToString();
+		else
+			return $"[{this.Name}]{this.Value}";
 	}
+	#endregion
 }

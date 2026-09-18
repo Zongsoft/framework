@@ -54,9 +54,9 @@ partial class SequenceCommand
 		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
 			if(context.Arguments.IsEmpty)
-				throw new CommandException("The key(s) to be reset is missing.");
+				throw new CommandException(Properties.Resources.Sequence_KeysRequired_Message);
 
-			var sequence = context.Find<SequenceCommand>(true)?.Sequence ?? throw new CommandException("The sequence instance is not specified.");
+			var sequence = context.Find<SequenceCommand>(true)?.Sequence ?? throw new CommandException(Properties.Resources.Sequence_InstanceRequired_Message);
 			var value = context.Options.GetValue(VALUE_OPTION, 0);
 
 			for(int i = 0; i < context.Arguments.Count; i++)

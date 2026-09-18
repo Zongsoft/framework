@@ -29,16 +29,15 @@
 
 using System;
 
-namespace Zongsoft.Reporting
+namespace Zongsoft.Reporting;
+
+public enum ReportParameterType
 {
-	public enum ReportParameterType
-	{
-		String,
-		Boolean,
-		Integer,
-		Float,
-		Date,
-		Time,
-		DateTime,
-	}
+	String,
+	Boolean,
+	Integer,
+	Float,
+	Date,
+	Time,
+	DateTime,
 }

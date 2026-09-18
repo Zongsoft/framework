@@ -29,26 +29,25 @@
 
 using System;
 
-namespace Zongsoft.Plugins.Builders
+namespace Zongsoft.Plugins.Builders;
+
+/// <summary>
+/// 构件暴露创建器。
+/// </summary>
+/// <remarks>
+/// 	<para>该构建器区别于<seealso cref="ObjectBuilder"/>的主要特征在于它不会执行追加操作。</para>
+/// </remarks>
+public class ExposeBuilder : ObjectBuilder
 {
-	/// <summary>
-	/// 构件暴露创建器。
-	/// </summary>
-	/// <remarks>
-	/// 	<para>该构建器区别于<seealso cref="ObjectBuilder"/>的主要特征在于它不会执行追加操作。</para>
-	/// </remarks>
-	public class ExposeBuilder : ObjectBuilder
+	public override object Build(BuilderContext context)
 	{
-		public override object Build(BuilderContext context)
-		{
-			//忽略追加操作
-			context.Appender = null;
+		//忽略追加操作
+		context.Appender = null;
 
-			if(context.Settings != null)
-				context.Settings.SetFlags(BuilderSettingsFlags.IgnoreAppending);
+		if(context.Settings != null)
+			context.Settings.SetFlags(BuilderSettingsFlags.IgnoreAppending);
 
-			//调用基类同名方法
-			return base.Build(context);
-		}
+		//调用基类同名方法
+		return base.Build(context);
 	}
 }

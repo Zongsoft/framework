@@ -52,7 +52,7 @@ public class CommandParser : Parser
 		protected override ValueTask<object> OnExecuteAsync(object parameter, CancellationToken cancellation)
 		{
 			var commandExecutor = CommandExecutor.Default ??
-				throw new InvalidOperationException("Can not get the CommandExecutor from 'Zongsoft.Services.CommandExecutor.Default' static member.");
+				throw new InvalidOperationException(global::Zongsoft.Plugins.Properties.Resources.Command_ExecutorUnavailable_Message);
 
 			return commandExecutor.ExecuteAsync(_commandText, parameter, cancellation);
 		}

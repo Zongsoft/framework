@@ -300,7 +300,7 @@ internal sealed class RedisConnectionLease : IDisposable, IAsyncDisposable
 				var result = targetMethod.Invoke(current.Connection, args);
 				return result is IDatabase database ? DatabaseProxy.Create(database, (IConnectionMultiplexer)(object)this) : result;
 			}
-			catch(TargetInvocationException exception) when (exception.InnerException != null)
+			catch(TargetInvocationException exception) when(exception.InnerException != null)
 			{
 				ExceptionDispatchInfo.Capture(exception.InnerException).Throw();
 				throw;
@@ -331,7 +331,7 @@ internal sealed class RedisConnectionLease : IDisposable, IAsyncDisposable
 			{
 				return targetMethod.Invoke(_database, args);
 			}
-			catch(TargetInvocationException exception) when (exception.InnerException != null)
+			catch(TargetInvocationException exception) when(exception.InnerException != null)
 			{
 				ExceptionDispatchInfo.Capture(exception.InnerException).Throw();
 				throw;

@@ -29,16 +29,15 @@
 
 using System;
 
-namespace Zongsoft.Plugins
-{
-	public class ViewEventArgs : EventArgs
-	{
-		#region 构造函数
-		public ViewEventArgs(object view) => this.View = view ?? throw new ArgumentNullException(nameof(view));
-		#endregion
+namespace Zongsoft.Plugins;
 
-		#region 公共属性
-		public object View { get; }
-		#endregion
-	}
+public class ViewEventArgs : EventArgs
+{
+	#region 构造函数
+	public ViewEventArgs(object view) => this.View = view ?? throw new ArgumentNullException(nameof(view));
+	#endregion
+
+	#region 公共属性
+	public object View { get; }
+	#endregion
 }

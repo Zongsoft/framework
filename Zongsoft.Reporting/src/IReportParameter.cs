@@ -30,14 +30,13 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Reporting
+namespace Zongsoft.Reporting;
+
+public interface IReportParameter
 {
-	public interface IReportParameter
-	{
-		string Name { get; set; }
-		string Label { get; set; }
-		object Value { get; set; }
-		ReportParameterType ParameterType { get; set; }
-		string Description { get; set; }
-	}
+	string Name { get; set; }
+	string Label { get; set; }
+	object Value { get; set; }
+	ReportParameterType ParameterType { get; set; }
+	string Description { get; set; }
 }

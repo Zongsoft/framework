@@ -10,8 +10,8 @@
 
 namespace Zongsoft.Plugins.Properties {
     using System;
-    
-    
+
+
     /// <summary>
     ///   一个强类型的资源类，用于查找本地化的字符串等。
     /// </summary>
@@ -19,19 +19,19 @@ namespace Zongsoft.Plugins.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   返回此类使用的缓存的 ResourceManager 实例。
         /// </summary>
@@ -45,10 +45,10 @@ namespace Zongsoft.Plugins.Properties {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
-        ///   重写当前线程的 CurrentUICulture 属性，对
-        ///   使用此强类型资源类的所有资源查找执行重写。
+        ///   使用此强类型资源类，为所有资源查找
+        ///   重写当前线程的 CurrentUICulture 属性。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -59,7 +59,403 @@ namespace Zongsoft.Plugins.Properties {
                 resourceCulture = value;
             }
         }
-        
+
+        /// <summary>
+        ///   查找类似 Append 的本地化字符串。
+        /// </summary>
+        internal static string AppenderBehavior_Appending_Description {
+            get {
+                return ResourceManager.GetString("AppenderBehavior.Appending.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Replace 的本地化字符串。
+        /// </summary>
+        internal static string AppenderBehavior_Replacement_Description {
+            get {
+                return ResourceManager.GetString("AppenderBehavior.Replacement.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; application directory is not an absolute path. 的本地化字符串。
+        /// </summary>
+        internal static string Application_AbsolutePathRequired_Message {
+            get {
+                return ResourceManager.GetString("Application.AbsolutePathRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 This &apos;{0}&apos; builtin behavior element be contants child elements in &apos;{1}&apos;. 的本地化字符串。
+        /// </summary>
+        internal static string Builtin_BehaviorChildrenInvalid_Message {
+            get {
+                return ResourceManager.GetString("Builtin.BehaviorChildrenInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Not found the builder for the &apos;{0}&apos;({1}) builtin. 的本地化字符串。
+        /// </summary>
+        internal static string Builtin_BuilderNotFound_Message {
+            get {
+                return ResourceManager.GetString("Builtin.BuilderNotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Create object of &apos;{0}&apos; type faild, The constructor is ({1}). 的本地化字符串。
+        /// </summary>
+        internal static string Builtin_ConstructionFailed_Message {
+            get {
+                return ResourceManager.GetString("Builtin.ConstructionFailed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing matching constructor for builtin &apos;{0}&apos;. 的本地化字符串。
+        /// </summary>
+        internal static string Builtin_ConstructorRequired_Message {
+            get {
+                return ResourceManager.GetString("Builtin.ConstructorRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid &apos;{0}&apos; ExtendElement in &apos;{1}&apos;. 的本地化字符串。
+        /// </summary>
+        internal static string Builtin_ExtensionInvalid_Message {
+            get {
+                return ResourceManager.GetString("Builtin.ExtensionInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 This &apos;{0}&apos; ExtendElement dependencied builtin-type is null. 的本地化字符串。
+        /// </summary>
+        internal static string Builtin_ExtensionTypeRequired_Message {
+            get {
+                return ResourceManager.GetString("Builtin.ExtensionTypeRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid builtin. 的本地化字符串。
+        /// </summary>
+        internal static string Builtin_Invalid_Message {
+            get {
+                return ResourceManager.GetString("Builtin.Invalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Can not get type from &apos;{0}&apos; text for &apos;{1}&apos; builtin. 的本地化字符串。
+        /// </summary>
+        internal static string Builtin_TypeInvalid_Message {
+            get {
+                return ResourceManager.GetString("Builtin.TypeInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Unable to determine the target type of the &apos;{0}&apos; builtin. 的本地化字符串。
+        /// </summary>
+        internal static string Builtin_TypeRequired_Message {
+            get {
+                return ResourceManager.GetString("Builtin.TypeRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Can not get the CommandExecutor from &apos;Zongsoft.Services.CommandExecutor.Default&apos; static member. 的本地化字符串。
+        /// </summary>
+        internal static string Command_ExecutorUnavailable_Message {
+            get {
+                return ResourceManager.GetString("Command.ExecutorUnavailable.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; file is not exists. 的本地化字符串。
+        /// </summary>
+        internal static string File_NotFound_Message {
+            get {
+                return ResourceManager.GetString("File.NotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid format of parser, this expression is &apos;{0}&apos;. 的本地化字符串。
+        /// </summary>
+        internal static string Parser_ExpressionInvalid_Message {
+            get {
+                return ResourceManager.GetString("Parser.ExpressionInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; parser was not found. 的本地化字符串。
+        /// </summary>
+        internal static string Parser_NotFound_Message {
+            get {
+                return ResourceManager.GetString("Parser.NotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing argument of the path parser. 的本地化字符串。
+        /// </summary>
+        internal static string Parser_PathArgumentRequired_Message {
+            get {
+                return ResourceManager.GetString("Parser.PathArgumentRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; assembly file is not exists. in &apos;{1}&apos; plugin file. 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_AssemblyFileNotFound_Message {
+            get {
+                return ResourceManager.GetString("Plugin.AssemblyFileNotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The builder &apos;{0}&apos; was not found in plugin &apos;{1}&apos;.{3}{2} 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_BuilderNotFound_Message {
+            get {
+                return ResourceManager.GetString("Plugin.BuilderNotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Cannot construct type &apos;{0}&apos; in &apos;{1}&apos;: no constructor matches the supplied arguments. 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_ConstructorNotFound_Message {
+            get {
+                return ResourceManager.GetString("Plugin.ConstructorNotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; plugin load failed. it&apos;s &apos;{1}&apos; dependent plugin is not exists. 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_DependencyNotFound_Message {
+            get {
+                return ResourceManager.GetString("Plugin.DependencyNotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; plugins directory is not exists. 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_DirectoryNotFound_Message {
+            get {
+                return ResourceManager.GetString("Plugin.DirectoryNotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The name is &apos;{0}&apos; of plugin was exists. it&apos;s path is: &apos;{1}&apos; 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_DuplicateName_Message {
+            get {
+                return ResourceManager.GetString("Plugin.DuplicateName.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid element &apos;{0}&apos; in the plugin file. 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_ElementInvalid_Message {
+            get {
+                return ResourceManager.GetString("Plugin.ElementInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The plugin element name({0}) contains illegal characters. 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_ElementNameInvalid_Message {
+            get {
+                return ResourceManager.GetString("Plugin.ElementNameInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Can not support the &apos;{0}&apos; element type. 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_ElementTypeUnsupported_Message {
+            get {
+                return ResourceManager.GetString("Plugin.ElementTypeUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Undefined element &apos;{0}&apos; in this plugin file. 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_ElementUndefined_Message {
+            get {
+                return ResourceManager.GetString("Plugin.ElementUndefined.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 This &apos;{0}&apos; plugin element was validate failed. 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_ElementValidationFailed_Message {
+            get {
+                return ResourceManager.GetString("Plugin.ElementValidationFailed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid &apos;{0}/{1}&apos; ExtendedElement is not exists in &apos;{2}&apos; plugin. 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_ExtensionNotFound_Message {
+            get {
+                return ResourceManager.GetString("Plugin.ExtensionNotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 This &apos;{0}&apos; plugin file format is invalid. 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_FileFormatInvalid_Message {
+            get {
+                return ResourceManager.GetString("Plugin.FileFormatInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; plugin file resolve failed. 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_FileResolveFailed_Message {
+            get {
+                return ResourceManager.GetString("Plugin.FileResolveFailed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; plugin file cann&apos;t read. 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_FileUnreadable_Message {
+            get {
+                return ResourceManager.GetString("Plugin.FileUnreadable.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The dependencies cannot be defined in the &apos;{0}&apos; hidden plugin file. 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_HiddenDependenciesInvalid_Message {
+            get {
+                return ResourceManager.GetString("Plugin.HiddenDependenciesInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 An exception occurred while creating an instance of type &apos;{0}&apos; in &apos;{1}&apos;. 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_InstanceCreationFailed_Message {
+            get {
+                return ResourceManager.GetString("Plugin.InstanceCreationFailed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid manifest element &apos;{0}&apos; in the plugin file. 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_ManifestElementInvalid_Message {
+            get {
+                return ResourceManager.GetString("Plugin.ManifestElementInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The specified plugin path &quot;{0}&quot; does not exist. 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_NodeNotFound_Message {
+            get {
+                return ResourceManager.GetString("Plugin.NodeNotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invlaid plugin path: &apos;{0}&apos;. 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_PathInvalid_Message {
+            get {
+                return ResourceManager.GetString("Plugin.PathInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid value of the plugin extended property. 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_PropertyInvalid_Message {
+            get {
+                return ResourceManager.GetString("Plugin.PropertyInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; type resolve failed in {1}. 的本地化字符串。
+        /// </summary>
+        internal static string Plugin_TypeResolveFailed_Message {
+            get {
+                return ResourceManager.GetString("Plugin.TypeResolveFailed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Can not parse for the predication. 的本地化字符串。
+        /// </summary>
+        internal static string Predication_ParseFailed_Message {
+            get {
+                return ResourceManager.GetString("Predication.ParseFailed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; ServiceProvider is not exists on the predication parsing. 的本地化字符串。
+        /// </summary>
+        internal static string Predication_ServiceProviderNotFound_Message {
+            get {
+                return ResourceManager.GetString("Predication.ServiceProviderNotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Can not parse for the predication because of a syntax error. 的本地化字符串。
+        /// </summary>
+        internal static string Predication_SyntaxInvalid_Message {
+            get {
+                return ResourceManager.GetString("Predication.SyntaxInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Can not parse for the predication because the parser text is empty. 的本地化字符串。
+        /// </summary>
+        internal static string Predication_TextRequired_Message {
+            get {
+                return ResourceManager.GetString("Predication.TextRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing the required command executor of the terminal. 的本地化字符串。
+        /// </summary>
+        internal static string Terminal_ExecutorRequired_Message {
+            get {
+                return ResourceManager.GetString("Terminal.ExecutorRequired.Message", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   查找类似 Command to find the specified plugin path. 的本地化字符串。
         /// </summary>
@@ -68,7 +464,7 @@ namespace Zongsoft.Plugins.Properties {
                 return ResourceManager.GetString("Text.FindCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Find command 的本地化字符串。
         /// </summary>
@@ -77,7 +473,7 @@ namespace Zongsoft.Plugins.Properties {
                 return ResourceManager.GetString("Text.FindCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Displays the maximum depth of the target object members. The default is 3. 的本地化字符串。
         /// </summary>
@@ -86,7 +482,7 @@ namespace Zongsoft.Plugins.Properties {
                 return ResourceManager.GetString("Text.FindCommand.Options.Depth", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 The mode for obtaining the content of the specified plugin tree node. The default is: never. 的本地化字符串。
         /// </summary>
@@ -95,7 +491,7 @@ namespace Zongsoft.Plugins.Properties {
                 return ResourceManager.GetString("Text.FindCommand.Options.ObtainMode", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Display all plugin information in the current application in a hierarchical manner. 的本地化字符串。
         /// </summary>
@@ -104,7 +500,7 @@ namespace Zongsoft.Plugins.Properties {
                 return ResourceManager.GetString("Text.ListCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 List command 的本地化字符串。
         /// </summary>
@@ -113,7 +509,7 @@ namespace Zongsoft.Plugins.Properties {
                 return ResourceManager.GetString("Text.ListCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Too many command arguments specified. 的本地化字符串。
         /// </summary>
@@ -122,7 +518,7 @@ namespace Zongsoft.Plugins.Properties {
                 return ResourceManager.GetString("Text.Message.CommandArgumentsTooMany", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Invalid command parameters. The parameters passed to the {0} command are not of the expected type or value. 的本地化字符串。
         /// </summary>
@@ -131,7 +527,7 @@ namespace Zongsoft.Plugins.Properties {
                 return ResourceManager.GetString("Text.Message.InvalidCommandParameter", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 No command arguments specified. Please specify at least one command argument. 的本地化字符串。
         /// </summary>
@@ -140,16 +536,7 @@ namespace Zongsoft.Plugins.Properties {
                 return ResourceManager.GetString("Text.Message.MissingCommandArguments", resourceCulture);
             }
         }
-        
-        /// <summary>
-        ///   查找类似 The specified plugin path &quot;{0}&quot; does not exist. 的本地化字符串。
-        /// </summary>
-        internal static string Text_Message_PluginNodeNotFound {
-            get {
-                return ResourceManager.GetString("Text.Message.PluginNodeNotFound", resourceCulture);
-            }
-        }
-        
+
         /// <summary>
         ///   查找类似 Display information about the current application plugin tree nodes in a hierarchical manner. 的本地化字符串。
         /// </summary>
@@ -158,7 +545,7 @@ namespace Zongsoft.Plugins.Properties {
                 return ResourceManager.GetString("Text.TreeCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Tree command 的本地化字符串。
         /// </summary>
@@ -167,7 +554,7 @@ namespace Zongsoft.Plugins.Properties {
                 return ResourceManager.GetString("Text.TreeCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Displays the maximum depth of the plugin tree. The default is 3. 的本地化字符串。
         /// </summary>
@@ -176,13 +563,85 @@ namespace Zongsoft.Plugins.Properties {
                 return ResourceManager.GetString("Text.TreeCommand.Options.Depth", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Display the full path of the plugin tree node. 的本地化字符串。
         /// </summary>
         internal static string Text_TreeCommand_Options_Path {
             get {
                 return ResourceManager.GetString("Text.TreeCommand.Options.Path", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing assembly name in the qualified name &apos;{0}&apos;. 的本地化字符串。
+        /// </summary>
+        internal static string Type_AssemblyNameRequired_Message {
+            get {
+                return ResourceManager.GetString("Type.AssemblyNameRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Not found &apos;{0}&apos; assembly in the runtimes, for &apos;{1}&apos; qualified type name. 的本地化字符串。
+        /// </summary>
+        internal static string Type_AssemblyNotFound_Message {
+            get {
+                return ResourceManager.GetString("Type.AssemblyNotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Unable to create an instance of the specified &apos;{0}&apos; type because it is an interface or an abstract class. 的本地化字符串。
+        /// </summary>
+        internal static string Type_NotConstructible_Message {
+            get {
+                return ResourceManager.GetString("Type.NotConstructible.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid qualified name &apos;{0}&apos;. 的本地化字符串。
+        /// </summary>
+        internal static string Type_QualifiedNameInvalid_Message {
+            get {
+                return ResourceManager.GetString("Type.QualifiedNameInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; is an invalid static member expression. 的本地化字符串。
+        /// </summary>
+        internal static string Type_StaticExpressionInvalid_Message {
+            get {
+                return ResourceManager.GetString("Type.StaticExpressionInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 No static field or property for &apos;{0}&apos; was found in &apos;{1}&apos; type. 的本地化字符串。
+        /// </summary>
+        internal static string Type_StaticMemberNotFound_Message {
+            get {
+                return ResourceManager.GetString("Type.StaticMemberNotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Unable to resolve the &apos;{0}&apos; static member in the &apos;{1}&apos; assembly. 的本地化字符串。
+        /// </summary>
+        internal static string Type_StaticMemberResolveFailed_Message {
+            get {
+                return ResourceManager.GetString("Type.StaticMemberResolveFailed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Failed to create the Workbench. 的本地化字符串。
+        /// </summary>
+        internal static string Workbench_CreationFailed_Message {
+            get {
+                return ResourceManager.GetString("Workbench.CreationFailed.Message", resourceCulture);
             }
         }
     }

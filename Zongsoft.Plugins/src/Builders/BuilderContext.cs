@@ -29,141 +29,140 @@
 
 using System;
 
-namespace Zongsoft.Plugins.Builders
+namespace Zongsoft.Plugins.Builders;
+
+public class BuilderContext
 {
-	public class BuilderContext
+	#region 同步字段
+	private readonly object _syncRoot;
+	#endregion
+
+	#region 成员字段
+	private IBuilder _builder;
+	private IAppender _appender;
+	private int _depth;
+	private bool _cancel;
+	private Builtin _builtin;
+	private BuilderSettings _settings;
+	private object _result;
+	private object _owner;
+	private PluginTreeNode _ownerNode;
+	#endregion
+
+	#region 构造函数
+	private BuilderContext(IBuilder builder, Builtin builtin, BuilderSettings settings, int depth, object owner, PluginTreeNode ownerNode)
 	{
-		#region 同步字段
-		private readonly object _syncRoot;
-		#endregion
+		_builder = builder ?? throw new ArgumentNullException(nameof(builder));
+		_builtin = builtin ?? throw new ArgumentNullException(nameof(builtin));
+		_appender = builder as IAppender;
+		_settings = settings;
 
-		#region 成员字段
-		private IBuilder _builder;
-		private IAppender _appender;
-		private int _depth;
-		private bool _cancel;
-		private Builtin _builtin;
-		private BuilderSettings _settings;
-		private object _result;
-		private object _owner;
-		private PluginTreeNode _ownerNode;
-		#endregion
+		_depth = depth;
+		_owner = owner;
+		_ownerNode = ownerNode;
 
-		#region 构造函数
-		private BuilderContext(IBuilder builder, Builtin builtin, BuilderSettings settings, int depth, object owner, PluginTreeNode ownerNode)
+		if(builtin.HasBehaviors)
+			_cancel = builtin.Behaviors.GetBehaviorValue<bool>(builtin.Scheme + ".break");
+
+		_syncRoot = new object();
+	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取当前插件上下文中的插件树。</summary>
+	public PluginTree PluginTree => _builtin.Tree;
+
+	/// <summary>获取当前的构建器对象。</summary>
+	public IBuilder Builder => _builder;
+
+	/// <summary>获取或设置构建过程的追加器。</summary>
+	/// <remarks>注意：该属性可能会被构建过程设置为空(null)，以阻止后续的追加动作。</remarks>
+	public IAppender Appender
+	{
+		get => _appender;
+		set => _appender = value;
+	}
+
+	/// <summary>获取构建选项参数。</summary>
+	public BuilderSettings Settings => _settings;
+
+	/// <summary>获取或设置是否取消后续构建。</summary>
+	public bool Cancel
+	{
+		get => _cancel;
+		set => _cancel = value;
+	}
+
+	/// <summary>获取当前构建器要操作的构件。</summary>
+	public Builtin Builtin => _builtin;
+
+	/// <summary>获取当前构建器需要操作的插件节点，即为<see cref="Builtin"/>属性所指定的构件所属的<see cref="PluginTreeNode"/>插件树节点。</summary>
+	public PluginTreeNode Node => _builtin.Node;
+
+	/// <summary>获取当前构建的深度，如果大于零则表示处于子构件的构建中。</summary>
+	public int Depth => _depth;
+
+	/// <summary>获取当前节点的所有者对象，即所有者节点对应的目标对象。</summary>
+	/// <remarks>获取该属性值不会激发对所有者节点的创建动作，以避免在构建过程中发生无限递归调用。</remarks>
+	public object Owner
+	{
+		get
 		{
-			_builder = builder ?? throw new ArgumentNullException(nameof(builder));
-			_builtin = builtin ?? throw new ArgumentNullException(nameof(builtin));
-			_appender = builder as IAppender;
-			_settings = settings;
-
-			_depth = depth;
-			_owner = owner;
-			_ownerNode = ownerNode;
-
-			if(builtin.HasBehaviors)
-				_cancel = builtin.Behaviors.GetBehaviorValue<bool>(builtin.Scheme + ".break");
-
-			_syncRoot = new object();
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取当前插件上下文中的插件树。</summary>
-		public PluginTree PluginTree => _builtin.Tree;
-
-		/// <summary>获取当前的构建器对象。</summary>
-		public IBuilder Builder => _builder;
-
-		/// <summary>获取或设置构建过程的追加器。</summary>
-		/// <remarks>注意：该属性可能会被构建过程设置为空(null)，以阻止后续的追加动作。</remarks>
-		public IAppender Appender
-		{
-			get => _appender;
-			set => _appender = value;
-		}
-
-		/// <summary>获取构建选项参数。</summary>
-		public BuilderSettings Settings => _settings;
-
-		/// <summary>获取或设置是否取消后续构建。</summary>
-		public bool Cancel
-		{
-			get => _cancel;
-			set => _cancel = value;
-		}
-
-		/// <summary>获取当前构建器要操作的构件。</summary>
-		public Builtin Builtin => _builtin;
-
-		/// <summary>获取当前构建器需要操作的插件节点，即为<see cref="Builtin"/>属性所指定的构件所属的<see cref="PluginTreeNode"/>插件树节点。</summary>
-		public PluginTreeNode Node => _builtin.Node;
-
-		/// <summary>获取当前构建的深度，如果大于零则表示处于子构件的构建中。</summary>
-		public int Depth => _depth;
-
-		/// <summary>获取当前节点的所有者对象，即所有者节点对应的目标对象。</summary>
-		/// <remarks>获取该属性值不会激发对所有者节点的创建动作，以避免在构建过程中发生无限递归调用。</remarks>
-		public object Owner
-		{
-			get
+			if(_owner == null)
 			{
-				if(_owner == null)
-				{
-					var ownerNode = this.OwnerNode;
+				var ownerNode = this.OwnerNode;
 
-					//注意：解析所有者节点的目标对象。该操作绝不能激发创建动作，不然将可能导致无限递归调用。
-					if(ownerNode != null)
-						_owner = ownerNode.UnwrapValue(ObtainMode.Never, _settings);
-				}
-
-				return _owner;
+				//注意：解析所有者节点的目标对象。该操作绝不能激发创建动作，不然将可能导致无限递归调用。
+				if(ownerNode != null)
+					_owner = ownerNode.UnwrapValue(ObtainMode.Never, _settings);
 			}
+
+			return _owner;
 		}
+	}
 
-		/// <summary>获取当前节点的所有者节点。</summary>
-		public PluginTreeNode OwnerNode
+	/// <summary>获取当前节点的所有者节点。</summary>
+	public PluginTreeNode OwnerNode
+	{
+		get
 		{
-			get
+			if(_ownerNode == null)
 			{
-				if(_ownerNode == null)
+				lock(_syncRoot)
 				{
-					lock(_syncRoot)
+					if(_ownerNode == null)
 					{
-						if(_ownerNode == null)
-						{
-							var node = this.Node;
-							var tree = this.PluginTree;
+						var node = this.Node;
+						var tree = this.PluginTree;
 
-							if(tree == null)
-								return null;
+						if(tree == null)
+							return null;
 
-							if(node == null)
-								_ownerNode = tree.GetOwnerNode(_builtin.FullPath);
-							else
-								_ownerNode = tree.GetOwnerNode(node);
-						}
+						if(node == null)
+							_ownerNode = tree.GetOwnerNode(_builtin.FullPath);
+						else
+							_ownerNode = tree.GetOwnerNode(node);
 					}
 				}
-
-				return _ownerNode;
 			}
-		}
 
-		/// <summary>获取或设置由构建器创建的目标对象。</summary>
-		/// <remarks>该属性返回值会被添加到<see cref="Owner"/>对象的子集中。</remarks>
-		public object Result
-		{
-			get => _result;
-			set => _result = value;
+			return _ownerNode;
 		}
-		#endregion
-
-		#region 创建方法
-		internal static BuilderContext CreateContext(IBuilder builder, Builtin builtin, BuilderSettings settings = null, int depth = 0, object owner = null, PluginTreeNode ownerNode = null)
-		{
-			return new BuilderContext(builder, builtin, settings, depth, owner, ownerNode);
-		}
-		#endregion
 	}
+
+	/// <summary>获取或设置由构建器创建的目标对象。</summary>
+	/// <remarks>该属性返回值会被添加到<see cref="Owner"/>对象的子集中。</remarks>
+	public object Result
+	{
+		get => _result;
+		set => _result = value;
+	}
+	#endregion
+
+	#region 创建方法
+	internal static BuilderContext CreateContext(IBuilder builder, Builtin builtin, BuilderSettings settings = null, int depth = 0, object owner = null, PluginTreeNode ownerNode = null)
+	{
+		return new BuilderContext(builder, builtin, settings, depth, owner, ownerNode);
+	}
+	#endregion
 }

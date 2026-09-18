@@ -24,7 +24,8 @@ public class DeleteTest(DatabaseFixture database)
 		var count = await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 404));
 		Assert.Equal(0, count);
 
-		await accessor.InsertAsync(Model.Build<UserModel>(model => {
+		await accessor.InsertAsync(Model.Build<UserModel>(model =>
+		{
 			model.UserId = 100;
 			model.Name = "Popeye";
 		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
@@ -42,12 +43,14 @@ public class DeleteTest(DatabaseFixture database)
 			return;
 
 		var accessor = _database.Accessor;
-		var model = Model.Build<Employee>(model => {
+		var model = Model.Build<Employee>(model =>
+		{
 			model.TenantId = 1;
 			model.BranchId = 0;
 			model.UserId = 404;
 			model.FullName = "Boss Zhong";
-			model.User = Model.Build<UserModel>(user => {
+			model.User = Model.Build<UserModel>(user =>
+			{
 				user.UserId = 404;
 				user.Name = "Popeye";
 				user.Nickname = "Popeye Zhong";
@@ -74,7 +77,8 @@ public class DeleteTest(DatabaseFixture database)
 			return;
 
 		var accessor = _database.Accessor;
-		await accessor.InsertAsync(Model.Build<RoleModel>(model => {
+		await accessor.InsertAsync(Model.Build<RoleModel>(model =>
+		{
 			model.RoleId = 100;
 			model.Name = "Guests";
 		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
@@ -103,7 +107,8 @@ public class DeleteTest(DatabaseFixture database)
 			return;
 
 		var accessor = _database.Accessor;
-		await accessor.InsertAsync(Model.Build<Branch>(model => {
+		await accessor.InsertAsync(Model.Build<Branch>(model =>
+		{
 			model.TenantId = TenantId;
 			model.BranchId = BranchId;
 			model.BranchNo = "B01";

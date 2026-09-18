@@ -38,128 +38,127 @@ using Org.BouncyCastle.Crypto.Engines;
 using Org.BouncyCastle.Crypto.Parameters;
 using Org.BouncyCastle.Security;
 
-namespace Zongsoft.Externals.Wechat
+namespace Zongsoft.Externals.Wechat;
+
+public static class CryptographyHelper
 {
-	public static class CryptographyHelper
+	private const string ALGORITHM = "AES/GCM/NoPadding";
+	private static readonly IAeadCipher _cipher1 = new GcmBlockCipher(new AesEngine());
+	private static readonly IBufferedCipher _cipher2 = CipherUtilities.GetCipher(ALGORITHM);
+
+	public static byte[] Decrypt1(string key, string nonce, string associatedData, string ciphertext) => Decrypt1
+	(
+		Encoding.UTF8.GetBytes(key),
+		Encoding.UTF8.GetBytes(nonce),
+		Encoding.UTF8.GetBytes(associatedData),
+		Convert.FromBase64String(ciphertext)
+	);
+
+	public static byte[] Decrypt1(byte[] key, byte[] nonce, byte[] associatedData, byte[] ciphertext)
 	{
-		private const string ALGORITHM = "AES/GCM/NoPadding";
-		private static readonly IAeadCipher _cipher1 = new GcmBlockCipher(new AesEngine());
-		private static readonly IBufferedCipher _cipher2 = CipherUtilities.GetCipher(ALGORITHM);
+		var cipher = _cipher1;
+		var parameters = new AeadParameters(new KeyParameter(key), 128, nonce, associatedData);
 
-		public static byte[] Decrypt1(string key, string nonce, string associatedData, string ciphertext) => Decrypt1
-		(
-			Encoding.UTF8.GetBytes(key),
-			Encoding.UTF8.GetBytes(nonce),
-			Encoding.UTF8.GetBytes(associatedData),
-			Convert.FromBase64String(ciphertext)
-		);
+		cipher.Init(false, parameters);
+		var plaintext = new byte[cipher.GetOutputSize(ciphertext.Length)];
+		var length = cipher.ProcessBytes(ciphertext, 0, ciphertext.Length, plaintext, 0);
+		cipher.DoFinal(plaintext, length);
 
-		public static byte[] Decrypt1(byte[] key, byte[] nonce, byte[] associatedData, byte[] ciphertext)
+		return plaintext;
+	}
+
+	public static byte[] Decrypt2(string key, string nonce, string associatedData, string ciphertext) => Decrypt2
+	(
+		Encoding.UTF8.GetBytes(key),
+		Encoding.UTF8.GetBytes(nonce),
+		Encoding.UTF8.GetBytes(associatedData),
+		Convert.FromBase64String(ciphertext)
+	);
+
+	public static byte[] Decrypt2(byte[] key, byte[] nonce, byte[] associatedData, byte[] ciphertext)
+	{
+		var cipher = _cipher2;
+		var parameters = new AeadParameters(new KeyParameter(key), 128, nonce, associatedData);
+
+		cipher.Init(false, parameters);
+		var plaintext = new byte[cipher.GetOutputSize(ciphertext.Length)];
+		var length = cipher.ProcessBytes(ciphertext, 0, ciphertext.Length, plaintext, 0);
+		cipher.DoFinal(plaintext, length);
+
+		return plaintext;
+	}
+
+	public static class Obsolescent
+	{
+		public static byte[] Encrypt(string identity, string password, byte[] data)
 		{
-			var cipher = _cipher1;
-			var parameters = new AeadParameters(new KeyParameter(key), 128, nonce, associatedData);
+			var key = Convert.FromBase64String(password + "=");
+			var iv = new byte[16];
+			Array.Copy(key, iv, 16);
 
-			cipher.Init(false, parameters);
-			var plaintext = new byte[cipher.GetOutputSize(ciphertext.Length)];
-			var length = cipher.ProcessBytes(ciphertext, 0, ciphertext.Length, plaintext, 0);
-			cipher.DoFinal(plaintext, length);
+			string nonce = Common.Randomizer.GenerateString(16);
+			byte[] nonceArray = Encoding.UTF8.GetBytes(nonce);
+			byte[] identityArray = Encoding.UTF8.GetBytes(identity);
+			byte[] lengthArray = BitConverter.GetBytes(System.Net.IPAddress.HostToNetworkOrder(data.Length));
+			byte[] buffer = new byte[nonceArray.Length + lengthArray.Length + identityArray.Length + data.Length];
 
-			return plaintext;
-		}
+			Array.Copy(nonceArray, buffer, nonceArray.Length);
+			Array.Copy(lengthArray, 0, buffer, nonceArray.Length, lengthArray.Length);
+			Array.Copy(data, 0, buffer, nonceArray.Length + lengthArray.Length, data.Length);
+			Array.Copy(identityArray, 0, buffer, nonceArray.Length + lengthArray.Length + data.Length, identityArray.Length);
 
-		public static byte[] Decrypt2(string key, string nonce, string associatedData, string ciphertext) => Decrypt2
-		(
-			Encoding.UTF8.GetBytes(key),
-			Encoding.UTF8.GetBytes(nonce),
-			Encoding.UTF8.GetBytes(associatedData),
-			Convert.FromBase64String(ciphertext)
-		);
+			using var algorithm = Aes.Create();
+			algorithm.IV = iv;
+			algorithm.Key = key;
+			algorithm.KeySize = 256;
+			algorithm.BlockSize = 128;
+			algorithm.Mode = CipherMode.CBC;
+			algorithm.Padding = PaddingMode.None;
 
-		public static byte[] Decrypt2(byte[] key, byte[] nonce, byte[] associatedData, byte[] ciphertext)
-		{
-			var cipher = _cipher2;
-			var parameters = new AeadParameters(new KeyParameter(key), 128, nonce, associatedData);
+			using var encryptor = algorithm.CreateEncryptor(algorithm.Key, algorithm.IV);
+			byte[] result = new byte[buffer.Length + 32 - buffer.Length % 32];
+			Array.Copy(buffer, result, buffer.Length);
+			byte[] padding = KCS7Encoder(buffer.Length);
+			Array.Copy(padding, 0, result, buffer.Length, padding.Length);
 
-			cipher.Init(false, parameters);
-			var plaintext = new byte[cipher.GetOutputSize(ciphertext.Length)];
-			var length = cipher.ProcessBytes(ciphertext, 0, ciphertext.Length, plaintext, 0);
-			cipher.DoFinal(plaintext, length);
-
-			return plaintext;
-		}
-
-		public static class Obsolescent
-		{
-			public static byte[] Encrypt(string identity, string password, byte[] data)
+			using(var ms = new MemoryStream())
 			{
-				var key = Convert.FromBase64String(password + "=");
-				var iv = new byte[16];
-				Array.Copy(key, iv, 16);
-
-				string nonce = Common.Randomizer.GenerateString(16);
-				byte[] nonceArray = Encoding.UTF8.GetBytes(nonce);
-				byte[] identityArray = Encoding.UTF8.GetBytes(identity);
-				byte[] lengthArray = BitConverter.GetBytes(System.Net.IPAddress.HostToNetworkOrder(data.Length));
-				byte[] buffer = new byte[nonceArray.Length + lengthArray.Length + identityArray.Length + data.Length];
-
-				Array.Copy(nonceArray, buffer, nonceArray.Length);
-				Array.Copy(lengthArray, 0, buffer, nonceArray.Length, lengthArray.Length);
-				Array.Copy(data, 0, buffer, nonceArray.Length + lengthArray.Length, data.Length);
-				Array.Copy(identityArray, 0, buffer, nonceArray.Length + lengthArray.Length + data.Length, identityArray.Length);
-
-				using var algorithm = Aes.Create();
-				algorithm.IV = iv;
-				algorithm.Key = key;
-				algorithm.KeySize = 256;
-				algorithm.BlockSize = 128;
-				algorithm.Mode = CipherMode.CBC;
-				algorithm.Padding = PaddingMode.None;
-
-				using var encryptor = algorithm.CreateEncryptor(algorithm.Key, algorithm.IV);
-				byte[] result = new byte[buffer.Length + 32 - buffer.Length % 32];
-				Array.Copy(buffer, result, buffer.Length);
-				byte[] padding = KCS7Encoder(buffer.Length);
-				Array.Copy(padding, 0, result, buffer.Length, padding.Length);
-
-				using(var ms = new MemoryStream())
+				using(var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
 				{
-					using(var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
-					{
-						cs.Write(result, 0, result.Length);
-					}
-
-					return ms.ToArray();
-				}
-			}
-
-			public static byte[] Decrypt(string identity, string password, byte[] data)
-			{
-				throw new NotImplementedException();
-			}
-
-			#region 私有方法
-			private static byte[] KCS7Encoder(int text_length)
-			{
-				var block_size = 32;
-
-				// 计算需要填充的位数
-				var amount_to_pad = block_size - (text_length % block_size);
-
-				if(amount_to_pad == 0)
-					amount_to_pad = block_size;
-
-				// 获得补位所用的字符
-				var pad_chr = (char)(byte)(amount_to_pad & 0xFF);
-				var tmp = string.Empty;
-
-				for(int index = 0; index < amount_to_pad; index++)
-				{
-					tmp += pad_chr;
+					cs.Write(result, 0, result.Length);
 				}
 
-				return Encoding.UTF8.GetBytes(tmp);
+				return ms.ToArray();
 			}
-			#endregion
 		}
+
+		public static byte[] Decrypt(string identity, string password, byte[] data)
+		{
+			throw new NotImplementedException();
+		}
+
+		#region 私有方法
+		private static byte[] KCS7Encoder(int text_length)
+		{
+			var block_size = 32;
+
+			// 计算需要填充的位数
+			var amount_to_pad = block_size - (text_length % block_size);
+
+			if(amount_to_pad == 0)
+				amount_to_pad = block_size;
+
+			// 获得补位所用的字符
+			var pad_chr = (char)(byte)(amount_to_pad & 0xFF);
+			var tmp = string.Empty;
+
+			for(int index = 0; index < amount_to_pad; index++)
+			{
+				tmp += pad_chr;
+			}
+
+			return Encoding.UTF8.GetBytes(tmp);
+		}
+		#endregion
 	}
 }

@@ -118,33 +118,39 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="Read.Description" xml:space="preserve">
-    <value>表示读取或查询数据的操作。</value>
+    <value>Represents a read or query operation.</value>
   </data>
   <data name="Read.Title" xml:space="preserve">
-    <value>读取操作</value>
+    <value>Read operation</value>
   </data>
   <data name="Role.Description" xml:space="preserve">
-    <value>提供角色创建、修改等功能。</value>
+    <value>Provides role creation and editing features.</value>
   </data>
   <data name="Role.Title" xml:space="preserve">
-    <value>角色管理</value>
+    <value>Role management</value>
   </data>
   <data name="Security.Description" xml:space="preserve">
-    <value>提供用户、角色、权限、身份验证与授权等安全管理功能。</value>
+    <value>Provides security management for users, roles, permissions, authentication, and authorization.</value>
   </data>
   <data name="Security.Title" xml:space="preserve">
-    <value>安全管理</value>
+    <value>Security management</value>
   </data>
   <data name="User.Description" xml:space="preserve">
-    <value>提供用户创建、修改、密码重置等功能。</value>
+    <value>Provides user creation, editing, and password reset features.</value>
   </data>
   <data name="User.Title" xml:space="preserve">
-    <value>用户管理</value>
+    <value>User management</value>
   </data>
   <data name="Write.Description" xml:space="preserve">
-    <value>表示新增、修改、删除的写入操作。</value>
+    <value>Represents a write operation, including creation, modification, and deletion.</value>
   </data>
   <data name="Write.Title" xml:space="preserve">
-    <value>写入操作</value>
+    <value>Write operation</value>
   </data>
+	<data name="Role.IdentifierInvalid.Message" xml:space="preserve">
+		<value>The specified '{0}' value cannot be converted to a role identifier.</value>
+	</data>
+	<data name="User.IdentifierInvalid.Message" xml:space="preserve">
+		<value>The specified '{0}' value cannot be converted to a user identifier.</value>
+	</data>
 </root>

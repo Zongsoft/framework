@@ -90,7 +90,7 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 		set
 		{
 			if(_activated)
-				throw new InvalidOperationException("The namespace cannot be changed after the etcd service has been activated.");
+				throw new InvalidOperationException(Properties.Resources.Etcd_NamespaceImmutable_Message);
 
 			_namespace = string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim().TrimEnd(':');
 		}
@@ -240,7 +240,7 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 				return client;
 
 			var settings = this.Settings as Configuration.EtcdConnectionSettings ??
-				throw new ConfigurationException($"Missing the '{this.Name}' etcd connection setting.");
+				throw new ConfigurationException(string.Format(Properties.Resources.Etcd_SettingsNotFound_Message, this.Name));
 			var server = string.IsNullOrWhiteSpace(settings.Server) ? "127.0.0.1" : settings.Server.Trim();
 			var endpoints = string.Join(',', server.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(endpoint =>
 			{

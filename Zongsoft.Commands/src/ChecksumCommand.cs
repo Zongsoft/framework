@@ -59,7 +59,7 @@ public class ChecksumCommand : CommandBase<CommandContext>
 				byte[] buffer => Checksum.Compute(algorithm, buffer),
 				string text => Checksum.Compute(algorithm, encoding.GetBytes(text)),
 				System.IO.Stream stream => await Checksum.ComputeAsync(algorithm, stream, cancellation),
-				_ => throw new InvalidOperationException($"Does not support checksums of the '{context.Value.GetType().GetAlias()}' type."),
+				_ => throw new InvalidOperationException(string.Format(Properties.Resources.Checksum_TypeUnsupported_Message, context.Value.GetType().GetAlias())),
 			};
 
 		if(context.Arguments.Count == 1)

@@ -148,4 +148,7 @@
   <data name="MqttQueueServer.PortImmutable.Message" xml:space="preserve">
     <value>The MQTT server port cannot be changed while the server is running.</value>
   </data>
+	<data name="Messaging.ReconnectIntervalInvalid.Message" xml:space="preserve">
+		<value>The reconnect interval must be greater than zero.</value>
+	</data>
 </root>

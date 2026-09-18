@@ -44,7 +44,7 @@ internal static class Utility
 		if(position < 0)
 			throw new ArgumentOutOfRangeException(nameof(position));
 		if(!servicePrototype.IsGenericTypeDefinition)
-			throw new ArgumentException($"The specified '{servicePrototype.FullName}' service prototype must be a generic type definition.");
+			throw new ArgumentException(string.Format(Properties.Resources.Service_GenericPrototypeRequired_Message, servicePrototype.FullName));
 
 		return _types.GetOrAdd(service.GetType(), type =>
 		{

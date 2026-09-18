@@ -30,24 +30,23 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Externals.Wechat.Options
+namespace Zongsoft.Externals.Wechat.Options;
+
+public class AppletOptionsCollection : KeyedCollection<string, AppletOptions>
 {
-	public class AppletOptionsCollection : KeyedCollection<string, AppletOptions>
-	{
-		#region 公共属性
-		public string Default { get; set; }
-		#endregion
+	#region 公共属性
+	public string Default { get; set; }
+	#endregion
 
-		#region 构造函数
-		public AppletOptionsCollection() : base(StringComparer.OrdinalIgnoreCase) { }
-		#endregion
+	#region 构造函数
+	public AppletOptionsCollection() : base(StringComparer.OrdinalIgnoreCase) { }
+	#endregion
 
-		#region 公共方法
-		public AppletOptions GetDefault() => this.Default != null && this.TryGetValue(this.Default, out var applet) ? applet : (this.Count > 0 ? this[0] : null);
-		#endregion
+	#region 公共方法
+	public AppletOptions GetDefault() => this.Default != null && this.TryGetValue(this.Default, out var applet) ? applet : (this.Count > 0 ? this[0] : null);
+	#endregion
 
-		#region 重写方法
-		protected override string GetKeyForItem(AppletOptions item) => item.Name;
-		#endregion
-	}
+	#region 重写方法
+	protected override string GetKeyForItem(AppletOptions item) => item.Name;
+	#endregion
 }

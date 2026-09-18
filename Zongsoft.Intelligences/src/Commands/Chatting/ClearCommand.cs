@@ -42,7 +42,7 @@ public class ClearCommand() : CommandBase<CommandContext>("Clear")
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		var service = (context.Find<IServiceAccessor<IChatService>>(true)?.Value) ??
-			throw new CommandException("The chat service required by this command was not found.");
+			throw new CommandException(Properties.Resources.Chat_ServiceRequired_Message);
 
 		var history = service.Sessions.Current?.History;
 

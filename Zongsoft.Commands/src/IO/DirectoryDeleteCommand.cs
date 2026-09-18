@@ -46,9 +46,9 @@ public class DirectoryDeleteCommand : CommandBase<CommandContext>
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(context.Arguments.IsEmpty)
-			throw new CommandException(Properties.Resources.Command_MissingArguments);
+			throw new CommandException(Properties.Resources.Command_ArgumentsRequired_Message);
 
-		for(int i=0; i< context.Arguments.Count; i++)
+		for(int i = 0; i < context.Arguments.Count; i++)
 		{
 			var filePath = context.Arguments[i];
 			var succeed = await FileSystem.Directory.DeleteAsync(filePath);
@@ -56,7 +56,7 @@ public class DirectoryDeleteCommand : CommandBase<CommandContext>
 				Properties.Resources.DirectoryDeleteSucceed_Message :
 				Properties.Resources.DirectoryDeleteFailed_Message;
 
-			context.Output.WriteLine((succeed ? CommandOutletColor.Green : CommandOutletColor.Red), $"[{i+1}] `{filePath}` {message}");
+			context.Output.WriteLine((succeed ? CommandOutletColor.Green : CommandOutletColor.Red), $"[{i + 1}] `{filePath}` {message}");
 		}
 
 		return null;

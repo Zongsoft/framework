@@ -10,8 +10,8 @@
 
 namespace Zongsoft.Properties {
     using System;
-    
-    
+
+
     /// <summary>
     ///   一个强类型的资源类，用于查找本地化的字符串等。
     /// </summary>
@@ -19,19 +19,19 @@ namespace Zongsoft.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   返回此类使用的缓存的 ResourceManager 实例。
         /// </summary>
@@ -45,10 +45,10 @@ namespace Zongsoft.Properties {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
-        ///   重写当前线程的 CurrentUICulture 属性，对
-        ///   使用此强类型资源类的所有资源查找执行重写。
+        ///   使用此强类型资源类，为所有资源查找
+        ///   重写当前线程的 CurrentUICulture 属性。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -59,880 +59,997 @@ namespace Zongsoft.Properties {
                 resourceCulture = value;
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 已应答 的本地化字符串。
+        ///   查找类似 Acknowledged 的本地化字符串。
         /// </summary>
         internal static string Acknowledged {
             get {
                 return ResourceManager.GetString("Acknowledged", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 查看当前应用程序(进程)所有加载的程序集信息。 的本地化字符串。
+        ///   查找类似 Displays all assemblies loaded in the current application process. 的本地化字符串。
         /// </summary>
         internal static string AssemblyCommand_Description {
             get {
                 return ResourceManager.GetString("AssemblyCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 程序集查看命令 的本地化字符串。
+        ///   查找类似 Assembly inspection command 的本地化字符串。
         /// </summary>
         internal static string AssemblyCommand_Name {
             get {
                 return ResourceManager.GetString("AssemblyCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 无法获得命令的操作目标：{0}。 的本地化字符串。
+        ///   查找类似 Unable to obtain the command target: {0}. 的本地化字符串。
         /// </summary>
         internal static string CannotObtainCommandTarget {
             get {
                 return ResourceManager.GetString("CannotObtainCommandTarget", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 将输入参数转换成指定类型并返回。 的本地化字符串。
+        ///   查找类似 Converts the input arguments to the specified type and returns the result. 的本地化字符串。
         /// </summary>
         internal static string CastCommand_Description {
             get {
                 return ResourceManager.GetString("CastCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 转换命令 的本地化字符串。
+        ///   查找类似 Conversion command 的本地化字符串。
         /// </summary>
         internal static string CastCommand_Name {
             get {
                 return ResourceManager.GetString("CastCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 转换的字节数。 的本地化字符串。
+        ///   查找类似 The number of bytes to convert. 的本地化字符串。
         /// </summary>
         internal static string CastCommand_Options_Count {
             get {
                 return ResourceManager.GetString("CastCommand.Options.Count", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 转换的文本编码。 的本地化字符串。
+        ///   查找类似 The text encoding to use for conversion. 的本地化字符串。
         /// </summary>
         internal static string CastCommand_Options_Encoding {
             get {
                 return ResourceManager.GetString("CastCommand.Options.Encoding", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 转换的偏移量（起始字节数）。 的本地化字符串。
+        ///   查找类似 The starting byte offset for conversion. 的本地化字符串。
         /// </summary>
         internal static string CastCommand_Options_Offset {
             get {
                 return ResourceManager.GetString("CastCommand.Options.Offset", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 转换的类型。 的本地化字符串。
+        ///   查找类似 The target type for conversion. 的本地化字符串。
         /// </summary>
         internal static string CastCommand_Options_Type {
             get {
                 return ResourceManager.GetString("CastCommand.Options.Type", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 命令 的本地化字符串。
+        ///   查找类似 Does not support checksums of the &apos;{0}&apos; type. 的本地化字符串。
+        /// </summary>
+        internal static string Checksum_TypeUnsupported_Message {
+            get {
+                return ResourceManager.GetString("Checksum.TypeUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Command 的本地化字符串。
         /// </summary>
         internal static string Command {
             get {
                 return ResourceManager.GetString("Command", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 没有指定命令参数，请至少指定一个命令参数。 的本地化字符串。
+        ///   查找类似 Missing the required command arguments. 的本地化字符串。
         /// </summary>
-        internal static string Command_MissingArguments {
+        internal static string Command_ArgumentsRequired_Message {
             get {
-                return ResourceManager.GetString("Command.MissingArguments", resourceCulture);
+                return ResourceManager.GetString("Command.ArgumentsRequired.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 无效的命令参数，参数个数必须为{0}。 的本地化字符串。
+        ///   查找类似 No arguments are provided, and the &apos;{0}&apos; command is not running in a terminal environment, so the required arguments cannot be obtained through user interaction. 的本地化字符串。
+        /// </summary>
+        internal static string Command_InteractiveArgumentsUnavailable_Message {
+            get {
+                return ResourceManager.GetString("Command.InteractiveArgumentsUnavailable.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The value of the &apos;{0}&apos; option cannot be greater than the value of the &apos;{1}&apos; option. 的本地化字符串。
+        /// </summary>
+        internal static string Command_OptionRangeInvalid_Message {
+            get {
+                return ResourceManager.GetString("Command.OptionRangeInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; option of this command does not support the specified &apos;{1}&apos; value. 的本地化字符串。
+        /// </summary>
+        internal static string Command_OptionValueUnsupported_Message {
+            get {
+                return ResourceManager.GetString("Command.OptionValueUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid command arguments. Exactly {0} arguments are required. 的本地化字符串。
         /// </summary>
         internal static string Command_RequiresCountOfArguments {
             get {
                 return ResourceManager.GetString("Command.RequiresCountOfArguments", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 指定的命令参数太多了。 的本地化字符串。
+        ///   查找类似 Too many command arguments were specified. 的本地化字符串。
         /// </summary>
         internal static string Command_TooManyArguments {
             get {
                 return ResourceManager.GetString("Command.TooManyArguments", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 命令执行失败。 的本地化字符串。
+        ///   查找类似 Command execution failed. 的本地化字符串。
         /// </summary>
         internal static string CommandExecuteFailed {
             get {
                 return ResourceManager.GetString("CommandExecuteFailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 命令执行成功。 的本地化字符串。
+        ///   查找类似 Command execution succeeded. 的本地化字符串。
         /// </summary>
         internal static string CommandExecuteSucceed {
             get {
                 return ResourceManager.GetString("CommandExecuteSucceed", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 命令使用方法： 的本地化字符串。
+        ///   查找类似 Command usage: 的本地化字符串。
         /// </summary>
         internal static string CommandUsages {
             get {
                 return ResourceManager.GetString("CommandUsages", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 该命令提供获取当前程序的配置信息。 的本地化字符串。
+        ///   查找类似 Provides access to the current application&apos;s configuration. 的本地化字符串。
         /// </summary>
         internal static string ConfigurationCommand_Description {
             get {
                 return ResourceManager.GetString("ConfigurationCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 配置命令 的本地化字符串。
+        ///   查找类似 Configuration command 的本地化字符串。
         /// </summary>
         internal static string ConfigurationCommand_Name {
             get {
                 return ResourceManager.GetString("ConfigurationCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 是否以简化的方式显式。 的本地化字符串。
+        ///   查找类似 Whether to use a simplified display format. 的本地化字符串。
         /// </summary>
         internal static string ConfigurationCommand_Options_Simplify {
             get {
                 return ResourceManager.GetString("ConfigurationCommand.Options.Simplify", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 该命令查看指定路径的配置信息。 的本地化字符串。
+        ///   查找类似 Displays configuration information at the specified path. 的本地化字符串。
         /// </summary>
         internal static string ConfigurationGetCommand_Description {
             get {
                 return ResourceManager.GetString("ConfigurationGetCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 获取配置命令 的本地化字符串。
+        ///   查找类似 Get configuration command 的本地化字符串。
         /// </summary>
         internal static string ConfigurationGetCommand_Name {
             get {
                 return ResourceManager.GetString("ConfigurationGetCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 目录删除失败。 的本地化字符串。
+        ///   查找类似 Failed to delete the directory. 的本地化字符串。
         /// </summary>
         internal static string DirectoryDeleteFailed_Message {
             get {
                 return ResourceManager.GetString("DirectoryDeleteFailed.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 目录删除成功。 的本地化字符串。
+        ///   查找类似 The directory was deleted successfully. 的本地化字符串。
         /// </summary>
         internal static string DirectoryDeleteSucceed_Message {
             get {
                 return ResourceManager.GetString("DirectoryDeleteSucceed.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 指定的“{0}”目录存在。 的本地化字符串。
+        ///   查找类似 The directory &apos;{0}&apos; exists. 的本地化字符串。
         /// </summary>
         internal static string DirectoryExisted {
             get {
                 return ResourceManager.GetString("DirectoryExisted", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 指定的“{0}”目录不存在。 的本地化字符串。
+        ///   查找类似 The directory &apos;{0}&apos; does not exist. 的本地化字符串。
         /// </summary>
         internal static string DirectoryNotExisted {
             get {
                 return ResourceManager.GetString("DirectoryNotExisted", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 已禁用 的本地化字符串。
+        ///   查找类似 Disabled 的本地化字符串。
         /// </summary>
         internal static string Disabled {
             get {
                 return ResourceManager.GetString("Disabled", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 输出命令的参数值。 的本地化字符串。
+        ///   查找类似 Outputs the values of the command arguments. 的本地化字符串。
         /// </summary>
         internal static string EchoCommand_Description {
             get {
                 return ResourceManager.GetString("EchoCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 回声命令 的本地化字符串。
+        ///   查找类似 Echo command 的本地化字符串。
         /// </summary>
         internal static string EchoCommand_Name {
             get {
                 return ResourceManager.GetString("EchoCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 文件删除失败。 的本地化字符串。
+        ///   查找类似 Failed to delete the file. 的本地化字符串。
         /// </summary>
         internal static string FileDeleteFailed_Message {
             get {
                 return ResourceManager.GetString("FileDeleteFailed.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 文件删除成功。 的本地化字符串。
+        ///   查找类似 The file was deleted successfully. 的本地化字符串。
         /// </summary>
         internal static string FileDeleteSucceed_Message {
             get {
                 return ResourceManager.GetString("FileDeleteSucceed.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 指定的“{0}”文件存在。 的本地化字符串。
+        ///   查找类似 The file &apos;{0}&apos; exists. 的本地化字符串。
         /// </summary>
         internal static string FileExisted {
             get {
                 return ResourceManager.GetString("FileExisted", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 指定的“{0}”文件不存在。 的本地化字符串。
+        ///   查找类似 The file &apos;{0}&apos; does not exist. 的本地化字符串。
         /// </summary>
         internal static string FileNotExisted {
             get {
                 return ResourceManager.GetString("FileNotExisted", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 {0}文件或目录是不存在的。 的本地化字符串。
+        ///   查找类似 The file or directory &apos;{0}&apos; does not exist. 的本地化字符串。
         /// </summary>
         internal static string FileOrDirectoryNotExists {
             get {
                 return ResourceManager.GetString("FileOrDirectoryNotExists", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 提供对命令的相关使用信息的命令。 的本地化字符串。
+        ///   查找类似 Displays usage information for commands. 的本地化字符串。
         /// </summary>
         internal static string HelpCommand_Description {
             get {
                 return ResourceManager.GetString("HelpCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 帮助命令 的本地化字符串。
+        ///   查找类似 Help command 的本地化字符串。
         /// </summary>
         internal static string HelpCommand_Name {
             get {
                 return ResourceManager.GetString("HelpCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 提供Json相关操作的功能。 的本地化字符串。
+        ///   查找类似 Provides JSON operations. 的本地化字符串。
         /// </summary>
         internal static string JsonCommand_Description {
             get {
                 return ResourceManager.GetString("JsonCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 Json命令 的本地化字符串。
+        ///   查找类似 JSON command 的本地化字符串。
         /// </summary>
         internal static string JsonCommand_Name {
             get {
                 return ResourceManager.GetString("JsonCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 指定要序列化成员名称的命名规则。 的本地化字符串。
+        ///   查找类似 The naming convention for serialized member names. 的本地化字符串。
         /// </summary>
         internal static string JsonCommand_Options_Casing {
             get {
                 return ResourceManager.GetString("JsonCommand.Options.Casing", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 指定要序列化的最大深度，默认为3。 的本地化字符串。
+        ///   查找类似 The maximum serialization depth. The default is 3. 的本地化字符串。
         /// </summary>
         internal static string JsonCommand_Options_Depth {
             get {
                 return ResourceManager.GetString("JsonCommand.Options.Depth", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 是否启用Json序列化缩进格式。 的本地化字符串。
+        ///   查找类似 Whether to indent the serialized JSON. 的本地化字符串。
         /// </summary>
         internal static string JsonCommand_Options_Indented {
             get {
                 return ResourceManager.GetString("JsonCommand.Options.Indented", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 安静模式，如果开启则不输出 Json 内容。 的本地化字符串。
+        ///   查找类似 Quiet mode. Suppresses JSON output when enabled. 的本地化字符串。
         /// </summary>
         internal static string JsonCommand_Options_Quiet {
             get {
                 return ResourceManager.GetString("JsonCommand.Options.Quiet", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 是否启用Json序列化元素类型信息。 的本地化字符串。
+        ///   查找类似 Whether to include element type information in the serialized JSON. 的本地化字符串。
         /// </summary>
         internal static string JsonCommand_Options_Typed {
             get {
                 return ResourceManager.GetString("JsonCommand.Options.Typed", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 没有找到指定‘{0}’的命令。 的本地化字符串。
+        ///   查找类似 The command &apos;{0}&apos; was not found. 的本地化字符串。
         /// </summary>
         internal static string Message_CommandNotFound {
             get {
                 return ResourceManager.GetString("Message.CommandNotFound", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 没有队列。 的本地化字符串。
+        ///   查找类似 Not found the required queue object. 的本地化字符串。
+        /// </summary>
+        internal static string Messaging_QueueRequired_Message {
+            get {
+                return ResourceManager.GetString("Messaging.QueueRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 No queues are available. 的本地化字符串。
         /// </summary>
         internal static string NoQueue {
             get {
                 return ResourceManager.GetString("NoQueue", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 请输入要打开的文件路径： 的本地化字符串。
+        ///   查找类似 Enter the path of the file to open: 的本地化字符串。
         /// </summary>
         internal static string OpenFile_Prompt {
             get {
                 return ResourceManager.GetString("OpenFile.Prompt", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 可选的 的本地化字符串。
+        ///   查找类似 Optional 的本地化字符串。
         /// </summary>
         internal static string Optional {
             get {
                 return ResourceManager.GetString("Optional", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 清除指定队列中的所有元素。 的本地化字符串。
+        ///   查找类似 The specified binary data is not a valid password format. 的本地化字符串。
+        /// </summary>
+        internal static string Password_DataInvalid_Message {
+            get {
+                return ResourceManager.GetString("Password.DataInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; text is not a valid password format. 的本地化字符串。
+        /// </summary>
+        internal static string Password_TextInvalid_Message {
+            get {
+                return ResourceManager.GetString("Password.TextInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Removes all items from the specified queue. 的本地化字符串。
         /// </summary>
         internal static string QueueClearCommand_Description {
             get {
                 return ResourceManager.GetString("QueueClearCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 清空队列 的本地化字符串。
+        ///   查找类似 Clear queue command 的本地化字符串。
         /// </summary>
         internal static string QueueClearCommand_Name {
             get {
                 return ResourceManager.GetString("QueueClearCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 提供队列操作命令的队列。 的本地化字符串。
+        ///   查找类似 Provides commands for queue operations. 的本地化字符串。
         /// </summary>
         internal static string QueueCommand_Description {
             get {
                 return ResourceManager.GetString("QueueCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 当前名为 &apos;{0}&apos; 队列，总计 {1} 个元素，其类型是：{2}
-        ///队列信息：{3} 的本地化字符串。
+        ///   查找类似 The queue &apos;{0}&apos; contains {1} items and has type {2}.
+        ///Queue information: {3} 的本地化字符串。
         /// </summary>
         internal static string QueueCommand_Message {
             get {
                 return ResourceManager.GetString("QueueCommand.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 当前队列命令缺少队列提供程序，因此无法选取指定名称的队列。 的本地化字符串。
+        ///   查找类似 A queue provider is required to select a queue by name. 的本地化字符串。
         /// </summary>
         internal static string QueueCommand_MissingQueueProvider {
             get {
                 return ResourceManager.GetString("QueueCommand.MissingQueueProvider", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 队列命令 的本地化字符串。
+        ///   查找类似 Queue command 的本地化字符串。
         /// </summary>
         internal static string QueueCommand_Name {
             get {
                 return ResourceManager.GetString("QueueCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 从队列提供程序中没有找到指定名称为“{0}”的队列。 的本地化字符串。
+        ///   查找类似 The queue &apos;{0}&apos; was not found in the queue provider. 的本地化字符串。
         /// </summary>
         internal static string QueueCommand_NotFoundQueue {
             get {
                 return ResourceManager.GetString("QueueCommand.NotFoundQueue", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 出队或者提取的项目个数。 的本地化字符串。
+        ///   查找类似 The number of items to dequeue or retrieve. 的本地化字符串。
         /// </summary>
         internal static string QueueCommand_Options_Count {
             get {
                 return ResourceManager.GetString("QueueCommand.Options.Count", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 消息队列名称。 的本地化字符串。
+        ///   查找类似 The message queue name. 的本地化字符串。
         /// </summary>
         internal static string QueueCommand_Options_Name {
             get {
                 return ResourceManager.GetString("QueueCommand.Options.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 指定队列操作的队列名，多个队列名之间以逗号(,)分隔。 的本地化字符串。
+        ///   查找类似 The names of the queues to operate on, separated by commas (,). 的本地化字符串。
         /// </summary>
         internal static string QueueCommand_Options_Queues {
             get {
                 return ResourceManager.GetString("QueueCommand.Options.Queues", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 出队或入队操作循环执行的次数，默认值为1。如果在出队命令中该参数为负数则表示直至将队列出空为止。 的本地化字符串。
+        ///   查找类似 The number of times to repeat the enqueue or dequeue operation. The default is 1. For dequeue operations, a negative value means to continue until the queue is empty. 的本地化字符串。
         /// </summary>
         internal static string QueueCommand_Options_Round {
             get {
                 return ResourceManager.GetString("QueueCommand.Options.Round", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 返回指定队列的元素个数。 的本地化字符串。
+        ///   查找类似 Returns the number of items in the specified queue. 的本地化字符串。
         /// </summary>
         internal static string QueueCountCommand_Description {
             get {
                 return ResourceManager.GetString("QueueCountCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 名为 &apos;{0}&apos; 队列，总计 {1} 个元素。 的本地化字符串。
+        ///   查找类似 The queue &apos;{0}&apos; contains {1} items. 的本地化字符串。
         /// </summary>
         internal static string QueueCountCommand_Message {
             get {
                 return ResourceManager.GetString("QueueCountCommand.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 队列数量命令 的本地化字符串。
+        ///   查找类似 Queue count command 的本地化字符串。
         /// </summary>
         internal static string QueueCountCommand_Name {
             get {
                 return ResourceManager.GetString("QueueCountCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 将指定的参数加入到指定的队列中。 的本地化字符串。
+        ///   查找类似 Enqueues the specified arguments in the specified queue. 的本地化字符串。
         /// </summary>
         internal static string QueueInCommand_Description {
             get {
                 return ResourceManager.GetString("QueueInCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 第 {0} 轮，入队 {1} 条记录，{2} 队列。 的本地化字符串。
+        ///   查找类似 Round {0}: enqueued {1} items in queue {2}. 的本地化字符串。
         /// </summary>
         internal static string QueueInCommand_Message {
             get {
                 return ResourceManager.GetString("QueueInCommand.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 入队命令 的本地化字符串。
+        ///   查找类似 Enqueue command 的本地化字符串。
         /// </summary>
         internal static string QueueInCommand_Name {
             get {
                 return ResourceManager.GetString("QueueInCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 名为&apos;{0}&apos;的队列为空集。 的本地化字符串。
+        ///   查找类似 The queue &apos;{0}&apos; is empty. 的本地化字符串。
         /// </summary>
         internal static string QueueIsEmpty {
             get {
                 return ResourceManager.GetString("QueueIsEmpty", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 从指定队列的队首移出元素。 的本地化字符串。
+        ///   查找类似 Removes items from the front of the specified queue. 的本地化字符串。
         /// </summary>
         internal static string QueueOutCommand_Description {
             get {
                 return ResourceManager.GetString("QueueOutCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 第 {0} 轮，出队 {1} 条记录，{2} 队列。 的本地化字符串。
+        ///   查找类似 Round {0}: dequeued {1} items from queue {2}. 的本地化字符串。
         /// </summary>
         internal static string QueueOutCommand_Message {
             get {
                 return ResourceManager.GetString("QueueOutCommand.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 出队命令 的本地化字符串。
+        ///   查找类似 Dequeue command 的本地化字符串。
         /// </summary>
         internal static string QueueOutCommand_Name {
             get {
                 return ResourceManager.GetString("QueueOutCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 返回指定队列的队首元素，但并不移除它。 的本地化字符串。
+        ///   查找类似 Returns the first item in the specified queue without removing it. 的本地化字符串。
         /// </summary>
         internal static string QueuePeekCommand_Description {
             get {
                 return ResourceManager.GetString("QueuePeekCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 查看队首 的本地化字符串。
+        ///   查找类似 Peek queue command 的本地化字符串。
         /// </summary>
         internal static string QueuePeekCommand_Name {
             get {
                 return ResourceManager.GetString("QueuePeekCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 是否自动应答，默认值为真(true)。 的本地化字符串。
+        ///   查找类似 Whether to acknowledge messages automatically. The default is true. 的本地化字符串。
         /// </summary>
         internal static string QueueSubscribeCommand_Acknowledgeable {
             get {
                 return ResourceManager.GetString("QueueSubscribeCommand.Acknowledgeable", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 显示格式，收到消息后消息内容的显示格式。 的本地化字符串。
+        ///   查找类似 The display format for received message content. 的本地化字符串。
         /// </summary>
         internal static string QueueSubscribeCommand_Format {
             get {
                 return ResourceManager.GetString("QueueSubscribeCommand.Format", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 提示：按 Ctrl+C 组合键可以退出侦听模式。 的本地化字符串。
+        ///   查找类似 Press Ctrl+C to stop listening. 的本地化字符串。
         /// </summary>
         internal static string QueueSubscribeCommand_Prompt {
             get {
                 return ResourceManager.GetString("QueueSubscribeCommand.Prompt", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 欢迎进入 {0} 消息队列的侦听模式。 的本地化字符串。
+        ///   查找类似 Listening to the &apos;{0}&apos; message queue. 的本地化字符串。
         /// </summary>
         internal static string QueueSubscribeCommand_Welcome {
             get {
                 return ResourceManager.GetString("QueueSubscribeCommand.Welcome", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 必须的 的本地化字符串。
+        ///   查找类似 Required 的本地化字符串。
         /// </summary>
         internal static string Required {
             get {
                 return ResourceManager.GetString("Required", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 请输入要保存的文件路径： 的本地化字符串。
+        ///   查找类似 Enter the path of the file to save: 的本地化字符串。
         /// </summary>
         internal static string SaveFile_Prompt {
             get {
                 return ResourceManager.GetString("SaveFile.Prompt", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 提供验证码生成、校验等命令的宿主，通过该命令可更改验证码相关命令的验证码提供程序，譬如：services.get secret | secret 的本地化字符串。
+        ///   查找类似 Missing the required scheduler. 的本地化字符串。
+        /// </summary>
+        internal static string Scheduler_Required_Message {
+            get {
+                return ResourceManager.GetString("Scheduler.Required.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Hosts commands for generating and verifying verification codes. Use this command to change the verification code provider, for example: services.get secret | secret 的本地化字符串。
         /// </summary>
         internal static string SecretCommand_Description {
             get {
                 return ResourceManager.GetString("SecretCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 秘密（验证码）宿主命令 的本地化字符串。
+        ///   查找类似 Verification code host command 的本地化字符串。
         /// </summary>
         internal static string SecretCommand_Name {
             get {
                 return ResourceManager.GetString("SecretCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 生成一个或多个验证码，譬如：secret.generate -name:&apos;user.phone.change:100&apos; -pattern:#4 -timeout:15m 13800000001 13800000002 13800000003 的本地化字符串。
+        ///   查找类似 Generates one or more verification codes, for example: secret.generate -name:&apos;user.phone.change:100&apos; -pattern:#4 -timeout:15m 13800000001 13800000002 13800000003 的本地化字符串。
         /// </summary>
         internal static string SecretGenerateCommand_Description {
             get {
                 return ResourceManager.GetString("SecretGenerateCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 生成秘密（验证码）命令 的本地化字符串。
+        ///   查找类似 Generate verification code command 的本地化字符串。
         /// </summary>
         internal static string SecretGenerateCommand_Name {
             get {
                 return ResourceManager.GetString("SecretGenerateCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 验证码名称，该名称通常包含对应的目标标识（譬如：user.forget:100、user.email:100，其中数字100表示用户的唯一编号）。 的本地化字符串。
+        ///   查找类似 The verification code name, usually including the target identifier, for example: user.forget:100 or user.email:100, where 100 is the user&apos;s unique identifier. 的本地化字符串。
         /// </summary>
         internal static string SecretGenerateCommand_Options_Name {
             get {
                 return ResourceManager.GetString("SecretGenerateCommand.Options.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 验证码生成模式，如果不指定或空字符串则生成6位数字；也可以表示生成验证码的规则，基本模式定义如下：
-        ///- guid|uuid，表示生成一个GUID值
-        ///- #{number}，表示生成{number}个的数字字符，譬如：#4
-        ///- ?{number}，表示生成{number}个的含有字母或数字的字符，譬如：?8 的本地化字符串。
+        ///   查找类似 The verification code generation pattern. If omitted or empty, a six-digit code is generated. Supported patterns:
+        ///- guid|uuid: generates a GUID value
+        ///- #{number}: generates {number} digits, for example: #4
+        ///- ?{number}: generates {number} alphanumeric characters, for example: ?8 的本地化字符串。
         /// </summary>
         internal static string SecretGenerateCommand_Options_Pattern {
             get {
                 return ResourceManager.GetString("SecretGenerateCommand.Options.Pattern", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 校验一个验证码，譬如：secret.verify -name:&apos;user.email:100&apos; 123456 的本地化字符串。
+        ///   查找类似 Missing required secretor for the command. 的本地化字符串。
+        /// </summary>
+        internal static string Secretor_Required_Message {
+            get {
+                return ResourceManager.GetString("Secretor.Required.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Verifies a verification code, for example: secret.verify -name:&apos;user.email:100&apos; 123456 的本地化字符串。
         /// </summary>
         internal static string SecretVerifyCommand_Description {
             get {
                 return ResourceManager.GetString("SecretVerifyCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 校验秘密（验证码）命令 的本地化字符串。
+        ///   查找类似 Verify verification code command 的本地化字符串。
         /// </summary>
         internal static string SecretVerifyCommand_Name {
             get {
                 return ResourceManager.GetString("SecretVerifyCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 验证码名称，该名称通常包含对应的目标标识（譬如：user.forget:100、user.email:100，其中数字100表示用户的唯一编号）。 的本地化字符串。
+        ///   查找类似 The verification code name, usually including the target identifier, for example: user.forget:100 or user.email:100, where 100 is the user&apos;s unique identifier. 的本地化字符串。
         /// </summary>
         internal static string SecretVerifyCommand_Options_Name {
             get {
                 return ResourceManager.GetString("SecretVerifyCommand.Options.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 服务器已经启动。 的本地化字符串。
+        ///   查找类似 Missing the required RSA. 的本地化字符串。
+        /// </summary>
+        internal static string Security_RsaRequired_Message {
+            get {
+                return ResourceManager.GetString("Security.RsaRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The sequence instance is not specified. 的本地化字符串。
+        /// </summary>
+        internal static string Sequence_InstanceRequired_Message {
+            get {
+                return ResourceManager.GetString("Sequence.InstanceRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The required sequence keys are missing. 的本地化字符串。
+        /// </summary>
+        internal static string Sequence_KeysRequired_Message {
+            get {
+                return ResourceManager.GetString("Sequence.KeysRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Only one argument is allowed for specifying the sequence instance. 的本地化字符串。
+        /// </summary>
+        internal static string Sequence_TooManyArguments_Message {
+            get {
+                return ResourceManager.GetString("Sequence.TooManyArguments.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The server has already started. 的本地化字符串。
         /// </summary>
         internal static string ServerHasBeenStarted {
             get {
                 return ResourceManager.GetString("ServerHasBeenStarted", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 该命令提供切换指定服务供应程序工厂中的当前操作的供应程序，并显示所有服务提供程序的名称。
-        ///如果不指定命令行的参数则显示所有命令提供程序的名称；否则将命令行参数所指定名称的服务提供程序(默认服务提供程序名为“.”)设置本命令操作的服务容器。 的本地化字符串。
+        ///   查找类似 Selects the active provider from the specified service provider factory and lists the names of all service providers.
+        ///Without command arguments, lists all provider names. Otherwise, uses the provider named by the command argument as the service container for this command. The default provider name is &apos;.&apos;. 的本地化字符串。
         /// </summary>
         internal static string ServicesCommand_Description {
             get {
                 return ResourceManager.GetString("ServicesCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 服务命令 的本地化字符串。
+        ///   查找类似 Services command 的本地化字符串。
         /// </summary>
         internal static string ServicesCommand_Name {
             get {
                 return ResourceManager.GetString("ServicesCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 指定名称为“{0}”的服务提供程序没有找到。 的本地化字符串。
+        ///   查找类似 The service provider &apos;{0}&apos; was not found. 的本地化字符串。
         /// </summary>
         internal static string ServicesCommand_NotFoundProvider {
             get {
                 return ResourceManager.GetString("ServicesCommand.NotFoundProvider", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 指定的服务提供程序(服务容器)的名称。 的本地化字符串。
+        ///   查找类似 The name of the service provider (service container). 的本地化字符串。
         /// </summary>
         internal static string ServicesCommand_Options_Provider {
             get {
                 return ResourceManager.GetString("ServicesCommand.Options.Provider", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 该命令提供获取当前服务供应程序中的各种服务对象，并显式其信息。
+        ///   查找类似 Retrieves service objects from the current service provider and displays their information.
         ///
-        ///用法如下：
+        ///Usage:
         ///
         ///services.get &amp;lt;service-name&amp;gt;
-        ///	参数为要获取的服务名称，该名称为其在当前服务供应程序注册时声明的名称。
+        ///	The argument is the name under which the service is registered with the current service provider.
         ///
         ///services.get -contract:assemblyQualifiedName
-        ///	-contract 选项为要获取的服务类型限定名。
+        ///	The -contract option specifies the assembly-qualified service type name.
         ///
         ///services.get -contract:assemblyQualifiedName parameter
-        ///	-contract 选项为要获取的服务类型限定名；参数为解析时传入的参数。 的本地化字符串。
+        ///	The -contract option specifies the assembly-qualified service type name; the argument is p [字符串的其余部分被截断]&quot;; 的本地化字符串。
         /// </summary>
         internal static string ServicesGetCommand_Description {
             get {
                 return ResourceManager.GetString("ServicesGetCommand.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 服务获取命令 的本地化字符串。
+        ///   查找类似 Get service command 的本地化字符串。
         /// </summary>
         internal static string ServicesGetCommand_Name {
             get {
                 return ResourceManager.GetString("ServicesGetCommand.Name", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 排序方式 的本地化字符串。
+        ///   查找类似 Sort order 的本地化字符串。
         /// </summary>
         internal static string SortMode {
             get {
                 return ResourceManager.GetString("SortMode", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 升序 的本地化字符串。
+        ///   查找类似 Ascending 的本地化字符串。
         /// </summary>
         internal static string SortMode_Asc {
             get {
                 return ResourceManager.GetString("SortMode.Asc", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 降序 的本地化字符串。
+        ///   查找类似 Descending 的本地化字符串。
         /// </summary>
         internal static string SortMode_Desc {
             get {
                 return ResourceManager.GetString("SortMode.Desc", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 不排序 的本地化字符串。
+        ///   查找类似 Unsorted 的本地化字符串。
         /// </summary>
         internal static string SortMode_None {
             get {

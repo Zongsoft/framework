@@ -10,8 +10,8 @@
 
 namespace Zongsoft.Web.Properties {
     using System;
-    
-    
+
+
     /// <summary>
     ///   一个强类型的资源类，用于查找本地化的字符串等。
     /// </summary>
@@ -19,19 +19,19 @@ namespace Zongsoft.Web.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   返回此类使用的缓存的 ResourceManager 实例。
         /// </summary>
@@ -45,10 +45,10 @@ namespace Zongsoft.Web.Properties {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
-        ///   重写当前线程的 CurrentUICulture 属性，对
-        ///   使用此强类型资源类的所有资源查找执行重写。
+        ///   使用此强类型资源类，为所有资源查找
+        ///   重写当前线程的 CurrentUICulture 属性。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -59,7 +59,7 @@ namespace Zongsoft.Web.Properties {
                 resourceCulture = value;
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Dependency conflict: The ({1}) fields in the {0} table depends on the ({3}) fields in the {2} table. The dependency values is: {4}. 的本地化字符串。
         /// </summary>
@@ -68,7 +68,7 @@ namespace Zongsoft.Web.Properties {
                 return ResourceManager.GetString("ConstraintException.Dependency.Message", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Data conflict: The ({1}) fields in the {0} table has duplicate values: {2}. 的本地化字符串。
         /// </summary>
@@ -77,13 +77,58 @@ namespace Zongsoft.Web.Properties {
                 return ResourceManager.GetString("ConstraintException.Unique.Message", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   查找类似 Missing required data service. 的本地化字符串。
+        /// </summary>
+        internal static string Data_ServiceRequired_Message {
+            get {
+                return ResourceManager.GetString("Data.ServiceRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Incorrect Content-Type: {0} 的本地化字符串。
+        /// </summary>
+        internal static string Http_ContentTypeInvalid_Message {
+            get {
+                return ResourceManager.GetString("Http.ContentTypeInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid path format. 的本地化字符串。
+        /// </summary>
+        internal static string Path_FormatInvalid_Message {
+            get {
+                return ResourceManager.GetString("Path.FormatInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The specified ‘{0}’ is an illegal path. 的本地化字符串。
+        /// </summary>
+        internal static string Path_Invalid_Message {
+            get {
+                return ResourceManager.GetString("Path.Invalid.Message", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   查找类似 , 的本地化字符串。
         /// </summary>
         internal static string Separator {
             get {
                 return ResourceManager.GetString("Separator", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing the required service. 的本地化字符串。
+        /// </summary>
+        internal static string Service_Required_Message {
+            get {
+                return ResourceManager.GetString("Service.Required.Message", resourceCulture);
             }
         }
     }

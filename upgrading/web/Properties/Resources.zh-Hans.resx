@@ -123,4 +123,7 @@
   <data name="Evaluator.Default.Description" xml:space="preserve">
     <value>提供选项设置匹配评估。</value>
   </data>
+	<data name="Command.ParameterRequired.Message" xml:space="preserve">
+		<value>必须指定“{0}”参数。</value>
+	</data>
 </root>

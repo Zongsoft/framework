@@ -29,18 +29,17 @@
 
 using System;
 
-namespace Zongsoft.Plugins.Builders
+namespace Zongsoft.Plugins.Builders;
+
+[Flags]
+public enum BuilderSettingsFlags
 {
-	[Flags]
-	public enum BuilderSettingsFlags
-	{
-		/// <summary>无。</summary>
-		None = 0,
+	/// <summary>无。</summary>
+	None = 0,
 
-		/// <summary>禁止构建子元素。</summary>
-		IgnoreChildren = 1,
+	/// <summary>禁止构建子元素。</summary>
+	IgnoreChildren = 1,
 
-		/// <summary>禁止追加操作。</summary>
-		IgnoreAppending = 2,
-	}
+	/// <summary>禁止追加操作。</summary>
+	IgnoreAppending = 2,
 }

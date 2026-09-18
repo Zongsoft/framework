@@ -77,7 +77,7 @@ partial class Scheduler
 			if(options == null)
 				throw new ArgumentNullException(nameof(options));
 			if(string.IsNullOrEmpty(options.Expression))
-				throw new ArgumentException($"Missing required Cron expression parameter value.");
+				throw new ArgumentException(Properties.Resources.Scheduler_CronRequired_Message);
 
 			if(string.IsNullOrEmpty(options.Identifier))
 				options.Identifier = $"X{Common.Randomizer.GenerateString()}";
@@ -92,7 +92,7 @@ partial class Scheduler
 			if(options == null)
 				throw new ArgumentNullException(nameof(options));
 			if(string.IsNullOrEmpty(options.Expression))
-				throw new ArgumentException($"Missing required Cron expression parameter value.");
+				throw new ArgumentException(Properties.Resources.Scheduler_CronRequired_Message);
 
 			if(string.IsNullOrEmpty(options.Identifier))
 				options.Identifier = $"X{Common.Randomizer.GenerateString()}";

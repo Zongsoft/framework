@@ -98,4 +98,25 @@
 	<resheader name="writer">
 		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
 	</resheader>
+	<data name="Configuration.Required.Message" xml:space="preserve">
+		<value>Missing required configuration.</value>
+	</data>
+	<data name="Storage.DefaultRegionRequired.Message" xml:space="preserve">
+		<value>No default region configuration is provided.</value>
+	</data>
+	<data name="File.AlreadyExists.Message" xml:space="preserve">
+		<value>The specified '{0}' file already exists.</value>
+	</data>
+	<data name="Storage.RegionNotConfigured.Message" xml:space="preserve">
+		<value>The specified '{0}' region is not configured.</value>
+	</data>
+	<data name="Storage.BucketRequired.Message" xml:space="preserve">
+		<value>The specified '{0}' scheme value does not contain the bucket name.</value>
+	</data>
+	<data name="File.RequiredFileNotFound.Message" xml:space="preserve">
+		<value>The specified file does not exist.</value>
+	</data>
+	<data name="Storage.RegionInvalid.Message" xml:space="preserve">
+		<value>The specified region '{0}' is not valid.</value>
+	</data>
 </root>

@@ -10,8 +10,8 @@
 
 namespace Zongsoft.Data.TDengine.Properties {
     using System;
-    
-    
+
+
     /// <summary>
     ///   一个强类型的资源类，用于查找本地化的字符串等。
     /// </summary>
@@ -19,19 +19,19 @@ namespace Zongsoft.Data.TDengine.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   返回此类使用的缓存的 ResourceManager 实例。
         /// </summary>
@@ -45,10 +45,10 @@ namespace Zongsoft.Data.TDengine.Properties {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
-        ///   重写当前线程的 CurrentUICulture 属性，对
-        ///   使用此强类型资源类的所有资源查找执行重写。
+        ///   使用此强类型资源类，为所有资源查找
+        ///   重写当前线程的 CurrentUICulture 属性。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -59,7 +59,106 @@ namespace Zongsoft.Data.TDengine.Properties {
                 resourceCulture = value;
             }
         }
-        
+
+        /// <summary>
+        ///   查找类似 The TDengine DELETE parameter &apos;{0}&apos; does not contain a value. 的本地化字符串。
+        /// </summary>
+        internal static string DeleteStatement_ParameterValueMissing_Message {
+            get {
+                return ResourceManager.GetString("DeleteStatement.ParameterValueMissing.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The ‘{0}’ type expression is not supported within the FROM clause. 的本地化字符串。
+        /// </summary>
+        internal static string DeleteStatement_SourceUnsupported_Message {
+            get {
+                return ResourceManager.GetString("DeleteStatement.SourceUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 TDengine DELETE conditions may only reference the primary timestamp field &apos;{0}&apos;. 的本地化字符串。
+        /// </summary>
+        internal static string DeleteStatement_TimestampConditionOnly_Message {
+            get {
+                return ResourceManager.GetString("DeleteStatement.TimestampConditionOnly.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 TDengine DELETE requires an entity whose first column is the primary timestamp. 的本地化字符串。
+        /// </summary>
+        internal static string DeleteStatement_TimestampRequired_Message {
+            get {
+                return ResourceManager.GetString("DeleteStatement.TimestampRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid &apos;{0}&apos; aggregate method. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_AggregateInvalid_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.AggregateInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Unsupported &apos;{0}&apos; data type. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_DataTypeUnsupported_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.DataTypeUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The TDengine driver does not support the &apos;{0}&apos; sequence function. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_SequenceUnsupported_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.SequenceUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Not supported &apos;{0}&apos; statement. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_StatementUnsupported_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.StatementUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing required fields in the {0} statement. 的本地化字符串。
+        /// </summary>
+        internal static string InsertStatement_MissingFields_Message {
+            get {
+                return ResourceManager.GetString("InsertStatement.MissingFields.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 TDengine {0} statements support one record at a time; use the data importer for bulk writes. 的本地化字符串。
+        /// </summary>
+        internal static string InsertStatement_SingleRecordOnly_Message {
+            get {
+                return ResourceManager.GetString("InsertStatement.SingleRecordOnly.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 TDengine does not support UPDATE statements; insert a row with the same primary timestamp to replace its values. 的本地化字符串。
+        /// </summary>
+        internal static string Statement_UpdateUnsupported_Message {
+            get {
+                return ResourceManager.GetString("Statement.UpdateUnsupported.Message", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   查找类似 Compression Enabled 的本地化字符串。
         /// </summary>
@@ -68,7 +167,7 @@ namespace Zongsoft.Data.TDengine.Properties {
                 return ResourceManager.GetString("TDengine.Settings.Compressible", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Database 的本地化字符串。
         /// </summary>
@@ -77,7 +176,7 @@ namespace Zongsoft.Data.TDengine.Properties {
                 return ResourceManager.GetString("TDengine.Settings.Database", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Password 的本地化字符串。
         /// </summary>
@@ -86,7 +185,7 @@ namespace Zongsoft.Data.TDengine.Properties {
                 return ResourceManager.GetString("TDengine.Settings.Password", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Port 的本地化字符串。
         /// </summary>
@@ -95,7 +194,7 @@ namespace Zongsoft.Data.TDengine.Properties {
                 return ResourceManager.GetString("TDengine.Settings.Port", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Protocol 的本地化字符串。
         /// </summary>
@@ -104,7 +203,7 @@ namespace Zongsoft.Data.TDengine.Properties {
                 return ResourceManager.GetString("TDengine.Settings.Protocol", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Reconnectable 的本地化字符串。
         /// </summary>
@@ -113,7 +212,7 @@ namespace Zongsoft.Data.TDengine.Properties {
                 return ResourceManager.GetString("TDengine.Settings.Reconnectable", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Use SSL 的本地化字符串。
         /// </summary>
@@ -122,7 +221,7 @@ namespace Zongsoft.Data.TDengine.Properties {
                 return ResourceManager.GetString("TDengine.Settings.Secured", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Server 的本地化字符串。
         /// </summary>
@@ -131,7 +230,7 @@ namespace Zongsoft.Data.TDengine.Properties {
                 return ResourceManager.GetString("TDengine.Settings.Server", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Timeout 的本地化字符串。
         /// </summary>
@@ -140,7 +239,7 @@ namespace Zongsoft.Data.TDengine.Properties {
                 return ResourceManager.GetString("TDengine.Settings.Timeout", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 User Name 的本地化字符串。
         /// </summary>

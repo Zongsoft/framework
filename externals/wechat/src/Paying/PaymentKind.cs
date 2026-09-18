@@ -29,33 +29,32 @@
 
 using System;
 
-namespace Zongsoft.Externals.Wechat.Paying
+namespace Zongsoft.Externals.Wechat.Paying;
+
+/// <summary>
+/// 表示支付方式的枚举。
+/// </summary>
+public enum PaymentKind
 {
-	/// <summary>
-	/// 表示支付方式的枚举。
-	/// </summary>
-	public enum PaymentKind
-	{
-		/// <summary>公众号支付</summary>
-		[Components.Alias("JSAPI")]
-		Web,
+	/// <summary>公众号支付</summary>
+	[Components.Alias("JSAPI")]
+	Web,
 
-		/// <summary>扫码支付</summary>
-		Native,
+	/// <summary>扫码支付</summary>
+	Native,
 
-		/// <summary>APP支付</summary>
-		App,
+	/// <summary>APP支付</summary>
+	App,
 
-		/// <summary>付款码支付</summary>
-		[Components.Alias("MICROPAY")]
-		Paycode,
+	/// <summary>付款码支付</summary>
+	[Components.Alias("MICROPAY")]
+	Paycode,
 
-		/// <summary>H5支付</summary>
-		[Components.Alias("MWEB")]
-		Mobile,
+	/// <summary>H5支付</summary>
+	[Components.Alias("MWEB")]
+	Mobile,
 
-		/// <summary>刷脸支付</summary>
-		[Components.Alias("FACEPAY")]
-		Facepay,
-	}
+	/// <summary>刷脸支付</summary>
+	[Components.Alias("FACEPAY")]
+	Facepay,
 }

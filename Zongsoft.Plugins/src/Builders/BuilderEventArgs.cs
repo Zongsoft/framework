@@ -29,20 +29,19 @@
 
 using System;
 
-namespace Zongsoft.Plugins.Builders
-{
-	public class BuilderEventArgs : EventArgs
-	{
-		#region 构造函数
-		public BuilderEventArgs(BuilderContext context)
-		{
-			this.Context = context ?? throw new ArgumentNullException(nameof(context));
-		}
-		#endregion
+namespace Zongsoft.Plugins.Builders;
 
-		#region 公共属性
-		/// <summary>获取当前的构建上下文对象。</summary>
-		public BuilderContext Context { get; }
-		#endregion
+public class BuilderEventArgs : EventArgs
+{
+	#region 构造函数
+	public BuilderEventArgs(BuilderContext context)
+	{
+		this.Context = context ?? throw new ArgumentNullException(nameof(context));
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取当前的构建上下文对象。</summary>
+	public BuilderContext Context { get; }
+	#endregion
 }

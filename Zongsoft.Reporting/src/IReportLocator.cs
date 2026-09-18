@@ -30,13 +30,12 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Reporting
-{
-	public interface IReportLocator
-	{
-		int Priority { get; set; }
+namespace Zongsoft.Reporting;
 
-		IReportDescriptor GetReport(string key);
-		IEnumerable<IReportDescriptor> GetReports();
-	}
+public interface IReportLocator
+{
+	int Priority { get; set; }
+
+	IReportDescriptor GetReport(string key);
+	IEnumerable<IReportDescriptor> GetReports();
 }

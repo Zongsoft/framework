@@ -69,7 +69,7 @@ partial class OllamaClient : IModelService
 
 			return response.ToModel();
 		}
-		catch(System.Net.Http.HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+		catch(System.Net.Http.HttpRequestException ex) when(ex.StatusCode == System.Net.HttpStatusCode.NotFound)
 		{
 			return null;
 		}

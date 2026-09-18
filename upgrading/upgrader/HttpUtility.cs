@@ -46,7 +46,7 @@ internal static class HttpUtility
 			baseAddress += $"http://{baseAddress}";
 
 		if(!baseAddress.EndsWith('/'))
-			baseAddress += "/" ;
+			baseAddress += "/";
 
 		var handler = new HttpClientHandler
 		{

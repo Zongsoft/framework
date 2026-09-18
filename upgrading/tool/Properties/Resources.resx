@@ -139,4 +139,10 @@
   <data name="ManifestPublishedSuccessfully.Message" xml:space="preserve">
     <value>The '{0}' manifest file published successfully.</value>
   </data>
+	<data name="Manifest.NoReleasesImported.Message" xml:space="preserve">
+		<value>The manifest file '{0}' did not import any release.</value>
+	</data>
+	<data name="Manifest.ReleaseIdInvalid.Message" xml:space="preserve">
+		<value>The web service returned an invalid release id for manifest file '{0}'.</value>
+	</data>
 </root>

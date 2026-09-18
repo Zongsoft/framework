@@ -193,7 +193,7 @@ public class WebFileAccessor
 	{
 		//检测请求的内容是否为Multipart类型
 		if(!request.HasFormContentType)
-			throw new InvalidOperationException("Incorrect Content-Type: " + request.ContentType);
+			throw new InvalidOperationException(string.Format(Properties.Resources.Http_ContentTypeInvalid_Message, request.ContentType));
 
 		//从当前请求内容读取多段信息并写入文件中
 		var form = await request.ReadFormAsync(cancellation);
@@ -319,7 +319,7 @@ public class WebFileAccessor
 		path = Uri.UnescapeDataString(path).Trim();
 
 		if(!Zongsoft.IO.Path.TryParse(path, out var pathInfo))
-			throw new PathException($"The specified ‘{path}’ is an illegal path.");
+			throw new PathException(string.Format(Properties.Resources.Path_Invalid_Message, path));
 
 		if(string.IsNullOrEmpty(pathInfo.Scheme))
 			return Zongsoft.IO.Path.Combine(this.EnsureBasePath(out _), path);

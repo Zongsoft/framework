@@ -92,7 +92,7 @@ public static class HubEndpointRouteBuilderExtensions
 			options.WebSockets.SubProtocolSelector = value.WebSockets.SubProtocolSelector;
 
 #if NET8_0_OR_GREATER
-				options.AllowStatefulReconnects = value.AllowStatefulReconnects;
+			options.AllowStatefulReconnects = value.AllowStatefulReconnects;
 #endif
 
 			foreach(var data in value.AuthorizationData)

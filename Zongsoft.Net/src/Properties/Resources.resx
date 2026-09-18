@@ -98,4 +98,10 @@
 	<resheader name="writer">
 		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
 	</resheader>
+	<data name="Network.DestinationRequired.Message" xml:space="preserve">
+		<value>The destination address to connect to is not specified.</value>
+	</data>
+	<data name="Network.HandlerMismatch.Message" xml:space="preserve">
+		<value>The specified ‘{0}’ handler does not match.</value>
+	</data>
 </root>

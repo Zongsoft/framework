@@ -29,26 +29,25 @@
 
 using System;
 
-namespace Zongsoft.Plugins
+namespace Zongsoft.Plugins;
+
+public class PluginUnloadedEventArgs : EventArgs
 {
-	public class PluginUnloadedEventArgs : EventArgs
+	#region 构造函数
+	public PluginUnloadedEventArgs(Plugin plugin)
 	{
-		#region 构造函数
-		public PluginUnloadedEventArgs(Plugin plugin)
-		{
-			if(plugin == null)
-				throw new ArgumentNullException("plugin");
+		if(plugin == null)
+			throw new ArgumentNullException("plugin");
 
-			this.Plugin = plugin;
-		}
-		#endregion
-
-		#region 公共属性
-		public Plugin Plugin
-		{
-			get;
-			private set;
-		}
-		#endregion
+		this.Plugin = plugin;
 	}
+	#endregion
+
+	#region 公共属性
+	public Plugin Plugin
+	{
+		get;
+		private set;
+	}
+	#endregion
 }

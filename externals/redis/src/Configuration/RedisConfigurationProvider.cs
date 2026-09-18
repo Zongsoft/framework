@@ -198,7 +198,7 @@ public class RedisConfigurationProvider : ConfigurationProvider, IDisposable, IA
 
 		internal RedisConfigurationDictionary(IServer server, IDatabase database, string @namespace)
 		{
-			_server  = server ?? throw new ArgumentNullException(nameof(server));
+			_server = server ?? throw new ArgumentNullException(nameof(server));
 			_database = database ?? throw new ArgumentNullException(nameof(database));
 
 			if(string.IsNullOrEmpty(@namespace))
@@ -298,7 +298,7 @@ public class RedisConfigurationProvider : ConfigurationProvider, IDisposable, IA
 		private RedisValue[] GetValues(RedisKey[] keys)
 		{
 			if(keys == null || keys.Length == 0)
-				return Array.Empty<RedisValue>();
+				return [];
 
 			var batch = _database.CreateBatch();
 			var tasks = new System.Threading.Tasks.Task<RedisValue>[keys.Length];

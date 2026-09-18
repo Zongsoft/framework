@@ -85,12 +85,12 @@ public class MySqlUpdateStatementVisitor : UpdateStatementVisitor
 						}
 						else
 						{
-							throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("UpdateStatement.JoinTargetUnsupported.Message"), MySqlDriver.NAME, join.Target.GetType().Name));
+							throw new DataException(string.Format(Properties.Resources.UpdateStatement_JoinTargetUnsupported_Message, MySqlDriver.NAME, join.Target.GetType().Name));
 						}
 
 						break;
 					default:
-						throw new NotSupportedException(string.Format(Properties.Resources.ResourceManager.GetString("UpdateStatement.SourceUnsupported.Message"), MySqlDriver.NAME, source.GetType().Name));
+						throw new NotSupportedException(string.Format(Properties.Resources.UpdateStatement_SourceUnsupported_Message, MySqlDriver.NAME, source.GetType().Name));
 				}
 			}
 		}

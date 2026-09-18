@@ -210,18 +210,18 @@ partial class Packager
 			await EnsureSuccessAsync(response, cancellation);
 
 			if(response.StatusCode == System.Net.HttpStatusCode.NoContent)
-				throw new InvalidOperationException($"The manifest file '{manifestPath}' did not import any release.");
+				throw new InvalidOperationException(string.Format(Properties.Resources.Manifest_NoReleasesImported_Message, manifestPath));
 
 			await using var result = await response.Content.ReadAsStreamAsync(cancellation);
 			var releases = await JsonSerializer.DeserializeAsync<WebRelease[]>(result, _jsonOptions, cancellation);
 
 			if(releases == null || releases.Length == 0)
-				throw new InvalidOperationException($"The manifest file '{manifestPath}' did not import any release.");
+				throw new InvalidOperationException(string.Format(Properties.Resources.Manifest_NoReleasesImported_Message, manifestPath));
 
 			for(int i = 0; i < releases.Length; i++)
 			{
 				if(releases[i].ReleaseId == 0)
-					throw new InvalidOperationException($"The web service returned an invalid release id for manifest file '{manifestPath}'.");
+					throw new InvalidOperationException(string.Format(Properties.Resources.Manifest_ReleaseIdInvalid_Message, manifestPath));
 			}
 
 			return releases;

@@ -53,7 +53,7 @@ partial class OpcClient
 			return null;
 
 		if(StatusCode.IsBad(result.StatusCode))
-			throw new InvalidOperationException($"[{result.StatusCode}] Failed to read the value of the “{identifier}” node.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.Opc_ValueReadFailed_Message, result.StatusCode, identifier));
 
 		if(result.Value is ExtensionObject extension)
 			return extension.Body;

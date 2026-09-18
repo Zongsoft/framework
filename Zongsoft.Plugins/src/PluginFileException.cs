@@ -29,18 +29,17 @@
 
 using System;
 
-namespace Zongsoft.Plugins
-{
-	public class PluginFileException : PluginException
-	{
-		#region 构造函数
-		public PluginFileException(string message) : base(message) { }
-		public PluginFileException(string fileName, string message) : base(message, null) => this.FileName = fileName;
-		public PluginFileException(string fileName, string message, Exception innerException) : base(message, innerException) => this.FileName = fileName;
-		#endregion
+namespace Zongsoft.Plugins;
 
-		#region 公共属性
-		public string FileName { get; }
-		#endregion
-	}
+public class PluginFileException : PluginException
+{
+	#region 构造函数
+	public PluginFileException(string message) : base(message) { }
+	public PluginFileException(string fileName, string message) : base(message, null) => this.FileName = fileName;
+	public PluginFileException(string fileName, string message, Exception innerException) : base(message, innerException) => this.FileName = fileName;
+	#endregion
+
+	#region 公共属性
+	public string FileName { get; }
+	#endregion
 }

@@ -35,226 +35,225 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 
-namespace Zongsoft.Externals.Aliyun
+namespace Zongsoft.Externals.Aliyun;
+
+public class HttpAuthenticator
 {
-	public class HttpAuthenticator
+	#region 常量定义
+	public const char NewLine = '\n';
+	#endregion
+
+	#region 成员字段
+	private readonly string _name;
+	private readonly HttpSignatureMode _signatureMode;
+	#endregion
+
+	#region 构造函数
+	protected HttpAuthenticator(string name, HttpSignatureMode signatureMode)
 	{
-		#region 常量定义
-		public const char NewLine = '\n';
-		#endregion
+		if(string.IsNullOrWhiteSpace(name))
+			throw new ArgumentNullException(nameof(name));
 
-		#region 成员字段
-		private readonly string _name;
-		private readonly HttpSignatureMode _signatureMode;
-		#endregion
+		_name = name.Trim();
+		_signatureMode = signatureMode;
+	}
+	#endregion
 
-		#region 构造函数
-		protected HttpAuthenticator(string name, HttpSignatureMode signatureMode)
+	#region 公共属性
+	public string Name
+	{
+		get => _name;
+	}
+
+	public HttpSignatureMode SignatureMode
+	{
+		get => _signatureMode;
+	}
+	#endregion
+
+	#region 公共方法
+	public virtual string Signature(HttpRequestMessage request, string secret)
+	{
+		using(var algorithm = new HMACSHA1())
 		{
-			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException(nameof(name));
+			//设置散列加密算法的密钥
+			algorithm.Key = Encoding.UTF8.GetBytes(secret);
 
-			_name = name.Trim();
-			_signatureMode = signatureMode;
+			//计算当前请求的签名数据
+			var data = Encoding.UTF8.GetBytes(this.Canonicalize(request));
+
+			//计算加密后的散列值（签名内容）
+			return System.Convert.ToBase64String(algorithm.ComputeHash(data));
 		}
-		#endregion
+	}
+	#endregion
 
-		#region 公共属性
-		public string Name
+	#region 虚拟方法
+	protected virtual string Canonicalize(HttpRequestMessage request)
+	{
+		if(request == null)
+			throw new ArgumentNullException(nameof(request));
+
+		var headersString = this.CanonicalizeHeaders(request);
+		var resourceString = this.CanonicalizeResource(request);
+
+		return headersString + resourceString;
+	}
+
+	protected virtual string CanonicalizeHeaders(HttpRequestMessage request)
+	{
+		var text = new StringBuilder(request.Method.ToString().ToUpperInvariant() + NewLine, 512);
+
+		if(request.Content != null && request.Content.Headers != null && (request.Content.Headers.ContentMD5 != null && request.Content.Headers.ContentMD5.Length > 0))
+			text.Append(System.Convert.ToBase64String(request.Content.Headers.ContentMD5) + NewLine);
+		else
+			text.Append(NewLine);
+
+		if(request.Content != null && request.Content.Headers != null && (request.Content.Headers.ContentType != null && !string.IsNullOrWhiteSpace(request.Content.Headers.ContentType.MediaType)))
+			text.Append(request.Content.Headers.ContentType.ToString() + NewLine);
+		else
+			text.Append(NewLine);
+
+		if(request.Headers.Date == null)
+			request.Headers.Date = DateTime.UtcNow;
+
+		text.Append(request.Headers.Date.Value.ToString("r") + NewLine);
+
+		var dictionary = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+		foreach(KeyValuePair<string, IEnumerable<string>> header in request.Headers)
 		{
-			get => _name;
+			if(this.IsCanonicalizedHeader(header.Key))
+			{
+				string key = header.Key.ToLowerInvariant().Trim();
+
+				if(dictionary.TryGetValue(key, out var value))
+					dictionary[key] = JoinValues(value, header.Value);
+				else
+					dictionary[key] = JoinValues(null, header.Value);
+			}
 		}
 
-		public HttpSignatureMode SignatureMode
+		foreach(var entry in dictionary)
 		{
-			get => _signatureMode;
+			text.Append($"{entry.Key}:{entry.Value}{NewLine}");
+		}
+
+		return text.ToString();
+	}
+
+	protected virtual string CanonicalizeResource(HttpRequestMessage request) => null;
+	protected virtual bool IsCanonicalizedHeader(string name) => !string.IsNullOrWhiteSpace(name) && name.StartsWith("x-");
+	#endregion
+
+	#region 保护方法
+	protected static string CanonicalizeQuery(Uri url, Action<StringBuilder> onCanonicalized = null)
+	{
+		if(url == null || string.IsNullOrEmpty(url.Query))
+			return null;
+
+		var parts = url.Query.TrimStart('?').Split('&');
+		var dictionary = new SortedDictionary<string, string>(StringComparer.Ordinal);
+		string key, value;
+
+		foreach(var part in parts)
+		{
+			var index = part.IndexOf('=');
+
+			if(index > 0)
+			{
+				key = Uri.UnescapeDataString(part[..index]);
+				value = index < part.Length - 1 ? Uri.UnescapeDataString(part[(index + 1)..]) : null;
+			}
+			else
+			{
+				key = Uri.UnescapeDataString(part);
+				value = null;
+			}
+
+			dictionary[key] = value;
+		}
+
+		var text = new StringBuilder((int)Math.Ceiling(url.Query.Length * 1.5));
+
+		foreach(var entry in dictionary)
+		{
+			if(text.Length > 0)
+				text.Append('&');
+
+			text.Append($"{Uri.EscapeDataString(entry.Key)}={Uri.EscapeDataString(entry.Value)}");
+		}
+
+		onCanonicalized?.Invoke(text);
+
+		return text.ToString();
+	}
+	#endregion
+
+	#region 私有方法
+	private static string JoinValues(string originalValue, IEnumerable<string> values)
+	{
+		if(values == null)
+			return originalValue;
+
+		var result = string.Join(',', values).Trim().Trim(',');
+		return string.IsNullOrWhiteSpace(originalValue) ? result : $"{originalValue.Trim()},{result}";
+	}
+	#endregion
+
+	#region 嵌套子类
+	protected class QueryStringComparer : IComparer<string>
+	{
+		#region 单例字段
+		public static readonly QueryStringComparer Ordinal = new();
+		#endregion
+
+		#region 私有构造
+		private QueryStringComparer()
+		{
 		}
 		#endregion
 
 		#region 公共方法
-		public virtual string Signature(HttpRequestMessage request, string secret)
+		public int Compare(string x, string y)
 		{
-			using(var algorithm = new HMACSHA1())
+			if(string.IsNullOrEmpty(x) && string.IsNullOrEmpty(y))
+				return 0;
+
+			if(string.IsNullOrEmpty(x))
+				return -1;
+
+			if(string.IsNullOrEmpty(y))
+				return 1;
+
+			for(int i = 0; i < Math.Min(x.Length, y.Length); i++)
 			{
-				//设置散列加密算法的密钥
-				algorithm.Key = Encoding.UTF8.GetBytes(secret);
+				var xv = GetCharNumber(x[i]);
+				var yv = GetCharNumber(y[i]);
 
-				//计算当前请求的签名数据
-				var data = Encoding.UTF8.GetBytes(this.Canonicalize(request));
-
-				//计算加密后的散列值（签名内容）
-				return System.Convert.ToBase64String(algorithm.ComputeHash(data));
-			}
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected virtual string Canonicalize(HttpRequestMessage request)
-		{
-			if(request == null)
-				throw new ArgumentNullException(nameof(request));
-
-			var headersString = this.CanonicalizeHeaders(request);
-			var resourceString = this.CanonicalizeResource(request);
-
-			return headersString + resourceString;
-		}
-
-		protected virtual string CanonicalizeHeaders(HttpRequestMessage request)
-		{
-			var text = new StringBuilder(request.Method.ToString().ToUpperInvariant() + NewLine, 512);
-
-			if(request.Content != null && request.Content.Headers != null && (request.Content.Headers.ContentMD5 != null && request.Content.Headers.ContentMD5.Length > 0))
-				text.Append(System.Convert.ToBase64String(request.Content.Headers.ContentMD5) + NewLine);
-			else
-				text.Append(NewLine);
-
-			if(request.Content != null && request.Content.Headers != null && (request.Content.Headers.ContentType != null && !string.IsNullOrWhiteSpace(request.Content.Headers.ContentType.MediaType)))
-				text.Append(request.Content.Headers.ContentType.ToString() + NewLine);
-			else
-				text.Append(NewLine);
-
-			if(request.Headers.Date == null)
-				request.Headers.Date = DateTime.UtcNow;
-
-			text.Append(request.Headers.Date.Value.ToString("r") + NewLine);
-
-			var dictionary = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-			foreach(KeyValuePair<string, IEnumerable<string>> header in request.Headers)
-			{
-				if(this.IsCanonicalizedHeader(header.Key))
-				{
-					string key = header.Key.ToLowerInvariant().Trim();
-
-					if(dictionary.TryGetValue(key, out var value))
-						dictionary[key] = JoinValues(value, header.Value);
-					else
-						dictionary[key] = JoinValues(null, header.Value);
-				}
+				if(xv != yv)
+					return xv < yv ? -1 : 1;
 			}
 
-			foreach(var entry in dictionary)
-			{
-				text.Append($"{entry.Key}:{entry.Value}{NewLine}");
-			}
+			if(x.Length == y.Length)
+				return 0;
 
-			return text.ToString();
-		}
-
-		protected virtual string CanonicalizeResource(HttpRequestMessage request) => null;
-		protected virtual bool IsCanonicalizedHeader(string name) => !string.IsNullOrWhiteSpace(name) && name.StartsWith("x-");
-		#endregion
-
-		#region 保护方法
-		protected static string CanonicalizeQuery(Uri url, Action<StringBuilder> onCanonicalized = null)
-		{
-			if(url == null || string.IsNullOrEmpty(url.Query))
-				return null;
-
-			var parts = url.Query.TrimStart('?').Split('&');
-			var dictionary = new SortedDictionary<string, string>(StringComparer.Ordinal);
-			string key, value;
-
-			foreach(var part in parts)
-			{
-				var index = part.IndexOf('=');
-
-				if(index > 0)
-				{
-					key = Uri.UnescapeDataString(part[..index]);
-					value = index < part.Length - 1 ? Uri.UnescapeDataString(part[(index + 1)..]) : null;
-				}
-				else
-				{
-					key = Uri.UnescapeDataString(part);
-					value = null;
-				}
-
-				dictionary[key] = value;
-			}
-
-			var text = new StringBuilder((int)Math.Ceiling(url.Query.Length * 1.5));
-
-			foreach(var entry in dictionary)
-			{
-				if(text.Length > 0)
-					text.Append('&');
-
-				text.Append($"{Uri.EscapeDataString(entry.Key)}={Uri.EscapeDataString(entry.Value)}");
-			}
-
-			onCanonicalized?.Invoke(text);
-
-			return text.ToString();
+			return x.Length < y.Length ? -1 : 1;
 		}
 		#endregion
 
 		#region 私有方法
-		private static string JoinValues(string originalValue, IEnumerable<string> values)
+		private static int GetCharNumber(char chr)
 		{
-			if(values == null)
-				return originalValue;
+			if(chr >= '0' && chr <= '9')
+				return chr + 7;
 
-			var result = string.Join(',', values).Trim().Trim(',');
-			return string.IsNullOrWhiteSpace(originalValue) ? result : $"{originalValue.Trim()},{result}";
-		}
-		#endregion
+			if(chr > '9' && chr < 'A')
+				return chr - 10;
 
-		#region 嵌套子类
-		protected class QueryStringComparer : IComparer<string>
-		{
-			#region 单例字段
-			public static readonly QueryStringComparer Ordinal = new();
-			#endregion
-
-			#region 私有构造
-			private QueryStringComparer()
-			{
-			}
-			#endregion
-
-			#region 公共方法
-			public int Compare(string x, string y)
-			{
-				if(string.IsNullOrEmpty(x) && string.IsNullOrEmpty(y))
-					return 0;
-
-				if(string.IsNullOrEmpty(x))
-					return -1;
-
-				if(string.IsNullOrEmpty(y))
-					return 1;
-
-				for(int i = 0; i < Math.Min(x.Length, y.Length); i++)
-				{
-					var xv = GetCharNumber(x[i]);
-					var yv = GetCharNumber(y[i]);
-
-					if(xv != yv)
-						return xv < yv ? -1 : 1;
-				}
-
-				if(x.Length == y.Length)
-					return 0;
-
-				return x.Length < y.Length ? -1 : 1;
-			}
-			#endregion
-
-			#region 私有方法
-			private static int GetCharNumber(char chr)
-			{
-				if(chr >= '0' && chr <= '9')
-					return chr + 7;
-
-				if(chr > '9' && chr < 'A')
-					return chr - 10;
-
-				return chr;
-			}
-			#endregion
+			return chr;
 		}
 		#endregion
 	}
+	#endregion
 }

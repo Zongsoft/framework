@@ -37,30 +37,29 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 
-namespace Zongsoft.Externals.Wechat.Web
+namespace Zongsoft.Externals.Wechat.Web;
+
+internal static class WebUtility
 {
-	internal static class WebUtility
+	public static async ValueTask<string> ReadAsStringAsync(this HttpRequest request, CancellationToken cancellation = default)
 	{
-		public static async ValueTask<string> ReadAsStringAsync(this HttpRequest request, CancellationToken cancellation = default)
+		if(request == null)
+			throw new ArgumentNullException(nameof(request));
+
+		if(cancellation.IsCancellationRequested)
+			return null;
+
+		var encoding = MediaTypeHeaderValue.TryParse(request.ContentType, out MediaTypeHeaderValue mediaType) ?
+			(mediaType.Encoding ?? Encoding.UTF8) : Encoding.UTF8;
+
+		using(var reader = new StreamReader(
+			request.Body,
+			encoding,
+			detectEncodingFromByteOrderMarks: true,
+			bufferSize: 1024,
+			leaveOpen: true))
 		{
-			if(request == null)
-				throw new ArgumentNullException(nameof(request));
-
-			if(cancellation.IsCancellationRequested)
-				return null;
-
-			var encoding = MediaTypeHeaderValue.TryParse(request.ContentType, out MediaTypeHeaderValue mediaType) ?
-				(mediaType.Encoding ?? Encoding.UTF8) : Encoding.UTF8;
-
-			using(var reader = new StreamReader(
-				request.Body,
-				encoding,
-				detectEncodingFromByteOrderMarks: true,
-				bufferSize: 1024,
-				leaveOpen: true))
-			{
-				return await reader.ReadToEndAsync();
-			}
+			return await reader.ReadToEndAsync();
 		}
 	}
 }

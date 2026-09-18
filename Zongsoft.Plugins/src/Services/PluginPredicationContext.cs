@@ -31,60 +31,59 @@ using System;
 
 using Zongsoft.Plugins;
 
-namespace Zongsoft.Services
+namespace Zongsoft.Services;
+
+public class PluginPredicationContext
 {
-	public class PluginPredicationContext
+	#region 构造函数
+	public PluginPredicationContext(string parameter, Builtin builtin)
 	{
-		#region 构造函数
-		public PluginPredicationContext(string parameter, Builtin builtin)
+		this.Parameter = parameter;
+		this.Builtin = builtin;
+		this.Node = builtin.Node;
+		this.Plugin = builtin.Plugin;
+	}
+
+	public PluginPredicationContext(string parameter, PluginTreeNode node, Plugin plugin)
+	{
+		this.Parameter = parameter;
+		this.Node = node;
+		this.Plugin = plugin ?? node.Plugin;
+	}
+
+	public PluginPredicationContext(string parameter, Builtin builtin, PluginTreeNode node, Plugin plugin)
+	{
+		this.Parameter = parameter;
+		this.Builtin = builtin;
+
+		if(builtin != null)
 		{
-			this.Parameter = parameter;
-			this.Builtin = builtin;
 			this.Node = builtin.Node;
 			this.Plugin = builtin.Plugin;
 		}
 
-		public PluginPredicationContext(string parameter, PluginTreeNode node, Plugin plugin)
+		if(node != null)
 		{
-			this.Parameter = parameter;
 			this.Node = node;
 			this.Plugin = plugin ?? node.Plugin;
 		}
 
-		public PluginPredicationContext(string parameter, Builtin builtin, PluginTreeNode node, Plugin plugin)
-		{
-			this.Parameter = parameter;
-			this.Builtin = builtin;
-
-			if(builtin != null)
-			{
-				this.Node = builtin.Node;
-				this.Plugin = builtin.Plugin;
-			}
-
-			if(node != null)
-			{
-				this.Node = node;
-				this.Plugin = plugin ?? node.Plugin;
-			}
-
-			if(plugin != null)
-				this.Plugin = plugin;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获传入的参数文本。</summary>
-		public string Parameter { get; }
-
-		/// <summary>获取待解析文本所在的构件(<see cref="Builtin"/>)，注意：该属性可能返回空值(null)。</summary>
-		public Builtin Builtin { get; }
-
-		/// <summary>获取待解析文本所在的插件树节点(<see cref="PluginTreeNode"/>)，注意：该属性可能返回空值(null)。</summary>
-		public PluginTreeNode Node { get; }
-
-		/// <summary>获取待解析文本所在构件或插件树节点所隶属的插件对象，注意：该属性可能返回空值(null)。</summary>
-		public Plugin Plugin { get; }
-		#endregion
+		if(plugin != null)
+			this.Plugin = plugin;
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获传入的参数文本。</summary>
+	public string Parameter { get; }
+
+	/// <summary>获取待解析文本所在的构件(<see cref="Builtin"/>)，注意：该属性可能返回空值(null)。</summary>
+	public Builtin Builtin { get; }
+
+	/// <summary>获取待解析文本所在的插件树节点(<see cref="PluginTreeNode"/>)，注意：该属性可能返回空值(null)。</summary>
+	public PluginTreeNode Node { get; }
+
+	/// <summary>获取待解析文本所在构件或插件树节点所隶属的插件对象，注意：该属性可能返回空值(null)。</summary>
+	public Plugin Plugin { get; }
+	#endregion
 }

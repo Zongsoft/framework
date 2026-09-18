@@ -60,10 +60,10 @@ partial class SecretCommand
 		protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
 			if(context.Arguments.IsEmpty)
-				throw new CommandException(Properties.Resources.Command_MissingArguments);
+				throw new CommandException(Properties.Resources.Command_ArgumentsRequired_Message);
 
 			//从环境中查找秘密提供程序
-			var secretor = context.Find<SecretCommand>(true)?.Secretor ?? throw new CommandException("Missing required secretor for the command.");
+			var secretor = context.Find<SecretCommand>(true)?.Secretor ?? throw new CommandException(Properties.Resources.Secretor_Required_Message);
 			(var succeed, var extra) = await secretor.VerifyAsync(context.Options.GetValue<string>(KEY_NAME_OPTION), context.Arguments[0], cancellation);
 
 			if(succeed)

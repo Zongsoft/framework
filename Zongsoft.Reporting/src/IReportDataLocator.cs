@@ -29,10 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Reporting
+namespace Zongsoft.Reporting;
+
+public interface IReportDataLocator
 {
-	public interface IReportDataLocator
-	{
-		IReportDataLoader Locate(IReportDataSource source);
-	}
+	IReportDataLoader Locate(IReportDataSource source);
 }

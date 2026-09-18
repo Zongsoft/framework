@@ -168,4 +168,7 @@
   <data name="MqttQueueServer.PortImmutable.Message" xml:space="preserve">
     <value>MQTT 服务器运行期间不能更改端口。</value>
   </data>
+	<data name="Messaging.ReconnectIntervalInvalid.Message" xml:space="preserve">
+		<value>重连间隔必须大于零。</value>
+	</data>
 </root>

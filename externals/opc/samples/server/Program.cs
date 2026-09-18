@@ -106,11 +106,11 @@ internal static class Program
 		executor.Command("set", context =>
 		{
 			if(context.Arguments.Count < 2)
-				throw new CommandException($"Missing required argument of the command.");
+				throw new CommandException(Properties.Resources.Command_ArgumentsRequired_Message);
 
 			//获取指定键对应的数据类型
 			var type = server.GetDataType(context.Arguments[0]) ??
-				throw new CommandException($"The specified '{context.Arguments[0]}' does not exist, or its data type is not available.");
+				throw new CommandException(string.Format(Properties.Resources.Opc_NodeUnavailable_Message, context.Arguments[0]));
 
 			object value = null;
 
@@ -127,7 +127,7 @@ internal static class Program
 			else
 			{
 				if(context.Arguments.Count > 2)
-					throw new CommandException($"Too many command arguments.");
+					throw new CommandException(Properties.Resources.Command_TooManyArguments_Message);
 
 				value = Common.Convert.ConvertValue(context.Arguments[1], type);
 			}

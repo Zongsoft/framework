@@ -29,13 +29,12 @@
 
 using System;
 
-namespace Zongsoft.Plugins.Parsers
+namespace Zongsoft.Plugins.Parsers;
+
+public class TypeParser : Parser
 {
-	public class TypeParser : Parser
+	public override object Parse(ParserContext context)
 	{
-		public override object Parse(ParserContext context)
-		{
-			return PluginUtility.GetType(context.Text, context.Builtin);
-		}
+		return PluginUtility.GetType(context.Text, context.Builtin);
 	}
 }

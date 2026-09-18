@@ -38,7 +38,8 @@ public class InsertReturningTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(nameof(UserModel.Enabled), returning.Columns[2].Name);
 		Assert.Equal(ReturningKind.Newer, returning.Columns[2].Kind);
 
-		var count = await accessor.InsertAsync(Model.Build<UserModel>(model => {
+		var count = await accessor.InsertAsync(Model.Build<UserModel>(model =>
+		{
 			model.UserId = 100;
 			model.Name = "Popeye";
 		}), options);
@@ -57,7 +58,8 @@ public class InsertReturningTest(DatabaseFixture database) : IDisposable
 			nameof(UserModel.Enabled)
 		).Sequence(DataSequenceBehavior.Never).IgnoreConstraint().Build();
 
-		count = await accessor.InsertAsync(Model.Build<UserModel>(model => {
+		count = await accessor.InsertAsync(Model.Build<UserModel>(model =>
+		{
 			model.UserId = 100;
 			model.Name = "Popeye Zhong";
 		}), options);
@@ -72,7 +74,8 @@ public class InsertReturningTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
-		var model = Model.Build<RoleModel>(model => {
+		var model = Model.Build<RoleModel>(model =>
+		{
 			model.RoleId = 10;
 			model.Name = "Managers";
 			model.Children =

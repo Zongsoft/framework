@@ -32,182 +32,181 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Xml;
 
-namespace Zongsoft.Externals.Aliyun
+namespace Zongsoft.Externals.Aliyun;
+
+public static class Utility
 {
-	public static class Utility
+	#region 常量定义
+	private static readonly DateTime EPOCH = new DateTime(1970, 1, 1);
+	#endregion
+
+	/// <summary>
+	/// 将本地时间转换成GMT格式的时间文本。
+	/// </summary>
+	/// <param name="datetime">本地时间。</param>
+	/// <returns>返回被转换后的GMT格式的时间文本。</returns>
+	/// <remarks>
+	///		<para>如果北京时间为：2017-12-23 17:40:00，则该方法的返回结果为：Sat, 23 Dec 2017 09:40:00 GMT</para>
+	/// </remarks>
+	public static string GetGmtTime(DateTime? datetime = null)
 	{
-		#region 常量定义
-		private static readonly DateTime EPOCH = new DateTime(1970, 1, 1);
-		#endregion
+		return (datetime.HasValue ? datetime.Value : DateTime.Now).ToUniversalTime().ToString("r");
+	}
 
-		/// <summary>
-		/// 将本地时间转换成GMT格式的时间文本。
-		/// </summary>
-		/// <param name="datetime">本地时间。</param>
-		/// <returns>返回被转换后的GMT格式的时间文本。</returns>
-		/// <remarks>
-		///		<para>如果北京时间为：2017-12-23 17:40:00，则该方法的返回结果为：Sat, 23 Dec 2017 09:40:00 GMT</para>
-		/// </remarks>
-		public static string GetGmtTime(DateTime? datetime = null)
+	public static string GetTimestamp(DateTime? datetime = null)
+	{
+		return (datetime.HasValue ? datetime.Value : DateTime.Now).ToUniversalTime().ToString("s") + "Z";
+	}
+
+	public static DateTime GetDateTimeFromEpoch(int milliseconds)
+	{
+		return EPOCH.AddMilliseconds(milliseconds);
+	}
+
+	public static DateTime GetDateTimeFromEpoch(string milliseconds)
+	{
+		double number;
+
+		if(Zongsoft.Common.Convert.TryConvertValue(milliseconds, out number))
+			return EPOCH.AddMilliseconds(number);
+		else
+			throw new ArgumentException(string.Format(Properties.Resources.Time_MillisecondsInvalid_Message, milliseconds));
+	}
+
+	public static TimeSpan? GetDuration(object parameter, DateTime baseTime)
+	{
+		if(parameter == null)
+			return null;
+
+		if(parameter.GetType() == typeof(TimeSpan))
+			return (TimeSpan)parameter;
+
+		TimeSpan? duration = null;
+
+		switch(Type.GetTypeCode(parameter.GetType()))
 		{
-			return (datetime.HasValue ? datetime.Value : DateTime.Now).ToUniversalTime().ToString("r");
+			case TypeCode.Byte:
+			case TypeCode.SByte:
+			case TypeCode.Single:
+			case TypeCode.Double:
+			case TypeCode.Decimal:
+			case TypeCode.Int16:
+			case TypeCode.Int32:
+			case TypeCode.Int64:
+			case TypeCode.UInt16:
+			case TypeCode.UInt32:
+			case TypeCode.UInt64:
+				duration = TimeSpan.FromSeconds(Zongsoft.Common.Convert.ConvertValue<int>(parameter));
+				break;
+			case TypeCode.DateTime:
+				duration = ((DateTime)parameter) - baseTime;
+				break;
 		}
 
-		public static string GetTimestamp(DateTime? datetime = null)
+		if(duration.HasValue)
+			return duration.Value;
+
+		throw new ArgumentException(string.Format(Properties.Resources.Argument_ValueUnsupported_Message, parameter));
+	}
+
+	public static string GetQueryString(IDictionary<string, string> parameters)
+	{
+		if(parameters == null || parameters.Count == 0)
+			return string.Empty;
+
+		var text = new System.Text.StringBuilder();
+
+		foreach(var parameter in parameters)
 		{
-			return (datetime.HasValue ? datetime.Value : DateTime.Now).ToUniversalTime().ToString("s") + "Z";
+			if(text.Length > 0)
+				text.Append("&");
+
+			text.Append(parameter.Key + "=" + parameter.Value);
 		}
 
-		public static DateTime GetDateTimeFromEpoch(int milliseconds)
+		return text.ToString();
+	}
+
+	/// <summary>
+	/// 异步包装方法：确保在Web程序中不会被异步操作的并发线程乱入。
+	/// </summary>
+	/// <typeparam name="T">返回值的类型。</typeparam>
+	/// <param name="thunk">异步任务的委托。</param>
+	/// <returns>返回以同步方式返回异步任务的执行结果。</returns>
+	public static T ExecuteTask<T>(Func<Task<T>> thunk)
+	{
+		return Task.Run(() => ExecuteTaskDelegate(() => thunk())).Result;
+	}
+
+	private static async Task<T> ExecuteTaskDelegate<T>(Func<Task<T>> thunk)
+	{
+		return await thunk();
+	}
+
+	public static IDictionary<string, string> GetDictionary(string text)
+	{
+		if(string.IsNullOrEmpty(text))
+			return null;
+
+		var parts = text.Split(',', '|');
+		var dictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+		foreach(var part in parts)
 		{
-			return EPOCH.AddMilliseconds(milliseconds);
+			if(string.IsNullOrEmpty(part))
+				continue;
+
+			var index = part.IndexOf('=');
+
+			if(index < 0)
+				index = part.IndexOf(':');
+
+			if(index <= 0)
+				continue;
+
+			var key = part.Substring(0, index);
+			var value = index < part.Length - 1 ? part.Substring(index + 1) : string.Empty;
+
+			dictionary[key] = value;
 		}
 
-		public static DateTime GetDateTimeFromEpoch(string milliseconds)
+		return dictionary;
+	}
+
+	public static class Xml
+	{
+		public static void MoveToEndElement(XmlReader reader)
 		{
-			double number;
+			if(reader == null || reader.ReadState != ReadState.Interactive || reader.IsEmptyElement)
+				return;
 
-			if(Zongsoft.Common.Convert.TryConvertValue(milliseconds, out number))
-				return EPOCH.AddMilliseconds(number);
-			else
-				throw new ArgumentException(string.Format("Invalid '{0}' value of 'totalMilliseconds' argument.", milliseconds));
-		}
-
-		public static TimeSpan? GetDuration(object parameter, DateTime baseTime)
-		{
-			if(parameter == null)
-				return null;
-
-			if(parameter.GetType() == typeof(TimeSpan))
-				return (TimeSpan)parameter;
-
-			TimeSpan? duration = null;
-
-			switch(Type.GetTypeCode(parameter.GetType()))
+			if(reader.NodeType == XmlNodeType.Element)
 			{
-				case TypeCode.Byte:
-				case TypeCode.SByte:
-				case TypeCode.Single:
-				case TypeCode.Double:
-				case TypeCode.Decimal:
-				case TypeCode.Int16:
-				case TypeCode.Int32:
-				case TypeCode.Int64:
-				case TypeCode.UInt16:
-				case TypeCode.UInt32:
-				case TypeCode.UInt64:
-					duration = TimeSpan.FromSeconds(Zongsoft.Common.Convert.ConvertValue<int>(parameter));
-					break;
-				case TypeCode.DateTime:
-					duration = ((DateTime)parameter) - baseTime;
-					break;
-			}
-
-			if(duration.HasValue)
-				return duration.Value;
-
-			throw new ArgumentException(string.Format("The '{0}' value of parameter is not supported.", parameter));
-		}
-
-		public static string GetQueryString(IDictionary<string, string> parameters)
-		{
-			if(parameters == null || parameters.Count == 0)
-				return string.Empty;
-
-			var text = new System.Text.StringBuilder();
-
-			foreach(var parameter in parameters)
-			{
-				if(text.Length > 0)
-					text.Append("&");
-
-				text.Append(parameter.Key + "=" + parameter.Value);
-			}
-
-			return text.ToString();
-		}
-
-		/// <summary>
-		/// 异步包装方法：确保在Web程序中不会被异步操作的并发线程乱入。
-		/// </summary>
-		/// <typeparam name="T">返回值的类型。</typeparam>
-		/// <param name="thunk">异步任务的委托。</param>
-		/// <returns>返回以同步方式返回异步任务的执行结果。</returns>
-		public static T ExecuteTask<T>(Func<Task<T>> thunk)
-		{
-			return Task.Run(() => ExecuteTaskDelegate(() => thunk())).Result;
-		}
-
-		private static async Task<T> ExecuteTaskDelegate<T>(Func<Task<T>> thunk)
-		{
-			return await thunk();
-		}
-
-		public static IDictionary<string, string> GetDictionary(string text)
-		{
-			if(string.IsNullOrEmpty(text))
-				return null;
-
-			var parts = text.Split(',', '|');
-			var dictionary = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-			foreach(var part in parts)
-			{
-				if(string.IsNullOrEmpty(part))
-					continue;
-
-				var index = part.IndexOf('=');
-
-				if(index < 0)
-					index = part.IndexOf(':');
-
-				if(index <= 0)
-					continue;
-
-				var key = part.Substring(0, index);
-				var value = index < part.Length - 1 ? part.Substring(index + 1) : string.Empty;
-
-				dictionary[key] = value;
-			}
-
-			return dictionary;
-		}
-
-		public static class Xml
-		{
-			public static void MoveToEndElement(XmlReader reader)
-			{
-				if(reader == null || reader.ReadState != ReadState.Interactive || reader.IsEmptyElement)
-					return;
-
-				if(reader.NodeType == XmlNodeType.Element)
-				{
-					int depth = reader.Depth;
-
-					while(reader.Read() && reader.Depth > depth)
-						;
-				}
-			}
-
-			public static string ReadContentAsString(XmlReader reader)
-			{
-				if(reader.NodeType != XmlNodeType.Element)
-					return null;
-
-				if(reader.IsEmptyElement)
-					return string.Empty;
-
-				var depth = reader.Depth;
-				string text = null;
+				int depth = reader.Depth;
 
 				while(reader.Read() && reader.Depth > depth)
-				{
-					if(text == null && reader.NodeType == XmlNodeType.Text)
-						text = reader.Value;
-				}
-
-				return text;
+					;
 			}
+		}
+
+		public static string ReadContentAsString(XmlReader reader)
+		{
+			if(reader.NodeType != XmlNodeType.Element)
+				return null;
+
+			if(reader.IsEmptyElement)
+				return string.Empty;
+
+			var depth = reader.Depth;
+			string text = null;
+
+			while(reader.Read() && reader.Depth > depth)
+			{
+				if(text == null && reader.NodeType == XmlNodeType.Text)
+					text = reader.Value;
+			}
+
+			return text;
 		}
 	}
 }

@@ -211,7 +211,7 @@ public class JsonOutputFormatter : TextOutputFormatter
 			return this.WriteAsync(bufferSegment, cancellation);
 		}
 
-		private async Task WriteAsync( ArraySegment<byte> bufferSegment, CancellationToken cancellation)
+		private async Task WriteAsync(ArraySegment<byte> bufferSegment, CancellationToken cancellation)
 		{
 			var decoderCompleted = false;
 			while(!decoderCompleted)

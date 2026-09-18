@@ -28,7 +28,8 @@ public class UpsertReturningTest(DatabaseFixture database) : IDisposable
 			.Return(ReturningKind.Older, nameof(UserModel.UserId), nameof(UserModel.Name), nameof(UserModel.Enabled))
 			.Sequence(DataSequenceBehavior.Never).Build();
 
-		var count = await accessor.UpsertAsync(Model.Build<UserModel>(model => {
+		var count = await accessor.UpsertAsync(Model.Build<UserModel>(model =>
+		{
 			model.UserId = 100;
 			model.Name = "Popeye";
 		}), options);
@@ -54,7 +55,8 @@ public class UpsertReturningTest(DatabaseFixture database) : IDisposable
 			.Return(ReturningKind.Older, nameof(UserModel.UserId), nameof(UserModel.Name), nameof(UserModel.Enabled))
 			.Sequence(DataSequenceBehavior.Never).Build();
 
-		count = await accessor.UpsertAsync<UserModel>(new {
+		count = await accessor.UpsertAsync<UserModel>(new
+		{
 			UserId = 100,
 			Name = "Popeye Zhong"
 		}, options);
@@ -219,11 +221,11 @@ public class UpsertReturningTest(DatabaseFixture database) : IDisposable
 			Assert.Null(value);
 		}
 
-		models = Model.Build<UserModel>(COUNT, (model, index) =>
+		models = [.. Model.Build<UserModel>(COUNT, (model, index) =>
 		{
 			model.UserId = (uint)(OFFSET + index);
 			model.Name = $"{NEWER_PREFIX}{OFFSET + index}";
-		}).ToArray();
+		})];
 
 		options = DataUpsertOptions
 			.Return(ReturningKind.Newer, nameof(UserModel.UserId), nameof(UserModel.Name), nameof(UserModel.Enabled))
@@ -317,7 +319,7 @@ public class UpsertReturningTest(DatabaseFixture database) : IDisposable
 			Assert.Null(value);
 		}
 
-		models = Model.Build<RoleModel>(COUNT, (model, index) =>
+		models = [.. Model.Build<RoleModel>(COUNT, (model, index) =>
 		{
 			model.RoleId = (uint)(OFFSET + index);
 			model.Name = $"{NEWER_PREFIX}{(OFFSET + index)}";
@@ -332,7 +334,7 @@ public class UpsertReturningTest(DatabaseFixture database) : IDisposable
 					member.MemberType = MemberType.Role;
 				}),
 			];
-		}).ToArray();
+		})];
 
 		options = DataUpsertOptions
 			.Return(ReturningKind.Newer, nameof(RoleModel.RoleId), nameof(RoleModel.Name), nameof(RoleModel.Enabled))

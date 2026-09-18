@@ -10,8 +10,8 @@
 
 namespace Zongsoft.Data.MySql.Properties {
     using System;
-    
-    
+
+
     /// <summary>
     ///   一个强类型的资源类，用于查找本地化的字符串等。
     /// </summary>
@@ -19,19 +19,19 @@ namespace Zongsoft.Data.MySql.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   返回此类使用的缓存的 ResourceManager 实例。
         /// </summary>
@@ -45,10 +45,10 @@ namespace Zongsoft.Data.MySql.Properties {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
-        ///   重写当前线程的 CurrentUICulture 属性，对
-        ///   使用此强类型资源类的所有资源查找执行重写。
+        ///   使用此强类型资源类，为所有资源查找
+        ///   重写当前线程的 CurrentUICulture 属性。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -59,7 +59,43 @@ namespace Zongsoft.Data.MySql.Properties {
                 resourceCulture = value;
             }
         }
-        
+
+        /// <summary>
+        ///   查找类似 Invalid &apos;{0}&apos; aggregate method. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_AggregateInvalid_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.AggregateInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Unsupported &apos;{0}&apos; data type. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_DataTypeUnsupported_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.DataTypeUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The {0} driver does not support the &apos;{1}&apos; sequence function. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_SequenceUnsupported_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.SequenceUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Not supported &apos;{0}&apos; statement. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_StatementUnsupported_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.StatementUnsupported.Message", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   查找类似 Allow Load Local Infile 的本地化字符串。
         /// </summary>
@@ -68,7 +104,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.AllowLoadLocalInfile", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Local Infile in Path 的本地化字符串。
         /// </summary>
@@ -77,7 +113,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.AllowLoadLocalInfileInPath", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Allow Public Key Retrieval 的本地化字符串。
         /// </summary>
@@ -86,7 +122,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.AllowPublicKeyRetrieval", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Allow User Variables 的本地化字符串。
         /// </summary>
@@ -95,7 +131,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.AllowUserVariables", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Allow Zero DateTime 的本地化字符串。
         /// </summary>
@@ -104,7 +140,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.AllowZeroDateTime", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Certificate Digest 的本地化字符串。
         /// </summary>
@@ -113,7 +149,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.CertificateDigest", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Certificate File 的本地化字符串。
         /// </summary>
@@ -122,7 +158,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.CertificateFile", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Certificate Secret 的本地化字符串。
         /// </summary>
@@ -131,7 +167,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.CertificateSecret", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Charset 的本地化字符串。
         /// </summary>
@@ -140,7 +176,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.Charset", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Client 的本地化字符串。
         /// </summary>
@@ -149,7 +185,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.Client", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Compression Enabled 的本地化字符串。
         /// </summary>
@@ -158,7 +194,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.Compressible", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Connection Reset 的本地化字符串。
         /// </summary>
@@ -167,7 +203,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.ConnectionReset", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Convert Zero DateTime 的本地化字符串。
         /// </summary>
@@ -176,7 +212,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.ConvertZeroDateTime", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Database 的本地化字符串。
         /// </summary>
@@ -185,7 +221,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.Database", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Integrated Security 的本地化字符串。
         /// </summary>
@@ -194,7 +230,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.IntegratedSecurity", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 KeepAlive 的本地化字符串。
         /// </summary>
@@ -203,7 +239,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.KeepAlive", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Maximum Pool Size 的本地化字符串。
         /// </summary>
@@ -212,7 +248,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.MaximumPoolSize", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Minimum Pool Size 的本地化字符串。
         /// </summary>
@@ -221,7 +257,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.MinimumPoolSize", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Password 的本地化字符串。
         /// </summary>
@@ -230,7 +266,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.Password", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Pooling 的本地化字符串。
         /// </summary>
@@ -239,7 +275,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.Pooling", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Port 的本地化字符串。
         /// </summary>
@@ -248,7 +284,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.Port", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Protocol 的本地化字符串。
         /// </summary>
@@ -257,7 +293,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.Protocol", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Replication 的本地化字符串。
         /// </summary>
@@ -266,7 +302,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.Replication", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Server 的本地化字符串。
         /// </summary>
@@ -275,7 +311,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.Server", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 SSL Mode 的本地化字符串。
         /// </summary>
@@ -284,7 +320,7 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.SslMode", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Timeout 的本地化字符串。
         /// </summary>
@@ -293,13 +329,40 @@ namespace Zongsoft.Data.MySql.Properties {
                 return ResourceManager.GetString("MySql.Settings.Timeout", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 User Name 的本地化字符串。
         /// </summary>
         internal static string MySql_Settings_UserName {
             get {
                 return ResourceManager.GetString("MySql.Settings.UserName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The {0} driver does not support a FROM clause in an UPDATE statement that contains an expression of type &apos;{1}&apos;. 的本地化字符串。
+        /// </summary>
+        internal static string UpdateStatement_JoinTargetUnsupported_Message {
+            get {
+                return ResourceManager.GetString("UpdateStatement.JoinTargetUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The {0} driver does not support a FROM clause in an UPDATE statement that contains an expression of type &apos;{1}&apos;. 的本地化字符串。
+        /// </summary>
+        internal static string UpdateStatement_SourceUnsupported_Message {
+            get {
+                return ResourceManager.GetString("UpdateStatement.SourceUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing required fields in the upsert statement. 的本地化字符串。
+        /// </summary>
+        internal static string UpsertStatement_MissingFields_Message {
+            get {
+                return ResourceManager.GetString("UpsertStatement.MissingFields.Message", resourceCulture);
             }
         }
     }

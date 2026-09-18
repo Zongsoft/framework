@@ -30,121 +30,120 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Plugins.Builders
+namespace Zongsoft.Plugins.Builders;
+
+public abstract class BuilderBase : IBuilder
 {
-	public abstract class BuilderBase : IBuilder
+	#region 成员变量
+	private IEnumerable<string> _ignoredProperties;
+	#endregion
+
+	#region 构造函数
+	protected BuilderBase() { }
+	protected BuilderBase(IEnumerable<string> ignoredProperties) => _ignoredProperties = ignoredProperties;
+	#endregion
+
+	#region 保护属性
+	/// <summary>获取在创建目标对象时要忽略设置的扩展属性名。</summary>
+	/// <remarks>对重写<see cref="Build"/>方法的实现者的说明：在构建目标对象后应排除本属性所指定的在Builtin.Properties中的属性项。</remarks>
+	protected virtual IEnumerable<string> IgnoredProperties => _ignoredProperties;
+	#endregion
+
+	#region 获取类型
+	public virtual Type GetValueType(Builtin builtin)
 	{
-		#region 成员变量
-		private IEnumerable<string> _ignoredProperties;
-		#endregion
+		if(builtin.HasValue)
+			return builtin.Value.GetType();
 
-		#region 构造函数
-		protected BuilderBase() { }
-		protected BuilderBase(IEnumerable<string> ignoredProperties) => _ignoredProperties = ignoredProperties;
-		#endregion
+		if(builtin.BuiltinType != null)
+			return builtin.BuiltinType.Type;
 
-		#region 保护属性
-		/// <summary>获取在创建目标对象时要忽略设置的扩展属性名。</summary>
-		/// <remarks>对重写<see cref="Build"/>方法的实现者的说明：在构建目标对象后应排除本属性所指定的在Builtin.Properties中的属性项。</remarks>
-		protected virtual IEnumerable<string> IgnoredProperties => _ignoredProperties;
-		#endregion
+		var attribute = (BuilderBehaviorAttribute)Attribute.GetCustomAttribute(this.GetType(), typeof(BuilderBehaviorAttribute), true);
 
-		#region 获取类型
-		public virtual Type GetValueType(Builtin builtin)
-		{
-			if(builtin.HasValue)
-				return builtin.Value.GetType();
+		if(attribute != null)
+			return attribute.ValueType;
 
-			if(builtin.BuiltinType != null)
-				return builtin.BuiltinType.Type;
-
-			var attribute = (BuilderBehaviorAttribute)Attribute.GetCustomAttribute(this.GetType(), typeof(BuilderBehaviorAttribute), true);
-
-			if(attribute != null)
-				return attribute.ValueType;
-
-			return null;
-		}
-		#endregion
-
-		#region 公共方法
-		/// <summary>创建指定构件对应的目标对象。</summary>
-		/// <param name="context">调用本方法进行构建的上下文对象，可通过该参数获取构建过程的相关设置或状态。</param>
-		/// <returns>创建成功后的目标对象。</returns>
-		public virtual object Build(BuilderContext context)
-		{
-			return PluginUtility.BuildBuiltin(context.Builtin, context.Settings, this.IgnoredProperties);
-		}
-
-		public virtual void Destroy(BuilderContext context)
-		{
-			if(context == null || context.Builtin == null)
-				return;
-
-			var builtin = context.Builtin;
-
-			if(builtin.HasValue)
-			{
-				if(builtin.Value is IDisposable disposable)
-					disposable.Dispose();
-				else if(builtin.Value is System.Collections.IEnumerable collection)
-				{
-					foreach(object item in collection)
-					{
-						if(item is IDisposable disposableItem)
-							disposableItem.Dispose();
-					}
-				}
-
-				builtin.Value = null;
-			}
-		}
-
-		/// <summary>当构建器所属的插件被卸载，该方法被调用。</summary>
-		public void Dispose()
-		{
-			this.Dispose(true);
-			GC.SuppressFinalize(this);
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected virtual void ApplyBehaviors(BuilderContext context)
-		{
-			if(context.Builtin.HasBehaviors && context.Builtin.Behaviors.TryGet("property", out var behavior))
-			{
-				//var path = behavior.GetPropertyValue<string>("name");
-				//var target = behavior.GetPropertyValue<object>("target");
-				//Reflection.MemberAccess.SetMemberValue(target, path, () => behavior.GetPropertyValue<object>("value"));
-
-				var expression = Reflection.Expressions.MemberExpression.Parse(behavior.GetPropertyValue<string>("name"));
-				var target = behavior.GetPropertyValue<object>("target");
-				Reflection.Expressions.MemberExpressionEvaluator.Default.SetValue(expression, target, behavior.GetPropertyValue<object>("value"));
-			}
-		}
-
-		protected virtual void OnBuildComplete(BuilderContext context)
-		{
-			if(context.OwnerNode == null || context.OwnerNode.NodeType != PluginTreeNodeType.Builtin)
-				return;
-
-			//获取构建上下文所关联的追加器
-			var appender = context.Appender;
-
-			//注意：如果追加器为空表示忽略后续的追加操作
-			if(appender != null && (context.Settings == null || !context.Settings.HasFlags(BuilderSettingsFlags.IgnoreAppending)))
-				appender.Append(new AppenderContext(context.Result, context.Node, context.Owner, context.OwnerNode, AppenderBehavior.Appending));
-		}
-
-		protected virtual void Dispose(bool disposing) { }
-		#endregion
-
-		#region 显式实现
-		void IBuilder.OnBuildComplete(BuilderContext context)
-		{
-			this.ApplyBehaviors(context);
-			this.OnBuildComplete(context);
-		}
-		#endregion
+		return null;
 	}
+	#endregion
+
+	#region 公共方法
+	/// <summary>创建指定构件对应的目标对象。</summary>
+	/// <param name="context">调用本方法进行构建的上下文对象，可通过该参数获取构建过程的相关设置或状态。</param>
+	/// <returns>创建成功后的目标对象。</returns>
+	public virtual object Build(BuilderContext context)
+	{
+		return PluginUtility.BuildBuiltin(context.Builtin, context.Settings, this.IgnoredProperties);
+	}
+
+	public virtual void Destroy(BuilderContext context)
+	{
+		if(context == null || context.Builtin == null)
+			return;
+
+		var builtin = context.Builtin;
+
+		if(builtin.HasValue)
+		{
+			if(builtin.Value is IDisposable disposable)
+				disposable.Dispose();
+			else if(builtin.Value is System.Collections.IEnumerable collection)
+			{
+				foreach(object item in collection)
+				{
+					if(item is IDisposable disposableItem)
+						disposableItem.Dispose();
+				}
+			}
+
+			builtin.Value = null;
+		}
+	}
+
+	/// <summary>当构建器所属的插件被卸载，该方法被调用。</summary>
+	public void Dispose()
+	{
+		this.Dispose(true);
+		GC.SuppressFinalize(this);
+	}
+	#endregion
+
+	#region 虚拟方法
+	protected virtual void ApplyBehaviors(BuilderContext context)
+	{
+		if(context.Builtin.HasBehaviors && context.Builtin.Behaviors.TryGet("property", out var behavior))
+		{
+			//var path = behavior.GetPropertyValue<string>("name");
+			//var target = behavior.GetPropertyValue<object>("target");
+			//Reflection.MemberAccess.SetMemberValue(target, path, () => behavior.GetPropertyValue<object>("value"));
+
+			var expression = Reflection.Expressions.MemberExpression.Parse(behavior.GetPropertyValue<string>("name"));
+			var target = behavior.GetPropertyValue<object>("target");
+			Reflection.Expressions.MemberExpressionEvaluator.Default.SetValue(expression, target, behavior.GetPropertyValue<object>("value"));
+		}
+	}
+
+	protected virtual void OnBuildComplete(BuilderContext context)
+	{
+		if(context.OwnerNode == null || context.OwnerNode.NodeType != PluginTreeNodeType.Builtin)
+			return;
+
+		//获取构建上下文所关联的追加器
+		var appender = context.Appender;
+
+		//注意：如果追加器为空表示忽略后续的追加操作
+		if(appender != null && (context.Settings == null || !context.Settings.HasFlags(BuilderSettingsFlags.IgnoreAppending)))
+			appender.Append(new AppenderContext(context.Result, context.Node, context.Owner, context.OwnerNode, AppenderBehavior.Appending));
+	}
+
+	protected virtual void Dispose(bool disposing) { }
+	#endregion
+
+	#region 显式实现
+	void IBuilder.OnBuildComplete(BuilderContext context)
+	{
+		this.ApplyBehaviors(context);
+		this.OnBuildComplete(context);
+	}
+	#endregion
 }

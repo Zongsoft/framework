@@ -351,7 +351,7 @@ public class RedisSubscriber : MessageConsumerBase<RedisQueue>
 			if(worker != null)
 			{
 				try { await worker.WaitAsync(cancellation); }
-				catch(OperationCanceledException) when (source?.IsCancellationRequested == true) { }
+				catch(OperationCanceledException) when(source?.IsCancellationRequested == true) { }
 			}
 
 			source?.Dispose();
@@ -384,7 +384,7 @@ public class RedisSubscriber : MessageConsumerBase<RedisQueue>
 					if(subscriber.Handler != null)
 						await subscriber.Handler.HandleAsync(message, cancellation);
 				}
-				catch(OperationCanceledException) when (cancellation.IsCancellationRequested)
+				catch(OperationCanceledException) when(cancellation.IsCancellationRequested)
 				{
 					return;
 				}

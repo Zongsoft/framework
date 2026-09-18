@@ -29,21 +29,20 @@
 
 using System;
 
-namespace Zongsoft.Plugins
+namespace Zongsoft.Plugins;
+
+public class FixedElement<T> : FixedElement
 {
-	public class FixedElement<T> : FixedElement
-	{
-		#region 构造函数
-		public FixedElement(Type type, string name, Plugin plugin, FixedElementType elementType) : base(type, name, plugin, elementType) { }
-		public FixedElement(string typeName, string name, Plugin plugin, FixedElementType elementType) : base(typeName, name, plugin, elementType) { }
-		#endregion
+	#region 构造函数
+	public FixedElement(Type type, string name, Plugin plugin, FixedElementType elementType) : base(type, name, plugin, elementType) { }
+	public FixedElement(string typeName, string name, Plugin plugin, FixedElementType elementType) : base(typeName, name, plugin, elementType) { }
+	#endregion
 
-		#region 公共属性
-		public T Value => (T)base.GetValue();
-		#endregion
+	#region 公共属性
+	public T Value => (T)base.GetValue();
+	#endregion
 
-		#region 重写方法
-		protected override bool ValidateType(Type type) => type != null && typeof(T).IsAssignableFrom(type);
-		#endregion
-	}
+	#region 重写方法
+	protected override bool ValidateType(Type type) => type != null && typeof(T).IsAssignableFrom(type);
+	#endregion
 }

@@ -37,88 +37,87 @@ using System.Collections.Concurrent;
 
 using Zongsoft.Security;
 
-namespace Zongsoft.Externals.Wechat.Paying
+namespace Zongsoft.Externals.Wechat.Paying;
+
+public static class HttpClientFactory
 {
-	public static class HttpClientFactory
+	private static readonly ConcurrentDictionary<ICertificate, HttpClient> _clients = new ConcurrentDictionary<ICertificate, HttpClient>();
+
+	public static HttpClient GetHttpClient(ICertificate certificate)
 	{
-		private static readonly ConcurrentDictionary<ICertificate, HttpClient> _clients = new ConcurrentDictionary<ICertificate, HttpClient>();
+		if(certificate == null)
+			throw new ArgumentNullException(nameof(certificate));
 
-		public static HttpClient GetHttpClient(ICertificate certificate)
+		return _clients.GetOrAdd(certificate, key => CreateHttpClient(key));
+	}
+
+	private static HttpClient CreateHttpClient(ICertificate certificate)
+	{
+		var client = new HttpClient(new PaymentHttpMessageHandler(certificate));
+		client.BaseAddress = new Uri("https://api.mch.weixin.qq.com/v3/");
+		client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+		client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Zongsoft.Externals.Wechat", "1.0"));
+		return client;
+	}
+
+	private class PaymentHttpMessageHandler : DelegatingHandler
+	{
+		private readonly ICertificate _certificate;
+
+		public PaymentHttpMessageHandler(ICertificate certificate)
 		{
-			if(certificate == null)
-				throw new ArgumentNullException(nameof(certificate));
-
-			return _clients.GetOrAdd(certificate, key => CreateHttpClient(key));
+			_certificate = certificate ?? throw new ArgumentNullException(nameof(certificate));
+			this.InnerHandler = new HttpClientHandler();
 		}
 
-		private static HttpClient CreateHttpClient(ICertificate certificate)
+		protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellation)
 		{
-			var client = new HttpClient(new PaymentHttpMessageHandler(certificate));
-			client.BaseAddress = new Uri("https://api.mch.weixin.qq.com/v3/");
-			client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-			client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Zongsoft.Externals.Wechat", "1.0"));
-			return client;
-		}
+			var method = request.Method;
+			var content = string.Empty;
 
-		private class PaymentHttpMessageHandler : DelegatingHandler
-		{
-			private readonly ICertificate _certificate;
-
-			public PaymentHttpMessageHandler(ICertificate certificate)
+			if(method == HttpMethod.Put || method == HttpMethod.Post || method == HttpMethod.Patch)
 			{
-				_certificate = certificate ?? throw new ArgumentNullException(nameof(certificate));
-				this.InnerHandler = new HttpClientHandler();
-			}
-
-			protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellation)
-			{
-				var method = request.Method;
-				var content = string.Empty;
-
-				if(method == HttpMethod.Put || method == HttpMethod.Post || method == HttpMethod.Patch)
+				if(request.Content is MultipartContent forms)
 				{
-					if(request.Content is MultipartContent forms)
+					foreach(var form in forms)
 					{
-						foreach(var form in forms)
+						if(form.Headers.ContentDisposition.Name == "\"meta\"" && form.Headers.ContentType.MediaType.EndsWith("json"))
 						{
-							if(form.Headers.ContentDisposition.Name == "\"meta\"" && form.Headers.ContentType.MediaType.EndsWith("json"))
-							{
-								content = await form.ReadAsStringAsync(cancellation);
-								break;
-							}
+							content = await form.ReadAsStringAsync(cancellation);
+							break;
 						}
 					}
-					else
-						content = await request.Content?.ReadAsStringAsync(cancellation);
 				}
-
-				var value = Signature(_certificate, request.Method.ToString(), request.RequestUri.PathAndQuery, content);
-				request.Headers.Authorization = new AuthenticationHeaderValue("WECHATPAY2-SHA256-RSA2048", value);
-				return await base.SendAsync(request, cancellation);
+				else
+					content = await request.Content?.ReadAsStringAsync(cancellation);
 			}
 
-			private static string Signature(ICertificate certificate, string method, string url, string content)
-			{
-				var nonce = Guid.NewGuid().ToString("N");
-				var timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-				var message = $"{method}\n{url}\n{timestamp}\n{nonce}\n{content}\n";
-				var signature = System.Convert.ToBase64String(certificate.Signaturer.Signature(System.Text.Encoding.UTF8.GetBytes(message)));
-
-				return $"mchid=\"{certificate.Issuer.Identifier}\",nonce_str=\"{nonce}\",timestamp=\"{timestamp}\",serial_no=\"{certificate.Identifier}\",signature=\"{signature}\"";
-			}
+			var value = Signature(_certificate, request.Method.ToString(), request.RequestUri.PathAndQuery, content);
+			request.Headers.Authorization = new AuthenticationHeaderValue("WECHATPAY2-SHA256-RSA2048", value);
+			return await base.SendAsync(request, cancellation);
 		}
 
-		public static class Xml
+		private static string Signature(ICertificate certificate, string method, string url, string content)
 		{
-			public static readonly HttpClient Client;
+			var nonce = Guid.NewGuid().ToString("N");
+			var timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+			var message = $"{method}\n{url}\n{timestamp}\n{nonce}\n{content}\n";
+			var signature = System.Convert.ToBase64String(certificate.Signaturer.Signature(System.Text.Encoding.UTF8.GetBytes(message)));
 
-			static Xml()
-			{
-				Client = new HttpClient();
-				Client.BaseAddress = new Uri("https://api.mch.weixin.qq.com/pay/");
-				Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xml"));
-				Client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Zongsoft.Externals.Wechat", "1.0"));
-			}
+			return $"mchid=\"{certificate.Issuer.Identifier}\",nonce_str=\"{nonce}\",timestamp=\"{timestamp}\",serial_no=\"{certificate.Identifier}\",signature=\"{signature}\"";
+		}
+	}
+
+	public static class Xml
+	{
+		public static readonly HttpClient Client;
+
+		static Xml()
+		{
+			Client = new HttpClient();
+			Client.BaseAddress = new Uri("https://api.mch.weixin.qq.com/pay/");
+			Client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xml"));
+			Client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Zongsoft.Externals.Wechat", "1.0"));
 		}
 	}
 }

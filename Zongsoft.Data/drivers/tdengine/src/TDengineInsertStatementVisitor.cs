@@ -53,10 +53,10 @@ public class TDengineInsertStatementVisitor : InsertStatementVisitor
 	internal static void Visit(ExpressionVisitorContext context, IStatementBase statement, IList<FieldIdentifier> fields, IList<IExpression> values, string operation)
 	{
 		if(fields == null || fields.Count == 0)
-			throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("InsertStatement.MissingFields.Message"), operation));
+			throw new DataException(string.Format(Properties.Resources.InsertStatement_MissingFields_Message, operation));
 
 		if(values == null || values.Count != fields.Count)
-			throw new NotSupportedException(string.Format(Properties.Resources.ResourceManager.GetString("InsertStatement.SingleRecordOnly.Message"), operation.ToUpperInvariant()));
+			throw new NotSupportedException(string.Format(Properties.Resources.InsertStatement_SingleRecordOnly_Message, operation.ToUpperInvariant()));
 
 		(var tags, var data) = GetSettings(fields, values);
 

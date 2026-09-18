@@ -83,7 +83,7 @@ public class DuckDBExpressionVisitor : ExpressionVisitorBase
 				DuckDBExecutionStatementVisitor.Instance.Visit(context, execution);
 				break;
 			default:
-				throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.StatementUnsupported.Message"), statement));
+				throw new DataException(string.Format(Properties.Resources.ExpressionVisitor_StatementUnsupported_Message, statement));
 		}
 	}
 
@@ -104,7 +104,7 @@ public class DuckDBExpressionVisitor : ExpressionVisitorBase
 				{
 					SequenceMethod.Current => $"currval('{serial ?? sequence.Name}')",
 					SequenceMethod.Next => $"nextval('{serial ?? sequence.Name}')",
-					_ => throw new NotSupportedException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.SequenceInvalid.Message"), sequence.Method)),
+					_ => throw new NotSupportedException(string.Format(Properties.Resources.ExpressionVisitor_SequenceInvalid_Message, sequence.Method)),
 				};
 
 				context.Write(text);
@@ -170,7 +170,7 @@ public class DuckDBExpressionVisitor : ExpressionVisitorBase
 			DbType.VarNumeric => precision > 0 ? $"numeric({precision},{scale})" : "numeric",
 			DbType.Xml => "varchar",
 			DbType.Object => type.ToString(),
-			_ => throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.DataTypeUnsupported.Message"), type)),
+			_ => throw new DataException(string.Format(Properties.Resources.ExpressionVisitor_DataTypeUnsupported_Message, type)),
 		};
 
 		public string GetMethodName(MethodExpression method)
@@ -213,7 +213,7 @@ public class DuckDBExpressionVisitor : ExpressionVisitorBase
 			DataAggregateFunction.DeviationPopulation => "STDEV_POP",
 			DataAggregateFunction.Variance => "VARIANCE",
 			DataAggregateFunction.VariancePopulation => "VAR_POP",
-			_ => throw new NotSupportedException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.AggregateInvalid.Message"), function)),
+			_ => throw new NotSupportedException(string.Format(Properties.Resources.ExpressionVisitor_AggregateInvalid_Message, function)),
 		};
 
 		#endregion

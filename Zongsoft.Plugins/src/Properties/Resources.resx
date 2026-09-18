@@ -144,7 +144,7 @@
   <data name="Text.Message.MissingCommandArguments" xml:space="preserve">
     <value>No command arguments specified. Please specify at least one command argument.</value>
   </data>
-  <data name="Text.Message.PluginNodeNotFound" xml:space="preserve">
+  <data name="Plugin.NodeNotFound.Message" xml:space="preserve">
     <value>The specified plugin path "{0}" does not exist.</value>
   </data>
   <data name="Text.TreeCommand.Description" xml:space="preserve">
@@ -159,4 +159,157 @@
   <data name="Text.TreeCommand.Options.Path" xml:space="preserve">
     <value>Display the full path of the plugin tree node.</value>
   </data>
+	<data name="Plugin.ManifestElementInvalid.Message" xml:space="preserve">
+		<value>Invalid manifest element '{0}' in the plugin file.</value>
+	</data>
+	<data name="Plugin.ElementInvalid.Message" xml:space="preserve">
+		<value>Invalid element '{0}' in the plugin file.</value>
+	</data>
+	<data name="Plugin.ConstructorNotFound.Message" xml:space="preserve">
+		<value>Cannot construct type '{0}' in '{1}': no constructor matches the supplied arguments.</value>
+	</data>
+	<data name="Command.ExecutorUnavailable.Message" xml:space="preserve">
+		<value>Can not get the CommandExecutor from 'Zongsoft.Services.CommandExecutor.Default' static member.</value>
+	</data>
+	<data name="Builtin.TypeInvalid.Message" xml:space="preserve">
+		<value>Can not get type from '{0}' text for '{1}' builtin.</value>
+	</data>
+	<data name="Predication.SyntaxInvalid.Message" xml:space="preserve">
+		<value>Can not parse for the predication because of a syntax error.</value>
+	</data>
+	<data name="Predication.TextRequired.Message" xml:space="preserve">
+		<value>Can not parse for the predication because the parser text is empty.</value>
+	</data>
+	<data name="Predication.ParseFailed.Message" xml:space="preserve">
+		<value>Can not parse for the predication.</value>
+	</data>
+	<data name="Plugin.ElementTypeUnsupported.Message" xml:space="preserve">
+		<value>Can not support the '{0}' element type.</value>
+	</data>
+	<data name="Builtin.ConstructionFailed.Message" xml:space="preserve">
+		<value>Create object of '{0}' type faild, The constructor is ({1}).</value>
+	</data>
+	<data name="Workbench.CreationFailed.Message" xml:space="preserve">
+		<value>Failed to create the Workbench.</value>
+	</data>
+	<data name="Builtin.ExtensionInvalid.Message" xml:space="preserve">
+		<value>Invalid '{0}' ExtendElement in '{1}'.</value>
+	</data>
+	<data name="Plugin.ExtensionNotFound.Message" xml:space="preserve">
+		<value>Invalid '{0}/{1}' ExtendedElement is not exists in '{2}' plugin.</value>
+	</data>
+	<data name="Builtin.Invalid.Message" xml:space="preserve">
+		<value>Invalid builtin.</value>
+	</data>
+	<data name="Parser.ExpressionInvalid.Message" xml:space="preserve">
+		<value>Invalid format of parser, this expression is '{0}'.</value>
+	</data>
+	<data name="Type.QualifiedNameInvalid.Message" xml:space="preserve">
+		<value>Invalid qualified name '{0}'.</value>
+	</data>
+	<data name="Plugin.PropertyInvalid.Message" xml:space="preserve">
+		<value>Invalid value of the plugin extended property.</value>
+	</data>
+	<data name="Plugin.PathInvalid.Message" xml:space="preserve">
+		<value>Invlaid plugin path: '{0}'.</value>
+	</data>
+	<data name="Parser.PathArgumentRequired.Message" xml:space="preserve">
+		<value>Missing argument of the path parser.</value>
+	</data>
+	<data name="Type.AssemblyNameRequired.Message" xml:space="preserve">
+		<value>Missing assembly name in the qualified name '{0}'.</value>
+	</data>
+	<data name="Builtin.ConstructorRequired.Message" xml:space="preserve">
+		<value>Missing matching constructor for builtin '{0}'.</value>
+	</data>
+	<data name="Terminal.ExecutorRequired.Message" xml:space="preserve">
+		<value>Missing the required command executor of the terminal.</value>
+	</data>
+	<data name="Type.StaticMemberNotFound.Message" xml:space="preserve">
+		<value>No static field or property for '{0}' was found in '{1}' type.</value>
+	</data>
+	<data name="Type.AssemblyNotFound.Message" xml:space="preserve">
+		<value>Not found '{0}' assembly in the runtimes, for '{1}' qualified type name.</value>
+	</data>
+	<data name="Builtin.BuilderNotFound.Message" xml:space="preserve">
+		<value>Not found the builder for the '{0}'({1}) builtin.</value>
+	</data>
+	<data name="Plugin.InstanceCreationFailed.Message" xml:space="preserve">
+		<value>An exception occurred while creating an instance of type '{0}' in '{1}'.</value>
+	</data>
+	<data name="Predication.ServiceProviderNotFound.Message" xml:space="preserve">
+		<value>The '{0}' ServiceProvider is not exists on the predication parsing.</value>
+	</data>
+	<data name="Plugin.AssemblyFileNotFound.Message" xml:space="preserve">
+		<value>The '{0}' assembly file is not exists. in '{1}' plugin file.</value>
+	</data>
+	<data name="File.NotFound.Message" xml:space="preserve">
+		<value>The '{0}' file is not exists.</value>
+	</data>
+	<data name="Plugin.FileUnreadable.Message" xml:space="preserve">
+		<value>The '{0}' plugin file cann't read.</value>
+	</data>
+	<data name="Plugin.FileResolveFailed.Message" xml:space="preserve">
+		<value>The '{0}' plugin file resolve failed.</value>
+	</data>
+	<data name="Plugin.DependencyNotFound.Message" xml:space="preserve">
+		<value>The '{0}' plugin load failed. it's '{1}' dependent plugin is not exists.</value>
+	</data>
+	<data name="Plugin.DirectoryNotFound.Message" xml:space="preserve">
+		<value>The '{0}' plugins directory is not exists.</value>
+	</data>
+	<data name="Plugin.TypeResolveFailed.Message" xml:space="preserve">
+		<value>The '{0}' type resolve failed in {1}.</value>
+	</data>
+	<data name="Plugin.HiddenDependenciesInvalid.Message" xml:space="preserve">
+		<value>The dependencies cannot be defined in the '{0}' hidden plugin file.</value>
+	</data>
+	<data name="Plugin.DuplicateName.Message" xml:space="preserve">
+		<value>The name is '{0}' of plugin was exists. it's path is: '{1}'</value>
+	</data>
+	<data name="Plugin.ElementNameInvalid.Message" xml:space="preserve">
+		<value>The plugin element name({0}) contains illegal characters.</value>
+	</data>
+	<data name="Application.AbsolutePathRequired.Message" xml:space="preserve">
+		<value>The specified '{0}' application directory is not an absolute path.</value>
+	</data>
+	<data name="Type.StaticExpressionInvalid.Message" xml:space="preserve">
+		<value>The specified '{0}' is an invalid static member expression.</value>
+	</data>
+	<data name="Parser.NotFound.Message" xml:space="preserve">
+		<value>The specified '{0}' parser was not found.</value>
+	</data>
+	<data name="Builtin.ExtensionTypeRequired.Message" xml:space="preserve">
+		<value>This '{0}' ExtendElement dependencied builtin-type is null.</value>
+	</data>
+	<data name="Builtin.BehaviorChildrenInvalid.Message" xml:space="preserve">
+		<value>This '{0}' builtin behavior element be contants child elements in '{1}'.</value>
+	</data>
+	<data name="Plugin.ElementValidationFailed.Message" xml:space="preserve">
+		<value>This '{0}' plugin element was validate failed.</value>
+	</data>
+	<data name="Plugin.FileFormatInvalid.Message" xml:space="preserve">
+		<value>This '{0}' plugin file format is invalid.</value>
+	</data>
+	<data name="Type.NotConstructible.Message" xml:space="preserve">
+		<value>Unable to create an instance of the specified '{0}' type because it is an interface or an abstract class.</value>
+	</data>
+	<data name="Builtin.TypeRequired.Message" xml:space="preserve">
+		<value>Unable to determine the target type of the '{0}' builtin.</value>
+	</data>
+	<data name="Type.StaticMemberResolveFailed.Message" xml:space="preserve">
+		<value>Unable to resolve the '{0}' static member in the '{1}' assembly.</value>
+	</data>
+	<data name="Plugin.ElementUndefined.Message" xml:space="preserve">
+		<value>Undefined element '{0}' in this plugin file.</value>
+	</data>
+	<data name="Plugin.BuilderNotFound.Message" xml:space="preserve">
+		<value>The builder '{0}' was not found in plugin '{1}'.{3}{2}</value>
+	</data>
+	<data name="AppenderBehavior.Replacement.Description" xml:space="preserve">
+		<value>Replace</value>
+	</data>
+	<data name="AppenderBehavior.Appending.Description" xml:space="preserve">
+		<value>Append</value>
+	</data>
 </root>

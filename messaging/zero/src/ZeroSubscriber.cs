@@ -226,7 +226,8 @@ public sealed class ZeroSubscriber : MessageConsumerBase<ZeroQueue>
 
 		static void SkipRemainingFrames(NetMQSocket socket, bool more)
 		{
-			while(more && socket.TrySkipFrame(out more)) { }
+			while(more && socket.TrySkipFrame(out more))
+			{ }
 		}
 	}
 	#endregion

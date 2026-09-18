@@ -30,12 +30,11 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Reporting
+namespace Zongsoft.Reporting;
+
+public interface IReportDataSource
 {
-	public interface IReportDataSource
-	{
-		string Name { get; }
-		string Provider { get; }
-		IDictionary<string, string> Settings { get; }
-	}
+	string Name { get; }
+	string Provider { get; }
+	IDictionary<string, string> Settings { get; }
 }

@@ -29,26 +29,25 @@
 
 using System;
 
-namespace Zongsoft.Plugins
+namespace Zongsoft.Plugins;
+
+/// <summary>
+/// 表示插件的状态。
+/// </summary>
+public enum PluginStatus
 {
-	/// <summary>
-	/// 表示插件的状态。
-	/// </summary>
-	public enum PluginStatus
-	{
-		/// <summary>尚未加载，表示插件刚创建。</summary>
-		None = 0,
+	/// <summary>尚未加载，表示插件刚创建。</summary>
+	None = 0,
 
-		/// <summary>表示插件正在加载。</summary>
-		Loading,
+	/// <summary>表示插件正在加载。</summary>
+	Loading,
 
-		/// <summary>表示插件已经成功加载。</summary>
-		Loaded,
+	/// <summary>表示插件已经成功加载。</summary>
+	Loaded,
 
-		/// <summary>表示插件正在卸载。</summary>
-		Unloading,
+	/// <summary>表示插件正在卸载。</summary>
+	Unloading,
 
-		/// <summary>表示插件已经被卸载。</summary>
-		Unloaded,
-	}
+	/// <summary>表示插件已经被卸载。</summary>
+	Unloaded,
 }

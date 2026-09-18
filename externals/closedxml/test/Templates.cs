@@ -81,13 +81,13 @@ internal class Templates
 
 		public ApartmentUsageModel()
 		{
-			this.Park = Parks[0];
+			this.Park = _parks[0];
 			this.Usages =
 			[
-				new ApartmentUsage(Apartments[0], Assets[0], DateTime.Today.AddMonths(-1), 100d),
-				new ApartmentUsage(Apartments[0], Assets[1], DateTime.Today.AddMonths(-1), 200d),
-				new ApartmentUsage(Apartments[1], Assets[0], DateTime.Today.AddMonths(-2), 000d),
-				new ApartmentUsage(Apartments[1], Assets[1], DateTime.Today.AddMonths(-1), 400d),
+				new ApartmentUsage(_apartments[0], _assets[0], DateTime.Today.AddMonths(-1), 100d),
+				new ApartmentUsage(_apartments[0], _assets[1], DateTime.Today.AddMonths(-1), 200d),
+				new ApartmentUsage(_apartments[1], _assets[0], DateTime.Today.AddMonths(-2), 000d),
+				new ApartmentUsage(_apartments[1], _assets[1], DateTime.Today.AddMonths(-1), 400d),
 			];
 		}
 
@@ -103,29 +103,29 @@ internal class Templates
 			}
 		}
 
-		private static readonly Item[] Items =
+		private static readonly Item[] _items =
 		[
 			new Item(1101, "水费"),
 			new Item(1201, "电费"),
 		];
 
-		private static readonly Asset[] Assets =
+		private static readonly Asset[] _assets =
 		[
 			new Asset(10001, "一号设施", "水表")
 			{
 				AssetNo = "A10001",
-				Item = Items[0],
-				ItemId = Items[0].ItemId,
+				Item = _items[0],
+				ItemId = _items[0].ItemId,
 			},
 			new Asset(10002, "二号设施", "电表")
 			{
 				AssetNo = "A10002",
-				Item = Items[1],
-				ItemId = Items[1].ItemId,
+				Item = _items[1],
+				ItemId = _items[1].ItemId,
 			},
 		];
 
-		private static readonly Park[] Parks =
+		private static readonly Park[] _parks =
 		[
 			new Park(1, "武汉万科红郡")
 			{
@@ -133,39 +133,39 @@ internal class Templates
 			},
 		];
 
-		private static readonly Building[] Buildings =
+		private static readonly Building[] _buildings =
 		[
 			new Building(1, "一号大楼")
 			{
-				Park = Parks[0],
-				ParkId = Parks[0].ParkId,
-				ParkTerm = Parks[0].ParkTerm,
+				Park = _parks[0],
+				ParkId = _parks[0].ParkId,
+				ParkTerm = _parks[0].ParkTerm,
 			},
 			new Building(2, "二号大楼")
 			{
-				Park = Parks[0],
-				ParkId = Parks[0].ParkId,
-				ParkTerm = Parks[0].ParkTerm,
+				Park = _parks[0],
+				ParkId = _parks[0].ParkId,
+				ParkTerm = _parks[0].ParkTerm,
 			},
 			new Building(3, "三号大楼")
 			{
-				Park = Parks[0],
-				ParkId = Parks[0].ParkId,
-				ParkTerm = Parks[0].ParkTerm,
+				Park = _parks[0],
+				ParkId = _parks[0].ParkId,
+				ParkTerm = _parks[0].ParkTerm,
 			},
 		];
 
-		private static readonly Apartment[] Apartments =
+		private static readonly Apartment[] _apartments =
 		[
 			new Apartment(101, "1-101")
 			{
-				Building = Buildings[0],
-				BuildingId = Buildings[0].BuildingId,
+				Building = _buildings[0],
+				BuildingId = _buildings[0].BuildingId,
 			},
 			new Apartment(102, "1-102")
 			{
-				Building = Buildings[0],
-				BuildingId = Buildings[0].BuildingId,
+				Building = _buildings[0],
+				BuildingId = _buildings[0].BuildingId,
 			},
 		];
 	}

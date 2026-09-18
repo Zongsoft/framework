@@ -58,9 +58,9 @@ public class MsSqlInsertStatementVisitor : InsertStatementVisitor
 		const string SOURCE_ALIAS = "SRC";
 
 		if(statement.Fields == null || statement.Fields.Count == 0)
-			throw new DataException(Properties.Resources.ResourceManager.GetString("InsertStatement.MissingFields.Message"));
+			throw new DataException(Properties.Resources.InsertStatement_MissingFields_Message);
 		if(!statement.Entity.HasKey)
-			throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("InsertStatement.EntityKeyRequired.Message"), statement.Entity.Name));
+			throw new DataException(string.Format(Properties.Resources.InsertStatement_EntityKeyRequired_Message, statement.Entity.Name));
 
 		context.Write("MERGE INTO ");
 		context.Visit(statement.Table);

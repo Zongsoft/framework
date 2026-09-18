@@ -62,7 +62,7 @@ public class RangeCommand : CommandBase<CommandContext>
 			throw new CommandOptionException(MAXIMUM_OPTION);
 
 		if(minimum > maximum)
-			throw new CommandOptionException($"{MINIMUM_OPTION},{MAXIMUM_OPTION}", $"The value of the '{MINIMUM_OPTION}' option cannot be greater than the value of the '{MAXIMUM_OPTION}' option.");
+			throw new CommandOptionException($"{MINIMUM_OPTION},{MAXIMUM_OPTION}", string.Format(Properties.Resources.Command_OptionRangeInvalid_Message, MINIMUM_OPTION, MAXIMUM_OPTION));
 
 		var count = maximum - minimum + 1;
 
@@ -234,7 +234,7 @@ public class RangeCommand : CommandBase<CommandContext>
 
 				return ValueTask.FromResult<object>(resultDecimal);
 			default:
-				throw new CommandException($"The '{TYPE_OPTION}' option of this command does not support the specified '{type.Name}' value.");
+				throw new CommandException(string.Format(Properties.Resources.Command_OptionValueUnsupported_Message, TYPE_OPTION, type.Name));
 		}
 	}
 	#endregion

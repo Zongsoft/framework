@@ -52,7 +52,7 @@ internal static class Utility
 			content.AppendLine();
 		else
 			content.Append(CommandOutletColor.DarkGray, "@")
-			       .AppendLine(CommandOutletColor.DarkCyan, node.Plugin.Name);
+				   .AppendLine(CommandOutletColor.DarkCyan, node.Plugin.Name);
 
 		if(node.Properties.Count > 0)
 		{
@@ -90,7 +90,7 @@ internal static class Utility
 					content.AppendLine();
 				else
 					content.Append(CommandOutletColor.DarkGray, "@")
-					       .AppendLine(CommandOutletColor.DarkCyan, child.Plugin.Name);
+						   .AppendLine(CommandOutletColor.DarkCyan, child.Plugin.Name);
 			}
 		}
 

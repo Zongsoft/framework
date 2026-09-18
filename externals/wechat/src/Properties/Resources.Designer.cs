@@ -10,8 +10,8 @@
 
 namespace Zongsoft.Externals.Wechat.Properties {
     using System;
-    
-    
+
+
     /// <summary>
     ///   一个强类型的资源类，用于查找本地化的字符串等。
     /// </summary>
@@ -19,19 +19,19 @@ namespace Zongsoft.Externals.Wechat.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   返回此类使用的缓存的 ResourceManager 实例。
         /// </summary>
@@ -45,10 +45,10 @@ namespace Zongsoft.Externals.Wechat.Properties {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
-        ///   重写当前线程的 CurrentUICulture 属性，对
-        ///   使用此强类型资源类的所有资源查找执行重写。
+        ///   使用此强类型资源类，为所有资源查找
+        ///   重写当前线程的 CurrentUICulture 属性。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -59,31 +59,229 @@ namespace Zongsoft.Externals.Wechat.Properties {
                 resourceCulture = value;
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 模板消息 的本地化字符串。
+        ///   查找类似 Unsupported &apos;{0}&apos; digital certificate type. 的本地化字符串。
+        /// </summary>
+        internal static string Certificate_FormatUnsupported_Message {
+            get {
+                return ResourceManager.GetString("Certificate.FormatUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Unsupported &apos;{0}&apos; file format. 的本地化字符串。
+        /// </summary>
+        internal static string File_FormatUnsupported_Message {
+            get {
+                return ResourceManager.GetString("File.FormatUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The identity verification data type &apos;{0}&apos; is not supported. 的本地化字符串。
+        /// </summary>
+        internal static string Identity_DataTypeUnsupported_Message {
+            get {
+                return ResourceManager.GetString("Identity.DataTypeUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing the required data of the recognition authenticate. 的本地化字符串。
+        /// </summary>
+        internal static string Recognition_DataRequired_Message {
+            get {
+                return ResourceManager.GetString("Recognition.DataRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Template message 的本地化字符串。
         /// </summary>
         internal static string TemplateMessage {
             get {
                 return ResourceManager.GetString("TemplateMessage", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 提供微信模板消息通知功能。 的本地化字符串。
+        ///   查找类似 Provides WeChat template message notifications. 的本地化字符串。
         /// </summary>
         internal static string Transmitter_Description {
             get {
                 return ResourceManager.GetString("Transmitter.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
-        ///   查找类似 微信通知 的本地化字符串。
+        ///   查找类似 WeChat notifications 的本地化字符串。
         /// </summary>
         internal static string Transmitter_Title {
             get {
                 return ResourceManager.GetString("Transmitter.Title", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; account is not a WeChat applet. 的本地化字符串。
+        /// </summary>
+        internal static string Wechat_AccountNotApplet_Message {
+            get {
+                return ResourceManager.GetString("Wechat.AccountNotApplet.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; account is not a WeChat channel. 的本地化字符串。
+        /// </summary>
+        internal static string Wechat_AccountNotChannel_Message {
+            get {
+                return ResourceManager.GetString("Wechat.AccountNotChannel.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; AppId is undefined in the &apos;{1}&apos; WeChat authority. 的本地化字符串。
+        /// </summary>
+        internal static string Wechat_AppIdUndefined_Message {
+            get {
+                return ResourceManager.GetString("Wechat.AppIdUndefined.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The WeChat applet &apos;{0}&apos; does not exist. 的本地化字符串。
+        /// </summary>
+        internal static string Wechat_AppletNotFound_Message {
+            get {
+                return ResourceManager.GetString("Wechat.AppletNotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid configuration section for the &apos;{0}&apos; authority of the WeChat. 的本地化字符串。
+        /// </summary>
+        internal static string Wechat_AuthorityConfigurationInvalid_Message {
+            get {
+                return ResourceManager.GetString("Wechat.AuthorityConfigurationInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The configuration section for the &apos;{0}&apos; authority of the WeChat was not found. 的本地化字符串。
+        /// </summary>
+        internal static string Wechat_AuthorityConfigurationRequired_Message {
+            get {
+                return ResourceManager.GetString("Wechat.AuthorityConfigurationRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid authority of the wechat. 的本地化字符串。
+        /// </summary>
+        internal static string Wechat_AuthorityInvalid_Message {
+            get {
+                return ResourceManager.GetString("Wechat.AuthorityInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; authority does not exist. 的本地化字符串。
+        /// </summary>
+        internal static string Wechat_AuthorityNotFound_Message {
+            get {
+                return ResourceManager.GetString("Wechat.AuthorityNotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid format of the authority token. 的本地化字符串。
+        /// </summary>
+        internal static string Wechat_AuthorityTokenInvalid_Message {
+            get {
+                return ResourceManager.GetString("Wechat.AuthorityTokenInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 WeChat callback decryption failed for authority {0}. 的本地化字符串。
+        /// </summary>
+        internal static string Wechat_CallbackDecryptionFailed_Message {
+            get {
+                return ResourceManager.GetString("Wechat.CallbackDecryptionFailed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 No certificate found for &apos;{0}({1})&apos; authority of the WeChat. 的本地化字符串。
+        /// </summary>
+        internal static string Wechat_CertificateNotFound_Message {
+            get {
+                return ResourceManager.GetString("Wechat.CertificateNotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 长期 的本地化字符串。
+        /// </summary>
+        internal static string Wechat_CertificatePermanentValue {
+            get {
+                return ResourceManager.GetString("Wechat.CertificatePermanentValue", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The WeChat channel &apos;{0}&apos; does not exist. 的本地化字符串。
+        /// </summary>
+        internal static string Wechat_ChannelNotFound_Message {
+            get {
+                return ResourceManager.GetString("Wechat.ChannelNotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The &apos;{0}&apos; WeChat authority has no credential. 的本地化字符串。
+        /// </summary>
+        internal static string Wechat_CredentialRequired_Message {
+            get {
+                return ResourceManager.GetString("Wechat.CredentialRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The AppId parameter is not specified, the &apos;{0}&apos; WeChat authority has no default account defined. 的本地化字符串。
+        /// </summary>
+        internal static string Wechat_DefaultAccountRequired_Message {
+            get {
+                return ResourceManager.GetString("Wechat.DefaultAccountRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The configuration section for the default authority of the WeChat was not found. 的本地化字符串。
+        /// </summary>
+        internal static string Wechat_DefaultAuthorityRequired_Message {
+            get {
+                return ResourceManager.GetString("Wechat.DefaultAuthorityRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid destination format. 的本地化字符串。
+        /// </summary>
+        internal static string Wechat_DestinationInvalid_Message {
+            get {
+                return ResourceManager.GetString("Wechat.DestinationInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The specified ‘{0}’ key is not recognized. 的本地化字符串。
+        /// </summary>
+        internal static string Wechat_KeyUnrecognized_Message {
+            get {
+                return ResourceManager.GetString("Wechat.KeyUnrecognized.Message", resourceCulture);
             }
         }
     }

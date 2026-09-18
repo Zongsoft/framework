@@ -57,7 +57,7 @@ public class RedisInfoCommand : CommandBase<CommandContext>
 		if(!string.IsNullOrEmpty(info.Namespace))
 		{
 			content.Append(CommandOutletColor.Gray + "@")
-			       .Append(CommandOutletColor.DarkYellow, info.Namespace);
+				   .Append(CommandOutletColor.DarkYellow, info.Namespace);
 		}
 
 		content.AppendLine().AppendLine(CommandOutletColor.DarkGray, info.Settings.ToString());

@@ -59,7 +59,7 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 		var slaver = Utility.ResolveSlaverExecutable(settings.Slaver);
 
 		if(string.IsNullOrWhiteSpace(slaver) || !File.Exists(slaver))
-			throw new CommandException($"The slaver executable was not found. Build the slaver project first or specify --slaver:<path>.");
+			throw new CommandException(global::Zongsoft.Externals.Redis.DistributedLock.Master.Properties.Resources.Sample_SlaverNotFound_Message);
 
 		for(var index = 1; index <= settings.Workers; index++)
 		{
@@ -74,7 +74,7 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 			foreach(var argument in settings.GetSlaverArguments(index))
 				start.ArgumentList.Add(argument);
 
-			var process = Process.Start(start) ?? throw new CommandException("Cannot start the slaver process.");
+			var process = Process.Start(start) ?? throw new CommandException(global::Zongsoft.Externals.Redis.DistributedLock.Master.Properties.Resources.Sample_SlaverStartFailed_Message);
 			yield return new WorkerProcess(process);
 		}
 	}

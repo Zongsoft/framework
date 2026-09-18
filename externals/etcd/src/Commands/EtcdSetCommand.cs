@@ -43,7 +43,7 @@ public sealed class EtcdSetCommand() : EtcdCommandBase("Set")
 		RequireArguments(context);
 		var value = context.Arguments.Count > 1 ? context.Arguments[1] : context.Value?.ToString();
 		if(value == null)
-			throw new CommandException("Missing the value argument.");
+			throw new CommandException(Properties.Resources.Command_ValueRequired_Message);
 		await GetEtcd(context).SetValueAsync(context.Arguments[0], value, context.Options.GetValue<TimeSpan?>("expiry"), cancellation);
 		return true;
 	}

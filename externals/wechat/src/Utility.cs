@@ -40,139 +40,138 @@ using System.Security.Cryptography;
 
 using Zongsoft.Common;
 
-namespace Zongsoft.Externals.Wechat
+namespace Zongsoft.Externals.Wechat;
+
+internal static class Utility
 {
-	internal static class Utility
+	private static readonly MD5 _md5 = MD5.Create();
+
+	public static TOptions GetOptions<TOptions>(string path)
 	{
-		private static readonly MD5 _md5 = MD5.Create();
+		var configuration = Zongsoft.Services.ApplicationContext.Current?.Configuration;
+		return configuration == null ? default : Zongsoft.Configuration.ConfigurationBinder.GetOption<TOptions>(configuration, path);
+	}
 
-		public static TOptions GetOptions<TOptions>(string path)
+	public static TimeSpan GetPeriod(this DateTime expiry)
+	{
+		return expiry.Kind == DateTimeKind.Utc ? expiry - DateTime.UtcNow : expiry - DateTime.Now;
+	}
+
+	public static async ValueTask<TResult> GetResultAsync<TResult>(this HttpResponseMessage response, CancellationToken cancellation = default)
+	{
+		if(response == null)
+			throw new ArgumentNullException(nameof(response));
+
+		if(response.IsSuccessStatusCode)
 		{
-			var configuration = Zongsoft.Services.ApplicationContext.Current?.Configuration;
-			return configuration == null ? default : Zongsoft.Configuration.ConfigurationBinder.GetOption<TOptions>(configuration, path);
-		}
+			if(response.Content.Headers.ContentLength <= 0)
+				return default;
 
-		public static TimeSpan GetPeriod(this DateTime expiry)
-		{
-			return expiry.Kind == DateTimeKind.Utc ? expiry - DateTime.UtcNow : expiry - DateTime.Now;
-		}
+			var text = await response.Content.ReadAsStringAsync(cancellation);
 
-		public static async ValueTask<TResult> GetResultAsync<TResult>(this HttpResponseMessage response, CancellationToken cancellation = default)
-		{
-			if(response == null)
-				throw new ArgumentNullException(nameof(response));
-
-			if(response.IsSuccessStatusCode)
-			{
-				if(response.Content.Headers.ContentLength <= 0)
-					return default;
-
-				var text = await response.Content.ReadAsStringAsync(cancellation);
-
-				//首先判断返回内容是否为错误信息
-				var error = JsonSerializer.Deserialize<ErrorResult>(text, Json.Options);
-				if(error.IsFailed)
-					throw new OperationException(error.Code.ToString(), error.Message);
-
-				return JsonSerializer.Deserialize<TResult>(text, Json.Options);
-			}
-			else
-			{
-				if(response.Content.Headers.ContentLength <= 0)
-					throw new OperationException(response.StatusCode.ToString(), response.ReasonPhrase);
-
-				var error = await response.Content.ReadFromJsonAsync<ErrorResult>(Json.Options, cancellation);
+			//首先判断返回内容是否为错误信息
+			var error = JsonSerializer.Deserialize<ErrorResult>(text, Json.Options);
+			if(error.IsFailed)
 				throw new OperationException(error.Code.ToString(), error.Message);
-			}
+
+			return JsonSerializer.Deserialize<TResult>(text, Json.Options);
 		}
-
-		public static string Postmark(IEnumerable<KeyValuePair<string, object>> data, string password, HashAlgorithm algorithm = null)
+		else
 		{
-			if(string.IsNullOrEmpty(password))
-				throw new ArgumentNullException(nameof(password));
+			if(response.Content.Headers.ContentLength <= 0)
+				throw new OperationException(response.StatusCode.ToString(), response.ReasonPhrase);
 
-			if(data == null)
-				return null;
+			var error = await response.Content.ReadFromJsonAsync<ErrorResult>(Json.Options, cancellation);
+			throw new OperationException(error.Code.ToString(), error.Message);
+		}
+	}
 
-			var text = new System.Text.StringBuilder();
-			var source = (IEnumerable<KeyValuePair<string, object>>)((data is SortedDictionary<string, object> sorts) ? sorts : data.OrderBy(p => p.Key));
+	public static string Postmark(IEnumerable<KeyValuePair<string, object>> data, string password, HashAlgorithm algorithm = null)
+	{
+		if(string.IsNullOrEmpty(password))
+			throw new ArgumentNullException(nameof(password));
 
-			foreach(var entry in source)
-			{
-				if(entry.Value == null)
-					continue;
+		if(data == null)
+			return null;
 
-				if(text.Length > 0)
-					text.Append('&');
+		var text = new System.Text.StringBuilder();
+		var source = (IEnumerable<KeyValuePair<string, object>>)((data is SortedDictionary<string, object> sorts) ? sorts : data.OrderBy(p => p.Key));
 
-				text.Append($"{entry.Key}={entry.Value}");
-			}
+		foreach(var entry in source)
+		{
+			if(entry.Value == null)
+				continue;
 
 			if(text.Length > 0)
 				text.Append('&');
 
-			text.Append($"key={password}");
-
-			var result = (algorithm ?? _md5).ComputeHash(System.Text.Encoding.UTF8.GetBytes(text.ToString()));
-			return System.Convert.ToHexString(result);
+			text.Append($"{entry.Key}={entry.Value}");
 		}
 
-		public static string Truncate(string text, int maxBytes)
-		{
-			if(string.IsNullOrEmpty(text) || maxBytes < 0)
-				return text;
+		if(text.Length > 0)
+			text.Append('&');
 
-			if(maxBytes == 0)
-				return string.Empty;
+		text.Append($"key={password}");
 
-			var span = text.AsSpan();
-			if(System.Text.Encoding.UTF8.GetByteCount(span) <= maxBytes)
-				return text;
+		var result = (algorithm ?? _md5).ComputeHash(System.Text.Encoding.UTF8.GetBytes(text.ToString()));
+		return System.Convert.ToHexString(result);
+	}
 
-			int count = 0;
-			for(int i = 0; i < span.Length; i++)
-			{
-				count += System.Text.Encoding.UTF8.GetByteCount(span.Slice(i, 1));
-				if(count > maxBytes)
-					return span.Slice(0, i).ToString();
-			}
-
+	public static string Truncate(string text, int maxBytes)
+	{
+		if(string.IsNullOrEmpty(text) || maxBytes < 0)
 			return text;
-		}
 
-		private struct ErrorResult
+		if(maxBytes == 0)
+			return string.Empty;
+
+		var span = text.AsSpan();
+		if(System.Text.Encoding.UTF8.GetByteCount(span) <= maxBytes)
+			return text;
+
+		int count = 0;
+		for(int i = 0; i < span.Length; i++)
 		{
-			#region 构造函数
-			public ErrorResult(int code, string message)
-			{
-				this.Code = code;
-				this.Message = message;
-			}
-			#endregion
-
-			#region 公共属性
-			[JsonIgnore]
-			[Serialization.SerializationMember(Ignored = true)]
-			public bool IsFailed { get => this.Code != 0; }
-
-			[JsonIgnore]
-			[Serialization.SerializationMember(Ignored = true)]
-			public bool IsSucceed { get => this.Code == 0; }
-
-			/// <summary>获取或设置错误码。</summary>
-			[JsonPropertyName("errcode")]
-			[Serialization.SerializationMember("errcode")]
-			public int Code { get; set; }
-
-			/// <summary>获取或设置错误消息。</summary>
-			[JsonPropertyName("errmsg")]
-			[Serialization.SerializationMember("errmsg")]
-			public string Message { get; set; }
-			#endregion
-
-			#region 重写方法
-			public override string ToString() => $"[{this.Code}] {this.Message}";
-			#endregion
+			count += System.Text.Encoding.UTF8.GetByteCount(span.Slice(i, 1));
+			if(count > maxBytes)
+				return span.Slice(0, i).ToString();
 		}
+
+		return text;
+	}
+
+	private struct ErrorResult
+	{
+		#region 构造函数
+		public ErrorResult(int code, string message)
+		{
+			this.Code = code;
+			this.Message = message;
+		}
+		#endregion
+
+		#region 公共属性
+		[JsonIgnore]
+		[Serialization.SerializationMember(Ignored = true)]
+		public bool IsFailed { get => this.Code != 0; }
+
+		[JsonIgnore]
+		[Serialization.SerializationMember(Ignored = true)]
+		public bool IsSucceed { get => this.Code == 0; }
+
+		/// <summary>获取或设置错误码。</summary>
+		[JsonPropertyName("errcode")]
+		[Serialization.SerializationMember("errcode")]
+		public int Code { get; set; }
+
+		/// <summary>获取或设置错误消息。</summary>
+		[JsonPropertyName("errmsg")]
+		[Serialization.SerializationMember("errmsg")]
+		public string Message { get; set; }
+		#endregion
+
+		#region 重写方法
+		public override string ToString() => $"[{this.Code}] {this.Message}";
+		#endregion
 	}
 }

@@ -118,12 +118,79 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="TemplateMessage" xml:space="preserve">
-    <value>模板消息</value>
+    <value>Template message</value>
   </data>
   <data name="Transmitter.Description" xml:space="preserve">
-    <value>提供微信模板消息通知功能。</value>
+    <value>Provides WeChat template message notifications.</value>
   </data>
   <data name="Transmitter.Title" xml:space="preserve">
-    <value>微信通知</value>
+    <value>WeChat notifications</value>
   </data>
+	<data name="Wechat.AuthorityInvalid.Message" xml:space="preserve">
+		<value>Invalid authority of the wechat.</value>
+	</data>
+	<data name="Wechat.AuthorityConfigurationInvalid.Message" xml:space="preserve">
+		<value>Invalid configuration section for the '{0}' authority of the WeChat.</value>
+	</data>
+	<data name="Wechat.DestinationInvalid.Message" xml:space="preserve">
+		<value>Invalid destination format.</value>
+	</data>
+	<data name="Wechat.AuthorityTokenInvalid.Message" xml:space="preserve">
+		<value>Invalid format of the authority token.</value>
+	</data>
+	<data name="Recognition.DataRequired.Message" xml:space="preserve">
+		<value>Missing the required data of the recognition authenticate.</value>
+	</data>
+	<data name="Wechat.CertificateNotFound.Message" xml:space="preserve">
+		<value>No certificate found for '{0}({1})' authority of the WeChat.</value>
+	</data>
+	<data name="Wechat.CredentialRequired.Message" xml:space="preserve">
+		<value>The '{0}' WeChat authority has no credential.</value>
+	</data>
+	<data name="Wechat.DefaultAccountRequired.Message" xml:space="preserve">
+		<value>The AppId parameter is not specified, the '{0}' WeChat authority has no default account defined.</value>
+	</data>
+	<data name="Wechat.AuthorityConfigurationRequired.Message" xml:space="preserve">
+		<value>The configuration section for the '{0}' authority of the WeChat was not found.</value>
+	</data>
+	<data name="Wechat.DefaultAuthorityRequired.Message" xml:space="preserve">
+		<value>The configuration section for the default authority of the WeChat was not found.</value>
+	</data>
+	<data name="Wechat.AppletNotFound.Message" xml:space="preserve">
+		<value>The WeChat applet '{0}' does not exist.</value>
+	</data>
+	<data name="Wechat.ChannelNotFound.Message" xml:space="preserve">
+		<value>The WeChat channel '{0}' does not exist.</value>
+	</data>
+	<data name="Identity.DataTypeUnsupported.Message" xml:space="preserve">
+		<value>The identity verification data type '{0}' is not supported.</value>
+	</data>
+	<data name="Wechat.AppIdUndefined.Message" xml:space="preserve">
+		<value>The specified '{0}' AppId is undefined in the '{1}' WeChat authority.</value>
+	</data>
+	<data name="Wechat.AccountNotApplet.Message" xml:space="preserve">
+		<value>The specified '{0}' account is not a WeChat applet.</value>
+	</data>
+	<data name="Wechat.AccountNotChannel.Message" xml:space="preserve">
+		<value>The specified '{0}' account is not a WeChat channel.</value>
+	</data>
+	<data name="Wechat.AuthorityNotFound.Message" xml:space="preserve">
+		<value>The specified '{0}' authority does not exist.</value>
+	</data>
+	<data name="Wechat.KeyUnrecognized.Message" xml:space="preserve">
+		<value>The specified ‘{0}’ key is not recognized.</value>
+	</data>
+	<data name="Certificate.FormatUnsupported.Message" xml:space="preserve">
+		<value>Unsupported '{0}' digital certificate type.</value>
+	</data>
+	<data name="File.FormatUnsupported.Message" xml:space="preserve">
+		<value>Unsupported '{0}' file format.</value>
+	</data>
+	<data name="Wechat.CallbackDecryptionFailed.Message" xml:space="preserve">
+		<value>WeChat callback decryption failed for authority {0}.</value>
+	</data>
+	<data name="Wechat.CertificatePermanentValue" xml:space="preserve">
+		<value>长期</value>
+		<comment>WeChat protocol value. Keep this exact value in every culture.</comment>
+	</data>
 </root>

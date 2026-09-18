@@ -30,24 +30,23 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Externals.Wechat.Options
+namespace Zongsoft.Externals.Wechat.Options;
+
+public class AuthorityOptionsCollection : KeyedCollection<string, AuthorityOptions>
 {
-	public class AuthorityOptionsCollection : KeyedCollection<string, AuthorityOptions>
-	{
-		#region 公共属性
-		public string Default { get; set; }
-		#endregion
+	#region 公共属性
+	public string Default { get; set; }
+	#endregion
 
-		#region 构造函数
-		public AuthorityOptionsCollection() : base(StringComparer.OrdinalIgnoreCase) { }
-		#endregion
+	#region 构造函数
+	public AuthorityOptionsCollection() : base(StringComparer.OrdinalIgnoreCase) { }
+	#endregion
 
-		#region 公共方法
-		public AuthorityOptions GetDefault() => this.Default != null && this.TryGetValue(this.Default, out var authority) ? authority : (this.Count > 0 ? this[0] : null);
-		#endregion
+	#region 公共方法
+	public AuthorityOptions GetDefault() => this.Default != null && this.TryGetValue(this.Default, out var authority) ? authority : (this.Count > 0 ? this[0] : null);
+	#endregion
 
-		#region 重写方法
-		protected override string GetKeyForItem(AuthorityOptions item) => item.Name;
-		#endregion
-	}
+	#region 重写方法
+	protected override string GetKeyForItem(AuthorityOptions item) => item.Name;
+	#endregion
 }

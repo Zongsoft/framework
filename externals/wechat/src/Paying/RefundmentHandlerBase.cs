@@ -29,25 +29,24 @@
 
 using System;
 
-namespace Zongsoft.Externals.Wechat.Paying
+namespace Zongsoft.Externals.Wechat.Paying;
+
+public abstract class RefundmentHandlerBase : FallbackHandlerBase<PaymentManager.RefundmentService.RefundmentOrder>
 {
-	public abstract class RefundmentHandlerBase : FallbackHandlerBase<PaymentManager.RefundmentService.RefundmentOrder>
-	{
-		protected RefundmentHandlerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
+	protected RefundmentHandlerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
 
-		internal protected override Type GetRequestType(string format) =>
-			string.Equals(format, PaymentManager.RefundmentService.DirectRefundmentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?
-			typeof(PaymentManager.RefundmentService.DirectRefundmentService.DirectOrder) :
-			typeof(PaymentManager.RefundmentService.BrokerRefundmentService.BrokerOrder);
-	}
+	internal protected override Type GetRequestType(string format) =>
+		string.Equals(format, PaymentManager.RefundmentService.DirectRefundmentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?
+		typeof(PaymentManager.RefundmentService.DirectRefundmentService.DirectOrder) :
+		typeof(PaymentManager.RefundmentService.BrokerRefundmentService.BrokerOrder);
+}
 
-	public abstract class RefundmentHandlerBase<TResult> : FallbackHandlerBase<PaymentManager.RefundmentService.RefundmentOrder, TResult>
-	{
-		protected RefundmentHandlerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
+public abstract class RefundmentHandlerBase<TResult> : FallbackHandlerBase<PaymentManager.RefundmentService.RefundmentOrder, TResult>
+{
+	protected RefundmentHandlerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
 
-		internal protected override Type GetRequestType(string format) =>
-			string.Equals(format, PaymentManager.RefundmentService.DirectRefundmentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?
-			typeof(PaymentManager.RefundmentService.DirectRefundmentService.DirectOrder) :
-			typeof(PaymentManager.RefundmentService.BrokerRefundmentService.BrokerOrder);
-	}
+	internal protected override Type GetRequestType(string format) =>
+		string.Equals(format, PaymentManager.RefundmentService.DirectRefundmentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?
+		typeof(PaymentManager.RefundmentService.DirectRefundmentService.DirectOrder) :
+		typeof(PaymentManager.RefundmentService.BrokerRefundmentService.BrokerOrder);
 }

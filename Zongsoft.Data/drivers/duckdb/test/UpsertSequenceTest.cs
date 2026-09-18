@@ -32,7 +32,8 @@ public class UpsertSequenceTest(DatabaseFixture database) : IDisposable
 		Assert.True(await accessor.ExistsAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), model.UserId)));
 
 		var text = $"${Zongsoft.Common.Randomizer.GenerateString()}";
-		count = await accessor.UpsertAsync<UserModel>(new {
+		count = await accessor.UpsertAsync<UserModel>(new
+		{
 			UserId = model.UserId,
 			Name = text
 		}, DataUpsertOptions.Sequence(DataSequenceBehavior.Never));
@@ -145,7 +146,7 @@ public class UpsertSequenceTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(model.Name, role.Name);
 		Assert.NotNull(role.Children);
 
-		members = role.Children.OrderBy(member => member.MemberId).ToArray();
+		members = [.. role.Children.OrderBy(member => member.MemberId)];
 		Assert.NotEmpty(members);
 		Assert.Equal(3, members.Length);
 		Assert.Equal(model.RoleId, members[0].RoleId);
@@ -168,7 +169,8 @@ public class UpsertSequenceTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
-		var models = Model.Build<UserModel>(COUNT, (model, index) => {
+		var models = Model.Build<UserModel>(COUNT, (model, index) =>
+		{
 			model.Name = $"${Zongsoft.Common.Randomizer.GenerateString()}#{index}";
 		}).ToArray();
 

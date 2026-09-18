@@ -29,33 +29,32 @@
 
 using System;
 
-namespace Zongsoft.Plugins
+namespace Zongsoft.Plugins;
+
+public class PluginPath
 {
-	public class PluginPath
+	#region 静态方法
+	public static string Combine(params string[] paths) => Zongsoft.IO.Path.Combine(paths);
+	#endregion
+
+	#region 内部方法
+	internal static string PreparePathText(string text) => PreparePathText(text, out _);
+	internal static string PreparePathText(string text, out ObtainMode mode)
 	{
-		#region 静态方法
-		public static string Combine(params string[] paths) => Zongsoft.IO.Path.Combine(paths);
-		#endregion
+		mode = ObtainMode.Auto;
 
-		#region 内部方法
-		internal static string PreparePathText(string text) => PreparePathText(text, out _);
-		internal static string PreparePathText(string text, out ObtainMode mode)
-		{
-			mode = ObtainMode.Auto;
+		if(string.IsNullOrEmpty(text))
+			return string.Empty;
 
-			if(string.IsNullOrEmpty(text))
-				return string.Empty;
+		var index = text.LastIndexOf(',');
 
-			var index = text.LastIndexOf(',');
+		if(index < 0)
+			return text;
 
-			if(index < 0)
-				return text;
+		if(index < text.Length - 1)
+			Enum.TryParse<ObtainMode>(text[(index + 1)..], true, out mode);
 
-			if(index < text.Length - 1)
-				Enum.TryParse<ObtainMode>(text[(index + 1)..], true, out mode);
-
-			return text[..index];
-		}
-		#endregion
+		return text[..index];
 	}
+	#endregion
 }

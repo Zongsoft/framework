@@ -383,7 +383,7 @@ partial class OpcServer
 				DisplayName = member.Name,
 				DataType = this.DefineType(member.Type, out var rank).NodeId,
 				ValueRank = rank,
-				AccessLevel = member.IsReadOnly ? AccessLevels.CurrentRead: AccessLevels.CurrentReadOrWrite,
+				AccessLevel = member.IsReadOnly ? AccessLevels.CurrentRead : AccessLevels.CurrentReadOrWrite,
 				UserAccessLevel = member.IsReadOnly ? AccessLevels.CurrentRead : AccessLevels.CurrentReadOrWrite,
 				MinimumSamplingInterval = MinimumSamplingIntervals.Indeterminate,
 			};

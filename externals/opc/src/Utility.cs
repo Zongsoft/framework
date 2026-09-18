@@ -247,7 +247,7 @@ internal static class Utility
 			var result = store.Certificates.Find(X509FindType.FindBySerialNumber, text[(index + 1)..], false);
 
 			if(result == null || result.Count == 0)
-				throw new InvalidOperationException($"Unable to find “{text[(index + 1)..]}” certificate in “{store.Name}@{store.Location}” store.");
+				throw new InvalidOperationException(string.Format(Properties.Resources.Certificate_NotFound_Message, text[(index + 1)..], store.Name, store.Location));
 
 			return result[0];
 		}

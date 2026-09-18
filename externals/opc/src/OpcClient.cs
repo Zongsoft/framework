@@ -175,7 +175,7 @@ public partial class OpcClient : IDisposable
 	#endregion
 
 	#region 私有方法
-	private ISession GetSession() => _session ?? throw new InvalidOperationException($"The {nameof(OpcClient)}({this.Name}) is not connected.");
+	private ISession GetSession() => _session ?? throw new InvalidOperationException(string.Format(Properties.Resources.Opc_ClientNotConnected_Message, nameof(OpcClient), this.Name));
 	#endregion
 
 	#region 处置方法

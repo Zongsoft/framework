@@ -90,7 +90,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		for(int i = 0; i < COUNT; i++)
 			Assert.True(logs[i].LogId > 0);
 
-		logs = Model.Build<Log>(COUNT, (log, index) =>
+		logs = [.. Model.Build<Log>(COUNT, (log, index) =>
 		{
 			log.UserId = 1;
 			log.Target = $"Target#{index}";
@@ -98,7 +98,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			log.TenantId = 1;
 			log.BranchId = 0;
 			log.Timestamp = Zongsoft.Common.DateTimeExtension.Reset(DateTime.UtcNow, Zongsoft.Common.DateTimePart.Millisecond);
-		}).ToArray();
+		})];
 
 		var options = DataInsertOptions.Return(nameof(Log.LogId), nameof(Log.Timestamp)).Build();
 		count = await accessor.InsertManyAsync(logs, options);
@@ -269,13 +269,15 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 
 		await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
 
-		var count = await accessor.InsertAsync(Model.Build<UserModel>(model => {
+		var count = await accessor.InsertAsync(Model.Build<UserModel>(model =>
+		{
 			model.UserId = 100;
 			model.Name = "Popeye";
 		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(1, count);
 
-		count = await accessor.InsertAsync(Model.Build<UserModel>(model => {
+		count = await accessor.InsertAsync(Model.Build<UserModel>(model =>
+		{
 			model.UserId = 100;
 			model.Name = "Popeye Zhong";
 		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
@@ -289,12 +291,14 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
-		var model = Model.Build<Employee>(model => {
+		var model = Model.Build<Employee>(model =>
+		{
 			model.TenantId = 1;
 			model.BranchId = 0;
 			model.UserId = 100;
 			model.FullName = "Boss Zhong";
-			model.User = Model.Build<UserModel>(user => {
+			model.User = Model.Build<UserModel>(user =>
+			{
 				user.UserId = 100;
 				user.Name = "Popeye";
 				user.Nickname = "Popeye Zhong";
@@ -321,7 +325,8 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		Assert.Equal("Popeye", employee.User.Name);
 		Assert.Equal("Popeye Zhong", employee.User.Nickname);
 
-		model = Model.Build<Employee>(model => {
+		model = Model.Build<Employee>(model =>
+		{
 			model.TenantId = 1;
 			model.BranchId = 0;
 			model.UserId = 404;
@@ -345,7 +350,8 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
-		var model = Model.Build<RoleModel>(model => {
+		var model = Model.Build<RoleModel>(model =>
+		{
 			model.RoleId = 10;
 			model.Name = "Managers";
 			model.Children =
@@ -394,7 +400,8 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		//必须先释放掉枚举器，否则会因为占用连接而导致后续的插入操作失败
 		await enumerator.DisposeAsync();
 
-		model = Model.Build<RoleModel>(model => {
+		model = Model.Build<RoleModel>(model =>
+		{
 			model.RoleId = 11;
 			model.Name = $"Role#{Random.Shared.Next():X}";
 		});
@@ -402,7 +409,8 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(1, count);
 		Assert.True(await accessor.ExistsAsync<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), model.RoleId)));
 
-		model = Model.Build<RoleModel>(model => {
+		model = Model.Build<RoleModel>(model =>
+		{
 			model.RoleId = 12;
 			model.Name = $"Role#{Random.Shared.Next():X}";
 			model.Children = [];
@@ -419,7 +427,8 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
-		var model = Model.Build<Branch>(model => {
+		var model = Model.Build<Branch>(model =>
+		{
 			model.TenantId = 1;
 			model.BranchId = 10;
 			model.BranchNo = "B01";
@@ -485,7 +494,8 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(0, await accessor.InsertManyAsync<Employee>(null, $"*, {nameof(Employee.User)}{{*}}"));
 		Assert.Equal(0, await accessor.InsertManyAsync(Array.Empty<Employee>(), $"*, {nameof(Employee.User)}{{*}}"));
 
-		var count = await accessor.InsertManyAsync(Model.Build<UserModel>(COUNT, (model, index) => {
+		var count = await accessor.InsertManyAsync(Model.Build<UserModel>(COUNT, (model, index) =>
+		{
 			model.UserId = (uint)(200 + index);
 			model.Name = $"${Zongsoft.Common.Randomizer.GenerateString()}_{index}";
 		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never));
@@ -501,7 +511,8 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
-		var count = await accessor.InsertManyAsync(Model.Build<Employee>(COUNT, (model, index) => {
+		var count = await accessor.InsertManyAsync(Model.Build<Employee>(COUNT, (model, index) =>
+		{
 			model.TenantId = 1;
 			model.BranchId = 0;
 			model.UserId = (uint)(200 + index);
@@ -535,7 +546,8 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			Condition.Equal(nameof(Employee.TenantId), 1) &
 			Condition.In(nameof(Employee.UserId), Enumerable.Range(200, COUNT)), nameof(Employee.User));
 
-		count = await accessor.InsertManyAsync(Model.Build<Employee>(COUNT, (model, index) => {
+		count = await accessor.InsertManyAsync(Model.Build<Employee>(COUNT, (model, index) =>
+		{
 			model.TenantId = 1;
 			model.BranchId = 0;
 			model.UserId = (uint)(200 + index);
@@ -560,7 +572,8 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
-		var models = Model.Build<RoleModel>(COUNT, (model, index) => {
+		var models = Model.Build<RoleModel>(COUNT, (model, index) =>
+		{
 			model.RoleId = (uint)(OFFSET + index);
 			model.Name = $"$Role#{(OFFSET + index)}";
 			model.Children =
@@ -620,20 +633,22 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		await accessor.DeleteAsync<RoleModel>(Condition.Between(nameof(RoleModel.RoleId), OFFSET, OFFSET + COUNT));
 		await accessor.DeleteAsync<MemberModel>(Condition.Between(nameof(MemberModel.RoleId), OFFSET, OFFSET + COUNT));
 
-		models = Model.Build<RoleModel>(COUNT, (model, index) => {
+		models = [.. Model.Build<RoleModel>(COUNT, (model, index) =>
+		{
 			model.RoleId = (uint)(OFFSET + index);
 			model.Name = $"$Role#{(OFFSET + index)}";
-		}).ToArray();
+		})];
 		count = await accessor.InsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(COUNT, count);
 
 		await accessor.DeleteAsync<RoleModel>(Condition.Between(nameof(RoleModel.RoleId), OFFSET, OFFSET + COUNT));
 
-		models = Model.Build<RoleModel>(COUNT, (model, index) => {
+		models = [.. Model.Build<RoleModel>(COUNT, (model, index) =>
+		{
 			model.RoleId = (uint)(OFFSET + index);
 			model.Name = $"$Role#{(OFFSET + index)}";
 			model.Children = [];
-		}).ToArray();
+		})];
 		count = await accessor.InsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(COUNT, count);
 
@@ -773,7 +788,8 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
-		var models = Model.Build<Branch>(COUNT, (model, index) => {
+		var models = Model.Build<Branch>(COUNT, (model, index) =>
+		{
 			model.TenantId = 1;
 			model.BranchId = (uint)(index + 1);
 			model.BranchNo = $"B{index + 1}";

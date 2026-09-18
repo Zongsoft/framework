@@ -81,7 +81,7 @@ public abstract class RoleModel : IRole, IIdentifiable, IIdentifiable<uint>, IEq
 					this.Identify(id.Value);
 				break;
 			default:
-				throw new InvalidOperationException($"The specified '{value}' value cannot be converted to a role identifier.");
+				throw new InvalidOperationException(string.Format(Properties.Resources.Role_IdentifierInvalid_Message, value));
 		}
 	}
 	#endregion

@@ -56,7 +56,7 @@ public static class WebUtility
 
 		var context = response.HttpContext;
 		var feature = context.Features.Get<IHttpResponseBodyFeature>() ??
-			throw new InvalidOperationException($"The {typeof(IHttpResponseBodyFeature)} feature is not present.");
+			throw new InvalidOperationException(string.Format(global::Zongsoft.Intelligences.Web.Properties.Resources.Http_FeatureRequired_Message, typeof(IHttpResponseBodyFeature)));
 
 		feature.DisableBuffering();
 

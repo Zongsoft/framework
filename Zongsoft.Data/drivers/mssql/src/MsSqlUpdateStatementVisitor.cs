@@ -49,7 +49,7 @@ public class MsSqlUpdateStatementVisitor : UpdateStatementVisitor
 	protected override void VisitTables(ExpressionVisitorContext context, UpdateStatement statement, IList<TableIdentifier> tables)
 	{
 		if(tables.Count > 1)
-			throw new DataException(Properties.Resources.ResourceManager.GetString("UpdateStatement.MultiTableUnsupported.Message"));
+			throw new DataException(Properties.Resources.UpdateStatement_MultiTableUnsupported_Message);
 
 		if(string.IsNullOrEmpty(tables[0].Alias))
 			context.Visit(tables[0]);

@@ -38,113 +38,112 @@ using System.Threading.Tasks;
 
 using Zongsoft.Common;
 
-namespace Zongsoft.Externals.Wechat
+namespace Zongsoft.Externals.Wechat;
+
+public class Applet
 {
-	public class Applet
+	#region 成员字段
+	private volatile UserProvider _users;
+	#endregion
+
+	#region 构造函数
+	public Applet(Account account)
 	{
-		#region 成员字段
-		private volatile UserProvider _users;
-		#endregion
+		if(account.IsEmpty)
+			throw new ArgumentNullException(nameof(account));
 
-		#region 构造函数
-		public Applet(Account account)
-		{
-			if(account.IsEmpty)
-				throw new ArgumentNullException(nameof(account));
-
-			this.Account = account;
-		}
-		#endregion
-
-		#region 公共属性
-		public Account Account { get; }
-
-		public UserProvider Users
-		{
-			get
-			{
-				if(_users == null)
-					Interlocked.CompareExchange(ref _users, new UserProvider(this.Account), null);
-
-				return _users;
-			}
-		}
-		#endregion
-
-		#region 获取凭证
-		public ValueTask<string> GetCredentialAsync(bool refresh, CancellationToken cancellation = default) => CredentialManager.GetCredentialAsync(this.Account, refresh, cancellation);
-		#endregion
-
-		#region 登录方法
-		public async ValueTask<LoginResult> LoginAsync(string token, CancellationToken cancellation = default)
-		{
-			var response = await CredentialManager.Http.GetAsync($"/sns/jscode2session?appid={this.Account.Code}&secret={this.Account.Secret}&js_code={token}&grant_type=authorization_code", cancellation);
-			var result = await response.GetResultAsync<LoginResultWrapper>(cancellation);
-			return new LoginResult(result.OpenId, result.Secret, result.UnionId);
-		}
-		#endregion
-
-		#region 手机号码
-		public async ValueTask<string> GetPhoneNumberAsync(string token, CancellationToken cancellation = default)
-		{
-			var credential = await CredentialManager.GetCredentialAsync(this.Account, false, cancellation);
-			//var response = await CredentialManager.Http.PostAsJsonAsync($"/wxa/business/getuserphonenumber?access_token={credential}", new { code = token }, cancellation);
-
-			/* 注意：此API调用微信不兼容 HttpClient.PostAsJsonAsync(...) 方法，必须改为 StringContent 模式（具体原因不详）。 */
-			var content = new StringContent(Zongsoft.Serialization.Serializer.Json.Serialize(new { code = token }), Encoding.UTF8, "application/json");
-			var response = await CredentialManager.Http.PostAsync($"/wxa/business/getuserphonenumber?access_token={credential}", content, cancellation);
-			var result = await response.GetResultAsync<PhoneInfoWrapper>(cancellation);
-			return result.Phone.PhoneNumber;
-		}
-		#endregion
-
-		#region 嵌套结构
-		public readonly struct LoginResult
-		{
-			public LoginResult(string openId, string secret, string unionId)
-			{
-				this.OpenId = openId;
-				this.Secret = secret;
-				this.UnionId = unionId;
-			}
-
-			public string Secret { get; }
-			public string OpenId { get; }
-			public string UnionId { get; }
-		}
-
-		private struct LoginResultWrapper
-		{
-			[JsonPropertyName("session_key")]
-			[Serialization.SerializationMember("session_key")]
-			public string Secret { get; set; }
-
-			[JsonPropertyName("openid")]
-			[Serialization.SerializationMember("openid")]
-			public string OpenId { get; set; }
-
-			[JsonPropertyName("unionid")]
-			[Serialization.SerializationMember("unionid")]
-			public string UnionId { get; set; }
-		}
-
-		private struct PhoneInfoWrapper
-		{
-			[JsonPropertyName("phone_info")]
-			[Serialization.SerializationMember("phone_info")]
-			public PhoneInfo Phone { get; set; }
-
-			public struct PhoneInfo
-			{
-				[JsonPropertyName("phoneNumber")]
-				[Serialization.SerializationMember("phoneNumber")]
-				public string PhoneNumber { get; set; }
-
-				[JsonPropertyName("countryCode")]
-				[Serialization.SerializationMember("countryCode")]
-				public string CountryCode { get; set; }
-			}
-		}
-		#endregion
+		this.Account = account;
 	}
+	#endregion
+
+	#region 公共属性
+	public Account Account { get; }
+
+	public UserProvider Users
+	{
+		get
+		{
+			if(_users == null)
+				Interlocked.CompareExchange(ref _users, new UserProvider(this.Account), null);
+
+			return _users;
+		}
+	}
+	#endregion
+
+	#region 获取凭证
+	public ValueTask<string> GetCredentialAsync(bool refresh, CancellationToken cancellation = default) => CredentialManager.GetCredentialAsync(this.Account, refresh, cancellation);
+	#endregion
+
+	#region 登录方法
+	public async ValueTask<LoginResult> LoginAsync(string token, CancellationToken cancellation = default)
+	{
+		var response = await CredentialManager.Http.GetAsync($"/sns/jscode2session?appid={this.Account.Code}&secret={this.Account.Secret}&js_code={token}&grant_type=authorization_code", cancellation);
+		var result = await response.GetResultAsync<LoginResultWrapper>(cancellation);
+		return new LoginResult(result.OpenId, result.Secret, result.UnionId);
+	}
+	#endregion
+
+	#region 手机号码
+	public async ValueTask<string> GetPhoneNumberAsync(string token, CancellationToken cancellation = default)
+	{
+		var credential = await CredentialManager.GetCredentialAsync(this.Account, false, cancellation);
+		//var response = await CredentialManager.Http.PostAsJsonAsync($"/wxa/business/getuserphonenumber?access_token={credential}", new { code = token }, cancellation);
+
+		/* 注意：此API调用微信不兼容 HttpClient.PostAsJsonAsync(...) 方法，必须改为 StringContent 模式（具体原因不详）。 */
+		var content = new StringContent(Zongsoft.Serialization.Serializer.Json.Serialize(new { code = token }), Encoding.UTF8, "application/json");
+		var response = await CredentialManager.Http.PostAsync($"/wxa/business/getuserphonenumber?access_token={credential}", content, cancellation);
+		var result = await response.GetResultAsync<PhoneInfoWrapper>(cancellation);
+		return result.Phone.PhoneNumber;
+	}
+	#endregion
+
+	#region 嵌套结构
+	public readonly struct LoginResult
+	{
+		public LoginResult(string openId, string secret, string unionId)
+		{
+			this.OpenId = openId;
+			this.Secret = secret;
+			this.UnionId = unionId;
+		}
+
+		public string Secret { get; }
+		public string OpenId { get; }
+		public string UnionId { get; }
+	}
+
+	private struct LoginResultWrapper
+	{
+		[JsonPropertyName("session_key")]
+		[Serialization.SerializationMember("session_key")]
+		public string Secret { get; set; }
+
+		[JsonPropertyName("openid")]
+		[Serialization.SerializationMember("openid")]
+		public string OpenId { get; set; }
+
+		[JsonPropertyName("unionid")]
+		[Serialization.SerializationMember("unionid")]
+		public string UnionId { get; set; }
+	}
+
+	private struct PhoneInfoWrapper
+	{
+		[JsonPropertyName("phone_info")]
+		[Serialization.SerializationMember("phone_info")]
+		public PhoneInfo Phone { get; set; }
+
+		public struct PhoneInfo
+		{
+			[JsonPropertyName("phoneNumber")]
+			[Serialization.SerializationMember("phoneNumber")]
+			public string PhoneNumber { get; set; }
+
+			[JsonPropertyName("countryCode")]
+			[Serialization.SerializationMember("countryCode")]
+			public string CountryCode { get; set; }
+		}
+	}
+	#endregion
 }

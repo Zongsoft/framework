@@ -78,7 +78,7 @@ public class KafkaSubscriber : MessageConsumerBase<KafkaQueue>
 		lock(_syncRoot)
 		{
 			if(_consumer != null)
-				throw new InvalidOperationException($"The message queue topic has already been subscribed.");
+				throw new InvalidOperationException(Properties.Resources.Messaging_TopicAlreadySubscribed_Message);
 
 			try
 			{
@@ -114,7 +114,7 @@ public class KafkaSubscriber : MessageConsumerBase<KafkaQueue>
 			lock(_syncRoot)
 			{
 				if(_consumer == null)
-					throw new InvalidOperationException($"The message queue topic to consume is not yet subscribed.");
+					throw new InvalidOperationException(Properties.Resources.Messaging_TopicNotSubscribed_Message);
 
 				result = _consumer.Consume(cancellation);
 			}

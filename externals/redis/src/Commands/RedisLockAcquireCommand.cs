@@ -89,7 +89,7 @@ public class RedisLockAcquireCommand : CommandBase<CommandContext>
 		else
 		{
 			content.Append(CommandOutletColor.DarkYellow, $" {GetTokenString(tokenizer, locker.Token)}")
-			       .Append(CommandOutletColor.DarkMagenta, $" {nameof(locker.IsHeld)}:{locker.IsHeld}");
+				   .Append(CommandOutletColor.DarkMagenta, $" {nameof(locker.IsHeld)}:{locker.IsHeld}");
 		}
 
 		output.WriteLine(content);

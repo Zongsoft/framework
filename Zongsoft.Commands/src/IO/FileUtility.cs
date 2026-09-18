@@ -45,7 +45,7 @@ internal static class FileUtility
 
 		if(context.Arguments.IsEmpty)
 		{
-			var terminal = context.GetTerminal() ?? throw new CommandException($"No arguments are provided, and the '{context.Command.Name}' command is not running in a terminal environment, so the required arguments cannot be obtained through user interaction.");
+			var terminal = context.GetTerminal() ?? throw new CommandException(string.Format(Properties.Resources.Command_InteractiveArgumentsUnavailable_Message, context.Command.Name));
 
 			var filePath = string.Empty;
 			var prompt = (access & FileAccess.Write) == FileAccess.Write ?
@@ -71,7 +71,7 @@ internal static class FileUtility
 			}
 
 			if(paths.Count == 0)
-				throw new CommandException(Properties.Resources.Command_MissingArguments);
+				throw new CommandException(Properties.Resources.Command_ArgumentsRequired_Message);
 		}
 
 		var streams = new List<Stream>(paths.Count);

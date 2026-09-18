@@ -43,7 +43,7 @@ internal class Program
 		executor.Command("subscribe", async (context, cancellation) =>
 		{
 			if(context.Arguments.IsEmpty)
-				throw new CommandException("Missing the topics for subscribe.");
+				throw new CommandException(Properties.Resources.Messaging_SubscribeTopicsRequired_Message);
 
 			var tags = context.Options.GetValue<string>("tags");
 
@@ -61,7 +61,7 @@ internal class Program
 		executor.Command("unsubscribe", async (context, cancellation) =>
 		{
 			if(context.Arguments.IsEmpty)
-				throw new CommandException("Missing the topics for unsubscribe.");
+				throw new CommandException(Properties.Resources.Messaging_UnsubscribeTopicsRequired_Message);
 
 			for(int i = 0; i < context.Arguments.Count; i++)
 			{
@@ -77,7 +77,7 @@ internal class Program
 			var tags = context.Options.GetValue<string>("tags");
 
 			if(string.IsNullOrEmpty(topic))
-				throw new CommandOptionException("topic", "The topic is required.");
+				throw new CommandOptionException("topic", Properties.Resources.Messaging_TopicRequired_Message);
 
 			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 

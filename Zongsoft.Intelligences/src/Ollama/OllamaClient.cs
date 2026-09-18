@@ -60,7 +60,7 @@ public partial class OllamaClient : IDisposable
 			throw new ArgumentNullException(nameof(settings));
 
 		if(string.IsNullOrEmpty(settings.Server))
-			throw new ArgumentException($"The specified connection settings are missing the required server option.");
+			throw new ArgumentException(Properties.Resources.Connection_ServerRequired_Message);
 
 		_client = new OllamaApiClient(settings.Server, settings.Model);
 		this.Settings = settings;

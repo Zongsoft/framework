@@ -69,7 +69,7 @@ partial class OpcClient
 			], cancellation);
 
 		if(response.ResponseHeader != null && StatusCode.IsBad(response.ResponseHeader.ServiceResult))
-			throw new InvalidOperationException($"[{response.ResponseHeader.ServiceResult}] Failed to get the data type of the “{id}” node.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.Opc_DataTypeReadFailed_Message, response.ResponseHeader.ServiceResult, id));
 
 		if(response.Results.Count < 2)
 			return null;

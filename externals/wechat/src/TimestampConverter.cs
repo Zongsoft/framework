@@ -31,21 +31,20 @@ using System;
 using System.Globalization;
 using System.ComponentModel;
 
-namespace Zongsoft.Externals.Wechat
+namespace Zongsoft.Externals.Wechat;
+
+public class TimestampConverter : TypeConverter
 {
-	public class TimestampConverter : TypeConverter
+	public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
 	{
-		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
-		{
-			return Zongsoft.Common.TypeExtension.IsNumeric(sourceType);
-		}
+		return Zongsoft.Common.TypeExtension.IsNumeric(sourceType);
+	}
 
-		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
-		{
-			if(Zongsoft.Common.Convert.TryConvertValue<long>(value, out var number))
-				return DateTimeOffset.FromUnixTimeSeconds(number).DateTime;
+	public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+	{
+		if(Zongsoft.Common.Convert.TryConvertValue<long>(value, out var number))
+			return DateTimeOffset.FromUnixTimeSeconds(number).DateTime;
 
-			return base.ConvertFrom(context, culture, value);
-		}
+		return base.ConvertFrom(context, culture, value);
 	}
 }

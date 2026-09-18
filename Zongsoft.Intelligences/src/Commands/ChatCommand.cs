@@ -63,7 +63,7 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		var service = (context.Find<IServiceAccessor<IChatService>>(true)?.Value) ??
-			throw new CommandException("The chat service required by this command was not found.");
+			throw new CommandException(Properties.Resources.Chat_ServiceRequired_Message);
 
 		var client = (IChatClient)service.Sessions.Current ?? service;
 		var format = context.Options.GetValue(FORMAT_OPTION, ChatResponseFormat.Object);
@@ -109,7 +109,7 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 	private static async ValueTask Chat(CommandContext context, IChatClient service)
 	{
 		var terminal = context.GetTerminal() ??
-			throw new CommandException("The interactive chat can only run in a terminal environment.");
+			throw new CommandException(Properties.Resources.Chat_TerminalRequired_Message);
 
 		var splash = CommandOutletContent.Create()
 			.AppendLine(CommandOutletColor.Yellow, new string('·', 50))

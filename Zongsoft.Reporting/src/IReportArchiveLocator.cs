@@ -31,11 +31,10 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 
-namespace Zongsoft.Reporting
+namespace Zongsoft.Reporting;
+
+public interface IReportArchiveLocator
 {
-	public interface IReportArchiveLocator
-	{
-		Stream Open(string key, out ReportArchive archive);
-		IEnumerable<ReportArchive> Find(string type, string contentType = null);
-	}
+	Stream Open(string key, out ReportArchive archive);
+	IEnumerable<ReportArchive> Find(string type, string contentType = null);
 }

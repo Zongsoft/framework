@@ -115,7 +115,7 @@ partial class Application
 		private void Run(object sender, EventArgs e)
 		{
 			if(this.Executor == null)
-				throw new InvalidOperationException("Missing the required command executor of the terminal.");
+				throw new InvalidOperationException(Properties.Resources.Terminal_ExecutorRequired_Message);
 
 			Environment.ExitCode = this.Executor.Run();
 			this.Close();

@@ -37,55 +37,82 @@ using System.Threading.Tasks;
 using Zongsoft.Common;
 using Zongsoft.Security;
 
-namespace Zongsoft.Externals.Wechat.Paying
+namespace Zongsoft.Externals.Wechat.Paying;
+
+public static class HttpUtility
 {
-	public static class HttpUtility
+	public static async ValueTask GetAsync(this HttpClient client, string url, CancellationToken cancellation = default)
 	{
-		public static async ValueTask GetAsync(this HttpClient client, string url, CancellationToken cancellation = default)
+		var response = await client.GetAsync(url, cancellation);
+		await EnsureResultAsync(response, cancellation);
+	}
+
+	public static async ValueTask<TResult> GetAsync<TResult>(this HttpClient client, string url, CancellationToken cancellation = default)
+	{
+		var response = await client.GetAsync(url, cancellation);
+		return await GetResultAsync<TResult>(response, cancellation);
+	}
+
+	public static ValueTask PostAsync(this HttpClient client, string url, CancellationToken cancellation = default) => PostAsync(client, url, (object)null, cancellation);
+	public static async ValueTask PostAsync<TRequest>(this HttpClient client, string url, TRequest request, CancellationToken cancellation = default)
+	{
+		var content = request is null ? (HttpContent)new StringContent(string.Empty, System.Text.Encoding.UTF8, "application/json") : JsonContent.Create(request, request.GetType(), null, Json.Options);
+		var response = await client.PostAsync(url, content, cancellation);
+		await EnsureResultAsync(response, cancellation);
+	}
+
+	public static ValueTask<TResult> PostAsync<TRequest, TResult>(this HttpClient client, string url, TRequest request, CancellationToken cancellation = default)
+	{
+		return PostAsync<TRequest, TResult>(client, url, request, null, cancellation);
+	}
+
+	public static async ValueTask<TResult> PostAsync<TRequest, TResult>(this HttpClient client, string url, TRequest request, ICertificate certificate, CancellationToken cancellation = default)
+	{
+		//var json = System.Text.Json.JsonSerializer.Serialize(request, request.GetType(), Json.Options);
+		var content = JsonContent.Create(request, request.GetType(), null, Json.Options);
+
+		if(certificate != null)
+			content.Headers.Add("Wechatpay-Serial", certificate.Identifier);
+
+		var response = await client.PostAsync(url, content, cancellation);
+		return await GetResultAsync<TResult>(response, cancellation);
+	}
+
+	public static async ValueTask EnsureResultAsync(this HttpResponseMessage response, CancellationToken cancellation = default)
+	{
+		if(response == null)
+			throw new ArgumentNullException(nameof(response));
+
+		if(response.IsSuccessStatusCode)
+			return;
+
+		if(response.Content.Headers.ContentLength <= 0)
+			throw new OperationException(response.StatusCode.ToString(), response.ReasonPhrase);
+
+		var failure = response.Content.Headers.ContentType.MediaType.Contains("json", StringComparison.OrdinalIgnoreCase) ?
+			await response.Content.ReadFromJsonAsync<FailureResult>(Json.Options, cancellation) :
+			new FailureResult(response.StatusCode.ToString(), await response.Content.ReadAsStringAsync(cancellation));
+
+		throw new OperationException(failure.Code, failure.Message);
+	}
+
+	public static async ValueTask<TResult> GetResultAsync<TResult>(this HttpResponseMessage response, CancellationToken cancellation = default)
+	{
+		if(response == null)
+			throw new ArgumentNullException(nameof(response));
+
+		if(response.IsSuccessStatusCode)
 		{
-			var response = await client.GetAsync(url, cancellation);
-			await EnsureResultAsync(response, cancellation);
+			if(response.Content.Headers.ContentLength <= 0 || typeof(TResult) == typeof(void) || typeof(TResult) == typeof(object))
+				return default;
+
+			//var text = await response.Content.ReadAsStringAsync(cancellation);
+			//var result = System.Text.Json.JsonSerializer.Deserialize<TResult>(text, Json.Options);
+			var result = await response.Content.ReadFromJsonAsync<TResult>(Json.Options, cancellation);
+			return result;
 		}
-
-		public static async ValueTask<TResult> GetAsync<TResult>(this HttpClient client, string url, CancellationToken cancellation = default)
+		else
 		{
-			var response = await client.GetAsync(url, cancellation);
-			return await GetResultAsync<TResult>(response, cancellation);
-		}
-
-		public static ValueTask PostAsync(this HttpClient client, string url, CancellationToken cancellation = default) => PostAsync(client, url, (object)null, cancellation);
-		public static async ValueTask PostAsync<TRequest>(this HttpClient client, string url, TRequest request, CancellationToken cancellation = default)
-		{
-			var content = request is null ? (HttpContent)new StringContent(string.Empty, System.Text.Encoding.UTF8, "application/json") : JsonContent.Create(request, request.GetType(), null, Json.Options);
-			var response = await client.PostAsync(url, content, cancellation);
-			await EnsureResultAsync(response, cancellation);
-		}
-
-		public static ValueTask<TResult> PostAsync<TRequest, TResult>(this HttpClient client, string url, TRequest request, CancellationToken cancellation = default)
-		{
-			return PostAsync<TRequest, TResult>(client, url, request, null, cancellation);
-		}
-
-		public static async ValueTask<TResult> PostAsync<TRequest, TResult>(this HttpClient client, string url, TRequest request, ICertificate certificate, CancellationToken cancellation = default)
-		{
-			//var json = System.Text.Json.JsonSerializer.Serialize(request, request.GetType(), Json.Options);
-			var content = JsonContent.Create(request, request.GetType(), null, Json.Options);
-
-			if(certificate != null)
-				content.Headers.Add("Wechatpay-Serial", certificate.Identifier);
-
-			var response = await client.PostAsync(url, content, cancellation);
-			return await GetResultAsync<TResult>(response, cancellation);
-		}
-
-		public static async ValueTask EnsureResultAsync(this HttpResponseMessage response, CancellationToken cancellation = default)
-		{
-			if(response == null)
-				throw new ArgumentNullException(nameof(response));
-
-			if(response.IsSuccessStatusCode)
-				return;
-
 			if(response.Content.Headers.ContentLength <= 0)
 				throw new OperationException(response.StatusCode.ToString(), response.ReasonPhrase);
 
@@ -94,34 +121,6 @@ namespace Zongsoft.Externals.Wechat.Paying
 				new FailureResult(response.StatusCode.ToString(), await response.Content.ReadAsStringAsync(cancellation));
 
 			throw new OperationException(failure.Code, failure.Message);
-		}
-
-		public static async ValueTask<TResult> GetResultAsync<TResult>(this HttpResponseMessage response, CancellationToken cancellation = default)
-		{
-			if(response == null)
-				throw new ArgumentNullException(nameof(response));
-
-			if(response.IsSuccessStatusCode)
-			{
-				if(response.Content.Headers.ContentLength <= 0 || typeof(TResult) == typeof(void) || typeof(TResult) == typeof(object))
-					return default;
-
-				//var text = await response.Content.ReadAsStringAsync(cancellation);
-				//var result = System.Text.Json.JsonSerializer.Deserialize<TResult>(text, Json.Options);
-				var result = await response.Content.ReadFromJsonAsync<TResult>(Json.Options, cancellation);
-				return result;
-			}
-			else
-			{
-				if(response.Content.Headers.ContentLength <= 0)
-					throw new OperationException(response.StatusCode.ToString(), response.ReasonPhrase);
-
-				var failure = response.Content.Headers.ContentType.MediaType.Contains("json", StringComparison.OrdinalIgnoreCase) ?
-					await response.Content.ReadFromJsonAsync<FailureResult>(Json.Options, cancellation) :
-					new FailureResult(response.StatusCode.ToString(), await response.Content.ReadAsStringAsync(cancellation));
-
-				throw new OperationException(failure.Code, failure.Message);
-			}
 		}
 	}
 }

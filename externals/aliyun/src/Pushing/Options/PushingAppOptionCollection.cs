@@ -30,10 +30,9 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Externals.Aliyun.Pushing.Options
+namespace Zongsoft.Externals.Aliyun.Pushing.Options;
+
+public class PushingAppOptionCollection() : KeyedCollection<string, PushingAppOption>(StringComparer.OrdinalIgnoreCase)
 {
-	public class PushingAppOptionCollection() : KeyedCollection<string, PushingAppOption>(StringComparer.OrdinalIgnoreCase)
-	{
-		protected override string GetKeyForItem(PushingAppOption item) => item.Name;
-	}
+	protected override string GetKeyForItem(PushingAppOption item) => item.Name;
 }

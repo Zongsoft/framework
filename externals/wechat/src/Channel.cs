@@ -38,89 +38,88 @@ using System.Collections.Generic;
 
 using Zongsoft.Common;
 
-namespace Zongsoft.Externals.Wechat
+namespace Zongsoft.Externals.Wechat;
+
+public class Channel
 {
-	public class Channel
+	#region 静态变量
+	private static readonly System.Security.Cryptography.SHA1 SHA1 = System.Security.Cryptography.SHA1.Create();
+	#endregion
+
+	#region 成员字段
+	private volatile UserProvider _users;
+	private volatile ChannelMessager _messager;
+	private volatile ChannelAuthentication _authentication;
+	#endregion
+
+	#region 构造函数
+	public Channel(Account account)
 	{
-		#region 静态变量
-		private static readonly System.Security.Cryptography.SHA1 SHA1 = System.Security.Cryptography.SHA1.Create();
-		#endregion
+		if(account.IsEmpty)
+			throw new ArgumentNullException(nameof(account));
 
-		#region 成员字段
-		private volatile UserProvider _users;
-		private volatile ChannelMessager _messager;
-		private volatile ChannelAuthentication _authentication;
-		#endregion
-
-		#region 构造函数
-		public Channel(Account account)
-		{
-			if(account.IsEmpty)
-				throw new ArgumentNullException(nameof(account));
-
-			this.Account = account;
-			this.Membership = new Membership(this.Account);
-		}
-		#endregion
-
-		#region 公共属性
-		public Account Account { get; }
-
-		public UserProvider Users
-		{
-			get
-			{
-				if(_users == null)
-					Interlocked.CompareExchange(ref _users, new UserProvider(this.Account), null);
-
-				return _users;
-			}
-		}
-
-		public Membership Membership { get; }
-
-		public ChannelMessager Messager
-		{
-			get
-			{
-				if(_messager == null)
-					Interlocked.CompareExchange(ref _messager, new ChannelMessager(this.Account), null);
-
-				return _messager;
-			}
-		}
-
-		public ChannelAuthentication Authentication
-		{
-			get
-			{
-				if(_authentication == null)
-					Interlocked.CompareExchange(ref _authentication, new ChannelAuthentication(this.Account), null);
-
-				return _authentication;
-			}
-		}
-		#endregion
-
-		#region 获取凭证
-		public ValueTask<string> GetCredentialAsync(bool refresh, CancellationToken cancellation = default) => CredentialManager.GetCredentialAsync(this.Account, refresh, cancellation);
-		#endregion
-
-		#region 计算邮戳
-		public async ValueTask<(byte[] data, string nonce, long timestamp, TimeSpan period)> PostmarkAsync(string url, CancellationToken cancellation = default)
-		{
-			var result = await CredentialManager.GetTicketAsync(this.Account, "jsapi", false, cancellation);
-
-			if(string.IsNullOrEmpty(result.ticket))
-				return default;
-
-			var nonce = Randomizer.GenerateString(16);
-			var timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-			var period = result.period;
-
-			var text = $"jsapi_ticket={result.ticket}&noncestr={nonce}&timestamp={timestamp}&url={url}";
-			return (SHA1.ComputeHash(Encoding.UTF8.GetBytes(text)), nonce, timestamp, period);
-		}
-		#endregion
+		this.Account = account;
+		this.Membership = new Membership(this.Account);
 	}
+	#endregion
+
+	#region 公共属性
+	public Account Account { get; }
+
+	public UserProvider Users
+	{
+		get
+		{
+			if(_users == null)
+				Interlocked.CompareExchange(ref _users, new UserProvider(this.Account), null);
+
+			return _users;
+		}
+	}
+
+	public Membership Membership { get; }
+
+	public ChannelMessager Messager
+	{
+		get
+		{
+			if(_messager == null)
+				Interlocked.CompareExchange(ref _messager, new ChannelMessager(this.Account), null);
+
+			return _messager;
+		}
+	}
+
+	public ChannelAuthentication Authentication
+	{
+		get
+		{
+			if(_authentication == null)
+				Interlocked.CompareExchange(ref _authentication, new ChannelAuthentication(this.Account), null);
+
+			return _authentication;
+		}
+	}
+	#endregion
+
+	#region 获取凭证
+	public ValueTask<string> GetCredentialAsync(bool refresh, CancellationToken cancellation = default) => CredentialManager.GetCredentialAsync(this.Account, refresh, cancellation);
+	#endregion
+
+	#region 计算邮戳
+	public async ValueTask<(byte[] data, string nonce, long timestamp, TimeSpan period)> PostmarkAsync(string url, CancellationToken cancellation = default)
+	{
+		var result = await CredentialManager.GetTicketAsync(this.Account, "jsapi", false, cancellation);
+
+		if(string.IsNullOrEmpty(result.ticket))
+			return default;
+
+		var nonce = Randomizer.GenerateString(16);
+		var timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
+		var period = result.period;
+
+		var text = $"jsapi_ticket={result.ticket}&noncestr={nonce}&timestamp={timestamp}&url={url}";
+		return (SHA1.ComputeHash(Encoding.UTF8.GetBytes(text)), nonce, timestamp, period);
+	}
+	#endregion
 }

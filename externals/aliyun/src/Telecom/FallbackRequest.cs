@@ -33,43 +33,42 @@ using System.Text.Json.Serialization;
 
 using Zongsoft.Serialization;
 
-namespace Zongsoft.Externals.Aliyun.Telecom
+namespace Zongsoft.Externals.Aliyun.Telecom;
+
+public class FallbackRequest
 {
-	public class FallbackRequest
+	#region 公共属性
+	[JsonPropertyName("call_id")]
+	[SerializationMember("call_id")]
+	public string Identifier { get; set; }
+
+	[JsonPropertyName("timestamp")]
+	[SerializationMember("timestamp")]
+	public long Timestamp { get; set; }
+
+	[JsonPropertyName("content_type")]
+	[SerializationMember("content_type")]
+	public FallbackRequestContentType ContentType { get; set; }
+
+	[JsonPropertyName("content")]
+	[SerializationMember("content")]
+	public FallbackRequestContent Content { get; set; }
+	#endregion
+
+	#region 公共方法
+	public FallbackResponse Reply(FallbackRequest request, FallbackResponseAction action, string voice = null, object parameter = null)
 	{
-		#region 公共属性
-		[JsonPropertyName("call_id")]
-		[SerializationMember("call_id")]
-		public string Identifier { get; set; }
+		if(request == null)
+			return new FallbackResponse();
 
-		[JsonPropertyName("timestamp")]
-		[SerializationMember("timestamp")]
-		public long Timestamp { get; set; }
-
-		[JsonPropertyName("content_type")]
-		[SerializationMember("content_type")]
-		public FallbackRequestContentType ContentType { get; set; }
-
-		[JsonPropertyName("content")]
-		[SerializationMember("content")]
-		public FallbackRequestContent Content { get; set; }
-		#endregion
-
-		#region 公共方法
-		public FallbackResponse Reply(FallbackRequest request, FallbackResponseAction action, string voice = null, object parameter = null)
+		return request == null ? new FallbackResponse() : new FallbackResponse
 		{
-			if(request == null)
-				return new FallbackResponse();
-
-			return request == null ? new FallbackResponse() : new FallbackResponse
-			{
-				Action = action,
-				Voice = voice,
-				VoiceParameter = parameter,
-				Identifier = request.Identifier,
-				Extra = request.Content?.Extra,
-			};
-		}
-		#endregion
+			Action = action,
+			Voice = voice,
+			VoiceParameter = parameter,
+			Identifier = request.Identifier,
+			Extra = request.Content?.Extra,
+		};
 	}
+	#endregion
 }

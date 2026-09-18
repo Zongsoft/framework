@@ -30,19 +30,18 @@
 using System;
 using System.ComponentModel;
 
-namespace Zongsoft.Externals.Wechat.Paying
+namespace Zongsoft.Externals.Wechat.Paying;
+
+public static class RefundmentUtility
 {
-	public static class RefundmentUtility
+	public static RefundmentStatus GetStatus(string text) => text?.ToUpperInvariant() switch
 	{
-		public static RefundmentStatus GetStatus(string text) => text?.ToUpperInvariant() switch
-		{
-			"FAIL" => RefundmentStatus.Failed,
-			"ABNORMAL" => RefundmentStatus.Failed,
-			"SUCCESS" => RefundmentStatus.Succeed,
-			"CLOSE" => RefundmentStatus.Cancelled,
-			"CLOSED" => RefundmentStatus.Cancelled,
-			"PROCESSING" => RefundmentStatus.Processing,
-			_ => RefundmentStatus.Processing,
-		};
-	}
+		"FAIL" => RefundmentStatus.Failed,
+		"ABNORMAL" => RefundmentStatus.Failed,
+		"SUCCESS" => RefundmentStatus.Succeed,
+		"CLOSE" => RefundmentStatus.Cancelled,
+		"CLOSED" => RefundmentStatus.Cancelled,
+		"PROCESSING" => RefundmentStatus.Processing,
+		_ => RefundmentStatus.Processing,
+	};
 }

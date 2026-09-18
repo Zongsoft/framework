@@ -30,26 +30,25 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Aliyun.Storages.Options
+namespace Zongsoft.Externals.Aliyun.Storages.Options;
+
+/// <summary>
+/// 表示阿里云对象存储(OSS)相关的配置接口。
+/// </summary>
+public class StorageOptions
 {
-	/// <summary>
-	/// 表示阿里云对象存储(OSS)相关的配置接口。
-	/// </summary>
-	public class StorageOptions
-	{
-		#region 构造函数
-		public StorageOptions() => this.Buckets = new();
-		#endregion
+	#region 构造函数
+	public StorageOptions() => this.Buckets = new();
+	#endregion
 
-		#region 公共属性
-		/// <summary>获取或设置对象存储所属的服务区域。</summary>
-		public ServiceCenterName? Region { get; set; }
+	#region 公共属性
+	/// <summary>获取或设置对象存储所属的服务区域。</summary>
+	public ServiceCenterName? Region { get; set; }
 
-		/// <summary>获取或设置关联的凭证名。</summary>
-		public string Certificate { get; set; }
+	/// <summary>获取或设置关联的凭证名。</summary>
+	public string Certificate { get; set; }
 
-		/// <summary>获取存储器配置项集合。</summary>
-		public BucketOptionCollection Buckets { get; }
-		#endregion
-	}
+	/// <summary>获取存储器配置项集合。</summary>
+	public BucketOptionCollection Buckets { get; }
+	#endregion
 }

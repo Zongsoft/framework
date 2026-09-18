@@ -170,4 +170,31 @@ Aes256Sha256RsaPss</value>
   <data name="Opc.Settings.UserName" xml:space="preserve">
     <value>UserName</value>
   </data>
+	<data name="Subscription.AlreadyRegistered.Message" xml:space="preserve">
+		<value>The specified '{0}' subscription has been registered.</value>
+	</data>
+	<data name="Opc.ClientNotConnected.Message" xml:space="preserve">
+		<value>The {0}({1}) is not connected.</value>
+	</data>
+	<data name="Certificate.NotFound.Message" xml:space="preserve">
+		<value>Unable to find “{0}” certificate in “{1}@{2}” store.</value>
+	</data>
+	<data name="Opc.FolderCreationFailed.Message" xml:space="preserve">
+		<value>[{0}] Failed to create the folder node.</value>
+	</data>
+	<data name="Opc.VariableCreationFailed.Message" xml:space="preserve">
+		<value>[{0}] Failed to create the variable node.</value>
+	</data>
+	<data name="Opc.DataTypeReadFailed.Message" xml:space="preserve">
+		<value>[{0}] Failed to get the data type of the “{1}” node.</value>
+	</data>
+	<data name="Opc.ValueReadFailed.Message" xml:space="preserve">
+		<value>[{0}] Failed to read the value of the “{1}” node.</value>
+	</data>
+	<data name="Opc.ValuesWriteFailed.Message" xml:space="preserve">
+		<value>[{0}] Failed to write node value.</value>
+	</data>
+	<data name="Opc.ValueWriteFailed.Message" xml:space="preserve">
+		<value>[{0}] Failed to write the value of the “{1}” node.</value>
+	</data>
 </root>

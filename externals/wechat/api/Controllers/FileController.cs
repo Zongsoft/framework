@@ -39,37 +39,36 @@ using Microsoft.AspNetCore.Http;
 using Zongsoft.Web;
 using Zongsoft.Externals.Wechat.Paying;
 
-namespace Zongsoft.Externals.Wechat.Web.Controllers
+namespace Zongsoft.Externals.Wechat.Web.Controllers;
+
+[Area("Externals/Wechat")]
+[ControllerName("Files")]
+public class FileController : ControllerBase
 {
-	[Area("Externals/Wechat")]
-	[ControllerName("Files")]
-	public class FileController : ControllerBase
+	[HttpPost("{name?}")]
+	public async ValueTask<IActionResult> UploadAsync(string name = null, CancellationToken cancellation = default)
 	{
-		[HttpPost("{name?}")]
-		public async ValueTask<IActionResult> UploadAsync(string name = null, CancellationToken cancellation = default)
-		{
-			if(this.Request.ContentLength == null || this.Request.ContentLength == 0)
-				return this.BadRequest();
+		if(this.Request.ContentLength == null || this.Request.ContentLength == 0)
+			return this.BadRequest();
 
-			var filePath = await ReadAsStringAsync(this.Request);
+		var filePath = await ReadAsStringAsync(this.Request);
 
-			if(string.IsNullOrEmpty(filePath))
-				return this.BadRequest();
+		if(string.IsNullOrEmpty(filePath))
+			return this.BadRequest();
 
-			var result = await AuthorityUtility.GetAuthority(name).UploadAsync(filePath, cancellation);
-			return string.IsNullOrEmpty(result) ? this.NoContent() : this.Content(result);
-		}
+		var result = await AuthorityUtility.GetAuthority(name).UploadAsync(filePath, cancellation);
+		return string.IsNullOrEmpty(result) ? this.NoContent() : this.Content(result);
+	}
 
-		private static async ValueTask<string> ReadAsStringAsync(HttpRequest request)
-		{
-			using var reader = new StreamReader(
-				request.Body,
-				Encoding.UTF8,
-				detectEncodingFromByteOrderMarks: true,
-				bufferSize: 1024,
-				leaveOpen: true);
+	private static async ValueTask<string> ReadAsStringAsync(HttpRequest request)
+	{
+		using var reader = new StreamReader(
+			request.Body,
+			Encoding.UTF8,
+			detectEncodingFromByteOrderMarks: true,
+			bufferSize: 1024,
+			leaveOpen: true);
 
-			return await reader.ReadToEndAsync();
-		}
+		return await reader.ReadToEndAsync();
 	}
 }

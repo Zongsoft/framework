@@ -34,33 +34,32 @@ using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Spreadsheet;
 
-namespace Zongsoft.Externals.OpenXml.Spreadsheet
+namespace Zongsoft.Externals.OpenXml.Spreadsheet;
+
+public class Sheet
 {
-	public class Sheet
+	#region 成员字段
+	private readonly WorksheetPart _sheet;
+	private readonly SheetCollection _sheets;
+	#endregion
+
+	#region 构造函数
+	internal Sheet(SheetCollection sheets, WorksheetPart sheet, uint id, string name, bool visible = true)
 	{
-		#region 成员字段
-		private readonly WorksheetPart _sheet;
-		private readonly SheetCollection _sheets;
-		#endregion
+		_sheet = sheet;
+		_sheets = sheets;
 
-		#region 构造函数
-		internal Sheet(SheetCollection sheets, WorksheetPart sheet, uint id, string name, bool visible = true)
-		{
-			_sheet = sheet;
-			_sheets = sheets;
-
-			this.SheetId = id;
-			this.Name = name;
-			this.Visible = visible;
-			this.Cells = new CellAssistant(sheet, sheets);
-		}
-		#endregion
-
-		#region 公共属性
-		public uint SheetId { get; init; }
-		public string Name { get; init; }
-		public bool Visible { get; set; }
-		public CellAssistant Cells { get; }
-		#endregion
+		this.SheetId = id;
+		this.Name = name;
+		this.Visible = visible;
+		this.Cells = new CellAssistant(sheet, sheets);
 	}
+	#endregion
+
+	#region 公共属性
+	public uint SheetId { get; init; }
+	public string Name { get; init; }
+	public bool Visible { get; set; }
+	public CellAssistant Cells { get; }
+	#endregion
 }

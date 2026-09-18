@@ -47,7 +47,7 @@ internal static class S3ClientFactory
 	public static AmazonS3Client GetClient(string region) => GetClient(null, region);
 	public static AmazonS3Client GetClient(this IConfiguration configuration, string region)
 	{
-		configuration ??= ApplicationContext.Current?.Configuration ?? throw new InvalidOperationException($"Missing required configuration.");
+		configuration ??= ApplicationContext.Current?.Configuration ?? throw new InvalidOperationException(Properties.Resources.Configuration_Required_Message);
 		return _cache.GetOrCreate(region ?? string.Empty, key => (CreateClient(configuration, (string)key), configuration.GetReloadToken()));
 	}
 
@@ -55,8 +55,8 @@ internal static class S3ClientFactory
 	{
 		var settings = GetSettings(configuration, region) ??
 			throw (string.IsNullOrEmpty(region) ?
-				new InvalidOperationException("No default region configuration is provided.") :
-				new InvalidOperationException($"The specified '{region}' region is not configured."));
+				new InvalidOperationException(Properties.Resources.Storage_DefaultRegionRequired_Message) :
+				new InvalidOperationException(string.Format(Properties.Resources.Storage_RegionNotConfigured_Message, region)));
 
 		return new AmazonS3Client(settings.GetOptions());
 	}

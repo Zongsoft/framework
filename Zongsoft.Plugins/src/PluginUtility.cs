@@ -74,7 +74,7 @@ public static class PluginUtility
 		}, false);
 
 		if(type == null)
-			throw new PluginException($"The '{typeFullName}' type resolve failed in {element}.");
+			throw new PluginException(string.Format(Properties.Resources.Plugin_TypeResolveFailed_Message, typeFullName, element));
 
 		return type;
 	}
@@ -109,7 +109,7 @@ public static class PluginUtility
 			var type = GetOwnerElementType(builtin.Node) ?? settings?.TargetType;
 
 			if(type == null)
-				throw new PluginException($"Unable to determine the target type of the '{builtin}' builtin.");
+				throw new PluginException(string.Format(Properties.Resources.Builtin_TypeRequired_Message, builtin));
 
 			result = BuildType(type, builtin);
 		}
@@ -196,7 +196,7 @@ public static class PluginUtility
 		(var info, var values) = MatchConstructor(builtinType.Constructor);
 
 		if(info == null || values == null)
-			throw new PluginException($"Missing matching constructor for builtin '{builtinType.Builtin}'.");
+			throw new PluginException(string.Format(Properties.Resources.Builtin_ConstructorRequired_Message, builtinType.Builtin));
 
 		try
 		{
@@ -207,7 +207,7 @@ public static class PluginUtility
 			if(System.Diagnostics.Debugger.IsAttached)
 				throw;
 
-			throw new PluginException($"Create object of '{builtinType.TypeName}' type faild, The constructor is ({info.GetParameters()}).", ex);
+			throw new PluginException(string.Format(Properties.Resources.Builtin_ConstructionFailed_Message, builtinType.TypeName, info.GetParameters()), ex);
 		}
 
 		//注入依赖属性
@@ -275,7 +275,7 @@ public static class PluginUtility
 		Type type = PluginUtility.GetType(typeName, builtin);
 
 		if(type == null)
-			throw new PluginException(string.Format("Can not get type from '{0}' text for '{1}' builtin.", typeName, builtin));
+			throw new PluginException(string.Format(Properties.Resources.Builtin_TypeInvalid_Message, typeName, builtin));
 
 		return BuildType(type, builtin);
 	}
@@ -289,14 +289,14 @@ public static class PluginUtility
 			target = BuildType(type, (ParameterInfo parameter, out object value) => GetParameterValue(element, parameter, out value));
 
 			if(target == null)
-				throw new PluginException(string.Format("Can not build instance of '{0}' type, Maybe that's cause type-generator not found matched constructor with parameters. in '{1}'.", type.FullName, element));
+				throw new PluginException(string.Format(Properties.Resources.Plugin_ConstructorNotFound_Message, type.FullName, element));
 		}
 		catch(Exception ex)
 		{
 			if(System.Diagnostics.Debugger.IsAttached)
 				throw;
 
-			throw new PluginException(string.Format("Occurred an exception on create a builtin instance of '{0}' type, at '{1}' builtin.", type.FullName, element), ex);
+			throw new PluginException(string.Format(Properties.Resources.Plugin_InstanceCreationFailed_Message, type.FullName, element), ex);
 		}
 
 		//注入依赖属性
@@ -314,7 +314,7 @@ public static class PluginUtility
 			throw new ArgumentNullException(nameof(parameterResolver));
 
 		if(type.IsInterface || type.IsAbstract)
-			throw new ArgumentException($"Unable to create an instance of the specified '{type.FullName}' type because it is an interface or an abstract class.");
+			throw new ArgumentException(string.Format(Properties.Resources.Type_NotConstructible_Message, type.FullName));
 
 		var constructors = type.GetConstructors();
 
@@ -559,7 +559,7 @@ public static class PluginUtility
 			else if(element is PluginTreeNode)
 				result = Parsers.Parser.Parse(text, (PluginTreeNode)element, memberName, memberType);
 			else
-				throw new NotSupportedException(string.Format("Can not support the '{0}' element type.", element.GetType()));
+				throw new NotSupportedException(string.Format(Properties.Resources.Plugin_ElementTypeUnsupported_Message, element.GetType()));
 		}
 
 		//对最后的结果进行类型转换，如果指定的类型为空，该转换操作不会执行任何动作
@@ -632,16 +632,16 @@ public static class PluginUtility
 		var parts = qualifiedName.Split(',');
 
 		if(parts.Length != 2)
-			throw new ArgumentException(string.Format("Invalid qualified name '{0}'.", qualifiedName));
+			throw new ArgumentException(string.Format(Properties.Resources.Type_QualifiedNameInvalid_Message, qualifiedName));
 
 		var assemblyName = parts[1].Trim();
 
 		if(string.IsNullOrWhiteSpace(assemblyName))
-			throw new ArgumentException(string.Format("Missing assembly name in the qualified name '{0}'.", qualifiedName));
+			throw new ArgumentException(string.Format(Properties.Resources.Type_AssemblyNameRequired_Message, qualifiedName));
 
 		//根据指定程序集名称获取对应的程序集
 		var assembly = ResolveAssembly(new AssemblyName(assemblyName)) ??
-			throw new InvalidOperationException(string.Format("Not found '{0}' assembly in the runtimes, for '{1}' qualified type name.", assemblyName, qualifiedName));
+			throw new InvalidOperationException(string.Format(Properties.Resources.Type_AssemblyNotFound_Message, assemblyName, qualifiedName));
 
 		return GetValue(assembly, parts[0]);
 
@@ -655,7 +655,7 @@ public static class PluginUtility
 
 			//不能小于三个部分，因为「Namespace.Type.Member」至少包含三个部分
 			if(parts.Length < 3)
-				throw new ArgumentException($"The specified '{path}' is an invalid static member expression.");
+				throw new ArgumentException(string.Format(Properties.Resources.Type_StaticExpressionInvalid_Message, path));
 
 			for(int i = 1; i < parts.Length; i++)
 			{
@@ -668,7 +668,7 @@ public static class PluginUtility
 					var members = type.GetMember(parts[index], MemberTypes.Field | MemberTypes.Property, BindingFlags.Public | BindingFlags.Static);
 
 					if(members == null || members.Length == 0)
-						throw new PluginException($"No static field or property for '{parts[index]}' was found in '{type.FullName}' type.");
+						throw new PluginException(string.Format(Properties.Resources.Type_StaticMemberNotFound_Message, parts[index], type.FullName));
 
 					var target = members[0] switch
 					{
@@ -685,7 +685,7 @@ public static class PluginUtility
 				}
 			}
 
-			throw new InvalidOperationException($"Unable to resolve the '{path}' static member in the '{assembly.FullName}' assembly.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.Type_StaticMemberResolveFailed_Message, path, assembly.FullName));
 		}
 	}
 

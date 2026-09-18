@@ -63,7 +63,7 @@ partial class OpcClient
 			cancellation);
 
 		if(response.ResponseHeader != null && StatusCode.IsBad(response.ResponseHeader.ServiceResult))
-			throw new InvalidOperationException($"[{response.ResponseHeader.ServiceResult}] Failed to write the value of the “{identifier}” node.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.Opc_ValueWriteFailed_Message, response.ResponseHeader.ServiceResult, identifier));
 
 		if(response.Results != null && response.Results.Count > 0)
 		{
@@ -74,7 +74,7 @@ partial class OpcClient
 			var failures = response.Results.Where(StatusCode.IsBad);
 
 			if(failures.Any())
-				throw new InvalidOperationException($"[{string.Join(',', failures)}] Failed to write the value of the “{identifier}” node.");
+				throw new InvalidOperationException(string.Format(Properties.Resources.Opc_ValueWriteFailed_Message, string.Join(',', failures), identifier));
 		}
 
 		return true;
@@ -100,7 +100,7 @@ partial class OpcClient
 		var response = await session.WriteAsync(request, [.. nodes], cancellation);
 
 		if(response.ResponseHeader != null && StatusCode.IsBad(response.ResponseHeader.ServiceResult))
-			throw new InvalidOperationException($"[{response.ResponseHeader.ServiceResult}] Failed to write node value.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.Opc_ValuesWriteFailed_Message, response.ResponseHeader.ServiceResult));
 
 		if(response.Results != null && response.Results.Count > 0)
 			return response.Results.Where(StatusCode.IsBad).Select(Failure.GetFailure).ToArray();

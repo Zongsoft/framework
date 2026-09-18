@@ -35,63 +35,62 @@ using System.Text.RegularExpressions;
 using Zongsoft.Common;
 using Zongsoft.Services;
 
-namespace Zongsoft.Plugins.Parsers
+namespace Zongsoft.Plugins.Parsers;
+
+public class PredicateParser : Parser
 {
-	public class PredicateParser : Parser
+	private readonly Regex _regex = new Regex(@"[^\s]+", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace);
+
+	public override object Parse(ParserContext context)
 	{
-		private readonly Regex _regex = new Regex(@"[^\s]+", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace);
+		if(string.IsNullOrWhiteSpace(context.Text))
+			throw new PluginException(Properties.Resources.Predication_TextRequired_Message);
 
-		public override object Parse(ParserContext context)
+		var matches = _regex.Matches(context.Text);
+
+		if(matches.Count < 1)
+			throw new PluginException(Properties.Resources.Predication_ParseFailed_Message);
+
+		var parts = matches[0].Value.Split('.');
+
+		if(parts.Length > 2)
+			throw new PluginException(Properties.Resources.Predication_SyntaxInvalid_Message);
+
+		IPredication predication;
+
+		if(parts.Length == 1)
+			predication = ApplicationContext.Current.Services.Find<IPredication>(parts[0]);
+		else
 		{
-			if(string.IsNullOrWhiteSpace(context.Text))
-				throw new PluginException("Can not parse for the predication because the parser text is empty.");
+			if(!ApplicationContext.Current.Modules.TryGetValue(parts[0], out var module))
+				throw new PluginException(string.Format(Properties.Resources.Predication_ServiceProviderNotFound_Message, parts[0]));
 
-			var matches = _regex.Matches(context.Text);
+			predication = module.Services.Find<IPredication>(parts[1]);
+		}
 
-			if(matches.Count < 1)
-				throw new PluginException("Can not parse for the predication.");
+		if(predication != null)
+		{
+			string text = matches.Count <= 1 ? null : context.Text.Substring(matches[1].Index);
+			object argument = text;
 
-			var parts = matches[0].Value.Split('.');
+			if(TypeExtension.IsAssignableFrom(typeof(IPredication<PluginPredicationContext>), predication.GetType()))
+				argument = new PluginPredicationContext(text, context.Builtin, context.Node, context.Plugin);
 
-			if(parts.Length > 2)
-				throw new PluginException("Can not parse for the predication because of a syntax error.");
+			return Predicate(predication, argument);
+		}
 
-			IPredication predication;
+		return false;
+	}
 
-			if(parts.Length == 1)
-				predication = ApplicationContext.Current.Services.Find<IPredication>(parts[0]);
-			else
-			{
-				if(!ApplicationContext.Current.Modules.TryGetValue(parts[0], out var module))
-					throw new PluginException(string.Format("The '{0}' ServiceProvider is not exists on the predication parsing.", parts[0]));
-
-				predication = module.Services.Find<IPredication>(parts[1]);
-			}
-
-			if(predication != null)
-			{
-				string text = matches.Count <= 1 ? null : context.Text.Substring(matches[1].Index);
-				object argument = text;
-
-				if(TypeExtension.IsAssignableFrom(typeof(IPredication<PluginPredicationContext>), predication.GetType()))
-					argument = new PluginPredicationContext(text, context.Builtin, context.Node, context.Plugin);
-
-				return Predicate(predication, argument);
-			}
-
+	private static bool Predicate(IPredication predication, object argument)
+	{
+		if(predication == null)
 			return false;
-		}
 
-		private static bool Predicate(IPredication predication, object argument)
-		{
-			if(predication == null)
-				return false;
+		var task = predication.PredicateAsync(argument);
+		if(task.IsCompletedSuccessfully)
+			return task.Result;
 
-			var task = predication.PredicateAsync(argument);
-			if(task.IsCompletedSuccessfully)
-				return task.Result;
-
-			return task.AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-		}
+		return task.AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 	}
 }

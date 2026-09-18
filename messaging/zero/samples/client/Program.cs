@@ -41,7 +41,7 @@ internal class Program
 		executor.Command("subscribe", async (context, cancellation) =>
 		{
 			if(context.Arguments.IsEmpty)
-				throw new CommandException("Missing the topics for subscribe.");
+				throw new CommandException(global::Zongsoft.Messaging.ZeroMQ.Samples.Client.Properties.Resources.Messaging_SubscribeTopicsRequired_Message);
 
 			for(int i = 0; i < context.Arguments.Count; i++)
 			{
@@ -57,7 +57,7 @@ internal class Program
 		executor.Command("unsubscribe", async (context, cancellation) =>
 		{
 			if(context.Arguments.IsEmpty)
-				throw new CommandException("Missing the topics for unsubscribe.");
+				throw new CommandException(global::Zongsoft.Messaging.ZeroMQ.Samples.Client.Properties.Resources.Messaging_UnsubscribeTopicsRequired_Message);
 
 			for(int i = 0; i < context.Arguments.Count; i++)
 			{
@@ -72,7 +72,7 @@ internal class Program
 			var topic = context.Options.GetValue<string>("topic");
 
 			if(string.IsNullOrEmpty(topic))
-				throw new CommandOptionException("topic", "The topic is required.");
+				throw new CommandOptionException("topic", global::Zongsoft.Messaging.ZeroMQ.Samples.Client.Properties.Resources.Messaging_TopicRequired_Message);
 
 			var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 

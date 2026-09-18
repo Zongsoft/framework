@@ -29,26 +29,25 @@
 
 using System;
 
-namespace Zongsoft.Externals.Wechat.Paying
+namespace Zongsoft.Externals.Wechat.Paying;
+
+/// <summary>
+/// 表示退款状态的枚举。
+/// </summary>
+public enum RefundmentStatus
 {
-	/// <summary>
-	/// 表示退款状态的枚举。
-	/// </summary>
-	public enum RefundmentStatus
-	{
-		/// <summary>退款成功</summary>
-		[Components.Alias("Success")]
-		Succeed,
+	/// <summary>退款成功</summary>
+	[Components.Alias("Success")]
+	Succeed,
 
-		/// <summary>退款异常</summary>
-		[Components.Alias("Abnormal")]
-		Failed,
+	/// <summary>退款异常</summary>
+	[Components.Alias("Abnormal")]
+	Failed,
 
-		/// <summary>已关闭</summary>
-		[Components.Alias("Closed")]
-		Cancelled,
+	/// <summary>已关闭</summary>
+	[Components.Alias("Closed")]
+	Cancelled,
 
-		/// <summary>处理中</summary>
-		Processing,
-	}
+	/// <summary>处理中</summary>
+	Processing,
 }

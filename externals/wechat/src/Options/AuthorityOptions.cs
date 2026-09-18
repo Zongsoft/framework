@@ -33,36 +33,35 @@ using System.IO;
 using Zongsoft.Configuration;
 using Zongsoft.Externals.Wechat.Options;
 
-namespace Zongsoft.Externals.Wechat.Options
+namespace Zongsoft.Externals.Wechat.Options;
+
+/// <summary>
+/// 表示微信支付账户的选项类。
+/// </summary>
+public class AuthorityOptions
 {
-	/// <summary>
-	/// 表示微信支付账户的选项类。
-	/// </summary>
-	public class AuthorityOptions
+	#region 构造函数
+	public AuthorityOptions()
 	{
-		#region 构造函数
-		public AuthorityOptions()
-		{
-			this.Apps = new AppOptionsCollection();
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取或设置账户名称。</summary>
-		public string Name { get; set; }
-
-		/// <summary>获取或设置账户号码。</summary>
-		public string Code { get; set; }
-
-		/// <summary>获取或设置账户密钥。</summary>
-		[ConfigurationProperty("secret")]
-		public string Secret { get; set; }
-
-		/// <summary>获取或设置证书文件的存放目录。</summary>
-		public DirectoryInfo Directory { get; set; }
-
-		/// <summary>获取微信小程序应用设置选项集。</summary>
-		public AppOptionsCollection Apps { get; }
-		#endregion
+		this.Apps = new AppOptionsCollection();
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>获取或设置账户名称。</summary>
+	public string Name { get; set; }
+
+	/// <summary>获取或设置账户号码。</summary>
+	public string Code { get; set; }
+
+	/// <summary>获取或设置账户密钥。</summary>
+	[ConfigurationProperty("secret")]
+	public string Secret { get; set; }
+
+	/// <summary>获取或设置证书文件的存放目录。</summary>
+	public DirectoryInfo Directory { get; set; }
+
+	/// <summary>获取微信小程序应用设置选项集。</summary>
+	public AppOptionsCollection Apps { get; }
+	#endregion
 }

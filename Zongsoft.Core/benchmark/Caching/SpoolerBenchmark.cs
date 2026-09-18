@@ -28,7 +28,7 @@ public class SpoolerFileBenchmark : SpoolerBenchmarkBase
 public abstract class SpoolerBenchmarkBase
 {
 	public const int RecordCount = 10_000;
-	private const int RecordSize = 128;
+	private const int RECORD_SIZE = 128;
 	private readonly SemaphoreSlim _batchGate = new(1, 1);
 	private readonly SemaphoreSlim _sinkGate = new(1, 1);
 	private Spooler<int> _spooler;
@@ -62,8 +62,9 @@ public abstract class SpoolerBenchmarkBase
 		_batch = new int[this.BatchSize];
 		_producers = new Task[this.Producers];
 		_records = new byte[RecordCount][];
+
 		for(int index = 0; index < _records.Length; index++)
-			_records[index] = Encoding.ASCII.GetBytes(index.ToString("D8") + new string('x', RecordSize - 10) + "\r\n");
+			_records[index] = Encoding.ASCII.GetBytes(index.ToString("D8") + new string('x', RECORD_SIZE - 10) + "\r\n");
 
 		if(this.WritesFile)
 		{
@@ -82,10 +83,13 @@ public abstract class SpoolerBenchmarkBase
 			{
 				_seen = new bool[count];
 				await this.RunAsync(method, count);
+
 				if(_seen.Any(seen => !seen))
-					throw new InvalidOperationException("A record was not consumed.");
+					throw new InvalidOperationException(global::Zongsoft.Core.Benchmarks.Properties.Resources.Benchmark_RecordNotConsumed_Message);
+
 				if(this.WritesFile)
 					this.ValidateFile(count);
+
 				if(count == RecordCount)
 					Console.WriteLine($"VALIDATED {this.GetType().Name} Method={method} BatchSize={this.BatchSize} Producers={this.Producers} Records={_consumed} Calls={_calls} Checksum={_checksum}");
 			}
@@ -110,11 +114,12 @@ public abstract class SpoolerBenchmarkBase
 	private async Task<long> RunAsync(int method, int count)
 	{
 		if(_batchCount != 0 || !_spooler.IsEmpty)
-			throw new InvalidOperationException("The previous workload was not drained.");
+			throw new InvalidOperationException(global::Zongsoft.Core.Benchmarks.Properties.Resources.Benchmark_WorkloadNotDrained_Message);
 
 		_consumed = 0;
 		_checksum = 0;
 		_calls = 0;
+
 		if(this.WritesFile)
 		{
 			// Identical bounded-file reset cost is included for all three approaches.
@@ -122,6 +127,7 @@ public abstract class SpoolerBenchmarkBase
 		}
 
 		var writer = _writers[method];
+
 		if(this.Producers == 1)
 			await ProduceAsync(0, count, writer);
 		else
@@ -132,6 +138,7 @@ public abstract class SpoolerBenchmarkBase
 				var end = count * (index + 1) / _producers.Length;
 				_producers[index] = Task.Run(() => ProduceAsync(start, end, writer));
 			}
+
 			await Task.WhenAll(_producers);
 		}
 
@@ -148,15 +155,18 @@ public abstract class SpoolerBenchmarkBase
 
 		// All producer-triggered callbacks have completed before this final drain.
 		if(_consumed != count || _checksum != (long)count * (count - 1) / 2)
-			throw new InvalidOperationException($"Consumption mismatch: {_consumed}/{count}, checksum={_checksum}.");
+			throw new InvalidOperationException(string.Format(global::Zongsoft.Core.Benchmarks.Properties.Resources.Benchmark_ConsumptionMismatch_Message, _consumed, count, _checksum));
+
 		var expectedCalls = method == 0 ? count : (count + this.BatchSize - 1) / this.BatchSize;
 		// Competing bounded writers can trigger partially filled Spooler batches.
 		if(method == 2 ? _calls < expectedCalls || _calls > count : _calls != expectedCalls)
-			throw new InvalidOperationException($"Unexpected callback count: {_calls}/{expectedCalls}.");
+			throw new InvalidOperationException(string.Format(global::Zongsoft.Core.Benchmarks.Properties.Resources.Benchmark_CallbackCountMismatch_Message, _calls, expectedCalls));
+
 		_minimumCalls = Math.Min(_minimumCalls, _calls);
 		_maximumCalls = Math.Max(_maximumCalls, _calls);
 		_totalCalls += _calls;
 		_runs++;
+
 		return _checksum;
 	}
 
@@ -169,6 +179,7 @@ public abstract class SpoolerBenchmarkBase
 	private async ValueTask PutBatchAsync(int value)
 	{
 		await _batchGate.WaitAsync();
+
 		try
 		{
 			_batch[_batchCount++] = value;
@@ -187,6 +198,7 @@ public abstract class SpoolerBenchmarkBase
 	private async ValueTask ConsumeSingleAsync(int value)
 	{
 		await _sinkGate.WaitAsync();
+
 		try
 		{
 			_calls++;
@@ -202,10 +214,12 @@ public abstract class SpoolerBenchmarkBase
 	private async ValueTask ConsumeBatchAsync(IEnumerable<int> values, CancellationToken cancellation = default)
 	{
 		await _sinkGate.WaitAsync(cancellation);
+
 		try
 		{
 			_calls++;
 			using var stream = this.OpenFile();
+
 			foreach(var value in values)
 				await this.ConsumeRecordAsync(value, stream);
 		}
@@ -222,7 +236,7 @@ public abstract class SpoolerBenchmarkBase
 		if(_seen != null)
 		{
 			if((uint)value >= (uint)_seen.Length || _seen[value])
-				throw new InvalidOperationException($"Invalid or duplicate record: {value}.");
+				throw new InvalidOperationException(string.Format(global::Zongsoft.Core.Benchmarks.Properties.Resources.Benchmark_RecordInvalid_Message, value));
 			_seen[value] = true;
 		}
 		_consumed++;
@@ -233,14 +247,16 @@ public abstract class SpoolerBenchmarkBase
 	private void ValidateFile(int count)
 	{
 		var bytes = File.ReadAllBytes(_path);
-		if(bytes.Length != count * RecordSize)
-			throw new InvalidOperationException("Incorrect output file length.");
+		if(bytes.Length != count * RECORD_SIZE)
+			throw new InvalidOperationException(global::Zongsoft.Core.Benchmarks.Properties.Resources.Benchmark_OutputLengthInvalid_Message);
+
 		var seen = new bool[count];
-		for(int offset = 0; offset < bytes.Length; offset += RecordSize)
+		for(int offset = 0; offset < bytes.Length; offset += RECORD_SIZE)
 		{
 			var id = int.Parse(Encoding.ASCII.GetString(bytes, offset, 8));
-			if((uint)id >= (uint)count || seen[id] || !bytes.AsSpan(offset, RecordSize).SequenceEqual(_records[id]))
-				throw new InvalidOperationException("Incorrect output file contents.");
+			if((uint)id >= (uint)count || seen[id] || !bytes.AsSpan(offset, RECORD_SIZE).SequenceEqual(_records[id]))
+				throw new InvalidOperationException(global::Zongsoft.Core.Benchmarks.Properties.Resources.Benchmark_OutputContentsInvalid_Message);
+
 			seen[id] = true;
 		}
 	}
@@ -250,9 +266,11 @@ public abstract class SpoolerBenchmarkBase
 	{
 		if(_runs > 0)
 			Console.WriteLine(FormattableString.Invariant($"CALLBACKS Runs={_runs} Min={_minimumCalls} Max={_maximumCalls} Mean={(double)_totalCalls / _runs:F4}"));
+
 		_spooler?.Dispose();
 		_batchGate.Dispose();
 		_sinkGate.Dispose();
+
 		if(_path != null && File.Exists(_path))
 			File.Delete(_path);
 		if(_directory != null && Directory.Exists(_directory))

@@ -414,4 +414,7 @@
   <data name="Version" xml:space="preserve">
     <value>版本</value>
   </data>
+	<data name="Redis.ConnectionSettingInvalid.Message" xml:space="preserve">
+		<value>名为“{0}”的 Redis 连接设置不存在，或其驱动不是 Redis。</value>
+	</data>
 </root>

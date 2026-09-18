@@ -29,17 +29,16 @@
 
 using System;
 
-namespace Zongsoft.Externals.Wechat
-{
-	/// <summary>
-	/// 表示应用账户类型的枚举。
-	/// </summary>
-	public enum AccountType
-	{
-		/// <summary>小程序</summary>
-		Applet,
+namespace Zongsoft.Externals.Wechat;
 
-		/// <summary>公众号</summary>
-		Channel,
-	}
+/// <summary>
+/// 表示应用账户类型的枚举。
+/// </summary>
+public enum AccountType
+{
+	/// <summary>小程序</summary>
+	Applet,
+
+	/// <summary>公众号</summary>
+	Channel,
 }

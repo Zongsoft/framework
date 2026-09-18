@@ -29,35 +29,34 @@
 
 using System;
 
-namespace Zongsoft.Externals.Aliyun.Messaging.Options
+namespace Zongsoft.Externals.Aliyun.Messaging.Options;
+
+/// <summary>
+/// 表示消息队列的配置选项。
+/// </summary>
+public class QueueOption
 {
 	/// <summary>
-	/// 表示消息队列的配置选项。
+	/// 获取或设置消息队列名。
 	/// </summary>
-	public class QueueOption
+	public string Name
 	{
-		/// <summary>
-		/// 获取或设置消息队列名。
-		/// </summary>
-		public string Name
-		{
-			get; set;
-		}
+		get; set;
+	}
 
-		/// <summary>
-		/// 获取或设置消息队列所在的服务区域名，如果为空(null)或空字符串("")则由提供程序配置项指定。
-		/// </summary>
-		public ServiceCenterName? Region
-		{
-			get; set;
-		}
+	/// <summary>
+	/// 获取或设置消息队列所在的服务区域名，如果为空(null)或空字符串("")则由提供程序配置项指定。
+	/// </summary>
+	public ServiceCenterName? Region
+	{
+		get; set;
+	}
 
-		/// <summary>
-		/// 获取或设置消息队列关联的凭证名，如果为空(null)或空字符串("")则由提供程序配置项指定。
-		/// </summary>
-		public string Certificate
-		{
-			get; set;
-		}
+	/// <summary>
+	/// 获取或设置消息队列关联的凭证名，如果为空(null)或空字符串("")则由提供程序配置项指定。
+	/// </summary>
+	public string Certificate
+	{
+		get; set;
 	}
 }

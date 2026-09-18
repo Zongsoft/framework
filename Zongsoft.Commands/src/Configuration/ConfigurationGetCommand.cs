@@ -68,7 +68,7 @@ public class ConfigurationGetCommand : CommandBase<CommandContext>
 			throw new CommandException(string.Format(Properties.Resources.CannotObtainCommandTarget, "Configuration"));
 
 		if(context.Arguments.IsEmpty)
-			throw new CommandException(Properties.Resources.Command_MissingArguments);
+			throw new CommandException(Properties.Resources.Command_ArgumentsRequired_Message);
 
 		if(context.Arguments.Count == 1)
 		{

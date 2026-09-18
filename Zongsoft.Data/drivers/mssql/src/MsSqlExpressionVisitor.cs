@@ -78,7 +78,7 @@ public class MsSqlExpressionVisitor : ExpressionVisitorBase
 				MsSqlExecutionStatementVisitor.Instance.Visit(context, execution);
 				break;
 			default:
-				throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.StatementUnsupported.Message"), statement));
+				throw new DataException(string.Format(Properties.Resources.ExpressionVisitor_StatementUnsupported_Message, statement));
 		}
 	}
 
@@ -103,7 +103,7 @@ public class MsSqlExpressionVisitor : ExpressionVisitorBase
 					if(sequence.Method == SequenceMethod.Current)
 						context.Write("SCOPE_IDENTITY()");
 					else
-						throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.SequenceWithoutNameUnsupported.Message"), sequence.Method));
+						throw new DataException(string.Format(Properties.Resources.ExpressionVisitor_SequenceWithoutNameUnsupported_Message, sequence.Method));
 
 					return;
 				}
@@ -111,7 +111,7 @@ public class MsSqlExpressionVisitor : ExpressionVisitorBase
 				var text = sequence.Method switch
 				{
 					SequenceMethod.Next => "NEXT VALUE FOR " + sequence.Name,
-					_ => throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.SequenceWithNameUnsupported.Message"), sequence.Method)),
+					_ => throw new DataException(string.Format(Properties.Resources.ExpressionVisitor_SequenceWithNameUnsupported_Message, sequence.Method)),
 				};
 
 				context.Write(text);
@@ -191,7 +191,7 @@ public class MsSqlExpressionVisitor : ExpressionVisitorBase
 			DbType.Xml => "xml",
 			DbType.Object when type.Name.Equals("text", StringComparison.OrdinalIgnoreCase) => "nvarchar(MAX)",
 			DbType.Object => "sql_variant",
-			_ => throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.DataTypeUnsupported.Message"), type)),
+			_ => throw new DataException(string.Format(Properties.Resources.ExpressionVisitor_DataTypeUnsupported_Message, type)),
 		};
 
 		public string GetMethodName(MethodExpression method)
@@ -226,7 +226,7 @@ public class MsSqlExpressionVisitor : ExpressionVisitorBase
 			DataAggregateFunction.DeviationPopulation => "STDEVP",
 			DataAggregateFunction.Variance => "VAR",
 			DataAggregateFunction.VariancePopulation => "VARP",
-			_ => throw new NotSupportedException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.AggregateInvalid.Message"), function)),
+			_ => throw new NotSupportedException(string.Format(Properties.Resources.ExpressionVisitor_AggregateInvalid_Message, function)),
 		};
 		#endregion
 	}

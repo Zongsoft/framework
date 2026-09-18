@@ -29,23 +29,22 @@
 
 using System;
 
-namespace Zongsoft.Plugins
-{
-	public class ValueChangedEventArgs : EventArgs
-	{
-		#region 构造函数
-		public ValueChangedEventArgs(object value)
-		{
-			this.Value = value;
-		}
-		#endregion
+namespace Zongsoft.Plugins;
 
-		#region 公共属性
-		public object Value
-		{
-			get;
-			private set;
-		}
-		#endregion
+public class ValueChangedEventArgs : EventArgs
+{
+	#region 构造函数
+	public ValueChangedEventArgs(object value)
+	{
+		this.Value = value;
 	}
+	#endregion
+
+	#region 公共属性
+	public object Value
+	{
+		get;
+		private set;
+	}
+	#endregion
 }

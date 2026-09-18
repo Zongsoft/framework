@@ -56,7 +56,7 @@ public class PasswordGenerateCommand : CommandBase<CommandContext>
 
 		var result = new Password[context.Arguments.Count];
 
-		for(int i=0; i < result.Length; i++)
+		for(int i = 0; i < result.Length; i++)
 			result[i] = Generate(context.Arguments[i], context.Options);
 
 		return ValueTask.FromResult<object>(result);

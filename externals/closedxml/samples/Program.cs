@@ -19,9 +19,9 @@ namespace Zongsoft.Externals.ClosedXml.Samples;
 
 internal class Program
 {
-	private static readonly ModelDescriptor Model = Zongsoft.Data.Model.GetDescriptor<User>();
-	private static readonly SpreadsheetGenerator Generator = new();
-	private static readonly SpreadsheetExtractor Extractor = new();
+	private static readonly ModelDescriptor _model = Zongsoft.Data.Model.GetDescriptor<User>();
+	private static readonly SpreadsheetGenerator _generator = new();
+	private static readonly SpreadsheetExtractor _extractor = new();
 
 	static async Task Main(string[] args)
 	{
@@ -76,7 +76,7 @@ internal class Program
 	private static async ValueTask ExportAsync(string path, int count, CultureInfo culture, CancellationToken cancellation)
 	{
 		await using var stream = File.Create(path);
-		await Generator.GenerateAsync(stream, Model, GenerateUsers(count, culture), cancellation);
+		await _generator.GenerateAsync(stream, _model, GenerateUsers(count, culture), cancellation);
 	}
 
 	private static User[] GenerateUsers(int count, CultureInfo culture)
@@ -110,7 +110,7 @@ internal class Program
 		var users = new List<User>();
 		await using var stream = File.OpenRead(path);
 
-		await foreach(var user in Extractor.ExtractAsync<User>(stream, new DataArchiveExtractorOptions(Model), cancellation))
+		await foreach(var user in _extractor.ExtractAsync<User>(stream, new DataArchiveExtractorOptions(_model), cancellation))
 			users.Add(user);
 
 		return users;
@@ -119,7 +119,7 @@ internal class Program
 	private static void DisplayWorkbook(ICommandOutlet output, string path)
 	{
 		using var workbook = new XLWorkbook(path);
-		var table = workbook.Table(Model.Name);
+		var table = workbook.Table(_model.Name);
 
 		output.WriteLine(CommandOutletColor.DarkCyan, $"Workbook: {Path.GetFileName(path)}");
 		output.WriteLine($"Worksheet: {table.Worksheet.Name}");

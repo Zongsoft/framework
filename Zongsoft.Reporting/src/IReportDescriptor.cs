@@ -30,15 +30,14 @@
 using System;
 using System.IO;
 
-namespace Zongsoft.Reporting
-{
-	public interface IReportDescriptor
-	{
-		string Key { get; }
-		string Name { get; }
-		string Type { get; }
-		string Url { get; }
+namespace Zongsoft.Reporting;
 
-		Stream Open();
-	}
+public interface IReportDescriptor
+{
+	string Key { get; }
+	string Name { get; }
+	string Type { get; }
+	string Url { get; }
+
+	Stream Open();
 }

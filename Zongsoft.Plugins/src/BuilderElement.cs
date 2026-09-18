@@ -30,18 +30,17 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Plugins
-{
-	public class BuilderElement : FixedElement<IBuilder>
-	{
-		#region 构造函数
-		public BuilderElement(string typeName, string name, Plugin plugin) : base(typeName, name, plugin, FixedElementType.Builder)
-		{
-		}
+namespace Zongsoft.Plugins;
 
-		public BuilderElement(Type type, string name, Plugin plugin) : base(type, name, plugin, FixedElementType.Builder)
-		{
-		}
-		#endregion
+public class BuilderElement : FixedElement<IBuilder>
+{
+	#region 构造函数
+	public BuilderElement(string typeName, string name, Plugin plugin) : base(typeName, name, plugin, FixedElementType.Builder)
+	{
 	}
+
+	public BuilderElement(Type type, string name, Plugin plugin) : base(type, name, plugin, FixedElementType.Builder)
+	{
+	}
+	#endregion
 }

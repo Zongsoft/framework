@@ -29,17 +29,16 @@
 
 using System;
 
-namespace Zongsoft.Externals.Aliyun.Pushing
-{
-	/// <summary>
-	/// 关于移动消息推送类型的枚举。
-	/// </summary>
-	public enum PushingType
-	{
-		/// <summary>消息</summary>
-		Message,
+namespace Zongsoft.Externals.Aliyun.Pushing;
 
-		/// <summary>通知</summary>
-		Notice,
-	}
+/// <summary>
+/// 关于移动消息推送类型的枚举。
+/// </summary>
+public enum PushingType
+{
+	/// <summary>消息</summary>
+	Message,
+
+	/// <summary>通知</summary>
+	Notice,
 }

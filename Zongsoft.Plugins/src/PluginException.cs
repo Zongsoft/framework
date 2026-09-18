@@ -29,14 +29,13 @@
 
 using System;
 
-namespace Zongsoft.Plugins
+namespace Zongsoft.Plugins;
+
+public class PluginException : Exception
 {
-	public class PluginException : Exception
-	{
-		#region 构造函数
-		public PluginException() { }
-		public PluginException(string message) : base(message, null) { }
-		public PluginException(string message, Exception innerException) : base(message, innerException) { }
-		#endregion
-	}
+	#region 构造函数
+	public PluginException() { }
+	public PluginException(string message) : base(message, null) { }
+	public PluginException(string message, Exception innerException) : base(message, innerException) { }
+	#endregion
 }

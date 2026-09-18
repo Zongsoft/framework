@@ -48,7 +48,7 @@ public class UpgraderController : ControllerBase
 	public async Task<IActionResult> GetAsync(string name, string edition, [FromQuery]Platform platform, [FromQuery]Architecture architecture, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrWhiteSpace(name))
-			throw new BadHttpRequestException($"The '{nameof(name)}' parameter is required.", StatusCodes.Status400BadRequest);
+			throw new BadHttpRequestException(string.Format(Properties.Resources.Command_ParameterRequired_Message, nameof(name)), StatusCodes.Status400BadRequest);
 
 		var parameters = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -78,7 +78,7 @@ public class UpgraderController : ControllerBase
 	public async Task TraceAsync(string phase, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(phase))
-			throw new BadHttpRequestException($"The '{nameof(phase)}' parameter is required.");
+			throw new BadHttpRequestException(string.Format(Properties.Resources.Command_ParameterRequired_Message, nameof(phase)));
 
 		var message = this.Request.Query.TryGetValue("message", out var value) ? value.ToString() : null;
 

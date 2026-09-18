@@ -30,26 +30,25 @@
 using System;
 using System.ComponentModel;
 
-namespace Zongsoft.Externals.Aliyun
+namespace Zongsoft.Externals.Aliyun;
+
+/// <summary>
+/// 表示服务中心名称的枚举。
+/// </summary>
+public enum ServiceCenterName
 {
-	/// <summary>
-	/// 表示服务中心名称的枚举。
-	/// </summary>
-	public enum ServiceCenterName
-	{
-		/// <summary>北京</summary>
-		Beijing,
+	/// <summary>北京</summary>
+	Beijing,
 
-		/// <summary>青岛</summary>
-		Qingdao,
+	/// <summary>青岛</summary>
+	Qingdao,
 
-		/// <summary>杭州</summary>
-		Hangzhou,
+	/// <summary>杭州</summary>
+	Hangzhou,
 
-		/// <summary>深圳</summary>
-		Shenzhen,
+	/// <summary>深圳</summary>
+	Shenzhen,
 
-		/// <summary>香港</summary>
-		Hongkong,
-	}
+	/// <summary>香港</summary>
+	Hongkong,
 }

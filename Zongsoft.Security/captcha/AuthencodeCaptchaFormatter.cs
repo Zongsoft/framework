@@ -36,31 +36,30 @@ using Microsoft.AspNetCore.Http;
 
 using Zongsoft.Services;
 
-namespace Zongsoft.Security.Captcha
+namespace Zongsoft.Security.Captcha;
+
+[Service<ICaptchaFormatter<HttpContext>>]
+public class AuthencodeCaptchaFormatter : ICaptchaFormatter<HttpContext>, IMatchable, IMatchable<string>
 {
-	[Service<ICaptchaFormatter<HttpContext>>]
-	public class AuthencodeCaptchaFormatter : ICaptchaFormatter<HttpContext>, IMatchable, IMatchable<string>
+	#region 公共属性
+	public string Scheme => "Authencode";
+	#endregion
+
+	#region 公共方法
+	public ValueTask<object> FormatAsync(HttpContext context, object value, CancellationToken cancellation = default)
 	{
-		#region 公共属性
-		public string Scheme => "Authencode";
-		#endregion
-
-		#region 公共方法
-		public ValueTask<object> FormatAsync(HttpContext context, object value, CancellationToken cancellation = default)
+		if(value is AuthencodeCaptcha.AuthencodeCaptchaResult data && data.HasValue)
 		{
-			if(value is AuthencodeCaptcha.AuthencodeCaptchaResult data && data.HasValue)
-			{
-				context.Response.Headers[Zongsoft.Web.Http.Headers.Captcha] = data.Token;
-				return ValueTask.FromResult<object>(new FileContentResult(data.Data, data.Type));
-			}
-
-			return ValueTask.FromResult<object>(null);
+			context.Response.Headers[Zongsoft.Web.Http.Headers.Captcha] = data.Token;
+			return ValueTask.FromResult<object>(new FileContentResult(data.Data, data.Type));
 		}
-		#endregion
 
-		#region 服务匹配
-		bool IMatchable<string>.Match(string argument) => this.Scheme.Equals(argument, StringComparison.OrdinalIgnoreCase);
-		bool IMatchable.Match(object argument) => argument is string scheme && this.Scheme.Equals(scheme, StringComparison.OrdinalIgnoreCase);
-		#endregion
+		return ValueTask.FromResult<object>(null);
 	}
+	#endregion
+
+	#region 服务匹配
+	bool IMatchable<string>.Match(string argument) => this.Scheme.Equals(argument, StringComparison.OrdinalIgnoreCase);
+	bool IMatchable.Match(object argument) => argument is string scheme && this.Scheme.Equals(scheme, StringComparison.OrdinalIgnoreCase);
+	#endregion
 }

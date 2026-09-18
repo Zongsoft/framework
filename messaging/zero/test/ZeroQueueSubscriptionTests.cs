@@ -161,7 +161,8 @@ public class ZeroQueueSubscriptionTests
 		using var server = await ZeroServerScope.StartAsync();
 		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "publisher");
 		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "subscriber");
-		using(var disposable = ZeroTestUtility.CreateQueue(server.Port, "disposable")) { }
+		using(var disposable = ZeroTestUtility.CreateQueue(server.Port, "disposable"))
+		{ }
 
 		var handler = new MessageCollector();
 		await subscriber.SubscribeAsync("topic/live", handler);

@@ -30,10 +30,9 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Externals.Aliyun.Telecom.Options
+namespace Zongsoft.Externals.Aliyun.Telecom.Options;
+
+public class TemplateOptionCollection() : KeyedCollection<string, TemplateOption>(StringComparer.OrdinalIgnoreCase)
 {
-	public class TemplateOptionCollection() : KeyedCollection<string, TemplateOption>(StringComparer.OrdinalIgnoreCase)
-	{
-		protected override string GetKeyForItem(TemplateOption template) => template.Name;
-	}
+	protected override string GetKeyForItem(TemplateOption template) => template.Name;
 }

@@ -98,4 +98,16 @@
 	<resheader name="writer">
 		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
 	</resheader>
+	<data name="Chat.ServiceRequired.Message" xml:space="preserve">
+		<value>The chat service required by this command was not found.</value>
+	</data>
+	<data name="Chat.TerminalRequired.Message" xml:space="preserve">
+		<value>The interactive chat can only run in a terminal environment.</value>
+	</data>
+	<data name="Model.ServiceRequired.Message" xml:space="preserve">
+		<value>The model service required by this command was not found.</value>
+	</data>
+	<data name="Connection.ServerRequired.Message" xml:space="preserve">
+		<value>The specified connection settings are missing the required server option.</value>
+	</data>
 </root>

@@ -479,7 +479,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 		public override int Read(byte[] buffer, int offset, int count) => _fileStream.Read(buffer, offset, count);
 		public override long Seek(long offset, SeekOrigin origin) => _fileStream.Seek(offset, origin);
 		public override void SetLength(long value) => _fileStream.SetLength(value);
-		public override void Write(byte[] buffer, int offset, int count) => _fileStream.Write(buffer, offset,count);
+		public override void Write(byte[] buffer, int offset, int count) => _fileStream.Write(buffer, offset, count);
 
 		protected override void Dispose(bool disposing)
 		{

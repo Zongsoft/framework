@@ -34,17 +34,16 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 
-namespace Zongsoft.Externals.Wechat.Web.Controllers
+namespace Zongsoft.Externals.Wechat.Web.Controllers;
+
+[Area("Externals/Wechat")]
+[Zongsoft.Web.ControllerName("Certificates")]
+public class CertificateController : ControllerBase
 {
-	[Area("Externals/Wechat")]
-	[Zongsoft.Web.ControllerName("Certificates")]
-	public class CertificateController : ControllerBase
+	[HttpGet("{code?}")]
+	public async ValueTask<IActionResult> GetCertificateAsync(string code = null, CancellationToken cancellation = default)
 	{
-		[HttpGet("{code?}")]
-		public async ValueTask<IActionResult> GetCertificateAsync(string code = null, CancellationToken cancellation = default)
-		{
-			var certificate = await AuthorityUtility.GetAuthority().GetCertificateAsync(code, cancellation);
-			return certificate == null ? this.NotFound() : this.Ok(certificate);
-		}
+		var certificate = await AuthorityUtility.GetAuthority().GetCertificateAsync(code, cancellation);
+		return certificate == null ? this.NotFound() : this.Ok(certificate);
 	}
 }

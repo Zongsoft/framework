@@ -48,7 +48,7 @@ public class ClickHouseUpsertStatementVisitor : UpsertStatementVisitor
 	protected override void OnVisit(ExpressionVisitorContext context, UpsertStatement statement)
 	{
 		if(statement.Fields == null || statement.Fields.Count == 0)
-			throw new DataException(Properties.Resources.ResourceManager.GetString("UpsertStatement.MissingFields.Message"));
+			throw new DataException(Properties.Resources.UpsertStatement_MissingFields_Message);
 
 		var index = 0;
 

@@ -30,19 +30,18 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Aliyun.Telecom.Options
+namespace Zongsoft.Externals.Aliyun.Telecom.Options;
+
+public class TemplateParameterOption
 {
-	public class TemplateParameterOption
-	{
-		#region 公共属性
-		/// <summary>获取或设置模板参数的名称。</summary>
-		public string Name { get; set; }
+	#region 公共属性
+	/// <summary>获取或设置模板参数的名称。</summary>
+	public string Name { get; set; }
 
-		/// <summary>获取或设置模板参数的标题。</summary>
-		public string Title { get; set; }
+	/// <summary>获取或设置模板参数的标题。</summary>
+	public string Title { get; set; }
 
-		/// <summary>获取或设置模板参数的描述。</summary>
-		public string Description { get; set; }
-		#endregion
-	}
+	/// <summary>获取或设置模板参数的描述。</summary>
+	public string Description { get; set; }
+	#endregion
 }

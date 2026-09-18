@@ -271,11 +271,11 @@ partial class S3FileSystem
 			{
 				case FileMode.Open:
 					if(!Exists(client, bucket, path))
-						throw new FileNotFoundException("The specified file does not exist.", _fileSystem.GetPath(region, bucket, path));
+						throw new FileNotFoundException(Properties.Resources.File_RequiredFileNotFound_Message, _fileSystem.GetPath(region, bucket, path));
 					break;
 				case FileMode.CreateNew:
 					if(Exists(client, bucket, path))
-						throw new IOException($"The specified '{_fileSystem.GetPath(region, bucket, path)}' file already exists.");
+						throw new IOException(string.Format(Properties.Resources.File_AlreadyExists_Message, _fileSystem.GetPath(region, bucket, path)));
 					break;
 				case FileMode.Append:
 				case FileMode.Truncate:
@@ -320,11 +320,11 @@ partial class S3FileSystem
 			{
 				case FileMode.Open:
 					if(!await ExistsAsync(client, bucket, path, cancellation))
-						throw new FileNotFoundException("The specified file does not exist.", _fileSystem.GetPath(region, bucket, path));
+						throw new FileNotFoundException(Properties.Resources.File_RequiredFileNotFound_Message, _fileSystem.GetPath(region, bucket, path));
 					break;
 				case FileMode.CreateNew:
 					if(await ExistsAsync(client, bucket, path, cancellation))
-						throw new IOException($"The specified '{_fileSystem.GetPath(region, bucket, path)}' file already exists.");
+						throw new IOException(string.Format(Properties.Resources.File_AlreadyExists_Message, _fileSystem.GetPath(region, bucket, path)));
 					break;
 				case FileMode.Append:
 				case FileMode.Truncate:

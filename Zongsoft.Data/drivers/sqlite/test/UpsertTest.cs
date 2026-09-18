@@ -28,13 +28,15 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 
 		await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
 
-		var count = await accessor.UpsertAsync(Model.Build<UserModel>(model => {
+		var count = await accessor.UpsertAsync(Model.Build<UserModel>(model =>
+		{
 			model.UserId = 100;
 			model.Name = "Popeye";
 		}), DataUpsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(1, count);
 
-		count = await accessor.UpsertAsync<UserModel>(new {
+		count = await accessor.UpsertAsync<UserModel>(new
+		{
 			UserId = 100,
 			Name = "Popeye Zhong"
 		}, DataUpsertOptions.Sequence(DataSequenceBehavior.Never));
@@ -175,7 +177,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 		Assert.Equal("Masters", role.Name);
 		Assert.NotNull(role.Children);
 
-		members = role.Children.OrderBy(member => member.MemberId).ToArray();
+		members = [.. role.Children.OrderBy(member => member.MemberId)];
 		Assert.NotEmpty(members);
 		Assert.Equal(3, members.Length);
 		Assert.Equal(10U, members[0].RoleId);
@@ -208,7 +210,8 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 
 		await accessor.DeleteAsync<UserModel>(Condition.Between(nameof(UserModel.UserId), OFFSET, OFFSET + COUNT));
 
-		var count = await accessor.UpsertManyAsync(Model.Build<UserModel>(COUNT, (model, index) => {
+		var count = await accessor.UpsertManyAsync(Model.Build<UserModel>(COUNT, (model, index) =>
+		{
 			model.UserId = (uint)(OFFSET + index);
 			model.Name = $"#Unnamed@{OFFSET + index}";
 		}), DataUpsertOptions.Sequence(DataSequenceBehavior.Never));
@@ -361,7 +364,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 			++index;
 		}
 
-		models = Model.Build<RoleModel>(COUNT, (model, index) =>
+		models = [.. Model.Build<RoleModel>(COUNT, (model, index) =>
 		{
 			model.RoleId = (uint)(OFFSET + index);
 			model.Name = $"$New Role#{(OFFSET + index)}";
@@ -376,7 +379,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 					member.MemberType = MemberType.Role;
 				}),
 			];
-		}).ToArray();
+		})];
 
 		count = await accessor.UpsertManyAsync(models, $"*,{nameof(RoleModel.Children)}{{*}}", DataUpsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(3 * COUNT, count);

@@ -48,7 +48,7 @@ public class FileInfoCommand : CommandBase<CommandContext>
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(context.Arguments.IsEmpty)
-			throw new CommandException(Properties.Resources.Command_MissingArguments);
+			throw new CommandException(Properties.Resources.Command_ArgumentsRequired_Message);
 
 		async ValueTask<FileInfo> GetInfoAsync(string path)
 		{

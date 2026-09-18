@@ -41,7 +41,7 @@ public class InfoCommand() : CommandBase<CommandContext>("Info")
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		var service = context.Find<IServiceAccessor<IModelService>>(true)?.Value ??
-			throw new CommandException("The model service required by this command was not found.");
+			throw new CommandException(Properties.Resources.Model_ServiceRequired_Message);
 
 		var model = await service.GetModelAsync(null, cancellation);
 		context.Dump(model);

@@ -232,7 +232,8 @@ public class SpreadsheetExtractor() : DataArchiveExtractorBase(Spreadsheet.Forma
 
 		public bool Read()
 		{
-			while(++_row <= _lastRow && _worksheet.Range(_row, _firstColumn, _row, _firstColumn + _fields.Capacity - 1).IsEmpty(XLCellsUsedOptions.Contents)) { }
+			while(++_row <= _lastRow && _worksheet.Range(_row, _firstColumn, _row, _firstColumn + _fields.Capacity - 1).IsEmpty(XLCellsUsedOptions.Contents))
+			{ }
 			return _row <= _lastRow;
 		}
 

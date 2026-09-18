@@ -29,20 +29,19 @@
 
 using System;
 
-namespace Zongsoft.Externals.Aliyun.Pushing
+namespace Zongsoft.Externals.Aliyun.Pushing;
+
+/// <summary>
+/// 关于移动推送的设备类型的枚举。
+/// </summary>
+public enum PushingDeviceType
 {
-	/// <summary>
-	/// 关于移动推送的设备类型的枚举。
-	/// </summary>
-	public enum PushingDeviceType
-	{
-		/// <summary>所有设备</summary>
-		All,
+	/// <summary>所有设备</summary>
+	All,
 
-		/// <summary>安卓设备</summary>
-		Android,
+	/// <summary>安卓设备</summary>
+	Android,
 
-		/// <summary>苹果设备</summary>
-		iOS,
-	}
+	/// <summary>苹果设备</summary>
+	iOS,
 }

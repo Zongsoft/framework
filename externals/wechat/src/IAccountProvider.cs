@@ -29,10 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Externals.Wechat
+namespace Zongsoft.Externals.Wechat;
+
+public interface IAccountProvider
 {
-	public interface IAccountProvider
-	{
-		Account GetAccount(string code, AccountType type);
-	}
+	Account GetAccount(string code, AccountType type);
 }

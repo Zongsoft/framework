@@ -29,20 +29,19 @@
 
 using System;
 
-namespace Zongsoft.Plugins
+namespace Zongsoft.Plugins;
+
+/// <summary>
+/// 表示插件树的当前状态。
+/// </summary>
+public enum PluginTreeStatus
 {
-	/// <summary>
-	/// 表示插件树的当前状态。
-	/// </summary>
-	public enum PluginTreeStatus
-	{
-		/// <summary>未初始化。</summary>
-		None = 0,
+	/// <summary>未初始化。</summary>
+	None = 0,
 
-		/// <summary>加载进行中。</summary>
-		Loading,
+	/// <summary>加载进行中。</summary>
+	Loading,
 
-		/// <summary>已加载完成。</summary>
-		Loaded,
-	}
+	/// <summary>已加载完成。</summary>
+	Loaded,
 }

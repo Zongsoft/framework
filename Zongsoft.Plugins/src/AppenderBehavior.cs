@@ -30,16 +30,22 @@
 using System;
 using System.ComponentModel;
 
-namespace Zongsoft.Plugins
-{
-	public enum AppenderBehavior
-	{
-		/// <summary>追加</summary>
-		[Description("追加")]
-		Appending,
+namespace Zongsoft.Plugins;
 
-		/// <summary>替换</summary>
-		[Description("替换")]
-		Replacement,
-	}
+public enum AppenderBehavior
+{
+	/// <summary>追加</summary>
+	[AppenderDescription(AppenderBehavior.Appending)]
+	Appending,
+
+	/// <summary>替换</summary>
+	[AppenderDescription(AppenderBehavior.Replacement)]
+	Replacement,
+}
+
+internal sealed class AppenderDescriptionAttribute(AppenderBehavior behavior) : DescriptionAttribute
+{
+	public override string Description => behavior == AppenderBehavior.Appending ?
+		Properties.Resources.AppenderBehavior_Appending_Description :
+		Properties.Resources.AppenderBehavior_Replacement_Description;
 }

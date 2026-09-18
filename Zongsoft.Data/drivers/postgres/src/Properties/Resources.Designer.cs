@@ -10,8 +10,8 @@
 
 namespace Zongsoft.Data.PostgreSql.Properties {
     using System;
-    
-    
+
+
     /// <summary>
     ///   一个强类型的资源类，用于查找本地化的字符串等。
     /// </summary>
@@ -19,19 +19,19 @@ namespace Zongsoft.Data.PostgreSql.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   返回此类使用的缓存的 ResourceManager 实例。
         /// </summary>
@@ -45,10 +45,10 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
-        ///   重写当前线程的 CurrentUICulture 属性，对
-        ///   使用此强类型资源类的所有资源查找执行重写。
+        ///   使用此强类型资源类，为所有资源查找
+        ///   重写当前线程的 CurrentUICulture 属性。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -59,7 +59,43 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 resourceCulture = value;
             }
         }
-        
+
+        /// <summary>
+        ///   查找类似 Invalid &apos;{0}&apos; aggregate method. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_AggregateInvalid_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.AggregateInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Unsupported &apos;{0}&apos; data type. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_DataTypeUnsupported_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.DataTypeUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid &apos;{0}&apos; sequence method. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_SequenceInvalid_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.SequenceInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Not supported &apos;{0}&apos; statement. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_StatementUnsupported_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.StatementUnsupported.Message", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   查找类似 Auto-Prepare Minimum Usages 的本地化字符串。
         /// </summary>
@@ -68,7 +104,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.AutoPrepareMinUsages", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 The minimum number of usages an SQL statement is used before it&apos;s automatically prepared. Defaults to 5. 的本地化字符串。
         /// </summary>
@@ -77,7 +113,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.AutoPrepareMinUsages.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Certificate Secret 的本地化字符串。
         /// </summary>
@@ -86,7 +122,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.CertificateSecret", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Password for a key for a client certificate. 的本地化字符串。
         /// </summary>
@@ -95,7 +131,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.CertificateSecret.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Check Certificate Revocation 的本地化字符串。
         /// </summary>
@@ -104,7 +140,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.CheckCertificateRevocation", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Whether to check the certificate revocation list during authentication. Defaults to false. 的本地化字符串。
         /// </summary>
@@ -113,7 +149,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.CheckCertificateRevocation.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Client 的本地化字符串。
         /// </summary>
@@ -122,7 +158,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.Client", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Connection Idle Lifetime 的本地化字符串。
         /// </summary>
@@ -131,7 +167,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.ConnectionIdleLifetime", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 The time to wait before closing unused connections in the pool if the count of all connections exceeds MinimumPoolSize. 的本地化字符串。
         /// </summary>
@@ -140,7 +176,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.ConnectionIdleLifetime.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Connection Lifetime 的本地化字符串。
         /// </summary>
@@ -149,7 +185,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.ConnectionLifetime", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 The total maximum lifetime of connections (in seconds), Defaults to 3600 seconds(1 hour).
         ///Connections which have exceeded this value will be destroyed instead of returned from the pool.
@@ -160,7 +196,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.ConnectionLifetime.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Connection Pruning Interval 的本地化字符串。
         /// </summary>
@@ -169,7 +205,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.ConnectionPruningInterval", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 How many seconds the pool waits before attempting to prune idle connections that are beyond idle lifetime. 的本地化字符串。
         /// </summary>
@@ -178,7 +214,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.ConnectionPruningInterval.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Database 的本地化字符串。
         /// </summary>
@@ -187,7 +223,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.Database", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Encoding 的本地化字符串。
         /// </summary>
@@ -196,7 +232,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.Encoding", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Error Detailed 的本地化字符串。
         /// </summary>
@@ -205,7 +241,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.ErrorDetailed", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 When enabled, PostgreSQL error and notice details are included on PostgresException.Detail and PostgresNotice.Detail. These can contain sensitive data. 的本地化字符串。
         /// </summary>
@@ -214,7 +250,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.ErrorDetailed.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 KeepAlive 的本地化字符串。
         /// </summary>
@@ -223,7 +259,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.KeepAlive", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 The number of seconds of connection inactivity before client sends a keepalive query. Defaults is 0 to disable. 的本地化字符串。
         /// </summary>
@@ -232,7 +268,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.KeepAlive.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 LoadBalance Enabled 的本地化字符串。
         /// </summary>
@@ -241,7 +277,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.LoadBalanceEnabled", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Enables balancing between multiple hosts by round-robin. 的本地化字符串。
         /// </summary>
@@ -250,7 +286,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.LoadBalanceEnabled.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 LoadBalance Lifetime 的本地化字符串。
         /// </summary>
@@ -259,7 +295,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.LoadBalanceLifetime", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Controls for how long the host&apos;s cached state will be considered as valid. 的本地化字符串。
         /// </summary>
@@ -268,7 +304,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.LoadBalanceLifetime.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Maximum Auto-Prepare 的本地化字符串。
         /// </summary>
@@ -277,7 +313,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.MaxAutoPrepare", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 The maximum number SQL statements that can be automatically prepared at any given point. Beyond this number the least-recently-used statement will be recycled. Zero (the default) disables automatic preparation. 的本地化字符串。
         /// </summary>
@@ -286,7 +322,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.MaxAutoPrepare.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Maximum Pool Size 的本地化字符串。
         /// </summary>
@@ -295,7 +331,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.MaximumPoolSize", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Minimum Pool Size 的本地化字符串。
         /// </summary>
@@ -304,7 +340,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.MinimumPoolSize", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Multiplexing 的本地化字符串。
         /// </summary>
@@ -313,7 +349,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.Multiplexing", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Enables multiplexing, which allows more efficient use of connections. 的本地化字符串。
         /// </summary>
@@ -322,7 +358,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.Multiplexing.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Passfile 的本地化字符串。
         /// </summary>
@@ -331,7 +367,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.Passfile", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Path to a PostgreSQL password file (PGPASSFILE), from which the password would be taken. 的本地化字符串。
         /// </summary>
@@ -340,7 +376,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.Passfile.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Password 的本地化字符串。
         /// </summary>
@@ -349,7 +385,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.Password", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Pooling 的本地化字符串。
         /// </summary>
@@ -358,7 +394,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.Pooling", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Port 的本地化字符串。
         /// </summary>
@@ -367,7 +403,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.Port", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Root Certificate 的本地化字符串。
         /// </summary>
@@ -376,7 +412,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.RootCertificate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Location of a CA certificate used to validate the server certificate. 的本地化字符串。
         /// </summary>
@@ -385,7 +421,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.RootCertificate.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Server 的本地化字符串。
         /// </summary>
@@ -394,7 +430,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.Server", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 SSL Certificate 的本地化字符串。
         /// </summary>
@@ -403,7 +439,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.SslCertificate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Location of a client certificate to be sent to the server. 的本地化字符串。
         /// </summary>
@@ -412,7 +448,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.SslCertificate.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 SSL Key 的本地化字符串。
         /// </summary>
@@ -421,7 +457,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.SslKey", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Location of a client key for a client certificate to be sent to the server. 的本地化字符串。
         /// </summary>
@@ -430,7 +466,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.SslKey.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 SSL Mode 的本地化字符串。
         /// </summary>
@@ -439,7 +475,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.SslMode", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Controls whether SSL is required, disabled or preferred, depending on server support. 的本地化字符串。
         /// </summary>
@@ -448,7 +484,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.SslMode.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Timeout 的本地化字符串。
         /// </summary>
@@ -457,7 +493,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.Timeout", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Timezone 的本地化字符串。
         /// </summary>
@@ -466,7 +502,7 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.Timezone", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 The PostgreSQL session timezone, in Olson/IANA database format. 的本地化字符串。
         /// </summary>
@@ -475,13 +511,22 @@ namespace Zongsoft.Data.PostgreSql.Properties {
                 return ResourceManager.GetString("PostgreSql.Settings.Timezone.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 User Name 的本地化字符串。
         /// </summary>
         internal static string PostgreSql_Settings_UserName {
             get {
                 return ResourceManager.GetString("PostgreSql.Settings.UserName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing required fields in the upsert statement. 的本地化字符串。
+        /// </summary>
+        internal static string UpsertStatement_MissingFields_Message {
+            get {
+                return ResourceManager.GetString("UpsertStatement.MissingFields.Message", resourceCulture);
             }
         }
     }

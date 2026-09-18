@@ -35,12 +35,12 @@ using System.Text.RegularExpressions;
 using Zongsoft.Plugins;
 using Zongsoft.Plugins.Parsers;
 
-namespace Zongsoft.Resources
+namespace Zongsoft.Resources;
+
+public class ResourceParser : Parser
 {
-	public class ResourceParser : Parser
-	{
-		#region 常量定义
-		private const string PATTERN = @"
+	#region 常量定义
+	private const string PATTERN = @"
 (?<name>[\.\w]+)
 (
 \s+
@@ -52,140 +52,139 @@ namespace Zongsoft.Resources
 		)|(?<arg>[^\s]+)
 	)
 )*";
-		#endregion
+	#endregion
 
-		#region 正则表达
-		private readonly Regex _regex = new Regex(PATTERN, RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture);
-		#endregion
+	#region 正则表达
+	private readonly Regex _regex = new Regex(PATTERN, RegexOptions.Compiled | RegexOptions.IgnorePatternWhitespace | RegexOptions.ExplicitCapture);
+	#endregion
 
-		#region 解析方法
-		public override object Parse(ParserContext context)
-		{
-			if(string.IsNullOrWhiteSpace(context.Text))
-				return null;
+	#region 解析方法
+	public override object Parse(ParserContext context)
+	{
+		if(string.IsNullOrWhiteSpace(context.Text))
+			return null;
 
-			var match = _regex.Match(context.Text);
+		var match = _regex.Match(context.Text);
 
-			if(!match.Success)
-				return context.Text;
-
-			var resourceName = match.Groups["name"].Value;
-			var args = new string[match.Groups["arg"].Captures.Count];
-			if(args.Length > 0)
-				match.Groups["arg"].Captures.CopyTo(args, 0);
-
-			if(TryParse(resourceName, context.Plugin, true, out object result))
-				return FormatResult(result, args);
-
-			//如果父插件的程序集中未包含指定的资源，则从当前程序集中继续查找
-			if(GetResourceValue(Assembly.GetExecutingAssembly(), resourceName, out result))
-				return FormatResult(result, args);
-
-			//如果当前程序集中未包含指定的资源，则从入口主程序集中继续查找
-			if(GetResourceValue(Assembly.GetEntryAssembly(), resourceName, out result))
-				return FormatResult(result, args);
-
-			//最后返回无法解析的文本本身
+		if(!match.Success)
 			return context.Text;
-		}
-		#endregion
 
-		#region 私有方法
-		private static object FormatResult(object result, string[] args)
+		var resourceName = match.Groups["name"].Value;
+		var args = new string[match.Groups["arg"].Captures.Count];
+		if(args.Length > 0)
+			match.Groups["arg"].Captures.CopyTo(args, 0);
+
+		if(TryParse(resourceName, context.Plugin, true, out object result))
+			return FormatResult(result, args);
+
+		//如果父插件的程序集中未包含指定的资源，则从当前程序集中继续查找
+		if(GetResourceValue(Assembly.GetExecutingAssembly(), resourceName, out result))
+			return FormatResult(result, args);
+
+		//如果当前程序集中未包含指定的资源，则从入口主程序集中继续查找
+		if(GetResourceValue(Assembly.GetEntryAssembly(), resourceName, out result))
+			return FormatResult(result, args);
+
+		//最后返回无法解析的文本本身
+		return context.Text;
+	}
+	#endregion
+
+	#region 私有方法
+	private static object FormatResult(object result, string[] args)
+	{
+		if(result == null)
+			return null;
+
+		if(result is string format && args != null && args.Length > 0)
+			result = string.Format(format, (object[])args);
+
+		return result;
+	}
+
+	private static bool TryParse(string text, Plugin plugin, bool findUp, out object value)
+	{
+		if(plugin == null)
 		{
-			if(result == null)
-				return null;
-
-			if(result is string format && args != null && args.Length > 0)
-				result = string.Format(format, (object[])args);
-
-			return result;
-		}
-
-		private static bool TryParse(string text, Plugin plugin, bool findUp, out object value)
-		{
-			if(plugin == null)
-			{
-				value = text;
-				return false;
-			}
-
-			//在当前插件的程序集中进行资源查找，如果找到则直接返回
-			foreach(Assembly assembly in plugin.Manifest.Assemblies)
-			{
-				if(GetResourceValue(assembly, text, out value))
-					return true;
-			}
-
-			//在当前插件的依赖插件中进行资源查找，如果找到则直接返回
-			foreach(var dependency in plugin.Manifest.Dependencies)
-			{
-				if(TryParse(text, dependency.Plugin, false, out value))
-					return true;
-			}
-
-			//如果当前插件的程序集中未包含指定的资源，则从父插件中继续查找
-			if(findUp)
-				return TryParse(text, plugin.Parent, findUp, out value);
-
-			//如果所有查找失败则返回假
 			value = text;
 			return false;
 		}
 
-		private static bool GetResourceValue(Assembly assembly, string name, out object result)
+		//在当前插件的程序集中进行资源查找，如果找到则直接返回
+		foreach(Assembly assembly in plugin.Manifest.Assemblies)
 		{
-			result = null;
-
-			if(assembly == null)
-				return false;
-
-			//默认资源基名为程序集名
-			string baseName = assembly.GetName().Name;
-
-			//定义可选的几种资源基名
-			string[] baseNames = new string[]
-				{
-					baseName,
-					baseName + ".Resources",
-					baseName + ".Properties.Resources",
-				};
-
-			//在指定程序集中从可选的资源基名中找出存在的基名
-			baseName = GetResourceBaseName(assembly, baseNames);
-
-			//如果在指定的程序集中没有找到合适的资源基名则退出
-			if(string.IsNullOrEmpty(baseName))
-				return false;
-
-			//创建资源管理对象
-			ResourceManager resources = new ResourceManager(baseName, assembly);
-
-			if(resources != null)
-				result = resources.GetObject(name);
-
-			return (result != null);
+			if(GetResourceValue(assembly, text, out value))
+				return true;
 		}
 
-		private static string GetResourceBaseName(Assembly assembly, string[] names)
+		//在当前插件的依赖插件中进行资源查找，如果找到则直接返回
+		foreach(var dependency in plugin.Manifest.Dependencies)
 		{
-			if(names == null || names.Length < 1)
-				return null;
-
-			foreach(string name in names)
-			{
-				string resourceName = name;
-
-				if(!name.EndsWith(".resources", StringComparison.Ordinal))
-					resourceName = name + ".resources";
-
-				//判断指定基名的资源在当前程序集中是否存在，如果不存在直接返回
-				if(assembly.GetManifestResourceInfo(resourceName) != null)
-					return name;
-			}
-
-			return null;
+			if(TryParse(text, dependency.Plugin, false, out value))
+				return true;
 		}
-		#endregion
+
+		//如果当前插件的程序集中未包含指定的资源，则从父插件中继续查找
+		if(findUp)
+			return TryParse(text, plugin.Parent, findUp, out value);
+
+		//如果所有查找失败则返回假
+		value = text;
+		return false;
 	}
+
+	private static bool GetResourceValue(Assembly assembly, string name, out object result)
+	{
+		result = null;
+
+		if(assembly == null)
+			return false;
+
+		//默认资源基名为程序集名
+		string baseName = assembly.GetName().Name;
+
+		//定义可选的几种资源基名
+		string[] baseNames =
+			[
+				baseName,
+				baseName + ".Resources",
+				baseName + ".Properties.Resources",
+			];
+
+		//在指定程序集中从可选的资源基名中找出存在的基名
+		baseName = GetResourceBaseName(assembly, baseNames);
+
+		//如果在指定的程序集中没有找到合适的资源基名则退出
+		if(string.IsNullOrEmpty(baseName))
+			return false;
+
+		//创建资源管理对象
+		ResourceManager resources = new ResourceManager(baseName, assembly);
+
+		if(resources != null)
+			result = resources.GetObject(name);
+
+		return (result != null);
+	}
+
+	private static string GetResourceBaseName(Assembly assembly, string[] names)
+	{
+		if(names == null || names.Length < 1)
+			return null;
+
+		foreach(string name in names)
+		{
+			string resourceName = name;
+
+			if(!name.EndsWith(".resources", StringComparison.Ordinal))
+				resourceName = name + ".resources";
+
+			//判断指定基名的资源在当前程序集中是否存在，如果不存在直接返回
+			if(assembly.GetManifestResourceInfo(resourceName) != null)
+				return name;
+		}
+
+		return null;
+	}
+	#endregion
 }

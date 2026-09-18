@@ -69,7 +69,7 @@ internal class Program
 				}
 
 				if(context.Arguments.IsEmpty)
-					throw new CommandException($"Missing required arguments of the subscribe command.");
+					throw new CommandException(Properties.Resources.Subscription_ArgumentsRequired_Message);
 
 				foreach(var identifier in context.Arguments)
 					await subscriber.Entries.AddAsync(identifier, cancellation);
@@ -117,7 +117,7 @@ internal class Program
 			else
 			{
 				if(context.Arguments.IsEmpty)
-					throw new CommandException($"Missing required arguments of the subscribe command.");
+					throw new CommandException(Properties.Resources.Subscription_ArgumentsRequired_Message);
 
 				subscriber = await client.SubscribeAsync(context.Arguments, cancellation);
 
@@ -215,11 +215,11 @@ internal class Program
 		executor.Command("set", async (context, cancellation) =>
 		{
 			if(context.Arguments.Count < 2)
-				throw new CommandException($"Missing required argument of the command.");
+				throw new CommandException(Properties.Resources.Command_ArgumentsRequired_Message);
 
 			//获取指定键对应的数据类型
 			var type = await client.GetDataTypeAsync(context.Arguments[0], cancellation) ??
-				throw new CommandException($"The specified '{context.Arguments[0]}' does not exist, or its data type is not available.");
+				throw new CommandException(string.Format(Properties.Resources.Opc_NodeUnavailable_Message, context.Arguments[0]));
 
 			object value = context.Arguments[1];
 
@@ -235,7 +235,7 @@ internal class Program
 			else
 			{
 				if(context.Arguments.Count > 2)
-					throw new CommandException($"Too many command arguments.");
+					throw new CommandException(Properties.Resources.Command_TooManyArguments_Message);
 
 				value = Common.Convert.ConvertValue(context.Arguments[1], type.Type);
 			}

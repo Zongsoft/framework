@@ -29,22 +29,21 @@
 
 using System;
 
-namespace Zongsoft.Plugins
+namespace Zongsoft.Plugins;
+
+public class PluginLoadingEventArgs : PluginLoadEventArgs
 {
-	public class PluginLoadingEventArgs : PluginLoadEventArgs
+	public PluginLoadingEventArgs(string pluginFile, PluginOptions options) : base(options)
 	{
-		public PluginLoadingEventArgs(string pluginFile, PluginOptions options) : base(options)
-		{
-			if(string.IsNullOrEmpty(pluginFile))
-				throw new ArgumentNullException(nameof(pluginFile));
+		if(string.IsNullOrEmpty(pluginFile))
+			throw new ArgumentNullException(nameof(pluginFile));
 
-			this.PluginFile = pluginFile;
-		}
+		this.PluginFile = pluginFile;
+	}
 
-		public string PluginFile
-		{
-			get;
-			private set;
-		}
+	public string PluginFile
+	{
+		get;
+		private set;
 	}
 }

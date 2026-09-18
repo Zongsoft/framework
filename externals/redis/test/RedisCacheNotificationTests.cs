@@ -192,7 +192,7 @@ public class RedisCacheNotificationTests
 
 		var notifications = new[] { await buffer.ReceiveRequiredAsync(), await buffer.ReceiveRequiredAsync() };
 		Assert.All(notifications, notification => Assert.Equal(DistributedCacheNotificationKind.Removed, notification.Kind));
-		Assert.Equal(["clear-one", "clear-two"], notifications.Select(notification => notification.Key).Order().ToArray());
+		Assert.Equal(["clear-one", "clear-two"], [.. notifications.Select(notification => notification.Key).Order()]);
 	}
 
 	[Fact]
@@ -463,7 +463,7 @@ public class RedisCacheNotificationTests
 
 		public int CallCount => Volatile.Read(ref _callCount);
 		public int MaximumConcurrency => Volatile.Read(ref _maximumConcurrency);
-		public string[] Keys { get { lock(_sync) return _keys.ToArray(); } }
+		public string[] Keys { get { lock(_sync) return [.. _keys]; } }
 
 		public async Task WaitAsync(TimeSpan timeout) => await _completion.Task.WaitAsync(timeout);
 		public void Dispose() => _completion.TrySetCanceled();
@@ -519,7 +519,7 @@ public class RedisCacheNotificationTests
 			{
 				await Task.Delay(Timeout.InfiniteTimeSpan, cancellation);
 			}
-			catch(OperationCanceledException) when (cancellation.IsCancellationRequested)
+			catch(OperationCanceledException) when(cancellation.IsCancellationRequested)
 			{
 				_canceled.TrySetResult();
 				throw;

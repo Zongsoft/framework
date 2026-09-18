@@ -159,4 +159,10 @@
   <data name="ManifestPublishedSuccessfully.Message" xml:space="preserve">
     <value>指定的 '{0}' 的清单文件发布成功。</value>
   </data>
+	<data name="Manifest.NoReleasesImported.Message" xml:space="preserve">
+		<value>清单文件“{0}”未导入任何发布。</value>
+	</data>
+	<data name="Manifest.ReleaseIdInvalid.Message" xml:space="preserve">
+		<value>Web 服务为清单文件“{0}”返回了无效的发布标识。</value>
+	</data>
 </root>

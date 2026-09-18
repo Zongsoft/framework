@@ -56,7 +56,7 @@ public partial class Release
 		this.Executors = [];
 		this.Creation = DateTime.Now;
 		this.Platform = Application.Platform;
-		this.Architecture= Application.Architecture;
+		this.Architecture = Application.Architecture;
 		this.Properties = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 	}
 

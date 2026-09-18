@@ -29,21 +29,20 @@
 
 using System;
 
-namespace Zongsoft.Plugins
+namespace Zongsoft.Plugins;
+
+public class FixedElementCollection : PluginElementCollection<FixedElement>
 {
-	public class FixedElementCollection : PluginElementCollection<FixedElement>
-	{
-		#region 构造函数
-		internal protected FixedElementCollection() { }
-		#endregion
+	#region 构造函数
+	internal protected FixedElementCollection() { }
+	#endregion
 
-		#region 公共属性
-		public override bool IsReadOnly => false;
-		#endregion
+	#region 公共属性
+	public override bool IsReadOnly => false;
+	#endregion
 
-		#region 公共方法
-		public void Clear() => this.BaseClear();
-		public void Remove(string name) => this.BaseRemoveKey(name);
-		#endregion
-	}
+	#region 公共方法
+	public void Clear() => this.BaseClear();
+	public void Remove(string name) => this.BaseRemoveKey(name);
+	#endregion
 }

@@ -118,307 +118,346 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="FileOrDirectoryNotExists" xml:space="preserve">
-    <value>{0}文件或目录是不存在的。</value>
+    <value>The file or directory '{0}' does not exist.</value>
   </data>
   <data name="QueueSubscribeCommand.Prompt" xml:space="preserve">
-    <value>提示：按 Ctrl+C 组合键可以退出侦听模式。</value>
+    <value>Press Ctrl+C to stop listening.</value>
   </data>
   <data name="QueueSubscribeCommand.Welcome" xml:space="preserve">
-    <value>欢迎进入 {0} 消息队列的侦听模式。</value>
+    <value>Listening to the '{0}' message queue.</value>
   </data>
   <data name="Acknowledged" xml:space="preserve">
-    <value>已应答</value>
+    <value>Acknowledged</value>
   </data>
   <data name="AssemblyCommand.Description" xml:space="preserve">
-    <value>查看当前应用程序(进程)所有加载的程序集信息。</value>
+    <value>Displays all assemblies loaded in the current application process.</value>
   </data>
   <data name="AssemblyCommand.Name" xml:space="preserve">
-    <value>程序集查看命令</value>
+    <value>Assembly inspection command</value>
   </data>
   <data name="CannotObtainCommandTarget" xml:space="preserve">
-    <value>无法获得命令的操作目标：{0}。</value>
+    <value>Unable to obtain the command target: {0}.</value>
   </data>
   <data name="CastCommand.Description" xml:space="preserve">
-    <value>将输入参数转换成指定类型并返回。</value>
+    <value>Converts the input arguments to the specified type and returns the result.</value>
   </data>
   <data name="CastCommand.Name" xml:space="preserve">
-    <value>转换命令</value>
+    <value>Conversion command</value>
   </data>
   <data name="CastCommand.Options.Count" xml:space="preserve">
-    <value>转换的字节数。</value>
+    <value>The number of bytes to convert.</value>
   </data>
   <data name="CastCommand.Options.Encoding" xml:space="preserve">
-    <value>转换的文本编码。</value>
+    <value>The text encoding to use for conversion.</value>
   </data>
   <data name="CastCommand.Options.Offset" xml:space="preserve">
-    <value>转换的偏移量（起始字节数）。</value>
+    <value>The starting byte offset for conversion.</value>
   </data>
   <data name="CastCommand.Options.Type" xml:space="preserve">
-    <value>转换的类型。</value>
+    <value>The target type for conversion.</value>
   </data>
   <data name="Command" xml:space="preserve">
-    <value>命令</value>
+    <value>Command</value>
   </data>
-  <data name="Command.MissingArguments" xml:space="preserve">
-    <value>没有指定命令参数，请至少指定一个命令参数。</value>
+  <data name="Command.ArgumentsRequired.Message" xml:space="preserve">
+    <value>Missing the required command arguments.</value>
   </data>
   <data name="Command.RequiresCountOfArguments" xml:space="preserve">
-    <value>无效的命令参数，参数个数必须为{0}。</value>
+    <value>Invalid command arguments. Exactly {0} arguments are required.</value>
   </data>
   <data name="CommandExecuteFailed" xml:space="preserve">
-    <value>命令执行失败。</value>
+    <value>Command execution failed.</value>
   </data>
   <data name="CommandExecuteSucceed" xml:space="preserve">
-    <value>命令执行成功。</value>
+    <value>Command execution succeeded.</value>
   </data>
   <data name="CommandUsages" xml:space="preserve">
-    <value>命令使用方法：</value>
+    <value>Command usage:</value>
   </data>
   <data name="ConfigurationCommand.Description" xml:space="preserve">
-    <value>该命令提供获取当前程序的配置信息。</value>
+    <value>Provides access to the current application's configuration.</value>
   </data>
   <data name="ConfigurationCommand.Name" xml:space="preserve">
-    <value>配置命令</value>
+    <value>Configuration command</value>
   </data>
   <data name="ConfigurationCommand.Options.Simplify" xml:space="preserve">
-    <value>是否以简化的方式显式。</value>
+    <value>Whether to use a simplified display format.</value>
   </data>
   <data name="ConfigurationGetCommand.Description" xml:space="preserve">
-    <value>该命令查看指定路径的配置信息。</value>
+    <value>Displays configuration information at the specified path.</value>
   </data>
   <data name="ConfigurationGetCommand.Name" xml:space="preserve">
-    <value>获取配置命令</value>
+    <value>Get configuration command</value>
   </data>
   <data name="Disabled" xml:space="preserve">
-    <value>已禁用</value>
+    <value>Disabled</value>
   </data>
   <data name="EchoCommand.Description" xml:space="preserve">
-    <value>输出命令的参数值。</value>
+    <value>Outputs the values of the command arguments.</value>
   </data>
   <data name="EchoCommand.Name" xml:space="preserve">
-    <value>回声命令</value>
+    <value>Echo command</value>
   </data>
   <data name="FileDeleteFailed.Message" xml:space="preserve">
-    <value>文件删除失败。</value>
+    <value>Failed to delete the file.</value>
   </data>
   <data name="FileDeleteSucceed.Message" xml:space="preserve">
-    <value>文件删除成功。</value>
+    <value>The file was deleted successfully.</value>
   </data>
   <data name="FileExisted" xml:space="preserve">
-    <value>指定的“{0}”文件存在。</value>
+    <value>The file '{0}' exists.</value>
   </data>
   <data name="FileNotExisted" xml:space="preserve">
-    <value>指定的“{0}”文件不存在。</value>
+    <value>The file '{0}' does not exist.</value>
   </data>
   <data name="HelpCommand.Description" xml:space="preserve">
-    <value>提供对命令的相关使用信息的命令。</value>
+    <value>Displays usage information for commands.</value>
   </data>
   <data name="HelpCommand.Name" xml:space="preserve">
-    <value>帮助命令</value>
+    <value>Help command</value>
   </data>
   <data name="JsonCommand.Description" xml:space="preserve">
-    <value>提供Json相关操作的功能。</value>
+    <value>Provides JSON operations.</value>
   </data>
   <data name="JsonCommand.Name" xml:space="preserve">
-    <value>Json命令</value>
+    <value>JSON command</value>
   </data>
   <data name="JsonCommand.Options.Casing" xml:space="preserve">
-    <value>指定要序列化成员名称的命名规则。</value>
+    <value>The naming convention for serialized member names.</value>
   </data>
   <data name="JsonCommand.Options.Depth" xml:space="preserve">
-    <value>指定要序列化的最大深度，默认为3。</value>
+    <value>The maximum serialization depth. The default is 3.</value>
   </data>
   <data name="JsonCommand.Options.Indented" xml:space="preserve">
-    <value>是否启用Json序列化缩进格式。</value>
+    <value>Whether to indent the serialized JSON.</value>
   </data>
   <data name="JsonCommand.Options.Quiet" xml:space="preserve">
-    <value>安静模式，如果开启则不输出 Json 内容。</value>
+    <value>Quiet mode. Suppresses JSON output when enabled.</value>
   </data>
   <data name="JsonCommand.Options.Typed" xml:space="preserve">
-    <value>是否启用Json序列化元素类型信息。</value>
+    <value>Whether to include element type information in the serialized JSON.</value>
   </data>
   <data name="Message.CommandNotFound" xml:space="preserve">
-    <value>没有找到指定‘{0}’的命令。</value>
+    <value>The command '{0}' was not found.</value>
   </data>
   <data name="NoQueue" xml:space="preserve">
-    <value>没有队列。</value>
+    <value>No queues are available.</value>
   </data>
   <data name="OpenFile.Prompt" xml:space="preserve">
-    <value>请输入要打开的文件路径：</value>
+    <value>Enter the path of the file to open:</value>
   </data>
   <data name="Optional" xml:space="preserve">
-    <value>可选的</value>
+    <value>Optional</value>
   </data>
   <data name="QueueClearCommand.Description" xml:space="preserve">
-    <value>清除指定队列中的所有元素。</value>
+    <value>Removes all items from the specified queue.</value>
   </data>
   <data name="QueueClearCommand.Name" xml:space="preserve">
-    <value>清空队列</value>
+    <value>Clear queue command</value>
   </data>
   <data name="QueueCommand.Description" xml:space="preserve">
-    <value>提供队列操作命令的队列。</value>
+    <value>Provides commands for queue operations.</value>
   </data>
   <data name="QueueCommand.Message" xml:space="preserve">
-    <value>当前名为 '{0}' 队列，总计 {1} 个元素，其类型是：{2}
-队列信息：{3}</value>
+    <value>The queue '{0}' contains {1} items and has type {2}.
+Queue information: {3}</value>
   </data>
   <data name="QueueCommand.MissingQueueProvider" xml:space="preserve">
-    <value>当前队列命令缺少队列提供程序，因此无法选取指定名称的队列。</value>
+    <value>A queue provider is required to select a queue by name.</value>
   </data>
   <data name="QueueCommand.Name" xml:space="preserve">
-    <value>队列命令</value>
+    <value>Queue command</value>
   </data>
   <data name="QueueCommand.NotFoundQueue" xml:space="preserve">
-    <value>从队列提供程序中没有找到指定名称为“{0}”的队列。</value>
+    <value>The queue '{0}' was not found in the queue provider.</value>
   </data>
   <data name="QueueCommand.Options.Count" xml:space="preserve">
-    <value>出队或者提取的项目个数。</value>
+    <value>The number of items to dequeue or retrieve.</value>
   </data>
   <data name="QueueCommand.Options.Name" xml:space="preserve">
-    <value>消息队列名称。</value>
+    <value>The message queue name.</value>
   </data>
   <data name="QueueCommand.Options.Queues" xml:space="preserve">
-    <value>指定队列操作的队列名，多个队列名之间以逗号(,)分隔。</value>
+    <value>The names of the queues to operate on, separated by commas (,).</value>
   </data>
   <data name="QueueCommand.Options.Round" xml:space="preserve">
-    <value>出队或入队操作循环执行的次数，默认值为1。如果在出队命令中该参数为负数则表示直至将队列出空为止。</value>
+    <value>The number of times to repeat the enqueue or dequeue operation. The default is 1. For dequeue operations, a negative value means to continue until the queue is empty.</value>
   </data>
   <data name="QueueCountCommand.Description" xml:space="preserve">
-    <value>返回指定队列的元素个数。</value>
+    <value>Returns the number of items in the specified queue.</value>
   </data>
   <data name="QueueCountCommand.Message" xml:space="preserve">
-    <value>名为 '{0}' 队列，总计 {1} 个元素。</value>
+    <value>The queue '{0}' contains {1} items.</value>
   </data>
   <data name="QueueCountCommand.Name" xml:space="preserve">
-    <value>队列数量命令</value>
+    <value>Queue count command</value>
   </data>
   <data name="QueueInCommand.Description" xml:space="preserve">
-    <value>将指定的参数加入到指定的队列中。</value>
+    <value>Enqueues the specified arguments in the specified queue.</value>
   </data>
   <data name="QueueInCommand.Message" xml:space="preserve">
-    <value>第 {0} 轮，入队 {1} 条记录，{2} 队列。</value>
+    <value>Round {0}: enqueued {1} items in queue {2}.</value>
   </data>
   <data name="QueueInCommand.Name" xml:space="preserve">
-    <value>入队命令</value>
+    <value>Enqueue command</value>
   </data>
   <data name="QueueIsEmpty" xml:space="preserve">
-    <value>名为'{0}'的队列为空集。</value>
+    <value>The queue '{0}' is empty.</value>
   </data>
   <data name="QueueOutCommand.Description" xml:space="preserve">
-    <value>从指定队列的队首移出元素。</value>
+    <value>Removes items from the front of the specified queue.</value>
   </data>
   <data name="QueueOutCommand.Message" xml:space="preserve">
-    <value>第 {0} 轮，出队 {1} 条记录，{2} 队列。</value>
+    <value>Round {0}: dequeued {1} items from queue {2}.</value>
   </data>
   <data name="QueueOutCommand.Name" xml:space="preserve">
-    <value>出队命令</value>
+    <value>Dequeue command</value>
   </data>
   <data name="QueuePeekCommand.Description" xml:space="preserve">
-    <value>返回指定队列的队首元素，但并不移除它。</value>
+    <value>Returns the first item in the specified queue without removing it.</value>
   </data>
   <data name="QueuePeekCommand.Name" xml:space="preserve">
-    <value>查看队首</value>
+    <value>Peek queue command</value>
   </data>
   <data name="QueueSubscribeCommand.Acknowledgeable" xml:space="preserve">
-    <value>是否自动应答，默认值为真(true)。</value>
+    <value>Whether to acknowledge messages automatically. The default is true.</value>
   </data>
   <data name="QueueSubscribeCommand.Format" xml:space="preserve">
-    <value>显示格式，收到消息后消息内容的显示格式。</value>
+    <value>The display format for received message content.</value>
   </data>
   <data name="Required" xml:space="preserve">
-    <value>必须的</value>
+    <value>Required</value>
   </data>
   <data name="SaveFile.Prompt" xml:space="preserve">
-    <value>请输入要保存的文件路径：</value>
+    <value>Enter the path of the file to save:</value>
   </data>
   <data name="SecretCommand.Description" xml:space="preserve">
-    <value>提供验证码生成、校验等命令的宿主，通过该命令可更改验证码相关命令的验证码提供程序，譬如：services.get secret | secret</value>
+    <value>Hosts commands for generating and verifying verification codes. Use this command to change the verification code provider, for example: services.get secret | secret</value>
   </data>
   <data name="SecretCommand.Name" xml:space="preserve">
-    <value>秘密（验证码）宿主命令</value>
+    <value>Verification code host command</value>
   </data>
   <data name="SecretGenerateCommand.Description" xml:space="preserve">
-    <value>生成一个或多个验证码，譬如：secret.generate -name:'user.phone.change:100' -pattern:#4 -timeout:15m 13800000001 13800000002 13800000003</value>
+    <value>Generates one or more verification codes, for example: secret.generate -name:'user.phone.change:100' -pattern:#4 -timeout:15m 13800000001 13800000002 13800000003</value>
   </data>
   <data name="SecretGenerateCommand.Name" xml:space="preserve">
-    <value>生成秘密（验证码）命令</value>
+    <value>Generate verification code command</value>
   </data>
   <data name="SecretGenerateCommand.Options.Name" xml:space="preserve">
-    <value>验证码名称，该名称通常包含对应的目标标识（譬如：user.forget:100、user.email:100，其中数字100表示用户的唯一编号）。</value>
+    <value>The verification code name, usually including the target identifier, for example: user.forget:100 or user.email:100, where 100 is the user's unique identifier.</value>
   </data>
   <data name="SecretGenerateCommand.Options.Pattern" xml:space="preserve">
-    <value>验证码生成模式，如果不指定或空字符串则生成6位数字；也可以表示生成验证码的规则，基本模式定义如下：
-- guid|uuid，表示生成一个GUID值
-- #{number}，表示生成{number}个的数字字符，譬如：#4
-- ?{number}，表示生成{number}个的含有字母或数字的字符，譬如：?8</value>
+    <value>The verification code generation pattern. If omitted or empty, a six-digit code is generated. Supported patterns:
+- guid|uuid: generates a GUID value
+- #{number}: generates {number} digits, for example: #4
+- ?{number}: generates {number} alphanumeric characters, for example: ?8</value>
   </data>
   <data name="SecretVerifyCommand.Description" xml:space="preserve">
-    <value>校验一个验证码，譬如：secret.verify -name:'user.email:100' 123456</value>
+    <value>Verifies a verification code, for example: secret.verify -name:'user.email:100' 123456</value>
   </data>
   <data name="SecretVerifyCommand.Name" xml:space="preserve">
-    <value>校验秘密（验证码）命令</value>
+    <value>Verify verification code command</value>
   </data>
   <data name="SecretVerifyCommand.Options.Name" xml:space="preserve">
-    <value>验证码名称，该名称通常包含对应的目标标识（譬如：user.forget:100、user.email:100，其中数字100表示用户的唯一编号）。</value>
+    <value>The verification code name, usually including the target identifier, for example: user.forget:100 or user.email:100, where 100 is the user's unique identifier.</value>
   </data>
   <data name="ServerHasBeenStarted" xml:space="preserve">
-    <value>服务器已经启动。</value>
+    <value>The server has already started.</value>
   </data>
   <data name="ServicesCommand.Description" xml:space="preserve">
-    <value>该命令提供切换指定服务供应程序工厂中的当前操作的供应程序，并显示所有服务提供程序的名称。
-如果不指定命令行的参数则显示所有命令提供程序的名称；否则将命令行参数所指定名称的服务提供程序(默认服务提供程序名为“.”)设置本命令操作的服务容器。</value>
+    <value>Selects the active provider from the specified service provider factory and lists the names of all service providers.
+Without command arguments, lists all provider names. Otherwise, uses the provider named by the command argument as the service container for this command. The default provider name is '.'.</value>
   </data>
   <data name="ServicesCommand.Name" xml:space="preserve">
-    <value>服务命令</value>
+    <value>Services command</value>
   </data>
   <data name="ServicesCommand.NotFoundProvider" xml:space="preserve">
-    <value>指定名称为“{0}”的服务提供程序没有找到。</value>
+    <value>The service provider '{0}' was not found.</value>
   </data>
   <data name="ServicesCommand.Options.Provider" xml:space="preserve">
-    <value>指定的服务提供程序(服务容器)的名称。</value>
+    <value>The name of the service provider (service container).</value>
   </data>
   <data name="ServicesGetCommand.Description" xml:space="preserve">
-    <value>该命令提供获取当前服务供应程序中的各种服务对象，并显式其信息。
+    <value>Retrieves service objects from the current service provider and displays their information.
 
-用法如下：
+Usage:
 
 services.get &amp;lt;service-name&amp;gt;
-	参数为要获取的服务名称，该名称为其在当前服务供应程序注册时声明的名称。
+	The argument is the name under which the service is registered with the current service provider.
 
 services.get -contract:assemblyQualifiedName
-	-contract 选项为要获取的服务类型限定名。
+	The -contract option specifies the assembly-qualified service type name.
 
 services.get -contract:assemblyQualifiedName parameter
-	-contract 选项为要获取的服务类型限定名；参数为解析时传入的参数。</value>
+	The -contract option specifies the assembly-qualified service type name; the argument is passed to the resolver.</value>
   </data>
   <data name="ServicesGetCommand.Name" xml:space="preserve">
-    <value>服务获取命令</value>
+    <value>Get service command</value>
   </data>
   <data name="SortMode" xml:space="preserve">
-    <value>排序方式</value>
+    <value>Sort order</value>
   </data>
   <data name="SortMode.Asc" xml:space="preserve">
-    <value>升序</value>
+    <value>Ascending</value>
   </data>
   <data name="SortMode.Desc" xml:space="preserve">
-    <value>降序</value>
+    <value>Descending</value>
   </data>
   <data name="SortMode.None" xml:space="preserve">
-    <value>不排序</value>
+    <value>Unsorted</value>
   </data>
   <data name="Command.TooManyArguments" xml:space="preserve">
-    <value>指定的命令参数太多了。</value>
+    <value>Too many command arguments were specified.</value>
   </data>
   <data name="DirectoryExisted" xml:space="preserve">
-    <value>指定的“{0}”目录存在。</value>
+    <value>The directory '{0}' exists.</value>
   </data>
   <data name="DirectoryNotExisted" xml:space="preserve">
-    <value>指定的“{0}”目录不存在。</value>
+    <value>The directory '{0}' does not exist.</value>
   </data>
   <data name="DirectoryDeleteFailed.Message" xml:space="preserve">
-    <value>目录删除失败。</value>
+    <value>Failed to delete the directory.</value>
   </data>
   <data name="DirectoryDeleteSucceed.Message" xml:space="preserve">
-    <value>目录删除成功。</value>
+    <value>The directory was deleted successfully.</value>
   </data>
+	<data name="Checksum.TypeUnsupported.Message" xml:space="preserve">
+		<value>Does not support checksums of the '{0}' type.</value>
+	</data>
+	<data name="Secretor.Required.Message" xml:space="preserve">
+		<value>Missing required secretor for the command.</value>
+	</data>
+	<data name="Security.RsaRequired.Message" xml:space="preserve">
+		<value>Missing the required RSA.</value>
+	</data>
+	<data name="Scheduler.Required.Message" xml:space="preserve">
+		<value>Missing the required scheduler.</value>
+	</data>
+	<data name="Command.InteractiveArgumentsUnavailable.Message" xml:space="preserve">
+		<value>No arguments are provided, and the '{0}' command is not running in a terminal environment, so the required arguments cannot be obtained through user interaction.</value>
+	</data>
+	<data name="Messaging.QueueRequired.Message" xml:space="preserve">
+		<value>Not found the required queue object.</value>
+	</data>
+	<data name="Sequence.TooManyArguments.Message" xml:space="preserve">
+		<value>Only one argument is allowed for specifying the sequence instance.</value>
+	</data>
+	<data name="Command.OptionValueUnsupported.Message" xml:space="preserve">
+		<value>The '{0}' option of this command does not support the specified '{1}' value.</value>
+	</data>
+	<data name="Sequence.KeysRequired.Message" xml:space="preserve">
+		<value>The required sequence keys are missing.</value>
+	</data>
+	<data name="Sequence.InstanceRequired.Message" xml:space="preserve">
+		<value>The sequence instance is not specified.</value>
+	</data>
+	<data name="Password.TextInvalid.Message" xml:space="preserve">
+		<value>The specified '{0}' text is not a valid password format.</value>
+	</data>
+	<data name="Password.DataInvalid.Message" xml:space="preserve">
+		<value>The specified binary data is not a valid password format.</value>
+	</data>
+	<data name="Command.OptionRangeInvalid.Message" xml:space="preserve">
+		<value>The value of the '{0}' option cannot be greater than the value of the '{1}' option.</value>
+	</data>
 </root>

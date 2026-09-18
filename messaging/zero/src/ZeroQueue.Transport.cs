@@ -216,7 +216,7 @@ public sealed partial class ZeroQueue
 				var response = args.Socket.ReceiveFrameString();
 				this.ReleaseDiscovery(args.Socket as RequestSocket);
 
-			if(!Protocol.TryParseDiscoveryResponse(response, out var epoch, out var control, out var incoming, out var outgoing))
+				if(!Protocol.TryParseDiscoveryResponse(response, out var epoch, out var control, out var incoming, out var outgoing))
 					throw new InvalidOperationException(Properties.Resources.ZeroQueue_DiscoveryInvalid_Message);
 
 				var changed = !string.Equals(_epoch, epoch, StringComparison.Ordinal) || _controlPort != control || _incomingPort != incoming || _outgoingPort != outgoing;

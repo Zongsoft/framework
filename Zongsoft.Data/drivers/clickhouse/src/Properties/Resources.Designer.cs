@@ -8,54 +8,218 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace Zongsoft.Data.ClickHouse.Properties
-{
-	using System;
+namespace Zongsoft.Data.ClickHouse.Properties {
+    using System;
 
-	/// <summary>
-	///   一个强类型的资源类，用于查找本地化的字符串等。
-	/// </summary>
-	[global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
-	[global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-	[global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-	internal class Resources
-	{
-		private static global::System.Resources.ResourceManager resourceMan;
-		private static global::System.Globalization.CultureInfo resourceCulture;
 
-		internal Resources() { }
+    /// <summary>
+    ///   一个强类型的资源类，用于查找本地化的字符串等。
+    /// </summary>
+    // 此类是由 StronglyTypedResourceBuilder
+    // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
+    // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
+    // (以 /str 作为命令选项)，或重新生成 VS 项目。
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+    [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+    internal class Resources {
 
-		[global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-		internal static global::System.Resources.ResourceManager ResourceManager
-		{
-			get
-			{
-				if(object.ReferenceEquals(resourceMan, null))
-					resourceMan = new global::System.Resources.ResourceManager("Zongsoft.Data.ClickHouse.Properties.Resources", typeof(Resources).Assembly);
+        private static global::System.Resources.ResourceManager resourceMan;
 
-				return resourceMan;
-			}
-		}
+        private static global::System.Globalization.CultureInfo resourceCulture;
 
-		[global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-		internal static global::System.Globalization.CultureInfo Culture
-		{
-			get => resourceCulture;
-			set => resourceCulture = value;
-		}
+        [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
+        internal Resources() {
+        }
 
-		internal static string ClickHouse_Settings_Compression => ResourceManager.GetString("ClickHouse.Settings.Compression", resourceCulture);
-		internal static string ClickHouse_Settings_Database => ResourceManager.GetString("ClickHouse.Settings.Database", resourceCulture);
-		internal static string ClickHouse_Settings_Password => ResourceManager.GetString("ClickHouse.Settings.Password", resourceCulture);
-		internal static string ClickHouse_Settings_Path => ResourceManager.GetString("ClickHouse.Settings.Path", resourceCulture);
-		internal static string ClickHouse_Settings_Port => ResourceManager.GetString("ClickHouse.Settings.Port", resourceCulture);
-		internal static string ClickHouse_Settings_Protocol => ResourceManager.GetString("ClickHouse.Settings.Protocol", resourceCulture);
-		internal static string ClickHouse_Settings_Server => ResourceManager.GetString("ClickHouse.Settings.Server", resourceCulture);
-		internal static string ClickHouse_Settings_SessionId => ResourceManager.GetString("ClickHouse.Settings.SessionId", resourceCulture);
-		internal static string ClickHouse_Settings_Timeout => ResourceManager.GetString("ClickHouse.Settings.Timeout", resourceCulture);
-		internal static string ClickHouse_Settings_UseCustomDecimals => ResourceManager.GetString("ClickHouse.Settings.UseCustomDecimals", resourceCulture);
-		internal static string ClickHouse_Settings_UseServerTimezone => ResourceManager.GetString("ClickHouse.Settings.UseServerTimezone", resourceCulture);
-		internal static string ClickHouse_Settings_UseSession => ResourceManager.GetString("ClickHouse.Settings.UseSession", resourceCulture);
-		internal static string ClickHouse_Settings_UserName => ResourceManager.GetString("ClickHouse.Settings.UserName", resourceCulture);
-	}
+        /// <summary>
+        ///   返回此类使用的缓存的 ResourceManager 实例。
+        /// </summary>
+        [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
+        internal static global::System.Resources.ResourceManager ResourceManager {
+            get {
+                if (object.ReferenceEquals(resourceMan, null)) {
+                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Zongsoft.Data.ClickHouse.Properties.Resources", typeof(Resources).Assembly);
+                    resourceMan = temp;
+                }
+                return resourceMan;
+            }
+        }
+
+        /// <summary>
+        ///   使用此强类型资源类，为所有资源查找
+        ///   重写当前线程的 CurrentUICulture 属性。
+        /// </summary>
+        [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
+        internal static global::System.Globalization.CultureInfo Culture {
+            get {
+                return resourceCulture;
+            }
+            set {
+                resourceCulture = value;
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Compression 的本地化字符串。
+        /// </summary>
+        internal static string ClickHouse_Settings_Compression {
+            get {
+                return ResourceManager.GetString("ClickHouse.Settings.Compression", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Database 的本地化字符串。
+        /// </summary>
+        internal static string ClickHouse_Settings_Database {
+            get {
+                return ResourceManager.GetString("ClickHouse.Settings.Database", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Password 的本地化字符串。
+        /// </summary>
+        internal static string ClickHouse_Settings_Password {
+            get {
+                return ResourceManager.GetString("ClickHouse.Settings.Password", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Path 的本地化字符串。
+        /// </summary>
+        internal static string ClickHouse_Settings_Path {
+            get {
+                return ResourceManager.GetString("ClickHouse.Settings.Path", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Port 的本地化字符串。
+        /// </summary>
+        internal static string ClickHouse_Settings_Port {
+            get {
+                return ResourceManager.GetString("ClickHouse.Settings.Port", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Protocol 的本地化字符串。
+        /// </summary>
+        internal static string ClickHouse_Settings_Protocol {
+            get {
+                return ResourceManager.GetString("ClickHouse.Settings.Protocol", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Server 的本地化字符串。
+        /// </summary>
+        internal static string ClickHouse_Settings_Server {
+            get {
+                return ResourceManager.GetString("ClickHouse.Settings.Server", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Session ID 的本地化字符串。
+        /// </summary>
+        internal static string ClickHouse_Settings_SessionId {
+            get {
+                return ResourceManager.GetString("ClickHouse.Settings.SessionId", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Timeout 的本地化字符串。
+        /// </summary>
+        internal static string ClickHouse_Settings_Timeout {
+            get {
+                return ResourceManager.GetString("ClickHouse.Settings.Timeout", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Use Custom Decimals 的本地化字符串。
+        /// </summary>
+        internal static string ClickHouse_Settings_UseCustomDecimals {
+            get {
+                return ResourceManager.GetString("ClickHouse.Settings.UseCustomDecimals", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 User Name 的本地化字符串。
+        /// </summary>
+        internal static string ClickHouse_Settings_UserName {
+            get {
+                return ResourceManager.GetString("ClickHouse.Settings.UserName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Use Server Timezone 的本地化字符串。
+        /// </summary>
+        internal static string ClickHouse_Settings_UseServerTimezone {
+            get {
+                return ResourceManager.GetString("ClickHouse.Settings.UseServerTimezone", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Use Session 的本地化字符串。
+        /// </summary>
+        internal static string ClickHouse_Settings_UseSession {
+            get {
+                return ResourceManager.GetString("ClickHouse.Settings.UseSession", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid &apos;{0}&apos; aggregate method. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_AggregateInvalid_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.AggregateInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Unsupported &apos;{0}&apos; data type. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_DataTypeUnsupported_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.DataTypeUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The ClickHouse driver does not support the &apos;{0}&apos; sequence function. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_SequenceUnsupported_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.SequenceUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Not supported &apos;{0}&apos; statement. 的本地化字符串。
+        /// </summary>
+        internal static string ExpressionVisitor_StatementUnsupported_Message {
+            get {
+                return ResourceManager.GetString("ExpressionVisitor.StatementUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Missing required fields in the upsert statement. 的本地化字符串。
+        /// </summary>
+        internal static string UpsertStatement_MissingFields_Message {
+            get {
+                return ResourceManager.GetString("UpsertStatement.MissingFields.Message", resourceCulture);
+            }
+        }
+    }
 }

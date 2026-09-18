@@ -29,10 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Reporting
+namespace Zongsoft.Reporting;
+
+public class ReportRepositoryOptions
 {
-	public class ReportRepositoryOptions
-	{
-		public bool IsTemporary { get; set; }
-	}
+	public bool IsTemporary { get; set; }
 }

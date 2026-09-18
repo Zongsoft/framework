@@ -303,6 +303,6 @@ internal class Program
 		if(parameters.TryGetValue<TimeSpan>("delay", out var delay) && delay > TimeSpan.Zero)
 			await Task.Delay(delay, cancellation);
 		if(parameters.TryGetValue<bool>("throw", out var throws) && throws)
-			throw new InvalidOperationException("🚨🚨🚨 This is a simulation of an exception thrown during execution. 🚨🚨🚨");
+			throw new InvalidOperationException(Properties.Resources.Sample_SimulatedFailure_Message);
 	}
 }

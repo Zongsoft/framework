@@ -31,53 +31,52 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace Zongsoft.Externals.Aliyun.Telecom
+namespace Zongsoft.Externals.Aliyun.Telecom;
+
+[JsonConverter(typeof(FallbackRequestContentTypeConverter))]
+public enum FallbackRequestContentType
 {
-	[JsonConverter(typeof(FallbackRequestContentTypeConverter))]
-	public enum FallbackRequestContentType
+	Normal,
+	Muting,
+	Breaking,
+	Transfer,
+	Dtmf,
+}
+
+internal class FallbackRequestContentTypeConverter : JsonConverter<FallbackRequestContentType>
+{
+	public override FallbackRequestContentType Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 	{
-		Normal,
-		Muting,
-		Breaking,
-		Transfer,
-		Dtmf,
+		return reader.GetString() switch
+		{
+			"normal" => FallbackRequestContentType.Normal,
+			"mute" => FallbackRequestContentType.Muting,
+			"dtmf" => FallbackRequestContentType.Dtmf,
+			"timebreak" => FallbackRequestContentType.Breaking,
+			"parallel_transfer" => FallbackRequestContentType.Transfer,
+			_ => FallbackRequestContentType.Normal,
+		};
 	}
 
-	internal class FallbackRequestContentTypeConverter : JsonConverter<FallbackRequestContentType>
+	public override void Write(Utf8JsonWriter writer, FallbackRequestContentType value, JsonSerializerOptions options)
 	{
-		public override FallbackRequestContentType Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		switch(value)
 		{
-			return reader.GetString() switch
-			{
-				"normal" => FallbackRequestContentType.Normal,
-				"mute" => FallbackRequestContentType.Muting,
-				"dtmf" => FallbackRequestContentType.Dtmf,
-				"timebreak" => FallbackRequestContentType.Breaking,
-				"parallel_transfer" => FallbackRequestContentType.Transfer,
-				_ => FallbackRequestContentType.Normal,
-			};
-		}
-
-		public override void Write(Utf8JsonWriter writer, FallbackRequestContentType value, JsonSerializerOptions options)
-		{
-			switch(value)
-			{
-				case FallbackRequestContentType.Normal:
-					writer.WriteStringValue("normal");
-					break;
-				case FallbackRequestContentType.Muting:
-					writer.WriteStringValue("mute");
-					break;
-				case FallbackRequestContentType.Dtmf:
-					writer.WriteStringValue("dtmf");
-					break;
-				case FallbackRequestContentType.Breaking:
-					writer.WriteStringValue("timebreak");
-					break;
-				case FallbackRequestContentType.Transfer:
-					writer.WriteStringValue("parallel_transfer");
-					break;
-			}
+			case FallbackRequestContentType.Normal:
+				writer.WriteStringValue("normal");
+				break;
+			case FallbackRequestContentType.Muting:
+				writer.WriteStringValue("mute");
+				break;
+			case FallbackRequestContentType.Dtmf:
+				writer.WriteStringValue("dtmf");
+				break;
+			case FallbackRequestContentType.Breaking:
+				writer.WriteStringValue("timebreak");
+				break;
+			case FallbackRequestContentType.Transfer:
+				writer.WriteStringValue("parallel_transfer");
+				break;
 		}
 	}
 }

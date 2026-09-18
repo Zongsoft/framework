@@ -30,36 +30,35 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Aliyun.Messaging.Options
+namespace Zongsoft.Externals.Aliyun.Messaging.Options;
+
+/// <summary>
+/// 表示阿里云消息服务的配置选项。
+/// </summary>
+public class MessagingOptions
 {
-	/// <summary>
-	/// 表示阿里云消息服务的配置选项。
-	/// </summary>
-	public class MessagingOptions
+	#region 构造函数
+	public MessagingOptions()
 	{
-		#region 构造函数
-		public MessagingOptions()
-		{
-			this.Queues = new QueueOptionCollection();
-			this.Topics = new TopicOptionCollection();
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>
-		/// 获取或设置消息服务的访问标识。
-		/// </summary>
-		public string Name { get; set; }
-
-		/// <summary>
-		/// 获取消息队列提供程序的配置项。
-		/// </summary>
-		public QueueOptionCollection Queues { get; }
-
-		/// <summary>
-		/// 获取消息主题提供程序的配置项。
-		/// </summary>
-		public TopicOptionCollection Topics { get; }
-		#endregion
+		this.Queues = new QueueOptionCollection();
+		this.Topics = new TopicOptionCollection();
 	}
+	#endregion
+
+	#region 公共属性
+	/// <summary>
+	/// 获取或设置消息服务的访问标识。
+	/// </summary>
+	public string Name { get; set; }
+
+	/// <summary>
+	/// 获取消息队列提供程序的配置项。
+	/// </summary>
+	public QueueOptionCollection Queues { get; }
+
+	/// <summary>
+	/// 获取消息主题提供程序的配置项。
+	/// </summary>
+	public TopicOptionCollection Topics { get; }
+	#endregion
 }

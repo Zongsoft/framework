@@ -10,8 +10,8 @@
 
 namespace Zongsoft.Externals.Opc.Properties {
     using System;
-    
-    
+
+
     /// <summary>
     ///   一个强类型的资源类，用于查找本地化的字符串等。
     /// </summary>
@@ -19,19 +19,19 @@ namespace Zongsoft.Externals.Opc.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   返回此类使用的缓存的 ResourceManager 实例。
         /// </summary>
@@ -45,10 +45,10 @@ namespace Zongsoft.Externals.Opc.Properties {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
-        ///   重写当前线程的 CurrentUICulture 属性，对
-        ///   使用此强类型资源类的所有资源查找执行重写。
+        ///   使用此强类型资源类，为所有资源查找
+        ///   重写当前线程的 CurrentUICulture 属性。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -59,7 +59,43 @@ namespace Zongsoft.Externals.Opc.Properties {
                 resourceCulture = value;
             }
         }
-        
+
+        /// <summary>
+        ///   查找类似 Unable to find “{0}” certificate in “{1}@{2}” store. 的本地化字符串。
+        /// </summary>
+        internal static string Certificate_NotFound_Message {
+            get {
+                return ResourceManager.GetString("Certificate.NotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The {0}({1}) is not connected. 的本地化字符串。
+        /// </summary>
+        internal static string Opc_ClientNotConnected_Message {
+            get {
+                return ResourceManager.GetString("Opc.ClientNotConnected.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 [{0}] Failed to get the data type of the “{1}” node. 的本地化字符串。
+        /// </summary>
+        internal static string Opc_DataTypeReadFailed_Message {
+            get {
+                return ResourceManager.GetString("Opc.DataTypeReadFailed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 [{0}] Failed to create the folder node. 的本地化字符串。
+        /// </summary>
+        internal static string Opc_FolderCreationFailed_Message {
+            get {
+                return ResourceManager.GetString("Opc.FolderCreationFailed.Message", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   查找类似 Certificate File 的本地化字符串。
         /// </summary>
@@ -68,7 +104,7 @@ namespace Zongsoft.Externals.Opc.Properties {
                 return ResourceManager.GetString("Opc.Settings.Certificate", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Certificate Secret 的本地化字符串。
         /// </summary>
@@ -77,7 +113,7 @@ namespace Zongsoft.Externals.Opc.Properties {
                 return ResourceManager.GetString("Opc.Settings.CertificateSecret", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Client 的本地化字符串。
         /// </summary>
@@ -86,7 +122,7 @@ namespace Zongsoft.Externals.Opc.Properties {
                 return ResourceManager.GetString("Opc.Settings.Client", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Heartbeat 的本地化字符串。
         /// </summary>
@@ -95,7 +131,7 @@ namespace Zongsoft.Externals.Opc.Properties {
                 return ResourceManager.GetString("Opc.Settings.Heartbeat", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Heartbeat interval for maintaining network connection. The default value is 10 seconds. 的本地化字符串。
         /// </summary>
@@ -104,7 +140,7 @@ namespace Zongsoft.Externals.Opc.Properties {
                 return ResourceManager.GetString("Opc.Settings.Heartbeat.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Instance 的本地化字符串。
         /// </summary>
@@ -113,7 +149,7 @@ namespace Zongsoft.Externals.Opc.Properties {
                 return ResourceManager.GetString("Opc.Settings.Instance", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Locales 的本地化字符串。
         /// </summary>
@@ -122,7 +158,7 @@ namespace Zongsoft.Externals.Opc.Properties {
                 return ResourceManager.GetString("Opc.Settings.Locales", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Password 的本地化字符串。
         /// </summary>
@@ -131,7 +167,7 @@ namespace Zongsoft.Externals.Opc.Properties {
                 return ResourceManager.GetString("Opc.Settings.Password", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Security Mode 的本地化字符串。
         /// </summary>
@@ -140,20 +176,19 @@ namespace Zongsoft.Externals.Opc.Properties {
                 return ResourceManager.GetString("Opc.Settings.SecurityMode", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Indicates the secure communication method. The default is unsecured plaintext mode. Supported methods include:
         ///None: Plaintext mode.
         ///Sign: Message signature.
-        ///SignAndEncrypt: Message signature and encryption.
-        ///     的本地化字符串。
+        ///SignAndEncrypt: Message signature and encryption. 的本地化字符串。
         /// </summary>
         internal static string Opc_Settings_SecurityMode_Description {
             get {
                 return ResourceManager.GetString("Opc.Settings.SecurityMode.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Security Policy 的本地化字符串。
         /// </summary>
@@ -162,7 +197,7 @@ namespace Zongsoft.Externals.Opc.Properties {
                 return ResourceManager.GetString("Opc.Settings.SecurityPolicy", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Indicates the security policy for communication. When security mode is enabled, this option can be used to set message signing and encryption policies. Commonly used policies include:
         ///Basic128Rsa15
@@ -176,7 +211,7 @@ namespace Zongsoft.Externals.Opc.Properties {
                 return ResourceManager.GetString("Opc.Settings.SecurityPolicy.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Server 的本地化字符串。
         /// </summary>
@@ -185,7 +220,7 @@ namespace Zongsoft.Externals.Opc.Properties {
                 return ResourceManager.GetString("Opc.Settings.Server", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Timeout 的本地化字符串。
         /// </summary>
@@ -194,13 +229,58 @@ namespace Zongsoft.Externals.Opc.Properties {
                 return ResourceManager.GetString("Opc.Settings.Timeout", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 UserName 的本地化字符串。
         /// </summary>
         internal static string Opc_Settings_UserName {
             get {
                 return ResourceManager.GetString("Opc.Settings.UserName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 [{0}] Failed to read the value of the “{1}” node. 的本地化字符串。
+        /// </summary>
+        internal static string Opc_ValueReadFailed_Message {
+            get {
+                return ResourceManager.GetString("Opc.ValueReadFailed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 [{0}] Failed to write node value. 的本地化字符串。
+        /// </summary>
+        internal static string Opc_ValuesWriteFailed_Message {
+            get {
+                return ResourceManager.GetString("Opc.ValuesWriteFailed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 [{0}] Failed to write the value of the “{1}” node. 的本地化字符串。
+        /// </summary>
+        internal static string Opc_ValueWriteFailed_Message {
+            get {
+                return ResourceManager.GetString("Opc.ValueWriteFailed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 [{0}] Failed to create the variable node. 的本地化字符串。
+        /// </summary>
+        internal static string Opc_VariableCreationFailed_Message {
+            get {
+                return ResourceManager.GetString("Opc.VariableCreationFailed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The specified &apos;{0}&apos; subscription has been registered. 的本地化字符串。
+        /// </summary>
+        internal static string Subscription_AlreadyRegistered_Message {
+            get {
+                return ResourceManager.GetString("Subscription.AlreadyRegistered.Message", resourceCulture);
             }
         }
     }

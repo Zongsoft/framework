@@ -40,35 +40,34 @@ using Zongsoft.Web.Http;
 using Zongsoft.Components;
 using Zongsoft.Collections;
 
-namespace Zongsoft.Externals.Wechat.Gateway
+namespace Zongsoft.Externals.Wechat.Gateway;
+
+public class FallbackExecutor : ExecutorBase<Stream, object>
 {
-	public class FallbackExecutor : ExecutorBase<Stream, object>
+	#region 单例字段
+	public static readonly FallbackExecutor Instance = new();
+	#endregion
+
+	#region 构造函数
+	public FallbackExecutor() => this.Handlers = new Dictionary<string, IHandler>(StringComparer.OrdinalIgnoreCase);
+	#endregion
+
+	#region 公共属性
+	public IDictionary<string, IHandler> Handlers { get; }
+	#endregion
+
+	#region 公共方法
+	public ValueTask<object> ExecuteAsync(HttpRequest request, CancellationToken cancellation = default)
 	{
-		#region 单例字段
-		public static readonly FallbackExecutor Instance = new();
-		#endregion
+		if(request == null)
+			throw new ArgumentNullException(nameof(request));
 
-		#region 构造函数
-		public FallbackExecutor() => this.Handlers = new Dictionary<string, IHandler>(StringComparer.OrdinalIgnoreCase);
-		#endregion
-
-		#region 公共属性
-		public IDictionary<string, IHandler> Handlers { get; }
-		#endregion
-
-		#region 公共方法
-		public ValueTask<object> ExecuteAsync(HttpRequest request, CancellationToken cancellation = default)
-		{
-			if(request == null)
-				throw new ArgumentNullException(nameof(request));
-
-			return this.ExecuteAsync(request.Body, request.GetParameters().ToDictionary(entry => entry.Key, entry => entry.Value), cancellation);
-		}
-		#endregion
-
-		#region 重写方法
-		protected override IExecutorContext<Stream, object> CreateContext(Stream request, Parameters parameters) => new ExecutorContext<Stream, object>(this, request, parameters);
-		protected override IHandler GetHandler(IExecutorContext<Stream, object> context) => context.Parameters.TryGetValue("name", out var value) && value is string name && this.Handlers.TryGetValue(name, out var handler) ? handler : null;
-		#endregion
+		return this.ExecuteAsync(request.Body, request.GetParameters().ToDictionary(entry => entry.Key, entry => entry.Value), cancellation);
 	}
+	#endregion
+
+	#region 重写方法
+	protected override IExecutorContext<Stream, object> CreateContext(Stream request, Parameters parameters) => new ExecutorContext<Stream, object>(this, request, parameters);
+	protected override IHandler GetHandler(IExecutorContext<Stream, object> context) => context.Parameters.TryGetValue("name", out var value) && value is string name && this.Handlers.TryGetValue(name, out var handler) ? handler : null;
+	#endregion
 }

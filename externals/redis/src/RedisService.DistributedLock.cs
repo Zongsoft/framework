@@ -203,7 +203,7 @@ partial class RedisService : IDistributedLockManager
 			if(task != null)
 			{
 				try { await task; }
-				catch(OperationCanceledException) when (source?.IsCancellationRequested == true) { }
+				catch(OperationCanceledException) when(source?.IsCancellationRequested == true) { }
 			}
 			source?.Dispose();
 		}
@@ -219,7 +219,7 @@ partial class RedisService : IDistributedLockManager
 						return;
 				}
 			}
-			catch(OperationCanceledException) when (cancellation.IsCancellationRequested)
+			catch(OperationCanceledException) when(cancellation.IsCancellationRequested)
 			{
 			}
 			catch(Exception exception)

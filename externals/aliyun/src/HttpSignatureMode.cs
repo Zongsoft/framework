@@ -29,17 +29,16 @@
 
 using System;
 
-namespace Zongsoft.Externals.Aliyun
-{
-	/// <summary>
-	/// 表示验证签名的方式。
-	/// </summary>
-	public enum HttpSignatureMode
-	{
-		/// <summary>签名位于Http请求的头。</summary>
-		Header,
+namespace Zongsoft.Externals.Aliyun;
 
-		/// <summary>签名位于Http请求的查询参数。</summary>
-		Parameter,
-	}
+/// <summary>
+/// 表示验证签名的方式。
+/// </summary>
+public enum HttpSignatureMode
+{
+	/// <summary>签名位于Http请求的头。</summary>
+	Header,
+
+	/// <summary>签名位于Http请求的查询参数。</summary>
+	Parameter,
 }

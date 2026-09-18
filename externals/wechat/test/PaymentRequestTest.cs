@@ -4,13 +4,12 @@ using System.Text.Json.Serialization;
 
 using Xunit;
 
-namespace Zongsoft.Externals.Wechat.Tests
+namespace Zongsoft.Externals.Wechat.Tests;
+
+public class PaymentRequestTest
 {
-	public class PaymentRequestTest
+	[Fact]
+	public void Test()
 	{
-		[Fact]
-		public void Test()
-		{
-		}
 	}
 }

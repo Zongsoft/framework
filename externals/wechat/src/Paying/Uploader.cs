@@ -39,84 +39,83 @@ using System.Security.Cryptography;
 using Zongsoft.IO;
 using Zongsoft.Common;
 
-namespace Zongsoft.Externals.Wechat.Paying
+namespace Zongsoft.Externals.Wechat.Paying;
+
+public static class Uploader
 {
-	public static class Uploader
+	private static readonly SHA256 _sha256 = SHA256.Create();
+
+	public static ValueTask<string> UploadAsync(this IAuthority authority, string filePath, CancellationToken cancellation = default)
 	{
-		private static readonly SHA256 _sha256 = SHA256.Create();
+		if(authority == null)
+			throw new ArgumentNullException(nameof(authority));
 
-		public static ValueTask<string> UploadAsync(this IAuthority authority, string filePath, CancellationToken cancellation = default)
+		if(string.IsNullOrEmpty(filePath))
+			throw new ArgumentNullException(nameof(filePath));
+
+		var extension = System.IO.Path.GetExtension(filePath);
+
+		switch(extension.ToLowerInvariant())
 		{
-			if(authority == null)
-				throw new ArgumentNullException(nameof(authority));
-
-			if(string.IsNullOrEmpty(filePath))
-				throw new ArgumentNullException(nameof(filePath));
-
-			var extension = System.IO.Path.GetExtension(filePath);
-
-			switch(extension.ToLowerInvariant())
-			{
-				case ".png":
-				case ".jpg":
-				case ".jpeg":
-					return UploadFileAsync(authority, filePath, "merchant/media/upload", cancellation);
-				case ".avi":
-				case ".wmv":
-				case ".mp4":
-				case ".mov":
-				case ".mkv":
-				case ".flv":
-				case ".f4v":
-				case ".m4v":
-				case ".rmvb":
-				case ".mpeg":
-					return UploadFileAsync(authority, filePath, "merchant/media/video_upload", cancellation);
-			}
-
-			throw new OperationException("InvalidFileFormat", $"Unsupported '{extension}' file format.");
+			case ".png":
+			case ".jpg":
+			case ".jpeg":
+				return UploadFileAsync(authority, filePath, "merchant/media/upload", cancellation);
+			case ".avi":
+			case ".wmv":
+			case ".mp4":
+			case ".mov":
+			case ".mkv":
+			case ".flv":
+			case ".f4v":
+			case ".m4v":
+			case ".rmvb":
+			case ".mpeg":
+				return UploadFileAsync(authority, filePath, "merchant/media/video_upload", cancellation);
 		}
 
-		private static async ValueTask<string> UploadFileAsync(this IAuthority authority, string filePath, string url, CancellationToken cancellation = default)
+		throw new OperationException("InvalidFileFormat", string.Format(Properties.Resources.File_FormatUnsupported_Message, extension));
+	}
+
+	private static async ValueTask<string> UploadFileAsync(this IAuthority authority, string filePath, string url, CancellationToken cancellation = default)
+	{
+		if(authority == null)
+			throw new ArgumentNullException(nameof(authority));
+
+		if(string.IsNullOrEmpty(filePath))
+			throw new ArgumentNullException(nameof(filePath));
+
+		byte[] data;
+
+		using var fileStream = FileSystem.File.Open(filePath, FileMode.Open, FileAccess.Read);
 		{
-			if(authority == null)
-				throw new ArgumentNullException(nameof(authority));
-
-			if(string.IsNullOrEmpty(filePath))
-				throw new ArgumentNullException(nameof(filePath));
-
-			byte[] data;
-
-			using var fileStream = FileSystem.File.Open(filePath, FileMode.Open, FileAccess.Read);
-			{
-				using var stream = new MemoryStream();
-				await fileStream.CopyToAsync(stream, cancellation);
-				data = stream.ToArray();
-			}
-
-			var client = HttpClientFactory.GetHttpClient(authority.Certificate);
-			var fileName = System.IO.Path.GetFileName(filePath);
-
-			string boundary = Guid.NewGuid().ToString("N");
-			var form = new MultipartFormDataContent(boundary);
-
-			//注意：.NET默认会为boundary值加上双引号，这会导致微信服务器处理异常，故而必须手动指定一个不带双引号的boundary值
-			form.Headers.ContentType = MediaTypeHeaderValue.Parse("multipart/form-data; boundary=" + boundary);
-
-			var digest = _sha256.ComputeHash(data);
-			var json = JsonContent.Create(new { filename = fileName, sha256 = System.Convert.ToHexString(digest) });
-			form.Add(json, "\"meta\""); //注意：必须加上双引号
-			form.Add(new ByteArrayContent(data), "\"file\"", "\"" + fileName + "\""); //注意：必须加上双引号
-
-			var response = await client.PostAsync(url, form, cancellation);
-			var result = await response.GetResultAsync<UploaderResult>(cancellation);
-			return result.Identifier;
+			using var stream = new MemoryStream();
+			await fileStream.CopyToAsync(stream, cancellation);
+			data = stream.ToArray();
 		}
 
-		private struct UploaderResult
-		{
-			[System.Text.Json.Serialization.JsonPropertyName("media_id")]
-			public string Identifier { get; set; }
-		}
+		var client = HttpClientFactory.GetHttpClient(authority.Certificate);
+		var fileName = System.IO.Path.GetFileName(filePath);
+
+		string boundary = Guid.NewGuid().ToString("N");
+		var form = new MultipartFormDataContent(boundary);
+
+		//注意：.NET默认会为boundary值加上双引号，这会导致微信服务器处理异常，故而必须手动指定一个不带双引号的boundary值
+		form.Headers.ContentType = MediaTypeHeaderValue.Parse("multipart/form-data; boundary=" + boundary);
+
+		var digest = _sha256.ComputeHash(data);
+		var json = JsonContent.Create(new { filename = fileName, sha256 = System.Convert.ToHexString(digest) });
+		form.Add(json, "\"meta\""); //注意：必须加上双引号
+		form.Add(new ByteArrayContent(data), "\"file\"", "\"" + fileName + "\""); //注意：必须加上双引号
+
+		var response = await client.PostAsync(url, form, cancellation);
+		var result = await response.GetResultAsync<UploaderResult>(cancellation);
+		return result.Identifier;
+	}
+
+	private struct UploaderResult
+	{
+		[System.Text.Json.Serialization.JsonPropertyName("media_id")]
+		public string Identifier { get; set; }
 	}
 }

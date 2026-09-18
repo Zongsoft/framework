@@ -36,57 +36,56 @@ using System.Security.Cryptography.X509Certificates;
 
 using Zongsoft.Security;
 
-namespace Zongsoft.Externals.Wechat
+namespace Zongsoft.Externals.Wechat;
+
+internal static class Json
 {
-	internal static class Json
+	public static readonly JsonSerializerOptions Options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
 	{
-		public static readonly JsonSerializerOptions Options = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+		IncludeFields = true,
+		NumberHandling = JsonNumberHandling.AllowReadingFromString,
+		DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+		Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+	};
+
+	internal class CryptographyConverter : JsonConverter<string>
+	{
+		private Lazy<ICertificate> _certificate;
+
+		public CryptographyConverter()
 		{
-			IncludeFields = true,
-			NumberHandling = JsonNumberHandling.AllowReadingFromString,
-			DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-			Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-		};
-
-		internal class CryptographyConverter : JsonConverter<string>
-		{
-			private Lazy<ICertificate> _certificate;
-
-			public CryptographyConverter()
-			{
-				_certificate = new Lazy<ICertificate>(() => AuthorityUtility.GetAuthority().GetCertificateAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult());
-			}
-
-			public override string Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
-			{
-				return reader.GetString();
-			}
-
-			public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
-			{
-				writer.WriteBase64StringValue(_certificate.Value.Encrypt(value));
-			}
+			_certificate = new Lazy<ICertificate>(() => AuthorityUtility.GetAuthority().GetCertificateAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult());
 		}
 
-		internal class DateConverter : JsonConverter<DateTime?>
+		public override string Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
 		{
-			public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-			{
-				var raw = reader.GetString();
+			return reader.GetString();
+		}
 
-				if(raw != null && raw.Length > 0 && DateTime.TryParse(raw, out var date))
-					return date;
+		public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
+		{
+			writer.WriteBase64StringValue(_certificate.Value.Encrypt(value));
+		}
+	}
 
-				return null;
-			}
+	internal class DateConverter : JsonConverter<DateTime?>
+	{
+		public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+		{
+			var raw = reader.GetString();
 
-			public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions options)
-			{
-				if(value == null)
-					writer.WriteStringValue("长期");
-				else
-					writer.WriteStringValue(value.Value.ToString("yyyy-MM-dd"));
-			}
+			if(raw != null && raw.Length > 0 && DateTime.TryParse(raw, out var date))
+				return date;
+
+			return null;
+		}
+
+		public override void Write(Utf8JsonWriter writer, DateTime? value, JsonSerializerOptions options)
+		{
+			if(value == null)
+				writer.WriteStringValue(Properties.Resources.Wechat_CertificatePermanentValue);
+			else
+				writer.WriteStringValue(value.Value.ToString("yyyy-MM-dd"));
 		}
 	}
 }

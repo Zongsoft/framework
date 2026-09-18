@@ -1196,7 +1196,8 @@ public class DataConnectorTest
 		public ValueTask FlushAsync(CancellationToken cancellation = default) => ValueTask.CompletedTask;
 		public void Clear()
 		{
-			while(_entries.TryDequeue(out _)) { }
+			while(_entries.TryDequeue(out _))
+			{ }
 		}
 
 		public ValueTask LogAsync<TLog>(TLog log, CancellationToken cancellation = default) where TLog : Zongsoft.Diagnostics.ILog

@@ -30,101 +30,100 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Plugins
+namespace Zongsoft.Plugins;
+
+public class BuiltinBehavior
 {
-	public class BuiltinBehavior
+	#region 成员字段
+	private Builtin _builtin;
+	private string _name;
+	private string _text;
+	private PluginElementPropertyCollection _properties;
+	#endregion
+
+	#region 构造函数
+	public BuiltinBehavior(Builtin builtin, string name, string text = null)
 	{
-		#region 成员字段
-		private Builtin _builtin;
-		private string _name;
-		private string _text;
-		private PluginElementPropertyCollection _properties;
-		#endregion
+		if(builtin == null)
+			throw new ArgumentNullException(nameof(builtin));
 
-		#region 构造函数
-		public BuiltinBehavior(Builtin builtin, string name, string text = null)
-		{
-			if(builtin == null)
-				throw new ArgumentNullException(nameof(builtin));
+		if(string.IsNullOrWhiteSpace(name))
+			throw new ArgumentNullException(nameof(name));
 
-			if(string.IsNullOrWhiteSpace(name))
-				throw new ArgumentNullException(nameof(name));
-
-			_builtin = builtin;
-			_name = name.Trim();
-			_text = text;
-			_properties = new PluginElementPropertyCollection(builtin);
-		}
-		#endregion
-
-		#region 公共属性
-		public Builtin Builtin
-		{
-			get
-			{
-				return _builtin;
-			}
-			internal set
-			{
-				_builtin = value;
-			}
-		}
-
-		public string Name
-		{
-			get
-			{
-				return _name;
-			}
-		}
-
-		public string Text
-		{
-			get
-			{
-				return _text;
-			}
-			set
-			{
-				_text = value;
-			}
-		}
-
-		public PluginElementPropertyCollection Properties
-		{
-			get
-			{
-				return _properties;
-			}
-		}
-		#endregion
-
-		#region 公共方法
-		public T GetPropertyValue<T>(string propertyName, T defaultValue = default(T))
-		{
-			if(string.IsNullOrWhiteSpace(propertyName))
-				throw new ArgumentNullException(nameof(propertyName));
-
-			PluginElementProperty property;
-
-			if(_properties.TryGetValue(propertyName, out property))
-				return (T)property.GetValue(typeof(T), defaultValue);
-
-			return defaultValue;
-		}
-
-		public object GetPropertyValue(string propertyName, Type valueType, object defaultValue = null)
-		{
-			if(string.IsNullOrWhiteSpace(propertyName))
-				throw new ArgumentNullException(nameof(propertyName));
-
-			PluginElementProperty property;
-
-			if(_properties.TryGetValue(propertyName, out property))
-				return property.GetValue(valueType, defaultValue);
-
-			return defaultValue;
-		}
-		#endregion
+		_builtin = builtin;
+		_name = name.Trim();
+		_text = text;
+		_properties = new PluginElementPropertyCollection(builtin);
 	}
+	#endregion
+
+	#region 公共属性
+	public Builtin Builtin
+	{
+		get
+		{
+			return _builtin;
+		}
+		internal set
+		{
+			_builtin = value;
+		}
+	}
+
+	public string Name
+	{
+		get
+		{
+			return _name;
+		}
+	}
+
+	public string Text
+	{
+		get
+		{
+			return _text;
+		}
+		set
+		{
+			_text = value;
+		}
+	}
+
+	public PluginElementPropertyCollection Properties
+	{
+		get
+		{
+			return _properties;
+		}
+	}
+	#endregion
+
+	#region 公共方法
+	public T GetPropertyValue<T>(string propertyName, T defaultValue = default(T))
+	{
+		if(string.IsNullOrWhiteSpace(propertyName))
+			throw new ArgumentNullException(nameof(propertyName));
+
+		PluginElementProperty property;
+
+		if(_properties.TryGetValue(propertyName, out property))
+			return (T)property.GetValue(typeof(T), defaultValue);
+
+		return defaultValue;
+	}
+
+	public object GetPropertyValue(string propertyName, Type valueType, object defaultValue = null)
+	{
+		if(string.IsNullOrWhiteSpace(propertyName))
+			throw new ArgumentNullException(nameof(propertyName));
+
+		PluginElementProperty property;
+
+		if(_properties.TryGetValue(propertyName, out property))
+			return property.GetValue(valueType, defaultValue);
+
+		return defaultValue;
+	}
+	#endregion
 }

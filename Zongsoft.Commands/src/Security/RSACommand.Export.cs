@@ -54,7 +54,7 @@ partial class RSACommand
 		#region 重写方法
 		protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 		{
-			var rsa = (context.Find<RSACommand>(true)?.RSA) ?? throw new CommandException("Missing the required RSA.");
+			var rsa = (context.Find<RSACommand>(true)?.RSA) ?? throw new CommandException(Properties.Resources.Security_RsaRequired_Message);
 
 			object result = context.Options.GetValue<RSAKeyType>(TYPE_OPTION) switch
 			{

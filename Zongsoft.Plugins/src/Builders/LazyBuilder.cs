@@ -30,23 +30,22 @@
 using System;
 using System.Collections.Generic;
 
-namespace Zongsoft.Plugins.Builders
-{
-	/// <summary>
-	/// 对象懒惰式创建器。
-	/// </summary>
-	/// <remarks>
-	/// 	<para>该构建器区别于<seealso cref="ObjectBuilder"/>的主要特征在于它始终不会激发对子节点的构建。</para>
-	/// </remarks>
-	public class LazyBuilder : ObjectBuilder
-	{
-		public override object Build(BuilderContext context)
-		{
-			//阻止构建下级节点
-			context.Cancel = true;
+namespace Zongsoft.Plugins.Builders;
 
-			//调用基类同名方法
-			return base.Build(context);
-		}
+/// <summary>
+/// 对象懒惰式创建器。
+/// </summary>
+/// <remarks>
+/// 	<para>该构建器区别于<seealso cref="ObjectBuilder"/>的主要特征在于它始终不会激发对子节点的构建。</para>
+/// </remarks>
+public class LazyBuilder : ObjectBuilder
+{
+	public override object Build(BuilderContext context)
+	{
+		//阻止构建下级节点
+		context.Cancel = true;
+
+		//调用基类同名方法
+		return base.Build(context);
 	}
 }

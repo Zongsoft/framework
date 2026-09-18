@@ -58,7 +58,7 @@ public class TDengineDeleteStatementBuilder : DeleteStatementBuilder
 		if(statement.Entity == null || statement.Entity.Key == null || statement.Entity.Key.Length == 0 ||
 		   statement.Entity.Key[0] is not IDataEntitySimplexProperty property ||
 		   !IsTimestamp(property.Type.DbType))
-			throw new NotSupportedException(Properties.Resources.ResourceManager.GetString("DeleteStatement.TimestampRequired.Message"));
+			throw new NotSupportedException(Properties.Resources.DeleteStatement_TimestampRequired_Message);
 
 		if(statement.Where != null)
 			Validate(statement.Where, property.GetFieldName());
@@ -76,7 +76,7 @@ public class TDengineDeleteStatementBuilder : DeleteStatementBuilder
 		switch(expression)
 		{
 			case FieldIdentifier field when !string.Equals(field.Name, timestamp, StringComparison.OrdinalIgnoreCase):
-				throw new NotSupportedException(string.Format(Properties.Resources.ResourceManager.GetString("DeleteStatement.TimestampConditionOnly.Message"), timestamp));
+				throw new NotSupportedException(string.Format(Properties.Resources.DeleteStatement_TimestampConditionOnly_Message, timestamp));
 			case BinaryExpression binary:
 				Validate(binary.Left, timestamp);
 				Validate(binary.Right, timestamp);

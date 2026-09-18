@@ -126,4 +126,19 @@
   <data name="Separator" xml:space="preserve">
     <value>，</value>
   </data>
+	<data name="Http.ContentTypeInvalid.Message" xml:space="preserve">
+		<value>Content-Type 不正确：{0}</value>
+	</data>
+	<data name="Path.FormatInvalid.Message" xml:space="preserve">
+		<value>路径格式无效。</value>
+	</data>
+	<data name="Data.ServiceRequired.Message" xml:space="preserve">
+		<value>缺少必需的数据服务。</value>
+	</data>
+	<data name="Service.Required.Message" xml:space="preserve">
+		<value>缺少必需的服务。</value>
+	</data>
+	<data name="Path.Invalid.Message" xml:space="preserve">
+		<value>指定的路径“{0}”不合法。</value>
+	</data>
 </root>

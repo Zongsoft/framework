@@ -68,7 +68,7 @@ partial class OpcClient
 		var response = await session.AddNodesAsync(request, [folderNode], cancellation);
 
 		if(response.ResponseHeader != null && StatusCode.IsBad(response.ResponseHeader.ServiceResult))
-			throw new InvalidOperationException($"[{response.ResponseHeader.ServiceResult}] Failed to create the folder node.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.Opc_FolderCreationFailed_Message, response.ResponseHeader.ServiceResult));
 
 		if(response.Results != null && response.Results.Count > 0)
 		{
@@ -79,7 +79,7 @@ partial class OpcClient
 			var failures = response.Results.Where(result => StatusCode.IsBad(result.StatusCode));
 
 			if(failures.Any())
-				throw new InvalidOperationException($"[{string.Join(',', failures)}] Failed to create the folder node.");
+				throw new InvalidOperationException(string.Format(Properties.Resources.Opc_FolderCreationFailed_Message, string.Join(',', failures)));
 		}
 
 		return true;
@@ -120,7 +120,7 @@ partial class OpcClient
 		var response = await session.AddNodesAsync(request, [variableNode], cancellation);
 
 		if(response.ResponseHeader != null && StatusCode.IsBad(response.ResponseHeader.ServiceResult))
-			throw new InvalidOperationException($"[{response.ResponseHeader.ServiceResult}] Failed to create the variable node.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.Opc_VariableCreationFailed_Message, response.ResponseHeader.ServiceResult));
 
 		if(response.Results != null && response.Results.Count > 0)
 		{
@@ -131,7 +131,7 @@ partial class OpcClient
 			var failures = response.Results.Where(result => StatusCode.IsBad(result.StatusCode));
 
 			if(failures.Any())
-				throw new InvalidOperationException($"[{string.Join(',', failures)}] Failed to create the variable node.");
+				throw new InvalidOperationException(string.Format(Properties.Resources.Opc_VariableCreationFailed_Message, string.Join(',', failures)));
 		}
 
 		return true;

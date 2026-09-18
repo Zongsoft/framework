@@ -63,7 +63,7 @@ public partial class SequenceCommand : CommandBase<CommandContext>
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(context.Arguments.Count > 1)
-			throw new CommandException("Only one argument is allowed for specifying the sequence instance.");
+			throw new CommandException(Properties.Resources.Sequence_TooManyArguments_Message);
 
 		var provider = ApplicationContext.Current?.Services.Resolve<IServiceProvider<ISequenceBase>>();
 

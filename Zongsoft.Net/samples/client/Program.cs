@@ -41,7 +41,7 @@ internal class Program
 		executor.Command("send", async (context, cancellation) =>
 		{
 			if(context.Arguments.IsEmpty)
-				throw new CommandException("Missing the message to send.");
+				throw new CommandException(global::Zongsoft.Net.Samples.Client.Properties.Resources.Network_MessageRequired_Message);
 
 			var message = Encoding.UTF8.GetBytes(string.Join(' ', context.Arguments));
 			await client.SendAsync(new ReadOnlySequence<byte>(message), cancellation);
@@ -63,10 +63,10 @@ internal class Program
 		var port = 7969;
 
 		if(args.Length > 0 && !IPAddress.TryParse(args[0], out address))
-			throw new ArgumentException($"Invalid IP address: {args[0]}");
+			throw new ArgumentException(string.Format(global::Zongsoft.Net.Samples.Client.Properties.Resources.Network_AddressInvalid_Message, args[0]));
 
 		if(args.Length > 1 && !int.TryParse(args[1], out port))
-			throw new ArgumentException($"Invalid port number: {args[1]}");
+			throw new ArgumentException(string.Format(global::Zongsoft.Net.Samples.Client.Properties.Resources.Network_PortInvalid_Message, args[1]));
 
 		return new IPEndPoint(address, port);
 	}

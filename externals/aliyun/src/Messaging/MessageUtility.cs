@@ -37,216 +37,215 @@ using Zongsoft.Services;
 using Zongsoft.Messaging;
 using Zongsoft.Configuration;
 
-namespace Zongsoft.Externals.Aliyun.Messaging
+namespace Zongsoft.Externals.Aliyun.Messaging;
+
+internal static class MessageUtility
 {
-	internal static class MessageUtility
+	#region 常量定义
+	public const string QueueNotExist = "QueueNotExist";
+	public const string MessageNotExist = "MessageNotExist";
+	private static ReadOnlySpan<byte> CompressionMagic => "ZCMP"u8;
+
+	private static readonly Regex _error_regex = new Regex(@"\<(?'tag'(Code|Message))\>\s*(?<value>[^<>]+)\s*\<\/\k'tag'\>", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace);
+	#endregion
+
+	public static Message ResolveMessage(MessageQueue queue, Stream stream)
 	{
-		#region 常量定义
-		public const string QueueNotExist = "QueueNotExist";
-		public const string MessageNotExist = "MessageNotExist";
-		private static ReadOnlySpan<byte> CompressionMagic => "ZCMP"u8;
+		if(stream == null)
+			return Message.Empty;
 
-		private static readonly Regex _error_regex = new Regex(@"\<(?'tag'(Code|Message))\>\s*(?<value>[^<>]+)\s*\<\/\k'tag'\>", RegexOptions.Compiled | RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace);
-		#endregion
+		string id = null, ackId = null, md5 = null, body = null;
+		DateTime? expires = null, enqueuedTime = null, dequeuedTime = null;
+		int dequeuedCount = 0;
+		byte priority = 0;
 
-		public static Message ResolveMessage(MessageQueue queue, Stream stream)
+		var settings = new XmlReaderSettings()
 		{
-			if(stream == null)
+			IgnoreComments = true,
+			IgnoreProcessingInstructions = true,
+			IgnoreWhitespace = true,
+		};
+
+		using(var reader = XmlReader.Create(stream, settings))
+		{
+			if(reader.MoveToContent() != XmlNodeType.Element)
 				return Message.Empty;
 
-			string id = null, ackId = null, md5 = null, body = null;
-			DateTime? expires = null, enqueuedTime = null, dequeuedTime = null;
-			int dequeuedCount = 0;
-			byte priority = 0;
-
-			var settings = new XmlReaderSettings()
+			while(reader.Read())
 			{
-				IgnoreComments = true,
-				IgnoreProcessingInstructions = true,
-				IgnoreWhitespace = true,
-			};
+				if(reader.NodeType != XmlNodeType.Element)
+					continue;
 
-			using(var reader = XmlReader.Create(stream, settings))
-			{
-				if(reader.MoveToContent() != XmlNodeType.Element)
-					return Message.Empty;
-
-				while(reader.Read())
+				switch(reader.LocalName)
 				{
-					if(reader.NodeType != XmlNodeType.Element)
-						continue;
-
-					switch(reader.LocalName)
-					{
-						case "MessageId":
-							id = Utility.Xml.ReadContentAsString(reader);
-							break;
-						case "ReceiptHandle":
-							ackId = Utility.Xml.ReadContentAsString(reader);
-							break;
-						case "MessageBodyMD5":
-							md5 = Utility.Xml.ReadContentAsString(reader);
-							break;
-						case "MessageBody":
-							body = Utility.Xml.ReadContentAsString(reader);
-							break;
-						case "EnqueueTime":
-							enqueuedTime = Utility.GetDateTimeFromEpoch(Utility.Xml.ReadContentAsString(reader));
-							break;
-						case "NextVisibleTime":
-							expires = Utility.GetDateTimeFromEpoch(Utility.Xml.ReadContentAsString(reader));
-							break;
-						case "FirstDequeueTime":
-							dequeuedTime = Utility.GetDateTimeFromEpoch(Utility.Xml.ReadContentAsString(reader));
-							break;
-						case "DequeueCount":
-							dequeuedCount = Zongsoft.Common.Convert.ConvertValue<int>(Utility.Xml.ReadContentAsString(reader));
-							break;
-						case "Priority":
-							priority = Zongsoft.Common.Convert.ConvertValue<byte>(Utility.Xml.ReadContentAsString(reader));
-							break;
-					}
+					case "MessageId":
+						id = Utility.Xml.ReadContentAsString(reader);
+						break;
+					case "ReceiptHandle":
+						ackId = Utility.Xml.ReadContentAsString(reader);
+						break;
+					case "MessageBodyMD5":
+						md5 = Utility.Xml.ReadContentAsString(reader);
+						break;
+					case "MessageBody":
+						body = Utility.Xml.ReadContentAsString(reader);
+						break;
+					case "EnqueueTime":
+						enqueuedTime = Utility.GetDateTimeFromEpoch(Utility.Xml.ReadContentAsString(reader));
+						break;
+					case "NextVisibleTime":
+						expires = Utility.GetDateTimeFromEpoch(Utility.Xml.ReadContentAsString(reader));
+						break;
+					case "FirstDequeueTime":
+						dequeuedTime = Utility.GetDateTimeFromEpoch(Utility.Xml.ReadContentAsString(reader));
+						break;
+					case "DequeueCount":
+						dequeuedCount = Zongsoft.Common.Convert.ConvertValue<int>(Utility.Xml.ReadContentAsString(reader));
+						break;
+					case "Priority":
+						priority = Zongsoft.Common.Convert.ConvertValue<byte>(Utility.Xml.ReadContentAsString(reader));
+						break;
 				}
 			}
-
-			var data = string.IsNullOrWhiteSpace(body) ? null : Convert.FromBase64String(body);
-			if(data != null && TryDecompress(data, out var decompressed))
-				data = decompressed;
-
-			return new Message(
-				id,
-				null,
-				data,
-				(delay, cancellation) => queue.AcknowledgeAsync(ackId, delay, cancellation));
 		}
 
-		internal static byte[] Pack(MessageCompression compression, ReadOnlySpan<byte> data)
+		var data = string.IsNullOrWhiteSpace(body) ? null : Convert.FromBase64String(body);
+		if(data != null && TryDecompress(data, out var decompressed))
+			data = decompressed;
+
+		return new Message(
+			id,
+			null,
+			data,
+			(delay, cancellation) => queue.AcknowledgeAsync(ackId, delay, cancellation));
+	}
+
+	internal static byte[] Pack(MessageCompression compression, ReadOnlySpan<byte> data)
+	{
+		if(compression.IsEmpty)
+			throw new InvalidOperationException();
+
+		var name = Encoding.UTF8.GetBytes(compression.Name);
+		if(name.Length > byte.MaxValue)
+			throw Common.OperationException.Unsupported();
+
+		var payload = compression.Compress(data);
+		var result = new byte[CompressionMagic.Length + 2 + name.Length + payload.Length];
+		CompressionMagic.CopyTo(result);
+		result[CompressionMagic.Length] = 1;
+		result[CompressionMagic.Length + 1] = (byte)name.Length;
+		name.CopyTo(result, CompressionMagic.Length + 2);
+		payload.CopyTo(result, CompressionMagic.Length + 2 + name.Length);
+		return result;
+	}
+
+	private static bool TryDecompress(ReadOnlySpan<byte> source, out byte[] data)
+	{
+		var offset = CompressionMagic.Length;
+		if(source.Length < offset || !source[..offset].SequenceEqual(CompressionMagic))
 		{
-			if(compression.IsEmpty)
-				throw new InvalidOperationException();
-
-			var name = Encoding.UTF8.GetBytes(compression.Name);
-			if(name.Length > byte.MaxValue)
-				throw Common.OperationException.Unsupported();
-
-			var payload = compression.Compress(data);
-			var result = new byte[CompressionMagic.Length + 2 + name.Length + payload.Length];
-			CompressionMagic.CopyTo(result);
-			result[CompressionMagic.Length] = 1;
-			result[CompressionMagic.Length + 1] = (byte)name.Length;
-			name.CopyTo(result, CompressionMagic.Length + 2);
-			payload.CopyTo(result, CompressionMagic.Length + 2 + name.Length);
-			return result;
+			data = null;
+			return false;
 		}
 
-		private static bool TryDecompress(ReadOnlySpan<byte> source, out byte[] data)
-		{
-			var offset = CompressionMagic.Length;
-			if(source.Length < offset || !source[..offset].SequenceEqual(CompressionMagic))
-			{
-				data = null;
-				return false;
-			}
+		if(source.Length <= offset + 2 || source[offset] != 1)
+			throw new FormatException();
 
-			if(source.Length <= offset + 2 || source[offset] != 1)
-				throw new FormatException();
+		var length = source[offset + 1];
+		if(length == 0 || source.Length <= offset + 2 + length)
+			throw new FormatException();
 
-			var length = source[offset + 1];
-			if(length == 0 || source.Length <= offset + 2 + length)
-				throw new FormatException();
+		var name = Encoding.UTF8.GetString(source.Slice(offset + 2, length));
+		data = MessageCompression.Decompress(name, source[(offset + 2 + length)..]);
+		return true;
+	}
 
-			var name = Encoding.UTF8.GetString(source.Slice(offset + 2, length));
-			data = MessageCompression.Decompress(name, source[(offset + 2 + length)..]);
-			return true;
-		}
-
-		public static MessageTopicInfo ResolveTopicInfo(Stream stream)
-		{
-			if(stream == null)
-				return null;
-
-			var settings = new XmlReaderSettings()
-			{
-				IgnoreComments = true,
-				IgnoreProcessingInstructions = true,
-				IgnoreWhitespace = true,
-			};
-
-			using(var reader = XmlReader.Create(stream, settings))
-			{
-				if(reader.MoveToContent() != XmlNodeType.Element)
-					return null;
-
-				var info = new MessageTopicInfo();
-
-				while(reader.Read())
-				{
-					if(reader.NodeType != XmlNodeType.Element)
-						continue;
-
-					switch(reader.LocalName)
-					{
-						case "TopicName":
-							info.Name = Utility.Xml.ReadContentAsString(reader);
-							break;
-						case "CreateTime":
-							info.CreatedTime = Utility.GetDateTimeFromEpoch(Utility.Xml.ReadContentAsString(reader));
-							break;
-						case "LastModifyTime":
-							info.ModifiedTime = Utility.GetDateTimeFromEpoch(Utility.Xml.ReadContentAsString(reader));
-							break;
-						case "MessageRetentionPeriod":
-							info.MessageRetentionPeriod = TimeSpan.FromSeconds(reader.ReadElementContentAsInt());
-							break;
-						case "MessageCount":
-							info.MessageCount = Zongsoft.Common.Convert.ConvertValue<int>(Utility.Xml.ReadContentAsString(reader));
-							break;
-						case "LoggingEnabled":
-							info.LoggingEnabled = Zongsoft.Common.Convert.ConvertValue<bool>(Utility.Xml.ReadContentAsString(reader));
-							break;
-					}
-				}
-
-				return info;
-			}
-		}
-
-		internal static Options.MessagingOptions GetOptions()
-		{
-			return ApplicationContext.Current?.Configuration.GetOption<Options.MessagingOptions>("Externals/Aliyun/Messaging");
-		}
-
-		internal static string GetMessageResponseId(Stream stream)
-		{
-			if(stream == null)
-				return null;
-
-			var settings = new XmlReaderSettings()
-			{
-				IgnoreComments = true,
-				IgnoreProcessingInstructions = true,
-				IgnoreWhitespace = true,
-			};
-
-			using(var reader = XmlReader.Create(stream, settings))
-			{
-				if(reader.MoveToContent() != XmlNodeType.Element)
-					return null;
-
-				while(reader.Read())
-				{
-					if(reader.NodeType != XmlNodeType.Element)
-						continue;
-
-					switch(reader.LocalName)
-					{
-						case "MessageId":
-							return reader.ReadElementContentAsString();
-					}
-				}
-			}
-
+	public static MessageTopicInfo ResolveTopicInfo(Stream stream)
+	{
+		if(stream == null)
 			return null;
+
+		var settings = new XmlReaderSettings()
+		{
+			IgnoreComments = true,
+			IgnoreProcessingInstructions = true,
+			IgnoreWhitespace = true,
+		};
+
+		using(var reader = XmlReader.Create(stream, settings))
+		{
+			if(reader.MoveToContent() != XmlNodeType.Element)
+				return null;
+
+			var info = new MessageTopicInfo();
+
+			while(reader.Read())
+			{
+				if(reader.NodeType != XmlNodeType.Element)
+					continue;
+
+				switch(reader.LocalName)
+				{
+					case "TopicName":
+						info.Name = Utility.Xml.ReadContentAsString(reader);
+						break;
+					case "CreateTime":
+						info.CreatedTime = Utility.GetDateTimeFromEpoch(Utility.Xml.ReadContentAsString(reader));
+						break;
+					case "LastModifyTime":
+						info.ModifiedTime = Utility.GetDateTimeFromEpoch(Utility.Xml.ReadContentAsString(reader));
+						break;
+					case "MessageRetentionPeriod":
+						info.MessageRetentionPeriod = TimeSpan.FromSeconds(reader.ReadElementContentAsInt());
+						break;
+					case "MessageCount":
+						info.MessageCount = Zongsoft.Common.Convert.ConvertValue<int>(Utility.Xml.ReadContentAsString(reader));
+						break;
+					case "LoggingEnabled":
+						info.LoggingEnabled = Zongsoft.Common.Convert.ConvertValue<bool>(Utility.Xml.ReadContentAsString(reader));
+						break;
+				}
+			}
+
+			return info;
 		}
+	}
+
+	internal static Options.MessagingOptions GetOptions()
+	{
+		return ApplicationContext.Current?.Configuration.GetOption<Options.MessagingOptions>("Externals/Aliyun/Messaging");
+	}
+
+	internal static string GetMessageResponseId(Stream stream)
+	{
+		if(stream == null)
+			return null;
+
+		var settings = new XmlReaderSettings()
+		{
+			IgnoreComments = true,
+			IgnoreProcessingInstructions = true,
+			IgnoreWhitespace = true,
+		};
+
+		using(var reader = XmlReader.Create(stream, settings))
+		{
+			if(reader.MoveToContent() != XmlNodeType.Element)
+				return null;
+
+			while(reader.Read())
+			{
+				if(reader.NodeType != XmlNodeType.Element)
+					continue;
+
+				switch(reader.LocalName)
+				{
+					case "MessageId":
+						return reader.ReadElementContentAsString();
+				}
+			}
+		}
+
+		return null;
 	}
 }

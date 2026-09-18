@@ -32,25 +32,24 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-namespace Zongsoft.Externals.Wechat.Paying
+namespace Zongsoft.Externals.Wechat.Paying;
+
+public abstract class PaymentHandlerBase : FallbackHandlerBase<PaymentManager.PaymentService.PaymentOrder>
 {
-	public abstract class PaymentHandlerBase : FallbackHandlerBase<PaymentManager.PaymentService.PaymentOrder>
-	{
-		protected PaymentHandlerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
+	protected PaymentHandlerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
 
-		internal protected override Type GetRequestType(string format) =>
-			string.Equals(format, PaymentManager.PaymentService.DirectPaymentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?
-			typeof(PaymentManager.PaymentService.DirectPaymentService.DirectOrder) :
-			typeof(PaymentManager.PaymentService.BrokerPaymentService.BrokerOrder);
-	}
+	internal protected override Type GetRequestType(string format) =>
+		string.Equals(format, PaymentManager.PaymentService.DirectPaymentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?
+		typeof(PaymentManager.PaymentService.DirectPaymentService.DirectOrder) :
+		typeof(PaymentManager.PaymentService.BrokerPaymentService.BrokerOrder);
+}
 
-	public abstract class PaymentHandlerBase<TResult> : FallbackHandlerBase<PaymentManager.PaymentService.PaymentOrder, TResult>
-	{
-		protected PaymentHandlerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
+public abstract class PaymentHandlerBase<TResult> : FallbackHandlerBase<PaymentManager.PaymentService.PaymentOrder, TResult>
+{
+	protected PaymentHandlerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
 
-		internal protected override Type GetRequestType(string format) =>
-			string.Equals(format, PaymentManager.PaymentService.DirectPaymentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?
-			typeof(PaymentManager.PaymentService.DirectPaymentService.DirectOrder) :
-			typeof(PaymentManager.PaymentService.BrokerPaymentService.BrokerOrder);
-	}
+	internal protected override Type GetRequestType(string format) =>
+		string.Equals(format, PaymentManager.PaymentService.DirectPaymentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?
+		typeof(PaymentManager.PaymentService.DirectPaymentService.DirectOrder) :
+		typeof(PaymentManager.PaymentService.BrokerPaymentService.BrokerOrder);
 }

@@ -73,7 +73,7 @@ public class SubscriberCollection : IReadOnlyCollection<Subscriber>
 			throw new ArgumentException(nameof(subscriber));
 
 		if(subscription.Created)
-			throw new InvalidOperationException($"The specified '{subscription.Id}' subscription has been registered.");
+			throw new InvalidOperationException(string.Format(Properties.Resources.Subscription_AlreadyRegistered_Message, subscription.Id));
 
 		//从服务器中创建指定的订阅
 		await subscription.CreateAsync(cancellation);

@@ -135,7 +135,7 @@ public sealed partial class S3FileSystem : Zongsoft.IO.IFileSystem
 		(region, bucket) = S3Utility.Resolve(text.Slice(start, index));
 
 		if(string.IsNullOrEmpty(bucket))
-			throw new ArgumentException($"The specified '{text}' scheme value does not contain the bucket name.", nameof(bucket));
+			throw new ArgumentException(string.Format(Properties.Resources.Storage_BucketRequired_Message, text.ToString()), nameof(bucket));
 
 		return text[(index + 1)..].TrimStart('/').ToString();
 	}

@@ -39,55 +39,54 @@ using Zongsoft.Web.Http;
 using Zongsoft.Services;
 using Zongsoft.Collections;
 
-namespace Zongsoft.Security.Controllers
+namespace Zongsoft.Security.Controllers;
+
+[ApiController]
+[Area(Module.NAME)]
+[Route("[area]/[controller]")]
+public class CaptchaController : ControllerBase
 {
-	[ApiController]
-	[Area(Module.NAME)]
-	[Route("[area]/[controller]")]
-	public class CaptchaController : ControllerBase
+	[HttpPost("{scheme:required}")]
+	public async Task<IActionResult> IssueAsync(string scheme, CancellationToken cancellation = default)
 	{
-		[HttpPost("{scheme:required}")]
-		public async Task<IActionResult> IssueAsync(string scheme, CancellationToken cancellation = default)
-		{
-			if(string.IsNullOrEmpty(scheme))
-				return this.BadRequest();
+		if(string.IsNullOrEmpty(scheme))
+			return this.BadRequest();
 
-			var captch = this.HttpContext.RequestServices.Find<ICaptcha>(scheme);
-			if(captch == null)
-				return this.BadRequest($"The specified '{scheme}' captcha does not exist.");
+		var captch = this.HttpContext.RequestServices.Find<ICaptcha>(scheme);
+		if(captch == null)
+			return this.BadRequest($"The specified '{scheme}' captcha does not exist.");
 
-			object argument = this.Request.HasFormContentType ?
-				await this.Request.ReadFormAsync(cancellation) :
-				await this.Request.ReadAsStringAsync(cancellation);
+		object argument = this.Request.HasFormContentType ?
+			await this.Request.ReadFormAsync(cancellation) :
+			await this.Request.ReadAsStringAsync(cancellation);
 
-			var data = await captch.IssueAsync(argument, new Parameters(this.Request.GetParameters()), cancellation);
-			var formatter = this.HttpContext.RequestServices.Find<ICaptchaFormatter<HttpContext>>(scheme);
+		var data = await captch.IssueAsync(argument, new Parameters(this.Request.GetParameters()), cancellation);
+		var formatter = this.HttpContext.RequestServices.Find<ICaptchaFormatter<HttpContext>>(scheme);
 
-			if(formatter != null)
-				data = await formatter.FormatAsync(this.HttpContext, data, cancellation);
+		if(formatter != null)
+			data = await formatter.FormatAsync(this.HttpContext, data, cancellation);
 
-			if(data == null)
-				return this.NoContent();
+		if(data == null)
+			return this.NoContent();
 
-			return data is IActionResult result ? result : this.Ok(data);
-		}
+		return data is IActionResult result ? result : this.Ok(data);
+	}
 
-		[HttpPost("{scheme:required}/[action]")]
-		public async Task<IActionResult> VerifyAsync(string scheme, CancellationToken cancellation = default)
-		{
-			if(string.IsNullOrEmpty(scheme))
-				return this.BadRequest();
+	[HttpPost("{scheme:required}/[action]")]
+	public async Task<IActionResult> VerifyAsync(string scheme, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(scheme))
+			return this.BadRequest();
 
-			var captch = this.HttpContext.RequestServices.Find<ICaptcha>(scheme);
-			if(captch == null)
-				return this.BadRequest($"The specified '{scheme}' captcha does not exist.");
+		var captch = this.HttpContext.RequestServices.Find<ICaptcha>(scheme);
+		if(captch == null)
+			return this.BadRequest($"The specified '{scheme}' captcha does not exist.");
 
-			object argument = this.Request.HasFormContentType ?
-				await this.Request.ReadFormAsync(cancellation) :
-				await this.Request.ReadAsStringAsync(cancellation);
+		object argument = this.Request.HasFormContentType ?
+			await this.Request.ReadFormAsync(cancellation) :
+			await this.Request.ReadAsStringAsync(cancellation);
 
-			var result = await captch.VerifyAsync(argument, new Parameters(this.Request.GetParameters()), cancellation);
-			return string.IsNullOrEmpty(result) ? this.NoContent() : this.Content(result);
-		}
+		var result = await captch.VerifyAsync(argument, new Parameters(this.Request.GetParameters()), cancellation);
+		return string.IsNullOrEmpty(result) ? this.NoContent() : this.Content(result);
 	}
 }

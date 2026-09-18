@@ -83,7 +83,7 @@ public class TDengineExpressionVisitor : ExpressionVisitorBase
 				TDengineInsertStatementVisitor.Instance.Visit(context, insert);
 				break;
 			case UpdateStatement:
-				throw new NotSupportedException(Properties.Resources.ResourceManager.GetString("Statement.UpdateUnsupported.Message"));
+				throw new NotSupportedException(Properties.Resources.Statement_UpdateUnsupported_Message);
 			case UpsertStatement upsert:
 				TDengineUpsertStatementVisitor.Instance.Visit(context, upsert);
 				break;
@@ -97,7 +97,7 @@ public class TDengineExpressionVisitor : ExpressionVisitorBase
 				TDengineExecutionStatementVisitor.Instance.Visit(context, execution);
 				break;
 			default:
-				throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.StatementUnsupported.Message"), statement));
+				throw new DataException(string.Format(Properties.Resources.ExpressionVisitor_StatementUnsupported_Message, statement));
 		}
 	}
 
@@ -122,7 +122,7 @@ public class TDengineExpressionVisitor : ExpressionVisitorBase
 	private static void WriteDeleteValue(ExpressionVisitorContext context, ParameterExpression parameter)
 	{
 		if(!parameter.IsChanged)
-			throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("DeleteStatement.ParameterValueMissing.Message"), parameter.Name));
+			throw new DataException(string.Format(Properties.Resources.DeleteStatement_ParameterValueMissing_Message, parameter.Name));
 
 		switch(parameter.Value)
 		{
@@ -202,7 +202,7 @@ public class TDengineExpressionVisitor : ExpressionVisitorBase
 			DbType.Single => "float",
 			DbType.VarNumeric => "double",
 			DbType.Xml => "nchar(4096)",
-			_ => throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.DataTypeUnsupported.Message"), type)),
+			_ => throw new DataException(string.Format(Properties.Resources.ExpressionVisitor_DataTypeUnsupported_Message, type)),
 		};
 
 		public string GetMethodName(MethodExpression method)
@@ -246,11 +246,11 @@ public class TDengineExpressionVisitor : ExpressionVisitorBase
 			DataAggregateFunction.DeviationPopulation => "STDEV_POP",
 			DataAggregateFunction.Variance => "VARIANCE",
 			DataAggregateFunction.VariancePopulation => "VAR_POP",
-			_ => throw new NotSupportedException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.AggregateInvalid.Message"), function)),
+			_ => throw new NotSupportedException(string.Format(Properties.Resources.ExpressionVisitor_AggregateInvalid_Message, function)),
 		};
 
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static string GetSequenceName(SequenceExpression sequence) => throw new DataException(string.Format(Properties.Resources.ResourceManager.GetString("ExpressionVisitor.SequenceUnsupported.Message"), sequence.Method));
+		private static string GetSequenceName(SequenceExpression sequence) => throw new DataException(string.Format(Properties.Resources.ExpressionVisitor_SequenceUnsupported_Message, sequence.Method));
 		#endregion
 	}
 

@@ -72,7 +72,7 @@ public class TreeCommand : CommandBase<CommandContext>
 
 			if(node == null)
 			{
-				context.Output.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.Text_Message_PluginNodeNotFound, context.Arguments[0]));
+				context.Output.WriteLine(CommandOutletColor.DarkRed, string.Format(Properties.Resources.Plugin_NodeNotFound_Message, context.Arguments[0]));
 				return ValueTask.FromResult<object>(node);
 			}
 		}

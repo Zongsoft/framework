@@ -36,55 +36,54 @@ using Microsoft.AspNetCore.Mvc;
 using Zongsoft.Web;
 using Zongsoft.Data;
 
-namespace Zongsoft.Externals.Wechat.Web.Controllers
+namespace Zongsoft.Externals.Wechat.Web.Controllers;
+
+[Area("Externals/Wechat")]
+[ControllerName("Banks")]
+public class BankController : ControllerBase
 {
-	[Area("Externals/Wechat")]
-	[ControllerName("Banks")]
-	public class BankController : ControllerBase
+	[HttpGet("{kind}")]
+	public async ValueTask<IActionResult> Get(BankUtility.BankKind kind, [FromQuery]Paging page = null, CancellationToken cancellation = default)
 	{
-		[HttpGet("{kind}")]
-		public async ValueTask<IActionResult> Get(BankUtility.BankKind kind, [FromQuery]Paging page = null, CancellationToken cancellation = default)
+		page ??= Paging.Page(1, 50);
+		var result = await AuthorityUtility.GetAuthority().GetBanksAsync(kind, page, cancellation);
+
+		if(page.Total > 0)
 		{
-			page ??= Paging.Page(1, 50);
-			var result = await AuthorityUtility.GetAuthority().GetBanksAsync(kind, page, cancellation);
-
-			if(page.Total > 0)
-			{
-				Zongsoft.Web.Http.HeaderDictionaryExtension.SetPagination(this.Response.Headers, page);
-				return this.Ok(result);
-			}
-
-			return this.NotFound();
+			Zongsoft.Web.Http.HeaderDictionaryExtension.SetPagination(this.Response.Headers, page);
+			return this.Ok(result);
 		}
 
-		[HttpGet("{code}/Branches")]
-		public async ValueTask<IActionResult> GetBranches(string code, [FromQuery]string city, [FromQuery]Paging page = null, CancellationToken cancellation = default)
+		return this.NotFound();
+	}
+
+	[HttpGet("{code}/Branches")]
+	public async ValueTask<IActionResult> GetBranches(string code, [FromQuery]string city, [FromQuery]Paging page = null, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(code))
+			return this.BadRequest();
+		if(string.IsNullOrEmpty(city))
+			return this.BadRequest();
+
+		page ??= Paging.Page(1, 50);
+		var result = await AuthorityUtility.GetAuthority().GetBranchesAsync(code, city, page, cancellation);
+
+		if(page.Total > 0)
 		{
-			if(string.IsNullOrEmpty(code))
-				return this.BadRequest();
-			if(string.IsNullOrEmpty(city))
-				return this.BadRequest();
-
-			page ??= Paging.Page(1, 50);
-			var result = await AuthorityUtility.GetAuthority().GetBranchesAsync(code, city, page, cancellation);
-
-			if(page.Total > 0)
-			{
-				Zongsoft.Web.Http.HeaderDictionaryExtension.SetPagination(this.Response.Headers, page);
-				return this.Ok(result);
-			}
-
-			return this.NotFound();
+			Zongsoft.Web.Http.HeaderDictionaryExtension.SetPagination(this.Response.Headers, page);
+			return this.Ok(result);
 		}
 
-		[HttpGet("Find/card:{code}")]
-		public async ValueTask<IActionResult> Find(string code, CancellationToken cancellation = default)
-		{
-			if(string.IsNullOrEmpty(code))
-				return this.BadRequest();
+		return this.NotFound();
+	}
 
-			var result = await AuthorityUtility.GetAuthority().FindAsync(code, cancellation);
-			return result != null ? this.Ok(result.Value) : this.NotFound();
-		}
+	[HttpGet("Find/card:{code}")]
+	public async ValueTask<IActionResult> Find(string code, CancellationToken cancellation = default)
+	{
+		if(string.IsNullOrEmpty(code))
+			return this.BadRequest();
+
+		var result = await AuthorityUtility.GetAuthority().FindAsync(code, cancellation);
+		return result != null ? this.Ok(result.Value) : this.NotFound();
 	}
 }

@@ -318,7 +318,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 			ArgumentNullException.ThrowIfNull(settings);
 
 			if(settings.ReconnectInterval <= TimeSpan.Zero)
-				throw new ArgumentOutOfRangeException(nameof(settings.ReconnectInterval), settings.ReconnectInterval, "The reconnect interval must be greater than zero.");
+				throw new ArgumentOutOfRangeException(nameof(settings.ReconnectInterval), settings.ReconnectInterval, Properties.Resources.Messaging_ReconnectIntervalInvalid_Message);
 
 			_options = settings.GetOptions();
 			_reconnectInterval = settings.ReconnectInterval;

@@ -29,12 +29,11 @@
 
 using System;
 
-namespace Zongsoft.Externals.Wechat
+namespace Zongsoft.Externals.Wechat;
+
+public enum Scenario
 {
-	public enum Scenario
-	{
-		App,
-		Web,
-		Native,
-	}
+	App,
+	Web,
+	Native,
 }

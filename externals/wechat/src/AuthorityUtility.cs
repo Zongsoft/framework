@@ -33,111 +33,110 @@ using System.Collections.Generic;
 
 using Zongsoft.Security;
 
-namespace Zongsoft.Externals.Wechat
+namespace Zongsoft.Externals.Wechat;
+
+public static class AuthorityUtility
 {
-	public static class AuthorityUtility
+	#region 静态字段
+	private static readonly IDictionary<string, IAuthority> _authorities = new Dictionary<string, IAuthority>(StringComparer.OrdinalIgnoreCase);
+	#endregion
+
+	#region 获取机构
+	public static IAuthority GetAuthority(string name = null)
 	{
-		#region 静态字段
-		private static readonly IDictionary<string, IAuthority> _authorities = new Dictionary<string, IAuthority>(StringComparer.OrdinalIgnoreCase);
-		#endregion
+		if(name == null)
+			name = string.Empty;
 
-		#region 获取机构
-		public static IAuthority GetAuthority(string name = null)
+		if(_authorities.TryGetValue(name, out var authority) && authority != null)
+			return authority;
+
+		lock(_authorities)
 		{
-			if(name == null)
-				name = string.Empty;
-
-			if(_authorities.TryGetValue(name, out var authority) && authority != null)
+			if(_authorities.TryGetValue(name, out authority))
 				return authority;
 
-			lock(_authorities)
-			{
-				if(_authorities.TryGetValue(name, out authority))
-					return authority;
+			authority = CreateAuthority(name);
 
-				authority = CreateAuthority(name);
-
-				if(authority == null)
-					return null;
-
-				if(string.IsNullOrEmpty(name))
-					_authorities.TryAdd(string.Empty, authority);
-
-				return _authorities.TryAdd(authority.Name, authority) ? authority : _authorities[authority.Name];
-			}
-		}
-
-		private static IAuthority CreateAuthority(string name)
-		{
-			Options.AuthorityOptions options;
+			if(authority == null)
+				return null;
 
 			if(string.IsNullOrEmpty(name))
-			{
-				options = Utility.GetOptions<Options.AuthorityOptionsCollection>("/Externals/Wechat/Authorities")?.GetDefault() ??
-					throw new WechatException("The configuration section for the default authority of the WeChat was not found.");
-			}
-			else
-			{
-				options = Utility.GetOptions<Options.AuthorityOptions>($"/Externals/Wechat/Authorities/{name}") ??
-					throw new WechatException($"The configuration section for the '{name}' authority of the WeChat was not found.");
-			}
+				_authorities.TryAdd(string.Empty, authority);
 
-			if(string.IsNullOrEmpty(options.Code))
-				throw new WechatException($"Invalid configuration section for the '{name}' authority of the WeChat.");
-
-			var certificate = GetCertificate(options.Directory, options.Code);
-			if(certificate == null)
-				throw new WechatException($"No certificate found for '{options.Code}({options.Name})' authority of the WeChat.");
-
-			return new Authority(options.Name, options.Code, options.Secret, certificate, new AccountCollection(options.Apps));
+			return _authorities.TryAdd(authority.Name, authority) ? authority : _authorities[authority.Name];
 		}
-		#endregion
-
-		#region 获取证书
-		private static ICertificate GetCertificate(DirectoryInfo directory, string authorityCode)
-		{
-			if(string.IsNullOrEmpty(authorityCode))
-				throw new ArgumentNullException(nameof(authorityCode));
-
-			if(directory == null || !directory.Exists)
-				return null;
-
-			var directories = directory.GetDirectories(authorityCode);
-
-			if(directories != null && directories.Length > 0)
-				directory = directories[0];
-
-			var files = directory.GetFiles(authorityCode + "*");
-
-			if(files == null || files.Length == 0)
-				files = directory.GetFiles();
-
-			FileInfo file = null;
-
-			for(int i = 0; i < files.Length; i++)
-			{
-				if(file == null)
-					file = files[i];
-				else if(files[i].CreationTimeUtc > file.CreationTimeUtc)
-					file = files[i];
-			}
-
-			return ResolveFile(file, authorityCode);
-		}
-
-		private static ICertificate ResolveFile(FileInfo file, string authorityCode)
-		{
-			if(file == null || !file.Exists)
-				return null;
-
-			return Certificate.FromPem(
-				Path.GetFileNameWithoutExtension(file.Name),
-				file.OpenRead(),
-				default,
-				new Certificate.CertificateIssuer(authorityCode),
-				new Certificate.CertificateSubject(authorityCode)
-			);
-		}
-		#endregion
 	}
+
+	private static IAuthority CreateAuthority(string name)
+	{
+		Options.AuthorityOptions options;
+
+		if(string.IsNullOrEmpty(name))
+		{
+			options = Utility.GetOptions<Options.AuthorityOptionsCollection>("/Externals/Wechat/Authorities")?.GetDefault() ??
+				throw new WechatException(Properties.Resources.Wechat_DefaultAuthorityRequired_Message);
+		}
+		else
+		{
+			options = Utility.GetOptions<Options.AuthorityOptions>($"/Externals/Wechat/Authorities/{name}") ??
+				throw new WechatException(string.Format(Properties.Resources.Wechat_AuthorityConfigurationRequired_Message, name));
+		}
+
+		if(string.IsNullOrEmpty(options.Code))
+			throw new WechatException(string.Format(Properties.Resources.Wechat_AuthorityConfigurationInvalid_Message, name));
+
+		var certificate = GetCertificate(options.Directory, options.Code);
+		if(certificate == null)
+			throw new WechatException(string.Format(Properties.Resources.Wechat_CertificateNotFound_Message, options.Code, options.Name));
+
+		return new Authority(options.Name, options.Code, options.Secret, certificate, new AccountCollection(options.Apps));
+	}
+	#endregion
+
+	#region 获取证书
+	private static ICertificate GetCertificate(DirectoryInfo directory, string authorityCode)
+	{
+		if(string.IsNullOrEmpty(authorityCode))
+			throw new ArgumentNullException(nameof(authorityCode));
+
+		if(directory == null || !directory.Exists)
+			return null;
+
+		var directories = directory.GetDirectories(authorityCode);
+
+		if(directories != null && directories.Length > 0)
+			directory = directories[0];
+
+		var files = directory.GetFiles(authorityCode + "*");
+
+		if(files == null || files.Length == 0)
+			files = directory.GetFiles();
+
+		FileInfo file = null;
+
+		for(int i = 0; i < files.Length; i++)
+		{
+			if(file == null)
+				file = files[i];
+			else if(files[i].CreationTimeUtc > file.CreationTimeUtc)
+				file = files[i];
+		}
+
+		return ResolveFile(file, authorityCode);
+	}
+
+	private static ICertificate ResolveFile(FileInfo file, string authorityCode)
+	{
+		if(file == null || !file.Exists)
+			return null;
+
+		return Certificate.FromPem(
+			Path.GetFileNameWithoutExtension(file.Name),
+			file.OpenRead(),
+			default,
+			new Certificate.CertificateIssuer(authorityCode),
+			new Certificate.CertificateSubject(authorityCode)
+		);
+	}
+	#endregion
 }

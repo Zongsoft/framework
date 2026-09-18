@@ -379,15 +379,15 @@ public class TimeSeriesScenarioTest(DatabaseFixture database)
 		float current,
 		int voltage,
 		float phase) => new()
-	{
-		Timestamp = timestamp,
-		MeterId = meterId,
-		Location = location,
-		GroupId = groupId,
-		Current = current,
-		Voltage = voltage,
-		Phase = phase,
-	};
+		{
+			Timestamp = timestamp,
+			MeterId = meterId,
+			Location = location,
+			GroupId = groupId,
+			Current = current,
+			Voltage = voltage,
+			Phase = phase,
+		};
 
 	private static VehicleTelemetry CreateVehicle(DateTime timestamp, int speed, int? altitude) => new()
 	{
@@ -410,34 +410,34 @@ public class TimeSeriesScenarioTest(DatabaseFixture database)
 		float? humidity,
 		bool raining,
 		string description) => new()
-	{
-		Timestamp = timestamp,
-		StationCode = stationCode,
-		Region = region,
-		Temperature = temperature,
-		Humidity = humidity,
-		WindDirection = temperature.HasValue ? (short)135 : null,
-		WindSpeed = humidity.HasValue ? 3.5F : null,
-		Raining = raining,
-		Description = description,
-	};
+		{
+			Timestamp = timestamp,
+			StationCode = stationCode,
+			Region = region,
+			Temperature = temperature,
+			Humidity = humidity,
+			WindDirection = temperature.HasValue ? (short)135 : null,
+			WindSpeed = humidity.HasValue ? 3.5F : null,
+			Raining = raining,
+			Description = description,
+		};
 
 	private static MotorWaveform CreateWaveform(
 		DateTime timestamp,
 		string measuringId,
 		string values,
 		int sampleRate) => new()
-	{
-		Timestamp = timestamp,
-		LineId = "LINE-01",
-		SiteId = "SITE-01",
-		ElevatorCode = "ESC-01",
-		MeasuringId = measuringId,
-		Values = values,
-		SampleRate = sampleRate,
-		Length = values.Split(',').Length,
-		Ratio = 1,
-	};
+		{
+			Timestamp = timestamp,
+			LineId = "LINE-01",
+			SiteId = "SITE-01",
+			ElevatorCode = "ESC-01",
+			MeasuringId = measuringId,
+			Values = values,
+			SampleRate = sampleRate,
+			Length = values.Split(',').Length,
+			Ratio = 1,
+		};
 
 	private static ICondition GetTimeCriteria(DateTime start, DateTime end) =>
 		Condition.GreaterThanEqual("Timestamp", start) &

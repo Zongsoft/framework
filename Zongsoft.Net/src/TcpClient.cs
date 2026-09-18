@@ -93,7 +93,7 @@ public class TcpClient<T> : IHandleable<T>, ISender<T>
 	IHandler IHandleable.Handler
 	{
 		get => this.Handler;
-		set => this.Handler = value as IHandler<T> ?? throw new ArgumentException($"The specified ‘{value}’ handler does not match.");
+		set => this.Handler = value as IHandler<T> ?? throw new ArgumentException(string.Format(Properties.Resources.Network_HandlerMismatch_Message, value));
 	}
 	#endregion
 
@@ -101,7 +101,7 @@ public class TcpClient<T> : IHandleable<T>, ISender<T>
 	public async Task ConnectAsync(EndPoint address = null)
 	{
 		if(address == null)
-			address = this.Address ?? throw new InvalidOperationException("The destination address to connect to is not specified.");
+			address = this.Address ?? throw new InvalidOperationException(Properties.Resources.Network_DestinationRequired_Message);
 
 		if(_channel != null)
 		{

@@ -61,7 +61,7 @@ public class EtcdServiceProvider :
 		{
 			var settings = ApplicationContext.Current.Configuration.GetOption<ConnectionSettingsCollection>("/Externals/Etcd/ConnectionSettings");
 			if(settings == null || settings.Count == 0)
-				throw new ConfigurationException($"Missing etcd connection settings.");
+				throw new ConfigurationException(Properties.Resources.Etcd_SettingsRequired_Message);
 
 			if(!string.IsNullOrEmpty(name) && settings.TryGetValue(name, Configuration.EtcdConnectionSettingsDriver.NAME, out var setting))
 				return setting;

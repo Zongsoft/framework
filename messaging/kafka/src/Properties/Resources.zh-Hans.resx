@@ -168,4 +168,10 @@
   <data name="Kafka.Settings.Group.Description" xml:space="preserve">
     <value>表示消息分组名称，如果未指定则默认生成一个随机的组名。</value>
   </data>
+	<data name="Messaging.TopicAlreadySubscribed.Message" xml:space="preserve">
+		<value>消息队列主题已经订阅。</value>
+	</data>
+	<data name="Messaging.TopicNotSubscribed.Message" xml:space="preserve">
+		<value>要消费的消息队列主题尚未订阅。</value>
+	</data>
 </root>

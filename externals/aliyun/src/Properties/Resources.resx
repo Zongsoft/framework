@@ -118,66 +118,120 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="PhoneTransmitter.Description" xml:space="preserve">
-    <value>提供手机短信、语音通知功能。</value>
+    <value>Provides SMS and voice notifications.</value>
   </data>
   <data name="PhoneTransmitter.Title" xml:space="preserve">
-    <value>手机</value>
+    <value>Mobile phone</value>
   </data>
-  <data name="Text.MissingCommandArguments" xml:space="preserve">
-    <value>缺少命令参数。</value>
+  <data name="Command.ArgumentsRequired.Message" xml:space="preserve">
+    <value>Missing the required command arguments.</value>
   </data>
   <data name="Text.NotificationSendCommand.Faild" xml:space="preserve">
-    <value>通知发送命令执行失败。</value>
+    <value>The notification send command failed.</value>
   </data>
   <data name="Text.NotificationSendCommand.Options.DeviceType" xml:space="preserve">
-    <value>推送的设备类型。</value>
+    <value>The target device type for the push notification.</value>
   </data>
   <data name="Text.NotificationSendCommand.Options.Expiry" xml:space="preserve">
-    <value>离线消息或通知的有效期（单位：分钟，最大支持72小时）。</value>
+    <value>The lifetime of an offline message or notification, in minutes, up to 72 hours.</value>
   </data>
   <data name="Text.NotificationSendCommand.Options.Name" xml:space="preserve">
-    <value>推送通道的名称（移动推送的AppKey参数）。</value>
+    <value>The push channel name (the AppKey parameter for Mobile Push).</value>
   </data>
   <data name="Text.NotificationSendCommand.Options.Target" xml:space="preserve">
-    <value>推送的目标，其含义由TargetType选项定义。</value>
+    <value>The push target, as defined by the TargetType option.</value>
   </data>
   <data name="Text.NotificationSendCommand.Options.TargetType" xml:space="preserve">
-    <value>推送目标类型（推送方式）。</value>
+    <value>The push target type (delivery mode).</value>
   </data>
   <data name="Text.NotificationSendCommand.Options.Title" xml:space="preserve">
-    <value>推送的消息或通知的标题。</value>
+    <value>The title of the push message or notification.</value>
   </data>
   <data name="Text.NotificationSendCommand.Options.Type" xml:space="preserve">
-    <value>推送的类型，默认为消息(Message)。</value>
+    <value>The push type. The default is Message.</value>
   </data>
   <data name="Text.Phone.Message" xml:space="preserve">
-    <value>短信</value>
+    <value>SMS</value>
   </data>
   <data name="Text.Phone.Voice" xml:space="preserve">
-    <value>语音</value>
+    <value>Voice</value>
   </data>
   <data name="Text.PhoneCallCommand.Options.Extra" xml:space="preserve">
-    <value>附加数据，通常表示拨打电话关联的业务数据。</value>
+    <value>Additional data, usually business data associated with the phone call.</value>
   </data>
   <data name="Text.PhoneCallCommand.Options.Interactive" xml:space="preserve">
-    <value>是否启用语音交互功能。</value>
+    <value>Whether to enable voice interaction.</value>
   </data>
   <data name="Text.PhoneCallCommand.Options.Parameters" xml:space="preserve">
-    <value>语音模板参数，参数之间使用逗号或竖线分隔，参数键值使用等号或冒号分隔（譬如：key1=value1,key2:value2）。</value>
+    <value>Voice template parameters. Separate parameters with commas or vertical bars and keys from values with equals signs or colons, for example: key1=value1,key2:value2.</value>
   </data>
   <data name="Text.PhoneCallCommand.Options.Template" xml:space="preserve">
-    <value>语音模板名称。</value>
+    <value>The voice template name.</value>
   </data>
   <data name="Text.PhoneSendCommand.Options.Extra" xml:space="preserve">
-    <value>附加数据，通常表示发送短信关联的业务数据。</value>
+    <value>Additional data, usually business data associated with the SMS message.</value>
   </data>
   <data name="Text.PhoneSendCommand.Options.Parameters" xml:space="preserve">
-    <value>短信模板参数，参数之间使用逗号或竖线分隔，参数键值使用等号或冒号分隔（譬如：key1=value1,key2:value2）。</value>
+    <value>SMS template parameters. Separate parameters with commas or vertical bars and keys from values with equals signs or colons, for example: key1=value1,key2:value2.</value>
   </data>
   <data name="Text.PhoneSendCommand.Options.Scheme" xml:space="preserve">
-    <value>短信签名，如果未指定则采用指定模板的默认签名。</value>
+    <value>The SMS signature. If omitted, uses the specified template's default signature.</value>
   </data>
   <data name="Text.PhoneSendCommand.Options.Template" xml:space="preserve">
-    <value>短信模板名称。</value>
+    <value>The SMS template name.</value>
   </data>
+	<data name="Time.MillisecondsInvalid.Message" xml:space="preserve">
+		<value>Invalid '{0}' value of 'totalMilliseconds' argument.</value>
+	</data>
+	<data name="Directory.PathInvalid.Message" xml:space="preserve">
+		<value>Invalid directory path.</value>
+	</data>
+	<data name="File.PathInvalid.Message" xml:space="preserve">
+		<value>Invalid file path.</value>
+	</data>
+	<data name="Directory.BucketRequired.Message" xml:space="preserve">
+		<value>Missing bucket name of the directory path.</value>
+	</data>
+	<data name="Telecom.SmsDestinationRequired.Message" xml:space="preserve">
+		<value>Missing destination for the send of telecom sms.</value>
+	</data>
+	<data name="Storage.ConfigurationRequired.Message" xml:space="preserve">
+		<value>Missing required configuration of the OSS file-system(aliyun).</value>
+	</data>
+	<data name="Pushing.ConfigurationRequired.Message" xml:space="preserve">
+		<value>Missing required configuration of the mobile-pushing sender(aliyun).</value>
+	</data>
+	<data name="Telecom.ConfigurationRequired.Message" xml:space="preserve">
+		<value>Missing required configuration of the phone service(aliyun).</value>
+	</data>
+	<data name="Telecom.SmsOptionsRequired.Message" xml:space="preserve">
+		<value>Missing required telecom sms option.</value>
+	</data>
+	<data name="Telecom.VoiceOptionsRequired.Message" xml:space="preserve">
+		<value>Missing required telecom voice option.</value>
+	</data>
+	<data name="Telecom.VoiceNumbersRequired.Message" xml:space="preserve">
+		<value>Missing required telecom voice phone numbers in the option.</value>
+	</data>
+	<data name="Path.WildcardPositionInvalid.Message" xml:space="preserve">
+		<value>The '*' character at last only in the '{0}' pattern.</value>
+	</data>
+	<data name="Path.PatternInvalid.Message" xml:space="preserve">
+		<value>The '{0}' pattern contains invalid characters.</value>
+	</data>
+	<data name="Argument.ValueUnsupported.Message" xml:space="preserve">
+		<value>The '{0}' value of parameter is not supported.</value>
+	</data>
+	<data name="Pushing.AppNotFound.Message" xml:space="preserve">
+		<value>The specified '{0}' app is not existed.</value>
+	</data>
+	<data name="Telecom.SmsTemplateNotFound.Message" xml:space="preserve">
+		<value>The specified '{0}' sms template is not existed.</value>
+	</data>
+	<data name="Telecom.VoiceTemplateNotFound.Message" xml:space="preserve">
+		<value>The specified '{0}' voice template is not existed.</value>
+	</data>
+	<data name="Pushing.ChannelUnsupported.Message" xml:space="preserve">
+		<value>Unsupported ‘{0}’ channel.</value>
+	</data>
 </root>

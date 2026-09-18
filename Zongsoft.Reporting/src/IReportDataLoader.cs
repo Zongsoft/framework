@@ -29,10 +29,9 @@
 
 using System;
 
-namespace Zongsoft.Reporting
+namespace Zongsoft.Reporting;
+
+public interface IReportDataLoader
 {
-	public interface IReportDataLoader
-	{
-		object Load(IReport report, IReportDataModel model);
-	}
+	object Load(IReport report, IReportDataModel model);
 }

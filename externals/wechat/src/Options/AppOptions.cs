@@ -29,19 +29,18 @@
 
 using System;
 
-namespace Zongsoft.Externals.Wechat.Options
-{
-	/// <summary>
-	/// 表示微信开放平台的第三方应用设置选项类。
-	/// </summary>
-	public class AppOptions
-	{
-		#region 公共属性
-		/// <summary>获取或设置微信应用标识。</summary>
-		public string Name { get; set; }
+namespace Zongsoft.Externals.Wechat.Options;
 
-		/// <summary>获取或设置微信应用的类型。</summary>
-		public AccountType Type { get; set; }
-		#endregion
-	}
+/// <summary>
+/// 表示微信开放平台的第三方应用设置选项类。
+/// </summary>
+public class AppOptions
+{
+	#region 公共属性
+	/// <summary>获取或设置微信应用标识。</summary>
+	public string Name { get; set; }
+
+	/// <summary>获取或设置微信应用的类型。</summary>
+	public AccountType Type { get; set; }
+	#endregion
 }

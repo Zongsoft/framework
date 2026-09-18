@@ -58,7 +58,8 @@ public class InsertSequenceTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
-		var model = Model.Build<RoleModel>(model => {
+		var model = Model.Build<RoleModel>(model =>
+		{
 			model.Name = $"${Zongsoft.Common.Randomizer.GenerateString()}";
 			model.Children =
 			[
@@ -162,7 +163,8 @@ public class InsertSequenceTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
-		var models = Model.Build<RoleModel>(COUNT, (model, index) => {
+		var models = Model.Build<RoleModel>(COUNT, (model, index) =>
+		{
 			model.Name = $"$Role#{(OFFSET + index)}";
 			model.Children =
 			[

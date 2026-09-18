@@ -30,45 +30,44 @@
 using System;
 using System.Collections.ObjectModel;
 
-namespace Zongsoft.Externals.Wechat.Options
+namespace Zongsoft.Externals.Wechat.Options;
+
+public class AppOptionsCollection : KeyedCollection<string, AppOptions>
 {
-	public class AppOptionsCollection : KeyedCollection<string, AppOptions>
+	#region 公共属性
+	public string Default { get; set; }
+	#endregion
+
+	#region 构造函数
+	public AppOptionsCollection() : base(StringComparer.OrdinalIgnoreCase) { }
+	#endregion
+
+	#region 公共方法
+	public AppOptions GetDefault() => this.Default != null && this.TryGetValue(this.Default, out var app) ? app : (this.Count > 0 ? this[0] : null);
+	public bool TryGetDefault(out AppOptions result)
 	{
-		#region 公共属性
-		public string Default { get; set; }
-		#endregion
+		result = this.Default != null && this.TryGetValue(this.Default, out var app) ? app : (this.Count > 0 ? this[0] : null);
+		return result != null;
+	}
 
-		#region 构造函数
-		public AppOptionsCollection() : base(StringComparer.OrdinalIgnoreCase) { }
-		#endregion
-
-		#region 公共方法
-		public AppOptions GetDefault() => this.Default != null && this.TryGetValue(this.Default, out var app) ? app : (this.Count > 0 ? this[0] : null);
-		public bool TryGetDefault(out AppOptions result)
+	public bool TryGetOption(string key, out AppOptions result)
+	{
+		if(string.IsNullOrEmpty(key))
 		{
-			result = this.Default != null && this.TryGetValue(this.Default, out var app) ? app : (this.Count > 0 ? this[0] : null);
-			return result != null;
-		}
+			key = this.Default;
 
-		public bool TryGetOption(string key, out AppOptions result)
-		{
 			if(string.IsNullOrEmpty(key))
 			{
-				key = this.Default;
-
-				if(string.IsNullOrEmpty(key))
-				{
-					result = null;
-					return false;
-				}
+				result = null;
+				return false;
 			}
-
-			return this.TryGetValue(key, out result);
 		}
-		#endregion
 
-		#region 重写方法
-		protected override string GetKeyForItem(AppOptions item) => item.Name;
-		#endregion
+		return this.TryGetValue(key, out result);
 	}
+	#endregion
+
+	#region 重写方法
+	protected override string GetKeyForItem(AppOptions item) => item.Name;
+	#endregion
 }
