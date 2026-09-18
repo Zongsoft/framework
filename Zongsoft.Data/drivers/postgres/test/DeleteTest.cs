@@ -100,8 +100,8 @@ public class DeleteTest(DatabaseFixture database)
 	[Fact]
 	public async Task DeleteAsync_Cascading2()
 	{
-		const uint TenantId = 1U;
-		const uint BranchId = 0x01_00_00_00;
+		const uint TENANT_ID = 1U;
+		const uint BRANCH_ID = 0x01_00_00_00;
 
 		if(!Global.IsTestingEnabled)
 			return;
@@ -109,16 +109,16 @@ public class DeleteTest(DatabaseFixture database)
 		var accessor = _database.Accessor;
 		await accessor.InsertAsync(Model.Build<Branch>(model =>
 		{
-			model.TenantId = TenantId;
-			model.BranchId = BranchId;
+			model.TenantId = TENANT_ID;
+			model.BranchId = BRANCH_ID;
 			model.BranchNo = "B01";
 			model.Name = "Branch#1";
 		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
 
 		await accessor.InsertAsync(Model.Build<Department>(model =>
 		{
-			model.TenantId = TenantId;
-			model.BranchId = BranchId;
+			model.TenantId = TENANT_ID;
+			model.BranchId = BRANCH_ID;
 			model.DepartmentId = 1;
 			model.DepartmentNo = "D01";
 			model.Name = "Department#1";
@@ -126,29 +126,29 @@ public class DeleteTest(DatabaseFixture database)
 
 		await accessor.InsertAsync(Model.Build<Team>(model =>
 		{
-			model.TenantId = TenantId;
-			model.BranchId = BranchId;
+			model.TenantId = TENANT_ID;
+			model.BranchId = BRANCH_ID;
 			model.TeamId = 1;
 			model.TeamNo = "T01";
 			model.Name = "Team#1";
 		}), DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
 
 		var count = await accessor.DeleteAsync<Branch>(
-			Condition.Equal(nameof(Branch.TenantId), TenantId) &
-			Condition.Equal(nameof(Branch.BranchId), BranchId),
+			Condition.Equal(nameof(Branch.TenantId), TENANT_ID) &
+			Condition.Equal(nameof(Branch.BranchId), BRANCH_ID),
 			$"{nameof(Branch.Departments)},{nameof(Branch.Teams)}");
 
 		Assert.Equal(3, count);
-		Assert.False(await accessor.ExistsAsync<Branch>(Condition.Equal(nameof(Branch.TenantId), TenantId) & Condition.Equal(nameof(Branch.BranchId), BranchId)));
-		Assert.False(await accessor.ExistsAsync<Team>(Condition.Equal(nameof(Team.TenantId), TenantId) & Condition.Equal(nameof(Team.BranchId), BranchId)));
-		Assert.False(await accessor.ExistsAsync<Department>(Condition.Equal(nameof(Department.TenantId), TenantId) & Condition.Equal(nameof(Department.BranchId), BranchId)));
+		Assert.False(await accessor.ExistsAsync<Branch>(Condition.Equal(nameof(Branch.TenantId), TENANT_ID) & Condition.Equal(nameof(Branch.BranchId), BRANCH_ID)));
+		Assert.False(await accessor.ExistsAsync<Team>(Condition.Equal(nameof(Team.TenantId), TENANT_ID) & Condition.Equal(nameof(Team.BranchId), BRANCH_ID)));
+		Assert.False(await accessor.ExistsAsync<Department>(Condition.Equal(nameof(Department.TenantId), TENANT_ID) & Condition.Equal(nameof(Department.BranchId), BRANCH_ID)));
 	}
 
 	[Fact]
 	public async Task DeleteAsync_Cascading3()
 	{
-		const uint TenantId = 1U;
-		const uint BranchId = 0x01_00_00_00;
+		const uint TENANT_ID = 1U;
+		const uint BRANCH_ID = 0x01_00_00_00;
 
 		if(!Global.IsTestingEnabled)
 			return;
@@ -156,33 +156,33 @@ public class DeleteTest(DatabaseFixture database)
 		var accessor = _database.Accessor;
 		var branch = Model.Build<Branch>(model =>
 		{
-			model.TenantId = TenantId;
-			model.BranchId = BranchId;
+			model.TenantId = TENANT_ID;
+			model.BranchId = BRANCH_ID;
 			model.BranchNo = "B01";
 			model.Name = "Branch#1";
 		});
 		var department = Model.Build<Department>(model =>
 		{
-			model.TenantId = TenantId;
-			model.BranchId = BranchId;
+			model.TenantId = TENANT_ID;
+			model.BranchId = BRANCH_ID;
 			model.DepartmentId = 1;
 			model.DepartmentNo = "D01";
 			model.Name = "Department#1";
 			model.Members = [
-				new DepartmentMember(TenantId, BranchId, 1, 1),
-				new DepartmentMember(TenantId, BranchId, 1, 404),
+				new DepartmentMember(TENANT_ID, BRANCH_ID, 1, 1),
+				new DepartmentMember(TENANT_ID, BRANCH_ID, 1, 404),
 			];
 		});
 		var team = Model.Build<Team>(model =>
 		{
-			model.TenantId = TenantId;
-			model.BranchId = BranchId;
+			model.TenantId = TENANT_ID;
+			model.BranchId = BRANCH_ID;
 			model.TeamId = 1;
 			model.TeamNo = "T01";
 			model.Name = "Team#1";
 			model.Members = [
-				new TeamMember(TenantId, BranchId, 1, 1),
-				new TeamMember(TenantId, BranchId, 1, 404),
+				new TeamMember(TENANT_ID, BRANCH_ID, 1, 1),
+				new TeamMember(TENANT_ID, BRANCH_ID, 1, 404),
 			];
 		});
 
@@ -191,16 +191,16 @@ public class DeleteTest(DatabaseFixture database)
 		await accessor.InsertAsync(team, $"*,{nameof(Team.Members)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never).IgnoreConstraint());
 
 		var count = await accessor.DeleteAsync<Branch>(
-			Condition.Equal(nameof(Branch.TenantId), TenantId) &
-			Condition.Equal(nameof(Branch.BranchId), BranchId),
+			Condition.Equal(nameof(Branch.TenantId), TENANT_ID) &
+			Condition.Equal(nameof(Branch.BranchId), BRANCH_ID),
 			$"{nameof(Branch.Departments)}{{{nameof(Department.Members)}}}," +
 			$"{nameof(Branch.Teams)}{{{nameof(Team.Members)}}}");
 
 		Assert.Equal(7, count);
-		Assert.False(await accessor.ExistsAsync<Branch>(Condition.Equal(nameof(Branch.TenantId), TenantId) & Condition.Equal(nameof(Branch.BranchId), BranchId)));
-		Assert.False(await accessor.ExistsAsync<Team>(Condition.Equal(nameof(Team.TenantId), TenantId) & Condition.Equal(nameof(Team.BranchId), BranchId) & Condition.Equal(nameof(Team.TeamId), 1)));
-		Assert.False(await accessor.ExistsAsync<TeamMember>(Condition.Equal(nameof(TeamMember.TenantId), TenantId) & Condition.Equal(nameof(TeamMember.BranchId), BranchId) & Condition.Equal(nameof(TeamMember.TeamId), 1)));
-		Assert.False(await accessor.ExistsAsync<Department>(Condition.Equal(nameof(Department.TenantId), TenantId) & Condition.Equal(nameof(Department.BranchId), BranchId) & Condition.Equal(nameof(Department.DepartmentId), 1)));
-		Assert.False(await accessor.ExistsAsync<DepartmentMember>(Condition.Equal(nameof(DepartmentMember.TenantId), TenantId) & Condition.Equal(nameof(DepartmentMember.BranchId), BranchId) & Condition.Equal(nameof(DepartmentMember.DepartmentId), 1)));
+		Assert.False(await accessor.ExistsAsync<Branch>(Condition.Equal(nameof(Branch.TenantId), TENANT_ID) & Condition.Equal(nameof(Branch.BranchId), BRANCH_ID)));
+		Assert.False(await accessor.ExistsAsync<Team>(Condition.Equal(nameof(Team.TenantId), TENANT_ID) & Condition.Equal(nameof(Team.BranchId), BRANCH_ID) & Condition.Equal(nameof(Team.TeamId), 1)));
+		Assert.False(await accessor.ExistsAsync<TeamMember>(Condition.Equal(nameof(TeamMember.TenantId), TENANT_ID) & Condition.Equal(nameof(TeamMember.BranchId), BRANCH_ID) & Condition.Equal(nameof(TeamMember.TeamId), 1)));
+		Assert.False(await accessor.ExistsAsync<Department>(Condition.Equal(nameof(Department.TenantId), TENANT_ID) & Condition.Equal(nameof(Department.BranchId), BRANCH_ID) & Condition.Equal(nameof(Department.DepartmentId), 1)));
+		Assert.False(await accessor.ExistsAsync<DepartmentMember>(Condition.Equal(nameof(DepartmentMember.TenantId), TENANT_ID) & Condition.Equal(nameof(DepartmentMember.BranchId), BRANCH_ID) & Condition.Equal(nameof(DepartmentMember.DepartmentId), 1)));
 	}
 }

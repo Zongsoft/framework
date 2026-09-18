@@ -430,6 +430,7 @@ partial class RedisService : IDistributedCache
 
 		if(typeof(T) == typeof(object))
 			return (T)this.GetEntry(key, out _, out expiry);
+
 		if(IsStringList(typeof(T)))
 		{
 			if(!_database.KeyExists(entryKey))
@@ -487,6 +488,7 @@ partial class RedisService : IDistributedCache
 			var result = await this.GetEntryAsync(key, cancellation);
 			return (T)result.value;
 		}
+
 		if(IsStringList(typeof(T)))
 			return await _database.KeyExistsAsync(entryKey).WaitAsync(cancellation) ? GetStringList<T>(await _database.ListRangeAsync(entryKey).WaitAsync(cancellation)) : default;
 
@@ -514,6 +516,7 @@ partial class RedisService : IDistributedCache
 			var objectResult = await this.GetEntryAsync(key, cancellation);
 			return ((T)objectResult.value, objectResult.expiry);
 		}
+
 		if(IsStringList(typeof(T)))
 		{
 			if(!await _database.KeyExistsAsync(entryKey).WaitAsync(cancellation))
@@ -558,6 +561,7 @@ partial class RedisService : IDistributedCache
 			value = (T)objectResult;
 			return objectResult != null;
 		}
+
 		if(IsStringList(typeof(T)))
 		{
 			var exists = _database.KeyExists(entryKey);
@@ -600,6 +604,7 @@ partial class RedisService : IDistributedCache
 			value = (T)objectResult;
 			return objectResult != null;
 		}
+
 		if(IsStringList(typeof(T)))
 		{
 			var exists = _database.KeyExists(entryKey);
@@ -646,6 +651,7 @@ partial class RedisService : IDistributedCache
 			var objectResult = await this.GetEntryAsync(key, cancellation);
 			return (objectResult.value != null, (T)objectResult.value);
 		}
+
 		if(IsStringList(typeof(T)))
 		{
 			var exists = await _database.KeyExistsAsync(entryKey).WaitAsync(cancellation);

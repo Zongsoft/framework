@@ -37,17 +37,13 @@ namespace Zongsoft.Externals.Aliyun;
 public static class Utility
 {
 	#region 常量定义
-	private static readonly DateTime EPOCH = new DateTime(1970, 1, 1);
+	private static readonly DateTime EPOCH = new(1970, 1, 1);
 	#endregion
 
-	/// <summary>
-	/// 将本地时间转换成GMT格式的时间文本。
-	/// </summary>
+	/// <summary>将本地时间转换成GMT格式的时间文本。</summary>
 	/// <param name="datetime">本地时间。</param>
 	/// <returns>返回被转换后的GMT格式的时间文本。</returns>
-	/// <remarks>
-	///		<para>如果北京时间为：2017-12-23 17:40:00，则该方法的返回结果为：Sat, 23 Dec 2017 09:40:00 GMT</para>
-	/// </remarks>
+	/// <remarks>如果北京时间为：<c>2017-12-23 17:40:00</c>，则该方法的返回结果为：<c>Sat, 23 Dec 2017 09:40:00 GMT</c>。</remarks>
 	public static string GetGmtTime(DateTime? datetime = null)
 	{
 		return (datetime.HasValue ? datetime.Value : DateTime.Now).ToUniversalTime().ToString("r");
@@ -65,9 +61,7 @@ public static class Utility
 
 	public static DateTime GetDateTimeFromEpoch(string milliseconds)
 	{
-		double number;
-
-		if(Zongsoft.Common.Convert.TryConvertValue(milliseconds, out number))
+		if(Zongsoft.Common.Convert.TryConvertValue(milliseconds, out double number))
 			return EPOCH.AddMilliseconds(number);
 		else
 			throw new ArgumentException(string.Format(Properties.Resources.Time_MillisecondsInvalid_Message, milliseconds));
@@ -127,9 +121,7 @@ public static class Utility
 		return text.ToString();
 	}
 
-	/// <summary>
-	/// 异步包装方法：确保在Web程序中不会被异步操作的并发线程乱入。
-	/// </summary>
+	/// <summary>异步包装方法：确保在Web程序中不会被异步操作的并发线程乱入。</summary>
 	/// <typeparam name="T">返回值的类型。</typeparam>
 	/// <param name="thunk">异步任务的委托。</param>
 	/// <returns>返回以同步方式返回异步任务的执行结果。</returns>

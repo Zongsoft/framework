@@ -35,7 +35,7 @@ namespace Zongsoft.Data.Common.Expressions;
 public class ParameterExpression : Expression
 {
 	#region 常量定义
-	internal const string Anonymous = "?";
+	internal const string ANONYMOUS = "?";
 	#endregion
 
 	#region 成员字段
@@ -83,7 +83,7 @@ public class ParameterExpression : Expression
 	public ParameterExpression(FieldIdentifier field, object value) : this(field, null, value) { }
 	public ParameterExpression(FieldIdentifier field, SchemaMember schema)
 	{
-		this.Name = Anonymous;
+		this.Name = ANONYMOUS;
 		this.Schema = schema;
 		this.Field = field ?? throw new ArgumentNullException(nameof(field));
 		this.Direction = ParameterDirection.Input;
@@ -94,7 +94,7 @@ public class ParameterExpression : Expression
 
 	public ParameterExpression(FieldIdentifier field, SchemaMember schema, object value)
 	{
-		this.Name = Anonymous;
+		this.Name = ANONYMOUS;
 		this.Schema = schema;
 		this.Field = field ?? throw new ArgumentNullException(nameof(field));
 		this.Direction = ParameterDirection.Input;

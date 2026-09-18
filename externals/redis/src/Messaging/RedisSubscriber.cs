@@ -251,6 +251,7 @@ public class RedisSubscriber : MessageConsumerBase<RedisQueue>
 		var entry = result[0];
 		var data = (byte[])entry.GetMessageData();
 		var compression = (string)entry.GetMessageCompression();
+
 		if(!string.IsNullOrEmpty(compression))
 			data = MessageCompression.Decompress(compression, data);
 

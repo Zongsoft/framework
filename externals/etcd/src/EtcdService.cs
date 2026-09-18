@@ -180,6 +180,7 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 		}, null, null, cancellation);
 		var result = new Dictionary<string, string>(response.Kvs.Count, StringComparer.Ordinal);
 		var namespacePrefix = string.IsNullOrEmpty(_namespace) ? string.Empty : _namespace + ":";
+
 		foreach(var item in response.Kvs)
 		{
 			var key = item.Key.ToStringUtf8();

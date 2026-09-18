@@ -334,6 +334,7 @@ public class Membership
 					{
 						if(reader.TokenType == JsonTokenType.EndArray)
 							return flags;
+
 						switch(reader.TokenType)
 						{
 							case JsonTokenType.EndArray:

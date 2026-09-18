@@ -360,12 +360,12 @@ partial class HardwareCollector
 
 		private static IEnumerable<IO.Hardwares.IHardware> GetSysfsDisks()
 		{
-			const string root = "/sys/block";
+			const string ROOT = "/sys/block";
 
-			if(!Directory.Exists(root))
+			if(!Directory.Exists(ROOT))
 				yield break;
 
-			foreach(var directory in Directory.EnumerateDirectories(root))
+			foreach(var directory in Directory.EnumerateDirectories(ROOT))
 			{
 				var name = System.IO.Path.GetFileName(directory);
 

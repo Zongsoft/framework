@@ -50,10 +50,10 @@ public class EtcdServiceTests
 		Assert.Equal(1.75, await service.IncreaseAsync("double", 0.25, 1.5), 10);
 		Assert.Equal(1.5, await service.DecreaseAsync("double", 0.25), 10);
 
-		const int count = 32;
-		var tasks = Enumerable.Range(0, count).Select(_ => service.IncreaseAsync("concurrent").AsTask()).ToArray();
+		const int COUNT = 32;
+		var tasks = Enumerable.Range(0, COUNT).Select(_ => service.IncreaseAsync("concurrent").AsTask()).ToArray();
 		var results = await Task.WhenAll(tasks);
-		Assert.Equal(Enumerable.Range(1, count).Select(value => (long)value), results.Order());
+		Assert.Equal(Enumerable.Range(1, COUNT).Select(value => (long)value), results.Order());
 
 		Assert.Equal(6, await service.IncreaseAsync("expiring", 1, 5, TimeSpan.FromSeconds(2)));
 		await EventuallyAsync(async () => !await service.ExistsAsync("expiring"), TimeSpan.FromSeconds(5));

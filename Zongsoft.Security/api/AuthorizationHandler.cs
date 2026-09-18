@@ -99,7 +99,8 @@ public class AuthorizationHandler : AuthorizationHandler<OperationAuthorizationR
 		else
 			context.Fail(new AuthorizationFailureReason(this, $"The '{requirement.Name}' operation is not authorized."));
 
-		async ValueTask<bool> Any(IEnumerable<Privilege> privileges, IAuthorizer authorizer, ClaimsIdentity identity, Parameters parameters)
+		#pragma warning disable CS8321
+		static async ValueTask<bool> Any(IEnumerable<Privilege> privileges, IAuthorizer authorizer, ClaimsIdentity identity, Parameters parameters)
 		{
 			foreach(var privilege in privileges)
 			{
@@ -110,7 +111,7 @@ public class AuthorizationHandler : AuthorizationHandler<OperationAuthorizationR
 			return false;
 		}
 
-		async ValueTask<bool> All(IEnumerable<Privilege> privileges, IAuthorizer authorizer, ClaimsIdentity identity, Parameters parameters)
+		static async ValueTask<bool> All(IEnumerable<Privilege> privileges, IAuthorizer authorizer, ClaimsIdentity identity, Parameters parameters)
 		{
 			foreach(var privilege in privileges)
 			{
@@ -120,6 +121,7 @@ public class AuthorizationHandler : AuthorizationHandler<OperationAuthorizationR
 
 			return true;
 		}
+		#pragma warning restore CS8321
 	}
 
 	private static IAuthorizer GetAuthorizer(System.Security.Principal.IIdentity identity)

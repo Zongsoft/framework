@@ -13,7 +13,7 @@ namespace Zongsoft.Data.Tests;
 [Collection(nameof(SchemaMappingCollection))]
 public class SchemaParserTest : IDisposable
 {
-	private const string Namespace = "SchemaTests";
+	private const string NAMESPACE = "SchemaTests";
 	private readonly SchemaParser _parser;
 
 	public SchemaParserTest()
@@ -27,7 +27,7 @@ public class SchemaParserTest : IDisposable
 	[InlineData(nameof(Employee.ComputedCode), MemberTypes.Field)]
 	public void Parse_ExplicitUnmappedModelMember_CreatesIgnoredMember(string name, MemberTypes memberType)
 	{
-		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", $"Id,{name}", typeof(Employee)));
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", $"Id,{name}", typeof(Employee)));
 		var computed = schema.Members[name];
 
 		Assert.True(computed.Ignored);
@@ -39,7 +39,7 @@ public class SchemaParserTest : IDisposable
 	[Fact]
 	public void Parse_ExplicitUnmappedModelMember_IsCaseInsensitive()
 	{
-		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "fullname", typeof(Employee)));
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", "fullname", typeof(Employee)));
 		var computed = Assert.Single(schema.Members);
 
 		Assert.Equal("fullname", computed.Name);
@@ -50,7 +50,7 @@ public class SchemaParserTest : IDisposable
 	[Fact]
 	public void Parse_NestedComputedMember_UsesNavigationModelScope()
 	{
-		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "Metric{DisplayAvatar}", typeof(Employee)));
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", "Metric{DisplayAvatar}", typeof(Employee)));
 		var computed = schema.Find("Metric.DisplayAvatar");
 
 		Assert.NotNull(computed);
@@ -61,9 +61,9 @@ public class SchemaParserTest : IDisposable
 	[Fact]
 	public void Parse_NavigationShorthands_ProduceEquivalentTrees()
 	{
-		var bare = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "Department", typeof(Employee)));
-		var dotted = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "Department.*", typeof(Employee)));
-		var braced = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "Department{*}", typeof(Employee)));
+		var bare = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", "Department", typeof(Employee)));
+		var dotted = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", "Department.*", typeof(Employee)));
+		var braced = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", "Department{*}", typeof(Employee)));
 
 		Assert.Equal(braced.ToString(), bare.ToString());
 		Assert.Equal(braced.ToString(), dotted.ToString());
@@ -75,23 +75,24 @@ public class SchemaParserTest : IDisposable
 	[Fact]
 	public void Parse_DottedNestedExpression_MatchesBracedExpression()
 	{
-		const string dottedExpression = "*,User,Department.*,Department.Manager.Name,Department.Manager.FullName,Department.Manager.Gender,!Department.Manager.Secret";
-		const string bracedExpression = "*,User{*},Department{*,Manager{Name,FullName,Gender,!Secret}}";
-		var dotted = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", dottedExpression, typeof(Employee)));
-		var braced = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", bracedExpression, typeof(Employee)));
+		const string DOTTED_EXPRESSION = "*,User,Department.*,Department.Manager.Name,Department.Manager.FullName,Department.Manager.Gender,!Department.Manager.Secret";
+		const string BRACED_EXPRESSION = "*,User{*},Department{*,Manager{Name,FullName,Gender,!Secret}}";
+
+		var dotted = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", DOTTED_EXPRESSION, typeof(Employee)));
+		var braced = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", BRACED_EXPRESSION, typeof(Employee)));
 
 		Assert.Equal(braced.ToString(), dotted.ToString());
 		Assert.True(dotted.Contains("Department.Manager.Name"));
 		Assert.True(dotted.Contains("Department.Manager.FullName"));
 		Assert.True(dotted.Contains("Department.Manager.Gender"));
 		Assert.False(dotted.Contains("Department.Manager.Secret"));
-		Assert.Equal(dottedExpression, dotted.Text);
+		Assert.Equal(DOTTED_EXPRESSION, dotted.Text);
 	}
 
 	[Fact]
 	public void Parse_DottedPath_IsCaseInsensitiveAndAllowsWhitespace()
 	{
-		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", " department . MANAGER . name ", typeof(Employee)));
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", " department . MANAGER . name ", typeof(Employee)));
 
 		Assert.True(schema.Contains("Department.Manager.Name"));
 		Assert.Equal("Department{Manager{Name}}", schema.ToString());
@@ -100,8 +101,8 @@ public class SchemaParserTest : IDisposable
 	[Fact]
 	public void Parse_NavigationExclusions_RemoveEntireMember()
 	{
-		var named = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "User,!User", typeof(Employee)));
-		var cleared = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "User{!}", typeof(Employee)));
+		var named = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", "User,!User", typeof(Employee)));
+		var cleared = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", "User{!}", typeof(Employee)));
 
 		Assert.True(named.IsEmpty);
 		Assert.True(cleared.IsEmpty);
@@ -111,7 +112,7 @@ public class SchemaParserTest : IDisposable
 	[Fact]
 	public void Parse_ClearThenIncludeInNavigation_RetainsNavigation()
 	{
-		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "User{!,Name}", typeof(Employee)));
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", "User{!,Name}", typeof(Employee)));
 
 		Assert.True(schema.Contains("User.Name"));
 		Assert.False(schema.Contains("User.Id"));
@@ -126,8 +127,8 @@ public class SchemaParserTest : IDisposable
 	[InlineData("Posts:10(~Approved)", "Posts:10(~Approved){*}")]
 	public void Parse_TerminalNavigationModifier_ExpandsWildcard(string shorthand, string explicitWildcard)
 	{
-		var actual = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", shorthand, typeof(Employee)));
-		var expected = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", explicitWildcard, typeof(Employee)));
+		var actual = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", shorthand, typeof(Employee)));
+		var expected = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", explicitWildcard, typeof(Employee)));
 
 		Assert.Equal(expected.ToString(), actual.ToString());
 		Assert.True(actual.Contains("Posts.Id"));
@@ -137,8 +138,8 @@ public class SchemaParserTest : IDisposable
 	[Fact]
 	public void Parse_TerminalNavigationModifiers_ExpandWildcard()
 	{
-		var shorthand = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "Posts:12(-Approved)", typeof(Employee)));
-		var explicitWildcard = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "Posts:12(~Approved){*}", typeof(Employee)));
+		var shorthand = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", "Posts:12(-Approved)", typeof(Employee)));
+		var explicitWildcard = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", "Posts:12(~Approved){*}", typeof(Employee)));
 		var member = shorthand.Members[nameof(Employee.Posts)];
 
 		Assert.Equal(explicitWildcard.ToString(), shorthand.ToString());
@@ -174,14 +175,14 @@ public class SchemaParserTest : IDisposable
 	[InlineData("User{!*}")]
 	public void Parse_InvalidDottedOrExclusionMember_ThrowsSchemaArgument(string expression)
 	{
-		var exception = Assert.Throws<DataArgumentException>(() => _parser.Parse($"{Namespace}.Employee", expression, typeof(Employee)));
+		var exception = Assert.Throws<DataArgumentException>(() => _parser.Parse($"{NAMESPACE}.Employee", expression, typeof(Employee)));
 		Assert.Equal("$schema", exception.Name);
 	}
 
 	[Fact]
 	public void Parse_DottedExclusionOfAbsentValidMember_IsNoOp()
 	{
-		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "Id,!Department.Manager.Secret", typeof(Employee)));
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", "Id,!Department.Manager.Secret", typeof(Employee)));
 
 		Assert.Single(schema.Members);
 		Assert.True(schema.Contains(nameof(Employee.Id)));
@@ -191,35 +192,37 @@ public class SchemaParserTest : IDisposable
 	[Fact]
 	public void Parse_DottedLeafExclusion_PreservesEmptyParentsAndCanonicalTree()
 	{
-		const string expression = "Department.Manager.Name,!Department.Manager.Name";
-		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", expression, typeof(Employee)));
+		const string EXPRESSION = "Department.Manager.Name,!Department.Manager.Name";
+
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", EXPRESSION, typeof(Employee)));
 		var canonical = schema.ToString();
 
 		Assert.True(schema.Contains("Department.Manager"));
 		Assert.False(schema.Contains("Department.Manager.Name"));
 		Assert.True(schema.Find("Department.Manager").Property.IsComplex);
 		Assert.Equal("Department{Manager{}}", canonical);
-		Assert.Equal(canonical, _parser.Parse($"{Namespace}.Employee", canonical, typeof(Employee)).ToString());
+		Assert.Equal(canonical, _parser.Parse($"{NAMESPACE}.Employee", canonical, typeof(Employee)).ToString());
 	}
 
 	[Fact]
 	public void Parse_DottedComputedMember_UsesNavigationModelScope()
 	{
-		const string expression = "ComputedProfile.DisplayAvatar";
-		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", expression, typeof(Employee)));
-		var computed = schema.Find(expression);
+		const string EXPRESSION = "ComputedProfile.DisplayAvatar";
+
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", EXPRESSION, typeof(Employee)));
+		var computed = schema.Find(EXPRESSION);
 
 		Assert.NotNull(computed);
 		Assert.True(computed.Ignored);
 		Assert.Equal(typeof(Profile).GetProperty(nameof(Profile.DisplayAvatar)), computed.Member);
-		Assert.Equal(expression, schema.Text);
+		Assert.Equal(EXPRESSION, schema.Text);
 		Assert.Equal("ComputedProfile{DisplayAvatar}", schema.ToString());
 	}
 
 	[Fact]
 	public void Parse_Wildcard_DoesNotAddUnmappedModelMembers()
 	{
-		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "*", typeof(Employee)));
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", "*", typeof(Employee)));
 
 		Assert.True(schema.Contains(nameof(Employee.Id)));
 		Assert.True(schema.Contains(nameof(Employee.FirstName)));
@@ -232,7 +235,7 @@ public class SchemaParserTest : IDisposable
 	[Fact]
 	public void SelectBuilder_IgnoredMembers_DoNotEmitFields()
 	{
-		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "FirstName,LastName,FullName", typeof(Employee)));
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", "FirstName,LastName,FullName", typeof(Employee)));
 		var statement = new SelectStatement(schema.Entity);
 		var aliaser = new Aliaser();
 
@@ -250,7 +253,7 @@ public class SchemaParserTest : IDisposable
 	[InlineData("Posts:*{*}", 0)]
 	public void SelectBuilder_CollectionLimit_AppliesOnlyPositiveLimits(string expression, int expected)
 	{
-		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", expression, typeof(Employee)));
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", expression, typeof(Employee)));
 		var statement = new SelectStatement(schema.Entity);
 		var member = schema.Members[nameof(Employee.Posts)];
 
@@ -273,7 +276,7 @@ public class SchemaParserTest : IDisposable
 	[Fact]
 	public void SelectBuilder_NegativeCollectionLimit_IsUnlimited()
 	{
-		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "Posts:1{*}", typeof(Employee)));
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", "Posts:1{*}", typeof(Employee)));
 		var statement = new SelectStatement(schema.Entity);
 		var member = schema.Members[nameof(Employee.Posts)];
 		var property = typeof(SchemaMemberBase).GetProperty(nameof(ISchemaMember.Limit));
@@ -289,7 +292,7 @@ public class SchemaParserTest : IDisposable
 	[Fact]
 	public void Parse_MappedMemberWinsOverUnrecognizedFallback()
 	{
-		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", nameof(Employee.FirstName), typeof(Employee)));
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", nameof(Employee.FirstName), typeof(Employee)));
 		var member = schema.Members[nameof(Employee.FirstName)];
 
 		Assert.False(member.Ignored);
@@ -299,7 +302,7 @@ public class SchemaParserTest : IDisposable
 	[Fact]
 	public void Parse_InheritedWildcard_UsesDerivedMemberAndIncludesBaseMembers()
 	{
-		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "*", typeof(Employee)));
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", "*", typeof(Employee)));
 
 		Assert.True(schema.Contains(nameof(Employee.BaseCode)));
 		Assert.Same(schema.Entity, schema.Members[nameof(Employee.FirstName)].Property.Entity);
@@ -310,7 +313,7 @@ public class SchemaParserTest : IDisposable
 	public void Parse_DerivedParserHandlesUnrecognizedMember()
 	{
 		var parser = new CustomSchemaParser();
-		var schema = Assert.IsType<Schema>(parser.Parse($"{Namespace}.Employee", "ProjectedName", typeof(Employee)));
+		var schema = Assert.IsType<Schema>(parser.Parse($"{NAMESPACE}.Employee", "ProjectedName", typeof(Employee)));
 		var member = schema.Members["ProjectedName"];
 
 		Assert.True(member.Ignored);
@@ -320,7 +323,7 @@ public class SchemaParserTest : IDisposable
 	[Fact]
 	public void Parse_UnknownMember_ThrowsSchemaArgument()
 	{
-		var exception = Assert.Throws<DataArgumentException>(() => _parser.Parse($"{Namespace}.Employee", "Misspelled", typeof(Employee)));
+		var exception = Assert.Throws<DataArgumentException>(() => _parser.Parse($"{NAMESPACE}.Employee", "Misspelled", typeof(Employee)));
 		Assert.Equal("$schema", exception.Name);
 		Assert.Contains("Misspelled", exception.Message);
 	}
@@ -328,7 +331,7 @@ public class SchemaParserTest : IDisposable
 	[Fact]
 	public void Parse_DefaultParserResolvesExplicitComputedMember()
 	{
-		var schema = Assert.IsType<Schema>(SchemaParser.Instance.Parse($"{Namespace}.Employee", nameof(Employee.FullName), typeof(Employee)));
+		var schema = Assert.IsType<Schema>(SchemaParser.Instance.Parse($"{NAMESPACE}.Employee", nameof(Employee.FullName), typeof(Employee)));
 		Assert.True(schema.Members[nameof(Employee.FullName)].Ignored);
 	}
 
@@ -338,7 +341,7 @@ public class SchemaParserTest : IDisposable
 	[InlineData("Item")]
 	public void Parse_NonPublicInstanceModelMember_ThrowsSchemaArgument(string name)
 	{
-		var exception = Assert.Throws<DataArgumentException>(() => _parser.Parse($"{Namespace}.Employee", name, typeof(Employee)));
+		var exception = Assert.Throws<DataArgumentException>(() => _parser.Parse($"{NAMESPACE}.Employee", name, typeof(Employee)));
 		Assert.Contains(name, exception.Message);
 	}
 
@@ -354,14 +357,14 @@ public class SchemaParserTest : IDisposable
 	[InlineData("*,Metric{*}", "Metric.Avatar")]
 	public void Parse_DeduplicatedExternalProjectShapes_UsesOnlySyntheticMappings(string expression, string expectedPath)
 	{
-		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", expression, typeof(Employee)));
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", expression, typeof(Employee)));
 		Assert.True(schema.Contains(expectedPath));
 	}
 
 	[Fact]
 	public void IncludeAndExclude_DeepCompatibilityPaths_MergeAndPrune()
 	{
-		var schema = Assert.IsType<Schema>(_parser.Parse($"{Namespace}.Employee", "Id,User{Name}", typeof(Employee)));
+		var schema = Assert.IsType<Schema>(_parser.Parse($"{NAMESPACE}.Employee", "Id,User{Name}", typeof(Employee)));
 
 		schema.Include("User.Profile.Avatar");
 		Assert.True(schema.Contains("User.Profile.Avatar"));
@@ -375,84 +378,84 @@ public class SchemaParserTest : IDisposable
 
 	public void Dispose()
 	{
-		Mapping.Entities.Remove($"{Namespace}.Employee");
-		Mapping.Entities.Remove($"{Namespace}.BaseEmployee");
-		Mapping.Entities.Remove($"{Namespace}.User");
-		Mapping.Entities.Remove($"{Namespace}.Profile");
-		Mapping.Entities.Remove($"{Namespace}.Post");
-		Mapping.Entities.Remove($"{Namespace}.Field");
-		Mapping.Entities.Remove($"{Namespace}.Component");
-		Mapping.Entities.Remove($"{Namespace}.Asset");
-		Mapping.Entities.Remove($"{Namespace}.BranchMember");
-		Mapping.Entities.Remove($"{Namespace}.Branch");
-		Mapping.Entities.Remove($"{Namespace}.Member");
-		Mapping.Entities.Remove($"{Namespace}.Role");
-		Mapping.Entities.Remove($"{Namespace}.Department");
-		Mapping.Entities.Remove($"{Namespace}.Manager");
+		Mapping.Entities.Remove($"{NAMESPACE}.Employee");
+		Mapping.Entities.Remove($"{NAMESPACE}.BaseEmployee");
+		Mapping.Entities.Remove($"{NAMESPACE}.User");
+		Mapping.Entities.Remove($"{NAMESPACE}.Profile");
+		Mapping.Entities.Remove($"{NAMESPACE}.Post");
+		Mapping.Entities.Remove($"{NAMESPACE}.Field");
+		Mapping.Entities.Remove($"{NAMESPACE}.Component");
+		Mapping.Entities.Remove($"{NAMESPACE}.Asset");
+		Mapping.Entities.Remove($"{NAMESPACE}.BranchMember");
+		Mapping.Entities.Remove($"{NAMESPACE}.Branch");
+		Mapping.Entities.Remove($"{NAMESPACE}.Member");
+		Mapping.Entities.Remove($"{NAMESPACE}.Role");
+		Mapping.Entities.Remove($"{NAMESPACE}.Department");
+		Mapping.Entities.Remove($"{NAMESPACE}.Manager");
 	}
 
 	private static void AddMappings()
 	{
-		var profile = new DataEntity(Namespace, "Profile");
+		var profile = new DataEntity(NAMESPACE, "Profile");
 		profile.Properties.Simplex(nameof(Profile.Avatar), DataType.String, 100, true);
 
-		var user = new DataEntity(Namespace, "User");
+		var user = new DataEntity(NAMESPACE, "User");
 		user.Properties.Simplex(nameof(User.Id), DataType.Int64, false);
 		user.Properties.Simplex(nameof(User.Name), DataType.String, 50, true);
 		user.Properties.Complex(nameof(User.Profile), "Profile");
 		user.Properties.Complex(nameof(User.BranchMembers), "BranchMember", false, DataAssociationMultiplicity.Many);
 		user.Properties.Complex(nameof(User.Members), "Member", false, DataAssociationMultiplicity.Many);
 
-		var post = new DataEntity(Namespace, "Post");
+		var post = new DataEntity(NAMESPACE, "Post");
 		post.Properties.Simplex(nameof(Post.Id), DataType.Int64, false);
 		post.Properties.Simplex(nameof(Post.Approved), DataType.Boolean, false).Sortable = true;
 
-		var component = new DataEntity(Namespace, "Component");
+		var component = new DataEntity(NAMESPACE, "Component");
 		component.Properties.Simplex(nameof(Component.Id), DataType.Int64, false);
 		component.Properties.Simplex(nameof(Component.Name), DataType.String, 50, true);
 
-		var field = new DataEntity(Namespace, "Field");
+		var field = new DataEntity(NAMESPACE, "Field");
 		field.Properties.Simplex(nameof(Field.Id), DataType.Int64, false);
 		field.Properties.Simplex(nameof(Field.Name), DataType.String, 50, true);
 		field.Properties.Complex(nameof(Field.Components), "Component", false, DataAssociationMultiplicity.Many);
 
-		var asset = new DataEntity(Namespace, "Asset");
+		var asset = new DataEntity(NAMESPACE, "Asset");
 		asset.Properties.Simplex(nameof(Asset.Id), DataType.Int64, false);
 		asset.Properties.Simplex(nameof(Asset.Name), DataType.String, 50, true);
 
-		var branch = new DataEntity(Namespace, "Branch");
+		var branch = new DataEntity(NAMESPACE, "Branch");
 		branch.Properties.Simplex(nameof(Branch.Id), DataType.Int64, false);
 		branch.Properties.Simplex(nameof(Branch.Name), DataType.String, 50, true);
 
-		var branchMember = new DataEntity(Namespace, "BranchMember");
+		var branchMember = new DataEntity(NAMESPACE, "BranchMember");
 		branchMember.Properties.Simplex(nameof(BranchMember.BranchId), DataType.Int64, false);
 		branchMember.Properties.Complex(nameof(BranchMember.Branch), "Branch");
 
-		var role = new DataEntity(Namespace, "Role");
+		var role = new DataEntity(NAMESPACE, "Role");
 		role.Properties.Simplex(nameof(Role.Id), DataType.Int64, false);
 		role.Properties.Simplex(nameof(Role.Name), DataType.String, 50, true);
 
-		var member = new DataEntity(Namespace, "Member");
+		var member = new DataEntity(NAMESPACE, "Member");
 		member.Properties.Simplex(nameof(Member.RoleId), DataType.Int64, false);
 		member.Properties.Complex(nameof(Member.Role), "Role");
 
-		var manager = new DataEntity(Namespace, "Manager");
+		var manager = new DataEntity(NAMESPACE, "Manager");
 		manager.Properties.Simplex(nameof(Manager.Id), DataType.Int64, false);
 		manager.Properties.Simplex(nameof(Manager.Name), DataType.String, 50, true);
 		manager.Properties.Simplex(nameof(Manager.FullName), DataType.String, 100, true);
 		manager.Properties.Simplex(nameof(Manager.Gender), DataType.String, 20, true);
 		manager.Properties.Simplex(nameof(Manager.Secret), DataType.String, 100, true);
 
-		var department = new DataEntity(Namespace, "Department");
+		var department = new DataEntity(NAMESPACE, "Department");
 		department.Properties.Simplex(nameof(Department.Id), DataType.Int64, false);
 		department.Properties.Simplex(nameof(Department.Name), DataType.String, 50, true);
 		department.Properties.Complex(nameof(Department.Manager), "Manager");
 
-		var baseEmployee = new DataEntity(Namespace, "BaseEmployee");
+		var baseEmployee = new DataEntity(NAMESPACE, "BaseEmployee");
 		baseEmployee.Properties.Simplex(nameof(Employee.BaseCode), DataType.String, 50, true);
 		baseEmployee.Properties.Simplex(nameof(Employee.FirstName), DataType.String, 50, true);
 
-		var employee = new DataEntity(Namespace, "Employee", "BaseEmployee");
+		var employee = new DataEntity(NAMESPACE, "Employee", "BaseEmployee");
 		employee.Properties.Simplex(nameof(Employee.Id), DataType.Int64, false);
 		employee.Properties.Simplex(nameof(Employee.FirstName), DataType.String, 50, true);
 		employee.Properties.Simplex(nameof(Employee.LastName), DataType.String, 50, true);

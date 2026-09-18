@@ -23,14 +23,14 @@ public class RedisConfigurationProviderTests
 		EnsureRedisNotifications();
 
 		await using var cache = CreateCache(out var cacheNamespace);
-		const string configurationKey = "configuration";
-		cache.SetValue(configurationKey, new Dictionary<string, string>
+		const string CONFIGURATION_KEY = "configuration";
+		cache.SetValue(CONFIGURATION_KEY, new Dictionary<string, string>
 		{
 			["Feature"] = "old",
 			["Nested:Value"] = "one",
 		});
 
-		var source = new RedisConfigurationSource("test") { Namespace = configurationKey };
+		var source = new RedisConfigurationSource("test") { Namespace = CONFIGURATION_KEY };
 		await using var provider = new RedisConfigurationProvider(source, cache);
 		provider.Load();
 
@@ -41,7 +41,7 @@ public class RedisConfigurationProviderTests
 
 		await provider.SubscriptionTask.WaitAsync(TimeSpan.FromSeconds(10));
 		var reloaded = GetNextReloadAsync(provider);
-		await cache.Database.HashSetAsync($"{cacheNamespace}:{configurationKey}", "Feature", "new");
+		await cache.Database.HashSetAsync($"{cacheNamespace}:{CONFIGURATION_KEY}", "Feature", "new");
 
 		Assert.True(provider.TryGet("Feature", out var snapshotValue));
 		Assert.Equal("old", snapshotValue);
@@ -58,21 +58,21 @@ public class RedisConfigurationProviderTests
 		EnsureRedisNotifications();
 
 		await using var cache = CreateCache(out var cacheNamespace);
-		const string configurationKey = "settings";
-		cache.SetValue(configurationKey, new Dictionary<string, string> { ["Value"] = "one" });
+		const string CONFIGURATION_KEY = "settings";
+		cache.SetValue(CONFIGURATION_KEY, new Dictionary<string, string> { ["Value"] = "one" });
 
-		var source = new RedisConfigurationSource("test") { Namespace = configurationKey };
+		var source = new RedisConfigurationSource("test") { Namespace = CONFIGURATION_KEY };
 		await using var provider = new RedisConfigurationProvider(source, cache);
 		provider.Load();
 		await provider.SubscriptionTask.WaitAsync(TimeSpan.FromSeconds(10));
 
 		var unrelatedReload = GetNextReloadAsync(provider);
-		await cache.Database.StringSetAsync($"{cacheNamespace}:{configurationKey}Extra", "ignored");
+		await cache.Database.StringSetAsync($"{cacheNamespace}:{CONFIGURATION_KEY}Extra", "ignored");
 		await Task.Delay(300);
 		Assert.False(unrelatedReload.IsCompleted);
 
 		var childReload = GetNextReloadAsync(provider);
-		await cache.Database.StringSetAsync($"{cacheNamespace}:{configurationKey}:Child", "related");
+		await cache.Database.StringSetAsync($"{cacheNamespace}:{CONFIGURATION_KEY}:Child", "related");
 		await childReload.WaitAsync(TimeSpan.FromSeconds(10));
 
 		await cache.ClearAsync();
@@ -84,11 +84,11 @@ public class RedisConfigurationProviderTests
 		EnsureRedisNotifications();
 
 		await using var cache = CreateCache(out _);
-		const string configurationKey = "individual";
-		Assert.True(await cache.SetValueAsync($"{configurationKey}:First", "one"));
-		Assert.True(await cache.SetValueAsync($"{configurationKey}:Second", "two"));
+		const string CONFIGURATION_KEY = "individual";
+		Assert.True(await cache.SetValueAsync($"{CONFIGURATION_KEY}:First", "one"));
+		Assert.True(await cache.SetValueAsync($"{CONFIGURATION_KEY}:Second", "two"));
 
-		var source = new RedisConfigurationSource("test") { Namespace = configurationKey };
+		var source = new RedisConfigurationSource("test") { Namespace = CONFIGURATION_KEY };
 		await using var provider = new RedisConfigurationProvider(source, cache);
 		provider.Load();
 		await provider.SubscriptionTask.WaitAsync(TimeSpan.FromSeconds(10));
@@ -97,15 +97,15 @@ public class RedisConfigurationProviderTests
 		Assert.Equal("one", first);
 		Assert.True(provider.TryGet("Second", out var second));
 		Assert.Equal("two", second);
-		Assert.False(provider.TryGet($"{configurationKey}:First", out _));
+		Assert.False(provider.TryGet($"{CONFIGURATION_KEY}:First", out _));
 
 		var reloaded = GetNextReloadAsync(provider);
-		Assert.True(await cache.SetValueAsync($"{configurationKey}:Third", "three"));
+		Assert.True(await cache.SetValueAsync($"{CONFIGURATION_KEY}:Third", "three"));
 		await reloaded.WaitAsync(TimeSpan.FromSeconds(10));
 
 		Assert.True(provider.TryGet("Third", out var third));
 		Assert.Equal("three", third);
-		Assert.False(provider.TryGet($"{configurationKey}:Third", out _));
+		Assert.False(provider.TryGet($"{CONFIGURATION_KEY}:Third", out _));
 
 		await cache.ClearAsync();
 	}
@@ -116,23 +116,23 @@ public class RedisConfigurationProviderTests
 		EnsureRedisNotifications();
 
 		await using var cache = CreateCache(out var cacheNamespace);
-		const string configurationKey = "dispose";
-		cache.SetValue(configurationKey, new Dictionary<string, string> { ["Value"] = "before" });
+		const string CONFIGURATION_KEY = "dispose";
+		cache.SetValue(CONFIGURATION_KEY, new Dictionary<string, string> { ["Value"] = "before" });
 
-		var source = new RedisConfigurationSource("test") { Namespace = configurationKey };
+		var source = new RedisConfigurationSource("test") { Namespace = CONFIGURATION_KEY };
 		var provider = new RedisConfigurationProvider(source, cache);
 		provider.Load();
 		await provider.SubscriptionTask.WaitAsync(TimeSpan.FromSeconds(10));
 		await provider.DisposeAsync();
 
 		var reload = GetNextReloadAsync(provider);
-		await cache.Database.HashSetAsync($"{cacheNamespace}:{configurationKey}", "Value", "after");
+		await cache.Database.HashSetAsync($"{cacheNamespace}:{CONFIGURATION_KEY}", "Value", "after");
 		await Task.Delay(300);
 
 		Assert.False(reload.IsCompleted);
 		Assert.True(provider.TryGet("Value", out var snapshot));
 		Assert.Equal("before", snapshot);
-		Assert.True(await cache.ExistsAsync(configurationKey));
+		Assert.True(await cache.ExistsAsync(CONFIGURATION_KEY));
 
 		await provider.DisposeAsync();
 		await cache.ClearAsync();

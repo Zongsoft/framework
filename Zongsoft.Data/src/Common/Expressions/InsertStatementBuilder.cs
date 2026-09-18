@@ -196,7 +196,7 @@ public class InsertStatementBuilder : IStatementBuilder<DataInsertContext>
 					{
 						if(statement.Values[j] is ParameterExpression pe && pe.Schema != null)
 						{
-							var parameter = pe.Clone(ParameterExpression.Anonymous);
+							var parameter = pe.Clone(ParameterExpression.ANONYMOUS);
 							statement.Values.Add(parameter);
 							statement.Parameters.Add(parameter);
 						}

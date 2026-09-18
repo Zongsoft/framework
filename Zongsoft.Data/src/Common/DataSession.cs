@@ -41,8 +41,8 @@ namespace Zongsoft.Data.Common;
 public partial class DataSession : IDisposable, IAsyncDisposable
 {
 	#region 私有变量
-	private readonly bool TransactionSupported;
-	private readonly bool ShareConnectionSupported;
+	private readonly bool _TransactionSupported_;
+	private readonly bool _ShareConnectionSupported_;
 
 	private readonly SemaphoreSlim _semaphore; //表示当前会话连接及事务初始化的同步信号量
 	#endregion
@@ -72,8 +72,8 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 			throw new DataException(Properties.Resources.DataSession_AmbientTransactionCompleted_Message);
 		}
 
-		this.TransactionSupported = !source.Features.Support(Feature.TransactionSuppressed);
-		this.ShareConnectionSupported = source.Features.Support(Feature.MultipleActiveResultSets);
+		_TransactionSupported_ = !source.Features.Support(Feature.TransactionSuppressed);
+		_ShareConnectionSupported_ = source.Features.Support(Feature.MultipleActiveResultSets);
 	}
 	#endregion
 
@@ -113,7 +113,7 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 	/// <returns>返回获取的数据连接租约。</returns>
 	public ConnectionLease AcquireLease(bool transactionSuppressed = false)
 	{
-		if(!this.TransactionSupported || (_ambient != null && transactionSuppressed))
+		if(!_TransactionSupported_ || (_ambient != null && transactionSuppressed))
 		{
 			this.EnsureActive();
 			return this.CreateIndependentLease();
@@ -128,7 +128,7 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 	/// <returns>返回获取的数据连接租约。</returns>
 	public async ValueTask<ConnectionLease> AcquireLeaseAsync(bool transactionSuppressed = false, CancellationToken cancellation = default)
 	{
-		if(!this.TransactionSupported || (_ambient != null && transactionSuppressed))
+		if(!_TransactionSupported_ || (_ambient != null && transactionSuppressed))
 		{
 			this.EnsureActive();
 			return await this.CreateIndependentLeaseAsync(cancellation).ConfigureAwait(false);
@@ -422,7 +422,7 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 		{
 			_connection = _connector.CreateConnection();
 
-			if(this.TransactionSupported)
+			if(_TransactionSupported_)
 				_connection.StateChange += this.Connection_StateChange;
 		}
 
@@ -431,7 +431,7 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 
 	private DbTransaction EnsureTransaction(DbConnection connection)
 	{
-		if(!this.TransactionSupported)
+		if(!_TransactionSupported_)
 			return null;
 
 		return _transaction ??= connection.BeginTransaction(_ambient?.IsolationLevel ?? IsolationLevel.Unspecified);

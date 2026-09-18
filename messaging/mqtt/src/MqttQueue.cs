@@ -45,7 +45,7 @@ namespace Zongsoft.Messaging.Mqtt;
 public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConnectionSettings>
 {
 	#region 常量定义
-	private static readonly int HandlerConcurrency = Math.Clamp(Environment.ProcessorCount * 2, 4, 256);
+	private static readonly int _HandlerConcurrency_ = Math.Clamp(Environment.ProcessorCount * 2, 4, 256);
 	#endregion
 
 	#region 成员字段
@@ -59,7 +59,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 	{
 		ArgumentNullException.ThrowIfNull(settings);
 
-		_dispatchers = new SemaphoreSlim(HandlerConcurrency, HandlerConcurrency);
+		_dispatchers = new SemaphoreSlim(_HandlerConcurrency_, _HandlerConcurrency_);
 		_cancellation = new CancellationTokenSource();
 		this.Features.Add(MessageQueueFeature.Compression);
 		_connection = new ConnectionManager(this, settings, _cancellation.Token);
@@ -276,7 +276,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 		var deadline = DateTime.UtcNow + timeout;
 		var acquired = 0;
 
-		while(acquired < HandlerConcurrency)
+		while(acquired < _HandlerConcurrency_)
 		{
 			var remaining = deadline - DateTime.UtcNow;
 			if(remaining <= TimeSpan.Zero || !_dispatchers.Wait(remaining))
@@ -285,7 +285,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 			acquired++;
 		}
 
-		if(acquired == HandlerConcurrency)
+		if(acquired == _HandlerConcurrency_)
 			return true;
 
 		if(acquired > 0)

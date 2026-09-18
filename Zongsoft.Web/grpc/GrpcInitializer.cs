@@ -45,7 +45,7 @@ namespace Zongsoft.Web.Grpc;
 public class GrpcInitializer : IApplicationInitializer<IApplicationBuilder>
 {
 	#region 私有变量
-	private static readonly MethodInfo MapGrpcServiceMethod = typeof(GrpcEndpointRouteBuilderExtensions).GetMethod
+	private static readonly MethodInfo _MapGrpcServiceMethod_ = typeof(GrpcEndpointRouteBuilderExtensions).GetMethod
 	(
 		nameof(GrpcEndpointRouteBuilderExtensions.MapGrpcService),
 		1, BindingFlags.Public | BindingFlags.Static,
@@ -73,7 +73,7 @@ public class GrpcInitializer : IApplicationInitializer<IApplicationBuilder>
 			return;
 
 		//Make the MapGrpcService method generic with the type of service.
-		var method = MapGrpcServiceMethod.MakeGenericMethod(serviceType);
+		var method = _MapGrpcServiceMethod_.MakeGenericMethod(serviceType);
 
 		//Invoke the MapGrpcService method to map gRPC services.
 		method.Invoke(null, [app]);

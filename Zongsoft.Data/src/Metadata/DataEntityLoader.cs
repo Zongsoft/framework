@@ -74,9 +74,7 @@ public class DataEntityLoader : Mapping.Loader
 	#region 私有方法
 	private static Type[] GetTypes(Assembly assembly)
 	{
-		try {
-			return assembly.GetExportedTypes();
-		}
+		try { return assembly.GetExportedTypes(); }
 		catch { return []; }
 	}
 

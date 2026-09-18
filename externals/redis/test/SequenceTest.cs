@@ -18,79 +18,79 @@ public class SequenceTest
 	//[Fact]
 	public void TestIncrementByOne()
 	{
-		var KEY = GetKey();
+		var key = GetKey();
 
-		Assert.False(_redis.Exists(KEY));
+		Assert.False(_redis.Exists(key));
 
-		Assert.Equal(1, _redis.Increase(KEY));
-		Assert.Equal(2, _redis.Increase(KEY));
-		Assert.Equal(3, _redis.Increase(KEY));
-		Assert.Equal(4, _redis.Increase(KEY));
-		Assert.Equal(5, _redis.Increase(KEY));
+		Assert.Equal(1, _redis.Increase(key));
+		Assert.Equal(2, _redis.Increase(key));
+		Assert.Equal(3, _redis.Increase(key));
+		Assert.Equal(4, _redis.Increase(key));
+		Assert.Equal(5, _redis.Increase(key));
 
-		Assert.Equal(4, _redis.Decrease(KEY));
-		Assert.Equal(3, _redis.Decrease(KEY));
-		Assert.Equal(2, _redis.Decrease(KEY));
-		Assert.Equal(1, _redis.Decrease(KEY));
-		Assert.Equal(0, _redis.Decrease(KEY));
+		Assert.Equal(4, _redis.Decrease(key));
+		Assert.Equal(3, _redis.Decrease(key));
+		Assert.Equal(2, _redis.Decrease(key));
+		Assert.Equal(1, _redis.Decrease(key));
+		Assert.Equal(0, _redis.Decrease(key));
 
-		((Zongsoft.Common.ISequence)_redis).Reset(KEY);
-		Assert.Equal(0, (int)_redis.GetValue(KEY));
+		((Zongsoft.Common.ISequence)_redis).Reset(key);
+		Assert.Equal(0, (int)_redis.GetValue(key));
 
-		Assert.True(_redis.Remove(KEY));
-		Assert.False(_redis.Exists(KEY));
+		Assert.True(_redis.Remove(key));
+		Assert.False(_redis.Exists(key));
 	}
 
 	//[Fact]
 	public void TestIncrementByInterval()
 	{
-		var KEY = GetKey();
+		var key = GetKey();
 
 		const int ROUND = 100;
 		const int INTERVAL = 10;
 
-		Assert.False(_redis.Exists(KEY));
+		Assert.False(_redis.Exists(key));
 
 		for(int i = 1; i <= ROUND; i++)
 		{
-			Assert.Equal(i * INTERVAL, _redis.Increase(KEY, INTERVAL));
+			Assert.Equal(i * INTERVAL, _redis.Increase(key, INTERVAL));
 		}
 
 		for(int i = 1; i <= ROUND; i++)
 		{
-			Assert.Equal((ROUND - i) * INTERVAL, _redis.Decrease(KEY, INTERVAL));
+			Assert.Equal((ROUND - i) * INTERVAL, _redis.Decrease(key, INTERVAL));
 		}
 
-		Assert.True(_redis.Remove(KEY));
-		Assert.False(_redis.Exists(KEY));
+		Assert.True(_redis.Remove(key));
+		Assert.False(_redis.Exists(key));
 	}
 
 	//[Fact]
 	public void TestIncrementWithSeed()
 	{
-		var KEY = GetKey();
+		var key = GetKey();
 
 		const int ROUND = 100;
 		const int INTERVAL = 10;
 		const int SEED = 10000;
 
-		Assert.False(_redis.Exists(KEY));
+		Assert.False(_redis.Exists(key));
 
 		for(int i = 1; i <= ROUND; i++)
 		{
-			Assert.Equal((i * INTERVAL) + SEED, _redis.Increase(KEY, INTERVAL, SEED));
+			Assert.Equal((i * INTERVAL) + SEED, _redis.Increase(key, INTERVAL, SEED));
 		}
 
 		for(int i = 1; i <= ROUND; i++)
 		{
-			Assert.Equal(((ROUND - i) * INTERVAL) + SEED, _redis.Decrease(KEY, INTERVAL, SEED));
+			Assert.Equal(((ROUND - i) * INTERVAL) + SEED, _redis.Decrease(key, INTERVAL, SEED));
 		}
 
-		((Zongsoft.Common.ISequence)_redis).Reset(KEY, SEED);
-		Assert.Equal(SEED, (int)_redis.GetValue(KEY));
+		((Zongsoft.Common.ISequence)_redis).Reset(key, SEED);
+		Assert.Equal(SEED, (int)_redis.GetValue(key));
 
-		Assert.True(_redis.Remove(KEY));
-		Assert.False(_redis.Exists(KEY));
+		Assert.True(_redis.Remove(key));
+		Assert.False(_redis.Exists(key));
 	}
 
 	#region 私有方法

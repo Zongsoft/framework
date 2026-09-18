@@ -911,6 +911,7 @@ public class DataConnectorTest
 		var lease = asynchronous ? await session.AcquireLeaseAsync() : session.AcquireLease();
 		var connection = Assert.IsType<DbConnectionMocker>(lease.Connection);
 		var transaction = Assert.IsType<DbTransactionMocker>(lease.Transaction);
+
 		if(asynchronous)
 			await lease.DisposeAsync();
 		else
@@ -941,6 +942,7 @@ public class DataConnectorTest
 		var lease = asynchronous ? await session.AcquireLeaseAsync() : session.AcquireLease();
 		var connection = Assert.IsType<DbConnectionMocker>(lease.Connection);
 		var transaction = Assert.IsType<DbTransactionMocker>(lease.Transaction);
+
 		if(asynchronous)
 			await lease.DisposeAsync();
 		else

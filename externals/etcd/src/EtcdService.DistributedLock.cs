@@ -139,6 +139,7 @@ partial class EtcdService : IDistributedLockManager
 		var client = await this.ConnectAsync(cancellation);
 		var physicalKey = this.GetKey(key);
 		var current = await client.GetAsync(physicalKey, null, null, cancellation);
+
 		if(current.Kvs.Count == 0 || !current.Kvs[0].Value.Span.SequenceEqual(token))
 			return false;
 
@@ -201,6 +202,7 @@ partial class EtcdService : IDistributedLockManager
 		var client = await this.ConnectAsync(cancellation);
 		var physicalKey = this.GetKey(key);
 		var current = await client.GetAsync(physicalKey, null, null, cancellation);
+
 		if(current.Kvs.Count == 0 || !current.Kvs[0].Value.Span.SequenceEqual(token))
 			return false;
 

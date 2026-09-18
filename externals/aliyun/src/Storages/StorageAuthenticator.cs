@@ -36,11 +36,11 @@ namespace Zongsoft.Externals.Aliyun.Storages;
 internal class StorageAuthenticator : HttpAuthenticator
 {
 	#region 单例字段
-	public static StorageAuthenticator Instance = new StorageAuthenticator("OSS");
+	public static StorageAuthenticator Instance = new("OSS");
 	#endregion
 
 	#region 常量定义
-	private static readonly HashSet<string> AVAILABLE_RESOURCES = new HashSet<string>(new string[] {
+	private static readonly HashSet<string> AVAILABLE_RESOURCES = new(new string[] {
 		"acl", "uploadId", "partNumber", "uploads", "cors", "logging",
 		"website", "delete", "referer", "lifecycle", "security-token",
 		"response-cache-control", "response-content-disposition", "response-content-encoding",

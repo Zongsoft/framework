@@ -176,11 +176,13 @@ public class RedisConfigurationProvider : ConfigurationProvider, IDisposable, IA
 			try { await subscriptionTask; }
 			catch(OperationCanceledException) { }
 		}
+
 		if(reloadTask != null)
 		{
 			try { await reloadTask; }
 			catch(OperationCanceledException) { }
 		}
+
 		if(_subscription != null)
 			await _subscription.DisposeAsync();
 

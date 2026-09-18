@@ -125,10 +125,10 @@ public class JsonInputFormatter : TextInputFormatter, IInputFormatterExceptionPo
 	#region 嵌套子类
 	internal sealed class TranscodingReadStream : Stream
 	{
-		private static readonly int OverflowBufferSize = Encoding.UTF8.GetMaxByteCount(1); // The most number of bytes used to represent a single UTF char
+		private static readonly int _OverflowBufferSize_ = Encoding.UTF8.GetMaxByteCount(1); // The most number of bytes used to represent a single UTF char
 
-		internal const int MaxByteBufferSize = 4096;
-		internal const int MaxCharBufferSize = 3 * MaxByteBufferSize;
+		internal const int MAX_BYTE_BUFFER_SIZE = 4096;
+		internal const int MAX_CHAR_BUFFER_SIZE = 3 * MAX_BYTE_BUFFER_SIZE;
 
 		private readonly Stream _stream;
 		private readonly Decoder _decoder;
@@ -143,18 +143,18 @@ public class JsonInputFormatter : TextInputFormatter, IInputFormatterExceptionPo
 			_stream = input;
 
 			_byteBuffer = new ArraySegment<byte>(
-				ArrayPool<byte>.Shared.Rent(MaxByteBufferSize),
+				ArrayPool<byte>.Shared.Rent(MAX_BYTE_BUFFER_SIZE),
 				0,
 				count: 0);
 
-			var maxCharBufferSize = Math.Min(MaxCharBufferSize, sourceEncoding.GetMaxCharCount(MaxByteBufferSize));
+			var maxCharBufferSize = Math.Min(MAX_CHAR_BUFFER_SIZE, sourceEncoding.GetMaxCharCount(MAX_BYTE_BUFFER_SIZE));
 			_charBuffer = new ArraySegment<char>(
 				ArrayPool<char>.Shared.Rent(maxCharBufferSize),
 				0,
 				count: 0);
 
 			_overflowBuffer = new ArraySegment<byte>(
-				ArrayPool<byte>.Shared.Rent(OverflowBufferSize),
+				ArrayPool<byte>.Shared.Rent(_OverflowBufferSize_),
 				0,
 				count: 0);
 

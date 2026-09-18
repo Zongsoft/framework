@@ -196,7 +196,7 @@ public sealed class RedisMessageStorageTests
 
 	private sealed class ApplicationScope : IDisposable
 	{
-		private static readonly FieldInfo CurrentField = typeof(ApplicationContext).GetField("_current", BindingFlags.Static | BindingFlags.NonPublic);
+		private static readonly FieldInfo _CurrentField_ = typeof(ApplicationContext).GetField("_current", BindingFlags.Static | BindingFlags.NonPublic);
 		private readonly IApplicationContext _previous;
 		private readonly TestApplicationContext _current;
 
@@ -209,7 +209,7 @@ public sealed class RedisMessageStorageTests
 		public void Dispose()
 		{
 			_current.Dispose();
-			CurrentField.SetValue(null, _previous);
+			_CurrentField_.SetValue(null, _previous);
 		}
 	}
 

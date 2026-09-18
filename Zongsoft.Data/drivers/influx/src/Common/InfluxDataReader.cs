@@ -294,6 +294,7 @@ public class InfluxDataReader(IAsyncEnumerable<PointDataValues> data) : DbDataRe
 
 		for(int i = 0; i < tags.Length; i++)
 			_entries[i] = new(tags[i], EntryKind.Tag);
+
 		for(int i = 0; i < fields.Length; i++)
 			_entries[tags.Length + i] = new(fields[i], EntryKind.Field);
 	}

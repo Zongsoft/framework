@@ -45,7 +45,7 @@ public class ModelPopulatorProvider : IDataPopulatorProvider
 
 	#region 静态变量
 	private static readonly ConcurrentDictionary<PopulatorKey, IDataPopulator> _populators = new();
-	private static readonly MethodInfo CreatePopulatorMethod = typeof(ModelPopulatorProvider).GetMethod(
+	private static readonly MethodInfo _CreatePopulatorMethod_ = typeof(ModelPopulatorProvider).GetMethod(
 		nameof(CreatePopulator),
 		1,
 		BindingFlags.NonPublic | BindingFlags.Static,
@@ -74,7 +74,7 @@ public class ModelPopulatorProvider : IDataPopulatorProvider
 
 		return _populators.GetOrAdd(key, (key, record) =>
 		{
-			var method = CreatePopulatorMethod.MakeGenericMethod(key.ModelType);
+			var method = _CreatePopulatorMethod_.MakeGenericMethod(key.ModelType);
 			var invoker = method.CreateDelegate(typeof(Func<,,,>)
 				.MakeGenericType(
 					typeof(IDataDriver),

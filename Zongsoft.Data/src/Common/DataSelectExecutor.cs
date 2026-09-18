@@ -275,7 +275,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 	{
 		return (IEnumerable)System.Activator.CreateInstance(
 			typeof(LazyCollection<>).MakeGenericType(elementType),
-			[ context, statement, command, skip, paging ]);
+			[context, statement, command, skip, paging]);
 	}
 	#endregion
 

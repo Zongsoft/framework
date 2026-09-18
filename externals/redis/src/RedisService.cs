@@ -164,6 +164,7 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 		var physicalPrefix = this.GetKey(prefix) + ":";
 		var keys = this.ScanKeys(EscapePattern(physicalPrefix) + "*").ToArray();
 		var result = new Dictionary<string, string>(keys.Length, StringComparer.OrdinalIgnoreCase);
+
 		if(keys.Length == 0)
 			return result;
 

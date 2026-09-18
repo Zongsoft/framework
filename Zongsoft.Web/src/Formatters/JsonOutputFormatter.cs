@@ -166,8 +166,8 @@ public class JsonOutputFormatter : TextOutputFormatter
 	#region 嵌套子类
 	internal sealed class TranscodingWriteStream : Stream
 	{
-		internal const int MaxCharBufferSize = 4096;
-		internal const int MaxByteBufferSize = 4 * MaxCharBufferSize;
+		internal const int MAX_CHAR_BUFFER_SIZE = 4096;
+		internal const int MAX_BYTE_BUFFER_SIZE = 4 * MAX_CHAR_BUFFER_SIZE;
 		private readonly int _maxByteBufferSize;
 
 		private readonly Stream _stream;
@@ -180,8 +180,8 @@ public class JsonOutputFormatter : TextOutputFormatter
 		public TranscodingWriteStream(Stream stream, Encoding targetEncoding)
 		{
 			_stream = stream;
-			_charBuffer = ArrayPool<char>.Shared.Rent(MaxCharBufferSize);
-			_maxByteBufferSize = Math.Min(MaxByteBufferSize, targetEncoding.GetMaxByteCount(MaxCharBufferSize));
+			_charBuffer = ArrayPool<char>.Shared.Rent(MAX_CHAR_BUFFER_SIZE);
+			_maxByteBufferSize = Math.Min(MAX_BYTE_BUFFER_SIZE, targetEncoding.GetMaxByteCount(MAX_CHAR_BUFFER_SIZE));
 			_decoder = Encoding.UTF8.GetDecoder();
 			_encoder = targetEncoding.GetEncoder();
 		}

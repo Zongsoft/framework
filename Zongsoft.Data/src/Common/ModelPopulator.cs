@@ -36,7 +36,7 @@ namespace Zongsoft.Data.Common;
 public class ModelPopulator<TModel> : IDataPopulator, IDataPopulator<TModel>
 {
 	#region 私有变量
-	private static readonly Func<IDataRecord, TModel> Creator = typeof(TModel).IsAbstract ?
+	private static readonly Func<IDataRecord, TModel> _Creator_ = typeof(TModel).IsAbstract ?
 		record => Model.Build<TModel>() :
 		record => System.Activator.CreateInstance<TModel>();
 	#endregion
@@ -83,12 +83,12 @@ public class ModelPopulator<TModel> : IDataPopulator, IDataPopulator<TModel>
 		{
 			if(member.Ordinal >= 0)
 			{
-				model ??= Creator.Invoke(record);
+				model ??= _Creator_.Invoke(record);
 				count += member.Token.Populate(ref model, record, member.Ordinal) ? 1 : 0;
 			}
 			else if(member.Populator != null)
 			{
-				model ??= Creator.Invoke(record);
+				model ??= _Creator_.Invoke(record);
 				var value = member.Populate(record);
 				count += value is null ? 0 : 1;
 				member.Token.SetValue(ref model, value);

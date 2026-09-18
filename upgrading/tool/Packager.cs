@@ -101,6 +101,7 @@ public partial class Packager : IDisposable
 
 		foreach(var file in Directory.GetFiles(source))
 			this.PackFile(file, Path.Combine(entryName, Path.GetFileName(file)), excluded);
+
 		foreach(var directory in Directory.GetDirectories(source))
 			this.PackDirectory(directory, Path.Combine(entryName, Path.GetFileName(directory)), excluded);
 	}

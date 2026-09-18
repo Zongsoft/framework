@@ -37,7 +37,7 @@ namespace Zongsoft.Plugins;
 internal class PluginResolver
 {
 	#region 静态变量
-	private static readonly Regex ExtendElementRegex = new Regex(@"\w+(\.\w+)+", RegexOptions.Singleline | RegexOptions.Compiled);
+	private static readonly Regex _ExtendElementRegex_ = new Regex(@"\w+(\.\w+)+", RegexOptions.Singleline | RegexOptions.Compiled);
 	#endregion
 
 	#region 构造函数
@@ -546,7 +546,7 @@ internal class PluginResolver
 		if(string.IsNullOrWhiteSpace(elementName))
 			throw new ArgumentNullException(nameof(elementName));
 
-		if(ExtendElementRegex.IsMatch(elementName))
+		if(_ExtendElementRegex_.IsMatch(elementName))
 			return true;
 
 		return false;

@@ -129,6 +129,7 @@ public sealed partial class ZeroQueue
 
 					foreach(var subscription in _subscriptions.Values)
 						this.Register(subscription);
+
 					foreach(var command in _publishes.Values)
 						this.Send(command);
 				}
@@ -300,9 +301,11 @@ public sealed partial class ZeroQueue
 								new DateTime(ticks, DateTimeKind.Utc) : DateTime.UtcNow;
 							var compression = message[8].ConvertToString();
 							var data = message[9].ToByteArray();
+
 							if(string.IsNullOrWhiteSpace(identifier) || identifier.Length > Protocol.MaxIdentifierSize || topic == null ||
 						   Encoding.UTF8.GetByteCount(topic) > Protocol.MaxTopicSize || data.Length > Protocol.MaxPayloadSize)
 								break;
+
 							if(!string.IsNullOrEmpty(compression))
 							{
 								data = MessageCompression.Decompress(compression, data);
@@ -336,6 +339,7 @@ public sealed partial class ZeroQueue
 							var identifier = message[2].ConvertToString();
 							if(_subscriptions.TryGetValue(identifier, out var subscription))
 								subscription.Command?.Completion.TrySetException(new InvalidOperationException(string.Format(Properties.Resources.ZeroQueue_ReliableProtocolError_Message, code)));
+
 							if(_publishes.Remove(identifier, out var command))
 							{
 								command.CancellationRegistration.Dispose();
@@ -388,6 +392,7 @@ public sealed partial class ZeroQueue
 				this.Disconnect(false);
 				foreach(var subscription in _subscriptions.Values)
 					subscription.Command?.Completion.TrySetException(new ObjectDisposedException(nameof(Transport)));
+
 				foreach(var command in _publishes.Values)
 				{
 					command.CancellationRegistration.Dispose();

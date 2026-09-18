@@ -45,17 +45,19 @@ public sealed class EtcdLockAcquireCommand() : EtcdCommandBase("Acquire")
 	{
 		RequireArguments(context);
 		var etcd = GetEtcd(context);
+		var locks = new List<IDistributedLock>(context.Arguments.Count);
 		var options = new DistributedLockOptions(context.Options.GetValue("expiry", TimeSpan.FromSeconds(60)))
 		{
 			RenewalInterval = context.Options.GetValue<TimeSpan?>("renewal"),
 		};
-		var locks = new List<IDistributedLock>(context.Arguments.Count);
+
 		foreach(var key in context.Arguments)
 		{
 			var locker = await etcd.AcquireAsync(key, options, cancellation);
 			locks.Add(locker);
 			context.Output.WriteLine($"{key} {Convert.ToHexString(locker.Token)} {locker.IsHeld} #{locker.FencingToken}");
 		}
+
 		return locks;
 	}
 }

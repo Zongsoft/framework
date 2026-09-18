@@ -100,6 +100,7 @@ public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisC
 		var payload = data.ToArray();
 		var compression = options?.Compression ?? default;
 		var compressor = default(string);
+
 		if(compression.CanCompress(payload.Length))
 		{
 			payload = compression.Compress(payload);

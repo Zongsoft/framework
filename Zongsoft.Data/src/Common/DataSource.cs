@@ -42,7 +42,7 @@ public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataS
 	#endregion
 
 	#region 私有常量
-	private static readonly Regex MARS_FEATURE = new(@"\bMultipleActiveResultSets\s*=\s*True\b", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
+	private static readonly Regex _MarsFeature_ = new(@"\bMultipleActiveResultSets\s*=\s*True\b", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
 	#endregion
 
 	#region 成员字段
@@ -132,7 +132,7 @@ public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataS
 			{
 				_features = new FeatureCollection(this.Driver?.Features);
 
-				if(!string.IsNullOrEmpty(_connectionString) && MARS_FEATURE.IsMatch(_connectionString))
+				if(!string.IsNullOrEmpty(_connectionString) && _MarsFeature_.IsMatch(_connectionString))
 					_features.Add(Feature.MultipleActiveResultSets);
 			}
 

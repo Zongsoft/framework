@@ -33,27 +33,27 @@ public class RedisDistributedLockTests
 		EnsureRedis();
 
 		await using var cache = CreateCache(out var cacheNamespace);
-		const string key = "fencing";
+		const string KEY = "fencing";
 
 		try
 		{
-			await using var first = await cache.AcquireAsync(key, TimeSpan.FromSeconds(2));
+			await using var first = await cache.AcquireAsync(KEY, TimeSpan.FromSeconds(2));
 			Assert.True(first.IsLocked);
 			Assert.True(first.FencingToken > 0);
 
-			await using var rejected = await cache.AcquireAsync(key, TimeSpan.FromSeconds(2));
+			await using var rejected = await cache.AcquireAsync(KEY, TimeSpan.FromSeconds(2));
 			Assert.True(rejected.IsUnheld);
 			Assert.Equal(0, rejected.FencingToken);
 
 			var firstToken = first.FencingToken;
 			await first.DisposeAsync();
-			await using var second = await cache.AcquireAsync(key, TimeSpan.FromSeconds(2));
+			await using var second = await cache.AcquireAsync(KEY, TimeSpan.FromSeconds(2));
 			Assert.True(second.IsLocked);
 			Assert.True(second.FencingToken > firstToken);
 		}
 		finally
 		{
-			await DeleteLockKeysAsync(cache, cacheNamespace, key);
+			await DeleteLockKeysAsync(cache, cacheNamespace, KEY);
 		}
 	}
 
@@ -63,27 +63,27 @@ public class RedisDistributedLockTests
 		EnsureRedis();
 
 		await using var cache = CreateCache(out var cacheNamespace);
-		const string key = "manual-renewal";
+		const string KEY = "manual-renewal";
 
 		try
 		{
-			await using var distributedLock = await cache.AcquireAsync(key, TimeSpan.FromMilliseconds(500));
+			await using var distributedLock = await cache.AcquireAsync(KEY, TimeSpan.FromMilliseconds(500));
 			Assert.True(distributedLock.IsLocked);
 
 			await Task.Delay(300);
 			Assert.True(await distributedLock.RenewAsync());
 			await Task.Delay(300);
 			Assert.True(distributedLock.IsLocked);
-			Assert.True((await cache.GetExpiryAsync(key)) > TimeSpan.Zero);
+			Assert.True((await cache.GetExpiryAsync(KEY)) > TimeSpan.Zero);
 
-			await cache.Database.StringSetAsync($"{cacheNamespace}:{key}", "foreign-owner", TimeSpan.FromSeconds(2));
+			await cache.Database.StringSetAsync($"{cacheNamespace}:{KEY}", "foreign-owner", TimeSpan.FromSeconds(2));
 			Assert.False(await distributedLock.RenewAsync());
 			Assert.True(distributedLock.IsUnheld);
-			Assert.Equal("foreign-owner", (string)await cache.Database.StringGetAsync($"{cacheNamespace}:{key}"));
+			Assert.Equal("foreign-owner", (string)await cache.Database.StringGetAsync($"{cacheNamespace}:{KEY}"));
 		}
 		finally
 		{
-			await DeleteLockKeysAsync(cache, cacheNamespace, key);
+			await DeleteLockKeysAsync(cache, cacheNamespace, KEY);
 		}
 	}
 
@@ -139,18 +139,18 @@ public class RedisDistributedLockTests
 		EnsureRedis();
 
 		await using var cache = CreateCache(out var cacheNamespace);
-		const string key = "entered-renewal";
+		const string KEY = "entered-renewal";
 
 		try
 		{
-			await using var holder = await cache.AcquireAsync(key, TimeSpan.FromSeconds(2));
+			await using var holder = await cache.AcquireAsync(KEY, TimeSpan.FromSeconds(2));
 			Assert.True(holder.IsLocked);
 
 			var options = new DistributedLockOptions(TimeSpan.FromMilliseconds(300))
 			{
 				RenewalInterval = TimeSpan.FromMilliseconds(75),
 			};
-			await using var contender = await cache.AcquireAsync(key, options);
+			await using var contender = await cache.AcquireAsync(KEY, options);
 			Assert.True(contender.IsUnheld);
 			Assert.Equal(0, contender.FencingToken);
 
@@ -162,15 +162,15 @@ public class RedisDistributedLockTests
 
 			await Task.Delay(800);
 			Assert.True(contender.IsLocked);
-			Assert.True((await cache.GetExpiryAsync(key)) > TimeSpan.Zero);
+			Assert.True((await cache.GetExpiryAsync(KEY)) > TimeSpan.Zero);
 
-			await using var secondCompetitor = await cache.AcquireAsync(key, TimeSpan.FromSeconds(1));
+			await using var secondCompetitor = await cache.AcquireAsync(KEY, TimeSpan.FromSeconds(1));
 			Assert.True(secondCompetitor.IsUnheld);
 			Assert.Equal(0, secondCompetitor.FencingToken);
 		}
 		finally
 		{
-			await DeleteLockKeysAsync(cache, cacheNamespace, key);
+			await DeleteLockKeysAsync(cache, cacheNamespace, KEY);
 		}
 	}
 

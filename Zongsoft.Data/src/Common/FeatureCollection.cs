@@ -36,7 +36,7 @@ namespace Zongsoft.Data.Common;
 public class FeatureCollection : ICollection<Feature>
 {
 	#region 静态常量
-	private static readonly Version ZERO_VERSION = new();
+	private static readonly Version _ZeroVersion_ = new();
 	#endregion
 
 	#region 成员字段
@@ -76,7 +76,7 @@ public class FeatureCollection : ICollection<Feature>
 			throw new ArgumentNullException(nameof(name));
 
 		if(version == null)
-			version = ZERO_VERSION;
+			version = _ZeroVersion_;
 
 		if(_features.TryGetValue(name, out var versions))
 		{
@@ -175,7 +175,7 @@ public class FeatureCollection : ICollection<Feature>
 	#region 虚拟方法
 	protected virtual bool OnSupport(string name, Version version)
 	{
-		if(version == null || version == ZERO_VERSION)
+		if(version == null || version == _ZeroVersion_)
 			return _features.ContainsKey(name);
 
 		if(_features.TryGetValue(name, out var versions))
@@ -203,7 +203,7 @@ public class FeatureCollection : ICollection<Feature>
 
 		if(_features.TryGetValue(feature.Name, out var versions))
 			return feature.Version == null ||
-				   feature.Version == ZERO_VERSION ||
+				   feature.Version == _ZeroVersion_ ||
 				   Array.Exists(versions, ver => ver == feature.Version);
 
 		return false;

@@ -96,7 +96,7 @@ public class MqttQueuePublishingTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		const int count = 500;
+		const int COUNT = 500;
 
 		using var server = await MqttServerScope.StartAsync();
 		using var publisher = MqttTestUtility.CreateQueue(server.Port, "publisher");
@@ -107,20 +107,20 @@ public class MqttQueuePublishingTests
 		await subscriber.SubscribeAsync(topic, messages);
 
 		var stopwatch = Stopwatch.StartNew();
-		var publishing = Enumerable.Range(0, count)
+		var publishing = Enumerable.Range(0, COUNT)
 			.Select(index => publisher.ProduceAsync(topic, BitConverter.GetBytes(index)).AsTask())
 			.ToArray();
 
 		await Task.WhenAll(publishing);
-		var received = await messages.ReceiveManyAsync(count, TimeSpan.FromSeconds(30));
+		var received = await messages.ReceiveManyAsync(COUNT, TimeSpan.FromSeconds(30));
 		stopwatch.Stop();
 
-		Assert.Equal(count, received.Length);
-		Assert.Equal(count, received.Select(message => BitConverter.ToInt32(message.Data)).Distinct().Count());
+		Assert.Equal(COUNT, received.Length);
+		Assert.Equal(COUNT, received.Select(message => BitConverter.ToInt32(message.Data)).Distinct().Count());
 		Assert.All(publishing, task => Assert.Null(task.Result));
 		Assert.InRange(stopwatch.Elapsed, TimeSpan.Zero, TimeSpan.FromSeconds(30));
-		Assert.True(count / stopwatch.Elapsed.TotalSeconds >= 1,
-			$"MQTT concurrent producer throughput was below 1 publication/s; {count} published-and-received payloads took {stopwatch.Elapsed}.");
+		Assert.True(COUNT / stopwatch.Elapsed.TotalSeconds >= 1,
+			$"MQTT concurrent producer throughput was below 1 publication/s; {COUNT} published-and-received payloads took {stopwatch.Elapsed}.");
 	}
 
 	[Fact]
@@ -129,23 +129,23 @@ public class MqttQueuePublishingTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		const int count = 32;
+		const int COUNT = 32;
 
 		using var server = await MqttServerScope.StartAsync();
 		using var publisher = MqttTestUtility.CreateQueue(server.Port, "publisher");
 		using var subscriber = MqttTestUtility.CreateQueue(server.Port, "subscriber");
-		var handler = new ConcurrentMessageHandler(count);
+		var handler = new ConcurrentMessageHandler(COUNT);
 		var topic = $"tests/consumers/{Guid.NewGuid():N}";
 
 		await subscriber.SubscribeAsync(topic, handler);
 
-		var publishing = Enumerable.Range(0, count)
+		var publishing = Enumerable.Range(0, COUNT)
 			.Select(index => publisher.ProduceAsync(topic, BitConverter.GetBytes(index)).AsTask());
 
 		await Task.WhenAll(publishing);
 		await handler.WaitAsync(TimeSpan.FromSeconds(10));
 
-		Assert.Equal(count, handler.Count);
+		Assert.Equal(COUNT, handler.Count);
 		Assert.True(handler.MaximumConcurrency > 1);
 	}
 

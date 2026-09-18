@@ -41,7 +41,7 @@ namespace Zongsoft.Web.SignalR;
 public static class HubEndpointRouteBuilderExtensions
 {
 	#region 静态字段
-	private static readonly MethodInfo MapMethod = typeof(Microsoft.AspNetCore.Builder.HubEndpointRouteBuilderExtensions).GetMethod
+	private static readonly MethodInfo _MapMethod_ = typeof(Microsoft.AspNetCore.Builder.HubEndpointRouteBuilderExtensions).GetMethod
 	(
 		nameof(Microsoft.AspNetCore.Builder.HubEndpointRouteBuilderExtensions.MapHub),
 		BindingFlags.Public | BindingFlags.Static,
@@ -64,7 +64,7 @@ public static class HubEndpointRouteBuilderExtensions
 
 	public static HubEndpointConventionBuilder MapHub(this IEndpointRouteBuilder endpoints, TypeInfo type, string pattern)
 	{
-		var map = MapMethod.MakeGenericMethod(type);
+		var map = _MapMethod_.MakeGenericMethod(type);
 
 		return (HubEndpointConventionBuilder)map.Invoke(null, [endpoints, pattern, (HttpConnectionDispatcherOptions options) =>
 		{

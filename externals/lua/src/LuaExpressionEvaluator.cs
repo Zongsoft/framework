@@ -131,12 +131,12 @@ public sealed class LuaExpressionEvaluator : ExpressionEvaluatorBase
 	#region 嵌套子类
 	private sealed class Assistant(IExpressionEvaluatorOptions options)
 	{
-		private static readonly MethodInfo ListMethod = typeof(Assistant).GetMethod(nameof(List), BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-		private static readonly MethodInfo ArrayMethod = typeof(Assistant).GetMethod(nameof(Array), BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-		private static readonly MethodInfo DictionaryMethod = typeof(Assistant).GetMethod(nameof(Dictionary), BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+		private static readonly MethodInfo _ListMethod_ = typeof(Assistant).GetMethod(nameof(List), BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+		private static readonly MethodInfo _ArrayMethod_ = typeof(Assistant).GetMethod(nameof(Array), BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+		private static readonly MethodInfo _DictionaryMethod_ = typeof(Assistant).GetMethod(nameof(Dictionary), BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
 
-		private static readonly MethodInfo ErrorMethod = typeof(Assistant).GetMethod(nameof(Error), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-		private static readonly MethodInfo PrintMethod = typeof(Assistant).GetMethod(nameof(Print), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+		private static readonly MethodInfo _ErrorMethod_ = typeof(Assistant).GetMethod(nameof(Error), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+		private static readonly MethodInfo _PrintMethod_ = typeof(Assistant).GetMethod(nameof(Print), BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
 
 		private readonly IExpressionEvaluatorOptions _options = options;
 
@@ -145,11 +145,11 @@ public sealed class LuaExpressionEvaluator : ExpressionEvaluatorBase
 			if(lua == null)
 				return;
 
-			lua.RegisterFunction("list", null, ListMethod);
-			lua.RegisterFunction("array", null, ArrayMethod);
-			lua.RegisterFunction("error", this, ErrorMethod);
-			lua.RegisterFunction("print", this, PrintMethod);
-			lua.RegisterFunction("dictionary", null, DictionaryMethod);
+			lua.RegisterFunction("list", null, _ListMethod_);
+			lua.RegisterFunction("array", null, _ArrayMethod_);
+			lua.RegisterFunction("error", this, _ErrorMethod_);
+			lua.RegisterFunction("print", this, _PrintMethod_);
+			lua.RegisterFunction("dictionary", null, _DictionaryMethod_);
 		}
 
 		private static List<object> List(int capacity = 0) => capacity > 0 ? new(capacity) : new();

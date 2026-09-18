@@ -47,7 +47,7 @@ namespace Zongsoft.Security.Web.Controllers;
 public class AuthenticationController : ControllerBase
 {
 	#region 常量定义
-	private static readonly char[] InvalidDestinationCharacters = [',', ';', '|', '/', '\\'];
+	private static readonly char[] _InvalidDestinationCharacters_ = [',', ';', '|', '/', '\\'];
 	#endregion
 
 	#region 公共属性
@@ -118,7 +118,7 @@ public class AuthenticationController : ControllerBase
 		if(string.IsNullOrEmpty(scheme) || string.IsNullOrEmpty(destination))
 			return this.BadRequest();
 
-		if(destination.IndexOfAny(InvalidDestinationCharacters) >= 0)
+		if(destination.IndexOfAny(_InvalidDestinationCharacters_) >= 0)
 			return this.BadRequest($"The specified destination parameter contains illegal characters.");
 
 		var captcha = this.Request.Headers.TryGetValue(Headers.Captcha, out var text) ? text.ToString() : null;

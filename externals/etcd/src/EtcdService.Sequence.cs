@@ -80,6 +80,7 @@ partial class EtcdService : ISequence
 			var current = await client.GetAsync(physicalKey, null, null, cancellation);
 			var exists = current.Kvs.Count > 0;
 			var value = exists ? parser(current.Kvs[0].Value.ToStringUtf8()) : seed;
+
 			if(interval == T.Zero)
 				return value;
 

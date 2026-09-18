@@ -231,7 +231,7 @@ public sealed partial class DataConnector
 				await operation(cancellation).ConfigureAwait(false);
 				this.Succeed(permit);
 			}
-			catch(OperationCanceledException) when (cancellation.IsCancellationRequested)
+			catch(OperationCanceledException) when(cancellation.IsCancellationRequested)
 			{
 				this.Cancel(permit);
 				throw;
@@ -256,7 +256,7 @@ public sealed partial class DataConnector
 				this.Succeed(permit);
 				return result;
 			}
-			catch(OperationCanceledException) when (cancellation.IsCancellationRequested)
+			catch(OperationCanceledException) when(cancellation.IsCancellationRequested)
 			{
 				this.Cancel(permit);
 				throw;

@@ -51,6 +51,7 @@ public sealed class EtcdIncrementCommand() : EtcdCommandBase("Increase")
 		var interval = context.Options.GetValue<int>("interval");
 		var expiry = context.Options.GetValue<TimeSpan?>("expiry");
 		var values = new long[context.Arguments.Count];
+
 		for(var index = 0; index < values.Length; index++)
 		{
 			values[index] = decrease ? await etcd.DecreaseAsync(context.Arguments[index], interval, seed, expiry, cancellation) : await etcd.IncreaseAsync(context.Arguments[index], interval, seed, expiry, cancellation);

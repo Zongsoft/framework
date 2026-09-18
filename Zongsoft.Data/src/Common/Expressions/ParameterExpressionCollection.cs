@@ -55,7 +55,7 @@ public class ParameterExpressionCollection() : KeyedCollection<string, Parameter
 			throw new ArgumentNullException(nameof(parameter));
 
 		//处理匿名参数，即参数名为空或问号(?)的参数
-		if(string.IsNullOrEmpty(parameter.Name) || parameter.Name == ParameterExpression.Anonymous)
+		if(string.IsNullOrEmpty(parameter.Name) || parameter.Name == ParameterExpression.ANONYMOUS)
 			this.Anonymize(++_index, parameter);
 
 		//调用基类同名方法

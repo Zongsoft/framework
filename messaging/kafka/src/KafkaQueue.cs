@@ -67,6 +67,7 @@ public class KafkaQueue : MessageQueueBase<KafkaSubscriber, Configuration.KafkaC
 		var payload = data.ToArray();
 		var message = new Message<Null, byte[]> { Value = payload };
 		var compression = options?.Compression ?? default;
+
 		if(compression.CanCompress(payload.Length))
 		{
 			message.Value = compression.Compress(payload);

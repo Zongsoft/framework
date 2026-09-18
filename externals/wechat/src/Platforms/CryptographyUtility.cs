@@ -99,7 +99,7 @@ public static class CryptographyUtility
 	#endregion
 
 	#region 私有方法
-	private static string AES_Encrypt(byte[] Input, byte[] iv, byte[] key)
+	private static string AES_Encrypt(byte[] input, byte[] iv, byte[] key)
 	{
 		using var aes = Aes.Create();
 		//秘钥的大小，以位为单位
@@ -116,10 +116,10 @@ public static class CryptographyUtility
 		byte[] xBuff = null;
 
 		#region 自己进行PKCS7补位，用系统自己带的不行
-		byte[] msg = new byte[Input.Length + 32 - Input.Length % 32];
-		Array.Copy(Input, msg, Input.Length);
-		byte[] pad = KCS7Encoder(Input.Length);
-		Array.Copy(pad, 0, msg, Input.Length, pad.Length);
+		byte[] msg = new byte[input.Length + 32 - input.Length % 32];
+		Array.Copy(input, msg, input.Length);
+		byte[] pad = KCS7Encoder(input.Length);
+		Array.Copy(pad, 0, msg, input.Length, pad.Length);
 		#endregion
 
 		#region 注释的也是一种方法，效果一样

@@ -245,8 +245,11 @@ public abstract class TcpChannelBase<T> : ChannelBase, ISender, ISender<T>
 		if(transport != null)
 		{
 			try { transport.Input.Complete(); } catch { }
+
 			try { transport.Input.CancelPendingRead(); } catch { }
+
 			try { transport.Output.Complete(); } catch { }
+
 			try { transport.Output.CancelPendingFlush(); } catch { }
 
 			switch(transport)

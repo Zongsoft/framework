@@ -36,11 +36,11 @@ namespace Zongsoft.Messaging.ZeroMQ;
 internal static class Packetizer
 {
 	#region 私有常量
-	private const char Delimiter = '\n';
+	private const char DELIMITER = '\n';
 	#endregion
 
 	#region 公共方法
-	public static string Pack(string topic) => $"{topic}{Delimiter}{Protocol.Headers.Version}:{Protocol.Version}";
+	public static string Pack(string topic) => $"{topic}{DELIMITER}{Protocol.Headers.Version}:{Protocol.Version}";
 	public static string Pack(string identity, string identifier, string topic, string tags, string compression)
 	{
 		Validate(topic, nameof(topic));
@@ -53,11 +53,11 @@ internal static class Packetizer
 		if(identifier?.Length > Protocol.MaxIdentifierSize)
 			throw new ArgumentOutOfRangeException(nameof(identifier));
 
-		var result = $"{topic}{Delimiter}{Protocol.Headers.Version}:{Protocol.Version}{Delimiter}{Protocol.Headers.Identifier}:{identifier}{Delimiter}{Protocol.Headers.Identity}:{identity}";
+		var result = $"{topic}{DELIMITER}{Protocol.Headers.Version}:{Protocol.Version}{DELIMITER}{Protocol.Headers.Identifier}:{identifier}{DELIMITER}{Protocol.Headers.Identity}:{identity}";
 		if(!string.IsNullOrEmpty(tags))
-			result += $"{Delimiter}{Protocol.Headers.Tags}:{tags}";
+			result += $"{DELIMITER}{Protocol.Headers.Tags}:{tags}";
 		if(!string.IsNullOrEmpty(compression))
-			result += $"{Delimiter}{Protocol.Headers.Compression}:{compression}";
+			result += $"{DELIMITER}{Protocol.Headers.Compression}:{compression}";
 		return result;
 	}
 
@@ -69,7 +69,7 @@ internal static class Packetizer
 		if(header.IsEmpty || header.Length > Protocol.MaxHeaderSize || header.IndexOf('\r') >= 0)
 			return false;
 
-		var delimiter = header.IndexOf(Delimiter);
+		var delimiter = header.IndexOf(DELIMITER);
 		if(delimiter < 0)
 			return false;
 
@@ -86,7 +86,7 @@ internal static class Packetizer
 			if(result.Count >= Protocol.MaxOptionCount)
 				return false;
 
-			var end = text.IndexOf(Delimiter);
+			var end = text.IndexOf(DELIMITER);
 			var entry = end < 0 ? text : text[..end];
 			entry = entry.Trim();
 

@@ -37,7 +37,7 @@ namespace Zongsoft.Web.SignalR;
 public sealed class HubDescriptor : IEquatable<HubDescriptor>, IEquatable<TypeInfo>
 {
 	#region 常量定义
-	private const string HubSuffix = @"Hub";
+	private const string HUB_SUFFIX = @"Hub";
 	#endregion
 
 	#region 构造函数
@@ -53,8 +53,8 @@ public sealed class HubDescriptor : IEquatable<HubDescriptor>, IEquatable<TypeIn
 				pattern = attribute.Template;
 			else
 			{
-				if(type.Name.Length > HubSuffix.Length && type.Name.EndsWith(HubSuffix))
-					pattern = type.Name[..^HubSuffix.Length];
+				if(type.Name.Length > HUB_SUFFIX.Length && type.Name.EndsWith(HUB_SUFFIX))
+					pattern = type.Name[..^HUB_SUFFIX.Length];
 				else
 					pattern = type.Name;
 			}

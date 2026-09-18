@@ -193,16 +193,16 @@ public class MutationTest(DatabaseFixture database)
 	{
 		Assert.SkipUnless(Global.IsTestingEnabled, TESTING_DISABLED_REASON);
 
-		const double Value = 8.25;
+		const double VALUE = 8.25;
 		var accessor = _database.Accessor;
 		var timestamp = new DateTime(2097, 1, 8, 0, 0, 0, DateTimeKind.Local);
 		var timestampCriteria = Condition.Equal(nameof(GatewayHistory.Timestamp), timestamp);
-		var invalidCriteria = Condition.Equal(nameof(GatewayHistory.Value), Value);
+		var invalidCriteria = Condition.Equal(nameof(GatewayHistory.Value), VALUE);
 
 		try
 		{
 			await accessor.DeleteAsync<GatewayHistory>(timestampCriteria);
-			Assert.Equal(1, await accessor.InsertAsync(new GatewayHistory(206, 20007, Value, null, timestamp)));
+			Assert.Equal(1, await accessor.InsertAsync(new GatewayHistory(206, 20007, VALUE, null, timestamp)));
 
 			var exception = await Record.ExceptionAsync(async () => await accessor.DeleteAsync<GatewayHistory>(invalidCriteria));
 			Assert.NotNull(exception);

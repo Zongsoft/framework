@@ -15,7 +15,7 @@ partial class WebExtension
 	 */
 	internal sealed class Utf8BufferTextWriter : TextWriter
 	{
-		private const int MaximumBytesPerUtf8Char = 4;
+		private const int MAXIMUM_BYTES_PER_UTF8_CHAR = 4;
 
 		[ThreadStatic]
 		private static Utf8BufferTextWriter _cachedInstance;
@@ -122,13 +122,13 @@ partial class WebExtension
 			// writes what it can. However, if it can't even write a single character, it throws. So if the buffer has only
 			// 2 bytes left and the next character to write is 3 bytes in UTF-8, an exception is thrown.
 			var remaining = _memory.Length - _memoryUsed;
-			if(remaining < MaximumBytesPerUtf8Char)
+			if(remaining < MAXIMUM_BYTES_PER_UTF8_CHAR)
 			{
 				// Used up the memory from the buffer writer so advance and get more
 				if(_memoryUsed > 0)
 					_bufferWriter!.Advance(_memoryUsed);
 
-				_memory = _bufferWriter!.GetMemory(MaximumBytesPerUtf8Char);
+				_memory = _bufferWriter!.GetMemory(MAXIMUM_BYTES_PER_UTF8_CHAR);
 				_memoryUsed = 0;
 			}
 		}

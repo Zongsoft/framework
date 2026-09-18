@@ -71,7 +71,7 @@ partial class Release
 	#endregion
 
 	#region 私有字段
-	private static readonly XmlWriterSettings WriterSettings = new()
+	private static readonly XmlWriterSettings _WriterSettings_ = new()
 	{
 		Indent = true,
 		IndentChars = "\t",
@@ -83,14 +83,14 @@ partial class Release
 	public void Save(string filePath)
 	{
 		ArgumentException.ThrowIfNullOrEmpty(filePath);
-		using var writer = XmlWriter.Create(filePath, WriterSettings);
+		using var writer = XmlWriter.Create(filePath, _WriterSettings_);
 		Write(writer, this);
 	}
 
 	public void Save(Stream stream)
 	{
 		ArgumentNullException.ThrowIfNull(stream);
-		using var writer = XmlWriter.Create(stream, WriterSettings);
+		using var writer = XmlWriter.Create(stream, _WriterSettings_);
 		Write(writer, this);
 	}
 	#endregion
@@ -101,7 +101,7 @@ partial class Release
 		ArgumentNullException.ThrowIfNull(stream);
 		ArgumentNullException.ThrowIfNull(releases);
 
-		using var writer = XmlWriter.Create(stream, WriterSettings);
+		using var writer = XmlWriter.Create(stream, _WriterSettings_);
 		writer.WriteStartElement(RELEASES_ELEMENT);
 
 		await foreach(var release in releases)
@@ -115,7 +115,7 @@ partial class Release
 		ArgumentNullException.ThrowIfNull(stream);
 		ArgumentNullException.ThrowIfNull(releases);
 
-		using var writer = XmlWriter.Create(stream, WriterSettings);
+		using var writer = XmlWriter.Create(stream, _WriterSettings_);
 		writer.WriteStartElement(RELEASES_ELEMENT);
 
 		foreach(var release in releases)

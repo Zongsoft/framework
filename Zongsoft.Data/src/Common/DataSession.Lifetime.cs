@@ -91,7 +91,7 @@ partial class DataSession
 			if(_completion != CompletionKind.None)
 				return LeaseKind.Owned;
 
-			if(!this.ShareConnectionSupported && _reading > 0)
+			if(!_ShareConnectionSupported_ && _reading > 0)
 				return LeaseKind.Owned;
 
 			_reading++;
