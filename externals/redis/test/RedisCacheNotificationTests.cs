@@ -463,7 +463,14 @@ public class RedisCacheNotificationTests
 
 		public int CallCount => Volatile.Read(ref _callCount);
 		public int MaximumConcurrency => Volatile.Read(ref _maximumConcurrency);
-		public string[] Keys { get { lock(_sync) return [.. _keys]; } }
+		public string[] Keys
+		{
+			get
+			{
+				lock(_sync)
+					return [.. _keys];
+			}
+		}
 
 		public async Task WaitAsync(TimeSpan timeout) => await _completion.Task.WaitAsync(timeout);
 		public void Dispose() => _completion.TrySetCanceled();

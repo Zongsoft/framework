@@ -1237,7 +1237,11 @@ public partial class PaymentManager
 				private readonly IAuthority _master;
 				private readonly IAuthority _subsidiary;
 
-				public BrokerBuilder(IAuthority master, IAuthority subsidiary) { _master = master; _subsidiary = subsidiary; }
+				public BrokerBuilder(IAuthority master, IAuthority subsidiary)
+				{
+					_master = master;
+					_subsidiary = subsidiary;
+				}
 
 				internal override string GetFallback() => GetFallback(_master.Code, FORMAT);
 

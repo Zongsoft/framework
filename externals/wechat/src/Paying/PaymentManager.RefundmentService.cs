@@ -485,7 +485,11 @@ public partial class PaymentManager
 				private readonly IAuthority _master;
 				private readonly IAuthority _subsidiary;
 
-				public BrokerBuilder(IAuthority master, IAuthority subsidiary) { _master = master; _subsidiary = subsidiary; }
+				public BrokerBuilder(IAuthority master, IAuthority subsidiary)
+				{
+					_master = master;
+					_subsidiary = subsidiary;
+				}
 
 				public override RefundmentRequest Create(string paymentKey, string voucher, decimal amount, decimal paidAmount, string currency, string description = null)
 				{

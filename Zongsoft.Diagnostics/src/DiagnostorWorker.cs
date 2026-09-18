@@ -55,7 +55,6 @@ public class DiagnostorWorker(string name, Diagnostor.Configurator configurator)
 	protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
 		var diagnostor = _diagnostor ?? throw new ObjectDisposedException(nameof(DiagnostorWorker));
-
 		var meters = diagnostor.Meters;
 
 		if(meters != null && Validate(meters))
@@ -126,7 +125,7 @@ public class DiagnostorWorker(string name, Diagnostor.Configurator configurator)
 	#endregion
 
 	#region 私有方法
-	private static readonly string[] DefaultMeters =
+	private static readonly string[] DEFAULT_METERS =
 	[
 		"System.Runtime",
 		"System.Net.Http",
@@ -141,7 +140,7 @@ public class DiagnostorWorker(string name, Diagnostor.Configurator configurator)
 		"Microsoft.AspNetCore.Http.Connections",
 	];
 
-	private static readonly string[] DefaultTracers =
+	private static readonly string[] DEFAULT_TRACERS =
 	[
 		"System.Net",
 		"System.Net.Http",
@@ -169,8 +168,8 @@ public class DiagnostorWorker(string name, Diagnostor.Configurator configurator)
 
 			if(meter == "*")
 			{
-				for(int i = 0; i < DefaultMeters.Length; i++)
-					hashset.Add(DefaultMeters[i]);
+				for(int i = 0; i < DEFAULT_METERS.Length; i++)
+					hashset.Add(DEFAULT_METERS[i]);
 
 				if(ApplicationContext.Current != null)
 				{
@@ -201,8 +200,8 @@ public class DiagnostorWorker(string name, Diagnostor.Configurator configurator)
 
 			if(tracer == "*")
 			{
-				for(int i = 0; i < DefaultTracers.Length; i++)
-					hashset.Add(DefaultTracers[i]);
+				for(int i = 0; i < DEFAULT_TRACERS.Length; i++)
+					hashset.Add(DEFAULT_TRACERS[i]);
 
 				if(ApplicationContext.Current != null)
 				{

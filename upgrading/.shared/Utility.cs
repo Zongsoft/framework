@@ -64,7 +64,11 @@ public static class Utility
 			exitCode = process.ExitCode;
 			return process.HasExited;
 		}
-		catch { exitCode = 0; return false; }
+		catch
+		{
+			exitCode = 0;
+			return false;
+		}
 	}
 
 	public static string GetProcessInfo(this Process process)
