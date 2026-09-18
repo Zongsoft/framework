@@ -2,10 +2,6 @@
 	<Project Path="src/Zongsoft.Externals.Wechat.csproj" />
 	<Project Path="test/Zongsoft.Externals.Wechat.Tests.csproj" />
 
-	<Project Path="api/Zongsoft.Externals.Wechat.Web.csproj">
-		<BuildDependency Project="src/Zongsoft.Externals.Wechat.csproj" />
-	</Project>
-	<Project Path="gateway/Zongsoft.Externals.Wechat.Gateway.csproj">
-		<BuildDependency Project="src/Zongsoft.Externals.Wechat.csproj" />
-	</Project>
+	<Project Path="api/Zongsoft.Externals.Wechat.Web.csproj" />
+	<Project Path="gateway/Zongsoft.Externals.Wechat.Gateway.csproj" />
 </Solution>

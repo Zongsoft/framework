@@ -17,7 +17,7 @@
 
 ## 适用场景
 
-当 Zongsoft 数据模型存储于 ClickHouse 时选择本包。上层应用仍面向 `IDataAccess`/`IDataService<T>`；本包负责把表达式和数据变更翻译为对应方言，并通过 ClickHouse.Client 创建连接。
+当 Zongsoft 数据模型存储于 ClickHouse 时选择本包。上层应用仍面向 `IDataAccess`/`IDataService<T>`；本包负责把表达式和数据变更翻译为对应方言，并通过 ClickHouse.Driver 创建连接。
 
 ClickHouse 是面向分析负载的列式数据库。将原本针对 OLTP 数据库设计的数据服务模式用于它之前，应确认变更操作与事务预期。
 
@@ -43,7 +43,7 @@ dotnet add package Zongsoft.Data.ClickHouse
 </options>
 ```
 
-`driver` 不区分大小写，但建议使用规范拼写 `ClickHouse`。`value` 由本包的连接设置驱动解析，并最终传给 ClickHouse.Client；可用关键字请查阅[提供程序文档](https://clickhouse.com/docs/zh)。
+`driver` 不区分大小写，但建议使用规范拼写 `ClickHouse`。`value` 由本包的连接设置驱动解析，并最终传给 ClickHouse.Driver；可用关键字请查阅[提供程序文档](https://clickhouse.com/docs/integrations/csharp)。
 
 > 💡 实体映射、条件、分页、事务和 `IDataAccess` 用法统一参阅 [Zongsoft.Data 指南](../../README.zh-Hans.md)。切换驱动不应迫使应用服务依赖提供程序连接类型。
 
@@ -66,6 +66,8 @@ Console.WriteLine(data.Name);
 
 取得访问器不等于查询成功。真实业务装配请参阅 [Data 中的 Discussions 用例](../../README.zh-Hans.md#plugin-quickstart)，并沿其中的模块、映射及服务源码阅读。该用例不表示 Discussions 已兼容本驱动；数据库结构、字段类型和所需操作必须逐项验证，不能只改驱动名就推定可移植。业务服务通过公共契约调用，不自行构造数据库连接。
 
+底层提供程序为 `ClickHouse.Driver` 1.4.0。数据引擎使用 ADO.NET 连接和命令；批量导入通过 `ClickHouseClient.InsertBinaryAsync` 执行，使用租约连接的设置和当前数据库。`Compression` 设置同时控制批量写入压缩。提供程序不支持 `UseServerTimezone` 开关；日期时间行为由 ClickHouse 列类型及显式查询转换确定。
+
 ## 运行行为
 
 本驱动提供数据库专属的语句构建器/访问器、命令参数化、执行基元与导入器。数据引擎根据具名连接设置选择它；在提供程序和操作支持时，驱动会加入环境数据事务。
@@ -74,14 +76,14 @@ Console.WriteLine(data.Name);
 
 ## 兼容性与测试
 
-数据库行为无法完全移植。请在与生产相同的服务器/提供程序版本上验证标识符大小写、空值和比较规则、日期时间精度、生成值、事务语义与批量导入约束。仓库测试需要显式配置可丢弃数据库，不属于普通离线单元测试。
+数据库行为无法完全移植。请在与生产相同的服务器/提供程序版本上验证标识符大小写、空值和比较规则、日期时间精度、生成值、事务语义与批量导入约束。连接设置和命令创建测试可离线运行；查询和批量导入的端到端验证需要显式配置的一次性 ClickHouse 数据库。
 
 ## 延伸阅读
 
 - [Zongsoft.Data 使用指南](../../README.zh-Hans.md)
 - [驱动实现规则](../../AGENTS.md)
 - [数据引擎实现技能](../../SKILL.md)
-- [ClickHouse 提供程序文档](https://clickhouse.com/docs/zh)
+- [ClickHouse 提供程序文档](https://clickhouse.com/docs/integrations/csharp)
 
 ## 插件化接入
 

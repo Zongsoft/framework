@@ -31,8 +31,8 @@ using System;
 using System.Data;
 using System.Data.Common;
 
-using ClickHouse.Client;
-using ClickHouse.Client.ADO;
+using ClickHouse.Driver;
+using ClickHouse.Driver.ADO;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;

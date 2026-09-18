@@ -2,10 +2,9 @@ artifacts/Zongsoft.Data.SQLite.plugin
 lib/$(Framework)/Zongsoft.Data.SQLite.*
 lib/$(Framework)/*/Zongsoft.Data.SQLite.resources.*
 
-nuget:Microsoft.Data.Sqlite@10.0.7
-nuget:SQLitePCLRaw.core@3.0.3
-nuget:SQLitePCLRaw.provider.e_sqlite3@3.0.3
-nuget:SQLitePCLRaw.bundle_e_sqlite3@3.0.3
-nuget:SQLitePCLRaw.config.e_sqlite3@3.0.3
-nuget:SQLitePCLRaw.lib.e_sqlite3@2.1.11
-nuget:SourceGear.sqlite3@3.50.4.5
+nuget:Microsoft.Data.Sqlite@10.0.12
+nuget:SQLitePCLRaw.core@3.0.5
+nuget:SQLitePCLRaw.provider.e_sqlite3@3.0.5
+nuget:SQLitePCLRaw.bundle_e_sqlite3@3.0.5
+nuget:SQLitePCLRaw.config.e_sqlite3@3.0.5
+nuget:SourceGear.sqlite3@3.53.4

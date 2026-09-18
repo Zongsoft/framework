@@ -33,9 +33,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using ClickHouse.Client;
-using ClickHouse.Client.ADO;
-using ClickHouse.Client.Copy;
+using ClickHouse.Driver;
+using ClickHouse.Driver.ADO;
+using ClickHouse.Driver.Compression;
 
 using Zongsoft.Reflection;
 using Zongsoft.Data.Common;
@@ -53,8 +53,9 @@ public class ClickHouseImporter : DataImporterBase
 			return;
 
 		using var lease = context.Session.AcquireLease(context.Options.TransactionSuppressed);
-		var bulker = GetBulker(context, (ClickHouseConnection)lease.Connection);
-		bulker.WriteToServerAsync(records).ConfigureAwait(false).GetAwaiter().GetResult();
+		var connection = (ClickHouseConnection)lease.Connection;
+		using var client = new ClickHouseClient(connection.Settings);
+		context.Count = (int)client.InsertBinaryAsync(context.Entity.GetTableName(), context.Members, records, GetOptions(connection)).ConfigureAwait(false).GetAwaiter().GetResult();
 	}
 
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
@@ -64,22 +65,18 @@ public class ClickHouseImporter : DataImporterBase
 			return;
 
 		await using var lease = await context.Session.AcquireLeaseAsync(context.Options.TransactionSuppressed, cancellation);
-		var bulker = GetBulker(context, (ClickHouseConnection)lease.Connection);
-		await bulker.WriteToServerAsync(records, cancellation);
+		var connection = (ClickHouseConnection)lease.Connection;
+		using var client = new ClickHouseClient(connection.Settings);
+		context.Count = (int)await client.InsertBinaryAsync(context.Entity.GetTableName(), context.Members, records, GetOptions(connection), cancellation);
 	}
 	#endregion
 
 	#region 私有方法
-	private static ClickHouseBulkCopy GetBulker(DataImportContext context, ClickHouseConnection connection)
+	private static InsertOptions GetOptions(ClickHouseConnection connection) => new()
 	{
-		var bulker = new ClickHouseBulkCopy(connection)
-		{
-			DestinationTableName = context.Entity.GetTableName(),
-			ColumnNames = context.Members,
-		};
-
-		return bulker;
-	}
+		Database = connection.Database,
+		Compressor = connection.UseCompression ? ZstdCompressor.Default : null,
+	};
 
 	private static List<object[]> GetRecords(DataImportContext context, MemberCollection members)
 	{

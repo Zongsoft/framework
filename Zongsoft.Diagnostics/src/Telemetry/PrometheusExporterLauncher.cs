@@ -64,7 +64,24 @@ public class PrometheusExporterLauncher() : ExporterLauncherBase<MeterProviderBu
 
 			var urls = connectionSettings.GetValue("urls", "http://127.0.0.1:9464,http://localhost:9464");
 			if(!string.IsNullOrEmpty(urls))
-				options.UriPrefixes = urls.Split([',', ';', '|'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+			{
+				var prefixes = urls.Split([',', ';', '|'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+
+				options.ConfigureHttpListener = (settings, listener) =>
+				{
+					var path = settings.ScrapeEndpointPath ?? "/metrics";
+
+					if(!path.StartsWith('/'))
+						path = "/" + path;
+					if(!path.EndsWith('/'))
+						path += "/";
+
+					listener.Prefixes.Clear();
+
+					foreach(var prefix in prefixes)
+						listener.Prefixes.Add(prefix.TrimEnd('/') + path);
+				};
+			}
 		});
 	}
 }

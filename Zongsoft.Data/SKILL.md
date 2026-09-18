@@ -16,9 +16,9 @@ description: 开发、重构、测试或审查 Zongsoft.Data ORM 数据引擎及
 
 ## 插件、容器与首次数据访问
 
-- [DataAccessProvider](src/DataAccessProvider.cs) 通过 ServiceAttribute 的 Members 注册静态 Instance，公共消费契约是 `IServiceProvider<IDataAccess>`，不是自动注册的 `IDataAccessProvider`。创建具名访问器后优先使用同名模块容器注入，缺少模块时回到应用容器。
+- [DataAccessProvider](src/DataAccessProvider.cs) 通过 ServiceAttribute 的 Members 注册静态 Instance；其基类 `DataAccessProviderBase<TDataAccess>` 还声明了 `IDataAccessProvider` 与 `IServiceProvider<IDataAccess>` 契约，服务扫描会读取继承的特性，因此不能仅看派生类特性推断注册契约。创建具名访问器后优先使用同名模块容器注入，缺少模块时回到应用容器。
 - [MetadataFileLoader](src/Metadata/Profiles/MetadataFileLoader.cs) 默认递归搜索 ApplicationPath 的 `.mapping`；别把部署了映射等同于创建物理表。命名命令由 container 与 name 组成限定名，mutability 控制读写源选择。
-- 驱动清单分别注册数据驱动与连接设置驱动；两者之一缺失都会影响首次查询。README 的[插件最小闭环](README.zh-Hans.md#plugin-quickstart)验证了公共接口到 SQLite 映射命令的实际调用。
+- 驱动清单分别注册数据驱动与连接设置驱动；两者之一缺失都会影响首次查询。README 的[真实插件用例](README.zh-Hans.md#plugin-quickstart)以 Discussions 模块说明公共接口与数据服务的消费方式，不代表全新部署已经通过集成验证。
 - 手工调试部署要核对最终 SDK/原生依赖。Windows x64 SQLite 在插件内仅保留嵌套 runtimes 时可能找不到 e_sqlite3，隔离验证采用匹配架构原生 DLL 与托管包装器同目录。不要把构建输出复制成功作为原生库可加载的证明。
 
 ## 数据模式(Schema)

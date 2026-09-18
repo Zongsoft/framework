@@ -31,7 +31,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.58.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.59.0" />
 				<PackageReference Include="Zongsoft.Data" VersionOverride="7.27.0" />
 			</ItemGroup>
 		</Otherwise>

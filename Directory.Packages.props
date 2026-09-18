@@ -93,19 +93,8 @@
 		<PackageVersion Include="Microsoft.Extensions.Diagnostics.ResourceMonitoring" Version="10.0.0" />
 	</ItemGroup>
 
-	<!-- SQL Server 驱动的传递依赖要求内存缓存包至少为 9.0.13。 -->
-	<ItemGroup Condition="'$(MSBuildProjectName)' == 'Zongsoft.Messaging.Storages.Data.Tests' And ('$(TargetFramework)' == 'net8.0' Or '$(TargetFramework)' == 'net9.0')">
-		<PackageVersion Update="Microsoft.Extensions.Caching.Memory" Version="9.0.20" />
-	</ItemGroup>
-
 	<ItemGroup>
-		<PackageVersion Include="Microsoft.Extensions.AI" Version="10.10.0" />
-		<PackageVersion Include="Microsoft.Extensions.AI.Abstractions" Version="10.10.0" />
-		<PackageVersion Include="Microsoft.Extensions.VectorData.Abstractions" Version="10.10.0" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<PackageVersion Include="Zongsoft.CodeAnalysis" Version="1.0.0" />
+		<PackageVersion Include="Zongsoft.CodeAnalysis" Version="1.1.0" />
 		<PackageVersion Include="Microsoft.CodeCoverage" Version="17.13.0" />
 		<PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.13.0" />
 		<PackageVersion Include="xunit.v3" Version="3.2.2" />

@@ -14,7 +14,9 @@
 
 [**Z**ongsoft.**D**iagnostics](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Diagnostics) 是 [_**Z**ongsoft_](https://github.com/Zongsoft/framework) 开源框架的诊断插件库，提供了基于 [_**O**pen**T**elemetry_](https://opentelemetry.io) 诊断遥测的功能集。
 
-通过 [Zongsoft.Diagnostics.option](src/Zongsoft.Diagnostics.option) 配置文件默认定义了 _**O**pen**T**elemetry_ 标准的指标 _(Metric)_、跟踪 _(Trace)_ 导出器，以及 [_**P**rometheus_](https://prometheus.io) _指标_ 导出器 和 [_**Z**ipkin_](https://zipkin.io) _跟踪_ 导出器。
+通过 [Zongsoft.Diagnostics.option](src/Zongsoft.Diagnostics.option) 配置文件默认定义了 _**O**pen**T**elemetry_ 标准的指标 _(Metric)_、跟踪 _(Trace)_ 导出器，以及 [_**P**rometheus_](https://prometheus.io) _指标_ 导出器。
+
+使用 `driver="telemetry"` 导出 OTLP 数据。将 `server` 设置为接收端点，`protocol` 设置为 `grpc` 或 `HttpProtobuf`；接收端点必须支持所选的 OTLP 传输协议。
 
 ## 内置 OpenTelemetry 协议
 

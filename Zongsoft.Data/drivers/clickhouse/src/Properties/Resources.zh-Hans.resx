@@ -45,9 +45,6 @@
   <data name="ClickHouse.Settings.Timeout" xml:space="preserve">
     <value>超时时长</value>
   </data>
-  <data name="ClickHouse.Settings.UseServerTimezone" xml:space="preserve">
-    <value>使用服务器时区</value>
-  </data>
   <data name="ClickHouse.Settings.UseCustomDecimals" xml:space="preserve">
     <value>使用自定义小数</value>
   </data>

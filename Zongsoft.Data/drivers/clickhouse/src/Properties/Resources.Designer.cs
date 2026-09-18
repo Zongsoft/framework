@@ -160,15 +160,6 @@ namespace Zongsoft.Data.ClickHouse.Properties {
         }
 
         /// <summary>
-        ///   查找类似 Use Server Timezone 的本地化字符串。
-        /// </summary>
-        internal static string ClickHouse_Settings_UseServerTimezone {
-            get {
-                return ResourceManager.GetString("ClickHouse.Settings.UseServerTimezone", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   查找类似 Use Session 的本地化字符串。
         /// </summary>
         internal static string ClickHouse_Settings_UseSession {

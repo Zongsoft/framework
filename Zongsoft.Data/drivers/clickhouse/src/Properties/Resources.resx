@@ -45,9 +45,6 @@
   <data name="ClickHouse.Settings.Timeout" xml:space="preserve">
     <value>Timeout</value>
   </data>
-  <data name="ClickHouse.Settings.UseServerTimezone" xml:space="preserve">
-    <value>Use Server Timezone</value>
-  </data>
   <data name="ClickHouse.Settings.UseCustomDecimals" xml:space="preserve">
     <value>Use Custom Decimals</value>
   </data>

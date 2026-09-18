@@ -21,9 +21,6 @@
 				<exporters>
 					<exporter exporter.name="telemetry" driver="telemetry"
 					          settings="server=http://localhost:4317;protocol=grpc;processorType=batch;timeout=30s;interval=15s;" />
-
-					<exporter exporter.name="zipkin" driver="zipkin"
-					          settings="server=http://localhost:9411/api/v2/spans;maxPayloadSize=4096;useShortTraceIds=true;processorType=batch;timeout=30s;interval=15s;" />
 				</exporters>
 			</traces>
 		</diagnostor>

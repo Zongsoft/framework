@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.2.0</Version>
+		<Version>7.3.0</Version>
 		<Product>Zongsoft Kafka Library</Product>
 		<Description>This is a library about the Kafka messaging development.</Description>
 		<RootNamespace>Zongsoft.Messaging.Kafka</RootNamespace>
@@ -29,7 +29,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.51.1" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.59.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

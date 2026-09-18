@@ -65,7 +65,7 @@ LeastOnce 使用 ROUTER/DEALER 命令 `REGISTER`、`UNREGISTER`、`PING`、`PUBL
 - MostOnce 没有匹配 Prefix 时立即返回 `null`，以后也不会补发。
 - Stage 2B 的 `LeastOnce` 使用可寻址运行时 Session、显式 `Message.AcknowledgeAsync`、仅 Broker 持久化、竞争消费者和同标识重试；重复投递是契约的一部分。
 - Broker 接受要求存在在线匹配订阅，先持久化 Pending 再返回 `ACCEPTED`，不等待 Handler ACK。每次尝试选择一个在线消费者，任意有效 ACK 删除 Pending；新订阅或重连订阅可消费已接受 Pending。
-- Core 拥有传输无关的 `IMessageStorage` 与 `MessageStorageBase<TSettings>`。Storage 是独立插件，每个 Broker 使用独立配置实例。基类用一个模板方法处理全部消息和精确 Topic 的读/清理：null Topic 表示不过滤，空字符串表示默认 Topic。Server 仅在 `Disposable=true` 时释放 Storage，优先 `IAsyncDisposable`；Stop 不释放。持久化完整外层 `Message` 元数据，ZeroMQ 的 Expiration、Protocol Version、Compression、Retry 信封保持私有。
+- Core 拥有传输无关的 `IMessageStorage` 与 `MessageStorageBase<TSettings>`。Storage 是独立插件，每个 Broker 使用独立配置实例。基类用一个模板方法处理全部消息和精确 Topic 的读/清理：null Topic 表示不过滤，空字符串表示默认 Topic。Server 拥有工厂创建的 Storage，在替换工厂或自身释放时释放 Storage，优先 `IAsyncDisposable`；Stop 不释放。`IMessageStorage` 不再声明 `Disposable` 或 `Settings`。持久化完整外层 `Message` 元数据，ZeroMQ 的 Expiration、Protocol Version、Compression、Retry 信封保持私有。
 - 不支持 `ExactlyOnce`，并且必须在创建传输状态前失败。
 
 ## 配置事实
@@ -75,7 +75,7 @@ LeastOnce 使用 ROUTER/DEALER 命令 `REGISTER`、`UNREGISTER`、`PING`、`PUBL
 - `Topic`、`Group`、`Client`、`Instance`、`Filter` 影响路由或身份。默认 Filter 排除当前 Instance；`Filter=*` 接收所有实例。
 - `ReconnectInterval` 控制重新发现。
 - Server 端口位于 `/Messaging/ZeroMQ/Servers`。三个值表示 `Control,Incoming,Outgoing`；两个值表示 `Incoming,Outgoing`，挂载 Storage 时随机绑定 Control。优先级为启动参数、命名 Server 自身 Port、集合默认值，仍未定义则随机。
-- Server Storage 只能在停止状态变更。没有 Storage 的 Broker 从 Discovery `Ports` 省略 Control，但继续提供 Broadcast。`IMessageStorage.Name` 标识 Provider，`Settings` 定义独立实例的连接与数据范围，并支持精确 Topic 读/清理。
+- Server 的 `Storages` 工厂只能在停止状态变更。没有 Storage 的 Broker 从 Discovery `Ports` 省略 Control，但继续提供 Broadcast。`IMessageStorage.Name` 标识存储实例；工厂按 Broker 名创建实例，具体实现的 `Settings` 定义连接与数据范围，并支持精确 Topic 读/清理。
 - Server TCP 端点绑定所有接口，本适配器不配置认证或加密。
 
 ## 验证

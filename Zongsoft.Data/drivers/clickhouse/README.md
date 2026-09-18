@@ -17,7 +17,7 @@
 
 ## When to Use This Driver
 
-Choose this package when a Zongsoft data model is stored in ClickHouse. The public application contract remains `IDataAccess`/`IDataService<T>`; this package translates expressions and mutations into the database dialect and creates connections through ClickHouse.Client.
+Choose this package when a Zongsoft data model is stored in ClickHouse. The public application contract remains `IDataAccess`/`IDataService<T>`; this package translates expressions and mutations into the database dialect and creates connections through ClickHouse.Driver.
 
 ClickHouse is column-oriented and optimized for analytical workloads. Review mutation and transaction expectations before using data-service patterns designed for OLTP databases.
 
@@ -43,7 +43,7 @@ Deploy `Zongsoft.Data.ClickHouse.plugin` with the assembly. Its manifest registe
 </options>
 ```
 
-The `driver` value is case-insensitive but should use the canonical `ClickHouse` spelling. The `value` is parsed by this package's connection settings driver and ultimately passed to ClickHouse.Client; consult the [provider documentation](https://clickhouse.com/docs/en/integrations/language-clients/csharp) for supported keywords.
+The `driver` value is case-insensitive but should use the canonical `ClickHouse` spelling. The `value` is parsed by this package's connection settings driver and ultimately passed to ClickHouse.Driver; consult the [provider documentation](https://clickhouse.com/docs/integrations/csharp) for supported keywords.
 
 > 💡 Keep entity mappings, criteria, paging, transactions, and `IDataAccess` usage in the shared [Zongsoft.Data guide](../../README.md). Switching drivers should not require application services to depend on provider connection classes.
 
@@ -66,6 +66,8 @@ Console.WriteLine(data.Name);
 
 Obtaining an accessor does not prove query execution succeeded. Follow the [real Discussions composition in the Data guide](../../README.md#plugin-quickstart) through its module, mapping and services. That walkthrough does not establish Discussions compatibility with this driver: verify database structures, field types and required operations, rather than assuming a driver-name change makes the application portable. Business services use shared contracts instead of constructing database connections.
 
+The provider is `ClickHouse.Driver` 1.4.0. ADO.NET connections and commands serve the data engine; bulk imports use `ClickHouseClient.InsertBinaryAsync` with the leased connection's settings and current database. The `Compression` setting also controls binary-insert compression. The provider has no `UseServerTimezone` switch; configure date/time behavior through ClickHouse column types and explicit query conversions.
+
 ## Runtime Behavior
 
 The driver supplies a provider-specific statement builder/visitor, command parameterization, execution primitives, and an importer. The data engine selects it from the named connection setting. Ambient data transactions are honored where the provider and operation support them.
@@ -74,14 +76,14 @@ The driver supplies a provider-specific statement builder/visitor, command param
 
 ## Compatibility and Testing
 
-Database behavior is not completely portable. Verify identifier casing, null and comparison rules, date/time precision, generated values, transaction semantics, and bulk-import constraints on the same server/provider versions used in production. Repository tests require an explicitly configured disposable database and are not ordinary offline unit tests.
+Database behavior is not completely portable. Verify identifier casing, null and comparison rules, date/time precision, generated values, transaction semantics, and bulk-import constraints on the same server/provider versions used in production. Connection-settings and command-construction tests run offline. End-to-end query and bulk-import validation requires an explicitly configured disposable ClickHouse database.
 
 ## Related Resources
 
 - [Zongsoft.Data user guide](../../README.md)
 - [Driver implementation rules](../../AGENTS.md)
 - [Data engine implementation skill](../../SKILL.md)
-- [ClickHouse provider documentation](https://clickhouse.com/docs/en/integrations/language-clients/csharp)
+- [ClickHouse provider documentation](https://clickhouse.com/docs/integrations/csharp)
 
 ## Plugin-Based Integration
 

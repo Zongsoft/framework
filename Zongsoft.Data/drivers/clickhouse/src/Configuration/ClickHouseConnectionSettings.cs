@@ -30,8 +30,8 @@
 using System;
 using System.ComponentModel;
 
-using ClickHouse.Client;
-using ClickHouse.Client.ADO;
+using ClickHouse.Driver;
+using ClickHouse.Driver.ADO;
 
 using Zongsoft.Components;
 using Zongsoft.Configuration;
@@ -139,15 +139,6 @@ public sealed class ClickHouseConnectionSettings : ConnectionSettingsBase<ClickH
 	public TimeSpan Timeout
 	{
 		get => this.GetValue<TimeSpan>();
-		set => this.SetValue(value);
-	}
-
-	[Category("Other")]
-	[DefaultValue(true)]
-	[Alias(nameof(ClickHouseConnectionStringBuilder.UseServerTimezone))]
-	public bool UseServerTimezone
-	{
-		get => this.GetValue<bool>();
 		set => this.SetValue(value);
 	}
 

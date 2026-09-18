@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.13.0</Version>
+		<Version>7.14.0</Version>
 		<Product>Zongsoft Redis Library</Product>
 		<Description>This is a library about Redis SDK.</Description>
 		<RootNamespace>Zongsoft.Externals.Redis</RootNamespace>
@@ -35,7 +35,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.58.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.59.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

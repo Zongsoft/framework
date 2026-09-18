@@ -6,7 +6,7 @@
 
 - 先判断行为是通用引擎契约还是单一数据库差异；单一差异不得下沉到公共接口。
 - 沿用目标驱动现有 StatementBuilder、Visitor、Binder、Slotter 和 Importer 扩展方式。
-- Provider 包版本由根 `Directory.Packages.props` 管理；多目标框架的传递依赖冲突应按目标框架分析。
+- 通用包版本由根 `Directory.Packages.props` 管理；非通用及第三方 Provider 包版本在驱动 `.csproj` 中使用 `VersionOverride` 定义。多目标框架的传递依赖冲突应按目标框架分析。
 - 驱动插件、部署文件、连接设置和 README 必须与实现保持一致。
 - SQLite、DuckDB 为进程内数据库；其它驱动测试通常需要对应 `*-pod.yaml` 或外部数据库，运行前动态确认。
 
