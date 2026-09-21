@@ -69,7 +69,7 @@ public class PluginTreeNode : PluginElement, IEquatable<PluginTreeNode>
 	/// <summary>获取当前插件树节点挂载的对象。</summary>
 	/// <remarks>
 	///		<list type="number">
-	///			<item><term>如果当前<see cref="NodeType"/>属性为Empty，则返回空<c>null</c>。</term></item>
+	///			<item><term>如果当前<see cref="NodeType"/>属性为Empty，则返回空(<c>null</c>)。</term></item>
 	///			<item><term>如果当前<see cref="NodeType"/>属性为Builtin，则返回对应的<seealso cref="Builtin"/>对象。</term></item>
 	///			<item><term>如果当前<see cref="NodeType"/>属性为Custom，则返回对应的自定义对象。</term></item>
 	///		</list>
@@ -86,7 +86,7 @@ public class PluginTreeNode : PluginElement, IEquatable<PluginTreeNode>
 		}
 	}
 
-	/// <summary>获取节点中挂载的目标对象类型，如果节点类型为<see cref="PluginTreeNodeType.Empty"/>则返回空<c>null</c>，该属性始终不会引发目标对象的创建动作。</summary>
+	/// <summary>获取节点中挂载的目标对象类型，如果节点类型为<see cref="PluginTreeNodeType.Empty"/>则返回空(<c>null</c>)，该属性始终不会引发目标对象的创建动作。</summary>
 	/// <remarks>
 	///		<para>注意：该方法不会激发节点类型为<see cref="PluginTreeNodeType.Builtin"/>的创建动作，因此适合在不需要获取目标值的场景中使用该方法来获取其类型。</para>
 	///		<para>当节点类型为<see cref="PluginTreeNodeType.Builtin"/>时的更详细行为请参考<seealso cref="Builtin.GetValueType()"/>方法的描述信息。</para>

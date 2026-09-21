@@ -40,13 +40,13 @@ public class QueueOption
 		get; set;
 	}
 
-	/// <summary>获取或设置消息队列所在的服务区域名，如果为空<c>null</c>或空字符串则由提供程序配置项指定。</summary>
+	/// <summary>获取或设置消息队列所在的服务区域名，如果为空(<c>null</c>)或空字符串则由提供程序配置项指定。</summary>
 	public ServiceCenterName? Region
 	{
 		get; set;
 	}
 
-	/// <summary>获取或设置消息队列关联的凭证名，如果为空<c>null</c>或空字符串则由提供程序配置项指定。</summary>
+	/// <summary>获取或设置消息队列关联的凭证名，如果为空(<c>null</c>)或空字符串则由提供程序配置项指定。</summary>
 	public string Certificate
 	{
 		get; set;

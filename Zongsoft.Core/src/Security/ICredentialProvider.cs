@@ -80,7 +80,7 @@ public interface ICredentialProvider
 
 	/// <summary>刷新指定标识及应用场景对应的凭证主体。</summary>
 	/// <param name="identifier">指定要刷新的安全凭证对应的用户唯一标识，通常为用户主键。</param>
-	/// <param name="scenario">指定要刷新的安全凭证对应的应用场景，为空<c>null</c>或星号表示不限场景。</param>
+	/// <param name="scenario">指定要刷新的安全凭证对应的应用场景，为空(<c>null</c>)或星号表示不限场景。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回刷新成功的凭证主体集。</returns>
 	IAsyncEnumerable<CredentialPrincipal> RefreshAsync(string identifier, string scenario, CancellationToken cancellation = default);
@@ -93,7 +93,7 @@ public interface ICredentialProvider
 
 	/// <summary>获取指定标识及应用场景对应的凭证主体集。</summary>
 	/// <param name="identifier">指定要获取的安全凭证对应的用户唯一标识，通常为用户主键。</param>
-	/// <param name="scenario">指定要获取的安全凭证对应的应用场景，为空<c>null</c>或星号表示不限场景。</param>
+	/// <param name="scenario">指定要获取的安全凭证对应的应用场景，为空(<c>null</c>)或星号表示不限场景。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回成功的凭证主体集。</returns>
 	IAsyncEnumerable<CredentialPrincipal> GetPrincipalsAsync(string identifier, string scenario, CancellationToken cancellation = default);

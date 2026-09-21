@@ -35,7 +35,7 @@ namespace Zongsoft.Plugins;
 /// <summary>表示当获取构件或者插件树节点中内部属性时的方式。</summary>
 public enum ObtainMode
 {
-	/// <summary>只有当Value属性为空<c>null</c>时，才调用Build方法。</summary>
+	/// <summary>只有当Value属性为空(<c>null</c>)时，才调用Build方法。</summary>
 	Auto = 0,
 
 	/// <summary>无论Value属性是否可用，始终调用Build方法。</summary>

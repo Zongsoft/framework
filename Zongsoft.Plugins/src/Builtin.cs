@@ -126,7 +126,7 @@ public sealed class Builtin : PluginElement, IEquatable<Builtin>
 		internal set => _position = value ?? string.Empty;
 	}
 
-	/// <summary>获取当前Value是否可用。如果Value不为空<c>null</c>则返回真(True)，否则返回假(False)。</summary>
+	/// <summary>获取当前Value是否可用。如果Value不为空(<c>null</c>)则返回真(True)，否则返回假(False)。</summary>
 	public bool HasValue => _value != null;
 
 	/// <summary>获取构件的缓存值，获取该属性值始终不会引发构建动作。</summary>

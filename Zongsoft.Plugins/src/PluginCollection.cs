@@ -74,7 +74,7 @@ public class PluginCollection : KeyedCollection<string, Plugin>
 	/// <summary>将指定的插件对象加入当前的集合中。</summary>
 	/// <param name="plugin">带加入的插件对象。</param>
 	/// <returns>添加成功则返回真(True)，否则返回假(False)。</returns>
-	/// <exception cref="System.ArgumentNullException">当<paramref name="plugin"/>参数为空<c>null</c>。</exception>
+	/// <exception cref="System.ArgumentNullException">当<paramref name="plugin"/>参数为空(<c>null</c>)。</exception>
 	/// <exception cref="System.InvalidOperationException">当<paramref name="plugin"/>参数的<see cref="Zongsoft.Plugins.Plugin.Parent"/>父插件属性不为空，并且与当前集合的所有者不是同一个引用对象。</exception>
 	internal bool TryAdd(Plugin plugin)
 	{

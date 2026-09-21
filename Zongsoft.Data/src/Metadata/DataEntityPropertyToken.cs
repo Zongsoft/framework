@@ -42,7 +42,7 @@ public readonly struct DataEntityPropertyToken
 	/// <summary>获取属性的元数据。</summary>
 	public readonly IDataEntityProperty Property;
 
-	/// <summary>获取属性的绑定到目标类型的成员信息，如果该字段为空<c>null</c>则表示绑定的目标类型为字典。</summary>
+	/// <summary>获取属性的绑定到目标类型的成员信息，如果该字段为空(<c>null</c>)则表示绑定的目标类型为字典。</summary>
 	public readonly MemberInfo Member;
 
 	/// <summary>获取目标成员的类型转换器。</summary>

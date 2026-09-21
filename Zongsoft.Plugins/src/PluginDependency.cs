@@ -53,7 +53,7 @@ public class PluginDependency
 	}
 
 	/// <summary>获取依赖的插件对象。</summary>
-	/// <remarks>如果插件未加载完成，该属性返回空<c>null</c>。</remarks>
+	/// <remarks>如果插件未加载完成，该属性返回空(<c>null</c>)。</remarks>
 	public Plugin Plugin
 	{
 		get;

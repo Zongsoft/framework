@@ -41,7 +41,7 @@ public static class Executor
 {
 	#region 公共属性
 	/// <summary>获取功能构建器。</summary>
-	/// <remarks>该属性始终返回空<c>null</c>，用于相关扩展方法的扩展点。</remarks>
+	/// <remarks>该属性始终返回空(<c>null</c>)，用于相关扩展方法的扩展点。</remarks>
 	public static IFeatureBuilder Features { get; }
 
 	/// <summary>获取或设置功能管线构建器。</summary>

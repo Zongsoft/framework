@@ -86,7 +86,7 @@ public static class DataEntityExtension
 
 	/// <summary>查找指定实体元素继承的父实体元素。</summary>
 	/// <param name="entity">指定的实体元素。</param>
-	/// <returns>如果 <paramref name="entity"/> 参数指定的实体元素设置了继承关系，则返回它继承的父实体元素（如果指定父实体元素不存在，则抛出异常）；否则返回空<c>null</c>。</returns>
+	/// <returns>如果 <paramref name="entity"/> 参数指定的实体元素设置了继承关系，则返回它继承的父实体元素（如果指定父实体元素不存在，则抛出异常）；否则返回空(<c>null</c>)。</returns>
 	public static IDataEntity GetBaseEntity(this IDataEntity entity)
 	{
 		if(entity == null || string.IsNullOrEmpty(entity.BaseName))

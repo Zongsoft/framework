@@ -127,7 +127,7 @@ public class JoinClause : ISource
 	/// <param name="fullPath">指定的 <paramref name="table"/> 参数对应的成员完整路径。</param>
 	/// <param name="targetFinder">关联目标的查找器函数。</param>
 	/// <param name="targetCreator">关联目标表的创建器函数。</param>
-	/// <returns>返回创建的继承表关联子句，如果指定的表实体没有父实体则返回空<c>null</c>。</returns>
+	/// <returns>返回创建的继承表关联子句，如果指定的表实体没有父实体则返回空(<c>null</c>)。</returns>
 	internal static JoinClause Create(TableIdentifier table, string fullPath, Func<string, JoinClause> targetFinder, Func<IDataEntity, TableIdentifier> targetCreator)
 	{
 		if(table.Entity == null)
@@ -295,7 +295,7 @@ public class JoinClause : ISource
 	/// <param name="schema">指定要创建关联子句对应的数据模式成员。</param>
 	/// <param name="targetFinder">待创建关联子句是否存在的判断函数。</param>
 	/// <param name="targetCreator">创建关联子句时目标表标识的生成函数。</param>
-	/// <returns>返回创建的导航关联子句，如果 <paramref name="schema"/> 参数指定的数据模式成员对应的不是导航属性则返回空<c>null</c>。</returns>
+	/// <returns>返回创建的导航关联子句，如果 <paramref name="schema"/> 参数指定的数据模式成员对应的不是导航属性则返回空(<c>null</c>)。</returns>
 	internal static IEnumerable<JoinClause> Create(ISource source, SchemaMember schema, Func<string, JoinClause> targetFinder, Func<IDataEntity, TableIdentifier> targetCreator)
 	{
 		if(schema == null)

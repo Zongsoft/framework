@@ -75,9 +75,9 @@ public class TableDefinition : StatementBase
 	/// <returns>返回指向当前表定义的表标识。</returns>
 	public TableIdentifier Identifier(string alias = null) => new TableIdentifier(this, alias);
 
-	/// <summary>创建一个字段定义并添加到当前表定义的 <see cref="Fields"/> 集中，如果同名字段已经定义则返回空<c>null</c>。</summary>
+	/// <summary>创建一个字段定义并添加到当前表定义的 <see cref="Fields"/> 集中，如果同名字段已经定义则返回空(<c>null</c>)。</summary>
 	/// <param name="property">指定的要添加字段的单值属性元信息。</param>
-	/// <returns>返回的新增字段定义项，如果指定属性对应的字段已经存在则返回空<c>null</c>。</returns>
+	/// <returns>返回的新增字段定义项，如果指定属性对应的字段已经存在则返回空(<c>null</c>)。</returns>
 	public FieldDefinition Field(IDataEntitySimplexProperty property)
 	{
 		if(property == null)
@@ -99,7 +99,7 @@ public class TableDefinition : StatementBase
 		return field;
 	}
 
-	/// <summary>创建一个字段定义并添加到当前表定义的 <see cref="Fields"/> 集中，如果同名字段已经定义则返回空<c>null</c>。</summary>
+	/// <summary>创建一个字段定义并添加到当前表定义的 <see cref="Fields"/> 集中，如果同名字段已经定义则返回空(<c>null</c>)。</summary>
 	/// <param name="name">要添加字段的名称。</param>
 	/// <param name="type">要添加字段的数据类型。</param>
 	/// <param name="nullable">要添加字段的可空性（即字段是否允许为空），默认为允许(True)。</param>
@@ -114,7 +114,7 @@ public class TableDefinition : StatementBase
 		return field;
 	}
 
-	/// <summary>创建一个字段定义并添加到当前表定义的 <see cref="Fields"/> 集中，如果同名字段已经定义则返回空<c>null</c>。</summary>
+	/// <summary>创建一个字段定义并添加到当前表定义的 <see cref="Fields"/> 集中，如果同名字段已经定义则返回空(<c>null</c>)。</summary>
 	/// <param name="name">要添加字段的名称。</param>
 	/// <param name="type">要添加字段的数据类型。</param>
 	/// <param name="length">要添加字段的最大长度。</param>
@@ -134,7 +134,7 @@ public class TableDefinition : StatementBase
 		return field;
 	}
 
-	/// <summary>创建一个字段定义并添加到当前表定义的 <see cref="Fields"/> 集中，如果同名字段已经定义则返回空<c>null</c>。</summary>
+	/// <summary>创建一个字段定义并添加到当前表定义的 <see cref="Fields"/> 集中，如果同名字段已经定义则返回空(<c>null</c>)。</summary>
 	/// <param name="name">要添加字段的名称。</param>
 	/// <param name="type">要添加字段的数据类型。</param>
 	/// <param name="precision">要添加字段的数字精度。</param>

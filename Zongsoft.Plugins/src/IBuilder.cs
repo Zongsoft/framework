@@ -45,7 +45,7 @@ public interface IBuilder : IDisposable
 	/// <returns>创建成功后的目标对象，有关该返回值的详细定义请参考说明部分。</returns>
 	/// <remarks>
 	///		<para>该方法返回值会被作为对应<see cref="Builtin"/>的子构件对应目标对象的所有者(即上级对象)。</para>
-	///		<para>如果该方法内部设置了<paramref name="context"/>参数对象中的<seealso cref="Builders.BuilderContext.Result"/>属性不为空<c>null</c>。</para>
+	///		<para>如果该方法内部设置了<paramref name="context"/>参数对象中的<seealso cref="Builders.BuilderContext.Result"/>属性不为空(<c>null</c>)。</para>
 	/// </remarks>
 	object Build(Builders.BuilderContext context);
 

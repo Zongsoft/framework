@@ -145,8 +145,8 @@ public class Plugin : IEquatable<Plugin>
 	#region 公共方法
 	/// <summary>获取指定构件的构建器。</summary>
 	/// <param name="scheme">指定的构建器名称。</param>
-	/// <returns>如果找到对应的构建器则返回构建器对象，否则返回空<c>null</c>。</returns>
-	/// <exception cref="System.ArgumentNullException">当<paramref name="scheme"/>参数为空<c>null</c>或空白字符。</exception>
+	/// <returns>如果找到对应的构建器则返回构建器对象，否则返回空(<c>null</c>)。</returns>
+	/// <exception cref="System.ArgumentNullException">当<paramref name="scheme"/>参数为空(<c>null</c>)或空白字符。</exception>
 	/// <remarks>
 	/// <para>查找构建器的流程如下：</para>
 	/// <list type="number">
@@ -154,7 +154,7 @@ public class Plugin : IEquatable<Plugin>
 	///			<term>在当前插件的构建器集合中查找指定名称的构建器，如果找到则返回，否则继续；</term>
 	///			<term>依次在当前插件的依赖插件的构建器集合中查找指定名称的构建器，如果找到则返回，否则递归重复该项查找；</term>
 	///			<term>在当前插件的父插件的构建器集合中查找，如果找到则返回；</term>
-	///			<term>查找失败，返回空<c>null</c>。</term>
+	///			<term>查找失败，返回空(<c>null</c>)。</term>
 	///		</item>
 	/// </list>
 	/// </remarks>
@@ -170,8 +170,8 @@ public class Plugin : IEquatable<Plugin>
 
 	/// <summary>获取指定构件的解析器。</summary>
 	/// <param name="scheme">指定的解析器名称。</param>
-	/// <returns>如果找到对应的解析器则返回解析器对象，否则返回空<c>null</c>。</returns>
-	/// <exception cref="System.ArgumentNullException">当<paramref name="scheme"/>参数为空<c>null</c>或空白字符。</exception>
+	/// <returns>如果找到对应的解析器则返回解析器对象，否则返回空(<c>null</c>)。</returns>
+	/// <exception cref="System.ArgumentNullException">当<paramref name="scheme"/>参数为空(<c>null</c>)或空白字符。</exception>
 	/// <remarks>
 	/// <para>查找解析器的流程如下：</para>
 	/// <list type="number">
@@ -179,7 +179,7 @@ public class Plugin : IEquatable<Plugin>
 	///			<term>在当前插件的解析器集合中查找指定名称的解析器，如果找到则返回，否则继续；</term>
 	///			<term>依次在当前插件的依赖插件的解析器集合中查找指定名称的解析器，如果找到则返回，否则递归重复该项查找；</term>
 	///			<term>在当前插件的父插件的解析器集合中查找，如果找到则返回；</term>
-	///			<term>查找失败，返回空<c>null</c>。</term>
+	///			<term>查找失败，返回空(<c>null</c>)。</term>
 	///		</item>
 	/// </list>
 	/// </remarks>

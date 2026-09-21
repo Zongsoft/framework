@@ -129,7 +129,7 @@ public class PluginLoader
 	///		<para>使用不同的<see cref="Zongsoft.Plugins.PluginOptions"/>设置项多次加载，会导致最后一次加载覆盖上次加载的插件结构，这有可能会影响您的插件应用对构件或服务的获取路径，从而导致不可预知的结果。</para>
 	///		<para>如果要重用上次加载的配置，请调用无参的Load方法。</para>
 	///	</remarks>
-	/// <exception cref="System.ArgumentNullException">参数<paramref name="options"/>为空<c>null</c>。</exception>
+	/// <exception cref="System.ArgumentNullException">参数<paramref name="options"/>为空(<c>null</c>)。</exception>
 	internal void Load(PluginOptions options)
 	{
 		if(options == null)
@@ -181,7 +181,7 @@ public class PluginLoader
 	/// <summary>卸载指定的插件。</summary>
 	/// <param name="plugin">指定要卸载的插件。</param>
 	/// <remarks>如果指定的插件状态不是已经加载的（即插件对象的Status属性值不等于<seealso cref="Zongsoft.Plugins.PluginStatus.Loaded"/>），则不能对其进行卸载。</remarks>
-	/// <exception cref="System.ArgumentNullException">当<paramref name="plugin"/>参数为空<c>null</c>。</exception>
+	/// <exception cref="System.ArgumentNullException">当<paramref name="plugin"/>参数为空(<c>null</c>)。</exception>
 	internal void Unload(Plugin plugin)
 	{
 		if(plugin == null || plugin.Status != PluginStatus.Loaded)

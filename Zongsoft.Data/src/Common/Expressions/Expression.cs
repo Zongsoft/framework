@@ -39,9 +39,9 @@ public abstract class Expression : IExpression
 	#endregion
 
 	#region 静态方法
-	/// <summary>判断指定的表达式是否为空<c>null</c>或空常量表达式（即值为空的常量表达式）。</summary>
+	/// <summary>判断指定的表达式是否为空(<c>null</c>)或空常量表达式（即值为空的常量表达式）。</summary>
 	/// <param name="expression">指定要判断的表达式。</param>
-	/// <returns>如果指定的表达式为空<c>null</c>或是一个空常量表达式则返回真(True)，否则返回假(False)。</returns>
+	/// <returns>如果指定的表达式为空(<c>null</c>)或是一个空常量表达式则返回真(True)，否则返回假(False)。</returns>
 	public static bool IsNull(IExpression expression)
 	{
 		return expression == null || (expression is ConstantExpression constant && constant.Value == null);

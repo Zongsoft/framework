@@ -76,7 +76,7 @@ public class BuilderContext
 	public IBuilder Builder => _builder;
 
 	/// <summary>获取或设置构建过程的追加器。</summary>
-	/// <remarks>注意：该属性可能会被构建过程设置为空<c>null</c>，以阻止后续的追加动作。</remarks>
+	/// <remarks>注意：该属性可能会被构建过程设置为空(<c>null</c>)，以阻止后续的追加动作。</remarks>
 	public IAppender Appender
 	{
 		get => _appender;
