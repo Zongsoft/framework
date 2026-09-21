@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Security.Configuration;
 
-/// <summary>
-/// 表示用户管理的配置选项。
-/// </summary>
+/// <summary>表示用户管理的配置选项。</summary>
 public class IdentityOptions
 {
 	/// <summary>获取或设置密码的最小长度，零表示不限制。</summary>

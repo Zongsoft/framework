@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Expressions;
 
-/// <summary>
-/// 表示词素的类。
-/// </summary>
+/// <summary>表示词素的类。</summary>
 public class Token : IEquatable<Token>
 {
 	#region 静态字段

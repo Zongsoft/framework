@@ -74,13 +74,13 @@ public abstract partial class Fetcher
 	public static ValueTask<Result> FetchAsync(Version version, CancellationToken cancellation = default) => FetchAsync(null, null, version, cancellation);
 
 	/// <summary>通过指定通道获取最新版本的升级信息。</summary>
-	/// <param name="name">指定的通道，即获取器名称（譬如：<c>Web</c>、<c>File</c>）；如果为空(<c>null</c>)或空字符串(<c>""</c>)，则表示默认通道。</param>
+	/// <param name="name">指定的通道，即获取器名称（譬如：<c>Web</c>、<c>File</c>）；如果为空(<c>null</c>)或空字符串，则表示默认通道。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
 	/// <returns>如果获取成功则返回包含结果升级清单和文件信息的结果对象，否则返回空(<c>null</c>)。</returns>
 	public static ValueTask<Result> FetchAsync(string name, CancellationToken cancellation = default) => FetchAsync(name, null, null, cancellation);
 
 	/// <summary>通过指定通道获取指定版本的升级信息。</summary>
-	/// <param name="name">指定的通道，即获取器名称（譬如：<c>Web</c>、<c>File</c>）；如果为空(<c>null</c>)或空字符串(<c>""</c>)，则表示默认通道。</param>
+	/// <param name="name">指定的通道，即获取器名称（譬如：<c>Web</c>、<c>File</c>）；如果为空(<c>null</c>)或空字符串，则表示默认通道。</param>
 	/// <param name="edition">指定要升级的版本名，如果为空(<c>null</c>)或空字符串则表示不限定版本名。</param>
 	/// <param name="version">指定要升级到的版本号，如果为空(<c>null</c>)表示升级到最新版本。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>

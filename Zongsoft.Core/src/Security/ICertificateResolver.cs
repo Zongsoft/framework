@@ -32,9 +32,7 @@ using System.IO;
 
 namespace Zongsoft.Security;
 
-/// <summary>
-/// 提供数字证书解析功能的接口。
-/// </summary>
+/// <summary>提供数字证书解析功能的接口。</summary>
 public interface ICertificateResolver
 {
 	/// <summary>获取数字证书解析器名称，通常对应数字证书的格式名。</summary>

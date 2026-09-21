@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common.Expressions;
 
-/// <summary>
-/// 表示语句的基础接口。
-/// </summary>
+/// <summary>表示语句的基础接口。</summary>
 public interface IStatementBase : IExpression
 {
 	#region 属性定义

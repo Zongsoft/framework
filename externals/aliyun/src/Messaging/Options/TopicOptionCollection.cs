@@ -32,9 +32,7 @@ using System.Collections.ObjectModel;
 
 namespace Zongsoft.Externals.Aliyun.Messaging.Options;
 
-/// <summary>
-/// 表示阿里云消息主题提供程序的配置项集合。
-/// </summary>
+/// <summary>表示阿里云消息主题提供程序的配置项集合。</summary>
 public class TopicOptionCollection() : KeyedCollection<string, TopicOption>(StringComparer.OrdinalIgnoreCase)
 {
 	#region 公共属性

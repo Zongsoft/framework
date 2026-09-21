@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 定义用于数据提供程序的访问方式。
-/// </summary>
+/// <summary>定义用于数据提供程序的访问方式。</summary>
 [Flags]
 public enum DataAccessMode
 {

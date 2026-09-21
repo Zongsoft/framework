@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Externals.Aliyun.Pushing;
 
-/// <summary>
-/// 关于移动推送的设备类型的枚举。
-/// </summary>
+/// <summary>关于移动推送的设备类型的枚举。</summary>
 public enum PushingDeviceType
 {
 	/// <summary>所有设备</summary>

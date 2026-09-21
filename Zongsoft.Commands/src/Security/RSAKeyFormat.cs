@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Security;
 
-/// <summary>
-/// 表示RSA密钥格式的枚举。
-/// </summary>
+/// <summary>表示RSA密钥格式的枚举。</summary>
 public enum RSAKeyFormat
 {
 	/// <summary>无</summary>

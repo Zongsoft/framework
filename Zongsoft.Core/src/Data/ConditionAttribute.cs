@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示条件组合成员的描述特性。
-/// </summary>
+/// <summary>表示条件组合成员的描述特性。</summary>
 [AttributeUsage(AttributeTargets.Property)]
 public class ConditionAttribute : Attribute
 {

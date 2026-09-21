@@ -73,6 +73,8 @@ public class Transaction : IDisposable, IAsyncDisposable, IEquatable<Transaction
 
 	#region 公共方法
 	/// <summary>向当前事务登记一个事务处理过程的回调。</summary>
+	/// <param name="enlistment">要登记的非空事务回调。</param>
+	/// <returns>登记成功返回真；事务已开始终结或回调已登记时返回假。</returns>
 	public bool Enlist(IEnlistment enlistment) => _context.Enlist(enlistment);
 
 	/// <summary>提交事务。</summary>
@@ -80,6 +82,7 @@ public class Transaction : IDisposable, IAsyncDisposable, IEquatable<Transaction
 
 	/// <summary>提交事务。</summary>
 	/// <param name="cancellation">保留用于兼容现有调用；事务终结不响应此取消标记。</param>
+	/// <returns>表示事务提交及全部登记回调完成的任务。</returns>
 	/// <remarks>等待所有登记回调（含数据会话的真实提交）完成后再返回；事务终结一旦调用便不会被取消。</remarks>
 	public Task CommitAsync(CancellationToken cancellation = default) => _context.CommitAsync(cancellation);
 
@@ -88,6 +91,7 @@ public class Transaction : IDisposable, IAsyncDisposable, IEquatable<Transaction
 
 	/// <summary>回滚事务。</summary>
 	/// <param name="cancellation">保留用于兼容现有调用；事务终结不响应此取消标记。</param>
+	/// <returns>表示事务回滚及全部登记回调完成的任务。</returns>
 	/// <remarks>等待所有登记回调（含数据会话的真实回滚）完成后再返回；事务终结一旦调用便不会被取消。</remarks>
 	public Task RollbackAsync(CancellationToken cancellation = default) => _context.RollbackAsync(cancellation);
 	#endregion

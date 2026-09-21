@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示条件转换器的接口。
-/// </summary>
+/// <summary>表示条件转换器的接口。</summary>
 public interface IConditionConverter
 {
 	ICondition Convert(ConditionConverterContext context);

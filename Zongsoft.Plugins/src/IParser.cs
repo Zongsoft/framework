@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Plugins;
 
-/// <summary>
-/// 表示解析器的接口。
-/// </summary>
+/// <summary>表示解析器的接口。</summary>
 public interface IParser
 {
 	/// <summary>获取解析器目标对象的类型。</summary>

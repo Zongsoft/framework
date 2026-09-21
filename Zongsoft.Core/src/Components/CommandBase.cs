@@ -153,9 +153,7 @@ public abstract class CommandBase : ICommand, Services.IMatchable, INotifyProper
 	/// <param name="argument">执行命令的参数。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回执行的返回结果。</returns>
-	/// <remarks>
-	///		<para>本方法的实现中首先调用<see cref="CanExecuteAsync"/>方法，以确保阻止非法的调用。</para>
-	/// </remarks>
+	/// <remarks>本方法的实现中首先调用<see cref="CanExecuteAsync"/>方法，以确保阻止非法的调用。</remarks>
 	protected virtual async ValueTask<object> ExecuteAsync(object argument, CancellationToken cancellation)
 	{
 		//在执行之前首先判断是否可以执行

@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Reflection.Expressions;
 
-/// <summary>
-/// 提供表达式元素的扩展方法类。
-/// </summary>
+/// <summary>提供表达式元素的扩展方法类。</summary>
 public static class MemberExpressionExtension
 {
 	/// <summary>查找指定表达式节点位于表达式中的首个节点元素。</summary>

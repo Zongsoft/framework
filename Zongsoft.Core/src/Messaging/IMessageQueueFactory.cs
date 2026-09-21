@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Messaging;
 
-/// <summary>
-/// 提供消息队列创建功能的接口。
-/// </summary>
+/// <summary>提供消息队列创建功能的接口。</summary>
 public interface IMessageQueueFactory
 {
 	/// <summary>获取消息队列类型名称。</summary>

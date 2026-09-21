@@ -36,6 +36,7 @@ namespace Zongsoft.Data;
 
 partial class DataAccessBase
 {
+	#region 公共方法
 	public int Execute(string name, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null) => this.Execute(name, null, options, executing, executed);
 	public int Execute(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null)
 	{
@@ -361,7 +362,10 @@ partial class DataAccessBase
 		//返回最终的结果
 		return result;
 	}
+	#endregion
 
+	#region 保护方法
 	protected abstract void OnExecute(DataExecuteContextBase context);
 	protected abstract ValueTask OnExecuteAsync(DataExecuteContextBase context, CancellationToken cancellation);
+	#endregion
 }

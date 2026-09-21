@@ -34,9 +34,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Security;
 
-/// <summary>
-/// 提供安全凭证相关操作的功能。
-/// </summary>
+/// <summary>提供安全凭证相关操作的功能。</summary>
 public interface ICredentialProvider
 {
 	#region 事件定义
@@ -57,11 +55,13 @@ public interface ICredentialProvider
 	/// <summary>将指定的凭证主体注册到凭证容器中。</summary>
 	/// <param name="principal">指定要注册的凭证主体对象。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>表示凭证主体注册操作的异步任务。</returns>
 	ValueTask RegisterAsync(CredentialPrincipal principal, CancellationToken cancellation = default);
 
 	/// <summary>从安全凭证容器中注销指定的凭证。</summary>
 	/// <param name="credentialId">指定的要注销的安全凭证编号。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
+	/// <returns>表示凭证注销操作的异步任务。</returns>
 	ValueTask UnregisterAsync(string credentialId, CancellationToken cancellation = default);
 
 	/// <summary>续约指定的凭证主体。</summary>

@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据服务过滤器的接口。
-/// </summary>
+/// <summary>表示数据服务过滤器的接口。</summary>
 public interface IDataServiceFilter<TModel>
 {
 	void OnFiltered(IDataServiceContext<TModel> context);

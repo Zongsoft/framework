@@ -44,6 +44,7 @@ partial class S3FileSystem
 	{
 		private readonly S3FileSystem _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
 
+		#region 公共方法
 		public bool Create(string path, IEnumerable<KeyValuePair<string, string>> properties = null) => true;
 		public ValueTask<bool> CreateAsync(string path, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default) => ValueTask.FromResult(true);
 
@@ -278,5 +279,6 @@ partial class S3FileSystem
 					yield return (Zongsoft.IO.FileInfo)child;
 			}
 		}
+		#endregion
 	}
 }

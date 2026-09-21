@@ -33,9 +33,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示命令执行器的上下文（命令执行会话）类。
-/// </summary>
+/// <summary>表示命令执行器的上下文（命令执行会话）类。</summary>
 public class CommandExecutorContext : ICommandContext
 {
 	#region 构造函数

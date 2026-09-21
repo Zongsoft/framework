@@ -34,12 +34,8 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
 
-/// <summary>
-/// 表示键值对的选项设置类，可以通过一个以分号为分隔符的字符串来表示该设置类。
-/// </summary>
-/// <example>
-/// key1=value1;key2=;key3='contains whitespaces or other escape characters(e.g. :=;"\t\r\n\').'
-/// </example>
+/// <summary>表示键值对的选项设置类，可以通过一个以分号为分隔符的字符串来表示该设置类。</summary>
+/// <example>key1=value1;key2=;key3='contains whitespaces or other escape characters(e.g. :=;"\t\r\n\').'</example>
 public partial class Settings : ISettings, IReadOnlyDictionary<string, string>, IEquatable<Settings>
 {
 	#region 成员字段

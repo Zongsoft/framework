@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Caching;
 
-/// <summary>
-/// 表示缓存项优先级(重要性)的枚举。
-/// </summary>
+/// <summary>表示缓存项优先级(重要性)的枚举。</summary>
 public enum CachePriority
 {
 	Low,

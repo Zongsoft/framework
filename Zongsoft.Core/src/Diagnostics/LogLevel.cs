@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Diagnostics;
 
-/// <summary>
-/// 表示日志的级别。
-/// </summary>
+/// <summary>表示日志的级别。</summary>
 public enum LogLevel : byte
 {
 	/// <summary>跟踪(0)</summary>

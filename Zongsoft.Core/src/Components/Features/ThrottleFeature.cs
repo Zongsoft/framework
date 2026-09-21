@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components.Features;
 
-/// <summary>
-/// 提供限流(限速)功能的特性类。
-/// </summary>
+/// <summary>提供限流(限速)功能的特性类。</summary>
 public abstract class ThrottleFeatureBase : IFeature
 {
 	#region 构造函数
@@ -56,9 +54,7 @@ public abstract class ThrottleFeatureBase : IFeature
 	#endregion
 }
 
-/// <summary>
-/// 提供限流(限速)功能的特性类。
-/// </summary>
+/// <summary>提供限流(限速)功能的特性类。</summary>
 public class ThrottleFeature : ThrottleFeatureBase
 {
 	#region 构造函数
@@ -74,9 +70,7 @@ public class ThrottleFeature : ThrottleFeatureBase
 	#endregion
 }
 
-/// <summary>
-/// 提供限流(限速)功能的特性类。
-/// </summary>
+/// <summary>提供限流(限速)功能的特性类。</summary>
 public class ThrottleFeature<T> : ThrottleFeatureBase
 {
 	#region 构造函数
@@ -92,9 +86,7 @@ public class ThrottleFeature<T> : ThrottleFeatureBase
 	#endregion
 }
 
-/// <summary>
-/// 提供限流(限速)功能的特性类。
-/// </summary>
+/// <summary>提供限流(限速)功能的特性类。</summary>
 public class ThrottleFeature<T, TResult> : ThrottleFeatureBase
 {
 	#region 构造函数
@@ -198,9 +190,12 @@ public class ThrottleLease : IDisposable
 {
 	protected ThrottleLease() { }
 
+	#region 公共属性
 	public virtual bool IsLeased { get; }
 	public virtual IMetadataCollection Metadata { get; }
+	#endregion
 
+	#region 资源释放
 	public void Dispose()
 	{
 		this.Dispose(true);
@@ -208,21 +203,26 @@ public class ThrottleLease : IDisposable
 	}
 
 	protected virtual void Dispose(bool disposing) { }
+	#endregion
 
 	public interface IMetadataCollection : IReadOnlyCollection<KeyValuePair<string, object>>
 	{
+		#region 公共方法
 		bool TryGetValue<T>(string key, out T value);
 		bool TryGetValue(string key, out object value);
+		#endregion
 	}
 }
 
 public class ThrottleLimiter
 {
+	#region 静态方法
 	public static TokenBucket Token(int value, TimeSpan period) => new(value, period);
 	public static FixedWindown Fixed(TimeSpan window) => new(window);
 	public static FixedWindown Fixed(int window) => new(TimeSpan.FromMilliseconds(window));
 	public static SlidingWindown Sliding(TimeSpan window, int windowSegments = 0) => new(window, windowSegments);
 	public static SlidingWindown Sliding(int window, int windowSegments = 0) => new(TimeSpan.FromMilliseconds(window), windowSegments);
+	#endregion
 
 	/// <summary>表示令牌桶限制器。</summary>
 	public class TokenBucket : ThrottleLimiter
@@ -233,12 +233,16 @@ public class ThrottleLimiter
 			this.Period = period;
 		}
 
+		#region 公共属性
 		/// <summary>获取或设置每个周期补充的令牌数。</summary>
 		public int Value { get; set; }
 		/// <summary>获取或设置令牌补充周期。</summary>
 		public TimeSpan Period { get; set; }
+		#endregion
 
+		#region 重写方法
 		public override string ToString() => $"{nameof(TokenBucket)}({this.Value}@{this.Period})";
+		#endregion
 	}
 
 	/// <summary>表示固定窗口限制器。</summary>
@@ -246,10 +250,14 @@ public class ThrottleLimiter
 	{
 		public FixedWindown(TimeSpan window) => this.Window = window;
 
+		#region 公共属性
 		/// <summary>获取或设置窗口时长。</summary>
 		public TimeSpan Window { get; set; }
+		#endregion
 
+		#region 重写方法
 		public override string ToString() => $"{nameof(FixedWindown)}({this.Window})";
+		#endregion
 	}
 
 	/// <summary>表示滑动窗口限制器。</summary>
@@ -261,11 +269,15 @@ public class ThrottleLimiter
 			this.WindowSegments = windowSegments;
 		}
 
+		#region 公共属性
 		/// <summary>获取或设置窗口分段数。</summary>
 		public int WindowSegments { get; set; }
 		/// <summary>获取或设置窗口时长。</summary>
 		public TimeSpan Window { get; set; }
+		#endregion
 
+		#region 重写方法
 		public override string ToString() => $"{nameof(SlidingWindown)}({this.WindowSegments}@{this.Window})";
+		#endregion
 	}
 }

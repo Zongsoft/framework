@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Externals.Opc;
 
-/// <summary>
-/// 表示预制件种类的枚举。
-/// </summary>
+/// <summary>表示预制件种类的枚举。</summary>
 public enum PrefabKind
 {
 	/// <summary>未定义</summary>

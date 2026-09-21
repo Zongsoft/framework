@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示操作元类型的枚举。
-/// </summary>
+/// <summary>表示操作元类型的枚举。</summary>
 public enum OperandType
 {
 	/// <summary>加号</summary>

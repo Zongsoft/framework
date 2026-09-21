@@ -39,6 +39,7 @@ partial class HardwareCollector
 	[System.Runtime.Versioning.SupportedOSPlatform("MacOS")]
 	private static class MacosGatherer
 	{
+		#region 静态方法
 		public static IEnumerable<IO.Hardwares.IHardware> Gather()
 		{
 			var profile = GetHardwareProfile();
@@ -61,7 +62,9 @@ partial class HardwareCollector
 			foreach(var disk in GetDisks())
 				yield return disk;
 		}
+		#endregion
 
+		#region 私有方法
 		private static IO.Hardwares.IHardware GetMainboard(IReadOnlyDictionary<string, string> profile)
 		{
 			var properties = new List<IO.Hardwares.HardwareProperty>();
@@ -493,11 +496,14 @@ partial class HardwareCollector
 			JsonValueKind.False => bool.FalseString,
 			_ => null,
 		};
+		#endregion
 
 		private sealed class ProfileEntry(IReadOnlyDictionary<string, string> values, IReadOnlyList<ProfileEntry> children)
 		{
+			#region 公共属性
 			public IReadOnlyDictionary<string, string> Values { get; } = values ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 			public IReadOnlyList<ProfileEntry> Children { get; } = children ?? [];
+			#endregion
 		}
 	}
 }

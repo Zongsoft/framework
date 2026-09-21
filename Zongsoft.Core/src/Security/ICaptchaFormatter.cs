@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Security;
 
-/// <summary>
-/// 提供人机识别签发结果的格式化功能。
-/// </summary>
+/// <summary>提供人机识别签发结果的格式化功能。</summary>
 /// <typeparam name="TContext">表示格式化上下文的类型。</typeparam>
 public interface ICaptchaFormatter<TContext>
 {

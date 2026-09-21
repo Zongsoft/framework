@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Communication;
 
-/// <summary>
-/// 提供发送器模板参数转换功能的接口。
-/// </summary>
+/// <summary>提供发送器模板参数转换功能的接口。</summary>
 public interface ITransmitterArgumenter
 {
 	/// <summary>将指定的数据转换为模板参数。</summary>

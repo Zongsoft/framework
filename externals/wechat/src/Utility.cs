@@ -46,6 +46,7 @@ internal static class Utility
 {
 	private static readonly MD5 _md5 = MD5.Create();
 
+	#region 静态方法
 	public static TOptions GetOptions<TOptions>(string path)
 	{
 		var configuration = Zongsoft.Services.ApplicationContext.Current?.Configuration;
@@ -139,6 +140,7 @@ internal static class Utility
 
 		return text;
 	}
+	#endregion
 
 	private struct ErrorResult
 	{

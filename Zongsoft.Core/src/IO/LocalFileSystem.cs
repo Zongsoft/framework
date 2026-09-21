@@ -55,7 +55,7 @@ public class LocalFileSystem : IFileSystem
 	#endregion
 
 	#region 公共方法
-	public string GetUrl(string path) => String.IsNullOrEmpty(path) ? null : GetLocalPath(path);
+	public string GetUrl(string path) => string.IsNullOrEmpty(path) ? null : GetLocalPath(path);
 	public string GetUrl(Path path) => TryGetLocalPath(path, out var result) ? result : path.Url;
 	#endregion
 

@@ -37,9 +37,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Security.Privileges;
 
-/// <summary>
-/// 提供角色成员服务的接口。
-/// </summary>
+/// <summary>提供角色成员服务的接口。</summary>
 public interface IMemberService<TRole, TMember> : IMemberService where TRole : IRole where TMember : IMember<TRole>
 {
 	/// <summary>获取指定成员的所有祖先角色集。</summary>

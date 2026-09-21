@@ -36,37 +36,36 @@ using Microsoft.AspNetCore.Mvc;
 using Zongsoft.Services;
 using Zongsoft.Reporting;
 
-namespace Zongsoft.Externals.Grapecity.Reporting.Web
+namespace Zongsoft.Externals.Grapecity.Reporting.Web;
+
+[ApiController]
+[Route("Grapecity/Reporting/Reports")]
+public class ReportController : ControllerBase
 {
-	[ApiController]
-	[Route("Grapecity/Reporting/Reports")]
-	public class ReportController : ControllerBase
+	#region 成员字段
+	private readonly IServiceProvider _serviceProvider;
+	#endregion
+
+	#region 构造函数
+	public ReportController(IServiceProvider serviceProvider)
 	{
-		#region 成员字段
-		private readonly IServiceProvider _serviceProvider;
-		#endregion
-
-		#region 构造函数
-		public ReportController(IServiceProvider serviceProvider)
-		{
-			_serviceProvider = serviceProvider;
-		}
-		#endregion
-
-		#region 公共方法
-		[HttpGet]
-		public IActionResult GetReports()
-		{
-			var providers = _serviceProvider.ResolveAll<IReportLocator>();
-			var reports = new List<IReportDescriptor>();
-
-			foreach(var provider in providers)
-			{
-				reports.AddRange(provider.GetReports());
-			}
-
-			return reports.Count > 0 ? this.Ok(reports.Select(report => report.Name)) : this.NoContent();
-		}
-		#endregion
+		_serviceProvider = serviceProvider;
 	}
+	#endregion
+
+	#region 公共方法
+	[HttpGet]
+	public IActionResult GetReports()
+	{
+		var providers = _serviceProvider.ResolveAll<IReportLocator>();
+		var reports = new List<IReportDescriptor>();
+
+		foreach(var provider in providers)
+		{
+			reports.AddRange(provider.GetReports());
+		}
+
+		return reports.Count > 0 ? this.Ok(reports.Select(report => report.Name)) : this.NoContent();
+	}
+	#endregion
 }

@@ -482,6 +482,7 @@ public abstract class DataUpsertContextBase : DataAccessContextBase<IDataUpsertO
 
 internal static class DataContextUtility
 {
+	#region 静态方法
 	public static Metadata.IDataEntity GetEntity(this IDataAccess _, string name)
 	{
 		if(Mapping.Entities.TryGetValue(name, out var entity))
@@ -497,4 +498,5 @@ internal static class DataContextUtility
 
 		throw new DataException(string.Format(Properties.Resources.DataCommand_NotFound_Message, name));
 	}
+	#endregion
 }

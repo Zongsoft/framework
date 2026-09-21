@@ -2,9 +2,7 @@
 
 namespace Zongsoft.Data.Tests.Models;
 
-/// <summary>
-/// 表示就职状态的枚举。
-/// </summary>
+/// <summary>表示就职状态的枚举。</summary>
 public enum JobStatus : byte
 {
 	/// <summary>在职</summary>

@@ -2,9 +2,7 @@ using System;
 
 namespace Zongsoft.Messaging;
 
-/// <summary>
-/// 表示消息主题订阅操作的选项类。
-/// </summary>
+/// <summary>表示消息主题订阅操作的选项类。</summary>
 public class MessageSubscribeOptions
 {
 	#region 单例字段
@@ -28,9 +26,7 @@ public class MessageSubscribeOptions
 	#endregion
 }
 
-/// <summary>
-/// 表示消息出队(消费)操作的选项类。
-/// </summary>
+/// <summary>表示消息出队(消费)操作的选项类。</summary>
 public class MessageDequeueOptions
 {
 	#region 单例字段
@@ -51,9 +47,7 @@ public class MessageDequeueOptions
 	#endregion
 }
 
-/// <summary>
-/// 表示消息入队(生产)操作的选项类。
-/// </summary>
+/// <summary>表示消息入队(生产)操作的选项类。</summary>
 public class MessageEnqueueOptions
 {
 	#region 单例字段

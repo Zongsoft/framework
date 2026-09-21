@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data.Metadata;
 
-/// <summary>
-/// 表示数据实体复合属性特性的枚举。
-/// </summary>
+/// <summary>表示数据实体复合属性特性的枚举。</summary>
 [Flags]
 public enum DataEntityComplexPropertyBehaviors
 {

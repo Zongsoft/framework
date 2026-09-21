@@ -2,9 +2,7 @@
 
 namespace Zongsoft.Data.Tests.Models;
 
-/// <summary>
-/// 表示营业执照种类的枚举。
-/// </summary>
+/// <summary>表示营业执照种类的枚举。</summary>
 public enum BusinessLicenseKind : byte
 {
 	/// <summary>其他</summary>

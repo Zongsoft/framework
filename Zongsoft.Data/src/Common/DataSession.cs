@@ -35,9 +35,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Data.Common;
 
-/// <summary>
-/// 表示数据操作的会话类。
-/// </summary>
+/// <summary>表示数据操作的会话类。</summary>
 public partial class DataSession : IDisposable, IAsyncDisposable
 {
 	#region 私有变量
@@ -150,6 +148,8 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 	}
 
 	/// <summary>提交当前会话事务。</summary>
+	/// <param name="cancellation">仅在提交决议被接受前响应的取消令牌；提交开始后不可取消。</param>
+	/// <returns>表示会话提交操作的异步任务；位于环境事务中时不执行提交。</returns>
 	public async ValueTask CommitAsync(CancellationToken cancellation = default)
 	{
 		/*
@@ -179,6 +179,7 @@ public partial class DataSession : IDisposable, IAsyncDisposable
 
 	/// <summary>回滚当前会话事务。</summary>
 	/// <param name="cancellation">保留用于兼容现有调用；回滚属于资源清理操作，不响应此取消标记。</param>
+	/// <returns>表示会话回滚操作的异步任务；位于环境事务中时不执行回滚。</returns>
 	/// <remarks>回滚一旦发起即不可取消，与 DisposeAsync 保持一致，确保会话资源必然被释放。</remarks>
 	public async ValueTask RollbackAsync(CancellationToken cancellation = default)
 	{

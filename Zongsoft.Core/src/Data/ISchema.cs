@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据模式的接口。
-/// </summary>
+/// <summary>表示数据模式的接口。</summary>
 public interface ISchema
 {
 	#region 属性定义

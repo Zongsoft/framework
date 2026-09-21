@@ -2,9 +2,7 @@
 
 namespace Zongsoft.Data.Tests.Models;
 
-/// <summary>
-/// 表示租户状态的枚举。
-/// </summary>
+/// <summary>表示租户状态的枚举。</summary>
 public enum TenantStatus : byte
 {
 	/// <summary>0: 正常。</summary>

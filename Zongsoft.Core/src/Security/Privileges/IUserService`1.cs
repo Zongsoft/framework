@@ -37,9 +37,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Security.Privileges;
 
-/// <summary>
-/// 提供用户服务的接口。
-/// </summary>
+/// <summary>提供用户服务的接口。</summary>
 public interface IUserService<TUser> : IUserService where TUser : IUser
 {
 	/// <summary>获取指定的用户对象。</summary>

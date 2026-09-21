@@ -40,9 +40,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.IO.Hardwares;
 
-/// <summary>
-/// 表示当前机器的硬件配置档案。
-/// </summary>
+/// <summary>表示当前机器的硬件配置档案。</summary>
 public partial class HardwareProfile : IReadOnlyCollection<IHardware>
 {
 	#region 常量定义
@@ -320,6 +318,7 @@ partial class HardwareProfile
 {
 	private sealed class JsonConverter : JsonConverter<HardwareProfile>
 	{
+		#region 重写方法
 		public override HardwareProfile Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
 		{
 			if(reader.TokenType == JsonTokenType.Null)
@@ -394,5 +393,6 @@ partial class HardwareProfile
 
 			writer.WriteEndArray();
 		}
+		#endregion
 	}
 }

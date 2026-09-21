@@ -32,9 +32,7 @@ using System.ComponentModel;
 
 namespace Zongsoft.Collections;
 
-/// <summary>
-/// 表示层次结构的节点类。
-/// </summary>
+/// <summary>表示层次结构的节点类。</summary>
 public abstract class HierarchicalNode : IHierarchicalNode, INotifyPropertyChanged
 {
 	#region 事件定义

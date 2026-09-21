@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据访问的上下文的基本接口。
-/// </summary>
+/// <summary>表示数据访问的上下文的基本接口。</summary>
 public interface IDataAccessContextBase
 {
 	/// <summary>获取数据访问的名称。</summary>
@@ -54,9 +52,7 @@ public interface IDataAccessContextBase
 	TFeature GetFeature<TFeature>();
 }
 
-/// <summary>
-/// 表示数据访问的上下文的基本接口。
-/// </summary>
+/// <summary>表示数据访问的上下文的基本接口。</summary>
 /// <typeparam name="TOptions">当前数据操作的选项类型。</typeparam>
 public interface IDataAccessContextBase<TOptions> : IDataAccessContextBase where TOptions : IDataOptions
 {

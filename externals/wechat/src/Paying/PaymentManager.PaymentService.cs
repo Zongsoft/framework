@@ -104,6 +104,13 @@ public partial class PaymentManager
 		public abstract ValueTask<PaymentOrder> GetCompletedAsync(string key, CancellationToken cancellation = default);
 
 		/// <summary>初始化人脸识别设备的在线刷脸验证请求。</summary>
+		/// <param name="applet">发起刷脸验证的应用编号。</param>
+		/// <param name="data">人脸识别设备采集的原始验证数据。</param>
+		/// <param name="device">人脸识别设备编号。</param>
+		/// <param name="store">门店编号。</param>
+		/// <param name="title">门店名称。</param>
+		/// <param name="extra">附加验证信息。</param>
+		/// <param name="cancellation">监视取消请求的令牌。</param>
 		/// <returns>返回人脸识别验证凭证。</returns>
 		public async ValueTask<object> AuthenticateOnlineAsync(string applet, string data, string device, string store, string title, string extra = null, CancellationToken cancellation = default)
 		{
@@ -133,6 +140,11 @@ public partial class PaymentManager
 		}
 
 		/// <summary>初始化人脸识别设备的离线刷脸验证请求。</summary>
+		/// <param name="applet">发起刷脸验证的应用编号。</param>
+		/// <param name="data">人脸识别设备采集的原始验证数据。</param>
+		/// <param name="device">人脸识别设备编号。</param>
+		/// <param name="organization">刷脸支付业务的机构编号。</param>
+		/// <param name="cancellation">监视取消请求的令牌。</param>
 		/// <returns>返回人脸识别验证凭证。</returns>
 		public async ValueTask<object> AuthenticateOfflineAsync(string applet, string data, string device, string organization, CancellationToken cancellation = default)
 		{
@@ -792,6 +804,7 @@ public partial class PaymentManager
 			{
 				public Compatibility(DirectPaymentService service) : base(service) { }
 
+				#region 重写方法
 				protected override IDictionary<string, object> GetRequest(PaymentRequest request, Scenario scenario)
 				{
 					var dictionary = base.GetRequest(request, scenario);
@@ -825,6 +838,7 @@ public partial class PaymentManager
 
 					return order;
 				}
+				#endregion
 			}
 
 			private sealed class DirectBuilder : RequestBuilder
@@ -832,6 +846,7 @@ public partial class PaymentManager
 				private readonly IAuthority _authority;
 				public DirectBuilder(IAuthority authority) => _authority = authority;
 
+				#region 重写方法
 				internal override string GetFallback() => GetFallback(_authority.Code, FORMAT);
 
 				public override PaymentRequest Create(string appId, string voucher, decimal amount, string currency, string payer, string description = null)
@@ -867,6 +882,7 @@ public partial class PaymentManager
 						FallbackUrl = this.GetFallback(),
 					};
 				}
+				#endregion
 			}
 
 			private sealed class DirectRequest : PaymentRequest
@@ -1184,6 +1200,7 @@ public partial class PaymentManager
 			{
 				public Compatibility(BrokerPaymentService service) : base(service) { }
 
+				#region 重写方法
 				protected override IDictionary<string, object> GetRequest(PaymentRequest request, Scenario scenario)
 				{
 					var dictionary = base.GetRequest(request, scenario);
@@ -1230,6 +1247,7 @@ public partial class PaymentManager
 
 					return order;
 				}
+				#endregion
 			}
 
 			private sealed class BrokerBuilder : RequestBuilder
@@ -1243,6 +1261,7 @@ public partial class PaymentManager
 					_subsidiary = subsidiary;
 				}
 
+				#region 重写方法
 				internal override string GetFallback() => GetFallback(_master.Code, FORMAT);
 
 				public override PaymentRequest Create(string appId, string voucher, decimal amount, string currency, string payer, string description = null)
@@ -1278,6 +1297,7 @@ public partial class PaymentManager
 						FallbackUrl = this.GetFallback(),
 					};
 				}
+				#endregion
 			}
 
 			private sealed class BrokerRequest : PaymentRequest

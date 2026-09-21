@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示尝试器的接口。
-/// </summary>
+/// <summary>表示尝试器的接口。</summary>
 public interface IAttempter
 {
 	/// <summary>获取或设置尝试器选项。</summary>

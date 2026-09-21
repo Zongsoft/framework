@@ -57,6 +57,7 @@ namespace Zongsoft.Services.Distributing;
 /// </example>
 public interface IDistributedLock : IDisposable, IAsyncDisposable
 {
+	#region 公共属性
 	/// <summary>获取分布式锁的标识。</summary>
 	string Key { get; }
 	/// <summary>获取分布式锁的令牌。</summary>
@@ -74,12 +75,17 @@ public interface IDistributedLock : IDisposable, IAsyncDisposable
 	bool IsLocked { get; }
 	/// <summary>获取一个值，指示当前是否处于未锁定（未持有或已过期）状态。</summary>
 	bool IsUnlocked { get; }
+	#endregion
 
+	#region 公共方法
 	/// <summary>进入分布式锁的临界区。</summary>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回异步操作任务。</returns>
 	ValueTask EnterAsync(CancellationToken cancellation = default);
 
 	/// <summary>为当前持有的锁续期。</summary>
+	/// <param name="cancellation">监视取消请求的令牌。</param>
+	/// <returns>续期成功并保持锁所有权时返回真，否则返回假。</returns>
 	ValueTask<bool> RenewAsync(CancellationToken cancellation = default);
+	#endregion
 }

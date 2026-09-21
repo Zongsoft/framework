@@ -32,20 +32,16 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据聚合操作选项的接口。
-/// </summary>
+/// <summary>表示数据聚合操作选项的接口。</summary>
 public interface IDataAggregateOptions : IDataOptions
 {
-	/// <summary>
-	/// 获取或设置一个值，指示是否禁用当前数据访问操作的验证器，默认不禁用。
-	/// </summary>
+	#region 公共属性
+	/// <summary>获取或设置一个值，指示是否禁用当前数据访问操作的验证器，默认不禁用。</summary>
 	bool ValidatorSuppressed { get; set; }
+	#endregion
 }
 
-/// <summary>
-/// 表示数据聚合操作选项的类。
-/// </summary>
+/// <summary>表示数据聚合操作选项的类。</summary>
 public class DataAggregateOptions : DataOptionsBase, IDataAggregateOptions
 {
 	#region 构造函数

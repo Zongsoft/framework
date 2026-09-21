@@ -35,6 +35,7 @@ namespace Zongsoft.Data;
 
 partial class DataAccessExtension
 {
+	#region 静态方法
 	public static int Count(this IDataAccess accessor, string name, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) => accessor.Aggregate<int>(name, DataAggregate.Count(null), criteria, options, aggregating, aggregated) ?? 0;
 	public static int Count<T>(this IDataAccess accessor, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) => accessor.Aggregate<T, int>(DataAggregate.Count(null), criteria, options, aggregating, aggregated) ?? 0;
 	public static int Count(this IDataAccess accessor, string name, string member, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) => accessor.Aggregate<int>(name, DataAggregate.Count(member), criteria, options, aggregating, aggregated) ?? 0;
@@ -71,4 +72,5 @@ partial class DataAccessExtension
 	public static async ValueTask<int> CountAsync<T>(this IDataAccess accessor, string member, bool distinct, ICondition criteria, CancellationToken cancellation = default) => await accessor.AggregateAsync<T, int>(DataAggregate.Count(member, distinct), criteria, null, null, null, cancellation) ?? 0;
 	public static async ValueTask<int> CountAsync<T>(this IDataAccess accessor, string member, bool distinct, ICondition criteria, DataAggregateOptions options, CancellationToken cancellation = default) => await accessor.AggregateAsync<T, int>(DataAggregate.Count(member, distinct), criteria, options, null, null, cancellation) ?? 0;
 	public static async ValueTask<int> CountAsync<T>(this IDataAccess accessor, string member, bool distinct, ICondition criteria, DataAggregateOptions options, Func<DataAggregateContextBase, bool> aggregating, Action<DataAggregateContextBase> aggregated, CancellationToken cancellation = default) => await accessor.AggregateAsync<T, int>(DataAggregate.Count(member, distinct), criteria, options, aggregating, aggregated, cancellation) ?? 0;
+	#endregion
 }

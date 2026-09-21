@@ -36,9 +36,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Caching;
 
-/// <summary>
-/// 表示分布式缓存容器的接口。
-/// </summary>
+/// <summary>表示分布式缓存容器的接口。</summary>
 public interface IDistributedCache
 {
 	#region 属性定义

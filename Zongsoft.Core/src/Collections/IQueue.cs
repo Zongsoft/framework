@@ -35,9 +35,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Collections;
 
-/// <summary>
-/// 队列，表示先进先出的数据容器。
-/// </summary>
+/// <summary>队列，表示先进先出的数据容器。</summary>
 public interface IQueue : ICollection
 {
 	#region 事件定义
@@ -125,17 +123,13 @@ public interface IQueue : ICollection
 	#region 获取方法
 	/// <summary>返回位于队列开始处的对象但不将其移除。</summary>
 	/// <returns>返回位于队列开头处的对象。</returns>
-	/// <remarks>
-	/// 	<para>此方法类似于<seealso cref="Dequeue(object)"/>出队方法，但本方法不修改<seealso cref="Zongsoft.Collections.Queue"/>队列。</para>
-	/// </remarks>
+	/// <remarks>此方法类似于<seealso cref="Dequeue(object)"/>出队方法，但本方法不修改<seealso cref="Zongsoft.Collections.Queue"/>队列。</remarks>
 	object Peek();
 
 	/// <summary>返回位于队列开始处的对象但不将其移除。</summary>
 	/// <param name="cancellation">监视取消请求的令牌。</param>
 	/// <returns>返回表示异步操作的任务对象。</returns>
-	/// <remarks>
-	/// 	<para>此方法类似于<seealso cref="DequeueAsync(object, CancellationToken)"/>出队方法，但本方法不修改<seealso cref="Zongsoft.Collections.Queue"/>队列。</para>
-	/// </remarks>
+	/// <remarks>此方法类似于<seealso cref="DequeueAsync(object, CancellationToken)"/>出队方法，但本方法不修改<seealso cref="Zongsoft.Collections.Queue"/>队列。</remarks>
 	Task<object> PeekAsync(CancellationToken cancellation = default);
 	#endregion
 

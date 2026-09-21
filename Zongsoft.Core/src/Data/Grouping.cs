@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据分组的设置项。
-/// </summary>
+/// <summary>表示数据分组的设置项。</summary>
 public class Grouping
 {
 	#region 成员字段
@@ -258,9 +256,7 @@ public class Grouping
 	#endregion
 
 	#region 嵌套结构
-	/// <summary>
-	/// 表示数据分组键的结构。
-	/// </summary>
+	/// <summary>表示数据分组键的结构。</summary>
 	public readonly struct GroupKey : IEquatable<GroupKey>
 	{
 		#region 公共字段

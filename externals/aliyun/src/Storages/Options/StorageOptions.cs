@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Externals.Aliyun.Storages.Options;
 
-/// <summary>
-/// 表示阿里云对象存储(OSS)相关的配置接口。
-/// </summary>
+/// <summary>表示阿里云对象存储(OSS)相关的配置接口。</summary>
 public class StorageOptions
 {
 	#region 构造函数

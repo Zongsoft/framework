@@ -33,9 +33,7 @@ using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.Common.Expressions;
 
-/// <summary>
-/// 表示写入语句（包括更新、删除等语句）的基类。
-/// </summary>
+/// <summary>表示写入语句（包括更新、删除等语句）的基类。</summary>
 public class MutateStatement : Statement, IMutateStatement
 {
 	#region 构造函数

@@ -34,9 +34,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Plugins;
 
-/// <summary>
-/// 关于插件加载的功能。
-/// </summary>
+/// <summary>关于插件加载的功能。</summary>
 /// <remarks>
 ///		<para>插件加载器根据一系列策略进行插件加载，可以通过<seealso cref="Zongsoft.Plugins.PluginLoader.Topmosts"/>或<seealso cref="Zongsoft.Plugins.PluginTree.Plugins"/>属性获取加载成功的所有根插件集。</para>
 ///		<para>关于插件加载中的相关定义如下：</para>
@@ -47,9 +45,7 @@ namespace Zongsoft.Plugins;
 ///			</item>
 ///			<item>
 ///				<term>插件目录</term>
-///				<description>
-///					<para>位于插件根目录下的子目录或者插件根目录均称为插件目录。不是所有插件根目录下的子目录都是插件子目录，必须包含插件定义文件(*.plugin)的子目录才是插件子目录。</para>
-///				</description>
+///				<description><para>位于插件根目录下的子目录或者插件根目录均称为插件目录。不是所有插件根目录下的子目录都是插件子目录，必须包含插件定义文件(*.plugin)的子目录才是插件子目录。</para></description>
 ///			</item>
 ///			<item>
 ///				<term>父子插件</term>
@@ -67,33 +63,17 @@ namespace Zongsoft.Plugins;
 ///
 ///		<para>插件的父子关系确定涉及下列步骤：</para>
 ///		<list type="number">
-///			<item>
-///				<description>在当前插件目录下如果有子文件夹，则启动子插件的搜索。</description>
-///			</item>
-///			<item>
-///				<description>如果插件目录下有子插件，则这些子插件的父插件为上级插件目录的主插件；当上级插件目录有多个主插件，则他们之间没有从属关系，即为平级关系，并以此类推。</description>
-///			</item>
+///			<item><description>在当前插件目录下如果有子文件夹，则启动子插件的搜索。</description></item>
+///			<item><description>如果插件目录下有子插件，则这些子插件的父插件为上级插件目录的主插件；当上级插件目录有多个主插件，则他们之间没有从属关系，即为平级关系，并以此类推。</description></item>
 ///		</list>
 ///
 ///		<list type="number">
-///			<item>
-///				<description>从插件根目录中以插件文件名排序依次预加载插件，预加载成功的根插件进入根插件集合中。</description>
-///			</item>
-///			<item>
-///				<description>如果预加载插件成功的插件是主插件，则完整的加载它。</description>
-///			</item>
-///			<item>
-///				<description>依次递归预加载子插件目录中的各主插件文件。</description>
-///			</item>
-///			<item>
-///				<description>在系统中所有主插件加载完毕后，则从上向下按级加载从插件。</description>
-///			</item>
-///			<item>
-///				<description>如果从插件集中不能有加载的依赖项或者有循环引用的情况，则这些从插件的状态被置为失败，并从上级插件树列表移除。</description>
-///			</item>
-///			<item>
-///				<description>依次递归预加载子插件目录中的各从插件。</description>
-///			</item>
+///			<item><description>从插件根目录中以插件文件名排序依次预加载插件，预加载成功的根插件进入根插件集合中。</description></item>
+///			<item><description>如果预加载插件成功的插件是主插件，则完整的加载它。</description></item>
+///			<item><description>依次递归预加载子插件目录中的各主插件文件。</description></item>
+///			<item><description>在系统中所有主插件加载完毕后，则从上向下按级加载从插件。</description></item>
+///			<item><description>如果从插件集中不能有加载的依赖项或者有循环引用的情况，则这些从插件的状态被置为失败，并从上级插件树列表移除。</description></item>
+///			<item><description>依次递归预加载子插件目录中的各从插件。</description></item>
 ///		</list>
 /// </remarks>
 public class PluginLoader
@@ -149,7 +129,7 @@ public class PluginLoader
 	///		<para>使用不同的<see cref="Zongsoft.Plugins.PluginOptions"/>设置项多次加载，会导致最后一次加载覆盖上次加载的插件结构，这有可能会影响您的插件应用对构件或服务的获取路径，从而导致不可预知的结果。</para>
 	///		<para>如果要重用上次加载的配置，请调用无参的Load方法。</para>
 	///	</remarks>
-	/// <exception cref="System.ArgumentNullException">参数<paramref name="options"/>为空(null)。</exception>
+	/// <exception cref="System.ArgumentNullException">参数<paramref name="options"/>为空<c>null</c>。</exception>
 	internal void Load(PluginOptions options)
 	{
 		if(options == null)
@@ -200,10 +180,8 @@ public class PluginLoader
 
 	/// <summary>卸载指定的插件。</summary>
 	/// <param name="plugin">指定要卸载的插件。</param>
-	/// <remarks>
-	///		<para>如果指定的插件状态不是已经加载的（即插件对象的Status属性值不等于<seealso cref="Zongsoft.Plugins.PluginStatus.Loaded"/>），则不能对其进行卸载。</para>
-	/// </remarks>
-	/// <exception cref="System.ArgumentNullException">当<paramref name="plugin"/>参数为空(null)。</exception>
+	/// <remarks>如果指定的插件状态不是已经加载的（即插件对象的Status属性值不等于<seealso cref="Zongsoft.Plugins.PluginStatus.Loaded"/>），则不能对其进行卸载。</remarks>
+	/// <exception cref="System.ArgumentNullException">当<paramref name="plugin"/>参数为空<c>null</c>。</exception>
 	internal void Unload(Plugin plugin)
 	{
 		if(plugin == null || plugin.Status != PluginStatus.Loaded)

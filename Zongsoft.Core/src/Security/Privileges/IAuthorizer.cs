@@ -37,9 +37,7 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-/// <summary>
-/// 提供关于鉴权相关功能的接口。
-/// </summary>
+/// <summary>提供关于鉴权相关功能的接口。</summary>
 public interface IAuthorizer
 {
 	/// <summary>获取鉴权器名称。</summary>

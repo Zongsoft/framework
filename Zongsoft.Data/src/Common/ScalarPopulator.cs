@@ -47,12 +47,12 @@ public static class ScalarPopulator
 
 	public static readonly IDataPopulator Byte = new ValuePopulator<byte>();
 	public static readonly IDataPopulator SByte = new ValuePopulator<sbyte>();
-	public static readonly IDataPopulator Int16 = new ValuePopulator<Int16>();
-	public static readonly IDataPopulator Int32 = new ValuePopulator<Int32>();
-	public static readonly IDataPopulator Int64 = new ValuePopulator<Int64>();
-	public static readonly IDataPopulator UInt16 = new ValuePopulator<UInt16>();
-	public static readonly IDataPopulator UInt32 = new ValuePopulator<UInt32>();
-	public static readonly IDataPopulator UInt64 = new ValuePopulator<UInt64>();
+	public static readonly IDataPopulator Int16 = new ValuePopulator<short>();
+	public static readonly IDataPopulator Int32 = new ValuePopulator<int>();
+	public static readonly IDataPopulator Int64 = new ValuePopulator<long>();
+	public static readonly IDataPopulator UInt16 = new ValuePopulator<ushort>();
+	public static readonly IDataPopulator UInt32 = new ValuePopulator<uint>();
+	public static readonly IDataPopulator UInt64 = new ValuePopulator<ulong>();
 
 	public static readonly IDataPopulator Single = new ValuePopulator<float>();
 	public static readonly IDataPopulator Double = new ValuePopulator<double>();
@@ -87,12 +87,12 @@ public static class NullablePopulator
 
 	public static readonly IDataPopulator Byte = new ValuePopulator<byte>();
 	public static readonly IDataPopulator SByte = new ValuePopulator<sbyte>();
-	public static readonly IDataPopulator Int16 = new ValuePopulator<Int16>();
-	public static readonly IDataPopulator Int32 = new ValuePopulator<Int32>();
-	public static readonly IDataPopulator Int64 = new ValuePopulator<Int64>();
-	public static readonly IDataPopulator UInt16 = new ValuePopulator<UInt16>();
-	public static readonly IDataPopulator UInt32 = new ValuePopulator<UInt32>();
-	public static readonly IDataPopulator UInt64 = new ValuePopulator<UInt64>();
+	public static readonly IDataPopulator Int16 = new ValuePopulator<short>();
+	public static readonly IDataPopulator Int32 = new ValuePopulator<int>();
+	public static readonly IDataPopulator Int64 = new ValuePopulator<long>();
+	public static readonly IDataPopulator UInt16 = new ValuePopulator<ushort>();
+	public static readonly IDataPopulator UInt32 = new ValuePopulator<uint>();
+	public static readonly IDataPopulator UInt64 = new ValuePopulator<ulong>();
 
 	public static readonly IDataPopulator Single = new ValuePopulator<float>();
 	public static readonly IDataPopulator Double = new ValuePopulator<double>();

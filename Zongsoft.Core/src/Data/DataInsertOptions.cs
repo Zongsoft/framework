@@ -32,22 +32,20 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据新增操作选项的接口。
-/// </summary>
+/// <summary>表示数据新增操作选项的接口。</summary>
 public interface IDataInsertOptions : IDataMutateOptions
 {
+	#region 公共属性
 	/// <summary>获取或设置一个值，指示是否忽略写操作中的数据库约束（主键、唯一索引、外键约束等）。</summary>
 	bool ConstraintIgnored { get; set; }
 	/// <summary>获取或设置序号值的处理方式。</summary>
 	DataSequenceBehavior SequenceBehavior { get; set; }
 	/// <summary>获取或设置一个值，指示是否获取数据库自增序号器的返回值，默认值为真(<c>True</c>)。</summary>
 	bool SequenceRetrievable { get; set; }
+	#endregion
 }
 
-/// <summary>
-/// 表示数据新增操作选项的类。
-/// </summary>
+/// <summary>表示数据新增操作选项的类。</summary>
 public class DataInsertOptions : DataMutateOptions, IDataInsertOptions
 {
 	#region 构造函数
@@ -85,6 +83,8 @@ public class DataInsertOptions : DataMutateOptions, IDataInsertOptions
 	public static Builder Parameter(IEnumerable<KeyValuePair<string, object>> parameters) => new(parameters);
 
 	/// <summary>创建一个指定序号生成方式和是否开启序号返回值获取的新增选项构建器。</summary>
+	/// <param name="behavior">序号的生成方式。</param>
+	/// <param name="retrievable">指示是否获取生成的序号值，默认为真。</param>
 	/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
 	public static Builder Sequence(DataSequenceBehavior behavior, bool retrievable = true) => new(null) { SequenceBehavior = behavior, SequenceRetrievable = retrievable };
 

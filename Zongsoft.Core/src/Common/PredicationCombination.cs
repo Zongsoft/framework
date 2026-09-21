@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Common;
 
-/// <summary>
-/// 表示断言的逻辑组合方式。
-/// </summary>
+/// <summary>表示断言的逻辑组合方式。</summary>
 public enum PredicationCombination
 {
 	/// <summary>表示如果某个断言返回成功，则不再执行后续断言测试而直接返回成功；如果返回失败，则进行后续断言测试。即整个断言链中所有断言测试均失败则断言链返回失败。</summary>

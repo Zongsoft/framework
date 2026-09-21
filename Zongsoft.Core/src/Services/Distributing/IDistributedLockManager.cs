@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Services.Distributing;
 
-/// <summary>
-/// 提供分布式锁管理功能的接口。
-/// </summary>
+/// <summary>提供分布式锁管理功能的接口。</summary>
 public interface IDistributedLockManager
 {
 	/// <summary>获取或设置分布式锁的令牌生成器。</summary>

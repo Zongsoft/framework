@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示命令会话执行完成的上下文类。
-/// </summary>
+/// <summary>表示命令会话执行完成的上下文类。</summary>
 public class CommandCompletionContext : CommandExecutorContext
 {
 	#region 构造函数

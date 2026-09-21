@@ -35,9 +35,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Archiving;
 
-/// <summary>
-/// 提供数据模板渲染功能的接口。
-/// </summary>
+/// <summary>提供数据模板渲染功能的接口。</summary>
 public interface IDataTemplateRenderer
 {
 	/// <summary>获取渲染器名称。</summary>

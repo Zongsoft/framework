@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据约束失败的异常类。
-/// </summary>
+/// <summary>表示数据约束失败的异常类。</summary>
 public class DataConstraintException : DataAccessException
 {
 	#region 构造函数

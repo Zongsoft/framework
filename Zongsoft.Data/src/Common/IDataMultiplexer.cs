@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common;
 
-/// <summary>
-/// 提供数据源的多路复用功能的接口。
-/// </summary>
+/// <summary>提供数据源的多路复用功能的接口。</summary>
 public interface IDataMultiplexer
 {
 	/// <summary>获取数据源提供程序。</summary>

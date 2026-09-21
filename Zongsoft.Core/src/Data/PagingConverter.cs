@@ -33,9 +33,7 @@ using System.ComponentModel;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 提供 <see cref="Paging"/> 分页设置的解析功能，关于支持的解析语法请查看备注说明。
-/// </summary>
+/// <summary>提供 <see cref="Paging"/> 分页设置的解析功能，关于支持的解析语法请查看备注说明。</summary>
 /// <remarks>
 /// 支持三种解析格式：
 /// <list type="bullet">

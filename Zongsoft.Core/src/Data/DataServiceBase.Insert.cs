@@ -37,6 +37,7 @@ namespace Zongsoft.Data;
 
 partial class DataServiceBase<TModel>
 {
+	#region 公共方法
 	public int Insert(object data, DataInsertOptions options = null) => this.Insert(data, string.Empty, options);
 	public int Insert(object data, string schema, DataInsertOptions options = null)
 	{
@@ -64,7 +65,9 @@ partial class DataServiceBase<TModel>
 
 		return this.OnInsert(dictionary, schematic, options);
 	}
+	#endregion
 
+	#region 保护方法
 	protected virtual int OnInsert(IDataDictionary<TModel> data, ISchema schema, DataInsertOptions options)
 	{
 		if(data == null || data.Data == null || !data.HasChanges())
@@ -73,7 +76,9 @@ partial class DataServiceBase<TModel>
 		//执行数据引擎的插入操作
 		return this.DataAccess.Insert(this.Name, data, schema, options, ctx => this.OnInserting(ctx), ctx => this.OnInserted(ctx));
 	}
+	#endregion
 
+	#region 公共方法
 	public int InsertMany(IEnumerable items, DataInsertOptions options = null) => this.InsertMany(items, string.Empty, options);
 	public int InsertMany(IEnumerable items, string schema, DataInsertOptions options = null)
 	{
@@ -134,7 +139,9 @@ partial class DataServiceBase<TModel>
 
 		return this.OnInsertMany(dictionaries, schematic, options);
 	}
+	#endregion
 
+	#region 保护方法
 	protected virtual int OnInsertMany(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataInsertOptions options)
 	{
 		if(items == null)
@@ -143,7 +150,9 @@ partial class DataServiceBase<TModel>
 		//执行数据引擎的插入操作
 		return this.DataAccess.InsertMany(this.Name, items, schema, options, ctx => this.OnInserting(ctx), ctx => this.OnInserted(ctx));
 	}
+	#endregion
 
+	#region 公共方法
 	public ValueTask<int> InsertAsync(object data, DataInsertOptions options = null, CancellationToken cancellation = default) => this.InsertAsync(data, string.Empty, options, cancellation);
 	public ValueTask<int> InsertAsync(object data, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
 	{
@@ -171,7 +180,9 @@ partial class DataServiceBase<TModel>
 
 		return this.OnInsertAsync(dictionary, schematic, options, cancellation);
 	}
+	#endregion
 
+	#region 保护方法
 	protected virtual ValueTask<int> OnInsertAsync(IDataDictionary<TModel> data, ISchema schema, DataInsertOptions options, CancellationToken cancellation)
 	{
 		if(data == null || data.Data == null || !data.HasChanges())
@@ -180,7 +191,9 @@ partial class DataServiceBase<TModel>
 		//执行数据引擎的插入操作
 		return this.DataAccess.InsertAsync(this.Name, data, schema, options, ctx => this.OnInserting(ctx), ctx => this.OnInserted(ctx), cancellation);
 	}
+	#endregion
 
+	#region 公共方法
 	public ValueTask<int> InsertManyAsync(IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default) => this.InsertManyAsync(items, string.Empty, options, cancellation);
 	public ValueTask<int> InsertManyAsync(IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
 	{
@@ -241,7 +254,9 @@ partial class DataServiceBase<TModel>
 
 		return this.OnInsertManyAsync(dictionaries, schematic, options, cancellation);
 	}
+	#endregion
 
+	#region 保护方法
 	protected virtual ValueTask<int> OnInsertManyAsync(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataInsertOptions options, CancellationToken cancellation = default)
 	{
 		if(items == null)
@@ -250,4 +265,5 @@ partial class DataServiceBase<TModel>
 		//执行数据引擎的插入操作
 		return this.DataAccess.InsertManyAsync(this.Name, items, schema, options, ctx => this.OnInserting(ctx), ctx => this.OnInserted(ctx), cancellation);
 	}
+	#endregion
 }

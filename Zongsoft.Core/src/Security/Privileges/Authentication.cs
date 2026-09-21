@@ -39,9 +39,7 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-/// <summary>
-/// 提供身份验证的平台类。
-/// </summary>
+/// <summary>提供身份验证的平台类。</summary>
 [System.Reflection.DefaultMember(nameof(Authenticators))]
 public static partial class Authentication
 {

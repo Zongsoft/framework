@@ -33,9 +33,7 @@ using Opc.Ua;
 
 namespace Zongsoft.Externals.Opc;
 
-/// <summary>
-/// 表示节点种类的枚举。
-/// </summary>
+/// <summary>表示节点种类的枚举。</summary>
 [Flags]
 public enum OpcNodeKind : byte
 {

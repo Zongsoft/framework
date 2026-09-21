@@ -32,9 +32,7 @@ using System.Linq;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示操作元的基类。
-/// </summary>
+/// <summary>表示操作元的基类。</summary>
 public abstract class Operand
 {
 	#region 构造函数

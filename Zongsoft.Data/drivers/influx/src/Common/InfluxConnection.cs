@@ -49,14 +49,19 @@ public class InfluxConnection : DbConnection
 		_builder = new(connectionString);
 	}
 
+	#region 重写属性
 	public override string ConnectionString { get; set; }
 	public override string Database => _builder.Database;
 	public override string DataSource => _builder.Server;
 	public override string ServerVersion => string.Empty;
 	public override ConnectionState State => _state;
+	#endregion
+	#region 内部属性
 	internal InfluxDBClient Client => _client;
 	internal ClientConfig Configuration => _configuration;
+	#endregion
 
+	#region 重写方法
 	public override void Open()
 	{
 		if(_client != null)
@@ -84,4 +89,5 @@ public class InfluxConnection : DbConnection
 	protected override DbCommand CreateDbCommand() => new InfluxCommand();
 	public override void ChangeDatabase(string database) => _builder.Database = database;
 	protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) => throw new NotSupportedException();
+	#endregion
 }

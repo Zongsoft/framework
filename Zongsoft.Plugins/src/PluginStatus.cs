@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Plugins;
 
-/// <summary>
-/// 表示插件的状态。
-/// </summary>
+/// <summary>表示插件的状态。</summary>
 public enum PluginStatus
 {
 	/// <summary>尚未加载，表示插件刚创建。</summary>

@@ -83,6 +83,7 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 		_settings = Configuration.EtcdConnectionSettingsDriver.Instance.GetSettings(connectionString);
 	}
 
+	#region 公共属性
 	public string Name { get; }
 	public string Namespace
 	{
@@ -97,7 +98,9 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 	}
 
 	public IConnectionSettings Settings => _settings ??= ApplicationContext.Current?.Configuration.GetConnectionSettings("/Externals/Etcd/ConnectionSettings", this.Name, "etcd");
+	#endregion
 
+	#region 公共方法
 	public async ValueTask HeartbeatAsync(CancellationToken cancellation = default)
 	{
 		var client = await this.ConnectAsync(cancellation);
@@ -204,9 +207,13 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 		}, null, null, cancellation);
 		return response.Count;
 	}
+	#endregion
 
+	#region 内部方法
 	internal string GetKey(string key) => string.IsNullOrEmpty(_namespace) ? key : $"{_namespace}:{key}";
+	#endregion
 
+	#region 私有方法
 	private static ByteString GetPrefixRangeEnd(string prefix)
 	{
 		if(string.IsNullOrEmpty(prefix))
@@ -224,7 +231,9 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 
 		return ByteString.CopyFrom([0]);
 	}
+	#endregion
 
+	#region 内部方法
 	internal async ValueTask<EtcdClient> ConnectAsync(CancellationToken cancellation = default)
 	{
 		ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
@@ -269,7 +278,9 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 			_connectionLock.Release();
 		}
 	}
+	#endregion
 
+	#region 资源释放
 	public void Dispose()
 	{
 		if(Interlocked.Exchange(ref _disposed, 1) != 0)
@@ -284,4 +295,5 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 		this.Dispose();
 		return ValueTask.CompletedTask;
 	}
+	#endregion
 }

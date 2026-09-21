@@ -34,6 +34,7 @@ namespace Zongsoft.Security;
 
 public static class ClaimUtility
 {
+	#region 静态方法
 	public static T GetValue<T>(this Claim claim)
 	{
 		if(claim == null)
@@ -151,4 +152,5 @@ public static class ClaimUtility
 			return url;
 		}
 	}
+	#endregion
 }

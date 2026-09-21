@@ -36,9 +36,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 提供 <see cref="IModel"/> 数据实体或其他模型的动态编译及构建的静态类。
-/// </summary>
+/// <summary>提供 <see cref="IModel"/> 数据实体或其他模型的动态编译及构建的静态类。</summary>
 public static partial class Model
 {
 	#region 常量定义
@@ -251,9 +249,7 @@ public static partial class Model
 	#endregion
 
 	#region 嵌套子类
-	/// <summary>
-	/// 表示实体属性实现代码的生成方式。
-	/// </summary>
+	/// <summary>表示实体属性实现代码的生成方式。</summary>
 	public enum PropertyImplementationMode
 	{
 		/// <summary>默认实现方式。</summary>
@@ -266,9 +262,7 @@ public static partial class Model
 		Singleton,
 	}
 
-	/// <summary>
-	/// 提供实体属性动态编译的自定义特性。
-	/// </summary>
+	/// <summary>提供实体属性动态编译的自定义特性。</summary>
 	[AttributeUsage(AttributeTargets.Interface | AttributeTargets.Property | AttributeTargets.Method)]
 	public class PropertyAttribute : Attribute
 	{

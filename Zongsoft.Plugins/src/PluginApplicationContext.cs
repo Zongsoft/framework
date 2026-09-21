@@ -102,6 +102,7 @@ public class PluginApplicationContext : Zongsoft.Services.ApplicationContext
 
 	#region 虚拟方法
 	/// <summary>创建一个主控台对象。</summary>
+	/// <param name="node">接收主控台挂载路径对应的插件树节点。</param>
 	/// <returns>返回的主控台对象。</returns>
 	protected virtual IWorkbenchBase CreateWorkbench(out PluginTreeNode node)
 	{

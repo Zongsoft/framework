@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示被监测对象取消原因的枚举。
-/// </summary>
+/// <summary>表示被监测对象取消原因的枚举。</summary>
 public enum SupervisableReason
 {
 	/// <summary>手动，被手动取消监测。</summary>

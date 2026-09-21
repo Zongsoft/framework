@@ -33,9 +33,7 @@ using System.Text.Json.Serialization;
 
 namespace Zongsoft.IO.Hardwares;
 
-/// <summary>
-/// 表示硬件属性。
-/// </summary>
+/// <summary>表示硬件属性。</summary>
 public partial class HardwareProperty
 {
 	#region 构造函数

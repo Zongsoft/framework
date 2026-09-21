@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示命令链执行完成的回调接口。
-/// </summary>
+/// <summary>表示命令链执行完成的回调接口。</summary>
 public interface ICommandCompletion
 {
 	void OnCompleted(CommandCompletionContext context);

@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Components.Features;
 
-/// <summary>
-/// 提供熔断功能的特性类。
-/// </summary>
+/// <summary>提供熔断功能的特性类。</summary>
 public abstract class BreakerFeatureBase : IFeature
 {
 	#region 构造函数
@@ -60,9 +58,7 @@ public abstract class BreakerFeatureBase : IFeature
 	#endregion
 }
 
-/// <summary>
-/// 提供熔断功能的特性类。
-/// </summary>
+/// <summary>提供熔断功能的特性类。</summary>
 public class BreakerFeature : BreakerFeatureBase
 {
 	#region 构造函数
@@ -89,9 +85,7 @@ public class BreakerFeature : BreakerFeatureBase
 	#endregion
 }
 
-/// <summary>
-/// 提供熔断功能的特性类。
-/// </summary>
+/// <summary>提供熔断功能的特性类。</summary>
 public class BreakerFeature<T> : BreakerFeatureBase
 {
 	#region 构造函数
@@ -118,9 +112,7 @@ public class BreakerFeature<T> : BreakerFeatureBase
 	#endregion
 }
 
-/// <summary>
-/// 提供熔断功能的特性类。
-/// </summary>
+/// <summary>提供熔断功能的特性类。</summary>
 public class BreakerFeature<T, TResult> : BreakerFeatureBase
 {
 	#region 构造函数

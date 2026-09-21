@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Reflection.Expressions;
 
-/// <summary>
-/// 表示成员表达式元素的基类。
-/// </summary>
+/// <summary>表示成员表达式元素的基类。</summary>
 public abstract class MemberExpression : IMemberExpression
 {
 	#region 构造函数

@@ -35,9 +35,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Collections;
 
-/// <summary>
-/// 队列，表示先进先出的数据容器。
-/// </summary>
+/// <summary>队列，表示先进先出的数据容器。</summary>
 /// <remarks>
 ///		<para>本队列的默认实现不同步。</para>
 ///		<para>本队列中的各种方法本质上不是一个线程安全的过程。若要确保各种操作过程中的线程安全性，可以在操作过程中锁定队列。若要允许多个线程访问集合以进行读写操作，则必须实现自己的同步。</para>

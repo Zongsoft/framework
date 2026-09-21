@@ -32,9 +32,7 @@ using System.ComponentModel;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示尝试器的配置选项。
-/// </summary>
+/// <summary>表示尝试器的配置选项。</summary>
 public class AttempterOptions : IAttempterOptions
 {
 	#region 构造函数

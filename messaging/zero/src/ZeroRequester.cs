@@ -207,6 +207,7 @@ public class ZeroRequester : IRequester, IDisposable, IAsyncDisposable
 
 	private sealed class Adapter(ZeroRequester requester) : HandlerBase<Message>
 	{
+		#region 重写方法
 		protected override ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
 		{
 			if(message.IsEmpty)
@@ -219,6 +220,7 @@ public class ZeroRequester : IRequester, IDisposable, IAsyncDisposable
 			var request = requester.GetRequest(identifier);
 			return request == null ? ValueTask.CompletedTask : requester.OnRespondedAsync(request.Response(message.Topic, data), cancellation);
 		}
+		#endregion
 	}
 
 	private sealed class Token : IRequestToken, IDisposable
@@ -233,9 +235,14 @@ public class ZeroRequester : IRequester, IDisposable, IAsyncDisposable
 			_disposed = disposed ?? throw new ArgumentNullException(nameof(disposed));
 		}
 
+		#region 显式实现
 		IRequest IRequestToken.Request => this.Request;
+		#endregion
+		#region 公共属性
 		public ZeroRequest Request { get; }
+		#endregion
 
+		#region 内部方法
 		internal void Response(ZeroResponse response)
 		{
 			var responses = _responses;
@@ -245,7 +252,9 @@ public class ZeroRequester : IRequester, IDisposable, IAsyncDisposable
 			responses.Enqueue(response);
 			_signal.Release();
 		}
+		#endregion
 
+		#region 公共方法
 		public IEnumerable<IResponse> GetResponses(CancellationToken cancellation = default) => this.GetResponses(TimeSpan.Zero, cancellation);
 		public IEnumerable<IResponse> GetResponses(TimeSpan timeout, CancellationToken cancellation = default)
 		{
@@ -286,7 +295,9 @@ public class ZeroRequester : IRequester, IDisposable, IAsyncDisposable
 					yield break;
 			}
 		}
+		#endregion
 
+		#region 资源释放
 		public void Dispose()
 		{
 			var responses = Interlocked.Exchange(ref _responses, null);
@@ -297,5 +308,6 @@ public class ZeroRequester : IRequester, IDisposable, IAsyncDisposable
 			_signal.Release();
 			Interlocked.Exchange(ref _disposed, null)?.Invoke(this.Request);
 		}
+		#endregion
 	}
 }

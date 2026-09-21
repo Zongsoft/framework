@@ -2,9 +2,7 @@
 
 namespace Zongsoft.Data.Tests.Models;
 
-/// <summary>
-/// 表示分支机构状态的枚举。
-/// </summary>
+/// <summary>表示分支机构状态的枚举。</summary>
 public enum BranchStatus : byte
 {
 	/// <summary>正常。</summary>

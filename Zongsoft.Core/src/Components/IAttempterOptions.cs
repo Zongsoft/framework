@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示尝试器的配置选项。
-/// </summary>
+/// <summary>表示尝试器的配置选项。</summary>
 public interface IAttempterOptions
 {
 	/// <summary>获取或设置尝试失败的阈值，零表示不限制。</summary>

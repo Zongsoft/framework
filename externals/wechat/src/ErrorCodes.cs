@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Externals.Wechat;
 
-/// <summary>
-/// 提供了微信平台全局错误码的定义。
-/// </summary>
+/// <summary>提供了微信平台全局错误码的定义。</summary>
 public static class ErrorCodes
 {
 	/// <summary>成功。</summary>

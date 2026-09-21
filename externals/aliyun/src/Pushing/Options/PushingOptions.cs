@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Externals.Aliyun.Pushing.Options;
 
-/// <summary>
-/// 表示移动推送相关的配置选项。
-/// </summary>
+/// <summary>表示移动推送相关的配置选项。</summary>
 public class PushingOptions
 {
 	public PushingOptions() => this.Apps = new();

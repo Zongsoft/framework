@@ -34,9 +34,7 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示构建数据访问器的选项设置类。
-/// </summary>
+/// <summary>表示构建数据访问器的选项设置类。</summary>
 public class DataAccessOptions : IDataAccessOptions
 {
 	#region 构造函数

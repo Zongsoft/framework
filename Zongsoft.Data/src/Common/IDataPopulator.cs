@@ -32,9 +32,7 @@ using System.Data;
 
 namespace Zongsoft.Data.Common;
 
-/// <summary>
-/// 提供数据实体装配的接口。
-/// </summary>
+/// <summary>提供数据实体装配的接口。</summary>
 public interface IDataPopulator
 {
 	/// <summary>数据实体装配方法。</summary>
@@ -44,9 +42,7 @@ public interface IDataPopulator
 	T Populate<T>(IDataRecord record);
 }
 
-/// <summary>
-/// 提供数据实体装配的泛型接口。
-/// </summary>
+/// <summary>提供数据实体装配的泛型接口。</summary>
 /// <typeparam name="T">装配的实体类型。</typeparam>
 public interface IDataPopulator<out T> : IDataPopulator
 {

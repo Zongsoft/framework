@@ -32,21 +32,19 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据导入(批量写入)操作选项的接口。
-/// </summary>
+/// <summary>表示数据导入(批量写入)操作选项的接口。</summary>
 public interface IDataImportOptions : IDataOptions
 {
+	#region 公共属性
 	/// <summary>获取或设置一个值，指示是否忽略写操作中的数据库约束（主键、唯一索引、外键约束等）。</summary>
 	bool ConstraintIgnored { get; set; }
 
 	/// <summary>获取或设置一个值，指示是否禁用当前导入操作关联环境事务，默认不禁用。</summary>
 	bool TransactionSuppressed { get; set; }
+	#endregion
 }
 
-/// <summary>
-/// 表示数据导入(批量写入)操作选项的类。
-/// </summary>
+/// <summary>表示数据导入(批量写入)操作选项的类。</summary>
 public class DataImportOptions : DataOptionsBase, IDataImportOptions
 {
 	#region 构造函数

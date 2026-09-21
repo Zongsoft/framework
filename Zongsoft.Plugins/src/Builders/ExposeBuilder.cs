@@ -31,12 +31,8 @@ using System;
 
 namespace Zongsoft.Plugins.Builders;
 
-/// <summary>
-/// 构件暴露创建器。
-/// </summary>
-/// <remarks>
-/// 	<para>该构建器区别于<seealso cref="ObjectBuilder"/>的主要特征在于它不会执行追加操作。</para>
-/// </remarks>
+/// <summary>构件暴露创建器。</summary>
+/// <remarks>该构建器区别于<seealso cref="ObjectBuilder"/>的主要特征在于它不会执行追加操作。</remarks>
 public class ExposeBuilder : ObjectBuilder
 {
 	public override object Build(BuilderContext context)

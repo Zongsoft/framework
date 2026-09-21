@@ -33,9 +33,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Expressions;
 
-/// <summary>
-/// 提供词法解析的类。
-/// </summary>
+/// <summary>提供词法解析的类。</summary>
 public class Lexer
 {
 	#region 单例字段

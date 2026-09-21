@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Externals.Aliyun;
 
-/// <summary>
-/// 表示阿里云访问凭证的配置项类。
-/// </summary>
+/// <summary>表示阿里云访问凭证的配置项类。</summary>
 public interface ICertificate
 {
 	string Name
@@ -41,17 +39,13 @@ public interface ICertificate
 		get; set;
 	}
 
-	/// <summary>
-	/// 获取凭证的标识（即：AccessKey）。
-	/// </summary>
+	/// <summary>获取凭证的标识（即：AccessKey）。</summary>
 	string Code
 	{
 		get; set;
 	}
 
-	/// <summary>
-	/// 获取凭证的密钥（即：AccessKeySecret）。
-	/// </summary>
+	/// <summary>获取凭证的密钥（即：AccessKeySecret）。</summary>
 	string Secret
 	{
 		get; set;

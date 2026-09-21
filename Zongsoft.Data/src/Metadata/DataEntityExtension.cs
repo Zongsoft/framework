@@ -34,9 +34,7 @@ using System.Collections.Concurrent;
 
 namespace Zongsoft.Data.Metadata;
 
-/// <summary>
-/// 实体元数据的扩展类。
-/// </summary>
+/// <summary>实体元数据的扩展类。</summary>
 public static class DataEntityExtension
 {
 	#region 私有变量
@@ -88,7 +86,7 @@ public static class DataEntityExtension
 
 	/// <summary>查找指定实体元素继承的父实体元素。</summary>
 	/// <param name="entity">指定的实体元素。</param>
-	/// <returns>如果 <paramref name="entity"/> 参数指定的实体元素设置了继承关系，则返回它继承的父实体元素（如果指定父实体元素不存在，则抛出异常）；否则返回空(null)。</returns>
+	/// <returns>如果 <paramref name="entity"/> 参数指定的实体元素设置了继承关系，则返回它继承的父实体元素（如果指定父实体元素不存在，则抛出异常）；否则返回空<c>null</c>。</returns>
 	public static IDataEntity GetBaseEntity(this IDataEntity entity)
 	{
 		if(entity == null || string.IsNullOrEmpty(entity.BaseName))
@@ -156,6 +154,8 @@ public static class DataEntityExtension
 	}
 
 	/// <summary>获取一个值，指示指定的数据实体中是否含有序号属性。</summary>
+	/// <param name="entity">要检查的数据实体。</param>
+	/// <returns>实体的缓存元数据包含序号属性时返回真，否则返回假。</returns>
 	public static bool HasSequences(this IDataEntity entity) => entity != null && _cache.TryGetValue(entity, out var token) && token.HasSequences;
 	#endregion
 

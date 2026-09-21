@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Messaging;
 
-/// <summary>
-/// 表示消息队列提供程序的接口。
-/// </summary>
+/// <summary>表示消息队列提供程序的接口。</summary>
 public interface IMessageQueueProvider : IEnumerable<IMessageQueue>
 {
 	/// <summary>消息队列提供程序名称，譬如：<c>Kafka</c>、<c>RabbitMQ</c>、<c>Redis</c>、<c>Mqtt</c>、<c>Aliyun.MNS</c>等。</summary>

@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Security;
 
-/// <summary>
-/// 表示数字证书的接口。
-/// </summary>
+/// <summary>表示数字证书的接口。</summary>
 public interface ICertificate : IEquatable<ICertificate>
 {
 	#region 属性定义
@@ -64,9 +62,7 @@ public interface ICertificate : IEquatable<ICertificate>
 	#endregion
 }
 
-/// <summary>
-/// 表示数字证书有效期的结构。
-/// </summary>
+/// <summary>表示数字证书有效期的结构。</summary>
 public readonly struct CertificateValidity : IEquatable<CertificateValidity>
 {
 	#region 构造函数
@@ -116,26 +112,26 @@ public readonly struct CertificateValidity : IEquatable<CertificateValidity>
 	#endregion
 }
 
-/// <summary>
-/// 表示数字证书签发者的接口。
-/// </summary>
+/// <summary>表示数字证书签发者的接口。</summary>
 public interface ICertificateIssuer
 {
+	#region 公共属性
 	/// <summary>获取表示身份唯一性的标识。</summary>
 	string Identifier { get; }
 
 	/// <summary>获取主体名称。</summary>
 	string Name { get; }
+	#endregion
 }
 
-/// <summary>
-/// 表示数字证书持有者的接口。
-/// </summary>
+/// <summary>表示数字证书持有者的接口。</summary>
 public interface ICertificateSubject
 {
+	#region 公共属性
 	/// <summary>获取表示身份唯一性的标识。</summary>
 	string Identifier { get; }
 
 	/// <summary>获取主体名称。</summary>
 	string Name { get; }
+	#endregion
 }

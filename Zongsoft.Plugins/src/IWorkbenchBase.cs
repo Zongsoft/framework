@@ -32,9 +32,7 @@ using System.ComponentModel;
 
 namespace Zongsoft.Plugins;
 
-/// <summary>
-/// 表示工作台的接口，包含对工作台的基本行为特性的定义。
-/// </summary>
+/// <summary>表示工作台的接口，包含对工作台的基本行为特性的定义。</summary>
 public interface IWorkbenchBase
 {
 	/// <summary>当工作台被打开后。</summary>

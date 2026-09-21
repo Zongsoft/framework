@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data.Archiving;
 
-/// <summary>
-/// 表示数据模板模型提供程序的接口。
-/// </summary>
+/// <summary>表示数据模板模型提供程序的接口。</summary>
 public interface IDataTemplateModelProvider
 {
 	/// <summary>获取数据模板模型。</summary>

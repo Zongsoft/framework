@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Communication;
 
-/// <summary>
-/// 表示通道的接口。
-/// </summary>
+/// <summary>表示通道的接口。</summary>
 public interface IChannel : IAsyncDisposable
 {
 	#region 事件定义

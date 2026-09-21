@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Communication;
 
-/// <summary>
-/// 表示请求对象的接口。
-/// </summary>
+/// <summary>表示请求对象的接口。</summary>
 public interface IRequest
 {
 	/// <summary>获取请求地址。</summary>

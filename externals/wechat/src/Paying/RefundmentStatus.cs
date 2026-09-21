@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Externals.Wechat.Paying;
 
-/// <summary>
-/// 表示退款状态的枚举。
-/// </summary>
+/// <summary>表示退款状态的枚举。</summary>
 public enum RefundmentStatus
 {
 	/// <summary>退款成功</summary>

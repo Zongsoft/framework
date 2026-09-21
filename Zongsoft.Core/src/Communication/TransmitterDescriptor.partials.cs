@@ -63,7 +63,9 @@ partial class TransmitterDescriptor
 
 	public class ChannelCollection() : KeyedCollection<string, Channel>(StringComparer.OrdinalIgnoreCase)
 	{
+		#region 重写方法
 		protected override string GetKeyForItem(Channel channel) => channel.Name;
+		#endregion
 	}
 
 	public class Template : IEquatable<Template>
@@ -127,6 +129,8 @@ partial class TransmitterDescriptor
 
 	public class TemplateCollection() : KeyedCollection<string, Template>(StringComparer.OrdinalIgnoreCase)
 	{
+		#region 重写方法
 		protected override string GetKeyForItem(Template template) => template.Name;
+		#endregion
 	}
 }

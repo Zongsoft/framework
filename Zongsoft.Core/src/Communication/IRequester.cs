@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Communication;
 
-/// <summary>
-/// 表示请求器的接口。
-/// </summary>
+/// <summary>表示请求器的接口。</summary>
 public interface IRequester
 {
 	/// <summary>发送一个请求。</summary>

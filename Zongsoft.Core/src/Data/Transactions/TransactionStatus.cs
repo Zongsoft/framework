@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data.Transactions;
 
-/// <summary>
-/// 表示事务状态的枚举。
-/// </summary>
+/// <summary>表示事务状态的枚举。</summary>
 public enum TransactionStatus
 {
 	/// <summary>事务活动中。</summary>

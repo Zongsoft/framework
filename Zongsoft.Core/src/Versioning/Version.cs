@@ -129,15 +129,28 @@ public partial class Version : IFormattable, IComparable, IComparable<Version>, 
 	}
 
 	/// <summary>将指定的字符串解析成版本对象。</summary>
+	/// <param name="text">要解析的版本文本。</param>
+	/// <param name="provider">格式提供程序；当前解析不使用此参数。</param>
+	/// <returns>返回解析得到的版本对象；格式无效时抛出 <see cref="FormatException"/>。</returns>
 	public static Version Parse(string text, IFormatProvider provider = null) => TryParse(text, provider, out var result) ? result : throw new FormatException();
 
 	/// <summary>尝试将指定的字符串解析成版本对象。</summary>
+	/// <param name="text">要解析的版本文本。</param>
+	/// <param name="result">解析成功时返回的版本对象；解析失败时为空。</param>
+	/// <returns>解析成功返回真，否则返回假。</returns>
 	public static bool TryParse(string text, out Version result) => TryParse(text, null, out result);
 
 	/// <summary>尝试将指定的字符串解析成版本对象。</summary>
+	/// <param name="text">要解析的版本文本。</param>
+	/// <param name="result">解析成功时返回的版本对象；解析失败时为空。</param>
+	/// <returns>解析成功返回真，否则返回假。</returns>
 	public static bool TryParse(ReadOnlySpan<char> text, out Version result) => TryParse(text.IsEmpty ? null : text.ToString(), null, out result);
 
 	/// <summary>尝试将指定的字符串解析成版本对象。</summary>
+	/// <param name="text">要解析的版本文本。</param>
+	/// <param name="provider">格式提供程序；当前解析不使用此参数。</param>
+	/// <param name="result">解析成功时返回的版本对象；解析失败时为空。</param>
+	/// <returns>解析成功返回真，否则返回假。</returns>
 	public static bool TryParse(string text, IFormatProvider provider, out Version result)
 	{
 		return Parser.TryParse(text, out result);

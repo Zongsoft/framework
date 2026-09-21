@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Configuration;
 
-/// <summary>
-/// 供 <see cref="ConfigurationBinder"/> 使用的选项类。
-/// </summary>
+/// <summary>供 <see cref="ConfigurationBinder"/> 使用的选项类。</summary>
 public class ConfigurationBinderOptions
 {
 	/// <summary>获取或设置一个值，指示是否绑定到非公共属性。默认为假(<c>False</c>)。</summary>

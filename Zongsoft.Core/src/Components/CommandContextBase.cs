@@ -32,9 +32,7 @@ using System.IO;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示命令执行器的上下文（命令执行会话）类。
-/// </summary>
+/// <summary>表示命令执行器的上下文（命令执行会话）类。</summary>
 public abstract class CommandContextBase : ICommandContext
 {
 	#region 成员字段

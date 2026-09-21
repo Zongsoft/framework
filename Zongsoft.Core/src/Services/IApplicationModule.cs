@@ -34,9 +34,7 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Services;
 
-/// <summary>
-/// 表示应用模块（应用子系统）的接口。
-/// </summary>
+/// <summary>表示应用模块（应用子系统）的接口。</summary>
 public interface IApplicationModule
 {
 	/// <summary>获取应用模块名称。</summary>

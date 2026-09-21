@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Security.Configuration;
 
-/// <summary>
-/// 表示身份验证方式的枚举。
-/// </summary>
+/// <summary>表示身份验证方式的枚举。</summary>
 [Flags]
 public enum IdentityVerification
 {

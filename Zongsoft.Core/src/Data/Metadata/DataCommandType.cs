@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data.Metadata;
 
-/// <summary>
-/// 表示数据命令类型的枚举。
-/// </summary>
+/// <summary>表示数据命令类型的枚举。</summary>
 public enum DataCommandType
 {
 	/// <summary>命令文本</summary>

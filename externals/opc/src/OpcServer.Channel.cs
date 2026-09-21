@@ -78,6 +78,7 @@ partial class OpcServer
 
 	public sealed class ChannelStatistics
 	{
+		#region 公共方法
 		public ChannelStatistics Update(SessionDiagnosticsDataType diagnostics)
 		{
 			if(diagnostics != null)
@@ -92,13 +93,16 @@ partial class OpcServer
 
 			return this;
 		}
+		#endregion
 
+		#region 公共属性
 		public Count Requests { get; private set; }
 		public Count Readings { get; private set; }
 		public Count Writings { get; private set; }
 		public Count Browsings { get; private set; }
 		public uint MonitoredCount { get; private set; }
 		public uint SubscriptionCount { get; private set; }
+		#endregion
 
 		public readonly struct Count
 		{
@@ -117,7 +121,9 @@ partial class OpcServer
 			public readonly uint Total;
 			public readonly uint Error;
 
+			#region 重写方法
 			public override string ToString() => $"{this.Error}/{this.Total}";
+			#endregion
 		}
 	}
 

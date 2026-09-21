@@ -32,9 +32,7 @@ using System.Security.Cryptography;
 
 namespace Zongsoft.Common;
 
-/// <summary>
-/// 提供随机数生成的静态类。
-/// </summary>
+/// <summary>提供随机数生成的静态类。</summary>
 public static class Randomizer
 {
 	#region 常量定义

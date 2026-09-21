@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Caching;
 
-/// <summary>
-/// 表示缓存项被移除的原因。
-/// </summary>
+/// <summary>表示缓存项被移除的原因。</summary>
 public enum CacheEvictedReason
 {
 	/// <summary>系统内部原因。</summary>

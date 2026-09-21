@@ -5,9 +5,7 @@ using Zongsoft.Common;
 
 namespace Zongsoft.Data.Tests.Models;
 
-/// <summary>
-/// 表示分支机构业务的实体类。
-/// </summary>
+/// <summary>表示分支机构业务的实体类。</summary>
 public abstract class Branch
 {
 	#region 普通属性
@@ -211,9 +209,7 @@ public abstract class Branch
 	#endregion
 }
 
-/// <summary>
-/// 表示分支机构查询条件的实体类。
-/// </summary>
+/// <summary>表示分支机构查询条件的实体类。</summary>
 public abstract class BranchCriteria : CriteriaBase
 {
 	#region 公共属性
@@ -243,9 +239,7 @@ public abstract class BranchCriteria : CriteriaBase
 	#endregion
 }
 
-/// <summary>
-/// 表示层次化的分支机构实体类。
-/// </summary>
+/// <summary>表示层次化的分支机构实体类。</summary>
 public class HierarchicalBranch : Branch
 {
 	#region 成员字段

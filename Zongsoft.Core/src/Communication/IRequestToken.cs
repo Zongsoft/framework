@@ -34,9 +34,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Communication;
 
-/// <summary>
-/// 表示请求令牌的接口。
-/// </summary>
+/// <summary>表示请求令牌的接口。</summary>
 public interface IRequestToken : IDisposable
 {
 	/// <summary>获取关联的请求对象。</summary>

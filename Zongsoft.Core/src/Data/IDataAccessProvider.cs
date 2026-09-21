@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据访问提供程序的接口。
-/// </summary>
+/// <summary>表示数据访问提供程序的接口。</summary>
 public interface IDataAccessProvider
 {
 	/// <summary>获取或创建指定应用的数据访问器。</summary>

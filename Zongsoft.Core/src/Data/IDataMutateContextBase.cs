@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示写入操作上下文的基础接口。
-/// </summary>
+/// <summary>表示写入操作上下文的基础接口。</summary>
 public interface IDataMutateContextBase : IDataAccessContextBase
 {
 	/// <summary>获取写入操作对应的实体。</summary>

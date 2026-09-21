@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Collections;
 
-/// <summary>
-/// 表示集合元素被删除的原因。
-/// </summary>
+/// <summary>表示集合元素被删除的原因。</summary>
 public enum CollectionRemovedReason
 {
 	/// <summary>通过删除方法。</summary>

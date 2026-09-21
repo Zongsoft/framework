@@ -107,17 +107,17 @@ internal static class Utility
 		if(id == DataTypeIds.Boolean)
 			return GetType(typeof(bool), rank);
 		if(id == DataTypeIds.Int16)
-			return GetType(typeof(Int16), rank);
+			return GetType(typeof(short), rank);
 		if(id == DataTypeIds.Int32 || id == DataTypeIds.Integer)
-			return GetType(typeof(Int32), rank);
+			return GetType(typeof(int), rank);
 		if(id == DataTypeIds.Int64)
-			return GetType(typeof(Int64), rank);
+			return GetType(typeof(long), rank);
 		if(id == DataTypeIds.UInt16)
-			return GetType(typeof(UInt16), rank);
+			return GetType(typeof(ushort), rank);
 		if(id == DataTypeIds.UInt32 || id == DataTypeIds.UInteger)
-			return GetType(typeof(UInt32), rank);
+			return GetType(typeof(uint), rank);
 		if(id == DataTypeIds.UInt64)
-			return GetType(typeof(UInt64), rank);
+			return GetType(typeof(ulong), rank);
 		if(id == DataTypeIds.Float)
 			return GetType(typeof(float), rank);
 		if(id == DataTypeIds.Double)

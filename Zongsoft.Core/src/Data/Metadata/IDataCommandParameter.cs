@@ -32,9 +32,7 @@ using System.Data;
 
 namespace Zongsoft.Data.Metadata;
 
-/// <summary>
-/// 表示命令参数的元数据类。
-/// </summary>
+/// <summary>表示命令参数的元数据类。</summary>
 public interface IDataCommandParameter
 {
 	/// <summary>获取命令参数的名称。</summary>

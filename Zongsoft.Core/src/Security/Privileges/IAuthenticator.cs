@@ -36,9 +36,7 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-/// <summary>
-/// 表示身份验证器的接口。
-/// </summary>
+/// <summary>表示身份验证器的接口。</summary>
 public interface IAuthenticator
 {
 	#region 属性定义
@@ -66,9 +64,7 @@ public interface IAuthenticator
 	#endregion
 }
 
-/// <summary>
-/// 表示身份验证器的接口。
-/// </summary>
+/// <summary>表示身份验证器的接口。</summary>
 public interface IAuthenticator<in TRequirement, TTicket> : IAuthenticator
 {
 	#region 方法定义

@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
 
-/// <summary>
-/// 表示连接设置的接口。
-/// </summary>
+/// <summary>表示连接设置的接口。</summary>
 [Configuration(ResolverType = typeof(ConnectionSettingsResolver))]
 public interface IConnectionSettings : ISetting, IEquatable<IConnectionSettings>, IReadOnlyDictionary<string, string>
 {

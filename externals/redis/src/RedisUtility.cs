@@ -36,6 +36,7 @@ namespace Zongsoft.Externals.Redis;
 
 public static class RedisUtility
 {
+	#region 静态方法
 	public static RedisQueuePendingMessageInfo[] GetPendingMessages(this IDatabase database, string key, string group, TimeSpan idle, int count = 100, string minimum = "-", string maximum = "+") =>
 		GetPendingMessages(database, key, group, null, idle > TimeSpan.Zero ? (long)idle.TotalMilliseconds : 0L, count, minimum, maximum);
 
@@ -44,7 +45,9 @@ public static class RedisUtility
 
 	public static RedisQueuePendingMessageInfo[] GetPendingMessages(this IDatabase database, string key, string group, string consumer, TimeSpan idle, int count = 100, string minimum = "-", string maximum = "+") =>
 		GetPendingMessages(database, key, group, consumer, idle > TimeSpan.Zero ? (long)idle.TotalMilliseconds : 0L, count, minimum, maximum);
+	#endregion
 
+	#region 私有方法
 	private static RedisQueuePendingMessageInfo[] GetPendingMessages(this IDatabase database, string key, string group, string consumer, long idle = 0, int count = 100, string minimum = "-", string maximum = "+")
 	{
 		if(database == null)
@@ -109,7 +112,9 @@ public static class RedisUtility
 
 		return pendings;
 	}
+	#endregion
 
+	#region 内部方法
 	internal static RedisValue GetValue(this StreamEntry entry, string name) => GetValue(entry.Values, name);
 	internal static RedisValue GetValue(this NameValueEntry[] values, string name)
 	{
@@ -136,6 +141,7 @@ public static class RedisUtility
 		await foreach(var key in server.KeysAsync(database, pattern))
 			yield return key;
 	}
+	#endregion
 }
 
 public readonly struct RedisQueuePendingMessageInfo
@@ -148,8 +154,10 @@ public readonly struct RedisQueuePendingMessageInfo
 		this.DeliveryCount = deliveryCount;
 	}
 
+	#region 公共属性
 	public RedisValue MessageId { get; }
 	public RedisValue Consumer { get; }
 	public TimeSpan IdledDuration { get; }
 	public int DeliveryCount { get; }
+	#endregion
 }

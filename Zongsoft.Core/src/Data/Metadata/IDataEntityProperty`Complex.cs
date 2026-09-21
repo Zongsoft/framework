@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data.Metadata;
 
-/// <summary>
-/// 表示数据实体复合属性的元数据类。
-/// </summary>
+/// <summary>表示数据实体复合属性的元数据类。</summary>
 public interface IDataEntityComplexProperty : IDataEntityProperty
 {
 	/// <summary>获取或设置属性的特性。</summary>

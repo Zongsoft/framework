@@ -35,6 +35,7 @@ namespace Zongsoft.Components.Features;
 
 public static class RetryFeatureExtension
 {
+	#region 静态方法
 	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryLatency latency, int attempts = 0, Func<RetryArgument, CancellationToken, ValueTask> onRetry = null) =>
 		Retry(builder, RetryBackoff.None, latency, true, attempts, null, onRetry);
 	public static IFeatureBuilder Retry(this IFeatureBuilder builder, RetryLatency latency, bool jitterable, int attempts = 0, Func<RetryArgument, CancellationToken, ValueTask> onRetry = null) =>
@@ -121,4 +122,5 @@ public static class RetryFeatureExtension
 
 		return new FeatureBuilder([.. builder.Build(), new RetryFeature<T, TResult>(backoff, latency, jitterable, attempts, predicator) { OnRetry = onRetry }]);
 	}
+	#endregion
 }

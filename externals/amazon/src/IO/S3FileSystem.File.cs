@@ -46,6 +46,7 @@ partial class S3FileSystem
 	{
 		private readonly S3FileSystem _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
 
+		#region 公共方法
 		public void Copy(string source, string destination, bool overwrite = true) => this.CopyAsync(source, destination, overwrite).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 		public ValueTask CopyAsync(string source, string destination, bool overwrite, CancellationToken cancellation = default)
 		{
@@ -359,7 +360,9 @@ partial class S3FileSystem
 				}
 			}
 		}
+		#endregion
 
+		#region 私有方法
 		private static bool Exists(AmazonS3Client client, string bucket, string path) => ExistsAsync(client, bucket, path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 		private static async ValueTask<bool> ExistsAsync(AmazonS3Client client, string bucket, string path, CancellationToken cancellation = default)
 		{
@@ -373,6 +376,7 @@ partial class S3FileSystem
 				return false;
 			}
 		}
+		#endregion
 	}
 
 	internal sealed class S3Stream : Stream
@@ -405,12 +409,15 @@ partial class S3FileSystem
 			_buffer = ArrayPool<byte>.Shared.Rent(5 * MB);
 		}
 
+		#region 重写属性
 		public override bool CanRead => true;
 		public override bool CanSeek => false;
 		public override bool CanWrite => true;
 		public override long Length => _length;
 		public override long Position { get => _position; set => throw new NotSupportedException(); }
+		#endregion
 
+		#region 重写方法
 		public override void Flush() { }
 		public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
 		public override void SetLength(long value) => throw new NotSupportedException();
@@ -509,7 +516,9 @@ partial class S3FileSystem
 					}).ConfigureAwait(false).GetAwaiter().GetResult();
 			}
 		}
+		#endregion
 
+		#region 私有方法
 		private async ValueTask UploadAsync(byte[] buffer, int offset, int count, CancellationToken cancellation = default)
 		{
 			_length += count;
@@ -552,7 +561,9 @@ partial class S3FileSystem
 			_parts.Add(new PartETag(response.PartNumber.Value, response.ETag));
 			_position += _bufferSize;
 		}
+		#endregion
 
+		#region 重写方法
 		protected override void Dispose(bool disposing)
 		{
 			ArrayPool<byte>.Shared.Return(_buffer);
@@ -562,5 +573,6 @@ partial class S3FileSystem
 			_buffer = null;
 			_parts = null;
 		}
+		#endregion
 	}
 }

@@ -37,9 +37,7 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Configuration.Commands;
 
-/// <summary>
-/// 该命令名为“get”，本命令获取当前选项提供程序中的指定选项路径的配置信息。
-/// </summary>
+/// <summary>该命令名为“get”，本命令获取当前选项提供程序中的指定选项路径的配置信息。</summary>
 /// <remarks>
 ///		<para>该命令的用法如下：</para>
 ///		<code>[configuration.]get path1 path2 path3...</code>

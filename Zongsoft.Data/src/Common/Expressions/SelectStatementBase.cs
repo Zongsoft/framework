@@ -33,9 +33,7 @@ using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.Common.Expressions;
 
-/// <summary>
-/// 表示查询语句的基类。
-/// </summary>
+/// <summary>表示查询语句的基类。</summary>
 public abstract class SelectStatementBase : Statement, ISelectStatementBase, ISource
 {
 	#region 构造函数

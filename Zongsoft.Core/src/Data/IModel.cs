@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据实体或业务模型的接口。
-/// </summary>
+/// <summary>表示数据实体或业务模型的接口。</summary>
 public interface IModel
 {
 	/// <summary>重置变更属性，并获取重置之前的值。</summary>
@@ -67,9 +65,7 @@ public interface IModel
 	/// <param name="name">指定要获取的属性名。</param>
 	/// <param name="value">输出参数，指定属性名对应的变更后的值。</param>
 	/// <returns>如果指定名称的属性是存在的并且发生过变更，则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	/// <remarks>
-	/// 	<para>注意：即使指定名称的属性是存在的，但只要其值未被更改过，也会返回假(<c>False</c>)。</para>
-	/// </remarks>
+	/// <remarks>注意：即使指定名称的属性是存在的，但只要其值未被更改过，也会返回假(<c>False</c>)。</remarks>
 	bool TryGetValue(string name, out object value);
 
 	/// <summary>尝试设置指定名称的属性值。</summary>

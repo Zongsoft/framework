@@ -3,9 +3,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Tests.Models;
 
-/// <summary>
-/// 表示班组(工作组)业务的实体类。
-/// </summary>
+/// <summary>表示班组(工作组)业务的实体类。</summary>
 public abstract class Team
 {
 	#region 普通属性
@@ -62,9 +60,7 @@ public abstract class Team
 	#endregion
 }
 
-/// <summary>
-/// 表示小组查询条件的实体类。
-/// </summary>
+/// <summary>表示小组查询条件的实体类。</summary>
 public abstract class TeamCriteria : CriteriaBase
 {
 	#region 公共属性

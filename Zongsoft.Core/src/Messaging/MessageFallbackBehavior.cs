@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Messaging;
 
-/// <summary>
-/// 表示消息订阅回调失败重试策略的枚举。
-/// </summary>
+/// <summary>表示消息订阅回调失败重试策略的枚举。</summary>
 public enum MessageFallbackBehavior
 {
 	/// <summary>退避重试</summary>

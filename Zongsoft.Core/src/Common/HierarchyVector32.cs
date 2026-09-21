@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Common;
 
-/// <summary>
-/// 表示层次向量的结构。
-/// </summary>
+/// <summary>表示层次向量的结构。</summary>
 public readonly struct HierarchyVector32 : IEquatable<HierarchyVector32>, IEquatable<uint>
 {
 	#region 静态字段

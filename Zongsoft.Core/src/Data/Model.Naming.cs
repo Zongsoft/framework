@@ -36,9 +36,7 @@ namespace Zongsoft.Data;
 
 partial class Model
 {
-	/// <summary>
-	/// 提供数据模型名字映射的类。
-	/// </summary>
+	/// <summary>提供数据模型名字映射的类。</summary>
 	public static class Naming
 	{
 		#region 成员字段

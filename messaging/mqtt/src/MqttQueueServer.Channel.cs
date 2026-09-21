@@ -111,6 +111,7 @@ public partial class MqttQueueServer
 		#region 关闭方法
 		/// <summary>断开当前客户端通道。</summary>
 		/// <param name="cancellation">指定关闭操作的取消标记，该标记仅在发起断开前生效。</param>
+		/// <returns>表示客户端断开及通道关闭操作的异步任务。</returns>
 		public async ValueTask CloseAsync(CancellationToken cancellation = default)
 		{
 			await _semaphore.WaitAsync(cancellation);

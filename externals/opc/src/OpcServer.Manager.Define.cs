@@ -43,6 +43,7 @@ partial class OpcServer
 {
 	partial class NodeManager
 	{
+		#region 公共方法
 		public BaseDataVariableState DefineVariable(string name, Type type, string label, string description = null) => this.DefineVariable(null, name, type, null, label, description);
 		public BaseDataVariableState DefineVariable(string name, Type type, object value, string label, string description = null) => this.DefineVariable(null, name, type, value, label, description);
 		public BaseDataVariableState DefineVariable(NodeState parent, string name, Type type, string label, string description = null) => this.DefineVariable(parent, name, type, null, label, description);
@@ -203,7 +204,9 @@ partial class OpcServer
 				return this.DefineObjectType(type);
 			}
 		}
+		#endregion
 
+		#region 私有方法
 		private DataTypeState DefineEnumeration(Type type)
 		{
 			EnumDefinition enumeration = new EnumDefinition();
@@ -457,6 +460,7 @@ partial class OpcServer
 			parent?.AddChild(variable);
 			return variable;
 		}
+		#endregion
 
 		private readonly struct MemberToken
 		{
@@ -483,7 +487,9 @@ partial class OpcServer
 			public readonly Type Type;
 			public readonly bool IsReadOnly;
 
+			#region 重写方法
 			public override string ToString() => $"{this.Name}:{this.Type.FullName}({(this.IsReadOnly ? "ReadOnly" : "Read|Write")})";
+			#endregion
 		}
 	}
 }

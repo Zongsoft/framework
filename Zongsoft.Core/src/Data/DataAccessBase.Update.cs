@@ -35,6 +35,7 @@ namespace Zongsoft.Data;
 
 partial class DataAccessBase
 {
+	#region 公共方法
 	public int Update<T>(T data) => data == null ? 0 : this.Update(this.GetName<T>(), data, null, string.Empty, null, null, null);
 	public int Update<T>(T data, DataUpdateOptions options) => data == null ? 0 : this.Update(this.GetName<T>(), data, null, string.Empty, options, null, null);
 	public int Update<T>(T data, string schema) => data == null ? 0 : this.Update(this.GetName<T>(), data, null, schema, null, null, null);
@@ -203,7 +204,10 @@ partial class DataAccessBase
 		//返回最终的结果
 		return result;
 	}
+	#endregion
 
+	#region 保护方法
 	protected abstract void OnUpdate(DataUpdateContextBase context);
 	protected abstract ValueTask OnUpdateAsync(DataUpdateContextBase context, CancellationToken cancellation);
+	#endregion
 }

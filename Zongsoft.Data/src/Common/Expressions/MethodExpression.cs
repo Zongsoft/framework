@@ -80,10 +80,12 @@ public class CastFunctionExpression : MethodExpression
 		this.Style = style;
 	}
 
+	#region 公共属性
 	public IExpression Value { get; }
 	public DataType Type { get; }
 	public int Length { get; }
 	public byte Precision { get; }
 	public byte Scale { get; }
 	public string Style { get; }
+	#endregion
 }

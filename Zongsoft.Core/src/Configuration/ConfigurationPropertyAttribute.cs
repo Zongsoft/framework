@@ -31,12 +31,8 @@ using System;
 
 namespace Zongsoft.Configuration;
 
-/// <summary>
-/// 表示配置属性的标注类。
-/// </summary>
-/// <remarks>
-/// 如果需要定义类型转换器，请加注 <seealso cref="System.ComponentModel.TypeConverterAttribute"/> 标注标记。
-/// </remarks>
+/// <summary>表示配置属性的标注类。</summary>
+/// <remarks>如果需要定义类型转换器，请加注 <seealso cref="System.ComponentModel.TypeConverterAttribute"/> 标注标记。</remarks>
 [AttributeUsage(AttributeTargets.Property, Inherited = true)]
 public class ConfigurationPropertyAttribute : Attribute
 {

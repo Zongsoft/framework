@@ -33,9 +33,7 @@ using System.Globalization;
 
 namespace Zongsoft.Externals.Wechat;
 
-/// <summary>
-/// 表示机构标识的结构。
-/// </summary>
+/// <summary>表示机构标识的结构。</summary>
 [TypeConverter(typeof(TypeConverter))]
 public struct AuthorityToken : IEquatable<AuthorityToken>
 {

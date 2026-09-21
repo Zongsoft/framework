@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data.Archiving;
 
-/// <summary>
-/// 表示数据文件生成选项的接口。
-/// </summary>
+/// <summary>表示数据文件生成选项的接口。</summary>
 public interface IDataArchiveGeneratorOptions
 {
 	/// <summary>获取或设置生成格式化器。</summary>

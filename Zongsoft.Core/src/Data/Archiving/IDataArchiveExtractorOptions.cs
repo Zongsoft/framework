@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data.Archiving;
 
-/// <summary>
-/// 表示数据文件提取选项的接口。
-/// </summary>
+/// <summary>表示数据文件提取选项的接口。</summary>
 public interface IDataArchiveExtractorOptions
 {
 	/// <summary>获取模型元信息。</summary>

@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Externals.Aliyun;
 
-/// <summary>
-/// 表示服务中心的基类。
-/// </summary>
+/// <summary>表示服务中心的基类。</summary>
 public class ServiceCenterBase
 {
 	#region 成员字段
@@ -74,26 +72,20 @@ public class ServiceCenterBase
 	#endregion
 
 	#region 公共属性
-	/// <summary>
-	/// 获取服务中心的名称。
-	/// </summary>
+	/// <summary>获取服务中心的名称。</summary>
 	public ServiceCenterName Name
 	{
 		get => _name;
 	}
 
-	/// <summary>
-	/// 获取或设置服务中心的别名。
-	/// </summary>
+	/// <summary>获取或设置服务中心的别名。</summary>
 	public string Alias
 	{
 		get => _alias;
 		protected set => _alias = value;
 	}
 
-	/// <summary>
-	/// 获取或设置服务中心的访问路径。
-	/// </summary>
+	/// <summary>获取或设置服务中心的访问路径。</summary>
 	public virtual string Path
 	{
 		get => _path;

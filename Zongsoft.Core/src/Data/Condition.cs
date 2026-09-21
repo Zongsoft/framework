@@ -35,9 +35,7 @@ using System.Linq.Expressions;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据过滤条件的设置项。
-/// </summary>
+/// <summary>表示数据过滤条件的设置项。</summary>
 public class Condition : ICondition, IEquatable<Condition>
 {
 	#region 构造函数

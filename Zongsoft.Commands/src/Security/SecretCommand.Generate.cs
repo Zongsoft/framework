@@ -39,9 +39,7 @@ namespace Zongsoft.Security.Commands;
 partial class SecretCommand
 {
 	/// <summary>提供生成验证码的命令类。</summary>
-	/// <example>
-	///		<code>secret.generate -name:'user.phone.change:100' -pattern:#4 13800000001 13800000002 13800000003</code>
-	/// </example>
+	/// <example><code>secret.generate -name:'user.phone.change:100' -pattern:#4 13800000001 13800000002 13800000003</code></example>
 	/// <remarks>
 	///		<para>命令‘pattern’选项即可以表示一个固定的验证码值，如果未指定或为空则生成6位数字的验证码；也可以表示生成验证码的规则，则大致如下所示：</para>
 	///		<list type="bullet">

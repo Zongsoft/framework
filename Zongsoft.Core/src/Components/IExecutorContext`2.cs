@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示执行器上下文的接口。
-/// </summary>
+/// <summary>表示执行器上下文的接口。</summary>
 public interface IExecutorContext<TArgument, TResult> : IExecutorContext, IExecutorContext<TArgument>
 {
 	/// <summary>获取或设置执行结果。</summary>

@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Security.Privileges;
 
-/// <summary>
-/// 表示成员类型的枚举。
-/// </summary>
+/// <summary>表示成员类型的枚举。</summary>
 public enum MemberType : byte
 {
 	/// <summary>用户</summary>

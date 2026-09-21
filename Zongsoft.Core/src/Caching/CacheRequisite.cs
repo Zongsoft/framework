@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Caching;
 
-/// <summary>
-/// 表示缓存设置项的必须条件的枚举。
-/// </summary>
+/// <summary>表示缓存设置项的必须条件的枚举。</summary>
 public enum CacheRequisite
 {
 	/// <summary>无约束，即无论缓存项是否存在都能被设置。</summary>

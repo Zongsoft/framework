@@ -34,9 +34,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Serialization;
 
-/// <summary>
-/// 提供将对象序列化到流中和从流中反序列化对象的功能。
-/// </summary>
+/// <summary>提供将对象序列化到流中和从流中反序列化对象的功能。</summary>
 public interface ISerializer
 {
 	#region 反序列化
@@ -168,15 +166,17 @@ public interface ISerializer
 	#endregion
 
 	#region 序列方法
-	/// <summary>将指定的对象序列化到指定的<seealso cref="System.IO.Stream"/>流中。</summary>
+	/// <summary>将指定的对象序列化为字节数组。</summary>
 	/// <param name="graph">待序列化的目标对象。</param>
 	/// <param name="options">序列化的选项设置。</param>
+	/// <returns>返回序列化后的字节数组。</returns>
 	byte[] Serialize(object graph, SerializationOptions options = null);
 
-	/// <summary>将指定的对象序列化到指定的<seealso cref="System.IO.Stream"/>流中。</summary>
+	/// <summary>将指定的对象序列化为字节数组。</summary>
 	/// <param name="graph">待序列化的目标对象。</param>
 	/// <param name="type">待序列化的目标类型。</param>
 	/// <param name="options">序列化的选项设置。</param>
+	/// <returns>返回序列化后的字节数组。</returns>
 	byte[] Serialize(object graph, Type type, SerializationOptions options = null);
 
 	/// <summary>将指定的对象序列化到指定的<seealso cref="System.IO.Stream"/>流中。</summary>

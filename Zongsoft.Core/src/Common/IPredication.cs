@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Common;
 
-/// <summary>
-/// 表示条件判断的接口。
-/// </summary>
+/// <summary>表示条件判断的接口。</summary>
 public interface IPredication
 {
 	/// <summary>确定指定对象是否符合某种条件。</summary>

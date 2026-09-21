@@ -35,6 +35,7 @@ namespace Zongsoft.Data;
 
 partial class DataServiceBase<TModel>
 {
+	#region 公共方法
 	public TValue? Aggregate<TValue>(DataAggregate aggregate, string key, DataAggregateOptions options = null)
 		where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key, options, out _), options);
 	public TValue? Aggregate<TKey1, TValue>(DataAggregate aggregate, TKey1 key1, DataAggregateOptions options = null)
@@ -82,12 +83,16 @@ partial class DataServiceBase<TModel>
 
 	public TValue? Aggregate<TValue>(DataAggregate aggregate, Data.Condition criteria, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(aggregate, (ICondition)criteria, options);
 	public TValue? Aggregate<TValue>(DataAggregate aggregate, ConditionCollection criteria, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(aggregate, (ICondition)criteria, options);
+	#endregion
 
+	#region 保护方法
 	protected virtual TValue? OnAggregate<TValue>(DataAggregate aggregate, ICondition criteria, DataAggregateOptions options) where TValue : struct, IEquatable<TValue>
 	{
 		return this.DataAccess.Aggregate<TValue>(this.Name, aggregate, criteria, options, ctx => this.OnAggregating(ctx), ctx => this.OnAggregated(ctx));
 	}
+	#endregion
 
+	#region 公共方法
 	public ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, string key, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key, null, out _), null, cancellation);
 	public ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, string key, DataAggregateOptions options, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key, options, out _), options, cancellation);
 	public ValueTask<TValue?> AggregateAsync<TKey1, TValue>(DataAggregate aggregate, TKey1 key1, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, this.ConvertKey(DataServiceMethod.Aggregate(aggregate), key1, null, out _), null, cancellation);
@@ -124,9 +129,12 @@ partial class DataServiceBase<TModel>
 	public ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, Data.Condition criteria, DataAggregateOptions options, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, (ICondition)criteria, options, cancellation);
 	public ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, ConditionCollection criteria, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, (ICondition)criteria, null, cancellation);
 	public ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, ConditionCollection criteria, DataAggregateOptions options, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, (ICondition)criteria, options, cancellation);
+	#endregion
 
+	#region 保护方法
 	protected virtual ValueTask<TValue?> OnAggregateAsync<TValue>(DataAggregate aggregate, ICondition criteria, DataAggregateOptions options, CancellationToken cancellation) where TValue : struct, IEquatable<TValue>
 	{
 		return this.DataAccess.AggregateAsync<TValue>(this.Name, aggregate, criteria, options, ctx => this.OnAggregating(ctx), ctx => this.OnAggregated(ctx), cancellation);
 	}
+	#endregion
 }

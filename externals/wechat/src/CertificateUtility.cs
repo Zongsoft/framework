@@ -50,9 +50,7 @@ public static class CertificateUtility
 	#endregion
 
 	#region 公共方法
-	/// <summary>
-	/// 获取微信平台的数字证书。
-	/// </summary>
+	/// <summary>获取微信平台的数字证书。</summary>
 	/// <param name="authority">获取凭证证书的机构，即指定以哪个机构的身份来获取平台证书。</param>
 	/// <param name="cancellation">异步任务的取消标记。</param>
 	/// <returns>返回的微信平台的数字证书。</returns>
@@ -64,9 +62,7 @@ public static class CertificateUtility
 		return AcquireCertificateAsync(authority, cancellation);
 	}
 
-	/// <summary>
-	/// 获取微信平台的数字证书。
-	/// </summary>
+	/// <summary>获取微信平台的数字证书。</summary>
 	/// <param name="authority">获取凭证证书的机构，即指定以哪个机构的身份来获取平台证书。</param>
 	/// <param name="code">获取对应凭证证书的代号。</param>
 	/// <param name="cancellation">异步任务的取消标记。</param>

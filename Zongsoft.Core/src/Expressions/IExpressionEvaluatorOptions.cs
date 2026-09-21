@@ -32,9 +32,7 @@ using System.IO;
 
 namespace Zongsoft.Expressions;
 
-/// <summary>
-/// 表示表达式运算器配置选项的接口。
-/// </summary>
+/// <summary>表示表达式运算器配置选项的接口。</summary>
 public interface IExpressionEvaluatorOptions
 {
 	/// <summary>获取或设置错误输出通道。</summary>

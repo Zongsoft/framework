@@ -32,14 +32,10 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据执行操作选项的接口。
-/// </summary>
+/// <summary>表示数据执行操作选项的接口。</summary>
 public interface IDataExecuteOptions : IDataOptions { }
 
-/// <summary>
-/// 表示数据执行操作选项的类。
-/// </summary>
+/// <summary>表示数据执行操作选项的类。</summary>
 public class DataExecuteOptions : DataOptionsBase, IDataExecuteOptions
 {
 	#region 构造函数

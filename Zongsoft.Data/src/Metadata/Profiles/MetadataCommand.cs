@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data.Metadata.Profiles;
 
-/// <summary>
-/// 表示数据命令的元数据类。
-/// </summary>
+/// <summary>表示数据命令的元数据类。</summary>
 public partial class MetadataCommand : DataCommandBase<MetadataCommand.MetadataCommandScriptor>
 {
 	#region 构造函数

@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 扩展命令接口。
-/// </summary>
+/// <summary>扩展命令接口。</summary>
 public interface ICommand
 {
 	#region 事件定义

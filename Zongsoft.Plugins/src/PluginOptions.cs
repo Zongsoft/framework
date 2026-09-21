@@ -35,9 +35,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Zongsoft.Plugins;
 
-/// <summary>
-/// 有关插件运行环境的设置信息。
-/// </summary>
+/// <summary>有关插件运行环境的设置信息。</summary>
 public class PluginOptions : IEquatable<PluginOptions>
 {
 	#region 构造函数

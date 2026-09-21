@@ -35,9 +35,7 @@ using System.Collections.Concurrent;
 
 namespace Zongsoft.Collections;
 
-/// <summary>
-/// 提供了一个线程安全的通用对象池的相关功能。
-/// </summary>
+/// <summary>提供了一个线程安全的通用对象池的相关功能。</summary>
 public class ObjectPool<T> : IDisposable where T : class
 {
 	#region 私有变量
@@ -104,6 +102,7 @@ public class ObjectPool<T> : IDisposable where T : class
 
 	#region 公共方法
 	/// <summary>从对象池中获取一个可用对象。</summary>
+	/// <returns>返回池中的可用对象或新创建的对象；无法创建时返回空。</returns>
 	public T Get()
 	{
 		var idles = _idles;
@@ -133,6 +132,7 @@ public class ObjectPool<T> : IDisposable where T : class
 	}
 
 	/// <summary>将一个对象释放到池中。</summary>
+	/// <param name="value">要归还到对象池中的非空对象。</param>
 	public void Return(T value)
 	{
 		var idles = _idles;

@@ -14,6 +14,7 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 {
 	public RunCommand() : base("Run") { }
 
+	#region 重写方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		var settings = RunSettings.Get(context);
@@ -53,7 +54,9 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 
 		return success ? 0 : 2;
 	}
+	#endregion
 
+	#region 私有方法
 	private static IEnumerable<WorkerProcess> StartWorkers(RunSettings settings)
 	{
 		var slaver = Utility.ResolveSlaverExecutable(settings.Slaver);
@@ -106,9 +109,11 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 				output.WriteLine(CommandOutletColor.DarkRed, worker.Error.TrimEnd());
 		}
 	}
+	#endregion
 
 	private sealed class RunSettings
 	{
+		#region 公共属性
 		public string Scenario { get; private set; }
 		public string Namespace { get; private set; }
 		public string ConnectionString { get; private set; }
@@ -120,7 +125,9 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 		public TimeSpan Timeout { get; private set; }
 		public TimeSpan? RenewalInterval { get; private set; }
 		public bool ExpectViolations { get; private set; }
+		#endregion
 
+		#region 静态方法
 		public static RunSettings Get(CommandContext context)
 		{
 			var scenario = context.Options.GetValue<string>("scenario", "mutex");
@@ -154,7 +161,9 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 
 			return settings;
 		}
+		#endregion
 
+		#region 公共方法
 		public IEnumerable<string> GetSlaverArguments(int workerId)
 		{
 			yield return "run";
@@ -169,6 +178,7 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 			if(this.RenewalInterval.HasValue)
 				yield return $"--renewal-interval:{this.RenewalInterval.Value}";
 		}
+		#endregion
 	}
 
 	private sealed class WorkerProcess
@@ -181,11 +191,14 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 			this.Completion = this.CompleteAsync(process);
 		}
 
+		#region 公共属性
 		public Task Completion { get; }
 		public int ExitCode => _process.ExitCode;
 		public string Output { get; private set; }
 		public string Error { get; private set; }
+		#endregion
 
+		#region 私有方法
 		private async Task CompleteAsync(Process process)
 		{
 			var output = process.StandardOutput.ReadToEndAsync();
@@ -196,5 +209,6 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 			this.Output = await output;
 			this.Error = await error;
 		}
+		#endregion
 	}
 }

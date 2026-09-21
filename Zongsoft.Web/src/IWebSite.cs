@@ -29,9 +29,7 @@
 
 namespace Zongsoft.Web;
 
-/// <summary>
-/// 表示Web站点的接口。
-/// </summary>
+/// <summary>表示Web站点的接口。</summary>
 public interface IWebSite
 {
 	/// <summary>获取站点名称。</summary>

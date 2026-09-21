@@ -164,6 +164,7 @@ partial class Version
 
 	private sealed class NumberJsonConverter : JsonConverter<Number>
 	{
+		#region 重写方法
 		public override Number Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options) => reader.TokenType switch
 		{
 			JsonTokenType.Null => default,
@@ -173,10 +174,12 @@ partial class Version
 		};
 
 		public override void Write(Utf8JsonWriter writer, Number value, JsonSerializerOptions options) => writer.WriteStringValue(value.ToString());
+		#endregion
 	}
 
 	private sealed class NumberTypeConverter : VersionConverter
 	{
+		#region 重写方法
 		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(long) || sourceType == typeof(ulong) || base.CanConvertFrom(context, sourceType);
 		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == typeof(long) || destinationType == typeof(ulong) || base.CanConvertTo(context, destinationType);
 
@@ -212,5 +215,6 @@ partial class Version
 		}
 
 		public override bool IsValid(ITypeDescriptorContext context, object value) => value is Number || base.IsValid(context, value);
+		#endregion
 	}
 }

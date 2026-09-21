@@ -49,24 +49,32 @@ public static class TcpClient
 	private class HeadlessClient : TcpClient<IMemoryOwner<byte>>, ISender
 	{
 		public HeadlessClient() : base(HeadlessPacketizer.Instance) => this.Address = new IPEndPoint(IPAddress.Loopback, 7969);
+		#region 公共方法
 		public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray()).AsTask().GetAwaiter().GetResult();
 		public new ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default) => base.SendAsync(data, cancellation);
+		#endregion
 	}
 
 	private class HeadedClient : TcpClient<ReadOnlySequence<byte>>, ISender
 	{
 		public HeadedClient() : base(HeadedPacketizer.Instance) => this.Address = new IPEndPoint(IPAddress.Loopback, 7969);
+		#region 公共方法
 		public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray()).AsTask().GetAwaiter().GetResult();
 		public new ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default) => base.SendAsync(data, cancellation);
+		#endregion
 
+		#region 重写方法
 		protected override TcpClientChannel<ReadOnlySequence<byte>> CreateChannel(SocketConnection connection, EndPoint address) => new SizedChannel(this, connection, address);
+		#endregion
 
 		private class SizedChannel(TcpClient<ReadOnlySequence<byte>> client, SocketConnection connection, EndPoint address) : TcpClientChannel<ReadOnlySequence<byte>>(client, connection, address)
 		{
+			#region 重写方法
 			protected override ValueTask<FlushResult> OnSendAsync(PipeWriter writer, ReadOnlyMemory<byte> data, CancellationToken cancellation)
 			{
 				return HeadedPacketizer.Instance.PackAsync(writer, new ReadOnlySequence<byte>(data), cancellation);
 			}
+			#endregion
 		}
 	}
 }

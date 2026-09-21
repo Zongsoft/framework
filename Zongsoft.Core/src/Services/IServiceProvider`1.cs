@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Services;
 
-/// <summary>
-/// 表示特定类型的服务提供程序。
-/// </summary>
+/// <summary>表示特定类型的服务提供程序。</summary>
 /// <typeparam name="T">特定的服务类型。</typeparam>
 public interface IServiceProvider<out T> where T : class
 {

@@ -35,9 +35,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Security.Privileges;
 
-/// <summary>
-/// 提供密码获取、设置、校验功能的基类。
-/// </summary>
+/// <summary>提供密码获取、设置、校验功能的基类。</summary>
 public abstract class Passworder
 {
 	#region 公共方法

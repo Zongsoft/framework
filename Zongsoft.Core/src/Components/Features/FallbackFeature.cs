@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Components.Features;
 
-/// <summary>
-/// 提供回退(后备)功能的特性类。
-/// </summary>
+/// <summary>提供回退(后备)功能的特性类。</summary>
 public class FallbackFeature : IFeature
 {
 	#region 构造函数
@@ -55,9 +53,7 @@ public class FallbackFeature : IFeature
 	#endregion
 }
 
-/// <summary>
-/// 提供回退(后备)功能的特性类。
-/// </summary>
+/// <summary>提供回退(后备)功能的特性类。</summary>
 public class FallbackFeature<T> : IFeature
 {
 	#region 构造函数
@@ -77,9 +73,7 @@ public class FallbackFeature<T> : IFeature
 	#endregion
 }
 
-/// <summary>
-/// 提供回退(后备)功能的特性类。
-/// </summary>
+/// <summary>提供回退(后备)功能的特性类。</summary>
 public class FallbackFeature<T, TResult> : IFeature
 {
 	#region 构造函数

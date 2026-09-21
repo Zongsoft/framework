@@ -35,6 +35,7 @@ namespace Zongsoft.Data;
 
 partial class DataAccessBase
 {
+	#region 公共方法
 	public int Delete<T>(ICondition criteria, string schema = null) => this.Delete(this.GetName<T>(), criteria, schema, null, null, null);
 	public int Delete<T>(ICondition criteria, DataDeleteOptions options) => this.Delete(this.GetName<T>(), criteria, string.Empty, options, null, null);
 	public int Delete<T>(ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, bool> deleting = null, Action<DataDeleteContextBase> deleted = null) => this.Delete(this.GetName<T>(), criteria, schema, options, deleting, deleted);
@@ -134,7 +135,10 @@ partial class DataAccessBase
 		//返回最终的结果
 		return result;
 	}
+	#endregion
 
+	#region 保护方法
 	protected abstract void OnDelete(DataDeleteContextBase context);
 	protected abstract ValueTask OnDeleteAsync(DataDeleteContextBase context, CancellationToken cancellation);
+	#endregion
 }

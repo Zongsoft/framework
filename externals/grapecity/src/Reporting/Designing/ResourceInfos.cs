@@ -43,117 +43,126 @@ using Zongsoft.IO;
 using Zongsoft.Services;
 using Zongsoft.Reporting;
 
-namespace Zongsoft.Externals.Grapecity.Reporting.Designing
+namespace Zongsoft.Externals.Grapecity.Reporting.Designing;
+
+public class ReportInfo : IReportInfo
 {
-	public class ReportInfo : IReportInfo
+	public ReportInfo(string id, string name, string type)
 	{
-		public ReportInfo(string id, string name, string type)
-		{
-			if(string.IsNullOrEmpty(name))
-				throw new ArgumentNullException(nameof(name));
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
 
-			this.Id = id;
-			this.Name = name;
-			this.Type = type;
-		}
-
-		public string Id { get; set; }
-		public string Name { get; set; }
-		public string Type { get; set; }
+		this.Id = id;
+		this.Name = name;
+		this.Type = type;
 	}
 
-	public class ImageInfo : IImageInfo
-	{
-		public ImageInfo() { }
-		public ImageInfo(string id, string name, string type = null)
-		{
-			this.Id = id;
-			this.Name = name;
-			this.ContentType = type;
-		}
+	#region 公共属性
+	public string Id { get; set; }
+	public string Name { get; set; }
+	public string Type { get; set; }
+	#endregion
+}
 
-		public string Id { get; set; }
-		public string Name { get; set; }
-		public byte[] Thumbnail { get; set; }
-		public string ContentType { get; set; }
+public class ImageInfo : IImageInfo
+{
+	public ImageInfo() { }
+	public ImageInfo(string id, string name, string type = null)
+	{
+		this.Id = id;
+		this.Name = name;
+		this.ContentType = type;
 	}
 
-	public class ThemeInfo : IThemeInfo
+	#region 公共属性
+	public string Id { get; set; }
+	public string Name { get; set; }
+	public byte[] Thumbnail { get; set; }
+	public string ContentType { get; set; }
+	#endregion
+}
+
+public class ThemeInfo : IThemeInfo
+{
+	#region 构造函数
+	public ThemeInfo() { }
+	public ThemeInfo(string id, string title = null)
 	{
-		public ThemeInfo() { }
-		public ThemeInfo(string id, string title = null)
-		{
-			this.Id = id;
-			this.Title = title;
-		}
+		this.Id = id;
+		this.Title = title;
+	}
+	#endregion
 
-		public string Id { get; set; }
-		public string Title { get; set; }
-		public string Dark1 { get; set; }
-		public string Dark2 { get; set; }
-		public string Light1 { get; set; }
-		public string Light2 { get; set; }
-		public string Accent1 { get; set; }
-		public string Accent2 { get; set; }
-		public string Accent3 { get; set; }
-		public string Accent4 { get; set; }
-		public string Accent5 { get; set; }
-		public string Accent6 { get; set; }
-		public string MajorFontFamily { get; set; }
-		public string MinorFontFamily { get; set; }
+	#region 公共属性
+	public string Id { get; set; }
+	public string Title { get; set; }
+	public string Dark1 { get; set; }
+	public string Dark2 { get; set; }
+	public string Light1 { get; set; }
+	public string Light2 { get; set; }
+	public string Accent1 { get; set; }
+	public string Accent2 { get; set; }
+	public string Accent3 { get; set; }
+	public string Accent4 { get; set; }
+	public string Accent5 { get; set; }
+	public string Accent6 { get; set; }
+	public string MajorFontFamily { get; set; }
+	public string MinorFontFamily { get; set; }
+	#endregion
 
-		public static ThemeInfo Populate(string id, string title, string content)
-		{
-			if(string.IsNullOrEmpty(id))
-				throw new ArgumentNullException(nameof(id));
+	#region 公共方法
+	public static ThemeInfo Populate(string id, string title, string content)
+	{
+		if(string.IsNullOrEmpty(id))
+			throw new ArgumentNullException(nameof(id));
 
-			var theme = new ThemeInfo(id, title ?? id);
+		var theme = new ThemeInfo(id, title ?? id);
 
-			if(string.IsNullOrEmpty(content))
-				return theme;
-
-			var pairs = Zongsoft.Common.StringExtension.Slice(content, new[] { ',', '|', ';' });
-
-			foreach(var pair in pairs)
-			{
-				if(string.IsNullOrEmpty(pair))
-					continue;
-
-				var index = pair.IndexOfAny(new[] { ':', '=' });
-
-				if(index > 0 && index < pair.Length - 1)
-				{
-					var key = pair.AsSpan(0, index);
-					var value = pair.AsSpan(index + 1);
-
-					if(key.Equals(nameof(Dark1), StringComparison.OrdinalIgnoreCase))
-						theme.Dark1 = value.ToString();
-					else if(key.Equals(nameof(Dark2), StringComparison.OrdinalIgnoreCase))
-						theme.Dark2 = value.ToString();
-					else if(key.Equals(nameof(Light1), StringComparison.OrdinalIgnoreCase))
-						theme.Light1 = value.ToString();
-					else if(key.Equals(nameof(Light2), StringComparison.OrdinalIgnoreCase))
-						theme.Light2 = value.ToString();
-					else if(key.Equals(nameof(Accent1), StringComparison.OrdinalIgnoreCase))
-						theme.Accent1 = value.ToString();
-					else if(key.Equals(nameof(Accent2), StringComparison.OrdinalIgnoreCase))
-						theme.Accent2 = value.ToString();
-					else if(key.Equals(nameof(Accent3), StringComparison.OrdinalIgnoreCase))
-						theme.Accent3 = value.ToString();
-					else if(key.Equals(nameof(Accent4), StringComparison.OrdinalIgnoreCase))
-						theme.Accent4 = value.ToString();
-					else if(key.Equals(nameof(Accent5), StringComparison.OrdinalIgnoreCase))
-						theme.Accent5 = value.ToString();
-					else if(key.Equals(nameof(Accent6), StringComparison.OrdinalIgnoreCase))
-						theme.Accent6 = value.ToString();
-					else if(key.Equals(nameof(MajorFontFamily), StringComparison.OrdinalIgnoreCase))
-						theme.MajorFontFamily = value.ToString();
-					else if(key.Equals(nameof(MinorFontFamily), StringComparison.OrdinalIgnoreCase))
-						theme.MinorFontFamily = value.ToString();
-				}
-			}
-
+		if(string.IsNullOrEmpty(content))
 			return theme;
+
+		var pairs = Zongsoft.Common.StringExtension.Slice(content, new[] { ',', '|', ';' });
+
+		foreach(var pair in pairs)
+		{
+			if(string.IsNullOrEmpty(pair))
+				continue;
+
+			var index = pair.IndexOfAny(new[] { ':', '=' });
+
+			if(index > 0 && index < pair.Length - 1)
+			{
+				var key = pair.AsSpan(0, index);
+				var value = pair.AsSpan(index + 1);
+
+				if(key.Equals(nameof(Dark1), StringComparison.OrdinalIgnoreCase))
+					theme.Dark1 = value.ToString();
+				else if(key.Equals(nameof(Dark2), StringComparison.OrdinalIgnoreCase))
+					theme.Dark2 = value.ToString();
+				else if(key.Equals(nameof(Light1), StringComparison.OrdinalIgnoreCase))
+					theme.Light1 = value.ToString();
+				else if(key.Equals(nameof(Light2), StringComparison.OrdinalIgnoreCase))
+					theme.Light2 = value.ToString();
+				else if(key.Equals(nameof(Accent1), StringComparison.OrdinalIgnoreCase))
+					theme.Accent1 = value.ToString();
+				else if(key.Equals(nameof(Accent2), StringComparison.OrdinalIgnoreCase))
+					theme.Accent2 = value.ToString();
+				else if(key.Equals(nameof(Accent3), StringComparison.OrdinalIgnoreCase))
+					theme.Accent3 = value.ToString();
+				else if(key.Equals(nameof(Accent4), StringComparison.OrdinalIgnoreCase))
+					theme.Accent4 = value.ToString();
+				else if(key.Equals(nameof(Accent5), StringComparison.OrdinalIgnoreCase))
+					theme.Accent5 = value.ToString();
+				else if(key.Equals(nameof(Accent6), StringComparison.OrdinalIgnoreCase))
+					theme.Accent6 = value.ToString();
+				else if(key.Equals(nameof(MajorFontFamily), StringComparison.OrdinalIgnoreCase))
+					theme.MajorFontFamily = value.ToString();
+				else if(key.Equals(nameof(MinorFontFamily), StringComparison.OrdinalIgnoreCase))
+					theme.MinorFontFamily = value.ToString();
+			}
 		}
+
+		return theme;
 	}
+	#endregion
 }

@@ -41,8 +41,11 @@ namespace Zongsoft.Externals.Etcd;
 [Service<IDistributedLock>(Tags = "etcd")]
 partial class EtcdService : IDistributedLockManager
 {
+	#region 公共属性
 	public IDistributedLockTokenizer Tokenizer { get; set; }
+	#endregion
 
+	#region 显式实现
 	async ValueTask<TimeSpan?> IDistributedLockManager.GetExpiryAsync(string key, CancellationToken cancellation)
 	{
 		if(string.IsNullOrEmpty(key))
@@ -61,7 +64,9 @@ partial class EtcdService : IDistributedLockManager
 		}, null, null, cancellation);
 		return lease.TTL > 0 ? TimeSpan.FromSeconds(lease.TTL) : null;
 	}
+	#endregion
 
+	#region 公共方法
 	public ValueTask<IDistributedLock> AcquireAsync(string key, TimeSpan expiry, CancellationToken cancellation = default) =>
 		this.AcquireAsync(key, new DistributedLockOptions(expiry), cancellation);
 
@@ -78,7 +83,9 @@ partial class EtcdService : IDistributedLockManager
 		var fencingToken = await this.AcquireAsync(key, token, options.Expiry, cancellation);
 		return new DistributedLock(this, key, token, options.Expiry, fencingToken, options.RenewalInterval);
 	}
+	#endregion
 
+	#region 内部方法
 	internal async ValueTask<long> AcquireAsync(string key, byte[] token, TimeSpan expiry, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(key))
@@ -192,7 +199,9 @@ partial class EtcdService : IDistributedLockManager
 			await RevokeLeaseAsync(client, entry.Lease);
 		return true;
 	}
+	#endregion
 
+	#region 公共方法
 	public async ValueTask<bool> ReleaseAsync(string key, byte[] token, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(key) || token == null || token.Length == 0)
@@ -235,13 +244,16 @@ partial class EtcdService : IDistributedLockManager
 			await RevokeLeaseAsync(client, entry.Lease);
 		return true;
 	}
+	#endregion
 
+	#region 私有方法
 	private static long GetLeaseSeconds(TimeSpan expiry) => Math.Max(1L, checked((long)Math.Ceiling(expiry.TotalSeconds)));
 	private static async ValueTask RevokeLeaseAsync(dotnet_etcd.EtcdClient client, long leaseId)
 	{
 		try { await client.LeaseRevokeAsync(new Etcdserverpb.LeaseRevokeRequest { ID = leaseId }); }
 		catch { }
 	}
+	#endregion
 
 	private sealed class DistributedLock : DistributedLockBase<EtcdService>
 	{
@@ -255,6 +267,7 @@ partial class EtcdService : IDistributedLockManager
 			this.StartRenewal();
 		}
 
+		#region 重写方法
 		protected override void OnEntered() => this.StartRenewal();
 		protected override async ValueTask<bool> OnEnterAsync(CancellationToken cancellation)
 		{
@@ -279,7 +292,9 @@ partial class EtcdService : IDistributedLockManager
 				await this.StopRenewalAsync();
 			await base.DisposeAsync(disposing);
 		}
+		#endregion
 
+		#region 私有方法
 		private void StartRenewal()
 		{
 			if(_renewalTask?.IsCompleted == true)
@@ -326,5 +341,6 @@ partial class EtcdService : IDistributedLockManager
 				Zongsoft.Diagnostics.Logging.GetLogging(typeof(DistributedLock)).Error(exception);
 			}
 		}
+		#endregion
 	}
 }

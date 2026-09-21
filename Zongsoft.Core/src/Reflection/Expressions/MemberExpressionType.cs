@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Reflection.Expressions;
 
-/// <summary>
-/// 表示成员表达式类型的枚举。
-/// </summary>
+/// <summary>表示成员表达式类型的枚举。</summary>
 public enum MemberExpressionType
 {
 	/// <summary>常量表达式</summary>

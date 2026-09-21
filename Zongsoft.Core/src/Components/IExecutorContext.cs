@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示执行器上下文的接口。
-/// </summary>
+/// <summary>表示执行器上下文的接口。</summary>
 public interface IExecutorContext
 {
 	/// <summary>获取处理本次执行请求的执行器。</summary>

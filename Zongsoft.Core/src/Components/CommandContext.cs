@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示命令执行的上下文类。
-/// </summary>
+/// <summary>表示命令执行的上下文类。</summary>
 public class CommandContext : CommandContextBase
 {
 	#region 成员字段

@@ -31,12 +31,8 @@ using System;
 
 namespace Zongsoft.Plugins.Builders;
 
-/// <summary>
-/// 提供构建器行为约定的特性类。
-/// </summary>
-/// <remarks>
-///		<para>在特定情况建议使用该类对构建器进行定制。</para>
-/// </remarks>
+/// <summary>提供构建器行为约定的特性类。</summary>
+/// <remarks>在特定情况建议使用该类对构建器进行定制。</remarks>
 [AttributeUsage(AttributeTargets.Class)]
 public class BuilderBehaviorAttribute : Attribute
 {

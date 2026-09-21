@@ -131,6 +131,7 @@ public abstract class MessageQueueProviderBase<TQueue, TSettings>(string name) :
 	where TQueue : class, IMessageQueue
 	where TSettings : class, IMessageQueueSettings
 {
+	#region 重写方法
 	public override bool Exists(string name)
 	{
 		var connectionSettings = ApplicationContext.Current?.Configuration.GetOption<ConnectionSettingsCollection>(SETTINGS_PATH);
@@ -141,4 +142,5 @@ public abstract class MessageQueueProviderBase<TQueue, TSettings>(string name) :
 	{
 		return (IMessageQueue)Activator.CreateInstance(typeof(TQueue), name, this.GetSettings<TSettings>(name, settings));
 	}
+	#endregion
 }

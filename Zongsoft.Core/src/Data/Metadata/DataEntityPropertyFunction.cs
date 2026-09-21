@@ -35,8 +35,12 @@ namespace Zongsoft.Data.Metadata;
 
 public interface IDataEntityPropertyFunctionBuilder
 {
+	#region 公共属性
 	string Name { get; }
+	#endregion
+	#region 公共方法
 	DataEntityPropertyFunction Build(params string[] arguments);
+	#endregion
 }
 
 public abstract class DataEntityPropertyFunction
@@ -230,7 +234,7 @@ public abstract class DataEntityPropertyFunction
 				DbType.Single => BitConverter.Int32BitsToSingle(Common.Randomizer.GenerateInt32()),
 				DbType.Double => BitConverter.Int64BitsToDouble(Common.Randomizer.GenerateInt64()),
 				DbType.Decimal or
-				DbType.Currency => new Decimal(Common.Randomizer.GenerateInt64()),
+				DbType.Currency => new decimal(Common.Randomizer.GenerateInt64()),
 				DbType.Date or
 				DbType.Time or
 				DbType.DateTime or

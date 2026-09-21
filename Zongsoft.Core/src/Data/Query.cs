@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示查询定义的类。
-/// </summary>
+/// <summary>表示查询定义的类。</summary>
 public class Query : IQuery
 {
 	#region 构造函数

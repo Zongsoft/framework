@@ -40,9 +40,7 @@ using StackExchange.Redis;
 
 namespace Zongsoft.Externals.Redis.Messaging;
 
-/// <summary>
-/// 表示Redis消息队列的消费者。
-/// </summary>
+/// <summary>表示Redis消息队列的消费者。</summary>
 /// <remarks>
 ///		<para>参考资料：</para>
 ///		<list type="bullet">

@@ -35,9 +35,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Plugins;
 
-/// <summary>
-/// 表示工作台的基类。
-/// </summary>
+/// <summary>表示工作台的基类。</summary>
 public abstract class WorkbenchBase : IWorkbenchBase, IDisposable
 {
 	#region 事件声明

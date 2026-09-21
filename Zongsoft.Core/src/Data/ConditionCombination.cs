@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示条件组合方式的枚举。
-/// </summary>
+/// <summary>表示条件组合方式的枚举。</summary>
 public enum ConditionCombination
 {
 	/// <summary>条件「与」组合。</summary>

@@ -37,6 +37,7 @@ public static class StringExtension
 {
 	public delegate bool TryParser<T>(string text, out T value);
 
+	#region 静态方法
 	public static string Justify(this string text, int totalWidth, char paddingChar = ' ')
 	{
 		int padding = totalWidth - text.Length;
@@ -360,4 +361,5 @@ public static class StringExtension
 				yield return value;
 		}
 	}
+	#endregion
 }

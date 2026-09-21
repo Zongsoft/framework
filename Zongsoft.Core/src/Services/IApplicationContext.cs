@@ -35,9 +35,7 @@ using Microsoft.Extensions.Configuration;
 
 namespace Zongsoft.Services;
 
-/// <summary>
-/// 表示应用程序上下文的接口。
-/// </summary>
+/// <summary>表示应用程序上下文的接口。</summary>
 public interface IApplicationContext : IApplicationModule
 {
 	#region 事件定义

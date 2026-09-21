@@ -5,9 +5,7 @@ using Zongsoft.Data;
 
 namespace Zongsoft.Data.Tests.Models;
 
-/// <summary>
-/// 表示系统日志的实体类。
-/// </summary>
+/// <summary>表示系统日志的实体类。</summary>
 public abstract class Log
 {
 	#region 普通属性
@@ -58,9 +56,7 @@ public abstract class Log
 	#endregion
 }
 
-/// <summary>
-/// 表示日志查询条件的实体类。
-/// </summary>
+/// <summary>表示日志查询条件的实体类。</summary>
 public abstract class LogCriteria : CriteriaBase
 {
 	#region 公共属性

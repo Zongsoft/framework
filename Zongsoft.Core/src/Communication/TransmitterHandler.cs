@@ -81,9 +81,7 @@ public class TransmitterHandler(IServiceProvider serviceProvider) : HandlerBase<
 	#endregion
 
 	#region 嵌套子类
-	/// <summary>
-	/// 表示发送处理器参数的类。
-	/// </summary>
+	/// <summary>表示发送处理器参数的类。</summary>
 	[TypeConverter(typeof(ArgumentConverter))]
 	public class Argument
 	{

@@ -33,8 +33,11 @@ partial class WebExtension
 		public Utf8BufferTextWriter() => _encoder = _utf8NoBom.GetEncoder();
 		public Utf8BufferTextWriter(IFormatProvider formatProvider) : base(formatProvider) => _encoder = _utf8NoBom.GetEncoder();
 
+		#region 重写属性
 		public override Encoding Encoding => _utf8NoBom;
+		#endregion
 
+		#region 静态方法
 		public static Utf8BufferTextWriter Get(IBufferWriter<byte> bufferWriter)
 		{
 			var writer = _cachedInstance ?? new Utf8BufferTextWriter();
@@ -65,8 +68,12 @@ partial class WebExtension
 			writer._inUse = false;
 			#endif
 		}
+		#endregion
 
+		#region 公共方法
 		public void SetWriter(IBufferWriter<byte> bufferWriter) => _bufferWriter = bufferWriter;
+		#endregion
+		#region 重写方法
 		public override void Write(char[] buffer, int index, int count) => this.WriteInternal(buffer.AsSpan(index, count));
 		public override void Write(char[] buffer)
 		{
@@ -90,7 +97,9 @@ partial class WebExtension
 				this.WriteMultiByteChar(value);
 			}
 		}
+		#endregion
 
+		#region 私有方法
 		private unsafe void WriteMultiByteChar(char value)
 		{
 			var destination = this.GetBuffer();
@@ -101,13 +110,17 @@ partial class WebExtension
 			Debug.Assert(charsUsed == 1);
 			_memoryUsed += bytesUsed;
 		}
+		#endregion
 
+		#region 重写方法
 		public override void Write(string value)
 		{
 			if(value is not null)
 				this.WriteInternal(value.AsSpan());
 		}
+		#endregion
 
+		#region 私有方法
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		private Span<byte> GetBuffer()
 		{
@@ -144,7 +157,9 @@ partial class WebExtension
 				_memoryUsed += bytesUsed;
 			}
 		}
+		#endregion
 
+		#region 重写方法
 		public override void Flush()
 		{
 			if(_memoryUsed > 0)
@@ -162,5 +177,6 @@ partial class WebExtension
 			if(disposing)
 				this.Flush();
 		}
+		#endregion
 	}
 }

@@ -35,6 +35,7 @@ namespace Zongsoft.Diagnostics;
 
 partial class LoggingBase<TLog>
 {
+	#region 公共方法
 	public void Debug(Exception exception, object data = null, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.Log(this.CreateLog(LogLevel.Debug, exception, data, null, action));
 	public void Debug(string message, object data = null, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.Log(this.CreateLog(LogLevel.Debug, message, data, null, action));
 	public void Debug(string message, Exception exception, object data = null, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.Log(this.CreateLog(LogLevel.Debug, message, exception, data, null, action));
@@ -78,4 +79,5 @@ partial class LoggingBase<TLog>
 	public ValueTask DebugAsync(object source, string message, object data, CancellationToken cancellation = default, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.LogAsync(this.CreateLog(LogLevel.Debug, message, data, this.GetSource(source), action), cancellation);
 	public ValueTask DebugAsync(object source, string message, Exception exception, CancellationToken cancellation = default, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.LogAsync(this.CreateLog(LogLevel.Debug, message, exception, null, this.GetSource(source), action), cancellation);
 	public ValueTask DebugAsync(object source, string message, Exception exception, object data, CancellationToken cancellation = default, [System.Runtime.CompilerServices.CallerMemberName] string action = null) => Logging.LogAsync(this.CreateLog(LogLevel.Debug, message, exception, data, this.GetSource(source), action), cancellation);
+	#endregion
 }

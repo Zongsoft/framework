@@ -34,6 +34,7 @@ namespace Zongsoft.Resources;
 
 public static class ResourceUtility
 {
+	#region 静态方法
 	public static object GetObject<T>(this IResource resource, string name) => resource?.GetObject(name, GetLocation(typeof(T)));
 	public static object GetObject(this IResource resource, string name, Type location) => resource?.GetObject(name, GetLocation(location));
 	public static object GetObject(this IResource resource, string name, MemberInfo location) => resource?.GetObject(name, GetLocation(location));
@@ -111,10 +112,14 @@ public static class ResourceUtility
 	public static bool TryGetString<T>(this IResource resource, string name, out string value) => resource.TryGetString(name, GetLocation(typeof(T)), out value);
 	public static bool TryGetString(this IResource resource, string name, Type location, out string value) => resource.TryGetString(name, GetLocation(location), out value);
 	public static bool TryGetString(this IResource resource, string name, MemberInfo location, out string value) => resource.TryGetString(name, GetLocation(location), out value);
+	#endregion
 
+	#region 内部方法
 	internal static string GetLocation(MemberInfo member) => member == null ? null : GetLocation(member.ReflectedType);
 	internal static string GetLocation(Type type) => type == null ? null : (string.IsNullOrEmpty(type.Namespace) ? type.Name : $"{type.Namespace}{Type.Delimiter}{type.Name}");
+	#endregion
 
+	#region 静态方法
 	public static object GetResourceObject(this Type location, string name) => Resource.GetResource(location).GetObject(name, location);
 	public static object GetResourceObject(this MemberInfo location, string name) => Resource.GetResource(location).GetObject(name, location);
 	public static object GetResourceObject(this Assembly assembly, string name, Type location) => Resource.GetResource(assembly).GetObject(name, location);
@@ -288,4 +293,5 @@ public static class ResourceUtility
 
 		return null;
 	}
+	#endregion
 }

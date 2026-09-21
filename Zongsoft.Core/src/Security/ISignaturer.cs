@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Security;
 
-/// <summary>
-/// 提供数字签名功能的接口。
-/// </summary>
+/// <summary>提供数字签名功能的接口。</summary>
 public interface ISignaturer
 {
 	/// <summary>获取数字签名器名称。</summary>

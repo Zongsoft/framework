@@ -33,12 +33,8 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 关于工作器的接口。
-/// </summary>
-/// <remarks>
-///		<para>对于实现者的约定：应支持 <see cref="Start(string[])"/>、<see cref="Stop(string[])"/>、<see cref="Pause"/>、<see cref="Resume"/> 这四个工作方法的线程重入隔离性。</para>
-/// </remarks>
+/// <summary>关于工作器的接口。</summary>
+/// <remarks>对于实现者的约定：应支持 <see cref="Start(string[])"/>、<see cref="Stop(string[])"/>、<see cref="Pause"/>、<see cref="Resume"/> 这四个工作方法的线程重入隔离性。</remarks>
 public interface IWorker
 {
 	#region 事件定义
@@ -68,6 +64,7 @@ public interface IWorker
 	/// <summary>启动工作器。</summary>
 	/// <param name="args">启动的参数。</param>
 	/// <param name="cancellation">异步操作取消标记。</param>
+	/// <returns>表示工作器启动操作的任务。</returns>
 	Task StartAsync(string[] args, CancellationToken cancellation = default);
 
 	/// <summary>停止工作器。</summary>
@@ -77,6 +74,7 @@ public interface IWorker
 	/// <summary>停止工作器。</summary>
 	/// <param name="args">停止的参数。</param>
 	/// <param name="cancellation">异步操作取消标记。</param>
+	/// <returns>表示工作器停止操作的任务。</returns>
 	Task StopAsync(string[] args, CancellationToken cancellation = default);
 
 	/// <summary>暂停工作器。</summary>
@@ -84,6 +82,7 @@ public interface IWorker
 
 	/// <summary>暂停工作器。</summary>
 	/// <param name="cancellation">异步操作取消标记。</param>
+	/// <returns>表示工作器暂停操作的任务。</returns>
 	Task PauseAsync(CancellationToken cancellation = default);
 
 	/// <summary>恢复工作器，继续运行。</summary>
@@ -91,6 +90,7 @@ public interface IWorker
 
 	/// <summary>恢复工作器，继续运行。</summary>
 	/// <param name="cancellation">异步操作取消标记。</param>
+	/// <returns>表示工作器恢复运行操作的任务。</returns>
 	Task ResumeAsync(CancellationToken cancellation = default);
 	#endregion
 }

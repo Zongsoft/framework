@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据搜索器的泛型接口。
-/// </summary>
+/// <summary>表示数据搜索器的泛型接口。</summary>
 /// <typeparam name="TModel">关于搜索服务对应的数据模型类型。</typeparam>
 public interface IDataSearcher<TModel> : IDataSearcher
 {

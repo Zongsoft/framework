@@ -289,6 +289,7 @@ public partial interface IDataService
  */
 public partial interface IDataService
 {
+	#region 公共方法
 	ValueTask<bool> ExistsAsync(Condition criteria, DataExistsOptions options = null, CancellationToken cancellation = default) => this.ExistsAsync((ICondition)criteria, options, cancellation);
 	ValueTask<bool> ExistsAsync(ConditionCollection criteria, DataExistsOptions options = null, CancellationToken cancellation = default) => this.ExistsAsync((ICondition)criteria, options, cancellation);
 
@@ -306,4 +307,5 @@ public partial interface IDataService
 	ValueTask<int> UpdateAsync(object data, Condition criteria, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, (ICondition)criteria, schema, options, cancellation);
 	ValueTask<int> UpdateAsync(object data, ConditionCollection criteria, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, (ICondition)criteria, options, cancellation);
 	ValueTask<int> UpdateAsync(object data, ConditionCollection criteria, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, (ICondition)criteria, schema, options, cancellation);
+	#endregion
 }

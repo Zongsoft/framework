@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示处理程序的基类。
-/// </summary>
+/// <summary>表示处理程序的基类。</summary>
 /// <typeparam name="TArgument">处理程序的请求参数类型。</typeparam>
 public abstract class HandlerBase<TArgument> : IHandler<TArgument>, IHandler
 {

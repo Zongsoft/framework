@@ -48,6 +48,7 @@ public class InfluxCommand : DbCommand
 		this.DbParameterCollection = new InfluxParameterCollection();
 	}
 
+	#region 重写属性
 	public override string CommandText { get; set; }
 	public override int CommandTimeout { get; set; }
 	public override CommandType CommandType { get; set; }
@@ -56,8 +57,12 @@ public class InfluxCommand : DbCommand
 	protected override DbConnection DbConnection { get; set; }
 	protected override DbParameterCollection DbParameterCollection { get; }
 	protected override DbTransaction DbTransaction { get => null; set => throw new NotSupportedException(); }
+	#endregion
+	#region 内部属性
 	internal InfluxDBClient Client => ((InfluxConnection)this.Connection).Client;
+	#endregion
 
+	#region 重写方法
 	public override void Cancel() { }
 	public override void Prepare() { }
 	protected override DbParameter CreateDbParameter() => new InfluxParameter();
@@ -65,4 +70,5 @@ public class InfluxCommand : DbCommand
 	public override object ExecuteScalar() => throw new NotSupportedException();
 	public override int ExecuteNonQuery() => throw new NotImplementedException();
 	protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => new InfluxDataReader(this.Client.QueryPoints(this.CommandText, InfluxDB3.Client.Query.QueryType.SQL));
+	#endregion
 }

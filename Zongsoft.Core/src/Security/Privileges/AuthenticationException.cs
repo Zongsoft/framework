@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Security.Privileges;
 
-/// <summary>
-/// 表示身份验证失败时引发的异常。
-/// </summary>
+/// <summary>表示身份验证失败时引发的异常。</summary>
 [Serializable]
 public class AuthenticationException : SecurityException
 {

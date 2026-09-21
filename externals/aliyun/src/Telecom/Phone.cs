@@ -61,9 +61,7 @@ public class Phone
 	#endregion
 
 	#region 公共属性
-	/// <summary>
-	/// 获取或设置电信服务配置信息。
-	/// </summary>
+	/// <summary>获取或设置电信服务配置信息。</summary>
 	[Zongsoft.Configuration.Options.Options("Externals/Aliyun/Telecom")]
 	public Options.TelecomOptions Options
 	{

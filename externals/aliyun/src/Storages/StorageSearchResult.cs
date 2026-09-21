@@ -67,9 +67,7 @@ public class StorageSearchResult : IEnumerable<Zongsoft.IO.PathInfo>, IEnumerato
 	#endregion
 
 	#region 公共属性
-	/// <summary>
-	/// 获取结果列表所属的存储容器(Bucket)名称。
-	/// </summary>
+	/// <summary>获取结果列表所属的存储容器(Bucket)名称。</summary>
 	public string Name
 	{
 		get

@@ -35,6 +35,7 @@ namespace Zongsoft.IO.Compression;
 
 public static class Compressor
 {
+	#region 静态方法
 	/// <summary>确定指定名称的压缩算法是否受支持。</summary>
 	/// <param name="name">指定的压缩算法名称。</param>
 	/// <returns>如果指定算法受支持则返回真，否则返回假。</returns>
@@ -43,6 +44,7 @@ public static class Compressor
 		"br" or "brotli" or "gzip" or "zlib" or "deflate" => true,
 		_ => false,
 	};
+	#endregion
 
 	#region 常量定义
 	public const string Brotli = nameof(Brotli);

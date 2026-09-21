@@ -34,9 +34,7 @@ using Microsoft.Extensions.AI;
 
 namespace Zongsoft.Intelligences;
 
-/// <summary>
-/// 表示聊天历史记录的接口。
-/// </summary>
+/// <summary>表示聊天历史记录的接口。</summary>
 public interface IChatHistory : IEnumerable<ChatMessage>
 {
 	/// <summary>获取记录数量。</summary>

@@ -33,9 +33,7 @@ using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.Common.Expressions;
 
-/// <summary>
-/// 表示表标识的表达式。
-/// </summary>
+/// <summary>表示表标识的表达式。</summary>
 public class TableIdentifier : Expression, IIdentifier, ISource, IEquatable<TableIdentifier>
 {
 	#region 构造函数

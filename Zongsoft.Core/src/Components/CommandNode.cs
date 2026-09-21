@@ -124,9 +124,7 @@ public partial class CommandNode : Zongsoft.Collections.HierarchicalNode<Command
 	/// <summary>查找指定的命令路径的命令节点。</summary>
 	/// <param name="path">指定的命令路径。</param>
 	/// <returns>返回查找的结果，如果为空则表示没有找到指定路径的<see cref="CommandNode"/>命令节点。</returns>
-	/// <remarks>
-	///		<para>如果路径以斜杠(/)打头则从根节点开始查找；如果以双点(../)打头则表示从上级节点开始查找；否则从当前节点开始查找。</para>
-	/// </remarks>
+	/// <remarks>如果路径以斜杠(<c>/</c>)打头则从根节点开始查找；如果以双点(<c>../</c>)打头则表示从上级节点开始查找；否则从当前节点开始查找。</remarks>
 	public CommandNode Find(string path)
 	{
 		if(string.IsNullOrWhiteSpace(path))

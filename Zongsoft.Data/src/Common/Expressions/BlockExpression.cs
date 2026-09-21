@@ -33,9 +33,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common.Expressions;
 
-/// <summary>
-/// 表示由多个表达式组成的块级表达式类。
-/// </summary>
+/// <summary>表示由多个表达式组成的块级表达式类。</summary>
 public class BlockExpression : Expression, ICollection<IExpression>
 {
 	#region 成员字段
@@ -92,9 +90,7 @@ public class BlockExpression : Expression, ICollection<IExpression>
 	#endregion
 }
 
-/// <summary>
-/// 表示块级表达式的分割符枚举。
-/// </summary>
+/// <summary>表示块级表达式的分割符枚举。</summary>
 public enum BlockExpressionDelimiter
 {
 	/// <summary>无分隔。</summary>

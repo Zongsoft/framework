@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Messaging;
 
-/// <summary>
-/// 表示消息可靠性的枚举。
-/// </summary>
+/// <summary>表示消息可靠性的枚举。</summary>
 public enum MessageReliability
 {
 	/// <summary>最多一次</summary>

@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Intelligences;
 
-/// <summary>
-/// 表示模型信息的接口。
-/// </summary>
+/// <summary>表示模型信息的接口。</summary>
 public interface IModel
 {
 	/// <summary>获取模型的唯一标识。</summary>

@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data.Common.Expressions;
 
-/// <summary>
-/// 表示操作符的枚举。
-/// </summary>
+/// <summary>表示操作符的枚举。</summary>
 public enum Operator
 {
 	/// <summary>正号(<c>+</c>)</summary>

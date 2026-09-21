@@ -39,6 +39,7 @@ partial class HardwareCollector
 	[System.Runtime.Versioning.SupportedOSPlatform("Windows")]
 	private static class WindowsGatherer
 	{
+		#region 静态方法
 		public static IEnumerable<IO.Hardwares.IHardware> Gather()
 		{
 			foreach(var hardware in GetMainboards())
@@ -56,7 +57,9 @@ partial class HardwareCollector
 			foreach(var hardware in GetDisks())
 				yield return hardware;
 		}
+		#endregion
 
+		#region 私有方法
 		private static IEnumerable<IO.Hardwares.IHardware> GetMainboards()
 		{
 			foreach(var item in Query("SELECT * FROM Win32_BaseBoard"))
@@ -358,5 +361,6 @@ partial class HardwareCollector
 				return false;
 			}
 		}
+		#endregion
 	}
 }

@@ -5,9 +5,7 @@ using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.Tests.Models;
 
-/// <summary>
-/// 表示系统日志的实体类。
-/// </summary>
+/// <summary>表示系统日志的实体类。</summary>
 [Model(Alias = "Log")]
 public abstract class LogModel
 {

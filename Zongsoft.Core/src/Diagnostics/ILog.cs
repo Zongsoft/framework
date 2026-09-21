@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Diagnostics;
 
-/// <summary>
-/// 表示日志记录的实体类。
-/// </summary>
+/// <summary>表示日志记录的实体类。</summary>
 public interface ILog
 {
 	/// <summary>获取日志级别。</summary>

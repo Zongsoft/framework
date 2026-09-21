@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Plugins;
 
-/// <summary>
-/// 表示插件树节点的类型。
-/// </summary>
+/// <summary>表示插件树节点的类型。</summary>
 public enum PluginTreeNodeType
 {
 	/// <summary>空节点(路径节点)，即该节点的 <see cref="Zongsoft.Plugins.PluginTreeNode.Value"/> 属性为空。</summary>

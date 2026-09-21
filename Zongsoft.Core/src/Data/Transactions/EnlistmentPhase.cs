@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data.Transactions;
 
-/// <summary>
-/// 表示当前事务处理程序所处的阶段。
-/// </summary>
+/// <summary>表示当前事务处理程序所处的阶段。</summary>
 public enum EnlistmentPhase
 {
 	/// <summary>准备阶段，表示当前事务被启动。</summary>

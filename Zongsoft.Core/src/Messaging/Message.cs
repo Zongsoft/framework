@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Messaging;
 
-/// <summary>
-/// 表示消息的结构。
-/// </summary>
+/// <summary>表示消息的结构。</summary>
 public struct Message
 {
 	#region 静态字段

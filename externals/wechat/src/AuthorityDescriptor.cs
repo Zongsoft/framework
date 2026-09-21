@@ -33,9 +33,7 @@ using Zongsoft.Security;
 
 namespace Zongsoft.Externals.Wechat;
 
-/// <summary>
-/// 表示机构描述符的类。
-/// </summary>
+/// <summary>表示机构描述符的类。</summary>
 public class AuthorityDescriptor : IEquatable<AuthorityDescriptor>
 {
 	#region 构造函数

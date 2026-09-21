@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Services;
 
-/// <summary>
-/// 提供应用初始化功能的接口。
-/// </summary>
+/// <summary>提供应用初始化功能的接口。</summary>
 public interface IApplicationInitializer
 {
 	/// <summary>初始化应用扩展模块，并使其为处理请求做好准备。</summary>

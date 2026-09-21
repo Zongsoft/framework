@@ -37,6 +37,7 @@ namespace Zongsoft.Data;
 
 partial class DataServiceBase<TModel>
 {
+	#region 公共方法
 	public int Upsert(object data, DataUpsertOptions options = null) => this.Upsert(data, string.Empty, options);
 	public int Upsert(object data, string schema, DataUpsertOptions options = null)
 	{
@@ -64,7 +65,9 @@ partial class DataServiceBase<TModel>
 
 		return this.OnUpsert(dictionary, schematic, options);
 	}
+	#endregion
 
+	#region 保护方法
 	protected virtual int OnUpsert(IDataDictionary<TModel> data, ISchema schema, DataUpsertOptions options)
 	{
 		if(data == null || data.Data == null || !data.HasChanges())
@@ -73,7 +76,9 @@ partial class DataServiceBase<TModel>
 		//执行数据引擎的增改操作
 		return this.DataAccess.Upsert(this.Name, data, schema, options, ctx => this.OnUpserting(ctx), ctx => this.OnUpserted(ctx));
 	}
+	#endregion
 
+	#region 公共方法
 	public int UpsertMany(IEnumerable items, DataUpsertOptions options = null) => this.UpsertMany(items, string.Empty, options);
 	public int UpsertMany(IEnumerable items, string schema, DataUpsertOptions options = null)
 	{
@@ -134,7 +139,9 @@ partial class DataServiceBase<TModel>
 
 		return this.OnUpsertMany(dictionaries, schematic, options);
 	}
+	#endregion
 
+	#region 保护方法
 	protected virtual int OnUpsertMany(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataUpsertOptions options)
 	{
 		if(items == null)
@@ -143,7 +150,9 @@ partial class DataServiceBase<TModel>
 		//执行数据引擎的增改操作
 		return this.DataAccess.UpsertMany(this.Name, items, schema, options, ctx => this.OnUpserting(ctx), ctx => this.OnUpserted(ctx));
 	}
+	#endregion
 
+	#region 公共方法
 	public ValueTask<int> UpsertAsync(object data, DataUpsertOptions options = null, CancellationToken cancellation = default) => this.UpsertAsync(data, string.Empty, options, cancellation);
 	public ValueTask<int> UpsertAsync(object data, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default)
 	{
@@ -171,7 +180,9 @@ partial class DataServiceBase<TModel>
 
 		return this.OnUpsertAsync(dictionary, schematic, options, cancellation);
 	}
+	#endregion
 
+	#region 保护方法
 	protected virtual ValueTask<int> OnUpsertAsync(IDataDictionary<TModel> data, ISchema schema, DataUpsertOptions options, CancellationToken cancellation)
 	{
 		if(data == null || data.Data == null || !data.HasChanges())
@@ -180,7 +191,9 @@ partial class DataServiceBase<TModel>
 		//执行数据引擎的增改操作
 		return this.DataAccess.UpsertAsync(this.Name, data, schema, options, ctx => this.OnUpserting(ctx), ctx => this.OnUpserted(ctx), cancellation);
 	}
+	#endregion
 
+	#region 公共方法
 	public ValueTask<int> UpsertManyAsync(IEnumerable items, DataUpsertOptions options = null, CancellationToken cancellation = default) => this.UpsertManyAsync(items, string.Empty, options, cancellation);
 	public ValueTask<int> UpsertManyAsync(IEnumerable items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default)
 	{
@@ -241,7 +254,9 @@ partial class DataServiceBase<TModel>
 
 		return this.OnUpsertManyAsync(dictionaries, schematic, options, cancellation);
 	}
+	#endregion
 
+	#region 保护方法
 	protected virtual ValueTask<int> OnUpsertManyAsync(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataUpsertOptions options, CancellationToken cancellation)
 	{
 		if(items == null)
@@ -250,4 +265,5 @@ partial class DataServiceBase<TModel>
 		//执行数据引擎的增改操作
 		return this.DataAccess.UpsertManyAsync(this.Name, items, schema, options, ctx => this.OnUpserting(ctx), ctx => this.OnUpserted(ctx), cancellation);
 	}
+	#endregion
 }

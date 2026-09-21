@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Security.Configuration;
 
-/// <summary>
-/// 表示密码强度的枚举。
-/// </summary>
+/// <summary>表示密码强度的枚举。</summary>
 public enum PasswordStrength
 {
 	/// <summary>无强度约束。</summary>

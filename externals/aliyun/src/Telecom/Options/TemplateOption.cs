@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Externals.Aliyun.Telecom.Options;
 
-/// <summary>
-/// 表示短信模板的配置项接口。
-/// </summary>
+/// <summary>表示短信模板的配置项接口。</summary>
 public class TemplateOption
 {
 	#region 构造函数

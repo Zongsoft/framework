@@ -31,11 +31,10 @@ using System;
 
 namespace Zongsoft.Data.Metadata;
 
-/// <summary>
-/// 表示数据实体单值属性的元数据类。
-/// </summary>
+/// <summary>表示数据实体单值属性的元数据类。</summary>
 public interface IDataEntitySimplexProperty : IDataEntityProperty
 {
+	#region 公共属性
 	/// <summary>获取或设置数据实体属性的别名（字段名）。</summary>
 	string Alias { get; set; }
 
@@ -65,4 +64,5 @@ public interface IDataEntitySimplexProperty : IDataEntityProperty
 
 	/// <summary>获取或设置数据序号器元数据。</summary>
 	IDataEntityPropertySequence Sequence { get; set; }
+	#endregion
 }

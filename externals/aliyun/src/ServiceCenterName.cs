@@ -32,9 +32,7 @@ using System.ComponentModel;
 
 namespace Zongsoft.Externals.Aliyun;
 
-/// <summary>
-/// 表示服务中心名称的枚举。
-/// </summary>
+/// <summary>表示服务中心名称的枚举。</summary>
 public enum ServiceCenterName
 {
 	/// <summary>北京</summary>

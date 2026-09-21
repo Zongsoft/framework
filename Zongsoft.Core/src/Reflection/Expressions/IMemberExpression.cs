@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Reflection.Expressions;
 
-/// <summary>
-/// 表示表达式元素(节点)的接口。
-/// </summary>
+/// <summary>表示表达式元素(节点)的接口。</summary>
 public interface IMemberExpression
 {
 	/// <summary>获取一个值，指示表达式的种类。</summary>

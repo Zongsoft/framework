@@ -79,13 +79,13 @@ public class ParserContext
 	/// <summary>获取待解析文本所在目标对象的成员类型。</summary>
 	public Type MemberType { get; }
 
-	/// <summary>获取待解析文本所在的构件(<see cref="Builtin"/>)，注意：该属性可能返回空值(null)。</summary>
+	/// <summary>获取待解析文本所在的构件(<see cref="Builtin"/>)，注意：该属性可能返回空值<c>null</c>。</summary>
 	public Builtin Builtin => this.Node.NodeType == PluginTreeNodeType.Builtin ? (Builtin)this.Node.Value : null;
 
 	/// <summary>获取待解析文本所在的插件树节点(<see cref="PluginTreeNode"/>)。</summary>
 	public PluginTreeNode Node { get; }
 
-	/// <summary>获取待解析文本所在构件或插件树节点所隶属的插件对象，注意：该属性可能返回空值(null)。</summary>
+	/// <summary>获取待解析文本所在构件或插件树节点所隶属的插件对象，注意：该属性可能返回空值<c>null</c>。</summary>
 	public Plugin Plugin => this.Node.Plugin;
 
 	public PluginTree PluginTree => this.Node.Tree;

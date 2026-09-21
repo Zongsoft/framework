@@ -45,6 +45,7 @@ internal static class RedisConnectionPool
 {
 	private static readonly ConcurrentDictionary<string, Entry> _entries = new(StringComparer.Ordinal);
 
+	#region 静态方法
 	public static RedisConnectionLease Acquire(ConfigurationOptions options)
 	{
 		ArgumentNullException.ThrowIfNull(options);
@@ -97,7 +98,9 @@ internal static class RedisConnectionPool
 			}
 		}
 	}
+	#endregion
 
+	#region 私有方法
 	private static string GetKey(ConfigurationOptions options)
 	{
 		var text = string.Concat(
@@ -109,6 +112,7 @@ internal static class RedisConnectionPool
 
 		return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
 	}
+	#endregion
 
 	internal sealed class Entry
 	{
@@ -120,6 +124,7 @@ internal static class RedisConnectionPool
 
 		public Entry(string key) => _key = key;
 
+		#region 公共方法
 		public bool TryAcquire()
 		{
 			lock(_sync)
@@ -178,7 +183,9 @@ internal static class RedisConnectionPool
 				}
 			}
 		}
+		#endregion
 
+		#region 私有方法
 		private Task<ConnectionMultiplexer> GetConnectionTask(ConfigurationOptions options, bool asynchronously)
 		{
 			TaskCompletionSource<ConnectionMultiplexer> source = null;
@@ -234,6 +241,7 @@ internal static class RedisConnectionPool
 				connection.ErrorMessage += static (_, _) => RedisDiagnostics.ConnectionErrors.Add(1);
 			}
 		}
+		#endregion
 	}
 }
 
@@ -247,14 +255,20 @@ internal sealed class RedisConnectionLease : IDisposable, IAsyncDisposable
 		this.Connection = connection ?? throw new ArgumentNullException(nameof(connection));
 	}
 
+	#region 公共属性
 	public ConnectionMultiplexer Connection { get; }
+	#endregion
+
+	#region 内部方法
 	internal IConnectionMultiplexer CreateProxy()
 	{
 		var proxy = DispatchProxy.Create<IConnectionMultiplexer, LeaseProxy>();
 		((LeaseProxy)(object)proxy).Initialize(this);
 		return proxy;
 	}
+	#endregion
 
+	#region 资源释放
 	public void Dispose()
 	{
 		var entry = Interlocked.Exchange(ref _entry, null);
@@ -266,13 +280,17 @@ internal sealed class RedisConnectionLease : IDisposable, IAsyncDisposable
 		var entry = Interlocked.Exchange(ref _entry, null);
 		return entry?.Release() ?? ValueTask.CompletedTask;
 	}
+	#endregion
 
 	private class LeaseProxy : DispatchProxy
 	{
 		private RedisConnectionLease _lease;
 
+		#region 内部方法
 		internal void Initialize(RedisConnectionLease lease) => _lease = lease;
+		#endregion
 
+		#region 重写方法
 		protected override object Invoke(MethodInfo targetMethod, object[] args)
 		{
 			if((targetMethod.Name == nameof(IDisposable.Dispose) && targetMethod.GetParameters().Length == 0) ||
@@ -306,6 +324,7 @@ internal sealed class RedisConnectionLease : IDisposable, IAsyncDisposable
 				throw;
 			}
 		}
+		#endregion
 	}
 
 	private class DatabaseProxy : DispatchProxy
@@ -313,6 +332,7 @@ internal sealed class RedisConnectionLease : IDisposable, IAsyncDisposable
 		private IDatabase _database;
 		private IConnectionMultiplexer _connection;
 
+		#region 内部方法
 		internal static IDatabase Create(IDatabase database, IConnectionMultiplexer connection)
 		{
 			var proxy = DispatchProxy.Create<IDatabase, DatabaseProxy>();
@@ -321,7 +341,9 @@ internal sealed class RedisConnectionLease : IDisposable, IAsyncDisposable
 			target._connection = connection;
 			return proxy;
 		}
+		#endregion
 
+		#region 重写方法
 		protected override object Invoke(MethodInfo targetMethod, object[] args)
 		{
 			if(targetMethod.Name == "get_Multiplexer")
@@ -337,5 +359,6 @@ internal sealed class RedisConnectionLease : IDisposable, IAsyncDisposable
 				throw;
 			}
 		}
+		#endregion
 	}
 }

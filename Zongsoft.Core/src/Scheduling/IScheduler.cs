@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Scheduling;
 
-/// <summary>
-/// 表示作业任务调度器的接口。
-/// </summary>
+/// <summary>表示作业任务调度器的接口。</summary>
 public interface IScheduler
 {
 	/// <summary>调度作业任务。</summary>
@@ -67,9 +65,7 @@ public interface IScheduler
 	ValueTask<bool> UnscheduleAsync(string identifier, CancellationToken cancellation = default);
 }
 
-/// <summary>
-/// 表示作业任务调度器的接口。
-/// </summary>
+/// <summary>表示作业任务调度器的接口。</summary>
 public interface IScheduler<in TOptions> : IScheduler where TOptions : class, ITriggerOptions
 {
 	/// <summary>调度作业任务。</summary>

@@ -37,9 +37,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration.Profiles;
 
-/// <summary>
-/// 提供了对INI文件格式的各项操作。
-/// </summary>
+/// <summary>提供了对INI文件格式的各项操作。</summary>
 /// <remarks>
 ///		<para>INI文件就是简单的文本文件，只不过这种文本文件要遵循一定的INI文件格式，其扩展名通常为“.ini”、“.cfg”、“.conf”等。</para>
 ///		<para>INI文件中的每一行文本为一个元素单位，其类型分别为 Section(节)、Entry/Parameter(条目/参数)、Comment(注释)。</para>
@@ -131,9 +129,7 @@ public partial class Profile : IEnumerable<ProfileItem>
 	/// <summary>获取指定路径的配置数据。</summary>
 	/// <param name="path">指定的配置项路径，路径是以“<c>/</c>”斜杠分隔的文本。</param>
 	/// <returns>如果找到则返回配置结果，否则返回空(<c>null</c>)。</returns>
-	/// <remarks>
-	///		<para>如果<paramref name="path"/>参数指定的配置路径以“<c>/</c>”斜杠结尾则将返回指定配置段的所有条目集；否则返回指定的配置条目的值。</para>
-	/// </remarks>
+	/// <remarks>如果<paramref name="path"/>参数指定的配置路径以“<c>/</c>”斜杠结尾则将返回指定配置段的所有条目集；否则返回指定的配置条目的值。</remarks>
 	public object GetOptionValue(string path)
 	{
 		if(!this.ParsePath(path, false, out var section, out var name, out var isSectionPath))

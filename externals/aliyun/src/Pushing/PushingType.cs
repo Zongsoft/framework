@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Externals.Aliyun.Pushing;
 
-/// <summary>
-/// 关于移动消息推送类型的枚举。
-/// </summary>
+/// <summary>关于移动消息推送类型的枚举。</summary>
 public enum PushingType
 {
 	/// <summary>消息</summary>

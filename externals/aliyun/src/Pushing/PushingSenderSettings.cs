@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Externals.Aliyun.Pushing;
 
-/// <summary>
-/// 表示移动推送的设置选项类。
-/// </summary>
+/// <summary>表示移动推送的设置选项类。</summary>
 public class PushingSenderSettings
 {
 	#region 成员字段
@@ -62,9 +60,7 @@ public class PushingSenderSettings
 	#endregion
 
 	#region 公共属性
-	/// <summary>
-	/// 获取或设置移动推送消息或通知的过期时间，即当指定的目标不在线的情况下保存的有效期（单位：分钟）。
-	/// </summary>
+	/// <summary>获取或设置移动推送消息或通知的过期时间，即当指定的目标不在线的情况下保存的有效期（单位：分钟）。</summary>
 	public int Expiry
 	{
 		get
@@ -77,9 +73,7 @@ public class PushingSenderSettings
 		}
 	}
 
-	/// <summary>
-	/// 获取或设置移动推送的类型（消息或通知），默认值为消息(Message)。
-	/// </summary>
+	/// <summary>获取或设置移动推送的类型（消息或通知），默认值为消息(Message)。</summary>
 	public PushingType Type
 	{
 		get
@@ -92,9 +86,7 @@ public class PushingSenderSettings
 		}
 	}
 
-	/// <summary>
-	/// 获取或设置移动推送的设备类型，默认值为所有(All)。
-	/// </summary>
+	/// <summary>获取或设置移动推送的设备类型，默认值为所有(All)。</summary>
 	public PushingDeviceType DeviceType
 	{
 		get
@@ -107,9 +99,7 @@ public class PushingSenderSettings
 		}
 	}
 
-	/// <summary>
-	/// 获取或设置移动推送的目标（即推送方式）。
-	/// </summary>
+	/// <summary>获取或设置移动推送的目标（即推送方式）。</summary>
 	public PushingTargetType TargetType
 	{
 		get

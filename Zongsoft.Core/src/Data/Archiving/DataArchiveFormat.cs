@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data.Archiving;
 
-/// <summary>
-/// 表示数据文件格式的类。
-/// </summary>
+/// <summary>表示数据文件格式的类。</summary>
 public sealed class DataArchiveFormat : IEquatable<DataArchiveFormat>, IEquatable<string>
 {
 	#region 构造函数

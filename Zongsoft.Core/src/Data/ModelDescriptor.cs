@@ -36,9 +36,7 @@ using Zongsoft.Reflection;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据模型元信息的类。
-/// </summary>
+/// <summary>表示数据模型元信息的类。</summary>
 public partial class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
 {
 	#region 事件定义

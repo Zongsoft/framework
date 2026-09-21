@@ -33,6 +33,7 @@ namespace Zongsoft.Components.Features;
 
 public static class ThrottleFeatureExtension
 {
+	#region 静态方法
 	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, IHandler<ThrottleArgument, bool> rejected = null) => Throttle(builder, permitLimit, 0, ThrottleQueueOrder.Oldest, null, rejected);
 	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, ThrottleQueueOrder queueOrder, IHandler<ThrottleArgument, bool> rejected = null) => Throttle(builder, permitLimit, 0, queueOrder, null, rejected);
 	public static IFeatureBuilder Throttle(this IFeatureBuilder builder, int permitLimit, int queueLimit, IHandler<ThrottleArgument, bool> rejected = null) => Throttle(builder, permitLimit, queueLimit, ThrottleQueueOrder.Oldest, null, rejected);
@@ -98,4 +99,5 @@ public static class ThrottleFeatureExtension
 
 		return new FeatureBuilder([.. builder.Build(), new ThrottleFeature<T, TResult>(permitLimit, queueLimit, queueOrder, limiter, rejected)]);
 	}
+	#endregion
 }

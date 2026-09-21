@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示聚合元素的结构。
-/// </summary>
+/// <summary>表示聚合元素的结构。</summary>
 public readonly struct DataAggregate
 {
 	#region 构造函数

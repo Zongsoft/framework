@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Common;
 
-/// <summary>
-/// 表示提供有效性验证功能的接口。
-/// </summary>
+/// <summary>表示提供有效性验证功能的接口。</summary>
 /// <typeparam name="T">指定的验证数据类型。</typeparam>
 public interface IValidator<in T>
 {

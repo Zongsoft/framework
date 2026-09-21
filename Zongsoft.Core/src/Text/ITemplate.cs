@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Text;
 
-/// <summary>
-/// 表示模板的接口。
-/// </summary>
+/// <summary>表示模板的接口。</summary>
 public interface ITemplate
 {
 	/// <summary>获取模板名称。</summary>

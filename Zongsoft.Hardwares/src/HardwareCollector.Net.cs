@@ -36,6 +36,7 @@ namespace Zongsoft.Hardwares;
 
 partial class HardwareCollector
 {
+	#region 内部方法
 	internal static IEnumerable<IO.Hardwares.IHardware> GetNetworks()
 	{
 		NetworkInterface[] adapters;
@@ -90,7 +91,9 @@ partial class HardwareCollector
 				components: components);
 		}
 	}
+	#endregion
 
+	#region 私有方法
 	private static IEnumerable<IO.Hardwares.HardwareComponent> GetNetworkComponents(NetworkInterface adapter)
 	{
 		var properties = GetIPProperties(adapter);
@@ -338,6 +341,7 @@ partial class HardwareCollector
 			return null;
 		}
 	}
+	#endregion
 
 	private static class PropertyNames
 	{

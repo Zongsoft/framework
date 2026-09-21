@@ -40,6 +40,7 @@ namespace Zongsoft.Externals.Etcd;
 
 partial class EtcdService : ISequence
 {
+	#region 公共方法
 	public long Decrease(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null) => this.Increase(key, -interval, seed, expiry);
 	public double Decrease(string key, double interval, double seed = 0, TimeSpan? expiry = null) => this.Increase(key, -interval, seed, expiry);
 	public ValueTask<long> DecreaseAsync(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default) => this.IncreaseAsync(key, -interval, seed, expiry, cancellation);
@@ -63,7 +64,9 @@ partial class EtcdService : ISequence
 		this.ResetAsync(key, value.ToString(CultureInfo.InvariantCulture), expiry, cancellation);
 	public ValueTask ResetAsync(string key, double value, TimeSpan? expiry = null, CancellationToken cancellation = default) =>
 		this.ResetAsync(key, value.ToString("R", CultureInfo.InvariantCulture), expiry, cancellation);
+	#endregion
 
+	#region 私有方法
 	private async ValueTask<T> ChangeAsync<T>(string key, T interval, T seed, TimeSpan? expiry, Func<string, T> parser, Func<T, string> formatter, CancellationToken cancellation) where T : System.Numerics.INumber<T>
 	{
 		if(string.IsNullOrEmpty(key))
@@ -144,4 +147,5 @@ partial class EtcdService : ISequence
 
 		await this.SetValueAsync(key, value, expiry, cancellation);
 	}
+	#endregion
 }

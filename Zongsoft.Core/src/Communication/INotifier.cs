@@ -32,9 +32,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Communication;
 
-/// <summary>
-/// 表示通知激发器的接口。
-/// </summary>
+/// <summary>表示通知激发器的接口。</summary>
 public interface INotifier
 {
 	/// <summary>激发一个通知给指定的接受者。</summary>

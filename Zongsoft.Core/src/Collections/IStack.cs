@@ -34,6 +34,7 @@ namespace Zongsoft.Collections;
 
 public interface IStack<T> : IReadOnlyCollection<T>, IEnumerable<T>
 {
+	#region 公共方法
 	T Pop();
 	T Peek();
 	T Take(int index);
@@ -45,4 +46,5 @@ public interface IStack<T> : IReadOnlyCollection<T>, IEnumerable<T>
 	bool TryPeek(out T value);
 	bool TryTake(int index, out T value);
 	bool TryTake(int index, int count, out T[] values);
+	#endregion
 }

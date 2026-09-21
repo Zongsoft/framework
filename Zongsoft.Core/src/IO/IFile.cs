@@ -35,11 +35,10 @@ using System.Collections.Generic;
 
 namespace Zongsoft.IO;
 
-/// <summary>
-/// 提供用于创建、复制、删除、移动和打开文件等功能的抽象接口，该接口将提供不同文件系统的文件支持。
-/// </summary>
+/// <summary>提供用于创建、复制、删除、移动和打开文件等功能的抽象接口，该接口将提供不同文件系统的文件支持。</summary>
 public interface IFile
 {
+	#region 公共方法
 	/// <summary>获取指定文件路径对应的<see cref="FileInfo"/>描述信息。</summary>
 	/// <param name="path">指定的文件路径。</param>
 	/// <returns>如果指定的路径是存在的则返回对应的<see cref="FileInfo"/>，否则返回空(<c>null</c>)。</returns>
@@ -72,4 +71,5 @@ public interface IFile
 	ValueTask<Stream> OpenAsync(string path, FileMode mode, FileAccess access, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default) => this.OpenAsync(path, mode, access, FileShare.None, properties, cancellation);
 	ValueTask<Stream> OpenAsync(string path, FileMode mode, FileAccess access, FileShare share, CancellationToken cancellation = default) => this.OpenAsync(path, mode, access, share, null, cancellation);
 	ValueTask<Stream> OpenAsync(string path, FileMode mode, FileAccess access, FileShare share, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default);
+	#endregion
 }

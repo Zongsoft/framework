@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Externals.Aliyun.Storages;
 
-/// <summary>
-/// 表示存储服务中心的类。
-/// </summary>
+/// <summary>表示存储服务中心的类。</summary>
 public class StorageServiceCenter : ServiceCenterBase
 {
 	#region 常量定义

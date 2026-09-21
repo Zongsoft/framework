@@ -2,9 +2,7 @@
 
 namespace Zongsoft.Data.Tests.Models;
 
-/// <summary>
-/// 表示人员规模的枚举。
-/// </summary>
+/// <summary>表示人员规模的枚举。</summary>
 public enum StaffScale : byte
 {
 	/// <summary>未定义</summary>

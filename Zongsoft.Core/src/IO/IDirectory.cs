@@ -34,11 +34,10 @@ using System.Collections.Generic;
 
 namespace Zongsoft.IO;
 
-/// <summary>
-/// 公开用于创建、移动和遍历目录和子目录等功能的抽象接口，该接口将提供不同文件系统的目录支持。
-/// </summary>
+/// <summary>公开用于创建、移动和遍历目录和子目录等功能的抽象接口，该接口将提供不同文件系统的目录支持。</summary>
 public interface IDirectory
 {
+	#region 公共方法
 	/// <summary>获取指定目录路径对应的<see cref="DirectoryInfo"/>描述信息。</summary>
 	/// <param name="path">指定的目录路径。</param>
 	/// <returns>如果指定的路径是存在的则返回对应的<see cref="DirectoryInfo"/>，否则返回空(<c>null</c>)。</returns>
@@ -120,4 +119,5 @@ public interface IDirectory
 	IAsyncEnumerable<FileInfo> GetFilesAsync(string path, CancellationToken cancellation = default) => this.GetFilesAsync(path, null, false, cancellation);
 	IAsyncEnumerable<FileInfo> GetFilesAsync(string path, string pattern, CancellationToken cancellation = default) => this.GetFilesAsync(path, pattern, false, cancellation);
 	IAsyncEnumerable<FileInfo> GetFilesAsync(string path, string pattern, bool recursive, CancellationToken cancellation = default);
+	#endregion
 }

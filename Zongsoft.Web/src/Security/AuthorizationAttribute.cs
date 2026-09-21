@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Web.Security;
 
-/// <summary>
-/// 表示需要授权控制的特性，适用于类或方法。
-/// </summary>
+/// <summary>表示需要授权控制的特性，适用于类或方法。</summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, Inherited = true)]
 public class AuthorizationAttribute : Attribute
 {

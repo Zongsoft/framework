@@ -2,9 +2,7 @@
 
 namespace Zongsoft.Data.Tests.Models;
 
-/// <summary>
-/// 表示身份证件种类的枚举。
-/// </summary>
+/// <summary>表示身份证件种类的枚举。</summary>
 public enum IdentityKind : byte
 {
 	/// <summary>其他</summary>

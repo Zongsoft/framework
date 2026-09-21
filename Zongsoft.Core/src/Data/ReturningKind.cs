@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示写操作的返回数据列种类的枚举。
-/// </summary>
+/// <summary>表示写操作的返回数据列种类的枚举。</summary>
 public enum ReturningKind
 {
 	/// <summary>新值</summary>

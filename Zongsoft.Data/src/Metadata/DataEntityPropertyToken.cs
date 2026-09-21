@@ -35,16 +35,14 @@ using System.ComponentModel;
 
 namespace Zongsoft.Data.Metadata;
 
-/// <summary>
-/// 表示实体属性及成员信息的标记类。
-/// </summary>
+/// <summary>表示实体属性及成员信息的标记类。</summary>
 public readonly struct DataEntityPropertyToken
 {
 	#region 公共字段
 	/// <summary>获取属性的元数据。</summary>
 	public readonly IDataEntityProperty Property;
 
-	/// <summary>获取属性的绑定到目标类型的成员信息，如果该字段为空(null)则表示绑定的目标类型为字典。</summary>
+	/// <summary>获取属性的绑定到目标类型的成员信息，如果该字段为空<c>null</c>则表示绑定的目标类型为字典。</summary>
 	public readonly MemberInfo Member;
 
 	/// <summary>获取目标成员的类型转换器。</summary>

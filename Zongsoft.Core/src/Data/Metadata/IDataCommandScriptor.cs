@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Metadata;
 
-/// <summary>
-/// 提供数据命令内容管理的接口。
-/// </summary>
+/// <summary>提供数据命令内容管理的接口。</summary>
 public interface IDataCommandScriptor
 {
 	IReadOnlySet<string> Drivers { get; }
@@ -47,5 +45,6 @@ public interface IDataCommandScriptor
 	/// <summary>设置指定驱动的命令脚本内容。</summary>
 	/// <param name="driver">指定要设置的脚本对应的驱动标识名。</param>
 	/// <param name="text">要设置的脚本内容文本。</param>
+	/// <returns>设置成功则返回真；驱动标识为空时返回假。</returns>
 	bool SetScript(string driver, string text);
 }

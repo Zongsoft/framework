@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Externals.Wechat.Options;
 
-/// <summary>
-/// 表示微信开放平台的第三方应用设置选项类。
-/// </summary>
+/// <summary>表示微信开放平台的第三方应用设置选项类。</summary>
 public class AppOptions
 {
 	#region 公共属性

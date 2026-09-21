@@ -124,6 +124,8 @@ public partial class Parameters : IDictionary<object, object>
 	public T GetValue<T>(T defaultValue = default) => (T)(this.GetValue((object)typeof(T)) ?? defaultValue);
 
 	/// <summary>获取指定类型的参数，如果不存在则原子地创建并加入该参数。</summary>
+	/// <param name="valueFactory">参数不存在时创建参数值的工厂；并发调用时可能执行多次。</param>
+	/// <returns>返回已有参数值或成功加入的参数值。</returns>
 	public T GetOrAdd<T>(Func<T> valueFactory)
 	{
 		ArgumentNullException.ThrowIfNull(valueFactory);
@@ -131,6 +133,9 @@ public partial class Parameters : IDictionary<object, object>
 	}
 
 	/// <summary>获取指定名称的参数，如果不存在则原子地创建并加入该参数。</summary>
+	/// <param name="name">参数名称；空引用按空字符串处理。</param>
+	/// <param name="valueFactory">接收参数名称并创建参数值的工厂；并发调用时可能执行多次。</param>
+	/// <returns>返回已有参数值或成功加入的参数值。</returns>
 	public TValue GetOrAdd<TValue>(string name, Func<string, TValue> valueFactory)
 	{
 		ArgumentNullException.ThrowIfNull(valueFactory);

@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据序列字段行为的枚举。
-/// </summary>
+/// <summary>表示数据序列字段行为的枚举。</summary>
 public enum DataSequenceBehavior
 {
 	/// <summary>自动，表示序列字段值为空或等于零则由序列器生成，否则为字段指定值。</summary>

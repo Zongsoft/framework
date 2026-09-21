@@ -265,6 +265,10 @@ partial class DocumentGenerator
 	}
 
 	/// <summary>从运行时路由表中反查约定式路由接口的路径模板。</summary>
+	/// <param name="context">包含运行时路由表的文档生成上下文。</param>
+	/// <param name="operation">要查找路由的控制器操作。</param>
+	/// <param name="method">用于筛选路由端点的 HTTP 方法。</param>
+	/// <returns>返回匹配操作及 HTTP 方法、且已替换控制器路由值的路径模板列表。</returns>
 	private static List<RoutePattern> GetConventionalPatterns(DocumentContext context, ControllerServiceDescriptor.ControllerOperationDescriptor operation, HttpMethod method)
 	{
 		if(context.Routing == null)

@@ -33,9 +33,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.IO.Hardwares;
 
-/// <summary>
-/// 表示硬件信息采集器。
-/// </summary>
+/// <summary>表示硬件信息采集器。</summary>
 public interface IHardwareCollector
 {
 	/// <summary>采集硬件信息。</summary>

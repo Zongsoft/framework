@@ -98,13 +98,18 @@ partial class OpcNodeType
 		public readonly NodeId Id = id;
 		public readonly int Rank = rank;
 
+		#region 公共方法
 		public bool Equals(Key other) => this.Id == other.Id && this.Rank == other.Rank;
+		#endregion
+		#region 重写方法
 		public override bool Equals(object obj) => obj is Key other && this.Equals(other);
 		public override int GetHashCode() => HashCode.Combine(this.Id, this.Rank);
 		public override string ToString() => this.Rank == 0 ? this.Id.ToString() : $"{this.Id}[{this.Rank}]";
+		#endregion
 	}
 
 	private static readonly Dictionary<Key, OpcNodeType> _cache = [];
+	#region 内部方法
 	internal static OpcNodeType Get(ExpandedNodeId id, int rank = 0) => Get((NodeId)id, rank);
 	internal static OpcNodeType Get(NodeId id, int rank = 0)
 	{
@@ -124,4 +129,5 @@ partial class OpcNodeType
 			return _cache[key] = result = new(id, Utility.GetDataType(id, rank));
 		}
 	}
+	#endregion
 }

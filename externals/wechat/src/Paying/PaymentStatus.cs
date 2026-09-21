@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Externals.Wechat.Paying;
 
-/// <summary>
-/// 表示支付状态的枚举。
-/// </summary>
+/// <summary>表示支付状态的枚举。</summary>
 public enum PaymentStatus
 {
 	/// <summary>未支付</summary>

@@ -34,9 +34,7 @@ using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.Common.Expressions;
 
-/// <summary>
-/// 表示带条件子句的语句基类。
-/// </summary>
+/// <summary>表示带条件子句的语句基类。</summary>
 public class Statement : StatementBase, IStatement
 {
 	#region 构造函数

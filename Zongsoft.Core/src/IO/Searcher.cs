@@ -48,6 +48,7 @@ public static class Searcher
 	/// <param name="pattern">支持 *、? 和独立段 ** 的相对路径模式。</param>
 	/// <param name="target">要返回的结果类型，默认为文件和目录。</param>
 	/// <param name="cancellation">取消搜索的通知令牌。</param>
+	/// <returns>返回延迟枚举的匹配结果序列，每项包含逻辑路径和实际文件系统目标。</returns>
 	public static IEnumerable<Match> Search(this System.IO.DirectoryInfo directory, string pattern, Target target = Target.Both, CancellationToken cancellation = default)
 	{
 		ArgumentNullException.ThrowIfNull(directory);
@@ -298,9 +299,12 @@ public static class Searcher
 		public IReadOnlyList<string> Captures { get; }
 
 		/// <summary>返回匹配的文件或目录的路径，如果匹配失败返回空字符串。</summary>
+		/// <returns>返回匹配目标的完整路径；没有匹配目标时返回空字符串。</returns>
 		public override string ToString() => this.Result == null ? string.Empty : this.Result.FullName;
 
 		/// <summary>判断匹配目标是否为文件，不执行文件系统访问。</summary>
+		/// <param name="file">匹配的文件对象；目标不是文件时为空。</param>
+		/// <returns>目标是文件时返回真，否则返回假。</returns>
 		public bool IsFile(out System.IO.FileInfo file)
 		{
 			file = this.Result as System.IO.FileInfo;
@@ -308,6 +312,8 @@ public static class Searcher
 		}
 
 		/// <summary>判断匹配目标是否为目录，不执行文件系统访问。</summary>
+		/// <param name="directory">匹配的目录对象；目标不是目录时为空。</param>
+		/// <returns>目标是目录时返回真，否则返回假。</returns>
 		public bool IsDirectory(out System.IO.DirectoryInfo directory)
 		{
 			directory = this.Result as System.IO.DirectoryInfo;

@@ -53,6 +53,7 @@ public partial class DirectoryInfo : PathInfo
 
 partial class DirectoryInfo
 {
+	#region 公共方法
 	public bool Delete() => FileSystem.Directory.Delete(this.Url);
 	public ValueTask<bool> DeleteAsync(CancellationToken cancellation = default) => FileSystem.Directory.DeleteAsync(this.Url, cancellation);
 
@@ -82,4 +83,5 @@ partial class DirectoryInfo
 	public IAsyncEnumerable<FileInfo> GetFilesAsync(CancellationToken cancellation = default) => FileSystem.Directory.GetFilesAsync(this.Url, cancellation);
 	public IAsyncEnumerable<FileInfo> GetFilesAsync(string pattern, CancellationToken cancellation = default) => FileSystem.Directory.GetFilesAsync(this.Url, pattern, cancellation);
 	public IAsyncEnumerable<FileInfo> GetFilesAsync(string pattern, bool recursive, CancellationToken cancellation = default) => FileSystem.Directory.GetFilesAsync(this.Url, pattern, recursive, cancellation);
+	#endregion
 }

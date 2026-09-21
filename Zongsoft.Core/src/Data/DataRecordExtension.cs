@@ -33,9 +33,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 关于数据记录接口的扩展方法类。
-/// </summary>
+/// <summary>关于数据记录接口的扩展方法类。</summary>
 public static class DataRecordExtension
 {
 	#region 静态构造

@@ -35,6 +35,7 @@ namespace Zongsoft.Data;
 
 partial class DataServiceBase<TModel>
 {
+	#region 公共方法
 	public int Delete(string key, DataDeleteOptions options = null) => this.Delete(key, null, options);
 	public int Delete(string key, string schema, DataDeleteOptions options = null) => this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key, options, out _), schema, options);
 
@@ -107,7 +108,9 @@ partial class DataServiceBase<TModel>
 	public int Delete(Data.Condition criteria, string schema, DataDeleteOptions options = null) => this.Delete((ICondition)criteria, schema, options);
 	public int Delete(ConditionCollection criteria, DataDeleteOptions options = null) => this.Delete((ICondition)criteria, options);
 	public int Delete(ConditionCollection criteria, string schema, DataDeleteOptions options = null) => this.Delete((ICondition)criteria, schema, options);
+	#endregion
 
+	#region 保护方法
 	protected virtual int OnDelete(ICondition criteria, ISchema schema, DataDeleteOptions options)
 	{
 		if(criteria == null)
@@ -115,7 +118,9 @@ partial class DataServiceBase<TModel>
 
 		return this.DataAccess.Delete(this.Name, criteria, schema, options, ctx => this.OnDeleting(ctx), ctx => this.OnDeleted(ctx));
 	}
+	#endregion
 
+	#region 公共方法
 	public ValueTask<int> DeleteAsync(string key, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync(key, null, options, cancellation);
 	public ValueTask<int> DeleteAsync(string key, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key, options, out _), schema, options, cancellation);
 
@@ -188,7 +193,9 @@ partial class DataServiceBase<TModel>
 	public ValueTask<int> DeleteAsync(Data.Condition criteria, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync((ICondition)criteria, schema, options, cancellation);
 	public ValueTask<int> DeleteAsync(ConditionCollection criteria, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync((ICondition)criteria, options, cancellation);
 	public ValueTask<int> DeleteAsync(ConditionCollection criteria, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync((ICondition)criteria, schema, options, cancellation);
+	#endregion
 
+	#region 保护方法
 	protected virtual ValueTask<int> OnDeleteAsync(ICondition criteria, ISchema schema, DataDeleteOptions options, CancellationToken cancellation)
 	{
 		if(criteria == null)
@@ -196,4 +203,5 @@ partial class DataServiceBase<TModel>
 
 		return this.DataAccess.DeleteAsync(this.Name, criteria, schema, options, ctx => this.OnDeleting(ctx), ctx => this.OnDeleted(ctx), cancellation);
 	}
+	#endregion
 }

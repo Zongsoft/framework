@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data.Metadata;
 
-/// <summary>
-/// 表示关联约束主体的枚举。
-/// </summary>
+/// <summary>表示关联约束主体的枚举。</summary>
 public enum DataAssociationConstraintActor
 {
 	/// <summary>本键</summary>

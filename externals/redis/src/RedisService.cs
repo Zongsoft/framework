@@ -594,6 +594,7 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 
 	/// <summary>创建使用指定数据库的不可变作用域视图。</summary>
 	/// <param name="databaseId">要使用的数据库编号。</param>
+	/// <returns>返回使用指定数据库、保留当前键命名空间的新服务视图。</returns>
 	public RedisService WithDatabase(int databaseId)
 	{
 		if(databaseId < 0)
@@ -609,6 +610,7 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 
 	/// <summary>创建使用指定键命名空间的不可变作用域视图。</summary>
 	/// <param name="namespace">要使用的键命名空间。</param>
+	/// <returns>返回使用指定键命名空间、保留当前数据库编号的新服务视图。</returns>
 	public RedisService WithNamespace(string @namespace)
 	{
 		return new RedisService(_name, _settings)

@@ -46,6 +46,7 @@ public static class TcpServer
 	private class HeadlessServer : TcpServer<IMemoryOwner<byte>>, ISender
 	{
 		public HeadlessServer() : base(HeadlessPacketizer.Instance) => this.Address = new IPEndPoint(IPAddress.Loopback, 7969);
+		#region 公共方法
 		public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray()).AsTask().GetAwaiter().GetResult();
 		public ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
 		{
@@ -59,11 +60,13 @@ public static class TcpServer
 
 			return new ValueTask(task.AsTask());
 		}
+		#endregion
 	}
 
 	private class HeadedServer : TcpServer<ReadOnlySequence<byte>>, ISender
 	{
 		public HeadedServer() : base(HeadedPacketizer.Instance) => this.Address = new IPEndPoint(IPAddress.Loopback, 7969);
+		#region 公共方法
 		public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray()).AsTask().GetAwaiter().GetResult();
 		public ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
 		{
@@ -77,15 +80,20 @@ public static class TcpServer
 
 			return new ValueTask(task.AsTask());
 		}
+		#endregion
 
+		#region 重写方法
 		internal protected override TcpServerChannel<ReadOnlySequence<byte>> CreateChannel(IDuplexPipe transport, IPEndPoint address) => new SizedChannel(this.Channels, transport, address);
+		#endregion
 
 		private class SizedChannel(TcpServerChannelManager<ReadOnlySequence<byte>> manager, IDuplexPipe transport, IPEndPoint address) : TcpServerChannel<ReadOnlySequence<byte>>(manager, transport, address)
 		{
+			#region 重写方法
 			protected override ValueTask<FlushResult> OnSendAsync(PipeWriter writer, ReadOnlyMemory<byte> data, CancellationToken cancellation)
 			{
 				return HeadedPacketizer.Instance.PackAsync(writer, new ReadOnlySequence<byte>(data), cancellation);
 			}
+			#endregion
 		}
 	}
 }

@@ -124,6 +124,7 @@ public readonly struct Mixture<T> : IEquatable<Mixture<T>> where T : struct, IEq
 
 public static class MixtureUtility
 {
+	#region 静态方法
 	public static Condition ToCondition<T>(this Mixture<T> mixture, string name) where T : struct, IEquatable<T>, IComparable<T>
 	{
 		if(string.IsNullOrEmpty(name))
@@ -137,9 +138,12 @@ public static class MixtureUtility
 
 		return null;
 	}
+	#endregion
 }
 
 public class MixtureConverter<T> : IConditionConverter where T : struct, IEquatable<T>, IComparable<T>
 {
+	#region 公共方法
 	public ICondition Convert(ConditionConverterContext context) => context.Value is Mixture<T> mixture ? mixture.ToCondition(context.GetFullName()) : null;
+	#endregion
 }

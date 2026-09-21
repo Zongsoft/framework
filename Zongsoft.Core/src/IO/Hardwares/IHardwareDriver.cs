@@ -29,9 +29,7 @@
 
 namespace Zongsoft.IO.Hardwares;
 
-/// <summary>
-/// 表示硬件驱动程序。
-/// </summary>
+/// <summary>表示硬件驱动程序。</summary>
 public interface IHardwareDriver
 {
 	/// <summary>获取驱动程序名称。</summary>

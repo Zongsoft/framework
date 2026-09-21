@@ -32,9 +32,7 @@ using System.Buffers;
 
 namespace Zongsoft.Communication;
 
-/// <summary>
-/// 提供通讯协议包有关打包与拆包功能的接口。
-/// </summary>
+/// <summary>提供通讯协议包有关打包与拆包功能的接口。</summary>
 /// <typeparam name="TPackage">通讯协议包的类型。</typeparam>
 public interface IPacketizer<TPackage>
 {
@@ -50,9 +48,7 @@ public interface IPacketizer<TPackage>
 	bool Unpack(ref ReadOnlySequence<byte> data, out TPackage package);
 }
 
-/// <summary>
-/// 提供请求/应答模式通讯协议包有关打包与拆包功能的接口。
-/// </summary>
+/// <summary>提供请求/应答模式通讯协议包有关打包与拆包功能的接口。</summary>
 /// <typeparam name="TRequest">请求包的类型。</typeparam>
 /// <typeparam name="TResponse">响应包的类型。</typeparam>
 public interface IPacketizer<in TRequest, TResponse>

@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Expressions;
 
-/// <summary>
-/// 表示词素的类型。
-/// </summary>
+/// <summary>表示词素的类型。</summary>
 public enum TokenType
 {
 	/// <summary>常量（包括：字符串、数值、布尔值、空值(<c>null</c>)等）</summary>

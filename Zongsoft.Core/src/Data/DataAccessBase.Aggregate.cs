@@ -35,6 +35,7 @@ namespace Zongsoft.Data;
 
 partial class DataAccessBase
 {
+	#region 公共方法
 	public TValue? Aggregate<T, TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(this.GetName<T>(), new DataAggregate(function, member), criteria, options, null, null);
 	public TValue? Aggregate<T, TValue>(DataAggregateFunction function, string member, string alias, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(this.GetName<T>(), new DataAggregate(function, member, alias), criteria, options, null, null);
 	public TValue? Aggregate<T, TValue>(DataAggregateFunction function, string member, bool distinct, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(this.GetName<T>(), new DataAggregate(function, member, distinct), criteria, options, null, null);
@@ -142,7 +143,10 @@ partial class DataAccessBase
 		//返回最终的结果
 		return value;
 	}
+	#endregion
 
+	#region 保护方法
 	protected abstract void OnAggregate(DataAggregateContextBase context);
 	protected abstract ValueTask OnAggregateAsync(DataAggregateContextBase context, CancellationToken cancellation);
+	#endregion
 }

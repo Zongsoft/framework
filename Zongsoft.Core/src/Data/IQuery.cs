@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示查询定义的接口。
-/// </summary>
+/// <summary>表示查询定义的接口。</summary>
 public interface IQuery
 {
 	/// <summary>获取数据查询的名称。</summary>

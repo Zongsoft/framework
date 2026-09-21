@@ -32,16 +32,12 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据删除操作选项的接口。
-/// </summary>
+/// <summary>表示数据删除操作选项的接口。</summary>
 public interface IDataDeleteOptions : IDataMutateOptions
 {
 }
 
-/// <summary>
-/// 表示数据删除操作选项的类。
-/// </summary>
+/// <summary>表示数据删除操作选项的类。</summary>
 public class DataDeleteOptions : DataMutateOptions, IDataDeleteOptions
 {
 	#region 构造函数

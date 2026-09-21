@@ -35,9 +35,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Archiving;
 
-/// <summary>
-/// 提供数据文件提取功能的接口。
-/// </summary>
+/// <summary>提供数据文件提取功能的接口。</summary>
 public interface IDataArchiveExtractor
 {
 	/// <summary>获取提取器名称。</summary>

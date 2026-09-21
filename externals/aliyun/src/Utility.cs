@@ -40,6 +40,7 @@ public static class Utility
 	private static readonly DateTime EPOCH = new(1970, 1, 1);
 	#endregion
 
+	#region 静态方法
 	/// <summary>将本地时间转换成GMT格式的时间文本。</summary>
 	/// <param name="datetime">本地时间。</param>
 	/// <returns>返回被转换后的GMT格式的时间文本。</returns>
@@ -129,12 +130,16 @@ public static class Utility
 	{
 		return Task.Run(() => ExecuteTaskDelegate(() => thunk())).Result;
 	}
+	#endregion
 
+	#region 私有方法
 	private static async Task<T> ExecuteTaskDelegate<T>(Func<Task<T>> thunk)
 	{
 		return await thunk();
 	}
+	#endregion
 
+	#region 静态方法
 	public static IDictionary<string, string> GetDictionary(string text)
 	{
 		if(string.IsNullOrEmpty(text))
@@ -164,9 +169,11 @@ public static class Utility
 
 		return dictionary;
 	}
+	#endregion
 
 	public static class Xml
 	{
+		#region 静态方法
 		public static void MoveToEndElement(XmlReader reader)
 		{
 			if(reader == null || reader.ReadState != ReadState.Interactive || reader.IsEmptyElement)
@@ -200,5 +207,6 @@ public static class Utility
 
 			return text;
 		}
+		#endregion
 	}
 }

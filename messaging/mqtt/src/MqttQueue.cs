@@ -343,6 +343,8 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 
 		#region 公共方法
 		/// <summary>获取一个已连接且受共享生命周期锁保护的客户端。</summary>
+		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <returns>返回持有共享生命周期锁的已连接客户端；使用完毕后必须调用 <see cref="Release"/> 释放锁。</returns>
 		public async ValueTask<IMqttClient> AcquireAsync(CancellationToken cancellation)
 		{
 			while(true)
@@ -377,6 +379,8 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 
 		#region 私有方法
 		/// <summary>按照指定的重连间隔周期检查并维护客户端连接。</summary>
+		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <returns>表示连接维护循环的任务，在取消或循环退出时结束。</returns>
 		private async Task MaintainAsync(CancellationToken cancellation)
 		{
 			using var timer = new PeriodicTimer(_reconnectInterval);
@@ -404,6 +408,8 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 		}
 
 		/// <summary>确保客户端已连接，如果建立了新连接则恢复全部订阅。</summary>
+		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <returns>表示连接建立及订阅恢复操作的异步任务。</returns>
 		private async ValueTask EnsureConnectedAsync(CancellationToken cancellation)
 		{
 			var client = _client;
@@ -445,6 +451,8 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 		}
 
 		/// <summary>进入客户端共享生命周期锁。</summary>
+		/// <param name="cancellation">监视取消请求的令牌。</param>
+		/// <returns>表示共享生命周期锁获取操作的异步任务。</returns>
 		private async ValueTask EnterAsync(CancellationToken cancellation)
 		{
 			await _readers.WaitAsync(cancellation);

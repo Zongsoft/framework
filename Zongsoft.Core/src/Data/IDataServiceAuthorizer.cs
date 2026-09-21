@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 提供数据服务授权验证功能的接口。
-/// </summary>
+/// <summary>提供数据服务授权验证功能的接口。</summary>
 public interface IDataServiceAuthorizer<TModel>
 {
 	/// <summary>对数据服务方法进行授权验证。</summary>

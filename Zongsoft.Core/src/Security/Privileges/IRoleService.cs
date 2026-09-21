@@ -37,9 +37,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Security.Privileges;
 
-/// <summary>
-/// 提供角色服务的接口。
-/// </summary>
+/// <summary>提供角色服务的接口。</summary>
 public interface IRoleService
 {
 	#region 通用方法

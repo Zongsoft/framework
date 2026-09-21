@@ -37,6 +37,7 @@ namespace Zongsoft.Communication;
 
 public static class SenderExtension
 {
+	#region 静态方法
 	public static void Send(this ISender sender, byte[] data)
 	{
 		ArgumentNullException.ThrowIfNull(sender);
@@ -156,4 +157,5 @@ public static class SenderExtension
 			data?.Dispose();
 		}
 	}
+	#endregion
 }

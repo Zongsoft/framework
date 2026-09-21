@@ -33,6 +33,7 @@ namespace Zongsoft.Components.Features;
 
 public static class BreakerFeatureExtension
 {
+	#region 静态方法
 	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, TimeSpan duration, double ratio, TimeSpan period, int threshold, Common.IPredication<Argument> predicator = null) => Breaker(builder, duration, ratio, period, threshold, predicator, out _);
 	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, TimeSpan duration, double ratio, TimeSpan period, int threshold, out BreakerFeature feature) => Breaker(builder, duration, ratio, period, threshold, null, out feature);
 	public static IFeatureBuilder Breaker(this IFeatureBuilder builder, TimeSpan duration, double ratio, TimeSpan period, int threshold, Common.IPredication<Argument> predicator, out BreakerFeature feature)
@@ -128,4 +129,5 @@ public static class BreakerFeatureExtension
 
 		return new FeatureBuilder([.. builder.Build(), feature = new BreakerFeature<T, TResult>(durationFactory, ratio, period, threshold, predicator)]);
 	}
+	#endregion
 }

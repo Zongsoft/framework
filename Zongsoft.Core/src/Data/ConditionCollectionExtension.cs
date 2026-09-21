@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 提供条件集合扩展方法的静态扩展类。
-/// </summary>
+/// <summary>提供条件集合扩展方法的静态扩展类。</summary>
 public static class ConditionCollectionExtension
 {
 	#region 集合构建

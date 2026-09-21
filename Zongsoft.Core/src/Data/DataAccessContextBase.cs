@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据访问的上下文基类。
-/// </summary>
+/// <summary>表示数据访问的上下文基类。</summary>
 public abstract class DataAccessContextBase<TOptions> : IDataAccessContextBase<TOptions>, IDisposable where TOptions : IDataOptions
 {
 	#region 构造函数

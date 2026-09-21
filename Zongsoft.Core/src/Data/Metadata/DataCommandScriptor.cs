@@ -38,8 +38,13 @@ public class DataCommandScriptor(IDataCommand command) : IDataCommandScriptor
 	private readonly IDataCommand _command = command ?? throw new ArgumentNullException(nameof(command));
 	private readonly Dictionary<string, string> _scripts = new(StringComparer.OrdinalIgnoreCase);
 
+	#region 保护属性
 	protected IDataCommand Command => _command;
+	#endregion
+	#region 公共属性
 	public IReadOnlySet<string> Drivers => new DriverCollection(_scripts);
+	#endregion
+	#region 公共方法
 	public string GetScript(string driver) => driver != null && _scripts.TryGetValue(driver, out var script) ? script : null;
 	public bool SetScript(string driver, string text)
 	{
@@ -49,14 +54,20 @@ public class DataCommandScriptor(IDataCommand command) : IDataCommandScriptor
 		_scripts[driver] = text;
 		return true;
 	}
+	#endregion
 
 	private sealed class DriverCollection(Dictionary<string, string> scripts) : IReadOnlySet<string>
 	{
 		private readonly Dictionary<string, string> _scripts = scripts;
 
+		#region 公共属性
 		public int Count => _scripts.Count;
+		#endregion
+		#region 公共方法
 		public bool Contains(string name) => _scripts.ContainsKey(name);
 		public IEnumerator<string> GetEnumerator() => _scripts.Keys.GetEnumerator();
+		#endregion
+		#region 显式实现
 		IEnumerator IEnumerable.GetEnumerator() => _scripts.Keys.GetEnumerator();
 
 		bool IReadOnlySet<string>.IsProperSubsetOf(IEnumerable<string> other) => (new HashSet<string>(_scripts.Keys, _scripts.Comparer)).IsProperSubsetOf(other);
@@ -65,5 +76,6 @@ public class DataCommandScriptor(IDataCommand command) : IDataCommandScriptor
 		bool IReadOnlySet<string>.IsSupersetOf(IEnumerable<string> other) => (new HashSet<string>(_scripts.Keys, _scripts.Comparer)).IsSupersetOf(other);
 		bool IReadOnlySet<string>.Overlaps(IEnumerable<string> other) => (new HashSet<string>(_scripts.Keys, _scripts.Comparer)).Overlaps(other);
 		bool IReadOnlySet<string>.SetEquals(IEnumerable<string> other) => (new HashSet<string>(_scripts.Keys, _scripts.Comparer)).SetEquals(other);
+		#endregion
 	}
 }

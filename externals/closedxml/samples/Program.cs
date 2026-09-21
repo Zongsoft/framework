@@ -23,6 +23,7 @@ internal class Program
 	private static readonly SpreadsheetGenerator _generator = new();
 	private static readonly SpreadsheetExtractor _extractor = new();
 
+	#region 静态方法
 	static async Task Main(string[] args)
 	{
 		var executor = Terminal.Console.Executor;
@@ -72,7 +73,9 @@ internal class Program
 
 		await executor.RunAsync(splash);
 	}
+	#endregion
 
+	#region 私有方法
 	private static async ValueTask ExportAsync(string path, int count, CultureInfo culture, CancellationToken cancellation)
 	{
 		await using var stream = File.Create(path);
@@ -190,6 +193,7 @@ internal class Program
 
 		return Path.GetFullPath($"users.{cultureName}({count.ToString(CultureInfo.InvariantCulture)}).xlsx");
 	}
+	#endregion
 
 	private sealed class CultureScope : IDisposable
 	{
@@ -205,6 +209,7 @@ internal class Program
 			CultureInfo.CurrentUICulture = culture;
 		}
 
+		#region 资源释放
 		public void Dispose()
 		{
 			if(_culture == null)
@@ -213,10 +218,12 @@ internal class Program
 			CultureInfo.CurrentCulture = _culture;
 			CultureInfo.CurrentUICulture = _uiCulture;
 		}
+		#endregion
 	}
 
 	private sealed class User
 	{
+		#region 公共属性
 		[ModelProperty(DbType.Int32, false, IsPrimaryKey = true)]
 		public int UserId { get; set; }
 		[ModelProperty(DbType.String, 50, false)]
@@ -233,6 +240,7 @@ internal class Program
 		public DateTime Creation { get; set; }
 		[ModelProperty(DbType.String, 500, true, Role = nameof(ModelPropertyRole.Description))]
 		public string Description { get; set; }
+		#endregion
 	}
 
 	private enum Gender : byte

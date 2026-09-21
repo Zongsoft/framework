@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Expressions;
 
-/// <summary>
-/// 表示符号词素的类。
-/// </summary>
+/// <summary>表示符号词素的类。</summary>
 public class SymbolToken : Token
 {
 	#region 常量定义

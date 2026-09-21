@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Plugins.Builders;
 
-/// <summary>
-/// 表示构建设置的类。
-/// </summary>
+/// <summary>表示构建设置的类。</summary>
 public class BuilderSettings
 {
 	#region 成员字段

@@ -170,6 +170,7 @@ public abstract class FallbackHandlerBase<TRequest, TResult> : HandlerBase<Strea
 
 internal static class FallbackHandlerUtility
 {
+	#region 静态方法
 	public static ValueTask<TRequest> GetRequestAsync<TRequest>(this FallbackHandlerBase<TRequest> handler, Stream stream, Parameters parameters, CancellationToken cancellation = default)
 	{
 		return GetRequestAsync<TRequest>(stream, parameters, handler.GetAuthority, handler.GetRequestType, cancellation);
@@ -179,7 +180,9 @@ internal static class FallbackHandlerUtility
 	{
 		return GetRequestAsync<TRequest>(stream, parameters, handler.GetAuthority, handler.GetRequestType, cancellation);
 	}
+	#endregion
 
+	#region 私有方法
 	private static async ValueTask<TRequest> GetRequestAsync<TRequest>(Stream stream, Parameters parameters, Func<string, string, IAuthority> authorityThunk, Func<string, Type> typeThunk, CancellationToken cancellation = default)
 	{
 		if(stream == null)
@@ -236,4 +239,5 @@ internal static class FallbackHandlerUtility
 					(key[..index].ToString(), key[(index + 1)..].ToString());
 		}
 	}
+	#endregion
 }

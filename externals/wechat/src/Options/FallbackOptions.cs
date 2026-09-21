@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Externals.Wechat.Options;
 
-/// <summary>
-/// 表示微信支付反馈的配置项。
-/// </summary>
+/// <summary>表示微信支付反馈的配置项。</summary>
 public class FallbackOptions
 {
 	/// <summary>获取或设置通知地址。</summary>

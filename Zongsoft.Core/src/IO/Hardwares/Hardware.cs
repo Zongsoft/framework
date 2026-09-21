@@ -34,9 +34,7 @@ using System.Text.Json.Serialization;
 
 namespace Zongsoft.IO.Hardwares;
 
-/// <summary>
-/// 表示一个通用的硬件设备。
-/// </summary>
+/// <summary>表示一个通用的硬件设备。</summary>
 public partial class Hardware : IHardware
 {
 	#region 构造函数
@@ -280,17 +278,20 @@ partial class Hardware
 {
 	internal sealed class JsonConverter : JsonConverterFactory
 	{
+		#region 重写方法
 		public override bool CanConvert(Type type) => type == typeof(IHardware) || type == typeof(Hardware);
 
 		public override System.Text.Json.Serialization.JsonConverter CreateConverter(Type type, JsonSerializerOptions options) => type == typeof(Hardware) ?
 			Converter<Hardware>.Default :
 			Converter<IHardware>.Default;
+		#endregion
 
 		private sealed class Converter<T> : JsonConverter<T> where T : class, IHardware
 		{
 			const string IDENTIFIER_PROPERTY = "$UniqueIdentifier";
 			public static readonly Converter<T> Default = new();
 
+			#region 重写方法
 			public override T Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
 			{
 				if(reader.TokenType == JsonTokenType.Null)
@@ -396,6 +397,7 @@ partial class Hardware
 
 				writer.WriteEndObject();
 			}
+			#endregion
 		}
 	}
 }

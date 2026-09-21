@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Externals.Wechat.Paying;
 
-/// <summary>
-/// 表示支付方式的枚举。
-/// </summary>
+/// <summary>表示支付方式的枚举。</summary>
 public enum PaymentKind
 {
 	/// <summary>公众号支付</summary>

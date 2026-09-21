@@ -32,9 +32,7 @@ using System.ComponentModel;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据排序的设置项。
-/// </summary>
+/// <summary>表示数据排序的设置项。</summary>
 [TypeConverter(typeof(SortingConverter))]
 public readonly struct Sorting : IEquatable<Sorting>
 {
@@ -187,9 +185,7 @@ public readonly struct Sorting : IEquatable<Sorting>
 	#endregion
 }
 
-/// <summary>
-/// 表示排序方式的枚举。
-/// </summary>
+/// <summary>表示排序方式的枚举。</summary>
 public enum SortingMode
 {
 	/// <summary>正序</summary>

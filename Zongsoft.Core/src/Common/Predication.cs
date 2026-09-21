@@ -35,6 +35,7 @@ namespace Zongsoft.Common;
 
 public static class Predication
 {
+	#region 静态方法
 	public static IPredication Predicate(Func<object, bool> predicate) => new PredicationProxy<object>(predicate);
 	public static IPredication<T> Predicate<T>(Func<T, bool> predicate) => new PredicationProxy<T>(predicate);
 	public static IPredication Predicate(Func<object, CancellationToken, ValueTask<bool>> predicate) => new PredicationProxy<object>(predicate);
@@ -44,6 +45,7 @@ public static class Predication
 	public static IPredication<T> Predicate<T>(Func<T, Collections.Parameters, bool> predicate) => new PredicationProxy<T>(predicate);
 	public static IPredication Predicate(Func<object, Collections.Parameters, CancellationToken, ValueTask<bool>> predicate) => new PredicationProxy<object>(predicate);
 	public static IPredication<T> Predicate<T>(Func<T, Collections.Parameters, CancellationToken, ValueTask<bool>> predicate) => new PredicationProxy<T>(predicate);
+	#endregion
 
 	private sealed class PredicationProxy<TArgument> : IPredication<TArgument>
 	{
@@ -77,11 +79,13 @@ public static class Predication
 				ValueTask.FromResult(predicator(argument, parameters));
 		}
 
+		#region 公共方法
 		public ValueTask<bool> PredicateAsync(TArgument argument, CancellationToken cancellation = default) => _predicator(argument, null, cancellation);
 		public ValueTask<bool> PredicateAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default) => _predicator(argument, parameters, cancellation);
 		public ValueTask<bool> PredicateAsync(object argument, CancellationToken cancellation = default) =>
 			argument is TArgument target ? this.PredicateAsync(target, cancellation) : throw new InvalidOperationException(string.Format(Properties.Resources.Conversion_ValueType_Message, argument, typeof(TArgument)));
 		public ValueTask<bool> PredicateAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation = default) =>
 			argument is TArgument target ? this.PredicateAsync(target, parameters, cancellation) : throw new InvalidOperationException(string.Format(Properties.Resources.Conversion_ValueType_Message, argument, typeof(TArgument)));
+		#endregion
 	}
 }

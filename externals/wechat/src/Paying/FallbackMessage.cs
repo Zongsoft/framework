@@ -35,6 +35,7 @@ namespace Zongsoft.Externals.Wechat.Paying;
 
 public class FallbackMessage
 {
+	#region 公共属性
 	[JsonPropertyName("id")]
 	public string Identifier { get; set; }
 
@@ -52,9 +53,11 @@ public class FallbackMessage
 
 	[JsonPropertyName("resource")]
 	public ResourceInfo Resource { get; set; }
+	#endregion
 
 	public struct ResourceInfo
 	{
+		#region 公共属性
 		[JsonPropertyName("original_type")]
 		public string Source { get; set; }
 		[JsonPropertyName("algorithm")]
@@ -65,5 +68,6 @@ public class FallbackMessage
 		public string AssociatedData { get; set; }
 		[JsonPropertyName("ciphertext")]
 		public string Ciphertext { get; set; }
+		#endregion
 	}
 }

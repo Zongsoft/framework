@@ -34,6 +34,7 @@ namespace Zongsoft.Reporting;
 
 public interface IReport
 {
+	#region 公共属性
 	string Name { get; }
 	string Type { get; }
 	string Icon { get; set; }
@@ -41,7 +42,9 @@ public interface IReport
 	string Description { get; set; }
 	IReportParameterCollection Parameters { get; }
 	IReportDataLocator Locator { get; set; }
+	#endregion
 
+	#region 公共方法
 	T AsReport<T>() where T : class;
 
 	void Save(Stream stream);
@@ -50,4 +53,5 @@ public interface IReport
 
 	void Export(Stream stream, IReportExportOptions options);
 	void ExportToFile(string filePath, IReportExportOptions options);
+	#endregion
 }

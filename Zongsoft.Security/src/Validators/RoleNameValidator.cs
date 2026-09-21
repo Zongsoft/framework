@@ -56,7 +56,7 @@ public class RoleNameValidator : IValidator<string>, IMatchable
 		}
 
 		//名字(用户名或角色名)的首字符必须是字母、下划线、美元符
-		if(!(Char.IsLetter(data[0]) || data[0] == '_' || data[0] == '$'))
+		if(!(char.IsLetter(data[0]) || data[0] == '_' || data[0] == '$'))
 		{
 			failure?.Invoke($"The '{data}' name contains illegal characters.");
 			return false;
@@ -66,7 +66,7 @@ public class RoleNameValidator : IValidator<string>, IMatchable
 		for(int i = 1; i < data.Length; i++)
 		{
 			//名字的中间字符必须是字母、数字或下划线
-			if(!Char.IsLetterOrDigit(data[i]) && data[i] != '_')
+			if(!char.IsLetterOrDigit(data[i]) && data[i] != '_')
 			{
 				failure?.Invoke($"The '{data}' name contains illegal characters.");
 				return false;

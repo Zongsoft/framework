@@ -33,9 +33,7 @@ using System.Data.Common;
 
 namespace Zongsoft.Data.Common;
 
-/// <summary>
-/// 表示数据驱动器的接口。
-/// </summary>
+/// <summary>表示数据驱动器的接口。</summary>
 public interface IDataDriver
 {
 	#region 属性定义

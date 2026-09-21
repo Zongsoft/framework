@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 提供数据库常用函数的定义。
-/// </summary>
+/// <summary>提供数据库常用函数的定义。</summary>
 public static class Functions
 {
 	public const string Cast = nameof(Cast);

@@ -34,9 +34,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示命令执行器的接口。
-/// </summary>
+/// <summary>表示命令执行器的接口。</summary>
 public interface ICommandExecutor
 {
 	#region 声明事件

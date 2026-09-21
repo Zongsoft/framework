@@ -34,6 +34,7 @@ namespace Zongsoft.Data;
 
 public interface IDataDictionary<T> : IDataDictionary
 {
+	#region 公共方法
 	T AsModel();
 	bool Contains<TMember>(Expression<Func<T, TMember>> expression);
 	bool Reset<TValue>(Expression<Func<T, TValue>> expression, out TValue value);
@@ -49,4 +50,5 @@ public interface IDataDictionary<T> : IDataDictionary
 
 	bool TrySetValue<TValue>(Expression<Func<T, TValue>> expression, TValue value, Func<TValue, bool> predicate = null);
 	bool TrySetValue<TValue>(Expression<Func<T, TValue>> expression, Func<string, TValue> valueFactory, Func<TValue, bool> predicate = null);
+	#endregion
 }

@@ -42,5 +42,6 @@ public interface IEnlistment
 	/// <summary>异步执行事务登记回调。</summary>
 	/// <param name="context">事务登记上下文。</param>
 	/// <param name="cancellation">异步操作取消标记。</param>
+	/// <returns>表示事务登记回调执行的异步任务。</returns>
 	ValueTask OnEnlistAsync(EnlistmentContext context, CancellationToken cancellation = default);
 }

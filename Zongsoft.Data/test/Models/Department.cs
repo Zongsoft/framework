@@ -3,9 +3,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Tests.Models;
 
-/// <summary>
-/// 表示部门业务的实体类。
-/// </summary>
+/// <summary>表示部门业务的实体类。</summary>
 public abstract class Department
 {
 	#region 普通属性
@@ -67,9 +65,7 @@ public abstract class Department
 	#endregion
 }
 
-/// <summary>
-/// 表示部门主键的结构。
-/// </summary>
+/// <summary>表示部门主键的结构。</summary>
 public struct DepartmentKey : IEquatable<DepartmentKey>
 {
 	#region 构造函数
@@ -115,9 +111,7 @@ public struct DepartmentKey : IEquatable<DepartmentKey>
 	#endregion
 }
 
-/// <summary>
-/// 表示部门查询条件的实体类。
-/// </summary>
+/// <summary>表示部门查询条件的实体类。</summary>
 public abstract class DepartmentCriteria : CriteriaBase
 {
 	#region 公共属性

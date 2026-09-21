@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Common;
 
-/// <summary>
-/// 表示枚举项的描述。
-/// </summary>
+/// <summary>表示枚举项的描述。</summary>
 public readonly struct EnumEntry : IFormattable, IFormatProvider, IEquatable<EnumEntry>
 {
 	#region 构造函数

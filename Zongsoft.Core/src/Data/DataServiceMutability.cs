@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据服务可变性的结构。
-/// </summary>
+/// <summary>表示数据服务可变性的结构。</summary>
 public readonly struct DataServiceMutability : IEquatable<DataServiceMutability>
 {
 	#region 常量定义

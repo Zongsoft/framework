@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data.Common.Expressions;
 
-/// <summary>
-/// 表示字段标识的表达式。
-/// </summary>
+/// <summary>表示字段标识的表达式。</summary>
 public class FieldIdentifier : Expression, IIdentifier, IEquatable<FieldIdentifier>
 {
 	#region 构造函数

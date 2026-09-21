@@ -35,9 +35,12 @@ namespace Zongsoft.Components;
 
 public interface ICommandOutlet
 {
+	#region 公共属性
 	Encoding Encoding { get; set; }
 	TextWriter Writer { get; }
+	#endregion
 
+	#region 公共方法
 	void Write(CommandOutletContent content);
 	void Write<T>(T value);
 	void Write<T>(CommandOutletColor foregroundColor, T value);
@@ -54,4 +57,5 @@ public interface ICommandOutlet
 	void WriteLine<T>(CommandOutletStyles style, T value);
 	void WriteLine<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, T value);
 	void WriteLine<T>(CommandOutletStyles style, CommandOutletColor foregroundColor, CommandOutletColor backgroundColor, T value);
+	#endregion
 }

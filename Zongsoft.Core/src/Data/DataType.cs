@@ -33,9 +33,7 @@ using System.Text.RegularExpressions;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据类型（包括字段类型、命令或函数的参数类型）的类。
-/// </summary>
+/// <summary>表示数据类型（包括字段类型、命令或函数的参数类型）的类。</summary>
 public sealed partial class DataType : IEquatable<DataType>
 {
 	#region 单例字段

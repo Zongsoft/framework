@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Security;
 
-/// <summary>
-/// 提供安全理由短语的定义类。
-/// </summary>
+/// <summary>提供安全理由短语的定义类。</summary>
 public static class SecurityReasons
 {
 	/// <summary>未知的原因</summary>

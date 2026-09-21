@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 提供命令加载的功能。
-/// </summary>
+/// <summary>提供命令加载的功能。</summary>
 /// <remarks>对使用者的提醒：命令加载器不能重复使用，即不要把一个<see cref="ICommandLoader"/>实例赋予不同的用例，因为<seealso cref="IsLoaded"/>属性与不同的用例是无关的。</remarks>
 public interface ICommandLoader
 {

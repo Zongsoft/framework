@@ -37,6 +37,7 @@ namespace Zongsoft.Data;
 
 partial class DataServiceBase<TModel>
 {
+	#region 公共方法
 	public int Update(string key, object data, DataUpdateOptions options = null) => this.Update(key, data, null, options);
 	public int Update(string key, object data, string schema, DataUpdateOptions options = null) => this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key, options, out _), schema, options);
 
@@ -193,7 +194,9 @@ partial class DataServiceBase<TModel>
 	public int Update(object data, Data.Condition criteria, string schema, DataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, schema, options);
 	public int Update(object data, ConditionCollection criteria, DataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, options);
 	public int Update(object data, ConditionCollection criteria, string schema, DataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, schema, options);
+	#endregion
 
+	#region 保护方法
 	protected virtual int OnUpdate(IDataDictionary<TModel> data, ICondition criteria, ISchema schema, DataUpdateOptions options)
 	{
 		if(data == null || data.Data == null || !data.HasChanges())
@@ -201,7 +204,9 @@ partial class DataServiceBase<TModel>
 
 		return this.DataAccess.Update(this.Name, data, criteria, schema, options, ctx => this.OnUpdating(ctx), ctx => this.OnUpdated(ctx));
 	}
+	#endregion
 
+	#region 公共方法
 	public ValueTask<int> UpdateAsync(string key, object data, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(key, data, null, options, cancellation);
 	public ValueTask<int> UpdateAsync(string key, object data, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, this.ConvertKey(DataServiceMethod.Update(), key, options, out _), schema, options, cancellation);
 
@@ -354,7 +359,9 @@ partial class DataServiceBase<TModel>
 	public ValueTask<int> UpdateAsync(object data, Data.Condition criteria, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, (ICondition)criteria, schema, options, cancellation);
 	public ValueTask<int> UpdateAsync(object data, ConditionCollection criteria, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, (ICondition)criteria, options, cancellation);
 	public ValueTask<int> UpdateAsync(object data, ConditionCollection criteria, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, (ICondition)criteria, schema, options, cancellation);
+	#endregion
 
+	#region 保护方法
 	protected virtual ValueTask<int> OnUpdateAsync(IDataDictionary<TModel> data, ICondition criteria, ISchema schema, DataUpdateOptions options, CancellationToken cancellation)
 	{
 		if(data == null || data.Data == null || !data.HasChanges())
@@ -362,4 +369,5 @@ partial class DataServiceBase<TModel>
 
 		return this.DataAccess.UpdateAsync(this.Name, data, criteria, schema, options, ctx => this.OnUpdating(ctx), ctx => this.OnUpdated(ctx), cancellation);
 	}
+	#endregion
 }

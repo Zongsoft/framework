@@ -32,9 +32,7 @@ using System.ComponentModel;
 
 namespace Zongsoft.Collections;
 
-/// <summary>
-/// 表示层次结构节点的接口。
-/// </summary>
+/// <summary>表示层次结构节点的接口。</summary>
 public interface IHierarchicalNode : IEquatable<IHierarchicalNode>, INotifyPropertyChanged
 {
 	/// <summary>获取层次结构节点的名称，名称不可为空或空字符串，根节点的名称为斜杠(即“/”)。</summary>
@@ -48,9 +46,7 @@ public interface IHierarchicalNode : IEquatable<IHierarchicalNode>, INotifyPrope
 	string FullPath { get; }
 }
 
-/// <summary>
-/// 表示层次结构节点的泛型接口。
-/// </summary>
+/// <summary>表示层次结构节点的泛型接口。</summary>
 /// <typeparam name="TNode">泛型参数，表示层次结构节点的类型。</typeparam>
 public interface IHierarchicalNode<TNode> : IHierarchicalNode where TNode : IHierarchicalNode<TNode>
 {

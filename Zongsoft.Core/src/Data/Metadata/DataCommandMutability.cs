@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data.Metadata;
 
-/// <summary>
-/// 表示数据命令变化性的枚举。
-/// </summary>
+/// <summary>表示数据命令变化性的枚举。</summary>
 [Flags]
 public enum DataCommandMutability
 {

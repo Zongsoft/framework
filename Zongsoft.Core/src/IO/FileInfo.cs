@@ -104,6 +104,7 @@ public partial class FileInfo : PathInfo, IEquatable<FileInfo>
 
 partial class FileInfo
 {
+	#region 公共方法
 	public bool Delete() => FileSystem.File.Delete(this.Url);
 	public ValueTask<bool> DeleteAsync(CancellationToken cancellation = default) => FileSystem.File.DeleteAsync(this.Url, cancellation);
 
@@ -127,4 +128,5 @@ partial class FileInfo
 	public ValueTask<System.IO.Stream> OpenAsync(System.IO.FileMode mode, System.IO.FileAccess access, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default) => FileSystem.File.OpenAsync(this.Url, mode, access, properties, cancellation);
 	public ValueTask<System.IO.Stream> OpenAsync(System.IO.FileMode mode, System.IO.FileAccess access, System.IO.FileShare share, CancellationToken cancellation = default) => FileSystem.File.OpenAsync(this.Url, mode, access, share, cancellation);
 	public ValueTask<System.IO.Stream> OpenAsync(System.IO.FileMode mode, System.IO.FileAccess access, System.IO.FileShare share, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default) => FileSystem.File.OpenAsync(this.Url, mode, access, share, properties, cancellation);
+	#endregion
 }

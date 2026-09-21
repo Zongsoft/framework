@@ -35,9 +35,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Expressions;
 
-/// <summary>
-/// 表示词法分析的分词扫描器。
-/// </summary>
+/// <summary>表示词法分析的分词扫描器。</summary>
 public class TokenScanner : IEnumerable<Token>, IDisposable
 {
 	#region 成员字段

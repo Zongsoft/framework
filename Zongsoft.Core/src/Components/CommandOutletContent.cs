@@ -32,9 +32,7 @@ using System.Text;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示命令输出内容链的类。
-/// </summary>
+/// <summary>表示命令输出内容链的类。</summary>
 public class CommandOutletContent
 {
 	#region 嵌套枚举

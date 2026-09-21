@@ -34,9 +34,7 @@ using Zongsoft.Reflection.Expressions;
 
 namespace Zongsoft.Collections;
 
-/// <summary>
-/// 表示层次结构的表达式类。
-/// </summary>
+/// <summary>表示层次结构的表达式类。</summary>
 /// <remarks>
 ///		<para>层次结构表达式由“路径”和“成员集”两部分组成，其文本格式如下：</para>
 ///		<list type="number">

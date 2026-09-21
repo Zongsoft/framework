@@ -409,12 +409,15 @@ public class RandomCommand : CommandBase<CommandContext>
 		public static readonly Randomizer Default = new DefaultRandomizer();
 		public static readonly Randomizer Enhanced = new EnhancedRandomizer();
 
+		#region 公共方法
 		public abstract int GetInt32();
 		public abstract int GetInt32(int? minimum, int? maximum);
 		public abstract byte[] GetBytes(int count);
+		#endregion
 
 		sealed class DefaultRandomizer : Randomizer
 		{
+			#region 重写方法
 			public override int GetInt32() => Random.Shared.Next();
 			public override int GetInt32(int? minimum, int? maximum) => Random.Shared.Next(minimum ?? int.MinValue, maximum ?? int.MaxValue);
 			public override byte[] GetBytes(int count)
@@ -423,13 +426,16 @@ public class RandomCommand : CommandBase<CommandContext>
 				Random.Shared.NextBytes(bytes);
 				return bytes;
 			}
+			#endregion
 		}
 
 		sealed class EnhancedRandomizer : Randomizer
 		{
+			#region 重写方法
 			public override int GetInt32() => System.Security.Cryptography.RandomNumberGenerator.GetInt32(int.MinValue, int.MaxValue);
 			public override int GetInt32(int? minimum, int? maximum) => System.Security.Cryptography.RandomNumberGenerator.GetInt32(minimum ?? int.MinValue, maximum ?? int.MaxValue);
 			public override byte[] GetBytes(int count) => System.Security.Cryptography.RandomNumberGenerator.GetBytes(count);
+			#endregion
 		}
 	}
 }

@@ -169,6 +169,7 @@ public abstract class Parser : IParser
 
 	#region 抽象方法
 	/// <summary>解析目标对象。</summary>
+	/// <param name="context">包含待解析文本及其插件节点的解析上下文。</param>
 	/// <returns>返回解析后的对象。</returns>
 	public abstract object Parse(ParserContext context);
 	#endregion

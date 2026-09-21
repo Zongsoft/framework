@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 提供数据访问中的条件和数据进行验证修正的接口。
-/// </summary>
+/// <summary>提供数据访问中的条件和数据进行验证修正的接口。</summary>
 public interface IDataValidator
 {
 	/// <summary>验证并修正当前执行上下文中的操作条件。</summary>

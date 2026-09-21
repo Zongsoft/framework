@@ -37,9 +37,7 @@ using Zongsoft.Common;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示对象标识的结构。
-/// </summary>
+/// <summary>表示对象标识的结构。</summary>
 [TypeConverter(typeof(TypeConverter))]
 [JsonConverter(typeof(JsonConverter))]
 public readonly struct Identifier(Type type, object value, string label = null, string description = null) : IEquatable<Identifier>, IConvertible
@@ -228,9 +226,7 @@ public readonly struct Identifier(Type type, object value, string label = null, 
 	#endregion
 }
 
-/// <summary>
-/// 表示对象标识的结构。
-/// </summary>
+/// <summary>表示对象标识的结构。</summary>
 public readonly struct Identifier<T>(Type type, T value, string label = null, string description = null) : IEquatable<Identifier<T>> where T : IEquatable<T>
 {
 	#region 公共字段

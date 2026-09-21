@@ -106,11 +106,13 @@ public sealed partial class DataConnector
 			this.Exception = exception;
 		}
 
+		#region 公共属性
 		public IDataSource Source { get; }
 		public CircuitBreakerState OriginalState { get; }
 		public CircuitBreakerState CurrentState { get; }
 		public DateTimeOffset? RetryAt { get; }
 		public Exception Exception { get; }
+		#endregion
 	}
 
 	internal sealed class CircuitBreaker

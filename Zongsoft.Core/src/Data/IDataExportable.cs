@@ -35,9 +35,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示提供数据导出功能的接口。
-/// </summary>
+/// <summary>表示提供数据导出功能的接口。</summary>
 public interface IDataExportable
 {
 	/// <summary>获取一个值，指示是否支持导出操作。</summary>

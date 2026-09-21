@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Externals.Aliyun;
 
-/// <summary>
-/// 表示验证签名的方式。
-/// </summary>
+/// <summary>表示验证签名的方式。</summary>
 public enum HttpSignatureMode
 {
 	/// <summary>签名位于Http请求的头。</summary>

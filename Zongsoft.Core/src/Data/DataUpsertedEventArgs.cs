@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 为数据访问的新增或更新事件提供数据。
-/// </summary>
+/// <summary>为数据访问的新增或更新事件提供数据。</summary>
 public class DataUpsertedEventArgs : DataAccessEventArgs<DataUpsertContextBase>
 {
 	#region 构造函数

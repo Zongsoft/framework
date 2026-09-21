@@ -42,8 +42,11 @@ namespace Zongsoft.Data;
 
 partial class DataServiceBase<TModel> : IDataImportable
 {
+	#region 公共属性
 	public virtual bool CanImport => this.CanInsert;
+	#endregion
 
+	#region 公共方法
 	public int Import(Stream input, DataImportOptions options = null) => this.Import(input, null, options);
 	public int Import(Stream input, string format, DataImportOptions options = null)
 	{
@@ -69,7 +72,9 @@ partial class DataServiceBase<TModel> : IDataImportable
 		//执行导出操作
 		return this.OnImportAsync(input, format, options, cancellation);
 	}
+	#endregion
 
+	#region 保护方法
 	protected virtual IDataArchiveExtractor GetExtractor(string format, DataImportOptions options, out IDataArchiveExtractorOptions extracting)
 	{
 		extracting = new DataArchiveExtractorOptions(this.Descriptor.Model, options?.Parameters);
@@ -92,4 +97,5 @@ partial class DataServiceBase<TModel> : IDataImportable
 
 	protected virtual int OnImport(IEnumerable<TModel> items, string[] members, DataImportOptions options) => this.DataAccess.Import(this.Name, items, members, options);
 	protected virtual ValueTask<int> OnImportAsync(IAsyncEnumerable<TModel> items, string[] members, DataImportOptions options, CancellationToken cancellation) => this.DataAccess.ImportAsync(this.Name, items.Synchronize(), members, options, cancellation);
+	#endregion
 }

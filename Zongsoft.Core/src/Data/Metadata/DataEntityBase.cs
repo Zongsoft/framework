@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Metadata;
 
-/// <summary>
-/// 表示数据实体的元数据类。
-/// </summary>
+/// <summary>表示数据实体的元数据类。</summary>
 public class DataEntityBase : IDataEntity
 {
 	#region 成员字段

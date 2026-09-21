@@ -36,6 +36,7 @@ namespace Zongsoft.Collections;
 
 public static class DictionaryExtension
 {
+	#region 静态方法
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.Synchronized)]
 	public static bool TryGetValue(this IDictionary dictionary, object key, out object value)
 	{
@@ -192,4 +193,5 @@ public static class DictionaryExtension
 			}
 		}
 	}
+	#endregion
 }

@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Data.Common;
 
-/// <summary>
-/// 表示数据提供程序的接口。
-/// </summary>
+/// <summary>表示数据提供程序的接口。</summary>
 public interface IDataProvider
 {
 	#region 事件定义

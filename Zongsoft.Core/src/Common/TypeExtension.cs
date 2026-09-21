@@ -38,6 +38,7 @@ namespace Zongsoft.Common;
 
 public static class TypeExtension
 {
+	#region 静态方法
 	public static bool IsAssignableFrom(this Type type, Type instanceType) => IsAssignableFrom(type, instanceType, null);
 	public static bool IsAssignableFrom(this Type type, Type instanceType, out IReadOnlyList<Type> genericTypes)
 	{
@@ -59,29 +60,17 @@ public static class TypeExtension
 		}
 	}
 
-	/// <summary>
-	/// 提供比<see cref="System.Type.IsAssignableFrom"/>加强的功能，支持对泛型定义接口或类的匹配。
-	/// </summary>
+	/// <summary>提供比<see cref="System.Type.IsAssignableFrom"/>加强的功能，支持对泛型定义接口或类的匹配。</summary>
 	/// <param name="type">指定的接口或基类的类型。</param>
 	/// <param name="instanceType">指定的实例类型。</param>
 	/// <param name="genericMatch">当<paramref name="type"/>参数为泛型原型，则该委托表示找到的实现者的泛化类型，返回空表示继续后续匹配，否则结束匹配并将该委托的返回作为方法的结果。</param>
 	/// <returns>如果当满足如下条件之一则返回真(<c>True</c>)：
 	/// <list type="bullet">
-	///		<item>
-	///			<term>如果 <paramref name="type"/> 为泛型定义类型，则 <paramref name="instanceType"/> 实现的接口或基类中有从 <paramref name="type"/> 指定的泛型定义中泛化的版本。</term>
-	///		</item>
-	///		<item>
-	///			<term>如果 <paramref name="type"/> 和当前 <paramref name="instanceType"/> 表示同一类型；</term>
-	///		</item>
-	///		<item>
-	///			<term>当前 <paramref name="instanceType"/> 位于 <paramref name="type"/> 的继承层次结构中；</term>
-	///		</item>
-	///		<item>
-	///			<term>当前 <paramref name="instanceType"/> 是 <paramref name="type"/> 实现的接口；</term>
-	///		</item>
-	///		<item>
-	///			<term><paramref name="type"/> 是泛型类型参数且当前 <paramref name="instanceType"/> 表示 <paramref name="type"/> 的约束之一。</term>
-	///		</item>
+	///		<item><term>如果 <paramref name="type"/> 为泛型定义类型，则 <paramref name="instanceType"/> 实现的接口或基类中有从 <paramref name="type"/> 指定的泛型定义中泛化的版本。</term></item>
+	///		<item><term>如果 <paramref name="type"/> 和当前 <paramref name="instanceType"/> 表示同一类型；</term></item>
+	///		<item><term>当前 <paramref name="instanceType"/> 位于 <paramref name="type"/> 的继承层次结构中；</term></item>
+	///		<item><term>当前 <paramref name="instanceType"/> 是 <paramref name="type"/> 实现的接口；</term></item>
+	///		<item><term><paramref name="type"/> 是泛型类型参数且当前 <paramref name="instanceType"/> 表示 <paramref name="type"/> 的约束之一。</term></item>
 	/// </list>
 	/// </returns>
 	/// <remarks>
@@ -344,6 +333,8 @@ public static class TypeExtension
 	public static Type GetListElementType(this Type type) => GetElementType(type, typeof(IList<>), typeof(IList));
 	public static Type GetCollectionElementType(this Type type) => GetElementType(type, typeof(ICollection<>), typeof(ICollection));
 	public static Type GetElementType(this Type type) => GetElementType(type, typeof(IEnumerable<>), typeof(IEnumerable));
+	#endregion
+	#region 私有方法
 	private static Type GetElementType(Type type, Type genericDefinitionInterface, Type collectionInterface)
 	{
 		if(type == null)
@@ -366,7 +357,9 @@ public static class TypeExtension
 
 		return null;
 	}
+	#endregion
 
+	#region 静态方法
 	public static object GetDefaultValue(this Type type)
 	{
 		if(type == typeof(DBNull))
@@ -450,6 +443,7 @@ public static class TypeExtension
 
 		return (MethodInfo)members[0];
 	}
+	#endregion
 
 	#region 嵌套子类
 	private class ClassicDictionaryEnumerable : IEnumerable<DictionaryEntry>

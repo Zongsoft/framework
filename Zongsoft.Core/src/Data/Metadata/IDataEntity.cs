@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data.Metadata;
 
-/// <summary>
-/// 表示数据实体的元数据接口。
-/// </summary>
+/// <summary>表示数据实体的元数据接口。</summary>
 public interface IDataEntity
 {
 	#region 属性声明

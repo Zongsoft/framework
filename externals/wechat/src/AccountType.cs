@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Externals.Wechat;
 
-/// <summary>
-/// 表示应用账户类型的枚举。
-/// </summary>
+/// <summary>表示应用账户类型的枚举。</summary>
 public enum AccountType
 {
 	/// <summary>小程序</summary>

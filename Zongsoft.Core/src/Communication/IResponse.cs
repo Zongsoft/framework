@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Communication;
 
-/// <summary>
-/// 表示请求响应的接口。
-/// </summary>
+/// <summary>表示请求响应的接口。</summary>
 public interface IResponse
 {
 	/// <summary>获取响应的地址。</summary>

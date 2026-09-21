@@ -38,9 +38,7 @@ using Zongsoft.Reflection.Expressions;
 
 namespace Zongsoft.Services;
 
-/// <summary>
-/// 服务解析器类。
-/// </summary>
+/// <summary>服务解析器类。</summary>
 /// <remarks>
 ///		<para>服务解析支持如下几种表达式：</para>
 ///		<list type="table">

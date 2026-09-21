@@ -35,9 +35,7 @@ using Zongsoft.Externals.Wechat.Options;
 
 namespace Zongsoft.Externals.Wechat.Options;
 
-/// <summary>
-/// 表示微信支付账户的选项类。
-/// </summary>
+/// <summary>表示微信支付账户的选项类。</summary>
 public class AuthorityOptions
 {
 	#region 构造函数

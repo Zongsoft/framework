@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Messaging;
 
-/// <summary>
-/// 提供消息队列轮询功能的类。
-/// </summary>
+/// <summary>提供消息队列轮询功能的类。</summary>
 public abstract class MessagePollerBase : IMessagePoller
 {
 	#region 常量定义

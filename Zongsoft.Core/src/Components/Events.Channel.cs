@@ -40,11 +40,13 @@ namespace Zongsoft.Components;
 
 partial class Events
 {
+	#region 静态方法
 	public static IEventChannel Channel([TypeConverter(typeof(MessageQueueConverter))]this IMessageQueue queue, MessageEnqueueOptions options = null)
 	{
 		ArgumentNullException.ThrowIfNull(queue);
 		return new MessageQueueEventChannel(queue, options);
 	}
+	#endregion
 
 	[DefaultProperty(nameof(Filtering))]
 	[System.Reflection.DefaultMember(nameof(Filtering))]

@@ -37,9 +37,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Communication;
 
-/// <summary>
-/// 提供通讯侦听功能的抽象基类。
-/// </summary>
+/// <summary>提供通讯侦听功能的抽象基类。</summary>
 public abstract class ListenerBase<T> : WorkerBase, IListener<T>, IReceiver, IHandleable<T>, IHandleable
 {
 	#region 成员变量

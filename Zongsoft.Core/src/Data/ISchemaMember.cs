@@ -36,6 +36,7 @@ namespace Zongsoft.Data;
 /// <summary>表示数据模式中的成员。</summary>
 public interface ISchemaMember
 {
+	#region 公共属性
 	/// <summary>获取模式成员的名称。</summary>
 	string Name { get; }
 
@@ -68,5 +69,6 @@ public interface ISchemaMember
 
 	/// <summary>获取模式成员的子成员集。</summary>
 	IEnumerable<ISchemaMember> Children { get; }
+	#endregion
 }
 

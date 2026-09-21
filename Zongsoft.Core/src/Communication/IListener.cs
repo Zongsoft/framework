@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Communication;
 
-/// <summary>
-/// 提供关于通讯侦听的功能的接口。
-/// </summary>
+/// <summary>提供关于通讯侦听的功能的接口。</summary>
 public interface IListener<T> : Components.IWorker, IDisposable
 {
 	/// <summary>获取当前是否处于侦听状态。</summary>
@@ -44,5 +42,6 @@ public interface IListener<T> : Components.IWorker, IDisposable
 	/// <summary>处理请求。</summary>
 	/// <param name="package">处理的请求包。</param>
 	/// <param name="cancellation">指定的异步取消标记。</param>
+	/// <returns>表示请求包处理操作的异步任务。</returns>
 	ValueTask HandleAsync(T package, CancellationToken cancellation = default);
 }

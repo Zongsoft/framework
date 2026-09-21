@@ -42,10 +42,15 @@ namespace Zongsoft.Data.Common.Expressions;
 
 public static class StatementExtension
 {
+	#region 静态方法
 	public static void Bind(this IStatementBase statement, IDataMutateContextBase context, DbCommand command) => GetBinder(context).Bind(context, statement, command);
 	public static ValueTask BindAsync(this IStatementBase statement, IDataMutateContextBase context, DbCommand command, CancellationToken cancellation) => GetBinder(context).BindAsync(context, statement, command, cancellation);
+	#endregion
+	#region 私有方法
 	private static IStatementBinder GetBinder(IDataMutateContextBase context) => context is IDataAccessContext accessor ? accessor.Source.Driver?.Binder ?? StatementBinder.Default : StatementBinder.Default;
+	#endregion
 
+	#region 静态方法
 	public static ISource From(this IStatement statement, string memberPath, Aliaser aliaser, Func<ISource, IDataEntityComplexProperty, ISource> subqueryFactory, out IDataEntityProperty property)
 	{
 		return From(statement, statement.Table, memberPath, aliaser, subqueryFactory, out property);
@@ -107,7 +112,9 @@ public static class StatementExtension
 
 		throw new NotSupportedException(string.Format(Properties.Resources.Condition_TypeUnsupported_Message, criteria.GetType().FullName));
 	}
+	#endregion
 
+	#region 私有方法
 	private static ConditionExpression GetConditionExpression(IStatement statement, Aliaser aliaser, ConditionCollection conditions, bool fieldExpending)
 	{
 		if(conditions == null)
@@ -413,4 +420,5 @@ public static class StatementExtension
 		parameters.Add(parameter);
 		return parameter;
 	}
+	#endregion
 }

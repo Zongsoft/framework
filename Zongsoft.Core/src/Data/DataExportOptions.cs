@@ -32,16 +32,12 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据导出操作选项的接口。
-/// </summary>
+/// <summary>表示数据导出操作选项的接口。</summary>
 public interface IDataExportOptions : IDataOptions
 {
 }
 
-/// <summary>
-/// 表示数据导出操作选项的类。
-/// </summary>
+/// <summary>表示数据导出操作选项的类。</summary>
 public class DataExportOptions : DataOptionsBase, IDataExportOptions
 {
 	#region 构造函数

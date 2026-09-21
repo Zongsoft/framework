@@ -32,26 +32,22 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据查询操作选项的接口。
-/// </summary>
+/// <summary>表示数据查询操作选项的接口。</summary>
 public interface IDataSelectOptions : IDataOptions
 {
+	#region 公共属性
 	/// <summary>获取或设置一个值，指示是否进行去重查询。</summary>
 	bool IsDistinct { get; set; }
 
 	/// <summary>获取或设置一个值，指示是否禁用对子集的延迟加载。</summary>
 	bool LazySuppressed { get; set; }
 
-	/// <summary>
-	/// 获取或设置一个值，指示是否禁用当前数据访问操作的验证器，默认不禁用。
-	/// </summary>
+	/// <summary>获取或设置一个值，指示是否禁用当前数据访问操作的验证器，默认不禁用。</summary>
 	bool ValidatorSuppressed { get; set; }
+	#endregion
 }
 
-/// <summary>
-/// 表示数据查询操作选项的类。
-/// </summary>
+/// <summary>表示数据查询操作选项的类。</summary>
 public class DataSelectOptions : DataOptionsBase, IDataSelectOptions
 {
 	#region 构造函数
@@ -89,6 +85,7 @@ public class DataSelectOptions : DataOptionsBase, IDataSelectOptions
 	public static Builder Parameter(IEnumerable<KeyValuePair<string, object>> parameters) => new(parameters);
 
 	/// <summary>创建一个去重的查询选项构建器。</summary>
+	/// <param name="parameters">查询操作的附加参数。</param>
 	/// <returns>返回创建的<see cref="Builder"/>构建器对象。</returns>
 	public static Builder Distinct(IEnumerable<KeyValuePair<string, object>> parameters = null) => new(parameters) { IsDistinct = true };
 

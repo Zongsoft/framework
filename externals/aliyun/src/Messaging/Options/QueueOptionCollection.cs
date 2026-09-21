@@ -32,9 +32,7 @@ using System.Collections.ObjectModel;
 
 namespace Zongsoft.Externals.Aliyun.Messaging.Options;
 
-/// <summary>
-/// 表示阿里云消息队列提供程序的配置项集合。
-/// </summary>
+/// <summary>表示阿里云消息队列提供程序的配置项集合。</summary>
 public class QueueOptionCollection() : KeyedCollection<string, QueueOption>(StringComparer.OrdinalIgnoreCase)
 {
 	#region 公共属性

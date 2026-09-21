@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示条件转换器的上下文类。
-/// </summary>
+/// <summary>表示条件转换器的上下文类。</summary>
 public class ConditionConverterContext
 {
 	#region 构造函数

@@ -35,9 +35,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Messaging;
 
-/// <summary>
-/// 表示消息队列的接口。
-/// </summary>
+/// <summary>表示消息队列的接口。</summary>
 public interface IMessageQueue : IMessageProducer, IDisposable
 {
 	#region 属性定义

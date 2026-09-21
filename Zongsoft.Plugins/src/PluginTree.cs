@@ -113,7 +113,7 @@ public class PluginTree
 	#region 查找方法
 	/// <summary>查找指定路径的插件树节点。</summary>
 	/// <param name="path">指定的路径。</param>
-	/// <returns>如果查找成功则返回对应的插件树节点对象，否则返回空(null)。</returns>
+	/// <returns>如果查找成功则返回对应的插件树节点对象，否则返回空<c>null</c>。</returns>
 	/// <exception cref="System.ArgumentNullException">当<paramref name="path"/>参数为空或全空格字符串。</exception>
 	public PluginTreeNode Find(string path) => this.Root.Find(path);
 	public PluginTreeNode Find(params string[] paths) => this.Root.Find(paths);
@@ -127,7 +127,7 @@ public class PluginTree
 
 	/// <summary>获取或创建指定路径的插件树节点。</summary>
 	/// <param name="path">要获取或创建的插件路径。</param>
-	/// <param name="position">当创建指定路径对应的叶子节点时，由该参数确认其插入的位置，如果该参数为空(null)或空字符串则默认追加到同级节点的最后。</param>
+	/// <param name="position">当创建指定路径对应的叶子节点时，由该参数确认其插入的位置，如果该参数为空<c>null</c>或空字符串则默认追加到同级节点的最后。</param>
 	/// <returns>返回存在的或者新建的节点对象，如果指定的<paramref name="path"/>路径参数是已存在的，则返回其对应的节点对象否则新建该节点。</returns>
 	public PluginTreeNode EnsurePath(string path, string position) => this.EnsurePath(path, position, out _);
 
@@ -139,7 +139,7 @@ public class PluginTree
 
 	/// <summary>获取或创建指定路径的插件树节点。</summary>
 	/// <param name="path">要获取或创建的插件路径。</param>
-	/// <param name="position">当创建指定路径对应的叶子节点时，由该参数确认其插入的位置，如果该参数为空(null)或空字符串则默认追加到同级节点的最后。</param>
+	/// <param name="position">当创建指定路径对应的叶子节点时，由该参数确认其插入的位置，如果该参数为空<c>null</c>或空字符串则默认追加到同级节点的最后。</param>
 	/// <param name="existed">输出参数，如果指定的路径已存在则返回真(true)，否则返回假(false)。</param>
 	/// <returns>返回存在的或者新建的节点对象，如果指定的<paramref name="path"/>路径参数是已存在的，则返回其对应的节点对象否则新建该节点。</returns>
 	public PluginTreeNode EnsurePath(string path, string position, out bool existed)
@@ -194,7 +194,7 @@ public class PluginTree
 	/// <summary>挂载对象到插件树中。</summary>
 	/// <param name="path">要挂载的路径。</param>
 	/// <param name="value">要挂载的对象。</param>
-	/// <param name="position">当挂载路径对应的叶子节点不存在时，由该参数确认其插入的位置，如果该参数为空(null)或空字符串则默认追加到同级节点的最后。</param>
+	/// <param name="position">当挂载路径对应的叶子节点不存在时，由该参数确认其插入的位置，如果该参数为空<c>null</c>或空字符串则默认追加到同级节点的最后。</param>
 	/// <returns>挂载成功则返回真(True)否则返回假(False)。</returns>
 	/// <remarks>
 	///		<para>注意：如果<paramref name="path"/>参数指定的路径对应的插件树节点已经存在，并且节点类型为<seealso cref="Zongsoft.Plugins.PluginTreeNodeType.Builtin"/>并且已经构建完成则返回假(False)。</para>
@@ -264,7 +264,7 @@ public class PluginTree
 	#region 卸载方法
 	/// <summary>卸载指定路径的自定义对象。</summary>
 	/// <param name="path">指定要卸载的路径。</param>
-	/// <returns>如果成功卸载则返回被卸载的对象，否则返回空(null)。</returns>
+	/// <returns>如果成功卸载则返回被卸载的对象，否则返回空<c>null</c>。</returns>
 	/// <exception cref="System.ArgumentNullException">当<paramref name="path"/>参数为空或全空字符串。</exception>
 	/// <exception cref="System.ArgumentException">当<paramref name="path"/>参数对应的节点对象的<see cref="Zongsoft.Plugins.PluginTreeNode.Tree"/>属性与当前插件树对象不是同一个引用。</exception>
 	/// <remarks>
@@ -287,8 +287,8 @@ public class PluginTree
 
 	/// <summary>卸载指定插件树节点对应的自定义对象。</summary>
 	/// <param name="node">指定要卸载对象的挂靠节点。</param>
-	/// <returns>如果成功卸载则返回被卸载的对象，否则返回空(null)。</returns>
-	/// <exception cref="System.ArgumentNullException">当<paramref name="node"/>参数为空(null)。</exception>
+	/// <returns>如果成功卸载则返回被卸载的对象，否则返回空<c>null</c>。</returns>
+	/// <exception cref="System.ArgumentNullException">当<paramref name="node"/>参数为空<c>null</c>。</exception>
 	/// <exception cref="System.ArgumentException">当<paramref name="node"/>参数的<see cref="Zongsoft.Plugins.PluginTreeNode.Tree"/>属性与当前插件树对象不是同一个引用。</exception>
 	/// <remarks>
 	///		<para>注意：当前该方法的实现是不完备的，请谨慎使用！</para>
@@ -435,10 +435,8 @@ public class PluginTree
 
 	/// <summary>获取指定节点的所有者对象。</summary>
 	/// <param name="node">要获取的所有者对象的节点。</param>
-	/// <returns>返回指定节点的所有者对象，如果没有则返回空(null)。</returns>
-	/// <remarks>
-	///		<para>注意：该方法不会引起上级节点的创建动作，可确保在<see cref="Zongsoft.Plugins.IBuilder"/>构建器中使用而不会导致循环创建的问题。</para>
-	/// </remarks>
+	/// <returns>返回指定节点的所有者对象，如果没有则返回空<c>null</c>。</returns>
+	/// <remarks>注意：该方法不会引起上级节点的创建动作，可确保在<see cref="Zongsoft.Plugins.IBuilder"/>构建器中使用而不会导致循环创建的问题。</remarks>
 	internal object GetOwner(PluginTreeNode node) => this.GetOwnerNode(node)?.Value;
 	public PluginTreeNode GetOwnerNode(string path) => string.IsNullOrWhiteSpace(path) ? null : this.GetOwnerNode(this.Find(path));
 	public PluginTreeNode GetOwnerNode(PluginTreeNode node)

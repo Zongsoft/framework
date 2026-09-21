@@ -32,9 +32,7 @@ using System.ComponentModel;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据分页的设置类。
-/// </summary>
+/// <summary>表示数据分页的设置类。</summary>
 [TypeConverter(typeof(PagingConverter))]
 public partial class Paging : INotifyPropertyChanged, INotifyPropertyChanging
 {

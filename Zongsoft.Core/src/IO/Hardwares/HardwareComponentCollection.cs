@@ -33,9 +33,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.IO.Hardwares;
 
-/// <summary>
-/// 表示硬件组件集。
-/// </summary>
+/// <summary>表示硬件组件集。</summary>
 public class HardwareComponentCollection : ICollection<HardwareComponent>, IReadOnlyCollection<HardwareComponent>
 {
 	#region 成员字段

@@ -29,9 +29,7 @@
 
 namespace Zongsoft.Web;
 
-/// <summary>
-/// 表示Web应用环境的接口。
-/// </summary>
+/// <summary>表示Web应用环境的接口。</summary>
 public interface IWebEnvironment
 {
 	/// <summary>获取Web根目录名，默认为：<c>wwwroot</c>。</summary>

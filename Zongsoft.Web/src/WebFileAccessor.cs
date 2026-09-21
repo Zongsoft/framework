@@ -82,6 +82,7 @@ public class WebFileAccessor
 	#region 公共方法
 	/// <summary>下载指定路径的文件。</summary>
 	/// <param name="path">指定要下载的文件的相对路径或绝对路径（绝对路径以/斜杠打头）。</param>
+	/// <returns>返回包含文件内容流及下载元数据的响应结果。</returns>
 	public FileStreamResult Read(string path)
 	{
 		if(string.IsNullOrWhiteSpace(path))
@@ -135,6 +136,7 @@ public class WebFileAccessor
 
 	/// <summary>删除指定相对路径的文件。</summary>
 	/// <param name="path">指定要删除的文件的相对路径或绝对路径（绝对路径以/斜杠打头）。</param>
+	/// <returns>异步返回文件是否删除成功。</returns>
 	public async ValueTask<bool> Delete(string path)
 	{
 		if(string.IsNullOrWhiteSpace(path))
@@ -185,7 +187,7 @@ public class WebFileAccessor
 
 	/// <summary>将网络请求中的一个文件或多个文件写入到指定的目录中。</summary>
 	/// <param name="request">网络请求消息。</param>
-	/// <param name="directory">指定文件写入的目录路径（绝对路径以“/”斜杠符打头）；如果为空(null)或全空字符串则写入目录为<see cref="BasePath"/>属性值。</param>
+	/// <param name="directory">指定文件写入的目录路径（绝对路径以“/”斜杠符打头）；如果为空<c>null</c>或全空字符串则写入目录为<see cref="BasePath"/>属性值。</param>
 	/// <param name="configure">当文件写入前激发的通知回调。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回写入成功的<see cref="Zongsoft.IO.FileInfo"/>文件描述信息实体对象集。</returns>

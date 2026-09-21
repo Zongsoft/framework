@@ -48,6 +48,7 @@ public class RedisDictionary : IDictionary<string, string>
 		_name = name ?? throw new ArgumentNullException(nameof(name));
 	}
 
+	#region 公共属性
 	public int Count => (int)_database.HashLength(_name);
 	public bool IsReadOnly => false;
 
@@ -90,30 +91,44 @@ public class RedisDictionary : IDictionary<string, string>
 			return result;
 		}
 	}
+	#endregion
 
+	#region 公共方法
 	public void Add(string key, string value)
 	{
 		if(!_database.HashSet(_name, key, value, When.NotExists))
 			throw new ArgumentException(string.Format(Properties.Resources.DictionaryKeyAlreadyExists_Message, key, _name));
 	}
+	#endregion
 
+	#region 显式实现
 	void ICollection<KeyValuePair<string, string>>.Add(KeyValuePair<string, string> field) => this.Add(field.Key, field.Value);
+	#endregion
+	#region 公共方法
 	public void Clear() => _database.KeyDelete(_name);
 	public bool Remove(string key) => _database.HashDelete(_name, key);
+	#endregion
+	#region 显式实现
 	bool ICollection<KeyValuePair<string, string>>.Remove(KeyValuePair<string, string> field)
 	{
 		var result = _database.ScriptEvaluate(REMOVE_SCRIPT, [(RedisKey)_name], [field.Key, field.Value]);
 		return (long)result != 0;
 	}
+	#endregion
 
+	#region 公共方法
 	public bool Contains(string key) => _database.HashExists(_name, key);
+	#endregion
+	#region 显式实现
 	bool IDictionary<string, string>.ContainsKey(string key) => this.Contains(key);
 	bool ICollection<KeyValuePair<string, string>>.Contains(KeyValuePair<string, string> field)
 	{
 		var value = _database.HashGet(_name, field.Key);
 		return value.HasValue && value == field.Value;
 	}
+	#endregion
 
+	#region 公共方法
 	public bool TryGetValue(string key, out string value)
 	{
 		var result = _database.HashGet(_name, key);
@@ -136,11 +151,16 @@ public class RedisDictionary : IDictionary<string, string>
 		for(int i = 0; i < entries.Length; i++)
 			array[arrayIndex + i] = new KeyValuePair<string, string>(entries[i].Name, entries[i].Value);
 	}
+	#endregion
 
+	#region 显式实现
 	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+	#endregion
+	#region 公共方法
 	public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
 	{
 		foreach(var entry in _database.HashScan(_name))
 			yield return new KeyValuePair<string, string>(entry.Name, entry.Value);
 	}
+	#endregion
 }

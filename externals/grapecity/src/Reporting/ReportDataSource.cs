@@ -35,48 +35,47 @@ using GrapeCity.ActiveReports.PageReportModel;
 
 using Zongsoft.Reporting;
 
-namespace Zongsoft.Externals.Grapecity.Reporting
+namespace Zongsoft.Externals.Grapecity.Reporting;
+
+public class ReportDataSource : IReportDataSource
 {
-	public class ReportDataSource : IReportDataSource
+	public ReportDataSource(DataSource source)
 	{
-		public ReportDataSource(DataSource source)
+		this.Source = source ?? throw new ArgumentNullException(nameof(source));
+		this.Name = source.Name;
+		this.Provider = source.ConnectionProperties.DataProvider;
+
+		var connectionString = source.ConnectionProperties.ConnectString.Expression;
+
+		if(!string.IsNullOrEmpty(connectionString))
 		{
-			this.Source = source ?? throw new ArgumentNullException(nameof(source));
-			this.Name = source.Name;
-			this.Provider = source.ConnectionProperties.DataProvider;
+			var parts = Zongsoft.Common.StringExtension.Slice(connectionString, ';');
+			this.Settings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
-			var connectionString = source.ConnectionProperties.ConnectString.Expression;
-
-			if(!string.IsNullOrEmpty(connectionString))
+			foreach(var part in parts)
 			{
-				var parts = Zongsoft.Common.StringExtension.Slice(connectionString, ';');
-				this.Settings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-
-				foreach(var part in parts)
+				if(part != null && part.Length > 0)
 				{
-					if(part != null && part.Length > 0)
+					var index = part.IndexOf('=');
+
+					if(index > 0)
 					{
-						var index = part.IndexOf('=');
+						var key = part.Substring(0, index);
 
-						if(index > 0)
-						{
-							var key = part.Substring(0, index);
-
-							if(index >= part.Length - 1)
-								this.Settings.Add(key, null);
-							else
-								this.Settings.Add(key, part.Substring(index + 1));
-						}
+						if(index >= part.Length - 1)
+							this.Settings.Add(key, null);
+						else
+							this.Settings.Add(key, part.Substring(index + 1));
 					}
 				}
 			}
 		}
-
-		public string Name { get; }
-		public string Provider { get; }
-		public DataSource Source { get; }
-		public IDictionary<string, string> Settings { get; }
-
-		public ReportDataModel CreateModel(IDataSet dataSet) => new ReportDataModel(dataSet, this);
 	}
+
+	public string Name { get; }
+	public string Provider { get; }
+	public DataSource Source { get; }
+	public IDictionary<string, string> Settings { get; }
+
+	public ReportDataModel CreateModel(IDataSet dataSet) => new(dataSet, this);
 }

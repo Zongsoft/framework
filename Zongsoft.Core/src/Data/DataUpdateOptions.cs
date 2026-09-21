@@ -33,9 +33,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示更新行为的枚举。
-/// </summary>
+/// <summary>表示更新行为的枚举。</summary>
 [Flags]
 public enum UpdateBehaviors
 {
@@ -46,18 +44,16 @@ public enum UpdateBehaviors
 	PrimaryKey,
 }
 
-/// <summary>
-/// 表示数据更新操作选项的接口。
-/// </summary>
+/// <summary>表示数据更新操作选项的接口。</summary>
 public interface IDataUpdateOptions : IDataMutateOptions
 {
+	#region 公共属性
 	/// <summary>获取或设置更新行为。</summary>
 	UpdateBehaviors Behaviors { get; set; }
+	#endregion
 }
 
-/// <summary>
-/// 表示数据更新操作选项的类。
-/// </summary>
+/// <summary>表示数据更新操作选项的类。</summary>
 public class DataUpdateOptions : DataMutateOptions, IDataUpdateOptions
 {
 	#region 构造函数
@@ -164,11 +160,10 @@ public class DataUpdateOptions : DataMutateOptions, IDataUpdateOptions
 	#endregion
 }
 
-/// <summary>
-/// 提供数据更新操作选项的扩展方法的静态类。
-/// </summary>
+/// <summary>提供数据更新操作选项的扩展方法的静态类。</summary>
 public static class DataUpdateOptionsExtension
 {
+	#region 静态方法
 	public static bool HasBehaviors(this IDataUpdateOptions options, UpdateBehaviors behaviors)
 	{
 		if(options == null)
@@ -194,4 +189,5 @@ public static class DataUpdateOptionsExtension
 		options.Behaviors &= ~behaviors;
 		return options;
 	}
+	#endregion
 }

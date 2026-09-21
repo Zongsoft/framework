@@ -38,9 +38,7 @@ using Zongsoft.Reflection;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 提供条件转换的静态类。
-/// </summary>
+/// <summary>提供条件转换的静态类。</summary>
 public static class Criteria
 {
 	#region 静态变量

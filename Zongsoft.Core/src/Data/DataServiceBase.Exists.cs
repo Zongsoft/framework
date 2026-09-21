@@ -35,6 +35,7 @@ namespace Zongsoft.Data;
 
 partial class DataServiceBase<TModel>
 {
+	#region 公共方法
 	public bool Exists(string key, DataExistsOptions options = null) => this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key, options, out _), options);
 	public bool Exists<TKey1>(TKey1 key1, DataExistsOptions options = null)
 		where TKey1 : IEquatable<TKey1> => this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, options, out _), options);
@@ -75,12 +76,16 @@ partial class DataServiceBase<TModel>
 
 	public bool Exists(Data.Condition criteria, DataExistsOptions options = null) => this.Exists((ICondition)criteria, options);
 	public bool Exists(ConditionCollection criteria, DataExistsOptions options = null) => this.Exists((ICondition)criteria, options);
+	#endregion
 
+	#region 保护方法
 	protected virtual bool OnExists(ICondition criteria, DataExistsOptions options)
 	{
 		return this.DataAccess.Exists(this.Name, criteria, options, ctx => this.OnExisting(ctx), ctx => this.OnExisted(ctx));
 	}
+	#endregion
 
+	#region 公共方法
 	public ValueTask<bool> ExistsAsync(string key, DataExistsOptions options = null, CancellationToken cancellation = default) => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key, options, out _), options, cancellation);
 	public ValueTask<bool> ExistsAsync<TKey1>(TKey1 key1, DataExistsOptions options = null, CancellationToken cancellation = default)
 		where TKey1 : IEquatable<TKey1> => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, options, out _), options, cancellation);
@@ -118,9 +123,12 @@ partial class DataServiceBase<TModel>
 		//执行存在操作
 		return this.OnExistsAsync(criteria, options, cancellation);
 	}
+	#endregion
 
+	#region 保护方法
 	protected virtual ValueTask<bool> OnExistsAsync(ICondition criteria, DataExistsOptions options, CancellationToken cancellation)
 	{
 		return this.DataAccess.ExistsAsync(this.Name, criteria, options, ctx => this.OnExisting(ctx), ctx => this.OnExisted(ctx), cancellation);
 	}
+	#endregion
 }

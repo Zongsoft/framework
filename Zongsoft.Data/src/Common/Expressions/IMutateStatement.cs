@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data.Common.Expressions;
 
-/// <summary>
-/// 表示写入语句（即新增、更新、删除等）的接口。
-/// </summary>
+/// <summary>表示写入语句（即新增、更新、删除等）的接口。</summary>
 public interface IMutateStatement : IStatementBase
 {
 	/// <summary>获取或设置写入语句对应的模式成员。</summary>

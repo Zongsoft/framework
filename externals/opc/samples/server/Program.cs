@@ -10,6 +10,7 @@ namespace Zongsoft.Externals.Opc.Samples;
 
 internal static class Program
 {
+	#region 静态方法
 	static async Task Main(string[] args)
 	{
 		using var server = new OpcServer();
@@ -174,7 +175,9 @@ internal static class Program
 		//运行终端命令执行器
 		await executor.RunAsync(splash);
 	}
+	#endregion
 
+	#region 私有方法
 	private static void Initialize(this OpcServerOptions.StorageOptions storage) => Initialize(storage.Prefabs);
 	private static void Initialize(this PrefabCollection prefabs)
 	{
@@ -246,24 +249,29 @@ internal static class Program
 		DateTimeOffset datetime => datetime.AddSeconds(interval),
 		_ => value,
 	};
+	#endregion
 
 	public class Person
 	{
+		#region 公共属性
 		public string Name { get; set; }
 		public Gender? Gender { get; set; }
 		public DateTime? Birthday { get; set; }
 		public Address? HomeAddress { get; set; }
 		public Address? OfficeAddress { get; set; }
+		#endregion
 	}
 
 	public struct Address
 	{
 		public int Country;
+		#region 公共属性
 		public string Province { get; set; }
 		public string City { get; set; }
 		public string Street { get; set; }
 		public string Detail { get; set; }
 		public string PostalCode { get; set; }
+		#endregion
 	}
 
 	public enum Gender : byte

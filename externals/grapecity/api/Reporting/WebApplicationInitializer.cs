@@ -41,86 +41,85 @@ using GrapeCity.ActiveReports.Aspnetcore.Designer;
 using Zongsoft.Services;
 using Zongsoft.Reporting;
 
-namespace Zongsoft.Externals.Grapecity.Reporting.Web
+namespace Zongsoft.Externals.Grapecity.Reporting.Web;
+
+[Service(typeof(IApplicationInitializer<IApplicationBuilder>))]
+public class WebApplicationInitializer : IApplicationInitializer<IApplicationBuilder>
 {
-	[Service(typeof(IApplicationInitializer<IApplicationBuilder>))]
-	public class WebApplicationInitializer : IApplicationInitializer<IApplicationBuilder>
+	#region 常量定义
+	private const string ROUTE_PREFIX = "/Grapecity/Reporting";
+	#endregion
+
+	#region 初始方法
+	public void Initialize(IApplicationBuilder app)
 	{
-		#region 常量定义
-		private const string ROUTE_PREFIX = "/Grapecity/Reporting";
-		#endregion
+		var reportService = app.ApplicationServices.Resolve<Designing.ResourceService>();
 
-		#region 初始方法
-		public void Initialize(IApplicationBuilder app)
+		app.UseReporting(settings =>
 		{
-			var reportService = app.ApplicationServices.Resolve<Designing.ResourceService>();
+			settings.Prefix = ROUTE_PREFIX;
+			settings.UseCompression = true;
+			settings.UseCustomStore(reportService.GetReport);
+			settings.LocateDataSource = GetData;
+			settings.SetLocateDataSource(GetData);
+		});
 
-			app.UseReporting(settings =>
-			{
-				settings.Prefix = ROUTE_PREFIX;
-				settings.UseCompression = true;
-				settings.UseCustomStore(reportService.GetReport);
-				settings.LocateDataSource = GetData;
-				settings.SetLocateDataSource(GetData);
-			});
-
-			app.UseDesigner(settings =>
-			{
-				settings.Prefix = ROUTE_PREFIX;
-				settings.UseCustomStore(reportService);
-			});
-		}
-		#endregion
-
-		#region 私有方法
-		private static object GetData(GrapeCity.ActiveReports.Rendering.LocateDataSourceArgs args)
+		app.UseDesigner(settings =>
 		{
-			var source = GetDataSource(args.DataSet.Query.DataSourceName, args.Report.DataSources);
-
-			if(source != null)
-			{
-				var model = source.CreateModel(args.DataSet);
-				var loader = ApplicationContext.Current.Services.Resolve<IReportDataLoader>();
-
-				if(loader != null)
-				{
-					return loader.Load(null, model);
-				}
-			}
-
-			return null;
-		}
-
-		private static object GetData(GrapeCity.ActiveReports.Web.Viewer.LocateDataSourceArgs args)
-		{
-			var source = GetDataSource(args.DataSet.Query.DataSourceName, args.Report.DataSources);
-
-			if(source != null)
-			{
-				var model = source.CreateModel(args.DataSet);
-				var loader = ApplicationContext.Current.Services.Resolve<IReportDataLoader>();
-
-				if(loader != null)
-				{
-					return loader.Load(null, model);
-				}
-			}
-
-			return null;
-		}
-
-		private static ReportDataSource GetDataSource(string name, IEnumerable<GrapeCity.ActiveReports.PageReportModel.DataSource> sources)
-		{
-			foreach(var source in sources)
-			{
-				if(source.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
-				{
-					return new ReportDataSource(source);
-				}
-			}
-
-			return null;
-		}
-		#endregion
+			settings.Prefix = ROUTE_PREFIX;
+			settings.UseCustomStore(reportService);
+		});
 	}
+	#endregion
+
+	#region 私有方法
+	private static object GetData(GrapeCity.ActiveReports.Rendering.LocateDataSourceArgs args)
+	{
+		var source = GetDataSource(args.DataSet.Query.DataSourceName, args.Report.DataSources);
+
+		if(source != null)
+		{
+			var model = source.CreateModel(args.DataSet);
+			var loader = ApplicationContext.Current.Services.Resolve<IReportDataLoader>();
+
+			if(loader != null)
+			{
+				return loader.Load(null, model);
+			}
+		}
+
+		return null;
+	}
+
+	private static object GetData(GrapeCity.ActiveReports.Web.Viewer.LocateDataSourceArgs args)
+	{
+		var source = GetDataSource(args.DataSet.Query.DataSourceName, args.Report.DataSources);
+
+		if(source != null)
+		{
+			var model = source.CreateModel(args.DataSet);
+			var loader = ApplicationContext.Current.Services.Resolve<IReportDataLoader>();
+
+			if(loader != null)
+			{
+				return loader.Load(null, model);
+			}
+		}
+
+		return null;
+	}
+
+	private static ReportDataSource GetDataSource(string name, IEnumerable<GrapeCity.ActiveReports.PageReportModel.DataSource> sources)
+	{
+		foreach(var source in sources)
+		{
+			if(source.Name.Equals(name, StringComparison.OrdinalIgnoreCase))
+			{
+				return new ReportDataSource(source);
+			}
+		}
+
+		return null;
+	}
+	#endregion
 }

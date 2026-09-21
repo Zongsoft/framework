@@ -3,9 +3,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Tests.Models;
 
-/// <summary>
-/// 表示班组成员的实体结构。
-/// </summary>
+/// <summary>表示班组成员的实体结构。</summary>
 public struct TeamMember : IEquatable<TeamMember>
 {
 	#region 构造函数

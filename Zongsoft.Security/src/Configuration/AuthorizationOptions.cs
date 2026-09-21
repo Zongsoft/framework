@@ -34,9 +34,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Security.Configuration;
 
-/// <summary>
-/// 表示授权管理的配置选项。
-/// </summary>
+/// <summary>表示授权管理的配置选项。</summary>
 public class AuthorizationOptions
 {
 	#region 公共属性

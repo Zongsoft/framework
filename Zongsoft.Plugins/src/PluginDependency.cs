@@ -45,19 +45,15 @@ public class PluginDependency
 	#endregion
 
 	#region 公共属性
-	/// <summary>
-	/// 获取依赖的插件名。注：此名称不是插件的文件名。
-	/// </summary>
+	/// <summary>获取依赖的插件名。注：此名称不是插件的文件名。</summary>
 	public string Name
 	{
 		get;
 		internal set;
 	}
 
-	/// <summary>
-	/// 获取依赖的插件对象。
-	/// </summary>
-	/// <remarks>如果插件未加载完成，该属性返回空(null)。</remarks>
+	/// <summary>获取依赖的插件对象。</summary>
+	/// <remarks>如果插件未加载完成，该属性返回空<c>null</c>。</remarks>
 	public Plugin Plugin
 	{
 		get;

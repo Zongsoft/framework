@@ -37,6 +37,7 @@ namespace Zongsoft.Externals.Aliyun.Telecom;
 
 public class FallbackRequestContent
 {
+	#region 公共属性
 	[JsonPropertyName("role")]
 	[SerializationMember("role")]
 	public string Actor { get; set; }
@@ -80,4 +81,5 @@ public class FallbackRequestContent
 	[JsonPropertyName("is_monitor\t")]
 	[SerializationMember("is_monitor\t")]
 	public bool IsTransferMonitor { get; set; }
+	#endregion
 }

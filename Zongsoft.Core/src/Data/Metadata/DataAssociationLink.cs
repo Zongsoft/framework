@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data.Metadata;
 
-/// <summary>
-/// 表示数据实体关联成员的元数据类。
-/// </summary>
+/// <summary>表示数据实体关联成员的元数据类。</summary>
 public class DataAssociationLink
 {
 	#region 成员字段

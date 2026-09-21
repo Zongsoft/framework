@@ -38,9 +38,7 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-/// <summary>
-/// 提供用户服务的接口。
-/// </summary>
+/// <summary>提供用户服务的接口。</summary>
 public partial interface IUserService
 {
 	#region 属性定义

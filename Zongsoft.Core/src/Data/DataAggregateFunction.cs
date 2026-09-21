@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示聚合函数的枚举。
-/// </summary>
+/// <summary>表示聚合函数的枚举。</summary>
 public enum DataAggregateFunction
 {
 	/// <summary>数量</summary>

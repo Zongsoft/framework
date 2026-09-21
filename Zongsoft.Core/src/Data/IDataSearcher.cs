@@ -32,17 +32,18 @@ using System.Collections;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据搜索器的接口。
-/// </summary>
+/// <summary>表示数据搜索器的接口。</summary>
 public interface IDataSearcher
 {
+	#region 公共属性
 	/// <summary>获取数据搜索服务的名称，该名称亦为数据搜索接口的调用名。</summary>
 	string Name { get; }
 
 	/// <summary>获取数据搜索关键字的条件解析器。</summary>
 	IDataSearcherConditioner Conditioner { get; }
+	#endregion
 
+	#region 公共方法
 	int Count(string keyword, IDataOptions options = null);
 	bool Exists(string keyword, IDataOptions options = null);
 
@@ -53,4 +54,5 @@ public interface IDataSearcher
 	IEnumerable Search(string keyword, string schema, IDataOptions options, params Sorting[] sortings);
 	IEnumerable Search(string keyword, string schema, Paging paging, params Sorting[] sortings);
 	IEnumerable Search(string keyword, string schema, Paging paging, IDataOptions options, params Sorting[] sortings);
+	#endregion
 }

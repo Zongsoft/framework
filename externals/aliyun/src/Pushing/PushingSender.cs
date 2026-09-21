@@ -36,9 +36,7 @@ using System.Collections.Concurrent;
 
 namespace Zongsoft.Externals.Aliyun.Pushing;
 
-/// <summary>
-/// 提供移动推送功能的类。
-/// </summary>
+/// <summary>提供移动推送功能的类。</summary>
 [Services.Service]
 public class PushingSender
 {

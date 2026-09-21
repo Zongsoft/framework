@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示某种功能或特性的接口。
-/// </summary>
+/// <summary>表示某种功能或特性的接口。</summary>
 public interface IFeature
 {
 }

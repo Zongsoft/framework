@@ -35,9 +35,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示写操作的返回数据的类。
-/// </summary>
+/// <summary>表示写操作的返回数据的类。</summary>
 public class Returning
 {
 	#region 构造函数

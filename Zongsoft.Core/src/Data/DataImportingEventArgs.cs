@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 为数据访问的导入事件提供数据。
-/// </summary>
+/// <summary>为数据访问的导入事件提供数据。</summary>
 public class DataImportingEventArgs : DataImportedEventArgs
 {
 	#region 构造函数

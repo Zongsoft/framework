@@ -43,6 +43,7 @@ internal static class Utility
 	private static readonly ConcurrentDictionary<MemberInfo, TypeConverter> _converters = new();
 	#endregion
 
+	#region 静态方法
 	public static IList CreateList(Type elementType)
 	{
 		if(elementType == null)
@@ -125,7 +126,9 @@ internal static class Utility
 
 		return _converters.GetOrAdd(member, Zongsoft.Common.Convert.GetTypeConverter(member, true));
 	}
+	#endregion
 
+	#region 内部方法
 	internal static object GetMemberValue(ref object target, string name)
 	{
 		if(target is IModel model)
@@ -285,4 +288,5 @@ internal static class Utility
 
 		return false;
 	}
+	#endregion
 }

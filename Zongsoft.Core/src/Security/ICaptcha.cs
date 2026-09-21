@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Security;
 
-/// <summary>
-/// 表示人机识别程序(Completely Automated Public Turing test to tell Computers and Humans Apart)的接口。
-/// </summary>
+/// <summary>表示人机识别程序(Completely Automated Public Turing test to tell Computers and Humans Apart)的接口。</summary>
 /// <remarks>
 ///		<para>人机识别 RESTful API 定义：</para>
 ///		<list type="bullet">

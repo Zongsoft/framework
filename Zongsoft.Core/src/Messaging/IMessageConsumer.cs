@@ -36,9 +36,7 @@ using Zongsoft.Communication;
 
 namespace Zongsoft.Messaging;
 
-/// <summary>
-/// 表示消息消费者的接口。
-/// </summary>
+/// <summary>表示消息消费者的接口。</summary>
 public interface IMessageConsumer : IChannel
 {
 	#region 属性定义

@@ -33,20 +33,28 @@ namespace Zongsoft.Data.Archiving;
 
 public interface IDataArchiveReader : IDataArchiveRecord, IDisposable
 {
+	#region 公共属性
 	bool IsEmpty { get; }
+	#endregion
+	#region 公共方法
 	bool Read();
+	#endregion
 }
 
 public interface IDataArchiveRecord
 {
+	#region 公共属性
 	int FieldCount { get; }
 
 	object this[int ordinal] { get; }
 	object this[string name] { get; }
+	#endregion
 
+	#region 公共方法
 	string GetName(int ordinal);
 	object GetValue(int ordinal);
 	object GetValue(string name);
 	T GetValue<T>(int ordinal);
 	T GetValue<T>(string name);
+	#endregion
 }

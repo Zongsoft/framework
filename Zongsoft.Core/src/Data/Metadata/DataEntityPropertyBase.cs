@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data.Metadata;
 
-/// <summary>
-/// 表示数据实体属性的元数据抽象基类。
-/// </summary>
+/// <summary>表示数据实体属性的元数据抽象基类。</summary>
 public abstract class DataEntityPropertyBase : IDataEntityProperty
 {
 	#region 构造函数

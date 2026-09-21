@@ -32,9 +32,7 @@ using System.Collections.ObjectModel;
 
 namespace Zongsoft.Security.Configuration;
 
-/// <summary>
-/// 表示身份验证的配置选项。
-/// </summary>
+/// <summary>表示身份验证的配置选项。</summary>
 public class AuthenticationOptions
 {
 	#region 静态字段
@@ -71,9 +69,7 @@ public class AuthenticationOptions
 	#endregion
 
 	#region 嵌套子类
-	/// <summary>
-	/// 表示以凭证场景为依据的有效期配置项。
-	/// </summary>
+	/// <summary>表示以凭证场景为依据的有效期配置项。</summary>
 	public class ExpirationScenario
 	{
 		/// <summary>获取凭证场景名。</summary>

@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common.Expressions;
 
-/// <summary>
-/// 提供生成 <see cref="IStatementBase"/> 数据操作语句的接口。
-/// </summary>
+/// <summary>提供生成 <see cref="IStatementBase"/> 数据操作语句的接口。</summary>
 public interface IStatementBuilder<TContext> where TContext : IDataAccessContext
 {
 	/// <summary>根据指定的数据访问上下文生成对应的数据操作语句。</summary>

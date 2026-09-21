@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据访问的方法名的枚举。
-/// </summary>
+/// <summary>表示数据访问的方法名的枚举。</summary>
 public enum DataAccessMethod
 {
 	/// <summary>执行方法</summary>

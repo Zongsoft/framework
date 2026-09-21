@@ -39,9 +39,12 @@ public class InfluxParameterCollection : DbParameterCollection
 {
 	private readonly Parameters _parameters = new();
 
+	#region 重写属性
 	public override int Count => _parameters.Count;
 	public override object SyncRoot => ((ICollection)_parameters).SyncRoot;
+	#endregion
 
+	#region 重写方法
 	public override int Add(object value)
 	{
 		if(value is InfluxParameter parameter)
@@ -80,9 +83,12 @@ public class InfluxParameterCollection : DbParameterCollection
 	protected override void SetParameter(int index, DbParameter value) => _parameters.Insert(index, value as InfluxParameter);
 	protected override void SetParameter(string name, DbParameter value) => _parameters.Add(value as InfluxParameter);
 	public override IEnumerator GetEnumerator() => _parameters.GetEnumerator();
+	#endregion
 
 	private sealed class Parameters : KeyedCollection<string, InfluxParameter>
 	{
+		#region 重写方法
 		protected override string GetKeyForItem(InfluxParameter parameter) => parameter.ParameterName;
+		#endregion
 	}
 }

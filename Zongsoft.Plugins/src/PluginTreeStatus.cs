@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Plugins;
 
-/// <summary>
-/// 表示插件树的当前状态。
-/// </summary>
+/// <summary>表示插件树的当前状态。</summary>
 public enum PluginTreeStatus
 {
 	/// <summary>未初始化。</summary>

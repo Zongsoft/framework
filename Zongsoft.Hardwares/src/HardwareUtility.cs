@@ -59,6 +59,7 @@ internal static class HardwareUtility
 		"base board",
 	];
 
+	#region 静态方法
 	public static string Normalize(object value)
 	{
 		if(value == null)
@@ -282,7 +283,9 @@ internal static class HardwareUtility
 		var number = text.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).FirstOrDefault();
 		return ulong.TryParse(number, NumberStyles.Integer, CultureInfo.InvariantCulture, out var result) ? result * 1024UL : null;
 	}
+	#endregion
 
+	#region 私有方法
 	private static object NormalizeValue(object value)
 	{
 		if(value == null)
@@ -296,10 +299,13 @@ internal static class HardwareUtility
 
 		return value;
 	}
+	#endregion
 }
 
 internal readonly record struct CommandResult(int ExitCode, string Output, string Error)
 {
 	public static readonly CommandResult Empty = new(-1, null, null);
+	#region 公共属性
 	public bool Succeeded => this.ExitCode == 0 && !string.IsNullOrWhiteSpace(this.Output);
+	#endregion
 }

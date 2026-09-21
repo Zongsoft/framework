@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Externals.Aliyun.Messaging;
 
-/// <summary>
-/// 表示主题信息的实体类。
-/// </summary>
+/// <summary>表示主题信息的实体类。</summary>
 public class MessageTopicInfo
 {
 	#region 公共属性

@@ -100,6 +100,7 @@ partial class ModelPropertyDescriptor
 
 		private class ConstraintTypeConverter : TypeConverter
 		{
+			#region 重写方法
 			public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
 			public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
 
@@ -118,10 +119,12 @@ partial class ModelPropertyDescriptor
 
 				return base.ConvertTo(context, culture, value, destinationType);
 			}
+			#endregion
 		}
 
 		private class ConstraintJsonConverter : JsonConverter<Constraint>
 		{
+			#region 重写方法
 			public override Constraint Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options) => reader.TokenType switch
 			{
 				JsonTokenType.Null => default,
@@ -136,6 +139,7 @@ partial class ModelPropertyDescriptor
 				else
 					writer.WriteStringValue(value.ToString());
 			}
+			#endregion
 		}
 	}
 }

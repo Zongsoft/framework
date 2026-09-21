@@ -3,9 +3,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Tests.Models;
 
-/// <summary>
-/// 表示租户业务的实体类。
-/// </summary>
+/// <summary>表示租户业务的实体类。</summary>
 public abstract class Tenant
 {
 	#region 普通属性
@@ -205,9 +203,7 @@ public abstract class Tenant
 	#endregion
 }
 
-/// <summary>
-/// 表示租户查询条件的实体类。
-/// </summary>
+/// <summary>表示租户查询条件的实体类。</summary>
 public abstract class TenantCriteria : CriteriaBase
 {
 	#region 公共属性
@@ -291,9 +287,7 @@ public abstract class TenantCriteria : CriteriaBase
 	#endregion
 }
 
-/// <summary>
-/// 表示租户许可的实体类。
-/// </summary>
+/// <summary>表示租户许可的实体类。</summary>
 public abstract class TenantLicense
 {
 	#region 普通属性

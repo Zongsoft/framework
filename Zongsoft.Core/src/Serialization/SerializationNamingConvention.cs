@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Serialization;
 
-/// <summary>
-/// 表示命名转换的枚举。
-/// </summary>
+/// <summary>表示命名转换的枚举。</summary>
 public enum SerializationNamingConvention
 {
 	/// <summary>无转换</summary>

@@ -43,17 +43,22 @@ namespace Zongsoft.Net;
 
 public class WebFileSystem : Zongsoft.IO.IFileSystem
 {
+	#region 公共属性
 	public string Scheme => "zfs.web";
 	public IFile File => new FileProvider(ApplicationContext.Current.Services.ResolveRequired<IHttpClientFactory>());
 	public IDirectory Directory => new DirectoryProvider(ApplicationContext.Current.Services.ResolveRequired<IHttpClientFactory>());
+	#endregion
 
+	#region 公共方法
 	public string GetUrl(string virtualPath) => Zongsoft.IO.Path.TryParse(virtualPath, out var path) ? this.GetUrl(path) : virtualPath;
 	public string GetUrl(Zongsoft.IO.Path path) => $"http://{path.FullPath.TrimStart('/')}";
+	#endregion
 
 	private sealed class DirectoryProvider(IHttpClientFactory factory) : Zongsoft.IO.IDirectory
 	{
 		private readonly IHttpClientFactory _factory = factory;
 
+		#region 公共方法
 		public bool Create(string fullPath, IEnumerable<KeyValuePair<string, string>> properties = null)
 		{
 			var client = this.GetClient(fullPath, out var path);
@@ -211,7 +216,9 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 		public ValueTask MoveAsync(string source, string destination, CancellationToken cancellation = default) => throw new NotSupportedException();
 		public bool SetInfo(string path, IEnumerable<KeyValuePair<string, string>> properties) => throw new NotSupportedException();
 		public ValueTask<bool> SetInfoAsync(string path, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default) => throw new NotSupportedException();
+		#endregion
 
+		#region 私有方法
 		private HttpClient GetClient(ReadOnlySpan<char> fullPath, out string path)
 		{
 			if(fullPath.IsEmpty)
@@ -291,27 +298,34 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 			foreach(var info in infos)
 				yield return new IO.FileInfo(info.Name, info.Size, info.Type, info.Creation, info.Modification);
 		}
+		#endregion
 
 		private sealed class Result
 		{
+			#region 公共属性
 			public DirectoryInfo[] Directories { get; set; }
 			public FileInfo[] Files { get; set; }
+			#endregion
 		}
 
 		private sealed class FileInfo
 		{
+			#region 公共属性
 			public string Name { get; set; }
 			public string Type { get; set; }
 			public long Size { get; set; }
 			public DateTime Creation { get; set; }
 			public DateTime Modification { get; set; }
+			#endregion
 		}
 
 		private sealed class DirectoryInfo
 		{
+			#region 公共属性
 			public string Name { get; set; }
 			public DateTime Creation { get; set; }
 			public DateTime Modification { get; set; }
+			#endregion
 		}
 	}
 
@@ -319,6 +333,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 	{
 		private readonly IHttpClientFactory _factory = factory;
 
+		#region 公共方法
 		public void Copy(string source, string destination, bool overwrite = true) => throw new NotSupportedException();
 		public ValueTask CopyAsync(string source, string destination, bool overwrite, CancellationToken cancellation = default) => throw new NotSupportedException();
 		public void Move(string source, string destination) => throw new NotSupportedException();
@@ -398,7 +413,9 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 			response.EnsureSuccessStatusCode();
 			return await response.Content.ReadAsStreamAsync(cancellation);
 		}
+		#endregion
 
+		#region 私有方法
 		private HttpClient GetClient(ReadOnlySpan<char> fullPath, out string path)
 		{
 			if(fullPath.IsEmpty)
@@ -440,19 +457,24 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 			return new IO.FileInfo(name, size, type, creation, modification);
 		}
+		#endregion
 
 		private struct FileInfo
 		{
+			#region 公共属性
 			public string Name { get; set; }
 			public long Size { get; set; }
 			public string Type { get; set; }
 			public DateTimeOffset Creation { get; set; }
 			public DateTimeOffset Modification { get; set; }
+			#endregion
 		}
 	}
 
+	#region 私有方法
 	private static string GetHeader(HttpResponseMessage response, string name) =>
 		response.Headers.TryGetValues(name, out var values) ? values.FirstOrDefault() : null;
+	#endregion
 
 	private sealed class WebUploadStream : Stream
 	{
@@ -469,12 +491,15 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 			_fileStream = System.IO.File.Open(_filePath, FileMode.Create, FileAccess.ReadWrite);
 		}
 
+		#region 重写属性
 		public override bool CanSeek => false;
 		public override bool CanRead => false;
 		public override bool CanWrite => true;
 		public override long Length => _fileStream.Length;
 		public override long Position { get => _fileStream.Position; set => _fileStream.Position = value; }
+		#endregion
 
+		#region 重写方法
 		public override void Flush() { }
 		public override int Read(byte[] buffer, int offset, int count) => _fileStream.Read(buffer, offset, count);
 		public override long Seek(long offset, SeekOrigin origin) => _fileStream.Seek(offset, origin);
@@ -500,5 +525,6 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 			_fileStream.Dispose();
 			System.IO.File.Delete(_filePath);
 		}
+		#endregion
 	}
 }

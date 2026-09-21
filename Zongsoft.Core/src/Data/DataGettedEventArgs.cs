@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 为数据服务的获取事件提供数据。
-/// </summary>
+/// <summary>为数据服务的获取事件提供数据。</summary>
 public class DataGettedEventArgs<T> : DataAccessEventArgs<DataSelectContextBase>
 {
 	#region 构造函数
@@ -41,9 +39,7 @@ public class DataGettedEventArgs<T> : DataAccessEventArgs<DataSelectContextBase>
 	#endregion
 
 	#region 公共属性
-	/// <summary>
-	/// 获取查询操作的首条数据。
-	/// </summary>
+	/// <summary>获取查询操作的首条数据。</summary>
 	public T Result
 	{
 		get

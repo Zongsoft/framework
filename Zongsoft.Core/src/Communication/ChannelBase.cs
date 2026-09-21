@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Communication;
 
-/// <summary>
-/// 定义通道基本功能的抽象基类。
-/// </summary>
+/// <summary>定义通道基本功能的抽象基类。</summary>
 public abstract class ChannelBase : IChannel, IAsyncDisposable
 {
 	#region 事件定义
@@ -75,9 +73,13 @@ public abstract class ChannelBase : IChannel, IAsyncDisposable
 
 	#region 关闭方法
 	/// <summary>当前通道被关闭时候由子类实现。</summary>
+	/// <param name="cancellation">监视取消请求的令牌。</param>
+	/// <returns>表示通道关闭操作的异步任务。</returns>
 	protected abstract ValueTask OnCloseAsync(CancellationToken cancellation);
 
 	/// <summary>关闭当前通道。</summary>
+	/// <param name="cancellation">监视取消请求的令牌。</param>
+	/// <returns>表示通道关闭操作的异步任务。</returns>
 	/// <remarks>
 	///		<para>注意：该方法不允许线程重入，即在多线程调用中，本方法内部会以同步机制运行。</para>
 	///		<para>如果当前通道是已关闭的(即<seealso cref="IsClosed"/>属性为真)，则该方法不执行任何操作。</para>

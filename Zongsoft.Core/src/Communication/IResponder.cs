@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Communication;
 
-/// <summary>
-/// 表示请求响应器的接口。
-/// </summary>
+/// <summary>表示请求响应器的接口。</summary>
 public interface IResponder
 {
 	/// <summary>接收请求的方法。</summary>

@@ -143,7 +143,7 @@ dotnet format style ./Zongsoft.Core/src/Zongsoft.Core.csproj --no-restore --veri
 
 `--include` 路径相对于当前工作目录，将示例文件替换为实际修改文件。普通构建将明确的风格问题报告为警告；未使用引用改用 `ZS0005`，允许普通 `using System;`，此项检查仍要求开启 XML 文档生成；`CS4014` 与 `CA2012` 保持为错误。`IDE0049` 不在构建时运行，必须由编辑器或上面的 `dotnet format style` 命令补充检查。首次使用前可用 `dotnet restore` 还原目标项目。
 
-对已整理完成的项目，在构建命令追加 `-p:ZongsoftCodeStyleStrict=true`，将配置指定的风格警告升级为错误。严格模式检查整个项目及实际构建的项目引用，不能限制为 Git 修改行；当前历史代码仍有存量诊断。多目标编译按项目的实际目标框架执行，局部格式检查不替代各目标框架验证。CI 必须检查构建和 IDE0049 验证命令的退出码。
+在构建命令追加 `-p:ZongsoftCodeStyleStrict=true`，将配置指定的风格警告升级为错误。严格模式检查整个项目及实际构建的项目引用，不能限制为 Git 修改行。多目标编译按项目的实际目标框架执行，局部格式检查不替代各目标框架验证。CI 必须检查构建和 IDE0049 验证命令的退出码。
 
 > 💡 `dotnet format whitespace` 直接检查格式化结果，不应用分析器的诊断抑制，仍可能报告合法条件编译缩进和单行 try/catch/finally 的排版差异；这些例外以加载配套分析器的构建诊断为准。只读检查保留 `--verify-no-changes`。需要修正时限定本次修改文件并检查差异；不要对全仓执行无范围限制的格式修正、整理导入或公共 API 重命名。
 

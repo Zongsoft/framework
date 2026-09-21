@@ -140,8 +140,11 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 		public readonly Stack<string> Paths;
 
 		public XmlNodeType Previous;
+		#region 公共属性
 		public readonly int Depth => this.Reader.Depth;
+		#endregion
 
+		#region 公共方法
 		public void Next()
 		{
 			if(this.Reader.NodeType == XmlNodeType.Element && this.Reader.IsEmptyElement)
@@ -156,10 +159,12 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 		public readonly void Clear() => this.Paths.Clear();
 		public readonly void Indent(string path) => this.Paths.Push(path);
 		public readonly string Dedent() => this.Paths.Pop();
+		#endregion
 	}
 
 	partial struct Context
 	{
+		#region 公共方法
 		public readonly void DoOption()
 		{
 			//确保配置元素必须位于<option>节点之内
@@ -269,5 +274,6 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 
 			this.Data[key] = this.Reader.Value;
 		}
+		#endregion
 	}
 }

@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 提供数据实体属性写入值的校验和绑定的接口。
-/// </summary>
+/// <summary>提供数据实体属性写入值的校验和绑定的接口。</summary>
 public interface IDataValueBinder
 {
 	/// <summary>绑定数据写入时指定属性的值。</summary>

@@ -35,9 +35,7 @@ using System.Text.Json.Serialization;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据属性函数的结构。
-/// </summary>
+/// <summary>表示数据属性函数的结构。</summary>
 [TypeConverter(typeof(TypeConverter))]
 [JsonConverter(typeof(JsonConverter))]
 public readonly struct DataPropertyFunction : IParsable<DataPropertyFunction>

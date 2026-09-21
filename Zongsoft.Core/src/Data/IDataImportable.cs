@@ -34,9 +34,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示提供数据导入功能的接口。
-/// </summary>
+/// <summary>表示提供数据导入功能的接口。</summary>
 public interface IDataImportable
 {
 	/// <summary>获取一个值，指示是否支持导入操作。</summary>

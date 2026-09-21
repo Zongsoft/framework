@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Common;
 
-/// <summary>
-/// 提供时间戳相关功能的工具类。
-/// </summary>
+/// <summary>提供时间戳相关功能的工具类。</summary>
 public class Timestamp
 {
 	#region 单例字段
@@ -91,9 +89,7 @@ public class Timestamp
 	#endregion
 }
 
-/// <summary>
-/// 表示时间戳的单位。
-/// </summary>
+/// <summary>表示时间戳的单位。</summary>
 public enum TimestampUnit
 {
 	/// <summary>秒</summary>

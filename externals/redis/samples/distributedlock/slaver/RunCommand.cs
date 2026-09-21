@@ -11,6 +11,7 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 {
 	public RunCommand() : base("Run") { }
 
+	#region 重写方法
 	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		var settings = RunSettings.Get(context);
@@ -66,7 +67,9 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 
 		return 0;
 	}
+	#endregion
 
+	#region 私有方法
 	private static async ValueTask WriteFenceAsync(RedisService redis, ICommandOutlet output, RunSettings settings, int iteration, long fencingToken, CancellationToken cancellation)
 	{
 		//读取存储中已记录的最大栅栏令牌
@@ -142,9 +145,11 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 
 		output.Write(content);
 	}
+	#endregion
 
 	private sealed class RunSettings
 	{
+		#region 公共属性
 		public int WorkerId { get; private set; }
 		public int Iterations { get; private set; }
 		public string Namespace { get; private set; }
@@ -153,7 +158,9 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 		public TimeSpan Timeout { get; private set; }
 		public TimeSpan? RenewalInterval { get; private set; }
 		public bool Verbose { get; private set; }
+		#endregion
 
+		#region 静态方法
 		public static RunSettings Get(CommandContext context)
 		{
 			var scenario = context.Options.GetValue<string>("scenario", "mutex");
@@ -183,5 +190,6 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 
 			return settings;
 		}
+		#endregion
 	}
 }

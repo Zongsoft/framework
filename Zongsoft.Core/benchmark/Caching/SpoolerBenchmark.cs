@@ -14,14 +14,18 @@ namespace Zongsoft.Benchmarks;
 
 public class SpoolerMemoryBenchmark : SpoolerBenchmarkBase
 {
+	#region 重写属性
 	protected override bool WritesFile => false;
+	#endregion
 }
 
 // A full file workload can take seconds; allow the pilot to choose one invocation.
 [MinInvokeCount(1)]
 public class SpoolerFileBenchmark : SpoolerBenchmarkBase
 {
+	#region 重写属性
 	protected override bool WritesFile => true;
+	#endregion
 }
 
 [MemoryDiagnoser]
@@ -48,14 +52,19 @@ public abstract class SpoolerBenchmarkBase
 	private long _totalCalls;
 	private long _runs;
 
+	#region 公共属性
 	[Params(100, 1_000)]
 	public int BatchSize { get; set; }
 
 	[Params(1, 4)]
 	public int Producers { get; set; }
+	#endregion
 
+	#region 保护属性
 	protected abstract bool WritesFile { get; }
+	#endregion
 
+	#region 公共方法
 	[GlobalSetup]
 	public async Task SetupAsync()
 	{
@@ -110,7 +119,9 @@ public abstract class SpoolerBenchmarkBase
 
 	[Benchmark]
 	public Task<long> Spooler() => this.RunAsync(2, RecordCount);
+	#endregion
 
+	#region 私有方法
 	private async Task<long> RunAsync(int method, int count)
 	{
 		if(_batchCount != 0 || !_spooler.IsEmpty)
@@ -260,7 +271,9 @@ public abstract class SpoolerBenchmarkBase
 			seen[id] = true;
 		}
 	}
+	#endregion
 
+	#region 公共方法
 	[GlobalCleanup]
 	public void Cleanup()
 	{
@@ -276,4 +289,5 @@ public abstract class SpoolerBenchmarkBase
 		if(_directory != null && Directory.Exists(_directory))
 			Directory.Delete(_directory);
 	}
+	#endregion
 }

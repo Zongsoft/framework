@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示分页事件的参数类。
-/// </summary>
+/// <summary>表示分页事件的参数类。</summary>
 public class PagingEventArgs : EventArgs
 {
 	#region 构造函数

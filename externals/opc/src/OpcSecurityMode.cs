@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Externals.Opc;
 
-/// <summary>
-/// 表示安全模式的枚举。
-/// </summary>
+/// <summary>表示安全模式的枚举。</summary>
 public enum OpcSecurityMode
 {
 	/// <summary>非安全模式</summary>

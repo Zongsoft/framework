@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Expressions;
 
-/// <summary>
-/// 表示词素提取的结果结构。
-/// </summary>
+/// <summary>表示词素提取的结果结构。</summary>
 public readonly struct TokenResult
 {
 	#region 公共字段

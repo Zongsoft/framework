@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Components.Features;
 
-/// <summary>
-/// 提供重试功能的特性类。
-/// </summary>
+/// <summary>提供重试功能的特性类。</summary>
 public abstract class RetryFeatureBase : IFeature
 {
 	#region 构造函数
@@ -63,9 +61,7 @@ public abstract class RetryFeatureBase : IFeature
 	#endregion
 }
 
-/// <summary>
-/// 提供重试功能的特性类。
-/// </summary>
+/// <summary>提供重试功能的特性类。</summary>
 public class RetryFeature : RetryFeatureBase
 {
 	#region 构造函数
@@ -86,9 +82,7 @@ public class RetryFeature : RetryFeatureBase
 	#endregion
 }
 
-/// <summary>
-/// 提供重试功能的特性类。
-/// </summary>
+/// <summary>提供重试功能的特性类。</summary>
 public class RetryFeature<T> : RetryFeatureBase
 {
 	#region 构造函数
@@ -109,9 +103,7 @@ public class RetryFeature<T> : RetryFeatureBase
 	#endregion
 }
 
-/// <summary>
-/// 提供重试功能的特性类。
-/// </summary>
+/// <summary>提供重试功能的特性类。</summary>
 public class RetryFeature<T, TResult> : RetryFeatureBase
 {
 	#region 构造函数
@@ -143,9 +135,7 @@ public enum RetryBackoff
 	Exponential,
 }
 
-/// <summary>
-/// 表示重试回调的参数类。
-/// </summary>
+/// <summary>表示重试回调的参数类。</summary>
 public class RetryArgument : Argument
 {
 	#region 构造函数
@@ -162,9 +152,7 @@ public class RetryArgument : Argument
 	#endregion
 }
 
-/// <summary>
-/// 表示重试回调的参数类。
-/// </summary>
+/// <summary>表示重试回调的参数类。</summary>
 public class RetryArgument<T> : Argument<T>
 {
 	#region 构造函数
@@ -182,9 +170,7 @@ public class RetryArgument<T> : Argument<T>
 	#endregion
 }
 
-/// <summary>
-/// 表示重试回调的参数类。
-/// </summary>
+/// <summary>表示重试回调的参数类。</summary>
 public class RetryArgument<T, TResult> : Argument<T, TResult>
 {
 	#region 构造函数
@@ -203,9 +189,7 @@ public class RetryArgument<T, TResult> : Argument<T, TResult>
 	#endregion
 }
 
-/// <summary>
-/// 表示重试延迟的结构。
-/// </summary>
+/// <summary>表示重试延迟的结构。</summary>
 public struct RetryLatency
 {
 	#region 构造函数

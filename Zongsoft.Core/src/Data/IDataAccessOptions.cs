@@ -34,9 +34,7 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示构建数据访问器的选项设置接口。
-/// </summary>
+/// <summary>表示构建数据访问器的选项设置接口。</summary>
 public interface IDataAccessOptions
 {
 	/// <summary>获取或设置数据访问的过滤器集合。</summary>

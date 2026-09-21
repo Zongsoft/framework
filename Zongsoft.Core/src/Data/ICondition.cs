@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 条件接口。
-/// </summary>
+/// <summary>条件接口。</summary>
 public interface ICondition
 {
 	/// <summary>判断当前条件语句中是否包含指定名称的条件项。</summary>

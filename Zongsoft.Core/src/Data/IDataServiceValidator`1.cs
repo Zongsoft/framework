@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 提供数据服务的条件和数据进行验证功能的接口。
-/// </summary>
+/// <summary>提供数据服务的条件和数据进行验证功能的接口。</summary>
 /// <typeparam name="TModel">关于数据服务验证对应的数据模型类型。</typeparam>
 public interface IDataServiceValidator<TModel> : IDataServiceValidator
 {

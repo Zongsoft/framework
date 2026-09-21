@@ -32,9 +32,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Services;
 
-/// <summary>
-/// 表示服务注册的接口。
-/// </summary>
+/// <summary>表示服务注册的接口。</summary>
 public interface IServiceRegistration
 {
 	void Register(IServiceCollection services, IConfiguration configuration);

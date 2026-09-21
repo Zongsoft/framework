@@ -39,9 +39,7 @@ namespace Zongsoft.Security.Commands;
 partial class SecretCommand
 {
 	/// <summary>提供验证码校验的命令类。</summary>
-	/// <example>
-	///		<code>secret.verify -name:'user.email:100' 123456</code>
-	/// </example>
+	/// <example><code>secret.verify -name:'user.email:100' 123456</code></example>
 	[DisplayName("SecretVerifyCommand.Name")]
 	[Description("SecretVerifyCommand.Description")]
 	[CommandOption(KEY_NAME_OPTION, typeof(string), null, true, "SecretVerifyCommand.Options.Name")]

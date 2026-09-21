@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示输出样式的枚举。
-/// </summary>
+/// <summary>表示输出样式的枚举。</summary>
 [Flags]
 public enum CommandOutletStyles
 {

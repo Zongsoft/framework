@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Services;
 
-/// <summary>
-/// 提供一种特定于类型的通用匹配方法，某些同类型的类通过实现此接口对其进行更进一步的匹配。
-/// </summary>
+/// <summary>提供一种特定于类型的通用匹配方法，某些同类型的类通过实现此接口对其进行更进一步的匹配。</summary>
 public interface IMatchable
 {
 	/// <summary>指示当前对象是否匹配指定参数的条件约束。</summary>
@@ -42,9 +40,7 @@ public interface IMatchable
 	bool Match(object argument);
 }
 
-/// <summary>
-/// 提供一种特定于类型的通用匹配方法，某些同类型的类通过实现此接口对其进行更进一步的匹配。
-/// </summary>
+/// <summary>提供一种特定于类型的通用匹配方法，某些同类型的类通过实现此接口对其进行更进一步的匹配。</summary>
 public interface IMatchable<in T>
 {
 	/// <summary>指示当前对象是否匹配指定参数的条件约束。</summary>

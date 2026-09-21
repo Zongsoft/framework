@@ -387,6 +387,7 @@ public class ApplicationVersion
 		public Version Version { get; }
 
 		/// <summary>返回 <c>版本名@版本号</c> 形式的文本表示。</summary>
+		/// <returns>返回由版本名、@ 分隔符和版本号组成的字符串。</returns>
 		/// <remarks>此文本用于表示单个具名版本，不是 <c>.version</c> 文件的段落格式。</remarks>
 		public override string ToString() => $"{this.Name}@{this.Version}";
 	}
@@ -478,6 +479,7 @@ public class ApplicationVersion
 		void ICollection<Edition>.CopyTo(Edition[] array, int arrayIndex) => _items.CopyTo(array, arrayIndex);
 
 		/// <summary>获取按添加顺序遍历版本集的枚举器。</summary>
+		/// <returns>返回按添加顺序枚举版本项的枚举器。</returns>
 		public List<Edition>.Enumerator GetEnumerator() => _items.GetEnumerator();
 		IEnumerator<Edition> IEnumerable<Edition>.GetEnumerator() => this.GetEnumerator();
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();

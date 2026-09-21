@@ -36,9 +36,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Security.Validators;
 
-/// <summary>
-/// 提供密码有效性验证的验证器类。
-/// </summary>
+/// <summary>提供密码有效性验证的验证器类。</summary>
 [Service(typeof(IValidator<string>))]
 public class PasswordValidator : IValidator<string>, IMatchable
 {

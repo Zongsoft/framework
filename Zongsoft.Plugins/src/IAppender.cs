@@ -32,12 +32,8 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Plugins;
 
-/// <summary>
-/// 提供追加器的功能接口。
-/// </summary>
-/// <remarks>
-///		<para>由构建器可选性的实现该接口，实现该接口的构建器支持将子级构建器创建的目标对象追加到当前目标对象的特定集合中。</para>
-/// </remarks>
+/// <summary>提供追加器的功能接口。</summary>
+/// <remarks>由构建器可选性的实现该接口，实现该接口的构建器支持将子级构建器创建的目标对象追加到当前目标对象的特定集合中。</remarks>
 public interface IAppender
 {
 	/// <summary>将指定的子级目标对象追加到当前目标对象的特定集合中。</summary>

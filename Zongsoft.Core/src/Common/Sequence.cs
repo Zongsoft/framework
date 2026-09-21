@@ -36,6 +36,7 @@ namespace Zongsoft.Common;
 
 public static class Sequence
 {
+	#region 静态方法
 	/// <summary>为指定的序列号提供程序包装一个自适应可变速率的序列号器。</summary>
 	/// <param name="sequence">指定的待包装的序列号器。</param>
 	/// <param name="options">指定的自适应可变速率序号选项。</param>
@@ -52,6 +53,7 @@ public static class Sequence
 
 		return sequence is SequenceVariator variator ? variator : new SequenceVariator(sequence, options);
 	}
+	#endregion
 
 	#region 公共嵌套
 	public sealed class VariatorOptions

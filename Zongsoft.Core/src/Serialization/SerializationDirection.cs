@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Serialization;
 
-/// <summary>
-/// 表示序列化方向的枚举。
-/// </summary>
+/// <summary>表示序列化方向的枚举。</summary>
 public enum SerializationDirection
 {
 	/// <summary>未定义。</summary>

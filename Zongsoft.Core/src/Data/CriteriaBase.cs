@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示查询条件实体的抽象基类。
-/// </summary>
+/// <summary>表示查询条件实体的抽象基类。</summary>
 public abstract class CriteriaBase : IModel
 {
 	#region 保护构造

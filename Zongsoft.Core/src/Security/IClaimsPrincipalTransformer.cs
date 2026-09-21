@@ -32,9 +32,7 @@ using System.Security.Claims;
 
 namespace Zongsoft.Security;
 
-/// <summary>
-/// 提供 <see cref="ClaimsPrincipal"/> 安全主体转换功能的接口。
-/// </summary>
+/// <summary>提供 <see cref="ClaimsPrincipal"/> 安全主体转换功能的接口。</summary>
 public interface IClaimsPrincipalTransformer
 {
 	/// <summary>转换安全主体对象。</summary>

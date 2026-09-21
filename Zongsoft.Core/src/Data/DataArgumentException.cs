@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据参数无效的异常类。
-/// </summary>
+/// <summary>表示数据参数无效的异常类。</summary>
 public class DataArgumentException : DataException
 {
 	#region 构造函数

@@ -33,9 +33,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据服务的注解类。
-/// </summary>
+/// <summary>表示数据服务的注解类。</summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Interface, Inherited = true)]
 public class DataServiceAttribute : Attribute
 {
@@ -80,9 +78,7 @@ public class DataServiceAttribute : Attribute
 	#endregion
 }
 
-/// <summary>
-/// 表示数据服务的注解类。
-/// </summary>
+/// <summary>表示数据服务的注解类。</summary>
 /// <typeparam name="TCriteria">数据服务的查询或过滤条件的实体类型。</typeparam>
 /// <remarks>构造一个数据服务注解。</remarks>
 /// <param name="sortings">指定的默认排序规则。</param>

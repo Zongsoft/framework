@@ -249,9 +249,13 @@ public class ApplicationBuilder : ApplicationBuilderBase<IHost>
 		_builder.ConfigureContainer(new Services.ServiceProviderFactory());
 	}
 
+	#region 重写属性
 	public override IServiceCollection Services => _builder.Services;
 	public override ConfigurationManager Configuration => _builder.Configuration;
 	public override IHostEnvironment Environment => _builder.Environment;
+	#endregion
+
+	#region 重写方法
 	public override IHost Build()
 	{
 		_configure?.Invoke(_builder);
@@ -268,6 +272,7 @@ public class ApplicationBuilder : ApplicationBuilderBase<IHost>
 		//创建并初始化宿主
 		return _builder.Build().Initialize();
 	}
+	#endregion
 #else
 	private readonly IHostBuilder _builder;
 	private readonly Action<IHostBuilder> _configure;
@@ -297,10 +302,13 @@ public class ApplicationBuilder : ApplicationBuilderBase<IHost>
 		_builder.UseServiceProviderFactory(new Zongsoft.Services.ServiceProviderFactory());
 	}
 
+	#region 重写属性
 	public override IServiceCollection Services { get; }
 	public override ConfigurationManager Configuration { get; }
 	public override IHostEnvironment Environment { get; }
+	#endregion
 
+	#region 重写方法
 	public override IHost Build()
 	{
 		_configure?.Invoke(_builder);
@@ -342,6 +350,7 @@ public class ApplicationBuilder : ApplicationBuilderBase<IHost>
 		//创建并初始化宿主
 		return _builder.Build().Initialize();
 	}
+	#endregion
 
 	private sealed class ApplicationEnvironment : Services.IApplicationEnvironment, IHostEnvironment
 	{
@@ -357,13 +366,19 @@ public class ApplicationBuilder : ApplicationBuilderBase<IHost>
 			this.Properties.Add(HostDefaults.ContentRootKey, this.ContentRootPath);
 		}
 
+		#region 公共属性
 		public string EnvironmentName { get; set; }
 		public string ApplicationName { get; set; }
 		public string ContentRootPath { get; set; }
 		public IFileProvider ContentRootFileProvider { get; set; }
+		#endregion
 
+		#region 显式实现
 		string Services.IApplicationEnvironment.Name => this.EnvironmentName;
+		#endregion
+		#region 公共属性
 		public IDictionary<object, object> Properties { get; }
+		#endregion
 	}
 #endif
 }

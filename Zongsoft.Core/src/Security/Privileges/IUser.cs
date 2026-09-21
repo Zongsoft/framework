@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Security.Privileges;
 
-/// <summary>
-/// 表示权限系统的用户接口。
-/// </summary>
+/// <summary>表示权限系统的用户接口。</summary>
 public interface IUser : Zongsoft.Components.IIdentifiable
 {
 	#region 常量定义

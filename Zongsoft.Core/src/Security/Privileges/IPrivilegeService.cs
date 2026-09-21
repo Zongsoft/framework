@@ -37,9 +37,7 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Security.Privileges;
 
-/// <summary>
-/// 提供授权定义服务的接口。
-/// </summary>
+/// <summary>提供授权定义服务的接口。</summary>
 public interface IPrivilegeService
 {
 	/// <summary>获取权限过滤服务。</summary>
@@ -52,9 +50,7 @@ public interface IPrivilegeService
 	ValueTask<int> SetPrivilegesAsync(Identifier identifier, IEnumerable<IPrivilege> privileges, bool shouldResetting, Parameters parameters, CancellationToken cancellation = default);
 }
 
-/// <summary>
-/// 提供授权定义服务的接口。
-/// </summary>
+/// <summary>提供授权定义服务的接口。</summary>
 /// <typeparam name="TPrivilege">泛型参数，表示授权定义的类型。</typeparam>
 public interface IPrivilegeService<in TPrivilege> : IPrivilegeService where TPrivilege : IPrivilege
 {

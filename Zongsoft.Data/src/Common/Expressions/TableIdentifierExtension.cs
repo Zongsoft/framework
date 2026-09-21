@@ -160,9 +160,7 @@ public static class TableIdentifierExtension
 	#endregion
 
 	#region 嵌套子类
-	/// <summary>
-	/// 表示路径展开操作结果的结构。
-	/// </summary>
+	/// <summary>表示路径展开操作结果的结构。</summary>
 	public readonly struct ReduceResult(ISource source, IDataEntityProperty property)
 	{
 		#region 公共字段
@@ -179,9 +177,7 @@ public static class TableIdentifierExtension
 		#endregion
 	}
 
-	/// <summary>
-	/// 表示路径展开操作上下文的结构。
-	/// </summary>
+	/// <summary>表示路径展开操作上下文的结构。</summary>
 	public readonly struct ReduceContext(string path, ISource source, IDataEntityProperty property, IEnumerable<IDataEntity> ancestors)
 	{
 		#region 公共字段

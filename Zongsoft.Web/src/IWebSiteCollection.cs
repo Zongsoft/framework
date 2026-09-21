@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Web;
 
-/// <summary>
-/// 表示 <see cref="IWebSite"/> 站点集合的接口。
-/// </summary>
+/// <summary>表示 <see cref="IWebSite"/> 站点集合的接口。</summary>
 public interface IWebSiteCollection : ICollection<IWebSite>
 {
 	/// <summary>获取默认站点。</summary>

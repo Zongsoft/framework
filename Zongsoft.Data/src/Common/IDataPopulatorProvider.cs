@@ -32,9 +32,7 @@ using System.Data;
 
 namespace Zongsoft.Data.Common;
 
-/// <summary>
-/// 表示数据实体装配提供程序的接口。
-/// </summary>
+/// <summary>表示数据实体装配提供程序的接口。</summary>
 public interface IDataPopulatorProvider
 {
 	/// <summary>确认装配提供程序是否支持指定的元素类型。</summary>

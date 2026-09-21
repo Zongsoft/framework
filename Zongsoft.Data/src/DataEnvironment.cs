@@ -35,9 +35,7 @@ using Zongsoft.Data.Common;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 提供数据访问操作的环境信息。
-/// </summary>
+/// <summary>提供数据访问操作的环境信息。</summary>
 [DefaultMember(nameof(Filters))]
 [Service(Members = $"{nameof(Filters)}")]
 public static class DataEnvironment

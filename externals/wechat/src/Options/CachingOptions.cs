@@ -29,9 +29,7 @@
 
 namespace Zongsoft.Externals.Wechat.Options;
 
-/// <summary>
-/// 表示微信服务依赖缓存的选项类。
-/// </summary>
+/// <summary>表示微信服务依赖缓存的选项类。</summary>
 public class CachingOptions
 {
 	/// <summary>获取或设置缓存提供程序的名称。</summary>

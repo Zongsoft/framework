@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据模式的接口。
-/// </summary>
+/// <summary>表示数据模式的接口。</summary>
 /// <typeparam name="TMember">泛型参数，表示数据模式的成员类型。</typeparam>
 public interface ISchema<TMember> : ISchema where TMember : SchemaMemberBase
 {

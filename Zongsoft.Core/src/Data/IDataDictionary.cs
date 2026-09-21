@@ -35,9 +35,12 @@ namespace Zongsoft.Data;
 
 public interface IDataDictionary : IDictionary, IDictionary<string, object>
 {
+	#region 公共属性
 	object Data { get; }
 	bool IsEmpty { get; }
+	#endregion
 
+	#region 公共方法
 	T AsModel<T>();
 
 	bool Contains(string name);
@@ -57,4 +60,5 @@ public interface IDataDictionary : IDictionary, IDictionary<string, object>
 
 	bool TrySetValue<TValue>(string name, TValue value, Func<TValue, bool> predicate = null);
 	bool TrySetValue<TValue>(string name, Func<TValue> valueFactory, Func<TValue, bool> predicate = null);
+	#endregion
 }

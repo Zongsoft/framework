@@ -34,9 +34,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据服务的泛型接口。
-/// </summary>
+/// <summary>表示数据服务的泛型接口。</summary>
 /// <typeparam name="TModel">关于数据服务对应的数据模型类型。</typeparam>
 public interface IDataService<TModel> : IDataService
 {

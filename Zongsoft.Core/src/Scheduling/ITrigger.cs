@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Scheduling;
 
-/// <summary>
-/// 表示调度触发器的接口。
-/// </summary>
+/// <summary>表示调度触发器的接口。</summary>
 public interface ITrigger
 {
 	#region 属性定义
@@ -55,9 +53,7 @@ public interface ITrigger
 	#endregion
 }
 
-/// <summary>
-/// 表示调度触发器的接口。
-/// </summary>
+/// <summary>表示调度触发器的接口。</summary>
 /// <typeparam name="TOptions"></typeparam>
 public interface ITrigger<out TOptions> : ITrigger
 {

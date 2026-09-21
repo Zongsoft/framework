@@ -34,9 +34,7 @@ using System.Text.Json.Serialization;
 
 namespace Zongsoft.IO.Hardwares;
 
-/// <summary>
-/// 表示硬件组件。
-/// </summary>
+/// <summary>表示硬件组件。</summary>
 public partial class HardwareComponent
 {
 	#region 构造函数

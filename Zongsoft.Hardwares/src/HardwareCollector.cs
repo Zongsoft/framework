@@ -37,9 +37,7 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Hardwares;
 
-/// <summary>
-/// 表示当前机器硬件信息的采集器。
-/// </summary>
+/// <summary>表示当前机器硬件信息的采集器。</summary>
 [Service<IO.Hardwares.IHardwareCollector>(Members = nameof(Instance))]
 public sealed partial class HardwareCollector : IO.Hardwares.IHardwareCollector
 {

@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Services;
 
-/// <summary>
-/// 表示匹配器的接口。
-/// </summary>
+/// <summary>表示匹配器的接口。</summary>
 public interface IMatcher<in T>
 {
 	/// <summary>判断指定对象是否匹配某种规则。</summary>

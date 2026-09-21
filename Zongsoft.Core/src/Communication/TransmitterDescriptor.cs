@@ -63,5 +63,7 @@ public partial class TransmitterDescriptor : IEquatable<TransmitterDescriptor>
 
 public class TransmitterDescriptorCollection() : KeyedCollection<string, TransmitterDescriptor>(StringComparer.OrdinalIgnoreCase)
 {
+	#region 重写方法
 	protected override string GetKeyForItem(TransmitterDescriptor transmitter) => transmitter.Name;
+	#endregion
 }

@@ -33,9 +33,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Plugins;
 
-/// <summary>
-/// 关于构件功能的类，构件是组成插件的基本组成单位。
-/// </summary>
+/// <summary>关于构件功能的类，构件是组成插件的基本组成单位。</summary>
 /// <remarks>
 ///		<para>构件是组成插件的基本组成单位。</para>
 ///		<para>构件一旦被创建就属于某个插件，其位于所属插件的<seealso cref="Zongsoft.Plugins.Plugin.Builtins"/>集合内，但该构件是否处于插件树中，则取决于其所属的插件是否已经被成功加载，即插件的<seealso cref="Zongsoft.Plugins.Plugin.Status"/>属性应为<seealso cref="Zongsoft.Plugins.PluginStatus.Loaded"/>。</para>
@@ -128,7 +126,7 @@ public sealed class Builtin : PluginElement, IEquatable<Builtin>
 		internal set => _position = value ?? string.Empty;
 	}
 
-	/// <summary>获取当前Value是否可用。如果Value不为空(null)则返回真(True)，否则返回假(False)。</summary>
+	/// <summary>获取当前Value是否可用。如果Value不为空<c>null</c>则返回真(True)，否则返回假(False)。</summary>
 	public bool HasValue => _value != null;
 
 	/// <summary>获取构件的缓存值，获取该属性值始终不会引发构建动作。</summary>

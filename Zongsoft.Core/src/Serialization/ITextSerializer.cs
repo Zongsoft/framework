@@ -35,8 +35,11 @@ namespace Zongsoft.Serialization;
 
 public interface ITextSerializer : ISerializer
 {
+	#region 公共属性
 	TextSerializationOptionsBuilder Options { get; }
+	#endregion
 
+	#region 公共方法
 	string Serialize(object graph, TextSerializationOptions options = null);
 	string Serialize(object graph, Type type, TextSerializationOptions options = null);
 	ValueTask<string> SerializeAsync(object graph, CancellationToken cancellation = default);
@@ -54,4 +57,5 @@ public interface ITextSerializer : ISerializer
 	ValueTask<object> DeserializeAsync(string text, Type type, TextSerializationOptions options, CancellationToken cancellation = default);
 	ValueTask<T> DeserializeAsync<T>(string text, CancellationToken cancellation = default);
 	ValueTask<T> DeserializeAsync<T>(string text, TextSerializationOptions options, CancellationToken cancellation = default);
+	#endregion
 }

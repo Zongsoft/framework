@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Externals.Aliyun;
 
-/// <summary>
-/// 表示阿里云访问凭证提供程序的接口。
-/// </summary>
+/// <summary>表示阿里云访问凭证提供程序的接口。</summary>
 public interface ICertificateProvider : IEnumerable<ICertificate>
 {
 	/// <summary>获取凭证数量。</summary>

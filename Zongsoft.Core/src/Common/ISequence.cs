@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Common;
 
-/// <summary>
-/// 提供序号递增(减)增强功能的接口。
-/// </summary>
+/// <summary>提供序号递增(减)增强功能的接口。</summary>
 public interface ISequence : ISequenceBase
 {
 	#region 常量定义
@@ -129,6 +127,7 @@ public interface ISequence : ISequenceBase
 	/// <param name="value">指定要重置的序列号当前值，默认为零。</param>
 	/// <param name="expiry">序号记录的有效时长。</param>
 	/// <param name="cancellation">监视取消请求的令牌。</param>
+	/// <returns>表示序列号重置操作的异步任务。</returns>
 	ValueTask ResetAsync(string key, int value = DEFAULT_SEED, TimeSpan? expiry = null, CancellationToken cancellation = default);
 
 	/// <summary>重置指定的序列号数值，如果指定键的序列号不存在则创建它。</summary>
@@ -136,6 +135,7 @@ public interface ISequence : ISequenceBase
 	/// <param name="value">指定要重置的序列号当前值，默认为零。</param>
 	/// <param name="expiry">序号记录的有效时长。</param>
 	/// <param name="cancellation">监视取消请求的令牌。</param>
+	/// <returns>表示序列号重置操作的异步任务。</returns>
 	ValueTask ResetAsync(string key, double value, TimeSpan? expiry = null, CancellationToken cancellation = default);
 	#endregion
 

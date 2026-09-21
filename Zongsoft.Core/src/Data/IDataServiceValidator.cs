@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 提供数据服务的条件和数据进行验证功能的接口。
-/// </summary>
+/// <summary>提供数据服务的条件和数据进行验证功能的接口。</summary>
 public interface IDataServiceValidator
 {
 	/// <summary>验证指定数据服务方法的过滤条件。</summary>

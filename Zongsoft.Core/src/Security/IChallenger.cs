@@ -34,9 +34,7 @@ using System.Security.Claims;
 
 namespace Zongsoft.Security;
 
-/// <summary>
-/// 提供身份质询的接口。
-/// </summary>
+/// <summary>提供身份质询的接口。</summary>
 public interface IChallenger
 {
 	/// <summary>身份质询。</summary>

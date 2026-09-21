@@ -32,9 +32,7 @@ using System.Security.Claims;
 
 namespace Zongsoft.Security;
 
-/// <summary>
-/// 提供 <see cref="ClaimsIdentity"/> 身份标识转换功能的接口。
-/// </summary>
+/// <summary>提供 <see cref="ClaimsIdentity"/> 身份标识转换功能的接口。</summary>
 public interface IClaimsIdentityTransformer
 {
 	/// <summary>确认是否支持对指定的身份标识进行转换。</summary>

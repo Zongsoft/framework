@@ -278,6 +278,7 @@ public readonly struct ModelPropertyRole : IEquatable<ModelPropertyRole>
 	public static ModelPropertyRole Determine(string name) => string.IsNullOrWhiteSpace(name) || !TryNormalize(name.Trim(), out var entry) ? default : new(entry);
 
 	/// <summary>获取所有预定义角色描述项的副本。</summary>
+	/// <returns>返回包含全部预定义角色描述项的独立数组。</returns>
 	public static Entry[] GetEntries() => (Entry[])_entries.Clone();
 	#endregion
 

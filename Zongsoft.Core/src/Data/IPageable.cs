@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示支持分页的接口。
-/// </summary>
+/// <summary>表示支持分页的接口。</summary>
 public interface IPageable
 {
 	/// <summary>表示完成分页的事件。</summary>

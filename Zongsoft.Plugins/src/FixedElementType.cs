@@ -32,9 +32,7 @@ using System.ComponentModel;
 
 namespace Zongsoft.Plugins;
 
-/// <summary>
-/// 表示固定元件的类型。
-/// </summary>
+/// <summary>表示固定元件的类型。</summary>
 public enum FixedElementType
 {
 	/// <summary>构建器，指实现了 <seealso cref="Zongsoft.Plugins.IBuilder"/> 接口的类。</summary>

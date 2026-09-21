@@ -52,9 +52,7 @@ public static class DataEntityPropertyExtension
 	/// <param name="property">指定的实体属性。</param>
 	/// <param name="alias">输出参数，对应的返回别名。详细说明请参考该方法的备注说明。</param>
 	/// <returns>返回指定属性对应的字段名。</returns>
-	/// <remarks>
-	///		<para>注意：如果指定的实体属性的字段名不同于属性名，则<paramref name="alias"/>输出参数值即为属性名，必须确保查询返回的字段标识都为对应的属性名，以便后续实体组装时进行字段与属性的匹配。</para>
-	/// </remarks>
+	/// <remarks>注意：如果指定的实体属性的字段名不同于属性名，则<paramref name="alias"/>输出参数值即为属性名，必须确保查询返回的字段标识都为对应的属性名，以便后续实体组装时进行字段与属性的匹配。</remarks>
 	public static string GetFieldName(this IDataEntityProperty property, out string alias)
 	{
 		if(property == null)

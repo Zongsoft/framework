@@ -54,9 +54,12 @@ internal abstract class ThrottleStrategyBase : ResilienceStrategy, IDisposable, 
 		_telemetry = telemetry;
 	}
 
+	#region 公共属性
 	public RateLimiter Wrapper { get; }
 	public Func<RateLimiterArguments, ValueTask<RateLimitLease>> Limiter { get; }
+	#endregion
 
+	#region 资源释放
 	public void Dispose() => this.Wrapper?.Dispose();
 	public ValueTask DisposeAsync()
 	{
@@ -64,7 +67,9 @@ internal abstract class ThrottleStrategyBase : ResilienceStrategy, IDisposable, 
 			return this.Wrapper.DisposeAsync();
 		return ValueTask.CompletedTask;
 	}
+	#endregion
 
+	#region 重写方法
 	protected override async ValueTask<Outcome<TResult>> ExecuteCore<TResult, TState>(
 		Func<ResilienceContext, TState, ValueTask<Outcome<TResult>>> callback,
 		ResilienceContext context, TState state)
@@ -99,9 +104,13 @@ internal abstract class ThrottleStrategyBase : ResilienceStrategy, IDisposable, 
 
 		return Outcome.FromException<TResult>(exception);
 	}
+	#endregion
 
+	#region 保护方法
 	protected abstract ValueTask<bool> OnRejected<T>(string name, T state, RateLimitLease lease, TimeSpan? retryAfter, CancellationToken cancellation);
+	#endregion
 
+	#region 私有方法
 	private static TException TrySetStackTrace<TException>(TException exception) where TException : Exception
 	{
 		if(string.IsNullOrWhiteSpace(exception.StackTrace))
@@ -109,6 +118,7 @@ internal abstract class ThrottleStrategyBase : ResilienceStrategy, IDisposable, 
 
 		return exception;
 	}
+	#endregion
 }
 
 internal sealed class ThrottleStrategy : ThrottleStrategyBase
@@ -123,8 +133,10 @@ internal sealed class ThrottleStrategy : ThrottleStrategyBase
 		_rejected = rejected;
 	}
 
+	#region 重写方法
 	protected override ValueTask<bool> OnRejected<T>(string name, T state, RateLimitLease lease, TimeSpan? retryAfter, CancellationToken cancellation) =>
 		_rejected(new(name, new ThrottleLeaseWrapper(lease)), cancellation);
+	#endregion
 }
 
 internal sealed class ThrottleStrategy<TArgument> : ThrottleStrategyBase
@@ -139,8 +151,10 @@ internal sealed class ThrottleStrategy<TArgument> : ThrottleStrategyBase
 		_rejected = rejected;
 	}
 
+	#region 重写方法
 	protected override ValueTask<bool> OnRejected<T>(string name, T state, RateLimitLease lease, TimeSpan? retryAfter, CancellationToken cancellation) =>
 		_rejected(new(name, new ThrottleLeaseWrapper(lease), FeatureUtility.GetArgument<T, TArgument>(state)), cancellation);
+	#endregion
 }
 
 internal sealed class ThrottleStrategy<TArgument, TResult> : ThrottleStrategyBase
@@ -155,8 +169,10 @@ internal sealed class ThrottleStrategy<TArgument, TResult> : ThrottleStrategyBas
 		_rejected = rejected;
 	}
 
+	#region 重写方法
 	protected override ValueTask<bool> OnRejected<T>(string name, T state, RateLimitLease lease, TimeSpan? retryAfter, CancellationToken cancellation) =>
 		_rejected(new(name, new ThrottleLeaseWrapper(lease), FeatureUtility.GetArgument<T, TArgument>(state)), cancellation);
+	#endregion
 }
 
 internal sealed class ThrottleLeaseWrapper(RateLimitLease lease) : ThrottleLease
@@ -164,21 +180,33 @@ internal sealed class ThrottleLeaseWrapper(RateLimitLease lease) : ThrottleLease
 	private readonly RateLimitLease _lease = lease;
 	private readonly MetadataCollection _metadata = new(lease);
 
+	#region 重写属性
 	public override bool IsLeased => _lease.IsAcquired;
 	public override IMetadataCollection Metadata => _metadata;
+	#endregion
+	#region 重写方法
 	protected override void Dispose(bool disposing) => _lease.Dispose();
+	#endregion
 
 	private sealed class MetadataCollection(RateLimitLease lease) : IMetadataCollection
 	{
 		private readonly RateLimitLease _lease = lease;
+		#region 公共属性
 		public int Count => _lease.MetadataNames.Count();
+		#endregion
+		#region 公共方法
 		public bool TryGetValue<T>(string key, out T value) => _lease.TryGetMetadata(new MetadataName<T>(key), out value);
 		public bool TryGetValue(string key, out object value) => _lease.TryGetMetadata(key, out value);
+		#endregion
+		#region 显式实现
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+		#endregion
+		#region 公共方法
 		public IEnumerator<KeyValuePair<string, object>> GetEnumerator()
 		{
 			foreach(var metadata in _lease.GetAllMetadata())
 				yield return metadata;
 		}
+		#endregion
 	}
 }

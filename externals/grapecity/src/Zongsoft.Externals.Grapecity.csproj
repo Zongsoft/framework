@@ -16,6 +16,15 @@
 
 	<ItemGroup>
 		<EmbeddedResource Include="..\.gclicx" Link=".gclicx" />
+		<EmbeddedResource Update="Properties\Resources.resx">
+			<Generator>ResXFileCodeGenerator</Generator>
+			<LastGenOutput>Resources.Designer.cs</LastGenOutput>
+		</EmbeddedResource>
+		<Compile Update="Properties\Resources.Designer.cs">
+			<DesignTime>true</DesignTime>
+			<AutoGen>true</AutoGen>
+			<DependentUpon>Resources.resx</DependentUpon>
+		</Compile>
 	</ItemGroup>
 
 	<ItemGroup>

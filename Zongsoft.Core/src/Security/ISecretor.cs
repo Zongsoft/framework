@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Security;
 
-/// <summary>
-/// 提供秘密（验证码）生成和校验功能的接口。
-/// </summary>
+/// <summary>提供秘密（验证码）生成和校验功能的接口。</summary>
 public interface ISecretor
 {
 	#region 属性定义
@@ -98,9 +96,7 @@ public interface ISecretor
 	#endregion
 
 	#region 嵌套接口
-	/// <summary>
-	/// 提供秘密（验证码）发送功能的类。
-	/// </summary>
+	/// <summary>提供秘密（验证码）发送功能的类。</summary>
 	public abstract class SecretTransmitter
 	{
 		public ValueTask<string> TransmitAsync(string scheme, string destination, string template, string scenario, string captcha, CancellationToken cancellation = default) =>

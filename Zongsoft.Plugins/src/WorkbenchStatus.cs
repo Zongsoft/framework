@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Plugins;
 
-/// <summary>
-/// 表示工作台的运行状态。
-/// </summary>
+/// <summary>表示工作台的运行状态。</summary>
 public enum WorkbenchStatus
 {
 	/// <summary>未启动或已关闭。</summary>

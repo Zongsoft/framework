@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Web;
 
-/// <summary>
-/// 表示 <see cref="IWebHost"/> 宿主集合的接口。
-/// </summary>
+/// <summary>表示 <see cref="IWebHost"/> 宿主集合的接口。</summary>
 public interface IWebHostCollection : ICollection<IWebHost>
 {
 	/// <summary>获取默认宿主。</summary>

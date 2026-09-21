@@ -33,28 +33,16 @@ using System.Collections.Generic;
 
 namespace Zongsoft.IO;
 
-/// <summary>
-/// 表示不依赖操作系统的路径。
-/// </summary>
+/// <summary>表示不依赖操作系统的路径。</summary>
 /// <remarks>
 ///		<para>路径格式分为<seealso cref="Path.Scheme"/>和<seealso cref="Path.FullPath"/>这两个部分，中间使用冒号(:)分隔，路径各层级间使用正斜杠(/)进行分隔。如果是目录路径则以正斜杠(/)结尾。</para>
 ///		<para>其中<seealso cref="Path.Scheme"/>可以省略，如果为目录路径，则<see cref="Path.FileName"/>属性为空或空字符串。常用路径示例如下：</para>
 ///		<list type="bullet">
-///			<item>
-///				<term>某个文件的<see cref="Url"/>：zfs:/data/attachments/2014/07/file-name.ext</term>
-///			</item>
-///			<item>
-///				<term>某个本地文件的<see cref="Url"/>：zfs.local:/data/attachments/2014/07/file-name.ext</term>
-///			</item>
-///			<item>
-///				<term>某个分布式文件的<see cref="Url"/>：zfs.distributed:/data/attachments/file-name.ext</term>
-///			</item>
-///			<item>
-///				<term>某个目录的<see cref="Url"/>：zfs:/data/attachments/2014/07/</term>
-///			</item>
-///			<item>
-///				<term>未指定模式(Scheme)的<see cref="Url"/>：/data/attachements/images/</term>
-///			</item>
+///			<item><term>某个文件的<see cref="Url"/>：zfs:/data/attachments/2014/07/file-name.ext</term></item>
+///			<item><term>某个本地文件的<see cref="Url"/>：zfs.local:/data/attachments/2014/07/file-name.ext</term></item>
+///			<item><term>某个分布式文件的<see cref="Url"/>：zfs.distributed:/data/attachments/file-name.ext</term></item>
+///			<item><term>某个目录的<see cref="Url"/>：zfs:/data/attachments/2014/07/</term></item>
+///			<item><term>未指定模式(Scheme)的<see cref="Url"/>：/data/attachements/images/</term></item>
 ///		</list>
 /// </remarks>
 public readonly struct Path : IEquatable<Path>
@@ -107,9 +95,7 @@ public readonly struct Path : IEquatable<Path>
 	public string[] Segments => _segments;
 
 	/// <summary>获取一个值，指示当前路径是否为文件路径。如果返回真(<c>True</c>)，即表示<see cref="FileName"/>有值。</summary>
-	/// <remarks>
-	///		<para>路径如果不是以斜杠(/)结尾，则表示该路径为「文件路径」，文件路径中的<see cref="FileName"/>即为<see cref="Segments"/>数组中最后一个元素的值。</para>
-	/// </remarks>
+	/// <remarks>路径如果不是以斜杠(<c>/</c>)结尾，则表示该路径为「文件路径」，文件路径中的<see cref="FileName"/>即为<see cref="Segments"/>数组中最后一个元素的值。</remarks>
 	public bool IsFile => _segments != null && _segments.Length > 0 && !string.IsNullOrEmpty(_segments[^1]);
 
 	/// <summary>获取一个值，指示当前路径是否为目录路径。有关「目录路径」定义请参考备注说明。</summary>
@@ -119,13 +105,16 @@ public readonly struct Path : IEquatable<Path>
 
 	#region 公共方法
 	/// <summary>获取路径的完整URL，包含 <see cref="Scheme"/> 部分。</summary>
+	/// <returns>返回包含方案名的完整路径；未指定方案时返回完整路径。</returns>
 	/// <remarks>如果<see cref="Scheme"/>为空(<c>null</c>)或空字符串，则<see cref="Url"/>与<see cref="FullPath"/>属性值相同。</remarks>
 	public string GetUrl() => string.IsNullOrEmpty(_scheme) ? this.FullPath : _scheme + ':' + this.FullPath;
 
 	/// <summary>获取路径的完整路径（注：不含<see cref="Scheme"/>部分）。</summary>
+	/// <returns>返回由路径锚点和各路径段组成的完整路径，不包含方案名。</returns>
 	public string GetFullPath() => GetAnchorString(_anchor, true) + (_segments == null || _segments.Length == 0 ? null : string.Join('/', _segments));
 
 	/// <summary>获取路径的目录地址（注：不含<see cref="Scheme"/>部分）。</summary>
+	/// <returns>返回不包含方案名及文件名的目录路径。</returns>
 	public string GetDirectory() => GetAnchorString(_anchor, true) +
 	(
 		this.IsFile ?
@@ -134,6 +123,7 @@ public readonly struct Path : IEquatable<Path>
 	);
 
 	/// <summary>获取目录地址URL，包含 <see cref="Scheme"/> 部分。</summary>
+	/// <returns>返回包含方案名的目录路径；未指定方案时仅返回目录路径。</returns>
 	public string GetDirectoryUrl() => string.IsNullOrEmpty(_scheme) ? this.GetDirectory() : _scheme + ':' + this.GetDirectory();
 	#endregion
 

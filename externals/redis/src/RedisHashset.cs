@@ -48,9 +48,12 @@ public class RedisHashset : ISet<string>, ICollection<string>
 		_prefix = prefix ?? string.Empty;
 	}
 
+	#region 公共属性
 	public int Count => (int)_database.SetLength(_name);
 	public bool IsReadOnly => false;
+	#endregion
 
+	#region 公共方法
 	public TimeSpan? GetExpiry() => _database.KeyTimeToLive(_name);
 
 	public bool Add(string item) => item != null && _database.SetAdd(_name, item);
@@ -59,8 +62,12 @@ public class RedisHashset : ISet<string>, ICollection<string>
 		var values = GetValues(items);
 		return values.Length == 0 ? 0 : _database.SetAdd(_name, values);
 	}
+	#endregion
+	#region 显式实现
 	void ICollection<string>.Add(string item) => this.Add(item);
+	#endregion
 
+	#region 公共方法
 	public bool Move(string destination, string item) => !string.IsNullOrEmpty(destination) && item != null && _database.SetMove(_name, _prefix + destination, item);
 	public bool Remove(string item) => _database.SetRemove(_name, item);
 	public long RemoveRange(IEnumerable<string> items)
@@ -122,7 +129,9 @@ public class RedisHashset : ISet<string>, ICollection<string>
 	public bool IsSupersetOf(IEnumerable<string> other) => this.GetSnapshot().IsSupersetOf(GetItems(other));
 	public bool Overlaps(IEnumerable<string> other) => this.GetSnapshot().Overlaps(GetItems(other));
 	public bool SetEquals(IEnumerable<string> other) => this.GetSnapshot().SetEquals(GetItems(other));
+	#endregion
 
+	#region 显式实现
 	void ICollection<string>.CopyTo(string[] array, int arrayIndex)
 	{
 		ArgumentNullException.ThrowIfNull(array);
@@ -138,15 +147,21 @@ public class RedisHashset : ISet<string>, ICollection<string>
 		for(int i = 0; i < items.Length; i++)
 			array[arrayIndex + i] = (string)items[i];
 	}
+	#endregion
 
+	#region 公共方法
 	public IEnumerator<string> GetEnumerator()
 	{
 		foreach(var item in _database.SetScan(_name))
 			yield return item;
 	}
+	#endregion
 
+	#region 显式实现
 	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+	#endregion
 
+	#region 私有方法
 	private HashSet<string> GetSnapshot()
 	{
 		var result = new HashSet<string>(StringComparer.Ordinal);
@@ -186,4 +201,5 @@ public class RedisHashset : ISet<string>, ICollection<string>
 
 		return values.ToArray();
 	}
+	#endregion
 }

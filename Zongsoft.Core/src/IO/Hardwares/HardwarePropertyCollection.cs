@@ -33,9 +33,7 @@ using System.Collections.ObjectModel;
 
 namespace Zongsoft.IO.Hardwares;
 
-/// <summary>
-/// 表示硬件属性集。
-/// </summary>
+/// <summary>表示硬件属性集。</summary>
 public class HardwarePropertyCollection : KeyedCollection<string, HardwareProperty>
 {
 	#region 构造函数

@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Expressions;
 
-/// <summary>
-/// 表示表达式运算器的接口。
-/// </summary>
+/// <summary>表示表达式运算器的接口。</summary>
 public interface IExpressionEvaluator : IDisposable
 {
 	/// <summary>获取运算器的名称。</summary>

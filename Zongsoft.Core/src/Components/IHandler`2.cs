@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示处理程序的接口。
-/// </summary>
+/// <summary>表示处理程序的接口。</summary>
 /// <typeparam name="TArgument">处理程序的请求参数类型。</typeparam>
 /// <typeparam name="TResult">处理程序的结果类型。</typeparam>
 public interface IHandler<in TArgument, TResult> : IHandler

@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common;
 
-/// <summary>
-/// 表示数据源提供程序的接口。
-/// </summary>
+/// <summary>表示数据源提供程序的接口。</summary>
 public interface IDataSourceProvider
 {
 	/// <summary>获取指定应用名的可用数据源集合。</summary>

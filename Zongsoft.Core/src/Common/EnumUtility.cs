@@ -37,6 +37,7 @@ namespace Zongsoft.Common;
 
 public static class EnumUtility
 {
+	#region 静态方法
 	public static Type GetEnumType(Type type)
 	{
 		if(type == null)
@@ -171,6 +172,7 @@ public static class EnumUtility
 
 		return entries;
 	}
+	#endregion
 
 	#region 私有方法
 	private static string GetDescription(FieldInfo field)

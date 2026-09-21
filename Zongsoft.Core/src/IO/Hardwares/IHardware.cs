@@ -29,12 +29,11 @@
 
 namespace Zongsoft.IO.Hardwares;
 
-/// <summary>
-/// 表示硬件设备。
-/// </summary>
+/// <summary>表示硬件设备。</summary>
 [System.Text.Json.Serialization.JsonConverter(typeof(Hardware.JsonConverter))]
 public interface IHardware
 {
+	#region 公共属性
 	/// <summary>获取标识代码。</summary>
 	string Code { get; }
 
@@ -67,9 +66,12 @@ public interface IHardware
 
 	/// <summary>获取硬件属性集。</summary>
 	HardwarePropertyCollection Properties { get; }
+	#endregion
 
+	#region 公共方法
 	/// <summary>获取一个值，指示当前对象是否具有唯一编号。</summary>
 	/// <param name="identifier">返回当前对象的唯一编号。</param>
 	/// <returns>如果当前对象具有唯一编号则返回真(<c>true</c>)，否则返回假(<c>false</c>)。</returns>
 	bool HasUnique(out string identifier);
+	#endregion
 }

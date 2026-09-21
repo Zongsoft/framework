@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据冲突的异常类。
-/// </summary>
+/// <summary>表示数据冲突的异常类。</summary>
 public class DataConflictException : DataAccessException
 {
 	#region 构造函数

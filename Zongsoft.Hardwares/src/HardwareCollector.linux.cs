@@ -42,6 +42,7 @@ partial class HardwareCollector
 	{
 		private const string DMI = "/sys/devices/virtual/dmi/id/";
 
+		#region 静态方法
 		public static IEnumerable<IO.Hardwares.IHardware> Gather()
 		{
 			var mainboard = GetMainboard();
@@ -61,7 +62,9 @@ partial class HardwareCollector
 			foreach(var disk in GetDisks())
 				yield return disk;
 		}
+		#endregion
 
+		#region 私有方法
 		private static IO.Hardwares.IHardware GetMainboard()
 		{
 			var properties = new List<IO.Hardwares.HardwareProperty>();
@@ -662,5 +665,6 @@ partial class HardwareCollector
 			name.StartsWith("loop", StringComparison.OrdinalIgnoreCase) ||
 			name.StartsWith("ram", StringComparison.OrdinalIgnoreCase) ||
 			name.StartsWith("dm-", StringComparison.OrdinalIgnoreCase);
+		#endregion
 	}
 }

@@ -35,9 +35,7 @@ using Zongsoft.Configuration;
 
 namespace Zongsoft.Externals.Aliyun.Options;
 
-/// <summary>
-/// 表示阿里云的常规配置选项。
-/// </summary>
+/// <summary>表示阿里云的常规配置选项。</summary>
 public class GeneralOptions
 {
 	#region 构造函数

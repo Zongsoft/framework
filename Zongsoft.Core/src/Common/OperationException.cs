@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Common;
 
-/// <summary>
-/// 表示操作失败的异常类。
-/// </summary>
+/// <summary>表示操作失败的异常类。</summary>
 public class OperationException : ApplicationException
 {
 	#region 构造函数

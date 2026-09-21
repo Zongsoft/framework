@@ -35,9 +35,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Externals.Aliyun.Telecom.Options;
 
-/// <summary>
-/// 表示电信通讯相关的配置选项。
-/// </summary>
+/// <summary>表示电信通讯相关的配置选项。</summary>
 public class TelecomOptions
 {
 	#region 构造函数
@@ -63,9 +61,7 @@ public class TelecomOptions
 	#endregion
 
 	#region 嵌套子类
-	/// <summary>
-	/// 表示电信短信服务的配置选项。
-	/// </summary>
+	/// <summary>表示电信短信服务的配置选项。</summary>
 	[Configuration.Configuration(nameof(Templates))]
 	public class TelecomMessageOption
 	{
@@ -83,9 +79,7 @@ public class TelecomOptions
 		#endregion
 	}
 
-	/// <summary>
-	/// 表示电信语音服务的配置选项。
-	/// </summary>
+	/// <summary>表示电信语音服务的配置选项。</summary>
 	[Configuration.Configuration(nameof(Templates))]
 	public class TelecomVoiceOption
 	{

@@ -35,6 +35,7 @@ namespace Zongsoft.Components;
 
 partial class CommandLine
 {
+	#region 静态方法
 	public static T GetOptions<T>(CommandDescriptor descriptor, IEnumerable<CmdletOption> options)
 	{
 		if(descriptor == null)
@@ -64,6 +65,7 @@ partial class CommandLine
 
 		return result;
 	}
+	#endregion
 
 	public sealed class CmdletOptionCollection : IReadOnlyCollection<KeyValuePair<string, object>>
 	{

@@ -37,6 +37,7 @@ namespace Zongsoft.Data;
 
 partial class DataAccessBase
 {
+	#region 公共方法
 	public int Insert<T>(T data) => data == null ? 0 : this.Insert(this.GetName<T>(), data, string.Empty, null, null, null);
 	public int Insert<T>(T data, DataInsertOptions options) => data == null ? 0 : this.Insert(this.GetName<T>(), data, string.Empty, options, null, null);
 	public int Insert<T>(T data, string schema) => data == null ? 0 : this.Insert(this.GetName<T>(), data, schema, null, null, null);
@@ -274,7 +275,10 @@ partial class DataAccessBase
 		//返回最终的结果
 		return result;
 	}
+	#endregion
 
+	#region 保护方法
 	protected abstract void OnInsert(DataInsertContextBase context);
 	protected abstract ValueTask OnInsertAsync(DataInsertContextBase context, CancellationToken cancellation);
+	#endregion
 }

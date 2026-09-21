@@ -50,13 +50,18 @@ public class PrefabCollection : KeyedCollection<string, Prefab>
 		this.Namespace = folder.Namespace;
 	}
 
+	#region 公共属性
 	public string Namespace { get; }
 	public Prefab.FolderPrefab Folder { get; }
+	#endregion
+	#region 重写方法
 	protected override string GetKeyForItem(Prefab prefab) => prefab.Name;
+	#endregion
 }
 
 public static class PrefabCollectionExtension
 {
+	#region 静态方法
 	public static Prefab.FolderPrefab Folder(this PrefabCollection prefabs, string name, string label = null, string description = null)
 	{
 		if(prefabs == null)
@@ -110,4 +115,5 @@ public static class PrefabCollectionExtension
 		prefabs.Add(result);
 		return result;
 	}
+	#endregion
 }

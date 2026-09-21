@@ -9,9 +9,7 @@ using Microsoft.Extensions.ObjectPool;
 
 namespace Zongsoft.Common;
 
-/// <summary>
-/// 提供异步操作的同步锁功能。
-/// </summary>
+/// <summary>提供异步操作的同步锁功能。</summary>
 /// <remarks>
 /// 	<para>注意：本类代码基于 .NET 基础库的内部代码，版权归属 .NET 基金会。</para>
 /// 	<para>源码：https://source.dot.net/#System.ServiceModel.Primitives/Internals/System/Runtime/AsyncLock.cs</para>
@@ -30,6 +28,7 @@ public sealed class Locker : IAsyncDisposable
 		_currentRelease = new AsyncLocal<SemaphoreRelease>();
 	}
 
+	#region 公共方法
 	public ValueTask<IAsyncDisposable> LockAsync(CancellationToken cancellation = default)
 	{
 		lock(_syncRoot)
@@ -76,13 +75,17 @@ public sealed class Locker : IAsyncDisposable
 			return release;
 		}
 	}
+	#endregion
 
+	#region 资源释放
 	public ValueTask DisposeAsync()
 	{
 		lock(_syncRoot)
 			return new ValueTask(_disposeTask ??= this.DisposeCoreAsync());
 	}
+	#endregion
 
+	#region 私有方法
 	private async Task DisposeCoreAsync()
 	{
 		// Ensure the lock isn't held. If it is, wait for it to be released
@@ -109,6 +112,7 @@ public sealed class Locker : IAsyncDisposable
 		if(ReferenceEquals(_currentRelease.Value, release))
 			_currentRelease.Value = release.Parent;
 	}
+	#endregion
 
 	private sealed class SemaphoreRelease(SemaphoreSlim currentSemaphore, SemaphoreSlim nextSemaphore, SemaphoreRelease parent, Locker locker) : IAsyncDisposable, IDisposable
 	{
@@ -122,10 +126,13 @@ public sealed class Locker : IAsyncDisposable
 		private readonly Locker _locker = locker;
 		private int _state;
 
+		#region 公共属性
 		public SemaphoreRelease Parent { get; } = parent;
 		public SemaphoreSlim NextSemaphore => _nextSemaphore;
 		public bool IsActive => Volatile.Read(ref _state) <= ACQUIRED;
+		#endregion
 
+		#region 公共方法
 		public void Acquire()
 		{
 			if(Interlocked.CompareExchange(ref _state, ACQUIRED, PENDING) != PENDING)
@@ -137,7 +144,9 @@ public sealed class Locker : IAsyncDisposable
 			if(Interlocked.CompareExchange(ref _state, RELEASED, PENDING) == PENDING)
 				_semaphorePool.Return(_nextSemaphore);
 		}
+		#endregion
 
+		#region 资源释放
 		public ValueTask DisposeAsync()
 		{
 			if(Interlocked.CompareExchange(ref _state, RELEASING, ACQUIRED) != ACQUIRED)
@@ -146,7 +155,9 @@ public sealed class Locker : IAsyncDisposable
 			_locker.Pop(this);
 			return this.ReleaseAsync();
 		}
+		#endregion
 
+		#region 私有方法
 		private async ValueTask ReleaseAsync()
 		{
 			try
@@ -161,7 +172,9 @@ public sealed class Locker : IAsyncDisposable
 				Volatile.Write(ref _state, RELEASED);
 			}
 		}
+		#endregion
 
+		#region 资源释放
 		public void Dispose()
 		{
 			if(Interlocked.CompareExchange(ref _state, RELEASING, ACQUIRED) != ACQUIRED)
@@ -181,10 +194,12 @@ public sealed class Locker : IAsyncDisposable
 				Volatile.Write(ref _state, RELEASED);
 			}
 		}
+		#endregion
 	}
 
 	private sealed class SemaphoreSlimPooledObjectPolicy : PooledObjectPolicy<SemaphoreSlim>
 	{
+		#region 重写方法
 		public override SemaphoreSlim Create() => new(1);
 		public override bool Return(SemaphoreSlim semaphore)
 		{
@@ -196,5 +211,6 @@ public sealed class Locker : IAsyncDisposable
 
 			return true;
 		}
+		#endregion
 	}
 }

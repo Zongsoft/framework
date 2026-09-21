@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Communication;
 
-/// <summary>
-/// 提供模板信息发送功能的接口。
-/// </summary>
+/// <summary>提供模板信息发送功能的接口。</summary>
 public interface ITransmitter
 {
 	/// <summary>获取发送器名称。</summary>

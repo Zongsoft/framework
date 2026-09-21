@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示处理程序的接口。
-/// </summary>
+/// <summary>表示处理程序的接口。</summary>
 public interface IHandler
 {
 	/// <summary>异步处理执行请求。</summary>

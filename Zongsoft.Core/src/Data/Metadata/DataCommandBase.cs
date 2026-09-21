@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data.Metadata;
 
-/// <summary>
-/// 表示数据命令的元数据类。
-/// </summary>
+/// <summary>表示数据命令的元数据类。</summary>
 public class DataCommandBase<TScriptor> : IDataCommand where TScriptor : IDataCommandScriptor
 {
 	#region 成员字段

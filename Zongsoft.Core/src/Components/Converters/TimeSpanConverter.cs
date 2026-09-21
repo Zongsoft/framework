@@ -37,11 +37,14 @@ namespace Zongsoft.Components.Converters;
 
 public class TimeSpanConverter : TypeConverter
 {
+	#region 重写方法
 	public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string);
 	public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value) => value is string text ? TimeSpanUtility.Parse(text) : null;
+	#endregion
 
 	public sealed class Days : TypeConverter
 	{
+		#region 重写方法
 		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType.IsNumeric();
 		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType.IsNumeric();
 
@@ -76,10 +79,12 @@ public class TimeSpanConverter : TypeConverter
 			TypeCode.Decimal => (decimal)((TimeSpan)value).TotalDays,
 			_ => null,
 		};
+		#endregion
 	}
 
 	public sealed class Hours : TypeConverter
 	{
+		#region 重写方法
 		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType.IsNumeric();
 		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType.IsNumeric();
 
@@ -114,10 +119,12 @@ public class TimeSpanConverter : TypeConverter
 			TypeCode.Decimal => (decimal)((TimeSpan)value).TotalHours,
 			_ => null,
 		};
+		#endregion
 	}
 
 	public sealed class Minutes : TypeConverter
 	{
+		#region 重写方法
 		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType.IsNumeric();
 		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType.IsNumeric();
 
@@ -152,10 +159,12 @@ public class TimeSpanConverter : TypeConverter
 			TypeCode.Decimal => (decimal)((TimeSpan)value).TotalMinutes,
 			_ => null,
 		};
+		#endregion
 	}
 
 	public sealed class Seconds : TypeConverter
 	{
+		#region 重写方法
 		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType.IsNumeric();
 		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType.IsNumeric();
 
@@ -190,10 +199,12 @@ public class TimeSpanConverter : TypeConverter
 			TypeCode.Decimal => (decimal)((TimeSpan)value).TotalSeconds,
 			_ => null,
 		};
+		#endregion
 	}
 
 	public sealed class Milliseconds : TypeConverter
 	{
+		#region 重写方法
 		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType.IsNumeric();
 		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType.IsNumeric();
 
@@ -228,5 +239,6 @@ public class TimeSpanConverter : TypeConverter
 			TypeCode.Decimal => (decimal)((TimeSpan)value).TotalMilliseconds,
 			_ => null,
 		};
+		#endregion
 	}
 }

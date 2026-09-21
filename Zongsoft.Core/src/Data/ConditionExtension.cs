@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 提供条件操作的扩展方法。
-/// </summary>
+/// <summary>提供条件操作的扩展方法。</summary>
 public static class ConditionExtension
 {
 	#region 匹配方法

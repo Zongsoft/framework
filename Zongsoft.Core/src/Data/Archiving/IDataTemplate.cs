@@ -32,9 +32,7 @@ using System.IO;
 
 namespace Zongsoft.Data.Archiving;
 
-/// <summary>
-/// 表示数据模板的接口。
-/// </summary>
+/// <summary>表示数据模板的接口。</summary>
 public interface IDataTemplate
 {
 	/// <summary>获取模板名称。</summary>

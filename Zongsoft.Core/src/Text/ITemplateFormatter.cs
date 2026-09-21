@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Text;
 
-/// <summary>
-/// 提供模板格式化功能的接口。
-/// </summary>
+/// <summary>提供模板格式化功能的接口。</summary>
 public interface ITemplateFormatter
 {
 	/// <summary>获取格式化器名称。</summary>

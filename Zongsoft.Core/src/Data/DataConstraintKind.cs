@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据约束类型的枚举。
-/// </summary>
+/// <summary>表示数据约束类型的枚举。</summary>
 public enum DataConstraintKind
 {
 	/// <summary>唯一性约束</summary>

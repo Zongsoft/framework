@@ -35,9 +35,7 @@ using Zongsoft.Common;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据模型属性元信息的类。
-/// </summary>
+/// <summary>表示数据模型属性元信息的类。</summary>
 [System.Text.Json.Serialization.JsonDerivedType(typeof(SimplexPropertyDescriptor), "simplex")]
 [System.Text.Json.Serialization.JsonDerivedType(typeof(ComplexPropertyDescriptor), "complex")]
 public abstract partial class ModelPropertyDescriptor : INotifyPropertyChanged, INotifyPropertyChanging
@@ -230,6 +228,7 @@ public abstract partial class ModelPropertyDescriptor : INotifyPropertyChanged, 
 
 partial class ModelPropertyDescriptor
 {
+	#region 静态方法
 	public static ModelPropertyDescriptor Create(MemberInfo info)
 	{
 		var attribute = info.GetCustomAttribute<ModelPropertyAttribute>(true);
@@ -246,7 +245,9 @@ partial class ModelPropertyDescriptor
 			new SimplexPropertyDescriptor(info) :
 			new ComplexPropertyDescriptor(info);
 	}
+	#endregion
 
+	#region 私有方法
 	private static bool IsSimplexType(Type type) => TypeExtension.IsScalarType(type);
 	private static Type GetMemberType(MemberInfo member) => member switch
 	{
@@ -254,4 +255,5 @@ partial class ModelPropertyDescriptor
 		PropertyInfo info => info.PropertyType,
 		_ => throw new ArgumentException(string.Format(Properties.Resources.Model_InvalidPropertyMember_Message, member.Name)),
 	};
+	#endregion
 }

@@ -245,6 +245,7 @@ partial struct Checksum
 {
 	private sealed class TypeConverter : System.ComponentModel.TypeConverter
 	{
+		#region 重写方法
 		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string);
 		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType) => destinationType == typeof(string);
 
@@ -265,10 +266,12 @@ partial struct Checksum
 
 			return base.ConvertTo(context, culture, value, destinationType);
 		}
+		#endregion
 	}
 
 	private sealed class JsonConverter : JsonConverter<Checksum>
 	{
+		#region 重写方法
 		public override Checksum Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options) => reader.TokenType switch
 		{
 			JsonTokenType.Null => default,
@@ -283,5 +286,6 @@ partial struct Checksum
 			else
 				writer.WriteStringValue(value.ToString());
 		}
+		#endregion
 	}
 }

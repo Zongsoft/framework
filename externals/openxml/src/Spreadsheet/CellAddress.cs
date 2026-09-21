@@ -32,9 +32,7 @@ using System.Buffers;
 
 namespace Zongsoft.Externals.OpenXml.Spreadsheet;
 
-/// <summary>
-/// 表示单元格地址的结构。
-/// </summary>
+/// <summary>表示单元格地址的结构。</summary>
 public readonly struct CellAddress : IEquatable<CellAddress>
 {
 	#region 常量定义

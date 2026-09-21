@@ -36,6 +36,7 @@ namespace Zongsoft.Data.Metadata;
 
 public static class DataEntityUtility
 {
+	#region 静态方法
 	public static IDataEntity Key(this IDataEntity entity, params string[] keys)
 	{
 		if(entity == null)
@@ -144,4 +145,5 @@ public static class DataEntityUtility
 		return Mapping.Entities.TryGetValue(name, @namespace, out var result) ?
 			result : throw new System.Collections.Generic.KeyNotFoundException(string.Format(Properties.Resources.DataEntity_NotFound_Message, locator));
 	}
+	#endregion
 }

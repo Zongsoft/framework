@@ -35,11 +35,10 @@ using Zongsoft.Data.Common;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据访问上下文的接口。
-/// </summary>
+/// <summary>表示数据访问上下文的接口。</summary>
 public interface IDataAccessContext : IDataAccessContextBase
 {
+	#region 公共属性
 	/// <summary>获取当前上下文对应的数据源。</summary>
 	IDataSource Source { get; }
 
@@ -48,11 +47,10 @@ public interface IDataAccessContext : IDataAccessContextBase
 
 	/// <summary>获取当前上下文关联的数据会话。</summary>
 	DataSession Session { get; }
+	#endregion
 }
 
-/// <summary>
-/// 表示数据写入操作上下文的接口。
-/// </summary>
+/// <summary>表示数据写入操作上下文的接口。</summary>
 public interface IDataMutateContext : IDataAccessContext, IDataMutateContextBase { }
 
 public class DataExistContext : DataExistContextBase, IDataAccessContext, Common.Expressions.IAliasable

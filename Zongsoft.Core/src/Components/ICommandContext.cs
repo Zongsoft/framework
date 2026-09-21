@@ -32,9 +32,7 @@ using System.IO;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 表示命令执行的上下文的接口。
-/// </summary>
+/// <summary>表示命令执行的上下文的接口。</summary>
 public interface ICommandContext
 {
 	/// <summary>获取当前命令执行器对象。</summary>

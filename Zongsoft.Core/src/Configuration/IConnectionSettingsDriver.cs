@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
 
-/// <summary>
-/// 表示连接设置驱动器的基础接口。
-/// </summary>
+/// <summary>表示连接设置驱动器的基础接口。</summary>
 public interface IConnectionSettingsDriver : IEquatable<IConnectionSettingsDriver>
 {
 	#region 静态属性
@@ -61,9 +59,7 @@ public interface IConnectionSettingsDriver : IEquatable<IConnectionSettingsDrive
 	#endregion
 }
 
-/// <summary>
-/// 表示连接设置驱动器的接口。
-/// </summary>
+/// <summary>表示连接设置驱动器的接口。</summary>
 public interface IConnectionSettingsDriver<out TSettings> : IConnectionSettingsDriver where TSettings : IConnectionSettings
 {
 	#region 方法定义

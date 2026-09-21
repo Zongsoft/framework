@@ -39,6 +39,7 @@ namespace Zongsoft.Externals.Wechat;
 
 public static class BankUtility
 {
+	#region 静态方法
 	public static async ValueTask<IEnumerable<Bank>> GetBanksAsync(this IAuthority authority, BankKind kind, Paging page = null, CancellationToken cancellation = default)
 	{
 		if(authority == null)
@@ -122,9 +123,11 @@ public static class BankUtility
 
 		return result.HasData ? result.Data[0] : null;
 	}
+	#endregion
 
 	private struct Result<T>
 	{
+		#region 公共属性
 		[JsonPropertyName("total_count")]
 		public int Total { get; set; }
 		[JsonPropertyName("count")]
@@ -137,6 +140,7 @@ public static class BankUtility
 		[JsonIgnore]
 		[Serialization.SerializationMember(Ignored = true)]
 		public bool HasData => this.Data != null && this.Data.Length > 0;
+		#endregion
 	}
 
 	public enum BankKind
@@ -147,6 +151,7 @@ public static class BankUtility
 
 	public struct Bank
 	{
+		#region 公共属性
 		[JsonPropertyName("account_bank_code")]
 		public uint Id { get; set; }
 
@@ -161,13 +166,16 @@ public static class BankUtility
 
 		[JsonPropertyName("need_bank_branch")]
 		public bool Branched { get; set; }
+		#endregion
 	}
 
 	public struct BankBranch
 	{
+		#region 公共属性
 		[JsonPropertyName("bank_branch_id")]
 		public string Code { get; set; }
 		[JsonPropertyName("bank_branch_name")]
 		public string Name { get; set; }
+		#endregion
 	}
 }

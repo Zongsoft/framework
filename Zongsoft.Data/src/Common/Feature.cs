@@ -101,9 +101,7 @@ public class Feature : IEquatable<Feature>, IComparable<Feature>
 	#endregion
 
 	#region 嵌套子类
-	/// <summary>
-	/// 表示删除语句的功能特性集。
-	/// </summary>
+	/// <summary>表示删除语句的功能特性集。</summary>
 	public static class Deletion
 	{
 		#region 常量定义
@@ -116,9 +114,7 @@ public class Feature : IEquatable<Feature>, IComparable<Feature>
 		#endregion
 	}
 
-	/// <summary>
-	/// 表示更新语句的功能特性集。
-	/// </summary>
+	/// <summary>表示更新语句的功能特性集。</summary>
 	public static class Updation
 	{
 		#region 常量定义

@@ -70,9 +70,7 @@ public readonly struct Account : IEquatable<Account>
 	#endregion
 
 	#region 解析方法
-	/// <summary>
-	/// 将格式为<c>type:code=secret?description</c>文本解析为<see cref="Account"/>结构。
-	/// </summary>
+	/// <summary>将格式为<c>type:code=secret?description</c>文本解析为<see cref="Account"/>结构。</summary>
 	/// <param name="text">指定待解析的文本。</param>
 	/// <param name="result">输出参数，返回解析成功的<see cref="Account"/>结构。</param>
 	/// <returns>如果解析成功则返回真(True)，否则返回假(False)。</returns>

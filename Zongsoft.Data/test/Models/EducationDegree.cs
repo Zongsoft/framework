@@ -2,9 +2,7 @@
 
 namespace Zongsoft.Data.Tests.Models;
 
-/// <summary>
-/// 表示受教育程度（学历）的枚举。
-/// </summary>
+/// <summary>表示受教育程度（学历）的枚举。</summary>
 public enum EducationDegree : byte
 {
 	/// <summary>未定义</summary>

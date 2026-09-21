@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 关于<seealso cref="IWorker"/>的状态信息。
-/// </summary>
+/// <summary>关于<seealso cref="IWorker"/>的状态信息。</summary>
 public enum WorkerState
 {
 	/// <summary>未运行/已停止。</summary>

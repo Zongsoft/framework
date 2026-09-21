@@ -178,5 +178,7 @@ partial class RedisService : ISequence
 	}
 	#endregion
 
+	#region 私有方法
 	private static long GetExpiryMilliseconds(TimeSpan expiry) => Math.Max(1L, checked((long)Math.Ceiling(expiry.TotalMilliseconds)));
+	#endregion
 }

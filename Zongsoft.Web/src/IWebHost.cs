@@ -29,9 +29,7 @@
 
 namespace Zongsoft.Web;
 
-/// <summary>
-/// 表示Web宿主的接口。
-/// </summary>
+/// <summary>表示Web宿主的接口。</summary>
 public interface IWebHost
 {
 	/// <summary>获取宿主名称。</summary>

@@ -32,9 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Configuration;
 
-/// <summary>
-/// 表示连接设置项的注解类。
-/// </summary>
+/// <summary>表示连接设置项的注解类。</summary>
 [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, AllowMultiple = false)]
 public class ConnectionSettingAttribute : Attribute
 {

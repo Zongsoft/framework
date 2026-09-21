@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Components.Features;
 
-/// <summary>
-/// 提供超时功能的特性类。
-/// </summary>
+/// <summary>提供超时功能的特性类。</summary>
 public abstract class TimeoutFeatureBase : IFeature
 {
 	#region 构造函数
@@ -49,9 +47,7 @@ public abstract class TimeoutFeatureBase : IFeature
 	#endregion
 }
 
-/// <summary>
-/// 提供超时功能的特性类。
-/// </summary>
+/// <summary>提供超时功能的特性类。</summary>
 public class TimeoutFeature : TimeoutFeatureBase
 {
 	#region 构造函数
@@ -70,9 +66,7 @@ public class TimeoutFeature : TimeoutFeatureBase
 	#endregion
 }
 
-/// <summary>
-/// 提供超时功能的特性类。
-/// </summary>
+/// <summary>提供超时功能的特性类。</summary>
 public class TimeoutFeature<T> : TimeoutFeatureBase
 {
 	#region 构造函数
@@ -91,9 +85,7 @@ public class TimeoutFeature<T> : TimeoutFeatureBase
 	#endregion
 }
 
-/// <summary>
-/// 提供超时功能的特性类。
-/// </summary>
+/// <summary>提供超时功能的特性类。</summary>
 public class TimeoutFeature<T, TResult> : TimeoutFeatureBase
 {
 	#region 构造函数

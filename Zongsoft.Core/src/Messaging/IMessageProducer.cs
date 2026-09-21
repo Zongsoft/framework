@@ -34,9 +34,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Messaging;
 
-/// <summary>
-/// 表示消息生产者的接口。
-/// </summary>
+/// <summary>表示消息生产者的接口。</summary>
 public interface IMessageProducer
 {
 	/// <summary>生产消息。</summary>

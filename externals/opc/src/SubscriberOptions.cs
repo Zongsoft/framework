@@ -37,6 +37,7 @@ public class SubscriberOptions
 	internal const int KEEP_ALIVE_COUNT = 512 * 1000;
 	internal const int LIFETIME_COUNT = KEEP_ALIVE_COUNT * 3;
 
+	#region 公共属性
 	public TimeSpan MinLifetimeInterval { get; set; }
 	public TimeSpan PublishingInterval { get; set; }
 	public TimeSpan SamplingInterval { get; set; }
@@ -45,10 +46,12 @@ public class SubscriberOptions
 	public int KeepAliveCount { get; set; }
 	public int LifetimeCount { get; set; }
 	public byte Priority { get; set; }
+	#endregion
 }
 
 public static class SubscriberOptionsUtility
 {
+	#region 静态方法
 	public static int GetSamplingInterval(this SubscriberOptions options) => options == null ? 100 : (int)options.SamplingInterval.TotalMilliseconds;
 	public static int GetPublishingInterval(this SubscriberOptions options) => options == null ? 1000 : (int)options.PublishingInterval.TotalMilliseconds;
 	public static uint GetMinLifetimeInterval(this SubscriberOptions options) => options == null ? 1000 : (uint)options.MinLifetimeInterval.TotalMilliseconds;
@@ -57,4 +60,5 @@ public static class SubscriberOptionsUtility
 	public static int GetKeepAliveCount(this SubscriberOptions options) => options == null ? SubscriberOptions.KEEP_ALIVE_COUNT : options.KeepAliveCount;
 	public static int GetLifetimeCount(this SubscriberOptions options) => options == null ? SubscriberOptions.LIFETIME_COUNT : options.LifetimeCount;
 	public static byte GetPriority(this SubscriberOptions options) => options == null ? (byte)0 : options.Priority;
+	#endregion
 }

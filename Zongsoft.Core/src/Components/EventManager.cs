@@ -33,9 +33,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 提供全局事件管理功能的类。
-/// </summary>
+/// <summary>提供全局事件管理功能的类。</summary>
 public sealed class EventManager : IEnumerable<EventDescriptor>
 {
 	#region 单例字段

@@ -37,6 +37,7 @@ namespace Zongsoft.Data;
 
 partial class DataAccessBase
 {
+	#region 公共方法
 	public int Upsert<T>(T data) => data == null ? 0 : this.Upsert(this.GetName<T>(), data, string.Empty, null, null, null);
 	public int Upsert<T>(T data, DataUpsertOptions options) => data == null ? 0 : this.Upsert(this.GetName<T>(), data, string.Empty, options, null, null);
 	public int Upsert<T>(T data, string schema) => data == null ? 0 : this.Upsert(this.GetName<T>(), data, schema, null, null, null);
@@ -279,7 +280,10 @@ partial class DataAccessBase
 		//返回最终的结果
 		return result;
 	}
+	#endregion
 
+	#region 保护方法
 	protected abstract void OnUpsert(DataUpsertContextBase context);
 	protected abstract ValueTask OnUpsertAsync(DataUpsertContextBase context, CancellationToken cancellation);
+	#endregion
 }

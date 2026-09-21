@@ -33,9 +33,7 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Components;
 
-/// <summary>
-/// 提供实现<see cref="ICommand"/>接口功能的基类，建议需要完成<see cref="ICommand"/>接口功能的实现者从此类继承。
-/// </summary>
+/// <summary>提供实现<see cref="ICommand"/>接口功能的基类，建议需要完成<see cref="ICommand"/>接口功能的实现者从此类继承。</summary>
 /// <typeparam name="TContext">指定命令的执行上下文类型。</typeparam>
 public abstract class CommandBase<TContext> : CommandBase, ICommand<TContext> where TContext : CommandContext
 {
@@ -60,9 +58,7 @@ public abstract class CommandBase<TContext> : CommandBase, ICommand<TContext> wh
 	/// <param name="context">执行命令的上下文对象。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回执行的返回结果。</returns>
-	/// <remarks>
-	///		<para>本方法的实现中首先调用<seealso cref="CommandBase.CanExecuteAsync"/>方法，以确保阻止非法的调用。</para>
-	/// </remarks>
+	/// <remarks>本方法的实现中首先调用<seealso cref="CommandBase.CanExecuteAsync"/>方法，以确保阻止非法的调用。</remarks>
 	public ValueTask<object> ExecuteAsync(TContext context, CancellationToken cancellation = default) => base.ExecuteAsync(context, cancellation);
 	#endregion
 

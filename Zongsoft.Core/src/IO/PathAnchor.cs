@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.IO;
 
-/// <summary>
-/// 表示关于路径的锚定点。
-/// </summary>
+/// <summary>表示关于路径的锚定点。</summary>
 public enum PathAnchor
 {
 	/// <summary>未锚定</summary>

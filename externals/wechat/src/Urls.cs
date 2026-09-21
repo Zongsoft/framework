@@ -31,9 +31,7 @@ using System;
 
 namespace Zongsoft.Externals.Wechat;
 
-/// <summary>
-/// 提供微信后台接口的URL定义。
-/// </summary>
+/// <summary>提供微信后台接口的URL定义。</summary>
 internal static class Urls
 {
 	#region 常量定义

@@ -33,9 +33,7 @@ using System.Security.Cryptography;
 
 namespace Zongsoft.Security;
 
-/// <summary>
-/// 提供密码操作的工具类。
-/// </summary>
+/// <summary>提供密码操作的工具类。</summary>
 [Obsolete($"This class has been deprecated, Please use the {nameof(Password)} struct instead.")]
 public static class PasswordUtility
 {

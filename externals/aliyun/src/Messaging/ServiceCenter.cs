@@ -32,9 +32,7 @@ using System.ComponentModel;
 
 namespace Zongsoft.Externals.Aliyun.Messaging;
 
-/// <summary>
-/// 表示消息队列服务中心的类。
-/// </summary>
+/// <summary>表示消息队列服务中心的类。</summary>
 public class ServiceCenter : ServiceCenterBase
 {
 	#region 常量定义

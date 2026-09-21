@@ -3,9 +3,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Tests.Models;
 
-/// <summary>
-/// 表示员工的实体类。
-/// </summary>
+/// <summary>表示员工的实体类。</summary>
 public abstract class Employee
 {
 	#region 普通属性
@@ -189,9 +187,7 @@ public abstract class Employee
 	#endregion
 }
 
-/// <summary>
-/// 表示员工查询条件的实体类。
-/// </summary>
+/// <summary>表示员工查询条件的实体类。</summary>
 public abstract class EmployeeCriteria : CriteriaBase
 {
 	#region 公共属性
@@ -278,9 +274,7 @@ public abstract class EmployeeCriteria : CriteriaBase
 	#endregion
 }
 
-/// <summary>
-/// 表示员工主键的结构。
-/// </summary>
+/// <summary>表示员工主键的结构。</summary>
 public struct EmployeeKey : IEquatable<EmployeeKey>
 {
 	#region 构造函数

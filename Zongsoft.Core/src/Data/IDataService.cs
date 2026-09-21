@@ -33,9 +33,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-/// <summary>
-/// 表示数据服务的接口。
-/// </summary>
+/// <summary>表示数据服务的接口。</summary>
 public partial interface IDataService
 {
 	#region 事件定义
@@ -279,6 +277,7 @@ public partial interface IDataService
  */
 public partial interface IDataService
 {
+	#region 公共方法
 	bool Exists(Condition criteria, DataExistsOptions options = null) => this.Exists((ICondition)criteria, options);
 	bool Exists(ConditionCollection criteria, DataExistsOptions options = null) => this.Exists((ICondition)criteria, options);
 
@@ -294,4 +293,5 @@ public partial interface IDataService
 	int Update(object data, Condition criteria, string schema, DataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, schema, options);
 	int Update(object data, ConditionCollection criteria, DataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, options);
 	int Update(object data, ConditionCollection criteria, string schema, DataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, schema, options);
+	#endregion
 }

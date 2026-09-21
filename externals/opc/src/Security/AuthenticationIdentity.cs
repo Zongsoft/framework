@@ -37,6 +37,7 @@ namespace Zongsoft.Externals.Opc.Security;
 
 public class AuthenticationIdentity
 {
+	#region 内部方法
 	internal static AuthenticationIdentity GetIdentity(UserIdentityToken token) => token switch
 	{
 		AnonymousIdentityToken => null,
@@ -45,6 +46,7 @@ public class AuthenticationIdentity
 		IssuedIdentityToken => throw new Zongsoft.Security.SecurityException(),
 		_ => null,
 	};
+	#endregion
 
 	public sealed class Account : AuthenticationIdentity, IEquatable<Account>, IEquatable<AuthenticationIdentity>
 	{
@@ -57,25 +59,37 @@ public class AuthenticationIdentity
 			_hashcode = string.IsNullOrEmpty(userName) ? 0 : userName.ToUpperInvariant().GetHashCode();
 		}
 
+		#region 公共属性
 		public string UserName { get; }
 		public string Password { get; }
+		#endregion
 
+		#region 公共方法
 		public bool Equals(Account other) => other is not null && string.Equals(this.UserName, other.UserName, StringComparison.OrdinalIgnoreCase);
 		public bool Equals(AuthenticationIdentity other) => this.Equals(other as Account);
+		#endregion
+		#region 重写方法
 		public override bool Equals(object obj) => this.Equals(obj as Account);
 		public override int GetHashCode() => _hashcode;
 		public override string ToString() => $"{this.UserName}";
+		#endregion
 	}
 
 	public sealed class Certificate : AuthenticationIdentity, IEquatable<Certificate>, IEquatable<AuthenticationIdentity>
 	{
 		public Certificate(X509Certificate2 x509) => this.X509 = x509;
+		#region 公共属性
 		public X509Certificate2 X509 { get; }
+		#endregion
 
+		#region 公共方法
 		public bool Equals(Certificate other) => other is not null && object.Equals(this.X509, other.X509);
 		public bool Equals(AuthenticationIdentity other) => this.Equals(other as Certificate);
+		#endregion
+		#region 重写方法
 		public override bool Equals(object obj) => this.Equals(obj as Account);
 		public override int GetHashCode() => HashCode.Combine(this.X509);
 		public override string ToString() => this.X509?.ToString();
+		#endregion
 	}
 }
