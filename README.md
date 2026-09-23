@@ -141,15 +141,15 @@ dotnet format whitespace ./Zongsoft.Core/src/Zongsoft.Core.csproj --no-restore -
 dotnet format style ./Zongsoft.Core/src/Zongsoft.Core.csproj --no-restore --verify-no-changes --diagnostics IDE0049
 ```
 
-These commands do not rewrite source files. `--include` paths are relative to the working directory. Normal builds report configured style violations as warnings. ZS0005 replaces IDE0005 and permits ordinary `using System;`; unused-import checks still require XML documentation generation; `CS4014` and `CA2012` remain errors. `IDE0049` does not run during builds, so the editor or the separate `dotnet format style` check is needed. Use `dotnet restore` for the target project before the first check.
+These commands do not rewrite source files. `--include` paths are relative to the working directory. C# builds run in strict mode by default and treat configured style violations as errors. ZS0005 replaces IDE0005 and permits ordinary `using System;`; unused-import checks still require XML documentation generation; `CS4014` and `CA2012` remain errors. `IDE0049` does not run during builds, so the editor or the separate `dotnet format style` check is needed. Use `dotnet restore` for the target project before the first check.
 
-Append `-p:ZongsoftCodeStyleStrict=true` to the build command to promote the configured style warnings to errors. This checks the entire project and any project references actually built, not just changed lines. Builds follow the project's configured target frameworks; formatting checks do not replace compilation and analysis for each target. CI must check build and IDE0049 verification exit codes.
+`Directory.Build.props` sets `ZongsoftCodeStyleStrict=true` for local, CI, and NuGet publishing builds. This checks the entire project and any project references actually built, not just changed lines. Builds follow the project's configured target frameworks; formatting checks do not replace compilation and analysis for each target. CI checks the strict build; run the separate IDE0049 command when reviewing style changes.
 
 > 💡 `dotnet format whitespace` compares formatted text directly and does not apply diagnostic suppressors. It may still report permitted directive indentation or compact try/catch/finally blocks; loaded-analyzer build diagnostics govern these exceptions. Keep `--verify-no-changes` for verification. Limit intentional formatting fixes to changed files and inspect the diff. Do not run unrestricted repository-wide formatting, import organization or public API renaming.
 
 Using aliases, production global imports, dependency grouping and import length ordering, Chinese region labels, field qualification by visibility, and design contracts still require review. Standard import organizers use alphabetical ordering and cannot implement the guideline's length ordering.
 
-C# rules update with the package; do not duplicate them in the root EditorConfig. New text files default to CRLF, with LF for shell scripts. Preserve existing encodings and BOMs; existing LF files need a local EditorConfig override to prevent editor-driven line-ending conversion.
+C# rules update with the package; do not duplicate them in the root EditorConfig. Git checks out C# files with CRLF to match EditorConfig; new text files default to CRLF, with LF for shell scripts. Preserve existing encodings and BOMs; existing LF files need a local EditorConfig override to prevent editor-driven line-ending conversion.
 
 ### EditorConfig synchronization
 

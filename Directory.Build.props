@@ -23,6 +23,7 @@
 		<OutputType Condition="$(MSBuildProjectName.EndsWith('.Tests'))">Exe</OutputType>
 		<NoWarn>$(NoWarn);1701;1702;CS1591;NU1701;NU5048;SYSLIB0001;NETSDK1138;xUnit1051;</NoWarn>
 		<GenerateDocumentationFile Condition="'$(Configuration)' == 'Release'">true</GenerateDocumentationFile>
+		<ZongsoftCodeStyleStrict>true</ZongsoftCodeStyleStrict>
 		<ZongsoftGuidelinesSynchronization>$(MSBuildThisFileDirectory)</ZongsoftGuidelinesSynchronization>
 	</PropertyGroup>
 

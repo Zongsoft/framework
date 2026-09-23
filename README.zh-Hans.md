@@ -141,15 +141,15 @@ dotnet format whitespace ./Zongsoft.Core/src/Zongsoft.Core.csproj --no-restore -
 dotnet format style ./Zongsoft.Core/src/Zongsoft.Core.csproj --no-restore --verify-no-changes --diagnostics IDE0049
 ```
 
-`--include` 路径相对于当前工作目录，将示例文件替换为实际修改文件。普通构建将明确的风格问题报告为警告；未使用引用改用 `ZS0005`，允许普通 `using System;`，此项检查仍要求开启 XML 文档生成；`CS4014` 与 `CA2012` 保持为错误。`IDE0049` 不在构建时运行，必须由编辑器或上面的 `dotnet format style` 命令补充检查。首次使用前可用 `dotnet restore` 还原目标项目。
+`--include` 路径相对于当前工作目录，将示例文件替换为实际修改文件。C# 构建默认启用严格模式，明确的风格问题会成为错误；未使用引用改用 `ZS0005`，允许普通 `using System;`，此项检查仍要求开启 XML 文档生成；`CS4014` 与 `CA2012` 保持为错误。`IDE0049` 不在构建时运行，必须由编辑器或上面的 `dotnet format style` 命令补充检查。首次使用前可用 `dotnet restore` 还原目标项目。
 
-在构建命令追加 `-p:ZongsoftCodeStyleStrict=true`，将配置指定的风格警告升级为错误。严格模式检查整个项目及实际构建的项目引用，不能限制为 Git 修改行。多目标编译按项目的实际目标框架执行，局部格式检查不替代各目标框架验证。CI 必须检查构建和 IDE0049 验证命令的退出码。
+`Directory.Build.props` 为本地、CI 和 NuGet 发布构建设置 `ZongsoftCodeStyleStrict=true`，将配置指定的风格警告升级为错误。严格模式检查整个项目及实际构建的项目引用，不能限制为 Git 修改行。多目标编译按项目的实际目标框架执行，局部格式检查不替代各目标框架验证。CI 检查严格构建；审查风格改动时需另行执行 IDE0049 验证命令。
 
 > 💡 `dotnet format whitespace` 直接检查格式化结果，不应用分析器的诊断抑制，仍可能报告合法条件编译缩进和单行 try/catch/finally 的排版差异；这些例外以加载配套分析器的构建诊断为准。只读检查保留 `--verify-no-changes`。需要修正时限定本次修改文件并检查差异；不要对全仓执行无范围限制的格式修正、整理导入或公共 API 重命名。
 
 `using` 别名、正式项目的全局引用限制、依赖分组及组内长度排序、中文职责分段、字段 `this.` 的可见性差异和设计契约仍需按开发规范审查。标准导入整理器使用字母顺序，不能实现本规范的长度排序。
 
-C# 规则随包更新；不要在根 EditorConfig 重复维护包内规则。新增文本默认 CRLF，`.sh` 遵循 LF，已有编码与 BOM 保留；已有 LF 文件需在就近 EditorConfig 中明确覆盖，避免编辑器统一换行。
+C# 规则随包更新；不要在根 EditorConfig 重复维护包内规则。Git 检出 C# 时使用 CRLF，与 EditorConfig 一致；新增文本默认 CRLF，`.sh` 遵循 LF，已有编码与 BOM 保留；已有 LF 文件需在就近 EditorConfig 中明确覆盖，避免编辑器统一换行。
 
 ### EditorConfig 同步
 
