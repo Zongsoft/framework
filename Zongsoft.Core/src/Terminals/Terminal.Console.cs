@@ -73,12 +73,16 @@ partial class Terminal
 
 			try
 			{
-				System.Console.TreatControlCAsInput = false;
+				if(!System.Console.IsInputRedirected)
+					System.Console.TreatControlCAsInput = false;
 			}
 			catch(IOException) { }
 
-			if(!System.Console.TreatControlCAsInput)
+			try
+			{
 				System.Console.CancelKeyPress += this.Console_CancelKeyPress;
+			}
+			catch(IOException) { }
 		}
 		#endregion
 
@@ -121,15 +125,15 @@ partial class Terminal
 		{
 			const string CLEAR_SEQUENCE = "\u001b[3J\u001b[2J\u001b[1J\u001b[0J";
 
-			if(!System.Console.IsOutputRedirected)
-			{
-				System.Console.Write(CLEAR_SEQUENCE);
+			if(System.Console.IsOutputRedirected)
+				return;
 
-				if(System.Console.BufferHeight > 0)
-				{
-					Console.Write($"\u001b[{System.Console.BufferHeight}B");
-					Console.Write(CLEAR_SEQUENCE);
-				}
+			System.Console.Write(CLEAR_SEQUENCE);
+
+			if(System.Console.BufferHeight > 0)
+			{
+				Console.Write($"\u001b[{System.Console.BufferHeight}B");
+				Console.Write(CLEAR_SEQUENCE);
 			}
 
 			System.Console.Clear();
@@ -286,7 +290,9 @@ partial class Terminal
 		{
 			lock(_locker)
 			{
-				if(backgroundColor == null)
+				if(System.Console.IsOutputRedirected)
+					System.Console.Write($"{value}");
+				else if(backgroundColor == null)
 					System.Console.Write($"\u001b[{GetStyle(style)}{GetForegroundColor(foregroundColor)}m{value}\u001b[0m");
 				else
 					System.Console.Write($"\u001b[{GetStyle(style)}{GetForegroundColor(foregroundColor)};{GetBackgroundColor(backgroundColor.Value)}m{value}\u001b[0m");
@@ -298,7 +304,9 @@ partial class Terminal
 		{
 			lock(_locker)
 			{
-				if(backgroundColor == null)
+				if(System.Console.IsOutputRedirected)
+					System.Console.WriteLine($"{value}");
+				else if(backgroundColor == null)
 					System.Console.WriteLine($"\u001b[{GetStyle(style)}{GetForegroundColor(foregroundColor)}m{value}\u001b[0m");
 				else
 					System.Console.WriteLine($"\u001b[{GetStyle(style)}{GetForegroundColor(foregroundColor)};{GetBackgroundColor(backgroundColor.Value)}m{value}\u001b[0m");
