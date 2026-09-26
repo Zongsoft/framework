@@ -30,8 +30,8 @@
 				<parameter name="channel" value="{path:Transport}" />
 			</object.constructor>
 
-			<expose name="Transport" value="{path:../Transports/ZeroMQ}" />
-			<expose name="Filtering" value="{path:../Transports/ZeroMQ@Filtering}" />
+			<expose name="Transport" value="{path:/Workbench/Events/Exchanger/Transports/ZeroMQ}" />
+			<expose name="Filtering" value="{path:/Workbench/Events/Exchanger/Transports/ZeroMQ@Filtering}" />
 		</object>
 	</extension>
 
