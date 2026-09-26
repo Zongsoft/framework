@@ -49,7 +49,7 @@ description: 设计、修改、审查或测试 Zongsoft.Core 的公共契约与�
 
 导入机制见 [实现文档](docs/profiles.zh-Hans.md#读取与导入)。#@import 是 ProfileReader 内置语法，没有通用指令接口、注册集合、公开读写操作上下文或执行回调。Reader 每次根加载独立创建，递归共享，私有 Context 仅存 Profile、行号和章节；Profile 内部 Import 方法合并有效引用并登记来源关系。
 
-ProfileOptions(bool preserveBlanks = true) 提供 PreserveBlanks、MaximumDepth 和两个可写的 Action<ProfileContext> 回调 Importing/Imported。Reader 浅复制空行选项、深度限制和委托引用，递归共享快照。ProfileContext 内部构造、公开 sealed，FilePath/Depth/Referer/Profile 只读；Referer 是直接引用者，根层数为 1；前置 Profile 为 null，后置为完成解析与合并的子文件，前后上下文分别创建。Reader 按 MaximumDepth（默认 64，仅接受正数，根文件计一层）限制导入深度并检测循环，没有禁用或跳过导入的选项；回调异常终止整个加载并清理，不回滚。根文件、可选缺失及内部拒绝不通知；回调捕获状态的线程安全由调用方保证。
+ProfileOptions(bool preserveBlanks = true) 提供 PreserveBlanks、RequireImports、MaximumDepth 和两个可写的 Action<ProfileContext> 回调 Importing/Imported。Reader 浅复制空行选项、严格导入要求、深度限制和委托引用，递归共享快照。ProfileContext 内部构造、公开 sealed，FilePath/Depth/Referer/Profile 只读；Referer 是直接引用者，根层数为 1；前置 Profile 为 null，后置为完成解析与合并的子文件，前后上下文分别创建。Reader 按 MaximumDepth（默认 64，仅接受正数，根文件计一层）限制导入深度并检测循环，RequireImports 默认为 false，设为 true 时缺失导入抛出带来源的 ProfileException；没有禁用或跳过导入的选项；回调异常终止整个加载并清理，不回滚。根文件、可选缺失及内部拒绝不通知；回调捕获状态的线程安全由调用方保证。
 
 Profile.Load 仅转发 Reader，Reader.ReadCore 管理流与活动状态，Parse 识别行及导入；独立根加载隔离，失败清理后可重试。Profile.Blanks 仅内部可写。保存由 ProfileWriter 承担，声明与有效引用分开，合并不修改被覆盖声明。Writer 不执行导入、不通知写入事件；导入文本是普通注释声明，编辑后需重新加载才能更新导入关系。
 

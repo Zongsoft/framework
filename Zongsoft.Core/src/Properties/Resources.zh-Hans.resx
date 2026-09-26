@@ -1,1122 +1,1066 @@
 <?xml version="1.0" encoding="utf-8"?>
 <root>
-  <!-- 
-    Microsoft ResX Schema 
-    
-    Version 2.0
-    
-    The primary goals of this format is to allow a simple XML format 
-    that is mostly human readable. The generation and parsing of the 
-    various data types are done through the TypeConverter classes 
-    associated with the data types.
-    
-    Example:
-    
-    ... ado.net/XML headers & schema ...
-    <resheader name="resmimetype">text/microsoft-resx</resheader>
-    <resheader name="version">2.0</resheader>
-    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
-    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
-    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
-    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
-    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
-        <value>[base64 mime encoded serialized .NET Framework object]</value>
-    </data>
-    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
-        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
-        <comment>This is a comment</comment>
-    </data>
-                
-    There are any number of "resheader" rows that contain simple 
-    name/value pairs.
-    
-    Each data row contains a name, and value. The row also contains a 
-    type or mimetype. Type corresponds to a .NET class that support 
-    text/value conversion through the TypeConverter architecture. 
-    Classes that don't support this are serialized and stored with the 
-    mimetype set.
-    
-    The mimetype is used for serialized objects, and tells the 
-    ResXResourceReader how to depersist the object. This is currently not 
-    extensible. For a given mimetype the value must be set accordingly:
-    
-    Note - application/x-microsoft.net.object.binary.base64 is the format 
-    that the ResXResourceWriter will generate, however the reader can 
-    read any of the formats listed below.
-    
-    mimetype: application/x-microsoft.net.object.binary.base64
-    value   : The object must be serialized with 
-            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
-            : and then encoded with base64 encoding.
-    
-    mimetype: application/x-microsoft.net.object.soap.base64
-    value   : The object must be serialized with 
-            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
-            : and then encoded with base64 encoding.
-
-    mimetype: application/x-microsoft.net.object.bytearray.base64
-    value   : The object must be serialized into a byte array 
-            : using a System.ComponentModel.TypeConverter
-            : and then encoded with base64 encoding.
-    -->
-  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
-    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
-    <xsd:element name="root" msdata:IsDataSet="true">
-      <xsd:complexType>
-        <xsd:choice maxOccurs="unbounded">
-          <xsd:element name="metadata">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" />
-              </xsd:sequence>
-              <xsd:attribute name="name" use="required" type="xsd:string" />
-              <xsd:attribute name="type" type="xsd:string" />
-              <xsd:attribute name="mimetype" type="xsd:string" />
-              <xsd:attribute ref="xml:space" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="assembly">
-            <xsd:complexType>
-              <xsd:attribute name="alias" type="xsd:string" />
-              <xsd:attribute name="name" type="xsd:string" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="data">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
-              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
-              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
-              <xsd:attribute ref="xml:space" />
-            </xsd:complexType>
-          </xsd:element>
-          <xsd:element name="resheader">
-            <xsd:complexType>
-              <xsd:sequence>
-                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
-              </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" />
-            </xsd:complexType>
-          </xsd:element>
-        </xsd:choice>
-      </xsd:complexType>
-    </xsd:element>
-  </xsd:schema>
-  <resheader name="resmimetype">
-    <value>text/microsoft-resx</value>
-  </resheader>
-  <resheader name="version">
-    <value>2.0</value>
-  </resheader>
-  <resheader name="reader">
-    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </resheader>
-  <resheader name="writer">
-    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
-  </resheader>
-  <data name="Disabled" xml:space="preserve">
-    <value>禁用</value>
-  </data>
-  <data name="Error.FailedBinding.Message" xml:space="preserve">
-    <value>无法将“ {0}”处的配置值转换为“ {1}”类型。</value>
-  </data>
-  <data name="Error.FailedToActivate.Message" xml:space="preserve">
-    <value>无法创建类型为“ {0}”的实例。</value>
-  </data>
-  <data name="Error.IllegalConfigurationAttributeName.Message" xml:space="preserve">
-    <value>非法的配置属性名“{0}”。位于：{1}</value>
-  </data>
-  <data name="Error.IllegalConfigurationKeyValue.Message" xml:space="preserve">
-    <value>非法的配置元素的键值“{0}”，键值中不能含有“/”、“\”、“:”、“*”、“?”等字符。位于：{1}</value>
-  </data>
-  <data name="Error.IllegalRootNodeName.Message" xml:space="preserve">
-    <value>发现“{0}”是非法的根节点名称。{1}</value>
-  </data>
-  <data name="Error.InvalidOptionConfigurationFileFormat.Message" xml:space="preserve">
-    <value>无效的选项配置文件格式，配置元素必须位于&lt;option&gt;元素内。位于：{0}</value>
-  </data>
-  <data name="Error.InvalidUnrecognizedProperty.Message" xml:space="preserve">
-    <value>指定的“{0}”是一个无效的未识别属性，未识别属性类型必须是一个键为字符串类型的字典。</value>
-  </data>
-  <data name="Error.KeyIsDuplicated.Message" xml:space="preserve">
-    <value>发现重复的“{0}”键。位于：{1}</value>
-  </data>
-  <data name="Error.NamespaceIsNotSupported.Message" xml:space="preserve">
-    <value>不支持XML名称空间。位于：{0}</value>
-  </data>
-  <data name="Error.PropertyCannotRead.Message" xml:space="preserve">
-    <value>位于“{0}”类型的“{1}”属性不可读。</value>
-  </data>
-  <data name="Error.PropertyNotExists.Message" xml:space="preserve">
-    <value>在“{0}”类型中不存在名为“{1}”的属性。</value>
-  </data>
-  <data name="Error.UnsupportedMultidimensionalArray.Message" xml:space="preserve">
-    <value>无法创建类型为“ {0}”的实例，因为不支持多维数组。</value>
-  </data>
-  <data name="Error.UnsupportedNodeType.Message" xml:space="preserve">
-    <value>发现不受支持的节点类型“{0}”。{1}</value>
-  </data>
-  <data name="OperationException.Argument.Message" xml:space="preserve">
-    <value>参数异常，可能传入了不支持的参数值。</value>
-  </data>
-  <data name="OperationException.Unfound.Message" xml:space="preserve">
-    <value>未能找到目标，导致操作异常。</value>
-  </data>
-  <data name="OperationException.Unknown.Message" xml:space="preserve">
-    <value>发生未知的操作异常。</value>
-  </data>
-  <data name="OperationException.Unprocessed.Message" xml:space="preserve">
-    <value>无法处理当前操作。</value>
-  </data>
-  <data name="OperationException.Unsatisfied.Message" xml:space="preserve">
-    <value>未能满足必要的先决条件，导致操作失败。</value>
-  </data>
-  <data name="OperationException.Unsupported.Message" xml:space="preserve">
-    <value>不支持当前操作。</value>
-  </data>
-  <data name="AuthenticationException.Message" xml:space="preserve">
-    <value>身份验证失败。</value>
-  </data>
-  <data name="Security.AccountDisabled.Message" xml:space="preserve">
-    <value>帐户已被禁用。</value>
-  </data>
-  <data name="Security.AccountSuspended.Message" xml:space="preserve">
-    <value>帐户被暂停，可能是因为验证失败次数太多。</value>
-  </data>
-  <data name="Security.AccountUnapproved.Message" xml:space="preserve">
-    <value>帐户尚未通过审核批准。</value>
-  </data>
-  <data name="Security.Forbidden.Message" xml:space="preserve">
-    <value>禁止访问，您的账号没有被授权访问当前资源。</value>
-  </data>
-  <data name="Security.InvalidIdentity.Message" xml:space="preserve">
-    <value>无效的身份标识。</value>
-  </data>
-  <data name="Security.InvalidPassword.Message" xml:space="preserve">
-    <value>无效的密码。</value>
-  </data>
-  <data name="Security.Succeed.Message" xml:space="preserve">
-    <value>验证成功。</value>
-  </data>
-  <data name="Security.Unknown.Message" xml:space="preserve">
-    <value>其他未知的安全原因。</value>
-  </data>
-  <data name="AuthorizationException.Message" xml:space="preserve">
-    <value>禁止访问，您没有访问这项资源的授权。</value>
-  </data>
-  <data name="ClearCommand.Description" xml:space="preserve">
-    <value>清除当前终端的显示内容。</value>
-  </data>
-  <data name="ClearCommand.Name" xml:space="preserve">
-    <value>清除命令</value>
-  </data>
-  <data name="Command.ExecutionFailed.Message" xml:space="preserve">
-    <value>{0} 执行失败。</value>
-  </data>
-  <data name="Command.ExecutionSucceed.Message" xml:space="preserve">
-    <value>{0} 执行成功。</value>
-  </data>
-  <data name="Command.Options.Timeout" xml:space="preserve">
-    <value>超时</value>
-  </data>
-  <data name="CommandError.Label" xml:space="preserve">
-    <value>命令出错：</value>
-  </data>
-  <data name="CommandNotFound.Message" xml:space="preserve">
-    <value>指定的 '{0}' 命令没有找到。</value>
-  </data>
-  <data name="DataArgumentException.Message" xml:space="preserve">
-    <value>无效的数据参数或者内容值。</value>
-  </data>
-  <data name="DataConflictException.Message" xml:space="preserve">
-    <value>数据冲突：数据项中 {0} 的 {1} 值重复了。</value>
-  </data>
-  <data name="DataConstraintException.Message" xml:space="preserve">
-    <value>数据约束失败。</value>
-  </data>
-  <data name="ExitCommand.Confirm" xml:space="preserve">
-    <value>您确认是否要退出(输入Yes则退出)？</value>
-  </data>
-  <data name="ExitCommand.Description" xml:space="preserve">
-    <value>退出当前应用程序。</value>
-  </data>
-  <data name="ExitCommand.Name" xml:space="preserve">
-    <value>退出命令</value>
-  </data>
-  <data name="ExitCommand.Options.Confirm" xml:space="preserve">
-    <value>直接退出，不提示确认信息。</value>
-  </data>
-  <data name="InvalidCommandOption.Message" xml:space="preserve">
-    <value>指定的 '{0}' 是一个无效的命令选项。</value>
-  </data>
-  <data name="InvalidCommandOptionValue.Message" xml:space="preserve">
-    <value>指定的 '{1}' 是一个无效的 '{0}' 命令选项值。</value>
-  </data>
-  <data name="LinePositionInfo" xml:space="preserve">
-    <value>第 {0} 行，第 {1} 列。</value>
-  </data>
-  <data name="MissingCommandOption.Message" xml:space="preserve">
-    <value>缺少 '{0}' 命令选项，必须为该选项提供值。</value>
-  </data>
-  <data name="SecretGenerateTooFrequently.Message" xml:space="preserve">
-    <value>验证码生成操作调用太频繁，请等待一会后再来。</value>
-  </data>
-  <data name="ShellCommand.Description" xml:space="preserve">
-    <value>通过系统 Shell 来执行外部命令。</value>
-  </data>
-  <data name="ShellCommand.Name" xml:space="preserve">
-    <value>外部命令执行器</value>
-  </data>
-  <data name="ShellCommand.Options.Timeout" xml:space="preserve">
-    <value>运行外部命令的超时，单位：毫秒。</value>
-  </data>
-  <data name="WorkerPauseCommand.Name" xml:space="preserve">
-    <value>暂停</value>
-  </data>
-  <data name="WorkerResumeCommand.Name" xml:space="preserve">
-    <value>恢复</value>
-  </data>
-  <data name="WorkerStartCommand.Name" xml:space="preserve">
-    <value>启动</value>
-  </data>
-  <data name="WorkerStartCommand.Options.Force" xml:space="preserve">
-    <value>强制启动，即使命令被禁用也尝试启动。</value>
-  </data>
-  <data name="WorkerState.Paused" xml:space="preserve">
-    <value>已暂停</value>
-  </data>
-  <data name="WorkerState.Pausing" xml:space="preserve">
-    <value>暂停中</value>
-  </data>
-  <data name="WorkerState.Resuming" xml:space="preserve">
-    <value>恢复中</value>
-  </data>
-  <data name="WorkerState.Running" xml:space="preserve">
-    <value>运行中</value>
-  </data>
-  <data name="WorkerState.Starting" xml:space="preserve">
-    <value>启动中</value>
-  </data>
-  <data name="WorkerState.Stopped" xml:space="preserve">
-    <value>已停止</value>
-  </data>
-  <data name="WorkerState.Stopping" xml:space="preserve">
-    <value>停止中</value>
-  </data>
-  <data name="WorkerStopCommand.Name" xml:space="preserve">
-    <value>停止</value>
-  </data>
-  <data name="ConnectionSettings.Group" xml:space="preserve">
-    <value>组别标识</value>
-  </data>
-  <data name="ConnectionSettings.Group.Description" xml:space="preserve">
-    <value>通常表示服务或连接程序所属组别。</value>
-  </data>
-  <data name="ConnectionSettings.Client" xml:space="preserve">
-    <value>客户端名</value>
-  </data>
-  <data name="ConnectionSettings.Client.Description" xml:space="preserve">
-    <value>表示连接程序的客户端名称。</value>
-  </data>
-  <data name="ConnectionSettings.Server" xml:space="preserve">
-    <value>服务器地址</value>
-  </data>
-  <data name="ConnectionSettings.Server.Description" xml:space="preserve">
-    <value>表示连接的服务器地址。对于多个目标服务器地址，通常采用分号(;)分隔。</value>
-  </data>
-  <data name="ConnectionSettings.Port" xml:space="preserve">
-    <value>端口号</value>
-  </data>
-  <data name="ConnectionSettings.Port.Description" xml:space="preserve">
-    <value>表示连接的服务器端口号。</value>
-  </data>
-  <data name="ConnectionSettings.Timeout" xml:space="preserve">
-    <value>超时</value>
-  </data>
-  <data name="ConnectionSettings.Timeout.Description" xml:space="preserve">
-    <value>表示连接超时或相关操作的超时。</value>
-  </data>
-  <data name="ConnectionSettings.Charset" xml:space="preserve">
-    <value>字符集</value>
-  </data>
-  <data name="ConnectionSettings.Charset.Description" xml:space="preserve">
-    <value>表示字符集的名称，譬如：UTF-8、GBK 等。</value>
-  </data>
-  <data name="ConnectionSettings.Encoding" xml:space="preserve">
-    <value>编码方案</value>
-  </data>
-  <data name="ConnectionSettings.Encoding.Description" xml:space="preserve">
-    <value>表示文本编码方案。</value>
-  </data>
-  <data name="ConnectionSettings.Provider" xml:space="preserve">
-    <value>提供程序</value>
-  </data>
-  <data name="ConnectionSettings.Provider.Description" xml:space="preserve">
-    <value>表示连接提供程序标识。</value>
-  </data>
-  <data name="ConnectionSettings.Database" xml:space="preserve">
-    <value>数据库</value>
-  </data>
-  <data name="ConnectionSettings.Database.Description" xml:space="preserve">
-    <value>表示连接的数据库名或标识。</value>
-  </data>
-  <data name="ConnectionSettings.UserName" xml:space="preserve">
-    <value>用户名</value>
-  </data>
-  <data name="ConnectionSettings.UserName.Description" xml:space="preserve">
-    <value>表示连接的用户名称。</value>
-  </data>
-  <data name="ConnectionSettings.Password" xml:space="preserve">
-    <value>密码</value>
-  </data>
-  <data name="ConnectionSettings.Password.Description" xml:space="preserve">
-    <value>表示连接的用户密码。</value>
-  </data>
-  <data name="ConnectionSettings.Instance" xml:space="preserve">
-    <value>实例名称</value>
-  </data>
-  <data name="ConnectionSettings.Instance.Description" xml:space="preserve">
-    <value>表示连接的实例标识。</value>
-  </data>
-  <data name="ConnectionSettings.Application" xml:space="preserve">
-    <value>应用名称</value>
-  </data>
-  <data name="ConnectionSettings.Application.Description" xml:space="preserve">
-    <value>表示连接的应用标识。</value>
-  </data>
-  <data name="Zongsoft.Security.Privileges.MemberType.Role" xml:space="preserve">
-    <value>角色</value>
-  </data>
-  <data name="Zongsoft.Security.Privileges.MemberType.User" xml:space="preserve">
-    <value>用户</value>
-  </data>
-  <data name="ErrorOccurred.Label" xml:space="preserve">
-    <value>发生错误：</value>
-  </data>
-  <data name="TransactionEventChannel.DispatchingTimeout" xml:space="preserve">
-    <value>事务事件通道“{0}”的投递任务未能在限定时间内完成，将继续关闭该通道。</value>
-  </data>
-  <data name="TransactionEventChannel.DispatchClosed" xml:space="preserve">
-    <value>无法投递已提交的事件“{0}”，因为事务事件通道已关闭。</value>
-  </data>
-  <data name="Schema.EmptyParsingStack.Message" xml:space="preserve">
-    <value>解析错误：解析栈为空。</value>
-  </data>
-  <data name="Schema.ErrorPosition.Message" xml:space="preserve">
-    <value>{0}（位置：{1}）。</value>
-  </data>
-  <data name="Schema.IdentifierContainsWhitespace.Message" xml:space="preserve">
-    <value>语法错误：数据模式标识符中包含空白字符。</value>
-  </data>
-  <data name="Schema.IdentifierIllegalCharacter.Message" xml:space="preserve">
-    <value>语法错误：数据模式标识符中包含非法字符“{0}”。</value>
-  </data>
-  <data name="Schema.IdentifierStartsWithDigit.Message" xml:space="preserve">
-    <value>语法错误：数据模式标识符不能以数字开头。</value>
-  </data>
-  <data name="Schema.IllegalCharacter.Message" xml:space="preserve">
-    <value>语法错误：数据模式中包含非法字符“{0}”。</value>
-  </data>
-  <data name="Schema.IllegalCharacterAfterSorting.Message" xml:space="preserve">
-    <value>语法错误：数据模式的排序项之后包含非法字符“{0}”。</value>
-  </data>
-  <data name="Schema.IncorrectExpression.Message" xml:space="preserve">
-    <value>语法错误：数据模式表达式不正确（{0}）。</value>
-  </data>
-  <data name="Schema.InvalidExclusionWildcard.Message" xml:space="preserve">
-    <value>语法错误：数据模式的排除通配符无效。</value>
-  </data>
-  <data name="Schema.InvalidLimitFormat.Message" xml:space="preserve">
-    <value>语法错误：数据模式的限量格式不正确。</value>
-  </data>
-  <data name="Schema.InvalidOrOverflowedLimit.Message" xml:space="preserve">
-    <value>语法错误：数据模式的限量“{0}”无效或溢出。</value>
-  </data>
-  <data name="Schema.LimitIllegalCharacter.Message" xml:space="preserve">
-    <value>语法错误：数据模式的限量中包含非法字符“{0}”。</value>
-  </data>
-  <data name="Schema.MissingExclusionMemberAfterPeriod.Message" xml:space="preserve">
-    <value>语法错误：数据模式的句点后缺少排除成员标识符，却发现“{0}”。</value>
-  </data>
-  <data name="Schema.MissingIdentifierBeforePeriod.Message" xml:space="preserve">
-    <value>语法错误：数据模式的句点前缺少标识符。</value>
-  </data>
-  <data name="Schema.MissingLimit.Message" xml:space="preserve">
-    <value>语法错误：数据模式中缺少限量值。</value>
-  </data>
-  <data name="Schema.MissingMemberAfterPeriod.Message" xml:space="preserve">
-    <value>语法错误：数据模式的句点后缺少成员标识符，却发现“{0}”。</value>
-  </data>
-  <data name="Schema.MissingMemberBeforePeriod.Message" xml:space="preserve">
-    <value>语法错误：数据模式的句点前缺少成员标识符。</value>
-  </data>
-  <data name="Schema.MissingSortingField.Message" xml:space="preserve">
-    <value>语法错误：数据模式中缺少排序字段。</value>
-  </data>
-  <data name="Schema.MissingSortingFields.Message" xml:space="preserve">
-    <value>语法错误：数据模式中缺少排序字段集。</value>
-  </data>
-  <data name="Schema.SortingFieldIllegalCharacter.Message" xml:space="preserve">
-    <value>语法错误：数据模式的排序字段中包含非法字符“{0}”。</value>
-  </data>
-  <data name="Schema.SortingFieldStartsWithDigit.Message" xml:space="preserve">
-    <value>语法错误：数据模式的排序字段不能以数字开头。</value>
-  </data>
-  <data name="Schema.UnclosedMemberBlock.Message" xml:space="preserve">
-    <value>语法错误：数据模式中包含未闭合的成员块。</value>
-  </data>
-  <data name="Schema.UnrecognizedMember.Message" xml:space="preserve">
-    <value>解析错误：无法识别数据模式成员“{0}”。</value>
-  </data>
-  <data name="Communication.ListenerHandlerMismatch.Message" xml:space="preserve">
-    <value>指定的“{0}”处理器类型不匹配。</value>
-  </data>
-  <data name="Communication.ListenerPacketizerRequired.Message" xml:space="preserve">
-    <value>接收操作缺少必需的封包器。</value>
-  </data>
-  <data name="Messaging.ConnectionSettingsNotFound.Message" xml:space="preserve">
-    <value>找不到名为“{1}”的 {0} 消息队列连接设置。</value>
-  </data>
-  <data name="Messaging.ConnectionSettingsTypeMismatch.Message" xml:space="preserve">
-    <value>指定的“{0}”连接设置不是所需的“{1}”设置类型。</value>
-  </data>
-  <data name="Messaging.GuarderQueueMissing.Warning" xml:space="preserve">
-    <value>无法启动名为“{0}”的消息队列守护器，因为其“{1}”属性为空。</value>
-  </data>
-  <data name="Messaging.ReliabilityNotSupported.Message" xml:space="preserve">
-    <value>“{1}”消息队列不支持“{0}”消息可靠性。</value>
-  </data>
-  <data name="Messaging.FeatureNotSupported.Message" xml:space="preserve">
-    <value>“{1}”消息队列不支持“{0}”功能。</value>
-  </data>
-  <data name="Messaging.SubscriptionConflict.Message" xml:space="preserve">
-    <value>主题“{0}”的现有订阅具有不同的处理器、标签或选项。</value>
-  </data>
-  <data name="Messaging.StorageCreationFailed.Message" xml:space="preserve">
-    <value>消息存储工厂无法为“{0}”消息代理创建存储器。</value>
-  </data>
-  <data name="Messaging.QueueUndefined.Message" xml:space="preserve">
-    <value>{0}：未定义指定的“{1}”消息队列。</value>
-  </data>
-  <data name="Compressor.Undefined.Message" xml:space="preserve">
-    <value>不支持指定的“{0}”消息压缩算法。</value>
-  </data>
-  <data name="ErrorOccurred.Message" xml:space="preserve">
-    <value>发生错误。</value>
-  </data>
-  <data name="Services.ApplicationVersion.Conflict.Message" xml:space="preserve">
-    <value>应用版本号与具名版本集不能同时设置。</value>
-  </data>
-  <data name="Services.ApplicationVersion.VersionRequired.Message" xml:space="preserve">
-    <value>必须设置应用版本号或至少一个具名版本。</value>
-  </data>
-  <data name="Services.ApplicationVersion.FormattingBufferExceeded.Message" xml:space="preserve">
-    <value>版本号超出格式化缓冲区的容量。</value>
-  </data>
-  <data name="Services.ApplicationVersion.ApplicationNameInvalid.Message" xml:space="preserve">
-    <value>必须指定应用名称，且名称不能包含保留字符。</value>
-  </data>
-  <data name="Services.ApplicationVersion.VersionInvalid.Message" xml:space="preserve">
-    <value>应用版本号无效。</value>
-  </data>
-  <data name="Services.ApplicationVersion.UnexpectedContent.Message" xml:space="preserve">
-    <value>name@version 首行后不能包含版本段落或其它内容。</value>
-  </data>
-  <data name="Services.ApplicationVersion.EditionVersionRequired.Message" xml:space="preserve">
-    <value>版本段落缺少版本号。</value>
-  </data>
-  <data name="Services.ApplicationVersion.EditionHeaderInvalid.Message" xml:space="preserve">
-    <value>版本段落标题无效。</value>
-  </data>
-  <data name="Services.ApplicationVersion.EditionNameInvalid.Message" xml:space="preserve">
-    <value>版本名无效。</value>
-  </data>
-  <data name="Services.ApplicationVersion.EditionHeaderRequired.Message" xml:space="preserve">
-    <value>此处应为版本段落标题。</value>
-  </data>
-  <data name="Services.ApplicationVersion.BareVersionRequired.Message" xml:space="preserve">
-    <value>此处应为不带键名的版本号。</value>
-  </data>
-  <data name="Services.ApplicationVersion.EditionDuplicated.Message" xml:space="preserve">
-    <value>版本名重复。</value>
-  </data>
-  <data name="Services.ApplicationVersion.InformationRequired.Message" xml:space="preserve">
-    <value>必须指定应用名称和版本信息。</value>
-  </data>
-  <data name="Services.ApplicationVersion.InvalidFormat.Message" xml:space="preserve">
-    <value>应用版本文件第 {0} 行的格式无效：{1}</value>
-  </data>
-  <data name="Services.ApplicationVersion.NameInvalid.Message" xml:space="preserve">
-    <value>名称为空或包含应用版本文件格式的保留字符。</value>
-  </data>
-  <data name="Services.ApplicationVersion.EditionInvalid.Message" xml:space="preserve">
-    <value>必须提供已初始化且具有名称和版本号的具名版本。</value>
-  </data>
-  <data name="Profiles.CircularImport.Message" xml:space="preserve">
-    <value>配置文件循环导入：{0}。引用位置：{1}，第 {2} 行。</value>
-  </data>
-  <data name="Profiles.MaximumDepth.Message" xml:space="preserve">
-    <value>配置文件导入深度超过上限：{0}。引用位置：{1}，第 {2} 行。</value>
-  </data>
-  <data name="Profiles.RelativeImportRequiresFile.Message" xml:space="preserve">
-    <value>相对导入“{0}”需要源文件路径（第 {1} 行）。</value>
-  </data>
-  <data name="Profiles.LinkResolutionFailed.Message" xml:space="preserve">
-    <value>无法解析配置文件路径链接：{0}。</value>
-  </data>
-  <data name="Profiles.SourceRequired.Message" xml:space="preserve">
-    <value>修改后的配置没有来源文件路径。</value>
-  </data>
-  <data name="Profiles.SourceEdit.Message" xml:space="preserve">
-    <value>请通过声明所属的来源配置及章节进行编辑。</value>
-  </data>
-  <data name="Profiles.AlreadySaving.Message" xml:space="preserve">
-    <value>此配置正在保存，不能重复进入保存操作。</value>
-  </data>
-  <data name="Profiles.SaveConflict.Message" xml:space="preserve">
-    <value>多个已修改的配置指向同一文件且内容冲突：“{0}”。</value>
-  </data>
-  <data name="Profiles.SaveFailed.Message" xml:space="preserve">
-    <value>保存“{0}”失败。已完成的文件：{1}。</value>
-  </data>
-  <data name="Profiles.SaveMutation.Message" xml:space="preserve">
-    <value>保存期间不得修改配置。</value>
-  </data>
-  <data name="Profiles.ReadOnly.Message" xml:space="preserve">
-    <value>配置文件为只读：“{0}”。</value>
-  </data>
-  <data name="Profiles.SectionInvalid.Message" xml:space="preserve">
-    <value>章节名称无法使用配置语法表示：“{0}”。</value>
-  </data>
-  <data name="Profiles.EntryInvalid.Message" xml:space="preserve">
-    <value>条目“{0}”无法使用配置语法表示。</value>
-  </data>
-  <data name="Profiles.CommentInvalid.Message" xml:space="preserve">
-    <value>注释无法一致地表示为配置声明。</value>
-  </data>
-  <data name="Profiles.BlanksInvalid.Message" xml:space="preserve">
-    <value>配置空行位置必须为非负数并严格递增。</value>
-  </data>
-  <data name="Profiles.EntryDuplicate.Message" xml:space="preserve">
-    <value>本配置已声明名为“{0}”的条目。</value>
-  </data>
-  <data name="Profiles.SectionDuplicate.Message" xml:space="preserve">
-    <value>已存在同名章节。</value>
-  </data>
-  <data name="NumberTokenizer.InvalidLongSuffix.Message" xml:space="preserve">
-    <value>浮点数字面量不能使用长整型后缀 L。</value>
-  </data>
-  <data name="NumberTokenizer.TrailingDot.Message" xml:space="preserve">
-    <value>数字字面量不能以小数点结尾。</value>
-  </data>
-  <data name="NumberTokenizer.MultipleDots.Message" xml:space="preserve">
-    <value>数字字面量不能包含多个小数点。</value>
-  </data>
-  <data name="Secretor.InvalidCaptcha.Message" xml:space="preserve">
-    <value>验证码格式无效。</value>
-  </data>
-  <data name="InvalidFormat.Message" xml:space="preserve">
-    <value>格式无效。</value>
-  </data>
-  <data name="MemberExpression.Invalid.Message" xml:space="preserve">
-    <value>成员表达式无效。</value>
-  </data>
-  <data name="ServiceInjector.InvalidMemberType.Message" xml:space="preserve">
-    <value>成员类型无效。</value>
-  </data>
-  <data name="Path.InvalidCharacter.Message" xml:space="preserve">
-    <value>路径包含非法字符。</value>
-  </data>
-  <data name="Secretor.InvalidPattern.Message" xml:space="preserve">
-    <value>秘密模式无效。</value>
-  </data>
-  <data name="Sorting.InvalidFormat.Message" xml:space="preserve">
-    <value>排序格式无效。</value>
-  </data>
-  <data name="CommandExecutor.MissingCommand.Message" xml:space="preserve">
-    <value>缺少可执行的命令。</value>
-  </data>
-  <data name="Authentication.MissingIdentity.Message" xml:space="preserve">
-    <value>缺少身份标识。</value>
-  </data>
-  <data name="WorkerCommand.MissingWorker.Message" xml:space="preserve">
-    <value>缺少所依赖的工作者。</value>
-  </data>
-  <data name="DataSearcher.MissingMembers.Message" xml:space="preserve">
-    <value>缺少指定的搜索成员定义。</value>
-  </data>
-  <data name="RangeParser.MissingClosingParenthesis.Message" xml:space="preserve">
-    <value>缺少右括号。</value>
-  </data>
-  <data name="DataSearcher.MissingResolver.Message" xml:space="preserve">
-    <value>缺少必需的关键字条件解析器。</value>
-  </data>
-  <data name="Searcher.ParentAfterWildcard.Message" xml:space="preserve">
-    <value>通配符路径段之后不能包含父目录段。</value>
-  </data>
-  <data name="Enumerable.Empty.Message" xml:space="preserve">
-    <value>序列不包含任何元素。</value>
-  </data>
-  <data name="DataService.DeleteRequiresCriteria.Message" xml:space="preserve">
-    <value>删除操作的条件不能为空。</value>
-  </data>
-  <data name="Stream.NotWritable.Message" xml:space="preserve">
-    <value>目标流不支持写入。</value>
-  </data>
-  <data name="Enumerable.NotStarted.Message" xml:space="preserve">
-    <value>迭代器尚未开始，请先调用 MoveNext() 方法。</value>
-  </data>
-  <data name="Enumerable.Completed.Message" xml:space="preserve">
-    <value>迭代器已结束。</value>
-  </data>
-  <data name="Locker.AcquisitionInactive.Message" xml:space="preserve">
-    <value>锁获取操作已失效。</value>
-  </data>
-  <data name="HierarchicalNode.InvalidName.Message" xml:space="preserve">
-    <value>名称包含非法字符。</value>
-  </data>
-  <data name="CacheSubscription.InvalidKind.Message" xml:space="preserve">
-    <value>通知类型只能包含已定义的标志，且不能为 None。</value>
-  </data>
-  <data name="CacheSubscription.InvalidCapacity.Message" xml:space="preserve">
-    <value>通知队列容量必须为正数。</value>
-  </data>
-  <data name="UserService.PasswordAnswersFailed.Message" xml:space="preserve">
-    <value>密码安全问题的答案验证失败。</value>
-  </data>
-  <data name="UserService.PasswordAnswersCountMismatch.Message" xml:space="preserve">
-    <value>密码安全问题与答案的数量不一致。</value>
-  </data>
-  <data name="RangeParser.RedundantContent.Message" xml:space="preserve">
-    <value>范围表达式包含多余的内容。</value>
-  </data>
-  <data name="Searcher.RelativePatternRequired.Message" xml:space="preserve">
-    <value>搜索模式必须相对于指定目录。</value>
-  </data>
-  <data name="Secretor.InvalidArgument.Message" xml:space="preserve">
-    <value>秘密参数包含非法字符。</value>
-  </data>
-  <data name="Searcher.LinkTargetMissing.Message" xml:space="preserve">
-    <value>所选链接的目标不存在。</value>
-  </data>
-  <data name="StringTokenizer.NewLine.Message" xml:space="preserve">
-    <value>字符串字面量包含换行符。</value>
-  </data>
-  <data name="UserService.EmptyName.Message" xml:space="preserve">
-    <value>用户名为空。</value>
-  </data>
-  <data name="UserService.InvalidStoredAnswer.Message" xml:space="preserve">
-    <value>存储的密码安全问题答案格式无效。</value>
-  </data>
-  <data name="DataServiceMutability.InvalidFormat.Message" xml:space="preserve">
-    <value>参数值格式无效。</value>
-  </data>
-  <data name="Paging.InvalidFormat.Message" xml:space="preserve">
-    <value>分页格式无效。</value>
-  </data>
-  <data name="Authentication.InvalidScheme.Message" xml:space="preserve">
-    <value>认证器方案无效。</value>
-  </data>
-  <data name="Checksum.InvalidFormat.Message" xml:space="preserve">
-    <value>校验和文本格式无效。</value>
-  </data>
-  <data name="RangeParser.InvalidDateTimeFormat.Message" xml:space="preserve">
-    <value>日期时间范围表达式格式无效。</value>
-  </data>
-  <data name="Identifier.InvalidFormat.Message" xml:space="preserve">
-    <value>标识符格式无效。</value>
-  </data>
-  <data name="Path.InvalidAnchor.Message" xml:space="preserve">
-    <value>路径锚点无效。</value>
-  </data>
-  <data name="StateHandler.InvalidContext.Message" xml:space="preserve">
-    <value>状态上下文的类型无效。</value>
-  </data>
-  <data name="DataAccess.MissingConnections.Message" xml:space="preserve">
-    <value>缺少数据库连接设置。</value>
-  </data>
-  <data name="DataAccess.MissingSequence.Message" xml:space="preserve">
-    <value>缺少必需的序号服务。</value>
-  </data>
-  <data name="Authentication.MissingToken.Message" xml:space="preserve">
-    <value>缺少必需的认证令牌。</value>
-  </data>
-  <data name="Authentication.MissingAuthority.Message" xml:space="preserve">
-    <value>缺少必需的凭证提供程序。</value>
-  </data>
-  <data name="UserService.MissingSecretor.Message" xml:space="preserve">
-    <value>缺少必需的秘密提供程序。</value>
-  </data>
-  <data name="Hardware.RequiredProperty.Message" xml:space="preserve">
-    <value>必须提供“{0}”属性。</value>
-  </data>
-  <data name="RangeParser.NumericArgumentRequired.Message" xml:space="preserve">
-    <value>日期时间范围表达式的参数必须是数字。</value>
-  </data>
-  <data name="Attempter.SequenceNotSupported.Message" xml:space="preserve">
-    <value>认证失败计数所用的缓存不支持递增操作（ISequence）。</value>
-  </data>
-  <data name="DistributedLock.Released.Message" xml:space="preserve">
-    <value>分布式锁已释放。</value>
-  </data>
-  <data name="DataEntityProperty.OwnerReadOnly.Message" xml:space="preserve">
-    <value>无法添加或更新实体属性，因为不能设置该属性所属的实体。</value>
-  </data>
-  <data name="Path.InvalidFirstCharacter.Message" xml:space="preserve">
-    <value>首字符必须是字母、数字或下划线。</value>
-  </data>
-  <data name="Path.AnchorRequired.Message" xml:space="preserve">
-    <value>路径分隔符之后必须有路径锚点。</value>
-  </data>
-  <data name="CommandAlias.InvalidCharacters.Message" xml:space="preserve">
-    <value>指定的别名包含非法字符。</value>
-  </data>
-  <data name="Command.InvalidName.Message" xml:space="preserve">
-    <value>指定的命令名称包含非法字符。</value>
-  </data>
-  <data name="Parameters.NullForNonNullable.Message" xml:space="preserve">
-    <value>指定的参数值为空，但声明的类型不允许为空。</value>
-  </data>
-  <data name="TypeAlias.InvalidFirstCharacter.Message" xml:space="preserve">
-    <value>类型名称或命名空间必须以字母或下划线开头。</value>
-  </data>
-  <data name="Serialization.Immutable.Message" xml:space="preserve">
-    <value>序列化选项不可修改。</value>
-  </data>
-  <data name="MemberExpression.UnknownError.Message" xml:space="preserve">
-    <value>成员表达式解析器发生未知错误。</value>
-  </data>
-  <data name="MemoryCache.ImmutableOptions.Message" xml:space="preserve">
-    <value>当前内存缓存选项不可修改。</value>
-  </data>
-  <data name="EventBinder.ArgumentTypeMismatch.Message" xml:space="preserve">
-    <value>绑定的事件参数类型不匹配。</value>
-  </data>
-  <data name="HierarchicalNode.RootAsChild.Message" xml:space="preserve">
-    <value>不能将根节点添加为子节点。</value>
-  </data>
-  <data name="Password.NonceTooLong.Message" xml:space="preserve">
-    <value>随机数的长度过长。</value>
-  </data>
-  <data name="Password.NonceTooShort.Message" xml:space="preserve">
-    <value>随机数的长度过短，必须至少为 4。</value>
-  </data>
-  <data name="RangeParser.MissingArguments.Message" xml:space="preserve">
-    <value>{0} 范围函数缺少必需的参数。</value>
-  </data>
-  <data name="RangeParser.TooManyArguments.Message" xml:space="preserve">
-    <value>{0} 范围函数的参数过多。</value>
-  </data>
-  <data name="DataService.OperationNotAllowed.Message" xml:space="preserve">
-    <value>不允许执行“{0}”操作。</value>
-  </data>
-  <data name="Security.BuiltinName.Message" xml:space="preserve">
-    <value>指定的名称不能使用内置名称。</value>
-  </data>
-  <data name="Type.ValueTypeRequired.Message" xml:space="preserve">
-    <value>指定的“{0}”参数必须为值类型。</value>
-  </data>
-  <data name="ApplicationIdentifier.InvalidValue.Message" xml:space="preserve">
-    <value>“{0}”不是有效的应用标识。</value>
-  </data>
-  <data name="Authentication.UnsupportedDataType.Message" xml:space="preserve">
-    <value>不支持“{0}”类型的身份验证数据。</value>
-  </data>
-  <data name="Checksum.UnsupportedAlgorithm.Message" xml:space="preserve">
-    <value>不支持“{0}”哈希算法。</value>
-  </data>
-  <data name="Color.InvalidValue.Message" xml:space="preserve">
-    <value>“{0}”不是有效的颜色。</value>
-  </data>
-  <data name="Command.InvalidType.Message" xml:space="preserve">
-    <value>“{0}”不是命令类型。</value>
-  </data>
-  <data name="CommandOption.DuplicateName.Message" xml:space="preserve">
-    <value>命令选项名称“{0}”重复。</value>
-  </data>
-  <data name="CommandOption.DuplicateNameOrSymbol.Message" xml:space="preserve">
-    <value>命令选项名称“{0}”或缩写“{1}”重复。</value>
-  </data>
-  <data name="CommandOption.InvalidConverter.Message" xml:space="preserve">
-    <value>“{0}”类型必须继承 TypeConverter。</value>
-  </data>
-  <data name="CommandOption.NotFound.Message" xml:space="preserve">
-    <value>找不到“{0}”命令选项。</value>
-  </data>
-  <data name="Configuration.CollectionEntryFailed.Message" xml:space="preserve">
-    <value>无法添加配置集合项“{0}={1}”。</value>
-  </data>
-  <data name="Configuration.DefaultCollectionBindingFailed.Message" xml:space="preserve">
-    <value>无法绑定“{1}”类型的默认集合属性“{0}”。</value>
-  </data>
-  <data name="Configuration.DefaultCollectionReadOnly.Message" xml:space="preserve">
-    <value>“{1}”类型的默认集合属性“{0}”为空且无法设置。</value>
-  </data>
-  <data name="Configuration.DictionaryKeyConversion.Message" xml:space="preserve">
-    <value>无法将配置键“{0}”转换为字典键类型“{1}”。</value>
-  </data>
-  <data name="Configuration.EntryNameRequired.Message" xml:space="preserve">
-    <value>配置项“{0}”缺少名称或键。位置：{1}</value>
-  </data>
-  <data name="Configuration.RecognizerNotFound.Message" xml:space="preserve">
-    <value>找不到“{0}”类型的配置识别器。</value>
-  </data>
-  <data name="Configuration.SectionBindingFailed.Message" xml:space="preserve">
-    <value>无法将配置节“{0}”绑定到“{1}”类型的成员。</value>
-  </data>
-  <data name="Configuration.SectionUnrecognized.Message" xml:space="preserve">
-    <value>无法识别配置节“{0}”。</value>
-  </data>
-  <data name="Configuration.UnrecognizedPropertyReadOnly.Message" xml:space="preserve">
-    <value>用于接收未识别配置项的属性“{0}”为空且只读。</value>
-  </data>
-  <data name="ConnectionSettings.InvalidName.Message" xml:space="preserve">
-    <value>“{1}”驱动的连接设置中不支持“{0}”设置项。</value>
-  </data>
-  <data name="Conversion.ArgumentType.Message" xml:space="preserve">
-    <value>无法将指定参数转换为“{0}”类型。</value>
-  </data>
-  <data name="Conversion.Type.Message" xml:space="preserve">
-    <value>无法将“{0}”类型转换为“{1}”类型。</value>
-  </data>
-  <data name="Conversion.ValueType.Message" xml:space="preserve">
-    <value>无法将“{0}”转换为“{1}”类型。</value>
-  </data>
-  <data name="Criteria.InvalidType.Message" xml:space="preserve">
-    <value>“{0}”不是有效的条件类型。</value>
-  </data>
-  <data name="Criteria.UndefinedCondition.Message" xml:space="preserve">
-    <value>“{1}”类型中未定义“{0}”条件。</value>
-  </data>
-  <data name="DataAccess.NameMappingRequired.Message" xml:space="preserve">
-    <value>“{0}”类型缺少数据访问名称映射。</value>
-  </data>
-  <data name="DataAssociation.InvalidAnchor.Message" xml:space="preserve">
-    <value>复杂属性“{1}”的关联锚点“{0}”无效。</value>
-  </data>
-  <data name="DataCommand.Duplicate.Message" xml:space="preserve">
-    <value>集合中已存在数据命令“{0}”。</value>
-  </data>
-  <data name="DataCommand.DuplicateMapping.Message" xml:space="preserve">
-    <value>容器“{1}”中已定义数据命令映射“{0}”。</value>
-  </data>
-  <data name="DataCommand.NotFound.Message" xml:space="preserve">
-    <value>找不到数据命令映射“{0}”。</value>
-  </data>
-  <data name="DataEntity.Duplicate.Message" xml:space="preserve">
-    <value>集合中已存在数据实体“{0}”。</value>
-  </data>
-  <data name="DataEntity.DuplicateProperty.Message" xml:space="preserve">
-    <value>集合中已存在实体属性“{0}”。</value>
-  </data>
-  <data name="DataEntity.NotFound.Message" xml:space="preserve">
-    <value>找不到数据实体映射“{0}”。</value>
-  </data>
-  <data name="DataEntity.PropertyNotFound.Message" xml:space="preserve">
-    <value>实体“{0}”不包含“{1}”属性。</value>
-  </data>
-  <data name="DataEntity.SequenceRequiresSimplex.Message" xml:space="preserve">
-    <value>“{0}.{1}”不是简单属性，不支持序号功能。</value>
-  </data>
-  <data name="DataFunction.Unrecognized.Message" xml:space="preserve">
-    <value>无法识别函数“{0}”。</value>
-  </data>
-  <data name="DataFunction.UnsupportedArguments.Message" xml:space="preserve">
-    <value>函数“{0}”不支持参数“({1})”。</value>
-  </data>
-  <data name="DataSequence.InvalidDefinition.Message" xml:space="preserve">
-    <value>实体属性“{1}.{2}”中的序号“{0}”无效。</value>
-  </data>
-  <data name="DataSequence.InvalidReference.Message" xml:space="preserve">
-    <value>序号引用“{0}”无效。</value>
-  </data>
-  <data name="DataSequence.MemberNotFound.Message" xml:space="preserve">
-    <value>序号“{1}”引用的成员“{0}”不是已存在的属性。</value>
-  </data>
-  <data name="DataSequence.ReferenceDependencies.Message" xml:space="preserve">
-    <value>属性“{0}:{1}”引用的序号不能包含依赖项。</value>
-  </data>
-  <data name="DataSequence.ReferenceNotFound.Message" xml:space="preserve">
-    <value>属性“{2}:{3}”引用的序号“{0}:{1}”不存在。</value>
-  </data>
-  <data name="DataSequence.SimplexMemberRequired.Message" xml:space="preserve">
-    <value>序号“{1}”引用的成员“{0}”必须是简单属性。</value>
-  </data>
-  <data name="DataService.UpdateRequiresCriteria.Message" xml:space="preserve">
-    <value>更新实体“{0}”时缺少必要的条件。</value>
-  </data>
-  <data name="DataType.InvalidDbType.Message" xml:space="preserve">
-    <value>无效的 DbType 值：“{0}”。</value>
-  </data>
-  <data name="DistributedCache.NotificationsUnsupported.Message" xml:space="preserve">
-    <value>分布式缓存“{0}”不支持通知。</value>
-  </data>
-  <data name="Enum.UndefinedTypedValue.Message" xml:space="preserve">
-    <value>枚举“{1}”中未定义值“{0}”。</value>
-  </data>
-  <data name="Enum.UndefinedValue.Message" xml:space="preserve">
-    <value>未定义枚举值“{0}”。</value>
-  </data>
-  <data name="EventBinder.DelegateRequired.Message" xml:space="preserve">
-    <value>成员“{0}”的类型“{1}”不是委托类型，无法绑定事件。</value>
-  </data>
-  <data name="EventBinder.UnsupportedMember.Message" xml:space="preserve">
-    <value>“{1}”类型的“{0}”成员不是属性、字段或事件，无法绑定事件。</value>
-  </data>
-  <data name="Executor.InvalidArgument.Message" xml:space="preserve">
-    <value>无法识别的执行参数：“{0}”。</value>
-  </data>
-  <data name="FileSystem.ProviderNotFound.Message" xml:space="preserve">
-    <value>找不到“{0}”对应的文件或目录提供程序。</value>
-  </data>
-  <data name="HierarchicalNode.CircularReference.Message" xml:space="preserve">
-    <value>层级结构中“{1}”类型的“{0}”节点存在循环引用。</value>
-  </data>
-  <data name="Model.BaseDefaultConstructorRequired.Message" xml:space="preserve">
-    <value>模型基类“{0}”缺少默认构造函数。</value>
-  </data>
-  <data name="Model.ConcreteOrInterfaceRequired.Message" xml:space="preserve">
-    <value>“{0}”类型必须是具体类或接口，不能是抽象类。</value>
-  </data>
-  <data name="Model.DefaultValueConcreteTypeRequired.Message" xml:space="preserve">
-    <value>为属性“{1}”生成默认值时，“{0}”类型必须是非抽象类。</value>
-  </data>
-  <data name="Model.DefaultValueConversion.Message" xml:space="preserve">
-    <value>无法将默认值“{0}”转换为成员类型“{1}”。</value>
-  </data>
-  <data name="Model.DefaultValueTypeConversion.Message" xml:space="preserve">
-    <value>无法将默认值类型“{0}”转换为成员类型“{1}”。</value>
-  </data>
-  <data name="Model.EventsNotAllowed.Message" xml:space="preserve">
-    <value>模型接口“{0}”不能定义事件。</value>
-  </data>
-  <data name="Model.ExtensionBooleanRequired.Message" xml:space="preserve">
-    <value>扩展方法“{0}”必须返回布尔值。</value>
-  </data>
-  <data name="Model.ExtensionMethodNotFound.Message" xml:space="preserve">
-    <value>扩展类型“{1}”中找不到属性“{0}”的扩展方法。</value>
-  </data>
-  <data name="Model.ExtensionReturnTypeInvalid.Message" xml:space="preserve">
-    <value>扩展方法“{0}”的返回类型缺失或无效。</value>
-  </data>
-  <data name="Model.FactoryMethodNotFound.Message" xml:space="preserve">
-    <value>扩展类“{1}”中找不到工厂方法“Get{0}(...)”。</value>
-  </data>
-  <data name="Model.FactoryReturnTypeInvalid.Message" xml:space="preserve">
-    <value>扩展类“{1}”中工厂方法“Get{0}(...)”的返回类型缺失或无效。</value>
-  </data>
-  <data name="Model.InterfaceOrAbstractRequired.Message" xml:space="preserve">
-    <value>模型类型“{0}”必须是接口或抽象类。</value>
-  </data>
-  <data name="Model.InvalidAssociationConstraint.Message" xml:space="preserve">
-    <value>模型属性“{1}.{2}”的关联约束“{0}”无效。</value>
-  </data>
-  <data name="Model.InvalidAssociationLink.Message" xml:space="preserve">
-    <value>模型属性“{1}.{2}”的关联链接“{0}”无效。</value>
-  </data>
-  <data name="Model.InvalidPropertyMember.Message" xml:space="preserve">
-    <value>“{0}”不是有效的模型属性成员。</value>
-  </data>
-  <data name="Model.MethodsNotAllowed.Message" xml:space="preserve">
-    <value>模型接口“{0}”不能定义方法。</value>
-  </data>
-  <data name="Model.MultipleContracts.Message" xml:space="preserve">
-    <value>数据服务“{0}”实现了多个模型契约。</value>
-  </data>
-  <data name="Model.PropertyAttributeTypeRequired.Message" xml:space="preserve">
-    <value>属性“{0}”的属性特性缺少类型。</value>
-  </data>
-  <data name="Model.PropertyDefaultConstructorRequired.Message" xml:space="preserve">
-    <value>属性“{1}”的类型“{0}”缺少默认构造函数。</value>
-  </data>
-  <data name="Model.PropertyRoleAliasConflict.Message" xml:space="preserve">
-    <value>模型属性角色别名“{0}”已分配给角色“{1}”。</value>
-  </data>
-  <data name="Model.PropertyTypeMismatch.Message" xml:space="preserve">
-    <value>属性“{1}”的 PropertyAttribute 指定的类型“{0}”未实现或继承“{2}”。</value>
-  </data>
-  <data name="Model.SingletonValueType.Message" xml:space="preserve">
-    <value>单例类型“{0}”不能是值类型。</value>
-  </data>
-  <data name="Model.UnsupportedCollection.Message" xml:space="preserve">
-    <value>“{0}”不是具体的或受支持的集合类型。</value>
-  </data>
-  <data name="Model.VirtualMethodRequired.Message" xml:space="preserve">
-    <value>模型“{1}”的方法“{0}”必须是虚方法或抽象方法。</value>
-  </data>
-  <data name="Path.InvalidFormat.Message" xml:space="preserve">
-    <value>无效的路径格式：“{0}”。</value>
-  </data>
-  <data name="Profiles.InvalidSectionName.Message" xml:space="preserve">
-    <value>节名称“{0}”包含无效字符。</value>
-  </data>
-  <data name="Range.InvalidTargetType.Message" xml:space="preserve">
-    <value>参数“{0}”的类型“{1}”不是 Range，不支持此操作。</value>
-  </data>
-  <data name="Range.MinimumExceedsMaximum.Message" xml:space="preserve">
-    <value>最小值“{0}”不能大于最大值“{1}”。</value>
-  </data>
-  <data name="Reflection.FieldNotFound.Message" xml:space="preserve">
-    <value>目标类型“{0}”未定义“{1}”字段。</value>
-  </data>
-  <data name="Reflection.MemberNotFound.Message" xml:space="preserve">
-    <value>“{1}”类型中不存在“{0}”成员。</value>
-  </data>
-  <data name="Reflection.UnsupportedMemberKind.Message" xml:space="preserve">
-    <value>不支持“{0}”成员种类。</value>
-  </data>
-  <data name="Searcher.LinkCycle.Message" xml:space="preserve">
-    <value>所选链接包含循环引用：“{0}”。</value>
-  </data>
-  <data name="Secretor.CaptchaInvalid.Message" xml:space="preserve">
-    <value>验证码“{0}”无效。</value>
-  </data>
-  <data name="Secretor.CaptchaValidationFailed.Message" xml:space="preserve">
-    <value>“{0}”验证码方案验证失败。</value>
-  </data>
-  <data name="Serialization.JsonConversion.Message" xml:space="preserve">
-    <value>无法将 JSON 值转换为“{0}”类型。</value>
-  </data>
-  <data name="Serialization.JsonNodeConversion.Message" xml:space="preserve">
-    <value>无法将 JSON 节点“{0}”转换为“{1}”类型。</value>
-  </data>
-  <data name="ServiceInjector.UnsupportedMember.Message" xml:space="preserve">
-    <value>成员“{0}.{1}”不支持服务注入。</value>
-  </data>
-  <data name="Services.NameNotFound.Message" xml:space="preserve">
-    <value>名为“{0}”的服务不存在。</value>
-  </data>
-  <data name="Services.NamedServiceNotFound.Message" xml:space="preserve">
-    <value>“{1}”类型的服务提供程序中找不到名为“{0}”的服务。</value>
-  </data>
-  <data name="Services.TypeNotRegistered.Message" xml:space="preserve">
-    <value>未注册“{0}”类型的服务。</value>
-  </data>
-  <data name="StringTokenizer.ClosingQuoteRequired.Message" xml:space="preserve">
-    <value>字符串缺少结束定界符“{0}”。</value>
-  </data>
-  <data name="Terminal.CommandRequiresTerminal.Message" xml:space="preserve">
-    <value>命令“{0}”必须在终端执行器中运行。</value>
-  </data>
-  <data name="Terminal.UnsupportedOperatingSystem.Message" xml:space="preserve">
-    <value>不支持“{0}”操作系统。</value>
-  </data>
-  <data name="TimeSpan.InvalidValue.Message" xml:space="preserve">
-    <value>“{0}”不是有效的时间间隔。</value>
-  </data>
-  <data name="TokenScanner.IllegalCharacter.Message" xml:space="preserve">
-    <value>表达式的第 {1} 个字符“{0}”无效。</value>
-  </data>
-  <data name="Type.InterfaceRequired.Message" xml:space="preserve">
-    <value>“{0}”类型必须实现“{1}”接口。</value>
-  </data>
-  <data name="Worker.Disabled.Message" xml:space="preserve">
-    <value>工作器“{0}”已禁用。</value>
-  </data>
-  <data name="Worker.PauseResumeUnsupported.Message" xml:space="preserve">
-    <value>工作器“{0}”不支持暂停和恢复操作。</value>
-  </data>
+	<xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+		<xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+		<xsd:element name="root" msdata:IsDataSet="true">
+			<xsd:complexType>
+				<xsd:choice maxOccurs="unbounded">
+					<xsd:element name="metadata">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0" />
+							</xsd:sequence>
+							<xsd:attribute name="name" use="required" type="xsd:string" />
+							<xsd:attribute name="type" type="xsd:string" />
+							<xsd:attribute name="mimetype" type="xsd:string" />
+							<xsd:attribute ref="xml:space" />
+						</xsd:complexType>
+					</xsd:element>
+					<xsd:element name="assembly">
+						<xsd:complexType>
+							<xsd:attribute name="alias" type="xsd:string" />
+							<xsd:attribute name="name" type="xsd:string" />
+						</xsd:complexType>
+					</xsd:element>
+					<xsd:element name="data">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+								<xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+							</xsd:sequence>
+							<xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+							<xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+							<xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+							<xsd:attribute ref="xml:space" />
+						</xsd:complexType>
+					</xsd:element>
+					<xsd:element name="resheader">
+						<xsd:complexType>
+							<xsd:sequence>
+								<xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+							</xsd:sequence>
+							<xsd:attribute name="name" type="xsd:string" use="required" />
+						</xsd:complexType>
+					</xsd:element>
+				</xsd:choice>
+			</xsd:complexType>
+		</xsd:element>
+	</xsd:schema>
+	<resheader name="resmimetype">
+		<value>text/microsoft-resx</value>
+	</resheader>
+	<resheader name="version">
+		<value>2.0</value>
+	</resheader>
+	<resheader name="reader">
+		<value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<resheader name="writer">
+		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+	</resheader>
+	<data name="Disabled" xml:space="preserve">
+		<value>禁用</value>
+	</data>
+	<data name="Error.FailedBinding.Message" xml:space="preserve">
+		<value>无法将“ {0}”处的配置值转换为“ {1}”类型。</value>
+	</data>
+	<data name="Error.FailedToActivate.Message" xml:space="preserve">
+		<value>无法创建类型为“ {0}”的实例。</value>
+	</data>
+	<data name="Error.IllegalConfigurationAttributeName.Message" xml:space="preserve">
+		<value>非法的配置属性名“{0}”。位于：{1}</value>
+	</data>
+	<data name="Error.IllegalConfigurationKeyValue.Message" xml:space="preserve">
+		<value>非法的配置元素的键值“{0}”，键值中不能含有“/”、“\”、“:”、“*”、“?”等字符。位于：{1}</value>
+	</data>
+	<data name="Error.IllegalRootNodeName.Message" xml:space="preserve">
+		<value>发现“{0}”是非法的根节点名称。{1}</value>
+	</data>
+	<data name="Error.InvalidOptionConfigurationFileFormat.Message" xml:space="preserve">
+		<value>无效的选项配置文件格式，配置元素必须位于&lt;option&gt;元素内。位于：{0}</value>
+	</data>
+	<data name="Error.InvalidUnrecognizedProperty.Message" xml:space="preserve">
+		<value>指定的“{0}”是一个无效的未识别属性，未识别属性类型必须是一个键为字符串类型的字典。</value>
+	</data>
+	<data name="Error.KeyIsDuplicated.Message" xml:space="preserve">
+		<value>发现重复的“{0}”键。位于：{1}</value>
+	</data>
+	<data name="Error.NamespaceIsNotSupported.Message" xml:space="preserve">
+		<value>不支持XML名称空间。位于：{0}</value>
+	</data>
+	<data name="Error.PropertyCannotRead.Message" xml:space="preserve">
+		<value>位于“{0}”类型的“{1}”属性不可读。</value>
+	</data>
+	<data name="Error.PropertyNotExists.Message" xml:space="preserve">
+		<value>在“{0}”类型中不存在名为“{1}”的属性。</value>
+	</data>
+	<data name="Error.UnsupportedMultidimensionalArray.Message" xml:space="preserve">
+		<value>无法创建类型为“ {0}”的实例，因为不支持多维数组。</value>
+	</data>
+	<data name="Error.UnsupportedNodeType.Message" xml:space="preserve">
+		<value>发现不受支持的节点类型“{0}”。{1}</value>
+	</data>
+	<data name="OperationException.Argument.Message" xml:space="preserve">
+		<value>参数异常，可能传入了不支持的参数值。</value>
+	</data>
+	<data name="OperationException.Unfound.Message" xml:space="preserve">
+		<value>未能找到目标，导致操作异常。</value>
+	</data>
+	<data name="OperationException.Unknown.Message" xml:space="preserve">
+		<value>发生未知的操作异常。</value>
+	</data>
+	<data name="OperationException.Unprocessed.Message" xml:space="preserve">
+		<value>无法处理当前操作。</value>
+	</data>
+	<data name="OperationException.Unsatisfied.Message" xml:space="preserve">
+		<value>未能满足必要的先决条件，导致操作失败。</value>
+	</data>
+	<data name="OperationException.Unsupported.Message" xml:space="preserve">
+		<value>不支持当前操作。</value>
+	</data>
+	<data name="AuthenticationException.Message" xml:space="preserve">
+		<value>身份验证失败。</value>
+	</data>
+	<data name="Security.AccountDisabled.Message" xml:space="preserve">
+		<value>帐户已被禁用。</value>
+	</data>
+	<data name="Security.AccountSuspended.Message" xml:space="preserve">
+		<value>帐户被暂停，可能是因为验证失败次数太多。</value>
+	</data>
+	<data name="Security.AccountUnapproved.Message" xml:space="preserve">
+		<value>帐户尚未通过审核批准。</value>
+	</data>
+	<data name="Security.Forbidden.Message" xml:space="preserve">
+		<value>禁止访问，您的账号没有被授权访问当前资源。</value>
+	</data>
+	<data name="Security.InvalidIdentity.Message" xml:space="preserve">
+		<value>无效的身份标识。</value>
+	</data>
+	<data name="Security.InvalidPassword.Message" xml:space="preserve">
+		<value>无效的密码。</value>
+	</data>
+	<data name="Security.Succeed.Message" xml:space="preserve">
+		<value>验证成功。</value>
+	</data>
+	<data name="Security.Unknown.Message" xml:space="preserve">
+		<value>其他未知的安全原因。</value>
+	</data>
+	<data name="AuthorizationException.Message" xml:space="preserve">
+		<value>禁止访问，您没有访问这项资源的授权。</value>
+	</data>
+	<data name="ClearCommand.Description" xml:space="preserve">
+		<value>清除当前终端的显示内容。</value>
+	</data>
+	<data name="ClearCommand.Name" xml:space="preserve">
+		<value>清除命令</value>
+	</data>
+	<data name="Command.ExecutionFailed.Message" xml:space="preserve">
+		<value>{0} 执行失败。</value>
+	</data>
+	<data name="Command.ExecutionSucceed.Message" xml:space="preserve">
+		<value>{0} 执行成功。</value>
+	</data>
+	<data name="Command.Options.Timeout" xml:space="preserve">
+		<value>超时</value>
+	</data>
+	<data name="CommandError.Label" xml:space="preserve">
+		<value>命令出错：</value>
+	</data>
+	<data name="CommandNotFound.Message" xml:space="preserve">
+		<value>指定的 '{0}' 命令没有找到。</value>
+	</data>
+	<data name="DataArgumentException.Message" xml:space="preserve">
+		<value>无效的数据参数或者内容值。</value>
+	</data>
+	<data name="DataConflictException.Message" xml:space="preserve">
+		<value>数据冲突：数据项中 {0} 的 {1} 值重复了。</value>
+	</data>
+	<data name="DataConstraintException.Message" xml:space="preserve">
+		<value>数据约束失败。</value>
+	</data>
+	<data name="ExitCommand.Confirm" xml:space="preserve">
+		<value>您确认是否要退出(输入Yes则退出)？</value>
+	</data>
+	<data name="ExitCommand.Description" xml:space="preserve">
+		<value>退出当前应用程序。</value>
+	</data>
+	<data name="ExitCommand.Name" xml:space="preserve">
+		<value>退出命令</value>
+	</data>
+	<data name="ExitCommand.Options.Confirm" xml:space="preserve">
+		<value>直接退出，不提示确认信息。</value>
+	</data>
+	<data name="InvalidCommandOption.Message" xml:space="preserve">
+		<value>指定的 '{0}' 是一个无效的命令选项。</value>
+	</data>
+	<data name="InvalidCommandOptionValue.Message" xml:space="preserve">
+		<value>指定的 '{1}' 是一个无效的 '{0}' 命令选项值。</value>
+	</data>
+	<data name="LinePositionInfo" xml:space="preserve">
+		<value>第 {0} 行，第 {1} 列。</value>
+	</data>
+	<data name="MissingCommandOption.Message" xml:space="preserve">
+		<value>缺少 '{0}' 命令选项，必须为该选项提供值。</value>
+	</data>
+	<data name="SecretGenerateTooFrequently.Message" xml:space="preserve">
+		<value>验证码生成操作调用太频繁，请等待一会后再来。</value>
+	</data>
+	<data name="ShellCommand.Description" xml:space="preserve">
+		<value>通过系统 Shell 来执行外部命令。</value>
+	</data>
+	<data name="ShellCommand.Name" xml:space="preserve">
+		<value>外部命令执行器</value>
+	</data>
+	<data name="ShellCommand.Options.Timeout" xml:space="preserve">
+		<value>运行外部命令的超时，单位：毫秒。</value>
+	</data>
+	<data name="WorkerPauseCommand.Name" xml:space="preserve">
+		<value>暂停</value>
+	</data>
+	<data name="WorkerResumeCommand.Name" xml:space="preserve">
+		<value>恢复</value>
+	</data>
+	<data name="WorkerStartCommand.Name" xml:space="preserve">
+		<value>启动</value>
+	</data>
+	<data name="WorkerStartCommand.Options.Force" xml:space="preserve">
+		<value>强制启动，即使命令被禁用也尝试启动。</value>
+	</data>
+	<data name="WorkerState.Paused" xml:space="preserve">
+		<value>已暂停</value>
+	</data>
+	<data name="WorkerState.Pausing" xml:space="preserve">
+		<value>暂停中</value>
+	</data>
+	<data name="WorkerState.Resuming" xml:space="preserve">
+		<value>恢复中</value>
+	</data>
+	<data name="WorkerState.Running" xml:space="preserve">
+		<value>运行中</value>
+	</data>
+	<data name="WorkerState.Starting" xml:space="preserve">
+		<value>启动中</value>
+	</data>
+	<data name="WorkerState.Stopped" xml:space="preserve">
+		<value>已停止</value>
+	</data>
+	<data name="WorkerState.Stopping" xml:space="preserve">
+		<value>停止中</value>
+	</data>
+	<data name="WorkerStopCommand.Name" xml:space="preserve">
+		<value>停止</value>
+	</data>
+	<data name="ConnectionSettings.Group" xml:space="preserve">
+		<value>组别标识</value>
+	</data>
+	<data name="ConnectionSettings.Group.Description" xml:space="preserve">
+		<value>通常表示服务或连接程序所属组别。</value>
+	</data>
+	<data name="ConnectionSettings.Client" xml:space="preserve">
+		<value>客户端名</value>
+	</data>
+	<data name="ConnectionSettings.Client.Description" xml:space="preserve">
+		<value>表示连接程序的客户端名称。</value>
+	</data>
+	<data name="ConnectionSettings.Server" xml:space="preserve">
+		<value>服务器地址</value>
+	</data>
+	<data name="ConnectionSettings.Server.Description" xml:space="preserve">
+		<value>表示连接的服务器地址。对于多个目标服务器地址，通常采用分号(;)分隔。</value>
+	</data>
+	<data name="ConnectionSettings.Port" xml:space="preserve">
+		<value>端口号</value>
+	</data>
+	<data name="ConnectionSettings.Port.Description" xml:space="preserve">
+		<value>表示连接的服务器端口号。</value>
+	</data>
+	<data name="ConnectionSettings.Timeout" xml:space="preserve">
+		<value>超时</value>
+	</data>
+	<data name="ConnectionSettings.Timeout.Description" xml:space="preserve">
+		<value>表示连接超时或相关操作的超时。</value>
+	</data>
+	<data name="ConnectionSettings.Charset" xml:space="preserve">
+		<value>字符集</value>
+	</data>
+	<data name="ConnectionSettings.Charset.Description" xml:space="preserve">
+		<value>表示字符集的名称，譬如：UTF-8、GBK 等。</value>
+	</data>
+	<data name="ConnectionSettings.Encoding" xml:space="preserve">
+		<value>编码方案</value>
+	</data>
+	<data name="ConnectionSettings.Encoding.Description" xml:space="preserve">
+		<value>表示文本编码方案。</value>
+	</data>
+	<data name="ConnectionSettings.Provider" xml:space="preserve">
+		<value>提供程序</value>
+	</data>
+	<data name="ConnectionSettings.Provider.Description" xml:space="preserve">
+		<value>表示连接提供程序标识。</value>
+	</data>
+	<data name="ConnectionSettings.Database" xml:space="preserve">
+		<value>数据库</value>
+	</data>
+	<data name="ConnectionSettings.Database.Description" xml:space="preserve">
+		<value>表示连接的数据库名或标识。</value>
+	</data>
+	<data name="ConnectionSettings.UserName" xml:space="preserve">
+		<value>用户名</value>
+	</data>
+	<data name="ConnectionSettings.UserName.Description" xml:space="preserve">
+		<value>表示连接的用户名称。</value>
+	</data>
+	<data name="ConnectionSettings.Password" xml:space="preserve">
+		<value>密码</value>
+	</data>
+	<data name="ConnectionSettings.Password.Description" xml:space="preserve">
+		<value>表示连接的用户密码。</value>
+	</data>
+	<data name="ConnectionSettings.Instance" xml:space="preserve">
+		<value>实例名称</value>
+	</data>
+	<data name="ConnectionSettings.Instance.Description" xml:space="preserve">
+		<value>表示连接的实例标识。</value>
+	</data>
+	<data name="ConnectionSettings.Application" xml:space="preserve">
+		<value>应用名称</value>
+	</data>
+	<data name="ConnectionSettings.Application.Description" xml:space="preserve">
+		<value>表示连接的应用标识。</value>
+	</data>
+	<data name="Zongsoft.Security.Privileges.MemberType.Role" xml:space="preserve">
+		<value>角色</value>
+	</data>
+	<data name="Zongsoft.Security.Privileges.MemberType.User" xml:space="preserve">
+		<value>用户</value>
+	</data>
+	<data name="ErrorOccurred.Label" xml:space="preserve">
+		<value>发生错误：</value>
+	</data>
+	<data name="TransactionEventChannel.DispatchingTimeout" xml:space="preserve">
+		<value>事务事件通道“{0}”的投递任务未能在限定时间内完成，将继续关闭该通道。</value>
+	</data>
+	<data name="TransactionEventChannel.DispatchClosed" xml:space="preserve">
+		<value>无法投递已提交的事件“{0}”，因为事务事件通道已关闭。</value>
+	</data>
+	<data name="Schema.EmptyParsingStack.Message" xml:space="preserve">
+		<value>解析错误：解析栈为空。</value>
+	</data>
+	<data name="Schema.ErrorPosition.Message" xml:space="preserve">
+		<value>{0}（位置：{1}）。</value>
+	</data>
+	<data name="Schema.IdentifierContainsWhitespace.Message" xml:space="preserve">
+		<value>语法错误：数据模式标识符中包含空白字符。</value>
+	</data>
+	<data name="Schema.IdentifierIllegalCharacter.Message" xml:space="preserve">
+		<value>语法错误：数据模式标识符中包含非法字符“{0}”。</value>
+	</data>
+	<data name="Schema.IdentifierStartsWithDigit.Message" xml:space="preserve">
+		<value>语法错误：数据模式标识符不能以数字开头。</value>
+	</data>
+	<data name="Schema.IllegalCharacter.Message" xml:space="preserve">
+		<value>语法错误：数据模式中包含非法字符“{0}”。</value>
+	</data>
+	<data name="Schema.IllegalCharacterAfterSorting.Message" xml:space="preserve">
+		<value>语法错误：数据模式的排序项之后包含非法字符“{0}”。</value>
+	</data>
+	<data name="Schema.IncorrectExpression.Message" xml:space="preserve">
+		<value>语法错误：数据模式表达式不正确（{0}）。</value>
+	</data>
+	<data name="Schema.InvalidExclusionWildcard.Message" xml:space="preserve">
+		<value>语法错误：数据模式的排除通配符无效。</value>
+	</data>
+	<data name="Schema.InvalidLimitFormat.Message" xml:space="preserve">
+		<value>语法错误：数据模式的限量格式不正确。</value>
+	</data>
+	<data name="Schema.InvalidOrOverflowedLimit.Message" xml:space="preserve">
+		<value>语法错误：数据模式的限量“{0}”无效或溢出。</value>
+	</data>
+	<data name="Schema.LimitIllegalCharacter.Message" xml:space="preserve">
+		<value>语法错误：数据模式的限量中包含非法字符“{0}”。</value>
+	</data>
+	<data name="Schema.MissingExclusionMemberAfterPeriod.Message" xml:space="preserve">
+		<value>语法错误：数据模式的句点后缺少排除成员标识符，却发现“{0}”。</value>
+	</data>
+	<data name="Schema.MissingIdentifierBeforePeriod.Message" xml:space="preserve">
+		<value>语法错误：数据模式的句点前缺少标识符。</value>
+	</data>
+	<data name="Schema.MissingLimit.Message" xml:space="preserve">
+		<value>语法错误：数据模式中缺少限量值。</value>
+	</data>
+	<data name="Schema.MissingMemberAfterPeriod.Message" xml:space="preserve">
+		<value>语法错误：数据模式的句点后缺少成员标识符，却发现“{0}”。</value>
+	</data>
+	<data name="Schema.MissingMemberBeforePeriod.Message" xml:space="preserve">
+		<value>语法错误：数据模式的句点前缺少成员标识符。</value>
+	</data>
+	<data name="Schema.MissingSortingField.Message" xml:space="preserve">
+		<value>语法错误：数据模式中缺少排序字段。</value>
+	</data>
+	<data name="Schema.MissingSortingFields.Message" xml:space="preserve">
+		<value>语法错误：数据模式中缺少排序字段集。</value>
+	</data>
+	<data name="Schema.SortingFieldIllegalCharacter.Message" xml:space="preserve">
+		<value>语法错误：数据模式的排序字段中包含非法字符“{0}”。</value>
+	</data>
+	<data name="Schema.SortingFieldStartsWithDigit.Message" xml:space="preserve">
+		<value>语法错误：数据模式的排序字段不能以数字开头。</value>
+	</data>
+	<data name="Schema.UnclosedMemberBlock.Message" xml:space="preserve">
+		<value>语法错误：数据模式中包含未闭合的成员块。</value>
+	</data>
+	<data name="Schema.UnrecognizedMember.Message" xml:space="preserve">
+		<value>解析错误：无法识别数据模式成员“{0}”。</value>
+	</data>
+	<data name="Communication.ListenerHandlerMismatch.Message" xml:space="preserve">
+		<value>指定的“{0}”处理器类型不匹配。</value>
+	</data>
+	<data name="Communication.ListenerPacketizerRequired.Message" xml:space="preserve">
+		<value>接收操作缺少必需的封包器。</value>
+	</data>
+	<data name="Messaging.ConnectionSettingsNotFound.Message" xml:space="preserve">
+		<value>找不到名为“{1}”的 {0} 消息队列连接设置。</value>
+	</data>
+	<data name="Messaging.ConnectionSettingsTypeMismatch.Message" xml:space="preserve">
+		<value>指定的“{0}”连接设置不是所需的“{1}”设置类型。</value>
+	</data>
+	<data name="Messaging.GuarderQueueMissing.Warning" xml:space="preserve">
+		<value>无法启动名为“{0}”的消息队列守护器，因为其“{1}”属性为空。</value>
+	</data>
+	<data name="Messaging.ReliabilityNotSupported.Message" xml:space="preserve">
+		<value>“{1}”消息队列不支持“{0}”消息可靠性。</value>
+	</data>
+	<data name="Messaging.FeatureNotSupported.Message" xml:space="preserve">
+		<value>“{1}”消息队列不支持“{0}”功能。</value>
+	</data>
+	<data name="Messaging.SubscriptionConflict.Message" xml:space="preserve">
+		<value>主题“{0}”的现有订阅具有不同的处理器、标签或选项。</value>
+	</data>
+	<data name="Messaging.StorageCreationFailed.Message" xml:space="preserve">
+		<value>消息存储工厂无法为“{0}”消息代理创建存储器。</value>
+	</data>
+	<data name="Messaging.QueueUndefined.Message" xml:space="preserve">
+		<value>{0}：未定义指定的“{1}”消息队列。</value>
+	</data>
+	<data name="Compressor.Undefined.Message" xml:space="preserve">
+		<value>不支持指定的“{0}”消息压缩算法。</value>
+	</data>
+	<data name="ErrorOccurred.Message" xml:space="preserve">
+		<value>发生错误。</value>
+	</data>
+	<data name="Services.ApplicationVersion.Conflict.Message" xml:space="preserve">
+		<value>应用版本号与具名版本集不能同时设置。</value>
+	</data>
+	<data name="Services.ApplicationVersion.VersionRequired.Message" xml:space="preserve">
+		<value>必须设置应用版本号或至少一个具名版本。</value>
+	</data>
+	<data name="Services.ApplicationVersion.FormattingBufferExceeded.Message" xml:space="preserve">
+		<value>版本号超出格式化缓冲区的容量。</value>
+	</data>
+	<data name="Services.ApplicationVersion.ApplicationNameInvalid.Message" xml:space="preserve">
+		<value>必须指定应用名称，且名称不能包含保留字符。</value>
+	</data>
+	<data name="Services.ApplicationVersion.VersionInvalid.Message" xml:space="preserve">
+		<value>应用版本号无效。</value>
+	</data>
+	<data name="Services.ApplicationVersion.UnexpectedContent.Message" xml:space="preserve">
+		<value>name@version 首行后不能包含版本段落或其它内容。</value>
+	</data>
+	<data name="Services.ApplicationVersion.EditionVersionRequired.Message" xml:space="preserve">
+		<value>版本段落缺少版本号。</value>
+	</data>
+	<data name="Services.ApplicationVersion.EditionHeaderInvalid.Message" xml:space="preserve">
+		<value>版本段落标题无效。</value>
+	</data>
+	<data name="Services.ApplicationVersion.EditionNameInvalid.Message" xml:space="preserve">
+		<value>版本名无效。</value>
+	</data>
+	<data name="Services.ApplicationVersion.EditionHeaderRequired.Message" xml:space="preserve">
+		<value>此处应为版本段落标题。</value>
+	</data>
+	<data name="Services.ApplicationVersion.BareVersionRequired.Message" xml:space="preserve">
+		<value>此处应为不带键名的版本号。</value>
+	</data>
+	<data name="Services.ApplicationVersion.EditionDuplicated.Message" xml:space="preserve">
+		<value>版本名重复。</value>
+	</data>
+	<data name="Services.ApplicationVersion.InformationRequired.Message" xml:space="preserve">
+		<value>必须指定应用名称和版本信息。</value>
+	</data>
+	<data name="Services.ApplicationVersion.InvalidFormat.Message" xml:space="preserve">
+		<value>应用版本文件第 {0} 行的格式无效：{1}</value>
+	</data>
+	<data name="Services.ApplicationVersion.NameInvalid.Message" xml:space="preserve">
+		<value>名称为空或包含应用版本文件格式的保留字符。</value>
+	</data>
+	<data name="Services.ApplicationVersion.EditionInvalid.Message" xml:space="preserve">
+		<value>必须提供已初始化且具有名称和版本号的具名版本。</value>
+	</data>
+	<data name="Profiles.CircularImport.Message" xml:space="preserve">
+		<value>配置文件循环导入：{0}。引用位置：{1}，第 {2} 行。</value>
+	</data>
+	<data name="Profiles.MaximumDepth.Message" xml:space="preserve">
+		<value>配置文件导入深度超过上限：{0}。引用位置：{1}，第 {2} 行。</value>
+	</data>
+	<data name="Profiles.RelativeImportRequiresFile.Message" xml:space="preserve">
+		<value>相对导入“{0}”需要源文件路径（第 {1} 行）。</value>
+	</data>
+	<data name="Profiles.RequiredImport.Message" xml:space="preserve">
+		<value>必需的配置导入文件“{0}”不存在。声明来源：{1}，第 {2} 行。</value>
+	</data>
+	<data name="Profiles.LinkResolutionFailed.Message" xml:space="preserve">
+		<value>无法解析配置文件路径链接：{0}。</value>
+	</data>
+	<data name="Profiles.SourceRequired.Message" xml:space="preserve">
+		<value>修改后的配置没有来源文件路径。</value>
+	</data>
+	<data name="Profiles.SourceEdit.Message" xml:space="preserve">
+		<value>请通过声明所属的来源配置及章节进行编辑。</value>
+	</data>
+	<data name="Profiles.AlreadySaving.Message" xml:space="preserve">
+		<value>此配置正在保存，不能重复进入保存操作。</value>
+	</data>
+	<data name="Profiles.SaveConflict.Message" xml:space="preserve">
+		<value>多个已修改的配置指向同一文件且内容冲突：“{0}”。</value>
+	</data>
+	<data name="Profiles.SaveFailed.Message" xml:space="preserve">
+		<value>保存“{0}”失败。已完成的文件：{1}。</value>
+	</data>
+	<data name="Profiles.SaveMutation.Message" xml:space="preserve">
+		<value>保存期间不得修改配置。</value>
+	</data>
+	<data name="Profiles.ReadOnly.Message" xml:space="preserve">
+		<value>配置文件为只读：“{0}”。</value>
+	</data>
+	<data name="Profiles.SectionInvalid.Message" xml:space="preserve">
+		<value>章节名称无法使用配置语法表示：“{0}”。</value>
+	</data>
+	<data name="Profiles.EntryInvalid.Message" xml:space="preserve">
+		<value>条目“{0}”无法使用配置语法表示。</value>
+	</data>
+	<data name="Profiles.CommentInvalid.Message" xml:space="preserve">
+		<value>注释无法一致地表示为配置声明。</value>
+	</data>
+	<data name="Profiles.BlanksInvalid.Message" xml:space="preserve">
+		<value>配置空行位置必须为非负数并严格递增。</value>
+	</data>
+	<data name="Profiles.EntryDuplicate.Message" xml:space="preserve">
+		<value>本配置已声明名为“{0}”的条目。</value>
+	</data>
+	<data name="Profiles.SectionDuplicate.Message" xml:space="preserve">
+		<value>已存在同名章节。</value>
+	</data>
+	<data name="NumberTokenizer.InvalidLongSuffix.Message" xml:space="preserve">
+		<value>浮点数字面量不能使用长整型后缀 L。</value>
+	</data>
+	<data name="NumberTokenizer.TrailingDot.Message" xml:space="preserve">
+		<value>数字字面量不能以小数点结尾。</value>
+	</data>
+	<data name="NumberTokenizer.MultipleDots.Message" xml:space="preserve">
+		<value>数字字面量不能包含多个小数点。</value>
+	</data>
+	<data name="Secretor.InvalidCaptcha.Message" xml:space="preserve">
+		<value>验证码格式无效。</value>
+	</data>
+	<data name="InvalidFormat.Message" xml:space="preserve">
+		<value>格式无效。</value>
+	</data>
+	<data name="MemberExpression.Invalid.Message" xml:space="preserve">
+		<value>成员表达式无效。</value>
+	</data>
+	<data name="ServiceInjector.InvalidMemberType.Message" xml:space="preserve">
+		<value>成员类型无效。</value>
+	</data>
+	<data name="Path.InvalidCharacter.Message" xml:space="preserve">
+		<value>路径包含非法字符。</value>
+	</data>
+	<data name="Secretor.InvalidPattern.Message" xml:space="preserve">
+		<value>秘密模式无效。</value>
+	</data>
+	<data name="Sorting.InvalidFormat.Message" xml:space="preserve">
+		<value>排序格式无效。</value>
+	</data>
+	<data name="CommandExecutor.MissingCommand.Message" xml:space="preserve">
+		<value>缺少可执行的命令。</value>
+	</data>
+	<data name="Authentication.MissingIdentity.Message" xml:space="preserve">
+		<value>缺少身份标识。</value>
+	</data>
+	<data name="WorkerCommand.MissingWorker.Message" xml:space="preserve">
+		<value>缺少所依赖的工作者。</value>
+	</data>
+	<data name="DataSearcher.MissingMembers.Message" xml:space="preserve">
+		<value>缺少指定的搜索成员定义。</value>
+	</data>
+	<data name="RangeParser.MissingClosingParenthesis.Message" xml:space="preserve">
+		<value>缺少右括号。</value>
+	</data>
+	<data name="DataSearcher.MissingResolver.Message" xml:space="preserve">
+		<value>缺少必需的关键字条件解析器。</value>
+	</data>
+	<data name="Searcher.ParentAfterWildcard.Message" xml:space="preserve">
+		<value>通配符路径段之后不能包含父目录段。</value>
+	</data>
+	<data name="Enumerable.Empty.Message" xml:space="preserve">
+		<value>序列不包含任何元素。</value>
+	</data>
+	<data name="DataService.DeleteRequiresCriteria.Message" xml:space="preserve">
+		<value>删除操作的条件不能为空。</value>
+	</data>
+	<data name="Stream.NotWritable.Message" xml:space="preserve">
+		<value>目标流不支持写入。</value>
+	</data>
+	<data name="Enumerable.NotStarted.Message" xml:space="preserve">
+		<value>迭代器尚未开始，请先调用 MoveNext() 方法。</value>
+	</data>
+	<data name="Enumerable.Completed.Message" xml:space="preserve">
+		<value>迭代器已结束。</value>
+	</data>
+	<data name="Locker.AcquisitionInactive.Message" xml:space="preserve">
+		<value>锁获取操作已失效。</value>
+	</data>
+	<data name="HierarchicalNode.InvalidName.Message" xml:space="preserve">
+		<value>名称包含非法字符。</value>
+	</data>
+	<data name="CacheSubscription.InvalidKind.Message" xml:space="preserve">
+		<value>通知类型只能包含已定义的标志，且不能为 None。</value>
+	</data>
+	<data name="CacheSubscription.InvalidCapacity.Message" xml:space="preserve">
+		<value>通知队列容量必须为正数。</value>
+	</data>
+	<data name="UserService.PasswordAnswersFailed.Message" xml:space="preserve">
+		<value>密码安全问题的答案验证失败。</value>
+	</data>
+	<data name="UserService.PasswordAnswersCountMismatch.Message" xml:space="preserve">
+		<value>密码安全问题与答案的数量不一致。</value>
+	</data>
+	<data name="RangeParser.RedundantContent.Message" xml:space="preserve">
+		<value>范围表达式包含多余的内容。</value>
+	</data>
+	<data name="Searcher.RelativePatternRequired.Message" xml:space="preserve">
+		<value>搜索模式必须相对于指定目录。</value>
+	</data>
+	<data name="Secretor.InvalidArgument.Message" xml:space="preserve">
+		<value>秘密参数包含非法字符。</value>
+	</data>
+	<data name="Searcher.LinkTargetMissing.Message" xml:space="preserve">
+		<value>所选链接的目标不存在。</value>
+	</data>
+	<data name="StringTokenizer.NewLine.Message" xml:space="preserve">
+		<value>字符串字面量包含换行符。</value>
+	</data>
+	<data name="UserService.EmptyName.Message" xml:space="preserve">
+		<value>用户名为空。</value>
+	</data>
+	<data name="UserService.InvalidStoredAnswer.Message" xml:space="preserve">
+		<value>存储的密码安全问题答案格式无效。</value>
+	</data>
+	<data name="DataServiceMutability.InvalidFormat.Message" xml:space="preserve">
+		<value>参数值格式无效。</value>
+	</data>
+	<data name="Paging.InvalidFormat.Message" xml:space="preserve">
+		<value>分页格式无效。</value>
+	</data>
+	<data name="Authentication.InvalidScheme.Message" xml:space="preserve">
+		<value>认证器方案无效。</value>
+	</data>
+	<data name="Checksum.InvalidFormat.Message" xml:space="preserve">
+		<value>校验和文本格式无效。</value>
+	</data>
+	<data name="RangeParser.InvalidDateTimeFormat.Message" xml:space="preserve">
+		<value>日期时间范围表达式格式无效。</value>
+	</data>
+	<data name="Identifier.InvalidFormat.Message" xml:space="preserve">
+		<value>标识符格式无效。</value>
+	</data>
+	<data name="Path.InvalidAnchor.Message" xml:space="preserve">
+		<value>路径锚点无效。</value>
+	</data>
+	<data name="StateHandler.InvalidContext.Message" xml:space="preserve">
+		<value>状态上下文的类型无效。</value>
+	</data>
+	<data name="DataAccess.MissingConnections.Message" xml:space="preserve">
+		<value>缺少数据库连接设置。</value>
+	</data>
+	<data name="DataAccess.MissingSequence.Message" xml:space="preserve">
+		<value>缺少必需的序号服务。</value>
+	</data>
+	<data name="Authentication.MissingToken.Message" xml:space="preserve">
+		<value>缺少必需的认证令牌。</value>
+	</data>
+	<data name="Authentication.MissingAuthority.Message" xml:space="preserve">
+		<value>缺少必需的凭证提供程序。</value>
+	</data>
+	<data name="UserService.MissingSecretor.Message" xml:space="preserve">
+		<value>缺少必需的秘密提供程序。</value>
+	</data>
+	<data name="Hardware.RequiredProperty.Message" xml:space="preserve">
+		<value>必须提供“{0}”属性。</value>
+	</data>
+	<data name="RangeParser.NumericArgumentRequired.Message" xml:space="preserve">
+		<value>日期时间范围表达式的参数必须是数字。</value>
+	</data>
+	<data name="Attempter.SequenceNotSupported.Message" xml:space="preserve">
+		<value>认证失败计数所用的缓存不支持递增操作（ISequence）。</value>
+	</data>
+	<data name="DistributedLock.Released.Message" xml:space="preserve">
+		<value>分布式锁已释放。</value>
+	</data>
+	<data name="DataEntityProperty.OwnerReadOnly.Message" xml:space="preserve">
+		<value>无法添加或更新实体属性，因为不能设置该属性所属的实体。</value>
+	</data>
+	<data name="Path.InvalidFirstCharacter.Message" xml:space="preserve">
+		<value>首字符必须是字母、数字或下划线。</value>
+	</data>
+	<data name="Path.AnchorRequired.Message" xml:space="preserve">
+		<value>路径分隔符之后必须有路径锚点。</value>
+	</data>
+	<data name="CommandAlias.InvalidCharacters.Message" xml:space="preserve">
+		<value>指定的别名包含非法字符。</value>
+	</data>
+	<data name="Command.InvalidName.Message" xml:space="preserve">
+		<value>指定的命令名称包含非法字符。</value>
+	</data>
+	<data name="Parameters.NullForNonNullable.Message" xml:space="preserve">
+		<value>指定的参数值为空，但声明的类型不允许为空。</value>
+	</data>
+	<data name="TypeAlias.InvalidFirstCharacter.Message" xml:space="preserve">
+		<value>类型名称或命名空间必须以字母或下划线开头。</value>
+	</data>
+	<data name="Serialization.Immutable.Message" xml:space="preserve">
+		<value>序列化选项不可修改。</value>
+	</data>
+	<data name="MemberExpression.UnknownError.Message" xml:space="preserve">
+		<value>成员表达式解析器发生未知错误。</value>
+	</data>
+	<data name="MemoryCache.ImmutableOptions.Message" xml:space="preserve">
+		<value>当前内存缓存选项不可修改。</value>
+	</data>
+	<data name="EventBinder.ArgumentTypeMismatch.Message" xml:space="preserve">
+		<value>绑定的事件参数类型不匹配。</value>
+	</data>
+	<data name="HierarchicalNode.RootAsChild.Message" xml:space="preserve">
+		<value>不能将根节点添加为子节点。</value>
+	</data>
+	<data name="Password.NonceTooLong.Message" xml:space="preserve">
+		<value>随机数的长度过长。</value>
+	</data>
+	<data name="Password.NonceTooShort.Message" xml:space="preserve">
+		<value>随机数的长度过短，必须至少为 4。</value>
+	</data>
+	<data name="RangeParser.MissingArguments.Message" xml:space="preserve">
+		<value>{0} 范围函数缺少必需的参数。</value>
+	</data>
+	<data name="RangeParser.TooManyArguments.Message" xml:space="preserve">
+		<value>{0} 范围函数的参数过多。</value>
+	</data>
+	<data name="DataService.OperationNotAllowed.Message" xml:space="preserve">
+		<value>不允许执行“{0}”操作。</value>
+	</data>
+	<data name="Security.BuiltinName.Message" xml:space="preserve">
+		<value>指定的名称不能使用内置名称。</value>
+	</data>
+	<data name="Type.ValueTypeRequired.Message" xml:space="preserve">
+		<value>指定的“{0}”参数必须为值类型。</value>
+	</data>
+	<data name="ApplicationIdentifier.InvalidValue.Message" xml:space="preserve">
+		<value>“{0}”不是有效的应用标识。</value>
+	</data>
+	<data name="Authentication.UnsupportedDataType.Message" xml:space="preserve">
+		<value>不支持“{0}”类型的身份验证数据。</value>
+	</data>
+	<data name="Checksum.UnsupportedAlgorithm.Message" xml:space="preserve">
+		<value>不支持“{0}”哈希算法。</value>
+	</data>
+	<data name="Color.InvalidValue.Message" xml:space="preserve">
+		<value>“{0}”不是有效的颜色。</value>
+	</data>
+	<data name="Command.InvalidType.Message" xml:space="preserve">
+		<value>“{0}”不是命令类型。</value>
+	</data>
+	<data name="CommandOption.DuplicateName.Message" xml:space="preserve">
+		<value>命令选项名称“{0}”重复。</value>
+	</data>
+	<data name="CommandOption.DuplicateNameOrSymbol.Message" xml:space="preserve">
+		<value>命令选项名称“{0}”或缩写“{1}”重复。</value>
+	</data>
+	<data name="CommandOption.InvalidConverter.Message" xml:space="preserve">
+		<value>“{0}”类型必须继承 TypeConverter。</value>
+	</data>
+	<data name="CommandOption.NotFound.Message" xml:space="preserve">
+		<value>找不到“{0}”命令选项。</value>
+	</data>
+	<data name="Configuration.CollectionEntryFailed.Message" xml:space="preserve">
+		<value>无法添加配置集合项“{0}={1}”。</value>
+	</data>
+	<data name="Configuration.DefaultCollectionBindingFailed.Message" xml:space="preserve">
+		<value>无法绑定“{1}”类型的默认集合属性“{0}”。</value>
+	</data>
+	<data name="Configuration.DefaultCollectionReadOnly.Message" xml:space="preserve">
+		<value>“{1}”类型的默认集合属性“{0}”为空且无法设置。</value>
+	</data>
+	<data name="Configuration.DictionaryKeyConversion.Message" xml:space="preserve">
+		<value>无法将配置键“{0}”转换为字典键类型“{1}”。</value>
+	</data>
+	<data name="Configuration.EntryNameRequired.Message" xml:space="preserve">
+		<value>配置项“{0}”缺少名称或键。位置：{1}</value>
+	</data>
+	<data name="Configuration.RecognizerNotFound.Message" xml:space="preserve">
+		<value>找不到“{0}”类型的配置识别器。</value>
+	</data>
+	<data name="Configuration.SectionBindingFailed.Message" xml:space="preserve">
+		<value>无法将配置节“{0}”绑定到“{1}”类型的成员。</value>
+	</data>
+	<data name="Configuration.SectionUnrecognized.Message" xml:space="preserve">
+		<value>无法识别配置节“{0}”。</value>
+	</data>
+	<data name="Configuration.UnrecognizedPropertyReadOnly.Message" xml:space="preserve">
+		<value>用于接收未识别配置项的属性“{0}”为空且只读。</value>
+	</data>
+	<data name="ConnectionSettings.InvalidName.Message" xml:space="preserve">
+		<value>“{1}”驱动的连接设置中不支持“{0}”设置项。</value>
+	</data>
+	<data name="Conversion.ArgumentType.Message" xml:space="preserve">
+		<value>无法将指定参数转换为“{0}”类型。</value>
+	</data>
+	<data name="Conversion.Type.Message" xml:space="preserve">
+		<value>无法将“{0}”类型转换为“{1}”类型。</value>
+	</data>
+	<data name="Conversion.ValueType.Message" xml:space="preserve">
+		<value>无法将“{0}”转换为“{1}”类型。</value>
+	</data>
+	<data name="Criteria.InvalidType.Message" xml:space="preserve">
+		<value>“{0}”不是有效的条件类型。</value>
+	</data>
+	<data name="Criteria.UndefinedCondition.Message" xml:space="preserve">
+		<value>“{1}”类型中未定义“{0}”条件。</value>
+	</data>
+	<data name="DataAccess.NameMappingRequired.Message" xml:space="preserve">
+		<value>“{0}”类型缺少数据访问名称映射。</value>
+	</data>
+	<data name="DataAssociation.InvalidAnchor.Message" xml:space="preserve">
+		<value>复杂属性“{1}”的关联锚点“{0}”无效。</value>
+	</data>
+	<data name="DataCommand.Duplicate.Message" xml:space="preserve">
+		<value>集合中已存在数据命令“{0}”。</value>
+	</data>
+	<data name="DataCommand.DuplicateMapping.Message" xml:space="preserve">
+		<value>容器“{1}”中已定义数据命令映射“{0}”。</value>
+	</data>
+	<data name="DataCommand.NotFound.Message" xml:space="preserve">
+		<value>找不到数据命令映射“{0}”。</value>
+	</data>
+	<data name="DataEntity.Duplicate.Message" xml:space="preserve">
+		<value>集合中已存在数据实体“{0}”。</value>
+	</data>
+	<data name="DataEntity.DuplicateProperty.Message" xml:space="preserve">
+		<value>集合中已存在实体属性“{0}”。</value>
+	</data>
+	<data name="DataEntity.NotFound.Message" xml:space="preserve">
+		<value>找不到数据实体映射“{0}”。</value>
+	</data>
+	<data name="DataEntity.PropertyNotFound.Message" xml:space="preserve">
+		<value>实体“{0}”不包含“{1}”属性。</value>
+	</data>
+	<data name="DataEntity.SequenceRequiresSimplex.Message" xml:space="preserve">
+		<value>“{0}.{1}”不是简单属性，不支持序号功能。</value>
+	</data>
+	<data name="DataFunction.Unrecognized.Message" xml:space="preserve">
+		<value>无法识别函数“{0}”。</value>
+	</data>
+	<data name="DataFunction.UnsupportedArguments.Message" xml:space="preserve">
+		<value>函数“{0}”不支持参数“({1})”。</value>
+	</data>
+	<data name="DataSequence.InvalidDefinition.Message" xml:space="preserve">
+		<value>实体属性“{1}.{2}”中的序号“{0}”无效。</value>
+	</data>
+	<data name="DataSequence.InvalidReference.Message" xml:space="preserve">
+		<value>序号引用“{0}”无效。</value>
+	</data>
+	<data name="DataSequence.MemberNotFound.Message" xml:space="preserve">
+		<value>序号“{1}”引用的成员“{0}”不是已存在的属性。</value>
+	</data>
+	<data name="DataSequence.ReferenceDependencies.Message" xml:space="preserve">
+		<value>属性“{0}:{1}”引用的序号不能包含依赖项。</value>
+	</data>
+	<data name="DataSequence.ReferenceNotFound.Message" xml:space="preserve">
+		<value>属性“{2}:{3}”引用的序号“{0}:{1}”不存在。</value>
+	</data>
+	<data name="DataSequence.SimplexMemberRequired.Message" xml:space="preserve">
+		<value>序号“{1}”引用的成员“{0}”必须是简单属性。</value>
+	</data>
+	<data name="DataService.UpdateRequiresCriteria.Message" xml:space="preserve">
+		<value>更新实体“{0}”时缺少必要的条件。</value>
+	</data>
+	<data name="DataType.InvalidDbType.Message" xml:space="preserve">
+		<value>无效的 DbType 值：“{0}”。</value>
+	</data>
+	<data name="DistributedCache.NotificationsUnsupported.Message" xml:space="preserve">
+		<value>分布式缓存“{0}”不支持通知。</value>
+	</data>
+	<data name="Enum.UndefinedTypedValue.Message" xml:space="preserve">
+		<value>枚举“{1}”中未定义值“{0}”。</value>
+	</data>
+	<data name="Enum.UndefinedValue.Message" xml:space="preserve">
+		<value>未定义枚举值“{0}”。</value>
+	</data>
+	<data name="EventBinder.DelegateRequired.Message" xml:space="preserve">
+		<value>成员“{0}”的类型“{1}”不是委托类型，无法绑定事件。</value>
+	</data>
+	<data name="EventBinder.UnsupportedMember.Message" xml:space="preserve">
+		<value>“{1}”类型的“{0}”成员不是属性、字段或事件，无法绑定事件。</value>
+	</data>
+	<data name="Executor.InvalidArgument.Message" xml:space="preserve">
+		<value>无法识别的执行参数：“{0}”。</value>
+	</data>
+	<data name="FileSystem.ProviderNotFound.Message" xml:space="preserve">
+		<value>找不到“{0}”对应的文件或目录提供程序。</value>
+	</data>
+	<data name="HierarchicalNode.CircularReference.Message" xml:space="preserve">
+		<value>层级结构中“{1}”类型的“{0}”节点存在循环引用。</value>
+	</data>
+	<data name="Model.BaseDefaultConstructorRequired.Message" xml:space="preserve">
+		<value>模型基类“{0}”缺少默认构造函数。</value>
+	</data>
+	<data name="Model.ConcreteOrInterfaceRequired.Message" xml:space="preserve">
+		<value>“{0}”类型必须是具体类或接口，不能是抽象类。</value>
+	</data>
+	<data name="Model.DefaultValueConcreteTypeRequired.Message" xml:space="preserve">
+		<value>为属性“{1}”生成默认值时，“{0}”类型必须是非抽象类。</value>
+	</data>
+	<data name="Model.DefaultValueConversion.Message" xml:space="preserve">
+		<value>无法将默认值“{0}”转换为成员类型“{1}”。</value>
+	</data>
+	<data name="Model.DefaultValueTypeConversion.Message" xml:space="preserve">
+		<value>无法将默认值类型“{0}”转换为成员类型“{1}”。</value>
+	</data>
+	<data name="Model.EventsNotAllowed.Message" xml:space="preserve">
+		<value>模型接口“{0}”不能定义事件。</value>
+	</data>
+	<data name="Model.ExtensionBooleanRequired.Message" xml:space="preserve">
+		<value>扩展方法“{0}”必须返回布尔值。</value>
+	</data>
+	<data name="Model.ExtensionMethodNotFound.Message" xml:space="preserve">
+		<value>扩展类型“{1}”中找不到属性“{0}”的扩展方法。</value>
+	</data>
+	<data name="Model.ExtensionReturnTypeInvalid.Message" xml:space="preserve">
+		<value>扩展方法“{0}”的返回类型缺失或无效。</value>
+	</data>
+	<data name="Model.FactoryMethodNotFound.Message" xml:space="preserve">
+		<value>扩展类“{1}”中找不到工厂方法“Get{0}(...)”。</value>
+	</data>
+	<data name="Model.FactoryReturnTypeInvalid.Message" xml:space="preserve">
+		<value>扩展类“{1}”中工厂方法“Get{0}(...)”的返回类型缺失或无效。</value>
+	</data>
+	<data name="Model.InterfaceOrAbstractRequired.Message" xml:space="preserve">
+		<value>模型类型“{0}”必须是接口或抽象类。</value>
+	</data>
+	<data name="Model.InvalidAssociationConstraint.Message" xml:space="preserve">
+		<value>模型属性“{1}.{2}”的关联约束“{0}”无效。</value>
+	</data>
+	<data name="Model.InvalidAssociationLink.Message" xml:space="preserve">
+		<value>模型属性“{1}.{2}”的关联链接“{0}”无效。</value>
+	</data>
+	<data name="Model.InvalidPropertyMember.Message" xml:space="preserve">
+		<value>“{0}”不是有效的模型属性成员。</value>
+	</data>
+	<data name="Model.MethodsNotAllowed.Message" xml:space="preserve">
+		<value>模型接口“{0}”不能定义方法。</value>
+	</data>
+	<data name="Model.MultipleContracts.Message" xml:space="preserve">
+		<value>数据服务“{0}”实现了多个模型契约。</value>
+	</data>
+	<data name="Model.PropertyAttributeTypeRequired.Message" xml:space="preserve">
+		<value>属性“{0}”的属性特性缺少类型。</value>
+	</data>
+	<data name="Model.PropertyDefaultConstructorRequired.Message" xml:space="preserve">
+		<value>属性“{1}”的类型“{0}”缺少默认构造函数。</value>
+	</data>
+	<data name="Model.PropertyRoleAliasConflict.Message" xml:space="preserve">
+		<value>模型属性角色别名“{0}”已分配给角色“{1}”。</value>
+	</data>
+	<data name="Model.PropertyTypeMismatch.Message" xml:space="preserve">
+		<value>属性“{1}”的 PropertyAttribute 指定的类型“{0}”未实现或继承“{2}”。</value>
+	</data>
+	<data name="Model.SingletonValueType.Message" xml:space="preserve">
+		<value>单例类型“{0}”不能是值类型。</value>
+	</data>
+	<data name="Model.UnsupportedCollection.Message" xml:space="preserve">
+		<value>“{0}”不是具体的或受支持的集合类型。</value>
+	</data>
+	<data name="Model.VirtualMethodRequired.Message" xml:space="preserve">
+		<value>模型“{1}”的方法“{0}”必须是虚方法或抽象方法。</value>
+	</data>
+	<data name="Path.InvalidFormat.Message" xml:space="preserve">
+		<value>无效的路径格式：“{0}”。</value>
+	</data>
+	<data name="Profiles.InvalidSectionName.Message" xml:space="preserve">
+		<value>节名称“{0}”包含无效字符。</value>
+	</data>
+	<data name="Range.InvalidTargetType.Message" xml:space="preserve">
+		<value>参数“{0}”的类型“{1}”不是 Range，不支持此操作。</value>
+	</data>
+	<data name="Range.MinimumExceedsMaximum.Message" xml:space="preserve">
+		<value>最小值“{0}”不能大于最大值“{1}”。</value>
+	</data>
+	<data name="Reflection.FieldNotFound.Message" xml:space="preserve">
+		<value>目标类型“{0}”未定义“{1}”字段。</value>
+	</data>
+	<data name="Reflection.MemberNotFound.Message" xml:space="preserve">
+		<value>“{1}”类型中不存在“{0}”成员。</value>
+	</data>
+	<data name="Reflection.UnsupportedMemberKind.Message" xml:space="preserve">
+		<value>不支持“{0}”成员种类。</value>
+	</data>
+	<data name="Searcher.LinkCycle.Message" xml:space="preserve">
+		<value>所选链接包含循环引用：“{0}”。</value>
+	</data>
+	<data name="Secretor.CaptchaInvalid.Message" xml:space="preserve">
+		<value>验证码“{0}”无效。</value>
+	</data>
+	<data name="Secretor.CaptchaValidationFailed.Message" xml:space="preserve">
+		<value>“{0}”验证码方案验证失败。</value>
+	</data>
+	<data name="Serialization.JsonConversion.Message" xml:space="preserve">
+		<value>无法将 JSON 值转换为“{0}”类型。</value>
+	</data>
+	<data name="Serialization.JsonNodeConversion.Message" xml:space="preserve">
+		<value>无法将 JSON 节点“{0}”转换为“{1}”类型。</value>
+	</data>
+	<data name="ServiceInjector.UnsupportedMember.Message" xml:space="preserve">
+		<value>成员“{0}.{1}”不支持服务注入。</value>
+	</data>
+	<data name="Services.NameNotFound.Message" xml:space="preserve">
+		<value>名为“{0}”的服务不存在。</value>
+	</data>
+	<data name="Services.NamedServiceNotFound.Message" xml:space="preserve">
+		<value>“{1}”类型的服务提供程序中找不到名为“{0}”的服务。</value>
+	</data>
+	<data name="Services.TypeNotRegistered.Message" xml:space="preserve">
+		<value>未注册“{0}”类型的服务。</value>
+	</data>
+	<data name="StringTokenizer.ClosingQuoteRequired.Message" xml:space="preserve">
+		<value>字符串缺少结束定界符“{0}”。</value>
+	</data>
+	<data name="Terminal.CommandRequiresTerminal.Message" xml:space="preserve">
+		<value>命令“{0}”必须在终端执行器中运行。</value>
+	</data>
+	<data name="Terminal.UnsupportedOperatingSystem.Message" xml:space="preserve">
+		<value>不支持“{0}”操作系统。</value>
+	</data>
+	<data name="TimeSpan.InvalidValue.Message" xml:space="preserve">
+		<value>“{0}”不是有效的时间间隔。</value>
+	</data>
+	<data name="TokenScanner.IllegalCharacter.Message" xml:space="preserve">
+		<value>表达式的第 {1} 个字符“{0}”无效。</value>
+	</data>
+	<data name="Type.InterfaceRequired.Message" xml:space="preserve">
+		<value>“{0}”类型必须实现“{1}”接口。</value>
+	</data>
+	<data name="Worker.Disabled.Message" xml:space="preserve">
+		<value>工作器“{0}”已禁用。</value>
+	</data>
+	<data name="Worker.PauseResumeUnsupported.Message" xml:space="preserve">
+		<value>工作器“{0}”不支持暂停和恢复操作。</value>
+	</data>
 </root>

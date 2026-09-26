@@ -11,6 +11,42 @@ namespace Zongsoft.Configuration.Tests;
 public class ProfileOptionsTest
 {
 	[Theory]
+	[InlineData("missing.ini", false)]
+	[InlineData("missing/child.ini", false)]
+	[InlineData("missing.ini", true)]
+	[InlineData("missing/child.ini", true)]
+	public void RequireImports_MissingFilesAbortTheWholeLoad(string target, bool recursive)
+	{
+		using var files = new ProfileImportTest.ProfileFiles();
+		var child = files.Write("child.ini", "#@import " + target);
+		var root = files.Write("root.ini", recursive ? "#@import child.ini" : "#@import " + target);
+		var completed = new List<ProfileContext>();
+		var options = new ProfileOptions { RequireImports = true, Imported = completed.Add };
+
+		var error = Assert.Throws<ProfileException>(() => Profile.Load(root, options));
+
+		Assert.IsAssignableFrom<IOException>(error.InnerException);
+		Assert.Empty(completed);
+		files.Write(target, "result=complete");
+		Assert.Equal("complete", Profile.Load(root, options).Entries["result"].Value);
+	}
+
+	[Fact]
+	public void RequireImports_IsOptionalAndCapturedBeforeCallbacks()
+	{
+		using var files = new ProfileImportTest.ProfileFiles();
+		files.Write("child.ini", "#@import missing.ini\nresult=complete");
+		var root = files.Write("root.ini", "#@import child.ini");
+		var options = new ProfileOptions();
+		Assert.False(options.RequireImports);
+		options.Importing = _ => options.RequireImports = true;
+		Assert.Equal("complete", Profile.Load(root, options).Entries["result"].Value);
+
+		options.Importing = _ => options.RequireImports = false;
+		Assert.Throws<ProfileException>(() => Profile.Load(root, options));
+	}
+
+	[Theory]
 	[InlineData(false)]
 	[InlineData(true)]
 	public void Options_DefaultCallbacksStillLoadImports(bool preserveBlanks)
@@ -110,7 +146,7 @@ public class ProfileOptionsTest
 		Assert.True(typeof(ProfileContext).IsVisible);
 		Assert.Equal(typeof(Action<ProfileContext>), typeof(ProfileOptions).GetProperty(nameof(ProfileOptions.Importing)).PropertyType);
 		Assert.Equal(typeof(Action<ProfileContext>), typeof(ProfileOptions).GetProperty(nameof(ProfileOptions.Imported)).PropertyType);
-		Assert.Equal(4, typeof(ProfileOptions).GetProperties().Length);
+		Assert.Equal(5, typeof(ProfileOptions).GetProperties().Length);
 		Assert.Null(typeof(ProfileOptions).GetProperty("Import"));
 		Assert.Null(typeof(ProfileOptions).GetProperty("Directives"));
 

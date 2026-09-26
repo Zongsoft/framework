@@ -41,11 +41,11 @@ var options = new ProfileOptions
 var profile = Profile.Load("settings.ini", options);
 ```
 
-`ProfileOptions(bool preserveBlanks = true)` retains the blank-line constructor parameter and exposes settable PreserveBlanks, MaximumDepth, Importing and Imported properties. Both callbacks are `Action<ProfileContext>` and default to null. Omitted load options discard blanks; explicit new ProfileOptions() records them.
+`ProfileOptions(bool preserveBlanks = true)` retains the blank-line constructor parameter and exposes settable PreserveBlanks, RequireImports, MaximumDepth, Importing and Imported properties. Both callbacks are `Action<ProfileContext>` and default to null. Omitted load options discard blanks; explicit new ProfileOptions() records them.
 
 Reader executes imports automatically, with no enable switch. MaximumDepth defaults to 64 and accepts only positive integers; invalid assignments throw ArgumentOutOfRangeException and retain the previous value. The root counts as level one: 1 permits only the root, while a higher value such as 128 allows deeper chains. Set it with `new ProfileOptions { MaximumDepth = 128 }`. Throw from either callback to abort the entire load; there is no return value for silently skipping a file.
 
-Reader shallow-clones ProfileOptions at the start of a root load to capture blank handling, MaximumDepth and both delegate references. Recursive reads share that snapshot; subsequently replacing properties on the original options does not affect the current load. Callers own concurrency of mutable callback captures. Writer does not execute import callbacks; save scope depends only on recorded source relationships.
+Reader shallow-clones ProfileOptions at the start of a root load to capture blank handling, RequireImports, MaximumDepth and both delegate references. Recursive reads share that snapshot; subsequently replacing properties on the original options does not affect the current load. Callers own concurrency of mutable callback captures. Writer does not execute import callbacks; save scope depends only on recorded source relationships.
 
 `ProfileContext` is public sealed, constructed internally by Reader, with get-only properties:
 
@@ -64,7 +64,7 @@ Before and after notifications receive separate context instances. Retaining a b
 
 Paths are separated by spaces, tabs or |. Quoted escaping, variable expansion and globs are not added. Relative paths use the containing file's loading directory; absolute paths are allowed. Cycle identity resolves file and ancestor-directory links independently, retaining the original relative-path base. Windows ignores path case; other platforms use ordinal comparison. Depth limits cover unrecognized aliases such as hard links.
 
-Only active-chain repetition is a cycle. Diamond and sequential repeated imports are read again without caching. Cycle/depth errors identify the reason, import chain, referring file and one-based line number. The default MaximumDepth permits 64 active files; a 65th fails before notification. A custom limit changes this boundary but does not disable cycle detection. Optional imports suppress only file/directory-not-found errors while opening, not permissions or other failures.
+Only active-chain repetition is a cycle. Diamond and sequential repeated imports are read again without caching. Cycle/depth errors identify the reason, import chain, referring file and one-based line number. The default MaximumDepth permits 64 active files; a 65th fails before notification. A custom limit changes this boundary but does not disable cycle detection. RequireImports defaults to false: imports suppress only file/directory-not-found errors while opening, not permissions or other failures. Set RequireImports = true to require every direct and recursive import. A missing file then raises ProfileException with the target path, referring file, one-based line and original IO exception. Root files are always required; failed opens do not invoke callbacks.
 
 FileStream roots have paths and participate in identity checks. Anonymous streams accept absolute imports and reject relative ones. Profile.Load closes the supplied stream. Explicit root encoding applies only to the root; imports default to UTF-8 with BOM detection.
 

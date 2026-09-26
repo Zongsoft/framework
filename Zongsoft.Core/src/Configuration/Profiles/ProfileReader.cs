@@ -80,12 +80,11 @@ internal sealed class ProfileReader
 		{
 			stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
 		}
-		catch(FileNotFoundException) when(context != null)
+		catch(IOException exception) when(context != null && exception is FileNotFoundException or DirectoryNotFoundException)
 		{
-			return null;
-		}
-		catch(DirectoryNotFoundException) when(context != null)
-		{
+			if(this.Options.RequireImports)
+				throw new ProfileException(string.Format(Properties.Resources.Profiles_RequiredImport_Message, path, context.Profile.FilePath, context.LineNumber + 1), exception);
+
 			return null;
 		}
 

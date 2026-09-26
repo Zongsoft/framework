@@ -41,11 +41,11 @@ var options = new ProfileOptions
 var profile = Profile.Load("settings.ini", options);
 ```
 
-`ProfileOptions(bool preserveBlanks = true)` 保留空行构造参数，公开可写属性为 PreserveBlanks、MaximumDepth、Importing、Imported。两个回调均为 `Action<ProfileContext>`，默认 null。不传加载选项时不记录空行；显式 new ProfileOptions() 记录空行。
+`ProfileOptions(bool preserveBlanks = true)` 保留空行构造参数，公开可写属性为 PreserveBlanks、RequireImports、MaximumDepth、Importing、Imported。两个回调均为 `Action<ProfileContext>`，默认 null。不传加载选项时不记录空行；显式 new ProfileOptions() 记录空行。
 
 导入由 Reader 自动执行，没有启用开关。MaximumDepth 默认 64，仅接受正整数；非法赋值抛出 ArgumentOutOfRangeException 并保留原值。根文件计为第一层，设为 1 时只允许根文件，设为 128 等更高值可以读取更深的导入链。例如 `new ProfileOptions { MaximumDepth = 128 }`。需要中止时从任一回调抛出异常，整个加载失败，不提供静默跳过单个文件的返回值。
 
-Reader 在根加载开始时浅复制 ProfileOptions，固定空行选项、MaximumDepth 及两个委托引用，全部子读取共享该快照。外部随后替换选项属性不会影响本次加载；回调捕获的可变状态仍由调用方保证并发安全。Writer 不执行导入回调，保存范围只取决于已加载的来源关系。
+Reader 在根加载开始时浅复制 ProfileOptions，固定空行选项、RequireImports、MaximumDepth 及两个委托引用，全部子读取共享该快照。外部随后替换选项属性不会影响本次加载；回调捕获的可变状态仍由调用方保证并发安全。Writer 不执行导入回调，保存范围只取决于已加载的来源关系。
 
 `ProfileContext` 是 public sealed 类型，由 Reader 内部构造，属性全部只读：
 
@@ -67,6 +67,8 @@ Reader 在根加载开始时浅复制 ProfileOptions，固定空行选项、Maxi
 仅活动链重复构成循环，菱形和顺序重复导入允许且每次重新读取。循环与深度异常包含原因、导入链、来源文件及从 1 开始的行号。默认 MaximumDepth 允许同时活动 64 个文件，第 65 个在通知前拒绝。自定义限制改变此边界，不关闭循环检测。可选导入只忽略打开阶段的文件或目录不存在，权限和其他异常正常传播。
 
 FileStream 根文件有路径并参与身份检查；匿名流允许绝对路径导入，相对导入明确报错。Profile.Load 关闭传入的流。显式根编码仅用于根文件，导入采用默认 UTF-8 并识别 BOM。
+
+RequireImports 默认为 false，打开导入时仅忽略文件或目录不存在；设置 RequireImports = true 后，所有直接和递归导入都必须存在。缺失时抛出 ProfileException，消息包含目标路径、声明文件及从 1 开始的行号，并保留原始 IO 异常。根文件始终必须存在；打开失败不触发导入回调。
 
 ### 导入通知
 
