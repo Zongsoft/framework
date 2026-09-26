@@ -122,7 +122,7 @@ internal class Program
 	private static void DisplayWorkbook(ICommandOutlet output, string path)
 	{
 		using var workbook = new XLWorkbook(path);
-		var table = workbook.Table(_model.Name);
+		var table = workbook.Table($"__{_model.QualifiedName}__");
 
 		output.WriteLine(CommandOutletColor.DarkCyan, $"Workbook: {Path.GetFileName(path)}");
 		output.WriteLine($"Worksheet: {table.Worksheet.Name}");

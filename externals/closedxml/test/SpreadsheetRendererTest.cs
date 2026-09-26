@@ -5,6 +5,34 @@ public class SpreadsheetRendererTest
 	private readonly SpreadsheetRenderer _renderer = new();
 
 	[Fact]
+	public async Task RenderAsync_FileOutput_CreatesReadableReport()
+	{
+		var path = Path.Combine(Path.GetTempPath(), $"zongsoft-closedxml-report-{Guid.NewGuid():N}.xlsx");
+
+		try
+		{
+			var data = new { Templates.ApartmentUsage.Usages };
+			var parameters = new[]
+			{
+				new KeyValuePair<string, object>(nameof(Templates.ApartmentUsage.Park), Templates.ApartmentUsage.Park),
+			};
+
+			await using(var output = File.Create(path))
+				await _renderer.RenderAsync(output, Templates.ApartmentUsage.Template, data, parameters);
+
+			using var workbook = new XLWorkbook(path);
+			var worksheet = Assert.Single(workbook.Worksheets);
+			Assert.Equal(Templates.ApartmentUsage.Park.Name, worksheet.Cell("A1").GetString());
+			Assert.Equal(Templates.ApartmentUsage.Usages.Length, worksheet.Range("A4:A7").CellsUsed().Count());
+			Assert.Equal(Templates.ApartmentUsage.Usages.Sum(usage => usage.Quantity), worksheet.Cell("I8").GetDouble());
+		}
+		finally
+		{
+			File.Delete(path);
+		}
+	}
+
+	[Fact]
 	public async Task RenderAsync_DataAndParameters_RendersExpectedWorkbookValues()
 	{
 		using var output = new MemoryStream();

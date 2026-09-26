@@ -246,6 +246,6 @@ nuget:Zongsoft.Externals.ClosedXml
 
 按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
 
-🚨 当前源码的 `.csproj` 引用 ClosedXML `0.105.1` / ClosedXML.Report `0.2.12`，但 `.deploy` 仍指定 `0.102.2` / `0.2.10`。不能将该清单视为当前源码构建的完整依赖集合；隔离验证时使用与构建资产一致的依赖，并检查最终 DLL 版本。补齐依赖前不要据此直接投产。
+部署清单将 ClosedXML 和 ClosedXML.Report 固定为项目声明的版本，并将 SixLabors.Fonts 与 Captcha 插件统一；升级依赖时应同步这些固定版本。由于部署器默认忽略 `System.*` 传递依赖，System.IO.Packaging 和 System.Linq.Dynamic.Core 仍显式列为部署根包。其他依赖由 NuGet 元数据确定，不应在当前解析器之外再添加过时的 Irony 根包。验证时检查最终部署的 DLL 版本及工作簿操作。
 
 清单列出的附属产物包括：`Zongsoft.Externals.ClosedXml.plugin`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。

@@ -14,7 +14,7 @@ This sample demonstrates spreadsheet import and export with `Zongsoft.Externals.
 The sample targets .NET 10. Run it from the repository root:
 
 ```shell
-dotnet run --project externals/closedxml/samples/Zongsoft.Externals.ClosedXml.Samples.csproj
+dotnet run --project externals/closedxml/samples/Zongsoft.Externals.ClosedXml.Samples.csproj -f net10.0
 ```
 
 ## Export
