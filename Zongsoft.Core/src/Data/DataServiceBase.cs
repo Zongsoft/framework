@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -371,12 +371,23 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	{
 		static IEnumerable<Type> GetNestedTypes(Type type)
 		{
-			while(type != null && !type.IsGenericType && type != typeof(object))
+			while(type != null && type != typeof(object))
 			{
-				var nestedTypes = type.GetNestedTypes().Where(type => type.IsNestedPublic && type.IsClass && !type.IsAbstract && typeof(IDataService).IsAssignableFrom(type));
+				foreach(var nestedType in type.GetNestedTypes())
+				{
+					var serviceType = nestedType;
+					if(serviceType.ContainsGenericParameters)
+					{
+						var arguments = type.GenericTypeArguments;
+						if(!serviceType.IsGenericTypeDefinition || arguments.Length != serviceType.GetGenericArguments().Length)
+							continue;
 
-				foreach(var nestedType in nestedTypes)
-					yield return nestedType;
+						serviceType = serviceType.MakeGenericType(arguments);
+					}
+
+					if(serviceType.IsNestedPublic && serviceType.IsClass && !serviceType.IsAbstract && typeof(IDataService).IsAssignableFrom(serviceType))
+						yield return serviceType;
+				}
 
 				type = type.BaseType;
 			}
@@ -428,7 +439,7 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 				var contracts = new List<Type>() { type };
 				var baseType = type.BaseType;
 
-				while(baseType != null && !baseType.IsGenericType && baseType != typeof(object))
+				while(baseType != null && baseType != typeof(object))
 				{
 					contracts.Add(baseType);
 					baseType = baseType.BaseType;
