@@ -330,8 +330,9 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		if(user == null)
 			return false;
 
-		//验证指定的名称是否合法
-		this.OnValidateName(user.Name);
+		//仅在修改用户名时验证名称(避免部分更新因未提供名称而失败)
+		if(user.Name != null)
+			this.OnValidateName(user.Name);
 
 		//确保修改的不是内置用户
 		var criteria = this.GetCriteria(user.Identifier) & Condition.NotEqual(nameof(IUser.Name), IUser.Administrator);

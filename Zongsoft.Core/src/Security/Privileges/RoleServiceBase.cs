@@ -232,6 +232,10 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		if(role == null)
 			return false;
 
+		//仅在修改角色名时验证名称(避免部分更新因未提供名称而失败)
+		if(role.Name != null)
+			this.OnValidateName(role.Name);
+
 		//确保修改的不是内置角色
 		var criteria = this.GetCriteria(role.Identifier) & Condition.NotIn(nameof(IRole.Name), [IRole.Administrators, IRole.Security]);
 		if(!await this.Accessor.ExistsAsync(this.Name, criteria, cancellation: cancellation))
