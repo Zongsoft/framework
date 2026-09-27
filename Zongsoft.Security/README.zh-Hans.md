@@ -16,6 +16,10 @@
 
 本包提供默认的持久化用户、角色、成员、权限、身份验证和授权服务。它实现 `Zongsoft.Core` 中的安全契约，并通过 `Zongsoft.Data` 持久化模型；只有需要 HTTP 端点时才增加 [Zongsoft.Security.Web](api/README.zh-Hans.md)。
 
+每个命名空间都可以拥有自己的内置 `Administrator` 用户以及 `Administrators`、`Security` 角色。内置用户和角色的成员关系不需要通过数据表达，它们是内化的。默认约定以空命名空间表示平台身份，用户和角色编号没有保留值。
+
+`Namespace` 是身份的逻辑属性，不要求业务数据库包含同名字段。应用可以通过替换用户、角色、成员或权限服务，重写查询条件，以及注册认证质询器和数据验证器来适配自己的租户模型。框架的管理接口不强制规定数据范围；租户与机构隔离由业务实现负责。
+
 ## 安全模型
 
 - **身份验证（Authentication）**通过 `Identity`、`Secretor` 等验证器方案证明身份，并签发有期限的凭据。
@@ -54,7 +58,7 @@ dotnet add package Zongsoft.Security
 
 ## 应用工作流
 
-应用通常解析 Core 中的身份验证/授权契约，而不直接实例化 `CredentialProvider`、`UserService` 或 `PrivilegeService`。插件负责装配具体服务、通过 `Module.Events` 发布身份验证事件并公开模块诊断。请经服务 API 管理用户/角色生命周期，以维持成员和权限不变量。
+应用通常解析 [Zongsoft.Core](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Core) 中的身份验证/授权契约，而不直接实例化 `CredentialProvider`、`UserService` 或 `PrivilegeService`。插件负责装配具体服务、通过 `Module.Events` 发布身份验证事件并公开模块诊断。请经服务 API 管理用户/角色生命周期，以维持成员和权限不变量。
 
 授权过滤与数据范围直接相关：应保留取消信号和调用者上下文，绝不能把“无授权结果”替换成无限制查询。
 

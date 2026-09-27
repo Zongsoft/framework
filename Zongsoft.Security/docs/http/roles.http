@@ -24,6 +24,12 @@ GET /Security/Roles/{{id}}/Exists HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{credentialId}}
 
+### 角色存在（HEAD 形式）
+@id = {{$input 角色编号 $value:100 }}
+HEAD /Security/Roles/{{id}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{credentialId}}
+
 ### 角色存在
 @namespace = {{$input 命名空间 $value: }}
 @identity = {{$input 角色标识 $value:Administrators }}
@@ -80,6 +86,15 @@ Authorization: Credential {{credentialId}}
   "Description":"{{description}}"
 }
 
+### 替换角色资料（PUT 形式）
+@id = {{$input 角色编号 $value:100 }}
+PUT /Security/Roles/{{id}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{credentialId}}
+Content-Type: application/json
+
+{"Description":"示例说明"}
+
 ### 修改角色名称
 @id = {{$input 角色编号 $value: }}
 @name = {{$input 角色名称 $value: }}
@@ -118,3 +133,10 @@ Authorization: Credential {{credentialId}}
 Content-Type: text/plain
 
 {{roles}}
+
+### 设置角色的单个父级角色
+@id = {{$input 角色编号 $value:100 }}
+@roleId = {{$input 上级角色编号 $value:1 }}
+PUT /Security/Roles/{{id}}/Parent?roleId={{roleId}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{credentialId}}

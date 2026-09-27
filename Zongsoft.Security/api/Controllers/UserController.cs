@@ -210,7 +210,7 @@ public partial class UserController : ControllerBase
 		if(string.IsNullOrEmpty(id))
 			return this.BadRequest();
 
-		return await this.Service.EnableAsync(new Identifier(typeof(IRole), id), cancellation) ? this.NoContent() : this.NotFound();
+		return await this.Service.EnableAsync(new Identifier(typeof(IUser), id), cancellation) ? this.NoContent() : this.NotFound();
 	}
 
 	[HttpPost("{id:required}/[action]")]
@@ -219,7 +219,7 @@ public partial class UserController : ControllerBase
 		if(string.IsNullOrEmpty(id))
 			return this.BadRequest();
 
-		return await this.Service.DisableAsync(new Identifier(typeof(IRole), id), cancellation) ? this.NoContent() : this.NotFound();
+		return await this.Service.DisableAsync(new Identifier(typeof(IUser), id), cancellation) ? this.NoContent() : this.NotFound();
 	}
 
 	[HttpHead("{id:required}")]

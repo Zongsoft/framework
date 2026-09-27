@@ -153,4 +153,10 @@
 	<data name="User.IdentifierInvalid.Message" xml:space="preserve">
 		<value>The specified '{0}' value cannot be converted to a user identifier.</value>
 	</data>
+	<data name="Authorization.Unauthenticated.Message" xml:space="preserve">
+		<value>The current identity is not authenticated.</value>
+	</data>
+	<data name="UserService.Unauthorized.Message" xml:space="preserve">
+		<value>The current user is not authorized to modify another user's information.</value>
+	</data>
 </root>

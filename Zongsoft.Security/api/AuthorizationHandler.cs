@@ -83,7 +83,7 @@ public class AuthorizationHandler : AuthorizationHandler<OperationAuthorizationR
 		if(authorizer == null || identity == null)
 			return;
 
-		//如果指定的用户属于内置的“系统管理员”角色则授权成功
+		//根据角色声明判断管理员的操作权限。
 		if(identity.InRole(IRole.Administrators))
 		{
 			context.Succeed(requirement);
@@ -97,7 +97,7 @@ public class AuthorizationHandler : AuthorizationHandler<OperationAuthorizationR
 		if(await Any(privileges, authorizer, identity, parameters))
 			context.Succeed(requirement);
 		else
-			context.Fail(new AuthorizationFailureReason(this, $"The '{requirement.Name}' operation is not authorized."));
+			context.Fail(new AuthorizationFailureReason(this, string.Format(Properties.Resources.Authorization_OperationDenied_Message, requirement.Name)));
 
 		#pragma warning disable CS8321
 		static async ValueTask<bool> Any(IEnumerable<Privilege> privileges, IAuthorizer authorizer, ClaimsIdentity identity, Parameters parameters)

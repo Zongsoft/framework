@@ -28,6 +28,9 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Security.Claims;
 
 using Zongsoft.Data;
 using Zongsoft.Services;
@@ -58,6 +61,9 @@ partial class Authenticators
 		#endregion
 
 		#region 重写方法
+		protected override async ValueTask<ClaimsIdentity> IssueIdentityAsync(IUser user, string scenario, CancellationToken cancellation) =>
+			await IssueRolesAsync(user, await base.IssueIdentityAsync(user, scenario, cancellation), cancellation);
+
 		protected override TimeSpan GetPeriod(string scenario)
 		{
 			var period = TimeSpan.Zero;

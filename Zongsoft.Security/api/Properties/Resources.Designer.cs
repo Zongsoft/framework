@@ -61,6 +61,15 @@ namespace Zongsoft.Security.Properties {
         }
 
         /// <summary>
+        ///   查找类似 The &apos;{0}&apos; operation is not authorized. 的本地化字符串。
+        /// </summary>
+        internal static string Authorization_OperationDenied_Message {
+            get {
+                return ResourceManager.GetString("Authorization.OperationDenied.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 The specified &apos;{0}&apos; service prototype must be a generic type definition. 的本地化字符串。
         /// </summary>
         internal static string Service_GenericPrototypeRequired_Message {

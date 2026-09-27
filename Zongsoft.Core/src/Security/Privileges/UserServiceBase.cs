@@ -111,7 +111,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 	public virtual async ValueTask<bool> RenameAsync(Identifier identifier, string name, CancellationToken cancellation = default)
 	{
 		//确认指定的用户标识是否有效
-		identifier = EnsureIdentity(identifier);
+		identifier = await this.EnsureIdentityAsync(identifier, cancellation);
 
 		//验证指定的名称是否合法
 		this.OnValidateName(name);
@@ -127,7 +127,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 	public virtual async ValueTask<bool> SetEmailAsync(Identifier identifier, string email, CancellationToken cancellation = default)
 	{
 		//确认指定的用户标识是否有效
-		identifier = EnsureIdentity(identifier);
+		identifier = await this.EnsureIdentityAsync(identifier, cancellation);
 
 		var criteria = this.GetCriteria(identifier);
 		if(criteria == null)
@@ -145,7 +145,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		const string SCHEME = "email";
 
 		//确认指定的用户标识是否有效
-		identifier = EnsureIdentity(identifier);
+		identifier = await this.EnsureIdentityAsync(identifier, cancellation);
 
 		//确保指定用户是存在的
 		if(await this.ExistsAsync(identifier, cancellation))
@@ -169,7 +169,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 	public virtual async ValueTask<bool> SetPhoneAsync(Identifier identifier, string phone, CancellationToken cancellation = default)
 	{
 		//确认指定的用户标识是否有效
-		identifier = EnsureIdentity(identifier);
+		identifier = await this.EnsureIdentityAsync(identifier, cancellation);
 
 		var criteria = this.GetCriteria(identifier);
 		if(criteria == null)
@@ -187,7 +187,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		const string SCHEME = "phone";
 
 		//确认指定的用户标识是否有效
-		identifier = EnsureIdentity(identifier);
+		identifier = await this.EnsureIdentityAsync(identifier, cancellation);
 
 		//确保指定用户是存在的
 		if(await this.ExistsAsync(identifier, cancellation))
@@ -202,7 +202,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 
 		return null;
 
-		static string GetTemplate(Parameters parameters) => parameters.TryGetValue("template", out var value) && value is string text ? text : "User.Email";
+		static string GetTemplate(Parameters parameters) => parameters.TryGetValue("template", out var value) && value is string text ? text : "User.Phone";
 		static string GetScenario(Parameters parameters) => parameters.TryGetValue("scenario", out var value) && value is string text ? text : null;
 		static string GetCaptcha(Parameters parameters) => parameters.TryGetValue("captcha", out var value) && value is string text ? text : null;
 		static string GetChannel(Parameters parameters) => parameters.TryGetValue("channel", out var value) && value is string text ? text : null;
@@ -386,13 +386,37 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 			return null;
 
 		if(identifier.Validate(out string qualifiedName))
-			return UserUtility.GetCriteria(qualifiedName);
+		{
+			var index = qualifiedName.IndexOf(':');
+			return index >= 0 && !qualifiedName.StartsWith("email:", StringComparison.OrdinalIgnoreCase) && !qualifiedName.StartsWith("phone:", StringComparison.OrdinalIgnoreCase) ?
+				this.GetCriteria(qualifiedName[(index + 1)..], qualifiedName[..index]) :
+				this.GetCriteria(qualifiedName, null);
+		}
 
 		throw OperationException.Argument();
 	}
 
 	protected virtual ICondition GetCriteria(string identity, string @namespace) => UserUtility.GetCriteria(identity, @namespace);
 	protected virtual ICondition GetCriteria(string identity, string @namespace, out string identityType) => UserUtility.GetCriteria(identity, @namespace, out identityType);
+
+	protected virtual ValueTask<Identifier> EnsureIdentityAsync(Identifier identifier, CancellationToken cancellation)
+	{
+		if(identifier.IsEmpty)
+			return ValueTask.FromResult(new Identifier(typeof(TUser), ApplicationContext.Current.Principal.Identity.GetIdentifier()));
+
+		/*
+		 * 只有当前用户是如下情况之一，才能操作指定的其他用户：
+		 *   1) 指定的用户就是当前用户自己；
+		 *   2) 当前用户是系统管理员(Administrators)或安全管理员角色(Security)成员。
+		 */
+
+		var current = ApplicationContext.Current.Principal.Identity.GetIdentifier();
+
+		if(object.Equals(current, identifier.Value) || ApplicationContext.Current.Principal.InRoles([IRole.Administrators, IRole.Security]))
+			return ValueTask.FromResult(identifier);
+
+		throw new AuthorizationException(SecurityReasons.Forbidden, Properties.Resources.UserService_Unauthorized_Message);
+	}
 	#endregion
 
 	#region 秘密校验
@@ -427,27 +451,6 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		}
 
 		return false;
-	}
-	#endregion
-
-	#region 私有方法
-	private static Identifier EnsureIdentity(Identifier identifier)
-	{
-		if(identifier.IsEmpty)
-			return new Identifier(typeof(TUser), ApplicationContext.Current.Principal.Identity.GetIdentifier());
-
-		/*
-		 * 只有当前用户是如下情况之一，才能操作指定的其他用户：
-		 *   1) 指定的用户就是当前用户自己；
-		 *   2) 当前用户是系统管理员(Administrators)或安全管理员角色(Security)成员。
-		 */
-
-		var current = ApplicationContext.Current.Principal.Identity.GetIdentifier();
-
-		if(object.Equals(current, identifier.Value) || ApplicationContext.Current.Principal.InRoles([IRole.Administrators, IRole.Security]))
-			return identifier;
-
-		throw new AuthorizationException($"The current user cannot operate on other user information.");
 	}
 	#endregion
 

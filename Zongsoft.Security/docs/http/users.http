@@ -24,6 +24,12 @@ GET /Security/Users/{{id}}/Exists HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{credentialId}}
 
+### 用户存在（HEAD 形式）
+@id = {{$input 用户编号 $value:100 }}
+HEAD /Security/Users/{{id}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{credentialId}}
+
 ### 用户存在
 @namespace = {{$input 命名空间 $value: }}
 @identity = {{$input 用户标识 $value: }}
@@ -45,18 +51,16 @@ Authorization: Credential {{credentialId}}
 
 ### 用户新增
 @username = {{$input 用户名称 $value: }}
-@password = {{$input 用户密码 $value: }}
 POST /Security/Users HTTP/1.1
 Host: {{host}}:{{port}}
 Content-Type: application/json
 Authorization: Credential {{credentialId}}
-X-Password: {{password}}
 
 {
   "Name":"{{username}}"
 }
 
-### 用户注册
+### 用户注册（待实现：当前控制器尚无 Register 路由）
 @token = {{$input 注册令牌 $value: }}
 @identity = {{$input 用户标识 $value: }}
 @password = {{$input 用户密码 $value: }}
@@ -96,6 +100,15 @@ Authorization: Credential {{credentialId}}
   "Description":"{{description}}"
 }
 
+### 替换用户资料（PUT 形式）
+@id = {{$input 用户编号 $value:100 }}
+PUT /Security/Users/{{id}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{credentialId}}
+Content-Type: application/json
+
+{"Nickname":"示例昵称"}
+
 ### 修改用户名称
 @id = {{$input 用户编号 $value: }}
 @name = {{$input 用户名称 $value: }}
@@ -116,6 +129,22 @@ Content-Type: text/plain
 
 {{email}}
 
+### 向新邮箱发送确认验证码
+@id = {{$input 用户编号 $value:100 }}
+POST /Security/Users/{{id}}/Email/Verify HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{credentialId}}
+Content-Type: text/plain
+
+{{email}}
+
+### 用令牌确认邮箱
+@token = {{$input 邮箱验证令牌 $value:invalid }}
+@secret = {{$input 邮箱验证码 $value:invalid }}
+POST /Security/Users/Email/{{token}}?secret={{secret}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{credentialId}}
+
 ### 修改用户电话
 @id = {{$input 用户编号 $value: }}
 @phone = {{$input 邮箱地址 $value: }}
@@ -126,10 +155,19 @@ Content-Type: text/plain
 
 {{phone}}
 
-### 修改用户状态
-@id = {{$input 用户编号 $value: }}
-@status = {{$input 用户状态 $value: }}
-PATCH /Security/Users/{{id}}/Status/{{status}} HTTP/1.1
+### 向新手机发送确认验证码
+@id = {{$input 用户编号 $value:100 }}
+POST /Security/Users/{{id}}/Phone/Verify HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{credentialId}}
+Content-Type: text/plain
+
+{{phone}}
+
+### 用令牌确认手机
+@token = {{$input 手机验证令牌 $value:invalid }}
+@secret = {{$input 手机验证码 $value:invalid }}
+POST /Security/Users/Phone/{{token}}?secret={{secret}} HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{credentialId}}
 
@@ -149,9 +187,10 @@ Host: {{host}}:{{port}}
 @id = {{$input 用户编号 $value: }}
 @oldPassword = {{$input 原有密码 $value: }}
 @newPassword = {{$input 新设密码 $value: }}
-PUT /Security/Users/{{id}}/Password HTTP/1.1
+POST /Security/Users/{{id}}/Password/Change HTTP/1.1
 Host: {{host}}:{{port}}
 Authorization: Credential {{credentialId}}
+Content-Type: application/json
 
 {
   "OldPassword":"{{oldPassword}}",
@@ -251,3 +290,10 @@ Authorization: Credential {{credentialId}}
 Content-Type: text/plain
 
 {{roles}}
+
+### 设置用户的单个父级角色
+@id = {{$input 用户编号 $value:100 }}
+@roleId = {{$input 角色编号 $value:1 }}
+PUT /Security/Users/{{id}}/Parent?roleId={{roleId}} HTTP/1.1
+Host: {{host}}:{{port}}
+Authorization: Credential {{credentialId}}

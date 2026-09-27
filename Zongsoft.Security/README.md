@@ -16,6 +16,10 @@
 
 The package supplies the default persistent user, role, membership, privilege, authentication, and authorization services. It builds on the security contracts in `Zongsoft.Core` and persists its models through `Zongsoft.Data`; add [Zongsoft.Security.Web](api/README.md) only when HTTP endpoints are required.
 
+Each namespace may have its own built-in `Administrator` user and `Administrators` and `Security` roles. Membership relationships between built-in users and roles do not need to be represented as data; they are built into the system. By default, an empty namespace denotes the platform identity; user and role IDs have no reserved value.
+
+The `Namespace` is a logical identity property and does not require a database column with that name. Applications can replace user, role, membership, or privilege services, override query criteria, and register authentication challengers and data validators to adapt their tenant models. Management endpoints do not impose a data access scope; business implementations own tenant and branch isolation.
+
 ## Security Model
 
 - **Authentication** proves an identity by an authenticator scheme such as `Identity` or `Secretor` and issues a credential with a bounded lifetime.
@@ -54,7 +58,7 @@ The plugin depends on `Zongsoft.Data` and mounts the Security module, authentica
 
 ## Application Workflow
 
-Applications normally resolve the Core authentication/authorization contracts rather than instantiate `CredentialProvider`, `UserService`, or `PrivilegeService`. The plugin wires concrete services, raises authentication events through `Module.Events`, and exposes module diagnostics. Use the service APIs for user/role lifecycle so membership and privilege invariants remain intact.
+Applications normally resolve the [Zongsoft.Core](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Core) authentication/authorization contracts rather than instantiate `CredentialProvider`, `UserService`, or `PrivilegeService`. The plugin wires concrete services, raises authentication events through `Module.Events`, and exposes module diagnostics. Use the service APIs for user/role lifecycle so membership and privilege invariants remain intact.
 
 Authorization filtering is data-sensitive: preserve cancellation and caller context, and never replace an empty authorized set with an unrestricted query.
 

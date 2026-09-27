@@ -70,7 +70,7 @@ partial class UserServiceBase<TUser>
 		const string ATTEMPTER_PREFIX = "User.Password.Change";
 
 		//确认指定的用户标识是否有效
-		identifier = EnsureIdentity(identifier);
+		identifier = await this.EnsureIdentityAsync(identifier, cancellation);
 
 		//确认新密码是否符合密码规则
 		this.OnValidatePassword(newPassword);
@@ -250,7 +250,7 @@ partial class UserServiceBase<TUser>
 			throw new ArgumentException(Properties.Resources.UserService_PasswordAnswersCountMismatch_Message);
 
 		//确认指定的用户标识是否有效
-		identifier = EnsureIdentity(identifier);
+		identifier = await this.EnsureIdentityAsync(identifier, cancellation);
 
 		//获取验证失败的解决器
 		var attempter = this.Attempter;

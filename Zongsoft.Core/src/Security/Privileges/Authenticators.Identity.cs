@@ -145,7 +145,7 @@ partial class Authentication
 			if(user == null)
 				return null;
 
-			return this.Identity(user, scenario);
+			return await this.IssueIdentityAsync(user, scenario, cancellation);
 		}
 		#endregion
 
@@ -154,6 +154,7 @@ partial class Authentication
 		protected virtual ValueTask<IUser> GetUserAsync(Ticket ticket, CancellationToken cancellation) => Authentication.Servicer.Users.GetAsync(ticket.Identifier, cancellation);
 		protected virtual TimeSpan GetPeriod(string scenario) => TimeSpan.FromHours(4);
 		protected virtual ClaimsIdentity Identity(IUser user, string scenario) => user.Identity(this.Name, this.Name, this.GetPeriod(scenario));
+		protected virtual ValueTask<ClaimsIdentity> IssueIdentityAsync(IUser user, string scenario, CancellationToken cancellation) => ValueTask.FromResult(this.Identity(user, scenario));
 		#endregion
 
 		#region 私有方法

@@ -639,6 +639,9 @@
 	<data name="CacheSubscription.InvalidCapacity.Message" xml:space="preserve">
 		<value>The notification queue capacity must be positive.</value>
 	</data>
+	<data name="UserService.Unauthorized.Message" xml:space="preserve">
+		<value>The current user is not authorized to modify another user's information.</value>
+	</data>
 	<data name="UserService.PasswordAnswersFailed.Message" xml:space="preserve">
 		<value>The password answers verify failed.</value>
 	</data>

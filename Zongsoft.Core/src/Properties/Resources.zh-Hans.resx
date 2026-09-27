@@ -628,6 +628,9 @@
 	<data name="CacheSubscription.InvalidCapacity.Message" xml:space="preserve">
 		<value>通知队列容量必须为正数。</value>
 	</data>
+	<data name="UserService.Unauthorized.Message" xml:space="preserve">
+		<value>当前用户无权修改其他用户的信息。</value>
+	</data>
 	<data name="UserService.PasswordAnswersFailed.Message" xml:space="preserve">
 		<value>密码安全问题的答案验证失败。</value>
 	</data>

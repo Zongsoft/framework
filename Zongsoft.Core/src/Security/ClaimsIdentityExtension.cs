@@ -46,16 +46,10 @@ public static class ClaimsIdentityExtension
 	public static bool IsAnonymous(this IIdentity identity) => identity == null || !identity.IsAuthenticated || string.IsNullOrEmpty(identity.Name);
 	public static bool IsAdministrator(this ClaimsIdentity identity)
 	{
-		const string USER_ADMINISTRATOR = "Administrator";
-		const string ROLE_ADMINISTRATORS = "Administrators";
+		if(identity == null || !identity.IsAuthenticated || string.IsNullOrEmpty(identity.FindFirst(ClaimTypes.NameIdentifier)?.Value))
+			return false;
 
-		return
-			identity != null &&
-			identity.IsAuthenticated &&
-			(
-				string.Equals(identity.Name, USER_ADMINISTRATOR, StringComparison.OrdinalIgnoreCase) ||
-				identity.HasClaim(identity.RoleClaimType, ROLE_ADMINISTRATORS)
-			);
+		return identity.InRoles([Privileges.IRole.Administrators]) || string.Equals(identity.Name, Privileges.IUser.Administrator, StringComparison.OrdinalIgnoreCase);
 	}
 
 	public static bool InRole(this ClaimsIdentity identity, string role) => identity != null && role != null && identity.HasClaim(identity.RoleClaimType, role);

@@ -31,6 +31,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Security.Claims;
 
 using Zongsoft.Data;
 using Zongsoft.Services;
@@ -56,6 +57,26 @@ public partial class UserService : UserServiceBase<UserModel>
 
 		return base.GetCriteria(identifier);
 	}
+
+	protected override ValueTask<Identifier> EnsureIdentityAsync(Identifier identifier, CancellationToken cancellation)
+	{
+		var identity = this.Principal?.Identity as ClaimsIdentity;
+		var identityId = identity?.GetIdentifier()?.ToString();
+
+		if(identity == null || !identity.IsAuthenticated || string.IsNullOrEmpty(identityId))
+			throw new AuthorizationException(SecurityReasons.InvalidIdentity, Properties.Resources.Authorization_Unauthenticated_Message);
+
+		if(identifier.IsEmpty)
+		{
+			object current = uint.TryParse(identityId, out var number) ? number : identityId;
+			identifier = new Identifier(typeof(IUser), current);
+		}
+
+		if(string.Equals(identityId, identifier.Value?.ToString(), StringComparison.Ordinal) || identity.InRoles([IRole.Administrators, IRole.Security]))
+			return ValueTask.FromResult(identifier);
+
+		throw new AuthorizationException(SecurityReasons.Forbidden, Properties.Resources.UserService_Unauthorized_Message);
+	}
 	#endregion
 }
 
@@ -63,6 +84,7 @@ partial class UserService
 {
 	public new class Passworder(UserService service) : PassworderBase<Passworder.UserCipher>(service)
 	{
+		#region 重写方法
 		protected override ValueTask<bool> OnVerifyAsync(string password, UserCipher cipher, CancellationToken cancellation)
 		{
 			//确认用户状态
@@ -71,9 +93,11 @@ partial class UserService
 
 			return base.OnVerifyAsync(password, cipher, cancellation);
 		}
+		#endregion
 
 		public class UserCipher : Cipher
 		{
+			#region 公共属性
 			public uint UserId { get; set; }
 			public bool Enabled { get; set; }
 
@@ -90,6 +114,7 @@ partial class UserService
 			}
 
 			public override Identifier Identifier => new(typeof(IUser), this.UserId);
+			#endregion
 		}
 	}
 }

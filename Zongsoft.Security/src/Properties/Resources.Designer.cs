@@ -61,6 +61,15 @@ namespace Zongsoft.Security.Properties {
         }
 
         /// <summary>
+        ///   查找类似 The current identity is not authenticated. 的本地化字符串。
+        /// </summary>
+        internal static string Authorization_Unauthenticated_Message {
+            get {
+                return ResourceManager.GetString("Authorization.Unauthenticated.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 Represents a read or query operation. 的本地化字符串。
         /// </summary>
         internal static string Read_Description {
@@ -147,6 +156,15 @@ namespace Zongsoft.Security.Properties {
         internal static string User_Title {
             get {
                 return ResourceManager.GetString("User.Title", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The current user is not authorized to modify another user&apos;s information. 的本地化字符串。
+        /// </summary>
+        internal static string UserService_Unauthorized_Message {
+            get {
+                return ResourceManager.GetString("UserService.Unauthorized.Message", resourceCulture);
             }
         }
 

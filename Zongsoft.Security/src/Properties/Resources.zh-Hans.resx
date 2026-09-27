@@ -153,4 +153,10 @@
   <data name="Write.Title" xml:space="preserve">
     <value>写入操作</value>
   </data>
+	<data name="Authorization.Unauthenticated.Message" xml:space="preserve">
+		<value>当前身份尚未通过验证。</value>
+	</data>
+	<data name="UserService.Unauthorized.Message" xml:space="preserve">
+		<value>当前用户无权修改其他用户的信息。</value>
+	</data>
 </root>

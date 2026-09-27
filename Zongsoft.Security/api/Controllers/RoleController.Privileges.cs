@@ -79,6 +79,7 @@ partial class RoleController
 
 			var parameters = new Parameters(this.Request.GetParameters());
 			var modelType = Utility.GetModelType(this.Service, typeof(IPrivilege), typeof(IPrivilegeService<>));
+
 			if(modelType == null)
 				return this.StatusCode(StatusCodes.Status501NotImplemented);
 
@@ -100,6 +101,7 @@ partial class RoleController
 
 			var parameters = new Parameters(this.Request.GetParameters());
 			var modelType = Utility.GetModelType(filtering, typeof(IPrivilege), typeof(IPrivilegeService<>));
+
 			if(modelType == null)
 				return this.StatusCode(StatusCodes.Status501NotImplemented);
 
