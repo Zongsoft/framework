@@ -34,6 +34,8 @@ using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
 
+using Zongsoft.Collections;
+
 namespace Zongsoft.Data;
 
 public static partial class DataAccessExtension
@@ -52,7 +54,12 @@ public static partial class DataAccessExtension
 		var field = (interval > 0 ? Operand.Field(member) + interval : Operand.Field(member) - (-interval));
 
 		if(accessor.Update(name, new Dictionary<string, object>([new KeyValuePair<string, object>(member, field)]), criteria, options) > 0)
-			return options.Returning.Rows.First().TryGetValue(member, ReturningKind.Newer, out var value) ? Zongsoft.Common.Convert.ConvertValue<long>(value) : 0L;
+		{
+			if(options.HasReturning(out var returning) && returning.Rows.Count > 0)
+				return returning.Rows[0].TryGetValue(member, ReturningKind.Newer, out var value) ? Zongsoft.Common.Convert.ConvertValue<long>(value) : 0L;
+			else
+				return accessor.Select<long>(name, criteria, member).FirstOrDefault();
+		}
 
 		return 0L;
 	}
@@ -74,7 +81,12 @@ public static partial class DataAccessExtension
 		var field = (interval > 0 ? Operand.Field(member) + interval : Operand.Field(member) - (-interval));
 
 		if(await accessor.UpdateAsync(name, new Dictionary<string, object>([new KeyValuePair<string, object>(member, field)]), criteria, options, cancellation) > 0)
-			return options.Returning.Rows.First().TryGetValue(member, ReturningKind.Newer, out var value) ? Zongsoft.Common.Convert.ConvertValue<long>(value) : 0L;
+		{
+			if(options.HasReturning(out var returning) && returning.Rows.Count > 0)
+				return returning.Rows[0].TryGetValue(member, ReturningKind.Newer, out var value) ? Zongsoft.Common.Convert.ConvertValue<long>(value) : 0L;
+			else
+				return await accessor.SelectAsync<long>(name, criteria, member, cancellation).FirstOrDefault(cancellation);
+		}
 
 		return 0L;
 	}
