@@ -150,9 +150,8 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 			//创建当前单值属性的对应的字段标识
 			var field = table.CreateField(member.Token);
 
-			if(typeof(Operand).IsAssignableFrom(member.Token.MemberType))
+			if(member.Token.GetValue(data) is Operand operand)
 			{
-				var operand = (Operand)member.Token.GetValue(data);
 				var expression = this.OperandConverter.Convert(context, statement, operand);
 				statement.Fields.Add(new FieldValue(field, expression));
 			}
