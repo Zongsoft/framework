@@ -207,7 +207,7 @@ public class MySqlImporter : DataImporterBase
 	#region 私有方法
 	private static MySqlBulkLoader GetBulker(string name, string filePath, MySqlConnection connection, IDataImportOptions options) => new MySqlBulkLoader(connection)
 	{
-		TableName = name,
+		TableName = $"`{name.Replace("`", "``")}`",
 		FileName = filePath,
 		CharacterSet = "UTF8",
 		LineTerminator = "\n",
