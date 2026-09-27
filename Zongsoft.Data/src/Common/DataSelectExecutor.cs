@@ -53,6 +53,8 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 				return this.OnExecute(insertion, statement);
 			case DataUpsertContext upsertion:
 				return this.OnExecute(upsertion, statement);
+			case DataUpdateContext updation:
+				return this.OnExecute(updation, statement);
 		}
 
 		throw new DataException(string.Format(Properties.Resources.DataExecutor_UnsupportedContext_Message, this.GetType().Name, context.GetType().Name));
@@ -139,6 +141,24 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 
 		return true;
 	}
+
+	protected virtual bool OnExecute(DataUpdateContext context, SelectStatement statement)
+	{
+		var command = context.Session.Build(context, statement);
+		StatementSlotter.Evaluate(context, statement, command);
+		statement.Bind(context, command);
+
+		using(var reader = command.ExecuteReader())
+		{
+			if(context.Options.HasReturning(out var returning))
+			{
+				while(reader.Read())
+					returning.Rows.Populate(reader);
+			}
+		}
+
+		return true;
+	}
 	#endregion
 
 	#region 异步执行
@@ -152,6 +172,8 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 				return this.OnExecuteAsync(insertion, statement, cancellation);
 			case DataUpsertContext upsertion:
 				return this.OnExecuteAsync(upsertion, statement, cancellation);
+			case DataUpdateContext updation:
+				return this.OnExecuteAsync(updation, statement, cancellation);
 		}
 
 		throw new DataException(string.Format(Properties.Resources.DataExecutor_UnsupportedContext_Message, this.GetType().Name, context.GetType().Name));
@@ -233,6 +255,24 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 						context.Data = data;
 					}
 				}
+			}
+		}
+
+		return true;
+	}
+
+	protected virtual async ValueTask<bool> OnExecuteAsync(DataUpdateContext context, SelectStatement statement, CancellationToken cancellation)
+	{
+		var command = context.Session.Build(context, statement);
+		StatementSlotter.Evaluate(context, statement, command);
+		await statement.BindAsync(context, command, cancellation);
+
+		using(var reader = await command.ExecuteReaderAsync(cancellation))
+		{
+			if(context.Options.HasReturning(out var returning))
+			{
+				while(await reader.ReadAsync(cancellation))
+					returning.Rows.Populate(reader);
 			}
 		}
 
