@@ -127,7 +127,7 @@ GO
 
 /* 添加系统内置角色 */
 INSERT INTO Security_Role (RoleId, Name, Nickname, Description) VALUES
-  (1, 'Administrators', N'系统管理', N'系统管理角色(系统内置角色)')
+  (1, 'Administrators', N'系统管理', N'系统管理角色(系统内置角色)'),
   (2, 'Security', N'安全管理', N'安全管理角色(系统内置角色)');
 
 /* 添加系统内置用户 */
