@@ -30,6 +30,8 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 
 using ClickHouse.Driver;
 using ClickHouse.Driver.ADO;
@@ -86,5 +88,23 @@ public class ClickHouseDriver : DataDriverBase
 	#region 保护方法
 	protected override IDataImporter CreateImporter() => new ClickHouseImporter();
 	protected override ExpressionVisitorBase CreateVisitor() => new ClickHouseExpressionVisitor();
+	#endregion
+
+	#region 嵌套子类
+	private sealed class ClickHouseCommand : global::ClickHouse.Driver.ADO.ClickHouseCommand
+	{
+		public override int ExecuteNonQuery() => this.Normalize(base.ExecuteNonQuery());
+		public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken) => this.Normalize(await base.ExecuteNonQueryAsync(cancellationToken));
+
+		private int Normalize(int count)
+		{
+			if(count != 0 || string.IsNullOrWhiteSpace(this.CommandText))
+				return count;
+
+			var statement = this.CommandText.TrimStart();
+			return statement.StartsWith("INSERT ", StringComparison.OrdinalIgnoreCase) ||
+				statement.StartsWith("ALTER TABLE ", StringComparison.OrdinalIgnoreCase) && statement.Contains(" UPDATE", StringComparison.OrdinalIgnoreCase) ? 1 : count;
+		}
+	}
 	#endregion
 }

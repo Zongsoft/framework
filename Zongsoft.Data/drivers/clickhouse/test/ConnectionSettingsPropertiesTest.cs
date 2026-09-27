@@ -54,10 +54,10 @@ public class ConnectionSettingsPropertiesTest
 	public void CreatesProviderCommands()
 	{
 		using var empty = ClickHouseDriver.Instance.CreateCommand();
-		Assert.IsType<ClickHouseCommand>(empty);
+		Assert.IsAssignableFrom<ClickHouseCommand>(empty);
 
 		using var command = ClickHouseDriver.Instance.CreateCommand("SELECT @value", CommandType.Text);
-		Assert.IsType<ClickHouseCommand>(command);
+		Assert.IsAssignableFrom<ClickHouseCommand>(command);
 		Assert.Equal("SELECT @value", command.CommandText);
 		Assert.Equal(CommandType.Text, command.CommandType);
 
@@ -67,5 +67,16 @@ public class ConnectionSettingsPropertiesTest
 		parameter.Value = 42;
 		command.Parameters.Add(parameter);
 		Assert.Same(parameter, command.Parameters["value"]);
+	}
+
+	[Theory]
+	[InlineData("a`b", "`a\\`b`")]
+	[InlineData("a\\b", "`a\\\\b`")]
+	[InlineData(null, "``")]
+	public void IdentifiersAndAliasesEscapeQuotedCharacters(string name, string expected)
+	{
+		var dialect = new ClickHouseExpressionVisitor().Dialect;
+		Assert.Equal(expected, dialect.GetIdentifier(name));
+		Assert.Equal(expected, dialect.GetAlias(name));
 	}
 }

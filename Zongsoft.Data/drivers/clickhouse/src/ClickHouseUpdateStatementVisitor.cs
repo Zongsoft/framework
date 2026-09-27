@@ -46,8 +46,35 @@ public class ClickHouseUpdateStatementVisitor : UpdateStatementVisitor
 	#endregion
 
 	#region 重写方法
-	protected override void VisitFrom(ExpressionVisitorContext context, UpdateStatement statement, ICollection<ISource> sources)
+	protected override void OnVisit(ExpressionVisitorContext context, UpdateStatement statement)
 	{
+		if(statement.Tables == null || statement.Tables.Count != 1)
+			throw new NotSupportedException();
+		if(statement.Fields == null || statement.Fields.Count == 0)
+			throw new NotSupportedException();
+
+		var table = statement.Tables[0];
+		var alias = table.Alias;
+		table.Alias = null;
+
+		try
+		{
+			context.Write("ALTER TABLE ");
+			context.Visit(table);
+			context.WriteLine(" UPDATE");
+
+			this.VisitFields(context, statement, statement.Fields);
+			this.VisitWhere(context, statement, statement.Where);
+		}
+		finally
+		{
+			table.Alias = alias;
+		}
+	}
+
+	protected override void OnVisited(ExpressionVisitorContext context, UpdateStatement statement)
+	{
+		context.WriteLine(" SETTINGS mutations_sync=1;");
 	}
 	#endregion
 }

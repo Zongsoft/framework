@@ -48,7 +48,22 @@ public class ClickHouseExpressionVisitor : ExpressionVisitorBase
 	#region 重写方法
 	protected override void VisitParameter(ExpressionVisitorContext context, ParameterExpression parameter)
 	{
+		if(context.Find<InsertStatement>() != null)
+		{
+			//新增语句按目标字段类型在外层包装参数占位符。
+			context.Write(parameter.Name);
+			return;
+		}
+
+		context.Write("{");
 		context.Write(parameter.Name);
+		context.Write(":");
+
+		context.Write(parameter.Field?.Token.Property is Metadata.IDataEntitySimplexProperty property ?
+			ClickHouseUtility.GetDataType(property) :
+			ClickHouseUtility.GetDataType(parameter.Type, 0, 18, 2, parameter.Value == null));
+
+		context.Write("}");
 	}
 
 	protected override void VisitExists(ExpressionVisitorContext context, IExpression expression)
@@ -62,14 +77,6 @@ public class ClickHouseExpressionVisitor : ExpressionVisitorBase
 			base.VisitExists(context, expression);
 			return;
 		}
-
-		/*
-		 * 注意：由于 MySQL 不支持在 Update/Delete 等写语句中的 Exists/NotExists 子句中包含上层表别名
-		 * 解决该缺陷的小窍门是对其内部的子查询语句再包裹一个查询语句，可参考：
-		 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html
-		 * https://stackoverflow.com/questions/5816840/delete-i-cant-specify-target-table
-		 * https://www.codeproject.com/Tips/831164/MySQL-can-t-specify-target-table-for-update-in-FRO
-		 */
 
 		context.Write("SELECT * FROM (");
 		base.VisitExists(context, expression);
@@ -145,9 +152,9 @@ public class ClickHouseExpressionVisitor : ExpressionVisitorBase
 		#endregion
 
 		#region 公共方法
-		public string GetAlias(string alias) => $"'{alias}'";
+		public string GetAlias(string alias) => QuoteIdentifier(alias);
 		public string GetSymbol(Operator @operator) => null;
-		public string GetIdentifier(string name) => $"`{name}`";
+		public string GetIdentifier(string name) => QuoteIdentifier(name);
 		public string GetIdentifier(IIdentifier identifier) => this.GetIdentifier(identifier.Name);
 		public string GetIdentifier(ReturningKind kind) => throw new NotSupportedException();
 
@@ -212,6 +219,9 @@ public class ClickHouseExpressionVisitor : ExpressionVisitorBase
 		#endregion
 
 		#region 私有方法
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		private static string QuoteIdentifier(string name) => $"`{(name ?? string.Empty).Replace("\\", "\\\\").Replace("`", "\\`")}`";
+
 		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 		private static string GetAggregateName(DataAggregateFunction function) => function switch
 		{

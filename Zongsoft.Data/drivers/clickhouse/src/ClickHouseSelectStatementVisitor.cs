@@ -45,6 +45,13 @@ public class ClickHouseSelectStatementVisitor : SelectStatementVisitor
 	#endregion
 
 	#region 重写方法
+	protected override void OnVisiting(ExpressionVisitorContext context, SelectStatement statement)
+	{
+		//ClickHouse 驱动一次只执行一条语句，不能附加通用分页的计数查询。
+		if(!string.IsNullOrEmpty(statement.Alias))
+			context.WriteLine($"/* {statement.Alias} */");
+	}
+
 	protected override void OnVisit(ExpressionVisitorContext context, SelectStatement statement)
 	{
 		//调用基类同名方法
