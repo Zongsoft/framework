@@ -156,7 +156,7 @@ public class ServiceController<TModel, TService> : ServiceControllerBase<TModel,
 				if(text.Length > 0)
 					text.Append('-');
 
-				text.Append(GetModelMemberValue(ref model, keys[0].Name)?.ToString());
+				text.Append(GetModelMemberValue(ref model, keys[i].Name)?.ToString());
 			}
 
 			this.RouteData.Values["key"] = text.ToString();

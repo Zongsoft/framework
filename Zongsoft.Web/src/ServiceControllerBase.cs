@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -297,7 +297,7 @@ public abstract class ServiceControllerBase<TModel, TService> : ControllerBase w
 				while(type.IsNested)
 				{
 					stack.Push(type);
-					type = type.DeclaringType;
+					type = GetDeclaringType(type);
 				}
 
 				if(this.HttpContext.RequestServices.GetService(type) is IDataService service)
@@ -313,7 +313,7 @@ public abstract class ServiceControllerBase<TModel, TService> : ControllerBase w
 			}
 			else
 			{
-				if(this.HttpContext.RequestServices.GetService(typeof(TService).DeclaringType) is IDataService service)
+				if(this.HttpContext.RequestServices.GetService(GetDeclaringType(typeof(TService))) is IDataService service)
 				{
 					var result = service.GetSubservice<TService>();
 
@@ -324,6 +324,22 @@ public abstract class ServiceControllerBase<TModel, TService> : ControllerBase w
 		}
 
 		return (TService)this.HttpContext.RequestServices.GetService(typeof(TService)) ?? throw new InvalidOperationException(Properties.Resources.Service_Required_Message);
+
+		static Type GetDeclaringType(Type type)
+		{
+			var declaringType = type.DeclaringType;
+
+			if(declaringType != null && declaringType.IsGenericTypeDefinition && type.IsConstructedGenericType)
+			{
+				var arguments = type.GenericTypeArguments;
+				var count = declaringType.GetGenericArguments().Length;
+
+				if(arguments.Length >= count)
+					return declaringType.MakeGenericType(arguments[..count]);
+			}
+
+			return declaringType;
+		}
 	}
 
 	protected virtual ValueTask<object> OnGetAsync(string key, Paging page, Sorting[] sort, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
