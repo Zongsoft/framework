@@ -912,17 +912,40 @@ public class ApplicationManifestTest : IDisposable
 	}
 
 	[Theory]
-	[InlineData("", "name")]
-	[InlineData(" \t", "name")]
-	[InlineData("[Community]", "value")]
-	public void Current_InvalidStringLeavesSelectionUnchanged(string name, string parameter)
+	[InlineData(null)]
+	[InlineData("")]
+	public void Current_NullOrEmptyStringClearsSelection(string name)
+	{
+		var manifest = new ApplicationManifest("App");
+		var community = manifest.Editions.Add("Community", new Version(1, 0));
+		var professional = manifest.Editions.Add("Professional", new Version(2, 0));
+		manifest.Editions.Current = "Community";
+		manifest.Editions.Current = name;
+
+		Assert.Equal(default(Edition), manifest.Editions.Current);
+		Assert.Equal(2, manifest.Editions.Count);
+		Assert.Equal(community, manifest.Editions[0]);
+		Assert.Equal(professional, manifest.Editions[1]);
+		using var writer = new StringWriter();
+		manifest.Save(writer);
+		Assert.StartsWith("App" + writer.NewLine, writer.ToString());
+		using var reader = new StringReader(writer.ToString());
+		var restored = ApplicationManifest.Load(reader);
+		Assert.Equal(default(Edition), restored.Editions.Current);
+		Assert.Equal(manifest.Editions, restored.Editions);
+	}
+
+	[Theory]
+	[InlineData(" \t")]
+	[InlineData("[Community]")]
+	[InlineData("Missing")]
+	public void Current_InvalidStringLeavesSelectionUnchanged(string name)
 	{
 		var editions = new ApplicationManifest("App").Editions;
 		editions.Add(new("Community", new Version(1, 0)));
 		editions.Current = "Community";
-		Assert.Throws<ArgumentException>(parameter, () => editions.Current = name);
-		Assert.Equal(editions[0], editions.Current);
-		Assert.Throws<ArgumentException>("value", () => editions.Current = "Missing");
+		Assert.Throws<ArgumentException>("value", () => editions.Current = name);
+		Assert.Single(editions);
 		Assert.Equal(editions[0], editions.Current);
 	}
 
