@@ -49,11 +49,11 @@ description: 设计、修改、审查或测试 Zongsoft.Core 的公共契约与�
 
 导入机制见 [实现文档](docs/profiles.zh-Hans.md#读取与导入)。#@import 是 ProfileReader 内置语法，没有通用指令接口、注册集合、公开读写操作上下文或执行回调。Reader 每次根加载独立创建，递归共享，私有 Context 仅存 Profile、行号和章节；Profile 内部 Import 方法合并有效引用并登记来源关系。
 
-ProfileOptions(bool preserveBlanks = true) 提供 PreserveBlanks、RequireImports、MaximumDepth 和两个可写的 Action<ProfileContext> 回调 Importing/Imported。Reader 浅复制空行选项、严格导入要求、深度限制和委托引用，递归共享快照。ProfileContext 内部构造、公开 sealed，FilePath/Depth/Referer/Profile 只读；Referer 是直接引用者，根层数为 1；前置 Profile 为 null，后置为完成解析与合并的子文件，前后上下文分别创建。Reader 按 MaximumDepth（默认 64，仅接受正数，根文件计一层）限制导入深度并检测循环，RequireImports 默认为 false，设为 true 时缺失导入抛出带来源的 ProfileException；没有禁用或跳过导入的选项；回调异常终止整个加载并清理，不回滚。根文件、可选缺失及内部拒绝不通知；回调捕获状态的线程安全由调用方保证。
+ProfileOptions(bool preserveBlanks = true) 提供 PreserveBlanks、ImportBehavior、MaximumDepth 和两个可写的 Action<ProfileContext> 回调 Importing/Imported。Reader 浅复制空行选项、导入行为、深度限制和委托引用，递归共享快照。ProfileContext 内部构造、公开 sealed，FilePath/Depth/Referer/Profile 只读；Referer 是直接引用者，根层数为 1；前置 Profile 为 null，后置为完成解析与合并的子文件，前后上下文分别创建。Reader 按 MaximumDepth（默认 64，仅接受正数，根文件计一层）限制导入深度并检测循环，ImportBehavior 使用枚举 ProfileDirectiveBehavior：Default 允许缺失导入；Existed 要求直接和递归导入存在，缺失时抛出带来源的 ProfileException；Ignored 将导入指令作为普通注释，不打开文件或触发回调；Suppressed 读取到导入指令即抛出 ProfileException，包含空参数指令，且不打开文件或触发回调；回调异常终止整个加载并清理，不回滚。根文件、可选缺失及内部拒绝不通知；回调捕获状态的线程安全由调用方保证。
 
-Profile.Load 仅转发 Reader，Reader.ReadCore 管理流与活动状态，Parse 识别行及导入；独立根加载隔离，失败清理后可重试。Profile.Blanks 仅内部可写。保存由 ProfileWriter 承担，声明与有效引用分开，合并不修改被覆盖声明。Writer 不执行导入、不通知写入事件；导入文本是普通注释声明，编辑后需重新加载才能更新导入关系。
+Profile.Load 仅转发 Reader，Reader.ReadCore 管理流与活动状态，Parse 通过 TextReader 识别行及导入；独立根加载隔离，失败清理后可重试。Load(Stream) 关闭传入流，Load(TextReader) 保持读取器打开；StreamReader 的底层流为 FileStream 时提供来源路径，其它读取器为匿名来源。Profile.Blanks 仅内部可写。[ApplicationManifest](docs/application-manifest.zh-Hans.md) 设置 ImportBehavior = ProfileDirectiveBehavior.Suppressed 拒绝导入指令，在打开导入文件前抛出 FormatException；加载时记录空行，保存时保留空行和注释，换行遵循 TextWriter.WriteLine 的标准行为。名称仅检查非空并移除两端空白，不额外验证保留字符。保存由 ProfileWriter 承担，声明与有效引用分开，合并不修改被覆盖声明。Writer 不执行导入、不通知写入事件；导入文本是普通注释声明，编辑后需重新加载才能更新导入关系。
 
-Save() 仅写回自身及导入子树中的修改来源，显式输出仅处理当前 Profile，回调配置不改变保存范围。所有临时输出准备成功后按导入后序提交；模型修改和重入仍拒绝，不增加测试专用生产扩展点。读写机制见 [声明与保存](docs/profiles.zh-Hans.md#声明与保存)，当前重构及平台结果见 [任务清单](PROFILE-BUILTIN-IMPORT-TASKS.md)。
+Save() 仅写回自身及导入子树中的修改来源，显式输出仅处理当前 Profile，回调配置不改变保存范围。所有临时输出准备成功后按导入后序提交；模型修改和重入仍拒绝，不增加测试专用生产扩展点。读写机制见 [声明与保存](docs/profiles.zh-Hans.md#声明与保存)，导入回归见 [ProfileImportTest](test/Configuration/Profiles/ProfileImportTest.cs)。
 
 ## 本地搜索
 
