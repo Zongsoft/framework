@@ -45,9 +45,9 @@ public class ProfileOptions
 	/// <summary>获取或设置一个值，指示是否保留空行。</summary>
 	public bool PreserveBlanks { get; set; }
 
-	/// <summary>获取或设置一个值，指示导入文件必须存在，默认为 <c>false</c>。</summary>
-	/// <remarks>启用时，缺失的直接或递归导入引发包含声明来源的 <see cref="ProfileException"/>。</remarks>
-	public bool RequireImports { get; set; }
+	/// <summary>获取或设置导入指令的处理行为，默认为 <see cref="ProfileDirectiveBehavior.Default"/>。</summary>
+	/// <remarks>仅用于读取。Existed 要求导入文件存在；Ignored 将指令保留为普通注释；Suppressed 在打开导入文件和触发回调之前抛出 <see cref="ProfileException"/>，包括空参数指令。</remarks>
+	public ProfileDirectiveBehavior ImportBehavior { get; set; }
 
 	/// <summary>获取或设置同时加载的最大文件层数，默认为 <c>64</c>。</summary>
 	/// <remarks>根文件计为第一层；设为 <c>1</c> 时只能读取根文件。此选项仅用于读取，不限制关联保存的范围。</remarks>

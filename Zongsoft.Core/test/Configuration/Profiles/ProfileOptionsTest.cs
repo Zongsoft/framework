@@ -15,13 +15,13 @@ public class ProfileOptionsTest
 	[InlineData("missing/child.ini", false)]
 	[InlineData("missing.ini", true)]
 	[InlineData("missing/child.ini", true)]
-	public void RequireImports_MissingFilesAbortTheWholeLoad(string target, bool recursive)
+	public void ImportBehavior_ExistedRequiresDirectAndRecursiveFiles(string target, bool recursive)
 	{
 		using var files = new ProfileImportTest.ProfileFiles();
 		var child = files.Write("child.ini", "#@import " + target);
 		var root = files.Write("root.ini", recursive ? "#@import child.ini" : "#@import " + target);
 		var completed = new List<ProfileContext>();
-		var options = new ProfileOptions { RequireImports = true, Imported = completed.Add };
+		var options = new ProfileOptions { ImportBehavior = ProfileDirectiveBehavior.Existed, Imported = completed.Add };
 
 		var error = Assert.Throws<ProfileException>(() => Profile.Load(root, options));
 
@@ -32,17 +32,17 @@ public class ProfileOptionsTest
 	}
 
 	[Fact]
-	public void RequireImports_IsOptionalAndCapturedBeforeCallbacks()
+	public void ImportBehavior_ExistenceCheckIsCapturedBeforeCallbacks()
 	{
 		using var files = new ProfileImportTest.ProfileFiles();
 		files.Write("child.ini", "#@import missing.ini\nresult=complete");
 		var root = files.Write("root.ini", "#@import child.ini");
 		var options = new ProfileOptions();
-		Assert.False(options.RequireImports);
-		options.Importing = _ => options.RequireImports = true;
+		Assert.Equal(ProfileDirectiveBehavior.Default, options.ImportBehavior);
+		options.Importing = _ => options.ImportBehavior = ProfileDirectiveBehavior.Existed;
 		Assert.Equal("complete", Profile.Load(root, options).Entries["result"].Value);
 
-		options.Importing = _ => options.RequireImports = false;
+		options.Importing = _ => options.ImportBehavior = ProfileDirectiveBehavior.Default;
 		Assert.Throws<ProfileException>(() => Profile.Load(root, options));
 	}
 
@@ -59,6 +59,7 @@ public class ProfileOptionsTest
 		var profile = Profile.Load(root, options);
 
 		Assert.Equal(64, options.MaximumDepth);
+		Assert.Equal(ProfileDirectiveBehavior.Default, options.ImportBehavior);
 		Assert.Null(options.Importing);
 		Assert.Null(options.Imported);
 		Assert.Equal(preserveBlanks ? [0] : Array.Empty<int>(), profile.Blanks);
@@ -138,7 +139,7 @@ public class ProfileOptionsTest
 	}
 
 	[Fact]
-	public void Options_ContextIsReadOnlyAndImportConfigurationIsRemoved()
+	public void Options_ContextIsReadOnlyAndHasNoCustomDirectiveModels()
 	{
 		Assert.All(typeof(ProfileContext).GetProperties(), property => Assert.Null(property.GetSetMethod(nonPublic: true)));
 		Assert.Empty(typeof(ProfileContext).GetConstructors());
@@ -147,6 +148,9 @@ public class ProfileOptionsTest
 		Assert.Equal(typeof(Action<ProfileContext>), typeof(ProfileOptions).GetProperty(nameof(ProfileOptions.Importing)).PropertyType);
 		Assert.Equal(typeof(Action<ProfileContext>), typeof(ProfileOptions).GetProperty(nameof(ProfileOptions.Imported)).PropertyType);
 		Assert.Equal(5, typeof(ProfileOptions).GetProperties().Length);
+		Assert.True(typeof(ProfileDirectiveBehavior).IsPublic);
+		Assert.Null(typeof(ProfileDirectiveBehavior).DeclaringType);
+		Assert.Equal(typeof(ProfileDirectiveBehavior), typeof(ProfileOptions).GetProperty(nameof(ProfileOptions.ImportBehavior)).PropertyType);
 		Assert.Null(typeof(ProfileOptions).GetProperty("Import"));
 		Assert.Null(typeof(ProfileOptions).GetProperty("Directives"));
 
@@ -160,6 +164,6 @@ public class ProfileOptionsTest
 		Assert.All(removed, name => Assert.Null(typeof(Profile).Assembly.GetType("Zongsoft.Configuration.Profiles." + name)));
 		Assert.DoesNotContain(typeof(Profile).Assembly.GetExportedTypes(), type =>
 			type.Namespace?.StartsWith("Zongsoft.Configuration.Profiles", StringComparison.Ordinal) == true &&
-			type.Name.Contains("Directive", StringComparison.Ordinal));
+			!type.IsEnum && type.Name.Contains("Directive", StringComparison.Ordinal));
 	}
 }

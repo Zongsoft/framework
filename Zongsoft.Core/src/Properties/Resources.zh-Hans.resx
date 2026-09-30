@@ -448,53 +448,41 @@
 	<data name="ErrorOccurred.Message" xml:space="preserve">
 		<value>发生错误。</value>
 	</data>
-	<data name="Services.ApplicationVersion.Conflict.Message" xml:space="preserve">
+	<data name="Services.ApplicationManifest.Conflict.Message" xml:space="preserve">
 		<value>应用版本号与具名版本集不能同时设置。</value>
 	</data>
-	<data name="Services.ApplicationVersion.VersionRequired.Message" xml:space="preserve">
+	<data name="Services.ApplicationManifest.VersionRequired.Message" xml:space="preserve">
 		<value>必须设置应用版本号或至少一个具名版本。</value>
 	</data>
-	<data name="Services.ApplicationVersion.FormattingBufferExceeded.Message" xml:space="preserve">
-		<value>版本号超出格式化缓冲区的容量。</value>
+	<data name="Services.ApplicationManifest.ApplicationNameInvalid.Message" xml:space="preserve">
+		<value>必须指定应用名称。</value>
 	</data>
-	<data name="Services.ApplicationVersion.ApplicationNameInvalid.Message" xml:space="preserve">
-		<value>必须指定应用名称，且名称不能包含保留字符。</value>
-	</data>
-	<data name="Services.ApplicationVersion.VersionInvalid.Message" xml:space="preserve">
+	<data name="Services.ApplicationManifest.VersionInvalid.Message" xml:space="preserve">
 		<value>应用版本号无效。</value>
 	</data>
-	<data name="Services.ApplicationVersion.UnexpectedContent.Message" xml:space="preserve">
+	<data name="Services.ApplicationManifest.UnexpectedContent.Message" xml:space="preserve">
 		<value>name@version 首行后不能包含版本段落或其它内容。</value>
 	</data>
-	<data name="Services.ApplicationVersion.EditionVersionRequired.Message" xml:space="preserve">
-		<value>版本段落缺少版本号。</value>
-	</data>
-	<data name="Services.ApplicationVersion.EditionHeaderInvalid.Message" xml:space="preserve">
-		<value>版本段落标题无效。</value>
-	</data>
-	<data name="Services.ApplicationVersion.EditionNameInvalid.Message" xml:space="preserve">
+	<data name="Services.ApplicationManifest.EditionNameInvalid.Message" xml:space="preserve">
 		<value>版本名无效。</value>
 	</data>
-	<data name="Services.ApplicationVersion.EditionHeaderRequired.Message" xml:space="preserve">
-		<value>此处应为版本段落标题。</value>
-	</data>
-	<data name="Services.ApplicationVersion.BareVersionRequired.Message" xml:space="preserve">
+	<data name="Services.ApplicationManifest.BareVersionRequired.Message" xml:space="preserve">
 		<value>此处应为不带键名的版本号。</value>
 	</data>
-	<data name="Services.ApplicationVersion.EditionDuplicated.Message" xml:space="preserve">
-		<value>版本名重复。</value>
-	</data>
-	<data name="Services.ApplicationVersion.InformationRequired.Message" xml:space="preserve">
+	<data name="Services.ApplicationManifest.InformationRequired.Message" xml:space="preserve">
 		<value>必须指定应用名称和版本信息。</value>
 	</data>
-	<data name="Services.ApplicationVersion.InvalidFormat.Message" xml:space="preserve">
-		<value>应用版本文件第 {0} 行的格式无效：{1}</value>
+	<data name="Services.ApplicationManifest.InvalidFormat.Message" xml:space="preserve">
+		<value>应用清单文件第 {0} 行的格式无效：{1}</value>
 	</data>
-	<data name="Services.ApplicationVersion.NameInvalid.Message" xml:space="preserve">
-		<value>名称为空或包含应用版本文件格式的保留字符。</value>
+	<data name="Services.ApplicationManifest.EditionNotFound.Message" xml:space="preserve">
+		<value>指定的发行版不在发行版集合中。</value>
 	</data>
-	<data name="Services.ApplicationVersion.EditionInvalid.Message" xml:space="preserve">
+	<data name="Services.ApplicationManifest.EditionInvalid.Message" xml:space="preserve">
 		<value>必须提供已初始化且具有名称和版本号的具名版本。</value>
+	</data>
+	<data name="Profiles.ImportNotSupported.Message" xml:space="preserve">
+		<value>已禁用导入，第 {0} 行的导入指令不可执行。</value>
 	</data>
 	<data name="Profiles.CircularImport.Message" xml:space="preserve">
 		<value>配置文件循环导入：{0}。引用位置：{1}，第 {2} 行。</value>

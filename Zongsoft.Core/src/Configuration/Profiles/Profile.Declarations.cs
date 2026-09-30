@@ -58,7 +58,6 @@ partial class Profile
 	}
 
 	internal void EndWrite() => _writing = false;
-
 	internal void BeginRead() => _baseline = [];
 
 	internal void CompleteRead(int[] blanks)

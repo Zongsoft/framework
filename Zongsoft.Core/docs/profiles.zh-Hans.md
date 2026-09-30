@@ -25,7 +25,7 @@ Profile.Load -> ProfileReader.Read -> ReadFile/ReadCore -> Parse
 子文件解析完成 -> 父 Profile.Import(子文件) -> Imported 回调 -> 清理活动状态
 ```
 
-公开 Load/Save 签名不变；内部读取入口不提供通用回调或外部继承点。导入完成后，模型保留来源关系，不保留 Reader。
+公开 Load 入口支持文件路径、Stream 和 TextReader，Save 支持文件路径、Stream 和 TextWriter；内部读取入口不提供通用回调或外部继承点。导入完成后，模型保留来源关系，不保留 Reader。
 
 ### 导入通知配置
 
@@ -41,11 +41,22 @@ var options = new ProfileOptions
 var profile = Profile.Load("settings.ini", options);
 ```
 
-`ProfileOptions(bool preserveBlanks = true)` 保留空行构造参数，公开可写属性为 PreserveBlanks、RequireImports、MaximumDepth、Importing、Imported。两个回调均为 `Action<ProfileContext>`，默认 null。不传加载选项时不记录空行；显式 new ProfileOptions() 记录空行。
+`ProfileOptions(bool preserveBlanks = true)` 保留空行构造参数，公开可写属性为 PreserveBlanks、ImportBehavior、MaximumDepth、Importing、Imported。两个回调均为 `Action<ProfileContext>`，默认 null。不传加载选项时不记录空行；显式 new ProfileOptions() 记录空行。
 
-导入由 Reader 自动执行，没有启用开关。MaximumDepth 默认 64，仅接受正整数；非法赋值抛出 ArgumentOutOfRangeException 并保留原值。根文件计为第一层，设为 1 时只允许根文件，设为 128 等更高值可以读取更深的导入链。例如 `new ProfileOptions { MaximumDepth = 128 }`。需要中止时从任一回调抛出异常，整个加载失败，不提供静默跳过单个文件的返回值。
+ImportBehavior 的类型为枚举 `ProfileDirectiveBehavior`，默认值为 Default，各值互斥：
 
-Reader 在根加载开始时浅复制 ProfileOptions，固定空行选项、RequireImports、MaximumDepth 及两个委托引用，全部子读取共享该快照。外部随后替换选项属性不会影响本次加载；回调捕获的可变状态仍由调用方保证并发安全。Writer 不执行导入回调，保存范围只取决于已加载的来源关系。
+| 值 | 导入行为 |
+| --- | --- |
+| Default | 执行导入，允许文件或目录不存在。 |
+| Existed | 执行导入，要求全部直接和递归导入文件存在。 |
+| Ignored | 指令作为普通注释保留，不打开导入文件或触发回调。 |
+| Suppressed | 遇到导入指令即抛出 ProfileException，包括空参数指令；在打开文件和触发回调之前拒绝。 |
+
+此选项仅用于读取，各模式均不影响保存时的指令注释输出。例如：`Profile.Load("settings.ini", new ProfileOptions { ImportBehavior = ProfileDirectiveBehavior.Ignored })`。Default 和 Existed 仍执行语法、循环和深度检查；Default 仅允许打开阶段的文件缺失。
+
+MaximumDepth 默认 64，仅接受正整数；非法赋值抛出 ArgumentOutOfRangeException 并保留原值。根文件计为第一层，设为 1 时只允许根文件，设为 128 等更高值可以读取更深的导入链。例如 `new ProfileOptions { MaximumDepth = 128 }`。需要中止时从任一回调抛出异常，整个加载失败，回调不提供静默跳过单个文件的返回值。
+
+Reader 在根加载开始时浅复制 ProfileOptions，固定空行选项、ImportBehavior、MaximumDepth 及两个委托引用，全部子读取共享该快照。外部随后替换选项属性不会影响本次加载；回调捕获的可变状态仍由调用方保证并发安全。Writer 不执行导入回调，保存范围只取决于已加载的来源关系。
 
 `ProfileContext` 是 public sealed 类型，由 Reader 内部构造，属性全部只读：
 
@@ -58,17 +69,27 @@ Reader 在根加载开始时浅复制 ProfileOptions，固定空行选项、Requ
 
 前后通知分别使用不同的上下文实例，保留的前置上下文不会在导入后被填入 Profile。只读属性固定的是引用，引用的 Profile 模型仍可编辑。上下文没有 Reader、输入流或递归入口，也不用于保存。
 
+### 章节名称
+
+`ProfileSection` 移除名称两端的空白，拒绝空名称或包含以下任一字符的名称：`/`、`\`、`|`、`*`、`?`、`=`、`%`、`^`、`&`、`<`、`>`、`{`、`}`。允许使用 `:`、`!`、`@`、`#` 等字符，章节查找忽略大小写。
+
+段落标题中的空格和 Tab 用于分隔层级：`[network proxy]` 表示 `network` 下的 `proxy` 子章节。通过 API 构建模型时，层级须通过父子章节表示；保存会拒绝单个章节名称内部的空白。章节名称不提供引号或转义语法。
+
 ### 语法、路径与递归
 
 `#@import defaults.ini` 或 `;@import defaults.ini` 执行导入，名称忽略大小写，@import 后必须是空格、Tab 或行尾。空参数不做任何读取；@imported 等其他名称都是普通注释。导入文本按普通 ProfileComment 声明记录，没有公开的指令模型。
+
+[ApplicationManifest](application-manifest.zh-Hans.md) 复用 Profile 解析，设置 ImportBehavior = ProfileDirectiveBehavior.Suppressed，在打开导入文件前拒绝导入指令。两种注释标记和空参数导入均抛出 FormatException；通用 Profile 加载仍保留这里描述的导入行为。
 
 多个路径以空格、Tab 或 `|` 分隔，不增加引号转义、变量展开或通配符。相对路径以包含导入语句的加载文件目录为基准，也允许绝对路径。循环检测单独解析文件及祖先目录链接，不改变相对路径基准。Windows 使用不区分大小写比较，其他平台使用 Ordinal；硬链接等未识别别名由深度限制兜底。
 
 仅活动链重复构成循环，菱形和顺序重复导入允许且每次重新读取。循环与深度异常包含原因、导入链、来源文件及从 1 开始的行号。默认 MaximumDepth 允许同时活动 64 个文件，第 65 个在通知前拒绝。自定义限制改变此边界，不关闭循环检测。可选导入只忽略打开阶段的文件或目录不存在，权限和其他异常正常传播。
 
-FileStream 根文件有路径并参与身份检查；匿名流允许绝对路径导入，相对导入明确报错。Profile.Load 关闭传入的流。显式根编码仅用于根文件，导入采用默认 UTF-8 并识别 BOM。
+FileStream 根文件有路径并参与身份检查；匿名流允许绝对路径导入，相对导入明确报错。Profile.Load(Stream) 关闭传入的流。显式根编码仅用于根文件，导入采用默认 UTF-8 并识别 BOM。
 
-RequireImports 默认为 false，打开导入时仅忽略文件或目录不存在；设置 RequireImports = true 后，所有直接和递归导入都必须存在。缺失时抛出 ProfileException，消息包含目标路径、声明文件及从 1 开始的行号，并保留原始 IO 异常。根文件始终必须存在；打开失败不触发导入回调。
+Profile.Load(TextReader, ProfileOptions) 从当前位置读取至结尾，成功或失败均不关闭读取器。StreamReader 的底层流为 FileStream 时使用该文件路径解析相对导入，其它读取器视为匿名来源。首个读取行开头的 BOM 会被忽略，行号从当前读取起点计数。
+
+ImportBehavior 默认为 Default，打开导入时仅忽略文件或目录不存在；设置为 Existed 后，所有直接和递归导入都必须存在。缺失时抛出 ProfileException，消息包含目标路径、声明文件及从 1 开始的行号，并保留原始 IO 异常。根文件始终必须存在；打开失败不触发导入回调。
 
 ### 导入通知
 
@@ -89,7 +110,7 @@ Reader 按读取内容登记声明基线，Imported 中的修改保持待保存�
 
 deployer 使用 Importing 记录导入文件哈希，根文件单独登记；packager 使用前后通知验证各来源。按路径另行计算哈希仍不保证摘要严格对应解析字节，此输入快照问题属于下游。
 
-实施与平台验证见 [任务清单](../PROFILE-BUILTIN-IMPORT-TASKS.md)。
+导入回归测试见 [ProfileImportTest](../test/Configuration/Profiles/ProfileImportTest.cs)。
 
 ## 声明与保存
 
@@ -159,4 +180,4 @@ Reader 在读取声明时登记原始基线，导入完成回调中的修改保�
 
 路径资源由 Writer 管理。Stream 保持既有关闭行为；TextWriter 不关闭。流与文本写入器可能在异常前收到部分输出，不能回滚。
 
-任务清单见 [PROFILE-WRITER-TASKS.md](../PROFILE-WRITER-TASKS.md)。测试覆盖来源写回、范围隔离、声明往返、重复实例、准备/提交失败与重试。Windows 多框架结果记录在任务清单；Linux/macOS 的权限和链接验证必须原生执行，不能用 Windows 结果代替。哈希严格对应解析字节仍由下游输入快照方案处理，Core 不依赖部署、NuGet 或哈希类型。
+[ProfileWriterTest](../test/Configuration/Profiles/ProfileWriterTest.cs) 覆盖来源写回、范围隔离、声明往返、重复实例、准备/提交失败与重试。Linux/macOS 的权限和链接验证必须原生执行，不能用 Windows 结果代替。哈希严格对应解析字节仍由下游输入快照方案处理，Core 不依赖部署、NuGet 或哈希类型。

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 
 using Zongsoft.Configuration.Profiles;
@@ -9,6 +10,29 @@ namespace Zongsoft.Configuration.Tests;
 
 public class ProfileTest
 {
+	[Fact]
+	public void Load_TextReaderUsesCurrentPositionAndLeavesReaderOpen()
+	{
+		using var reader = new StringReader("ignored\n\uFEFFApp=Community\r\n\r\n[Community]\r\n1.0\r\n");
+		Assert.Equal("ignored", reader.ReadLine());
+		var profile = Profile.Load(reader, new ProfileOptions());
+		Assert.Equal("Community", profile.Entries["App"].Value);
+		Assert.Equal(0, profile.Entries["App"].LineNumber);
+		Assert.Equal("1.0", profile.Sections["Community"].Entries[0].Name);
+		Assert.Equal(new[] { 1 }, profile.Blanks);
+		Assert.Equal(string.Empty, profile.FilePath);
+		Assert.Equal(-1, reader.Peek());
+	}
+
+	[Fact]
+	public void Load_TextReaderFailureLeavesReaderOpen()
+	{
+		using var reader = new StringReader("=invalid\nremaining");
+		Assert.Throws<ProfileException>(() => Profile.Load(reader));
+		Assert.Equal('r', reader.Peek());
+		Assert.Throws<ArgumentNullException>("reader", () => Profile.Load((TextReader)null));
+	}
+
 	public static Profile GetProfile1() => Profile.Load("Configuration/Profiles/Profile-1.ini");
 	public static Profile GetProfile2() => Profile.Load("Configuration/Profiles/Profile-2.ini");
 	public static Profile GetProfile3() => Profile.Load("Configuration/Profiles/Profile-3.ini");

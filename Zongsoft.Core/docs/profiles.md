@@ -25,7 +25,7 @@ Profile.Load -> ProfileReader.Read -> ReadFile/ReadCore -> Parse
 Parsed child -> parent Profile.Import(child) -> Imported callback -> activity cleanup
 ```
 
-Public Load/Save signatures remain unchanged. Internal read entry points have no general callbacks or external inheritance hooks. Loaded models retain source relationships, not their reader.
+Public Load entry points accept file paths, Stream and TextReader; Save accepts file paths, Stream and TextWriter. Internal read entry points have no general callbacks or external inheritance hooks. Loaded models retain source relationships, not their reader.
 
 ### Import notification options
 
@@ -41,11 +41,22 @@ var options = new ProfileOptions
 var profile = Profile.Load("settings.ini", options);
 ```
 
-`ProfileOptions(bool preserveBlanks = true)` retains the blank-line constructor parameter and exposes settable PreserveBlanks, RequireImports, MaximumDepth, Importing and Imported properties. Both callbacks are `Action<ProfileContext>` and default to null. Omitted load options discard blanks; explicit new ProfileOptions() records them.
+`ProfileOptions(bool preserveBlanks = true)` retains the blank-line constructor parameter and exposes settable PreserveBlanks, ImportBehavior, MaximumDepth, Importing and Imported properties. Both callbacks are `Action<ProfileContext>` and default to null. Omitted load options discard blanks; explicit new ProfileOptions() records them.
 
-Reader executes imports automatically, with no enable switch. MaximumDepth defaults to 64 and accepts only positive integers; invalid assignments throw ArgumentOutOfRangeException and retain the previous value. The root counts as level one: 1 permits only the root, while a higher value such as 128 allows deeper chains. Set it with `new ProfileOptions { MaximumDepth = 128 }`. Throw from either callback to abort the entire load; there is no return value for silently skipping a file.
+ImportBehavior uses the `ProfileDirectiveBehavior` enum and defaults to Default. Its values are mutually exclusive:
 
-Reader shallow-clones ProfileOptions at the start of a root load to capture blank handling, RequireImports, MaximumDepth and both delegate references. Recursive reads share that snapshot; subsequently replacing properties on the original options does not affect the current load. Callers own concurrency of mutable callback captures. Writer does not execute import callbacks; save scope depends only on recorded source relationships.
+| Value | Import behavior |
+| --- | --- |
+| Default | Execute imports; missing files or directories are allowed. |
+| Existed | Execute imports and require every direct and recursive imported file to exist. |
+| Ignored | Keep import directives as ordinary comments without opening files or invoking callbacks. |
+| Suppressed | Throw ProfileException on an import directive, including an empty argument, before opening its files or invoking callbacks. |
+
+This option affects loading only; all modes preserve directive comments when saving. For example: `Profile.Load("settings.ini", new ProfileOptions { ImportBehavior = ProfileDirectiveBehavior.Ignored })`. Default and Existed still enforce syntax, cycle and depth checks; Default only tolerates missing files during opening.
+
+MaximumDepth defaults to 64 and accepts only positive integers; invalid assignments throw ArgumentOutOfRangeException and retain the previous value. The root counts as level one: 1 permits only the root, while a higher value such as 128 allows deeper chains. Set it with `new ProfileOptions { MaximumDepth = 128 }`. Throw from either callback to abort the entire load; there is no callback return value for silently skipping a file.
+
+Reader shallow-clones ProfileOptions at the start of a root load to capture blank handling, ImportBehavior, MaximumDepth and both delegate references. Recursive reads share that snapshot; subsequently replacing properties on the original options does not affect the current load. Callers own concurrency of mutable callback captures. Writer does not execute import callbacks; save scope depends only on recorded source relationships.
 
 `ProfileContext` is public sealed, constructed internally by Reader, with get-only properties:
 
@@ -58,15 +69,25 @@ Reader shallow-clones ProfileOptions at the start of a root load to capture blan
 
 Before and after notifications receive separate context instances. Retaining a before context never causes its Profile to be filled later. Get-only properties fix references, while referenced Profile models remain editable. The context exposes no reader, input stream or recursive entry point and is not used for saving.
 
+### Section names
+
+`ProfileSection` trims surrounding whitespace and rejects empty names or names containing any of these characters: `/`, `\`, `|`, `*`, `?`, `=`, `%`, `^`, `&`, `<`, `>`, `{`, `}`. Characters such as `:`, `!`, `@` and `#` are allowed. Section lookup ignores case.
+
+In section headers, spaces and tabs separate hierarchy levels: `[network proxy]` declares `proxy` under `network`. When building a model, represent those levels with parent and child sections; saving rejects whitespace inside an individual section name. No quoting or escaping is provided for section names.
+
 ### Syntax, paths and recursion
 
 #@import defaults.ini and ;@import defaults.ini load a file. The keyword is case insensitive and must end at a space, tab or end of line. Empty arguments do nothing; other names such as @imported remain ordinary comments. Import text is recorded as an ordinary ProfileComment declaration, without a public directive model.
 
+[ApplicationManifest](application-manifest.md) reuses Profile parsing with ImportBehavior = ProfileDirectiveBehavior.Suppressed to reject import directives before opening their files. Its loads throw FormatException for both markers, including directives with empty arguments. General Profile loading keeps the import behavior described here.
+
 Paths are separated by spaces, tabs or |. Quoted escaping, variable expansion and globs are not added. Relative paths use the containing file's loading directory; absolute paths are allowed. Cycle identity resolves file and ancestor-directory links independently, retaining the original relative-path base. Windows ignores path case; other platforms use ordinal comparison. Depth limits cover unrecognized aliases such as hard links.
 
-Only active-chain repetition is a cycle. Diamond and sequential repeated imports are read again without caching. Cycle/depth errors identify the reason, import chain, referring file and one-based line number. The default MaximumDepth permits 64 active files; a 65th fails before notification. A custom limit changes this boundary but does not disable cycle detection. RequireImports defaults to false: imports suppress only file/directory-not-found errors while opening, not permissions or other failures. Set RequireImports = true to require every direct and recursive import. A missing file then raises ProfileException with the target path, referring file, one-based line and original IO exception. Root files are always required; failed opens do not invoke callbacks.
+Only active-chain repetition is a cycle. Diamond and sequential repeated imports are read again without caching. Cycle/depth errors identify the reason, import chain, referring file and one-based line number. The default MaximumDepth permits 64 active files; a 65th fails before notification. A custom limit changes this boundary but does not disable cycle detection. Default suppresses only file/directory-not-found errors while opening, not permissions or other failures. Set ImportBehavior to Existed to require every direct and recursive import. A missing file then raises ProfileException with the target path, referring file, one-based line and original IO exception. Root files are always required; failed opens do not invoke callbacks.
 
-FileStream roots have paths and participate in identity checks. Anonymous streams accept absolute imports and reject relative ones. Profile.Load closes the supplied stream. Explicit root encoding applies only to the root; imports default to UTF-8 with BOM detection.
+FileStream roots have paths and participate in identity checks. Anonymous streams accept absolute imports and reject relative ones. Profile.Load(Stream) closes the supplied stream. Explicit root encoding applies only to the root; imports default to UTF-8 with BOM detection.
+
+Profile.Load(TextReader, ProfileOptions) reads from the current position to the end and leaves the reader open on success or failure. A StreamReader backed by a FileStream uses that file path for relative imports; other readers are anonymous sources. A BOM at the start of the first line read is ignored, and line numbering starts at the current reading position.
 
 ### Import notifications
 
@@ -87,7 +108,7 @@ Reader records original declaration baselines; edits in Imported remain dirty. S
 
 Deployer uses Importing to hash child files and records the root separately. Packager uses before/after notifications to validate each source. Hashing by reopening a path still does not guarantee a digest of exactly the parsed bytes; that snapshot concern belongs downstream.
 
-See the [implementation checklist](../PROFILE-BUILTIN-IMPORT-TASKS.md) for validation and platform limits.
+See [ProfileImportTest](../test/Configuration/Profiles/ProfileImportTest.cs) for import regression coverage.
 
 ## Declarations and saving
 
@@ -157,4 +178,4 @@ File and Stream defaults use Encoding.UTF8. An explicit encoding applies only to
 
 Writer owns path resources. Supplied streams retain the existing closing behavior; supplied TextWriter instances remain open. Stream/text outputs may contain partial output after failure and cannot be rolled back.
 
-See [PROFILE-WRITER-TASKS.md](../PROFILE-WRITER-TASKS.md) for the checklist and validation results. Tests cover source writes, scope isolation, round trips, duplicate instances and preparation/commit failures with retry. Linux/macOS permission and link checks require native execution; Windows results do not substitute for them. Strict hashing of the parsed bytes remains a downstream snapshot concern; Core has no deployment, NuGet or hashing dependency.
+[ProfileWriterTest](../test/Configuration/Profiles/ProfileWriterTest.cs) covers source writes, scope isolation, round trips, duplicate instances and preparation/commit failures with retry. Linux/macOS permission and link checks require native execution; Windows results do not substitute for them. Strict hashing of the parsed bytes remains a downstream snapshot concern; Core has no deployment, NuGet or hashing dependency.

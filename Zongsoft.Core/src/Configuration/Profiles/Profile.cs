@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -44,7 +44,7 @@ namespace Zongsoft.Configuration.Profiles;
 ///		<para>Entry: INI所包含的最基本的“元素”就是 Entry/Parameter，每一个“条目”都由一个名称和一个值组成(值可选)，名称与值由等号“=”分隔，名称在等号的左边；值在等号右边，值的内容可省略。譬如：name=value 或者只有名称部分。注意：在同一个设置节中，条目名称必须唯一。</para>
 ///		<para>Section: 所有的“条目”都是以“节”为单位结合在一起的。“节”名字都被方括号包围着。在“节”声明后的所有“条目”都是属于该“节”。对于一个“节”没有明显的结束标志符，一个“节”的开始就是上一个“节”的结束。</para>
 ///		<para>注意：节是支持分层嵌套的，即在配置节中以空格或制表符(Tab)来分隔节的层级关系。</para>
-///		<para>Comment: 在INI文件中注释语句是以分号“;”或者“#”开始的，独占一行。读取器识别紧接注释符的 @import 导入语句，其余内容作为普通注释保留。</para>
+///		<para>Comment: 在INI文件中注释语句是以分号“;”或者“#”开始的，独占一行。读取器识别紧接注释符的 @import 导入语句；可通过 <see cref="ProfileOptions.ImportBehavior"/> 选择执行、忽略或禁止导入，其余内容作为普通注释保留。</para>
 /// </remarks>
 public partial class Profile : IEnumerable<ProfileItem>
 {
@@ -84,6 +84,17 @@ public partial class Profile : IEnumerable<ProfileItem>
 			throw new ArgumentNullException(nameof(stream));
 
 		return new ProfileReader(options).Read(stream, encoding);
+	}
+
+	/// <summary>从文本读取器加载配置，保留读取器的打开状态。</summary>
+	/// <param name="reader">从当前位置读取到结尾的文本读取器。</param>
+	/// <param name="options">读取选项。</param>
+	/// <returns>返回加载的配置。</returns>
+	/// <remarks>StreamReader 的底层流为 FileStream 时，以该文件路径解析相对导入；其它读取器没有来源路径。</remarks>
+	public static Profile Load(TextReader reader, ProfileOptions options = null)
+	{
+		ArgumentNullException.ThrowIfNull(reader);
+		return new ProfileReader(options).Read(reader);
 	}
 	#endregion
 

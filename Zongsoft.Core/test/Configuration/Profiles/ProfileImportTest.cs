@@ -16,6 +16,126 @@ namespace Zongsoft.Configuration.Tests;
 public class ProfileImportTest
 {
 	[Theory]
+	[InlineData("#@import child.ini")]
+	[InlineData(";@IMPORT child.ini")]
+	[InlineData(" #@import missing.ini")]
+	[InlineData("#@import")]
+	[InlineData("[section]\n#@import child.ini")]
+	public void Import_SuppressedRejectsBeforeOpeningFilesOrCallbacks(string directive)
+	{
+		using var files = new ProfileFiles();
+		var child = files.Write("child.ini", "child=value");
+		var root = files.Write("root.ini", directive + "\nremaining=value");
+		var notifications = new List<ProfileContext>();
+		var options = new ProfileOptions
+		{
+			ImportBehavior = ProfileDirectiveBehavior.Suppressed,
+			Importing = notifications.Add,
+			Imported = notifications.Add,
+		};
+		using var locked = new FileStream(child, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+		Assert.Throws<ProfileException>(() => Profile.Load(root, options));
+		using var stream = File.OpenRead(root);
+		Assert.Throws<ProfileException>(() => Profile.Load(stream, options));
+		Assert.False(stream.CanRead);
+		using var reader = new StringReader(directive + "\nremaining=value");
+		Assert.Throws<ProfileException>(() => Profile.Load(reader, options));
+		Assert.Equal('r', reader.Peek());
+		Assert.Empty(notifications);
+	}
+
+	[Fact]
+	public void Import_BehaviorChangesApplyOnlyToNextRoot()
+	{
+		using var files = new ProfileFiles();
+		var root = files.Chain(3);
+		var notifications = new List<int>();
+		var options = new ProfileOptions();
+		Assert.Equal(ProfileDirectiveBehavior.Default, options.ImportBehavior);
+		options.Importing = context =>
+		{
+			notifications.Add(context.Depth);
+			options.ImportBehavior = ProfileDirectiveBehavior.Suppressed;
+		};
+
+		Assert.Equal("complete", Profile.Load(root, options).Entries["result"].Value);
+		Assert.Equal([2, 3], notifications);
+		Assert.Equal(ProfileDirectiveBehavior.Suppressed, options.ImportBehavior);
+		notifications.Clear();
+		Assert.Throws<ProfileException>(() => Profile.Load(root, options));
+		Assert.Empty(notifications);
+	}
+
+	[Fact]
+	public void Import_SuppressedAllowsOrdinaryComments()
+	{
+		using var reader = new StringReader("#@imported note\n; @import note\nvalue=kept");
+		var profile = Profile.Load(reader, new ProfileOptions { ImportBehavior = ProfileDirectiveBehavior.Suppressed });
+		Assert.Equal("kept", profile.Entries["value"].Value);
+		Assert.Equal(["@imported note", " @import note"], profile.Comments.Select(comment => comment.Text));
+	}
+
+	[Theory]
+	[InlineData("#@import child.ini")]
+	[InlineData(";@IMPORT child.ini")]
+	[InlineData("#@import missing.ini")]
+	[InlineData("#@import")]
+	[InlineData("[section]\n#@import child.ini | child.ini")]
+	public void Import_IgnoredKeepsCommentsWithoutOpeningFilesOrCallbacks(string directive)
+	{
+		using var files = new ProfileFiles();
+		var child = files.Write("child.ini", "imported=child");
+		var root = files.Write("root.ini", "local=kept\n" + directive);
+		var notifications = new List<ProfileContext>();
+		var options = new ProfileOptions
+		{
+			ImportBehavior = ProfileDirectiveBehavior.Ignored,
+			Importing = notifications.Add,
+			Imported = notifications.Add,
+		};
+		using var locked = new FileStream(child, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+		var profile = Profile.Load(root, options);
+		Assert.Equal("kept", Assert.Single(profile.Entries).Value);
+		using var stream = File.OpenRead(root);
+		Assert.Equal("kept", Assert.Single(Profile.Load(stream, options).Entries).Value);
+		Assert.False(stream.CanRead);
+		using var reader = new StringReader("local=kept\n" + directive);
+		Assert.Equal("kept", Assert.Single(Profile.Load(reader, options).Entries).Value);
+		Assert.Equal(-1, reader.Peek());
+		Assert.Empty(notifications);
+		using var writer = new StringWriter { NewLine = "\n" };
+		profile.Save(writer, new ProfileOptions { ImportBehavior = ProfileDirectiveBehavior.Suppressed });
+		Assert.Equal("local=kept\n" + directive.Replace(";@IMPORT", "#@IMPORT") + "\n", writer.ToString());
+	}
+
+	[Theory]
+	[InlineData(ProfileDirectiveBehavior.Default, false)]
+	[InlineData(ProfileDirectiveBehavior.Existed, true)]
+	[InlineData(ProfileDirectiveBehavior.Ignored, false)]
+	[InlineData(ProfileDirectiveBehavior.Suppressed, true)]
+	public void Import_BehaviorHandlesMissingFiles(ProfileDirectiveBehavior behavior, bool fails)
+	{
+		using var files = new ProfileFiles();
+		var root = files.Write("root.ini", "#@import missing.ini\nlocal=kept");
+		var options = new ProfileOptions { ImportBehavior = behavior };
+
+		if(fails)
+		{
+			var error = Assert.Throws<ProfileException>(() => Profile.Load(root, options));
+			if(behavior == ProfileDirectiveBehavior.Existed)
+				Assert.IsAssignableFrom<IOException>(error.InnerException);
+			else
+				Assert.Null(error.InnerException);
+		}
+		else
+		{
+			var profile = Profile.Load(root, options);
+			Assert.Equal("kept", Assert.Single(profile.Entries).Value);
+			Assert.Equal("@import missing.ini", Assert.Single(profile.Comments).Text);
+		}
+	}
+
+	[Theory]
 	[InlineData(64, true)]
 	[InlineData(65, false)]
 	public void Import_DefaultDepthHonorsBoundary(int length, bool succeeds)
