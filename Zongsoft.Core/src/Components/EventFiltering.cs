@@ -117,6 +117,7 @@ public class EventFiltering : IPredication<EventContext>, IList<EventFiltering.E
 			this.Kind = kind;
 			this.RegistryName = Normalize(registry);
 			this.EventName = Normalize(name);
+
 			static string Normalize(string name) => string.IsNullOrEmpty(name) || name == ALL ? null : name;
 		}
 

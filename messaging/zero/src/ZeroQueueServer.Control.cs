@@ -94,6 +94,7 @@ public sealed partial class ZeroQueueServer
 				}
 
 				var router = new RouterSocket();
+
 				try
 				{
 					router.Options.RouterMandatory = true;
@@ -113,6 +114,7 @@ public sealed partial class ZeroQueueServer
 
 						envelope.NextAttempt = DateTime.UtcNow;
 						_pending[envelope.Identifier] = envelope;
+
 						if(envelope.IsExpired)
 						{
 							envelope.Removal = RemovalReason.Expired;
@@ -150,6 +152,7 @@ public sealed partial class ZeroQueueServer
 
 				var router = _router;
 				_router = null;
+
 				if(router != null && !router.IsDisposed)
 				{
 					router.ReceiveReady -= this.OnReceiveReady;
@@ -172,6 +175,7 @@ public sealed partial class ZeroQueueServer
 				{
 					try { this.Process(message); }
 					catch(Exception exception) { Diagnostics.Logging.GetLogging(this).Error(exception); }
+
 					message = new NetMQMessage();
 				}
 			}
@@ -262,6 +266,7 @@ public sealed partial class ZeroQueueServer
 						if(current.Removal == RemovalReason.None)
 							current.NextAttempt = DateTime.MinValue;
 					}
+
 					return;
 				}
 
@@ -288,6 +293,7 @@ public sealed partial class ZeroQueueServer
 
 				accepting = new Acceptance(envelope, route);
 				_accepting.Add(identifier, accepting);
+
 				if(!_worker.TryExecute(() => _storage.SetAsync(GetStorageMessage(envelope), GetExpiry(envelope)), exception => this.Dispatch(() => this.OnPersisted(identifier, exception))))
 				{
 					_accepting.Remove(identifier);
@@ -636,6 +642,7 @@ public sealed partial class ZeroQueueServer
 					await foreach(var work in _channel.Reader.ReadAllAsync())
 					{
 						Exception exception = null;
+
 						try { await work.Action().ConfigureAwait(false); }
 						catch(Exception error) { exception = error; }
 

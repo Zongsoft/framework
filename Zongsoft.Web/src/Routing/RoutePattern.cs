@@ -122,6 +122,7 @@ public partial class RoutePattern : IReadOnlyCollection<RoutePattern.Entry>
 		}
 
 		return result.ToString();
+
 		static string GetValue(Entry entry) => string.IsNullOrWhiteSpace(entry.Value) ? null : entry.Value;
 	}
 	#endregion

@@ -131,12 +131,10 @@ partial class OpcClient
 
 		static bool IsIgnored(BrowseOptions options, ReferenceDescription reference) =>
 			!options.IncludeBuiltins && reference.NodeId.NamespaceIndex == 0;
-
 		static async ValueTask<OpcNodeType> GetDataTypeAsync(ISession session, ReferenceDescription reference, CancellationToken cancellation) =>
 			reference.NodeClass == NodeClass.Variable ?
 			await OpcClient.GetDataTypeAsync(session, (NodeId)reference.NodeId, cancellation) :
 			OpcNodeType.Get(reference.TypeDefinition);
-
 		static IEnumerable<NodeId> GetNodeIds(BrowseOptions options, ICollection<ReferenceDescription> references) => references
 			.Where(reference => !reference.NodeId.IsNull && !IsIgnored(options, reference))
 			.Select(reference => (NodeId)reference.NodeId);

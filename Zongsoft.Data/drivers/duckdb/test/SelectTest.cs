@@ -118,6 +118,7 @@ public class SelectTest(DatabaseFixture database)
 			Assert.NotNull(role);
 			Assert.Equal(100 + index++, (int)role.RoleId);
 		}
+
 		Assert.Equal(10, index);
 
 		roles = accessor.SelectAsync<RoleModel>(
@@ -130,6 +131,7 @@ public class SelectTest(DatabaseFixture database)
 			Assert.NotNull(role);
 			Assert.Equal(130 + index++, (int)role.RoleId);
 		}
+
 		Assert.Equal(20, index);
 
 		await accessor.DeleteAsync<RoleModel>(Condition.GreaterThanEqual(nameof(RoleModel.RoleId), 100));

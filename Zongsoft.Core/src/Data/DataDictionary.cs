@@ -104,16 +104,16 @@ public static class DataDictionary
 		if(items == null)
 			throw new ArgumentNullException(nameof(items));
 
-		static IDataDictionary Invoke(IDataDictionary dictionary, Action<IDataDictionary> handle)
-		{
-			handle?.Invoke(dictionary);
-			return dictionary;
-		}
-
 		foreach(var item in items)
 		{
 			if(item != null)
 				yield return Invoke(GetDictionary(item), handle);
+		}
+
+		static IDataDictionary Invoke(IDataDictionary dictionary, Action<IDataDictionary> handle)
+		{
+			handle?.Invoke(dictionary);
+			return dictionary;
 		}
 	}
 
@@ -122,16 +122,16 @@ public static class DataDictionary
 		if(models == null)
 			throw new ArgumentNullException(nameof(models));
 
-		static IDataDictionary Invoke(IDataDictionary dictionary, Action<IDataDictionary> handle)
-		{
-			handle?.Invoke(dictionary);
-			return dictionary;
-		}
-
 		foreach(var model in models)
 		{
 			if(model != null)
 				yield return Invoke(GetDictionary(model), handle);
+		}
+
+		static IDataDictionary Invoke(IDataDictionary dictionary, Action<IDataDictionary> handle)
+		{
+			handle?.Invoke(dictionary);
+			return dictionary;
 		}
 	}
 
@@ -140,16 +140,16 @@ public static class DataDictionary
 		if(items == null)
 			throw new ArgumentNullException(nameof(items));
 
-		static IDataDictionary<T> Invoke(IDataDictionary<T> dictionary, Action<IDataDictionary<T>> handle)
-		{
-			handle?.Invoke(dictionary);
-			return dictionary;
-		}
-
 		foreach(var item in items)
 		{
 			if(item != null)
 				yield return Invoke(GetDictionary<T>(item), handle);
+		}
+
+		static IDataDictionary<T> Invoke(IDataDictionary<T> dictionary, Action<IDataDictionary<T>> handle)
+		{
+			handle?.Invoke(dictionary);
+			return dictionary;
 		}
 	}
 
@@ -158,16 +158,16 @@ public static class DataDictionary
 		if(models == null)
 			throw new ArgumentNullException(nameof(models));
 
-		static IDataDictionary<T> Invoke(IDataDictionary<T> dictionary, Action<IDataDictionary<T>> handle)
-		{
-			handle?.Invoke(dictionary);
-			return dictionary;
-		}
-
 		foreach(var model in models)
 		{
 			if(model != null)
 				yield return Invoke(GetDictionary<T>(model), handle);
+		}
+
+		static IDataDictionary<T> Invoke(IDataDictionary<T> dictionary, Action<IDataDictionary<T>> handle)
+		{
+			handle?.Invoke(dictionary);
+			return dictionary;
 		}
 	}
 	#endregion

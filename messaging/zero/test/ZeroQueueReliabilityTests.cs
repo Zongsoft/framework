@@ -239,6 +239,7 @@ public class ZeroQueueReliabilityTests
 
 		await using var scope = await ReliableServerScope.StartAsync();
 		var control = ZeroTestUtility.GetServerPorts(scope.Port).Control;
+
 		using(var socket = new DealerSocket())
 		{
 			socket.Connect($"tcp://127.0.0.1:{control}");
@@ -281,6 +282,7 @@ public class ZeroQueueReliabilityTests
 
 		var publication = publisher.ProduceAsync("topic/timeout", Encoding.UTF8.GetBytes("uncertain"), ReliableEnqueueOptions()).AsTask();
 		await storage.Started.Task.WaitAsync(TimeSpan.FromSeconds(5));
+
 		try { await Assert.ThrowsAsync<TimeoutException>(() => publication); }
 		finally { storage.Release(); }
 
@@ -307,6 +309,7 @@ public class ZeroQueueReliabilityTests
 		var publication = publisher.ProduceAsync("topic/cancel", Encoding.UTF8.GetBytes("uncertain"), ReliableEnqueueOptions(), cancellation.Token).AsTask();
 		await storage.Started.Task.WaitAsync(TimeSpan.FromSeconds(5));
 		await cancellation.CancelAsync();
+
 		try { await Assert.ThrowsAnyAsync<OperationCanceledException>(() => publication); }
 		finally { storage.Release(); }
 
@@ -428,6 +431,7 @@ public class ZeroQueueReliabilityTests
 		await stopping.WaitAsync(TimeSpan.FromSeconds(5));
 		var stored = Assert.Single(await ZeroTestUtility.CollectAsync(storage.Inner.GetAsync()));
 		publisher.Dispose();
+
 		try { await publication.WaitAsync(TimeSpan.FromSeconds(1)); }
 		catch(Exception) { }
 
@@ -454,6 +458,7 @@ public class ZeroQueueReliabilityTests
 		var control = ZeroTestUtility.GetServerPorts(scope.Port).Control;
 
 		string rejected;
+
 		try
 		{
 			rejected = await PublishUntilStorageBusyAsync(control, "topic/capacity", 1026).WaitAsync(TimeSpan.FromSeconds(10));
@@ -615,8 +620,10 @@ public class ZeroQueueReliabilityTests
 		public async Task<Message?> TryReceiveAsync(TimeSpan timeout)
 		{
 			using var cancellation = new CancellationTokenSource(timeout);
+
 			try { await _signal.WaitAsync(cancellation.Token); }
 			catch(OperationCanceledException) { return null; }
+
 			Assert.True(_messages.TryDequeue(out var message));
 			return message;
 		}
@@ -627,6 +634,7 @@ public class ZeroQueueReliabilityTests
 			_messages.Enqueue(message);
 			Interlocked.Increment(ref _received);
 			_signal.Release();
+
 			if(automatic && Interlocked.Increment(ref _count) >= acknowledgeOn)
 				await message.AcknowledgeAsync(cancellation);
 		}
@@ -675,6 +683,7 @@ public class ZeroQueueReliabilityTests
 		var identifier = await publisher.ProduceAsync("topic/compressed", "kind:compressed", payload, options);
 		var first = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
 		var stored = Assert.Single(await GetPendingAsync(scope));
+
 		using(var document = JsonDocument.Parse(stored.Data))
 		{
 			Assert.Equal(Protocol.Version, document.RootElement.GetProperty("Version").GetString());

@@ -206,6 +206,7 @@ public class SelectStatementBuilder : IStatementBuilder<DataSelectContext>
 
 							var foreignField = slave.Table.CreateField(link.ForeignKey);
 							foreignField.Alias = null;
+
 							if(slave.Where == null)
 								slave.Where = Expression.Equal(foreignField, slave.Parameters.Add(anchor.Name, link.ForeignKey.Type));
 							else

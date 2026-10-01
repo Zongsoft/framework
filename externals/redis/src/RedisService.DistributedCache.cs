@@ -116,6 +116,7 @@ partial class RedisService : IDistributedCache
 	{
 		cancellation.ThrowIfCancellationRequested();
 		await this.ConnectAsync(cancellation);
+
 		if(!string.IsNullOrEmpty(_namespace))
 		{
 			long count = 0;

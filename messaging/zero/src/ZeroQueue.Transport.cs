@@ -192,6 +192,7 @@ public sealed partial class ZeroQueue
 				return;
 
 			var requester = new RequestSocket();
+
 			try
 			{
 				requester.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
@@ -330,6 +331,7 @@ public sealed partial class ZeroQueue
 			var now = DateTime.UtcNow;
 			_control.Tick(now);
 			_broadcast.Tick(now);
+
 			if(_discovery != null && now >= _discoveryDeadline)
 			{
 				this.ReleaseDiscovery();
@@ -356,6 +358,7 @@ public sealed partial class ZeroQueue
 		{
 			_control.Stop();
 			_broadcast.Stop();
+
 			if(_timer != null)
 			{
 				_timer.Enable = false;

@@ -534,6 +534,7 @@ public class ApplicationManifestTest : IDisposable
 		var prefix = Encoding.ASCII.GetBytes("not a version file:");
 		using var stream = new MemoryStream();
 		stream.Write(prefix);
+
 		if(bom)
 			stream.Write(encoding.GetPreamble());
 		stream.Write(encoding.GetBytes("应用@1.2.3\r\n"));
@@ -755,6 +756,7 @@ public class ApplicationManifestTest : IDisposable
 	public void FileOperations_PropagateIoFailures()
 	{
 		var path = this.Write("App@1.0\r\n");
+
 		using(var locked = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
 		{
 			Assert.Throws<IOException>(() => ApplicationManifest.Load(path: path));
@@ -984,6 +986,7 @@ public class ApplicationManifestTest : IDisposable
 		editions.Add(new("Professional", new Version(2, 0)));
 		editions.Current = editions[1];
 		var item = new Edition("PROFESSIONAL", new Version(2, 0));
+
 		switch(operation)
 		{
 			case "item":
@@ -1005,6 +1008,7 @@ public class ApplicationManifestTest : IDisposable
 				((Collection<Edition>)editions).Clear();
 				break;
 		}
+
 		Assert.Equal(default(Edition), editions.Current);
 		Assert.False(editions.Contains("Professional"));
 		Assert.Equal(operation == "clear" ? 0 : 1, editions.Count);

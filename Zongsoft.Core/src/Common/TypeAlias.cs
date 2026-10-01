@@ -96,8 +96,8 @@ public static partial class TypeAlias
 			if(elementType.IsGenericType)
 			{
 				alias += '<';
-
 				var arguments = elementType.GenericTypeArguments;
+
 				if(arguments != null && arguments.Length > 0)
 				{
 					for(int i = 0; i < arguments.Length; i++)

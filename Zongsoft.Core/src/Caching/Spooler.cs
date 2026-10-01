@@ -228,6 +228,7 @@ public class Spooler<T> : IEnumerable<T>, IDisposable
 				return this;
 
 			var iterator = new Iterator(_reader, _limit);
+
 			lock(this)
 				(_iterators ??= []).Add(iterator);
 

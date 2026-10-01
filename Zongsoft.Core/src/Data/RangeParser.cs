@@ -602,17 +602,6 @@ internal static class DateTimeRangeParser
 
 	private static bool DoNumber(ref DataTimeRangeParserContext context, out int value, out char unit)
 	{
-		static int GetNumberValue(ref DataTimeRangeParserContext context, State state)
-		{
-			context.Reset(state, out var text);
-
-			if(text.Length > 0)
-				return int.Parse(text.ToString());
-
-			context.Error($"Missing datetime range function parameter value.");
-			return 0;
-		}
-
 		if(context.IsWhitespace)
 		{
 			unit = '\0';
@@ -653,6 +642,17 @@ internal static class DateTimeRangeParser
 				unit = '\0';
 
 				return false;
+		}
+
+		static int GetNumberValue(ref DataTimeRangeParserContext context, State state)
+		{
+			context.Reset(state, out var text);
+
+			if(text.Length > 0)
+				return int.Parse(text.ToString());
+
+			context.Error($"Missing datetime range function parameter value.");
+			return 0;
 		}
 	}
 

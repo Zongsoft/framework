@@ -163,12 +163,16 @@ public static class ControllerUtility
 					yield return method;
 
 				if(metadata is HttpMethodAttribute attribute)
+				{
 					foreach(var text in attribute.HttpMethods)
 						yield return HttpMethod.Parse(text);
+				}
 
 				if(metadata is Microsoft.AspNetCore.Routing.HttpMethodMetadata methodMetadata)
+				{
 					foreach(var text in methodMetadata.HttpMethods)
 						yield return HttpMethod.Parse(text);
+				}
 			}
 		}
 	}

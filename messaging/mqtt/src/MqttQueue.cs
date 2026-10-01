@@ -171,6 +171,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 		args.AutoAcknowledge = false;
 
 		byte[] payload;
+
 		try { payload = args.ApplicationMessage.GetPayload(); }
 		catch(Exception exception)
 		{

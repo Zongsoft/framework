@@ -85,6 +85,7 @@ public class UserIdentityTest
 		Assert.Equal(ConditionOperator.Equal, criteria.Find(field).Operator);
 		Assert.Equal(value, Assert.IsType<Operand.ConstantOperand<string>>(criteria.Find(field).Value).Value);
 		Assert.Equal(ConditionOperator.Equal, criteria.Find(nameof(IUser.Namespace)).Operator);
+
 		if(@namespace == null)
 			Assert.Null(criteria.Find(nameof(IUser.Namespace)).Value);
 		else

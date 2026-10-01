@@ -79,6 +79,7 @@ partial class RedisMessageStorage
 				throw new InvalidDataException(Properties.Resources.RedisMessageStorageRecordEmpty_Message);
 
 			MessageModel snapshot;
+
 			try
 			{
 				snapshot = JsonSerializer.Deserialize<MessageModel>(data, _options);

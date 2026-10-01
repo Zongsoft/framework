@@ -73,6 +73,7 @@ public class ObjectExtension(object value) : IOpenApiExtension
 				var field = fields[i];
 				var fieldValue = field.GetValue(value);
 				writer.WritePropertyName(field.Name);
+
 				if(fieldValue == null)
 					writer.WriteNull();
 				else

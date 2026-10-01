@@ -329,7 +329,6 @@ public class SpreadsheetGenerator : IDataArchiveGenerator, Services.IMatchable
 			model.Properties.TryGetValue(name, out var property) &&
 			property.IsSimplex(out var simplex) &&
 			IsGeneratedPrimaryKeyCore(simplex);
-
 		//只有同时为主键且定义了 Sequence 的字段才属于应从导入模板中排除的自动生成主键。
 		static bool IsGeneratedPrimaryKeyCore(ModelPropertyDescriptor.SimplexPropertyDescriptor property) =>
 			property.IsPrimaryKey && !property.Sequence.IsEmpty;

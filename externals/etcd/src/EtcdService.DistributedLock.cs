@@ -54,6 +54,7 @@ partial class EtcdService : IDistributedLockManager
 		cancellation.ThrowIfCancellationRequested();
 		var client = await this.ConnectAsync(cancellation);
 		var response = await client.GetAsync(this.GetKey(key), null, null, cancellation);
+
 		if(response.Kvs.Count == 0 || response.Kvs[0].Lease == 0)
 			return null;
 
@@ -99,6 +100,7 @@ partial class EtcdService : IDistributedLockManager
 		var client = await this.ConnectAsync(cancellation);
 		var lease = await client.LeaseGrantAsync(new Etcdserverpb.LeaseGrantRequest { TTL = GetLeaseSeconds(expiry) }, null, null, cancellation);
 		var lockKey = ByteString.CopyFromUtf8(this.GetKey(key));
+
 		try
 		{
 			var response = await client.TransactionAsync(new Etcdserverpb.TxnRequest
@@ -153,6 +155,7 @@ partial class EtcdService : IDistributedLockManager
 		var entry = current.Kvs[0];
 		var lease = await client.LeaseGrantAsync(new Etcdserverpb.LeaseGrantRequest { TTL = GetLeaseSeconds(expiry) }, null, null, cancellation);
 		var lockKey = ByteString.CopyFromUtf8(physicalKey);
+
 		try
 		{
 			var response = await client.TransactionAsync(new Etcdserverpb.TxnRequest
@@ -315,11 +318,13 @@ partial class EtcdService : IDistributedLockManager
 			var source = Interlocked.Exchange(ref _renewalCancellation, null);
 			source?.Cancel();
 			var task = Interlocked.Exchange(ref _renewalTask, null);
+
 			if(task != null)
 			{
 				try { await task; }
 				catch(OperationCanceledException) when(source?.IsCancellationRequested == true) { }
 			}
+
 			source?.Dispose();
 		}
 

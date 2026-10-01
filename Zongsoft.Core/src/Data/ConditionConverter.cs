@@ -90,25 +90,6 @@ public class ConditionConverter : IConditionConverter
 			return null;
 
 		ICondition result = null;
-
-		void Fallback(Func<string, Condition> factory)
-		{
-			if(context.Names.Length == 1)
-			{
-				result = factory(context.GetFullName(0));
-				return;
-			}
-
-			var criteria = ConditionCollection.Or();
-
-			for(int i = 0; i < context.Names.Length; i++)
-			{
-				criteria.Add(factory(context.GetFullName(i)));
-			}
-
-			result = criteria;
-		}
-
 		//确定是否为区间值，如果是则返回区间条件
 		if(IsRange(context.Type) && Range.HasValue(context.Value, Fallback))
 			return result;
@@ -137,6 +118,24 @@ public class ConditionConverter : IConditionConverter
 		}
 
 		return conditions;
+
+		void Fallback(Func<string, Condition> factory)
+		{
+			if(context.Names.Length == 1)
+			{
+				result = factory(context.GetFullName(0));
+				return;
+			}
+
+			var criteria = ConditionCollection.Or();
+
+			for(int i = 0; i < context.Names.Length; i++)
+			{
+				criteria.Add(factory(context.GetFullName(i)));
+			}
+
+			result = criteria;
+		}
 	}
 	#endregion
 

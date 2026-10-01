@@ -180,6 +180,7 @@ public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisC
 			Interlocked.Exchange(ref _database, null);
 			Interlocked.Exchange(ref _connection, null);
 			var lease = Interlocked.Exchange(ref _connectionLease, null);
+
 			if(lease != null)
 				await lease.DisposeAsync();
 

@@ -92,6 +92,7 @@ public sealed partial class ZeroQueue
 
 				var publisher = new XPublisherSocket();
 				NetMQMonitor monitor = null;
+
 				try
 				{
 					publisher.Options.HeartbeatInterval = TimeSpan.FromSeconds(30);
@@ -139,6 +140,7 @@ public sealed partial class ZeroQueue
 
 				var monitor = _publisherMonitor;
 				_publisherMonitor = null;
+
 				if(monitor != null)
 				{
 					monitor.Disconnected -= this.OnPublisherDisconnected;
@@ -149,6 +151,7 @@ public sealed partial class ZeroQueue
 
 				var publisher = _publisher;
 				_publisher = null;
+
 				if(publisher != null && !publisher.IsDisposed)
 				{
 					publisher.ReceiveReady -= this.OnSubscriptionReady;
@@ -187,6 +190,7 @@ public sealed partial class ZeroQueue
 				}
 
 				_subscriberTopics.Add(command.Subscriber, command.Topic);
+
 				try
 				{
 					this.Attach(command.Subscriber, command.Topic);
@@ -256,6 +260,7 @@ public sealed partial class ZeroQueue
 							continue;
 
 						string topic;
+
 						try { topic = UTF8.GetString(frame, 1, frame.Length - 1); }
 						catch(DecoderFallbackException) { continue; }
 
@@ -311,6 +316,7 @@ public sealed partial class ZeroQueue
 				if(_options.Heartbeat > TimeSpan.Zero && now >= _nextHeartbeat)
 				{
 					_nextHeartbeat = now + _options.Heartbeat;
+
 					try
 					{
 						foreach(var topic in _heartbeatTopics())

@@ -376,6 +376,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(3, count);
 		Assert.NotNull(model.Children);
 		Assert.NotEmpty(model.Children);
+
 		foreach(var child in model.Children)
 			Assert.Equal(10U, child.RoleId);
 
@@ -459,6 +460,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(3, count);
 		Assert.NotNull(model.Departments);
 		Assert.NotEmpty(model.Departments);
+
 		foreach(var department in model.Departments)
 			Assert.True(department.DepartmentId > 0);
 
@@ -824,6 +826,7 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			Assert.NotNull(model);
 			Assert.NotNull(model.Departments);
 			Assert.NotEmpty(model.Departments);
+
 			foreach(var department in model.Departments)
 				Assert.True(department.DepartmentId > 0);
 		}

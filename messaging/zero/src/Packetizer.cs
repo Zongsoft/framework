@@ -48,6 +48,7 @@ internal static class Packetizer
 		Validate(identifier, nameof(identifier));
 		Validate(tags, nameof(tags));
 		Validate(compression, nameof(compression));
+
 		if(Encoding.UTF8.GetByteCount(topic) > Protocol.MaxTopicSize)
 			throw new ArgumentOutOfRangeException(nameof(topic));
 		if(identifier?.Length > Protocol.MaxIdentifierSize)

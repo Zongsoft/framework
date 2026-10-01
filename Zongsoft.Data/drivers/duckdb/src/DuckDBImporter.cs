@@ -287,7 +287,6 @@ public class DuckDBImporter : DataImporterBase
 			DateTimeOffset date => DateOnly.FromDateTime(date.DateTime),
 			_ => Zongsoft.Common.Convert.ConvertValue<DateOnly>(value),
 		};
-
 		static TimeOnly GetTime(object value) => value switch
 		{
 			TimeOnly time => time,

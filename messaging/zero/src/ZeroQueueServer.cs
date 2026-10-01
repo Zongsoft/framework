@@ -95,6 +95,7 @@ public sealed partial class ZeroQueueServer : WorkerBase
 
 		var storage = _storage;
 		ServerAgent agent = null;
+
 		try
 		{
 			if(storage == null && _storages != null)

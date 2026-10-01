@@ -421,6 +421,8 @@ public class MetadataFileResolver
 			}
 		}
 
+		return command;
+
 		static System.Data.ParameterDirection GetDirection(string value)
 		{
 			if(string.IsNullOrEmpty(value))
@@ -439,8 +441,6 @@ public class MetadataFileResolver
 				_ => throw new MetadataFileException(string.Format(Properties.Resources.MetadataFile_InvalidAttributeValue_Message, value, XML_DIRECTION_ATTRIBUTE, XML_PARAMETER_ELEMENT)),
 			};
 		}
-
-		return command;
 	}
 	#endregion
 

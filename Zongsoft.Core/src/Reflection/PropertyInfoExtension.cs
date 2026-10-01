@@ -106,6 +106,7 @@ public static class PropertyInfoExtension
 
 			generator.Emit(OpCodes.Ldarg_0);
 			generator.Emit(OpCodes.Ldind_Ref);
+
 			if(property.DeclaringType.IsValueType)
 				generator.Emit(OpCodes.Unbox_Any, property.DeclaringType);
 			else
@@ -196,6 +197,7 @@ public static class PropertyInfoExtension
 
 			generator.Emit(OpCodes.Ldarg_0);
 			generator.Emit(OpCodes.Ldind_Ref);
+
 			if(property.DeclaringType.IsValueType)
 				generator.Emit(OpCodes.Unbox_Any, property.DeclaringType);
 			else

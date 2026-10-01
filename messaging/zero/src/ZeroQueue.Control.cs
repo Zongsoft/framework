@@ -117,6 +117,7 @@ public sealed partial class ZeroQueue
 					return;
 
 				var dealer = new DealerSocket();
+
 				try
 				{
 					dealer.Options.Identity = Encoding.UTF8.GetBytes(_session);
@@ -146,6 +147,7 @@ public sealed partial class ZeroQueue
 			{
 				var dealer = _dealer;
 				_dealer = null;
+
 				if(dealer != null && !dealer.IsDisposed)
 				{
 					dealer.ReceiveReady -= this.OnReceiveReady;
@@ -265,6 +267,7 @@ public sealed partial class ZeroQueue
 				{
 					try { this.Process(message); }
 					catch(Exception exception) { Diagnostics.Logging.GetLogging(this).Error(exception); }
+
 					message = new NetMQMessage();
 				}
 			}
@@ -285,6 +288,7 @@ public sealed partial class ZeroQueue
 								subscription.Command?.Completion.TrySetResult();
 								subscription.Command = null;
 							}
+
 							break;
 						}
 					case Protocol.Commands.Deliver when message.FrameCount == 10:
@@ -345,6 +349,7 @@ public sealed partial class ZeroQueue
 								command.CancellationRegistration.Dispose();
 								command.Completion.TrySetException(new InvalidOperationException(string.Format(Properties.Resources.ZeroQueue_ReliableProtocolError_Message, code)));
 							}
+
 							break;
 						}
 				}
@@ -398,6 +403,7 @@ public sealed partial class ZeroQueue
 					command.CancellationRegistration.Dispose();
 					command.Completion.TrySetException(new ObjectDisposedException(nameof(Transport)));
 				}
+
 				_subscriptions.Clear();
 				_publishes.Clear();
 			}

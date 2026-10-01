@@ -209,8 +209,6 @@ public static class EventBinder
 	#region 私有方法
 	private static (object adapter, Delegate trigger) GetAdapter(this EventDescriptor descriptor, Type delegateType)
 	{
-		static bool IsParametersType(Type type) => typeof(Collections.Parameters).IsAssignableFrom(type);
-
 		if(delegateType == typeof(Action))
 		{
 			var adapter = new ActionAdapter(descriptor);
@@ -289,6 +287,8 @@ public static class EventBinder
 		}
 
 		return default;
+
+		static bool IsParametersType(Type type) => typeof(Collections.Parameters).IsAssignableFrom(type);
 	}
 
 	private static object GetMember(object target, string name)

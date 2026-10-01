@@ -111,6 +111,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(3, count);
 		Assert.NotNull(model.Children);
 		Assert.NotEmpty(model.Children);
+
 		foreach(var child in model.Children)
 			Assert.Equal(10U, child.RoleId);
 
@@ -161,6 +162,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(3, count);
 		Assert.NotNull(model.Children);
 		Assert.NotEmpty(model.Children);
+
 		foreach(var child in model.Children)
 			Assert.Equal(10U, child.RoleId);
 

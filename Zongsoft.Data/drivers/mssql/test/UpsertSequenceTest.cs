@@ -79,6 +79,7 @@ public class UpsertSequenceTest(DatabaseFixture database) : IDisposable
 		Assert.True(model.RoleId > 0);
 		Assert.NotNull(model.Children);
 		Assert.NotEmpty(model.Children);
+
 		foreach(var child in model.Children)
 			Assert.Equal(model.RoleId, child.RoleId);
 
@@ -129,6 +130,7 @@ public class UpsertSequenceTest(DatabaseFixture database) : IDisposable
 		Assert.True(count >= 3);
 		Assert.NotNull(model.Children);
 		Assert.NotEmpty(model.Children);
+
 		foreach(var child in model.Children)
 			Assert.Equal(model.RoleId, child.RoleId);
 

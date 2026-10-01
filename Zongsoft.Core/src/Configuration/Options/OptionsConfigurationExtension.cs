@@ -79,20 +79,6 @@ public static class OptionsConfigurationExtension
 
 	private static bool Exists<TOptions>(this IServiceCollection services, string name, IConfiguration configuration, Action<Configuration.ConfigurationBinderOptions> binder) where TOptions : class
 	{
-		static bool CompareConfiguration(IConfiguration a, IConfiguration b)
-		{
-			if(a == null)
-				return b == null;
-
-			if(b == null)
-				return a == null;
-
-			if(a is IConfigurationSection x && b is IConfigurationSection y)
-				return string.Equals(x.Path, y.Path, StringComparison.OrdinalIgnoreCase);
-
-			return object.Equals(a, b);
-		}
-
 		return services.Any(descriptor =>
 		{
 			var instance = descriptor.ImplementationInstance;
@@ -106,5 +92,19 @@ public static class OptionsConfigurationExtension
 
 			return false;
 		});
+
+		static bool CompareConfiguration(IConfiguration a, IConfiguration b)
+		{
+			if(a == null)
+				return b == null;
+
+			if(b == null)
+				return a == null;
+
+			if(a is IConfigurationSection x && b is IConfigurationSection y)
+				return string.Equals(x.Path, y.Path, StringComparison.OrdinalIgnoreCase);
+
+			return object.Equals(a, b);
+		}
 	}
 }

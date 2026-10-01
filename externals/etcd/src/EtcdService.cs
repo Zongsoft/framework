@@ -137,6 +137,7 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 
 		var client = await this.ConnectAsync(cancellation);
 		long leaseId = 0;
+
 		try
 		{
 			if(expiry > TimeSpan.Zero)
@@ -191,6 +192,7 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 				key = key[namespacePrefix.Length..];
 			result[key] = item.Value.ToStringUtf8();
 		}
+
 		return result;
 	}
 
@@ -243,6 +245,7 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 			return client;
 
 		await _connectionLock.WaitAsync(cancellation);
+
 		try
 		{
 			client = _client;
@@ -269,6 +272,7 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 				client.Dispose();
 				throw new ObjectDisposedException(this.GetType().FullName);
 			}
+
 			_activated = true;
 			Volatile.Write(ref _client, client);
 			return client;

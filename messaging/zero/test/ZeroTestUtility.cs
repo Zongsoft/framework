@@ -168,6 +168,7 @@ internal sealed class MemoryMessageStorage : IMessageStorage
 		ArgumentNullException.ThrowIfNull(topic);
 		cancellation.ThrowIfCancellationRequested();
 		var count = 0;
+
 		foreach(var entry in _messages)
 		{
 			if(string.Equals(entry.Value.Message.Topic, topic, StringComparison.Ordinal) && _messages.TryRemove(entry.Key, out _))
@@ -198,6 +199,7 @@ internal sealed class MemoryMessageStorage : IMessageStorage
 	{
 		Interlocked.Increment(ref _getCount);
 		await Task.Yield();
+
 		foreach(var entry in _messages)
 		{
 			cancellation.ThrowIfCancellationRequested();
@@ -216,6 +218,7 @@ internal sealed class MemoryMessageStorage : IMessageStorage
 		ArgumentNullException.ThrowIfNull(topic);
 		Interlocked.Increment(ref _getCount);
 		await Task.Yield();
+
 		foreach(var entry in _messages)
 		{
 			cancellation.ThrowIfCancellationRequested();

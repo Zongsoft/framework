@@ -196,6 +196,11 @@ public class RangeTest
 	[Fact]
 	public void TestYear()
 	{
+		Verify(2020, Range<DateTime>.Parse("year(2020)"));
+		Verify(1979, Range<DateTime>.Parse("year (1979 ) "));
+		Verify(2000, Range<DateTime>.Parse("year( 2000  ) "));
+		Verify(2010, Range<DateTime>.Parse(" year ( 2010  ) "));
+
 		static void Verify(int year, Range<DateTime> range)
 		{
 			Assert.NotNull(range.Minimum);
@@ -215,16 +220,16 @@ public class RangeTest
 			Assert.Equal(59, range.Maximum.Value.Minute);
 			Assert.Equal(59, range.Maximum.Value.Second);
 		}
-
-		Verify(2020, Range<DateTime>.Parse("year(2020)"));
-		Verify(1979, Range<DateTime>.Parse("year (1979 ) "));
-		Verify(2000, Range<DateTime>.Parse("year( 2000  ) "));
-		Verify(2010, Range<DateTime>.Parse(" year ( 2010  ) "));
 	}
 
 	[Fact]
 	public void TestMonth()
 	{
+		Verify(2020, 1, Range<DateTime>.Parse("month(2020, 1)"));
+		Verify(1979, 2, Range<DateTime>.Parse("month (1979,2 ) "));
+		Verify(2000, 2, Range<DateTime>.Parse(" month( 2000 , 2 ) "));
+		Verify(2010, 12, Range<DateTime>.Parse(" month ( 2010  ,12 ) "));
+
 		static void Verify(int year, int month, Range<DateTime> range)
 		{
 			Assert.NotNull(range.Minimum);
@@ -244,11 +249,6 @@ public class RangeTest
 			Assert.Equal(59, range.Maximum.Value.Minute);
 			Assert.Equal(59, range.Maximum.Value.Second);
 		}
-
-		Verify(2020, 1, Range<DateTime>.Parse("month(2020, 1)"));
-		Verify(1979, 2, Range<DateTime>.Parse("month (1979,2 ) "));
-		Verify(2000, 2, Range<DateTime>.Parse(" month( 2000 , 2 ) "));
-		Verify(2010, 12, Range<DateTime>.Parse(" month ( 2010  ,12 ) "));
 	}
 
 	[Fact]

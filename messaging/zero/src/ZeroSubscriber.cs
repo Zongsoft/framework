@@ -165,6 +165,7 @@ public sealed class ZeroSubscriber : MessageConsumerBase<ZeroQueue>
 				}
 
 				string header;
+
 				try { header = UTF8.GetString(headerData); }
 				catch(System.Text.DecoderFallbackException)
 				{

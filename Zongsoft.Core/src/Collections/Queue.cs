@@ -168,6 +168,7 @@ public class Queue : Zongsoft.Collections.IQueue
 		int firstPart = (_buffer.Length - _head < numToCopy) ? _buffer.Length - _head : numToCopy;
 		Array.Copy(_buffer, _head, queue._buffer, 0, firstPart);
 		numToCopy -= firstPart;
+
 		if(numToCopy > 0)
 			Array.Copy(_buffer, 0, queue._buffer, _buffer.Length - _head, numToCopy);
 
@@ -529,6 +530,7 @@ public class Queue : Zongsoft.Collections.IQueue
 		int firstPart = (_buffer.Length - _head < numToCopy) ? _buffer.Length - _head : numToCopy;
 		Array.Copy(_buffer, _head, array, index, firstPart);
 		numToCopy -= firstPart;
+
 		if(numToCopy > 0)
 			Array.Copy(_buffer, 0, array, index + _buffer.Length - _head, numToCopy);
 	}

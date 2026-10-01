@@ -21,12 +21,12 @@ public class RedisRoundTripTests
 	{
 		EnsureRedis();
 
-		await using var cache = new RedisService($"roundtrip-{Guid.NewGuid():N}",
-			$"server={Global.Server};password={Global.Password};timeout=5s;")
+		var key = exists ? "existing" : "missing";
+		await using var cache = new RedisService($"roundtrip-{Guid.NewGuid():N}", $"server={Global.Server};password={Global.Password};timeout=5s;")
 		{
 			Namespace = $"Zongsoft.Tests.RoundTrip.{Guid.NewGuid():N}",
 		};
-		var key = exists ? "existing" : "missing";
+
 		if(exists)
 			Assert.True(await cache.SetValueAsync(key, "value"));
 		else

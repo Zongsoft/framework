@@ -83,6 +83,7 @@ public partial class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyCh
 		set
 		{
 			this.OnPropertyChanging(nameof(this.QualifiedName));
+
 			if(string.IsNullOrEmpty(value))
 			{
 				this.Name = string.Empty;
@@ -91,6 +92,7 @@ public partial class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyCh
 			else
 			{
 				var index = value.LastIndexOf(Type.Delimiter);
+
 				if(index < 0)
 				{
 					this.Name = value;
@@ -102,6 +104,7 @@ public partial class ModelDescriptor : INotifyPropertyChanged, INotifyPropertyCh
 					this.Namespace = value[..index];
 				}
 			}
+
 			this.OnPropertyChanged(nameof(this.QualifiedName));
 		}
 	}

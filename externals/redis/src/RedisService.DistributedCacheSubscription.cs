@@ -114,6 +114,7 @@ partial class RedisService
 				return;
 
 			var notification = new DistributedCacheNotification(kind, key);
+
 			lock(_queueLock)
 			{
 				if(_closing != 0)
@@ -132,6 +133,7 @@ partial class RedisService
 					Interlocked.Increment(ref _dropped);
 					RedisDiagnostics.PendingNotifications.Add(-1);
 					RedisDiagnostics.DroppedNotifications.Add(1);
+
 					if(_queue.Writer.TryWrite(notification))
 					{
 						Interlocked.Increment(ref _pending);
@@ -253,6 +255,7 @@ partial class RedisService
 				while(await _queue.Reader.WaitToReadAsync())
 				{
 					DistributedCacheNotification notification;
+
 					lock(_queueLock)
 					{
 						if(!_queue.Reader.TryRead(out notification))
@@ -268,6 +271,7 @@ partial class RedisService
 					{
 						using var activity = RedisDiagnostics.ActivitySource.StartActivity("redis.cache.notification.handle", ActivityKind.Consumer);
 						var started = Stopwatch.GetTimestamp();
+
 						try
 						{
 							await this.Handler.HandleAsync(notification, _lifetime.Token);

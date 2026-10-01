@@ -229,8 +229,10 @@ partial class Release
 		while(reader.Read() && reader.Depth > depth)
 		{
 			if(reader.NodeType == XmlNodeType.Element && reader.LocalName.Equals(TAG_ELEMENT, StringComparison.OrdinalIgnoreCase))
+			{
 				if(reader.Read() && reader.NodeType == XmlNodeType.Text && !string.IsNullOrWhiteSpace(reader.Value))
 					tags.Add(reader.Value.Trim());
+			}
 		}
 
 		if(tags != null && tags.Count > 0)

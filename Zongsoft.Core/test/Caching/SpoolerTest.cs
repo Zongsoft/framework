@@ -180,6 +180,7 @@ public class SpoolerTest
 		{
 			flusher.Resume();
 			await cancellation.CancelAsync();
+
 			try { await pending.WaitAsync(TimeSpan.FromSeconds(5)); }
 			catch(OperationCanceledException) { }
 		}
@@ -193,6 +194,7 @@ public class SpoolerTest
 		using var spooler = new Spooler<int>(flusher.OnFlushAsync, TimeSpan.FromDays(1), 1);
 		await spooler.PutAsync(0, cancellation.Token);
 		var pending = spooler.PutAsync(1, cancellation.Token).AsTask();
+
 		try
 		{
 			await flusher.Entered.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
@@ -216,6 +218,7 @@ public class SpoolerTest
 		using var spooler = new Spooler<int>(flusher.OnFlushAsync, TimeSpan.FromDays(1), 1);
 		await spooler.PutAsync(0, TestContext.Current.CancellationToken);
 		var pending = spooler.PutAsync(1, TestContext.Current.CancellationToken).AsTask();
+
 		try
 		{
 			await flusher.Entered.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
@@ -297,6 +300,7 @@ public class SpoolerTest
 		var context = new CountingContext();
 		var previous = SynchronizationContext.Current;
 		Task pending;
+
 		try
 		{
 			SynchronizationContext.SetSynchronizationContext(context);
@@ -317,6 +321,7 @@ public class SpoolerTest
 		finally
 		{
 			await cancellation.CancelAsync();
+
 			try { await pending.WaitAsync(TimeSpan.FromSeconds(5)); }
 			catch(OperationCanceledException) { }
 		}
@@ -330,6 +335,7 @@ public class SpoolerTest
 		using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
 		await spooler.PutAsync(42, TestContext.Current.CancellationToken);
 		var owner = spooler.FlushAsync(TestContext.Current.CancellationToken).AsTask();
+
 		try
 		{
 			await flusher.Entered.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
@@ -340,6 +346,7 @@ public class SpoolerTest
 			Assert.False(owner.IsCompleted);
 		}
 		finally { flusher.Resume(); }
+
 		await owner.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
 		Assert.Equal(new[] { 42 }, flusher.Values);
 		Assert.Equal(1, flusher.Calls);
@@ -352,6 +359,7 @@ public class SpoolerTest
 		using var spooler = new Spooler<int>(flusher.OnFlushAsync, TimeSpan.FromDays(1), 3);
 		await spooler.PutAsync(42, TestContext.Current.CancellationToken);
 		var owner = spooler.FlushAsync(TestContext.Current.CancellationToken).AsTask();
+
 		try
 		{
 			await flusher.Entered.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
@@ -362,6 +370,7 @@ public class SpoolerTest
 			Assert.Equal(1, flusher.Calls);
 		}
 		finally { flusher.Resume(); }
+
 		await owner.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
 	}
 
@@ -382,6 +391,7 @@ public class SpoolerTest
 			{
 				Assert.True(++count <= limit);
 				values.Add(value);
+
 				if(replenish)
 				{
 					var write = spooler.PutAsync(next++, cancellation);
@@ -389,6 +399,7 @@ public class SpoolerTest
 					write.GetAwaiter().GetResult();
 				}
 			}
+
 			return ValueTask.CompletedTask;
 		}, TimeSpan.FromDays(1), limit);
 
@@ -467,6 +478,7 @@ public class SpoolerTest
 		await spooler.PutAsync(0, cancellation.Token);
 		var pending = spooler.PutAsync(1, cancellation.Token).AsTask();
 		Assert.False(pending.IsCompleted);
+
 		if(dispose)
 		{
 			spooler.Dispose();
@@ -522,6 +534,7 @@ public class SpoolerTest
 				await release.Task;
 				throw failure;
 			}
+
 			values.AddRange(items);
 		}, TimeSpan.FromDays(1), 3);
 
@@ -558,6 +571,7 @@ public class SpoolerTest
 				entered.SetResult();
 				await release.Task;
 			}
+
 			using var iterator = items.GetEnumerator();
 			Assert.True(iterator.MoveNext());
 			values.Add(iterator.Current);

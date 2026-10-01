@@ -41,11 +41,13 @@ public sealed class EtcdRemoveCommand() : EtcdCommandBase("Remove")
 		RequireArguments(context);
 		var etcd = GetEtcd(context);
 		var count = 0;
+
 		foreach(var key in context.Arguments)
 		{
 			if(await etcd.RemoveAsync(key, cancellation))
 				count++;
 		}
+
 		return count;
 	}
 }

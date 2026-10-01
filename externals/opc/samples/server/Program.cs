@@ -30,6 +30,7 @@ internal static class Program
 			context.Output.Write(CommandOutletColor.Cyan, "Elapsed: ");
 			context.Output.WriteLine(CommandOutletColor.Green, server.Elapsed.ToString());
 			context.Output.Write(CommandOutletColor.Cyan, "Certificate: ");
+
 			if(server.Certificate == null)
 				context.Output.WriteLine(CommandOutletColor.White, "NULL");
 			else

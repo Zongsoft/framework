@@ -478,6 +478,7 @@ internal abstract class ModelEmitterBase
 
 			generator = getMethod.GetILGenerator();
 			generator.Emit(OpCodes.Ldarg_0);
+
 			//generator.Emit(OpCodes.Castclass, field.DeclaringType);
 			if(field == null)
 				generator.Emit(OpCodes.Callvirt, getter);
@@ -704,6 +705,7 @@ internal abstract class ModelEmitterBase
 				generator = setMethod.GetILGenerator();
 				generator.Emit(OpCodes.Ldarg_0);
 				generator.Emit(OpCodes.Ldarg_1);
+
 				if(properties[i].PropertyType.IsPrimitive)
 				{
 					generator.Emit(OpCodes.Ldtoken, properties[i].PropertyType);
@@ -717,6 +719,7 @@ internal abstract class ModelEmitterBase
 				}
 				else
 					generator.Emit(OpCodes.Castclass, properties[i].PropertyType);
+
 				generator.Emit(OpCodes.Call, setter);
 				generator.Emit(OpCodes.Ret);
 			}
@@ -1174,6 +1177,7 @@ internal abstract class ModelEmitterBase
 			generator.Emit(OpCodes.Rem);
 			generator.Emit(OpCodes.Shr);
 			generator.Emit(OpCodes.Ldc_I4_1);
+
 			if(mask.FieldType == typeof(ulong))
 				generator.Emit(OpCodes.Conv_I8);
 			generator.Emit(OpCodes.And);
@@ -1226,6 +1230,7 @@ internal abstract class ModelEmitterBase
 			generator.Emit(OpCodes.Ldfld, PROPERTY_TOKEN_ORDINAL_FIELD);
 			generator.Emit(OpCodes.Shr);
 			generator.Emit(OpCodes.Ldc_I4_1);
+
 			if(mask.FieldType == typeof(ulong))
 				generator.Emit(OpCodes.Conv_I8);
 			generator.Emit(OpCodes.And);
@@ -1251,6 +1256,7 @@ internal abstract class ModelEmitterBase
 			generator.Emit(OpCodes.Ldfld, PROPERTY_TOKEN_ORDINAL_FIELD);
 			generator.Emit(OpCodes.Shl);
 			generator.Emit(OpCodes.Not);
+
 			if(mask.FieldType == typeof(ulong))
 				generator.Emit(OpCodes.Conv_I8);
 			generator.Emit(OpCodes.And);
@@ -1382,6 +1388,7 @@ internal abstract class ModelEmitterBase
 			generator.Emit(OpCodes.Rem);
 			generator.Emit(OpCodes.Shr);
 			generator.Emit(OpCodes.Ldc_I4_1);
+
 			if(mask.FieldType == typeof(ulong))
 				generator.Emit(OpCodes.Conv_I8);
 			generator.Emit(OpCodes.And);
@@ -1426,6 +1433,7 @@ internal abstract class ModelEmitterBase
 			generator.Emit(OpCodes.Ldfld, PROPERTY_TOKEN_ORDINAL_FIELD);
 			generator.Emit(OpCodes.Shr);
 			generator.Emit(OpCodes.Ldc_I4_1);
+
 			if(mask.FieldType == typeof(ulong))
 				generator.Emit(OpCodes.Conv_I8);
 			generator.Emit(OpCodes.And);
@@ -1443,6 +1451,7 @@ internal abstract class ModelEmitterBase
 			generator.Emit(OpCodes.Ldfld, PROPERTY_TOKEN_ORDINAL_FIELD);
 			generator.Emit(OpCodes.Shl);
 			generator.Emit(OpCodes.Not);
+
 			if(mask.FieldType == typeof(ulong))
 				generator.Emit(OpCodes.Conv_I8);
 			generator.Emit(OpCodes.And);
@@ -1555,6 +1564,7 @@ internal abstract class ModelEmitterBase
 			generator.Emit(OpCodes.Ldarg_0);
 			generator.Emit(OpCodes.Ldfld, mask);
 			generator.Emit(OpCodes.Ldc_I4_0);
+
 			if(mask.FieldType == typeof(ulong))
 				generator.Emit(OpCodes.Conv_I8);
 			generator.Emit(OpCodes.Cgt_Un);
@@ -1613,6 +1623,7 @@ internal abstract class ModelEmitterBase
 			generator.Emit(OpCodes.Ldfld, PROPERTY_TOKEN_ORDINAL_FIELD);
 			generator.Emit(OpCodes.Shr_Un);
 			generator.Emit(OpCodes.Ldc_I4_1);
+
 			if(mask.FieldType == typeof(ulong))
 				generator.Emit(OpCodes.Conv_I8);
 			generator.Emit(OpCodes.And);
@@ -1726,6 +1737,7 @@ internal abstract class ModelEmitterBase
 			generator.Emit(OpCodes.Ldloc_1);
 			generator.Emit(OpCodes.Shr_Un);
 			generator.Emit(OpCodes.Ldc_I4_1);
+
 			if(mask.FieldType == typeof(ulong))
 				generator.Emit(OpCodes.Conv_I8);
 			generator.Emit(OpCodes.And);
@@ -1859,6 +1871,7 @@ internal abstract class ModelEmitterBase
 			generator.Emit(OpCodes.Ldfld, PROPERTY_TOKEN_ORDINAL_FIELD);
 			generator.Emit(OpCodes.Shr_Un);
 			generator.Emit(OpCodes.Ldc_I4_1);
+
 			if(mask.FieldType == typeof(ulong))
 				generator.Emit(OpCodes.Conv_I8);
 			generator.Emit(OpCodes.And);

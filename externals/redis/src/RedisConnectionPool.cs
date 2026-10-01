@@ -169,6 +169,7 @@ internal static class RedisConnectionPool
 				try
 				{
 					var connection = await task;
+
 					try
 					{
 						await connection.DisposeAsync();
@@ -313,6 +314,7 @@ internal sealed class RedisConnectionLease : IDisposable, IAsyncDisposable
 			}
 
 			var current = Volatile.Read(ref _lease) ?? throw new ObjectDisposedException(nameof(IConnectionMultiplexer));
+
 			try
 			{
 				var result = targetMethod.Invoke(current.Connection, args);

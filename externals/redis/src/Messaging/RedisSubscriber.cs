@@ -390,6 +390,7 @@ public class RedisSubscriber : MessageConsumerBase<RedisQueue>
 				catch(Exception exception)
 				{
 					Zongsoft.Diagnostics.Logging.GetLogging(typeof(RedisSubscriber)).Error(exception);
+
 					try { await Task.Delay(100, cancellation); }
 					catch(OperationCanceledException) { return; }
 				}

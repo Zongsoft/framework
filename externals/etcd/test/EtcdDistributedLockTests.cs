@@ -50,6 +50,7 @@ public class EtcdDistributedLockTests
 		}
 
 		var options = new DistributedLockOptions(TimeSpan.FromSeconds(2)) { RenewalInterval = TimeSpan.FromMilliseconds(500) };
+
 		await using(var automatic = await service.AcquireAsync("automatic", options))
 		{
 			await Task.Delay(TimeSpan.FromSeconds(4.5));

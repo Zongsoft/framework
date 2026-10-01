@@ -99,9 +99,9 @@ internal class Program
 			static ValueTask OnRetry(RetryArgument argument, CancellationToken cancellation)
 			{
 				Terminal.Console.WriteLine(CommandOutletContent.Create()
-					.AppendLine(CommandOutletColor.Cyan, new String('·', 50))
+					.AppendLine(CommandOutletColor.Cyan, new string('·', 50))
 					.AppendLine(CommandOutletColor.DarkYellow, $"[{nameof(OnRetry)}] {argument.Attempted}".Justify(50))
-					.AppendLine(CommandOutletColor.Cyan, new String('·', 50)));
+					.AppendLine(CommandOutletColor.Cyan, new string('·', 50)));
 
 				return ValueTask.CompletedTask;
 			}
@@ -119,9 +119,9 @@ internal class Program
 			breaker.Closed = (argument, cancellation) =>
 			{
 				Terminal.Console.WriteLine(CommandOutletContent.Create()
-					.AppendLine(CommandOutletColor.Cyan, new String('·', 50))
+					.AppendLine(CommandOutletColor.Cyan, new string('·', 50))
 					.AppendLine(CommandOutletColor.DarkYellow, $"[Breaker.{nameof(breaker.Closed)}]".Justify(50))
-					.AppendLine(CommandOutletColor.Cyan, new String('·', 50)));
+					.AppendLine(CommandOutletColor.Cyan, new string('·', 50)));
 
 				return ValueTask.CompletedTask;
 			};
@@ -129,9 +129,9 @@ internal class Program
 			breaker.Opened = (argument, cancellation) =>
 			{
 				Terminal.Console.WriteLine(CommandOutletContent.Create()
-					.AppendLine(CommandOutletColor.Cyan, new String('·', 50))
+					.AppendLine(CommandOutletColor.Cyan, new string('·', 50))
 					.AppendLine(CommandOutletColor.DarkYellow, $"[Breaker.{nameof(breaker.Opened)}] {(argument.IsHalf ? "(Half)" : null)}".Justify(50))
-					.AppendLine(CommandOutletColor.Cyan, new String('·', 50)));
+					.AppendLine(CommandOutletColor.Cyan, new string('·', 50)));
 
 				return ValueTask.CompletedTask;
 			};
@@ -144,9 +144,9 @@ internal class Program
 			static ValueTask OnTimeout(TimeoutArgument argument, CancellationToken cancellation)
 			{
 				Terminal.Console.WriteLine(CommandOutletContent.Create()
-					.AppendLine(CommandOutletColor.Cyan, new String('·', 50))
+					.AppendLine(CommandOutletColor.Cyan, new string('·', 50))
 					.AppendLine(CommandOutletColor.DarkYellow, $"[{nameof(OnTimeout)}] {argument.Timeout}".Justify(50))
-					.AppendLine(CommandOutletColor.Cyan, new String('·', 50)));
+					.AppendLine(CommandOutletColor.Cyan, new string('·', 50)));
 
 				return ValueTask.CompletedTask;
 			}
@@ -189,9 +189,9 @@ internal class Program
 				Console.Beep();
 
 				Terminal.Console.WriteLine(CommandOutletContent.Create()
-					.AppendLine(CommandOutletColor.Cyan, new String('·', 50))
+					.AppendLine(CommandOutletColor.Cyan, new string('·', 50))
 					.AppendLine(CommandOutletColor.DarkYellow, $"[{nameof(OnRejected)}] {argument.Value}".Justify(50))
-					.AppendLine(CommandOutletColor.Cyan, new String('·', 50)));
+					.AppendLine(CommandOutletColor.Cyan, new string('·', 50)));
 
 				return ValueTask.FromResult(true);
 			}

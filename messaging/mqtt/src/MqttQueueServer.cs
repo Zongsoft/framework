@@ -203,6 +203,7 @@ public partial class MqttQueueServer : ListenerBase<Message>
 			return;
 
 		byte[] payload;
+
 		try { payload = args.ApplicationMessage.GetPayload(); }
 		catch(Exception exception)
 		{

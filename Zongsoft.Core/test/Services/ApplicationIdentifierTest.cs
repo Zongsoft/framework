@@ -117,6 +117,7 @@ public class ApplicationIdentifierTest : IDisposable
 		var encoding = Encoding.GetEncoding(encodingName);
 		var prefix = Encoding.ASCII.GetBytes("invalid prefix");
 		stream.Write(prefix);
+
 		if(bom)
 			stream.Write(encoding.GetPreamble());
 		stream.Write(encoding.GetBytes("\r\n 应用-社区版@1.2.3\ninvalid@version"));

@@ -97,6 +97,7 @@ public static class FieldInfoExtension
 
 		generator.Emit(OpCodes.Ldarg_0);
 		generator.Emit(OpCodes.Ldind_Ref);
+
 		if(field.DeclaringType.IsValueType)
 			generator.Emit(OpCodes.Unbox_Any, field.DeclaringType);
 		else
@@ -135,6 +136,7 @@ public static class FieldInfoExtension
 
 		generator.Emit(OpCodes.Ldarg_0);
 		generator.Emit(OpCodes.Ldind_Ref);
+
 		if(field.DeclaringType.IsValueType)
 			generator.Emit(OpCodes.Unbox_Any, field.DeclaringType);
 		else

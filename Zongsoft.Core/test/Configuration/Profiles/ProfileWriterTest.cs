@@ -219,6 +219,7 @@ public class ProfileWriterTest
 		Assert.Equal(2, imported.Count);
 		Assert.NotSame(imported[0], imported[1]);
 		imported[0].Entries["value"].Value = "changed";
+
 		if(bothChanged)
 			imported[1].Entries["value"].Value = "changed";
 
@@ -538,6 +539,7 @@ public class ProfileWriterTest
 		using var files = new ProfileImportTest.ProfileFiles();
 		var target = files.Write("actual/value.ini", "value=original");
 		var alias = files.PathFor(directoryLink ? "alias" : "alias.ini");
+
 		try
 		{
 			if(directoryLink)
@@ -582,6 +584,7 @@ public class ProfileWriterTest
 		var copy = files.PathFor("latin1.ini");
 		profile.Save(copy, Encoding.Latin1);
 		Assert.Contains((byte)0xE9, File.ReadAllBytes(copy));
+
 		using(var input = File.OpenRead(copy))
 			Assert.Equal("café", Profile.Load(input, Encoding.Latin1).Entries["name"].Value);
 
@@ -748,6 +751,7 @@ public class ProfileWriterTest
 		using var files = new ProfileImportTest.ProfileFiles();
 		var child = files.Write("child.ini", "#@trace child\nvalue=original");
 		var alias = files.PathFor("alias.ini");
+
 		try
 		{
 			File.CreateSymbolicLink(alias, child);
@@ -764,6 +768,7 @@ public class ProfileWriterTest
 			var options = Options(imported: imported.Add);
 			var profile = Profile.Load(root, options);
 			Assert.Equal(2, imported.Count);
+
 			foreach(var item in imported)
 				item.Entries["value"].Value = "changed";
 

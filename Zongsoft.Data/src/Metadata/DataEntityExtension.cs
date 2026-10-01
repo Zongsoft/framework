@@ -51,11 +51,6 @@ public static class DataEntityExtension
 		IDataEntityProperty property;
 		var properties = entity.Properties;
 
-		static int GetLast(int position)
-		{
-			return position > 0 ? position + 1 : position;
-		}
-
 		while((index = path.IndexOf('.', last + 1)) > 0)
 		{
 			if(properties.TryGetValue(path[GetLast(last)..index], out property) && property.IsComplex)
@@ -82,6 +77,8 @@ public static class DataEntityExtension
 			return property;
 
 		throw new InvalidOperationException(string.Format(Properties.Resources.DataEntity_MemberNotFound_Message, path, entity));
+
+		static int GetLast(int position) => position > 0 ? position + 1 : position;
 	}
 
 	/// <summary>查找指定实体元素继承的父实体元素。</summary>

@@ -135,40 +135,6 @@ public static class ClaimsIdentityExtension
 
 	public static T AsModel<T>(this ClaimsIdentity identity, Func<T, Claim, bool> configure = null) where T : class
 	{
-		static string GetClaimName(string text)
-		{
-			var index = text.LastIndexOf('/');
-
-			if(index >= 0 && index < text.Length - 1)
-				return text[(index + 1)..];
-
-			return text;
-		}
-
-		static void ConfigureProperties(IDictionary<string, object> properties, Claim claim)
-		{
-			var isMultiple =
-				claim.Type == ClaimNames.Authorization ||
-				claim.Type == (claim.Subject?.RoleClaimType ?? ClaimsIdentity.DefaultRoleClaimType);
-
-			var key = GetClaimName(claim.Type) + (isMultiple ? "s" : null);
-
-			if(properties.TryGetValue(key, out var value))
-			{
-				if(value is ICollection<string> collection)
-					collection.Add(claim.Value);
-				else
-					properties[key] = new List<string>([value?.ToString(), claim.Value]);
-			}
-			else
-			{
-				if(isMultiple)
-					properties.Add(key, new List<string>([claim.Value]));
-				else
-					properties.Add(key, claim.Value);
-			}
-		}
-
 		if(identity == null || identity.IsAnonymous())
 			return null;
 
@@ -244,6 +210,40 @@ public static class ClaimsIdentityExtension
 		}
 
 		return model;
+
+		static string GetClaimName(string text)
+		{
+			var index = text.LastIndexOf('/');
+
+			if(index >= 0 && index < text.Length - 1)
+				return text[(index + 1)..];
+
+			return text;
+		}
+
+		static void ConfigureProperties(IDictionary<string, object> properties, Claim claim)
+		{
+			var isMultiple =
+				claim.Type == ClaimNames.Authorization ||
+				claim.Type == (claim.Subject?.RoleClaimType ?? ClaimsIdentity.DefaultRoleClaimType);
+
+			var key = GetClaimName(claim.Type) + (isMultiple ? "s" : null);
+
+			if(properties.TryGetValue(key, out var value))
+			{
+				if(value is ICollection<string> collection)
+					collection.Add(claim.Value);
+				else
+					properties[key] = new List<string>([value?.ToString(), claim.Value]);
+			}
+			else
+			{
+				if(isMultiple)
+					properties.Add(key, new List<string>([claim.Value]));
+				else
+					properties.Add(key, claim.Value);
+			}
+		}
 	}
 
 	public static bool TryGetClaim<T>(this IIdentity identity, string name, out T value, StringExtension.TryParser<T> converter = null)

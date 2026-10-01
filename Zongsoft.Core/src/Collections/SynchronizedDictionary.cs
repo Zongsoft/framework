@@ -86,6 +86,7 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 		get
 		{
 			_lock.EnterReadLock();
+
 			try { return _dictionary.Count; }
 			finally { _lock.ExitReadLock(); }
 		}
@@ -98,6 +99,7 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 		get
 		{
 			_lock.EnterReadLock();
+
 			try { return [.. _dictionary.Keys]; }
 			finally { _lock.ExitReadLock(); }
 		}
@@ -108,6 +110,7 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 		get
 		{
 			_lock.EnterReadLock();
+
 			try { return [.. _dictionary.Values]; }
 			finally { _lock.ExitReadLock(); }
 		}
@@ -118,12 +121,14 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 		get
 		{
 			_lock.EnterReadLock();
+
 			try { return _dictionary[key]; }
 			finally { _lock.ExitReadLock(); }
 		}
 		set
 		{
 			_lock.EnterWriteLock();
+
 			try { _dictionary[key] = value; }
 			finally { _lock.ExitWriteLock(); }
 		}
@@ -134,6 +139,7 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 	public void Add(TKey key, TValue value)
 	{
 		_lock.EnterWriteLock();
+
 		try { _dictionary.Add(key, value); }
 		finally { _lock.ExitWriteLock(); }
 	}
@@ -141,6 +147,7 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 	public bool TryAdd(TKey key, TValue value)
 	{
 		_lock.EnterWriteLock();
+
 		try { return _dictionary.TryAdd(key, value); }
 		finally { _lock.ExitWriteLock(); }
 	}
@@ -228,12 +235,14 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 			if(_dictionary.TryGetValue(key, out var existingValue))
 			{
 				_lock.EnterWriteLock();
+
 				try { return _dictionary[key] = updateFactory(key, existingValue); }
 				finally { _lock.ExitWriteLock(); }
 			}
 			else
 			{
 				_lock.EnterWriteLock();
+
 				try { return _dictionary[key] = addValue; }
 				finally { _lock.ExitWriteLock(); }
 			}
@@ -250,17 +259,20 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 		ArgumentNullException.ThrowIfNull(updateFactory);
 
 		_lock.EnterUpgradeableReadLock();
+
 		try
 		{
 			if(_dictionary.TryGetValue(key, out var existingValue))
 			{
 				_lock.EnterWriteLock();
+
 				try { return _dictionary[key] = updateFactory(key, existingValue); }
 				finally { _lock.ExitWriteLock(); }
 			}
 			else
 			{
 				_lock.EnterWriteLock();
+
 				try { return _dictionary[key] = addFactory(key); }
 				finally { _lock.ExitWriteLock(); }
 			}
@@ -277,17 +289,20 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 		ArgumentNullException.ThrowIfNull(updateFactory);
 
 		_lock.EnterUpgradeableReadLock();
+
 		try
 		{
 			if(_dictionary.TryGetValue(key, out var existingValue))
 			{
 				_lock.EnterWriteLock();
+
 				try { return _dictionary[key] = updateFactory(key, existingValue, state); }
 				finally { _lock.ExitWriteLock(); }
 			}
 			else
 			{
 				_lock.EnterWriteLock();
+
 				try { return _dictionary[key] = addFactory(key, state); }
 				finally { _lock.ExitWriteLock(); }
 			}
@@ -301,6 +316,7 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 	public void Clear()
 	{
 		_lock.EnterWriteLock();
+
 		try { _dictionary.Clear(); }
 		finally { _lock.ExitWriteLock(); }
 	}
@@ -308,6 +324,7 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 	public bool Remove(TKey key)
 	{
 		_lock.EnterWriteLock();
+
 		try { return _dictionary.Remove(key); }
 		finally { _lock.ExitWriteLock(); }
 	}
@@ -315,6 +332,7 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 	public bool Remove(TKey key, out TValue value)
 	{
 		_lock.EnterWriteLock();
+
 		try { return _dictionary.Remove(key, out value); }
 		finally { _lock.ExitWriteLock(); }
 	}
@@ -322,6 +340,7 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 	public bool ContainsKey(TKey key)
 	{
 		_lock.EnterReadLock();
+
 		try { return _dictionary.ContainsKey(key); }
 		finally { _lock.ExitReadLock(); }
 	}
@@ -329,6 +348,7 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 	public bool TryGetValue(TKey key, out TValue value)
 	{
 		_lock.EnterReadLock();
+
 		try { return _dictionary.TryGetValue(key, out value); }
 		finally { _lock.ExitReadLock(); }
 	}
@@ -507,6 +527,7 @@ public class SynchronizedDictionary<TKey, TValue> : IDictionary<TKey, TValue>
 	void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(KeyValuePair<TKey, TValue>[] array, int arrayIndex)
 	{
 		_lock.EnterReadLock();
+
 		try { _dictionary.CopyTo(array, arrayIndex); }
 		finally { _lock.ExitReadLock(); }
 	}

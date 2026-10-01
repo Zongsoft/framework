@@ -109,6 +109,7 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 			var @namespace = string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
 
 			_gate.Wait();
+
 			try
 			{
 				this.ThrowIfDisposed();
@@ -188,6 +189,7 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 			throw new ArgumentOutOfRangeException(nameof(databaseId));
 
 		_gate.Wait();
+
 		try
 		{
 			this.ThrowIfDisposed();
@@ -212,6 +214,7 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 			throw new ArgumentOutOfRangeException(nameof(databaseId));
 
 		await _gate.WaitAsync(cancellation);
+
 		try
 		{
 			this.ThrowIfDisposed();
@@ -643,6 +646,7 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 	private async Task DisposeAsyncCore(TaskCompletionSource<bool> completion)
 	{
 		await _gate.WaitAsync();
+
 		try
 		{
 			foreach(var subscription in _subscriptions.Keys)
@@ -723,8 +727,10 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 				builder ??= new StringBuilder(value.Length + 8).Append(value, 0, i);
 				builder.Append('\\');
 			}
+
 			builder?.Append(character);
 		}
+
 		return builder?.ToString() ?? value;
 	}
 
@@ -828,6 +834,7 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 
 		var capabilities = (RedisCapabilities)(-1);
 		var found = false;
+
 		foreach(var server in info.Servers)
 		{
 			if(server.IsSlave)
@@ -835,6 +842,7 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 			capabilities &= RedisCapabilityMatrix.GetCapabilities(server.Version);
 			found = true;
 		}
+
 		info.Capabilities = found ? capabilities : RedisCapabilities.None;
 
 		return info;

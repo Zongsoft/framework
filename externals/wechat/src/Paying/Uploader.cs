@@ -88,6 +88,7 @@ public static class Uploader
 		byte[] data;
 
 		using var fileStream = FileSystem.File.Open(filePath, FileMode.Open, FileAccess.Read);
+
 		{
 			using var stream = new MemoryStream();
 			await fileStream.CopyToAsync(stream, cancellation);

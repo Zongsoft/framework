@@ -200,11 +200,13 @@ partial class RedisService : IDistributedLockManager
 			var source = Interlocked.Exchange(ref _renewalCancellation, null);
 			source?.Cancel();
 			var task = Interlocked.Exchange(ref _renewalTask, null);
+
 			if(task != null)
 			{
 				try { await task; }
 				catch(OperationCanceledException) when(source?.IsCancellationRequested == true) { }
 			}
+
 			source?.Dispose();
 		}
 

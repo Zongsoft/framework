@@ -76,6 +76,7 @@ public class EtcdServiceTests
 				return;
 			await Task.Delay(100);
 		}
+
 		Assert.True(await condition(), "The expected etcd state was not observed before timeout.");
 	}
 }

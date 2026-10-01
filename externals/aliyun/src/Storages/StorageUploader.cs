@@ -291,16 +291,6 @@ internal class StorageUploader : IAsyncDisposable
 	{
 		if(string.IsNullOrEmpty(_identifier))
 			return false;
-
-		async ValueTask<bool> FlushBufferAsync(CancellationToken cancellation)
-		{
-			if(_bufferedCount <= 0)
-				return true;
-
-			var multipart = new StorageMultipart(_multiparts == null ? 1 : _multiparts.Count + 1, _buffer, 0, _bufferedCount);
-			return (await this.FlushAsync(multipart, cancellation)) > 0;
-		}
-
 		//尝试将缓存区内的部分数据补发完成（注：补发失败则终止批量上传任务并退出）
 		if(!(await FlushBufferAsync(cancellation)))
 			return true;
@@ -330,6 +320,15 @@ internal class StorageUploader : IAsyncDisposable
 		}
 
 		return await this.AbortAsync(cancellation);
+
+		async ValueTask<bool> FlushBufferAsync(CancellationToken cancellation)
+		{
+			if(_bufferedCount <= 0)
+				return true;
+
+			var multipart = new StorageMultipart(_multiparts == null ? 1 : _multiparts.Count + 1, _buffer, 0, _bufferedCount);
+			return (await this.FlushAsync(multipart, cancellation)) > 0;
+		}
 	}
 
 	private async ValueTask<bool> AbortAsync(CancellationToken cancellation = default)

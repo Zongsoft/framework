@@ -116,6 +116,7 @@ public class RabbitSubscriber : MessageConsumerBase<RabbitQueue>, IAsyncBasicCon
 			return;
 
 		byte[] payload;
+
 		try
 		{
 			payload = string.IsNullOrEmpty(properties?.ContentEncoding) ? data.ToArray() : MessageCompression.Decompress(properties.ContentEncoding, data.Span);

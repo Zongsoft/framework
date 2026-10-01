@@ -89,6 +89,7 @@ partial class EtcdService : ISequence
 
 			var result = checked(value + interval);
 			long leaseId = 0;
+
 			try
 			{
 				if(!exists && expiry > TimeSpan.Zero)

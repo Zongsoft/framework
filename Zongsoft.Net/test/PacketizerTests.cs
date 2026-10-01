@@ -86,6 +86,7 @@ public class PacketizerTests
 		var input = new ReadOnlySequence<byte>(source);
 
 		Assert.True(TcpClient.Headless.Packetizer.Unpack(ref input, out var package));
+
 		using(package)
 		{
 			Assert.Equal(source, package.Memory.ToArray());

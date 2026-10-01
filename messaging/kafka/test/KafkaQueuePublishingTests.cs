@@ -119,6 +119,7 @@ public class KafkaQueuePublishingTests
 		Assert.True(subscriber.IsDisposed);
 		Assert.Empty(publisher.Subscribers);
 		Assert.Empty(subscriber.Subscribers);
+
 		if(consumer != null)
 		{
 			Assert.True(consumer.IsClosed);

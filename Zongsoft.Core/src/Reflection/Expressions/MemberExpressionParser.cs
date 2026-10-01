@@ -592,17 +592,17 @@ internal static class MemberExpressionParser
 			if(owner == null)
 				throw new InvalidOperationException(Properties.Resources.MemberExpression_UnknownError_Message);
 
-			void Add(ICollection<IMemberExpression> parameters, string content, TypeCode type)
-			{
-				parameters.Add(MemberExpression.Constant(content, type));
-			}
-
 			if(owner is IndexerExpression indexer)
 				Add(indexer.Arguments, this.GetBufferContent(), Flags.GetConstantType());
 			else if(owner is MethodExpression method)
 				Add(method.Arguments, this.GetBufferContent(), Flags.GetConstantType());
 			else
 				throw new InvalidOperationException(Properties.Resources.MemberExpression_UnknownError_Message);
+
+			void Add(ICollection<IMemberExpression> parameters, string content, TypeCode type)
+			{
+				parameters.Add(MemberExpression.Constant(content, type));
+			}
 		}
 
 		public IdentifierExpression AppendIdentifier(IMemberExpression owner)

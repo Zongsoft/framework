@@ -51,6 +51,17 @@ public class ModelConfigurationTest
 			{ "mobile:pushing:wechat:code", "A123" },
 			{ "mobile:pushing:wechat:secret", "****" },
 		};
+		var models = GetModels(dictionary);
+
+		return new ConfigurationBuilder()
+			.AddModels(models, source =>
+			{
+				source.OnChange(model => System.Diagnostics.Debug.WriteLine(model.GetInfo()));
+
+				if(persistent != null)
+					source.OnChange(persistent);
+			})
+			.Build();
 
 		//获取配置数据（模拟数据库访问操作）
 		IEnumerable<ConfigurationEntity> GetModels(IDictionary<string, string> data)
@@ -67,18 +78,6 @@ public class ModelConfigurationTest
 				});
 			}
 		}
-
-		var models = GetModels(dictionary);
-
-		return new ConfigurationBuilder()
-			.AddModels(models, source =>
-			{
-				source.OnChange(model => System.Diagnostics.Debug.WriteLine(model.GetInfo()));
-
-				if(persistent != null)
-					source.OnChange(persistent);
-			})
-			.Build();
 	}
 
 	[Fact]

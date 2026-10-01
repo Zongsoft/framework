@@ -192,6 +192,7 @@ public class ProfileImportTest
 			Assert.Throws<ProfileException>(() => ReadProfile(reader, root));
 			Assert.Equal(Enumerable.Range(2, maximumDepth - 1), starting);
 			Assert.Empty(completed);
+
 			using(var input = new FileStream(files.PathFor(maximumDepth + ".ini"), FileMode.Open, FileAccess.ReadWrite, FileShare.None))
 				Assert.True(input.Length > 0);
 
@@ -497,6 +498,7 @@ public class ProfileImportTest
 
 		Assert.Same(failure, Assert.Throws<FileNotFoundException>(() => Profile.Load(root, options)));
 		Assert.Equal(after ? ["before", "after"] : ["before"], events);
+
 		using(var exclusive = new FileStream(child, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
 			Assert.True(exclusive.Length > 0);
 
@@ -535,6 +537,7 @@ public class ProfileImportTest
 
 		Assert.Throws<ArgumentException>(() => Profile.Load(root, options));
 		Assert.Equal(["before"], events);
+
 		using(var exclusive = new FileStream(child, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
 			Assert.True(exclusive.Length > 0);
 
@@ -642,6 +645,7 @@ public class ProfileImportTest
 		using var files = new ProfileFiles();
 		var root = files.Write("root.ini", directoryLink ? "#@import alias/root.ini" : "#@import alias.ini");
 		var alias = files.PathFor(directoryLink ? "alias" : "alias.ini");
+
 		try
 		{
 			if(directoryLink)
@@ -655,6 +659,7 @@ public class ProfileImportTest
 		}
 
 		var notifications = new List<string>();
+
 		try
 		{
 			var exception = Assert.Throws<ProfileException>(() => Profile.Load(root, Options(importing: notifications.Add)));
@@ -823,6 +828,7 @@ public class ProfileImportTest
 		Assert.Same(failure, Assert.Throws<InvalidOperationException>(() => ReadProfile(reader, stream, Encoding.UTF8)));
 		Assert.Equal(after ? ["before", "after"] : ["before"], events);
 		Assert.False(stream.CanRead);
+
 		using(var exclusive = new FileStream(child, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
 			Assert.True(exclusive.Length > 0);
 
@@ -865,12 +871,14 @@ public class ProfileImportTest
 			count++;
 			Assert.Equal("complete", profile.Entries["value"].Value);
 			Assert.Throws<ProfileException>(() => ReadProfile(reader, child));
+
 			if(shouldFail)
 				throw failure;
 		}));
 
 		Assert.Same(failure, Assert.Throws<FileNotFoundException>(() => ReadProfile(reader, root)));
 		Assert.Equal(1, count);
+
 		using(var exclusive = new FileStream(child, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
 			Assert.True(exclusive.Length > 0);
 

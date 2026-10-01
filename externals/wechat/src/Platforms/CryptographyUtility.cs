@@ -145,13 +145,16 @@ public static class CryptographyUtility
 		int block_size = 32;
 		// 计算需要填充的位数
 		int amount_to_pad = block_size - (text_length % block_size);
+
 		if(amount_to_pad == 0)
 		{
 			amount_to_pad = block_size;
 		}
+
 		// 获得补位所用的字符
 		char pad_chr = GetCharacter(amount_to_pad);
 		string tmp = "";
+
 		for(int index = 0; index < amount_to_pad; index++)
 		{
 			tmp += pad_chr;
@@ -187,8 +190,10 @@ public static class CryptographyUtility
 				Array.Copy(xXml, msg, xXml.Length);
 				cs.Write(xXml, 0, xXml.Length);
 			}
+
 			xBuff = AES_Decode(ms.ToArray());
 		}
+
 		return xBuff;
 	}
 

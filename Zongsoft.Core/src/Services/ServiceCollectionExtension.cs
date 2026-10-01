@@ -88,12 +88,6 @@ public static class ServiceCollectionExtension
 	#region 私有方法
 	private static void RegisterOptions(IServiceCollection services, TypeInfo type, IConfiguration configuration)
 	{
-		static Type GetOptionType(Type type)
-		{
-			return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IOptions<>) ?
-			       type.GenericTypeArguments[0] : type;
-		}
-
 		do
 		{
 			var properties = type.DeclaredProperties.Where(p => p.CanRead && p.CanWrite && p.IsDefined(typeof(Configuration.Options.OptionsAttribute), true));
@@ -124,6 +118,12 @@ public static class ServiceCollectionExtension
 
 			type = type.BaseType?.GetTypeInfo();
 		} while(type != null && type.GetTypeInfo() != _ObjectType_);
+
+		static Type GetOptionType(Type type)
+		{
+			return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IOptions<>) ?
+			       type.GenericTypeArguments[0] : type;
+		}
 	}
 
 	private static bool RegisterServices(IServiceCollection services, TypeInfo type, IConfiguration configuration)

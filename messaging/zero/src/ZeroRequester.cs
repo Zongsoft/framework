@@ -288,6 +288,7 @@ public class ZeroRequester : IRequester, IDisposable, IAsyncDisposable
 					yield break;
 
 				bool signaled;
+
 				try { signaled = _signal.Wait(remaining, cancellation); }
 				catch(OperationCanceledException) { yield break; }
 

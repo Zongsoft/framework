@@ -144,6 +144,7 @@ public sealed partial class RedisMessageStorage : MessageStorageBase<RedisConnec
 		RedisConnectionLease lease = null;
 
 		await _semaphore.WaitAsync();
+
 		try
 		{
 			if(Interlocked.Exchange(ref _disposed, 1) != 0)
@@ -194,6 +195,7 @@ public sealed partial class RedisMessageStorage : MessageStorageBase<RedisConnec
 			return database;
 
 		await _semaphore.WaitAsync(cancellation);
+
 		try
 		{
 			this.ThrowIfDisposed();
@@ -202,6 +204,7 @@ public sealed partial class RedisMessageStorage : MessageStorageBase<RedisConnec
 				return database;
 
 			var lease = await RedisConnectionPool.AcquireAsync(_options, cancellation);
+
 			try
 			{
 				database = lease.Connection.GetDatabase(_options.DefaultDatabase ?? -1);
@@ -249,6 +252,7 @@ public sealed partial class RedisMessageStorage : MessageStorageBase<RedisConnec
 
 		var results = await Task.WhenAll(tasks).WaitAsync(cancellation);
 		var count = 0;
+
 		for(int i = 0; i < results.Length; i++)
 		{
 			if(results[i])

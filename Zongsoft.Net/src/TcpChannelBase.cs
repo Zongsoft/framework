@@ -129,12 +129,6 @@ public abstract class TcpChannelBase<T> : ChannelBase, ISender, ISender<T>
 
 	public ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
 	{
-		async ValueTask AwaitFlushAndRelease(ValueTask<FlushResult> flush)
-		{
-			try { await flush; }
-			finally { _singleWriter.Release(); }
-		}
-
 		if(!_singleWriter.Wait(0, cancellation))
 			return this.SendSlowAsync(data, cancellation);
 
@@ -155,6 +149,12 @@ public abstract class TcpChannelBase<T> : ChannelBase, ISender, ISender<T>
 		{
 			if(release)
 				_singleWriter.Release();
+		}
+
+		async ValueTask AwaitFlushAndRelease(ValueTask<FlushResult> flush)
+		{
+			try { await flush; }
+			finally { _singleWriter.Release(); }
 		}
 	}
 
@@ -245,11 +245,8 @@ public abstract class TcpChannelBase<T> : ChannelBase, ISender, ISender<T>
 		if(transport != null)
 		{
 			try { transport.Input.Complete(); } catch { }
-
 			try { transport.Input.CancelPendingRead(); } catch { }
-
 			try { transport.Output.Complete(); } catch { }
-
 			try { transport.Output.CancelPendingFlush(); } catch { }
 
 			switch(transport)

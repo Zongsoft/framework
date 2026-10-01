@@ -369,30 +369,6 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	#region 获取服务
 	private void InitializeSubservices()
 	{
-		static IEnumerable<Type> GetNestedTypes(Type type)
-		{
-			while(type != null && type != typeof(object))
-			{
-				foreach(var nestedType in type.GetNestedTypes())
-				{
-					var serviceType = nestedType;
-					if(serviceType.ContainsGenericParameters)
-					{
-						var arguments = type.GenericTypeArguments;
-						if(!serviceType.IsGenericTypeDefinition || arguments.Length != serviceType.GetGenericArguments().Length)
-							continue;
-
-						serviceType = serviceType.MakeGenericType(arguments);
-					}
-
-					if(serviceType.IsNestedPublic && serviceType.IsClass && !serviceType.IsAbstract && typeof(IDataService).IsAssignableFrom(serviceType))
-						yield return serviceType;
-				}
-
-				type = type.BaseType;
-			}
-		}
-
 		var nestedTypes = GetNestedTypes(this.GetType());
 		var serviceDescriptors = nestedTypes.GroupBy(
 			type =>
@@ -464,6 +440,30 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 					foreach(var contract in serviceDescriptor)
 						_subservices.TryAdd(contract, subservice);
 				}
+			}
+		}
+
+		static IEnumerable<Type> GetNestedTypes(Type type)
+		{
+			while(type != null && type != typeof(object))
+			{
+				foreach(var nestedType in type.GetNestedTypes())
+				{
+					var serviceType = nestedType;
+					if(serviceType.ContainsGenericParameters)
+					{
+						var arguments = type.GenericTypeArguments;
+						if(!serviceType.IsGenericTypeDefinition || arguments.Length != serviceType.GetGenericArguments().Length)
+							continue;
+
+						serviceType = serviceType.MakeGenericType(arguments);
+					}
+
+					if(serviceType.IsNestedPublic && serviceType.IsClass && !serviceType.IsAbstract && typeof(IDataService).IsAssignableFrom(serviceType))
+						yield return serviceType;
+				}
+
+				type = type.BaseType;
 			}
 		}
 	}

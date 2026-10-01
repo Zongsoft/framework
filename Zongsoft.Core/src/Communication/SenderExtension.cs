@@ -130,14 +130,6 @@ public static class SenderExtension
 	}
 	public static ValueTask SendAsync(this ISender sender, IMemoryOwner<byte> data, CancellationToken cancellation = default)
 	{
-		static async ValueTask Awaited(IMemoryOwner<byte> mmemory, ValueTask write)
-		{
-			using(mmemory)
-			{
-				await write;
-			}
-		}
-
 		ArgumentNullException.ThrowIfNull(sender);
 		ArgumentNullException.ThrowIfNull(data);
 
@@ -155,6 +147,14 @@ public static class SenderExtension
 		finally
 		{
 			data?.Dispose();
+		}
+
+		static async ValueTask Awaited(IMemoryOwner<byte> mmemory, ValueTask write)
+		{
+			using(mmemory)
+			{
+				await write;
+			}
 		}
 	}
 	#endregion

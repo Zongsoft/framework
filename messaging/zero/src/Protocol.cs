@@ -83,6 +83,7 @@ internal static class Protocol
 
 		epoch = lines[2][(Headers.Epoch.Length + 1)..];
 		var values = lines[3][(Headers.Ports.Length + 1)..].Split(',', StringSplitOptions.TrimEntries);
+
 		if(values.Length == 2)
 		{
 			if(!ushort.TryParse(values[0], out incoming) || !ushort.TryParse(values[1], out outgoing))

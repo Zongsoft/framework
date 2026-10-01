@@ -49,6 +49,7 @@ public class ZeroQueuePublishingTests
 
 		await subscriber.SubscribeAsync(topic, handler);
 		string identifier;
+
 		do
 		{
 			identifier = await publisher.ProduceAsync(topic, "kind:sample,format:text", Encoding.UTF8.GetBytes("identified"));
@@ -56,6 +57,7 @@ public class ZeroQueuePublishingTests
 				await Task.Delay(25);
 		}
 		while(identifier == null);
+
 		var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
 
 		Assert.False(string.IsNullOrWhiteSpace(identifier));
@@ -194,6 +196,7 @@ public class ZeroQueuePublishingTests
 				await Task.Delay(25);
 		}
 		while(identifier == null);
+
 		var message = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
 		Assert.Equal("original", message.Topic);
 		Assert.Equal("snapshot", Encoding.UTF8.GetString(message.Data));
@@ -234,6 +237,7 @@ public class ZeroQueuePublishingTests
 		await subscriber.SubscribeAsync(topic, handler);
 		await ZeroTestUtility.PublishUntilAcceptedAsync(publisher, topic, Encoding.UTF8.GetBytes("probe"));
 		await handler.ReceiveAsync(TimeSpan.FromSeconds(5));
+
 		//突发发送覆盖传输 Actor 的批量命令及即时发布路径。
 		for(int i = 0; i < count; i++)
 			await publisher.ProduceAsync(topic, Encoding.UTF8.GetBytes($"burst-{i}"));

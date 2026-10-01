@@ -61,9 +61,6 @@ internal static class ModularServiceUtility
 
 	private static Type GetModularServiceType(string module, Type contractType)
 	{
-		static string GetModularServiceName(string module, Type type) =>
-			$"{module}:{type.FullName}!ModularService";
-
 		return _cache.GetOrAdd(new ModularServiceKey(module, contractType), key =>
 		{
 			var definition = _module.DefineType(
@@ -89,6 +86,8 @@ internal static class ModularServiceUtility
 
 			return definition.CreateType();
 		});
+
+		static string GetModularServiceName(string module, Type type) => $"{module}:{type.FullName}!ModularService";
 	}
 
 	public static IModularService GetModularService(string module, Type contractType, object service)

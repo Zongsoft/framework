@@ -50,6 +50,11 @@ public class FileInfoCommand : CommandBase<CommandContext>
 		if(context.Arguments.IsEmpty)
 			throw new CommandException(Properties.Resources.Command_ArgumentsRequired_Message);
 
+		if(context.Arguments.Count == 1)
+			return await GetInfoAsync(context.Arguments[0]);
+		else
+			return context.Arguments.Select(async path => await GetInfoAsync(path)).ToArray();
+
 		async ValueTask<FileInfo> GetInfoAsync(string path)
 		{
 			var info = await FileSystem.File.GetInfoAsync(path);
@@ -61,11 +66,6 @@ public class FileInfoCommand : CommandBase<CommandContext>
 
 			return info;
 		}
-
-		if(context.Arguments.Count == 1)
-			return await GetInfoAsync(context.Arguments[0]);
-		else
-			return context.Arguments.Select(async path => await GetInfoAsync(path)).ToArray();
 	}
 	#endregion
 }

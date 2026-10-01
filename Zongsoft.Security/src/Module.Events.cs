@@ -108,6 +108,7 @@ partial class Module
 					return string.IsNullOrEmpty(type.Namespace) ?
 						type.Name : $"{type.Namespace}.{type.Name}";
 				}
+
 				static string GetReason(Exception exception) => (exception as Privileges.AuthenticationException)?.Reason;
 			}
 

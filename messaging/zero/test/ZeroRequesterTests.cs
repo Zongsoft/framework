@@ -120,6 +120,7 @@ public class ZeroRequesterTests
 		{
 			using(await requester.RequestAsync("rpc/echo", Encoding.UTF8.GetBytes("dispose")))
 			{ }
+
 			Assert.Single(first.Subscribers);
 			Assert.Throws<InvalidOperationException>(() => requester.Queue = second);
 

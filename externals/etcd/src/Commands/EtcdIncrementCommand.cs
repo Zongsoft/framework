@@ -57,6 +57,7 @@ public sealed class EtcdIncrementCommand() : EtcdCommandBase("Increase")
 			values[index] = decrease ? await etcd.DecreaseAsync(context.Arguments[index], interval, seed, expiry, cancellation) : await etcd.IncreaseAsync(context.Arguments[index], interval, seed, expiry, cancellation);
 			context.Output.WriteLine(values[index].ToString());
 		}
+
 		return values.Length == 1 ? values[0] : values;
 	}
 }

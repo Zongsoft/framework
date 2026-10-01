@@ -134,14 +134,6 @@ public class ServiceController<TModel, TService> : ServiceControllerBase<TModel,
 		if(!this.TryValidateModel(model))
 			return this.UnprocessableEntity();
 
-		static object GetModelMemberValue(ref TModel target, string member)
-		{
-			if(target is IModel model)
-				return model.TryGetValue(member, out var value) ? value : null;
-			else
-				return Reflection.Reflector.TryGetValue(ref target, member, out var value) ? value : null;
-		}
-
 		if(await this.OnCreateAsync(model, null, cancellation) > 0)
 		{
 			var keys = Mapping.Entities.TryGetValue(this.DataService.Name, out var entity) ? entity.Key : null;
@@ -164,6 +156,14 @@ public class ServiceController<TModel, TService> : ServiceControllerBase<TModel,
 		}
 
 		return this.Conflict();
+
+		static object GetModelMemberValue(ref TModel target, string member)
+		{
+			if(target is IModel model)
+				return model.TryGetValue(member, out var value) ? value : null;
+			else
+				return Reflection.Reflector.TryGetValue(ref target, member, out var value) ? value : null;
+		}
 	}
 
 	[HttpPut]

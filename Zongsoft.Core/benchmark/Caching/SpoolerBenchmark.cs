@@ -103,6 +103,7 @@ public abstract class SpoolerBenchmarkBase
 					Console.WriteLine($"VALIDATED {this.GetType().Name} Method={method} BatchSize={this.BatchSize} Producers={this.Producers} Records={_consumed} Calls={_calls} Checksum={_checksum}");
 			}
 		}
+
 		_seen = null;
 		_minimumCalls = int.MaxValue;
 		_maximumCalls = 0;
@@ -250,6 +251,7 @@ public abstract class SpoolerBenchmarkBase
 				throw new InvalidOperationException(string.Format(global::Zongsoft.Core.Benchmarks.Properties.Resources.Benchmark_RecordInvalid_Message, value));
 			_seen[value] = true;
 		}
+
 		_consumed++;
 		_checksum += value;
 		return stream == null ? ValueTask.CompletedTask : stream.WriteAsync(_records[value].AsMemory());

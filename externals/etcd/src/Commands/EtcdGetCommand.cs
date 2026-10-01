@@ -41,11 +41,13 @@ public sealed class EtcdGetCommand() : EtcdCommandBase("Get")
 		RequireArguments(context);
 		var etcd = GetEtcd(context);
 		var values = new string[context.Arguments.Count];
+
 		for(var index = 0; index < values.Length; index++)
 		{
 			values[index] = await etcd.GetValueAsync(context.Arguments[index], cancellation);
 			context.Output.WriteLine(values[index] ?? "NULL");
 		}
+
 		return values.Length == 1 ? values[0] : values;
 	}
 }

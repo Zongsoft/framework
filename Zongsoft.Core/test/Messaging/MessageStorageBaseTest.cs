@@ -203,6 +203,7 @@ public class MessageStorageBaseTest
 		{
 			this.ClearCount++;
 			this.LastTopic = topic;
+
 			if(topic == null)
 			{
 				var count = _messages.Count;

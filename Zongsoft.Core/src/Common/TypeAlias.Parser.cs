@@ -798,6 +798,7 @@ partial class TypeAlias
 				{
 					result.Insert(0, stack.Pop().Token);
 				}
+
 				return result;
 			}
 		}

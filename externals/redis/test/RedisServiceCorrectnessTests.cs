@@ -378,6 +378,7 @@ public class RedisServiceCorrectnessTests
 		var operations = Enumerable.Range(0, 32).Select(_ => Task.Run(async () =>
 		{
 			start.Wait();
+
 			try
 			{
 				await cache.ExistsAsync("race");

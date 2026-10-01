@@ -81,6 +81,7 @@ public class RedisConfigurationProvider : ConfigurationProvider, IDisposable, IA
 	public override void Load()
 	{
 		this.LoadCore();
+
 		lock(_sync)
 			_subscriptionTask ??= this.SubscribeAsync();
 	}
@@ -165,6 +166,7 @@ public class RedisConfigurationProvider : ConfigurationProvider, IDisposable, IA
 		_lifetime.Cancel();
 		Task subscriptionTask;
 		Task reloadTask;
+
 		lock(_sync)
 		{
 			subscriptionTask = _subscriptionTask;

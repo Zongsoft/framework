@@ -52,6 +52,11 @@ public class DirectoryExistsCommand : CommandBase<CommandContext>
 			return await ExistsAsync(path);
 		}
 
+		if(context.Arguments.Count == 1)
+			return await ExistsAsync(context.Arguments[0]);
+		else
+			return context.Arguments.Select(async path => await ExistsAsync(path)).ToArray();
+
 		async ValueTask<bool> ExistsAsync(string path)
 		{
 			var existed = await FileSystem.Directory.ExistsAsync(path);
@@ -63,11 +68,6 @@ public class DirectoryExistsCommand : CommandBase<CommandContext>
 
 			return existed;
 		}
-
-		if(context.Arguments.Count == 1)
-			return await ExistsAsync(context.Arguments[0]);
-		else
-			return context.Arguments.Select(async path => await ExistsAsync(path)).ToArray();
 	}
 	#endregion
 }

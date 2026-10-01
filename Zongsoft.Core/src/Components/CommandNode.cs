@@ -188,8 +188,6 @@ public partial class CommandNode : Zongsoft.Collections.HierarchicalNode<Command
 
 	public TCommand Find<TCommand>(bool rooting = false) where TCommand : class
 	{
-		static bool Predicate(CommandNode node) => node.Command is TCommand;
-
 		//向上查找（往根节点方向）
 		if(rooting)
 			return (TCommand)FindUp(this, Predicate)?.Command;
@@ -198,6 +196,8 @@ public partial class CommandNode : Zongsoft.Collections.HierarchicalNode<Command
 		this.EnsureChildren();
 
 		return (TCommand)FindDown(this, Predicate)?.Command;
+
+		static bool Predicate(CommandNode node) => node.Command is TCommand;
 	}
 
 	public CommandNode Find(Predicate<CommandNode> predicate, bool rooting = false)

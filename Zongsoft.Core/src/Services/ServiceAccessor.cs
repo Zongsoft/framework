@@ -40,6 +40,12 @@ public class ServiceAccessor<T> : IServiceAccessor<T> where T : class
 	public ServiceAccessor(T value) => this.Value = value;
 	public ServiceAccessor(IApplicationModule module, string name)
 	{
+		//注意：以下代码的处理机制必须遵循服务注入注解类中ServiceName属性的规范！
+		if(module == null || module is IApplicationContext)
+			this.Value = GetValue(name ?? string.Empty, ApplicationContext.Current.Services);
+		else
+			this.Value = GetValue(name ?? module.Name, module.Services);
+
 		static T GetValue(string name, IServiceProvider serviceProvider)
 		{
 			if(serviceProvider == null)
@@ -55,12 +61,6 @@ public class ServiceAccessor<T> : IServiceAccessor<T> where T : class
 			else
 				return provider.GetService(name) ?? provider.GetService(string.Empty) ?? serviceProvider.GetService<T>();
 		}
-
-		//注意：以下代码的处理机制必须遵循服务注入注解类中ServiceName属性的规范！
-		if(module == null || module is IApplicationContext)
-			this.Value = GetValue(name ?? string.Empty, ApplicationContext.Current.Services);
-		else
-			this.Value = GetValue(name ?? module.Name, module.Services);
 	}
 	#endregion
 
