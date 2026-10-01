@@ -119,9 +119,11 @@ COMMENT ON COLUMN "Security_PrivilegeFiltering"."PrivilegeFilter" IS '授权过�
 /* 添加系统内置角色 */
 INSERT INTO "Security_Role" ("RoleId", "Name", "Nickname", "Description") VALUES
   (1, 'Administrators', '系统管理', '系统管理角色(系统内置角色)'),
-  (2, 'Security', '安全管理', '安全管理角色(系统内置角色)');
+  (2, 'Security', '安全管理', '安全管理角色(系统内置角色)')
+ON CONFLICT DO NOTHING;
 
 /* 添加系统内置用户 */
 INSERT INTO "Security_User" ("UserId", "Name", "Nickname", "Description") VALUES
   (1, 'Administrator', '系统管理员', '系统管理员(系统内置帐号)'),
-  (2, 'Guest', '来宾', '来宾');
+  (2, 'Guest', '来宾', '来宾')
+ON CONFLICT DO NOTHING;
