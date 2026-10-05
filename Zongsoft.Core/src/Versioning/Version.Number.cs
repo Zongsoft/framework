@@ -151,8 +151,8 @@ partial class Version
 		public static implicit operator Number(long value) => new(value);
 		public static implicit operator Number(ulong value) => new(value);
 
-		public static implicit operator long(Number number) => (long)(ulong)number;
-		public static implicit operator ulong(Number number) =>
+		public static explicit operator long(Number number) => (long)(ulong)number;
+		public static explicit operator ulong(Number number) =>
 			((ulong)number.Major << (3 * sizeof(ushort) * 8)) +
 			((ulong)number.Minor << (2 * sizeof(ushort) * 8)) +
 			((ulong)number.Patch << (1 * sizeof(ushort) * 8)) + number.Revision;

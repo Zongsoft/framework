@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using System.Text;
 using System.ComponentModel;
 
 using Xunit;
@@ -123,6 +125,21 @@ public class VersionNumberTest
 		Assert.Equal("1.2.0", new Version.Number(1, 2).ToString());
 		Assert.Equal("1.2.3", new Version.Number(1, 2, 3).ToString());
 		Assert.Equal("1.2.3.4", new Version.Number(1, 2, 3, 4).ToString());
+	}
+
+	[Theory]
+	[InlineData("0.0.0")]
+	[InlineData("0.1.0")]
+	[InlineData("1.2.3.4")]
+	[InlineData("65535.65535.65535.65535")]
+	public void TestTextOutputDoesNotSelectNumericOverloads(string text)
+	{
+		var version = Version.Number.Parse(text);
+		Assert.Equal(text, new StringBuilder().Append(version).ToString());
+
+		using var writer = new StringWriter();
+		writer.Write(version);
+		Assert.Equal(text, writer.ToString());
 	}
 
 	[Fact]
