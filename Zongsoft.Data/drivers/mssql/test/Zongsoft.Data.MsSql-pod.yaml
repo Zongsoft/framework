@@ -15,7 +15,7 @@ spec:
         type: File
   containers:
     - name: mssql
-      image: mcr.microsoft.com/mssql/server:2025-latest
+      image: mcr.microsoft.com/mssql/server:2025-CU9-ubuntu-22.04
       command:
         - /bin/bash
         - -c

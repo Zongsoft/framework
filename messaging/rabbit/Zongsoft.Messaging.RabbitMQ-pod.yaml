@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
     - name: rabbitmq
-      image: rabbitmq:4.3.4-management
+      image: rabbitmq:4.3.6-management
       ports:
         - containerPort: 5672
           protocol: TCP
