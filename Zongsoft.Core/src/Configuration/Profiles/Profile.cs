@@ -44,7 +44,7 @@ namespace Zongsoft.Configuration.Profiles;
 ///		<para>Entry: INI所包含的最基本的“元素”就是 Entry/Parameter，每一个“条目”都由一个名称和一个值组成(值可选)，名称与值由等号“=”分隔，名称在等号的左边；值在等号右边，值的内容可省略。譬如：name=value 或者只有名称部分。注意：在同一个设置节中，条目名称必须唯一。</para>
 ///		<para>Section: 所有的“条目”都是以“节”为单位结合在一起的。“节”名字都被方括号包围着。在“节”声明后的所有“条目”都是属于该“节”。对于一个“节”没有明显的结束标志符，一个“节”的开始就是上一个“节”的结束。</para>
 ///		<para>注意：节是支持分层嵌套的，即在配置节中以空格或制表符(Tab)来分隔节的层级关系。</para>
-///		<para>Comment: 在INI文件中注释语句是以分号“;”或者“#”开始的，独占一行。读取器识别紧接注释符的 @import 导入语句；可通过 <see cref="ProfileOptions.ImportBehavior"/> 选择执行、忽略或禁止导入，其余内容作为普通注释保留。</para>
+///		<para>Comment: 在INI文件中注释语句是以分号“;”或者“#”开始的，独占一行。读取器识别紧接注释符的 @name 指令；<see cref="ProfileOptions.Directives"/> 配置各指令行为，指令处理回调可改写参数或接管执行。指令文本作为注释声明保存。</para>
 /// </remarks>
 public partial class Profile : IEnumerable<ProfileItem>
 {

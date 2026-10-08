@@ -29,9 +29,17 @@ public class ProfileImportTest
 		var notifications = new List<ProfileContext>();
 		var options = new ProfileOptions
 		{
-			ImportBehavior = ProfileDirectiveBehavior.Suppress,
-			Importing = notifications.Add,
-			Imported = notifications.Add,
+			Directives = { ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Suppress) },
+			Loading = context =>
+			{
+				if(context.Depth > 1)
+					notifications.Add(context);
+			},
+			Loaded = context =>
+			{
+				if(context.Depth > 1)
+					notifications.Add(context);
+			},
 		};
 		using var locked = new FileStream(child, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 		Assert.Throws<ProfileException>(() => Profile.Load(root, options));
@@ -50,17 +58,20 @@ public class ProfileImportTest
 		using var files = new ProfileFiles();
 		var root = files.Chain(3);
 		var notifications = new List<int>();
-		var options = new ProfileOptions();
-		Assert.Equal(ProfileDirectiveBehavior.None, options.ImportBehavior);
-		options.Importing = context =>
+		var options = new ProfileOptions { Directives = { ProfileDirectiveOptions.Import() } };
+		Assert.Equal(ProfileDirectiveBehavior.None, options.Directives["import"].Behavior);
+		options.Loading = context =>
 		{
+			if(context.Depth == 1)
+				return;
+
 			notifications.Add(context.Depth);
-			options.ImportBehavior = ProfileDirectiveBehavior.Suppress;
+			options.Directives["import"].Behavior = ProfileDirectiveBehavior.Suppress;
 		};
 
 		Assert.Equal("complete", Profile.Load(root, options).Entries["result"].Value);
 		Assert.Equal([2, 3], notifications);
-		Assert.Equal(ProfileDirectiveBehavior.Suppress, options.ImportBehavior);
+		Assert.Equal(ProfileDirectiveBehavior.Suppress, options.Directives["import"].Behavior);
 		notifications.Clear();
 		Assert.Throws<ProfileException>(() => Profile.Load(root, options));
 		Assert.Empty(notifications);
@@ -70,7 +81,7 @@ public class ProfileImportTest
 	public void Import_SuppressAllowsOrdinaryComments()
 	{
 		using var reader = new StringReader("#@imported note\n; @import note\nvalue=kept");
-		var profile = Profile.Load(reader, new ProfileOptions { ImportBehavior = ProfileDirectiveBehavior.Suppress });
+		var profile = Profile.Load(reader, new ProfileOptions { Directives = { ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Suppress) } });
 		Assert.Equal("kept", profile.Entries["value"].Value);
 		Assert.Equal(["@imported note", " @import note"], profile.Comments.Select(comment => comment.Text));
 	}
@@ -89,9 +100,17 @@ public class ProfileImportTest
 		var notifications = new List<ProfileContext>();
 		var options = new ProfileOptions
 		{
-			ImportBehavior = ProfileDirectiveBehavior.Ignore,
-			Importing = notifications.Add,
-			Imported = notifications.Add,
+			Directives = { ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Ignore) },
+			Loading = context =>
+			{
+				if(context.Depth > 1)
+					notifications.Add(context);
+			},
+			Loaded = context =>
+			{
+				if(context.Depth > 1)
+					notifications.Add(context);
+			},
 		};
 		using var locked = new FileStream(child, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 		var profile = Profile.Load(root, options);
@@ -104,7 +123,7 @@ public class ProfileImportTest
 		Assert.Equal(-1, reader.Peek());
 		Assert.Empty(notifications);
 		using var writer = new StringWriter { NewLine = "\n" };
-		profile.Save(writer, new ProfileOptions { ImportBehavior = ProfileDirectiveBehavior.Suppress });
+		profile.Save(writer, new ProfileOptions { Directives = { ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Suppress) } });
 		Assert.Equal("local=kept\n" + directive.Replace(";@IMPORT", "#@IMPORT") + "\n", writer.ToString());
 	}
 
@@ -117,7 +136,7 @@ public class ProfileImportTest
 	{
 		using var files = new ProfileFiles();
 		var root = files.Write("root.ini", "#@import missing.ini\nlocal=kept");
-		var options = new ProfileOptions { ImportBehavior = behavior };
+		var options = new ProfileOptions { Directives = { ProfileDirectiveOptions.Import(behavior) } };
 
 		if(fails)
 		{
@@ -136,15 +155,32 @@ public class ProfileImportTest
 	}
 
 	[Theory]
-	[InlineData(64, true)]
-	[InlineData(65, false)]
-	public void Import_DefaultDepthHonorsBoundary(int length, bool succeeds)
+	[InlineData(64, true, false)]
+	[InlineData(65, false, false)]
+	[InlineData(64, true, true)]
+	[InlineData(65, false, true)]
+	public void Import_DefaultDepthHonorsBoundary(int length, bool succeeds, bool explicitDefault)
 	{
 		using var files = new ProfileFiles();
 		var root = files.Chain(length);
 		var starting = new List<ProfileContext>();
 		var completed = new List<ProfileContext>();
-		var options = new ProfileOptions { Importing = starting.Add, Imported = completed.Add };
+		var options = new ProfileOptions
+		{
+			Loading = context =>
+			{
+				if(context.Depth > 1)
+					starting.Add(context);
+			},
+			Loaded = context =>
+			{
+				if(context.Depth > 1)
+					completed.Add(context);
+			}
+		};
+
+		if(explicitDefault)
+			options.Directives.Add(ProfileDirectiveOptions.Import(maximumDepth: 0));
 
 		if(succeeds)
 		{
@@ -175,9 +211,17 @@ public class ProfileImportTest
 		var completed = new List<int>();
 		var options = new ProfileOptions
 		{
-			MaximumDepth = maximumDepth,
-			Importing = context => starting.Add(context.Depth),
-			Imported = context => completed.Add(context.Depth),
+			Directives = { ProfileDirectiveOptions.Import(maximumDepth: maximumDepth) },
+			Loading = context =>
+			{
+				if(context.Depth > 1)
+					starting.Add(context.Depth);
+			},
+			Loaded = context =>
+			{
+				if(context.Depth > 1)
+					completed.Add(context.Depth);
+			},
 		};
 		var reader = CreateReader(options);
 
@@ -212,11 +256,15 @@ public class ProfileImportTest
 		var starting = new List<int>();
 		var options = new ProfileOptions
 		{
-			MaximumDepth = 3,
-			Importing = context => starting.Add(context.Depth),
+			Directives = { ProfileDirectiveOptions.Import(maximumDepth: 3) },
+			Loading = context =>
+			{
+				if(context.Depth > 1)
+					starting.Add(context.Depth);
+			},
 		};
 		var reader = CreateReader(options);
-		options.MaximumDepth = 1;
+		((ProfileDirectiveOptions.ImportOptions)options.Directives["import"]).MaximumDepth = 1;
 
 		Assert.Equal("complete", ReadProfile(reader, root).Entries["result"].Value);
 		Assert.Equal([2, 3], starting);
@@ -235,13 +283,20 @@ public class ProfileImportTest
 		var root = files.Chain(3);
 		var starting = new List<int>();
 		var completed = new List<int>();
-		var options = new ProfileOptions { MaximumDepth = increase ? 2 : 3 };
-		options.Importing = context =>
+		var options = new ProfileOptions { Directives = { ProfileDirectiveOptions.Import(maximumDepth: increase ? 2 : 3) } };
+		options.Loading = context =>
 		{
+			if(context.Depth == 1)
+				return;
+
 			starting.Add(context.Depth);
-			options.MaximumDepth = increase ? 3 : 1;
+			((ProfileDirectiveOptions.ImportOptions)options.Directives["import"]).MaximumDepth = increase ? 3 : 1;
 		};
-		options.Imported = context => completed.Add(context.Depth);
+		options.Loaded = context =>
+		{
+			if(context.Depth > 1)
+				completed.Add(context.Depth);
+		};
 
 		if(increase)
 		{
@@ -283,14 +338,21 @@ public class ProfileImportTest
 		var failure = new InvalidOperationException("Business depth exceeded.");
 		var options = new ProfileOptions
 		{
-			Importing = context =>
+			Loading = context =>
 			{
+				if(context.Depth == 1)
+					return;
+
 				depths.Add(context.Depth);
 
 				if(context.Depth > 3)
 					throw failure;
 			},
-			Imported = completed.Add,
+			Loaded = context =>
+			{
+				if(context.Depth > 1)
+					completed.Add(context);
+			},
 		};
 		var reader = CreateReader(options);
 
@@ -409,15 +471,21 @@ public class ProfileImportTest
 		var events = new List<string>();
 		var options = new ProfileOptions
 		{
-			Importing = context =>
+			Loading = context =>
 			{
+				if(context.Depth == 1)
+					return;
+
 				Assert.Null(context.Profile);
 				Assert.Null(context.Referer.Entries["leaf"]);
 				starting.Add(context);
 				events.Add("before:" + Path.GetFileName(context.FilePath));
 			},
-			Imported = context =>
+			Loaded = context =>
 			{
+				if(context.Depth == 1)
+					return;
+
 				Assert.Equal(context.FilePath, context.Profile.FilePath);
 				Assert.Same(context.Profile.Entries["leaf"], context.Referer.Entries["leaf"]);
 				Assert.Equal("value", context.Referer.Entries["leaf"].Value);
@@ -444,7 +512,7 @@ public class ProfileImportTest
 	}
 
 	[Fact]
-	public void Import_ImportingRunsBeforeAnyParsing()
+	public void Import_LoadingRunsBeforeAnyParsing()
 	{
 		using var files = new ProfileFiles();
 		files.Write("invalid.ini", "value=first\nvalue=duplicate");
@@ -527,7 +595,7 @@ public class ProfileImportTest
 		Assert.Equal(["before", "after"], events);
 	}
 	[Fact]
-	public void Import_ParseFailureSkipsImportedAndCanRetry()
+	public void Import_ParseFailureSkipsLoadedAndCanRetry()
 	{
 		using var files = new ProfileFiles();
 		var child = files.Write("child.ini", "value=first\nvalue=duplicate");
@@ -556,7 +624,14 @@ public class ProfileImportTest
 		files.Write("child.ini", "\nvalue=child");
 		var root = files.Write("root.ini", "\n#@import child.ini");
 		Profile child = null;
-		var options = new ProfileOptions(preserveBlanks) { Imported = context => child = context.Profile };
+		var options = new ProfileOptions(preserveBlanks)
+		{
+			Loaded = context =>
+			{
+				if(context.Depth > 1)
+					child = context.Profile;
+			}
+		};
 
 		var result = Profile.Load(root, options);
 
@@ -598,15 +673,21 @@ public class ProfileImportTest
 		var root = files.Write("root.ini", "#@import child.ini\n\n");
 		var events = new List<string>();
 		var options = new ProfileOptions();
-		options.Importing = context =>
+		options.Loading = context =>
 		{
+			if(context.Depth == 1)
+				return;
+
 			events.Add("before:" + Path.GetFileName(context.FilePath));
 			options.PreserveBlanks = false;
-			options.Importing = _ => throw new InvalidOperationException("Changed callback must wait for next load.");
-			options.Imported = options.Importing;
+			options.Loading = _ => throw new InvalidOperationException("Changed callback must wait for next load.");
+			options.Loaded = options.Loading;
 		};
-		options.Imported = context =>
+		options.Loaded = context =>
 		{
+			if(context.Depth == 1)
+				return;
+
 			Assert.Equal([0], context.Profile.Blanks);
 			events.Add("after:" + Path.GetFileName(context.FilePath));
 		};
@@ -758,19 +839,31 @@ public class ProfileImportTest
 		using var files = new ProfileFiles();
 		var child = files.Write("child.ini", "\nvalue=child");
 		var notifications = new List<ProfileContext>();
-		var options = new ProfileOptions { Importing = notifications.Add, Imported = notifications.Add };
+		var options = new ProfileOptions
+		{
+			Loading = context =>
+			{
+				if(context.Depth > 1)
+					notifications.Add(context);
+			},
+			Loaded = context =>
+			{
+				if(context.Depth > 1)
+					notifications.Add(context);
+			}
+		};
 		var reader = CreateReader(options);
 		var snapshot = (ProfileOptions)reader.GetType().GetProperty("Options").GetValue(reader);
 		options.PreserveBlanks = false;
-		options.Importing = _ => throw new InvalidOperationException("Snapshot must retain original callback.");
-		options.Imported = options.Importing;
+		options.Loading = _ => throw new InvalidOperationException("Snapshot must retain original callback.");
+		options.Loaded = options.Loading;
 		using var stream = new MemoryStream(Encoding.UTF8.GetBytes("\n#@import " + child));
 
 		var profile = ReadProfile(reader, stream, Encoding.UTF8);
 
 		Assert.NotSame(options, snapshot);
-		Assert.NotSame(options.Importing, snapshot.Importing);
-		Assert.NotSame(options.Imported, snapshot.Imported);
+		Assert.NotSame(options.Loading, snapshot.Loading);
+		Assert.NotSame(options.Loaded, snapshot.Loaded);
 		Assert.True(snapshot.PreserveBlanks);
 		Assert.Equal([0], profile.Blanks);
 		Assert.Equal("child", Assert.Single(profile.Entries).Value);
@@ -785,7 +878,7 @@ public class ProfileImportTest
 	}
 
 	[Fact]
-	public void Reader_StreamEncodingAndRootNotifications()
+	public void Reader_StreamEncodingAndOwnershipWithoutImports()
 	{
 		var events = new List<string>();
 		var reader = CreateReader(Options(
@@ -857,7 +950,7 @@ public class ProfileImportTest
 	}
 
 	[Fact]
-	public void Reader_ImportedFailureRetainsActiveGuardThenCleansReader()
+	public void Reader_LoadedFailureRetainsActiveGuardThenCleansReader()
 	{
 		using var files = new ProfileFiles();
 		var child = files.Write("child.ini", "value=complete");
@@ -908,8 +1001,16 @@ public class ProfileImportTest
 
 	private static ProfileOptions Options(Action<string> importing = null, Action<Profile> imported = null) => new()
 	{
-		Importing = importing == null ? null : context => importing(context.FilePath),
-		Imported = imported == null ? null : context => imported(context.Profile),
+		Loading = importing == null ? null : context =>
+		{
+			if(context.Depth > 1)
+				importing(context.FilePath);
+		},
+		Loaded = imported == null ? null : context =>
+		{
+			if(context.Depth > 1)
+				imported(context.Profile);
+		},
 	};
 
 	internal sealed class ProfileFiles : IDisposable

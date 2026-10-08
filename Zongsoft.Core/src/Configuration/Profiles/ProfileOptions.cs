@@ -37,7 +37,7 @@ public class ProfileOptions
 	public ProfileOptions(bool preserveBlanks = true)
 	{
 		this.PreserveBlanks = preserveBlanks;
-		this.MaximumDepth = 64;
+		this.Directives = new();
 	}
 	#endregion
 
@@ -45,37 +45,42 @@ public class ProfileOptions
 	/// <summary>获取或设置一个值，指示是否保留空行。</summary>
 	public bool PreserveBlanks { get; set; }
 
-	/// <summary>获取或设置导入指令的处理行为，默认为 <see cref="ProfileDirectiveBehavior.None"/>。</summary>
-	/// <remarks>
-	/// <list type="bullet">
-	/// 	<item><see cref="ProfileDirectiveBehavior.None"/>：采用导入指令的内置默认行为，允许导入文件或目录不存在。</item>
-	/// 	<item><see cref="ProfileDirectiveBehavior.Strict"/>：要求全部直接和递归导入的文件必须存在。</item>
-	/// 	<item><see cref="ProfileDirectiveBehavior.Ignore"/>：将指令保留为普通注释。</item>
-	/// 	<item><see cref="ProfileDirectiveBehavior.Suppress"/>：在打开导入文件和触发回调之前抛出 <see cref="ProfileException"/>，包括空参数指令。</item>
-	/// </list>
-	/// </remarks>
-	public ProfileDirectiveBehavior ImportBehavior { get; set; }
+	/// <summary>获取指令选项集合；未配置的指令采用其内置默认设置。</summary>
+	public ProfileDirectiveOptionsCollection Directives { get; }
 
-	/// <summary>获取或设置同时加载的最大文件层数，默认为 <c>64</c>。</summary>
-	/// <remarks>根文件计为第一层；设为 <c>1</c> 时只能读取根文件。此选项仅用于读取，不限制关联保存的范围。</remarks>
-	/// <exception cref="ArgumentOutOfRangeException">指定的值小于或等于零。</exception>
-	public int MaximumDepth
-	{
-		get => field;
-		set => field = value > 0 ? value : throw new ArgumentOutOfRangeException(nameof(value));
-	}
+	/// <summary>获取或设置配置读取前的回调，根配置和导入配置均触发。</summary>
+	/// <remarks>文件打开和循环、深度检查通过后，解析内容前触发；此时上下文的 Profile 为空。</remarks>
+	public Action<ProfileContext> Loading { get; set; }
 
-	/// <summary>获取或设置导入文件打开且递归检查通过后、解析内容之前的回调。</summary>
-	/// <remarks>根文件不触发回调。抛出异常会终止整个加载，不支持跳过当前导入。</remarks>
-	public Action<ProfileContext> Importing { get; set; }
+	/// <summary>获取或设置配置读取成功后的回调，根配置和导入配置均触发。</summary>
+	/// <remarks>导入配置已合并到引用者。异常终止加载，不回滚已完成的合并和通知。</remarks>
+	public Action<ProfileContext> Loaded { get; set; }
 
-	/// <summary>获取或设置导入文件及其递归导入解析成功并合并到引用者之后的回调。</summary>
-	/// <remarks>根文件不触发回调。抛出异常会终止整个加载，不回滚已完成的合并和通知。</remarks>
-	public Action<ProfileContext> Imported { get; set; }
+	/// <summary>获取或设置指令处理前的回调，可修改执行参数或标记已处理。</summary>
+	/// <remarks>指令名称及原始参数已识别；忽略或禁止的指令不触发该回调。</remarks>
+	public Action<ProfileDirectiveContext> DirectiveProcessing { get; set; }
+
+	/// <summary>获取或设置指令成功处理后的回调。</summary>
+	/// <remarks>本条指令的递归处理及合并均已完成；忽略、禁止或处理失败的指令不触发。</remarks>
+	public Action<ProfileDirectiveContext> DirectiveProcessed { get; set; }
 	#endregion
 
 	#region 内部方法
-	//固定本次加载的选项值与委托引用；回调捕获的外部状态仍由调用方管理。
-	internal ProfileOptions Clone() => (ProfileOptions)this.MemberwiseClone();
+	//复制指令集合和各选项；委托捕获的外部状态仍由调用方管理。
+	internal ProfileOptions Clone()
+	{
+		var options = new ProfileOptions(this.PreserveBlanks)
+		{
+			Loading = this.Loading,
+			Loaded = this.Loaded,
+			DirectiveProcessing = this.DirectiveProcessing,
+			DirectiveProcessed = this.DirectiveProcessed,
+		};
+
+		foreach(var directive in this.Directives)
+			options.Directives.Add(directive.Clone());
+
+		return options;
+	}
 	#endregion
 }

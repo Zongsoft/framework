@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -27,33 +27,27 @@
  * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System;
+using System.Collections.ObjectModel;
+
 namespace Zongsoft.Configuration.Profiles;
 
-/// <summary>提供一次配置读取通知的上下文信息。</summary>
-/// <remarks>读取前后分别创建上下文；属性引用的配置模型仍可修改。</remarks>
-public sealed class ProfileContext
+/// <summary>表示按指令名称索引的选项集合，名称忽略大小写且不可重复。</summary>
+/// <remarks>集合顺序不影响指令执行顺序；未配置的指令采用内置默认设置。</remarks>
+public class ProfileDirectiveOptionsCollection() : KeyedCollection<string, ProfileDirectiveOptions>(StringComparer.OrdinalIgnoreCase)
 {
-	#region 构造函数
-	internal ProfileContext(string filePath, int depth, Profile referer, Profile profile = null)
+	#region 重写方法
+	protected override string GetKeyForItem(ProfileDirectiveOptions item) => item.Name;
+	protected override void InsertItem(int index, ProfileDirectiveOptions item)
 	{
-		this.FilePath = filePath ?? string.Empty;
-		this.Depth = depth;
-		this.Referer = referer;
-		this.Profile = profile;
+		ArgumentNullException.ThrowIfNull(item);
+		base.InsertItem(index, item);
 	}
-	#endregion
 
-	#region 公共属性
-	/// <summary>获取本次读取的绝对加载路径；匿名输入为空字符串。</summary>
-	public string FilePath { get; }
-
-	/// <summary>获取当前加载层数；根文件为第一层，直接导入为第二层。</summary>
-	public int Depth { get; }
-
-	/// <summary>获取直接引用者；根配置为空。</summary>
-	public Profile Referer { get; }
-
-	/// <summary>获取本次读取结果；读取前为空，读取后为已解析的配置，导入配置已合并到引用者。</summary>
-	public Profile Profile { get; }
+	protected override void SetItem(int index, ProfileDirectiveOptions item)
+	{
+		ArgumentNullException.ThrowIfNull(item);
+		base.SetItem(index, item);
+	}
 	#endregion
 }

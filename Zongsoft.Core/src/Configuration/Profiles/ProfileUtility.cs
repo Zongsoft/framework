@@ -80,17 +80,37 @@ internal static class ProfileUtility
 	#endregion
 
 	#region 语法解析
-	internal static bool TryGetImport(ReadOnlySpan<char> text, out string argument)
+	internal static bool IsDirectiveName(ReadOnlySpan<char> name)
 	{
-		const string KEYWORD = "@import";
-
-		argument = null;
-
-		if(!text.StartsWith(KEYWORD, StringComparison.OrdinalIgnoreCase) ||
-			text.Length > KEYWORD.Length && text[KEYWORD.Length] is not (' ' or '\t'))
+		if(name.IsEmpty || !char.IsLetter(name[0]) && name[0] != '_')
 			return false;
 
-		argument = text[KEYWORD.Length..].Trim().ToString();
+		foreach(var character in name)
+		{
+			if(!char.IsLetterOrDigit(character) && character is not ('_' or '-' or '.'))
+				return false;
+		}
+
+		return true;
+	}
+
+	internal static bool TryGetDirective(ReadOnlySpan<char> text, out string name, out string argument)
+	{
+		name = null;
+		argument = null;
+
+		if(text.Length < 2 || text[0] != '@')
+			return false;
+
+		text = text[1..];
+		var separator = text.IndexOfAny(' ', '\t');
+		var token = separator < 0 ? text : text[..separator];
+
+		if(!IsDirectiveName(token))
+			return false;
+
+		name = token.ToString();
+		argument = separator < 0 ? string.Empty : text[(separator + 1)..].Trim().ToString();
 		return true;
 	}
 

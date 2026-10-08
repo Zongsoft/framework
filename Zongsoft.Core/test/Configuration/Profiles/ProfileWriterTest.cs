@@ -810,7 +810,7 @@ public class ProfileWriterTest
 	}
 
 	[Fact]
-	public void Save_ImportCallbacksDoNotExecuteOrChangeLoadedSaveScope()
+	public void Save_ReadAndDirectiveCallbacksDoNotExecuteOrChangeLoadedSaveScope()
 	{
 		using var files = new ProfileImportTest.ProfileFiles();
 		var child = files.Write("child.ini", "imported=original");
@@ -820,8 +820,10 @@ public class ProfileWriterTest
 		profile.Entries["local"].Value = "changed";
 		var options = new ProfileOptions
 		{
-			Importing = _ => throw new InvalidOperationException("Saving must not read imports."),
-			Imported = _ => throw new InvalidOperationException("Saving must not merge imports."),
+			Loading = _ => throw new InvalidOperationException("Saving must not read imports."),
+			Loaded = _ => throw new InvalidOperationException("Saving must not merge imports."),
+			DirectiveProcessing = _ => throw new InvalidOperationException("Saving must not process directives."),
+			DirectiveProcessed = _ => throw new InvalidOperationException("Saving must not complete directives."),
 		};
 
 		profile.Save(options);
@@ -885,7 +887,14 @@ public class ProfileWriterTest
 	}
 
 	private static ProfileOptions Options(Action<Profile> imported = null) =>
-		new() { Imported = imported == null ? null : context => imported(context.Profile) };
+		new()
+		{
+			Loaded = imported == null ? null : context =>
+			{
+				if(context.Depth > 1)
+					imported(context.Profile);
+			}
+		};
 
 	private static void AssertFiles(ProfileImportTest.ProfileFiles files, params string[] expected) =>
 		Assert.Equal(expected.OrderBy(name => name), Directory.GetFiles(files.Root).Select(Path.GetFileName).OrderBy(name => name));

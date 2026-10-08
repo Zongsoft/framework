@@ -45,15 +45,17 @@ description: 设计、修改、审查或测试 Zongsoft.Core 的公共契约与�
 
 构建 `Zongsoft.Core.slnx` 并运行对应测试。公共行为变化至少选择一个真实下游实现做定向构建；多目标差异分别验证 net8.0、net9.0、net10.0。
 
-## Profile 导入
+## Profile 指令与读取
 
-导入机制见 [实现文档](docs/profiles.zh-Hans.md#读取与导入)。#@import 是 ProfileReader 内置语法，没有通用指令接口、注册集合、公开读写操作上下文或执行回调。Reader 每次根加载独立创建，递归共享，私有 Context 仅存 Profile、行号和章节；Profile 内部 Import 方法合并有效引用并登记来源关系。
+读取机制见 [实现文档](docs/profiles.zh-Hans.md#读取与导入)。ProfileReader 识别紧接注释符的 @name，名称与参数以空格或 Tab 分隔；Argument 去除两端空白，语义由具体指令解释。import 内置于读取器，未知指令可由回调接管。每次根读取独立创建 Reader，递归共享设置快照，保留活动链检查与失败清理。
 
-ProfileOptions(bool preserveBlanks = true) 提供 PreserveBlanks、ImportBehavior、MaximumDepth 和两个可写的 Action<ProfileContext> 回调 Importing/Imported。Reader 浅复制空行选项、导入行为、深度限制和委托引用，递归共享快照。ProfileContext 内部构造、公开 sealed，FilePath/Depth/Referer/Profile 只读；Referer 是直接引用者，根层数为 1；前置 Profile 为 null，后置为完成解析与合并的子文件，前后上下文分别创建。Reader 按 MaximumDepth（默认 64，仅接受正数，根文件计一层）限制导入深度并检测循环，ProfileDirectiveBehavior 是通用指令策略枚举：None 采用具体指令的内置默认行为，Strict 的严格校验规则由具体指令定义，Ignore 将指令作为普通注释，Suppress 禁止指令。ImportBehavior 默认为 None，导入指令的内置行为允许缺失导入；Strict 要求直接和递归导入存在，缺失时抛出带来源的 ProfileException；Ignore 将导入指令作为普通注释，不打开文件或触发回调；Suppress 读取到导入指令即抛出 ProfileException，包含空参数指令，且不打开文件或触发回调；回调异常终止整个加载并清理，不回滚。根文件、可选缺失及内部拒绝不通知；回调捕获状态的线程安全由调用方保证。
+ProfileOptions 提供 PreserveBlanks、只读 Directives 集合及四个回调。ProfileDirectiveOptions 按只读 Name 对应指令，Behavior 使用 None/Strict/Ignore/Suppress。集合名称忽略大小写，拒绝 null 和重名项，缺省配置采用指令内置默认值。ProfileDirectiveOptions.Import 创建公开嵌套 ImportOptions，MaximumDepth=0 采用默认 64，正数指定上限，负数拒绝；根配置计一层。根读取复制集合并调用每个选项的虚拟 Clone，含可变引用成员的派生类型负责复制这些成员。
 
-Profile.Load 仅转发 Reader，Reader.ReadCore 管理流与活动状态，Parse 通过 TextReader 识别行及导入；独立根加载隔离，失败清理后可重试。Load(Stream) 关闭传入流，Load(TextReader) 保持读取器打开；StreamReader 的底层流为 FileStream 时提供来源路径，其它读取器为匿名来源。Profile.Blanks 仅内部可写。[ApplicationManifest](docs/application-manifest.zh-Hans.md) 设置 ImportBehavior = ProfileDirectiveBehavior.Suppress 拒绝导入指令，在打开导入文件前抛出 FormatException；加载时记录空行，保存时保留空行和注释，换行遵循 TextWriter.WriteLine 的标准行为。名称仅检查非空并移除两端空白，不额外验证保留字符。保存由 ProfileWriter 承担，声明与有效引用分开，合并不修改被覆盖声明。Writer 不执行导入、不通知写入事件；导入文本是普通注释声明，编辑后需重新加载才能更新导入关系。
+Loading/Loaded 均为 Action<ProfileContext>，覆盖根与导入；文件打开及循环、深度检查后触发 Loading，解析和递归导入成功、子文件合并后触发 Loaded。FilePath/Depth/Referer/Profile 只读；匿名路径为空字符串，根 Referer 为 null，前置 Profile 为 null，后置为解析结果，前后使用不同上下文。缺失或被拒绝文件不通知，回调异常终止加载并清理，不回滚已有合并。
 
-Save() 仅写回自身及导入子树中的修改来源，显式输出仅处理当前 Profile，回调配置不改变保存范围。所有临时输出准备成功后按导入后序提交；模型修改和重入仍拒绝，不增加测试专用生产扩展点。读写机制见 [声明与保存](docs/profiles.zh-Hans.md#声明与保存)，导入回归见 [ProfileImportTest](test/Configuration/Profiles/ProfileImportTest.cs)。
+DirectiveProcessing/DirectiveProcessed 均为 Action<ProfileDirectiveContext>，每条指令一组，成功处理全部目标及递归导入后完成。前置可改 Argument 或设 Handled=true 接管；后置修改不重执行。上下文提供 Name、Argument、Handled、Behavior、Options、Profile、Section、FilePath、LineNumber、Depth。Options 是独立副本，修改不影响 Reader 设置。Ignore 不执行且不通知指令回调；Suppress 在指令回调前拒绝；未知指令 None 未接管时保留注释，Strict 未接管则失败。文件通知与指令通知按递归顺序嵌套，保存保留原始指令注释。Profile 不提供 Variables 或自动变量展开。
+
+[ApplicationManifest](docs/application-manifest.zh-Hans.md) 通过 Directives = { ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Suppress) } 禁止导入，并转换为 FormatException。Load(Stream) 关闭输入流，Load(TextReader) 保持读取器打开；基于 FileStream 的输入提供路径。Writer 只固定 PreserveBlanks，不复制指令选项、不执行指令或回调。Save() 按来源写回自身及导入子树的修改，显式输出仅处理当前配置；声明及保存规则见 [文档](docs/profiles.zh-Hans.md#声明与保存)。不为测试新增生产入口。
 
 ## 本地搜索
 

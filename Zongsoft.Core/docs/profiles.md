@@ -1,116 +1,140 @@
-# Profile configuration: loading, declarations and saving
+# Profile configuration: loading, directives and saving
 
 [English](profiles.md) | [简体中文](profiles.zh-Hans.md)
 
-This document describes Profile loading and imports, declarations and source ownership, and the rules for saving and committing source files.
+Profile reads INI declarations, processes directives, merges imported sources and saves changes back to their declaring files.
 
 - [Loading and imports](#loading-and-imports)
 - [Declarations and saving](#declarations-and-saving)
 
 ## Loading and imports
 
-Profile.Load reads INI files; #@import is built into the reader. Core exposes no general directive interfaces, registry, handlers or reading/writing operation contexts, and depends on no deployment, NuGet, hashing or lock-file types.
+`Profile.Load` accepts paths, Stream and TextReader. Each root load creates an internal ProfileReader that owns parsing, directive dispatch, file notifications and cycle/depth checks. Recursive imports share the reader and its captured settings. Profile retains declarations, effective references and source relationships. ProfileWriter serializes declarations and coordinates source commits; it does not execute directives or callbacks.
 
-### Responsibilities and lifetime
-
-- Profile owns declarations and the effective configuration, with public Load/Save entry points. Its internal Import method merges effective references and records direct imports.
-- Each root load creates an internal sealed ProfileReader shared throughout recursive imports. It opens files, parses input, recognizes imports, runs notifications and guards cycles/depth. Its private nested Context contains only the current Profile, line number and section.
-- ReadCore scopes streams and active paths; Parse uses ProfileUtility for line/import syntax. No static state or loading cache is used. Every exit cleans activity state, allowing internal retries on the same reader after failure.
-- ProfileWriter serializes declarations and coordinates source commits. It does not execute import text or expose write callbacks. See [declarations and saving](#declarations-and-saving).
-
-```text
-Profile.Load -> ProfileReader.Read -> ReadFile/ReadCore -> Parse
-                                    ^                      |
-                                    +--- built-in import ---+
-Parsed child -> parent Profile.Import(child) -> Imported callback -> activity cleanup
-```
-
-Public Load entry points accept file paths, Stream and TextReader; Save accepts file paths, Stream and TextWriter. Internal read entry points have no general callbacks or external inheritance hooks. Loaded models retain source relationships, not their reader.
-
-### Import notification options
+### Options and directive settings
 
 ```csharp
 using Zongsoft.Configuration.Profiles;
 
 var options = new ProfileOptions
 {
-	Importing = context => Console.WriteLine($"Reading {context.FilePath} at depth {context.Depth}"),
-	Imported = context => Console.WriteLine($"Merged {context.Profile.FilePath} into {context.Referer.FilePath}"),
+	Directives =
+	{
+		ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Strict, maximumDepth: 16),
+		new ProfileDirectiveOptions("custom", ProfileDirectiveBehavior.Suppress),
+	},
+	Loading = context => Console.WriteLine($"Reading {context.FilePath} at depth {context.Depth}"),
+	Loaded = context => Console.WriteLine($"Read {context.Profile.FilePath}"),
 };
 
 var profile = Profile.Load("settings.ini", options);
 ```
 
-`ProfileOptions(bool preserveBlanks = true)` configures blank-line preservation and exposes settable PreserveBlanks, ImportBehavior, MaximumDepth, Importing and Imported properties. Both callbacks are `Action<ProfileContext>` and default to null. Omitted load options discard blanks; explicit new ProfileOptions() records them.
+`ProfileOptions(bool preserveBlanks = true)` exposes PreserveBlanks, a get-only Directives collection, Loading/Loaded (`Action<ProfileContext>`) and DirectiveProcessing/DirectiveProcessed (`Action<ProfileDirectiveContext>`). Callbacks default to null. Omitted load options discard blanks; explicit new ProfileOptions() records them. Profile does not expand variables.
 
-`ProfileDirectiveBehavior` defines mutually exclusive policies for Profile directives. `None` leaves behavior unspecified and uses the directive's built-in default; `Strict` requests strict processing under rules defined by that directive; `Ignore` keeps the directive as an ordinary comment; `Suppress` rejects it with an exception. The enum is not specific to imports.
+`ProfileDirectiveOptions` has an immutable Name and a settable Behavior. Names start with a letter or underscore and contain only letters, digits, underscores, hyphens or dots; they contain no comment marker or `@` prefix. `ProfileDirectiveOptionsCollection` uses case-insensitive name keys, rejects null and duplicate items, and supports keyed lookup. Its enumeration order does not control execution order. Missing settings use the directive's built-in defaults; removing settings restores those defaults. Adding settings does not register an implementation.
 
-ImportBehavior defaults to `None`. For import directives, these policies have the following meanings:
+`ProfileDirectiveOptions.Import(behavior = None, maximumDepth = 0)` constructs the public nested ImportOptions type, whose name is fixed to `import`. MaximumDepth is nonnegative: zero selects the built-in limit of 64; positive values specify the limit; negative assignments throw ArgumentOutOfRangeException without replacing the current value. The root counts as one active level: 1 allows only the root. The effective limit is resolved once for the load, without modifying the supplied options. Cycle detection remains enabled independently.
 
-| Value | Import behavior |
-| --- | --- |
-| None | Use the import directive's built-in default: execute imports and allow missing files or directories. |
-| Strict | Execute imports and require every direct and recursive imported file to exist. |
-| Ignore | Keep import directives as ordinary comments without opening files or invoking callbacks. |
-| Suppress | Throw ProfileException on an import directive, including an empty argument, before opening its files or invoking callbacks. |
+`ProfileDirectiveBehavior` is a general policy enum. None selects the directive's built-in behavior; Strict requests its strict rules; Ignore preserves the declaration as a comment without entering directive processing; Suppress throws ProfileException before directive callbacks or execution.
 
-This option affects loading only; all modes preserve directive comments when saving. For example: `Profile.Load("settings.ini", new ProfileOptions { ImportBehavior = ProfileDirectiveBehavior.Ignore })`. Both None and Strict enforce syntax, cycle and depth checks for imports; None uses the import default, which only tolerates missing files during opening.
+| Behavior | Import directive | Other directive without an implementation |
+| --- | --- | --- |
+| None | Load files; missing imported files/directories are allowed. | Offer the directive to callbacks and preserve an unhandled declaration as a comment. |
+| Strict | Require every direct and recursive import to exist. | Throw unless the processing callback handles it. |
+| Ignore | No directive callbacks or imported-file access. | No directive callbacks or execution. |
+| Suppress | Reject the directive, including empty arguments. | Reject the directive, including empty arguments. |
 
-MaximumDepth defaults to 64 and accepts only positive integers; invalid assignments throw ArgumentOutOfRangeException and retain the previous value. The root counts as level one: 1 permits only the root, while a higher value such as 128 allows deeper chains. Set it with `new ProfileOptions { MaximumDepth = 128 }`. Throw from either callback to abort the entire load; there is no callback return value for silently skipping a file.
+These policies apply after the containing document's Loading notification. They do not suppress root file notifications. Names match without regard to case; invalid enum values are rejected when assigned.
 
-Reader shallow-clones ProfileOptions at the start of a root load to capture blank handling, ImportBehavior, MaximumDepth and both delegate references. Recursive reads share that snapshot; subsequently replacing properties on the original options does not affect the current load. Callers own concurrency of mutable callback captures. Writer does not execute import callbacks; save scope depends only on recorded source relationships.
+At root entry, Reader copies the options collection and calls each directive option's virtual Clone method. Recursive reads share the resulting settings. The default Clone preserves the runtime type and shallow-copies fields; derived options with mutable reference members must override it to copy those members. Changing the original collection, option properties or callback properties affects subsequent root loads. Callers manage mutable state captured by callback delegates.
 
-`ProfileContext` is public sealed, constructed internally by Reader, with get-only properties:
+### File loading callbacks
+
+Loading and Loaded run for roots and imports. Loading runs after opening and cycle/depth checks, before parsing. Loaded runs after successful parsing and recursive imports; an imported Profile has already been merged into its direct referer. Each notification receives a separate public sealed ProfileContext with get-only properties:
 
 | Property | Meaning |
 | --- | --- |
-| FilePath | Normalized absolute loading path of the imported file. |
-| Depth | Active loading depth of this file; root is 1, a direct import is 2. |
-| Referer | The direct referring Profile containing this import declaration. |
-| Profile | Null during Importing; the parsed child after recursive imports and merging during Imported. |
+| FilePath | Absolute loading path, or an empty string for anonymous input. |
+| Depth | Active loading depth: root 1, direct import 2. |
+| Referer | Direct referring Profile; null for roots. |
+| Profile | Null in Loading; the parsed Profile in Loaded. |
 
-Before and after notifications receive separate context instances. Retaining a before context never causes its Profile to be filled later. Get-only properties fix references, while referenced Profile models remain editable. The context exposes no reader, input stream or recursive entry point and is not used for saving.
+Missing optional imports and rejected files do not receive file notifications. Repeated successful reads notify separately. A failure in Loading, parsing or merging prevents that file's Loaded callback. Callback exceptions propagate, streams/activity are cleaned, and prior notifications or merges are not rolled back. Notifications run while the file is still in the active chain. Retained Loading contexts are not filled later; referenced Profile objects remain editable.
 
-### Section names
+### Directive callbacks
 
-`ProfileSection` trims surrounding whitespace and rejects empty names or names containing any of these characters: `/`, `\`, `|`, `*`, `?`, `=`, `%`, `^`, `&`, `<`, `>`, `{`, `}`. Characters such as `:`, `!`, `@` and `#` are allowed. Section lookup ignores case.
+A directive is a comment beginning immediately with `@name`, such as `#@import a.ini | b.ini` or `;@custom value`. A space or tab separates the name from its argument. Whitespace between the comment marker and `@` produces an ordinary comment. Original directive text remains a ProfileComment declaration.
 
-In section headers, spaces and tabs separate hierarchy levels: `[network proxy]` declares `proxy` under `network`. When building a model, represent those levels with parent and child sections; saving rejects whitespace inside an individual section name. No quoting or escaping is provided for section names.
+DirectiveProcessing runs after the name and original argument have been identified, before execution. DirectiveProcessed runs after the whole directive succeeds, including its nested file reads and merges. A directive with several imports receives one pair of directive notifications and a pair of file notifications for each successfully loaded file:
+
+```text
+Loading(root)
+  DirectiveProcessing(import)
+    Loading(a.ini)
+    Loaded(a.ini)
+    Loading(b.ini)
+    Loaded(b.ini)
+  DirectiveProcessed(import)
+Loaded(root)
+```
+
+Recursive directives nest inside their containing file's notifications. An empty import or an optional missing import still completes directive processing. Processing, execution or nested callback failure prevents DirectiveProcessed. Ignore and Suppress take effect before either directive callback.
+
+Both callbacks receive the same public sealed ProfileDirectiveContext:
+
+| Property | Meaning |
+| --- | --- |
+| Name | Directive name with its declared casing. |
+| Argument | Settable directive argument with surrounding whitespace removed; assigning null preserves null. Each directive defines its meaning. |
+| Handled | Set true in DirectiveProcessing to take over execution. Successful built-in handling also sets it true. |
+| Behavior | The captured policy for this directive. |
+| Options | An independent copy of this directive's settings, including derived properties; edits do not change Reader settings. |
+| Profile / Section | Declaring Profile and current section; Section is null at the root section. |
+| FilePath / LineNumber / Depth | Declaring source path, one-based line and active file depth. |
+
+Argument and Handled changes made in DirectiveProcessing guide execution. Edits in DirectiveProcessed do not re-execute the directive. Arguments are never written back into the original declaration. For example, a caller can redirect an import and implement a custom directive:
+
+```csharp
+options.DirectiveProcessing = context =>
+{
+	if(context.Name.Equals("import", StringComparison.OrdinalIgnoreCase))
+		context.Argument = "shared.ini";
+	else if(context.Name.Equals("note", StringComparison.OrdinalIgnoreCase))
+	{
+		Console.WriteLine(context.Argument);
+		context.Handled = true;
+	}
+};
+```
+
+Saving still writes the original import comment. An unhandled unknown directive under None completes with Handled=false; Strict rejects it. The extension context exposes no Reader, input stream or recursive loading entry point.
 
 ### Syntax, paths and recursion
 
-#@import defaults.ini and ;@import defaults.ini load a file. The keyword is case insensitive and must end at a space, tab or end of line. Empty arguments do nothing; other names such as @imported remain ordinary comments. Import text is recorded as an ordinary ProfileComment declaration, without a public directive model.
+Import arguments are separated by spaces, tabs or `|`. Null or empty arguments read no files. Paths support neither quoting, variable expansion nor globs. Relative paths use the declaring file's loading directory; absolute paths are allowed. Imports merge at the current Profile root even when declared inside a section.
 
-[ApplicationManifest](application-manifest.md) reuses Profile parsing with ImportBehavior = ProfileDirectiveBehavior.Suppress to reject import directives before opening their files. Its loads throw FormatException for both markers, including directives with empty arguments. General Profile loading keeps the import behavior described here.
+[ApplicationManifest](application-manifest.md) configures `Directives = { ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Suppress) }` and rejects import directives with FormatException before opening imported files, including both comment markers and empty arguments.
 
-Paths are separated by spaces, tabs or |. Quoted escaping, variable expansion and globs are not added. Relative paths use the containing file's loading directory; absolute paths are allowed. Cycle identity resolves file and ancestor-directory links independently, retaining the original relative-path base. Windows ignores path case; other platforms use ordinal comparison. Depth limits cover unrecognized aliases such as hard links.
+Only repetition on the active chain is a cycle. Diamond and sequential repeated imports are read again. Identity checks resolve file and ancestor-directory links while retaining the original relative-path base. Windows ignores path case; other platforms use ordinal comparison. The depth limit also bounds unrecognized aliases such as hard links. Cycle/depth errors identify the import chain, declaring file and one-based line. With the default limit, a 65th active file fails before its Loading callback.
 
-Only active-chain repetition is a cycle. Diamond and sequential repeated imports are read again without caching. Cycle/depth errors identify the reason, import chain, referring file and one-based line number. The default MaximumDepth permits 64 active files; a 65th fails before notification. A custom limit changes this boundary but does not disable cycle detection. ImportBehavior defaults to None, which uses the import directive's built-in behavior: only file/directory-not-found errors while opening are ignored, not permissions or other failures. Set ImportBehavior to Strict to require every direct and recursive import. A missing file then raises ProfileException with the target path, referring file, one-based line and original IO exception. Root files are always required; failed opens do not invoke callbacks.
+None ignores only file/directory-not-found errors during imported-file opening; permission, parsing and callback failures propagate. Strict reports a missing import with its path, referer, line and original IO exception. Root files are always required.
 
-FileStream roots have paths and participate in identity checks. Anonymous streams accept absolute imports and reject relative ones. Profile.Load(Stream) closes the supplied stream. Explicit root encoding applies only to the root; imports default to UTF-8 with BOM detection.
+FileStream roots provide paths and participate in cycle checks. Anonymous inputs permit absolute imports and reject relative imports. Profile.Load(Stream) closes the supplied stream. Explicit encoding applies only to the root; imports use UTF-8 with BOM detection. Profile.Load(TextReader, ProfileOptions) reads from the current position and leaves the reader open on success or failure. A StreamReader over a FileStream provides its source path. A BOM at the start of the first line read is ignored; numbering starts at that position.
 
-Profile.Load(TextReader, ProfileOptions) reads from the current position to the end and leaves the reader open on success or failure. A StreamReader backed by a FileStream uses that file path for relative imports; other readers are anonymous sources. A BOM at the start of the first line read is ignored, and line numbering starts at the current reading position.
+### Section names
 
-### Import notifications
-
-| Callback | Timing |
-| --- | --- |
-| Importing | After opening and cycle/depth checks, before parsing; the context Profile is null. |
-| Imported | After parsing the child and its imports and merging into its parent; the context identifies the child Profile and direct Referer while the child is still active. |
-
-Roots do not notify. A importing B importing C produces Importing(B), Importing(C), Imported(C), Imported(B). Repeated successful imports notify separately. Missing or rejected files do not produce their corresponding notifications.
-
-Importing, parse or merge failures suppress that file's Imported callback. Either callback throwing aborts loading and cleans streams/activity without rolling back prior notifications or merges. Discard collected results from failed loads.
+ProfileSection trims surrounding whitespace and rejects empty names or `/`, `\`, `|`, `*`, `?`, `=`, `%`, `^`, `&`, `<`, `>`, `{`, `}`. Section lookup ignores case. Spaces and tabs in headers separate hierarchy levels: `[network proxy]` declares a child section. Model construction uses parent/child sections; saving rejects whitespace inside a single section name. Section names have no quoting or escaping.
 
 ### Merging, saving and consumers
 
-Imports merge at the current Profile root, even when written inside sections. Sections merge recursively; later declarations replace effective references while retaining each declaration's original value and Profile source. Duplicate keys within one file remain errors. Local/import precedence follows read order. Successful merges record direct imports so shadowed or ineffective children still participate in saves.
+Sections merge recursively; later declarations replace effective references while retaining each declaration's original value and Profile source. Duplicate keys within one file are errors. Local/import precedence follows read order. Successful merges record direct imports so shadowed children still participate in saves.
 
-Reader records original declaration baselines; edits in Imported remain dirty. Save() writes only changed sources in the receiver's import subtree. Explicit path/stream/text outputs emit only local declarations. Comments may be edited into import text, but text edits do not load new files or update relationships; reload to build a new import graph.
+Reader records declaration baselines; edits in Loaded remain dirty. Save() writes changed sources in the receiver's import subtree, while explicit outputs emit local declarations. Changing a comment into directive text does not execute it or rebuild source relationships; reload to establish a new import graph.
 
-Deployer uses Importing to hash child files and records the root separately. Packager uses before/after notifications to validate each source. Hashing by reopening a path still does not guarantee a digest of exactly the parsed bytes; that snapshot concern belongs downstream.
+Deployer uses Loading for imported-file hashes and records the root separately. Packager uses Loading to collect the referer's declarations before merging and Loaded to collect each parsed source, including the root. Containerizer validates source declarations in Loading. Reopening a path for hashing does not guarantee a digest of exactly the parsed bytes; that concern belongs to consumers.
 
-See [ProfileImportTest](../test/Configuration/Profiles/ProfileImportTest.cs) for import regression coverage.
+See [ProfileImportTest](../test/Configuration/Profiles/ProfileImportTest.cs) for regression coverage.
 
 ## Declarations and saving
 
@@ -150,7 +174,7 @@ Collection edits update statements and name indexes together. Replacements remov
 
 ### Writer lifetime and output
 
-Each save creates an internal sealed ProfileWriter. Profile retains public convenience methods; Reader owns parsing and Writer owns serialization and commits. No public writer, singleton, context factory or shared reader/writer base is introduced. Writer clones ProfileOptions to freeze blank handling; it does not execute import callbacks. ProfileContext describes import notifications only; callback settings and MaximumDepth do not alter the save scope of loaded models.
+Each save creates an internal sealed ProfileWriter. Profile retains public convenience methods; Reader owns parsing and Writer owns serialization and commits. No public writer, singleton, context factory or shared reader/writer base is introduced. Writer captures PreserveBlanks only; it does not clone directive options or execute callbacks. ProfileContext describes file loading; callback settings and directive options do not alter the save scope of loaded models.
 
 Null values render as `name`, empty strings as `name=`. Comments use `#`, including empty comments. Statement order, empty sections and necessary scope switches are preserved. PreserveBlanks enables recorded blank lines; blanks discarded at load cannot be recovered at save.
 

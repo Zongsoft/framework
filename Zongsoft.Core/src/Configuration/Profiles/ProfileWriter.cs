@@ -44,7 +44,7 @@ internal sealed class ProfileWriter
 	#region 构造函数
 	public ProfileWriter(ProfileOptions options)
 	{
-		_options = options?.Clone() ?? new ProfileOptions();
+		_options = new ProfileOptions(options?.PreserveBlanks ?? true);
 	}
 	#endregion
 

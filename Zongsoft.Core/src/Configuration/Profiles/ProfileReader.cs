@@ -39,6 +39,8 @@ internal sealed class ProfileReader
 	#region 成员字段
 	private readonly HashSet<string> _active = new(OperatingSystem.IsWindows() ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal);
 	private readonly List<string> _paths = [];
+	private readonly ProfileDirectiveOptions _import;
+	private readonly int _maximumDepth;
 	#endregion
 
 	#region 构造函数
@@ -46,6 +48,8 @@ internal sealed class ProfileReader
 	{
 		//所有递归导入共享此快照，不受调用方随后修改原选项的影响。
 		this.Options = options?.Clone() ?? new ProfileOptions(false);
+		_import = this.Options.Directives.TryGetValue(ProfileDirectiveOptions.ImportOptions.NAME, out var import) ? import : ProfileDirectiveOptions.Import();
+		_maximumDepth = _import is ProfileDirectiveOptions.ImportOptions { MaximumDepth: > 0 } configuration ? configuration.MaximumDepth : ProfileDirectiveOptions.ImportOptions.DEFAULT_MAXIMUM_DEPTH;
 	}
 	#endregion
 
@@ -83,7 +87,7 @@ internal sealed class ProfileReader
 		}
 		catch(IOException exception) when(context != null && exception is FileNotFoundException or DirectoryNotFoundException)
 		{
-			if(this.Options.ImportBehavior == ProfileDirectiveBehavior.Strict)
+			if(_import.Behavior == ProfileDirectiveBehavior.Strict)
 				throw new ProfileException(string.Format(Properties.Resources.Profiles_RequiredImport_Message, path, context.Profile.FilePath, context.LineNumber + 1), exception);
 
 			return null;
@@ -106,7 +110,7 @@ internal sealed class ProfileReader
 		var identity = string.IsNullOrEmpty(path) ? null : ProfileUtility.GetIdentity(path);
 
 		//入栈前检查层数；根文件也占一层，被拒绝的文件不触发导入通知。
-		if(_paths.Count >= this.Options.MaximumDepth)
+		if(_paths.Count >= _maximumDepth)
 			throw this.CreateException(Properties.Resources.Profiles_MaximumDepth_Message, path, context);
 
 		//只检测当前活动链，允许已经退出活动链的文件再次导入。
@@ -118,8 +122,7 @@ internal sealed class ProfileReader
 		try
 		{
 			//根读取没有引用者；前后上下文分别创建，保留的前置上下文不会被更新。
-			if(context != null)
-				this.Options.Importing?.Invoke(new ProfileContext(path, _paths.Count, context.Profile));
+			this.Options.Loading?.Invoke(new ProfileContext(path, _paths.Count, context?.Profile));
 
 			var profile = this.Parse(reader, path);
 
@@ -127,8 +130,9 @@ internal sealed class ProfileReader
 			{
 				//先合并并登记来源，再通知完成；回调失败不回滚已发生的合并。
 				context.Profile.Import(profile);
-				this.Options.Imported?.Invoke(new ProfileContext(path, _paths.Count, context.Profile, profile));
 			}
+
+			this.Options.Loaded?.Invoke(new ProfileContext(path, _paths.Count, context?.Profile, profile));
 
 			return profile;
 		}
@@ -211,17 +215,8 @@ internal sealed class ProfileReader
 					var comments = context.Section == null ? profile.Comments : context.Section.Comments;
 					comments.AddParsed(content, context.LineNumber);
 
-					if(ProfileUtility.TryGetImport(content, out var argument))
-					{
-						if(options.ImportBehavior == ProfileDirectiveBehavior.Suppress)
-							throw new ProfileException(string.Format(Properties.Resources.Profiles_ImportNotSupported_Message, context.LineNumber + 1));
-
-						if(options.ImportBehavior != ProfileDirectiveBehavior.Ignore)
-						{
-							foreach(var importPath in argument.Split([' ', '\t', '|'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
-								this.ReadFile(importPath, context);
-						}
-					}
+					if(ProfileUtility.TryGetDirective(content, out var name, out var argument))
+						this.ProcessDirective(name, argument, context);
 
 					break;
 			}
@@ -235,6 +230,39 @@ internal sealed class ProfileReader
 
 		//返回加载成功的配置文件
 		return profile;
+	}
+
+	private void ProcessDirective(string name, string argument, Context context)
+	{
+		var importing = name.Equals(ProfileDirectiveOptions.ImportOptions.NAME, StringComparison.OrdinalIgnoreCase);
+		var options = importing ? _import : this.Options.Directives.TryGetValue(name, out var configured) ? configured : new ProfileDirectiveOptions(name);
+
+		//行为先于扩展回调生效，忽略和禁止均不会进入指令处理。
+		if(options.Behavior == ProfileDirectiveBehavior.Ignore)
+			return;
+		if(options.Behavior == ProfileDirectiveBehavior.Suppress)
+			throw new ProfileException(string.Format(Properties.Resources.Profiles_DirectiveSuppressed_Message, name, context.Profile.FilePath, context.LineNumber + 1));
+
+		var directive = new ProfileDirectiveContext(name, argument, context.Profile, context.Section, context.LineNumber + 1, _paths.Count, options);
+		this.Options.DirectiveProcessing?.Invoke(directive);
+
+		if(!directive.Handled)
+		{
+			if(importing)
+			{
+				if(!string.IsNullOrEmpty(directive.Argument))
+				{
+					foreach(var path in directive.Argument.Split([' ', '\t', '|'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+						this.ReadFile(path, context);
+				}
+
+				directive.Handled = true;
+			}
+			else if(directive.Behavior == ProfileDirectiveBehavior.Strict)
+				throw new ProfileException(string.Format(Properties.Resources.Profiles_DirectiveUnknown_Message, name, context.Profile.FilePath, context.LineNumber + 1));
+		}
+
+		this.Options.DirectiveProcessed?.Invoke(directive);
 	}
 
 	private ProfileException CreateException(string message, string path, Context context) => new(string.Format(

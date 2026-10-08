@@ -492,8 +492,14 @@
 	<data name="Services.ApplicationManifest.EditionNotFound.Message" xml:space="preserve">
 		<value>The specified edition does not exist in the edition collection.</value>
 	</data>
-	<data name="Profiles.ImportNotSupported.Message" xml:space="preserve">
-		<value>Import directives are disabled (line {0}).</value>
+	<data name="Profiles.DirectiveNameInvalid.Message" xml:space="preserve">
+		<value>Directive names must start with a letter or underscore and contain only letters, digits, underscores, hyphens, or dots.</value>
+	</data>
+	<data name="Profiles.DirectiveSuppressed.Message" xml:space="preserve">
+		<value>The &quot;{0}&quot; directive is prohibited. Declared in {1}, line {2}.</value>
+	</data>
+	<data name="Profiles.DirectiveUnknown.Message" xml:space="preserve">
+		<value>The &quot;{0}&quot; directive has no handler. Declared in {1}, line {2}.</value>
 	</data>
 	<data name="Profiles.CircularImport.Message" xml:space="preserve">
 		<value>Circular profile import: {0}. Referenced from {1}, line {2}.</value>

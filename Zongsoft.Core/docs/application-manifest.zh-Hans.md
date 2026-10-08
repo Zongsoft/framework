@@ -36,7 +36,7 @@ MyApplicationName=Professional
 
 加载复用 [Profile 解析](profiles.zh-Hans.md#读取与导入)，包括空白、空行、整行注释及 BOM 处理。发行版名称遵循 [Profile 章节名称规则](profiles.zh-Hans.md#章节名称)，空格和 Tab 表示层级，清单拒绝嵌套段落。应用和发行版构造函数仅检查名称非空并移除两端空白，不额外验证保留字符；调用方选择可表示为 Profile 格式的名称，首行中的 `@` 和 `=` 是格式分隔符。
 
-清单设置 `ImportBehavior = ProfileDirectiveBehavior.Suppress`，遇到 `#@import` 或 `;@import` 指令，包括空参数指令，均在打开导入文件前抛出 `FormatException`。
+清单设置 `Directives = { ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Suppress) }`，遇到 `#@import` 或 `;@import` 指令，包括空参数指令，均在打开导入文件前抛出 `FormatException`。
 
 ## 发行版集合与当前选择
 

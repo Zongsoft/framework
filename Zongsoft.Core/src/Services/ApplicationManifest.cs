@@ -136,7 +136,7 @@ public class ApplicationManifest
 		if(!File.Exists(path))
 			return null;
 
-		return LoadProfile(() => Profile.Load(path, new ProfileOptions { ImportBehavior = ProfileDirectiveBehavior.Suppress }));
+		return LoadProfile(() => Profile.Load(path, new ProfileOptions { Directives = { ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Suppress) } }));
 	}
 
 	/// <summary>从指定流加载应用版本信息。</summary>
@@ -162,7 +162,7 @@ public class ApplicationManifest
 	public static ApplicationManifest Load(TextReader reader)
 	{
 		ArgumentNullException.ThrowIfNull(reader);
-		return LoadProfile(() => Profile.Load(reader, new ProfileOptions { ImportBehavior = ProfileDirectiveBehavior.Suppress }));
+		return LoadProfile(() => Profile.Load(reader, new ProfileOptions { Directives = { ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Suppress) } }));
 	}
 
 	/// <summary>将应用版本信息保存到指定目录中的版本文件或指定文件，覆盖原有内容。</summary>
@@ -184,7 +184,7 @@ public class ApplicationManifest
 		else if(!File.Exists(path))
 			return;
 
-		var source = File.Exists(path) ? ReadProfile(() => Profile.Load(path, new ProfileOptions { ImportBehavior = ProfileDirectiveBehavior.Suppress })) : _profile;
+		var source = File.Exists(path) ? ReadProfile(() => Profile.Load(path, new ProfileOptions { Directives = { ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Suppress) } })) : _profile;
 		if(source == null || source.Statements.Count == 0 && (source.Blanks == null || source.Blanks.Length == 0))
 			source = _profile;
 
