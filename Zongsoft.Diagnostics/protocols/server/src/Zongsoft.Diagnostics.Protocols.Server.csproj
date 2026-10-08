@@ -26,10 +26,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<!-- 排除旧生成文件；使用 Grpc.Tools 默认的 obj 目录隔离各配置和目标框架的生成产物。 -->
 		<Compile Remove="Properties\generated\**\*.cs" />
 		<Protobuf Include="..\..\..\proto\opentelemetry\proto\**\*.proto"
 		          ProtoRoot="..\..\..\proto"
-		          OutputDir="%(RelativePath)Properties\generated"
 		          GrpcServices="None"
 		          CompileOutputs="true" />
 		<Protobuf Update="..\..\..\proto\opentelemetry\proto\collector\**\*_service.proto"
