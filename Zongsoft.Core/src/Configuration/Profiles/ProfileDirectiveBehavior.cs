@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -32,12 +32,12 @@ namespace Zongsoft.Configuration.Profiles;
 /// <summary>表示 Profile 指令的处理行为。</summary>
 public enum ProfileDirectiveBehavior
 {
-	/// <summary>默认，表示支持该指令，但不做有效性校验。</summary>
-	Default,
-	/// <summary>表示支持该指令，且校验其有效性。</summary>
-	Existed,
+	/// <summary>未指定具体处理行为，采用该指令的内置默认行为。</summary>
+	None = 0,
+	/// <summary>严格处理指令，具体校验规则由该指令定义。</summary>
+	Strict,
 	/// <summary>忽略指令，即将该指令作为普通注释。</summary>
-	Ignored,
+	Ignore,
 	/// <summary>禁止指令，如果存在该指令则抛出异常。</summary>
-	Suppressed,
+	Suppress,
 }

@@ -21,7 +21,7 @@ public class ProfileImportTest
 	[InlineData(" #@import missing.ini")]
 	[InlineData("#@import")]
 	[InlineData("[section]\n#@import child.ini")]
-	public void Import_SuppressedRejectsBeforeOpeningFilesOrCallbacks(string directive)
+	public void Import_SuppressRejectsBeforeOpeningFilesOrCallbacks(string directive)
 	{
 		using var files = new ProfileFiles();
 		var child = files.Write("child.ini", "child=value");
@@ -29,7 +29,7 @@ public class ProfileImportTest
 		var notifications = new List<ProfileContext>();
 		var options = new ProfileOptions
 		{
-			ImportBehavior = ProfileDirectiveBehavior.Suppressed,
+			ImportBehavior = ProfileDirectiveBehavior.Suppress,
 			Importing = notifications.Add,
 			Imported = notifications.Add,
 		};
@@ -51,26 +51,26 @@ public class ProfileImportTest
 		var root = files.Chain(3);
 		var notifications = new List<int>();
 		var options = new ProfileOptions();
-		Assert.Equal(ProfileDirectiveBehavior.Default, options.ImportBehavior);
+		Assert.Equal(ProfileDirectiveBehavior.None, options.ImportBehavior);
 		options.Importing = context =>
 		{
 			notifications.Add(context.Depth);
-			options.ImportBehavior = ProfileDirectiveBehavior.Suppressed;
+			options.ImportBehavior = ProfileDirectiveBehavior.Suppress;
 		};
 
 		Assert.Equal("complete", Profile.Load(root, options).Entries["result"].Value);
 		Assert.Equal([2, 3], notifications);
-		Assert.Equal(ProfileDirectiveBehavior.Suppressed, options.ImportBehavior);
+		Assert.Equal(ProfileDirectiveBehavior.Suppress, options.ImportBehavior);
 		notifications.Clear();
 		Assert.Throws<ProfileException>(() => Profile.Load(root, options));
 		Assert.Empty(notifications);
 	}
 
 	[Fact]
-	public void Import_SuppressedAllowsOrdinaryComments()
+	public void Import_SuppressAllowsOrdinaryComments()
 	{
 		using var reader = new StringReader("#@imported note\n; @import note\nvalue=kept");
-		var profile = Profile.Load(reader, new ProfileOptions { ImportBehavior = ProfileDirectiveBehavior.Suppressed });
+		var profile = Profile.Load(reader, new ProfileOptions { ImportBehavior = ProfileDirectiveBehavior.Suppress });
 		Assert.Equal("kept", profile.Entries["value"].Value);
 		Assert.Equal(["@imported note", " @import note"], profile.Comments.Select(comment => comment.Text));
 	}
@@ -81,7 +81,7 @@ public class ProfileImportTest
 	[InlineData("#@import missing.ini")]
 	[InlineData("#@import")]
 	[InlineData("[section]\n#@import child.ini | child.ini")]
-	public void Import_IgnoredKeepsCommentsWithoutOpeningFilesOrCallbacks(string directive)
+	public void Import_IgnoreKeepsCommentsWithoutOpeningFilesOrCallbacks(string directive)
 	{
 		using var files = new ProfileFiles();
 		var child = files.Write("child.ini", "imported=child");
@@ -89,7 +89,7 @@ public class ProfileImportTest
 		var notifications = new List<ProfileContext>();
 		var options = new ProfileOptions
 		{
-			ImportBehavior = ProfileDirectiveBehavior.Ignored,
+			ImportBehavior = ProfileDirectiveBehavior.Ignore,
 			Importing = notifications.Add,
 			Imported = notifications.Add,
 		};
@@ -104,15 +104,15 @@ public class ProfileImportTest
 		Assert.Equal(-1, reader.Peek());
 		Assert.Empty(notifications);
 		using var writer = new StringWriter { NewLine = "\n" };
-		profile.Save(writer, new ProfileOptions { ImportBehavior = ProfileDirectiveBehavior.Suppressed });
+		profile.Save(writer, new ProfileOptions { ImportBehavior = ProfileDirectiveBehavior.Suppress });
 		Assert.Equal("local=kept\n" + directive.Replace(";@IMPORT", "#@IMPORT") + "\n", writer.ToString());
 	}
 
 	[Theory]
-	[InlineData(ProfileDirectiveBehavior.Default, false)]
-	[InlineData(ProfileDirectiveBehavior.Existed, true)]
-	[InlineData(ProfileDirectiveBehavior.Ignored, false)]
-	[InlineData(ProfileDirectiveBehavior.Suppressed, true)]
+	[InlineData(ProfileDirectiveBehavior.None, false)]
+	[InlineData(ProfileDirectiveBehavior.Strict, true)]
+	[InlineData(ProfileDirectiveBehavior.Ignore, false)]
+	[InlineData(ProfileDirectiveBehavior.Suppress, true)]
 	public void Import_BehaviorHandlesMissingFiles(ProfileDirectiveBehavior behavior, bool fails)
 	{
 		using var files = new ProfileFiles();
@@ -122,7 +122,7 @@ public class ProfileImportTest
 		if(fails)
 		{
 			var error = Assert.Throws<ProfileException>(() => Profile.Load(root, options));
-			if(behavior == ProfileDirectiveBehavior.Existed)
+			if(behavior == ProfileDirectiveBehavior.Strict)
 				Assert.IsAssignableFrom<IOException>(error.InnerException);
 			else
 				Assert.Null(error.InnerException);

@@ -41,18 +41,20 @@ var options = new ProfileOptions
 var profile = Profile.Load("settings.ini", options);
 ```
 
-`ProfileOptions(bool preserveBlanks = true)` retains the blank-line constructor parameter and exposes settable PreserveBlanks, ImportBehavior, MaximumDepth, Importing and Imported properties. Both callbacks are `Action<ProfileContext>` and default to null. Omitted load options discard blanks; explicit new ProfileOptions() records them.
+`ProfileOptions(bool preserveBlanks = true)` configures blank-line preservation and exposes settable PreserveBlanks, ImportBehavior, MaximumDepth, Importing and Imported properties. Both callbacks are `Action<ProfileContext>` and default to null. Omitted load options discard blanks; explicit new ProfileOptions() records them.
 
-ImportBehavior uses the `ProfileDirectiveBehavior` enum and defaults to Default. Its values are mutually exclusive:
+`ProfileDirectiveBehavior` defines mutually exclusive policies for Profile directives. `None` leaves behavior unspecified and uses the directive's built-in default; `Strict` requests strict processing under rules defined by that directive; `Ignore` keeps the directive as an ordinary comment; `Suppress` rejects it with an exception. The enum is not specific to imports.
+
+ImportBehavior defaults to `None`. For import directives, these policies have the following meanings:
 
 | Value | Import behavior |
 | --- | --- |
-| Default | Execute imports; missing files or directories are allowed. |
-| Existed | Execute imports and require every direct and recursive imported file to exist. |
-| Ignored | Keep import directives as ordinary comments without opening files or invoking callbacks. |
-| Suppressed | Throw ProfileException on an import directive, including an empty argument, before opening its files or invoking callbacks. |
+| None | Use the import directive's built-in default: execute imports and allow missing files or directories. |
+| Strict | Execute imports and require every direct and recursive imported file to exist. |
+| Ignore | Keep import directives as ordinary comments without opening files or invoking callbacks. |
+| Suppress | Throw ProfileException on an import directive, including an empty argument, before opening its files or invoking callbacks. |
 
-This option affects loading only; all modes preserve directive comments when saving. For example: `Profile.Load("settings.ini", new ProfileOptions { ImportBehavior = ProfileDirectiveBehavior.Ignored })`. Default and Existed still enforce syntax, cycle and depth checks; Default only tolerates missing files during opening.
+This option affects loading only; all modes preserve directive comments when saving. For example: `Profile.Load("settings.ini", new ProfileOptions { ImportBehavior = ProfileDirectiveBehavior.Ignore })`. Both None and Strict enforce syntax, cycle and depth checks for imports; None uses the import default, which only tolerates missing files during opening.
 
 MaximumDepth defaults to 64 and accepts only positive integers; invalid assignments throw ArgumentOutOfRangeException and retain the previous value. The root counts as level one: 1 permits only the root, while a higher value such as 128 allows deeper chains. Set it with `new ProfileOptions { MaximumDepth = 128 }`. Throw from either callback to abort the entire load; there is no callback return value for silently skipping a file.
 
@@ -79,11 +81,11 @@ In section headers, spaces and tabs separate hierarchy levels: `[network proxy]`
 
 #@import defaults.ini and ;@import defaults.ini load a file. The keyword is case insensitive and must end at a space, tab or end of line. Empty arguments do nothing; other names such as @imported remain ordinary comments. Import text is recorded as an ordinary ProfileComment declaration, without a public directive model.
 
-[ApplicationManifest](application-manifest.md) reuses Profile parsing with ImportBehavior = ProfileDirectiveBehavior.Suppressed to reject import directives before opening their files. Its loads throw FormatException for both markers, including directives with empty arguments. General Profile loading keeps the import behavior described here.
+[ApplicationManifest](application-manifest.md) reuses Profile parsing with ImportBehavior = ProfileDirectiveBehavior.Suppress to reject import directives before opening their files. Its loads throw FormatException for both markers, including directives with empty arguments. General Profile loading keeps the import behavior described here.
 
 Paths are separated by spaces, tabs or |. Quoted escaping, variable expansion and globs are not added. Relative paths use the containing file's loading directory; absolute paths are allowed. Cycle identity resolves file and ancestor-directory links independently, retaining the original relative-path base. Windows ignores path case; other platforms use ordinal comparison. Depth limits cover unrecognized aliases such as hard links.
 
-Only active-chain repetition is a cycle. Diamond and sequential repeated imports are read again without caching. Cycle/depth errors identify the reason, import chain, referring file and one-based line number. The default MaximumDepth permits 64 active files; a 65th fails before notification. A custom limit changes this boundary but does not disable cycle detection. Default suppresses only file/directory-not-found errors while opening, not permissions or other failures. Set ImportBehavior to Existed to require every direct and recursive import. A missing file then raises ProfileException with the target path, referring file, one-based line and original IO exception. Root files are always required; failed opens do not invoke callbacks.
+Only active-chain repetition is a cycle. Diamond and sequential repeated imports are read again without caching. Cycle/depth errors identify the reason, import chain, referring file and one-based line number. The default MaximumDepth permits 64 active files; a 65th fails before notification. A custom limit changes this boundary but does not disable cycle detection. ImportBehavior defaults to None, which uses the import directive's built-in behavior: only file/directory-not-found errors while opening are ignored, not permissions or other failures. Set ImportBehavior to Strict to require every direct and recursive import. A missing file then raises ProfileException with the target path, referring file, one-based line and original IO exception. Root files are always required; failed opens do not invoke callbacks.
 
 FileStream roots have paths and participate in identity checks. Anonymous streams accept absolute imports and reject relative ones. Profile.Load(Stream) closes the supplied stream. Explicit root encoding applies only to the root; imports default to UTF-8 with BOM detection.
 
@@ -176,6 +178,6 @@ File writes follow symbolic-link targets without replacing the links. Hard-link 
 
 File and Stream defaults use Encoding.UTF8. An explicit encoding applies only to the explicit output; original encoding/BOM are not retained for later restoration. TextWriter controls its own encoding and newlines. Changed files are rendered in the selected format, without a byte-for-byte preservation promise.
 
-Writer owns path resources. Supplied streams retain the existing closing behavior; supplied TextWriter instances remain open. Stream/text outputs may contain partial output after failure and cannot be rolled back.
+Writer owns path resources. Supplied streams are closed; supplied TextWriter instances remain open. Stream/text outputs may contain partial output after failure and cannot be rolled back.
 
 [ProfileWriterTest](../test/Configuration/Profiles/ProfileWriterTest.cs) covers source writes, scope isolation, round trips, duplicate instances and preparation/commit failures with retry. Linux/macOS permission and link checks require native execution; Windows results do not substitute for them. Strict hashing of the parsed bytes remains a downstream snapshot concern; Core has no deployment, NuGet or hashing dependency.

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -45,8 +45,15 @@ public class ProfileOptions
 	/// <summary>获取或设置一个值，指示是否保留空行。</summary>
 	public bool PreserveBlanks { get; set; }
 
-	/// <summary>获取或设置导入指令的处理行为，默认为 <see cref="ProfileDirectiveBehavior.Default"/>。</summary>
-	/// <remarks>仅用于读取。Existed 要求导入文件存在；Ignored 将指令保留为普通注释；Suppressed 在打开导入文件和触发回调之前抛出 <see cref="ProfileException"/>，包括空参数指令。</remarks>
+	/// <summary>获取或设置导入指令的处理行为，默认为 <see cref="ProfileDirectiveBehavior.None"/>。</summary>
+	/// <remarks>
+	/// <list type="bullet">
+	/// 	<item><see cref="ProfileDirectiveBehavior.None"/>：采用导入指令的内置默认行为，允许导入文件或目录不存在。</item>
+	/// 	<item><see cref="ProfileDirectiveBehavior.Strict"/>：要求全部直接和递归导入的文件必须存在。</item>
+	/// 	<item><see cref="ProfileDirectiveBehavior.Ignore"/>：将指令保留为普通注释。</item>
+	/// 	<item><see cref="ProfileDirectiveBehavior.Suppress"/>：在打开导入文件和触发回调之前抛出 <see cref="ProfileException"/>，包括空参数指令。</item>
+	/// </list>
+	/// </remarks>
 	public ProfileDirectiveBehavior ImportBehavior { get; set; }
 
 	/// <summary>获取或设置同时加载的最大文件层数，默认为 <c>64</c>。</summary>

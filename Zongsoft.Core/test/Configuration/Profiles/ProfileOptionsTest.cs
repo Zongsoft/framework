@@ -15,13 +15,13 @@ public class ProfileOptionsTest
 	[InlineData("missing/child.ini", false)]
 	[InlineData("missing.ini", true)]
 	[InlineData("missing/child.ini", true)]
-	public void ImportBehavior_ExistedRequiresDirectAndRecursiveFiles(string target, bool recursive)
+	public void ImportBehavior_StrictRequiresDirectAndRecursiveFiles(string target, bool recursive)
 	{
 		using var files = new ProfileImportTest.ProfileFiles();
 		var child = files.Write("child.ini", "#@import " + target);
 		var root = files.Write("root.ini", recursive ? "#@import child.ini" : "#@import " + target);
 		var completed = new List<ProfileContext>();
-		var options = new ProfileOptions { ImportBehavior = ProfileDirectiveBehavior.Existed, Imported = completed.Add };
+		var options = new ProfileOptions { ImportBehavior = ProfileDirectiveBehavior.Strict, Imported = completed.Add };
 
 		var error = Assert.Throws<ProfileException>(() => Profile.Load(root, options));
 
@@ -38,11 +38,11 @@ public class ProfileOptionsTest
 		files.Write("child.ini", "#@import missing.ini\nresult=complete");
 		var root = files.Write("root.ini", "#@import child.ini");
 		var options = new ProfileOptions();
-		Assert.Equal(ProfileDirectiveBehavior.Default, options.ImportBehavior);
-		options.Importing = _ => options.ImportBehavior = ProfileDirectiveBehavior.Existed;
+		Assert.Equal(ProfileDirectiveBehavior.None, options.ImportBehavior);
+		options.Importing = _ => options.ImportBehavior = ProfileDirectiveBehavior.Strict;
 		Assert.Equal("complete", Profile.Load(root, options).Entries["result"].Value);
 
-		options.Importing = _ => options.ImportBehavior = ProfileDirectiveBehavior.Default;
+		options.Importing = _ => options.ImportBehavior = ProfileDirectiveBehavior.None;
 		Assert.Throws<ProfileException>(() => Profile.Load(root, options));
 	}
 
@@ -59,7 +59,7 @@ public class ProfileOptionsTest
 		var profile = Profile.Load(root, options);
 
 		Assert.Equal(64, options.MaximumDepth);
-		Assert.Equal(ProfileDirectiveBehavior.Default, options.ImportBehavior);
+		Assert.Equal(ProfileDirectiveBehavior.None, options.ImportBehavior);
 		Assert.Null(options.Importing);
 		Assert.Null(options.Imported);
 		Assert.Equal(preserveBlanks ? [0] : Array.Empty<int>(), profile.Blanks);

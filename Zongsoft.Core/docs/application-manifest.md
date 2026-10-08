@@ -36,7 +36,7 @@ Versions use the two-, three- or four-part numeric format supported by `System.V
 
 Loading reuses [Profile parsing](profiles.md#loading-and-imports), including whitespace, blank lines, whole-line comments and BOM handling. Edition names follow [Profile section name rules](profiles.md#section-names), with spaces and tabs denoting hierarchy; manifests reject nested sections. Application and edition constructors require nonblank names and trim surrounding whitespace without additional reserved-character validation. Callers choose names that the Profile format can represent; `@` and `=` are separators in the application header.
 
-Manifests use `ImportBehavior = ProfileDirectiveBehavior.Suppressed`. Both `#@import` and `;@import` directives, including empty arguments, throw `FormatException` before any imported file is opened.
+Manifests use `ImportBehavior = ProfileDirectiveBehavior.Suppress`. Both `#@import` and `;@import` directives, including empty arguments, throw `FormatException` before any imported file is opened.
 
 ## Editions and current selection
 

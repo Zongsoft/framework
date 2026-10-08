@@ -83,7 +83,7 @@ internal sealed class ProfileReader
 		}
 		catch(IOException exception) when(context != null && exception is FileNotFoundException or DirectoryNotFoundException)
 		{
-			if(this.Options.ImportBehavior == ProfileDirectiveBehavior.Existed)
+			if(this.Options.ImportBehavior == ProfileDirectiveBehavior.Strict)
 				throw new ProfileException(string.Format(Properties.Resources.Profiles_RequiredImport_Message, path, context.Profile.FilePath, context.LineNumber + 1), exception);
 
 			return null;
@@ -213,10 +213,10 @@ internal sealed class ProfileReader
 
 					if(ProfileUtility.TryGetImport(content, out var argument))
 					{
-						if(options.ImportBehavior == ProfileDirectiveBehavior.Suppressed)
+						if(options.ImportBehavior == ProfileDirectiveBehavior.Suppress)
 							throw new ProfileException(string.Format(Properties.Resources.Profiles_ImportNotSupported_Message, context.LineNumber + 1));
 
-						if(options.ImportBehavior != ProfileDirectiveBehavior.Ignored)
+						if(options.ImportBehavior != ProfileDirectiveBehavior.Ignore)
 						{
 							foreach(var importPath in argument.Split([' ', '\t', '|'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
 								this.ReadFile(importPath, context);
