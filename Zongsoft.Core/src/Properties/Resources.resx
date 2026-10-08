@@ -1071,4 +1071,25 @@
 	<data name="Worker.PauseResumeUnsupported.Message" xml:space="preserve">
 		<value>The worker '{0}' does not support pause and resume operations.</value>
 	</data>
+	<data name="Template.EvaluationFailed.Message" xml:space="preserve">
+		<value>Template evaluation failed ({0}) at position {1}, stage {2}.</value>
+	</data>
+	<data name="Template.InvalidEscape.Message" xml:space="preserve">
+		<value>The template contains an invalid or incomplete escape sequence.</value>
+	</data>
+	<data name="Template.NumberOverflow.Message" xml:space="preserve">
+		<value>The numeric literal exceeds the range of its type.</value>
+	</data>
+	<data name="Template.NullProvider.Message" xml:space="preserve">
+		<value>The variable provider collection cannot contain null entries.</value>
+	</data>
+	<data name="Template.AmbiguousMember.Message" xml:space="preserve">
+		<value>The member or indexer cannot be uniquely determined.</value>
+	</data>
+	<data name="Template.IndexParameters.Message" xml:space="preserve">
+		<value>The index parameter count does not match a readable indexer.</value>
+	</data>
+	<data name="Template.KeyNotFound.Message" xml:space="preserve">
+		<value>The specified index key does not exist.</value>
+	</data>
 </root>

@@ -29,92 +29,59 @@
 
 using System;
 using System.IO;
+using System.Text;
 
 namespace Zongsoft.Expressions.Tokenization;
 
 public class StringTokenizer : ITokenizer
 {
-	#region 公共方法
 	public TokenResult Tokenize(TextReader reader)
 	{
-		var valueRead = reader.Read();
+		var quote = reader.Peek();
 
-		if(valueRead < 0)
+		if(quote != '\'' && quote != '"')
 			return TokenResult.Fail(0);
 
-		var chr = (char)valueRead;
-		var content = string.Empty;
-		var escaping = false;
+		reader.Read();
+		var text = new StringBuilder();
+		int value;
 
-		if(chr != '\'' && chr != '"')
-			return TokenResult.Fail(-1);
-
-		var quote = chr;
-
-		while((valueRead = reader.Read()) > 0)
+		while((value = reader.Read()) >= 0)
 		{
-			chr = (char)valueRead;
+			if(value == quote)
+				return new TokenResult(0, new Token(TokenType.Constant, text.ToString()));
 
-			if(chr == '\n' || chr == '\r')
+			if(value == '\r' || value == '\n')
 				throw new SyntaxException(Properties.Resources.StringTokenizer_NewLine_Message);
 
-			if(escaping)
+			if(value == '\\')
 			{
-				if(chr != quote)
-				{
-					char escapedChar;
+				value = reader.Read();
 
-					if(EscapeChar(chr, out escapedChar))
-						chr = escapedChar;
-					else
-						content += '\\';
-				}
+				if(value < 0 || !TryEscape((char)value, out var character))
+					throw new SyntaxException(Properties.Resources.Template_InvalidEscape_Message);
 
-				content += chr;
+				text.Append(character);
 			}
 			else
-			{
-				if(chr == quote)
-					return new TokenResult(0, new Token(TokenType.Constant, content));
-
-				if(chr != '\\')
-					content += chr;
-			}
-
-			escaping = chr == '\\' && (!escaping);
+				text.Append((char)value);
 		}
 
-		throw new SyntaxException(string.Format(Properties.Resources.StringTokenizer_ClosingQuoteRequired_Message, quote));
+		throw new SyntaxException(string.Format(Properties.Resources.StringTokenizer_ClosingQuoteRequired_Message, (char)quote));
 	}
-	#endregion
 
-	#region 私有方法
-	private static bool EscapeChar(char chr, out char escapedChar)
+	//模板普通文本和字符串词素共享同一转义表。
+	internal static bool TryEscape(char character, out char result)
 	{
-		escapedChar = '\0';
-
-		switch(chr)
+		result = character switch
 		{
-			case '"':
-			case '\'':
-			case '\\':
-				escapedChar = chr;
-				return true;
-			case 's':
-				escapedChar = ' ';
-				return true;
-			case 't':
-				escapedChar = '\t';
-				return true;
-			case 'n':
-				escapedChar = '\n';
-				return true;
-			case 'r':
-				escapedChar = '\r';
-				return true;
-		}
+			'\\' or '$' or '\'' or '"' => character,
+			'n' => '\n',
+			'r' => '\r',
+			't' => '\t',
+			_ => '\0',
+		};
 
-		return false;
+		return character is '\\' or '$' or '\'' or '"' or 'n' or 'r' or 't';
 	}
-	#endregion
 }

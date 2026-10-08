@@ -29,7 +29,7 @@
 
 using System;
 using System.IO;
-using System.Threading;
+using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -40,70 +40,60 @@ public class TokenScanner : IEnumerable<Token>, IDisposable
 {
 	#region 成员字段
 	private Lexer _lexer;
-	private ITokenReader _reader;
+	private readonly Reader _reader;
+	private readonly TextReader _source;
 	#endregion
 
 	#region 构造函数
 	internal TokenScanner(Lexer lexer, string text)
 	{
-		if(lexer == null)
-			throw new ArgumentNullException(nameof(lexer));
-
-		_lexer = lexer;
-		_reader = new TokenStringReader(text);
+		_lexer = lexer ?? throw new ArgumentNullException(nameof(lexer));
+		_reader = new Reader(text ?? throw new ArgumentNullException(nameof(text)));
 	}
 
 	internal TokenScanner(Lexer lexer, Stream stream)
 	{
-		if(lexer == null)
-			throw new ArgumentNullException(nameof(lexer));
-
-		_lexer = lexer;
-		_reader = new TokenStreamReader(stream);
+		_lexer = lexer ?? throw new ArgumentNullException(nameof(lexer));
+		_source = new StreamReader(stream ?? throw new ArgumentNullException(nameof(stream)), Encoding.UTF8, true);
+		_reader = new Reader(_source.ReadToEnd());
 	}
 	#endregion
 
 	#region 公共方法
-	public Token Scan()
+	public Token Scan() => this.Scan(out _, out _);
+
+	/// <summary>读取下一个词素，并返回其在原文中的 UTF-16 起始位置与长度。</summary>
+	/// <param name="position">当前词素在原文中的起始位置。</param>
+	/// <param name="length">当前词素占用的 UTF-16 字符数。</param>
+	/// <returns>当前词素；到达原文末尾时返回空。</returns>
+	public Token Scan(out int position, out int length)
 	{
-		if(_lexer == null)
-			throw new ObjectDisposedException(nameof(TokenScanner));
+		ObjectDisposedException.ThrowIf(_lexer == null, this);
+
+		while(_reader.Peek() >= 0 && char.IsWhiteSpace((char)_reader.Peek()))
+			_reader.Read();
+
+		position = _reader.Position;
+		length = 0;
+
+		if(_reader.Peek() < 0)
+			return null;
 
 		foreach(var tokenizer in _lexer.Tokenizers)
 		{
-			//跳过中间的所有空白字符
-			SkipWhitespaces(_reader);
-
-			//执行分词操作
-			var result = tokenizer.Tokenize((TextReader)_reader);
-
-			//重新定位读取器的指针位置
-			_reader.Seek(result.Offset, SeekOrigin.Current);
+			var result = tokenizer.Tokenize(_reader);
+			_reader.Position += result.Offset;
 
 			if(result.Token != null)
-				return result.Token;
-		}
-
-		if(_reader.Peek() > 0)
-			throw new SyntaxException(string.Format(Properties.Resources.TokenScanner_IllegalCharacter_Message, (char)_reader.Read(), _reader.Position + 1));
-
-		return null;
-	}
-	#endregion
-
-	#region 私有方法
-	private static void SkipWhitespaces(ITokenReader reader)
-	{
-		int value;
-
-		while((value = reader.Read()) > 0)
-		{
-			if(!char.IsWhiteSpace((char)value))
 			{
-				reader.Seek(-1, SeekOrigin.Current);
-				return;
+				length = _reader.Position - position;
+				return result.Token;
 			}
+
+			_reader.Position = position;
 		}
+
+		throw new SyntaxException(string.Format(Properties.Resources.TokenScanner_IllegalCharacter_Message, (char)_reader.Peek(), position + 1));
 	}
 	#endregion
 
@@ -114,9 +104,7 @@ public class TokenScanner : IEnumerable<Token>, IDisposable
 		Token token;
 
 		while((token = this.Scan()) != null)
-		{
 			yield return token;
-		}
 	}
 	#endregion
 
@@ -125,107 +113,16 @@ public class TokenScanner : IEnumerable<Token>, IDisposable
 	{
 		_lexer = null;
 		_reader.Dispose();
+		_source?.Dispose();
 	}
 	#endregion
 
 	#region 嵌套子类
-	internal interface ITokenReader : IDisposable
+	private sealed class Reader(string text) : TextReader
 	{
-		int Position { get; }
-		int Seek(int offset, SeekOrigin origin);
-		int Peek();
-		int Read();
-	}
-
-	private class TokenStreamReader : StreamReader, ITokenReader
-	{
-		public TokenStreamReader(Stream stream) : base(stream) { }
-		public int Position => (int)this.BaseStream.Position;
-		public int Seek(int offset, SeekOrigin origin) => (int)this.BaseStream.Seek(offset, origin);
-	}
-
-	private class TokenStringReader : TextReader, ITokenReader
-	{
-		#region 成员字段
-		private readonly string _text;
-		private volatile int _position;
-		#endregion
-
-		#region 构造函数
-		public TokenStringReader(string text)
-		{
-			if(string.IsNullOrEmpty(text))
-				throw new ArgumentNullException(nameof(text));
-
-			_text = text;
-			_position = -1;
-		}
-		#endregion
-
-		#region 公共属性
-		public int Position
-		{
-			get => _position;
-			set
-			{
-				if(value < -1)
-					throw new ArgumentOutOfRangeException();
-
-				if(value > _text.Length)
-					throw new ArgumentOutOfRangeException();
-
-				_position = value;
-			}
-		}
-		#endregion
-
-		#region 公共方法
-		public int Seek(int offset, SeekOrigin origin)
-		{
-			var position = _position;
-
-			switch(origin)
-			{
-				case SeekOrigin.Begin:
-					position = offset;
-					break;
-				case SeekOrigin.End:
-					position = (_text.Length - 1) - offset;
-					break;
-				case SeekOrigin.Current:
-					position += offset;
-					break;
-			}
-
-			return this.Position = position;
-		}
-
-		public override int Peek()
-		{
-			var position = _position;
-
-			if(position >= 0 && position < _text.Length)
-				return _text[position];
-
-			return -1;
-		}
-
-		public override int Read()
-		{
-			var position = _position;
-
-			while((position = _position) < _text.Length)
-			{
-				if(Interlocked.CompareExchange(ref _position, position + 1, position) == position)
-					break;
-			}
-
-			if(position < _text.Length - 1)
-				return _text[position + 1];
-
-			return -1;
-		}
-		#endregion
+		public int Position { get; set; }
+		public override int Peek() => this.Position < text.Length ? text[this.Position] : -1;
+		public override int Read() => this.Position < text.Length ? text[this.Position++] : -1;
 	}
 	#endregion
 }

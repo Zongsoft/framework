@@ -2779,6 +2779,69 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 The member or indexer cannot be uniquely determined. 的本地化字符串。
+        /// </summary>
+        internal static string Template_AmbiguousMember_Message {
+            get {
+                return ResourceManager.GetString("Template.AmbiguousMember.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Template evaluation failed ({0}) at position {1}, stage {2}. 的本地化字符串。
+        /// </summary>
+        internal static string Template_EvaluationFailed_Message {
+            get {
+                return ResourceManager.GetString("Template.EvaluationFailed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The index parameter count does not match a readable indexer. 的本地化字符串。
+        /// </summary>
+        internal static string Template_IndexParameters_Message {
+            get {
+                return ResourceManager.GetString("Template.IndexParameters.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The template contains an invalid or incomplete escape sequence. 的本地化字符串。
+        /// </summary>
+        internal static string Template_InvalidEscape_Message {
+            get {
+                return ResourceManager.GetString("Template.InvalidEscape.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The specified index key does not exist. 的本地化字符串。
+        /// </summary>
+        internal static string Template_KeyNotFound_Message {
+            get {
+                return ResourceManager.GetString("Template.KeyNotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The variable provider collection cannot contain null entries. 的本地化字符串。
+        /// </summary>
+        internal static string Template_NullProvider_Message {
+            get {
+                return ResourceManager.GetString("Template.NullProvider.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The numeric literal exceeds the range of its type. 的本地化字符串。
+        /// </summary>
+        internal static string Template_NumberOverflow_Message {
+            get {
+                return ResourceManager.GetString("Template.NumberOverflow.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 The command &apos;{0}&apos; must run in a terminal executor. 的本地化字符串。
         /// </summary>
         internal static string Terminal_CommandRequiresTerminal_Message {

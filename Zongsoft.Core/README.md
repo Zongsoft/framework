@@ -50,7 +50,7 @@ The package is intentionally broad: it is the common layer that higher-level _**
 - **Serialization** _(`Zongsoft.Serialization`)_
   > Serializer contracts, JSON serializer helpers, serialization options, naming conventions, member attributes, and System.Text.Json converters.
 - **Expressions and text** _(`Zongsoft.Expressions`, `Zongsoft.Text`)_
-  > Lexer/tokenizer infrastructure, expression evaluator contracts, syntax exceptions, regular-text processing, and template contracts.
+  > Lexer/tokenizer infrastructure, [variable templates, providers, navigation and formatting](docs/expressions.md), expression evaluator contracts, syntax exceptions, regular-text processing, and template contracts.
 - **Reflection** _(`Zongsoft.Reflection`)_
   > High-performance reflection helpers and member-expression parsing/evaluation.
 - **Runtime helpers** _(`Zongsoft.Resources`, `Zongsoft.Scheduling`, `Zongsoft.Versioning`, `Zongsoft.Terminals`)_

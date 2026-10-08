@@ -29,43 +29,27 @@
 
 using System;
 using System.IO;
+using System.Text;
 
 namespace Zongsoft.Expressions.Tokenization;
 
 public class IdentifierTokenizer : ITokenizer
 {
-	#region 公共方法
 	public TokenResult Tokenize(TextReader reader)
 	{
-		var valueRead = reader.Read();
+		var value = reader.Peek();
 
-		if(valueRead < 0)
+		if(value < 0 || !IsBeginning((char)value))
 			return TokenResult.Fail(0);
 
-		var chr = (char)valueRead;
-		var identifier = string.Empty;
+		var text = new StringBuilder();
+		text.Append((char)reader.Read());
 
-		if(!IsIdentifierBeginning(chr))
-			return TokenResult.Fail(-1);
+		while((value = reader.Peek()) >= 0 && (IsBeginning((char)value) || char.IsAsciiDigit((char)value)))
+			text.Append((char)reader.Read());
 
-		identifier += chr;
-
-		while((valueRead = reader.Read()) > 0)
-		{
-			chr = (char)valueRead;
-
-			if(char.IsLetterOrDigit(chr) || chr == '_')
-				identifier += chr;
-			else
-				return new TokenResult(-1, new Token(TokenType.Identifier, identifier));
-		}
-
-		return new TokenResult(0, new Token(TokenType.Identifier, identifier));
+		return new TokenResult(0, new Token(TokenType.Identifier, text.ToString()));
 	}
-	#endregion
 
-	#region 私有方法
-	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private static bool IsIdentifierBeginning(char chr) => char.IsLetter(chr) || chr == '_';
-	#endregion
+	private static bool IsBeginning(char character) => char.IsAsciiLetter(character) || character == '_';
 }

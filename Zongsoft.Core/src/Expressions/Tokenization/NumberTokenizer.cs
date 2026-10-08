@@ -29,75 +29,104 @@
 
 using System;
 using System.IO;
+using System.Text;
+using System.Globalization;
 
 namespace Zongsoft.Expressions.Tokenization;
 
 public class NumberTokenizer : ITokenizer
 {
-	#region 公共方法
+	private readonly bool _signed;
+
+	public NumberTokenizer() { }
+
+	//索引参数的符号属于常量；通用表达式仍将符号作为独立词素。
+	internal NumberTokenizer(bool signed) => _signed = signed;
+
 	public TokenResult Tokenize(TextReader reader)
 	{
-		var valueRead = reader.Read();
+		var value = reader.Peek();
+		var text = new StringBuilder();
 
-		if(valueRead < 0)
-			return TokenResult.Fail(0);
-
-		var chr = (char)valueRead;
-		var number = string.Empty;
-
-		if(!char.IsDigit(chr))
-			return TokenResult.Fail(-1);
-
-		number += chr;
-
-		while((valueRead = reader.Read()) > 0)
+		if(_signed && value == '-')
 		{
-			chr = (char)valueRead;
-
-			if(char.IsDigit(chr))
-				number += chr;
-			else if(chr == '.')
-			{
-				if(number.Contains('.'))
-					throw new SyntaxException(Properties.Resources.NumberTokenizer_MultipleDots_Message);
-
-				number += chr;
-			}
-			else if(chr == 'L')
-			{
-				if(number.Contains('.'))
-					throw new SyntaxException(Properties.Resources.NumberTokenizer_InvalidLongSuffix_Message);
-
-				return new TokenResult(0, new Token(TokenType.Constant, long.Parse(number)));
-			}
-			else if(chr == 'm' || chr == 'M')
-			{
-				return new TokenResult(0, new Token(TokenType.Constant, decimal.Parse(number)));
-			}
-			else if(chr == 'f' || chr == 'F')
-			{
-				return new TokenResult(0, new Token(TokenType.Constant, float.Parse(number)));
-			}
-			else if(chr == 'd' || chr == 'D')
-			{
-				return new TokenResult(0, new Token(TokenType.Constant, double.Parse(number)));
-			}
-			else
-			{
-				if(number[number.Length - 1] == '.')
-					throw new SyntaxException(Properties.Resources.NumberTokenizer_TrailingDot_Message);
-
-				return new TokenResult(-1, CreateToken(number));
-			}
+			text.Append((char)reader.Read());
+			value = reader.Peek();
 		}
 
-		return new TokenResult(0, CreateToken(number));
-	}
-	#endregion
+		if(value < 0 || !char.IsAsciiDigit((char)value))
+			return TokenResult.Fail(-text.Length);
 
-	#region 私有方法
-	private static Token CreateToken(string value) => value.Contains('.') ?
-		new Token(TokenType.Constant, double.Parse(value)) :
-		new Token(TokenType.Constant, int.Parse(value));
-	#endregion
+		while((value = reader.Peek()) >= 0 && char.IsAsciiDigit((char)value))
+			text.Append((char)reader.Read());
+
+		var fractional = reader.Peek() == '.';
+
+		if(fractional)
+		{
+			text.Append((char)reader.Read());
+
+			if(reader.Peek() < 0 || !char.IsAsciiDigit((char)reader.Peek()))
+				throw new SyntaxException(Properties.Resources.NumberTokenizer_TrailingDot_Message);
+
+			while((value = reader.Peek()) >= 0 && char.IsAsciiDigit((char)value))
+				text.Append((char)reader.Read());
+
+			if(reader.Peek() == '.')
+				throw new SyntaxException(Properties.Resources.NumberTokenizer_MultipleDots_Message);
+		}
+
+		var suffix = reader.Peek();
+		if(suffix is 'l' or 'L' or 'f' or 'F' or 'd' or 'D' or 'm' or 'M')
+			reader.Read();
+
+		var literal = text.ToString();
+		object number;
+
+		switch(suffix)
+		{
+			case 'l':
+			case 'L':
+				if(fractional)
+					throw new SyntaxException(Properties.Resources.NumberTokenizer_InvalidLongSuffix_Message);
+				number = long.Parse(literal, CultureInfo.InvariantCulture);
+				break;
+			case 'f':
+			case 'F':
+				var single = float.Parse(literal, CultureInfo.InvariantCulture);
+				if(!float.IsFinite(single))
+					throw new OverflowException(Properties.Resources.Template_NumberOverflow_Message);
+				number = single;
+				break;
+			case 'd':
+			case 'D':
+				number = ParseDouble(literal);
+				break;
+			case 'm':
+			case 'M':
+				number = decimal.Parse(literal, CultureInfo.InvariantCulture);
+				break;
+			default:
+				if(fractional)
+					number = ParseDouble(literal);
+				else
+				{
+					var integer = long.Parse(literal, CultureInfo.InvariantCulture);
+					number = integer is >= int.MinValue and <= int.MaxValue ? (object)(int)integer : integer;
+				}
+				break;
+		}
+
+		return new TokenResult(0, new Token(TokenType.Constant, number));
+	}
+
+	private static double ParseDouble(string literal)
+	{
+		var value = double.Parse(literal, CultureInfo.InvariantCulture);
+
+		if(!double.IsFinite(value))
+			throw new OverflowException(Properties.Resources.Template_NumberOverflow_Message);
+
+		return value;
+	}
 }

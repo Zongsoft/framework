@@ -1060,4 +1060,25 @@
 	<data name="Worker.PauseResumeUnsupported.Message" xml:space="preserve">
 		<value>工作器“{0}”不支持暂停和恢复操作。</value>
 	</data>
+	<data name="Template.EvaluationFailed.Message" xml:space="preserve">
+		<value>模板求值失败（{0}），位置：{1}，阶段：{2}。</value>
+	</data>
+	<data name="Template.InvalidEscape.Message" xml:space="preserve">
+		<value>模板包含非法或不完整的转义序列。</value>
+	</data>
+	<data name="Template.NumberOverflow.Message" xml:space="preserve">
+		<value>数值常量超出其类型范围。</value>
+	</data>
+	<data name="Template.NullProvider.Message" xml:space="preserve">
+		<value>变量提供器集合不能包含空项。</value>
+	</data>
+	<data name="Template.AmbiguousMember.Message" xml:space="preserve">
+		<value>无法唯一确定目标成员或索引器。</value>
+	</data>
+	<data name="Template.IndexParameters.Message" xml:space="preserve">
+		<value>索引参数数量与可读索引器不匹配。</value>
+	</data>
+	<data name="Template.KeyNotFound.Message" xml:space="preserve">
+		<value>指定的索引键不存在。</value>
+	</data>
 </root>
