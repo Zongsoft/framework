@@ -27,21 +27,27 @@
  * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System.IO;
+
 namespace Zongsoft.Configuration.Profiles;
 
 /// <summary>提供一条 Profile 指令的处理上下文。</summary>
 /// <remarks>前后回调共享本次指令上下文；参数改写不修改原始注释声明。</remarks>
-public sealed class ProfileDirectiveContext
+public sealed class ProfileDirectiveContext : ProfileContext
 {
+	#region 成员字段
+	private readonly ProfileReadSession _session;
+	#endregion
+
 	#region 构造函数
-	internal ProfileDirectiveContext(string name, string argument, Profile profile, ProfileSection section, int lineNumber, int depth, ProfileDirectiveOptions options)
+	internal ProfileDirectiveContext(ProfileReadSession session, string name, string argument, Profile profile, Profile referer, ProfileSection section, int lineNumber, int depth, ProfileDirectiveOptions options) : base(profile.FilePath, depth, referer, profile)
 	{
+		_session = session;
+		this.Configuration = options;
 		this.Name = name;
 		this.Argument = argument;
-		this.Profile = profile;
 		this.Section = section;
 		this.LineNumber = lineNumber;
-		this.Depth = depth;
 		this.Behavior = options.Behavior;
 		this.Options = options.Clone();
 	}
@@ -52,21 +58,21 @@ public sealed class ProfileDirectiveContext
 	public string Name { get; }
 	/// <summary>获取或设置指令参数，移除两端空白；具体语义由指令解释，空值表示空参数。</summary>
 	public string Argument { get; set => field = value?.Trim(); }
-	/// <summary>获取或设置是否已处理；前置回调设置为真可接管指令，内置处理成功也会设置为真。</summary>
+	/// <summary>获取或设置是否已处理；前置回调设置为真可接管指令，指令实现处理成功也会设置为真。</summary>
 	public bool Handled { get; set; }
 	/// <summary>获取本次指令采用的处理行为。</summary>
 	public ProfileDirectiveBehavior Behavior { get; }
-	/// <summary>获取本条指令的独立选项副本，修改此副本不改变读取器的设置。</summary>
+	/// <summary>获取本条指令的独立选项副本，修改此副本不改变当前读取会话的设置。</summary>
 	public ProfileDirectiveOptions Options { get; }
-	/// <summary>获取声明本条指令的配置。</summary>
-	public Profile Profile { get; }
 	/// <summary>获取指令所在章节；根章节为空。</summary>
 	public ProfileSection Section { get; }
-	/// <summary>获取声明文件的加载路径；匿名输入为空字符串。</summary>
-	public string FilePath => this.Profile.FilePath;
 	/// <summary>获取指令所在行号，从 <c>1</c> 开始。</summary>
 	public int LineNumber { get; }
-	/// <summary>获取声明配置的加载层数；根配置为 <c>1</c>。</summary>
-	public int Depth { get; }
+	#endregion
+
+	#region 内部成员
+	//实际设置与公开选项副本分开，扩展回调不会改变读取过程的导入策略。
+	internal ProfileDirectiveOptions Configuration { get; }
+	internal Profile Read(Stream stream, int maximumDepth) => _session.Read(stream, null, this.Profile, this.LineNumber, maximumDepth);
 	#endregion
 }

@@ -32,7 +32,7 @@ dotnet add package Zongsoft.Core
 - **组件模型** _(`Zongsoft.Components`)_
   > 命令基础设施、命令行解析、事件交换、特性管道、重试/回退/熔断/限流/超时特性、状态机、工作者、监视器、处理器、执行器、过滤器、转换器和标识符。
 - **配置** _(`Zongsoft.Configuration`)_
-  > 设置和连接设置、配置绑定和识别、XML 配置提供程序、模型配置、Profile/INI 解析，以及与 `Microsoft.Extensions.Options` 的集成。
+  > 设置和连接设置、配置绑定和识别、XML 配置提供程序、模型配置、[Profile/INI 解析及指令扩展](docs/profiles.zh-Hans.md)，以及与 `Microsoft.Extensions.Options` 的集成。
 - **数据抽象** _(`Zongsoft.Data`)_
   > 查询条件、条件集合、范围、分页、排序、操作数、模型描述、数据访问/数据服务契约、操作选项和事件、元数据模型、归档契约和事务基础类型。
 - **服务** _(`Zongsoft.Services`)_

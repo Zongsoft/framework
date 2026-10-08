@@ -48,6 +48,12 @@ namespace Zongsoft.Configuration.Profiles;
 /// </remarks>
 public partial class Profile : IEnumerable<ProfileItem>
 {
+	#region 静态属性
+	/// <summary>获取本进程共用的指令注册表，默认包含导入指令。</summary>
+	/// <remarks>每次根加载固定注册表快照，后续注册只影响之后的根加载。</remarks>
+	public static ProfileDirectiveCollection Directives { get; } = new() { ImportDirective.Instance };
+	#endregion
+
 	#region 构造函数
 	public Profile(string filePath = null)
 	{
@@ -74,7 +80,7 @@ public partial class Profile : IEnumerable<ProfileItem>
 		if(string.IsNullOrWhiteSpace(filePath))
 			throw new ArgumentNullException(nameof(filePath));
 
-		return new ProfileReader(options).Read(filePath);
+		return new ProfileReadSession(options).Read(filePath);
 	}
 
 	public static Profile Load(Stream stream, ProfileOptions options = null) => Load(stream, null, options);
@@ -83,7 +89,7 @@ public partial class Profile : IEnumerable<ProfileItem>
 		if(stream == null)
 			throw new ArgumentNullException(nameof(stream));
 
-		return new ProfileReader(options).Read(stream, encoding);
+		return new ProfileReadSession(options).Read(stream, encoding);
 	}
 
 	/// <summary>从文本读取器加载配置，保留读取器的打开状态。</summary>
@@ -94,7 +100,7 @@ public partial class Profile : IEnumerable<ProfileItem>
 	public static Profile Load(TextReader reader, ProfileOptions options = null)
 	{
 		ArgumentNullException.ThrowIfNull(reader);
-		return new ProfileReader(options).Read(reader);
+		return new ProfileReadSession(options).Read(reader);
 	}
 	#endregion
 

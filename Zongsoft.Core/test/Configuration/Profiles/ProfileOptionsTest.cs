@@ -104,7 +104,8 @@ public class ProfileOptionsTest
 	[Fact]
 	public void Directives_CollectionUsesNamesAndRejectsInvalidItems()
 	{
-		var directives = new ProfileDirectiveOptionsCollection();
+		var owner = new ProfileOptions();
+		var directives = owner.Directives;
 		var import = ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Strict);
 		directives.Add(import);
 		directives.Add(new ProfileDirectiveOptions("_custom.part-2"));
@@ -121,6 +122,7 @@ public class ProfileOptionsTest
 		Assert.True(directives.Remove("IMPORT"));
 		Assert.False(directives.TryGetValue("import", out _));
 		Assert.Equal("_custom.part-2", Assert.Single(directives).Name);
+		Assert.Same(owner, directives.Options);
 	}
 
 	[Theory]
@@ -177,12 +179,17 @@ public class ProfileOptionsTest
 		Assert.Null(typeof(ProfileOptions).GetProperty(nameof(ProfileOptions.Directives)).SetMethod);
 		Assert.Equal(typeof(Action<ProfileContext>), typeof(ProfileOptions).GetProperty(nameof(ProfileOptions.Loading)).PropertyType);
 		Assert.Equal(typeof(Action<ProfileContext>), typeof(ProfileOptions).GetProperty(nameof(ProfileOptions.Loaded)).PropertyType);
-		Assert.Equal(typeof(Action<ProfileDirectiveContext>), typeof(ProfileOptions).GetProperty(nameof(ProfileOptions.DirectiveProcessing)).PropertyType);
-		Assert.Equal(typeof(Action<ProfileDirectiveContext>), typeof(ProfileOptions).GetProperty(nameof(ProfileOptions.DirectiveProcessed)).PropertyType);
+		Assert.Equal(typeof(Action<ProfileDirectiveContext>), typeof(ProfileDirectiveOptionsCollection).GetProperty(nameof(ProfileDirectiveOptionsCollection.Processing)).PropertyType);
+		Assert.Equal(typeof(Action<ProfileDirectiveContext>), typeof(ProfileDirectiveOptionsCollection).GetProperty(nameof(ProfileDirectiveOptionsCollection.Processed)).PropertyType);
+		Assert.Same(options, options.Directives.Options);
+		Assert.Same(other, other.Directives.Options);
+		Assert.Null(typeof(ProfileDirectiveOptionsCollection).GetProperty(nameof(ProfileDirectiveOptionsCollection.Options)).SetMethod);
+		Assert.Empty(typeof(ProfileDirectiveOptionsCollection).GetConstructors());
 		Assert.All(typeof(ProfileContext).GetProperties(), property => Assert.Null(property.SetMethod));
 		Assert.Empty(typeof(ProfileContext).GetConstructors());
-		Assert.True(typeof(ProfileContext).IsSealed);
-		Assert.All(new[] { "ImportBehavior", "MaximumDepth", "Importing", "Imported", "Variables" }, name =>
+		Assert.False(typeof(ProfileContext).IsSealed);
+		Assert.Equal(typeof(ProfileContext), typeof(ProfileDirectiveContext).BaseType);
+		Assert.All(new[] { "ImportBehavior", "MaximumDepth", "Importing", "Imported", "Variables", "DirectiveProcessing", "DirectiveProcessed" }, name =>
 			Assert.Null(typeof(ProfileOptions).GetProperty(name)));
 	}
 

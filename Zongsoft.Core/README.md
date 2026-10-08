@@ -32,7 +32,7 @@ The package is intentionally broad: it is the common layer that higher-level _**
 - **Components** _(`Zongsoft.Components`)_
   > Command infrastructure, command-line parsing, event exchange, feature pipelines, retry/fallback/breaker/throttle/timeout features, state machines, workers, supervisors, handlers, executors, filters, converters, and identifiers.
 - **Configuration** _(`Zongsoft.Configuration`)_
-  > Settings and connection settings, configuration binding and recognition, XML configuration providers, model-backed configuration, profile/INI parsing, and options integration with `Microsoft.Extensions.Options`.
+  > Settings and connection settings, configuration binding and recognition, XML configuration providers, model-backed configuration, [Profile/INI parsing and directive extensions](docs/profiles.md), and options integration with `Microsoft.Extensions.Options`.
 - **Data abstractions** _(`Zongsoft.Data`)_
   > Query criteria, conditions, ranges, paging, sorting, operands, model descriptors, data access/service contracts, operation options and events, metadata models, archiving contracts, and transaction primitives.
 - **Services** _(`Zongsoft.Services`)_

@@ -822,9 +822,9 @@ public class ProfileWriterTest
 		{
 			Loading = _ => throw new InvalidOperationException("Saving must not read imports."),
 			Loaded = _ => throw new InvalidOperationException("Saving must not merge imports."),
-			DirectiveProcessing = _ => throw new InvalidOperationException("Saving must not process directives."),
-			DirectiveProcessed = _ => throw new InvalidOperationException("Saving must not complete directives."),
 		};
+		options.Directives.Processing = _ => throw new InvalidOperationException("Saving must not process directives.");
+		options.Directives.Processed = _ => throw new InvalidOperationException("Saving must not complete directives.");
 
 		profile.Save(options);
 

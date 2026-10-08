@@ -9,7 +9,7 @@ Profile 读取 INI 声明，处理指令并合并导入来源，将修改保存�
 
 ## 读取与导入
 
-`Profile.Load` 支持文件路径、Stream 和 TextReader。每次根加载创建内部 ProfileReader，负责解析、指令调度、文件通知及循环和深度检查。递归导入共享读取器及本次设置快照。Profile 保留声明、有效引用和来源关系。ProfileWriter 输出声明并协调来源提交，不执行指令或回调。
+`Profile.Load` 支持文件路径、Stream 和 TextReader。每次根加载创建内部 ProfileReadSession，固定选项及全局指令注册表快照，负责指令调度、文件通知及活动加载链检查。ProfileReader 解析单个来源；ImportDirective 解释导入路径，通过同一会话完成递归读取。Profile 保留声明、有效引用和来源关系。ProfileWriter 输出声明并协调来源提交，不执行指令或回调。
 
 ### 选项与指令设置
 
@@ -30,11 +30,11 @@ var options = new ProfileOptions
 var profile = Profile.Load("settings.ini", options);
 ```
 
-`ProfileOptions(bool preserveBlanks = true)` 提供 PreserveBlanks、只读 Directives 集合、Loading/Loaded（`Action<ProfileContext>`）和 DirectiveProcessing/DirectiveProcessed（`Action<ProfileDirectiveContext>`）。回调默认为 null。不传加载选项时不记录空行；显式 new ProfileOptions() 记录空行。Profile 不执行变量展开。
+`ProfileOptions(bool preserveBlanks = true)` 提供 PreserveBlanks、只读 Directives 集合、Loading/Loaded（`Action<ProfileContext>`）。集合提供 Processing/Processed（`Action<ProfileDirectiveContext>`）和指回所属 ProfileOptions 的只读 Options 属性。回调默认为 null。不传加载选项时不记录空行；显式 new ProfileOptions() 记录空行。Profile 不执行变量展开。
 
 `ProfileDirectiveOptions` 提供只读 Name 和可写 Behavior。名称以字母或下划线开头，只能包含字母、数字、下划线、连字符或点号，不含注释标记和 `@` 前缀。`ProfileDirectiveOptionsCollection` 按名称忽略大小写索引，拒绝 null 和重名项，支持按名称查找。集合枚举顺序不控制执行顺序。未配置的指令采用内置默认设置，删除选项恢复默认设置；添加选项不注册执行程序。
 
-`ProfileDirectiveOptions.Import(behavior = None, maximumDepth = 0)` 创建公开嵌套类型 ImportOptions，名称固定为 `import`。MaximumDepth 非负：零采用内置上限 64，正数指定上限，负数赋值抛出 ArgumentOutOfRangeException 并保留原值。根文件计一层，设为 1 时只允许读取根文件。有效上限在根加载时固定，不修改传入的选项；循环检测独立生效。
+`ProfileDirectiveOptions.Import(behavior = None, maximumDepth = 0)` 创建公开嵌套类型 ImportOptions，名称固定为 `import`。MaximumDepth 非负：零采用内置上限 64，正数指定上限，负数赋值抛出 ArgumentOutOfRangeException 并保留原值。根文件计一层，设为 1 时只允许读取根文件。从本次加载的设置快照取得上限，不修改传入的选项；循环检测独立生效。
 
 `ProfileDirectiveBehavior` 是通用策略枚举。None 采用指令内置行为；Strict 要求按具体指令的规则严格处理；Ignore 保留注释声明，不进入指令处理；Suppress 在指令回调和执行之前抛出 ProfileException。
 
@@ -47,11 +47,40 @@ var profile = Profile.Load("settings.ini", options);
 
 这些策略在包含指令的文档触发 Loading 后生效，不阻止根文件通知。指令名称匹配忽略大小写；赋值时拒绝未定义的枚举值。
 
-Reader 在根加载入口复制选项集合，并调用各指令选项的虚拟 Clone 方法。递归读取共享复制后的设置。默认 Clone 保留实际派生类型并浅复制字段；含可变引用成员的派生选项须重写以复制这些成员。修改原集合、原选项属性或回调属性只影响后续根加载；委托捕获的可变状态由调用方管理。
+读取会话在根加载入口复制选项集合，并调用各指令选项的虚拟 Clone 方法。复制后的集合指向复制后的 ProfileOptions，并复制两项指令回调。递归读取共享复制后的设置。默认 Clone 保留实际派生类型并浅复制字段；含可变引用成员的派生选项须重写以复制这些成员。修改原集合、原选项属性或回调属性只影响后续根加载；委托捕获的可变状态由调用方管理。
+
+### 全局指令注册表
+
+`Profile.Directives` 是进程共用的 ProfileDirectiveCollection，默认包含 `ImportDirective.Instance`。它接受公开 ProfileDirectiveBase 的派生实现，基类提供只读 Name 和 Process(ProfileDirectiveContext) 方法。集合支持 Add、Count、名称索引、Contains、TryGetValue 及快照枚举。名称忽略大小写，拒绝空实例及重名注册；注册只增加实现，不提供移除或替换操作。
+
+```csharp
+// 在应用初始化时注册一次。
+Profile.Directives.Add(new NoteDirective());
+
+var options = new ProfileOptions();
+options.Directives.Processing = context => Console.WriteLine(context.Name);
+options.Directives.Add(new ProfileDirectiveOptions("note", ProfileDirectiveBehavior.Strict));
+using var input = new StringReader("#@note Hello");
+var profile = Profile.Load(input, options);
+
+public sealed class NoteDirective() : ProfileDirectiveBase("note")
+{
+	public override void Process(ProfileDirectiveContext context)
+	{
+		context.Profile.Entries.Add("note", context.Argument);
+	}
+}
+```
+
+每次根加载在克隆选项和执行回调之前复制注册表。递归导入共享这份名称到实例的快照；加载过程中新增的注册只影响后续根加载。修改注册表及获取快照时加锁，执行指令时不持锁。实例在并发加载间共享，每次调用的可变状态放在局部变量或上下文，所用依赖也须支持并发；快照复制实例引用，不复制实例。
+
+执行顺序为 Ignore/Suppress 检查、Processing 回调、未 Handled 时调用注册实现、成功后 Processed。已注册指令自行定义 None/Strict 的具体规则。未知 Strict 指令必须由 Processing 接管；未知 None 指令可以保持未处理。回调设置 Handled=true 可接管已注册实现。
+
+ImportDirective 拆分参数、按声明来源解析相对路径、处理可选或严格文件缺失，并取得深度上限（默认 64）。它通过上下文的内部读取操作将已打开的流交给当前 ProfileReadSession；会话拥有并释放流，共享活动链检查，完成解析和合并后通知 Loaded。ImportDirective 不引用 ProfileReader 或 ProfileWriter。自定义实现中调用公共 Profile.Load 会开始独立的根加载，不属于内置导入的递归通道。
 
 ### 文件读取回调
 
-Loading 和 Loaded 覆盖根配置及导入配置。Loading 在文件打开、循环和深度检查通过后、解析之前触发。Loaded 在解析及递归导入成功后触发；导入配置已经合并到直接引用者。前后通知分别创建公开 sealed 的 ProfileContext，属性全部只读：
+Loading 和 Loaded 覆盖根配置及导入配置。Loading 在文件打开、循环和深度检查通过后、解析之前触发。Loaded 在解析及递归导入成功后触发；导入配置已经合并到直接引用者。前后通知分别创建公开 ProfileContext，属性全部只读：
 
 | 属性 | 含义 |
 | --- | --- |
@@ -66,37 +95,37 @@ Loading 和 Loaded 覆盖根配置及导入配置。Loading 在文件打开、�
 
 指令是紧接注释标记的 `@name`，例如 `#@import a.ini | b.ini` 或 `;@custom value`。名称与参数以空格或 Tab 分隔。注释标记和 `@` 之间有空白时作为普通注释。原始指令文本保存在 ProfileComment 声明中。
 
-DirectiveProcessing 在识别名称及原始参数后、执行之前触发。DirectiveProcessed 在整条指令成功处理后触发，包括其递归文件读取和合并。一条指令导入多个文件时，指令通知一组，每个成功读取的文件通知一组：
+Directives.Processing 在识别名称及原始参数后、执行之前触发。Directives.Processed 在整条指令成功处理后触发，包括其递归文件读取和合并。一条指令导入多个文件时，指令通知一组，每个成功读取的文件通知一组：
 
 ```text
 Loading(root)
-  DirectiveProcessing(import)
+  Directives.Processing(import)
     Loading(a.ini)
     Loaded(a.ini)
     Loading(b.ini)
     Loaded(b.ini)
-  DirectiveProcessed(import)
+  Directives.Processed(import)
 Loaded(root)
 ```
 
-递归指令嵌套在所属文件的通知之间。空参数导入和可选缺失导入仍会完成指令处理。前置回调、执行或嵌套回调失败时不触发 DirectiveProcessed。Ignore 和 Suppress 在指令回调之前生效。
+递归指令嵌套在所属文件的通知之间。空参数导入和可选缺失导入仍会完成指令处理。前置回调、执行或嵌套回调失败时不触发 Directives.Processed。Ignore 和 Suppress 在指令回调之前生效。
 
-前后回调共享同一个公开 sealed 的 ProfileDirectiveContext：
+前后回调共享同一个公开 sealed 的 ProfileDirectiveContext，它继承 ProfileContext。继承的 Profile 为正在解析的配置，Referer 为该配置的直接引用者。例如 A 导入 B、B 导入 C，B 中的指令上下文为 Profile=B、Referer=A、Depth=2：
 
 | 属性 | 含义 |
 | --- | --- |
 | Name | 保留声明大小写的指令名称。 |
 | Argument | 可写的指令参数，去除两端空白；赋值 null 时保留 null，具体语义由指令解释。 |
-| Handled | 前置回调设为 true 可接管执行；内置处理成功后也会设为 true。 |
+| Handled | 前置回调设为 true 可接管执行；已注册实现正常返回后，调度逻辑也会设为 true。 |
 | Behavior | 本次指令固定的处理策略。 |
-| Options | 本条指令独立的选项副本，包含派生属性；修改副本不改变 Reader 设置。 |
+| Options | 本条指令独立的选项副本，包含派生属性；修改副本不改变会话设置或导入策略。未显式配置时为普通 ProfileDirectiveOptions，显式派生选项保留其类型。 |
 | Profile / Section | 声明指令的配置和当前章节；根章节对应 null。 |
 | FilePath / LineNumber / Depth | 声明来源路径、从 1 开始的行号和活动文件深度。 |
 
 前置回调对 Argument 和 Handled 的修改参与执行；后置回调中的修改不重新执行指令。执行参数不回写原始声明。例如可重定向导入并处理自定义指令：
 
 ```csharp
-options.DirectiveProcessing = context =>
+options.Directives.Processing = context =>
 {
 	if(context.Name.Equals("import", StringComparison.OrdinalIgnoreCase))
 		context.Argument = "shared.ini";
@@ -174,7 +203,7 @@ profile.Save();
 
 ### Writer 生命周期与输出
 
-每次保存创建一个 internal sealed ProfileWriter。Profile 保留公开便捷入口；Reader 负责解析，Writer 负责输出与提交。没有公共 Writer、单例、上下文工厂或读写公共基类。Writer 仅固定 PreserveBlanks，不复制指令选项或执行回调；ProfileContext 描述文件读取，回调配置和指令选项不改变已加载模型的保存范围。
+每次保存创建一个 internal sealed ProfileWriter。Profile 保留公开便捷入口；Reader 负责解析，Writer 负责输出与提交。没有公共 Writer、单例、上下文工厂或读写公共基类。Writer 仅固定 PreserveBlanks，不复制指令选项或执行回调；ProfileContext 描述当前来源及配置，回调配置和指令选项不改变已加载模型的保存范围。
 
 输出规则：null 值写作 `name`，空字符串写作 `name=`；注释规范化为 `#`，空注释保留为 `#`；保留声明顺序、空章节及必要的作用域切换。PreserveBlanks 为 true 时输出已记录空行，为 false 时不恢复原空行。加载时未保留的空行无法在保存时恢复。
 

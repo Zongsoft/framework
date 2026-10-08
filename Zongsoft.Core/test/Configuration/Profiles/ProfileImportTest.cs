@@ -223,7 +223,7 @@ public class ProfileImportTest
 					completed.Add(context.Depth);
 			},
 		};
-		var reader = CreateReader(options);
+		var reader = CreateSession(options);
 
 		if(succeeds)
 		{
@@ -263,7 +263,7 @@ public class ProfileImportTest
 					starting.Add(context.Depth);
 			},
 		};
-		var reader = CreateReader(options);
+		var reader = CreateSession(options);
 		((ProfileDirectiveOptions.ImportOptions)options.Directives["import"]).MaximumDepth = 1;
 
 		Assert.Equal("complete", ReadProfile(reader, root).Entries["result"].Value);
@@ -354,7 +354,7 @@ public class ProfileImportTest
 					completed.Add(context);
 			},
 		};
-		var reader = CreateReader(options);
+		var reader = CreateSession(options);
 
 		Assert.Same(failure, Assert.Throws<InvalidOperationException>(() => ReadProfile(reader, root)));
 		Assert.Equal([2, 3, 4], depths);
@@ -852,7 +852,7 @@ public class ProfileImportTest
 					notifications.Add(context);
 			}
 		};
-		var reader = CreateReader(options);
+		var reader = CreateSession(options);
 		var snapshot = (ProfileOptions)reader.GetType().GetProperty("Options").GetValue(reader);
 		options.PreserveBlanks = false;
 		options.Loading = _ => throw new InvalidOperationException("Snapshot must retain original callback.");
@@ -881,7 +881,7 @@ public class ProfileImportTest
 	public void Reader_StreamEncodingAndOwnershipWithoutImports()
 	{
 		var events = new List<string>();
-		var reader = CreateReader(Options(
+		var reader = CreateSession(Options(
 			importing: path => events.Add(path), imported: profile => events.Add(profile.FilePath)));
 		using var stream = new MemoryStream(Encoding.Latin1.GetBytes("name=café\n\n"));
 
@@ -903,7 +903,7 @@ public class ProfileImportTest
 		var events = new List<string>();
 		var failure = new InvalidOperationException("import callback failed");
 		var shouldFail = true;
-		var reader = CreateReader(Options(
+		var reader = CreateSession(Options(
 			importing: _ =>
 			{
 				events.Add("before");
@@ -939,7 +939,7 @@ public class ProfileImportTest
 	{
 		using var files = new ProfileFiles();
 		var path = files.PathFor("source.ini");
-		var reader = CreateReader(null);
+		var reader = CreateSession(null);
 
 		Assert.Throws<FileNotFoundException>(() => ReadProfile(reader, path));
 		files.Write("source.ini", "value=first\nvalue=duplicate");
@@ -959,7 +959,7 @@ public class ProfileImportTest
 		var failure = new FileNotFoundException("imported callback failure");
 		var shouldFail = true;
 		var count = 0;
-		reader = CreateReader(Options(imported: profile =>
+		reader = CreateSession(Options(imported: profile =>
 		{
 			count++;
 			Assert.Equal("complete", profile.Entries["value"].Value);
@@ -980,20 +980,20 @@ public class ProfileImportTest
 		Assert.Equal(2, count);
 	}
 
-	private static object CreateReader(ProfileOptions options)
+	internal static object CreateSession(ProfileOptions options)
 	{
-		var type = typeof(Profile).Assembly.GetType("Zongsoft.Configuration.Profiles.ProfileReader", throwOnError: true);
+		var type = typeof(Profile).Assembly.GetType("Zongsoft.Configuration.Profiles.ProfileReadSession", throwOnError: true);
 		return Activator.CreateInstance(type, [options]);
 	}
 
-	private static Profile ReadProfile(object reader, Stream stream, Encoding encoding)
+	internal static Profile ReadProfile(object reader, Stream stream, Encoding encoding)
 	{
 		var method = reader.GetType().GetMethod("Read", BindingFlags.Instance | BindingFlags.Public, null,
-			[typeof(Stream), typeof(Encoding)], null);
-		return method.CreateDelegate<Func<Stream, Encoding, Profile>>(reader)(stream, encoding);
+			[typeof(Stream), typeof(Encoding), typeof(Profile), typeof(int), typeof(int)], null);
+		return method.CreateDelegate<Func<Stream, Encoding, Profile, int, int, Profile>>(reader)(stream, encoding, null, 0, 0);
 	}
 
-	private static Profile ReadProfile(object reader, string path)
+	internal static Profile ReadProfile(object reader, string path)
 	{
 		var method = reader.GetType().GetMethod("Read", BindingFlags.Instance | BindingFlags.Public, null, [typeof(string)], null);
 		return method.CreateDelegate<Func<string, Profile>>(reader)(path);

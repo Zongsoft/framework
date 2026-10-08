@@ -47,15 +47,17 @@ description: 设计、修改、审查或测试 Zongsoft.Core 的公共契约与�
 
 ## Profile 指令与读取
 
-读取机制见 [实现文档](docs/profiles.zh-Hans.md#读取与导入)。ProfileReader 识别紧接注释符的 @name，名称与参数以空格或 Tab 分隔；Argument 去除两端空白，语义由具体指令解释。import 内置于读取器，未知指令可由回调接管。每次根读取独立创建 Reader，递归共享设置快照，保留活动链检查与失败清理。
+读取机制见 [实现文档](docs/profiles.zh-Hans.md#读取与导入)。ProfileReader 识别紧接注释符的 @name，名称与参数以空格或 Tab 分隔；Argument 去除两端空白，语义由具体指令解释。ProfileReadSession 固定注册表与选项快照、调度指令并管理活动链及文件通知；ProfileReader 仅解析单个来源。ImportDirective 负责路径、可选/严格缺失和深度选项，经上下文内部读取操作共享会话，不能调用 Profile.Load 重建根会话。未知指令可由回调接管。
 
-ProfileOptions 提供 PreserveBlanks、只读 Directives 集合及四个回调。ProfileDirectiveOptions 按只读 Name 对应指令，Behavior 使用 None/Strict/Ignore/Suppress。集合名称忽略大小写，拒绝 null 和重名项，缺省配置采用指令内置默认值。ProfileDirectiveOptions.Import 创建公开嵌套 ImportOptions，MaximumDepth=0 采用默认 64，正数指定上限，负数拒绝；根配置计一层。根读取复制集合并调用每个选项的虚拟 Clone，含可变引用成员的派生类型负责复制这些成员。
+ProfileOptions 提供 PreserveBlanks、只读 Directives 集合与 Loading/Loaded；集合提供 Processing/Processed 和指回所属 ProfileOptions 的只读 Options。集合仅由所有者构造，克隆时必须绑定到新所有者。ProfileDirectiveOptions 按只读 Name 对应指令，Behavior 使用 None/Strict/Ignore/Suppress。集合名称忽略大小写，拒绝 null 和重名项，缺省配置采用指令内置默认值。ProfileDirectiveOptions.Import 创建公开嵌套 ImportOptions，MaximumDepth=0 采用默认 64，正数指定上限，负数拒绝；根配置计一层。根读取复制集合并调用每个选项的虚拟 Clone，含可变引用成员的派生类型负责复制这些成员。
 
 Loading/Loaded 均为 Action<ProfileContext>，覆盖根与导入；文件打开及循环、深度检查后触发 Loading，解析和递归导入成功、子文件合并后触发 Loaded。FilePath/Depth/Referer/Profile 只读；匿名路径为空字符串，根 Referer 为 null，前置 Profile 为 null，后置为解析结果，前后使用不同上下文。缺失或被拒绝文件不通知，回调异常终止加载并清理，不回滚已有合并。
 
-DirectiveProcessing/DirectiveProcessed 均为 Action<ProfileDirectiveContext>，每条指令一组，成功处理全部目标及递归导入后完成。前置可改 Argument 或设 Handled=true 接管；后置修改不重执行。上下文提供 Name、Argument、Handled、Behavior、Options、Profile、Section、FilePath、LineNumber、Depth。Options 是独立副本，修改不影响 Reader 设置。Ignore 不执行且不通知指令回调；Suppress 在指令回调前拒绝；未知指令 None 未接管时保留注释，Strict 未接管则失败。文件通知与指令通知按递归顺序嵌套，保存保留原始指令注释。Profile 不提供 Variables 或自动变量展开。
+Directives.Processing/Directives.Processed 均为 Action<ProfileDirectiveContext>，每条指令一组，成功处理全部目标及递归导入后完成。前置可改 Argument 或设 Handled=true 接管；后置修改不重执行。上下文提供 Name、Argument、Handled、Behavior、Options、Profile、Section、FilePath、LineNumber、Depth。Options 是独立副本，修改不影响会话设置或导入策略，未显式配置时为普通选项。Ignore 不执行且不通知指令回调；Suppress 在指令回调前拒绝；未知指令 None 未接管时保留注释，Strict 未接管则失败。文件通知与指令通知按递归顺序嵌套，保存保留原始指令注释。Profile 不提供 Variables 或自动变量展开。
 
 [ApplicationManifest](docs/application-manifest.zh-Hans.md) 通过 Directives = { ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Suppress) } 禁止导入，并转换为 FormatException。Load(Stream) 关闭输入流，Load(TextReader) 保持读取器打开；基于 FileStream 的输入提供路径。Writer 只固定 PreserveBlanks，不复制指令选项、不执行指令或回调。Save() 按来源写回自身及导入子树的修改，显式输出仅处理当前配置；声明及保存规则见 [文档](docs/profiles.zh-Hans.md#声明与保存)。不为测试新增生产入口。
+
+Profile.Directives 为全局线程安全注册表，默认 ImportDirective.Instance；Add 拒绝空值和重名，不提供移除或替换，枚举使用快照。每次根加载在克隆选项前复制注册表，递归共享实例引用；后续注册只影响下次加载，执行指令不持锁。ProfileDirectiveBase 提供 Name/Process，实现不得保存调用状态。选项集合不注册实现，Writer 不依赖任何指令实现。
 
 ## 本地搜索
 

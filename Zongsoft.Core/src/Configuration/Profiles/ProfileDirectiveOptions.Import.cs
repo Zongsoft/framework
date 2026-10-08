@@ -36,7 +36,7 @@ partial class ProfileDirectiveOptions
 	#region 构建方法
 	/// <summary>创建导入指令选项。</summary>
 	/// <param name="behavior">指定指令行为。</param>
-	/// <param name="maximumDepth">最大加载层数，根文件计一层；零采用内置默认上限 <c>64</>。</param>
+	/// <param name="maximumDepth">最大加载层数，根文件计一层；零采用内置默认上限 <c>64</c>。</param>
 	/// <returns>返回新建的导入指令选项。</returns>
 	public static ImportOptions Import(ProfileDirectiveBehavior behavior = ProfileDirectiveBehavior.None, int maximumDepth = 0) => new(behavior, maximumDepth);
 	#endregion
@@ -55,7 +55,7 @@ partial class ProfileDirectiveOptions
 		#endregion
 
 		#region 公共属性
-		/// <summary>获取或设置同时加载的最大层数；根文件计一层，零表示采用内置默认上限 <c>64</>。</summary>
+		/// <summary>获取或设置同时加载的最大层数；根文件计一层，零表示采用内置默认上限 <c>64</c>。</summary>
 		/// <exception cref="ArgumentOutOfRangeException">指定的值小于零。</exception>
 		public int MaximumDepth
 		{

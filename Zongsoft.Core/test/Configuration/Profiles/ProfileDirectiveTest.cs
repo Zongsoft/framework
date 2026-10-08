@@ -27,7 +27,7 @@ public class ProfileDirectiveTest
 		files.Write("child.ini", "imported=child");
 		var root = files.Write("root.ini", prefix + " child.ini\nlocal=root");
 		var processing = new List<ProfileDirectiveContext>();
-		var profile = Profile.Load(root, new ProfileOptions { DirectiveProcessing = processing.Add });
+		var profile = Profile.Load(root, new ProfileOptions { Directives = { Processing = processing.Add } });
 
 		Assert.Equal(imports ? "child" : null, profile.Entries["imported"]?.Value);
 		Assert.Equal("root", profile.Entries["local"].Value);
@@ -74,19 +74,19 @@ public class ProfileDirectiveTest
 					Assert.Same(context.Profile.Entries["leaf"], context.Referer.Entries["leaf"]);
 				events.Add("loaded:" + Path.GetFileName(context.FilePath));
 			},
-			DirectiveProcessing = context =>
-			{
-				processing.Add(context);
-				Assert.False(context.Handled);
-				events.Add("directive:" + Path.GetFileName(context.FilePath));
-			},
-			DirectiveProcessed = context =>
-			{
-				processed.Add(context);
-				Assert.True(context.Handled);
-				Assert.Equal("present", context.Profile.Entries["leaf"].Value);
-				events.Add("processed:" + Path.GetFileName(context.FilePath));
-			},
+		};
+		options.Directives.Processing = context =>
+		{
+			processing.Add(context);
+			Assert.False(context.Handled);
+			events.Add("directive:" + Path.GetFileName(context.FilePath));
+		};
+		options.Directives.Processed = context =>
+		{
+			processed.Add(context);
+			Assert.True(context.Handled);
+			Assert.Equal("present", context.Profile.Entries["leaf"].Value);
+			events.Add("processed:" + Path.GetFileName(context.FilePath));
 		};
 
 		var profile = Profile.Load(root, options);
@@ -208,17 +208,17 @@ public class ProfileDirectiveTest
 		var options = new ProfileOptions
 		{
 			Directives = { ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Strict) },
-			DirectiveProcessing = context =>
-			{
-				Assert.Equal("absent.ini", context.Argument);
-				context.Argument = " \tactual.ini\t ";
-			},
-			DirectiveProcessed = context =>
-			{
-				Assert.Equal("actual.ini", context.Argument);
-				Assert.Equal("rewritten", context.Profile.Entries["value"].Value);
-				context.Argument = "another-missing.ini";
-			},
+		};
+		options.Directives.Processing = context =>
+		{
+			Assert.Equal("absent.ini", context.Argument);
+			context.Argument = " \tactual.ini\t ";
+		};
+		options.Directives.Processed = context =>
+		{
+			Assert.Equal("actual.ini", context.Argument);
+			Assert.Equal("rewritten", context.Profile.Entries["value"].Value);
+			context.Argument = "another-missing.ini";
 		};
 
 		var profile = Profile.Load(root, options);
@@ -239,13 +239,13 @@ public class ProfileDirectiveTest
 		var options = new ProfileOptions
 		{
 			Directives = { new ProfileDirectiveOptions(name, ProfileDirectiveBehavior.Strict) },
-			DirectiveProcessing = context =>
-			{
-				context.Profile.Entries.Add("handled", "externally");
-				context.Handled = true;
-			},
-			DirectiveProcessed = completed.Add,
 		};
+		options.Directives.Processing = context =>
+		{
+			context.Profile.Entries.Add("handled", "externally");
+			context.Handled = true;
+		};
+		options.Directives.Processed = completed.Add;
 
 		var profile = Profile.Load(input, options);
 
@@ -271,9 +271,9 @@ public class ProfileDirectiveTest
 			Directives = { new ProfileDirectiveOptions(name.ToUpperInvariant(), behavior) },
 			Loading = context => events.Add("loading:" + context.Depth),
 			Loaded = context => events.Add("loaded:" + context.Depth),
-			DirectiveProcessing = _ => Assert.Fail("Ignored or prohibited directives must not be processed."),
-			DirectiveProcessed = _ => Assert.Fail("Ignored or prohibited directives must not complete."),
 		};
+		options.Directives.Processing = _ => Assert.Fail("Ignored or prohibited directives must not be processed.");
+		options.Directives.Processed = _ => Assert.Fail("Ignored or prohibited directives must not complete.");
 		using var locked = new FileStream(child, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 
 		if(behavior == ProfileDirectiveBehavior.Suppress)
@@ -301,9 +301,9 @@ public class ProfileDirectiveTest
 		var options = new ProfileOptions
 		{
 			Directives = { new ProfileDirectiveOptions("unknown", behavior) },
-			DirectiveProcessing = context => { events.Add("processing"); context.Handled = handled; },
-			DirectiveProcessed = context => { events.Add("processed"); Assert.Equal(handled, context.Handled); },
 		};
+		options.Directives.Processing = context => { events.Add("processing"); context.Handled = handled; };
+		options.Directives.Processed = context => { events.Add("processed"); Assert.Equal(handled, context.Handled); };
 
 		if(behavior == ProfileDirectiveBehavior.Strict && !handled)
 		{
@@ -332,8 +332,11 @@ public class ProfileDirectiveTest
 		{
 			Loading = context => events.Add("loading:" + context.Depth),
 			Loaded = context => events.Add("loaded:" + context.Depth),
-			DirectiveProcessing = _ => events.Add("processing"),
-			DirectiveProcessed = context => { Assert.True(context.Handled); events.Add("processed"); },
+			Directives =
+			{
+				Processing = _ => events.Add("processing"),
+				Processed = context => { Assert.True(context.Handled); events.Add("processed"); },
+			},
 		});
 
 		Assert.Equal("kept", profile.Entries["value"].Value);
@@ -355,18 +358,18 @@ public class ProfileDirectiveTest
 			Directives = { ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Strict) },
 			Loading = context => events.Add("loading:" + context.Depth),
 			Loaded = context => events.Add("loaded:" + context.Depth),
-			DirectiveProcessing = context =>
-			{
-				Assert.Equal("child.ini", context.Argument);
-				context.Argument = argument;
-				events.Add("processing");
-			},
-			DirectiveProcessed = context =>
-			{
-				Assert.Equal(expected, context.Argument);
-				Assert.True(context.Handled);
-				events.Add("processed");
-			},
+		};
+		options.Directives.Processing = context =>
+		{
+			Assert.Equal("child.ini", context.Argument);
+			context.Argument = argument;
+			events.Add("processing");
+		};
+		options.Directives.Processed = context =>
+		{
+			Assert.Equal(expected, context.Argument);
+			Assert.True(context.Handled);
+			events.Add("processed");
 		};
 
 		using var locked = new FileStream(child, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
@@ -395,7 +398,7 @@ public class ProfileDirectiveTest
 			options.Directives.Clear();
 		};
 
-		options.DirectiveProcessing = context =>
+		options.Directives.Processing = context =>
 		{
 			Assert.Equal(ProfileDirectiveBehavior.Strict, context.Behavior);
 			seen.Add(context.Options);
@@ -443,7 +446,7 @@ public class ProfileDirectiveTest
 		var literal = Profile.Load(root, options);
 		Assert.Equal("literal", literal.Entries["value"].Value);
 		Assert.Equal("$(product)", literal.Entries["expression"].Value);
-		options.DirectiveProcessing = context => context.Argument = context.Argument.Replace("$(product)", "actual");
+		options.Directives.Processing = context => context.Argument = context.Argument.Replace("$(product)", "actual");
 		var rewritten = Profile.Load(root, options);
 		Assert.Equal("rewritten", rewritten.Entries["value"].Value);
 		Assert.Equal("$(product)", rewritten.Entries["expression"].Value);
@@ -456,13 +459,13 @@ public class ProfileDirectiveTest
 		var events = new List<string>();
 		var failure = new InvalidOperationException("Replacement callback");
 		var options = new ProfileOptions();
-		options.DirectiveProcessing = context =>
+		options.Directives.Processing = context =>
 		{
 			events.Add("processing:" + context.Argument);
-			options.DirectiveProcessing = _ => throw failure;
-			options.DirectiveProcessed = _ => throw failure;
+			options.Directives.Processing = _ => throw failure;
+			options.Directives.Processed = _ => throw failure;
 		};
-		options.DirectiveProcessed = context => events.Add("processed:" + context.Argument);
+		options.Directives.Processed = context => events.Add("processed:" + context.Argument);
 		using var first = new StringReader("#@custom first\n#@custom second\nvalue=kept");
 
 		Assert.Equal("kept", Profile.Load(first, options).Entries["value"].Value);
@@ -483,9 +486,9 @@ public class ProfileDirectiveTest
 			Directives = { ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Strict) },
 			Loading = context => events.Add("loading:" + context.Depth),
 			Loaded = context => events.Add("loaded:" + context.Depth),
-			DirectiveProcessing = _ => events.Add("processing"),
-			DirectiveProcessed = _ => events.Add("processed"),
 		};
+		options.Directives.Processing = _ => events.Add("processing");
+		options.Directives.Processed = _ => events.Add("processed");
 
 		var error = Assert.Throws<ProfileException>(() => Profile.Load(root, options));
 		Assert.IsType<FileNotFoundException>(error.InnerException);
@@ -508,19 +511,19 @@ public class ProfileDirectiveTest
 		var options = new ProfileOptions
 		{
 			Loaded = context => events.Add("loaded:" + context.Depth),
-			DirectiveProcessing = context =>
-			{
-				seen = context;
-				events.Add("processing");
-				if(failing && !after)
-					throw failure;
-			},
-			DirectiveProcessed = _ =>
-			{
-				events.Add("processed");
-				if(failing && after)
-					throw failure;
-			},
+		};
+		options.Directives.Processing = context =>
+		{
+			seen = context;
+			events.Add("processing");
+			if(failing && !after)
+				throw failure;
+		};
+		options.Directives.Processed = _ =>
+		{
+			events.Add("processed");
+			if(failing && after)
+				throw failure;
 		};
 
 		Assert.Same(failure, Assert.Throws<FileNotFoundException>(() => Profile.Load(root, options)));

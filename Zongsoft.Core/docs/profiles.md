@@ -9,7 +9,7 @@ Profile reads INI declarations, processes directives, merges imported sources an
 
 ## Loading and imports
 
-`Profile.Load` accepts paths, Stream and TextReader. Each root load creates an internal ProfileReader that owns parsing, directive dispatch, file notifications and cycle/depth checks. Recursive imports share the reader and its captured settings. Profile retains declarations, effective references and source relationships. ProfileWriter serializes declarations and coordinates source commits; it does not execute directives or callbacks.
+`Profile.Load` accepts paths, Stream and TextReader. Each root load creates an internal ProfileReadSession that captures settings and the global directive registry, dispatches directives, manages file notifications and guards the active loading chain. ProfileReader parses one source; ImportDirective interprets import paths and requests nested reads through the same session. Profile retains declarations, effective references and source relationships. ProfileWriter serializes declarations and coordinates source commits; it does not execute directives or callbacks.
 
 ### Options and directive settings
 
@@ -30,11 +30,11 @@ var options = new ProfileOptions
 var profile = Profile.Load("settings.ini", options);
 ```
 
-`ProfileOptions(bool preserveBlanks = true)` exposes PreserveBlanks, a get-only Directives collection, Loading/Loaded (`Action<ProfileContext>`) and DirectiveProcessing/DirectiveProcessed (`Action<ProfileDirectiveContext>`). Callbacks default to null. Omitted load options discard blanks; explicit new ProfileOptions() records them. Profile does not expand variables.
+`ProfileOptions(bool preserveBlanks = true)` exposes PreserveBlanks, a get-only Directives collection, Loading/Loaded (`Action<ProfileContext>`). The collection exposes Processing/Processed (`Action<ProfileDirectiveContext>`) and a get-only Options property pointing to its owning ProfileOptions. Callbacks default to null. Omitted load options discard blanks; explicit new ProfileOptions() records them. Profile does not expand variables.
 
 `ProfileDirectiveOptions` has an immutable Name and a settable Behavior. Names start with a letter or underscore and contain only letters, digits, underscores, hyphens or dots; they contain no comment marker or `@` prefix. `ProfileDirectiveOptionsCollection` uses case-insensitive name keys, rejects null and duplicate items, and supports keyed lookup. Its enumeration order does not control execution order. Missing settings use the directive's built-in defaults; removing settings restores those defaults. Adding settings does not register an implementation.
 
-`ProfileDirectiveOptions.Import(behavior = None, maximumDepth = 0)` constructs the public nested ImportOptions type, whose name is fixed to `import`. MaximumDepth is nonnegative: zero selects the built-in limit of 64; positive values specify the limit; negative assignments throw ArgumentOutOfRangeException without replacing the current value. The root counts as one active level: 1 allows only the root. The effective limit is resolved once for the load, without modifying the supplied options. Cycle detection remains enabled independently.
+`ProfileDirectiveOptions.Import(behavior = None, maximumDepth = 0)` constructs the public nested ImportOptions type, whose name is fixed to `import`. MaximumDepth is nonnegative: zero selects the built-in limit of 64; positive values specify the limit; negative assignments throw ArgumentOutOfRangeException without replacing the current value. The root counts as one active level: 1 allows only the root. The limit is taken from captured settings, without modifying the supplied options. Cycle detection remains enabled independently.
 
 `ProfileDirectiveBehavior` is a general policy enum. None selects the directive's built-in behavior; Strict requests its strict rules; Ignore preserves the declaration as a comment without entering directive processing; Suppress throws ProfileException before directive callbacks or execution.
 
@@ -47,11 +47,40 @@ var profile = Profile.Load("settings.ini", options);
 
 These policies apply after the containing document's Loading notification. They do not suppress root file notifications. Names match without regard to case; invalid enum values are rejected when assigned.
 
-At root entry, Reader copies the options collection and calls each directive option's virtual Clone method. Recursive reads share the resulting settings. The default Clone preserves the runtime type and shallow-copies fields; derived options with mutable reference members must override it to copy those members. Changing the original collection, option properties or callback properties affects subsequent root loads. Callers manage mutable state captured by callback delegates.
+At root entry, the session copies the options collection and calls each directive option's virtual Clone method. The copied collection points back to the copied ProfileOptions, and includes both directive callbacks. Recursive reads share the resulting settings. The default Clone preserves the runtime type and shallow-copies fields; derived options with mutable reference members must override it to copy those members. Changing the original collection, option properties or callback properties affects subsequent root loads. Callers manage mutable state captured by callback delegates.
+
+### Global directive registry
+
+`Profile.Directives` is the process-wide ProfileDirectiveCollection, initially containing `ImportDirective.Instance`. It accepts public ProfileDirectiveBase implementations with an immutable Name and a Process(ProfileDirectiveContext) method. The collection supports Add, Count, name lookup, Contains, TryGetValue and snapshot enumeration. Names are case-insensitive; null instances and duplicate names are rejected. Registration is additive: removal and replacement are not exposed.
+
+```csharp
+// Register once during application initialization.
+Profile.Directives.Add(new NoteDirective());
+
+var options = new ProfileOptions();
+options.Directives.Processing = context => Console.WriteLine(context.Name);
+options.Directives.Add(new ProfileDirectiveOptions("note", ProfileDirectiveBehavior.Strict));
+using var input = new StringReader("#@note Hello");
+var profile = Profile.Load(input, options);
+
+public sealed class NoteDirective() : ProfileDirectiveBase("note")
+{
+	public override void Process(ProfileDirectiveContext context)
+	{
+		context.Profile.Entries.Add("note", context.Argument);
+	}
+}
+```
+
+Each root load copies the registry before cloning options or invoking callbacks. Recursive imports use that same name-to-instance snapshot. Registrations during a load apply only to later root loads. The registry locks modifications and snapshot creation; handlers execute outside the lock. Instances are shared across concurrent loads and must keep invocation state in locals or the supplied context, with thread-safe dependencies. A snapshot copies references, not handler instances.
+
+Processing order is Ignore/Suppress checks, Processing callback, a registered implementation if not Handled, and Processed after success. Known implementations interpret None and Strict using their own rules. Unknown Strict directives must be handled by Processing; unknown None directives may remain unhandled. A callback can bypass a registered implementation by setting Handled=true.
+
+ImportDirective splits arguments, resolves paths relative to the declaring source, handles optional versus required missing files, and selects the configured depth limit (default 64). An internal context operation passes the opened stream to the current ProfileReadSession, which owns and releases it, checks the shared active chain, parses, merges and notifies Loaded. ImportDirective does not reference ProfileReader or ProfileWriter. Calling public Profile.Load inside a custom handler starts an independent root load; it is not the built-in recursive import path.
 
 ### File loading callbacks
 
-Loading and Loaded run for roots and imports. Loading runs after opening and cycle/depth checks, before parsing. Loaded runs after successful parsing and recursive imports; an imported Profile has already been merged into its direct referer. Each notification receives a separate public sealed ProfileContext with get-only properties:
+Loading and Loaded run for roots and imports. Loading runs after opening and cycle/depth checks, before parsing. Loaded runs after successful parsing and recursive imports; an imported Profile has already been merged into its direct referer. Each notification receives a separate public ProfileContext with get-only properties:
 
 | Property | Meaning |
 | --- | --- |
@@ -66,37 +95,37 @@ Missing optional imports and rejected files do not receive file notifications. R
 
 A directive is a comment beginning immediately with `@name`, such as `#@import a.ini | b.ini` or `;@custom value`. A space or tab separates the name from its argument. Whitespace between the comment marker and `@` produces an ordinary comment. Original directive text remains a ProfileComment declaration.
 
-DirectiveProcessing runs after the name and original argument have been identified, before execution. DirectiveProcessed runs after the whole directive succeeds, including its nested file reads and merges. A directive with several imports receives one pair of directive notifications and a pair of file notifications for each successfully loaded file:
+Directives.Processing runs after the name and original argument have been identified, before execution. Directives.Processed runs after the whole directive succeeds, including its nested file reads and merges. A directive with several imports receives one pair of directive notifications and a pair of file notifications for each successfully loaded file:
 
 ```text
 Loading(root)
-  DirectiveProcessing(import)
+  Directives.Processing(import)
     Loading(a.ini)
     Loaded(a.ini)
     Loading(b.ini)
     Loaded(b.ini)
-  DirectiveProcessed(import)
+  Directives.Processed(import)
 Loaded(root)
 ```
 
-Recursive directives nest inside their containing file's notifications. An empty import or an optional missing import still completes directive processing. Processing, execution or nested callback failure prevents DirectiveProcessed. Ignore and Suppress take effect before either directive callback.
+Recursive directives nest inside their containing file's notifications. An empty import or an optional missing import still completes directive processing. Processing, execution or nested callback failure prevents Directives.Processed. Ignore and Suppress take effect before either directive callback.
 
-Both callbacks receive the same public sealed ProfileDirectiveContext:
+Both callbacks receive the same public sealed ProfileDirectiveContext, derived from ProfileContext. The inherited Profile is the currently parsed source; its Referer is the direct parent of that source. For A importing B and B importing C, the directive in B has Profile=B, Referer=A and Depth=2:
 
 | Property | Meaning |
 | --- | --- |
 | Name | Directive name with its declared casing. |
 | Argument | Settable directive argument with surrounding whitespace removed; assigning null preserves null. Each directive defines its meaning. |
-| Handled | Set true in DirectiveProcessing to take over execution. Successful built-in handling also sets it true. |
+| Handled | Set true in Directives.Processing to take over execution. The dispatcher also sets it true when a registered implementation returns successfully. |
 | Behavior | The captured policy for this directive. |
-| Options | An independent copy of this directive's settings, including derived properties; edits do not change Reader settings. |
+| Options | An independent copy of this directive's settings, including derived properties; edits do not change session settings or the import policy. Without explicit settings, this is a plain ProfileDirectiveOptions; configured derived settings retain their type. |
 | Profile / Section | Declaring Profile and current section; Section is null at the root section. |
 | FilePath / LineNumber / Depth | Declaring source path, one-based line and active file depth. |
 
-Argument and Handled changes made in DirectiveProcessing guide execution. Edits in DirectiveProcessed do not re-execute the directive. Arguments are never written back into the original declaration. For example, a caller can redirect an import and implement a custom directive:
+Argument and Handled changes made in Directives.Processing guide execution. Edits in Directives.Processed do not re-execute the directive. Arguments are never written back into the original declaration. For example, a caller can redirect an import and implement a custom directive:
 
 ```csharp
-options.DirectiveProcessing = context =>
+options.Directives.Processing = context =>
 {
 	if(context.Name.Equals("import", StringComparison.OrdinalIgnoreCase))
 		context.Argument = "shared.ini";
@@ -174,7 +203,7 @@ Collection edits update statements and name indexes together. Replacements remov
 
 ### Writer lifetime and output
 
-Each save creates an internal sealed ProfileWriter. Profile retains public convenience methods; Reader owns parsing and Writer owns serialization and commits. No public writer, singleton, context factory or shared reader/writer base is introduced. Writer captures PreserveBlanks only; it does not clone directive options or execute callbacks. ProfileContext describes file loading; callback settings and directive options do not alter the save scope of loaded models.
+Each save creates an internal sealed ProfileWriter. Profile retains public convenience methods; Reader owns parsing and Writer owns serialization and commits. No public writer, singleton, context factory or shared reader/writer base is introduced. Writer captures PreserveBlanks only; it does not clone directive options or execute callbacks. ProfileContext describes the current source and configuration; callback settings and directive options do not alter the save scope of loaded models.
 
 Null values render as `name`, empty strings as `name=`. Comments use `#`, including empty comments. Statement order, empty sections and necessary scope switches are preserved. PreserveBlanks enables recorded blank lines; blanks discarded at load cannot be recovered at save.
 

@@ -27,33 +27,34 @@
  * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System;
+
 namespace Zongsoft.Configuration.Profiles;
 
-/// <summary>提供配置处理过程中的来源与配置上下文信息。</summary>
-/// <remarks>读取前后分别创建上下文；属性引用的配置模型仍可修改。</remarks>
-public class ProfileContext
+/// <summary>表示按名称注册的 Profile 指令实现。</summary>
+/// <remarks>实例在多次加载间共享；每次执行的可变状态应保存在上下文或局部变量中。</remarks>
+public abstract class ProfileDirectiveBase
 {
 	#region 构造函数
-	internal ProfileContext(string filePath, int depth, Profile referer, Profile profile = null)
+	protected ProfileDirectiveBase(string name)
 	{
-		this.FilePath = filePath ?? string.Empty;
-		this.Depth = depth;
-		this.Referer = referer;
-		this.Profile = profile;
+		ArgumentException.ThrowIfNullOrWhiteSpace(name);
+
+		if(!ProfileUtility.IsDirectiveName(name))
+			throw new ArgumentException(Properties.Resources.Profiles_DirectiveNameInvalid_Message, nameof(name));
+
+		this.Name = name;
 	}
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取本次读取的绝对加载路径；匿名输入为空字符串。</summary>
-	public string FilePath { get; }
+	/// <summary>获取指令名称，不包含注释标记和 <c>@</c>。</summary>
+	public string Name { get; }
+	#endregion
 
-	/// <summary>获取当前加载层数；根文件为第一层，直接导入为第二层。</summary>
-	public int Depth { get; }
-
-	/// <summary>获取直接引用者；根配置为空。</summary>
-	public Profile Referer { get; }
-
-	/// <summary>获取当前配置；读取前为空，指令处理时为正在解析的配置，读取完成后为解析结果。</summary>
-	public Profile Profile { get; }
+	#region 公共方法
+	/// <summary>处理本次指令，正常返回后由调度逻辑标记为已处理。</summary>
+	/// <param name="context">本次指令上下文。</param>
+	public abstract void Process(ProfileDirectiveContext context);
 	#endregion
 }
