@@ -30,7 +30,7 @@
 using System;
 using System.IO;
 
-namespace Zongsoft.Configuration.Profiles;
+namespace Zongsoft.Configuration.Profiles.Directives;
 
 /// <summary>按声明文件解析路径并将指定来源导入当前配置。</summary>
 public sealed class ImportDirective() : ProfileDirectiveBase(ProfileDirectiveOptions.ImportOptions.NAME)
@@ -49,7 +49,7 @@ public sealed class ImportDirective() : ProfileDirectiveBase(ProfileDirectiveOpt
 		if(string.IsNullOrEmpty(context.Argument))
 			return;
 
-		var maximumDepth = context.Configuration is ProfileDirectiveOptions.ImportOptions { MaximumDepth: > 0 } options ? options.MaximumDepth : ProfileDirectiveOptions.ImportOptions.DEFAULT_MAXIMUM_DEPTH;
+		var maximumDepth = context.Options is ProfileDirectiveOptions.ImportOptions { MaximumDepth: > 0 } options ? options.MaximumDepth : ProfileDirectiveOptions.ImportOptions.DEFAULT_MAXIMUM_DEPTH;
 
 		foreach(var argument in context.Argument.Split([' ', '\t', '|'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
 		{

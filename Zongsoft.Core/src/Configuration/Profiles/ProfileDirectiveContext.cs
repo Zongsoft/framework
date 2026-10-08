@@ -36,14 +36,13 @@ namespace Zongsoft.Configuration.Profiles;
 public sealed class ProfileDirectiveContext : ProfileContext
 {
 	#region 成员字段
-	private readonly ProfileReadSession _session;
+	private readonly ProfileReader.Session _session;
 	#endregion
 
 	#region 构造函数
-	internal ProfileDirectiveContext(ProfileReadSession session, string name, string argument, Profile profile, Profile referer, ProfileSection section, int lineNumber, int depth, ProfileDirectiveOptions options) : base(profile.FilePath, depth, referer, profile)
+	internal ProfileDirectiveContext(ProfileReader.Session session, string name, string argument, Profile profile, Profile referer, ProfileSection section, int lineNumber, int depth, ProfileDirectiveOptions options) : base(profile.FilePath, depth, referer, profile)
 	{
 		_session = session;
-		this.Configuration = options;
 		this.Name = name;
 		this.Argument = argument;
 		this.Section = section;
@@ -62,7 +61,7 @@ public sealed class ProfileDirectiveContext : ProfileContext
 	public bool Handled { get; set; }
 	/// <summary>获取本次指令采用的处理行为。</summary>
 	public ProfileDirectiveBehavior Behavior { get; }
-	/// <summary>获取本条指令的独立选项副本，修改此副本不改变当前读取会话的设置。</summary>
+	/// <summary>获取本条指令的独立选项副本，供回调和指令实现使用；修改此副本不改变当前读取会话的设置。</summary>
 	public ProfileDirectiveOptions Options { get; }
 	/// <summary>获取指令所在章节；根章节为空。</summary>
 	public ProfileSection Section { get; }
@@ -71,8 +70,6 @@ public sealed class ProfileDirectiveContext : ProfileContext
 	#endregion
 
 	#region 内部成员
-	//实际设置与公开选项副本分开，扩展回调不会改变读取过程的导入策略。
-	internal ProfileDirectiveOptions Configuration { get; }
 	internal Profile Read(Stream stream, int maximumDepth) => _session.Read(stream, null, this.Profile, this.LineNumber, maximumDepth);
 	#endregion
 }

@@ -9,7 +9,7 @@ Profile reads INI declarations, processes directives, merges imported sources an
 
 ## Loading and imports
 
-`Profile.Load` accepts paths, Stream and TextReader. Each root load creates an internal ProfileReadSession that captures settings and the global directive registry, dispatches directives, manages file notifications and guards the active loading chain. ProfileReader parses one source; ImportDirective interprets import paths and requests nested reads through the same session. Profile retains declarations, effective references and source relationships. ProfileWriter serializes declarations and coordinates source commits; it does not execute directives or callbacks.
+`Profile.Load` accepts paths, Stream and TextReader. Each root load creates a ProfileReader.Session, an internal type nested in ProfileReader, that captures settings and the global directive registry, dispatches directives, manages file notifications and guards the active loading chain. ProfileReader parses one source; ImportDirective interprets import paths and requests nested reads through the same session. Profile retains declarations, effective references and source relationships. ProfileWriter serializes declarations and coordinates source commits; it does not execute directives or callbacks.
 
 ### Options and directive settings
 
@@ -34,7 +34,7 @@ var profile = Profile.Load("settings.ini", options);
 
 `ProfileDirectiveOptions` has an immutable Name and a settable Behavior. Names start with a letter or underscore and contain only letters, digits, underscores, hyphens or dots; they contain no comment marker or `@` prefix. `ProfileDirectiveOptionsCollection` uses case-insensitive name keys, rejects null and duplicate items, and supports keyed lookup. Its enumeration order does not control execution order. Missing settings use the directive's built-in defaults; removing settings restores those defaults. Adding settings does not register an implementation.
 
-`ProfileDirectiveOptions.Import(behavior = None, maximumDepth = 0)` constructs the public nested ImportOptions type, whose name is fixed to `import`. MaximumDepth is nonnegative: zero selects the built-in limit of 64; positive values specify the limit; negative assignments throw ArgumentOutOfRangeException without replacing the current value. The root counts as one active level: 1 allows only the root. The limit is taken from captured settings, without modifying the supplied options. Cycle detection remains enabled independently.
+`ProfileDirectiveOptions.Import(behavior = None, maximumDepth = 0)` constructs the public nested ImportOptions type, whose name is fixed to `import`. MaximumDepth is nonnegative: zero selects the built-in limit of 64; positive values specify the limit; negative assignments throw ArgumentOutOfRangeException without replacing the current value. The root counts as one active level: 1 allows only the root. Each directive copies the captured settings and reads the limit from its context Options when executing. Processing may adjust MaximumDepth for that directive without changing the original options or other directives. Cycle detection remains enabled independently.
 
 `ProfileDirectiveBehavior` is a general policy enum. None selects the directive's built-in behavior; Strict requests its strict rules; Ignore preserves the declaration as a comment without entering directive processing; Suppress throws ProfileException before directive callbacks or execution.
 
@@ -51,7 +51,7 @@ At root entry, the session copies the options collection and calls each directiv
 
 ### Global directive registry
 
-`Profile.Directives` is the process-wide ProfileDirectiveCollection, initially containing `ImportDirective.Instance`. It accepts public ProfileDirectiveBase implementations with an immutable Name and a Process(ProfileDirectiveContext) method. The collection supports Add, Count, name lookup, Contains, TryGetValue and snapshot enumeration. Names are case-insensitive; null instances and duplicate names are rejected. Registration is additive: removal and replacement are not exposed.
+`Profile.Directives` is the process-wide ProfileDirectiveCollection, initially containing `ImportDirective.Instance` from the `Zongsoft.Configuration.Profiles.Directives` namespace. It accepts public ProfileDirectiveBase implementations with an immutable Name and a Process(ProfileDirectiveContext) method. The collection supports Add, Count, name lookup, Contains, TryGetValue and snapshot enumeration. Names are case-insensitive; null instances and duplicate names are rejected. Registration is additive: removal and replacement are not exposed.
 
 ```csharp
 // Register once during application initialization.
@@ -72,11 +72,11 @@ public sealed class NoteDirective() : ProfileDirectiveBase("note")
 }
 ```
 
-Each root load copies the registry before cloning options or invoking callbacks. Recursive imports use that same name-to-instance snapshot. Registrations during a load apply only to later root loads. The registry locks modifications and snapshot creation; handlers execute outside the lock. Instances are shared across concurrent loads and must keep invocation state in locals or the supplied context, with thread-safe dependencies. A snapshot copies references, not handler instances.
+Each root load copies the registry before cloning options or invoking callbacks. Recursive imports use that same name-to-instance snapshot. Registrations during a load apply only to later root loads. The registry uses SynchronizedDictionary to synchronize modifications and snapshot creation; handlers execute outside the lock. Instances are shared across concurrent loads and must keep invocation state in locals or the supplied context, with thread-safe dependencies. A snapshot copies references, not handler instances.
 
 Processing order is Ignore/Suppress checks, Processing callback, a registered implementation if not Handled, and Processed after success. Known implementations interpret None and Strict using their own rules. Unknown Strict directives must be handled by Processing; unknown None directives may remain unhandled. A callback can bypass a registered implementation by setting Handled=true.
 
-ImportDirective splits arguments, resolves paths relative to the declaring source, handles optional versus required missing files, and selects the configured depth limit (default 64). An internal context operation passes the opened stream to the current ProfileReadSession, which owns and releases it, checks the shared active chain, parses, merges and notifies Loaded. ImportDirective does not reference ProfileReader or ProfileWriter. Calling public Profile.Load inside a custom handler starts an independent root load; it is not the built-in recursive import path.
+ImportDirective splits arguments, resolves paths relative to the declaring source, handles optional versus required missing files, and selects the configured depth limit (default 64). An internal context operation passes the opened stream to the current ProfileReader.Session, which owns and releases it, checks the shared active chain, parses, merges and notifies Loaded. ImportDirective does not reference ProfileReader or ProfileWriter. Calling public Profile.Load inside a custom handler starts an independent root load; it is not the built-in recursive import path.
 
 ### File loading callbacks
 
@@ -118,7 +118,7 @@ Both callbacks receive the same public sealed ProfileDirectiveContext, derived f
 | Argument | Settable directive argument with surrounding whitespace removed; assigning null preserves null. Each directive defines its meaning. |
 | Handled | Set true in Directives.Processing to take over execution. The dispatcher also sets it true when a registered implementation returns successfully. |
 | Behavior | The captured policy for this directive. |
-| Options | An independent copy of this directive's settings, including derived properties; edits do not change session settings or the import policy. Without explicit settings, this is a plain ProfileDirectiveOptions; configured derived settings retain their type. |
+| Options | An independent copy of this directive's settings, including derived properties; implementations read this copy directly, so Processing edits can affect directive-specific settings such as import MaximumDepth, without changing session settings, other directives or the captured Behavior. Without explicit settings, this is a plain ProfileDirectiveOptions; configured derived settings retain their type. |
 | Profile / Section | Declaring Profile and current section; Section is null at the root section. |
 | FilePath / LineNumber / Depth | Declaring source path, one-based line and active file depth. |
 

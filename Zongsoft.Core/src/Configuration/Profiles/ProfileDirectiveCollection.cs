@@ -38,30 +38,15 @@ namespace Zongsoft.Configuration.Profiles;
 public sealed class ProfileDirectiveCollection : IReadOnlyCollection<ProfileDirectiveBase>
 {
 	#region 成员字段
-	private readonly object _sync = new();
-	private readonly Dictionary<string, ProfileDirectiveBase> _directives = new(StringComparer.OrdinalIgnoreCase);
+	private readonly Collections.SynchronizedDictionary<string, ProfileDirectiveBase> _directives = new(StringComparer.OrdinalIgnoreCase);
 	#endregion
 
 	#region 公共属性
 	/// <summary>获取已注册的指令数量。</summary>
-	public int Count
-	{
-		get
-		{
-			lock(_sync)
-				return _directives.Count;
-		}
-	}
+	public int Count => _directives.Count;
 
 	/// <summary>获取指定名称的指令。</summary>
-	public ProfileDirectiveBase this[string name]
-	{
-		get
-		{
-			lock(_sync)
-				return _directives[name];
-		}
-	}
+	public ProfileDirectiveBase this[string name] => _directives[name];
 	#endregion
 
 	#region 公共方法
@@ -70,41 +55,27 @@ public sealed class ProfileDirectiveCollection : IReadOnlyCollection<ProfileDire
 	public void Add(ProfileDirectiveBase directive)
 	{
 		ArgumentNullException.ThrowIfNull(directive);
-
-		lock(_sync)
-			_directives.Add(directive.Name, directive);
+		_directives.Add(directive.Name, directive);
 	}
 
 	/// <summary>判断是否已经注册指定名称的指令。</summary>
 	/// <returns>如果已注册则返回真，否则返回假。</returns>
 	/// <param name="name">指令名称。</param>
-	public bool Contains(string name)
-	{
-		lock(_sync)
-			return _directives.ContainsKey(name);
-	}
+	public bool Contains(string name) => _directives.ContainsKey(name);
 
 	/// <summary>尝试获取指定名称的指令。</summary>
 	/// <returns>如果已注册则返回真，否则返回假。</returns>
 	/// <param name="name">指令名称。</param>
 	/// <param name="directive">找到的指令实例。</param>
-	public bool TryGetValue(string name, out ProfileDirectiveBase directive)
-	{
-		lock(_sync)
-			return _directives.TryGetValue(name, out directive);
-	}
+	public bool TryGetValue(string name, out ProfileDirectiveBase directive) => _directives.TryGetValue(name, out directive);
 	#endregion
 
 	#region 内部方法
-	internal Dictionary<string, ProfileDirectiveBase> Snapshot()
-	{
-		lock(_sync)
-			return new(_directives, StringComparer.OrdinalIgnoreCase);
-	}
+	internal Dictionary<string, ProfileDirectiveBase> Snapshot() => new(_directives, StringComparer.OrdinalIgnoreCase);
 	#endregion
 
 	#region 枚举遍历
-	public IEnumerator<ProfileDirectiveBase> GetEnumerator() => this.Snapshot().Values.GetEnumerator();
 	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+	public IEnumerator<ProfileDirectiveBase> GetEnumerator() => _directives.Values.GetEnumerator();
 	#endregion
 }

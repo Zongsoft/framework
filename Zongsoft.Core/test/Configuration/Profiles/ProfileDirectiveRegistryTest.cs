@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 
 using Zongsoft.Configuration.Profiles;
+using Zongsoft.Configuration.Profiles.Directives;
 
 using Xunit;
 
@@ -24,6 +25,7 @@ public class ProfileDirectiveRegistryTest
 		var root = files.Write("a.ini", "owner=A\n#@import b.ini");
 		var contexts = new List<ProfileDirectiveContext>();
 		var options = new ProfileOptions();
+
 		options.Directives.Processing = context =>
 		{
 			contexts.Add(context);
@@ -62,6 +64,7 @@ public class ProfileDirectiveRegistryTest
 		var options = new ProfileOptions();
 		var source = options.Directives;
 		var failure = new InvalidOperationException("Changed callback");
+
 		source.Processing = context =>
 		{
 			events.Add("processing:" + context.Argument);
@@ -171,6 +174,7 @@ public class ProfileDirectiveRegistryTest
 		var directive = new CallbackDirective(UniqueName());
 		Profile.Directives.Add(directive);
 		var text = "#@" + directive.Name.ToUpperInvariant() + " configured\nlocal=kept";
+
 		using var input = new StringReader(text);
 		var invocations = 0;
 		var configuration = new CallbackOptions(directive.Name, (instance, context) =>
@@ -182,6 +186,7 @@ public class ProfileDirectiveRegistryTest
 		{
 			Behavior = behavior,
 		};
+
 		var options = new ProfileOptions { Directives = { configuration } };
 		var processed = new List<ProfileDirectiveContext>();
 		options.Directives.Processed = processed.Add;
@@ -218,6 +223,7 @@ public class ProfileDirectiveRegistryTest
 		var root = files.Write("root.ini", "#@" + directive.Name + " root\n#@import child.ini");
 		var handled = new List<bool>();
 		var registered = false;
+
 		var options = new ProfileOptions
 		{
 			Loading = context =>
@@ -229,6 +235,7 @@ public class ProfileDirectiveRegistryTest
 				}
 			},
 		};
+
 		options.Directives.Processed = context =>
 		{
 			if(context.Name == directive.Name)
@@ -241,6 +248,7 @@ public class ProfileDirectiveRegistryTest
 		Assert.Null(first.Entries["executed"]);
 		Assert.Equal("present", first.Entries["child"].Value);
 		Assert.Same(directive, Profile.Directives[directive.Name]);
+
 		handled.Clear();
 		var second = Profile.Load(root, options);
 		Assert.Equal([true, true], handled);
@@ -257,11 +265,13 @@ public class ProfileDirectiveRegistryTest
 		var directive = new ThrowingDirective(UniqueName(), failure);
 		Profile.Directives.Add(directive);
 		var events = new List<string>();
+
 		var options = new ProfileOptions
 		{
 			Loading = _ => events.Add("loading"),
 			Loaded = _ => events.Add("loaded"),
 		};
+
 		options.Directives.Processing = context =>
 		{
 			events.Add("processing");
@@ -297,6 +307,7 @@ public class ProfileDirectiveRegistryTest
 		var child = files.Write("shared.ini", "#@" + directive.Name + " value\nchild=present");
 		var first = files.Write("first.ini", "owner=first\n#@import shared.ini");
 		var second = files.Write("second.ini", "owner=second\n#@import shared.ini");
+
 		using var barrier = new Barrier(2);
 		var contexts = new ConcurrentBag<ProfileDirectiveContext>();
 		var instances = new ConcurrentBag<ProfileDirectiveBase>();
@@ -316,6 +327,7 @@ public class ProfileDirectiveRegistryTest
 				}),
 			},
 		}).ToArray();
+
 		var roots = new[] { first, second };
 		var tasks = roots.Select((root, index) => Task.Factory.StartNew(() => Profile.Load(root, options[index]),
 			CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default)).ToArray();
@@ -338,7 +350,6 @@ public class ProfileDirectiveRegistryTest
 	}
 
 	private static string UniqueName() => "test_" + Guid.NewGuid().ToString("N");
-
 	public sealed class EchoDirective(string name) : ProfileDirectiveBase(name)
 	{
 		public override void Process(ProfileDirectiveContext context) => context.Profile.Entries.Add("executed", context.Argument);

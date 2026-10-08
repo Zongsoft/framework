@@ -9,7 +9,7 @@ Profile 读取 INI 声明，处理指令并合并导入来源，将修改保存�
 
 ## 读取与导入
 
-`Profile.Load` 支持文件路径、Stream 和 TextReader。每次根加载创建内部 ProfileReadSession，固定选项及全局指令注册表快照，负责指令调度、文件通知及活动加载链检查。ProfileReader 解析单个来源；ImportDirective 解释导入路径，通过同一会话完成递归读取。Profile 保留声明、有效引用和来源关系。ProfileWriter 输出声明并协调来源提交，不执行指令或回调。
+`Profile.Load` 支持文件路径、Stream 和 TextReader。每次根加载创建 ProfileReader 的内部嵌套会话 ProfileReader.Session，固定选项及全局指令注册表快照，负责指令调度、文件通知及活动加载链检查。ProfileReader 解析单个来源；ImportDirective 解释导入路径，通过同一会话完成递归读取。Profile 保留声明、有效引用和来源关系。ProfileWriter 输出声明并协调来源提交，不执行指令或回调。
 
 ### 选项与指令设置
 
@@ -34,7 +34,7 @@ var profile = Profile.Load("settings.ini", options);
 
 `ProfileDirectiveOptions` 提供只读 Name 和可写 Behavior。名称以字母或下划线开头，只能包含字母、数字、下划线、连字符或点号，不含注释标记和 `@` 前缀。`ProfileDirectiveOptionsCollection` 按名称忽略大小写索引，拒绝 null 和重名项，支持按名称查找。集合枚举顺序不控制执行顺序。未配置的指令采用内置默认设置，删除选项恢复默认设置；添加选项不注册执行程序。
 
-`ProfileDirectiveOptions.Import(behavior = None, maximumDepth = 0)` 创建公开嵌套类型 ImportOptions，名称固定为 `import`。MaximumDepth 非负：零采用内置上限 64，正数指定上限，负数赋值抛出 ArgumentOutOfRangeException 并保留原值。根文件计一层，设为 1 时只允许读取根文件。从本次加载的设置快照取得上限，不修改传入的选项；循环检测独立生效。
+`ProfileDirectiveOptions.Import(behavior = None, maximumDepth = 0)` 创建公开嵌套类型 ImportOptions，名称固定为 `import`。MaximumDepth 非负：零采用内置上限 64，正数指定上限，负数赋值抛出 ArgumentOutOfRangeException 并保留原值。根文件计一层，设为 1 时只允许读取根文件。每条指令从会话快照复制选项，导入执行时读取上下文 Options 中的上限；Processing 可调整本条指令的 MaximumDepth，原选项及其它指令不受影响。循环检测独立生效。
 
 `ProfileDirectiveBehavior` 是通用策略枚举。None 采用指令内置行为；Strict 要求按具体指令的规则严格处理；Ignore 保留注释声明，不进入指令处理；Suppress 在指令回调和执行之前抛出 ProfileException。
 
@@ -51,7 +51,7 @@ var profile = Profile.Load("settings.ini", options);
 
 ### 全局指令注册表
 
-`Profile.Directives` 是进程共用的 ProfileDirectiveCollection，默认包含 `ImportDirective.Instance`。它接受公开 ProfileDirectiveBase 的派生实现，基类提供只读 Name 和 Process(ProfileDirectiveContext) 方法。集合支持 Add、Count、名称索引、Contains、TryGetValue 及快照枚举。名称忽略大小写，拒绝空实例及重名注册；注册只增加实现，不提供移除或替换操作。
+`Profile.Directives` 是进程共用的 ProfileDirectiveCollection，默认包含 `ImportDirective.Instance`，其类型位于 `Zongsoft.Configuration.Profiles.Directives` 命名空间。它接受公开 ProfileDirectiveBase 的派生实现，基类提供只读 Name 和 Process(ProfileDirectiveContext) 方法。集合支持 Add、Count、名称索引、Contains、TryGetValue 及快照枚举。名称忽略大小写，拒绝空实例及重名注册；注册只增加实现，不提供移除或替换操作。
 
 ```csharp
 // 在应用初始化时注册一次。
@@ -72,11 +72,11 @@ public sealed class NoteDirective() : ProfileDirectiveBase("note")
 }
 ```
 
-每次根加载在克隆选项和执行回调之前复制注册表。递归导入共享这份名称到实例的快照；加载过程中新增的注册只影响后续根加载。修改注册表及获取快照时加锁，执行指令时不持锁。实例在并发加载间共享，每次调用的可变状态放在局部变量或上下文，所用依赖也须支持并发；快照复制实例引用，不复制实例。
+每次根加载在克隆选项和执行回调之前复制注册表。递归导入共享这份名称到实例的快照；加载过程中新增的注册只影响后续根加载。注册表使用 SynchronizedDictionary 存储，修改及获取快照时由字典同步，执行指令时不持锁。实例在并发加载间共享，每次调用的可变状态放在局部变量或上下文，所用依赖也须支持并发；快照复制实例引用，不复制实例。
 
 执行顺序为 Ignore/Suppress 检查、Processing 回调、未 Handled 时调用注册实现、成功后 Processed。已注册指令自行定义 None/Strict 的具体规则。未知 Strict 指令必须由 Processing 接管；未知 None 指令可以保持未处理。回调设置 Handled=true 可接管已注册实现。
 
-ImportDirective 拆分参数、按声明来源解析相对路径、处理可选或严格文件缺失，并取得深度上限（默认 64）。它通过上下文的内部读取操作将已打开的流交给当前 ProfileReadSession；会话拥有并释放流，共享活动链检查，完成解析和合并后通知 Loaded。ImportDirective 不引用 ProfileReader 或 ProfileWriter。自定义实现中调用公共 Profile.Load 会开始独立的根加载，不属于内置导入的递归通道。
+ImportDirective 拆分参数、按声明来源解析相对路径、处理可选或严格文件缺失，并取得深度上限（默认 64）。它通过上下文的内部读取操作将已打开的流交给当前 ProfileReader.Session；会话拥有并释放流，共享活动链检查，完成解析和合并后通知 Loaded。ImportDirective 不引用 ProfileReader 或 ProfileWriter。自定义实现中调用公共 Profile.Load 会开始独立的根加载，不属于内置导入的递归通道。
 
 ### 文件读取回调
 
@@ -118,7 +118,7 @@ Loaded(root)
 | Argument | 可写的指令参数，去除两端空白；赋值 null 时保留 null，具体语义由指令解释。 |
 | Handled | 前置回调设为 true 可接管执行；已注册实现正常返回后，调度逻辑也会设为 true。 |
 | Behavior | 本次指令固定的处理策略。 |
-| Options | 本条指令独立的选项副本，包含派生属性；修改副本不改变会话设置或导入策略。未显式配置时为普通 ProfileDirectiveOptions，显式派生选项保留其类型。 |
+| Options | 本条指令独立的选项副本，包含派生属性；指令实现直接读取该副本，前置回调的修改可影响本条指令的专用设置（例如导入的 MaximumDepth），不改变会话设置、其它指令或已固定的 Behavior。未显式配置时为普通 ProfileDirectiveOptions，显式派生选项保留其类型。 |
 | Profile / Section | 声明指令的配置和当前章节；根章节对应 null。 |
 | FilePath / LineNumber / Depth | 声明来源路径、从 1 开始的行号和活动文件深度。 |
 

@@ -35,6 +35,8 @@ using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
 
+using Zongsoft.Configuration.Profiles.Directives;
+
 namespace Zongsoft.Configuration.Profiles;
 
 /// <summary>提供了对INI文件格式的各项操作。</summary>
@@ -51,7 +53,7 @@ public partial class Profile : IEnumerable<ProfileItem>
 	#region 静态属性
 	/// <summary>获取本进程共用的指令注册表，默认包含导入指令。</summary>
 	/// <remarks>每次根加载固定注册表快照，后续注册只影响之后的根加载。</remarks>
-	public static ProfileDirectiveCollection Directives { get; } = new() { ImportDirective.Instance };
+	public static ProfileDirectiveCollection Directives { get; } = [ImportDirective.Instance];
 	#endregion
 
 	#region 构造函数
@@ -80,7 +82,7 @@ public partial class Profile : IEnumerable<ProfileItem>
 		if(string.IsNullOrWhiteSpace(filePath))
 			throw new ArgumentNullException(nameof(filePath));
 
-		return new ProfileReadSession(options).Read(filePath);
+		return new ProfileReader.Session(options).Read(filePath);
 	}
 
 	public static Profile Load(Stream stream, ProfileOptions options = null) => Load(stream, null, options);
@@ -89,7 +91,7 @@ public partial class Profile : IEnumerable<ProfileItem>
 		if(stream == null)
 			throw new ArgumentNullException(nameof(stream));
 
-		return new ProfileReadSession(options).Read(stream, encoding);
+		return new ProfileReader.Session(options).Read(stream, encoding);
 	}
 
 	/// <summary>从文本读取器加载配置，保留读取器的打开状态。</summary>
@@ -100,7 +102,7 @@ public partial class Profile : IEnumerable<ProfileItem>
 	public static Profile Load(TextReader reader, ProfileOptions options = null)
 	{
 		ArgumentNullException.ThrowIfNull(reader);
-		return new ProfileReadSession(options).Read(reader);
+		return new ProfileReader.Session(options).Read(reader);
 	}
 	#endregion
 

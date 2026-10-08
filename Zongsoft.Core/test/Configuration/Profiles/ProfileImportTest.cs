@@ -41,6 +41,7 @@ public class ProfileImportTest
 					notifications.Add(context);
 			},
 		};
+
 		using var locked = new FileStream(child, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 		Assert.Throws<ProfileException>(() => Profile.Load(root, options));
 		using var stream = File.OpenRead(root);
@@ -112,16 +113,20 @@ public class ProfileImportTest
 					notifications.Add(context);
 			},
 		};
+
 		using var locked = new FileStream(child, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 		var profile = Profile.Load(root, options);
 		Assert.Equal("kept", Assert.Single(profile.Entries).Value);
+
 		using var stream = File.OpenRead(root);
 		Assert.Equal("kept", Assert.Single(Profile.Load(stream, options).Entries).Value);
 		Assert.False(stream.CanRead);
+
 		using var reader = new StringReader("local=kept\n" + directive);
 		Assert.Equal("kept", Assert.Single(Profile.Load(reader, options).Entries).Value);
 		Assert.Equal(-1, reader.Peek());
 		Assert.Empty(notifications);
+
 		using var writer = new StringWriter { NewLine = "\n" };
 		profile.Save(writer, new ProfileOptions { Directives = { ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Suppress) } });
 		Assert.Equal("local=kept\n" + directive.Replace(";@IMPORT", "#@IMPORT") + "\n", writer.ToString());
@@ -223,6 +228,7 @@ public class ProfileImportTest
 					completed.Add(context.Depth);
 			},
 		};
+
 		var reader = CreateSession(options);
 
 		if(succeeds)
@@ -263,6 +269,7 @@ public class ProfileImportTest
 					starting.Add(context.Depth);
 			},
 		};
+
 		var reader = CreateSession(options);
 		((ProfileDirectiveOptions.ImportOptions)options.Directives["import"]).MaximumDepth = 1;
 
@@ -328,6 +335,54 @@ public class ProfileImportTest
 		}
 	}
 
+	[Theory]
+	[InlineData(1)]
+	[InlineData(2)]
+	public void Import_ContextDepthLimitAppliesOnlyToCurrentDirective(int maximumDepth)
+	{
+		using var files = new ProfileFiles();
+		files.Write("leaf.ini", "leaf=present");
+		files.Write("child.ini", "#@import leaf.ini\nchild=present");
+		files.Write("sibling.ini", "sibling=present");
+
+		var root = files.Write("root.ini", "#@import child.ini\n#@import sibling.ini");
+		var import = ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Strict, 3);
+		var options = new ProfileOptions { Directives = { import } };
+		var contexts = new List<ProfileDirectiveContext>();
+		var starting = new List<int>();
+
+		options.Loading = context => starting.Add(context.Depth);
+		options.Directives.Processing = context =>
+		{
+			contexts.Add(context);
+			var current = Assert.IsType<ProfileDirectiveOptions.ImportOptions>(context.Options);
+			Assert.Equal(3, current.MaximumDepth);
+			Assert.NotSame(import, current);
+
+			if(context.Argument == "child.ini")
+				current.MaximumDepth = maximumDepth;
+		};
+
+		if(maximumDepth == 1)
+		{
+			Assert.Throws<ProfileException>(() => Profile.Load(root, options));
+			Assert.Equal([1], starting);
+			Assert.Single(contexts);
+		}
+		else
+		{
+			var profile = Profile.Load(root, options);
+			Assert.Equal("present", profile.Entries["child"].Value);
+			Assert.Equal("present", profile.Entries["leaf"].Value);
+			Assert.Equal("present", profile.Entries["sibling"].Value);
+			Assert.Equal([1, 2, 3, 2], starting);
+			Assert.Equal(["child.ini", "leaf.ini", "sibling.ini"], contexts.Select(context => context.Argument));
+			Assert.Equal(3, contexts.Select(context => context.Options).Distinct().Count());
+		}
+
+		Assert.Equal(3, import.MaximumDepth);
+	}
+
 	[Fact]
 	public void Import_CallbackCanEnforceBusinessDepthAndAllowsRetry()
 	{
@@ -336,6 +391,7 @@ public class ProfileImportTest
 		var depths = new List<int>();
 		var completed = new List<ProfileContext>();
 		var failure = new InvalidOperationException("Business depth exceeded.");
+
 		var options = new ProfileOptions
 		{
 			Loading = context =>
@@ -354,6 +410,7 @@ public class ProfileImportTest
 					completed.Add(context);
 			},
 		};
+
 		var reader = CreateSession(options);
 
 		Assert.Same(failure, Assert.Throws<InvalidOperationException>(() => ReadProfile(reader, root)));
@@ -392,6 +449,7 @@ public class ProfileImportTest
 		files.Write("left.ini", "#@import leaf.ini\nleft=present");
 		files.Write("right.ini", "#@import leaf.ini\nright=present");
 		files.Write("leaf.ini", "leaf=shared");
+
 		var root = files.Write("root.ini", "#@import left.ini | right.ini\tleaf.ini");
 		var events = new List<string>();
 		var options = Options(
@@ -414,6 +472,7 @@ public class ProfileImportTest
 		var leaf = files.Write("shared/leaf.ini", "value=leaf");
 		var child = files.Write("nested/child.ini", "#@import ../shared/leaf.ini\nchild=present");
 		var root = files.Write("root.ini", "#@import nested/child.ini");
+
 		var events = new List<string>();
 		var options = Options(
 			importing: path => events.Add("before:" + path),
@@ -434,6 +493,7 @@ public class ProfileImportTest
 		var child = files.Write("child.ini", "value=child\n[section]\ncomplete=yes");
 		var root = files.Write("root.ini", "#@import sub/../child.ini");
 		Directory.CreateDirectory(files.PathFor("sub"));
+
 		var events = new List<string>();
 		Profile completed = null;
 		var options = Options(
@@ -466,6 +526,7 @@ public class ProfileImportTest
 		var leaf = files.Write("leaf.ini", "leaf=value");
 		var child = files.Write("child.ini", "#@import leaf.ini\nchild=value");
 		var root = files.Write("root.ini", "#@import child.ini");
+
 		var starting = new List<ProfileContext>();
 		var completed = new List<ProfileContext>();
 		var events = new List<string>();
@@ -670,9 +731,11 @@ public class ProfileImportTest
 		using var files = new ProfileFiles();
 		files.Write("leaf.ini", "\nleaf=value");
 		files.Write("child.ini", "\n#@import leaf.ini\nvalue=child");
+
 		var root = files.Write("root.ini", "#@import child.ini\n\n");
 		var events = new List<string>();
 		var options = new ProfileOptions();
+
 		options.Loading = context =>
 		{
 			if(context.Depth == 1)
@@ -683,6 +746,7 @@ public class ProfileImportTest
 			options.Loading = _ => throw new InvalidOperationException("Changed callback must wait for next load.");
 			options.Loaded = options.Loading;
 		};
+
 		options.Loaded = context =>
 		{
 			if(context.Depth == 1)
@@ -807,6 +871,7 @@ public class ProfileImportTest
 		Assert.Equal(child, profile.Entries["only"].Profile.FilePath);
 		Assert.Equal(child, profile.Sections.Find("plugins/nested").Entries["value"].Profile.FilePath);
 		Assert.Equal("root", profile.Sections["plugins"].Entries["local"].Value);
+
 		using var output = new StringWriter();
 		profile.Save(output);
 		Assert.Contains("#@import child.ini", output.ToString());
@@ -852,6 +917,7 @@ public class ProfileImportTest
 					notifications.Add(context);
 			}
 		};
+
 		var reader = CreateSession(options);
 		var snapshot = (ProfileOptions)reader.GetType().GetProperty("Options").GetValue(reader);
 		options.PreserveBlanks = false;
@@ -903,6 +969,7 @@ public class ProfileImportTest
 		var events = new List<string>();
 		var failure = new InvalidOperationException("import callback failed");
 		var shouldFail = true;
+
 		var reader = CreateSession(Options(
 			importing: _ =>
 			{
@@ -916,8 +983,8 @@ public class ProfileImportTest
 				if(shouldFail && after)
 					throw failure;
 			}));
-		using var stream = new MemoryStream(Encoding.UTF8.GetBytes("#@import " + child));
 
+		using var stream = new MemoryStream(Encoding.UTF8.GetBytes("#@import " + child));
 		Assert.Same(failure, Assert.Throws<InvalidOperationException>(() => ReadProfile(reader, stream, Encoding.UTF8)));
 		Assert.Equal(after ? ["before", "after"] : ["before"], events);
 		Assert.False(stream.CanRead);
@@ -927,6 +994,7 @@ public class ProfileImportTest
 
 		shouldFail = false;
 		events.Clear();
+
 		using var retry = new MemoryStream(Encoding.UTF8.GetBytes("#@import " + child));
 		var profile = ReadProfile(reader, retry, Encoding.UTF8);
 		Assert.Equal("child", profile.Entries["value"].Value);
@@ -955,10 +1023,12 @@ public class ProfileImportTest
 		using var files = new ProfileFiles();
 		var child = files.Write("child.ini", "value=complete");
 		var root = files.Write("root.ini", "#@import child.ini");
+
 		object reader = null;
 		var failure = new FileNotFoundException("imported callback failure");
 		var shouldFail = true;
 		var count = 0;
+
 		reader = CreateSession(Options(imported: profile =>
 		{
 			count++;
@@ -982,7 +1052,7 @@ public class ProfileImportTest
 
 	internal static object CreateSession(ProfileOptions options)
 	{
-		var type = typeof(Profile).Assembly.GetType("Zongsoft.Configuration.Profiles.ProfileReadSession", throwOnError: true);
+		var type = typeof(Profile).Assembly.GetType("Zongsoft.Configuration.Profiles.ProfileReader+Session", throwOnError: true);
 		return Activator.CreateInstance(type, [options]);
 	}
 
@@ -1018,6 +1088,7 @@ public class ProfileImportTest
 		public ProfileFiles() => Directory.CreateDirectory(this.Root);
 		public string Root { get; } = Path.Combine(Path.GetTempPath(), "zongsoft-profile-tests", Guid.NewGuid().ToString("N"));
 		public string PathFor(string relative) => Path.Combine(this.Root, relative);
+
 		public string Write(string relative, string content)
 		{
 			var path = Path.GetFullPath(this.PathFor(relative));
@@ -1026,12 +1097,14 @@ public class ProfileImportTest
 			File.WriteAllText(path, content.Replace("\n", "\r\n"));
 			return path;
 		}
+
 		public string Chain(int length)
 		{
 			for(var index = 0; index < length; index++)
 				this.Write(index + ".ini", index == length - 1 ? "result=complete" : "#@import " + (index + 1) + ".ini");
 			return this.PathFor("0.ini");
 		}
+
 		public void Dispose()
 		{
 			var parent = Path.GetFullPath(Path.Combine(Path.GetTempPath(), "zongsoft-profile-tests")) + Path.DirectorySeparatorChar;

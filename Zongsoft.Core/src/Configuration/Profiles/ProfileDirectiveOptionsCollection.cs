@@ -43,6 +43,7 @@ public class ProfileDirectiveOptionsCollection : KeyedCollection<string, Profile
 	#region 公共属性
 	/// <summary>获取本集合所属的配置选项。</summary>
 	public ProfileOptions Options { get; }
+
 	/// <summary>获取或设置指令处理前的回调，可改写参数或通过 Handled 接管执行。</summary>
 	/// <remarks>忽略或禁止的指令不触发此回调。</remarks>
 	public Action<ProfileDirectiveContext> Processing { get; set; }
