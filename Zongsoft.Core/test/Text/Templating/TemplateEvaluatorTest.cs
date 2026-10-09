@@ -702,7 +702,7 @@ public class TemplateEvaluatorTest
 		public bool TryGetValue(string name, out object value) => this.TryGetValue(null, name, out value);
 		public bool TryGetValue(string @namespace, string name, out object value)
 		{
-			var result = get(name, @namespace);
+			var result = get(name, string.IsNullOrEmpty(@namespace) ? null : @namespace);
 			value = result.Value;
 			return result.Found;
 		}
