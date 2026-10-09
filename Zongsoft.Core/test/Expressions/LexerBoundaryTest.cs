@@ -22,6 +22,7 @@ public class LexerBoundaryTest
 	{
 		using var scanner = Lexer.Instance.GetScanner(text);
 		var token = scanner.Scan(out var position, out var length);
+
 		Assert.Equal(TokenType.Identifier, token.Type);
 		Assert.Equal(text, token.Value);
 		Assert.Equal(0, position);
@@ -35,6 +36,7 @@ public class LexerBoundaryTest
 		var lexer = new Lexer();
 		lexer.Tokenizers.Insert(0, new KeywordTokenizer(true, "in", "between"));
 		using var scanner = lexer.GetScanner("inside in betweenX BETWEEN ?? ? >= >");
+
 		Assert.Equal(TokenType.Identifier, scanner.Scan().Type);
 		Assert.Equal(TokenType.Keyword, scanner.Scan().Type);
 		Assert.Equal(TokenType.Identifier, scanner.Scan().Type);
@@ -58,6 +60,7 @@ public class LexerBoundaryTest
 		{
 			var first = literal.Scan(out var position, out var length);
 			var second = streamed.Scan(out var streamedPosition, out var streamedLength);
+
 			Assert.Equal(position, streamedPosition);
 			Assert.Equal(length, streamedLength);
 			Assert.Equal(first?.Type, second?.Type);
@@ -81,7 +84,6 @@ public class LexerBoundaryTest
 	[Theory]
 	[InlineData("\0")]
 	[InlineData("中文")]
-	[InlineData("'\\s'")]
 	[InlineData("'\\q'")]
 	[InlineData("'unterminated")]
 	public void InvalidCharactersAndEscapes(string text)

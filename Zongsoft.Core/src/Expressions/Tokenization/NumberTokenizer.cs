@@ -36,13 +36,16 @@ namespace Zongsoft.Expressions.Tokenization;
 
 public class NumberTokenizer : ITokenizer
 {
+	#region 成员字段
 	private readonly bool _signed;
+	#endregion
 
+	#region 构造函数
 	public NumberTokenizer() { }
-
-	//索引参数的符号属于常量；通用表达式仍将符号作为独立词素。
 	internal NumberTokenizer(bool signed) => _signed = signed;
+	#endregion
 
+	#region 公共方法
 	public TokenResult Tokenize(TextReader reader)
 	{
 		var value = reader.Peek();
@@ -95,7 +98,7 @@ public class NumberTokenizer : ITokenizer
 			case 'F':
 				var single = float.Parse(literal, CultureInfo.InvariantCulture);
 				if(!float.IsFinite(single))
-					throw new OverflowException(Properties.Resources.Template_NumberOverflow_Message);
+					throw new OverflowException(Properties.Resources.NumberTokenizer_NumberOverflow_Message);
 				number = single;
 				break;
 			case 'd':
@@ -118,15 +121,16 @@ public class NumberTokenizer : ITokenizer
 		}
 
 		return new TokenResult(0, new Token(TokenType.Constant, number));
+
+		static double ParseDouble(string literal)
+		{
+			var value = double.Parse(literal, CultureInfo.InvariantCulture);
+
+			if(!double.IsFinite(value))
+				throw new OverflowException(Properties.Resources.NumberTokenizer_NumberOverflow_Message);
+
+			return value;
+		}
 	}
-
-	private static double ParseDouble(string literal)
-	{
-		var value = double.Parse(literal, CultureInfo.InvariantCulture);
-
-		if(!double.IsFinite(value))
-			throw new OverflowException(Properties.Resources.Template_NumberOverflow_Message);
-
-		return value;
-	}
+	#endregion
 }

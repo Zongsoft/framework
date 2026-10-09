@@ -39,19 +39,20 @@ public class StringTokenizer : ITokenizer
 	{
 		var quote = reader.Peek();
 
-		if(quote != '\'' && quote != '"')
+		if(quote is not '\'' and not '"')
 			return TokenResult.Fail(0);
 
 		reader.Read();
-		var text = new StringBuilder();
+
 		int value;
+		var text = new StringBuilder();
 
 		while((value = reader.Read()) >= 0)
 		{
 			if(value == quote)
 				return new TokenResult(0, new Token(TokenType.Constant, text.ToString()));
 
-			if(value == '\r' || value == '\n')
+			if(value is '\r' or '\n')
 				throw new SyntaxException(Properties.Resources.StringTokenizer_NewLine_Message);
 
 			if(value == '\\')
@@ -64,24 +65,39 @@ public class StringTokenizer : ITokenizer
 				text.Append(character);
 			}
 			else
+			{
 				text.Append((char)value);
+			}
 		}
 
 		throw new SyntaxException(string.Format(Properties.Resources.StringTokenizer_ClosingQuoteRequired_Message, (char)quote));
 	}
 
-	//模板普通文本和字符串词素共享同一转义表。
 	internal static bool TryEscape(char character, out char result)
 	{
-		result = character switch
+		switch(character)
 		{
-			'\\' or '$' or '\'' or '"' => character,
-			'n' => '\n',
-			'r' => '\r',
-			't' => '\t',
-			_ => '\0',
-		};
+			case '"':
+			case '$':
+			case '\'':
+			case '\\':
+				result = character;
+				return true;
+			case 's':
+				result = ' ';
+				return true;
+			case 't':
+				result = '\t';
+				return true;
+			case 'n':
+				result = '\n';
+				return true;
+			case 'r':
+				result = '\r';
+				return true;
+		}
 
-		return character is '\\' or '$' or '\'' or '"' or 'n' or 'r' or 't';
+		result = '\0';
+		return false;
 	}
 }

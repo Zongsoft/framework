@@ -49,7 +49,7 @@ public class IdentifierTokenizer : ITokenizer
 			text.Append((char)reader.Read());
 
 		return new TokenResult(0, new Token(TokenType.Identifier, text.ToString()));
-	}
 
-	private static bool IsBeginning(char character) => char.IsAsciiLetter(character) || character == '_';
+		static bool IsBeginning(char character) => char.IsAsciiLetter(character) || character == '_';
+	}
 }

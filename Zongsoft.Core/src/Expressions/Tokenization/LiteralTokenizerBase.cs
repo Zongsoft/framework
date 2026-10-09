@@ -36,23 +36,30 @@ namespace Zongsoft.Expressions.Tokenization;
 
 public abstract class LiteralTokenizerBase : ITokenizer
 {
-	private readonly bool _ignoreCase;
+	#region 成员字段
 	private string[] _literals;
+	private readonly bool _ignoreCase;
+	#endregion
 
+	#region 构造函数
 	protected LiteralTokenizerBase(params string[] literals) : this(false, literals) { }
 	protected LiteralTokenizerBase(bool ignoreCase, params string[] literals)
 	{
 		_ignoreCase = ignoreCase;
 		_literals = literals ?? throw new ArgumentNullException(nameof(literals));
 	}
+	#endregion
 
+	#region 保护属性
 	protected bool IgnoreCase => _ignoreCase;
 	protected string[] Literals
 	{
 		get => _literals;
 		set => _literals = value ?? throw new ArgumentNullException(nameof(value));
 	}
+	#endregion
 
+	#region 公共方法
 	public TokenResult Tokenize(TextReader reader)
 	{
 		var comparison = _ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
@@ -76,7 +83,7 @@ public abstract class LiteralTokenizerBase : ITokenizer
 		if(matched == null)
 			return TokenResult.Fail(-text.Length);
 
-		//关键字必须在完整标识符边界结束；符号仍采用最长匹配。
+		//关键字必须在完整标识符边界结束；符号仍采用最长匹配
 		if(char.IsLetterOrDigit(matched[0]) || matched[0] == '_')
 		{
 			if(text.Length != matched.Length || value >= 0 && (char.IsLetterOrDigit((char)value) || value == '_'))
@@ -85,6 +92,9 @@ public abstract class LiteralTokenizerBase : ITokenizer
 
 		return new TokenResult(matched.Length - text.Length, this.CreateToken(matched));
 	}
+	#endregion
 
+	#region 抽象方法
 	protected abstract Token CreateToken(string literal);
+	#endregion
 }
