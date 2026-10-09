@@ -6,6 +6,7 @@ Profile 读取 INI 声明，处理指令并合并导入来源，将修改保存�
 
 - [读取与导入](#读取与导入)
 - [声明与保存](#声明与保存)
+- [变量视图](#变量视图)
 
 ## 读取与导入
 
@@ -234,3 +235,71 @@ Reader 在读取声明时登记原始基线，Loaded 回调中的修改保持待
 路径资源由 Writer 管理。Stream 保持既有关闭行为；TextWriter 不关闭。流与文本写入器可能在异常前收到部分输出，不能回滚。
 
 [ProfileWriterTest](../test/Configuration/Profiles/ProfileWriterTest.cs) 覆盖来源写回、范围隔离、声明往返、重复实例、准备/提交失败与重试。Linux/macOS 的权限和链接验证必须原生执行，不能用 Windows 结果代替。哈希严格对应解析字节仍由下游输入快照方案处理，Core 不依赖部署、NuGet 或哈希类型。
+
+## 变量视图
+
+`ProfileExtension.ToVariables()` 返回 `Zongsoft.Expressions.IVariables`，将配置对象适配为实时只读变量视图：
+
+| 转换入口 | 查询范围 |
+| --- | --- |
+| `profile.ToVariables()` | 根级条目及所有章节的当前有效条目，包含已合并的导入结果。 |
+| `section.ToVariables()` | 所选章节及全部子章节，保留从根到该章节的完整命名空间。 |
+| `entry.ToVariables()` | 仅所选条目，保留其所属章节的完整命名空间。 |
+
+转换不复制字典；值修改及所选配置或章节内的增删、替换反映到后续查询。章节或条目视图始终持有所选对象，原集合移除或替换该对象不会使视图转向新对象。视图不自动查询其它配置、预读文件或展开模板，也不提供额外的并发同步。
+
+### 名称映射
+
+根级条目属于默认命名空间。章节层级用 `.` 连接，章节名称内的 `.` 原样保留；每个点分段须符合 ASCII 标识符规则 `[A-Za-z_][A-Za-z0-9_]*`。非法分段，包括空段、数字开头或含其它字符的段，使该章节及其子章节不参与变量映射。
+
+条目名称中的每个 `.` 和 `-` 替换成 `_`，再验证完整标识符；例如 `db-name`、`db.name` 均映射为 `db_name`，`-name` 映射为 `_name`。其它非法条目不提供变量。转换不会修改原始名称、值或保存内容。
+
+```ini
+product=erp
+
+[mysql]
+db-name=zongsoft
+
+[io rustfs]
+database=attachments
+
+[app.runtime]
+worker-count=4
+```
+
+对应变量为 `product`、`mysql:db_name`、`io.rustfs:database`、`app.runtime:worker_count`。章节视图不会移到默认命名空间，例如 `profile.Sections["mysql"].ToVariables()` 仍需通过命名空间 `mysql` 查询。
+
+### 查询与冲突
+
+`TryGetValue(name, out value)`、`TryGetValue(null, name, out value)` 和 `TryGetValue("", name, out value)` 等价，仅查询默认命名空间。名称和命名空间按 OrdinalIgnoreCase 比较，非空命名空间不回退到父级或默认空间。
+
+查询参数不裁剪、不归一化，应传入转换后的名称 `db_name`；直接查询 `db-name` 或 `db.name` 返回 false。查询名称为 null 时抛 ArgumentNullException，其它非法查询或不存在的变量返回 false。转换对象为 null 也抛 ArgumentNullException。
+
+值保留为原始 string 或 null；存在且值为 null 的条目仍返回 true。提供程序不负责格式化、递归、成员访问或类型转换。
+
+名称转换可能产生重名，例如同一章节的 `db-name` 与 `db.name`，或者 `[io rustfs]` 和 `[io.rustfs]` 中同名的条目。只在查询冲突变量时抛 ProfileException，不因冲突拒绝创建视图，其它变量仍可查询。具有相同命名空间但不同变量名称的章节可以共同提供变量。
+
+冲突限于所选视图范围；单条目视图不检查其它条目。正常导入中同一章节同一原始名称的覆盖已经由 Profile 合并，不算映射冲突。删除冲突条目后，后续查询立即恢复正常。
+
+### 用于模板评估
+
+```csharp
+using Zongsoft.Configuration.Profiles;
+using Zongsoft.Expressions;
+using Zongsoft.Text.Templating;
+
+var profile = Profile.Load("settings.ini");
+IVariables variables = profile.ToVariables();
+
+variables.TryGetValue("mysql", "db_name", out var database);
+
+var evaluator = new TemplateEvaluator();
+evaluator.Providers.Add(variables);
+var text = evaluator.Evaluate("Database=${mysql:db_name};Storage=${io.rustfs:database}");
+```
+
+通过模板查询冲突变量时，TemplateEvaluator 抛出 Code 为 ProviderFailed 的 TemplateEvaluationException，InnerException 保留 ProfileException。是否递归评估字符串由 TemplateEvaluatorOptions.Recursive 控制。
+
+这些扩展只提供变量来源。Profile 加载、导入参数与 Save 不自动求值，ProfileEntry.Value 保留原文。运行期间变量来源的组合和模板求值由调用方显式组织。
+
+实现见 [ProfileExtension](../src/Configuration/Profiles/ProfileExtension.cs)，契约见 [IVariables](../src/Expressions/IVariables.cs)，行为测试见 [ProfileVariablesTest](../test/Configuration/Profiles/ProfileVariablesTest.cs)。

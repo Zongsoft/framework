@@ -59,6 +59,8 @@ Directives.Processing/Directives.Processed 均为 Action<ProfileDirectiveContext
 
 Profile.Directives 为全局线程安全注册表，内部使用 SynchronizedDictionary，默认 Directives.ImportDirective.Instance；Add 拒绝空值和重名，不提供移除或替换，枚举使用快照。每次根加载在克隆选项前复制注册表，递归共享实例引用；后续注册只影响下次加载，执行指令不持锁。ProfileDirectiveBase 提供 Name/Process，实现不得保存调用状态。选项集合不注册实现，Writer 不依赖任何指令实现。
 
+ProfileExtension.ToVariables 为 Profile、ProfileSection、ProfileEntry 提供 IVariables 实时视图。配置读取当前有效集合；章节包含子树并保留完整命名空间；条目仅提供自身，章节和条目视图不随原集合替换而改换对象。章节层级用点连接，章节名称内的点保留，每个点分段须为 ASCII 标识符；条目名称中的点和连字符改为下划线后验证标识符。非法来源不提供变量，查询参数不裁剪或归一化。null/empty 命名空间等价默认命名空间，大小写忽略且不回退，值为 null 仍表示找到。仅查询到映射重名的变量时抛 ProfileException，不预先拒绝整个视图。适配器返回原始值，不求值、不缓存结果或复制字典，也不负责并发同步；模板通过显式注册视图求值，Profile 加载与保存仍保留原文。
+
 ## 本地搜索
 
 Searcher 仅增强 System.IO.DirectoryInfo，详见 [机制文档](docs/searcher.zh-Hans.md)。Path 用于逻辑命名，Result 为实际目标，大小写按平台固定。搜索不穿过模式中的目录链接，显式起点可为链接；配置逻辑来源规则不变。不要将遍历提前移动到固定前缀，否则会绕过中间目录链接。

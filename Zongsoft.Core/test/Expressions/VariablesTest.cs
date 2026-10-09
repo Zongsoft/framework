@@ -65,7 +65,7 @@ public class VariablesTest
 	[InlineData("scoped", false, null)]
 	public void DefaultLookup_InterfaceOverloadsAgree(string name, bool found, object expected)
 	{
-		IVariableProvider provider = new Variables
+		IVariables provider = new Variables
 		{
 			["name"] = "value",
 			["nothing"] = null,
@@ -98,7 +98,7 @@ public class VariablesTest
 	[InlineData("app", "nothing", true, null)]
 	public void NamespaceLookup_IsExactAndDoesNotFallback(string scope, string name, bool found, object expected)
 	{
-		IVariableProvider provider = new Variables
+		IVariables provider = new Variables
 		{
 			["name"] = "default",
 			["app:name"] = "app",

@@ -44,7 +44,7 @@ public partial class TemplateEvaluator
 	public TemplateEvaluator(TemplateEvaluatorOptions options = null)
 	{
 		this.Options = options ?? new TemplateEvaluatorOptions();
-		this.Providers = new List<IVariableProvider>();
+		this.Providers = new List<IVariables>();
 	}
 	#endregion
 
@@ -56,7 +56,7 @@ public partial class TemplateEvaluator
 	#endregion
 
 	#region 公共属性
-	public IList<IVariableProvider> Providers { get; }
+	public IList<IVariables> Providers { get; }
 	public TemplateEvaluatorOptions Options { get; }
 	#endregion
 

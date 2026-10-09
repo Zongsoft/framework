@@ -697,7 +697,7 @@ public class TemplateEvaluatorTest
 		}
 	}
 
-	private sealed class Provider(Func<string, string, (bool Found, object Value)> get) : IVariableProvider
+	private sealed class Provider(Func<string, string, (bool Found, object Value)> get) : IVariables
 	{
 		public bool TryGetValue(string name, out object value) => this.TryGetValue(null, name, out value);
 		public bool TryGetValue(string @namespace, string name, out object value)

@@ -550,6 +550,9 @@
   <data name="Profiles.SectionDuplicate.Message" xml:space="preserve">
 		<value>A section with the same name already exists.</value>
 	</data>
+  <data name="Profiles.VariableAmbiguous.Message" xml:space="preserve">
+		<value>Multiple profile entries map to the '{0}' variable.</value>
+	</data>
   <data name="NumberTokenizer.InvalidLongSuffix.Message" xml:space="preserve">
 		<value>Illegal long integer suffix symbol(L), because it's a float numeric literal.</value>
 	</data>

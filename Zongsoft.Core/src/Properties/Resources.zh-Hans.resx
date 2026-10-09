@@ -544,6 +544,9 @@
   <data name="Profiles.SectionDuplicate.Message" xml:space="preserve">
 		<value>已存在同名章节。</value>
 	</data>
+  <data name="Profiles.VariableAmbiguous.Message" xml:space="preserve">
+		<value>多个配置条目映射到“{0}”变量。</value>
+	</data>
   <data name="NumberTokenizer.InvalidLongSuffix.Message" xml:space="preserve">
 		<value>浮点数字面量不能使用长整型后缀 L。</value>
 	</data>

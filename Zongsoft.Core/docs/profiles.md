@@ -6,6 +6,7 @@ Profile reads INI declarations, processes directives, merges imported sources an
 
 - [Loading and imports](#loading-and-imports)
 - [Declarations and saving](#declarations-and-saving)
+- [Variable views](#variable-views)
 
 ## Loading and imports
 
@@ -234,3 +235,71 @@ File and Stream defaults use Encoding.UTF8. An explicit encoding applies only to
 Writer owns path resources. Supplied streams are closed; supplied TextWriter instances remain open. Stream/text outputs may contain partial output after failure and cannot be rolled back.
 
 [ProfileWriterTest](../test/Configuration/Profiles/ProfileWriterTest.cs) covers source writes, scope isolation, round trips, duplicate instances and preparation/commit failures with retry. Linux/macOS permission and link checks require native execution; Windows results do not substitute for them. Strict hashing of the parsed bytes remains a downstream snapshot concern; Core has no deployment, NuGet or hashing dependency.
+
+## Variable views
+
+`ProfileExtension.ToVariables()` returns `Zongsoft.Expressions.IVariables`, adapting configuration objects into live read-only variable views:
+
+| Conversion | Lookup scope |
+| --- | --- |
+| `profile.ToVariables()` | Current effective root entries and all sections, including merged imports. |
+| `section.ToVariables()` | The selected section and all descendants, retaining the full namespace from the root. |
+| `entry.ToVariables()` | Only the selected entry, retaining its section's full namespace. |
+
+Conversion does not copy a dictionary. Value changes and additions, removals or replacements within the selected profile or section appear in subsequent queries. Section and entry views retain the selected object; removing or replacing that object in its original collection does not retarget the view. Views do not search other profiles, read ahead, expand templates or add synchronization for concurrent access.
+
+### Name mapping
+
+Root entries belong to the default namespace. Section levels are joined with `.`, retaining dots within section names. Each dot-separated segment must match the ASCII identifier rule `[A-Za-z_][A-Za-z0-9_]*`. Invalid segments, including empty segments, leading digits or other characters, exclude that section and its descendants from variable mapping.
+
+Every `.` and `-` in an entry name becomes `_` before validating the complete identifier. For example, `db-name` and `db.name` both map to `db_name`, while `-name` maps to `_name`. Other invalid entries provide no variable. Conversion never changes original names, values or saved declarations.
+
+```ini
+product=erp
+
+[mysql]
+db-name=zongsoft
+
+[io rustfs]
+database=attachments
+
+[app.runtime]
+worker-count=4
+```
+
+The variables are `product`, `mysql:db_name`, `io.rustfs:database` and `app.runtime:worker_count`. Section views do not move entries into the default namespace: `profile.Sections["mysql"].ToVariables()` still requires the `mysql` namespace.
+
+### Lookup and conflicts
+
+`TryGetValue(name, out value)`, `TryGetValue(null, name, out value)` and `TryGetValue("", name, out value)` are equivalent and query only the default namespace. Names and namespaces use OrdinalIgnoreCase; a nonempty namespace does not fall back to an ancestor or the default namespace.
+
+Query parameters are not trimmed or normalized. Pass the mapped name `db_name`; querying `db-name` or `db.name` directly returns false. A null query name throws ArgumentNullException; other invalid queries or missing variables return false. A null conversion source also throws ArgumentNullException.
+
+Values remain raw strings or null. An existing entry with a null value still returns true. The source performs no formatting, recursion, member navigation or type conversion.
+
+Mapping can produce duplicate names, such as `db-name` and `db.name` in one section, or identical entry names under `[io rustfs]` and `[io.rustfs]`. Only querying the conflicting variable throws ProfileException. View creation and other queries remain valid. Sections sharing a namespace may provide different variable names without conflict.
+
+Conflicts are limited to the selected view's scope; a single-entry view does not inspect other entries. Ordinary import overrides of the same original name in the same section are already resolved by Profile and are not mapping conflicts. Removing a conflicting entry restores successful lookup immediately.
+
+### Template evaluation
+
+```csharp
+using Zongsoft.Configuration.Profiles;
+using Zongsoft.Expressions;
+using Zongsoft.Text.Templating;
+
+var profile = Profile.Load("settings.ini");
+IVariables variables = profile.ToVariables();
+
+variables.TryGetValue("mysql", "db_name", out var database);
+
+var evaluator = new TemplateEvaluator();
+evaluator.Providers.Add(variables);
+var text = evaluator.Evaluate("Database=${mysql:db_name};Storage=${io.rustfs:database}");
+```
+
+When a template queries a conflicting variable, TemplateEvaluator throws TemplateEvaluationException with Code=ProviderFailed and preserves ProfileException as InnerException. TemplateEvaluatorOptions.Recursive controls recursive evaluation of string values.
+
+These extensions only supply variables. Profile loading, import arguments and Save do not evaluate templates automatically; ProfileEntry.Value retains the original text. The caller explicitly composes variable sources and invokes template evaluation.
+
+See [ProfileExtension](../src/Configuration/Profiles/ProfileExtension.cs), the [IVariables contract](../src/Expressions/IVariables.cs), and [ProfileVariablesTest](../test/Configuration/Profiles/ProfileVariablesTest.cs).

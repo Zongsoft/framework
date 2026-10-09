@@ -32,7 +32,7 @@ dotnet add package Zongsoft.Core
 - **组件模型** _(`Zongsoft.Components`)_
   > 命令基础设施、命令行解析、事件交换、特性管道、重试/回退/熔断/限流/超时特性、状态机、工作者、监视器、处理器、执行器、过滤器、转换器和标识符。
 - **配置** _(`Zongsoft.Configuration`)_
-  > 设置和连接设置、配置绑定和识别、XML 配置提供程序、模型配置、[Profile/INI 解析及指令扩展](docs/profiles.zh-Hans.md)，以及与 `Microsoft.Extensions.Options` 的集成。
+  > 设置和连接设置、配置绑定和识别、XML 配置提供程序、模型配置、[Profile/INI 解析、指令扩展及变量视图](docs/profiles.zh-Hans.md)，以及与 `Microsoft.Extensions.Options` 的集成。
 - **数据抽象** _(`Zongsoft.Data`)_
   > 查询条件、条件集合、范围、分页、排序、操作数、模型描述、数据访问/数据服务契约、操作选项和事件、元数据模型、归档契约和事务基础类型。
 - **服务** _(`Zongsoft.Services`)_
@@ -50,7 +50,7 @@ dotnet add package Zongsoft.Core
 - **序列化** _(`Zongsoft.Serialization`)_
   > 序列化契约、JSON 序列化辅助方法、序列化选项、命名约定、成员特性和 System.Text.Json 转换器。
 - **表达式** _(`Zongsoft.Expressions`)_
-  > 词法分析器/分词器基础设施、变量来源契约、忽略大小写的内存变量字典 `Variables`、表达式求值契约和语法异常。
+  > 词法分析器/分词器基础设施、变量来源契约 `IVariables`、忽略大小写的内存变量字典 `Variables`、表达式求值契约和语法异常。
 - **文本与模板** _(`Zongsoft.Text`、`Zongsoft.Text.Templating`)_
   > 正则文本处理、模板契约，以及[文本模板求值、成员导航、格式化和诊断](docs/expressions.zh-Hans.md)。
 - **反射** _(`Zongsoft.Reflection`)_

@@ -42,7 +42,7 @@ namespace Zongsoft.Expressions;
 /// 	<para>变量值可以为 <see langword="null"/>；查询返回原始对象，不进行类型转换、成员访问、模板求值或对象复制。</para>
 /// 	<para>每次查询均读取当前字典。此类不提供额外的并发同步，多线程读写时由调用方负责同步。</para>
 /// </remarks>
-public class Variables : Dictionary<string, object>, IVariableProvider
+public class Variables : Dictionary<string, object>, IVariables
 {
 	#region 构造函数
 	/// <summary>初始化一个空的变量字典。</summary>

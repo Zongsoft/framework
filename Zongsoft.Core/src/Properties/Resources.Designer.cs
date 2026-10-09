@@ -2068,6 +2068,15 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Multiple profile entries map to the &apos;{0}&apos; variable. 的本地化字符串。
+        /// </summary>
+        internal static string Profiles_VariableAmbiguous_Message {
+            get {
+                return ResourceManager.GetString("Profiles.VariableAmbiguous.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 The parameter &apos;{0}&apos; of type &apos;{1}&apos; is not a Range and does not support this operation. 的本地化字符串。
         /// </summary>
         internal static string Range_InvalidTargetType_Message {
@@ -2859,7 +2868,7 @@ namespace Zongsoft.Properties {
             }
         }
 
-/// <summary>
+        /// <summary>
         ///   查找类似 The committed event &apos;{0}&apos; cannot be dispatched because the transaction event channel is closed. 的本地化字符串。
         /// </summary>
         internal static string TransactionEventChannel_DispatchClosed {

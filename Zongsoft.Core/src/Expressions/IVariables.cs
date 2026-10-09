@@ -44,7 +44,7 @@ namespace Zongsoft.Expressions;
 /// 		实现类负责其数据来源的访问、缓存及并发同步策略，本接口不要求变量值在多次查询之间保持不变。
 /// 	</para>
 /// </remarks>
-public interface IVariableProvider
+public interface IVariables
 {
 	/// <summary>尝试获取默认命名空间中指定名称的变量值。</summary>
 	/// <param name="name">要查找的变量名称，不包含命名空间限定部分；名称比较应忽略大小写。</param>

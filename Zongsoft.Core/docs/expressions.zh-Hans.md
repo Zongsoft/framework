@@ -6,12 +6,12 @@ Zongsoft.Text.Templating.TemplateEvaluator 把带有变量引用的模板转换�
 
 Zongsoft.Text.Templating 提供独立的模板求值能力，不依赖 Profile 或具体工具。本文包含使用方式、公开契约及实现边界。
 
-模板契约 ITemplate、ITemplateRenderer，以及求值器、选项和诊断类型均位于 Zongsoft.Text.Templating；IVariableProvider、内存变量字典 Variables 与词法基础设施位于 Zongsoft.Expressions。ResolutionContext 和 FormattingContext 是 TemplateEvaluator 的公开嵌套类，分别描述引用取值和插值格式化。
+模板契约 ITemplate、ITemplateRenderer，以及求值器、选项和诊断类型均位于 Zongsoft.Text.Templating；IVariables、内存变量字典 Variables 与词法基础设施位于 Zongsoft.Expressions。ResolutionContext 和 FormattingContext 是 TemplateEvaluator 的公开嵌套类，分别描述引用取值和插值格式化。
 
 | 设施 | 职责 |
 | --- | --- |
 | TemplateEvaluator | 模板分区、变量引用、成员导航、事件、递归、格式化和诊断。 |
-| IVariableProvider | 查询原始变量值，决定数据来源及自身同步策略。 |
+| IVariables | 查询原始变量值，决定数据来源及自身同步策略。 |
 | Variables | 基于忽略大小写的内存字典提供变量。 |
 | Lexer / TokenScanner / Tokenizer | 提供共享的词法规则与扫描机制。 |
 | Reflector | 读取成员与默认索引器；模板遵守其现有规则。 |
@@ -52,7 +52,7 @@ TemplateEvaluator 的主要公开成员如下，取值与格式化分别使用�
 | 成员签名 | 作用 |
 | --- | --- |
 | `TemplateEvaluator(TemplateEvaluatorOptions options = null)` | 创建评估器，选项的持有规则见“选项与生命周期”。 |
-| `IList<IVariableProvider> Providers { get; }` | 按优先级排列的变量提供器集合。 |
+| `IList<IVariables> Providers { get; }` | 按优先级排列的变量提供器集合。 |
 | `TemplateEvaluatorOptions Options { get; }` | 当前评估器使用的选项。 |
 | `event EventHandler<ResolutionContext> Resolving / Resolved` | 完整变量引用取值前后的通知。 |
 | `event EventHandler<FormattingContext> Formatting / Formatted` | 插值格式化前后的通知。 |
@@ -62,7 +62,7 @@ TemplateEvaluator 的主要公开成员如下，取值与格式化分别使用�
 变量来源契约位于 Zongsoft.Expressions：
 
 ```csharp
-public interface IVariableProvider
+public interface IVariables
 {
 	bool TryGetValue(string name, out object value);
 	bool TryGetValue(string @namespace, string name, out object value);
@@ -77,7 +77,7 @@ Providers 按注册顺序查询，第一个返回 true 的来源获胜，包括�
 
 ## 内存变量
 
-Zongsoft.Expressions.Variables 继承 Dictionary<string, object> 并实现 IVariableProvider，固定使用 StringComparer.OrdinalIgnoreCase。索引器、集合初始化器、Add、TryAdd、Remove、Clear 和枚举均沿用字典行为。
+Zongsoft.Expressions.Variables 继承 Dictionary<string, object> 并实现 IVariables，固定使用 StringComparer.OrdinalIgnoreCase。索引器、集合初始化器、Add、TryAdd、Remove、Clear 和枚举均沿用字典行为。
 
 | 操作 | 示例 |
 | --- | --- |
@@ -274,7 +274,7 @@ Stage 为 Parsing、Resolving、Resolution、Resolved、Recursion、Formatting�
 ## 实现入口
 
 - [TemplateEvaluator](../src/Text/Templating/TemplateEvaluator.cs)：公开入口、事件及执行顺序。
-- [IVariableProvider](../src/Expressions/IVariableProvider.cs)、[Variables](../src/Expressions/Variables.cs)：变量来源契约及内存字典实现。
+- [IVariables](../src/Expressions/IVariables.cs)、[Variables](../src/Expressions/Variables.cs)：变量来源契约及内存字典实现。
 - [取值上下文](../src/Text/Templating/TemplateEvaluator.ResolutionContext.cs)、[格式化上下文](../src/Text/Templating/TemplateEvaluator.FormattingContext.cs)：归属于 TemplateEvaluator 的公开嵌套事件上下文。
 - [模板解析](../src/Text/Templating/TemplateEvaluator.Parser.cs)：模板分区与基于现有 Lexer 的引用语法，内部节点均私有。
 - [TokenScanner](../src/Expressions/TokenScanner.cs)：Span 扫描并保留源码位置及消耗长度；流按 UTF-8/BOM 解码，释放扫描器时关闭输入流。
@@ -285,8 +285,10 @@ Stage 为 Parsing、Resolving、Resolution、Resolved、Recursion、Formatting�
 
 ## 集成边界
 
-[Profile](profiles.zh-Hans.md) 加载与保存保留原文，不自动展开变量。Profile、ProfileEntry 和 ProfileDirectiveContext 的显式求值扩展尚未提供；集成应保持 ProfileEntry.Value 与保存原文，变量环境入口、导入参数求值时机、分词及重新加载行为仍需单独确定，不公开内部读取会话。
+[Profile](profiles.zh-Hans.md#变量视图) 通过 ProfileExtension.ToVariables() 将整个配置、指定章节子树或单个条目适配为 IVariables 实时视图，可用 evaluator.Providers.Add(profile.ToVariables()) 显式注册。章节层级以点连接为命名空间，章节名称内的点原样保留；条目名称中的点和连字符替换为下划线后验证标识符。查询返回原始值，多个条目映射到同一变量时，仅该变量的查询抛出 ProfileException；通过模板查询时包装为 ProviderFailed，并保留原始异常。
 
-deployer、packager、migrator、containerizer 等工具负责命令参数、环境变量、配置和业务来源的组织。工具接入 TemplateEvaluator 时，由工具层处理调用和模板语法的迁移，以及条件分支和产物的求值时机；评估器不内置这些工具规则。
+Profile 加载与保存保留原文，不自动展开变量。Profile、ProfileEntry 和 ProfileDirectiveContext 不提供 Evaluate() 扩展；调用方显式注册变量视图并使用 TemplateEvaluator 求值。ProfileEntry.Value 保留原始值，导入参数不执行模板评估，内部读取会话不公开。
+
+deployer、packager、migrator、containerizer 等工具负责组织命令参数、环境变量、配置和业务来源，调用 TemplateEvaluator，并决定条件分支和产物的求值时机；评估器不内置这些工具规则。
 
 计算表达式预留 `${=expression#format}` 位置，用于共享词法、变量来源和格式化能力；当前只识别入口并报告 UnsupportedExpression，不执行运算符、函数或条件表达式。

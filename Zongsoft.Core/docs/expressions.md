@@ -6,12 +6,12 @@ Zongsoft.Text.Templating.TemplateEvaluator evaluates text templates with extensi
 
 Zongsoft.Text.Templating provides standalone template evaluation without depending on Profile or specific tools. This document covers usage, public contracts and implementation boundaries.
 
-Template contracts (ITemplate and ITemplateRenderer), the evaluator, options and diagnostics belong to Zongsoft.Text.Templating. IVariableProvider, the in-memory Variables dictionary and the lexical infrastructure belong to Zongsoft.Expressions. ResolutionContext and FormattingContext are public nested classes of TemplateEvaluator; they describe reference resolution and interpolation formatting respectively.
+Template contracts (ITemplate and ITemplateRenderer), the evaluator, options and diagnostics belong to Zongsoft.Text.Templating. IVariables, the in-memory Variables dictionary and the lexical infrastructure belong to Zongsoft.Expressions. ResolutionContext and FormattingContext are public nested classes of TemplateEvaluator; they describe reference resolution and interpolation formatting respectively.
 
 | Component | Responsibility |
 | --- | --- |
 | TemplateEvaluator | Template regions, variable references, member navigation, events, recursion, formatting and diagnostics. |
-| IVariableProvider | Raw variable lookup, data sources and their synchronization policies. |
+| IVariables | Raw variable lookup, data sources and their synchronization policies. |
 | Variables | Variable storage in a case-insensitive in-memory dictionary. |
 | Lexer / TokenScanner / Tokenizer | Shared lexical rules and scanning. |
 | Reflector | Member and default-indexer access; templates follow its existing rules. |
@@ -52,7 +52,7 @@ TemplateEvaluator exposes the following main members, with separate contexts for
 | Member signature | Purpose |
 | --- | --- |
 | `TemplateEvaluator(TemplateEvaluatorOptions options = null)` | Create an evaluator; option ownership is described under Options and lifetime. |
-| `IList<IVariableProvider> Providers { get; }` | Variable providers ordered by priority. |
+| `IList<IVariables> Providers { get; }` | Variable providers ordered by priority. |
 | `TemplateEvaluatorOptions Options { get; }` | Options used by this evaluator. |
 | `event EventHandler<ResolutionContext> Resolving / Resolved` | Notifications before and after resolving a complete reference. |
 | `event EventHandler<FormattingContext> Formatting / Formatted` | Notifications before and after formatting an interpolation. |
@@ -62,7 +62,7 @@ TemplateEvaluator exposes the following main members, with separate contexts for
 The variable provider contract belongs to Zongsoft.Expressions:
 
 ```csharp
-public interface IVariableProvider
+public interface IVariables
 {
 	bool TryGetValue(string name, out object value);
 	bool TryGetValue(string @namespace, string name, out object value);
@@ -77,7 +77,7 @@ Variable values, getter return values and index results are not cached. Reflecti
 
 ## In-memory variables
 
-Zongsoft.Expressions.Variables inherits Dictionary<string, object> and implements IVariableProvider. Its comparer is always StringComparer.OrdinalIgnoreCase. Indexers, collection initializers, Add, TryAdd, Remove, Clear and enumeration retain the dictionary behavior.
+Zongsoft.Expressions.Variables inherits Dictionary<string, object> and implements IVariables. Its comparer is always StringComparer.OrdinalIgnoreCase. Indexers, collection initializers, Add, TryAdd, Remove, Clear and enumeration retain the dictionary behavior.
 
 | Operation | Example |
 | --- | --- |
@@ -274,7 +274,7 @@ Invalid options and null provider entries are API errors; TryEvaluate still thro
 ## Implementation
 
 - [TemplateEvaluator](../src/Text/Templating/TemplateEvaluator.cs): public entry points, events and execution.
-- [IVariableProvider](../src/Expressions/IVariableProvider.cs) and [Variables](../src/Expressions/Variables.cs): variable provider contract and in-memory dictionary implementation.
+- [IVariables](../src/Expressions/IVariables.cs) and [Variables](../src/Expressions/Variables.cs): variable provider contract and in-memory dictionary implementation.
 - [Resolution context](../src/Text/Templating/TemplateEvaluator.ResolutionContext.cs) and [formatting context](../src/Text/Templating/TemplateEvaluator.FormattingContext.cs): public nested event contexts owned by TemplateEvaluator.
 - [Template parser](../src/Text/Templating/TemplateEvaluator.Parser.cs): template regions and reference grammar consuming the existing Lexer; all syntax nodes remain private.
 - [TokenScanner](../src/Expressions/TokenScanner.cs): Span scanning with source positions and consumed lengths; streams are decoded using UTF-8/BOM detection and closed when the scanner is disposed.
@@ -285,8 +285,10 @@ Invalid options and null provider entries are API errors; TryEvaluate still thro
 
 ## Integration boundaries
 
-[Profile](profiles.md) loads and saves original text without expanding variables automatically. Explicit evaluation extensions for Profile, ProfileEntry and ProfileDirectiveContext are not yet provided. Integration should preserve ProfileEntry.Value and saved source text; the variable-environment entry point, import-argument evaluation timing, tokenization and reload behavior still require separate decisions, without exposing the internal read session.
+[Profile](profiles.md#variable-views) exposes live IVariables views of a whole configuration, a selected section subtree or one entry through ProfileExtension.ToVariables(). Register a view explicitly with evaluator.Providers.Add(profile.ToVariables()). Section levels form a dot-separated namespace, retaining dots within section names; dots and hyphens in entry names become underscores before identifier validation. Lookup returns raw values. When several entries map to the same variable, only queries for that variable throw ProfileException; template evaluation wraps it as ProviderFailed and preserves the original exception.
 
-Tools such as deployer, packager, migrator and containerizer organize command arguments, environment variables, configuration and business sources. When adopting TemplateEvaluator, the tools layer handles call-site and template-syntax migration and determines when conditions and generated artifacts are evaluated. The evaluator does not embed these tool-specific rules.
+Profile loads and saves original text without expanding variables automatically. Profile, ProfileEntry and ProfileDirectiveContext do not expose Evaluate() extensions; callers explicitly register variable views and invoke TemplateEvaluator. ProfileEntry.Value retains the raw value, import arguments are not evaluated as templates, and the internal read session is not public.
+
+Tools such as deployer, packager, migrator and containerizer organize command arguments, environment variables, configuration and business sources, invoke TemplateEvaluator and determine when conditions and generated artifacts are evaluated. The evaluator does not embed these tool-specific rules.
 
 The `${=expression#format}` position is reserved for computation sharing lexical, variable-provider and formatting facilities. Currently it only recognizes the entry point and reports UnsupportedExpression; operators, functions and conditional expressions are not executed.
