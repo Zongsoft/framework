@@ -49,8 +49,10 @@ dotnet add package Zongsoft.Core
   > Claims 辅助方法、凭证、证书、密钥/签名契约、密码工具、认证/授权流程、用户、角色、权限和权限评估器。
 - **序列化** _(`Zongsoft.Serialization`)_
   > 序列化契约、JSON 序列化辅助方法、序列化选项、命名约定、成员特性和 System.Text.Json 转换器。
-- **表达式与文本** _(`Zongsoft.Expressions`、`Zongsoft.Text`)_
-  > 词法分析器/分词器基础设施、[变量模板、来源扩展、导航与格式化](docs/expressions.zh-Hans.md)、表达式求值契约、语法异常、正则文本处理和模板契约。
+- **表达式** _(`Zongsoft.Expressions`)_
+  > 词法分析器/分词器基础设施、变量来源契约、表达式求值契约和语法异常。
+- **文本与模板** _(`Zongsoft.Text`、`Zongsoft.Text.Templating`)_
+  > 正则文本处理、模板契约，以及[文本模板求值、成员导航、格式化和诊断](docs/expressions.zh-Hans.md)。
 - **反射** _(`Zongsoft.Reflection`)_
   > 高性能反射辅助方法，以及成员表达式解析和求值。
 - **运行时辅助** _(`Zongsoft.Resources`、`Zongsoft.Scheduling`、`Zongsoft.Versioning`、`Zongsoft.Terminals`)_

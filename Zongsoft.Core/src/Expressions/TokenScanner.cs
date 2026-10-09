@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -30,99 +30,105 @@
 using System;
 using System.IO;
 using System.Text;
-using System.Collections;
-using System.Collections.Generic;
 
 namespace Zongsoft.Expressions;
 
 /// <summary>表示词法分析的分词扫描器。</summary>
-public class TokenScanner : IEnumerable<Token>, IDisposable
+public ref struct TokenScanner
 {
 	#region 成员字段
 	private Lexer _lexer;
-	private readonly Reader _reader;
-	private readonly TextReader _source;
+	private ReadOnlySpan<char> _text;
+	private readonly StreamReader _source;
+	private int _position;
 	#endregion
 
 	#region 构造函数
-	internal TokenScanner(Lexer lexer, string text)
+	internal TokenScanner(Lexer lexer, ReadOnlySpan<char> text)
 	{
 		_lexer = lexer ?? throw new ArgumentNullException(nameof(lexer));
-		_reader = new Reader(text ?? throw new ArgumentNullException(nameof(text)));
+		_text = text;
 	}
 
 	internal TokenScanner(Lexer lexer, Stream stream)
 	{
 		_lexer = lexer ?? throw new ArgumentNullException(nameof(lexer));
 		_source = new StreamReader(stream ?? throw new ArgumentNullException(nameof(stream)), Encoding.UTF8, true);
-		_reader = new Reader(_source.ReadToEnd());
+
+		try
+		{
+			_text = _source.ReadToEnd().AsSpan();
+		}
+		catch
+		{
+			_source.Dispose();
+			throw;
+		}
 	}
 	#endregion
 
 	#region 公共方法
 	public Token Scan() => this.Scan(out _, out _);
 
-	/// <summary>读取下一个词素，并返回其在原文中的 UTF-16 起始位置与长度。</summary>
+	/// <summary>读取下一个词素，并返回其在原文中的起始位置与长度。</summary>
 	/// <param name="position">当前词素在原文中的起始位置。</param>
-	/// <param name="length">当前词素占用的 UTF-16 字符数。</param>
-	/// <returns>当前词素；到达原文末尾时返回空。</returns>
+	/// <param name="length">当前词素占用的字符数。</param>
+	/// <returns>返回当前词素，当到达原文末尾时返回空。</returns>
 	public Token Scan(out int position, out int length)
 	{
-		ObjectDisposedException.ThrowIf(_lexer == null, this);
+		ObjectDisposedException.ThrowIf(_lexer == null, typeof(TokenScanner));
 
-		while(_reader.Peek() >= 0 && char.IsWhiteSpace((char)_reader.Peek()))
-			_reader.Read();
+		while(_position < _text.Length && char.IsWhiteSpace(_text[_position]))
+			_position++;
 
-		position = _reader.Position;
+		position = _position;
 		length = 0;
 
-		if(_reader.Peek() < 0)
+		if(_position == _text.Length)
 			return null;
 
-		foreach(var tokenizer in _lexer.Tokenizers)
+		var remaining = _text[_position..];
+
+		for(int i = 0; i < _lexer.Tokenizers.Count; i++)
 		{
-			var result = tokenizer.Tokenize(_reader);
-			_reader.Position += result.Offset;
+			var result = _lexer.Tokenizers[i].Tokenize(remaining);
 
 			if(result.Token != null)
 			{
-				length = _reader.Position - position;
+				if(result.Length <= 0 || result.Length > remaining.Length)
+					throw new InvalidOperationException(Properties.Resources.TokenScanner_InvalidLength_Message);
+
+				length = result.Length;
+				_position += length;
 				return result.Token;
 			}
-
-			_reader.Position = position;
 		}
 
-		throw new SyntaxException(string.Format(Properties.Resources.TokenScanner_IllegalCharacter_Message, (char)_reader.Peek(), position + 1));
+		throw new SyntaxException(string.Format(Properties.Resources.TokenScanner_IllegalCharacter_Message, remaining[0], position + 1));
 	}
 	#endregion
 
 	#region 遍历方法
-	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-	public IEnumerator<Token> GetEnumerator()
-	{
-		Token token;
-
-		while((token = this.Scan()) != null)
-			yield return token;
-	}
+	/// <summary>获取从当前扫描位置开始的独立枚举器，枚举不会推进此扫描器或释放输入流。</summary>
+	/// <returns>返回的词素枚举器。</returns>
+	public readonly Enumerator GetEnumerator() => new(this);
 	#endregion
 
 	#region 释放方法
-	void IDisposable.Dispose()
+	public void Dispose()
 	{
 		_lexer = null;
-		_reader.Dispose();
+		_text = default;
 		_source?.Dispose();
 	}
 	#endregion
 
 	#region 嵌套子类
-	private sealed class Reader(string text) : TextReader
+	public ref struct Enumerator(TokenScanner scanner)
 	{
-		public int Position { get; set; }
-		public override int Peek() => this.Position < text.Length ? text[this.Position] : -1;
-		public override int Read() => this.Position < text.Length ? text[this.Position++] : -1;
+		private TokenScanner _scanner = scanner;
+		public Token Current { get; private set; }
+		public bool MoveNext() => (this.Current = _scanner.Scan()) != null;
 	}
 	#endregion
 }

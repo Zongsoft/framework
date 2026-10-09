@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -28,9 +28,6 @@
  */
 
 using System;
-using System.IO;
-using System.Linq;
-using System.Text;
 
 namespace Zongsoft.Expressions.Tokenization;
 
@@ -60,41 +57,32 @@ public abstract class LiteralTokenizerBase : ITokenizer
 	#endregion
 
 	#region 公共方法
-	public TokenResult Tokenize(TextReader reader)
+	public TokenResult Tokenize(ReadOnlySpan<char> text)
 	{
 		var comparison = _ignoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-		var text = new StringBuilder();
 		string matched = null;
-		int value;
 
-		while((value = reader.Peek()) >= 0)
+		foreach(var literal in _literals)
 		{
-			var next = text.ToString() + (char)value;
+			if(string.IsNullOrEmpty(literal) || literal.Length <= (matched?.Length ?? 0) || !text.StartsWith(literal, comparison))
+				continue;
 
-			if(!_literals.Any(literal => literal.StartsWith(next, comparison)))
-				break;
+			//关键字必须在完整标识符边界结束；符号仍采用最长匹配
+			if((char.IsLetterOrDigit(literal[0]) || literal[0] == '_') && text.Length > literal.Length &&
+			   (char.IsLetterOrDigit(text[literal.Length]) || text[literal.Length] == '_'))
+				continue;
 
-			text.Append((char)reader.Read());
-
-			if(_literals.Any(literal => string.Equals(literal, next, comparison)))
-				matched = next;
+			matched = literal;
 		}
 
-		if(matched == null)
-			return TokenResult.Fail(-text.Length);
-
-		//关键字必须在完整标识符边界结束；符号仍采用最长匹配
-		if(char.IsLetterOrDigit(matched[0]) || matched[0] == '_')
-		{
-			if(text.Length != matched.Length || value >= 0 && (char.IsLetterOrDigit((char)value) || value == '_'))
-				return TokenResult.Fail(-text.Length);
-		}
-
-		return new TokenResult(matched.Length - text.Length, this.CreateToken(matched));
+		return matched == null ? TokenResult.Fail() : new TokenResult(matched.Length, this.CreateToken(matched));
 	}
 	#endregion
 
 	#region 抽象方法
+	/// <summary>为匹配的已配置字面量创建词素。</summary>
+	/// <param name="literal">配置中的字面量字符串，保留其配置时的大小写。</param>
+	/// <returns>返回匹配的词素。</returns>
 	protected abstract Token CreateToken(string literal);
 	#endregion
 }

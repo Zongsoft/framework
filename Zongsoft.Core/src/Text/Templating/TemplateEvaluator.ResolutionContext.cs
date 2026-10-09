@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,18 +29,38 @@
 
 using System;
 
-namespace Zongsoft.Text;
+namespace Zongsoft.Text.Templating;
 
-/// <summary>提供模板格式化功能的接口。</summary>
-public interface ITemplateFormatter
+public partial class TemplateEvaluator
 {
-	/// <summary>获取格式化器名称。</summary>
-	string Name { get; }
+	/// <summary>提供当前完整变量引用的取值上下文。</summary>
+	public class ResolutionContext : EventArgs
+	{
+		#region 构造函数
+		internal ResolutionContext(string template, string expression, string @namespace, string name, int position, int length, int depth, bool isIndex)
+		{
+			this.Template = template;
+			this.Expression = expression;
+			this.Namespace = @namespace;
+			this.Name = name;
+			this.Position = position;
+			this.Length = length;
+			this.Depth = depth;
+			this.IsIndex = isIndex;
+		}
+		#endregion
 
-	/// <summary>格式化模板参数。</summary>
-	/// <param name="name">指定的模板名称。</param>
-	/// <param name="data">待格式化的模板数据。</param>
-	/// <param name="arguments">附加参数集。</param>
-	/// <returns>返回格式化后的模板数据。</returns>
-	object Format(string name, object data, params object[] arguments);
+		#region 公共属性
+		public string Template { get; }
+		public string Expression { get; }
+		public string Namespace { get; }
+		public string Name { get; }
+		public int Position { get; }
+		public int Length { get; }
+		public int Depth { get; }
+		public bool IsIndex { get; }
+		public object Value { get; set; }
+		public bool Handled { get; set; }
+		#endregion
+	}
 }

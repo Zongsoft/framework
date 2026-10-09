@@ -1,4 +1,4 @@
-/*
+﻿/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -27,17 +27,17 @@
  * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-namespace Zongsoft.Expressions;
+using System;
 
-/// <summary>表示模板求值执行阶段的枚举。</summary>
-public enum TemplateEvaluationStage
+namespace Zongsoft.Text.Templating;
+
+/// <summary>表示模板的接口。</summary>
+public interface ITemplate
 {
-	Parsing,
-	Resolving,
-	Resolution,
-	Resolved,
-	Recursion,
-	Formatting,
-	Format,
-	Formatted,
+	/// <summary>获取模板名称。</summary>
+	string Name { get; }
+	/// <summary>获取模板标题。</summary>
+	string Title { get; }
+	/// <summary>获取模板描述。</summary>
+	string Description { get; }
 }

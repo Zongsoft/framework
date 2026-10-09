@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 
 using Xunit;
 
@@ -14,8 +13,7 @@ public class LexerTest
 	{
 		const string EXPRESSION = @"1+2f	_abc123'text\'suffix'	-30L*4.5 / 5.5m (true || FALSE?yes:no)null??nothing";
 
-		var scanner = Lexer.Instance.GetScanner(EXPRESSION);
-		Assert.NotNull(scanner);
+		using var scanner = Lexer.Instance.GetScanner(EXPRESSION);
 
 		var token = scanner.Scan();
 		Assert.NotNull(token);
@@ -141,8 +139,7 @@ public class LexerTest
 		var lexer = new Lexer();
 		lexer.Tokenizers.Insert(0, new KeywordTokenizer(true, "in", "Between"));
 
-		var scanner = lexer.GetScanner(EXPRESSION);
-		Assert.NotNull(scanner);
+		using var scanner = lexer.GetScanner(EXPRESSION);
 
 		var token = scanner.Scan();
 		Assert.NotNull(token);

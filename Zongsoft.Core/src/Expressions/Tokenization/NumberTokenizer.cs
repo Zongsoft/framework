@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -28,8 +28,6 @@
  */
 
 using System;
-using System.IO;
-using System.Text;
 using System.Globalization;
 
 namespace Zongsoft.Expressions.Tokenization;
@@ -46,44 +44,37 @@ public class NumberTokenizer : ITokenizer
 	#endregion
 
 	#region 公共方法
-	public TokenResult Tokenize(TextReader reader)
+	public TokenResult Tokenize(ReadOnlySpan<char> text)
 	{
-		var value = reader.Peek();
-		var text = new StringBuilder();
+		var length = _signed && !text.IsEmpty && text[0] == '-' ? 1 : 0;
 
-		if(_signed && value == '-')
-		{
-			text.Append((char)reader.Read());
-			value = reader.Peek();
-		}
+		if(length == text.Length || !char.IsAsciiDigit(text[length]))
+			return TokenResult.Fail();
 
-		if(value < 0 || !char.IsAsciiDigit((char)value))
-			return TokenResult.Fail(-text.Length);
+		while(length < text.Length && char.IsAsciiDigit(text[length]))
+			length++;
 
-		while((value = reader.Peek()) >= 0 && char.IsAsciiDigit((char)value))
-			text.Append((char)reader.Read());
-
-		var fractional = reader.Peek() == '.';
+		var fractional = length < text.Length && text[length] == '.';
 
 		if(fractional)
 		{
-			text.Append((char)reader.Read());
+			length++;
 
-			if(reader.Peek() < 0 || !char.IsAsciiDigit((char)reader.Peek()))
+			if(length == text.Length || !char.IsAsciiDigit(text[length]))
 				throw new SyntaxException(Properties.Resources.NumberTokenizer_TrailingDot_Message);
 
-			while((value = reader.Peek()) >= 0 && char.IsAsciiDigit((char)value))
-				text.Append((char)reader.Read());
+			while(length < text.Length && char.IsAsciiDigit(text[length]))
+				length++;
 
-			if(reader.Peek() == '.')
+			if(length < text.Length && text[length] == '.')
 				throw new SyntaxException(Properties.Resources.NumberTokenizer_MultipleDots_Message);
 		}
 
-		var suffix = reader.Peek();
+		var literal = text[..length];
+		var suffix = length < text.Length ? text[length] : '\0';
 		if(suffix is 'l' or 'L' or 'f' or 'F' or 'd' or 'D' or 'm' or 'M')
-			reader.Read();
+			length++;
 
-		var literal = text.ToString();
 		object number;
 
 		switch(suffix)
@@ -120,9 +111,9 @@ public class NumberTokenizer : ITokenizer
 				break;
 		}
 
-		return new TokenResult(0, new Token(TokenType.Constant, number));
+		return new TokenResult(length, new Token(TokenType.Constant, number));
 
-		static double ParseDouble(string literal)
+		static double ParseDouble(ReadOnlySpan<char> literal)
 		{
 			var value = double.Parse(literal, CultureInfo.InvariantCulture);
 

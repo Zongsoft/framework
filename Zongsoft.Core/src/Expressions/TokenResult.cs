@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -35,29 +35,28 @@ namespace Zongsoft.Expressions;
 public readonly struct TokenResult
 {
 	#region 公共字段
-	/// <summary>获取当前词素提取结果后需要移动读取器指针的偏移量。</summary>
-	public readonly int Offset;
+	/// <summary>获取当前词素消耗的字符数，失败结果不消耗文本。</summary>
+	public readonly int Length;
 
 	/// <summary>获取当前词素提取结果对应的词素对象，如果为空(<c>null</c>)则表示当前位置对应的字面量不是对应提取器支持的词素。</summary>
 	public readonly Token Token;
 	#endregion
 
 	#region 构造函数
-	public TokenResult(int offset, Token token)
+	public TokenResult(int length, Token token)
 	{
-		this.Offset = offset;
+		this.Length = length;
 		this.Token = token;
 	}
 	#endregion
 
 	#region 重写方法
-	public override string ToString() => $"[{this.Offset}] {this.Token}";
+	public override string ToString() => $"[{this.Length}] {this.Token}";
 	#endregion
 
 	#region 静态方法
 	/// <summary>创建一个失败的提取结果。</summary>
-	/// <param name="offset">指定的偏移量。</param>
 	/// <returns>返回的失败提取结果。</returns>
-	public static TokenResult Fail(int offset) => new TokenResult(offset, null);
+	public static TokenResult Fail() => default;
 	#endregion
 }

@@ -1,4 +1,4 @@
-/*
+﻿/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,38 +28,20 @@
  */
 
 using System;
+using System.Collections.Generic;
 
-namespace Zongsoft.Expressions;
+namespace Zongsoft.Text.Templating;
 
-/// <summary>包含模板求值错误的位置、阶段及底层异常。</summary>
-public class TemplateEvaluationException : Exception
+/// <summary>提供模板渲染功能的接口。</summary>
+public interface ITemplateRenderer
 {
-	internal TemplateEvaluationException(
-		string code,
-		TemplateEvaluationStage stage,
-		string template,
-		string expression,
-		int position,
-		int length,
-		int depth,
-		Exception innerException = null) : base(string.Format(Properties.Resources.Template_EvaluationFailed_Message, code, position, stage), innerException)
-	{
-		this.Code = code;
-		this.Stage = stage;
-		this.Template = template;
-		this.Expression = expression;
-		this.Position = position;
-		this.Length = length;
-		this.Depth = depth;
-	}
+	/// <summary>获取渲染器名称。</summary>
+	string Name { get; }
 
-	public string Code { get; }
-	public TemplateEvaluationStage Stage { get; }
-	public string Template { get; }
-	public string Expression { get; }
-	public int Position { get; }
-	public int Length { get; }
-	public int Depth { get; }
-
-	public override string ToString() => $"[{this.Code}]{this.Message}";
+	/// <summary>渲染模板。</summary>
+	/// <param name="template">指定要渲染的模板。</param>
+	/// <param name="data">指定待渲染的模板数据。</param>
+	/// <param name="parameters">指定的渲染参数集。</param>
+	/// <returns>返回渲染后的对象。</returns>
+	object Renderer(ITemplate template, object data, params IEnumerable<KeyValuePair<string, object>> parameters);
 }

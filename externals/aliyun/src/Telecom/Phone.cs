@@ -34,9 +34,9 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Zongsoft.Text;
 using Zongsoft.Services;
 using Zongsoft.Serialization;
+using Zongsoft.Text.Templating;
 
 namespace Zongsoft.Externals.Aliyun.Telecom;
 
@@ -124,7 +124,7 @@ public class Phone
 				//尝试进行模板数据格式化
 				if(!string.IsNullOrEmpty(template.Formatter) && this.ServiceProvider.Resolve(template.Formatter) is ITemplateFormatter formatter)
 				{
-					argument.Parameter = formatter.Format(template.Name, argument.Parameter, argument.Extra);
+					argument.Parameter = formatter.Format(template.Name, argument.Parameter, [new(nameof(argument.Extra), argument.Extra)]);
 				}
 
 				if(argument.Parameter is string || argument.Parameter is System.Text.StringBuilder)
@@ -211,7 +211,7 @@ public class Phone
 			//尝试进行模板数据格式化
 			if(!string.IsNullOrEmpty(template.Formatter) && this.ServiceProvider.Resolve(template.Formatter) is ITemplateFormatter formatter)
 			{
-				parameter = formatter.Format(template.Name, parameter, extra);
+				parameter = formatter.Format(template.Name, parameter, [new(nameof(extra), extra)]);
 			}
 
 			if(parameter is string || parameter is System.Text.StringBuilder)
@@ -286,7 +286,7 @@ public class Phone
 			//尝试进行模板数据格式化
 			if(!string.IsNullOrEmpty(template.Formatter) && this.ServiceProvider.Resolve(template.Formatter) is ITemplateFormatter formatter)
 			{
-				parameter = formatter.Format(template.Name, parameter, extra);
+				parameter = formatter.Format(template.Name, parameter, [new(nameof(extra), extra)]);
 			}
 
 			if(parameter is string || parameter is System.Text.StringBuilder)

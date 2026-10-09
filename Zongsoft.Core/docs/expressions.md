@@ -1,10 +1,12 @@
-# Expression templates
+# Text templates
 
 [English](expressions.md) | [简体中文](expressions.zh-Hans.md)
 
-Zongsoft.Expressions.TemplateEvaluator evaluates text templates with extensible variable providers, namespaces, member navigation, dynamic indices, formatting, and optional recursive expansion.
+Zongsoft.Text.Templating.TemplateEvaluator evaluates text templates with extensible variable providers, namespaces, member navigation, dynamic indices, formatting, and optional recursive expansion.
 
-This is phase 1, Expressions. Profile extensions and tools adapters belong to later phases. Profile still loads and saves original text. The [design record](expressions-design.zh-Hans.md) tracks all decisions and implementation progress.
+Zongsoft.Text.Templating provides standalone template evaluation. Profile extensions and tools adapters are separate integration concerns; Profile loads and saves original text. The [design document](expressions-design.zh-Hans.md) describes the contracts and implementation boundaries.
+
+Template contracts (ITemplate and ITemplateFormatter), the evaluator, options and diagnostics belong to Zongsoft.Text.Templating. IVariableProvider and the lexical infrastructure belong to Zongsoft.Expressions. ResolutionContext and FormattingContext are public nested classes of TemplateEvaluator; they describe reference resolution and interpolation formatting respectively.
 
 ## Getting started
 
@@ -15,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Zongsoft.Expressions;
+using Zongsoft.Text.Templating;
 
 var evaluator = new TemplateEvaluator(new()
 {
@@ -33,14 +36,51 @@ sealed class Variables : IVariableProvider
 		["app:price"] = 12.5m,
 	};
 
-	public bool TryGetValue(string name, string @namespace, out object value) =>
+	public bool TryGetValue(string name, out object value) => this.TryGetValue(null, name, out value);
+	public bool TryGetValue(string @namespace, string name, out object value) =>
 		_values.TryGetValue(@namespace == null ? name : @namespace + ":" + name, out value);
 }
 ```
 
+TryGetValue(name, out value) queries only the default namespace and is equivalent to TryGetValue(null, name, out value). The explicit overload takes the namespace first, followed by the variable name. The template evaluator uses this overload, passing null for unqualified references.
+
 Providers are queried in registration order. The first true result wins, including a null value. False continues to the next provider; exceptions terminate evaluation. Providers must compare names and namespaces using OrdinalIgnoreCase. The default namespace is null. An explicit namespace never falls back to the default namespace.
 
-Variable values, getters and index results are not cached. Repeated references perform repeated reads and may observe changing provider data.
+Variable values, getter return values and index results are not cached. Reflection may reuse getter delegates; repeated references still perform repeated reads and may observe changing provider data.
+
+## Text input
+
+Evaluate(ReadOnlySpan<char> text) and TryEvaluate(ReadOnlySpan<char> text, out string result, out TemplateEvaluationException error) accept strings, character buffers and slices. Strings convert implicitly; the result remains a string.
+
+```csharp
+var input = "prefix${name}suffix";
+var result = evaluator.Evaluate(input.AsSpan(6, 7)); // Zongsoft
+```
+
+Empty spans, default and spans converted from null strings are empty templates: they return an empty string without variable events. Null provider entries remain API errors.
+
+The internal parser and lexer scan the span directly. Each layer copies its source once before evaluating the first reference so events and errors can retain it; parsing failures also retain their input. Template contains only the supplied slice, Position is relative to that slice, and recursive diagnostics refer to the child template. Successful plain text does not need this extra source copy. Token values, syntax nodes and output still require allocations.
+
+Private Part, Accessor, Argument and Lexeme nodes consistently use readonly structs with constructor-initialized readonly fields, stored directly in list arrays. Reference nodes are constructed with readonly fields after parsing; their accessor lists are allocated only when member or index navigation occurs. Collections are built during parsing and only read during evaluation. A template containing a single text or placeholder part uses one list slot, without an additional scan of the input.
+
+## Lexical scanning
+
+Lexer.GetScanner(ReadOnlySpan<char> text) returns a TokenScanner ref struct. It accepts strings, slices and stack buffers without copying the input. Keep the input buffer valid and unchanged while scanning. Empty input produces no tokens.
+
+```csharp
+using var scanner = Lexer.Instance.GetScanner("prefix name == 12L suffix".AsSpan(7, 11));
+
+while(scanner.Scan(out var position, out var length) is { } token)
+	Console.WriteLine($"{position}, {length}: {token}");
+```
+
+Scan skips whitespace and reports the token's UTF-16 position and source length relative to the supplied slice. At the end it returns null, the input length as position and zero as length. TokenScanner is stack-bound and cannot be boxed or used with LINQ. Pattern-based foreach enumerates from a copy of its current cursor; it neither advances the original scanner nor closes its stream.
+
+Lexer.GetScanner(Stream stream) decodes the stream once using UTF-8 with BOM detection, then scans the decoded text through the same path. It supports non-seekable streams. Dispose closes the stream and invalidates that scanner; a failed initial read also closes the stream. Span-backed scanners require no input allocation. Keep stream ownership with the scanner returned by GetScanner rather than copying it to another owner.
+
+Custom tokenizers implement `TokenResult Tokenize(ReadOnlySpan<char> text)` and inspect the beginning of the remaining input. Success returns a Token and a positive Length that includes every consumed source character, including quotes, escapes and numeric suffixes. No match returns TokenResult.Fail() without consuming text. The scanner tries Tokenizers in registration order and advances only on success. A successful result whose Length is zero, negative or exceeds the remaining input throws InvalidOperationException. Keep the tokenizer collection unchanged during scanning.
+
+LiteralTokenizerBase chooses the longest matching configured literal, checking identifier boundaries for words. CreateToken receives that configured string, including its configured casing; case-insensitive matching does not allocate a copy of the input spelling. Boolean, null and standard symbol tokenizers reuse cached tokens. Numbers parse directly from spans; identifiers allocate their final value once. Quoted strings without escapes copy only their content; escaped strings decode into a bounded stack buffer or a pooled array before creating their final value. Template member names reuse identifier token values.
 
 ## Syntax
 
@@ -48,10 +88,10 @@ Variable values, getters and index results are not cached. Repeated references p
 | --- | --- |
 | `${name}` | A variable in the default namespace. |
 | `${app.runtime:name}` | A variable in a dotted namespace. |
-| `${person.Home.Address}` | Public instance property or field navigation. |
-| `${arr[0].Name}` | Navigation after a constant index. |
-| `${arr[indices[0]].Name}` | A dynamic argument with nested indexing. |
-| `${grid[row,column]}` | A multidimensional array or multi-parameter indexer. |
+| `${person.Home.Address}` | Property or field navigation using Reflector rules. |
+| `${items[0].Name}` | Navigation after a constant list index. |
+| `${items[indices[0]].Name}` | A dynamic argument with nested list indexing. |
+| `${grid[row,column]}` | A multi-parameter indexer. |
 | `${map['key']}, ${map["key"]}` | Single- or double-quoted string keys. |
 | `${price#0.00}` | A .NET number format. |
 | `${date#yyyy-MM-dd HH:mm:ss}` | A .NET date format with internal whitespace. |
@@ -62,7 +102,7 @@ Variable, member and namespace segments follow the ASCII rule [A-Za-z_][A-Za-z0-
 
 Dynamic arguments resolve against providers, independently of the indexed object and its namespace. In ${app:arr[index]}, index is in the default namespace.
 
-Navigation reads public instance fields, readable properties, indexers, and public interface contracts. Static or non-public members, write-only properties, method calls and arithmetic are unsupported. A Type value is an ordinary object, not an instruction to access static members of the represented type. Equally valid case-insensitive member matches fail as ambiguous.
+Navigation calls Reflector.GetValue(ref object, name, parameters) directly. It searches fields and properties using Public, Instance, Static and IgnoreCase; an empty name selects default members. Multiple results use the first member, without separate overload selection or ambiguity checks. A Type target denotes the type to search. Templates add no separate public-getter, instance-only or explicit-interface filtering. Method calls and arithmetic remain outside the template grammar.
 
 ## Index constants and binding
 
@@ -70,9 +110,11 @@ Unsuffixed integers use int when possible, otherwise long. Negative values and L
 
 Case-insensitive true, false and null are constants only as complete bare index arguments. ${true} is a variable; true in ${arr[true.Name]} is also a variable. Quoted string arguments never interpolate.
 
-After resolving an argument, running Resolved and optionally expanding a string, binding calls Zongsoft.Common.Convert.ConvertValue(value, targetType). Arrays, lists, dictionaries and custom indexers share this conversion behavior, including target defaults for null: null converts to int zero. Culture controls formatting and does not override conversion culture.
+After resolving an argument, running Resolved and optionally expanding a string, the original object is passed to Reflector without automatic conversion. For example, Dictionary<long, string> requires [42L], not the string ['42'] or the int [42]. Null does not become int zero. Culture controls formatting only.
 
-Indexer selection first requires the correct argument count, then prefers exact types or the unique most-specific assignable signature before conversion candidates. Ambiguity fails instead of trying multiple getters. Known missing keys, invalid bounds or unreadable targets fail; a custom getter returning null succeeds.
+Indexers follow Reflector's default-member selection, without choosing overloads by argument types. Its getter rejects too few arguments but may ignore extras; exact argument counts are not guaranteed. The current entry point has no special support for array indexing. Use objects with default indexers, such as List<T>. Ordinary array properties such as Length still follow normal member access.
+
+Missing keys and invalid bounds follow the target indexer. Dictionary typically throws for missing keys, while Hashtable may successfully return null. Templates add neither Contains checks nor explicit-interface lookup. A successful null result stays successful; further navigation through null fails.
 
 ## Escaping and format boundaries
 
@@ -82,6 +124,7 @@ Template text and quoted index keys share these escapes:
 | --- | --- |
 | `\\` | Backslash |
 | `\$` | Dollar |
+| `\s` | Space |
 | `\n, \r, \t` | Newline, carriage return, tab |
 | `\', \"` | Single quote, double quote |
 
@@ -103,7 +146,7 @@ The constructor accepts optional TemplateEvaluatorOptions:
 
 The evaluator retains the supplied options instance. Omitted/null options create a separate instance for each evaluator. Providers and Options are fixed references with configurable contents. Keep options, collection membership and event subscriptions stable throughout evaluation, including recursion. Providers manage synchronization of their own data. There are no configuration snapshots or shared default options.
 
-With Recursive enabled, every resolved string enters the next template depth, including plain strings without placeholders. Dynamic string index arguments expand before binding; quoted constants do not. Siblings do not accumulate depth, and repeated variable names may be queried again. Cycles end at MaximumDepth. Formatting callback Text is never recursively evaluated.
+With Recursive enabled, every resolved string enters the next template depth, including plain strings without placeholders. Dynamic string index arguments expand and remain strings when passed to the indexer; quoted constants do not expand. Siblings do not accumulate depth, and repeated variable names may be queried again. Cycles end at MaximumDepth. Formatting callback Text is never recursively evaluated.
 
 Each template layer is fully parsed before execution. Thus ${name}-${bad fails before querying name. Child templates can only be parsed after obtaining their strings; earlier side effects are not rolled back. Nested index syntax does not consume template depth and has a separate internal limit of 256 levels.
 
@@ -116,9 +159,9 @@ Resolving → providers/navigation → Resolved → optional recursion
 
 All four events belong to the evaluator and use EventHandler<T>; sender is the evaluator. Dynamic index references have Resolving/Resolved events, but no direct formatting events. References inside recursive child templates have their own complete event sequence.
 
-VariableEvaluationContext exposes read-only Template, Expression, Namespace, Name, Position, Length, Depth and IsIndex, plus writable Value and Handled.
+TemplateEvaluator.ResolutionContext exposes read-only Template, Expression, Namespace, Name, Position, Length, Depth and IsIndex, plus writable Value and Handled.
 
-VariableFormattingContext has the same read-only metadata except IsIndex, plus writable Value, Format, Culture, Text and Handled. Resolution and formatting use separate contexts.
+TemplateEvaluator.FormattingContext has the same read-only metadata except IsIndex, plus writable Value, Format, Culture, Text and Handled. Resolution and formatting use separate contexts.
 
 ```csharp
 evaluator.Resolving += (_, context) =>
@@ -164,14 +207,15 @@ Errors expose Code, Stage, Template, Expression, Position, Length, Depth and Inn
 
 Stage is Parsing, Resolving, Resolution, Resolved, Recursion, Formatting, Format or Formatted. Use codes, stages and exception types for programmatic handling, rather than localized Message text.
 
-Null input, invalid options and null provider entries are API errors; TryEvaluate still throws argument exceptions for them. An empty template returns an empty string without variable events.
+Invalid options and null provider entries are API errors; TryEvaluate still throws argument exceptions for them. Empty spans, including those converted from null strings, return an empty string without variable events.
 
 ## Implementation
 
-- [TemplateEvaluator](../src/Expressions/TemplateEvaluator.cs): public entry points, events and execution.
-- [Template parser](../src/Expressions/TemplateEvaluator.Parser.cs): template regions and reference grammar consuming the existing Lexer; all syntax nodes remain private.
-- [TokenScanner](../src/Expressions/TokenScanner.cs): shared string/stream tokenization; Scan(out position, out length) reports source spans. Streams are decoded into a character buffer using UTF-8/BOM detection and closed when the scanner is disposed.
-- [MemberAccess](../src/Reflection/MemberAccess.cs): internal public-instance contract selection and ConvertValue binding, with actual reads delegated to Reflector.
-- [Template tests](../test/Expressions/TemplateEvaluatorTest.cs) and [lexer tests](../test/Expressions/LexerBoundaryTest.cs): verification through public behavior.
+- [TemplateEvaluator](../src/Text/Templating/TemplateEvaluator.cs): public entry points, events and execution.
+- [Resolution context](../src/Text/Templating/TemplateEvaluator.ResolutionContext.cs) and [formatting context](../src/Text/Templating/TemplateEvaluator.FormattingContext.cs): public nested event contexts owned by TemplateEvaluator.
+- [Template parser](../src/Text/Templating/TemplateEvaluator.Parser.cs): template regions and reference grammar consuming the existing Lexer; all syntax nodes remain private.
+- [TokenScanner](../src/Expressions/TokenScanner.cs): Span scanning with source positions and consumed lengths; streams are decoded using UTF-8/BOM detection and closed when the scanner is disposed.
+- [Reflector](../src/Reflection/Reflector.cs): templates call the existing GetValue entry point for members and default indexers, preserving original read failures.
+- [Template tests](../test/Text/Templating/TemplateEvaluatorTest.cs) and [lexer tests](../test/Expressions/LexerBoundaryTest.cs): verification through public behavior.
 
-IExpressionEvaluator remains the script evaluation contract; existing MemberExpression APIs continue serving their consumers. Templates reuse the lexer and Reflection access layer without exposing parser nodes, sessions or test-only entry points.
+IExpressionEvaluator remains the script evaluation contract. MemberExpressionParser accepts spans but does not provide template namespaces or per-reference diagnostics. MemberExpressionEvaluator's default index path does not populate dynamic arguments or implement template events and providers. Templates therefore reuse Lexer and Reflector directly, retaining the existing member-expression APIs for their consumers without exposing template nodes or test-only entry points.

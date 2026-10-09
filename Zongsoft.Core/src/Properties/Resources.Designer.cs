@@ -2788,15 +2788,6 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 The member or indexer cannot be uniquely determined. 的本地化字符串。
-        /// </summary>
-        internal static string Template_AmbiguousMember_Message {
-            get {
-                return ResourceManager.GetString("Template.AmbiguousMember.Message", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   查找类似 Template evaluation failed ({0}) at position {1}, stage {2}. 的本地化字符串。
         /// </summary>
         internal static string Template_EvaluationFailed_Message {
@@ -2806,29 +2797,11 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   查找类似 The index parameter count does not match a readable indexer. 的本地化字符串。
-        /// </summary>
-        internal static string Template_IndexParameters_Message {
-            get {
-                return ResourceManager.GetString("Template.IndexParameters.Message", resourceCulture);
-            }
-        }
-        
-        /// <summary>
         ///   查找类似 The template contains an invalid or incomplete escape sequence. 的本地化字符串。
         /// </summary>
         internal static string Template_InvalidEscape_Message {
             get {
                 return ResourceManager.GetString("Template.InvalidEscape.Message", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 The specified index key does not exist. 的本地化字符串。
-        /// </summary>
-        internal static string Template_KeyNotFound_Message {
-            get {
-                return ResourceManager.GetString("Template.KeyNotFound.Message", resourceCulture);
             }
         }
         
@@ -2878,6 +2851,15 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 The tokenizer returned an invalid consumed length. 的本地化字符串。
+        /// </summary>
+        internal static string TokenScanner_InvalidLength_Message {
+            get {
+                return ResourceManager.GetString("TokenScanner.InvalidLength.Message", resourceCulture);
+            }
+        }
+
+/// <summary>
         ///   查找类似 The committed event &apos;{0}&apos; cannot be dispatched because the transaction event channel is closed. 的本地化字符串。
         /// </summary>
         internal static string TransactionEventChannel_DispatchClosed {

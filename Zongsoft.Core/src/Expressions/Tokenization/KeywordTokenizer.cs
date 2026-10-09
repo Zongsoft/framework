@@ -38,6 +38,6 @@ public class KeywordTokenizer : LiteralTokenizerBase
 	#endregion
 
 	#region 重写方法
-	protected override Token CreateToken(string literal) => new Token(TokenType.Keyword, literal);
+	protected override Token CreateToken(string literal) => new(TokenType.Keyword, literal);
 	#endregion
 }

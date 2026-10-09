@@ -32,7 +32,9 @@ using System.Text;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace Zongsoft.Expressions;
+using Zongsoft.Expressions;
+
+namespace Zongsoft.Text.Templating;
 
 /// <summary>评估包含变量引用、成员导航及格式化的文本模板。</summary>
 /// <remarks>求值期间须保持提供器集合、选项及事件订阅稳定；提供器负责自身数据及并发访问。</remarks>
@@ -47,10 +49,10 @@ public partial class TemplateEvaluator
 	#endregion
 
 	#region 事件定义
-	public event EventHandler<VariableEvaluationContext> Resolving;
-	public event EventHandler<VariableEvaluationContext> Resolved;
-	public event EventHandler<VariableFormattingContext> Formatting;
-	public event EventHandler<VariableFormattingContext> Formatted;
+	public event EventHandler<ResolutionContext> Resolving;
+	public event EventHandler<ResolutionContext> Resolved;
+	public event EventHandler<FormattingContext> Formatting;
+	public event EventHandler<FormattingContext> Formatted;
 	#endregion
 
 	#region 公共属性
@@ -59,10 +61,11 @@ public partial class TemplateEvaluator
 	#endregion
 
 	#region 公共方法
-	public string Evaluate(string text)
+	/// <summary>评估指定的表达式。</summary>
+	/// <param name="text">要评估的模板表达式内容。</param>
+	/// <returns>返回模板表达式求值后的文本，空跨度返回空字符串。</returns>
+	public string Evaluate(ReadOnlySpan<char> text)
 	{
-		ArgumentNullException.ThrowIfNull(text);
-
 		for(int i = 0; i < this.Providers.Count; i++)
 		{
 			if(this.Providers[i] == null)
@@ -72,7 +75,12 @@ public partial class TemplateEvaluator
 		return this.Evaluate(text, 1);
 	}
 
-	public bool TryEvaluate(string text, out string result, out TemplateEvaluationException error)
+	/// <summary>尝试评估指定的表达式。</summary>
+	/// <param name="text">要评估的模板表达式内容。</param>
+	/// <param name="result">返回模板表达式求值后的文本，空跨度返回空字符串。</param>
+	/// <param name="error">返回评估过程中发生的异常，如果没有异常则为空(<c>null</c>)。</param>
+	/// <returns>如果评估成功则返回真(<c>true</c>)，否则返回假(<c>false</c>)。</returns>
+	public bool TryEvaluate(ReadOnlySpan<char> text, out string result, out TemplateEvaluationException error)
 	{
 		try
 		{
@@ -90,8 +98,9 @@ public partial class TemplateEvaluator
 	#endregion
 
 	#region 求值处理
-	private string Evaluate(string template, int depth)
+	private string Evaluate(ReadOnlySpan<char> template, int depth)
 	{
+		string source = null;
 		var parts = new Parser(template, depth).Parse();
 		var text = new StringBuilder();
 
@@ -103,8 +112,10 @@ public partial class TemplateEvaluator
 				continue;
 			}
 
-			var value = this.Resolve(template, part.Reference, depth, false, out var context);
-			var formatting = new VariableFormattingContext(context, value, part.Format, this.Options.Culture);
+			//事件上下文及异常可在调用结束后保留，每层只在首次求值时固化源码
+			source ??= template.ToString();
+			var value = this.Resolve(source, part.Reference, depth, false, out var context);
+			var formatting = new FormattingContext(context, value, part.Format, this.Options.Culture);
 
 			try
 			{
@@ -112,7 +123,7 @@ public partial class TemplateEvaluator
 			}
 			catch(Exception exception)
 			{
-				throw Error("CallbackFailed", TemplateEvaluationStage.Formatting, template, part.Reference, depth, exception);
+				throw Error("CallbackFailed", TemplateEvaluationStage.Formatting, source, part.Reference, depth, exception);
 			}
 
 			if(!formatting.Handled)
@@ -133,7 +144,7 @@ public partial class TemplateEvaluator
 				}
 				catch(Exception exception)
 				{
-					throw Error("FormattingFailed", TemplateEvaluationStage.Format, template, part.Reference, depth, exception);
+					throw Error("FormattingFailed", TemplateEvaluationStage.Format, source, part.Reference, depth, exception);
 				}
 			}
 
@@ -143,7 +154,7 @@ public partial class TemplateEvaluator
 			}
 			catch(Exception exception)
 			{
-				throw Error("CallbackFailed", TemplateEvaluationStage.Formatted, template, part.Reference, depth, exception);
+				throw Error("CallbackFailed", TemplateEvaluationStage.Formatted, source, part.Reference, depth, exception);
 			}
 
 			text.Append(formatting.Text);
@@ -152,9 +163,9 @@ public partial class TemplateEvaluator
 		return text.ToString();
 	}
 
-	private object Resolve(string template, Reference reference, int depth, bool isIndex, out VariableEvaluationContext context)
+	private object Resolve(string template, Reference reference, int depth, bool isIndex, out ResolutionContext context)
 	{
-		context = new VariableEvaluationContext(template, reference.Text, reference.Namespace, reference.Name, reference.Position, reference.Length, depth, isIndex);
+		context = new ResolutionContext(template, reference.Text, reference.Namespace, reference.Name, reference.Position, reference.Length, depth, isIndex);
 
 		try
 		{
@@ -174,7 +185,7 @@ public partial class TemplateEvaluator
 			{
 				for(int i = 0; i < this.Providers.Count; i++)
 				{
-					if(this.Providers[i].TryGetValue(reference.Name, reference.Namespace, out value))
+					if(this.Providers[i].TryGetValue(reference.Namespace, reference.Name, out value))
 					{
 						found = true;
 						break;
@@ -189,8 +200,10 @@ public partial class TemplateEvaluator
 			if(!found)
 				throw Error("MissingVariable", TemplateEvaluationStage.Resolution, template, reference, depth);
 
-			foreach(var accessor in reference.Accessors)
+			for(int index = 0; index < (reference.Accessors?.Count ?? 0); index++)
 			{
+				var accessor = reference.Accessors[index];
+
 				if(value == null)
 					throw Error("NullTarget", TemplateEvaluationStage.Resolution, template, reference, depth);
 
@@ -210,9 +223,7 @@ public partial class TemplateEvaluator
 
 				try
 				{
-					value = arguments == null ?
-						Reflection.MemberAccess.GetValue(value, accessor.Name) :
-						Reflection.MemberAccess.GetValue(value, arguments);
+					value = Reflection.Reflector.GetValue(ref value, accessor.Name, arguments);
 				}
 				catch(Exception exception)
 				{

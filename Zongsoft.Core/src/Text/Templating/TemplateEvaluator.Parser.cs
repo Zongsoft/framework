@@ -31,47 +31,53 @@ using System;
 using System.Text;
 using System.Collections.Generic;
 
+using Zongsoft.Expressions;
 using Zongsoft.Expressions.Tokenization;
 
-namespace Zongsoft.Expressions;
+namespace Zongsoft.Text.Templating;
 
 public partial class TemplateEvaluator
 {
 	#region 语法节点
-	private sealed class Part
+	private sealed class Reference(string text, string @namespace, string name, int position, int length, List<Accessor> accessors)
 	{
-		public string Text;
-		public Reference Reference;
-		public string Format;
+		public readonly string Text = text;
+		public readonly string Name = name;
+		public readonly string Namespace = @namespace;
+		public readonly int Position = position;
+		public readonly int Length = length;
+		public readonly List<Accessor> Accessors = accessors;
 	}
 
-	private sealed class Reference
+	private readonly struct Accessor(string name, List<Argument> arguments = null)
 	{
-		public string Text;
-		public string Namespace;
-		public string Name;
-		public int Position;
-		public int Length;
-		public readonly List<Accessor> Accessors = new();
+		public readonly string Name = name;
+		public readonly List<Argument> Arguments = arguments;
 	}
 
-	private sealed class Accessor
+	private readonly struct Argument(object value, Reference reference = null)
 	{
-		public string Name;
-		public List<Argument> Arguments;
+		public readonly object Value = value;
+		public readonly Reference Reference = reference;
 	}
 
-	private sealed class Argument
+	private readonly struct Part(string text, Reference reference = null, string format = null)
 	{
-		public object Value;
-		public Reference Reference;
+		public readonly Reference Reference = reference;
+		public readonly string Text = text;
+		public readonly string Format = format;
 	}
 
-	private readonly record struct Lexeme(Token Token, int Position, int Length);
+	private readonly struct Lexeme(Token token, int position, int length)
+	{
+		public readonly Token Token = token;
+		public readonly int Position = position;
+		public readonly int Length = length;
+	}
 	#endregion
 
 	#region 嵌套子类
-	private sealed class Parser(string template, int depth)
+	private ref struct Parser(ReadOnlySpan<char> template, int depth)
 	{
 		private static readonly Lexer _lexer = CreateLexer();
 		private static Lexer CreateLexer()
@@ -81,7 +87,7 @@ public partial class TemplateEvaluator
 			return lexer;
 		}
 
-		private readonly string _template = template;
+		private readonly ReadOnlySpan<char> _template = template;
 		private readonly int _depth = depth;
 		private List<Lexeme> _tokens;
 		private int _index;
@@ -108,11 +114,17 @@ public partial class TemplateEvaluator
 				{
 					if(literal.Length > 0)
 					{
-						parts.Add(new Part { Text = literal.ToString() });
+						parts.Add(new Part(literal.ToString()));
 						literal.Clear();
 					}
 
-					parts.Add(this.ParsePlaceholder(ref position));
+					var part = this.ParsePlaceholder(ref position);
+
+					//只有一个片段时精确分配，避免结构节点占用多余的数组槽位。
+					if(parts.Count == 0 && position == _template.Length)
+						parts.Capacity = 1;
+
+					parts.Add(part);
 				}
 				else
 				{
@@ -122,7 +134,12 @@ public partial class TemplateEvaluator
 			}
 
 			if(literal.Length > 0)
-				parts.Add(new Part { Text = literal.ToString() });
+			{
+				if(parts.Count == 0)
+					parts.Capacity = 1;
+
+				parts.Add(new Part(literal.ToString()));
+			}
 
 			return parts;
 		}
@@ -174,16 +191,17 @@ public partial class TemplateEvaluator
 				throw this.Failure("UnsupportedExpression", opening, position - opening);
 
 			this.Tokenize(start, end);
+
 			_index = 0;
 			var reference = this.ParseReference(0);
 
 			if(_index != _tokens.Count)
 				throw this.Failure("InvalidSyntax", _tokens[_index].Position, _tokens[_index].Length);
 
-			return new Part { Reference = reference, Format = format };
+			return new Part(null, reference, format);
 		}
 
-		private string ParseFormat(int opening, ref int cursor)
+		private readonly string ParseFormat(int opening, ref int cursor)
 		{
 			var start = -1;
 			var end = -1;
@@ -198,7 +216,7 @@ public partial class TemplateEvaluator
 					if(start < 0)
 						throw this.Failure("EmptyFormat", cursor, 1);
 
-					return _template[start..end];
+					return _template[start..end].ToString();
 				}
 
 				var significant = quote != '\0' || !char.IsWhiteSpace(character);
@@ -280,25 +298,27 @@ public partial class TemplateEvaluator
 			while(this.Match("."))
 				names.Add(this.ReadName());
 
-			var reference = new Reference { Position = start };
+			string name;
+			string @namespace = null;
+			List<Accessor> accessors = null;
 
 			if(this.Match(":"))
 			{
-				reference.Namespace = string.Join('.', names);
-				reference.Name = this.ReadName();
+				@namespace = string.Join('.', names);
+				name = this.ReadName();
 			}
 			else
 			{
-				reference.Name = names[0];
+				name = names[0];
 
 				for(int i = 1; i < names.Count; i++)
-					reference.Accessors.Add(new Accessor { Name = names[i] });
+					(accessors ??= new()).Add(new Accessor(names[i]));
 			}
 
 			while(_index < _tokens.Count)
 			{
 				if(this.Match("."))
-					reference.Accessors.Add(new Accessor { Name = this.ReadName() });
+					(accessors ??= new()).Add(new Accessor(this.ReadName()));
 				else if(this.Match("["))
 				{
 					var arguments = new List<Argument> { this.ParseArgument(nesting + 1) };
@@ -309,16 +329,16 @@ public partial class TemplateEvaluator
 					if(!this.Match("]"))
 						throw this.Failure("InvalidSyntax", this.CurrentPosition, 1);
 
-					reference.Accessors.Add(new Accessor { Arguments = arguments });
+					(accessors ??= new()).Add(new Accessor(null, arguments));
 				}
 				else
 					break;
 			}
 
 			var last = _tokens[_index - 1];
-			reference.Length = last.Position + last.Length - start;
-			reference.Text = _template.Substring(start, reference.Length);
-			return reference;
+			var length = last.Position + last.Length - start;
+
+			return new Reference(_template.Slice(start, length).ToString(), @namespace, name, start, length, accessors);
 		}
 
 		private Argument ParseArgument(int nesting)
@@ -330,15 +350,15 @@ public partial class TemplateEvaluator
 
 			if(token.Type == TokenType.Constant)
 			{
-				//布尔/null 只有在整个裸参数中才是常量，其它名称位置仍是标识符。
+				//布尔/空 只有在整个裸参数中才是常量，其它名称位置仍是标识符
 				if(token.Value is not bool && token.Value != null || this.IsSymbol(_index + 1, ",") || this.IsSymbol(_index + 1, "]"))
 				{
 					_index++;
-					return new Argument { Value = token.Value };
+					return new Argument(token.Value);
 				}
 			}
 
-			return new Argument { Reference = this.ParseReference(nesting) };
+			return new Argument(null, this.ParseReference(nesting));
 		}
 
 		private string ReadName()
@@ -353,7 +373,7 @@ public partial class TemplateEvaluator
 				throw this.Failure("InvalidSyntax", lexeme.Position, lexeme.Length);
 
 			_index++;
-			return _template.Substring(lexeme.Position, lexeme.Length);
+			return token.Type == TokenType.Identifier ? (string)token.Value : _template.Slice(lexeme.Position, lexeme.Length).ToString();
 		}
 
 		private bool Match(string symbol)
@@ -365,14 +385,14 @@ public partial class TemplateEvaluator
 			return true;
 		}
 
-		private bool IsSymbol(int index, string symbol) =>
+		private readonly bool IsSymbol(int index, string symbol) =>
 			index < _tokens.Count && _tokens[index].Token.Type == TokenType.Symbol && (string)_tokens[index].Token.Value == symbol;
 
-		private int CurrentPosition => _index < _tokens.Count ? _tokens[_index].Position :
+		private readonly int CurrentPosition => _index < _tokens.Count ? _tokens[_index].Position :
 			_tokens.Count == 0 ? 0 : _tokens[^1].Position + _tokens[^1].Length;
 
-		private TemplateEvaluationException Failure(string code, int position, int length, Exception innerException = null) =>
-			new(code, TemplateEvaluationStage.Parsing, _template, null, position, length, _depth, innerException);
+		private readonly TemplateEvaluationException Failure(string code, int position, int length, Exception innerException = null) =>
+			new(code, TemplateEvaluationStage.Parsing, _template.ToString(), null, position, length, _depth, innerException);
 		#endregion
 	}
 	#endregion

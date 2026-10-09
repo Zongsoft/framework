@@ -27,24 +27,17 @@
  * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-using System;
-using System.Globalization;
+namespace Zongsoft.Text.Templating;
 
-namespace Zongsoft.Expressions;
-
-/// <summary>提供模板求值设置。求值及自动递归期间不得修改设置。</summary>
-public class TemplateEvaluatorOptions
+/// <summary>表示模板求值执行阶段的枚举。</summary>
+public enum TemplateEvaluationStage
 {
-	public TemplateEvaluatorOptions()
-	{
-		this.MaximumDepth = 64;
-	}
-
-	public CultureInfo Culture { get; set; }
-	public bool Recursive { get; set; }
-	public int MaximumDepth
-	{
-		get;
-		set => field = value > 0 ? value : throw new ArgumentOutOfRangeException(nameof(value));
-	}
+	Parsing,
+	Resolving,
+	Resolution,
+	Resolved,
+	Recursion,
+	Formatting,
+	Format,
+	Formatted,
 }

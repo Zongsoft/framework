@@ -1057,6 +1057,9 @@
   <data name="TokenScanner.IllegalCharacter.Message" xml:space="preserve">
 		<value>Invalid character '{0}' at position {1} in the expression.</value>
 	</data>
+  <data name="TokenScanner.InvalidLength.Message" xml:space="preserve">
+		<value>The tokenizer returned an invalid consumed length.</value>
+	</data>
   <data name="Type.InterfaceRequired.Message" xml:space="preserve">
 		<value>The type '{0}' must implement the '{1}' interface.</value>
 	</data>
@@ -1077,14 +1080,5 @@
 	</data>
   <data name="Template.NullProvider.Message" xml:space="preserve">
 		<value>The variable provider collection cannot contain null entries.</value>
-	</data>
-  <data name="Template.AmbiguousMember.Message" xml:space="preserve">
-		<value>The member or indexer cannot be uniquely determined.</value>
-	</data>
-  <data name="Template.IndexParameters.Message" xml:space="preserve">
-		<value>The index parameter count does not match a readable indexer.</value>
-	</data>
-  <data name="Template.KeyNotFound.Message" xml:space="preserve">
-		<value>The specified index key does not exist.</value>
 	</data>
 </root>

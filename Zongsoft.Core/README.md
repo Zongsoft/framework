@@ -49,8 +49,10 @@ The package is intentionally broad: it is the common layer that higher-level _**
   > Claims helpers, credentials, certificates, secret/signature contracts, password utilities, authentication/authorization flows, users, roles, privileges, and privilege evaluators.
 - **Serialization** _(`Zongsoft.Serialization`)_
   > Serializer contracts, JSON serializer helpers, serialization options, naming conventions, member attributes, and System.Text.Json converters.
-- **Expressions and text** _(`Zongsoft.Expressions`, `Zongsoft.Text`)_
-  > Lexer/tokenizer infrastructure, [variable templates, providers, navigation and formatting](docs/expressions.md), expression evaluator contracts, syntax exceptions, regular-text processing, and template contracts.
+- **Expressions** _(`Zongsoft.Expressions`)_
+  > Lexer/tokenizer infrastructure, variable provider contracts, expression evaluator contracts, and syntax exceptions.
+- **Text and templates** _(`Zongsoft.Text`, `Zongsoft.Text.Templating`)_
+  > Regular-text processing, template contracts, and [text template evaluation, member navigation, formatting and diagnostics](docs/expressions.md).
 - **Reflection** _(`Zongsoft.Reflection`)_
   > High-performance reflection helpers and member-expression parsing/evaluation.
 - **Runtime helpers** _(`Zongsoft.Resources`, `Zongsoft.Scheduling`, `Zongsoft.Versioning`, `Zongsoft.Terminals`)_

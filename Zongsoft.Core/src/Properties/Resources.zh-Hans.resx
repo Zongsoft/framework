@@ -1051,6 +1051,9 @@
   <data name="TokenScanner.IllegalCharacter.Message" xml:space="preserve">
 		<value>表达式的第 {1} 个字符“{0}”无效。</value>
 	</data>
+  <data name="TokenScanner.InvalidLength.Message" xml:space="preserve">
+		<value>分词器返回了无效的消耗长度。</value>
+	</data>
   <data name="Type.InterfaceRequired.Message" xml:space="preserve">
 		<value>“{0}”类型必须实现“{1}”接口。</value>
 	</data>
@@ -1071,14 +1074,5 @@
 	</data>
   <data name="Template.NullProvider.Message" xml:space="preserve">
 		<value>变量提供器集合不能包含空项。</value>
-	</data>
-  <data name="Template.AmbiguousMember.Message" xml:space="preserve">
-		<value>无法唯一确定目标成员或索引器。</value>
-	</data>
-  <data name="Template.IndexParameters.Message" xml:space="preserve">
-		<value>索引参数数量与可读索引器不匹配。</value>
-	</data>
-  <data name="Template.KeyNotFound.Message" xml:space="preserve">
-		<value>指定的索引键不存在。</value>
 	</data>
 </root>

@@ -30,40 +30,22 @@
 using System;
 using System.Globalization;
 
-namespace Zongsoft.Expressions;
+namespace Zongsoft.Text.Templating;
 
-/// <summary>提供当前插值的格式化上下文。</summary>
-public class VariableFormattingContext : EventArgs
+/// <summary>提供模板求值设置。</summary>
+/// <remarks>提示：求值及自动递归期间不得修改设置。</remarks>
+public class TemplateEvaluatorOptions
 {
-	#region 构造函数
-	internal VariableFormattingContext(VariableEvaluationContext context, object value, string format, CultureInfo culture)
+	public TemplateEvaluatorOptions()
 	{
-		this.Template = context.Template;
-		this.Expression = context.Expression;
-		this.Namespace = context.Namespace;
-		this.Name = context.Name;
-		this.Position = context.Position;
-		this.Length = context.Length;
-		this.Depth = context.Depth;
-		this.Value = value;
-		this.Format = format;
-		this.Culture = culture;
+		this.MaximumDepth = 64;
 	}
 
-	#endregion
-
-	#region 公共属性
-	public string Template { get; }
-	public string Expression { get; }
-	public string Namespace { get; }
-	public string Name { get; }
-	public int Position { get; }
-	public int Length { get; }
-	public int Depth { get; }
-	public object Value { get; set; }
-	public string Format { get; set; }
 	public CultureInfo Culture { get; set; }
-	public string Text { get; set; }
-	public bool Handled { get; set; }
-	#endregion
+	public bool Recursive { get; set; }
+	public int MaximumDepth
+	{
+		get;
+		set => field = value > 0 ? value : throw new ArgumentOutOfRangeException(nameof(value));
+	}
 }

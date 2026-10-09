@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -60,14 +60,7 @@ public class Lexer
 	#endregion
 
 	#region 公共方法
-	public TokenScanner GetScanner(string text)
-	{
-		if(string.IsNullOrEmpty(text))
-			throw new ArgumentNullException(nameof(text));
-
-		return new TokenScanner(this, text);
-	}
-
+	public TokenScanner GetScanner(ReadOnlySpan<char> text) => new(this, text);
 	public TokenScanner GetScanner(Stream stream)
 	{
 		if(stream == null)

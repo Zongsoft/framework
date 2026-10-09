@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -29,22 +29,37 @@
 
 using System;
 
-namespace Zongsoft.Expressions.Tokenization;
+namespace Zongsoft.Text.Templating;
 
-public class IdentifierTokenizer : ITokenizer
+/// <summary>包含模板求值错误的位置、阶段及底层异常。</summary>
+public class TemplateEvaluationException : Exception
 {
-	public TokenResult Tokenize(ReadOnlySpan<char> text)
+	internal TemplateEvaluationException(
+		string code,
+		TemplateEvaluationStage stage,
+		string template,
+		string expression,
+		int position,
+		int length,
+		int depth,
+		Exception innerException = null) : base(string.Format(Properties.Resources.Template_EvaluationFailed_Message, code, position, stage), innerException)
 	{
-		if(text.IsEmpty || !IsBeginning(text[0]))
-			return TokenResult.Fail();
-
-		var length = 1;
-
-		while(length < text.Length && (IsBeginning(text[length]) || char.IsAsciiDigit(text[length])))
-			length++;
-
-		return new TokenResult(length, new Token(TokenType.Identifier, text[..length].ToString()));
-
-		static bool IsBeginning(char character) => char.IsAsciiLetter(character) || character == '_';
+		this.Code = code;
+		this.Stage = stage;
+		this.Template = template;
+		this.Expression = expression;
+		this.Position = position;
+		this.Length = length;
+		this.Depth = depth;
 	}
+
+	public string Code { get; }
+	public TemplateEvaluationStage Stage { get; }
+	public string Template { get; }
+	public string Expression { get; }
+	public int Position { get; }
+	public int Length { get; }
+	public int Depth { get; }
+
+	public override string ToString() => $"[{this.Code}]{this.Message}";
 }
