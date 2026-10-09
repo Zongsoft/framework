@@ -50,7 +50,7 @@ dotnet add package Zongsoft.Core
 - **序列化** _(`Zongsoft.Serialization`)_
   > 序列化契约、JSON 序列化辅助方法、序列化选项、命名约定、成员特性和 System.Text.Json 转换器。
 - **表达式** _(`Zongsoft.Expressions`)_
-  > 词法分析器/分词器基础设施、变量来源契约 `IVariables`、忽略大小写的内存变量字典 `Variables`、表达式求值契约和语法异常。
+  > 词法分析器/分词器基础设施、变量来源契约 `IVariables`、忽略大小写的内存变量字典 `Variables`、[通过 `Variables.Wrap()` / `ToVariables()` 获取的字典实时视图](docs/expressions.zh-Hans.md#字典变量视图)、表达式求值契约和语法异常。
 - **文本与模板** _(`Zongsoft.Text`、`Zongsoft.Text.Templating`)_
   > 正则文本处理、模板契约，以及[文本模板求值、成员导航、格式化和诊断](docs/expressions.zh-Hans.md)。
 - **反射** _(`Zongsoft.Reflection`)_

@@ -93,6 +93,30 @@ Use `new Variables()`, `new Variables(capacity)` or `new Variables(entries)` to 
 
 Values are raw objects and may be null. Variables does not evaluate templates, navigate members or convert types. Mutations are visible to subsequent provider queries. Like Dictionary, it does not synchronize concurrent reads and writes; callers provide synchronization when needed.
 
+## Dictionary variable views
+
+Use `Variables.Wrap(dictionary)` or `dictionary.ToVariables()` (in `Zongsoft.Expressions`) to expose an `IDictionary<string, object>` as a live `IVariables` view:
+
+```csharp
+IDictionary<string, object> dictionary = new Dictionary<string, object>
+{
+	["Name"] = "Zongsoft",
+	["App:Version"] = "1.0",
+};
+
+IVariables variables = Variables.Wrap(dictionary);
+evaluator.Providers.Add(dictionary.ToVariables());
+dictionary["Name"] = "Updated"; // Subsequent lookups see this change.
+```
+
+Both entry points return the same view for the same dictionary instance. If the dictionary already implements `IVariables`, they return that object directly. A private adapter is cached in a `ConditionalWeakTable` by reference identity; overridden equality does not merge distinct dictionaries. The cached view remains available while the dictionary is alive, and holding a view keeps its source available. The cache does not prevent collection when neither object is otherwise reachable. Concurrent calls share the associated view, although the factory may create extra adapters during the first concurrent access.
+
+The view reads current entries, including additions, replacements, removals and null values. It does not copy entries, cache query results, evaluate templates or convert values. Use `new Variables(dictionary)` for an independent copy of the entries. The cache is thread-safe; source access still follows the source dictionary's synchronization requirements.
+
+Keys follow the same convention as `Variables`: `name` for the default namespace and `namespace:name` for a named namespace. Null and empty namespaces select the default namespace, with no fallback from a nonempty namespace. Query parameters are not trimmed, split or normalized. A null dictionary or query name throws `ArgumentNullException`.
+
+Lookups always compare keys using `OrdinalIgnoreCase`. Standard `Dictionary<string, object>` and `ConcurrentDictionary<string, object>` instances using `StringComparer.OrdinalIgnoreCase` are queried directly. Other implementations, derived types and comparers scan current entries in enumeration order and return immediately on the first match, even when its value is null. Duplicate names under case-insensitive comparison are allowed; an exact-case match has no extra priority. This scan takes O(n) in the worst case. A present null value counts as success and blocks later providers.
+
 ## Text input
 
 Evaluate(ReadOnlySpan<char> text) and TryEvaluate(ReadOnlySpan<char> text, out string result, out TemplateEvaluationException error) accept strings, character buffers and slices. Strings convert implicitly; the result remains a string.

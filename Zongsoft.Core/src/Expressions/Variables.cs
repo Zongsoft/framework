@@ -29,6 +29,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
+using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Expressions;
 
@@ -44,6 +46,10 @@ namespace Zongsoft.Expressions;
 /// </remarks>
 public class Variables : Dictionary<string, object>, IVariables
 {
+	#region 静态字段
+	private static readonly ConditionalWeakTable<IDictionary<string, object>, DictionaryVariables> _cache = new();
+	#endregion
+
 	#region 构造函数
 	/// <summary>初始化一个空的变量字典。</summary>
 	public Variables() : base(StringComparer.OrdinalIgnoreCase) { }
@@ -64,6 +70,24 @@ public class Variables : Dictionary<string, object>, IVariables
 	public Variables(IEnumerable<KeyValuePair<string, object>> variables) : base(variables, StringComparer.OrdinalIgnoreCase) { }
 	#endregion
 
+	#region 静态方法
+	/// <summary>将指定字典包装为共享其当前内容的变量视图。</summary>
+	/// <param name="dictionary">作为变量来源的字典，不能为 <see langword="null"/>。</param>
+	/// <returns>字典本身实现的 <see cref="IVariables"/>，或按字典实例复用的只读变量视图。</returns>
+	/// <exception cref="ArgumentNullException"><paramref name="dictionary"/> 为 <see langword="null"/>。</exception>
+	/// <remarks>
+	/// 	<para>视图读取原字典的当前内容，不复制条目或缓存变量值。默认变量以名称作为键，具名变量以 <c>命名空间:名称</c> 作为键；查询参数不裁剪或拆分。</para>
+	/// 	<para>查询按 <see cref="StringComparer.OrdinalIgnoreCase"/> 比较键；枚举查询时返回第一个匹配条目的原始值，包括 <see langword="null"/>。</para>
+	/// 	<para>已知采用上述比较器的标准字典直接查询，其它字典枚举匹配。名称为 <see langword="null"/> 时查询抛出 <see cref="ArgumentNullException"/>。</para>
+	/// 	<para>缓存按引用身份复用视图，不阻止无外部引用的字典和视图被回收。缓存支持并发访问，源字典的并发读写仍由调用方负责。</para>
+	/// </remarks>
+	public static IVariables Wrap(IDictionary<string, object> dictionary)
+	{
+		ArgumentNullException.ThrowIfNull(dictionary);
+		return dictionary as IVariables ?? _cache.GetValue(dictionary, static source => new DictionaryVariables(source));
+	}
+	#endregion
+
 	#region 公共方法
 	/// <summary>尝试获取指定命名空间中指定名称的变量值。</summary>
 	/// <param name="namespace">要查询的命名空间，<see langword="null"/> 或空字符串均表示忽略命名空间限定，查询默认命名空间；命名空间比较忽略大小写。</param>
@@ -79,6 +103,38 @@ public class Variables : Dictionary<string, object>, IVariables
 	{
 		ArgumentNullException.ThrowIfNull(name);
 		return base.TryGetValue(string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}:{name}", out value);
+	}
+	#endregion
+
+	#region 嵌套子类
+	private sealed class DictionaryVariables(IDictionary<string, object> dictionary) : IVariables
+	{
+		public bool TryGetValue(string name, out object value) => this.TryGetValue(null, name, out value);
+		public bool TryGetValue(string @namespace, string name, out object value)
+		{
+			ArgumentNullException.ThrowIfNull(name);
+			var key = string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}:{name}";
+
+			switch(dictionary)
+			{
+				case Dictionary<string, object> source when source.GetType() == typeof(Dictionary<string, object>) && ReferenceEquals(source.Comparer, StringComparer.OrdinalIgnoreCase):
+					return source.TryGetValue(key, out value);
+				case ConcurrentDictionary<string, object> source when source.GetType() == typeof(ConcurrentDictionary<string, object>) && ReferenceEquals(source.Comparer, StringComparer.OrdinalIgnoreCase):
+					return source.TryGetValue(key, out value);
+			}
+
+			foreach(var entry in dictionary)
+			{
+				if(!string.Equals(entry.Key, key, StringComparison.OrdinalIgnoreCase))
+					continue;
+
+				value = entry.Value;
+				return true;
+			}
+
+			value = null;
+			return false;
+		}
 	}
 	#endregion
 }

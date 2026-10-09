@@ -45,6 +45,10 @@ description: 设计、修改、审查或测试 Zongsoft.Core 的公共契约与�
 
 构建 `Zongsoft.Core.slnx` 并运行对应测试。公共行为变化至少选择一个真实下游实现做定向构建；多目标差异分别验证 net8.0、net9.0、net10.0。
 
+## 字典变量视图
+
+Variables.Wrap(IDictionary<string, object>) 承载字典实时视图，VariablesExtension.ToVariables 仅转发；已有 IVariables 直接返回，其它字典由私有嵌套适配器包装，ConditionalWeakTable 按引用身份复用且不阻止无外部引用对象回收。缓存同步不扩展到源字典。查询遵循 Variables 的完整键约定和 OrdinalIgnoreCase；标准 Dictionary、ConcurrentDictionary 使用相同比较器时直接查询，其它来源按枚举顺序返回第一个匹配项，不检查重名，null 值仍查询成功。测试覆盖引用身份、并发复用、GC 生命周期、实时修改和模板集成。详见 [表达式文档](docs/expressions.zh-Hans.md#字典变量视图)。
+
 ## Profile 指令与读取
 
 读取机制见 [实现文档](docs/profiles.zh-Hans.md#读取与导入)。ProfileReader 识别紧接注释符的 @name，名称与参数以空格或 Tab 分隔；Argument 去除两端空白，语义由具体指令解释。ProfileReader 的内部嵌套类 Session 固定注册表与选项快照、调度指令并管理活动链及文件通知；ProfileReader 仅解析单个来源。Directives 子命名空间中的 ImportDirective 负责路径、可选/严格缺失和深度选项，经上下文内部读取操作共享会话，不能调用 Profile.Load 重建根会话。未知指令可由回调接管。

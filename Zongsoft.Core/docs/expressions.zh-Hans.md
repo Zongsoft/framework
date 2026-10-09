@@ -93,6 +93,30 @@ Zongsoft.Expressions.Variables 继承 Dictionary<string, object> 并实现 IVari
 
 变量值是原始对象，可以为 null。Variables 不进行模板求值、成员导航或类型转换。字典修改会反映在后续查询中。它与 Dictionary 一样不提供并发读写同步，需要时由调用方负责同步。
 
+## 字典变量视图
+
+使用 `Variables.Wrap(dictionary)` 或 `dictionary.ToVariables()`（位于 `Zongsoft.Expressions`）可将 `IDictionary<string, object>` 包装为实时 `IVariables` 视图：
+
+```csharp
+IDictionary<string, object> dictionary = new Dictionary<string, object>
+{
+	["Name"] = "Zongsoft",
+	["App:Version"] = "1.0",
+};
+
+IVariables variables = Variables.Wrap(dictionary);
+evaluator.Providers.Add(dictionary.ToVariables());
+dictionary["Name"] = "Updated"; // 后续查询立即看到修改。
+```
+
+同一个字典实例通过两个入口得到同一个视图；字典已经实现 `IVariables` 时直接返回原对象。私有适配器使用 `ConditionalWeakTable` 按引用身份缓存，重写相等比较不会使不同字典共享视图。字典存活期间缓存视图保持可用，持有视图也会保留其来源；两者均无其它可达引用时，缓存不会阻止回收。并发调用共享最终关联的视图，但首次并发访问时工厂可能创建额外适配器。
+
+视图读取当前条目，立即反映新增、替换、删除和空值；不复制条目、不缓存查询结果、不展开模板或转换类型。需要独立复制条目时使用 `new Variables(dictionary)`。缓存自身支持并发访问，源字典的访问仍遵循其同步要求。
+
+键遵循 `Variables` 的约定：默认命名空间使用 `name`，具名命名空间使用 `namespace:name`。null 和空字符串命名空间均查询默认命名空间，非空命名空间不会回退。查询参数不裁剪、不拆分、不归一化。字典或查询名称为 null 时抛出 `ArgumentNullException`。
+
+查询始终使用 `OrdinalIgnoreCase` 比较键。采用 `StringComparer.OrdinalIgnoreCase` 的标准 `Dictionary<string, object>` 和 `ConcurrentDictionary<string, object>` 实例直接查询；其它实现、派生类型和比较器按当前条目的枚举顺序匹配，找到第一个匹配项就立即返回，包括值为 null 的情况。允许忽略大小写后的重名键，精确大小写命中没有额外优先级；枚举查询最坏为 O(n)。存在且值为 null 仍表示查询成功，阻止后续提供器回退。
+
 ## 文本输入
 
 Evaluate(ReadOnlySpan<char> text) 和 TryEvaluate(ReadOnlySpan<char> text, out string result, out TemplateEvaluationException error) 接受字符串、字符缓冲区和切片。字符串可直接传入，无须手动转换；返回值仍为 string。
