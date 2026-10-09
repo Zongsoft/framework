@@ -36,6 +36,8 @@ public interface ITemplate
 {
 	/// <summary>获取模板名称。</summary>
 	string Name { get; }
+	/// <summary>获取模板格式。</summary>
+	TemplateFormat Format { get; }
 	/// <summary>获取模板标题。</summary>
 	string Title { get; }
 	/// <summary>获取模板描述。</summary>
