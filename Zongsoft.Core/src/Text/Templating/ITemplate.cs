@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 
 namespace Zongsoft.Text.Templating;
 
@@ -42,4 +43,6 @@ public interface ITemplate
 	string Title { get; }
 	/// <summary>获取模板描述。</summary>
 	string Description { get; }
+	/// <summary>获取模板的元数据集合。</summary>
+	ICollection<KeyValuePair<string, object>> Metadata { get; }
 }
