@@ -13,11 +13,13 @@ namespace Zongsoft.Expressions.Tests;
 
 public class VariablesWrappingTest
 {
-	[Fact]
-	public void WrapAndExtension_RejectNullDictionary()
+	[Theory]
+	[InlineData(true)]
+	[InlineData(false)]
+	public void WrapAndExtension_RejectNullDictionary(bool reuse)
 	{
-		Assert.Equal("dictionary", Assert.Throws<ArgumentNullException>(() => Variables.Wrap(null)).ParamName);
-		Assert.Equal("dictionary", Assert.Throws<ArgumentNullException>(() => ((IDictionary<string, object>)null).ToVariables()).ParamName);
+		Assert.Equal("dictionary", Assert.Throws<ArgumentNullException>(() => Variables.Wrap(null, reuse)).ParamName);
+		Assert.Equal("dictionary", Assert.Throws<ArgumentNullException>(() => ((IDictionary<string, object>)null).ToVariables(reuse)).ParamName);
 	}
 
 	[Fact]
@@ -25,23 +27,55 @@ public class VariablesWrappingTest
 	{
 		var source = new EqualDictionary { ["name"] = "first" };
 		var other = new EqualDictionary { ["name"] = "second" };
-		var variables = Variables.Wrap(source);
+		var variables = Variables.Wrap(source, reuse: true);
 
 		Assert.True(source.Equals(other));
-		Assert.Same(variables, Variables.Wrap(source));
-		Assert.Same(variables, source.ToVariables());
-		Assert.NotSame(variables, other.ToVariables());
+		Assert.Same(variables, Variables.Wrap(source, reuse: true));
+		Assert.Same(variables, source.ToVariables(reuse: true));
+		Assert.NotSame(variables, other.ToVariables(reuse: true));
 		Assert.True(variables.TryGetValue("NAME", out var value));
 		Assert.Equal("first", value);
 	}
 
-	[Fact]
-	public void WrapAndExtension_ReturnExistingProvider()
+	[Theory]
+	[InlineData(true)]
+	[InlineData(false)]
+	public void WrapAndExtension_ReturnExistingProvider(bool reuse)
 	{
 		IDictionary<string, object> source = new Variables { ["name"] = "value" };
 
-		Assert.Same(source, Variables.Wrap(source));
-		Assert.Same(source, source.ToVariables());
+		Assert.Same(source, Variables.Wrap(source, reuse));
+		Assert.Same(source, source.ToVariables(reuse));
+	}
+
+	[Fact]
+	public void WrappingWithoutReuse_CreatesLiveViewsAndPreservesCachedView()
+	{
+		var source = new Dictionary<string, object> { ["Name"] = "initial" };
+		var first = Variables.Wrap(source);
+		var second = source.ToVariables();
+		var cached = Variables.Wrap(source, reuse: true);
+		var third = Variables.Wrap(source, reuse: false);
+		var fourth = source.ToVariables(reuse: false);
+		var views = new[] { first, second, cached, third, fourth };
+
+		for(var index = 0; index < views.Length; index++)
+		{
+			for(var other = index + 1; other < views.Length; other++)
+				Assert.NotSame(views[index], views[other]);
+		}
+
+		Assert.Same(cached, source.ToVariables(reuse: true));
+		source["Name"] = null;
+
+		Assert.All(views, variables =>
+		{
+			Assert.True(variables.TryGetValue("NAME", out var value));
+			Assert.Null(value);
+		});
+
+		source.Remove("Name");
+		Assert.All(views, variables => Assert.False(variables.TryGetValue("name", out _)));
 	}
 
 	[Fact]
@@ -50,7 +84,7 @@ public class VariablesWrappingTest
 		var source = new Dictionary<string, object>();
 		var results = new IVariables[128];
 
-		Parallel.For(0, results.Length, index => results[index] = index % 2 == 0 ? Variables.Wrap(source) : source.ToVariables());
+		Parallel.For(0, results.Length, index => results[index] = index % 2 == 0 ? Variables.Wrap(source, reuse: true) : source.ToVariables(reuse: true));
 
 		Assert.All(results, result => Assert.Same(results[0], result));
 	}
@@ -215,7 +249,20 @@ public class VariablesWrappingTest
 		Collect();
 
 		Assert.True(reference.IsAlive);
-		Assert.Same(reference.Target, source.ToVariables());
+		Assert.Same(reference.Target, source.ToVariables(reuse: true));
+		GC.KeepAlive(source);
+	}
+
+	[Fact]
+	public void WrappingWithoutReuse_DoesNotKeepViewsWhileDictionaryIsAlive()
+	{
+		var source = new Dictionary<string, object>();
+		var references = CreateUncachedWeakViews(source);
+
+		Collect();
+
+		Assert.False(references.Wrapped.IsAlive);
+		Assert.False(references.Converted.IsAlive);
 		GC.KeepAlive(source);
 	}
 
@@ -245,11 +292,15 @@ public class VariablesWrappingTest
 	private static (WeakReference Source, WeakReference View) CreateWeakReferences()
 	{
 		var source = new Dictionary<string, object>();
-		return (new WeakReference(source), new WeakReference(source.ToVariables()));
+		return (new WeakReference(source), new WeakReference(source.ToVariables(reuse: true)));
 	}
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
-	private static WeakReference CreateWeakView(IDictionary<string, object> source) => new(source.ToVariables());
+	private static WeakReference CreateWeakView(IDictionary<string, object> source) => new(source.ToVariables(reuse: true));
+
+	[MethodImpl(MethodImplOptions.NoInlining)]
+	private static (WeakReference Wrapped, WeakReference Converted) CreateUncachedWeakViews(IDictionary<string, object> source) =>
+		(new WeakReference(Variables.Wrap(source, reuse: false)), new WeakReference(source.ToVariables(reuse: false)));
 
 	[MethodImpl(MethodImplOptions.NoInlining)]
 	private static IVariables CreateView(out WeakReference reference)

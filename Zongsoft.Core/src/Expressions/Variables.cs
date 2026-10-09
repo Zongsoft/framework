@@ -73,18 +73,24 @@ public class Variables : Dictionary<string, object>, IVariables
 	#region 静态方法
 	/// <summary>将指定字典包装为共享其当前内容的变量视图。</summary>
 	/// <param name="dictionary">作为变量来源的字典，不能为 <see langword="null"/>。</param>
-	/// <returns>字典本身实现的 <see cref="IVariables"/>，或按字典实例复用的只读变量视图。</returns>
+	/// <param name="reuse">是否通过弱引用缓存复用包装视图，默认为 <see langword="false"/>，每次新建包装，不访问或修改缓存；为 <see langword="true"/> 时按字典实例复用视图。</param>
+	/// <returns>字典本身实现的 <see cref="IVariables"/>，或根据 <paramref name="reuse"/> 复用或新建的只读变量视图。</returns>
 	/// <exception cref="ArgumentNullException"><paramref name="dictionary"/> 为 <see langword="null"/>。</exception>
 	/// <remarks>
 	/// 	<para>视图读取原字典的当前内容，不复制条目或缓存变量值。默认变量以名称作为键，具名变量以 <c>命名空间:名称</c> 作为键；查询参数不裁剪或拆分。</para>
 	/// 	<para>查询按 <see cref="StringComparer.OrdinalIgnoreCase"/> 比较键；枚举查询时返回第一个匹配条目的原始值，包括 <see langword="null"/>。</para>
 	/// 	<para>已知采用上述比较器的标准字典直接查询，其它字典枚举匹配。名称为 <see langword="null"/> 时查询抛出 <see cref="ArgumentNullException"/>。</para>
 	/// 	<para>缓存按引用身份复用视图，不阻止无外部引用的字典和视图被回收。缓存支持并发访问，源字典的并发读写仍由调用方负责。</para>
+	/// 	<para>字典已经实现 <see cref="IVariables"/> 时，不受 <paramref name="reuse"/> 影响，始终返回原对象。</para>
 	/// </remarks>
-	public static IVariables Wrap(IDictionary<string, object> dictionary)
+	public static IVariables Wrap(IDictionary<string, object> dictionary, bool reuse = false)
 	{
 		ArgumentNullException.ThrowIfNull(dictionary);
-		return dictionary as IVariables ?? _cache.GetValue(dictionary, static source => new DictionaryVariables(source));
+
+		if(dictionary is IVariables variables)
+			return variables;
+
+		return reuse ? _cache.GetValue(dictionary, static source => new DictionaryVariables(source)) : new DictionaryVariables(dictionary);
 	}
 	#endregion
 

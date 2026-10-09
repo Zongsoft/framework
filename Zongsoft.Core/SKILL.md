@@ -47,7 +47,7 @@ description: 设计、修改、审查或测试 Zongsoft.Core 的公共契约与�
 
 ## 字典变量视图
 
-Variables.Wrap(IDictionary<string, object>) 承载字典实时视图，VariablesExtension.ToVariables 仅转发；已有 IVariables 直接返回，其它字典由私有嵌套适配器包装，ConditionalWeakTable 按引用身份复用且不阻止无外部引用对象回收。缓存同步不扩展到源字典。查询遵循 Variables 的完整键约定和 OrdinalIgnoreCase；标准 Dictionary、ConcurrentDictionary 使用相同比较器时直接查询，其它来源按枚举顺序返回第一个匹配项，不检查重名，null 值仍查询成功。测试覆盖引用身份、并发复用、GC 生命周期、实时修改和模板集成。详见 [表达式文档](docs/expressions.zh-Hans.md#字典变量视图)。
+Variables.Wrap(IDictionary<string, object>, bool reuse = false) 承载字典实时视图，VariablesExtension.ToVariables 转发字典及 reuse 参数；已有 IVariables 始终直接返回，其它字典由私有嵌套适配器包装。默认每次新建适配器，不读取、登记或移除缓存条目；reuse=true 时 ConditionalWeakTable 按引用身份复用且不阻止无外部引用对象回收。缓存同步不扩展到源字典。查询遵循 Variables 的完整键约定和 OrdinalIgnoreCase；标准 Dictionary、ConcurrentDictionary 使用相同比较器时直接查询，其它来源按枚举顺序返回第一个匹配项，不检查重名，null 值仍查询成功。测试覆盖引用身份、并发复用、关闭复用、GC 生命周期、实时修改和模板集成。详见 [表达式文档](docs/expressions.zh-Hans.md#字典变量视图)。
 
 ## Profile 指令与读取
 

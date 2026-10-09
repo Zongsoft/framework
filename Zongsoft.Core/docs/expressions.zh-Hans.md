@@ -105,11 +105,17 @@ IDictionary<string, object> dictionary = new Dictionary<string, object>
 };
 
 IVariables variables = Variables.Wrap(dictionary);
-evaluator.Providers.Add(dictionary.ToVariables());
+evaluator.Providers.Add(variables);
 dictionary["Name"] = "Updated"; // 后续查询立即看到修改。
+
+// 反复包装同一个字典时，显式开启复用。
+IVariables shared = dictionary.ToVariables(reuse: true);
+IVariables same = Variables.Wrap(dictionary, reuse: true);
 ```
 
-同一个字典实例通过两个入口得到同一个视图；字典已经实现 `IVariables` 时直接返回原对象。私有适配器使用 `ConditionalWeakTable` 按引用身份缓存，重写相等比较不会使不同字典共享视图。字典存活期间缓存视图保持可用，持有视图也会保留其来源；两者均无其它可达引用时，缓存不会阻止回收。并发调用共享最终关联的视图，但首次并发访问时工厂可能创建额外适配器。
+两个入口均接受可选参数 `bool reuse = false`，默认每次新建适配器，不读取、登记或移除缓存条目，视图仍读取同一个源字典。指定 `reuse: true` 时，同一个字典实例通过两个入口得到同一个视图。字典已经实现 `IVariables` 时，不论 `reuse` 为何值均直接返回原对象。
+
+复用的适配器使用 `ConditionalWeakTable` 按引用身份缓存，重写相等比较不会使不同字典共享视图。字典存活期间缓存视图保持可用，持有任何视图也会保留其来源；两者均无其它可达引用时，缓存不会阻止回收。启用复用的并发调用共享最终关联的视图，但首次并发访问时工厂可能创建额外适配器。复用可减少重复包装的分配；默认行为适合只包装一次并自行持有视图的场景，省去缓存查询和登记。
 
 视图读取当前条目，立即反映新增、替换、删除和空值；不复制条目、不缓存查询结果、不展开模板或转换类型。需要独立复制条目时使用 `new Variables(dictionary)`。缓存自身支持并发访问，源字典的访问仍遵循其同步要求。
 

@@ -37,8 +37,9 @@ public static class VariablesExtension
 {
 	/// <summary>将指定字典转换为共享其当前内容的变量视图。</summary>
 	/// <param name="dictionary">作为变量来源的字典，不能为 <see langword="null"/>。</param>
-	/// <returns>由 <see cref="Variables.Wrap"/> 按字典实例复用的变量视图；字典本身实现 <see cref="IVariables"/> 时返回原对象。</returns>
+	/// <param name="reuse">是否通过弱引用缓存复用包装视图，默认为 <see langword="false"/>，每次新建包装，不访问或修改缓存；为 <see langword="true"/> 时按字典实例复用视图。</param>
+	/// <returns>由 <see cref="Variables.Wrap"/> 复用或新建的变量视图；字典本身实现 <see cref="IVariables"/> 时始终返回原对象。</returns>
 	/// <exception cref="ArgumentNullException"><paramref name="dictionary"/> 为 <see langword="null"/>。</exception>
 	/// <remarks>查询规则和生命周期均遵循 <see cref="Variables.Wrap"/>。</remarks>
-	public static IVariables ToVariables(this IDictionary<string, object> dictionary) => Variables.Wrap(dictionary);
+	public static IVariables ToVariables(this IDictionary<string, object> dictionary, bool reuse = false) => Variables.Wrap(dictionary, reuse);
 }

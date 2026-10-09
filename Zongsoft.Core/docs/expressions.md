@@ -105,11 +105,17 @@ IDictionary<string, object> dictionary = new Dictionary<string, object>
 };
 
 IVariables variables = Variables.Wrap(dictionary);
-evaluator.Providers.Add(dictionary.ToVariables());
+evaluator.Providers.Add(variables);
 dictionary["Name"] = "Updated"; // Subsequent lookups see this change.
+
+// Explicitly enable reuse when repeatedly adapting the same dictionary.
+IVariables shared = dictionary.ToVariables(reuse: true);
+IVariables same = Variables.Wrap(dictionary, reuse: true);
 ```
 
-Both entry points return the same view for the same dictionary instance. If the dictionary already implements `IVariables`, they return that object directly. A private adapter is cached in a `ConditionalWeakTable` by reference identity; overridden equality does not merge distinct dictionaries. The cached view remains available while the dictionary is alive, and holding a view keeps its source available. The cache does not prevent collection when neither object is otherwise reachable. Concurrent calls share the associated view, although the factory may create extra adapters during the first concurrent access.
+Both entry points accept an optional `bool reuse = false`. By default, each call creates a fresh adapter without reading, populating or removing cache entries; the view still reads the same source dictionary. With `reuse: true`, both entry points return the same view for the same dictionary instance. If the dictionary already implements `IVariables`, both entry points return that object regardless of `reuse`.
+
+Reused adapters are cached in a `ConditionalWeakTable` by reference identity; overridden equality does not merge distinct dictionaries. The cached view remains available while the dictionary is alive, and holding any view keeps its source available. The cache does not prevent collection when neither object is otherwise reachable. Concurrent calls with reuse enabled share the associated view, although the factory may create extra adapters during the first concurrent access. Reuse avoids repeated adapter allocations; the default avoids cache lookup and registration when the caller creates and holds a view once.
 
 The view reads current entries, including additions, replacements, removals and null values. It does not copy entries, cache query results, evaluate templates or convert values. Use `new Variables(dictionary)` for an independent copy of the entries. The cache is thread-safe; source access still follows the source dictionary's synchronization requirements.
 
