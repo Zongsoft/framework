@@ -58,7 +58,7 @@ public sealed class DataArchiveFormat : IEquatable<DataArchiveFormat>, IEquatabl
 	public string Type { get; }
 
 	/// <summary>获取数据文件的扩展名称。</summary>
-	/// <remarks>如果该属性不为空，则扩展名始终以<c>.</c>打头。</remarks>
+	/// <remarks>如果该属性不为空，则扩展名始终以 <c>.</c> 打头。</remarks>
 	public string Extension { get; }
 	#endregion
 
@@ -66,7 +66,7 @@ public sealed class DataArchiveFormat : IEquatable<DataArchiveFormat>, IEquatabl
 	public bool Equals(string name) => string.Equals(this.Name, name, StringComparison.OrdinalIgnoreCase);
 	public bool Equals(DataArchiveFormat other) => other is not null && string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase);
 	public override bool Equals(object obj) => obj is DataArchiveFormat other && this.Equals(other);
-	public override int GetHashCode() => HashCode.Combine(this.Name.ToUpperInvariant());
+	public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode(this.Name);
 	public override string ToString() => $"{this.Name}({this.Type})";
 	#endregion
 
