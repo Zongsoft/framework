@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -54,7 +54,7 @@ public sealed class DataArchiveFormat : IEquatable<DataArchiveFormat>, IEquatabl
 	/// <summary>获取数据文件的格式名称。</summary>
 	public string Name { get; }
 
-	/// <summary>获取数据文件的格式类型。</summary>
+	/// <summary>获取数据文件的 <seealso href="http://developer.mozilla.org/zh-CN/docs/Web/HTTP/Guides/MIME_types">MIME</seealso> 类型。</summary>
 	public string Type { get; }
 
 	/// <summary>获取数据文件的扩展名称。</summary>

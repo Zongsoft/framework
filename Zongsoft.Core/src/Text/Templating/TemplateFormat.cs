@@ -54,7 +54,7 @@ public readonly struct TemplateFormat : IEquatable<TemplateFormat>, IEquatable<s
 	/// <summary>获取模板的格式名称。</summary>
 	public string Name { get; }
 
-	/// <summary>获取模板的格式类型。</summary>
+	/// <summary>获取模板的 <seealso href="http://developer.mozilla.org/zh-CN/docs/Web/HTTP/Guides/MIME_types">MIME</seealso> 类型。</summary>
 	public string Type { get; }
 
 	/// <summary>获取模板文件的扩展名称。</summary>
