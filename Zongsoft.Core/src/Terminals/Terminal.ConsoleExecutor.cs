@@ -209,6 +209,10 @@ partial class Terminal
 			//调用基类同名方法
 			base.OnFailed(args);
 
+			// 事件处理器可接管输出，清空异常时也不再访问异常消息
+			if(args.ExceptionHandled || args.Exception == null)
+				return;
+
 			if(args.Exception is Terminal.ExitException)
 				args.Exception = null;
 			else
