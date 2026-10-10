@@ -32,7 +32,7 @@ using System.IO;
 
 namespace Zongsoft.Configuration.Profiles.Directives;
 
-/// <summary>按声明文件解析路径并将指定来源导入当前配置。</summary>
+/// <summary>将完整指令参数作为单个文件路径，按声明来源解析并导入当前配置。</summary>
 public sealed class ImportDirective() : ProfileDirectiveBase(ProfileDirectiveOptions.ImportOptions.NAME)
 {
 	#region 单例字段
@@ -49,39 +49,35 @@ public sealed class ImportDirective() : ProfileDirectiveBase(ProfileDirectiveOpt
 		if(string.IsNullOrEmpty(context.Argument))
 			return;
 
+		var path = context.Argument;
 		var maximumDepth = context.Options is ProfileDirectiveOptions.ImportOptions { MaximumDepth: > 0 } options ? options.MaximumDepth : ProfileDirectiveOptions.ImportOptions.DEFAULT_MAXIMUM_DEPTH;
 
-		foreach(var argument in context.Argument.Split([' ', '\t', '|'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+		if(!Path.IsPathFullyQualified(path))
 		{
-			var path = argument;
+			if(string.IsNullOrEmpty(context.FilePath))
+				throw new ProfileException(string.Format(Properties.Resources.Profiles_RelativeImportRequiresFile_Message, path, context.LineNumber));
 
-			if(!Path.IsPathFullyQualified(path))
-			{
-				if(string.IsNullOrEmpty(context.FilePath))
-					throw new ProfileException(string.Format(Properties.Resources.Profiles_RelativeImportRequiresFile_Message, path, context.LineNumber));
-
-				path = Path.Combine(Path.GetDirectoryName(context.FilePath), path);
-			}
-
-			path = Path.GetFullPath(path);
-			FileStream stream;
-
-			//仅打开阶段允许忽略缺失；读取及回调中的同类异常仍须传播。
-			try
-			{
-				stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
-			}
-			catch(IOException exception) when(exception is FileNotFoundException or DirectoryNotFoundException)
-			{
-				if(context.Behavior == ProfileDirectiveBehavior.Strict)
-					throw new ProfileException(string.Format(Properties.Resources.Profiles_RequiredImport_Message, path, context.FilePath, context.LineNumber), exception);
-
-				continue;
-			}
-
-			//共享当前读取会话；会话拥有流并在成功或失败时释放。
-			context.Read(stream, maximumDepth);
+			path = Path.Combine(Path.GetDirectoryName(context.FilePath), path);
 		}
+
+		path = Path.GetFullPath(path);
+		FileStream stream;
+
+		//仅打开阶段允许忽略缺失；读取及回调中的同类异常仍须传播
+		try
+		{
+			stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+		}
+		catch(IOException exception) when(exception is FileNotFoundException or DirectoryNotFoundException)
+		{
+			if(context.Behavior == ProfileDirectiveBehavior.Strict)
+				throw new ProfileException(string.Format(Properties.Resources.Profiles_RequiredImport_Message, path, context.FilePath, context.LineNumber), exception);
+
+			return;
+		}
+
+		//共享当前读取会话；会话拥有流并在成功或失败时释放
+		context.Read(stream, maximumDepth);
 	}
 	#endregion
 }

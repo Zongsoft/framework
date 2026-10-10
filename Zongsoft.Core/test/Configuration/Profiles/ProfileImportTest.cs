@@ -92,7 +92,7 @@ public class ProfileImportTest
 	[InlineData(";@IMPORT child.ini")]
 	[InlineData("#@import missing.ini")]
 	[InlineData("#@import")]
-	[InlineData("[section]\n#@import child.ini | child.ini")]
+	[InlineData("[section]\n#@import child.ini\n#@import child.ini")]
 	public void Import_IgnoreKeepsCommentsWithoutOpeningFilesOrCallbacks(string directive)
 	{
 		using var files = new ProfileFiles();
@@ -450,7 +450,7 @@ public class ProfileImportTest
 		files.Write("right.ini", "#@import leaf.ini\nright=present");
 		files.Write("leaf.ini", "leaf=shared");
 
-		var root = files.Write("root.ini", "#@import left.ini | right.ini\tleaf.ini");
+		var root = files.Write("root.ini", "#@import left.ini\n#@import right.ini\n#@import leaf.ini");
 		var events = new List<string>();
 		var options = Options(
 			importing: path => events.Add("before:" + Path.GetFileName(path)),
@@ -463,6 +463,80 @@ public class ProfileImportTest
 		Assert.Equal("shared", result.Entries["leaf"].Value);
 		Assert.Equal("present", result.Entries["left"].Value);
 		Assert.Equal("present", result.Entries["right"].Value);
+	}
+
+	[Fact]
+	public void Import_PathContainingSpacesIsOneFileAndPreservesDeclaration()
+	{
+		using var files = new ProfileFiles();
+		const string ARGUMENT = "shared configs/service settings.ini";
+		var child = files.Write(ARGUMENT, "value=whole path");
+		var root = files.Write("root.ini", "#@import \t" + ARGUMENT + "\t \nlocal=kept");
+		var imported = new List<string>();
+		var processing = new List<ProfileDirectiveContext>();
+		var processed = new List<ProfileDirectiveContext>();
+		var options = Options(importing: imported.Add);
+		options.Directives.Add(ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Strict));
+		options.Directives.Processing = processing.Add;
+		options.Directives.Processed = processed.Add;
+
+		var profile = Profile.Load(root, options);
+
+		Assert.Equal("whole path", profile.Entries["value"].Value);
+		Assert.Equal("kept", profile.Entries["local"].Value);
+		Assert.Equal([child], imported);
+		var context = Assert.Single(processing);
+
+		Assert.Equal(ARGUMENT, context.Argument);
+		Assert.True(context.Handled);
+		Assert.Same(context, Assert.Single(processed));
+		using var output = new StringWriter { NewLine = "\n" };
+
+		profile.Save(output);
+		Assert.Equal("#@import \t" + ARGUMENT + "\nlocal=kept\n", output.ToString());
+	}
+
+	[Theory]
+	[InlineData("left.ini right.ini")]
+	[InlineData("left.ini\tright.ini")]
+	[InlineData("left.ini|right.ini")]
+	[InlineData("\"left.ini\"")]
+	[InlineData("'left.ini'")]
+	public void Import_WholeArgumentIsNotSplitOrUnquoted(string argument)
+	{
+		using var files = new ProfileFiles();
+		files.Write("left.ini", "left=must not load");
+		files.Write("right.ini", "right=must not load");
+		var root = files.Write("root.ini", "before=kept\n#@import " + argument);
+		var events = new List<string>();
+		ProfileDirectiveContext directive = null;
+		var options = new ProfileOptions
+		{
+			Loading = context => events.Add("loading:" + context.Depth),
+			Loaded = context => events.Add("loaded:" + context.Depth),
+			Directives = { ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Strict) },
+		};
+		options.Directives.Processing = context =>
+		{
+			directive = context;
+			events.Add("processing");
+		};
+		options.Directives.Processed = _ => events.Add("processed");
+
+		var error = Record.Exception(() => Profile.Load(root, options));
+
+		Assert.NotNull(error);
+		if(error is ProfileException profileError)
+			Assert.True(profileError.InnerException is FileNotFoundException or DirectoryNotFoundException);
+		else
+			Assert.True(error is IOException or ArgumentException);
+
+		Assert.NotNull(directive);
+		Assert.Equal(argument, directive.Argument);
+		Assert.Equal(2, directive.LineNumber);
+		Assert.False(directive.Handled);
+		Assert.Equal("kept", Assert.Single(directive.Profile.Entries).Value);
+		Assert.Equal(["loading:1", "processing"], events);
 	}
 
 	[Fact]
@@ -590,7 +664,7 @@ public class ProfileImportTest
 	public void Import_OptionalMissingHasNoCallbacks()
 	{
 		using var files = new ProfileFiles();
-		var root = files.Write("root.ini", "#@import absent.ini absent/child.ini\nvalue=root");
+		var root = files.Write("root.ini", "#@import absent.ini\n#@import absent/child.ini\nvalue=root");
 		var events = new List<string>();
 		var result = Profile.Load(root, Options(
 			importing: path => events.Add(path),

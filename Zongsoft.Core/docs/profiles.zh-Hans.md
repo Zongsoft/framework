@@ -77,7 +77,7 @@ public sealed class NoteDirective() : ProfileDirectiveBase("note")
 
 执行顺序为 Ignore/Suppress 检查、Processing 回调、未 Handled 时调用注册实现、成功后 Processed。已注册指令自行定义 None/Strict 的具体规则。未知 Strict 指令必须由 Processing 接管；未知 None 指令可以保持未处理。回调设置 Handled=true 可接管已注册实现。
 
-ImportDirective 拆分参数、按声明来源解析相对路径、处理可选或严格文件缺失，并取得深度上限（默认 64）。它通过上下文的内部读取操作将已打开的流交给当前 ProfileReader.Session；会话拥有并释放流，共享活动链检查，完成解析和合并后通知 Loaded。ImportDirective 不引用 ProfileReader 或 ProfileWriter。自定义实现中调用公共 Profile.Load 会开始独立的根加载，不属于内置导入的递归通道。
+ImportDirective 将完整参数作为单个文件路径、按声明来源解析相对路径、处理可选或严格文件缺失，并取得深度上限（默认 64）。它通过上下文的内部读取操作将已打开的流交给当前 ProfileReader.Session；会话拥有并释放流，共享活动链检查，完成解析和合并后通知 Loaded。ImportDirective 不引用 ProfileReader 或 ProfileWriter。自定义实现中调用公共 Profile.Load 会开始独立的根加载，不属于内置导入的递归通道。
 
 ### 文件读取回调
 
@@ -94,15 +94,17 @@ Loading 和 Loaded 覆盖根配置及导入配置。Loading 在文件打开、�
 
 ### 指令处理回调
 
-指令是紧接注释标记的 `@name`，例如 `#@import a.ini | b.ini` 或 `;@custom value`。名称与参数以空格或 Tab 分隔。注释标记和 `@` 之间有空白时作为普通注释。原始指令文本保存在 ProfileComment 声明中。
+指令是紧接注释标记的 `@name`，例如 `#@import a.ini` 或 `;@custom value`。名称与参数以空格或 Tab 分隔。注释标记和 `@` 之间有空白时作为普通注释。原始指令文本保存在 ProfileComment 声明中。
 
-Directives.Processing 在识别名称及原始参数后、执行之前触发。Directives.Processed 在整条指令成功处理后触发，包括其递归文件读取和合并。一条指令导入多个文件时，指令通知一组，每个成功读取的文件通知一组：
+Directives.Processing 在识别名称及原始参数后、执行之前触发。Directives.Processed 在整条指令成功处理后触发，包括其递归文件读取和合并。每条导入指令对应一个文件和一组指令通知，每个成功读取的文件收到一组文件通知。按顺序声明两条导入指令时：
 
 ```text
 Loading(root)
   Directives.Processing(import)
     Loading(a.ini)
     Loaded(a.ini)
+  Directives.Processed(import)
+  Directives.Processing(import)
     Loading(b.ini)
     Loaded(b.ini)
   Directives.Processed(import)
@@ -142,7 +144,15 @@ options.Directives.Processing = context =>
 
 ### 语法、路径与递归
 
-导入参数以空格、Tab 或 `|` 分隔。null 或空参数不读取文件。路径不提供引号、变量展开或通配符；相对路径基于声明文件的加载目录，绝对路径可直接使用。导入合并到当前 Profile 根，包括写在章节内的导入。
+每条导入指令将去除两端空白后的完整参数作为单个文件路径。参数内部的空格、Tab 和 `|` 均属于路径内容，具体字符是否合法由操作系统及文件系统决定。null 或空参数不读取文件。路径不解释或移除引号、不展开变量或通配符；包含空格的路径直接书写，无需引号。相对路径基于声明文件的加载目录，绝对路径可直接使用。导入合并到当前 Profile 根，包括写在章节内的导入。
+
+导入多个文件时，按读取顺序分别声明：
+
+```ini
+#@import ../shared files/base.env
+#@import ../.shared/product.env
+#@import ../.shared/production.env
+```
 
 [ApplicationManifest](application-manifest.zh-Hans.md) 配置 `Directives = { ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Suppress) }`，在打开导入文件前以 FormatException 拒绝导入指令，包括两种注释标记及空参数。
 

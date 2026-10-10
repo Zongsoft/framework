@@ -43,7 +43,7 @@ public class ProfileWriterTest
 		var leafPath = files.Write("leaf.ini", "leaf=original");
 		var childPath = files.Write("child.ini", "#@import leaf.ini\nchild=original");
 		var siblingPath = files.Write("sibling.ini", "sibling=original");
-		var rootPath = files.Write("root.ini", "#@import child.ini sibling.ini\nroot=original");
+		var rootPath = files.Write("root.ini", "#@import child.ini\n#@import sibling.ini\nroot=original");
 		var profile = Profile.Load(rootPath);
 		profile.Entries["leaf"].Value = "changed";
 		profile.Entries["child"].Value = "changed";
@@ -212,7 +212,7 @@ public class ProfileWriterTest
 	{
 		using var files = new ProfileImportTest.ProfileFiles();
 		var child = files.Write("child.ini", "#@trace child\nvalue=original");
-		var root = files.Write("root.ini", "#@import child.ini child.ini");
+		var root = files.Write("root.ini", "#@import child.ini\n#@import child.ini");
 		var imported = new List<Profile>();
 		var options = Options(imported: imported.Add);
 		var profile = Profile.Load(root, options);
@@ -238,7 +238,7 @@ public class ProfileWriterTest
 	{
 		using var files = new ProfileImportTest.ProfileFiles();
 		var child = files.Write("child.ini", "#@trace child\nvalue=original");
-		var root = files.Write("root.ini", "#@import child.ini child.ini\nlocal=original");
+		var root = files.Write("root.ini", "#@import child.ini\n#@import child.ini\nlocal=original");
 		var originalChild = File.ReadAllBytes(child);
 		var originalRoot = File.ReadAllBytes(root);
 		var imported = new List<Profile>();
@@ -763,7 +763,7 @@ public class ProfileWriterTest
 
 		try
 		{
-			var root = files.Write("root.ini", "#@import child.ini alias.ini");
+			var root = files.Write("root.ini", "#@import child.ini\n#@import alias.ini");
 			var imported = new List<Profile>();
 			var options = Options(imported: imported.Add);
 			var profile = Profile.Load(root, options);
@@ -854,13 +854,13 @@ public class ProfileWriterTest
 		using var files = new ProfileImportTest.ProfileFiles();
 		var first = files.Write("first.ini", "value=first\n[first]\nvalue=first section");
 		var second = files.Write("second.ini", "value=second\n[second]\nvalue=second section");
-		var root = files.Write("root.ini", "value=local\n#@import first.ini second.ini");
+		var root = files.Write("root.ini", "value=local\n#@import first.ini\n#@import second.ini");
 		var imported = new List<Profile>();
 		var profile = Profile.Load(root, Options(imported: imported.Add));
 		Assert.Equal(second, profile.Entries["value"].Profile.FilePath);
 		Assert.Equal("second", profile.Entries["value"].Value);
 		Assert.Equal("first", imported[0].Entries["value"].Value);
-		Assert.Equal("value=local\n#@import first.ini second.ini\n", Write(profile));
+		Assert.Equal("value=local\n#@import first.ini\n#@import second.ini\n", Write(profile));
 		imported[0].Entries["value"].Value = "changed first";
 
 		profile.Save();
@@ -870,7 +870,7 @@ public class ProfileWriterTest
 		Assert.Equal("second", reloaded.Entries["value"].Value);
 		Assert.Equal("first section", reloaded.Sections["first"].Entries["value"].Value);
 		Assert.Equal("second section", reloaded.Sections["second"].Entries["value"].Value);
-		Assert.Equal("value=local\n#@import first.ini second.ini\n", Write(reloaded));
+		Assert.Equal("value=local\n#@import first.ini\n#@import second.ini\n", Write(reloaded));
 	}
 
 	private static Profile Read(string content, ProfileOptions options = null)

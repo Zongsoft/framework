@@ -51,7 +51,7 @@ public class ProfileDirectiveTest
 		files.Write("first.ini", "#@import leaf.ini\nfirst=present");
 		files.Write("second.ini", "second=present");
 
-		var root = files.Write("root.ini", "local=present\n[section]\n;@ImPoRt first.ini | second.ini\nlast=present");
+		var root = files.Write("root.ini", "local=present\n[section]\n;@ImPoRt first.ini\n#@import second.ini\nlast=present");
 		var events = new List<string>();
 		var starting = new List<ProfileContext>();
 		var completed = new List<ProfileContext>();
@@ -95,7 +95,8 @@ public class ProfileDirectiveTest
 		{
 			"load:root.ini", "directive:root.ini", "load:first.ini", "directive:first.ini",
 			"load:leaf.ini", "loaded:leaf.ini", "processed:first.ini", "loaded:first.ini",
-			"load:second.ini", "loaded:second.ini", "processed:root.ini", "loaded:root.ini",
+			"processed:root.ini", "directive:root.ini", "load:second.ini", "loaded:second.ini",
+			"processed:root.ini", "loaded:root.ini",
 		}, events);
 
 		Assert.Equal([1, 2, 3, 2], starting.Select(context => context.Depth));
@@ -108,8 +109,9 @@ public class ProfileDirectiveTest
 		Assert.All(starting, context => Assert.Null(context.Profile));
 		Assert.Same(processing[0], processed[1]);
 		Assert.Same(processing[1], processed[0]);
+		Assert.Same(processing[2], processed[2]);
 		Assert.Equal("ImPoRt", processing[0].Name);
-		Assert.Equal("first.ini | second.ini", processing[0].Argument);
+		Assert.Equal("first.ini", processing[0].Argument);
 		Assert.Equal(3, processing[0].LineNumber);
 		Assert.Equal(1, processing[0].Depth);
 		Assert.Same(profile, processing[0].Profile);
@@ -117,6 +119,11 @@ public class ProfileDirectiveTest
 		Assert.Equal(2, processing[1].Depth);
 		Assert.Equal(1, processing[1].LineNumber);
 		Assert.Null(processing[1].Section);
+		Assert.Equal("second.ini", processing[2].Argument);
+		Assert.Equal(4, processing[2].LineNumber);
+		Assert.Equal(1, processing[2].Depth);
+		Assert.Same(profile, processing[2].Profile);
+		Assert.Same(profile.Sections["section"], processing[2].Section);
 		Assert.Equal("present", profile.Entries["second"].Value);
 		Assert.Equal("present", profile.Sections["section"].Entries["last"].Value);
 	}
@@ -203,7 +210,7 @@ public class ProfileDirectiveTest
 	public void Directive_RewrittenArgumentsPreserveOriginalDeclarations()
 	{
 		using var files = new ProfileImportTest.ProfileFiles();
-		files.Write("actual.ini", "value=rewritten");
+		files.Write("actual settings.ini", "value=rewritten");
 		var root = files.Write("root.ini", "#@import absent.ini");
 		var options = new ProfileOptions
 		{
@@ -212,11 +219,11 @@ public class ProfileDirectiveTest
 		options.Directives.Processing = context =>
 		{
 			Assert.Equal("absent.ini", context.Argument);
-			context.Argument = " \tactual.ini\t ";
+			context.Argument = " \tactual settings.ini\t ";
 		};
 		options.Directives.Processed = context =>
 		{
-			Assert.Equal("actual.ini", context.Argument);
+			Assert.Equal("actual settings.ini", context.Argument);
 			Assert.Equal("rewritten", context.Profile.Entries["value"].Value);
 			context.Argument = "another-missing.ini";
 		};

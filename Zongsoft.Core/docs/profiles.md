@@ -77,7 +77,7 @@ Each root load copies the registry before cloning options or invoking callbacks.
 
 Processing order is Ignore/Suppress checks, Processing callback, a registered implementation if not Handled, and Processed after success. Known implementations interpret None and Strict using their own rules. Unknown Strict directives must be handled by Processing; unknown None directives may remain unhandled. A callback can bypass a registered implementation by setting Handled=true.
 
-ImportDirective splits arguments, resolves paths relative to the declaring source, handles optional versus required missing files, and selects the configured depth limit (default 64). An internal context operation passes the opened stream to the current ProfileReader.Session, which owns and releases it, checks the shared active chain, parses, merges and notifies Loaded. ImportDirective does not reference ProfileReader or ProfileWriter. Calling public Profile.Load inside a custom handler starts an independent root load; it is not the built-in recursive import path.
+ImportDirective treats the complete argument as a single file path, resolves it relative to the declaring source, handles optional versus required missing files, and selects the configured depth limit (default 64). An internal context operation passes the opened stream to the current ProfileReader.Session, which owns and releases it, checks the shared active chain, parses, merges and notifies Loaded. ImportDirective does not reference ProfileReader or ProfileWriter. Calling public Profile.Load inside a custom handler starts an independent root load; it is not the built-in recursive import path.
 
 ### File loading callbacks
 
@@ -94,15 +94,17 @@ Missing optional imports and rejected files do not receive file notifications. R
 
 ### Directive callbacks
 
-A directive is a comment beginning immediately with `@name`, such as `#@import a.ini | b.ini` or `;@custom value`. A space or tab separates the name from its argument. Whitespace between the comment marker and `@` produces an ordinary comment. Original directive text remains a ProfileComment declaration.
+A directive is a comment beginning immediately with `@name`, such as `#@import a.ini` or `;@custom value`. A space or tab separates the name from its argument. Whitespace between the comment marker and `@` produces an ordinary comment. Original directive text remains a ProfileComment declaration.
 
-Directives.Processing runs after the name and original argument have been identified, before execution. Directives.Processed runs after the whole directive succeeds, including its nested file reads and merges. A directive with several imports receives one pair of directive notifications and a pair of file notifications for each successfully loaded file:
+Directives.Processing runs after the name and original argument have been identified, before execution. Directives.Processed runs after the whole directive succeeds, including its nested file reads and merges. Each import directive identifies one file and receives one pair of directive notifications; each successfully loaded file receives one pair of file notifications. Two import directives declared in sequence produce:
 
 ```text
 Loading(root)
   Directives.Processing(import)
     Loading(a.ini)
     Loaded(a.ini)
+  Directives.Processed(import)
+  Directives.Processing(import)
     Loading(b.ini)
     Loaded(b.ini)
   Directives.Processed(import)
@@ -142,7 +144,15 @@ Saving still writes the original import comment. An unhandled unknown directive 
 
 ### Syntax, paths and recursion
 
-Import arguments are separated by spaces, tabs or `|`. Null or empty arguments read no files. Paths support neither quoting, variable expansion nor globs. Relative paths use the declaring file's loading directory; absolute paths are allowed. Imports merge at the current Profile root even when declared inside a section.
+Each import directive treats its complete argument, with surrounding whitespace removed, as a single file path. Internal spaces, tabs and `|` remain part of the path; character validity depends on the operating system and filesystem. Null or empty arguments read no files. Paths do not interpret or remove quotes, expand variables or process globs; write paths containing spaces directly without quotes. Relative paths use the declaring file's loading directory; absolute paths are allowed. Imports merge at the current Profile root even when declared inside a section.
+
+To import several files, declare one directive per file in reading order:
+
+```ini
+#@import ../shared files/base.env
+#@import ../.shared/product.env
+#@import ../.shared/production.env
+```
 
 [ApplicationManifest](application-manifest.md) configures `Directives = { ProfileDirectiveOptions.Import(ProfileDirectiveBehavior.Suppress) }` and rejects import directives with FormatException before opening imported files, including both comment markers and empty arguments.
 
