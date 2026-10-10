@@ -30,6 +30,8 @@ public class VariablesEnvironmentsTest
 		Assert.Equal("name", Assert.Throws<ArgumentNullException>(() => variables.TryGetValue(null, null, out _)).ParamName);
 		Assert.Equal("name", Assert.Throws<ArgumentNullException>(() => variables.TryGetValue(string.Empty, null, out _)).ParamName);
 		Assert.Equal("name", Assert.Throws<ArgumentNullException>(() => variables.TryGetValue("env", null, out _)).ParamName);
+		Assert.Equal("name", Assert.Throws<ArgumentNullException>(() => variables.TryGetValue(null, true, out _)).ParamName);
+		Assert.Equal("name", Assert.Throws<ArgumentNullException>(() => variables.TryGetValue("env", null, true, out _)).ParamName);
 	}
 
 	[Fact]
@@ -59,7 +61,7 @@ public class VariablesEnvironmentsTest
 	}
 
 	[Fact]
-	public void Lookup_OnlyDefaultNamespaceAndExactUntrimmedName()
+	public void Lookup_FallbackControlsGlobalNamespaceWithoutChangingNames()
 	{
 		var name = CreateName();
 		var variables = Variables.Environments();
@@ -77,6 +79,20 @@ public class VariablesEnvironmentsTest
 			Assert.Null(value);
 			Assert.False(variables.TryGetValue($" {name} ", out value));
 			Assert.Null(value);
+
+			foreach(var scope in new[] { "env", "app.worker", "default", "*", " " })
+			{
+				Assert.False(variables.TryGetValue(scope, name, false, out value));
+				Assert.Null(value);
+				Assert.True(variables.TryGetValue(scope, name, true, out value));
+				Assert.Equal("value", value);
+			}
+
+			Assert.True(variables.TryGetValue(name, true, out value));
+			Assert.Equal("value", value);
+			Assert.False(variables.TryGetValue("env", $" {name} ", true, out value));
+			Assert.Null(value);
+
 		}
 		finally
 		{
@@ -137,6 +153,8 @@ public class VariablesEnvironmentsTest
 			Assert.True(Variables.Environments().TryGetValue(name, out var value));
 			Assert.Equal("process only", value);
 			Assert.False(variables.TryGetValue(name, out value));
+			Assert.Null(value);
+			Assert.False(variables.TryGetValue("env", name, true, out value));
 			Assert.Null(value);
 		}
 		finally

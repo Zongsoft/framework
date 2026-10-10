@@ -39,15 +39,47 @@ public class CommandOptionDescriptor
 	#endregion
 
 	#region 构造函数
-	public CommandOptionDescriptor(string name, bool required, Type type = null, Type converterType = null, object defaultValue = null, string description = null) :
-		this(name, '\0', required, type, converterType, defaultValue, description) { }
-	public CommandOptionDescriptor(string name, char symbol, bool required, Type type = null, Type converterType = null, object defaultValue = null, string description = null)
+	/// <summary>初始化没有声明默认值的命令选项描述。</summary>
+	/// <param name="name">选项名称。</param>
+	/// <param name="required">是否必需。</param>
+	/// <param name="type">值类型，<see langword="null"/> 表示无值选项。</param>
+	/// <param name="converterType">值转换器的类型。</param>
+	public CommandOptionDescriptor(string name, bool required, Type type = null, Type converterType = null) : this(name, '\0', required, type, converterType) { }
+
+	/// <summary>初始化没有声明默认值的命令选项描述。</summary>
+	/// <param name="name">选项名称。</param>
+	/// <param name="symbol">缩写字符。</param>
+	/// <param name="required">是否必需。</param>
+	/// <param name="type">值类型，<see langword="null"/> 表示无值选项。</param>
+	/// <param name="converterType">值转换器的类型。</param>
+	public CommandOptionDescriptor(string name, char symbol, bool required, Type type = null, Type converterType = null)
 	{
 		this.Name = name;
 		this.Symbol = symbol;
 		this.Required = required;
 		this.Type = type;
 		this.ConverterType = converterType;
+	}
+
+	/// <summary>初始化具有已声明默认值的命令选项描述。</summary>
+	/// <param name="name">选项名称。</param>
+	/// <param name="required">是否必需。</param>
+	/// <param name="type">值类型，<see langword="null"/> 表示无值选项。</param>
+	/// <param name="converterType">值转换器的类型。</param>
+	/// <param name="defaultValue">声明的默认值，显式传入 <see langword="null"/> 也属于已声明。</param>
+	/// <param name="description">文本描述。</param>
+	public CommandOptionDescriptor(string name, bool required, Type type, Type converterType, object defaultValue, string description = null) : this(name, '\0', required, type, converterType, defaultValue, description) { }
+
+	/// <summary>初始化具有已声明默认值的命令选项描述。</summary>
+	/// <param name="name">选项名称。</param>
+	/// <param name="symbol">缩写字符。</param>
+	/// <param name="required">是否必需。</param>
+	/// <param name="type">值类型，<see langword="null"/> 表示无值选项。</param>
+	/// <param name="converterType">值转换器的类型。</param>
+	/// <param name="defaultValue">声明的默认值，显式传入 <see langword="null"/> 也属于已声明。</param>
+	/// <param name="description">文本描述。</param>
+	public CommandOptionDescriptor(string name, char symbol, bool required, Type type, Type converterType, object defaultValue, string description = null) : this(name, symbol, required, type, converterType)
+	{
 		this.DefaultValue = defaultValue;
 		this.Description = description;
 	}
@@ -69,11 +101,20 @@ public class CommandOptionDescriptor
 	/// <summary>获取或设置命令选项值的类型转换器的类型。</summary>
 	public Type ConverterType { get; set; }
 
-	/// <summary>获取或设置命令选项的默认值。</summary>
+	/// <summary>获取一个值，指示是否明确声明了默认值。</summary>
+	/// <remarks>显式赋值 <see langword="null"/> 也表示已声明；未声明时不根据选项类型生成默认值。</remarks>
+	public bool HasDefaultValue { get; private set; }
+
+	/// <summary>获取或设置命令选项声明的默认值。</summary>
+	/// <remarks>赋值后 <see cref="HasDefaultValue"/> 为 <see langword="true"/>，包括赋值 <see langword="null"/>；读取不会生成类型的零值。</remarks>
 	public object DefaultValue
 	{
-		get => _defaultValue ?? Common.TypeExtension.GetDefaultValue(this.Type);
-		set => _defaultValue = value;
+		get => _defaultValue;
+		set
+		{
+			_defaultValue = value;
+			this.HasDefaultValue = true;
+		}
 	}
 
 	/// <summary>获取或设置命令选项的文本描述。</summary>

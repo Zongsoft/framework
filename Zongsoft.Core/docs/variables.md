@@ -30,17 +30,46 @@ Variable sources implement the following interface:
 public interface IVariables
 {
 	bool TryGetValue(string name, out object value);
+	bool TryGetValue(string name, bool fallback, out object value);
 	bool TryGetValue(string @namespace, string name, out object value);
+	bool TryGetValue(string @namespace, string name, bool fallback, out object value);
 }
 ```
 
 `TryGetValue(name, out value)` queries only the default namespace and is equivalent to both `TryGetValue(null, name, out value)` and `TryGetValue(string.Empty, name, out value)`. The explicit overload takes the namespace first, followed by the variable name. They are separate arguments; the name is not split again into namespace and name.
 
-Names and namespaces use `OrdinalIgnoreCase`. Null and empty namespaces are equivalent, and a nonempty namespace never falls back to the default namespace. [Environment variable views](#environment-variable-views) are an explicit exception to the name comparison rule and follow platform behavior.
+Names and namespaces use `OrdinalIgnoreCase`; [environment views](#environment-variable-views) follow platform rules. Null and empty namespaces both mean global. Overloads without a Boolean argument use `fallback=false`. With `fallback=true`, query the requested namespace, its parents, global, then source-declared defaults: A.B.C → A.B → A → global. Namespaces do not encode query modes.
 
 The Boolean result indicates whether lookup succeeded: a present null value still returns true. Missing variables return false without throwing; other source-access exceptions may propagate.
 
 Providers return raw objects without parsing references, navigating members, converting types, formatting or expanding templates. Each implementation owns its caching, live-value and synchronization policies. The interface does not require repeated queries to return the same value.
+
+## Multiple-source queries
+
+`VariablesExtension.TryGetValue` provides four overloads for `IEnumerable<IVariables>` matching the interface:
+
+1. Query all sources at the requested namespace in source order, passing false.
+2. If all miss and fallback is enabled, repeat at each parent namespace through global, checking every source at each level.
+3. Only after all ordinary global queries miss, query sources with `TryGetValue(null, name, true, out value)` to allow source-declared defaults.
+4. Null, empty strings, false or zero stop lookup. Overloads without the Boolean parameter, or passing false, perform only step 1.
+
+The fragment assumes existing command context context and configuration profile:
+
+```csharp
+IVariables[] sources = [context.Options, profile.ToVariables(), Variables.Environments()];
+sources.TryGetValue("compilation", true, out var raw);
+var evaluator = new TemplateEvaluator(new() { Fallback = true })
+{
+	Providers = { context.Options, profile.ToVariables(), Variables.Environments() },
+};
+var text = evaluator.Evaluate("${compilation}");
+```
+
+With descriptor default Release and configuration Debug, omission yields Debug; explicit `--compilation:Custom` yields Custom. Release applies only after options, configuration and environment all miss. Register command options once without copying or splitting them.
+
+Namespace specificity comes first; source order decides within each namespace. A customer source with global `key=customer` followed by a shared source with `A.B:key=shared` yields shared for `A.B.C:key` with fallback enabled.
+
+The collection must allow repeated enumeration and remain stable during lookup. Empty collections return false; null sources are skipped. A null collection or name throws ArgumentNullException. Templates independently reject null entries in Providers. No caching, conversion, expansion, exception suppression or atomic cross-source snapshot is provided. Profile [default] remains an ordinary namespace, queried by `${default:compilation}`.
 
 ## In-memory variables
 
@@ -103,7 +132,7 @@ Reused adapters are cached in a `ConditionalWeakTable` by reference identity; ov
 
 The view reads current entries, including additions, replacements, removals and null values. It does not copy entries, cache query results, evaluate templates or convert values. For an independent copy of string-keyed object values, pass `IEnumerable<KeyValuePair<string, object>>` to `new Variables(entries)`. The cache is thread-safe; source access still follows the source dictionary's synchronization requirements.
 
-Only string keys provide variables. Other key types are ignored without calling `ToString()`. Keys follow the same convention as `Variables`: `name` for the default namespace and `namespace:name` for a named namespace. Null and empty namespaces select the default namespace, with no fallback from a nonempty namespace. Query parameters are not trimmed, split or normalized. A null dictionary or query name throws `ArgumentNullException`.
+Only string keys provide variables. Other key types are ignored without calling `ToString()`. Keys follow the same convention as `Variables`: `name` for the default namespace and `namespace:name` for a named namespace. Null and empty namespaces select global. Only fallback=true enables parent/global namespace lookup. Query parameters are not trimmed, split or normalized. A null dictionary or query name throws `ArgumentNullException`.
 
 Lookups always compare keys using `OrdinalIgnoreCase`. Standard `Dictionary<string, object>` and `ConcurrentDictionary<string, object>` instances using `StringComparer.OrdinalIgnoreCase` are queried directly. Other implementations, derived types and comparers scan current entries in enumeration order and return immediately on the first match, even when its value is null. Duplicate names under case-insensitive comparison are allowed; an exact-case match has no extra priority. This scan takes O(n) in the worst case. A present null value counts as success and blocks later providers.
 
@@ -127,7 +156,7 @@ Each target has a shared view instance, but values are not cached. Every lookup 
 
 The view returned by `Variables.Environments()` is an explicit exception to the case-insensitive `IVariables` contract. The interface contract and dictionary/Profile behavior remain unchanged. Environment variable names follow platform rules: Windows ignores case, while Unix/Linux is case-sensitive. Unix/Linux callers must use the correct spelling; names differing only in case are queried separately. Names are preserved without converting `__`, underscores or other characters into namespaces. Template references still follow the template identifier grammar.
 
-The view provides only the default namespace. `TryGetValue(name, out value)`, a null namespace and an empty namespace are equivalent. Other namespaces return false without fallback. Query arguments are not trimmed; a null name throws `ArgumentNullException`.
+The view provides only the default namespace. `TryGetValue(name, out value)`, a null namespace and an empty namespace are equivalent. Other namespaces return false unless fallback=true allows the global value; the target has no additional defaults. Query arguments are not trimmed; a null name throws `ArgumentNullException`.
 
 `Process` reads the current process. `User` and `Machine` follow .NET platform support and find no variables on Unix/Linux. Targets are not merged and do not fall back to one another. Invalid enum values throw `ArgumentOutOfRangeException` with parameter name `target` when requesting the view.
 
@@ -150,17 +179,30 @@ var text = evaluator.Evaluate("${install_path}");
 
 Variable names replace `.` and `-` in option names with `_`: both `install.path` and `install-path` map to `install_path`. The resulting name must match `[A-Za-z_][A-Za-z0-9_]*`; otherwise the option and its short name are excluded from variable lookup. Valid short names are also available as variables. Lookup names must already be valid identifiers and are not trimmed, normalized or split into namespaces. Ordinary option access still uses the original name, for example `context.Options.GetValue("install-path")`.
 
-Variable lookup ignores case and provides only the default namespace; null and empty namespaces are equivalent, and any nonempty namespace returns false. Explicitly supplied values take precedence over descriptor defaults, preserving the option's converted type. A present null still succeeds and blocks fallback. When names map to the same variable, the first match in the supplied options' enumeration order wins; if none matches, descriptor defaults are searched in descriptor order.
+Variable lookup ignores case. Command options supply only global variables:
+
+| Call | Behavior |
+| --- | --- |
+| `TryGetValue(null, name, false, out value)` | Explicit options only. |
+| `TryGetValue(null, name, true, out value)` | Explicit options first, then declared defaults. |
+| `TryGetValue("app", name, false, out value)` | Return false. |
+| `TryGetValue("app", name, true, out value)` | Fall back to global, checking explicit options before declared defaults. |
+
+Overloads without the Boolean parameter do not fall back. Explicit values retain converted types; null, empty strings, false and zero stop lookup. Explicit values and descriptor references remain independent, with the first mapped entry winning in each layer. Ordinary GetValue/TryGetValue use original option names and allow declared defaults. Missing both an explicit value and a default makes GetValue throw option-not-found and TryGetValue return false. Optional reads use TryGetValue or GetValue with a caller-provided default.
+
+`CommandOptionDescriptor.HasDefaultValue` and `CommandOptionAttribute.HasDefaultValue` distinguish omission from explicit null. Constructors without a default leave it false; supplying or assigning DefaultValue sets it true, including null. Describe preserves the declaration state. DefaultValue never synthesizes false or zero from the type. Read these two descriptor properties for direct default access.
+
+With explicit `--compilation:Debug` and default Release, both settings return Debug. Omission fails with false and returns Release with true. Without a declared default both fail.
 
 The normalized name index is built lazily on the first valid variable lookup and then reused for dictionary lookups. Names are fixed at that point: later additions, removals or replacements in the descriptor collection do not rebuild the index. Default values are read from the original descriptor objects on every lookup, so changes to those defaults remain visible. The index is safely published for concurrent reads; concurrent changes to descriptors require caller coordination.
 
 ## Profile variable views
 
-[Profile](profiles.md#variable-views) exposes live IVariables views of a whole configuration, a selected section subtree or one entry through ProfileExtension.ToVariables(). Register a view explicitly with evaluator.Providers.Add(profile.ToVariables()). Section levels form a dot-separated namespace, retaining dots within section names; dots and hyphens in entry names become underscores before identifier validation. Lookup returns raw values. When several entries map to the same variable, only queries for that variable throw ProfileException; template evaluation wraps it as ProviderFailed and preserves the original exception.
+[Profile](profiles.md#variable-views) exposes live IVariables views of a whole configuration, a selected section subtree or one entry through ProfileExtension.ToVariables(). Register a view explicitly with evaluator.Providers.Add(profile.ToVariables()). Section levels form a dot-separated namespace, retaining dots within section names; dots and hyphens in entry names become underscores before identifier validation. Fallback checks parents without broadening view scope: sections provide only their subtrees and entries only themselves. Lookup returns raw values. When several entries map to the same variable, only queries for that variable throw ProfileException; template evaluation wraps it as ProviderFailed and preserves the original exception.
 
 ## Template integration
 
-All of these variable sources can be explicitly added to `TemplateEvaluator.Providers`. Templates query them in registration order and use the first successful result, including null. See the [text template documentation](expressions.md) for syntax, member navigation, formatting, events and error handling.
+All of these variable sources can be explicitly added to `TemplateEvaluator.Providers`. Templates use `VariablesExtension.TryGetValue`. `TemplateEvaluatorOptions.Fallback` defaults to false; true enables the lookup fallback above, including recursive templates. Null still stops lookup. See the [text template documentation](expressions.md) for syntax, member navigation, formatting, events and error handling.
 
 ## Implementation
 

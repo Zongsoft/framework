@@ -59,7 +59,7 @@ TemplateEvaluator exposes the following main members, with separate contexts for
 
 Variable providers follow the [IVariables contract](variables.md#variable-contract). The template evaluator calls the namespace-aware TryGetValue overload, passing null for unqualified references.
 
-Providers are queried in registration order. The first true result wins, including a null value. False continues to the next provider; exceptions terminate evaluation.
+Providers use `VariablesExtension.TryGetValue`. `TemplateEvaluatorOptions.Fallback` defaults to false, querying only the specified namespace. With true, query all sources in order at each level, then parents and global, and finally source-declared defaults. Null, empty strings, false and zero stop lookup; exceptions stop evaluation. Command options can precede configuration while configuration overrides option defaults. References still use `${name}` and `${app:name}`. See [multiple-source queries](variables.md#multiple-source-queries).
 
 Variable values, getter return values and index results are not cached. Reflection may reuse getter delegates; repeated references still perform repeated reads and may observe changing provider data.
 
@@ -172,6 +172,7 @@ The constructor accepts optional TemplateEvaluatorOptions:
 | --- | --- | --- |
 | `Culture` | null | Optional CultureInfo; null uses .NET defaults. |
 | `Recursive` | false | Evaluate strings returned by resolution and Resolved as child templates. |
+| `Fallback` | false | Allow parent/global lookup, then source-declared defaults; recursive templates use the same setting. |
 | `MaximumDepth` | 64 | Positive maximum template depth; the root is depth 1. |
 
 The evaluator retains the supplied options instance. Omitted/null options create a separate instance for each evaluator. Providers and Options are fixed references with configurable contents. Keep options, collection membership and event subscriptions stable throughout evaluation, including recursion. Providers manage synchronization of their own data. There are no configuration snapshots or shared default options.

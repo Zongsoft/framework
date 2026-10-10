@@ -51,13 +51,17 @@ IVariables、Variables（含 Variables.Environments.cs）和 VariablesExtension 
 
 Variables.Wrap 提供 Wrap<TDictionary>(TDictionary dictionary, bool reuse = false) where TDictionary : IDictionary，以及 IDictionary<string, object> 和 IDictionary<object, object> 两个接口重载；VariablesExtension.ToVariables 提供相应三个扩展方法。非泛型 IDictionary 的具体实现优先匹配受约束泛型入口，避免普通 Dictionary 直接调用的重载歧义。公开入口不接受任意 object；同时实现两个泛型接口但未实现非泛型 IDictionary 的类型须显式转换，裸 null 须指定字典类型。内部适配器依次优先使用字符串键泛型接口、对象键泛型接口和非泛型接口，null 抛 ArgumentNullException，参数名为 dictionary。字典本身实现 IVariables 时直接返回，其它字典由私有嵌套适配器包装。默认每次新建适配器，不读取、登记或移除缓存条目；reuse=true 时统一 ConditionalWeakTable<object, IVariables> 按引用身份复用，不同静态接口类型共享视图且不阻止无外部引用对象回收。缓存同步不扩展到源字典。仅字符串键提供变量，其它键忽略且不调用 ToString；查询遵循 Variables 的完整键约定和 OrdinalIgnoreCase；标准 Dictionary、ConcurrentDictionary 使用相同比较器时直接查询，其它来源按枚举顺序返回第一个匹配项，不检查重名，null 值仍查询成功。测试覆盖引用身份、并发复用、关闭复用、GC 生命周期、实时修改和模板集成。详见 [变量文档](docs/variables.zh-Hans.md#字典变量视图)。
 
+## 多来源查询
+
+VariablesExtension.TryGetValue 为 IEnumerable<IVariables> 提供四个重载，布尔 fallback 缺省为 false。启用时按命名空间层级查询：每一级先按来源顺序进行 false 查询，再进入父级直至全局；全部普通查询失败后，才按来源顺序执行 null 命名空间的 true 查询，允许来源自身已声明的默认值。命中 null、空字符串、false 或 0 均终止。模板通过 TemplateEvaluatorOptions.Fallback 控制，默认 false，递归沿用。命名空间没有查询模式保留名。来源集合可重复枚举且查询期间稳定，忽略 null 来源，不缓存或吞掉异常；TemplateEvaluator 独立拒绝 Providers 中的 null。详见 [多来源查询](docs/variables.zh-Hans.md#多来源查询)。
+
 ## 环境变量视图
 
-Variables.Environments(EnvironmentVariableTarget target = EnvironmentVariableTarget.Process) 及私有适配器位于 Variables.Environments.cs。每个有效来源共享无可变状态的视图，查询直接调用 Environment.GetEnvironmentVariable(name, target)，不缓存值、不展开、不合并来源。只提供默认命名空间，null/empty 等价；非空命名空间返回 false，名称为 null 抛 ArgumentNullException。原生空字符串仍表示成功；Unix/Linux 的 User/Machine 查询为空，无效 target 在工厂抛 ArgumentOutOfRangeException。IVariables 保持名称与命名空间使用 OrdinalIgnoreCase 的原契约；只有 Variables.Environments 返回的视图是明确特例，环境变量名称遵循平台规则，Unix/Linux 调用方负责大小写。字典/Profile 行为不变。Wrap(Environment.GetEnvironmentVariables()) 是字典快照，不具备环境实时视图语义。测试只修改唯一名称的进程环境变量并在 finally 恢复，不修改 User/Machine 或依赖真实环境值。
+Variables.Environments(EnvironmentVariableTarget target = EnvironmentVariableTarget.Process) 及私有适配器位于 Variables.Environments.cs。每个有效来源共享无可变状态的视图，查询直接调用 Environment.GetEnvironmentVariable(name, target)，不缓存值、不展开、不合并来源。只提供全局命名空间，null/empty 等价；非空命名空间仅在 fallback=true 时回退到全局，本目标没有额外默认值，名称为 null 抛 ArgumentNullException。原生空字符串仍表示成功；Unix/Linux 的 User/Machine 查询为空，无效 target 在工厂抛 ArgumentOutOfRangeException。IVariables 保持名称与命名空间使用 OrdinalIgnoreCase 的原契约；只有 Variables.Environments 返回的视图是明确特例，环境变量名称遵循平台规则，Unix/Linux 调用方负责大小写。字典/Profile 行为不变。Wrap(Environment.GetEnvironmentVariables()) 是字典快照，不具备环境实时视图语义。测试只修改唯一名称的进程环境变量并在 finally 恢复，不修改 User/Machine 或依赖真实环境值。
 
 ## 命令选项变量
 
-[CommandLine.CmdletOptionCollection](src/Components/CommandLine.Options.cs) 显式实现 IVariables 的两个查询重载，只查询默认命名空间；null/empty 命名空间等价，非空命名空间失败。选项名称中的点号和连字符映射为下划线，结果须符合 ASCII 标识符 [A-Za-z_][A-Za-z0-9_]*；非法选项连同短名称整体忽略，其它合法短名称仍可查询。查询参数不裁剪、不转换、不拆命名空间，非法名称返回 false。原有 GetValue/TryGetValue 等选项 API 继续使用原始选项名，内部选项字典与描述集合统一使用 OrdinalIgnoreCase。已传入值（包括 null）优先于描述默认值；映射重名按传入选项枚举顺序取首项，然后按描述顺序查询默认值。CmdletOptionCollection 使用同文件上下两个 partial 声明，IVariables 实现在文件下部，查询逻辑直接放在带命名空间的显式 TryGetValue 中，无命名空间重载转发该入口。首次有效查询惰性创建 OrdinalIgnoreCase 名称索引，之后直接字典查找；私有只读 VariableEntry 保存显式值或默认值的描述引用。名称映射建立后固定，不跟踪描述集合增删或替换；默认值仍从原描述实时读取。通过 Volatile.Read 与 LazyInitializer 安全发布索引，初始化后只读，不扩展描述集合的并发保证。不复制默认值、不展开模板，集合可直接注册到 TemplateEvaluator.Providers。测试入口为 [CommandLineVariablesTest](test/Components/CommandLineVariablesTest.cs)，使用公开 CommandContext 创建集合。
+[CommandLine.CmdletOptionCollection](src/Components/CommandLine.Options.cs) 显式实现 IVariables 的四个查询重载：不带布尔参数等价于 fallback=false。只提供全局变量；false 只查全局显式选项，true 允许从具名回退到全局并在显式值缺失时查询已声明的默认值。选项名称中的点号和连字符映射为下划线，结果须符合 ASCII 标识符 [A-Za-z_][A-Za-z0-9_]*；非法选项连同短名称整体忽略，其它合法短名称仍可查询。查询参数不裁剪、不转换、不拆命名空间，名称为 null 抛 ArgumentNullException，其它非法名称返回 false。CommandOptionDescriptor 和 CommandOptionAttribute 的 HasDefaultValue 保留默认值声明状态，无默认参数的构造保持 false，显式 null 也属于已声明；Describe 仅复制已声明默认值，DefaultValue 不合成类型零值。普通 GetValue/TryGetValue 等选项 API 使用原始选项名并允许已声明默认值回退，缺失时 GetValue 抛未找到异常、TryGetValue 返回 false；可选读取使用 TryGetValue 或带调用方默认值的 GetValue。内部选项字典与描述集合统一使用 OrdinalIgnoreCase。显式值与默认值独立保留，各层重名分别按枚举顺序取首项；null、空字符串、false 和 0 均终止回退。CmdletOptionCollection 使用同文件上下两个 partial 声明，IVariables 实现在文件下部，查询逻辑直接放在带命名空间的显式 TryGetValue 中，无命名空间重载转发该入口。首次有效查询惰性创建 OrdinalIgnoreCase 名称索引，之后直接字典查找；私有只读 VariableEntry 保存 Specified、显式值以及默认值的描述引用。名称映射建立后固定，不跟踪描述集合增删或替换；默认值仍从原描述实时读取。通过 Volatile.Read 与 LazyInitializer 安全发布索引，初始化后只读，不扩展描述集合的并发保证。不复制默认值、不展开模板，集合可直接注册到 TemplateEvaluator.Providers。测试入口为 [CommandLineVariablesTest](test/Components/CommandLineVariablesTest.cs)，使用公开 CommandContext 创建集合。
 
 ## Profile 指令与读取
 
@@ -73,7 +77,7 @@ Directives.Processing/Directives.Processed 均为 Action<ProfileDirectiveContext
 
 Profile.Directives 为全局线程安全注册表，内部使用 SynchronizedDictionary，默认 Directives.ImportDirective.Instance；Add 拒绝空值和重名，不提供移除或替换，枚举使用快照。每次根加载在克隆选项前复制注册表，递归共享实例引用；后续注册只影响下次加载，执行指令不持锁。ProfileDirectiveBase 提供 Name/Process，实现不得保存调用状态。选项集合不注册实现，Writer 不依赖任何指令实现。
 
-ProfileExtension.ToVariables 为 Profile、ProfileSection、ProfileEntry 提供 IVariables 实时视图。配置读取当前有效集合；章节包含子树并保留完整命名空间；条目仅提供自身，章节和条目视图不随原集合替换而改换对象。章节层级用点连接，章节名称内的点保留，每个点分段须为 ASCII 标识符；条目名称中的点和连字符改为下划线后验证标识符。非法来源不提供变量，查询参数不裁剪或归一化。null/empty 命名空间等价默认命名空间，大小写忽略且不回退，值为 null 仍表示找到。仅查询到映射重名的变量时抛 ProfileException，不预先拒绝整个视图。适配器返回原始值，不求值、不缓存结果或复制字典，也不负责并发同步；模板通过显式注册视图求值，Profile 加载与保存仍保留原文。
+ProfileExtension.ToVariables 为 Profile、ProfileSection、ProfileEntry 提供 IVariables 实时视图。配置读取当前有效集合；章节包含子树并保留完整命名空间；条目仅提供自身，章节和条目视图不随原集合替换而改换对象。章节层级用点连接，章节名称内的点保留，每个点分段须为 ASCII 标识符；条目名称中的点和连字符改为下划线后验证标识符。非法来源不提供变量，查询参数不裁剪或归一化。null/empty 命名空间等价全局命名空间，大小写忽略；fallback=true 才按父命名空间逐级回退，不越出视图范围，值为 null 仍表示找到。仅查询到映射重名的变量时抛 ProfileException，不预先拒绝整个视图。适配器返回原始值，不求值、不缓存结果或复制字典，也不负责并发同步；模板通过显式注册视图求值，Profile 加载与保存仍保留原文。
 
 ## 本地搜索
 

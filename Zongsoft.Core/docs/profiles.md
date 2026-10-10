@@ -281,7 +281,7 @@ The variables are `product`, `mysql:db_name`, `io.rustfs:database` and `app.runt
 
 ### Lookup and conflicts
 
-`TryGetValue(name, out value)`, `TryGetValue(null, name, out value)` and `TryGetValue("", name, out value)` are equivalent and query only the default namespace. Names and namespaces use OrdinalIgnoreCase; a nonempty namespace does not fall back to an ancestor or the default namespace.
+`TryGetValue(name, out value)`, `TryGetValue(null, name, out value)` and `TryGetValue("", name, out value)` are equivalent and query only the default namespace. Names and namespaces use OrdinalIgnoreCase. Overloads without a Boolean parameter do not fall back; `TryGetValue("A.B.C", "key", true, out value)` checks A.B.C, A.B, A and global. Fallback does not broaden view scope: sections supply only their subtrees, entries only themselves. Null or empty stops lookup. Profile has no additional defaults.
 
 Query parameters are not trimmed or normalized. Pass the mapped name `db_name`; querying `db-name` or `db.name` directly returns false. A null query name throws ArgumentNullException; other invalid queries or missing variables return false. A null conversion source also throws ArgumentNullException.
 

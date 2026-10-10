@@ -47,8 +47,8 @@ public partial class Variables
 	/// <remarks>
 	/// 	<para>每次查询调用 <see cref="Environment.GetEnvironmentVariable(string, EnvironmentVariableTarget)"/>，返回原始字符串，不展开模板或转换类型。</para>
 	/// 	<para>此视图是 <see cref="IVariables"/> 忽略大小写约定的特例，名称比较遵循平台规则：Windows 忽略大小写，Unix/Linux 区分大小写；调用方应使用来源所需的名称。不合并或回退到其它来源。</para>
-	/// 	<para>只提供默认命名空间，命名空间为 null 或空字符串时直接查询名称，其它命名空间查询失败；查询参数不裁剪或拆分。</para>
-	/// 	<para>查询名称为 null 时抛出 <see cref="ArgumentNullException"/>；存在的空字符串仍表示查询成功，原生访问异常向调用方传播。</para>
+	/// 	<para>只提供全局命名空间；<see langword="null"/> 或空字符串直接查询名称，非空命名空间仅在 <c>fallback=true</c> 时回退到全局。没有其它默认值，查询参数不裁剪或拆分。</para>
+	/// 	<para>查询名称为 <see langword="null"/> 时抛出 <see cref="ArgumentNullException"/>；存在的空字符串仍表示查询成功，原生访问异常向调用方传播。</para>
 	/// 	<para>Unix/Linux 上用户和计算机来源的查询结果为空。视图不保证多次查询期间的环境变量保持不变。</para>
 	/// </remarks>
 	public static IVariables Environments(EnvironmentVariableTarget target = EnvironmentVariableTarget.Process) => target switch
@@ -64,10 +64,12 @@ public partial class Variables
 	private sealed class EnvironmentVariables(EnvironmentVariableTarget target) : IVariables
 	{
 		public bool TryGetValue(string name, out object value) => this.TryGetValue(null, name, out value);
-		public bool TryGetValue(string @namespace, string name, out object value)
+		public bool TryGetValue(string name, bool fallback, out object value) => this.TryGetValue(null, name, fallback, out value);
+		public bool TryGetValue(string @namespace, string name, out object value) => this.TryGetValue(@namespace, name, false, out value);
+		public bool TryGetValue(string @namespace, string name, bool fallback, out object value)
 		{
 			ArgumentNullException.ThrowIfNull(name);
-			value = string.IsNullOrEmpty(@namespace) ? Environment.GetEnvironmentVariable(name, target) : null;
+			value = fallback || string.IsNullOrEmpty(@namespace) ? Environment.GetEnvironmentVariable(name, target) : null;
 			return value != null;
 		}
 	}

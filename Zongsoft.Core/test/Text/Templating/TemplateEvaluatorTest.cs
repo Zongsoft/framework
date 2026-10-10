@@ -1,10 +1,13 @@
 using System;
+using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 
 using Xunit;
+
 using Zongsoft.Common;
+using Zongsoft.Configuration.Profiles;
 
 namespace Zongsoft.Text.Templating.Tests;
 
@@ -490,6 +493,72 @@ public class TemplateEvaluatorTest
 	}
 
 	[Fact]
+	public void FallbackProvidersSupportRecursiveValuesAndPreserveProfileNamespaces()
+	{
+		using var reader = new StringReader("configured=profile\n[default]\nscoped=ordinary namespace\n");
+		var profile = Profile.Load(reader);
+		var evaluator = new TemplateEvaluator(new() { Recursive = true, Fallback = true });
+		evaluator.Providers.Add(new Provider((name, scope, fallback) => fallback ? name switch
+		{
+			"entry" => (true, "${configured}/${suffix}"),
+			"configured" => (true, "descriptor"),
+			"suffix" => (true, "tail"),
+			_ => (false, null),
+		} : (false, null)));
+		evaluator.Providers.Add(profile.ToVariables());
+		var resolving = new List<string>();
+		var resolved = new List<string>();
+		evaluator.Resolving += (_, context) => resolving.Add(context.Name);
+		evaluator.Resolved += (_, context) => resolved.Add(context.Name);
+
+		Assert.Equal("profile/tail", evaluator.Evaluate("${entry}"));
+		Assert.Equal(["entry", "configured", "suffix"], resolving);
+		Assert.Equal(["entry", "configured", "suffix"], resolved);
+		Assert.Equal("ordinary namespace", evaluator.Evaluate("${default:scoped}"));
+		Assert.False(evaluator.TryEvaluate("${scoped}", out var result, out var error));
+		Assert.Null(result);
+		Assert.Equal("MissingVariable", error.Code);
+		Assert.Equal("tail", evaluator.Evaluate("${default:suffix}"));
+	}
+
+	[Fact]
+	public void FallbackOptionSearchesNamespaceLayersBeforeEarlierGlobalSources()
+	{
+		var global = new Variables { ["name"] = "first global" };
+		var scoped = new Variables { ["app:name"] = "later parent" };
+		var evaluator = new TemplateEvaluator { Providers = { global, scoped } };
+
+		Assert.False(evaluator.TryEvaluate("${app.worker:name}", out var result, out var error));
+		Assert.Null(result);
+		Assert.Equal("MissingVariable", error.Code);
+		evaluator.Options.Fallback = true;
+		Assert.Equal("later parent", evaluator.Evaluate("${app.worker:name}"));
+		scoped["app:name"] = null;
+		Assert.Equal(string.Empty, evaluator.Evaluate("${app.worker:name}"));
+		scoped.Remove("app:name");
+		Assert.Equal("first global", evaluator.Evaluate("${app.worker:name}"));
+		evaluator.Options.Fallback = false;
+		Assert.Equal("MissingVariable", Assert.Throws<TemplateEvaluationException>(() => evaluator.Evaluate("${app.worker:name}")).Code);
+	}
+
+	[Fact]
+	public void FallbackProviderFailurePreservesCauseAndStopsCompletion()
+	{
+		var cause = new InvalidOperationException("Fallback failure.");
+		var evaluator = new TemplateEvaluator(new() { Fallback = true });
+		evaluator.Providers.Add(new Provider((_, _, fallback) => fallback ? throw cause : (false, null)));
+		var resolved = 0;
+		evaluator.Resolved += (_, _) => resolved++;
+
+		var error = Assert.Throws<TemplateEvaluationException>(() => evaluator.Evaluate("${missing}"));
+
+		Assert.Equal("ProviderFailed", error.Code);
+		Assert.Equal(TemplateEvaluationStage.Resolution, error.Stage);
+		Assert.Same(cause, error.InnerException);
+		Assert.Equal(0, resolved);
+	}
+
+	[Fact]
 	public void RecursiveTemplatesAndIndices()
 	{
 		var evaluator = Create(new()
@@ -562,6 +631,7 @@ public class TemplateEvaluatorTest
 		Assert.Same(options, evaluator.Options);
 		Assert.Null(options.Culture);
 		Assert.False(options.Recursive);
+		Assert.False(options.Fallback);
 		Assert.Equal(64, options.MaximumDepth);
 		Assert.NotSame(options, new TemplateEvaluator().Options);
 		Assert.Throws<ArgumentOutOfRangeException>(() => options.MaximumDepth = 0);
@@ -697,12 +767,16 @@ public class TemplateEvaluatorTest
 		}
 	}
 
-	private sealed class Provider(Func<string, string, (bool Found, object Value)> get) : IVariables
+	private sealed class Provider(Func<string, string, bool, (bool Found, object Value)> get) : IVariables
 	{
-		public bool TryGetValue(string name, out object value) => this.TryGetValue(null, name, out value);
-		public bool TryGetValue(string @namespace, string name, out object value)
+		public Provider(Func<string, string, (bool Found, object Value)> get) : this((name, scope, _) => get(name, scope)) { }
+
+		public bool TryGetValue(string name, out object value) => this.TryGetValue(null, name, false, out value);
+		public bool TryGetValue(string name, bool fallback, out object value) => this.TryGetValue(null, name, fallback, out value);
+		public bool TryGetValue(string @namespace, string name, out object value) => this.TryGetValue(@namespace, name, false, out value);
+		public bool TryGetValue(string @namespace, string name, bool fallback, out object value)
 		{
-			var result = get(name, string.IsNullOrEmpty(@namespace) ? null : @namespace);
+			var result = get(name, string.IsNullOrEmpty(@namespace) ? null : @namespace, fallback);
 			value = result.Value;
 			return result.Found;
 		}

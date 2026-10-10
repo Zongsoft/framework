@@ -56,6 +56,8 @@ public partial class TemplateEvaluator
 	#endregion
 
 	#region 公共属性
+	/// <summary>获取按查询优先级排列的变量来源集合。</summary>
+	/// <remarks>通过 <see cref="VariablesExtension"/> 查询，是否回退由 <see cref="TemplateEvaluatorOptions.Fallback"/> 控制；同一命名空间按来源顺序查询，允许回退时逐级向上，最后才查询来源自身的默认值。任何命中值（包括空值）均终止查找。</remarks>
 	public IList<IVariables> Providers { get; }
 	public TemplateEvaluatorOptions Options { get; }
 	#endregion
@@ -183,14 +185,7 @@ public partial class TemplateEvaluator
 
 			try
 			{
-				for(int i = 0; i < this.Providers.Count; i++)
-				{
-					if(this.Providers[i].TryGetValue(reference.Namespace, reference.Name, out value))
-					{
-						found = true;
-						break;
-					}
-				}
+				found = this.Providers.TryGetValue(reference.Namespace, reference.Name, this.Options.Fallback, out value);
 			}
 			catch(Exception exception)
 			{

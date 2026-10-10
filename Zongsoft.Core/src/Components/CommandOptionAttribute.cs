@@ -47,26 +47,63 @@ public class CommandOptionAttribute : Attribute
 	#endregion
 
 	#region 构造函数
-	public CommandOptionAttribute(string name, Type type = null) : this(name, '\0', type, null, false, null) { }
-	public CommandOptionAttribute(string name, char symbol, Type type = null) : this(name, symbol, type, null, false, null) { }
-
-	public CommandOptionAttribute(string name, Type type, object defaultValue, string description = null) : this(name, '\0', type, defaultValue, false, description) { }
-	public CommandOptionAttribute(string name, Type type, object defaultValue, bool required, string description = null) : this(name, '\0', type, defaultValue, required, description) { }
-
-	public CommandOptionAttribute(string name, char symbol, Type type, object defaultValue, string description = null) : this(name, symbol, type, defaultValue, false, description) { }
-	public CommandOptionAttribute(string name, char symbol, Type type, object defaultValue, bool required, string description = null)
+	/// <summary>初始化没有声明默认值的命令选项特性。</summary>
+	/// <param name="name">选项名称，不能为 <see langword="null"/>、空字符串或纯空白。</param>
+	/// <param name="type">值类型，<see langword="null"/> 表示无值选项。</param>
+	/// <exception cref="ArgumentNullException"><paramref name="name"/> 为空或纯空白。</exception>
+	public CommandOptionAttribute(string name, Type type = null) : this(name, '\0', type) { }
+	/// <summary>初始化没有声明默认值的命令选项特性。</summary>
+	/// <param name="name">选项名称，不能为 <see langword="null"/>、空字符串或纯空白。</param>
+	/// <param name="symbol">缩写字符。</param>
+	/// <param name="type">值类型，<see langword="null"/> 表示无值选项。</param>
+	/// <exception cref="ArgumentNullException"><paramref name="name"/> 为空或纯空白。</exception>
+	public CommandOptionAttribute(string name, char symbol, Type type = null)
 	{
 		if(string.IsNullOrWhiteSpace(name))
 			throw new ArgumentNullException(nameof(name));
 
-		if(type == null || Zongsoft.Common.Convert.TryConvertValue(defaultValue, type, out defaultValue))
-			_defaultValue = defaultValue;
-
 		_name = name;
 		_type = type;
 		_symbol = symbol;
-		_required = required;
-		_description = description ?? string.Empty;
+		_description = string.Empty;
+	}
+
+	/// <summary>初始化具有已声明默认值的命令选项特性。</summary>
+	/// <param name="name">选项名称，不能为 <see langword="null"/>、空字符串或纯空白。</param>
+	/// <param name="type">值类型，<see langword="null"/> 表示无值选项。</param>
+	/// <param name="defaultValue">声明的默认值；显式 <see langword="null"/> 也属于已声明且保持为空。</param>
+	/// <param name="description">文本描述。</param>
+	/// <exception cref="ArgumentNullException"><paramref name="name"/> 为空或纯空白。</exception>
+	public CommandOptionAttribute(string name, Type type, object defaultValue, string description = null) : this(name, '\0', type, defaultValue, false, description) { }
+	/// <summary>初始化具有已声明默认值的命令选项特性。</summary>
+	/// <param name="name">选项名称，不能为 <see langword="null"/>、空字符串或纯空白。</param>
+	/// <param name="type">值类型，<see langword="null"/> 表示无值选项。</param>
+	/// <param name="defaultValue">声明的默认值；显式 <see langword="null"/> 也属于已声明且保持为空。</param>
+	/// <param name="required">是否必需。</param>
+	/// <param name="description">文本描述。</param>
+	/// <exception cref="ArgumentNullException"><paramref name="name"/> 为空或纯空白。</exception>
+	public CommandOptionAttribute(string name, Type type, object defaultValue, bool required, string description = null) : this(name, '\0', type, defaultValue, required, description) { }
+	/// <summary>初始化具有已声明默认值的命令选项特性。</summary>
+	/// <param name="name">选项名称，不能为 <see langword="null"/>、空字符串或纯空白。</param>
+	/// <param name="symbol">缩写字符。</param>
+	/// <param name="type">值类型，<see langword="null"/> 表示无值选项。</param>
+	/// <param name="defaultValue">声明的默认值；显式 <see langword="null"/> 也属于已声明且保持为空。</param>
+	/// <param name="description">文本描述。</param>
+	/// <exception cref="ArgumentNullException"><paramref name="name"/> 为空或纯空白。</exception>
+	public CommandOptionAttribute(string name, char symbol, Type type, object defaultValue, string description = null) : this(name, symbol, type, defaultValue, false, description) { }
+	/// <summary>初始化具有已声明默认值的命令选项特性。</summary>
+	/// <param name="name">选项名称，不能为 <see langword="null"/>、空字符串或纯空白。</param>
+	/// <param name="symbol">缩写字符。</param>
+	/// <param name="type">值类型，<see langword="null"/> 表示无值选项。</param>
+	/// <param name="defaultValue">声明的默认值；显式 <see langword="null"/> 也属于已声明且保持为空。</param>
+	/// <param name="required">是否必需。</param>
+	/// <param name="description">文本描述。</param>
+	/// <exception cref="ArgumentNullException"><paramref name="name"/> 为空或纯空白。</exception>
+	public CommandOptionAttribute(string name, char symbol, Type type, object defaultValue, bool required, string description = null) : this(name, symbol, type)
+	{
+		this.Required = required;
+		this.Description = description;
+		this.DefaultValue = defaultValue;
 	}
 	#endregion
 
@@ -134,13 +171,18 @@ public class CommandOptionAttribute : Attribute
 		}
 	}
 
-	/// <summary>获取或设置命令选项的默认值。</summary>
+	/// <summary>获取一个值，指示是否明确声明了默认值。</summary>
+	/// <remarks>包含显式声明的空(<c>null</c>)；没有默认值参数的构造函数不会声明默认值。</remarks>
+	public bool HasDefaultValue { get; private set; }
+
+	/// <summary>获取或设置命令选项声明的默认值。</summary>
+	/// <remarks>赋值后 <see cref="HasDefaultValue" /> 为 <c>true</c>；显式 <c>null</c> 保留为 <c>null</c>，不转换成类型的零值。</remarks>
 	public object DefaultValue
 	{
 		get => _defaultValue;
 		set
 		{
-			if(_type != null)
+			if(value != null && _type != null)
 				_defaultValue = Zongsoft.Common.Convert.ConvertValue(value, _type, () =>
 				{
 					var converter = this.Converter;
@@ -152,6 +194,8 @@ public class CommandOptionAttribute : Attribute
 				});
 			else
 				_defaultValue = value;
+
+			this.HasDefaultValue = true;
 		}
 	}
 

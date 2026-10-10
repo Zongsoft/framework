@@ -281,7 +281,7 @@ worker-count=4
 
 ### 查询与冲突
 
-`TryGetValue(name, out value)`、`TryGetValue(null, name, out value)` 和 `TryGetValue("", name, out value)` 等价，仅查询默认命名空间。名称和命名空间按 OrdinalIgnoreCase 比较，非空命名空间不回退到父级或默认空间。
+`TryGetValue(name, out value)`、`TryGetValue(null, name, out value)` 和 `TryGetValue("", name, out value)` 等价，仅查询默认命名空间。名称和命名空间按 OrdinalIgnoreCase 比较。无布尔参数的重载不回退；`TryGetValue("A.B.C", "key", true, out value)` 依次查询 A.B.C、A.B、A、全局。回退不扩展视图范围，章节仅提供子树、条目仅提供自身；命中 null 或空字符串仍停止。Profile 没有额外默认值。
 
 查询参数不裁剪、不归一化，应传入转换后的名称 `db_name`；直接查询 `db-name` 或 `db.name` 返回 false。查询名称为 null 时抛 ArgumentNullException，其它非法查询或不存在的变量返回 false。转换对象为 null 也抛 ArgumentNullException。
 

@@ -44,7 +44,7 @@ namespace Zongsoft.Configuration.Profiles;
 /// 	</para>
 /// 	<para>
 /// 		查询名称与命名空间按 <see cref="StringComparison.OrdinalIgnoreCase"/> 比较；查询参数不裁剪、不替换字符。
-/// 		命名空间为 <see langword="null"/> 或空字符串时查询默认命名空间，非空命名空间不会回退到父级或默认命名空间。
+/// 		命名空间为 <see langword="null"/> 或空字符串时查询全局命名空间；只有 <c>fallback=true</c> 时才逐级查询父级及全局，且不会越出所选视图。
 /// 		查询名称为 <see langword="null"/> 时抛出 <see cref="ArgumentNullException"/>，其它非法查询返回 <see langword="false"/>。
 /// 	</para>
 /// 	<para>存在且值为 <see langword="null"/> 的变量仍返回查询成功；仅在查询到多个条目映射的同名变量时抛出 <see cref="ProfileException"/>，其它变量不受影响。</para>
@@ -189,6 +189,7 @@ public static class ProfileExtension
 	private sealed class ProfileVariables(Profile profile) : IVariables
 	{
 		public bool TryGetValue(string name, out object value) => this.TryGetValue(null, name, out value);
+		public bool TryGetValue(string name, bool fallback, out object value) => this.TryGetValue(null, name, fallback, out value);
 		public bool TryGetValue(string @namespace, string name, out object value)
 		{
 			value = null;
@@ -206,6 +207,12 @@ public static class ProfileExtension
 			value = entry?.Value;
 			return entry != null;
 		}
+
+		public bool TryGetValue(string @namespace, string name, bool fallback, out object value)
+		{
+			value = null;
+			return CanLookup(@namespace, name) && VariablesExtension.TryGetValueCore(this, @namespace, name, fallback, out value);
+		}
 	}
 
 	private sealed class SectionVariables(ProfileSection section) : IVariables
@@ -213,6 +220,7 @@ public static class ProfileExtension
 		private readonly string _namespace = GetNamespace(section);
 
 		public bool TryGetValue(string name, out object value) => this.TryGetValue(null, name, out value);
+		public bool TryGetValue(string name, bool fallback, out object value) => this.TryGetValue(null, name, fallback, out value);
 		public bool TryGetValue(string @namespace, string name, out object value)
 		{
 			value = null;
@@ -225,6 +233,12 @@ public static class ProfileExtension
 			value = entry?.Value;
 			return entry != null;
 		}
+
+		public bool TryGetValue(string @namespace, string name, bool fallback, out object value)
+		{
+			value = null;
+			return CanLookup(@namespace, name) && VariablesExtension.TryGetValueCore(this, @namespace, name, fallback, out value);
+		}
 	}
 
 	private sealed class EntryVariables(ProfileEntry entry) : IVariables
@@ -232,6 +246,7 @@ public static class ProfileExtension
 		private readonly string _namespace = GetNamespace(entry.Section);
 
 		public bool TryGetValue(string name, out object value) => this.TryGetValue(null, name, out value);
+		public bool TryGetValue(string name, bool fallback, out object value) => this.TryGetValue(null, name, fallback, out value);
 		public bool TryGetValue(string @namespace, string name, out object value)
 		{
 			value = null;
@@ -243,6 +258,12 @@ public static class ProfileExtension
 
 			value = entry.Value;
 			return true;
+		}
+
+		public bool TryGetValue(string @namespace, string name, bool fallback, out object value)
+		{
+			value = null;
+			return CanLookup(@namespace, name) && VariablesExtension.TryGetValueCore(this, @namespace, name, fallback, out value);
 		}
 	}
 	#endregion

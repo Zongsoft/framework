@@ -80,6 +80,67 @@ public class ProfileVariablesTest
 	}
 
 	[Fact]
+	public void Fallback_SearchesParentsWithoutLeavingTheSelectedView()
+	{
+		using var reader = new StringReader("rootOnly=root\nname=root\n[app]\nname=parent\nparentOnly=parent\nflag=ancestor\n[app worker]\nname=child\nchildOnly=child\nflag\n[other]\nforeign=sibling");
+		var profile = Profile.Load(reader);
+		var app = profile.Sections["app"];
+		var worker = app.Sections["worker"];
+		var variables = profile.ToVariables();
+
+		Assert.False(variables.TryGetValue("app.worker.extra", "name", out _));
+		Assert.False(variables.TryGetValue("app.worker.extra", "name", false, out _));
+		Assert.True(variables.TryGetValue("app.worker.extra", "name", true, out var value));
+		Assert.Equal("child", value);
+		Assert.True(variables.TryGetValue("app.other", "name", true, out value));
+		Assert.Equal("parent", value);
+		Assert.True(variables.TryGetValue("app.worker.extra", "rootOnly", true, out value));
+		Assert.Equal("root", value);
+		Assert.True(variables.TryGetValue("rootOnly", true, out value));
+		Assert.Equal("root", value);
+		Assert.True(variables.TryGetValue("app.worker.extra", "flag", true, out value));
+		Assert.Null(value);
+		var appView = app.ToVariables();
+		var workerView = worker.ToVariables();
+		var entryView = worker.Entries["childOnly"].ToVariables();
+
+		foreach(var view in new[] { appView, workerView, entryView })
+		{
+			Assert.True(view.TryGetValue("app.worker.extra", "childOnly", true, out value));
+			Assert.Equal("child", value);
+			Assert.False(view.TryGetValue("app.worker.extra", "rootOnly", true, out value));
+			Assert.Null(value);
+			Assert.False(view.TryGetValue("other", "foreign", true, out value));
+			Assert.Null(value);
+			Assert.False(view.TryGetValue("childOnly", true, out value));
+			Assert.Null(value);
+		}
+
+		Assert.True(appView.TryGetValue("app.worker.extra", "parentOnly", true, out value));
+		Assert.Equal("parent", value);
+		Assert.False(workerView.TryGetValue("app.worker.extra", "parentOnly", true, out value));
+		Assert.Null(value);
+		Assert.False(entryView.TryGetValue("app.worker.extra", "name", true, out value));
+		Assert.Null(value);
+		Assert.True(profile.Entries["rootOnly"].ToVariables().TryGetValue("app.worker", "rootOnly", true, out value));
+		Assert.Equal("root", value);
+	}
+
+	[Fact]
+	public void Fallback_OnlyReportsCollisionsInAQueriedNamespaceLayer()
+	{
+		using var reader = new StringReader("db_name=root\n[app]\ndb-name=first\ndb.name=second\n[app worker]\ndb_name=child");
+		var profile = Profile.Load(reader);
+		var variables = profile.ToVariables();
+
+		Assert.True(variables.TryGetValue("app.worker.extra", "db_name", true, out var value));
+		Assert.Equal("child", value);
+		Assert.Throws<ProfileException>(() => variables.TryGetValue("app.other", "db_name", true, out _));
+		Assert.True(profile.Sections["app"].Entries["db-name"].ToVariables().TryGetValue("app.other", "db_name", true, out value));
+		Assert.Equal("first", value);
+	}
+
+	[Fact]
 	public void Views_ReflectCurrentEntriesAndSubsections()
 	{
 		var profile = new Profile();
@@ -227,6 +288,8 @@ public class ProfileVariablesTest
 			Assert.Throws<ArgumentNullException>("name", () => variables.TryGetValue(null, null, out _));
 			Assert.Throws<ArgumentNullException>("name", () => variables.TryGetValue(string.Empty, null, out _));
 			Assert.Throws<ArgumentNullException>("name", () => variables.TryGetValue("app", null, out _));
+			Assert.Throws<ArgumentNullException>("name", () => variables.TryGetValue(null, true, out _));
+			Assert.Throws<ArgumentNullException>("name", () => variables.TryGetValue("app", null, true, out _));
 		}
 	}
 

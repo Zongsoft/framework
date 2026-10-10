@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 using Xunit;
@@ -127,6 +128,74 @@ public class VariablesTest
 		var error = Assert.Throws<ArgumentNullException>(() => variables.TryGetValue(scope, null, out _));
 
 		Assert.Equal("name", error.ParamName);
+	}
+
+	[Theory]
+	[InlineData(0)]
+	[InlineData(1)]
+	[InlineData(2)]
+	[InlineData(3)]
+	public void Lookup_FallbackSearchesNearestNamespaceAcrossDictionaryViews(int kind)
+	{
+		var source = new Dictionary<string, object>
+		{
+			["name"] = "global",
+			["app:name"] = "parent",
+			["app.worker:name"] = "exact",
+			["app.worker:null"] = null,
+			["app.worker:empty"] = string.Empty,
+			["app.worker:disabled"] = false,
+			["app.worker:zero"] = 0,
+			["app:null"] = "must not fallback",
+			["app:empty"] = "must not fallback",
+			["app:disabled"] = true,
+			["app:zero"] = 42,
+		};
+		var objects = new Dictionary<object, object>();
+		var table = new Hashtable();
+
+		foreach(var entry in source)
+		{
+			objects.Add(entry.Key, entry.Value);
+			table.Add(entry.Key, entry.Value);
+		}
+
+		IVariables variables = kind switch
+		{
+			0 => new Variables(source),
+			1 => Variables.Wrap((IDictionary<string, object>)source),
+			2 => Variables.Wrap((IDictionary<object, object>)objects),
+			_ => Variables.Wrap((IDictionary)table),
+		};
+
+		Assert.False(variables.TryGetValue("app.worker.child", "name", out var value));
+		Assert.Null(value);
+		Assert.False(variables.TryGetValue("app.worker.child", "name", false, out value));
+		Assert.Null(value);
+		Assert.True(variables.TryGetValue("APP.WORKER", "NAME", true, out value));
+		Assert.Equal("exact", value);
+		Assert.True(variables.TryGetValue("app.worker.child", "name", true, out value));
+		Assert.Equal("exact", value);
+		Assert.True(variables.TryGetValue("app.other.child", "name", true, out value));
+		Assert.Equal("parent", value);
+		Assert.True(variables.TryGetValue("other.child", "name", true, out value));
+		Assert.Equal("global", value);
+		Assert.True(variables.TryGetValue("name", true, out value));
+		Assert.Equal("global", value);
+		Assert.True(variables.TryGetValue("name", false, out value));
+		Assert.Equal("global", value);
+		Assert.True(variables.TryGetValue("app.worker.child", "null", true, out value));
+		Assert.Null(value);
+		Assert.True(variables.TryGetValue("app.worker.child", "empty", true, out value));
+		Assert.Equal(string.Empty, value);
+		Assert.True(variables.TryGetValue("app.worker.child", "disabled", true, out value));
+		Assert.False(Assert.IsType<bool>(value));
+		Assert.True(variables.TryGetValue("app.worker.child", "zero", true, out value));
+		Assert.Equal(0, Assert.IsType<int>(value));
+		Assert.False(variables.TryGetValue("other.child", "missing", true, out value));
+		Assert.Null(value);
+		Assert.Equal("name", Assert.Throws<ArgumentNullException>(() => variables.TryGetValue(null, true, out _)).ParamName);
+		Assert.Equal("name", Assert.Throws<ArgumentNullException>(() => variables.TryGetValue("app", null, true, out _)).ParamName);
 	}
 
 	[Fact]

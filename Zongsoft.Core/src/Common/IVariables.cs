@@ -31,45 +31,51 @@ using System;
 
 namespace Zongsoft.Common;
 
-/// <summary>提供按变量名称及可选命名空间查询原始变量值的契约。</summary>
+/// <summary>提供按变量名称、命名空间及回退设置查询原始变量值的契约。</summary>
 /// <remarks>
-/// 	<para>实现类负责从其数据来源中查找变量，并使用 <see cref="StringComparer.OrdinalIgnoreCase"/> 比较变量名称与命名空间。</para>
-/// 	<para>
-/// 		命名空间为 <see langword="null"/> 或空字符串时均视为未指定命名空间，查询默认命名空间；其语义与未指定命名空间的重载相同。
-/// 		查询非空命名空间中的变量时，不应自动回退到默认命名空间。
-/// 	</para>
-/// 	<para>查询结果由方法的布尔返回值表示，而不是由变量值是否为空判断。存在且值为 <see langword="null"/> 的变量仍属于查询成功。</para>
-/// 	<para>
-/// 		提供器返回未经格式化的原始对象值，不负责解析变量引用语法、访问对象成员或展开文本模板。
-/// 		实现类负责其数据来源的访问、缓存及并发同步策略，本接口不要求变量值在多次查询之间保持不变。
-/// 	</para>
+/// 	<para>名称与命名空间通常按 <see cref="StringComparer.OrdinalIgnoreCase"/> 比较；环境变量视图遵循操作系统的名称比较规则。</para>
+/// 	<para>命名空间为 <see langword="null"/> 或空字符串时均表示全局命名空间。不带回退参数的重载等价于 <c>fallback=false</c>。</para>
+/// 	<para>允许回退时，从指定命名空间逐级向上查询，例如 <c>A.B.C</c>、<c>A.B</c>、<c>A</c>、全局；全局仍未找到时，实现可提供自身已声明的默认值。回退不扩大变量视图的数据范围。</para>
+/// 	<para>命名空间只用于限定名称，没有保留的查询模式名称。多个来源的组合查询由 <see cref="VariablesExtension"/> 按命名空间层级及来源顺序执行，最后才允许来源自身的默认值。</para>
+/// 	<para>查询成功由布尔返回值表示；存在且值为 <see langword="null"/>、空字符串、<see langword="false"/> 或零的变量均属于成功并停止回退。</para>
+/// 	<para>返回未经转换的原始值，不负责模板解析、成员访问或格式化。变量不存在返回 <see langword="false"/>；数据访问等异常向调用方传播。</para>
+/// 	<para>实现负责来源的访问和并发策略；本接口不要求多次查询期间的值保持不变，也不承诺跨来源的原子快照。</para>
 /// </remarks>
 public interface IVariables
 {
-	/// <summary>尝试获取默认命名空间中指定名称的变量值。</summary>
-	/// <param name="name">要查找的变量名称，不包含命名空间限定部分；名称比较应忽略大小写。</param>
-	/// <param name="value">查询成功时返回变量的原始值，该值可以为 <see langword="null"/>；查询失败时，调用方不应使用此参数的值。</param>
-	/// <returns>如果找到指定变量则返回 <see langword="true"/>，即使其值为 <see langword="null"/>；未找到则返回 <see langword="false"/>。</returns>
-	/// <remarks>
-	/// 	<para>此重载仅查询默认命名空间，等价于调用 <c>TryGetValue(null, name, out value)</c> 或 <c>TryGetValue(string.Empty, name, out value)</c>，不遍历其它命名空间。</para>
-	/// 	<para>变量不存在是正常的查询失败，不应因此抛出异常；访问数据来源等过程中发生的其它异常可以向调用方传播。</para>
-	/// </remarks>
-	/// <seealso cref="TryGetValue(string, string, out object)"/>
+	/// <summary>尝试获取全局命名空间中的变量，不允许回退。</summary>
+	/// <param name="name">变量名称，不包含命名空间限定部分。</param>
+	/// <param name="value">成功时返回原始值，可以为 <see langword="null"/>；失败时不得使用此值。</param>
+	/// <returns>找到变量返回 <see langword="true"/>，否则返回 <see langword="false"/>。</returns>
+	/// <exception cref="ArgumentNullException"><paramref name="name"/> 为 <see langword="null"/>。</exception>
 	bool TryGetValue(string name, out object value);
 
-	/// <summary>尝试获取指定命名空间中指定名称的变量值。</summary>
-	/// <param name="namespace">要查询的命名空间，传入 <see langword="null"/> 或空字符串均表示忽略命名空间限定，查询默认命名空间；命名空间比较应忽略大小写。</param>
-	/// <param name="name">要查找的变量名称，不包含命名空间限定部分；名称比较应忽略大小写。</param>
-	/// <param name="value">查询成功时返回变量的原始值，该值可以为 <see langword="null"/>；查询失败时，调用方不应使用此参数的值。</param>
-	/// <returns>如果在指定命名空间中找到变量则返回 <see langword="true"/>，即使其值为 <see langword="null"/>；未找到则返回 <see langword="false"/>。</returns>
-	/// <remarks>
-	/// 	<para>命名空间和变量名称由两个独立参数传入，提供器不应将 <paramref name="name"/> 再次拆分为命名空间与名称。</para>
-	/// 	<para>
-	/// 		当 <paramref name="namespace"/> 为 <see langword="null"/> 或空字符串时，查询语义与 <see cref="TryGetValue(string, out object)"/> 相同。
-	/// 		非空命名空间中不存在该变量时应返回 <see langword="false"/>，不自动查询默认命名空间。
-	/// 	</para>
-	/// 	<para>变量不存在是正常的查询失败，不应因此抛出异常；访问数据来源等过程中发生的其它异常可以向调用方传播。</para>
-	/// </remarks>
-	/// <seealso cref="TryGetValue(string, out object)"/>
+	/// <summary>尝试获取全局命名空间中的变量，并明确是否允许来源自身的默认值。</summary>
+	/// <param name="name">变量名称，不包含命名空间限定部分。</param>
+	/// <param name="fallback">是否在普通变量不存在时查询来源已声明的默认值；不以值是否为空判断回退。</param>
+	/// <param name="value">成功时返回原始值，可以为 <see langword="null"/>；失败时不得使用此值。</param>
+	/// <returns>找到变量或允许的默认值返回 <see langword="true"/>，否则返回 <see langword="false"/>。</returns>
+	/// <exception cref="ArgumentNullException"><paramref name="name"/> 为 <see langword="null"/>。</exception>
+	bool TryGetValue(string name, bool fallback, out object value);
+
+	/// <summary>尝试获取指定命名空间中的变量，不允许回退。</summary>
+	/// <param name="namespace">命名空间，<see langword="null"/> 或空字符串表示全局命名空间。</param>
+	/// <param name="name">变量名称，不裁剪、转换或再次拆分命名空间。</param>
+	/// <param name="value">成功时返回原始值，可以为 <see langword="null"/>；失败时不得使用此值。</param>
+	/// <returns>在指定命名空间中找到变量返回 <see langword="true"/>，否则返回 <see langword="false"/>。</returns>
+	/// <exception cref="ArgumentNullException"><paramref name="name"/> 为 <see langword="null"/>。</exception>
 	bool TryGetValue(string @namespace, string name, out object value);
+
+	/// <summary>尝试获取指定命名空间中的变量，并明确是否允许回退。</summary>
+	/// <param name="namespace">命名空间，<see langword="null"/> 或空字符串表示全局命名空间；层级以点号分隔。</param>
+	/// <param name="name">变量名称，不裁剪、转换或再次拆分命名空间。</param>
+	/// <param name="fallback">为 <see langword="true"/> 时依次查询指定命名空间、各级父命名空间、全局命名空间及来源自身已声明的默认值；为 <see langword="false"/> 时仅查询指定命名空间。</param>
+	/// <param name="value">成功时返回原始值，可以为 <see langword="null"/>；失败时不得使用此值。</param>
+	/// <returns>找到变量或允许的默认值返回 <see langword="true"/>，否则返回 <see langword="false"/>。</returns>
+	/// <remarks>
+	/// 	<para>回退只在查询失败时进行，找到 <see langword="null"/>、空字符串、<see langword="false"/> 或零时立即结束；实现不得把类型的零值当作未声明的默认值。</para>
+	/// 	<para>只提供全局变量的来源在允许回退时可直接查询全局值；没有自身默认值的来源在全局未找到后返回 <see langword="false"/>。</para>
+	/// </remarks>
+	/// <exception cref="ArgumentNullException"><paramref name="name"/> 为 <see langword="null"/>。</exception>
+	bool TryGetValue(string @namespace, string name, bool fallback, out object value);
 }

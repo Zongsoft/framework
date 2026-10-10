@@ -59,7 +59,7 @@ TemplateEvaluator 的主要公开成员如下，取值与格式化分别使用�
 
 变量提供器遵循 [IVariables 契约](variables.zh-Hans.md#变量契约)。模板评估器调用带命名空间的 TryGetValue 重载；未限定命名空间的引用传入 null。
 
-Providers 按注册顺序查询，第一个返回 true 的来源获胜，包括值为 null 的情况；返回 false 才继续查询，来源异常立即终止求值。
+Providers 通过 `VariablesExtension.TryGetValue` 查询。`TemplateEvaluatorOptions.Fallback` 默认为 false，只查指定命名空间；true 时同层按来源顺序查询，全部未找到才逐级进入父命名空间及全局，最后查询来源已声明的默认值。null、空字符串、false 和 0 均停止查询；来源异常终止求值。命令选项可直接注册在配置之前，配置仍高于命令默认值。回退不改变模板语法，仍使用 `${name}` 和 `${app:name}`。详见[多来源查询](variables.zh-Hans.md#多来源查询)。
 
 评估器不缓存变量值、getter 的返回值或索引结果。Reflection 可以复用 Getter 委托；相同引用出现两次仍执行两次取值，因此动态提供器可以返回不同结果。
 
@@ -172,6 +172,7 @@ TemplateEvaluator 构造函数可接收 TemplateEvaluatorOptions：
 | --- | --- | --- |
 | `Culture` | null | 可显式设置 CultureInfo；null 保持 .NET 默认文化区域。 |
 | `Recursive` | false | 对取值及 Resolved 后得到的字符串执行子模板求值。 |
+| `Fallback` | false | 允许逐级命名空间回退，最后查询来源已声明的默认值；递归模板沿用相同设置。 |
 | `MaximumDepth` | 64 | 最大模板层数，必须为正整数，根模板为 1。 |
 
 构造直接持有传入选项；省略或传 null 时每个评估器创建独立选项。Providers 和 Options 属性的引用固定，内容可在求值之外配置。求值及递归期间，调用方保持选项、集合和事件订阅稳定；动态来源负责自己的数据同步。没有配置快照或全局共享默认实例。

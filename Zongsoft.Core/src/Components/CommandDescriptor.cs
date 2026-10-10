@@ -65,15 +65,22 @@ public class CommandDescriptor
 			var attributes = commandType.GetCustomAttributes<CommandOptionAttribute>(true);
 
 			foreach(var attribute in attributes)
-				options.Add(
-					new CommandOptionDescriptor(
-						attribute.Name,
-						attribute.Symbol,
-						attribute.Required,
-						attribute.Type,
-						attribute.ConverterType,
-						attribute.DefaultValue,
-						attribute.Description));
+			{
+				var option = new CommandOptionDescriptor(
+					attribute.Name,
+					attribute.Symbol,
+					attribute.Required,
+					attribute.Type,
+					attribute.ConverterType)
+				{
+					Description = attribute.Description,
+				};
+
+				if(attribute.HasDefaultValue)
+					option.DefaultValue = attribute.DefaultValue;
+
+				options.Add(option);
+			}
 
 			return new CommandDescriptor(commandType, options);
 		});

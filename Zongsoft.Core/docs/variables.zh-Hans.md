@@ -30,17 +30,46 @@ var found = source.TryGetValue("optional", out var value); // found 为 true，v
 public interface IVariables
 {
 	bool TryGetValue(string name, out object value);
+	bool TryGetValue(string name, bool fallback, out object value);
 	bool TryGetValue(string @namespace, string name, out object value);
+	bool TryGetValue(string @namespace, string name, bool fallback, out object value);
 }
 ```
 
 `TryGetValue(name, out value)` 只查询默认命名空间，语义等价于 `TryGetValue(null, name, out value)` 和 `TryGetValue(string.Empty, name, out value)`。显式重载先传命名空间，再传变量名称，两者由独立参数提供，不将名称再次拆分为命名空间与名称。
 
-名称和命名空间按 `OrdinalIgnoreCase` 比较。null 和空字符串命名空间等价；指定非空命名空间时，不自动回退到默认命名空间。[环境变量视图](#环境变量视图) 是名称比较规则的明确特例，遵循平台规则。
+名称和命名空间按 `OrdinalIgnoreCase` 比较；[环境变量视图](#环境变量视图) 遵循平台规则。null 和空字符串均表示全局命名空间。没有布尔参数的重载等价于 `fallback=false`；`fallback=true` 时依次查询指定命名空间、父级、全局及来源自身已声明的默认值。例如 A.B.C → A.B → A → 全局。命名空间只限定变量，没有保留的查询模式名称。
 
 查询是否成功由布尔返回值决定，存在且值为 null 仍返回 true；变量不存在返回 false，不因此抛出异常。读取来源时发生的其它异常可以传播。
 
 提供器返回原始对象，不负责解析变量引用、成员导航、类型转换、格式化或模板展开。缓存、实时性及并发同步由各实现决定，接口不保证多次查询得到相同值。
+
+## 多来源查询
+
+`VariablesExtension.TryGetValue` 为 `IEnumerable<IVariables>` 提供与接口对应的四个重载：
+
+1. 在当前命名空间按来源顺序查询，均传入 false。
+2. 全部未找到且允许回退时，逐级进入父命名空间直至全局，每一级都先查询全部来源。
+3. 全局普通查询仍全部失败，才按来源顺序调用 `TryGetValue(null, name, true, out value)`，允许来源提供自身已声明的默认值。
+4. 任何查询命中 null、空字符串、false 或 0 即结束。不带布尔参数或传入 false 时，仅执行第一步。
+
+以下片段假定已有命令上下文 context 和配置 profile：
+
+```csharp
+IVariables[] sources = [context.Options, profile.ToVariables(), Variables.Environments()];
+sources.TryGetValue("compilation", true, out var raw);
+var evaluator = new TemplateEvaluator(new() { Fallback = true })
+{
+	Providers = { context.Options, profile.ToVariables(), Variables.Environments() },
+};
+var text = evaluator.Evaluate("${compilation}");
+```
+
+描述符默认值为 Release、配置为 Debug 时，省略选项得到 Debug；显式传入 `--compilation:Custom` 得到 Custom；选项、配置和环境均缺失才使用 Release。命令选项只注册一次，无需复制或拆成两层。
+
+更具体的命名空间优先，同一命名空间内来源顺序优先。例如客户来源只有全局 `key=customer`，随后公共来源提供 `A.B:key=shared`，查询 `A.B.C:key` 并允许回退时得到 shared。
+
+集合须可重复枚举且查询期间稳定；空集合返回 false，忽略 null 来源，集合或名称为 null 抛 ArgumentNullException。模板评估器独立拒绝 Providers 中的 null 元素。查询不缓存、转换、展开或吞掉异常，不保证跨来源原子快照。Profile 的 [default] 是普通章节，`${default:compilation}` 查询该命名空间。
 
 ## 内存变量
 
@@ -103,7 +132,7 @@ public static IVariables Wrap(IDictionary<object, object> dictionary, bool reuse
 
 视图读取当前条目，立即反映新增、替换、删除和空值；不复制条目、不缓存查询结果、不展开模板或转换类型。需要独立复制字符串键/对象值条目时，可将 `IEnumerable<KeyValuePair<string, object>>` 传入 `new Variables(entries)`。缓存自身支持并发访问，源字典的访问仍遵循其同步要求。
 
-只有字符串键提供变量，其它类型的键被忽略，不调用 `ToString()` 转换。键遵循 `Variables` 的约定：默认命名空间使用 `name`，具名命名空间使用 `namespace:name`。null 和空字符串命名空间均查询默认命名空间，非空命名空间不会回退。查询参数不裁剪、不拆分、不归一化。字典或查询名称为 null 时抛出 `ArgumentNullException`。
+只有字符串键提供变量，其它类型的键被忽略，不调用 `ToString()` 转换。键遵循 `Variables` 的约定：默认命名空间使用 `name`，具名命名空间使用 `namespace:name`。null 和空字符串命名空间均查询默认命名空间，非空命名空间仅在 fallback=true 时逐级回退到父级和全局。查询参数不裁剪、不拆分、不归一化。字典或查询名称为 null 时抛出 `ArgumentNullException`。
 
 查询始终使用 `OrdinalIgnoreCase` 比较键。采用 `StringComparer.OrdinalIgnoreCase` 的标准 `Dictionary<string, object>` 和 `ConcurrentDictionary<string, object>` 实例直接查询；其它实现、派生类型和比较器按当前条目的枚举顺序匹配，找到第一个匹配项就立即返回，包括值为 null 的情况。允许忽略大小写后的重名键，精确大小写命中没有额外优先级；枚举查询最坏为 O(n)。存在且值为 null 仍表示查询成功，阻止后续提供器回退。
 
@@ -127,7 +156,7 @@ var text = evaluator.Evaluate("${PATH}");
 
 `Variables.Environments()` 返回的视图是 `IVariables` 忽略大小写契约的明确特例；接口原有约定及字典、Profile 视图的行为保持不变。环境变量名称比较遵循平台：Windows 忽略大小写，Unix/Linux 区分大小写。Unix/Linux 调用方应使用准确的环境变量名，仅大小写不同的名称分别查询。环境变量名保持原样，不把 `__`、下划线或其它字符转换成命名空间；通过模板引用时仍须符合模板的标识符语法。
 
-环境变量只属于默认命名空间。`TryGetValue(name, out value)`、null 命名空间和空字符串命名空间等价；其它命名空间直接查询失败，不回退。查询参数不裁剪；名称为 null 时抛出 `ArgumentNullException`。
+环境变量只属于默认命名空间。`TryGetValue(name, out value)`、null 命名空间和空字符串命名空间等价；其它命名空间仅在 fallback=true 时回退到全局；本目标没有额外默认值。查询参数不裁剪；名称为 null 时抛出 `ArgumentNullException`。
 
 `Process` 读取当前进程；`User`、`Machine` 遵循 .NET 的平台支持范围，Unix/Linux 上查询不到变量。不合并或回退到其它来源；无效枚举值在创建视图时抛出 `ArgumentOutOfRangeException`（参数名为 `target`）。
 
@@ -148,19 +177,32 @@ var evaluator = new TemplateEvaluator { Providers = { context.Options } };
 var text = evaluator.Evaluate("${install_path}");
 ```
 
-变量名称将选项名称中的 `.`、`-` 替换成 `_`：`install.path` 和 `install-path` 都对应 `install_path`。转换结果必须符合 `[A-Za-z_][A-Za-z0-9_]*`，否则该选项及其短名称均不参与变量查询；合法短名称也可以作为变量名。查询名称必须已经是合法标识符，不进行裁剪、规范化或命名空间拆分。原有选项查询仍使用原始名称，例如 `context.Options.GetValue("install-path")`。
+变量名称将选项名称中的 `.`、`-` 替换成 `_`：`install.path` 和 `install-path` 都对应 `install_path`。转换结果必须符合 `[A-Za-z_][A-Za-z0-9_]*`，否则该选项及其短名称均不参与变量查询；合法短名称也可以作为变量名。查询名称必须已经是合法标识符，不进行裁剪、规范化或命名空间拆分。普通选项查询使用原始名称，例如 `context.Options.GetValue("install-path")`。
 
-变量查询忽略大小写，只提供默认命名空间；null 和空字符串命名空间等价，非空命名空间查询失败。已传入的值优先于描述中的默认值，并保留选项转换后的类型；存在且值为 null 仍查询成功，阻止回退。多个选项映射为同名变量时，按已传入选项的枚举顺序返回首个匹配项；未匹配时按描述集合顺序查询默认值。
+变量查询忽略大小写。命令选项只提供全局变量：
+
+| 调用 | 行为 |
+| --- | --- |
+| `TryGetValue(null, name, false, out value)` | 仅查显式选项。 |
+| `TryGetValue(null, name, true, out value)` | 显式选项优先，没有才查询已声明的默认值。 |
+| `TryGetValue("app", name, false, out value)` | 返回 false。 |
+| `TryGetValue("app", name, true, out value)` | 回退到全局，显式选项优先，其次已声明的默认值。 |
+
+无布尔参数的重载不回退。显式值保留转换后的类型；null、空字符串、false 和 0 均停止回退。显式值和描述引用独立保留，映射冲突各按首项处理。普通 GetValue/TryGetValue 使用原始选项名并允许已声明的默认值；没有显式值或默认值时，GetValue 抛选项未找到异常，TryGetValue 返回 false。可选读取使用 TryGetValue 或带调用方默认值的 GetValue。
+
+`CommandOptionDescriptor.HasDefaultValue` 和 `CommandOptionAttribute.HasDefaultValue` 区别未声明与显式 null。无默认值构造函数保持 false；传入默认值或设置 DefaultValue 后为 true，包括显式 null；Describe 保留声明状态。DefaultValue 不根据类型合成 false 或 0。直接读取默认值时使用描述符的这两个属性。
+
+显式传入 `--compilation:Debug`、声明默认值 Release 时，两种设置都得到 Debug。省略选项时 false 查询失败，true 得到 Release。没有声明默认值则两者均失败。
 
 规范化名称索引在首次有效变量查询时惰性创建，之后直接查询字典。名称映射在此时固定，后续增删或替换描述集合中的选项不会重建索引；默认值每次从原描述对象读取，因此修改这些默认值仍立即生效。索引安全发布后可并发读取，描述对象的并发修改由调用方协调。
 
 ## Profile 变量视图
 
-[Profile](profiles.zh-Hans.md#变量视图) 通过 ProfileExtension.ToVariables() 将整个配置、指定章节子树或单个条目适配为 IVariables 实时视图，可用 evaluator.Providers.Add(profile.ToVariables()) 显式注册。章节层级以点连接为命名空间，章节名称内的点原样保留；条目名称中的点和连字符替换为下划线后验证标识符。查询返回原始值，多个条目映射到同一变量时，仅该变量的查询抛出 ProfileException；通过模板查询时包装为 ProviderFailed，并保留原始异常。
+[Profile](profiles.zh-Hans.md#变量视图) 通过 ProfileExtension.ToVariables() 将整个配置、指定章节子树或单个条目适配为 IVariables 实时视图，可用 evaluator.Providers.Add(profile.ToVariables()) 显式注册。章节层级以点连接为命名空间，章节名称内的点原样保留；条目名称中的点和连字符替换为下划线后验证标识符。启用回退时逐级查询父命名空间，但不扩展所选视图范围：章节只提供其子树，条目只提供自身。查询返回原始值，多个条目映射到同一变量时，仅该变量的查询抛出 ProfileException；通过模板查询时包装为 ProviderFailed，并保留原始异常。
 
 ## 模板集成
 
-上述变量来源均可显式加入 `TemplateEvaluator.Providers`；模板按注册顺序查找，首个查询成功的来源决定结果，包括值为 null 的情况。完整模板语法、成员导航、格式化、事件及错误处理见[文本模板文档](expressions.zh-Hans.md)。
+上述变量来源均可显式加入 `TemplateEvaluator.Providers`；模板通过 `VariablesExtension.TryGetValue` 查询；`TemplateEvaluatorOptions.Fallback` 默认 false，显式设为 true 才启用上述回退，递归模板沿用相同设置。命中 null 也终止查询。完整模板语法、成员导航、格式化、事件及错误处理见[文本模板文档](expressions.zh-Hans.md)。
 
 ## 实现入口
 

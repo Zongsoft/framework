@@ -122,6 +122,13 @@ public partial class Variables : Dictionary<string, object>, IVariables
 	#endregion
 
 	#region 公共方法
+	/// <summary>尝试获取全局变量，并明确是否允许回退。</summary>
+	/// <param name="name">变量名称，不能为 <see langword="null"/>。</param>
+	/// <param name="fallback">是否允许回退；本字典没有全局变量以外的默认值。</param>
+	/// <param name="value">成功时返回原始值，可以为空；失败时为空。</param>
+	/// <returns>是否找到变量。</returns>
+	public bool TryGetValue(string name, bool fallback, out object value) => this.TryGetValue(null, name, fallback, out value);
+
 	/// <summary>尝试获取指定命名空间中指定名称的变量值。</summary>
 	/// <param name="namespace">要查询的命名空间，<see langword="null"/> 或空字符串均表示忽略命名空间限定，查询默认命名空间；命名空间比较忽略大小写。</param>
 	/// <param name="name">不含命名空间限定部分的变量名称，不能为 <see langword="null"/>；名称比较忽略大小写。</param>
@@ -137,12 +144,21 @@ public partial class Variables : Dictionary<string, object>, IVariables
 		ArgumentNullException.ThrowIfNull(name);
 		return base.TryGetValue(string.IsNullOrEmpty(@namespace) ? name : $"{@namespace}:{name}", out value);
 	}
+
+	/// <summary>尝试查询指定命名空间，并按需逐级回退到全局命名空间。</summary>
+	/// <param name="namespace">命名空间，<see langword="null"/> 或空字符串表示全局；层级以点号分隔。</param>
+	/// <param name="name">变量名称，不能为 <see langword="null"/>，不裁剪或拆分。</param>
+	/// <param name="fallback">是否在未找到时逐级查询父命名空间及全局命名空间。</param>
+	/// <param name="value">成功时返回原始值，可以为空；失败时为空。</param>
+	/// <returns>是否找到变量；值为空也属于成功。</returns>
+	public bool TryGetValue(string @namespace, string name, bool fallback, out object value) => VariablesExtension.TryGetValueCore(this, @namespace, name, fallback, out value);
 	#endregion
 
 	#region 嵌套子类
 	private sealed class ClassicDictionaryVariables(IDictionary dictionary) : IVariables
 	{
 		public bool TryGetValue(string name, out object value) => this.TryGetValue(null, name, out value);
+		public bool TryGetValue(string name, bool fallback, out object value) => this.TryGetValue(null, name, fallback, out value);
 		public bool TryGetValue(string @namespace, string name, out object value)
 		{
 			ArgumentNullException.ThrowIfNull(name);
@@ -160,11 +176,14 @@ public partial class Variables : Dictionary<string, object>, IVariables
 			value = null;
 			return false;
 		}
+
+		public bool TryGetValue(string @namespace, string name, bool fallback, out object value) => VariablesExtension.TryGetValueCore(this, @namespace, name, fallback, out value);
 	}
 
 	private sealed class GenericDictionaryVariables<TKey>(IDictionary<TKey, object> dictionary) : IVariables
 	{
 		public bool TryGetValue(string name, out object value) => this.TryGetValue(null, name, out value);
+		public bool TryGetValue(string name, bool fallback, out object value) => this.TryGetValue(null, name, fallback, out value);
 		public bool TryGetValue(string @namespace, string name, out object value)
 		{
 			ArgumentNullException.ThrowIfNull(name);
@@ -190,6 +209,8 @@ public partial class Variables : Dictionary<string, object>, IVariables
 			value = null;
 			return false;
 		}
+
+		public bool TryGetValue(string @namespace, string name, bool fallback, out object value) => VariablesExtension.TryGetValueCore(this, @namespace, name, fallback, out value);
 	}
 	#endregion
 }

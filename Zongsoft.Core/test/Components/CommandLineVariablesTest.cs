@@ -79,27 +79,35 @@ public class CommandLineVariablesTest
 		Assert.Equal("unknown", value);
 		Assert.True(variables.TryGetValue("INSTALL_PATH", out value));
 		Assert.Equal("first", value);
-		Assert.True(variables.TryGetValue("region_path", out value));
+		Assert.True(variables.TryGetValue("INSTALL_PATH", true, out value));
+		Assert.Equal("first", value);
+		Assert.False(variables.TryGetValue("region_path", out value));
+		Assert.Null(value);
+		Assert.True(variables.TryGetValue("region_path", true, out value));
 		Assert.Equal("first default", value);
 	}
 
 	[Fact]
-	public void Lookup_OnlyAllowsDefaultNamespace()
+	public void Lookup_FallbackControlsGlobalValuesAndDeclaredDefaults()
 	{
 		IVariables variables = CreateOptions("options --name:provided");
 
-		Assert.True(variables.TryGetValue("name", out var value));
-		Assert.Equal("provided", value);
-		Assert.True(variables.TryGetValue(null, "NAME", out value));
-		Assert.Equal("provided", value);
-		Assert.True(variables.TryGetValue(string.Empty, "NAME", out value));
-		Assert.Equal("provided", value);
-
-		foreach(var scope in new[] { "options", "name", " " })
+		foreach(var scope in new[] { null, string.Empty, "app.worker", "default", "*", " " })
 		{
-			Assert.False(variables.TryGetValue(scope, "name", out value));
+			Assert.Equal(string.IsNullOrEmpty(scope), variables.TryGetValue(scope, "NAME", out var value));
+			Assert.Equal(string.IsNullOrEmpty(scope) ? "provided" : null, value);
+			Assert.True(variables.TryGetValue(scope, "NAME", true, out value));
+			Assert.Equal("provided", value);
+			Assert.False(variables.TryGetValue(scope, "count", out value));
 			Assert.Null(value);
+			Assert.True(variables.TryGetValue(scope, "C", true, out value));
+			Assert.Equal(3, value);
 		}
+
+		Assert.True(variables.TryGetValue("name", false, out var explicitValue));
+		Assert.Equal("provided", explicitValue);
+		Assert.False(variables.TryGetValue("count", false, out _));
+		Assert.False(variables.TryGetValue("missing", true, out _));
 	}
 
 	[Fact]
@@ -112,13 +120,21 @@ public class CommandLineVariablesTest
 		Assert.Null(value);
 		Assert.True(variables.TryGetValue("N", out value));
 		Assert.Null(value);
-		Assert.True(variables.TryGetValue("COUNT", out value));
+		Assert.False(variables.TryGetValue("COUNT", out value));
+		Assert.Null(value);
+		Assert.True(variables.TryGetValue("COUNT", true, out value));
 		Assert.Equal(3, value);
-		Assert.True(variables.TryGetValue("C", out value));
+		Assert.True(variables.TryGetValue("C", true, out value));
 		Assert.Equal(3, value);
-		Assert.True(variables.TryGetValue("optional", out value));
+		Assert.False(variables.TryGetValue("optional", out value));
+		Assert.Null(value);
+		Assert.False(variables.TryGetValue("optional", true, out value));
 		Assert.Null(value);
 		Assert.True(variables.TryGetValue("EXTRA", out value));
+		Assert.Null(value);
+		Assert.True(variables.TryGetValue("EXTRA", true, out value));
+		Assert.Null(value);
+		Assert.False(variables.TryGetValue("default", "EXTRA", out value));
 		Assert.Null(value);
 		Assert.True(variables.TryGetValue("install_path", out value));
 		Assert.Null(value);
@@ -127,10 +143,10 @@ public class CommandLineVariablesTest
 		Assert.False(variables.TryGetValue("q", out value));
 		Assert.Null(value);
 		IVariables defaults = CreateOptions("options");
-		Assert.False(defaults.TryGetValue("Q", out value));
+		Assert.False(defaults.TryGetValue("Q", true, out value));
 		Assert.Null(value);
 
-		foreach(var name in new[] { "missing", null, string.Empty })
+		foreach(var name in new[] { "missing", string.Empty })
 		{
 			Assert.False(options.TryGetValue(name, out value));
 			Assert.Null(value);
@@ -141,6 +157,13 @@ public class CommandLineVariablesTest
 			Assert.False(variables.TryGetValue(string.Empty, name, out value));
 			Assert.Null(value);
 		}
+
+		Assert.False(options.TryGetValue(null, out value));
+		Assert.Null(value);
+		Assert.Equal("name", Assert.Throws<ArgumentNullException>(() => variables.TryGetValue(null, out _)).ParamName);
+		Assert.Equal("name", Assert.Throws<ArgumentNullException>(() => variables.TryGetValue(null, true, out _)).ParamName);
+		Assert.Equal("name", Assert.Throws<ArgumentNullException>(() => variables.TryGetValue("app", null, out _)).ParamName);
+		Assert.Equal("name", Assert.Throws<ArgumentNullException>(() => variables.TryGetValue("app", null, true, out _)).ParamName);
 	}
 
 	[Fact]
@@ -154,7 +177,9 @@ public class CommandLineVariablesTest
 
 		try
 		{
-			Assert.True(defaults.TryGetValue("name", out var value));
+			Assert.False(defaults.TryGetValue("name", out var value));
+			Assert.Null(value);
+			Assert.True(defaults.TryGetValue("name", true, out value));
 			Assert.Equal("default name", value);
 			Assert.True(supplied.TryGetValue("name", out value));
 			Assert.Equal("provided", value);
@@ -163,9 +188,9 @@ public class CommandLineVariablesTest
 
 			descriptor.DefaultValue = "updated default";
 
-			Assert.True(defaults.TryGetValue(null, "NAME", out value));
+			Assert.True(defaults.TryGetValue("NAME", true, out value));
 			Assert.Equal("updated default", value);
-			Assert.True(defaults.TryGetValue("N", out value));
+			Assert.True(defaults.TryGetValue("app", "N", true, out value));
 			Assert.Equal("updated default", value);
 			Assert.True(supplied.TryGetValue(null, "NAME", out value));
 			Assert.Equal("provided", value);
@@ -175,11 +200,116 @@ public class CommandLineVariablesTest
 			Assert.Null(value);
 			Assert.True(empty.TryGetValue("N", out value));
 			Assert.Null(value);
+			Assert.True(supplied.TryGetValue("app", "NAME", true, out value));
+			Assert.Equal("provided", value);
+			Assert.True(empty.TryGetValue("app", "N", true, out value));
+			Assert.Null(value);
 		}
 		finally
 		{
 			descriptor.DefaultValue = original;
 		}
+	}
+
+	[Theory]
+	[InlineData("name", null, "n", null, "default name")]
+	[InlineData("name", "", "n", "", "default name")]
+	[InlineData("enabled", "false", "e", false, true)]
+	[InlineData("count", "0", "c", 0, 3)]
+	public void Lookup_ExplicitEmptyAndZeroValuesBlockDefaults(string name, string input, string alias, object expected, object fallback)
+	{
+		var cmdlet = new CommandLine.Cmdlet("options");
+		cmdlet.Options.Add(new(CommandLine.CmdletOptionKind.Fully, name, input));
+		IVariables variables = CreateOptions(cmdlet);
+
+		foreach(var scope in new[] { null, string.Empty, "app.worker", "default", "*" })
+		{
+			Assert.True(variables.TryGetValue(scope, name, true, out var value));
+			Assert.Equal(expected, value);
+			Assert.True(variables.TryGetValue(scope, alias, true, out value));
+			Assert.Equal(expected, value);
+		}
+
+		IVariables defaults = CreateOptions("options");
+		Assert.True(defaults.TryGetValue(name, true, out var defaultValue));
+		Assert.Equal(fallback, defaultValue);
+		Assert.True(defaults.TryGetValue(alias, true, out defaultValue));
+		Assert.Equal(fallback, defaultValue);
+	}
+
+	[Theory]
+	[InlineData(typeof(int), 0)]
+	[InlineData(typeof(bool), false)]
+	[InlineData(typeof(string), "")]
+	public void DefaultPresence_DistinguishesOmittedNullAndTypedValues(Type type, object value)
+	{
+		var omitted = new CommandOptionDescriptor("value", false, type);
+		var explicitNull = new CommandOptionDescriptor("value", false, type, null, null);
+		var namedNull = new CommandOptionDescriptor("value", false, type, null, defaultValue: null);
+		var typed = new CommandOptionDescriptor("value", 'v', false, type, null, value);
+		var attribute = new CommandOptionAttribute("value", type);
+		var nullAttribute = new CommandOptionAttribute("value", 'v', type, null);
+
+		Assert.False(omitted.HasDefaultValue);
+		Assert.Null(omitted.DefaultValue);
+		Assert.True(explicitNull.HasDefaultValue);
+		Assert.Null(explicitNull.DefaultValue);
+		Assert.True(namedNull.HasDefaultValue);
+		Assert.Null(namedNull.DefaultValue);
+		Assert.True(typed.HasDefaultValue);
+		Assert.Equal(value, typed.DefaultValue);
+		Assert.False(attribute.HasDefaultValue);
+		Assert.Null(attribute.DefaultValue);
+		Assert.True(nullAttribute.HasDefaultValue);
+		Assert.Null(nullAttribute.DefaultValue);
+
+		omitted.DefaultValue = null;
+		attribute.DefaultValue = null;
+
+		Assert.True(omitted.HasDefaultValue);
+		Assert.Null(omitted.DefaultValue);
+		Assert.True(attribute.HasDefaultValue);
+		Assert.Null(attribute.DefaultValue);
+		attribute.DefaultValue = value;
+		Assert.True(attribute.HasDefaultValue);
+		Assert.Equal(value, attribute.DefaultValue);
+	}
+
+	[Fact]
+	public void DefaultPresence_TransfersAttributesWithoutSynthesizingTypeDefaults()
+	{
+		var descriptor = CommandDescriptor.Describe(typeof(OptionsCommand));
+		var options = CreateOptions("options");
+		IVariables variables = options;
+
+		foreach(var name in new[] { "no-count", "no-enabled", "optional" })
+		{
+			Assert.False(descriptor.Options[name].HasDefaultValue);
+			Assert.Null(descriptor.Options[name].DefaultValue);
+			Assert.False(options.TryGetValue(name, out var value));
+			Assert.Null(value);
+			Assert.Throws<ArgumentException>(() => options.GetValue(name));
+			Assert.False(variables.TryGetValue(name.Replace('-', '_'), true, out value));
+			Assert.Null(value);
+		}
+
+		foreach(var name in new[] { "declared-null", "assigned-null" })
+		{
+			Assert.True(descriptor.Options[name].HasDefaultValue);
+			Assert.Null(descriptor.Options[name].DefaultValue);
+			Assert.True(options.TryGetValue(name, out var value));
+			Assert.Null(value);
+			Assert.True(variables.TryGetValue(name.Replace('-', '_'), true, out value));
+			Assert.Null(value);
+		}
+
+		Assert.True(descriptor.Options["converted-count"].HasDefaultValue);
+		Assert.Equal(12, Assert.IsType<int>(descriptor.Options["converted-count"].DefaultValue));
+		Assert.True(variables.TryGetValue("converted_count", true, out var converted));
+		Assert.Equal(12, Assert.IsType<int>(converted));
+		Assert.False(variables.TryGetValue("z", true, out _));
+		Assert.True(variables.TryGetValue("u", true, out var explicitNull));
+		Assert.Null(explicitNull);
 	}
 
 	[Fact]
@@ -197,6 +327,10 @@ public class CommandLineVariablesTest
 		Assert.True(options.Switch("CUSTOM"));
 		Assert.True(options.Switch("x"));
 		Assert.False(options.Contains("missing"));
+		Assert.False(options.Contains("count"));
+		Assert.Equal(3, options.GetValue<int>("count"));
+		Assert.True(options.TryGetValue("C", out var count));
+		Assert.Equal(3, count);
 		Assert.Equal("/opt/app", options.GetValue("INSTALL-PATH"));
 		Assert.False(options.TryGetValue("install_path", out var value));
 		Assert.Null(value);
@@ -210,6 +344,11 @@ public class CommandLineVariablesTest
 	[CommandOption("count", 'c', typeof(int), 3)]
 	[CommandOption("enabled", 'e', typeof(bool), true)]
 	[CommandOption("optional", typeof(string))]
+	[CommandOption("no-count", 'z', typeof(int))]
+	[CommandOption("no-enabled", typeof(bool))]
+	[CommandOption("declared-null", 'u', typeof(int), null)]
+	[CommandOption("assigned-null", typeof(bool), DefaultValue = null)]
+	[CommandOption("converted-count", typeof(int), "12")]
 	[CommandOption("install-path", typeof(string), "default path")]
 	[CommandOption("region.path", typeof(string), "first default")]
 	[CommandOption("region-path", typeof(string), "second default")]
