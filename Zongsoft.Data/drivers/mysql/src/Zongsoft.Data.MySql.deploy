@@ -3,5 +3,3 @@ lib/${Framework}/Zongsoft.Data.MySql.*
 lib/${Framework}/*/Zongsoft.Data.MySql.resources.*
 
 nuget:MySqlConnector@2.4.0
-
-nuget:System.Diagnostics.DiagnosticSource@8.0.1 <framework:net6.0>

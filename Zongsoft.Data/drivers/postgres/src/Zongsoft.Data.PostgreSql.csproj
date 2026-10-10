@@ -44,7 +44,7 @@
 		<Otherwise>
 			<ItemGroup>
 				<PackageReference Include="Zongsoft.Core" VersionOverride="7.63.0" />
-				<PackageReference Include="Zongsoft.Data" VersionOverride="7.29.0" />
+				<PackageReference Include="Zongsoft.Data" VersionOverride="7.31.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

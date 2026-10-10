@@ -84,3 +84,15 @@ nuget:Zongsoft.Externals.Wechat
 Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
 
 Additional artifacts listed by the deployment manifest include `Zongsoft.Externals.Wechat.plugin`, `Zongsoft.Externals.Wechat.option`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.
+
+## Publishing
+
+Set `NUGET_API_KEY` and use the Release `pack` task. The `--project` option selects a project or solution. Publish the main package first, wait until it is available from NuGet, and then publish the API and gateway packages that reference it:
+
+```powershell
+dotnet cake build.cake --target=pack --edition=Release --project=src/Zongsoft.Externals.Wechat.csproj
+dotnet cake build.cake --target=pack --edition=Release --project=api/Zongsoft.Externals.Wechat.Web.csproj
+dotnet cake build.cake --target=pack --edition=Release --project=gateway/Zongsoft.Externals.Wechat.Gateway.csproj
+```
+
+Without `--project`, the task builds the complete solution.

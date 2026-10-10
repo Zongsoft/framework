@@ -94,3 +94,7 @@ nuget:Zongsoft.Messaging.Storages.Data
 按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
 
 清单列出的附属产物包括：`Zongsoft.Messaging.Storages.Data.option`、`Zongsoft.Messaging.Storages.Data.plugin`、`Zongsoft.Messaging.Storages.mapping`、`scripts/**/*`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。
+
+## 发布
+
+设置 `NUGET_API_KEY` 后，在本目录执行 `dotnet cake build.cake --target=pack --edition=Release`。该任务构建解决方案并发布 NuGet 包；应先发布项目引用的 `Zongsoft.Core` 和 `Zongsoft.Data` 版本。

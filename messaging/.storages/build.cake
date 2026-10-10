@@ -1,7 +1,7 @@
 var target = Argument("target", "default");
 var edition = Argument("edition", "Debug");
 
-var solutionFile = Argument("project", "Zongsoft.Externals.Wechat.slnx");
+var solutionFile = "Zongsoft.Messaging.Storages.slnx";
 
 Task("clean")
 	.Description("清理解决方案")

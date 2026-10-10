@@ -94,3 +94,7 @@ nuget:Zongsoft.Messaging.Storages.Data
 Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
 
 Additional artifacts listed by the deployment manifest include `Zongsoft.Messaging.Storages.Data.option`, `Zongsoft.Messaging.Storages.Data.plugin`, `Zongsoft.Messaging.Storages.mapping`, `scripts/**/*`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.
+
+## Publishing
+
+Run `dotnet cake build.cake --target=pack --edition=Release` from this directory with `NUGET_API_KEY` set. The task builds the solution and publishes its NuGet packages. Publish the referenced `Zongsoft.Core` and `Zongsoft.Data` versions first.

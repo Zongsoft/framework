@@ -70,24 +70,6 @@ Task("pack")
 	}
 });
 
-Task("pack")
-	.Description("发包(NuGet)")
-	.IsDependentOn("build")
-	.Does(() =>
-{
-	var packages = GetFiles($"**/{edition}/*.nupkg");
-
-	foreach(var package in packages)
-	{
-		DotNetNuGetPush(package.FullPath, new DotNetNuGetPushSettings
-		{
-			Source = "nuget.org",
-			ApiKey = EnvironmentVariable("NUGET_API_KEY"),
-			SkipDuplicate = true,
-		});
-	}
-});
-
 Task("default")
 	.Description("默认")
 	.IsDependentOn("test");

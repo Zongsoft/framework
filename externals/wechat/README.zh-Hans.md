@@ -84,3 +84,15 @@ nuget:Zongsoft.Externals.Wechat
 按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
 
 清单列出的附属产物包括：`Zongsoft.Externals.Wechat.plugin`、`Zongsoft.Externals.Wechat.option`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。
+
+## 发布
+
+设置 `NUGET_API_KEY` 后，使用 Release 配置执行 `pack` 任务。`--project` 可指定项目或解决方案。先发布主包，等待 NuGet 可以还原该版本后，再发布依赖它的 API 和网关包：
+
+```powershell
+dotnet cake build.cake --target=pack --edition=Release --project=src/Zongsoft.Externals.Wechat.csproj
+dotnet cake build.cake --target=pack --edition=Release --project=api/Zongsoft.Externals.Wechat.Web.csproj
+dotnet cake build.cake --target=pack --edition=Release --project=gateway/Zongsoft.Externals.Wechat.Gateway.csproj
+```
+
+不指定 `--project` 时构建完整解决方案。
