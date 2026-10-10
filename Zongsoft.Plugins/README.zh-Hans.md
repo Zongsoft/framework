@@ -114,7 +114,7 @@ nuget:Zongsoft.Discussions
 nuget:Zongsoft.Discussions.Web
 ```
 
-领域包实际包含 `Zongsoft.Discussions.dll`、同名 `.plugin`、`.option`、`.mapping`；Web 包包含 `Zongsoft.Discussions.Web.dll`、同名 `.plugin` 和归档模板。包根 `.deploy` 从 `artifacts/` 与 `lib/$(Framework)/` 复制这些文件，不应把包内路径当作源码目录路径。
+领域包实际包含 `Zongsoft.Discussions.dll`、同名 `.plugin`、`.option`、`.mapping`；Web 包包含 `Zongsoft.Discussions.Web.dll`、同名 `.plugin` 和归档模板。包根 `.deploy` 从 `artifacts/` 与 `lib/${Framework}/` 复制这些文件，不应把包内路径当作源码目录路径。
 
 ### 加入业务插件
 
@@ -126,7 +126,7 @@ nuget:Zongsoft.Discussions.Web
 
 ### 包部署清单与源码构建
 
-包根目录的 `.deploy` 通常引用包内 `artifacts/` 和 `lib/$(Framework)/`。应通过 `nuget:Package` 条目执行；把这些文本复制到源码目录，不会让包内路径自动存在。
+包根目录的 `.deploy` 通常引用包内 `artifacts/` 和 `lib/${Framework}/`。应通过 `nuget:Package` 条目执行；把这些文本复制到源码目录，不会让包内路径自动存在。
 
 本地调试时先停止测试宿主，构建匹配的配置/TFM，将变化的程序集及配套清单、选项、映射、资源复制到既有插件位置，再重启。也可在应用自己的 `.deploy` 中显式引用源码构建产物。不要只为替换一个调试 DLL 就执行全量部署，它可能覆盖本地配置或移除手工安装的文件。
 

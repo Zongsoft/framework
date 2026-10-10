@@ -114,7 +114,7 @@ nuget:Zongsoft.Discussions
 nuget:Zongsoft.Discussions.Web
 ```
 
-The domain package contains `Zongsoft.Discussions.dll` and matching `.plugin`, `.option`, and `.mapping` files. The Web package contains `Zongsoft.Discussions.Web.dll`, its manifest and archive templates. Their package-root `.deploy` files copy from `artifacts/` and `lib/$(Framework)/`; these are package paths, not source-directory paths.
+The domain package contains `Zongsoft.Discussions.dll` and matching `.plugin`, `.option`, and `.mapping` files. The Web package contains `Zongsoft.Discussions.Web.dll`, its manifest and archive templates. Their package-root `.deploy` files copy from `artifacts/` and `lib/${Framework}/`; these are package paths, not source-directory paths.
 
 ### Adding the Business Plugin
 
@@ -126,7 +126,7 @@ Filesystem nesting differs from logical extension paths such as `/Workbench/Modu
 
 ### Deployment Manifest versus Source Build
 
-A package's root `.deploy` normally refers to package-relative `artifacts/` and `lib/$(Framework)/`. Execute it through a `nuget:Package` entry; copying this text into a source directory does not make those package paths exist.
+A package's root `.deploy` normally refers to package-relative `artifacts/` and `lib/${Framework}/`. Execute it through a `nuget:Package` entry; copying this text into a source directory does not make those package paths exist.
 
 For local debugging, stop the test host, build the matching configuration/TFM, then copy the changed assembly plus matching manifest/options/mappings/resources to its existing plugin location and restart. A local application `.deploy` may instead reference explicit source build output paths. Do not run a whole deployment merely to replace one debug DLL: it may overwrite local configuration or remove manually installed files.
 

@@ -248,7 +248,7 @@ Reader 在读取声明时登记原始基线，Loaded 回调中的修改保持待
 
 ## 变量视图
 
-`ProfileExtension.ToVariables()` 返回 `Zongsoft.Expressions.IVariables`，将配置对象适配为实时只读变量视图：
+`ProfileExtension.ToVariables()` 返回 `Zongsoft.Common.IVariables`，将配置对象适配为实时只读变量视图：
 
 | 转换入口 | 查询范围 |
 | --- | --- |
@@ -295,7 +295,7 @@ worker-count=4
 
 ```csharp
 using Zongsoft.Configuration.Profiles;
-using Zongsoft.Expressions;
+using Zongsoft.Common;
 using Zongsoft.Text.Templating;
 
 var profile = Profile.Load("settings.ini");
@@ -312,4 +312,4 @@ var text = evaluator.Evaluate("Database=${mysql:db_name};Storage=${io.rustfs:dat
 
 这些扩展只提供变量来源。Profile 加载、导入参数与 Save 不自动求值，ProfileEntry.Value 保留原文。运行期间变量来源的组合和模板求值由调用方显式组织。
 
-实现见 [ProfileExtension](../src/Configuration/Profiles/ProfileExtension.cs)，契约见 [IVariables](../src/Expressions/IVariables.cs)，行为测试见 [ProfileVariablesTest](../test/Configuration/Profiles/ProfileVariablesTest.cs)。
+实现见 [ProfileExtension](../src/Configuration/Profiles/ProfileExtension.cs)，契约见 [IVariables](variables.zh-Hans.md#变量契约)，行为测试见 [ProfileVariablesTest](../test/Configuration/Profiles/ProfileVariablesTest.cs)。

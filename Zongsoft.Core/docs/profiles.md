@@ -248,7 +248,7 @@ Writer owns path resources. Supplied streams are closed; supplied TextWriter ins
 
 ## Variable views
 
-`ProfileExtension.ToVariables()` returns `Zongsoft.Expressions.IVariables`, adapting configuration objects into live read-only variable views:
+`ProfileExtension.ToVariables()` returns `Zongsoft.Common.IVariables`, adapting configuration objects into live read-only variable views:
 
 | Conversion | Lookup scope |
 | --- | --- |
@@ -295,7 +295,7 @@ Conflicts are limited to the selected view's scope; a single-entry view does not
 
 ```csharp
 using Zongsoft.Configuration.Profiles;
-using Zongsoft.Expressions;
+using Zongsoft.Common;
 using Zongsoft.Text.Templating;
 
 var profile = Profile.Load("settings.ini");
@@ -312,4 +312,4 @@ When a template queries a conflicting variable, TemplateEvaluator throws Templat
 
 These extensions only supply variables. Profile loading, import arguments and Save do not evaluate templates automatically; ProfileEntry.Value retains the original text. The caller explicitly composes variable sources and invokes template evaluation.
 
-See [ProfileExtension](../src/Configuration/Profiles/ProfileExtension.cs), the [IVariables contract](../src/Expressions/IVariables.cs), and [ProfileVariablesTest](../test/Configuration/Profiles/ProfileVariablesTest.cs).
+See [ProfileExtension](../src/Configuration/Profiles/ProfileExtension.cs), the [IVariables contract](variables.md#variable-contract), and [ProfileVariablesTest](../test/Configuration/Profiles/ProfileVariablesTest.cs).

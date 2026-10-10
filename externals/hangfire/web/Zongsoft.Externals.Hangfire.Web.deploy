@@ -1,6 +1,6 @@
 artifacts/Zongsoft.Externals.Hangfire.Web.plugin
-lib/$(Framework)/Zongsoft.Externals.Hangfire.Web.*
-lib/$(Framework)/*/Zongsoft.Externals.Hangfire.Web.resources.*
+lib/${Framework}/Zongsoft.Externals.Hangfire.Web.*
+lib/${Framework}/*/Zongsoft.Externals.Hangfire.Web.resources.*
 
 nuget:Hangfire.Core@1.8.25
 nuget:Hangfire.NetCore@1.8.25

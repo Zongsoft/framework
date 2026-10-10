@@ -269,7 +269,7 @@ If messages are not received:
 
 Compose this feature through the host; a package reference supplies compile-time APIs, while plugin loading also requires deployed manifests and runtime assets. See [the complete plugin workflow](../../Zongsoft.Plugins/README.md).
 
-The deployment manifest selects `Zongsoft.Messaging.ZeroMQ-$(site).plugin`. `site=daemon` includes the broker startup contribution; client-only and broker hosts must be deliberately distinguished. Configure the endpoint and storage factory before starting the broker.
+The deployment manifest selects `Zongsoft.Messaging.ZeroMQ-${site}.plugin`. `site=daemon` includes the broker startup contribution; client-only and broker hosts must be deliberately distinguished. Configure the endpoint and storage factory before starting the broker.
 
 | Runtime artifact | Source of truth |
 | --- | --- |
@@ -287,4 +287,4 @@ nuget:Zongsoft.Messaging.ZeroMQ
 
 Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
 
-Additional artifacts listed by the deployment manifest include `Zongsoft.Messaging.ZeroMQ.option`, `Zongsoft.Messaging.ZeroMQ.plugin`, `Zongsoft.Messaging.ZeroMQ-$(site).plugin`, `Zongsoft.Messaging.ZeroMQ.Storage.plugin`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.
+Additional artifacts listed by the deployment manifest include `Zongsoft.Messaging.ZeroMQ.option`, `Zongsoft.Messaging.ZeroMQ.plugin`, `Zongsoft.Messaging.ZeroMQ-${site}.plugin`, `Zongsoft.Messaging.ZeroMQ.Storage.plugin`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.

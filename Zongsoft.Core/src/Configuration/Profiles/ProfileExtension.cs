@@ -29,7 +29,7 @@
 
 using System;
 
-using Zongsoft.Expressions;
+using Zongsoft.Common;
 using Zongsoft.Expressions.Tokenization;
 
 namespace Zongsoft.Configuration.Profiles;

@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
@@ -9,7 +10,7 @@ using Xunit;
 
 using Zongsoft.Text.Templating;
 
-namespace Zongsoft.Expressions.Tests;
+namespace Zongsoft.Common.Tests;
 
 public class VariablesWrappingTest
 {
@@ -18,8 +19,12 @@ public class VariablesWrappingTest
 	[InlineData(false)]
 	public void WrapAndExtension_RejectNullDictionary(bool reuse)
 	{
-		Assert.Equal("dictionary", Assert.Throws<ArgumentNullException>(() => Variables.Wrap(null, reuse)).ParamName);
+		Assert.Equal("dictionary", Assert.Throws<ArgumentNullException>(() => Variables.Wrap((IDictionary<string, object>)null, reuse)).ParamName);
+		Assert.Equal("dictionary", Assert.Throws<ArgumentNullException>(() => Variables.Wrap((IDictionary<object, object>)null, reuse)).ParamName);
+		Assert.Equal("dictionary", Assert.Throws<ArgumentNullException>(() => Variables.Wrap((IDictionary)null, reuse)).ParamName);
 		Assert.Equal("dictionary", Assert.Throws<ArgumentNullException>(() => ((IDictionary<string, object>)null).ToVariables(reuse)).ParamName);
+		Assert.Equal("dictionary", Assert.Throws<ArgumentNullException>(() => ((IDictionary)null).ToVariables(reuse)).ParamName);
+		Assert.Equal("dictionary", Assert.Throws<ArgumentNullException>(() => ((IDictionary<object, object>)null).ToVariables(reuse)).ParamName);
 	}
 
 	[Fact]
@@ -46,6 +51,8 @@ public class VariablesWrappingTest
 
 		Assert.Same(source, Variables.Wrap(source, reuse));
 		Assert.Same(source, source.ToVariables(reuse));
+		Assert.Same(source, Variables.Wrap((IDictionary)source, reuse));
+		Assert.Same(source, ((IDictionary)source).ToVariables(reuse));
 	}
 
 	[Fact]

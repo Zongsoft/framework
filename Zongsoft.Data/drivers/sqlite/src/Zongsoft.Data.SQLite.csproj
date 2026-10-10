@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>3.7.0</Version>
+		<Version>3.8.0</Version>
 		<Product>Zongsoft Data Driver for SQLite</Product>
 		<Description>This is a data driver for SQLite of the Zongsoft data engine.</Description>
 		<RootNamespace>Zongsoft.Data.SQLite</RootNamespace>
@@ -37,7 +37,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.59.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.63.0" />
 				<PackageReference Include="Zongsoft.Data" VersionOverride="7.29.0" />
 			</ItemGroup>
 		</Otherwise>

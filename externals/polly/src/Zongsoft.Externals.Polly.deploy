@@ -1,6 +1,6 @@
 artifacts/Zongsoft.Externals.Polly.plugin
-lib/$(Framework)/Zongsoft.Externals.Polly.*
-lib/$(Framework)/*/Zongsoft.Externals.Polly.resources.*
+lib/${Framework}/Zongsoft.Externals.Polly.*
+lib/${Framework}/*/Zongsoft.Externals.Polly.resources.*
 
 nuget:Polly.Core@8.6.5
 nuget:Polly.Extensions@8.6.5

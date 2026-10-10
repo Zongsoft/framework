@@ -6,24 +6,22 @@ Zongsoft.Text.Templating.TemplateEvaluator evaluates text templates with extensi
 
 Zongsoft.Text.Templating provides standalone template evaluation without depending on Profile or specific tools. This document covers usage, public contracts and implementation boundaries.
 
-Template contracts (ITemplate and ITemplateRenderer), the evaluator, options and diagnostics belong to Zongsoft.Text.Templating. IVariables, the in-memory Variables dictionary and the lexical infrastructure belong to Zongsoft.Expressions. ResolutionContext and FormattingContext are public nested classes of TemplateEvaluator; they describe reference resolution and interpolation formatting respectively.
+Template contracts (ITemplate and ITemplateRenderer), the evaluator, options and diagnostics belong to Zongsoft.Text.Templating. The lexical infrastructure belongs to Zongsoft.Expressions. Variable contracts and implementations are described in the [variables documentation](variables.md). ResolutionContext and FormattingContext are public nested classes of TemplateEvaluator; they describe reference resolution and interpolation formatting respectively.
 
 | Component | Responsibility |
 | --- | --- |
 | TemplateEvaluator | Template regions, variable references, member navigation, events, recursion, formatting and diagnostics. |
-| IVariables | Raw variable lookup, data sources and their synchronization policies. |
-| Variables | Variable storage in a case-insensitive in-memory dictionary. |
 | Lexer / TokenScanner / Tokenizer | Shared lexical rules and scanning. |
 | Reflector | Member and default-indexer access; templates follow its existing rules. |
 
 ## Getting started
 
-An application can use the built-in case-insensitive Variables provider:
+This example registers [Variables](variables.md#in-memory-variables) as a template provider and demonstrates namespaces and formatting:
 
 ```csharp
 using System;
 using System.Globalization;
-using Zongsoft.Expressions;
+using Zongsoft.Common;
 using Zongsoft.Text.Templating;
 
 var variables = new Variables
@@ -59,69 +57,11 @@ TemplateEvaluator exposes the following main members, with separate contexts for
 | `string Evaluate(ReadOnlySpan<char> text)` | Evaluate and return text, throwing on evaluation failure. |
 | `bool TryEvaluate(ReadOnlySpan<char> text, out string result, out TemplateEvaluationException error)` | Use the same evaluation pipeline and return its success status and error. |
 
-The variable provider contract belongs to Zongsoft.Expressions:
+Variable providers follow the [IVariables contract](variables.md#variable-contract). The template evaluator calls the namespace-aware TryGetValue overload, passing null for unqualified references.
 
-```csharp
-public interface IVariables
-{
-	bool TryGetValue(string name, out object value);
-	bool TryGetValue(string @namespace, string name, out object value);
-}
-```
-
-TryGetValue(name, out value) queries only the default namespace and is equivalent to both TryGetValue(null, name, out value) and TryGetValue(string.Empty, name, out value). The explicit overload takes the namespace first, followed by the variable name; all variable providers must treat null and an empty string as an unspecified namespace. The template evaluator uses this overload, passing null for unqualified references.
-
-Providers are queried in registration order. The first true result wins, including a null value. False continues to the next provider; exceptions terminate evaluation. Providers must compare names and namespaces using OrdinalIgnoreCase. Null and an empty string both select the default namespace. A non-empty namespace never falls back to the default namespace.
+Providers are queried in registration order. The first true result wins, including a null value. False continues to the next provider; exceptions terminate evaluation.
 
 Variable values, getter return values and index results are not cached. Reflection may reuse getter delegates; repeated references still perform repeated reads and may observe changing provider data.
-
-## In-memory variables
-
-Zongsoft.Expressions.Variables inherits Dictionary<string, object> and implements IVariables. Its comparer is always StringComparer.OrdinalIgnoreCase. Indexers, collection initializers, Add, TryAdd, Remove, Clear and enumeration retain the dictionary behavior.
-
-| Operation | Example |
-| --- | --- |
-| Store a default variable | `variables["name"] = "Zongsoft";` |
-| Store a namespaced variable | `variables["app.runtime:name"] = "worker";` |
-| Query the default namespace | `variables.TryGetValue("NAME", out var value);` |
-| Query an explicit namespace | `variables.TryGetValue("APP.RUNTIME", "NAME", out var value);` |
-| Remove a namespaced variable | `variables.Remove("app.runtime:name");` |
-
-Dictionary operations use the full key. The provider overload takes namespace and name separately and composes a key; it does not trim or split either argument. The colon is reserved as the namespace separator and must not occur within either component. Null and an empty string both omit the namespace qualifier and query `name` directly; a non-empty namespace queries `namespace:name`. A namespace containing only whitespace is non-empty and is not ignored. A null name throws ArgumentNullException.
-
-Use `new Variables()`, `new Variables(capacity)` or `new Variables(entries)` to create a dictionary. The entries constructor copies an IEnumerable<KeyValuePair<string, object>>; later additions, replacements and removals are independent of the source collection, while values retain their original object references. All constructors use the same comparer. Duplicate keys under case-insensitive comparison are rejected when copying entries.
-
-Values are raw objects and may be null. Variables does not evaluate templates, navigate members or convert types. Mutations are visible to subsequent provider queries. Like Dictionary, it does not synchronize concurrent reads and writes; callers provide synchronization when needed.
-
-## Dictionary variable views
-
-Use `Variables.Wrap(dictionary)` or `dictionary.ToVariables()` (in `Zongsoft.Expressions`) to expose an `IDictionary<string, object>` as a live `IVariables` view:
-
-```csharp
-IDictionary<string, object> dictionary = new Dictionary<string, object>
-{
-	["Name"] = "Zongsoft",
-	["App:Version"] = "1.0",
-};
-
-IVariables variables = Variables.Wrap(dictionary);
-evaluator.Providers.Add(variables);
-dictionary["Name"] = "Updated"; // Subsequent lookups see this change.
-
-// Explicitly enable reuse when repeatedly adapting the same dictionary.
-IVariables shared = dictionary.ToVariables(reuse: true);
-IVariables same = Variables.Wrap(dictionary, reuse: true);
-```
-
-Both entry points accept an optional `bool reuse = false`. By default, each call creates a fresh adapter without reading, populating or removing cache entries; the view still reads the same source dictionary. With `reuse: true`, both entry points return the same view for the same dictionary instance. If the dictionary already implements `IVariables`, both entry points return that object regardless of `reuse`.
-
-Reused adapters are cached in a `ConditionalWeakTable` by reference identity; overridden equality does not merge distinct dictionaries. The cached view remains available while the dictionary is alive, and holding any view keeps its source available. The cache does not prevent collection when neither object is otherwise reachable. Concurrent calls with reuse enabled share the associated view, although the factory may create extra adapters during the first concurrent access. Reuse avoids repeated adapter allocations; the default avoids cache lookup and registration when the caller creates and holds a view once.
-
-The view reads current entries, including additions, replacements, removals and null values. It does not copy entries, cache query results, evaluate templates or convert values. Use `new Variables(dictionary)` for an independent copy of the entries. The cache is thread-safe; source access still follows the source dictionary's synchronization requirements.
-
-Keys follow the same convention as `Variables`: `name` for the default namespace and `namespace:name` for a named namespace. Null and empty namespaces select the default namespace, with no fallback from a nonempty namespace. Query parameters are not trimmed, split or normalized. A null dictionary or query name throws `ArgumentNullException`.
-
-Lookups always compare keys using `OrdinalIgnoreCase`. Standard `Dictionary<string, object>` and `ConcurrentDictionary<string, object>` instances using `StringComparer.OrdinalIgnoreCase` are queried directly. Other implementations, derived types and comparers scan current entries in enumeration order and return immediately on the first match, even when its value is null. Duplicate names under case-insensitive comparison are allowed; an exact-case match has no extra priority. This scan takes O(n) in the worst case. A present null value counts as success and blocks later providers.
 
 ## Text input
 
@@ -304,18 +244,17 @@ Invalid options and null provider entries are API errors; TryEvaluate still thro
 ## Implementation
 
 - [TemplateEvaluator](../src/Text/Templating/TemplateEvaluator.cs): public entry points, events and execution.
-- [IVariables](../src/Expressions/IVariables.cs) and [Variables](../src/Expressions/Variables.cs): variable provider contract and in-memory dictionary implementation.
 - [Resolution context](../src/Text/Templating/TemplateEvaluator.ResolutionContext.cs) and [formatting context](../src/Text/Templating/TemplateEvaluator.FormattingContext.cs): public nested event contexts owned by TemplateEvaluator.
 - [Template parser](../src/Text/Templating/TemplateEvaluator.Parser.cs): template regions and reference grammar consuming the existing Lexer; all syntax nodes remain private.
 - [TokenScanner](../src/Expressions/TokenScanner.cs): Span scanning with source positions and consumed lengths; streams are decoded using UTF-8/BOM detection and closed when the scanner is disposed.
 - [Reflector](../src/Reflection/Reflector.cs): templates call the existing GetValue entry point for members and default indexers, preserving original read failures.
-- [Template tests](../test/Text/Templating/TemplateEvaluatorTest.cs), [variable tests](../test/Expressions/VariablesTest.cs) and [lexer tests](../test/Expressions/LexerBoundaryTest.cs): verification through public behavior.
+- [Template tests](../test/Text/Templating/TemplateEvaluatorTest.cs) and [lexer tests](../test/Expressions/LexerBoundaryTest.cs): verification through public behavior.
 
 [IExpressionEvaluator](../src/Expressions/IExpressionEvaluator.cs) provides the script evaluation contract. [MemberExpressionParser](../src/Reflection/Expressions/MemberExpressionParser.cs) accepts spans, but its grammar allows whitespace and methods, has different numeric and escape rules, and does not provide template namespaces or per-reference diagnostics. [MemberExpressionEvaluator](../src/Reflection/Expressions/MemberExpressionEvaluator.cs) does not populate dynamic arguments in its default index path or implement template events, providers and string recursion. Templates reuse [Lexer](../src/Expressions/Lexer.cs) and Reflector directly without an AST conversion layer. Internal nodes, Parser and syntax guards remain private, without test-only entry points. Common capabilities such as array indexing, argument conversion and interface access belong in extensions to Reflector's existing entry points.
 
 ## Integration boundaries
 
-[Profile](profiles.md#variable-views) exposes live IVariables views of a whole configuration, a selected section subtree or one entry through ProfileExtension.ToVariables(). Register a view explicitly with evaluator.Providers.Add(profile.ToVariables()). Section levels form a dot-separated namespace, retaining dots within section names; dots and hyphens in entry names become underscores before identifier validation. Lookup returns raw values. When several entries map to the same variable, only queries for that variable throw ProfileException; template evaluation wraps it as ProviderFailed and preserves the original exception.
+Register [Profile variable views](variables.md#profile-variable-views) explicitly with evaluator.Providers.Add(profile.ToVariables()). Template evaluation wraps source exceptions as ProviderFailed and preserves the original exception.
 
 Profile loads and saves original text without expanding variables automatically. Profile, ProfileEntry and ProfileDirectiveContext do not expose Evaluate() extensions; callers explicitly register variable views and invoke TemplateEvaluator. ProfileEntry.Value retains the raw value, import arguments are not evaluated as templates, and the internal read session is not public.
 

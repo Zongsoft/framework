@@ -1,6 +1,6 @@
 artifacts/Zongsoft.Web.Grpc.plugin
-lib/$(Framework)/Zongsoft.Web.Grpc.*
-lib/$(Framework)/*/Zongsoft.Web.Grpc.resources.*
+lib/${Framework}/Zongsoft.Web.Grpc.*
+lib/${Framework}/*/Zongsoft.Web.Grpc.resources.*
 
 nuget:Grpc.Core.Api@2.76.0
 nuget:Grpc.Net.Common@2.76.0

@@ -26,11 +26,11 @@ dotnet add package Zongsoft.Core
 The package is intentionally broad: it is the common layer that higher-level _**Z**ongsoft_ packages build on. The main areas are:
 
 - **Common utilities** _(`Zongsoft.Common`)_
-  > Conversion helpers, random generation, sequences, predicates, timers, bit vectors, string/type/URI extensions, timestamps, locking helpers, and validation contracts.
+  > Conversion helpers, random generation, sequences, predicates, timers, bit vectors, string/type/URI extensions, timestamps, locking helpers, and validation contracts. Variable sources include the [`IVariables` contract](docs/variables.md#variable-contract), the case-insensitive in-memory `Variables` dictionary, [live dictionary views through `Variables.Wrap()` / `ToVariables()`](docs/variables.md#dictionary-variable-views), and [live environment variables through `Variables.Environments()`](docs/variables.md#environment-variable-views).
 - **Collections** _(`Zongsoft.Collections`)_
   > Hierarchical nodes, category trees, parameter bags, synchronized collections, queues, object pools, and collection/dictionary extensions.
 - **Components** _(`Zongsoft.Components`)_
-  > Command infrastructure, command-line parsing, event exchange, feature pipelines, retry/fallback/breaker/throttle/timeout features, state machines, workers, supervisors, handlers, executors, filters, converters, and identifiers.
+  > Command infrastructure, command-line parsing, [command option variables](docs/variables.md#command-option-variables), event exchange, feature pipelines, retry/fallback/breaker/throttle/timeout features, state machines, workers, supervisors, handlers, executors, filters, converters, and identifiers.
 - **Configuration** _(`Zongsoft.Configuration`)_
   > Settings and connection settings, configuration binding and recognition, XML configuration providers, model-backed configuration, [Profile/INI parsing, directive extensions and variable views](docs/profiles.md), and options integration with `Microsoft.Extensions.Options`.
 - **Data abstractions** _(`Zongsoft.Data`)_
@@ -50,7 +50,7 @@ The package is intentionally broad: it is the common layer that higher-level _**
 - **Serialization** _(`Zongsoft.Serialization`)_
   > Serializer contracts, JSON serializer helpers, serialization options, naming conventions, member attributes, and System.Text.Json converters.
 - **Expressions** _(`Zongsoft.Expressions`)_
-  > Lexer/tokenizer infrastructure, the `IVariables` variable source contract, the case-insensitive in-memory `Variables` dictionary, [live dictionary views through `Variables.Wrap()` / `ToVariables()`](docs/expressions.md#dictionary-variable-views), expression evaluator contracts, and syntax exceptions.
+  > Lexer/tokenizer infrastructure, expression evaluator contracts, and syntax exceptions.
 - **Text and templates** _(`Zongsoft.Text`, `Zongsoft.Text.Templating`)_
   > Regular-text processing, template contracts, and [text template evaluation, member navigation, formatting and diagnostics](docs/expressions.md).
 - **Reflection** _(`Zongsoft.Reflection`)_

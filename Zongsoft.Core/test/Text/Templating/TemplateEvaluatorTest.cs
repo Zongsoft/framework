@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 
 using Xunit;
-using Zongsoft.Expressions;
+using Zongsoft.Common;
 
 namespace Zongsoft.Text.Templating.Tests;
 

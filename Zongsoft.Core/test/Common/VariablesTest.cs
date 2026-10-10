@@ -5,7 +5,7 @@ using Xunit;
 
 using Zongsoft.Text.Templating;
 
-namespace Zongsoft.Expressions.Tests;
+namespace Zongsoft.Common.Tests;
 
 public class VariablesTest
 {

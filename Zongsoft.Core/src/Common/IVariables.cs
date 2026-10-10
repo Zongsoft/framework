@@ -29,7 +29,7 @@
 
 using System;
 
-namespace Zongsoft.Expressions;
+namespace Zongsoft.Common;
 
 /// <summary>提供按变量名称及可选命名空间查询原始变量值的契约。</summary>
 /// <remarks>

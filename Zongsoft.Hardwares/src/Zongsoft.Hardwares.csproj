@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>0.1.0</Version>
+		<Version>0.2.0</Version>
 		<Product>Zongsoft Hardware Information Library</Product>
 		<Description>This library provides cross-platform functionality for retrieving hardware information.</Description>
 		<IncludeSymbols>true</IncludeSymbols>
@@ -29,7 +29,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.48.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.63.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

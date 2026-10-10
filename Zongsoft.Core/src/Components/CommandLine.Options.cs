@@ -67,7 +67,16 @@ partial class CommandLine
 	}
 	#endregion
 
-	public sealed class CmdletOptionCollection : IReadOnlyCollection<KeyValuePair<string, object>>
+	/// <summary>表示命令选项集合，并提供默认命名空间中的变量查询。</summary>
+	/// <remarks>
+	/// 	<para>选项名称和短名称均按 <see cref="StringComparer.OrdinalIgnoreCase"/> 比较；查询优先返回已传入的值，其次返回选项描述中的默认值，存在且值为 <see langword="null"/> 时仍表示查询成功。</para>
+	/// 	<para>通过 <see cref="Common.IVariables"/> 只提供默认命名空间；<see langword="null"/> 和空字符串命名空间等价，非空命名空间查询失败，不回退。</para>
+	/// 	<para>变量名称将选项名称中的点号和连字符转换为下划线，例如 <c>install-path</c> 和 <c>install.path</c> 均对应 <c>install_path</c>。转换后的名称必须符合 <c>[A-Za-z_][A-Za-z0-9_]*</c>，否则忽略该选项及其短名称。</para>
+	/// 	<para>变量查询参数必须是合法的变量名称，不进行裁剪、转换或命名空间拆分。原有选项查询方法仍使用原始选项名称，合法的短名称也可用于变量查询。</para>
+	/// 	<para>映射重名时优先匹配已传入的选项，同一层级按枚举顺序返回首个匹配项；未匹配已传入的选项时，按描述集合顺序查询默认值。</para>
+	/// 	<para>变量名称索引在首次有效变量查询时创建并固定，随后增删或替换选项描述不会更新索引；默认值仍从原描述对象实时读取。索引安全发布后只读，不提供描述集合并发修改的同步保证。</para>
+	/// </remarks>
+	public sealed partial class CmdletOptionCollection : IReadOnlyCollection<KeyValuePair<string, object>>
 	{
 		#region 成员字段
 		private readonly int _count;
@@ -79,7 +88,7 @@ partial class CommandLine
 		internal CmdletOptionCollection(CommandDescriptor descriptor, IEnumerable<CmdletOption> options)
 		{
 			_descriptor = descriptor ?? throw new ArgumentNullException(nameof(descriptor));
-			_options = new Dictionary<string, object>();
+			_options = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
 
 			foreach(var option in options)
 			{
@@ -247,6 +256,86 @@ partial class CommandLine
 		#region 枚举遍历
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 		public IEnumerator<KeyValuePair<string, object>> GetEnumerator() => _options.GetEnumerator();
+		#endregion
+	}
+
+	partial class CmdletOptionCollection : Common.IVariables
+	{
+		#region 成员字段
+		private Dictionary<string, VariableEntry> _variables;
+		#endregion
+
+		#region 显式实现
+		bool Common.IVariables.TryGetValue(string name, out object value) => ((Common.IVariables)this).TryGetValue(null, name, out value);
+		bool Common.IVariables.TryGetValue(string @namespace, string name, out object value)
+		{
+			value = null;
+
+			if(!string.IsNullOrEmpty(@namespace) || !Expressions.Tokenization.IdentifierTokenizer.IsIdentifier(name))
+				return false;
+
+			var variables = System.Threading.Volatile.Read(ref _variables) ??
+				System.Threading.LazyInitializer.EnsureInitialized(ref _variables, this.CreateVariables);
+
+			if(!variables.TryGetValue(name, out var entry))
+				return false;
+
+			value = entry.Descriptor == null ? entry.Value : entry.Descriptor.DefaultValue;
+			return true;
+		}
+		#endregion
+
+		#region 私有方法
+		private Dictionary<string, VariableEntry> CreateVariables()
+		{
+			var variables = new Dictionary<string, VariableEntry>(_options.Count + _descriptor.Options.Count, StringComparer.OrdinalIgnoreCase);
+
+			foreach(var option in _options)
+			{
+				if(_descriptor.Options.TryGetValue(option.Key, out var descriptor) && GetVariableName(descriptor.Name) == null)
+					continue;
+
+				var name = GetVariableName(option.Key);
+
+				if(name != null)
+					variables.TryAdd(name, new(option.Value));
+			}
+
+			foreach(var descriptor in _descriptor.Options)
+			{
+				var name = GetVariableName(descriptor.Name);
+
+				if(name == null)
+					continue;
+
+				var entry = new VariableEntry(null, descriptor);
+				variables.TryAdd(name, entry);
+
+				if(descriptor.Symbol != '\0')
+				{
+					name = GetVariableName(descriptor.Symbol.ToString());
+
+					if(name != null)
+						variables.TryAdd(name, entry);
+				}
+			}
+
+			return variables;
+		}
+
+		private static string GetVariableName(string name)
+		{
+			name = name?.Replace('.', '_').Replace('-', '_');
+			return Expressions.Tokenization.IdentifierTokenizer.IsIdentifier(name) ? name : null;
+		}
+		#endregion
+
+		#region 嵌套结构
+		private readonly struct VariableEntry(object value, CommandOptionDescriptor descriptor = null)
+		{
+			public readonly object Value = value;
+			public readonly CommandOptionDescriptor Descriptor = descriptor;
+		}
 		#endregion
 	}
 }

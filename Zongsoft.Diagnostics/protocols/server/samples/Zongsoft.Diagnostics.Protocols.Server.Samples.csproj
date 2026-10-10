@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>1.0.0</Version>
+		<Version>1.1.0</Version>
 		<Product>Zongsoft Diagnostics Protocols Server Samples</Product>
 		<Description>This is a sample for the gRPC server protocol of OpenTelemetry.</Description>
 		<IsPackable>true</IsPackable>
@@ -19,7 +19,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.15.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.63.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

@@ -1,6 +1,6 @@
 artifacts/Zongsoft.Data.SQLite.plugin
-lib/$(Framework)/Zongsoft.Data.SQLite.*
-lib/$(Framework)/*/Zongsoft.Data.SQLite.resources.*
+lib/${Framework}/Zongsoft.Data.SQLite.*
+lib/${Framework}/*/Zongsoft.Data.SQLite.resources.*
 
 nuget:Microsoft.Data.Sqlite@10.0.12
 nuget:SQLitePCLRaw.core@3.0.5

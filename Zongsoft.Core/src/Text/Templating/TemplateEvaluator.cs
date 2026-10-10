@@ -32,7 +32,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-using Zongsoft.Expressions;
+using Zongsoft.Common;
 
 namespace Zongsoft.Text.Templating;
 

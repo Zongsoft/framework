@@ -1,7 +1,7 @@
 artifacts/Zongsoft.Diagnostics.Protocols.Server.option
 artifacts/Zongsoft.Diagnostics.Protocols.Server.plugin
-lib/$(Framework)/Zongsoft.Diagnostics.Protocols.Server.*
-lib/$(Framework)/*/Zongsoft.Diagnostics.Protocols.Server.resources.*
+lib/${Framework}/Zongsoft.Diagnostics.Protocols.Server.*
+lib/${Framework}/*/Zongsoft.Diagnostics.Protocols.Server.resources.*
 
 nuget:Grpc.Core.Api@2.76.0
 nuget:Grpc.Net.Common@2.76.0

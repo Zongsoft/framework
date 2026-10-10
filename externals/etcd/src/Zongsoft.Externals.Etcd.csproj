@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>0.0.1</Version>
+		<Version>0.1.0</Version>
 		<Product>Zongsoft Etcd Library</Product>
 		<Description>This is a library about Etcd SDK.</Description>
 		<RootNamespace>Zongsoft.Externals.Etcd</RootNamespace>
@@ -29,7 +29,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.58.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.63.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

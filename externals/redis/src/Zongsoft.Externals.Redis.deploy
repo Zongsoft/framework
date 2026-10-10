@@ -1,7 +1,7 @@
 artifacts/Zongsoft.Externals.Redis.plugin
 artifacts/Zongsoft.Externals.Redis.option
-lib/$(Framework)/Zongsoft.Externals.Redis.*
-lib/$(Framework)/*/Zongsoft.Externals.Redis.resources.*
+lib/${Framework}/Zongsoft.Externals.Redis.*
+lib/${Framework}/*/Zongsoft.Externals.Redis.resources.*
 
 nuget:StackExchange.Redis@3.1.31
 

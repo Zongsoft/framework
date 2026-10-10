@@ -1,5 +1,5 @@
 artifacts/Zongsoft.Data.MsSql.plugin
-lib/$(Framework)/Zongsoft.Data.MsSql.*
-lib/$(Framework)/*/Zongsoft.Data.MsSql.resources.*
+lib/${Framework}/Zongsoft.Data.MsSql.*
+lib/${Framework}/*/Zongsoft.Data.MsSql.resources.*
 
 nuget:Microsoft.Data.SqlClient@7.0.2

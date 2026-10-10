@@ -1,5 +1,5 @@
 artifacts/Zongsoft.Externals.Scriban.plugin
-lib/$(Framework)/Zongsoft.Externals.Scriban.*
-lib/$(Framework)/*/Zongsoft.Externals.Scriban.resources.*
+lib/${Framework}/Zongsoft.Externals.Scriban.*
+lib/${Framework}/*/Zongsoft.Externals.Scriban.resources.*
 
 nuget:Scriban@7.4.0

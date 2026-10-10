@@ -269,7 +269,7 @@ await channel.SendAsync(eventContext);
 
 优先通过宿主组合本能力；包引用用于编译，而插件加载还需要部署清单和运行产物。完整流程见[插件化入门](../../Zongsoft.Plugins/README.zh-Hans.md)。
 
-部署清单按 `Zongsoft.Messaging.ZeroMQ-$(site).plugin` 选择附加插件；`site=daemon` 包含 Broker 启动贡献，必须明确区分纯客户端与 Broker 宿主。启动前配置端点及存储工厂。
+部署清单按 `Zongsoft.Messaging.ZeroMQ-${site}.plugin` 选择附加插件；`site=daemon` 包含 Broker 启动贡献，必须明确区分纯客户端与 Broker 宿主。启动前配置端点及存储工厂。
 
 | 运行产物 | 源码依据 |
 | --- | --- |
@@ -287,4 +287,4 @@ nuget:Zongsoft.Messaging.ZeroMQ
 
 按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
 
-清单列出的附属产物包括：`Zongsoft.Messaging.ZeroMQ.option`、`Zongsoft.Messaging.ZeroMQ.plugin`、`Zongsoft.Messaging.ZeroMQ-$(site).plugin`、`Zongsoft.Messaging.ZeroMQ.Storage.plugin`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。
+清单列出的附属产物包括：`Zongsoft.Messaging.ZeroMQ.option`、`Zongsoft.Messaging.ZeroMQ.plugin`、`Zongsoft.Messaging.ZeroMQ-${site}.plugin`、`Zongsoft.Messaging.ZeroMQ.Storage.plugin`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。

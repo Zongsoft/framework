@@ -1,7 +1,7 @@
 artifacts/Zongsoft.Intelligences.option
 artifacts/Zongsoft.Intelligences.plugin
-lib/$(Framework)/Zongsoft.Intelligences.*
-lib/$(Framework)/*/Zongsoft.Intelligences.resources.*
+lib/${Framework}/Zongsoft.Intelligences.*
+lib/${Framework}/*/Zongsoft.Intelligences.resources.*
 
 nuget:Microsoft.Extensions.AI@10.10.0
 nuget:Microsoft.Extensions.AI.Abstractions@10.10.0

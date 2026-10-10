@@ -6,24 +6,22 @@ Zongsoft.Text.Templating.TemplateEvaluator 把带有变量引用的模板转换�
 
 Zongsoft.Text.Templating 提供独立的模板求值能力，不依赖 Profile 或具体工具。本文包含使用方式、公开契约及实现边界。
 
-模板契约 ITemplate、ITemplateRenderer，以及求值器、选项和诊断类型均位于 Zongsoft.Text.Templating；IVariables、内存变量字典 Variables 与词法基础设施位于 Zongsoft.Expressions。ResolutionContext 和 FormattingContext 是 TemplateEvaluator 的公开嵌套类，分别描述引用取值和插值格式化。
+模板契约 ITemplate、ITemplateRenderer，以及求值器、选项和诊断类型均位于 Zongsoft.Text.Templating；词法基础设施位于 Zongsoft.Expressions。变量来源的契约与实现见[变量文档](variables.zh-Hans.md)。ResolutionContext 和 FormattingContext 是 TemplateEvaluator 的公开嵌套类，分别描述引用取值和插值格式化。
 
 | 设施 | 职责 |
 | --- | --- |
 | TemplateEvaluator | 模板分区、变量引用、成员导航、事件、递归、格式化和诊断。 |
-| IVariables | 查询原始变量值，决定数据来源及自身同步策略。 |
-| Variables | 基于忽略大小写的内存字典提供变量。 |
 | Lexer / TokenScanner / Tokenizer | 提供共享的词法规则与扫描机制。 |
 | Reflector | 读取成员与默认索引器；模板遵守其现有规则。 |
 
 ## 开始使用
 
-以下示例使用内置的 Variables 提供忽略名称大小写的变量来源：
+以下示例将 [Variables](variables.zh-Hans.md#内存变量) 注册为模板提供器，并演示命名空间和格式化：
 
 ```csharp
 using System;
 using System.Globalization;
-using Zongsoft.Expressions;
+using Zongsoft.Common;
 using Zongsoft.Text.Templating;
 
 var variables = new Variables
@@ -59,69 +57,11 @@ TemplateEvaluator 的主要公开成员如下，取值与格式化分别使用�
 | `string Evaluate(ReadOnlySpan<char> text)` | 求值并返回文本，求值失败抛出异常。 |
 | `bool TryEvaluate(ReadOnlySpan<char> text, out string result, out TemplateEvaluationException error)` | 使用同一求值流程并返回成功状态与错误。 |
 
-变量来源契约位于 Zongsoft.Expressions：
+变量提供器遵循 [IVariables 契约](variables.zh-Hans.md#变量契约)。模板评估器调用带命名空间的 TryGetValue 重载；未限定命名空间的引用传入 null。
 
-```csharp
-public interface IVariables
-{
-	bool TryGetValue(string name, out object value);
-	bool TryGetValue(string @namespace, string name, out object value);
-}
-```
-
-TryGetValue(name, out value) 只查询默认命名空间，语义等价于 TryGetValue(null, name, out value) 和 TryGetValue(string.Empty, name, out value)。显式重载先传命名空间，再传变量名称；所有变量提供器均应将 null 和空字符串视为未指定命名空间。模板评估器使用此重载，未限定命名空间的引用传入 null。
-
-Providers 按注册顺序查询，第一个返回 true 的来源获胜，包括值为 null 的情况；返回 false 才继续查询。提供器负责按 OrdinalIgnoreCase 比较名称和命名空间。null 和空字符串均查询默认命名空间；指定非空命名空间时，不会自动回退到默认空间。来源异常立即终止求值。
+Providers 按注册顺序查询，第一个返回 true 的来源获胜，包括值为 null 的情况；返回 false 才继续查询，来源异常立即终止求值。
 
 评估器不缓存变量值、getter 的返回值或索引结果。Reflection 可以复用 Getter 委托；相同引用出现两次仍执行两次取值，因此动态提供器可以返回不同结果。
-
-## 内存变量
-
-Zongsoft.Expressions.Variables 继承 Dictionary<string, object> 并实现 IVariables，固定使用 StringComparer.OrdinalIgnoreCase。索引器、集合初始化器、Add、TryAdd、Remove、Clear 和枚举均沿用字典行为。
-
-| 操作 | 示例 |
-| --- | --- |
-| 写入默认变量 | `variables["name"] = "Zongsoft";` |
-| 写入具名命名空间的变量 | `variables["app.runtime:name"] = "worker";` |
-| 查询默认命名空间 | `variables.TryGetValue("NAME", out var value);` |
-| 查询指定命名空间 | `variables.TryGetValue("APP.RUNTIME", "NAME", out var value);` |
-| 删除具名命名空间的变量 | `variables.Remove("app.runtime:name");` |
-
-字典操作使用完整的键。提供器重载分别接收命名空间和变量名称并组合成键，不裁剪或拆分参数。冒号专用于分隔命名空间与变量名称，两部分本身不应包含冒号。null 和空字符串均忽略命名空间限定，直接查询 `name`；非空命名空间查询 `namespace:name`，仅含空白字符的命名空间不会被忽略。变量名称为 null 时抛出 ArgumentNullException。
-
-可通过 `new Variables()`、`new Variables(capacity)` 或 `new Variables(entries)` 创建字典。集合构造函数复制 IEnumerable<KeyValuePair<string, object>> 中的条目；后续增删和替换不影响源集合，变量值仍引用原始对象。所有构造函数使用相同的比较器；复制时存在按忽略大小写规则比较后重复的键会抛出异常。
-
-变量值是原始对象，可以为 null。Variables 不进行模板求值、成员导航或类型转换。字典修改会反映在后续查询中。它与 Dictionary 一样不提供并发读写同步，需要时由调用方负责同步。
-
-## 字典变量视图
-
-使用 `Variables.Wrap(dictionary)` 或 `dictionary.ToVariables()`（位于 `Zongsoft.Expressions`）可将 `IDictionary<string, object>` 包装为实时 `IVariables` 视图：
-
-```csharp
-IDictionary<string, object> dictionary = new Dictionary<string, object>
-{
-	["Name"] = "Zongsoft",
-	["App:Version"] = "1.0",
-};
-
-IVariables variables = Variables.Wrap(dictionary);
-evaluator.Providers.Add(variables);
-dictionary["Name"] = "Updated"; // 后续查询立即看到修改。
-
-// 反复包装同一个字典时，显式开启复用。
-IVariables shared = dictionary.ToVariables(reuse: true);
-IVariables same = Variables.Wrap(dictionary, reuse: true);
-```
-
-两个入口均接受可选参数 `bool reuse = false`，默认每次新建适配器，不读取、登记或移除缓存条目，视图仍读取同一个源字典。指定 `reuse: true` 时，同一个字典实例通过两个入口得到同一个视图。字典已经实现 `IVariables` 时，不论 `reuse` 为何值均直接返回原对象。
-
-复用的适配器使用 `ConditionalWeakTable` 按引用身份缓存，重写相等比较不会使不同字典共享视图。字典存活期间缓存视图保持可用，持有任何视图也会保留其来源；两者均无其它可达引用时，缓存不会阻止回收。启用复用的并发调用共享最终关联的视图，但首次并发访问时工厂可能创建额外适配器。复用可减少重复包装的分配；默认行为适合只包装一次并自行持有视图的场景，省去缓存查询和登记。
-
-视图读取当前条目，立即反映新增、替换、删除和空值；不复制条目、不缓存查询结果、不展开模板或转换类型。需要独立复制条目时使用 `new Variables(dictionary)`。缓存自身支持并发访问，源字典的访问仍遵循其同步要求。
-
-键遵循 `Variables` 的约定：默认命名空间使用 `name`，具名命名空间使用 `namespace:name`。null 和空字符串命名空间均查询默认命名空间，非空命名空间不会回退。查询参数不裁剪、不拆分、不归一化。字典或查询名称为 null 时抛出 `ArgumentNullException`。
-
-查询始终使用 `OrdinalIgnoreCase` 比较键。采用 `StringComparer.OrdinalIgnoreCase` 的标准 `Dictionary<string, object>` 和 `ConcurrentDictionary<string, object>` 实例直接查询；其它实现、派生类型和比较器按当前条目的枚举顺序匹配，找到第一个匹配项就立即返回，包括值为 null 的情况。允许忽略大小写后的重名键，精确大小写命中没有额外优先级；枚举查询最坏为 O(n)。存在且值为 null 仍表示查询成功，阻止后续提供器回退。
 
 ## 文本输入
 
@@ -304,18 +244,17 @@ Stage 为 Parsing、Resolving、Resolution、Resolved、Recursion、Formatting�
 ## 实现入口
 
 - [TemplateEvaluator](../src/Text/Templating/TemplateEvaluator.cs)：公开入口、事件及执行顺序。
-- [IVariables](../src/Expressions/IVariables.cs)、[Variables](../src/Expressions/Variables.cs)：变量来源契约及内存字典实现。
 - [取值上下文](../src/Text/Templating/TemplateEvaluator.ResolutionContext.cs)、[格式化上下文](../src/Text/Templating/TemplateEvaluator.FormattingContext.cs)：归属于 TemplateEvaluator 的公开嵌套事件上下文。
 - [模板解析](../src/Text/Templating/TemplateEvaluator.Parser.cs)：模板分区与基于现有 Lexer 的引用语法，内部节点均私有。
 - [TokenScanner](../src/Expressions/TokenScanner.cs)：Span 扫描并保留源码位置及消耗长度；流按 UTF-8/BOM 解码，释放扫描器时关闭输入流。
 - [Reflector](../src/Reflection/Reflector.cs)：模板直接使用既有 GetValue 读取成员与默认索引器，保留原始读取异常。
-- [模板测试](../test/Text/Templating/TemplateEvaluatorTest.cs)、[变量测试](../test/Expressions/VariablesTest.cs)、[词法测试](../test/Expressions/LexerBoundaryTest.cs)：通过公开入口验证语义。
+- [模板测试](../test/Text/Templating/TemplateEvaluatorTest.cs)、[词法测试](../test/Expressions/LexerBoundaryTest.cs)：通过公开入口验证语义。
 
 [IExpressionEvaluator](../src/Expressions/IExpressionEvaluator.cs) 承担脚本求值契约。[MemberExpressionParser](../src/Reflection/Expressions/MemberExpressionParser.cs) 接受 Span，但其语法允许空白和方法，数值与转义规则也不同，没有模板命名空间和逐引用诊断；[MemberExpressionEvaluator](../src/Reflection/Expressions/MemberExpressionEvaluator.cs) 的默认索引流程没有填充动态参数，也不承担模板事件、提供器和字符串递归语义。模板直接复用 [Lexer](../src/Expressions/Lexer.cs) 与 Reflector，不增加语法树转换层，内部节点、Parser 及语法保护保持私有，不增加仅供测试使用的入口。数组、参数转换和接口访问等通用能力应由 Reflector 的既有入口扩展。
 
 ## 集成边界
 
-[Profile](profiles.zh-Hans.md#变量视图) 通过 ProfileExtension.ToVariables() 将整个配置、指定章节子树或单个条目适配为 IVariables 实时视图，可用 evaluator.Providers.Add(profile.ToVariables()) 显式注册。章节层级以点连接为命名空间，章节名称内的点原样保留；条目名称中的点和连字符替换为下划线后验证标识符。查询返回原始值，多个条目映射到同一变量时，仅该变量的查询抛出 ProfileException；通过模板查询时包装为 ProviderFailed，并保留原始异常。
+通过 evaluator.Providers.Add(profile.ToVariables()) 显式注册 [Profile 变量视图](variables.zh-Hans.md#profile-变量视图)。来源异常在模板查询时包装为 ProviderFailed，并保留原始异常。
 
 Profile 加载与保存保留原文，不自动展开变量。Profile、ProfileEntry 和 ProfileDirectiveContext 不提供 Evaluate() 扩展；调用方显式注册变量视图并使用 TemplateEvaluator 求值。ProfileEntry.Value 保留原始值，导入参数不执行模板评估，内部读取会话不公开。
 
