@@ -16,11 +16,11 @@
 		<object name="ZeroMQ" value="{static:Zongsoft.Messaging.ZeroMQ.Configuration.ZeroConnectionSettingsDriver.Instance, Zongsoft.Messaging.ZeroMQ}" />
 	</extension>
 
-	<!-- 挂载消息队列事件转子 -->
+	<!-- 暴露消息队列事件传输，订阅由事务通道统一管理 -->
 	<extension path="/Workbench/Events/Exchanger/Transports">
-		<object name="ZeroMQ" type="Zongsoft.Messaging.ZeroMQ.ZeroQueueEventChannel, Zongsoft.Messaging.ZeroMQ" queue="zeromq@zeromq">
+		<expose name="ZeroMQ" type="Zongsoft.Messaging.ZeroMQ.ZeroQueueEventChannel, Zongsoft.Messaging.ZeroMQ" queue="zeromq@zeromq">
 			<expose name="Filtering" value="{path:../@Filtering}" />
-		</object>
+		</expose>
 	</extension>
 
 	<!-- 挂载事务事件交换通道 -->

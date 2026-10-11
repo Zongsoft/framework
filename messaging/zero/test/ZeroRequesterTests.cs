@@ -65,17 +65,30 @@ public class ZeroRequesterTests
 		try
 		{
 			await using var requester = new ZeroRequester { Queue = requesterQueue };
-			var tasks = Enumerable.Range(0, 20).Select(async index =>
+			//先并发完成请求，避免同步等待回复占满线程池、阻塞回复处理器。
+			var tasks = Enumerable.Range(0, 20).Select(index =>
+				requester.RequestAsync("rpc/echo", Encoding.UTF8.GetBytes($"concurrent-{index}")).AsTask());
+			var tokens = await Task.WhenAll(tasks);
+
+			try
 			{
-				using var token = await requester.RequestAsync("rpc/echo", Encoding.UTF8.GetBytes($"concurrent-{index}"));
-				Assert.NotNull(token);
+				Assert.Single(requesterQueue.Subscribers);
 
-				var response = token.GetResponses(TimeSpan.FromSeconds(5)).FirstOrDefault();
-				Assert.NotNull(response);
-				Assert.Equal($"concurrent-{index}", Encoding.UTF8.GetString(response.Data.Span));
-			});
+				for(var index = 0; index < tokens.Length; index++)
+				{
+					var token = tokens[index];
+					Assert.NotNull(token);
 
-			await Task.WhenAll(tasks);
+					var response = token.GetResponses(TimeSpan.FromSeconds(5)).FirstOrDefault();
+					Assert.NotNull(response);
+					Assert.Equal($"concurrent-{index}", Encoding.UTF8.GetString(response.Data.Span));
+				}
+			}
+			finally
+			{
+				foreach(var token in tokens)
+					token?.Dispose();
+			}
 		}
 		finally
 		{
