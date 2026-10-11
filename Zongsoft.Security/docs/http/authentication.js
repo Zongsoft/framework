@@ -18,7 +18,7 @@ async function saveCredential(response, environmentName, vscode) {
 	variables[environmentName] = variables[environmentName] ?? {};
 	variables[environmentName].credentialId = credentialId;
 	variables[environmentName].renewalToken = renewalToken;
-	variables[environmentName].userId = identity.UserId ?? identity.userId;
+	variables[environmentName].userId = identity.Identifier ?? identity.identifier;
 	variables[environmentName].userName = identity.Name ?? identity.name;
 	variables[environmentName].namespace = identity.Namespace ?? identity.namespace;
 	variables[environmentName].email = identity.Email ?? identity.email;
@@ -31,7 +31,7 @@ async function saveCredential(response, environmentName, vscode) {
 
 	await config.update(key, variables, target);
 
-	console.info(`signin variables saved to httpYac environment '${environmentName}': ${credentialId}`);
+	console.info(`signin variables saved to httpYac environment '${environmentName}'.`);
 }
 
 module.exports = {
