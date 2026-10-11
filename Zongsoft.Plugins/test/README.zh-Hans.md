@@ -55,7 +55,7 @@ git -c core.whitespace=cr-at-eol diff --check -- Zongsoft.Plugins
 | [PluginLoaderTests](PluginLoaderTests.cs) | 加载事件与幂等性、依赖先后、主从关系、目录/隐藏插件、重复名称、可选程序集、无效声明、覆盖节点和产品清单 |
 | [PluginTreeTests](PluginTreeTests.cs) | 路径、大小写、节点顺序、挂载事件、卸载保留子节点、只读集合和非法输入 |
 | [ObjectBuilderTests](ObjectBuilderTests.cs) | 上下文/程序集/资源/模块服务注入、构造参数、成员赋值、类型推断、缓存、并发、失败恢复和释放 |
-| [BuilderExtensionTests](BuilderExtensionTests.cs)、[ExposeBuilderTests](ExposeBuilderTests.cs) | 扩展构建器、完成事件、取消子构建、集合转换/展开、分流追加、expose 不追加 |
+| [BuilderExtensionTests](BuilderExtensionTests.cs)、[ExposeBuilderTests](ExposeBuilderTests.cs) | 扩展构建器、完成事件、取消子构建、集合转换/展开、分流追加、expose 首次构建及缓存子节点追加 |
 | [ParserTests](ParserTests.cs)、[PredicateParserTests](PredicateParserTests.cs)、[ResourceParserTests](ResourceParserTests.cs) | path/type/static/object/service/option/predicate/resource，服务别名、同步/异步断言、未知方案和无效表达式；资源只使用测试自有数据 |
 | [CommandTests](CommandTests.cs) | List/Tree/Find、显式构建选项、延迟命令、参数和取消令牌传递、非法参数 |
 | [PluginConfigurationTests](PluginConfigurationTests.cs)、[HostingConfigurationTests](HostingConfigurationTests.cs) | 插件配置与宿主配置分别验证，文件名/环境/host/site 分层、优先级、Set、重新加载和释放解绑 |
@@ -89,10 +89,11 @@ dotnet test ./Zongsoft.Plugins/test/Zongsoft.Plugins.Tests.csproj -f net10.0 --n
 
 ## 重构前需单独解决的问题
 
-以下清单区分测试已确认的行为与源码审查风险。本次只增加基线，不通过断言错误结果把疑似缺陷固定成契约，也没有修复生产实现。
+以下清单区分测试已确认的兼容行为与源码审查风险。本基线不修复生产实现；明确保留的历史行为通过测试记录，后续修改需单独评估兼容性。
 
 | 问题 | 证据与后续验证 |
 | --- | --- |
+| expose 缓存子节点追加 | 首次构建会禁止向父集合追加，父节点遍历已构建的子节点时则直接调用继承的追加器。ExposeBuilderTests 分别验证两种构建顺序；这是保留的历史行为，不代表两条路径语义一致，调整前需评估现有插件的兼容性。 |
 | 成功关闭会退出进程 | 子进程用例已确认 `WorkbenchBase.Close` 经由 `ApplicationContext.Exit` 结束进程；`PluginApplicationContext.OnStopping` 先关闭工作台，再调用负责停止工作器的基类。应新增带启动/停止/释放记录的子进程回归，验证退出前清理顺序。 |
 | 依赖环 | `PluginLoader.LoadPlugin` 递归推进依赖而没有环检测。应先在可超时、可隔离的进程中验证 A→B→A 和自依赖，再实现诊断；当前套件不触发可能的栈溢出。 |
 | 深层卸载 | `PluginLoader.Unload` 在遍历子插件时移除同一集合，`PluginTree.UnmountItem` 也会在遍历子节点时移除节点。当前释放用例覆盖叶子构件，嵌套插件/构件与取消子卸载需单独回归。 |

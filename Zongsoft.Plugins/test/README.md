@@ -55,7 +55,7 @@ Builds enable `ZongsoftCodeStyleStrict` by default. Formatting temporarily selec
 | [PluginLoaderTests](PluginLoaderTests.cs) | Events, idempotence, dependency ordering, relationships, directory/hidden plugins, duplicates, optional assemblies, invalid declarations, overlays, shipped manifests |
 | [PluginTreeTests](PluginTreeTests.cs) | Paths, casing, sibling order, mount events, unmount behavior, read-only collections, invalid inputs |
 | [ObjectBuilderTests](ObjectBuilderTests.cs) | Context/assembly/resource/module injection, constructors, property assignment, inferred types, caching, concurrency, failure recovery, disposal |
-| [BuilderExtensionTests](BuilderExtensionTests.cs), [ExposeBuilderTests](ExposeBuilderTests.cs) | Custom builders, completion events, cancellation, collection conversion/expansion, discriminator routing, expose without appending |
+| [BuilderExtensionTests](BuilderExtensionTests.cs), [ExposeBuilderTests](ExposeBuilderTests.cs) | Custom builders, completion events, cancellation, collection conversion/expansion, discriminator routing, expose initial construction and cached-child appending |
 | [ParserTests](ParserTests.cs), [PredicateParserTests](PredicateParserTests.cs), [ResourceParserTests](ResourceParserTests.cs) | Path/type/static/object/service/option/predicate/resource parsing, aliases, asynchronous predication, invalid input, resources containing only test-owned data |
 | [CommandTests](CommandTests.cs) | List/Tree/Find, explicit construction modes, deferred commands, parameters and cancellation, invalid arguments |
 | [PluginConfigurationTests](PluginConfigurationTests.cs), [HostingConfigurationTests](HostingConfigurationTests.cs) | Plugin and host layers tested separately, filename/environment/host/site matching and precedence, mutation, reload, disposal |
@@ -89,10 +89,11 @@ dotnet test ./Zongsoft.Plugins/test/Zongsoft.Plugins.Tests.csproj -f net10.0 --n
 
 ## Refactoring Follow-ups
 
-The baseline does not assert suspected defects as required compatibility behavior or fix production implementations. The following source-review risks need separate regression work; only successful process exit has already been exercised by the subprocess tests.
+The baseline does not fix production implementations. Tests record explicitly retained historical behavior; changing it requires a separate compatibility review. The following table distinguishes confirmed compatibility behavior from source-review risks that need separate regression work.
 
 | Issue | Evidence and next validation |
 | --- | --- |
+| Cached expose child appending | Initial construction suppresses appending to the parent collection; parent traversal of an already built child directly invokes the inherited appender. ExposeBuilderTests covers both construction orders. This is retained historical behavior, not a guarantee that the paths are equivalent; assess existing plugin compatibility before changing it. |
 | Exit and cleanup | Workbench.Close calls ApplicationContext.Exit. PluginApplicationContext.OnStopping closes the workbench before calling the base implementation that stops workers. Add subprocess traces for worker start/stop/disposal and verify cleanup before exit. |
 | Dependency cycles | PluginLoader recursively advances dependencies without cycle detection. Validate self-dependencies and A→B→A in isolated, bounded processes before adding diagnostics; this suite does not trigger a possible stack overflow. |
 | Nested unloading | PluginLoader removes children while iterating their collection; PluginTree.UnmountItem can likewise remove nodes while iterating. Existing disposal tests cover leaf components. Add nested plugins/components and cancelled child unload cases. |

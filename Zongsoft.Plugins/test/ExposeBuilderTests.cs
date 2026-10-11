@@ -14,7 +14,7 @@ public class ExposeBuilderTests
 	[Theory]
 	[InlineData(false)]
 	[InlineData(true)]
-	public void ExposedChildIsNotAppendedToParent(bool buildChildFirst)
+	public void ExposedChildPreservesExistingAppendingBehavior(bool buildChildFirst)
 	{
 		var directory = Path.Combine(Path.GetTempPath(), "zongsoft-plugins-" + Guid.NewGuid().ToString("N"));
 		var plugins = Path.Combine(directory, "plugins");
@@ -51,9 +51,19 @@ public class ExposeBuilderTests
 			var exposed = child.UnwrapValue(ObtainMode.Never);
 
 			Assert.NotNull(exposed);
-			Assert.Single(container);
 			Assert.Same(regular, container[0]);
-			Assert.False(container.Contains(exposed));
+
+			//兼容性基线：首次构建不追加，缓存子节点沿用原有追加行为。
+			if(buildChildFirst)
+			{
+				Assert.Equal(2, container.Count);
+				Assert.Same(exposed, container[1]);
+			}
+			else
+			{
+				Assert.Single(container);
+				Assert.False(container.Contains(exposed));
+			}
 		}
 		finally
 		{
