@@ -51,6 +51,7 @@ public partial class Superviser<T> : ISuperviser<T>, IEnumerable<IObservable<T>>
 
 	#region 私有变量
 	private volatile int _disposing;
+	private int _observers;
 	#endregion
 
 	#region 成员字段
@@ -117,7 +118,19 @@ public partial class Superviser<T> : ISuperviser<T>, IEnumerable<IObservable<T>>
 			var lifecycle = this.GetOptions(observable).Lifecycle;
 
 			//将观察器对象写入缓存，并为其挂载故障通知和生命周期设置
-			_cache.SetValue(cacheKey, observer, Notification.GetToken(observer.Failure), lifecycle > TimeSpan.Zero ? lifecycle : TimeSpan.MaxValue);
+			//在缓存项可被逐出之前计数，直到对应的逐出回调完成才递减
+			Interlocked.Increment(ref _observers);
+
+			try
+			{
+				_cache.SetValue(cacheKey, observer, Notification.GetToken(observer.Failure), lifecycle > TimeSpan.Zero ? lifecycle : TimeSpan.MaxValue);
+			}
+			catch
+			{
+				Interlocked.Decrement(ref _observers);
+				this.DisposeCache();
+				throw;
+			}
 
 			//订阅被观察对象的行为
 			observer.Subscribe();
@@ -155,44 +168,38 @@ public partial class Superviser<T> : ISuperviser<T>, IEnumerable<IObservable<T>>
 	#region 驱逐事件
 	private void OnEvicted(object sender, CacheEvictedEventArgs args)
 	{
-		_shadows?.TryRemove(args.Key, out _);
-
 		if(args.Value is Observer observer)
 		{
-			var reason = args.Reason switch
+			try
 			{
-				CacheEvictedReason.Expired => SupervisableReason.Inactived,
-				CacheEvictedReason.Depended => SupervisableReason.Failed,
-				_ => SupervisableReason.Manual,
-			};
+				_shadows?.TryRemove(args.Key, out _);
 
-			switch(observer.Observable)
-			{
-				case ISupervisable<T> supervisable:
-					supervisable.OnUnsupervised(this, reason);
-					break;
-				default:
-					observer.Observable?.Subscribe(null);
-					break;
+				var reason = args.Reason switch
+				{
+					CacheEvictedReason.Expired => SupervisableReason.Inactived,
+					CacheEvictedReason.Depended => SupervisableReason.Failed,
+					_ => SupervisableReason.Manual,
+				};
+
+				switch(observer.Observable)
+				{
+					case ISupervisable<T> supervisable:
+						supervisable.OnUnsupervised(this, reason);
+						break;
+					default:
+						observer.Observable?.Subscribe(null);
+						break;
+				}
+
+				//触发“Unsupervised”事件
+				this.OnUnsupervised(observer.CachedKey, observer.Observable, reason);
 			}
-
-			//触发“Unsupervised”事件
-			this.OnUnsupervised(observer.CachedKey, observer.Observable, reason);
-
-			//释放观察者资源
-			observer.Dispose();
-		}
-
-		//如果当前监测器已被处置
-		if(_disposing != 0)
-		{
-			var cache = _cache;
-
-			if(cache != null && cache.Count == 0)
+			finally
 			{
-				cache.Evicted -= this.OnEvicted;
-				cache.Dispose();
-				_cache = null;
+				//即使用户通知失败，也必须完成观察者清理并归还回调计数
+				observer.Dispose();
+				Interlocked.Decrement(ref _observers);
+				this.DisposeCache();
 			}
 		}
 	}
@@ -237,6 +244,7 @@ public partial class Superviser<T> : ISuperviser<T>, IEnumerable<IObservable<T>>
 		finally
 		{
 			_disposing = DISPOSED;
+			this.DisposeCache();
 		}
 	}
 
@@ -259,6 +267,21 @@ public partial class Superviser<T> : ISuperviser<T>, IEnumerable<IObservable<T>>
 	#endregion
 
 	#region 私有方法
+	private void DisposeCache()
+	{
+		//缓存清理结束之前不能释放；条目数为零也不代表逐出回调已经完成
+		if(_disposing != DISPOSED || Volatile.Read(ref _observers) != 0)
+			return;
+
+		var cache = Interlocked.Exchange(ref _cache, null);
+
+		if(cache != null)
+		{
+			cache.Evicted -= this.OnEvicted;
+			cache.Dispose();
+		}
+	}
+
 	private SupervisableOptions GetOptions(object observable) => observable is ISupervisable<T> supervisable && supervisable.Options != null ? supervisable.Options : _options;
 	private void Touch(object key)
 	{

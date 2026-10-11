@@ -45,6 +45,12 @@ description: 设计、修改、审查或测试 Zongsoft.Core 的公共契约与�
 
 构建 `Zongsoft.Core.slnx` 并运行对应测试。公共行为变化至少选择一个真实下游实现做定向构建；多目标差异分别验证 net8.0、net9.0、net10.0。
 
+## 监视器资源释放
+
+`Superviser<T>` 的缓存逐出通知异步执行；`Count == 0` 或 `Unsupervised` 事件已经触发，都不能证明回调已经结束。观察者在写入缓存前计数，在逐出回调的 `finally` 中清理并递减；只有 `Dispose(bool)` 完成且全部观察者回调结束后，才能以原子交换取得缓存并释放。释放完成路径与最后一个回调都要尝试收尾，以覆盖空监视器和回调先结束的情况。不要在 `DISPOSING` 阶段释放缓存，也不要按缓存条目数提前注销逐出处理器，否则可能遗漏取消监视通知。
+
+`MemoryCacheScanner` 只定时调用缓存的内部 `Scan()`：用私有缺失键触发底层缓存按 `ScanFrequency` 执行后台过期检查，不插入条目、不刷新业务条目的滑动有效期，也不调用 `Compact(0)` 创建压缩候选列表。底层过期扫描间隔在缓存构造时设置；`Scan()` 仅触发检查并忽略缓存已被并发释放时的 `ObjectDisposedException`，不负责同步 `Options` 的后续修改。定时器是扫描器的私有同步锁，仅串行化 `Start/Stop/Dispose`；回调通过 `Volatile.Read` 取得缓存后在锁外触发检查。`Dispose()` 清除引用并停止定时器，不等待已经开始的底层检查或逐出通知，不释放缓存；释放后 `Stop/Dispose` 幂等，`Start` 抛 `ObjectDisposedException`。监视器无需与扫描器交换完成回调。回归测试见 [SuperviserDisposalTest](test/Components/SuperviserDisposalTest.cs) 和 [MemoryCacheScannerTest](test/Caching/MemoryCacheScannerTest.cs)，覆盖空闲过期、滑动有效期、停止/重启、并发控制、阻塞和重入释放，以及原始逐出回调竞态。
+
 ## 字典变量视图
 
 IVariables、Variables（含 Variables.Environments.cs）和 VariablesExtension 位于 src/Common，命名空间为 Zongsoft.Common。变量契约独立于表达式和模板语法；ProfileExtension 留在 Configuration.Profiles，TemplateEvaluator 留在 Text.Templating，均使用此公共契约。变量行为测试位于 test/Common。

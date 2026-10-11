@@ -48,6 +48,8 @@ public class MemoryCache : IDisposable
 	#endregion
 
 	#region 成员字段
+	private static readonly object _ScanKey_ = new();
+
 	private readonly MemoryCacheOptions _options;
 	private Microsoft.Extensions.Caching.Memory.MemoryCache _cache;
 	#endregion
@@ -76,6 +78,21 @@ public class MemoryCache : IDisposable
 
 	#region 存在方法
 	public bool Contains(object key) => key is not null && _cache.TryGetValue(key, out _);
+	#endregion
+
+	#region 扫描方法
+	internal void Scan()
+	{
+		try
+		{
+			//查询私有的缺失键以触发后台过期检查，不访问业务条目或延长其滑动有效期。
+			Volatile.Read(ref _cache)?.TryGetValue(_ScanKey_, out _);
+		}
+		catch(ObjectDisposedException) when(Volatile.Read(ref _cache) == null)
+		{
+			//取得底层缓存引用后，它可能已被另一线程释放，此时无需再触发扫描。
+		}
+	}
 	#endregion
 
 	#region 压缩方法
