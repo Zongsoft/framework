@@ -5,4 +5,5 @@
 	</Folder>
 
 	<Project Path="src/Zongsoft.Plugins.csproj" />
+	<Project Path="test/Zongsoft.Plugins.Tests.csproj" />
 </Solution>
