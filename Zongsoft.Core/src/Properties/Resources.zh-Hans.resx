@@ -1081,4 +1081,40 @@
   <data name="Configuration.Xml.InstructionAttributesInvalid.Message" xml:space="preserve">
 		<value>XML 处理指令“{0}”的属性格式无效，来源“{1}”，第 {2} 行、第 {3} 列。</value>
 	</data>
+  <data name="Configuration.Xml.InstructionNameInvalid.Message" xml:space="preserve">
+		<value>处理指令名称必须是除 xml 以外的有效 XML 名称。</value>
+	</data>
+  <data name="Configuration.Xml.InstructionSuppressed.Message" xml:space="preserve">
+		<value>禁止 XML 处理指令“{0}”，来源“{1}”，第 {2} 行，第 {3} 列。</value>
+	</data>
+  <data name="Configuration.Xml.InstructionUnknown.Message" xml:space="preserve">
+		<value>XML 处理指令“{0}”没有注册处理器，来源“{1}”，第 {2} 行，第 {3} 列。</value>
+	</data>
+  <data name="Configuration.Xml.ImportPositionInvalid.Message" xml:space="preserve">
+		<value>XML 处理指令“{0}”必须位于根元素之外或 option 元素的直接子级，来源“{1}”，第 {2} 行，第 {3} 列。</value>
+	</data>
+  <data name="Configuration.Xml.ImportPathRequired.Message" xml:space="preserve">
+		<value>XML 处理指令“{0}”必须指定非空的 path 属性，来源“{1}”，第 {2} 行，第 {3} 列。</value>
+	</data>
+  <data name="Configuration.Xml.ImportRequiredInvalid.Message" xml:space="preserve">
+		<value>required 属性“{0}”无效，应为 true 或 false，来源“{1}”，第 {2} 行，第 {3} 列。</value>
+	</data>
+  <data name="Configuration.Xml.MaximumDepth.Message" xml:space="preserve">
+		<value>超过 XML 导入最大层数 {0}，来源“{1}”，第 {2} 行，第 {3} 列。</value>
+	</data>
+  <data name="Configuration.Xml.CircularImport.Message" xml:space="preserve">
+		<value>检测到 XML 循环导入“{0}”，来源“{1}”，第 {2} 行，第 {3} 列。</value>
+	</data>
+  <data name="Configuration.Xml.RelativeImportRequiresFile.Message" xml:space="preserve">
+		<value>相对 XML 导入路径“{0}”需要真实文件来源，来源“{1}”，第 {2} 行，第 {3} 列。</value>
+	</data>
+  <data name="Configuration.Xml.ImportPathInvalid.Message" xml:space="preserve">
+		<value>XML 导入路径“{0}”不适用于当前来源，来源“{1}”，第 {2} 行，第 {3} 列。</value>
+	</data>
+  <data name="Configuration.Xml.ImportFileNotFound.Message" xml:space="preserve">
+		<value>找不到 XML 导入文件“{0}”。</value>
+	</data>
+  <data name="Configuration.Xml.LinkResolutionFailed.Message" xml:space="preserve">
+		<value>无法解析 XML 配置路径链接：{0}。</value>
+	</data>
 </root>

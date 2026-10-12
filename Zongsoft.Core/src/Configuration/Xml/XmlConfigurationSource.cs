@@ -33,8 +33,16 @@ using Microsoft.Extensions.Configuration;
 
 namespace Zongsoft.Configuration.Xml;
 
+/// <summary>表示 XML 配置文件来源及其加载选项。</summary>
 public class XmlConfigurationSource : FileConfigurationSource
 {
+	/// <summary>初始化 <see cref="XmlConfigurationSource"/> 类的新实例。</summary>
+	public XmlConfigurationSource() { }
+	internal XmlConfigurationSource(XmlConfigurationOptions options) => this.Options = options;
+
+	/// <summary>获取本来源的 XML 加载及指令选项。</summary>
+	public XmlConfigurationOptions Options { get; } = new();
+
 	public override IConfigurationProvider Build(IConfigurationBuilder builder)
 	{
 		if(builder == null)

@@ -1087,4 +1087,40 @@
   <data name="Configuration.Xml.InstructionAttributesInvalid.Message" xml:space="preserve">
 		<value>The attributes of XML processing instruction '{0}' are invalid in '{1}' at line {2}, position {3}.</value>
 	</data>
+  <data name="Configuration.Xml.InstructionNameInvalid.Message" xml:space="preserve">
+		<value>Instruction names must be valid XML names other than xml.</value>
+	</data>
+  <data name="Configuration.Xml.InstructionSuppressed.Message" xml:space="preserve">
+		<value>XML instruction &apos;{0}&apos; is prohibited in &apos;{1}&apos; at line {2}, position {3}.</value>
+	</data>
+  <data name="Configuration.Xml.InstructionUnknown.Message" xml:space="preserve">
+		<value>No processor is registered for XML instruction &apos;{0}&apos; in &apos;{1}&apos; at line {2}, position {3}.</value>
+	</data>
+  <data name="Configuration.Xml.ImportPositionInvalid.Message" xml:space="preserve">
+		<value>XML instruction &apos;{0}&apos; must appear outside the root element or directly inside an option element in &apos;{1}&apos; at line {2}, position {3}.</value>
+	</data>
+  <data name="Configuration.Xml.ImportPathRequired.Message" xml:space="preserve">
+		<value>XML instruction &apos;{0}&apos; requires a nonempty path attribute in &apos;{1}&apos; at line {2}, position {3}.</value>
+	</data>
+  <data name="Configuration.Xml.ImportRequiredInvalid.Message" xml:space="preserve">
+		<value>Invalid required attribute &apos;{0}&apos; in &apos;{1}&apos; at line {2}, position {3}; expected true or false.</value>
+	</data>
+  <data name="Configuration.Xml.MaximumDepth.Message" xml:space="preserve">
+		<value>Maximum XML import depth {0} exceeded in &apos;{1}&apos; at line {2}, position {3}.</value>
+	</data>
+  <data name="Configuration.Xml.CircularImport.Message" xml:space="preserve">
+		<value>Circular XML import &apos;{0}&apos; in &apos;{1}&apos; at line {2}, position {3}.</value>
+	</data>
+  <data name="Configuration.Xml.RelativeImportRequiresFile.Message" xml:space="preserve">
+		<value>Relative XML import &apos;{0}&apos; requires an actual source file in &apos;{1}&apos; at line {2}, position {3}.</value>
+	</data>
+  <data name="Configuration.Xml.ImportPathInvalid.Message" xml:space="preserve">
+		<value>XML import path &apos;{0}&apos; is invalid for this source in &apos;{1}&apos; at line {2}, position {3}.</value>
+	</data>
+  <data name="Configuration.Xml.ImportFileNotFound.Message" xml:space="preserve">
+		<value>XML import file &apos;{0}&apos; was not found.</value>
+	</data>
+  <data name="Configuration.Xml.LinkResolutionFailed.Message" xml:space="preserve">
+		<value>Unable to resolve the XML configuration path link: {0}.</value>
+	</data>
 </root>

@@ -430,11 +430,119 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 Circular XML import &apos;{0}&apos; in &apos;{1}&apos; at line {2}, position {3}. 的本地化字符串。
+        /// </summary>
+        internal static string Configuration_Xml_CircularImport_Message {
+            get {
+                return ResourceManager.GetString("Configuration.Xml.CircularImport.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 XML import file &apos;{0}&apos; was not found. 的本地化字符串。
+        /// </summary>
+        internal static string Configuration_Xml_ImportFileNotFound_Message {
+            get {
+                return ResourceManager.GetString("Configuration.Xml.ImportFileNotFound.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 XML import path &apos;{0}&apos; is invalid for this source in &apos;{1}&apos; at line {2}, position {3}. 的本地化字符串。
+        /// </summary>
+        internal static string Configuration_Xml_ImportPathInvalid_Message {
+            get {
+                return ResourceManager.GetString("Configuration.Xml.ImportPathInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 XML instruction &apos;{0}&apos; requires a nonempty path attribute in &apos;{1}&apos; at line {2}, position {3}. 的本地化字符串。
+        /// </summary>
+        internal static string Configuration_Xml_ImportPathRequired_Message {
+            get {
+                return ResourceManager.GetString("Configuration.Xml.ImportPathRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 XML instruction &apos;{0}&apos; must appear outside the root element or directly inside an option element in &apos;{1}&apos; at line {2}, position {3}. 的本地化字符串。
+        /// </summary>
+        internal static string Configuration_Xml_ImportPositionInvalid_Message {
+            get {
+                return ResourceManager.GetString("Configuration.Xml.ImportPositionInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Invalid required attribute &apos;{0}&apos; in &apos;{1}&apos; at line {2}, position {3}; expected true or false. 的本地化字符串。
+        /// </summary>
+        internal static string Configuration_Xml_ImportRequiredInvalid_Message {
+            get {
+                return ResourceManager.GetString("Configuration.Xml.ImportRequiredInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 The attributes of XML processing instruction &apos;{0}&apos; are invalid in &apos;{1}&apos; at line {2}, position {3}. 的本地化字符串。
         /// </summary>
         internal static string Configuration_Xml_InstructionAttributesInvalid_Message {
             get {
                 return ResourceManager.GetString("Configuration.Xml.InstructionAttributesInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Instruction names must be valid XML names other than xml. 的本地化字符串。
+        /// </summary>
+        internal static string Configuration_Xml_InstructionNameInvalid_Message {
+            get {
+                return ResourceManager.GetString("Configuration.Xml.InstructionNameInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 XML instruction &apos;{0}&apos; is prohibited in &apos;{1}&apos; at line {2}, position {3}. 的本地化字符串。
+        /// </summary>
+        internal static string Configuration_Xml_InstructionSuppressed_Message {
+            get {
+                return ResourceManager.GetString("Configuration.Xml.InstructionSuppressed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 No processor is registered for XML instruction &apos;{0}&apos; in &apos;{1}&apos; at line {2}, position {3}. 的本地化字符串。
+        /// </summary>
+        internal static string Configuration_Xml_InstructionUnknown_Message {
+            get {
+                return ResourceManager.GetString("Configuration.Xml.InstructionUnknown.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Unable to resolve the XML configuration path link: {0}. 的本地化字符串。
+        /// </summary>
+        internal static string Configuration_Xml_LinkResolutionFailed_Message {
+            get {
+                return ResourceManager.GetString("Configuration.Xml.LinkResolutionFailed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Maximum XML import depth {0} exceeded in &apos;{1}&apos; at line {2}, position {3}. 的本地化字符串。
+        /// </summary>
+        internal static string Configuration_Xml_MaximumDepth_Message {
+            get {
+                return ResourceManager.GetString("Configuration.Xml.MaximumDepth.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Relative XML import &apos;{0}&apos; requires an actual source file in &apos;{1}&apos; at line {2}, position {3}. 的本地化字符串。
+        /// </summary>
+        internal static string Configuration_Xml_RelativeImportRequiresFile_Message {
+            get {
+                return ResourceManager.GetString("Configuration.Xml.RelativeImportRequiresFile.Message", resourceCulture);
             }
         }
 

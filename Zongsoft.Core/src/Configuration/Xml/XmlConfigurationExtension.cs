@@ -60,13 +60,13 @@ public static class XmlConfigurationExtension
 		if(string.IsNullOrEmpty(path))
 			throw new ArgumentNullException(nameof(path));
 
-		return builder.AddOptionFile(src =>
+		return builder.AddOptionFile(source =>
 		{
-			src.FileProvider = provider;
-			src.Path = path;
-			src.Optional = optional;
-			src.ReloadOnChange = reloadOnChange;
-			src.ResolveFileProvider();
+			source.FileProvider = provider;
+			source.Path = path;
+			source.Optional = optional;
+			source.ReloadOnChange = reloadOnChange;
+			source.ResolveFileProvider();
 		});
 	}
 
@@ -75,7 +75,7 @@ public static class XmlConfigurationExtension
 		return builder.Add(configureSource);
 	}
 
-	/// <summary>添加 XML 配置流，并在加载时收集处理指令。</summary>
+	/// <summary>添加 XML 配置流，并在加载时收集和执行处理指令。</summary>
 	/// <param name="builder">配置构建器。</param>
 	/// <param name="stream">由调用方负责关闭的配置输入流。</param>
 	/// <returns>指定的配置构建器。</returns>
@@ -84,7 +84,7 @@ public static class XmlConfigurationExtension
 	/// <summary>添加 XML 配置流，并指定处理指令记录的来源路径。</summary>
 	/// <param name="builder">配置构建器。</param>
 	/// <param name="stream">由调用方负责关闭的配置输入流。</param>
-	/// <param name="filePath">来源路径或标识；为 <c>null</c> 时从文件流获取路径，其它流采用空字符串。</param>
+	/// <param name="filePath">仅用于记录来源；为 <see langword="null"/> 时从文件流获取路径，其它流采用空字符串。</param>
 	/// <returns>指定的配置构建器。</returns>
 	public static IConfigurationBuilder AddOptionStream(this IConfigurationBuilder builder, Stream stream, string filePath)
 	{
@@ -96,5 +96,16 @@ public static class XmlConfigurationExtension
 			source.Stream = stream;
 			source.FilePath = filePath;
 		});
+	}
+
+	/// <summary>通过配置委托添加 XML 配置流及其指令选项。</summary>
+	/// <param name="builder">配置构建器。</param>
+	/// <param name="configureSource">配置输入流及其加载选项的委托。</param>
+	/// <returns>指定的 <paramref name="builder"/>。</returns>
+	public static IConfigurationBuilder AddOptionStream(this IConfigurationBuilder builder, Action<Xml.XmlStreamConfigurationSource> configureSource)
+	{
+		ArgumentNullException.ThrowIfNull(builder);
+		ArgumentNullException.ThrowIfNull(configureSource);
+		return builder.Add(configureSource);
 	}
 }

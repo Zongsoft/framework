@@ -71,7 +71,7 @@ public sealed class XmlConfigurationInstruction
 	public int LineNumber { get; }
 	/// <summary>获取指令名称起始位置的列号，从 <c>1</c> 开始。</summary>
 	public int LinePosition { get; }
-	/// <summary>获取指令数据是否为空。</summary>
+	/// <summary>获取一个值，指示 <see cref="Data"/> 是否为空。</summary>
 	public bool IsEmpty => string.IsNullOrEmpty(this.Data);
 	#endregion
 
@@ -91,8 +91,8 @@ public sealed class XmlConfigurationInstruction
 	}
 
 	/// <summary>尝试将指令数据完整解析为属性式参数集合。</summary>
-	/// <param name="attributes">解析成功时为只读参数集合，失败时为 <c>null</c>，不返回部分结果。</param>
-	/// <returns>解析成功则返回 <c>true</c>，属性语法或重名校验失败则返回 <c>false</c>。</returns>
+	/// <param name="attributes">解析成功时为只读参数集合，失败时为 <see langword="null"/>，不返回部分结果。</param>
+	/// <returns>解析成功则返回 <see langword="true"/>，属性语法或重名校验失败则返回 <see langword="false"/>。</returns>
 	public bool TryGetAttributes(out IReadOnlyDictionary<string, string> attributes)
 	{
 		try
