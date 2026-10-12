@@ -1084,4 +1084,7 @@
   <data name="Template.NullProvider.Message" xml:space="preserve">
 		<value>The variable provider collection cannot contain null entries.</value>
 	</data>
+  <data name="Configuration.Xml.InstructionAttributesInvalid.Message" xml:space="preserve">
+		<value>The attributes of XML processing instruction '{0}' are invalid in '{1}' at line {2}, position {3}.</value>
+	</data>
 </root>

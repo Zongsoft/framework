@@ -35,6 +35,10 @@ namespace Zongsoft.Configuration.Xml;
 
 public class XmlStreamConfigurationSource : StreamConfigurationSource
 {
+	/// <summary>获取或设置指令的来源路径；为 <c>null</c> 时从文件流获取路径，其它流采用空字符串。</summary>
+	/// <remarks>仅用于来源定位，不打开该路径，也不改变流中配置的含义。</remarks>
+	public string FilePath { get; set; }
+
 	public override IConfigurationProvider Build(IConfigurationBuilder builder)
 	{
 		return new XmlStreamConfigurationProvider(this);

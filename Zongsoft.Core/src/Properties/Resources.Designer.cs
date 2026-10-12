@@ -430,6 +430,15 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 The attributes of XML processing instruction &apos;{0}&apos; are invalid in &apos;{1}&apos; at line {2}, position {3}. 的本地化字符串。
+        /// </summary>
+        internal static string Configuration_Xml_InstructionAttributesInvalid_Message {
+            get {
+                return ResourceManager.GetString("Configuration.Xml.InstructionAttributesInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 Application name 的本地化字符串。
         /// </summary>
         internal static string ConnectionSettings_Application {

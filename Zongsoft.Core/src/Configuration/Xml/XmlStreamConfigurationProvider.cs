@@ -49,52 +49,84 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 	private static readonly System.Buffers.SearchValues<char> ILLEGAL_CHARACTERS = System.Buffers.SearchValues.Create([':', ';', '/', '\\', '*', '?', '[', ']', '{', '}']);
 	#endregion
 
+	#region 公共属性
+	/// <summary>获取当前配置数据对应的处理指令只读快照，按文档顺序保留重复声明。</summary>
+	public IReadOnlyList<XmlConfigurationInstruction> Instructions => GetInstructions(this.Data);
+	#endregion
+
 	#region 重写方法
-	public override void Load(Stream stream) => this.Data = Read(stream);
+	/// <summary>读取 XML 配置和处理指令，成功后替换当前快照。</summary>
+	/// <param name="stream">由调用方负责关闭的输入流。</param>
+	public override void Load(Stream stream) => this.Data = Read(stream, out _, ((XmlStreamConfigurationSource)this.Source).FilePath);
 	#endregion
 
 	#region 公共方法
-	public static IDictionary<string, string> Read(Stream stream)
+	/// <summary>读取 XML 配置数据，不关闭输入流。</summary>
+	/// <param name="stream">配置输入流。</param>
+	/// <returns>使用忽略大小写的键名比较规则的配置字典。</returns>
+	public static IDictionary<string, string> Read(Stream stream) => Read(stream, out _);
+
+	/// <summary>读取 XML 配置数据及全部处理指令，不执行指令或关闭输入流。</summary>
+	/// <param name="stream">配置输入流。</param>
+	/// <param name="instructions">读取成功时按文档顺序排列的指令只读快照；无指令时为空集合。</param>
+	/// <param name="filePath">记录在指令中的来源路径；为 <c>null</c> 时从文件流获取路径，其它流采用空字符串。</param>
+	/// <returns>使用忽略大小写的键名比较规则的配置字典。</returns>
+	public static IDictionary<string, string> Read(Stream stream, out IReadOnlyList<XmlConfigurationInstruction> instructions, string filePath = null)
 	{
+		ArgumentNullException.ThrowIfNull(stream);
+		instructions = [];
+		filePath ??= stream is FileStream file ? file.Name : string.Empty;
+
 		using var reader = XmlReader.Create(stream, new XmlReaderSettings()
 		{
 			CloseInput = false,
 			IgnoreComments = true,
-			IgnoreWhitespace = true
+			IgnoreWhitespace = true,
+			DtdProcessing = DtdProcessing.Prohibit,
+			XmlResolver = null,
 		});
 
-		//移动到根节点
-		SkipUntilRootElement(reader);
-
-		//确认根节点的名称是否合法
-		if(reader.LocalName != "configuration" && reader.LocalName != "options")
-			throw new FormatException(string.Format(Properties.Resources.Error_IllegalRootNodeName_Message, reader.LocalName, GetLineInfo(reader)));
-
 		var context = new Context(reader);
+		var paths = new List<string>();
+		List<XmlConfigurationInstruction> declarations = null;
 
 		while(reader.Read())
 		{
 			switch(reader.NodeType)
 			{
 				case XmlNodeType.Element:
-					if(reader.Depth == 1)
+					if(reader.Depth == 0)
+					{
+						if(reader.LocalName != "configuration" && reader.LocalName != "options")
+							throw new FormatException(string.Format(Properties.Resources.Error_IllegalRootNodeName_Message, reader.LocalName, GetLineInfo(reader)));
+					}
+					else if(reader.Depth == 1)
 						context.DoOption();
 					else
 						context.DoElement();
 
+					if(!reader.IsEmptyElement)
+						paths.Add(reader.Name);
+
 					break;
 				case XmlNodeType.EndElement:
 					context.DoElementEnd();
+					paths.RemoveAt(paths.Count - 1);
 					break;
 				case XmlNodeType.CDATA:
 				case XmlNodeType.Text:
 					context.DoText();
 					break;
-				case XmlNodeType.XmlDeclaration:
 				case XmlNodeType.ProcessingInstruction:
+					var position = (IXmlLineInfo)reader;
+					(declarations ??= []).Add(new(reader.Name, reader.Value,
+						paths.Count == 0 ? string.Empty : "/" + string.Join('/', paths),
+						filePath, position.LineNumber, position.LinePosition));
+					continue;
+				case XmlNodeType.XmlDeclaration:
 				case XmlNodeType.Comment:
 				case XmlNodeType.Whitespace:
-					break;
+					continue;
 				default:
 					throw new FormatException(string.Format(Properties.Resources.Error_UnsupportedNodeType_Message, reader.NodeType, GetLineInfo(reader)));
 			}
@@ -102,20 +134,17 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 			context.Next();
 		}
 
+		instructions = declarations == null ? [] : declarations.AsReadOnly();
+		context.Data.Instructions = instructions;
 		return context.Data;
 	}
 	#endregion
 
-	#region 私有方法
-	private static void SkipUntilRootElement(XmlReader reader)
-	{
-		while(reader.Read())
-		{
-			if(reader.NodeType != XmlNodeType.XmlDeclaration && reader.NodeType != XmlNodeType.ProcessingInstruction)
-				break;
-		}
-	}
+	#region 内部方法
+	internal static IReadOnlyList<XmlConfigurationInstruction> GetInstructions(IDictionary<string, string> data) => data is ConfigurationData configuration ? configuration.Instructions : [];
+	#endregion
 
+	#region 私有方法
 	private static string GetLineInfo(XmlReader reader)
 	{
 		if(reader is IXmlLineInfo info)
@@ -125,17 +154,25 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 	}
 	#endregion
 
+	#region 配置数据
+	//将指令与同次读取的数据一起发布；文件基类清空数据时也自然清空指令视图。
+	private sealed class ConfigurationData() : Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+	{
+		public IReadOnlyList<XmlConfigurationInstruction> Instructions { get; set; } = [];
+	}
+	#endregion
+
 	private partial struct Context
 	{
 		public Context(XmlReader reader)
 		{
 			this.Reader = reader;
 			this.Previous = reader.NodeType;
-			this.Data = new(StringComparer.OrdinalIgnoreCase);
+			this.Data = new();
 			this.Paths = new();
 		}
 
-		public readonly Dictionary<string, string> Data;
+		public readonly ConfigurationData Data;
 		public readonly XmlReader Reader;
 		public readonly Stack<string> Paths;
 

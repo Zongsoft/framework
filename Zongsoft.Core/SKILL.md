@@ -91,3 +91,9 @@ ProfileExtension.ToVariables 为 Profile、ProfileSection、ProfileEntry 提供 
 Searcher 仅增强 System.IO.DirectoryInfo，详见 [机制文档](docs/searcher.zh-Hans.md)。Path 用于逻辑命名，Result 为实际目标，大小写按平台固定。搜索不穿过模式中的目录链接，显式起点可为链接；配置逻辑来源规则不变。不要将遍历提前移动到固定前缀，否则会绕过中间目录链接。
 
 Searcher 统一通过 Search 扩展方法搜索；Searcher.Target.Files、Directories、Both 指定结果类型，默认 Both；Both = 0，调用方负责传入有效的 target，Search 不进行枚举值校验。
+
+## XML 处理指令
+
+XML 配置读取及 PI 契约见 [实现文档](docs/xml-configuration.zh-Hans.md)。文件与流提供程序默认收集 Instructions，只读快照与本次配置字典一起发布。内部 ConfigurationData 承载指令；文件基类清空 Data 时指令视图也为空，不能另存一个会残留的指令列表。Read(Stream) 保持原入口，Read(Stream, out instructions, filePath) 返回定义；流来源可用 XmlStreamConfigurationSource.FilePath 或 AddOptionStream(stream, filePath) 标识。null 推导 FileStream.Name，其它流为空；显式标识不访问文件或更改路径基准。
+
+XmlConfigurationInstruction 的 Name、Data、Path、FilePath、LineNumber、LinePosition 只读，构造仅供读取器内部使用。Path 是 XML 父元素的限定名称层级，不是 option 路径或命名集合映射键；根外为空，保留顺序及重复。Data 使用 XmlReader.Value，不额外裁剪或解码。PI、声明等跳过节点不更新配置空元素检测的 Previous 状态。GetAttributes/TryGetAttributes 可选，复用 XML 属性词法、单次实体解码和空白规范化，OrdinalIgnoreCase 检索且拒绝大小写变体重名，必须消费全部数据。成功缓存只读字典，格式错误为 FormatException，Try 失败输出 null；不吞掉其它异常。属性解析不继承父元素命名空间或 DTD。当前不包含指令注册、执行、Import 或 binding 业务语义。

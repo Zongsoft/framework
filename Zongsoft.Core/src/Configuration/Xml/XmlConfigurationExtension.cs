@@ -75,11 +75,26 @@ public static class XmlConfigurationExtension
 		return builder.Add(configureSource);
 	}
 
-	public static IConfigurationBuilder AddOptionStream(this IConfigurationBuilder builder, Stream stream)
+	/// <summary>添加 XML 配置流，并在加载时收集处理指令。</summary>
+	/// <param name="builder">配置构建器。</param>
+	/// <param name="stream">由调用方负责关闭的配置输入流。</param>
+	/// <returns>指定的配置构建器。</returns>
+	public static IConfigurationBuilder AddOptionStream(this IConfigurationBuilder builder, Stream stream) => AddOptionStream(builder, stream, null);
+
+	/// <summary>添加 XML 配置流，并指定处理指令记录的来源路径。</summary>
+	/// <param name="builder">配置构建器。</param>
+	/// <param name="stream">由调用方负责关闭的配置输入流。</param>
+	/// <param name="filePath">来源路径或标识；为 <c>null</c> 时从文件流获取路径，其它流采用空字符串。</param>
+	/// <returns>指定的配置构建器。</returns>
+	public static IConfigurationBuilder AddOptionStream(this IConfigurationBuilder builder, Stream stream, string filePath)
 	{
 		if(builder == null)
 			throw new ArgumentNullException(nameof(builder));
 
-		return builder.Add<Xml.XmlStreamConfigurationSource>(s => s.Stream = stream);
+		return builder.Add<Xml.XmlStreamConfigurationSource>(source =>
+		{
+			source.Stream = stream;
+			source.FilePath = filePath;
+		});
 	}
 }

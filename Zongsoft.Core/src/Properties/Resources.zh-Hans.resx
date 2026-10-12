@@ -1078,4 +1078,7 @@
   <data name="Template.NullProvider.Message" xml:space="preserve">
 		<value>变量提供器集合不能包含空项。</value>
 	</data>
+  <data name="Configuration.Xml.InstructionAttributesInvalid.Message" xml:space="preserve">
+		<value>XML 处理指令“{0}”的属性格式无效，来源“{1}”，第 {2} 行、第 {3} 列。</value>
+	</data>
 </root>
