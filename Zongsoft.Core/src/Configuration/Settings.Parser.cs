@@ -91,6 +91,20 @@ partial class Settings
 			}
 		}
 
+		// 最后一个字符可能刚进入错误状态；输入结束不能返回已经解析的部分结果
+		if(context.State == State.Error)
+		{
+			onError?.Invoke(context.ErrorMessage);
+			return null;
+		}
+
+		// 引号和引号内的转义必须完整结束，再提交最后一个值
+		if(context.HasFlags())
+		{
+			onError?.Invoke(string.Format(Properties.Resources.StringTokenizer_ClosingQuoteRequired_Message, context.HasFlags(Flags.SingleQuotation) ? '\'' : '"'));
+			return null;
+		}
+
 		if(context.State == State.Key)
 			result.Add(new KeyValuePair<string, string>(context.GetValue().ToString(), null));
 		else if(context.State == State.Assigner)
@@ -277,7 +291,6 @@ partial class Settings
 		}
 
 		public readonly ReadOnlySpan<char> GetValue() => _bufferCount > 0 ? _buffer.AsSpan(0, _bufferCount) : default;
-
 		public void Reset(State state, Flags flags = Flags.None)
 		{
 			_state = state;

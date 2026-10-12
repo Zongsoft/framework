@@ -20,6 +20,12 @@ var text = settings.Value;
 
 `Value` 包含所有显式设置。修改使文本缓存失效，下次读取时序列化当前状态，并转义引号文本和分隔符。给 `Value` 赋值会全量替换状态；赋 `null` 或空文本会清空。文本中的重复键按原文顺序后值覆盖前值。驱动别名参与同一顺序：当 `Host` 是 `Server` 的别名时，`Server=a;Host=b;Server=c` 的结果为 `Server=c`。输出顺序、键名大小写和末尾分号不属于格式保证。
 
+## 文本语法
+
+设置项使用 `key=value`，以分号分隔。省略赋值符或赋值内容为空时，键仍存在且值为 null；`key=''` 显式提供空字符串。单引号或双引号可以保护分号、首尾空白及值开头的等号。引号内通过反斜杠转义引号和反斜杠，`\t`、`\r`、`\n` 表示控制字符，不使用重复引号转义。例如 `Password='=abc=='` 保留 `=abc==`，`Text='a\'b;=c\\'` 保留 `a'b;=c\`。
+
+解析检查全部输入，包括最后一个字符。引号未闭合、引号内转义未完成或末尾含非法字符均失败。`TryParse` 返回 false 且结果为 null；`Parse`、构造函数及 `Value` 赋值抛出 `ArgumentException`。`Value` 赋值失败保留原有文本与条目。序列化显式空值或带首尾空白的值时使用字典 `Add` 方法；索引器会删除空值并裁剪非空值。
+
 ## 连接设置（ConnectionSettings）
 
 连接设置接口（`IConnectionSettings`）继承 `ISettings`，提供驱动、`Properties`、`HasProperties`、`GetValue<T>` 和 `TryGetValue<T>`。连接设置基类（`ConnectionSettingsBase`）继承 `Settings`，共用解析器与主字典。扩展属性集（`Properties`）仅属于连接设置（`ConnectionSettings`）。

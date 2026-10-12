@@ -20,6 +20,12 @@ The raw indexer returns `null` for missing keys. Assigning `null` or an empty st
 
 `Value` includes all explicit settings. Mutations invalidate its cached text; the next read serializes the current state, escaping quoted text and separators. Assigning `Value` replaces the entire state; assigning `null` or empty text clears it. Duplicate text keys are applied in source order, with the last value winning. Driver aliases participate in the same sequence: `Server=a;Host=b;Server=c` resolves to `Server=c` when `Host` aliases `Server`. Output ordering, key casing and a trailing semicolon are not formatting contracts.
 
+## Text syntax
+
+Entries use `key=value`, separated by semicolons. A key without an assignment or with an empty assignment remains present with a null value; `key=''` explicitly supplies an empty string. Single and double quotes protect semicolons, surrounding whitespace and a leading equals sign. Inside quotes, use backslash escapes for quotes and backslashes, and `\t`, `\r` and `\n` for control characters; doubled quotes are not escapes. For example, `Password='=abc=='` preserves `=abc==`, and `Text='a\'b;=c\\'` preserves `a'b;=c\`.
+
+Parsing validates the entire input, including the final character. Unclosed quotes, incomplete quoted escapes and trailing invalid characters fail. `TryParse` returns false with a null result; `Parse`, constructors and `Value` assignment throw `ArgumentException`. Failed `Value` assignment preserves the previous text and entries. Use the dictionary `Add` method when serializing explicit empty values or values with surrounding whitespace; the indexer removes empty values and trims nonempty ones.
+
 ## Connection settings
 
 `IConnectionSettings` inherits `ISettings` and adds the driver, `Properties`, `HasProperties`, `GetValue<T>` and `TryGetValue<T>`. `ConnectionSettingsBase` inherits `Settings` and shares its parser and main dictionary. Only connection settings expose `Properties`.
