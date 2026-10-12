@@ -45,10 +45,10 @@ public sealed class XmlConfigurationInstructionContext : XmlConfigurationContext
 	internal XmlConfigurationInstructionContext(XmlConfigurationSession session, XmlConfigurationSession.File file, XmlConfigurationInstruction instruction, string optionPath, int xmlDepth, XmlConfigurationInstructionOptions options) :
 		base(file.Context.FilePath, file.Context.Depth, file.Context.Referer, file.Context.Configuration)
 	{
-		_session = session;
 		_file = file;
-		this.Instruction = instruction;
+		_session = session;
 		_currentInstruction = instruction;
+		this.Instruction = instruction;
 		this.OptionPath = optionPath;
 		this.XmlDepth = xmlDepth;
 		this.Behavior = options.Behavior;
@@ -57,14 +57,15 @@ public sealed class XmlConfigurationInstructionContext : XmlConfigurationContext
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取不可变的原始处理指令及其来源位置。</summary>
-	public XmlConfigurationInstruction Instruction { get; }
 	/// <summary>获取或设置本次执行的数据，不裁剪空白，修改不会改变 <see cref="Instruction"/>。</summary>
 	public string Data
 	{
 		get => _currentInstruction.Data;
 		set => _currentInstruction = new(this.Instruction.Name, value, this.Instruction.Path, this.FilePath, this.Instruction.LineNumber, this.Instruction.LinePosition);
 	}
+
+	/// <summary>获取不可变的原始处理指令及其来源位置。</summary>
+	public XmlConfigurationInstruction Instruction { get; }
 	/// <summary>获取所属 <c>option</c> 的规范化配置路径；配置根路径为空字符串，文件级指令为 <see langword="null"/>。</summary>
 	public string OptionPath { get; }
 	/// <summary>获取或设置是否已接管本条指令，前置回调设为 <see langword="true"/> 时跳过处理器。</summary>
@@ -80,6 +81,7 @@ public sealed class XmlConfigurationInstructionContext : XmlConfigurationContext
 	/// <returns>名称不区分大小写的只读属性集合。</returns>
 	/// <exception cref="FormatException"><see cref="Data"/> 不符合属性式参数语法。</exception>
 	public IReadOnlyDictionary<string, string> GetAttributes() => _currentInstruction.GetAttributes();
+
 	/// <summary>尝试将当前执行数据解析为属性式参数。</summary>
 	/// <param name="attributes">成功时为只读属性集合，失败时为 <see langword="null"/>。</param>
 	/// <returns>属性语法有效则返回 <see langword="true"/>，否则返回 <see langword="false"/>。</returns>

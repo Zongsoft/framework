@@ -53,6 +53,7 @@ public partial class XmlConfigurationInstructionOptions
 	#region 公共属性
 	/// <summary>获取指令名称，不包含处理指令标记。</summary>
 	public string Name { get; }
+
 	/// <summary>获取或设置指令行为；<see cref="XmlConfigurationInstructionBehavior.None"/> 表示采用指令内置默认行为。</summary>
 	public XmlConfigurationInstructionBehavior Behavior
 	{

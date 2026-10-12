@@ -34,12 +34,16 @@ namespace Zongsoft.Configuration.Xml.Instructions;
 /// <summary>按声明位置导入 XML 配置。</summary>
 public sealed class ImportInstructionProcessor : XmlConfigurationInstructionProcessor
 {
+	#region 单例字段
 	/// <summary>获取内置导入处理器的共享实例。</summary>
 	public static readonly ImportInstructionProcessor Instance = new();
-	private ImportInstructionProcessor() : base(XmlConfigurationInstructionOptions.ImportOptions.NAME) { }
+	#endregion
 
-	/// <inheritdoc />
-	/// <param name="context">本次导入指令的上下文。</param>
+	#region 私有构造
+	private ImportInstructionProcessor() : base(XmlConfigurationInstructionOptions.ImportOptions.NAME) { }
+	#endregion
+
+	#region 重写方法
 	public override void Process(XmlConfigurationInstructionContext context)
 	{
 		ArgumentNullException.ThrowIfNull(context);
@@ -57,4 +61,5 @@ public sealed class ImportInstructionProcessor : XmlConfigurationInstructionProc
 
 		context.Import(path, required, context.Options is XmlConfigurationInstructionOptions.ImportOptions options ? options.MaximumDepth : XmlConfigurationInstructionOptions.ImportOptions.DEFAULT_MAXIMUM_DEPTH);
 	}
+	#endregion
 }

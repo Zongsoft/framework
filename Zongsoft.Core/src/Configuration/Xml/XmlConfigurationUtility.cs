@@ -53,8 +53,6 @@ internal static class XmlConfigurationUtility
 		}
 	}
 
-	internal static string NormalizeOptionPath(string path) => string.IsNullOrWhiteSpace(path) ? string.Empty : path.Trim('/', ' ', '\t').Replace('/', ':');
-
 	internal static string GetFileIdentity(string path)
 	{
 		path = Path.GetFullPath(path);
@@ -73,6 +71,7 @@ internal static class XmlConfigurationUtility
 		return current;
 	}
 
+	internal static string NormalizeOptionPath(string path) => string.IsNullOrWhiteSpace(path) ? string.Empty : path.Trim('/', ' ', '\t').Replace('/', ':');
 	internal static FormatException CreateException(string message, XmlConfigurationInstruction instruction, object argument = null) =>
 		new(string.Format(message, argument ?? instruction?.Name, instruction?.FilePath, instruction?.LineNumber ?? 0, instruction?.LinePosition ?? 0));
 }

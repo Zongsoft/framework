@@ -49,13 +49,14 @@ internal sealed class XmlConfigurationSession
 	#region 构造函数
 	internal XmlConfigurationSession(XmlConfigurationOptions options)
 	{
+		this.Dependencies = [];
 		_processors = XmlConfiguration.Instructions.GetSnapshot();
 		_options = options.Clone();
 	}
 	#endregion
 
-	#region 依赖属性
-	internal HashSet<Source> Dependencies { get; } = [];
+	#region 公共属性
+	public HashSet<Source> Dependencies { get; }
 	#endregion
 
 	#region 读取方法
@@ -177,6 +178,7 @@ internal sealed class XmlConfigurationSession
 		internal IFileProvider Provider { get; } = provider;
 		private StringComparer PathComparer => this.Provider == null ? XmlConfigurationUtility.PathComparer : StringComparer.Ordinal;
 
+		internal Source GetIdentity() => this.Provider == null ? new(XmlConfigurationUtility.GetFileIdentity(this.Path)) : this;
 		internal static Source Create(Stream stream, IFileProvider provider = null, string path = null)
 		{
 			if(stream is FileStream file)
@@ -187,8 +189,6 @@ internal sealed class XmlConfigurationSession
 			var physicalPath = provider.GetFileInfo(path).PhysicalPath;
 			return string.IsNullOrEmpty(physicalPath) ? new(Normalize(path), provider) : new(global::System.IO.Path.GetFullPath(physicalPath));
 		}
-
-		internal Source GetIdentity() => this.Provider == null ? new(XmlConfigurationUtility.GetFileIdentity(this.Path)) : this;
 
 		internal Stream Open()
 		{
@@ -228,6 +228,7 @@ internal sealed class XmlConfigurationSession
 		private static string Normalize(string path, XmlConfigurationInstruction instruction = null)
 		{
 			var parts = new List<string>();
+
 			foreach(var part in (path ?? string.Empty).Replace('\\', '/').Split('/', StringSplitOptions.RemoveEmptyEntries))
 			{
 				if(part == ".")

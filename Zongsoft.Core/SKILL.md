@@ -102,4 +102,4 @@ XmlConfiguration.Instructions 是线程安全的处理器注册表，元素为 X
 
 Import 使用必需的 path 和默认 true 的 required；None 按 required 处理，Strict 忽略 required 并要求目标存在。required=false 只忽略打开目标时的 FileNotFoundException/DirectoryNotFoundException。只允许根前、根后或 option 的直接子级；根外导入全部，option 内仅选目标中同规范化路径的块，完全匹配且忽略大小写，不包含另行声明的子路径。未匹配成功返回空；未选选项的 PI 不执行、不收集、不跟随或监听引用，目标 XML 仍须格式良好。文件级递归导入传递筛选条件。每个文件独立字典，成功后按位置合并、后值覆盖；同文件普通 XML 声明重复键仍拒绝，处理器写入不算普通声明。
 
-物理路径相对于实际声明文件目录，FileStream 的实际路径不受诊断标识覆盖；无物理来源的普通流仅可导入绝对路径。虚拟来源复用同一 IFileProvider 并规范化逻辑路径，不退回磁盘。循环只针对活动链，物理身份解析目录和文件链接，重复或菱形依赖重新读取。ImportOptions.MaximumDepth 默认为 64，必须为正，根文件计一层。XmlConfigurationFileProvider 将有效依赖接入文件基类的重载通知；监听缺失可选文件、无匹配已读文件，刷新及释放订阅，失败沿用基类清空与 OnLoadException 规则。静态读取和流提供程序不关闭调用方流，导入流由会话关闭。Core 不提供 set 或 binding 业务语义；需要最终值的消费者在构建完成后结合 Instructions 和最终配置提取。
+物理路径相对于实际声明文件目录，FileStream 的实际路径不受诊断标识覆盖；无物理来源的普通流仅可导入绝对路径。虚拟来源复用同一 IFileProvider 并规范化逻辑路径，不退回磁盘。循环只针对活动链，物理身份解析目录和文件链接，重复或菱形依赖重新读取。ImportOptions.MaximumDepth 默认为 64，必须为正，根文件计一层。XmlConfigurationProvider 的私有嵌套类 FileProvider 将有效依赖接入文件基类的重载通知；监听缺失可选文件、无匹配已读文件，刷新及释放订阅，失败沿用基类清空与 OnLoadException 规则。静态读取和流提供程序不关闭调用方流，导入流由会话关闭。Core 不提供 set 或 binding 业务语义；需要最终值的消费者在构建完成后结合 Instructions 和最终配置提取。
