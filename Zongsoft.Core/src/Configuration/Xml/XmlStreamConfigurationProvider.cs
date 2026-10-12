@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -74,6 +74,7 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 	public static IDictionary<string, string> Read(Stream stream, out IReadOnlyList<XmlConfigurationInstruction> instructions, string filePath = null)
 	{
 		ArgumentNullException.ThrowIfNull(stream);
+
 		instructions = [];
 		filePath ??= stream is FileStream file ? file.Name : string.Empty;
 
@@ -136,6 +137,7 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 
 		instructions = declarations == null ? [] : declarations.AsReadOnly();
 		context.Data.Instructions = instructions;
+
 		return context.Data;
 	}
 	#endregion
@@ -164,6 +166,7 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 
 	private partial struct Context
 	{
+		#region 构造函数
 		public Context(XmlReader reader)
 		{
 			this.Reader = reader;
@@ -171,12 +174,15 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 			this.Data = new();
 			this.Paths = new();
 		}
+		#endregion
 
-		public readonly ConfigurationData Data;
+		#region 公共字段
+		public XmlNodeType Previous;
 		public readonly XmlReader Reader;
 		public readonly Stack<string> Paths;
+		public readonly ConfigurationData Data;
+		#endregion
 
-		public XmlNodeType Previous;
 		#region 公共属性
 		public readonly int Depth => this.Reader.Depth;
 		#endregion
