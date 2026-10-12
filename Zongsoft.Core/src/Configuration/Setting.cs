@@ -89,7 +89,7 @@ public class Setting : ISetting, IEquatable<Setting>, IEquatable<ISetting>
 	public bool Equals(ISetting setting) => setting is not null && string.Equals(_name, setting.Name, StringComparison.OrdinalIgnoreCase);
 	public bool Equals(Setting setting) => setting is not null && string.Equals(_name, setting._name, StringComparison.OrdinalIgnoreCase);
 	public override bool Equals(object obj) => obj is ISetting setting && this.Equals(setting);
-	public override int GetHashCode() => HashCode.Combine(_name.ToLowerInvariant());
+	public override int GetHashCode() => StringComparer.OrdinalIgnoreCase.GetHashCode(_name);
 	public override string ToString() => $"{this.Name}={this.Value}";
 	#endregion
 }

@@ -62,8 +62,8 @@ public partial class Settings : ISettings, IReadOnlyDictionary<string, string>, 
 	internal Settings(string name, string value, params IEnumerable<KeyValuePair<string, string>> entries)
 	{
 		this.Name = name ?? string.Empty;
-		_entries = new(entries, StringComparer.OrdinalIgnoreCase);
 		_value = value ?? string.Empty;
+		_entries = new(entries, StringComparer.OrdinalIgnoreCase);
 	}
 	#endregion
 

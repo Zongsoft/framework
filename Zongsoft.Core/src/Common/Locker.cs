@@ -16,17 +16,29 @@ namespace Zongsoft.Common;
 /// </remarks>
 public sealed class Locker : IAsyncDisposable
 {
+	#region 静态字段
 	private static readonly ObjectPool<SemaphoreSlim> _semaphorePool = new DefaultObjectPool<SemaphoreSlim>(new SemaphoreSlimPooledObjectPolicy(), 100);
+	#endregion
+
+	#region 成员字段
+	#if NET9_0_OR_GREATER
+	private readonly Lock _syncRoot = new();
+	#else
 	private readonly object _syncRoot = new();
+	#endif
+
 	private readonly AsyncLocal<SemaphoreRelease> _currentRelease;
 	private SemaphoreSlim _rootSemaphore;
 	private Task _disposeTask;
+	#endregion
 
+	#region 构造函数
 	public Locker()
 	{
 		_rootSemaphore = _semaphorePool.Get();
 		_currentRelease = new AsyncLocal<SemaphoreRelease>();
 	}
+	#endregion
 
 	#region 公共方法
 	public ValueTask<IAsyncDisposable> LockAsync(CancellationToken cancellation = default)
@@ -116,15 +128,19 @@ public sealed class Locker : IAsyncDisposable
 
 	private sealed class SemaphoreRelease(SemaphoreSlim currentSemaphore, SemaphoreSlim nextSemaphore, SemaphoreRelease parent, Locker locker) : IAsyncDisposable, IDisposable
 	{
+		#region 常量定义
 		private const int PENDING = 0;
 		private const int ACQUIRED = 1;
 		private const int RELEASING = 2;
 		private const int RELEASED = 3;
+		#endregion
 
+		#region 成员字段
 		private readonly SemaphoreSlim _currentSemaphore = currentSemaphore;
 		private readonly SemaphoreSlim _nextSemaphore = nextSemaphore;
 		private readonly Locker _locker = locker;
 		private int _state;
+		#endregion
 
 		#region 公共属性
 		public SemaphoreRelease Parent { get; } = parent;
