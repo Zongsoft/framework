@@ -73,21 +73,12 @@ public static class ConnectionSettingsUtility
 		return setting;
 	}
 
-	public static T GetValue<T>(this IConnectionSettings connectionSettings, string name, T defaultValue = default) => TryGetValue<T>(connectionSettings, name, out var value) ? value : defaultValue;
-	public static bool TryGetValue<T>(this IConnectionSettings connectionSettings, string name, out T value)
+	public static T GetValue<T>(this IConnectionSettings settings, string name) => settings.GetValue<T>(name);
+	public static T GetValue<T>(this IConnectionSettings settings, string name, T defaultValue) => settings.TryGetValue<T>(name, out var value) ? value : defaultValue;
+	public static bool TryGetValue<T>(this IConnectionSettings settings, string name, out T value)
 	{
-		if(connectionSettings == null)
-		{
-			value = default;
-			return false;
-		}
-
-		var text = connectionSettings[name];
-
-		if(!string.IsNullOrEmpty(text) && connectionSettings.Driver.Descriptors.TryGetValue(name, out var descriptor))
-			return Common.Convert.TryConvertValue<T>(text, () => descriptor.Converter, out value);
-
-		return Common.Convert.TryConvertValue<T>(text, out value);
+		value = default;
+		return settings != null && settings.TryGetValue(name, out value);
 	}
 
 	public static IConnectionSettings GetSettings(this IConnectionSettingsDriver driver, string connectionString)
@@ -158,9 +149,12 @@ public static class ConnectionSettingsUtility
 		if(connectionSettings == null)
 			return default;
 
+		if(connectionSettings is IConnectionSettings<TOptions> typed)
+			return typed.GetOptions();
+
 		var method = _thunks.GetOrAdd(connectionSettings.GetType(), type =>
 		{
-			return type.GetMethod(nameof(ConnectionSettingsBase<IConnectionSettingsDriver, TOptions>.GetOptions), BindingFlags.Public | BindingFlags.Instance);
+			return type.GetMethod(nameof(ConnectionSettingsBase<,>.GetOptions), BindingFlags.Public | BindingFlags.Instance);
 		});
 
 		var thunk = method?.CreateDelegate(typeof(Func<>).MakeGenericType(method.ReturnType), connectionSettings);

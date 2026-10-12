@@ -73,97 +73,23 @@ public class ConfigurationResolver : IConfigurationResolver
 		if(type == typeof(IConfigurationSection))
 			return;
 
+		//设置文本必须先绑定，随后绑定的独立属性才不会被 Value 的全量替换清除
+		var settings = instance as ISettings;
+
+		if(settings != null && configuration.GetSection(nameof(ISettings.Value)).Value is string value)
+			settings.Value = value;
+
 		foreach(var child in configuration.GetChildren())
 		{
+			if(settings != null && string.Equals(child.Key, nameof(ISettings.Value), StringComparison.OrdinalIgnoreCase))
+				continue;
+
+			//驱动已由连接设置解析器选定，不作为扩展参数写入
+			if(instance is IConnectionSettings && string.Equals(child.Key, nameof(IConnectionSettings.Driver), StringComparison.OrdinalIgnoreCase))
+				continue;
+
 			this.ResolveInstance(instance, child, options);
 		}
-	}
-
-	private void ResolveInstance(object instance, IConfiguration configuration, ConfigurationBinderOptions options)
-	{
-		if(configuration is not IConfigurationSection section)
-			return;
-
-		if(section.IsCollection())
-		{
-			if(Collections.CollectionUtility.TryAdd(instance, section.Value))
-				return;
-
-			throw new ConfigurationException(string.Format(Properties.Resources.Configuration_CollectionEntryFailed_Message, section.Path, section.Value));
-		}
-
-		var properties = this.GetProperties(instance.GetType().GetTypeInfo());
-
-		if(section.Value != null)
-		{
-			if(properties.TryGetValue(section.Key, out var property))
-			{
-				if(SetPathInfo(instance, property, section))
-					return;
-
-				if(property.SetValue(instance, section.Value))
-					return;
-
-				throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedBinding_Message, section.Path, property.PropertyType));
-			}
-
-			this.OnUnrecognized(instance, properties, section, options);
-		}
-		else
-		{
-			if(properties.TryGetValue(section.Key, out var property))
-			{
-				var target = property.GetValue(instance);
-
-				if(target == null)
-					target = ConfigurationUtility.GetResolver(property.PropertyType).Resolve(property.PropertyType, configuration, options);
-				else
-					this.Resolve(target, configuration, options);
-
-				property.SetValue(instance, target);
-			}
-			else
-			{
-				if(!this.ResolveCollection(instance, section, properties, options))
-					this.OnUnrecognized(instance, properties, section, options);
-			}
-		}
-	}
-
-	private bool ResolveCollection(object instance, IConfigurationSection configuration, IDictionary<string, PropertyToken> properties, ConfigurationBinderOptions options)
-	{
-		var dictionaryType = ConfigurationUtility.GetImplementedContract(instance.GetType(), typeof(IDictionary<,>));
-
-		if(dictionaryType != null)
-		{
-			object key = configuration.Key;
-
-			//如果字典键类型不是字符串并且配置键文本转换失败则抛出异常
-			if(dictionaryType.GenericTypeArguments[0] != typeof(string) && !Common.Convert.TryConvertValue(key, dictionaryType.GenericTypeArguments[0], out key))
-				throw new ConfigurationException(string.Format(Properties.Resources.Configuration_DictionaryKeyConversion_Message, key, dictionaryType.GenericTypeArguments[0].FullName));
-
-			var valueType = dictionaryType.GenericTypeArguments[1];
-			var setter = dictionaryType.GetTypeInfo().GetDeclaredProperty("Item");
-
-			Reflection.Reflector.SetValue(setter, ref instance, ConfigurationUtility.GetResolver(valueType).Resolve(valueType, configuration, options), [key]);
-
-			return true;
-		}
-
-		var collectionType = ConfigurationUtility.GetImplementedContract(instance.GetType(), typeof(ICollection<>));
-
-		if(collectionType != null)
-		{
-			var valueType = collectionType.GenericTypeArguments[0];
-			var add = collectionType.GetTypeInfo().GetDeclaredMethod("Add");
-
-			add.Invoke(instance, [ConfigurationUtility.GetResolver(valueType).Resolve(valueType, configuration, options)]);
-
-			return true;
-		}
-
-		//返回失败
-		return false;
 	}
 	#endregion
 
@@ -237,6 +163,9 @@ public class ConfigurationResolver : IConfigurationResolver
 	#region 虚拟方法
 	protected virtual object CreateInstance(Type type, IConfiguration configuration)
 	{
+		if(type == typeof(ISettings))
+			return new Settings();
+
 		if(type.IsArray)
 		{
 			if(type.GetArrayRank() > 1)
@@ -407,6 +336,93 @@ public class ConfigurationResolver : IConfigurationResolver
 	#endregion
 
 	#region 私有方法
+	private void ResolveInstance(object instance, IConfiguration configuration, ConfigurationBinderOptions options)
+	{
+		if(configuration is not IConfigurationSection section)
+			return;
+
+		if(section.IsCollection())
+		{
+			if(Collections.CollectionUtility.TryAdd(instance, section.Value))
+				return;
+
+			throw new ConfigurationException(string.Format(Properties.Resources.Configuration_CollectionEntryFailed_Message, section.Path, section.Value));
+		}
+
+		var properties = this.GetProperties(instance.GetType().GetTypeInfo());
+
+		if(section.Value != null)
+		{
+			if(properties.TryGetValue(section.Key, out var property))
+			{
+				if(SetPathInfo(instance, property, section))
+					return;
+
+				if(property.SetValue(instance, section.Value))
+					return;
+
+				throw new InvalidOperationException(string.Format(Properties.Resources.Error_FailedBinding_Message, section.Path, property.PropertyType));
+			}
+
+			this.OnUnrecognized(instance, properties, section, options);
+		}
+		else
+		{
+			if(properties.TryGetValue(section.Key, out var property))
+			{
+				var target = property.GetValue(instance);
+
+				if(target == null)
+					target = ConfigurationUtility.GetResolver(property.PropertyType).Resolve(property.PropertyType, configuration, options);
+				else
+					this.Resolve(target, configuration, options);
+
+				property.SetValue(instance, target);
+			}
+			else
+			{
+				if(!ResolveCollection(instance, section, properties, options))
+					this.OnUnrecognized(instance, properties, section, options);
+			}
+		}
+	}
+
+	private static bool ResolveCollection(object instance, IConfigurationSection configuration, IDictionary<string, PropertyToken> properties, ConfigurationBinderOptions options)
+	{
+		var dictionaryType = ConfigurationUtility.GetImplementedContract(instance.GetType(), typeof(IDictionary<,>));
+
+		if(dictionaryType != null)
+		{
+			object key = configuration.Key;
+
+			//如果字典键类型不是字符串并且配置键文本转换失败则抛出异常
+			if(dictionaryType.GenericTypeArguments[0] != typeof(string) && !Common.Convert.TryConvertValue(key, dictionaryType.GenericTypeArguments[0], out key))
+				throw new ConfigurationException(string.Format(Properties.Resources.Configuration_DictionaryKeyConversion_Message, key, dictionaryType.GenericTypeArguments[0].FullName));
+
+			var valueType = dictionaryType.GenericTypeArguments[1];
+			var setter = dictionaryType.GetTypeInfo().GetDeclaredProperty("Item");
+
+			Reflection.Reflector.SetValue(setter, ref instance, ConfigurationUtility.GetResolver(valueType).Resolve(valueType, configuration, options), [key]);
+
+			return true;
+		}
+
+		var collectionType = ConfigurationUtility.GetImplementedContract(instance.GetType(), typeof(ICollection<>));
+
+		if(collectionType != null)
+		{
+			var valueType = collectionType.GenericTypeArguments[0];
+			var add = collectionType.GetTypeInfo().GetDeclaredMethod("Add");
+
+			add.Invoke(instance, [ConfigurationUtility.GetResolver(valueType).Resolve(valueType, configuration, options)]);
+
+			return true;
+		}
+
+		//返回失败
+		return false;
+	}
+
 	private bool ResolveDefaultProperty(object instance, PropertyToken property, IDictionary<string, PropertyToken> properties, IConfigurationSection configuration, ConfigurationBinderOptions options)
 	{
 		if(property == null)
@@ -425,7 +441,7 @@ public class ConfigurationResolver : IConfigurationResolver
 				throw new ConfigurationException(string.Format(Properties.Resources.Configuration_DefaultCollectionReadOnly_Message, property.Name, instance.GetType().FullName));
 		}
 
-		return this.ResolveCollection(value, configuration, this.GetProperties(value.GetType().GetTypeInfo()), options);
+		return ResolveCollection(value, configuration, this.GetProperties(value.GetType().GetTypeInfo()), options);
 	}
 
 	private static PropertyToken FindDefaultProperty(IEnumerable<PropertyToken> properties)

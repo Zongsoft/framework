@@ -63,6 +63,12 @@ podman exec -it ollama ollama pull qwen3:0.6b
 > podman exec -it ollama ollama ps
 > ```
 
+## Ollama 连接设置（OllamaConnectionSettings）
+
+连接设置（[`OllamaConnectionSettings`](src/Ollama/OllamaConnectionSettings.cs)）不带 `TOptions` 约束，`Server`、`Model`、`History`、`Expiration` 由类型化属性读取，未知文本项仍保留在主字典。原始索引器只返回显式值；默认值（例如 `Expiration`）不会自动补入完整 `Value`。
+
+[`OllamaClientFactory`](src/Ollama/OllamaClientFactory.cs) 要求实际传入 `OllamaConnectionSettings`。从普通设置（`Settings`）或通用连接设置（`ConnectionSettings`）创建客户端时，先通过 `OllamaConnectionSettingsDriver.Instance.GetSettings(settings.Name, settings.Value)` 重建，再交给工厂。通用字典与文本规则见 [Core 设置契约](../Zongsoft.Core/docs/settings.zh-Hans.md)。
+
 ## 运行调试
 
 如果宿主程序中本库(`Zongsoft.Intelligences.dll`)所在目录中包含一个名为 _`preludes`_ 的子目录，则当开启一个新的聊天会话时默认会在该目录中查找该助手名字打头的文本文件作为新会话的开场白。具体请参考 [ChatSessionPreludeLoader.cs](src/ChatSessionPreludeLoader.cs) 类的源码。

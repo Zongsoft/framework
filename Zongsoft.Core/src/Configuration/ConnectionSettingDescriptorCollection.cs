@@ -164,7 +164,7 @@ public class ConnectionSettingDescriptorCollection(IConnectionSettingsDriver dri
 			return null;
 
 		//忽略内置属性
-		if(property.DeclaringType == typeof(Setting) ||
+		if(property.DeclaringType == typeof(Settings) ||
 			property.DeclaringType == typeof(ConnectionSettingsBase) ||
 			(property.DeclaringType.IsGenericType && property.DeclaringType.GetGenericTypeDefinition() == typeof(ConnectionSettingsBase<>)))
 			return null;

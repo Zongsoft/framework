@@ -46,6 +46,12 @@ dotnet add package Zongsoft.Externals.Aliyun
 
 > 💡 部署环境支持时优先采用实例/工作负载身份。无法避免静态密钥时，应从秘密提供程序注入，并按服务边界使用不同的最小权限凭据。
 
+## MQTT 连接设置（MqttConnectionSettings）
+
+阿里云 MQTT 连接设置（[`Zongsoft.Externals.Aliyun.Messaging.Mqtt.MqttConnectionSettings`](src/Messaging/Mqtt/MqttConnectionSettings.cs)）不带 `TOptions` 约束，未知文本项保留在主字典，索引器允许任意参数键。它与独立 [MQTT 驱动](../../messaging/mqtt/README.zh-Hans.md)的连接设置属于不同类型。
+
+`Client`、`UserName`、`Password` 属性包含阿里云客户端标识及认证值的生成逻辑；原始索引器和 `Value` 保存输入参数，不能用原始文本替代这些属性的计算结果。主参数、扩展属性集（`Properties`）及完整文本的通用行为见 [Core 设置契约](../../Zongsoft.Core/docs/settings.zh-Hans.md)。
+
 ## 应用工作流
 
 - 通过注册的 `zfs.oss` 文件系统访问 OSS 对象；Bucket 与 Key 遵循对象存储语义，而不是本地磁盘。

@@ -10,6 +10,12 @@
 
 -----
 
+## 连接设置（OpcConnectionSettings）
+
+连接设置（[`OpcConnectionSettings`](src/Configuration/OpcConnectionSettings.cs)）不带 `TOptions` 约束，允许任意主参数键；`Server` 与别名 `Url` 访问同一参数。`OpcClient` 读取服务器、超时、身份和安全相关的类型化属性建立会话，不通过通用 `GetOptions()` 生成 SDK 选项。
+
+原始字典只返回显式参数，默认值由类型化读取提供。`Value` 保留全部显式主参数与扩展属性；保留未知项不意味着 OPC 客户端会使用它们。完整规则见 [Core 设置契约](../../Zongsoft.Core/docs/settings.zh-Hans.md)。
+
 ## 证书生成
 
 如果采用 X509 证书进行身份验证，需要使用 [OpenSSL 工具](https://docs.openssl.org) 生成 X509 证书文件。

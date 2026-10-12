@@ -117,6 +117,10 @@ The client name and group come from the [sample client](samples/client/Program.c
 
 The default filter excludes messages produced by the same queue instance. Use `Filter=*` to accept every instance, `Filter=.` (or `~`) to accept only the current instance, ordinary identifiers as an allow list, and `!identifier` entries as exclusions.
 
+[`ZeroConnectionSettings`](src/Configuration/ZeroConnectionSettings.cs) has no `TOptions` constraint: unknown text entries remain in the main dictionary, and the indexer accepts arbitrary parameter names. The driver reads the parameters it uses through typed properties.
+
+The defaults in the table apply to typed reads. For example, when `Port` is absent, `settings.Port` returns `7969`, while `settings["Port"]` returns `null`; the default is not inserted into `Value`. `Value` retains main parameters and explicit extension properties. See the [Core settings contract](../../Zongsoft.Core/docs/settings.md) for the complete rules.
+
 <a name="usage"></a>
 ## Usage
 

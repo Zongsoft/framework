@@ -22,6 +22,12 @@ description: 创建、修改、审查或调试 framework/externals 下的第三�
 - ClosedXml 的四个公共归档/模板服务按 Spreadsheet 格式匹配。内部表格名由 Spreadsheet.GetTableName 生成 `__{QualifiedName}__`，不是 Model.Name；类型描述器与 service.GetDescriptor() 的映射上下文不能互换。更改命名时同步生成、提取、手工模板说明及往返测试。
 - 包含 Web/Gateway 的适配器要追踪“路由 → 请求解码 → 分发器 → Handler → 回复”全链路，不能把可扩展网关描述为自动验签或自动处理全部业务回调。
 
+## 连接设置（ConnectionSettings）
+
+- 以 [Core 设置契约](../Zongsoft.Core/docs/settings.zh-Hans.md) 为共同语义，核对具体基类是否带 `TOptions`：Redis、S3 按描述器约束主参数；Etcd、OPC、阿里云 MQTT 允许任意主参数键。
+- 原生选项与完整设置文本分开核对：Redis 生成 `ConfigurationOptions`，S3 生成 `AmazonS3Config`；Etcd、OPC 直接读取类型化属性。阿里云 MQTT 的认证属性还包含派生计算，原始索引器不能替代这些计算。
+- 修改消费路径时同时检查 Hangfire Redis 存储、消息队列等复用方。`Value` 保留扩展参数不代表 SDK 支持它们；未知参数不能仅因保存在文本中就被描述成已经生效。
+
 ## 适配规则
 
 - 第三方类型、错误码和配置细节留在适配层；公共调用方看到稳定的 Zongsoft 契约和异常语义。

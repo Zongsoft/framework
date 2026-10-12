@@ -46,6 +46,12 @@ The `general` section selects a default region/service center and whether intran
 
 > 💡 Prefer instance/workload credentials when the deployment supports them. When static keys are unavoidable, inject them from a secret provider and use separate least-privilege credentials per service boundary.
 
+## MQTT Connection Settings (MqttConnectionSettings)
+
+[`Zongsoft.Externals.Aliyun.Messaging.Mqtt.MqttConnectionSettings`](src/Messaging/Mqtt/MqttConnectionSettings.cs) has no `TOptions` constraint: unknown text entries remain in the main dictionary, and the indexer accepts arbitrary parameter names. It is distinct from the settings type used by the standalone [MQTT driver](../../messaging/mqtt/README.md).
+
+Its `Client`, `UserName` and `Password` properties include Alibaba Cloud client identity and authentication generation logic. The raw indexer and `Value` retain input parameters and do not substitute for those computed property values. See the [Core settings contract](../../Zongsoft.Core/docs/settings.md) for main parameters, `Properties` and complete text semantics.
+
 ## Application Workflows
 
 - Address OSS objects through the registered `zfs.oss` file system; bucket and key semantics follow object storage rather than a local disk.

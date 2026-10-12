@@ -37,6 +37,8 @@ $env:ZONGSOFT_MESSAGING_STORAGE_IDENTIFIER = "broker-storage-01"
 
 存储器会快照全部消息元数据和负载字节，通过数据库按 UTC 过期时间过滤，并且不会释放共享的 `IDataAccess`。过期行不会在后台自动删除；如需回收物理空间，请配置运维清理任务。
 
+连接设置（`IConnectionSettings`）的完整 `Value` 包含显式主参数与扩展属性，不能直接等同于 ADO.NET 原生连接字符串。本存储通过 `IDataAccess` 执行操作，由所选数据驱动生成原生连接参数；扩展项按该驱动的规则处理。具体契约见 [数据访问配置](../../Zongsoft.Data/README.zh-Hans.md)和 [Core 设置契约](../../Zongsoft.Core/docs/settings.zh-Hans.md)。
+
 ## 可靠性概念与范围
 
 存储的消息是载荷和元数据的独立快照，不是活的消费者或确认委托。本存储支撑 Broker 的可靠投递记账，但不会把业务数据库更新和消息投递自动变成同一个原子事务。

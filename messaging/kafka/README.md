@@ -41,6 +41,10 @@ dotnet add package Zongsoft.Messaging.Kafka
 
 Supported adapter settings include `server`, `username`, `password`, `client`, `group`, `securityProtocol`, `compressionType`, `compressionLevel`, `isolationLevel`, `heartbeat`, `timeout`, and transaction settings. Supply secrets through deployment configuration; the example intentionally omits credentials.
 
+[`KafkaConnectionSettings`](src/Configuration/KafkaConnectionSettings.cs) uses `ClientConfig` as its options type. `Driver.Descriptors` defines its main parameters; unknown entries parsed from text go to `Properties`. Producers and consumers use `GetProducerOptions()` and `GetConsumerOptions()` to generate `ProducerConfig` and `ConsumerConfig`, including their respective authentication, group and timeout mappings.
+
+`Value` retains the complete framework settings; extension entries are not forwarded as arbitrary native Kafka configuration. Write unknown entries through `Properties`. See the [Core settings contract](../../Zongsoft.Core/docs/settings.md) for dictionary access, defaults and complete text semantics.
+
 ## Delivery Model
 
 A topic is a Kafka topic; `group` controls consumer-group sharing. Received messages acknowledge by committing the consumed offset. Compression is conveyed through the adapter header and decompressed before the handler runs.

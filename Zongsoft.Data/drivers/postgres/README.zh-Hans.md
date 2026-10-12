@@ -43,7 +43,7 @@ dotnet add package Zongsoft.Data.PostgreSql
 </options>
 ```
 
-`driver` 不区分大小写，但建议使用规范拼写 `PostgreSQL`。`value` 由本包的连接设置驱动解析，并最终传给 Npgsql；可用关键字请查阅[提供程序文档](https://www.npgsql.org/doc/)。
+`driver` 不区分大小写，但建议使用规范拼写 `PostgreSQL`。`value` 遵循 [Core 设置契约](../../../Zongsoft.Core/docs/settings.zh-Hans.md)，包含显式驱动参数和扩展属性。`GetOptions()` 将驱动参数映射为 Npgsql 使用的原生选项；扩展属性保留在框架连接设置（`ConnectionSettings`）及其完整 `Value` 中。提供程序自身能力请查阅[提供程序文档](https://www.npgsql.org/doc/)。
 
 > 💡 实体映射、条件、分页、事务和 `IDataAccess` 用法统一参阅 [Zongsoft.Data 指南](../../README.zh-Hans.md)。切换驱动不应迫使应用服务依赖提供程序连接类型。
 

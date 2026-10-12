@@ -44,6 +44,8 @@ The package uses DuckDB.NET.Data.Full, including native runtime assets. Publish 
 </option>
 ```
 
+Connection text follows the [Core settings contract](../../../Zongsoft.Core/docs/settings.md). `GetOptions()` produces native DuckDB options; extension properties remain in the framework settings and its complete `Value`.
+
 A file database persists across connections; `DataSource=:memory:` is useful for a short-lived experiment but is not a persistent store.
 
 ## Application Integration

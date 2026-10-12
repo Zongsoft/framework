@@ -43,7 +43,7 @@ Deploy `Zongsoft.Data.PostgreSql.plugin` with the assembly. Its manifest registe
 </options>
 ```
 
-The `driver` value is case-insensitive but should use the canonical `PostgreSQL` spelling. The `value` is parsed by this package's connection settings driver and ultimately passed to Npgsql; consult the [provider documentation](https://www.npgsql.org/doc/) for supported keywords.
+The `driver` value is case-insensitive but should use the canonical `PostgreSQL` spelling. The `value` follows the [Core settings contract](../../../Zongsoft.Core/docs/settings.md): it contains explicit driver parameters and extension properties. `GetOptions()` maps driver parameters to the native options consumed by Npgsql; extension properties remain in the framework settings and its complete `Value`. For native provider capabilities, consult the [provider documentation](https://www.npgsql.org/doc/) for supported keywords.
 
 > 💡 Keep entity mappings, criteria, paging, transactions, and `IDataAccess` usage in the shared [Zongsoft.Data guide](../../README.md). Switching drivers should not require application services to depend on provider connection classes.
 

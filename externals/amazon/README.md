@@ -38,6 +38,10 @@ dotnet add package Zongsoft.Externals.Amazon
 
 Settings include `server`/`url`, `region`, `client`, `timeout`, `accessKey`, `secretKey`, and `accountId`. A custom `server` enables path-style addressing for compatible endpoints.
 
+[`S3ConnectionSettings`](src/IO/Configuration/S3ConnectionSettings.cs) generates `AmazonS3Config` through `GetOptions()`, with the adapter mapping credentials, custom endpoints and path-style addressing. `Driver.Descriptors` defines the main parameters; `Server`, `Url` and `ServiceURL` name the same parameter.
+
+Unknown text entries go to `Properties` and are not automatically mapped to AWS SDK options. The complete `Value` retains both main and extension entries. See the [Core settings contract](../../Zongsoft.Core/docs/settings.md) for writes and defaults.
+
 ## File-System Paths
 
 The first path segment is the bucket and the remainder is the object key:

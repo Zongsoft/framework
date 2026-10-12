@@ -57,7 +57,10 @@ public class ConfigurationTest
 		Assert.NotNull(setting);
 		Assert.Equal("db1", setting.Name);
 		Assert.True(setting.IsDriver("mysql"));
-		Assert.Equal("server=localhost", setting.Value);
+		var serialized = Settings.Parse(setting.Value);
+		Assert.Equal(2, serialized.Count());
+		Assert.Equal("localhost", serialized["server"]);
+		Assert.Equal("all", serialized["mode"]);
 
 		Assert.True(setting.HasProperties);
 		Assert.True(setting.Properties.TryGetValue("mode", out var value));
@@ -68,7 +71,10 @@ public class ConfigurationTest
 		Assert.NotNull(setting);
 		Assert.Equal("db1", setting.Name);
 		Assert.True(setting.IsDriver("mysql"));
-		Assert.Equal("server=localhost", setting.Value);
+		serialized = Settings.Parse(setting.Value);
+		Assert.Equal(2, serialized.Count());
+		Assert.Equal("localhost", serialized["server"]);
+		Assert.Equal("all", serialized["mode"]);
 		Assert.True(setting.HasProperties);
 		Assert.True(setting.Properties.TryGetValue("mode", out value));
 		Assert.Equal("all", value);

@@ -43,7 +43,7 @@ Deploy `Zongsoft.Data.MySql.plugin` with the assembly. Its manifest registers th
 </options>
 ```
 
-The `driver` value is case-insensitive but should use the canonical `MySql` spelling. The `value` is parsed by this package's connection settings driver and ultimately passed to MySqlConnector; consult the [provider documentation](https://mysqlconnector.net/) for supported keywords.
+The `driver` value is case-insensitive but should use the canonical `MySql` spelling. The `value` follows the [Core settings contract](../../../Zongsoft.Core/docs/settings.md): it contains explicit driver parameters and extension properties. `GetOptions()` maps driver parameters to the native options consumed by MySqlConnector; extension properties remain in the framework settings and its complete `Value`. For native provider capabilities, consult the [provider documentation](https://mysqlconnector.net/) for supported keywords.
 
 > 💡 Keep entity mappings, criteria, paging, transactions, and `IDataAccess` usage in the shared [Zongsoft.Data guide](../../README.md). Switching drivers should not require application services to depend on provider connection classes.
 
@@ -74,7 +74,7 @@ The driver supplies a provider-specific statement builder/visitor, command param
 
 ## Compatibility and Testing
 
-Database behavior is not completely portable. Verify identifier casing, null and comparison rules, date/time precision, generated values, transaction semantics, and bulk-import constraints on the same server/provider versions used in production. Repository tests require an explicitly configured disposable database and are not ordinary offline unit tests.
+Database behavior is not completely portable. Verify identifier casing, null and comparison rules, date/time precision, generated values, transaction semantics, and bulk-import constraints on the same server/provider versions used in production. Database integration tests require an explicitly configured disposable database. The `ConnectionSettingsTest` and `ConnectionSettingsPropertiesTest` classes run offline and cover native option conversion, extension properties, and complete settings text. Use a test filter for these classes when no database is available.
 
 ## Related Resources
 

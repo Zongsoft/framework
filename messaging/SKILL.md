@@ -20,6 +20,12 @@ description: 实现、审查、调试或测试 framework/messaging 下的消息�
 - 驱动 `.plugin` 注册设置驱动、提供者与扩展节点；ZeroMQ daemon 清单才启用 Broker 等工作器。消息存储是另一可选依赖，不等于所有消息自动可靠。
 - 数据库存储实现位于 [.storages](.storages)，Redis 存储位于 [externals/redis](../externals/redis)。核对存储标识冻结时点、Broker 名与连接匹配、快照和历史分区兼容性。
 
+## 连接设置（ConnectionSettings）
+
+- 先读 [Core 设置契约](../Zongsoft.Core/docs/settings.zh-Hans.md)。Kafka、MQTT、RabbitMQ 和 Redis 带 `TOptions`，主参数以驱动的 `Descriptors` 为准；ZeroMQ 和阿里云 MQTT 不带此约束，不能把“未知文本项进入 `Properties`”套用到所有消息驱动。
+- Kafka 使用 `GetProducerOptions()` / `GetConsumerOptions()`；MQTT、RabbitMQ、Redis 使用各自的 `GetOptions()`。`Value` 是完整框架设置文本，扩展项不是 SDK 配置透传入口。
+- 提供者 `Queue(name, settings)` 的附加参数逐项写主字典，遵守该驱动的键约束；它不会将未知键自动转存 `Properties`，也不会重新配置已复用的队列。
+
 ## 必须明确的语义
 
 - Topic、Group、Tags、Filter 和实例身份如何映射到物理 Broker。

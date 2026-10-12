@@ -51,7 +51,7 @@ partial class Settings
 		return result != null;
 	}
 
-	private static List<KeyValuePair<string, string>> Parse(ReadOnlySpan<char> text, Action<string> onError)
+	protected static List<KeyValuePair<string, string>> Parse(ReadOnlySpan<char> text, Action<string> onError)
 	{
 		if(text.IsEmpty)
 			return [];
@@ -93,6 +93,8 @@ partial class Settings
 
 		if(context.State == State.Key)
 			result.Add(new KeyValuePair<string, string>(context.GetValue().ToString(), null));
+		else if(context.State == State.Assigner)
+			result.Add(new KeyValuePair<string, string>(key, null));
 		else if(context.State == State.Value)
 			result.Add(new KeyValuePair<string, string>(key, context.GetValue().ToString()));
 

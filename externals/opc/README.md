@@ -10,6 +10,12 @@
 
 -----
 
+## Connection Settings (OpcConnectionSettings)
+
+[`OpcConnectionSettings`](src/Configuration/OpcConnectionSettings.cs) has no `TOptions` constraint and accepts arbitrary main parameter names. `Server` and its alias `Url` address the same parameter. `OpcClient` reads typed server, timeout, identity and security properties to establish a session, rather than generating SDK options through a generic `GetOptions()` step.
+
+The raw dictionary exposes explicit parameters; typed reads supply defaults. `Value` retains all explicit main parameters and extension properties. Retaining an unknown entry does not mean the OPC client consumes it. See the [Core settings contract](../../Zongsoft.Core/docs/settings.md) for the complete rules.
+
 ## Certificate Generation
 
 If X509 certificates are used for authentication, use [OpenSSL](https://docs.openssl.org) to generate the X509 certificate files.

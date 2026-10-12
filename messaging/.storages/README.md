@@ -37,6 +37,8 @@ When upgrading from the former `nodeId` option, set `ZONGSOFT_MESSAGING_STORAGE_
 
 The storage snapshots all message metadata and payload bytes, uses native UTC expiration filtering, and never disposes the shared `IDataAccess`. Expired rows are not removed in the background; schedule an operational cleanup if physical reclamation is required.
 
+The complete `IConnectionSettings.Value` includes explicit main parameters and extension properties; it is not necessarily an ADO.NET native connection string. This storage executes operations through `IDataAccess`, with the selected data driver generating native connection parameters and handling extension entries according to its own rules. See [data access configuration](../../Zongsoft.Data/README.md) and the [Core settings contract](../../Zongsoft.Core/docs/settings.md).
+
 ## Reliability Concepts and Scope
 
 A stored message is an independent snapshot of payload and metadata, not a live consumer or acknowledgment delegate. This storage supports a broker's reliable-delivery bookkeeping; it does not make the business database update and message delivery one atomic transaction.

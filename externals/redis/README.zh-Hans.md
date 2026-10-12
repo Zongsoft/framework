@@ -61,6 +61,12 @@ Redis 分布式锁提供单调递增的栅栏令牌及显式续期。自动续�
 
 `RedisServiceInfo.Capabilities` 和 `RedisQueue.Capabilities` 使用所有主节点版本的保守交集：Redis 6.2 启用 `XAUTOCLAIM`，8.2 启用 `XACKDEL`/消费组裁剪能力，8.6 暴露 Stream IDMP 能力；低版本会退回已有路径。诊断源名为 `Zongsoft.Externals.Redis`，同时提供 `ActivitySource` 和 `Meter`，无需额外遥测包。
 
+## 连接设置（RedisConnectionSettings）
+
+连接设置（[`RedisConnectionSettings`](src/Configuration/RedisConnectionSettings.cs)）通过 `GetOptions()` 生成 StackExchange.Redis 的 `ConfigurationOptions`。主参数由 `Driver.Descriptors` 定义；消息用的 `Topic`、`MaximumLength`、`UseApproximateMaximumLength` 等业务参数也属于主字典，其 `Ignored` 标记仅排除标准选项填充。
+
+未知文本项进入扩展属性集（`Properties`），代码写未知项也使用该字典。`Value` 包含主参数和扩展项，不能作为 StackExchange.Redis 原生连接字符串直接解析；缓存、消息等调用方使用生成的 `ConfigurationOptions`。默认值和字典写入边界见 [Core 设置契约](../../Zongsoft.Core/docs/settings.zh-Hans.md)。
+
 ## 通过公共缓存契约上手
 
 业务模块只需引用 Core 中的 [IDistributedCache](../../Zongsoft.Core/src/Caching/IDistributedCache.cs)，由部署方案选择 Redis 插件。不要把 RedisService 的构造函数作为默认业务入口。

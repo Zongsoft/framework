@@ -21,6 +21,8 @@ Load `Zongsoft.Externals.Hangfire.Storages.Redis.plugin` together with the core 
 Configure and verify the Redis connection before starting the Hangfire server. All Hangfire jobs, states, queues, and server metadata are persisted through that connection.
 
 
+The selected settings must support `GetOptions<StackExchange.Redis.ConfigurationOptions>()`; a `RedisConnectionSettings` instance produced by normal configuration binding satisfies this requirement. The storage adapter passes the generated options to `ConnectionMultiplexer.Connect`, rather than passing the complete `Value` with extension entries. It does not automatically rebuild a generic `ConnectionSettings` instance as Redis settings. See [Redis connection settings](../../../redis/README.md) for parameter rules.
+
 ## Installation and Resolution
 
 ```shell

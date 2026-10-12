@@ -61,6 +61,12 @@ Redis locks expose monotonically increasing fencing tokens and explicit renewal.
 
 `RedisServiceInfo.Capabilities` and `RedisQueue.Capabilities` expose the conservative intersection across primary nodes: `XAUTOCLAIM` at Redis 6.2, `XACKDEL`/group-aware trimming at 8.2, and Stream IDMP at 8.6. Older servers retain the existing fallback behavior. The `Zongsoft.Externals.Redis` diagnostics source provides both `ActivitySource` and `Meter` without requiring an additional telemetry package.
 
+## Connection Settings (RedisConnectionSettings)
+
+[`RedisConnectionSettings`](src/Configuration/RedisConnectionSettings.cs) generates StackExchange.Redis `ConfigurationOptions` through `GetOptions()`. `Driver.Descriptors` defines the main parameters. Messaging parameters such as `Topic`, `MaximumLength` and `UseApproximateMaximumLength` also belong to the main dictionary; their `Ignored` flag only excludes them from standard options population.
+
+Unknown text entries go to `Properties`; use that dictionary when writing unknown entries in code as well. `Value` includes main and extension entries and must not be parsed directly as a native StackExchange.Redis connection string. Cache, messaging and other consumers use the generated `ConfigurationOptions`. See the [Core settings contract](../../Zongsoft.Core/docs/settings.md) for defaults and dictionary write boundaries.
+
 ## Getting Started through the Cache Contract
 
 Business modules only reference Core's [IDistributedCache](../../Zongsoft.Core/src/Caching/IDistributedCache.cs); the deployment composition selects the Redis plugin. RedisService construction is not the default business entry point.

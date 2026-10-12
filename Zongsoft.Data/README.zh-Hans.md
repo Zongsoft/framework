@@ -298,6 +298,8 @@ Department.Manager.FullName,
 <a name="connection"></a>
 ## 连接配置
 
+连接设置（`ConnectionSettings`）遵循 [Core 设置契约](../Zongsoft.Core/docs/settings.zh-Hans.md)。`Value` 包含显式驱动参数和 `CircuitBreaker.Duration` 等扩展属性。数据库驱动通过 `GetOptions()` 生成提供程序选项；调用提供程序时传递原生选项或其连接字符串，完整框架设置文本（`Value`）用于保存和重建。
+
 连接名称由 [DataAccessProviderBase](../Zongsoft.Core/src/Data/DataAccessProviderBase.cs) 解析。Discussions 请求自身模块名，应显式配置同名连接，避免意外回退到其他模块的默认连接。
 
 以下沿用真实模块的配置结构，`REPLACE_WITH_*` 是部署时必须提供的环境值，不代表随包提供的账号或数据库。

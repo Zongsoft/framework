@@ -30,6 +30,7 @@ description: 设计、修改、审查或测试 Zongsoft.Core 的公共契约与�
 
 ## 配置与验证陷阱
 
+- 修改普通设置（`Settings`）、连接设置（`ConnectionSettings`）、字典接口、`Value` 或配置绑定时，先读[设置契约](docs/settings.zh-Hans.md)，从[配置测试](test/Configuration)中选择对应行为的回归；驱动原生参数通过 `GetOptions()` 生成。
 - [XmlStreamConfigurationProvider](src/Configuration/Xml/XmlStreamConfigurationProvider.cs) 将 XML 属性映射为配置键，文本节点则按 `[value]` 集合项处理。写标量配置时核对实际键，不能套用其它 XML Provider 的直觉。
 - 连接设置驱动、服务注册、提供者首次创建分属不同阶段。服务出现在容器中不证明配置或底层 SDK 可用。
 - 服务测试路由：[ServiceLocatorTest](test/Services/ServiceLocatorTest.cs)、[TaggedServiceTest](test/Services/TaggedServiceTest.cs)。插件装配回归需另验证应用与模块容器、属性注入、配置键和共享实例身份。

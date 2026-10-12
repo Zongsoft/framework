@@ -10,6 +10,12 @@
 
 -----
 
+## 客户端连接设置（MqttConnectionSettings）
+
+连接设置（[`MqttConnectionSettings`](src/Configuration/MqttConnectionSettings.cs)）通过 `GetOptions()` 生成 MQTTnet 的 `MqttClientOptions`，由适配器处理客户端标识、认证和通道选项。`Server` 使用 `host:port`（如 `localhost:1883`）或连接 URI；端口写在 `Server` 中，当前描述器没有独立的 `Port` 主参数。
+
+主参数由 `Driver.Descriptors` 定义，未知文本项进入扩展属性集（`Properties`）。`Topic`、`Server`、`ReconnectInterval` 等业务参数仍是已定义主参数，即使标记为 `Ignored` 也不应写入 `Properties`。完整 `Value` 包含主参数与扩展项，通用读写规则见 [Core 设置契约](../../Zongsoft.Core/docs/settings.zh-Hans.md)。
+
 ## 范例
 
 `samples` 目录包含两个基于 .NET 10 的交互式应用：

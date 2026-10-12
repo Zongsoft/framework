@@ -130,7 +130,7 @@ DataSession
 - 未被业务层处理的连接失败默认调用 `Zongsoft.Diagnostics.Logging.GetLogging<DataConnector>().Error(...)` 写入错误日志。日志消息从资源文件读取，并可包含数据源名、驱动名、服务器地址、数据库名、用户名、连续失败次数和重试时间；不要记录完整连接字符串、密码或其他凭据。
 - `DataConnectionException` 提供 `SourceName`、`DriverName`、`RetryAt` 和 `RetryAfter`。首次物理连接失败仍抛出提供程序原始异常；熔断后的快速拒绝才抛出该异常。
 - 熔断配置从数据源 `Properties` 读取：`CircuitBreaker.FailureThreshold`、`CircuitBreaker.Duration`、`CircuitBreaker.MaximumDuration` 和 `CircuitBreaker.Jitter`。
-- 类型化 `ConnectionSettingsBase<TDriver, TOptions>` 遇到未定义连接字符串项时，通过 `OnUnrecognized` 将其放入 `Properties`；已定义的复合属性仍保留在内部设置项中。因此熔断配置应直接写入连接字符串，并验证它们出现在 `settings.Properties`。
+- 类型化连接设置（`ConnectionSettingsBase<TDriver, TOptions>`）按驱动描述器区分主参数和扩展属性集（`Properties`）；有效复合路径属于主参数，未知项属于扩展参数。完整 `Value` 包含两者，原生选项由 `GetOptions()` 生成。熔断配置写入设置文本或 `settings.Properties`，不得写入提供程序的原生连接字符串；校验主参数修改后扩展项仍可经 `Value` 重建。具体写入约束及默认值语义见 [Core 设置契约](../Zongsoft.Core/docs/settings.zh-Hans.md)。
 - SQLite 和 DuckDB 当前也经过相同 Connector、信号量和熔断路径，并没有自动跳过。现有基准显示：DuckDB 没有可见退化；SQLite 默认池化连接在 16 路并发打开时每连接增加约 3 微秒，顺序打开没有稳定差异。该绝对成本不足以支持增加禁用机制，因此保持统一保护；Connector 实现或典型负载发生明显变化后再重新测量。不要在核心中硬编码驱动名称。
 
 驱动导入器需要独立连接时，使用：

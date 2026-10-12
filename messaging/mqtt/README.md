@@ -10,6 +10,12 @@
 
 -----
 
+## Client Connection Settings (MqttConnectionSettings)
+
+[`MqttConnectionSettings`](src/Configuration/MqttConnectionSettings.cs) generates MQTTnet's `MqttClientOptions` through `GetOptions()`, with the adapter handling client identity, credentials and channel options. `Server` accepts `host:port` (such as `localhost:1883`) or a connection URI. Specify the port inside `Server`; the current descriptors do not define a separate `Port` main parameter.
+
+`Driver.Descriptors` defines the main parameters; unknown entries parsed from text go to `Properties`. Business parameters such as `Topic`, `Server` and `ReconnectInterval` remain defined main parameters even when marked `Ignored`, so they must not be written through `Properties`. The complete `Value` includes both main and extension entries. See the [Core settings contract](../../Zongsoft.Core/docs/settings.md) for shared read and write rules.
+
 ## Samples
 
 The `samples` directory contains two interactive .NET 10 applications:

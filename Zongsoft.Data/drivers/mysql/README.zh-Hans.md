@@ -43,7 +43,7 @@ dotnet add package Zongsoft.Data.MySql
 </options>
 ```
 
-`driver` 不区分大小写，但建议使用规范拼写 `MySql`。`value` 由本包的连接设置驱动解析，并最终传给 MySqlConnector；可用关键字请查阅[提供程序文档](https://mysqlconnector.net/)。
+`driver` 不区分大小写，但建议使用规范拼写 `MySql`。`value` 遵循 [Core 设置契约](../../../Zongsoft.Core/docs/settings.zh-Hans.md)，包含显式驱动参数和扩展属性。`GetOptions()` 将驱动参数映射为 MySqlConnector 使用的原生选项；扩展属性保留在框架连接设置（`ConnectionSettings`）及其完整 `Value` 中。提供程序自身能力请查阅[提供程序文档](https://mysqlconnector.net/)。
 
 > 💡 实体映射、条件、分页、事务和 `IDataAccess` 用法统一参阅 [Zongsoft.Data 指南](../../README.zh-Hans.md)。切换驱动不应迫使应用服务依赖提供程序连接类型。
 
@@ -74,7 +74,7 @@ Console.WriteLine(data.Name);
 
 ## 兼容性与测试
 
-数据库行为无法完全移植。请在与生产相同的服务器/提供程序版本上验证标识符大小写、空值和比较规则、日期时间精度、生成值、事务语义与批量导入约束。仓库测试需要显式配置可丢弃数据库，不属于普通离线单元测试。
+数据库行为无法完全移植。请在与生产相同的服务器/提供程序版本上验证标识符大小写、空值和比较规则、日期时间精度、生成值、事务语义与批量导入约束。数据库集成测试需要显式配置可丢弃数据库。`ConnectionSettingsTest` 和 `ConnectionSettingsPropertiesTest` 两个类可离线执行，覆盖原生选项转换、扩展属性集（Properties）和完整设置文本。没有数据库时使用测试筛选器仅运行这两个类。
 
 ## 延伸阅读
 

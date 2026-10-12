@@ -21,6 +21,8 @@
 请在启动 Hangfire 服务器前配置并验证 Redis 连接。所有 Hangfire 作业、状态、队列和服务器元数据都会通过该连接持久化。
 
 
+选中的连接设置须支持 `GetOptions<StackExchange.Redis.ConfigurationOptions>()`，正常配置绑定得到的连接设置（`RedisConnectionSettings`）满足此要求。存储适配器将生成的选项交给 `ConnectionMultiplexer.Connect`，不直接传入包含扩展项的完整 `Value`，也不会把通用连接设置（`ConnectionSettings`）自动重建成 Redis 类型。参数规则见 [Redis 连接设置](../../../redis/README.zh-Hans.md)。
+
 ## 安装与解析
 
 ```shell

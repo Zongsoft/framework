@@ -63,6 +63,12 @@ podman exec -it ollama ollama pull qwen3:0.6b
 > podman exec -it ollama ollama ps
 > ```
 
+## Ollama Connection Settings (OllamaConnectionSettings)
+
+[`OllamaConnectionSettings`](src/Ollama/OllamaConnectionSettings.cs) has no `TOptions` constraint. `Server`, `Model`, `History` and `Expiration` are read through typed properties, while unknown text entries remain in the main dictionary. The raw indexer returns only explicit values; defaults such as `Expiration` are not inserted into the complete `Value`.
+
+[`OllamaClientFactory`](src/Ollama/OllamaClientFactory.cs) requires an actual `OllamaConnectionSettings` instance. When starting from `Settings` or generic `ConnectionSettings`, rebuild it through `OllamaConnectionSettingsDriver.Instance.GetSettings(settings.Name, settings.Value)` before passing it to the factory. See the [Core settings contract](../Zongsoft.Core/docs/settings.md) for dictionary and text semantics.
+
 ## Run and Debug
 
 If the directory that contains `Zongsoft.Intelligences.dll` in the host application also contains a _`preludes`_ subdirectory, new chat sessions look in that directory for a text file whose name starts with the assistant name and use it as the session prelude. See the [ChatSessionPreludeLoader.cs](src/ChatSessionPreludeLoader.cs) source code for details.

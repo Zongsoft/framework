@@ -41,6 +41,10 @@ dotnet add package Zongsoft.Messaging.Kafka
 
 适配器设置包括 `server`、`username`、`password`、`client`、`group`、`securityProtocol`、`compressionType`、`compressionLevel`、`isolationLevel`、`heartbeat`、`timeout` 及事务设置。秘密应由部署配置提供；示例有意省略凭据。
 
+连接设置（[`KafkaConnectionSettings`](src/Configuration/KafkaConnectionSettings.cs)）以 `ClientConfig` 为选项类型，主参数由 `Driver.Descriptors` 定义，未知文本项进入扩展属性集（`Properties`）。生产者和消费者分别使用 `GetProducerOptions()`、`GetConsumerOptions()` 生成 `ProducerConfig`、`ConsumerConfig`，其中包含各自的认证、分组和超时映射。
+
+`Value` 保存完整框架设置，扩展项不会作为任意 Kafka 原生配置透传。通过代码写未知项时使用 `Properties`；字典访问、默认值及完整文本的规则见 [Core 设置契约](../../Zongsoft.Core/docs/settings.zh-Hans.md)。
+
 ## 投递模型
 
 Topic 对应 Kafka Topic，`group` 控制消费组分摊。收到的消息通过提交已消费 Offset 确认；压缩方式写入适配器 Header，并在处理器执行前解压。

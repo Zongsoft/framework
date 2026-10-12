@@ -33,15 +33,24 @@ namespace Zongsoft.Configuration;
 
 public static class SettingsUtility
 {
-	public static T GetValue<T>(this Settings settings, string name, T defaultValue = default)
+	public static T GetValue<T>(this ISettings settings, string name, T defaultValue = default)
 	{
-		var value = settings != null && name != null ? settings[name] : null;
-		return Common.Convert.ConvertValue(value, defaultValue);
+		ArgumentNullException.ThrowIfNull(settings);
+
+		if(name != null && settings.TryGetValue(name, out var value))
+			return Common.Convert.ConvertValue(value, defaultValue);
+
+		return defaultValue;
 	}
 
-	public static T GetValue<T>(this Settings settings, string name, Func<T> defaultValue)
+	public static T GetValue<T>(this ISettings settings, string name, Func<T> defaultValue)
 	{
-		var value = settings != null && name != null ? settings[name] : null;
-		return Common.Convert.ConvertValue(value, defaultValue);
+		ArgumentNullException.ThrowIfNull(settings);
+		ArgumentNullException.ThrowIfNull(defaultValue);
+
+		if(name != null && settings.TryGetValue(name, out var value))
+			return Common.Convert.ConvertValue(value, defaultValue);
+
+		return defaultValue();
 	}
 }

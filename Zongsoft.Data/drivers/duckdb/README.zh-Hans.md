@@ -44,6 +44,8 @@ dotnet add package Zongsoft.Data.DuckDB
 </option>
 ```
 
+连接设置文本遵循 [Core 设置契约](../../../Zongsoft.Core/docs/settings.zh-Hans.md)。`GetOptions()` 生成 DuckDB 原生选项；扩展属性保留在框架连接设置（`ConnectionSettings`）及其完整 `Value` 中。
+
 文件数据库可跨连接持久保存；`DataSource=:memory:` 适合短期实验，不是持久存储。
 
 ## 应用层接入

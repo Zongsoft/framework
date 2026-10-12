@@ -41,6 +41,10 @@ dotnet add package Zongsoft.Messaging.RabbitMQ
 
 适配器设置包括 `server`、`port`、`username`、`password`、`container`（虚拟主机）、`queue`、`group`、`client`、`heartbeat`、`timeout`、`concurrency`、`certificate` 与 `reconnectable`。秘密应由部署配置提供；示例有意省略凭据。
 
+连接设置（[`RabbitConnectionSettings`](src/Configuration/RabbitConnectionSettings.cs)）通过 `GetOptions()` 生成 RabbitMQ 的 `ConnectionFactory`。主参数以 `Driver.Descriptors` 为准，`Container` 与别名 `VirtualHost` 访问同一参数；名称和别名都应通过主字典或类型化属性设置。
+
+未知文本项进入扩展属性集（`Properties`），并保留在完整 `Value` 中，不会自动成为 `ConnectionFactory` 的属性。写入边界、默认值和文本回写规则见 [Core 设置契约](../../Zongsoft.Core/docs/settings.zh-Hans.md)。
+
 ## 投递模型
 
 适配器按框架 Topic 与 Tag 声明/使用 Broker 的 Exchange、Queue 和 Binding。消费采用手动确认；`Message.AcknowledgeAsync` 发送 `basic.ack`。压缩方式使用 AMQP Content Encoding。

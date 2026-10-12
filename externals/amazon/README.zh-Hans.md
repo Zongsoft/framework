@@ -38,6 +38,10 @@ dotnet add package Zongsoft.Externals.Amazon
 
 设置包括 `server`/`url`、`region`、`client`、`timeout`、`accessKey`、`secretKey` 与 `accountId`。指定自定义 `server` 时启用路径式寻址，以支持兼容端点。
 
+连接设置（[`S3ConnectionSettings`](src/IO/Configuration/S3ConnectionSettings.cs)）通过 `GetOptions()` 生成 `AmazonS3Config`，由适配器映射凭据、自定义端点及路径式寻址。主参数由 `Driver.Descriptors` 定义，`Server`、`Url`、`ServiceURL` 是同一参数的名称或别名。
+
+未知文本项进入扩展属性集（`Properties`），不会自动映射为 AWS SDK 选项。完整 `Value` 同时保留主参数和扩展项，写入及默认值规则见 [Core 设置契约](../../Zongsoft.Core/docs/settings.zh-Hans.md)。
+
 ## 文件系统路径
 
 首个路径段是 Bucket，其余部分是对象键：

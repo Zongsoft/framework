@@ -117,6 +117,10 @@ await server.StartAsync(["--incoming:32101", "--outgoing:32102"]);
 
 默认过滤规则会排除当前队列实例自己发布的消息。`Filter=*` 接受所有实例；`Filter=.`（或 `~`）仅接受当前实例；普通实例标识组成允许列表，`!identifier` 表示排除指定实例。
 
+连接设置（[`ZeroConnectionSettings`](src/Configuration/ZeroConnectionSettings.cs)）不带 `TOptions` 约束，文本中的未知项仍保留在主字典，索引器也允许任意参数键。驱动按类型化属性读取实际使用的参数。
+
+表中的默认值属于类型化读取：例如未显式设置 `Port` 时，`settings.Port` 返回 `7969`，而 `settings["Port"]` 返回 `null`，默认值不会补入 `Value`。`Value` 同时保留主参数与显式扩展属性；完整规则见 [Core 设置契约](../../Zongsoft.Core/docs/settings.zh-Hans.md)。
+
 <a name="usage"></a>
 ## 使用
 

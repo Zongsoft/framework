@@ -37,6 +37,10 @@
 
 `server` 也可填写逗号分隔的端点列表；`username` 和 `password` 用于启用 etcd 身份验证。请在首次操作前设置 `Namespace` 以隔离逻辑键，服务激活后不能再改变该值。
 
+连接设置（[`EtcdConnectionSettings`](src/Configuration/EtcdConnectionSettings.cs)）不带 `TOptions` 约束，未知文本项和任意索引器写入仍属于主字典。`EtcdService` 读取其类型化属性生成端点并创建客户端，没有统一的 `GetOptions()` 选项转换步骤。
+
+未显式设置 `Port` 时，类型化属性使用默认端口，而原始索引器返回 `null`。`Value` 包含所有显式主参数及扩展属性，不补默认值；详见 [Core 设置契约](../../Zongsoft.Core/docs/settings.zh-Hans.md)。
+
 ## 从插件服务容器使用
 
 消费序号或锁的业务模块只需引用 `Zongsoft.Core`。以下将[真实序列样例](samples/sequence/Program.cs)改为具有超时、唯一过期键的宿主调用，运行在已加载 Etcd 插件及上述配置的宿主命令或应用服务中，并假设该容器只注册了一个序号提供者：

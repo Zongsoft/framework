@@ -41,6 +41,10 @@ dotnet add package Zongsoft.Messaging.RabbitMQ
 
 Supported adapter settings include `server`, `port`, `username`, `password`, `container` (virtual host), `queue`, `group`, `client`, `heartbeat`, `timeout`, `concurrency`, `certificate`, and `reconnectable`. Supply secrets through deployment configuration; the example intentionally omits credentials.
 
+[`RabbitConnectionSettings`](src/Configuration/RabbitConnectionSettings.cs) generates RabbitMQ's `ConnectionFactory` through `GetOptions()`. Main parameters are defined by `Driver.Descriptors`; `Container` and its alias `VirtualHost` address the same parameter. Set defined names and aliases through the main dictionary or typed properties.
+
+Unknown entries parsed from text go to `Properties` and remain in the complete `Value`; they do not automatically become `ConnectionFactory` properties. See the [Core settings contract](../../Zongsoft.Core/docs/settings.md) for write boundaries, defaults and text updates.
+
 ## Delivery Model
 
 The adapter declares/uses broker exchanges, queues, and bindings for framework topics and tags. Consumption uses manual acknowledgement; `Message.AcknowledgeAsync` sends `basic.ack`. Compression uses AMQP content encoding.

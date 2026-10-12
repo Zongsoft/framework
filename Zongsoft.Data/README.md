@@ -297,6 +297,8 @@ The current Discussions mapping does not define a forum statistics command or st
 <a name="connection"></a>
 ## Connection Settings
 
+Connection settings follow the [Core settings contract](../Zongsoft.Core/docs/settings.md). `Value` contains explicit driver parameters and extension properties such as `CircuitBreaker.Duration`. Database drivers create provider options through `GetOptions()`; pass those native options or their connection string to the provider, rather than the complete framework `Value`.
+
 The connection name is resolved by [DataAccessProviderBase](../Zongsoft.Core/src/Data/DataAccessProviderBase.cs). Discussions requests its module name; configure that name explicitly instead of accidentally falling back to another module's default connection.
 
 Use the following configuration shape with deployment-supplied values. `REPLACE_WITH_*` marks required environment values, not a shipped account or database.

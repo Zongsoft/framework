@@ -37,6 +37,10 @@ Load `Zongsoft.Externals.Etcd.plugin` and configure `/Externals/Etcd/ConnectionS
 
 `server` also accepts a comma-separated endpoint list. `username` and `password` enable etcd authentication. Set `Namespace` before the first operation to isolate logical keys; it becomes immutable after activation.
 
+[`EtcdConnectionSettings`](src/Configuration/EtcdConnectionSettings.cs) has no `TOptions` constraint, so unknown text entries and arbitrary indexer writes remain in the main dictionary. `EtcdService` reads its typed properties to construct endpoints and create the client; this path has no `GetOptions()` conversion step.
+
+When `Port` is absent, the typed property supplies the default port, while the raw indexer returns `null`. `Value` contains all explicit main parameters and extension properties without inserting defaults. See the [Core settings contract](../../Zongsoft.Core/docs/settings.md).
+
 ## Use Through the Plugin Service Container
 
 Business modules consuming sequences or locks only need `Zongsoft.Core`. The following adapts the [real sequence sample](samples/sequence/Program.cs) to a bounded host call with a unique expiring key. Run it in a host command or application service after the Etcd plugin and configuration above are loaded. It assumes this container has only one sequence provider:
