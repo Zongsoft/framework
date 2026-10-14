@@ -131,5 +131,14 @@ namespace Zongsoft.Web.Properties {
                 return ResourceManager.GetString("Service.Required.Message", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   查找类似 The Web endpoint configuration at “{0}” is invalid ({1}). 的本地化字符串。
+        /// </summary>
+        internal static string WebEndpoint_Invalid_Message {
+            get {
+                return ResourceManager.GetString("WebEndpoint.Invalid.Message", resourceCulture);
+            }
+        }
     }
 }

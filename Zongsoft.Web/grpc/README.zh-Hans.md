@@ -26,7 +26,7 @@ dotnet add package Zongsoft.Web.Grpc
 
 ## 服务发现
 
-实现由 `Grpc.Tools` 生成的服务基类，通过框架服务系统注册具体类型，并赋予 `gRPC` 标签。启动时，`GrpcInitializer.Registration` 调用 `AddGrpc` 与 `AddGrpcReflection`；`GrpcInitializer` 读取带标签的类型，调用 `MapGrpcService<T>`，并映射反射服务。
+实现由 `Grpc.Tools` 生成的服务基类，通过框架服务系统注册具体类型，并赋予 `gRPC` 标签。启动时，`GrpcInitializer.Registration` 调用 `AddGrpcWebEndpoints`、`AddGrpc` 与 `AddGrpcReflection`；`GrpcInitializer` 读取带标签的类型，调用 `MapGrpcService<T>`，并映射反射服务。
 
 > 💡 `gRPC` 标签是发现契约。只有 DI 注册而没有该标签的服务不会被此初始化器映射。
 
@@ -36,8 +36,13 @@ gRPC 通常使用 HTTP/2 与 Protocol Buffers。请按照 [ASP.NET Core gRPC 指
 
 🚨 本包会映射服务器反射，它会公开服务元数据。如果部署环境不应暴露协议面，请在网络和授权层限制访问。
 
+## 源码与测试
+
+[src 项目](src/Zongsoft.Web.Grpc.csproj)包含实现和插件构件；[test 项目](test/Zongsoft.Web.Grpc.Tests.csproj)验证协议注册及请求范围。两者均纳入 [Zongsoft.Web.slnx](../Zongsoft.Web.slnx)。
+
 ## 延伸阅读
 
+- [Web 端点与请求范围](../docs/endpoints.zh-Hans.md)：通用监听、协议策略及宿主接入。
 - [Zongsoft.Web](../README.zh-Hans.md)
 - [插件化宿主](../../Zongsoft.Plugins.Web/README.zh-Hans.md)
 - [Protocol Buffers 指南](https://protobuf.dev/programming-guides/proto3/)
@@ -45,14 +50,22 @@ gRPC 通常使用 HTTP/2 与 Protocol Buffers。请按照 [ASP.NET Core gRPC 指
 
 ## 插件化接入
 
+Zongsoft.Core、Zongsoft.Web、Zongsoft.Plugins、Zongsoft.Plugins.Web 由宿主统一提供，部署清单不引用这四个基础库；编译依赖保留在项目文件中。
+
+本包提供 Web 端点的 gRPC 协议策略：裸 `grpc` 默认 `grpc+http2`，请求按原生 gRPC 媒体类型分类，并执行方法、HTTP 版本、固定方法路径与无范围响应规则。该策略为私有实现，通过 `GrpcEndpointExtension.AddGrpcWebEndpoints` 注册；Web 主库不含这些协议判断。
+
+显式宿主在 `AddWebEndpoints` 创建快照之前调用 `services.AddGrpcWebEndpoints()`；插件服务注册已自动完成这一步。缺少扩展时，声明 gRPC 端点会失败，不能作为普通 HTTP 启动。完整 Plugins.Web 快照接入和基于 Handler 的服务挂载仍按实施顺序进行；当前协议策略注册不自动改变现有根级服务映射。
+
+`WebEndpointMetadata("/opentelemetry", "grpc")` 可表达路由的范围及类别；实际服务必须挂载在同一路径。独立 [协议测试项目](test/Zongsoft.Web.Grpc.Tests.csproj) 验证规则及隔离 HTTP/2 管线，尚不代表区域反射、完整 RPC/流或 HTTP/3 已验收。
+
 优先通过宿主组合本能力；包引用用于编译，而插件加载还需要部署清单和运行产物。完整流程见[插件化入门](../../Zongsoft.Plugins/README.zh-Hans.md)。
 
 使用 Plugins.Web 宿主。初始化器注册 gRPC 并映射带 `gRPC` 标签的服务类型，还需部署实际协议/服务插件。HTTP/2 端点及反射暴露需由宿主明确决定。
 
 | 运行产物 | 源码依据 |
 | --- | --- |
-| `Zongsoft.Web.Grpc` | [Zongsoft.Web.Grpc.plugin](Zongsoft.Web.Grpc.plugin) |
-| 文件复制及依赖 | [Zongsoft.Web.Grpc.deploy](Zongsoft.Web.Grpc.deploy) |
+| `Zongsoft.Web.Grpc` | [Zongsoft.Web.Grpc.plugin](src/Zongsoft.Web.Grpc.plugin) |
+| 文件复制及依赖 | [Zongsoft.Web.Grpc.deploy](src/Zongsoft.Web.Grpc.deploy) |
 
 在已有宿主的 `.deploy` 中加入以下片段（保留宿主原有 Main 等基础清单，不要用片段覆盖整份文件）：
 

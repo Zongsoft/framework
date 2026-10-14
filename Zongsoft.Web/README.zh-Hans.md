@@ -78,6 +78,7 @@ builder.Services
 
 ## 延伸阅读
 
+- [Web 端点快照与请求范围](docs/endpoints.zh-Hans.md)
 - [插件化 Web 宿主](../Zongsoft.Plugins.Web/README.zh-Hans.md)
 - [OpenAPI 集成](openapi/README.zh-Hans.md)
 - [gRPC 集成](grpc/README.zh-Hans.md)

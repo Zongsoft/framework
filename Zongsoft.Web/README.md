@@ -78,6 +78,7 @@ Extension points include the generic service controllers, MVC conventions, binde
 
 ## Related Resources
 
+- [Web endpoint snapshots and request scopes](docs/endpoints.md)
 - [Plugin-aware web hosting](../Zongsoft.Plugins.Web/README.md)
 - [OpenAPI integration](openapi/README.md)
 - [gRPC integration](grpc/README.md)

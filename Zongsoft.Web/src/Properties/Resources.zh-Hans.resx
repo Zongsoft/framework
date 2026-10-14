@@ -141,4 +141,7 @@
 	<data name="Path.Invalid.Message" xml:space="preserve">
 		<value>指定的路径“{0}”不合法。</value>
 	</data>
+	<data name="WebEndpoint.Invalid.Message" xml:space="preserve">
+		<value>“{0}”处的 Web 端点配置无效（{1}）。</value>
+	</data>
 </root>

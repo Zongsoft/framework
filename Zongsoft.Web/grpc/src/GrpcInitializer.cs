@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -85,6 +85,7 @@ public class GrpcInitializer : IApplicationInitializer<IApplicationBuilder>
 	{
 		public void Register(IServiceCollection services, IConfiguration configuration)
 		{
+			services.AddGrpcWebEndpoints();
 			services.AddGrpc();
 			services.AddGrpcReflection();
 		}

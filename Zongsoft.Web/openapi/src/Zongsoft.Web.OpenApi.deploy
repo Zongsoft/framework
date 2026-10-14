@@ -1,4 +1,4 @@
-﻿artifacts/Zongsoft.Web.OpenApi.option
+artifacts/Zongsoft.Web.OpenApi.option
 artifacts/Zongsoft.Web.OpenApi.plugin
 lib/${Framework}/Zongsoft.Web.OpenApi.*
 lib/${Framework}/*/Zongsoft.Web.OpenApi.resources.*

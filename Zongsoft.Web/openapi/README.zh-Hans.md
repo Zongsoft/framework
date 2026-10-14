@@ -154,18 +154,20 @@ app.UseOpenApi("/docs/{documentName}.{extension}");
 
 ```
 openapi/
-├── DocumentGenerator.cs            # 文档生成入口
-├── DocumentGenerator.*.cs          # 环境 / 服务器 / 安全 / 路径 / Schema
-├── DocumentContext.cs              # 生成上下文（格式、服务、路由表等）
-├── DocumentFormat.cs               # json / yaml 格式
-├── Tags.cs                         # 标签生成（x-parent、x-displayName 等）
-├── Utility.cs                      # 参数位置与类型工具
-├── WebExtension.cs                 # UseOpenApi() 端点扩展
-├── WebExtension.Writer.cs          # 响应输出的 UTF-8 缓冲写入器
-├── WebInitializer.cs               # 端点与 Scalar 界面的自动注册
-├── Configuration/                  # 认证 / 请求头 / 服务器 / 环境 / 变量选项
-├── Services/                       # IHeaderProvider 及其实现
-└── Extensions/                     # OpenAPI 扩展（x-*）构建器
+├── src/
+│   ├── DocumentGenerator.cs            # 文档生成入口
+│   ├── DocumentGenerator.*.cs          # 环境 / 服务器 / 安全 / 路径 / Schema
+│   ├── DocumentContext.cs              # 生成上下文（格式、服务、路由表等）
+│   ├── DocumentFormat.cs               # json / yaml 格式
+│   ├── Tags.cs                         # 标签生成（x-parent、x-displayName 等）
+│   ├── Utility.cs                      # 参数位置与类型工具
+│   ├── WebExtension.cs                 # UseOpenApi() 端点扩展
+│   ├── WebExtension.Writer.cs          # 响应输出的 UTF-8 缓冲写入器
+│   ├── WebInitializer.cs               # 端点与 Scalar 界面的自动注册
+│   ├── Configuration/                  # 认证 / 请求头 / 服务器 / 环境 / 变量选项
+│   ├── Services/                       # IHeaderProvider 及其实现
+│   └── Extensions/                     # OpenAPI 扩展（x-*）构建器
+└── test/                           # 测试目录；暂无独立测试项目
 ```
 
 ## 许可证
@@ -174,14 +176,16 @@ openapi/
 
 ## 插件化接入
 
+Zongsoft.Core、Zongsoft.Web、Zongsoft.Plugins、Zongsoft.Plugins.Web 由宿主统一提供，部署清单不引用这四个基础库；编译依赖保留在项目文件中。
+
 优先通过宿主组合本能力；包引用用于编译，而插件加载还需要部署清单和运行产物。完整流程见[插件化入门](../../Zongsoft.Plugins/README.zh-Hans.md)。
 
 使用 Plugins.Web 宿主，其初始化流程发现本包服务注册，并按部署选项映射 OpenAPI/Scalar。公开文档端点前确认暴露范围与身份验证。
 
 | 运行产物 | 源码依据 |
 | --- | --- |
-| `Zongsoft.Web.OpenApi` | [Zongsoft.Web.OpenApi.plugin](Zongsoft.Web.OpenApi.plugin) |
-| 文件复制及依赖 | [Zongsoft.Web.OpenApi.deploy](Zongsoft.Web.OpenApi.deploy) |
+| `Zongsoft.Web.OpenApi` | [Zongsoft.Web.OpenApi.plugin](src/Zongsoft.Web.OpenApi.plugin) |
+| 文件复制及依赖 | [Zongsoft.Web.OpenApi.deploy](src/Zongsoft.Web.OpenApi.deploy) |
 
 在已有宿主的 `.deploy` 中加入以下片段（保留宿主原有 Main 等基础清单，不要用片段覆盖整份文件）：
 

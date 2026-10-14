@@ -141,4 +141,7 @@
 	<data name="Path.Invalid.Message" xml:space="preserve">
 		<value>The specified ‘{0}’ is an illegal path.</value>
 	</data>
+	<data name="WebEndpoint.Invalid.Message" xml:space="preserve">
+		<value>The Web endpoint configuration at “{0}” is invalid ({1}).</value>
+	</data>
 </root>

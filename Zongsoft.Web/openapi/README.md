@@ -154,18 +154,20 @@ Both servers and environments support templated `url` values with `<variable>` p
 
 ```
 openapi/
-├── DocumentGenerator.cs            # document generation entry
-├── DocumentGenerator.*.cs          # environments / servers / security / paths / schemas
-├── DocumentContext.cs              # generation context (format, services, endpoints, ...)
-├── DocumentFormat.cs               # json / yaml format
-├── Tags.cs                         # tag generation (x-parent, x-displayName, ...)
-├── Utility.cs                      # parameter location & type utilities
-├── WebExtension.cs                 # UseOpenApi() endpoint extension
-├── WebExtension.Writer.cs          # UTF-8 buffered writer for the response
-├── WebInitializer.cs               # automatic registration of the endpoint & Scalar UI
-├── Configuration/                  # authentication / header / server / environment / variable options
-├── Services/                       # IHeaderProvider and its implementation
-└── Extensions/                     # OpenAPI extension (x-*) builders
+├── src/
+│   ├── DocumentGenerator.cs            # document generation entry
+│   ├── DocumentGenerator.*.cs          # environments / servers / security / paths / schemas
+│   ├── DocumentContext.cs              # generation context (format, services, endpoints, ...)
+│   ├── DocumentFormat.cs               # json / yaml format
+│   ├── Tags.cs                         # tag generation (x-parent, x-displayName, ...)
+│   ├── Utility.cs                      # parameter location & type utilities
+│   ├── WebExtension.cs                 # UseOpenApi() endpoint extension
+│   ├── WebExtension.Writer.cs          # UTF-8 buffered writer for the response
+│   ├── WebInitializer.cs               # automatic registration of the endpoint & Scalar UI
+│   ├── Configuration/                  # authentication / header / server / environment / variable options
+│   ├── Services/                       # IHeaderProvider and its implementation
+│   └── Extensions/                     # OpenAPI extension (x-*) builders
+└── test/                           # reserved test directory; no dedicated test project yet
 ```
 
 ## License
@@ -174,14 +176,16 @@ The **Zongsoft.Web.OpenApi** library is released under the [GNU Lesser General P
 
 ## Plugin-Based Integration
 
+The host supplies Zongsoft.Core, Zongsoft.Web, Zongsoft.Plugins and Zongsoft.Plugins.Web. Deployment manifests never reference these four libraries; compile-time dependencies remain in the project file.
+
 Compose this feature through the host; a package reference supplies compile-time APIs, while plugin loading also requires deployed manifests and runtime assets. See [the complete plugin workflow](../../Zongsoft.Plugins/README.md).
 
 Use a Plugins.Web host. Its initializer discovers this package's service registration and maps OpenAPI/Scalar according to the deployed options; review exposure and authentication before publishing documentation endpoints.
 
 | Runtime artifact | Source of truth |
 | --- | --- |
-| `Zongsoft.Web.OpenApi` | [Zongsoft.Web.OpenApi.plugin](Zongsoft.Web.OpenApi.plugin) |
-| File copying and dependencies | [Zongsoft.Web.OpenApi.deploy](Zongsoft.Web.OpenApi.deploy) |
+| `Zongsoft.Web.OpenApi` | [Zongsoft.Web.OpenApi.plugin](src/Zongsoft.Web.OpenApi.plugin) |
+| File copying and dependencies | [Zongsoft.Web.OpenApi.deploy](src/Zongsoft.Web.OpenApi.deploy) |
 
 Add this fragment to an existing host `.deploy` (retain Main and the host’s other base manifests; do not replace the whole file):
 

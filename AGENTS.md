@@ -22,6 +22,7 @@
 ## 插件与产物
 
 - `*.plugin` 声明插件、依赖和组件，`*.option` 声明选项，`*.mapping` 声明数据映射，`*.deploy` 控制部署复制。
+- `*.deploy` 不引用 `Zongsoft.Core`、`Zongsoft.Web`、`Zongsoft.Plugins`、`Zongsoft.Plugins.Web`；这四个基础库由宿主统一提供，编译依赖在项目文件中声明。
 - 修改公开类型、插件入口或配置模型时，检查项目文件、插件/部署产物、双语 README 和资源文件是否需要同步。
 - 保持 XML 节点顺序、命名、大小写和局部格式；不要无关重排。
 
