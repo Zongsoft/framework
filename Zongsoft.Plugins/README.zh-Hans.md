@@ -136,9 +136,17 @@ nuget:Zongsoft.Discussions.Web
 
 插件配置提供程序加载清单旁同主文件名的选项：基础 `Feature.option`、环境 `Feature.development.option`，再加载匹配的环境后缀和 host/site 专属文件。宿主级 `web.option` 或应用名称选项单独加载。准确匹配规则见[提供程序源码](src/Configuration/PluginConfigurationProvider.cs)，不能假设任意 `.option` 都会被扫描。
 
+首次加载和显式 `Load()` 均包含所有已加载的子插件。加载、卸载、整体重载及已关联文件的重载会通知宿主配置，并为下一次变更提供新令牌；替换、卸载或释放提供程序会解除旧文件订阅。整体重载失败会清理已建立的提供程序，调用方应处理异常后重试。整体重载、插件树加载/卸载与释放应串行调用；通知不代表多个文件的原子更新，不自动新增监听或热替换程序集。
+
+服务扫描发生在整棵插件树和选项加载完成之后。已加载的入口引用、入口程序集与插件清单共用去重集合，每个程序集在一次宿主构建中只注册一次；`IServiceRegistration.Register` 可以读取子插件配置。这让协议扩展能够先注册，再由宿主建立网络端点快照。
+
 部署变量和运行时选项不同。传给部署器的 `--site:daemon` 可以选中 `*-daemon.plugin` 产物；传给宿主的 `site=daemon` 参与运行时配置选择。一些插件依赖附加清单启动工作器，仅安装主 DLL 不会启用这些工作器。
 
 不要依赖多个插件定义同一配置键时的偶然顺序。环境/站点设置应有明确所有者，验证最终生效值时不得打印秘密。
+
+诊断冲突时，通过 `PluginConfigurationProvider.Providers` 分别读取各插件的生效值；每项是包含同插件配置分层的 `CompositeConfigurationProvider`。其 `Providers` 按优先级排列，第一个包含目标键的文件提供程序就是该插件此键的生效来源。其中 `file` 是 `FileConfigurationProvider` 实例，可由 `file.Source.FileProvider.GetFileInfo(file.Source.Path).PhysicalPath` 取得当前本地文件路径。先在同插件内完成覆盖，再比较插件间的值，不能把正常的环境覆盖报为冲突。Plugins 保留这些通用来源信息；网络键的冲突规则由 Web 宿主消费层负责，不能仅凭最终合并值判断。
+
+`<?binding ...?>` 是供交付工具消费的暴露声明，Plugins 不执行其中的模板、不生成代理配置，也不因此启动监听。
 
 ### 验证与操作风险
 

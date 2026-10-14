@@ -136,9 +136,17 @@ The deployer prefers a package-root `.deploy` when no package-internal path is s
 
 The plugin configuration provider loads same-stem option files next to each manifest: base `Feature.option`, environment `Feature.development.option`, then matching environment suffix files and host/site-specific files. Host-level `web.option` or application-name options are loaded separately. The [provider source](src/Configuration/PluginConfigurationProvider.cs) defines exact filename matching; do not assume every arbitrary `.option` file is scanned.
 
+Initial loading and explicit `Load()` include every loaded descendant plugin. Loading, unloading, full reloads and reloads of associated files notify the host configuration and supply a fresh token for the next change. Replacing, unloading or disposing providers detaches old file subscriptions. A failed full reload clears providers created during that attempt; callers must handle the exception before retrying. Serialize full reloads, plugin tree loading/unloading and disposal. Notifications do not make multiple file updates atomic, add listeners or replace assemblies.
+
+Service scanning runs after the complete plugin tree and its options have loaded. Loaded entry references, the entry assembly and plugin manifests share one deduplication set, so each assembly registers once per host build. `IServiceRegistration.Register` can read descendant plugin configuration. Protocol extensions can therefore register before the host creates its network endpoint snapshot.
+
 Deployment variables and runtime options are different. `--site:daemon` passed to the deployer can select a `*-daemon.plugin` artifact; `site=daemon` passed to the host participates in runtime configuration selection. Some plugins use that extra manifest to start workers. Merely installing the primary DLL does not enable such workers.
 
 Do not depend on an incidental ordering of multiple plugins defining the same configuration key. Give environment/site settings a clear owner and verify the effective value without printing secrets.
+
+To diagnose conflicts, read each plugin's effective value through `PluginConfigurationProvider.Providers`. Each entry is a `CompositeConfigurationProvider` containing that plugin's configuration layers. Its `Providers` are in priority order; the first file provider containing a key is that plugin's effective source for the key. For a `FileConfigurationProvider` instance named `file`, obtain the current local file path from `file.Source.FileProvider.GetFileInfo(file.Source.Path).PhysicalPath`. Apply overrides within each plugin before comparing plugins, so normal environment overrides are not reported as conflicts. Plugins preserves this generic source information; the Web host consumer owns network-key conflict rules and must not rely solely on the final merged value.
+
+`<?binding ...?>` declares exposure for delivery tools. Plugins does not evaluate its templates, generate proxy configuration or start listeners because of this instruction.
 
 ### Verification and Operational Risks
 

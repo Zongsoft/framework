@@ -58,10 +58,10 @@ Builds enable `ZongsoftCodeStyleStrict` by default. Formatting temporarily selec
 | [BuilderExtensionTests](BuilderExtensionTests.cs), [ExposeBuilderTests](ExposeBuilderTests.cs) | Custom builders, completion events, cancellation, collection conversion/expansion, discriminator routing, expose initial construction and cached-child appending |
 | [ParserTests](ParserTests.cs), [PredicateParserTests](PredicateParserTests.cs), [ResourceParserTests](ResourceParserTests.cs) | Path/type/static/object/service/option/predicate/resource parsing, aliases, asynchronous predication, invalid input, resources containing only test-owned data |
 | [CommandTests](CommandTests.cs) | List/Tree/Find, explicit construction modes, deferred commands, parameters and cancellation, invalid arguments |
-| [PluginConfigurationTests](PluginConfigurationTests.cs), [HostingConfigurationTests](HostingConfigurationTests.cs) | Plugin and host layers tested separately, filename/environment/host/site matching and precedence, mutation, reload, disposal |
+| [PluginConfigurationTests](PluginConfigurationTests.cs), [HostingConfigurationTests](HostingConfigurationTests.cs) | Plugin and host layers tested separately, filename/environment/host/site precedence, descendant reloads, repeated notifications, source provenance, failure/retry and subscription disposal |
 | [PluginModelTests](PluginModelTests.cs) | Options identity, property cache/conversion, behaviors, foundation inheritance/overrides, dependencies, build flags |
 | [PluginUnloadTests](PluginUnloadTests.cs) | Cancellation, resource disposal, removal of nodes/configuration, unused foundations remain uninstantiated |
-| [ApplicationLifecycleTests](ApplicationLifecycleTests.cs), [TestProgram](TestProgram.cs) | Initialization, workbench states/events/retry, startup worker selection, process exit, Daemon/Terminal/Web construction |
+| [ApplicationLifecycleTests](ApplicationLifecycleTests.cs), [TestProgram](TestProgram.cs) | Initialization, workbench states/events/retry, startup worker selection, process exit, Daemon/Terminal/Web construction, one assembly registration across host/plugin manifests with complete descendant configuration |
 | [WebIntegrationTests](WebIntegrationTests.cs) | Plugin assemblies, controller discovery, request principal/routes, descriptors, plugin diagnostics |
 
 `PluginTestScope` creates a unique temporary directory per test and disposes configuration providers and service containers. Assembly-level parallelism is disabled because ApplicationContext, BuilderManager, and plugin tree caches contain process-wide state. The concurrency test still makes concurrent calls explicitly. Global test event handlers are removed. PluginTree has no public disposal API; tests do not clear its private static cache, which lives until the test process exits.
@@ -89,7 +89,7 @@ dotnet test ./Zongsoft.Plugins/test/Zongsoft.Plugins.Tests.csproj -f net10.0 --n
 
 ## Refactoring Follow-ups
 
-The baseline does not fix production implementations. Tests record explicitly retained historical behavior; changing it requires a separate compatibility review. The following table distinguishes confirmed compatibility behavior from source-review risks that need separate regression work.
+Tests record the current composition contracts, including descendant configuration reloads, repeatable notifications and assembly registration deduplication. The following table distinguishes retained behavior from source-review risks requiring separate regression work.
 
 | Issue | Evidence and next validation |
 | --- | --- |
@@ -99,7 +99,6 @@ The baseline does not fix production implementations. Tests record explicitly re
 | Nested unloading | PluginLoader removes children while iterating their collection; PluginTree.UnmountItem can likewise remove nodes while iterating. Existing disposal tests cover leaf components. Add nested plugins/components and cancelled child unload cases. |
 | Multiple parent segments | PluginTreeNode.Find resolves `..` through the original node's parent. Add expected results for `../..` and `Child/..`. |
 | Equality/hash agreement | Builtin equality ignores case but hashing does not. Empty tree-node equality omits tree identity while hashing includes it. Define identity before testing hash collections. |
-| Child configuration and notifications | Explicit PluginConfigurationProvider.Load only visits top-level plugins, unlike event loading. Its reload token has no visible forwarding path from child providers. Add child reload and change-notification regressions. |
 | Expression/resource arguments | ParserExpression includes the opening brace and colon in parsed values; Parser.Parse uses another implementation. ResourceParser copies CaptureCollection directly into string[]. Add valid expression and formatted-resource regressions; current cases cover malformed expressions and argument-free resource lookup. |
 | Web Session dictionary | ContainsKey requires keys in both local and route dictionaries, unlike TryGetValue. Count/enumeration omit local entries and CopyTo increments before writing. Current cases cover request switching and route reads, not full dictionary consistency. |
 

@@ -5,6 +5,8 @@ using System.Collections.Generic;
 
 using Xunit;
 
+using Microsoft.Extensions.Configuration;
+
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Plugins.Tests;
@@ -25,9 +27,14 @@ public class PluginUnloadTests
 		var states = new List<PluginStatus>();
 		scope.Tree.Loader.PluginUnloading += (_, args) => states.Add(args.Plugin.Status);
 		scope.Tree.Loader.PluginUnloaded += (_, args) => states.Add(args.Plugin.Status);
+		var file = Assert.IsAssignableFrom<FileConfigurationProvider>(Assert.Single(Assert.IsType<CompositeConfigurationProvider>(Assert.Single(provider.Providers)).Providers));
+		var changed = provider.GetReloadToken();
 
 		Unload(scope.Tree.Loader, plugin);
 		Unload(scope.Tree.Loader, plugin);
+
+		Assert.True(changed.HasChanged);
+		Assert.NotSame(changed, provider.GetReloadToken());
 
 		Assert.Equal(new[] { PluginStatus.Loaded, PluginStatus.Unloaded }, states);
 		Assert.Equal(PluginStatus.Unloaded, plugin.Status);
@@ -38,6 +45,11 @@ public class PluginUnloadTests
 		Assert.Null(scope.Tree.Find("/Items/Deferred"));
 		Assert.False(scope.Tree.Plugins.Contains("Feature"));
 		Assert.Empty(provider.Providers);
+
+		var current = provider.GetReloadToken();
+		file.Load();
+
+		Assert.False(current.HasChanged);
 	}
 
 	[Fact]

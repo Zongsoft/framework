@@ -8,6 +8,7 @@ using System.Collections.Generic;
 
 using Xunit;
 
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Plugins.Tests;
@@ -20,10 +21,20 @@ public class ApplicationLifecycleTests
 	[InlineData("daemon", new[] { "opened", "started", "closed" })]
 	[InlineData("terminal", new[] { "created" })]
 	[InlineData("web", new[] { "created" })]
+	[InlineData("registration", new[] { "registered" })]
 	public async Task HostLifecycleRunsInAnIsolatedProcessAsync(string scenario, string[] expected)
 	{
 		using var scope = new PluginTestScope();
 		scope.WritePlugin($"<extension path=\"/Workspace/Environment/Services\"><object name=\"FixtureService\" type=\"{typeof(ProbeService).AssemblyQualifiedName}\" /></extension>");
+
+		if(scenario == "registration")
+		{
+			var assembly = typeof(RegistrationProbe).Assembly.GetName().Name;
+			scope.WriteFile("Feature.plugin", $"<plugin name=\"Feature\"><manifest><assemblies><assembly name=\"{assembly}\" /></assemblies></manifest></plugin>");
+			scope.WriteFile("nested/Child.plugin", $"<plugin name=\"Child\"><manifest><assemblies><assembly name=\"{assembly}\" /></assemblies></manifest></plugin>");
+			scope.WriteFile("nested/Child.option", "<options><option path=\"Kestrel/Endpoints\"><telemetry url=\"http://*:4317/opentelemetry\" protocols=\"grpc+http2\" /></option></options>");
+		}
+
 		var start = new ProcessStartInfo("dotnet")
 		{
 			UseShellExecute = false,
@@ -177,6 +188,21 @@ public class ApplicationLifecycleTests
 	}
 
 	public sealed class ProbeService;
+
+	public sealed class RegistrationProbe : Services.IServiceRegistration
+	{
+		public void Register(IServiceCollection services, IConfiguration configuration)
+		{
+			if(configuration?["Fixture:registration:enabled"] == "true")
+				services.AddSingleton(new RegistrationSnapshot(configuration["Kestrel:Endpoints:telemetry:Url"], configuration["Kestrel:Endpoints:telemetry:Protocols"]));
+		}
+	}
+
+	public sealed class RegistrationSnapshot(string url, string protocols)
+	{
+		public string Url { get; } = url;
+		public string Protocols { get; } = protocols;
+	}
 
 	public sealed class ProbeWorker(string name) : Components.WorkerBase(name)
 	{

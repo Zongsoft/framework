@@ -58,10 +58,10 @@ git -c core.whitespace=cr-at-eol diff --check -- Zongsoft.Plugins
 | [BuilderExtensionTests](BuilderExtensionTests.cs)、[ExposeBuilderTests](ExposeBuilderTests.cs) | 扩展构建器、完成事件、取消子构建、集合转换/展开、分流追加、expose 首次构建及缓存子节点追加 |
 | [ParserTests](ParserTests.cs)、[PredicateParserTests](PredicateParserTests.cs)、[ResourceParserTests](ResourceParserTests.cs) | path/type/static/object/service/option/predicate/resource，服务别名、同步/异步断言、未知方案和无效表达式；资源只使用测试自有数据 |
 | [CommandTests](CommandTests.cs) | List/Tree/Find、显式构建选项、延迟命令、参数和取消令牌传递、非法参数 |
-| [PluginConfigurationTests](PluginConfigurationTests.cs)、[HostingConfigurationTests](HostingConfigurationTests.cs) | 插件配置与宿主配置分别验证，文件名/环境/host/site 分层、优先级、Set、重新加载和释放解绑 |
+| [PluginConfigurationTests](PluginConfigurationTests.cs)、[HostingConfigurationTests](HostingConfigurationTests.cs) | 插件配置与宿主配置分别验证，文件名/环境/host/site 分层优先级、子插件重载、连续变更通知、来源追溯、失败重试与订阅释放 |
 | [PluginModelTests](PluginModelTests.cs) | 选项身份、属性转换缓存、行为、基础元素继承与覆盖、依赖集合和构建标志 |
 | [PluginUnloadTests](PluginUnloadTests.cs) | 卸载取消、资源释放、节点/配置移除，以及未实例化基础元素不被创建 |
-| [ApplicationLifecycleTests](ApplicationLifecycleTests.cs)、[TestProgram](TestProgram.cs) | 初始化、工作台状态/事件/重试、Startup 工作者筛选，隔离进程中的退出及 Daemon/Terminal/Web 宿主构建 |
+| [ApplicationLifecycleTests](ApplicationLifecycleTests.cs)、[TestProgram](TestProgram.cs) | 初始化、工作台状态/事件/重试、Startup 工作者筛选，隔离进程中的退出及 Daemon/Terminal/Web 宿主构建；宿主与插件共享程序集只注册一次且能读取完整子插件配置 |
 | [WebIntegrationTests](WebIntegrationTests.cs) | 插件程序集和控制器发现、请求主体/路由、控制器描述及插件诊断接口 |
 
 `PluginTestScope` 为每个用例建立唯一临时目录并释放配置提供程序及服务容器。框架的 `ApplicationContext.Current`、`BuilderManager.Current` 和插件树缓存是进程级状态，因此测试程序集禁用用例并行；并发构建用例仍显式发起并行调用。测试订阅的全局事件会解除。插件树缺少公开释放入口，测试不反射清空其静态缓存；缓存随测试进程结束释放。
@@ -89,7 +89,7 @@ dotnet test ./Zongsoft.Plugins/test/Zongsoft.Plugins.Tests.csproj -f net10.0 --n
 
 ## 重构前需单独解决的问题
 
-以下清单区分测试已确认的兼容行为与源码审查风险。本基线不修复生产实现；明确保留的历史行为通过测试记录，后续修改需单独评估兼容性。
+测试记录当前装配契约，包括子插件配置重载、连续变更通知和程序集注册去重。以下清单区分保留行为与仍需单独回归的源码审查风险。
 
 | 问题 | 证据与后续验证 |
 | --- | --- |
@@ -99,7 +99,6 @@ dotnet test ./Zongsoft.Plugins/test/Zongsoft.Plugins.Tests.csproj -f net10.0 --n
 | 深层卸载 | `PluginLoader.Unload` 在遍历子插件时移除同一集合，`PluginTree.UnmountItem` 也会在遍历子节点时移除节点。当前释放用例覆盖叶子构件，嵌套插件/构件与取消子卸载需单独回归。 |
 | 多层相对路径 | `PluginTreeNode.Find` 遇到 `..` 使用最初节点的 `_parent`，而不是当前迭代节点的父级；需补 `../..`、`Child/..` 的期望路径测试。 |
 | 相等性与哈希 | `Builtin` 相等比较忽略大小写，但哈希未采用相同规则；空 `PluginTreeNode` 的相等性不含树实例而哈希包含树实例。应明确跨树身份并验证集合行为。 |
-| 子插件配置与变更通知 | `PluginConfigurationProvider.Load` 仅遍历顶层插件，事件加载则能收到子插件；显式重新加载可能丢失子插件配置。`GetReloadToken` 返回固定令牌，未见转发子提供程序通知的路径。 |
 | 表达式与资源格式参数 | 独立 `ParserExpression` 把起始 `{`、分隔 `:` 加入其结果；实际 `Parser.Parse` 使用另一条路径。`ResourceParser` 将 `CaptureCollection` 直接复制到 `string[]`。需分别补有效表达式和带参数资源的回归；现有用例只覆盖前者非法输入、后者无参数查找。 |
 | Web Session 字典契约 | `ContainsKey` 要求本地字典及路由同时含键，与 `TryGetValue` 不同；Count/枚举未包含本地条目，CopyTo 先自增下标。当前用例覆盖请求切换和路由读取，完整字典一致性需要修复后回归。 |
 

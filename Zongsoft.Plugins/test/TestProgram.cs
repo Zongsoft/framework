@@ -23,6 +23,21 @@ internal static class TestProgram
 
 		try
 		{
+			if(args[1] == "registration")
+			{
+				using var host = Hosting.Application.Daemon(typeof(TestProgram).Assembly.GetName().Name, [$"--contentRoot={directory}"], builder =>
+				{
+					builder.Environment.EnvironmentName = "Development";
+					builder.Configuration["Fixture:registration:enabled"] = "true";
+				});
+				var snapshot = Assert.Single(host.Services.GetServices<ApplicationLifecycleTests.RegistrationSnapshot>());
+
+				Assert.Equal("http://*:4317/opentelemetry", snapshot.Url);
+				Assert.Equal("grpc+http2", snapshot.Protocols);
+				File.AppendAllLines(trace, ["registered"]);
+				return 0;
+			}
+
 			if(args[1] == "terminal")
 			{
 				using var host = Hosting.Application.Terminal(typeof(TestProgram).Assembly.GetName().Name, [$"--contentRoot={directory}"], builder => builder.Environment.EnvironmentName = "Development");

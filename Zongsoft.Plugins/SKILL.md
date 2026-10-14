@@ -20,11 +20,12 @@ description: 开发、审查、调试或测试 Zongsoft.Plugins 与 Zongsoft.Plu
 
 ## 源码路由与实际时序
 
-1. [ApplicationBuilder](src/Hosting/ApplicationBuilder.cs) 添加 PluginConfigurationSource，加载插件树，扫描已加载的入口引用、入口程序集和插件 Manifest.Assemblies，再构建宿主。
+1. [ApplicationBuilder](src/Hosting/ApplicationBuilder.cs) 添加 PluginConfigurationSource，加载整棵插件树及其配置，扫描已加载的入口引用、入口程序集和插件 Manifest.Assemblies，再构建宿主。三类程序集共用去重集合，每次宿主构建中同一程序集只注册一次；注册器可读取子插件的最终配置。
 2. [PluginLoader](src/PluginLoader.cs) 按文件目录组织父子插件、解析依赖；文件系统层级与 extension path 分离。不要把注释中的排序描述当作确定的文件枚举顺序。
 3. [PluginApplicationContext](src/PluginApplicationContext.cs) 初始化后挂载应用上下文；首次取得 Workbench 构建工作台子节点，Startup 子树后置，随宿主 Started/Stopping 打开/关闭工作台。
 4. [ObjectBuilder](src/Builders/ObjectBuilder.cs)、[BuilderManager](src/Builders/BuilderManager.cs) 处理节点构造和缓存；[ServicesParser](src/Services/ServicesParser.cs) 根据属性类型与当前树节点上下文定位服务。
-5. [PluginConfigurationProvider](src/Configuration/PluginConfigurationProvider.cs) 只关联已加载清单同主名的 option 及环境/host/site 附属文件。跨插件提供程序使用并发字典枚举，不承诺冲突键的跨插件覆盖顺序。
+5. [PluginConfigurationProvider](src/Configuration/PluginConfigurationProvider.cs) 只关联已加载清单同主名的 option 及环境/host/site 附属文件；显式 Load 递归包括子插件。关联文件逐次重载、插件加载/卸载及整体重载均向宿主传递变更通知，替换或释放时解除订阅。整体重载失败清理已建立的提供程序；整体重载、插件树加载/卸载与释放串行执行，通知不代表跨文件事务。
+6. 跨插件提供程序使用并发字典枚举，不承诺冲突键的跨插件覆盖顺序。通过 Providers 取得各插件的 CompositeConfigurationProvider，先按插件内分层确定生效值及首个包含该键的文件来源，再由宿主消费层判断网络键等领域冲突；不把 Kestrel 或 gRPC 规则硬编码进 Plugins。
 
 ### 易混淆契约
 

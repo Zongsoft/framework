@@ -103,6 +103,9 @@ public abstract class ApplicationBuilderBase<TApplication> : Services.IApplicati
 
 	#region 虚拟方法
 	protected virtual PluginOptions CreateOptions(IConfiguration configuration) => new(configuration, this.Environment);
+	/// <summary>加载完整插件配置，并按程序集去重注册宿主和插件服务。</summary>
+	/// <param name="services">承载宿主和插件服务的集合。</param>
+	/// <param name="options">插件加载选项。</param>
 	protected virtual void RegisterServices(IServiceCollection services, PluginOptions options)
 	{
 		//获取插件树并加载它
@@ -116,12 +119,14 @@ public abstract class ApplicationBuilderBase<TApplication> : Services.IApplicati
 		{
 			var assembly = GetAssembly(assemblyName, AppDomain.CurrentDomain.GetAssemblies());
 
-			if(assembly != null)
+			if(assembly != null && registry.Add(assembly))
 				Zongsoft.Services.ServiceCollectionExtension.Register(services, assembly, this.Configuration);
 		}
 
 		//注册宿主程序集中的服务
-		Zongsoft.Services.ServiceCollectionExtension.Register(services, Assembly.GetEntryAssembly(), this.Configuration);
+		var entry = Assembly.GetEntryAssembly();
+		if(entry != null && registry.Add(entry))
+			Zongsoft.Services.ServiceCollectionExtension.Register(services, entry, this.Configuration);
 
 		//添加默认的HTTP客户端服务
 		services.AddHttpClient();

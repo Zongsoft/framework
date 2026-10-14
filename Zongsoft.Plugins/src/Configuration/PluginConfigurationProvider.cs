@@ -30,6 +30,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
@@ -41,10 +42,13 @@ namespace Zongsoft.Configuration;
 public class PluginConfigurationProvider : ICompositeConfigurationProvider, IConfigurationProvider, IDisposable
 {
 	#region 成员字段
+	//仅保护提供程序的发布与释放状态；文件读取和变更回调不在锁内执行。
+	private readonly object _sync = new();
+	private bool _disposed;
 	private readonly PluginConfigurationSource _source;
 	private readonly Plugins.PluginTree _pluginTree;
-	private readonly ConfigurationReloadToken _reloadToken;
-	private readonly ConcurrentDictionary<Plugins.Plugin, CompositeConfigurationProvider> _providers;
+	private ConfigurationReloadToken _reloadToken;
+	private readonly ConcurrentDictionary<Plugins.Plugin, OptionProvider> _providers;
 	#endregion
 
 	#region 构造函数
@@ -52,7 +56,7 @@ public class PluginConfigurationProvider : ICompositeConfigurationProvider, ICon
 	{
 		_source = source ?? throw new ArgumentNullException(nameof(source));
 		_reloadToken = new ConfigurationReloadToken();
-		_providers = new ConcurrentDictionary<Plugins.Plugin, CompositeConfigurationProvider>();
+		_providers = new ConcurrentDictionary<Plugins.Plugin, OptionProvider>();
 
 		_pluginTree = Plugins.PluginTree.Get(source.Options);
 		_pluginTree.Loader.PluginLoaded += this.PluginLoader_PluginLoaded;
@@ -61,7 +65,8 @@ public class PluginConfigurationProvider : ICompositeConfigurationProvider, ICon
 	#endregion
 
 	#region 公共属性
-	public IEnumerable<IConfigurationProvider> Providers => _providers.Values;
+	/// <summary>获取各插件的分层配置提供程序，不保证跨插件的枚举顺序。</summary>
+	public IEnumerable<IConfigurationProvider> Providers => _providers.Values.Select(provider => provider.Configuration);
 	#endregion
 
 	#region 公共方法
@@ -69,7 +74,7 @@ public class PluginConfigurationProvider : ICompositeConfigurationProvider, ICon
 	{
 		foreach(var provider in _providers.Values)
 		{
-			if(provider.TryGet(key, out value))
+			if(provider.Configuration.TryGet(key, out value))
 				return true;
 		}
 
@@ -81,26 +86,38 @@ public class PluginConfigurationProvider : ICompositeConfigurationProvider, ICon
 	{
 		foreach(var provider in _providers.Values)
 		{
-			if(provider.TryGet(key, out _))
-				provider.Set(key, value);
+			if(provider.Configuration.TryGet(key, out _))
+				provider.Configuration.Set(key, value);
 		}
 	}
 
+	/// <summary>重新加载所有已加载插件及其子插件的配置，并通知配置发生变化。</summary>
+	/// <remarks>调用方应串行执行整体重载、插件树加载或卸载及释放操作；重载失败会清理本次建立的提供程序。</remarks>
+	/// <exception cref="ObjectDisposedException">当前提供程序已被释放。</exception>
 	public void Load()
 	{
-		foreach(var plugin in _providers.Keys)
+		ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed), this);
+		this.Clear();
+
+		try
 		{
-			if(_providers.TryRemove(plugin, out var provider))
-				provider.Dispose();
+			foreach(var plugin in _pluginTree.Plugins)
+				this.LoadOptionFiles(plugin);
+		}
+		catch
+		{
+			this.Clear();
+			throw;
 		}
 
-		foreach(var plugin in _pluginTree.Plugins)
-			this.LoadOptionFile(plugin);
+		this.OnReload();
 	}
 
-	public IChangeToken GetReloadToken() => _reloadToken;
+	/// <summary>获取当前配置变更令牌，每次通知后均替换为新令牌。</summary>
+	/// <returns>用于订阅下一次配置变更的令牌。</returns>
+	public IChangeToken GetReloadToken() => Volatile.Read(ref _reloadToken);
 	public IEnumerable<string> GetChildKeys(IEnumerable<string> earlierKeys, string parentPath) => _providers.Values
-		.SelectMany(p => p.GetChildKeys([], parentPath))
+		.SelectMany(p => p.Configuration.GetChildKeys([], parentPath))
 		.Concat(earlierKeys)
 		.OrderBy(k => k, ConfigurationKeyComparer.Instance);
 	#endregion
@@ -112,13 +129,17 @@ public class PluginConfigurationProvider : ICompositeConfigurationProvider, ICon
 	#region 事件处理
 	private void PluginLoader_PluginLoaded(object sender, Zongsoft.Plugins.PluginLoadedEventArgs e)
 	{
-		this.LoadOptionFile(e.Plugin);
+		if(this.LoadOptionFile(e.Plugin))
+			this.OnReload();
 	}
 
 	private void PluginLoader_PluginUnloaded(object sender, Zongsoft.Plugins.PluginUnloadedEventArgs e)
 	{
 		if(_providers.TryRemove(e.Plugin, out var provider))
+		{
 			provider.Dispose();
+			this.OnReload();
+		}
 	}
 	#endregion
 
@@ -133,101 +154,95 @@ public class PluginConfigurationProvider : ICompositeConfigurationProvider, ICon
 	{
 		if(disposing)
 		{
+			lock(_sync)
+			{
+				if(_disposed)
+					return;
+
+				_disposed = true;
+			}
+
 			_pluginTree.Loader.PluginLoaded -= this.PluginLoader_PluginLoaded;
 			_pluginTree.Loader.PluginUnloaded -= this.PluginLoader_PluginUnloaded;
-
-			foreach(var plugin in _providers.Keys)
-			{
-				if(_providers.TryRemove(plugin, out var provider))
-					provider.Dispose();
-			}
+			this.Clear();
 		}
 	}
 	#endregion
 
 	#region 私有方法
+	private void Clear()
+	{
+		OptionProvider[] providers;
+
+		lock(_sync)
+		{
+			providers = _providers.Values.ToArray();
+			_providers.Clear();
+		}
+
+		foreach(var provider in providers)
+			provider.Dispose();
+	}
+
+	private void OnReload()
+	{
+		if(!Volatile.Read(ref _disposed))
+			Interlocked.Exchange(ref _reloadToken, new ConfigurationReloadToken()).OnReload();
+	}
+
+	private void LoadOptionFiles(Plugins.Plugin plugin)
+	{
+		if(plugin.Status != Plugins.PluginStatus.Loaded)
+			return;
+
+		this.LoadOptionFile(plugin);
+
+		foreach(var child in plugin.Children)
+			this.LoadOptionFiles(child);
+	}
+
 	private bool LoadOptionFile(Plugins.Plugin plugin)
 	{
-		if(_providers.ContainsKey(plugin))
+		if(Volatile.Read(ref _disposed) || _providers.ContainsKey(plugin))
 			return false;
 
+		var files = this.GetOptionFiles(plugin).ToArray();
+		if(files.Length == 0)
+			return false;
+
+		var provider = OptionProvider.Load(files, this.OnReload);
+
+		lock(_sync)
+		{
+			if(!_disposed && _providers.TryAdd(plugin, provider))
+				return true;
+		}
+
+		provider.Dispose();
+		return false;
+	}
+
+	private IEnumerable<string> GetOptionFiles(Plugins.Plugin plugin)
+	{
 		var directory = Path.GetDirectoryName(plugin.FilePath);
 		var fileName = Path.GetFileNameWithoutExtension(plugin.FilePath);
 		var environment = _source.Options.EnvironmentName.ToLowerInvariant();
-		List<IConfigurationProvider> providers = null;
 
 		var optionFile = Path.Combine(directory, $"{fileName}.option");
 		if(File.Exists(optionFile))
-		{
-			providers ??= new List<IConfigurationProvider>(4);
-
-			providers.Add(new Xml.XmlConfigurationSource()
-			{
-				Path = optionFile,
-				Optional = true,
-				ReloadOnChange = true,
-			}.Build(null));
-		}
+			yield return optionFile;
 
 		optionFile = Path.Combine(directory, $"{fileName}.{environment}.option");
 		if(File.Exists(optionFile))
-		{
-			providers ??= new List<IConfigurationProvider>(4);
-
-			providers.Add(new Xml.XmlConfigurationSource()
-			{
-				Path = optionFile,
-				Optional = true,
-				ReloadOnChange = true,
-			}.Build(null));
-		}
+			yield return optionFile;
 
 		//获取当前目录下的当前环境的从属配置文件
-		var slaves = GetSlaveFiles(directory, fileName, environment);
-
-		if(slaves != null && slaves.Length > 0)
-		{
-			providers ??= new List<IConfigurationProvider>(slaves.Length);
-
-			for(int i = 0; i < slaves.Length; i++)
-			{
-				providers.Add(new Xml.XmlConfigurationSource()
-				{
-					Path = slaves[i],
-					Optional = true,
-					ReloadOnChange = true,
-				}.Build(null));
-			}
-		}
+		foreach(var file in GetSlaveFiles(directory, fileName, environment))
+			yield return file;
 
 		//获取当前目录下的特定配置文件（host & site）
-		var specifics = GetSpecificFiles(directory, fileName, environment, _source.Options.Configuration).ToArray();
-
-		if(specifics.Length > 0)
-		{
-			providers ??= new List<IConfigurationProvider>(specifics.Length);
-
-			for(int i = 0; i < specifics.Length; i++)
-			{
-				providers.Add(new Xml.XmlConfigurationSource()
-				{
-					Path = specifics[i],
-					Optional = true,
-					ReloadOnChange = true,
-				}.Build(null));
-			}
-		}
-
-		//如果没有任何配置文件则返回失败
-		if(providers == null || providers.Count == 0)
-			return false;
-
-		var composite = new CompositeConfigurationProvider(providers);
-
-		//加载配置文件
-		composite.Load();
-
-		return _providers.TryAdd(plugin, composite);
+		foreach(var file in GetSpecificFiles(directory, fileName, environment, _source.Options.Configuration))
+			yield return file;
 	}
 
 	private static string[] GetSlaveFiles(string directory, string fileName, string environment) =>
@@ -260,6 +275,68 @@ public class PluginConfigurationProvider : ICompositeConfigurationProvider, ICon
 			var slaves = GetSlaveFiles(directory, $"{fileName}.{site}", environment);
 			for(int i = 0; i < slaves.Length; i++)
 				yield return slaves[i];
+		}
+	}
+	#endregion
+
+	#region 嵌套类型
+	private sealed class OptionProvider : IDisposable
+	{
+		private int _disposed;
+		private readonly List<IDisposable> _subscriptions = new();
+		private OptionProvider(IReadOnlyCollection<IConfigurationProvider> providers) => this.Configuration = new(providers);
+		public CompositeConfigurationProvider Configuration { get; }
+		public override string ToString() => this.Configuration.ToString();
+
+		public static OptionProvider Load(IEnumerable<string> files, Action changed)
+		{
+			List<IConfigurationProvider> providers = new();
+			OptionProvider result = null;
+
+			try
+			{
+				foreach(var file in files)
+				{
+					providers.Add(new Xml.XmlConfigurationSource()
+					{
+						Path = file,
+						Optional = true,
+						ReloadOnChange = true,
+					}.Build(null));
+				}
+
+				result = new(providers);
+				result.Configuration.Load();
+
+				//直接订阅每个文件的可更新令牌，避免复合令牌只保留首次加载的快照。
+				foreach(var provider in providers)
+					result._subscriptions.Add(ChangeToken.OnChange(provider.GetReloadToken, changed));
+
+				return result;
+			}
+			catch
+			{
+				if(result != null)
+					result.Dispose();
+				else
+				{
+					foreach(var provider in providers.OfType<IDisposable>())
+						provider.Dispose();
+				}
+
+				throw;
+			}
+		}
+
+		public void Dispose()
+		{
+			if(Interlocked.Exchange(ref _disposed, 1) != 0)
+				return;
+
+			foreach(var subscription in _subscriptions)
+				subscription.Dispose();
+
+			this.Configuration.Dispose();
 		}
 	}
 	#endregion
