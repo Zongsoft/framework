@@ -41,9 +41,9 @@ Kestrel:Endpoints:orders:Protocols=grpc+http2
 
 These logical scopes share one physical HTTP/2 listener. Original configuration retains complete URLs; projected URLs contain only the scheme, host and port. Certificates, SNI and connection defaults are preserved. Items sharing a socket must have identical connection settings. Overlapping listeners, duplicate same-kind scopes, same-kind paths differing only in case, and mixed HTTP versions on a cleartext socket fail. Native SNI Protocols cannot expand the declared versions.
 
-`WebEndpoint` exposes the configuration name, `NetworkAddress`, a read-only `NetworkProtocol` collection and aggregate HTTP carrier versions in `HttpProtocols`. `GetProtocols(category)` returns the versions declared for a request category, defaulting to `http`. The collection sorts by descending path length, then ordinal name. Missing declarations do not inherit implicit server capabilities; an explicitly configured `EndpointDefaults:Protocols` can supply the endpoint's default declaration.
+`WebEndpoint` exposes the configuration name, `NetworkAddress`, a read-only `NetworkProtocol` collection and aggregate HTTP carrier versions in `HttpProtocols`. `GetProtocols(kind)` returns the versions declared for a request kind, defaulting to `http`. The collection sorts by descending path length, then ordinal name. Missing declarations do not inherit implicit server capabilities; an explicitly configured `EndpointDefaults:Protocols` can supply the endpoint's default declaration.
 
-The Web library supplies ordinary HTTP rules. Register upper-level protocols through `AddWebEndpointProtocol` before creating the snapshot. Valid syntax does not imply an installed runtime policy. Missing protocols, duplicate names or independent categories, and registration after snapshot creation fail without ordinary HTTP fallback. Registering the same instance again before snapshot creation is harmless. The optional second argument of `WebEndpointCollection` also accepts policy instances directly. The registration collection is copied; policy instances must remain immutable or thread-safe.
+The Web library supplies ordinary HTTP rules. Register upper-level protocols through `AddWebEndpointProtocol` before creating the snapshot. Valid syntax does not imply an installed runtime policy. Missing protocols, duplicate names or independent kinds, and registration after snapshot creation fail without ordinary HTTP fallback. Registering the same instance again before snapshot creation is harmless. The optional second argument of `WebEndpointCollection` also accepts policy instances directly. The registration collection is copied; policy instances must remain immutable or thread-safe.
 
 Encoding protocols may share ordinary HTTP. For example, `services.AddWebEndpointProtocol(new WebEndpointProtocol("protobuf"));` declares `protobuf → protobuf+http`; `protobuf,protobuf+http2` normalizes to `protobuf+http2`. This declaration does not install a serializer. Runtime listening requires a specific HTTP version: `http` or the expanded `protobuf+http` alone is insufficient. Direct TCP/UDP combinations are not carried by this Kestrel adapter.
 
@@ -65,7 +65,7 @@ After selection, an unsupported version, unknown method or routing failure does 
 
 ## Route constraints
 
-`WebEndpointFeature` retains the selected endpoint, raw path and `Category`. `WebEndpointMetadata` associates an ASP.NET route endpoint with the exact base path and category:
+`WebEndpointFeature` retains the selected endpoint, raw path and `Kind`. `WebEndpointMetadata` associates an ASP.NET route endpoint with the exact base path and kind:
 
 ```csharp
 routes.MapGroup("/opentelemetry")
@@ -76,12 +76,12 @@ The gRPC extension must register services and a regional fallback within that gr
 
 ## Protocol extension and responsibilities
 
-`WebEndpointProtocol` describes an upper-level protocol's name, default carrier and request category. Ordinary encodings can use a direct instance. Independent categories derive from it, supply a category through the protected constructor, and override the steps they need:
+`WebEndpointProtocol` describes an upper-level protocol's name, default carrier and request kind through `Name`, `Carrier` and `Kind`. Ordinary encodings can use a direct instance. Independent kinds derive from it, supply `kind` through the protected constructor, and override the steps they need:
 
 | Step | Contract |
 | --- | --- |
 | Normalize | Complete or validate a declaration without changing its upper-level name; return an empty protocol to reject it |
-| Matches | Identify independent categories before longest-path selection; multiple matches fail, and ordinary HTTP is the default category |
+| Matches | Identify independent kinds before longest-path selection; multiple matches fail, and ordinary HTTP is the default kind |
 | Validate | Check requests after classification but before path selection; zero accepts, otherwise return an HTTP status code |
 | Accepts | Apply protocol-specific route checks after the common scope checks |
 | RejectAsync | Respond when no scope matches; the default is 404 |
@@ -92,7 +92,7 @@ These facilities consume Kestrel runtime configuration. They do not interpret bi
 
 ## Validation and delivery
 
-[Snapshot tests](../test/Hosting/WebEndpointCollectionTest.cs) cover generic protocols, shared listeners, conflicts, independent snapshots and IPv6 TCP binding. [Ordinary pipeline tests](../test/Hosting/WebEndpointPipelineTest.cs) verify independent operation, categories and registration without referencing the gRPC extension. [gRPC pipeline tests](../grpc/test/GrpcEndpointPipelineTest.cs) cover media types, raw paths, isolation and HTTP/1 plus HTTP/2 requests against an isolated local Kestrel host. [Protocol tests](../grpc/test/GrpcEndpointProtocolTest.cs) cover shorthand, plugin registration and missing extensions. Requests with a gRPC media type verify scope dispatch, not complete gRPC calls.
+[Snapshot tests](../test/Hosting/WebEndpointCollectionTest.cs) cover generic protocols, shared listeners, conflicts, independent snapshots and IPv6 TCP binding. [Ordinary pipeline tests](../test/Hosting/WebEndpointPipelineTest.cs) verify independent operation, kinds and registration without referencing the gRPC extension. [gRPC pipeline tests](../grpc/test/GrpcEndpointPipelineTest.cs) cover media types, raw paths, isolation and HTTP/1 plus HTTP/2 requests against an isolated local Kestrel host. [Protocol tests](../grpc/test/GrpcEndpointProtocolTest.cs) cover shorthand, plugin registration and missing extensions. Requests with a gRPC media type verify scope dispatch, not complete gRPC calls.
 
 Debug references local Core output; the project file defines the minimum Release Core package dependency. Supply the corresponding Core build containing the network value APIs before publishing Web. Local Release validation uses an isolated package feed and does not imply publication. Plugin loading, complete gRPC services/reflection/streaming, Nginx and actual HTTP/3 operation require subsequent integration validation.
 

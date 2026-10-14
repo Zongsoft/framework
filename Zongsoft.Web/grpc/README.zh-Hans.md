@@ -56,7 +56,7 @@ Zongsoft.Core、Zongsoft.Web、Zongsoft.Plugins、Zongsoft.Plugins.Web 由宿主
 
 显式宿主在 `AddWebEndpoints` 创建快照之前调用 `services.AddGrpcWebEndpoints()`；插件服务注册已自动完成这一步。缺少扩展时，声明 gRPC 端点会失败，不能作为普通 HTTP 启动。完整 Plugins.Web 快照接入和基于 Handler 的服务挂载仍按实施顺序进行；当前协议策略注册不自动改变现有根级服务映射。
 
-`WebEndpointMetadata("/opentelemetry", "grpc")` 可表达路由的范围及类别；实际服务必须挂载在同一路径。独立 [协议测试项目](test/Zongsoft.Web.Grpc.Tests.csproj) 验证规则及隔离 HTTP/2 管线，尚不代表区域反射、完整 RPC/流或 HTTP/3 已验收。
+`WebEndpointMetadata("/opentelemetry", "grpc")` 可表达路由的范围及请求类别 `Kind`；实际服务必须挂载在同一路径。独立 [协议测试项目](test/Zongsoft.Web.Grpc.Tests.csproj) 验证规则及隔离 HTTP/2 管线，尚不代表区域反射、完整 RPC/流或 HTTP/3 已验收。
 
 优先通过宿主组合本能力；包引用用于编译，而插件加载还需要部署清单和运行产物。完整流程见[插件化入门](../../Zongsoft.Plugins/README.zh-Hans.md)。
 

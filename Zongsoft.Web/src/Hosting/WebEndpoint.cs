@@ -62,8 +62,8 @@ public sealed class WebEndpoint
 				_ => HttpProtocols.None,
 			};
 
-			var category = policies[protocol.Name ?? "http"].Category;
-			_versions[category] = this.GetProtocols(category) | version;
+			var kind = policies[protocol.Name ?? "http"].Kind;
+			_versions[kind] = this.GetProtocols(kind) | version;
 			this.HttpProtocols |= version;
 		}
 	}
@@ -82,13 +82,13 @@ public sealed class WebEndpoint
 
 	#region 公共方法
 	/// <summary>获取指定请求类别声明的 HTTP 承载版本。</summary>
-	/// <param name="category">请求类别，默认普通 HTTP。</param>
+	/// <param name="kind">请求类别，默认普通 HTTP。</param>
 	/// <returns>返回该类别的版本集合；未声明则返回 <see cref="HttpProtocols.None"/>。</returns>
-	public HttpProtocols GetProtocols(string category = "http") => category != null && _versions.TryGetValue(category, out var versions) ? versions : HttpProtocols.None;
+	public HttpProtocols GetProtocols(string kind = "http") => kind != null && _versions.TryGetValue(kind, out var versions) ? versions : HttpProtocols.None;
 	#endregion
 
 	#region 内部成员
-	internal IEnumerable<string> Categories => _versions.Keys;
+	internal IEnumerable<string> Kinds => _versions.Keys;
 	internal IPAddress IPAddress { get; }
 	internal HttpProtocols ListeningProtocols { get; set; }
 	internal bool Contains(IPAddress address, int port) => address != null && port == this.Address.Port &&

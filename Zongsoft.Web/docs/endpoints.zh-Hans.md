@@ -41,7 +41,7 @@ Kestrel:Endpoints:orders:Protocols=grpc+http2
 
 两个逻辑范围共用一个 HTTP/2 物理监听。原配置保留完整 URL；投影 URL 只含 scheme、主机及端口。证书、SNI、默认连接选项保留；相同 socket 的各项连接选项必须一致。监听重叠、同类别同范围冲突、同类别仅大小写不同的路径及明文 HTTP 多版本混用均失败。SNI 原生 Protocols 不能扩大端点声明的版本集合。
 
-`WebEndpoint` 公开配置名称、`NetworkAddress`、只读 `NetworkProtocol` 集合及所有类别的 HTTP 承载版本 `HttpProtocols`；`GetProtocols(category)` 返回指定请求类别的版本，默认类别为 `http`。集合按路径长度降序及名称序数排序。未配置项不会从服务器默认值推导能力；显式的 `EndpointDefaults:Protocols` 可作为端点配置默认值。
+`WebEndpoint` 公开配置名称、`NetworkAddress`、只读 `NetworkProtocol` 集合及所有类别的 HTTP 承载版本 `HttpProtocols`；`GetProtocols(kind)` 返回指定请求类别的版本，默认类别为 `http`。集合按路径长度降序及名称序数排序。未配置项不会从服务器默认值推导能力；显式的 `EndpointDefaults:Protocols` 可作为端点配置默认值。
 
 Web 主库内置普通 HTTP 规则。上层协议必须在创建快照前通过 `AddWebEndpointProtocol` 注册；仅有通用协议语法并不表示已安装对应运行规则。未注册、重名、独立类别重复或快照创建后追加注册均报错，不静默退回普通 HTTP。重复注册同一实例在快照创建前无副作用。`WebEndpointCollection` 的可选第二参数也可直接接收协议规则集合；它复制注册集合，规则实例应保持不可变或线程安全。
 
@@ -65,7 +65,7 @@ Web 主库内置普通 HTTP 规则。上层协议必须在创建快照前通过 
 
 ## 端点约束
 
-`WebEndpointFeature` 保存选定端点、原始路径及 `Category`。`WebEndpointMetadata` 将 ASP.NET 路由端点关联到相同的完整基路径及请求类别：
+`WebEndpointFeature` 保存选定端点、原始路径及 `Kind`。`WebEndpointMetadata` 将 ASP.NET 路由端点关联到相同的完整基路径及请求类别：
 
 ```csharp
 routes.MapGroup("/opentelemetry")
@@ -76,7 +76,7 @@ gRPC 扩展须在该组内注册服务及区域 fallback。普通未标注路由
 
 ## 协议扩展与职责
 
-`WebEndpointProtocol` 集中描述一个上层协议的名称、默认承载及请求类别。普通编码协议直接实例化即可；独立类别派生类型使用受保护构造函数指定类别，并覆盖实际需要的步骤：
+`WebEndpointProtocol` 以 `Name`、`Carrier`、`Kind` 分别描述上层协议名称、默认承载及请求类别。普通编码协议直接实例化即可；独立类别派生类型使用受保护构造函数指定 `kind`，并覆盖实际需要的步骤：
 
 | 步骤 | 契约 |
 | --- | --- |

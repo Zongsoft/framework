@@ -67,7 +67,7 @@ public static class WebEndpointExtension
 				throw WebEndpointUtility.Invalid(protocol.Name, "ProtocolInstanceRequired");
 			if(ReferenceEquals(existing, protocol))
 				return services;
-			if(existing.Name == protocol.Name || protocol.Category != "http" && existing.Category == protocol.Category)
+			if(existing.Name == protocol.Name || protocol.Kind != "http" && existing.Kind == protocol.Kind)
 				throw WebEndpointUtility.Invalid(protocol.Name, "DuplicateProtocol");
 		}
 
@@ -141,17 +141,17 @@ public static class WebEndpointExtension
 			if(!TryGetPath(target, out var path))
 				return Reject(context, StatusCodes.Status400BadRequest);
 
-			var endpoint = this.Find(context, path, protocol.Category, version);
+			var endpoint = this.Find(context, path, protocol.Kind, version);
 
 			if(endpoint != null)
 			{
-				var versions = endpoint.GetProtocols(protocol.Category);
+				var versions = endpoint.GetProtocols(protocol.Kind);
 
 				if((versions & version) == 0)
 					return Reject(context, StatusCodes.Status400BadRequest);
 
 				// 已解析路径不能穿越逻辑范围；这里只拒绝，不重新分派请求。
-				if(!ReferenceEquals(endpoint, this.Find(context, context.Request.PathBase.Add(context.Request.Path).Value, protocol.Category, version)))
+				if(!ReferenceEquals(endpoint, this.Find(context, context.Request.PathBase.Add(context.Request.Path).Value, protocol.Kind, version)))
 					return Reject(context, StatusCodes.Status404NotFound);
 
 				context.Features.Set(new WebEndpointFeature(endpoint, path, protocol));
@@ -161,14 +161,14 @@ public static class WebEndpointExtension
 			return protocol.RejectAsync(context);
 		}
 
-		private WebEndpoint Find(HttpContext context, string path, string category, HttpProtocols version)
+		private WebEndpoint Find(HttpContext context, string path, string kind, HttpProtocols version)
 		{
 			if(string.IsNullOrEmpty(path))
 				return null;
 
 			foreach(var endpoint in endpoints)
 			{
-				var versions = endpoint.GetProtocols(category);
+				var versions = endpoint.GetProtocols(kind);
 
 				if(versions != HttpProtocols.None && endpoint.Contains(context.Connection.LocalIpAddress, context.Connection.LocalPort) &&
 					(version == HttpProtocols.Http3 ? (endpoint.ListeningProtocols & HttpProtocols.Http3) != 0 : (endpoint.ListeningProtocols & HttpProtocols.Http1AndHttp2) != 0) &&
@@ -252,7 +252,7 @@ public static class WebEndpointExtension
 
 				var endpoint = candidates[i].Endpoint;
 				var metadata = endpoint.Metadata.GetMetadata<WebEndpointMetadata>();
-				var valid = metadata == null ? feature.Category == "http" : metadata.Category == feature.Category && metadata.Path == feature.Endpoint.Address.Path;
+				var valid = metadata == null ? feature.Kind == "http" : metadata.Kind == feature.Kind && metadata.Path == feature.Endpoint.Address.Path;
 				valid = valid && feature.Protocol.Accepts(endpoint, feature);
 
 				if(!valid)

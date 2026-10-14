@@ -56,7 +56,7 @@ This package supplies the Web endpoint policy for gRPC: bare `grpc` defaults to 
 
 Explicit hosts call `services.AddGrpcWebEndpoints()` before `AddWebEndpoints` creates the snapshot. Plugin service registration already performs this step automatically. A gRPC endpoint declaration fails when the extension is missing instead of starting as ordinary HTTP. Complete Plugins.Web snapshot integration and Handler-based service mounting remain subsequent implementation steps; policy registration does not change the existing root-level service mappings.
 
-`WebEndpointMetadata("/opentelemetry", "grpc")` associates a route with its scope and category; services must actually be mounted at that path. The independent [protocol test project](test/Zongsoft.Web.Grpc.Tests.csproj) verifies these rules and isolated HTTP/2 pipelines, not regional reflection, complete RPC/streaming or HTTP/3 operation.
+`WebEndpointMetadata("/opentelemetry", "grpc")` associates a route with its scope and request `Kind`; services must actually be mounted at that path. The independent [protocol test project](test/Zongsoft.Web.Grpc.Tests.csproj) verifies these rules and isolated HTTP/2 pipelines, not regional reflection, complete RPC/streaming or HTTP/3 operation.
 
 Compose this feature through the host; a package reference supplies compile-time APIs, while plugin loading also requires deployed manifests and runtime assets. See [the complete plugin workflow](../../Zongsoft.Plugins/README.md).
 

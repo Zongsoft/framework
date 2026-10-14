@@ -44,7 +44,7 @@ public class WebEndpointPipelineTest
 		Assert.Equal(expected, request.Response.StatusCode);
 
 		if(expected == 200)
-			Assert.Equal("http", request.Features.Get<WebEndpointFeature>().Category);
+			Assert.Equal("http", request.Features.Get<WebEndpointFeature>().Kind);
 	}
 
 	[Fact]
@@ -71,7 +71,7 @@ public class WebEndpointPipelineTest
 	[InlineData(false, true, "custom")]
 	[InlineData(true, false, "http")]
 	[InlineData(true, true, "custom")]
-	public async Task CustomCategoryIsSelectedBeforeLongestPathRegardlessOfRegistrationOrder(bool reverse, bool specialized, string expected)
+	public async Task CustomKindIsSelectedBeforeLongestPathRegardlessOfRegistrationOrder(bool reverse, bool specialized, string expected)
 	{
 		using var configuration = Configuration(
 			("Endpoints:ordinary:Url", "https://127.0.0.1:9000/a/deeper"), ("Endpoints:ordinary:Protocols", "http2"),
@@ -97,11 +97,11 @@ public class WebEndpointPipelineTest
 
 		await application.Build()(request);
 		Assert.Equal(200, request.Response.StatusCode);
-		Assert.Equal(expected, request.Features.Get<WebEndpointFeature>().Category);
+		Assert.Equal(expected, request.Features.Get<WebEndpointFeature>().Kind);
 	}
 
 	[Fact]
-	public void DuplicateCategoriesAndDeferredFactoriesCannotEnterSnapshot()
+	public void DuplicateKindsAndDeferredFactoriesCannotEnterSnapshot()
 	{
 		using var configuration = Configuration(("Endpoints:a:Url", "https://127.0.0.1:9000/"), ("Endpoints:a:Protocols", "http2"));
 		var services = Services();
@@ -124,7 +124,7 @@ public class WebEndpointPipelineTest
 	}
 
 	[Fact]
-	public async Task AmbiguousRequestCategoriesDoNotUseRegistrationOrder()
+	public async Task AmbiguousRequestKindsDoNotUseRegistrationOrder()
 	{
 		using var configuration = Configuration(("Endpoints:a:Url", "https://127.0.0.1:9000/"), ("Endpoints:a:Protocols", "http2"));
 		var services = Services();
@@ -178,7 +178,7 @@ public class WebEndpointPipelineTest
 		return request;
 	}
 
-	private sealed class CustomProtocol(string name, string category = null) : WebEndpointProtocol(name, "http2", category ?? name)
+	private sealed class CustomProtocol(string name, string kind = null) : WebEndpointProtocol(name, "http2", kind ?? name)
 	{
 		public override bool Matches(HttpContext context) => context.Request.Headers.ContainsKey(this.Name);
 	}

@@ -46,7 +46,7 @@ public sealed class WebEndpointFeature
 	/// <summary>获取原始请求路径，不包含查询字符串，不进行解码或点段消解。</summary>
 	public string Path { get; }
 	/// <summary>获取本次请求的类别。</summary>
-	public string Category => this.Protocol.Category;
+	public string Kind => this.Protocol.Kind;
 
 	internal WebEndpointProtocol Protocol { get; }
 }

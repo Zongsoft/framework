@@ -51,7 +51,7 @@ public sealed class WebEndpointCollection : IReadOnlyList<WebEndpoint>
 	private readonly Dictionary<string, string> _source;
 	private readonly Dictionary<string, string> _projection;
 	private readonly Dictionary<string, WebEndpointProtocol> _protocols;
-	private readonly WebEndpointProtocol[] _categories;
+	private readonly WebEndpointProtocol[] _kinds;
 	#endregion
 
 	#region 构造函数
@@ -63,7 +63,7 @@ public sealed class WebEndpointCollection : IReadOnlyList<WebEndpoint>
 		ArgumentNullException.ThrowIfNull(configuration);
 
 		_protocols = new(StringComparer.Ordinal) { ["http"] = WebEndpointProtocol.Http };
-		var categories = new Dictionary<string, WebEndpointProtocol>(StringComparer.Ordinal);
+		var kinds = new Dictionary<string, WebEndpointProtocol>(StringComparer.Ordinal);
 
 		foreach(var protocol in protocols ?? [])
 		{
@@ -71,11 +71,11 @@ public sealed class WebEndpointCollection : IReadOnlyList<WebEndpoint>
 
 			if(!_protocols.TryAdd(protocol.Name, protocol))
 				throw WebEndpointUtility.Invalid(protocol.Name, "DuplicateProtocol");
-			if(protocol.Category != "http" && !categories.TryAdd(protocol.Category, protocol))
-				throw WebEndpointUtility.Invalid(protocol.Category, "DuplicateCategory");
+			if(protocol.Kind != "http" && !kinds.TryAdd(protocol.Kind, protocol))
+				throw WebEndpointUtility.Invalid(protocol.Kind, "DuplicateKind");
 		}
 
-		_categories = categories.Values.OrderBy(protocol => protocol.Category, StringComparer.Ordinal).ToArray();
+		_kinds = kinds.Values.OrderBy(protocol => protocol.Kind, StringComparer.Ordinal).ToArray();
 		_source = Read(configuration);
 		_projection = new(_source, StringComparer.OrdinalIgnoreCase);
 
@@ -104,9 +104,9 @@ public sealed class WebEndpointCollection : IReadOnlyList<WebEndpoint>
 			{
 				if(string.Equals(address.Path, other.Address.Path, StringComparison.OrdinalIgnoreCase))
 				{
-					foreach(var category in endpoint.Categories.Intersect(other.Categories))
+					foreach(var kind in endpoint.Kinds.Intersect(other.Kinds))
 					{
-						if(address.Path != other.Address.Path || SameSocket(endpoint, other) && SharedTransport(endpoint.GetProtocols(category), other.GetProtocols(category)))
+						if(address.Path != other.Address.Path || SameSocket(endpoint, other) && SharedTransport(endpoint.GetProtocols(kind), other.GetProtocols(kind)))
 							throw WebEndpointUtility.Invalid(section.Path, "ConflictingRange");
 					}
 				}
@@ -236,7 +236,7 @@ public sealed class WebEndpointCollection : IReadOnlyList<WebEndpoint>
 	{
 		WebEndpointProtocol selected = null;
 
-		foreach(var protocol in _categories)
+		foreach(var protocol in _kinds)
 		{
 			if(!protocol.Matches(context))
 				continue;

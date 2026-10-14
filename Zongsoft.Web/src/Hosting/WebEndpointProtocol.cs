@@ -53,11 +53,11 @@ public class WebEndpointProtocol
 	/// <summary>初始化独立请求类别的协议规则。</summary>
 	/// <param name="name">上层协议名称。</param>
 	/// <param name="carrier">未指定承载时使用的 HTTP 承载。</param>
-	/// <param name="category">请求类别；同类规则共用路径范围。</param>
-	protected WebEndpointProtocol(string name, string carrier, string category)
+	/// <param name="kind">请求类别；同类规则共用路径范围。</param>
+	protected WebEndpointProtocol(string name, string carrier, string kind)
 	{
 		this.Name = WebEndpointUtility.GetName(name);
-		this.Category = WebEndpointUtility.GetName(category);
+		this.Kind = WebEndpointUtility.GetName(kind);
 
 		if(!NetworkProtocol.TryParse(carrier, out var protocol) || protocol.Name != null || !protocol.IsHttp)
 			throw new ArgumentException(null, nameof(carrier));
@@ -72,7 +72,7 @@ public class WebEndpointProtocol
 	/// <summary>获取默认 HTTP 承载。</summary>
 	public string Carrier { get; }
 	/// <summary>获取请求类别。</summary>
-	public string Category { get; }
+	public string Kind { get; }
 	#endregion
 
 	#region 公共方法
