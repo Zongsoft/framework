@@ -40,7 +40,7 @@ dotnet add package Zongsoft.Core
 - **缓存** _(`Zongsoft.Caching`)_
   > 内存缓存封装、淘汰/变更事件、缓存扫描器、分布式缓存契约，以及用于批量聚合写入的 `Spooler<T>`。
 - **通信与消息** _(`Zongsoft.Communication`、`Zongsoft.Messaging`)_
-  > 通道、监听器、发送器、接收器、请求/响应、传输器、分包器、通知器、消息队列、生产者/消费者、轮询器和队列选项抽象。
+  > [网络地址与协议值](docs/networking.zh-Hans.md)、通道、监听器、发送器、接收器、请求/响应、传输器、分包器、通知器、消息队列、生产者/消费者、轮询器和队列选项抽象。
 - **诊断与遥测** _(`Zongsoft.Diagnostics`)_
   > 日志契约、控制台/文本/XML 日志器和格式化器、诊断配置、遥测仪表、指标描述和导出器启动契约。
 - **IO 与硬件** _(`Zongsoft.IO`)_

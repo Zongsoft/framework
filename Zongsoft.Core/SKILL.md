@@ -19,6 +19,10 @@ description: 设计、修改、审查或测试 Zongsoft.Core 的公共契约与�
 - 可选能力通过 Feature、Provider、Factory 或现有扩展点表达，不用宽泛接口成员迫使所有实现伪支持。
 - 热路径优化先确认分配、锁竞争和复杂度，再用聚焦测试或基准证明。
 
+## 网络声明值
+
+[NetworkAddress 和 NetworkProtocol](docs/networking.zh-Hans.md) 提供通用网络地址及协议组合的解析、规范化和相等语义，均实现 `ISpanParsable<T>`（包含 `IParsable<T>`），公开 string 与 `ReadOnlySpan<char>` 重载。NetworkAddress 不设置应用方案白名单，保留地址族、区分大小写的 IPv6 区域及原始路径。NetworkProtocol 接受任意合法上层名称与 tcp、udp、http、http1、http2、http3 承载组合，组合顺序无关，不补全应用协议的默认承载。集合使用必须指定分隔符的 Parse/TryParse 重载，在相同上层名称内归并 HTTP 泛称，保留所有显式版本及未指定承载的名称。先通过 TemplateEvaluator 求值，再解析协议文本；应用简写、绑定路径限制及地址与协议的一致性由消费者负责。二者不执行 binding PI、不探测后端、不选择最高版本、不生成代理配置。EndpointConverter 的 EndPoint 转换及 HandlerAttribute 的元数据契约保持独立。测试为 Communication/NetworkAddressTest 与 NetworkProtocolTest。
+
 ## 服务注册与解析调用链
 
 - [ServiceCollectionExtension](src/Services/ServiceCollectionExtension.cs) 扫描程序集 ExportedTypes：优先执行 `IServiceRegistration`，否则处理 `ServiceAttribute`；通常将实现注册为 Singleton，契约指向同一实例，Members 分支读取静态成员。不要推断成 transient。

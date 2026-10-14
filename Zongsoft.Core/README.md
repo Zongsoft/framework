@@ -40,7 +40,7 @@ The package is intentionally broad: it is the common layer that higher-level _**
 - **Caching** _(`Zongsoft.Caching`)_
   > In-memory cache wrappers, eviction/change events, cache scanner, distributed-cache contract, and the `Spooler<T>` batching helper.
 - **Communication and messaging** _(`Zongsoft.Communication`, `Zongsoft.Messaging`)_
-  > Channel, listener, sender, receiver, requester/responder, transmitter, packetizer, notifier, message queue, producer/consumer, poller, and queue option abstractions.
+  > [Network address and protocol values](docs/networking.md), channel, listener, sender, receiver, requester/responder, transmitter, packetizer, notifier, message queue, producer/consumer, poller, and queue option abstractions.
 - **Diagnostics and telemetry** _(`Zongsoft.Diagnostics`)_
   > Logging contracts, console/text/XML loggers and formatters, diagnostic configuration, telemetry meters, metric descriptors, and exporter launcher contracts.
 - **IO and hardware** _(`Zongsoft.IO`)_
