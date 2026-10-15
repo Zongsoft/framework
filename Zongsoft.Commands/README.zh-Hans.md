@@ -73,6 +73,8 @@ var checksum = await CommandExecutor.Default.ExecuteAsync(
 | 配置 | `Configuration Get` | 读取应用的有效配置。 |
 | 消息 | `Messaging Queue Produce/Subscribe` | 通过已配置的消息队列发布和观察消息。 |
 
+[`Password Generate`](src/Security/Password.GenerateCommand.cs) 通过 `--factor`（`-f`）指定 `0～255` 的迭代因子，默认值为 `10`。因子为零时关闭额外迭代，仅执行一次 PBKDF2；正值对应 `factor × 65,535` 次迭代。该选项取代 `--exponent`（`-e`）。
+
 部分命令依赖其他插件提供的服务，例如调度、序号、消息和虚拟文件系统命令都会从当前应用解析相应提供程序。
 
 ## 扩展命令树

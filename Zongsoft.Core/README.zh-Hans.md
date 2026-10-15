@@ -58,6 +58,14 @@ dotnet add package Zongsoft.Core
 - **运行时辅助** _(`Zongsoft.Resources`、`Zongsoft.Scheduling`、`Zongsoft.Versioning`、`Zongsoft.Terminals`)_
   > 资源定位、触发器抽象、语义化版本解析，以及终端/控制台命令执行。
 
+## 密码哈希
+
+[`Password`](src/Security/Password.cs) 使用 PBKDF2，默认哈希算法为 SHA256。`Factor` 的范围为 `0～255`，默认值为 `10`。因子为零时关闭额外迭代，仅执行一次 PBKDF2；正值对应 `Factor × 65,535` 次迭代。默认因子 `10` 对应 655,350 次，因子 `127` 对应 8,322,945 次。实际耗时取决于硬件、哈希算法和负载。
+
+文本格式为 `algorithm#factor:nonce|value`，因子为零时可以省略 `#factor`。`Factor` 取代 `Exponent`；使用旧迭代映射生成的密码摘要需要重新生成。
+
+`Password` 实现 `ISpanParsable<Password>` 和 `IParsable<Password>`，提供字符串与字符跨度的公开 `Parse`、`TryParse` 重载。文本格式不受区域设置影响，接口的格式提供者参数被忽略。空引用或空输入表示空密码；无效文本使 `TryParse` 返回 `false` 并输出空密码，`Parse` 则抛出 `FormatException`。
+
 ## 服务注册
 
 `ServiceCollectionExtension.Register` 在整个程序集中发现 `IServiceRegistration` 实现，包括内部类和私有嵌套类。优先使用公开静态字段或属性供应的实例，否则调用公开或非公开的无参构造函数。未闭合的泛型类型，以及没有供应实例的抽象注册器不会被实例化；注册异常向调用方传播。

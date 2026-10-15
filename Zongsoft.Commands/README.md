@@ -73,6 +73,8 @@ var checksum = await CommandExecutor.Default.ExecuteAsync(
 | Configuration | `Configuration Get` | Read the effective application configuration. |
 | Messaging | `Messaging Queue Produce/Subscribe` | Publish and observe messages through a configured queue provider. |
 
+[`Password Generate`](src/Security/Password.GenerateCommand.cs) accepts `--factor` (`-f`) from `0` to `255`, defaulting to `10`. Zero disables additional iterations by performing PBKDF2 once; positive values use `factor × 65,535` iterations. This option replaces `--exponent` (`-e`).
+
 Some commands require services supplied by other plugins. Scheduling, sequence, messaging, and virtual file-system commands resolve their providers from the running application.
 
 ## Extending the Tree

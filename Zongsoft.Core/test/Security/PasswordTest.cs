@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Globalization;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 
 using Xunit;
 
@@ -7,6 +9,76 @@ namespace Zongsoft.Security.Tests;
 
 public class PasswordTest
 {
+	private const string HASH_TEXT = "AQIDBAUGBwgJCgsMDQ4PEBESExQVFhcYGRobHB0eHyA=";
+	private const string PASSWORD_TEXT = "SHA256#127:0102030405060708|" + HASH_TEXT;
+
+	[Fact]
+	public void ParsingContracts_IgnoreProviderAndPreserveFields()
+	{
+		var text = "sha256#127:0102030405060708|" + HASH_TEXT;
+		var password = Password.Parse(text);
+
+		Assert.Equal("SHA256", password.Algorithm);
+		Assert.Equal(127, password.Factor);
+		Assert.Equal(Convert.FromHexString("0102030405060708"), password.Nonce);
+		Assert.Equal(Convert.FromHexString("0102030405060708090A0B0C0D0E0F101112131415161718191A1B1C1D1E1F20"), password.Value);
+		Assert.Equal(PASSWORD_TEXT, password.ToString());
+
+		AssertParsingContract(text, password);
+	}
+
+	[Fact]
+	public void Parse_SpanSlice_OwnsDecodedData()
+	{
+		var buffer = ("prefix" + PASSWORD_TEXT + "suffix").ToCharArray();
+		var text = buffer.AsSpan(6, PASSWORD_TEXT.Length);
+		var password = Password.Parse(text);
+
+		Assert.True(Password.TryParse(text, out var result));
+		Assert.Equal(password, result);
+
+		Array.Fill(buffer, '?');
+
+		Assert.Equal(PASSWORD_TEXT, password.ToString());
+		Assert.Equal(PASSWORD_TEXT, result.ToString());
+	}
+
+	[Theory]
+	[InlineData(null)]
+	[InlineData("")]
+	public void ParsingContracts_EmptyInput_ReturnsEmptyPassword(string text)
+	{
+		Assert.Equal(default, Password.Parse(text));
+		Assert.Equal(default, Password.Parse(text.AsSpan()));
+		AssertParsingContract(text, default(Password));
+	}
+
+	[Theory]
+	[InlineData("invalid")]
+	[InlineData("SHA256:01020304")]
+	[InlineData("unsupported:01020304|" + HASH_TEXT)]
+	[InlineData("SHA256#:01020304|" + HASH_TEXT)]
+	[InlineData("SHA256#invalid:01020304|" + HASH_TEXT)]
+	[InlineData("SHA256#-1:01020304|" + HASH_TEXT)]
+	[InlineData("SHA256#256:01020304|" + HASH_TEXT)]
+	[InlineData("SHA256:|" + HASH_TEXT)]
+	[InlineData("SHA256:0|" + HASH_TEXT)]
+	[InlineData("SHA256:GG|" + HASH_TEXT)]
+	[InlineData("SHA256:01020304|invalid!")]
+	[InlineData("SHA256:01020304|")]
+	[InlineData("SHA256:01020304|AQIDBA==")]
+	public void ParsingContracts_InvalidInput_ReturnsFalseAndParseThrows(string text)
+	{
+		Assert.False(Password.TryParse(text, out var stringResult));
+		Assert.Equal(default, stringResult);
+		Assert.False(Password.TryParse(text.AsSpan(), out var spanResult));
+		Assert.Equal(default, spanResult);
+		Assert.Throws<FormatException>(() => Password.Parse(text));
+		Assert.Throws<FormatException>(() => Password.Parse(text.AsSpan()));
+
+		AssertInvalidParsingContract<Password>(text);
+	}
+
 	[Fact]
 	public void EqualParsedValues_HaveContentHashAndWorkAsDictionaryKeys()
 	{
@@ -44,7 +116,7 @@ public class PasswordTest
 		Assert.True(empty.IsEmpty);
 		Assert.False(empty.HasValue);
 		Assert.Null(empty.Algorithm);
-		Assert.Equal(0, empty.Exponent);
+		Assert.Equal(0, empty.Factor);
 		Assert.True(empty.Nonce.IsEmpty);
 		Assert.True(empty.Value.IsEmpty);
 
@@ -73,6 +145,58 @@ public class PasswordTest
 			Assert.Equal(32, result.Value.Length);
 			Assert.True(result.Verify(PASSWORD));
 		});
+
+		Assert.Equal(10, results[0].Factor);
+		Assert.Equal(0, results[1].Factor);
+		Assert.Equal(10, results[2].Factor);
+		Assert.Equal(0, results[3].Factor);
+	}
+
+	[Theory]
+	[InlineData(int.MinValue, 0, 1)]
+	[InlineData(0, 0, 1)]
+	[InlineData(1, 1, 65_535)]
+	[InlineData(2, 2, 131_070)]
+	[InlineData(10, 10, 655_350)]
+	[InlineData(127, 127, 8_322_945)]
+	[InlineData(255, 255, 16_711_425)]
+	[InlineData(int.MaxValue, 255, 16_711_425)]
+	public void Generate_Factor_UsesLinearIterations(int factor, int expectedFactor, int iterations)
+	{
+		const string PASSWORD = "correct horse";
+		byte[] nonce = [1, 2, 3, 4, 5, 6, 7, 8];
+		var expected = Rfc2898DeriveBytes.Pbkdf2(PASSWORD, nonce, iterations, HashAlgorithmName.SHA256, 32);
+
+		var password = Password.Generate(PASSWORD, nonce, factor: factor);
+
+		Assert.Equal(expectedFactor, password.Factor);
+		Assert.Equal("SHA256", password.Algorithm);
+		Assert.Equal(nonce, password.Nonce);
+		Assert.Equal(expected, password.Value);
+	}
+
+	[Theory]
+	[InlineData(0)]
+	[InlineData(255)]
+	public void Parse_Factor_RoundTripsTextAndBytesAndVerifies(int factor)
+	{
+		const string PASSWORD = "correct horse";
+		byte[] nonce = [1, 2, 3, 4, 5, 6, 7, 8];
+		var password = Password.Generate(PASSWORD, nonce, factor);
+		var text = password.ToString();
+		byte[] data = password;
+
+		Assert.StartsWith(factor == 0 ? "SHA256:" : "SHA256#255:", text);
+		Assert.Equal(factor, data[3]);
+		Assert.True(Password.TryParse(text, out var fromText));
+		Assert.True(Password.TryParse(data, out var fromData));
+		Assert.Equal(factor, fromText.Factor);
+		Assert.Equal(factor, fromData.Factor);
+		Assert.Equal(password, fromText);
+		Assert.Equal(password, fromData);
+		Assert.True(fromText.Verify(PASSWORD));
+		Assert.True(fromData.Verify(PASSWORD));
+		Assert.False(fromData.Verify(PASSWORD + "!"));
 	}
 
 	[Fact]
@@ -87,7 +211,7 @@ public class PasswordTest
 		Assert.True(result.HasValue);
 		Assert.False(result.IsEmpty);
 		Assert.Equal("SHA1", result.Algorithm);
-		Assert.Equal(0, result.Exponent);
+		Assert.Equal(0, result.Factor);
 		Assert.False(result.Nonce.IsEmpty);
 		Assert.False(result.Value.IsEmpty);
 		Assert.Equal(20, result.Value.Length);
@@ -108,7 +232,7 @@ public class PasswordTest
 		Assert.True(result.HasValue);
 		Assert.False(result.IsEmpty);
 		Assert.Equal("SHA256", result.Algorithm);
-		Assert.Equal(12, result.Exponent);
+		Assert.Equal(12, result.Factor);
 		Assert.False(result.Nonce.IsEmpty);
 		Assert.False(result.Value.IsEmpty);
 		Assert.Equal(32, result.Value.Length);
@@ -131,7 +255,7 @@ public class PasswordTest
 		Assert.True(result.HasValue);
 		Assert.False(result.IsEmpty);
 		Assert.Equal("SHA384", result.Algorithm);
-		Assert.Equal(12, result.Exponent);
+		Assert.Equal(12, result.Factor);
 		Assert.False(result.Nonce.IsEmpty);
 		Assert.False(result.Value.IsEmpty);
 		Assert.Equal(48, result.Value.Length);
@@ -152,7 +276,7 @@ public class PasswordTest
 		Assert.True(result.HasValue);
 		Assert.False(result.IsEmpty);
 		Assert.Equal("SHA512", result.Algorithm);
-		Assert.Equal(12, result.Exponent);
+		Assert.Equal(12, result.Factor);
 		Assert.False(result.Nonce.IsEmpty);
 		Assert.False(result.Value.IsEmpty);
 		Assert.Equal(64, result.Value.Length);
@@ -171,28 +295,28 @@ public class PasswordTest
 		Assert.True(empty.Verify(string.Empty));
 
 		string password = Common.Randomizer.GenerateString();
-		var result = Password.Generate(password, "SHA1");
+		var result = Password.Generate(password, 0, "SHA1");
 		Assert.True(result.Verify(password));
 		Assert.False(result.Verify(null));
 		Assert.False(result.Verify(" "));
 		Assert.False(result.Verify(string.Empty));
 		Assert.False(result.Verify(password + '!'));
 
-		result = Password.Generate(password, "SHA256");
+		result = Password.Generate(password, 0, "SHA256");
 		Assert.True(result.Verify(password));
 		Assert.False(result.Verify(null));
 		Assert.False(result.Verify(" "));
 		Assert.False(result.Verify(string.Empty));
 		Assert.False(result.Verify(password + '!'));
 
-		result = Password.Generate(password, "SHA384");
+		result = Password.Generate(password, 0, "SHA384");
 		Assert.True(result.Verify(password));
 		Assert.False(result.Verify(null));
 		Assert.False(result.Verify(" "));
 		Assert.False(result.Verify(string.Empty));
 		Assert.False(result.Verify(password + '!'));
 
-		result = Password.Generate(password, "SHA512");
+		result = Password.Generate(password, 0, "SHA512");
 		Assert.True(result.Verify(password));
 		Assert.False(result.Verify(null));
 		Assert.False(result.Verify(" "));
@@ -221,19 +345,19 @@ public class PasswordTest
 		Assert.Equal("SHA1", newer.Algorithm);
 		Assert.True(newer.Verify(PASSWORD));
 
-		older = Password.Generate(PASSWORD);
+		older = Password.Generate(PASSWORD, 0);
 		Assert.True(Password.TryParse(older.ToString(), out newer));
 		Assert.Equal(older, newer);
 
-		older = Password.Generate(PASSWORD, "SHA256");
+		older = Password.Generate(PASSWORD, 0, "SHA256");
 		Assert.True(Password.TryParse(older.ToString(), out newer));
 		Assert.Equal(older, newer);
 
-		older = Password.Generate(PASSWORD, "SHA384");
+		older = Password.Generate(PASSWORD, 0, "SHA384");
 		Assert.True(Password.TryParse(older.ToString(), out newer));
 		Assert.Equal(older, newer);
 
-		older = Password.Generate(PASSWORD, "SHA512");
+		older = Password.Generate(PASSWORD, 0, "SHA512");
 		Assert.True(Password.TryParse(older.ToString(), out newer));
 		Assert.Equal(older, newer);
 	}
@@ -264,7 +388,7 @@ public class PasswordTest
 
 		const string PASSWORD = "1234567890";
 
-		password = Password.Generate(PASSWORD);
+		password = Password.Generate(PASSWORD, 0);
 		Assert.True(password.HasValue);
 		Assert.False(password.IsEmpty);
 		Assert.NotNull(password.Algorithm);
@@ -277,7 +401,7 @@ public class PasswordTest
 		Assert.True(result.HasValue);
 		Assert.False(result.IsEmpty);
 		Assert.Equal(password.Algorithm, result.Algorithm);
-		Assert.Equal(password.Exponent, result.Exponent);
+		Assert.Equal(password.Factor, result.Factor);
 		Assert.Equal(password, result);
 		Assert.Equal((byte[])password, (byte[])result);
 
@@ -293,7 +417,7 @@ public class PasswordTest
 		var text = Common.Convert.ConvertValue<string>(default(Password));
 		Assert.Null(text);
 
-		text = Common.Convert.ConvertValue<string>(Password.Generate(PASSWORD));
+		text = Common.Convert.ConvertValue<string>(Password.Generate(PASSWORD, 0));
 		Assert.NotNull(text);
 		Assert.NotEmpty(text);
 		Assert.True(Password.TryParse(text, out var result1));
@@ -307,7 +431,7 @@ public class PasswordTest
 		var data = Common.Convert.ConvertValue<byte[]>(default(Password));
 		Assert.Null(data);
 
-		data = Common.Convert.ConvertValue<byte[]>(Password.Generate(PASSWORD));
+		data = Common.Convert.ConvertValue<byte[]>(Password.Generate(PASSWORD, 0));
 		Assert.NotNull(data);
 		Assert.NotEmpty(data);
 		Assert.True(Password.TryParse(data, out var result2));
@@ -328,7 +452,7 @@ public class PasswordTest
 		{
 			UserId = 100,
 			UserName = "Administrator",
-			Password = Password.Generate(PASSWORD),
+			Password = Password.Generate(PASSWORD, 0),
 		};
 
 		var json = Serialization.Serializer.Json.Serialize(cipher);
@@ -340,6 +464,39 @@ public class PasswordTest
 		Assert.True(result.Password.HasValue);
 		Assert.False(result.Password.IsEmpty);
 		Assert.True(result.Password.Verify(PASSWORD));
+	}
+
+	private static void AssertParsingContract<T>(string text, T expected) where T : ISpanParsable<T>
+	{
+		foreach(var provider in new IFormatProvider[] { null, CultureInfo.GetCultureInfo("tr-TR"), CultureInfo.GetCultureInfo("ar-SA"), new UnusedProvider() })
+		{
+			Assert.Equal(expected, ParseString<T>(text, provider));
+			Assert.True(T.TryParse(text, provider, out var stringResult));
+			Assert.Equal(expected, stringResult);
+			Assert.Equal(expected, T.Parse(text.AsSpan(), provider));
+			Assert.True(T.TryParse(text.AsSpan(), provider, out var spanResult));
+			Assert.Equal(expected, spanResult);
+		}
+	}
+
+	private static void AssertInvalidParsingContract<T>(string text) where T : ISpanParsable<T>
+	{
+		foreach(var provider in new IFormatProvider[] { null, CultureInfo.GetCultureInfo("tr-TR"), CultureInfo.GetCultureInfo("ar-SA"), new UnusedProvider() })
+		{
+			Assert.False(T.TryParse(text, provider, out var stringResult));
+			Assert.Equal(default, stringResult);
+			Assert.False(T.TryParse(text.AsSpan(), provider, out var spanResult));
+			Assert.Equal(default, spanResult);
+			Assert.Throws<FormatException>(() => ParseString<T>(text, provider));
+			Assert.Throws<FormatException>(() => T.Parse(text.AsSpan(), provider));
+		}
+	}
+
+	private static T ParseString<T>(string text, IFormatProvider provider) where T : IParsable<T> => T.Parse(text, provider);
+
+	private sealed class UnusedProvider : IFormatProvider
+	{
+		public object GetFormat(Type formatType) => throw new InvalidOperationException();
 	}
 
 	private class Cipher

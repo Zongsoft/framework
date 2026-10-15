@@ -58,6 +58,14 @@ The package is intentionally broad: it is the common layer that higher-level _**
 - **Runtime helpers** _(`Zongsoft.Resources`, `Zongsoft.Scheduling`, `Zongsoft.Versioning`, `Zongsoft.Terminals`)_
   > Resource lookup, trigger abstractions, semantic version parsing, and terminal/console command execution.
 
+## Password Hashing
+
+[`Password`](src/Security/Password.cs) uses PBKDF2 with SHA256 by default. Its `Factor` ranges from `0` to `255` and defaults to `10`. Zero disables additional iterations by performing PBKDF2 once; positive factors map to `Factor × 65,535` iterations. The default factor `10` means 655,350 iterations; factor `127` means 8,322,945 iterations. Execution time depends on the hardware, hash algorithm, and load.
+
+The text format is `algorithm#factor:nonce|value`; `#factor` may be omitted when the factor is zero. `Factor` replaces `Exponent`; hashes generated with earlier iteration mappings must be regenerated.
+
+`Password` implements `ISpanParsable<Password>` and `IParsable<Password>`, with public `Parse` and `TryParse` overloads for strings and character spans. The text format is culture-independent and the interface's format provider is ignored. Null or empty input represents an empty password. Invalid text returns `false` and an empty result from `TryParse`; `Parse` throws `FormatException` instead.
+
 ## Service Registration
 
 `ServiceCollectionExtension.Register` discovers `IServiceRegistration` implementations throughout an assembly, including internal classes and private nested classes. It uses an instance supplied by a public static field or property first; otherwise, it invokes a public or non-public parameterless constructor. Open generic types and abstract registrars without a supplied instance are not instantiated. Registration failures propagate to the caller.

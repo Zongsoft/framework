@@ -36,12 +36,12 @@ using Zongsoft.Components;
 namespace Zongsoft.Security.Commands;
 
 [CommandOption(ALGORITHM_OPTION, 'a', typeof(string), "SHA1")]
-[CommandOption(EXPONENT_OPTION, 'e', typeof(byte), 10)]
+[CommandOption(FACTOR_OPTION, 'f', typeof(byte), 10)]
 [CommandOption(NONCE_OPTION, 'n', typeof(string))]
 public class PasswordGenerateCommand : CommandBase<CommandContext>
 {
 	private const string ALGORITHM_OPTION = "algorithm";
-	private const string EXPONENT_OPTION = "exponent";
+	private const string FACTOR_OPTION = "factor";
 	private const string NONCE_OPTION = "nonce";
 
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
@@ -80,7 +80,7 @@ public class PasswordGenerateCommand : CommandBase<CommandContext>
 			return Password.Generate(
 				value,
 				nonce,
-				options.GetValue<int>(EXPONENT_OPTION),
+				options.GetValue<int>(FACTOR_OPTION),
 				options.GetValue<string>(ALGORITHM_OPTION));
 		}
 	}
