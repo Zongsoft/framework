@@ -20,20 +20,57 @@
 dotnet add package Zongsoft.Externals.Garnet
 ```
 
-Deploy the plugin and option artifacts. A named server is configured below `/Externals/Garnet`:
+Deploy the plugin and option artifacts. The packaged plugin selects the following server with `setting="default"`; the binding reads only that entry:
 
 ```xml
-<option path="/Externals/Garnet">
-	<server server.name="cache"
-	        value="bind=127.0.0.1;port=6379;auth=Password;password=REPLACE_ME;lua=true" />
-</option>
+<?xml version="1.0" encoding="utf-8" ?>
+
+<?binding name="garnet"
+	path="Externals/Garnet/default"
+	template="tcp://${option.Value['address']}"
+	protocols="tcp"
+	required="true"?>
+
+<options>
+	<option path="/Externals/Garnet">
+		<server server.name="default"
+			value="address=127.0.0.1:6379;auth=Password;password=REPLACE_ME;lua=true" />
+	</option>
+</options>
 ```
 
-Start a `GarnetServer("cache")` through the application worker lifecycle. Its `Setting` property can select a setting independently of the worker name. Relative path-valued options resolve from the adapter assembly directory; `~/` resolves from the application root.
+`GarnetServer.Setting` selects a named entry and falls back to the worker name only when the property is unspecified. A missing entry fails startup without choosing another preset or the SDK's default listener. Additional entries do not start automatically. When changing the plugin's `Setting`, update its binding `path` to select the same entry. `Setting` can only change while the worker is stopped.
+
+Each instance configures one IP and a fixed port through `address`, such as `address=127.0.0.1:6379` or `address=[::1]:6379`. Ports range from 1 through 65535. The adapter converts this value into the native Garnet `bind` and `port` arguments; the binding template reads the same address. Setting keys are case-insensitive. DNS names, address lists, wildcards, paths, query parameters, random ports, and separate `bind/port` settings are not accepted. Choose a reachable listening address explicitly for connections across containers.
+
+`protocols="tcp"` is a constant template; no tool-only option is forwarded to Garnet. Bindings publish TCP connections. With `tls/EnableTLS`, Garnet terminates TLS and the proxy passes the connection through. Cluster announcement options are not listening addresses. This first static binding implementation rejects Unix sockets and native `config-import-path`, including its alias, to prevent additional configuration sources from introducing undeclared listeners. Use framework `<?import ... ?>` directives to compose files into the same option tree.
+
+Relative path-valued options resolve from the adapter assembly directory; `~/` resolves from the current application root. This includes `cert-file-name/CertificateFileName` and `issuer-certificate-path/IssuerCertificatePath`. Enable TLS through Garnet options such as `tls=true` and `cert-file-name=~/certificates/garnet.pfx`.
+
+## Typed Configuration
+
+The [settings object](src/Configuration/GarnetConnectionSettings.cs) and [driver](src/Configuration/GarnetConnectionSettingsDriver.cs) use `ConnectionSettingsBase<TDriver>` and `ConnectionSettingsDriver<TSettings>`. The plugin registers the `Garnet` driver at `/Workbench/Configuration/ConnectionSettings/Drivers`. The server selects its named settings and uses this driver to create the typed configuration.
+
+```csharp
+var settings = GarnetConnectionSettingsDriver.Instance.GetSettings(
+	"default", "address=127.0.0.1:6379;tls=true;cert-file-name=~/certificates/garnet.pfx;");
+
+settings.EnableAOF = true;
+settings.CommitFrequency = TimeSpan.FromSeconds(1);
+settings.CheckpointDirectory = "~/.garnet";
+```
+
+Import `Zongsoft.Externals.Garnet.Configuration`. Common properties cover Address, AuthenticationMode, Password, TLS and certificates, AOF and its commit interval, Lua, recovery, checkpoints, and quiet mode. Native and friendly names identify the same setting; repeated keys and aliases follow the framework's last-value-wins rule. Other native Garnet parameters remain available without requiring a property for every SDK option.
+
+AuthenticationMode uses the SDK enum `GarnetAuthenticationMode?`, with NoAuth, Password, Aad, ACL, and AclWithAad. Configuration text remains `auth=Password`; runtime arguments use the canonical enum name. An unspecified value remains null rather than the adapter inserting NoAuth.
+
+Duration properties use `TimeSpan?`: `CommitFrequency` maps to integer milliseconds and `CertificateRefreshFrequency` maps to integer seconds. Text may use units, such as `CommitFrequency=1s` and `CertificateRefreshFrequency=1m`; unitless integers retain the corresponding native unit. Values must be exactly representable in that unit and within the native integer range. Zero and the commit interval of -1ms retain their native meanings. Boolean and duration properties are nullable: the adapter does not insert SDK defaults when no explicit value is supplied. Prefer explicit booleans such as `tls=true` and `quiet=true`. A native valueless flag such as `quiet` remains in the dictionary for the SDK to interpret. Address has no default and must be specified before startup.
+
+The settings object owns address validation, native argument conversion, and path resolution. Argument conversion is internal to the assembly; GarnetServer owns settings selection and instance lifecycle.
 
 ## Lifecycle and Persistence
 
-Starting creates the underlying `Garnet.GarnetServer` and calls `Start`; stopping disposes it. The adapter maps friendly names such as `Address`, `EnableAOF`, `CheckpointDir`, and `EnableTLS` to Garnet options while passing native option names through.
+Starting creates the underlying `Garnet.GarnetServer` and saves it only after `Start` succeeds. Cancellation or startup failure disposes the created instance; stopping or disposing the worker clears and disposes the server. Startup failures are reported through `StateChanged`, with the worker returning to `Stopped`. Friendly names such as `EnableAOF`, `CheckpointDirectory`, and `EnableTLS` map to native options. Process-level commands such as `help/version` are rejected.
 
 > 💡 Redis protocol compatibility does not imply that every Redis command, module, persistence mode, or client behavior is identical. Validate the exact commands used by the consuming application.
 

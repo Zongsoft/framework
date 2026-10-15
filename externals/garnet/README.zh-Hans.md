@@ -20,20 +20,57 @@
 dotnet add package Zongsoft.Externals.Garnet
 ```
 
-请部署插件和选项产物。在 `/Externals/Garnet` 下配置具名服务器：
+请部署插件和选项产物。随包插件以 `setting="default"` 选择以下服务器，绑定声明只读取这一项：
 
 ```xml
-<option path="/Externals/Garnet">
-	<server server.name="cache"
-	        value="bind=127.0.0.1;port=6379;auth=Password;password=REPLACE_ME;lua=true" />
-</option>
+<?xml version="1.0" encoding="utf-8" ?>
+
+<?binding name="garnet"
+	path="Externals/Garnet/default"
+	template="tcp://${option.Value['address']}"
+	protocols="tcp"
+	required="true"?>
+
+<options>
+	<option path="/Externals/Garnet">
+		<server server.name="default"
+			value="address=127.0.0.1:6379;auth=Password;password=REPLACE_ME;lua=true" />
+	</option>
+</options>
 ```
 
-通过应用 Worker 生命周期启动 `GarnetServer("cache")`。它的 `Setting` 属性可独立于 Worker 名称选择设置。相对路径选项从适配器程序集目录解析，`~/` 从应用根目录解析。
+`GarnetServer.Setting` 选择具名设置；未指定时使用工作器名称。配置项缺失会使启动失败，不回退到其它预设或 SDK 默认监听；额外定义的设置不会自动启动。更改插件的 `Setting` 时，应同时调整本插件 binding 的 `path`，使两者指向同一项。只能在工作器停止后修改 `Setting`。
+
+每个实例通过 `address` 配置单个 IP 和固定端口，例如 `address=127.0.0.1:6379` 或 `address=[::1]:6379`；端口为 1 至 65535。适配器将它转换为 Garnet 所需的 `bind` 和 `port` 参数，绑定模板直接使用同一地址。配置键不区分大小写。不接受 DNS、多地址列表、通配符、路径、查询参数或随机端口，也不允许另外指定 `bind/port`。跨容器访问时须明确选择可达的监听地址。
+
+`protocols="tcp"` 是常量模板，不向 Garnet 设置中添加工具专用参数。绑定按 TCP 发布，启用 `tls/EnableTLS` 时由 Garnet 终止 TLS，代理保持连接透传。`cluster-announce-ip/port` 是集群通告值，不作为绑定来源。首版静态绑定不接受 Unix socket 或原生 `config-import-path`（包括友好别名），避免其它配置来源增加未声明监听；需要拆分文件时使用框架的 `<?import ... ?>` 合并到同一选项树。
+
+相对路径选项从适配器程序集目录解析，`~/` 从当前应用根目录解析；证书文件 `cert-file-name/CertificateFileName`、`issuer-certificate-path/IssuerCertificatePath` 同样遵守此规则。`tls=true` 配合 `cert-file-name=~/certificates/garnet.pfx` 等 Garnet 原生选项启用 TLS。
+
+## 类型化配置
+
+[配置对象](src/Configuration/GarnetConnectionSettings.cs) 与 [配置驱动](src/Configuration/GarnetConnectionSettingsDriver.cs) 沿用 `ConnectionSettingsBase<TDriver>` / `ConnectionSettingsDriver<TSettings>`。插件将 `Garnet` 驱动注册到 `/Workbench/Configuration/ConnectionSettings/Drivers`；服务器按名称取得普通设置后，由该驱动创建类型化配置。
+
+```csharp
+var settings = GarnetConnectionSettingsDriver.Instance.GetSettings(
+	"default", "address=127.0.0.1:6379;tls=true;cert-file-name=~/certificates/garnet.pfx;");
+
+settings.EnableAOF = true;
+settings.CommitFrequency = TimeSpan.FromSeconds(1);
+settings.CheckpointDirectory = "~/.garnet";
+```
+
+引用命名空间 `Zongsoft.Externals.Garnet.Configuration`。常用属性包括 Address、AuthenticationMode、Password、TLS 与证书、AOF 与提交间隔、Lua、恢复、检查点及静默模式；原生名称和友好名称指向同一设置项。同名键及别名按框架约定后值覆盖前值。未声明的其它 Garnet 原生参数仍保留，不要求为每个 SDK 参数增加属性。
+
+AuthenticationMode 直接采用 Garnet SDK 的 `GarnetAuthenticationMode?`，包括 NoAuth、Password、Aad、ACL、AclWithAad；配置文本仍使用 `auth=Password`，运行端由枚举生成规范参数。未指定时保持 null，不在适配器中补成 NoAuth。
+
+时长属性采用 `TimeSpan?`：`CommitFrequency` 转为整数毫秒，`CertificateRefreshFrequency` 转为整数秒。配置文本可以写成 `CommitFrequency=1s`、`CertificateRefreshFrequency=1m`；无单位整数仍按对应原生单位解释。值必须能用该单位精确表示且处于原生整数范围内；零值和提交间隔 -1ms 保留原生语义。布尔和时长属性采用可空类型，表示没有显式值时不由框架补充 SDK 默认值。建议布尔选项写成 `tls=true`、`quiet=true`；原生无值标志 `quiet` 仍保留在字典中并交给 SDK 解释。Address 不提供默认值，启动时必须明确指定。
+
+地址验证、原生参数转换及路径解析由配置对象承担，参数转换方法仅供程序集内的服务器调用；GarnetServer 负责选择配置和管理实例生命周期。
 
 ## 生命周期与持久化
 
-启动会创建底层 `Garnet.GarnetServer` 并调用 `Start`，停止则释放它。适配器把 `Address`、`EnableAOF`、`CheckpointDir`、`EnableTLS` 等友好名称映射为 Garnet 选项，同时透传原生选项名。
+启动会创建底层 `Garnet.GarnetServer` 并调用 `Start`，成功后才保存实例；取消或启动失败时释放已创建的实例，停止和释放工作器会清空并释放服务器。启动失败通过工作器 `StateChanged` 事件报告异常并回到 `Stopped`。适配器把 `EnableAOF`、`CheckpointDirectory`、`EnableTLS` 等友好名称映射为 Garnet 选项，同时透传原生选项名；拒绝 `help/version` 等进程级命令。
 
 > 💡 兼容 Redis 协议不表示全部 Redis 命令、模块、持久化模式或客户端行为完全相同。请验证应用实际使用的命令集。
 

@@ -12,6 +12,10 @@
 		</assemblies>
 	</manifest>
 
+	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
+		<object name="Garnet" value="{static:Zongsoft.Externals.Garnet.Configuration.GarnetConnectionSettingsDriver.Instance, Zongsoft.Externals.Garnet}" />
+	</extension>
+
 	<extension path="/Workbench/Startup">
 		<object name="GarnetServer" setting="default" type="Zongsoft.Externals.Garnet.GarnetServer, Zongsoft.Externals.Garnet" />
 	</extension>

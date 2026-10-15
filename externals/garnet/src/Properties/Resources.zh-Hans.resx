@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+	<resheader name="version"><value>2.0</value></resheader>
+	<resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+	<resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+	<data name="GarnetServer.SettingImmutable.Message" xml:space="preserve">
+		<value>只能在服务器停止时更改设置名称。</value>
+	</data>
+	<data name="GarnetServer.SettingMissing.Message" xml:space="preserve">
+		<value>未找到名为“{0}”的 Garnet 服务器设置。</value>
+	</data>
+	<data name="GarnetConnectionSettings.AddressInvalid.Message" xml:space="preserve">
+		<value>Garnet 服务器设置“{0}”必须在 address 中指定单个 IP 地址和 1 至 65535 的固定端口，例如 127.0.0.1:6379 或 [::1]:6379。</value>
+	</data>
+	<data name="GarnetConnectionSettings.OptionUnsupported.Message" xml:space="preserve">
+		<value>内嵌服务器的静态 TCP 配置不支持 Garnet 选项“{0}”。</value>
+	</data>
+	<data name="GarnetConnectionSettings.DurationInvalid.Message" xml:space="preserve">
+		<value>Garnet 时长设置“{0}”无法用要求的单位精确表示，或超出支持的范围。</value>
+	</data>
+</root>
