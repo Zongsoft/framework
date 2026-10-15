@@ -28,16 +28,64 @@
  */
 
 using System;
+using System.Linq;
 using System.Globalization;
+using System.Collections.Generic;
+
+using Zongsoft.Communication;
 
 namespace Zongsoft.Web.Hosting;
 
 internal static class WebEndpointUtility
 {
+	public static Dictionary<string, WebEndpointProtocol> GetProtocols(IEnumerable<WebEndpointProtocol> protocols)
+	{
+		var result = new Dictionary<string, WebEndpointProtocol>(StringComparer.Ordinal)
+		{
+			["http"] = WebEndpointProtocol.Http,
+		};
+
+		foreach(var protocol in protocols ?? [])
+		{
+			ArgumentNullException.ThrowIfNull(protocol);
+
+			if(!result.TryAdd(protocol.Name, protocol))
+				throw Invalid(protocol.Name, "DuplicateProtocol");
+		}
+
+		return result;
+	}
+
+	public static NetworkProtocol[] Normalize(IEnumerable<NetworkProtocol> declarations, IReadOnlyDictionary<string, WebEndpointProtocol> policies, string path, bool requireRegistration)
+	{
+		var protocols = declarations.ToArray();
+
+		for(var i = 0; i < protocols.Length; i++)
+		{
+			if(policies.TryGetValue(protocols[i].Name ?? "http", out var policy))
+			{
+				var normalized = policy.Normalize(protocols[i]);
+				if(normalized.IsEmpty || normalized.Name != protocols[i].Name)
+					throw Invalid(path, "UnsupportedProtocols");
+
+				protocols[i] = normalized;
+			}
+			else if(requireRegistration)
+				throw Invalid(path, "UnregisteredProtocol");
+		}
+
+		protocols = NetworkProtocol.Parse(string.Join(',', protocols), ',');
+		if(protocols.Any(protocol => !protocol.IsHttp || protocol.HttpVersion == 0))
+			throw Invalid(path, "UnsupportedProtocols");
+
+		return protocols;
+	}
+
 	public static string GetName(string name)
 	{
 		if(!Zongsoft.Communication.NetworkProtocol.TryParse(name, out var protocol) ||
-		   protocol.Carrier != null && protocol.Carrier != "http" || protocol.Name != null && protocol.Carrier != null)
+		   protocol.Carrier != null && protocol.Carrier != "http" ||
+		   protocol.Name != null && protocol.Carrier != null)
 			throw new ArgumentException(null, nameof(name));
 
 		return protocol.Name ?? "http";
@@ -77,10 +125,6 @@ internal static class WebEndpointUtility
 	}
 
 	public static InvalidOperationException Invalid(string path, string reason) => new(string.Format(CultureInfo.CurrentCulture, Properties.Resources.WebEndpoint_Invalid_Message, path, reason));
-	public static bool Matches(string prefix, string path) => path.StartsWith(prefix, StringComparison.Ordinal) &&
-	(
-		prefix.EndsWith('/') ||
-		path.Length == prefix.Length ||
-		path[prefix.Length] == '/'
-	);
+	public static bool SameSocket(WebEndpoint left, WebEndpoint right) => left.Address.Port == right.Address.Port &&
+		(left.IPAddress == null ? right.IPAddress == null && left.Address.Host == right.Address.Host : left.IPAddress.Equals(right.IPAddress));
 }

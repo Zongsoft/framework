@@ -21,8 +21,8 @@ Use this package when a web application is assembled from Zongsoft plugins. Use 
 ```mermaid
 flowchart LR
 	A[Application.Web] --> B[WebApplicationBuilder]
-	B --> C[Load web.option]
-	C --> D[Build service provider]
+	B --> C[Load host and plugin configuration]
+	C --> D[Build the service provider]
 	D --> E[Initialize WebApplicationContext]
 	E --> F[Load plugin web parts]
 	F --> G[Map controllers and SignalR hubs]
@@ -134,6 +134,53 @@ Prepare a compatible host, dedicated initialized database, `Discussions` connect
 - initialization of web parts contributed by loaded plugins.
 
 🚨 Do not retain request-scoped objects in singleton plugin components. `HttpContext`, principals, sessions, and scoped services are only valid for the active request and may be accessed concurrently by different requests.
+
+## Listener Configuration and Request Ranges
+
+`WebApplicationBuilder.Build()` loads plugin configuration, registers services and builds the host. `Application.Web()` also loads `web.option` and composes the application pipeline. During the existing service scan, Plugins.Web's `WebEndpointExtension.Registration` automatically enables endpoint conversion, request scopes and change monitoring when a Web host has entries under `Kestrel:Endpoints`. No change to the hosting program is required:
+
+```csharp
+var app = Zongsoft.Web.Application.Web(args);
+await app.RunAsync();
+```
+
+The registrar uses the existing `IServiceRegistration` contract. It does not run for non-Web hosts, and skips hosts without endpoint entries or with an already registered `WebEndpointCollection`. Without declarations, native `urls`/`http_ports`/`https_ports`, `app.Urls` and code `Listen(...)` retain ASP.NET Core behavior. Detection uses the configuration available during service scanning; endpoint declarations added after startup require a restart. The binding processing instruction declares exposure to deployment tools; runtime registration consumes endpoint configuration.
+
+Automatic registration calls `AddWebEndpoints(configuration).AddWebEndpointMonitoring()`. These methods register factories and callbacks without creating a temporary provider or capturing a snapshot. The final provider creates the snapshot on first consumption, including protocol policies registered later in the service scan. Invalid declarations or plugin conflicts fail when resolving endpoint/server options or starting the host; do not rely on `Build()` throwing immediately.
+
+```xml
+<!-- web.option, explicitly imported web-default.option or a plugin entry -->
+<options>
+	<option path="Kestrel">
+		<endpoints>
+			<endpoint endpoint.name="api" url="http://127.0.0.1:8069/api" protocols="http1" />
+		</endpoints>
+	</option>
+</options>
+```
+
+The extension calls the independent `KestrelUtility.Convert` to produce logical endpoints and separate configuration from the same input. Source URLs retain `/api`, physical URLs omit it, and logical scope remains `/api`. Certificates, SNI and other server options follow the [Web endpoint contract](../Zongsoft.Web/docs/endpoints.md). Both configuration and request scopes are startup snapshots; DI owns the projected configuration.
+
+Different values for the same server key across plugins fail with the key and two entry paths, without values. Entry paths do not identify individual import fragments. Explicit imports within one plugin may override values; equal cross-plugin values are allowed. These checks belong to the endpoint extension, whether registered automatically or explicitly, and do not change generic plugin configuration rules.
+
+Projection uses `PostConfigure` with reload disabled. Do not manually `Load()` the original path-bearing configuration beforehand. `ConfigureKestrel` callbacks run before post-configuration. Other `PostConfigure<KestrelServerOptions>` callbacks retain normal registration order: register them before this extension to avoid replacing its projection afterwards. The extension neither wraps listener factories nor prohibits native address sources. Kestrel controls additional listeners and duplicate binds; scope enforcement rejects requests that match no declaration. Empty collections are valid and reject all requests when enforcement is enabled. Actual HTTP/3 startup remains subject to platform and TLS requirements.
+
+The extension calls `AddWebEndpointPipeline()` to register a private `IStartupFilter`, placing scope checks before application initializer middleware, automatic routing and static files. Do not call `UseWebEndpoints()` again. Custom startup-filter ordering remains the host's responsibility. Authentication and authorization retain their roles; controller and Hub routes do not gain prefixes automatically. Use KestrelUtility directly for conversion only. Non-plugin hosts can independently use Web endpoint registration and its startup-filter extension.
+
+`AddWebEndpointMonitoring()` is included in automatic registration. For explicit registration it remains optional and must follow endpoint registration; repeated calls are harmless. It subscribes at host startup and unsubscribes on stop or disposal. Network changes or new plugin conflicts produce one `WebEndpointsChanged` warning without refreshing listeners or routes; business changes stay quiet. Without monitoring, snapshots still remain fixed but no restart warning is emitted. Initialization failure disposes the constructed host.
+
+Explicit registration is available for a custom configuration section or for independent control of monitoring. Register it in the builder callback before service scanning. Automatic registration then preserves this choice, without adding another snapshot or monitor. The default section is `Kestrel`:
+
+```csharp
+using Zongsoft.Web.Hosting;
+
+var app = Zongsoft.Web.Application.Web(args, builder =>
+{
+	builder.Services.AddWebEndpoints(builder.Configuration, "Server");
+	// Optional for explicit registration.
+	builder.Services.AddWebEndpointMonitoring();
+});
+```
 
 ## Startup and Extension Points
 

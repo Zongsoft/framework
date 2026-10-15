@@ -50,7 +50,7 @@ using Zongsoft.Web.Security;
 namespace Zongsoft.Web;
 
 #if NET7_0_OR_GREATER
-public partial class WebApplicationBuilder : ApplicationBuilderBase<WebApplication>
+public class WebApplicationBuilder : ApplicationBuilderBase<WebApplication>
 {
 	private readonly Microsoft.AspNetCore.Builder.WebApplicationBuilder _builder;
 	private readonly Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> _configure;
@@ -90,19 +90,33 @@ public partial class WebApplicationBuilder : ApplicationBuilderBase<WebApplicati
 
 	public override WebApplication Build()
 	{
-		_configure?.Invoke(_builder);
+		WebApplication application = null;
 
-		//创建默认的插件环境配置
-		var options = this.CreateOptions(_builder.Configuration);
+		try
+		{
+			_configure?.Invoke(_builder);
 
-		//添加插件配置文件源到配置管理器中
-		((IConfigurationBuilder)_builder.Configuration).Add(new Zongsoft.Configuration.PluginConfigurationSource(options));
+			//创建默认的插件环境配置
+			var options = this.CreateOptions(_builder.Configuration);
 
-		//注册插件服务
-		this.RegisterServices(_builder.Services, options);
+			//添加插件配置文件源到配置管理器中
+			((IConfigurationBuilder)_builder.Configuration).Add(new Zongsoft.Configuration.PluginConfigurationSource(options));
 
-		//构建并初始化应用
-		return _builder.Build().Initialize();
+			//注册插件与 Web 服务
+			this.RegisterServices(_builder.Services, options);
+
+			application = _builder.Build();
+			return application.Initialize();
+		}
+		catch
+		{
+			if(application != null)
+				application.DisposeAsync().AsTask().GetAwaiter().GetResult();
+			else
+				((IDisposable)this.Configuration).Dispose();
+
+			throw;
+		}
 	}
 
 	protected override void RegisterServices(IServiceCollection services, PluginOptions options)
@@ -116,7 +130,7 @@ public partial class WebApplicationBuilder : ApplicationBuilderBase<WebApplicati
 	}
 }
 #else
-public partial class WebApplicationBuilder : Zongsoft.Plugins.Hosting.ApplicationBuilder
+public class WebApplicationBuilder : Zongsoft.Plugins.Hosting.ApplicationBuilder
 {
 	public WebApplicationBuilder(string name, string[] args, Action<IHostBuilder> configure = null) : base(name, args, configure) { }
 	public WebApplicationBuilder(string name, IHostBuilder builder, Action<IHostBuilder> configure = null) : base(name, builder, configure) { }

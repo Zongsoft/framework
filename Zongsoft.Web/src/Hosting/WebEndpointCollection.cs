@@ -29,144 +29,86 @@
 
 using System;
 using System.Linq;
-using System.Net;
 using System.Net.Sockets;
 using System.Collections;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
-using Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets;
-
-using Zongsoft.Communication;
 
 namespace Zongsoft.Web.Hosting;
 
-/// <summary>提供 Web 端点的不可变启动快照及独立的 Kestrel 配置投影。</summary>
+/// <summary>提供与服务器配置无关的只读 Web 端点集合及请求范围。</summary>
 public sealed class WebEndpointCollection : IReadOnlyList<WebEndpoint>
 {
 	#region 成员字段
 	private readonly WebEndpoint[] _endpoints;
-	private readonly Dictionary<string, string> _source;
-	private readonly Dictionary<string, string> _projection;
-	private readonly Dictionary<string, WebEndpointProtocol> _protocols;
 	private readonly WebEndpointProtocol[] _kinds;
+	private readonly Dictionary<WebEndpoint, Scope> _scopes = [];
 	#endregion
 
 	#region 构造函数
-	/// <summary>从最终的 Kestrel 配置节创建快照。</summary>
-	/// <param name="configuration">Kestrel 配置节，不是整个应用配置根。</param>
-	/// <param name="protocols">已注册的协议规则；未指定时仅支持普通 HTTP。</param>
-	public WebEndpointCollection(IConfiguration configuration, IEnumerable<WebEndpointProtocol> protocols = null)
+	/// <summary>从逻辑端点及应用协议规则创建只读集合。</summary>
+	/// <param name="endpoints">逻辑端点声明。</param>
+	/// <param name="protocols">应用协议规则；未指定时仅支持普通 HTTP。</param>
+	public WebEndpointCollection(IEnumerable<WebEndpoint> endpoints, IEnumerable<WebEndpointProtocol> protocols = null)
 	{
-		ArgumentNullException.ThrowIfNull(configuration);
+		ArgumentNullException.ThrowIfNull(endpoints);
 
-		_protocols = new(StringComparer.Ordinal) { ["http"] = WebEndpointProtocol.Http };
+		var policies = WebEndpointUtility.GetProtocols(protocols);
 		var kinds = new Dictionary<string, WebEndpointProtocol>(StringComparer.Ordinal);
 
-		foreach(var protocol in protocols ?? [])
+		foreach(var policy in policies.Values.Where(policy => policy.Kind != "http"))
 		{
-			ArgumentNullException.ThrowIfNull(protocol);
-
-			if(!_protocols.TryAdd(protocol.Name, protocol))
-				throw WebEndpointUtility.Invalid(protocol.Name, "DuplicateProtocol");
-			if(protocol.Kind != "http" && !kinds.TryAdd(protocol.Kind, protocol))
-				throw WebEndpointUtility.Invalid(protocol.Kind, "DuplicateKind");
+			if(!kinds.TryAdd(policy.Kind, policy))
+				throw WebEndpointUtility.Invalid(policy.Kind, "DuplicateKind");
 		}
 
 		_kinds = kinds.Values.OrderBy(protocol => protocol.Kind, StringComparer.Ordinal).ToArray();
-		_source = Read(configuration);
-		_projection = new(_source, StringComparer.OrdinalIgnoreCase);
+		var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-		using var snapshot = (ConfigurationRoot)new ConfigurationBuilder().AddInMemoryCollection(_source).Build();
-		var endpoints = new List<WebEndpoint>();
-		var listeners = new List<Listener>();
-		var defaults = snapshot["EndpointDefaults:Protocols"];
-
-		foreach(var section in snapshot.GetSection("Endpoints").GetChildren())
+		foreach(var declaration in endpoints)
 		{
-			if(!NetworkAddress.TryParse(section["Url"], out var address) ||
-			   address.Scheme is not ("http" or "https") ||
-			   address.HostType == UriHostNameType.Dns && address.Host != "localhost")
-				throw WebEndpointUtility.Invalid(section.Path + ":Url", "InvalidAddress");
+			ArgumentNullException.ThrowIfNull(declaration);
+			if(!names.Add(declaration.Name))
+				throw WebEndpointUtility.Invalid(declaration.Name, "DuplicateEndpoint");
 
-			if(!WebEndpointUtility.IsPath(address.Path))
-				throw WebEndpointUtility.Invalid(section.Path + ":Url", "InvalidBasePath");
+			var declarations = WebEndpointUtility.Normalize(declaration.Protocols, policies, declaration.Name + ":Protocols", true);
+			var endpoint = new WebEndpoint(declaration.Name, declaration.Address, declarations);
+			var versions = declarations.GroupBy(protocol => policies[protocol.Name ?? "http"].Kind)
+				.ToDictionary(group => group.Key, group => group.Select(protocol => protocol.HttpVersion).ToHashSet(), StringComparer.Ordinal);
 
-			var declarations = this.ParseProtocols(section["Protocols"] ?? defaults, section.Path + ":Protocols");
-			var endpoint = new WebEndpoint(section.Key, address, declarations, _protocols);
-			var settings = Read(section);
-			settings.Remove("Url");
-			settings.Remove("Protocols");
+			_scopes.Add(endpoint, new(versions, [.. declarations.Select(protocol => protocol.Transport)]));
+		}
 
-			foreach(var other in endpoints)
+		_endpoints = _scopes.Keys
+			.OrderByDescending(endpoint => endpoint.Address.Path.Length)
+			.ThenBy(endpoint => endpoint.Name, StringComparer.Ordinal)
+			.ToArray();
+
+		foreach(var endpoint in _endpoints)
+		{
+			foreach(var other in _endpoints)
 			{
-				if(string.Equals(address.Path, other.Address.Path, StringComparison.OrdinalIgnoreCase))
+				if(ReferenceEquals(endpoint, other))
+					continue;
+
+				var scope = _scopes[endpoint];
+				var otherScope = _scopes[other];
+
+				if(string.Equals(endpoint.Address.Path, other.Address.Path, StringComparison.OrdinalIgnoreCase))
 				{
-					foreach(var kind in endpoint.Kinds.Intersect(other.Kinds))
+					foreach(var kind in scope.Versions.Keys.Intersect(otherScope.Versions.Keys))
 					{
-						if(address.Path != other.Address.Path || SameSocket(endpoint, other) && SharedTransport(endpoint.GetProtocols(kind), other.GetProtocols(kind)))
-							throw WebEndpointUtility.Invalid(section.Path, "ConflictingRange");
+						if(endpoint.Address.Path != other.Address.Path || WebEndpointUtility.SameSocket(endpoint, other) &&
+						   SharesTransport(scope.Versions[kind], otherScope.Versions[kind]))
+							throw WebEndpointUtility.Invalid(endpoint.Name, "ConflictingRange");
 					}
 				}
+
+				if(WebEndpointUtility.SameSocket(endpoint, other) && endpoint.Address.Scheme == other.Address.Scheme)
+					scope.Transports.UnionWith(other.Protocols.Select(protocol => protocol.Transport));
 			}
-
-			var listener = listeners.Find(item => SameSocket(endpoint, item.Endpoint) && address.Scheme == item.Endpoint.Address.Scheme);
-			if(listener == null)
-				listeners.Add(new(endpoint, settings));
-			else
-			{
-				if(!Equal(settings, listener.Settings))
-					throw WebEndpointUtility.Invalid(section.Path, "ConflictingListenerOptions");
-
-				listener.Versions |= endpoint.HttpProtocols;
-			}
-
-			endpoints.Add(endpoint);
 		}
-
-		foreach(var key in _projection.Keys.Where(key => key.StartsWith("Endpoints:", StringComparison.OrdinalIgnoreCase)).ToArray())
-			_projection.Remove(key);
-
-		foreach(var listener in listeners)
-		{
-			var endpoint = listener.Endpoint;
-			var address = endpoint.Address;
-			var prefix = "Endpoints:" + endpoint.Name + ":";
-
-			if(address.Scheme == "http" && listener.Versions is not (HttpProtocols.Http1 or HttpProtocols.Http2))
-				throw WebEndpointUtility.Invalid(prefix + "Protocols", "CleartextProtocolConflict");
-
-			foreach(var other in listeners)
-			{
-				if(!ReferenceEquals(listener, other) && Overlaps(endpoint, other.Endpoint) && SharedTransport(listener.Versions, other.Versions))
-					throw WebEndpointUtility.Invalid(prefix + "Url", "OverlappingListeners");
-			}
-
-			foreach(var setting in listener.Settings)
-			{
-				if(setting.Key.StartsWith("Sni:", StringComparison.OrdinalIgnoreCase) && setting.Key.EndsWith(":Protocols", StringComparison.OrdinalIgnoreCase) &&
-				  (!Enum.TryParse<HttpProtocols>(setting.Value, true, out var versions) || versions == HttpProtocols.None || (versions & ~listener.Versions) != 0))
-					throw WebEndpointUtility.Invalid(prefix + setting.Key, "ConflictingSniProtocols");
-
-				_projection[prefix + setting.Key] = setting.Value;
-			}
-
-			var host = endpoint.IPAddress?.ToString() ?? address.Host;
-			if(endpoint.IPAddress?.AddressFamily == AddressFamily.InterNetworkV6)
-				host = $"[{host}]";
-
-			_projection[prefix + "Url"] = $"{address.Scheme}://{host}:{address.Port}";
-			_projection[prefix + "Protocols"] = listener.Versions.ToString();
-
-			foreach(var logical in endpoints.Where(item => SameSocket(item, endpoint) && item.Address.Scheme == address.Scheme))
-				logical.ListeningProtocols = listener.Versions;
-		}
-
-		// 每个投影端点已有明确版本；原生默认值不参与声明能力推断。
-		_projection.Remove("EndpointDefaults:Protocols");
-		_endpoints = endpoints.OrderByDescending(endpoint => endpoint.Address.Path.Length).ThenBy(endpoint => endpoint.Name, StringComparer.Ordinal).ToArray();
 	}
 	#endregion
 
@@ -177,135 +119,76 @@ public sealed class WebEndpointCollection : IReadOnlyList<WebEndpoint>
 	public WebEndpoint this[int index] => _endpoints[index];
 	#endregion
 
-	#region 公共方法
-	/// <summary>判断配置是否与启动快照不同，不改变当前监听或路由。</summary>
-	/// <param name="configuration">当前 Kestrel 配置节。</param>
-	/// <returns>如果不同则返回真(<see langword="true"/>)，否则返回假(<see langword="false"/>)。</returns>
-	public bool HasChanged(IConfiguration configuration)
-	{
-		ArgumentNullException.ThrowIfNull(configuration);
-		return !Equal(_source, Read(configuration));
-	}
+	#region 内部方法
+	internal bool Supports(WebEndpoint endpoint, string kind, int httpVersion) =>
+		_scopes[endpoint].Versions.TryGetValue(kind, out var versions) && versions.Contains(httpVersion);
 
-	/// <summary>以独立内存配置替换尚未加载的 Kestrel 配置源，并禁用网络热重载。</summary>
-	/// <param name="options">服务器选项；应在宿主最终配置阶段调用。</param>
-	public void Configure(KestrelServerOptions options)
-	{
-		ArgumentNullException.ThrowIfNull(options);
-		options.Configure(new ConfigurationBuilder().AddInMemoryCollection(_projection).Build(), reloadOnChange: false);
-	}
-
-	/// <summary>使管理的 IPv6 TCP 监听仅绑定 IPv6，不覆盖 IPv4。</summary>
-	/// <param name="options">TCP socket 传输选项。</param>
-	public void Configure(SocketTransportOptions options)
-	{
-		ArgumentNullException.ThrowIfNull(options);
-		var factory = options.CreateBoundListenSocket;
-
-		options.CreateBoundListenSocket = endpoint =>
-		{
-			if(endpoint is not IPEndPoint ip ||
-			   ip.AddressFamily != AddressFamily.InterNetworkV6 ||
-			   !_endpoints.Any(item => item.Contains(ip.Address, ip.Port)))
-				return factory(endpoint);
-
-			var socket = new Socket(AddressFamily.InterNetworkV6, SocketType.Stream, ProtocolType.Tcp);
-
-			try
-			{
-				socket.DualMode = false;
-				socket.Bind(endpoint);
-				return socket;
-			}
-			catch
-			{
-				socket.Dispose();
-				throw;
-			}
-		};
-	}
-
-	/// <summary>获取逻辑端点枚举器。</summary>
-	/// <returns>返回只读快照的枚举器。</returns>
-	public IEnumerator<WebEndpoint> GetEnumerator() => ((IEnumerable<WebEndpoint>)_endpoints).GetEnumerator();
-	IEnumerator IEnumerable.GetEnumerator() => _endpoints.GetEnumerator();
-	#endregion
-
-	#region 私有方法
 	internal WebEndpointProtocol SelectProtocol(HttpContext context)
 	{
-		WebEndpointProtocol selected = null;
+		WebEndpointProtocol result = null;
 
 		foreach(var protocol in _kinds)
 		{
 			if(!protocol.Matches(context))
 				continue;
-			if(selected != null)
+
+			if(result != null)
 				throw WebEndpointUtility.Invalid("Pipeline", "AmbiguousProtocol");
 
-			selected = protocol;
+			result = protocol;
 		}
 
-		return selected ?? WebEndpointProtocol.Http;
+		return result ?? WebEndpointProtocol.Http;
 	}
 
-	private NetworkProtocol[] ParseProtocols(string text, string path)
+	internal WebEndpoint Find(HttpContext context, string path, string kind, int httpVersion)
 	{
-		if(!NetworkProtocol.TryParse(text, ',', out var protocols))
-			throw WebEndpointUtility.Invalid(path, "InvalidProtocols");
+		if(string.IsNullOrEmpty(path))
+			return null;
 
-		for(var i = 0; i < protocols.Length; i++)
+		var transport = httpVersion == 3 ? ProtocolType.Udp : ProtocolType.Tcp;
+
+		foreach(var endpoint in _endpoints)
 		{
-			if(!_protocols.TryGetValue(protocols[i].Name ?? "http", out var policy))
-				throw WebEndpointUtility.Invalid(path, "UnregisteredProtocol");
+			var scope = _scopes[endpoint];
 
-			var normalized = policy.Normalize(protocols[i]);
-			if(normalized.IsEmpty || normalized.Name != protocols[i].Name)
-				throw WebEndpointUtility.Invalid(path, "UnsupportedProtocols");
-
-			protocols[i] = normalized;
+			if(scope.Versions.ContainsKey(kind) && scope.Transports.Contains(transport) &&
+			   endpoint.Contains(context.Connection.LocalIpAddress, context.Connection.LocalPort) &&
+			   Matche(endpoint.Address.Path, path))
+				return endpoint;
 		}
 
-		protocols = NetworkProtocol.Parse(string.Join(',', protocols.Select(protocol => protocol.ToString())), ',');
-		if(protocols.Any(protocol => !protocol.IsHttp || protocol.HttpVersion == 0))
-			throw WebEndpointUtility.Invalid(path, "UnsupportedProtocols");
+		return null;
 
-		return protocols;
+		static bool Matche(string prefix, string path) => path.StartsWith(prefix, StringComparison.Ordinal) &&
+		(
+			prefix.EndsWith('/') ||
+			path.Length == prefix.Length ||
+			path[prefix.Length] == '/'
+		);
 	}
-
-	private static Dictionary<string, string> Read(IConfiguration configuration) => configuration.AsEnumerable(makePathsRelative: true)
-		.Where(entry => !string.IsNullOrEmpty(entry.Key) && entry.Value != null).ToDictionary(entry => entry.Key, entry => entry.Value, StringComparer.OrdinalIgnoreCase);
-
-	private static bool Equal(Dictionary<string, string> left, Dictionary<string, string> right) => left.Count == right.Count &&
-		left.All(entry => right.TryGetValue(entry.Key, out var value) && entry.Value == value);
-
-	private static bool SameSocket(WebEndpoint left, WebEndpoint right) => left.Address.Port == right.Address.Port &&
-		(left.IPAddress == null ? right.IPAddress == null : left.IPAddress.Equals(right.IPAddress));
-
-	private static bool Overlaps(WebEndpoint left, WebEndpoint right)
-	{
-		if(left.Address.Port != right.Address.Port)
-			return false;
-
-		if(left.IPAddress == null)
-			return right.IPAddress == null || right.Address.IsAny || right.IPAddress.Equals(IPAddress.Loopback) || right.IPAddress.Equals(IPAddress.IPv6Loopback);
-		if(right.IPAddress == null)
-			return left.Address.IsAny || left.IPAddress.Equals(IPAddress.Loopback) || left.IPAddress.Equals(IPAddress.IPv6Loopback);
-
-		return left.IPAddress.AddressFamily == right.IPAddress.AddressFamily && (left.Address.IsAny || right.Address.IsAny || left.IPAddress.Equals(right.IPAddress));
-	}
-
-	private static bool SharedTransport(HttpProtocols left, HttpProtocols right) =>
-		(left & HttpProtocols.Http1AndHttp2) != 0 && (right & HttpProtocols.Http1AndHttp2) != 0 ||
-		(left & HttpProtocols.Http3) != 0 && (right & HttpProtocols.Http3) != 0;
 	#endregion
 
-	#region 嵌套子类
-	private sealed class Listener(WebEndpoint endpoint, Dictionary<string, string> settings)
+	#region 遍历枚举
+	/// <summary>获取逻辑端点枚举器。</summary>
+	/// <returns>返回只读端点的枚举器。</returns>
+	public IEnumerator<WebEndpoint> GetEnumerator() => ((IEnumerable<WebEndpoint>)_endpoints).GetEnumerator();
+	IEnumerator IEnumerable.GetEnumerator() => _endpoints.GetEnumerator();
+	#endregion
+
+	#region 私有方法
+	private static bool SharesTransport(HashSet<int> left, HashSet<int> right) =>
+		left.Any(version => version is 1 or 2) &&
+		right.Any(version => version is 1 or 2) ||
+		left.Contains(3) &&
+		right.Contains(3);
+	#endregion
+
+	#region 嵌套类型
+	private sealed class Scope(Dictionary<string, HashSet<int>> versions, HashSet<ProtocolType> transports)
 	{
-		public WebEndpoint Endpoint { get; } = endpoint;
-		public Dictionary<string, string> Settings { get; } = settings;
-		public HttpProtocols Versions { get; set; } = endpoint.HttpProtocols;
+		public readonly Dictionary<string, HashSet<int>> Versions = versions;
+		public readonly HashSet<ProtocolType> Transports = transports;
 	}
 	#endregion
 }

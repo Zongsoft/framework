@@ -29,70 +29,62 @@
 
 using System;
 using System.Net;
+using System.Linq;
 using System.Collections.Generic;
-
-using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 using Zongsoft.Communication;
 
 namespace Zongsoft.Web.Hosting;
 
-/// <summary>表示启动时声明的一项 Web 监听范围。</summary>
+/// <summary>表示一项与服务器实现无关的 Web 监听范围。</summary>
 public sealed class WebEndpoint
 {
-	#region 私有字段
-	private readonly Dictionary<string, HttpProtocols> _versions = new(StringComparer.OrdinalIgnoreCase);
-	#endregion
-
 	#region 构造函数
-	internal WebEndpoint(string name, NetworkAddress address, NetworkProtocol[] protocols, IReadOnlyDictionary<string, WebEndpointProtocol> policies)
+	/// <summary>初始化指定名称、地址及协议的逻辑端点。</summary>
+	/// <param name="name">端点名称。</param>
+	/// <param name="address">保留基路径的 Web 地址。</param>
+	/// <param name="protocols">协议声明；默认承载由消费方的协议规则补全。</param>
+	public WebEndpoint(string name, NetworkAddress address, IEnumerable<NetworkProtocol> protocols)
 	{
+		ArgumentException.ThrowIfNullOrEmpty(name);
+		ArgumentNullException.ThrowIfNull(protocols);
+
+		if(address.Scheme is not ("http" or "https"))
+			throw WebEndpointUtility.Invalid(name + ":Url", "InvalidAddress");
+		if(!WebEndpointUtility.IsPath(address.Path))
+			throw WebEndpointUtility.Invalid(name + ":Url", "InvalidBasePath");
+
+		var declarations = protocols.ToArray();
+		if(declarations.Length == 0 || declarations.Any(protocol => protocol.IsEmpty))
+			throw WebEndpointUtility.Invalid(name + ":Protocols", "InvalidProtocols");
+
 		this.Name = name;
 		this.Address = address;
-		this.Protocols = Array.AsReadOnly(protocols);
+		this.Protocols = Array.AsReadOnly(NetworkProtocol.Parse(string.Join(',', declarations), ','));
 		this.IPAddress = address.HostType == UriHostNameType.Dns ? null : System.Net.IPAddress.Parse(address.Zone == null ? address.Host : $"{address.Host}%{address.Zone}");
-
-		foreach(var protocol in protocols)
-		{
-			var version = protocol.HttpVersion switch
-			{
-				1 => HttpProtocols.Http1,
-				2 => HttpProtocols.Http2,
-				3 => HttpProtocols.Http3,
-				_ => HttpProtocols.None,
-			};
-
-			var kind = policies[protocol.Name ?? "http"].Kind;
-			_versions[kind] = this.GetProtocols(kind) | version;
-			this.HttpProtocols |= version;
-		}
 	}
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取端点的配置名称。</summary>
+	/// <summary>获取端点名称。</summary>
 	public string Name { get; }
-	/// <summary>获取保留原始基路径的地址。</summary>
+	/// <summary>获取保留基路径的地址。</summary>
 	public NetworkAddress Address { get; }
-	/// <summary>获取已应用默认简写的只读协议集合。</summary>
+	/// <summary>获取只读协议声明。</summary>
 	public IReadOnlyList<NetworkProtocol> Protocols { get; }
-	/// <summary>获取所有请求类别声明的 HTTP 承载版本。</summary>
-	public HttpProtocols HttpProtocols { get; }
 	#endregion
 
 	#region 公共方法
-	/// <summary>获取指定请求类别声明的 HTTP 承载版本。</summary>
-	/// <param name="kind">请求类别，默认普通 HTTP。</param>
-	/// <returns>返回该类别的版本集合；未声明则返回 <see cref="HttpProtocols.None"/>。</returns>
-	public HttpProtocols GetProtocols(string kind = "http") => kind != null && _versions.TryGetValue(kind, out var versions) ? versions : HttpProtocols.None;
+	/// <summary>判断是否声明了指定 HTTP 承载版本。</summary>
+	/// <param name="httpVersion">HTTP 主版本号。</param>
+	/// <returns>如果已声明则返回真(<see langword="true"/>)，否则返回假(<see langword="false"/>)。</returns>
+	public bool Supports(int httpVersion) => httpVersion > 0 && this.Protocols.Any(protocol => protocol.HttpVersion == httpVersion);
 	#endregion
 
 	#region 内部成员
-	internal IEnumerable<string> Kinds => _versions.Keys;
 	internal IPAddress IPAddress { get; }
-	internal HttpProtocols ListeningProtocols { get; set; }
 	internal bool Contains(IPAddress address, int port) => address != null && port == this.Address.Port &&
-		(this.IPAddress == null ? address.Equals(System.Net.IPAddress.Loopback) || address.Equals(System.Net.IPAddress.IPv6Loopback) :
+		(this.IPAddress == null ? this.Address.Host == "localhost" && (address.Equals(System.Net.IPAddress.Loopback) || address.Equals(System.Net.IPAddress.IPv6Loopback)) :
 		 this.Address.IsAny ? address.AddressFamily == this.IPAddress.AddressFamily : address.Equals(this.IPAddress));
 	#endregion
 }

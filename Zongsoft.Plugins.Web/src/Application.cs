@@ -52,33 +52,41 @@ public static class Application
 
 		var app = builder.Build();
 
-		//初始化应用上下文（该初始化器中会加载相应的Web部件）
-		var context = (WebApplicationContext)app.Services.GetService(typeof(WebApplicationContext));
-		context.Initialize();
+		try
+		{
+			//初始化应用上下文（该初始化器中会加载相应的Web部件）
+			var context = (WebApplicationContext)app.Services.GetService(typeof(WebApplicationContext));
+			context.Initialize();
 
-		//获取所有应用初始化器，并依次调用初始化方法
-		var initializers = app.Services.ResolveAll<IApplicationInitializer<IApplicationBuilder>>();
-		foreach(var initializer in initializers)
-			initializer.Initialize(app);
+			//获取所有应用初始化器，并依次调用初始化方法
+			var initializers = app.Services.ResolveAll<IApplicationInitializer<IApplicationBuilder>>();
+			foreach(var initializer in initializers)
+				initializer.Initialize(app);
 
-		if(app.Environment.IsDevelopment())
-			app.UseDeveloperExceptionPage();
+			if(app.Environment.IsDevelopment())
+				app.UseDeveloperExceptionPage();
 
-		app.UseCors();
-		app.UseRequestLocalization();
-		app.UseHttpMethodOverride();
-		app.UseRouting();
-		app.UseAuthentication();
-		app.UseAuthorization();
-		app.UseResponseCompression();
-		app.UseStaticFiles(app.Services.Resolve<Microsoft.Extensions.Options.IOptions<StaticFileOptions>>()?.Value);
+			app.UseCors();
+			app.UseRequestLocalization();
+			app.UseHttpMethodOverride();
+			app.UseRouting();
+			app.UseAuthentication();
+			app.UseAuthorization();
+			app.UseResponseCompression();
+			app.UseStaticFiles(app.Services.Resolve<Microsoft.Extensions.Options.IOptions<StaticFileOptions>>()?.Value);
 
-		app.MapControllers();
+			app.MapControllers();
 
-		//映射 SignalR 的 Hub 实现者
-		SignalR.HubEndpointRouteBuilderExtensions.MapHubs(app);
+			//映射 SignalR 的 Hub 实现者
+			SignalR.HubEndpointRouteBuilderExtensions.MapHubs(app);
 
-		return app;
+			return app;
+		}
+		catch
+		{
+			app.DisposeAsync().AsTask().GetAwaiter().GetResult();
+			throw;
+		}
 	}
 	#else
 	public static IHost Web(Action<WebHostBuilderContext, IApplicationBuilder> applicate = null) => Web(null, null, null, applicate);

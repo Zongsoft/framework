@@ -54,7 +54,7 @@ Zongsoft.Core、Zongsoft.Web、Zongsoft.Plugins、Zongsoft.Plugins.Web 由宿主
 
 本包提供 Web 端点的 gRPC 协议策略：裸 `grpc` 默认 `grpc+http2`，请求按原生 gRPC 媒体类型分类，并执行方法、HTTP 版本、固定方法路径与无范围响应规则。该策略为私有实现，通过 `GrpcEndpointExtension.AddGrpcWebEndpoints` 注册；Web 主库不含这些协议判断。
 
-显式宿主在 `AddWebEndpoints` 创建快照之前调用 `services.AddGrpcWebEndpoints()`；插件服务注册已自动完成这一步。缺少扩展时，声明 gRPC 端点会失败，不能作为普通 HTTP 启动。完整 Plugins.Web 快照接入和基于 Handler 的服务挂载仍按实施顺序进行；当前协议策略注册不自动改变现有根级服务映射。
+显式宿主在 `AddWebEndpoints` 创建快照之前调用 `services.AddGrpcWebEndpoints()`；插件服务注册已自动完成这一步。缺少扩展时，建立 gRPC 请求范围会失败，不能作为普通 HTTP 启动。KestrelUtility 单独转换 grpc+http2 等显式承载不需要这项运行规则；转换裸 grpc 时须传入对应规范化规则。Plugins.Web 的服务注册器根据 Web 宿主端点声明自动调用 AddWebEndpoints，延迟到最终服务提供器创建快照；基于 Handler 的服务挂载仍按实施顺序进行，当前协议策略注册不自动改变现有根级服务映射。
 
 `WebEndpointMetadata("/opentelemetry", "grpc")` 可表达路由的范围及请求类别 `Kind`；实际服务必须挂载在同一路径。独立 [协议测试项目](test/Zongsoft.Web.Grpc.Tests.csproj) 验证规则及隔离 HTTP/2 管线，尚不代表区域反射、完整 RPC/流或 HTTP/3 已验收。
 

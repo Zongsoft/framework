@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.IO;
 using System.Net;
 using System.Net.Http;
@@ -253,8 +254,8 @@ public class GrpcEndpointPipelineTest
 		services.AddLogging();
 		services.AddRouting();
 		services.AddGrpcWebEndpoints();
-		services.AddWebEndpoints(configuration);
-		Assert.Throws<InvalidOperationException>(() => services.AddWebEndpoints(configuration));
+		services.AddWebEndpoints(Declarations(configuration));
+		Assert.Throws<InvalidOperationException>(() => services.AddWebEndpoints(Declarations(configuration)));
 
 		using var provider = services.BuildServiceProvider();
 		var application = new ApplicationBuilder(provider);
@@ -287,9 +288,12 @@ public class GrpcEndpointPipelineTest
 		});
 
 		builder.Services.AddGrpcWebEndpoints();
-		var endpoints = builder.Services.AddWebEndpoints(builder.Configuration.GetSection("Kestrel"));
-		builder.WebHost.ConfigureKestrel(endpoints.Configure);
-		builder.Services.Configure<SocketTransportOptions>(endpoints.Configure);
+		var rules = builder.Services.Where(descriptor => descriptor.ServiceType == typeof(WebEndpointProtocol))
+			.Select(descriptor => (WebEndpointProtocol)descriptor.ImplementationInstance);
+		using var projection = KestrelUtility.Convert(builder.Configuration.GetSection("Kestrel"), out var declarations, rules);
+		var endpoints = builder.Services.AddWebEndpoints(declarations);
+		builder.WebHost.ConfigureKestrel(options => options.Configure(projection, reloadOnChange: false));
+		builder.Services.Configure<SocketTransportOptions>(options => KestrelUtility.Configure(options, endpoints));
 		await using var application = builder.Build();
 		application.UseWebEndpoints();
 		application.UseRouting();
@@ -320,7 +324,7 @@ public class GrpcEndpointPipelineTest
 
 			builder.Configuration["Kestrel:Endpoints:a:Url"] = $"http://127.0.0.1:{grpcPort}/changed";
 			((IConfigurationRoot)builder.Configuration).Reload();
-			Assert.True(endpoints.HasChanged(builder.Configuration.GetSection("Kestrel")));
+			Assert.Contains(endpoints, endpoint => endpoint.Name == "a" && endpoint.Address.Path == "/a");
 			Assert.Equal("ordinary", await client.GetStringAsync($"http://127.0.0.1:{webPort}/ordinary"));
 			using var afterReload = new HttpRequestMessage(HttpMethod.Post, $"http://127.0.0.1:{grpcPort}/a/demo.Service/Call")
 			{
@@ -397,7 +401,7 @@ public class GrpcEndpointPipelineTest
 			services.AddRouting();
 			services.AddSingleton(new DiagnosticListener("Zongsoft.Web.Tests"));
 			services.AddGrpcWebEndpoints();
-			services.AddWebEndpoints(_configuration);
+			services.AddWebEndpoints(Declarations(_configuration));
 			_services = services.BuildServiceProvider();
 			var application = new ApplicationBuilder(_services);
 			application.UseWebEndpoints();
@@ -417,4 +421,7 @@ public class GrpcEndpointPipelineTest
 			_configuration.Dispose();
 		}
 	}
+	private static IEnumerable<WebEndpoint> Declarations(IConfiguration configuration) => configuration.GetSection("Endpoints").GetChildren().Select(section =>
+		new WebEndpoint(section.Key, Zongsoft.Communication.NetworkAddress.Parse(section["Url"]), Zongsoft.Communication.NetworkProtocol.Parse(section["Protocols"], ',')));
+
 }

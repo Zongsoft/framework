@@ -50,4 +50,4 @@ description: 开发、审查、调试或测试 Zongsoft.Plugins 与 Zongsoft.Plu
 
 ## Web 端点接入
 
-Plugins.Web 在上述配置和服务注册完成后检查跨插件 Kestrel 同键异值，建立 WebEndpointCollection，并通过最终 PostConfigure 应用 Kestrel 及 SocketTransportOptions 投影。原配置不修改；初始化器执行前安装范围中间件。网络配置变更只警告一次并保留启动快照，停止/释放解除订阅。监听配置与请求范围规则见 [Plugins.Web](../Zongsoft.Plugins.Web/README.zh-Hans.md#监听配置与请求范围)，不在通用 Plugins 中增加网络规则。
+Plugins.Web 的通用构建器不执行网络策略。现有服务扫描发现 Web 宿主的 Kestrel:Endpoints 子项，且尚未注册 WebEndpointCollection 时，由 WebEndpointExtension.Registration 自动调用 AddWebEndpoints(configuration) 和 AddWebEndpointMonitoring。非 Web 宿主或无端点声明时不接入；显式接入优先保留自选配置节和可选监视。接入后，由最终容器延迟捕获插件配置和协议注册、检查跨插件服务器同键异值、调用 KestrelUtility.Convert、以 PostConfigure 应用配置并适配 IPv6 TCP socket。扩展通过 Web 的 AddWebEndpointPipeline 安装私有启动过滤器，位于应用管线之前；不再包装监听工厂或禁止原生地址来源。AddWebEndpointMonitoring 在自动接入时启用重启提示，显式接入时可独立选择，启动订阅、停止/释放解除。详见 [Plugins.Web](../Zongsoft.Plugins.Web/README.zh-Hans.md#监听配置与请求范围)。hosting 入口无须修改；不在通用 Plugins 中增加网络规则。

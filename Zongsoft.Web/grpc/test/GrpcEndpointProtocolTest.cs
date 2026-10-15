@@ -4,7 +4,6 @@ using System.Collections.Generic;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
 
 using Zongsoft.Web.Hosting;
 
@@ -15,24 +14,24 @@ namespace Zongsoft.Web.Grpc.Tests;
 public class GrpcEndpointProtocolTest
 {
 	[Theory]
-	[InlineData("grpc", "grpc+http2", HttpProtocols.None, HttpProtocols.Http2)]
-	[InlineData("grpc,HTTP2+grpc", "grpc+http2", HttpProtocols.None, HttpProtocols.Http2)]
-	[InlineData("grpc+http3", "grpc+http3", HttpProtocols.None, HttpProtocols.Http3)]
-	[InlineData("http2,grpc+http2", "grpc+http2,http2", HttpProtocols.Http2, HttpProtocols.Http2)]
-	public void GrpcDeclarationRequiresAndUsesItsRegisteredExtension(string text, string expected, HttpProtocols http, HttpProtocols grpc)
+	[InlineData("grpc", "grpc+http2", 0, 2)]
+	[InlineData("grpc,HTTP2+grpc", "grpc+http2", 0, 2)]
+	[InlineData("grpc+http3", "grpc+http3", 0, 3)]
+	[InlineData("http2,grpc+http2", "grpc+http2,http2", 2, 2)]
+	public void GrpcDeclarationRequiresAndUsesItsRegisteredExtension(string text, string expected, int http, int grpc)
 	{
 		using var configuration = Configuration(text);
 		var services = new ServiceCollection();
-		Assert.Throws<InvalidOperationException>(() => services.AddWebEndpoints(configuration));
+		Assert.Throws<InvalidOperationException>(() => services.AddWebEndpoints(Declarations(configuration)));
 		services.AddGrpcWebEndpoints();
 		services.AddGrpcWebEndpoints();
-		var snapshot = services.AddWebEndpoints(configuration);
+		var snapshot = services.AddWebEndpoints(Declarations(configuration));
 		var endpoint = Assert.Single(snapshot);
 
 		Assert.Equal(expected.Split(','), endpoint.Protocols.Select(protocol => protocol.ToString()));
-		Assert.Equal(http | grpc, endpoint.HttpProtocols);
-		Assert.Equal(http, endpoint.GetProtocols());
-		Assert.Equal(grpc, endpoint.GetProtocols("grpc"));
+		Assert.True(endpoint.Supports(grpc));
+		Assert.Equal(http > 0, endpoint.Protocols.Any(protocol => protocol.Name == null && protocol.HttpVersion == http));
+		Assert.Contains(endpoint.Protocols, protocol => protocol.Name == "grpc" && protocol.HttpVersion == grpc);
 		Assert.Throws<InvalidOperationException>(() => services.AddGrpcWebEndpoints());
 	}
 
@@ -46,7 +45,7 @@ public class GrpcEndpointProtocolTest
 		using var configuration = Configuration(protocol);
 		var services = new ServiceCollection();
 		services.AddGrpcWebEndpoints();
-		Assert.Throws<InvalidOperationException>(() => services.AddWebEndpoints(configuration));
+		Assert.Throws<InvalidOperationException>(() => services.AddWebEndpoints(Declarations(configuration)));
 	}
 
 	[Fact]
@@ -55,8 +54,8 @@ public class GrpcEndpointProtocolTest
 		using var configuration = Configuration("grpc");
 		var services = new ServiceCollection();
 		new GrpcInitializer.Registration().Register(services, configuration);
-		var snapshot = services.AddWebEndpoints(configuration);
-		Assert.Equal(HttpProtocols.Http2, Assert.Single(snapshot).GetProtocols("grpc"));
+		var snapshot = services.AddWebEndpoints(Declarations(configuration));
+		Assert.Contains(Assert.Single(snapshot).Protocols, protocol => protocol.Name == "grpc" && protocol.HttpVersion == 2);
 	}
 
 	private static ConfigurationRoot Configuration(string protocol) =>
@@ -65,4 +64,7 @@ public class GrpcEndpointProtocolTest
 			["Endpoints:a:Url"] = "https://127.0.0.1:9000/telemetry",
 			["Endpoints:a:Protocols"] = protocol,
 		}).Build();
+	private static IEnumerable<WebEndpoint> Declarations(IConfiguration configuration) => configuration.GetSection("Endpoints").GetChildren().Select(section =>
+		new WebEndpoint(section.Key, Zongsoft.Communication.NetworkAddress.Parse(section["Url"]), Zongsoft.Communication.NetworkProtocol.Parse(section["Protocols"], ',')));
+
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Net;
 using System.Diagnostics;
 using System.Threading.Tasks;
@@ -29,7 +30,7 @@ public class WebEndpointPipelineTest
 			("Endpoints:api:Url", "http://127.0.0.1:9000/api"), ("Endpoints:api:Protocols", "http2"),
 			("Endpoints:admin:Url", "http://127.0.0.1:9001/admin"), ("Endpoints:admin:Protocols", "http2"));
 		var services = Services();
-		services.AddWebEndpoints(configuration);
+		services.AddWebEndpoints(Declarations(configuration));
 		using var provider = services.BuildServiceProvider();
 		var application = new ApplicationBuilder(provider);
 		application.UseWebEndpoints();
@@ -52,7 +53,7 @@ public class WebEndpointPipelineTest
 	{
 		using var configuration = Configuration(("Endpoints:a:Url", "https://127.0.0.1:9000/"), ("Endpoints:a:Protocols", "custom"));
 		var services = Services();
-		Assert.Throws<InvalidOperationException>(() => services.AddWebEndpoints(configuration));
+		Assert.Throws<InvalidOperationException>(() => services.AddWebEndpoints(Declarations(configuration)));
 
 		var protocol = new WebEndpointProtocol("custom", "http2");
 		services.AddWebEndpointProtocol(protocol);
@@ -60,10 +61,10 @@ public class WebEndpointPipelineTest
 		Assert.Throws<InvalidOperationException>(() => services.AddWebEndpointProtocol(new WebEndpointProtocol("custom")));
 		Assert.Throws<InvalidOperationException>(() => services.AddWebEndpointProtocol(WebEndpointProtocol.Http));
 
-		var endpoints = services.AddWebEndpoints(configuration);
+		var endpoints = services.AddWebEndpoints(Declarations(configuration));
 		Assert.Equal("custom+http2", Assert.Single(Assert.Single(endpoints).Protocols).ToString());
 		Assert.Throws<InvalidOperationException>(() => services.AddWebEndpointProtocol(new WebEndpointProtocol("late")));
-		Assert.Throws<InvalidOperationException>(() => services.AddWebEndpoints(configuration));
+		Assert.Throws<InvalidOperationException>(() => services.AddWebEndpoints(Declarations(configuration)));
 	}
 
 	[Theory]
@@ -85,7 +86,7 @@ public class WebEndpointPipelineTest
 		foreach(var protocol in protocols)
 			services.AddWebEndpointProtocol(protocol);
 
-		services.AddWebEndpoints(configuration);
+		services.AddWebEndpoints(Declarations(configuration));
 		using var provider = services.BuildServiceProvider();
 		var application = new ApplicationBuilder(provider);
 		application.UseWebEndpoints();
@@ -107,19 +108,19 @@ public class WebEndpointPipelineTest
 		var services = Services();
 		services.AddWebEndpointProtocol(new CustomProtocol("first", "shared"));
 		Assert.Throws<InvalidOperationException>(() => services.AddWebEndpointProtocol(new CustomProtocol("second", "shared")));
-		Assert.Throws<InvalidOperationException>(() => new WebEndpointCollection(configuration,
+		Assert.Throws<InvalidOperationException>(() => new WebEndpointCollection(Declarations(configuration),
 			[new CustomProtocol("first", "shared"), new CustomProtocol("second", "shared")]));
 
 		var deferred = Services();
 		deferred.AddSingleton<WebEndpointProtocol>(_ => new CustomProtocol("custom"));
-		Assert.Throws<InvalidOperationException>(() => deferred.AddWebEndpoints(configuration));
+		Assert.Throws<InvalidOperationException>(() => deferred.AddWebEndpoints(Declarations(configuration)));
 	}
 
 	[Fact]
 	public void NormalizationCannotReplaceApplicationProtocolIdentity()
 	{
 		using var configuration = Configuration(("Endpoints:a:Url", "https://127.0.0.1:9000/"), ("Endpoints:a:Protocols", "custom"));
-		Assert.Throws<InvalidOperationException>(() => new WebEndpointCollection(configuration, [new RenamingProtocol()]));
+		Assert.Throws<InvalidOperationException>(() => new WebEndpointCollection(Declarations(configuration), [new RenamingProtocol()]));
 		Assert.Equal("custom", configuration["Endpoints:a:Protocols"]);
 	}
 
@@ -130,7 +131,7 @@ public class WebEndpointPipelineTest
 		var services = Services();
 		services.AddWebEndpointProtocol(new CustomProtocol("first"));
 		services.AddWebEndpointProtocol(new CustomProtocol("second"));
-		services.AddWebEndpoints(configuration);
+		services.AddWebEndpoints(Declarations(configuration));
 		using var provider = services.BuildServiceProvider();
 		var application = new ApplicationBuilder(provider);
 		application.UseWebEndpoints();
@@ -153,6 +154,70 @@ public class WebEndpointPipelineTest
 		var routed = new ApplicationBuilder(provider);
 		routed.UseRouting();
 		Assert.Throws<InvalidOperationException>(() => routed.UseWebEndpoints());
+	}
+
+	[Fact]
+	public async Task LogicalEndpointsWorkWithoutConfigurationOrKestrel()
+	{
+		var services = Services();
+		services.AddWebEndpoints([
+			new WebEndpoint("api", Zongsoft.Communication.NetworkAddress.Parse("http://127.0.0.1:9000/api"), [Zongsoft.Communication.NetworkProtocol.Parse("http2")]),
+		]);
+		using var provider = services.BuildServiceProvider();
+		var application = new ApplicationBuilder(provider);
+		application.UseWebEndpoints();
+		application.Run(context =>
+		{
+			context.Response.Headers["Selected"] = context.Features.Get<WebEndpointFeature>().Endpoint.Name;
+			return Task.CompletedTask;
+		});
+		var pipeline = application.Build();
+		var accepted = Request(provider, "/api/item");
+		await pipeline(accepted);
+		Assert.Equal(200, accepted.Response.StatusCode);
+		Assert.Equal("api", accepted.Response.Headers["Selected"].ToString());
+		var rejected = Request(provider, "/elsewhere");
+		await pipeline(rejected);
+		Assert.Equal(404, rejected.Response.StatusCode);
+		Assert.False(rejected.Response.Headers.ContainsKey("Selected"));
+	}
+
+	[Fact]
+	public void DeferredEndpointsUseFinalRegistrations()
+	{
+		using var configuration = Configuration(("Endpoints:a:Url", "https://127.0.0.1:9000/old"), ("Endpoints:a:Protocols", "custom"));
+		var services = Services();
+		var calls = 0;
+		services.AddWebEndpoints(provider =>
+		{
+			calls++;
+			return Declarations(provider.GetRequiredService<IConfiguration>());
+		});
+		services.AddSingleton<IConfiguration>(configuration);
+		services.AddWebEndpointProtocol(new WebEndpointProtocol("custom", "http2"));
+		configuration["Endpoints:a:Url"] = "https://127.0.0.1:9000/final";
+		Assert.Equal(0, calls);
+		Assert.Throws<InvalidOperationException>(() => services.AddWebEndpoints(_ => []));
+		using var provider = services.BuildServiceProvider();
+		Assert.Equal(0, calls);
+		var endpoints = provider.GetRequiredService<WebEndpointCollection>();
+		var endpoint = Assert.Single(endpoints);
+		Assert.Equal("/final", endpoint.Address.Path);
+		Assert.Equal("custom+http2", Assert.Single(endpoint.Protocols).ToString());
+		configuration["Endpoints:a:Url"] = "https://127.0.0.1:9000/later";
+		Assert.Same(endpoints, provider.GetRequiredService<WebEndpointCollection>());
+		Assert.Equal("/final", endpoint.Address.Path);
+		Assert.Equal(1, calls);
+	}
+
+	[Fact]
+	public void DeferredEndpointsRequireRuntimeProtocolRules()
+	{
+		using var configuration = Configuration(("Endpoints:a:Url", "https://127.0.0.1:9000/"), ("Endpoints:a:Protocols", "custom+http2"));
+		var services = Services();
+		services.AddWebEndpoints(_ => Declarations(configuration));
+		using var provider = services.BuildServiceProvider();
+		Assert.Throws<InvalidOperationException>(() => provider.GetRequiredService<WebEndpointCollection>());
 	}
 
 	private static IServiceCollection Services() => new ServiceCollection().AddLogging().AddRouting().AddSingleton(new DiagnosticListener("Web.Tests"));
@@ -188,4 +253,7 @@ public class WebEndpointPipelineTest
 		public override Zongsoft.Communication.NetworkProtocol Normalize(Zongsoft.Communication.NetworkProtocol protocol) =>
 			Zongsoft.Communication.NetworkProtocol.Parse("replacement+http2");
 	}
+	private static IEnumerable<WebEndpoint> Declarations(IConfiguration configuration) => configuration.GetSection("Endpoints").GetChildren().Select(section =>
+		new WebEndpoint(section.Key, Zongsoft.Communication.NetworkAddress.Parse(section["Url"]), Zongsoft.Communication.NetworkProtocol.Parse(section["Protocols"], ',')));
+
 }

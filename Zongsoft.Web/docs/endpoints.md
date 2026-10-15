@@ -2,21 +2,22 @@
 
 [English](endpoints.md) | [简体中文](endpoints.zh-Hans.md)
 
-`Zongsoft.Web.Hosting` provides startup endpoint snapshots, Kestrel configuration projection and request-scope constraints. Standalone ASP.NET hosts must explicitly connect these facilities after configuration loading. Referencing the assembly or adding a binding processing instruction does not install the pipeline. The Plugins.Web builder now installs them automatically; do not register the snapshot or middleware again. gRPC service registration belongs to Web.Grpc.
+`Zongsoft.Web.Hosting` provides independent Kestrel configuration conversion, server-independent logical endpoints and request-scope constraints. Standalone ASP.NET hosts must explicitly connect these facilities after configuration loading. Referencing the assembly or adding a binding processing instruction does not install the pipeline. Plugins.Web uses IServiceRegistration scanning to automatically connect conversion, scopes and monitoring when a Web host declares Kestrel:Endpoints and has no explicit endpoint registration; hosting code needs no changes. gRPC service registration belongs to Web.Grpc.
 
 ## Host integration
 
-Place this fragment after an existing ASP.NET Core WebApplicationBuilder has loaded its final configuration. Kestrel must have valid configured endpoints.
+Place this ordinary HTTP example after an existing ASP.NET Core WebApplicationBuilder has loaded its final configuration. Keep projection alive until the application has stopped and been disposed.
 
 ```csharp
 using Zongsoft.Web.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets;
 
-var endpoints = builder.Services.AddWebEndpoints(
-	builder.Configuration.GetSection("Kestrel"));
+using var projection = KestrelUtility.Convert(
+	builder.Configuration.GetSection("Kestrel"), out var declarations);
+var endpoints = builder.Services.AddWebEndpoints(declarations);
 
-builder.WebHost.ConfigureKestrel(endpoints.Configure);
-builder.Services.Configure<SocketTransportOptions>(endpoints.Configure);
+builder.WebHost.ConfigureKestrel(options => options.Configure(projection, reloadOnChange: false));
+builder.Services.Configure<SocketTransportOptions>(options => KestrelUtility.Configure(options, endpoints));
 
 var app = builder.Build();
 app.UseWebEndpoints();
@@ -24,7 +25,9 @@ app.UseRouting();
 // Add authentication, authorization, static files and existing routes afterwards.
 ```
 
-`AddWebEndpoints` returns the registered `WebEndpointCollection` for final Kestrel configuration. Install its projection after other Kestrel callbacks and before original endpoints load. Do not load the original URLs with paths first or add unregistered listeners through Listen, urls or environment variables. On configuration changes, the host uses `HasChanged(kestrelSection)` to report that a restart is required, without reconfiguring listeners or routes.
+`KestrelUtility.Convert(configuration, out declarations, protocols)` produces an independent ConfigurationRoot and read-only logical declarations from the same input. Supply optional normalization rules for protocol shorthand. The caller disposes the result; changes to it cannot mutate the source or logical endpoints. Conversion does not register services, install middleware, subscribe to reloads or start listeners. Empty endpoints produce an independent configuration retaining native settings. The caller selects the section; the utility does not hard-code the Kestrel root path.
+
+`AddWebEndpoints(declarations)` creates request scopes from logical declarations and registered protocol policies. WebEndpoint and WebEndpointCollection can also be constructed directly, without configuration or Kestrel. Apply the projected configuration before original endpoints load. Configuration comparison, restart notifications and projection lifetime belong to the host; the collection has no Configure or HasChanged methods.
 
 Install `UseWebEndpoints` once, before routing, forwarded headers and ordinary HTTP middleware that may return early. It does not replace authentication or authorization. Scope constraints govern listener and route ownership; arbitrary custom middleware remains the application's responsibility. Ordinary requests cannot reach static files or ordinary routes through a gRPC-only scope.
 
@@ -39,15 +42,17 @@ Kestrel:Endpoints:orders:Url=http://127.0.0.1:4317/orders
 Kestrel:Endpoints:orders:Protocols=grpc+http2
 ```
 
-These logical scopes share one physical HTTP/2 listener. Original configuration retains complete URLs; projected URLs contain only the scheme, host and port. Certificates, SNI and connection defaults are preserved. Items sharing a socket must have identical connection settings. Overlapping listeners, duplicate same-kind scopes, same-kind paths differing only in case, and mixed HTTP versions on a cleartext socket fail. Native SNI Protocols cannot expand the declared versions.
+These logical scopes share one physical HTTP/2 listener. Conversion preserves the source URLs and outputs scheme, host and port for each physical listener. Certificates, SNI and connection defaults are preserved. The converter rejects incompatible settings on shared sockets, overlapping listeners, mixed cleartext HTTP versions and SNI settings that expand declared capabilities. WebEndpointCollection separately rejects conflicting same-kind scopes and paths differing only in case. Successful conversion does not establish unambiguous request scopes.
 
-`WebEndpoint` exposes the configuration name, `NetworkAddress`, a read-only `NetworkProtocol` collection and aggregate HTTP carrier versions in `HttpProtocols`. `GetProtocols(kind)` returns the versions declared for a request kind, defaulting to `http`. The collection sorts by descending path length, then ordinal name. Missing declarations do not inherit implicit server capabilities; an explicitly configured `EndpointDefaults:Protocols` can supply the endpoint's default declaration.
+`WebEndpoint` accepts a name, NetworkAddress and protocol declarations, which it copies into a read-only collection. Supports(httpVersion) checks a declared HTTP major version. WebEndpointCollection normalizes declarations, builds request-kind scopes and sorts by descending path length and ordinal name. The models and common pipeline do not reference Kestrel types. Conversion uses explicit protocols or EndpointDefaults:Protocols without inferring undeclared capabilities.
 
-The Web library supplies ordinary HTTP rules. Register upper-level protocols through `AddWebEndpointProtocol` before creating the snapshot. Valid syntax does not imply an installed runtime policy. Missing protocols, duplicate names or independent kinds, and registration after snapshot creation fail without ordinary HTTP fallback. Registering the same instance again before snapshot creation is harmless. The optional second argument of `WebEndpointCollection` also accepts policy instances directly. The registration collection is copied; policy instances must remain immutable or thread-safe.
+Pure conversion accepts explicit carriers such as grpc+http2 and custom+http2 without application-protocol registration. Bare names need a supplied normalization rule. Conversion does not inspect business handlers. Request scopes require the corresponding runtime policies; successful conversion does not imply that those policies are registered.
+
+The Web library supplies ordinary HTTP rules. Register upper-level protocols through `AddWebEndpointProtocol` before creating the snapshot. Valid syntax does not imply an installed runtime policy. Missing protocols and duplicate names or independent kinds fail without ordinary HTTP fallback. The immediate declaration overload rejects later protocol registration; the factory overload permits registration until the final provider is built. Registering the same instance again before snapshot creation is harmless. The optional second argument of `WebEndpointCollection` also accepts policy instances directly. The registration collection is copied; policy instances must remain immutable or thread-safe.
 
 Encoding protocols may share ordinary HTTP. For example, `services.AddWebEndpointProtocol(new WebEndpointProtocol("protobuf"));` declares `protobuf → protobuf+http`; `protobuf,protobuf+http2` normalizes to `protobuf+http2`. This declaration does not install a serializer. Runtime listening requires a specific HTTP version: `http` or the expanded `protobuf+http` alone is insufficient. Direct TCP/UDP combinations are not carried by this Kestrel adapter.
 
-Native gRPC policy belongs to the separate `Zongsoft.Web.Grpc` package. Explicit hosts call its `services.AddGrpcWebEndpoints()` before `AddWebEndpoints`. The plugin's `GrpcInitializer.Registration` registers this policy automatically; Plugins.Web creates the snapshot after all plugin registration completes. This policy expands bare `grpc` to `grpc+http2`, accepts HTTP/2 and HTTP/3 carriers, and rejects unsuitable carriers. The Web library contains no gRPC name checks.
+Native gRPC policy belongs to the separate `Zongsoft.Web.Grpc` package. Use `services.AddGrpcWebEndpoints()` before the immediate declaration overload; with the factory overload, complete registration before building the final provider. The plugin's `GrpcInitializer.Registration` registers this policy automatically; Plugins.Web creates snapshots in the final provider through explicit endpoint integration. This policy expands bare `grpc` to `grpc+http2`, accepts HTTP/2 and HTTP/3 carriers, and rejects unsuitable carriers. The Web library contains no gRPC name checks.
 
 An HTTPS `grpc+http3` declaration can produce an HTTP/3 projection. Snapshot creation does not probe the backend or QUIC support. Actual startup remains subject to Kestrel, TLS and platform requirements. HTTP/3 runtime validation is separate from TCP socket validation.
 
@@ -88,11 +93,11 @@ The gRPC extension must register services and a regional fallback within that gr
 
 The gRPC package's private policy owns media types, method restrictions, exact method paths and grpc-status responses. The Web middleware and matcher policy are private nested classes of `WebEndpointExtension`, not public extension points.
 
-These facilities consume Kestrel runtime configuration. They do not interpret binding processing instructions, generate external entrances or prepend paths to controllers. They project declarations with paths into physical listeners and enforce logical scopes at request time. Ordinary HTTP can likewise use separate `/api` and `/admin` listener scopes. Deployment tools consume binding exposure declarations separately to generate proxy mappings.
+KestrelUtility consumes server configuration. Logical endpoint collections and the common request pipeline consume endpoint declarations and protocol policies. These facilities do not interpret binding processing instructions, generate external entrances or prepend paths to controllers. Ordinary HTTP can likewise use separate `/api` and `/admin` listener scopes. Deployment tools consume binding exposure declarations separately to generate proxy mappings.
 
 ## Validation and delivery
 
-[Snapshot tests](../test/Hosting/WebEndpointCollectionTest.cs) cover generic protocols, shared listeners, conflicts, independent snapshots and IPv6 TCP binding. [Ordinary pipeline tests](../test/Hosting/WebEndpointPipelineTest.cs) verify independent operation, kinds and registration without referencing the gRPC extension. [gRPC pipeline tests](../grpc/test/GrpcEndpointPipelineTest.cs) cover media types, raw paths, isolation and HTTP/1 plus HTTP/2 requests against an isolated local Kestrel host. [Protocol tests](../grpc/test/GrpcEndpointProtocolTest.cs) cover shorthand, plugin registration and missing extensions. Requests with a gRPC media type verify scope dispatch, not complete gRPC calls.
+[Conversion tests](../test/Hosting/KestrelUtilityTest.cs) cover independent conversion, normalization rules, shared listeners, source isolation and IPv6 TCP binding. [Logical endpoint tests](../test/Hosting/WebEndpointCollectionTest.cs) cover construction without configuration, copied declarations and scope conflicts. [Ordinary pipeline tests](../test/Hosting/WebEndpointPipelineTest.cs) verify independent operation, kinds and registration without referencing the gRPC extension. [gRPC pipeline tests](../grpc/test/GrpcEndpointPipelineTest.cs) cover media types, raw paths, isolation and HTTP/1 plus HTTP/2 requests against an isolated local Kestrel host. [Protocol tests](../grpc/test/GrpcEndpointProtocolTest.cs) cover shorthand, plugin registration and missing extensions. Requests with a gRPC media type verify scope dispatch, not complete gRPC calls.
 
 Debug references local Core output; the project file defines the minimum Release Core package dependency. Supply the corresponding Core build containing the network value APIs before publishing Web. Local Release validation uses an isolated package feed and does not imply publication. See [Plugins.Web](../../Zongsoft.Plugins.Web/README.md) for plugin host integration. Complete gRPC services/reflection/streaming, Nginx and actual HTTP/3 operation require subsequent integration validation.
 

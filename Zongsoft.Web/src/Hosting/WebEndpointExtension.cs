@@ -33,13 +33,12 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Routing.Matching;
-using Microsoft.AspNetCore.Server.Kestrel.Core;
 
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -58,7 +57,7 @@ public static class WebEndpointExtension
 		ArgumentNullException.ThrowIfNull(services);
 		ArgumentNullException.ThrowIfNull(protocol);
 
-		if(services.Any(descriptor => descriptor.ServiceType == typeof(WebEndpointCollection)))
+		if(services.Any(descriptor => descriptor.ImplementationInstance is WebEndpointCollection))
 			throw WebEndpointUtility.Invalid(protocol.Name, "SnapshotAlreadyCreated");
 
 		foreach(var descriptor in services.Where(descriptor => descriptor.ServiceType == typeof(WebEndpointProtocol)))
@@ -78,24 +77,53 @@ public static class WebEndpointExtension
 		return services;
 	}
 
-	/// <summary>从最终 Kestrel 配置节注册端点快照及路由约束。</summary>
+	/// <summary>注册逻辑端点快照及路由约束。</summary>
 	/// <param name="services">服务集合。</param>
-	/// <param name="configuration">最终的 Kestrel 配置节。</param>
-	/// <returns>返回注册的端点快照；宿主通过其 Configure 方法显式配置 Kestrel 和 TCP 传输。</returns>
-	public static WebEndpointCollection AddWebEndpoints(this IServiceCollection services, IConfiguration configuration)
+	/// <param name="declarations">与服务器配置无关的逻辑端点声明。</param>
+	/// <returns>返回注册的逻辑端点快照。</returns>
+	public static WebEndpointCollection AddWebEndpoints(this IServiceCollection services, IEnumerable<WebEndpoint> declarations)
 	{
 		ArgumentNullException.ThrowIfNull(services);
 
 		if(services.Any(descriptor => descriptor.ServiceType == typeof(WebEndpointCollection)))
-			throw WebEndpointUtility.Invalid("Kestrel", "AlreadyRegistered");
+			throw WebEndpointUtility.Invalid("Endpoints", "AlreadyRegistered");
 
-		var protocols = services.Where(descriptor => descriptor.ServiceType == typeof(WebEndpointProtocol))
+		var protocols = services
+			.Where(descriptor => descriptor.ServiceType == typeof(WebEndpointProtocol))
 			.Select(descriptor => descriptor.ImplementationInstance as WebEndpointProtocol ?? throw WebEndpointUtility.Invalid("Protocols", "ProtocolInstanceRequired"));
-		var endpoints = new WebEndpointCollection(configuration, protocols);
+		var endpoints = new WebEndpointCollection(declarations, protocols);
+
 		services.AddSingleton(endpoints);
 		services.TryAddEnumerable(ServiceDescriptor.Singleton<MatcherPolicy, WebEndpointMatcherPolicy>());
 
 		return endpoints;
+	}
+
+	/// <summary>延迟到最终服务提供程序中创建逻辑端点快照。</summary>
+	/// <param name="services">服务集合。</param>
+	/// <param name="factory">逻辑端点工厂；以最终注册的协议规则规范化声明。</param>
+	/// <returns>返回原服务集合。</returns>
+	public static IServiceCollection AddWebEndpoints(this IServiceCollection services, Func<IServiceProvider, IEnumerable<WebEndpoint>> factory)
+	{
+		ArgumentNullException.ThrowIfNull(services);
+		ArgumentNullException.ThrowIfNull(factory);
+
+		if(services.Any(descriptor => descriptor.ServiceType == typeof(WebEndpointCollection)))
+			throw WebEndpointUtility.Invalid("Endpoints", "AlreadyRegistered");
+
+		services.AddSingleton(provider => new WebEndpointCollection(factory(provider), provider.GetServices<WebEndpointProtocol>()));
+		services.TryAddEnumerable(ServiceDescriptor.Singleton<MatcherPolicy, WebEndpointMatcherPolicy>());
+		return services;
+	}
+
+	/// <summary>通过启动过滤器在应用管线之前安装请求范围中间件。</summary>
+	/// <param name="services">服务集合；须另行注册逻辑端点。</param>
+	/// <returns>返回原服务集合；重复调用不会重复安装。</returns>
+	public static IServiceCollection AddWebEndpointPipeline(this IServiceCollection services)
+	{
+		ArgumentNullException.ThrowIfNull(services);
+		services.TryAddEnumerable(ServiceDescriptor.Singleton<IStartupFilter, WebEndpointStartupFilter>());
+		return services;
 	}
 
 	/// <summary>在路由、转发头及静态文件中间件之前确定请求范围。</summary>
@@ -114,6 +142,15 @@ public static class WebEndpointExtension
 	#endregion
 
 	#region 嵌套类型
+	private sealed class WebEndpointStartupFilter : IStartupFilter
+	{
+		public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => application =>
+		{
+			application.UseWebEndpoints();
+			next(application);
+		};
+	}
+
 	private sealed class WebEndpointMiddleware(RequestDelegate next, WebEndpointCollection endpoints)
 	{
 		public Task InvokeAsync(HttpContext context)
@@ -124,10 +161,10 @@ public static class WebEndpointExtension
 			var protocol = endpoints.SelectProtocol(context);
 			var version = context.Request.Protocol switch
 			{
-				"HTTP/1.0" or "HTTP/1.1" => HttpProtocols.Http1,
-				"HTTP/2" => HttpProtocols.Http2,
-				"HTTP/3" => HttpProtocols.Http3,
-				_ => HttpProtocols.None,
+				"HTTP/1.0" or "HTTP/1.1" => 1,
+				"HTTP/2" => 2,
+				"HTTP/3" => 3,
+				_ => 0,
 			};
 
 			var status = protocol.Validate(context);
@@ -141,17 +178,15 @@ public static class WebEndpointExtension
 			if(!TryGetPath(target, out var path))
 				return Reject(context, StatusCodes.Status400BadRequest);
 
-			var endpoint = this.Find(context, path, protocol.Kind, version);
+			var endpoint = endpoints.Find(context, path, protocol.Kind, version);
 
 			if(endpoint != null)
 			{
-				var versions = endpoint.GetProtocols(protocol.Kind);
-
-				if((versions & version) == 0)
+				if(!endpoints.Supports(endpoint, protocol.Kind, version))
 					return Reject(context, StatusCodes.Status400BadRequest);
 
-				// 已解析路径不能穿越逻辑范围；这里只拒绝，不重新分派请求。
-				if(!ReferenceEquals(endpoint, this.Find(context, context.Request.PathBase.Add(context.Request.Path).Value, protocol.Kind, version)))
+				//已解析路径不能穿越逻辑范围；这里只拒绝，不重新分派请求
+				if(!ReferenceEquals(endpoint, endpoints.Find(context, context.Request.PathBase.Add(context.Request.Path).Value, protocol.Kind, version)))
 					return Reject(context, StatusCodes.Status404NotFound);
 
 				context.Features.Set(new WebEndpointFeature(endpoint, path, protocol));
@@ -159,24 +194,6 @@ public static class WebEndpointExtension
 			}
 
 			return protocol.RejectAsync(context);
-		}
-
-		private WebEndpoint Find(HttpContext context, string path, string kind, HttpProtocols version)
-		{
-			if(string.IsNullOrEmpty(path))
-				return null;
-
-			foreach(var endpoint in endpoints)
-			{
-				var versions = endpoint.GetProtocols(kind);
-
-				if(versions != HttpProtocols.None && endpoint.Contains(context.Connection.LocalIpAddress, context.Connection.LocalPort) &&
-					(version == HttpProtocols.Http3 ? (endpoint.ListeningProtocols & HttpProtocols.Http3) != 0 : (endpoint.ListeningProtocols & HttpProtocols.Http1AndHttp2) != 0) &&
-					WebEndpointUtility.Matches(endpoint.Address.Path, path))
-					return endpoint;
-			}
-
-			return null;
 		}
 
 		private static Task Reject(HttpContext context, int status)
@@ -237,7 +254,6 @@ public static class WebEndpointExtension
 	{
 		public override int Order => -2000;
 		public bool AppliesToEndpoints(IReadOnlyList<Endpoint> endpoints) => true;
-
 		public Task ApplyAsync(HttpContext httpContext, CandidateSet candidates)
 		{
 			var feature = httpContext.Features.Get<WebEndpointFeature>();
@@ -262,6 +278,5 @@ public static class WebEndpointExtension
 			return Task.CompletedTask;
 		}
 	}
-
 	#endregion
 }

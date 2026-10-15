@@ -21,7 +21,7 @@
 ```mermaid
 flowchart LR
 	A[Application.Web] --> B[WebApplicationBuilder]
-	B --> C[加载 web.option]
+	B --> C[加载宿主及插件配置]
 	C --> D[构建服务提供器]
 	D --> E[初始化 WebApplicationContext]
 	E --> F[加载插件 Web 部件]
@@ -134,6 +134,53 @@ Web 清单依赖领域插件，领域项目只面向其公共依赖；数据提�
 - 已加载插件贡献的 Web 部件初始化。
 
 🚨 不要在单例插件组件中保存请求作用域对象。`HttpContext`、主体、会话和作用域服务只在当前请求内有效，不同请求也可能并发执行。
+
+## 监听配置与请求范围
+
+`WebApplicationBuilder.Build()` 负责加载插件配置、完成服务注册和构建宿主。`Application.Web()` 另行加载 `web.option` 并装配应用管线。在现有服务扫描阶段，Plugins.Web 的 `WebEndpointExtension.Registration` 发现 Web 宿主的 `Kestrel:Endpoints` 下存在端点项，就自动接入端点转换、请求范围及配置监视，无需修改 hosting 程序：
+
+```csharp
+var app = Zongsoft.Web.Application.Web(args);
+await app.RunAsync();
+```
+
+注册器复用 `IServiceRegistration` 契约。非 Web 宿主、没有端点项或已经注册 `WebEndpointCollection` 时不自动接入。没有声明时，原生 `urls`/`http_ports`/`https_ports`、`app.Urls` 及代码 `Listen(...)` 沿用 ASP.NET Core 行为。是否接入按服务扫描时的配置判断；启动后才增加端点声明需要重启。binding 处理指令面向部署工具声明暴露意图，运行时注册消费端点配置。
+
+自动注册调用 `AddWebEndpoints(configuration).AddWebEndpointMonitoring()`。这两个方法只登记工厂与回调，不临时构建服务提供程序或捕获快照。实际快照由最终容器首次消费时创建，后续服务扫描注册的协议规则可以参与。跨插件冲突或无效声明在首次解析端点/服务器选项或启动时失败，不能依赖 `Build()` 立即抛出。
+
+```xml
+<!-- web.option、显式导入的 web-default.option 或插件入口配置 -->
+<options>
+	<option path="Kestrel">
+		<endpoints>
+			<endpoint endpoint.name="api" url="http://127.0.0.1:8069/api" protocols="http1" />
+		</endpoints>
+	</option>
+</options>
+```
+
+扩展调用独立的 `KestrelUtility.Convert`，从同一次输入生成逻辑端点及独立配置。原配置保留完整 URL，Kestrel 接收去掉 `/api` 的配置，逻辑范围仍为 `/api`。证书、SNI 和其他服务器选项按 [Web 端点契约](../Zongsoft.Web/docs/endpoints.zh-Hans.md)处理。投影和请求范围使用启动快照，配置由服务容器释放。
+
+跨插件同一服务器配置键异值时报错，报告配置键及两个入口路径，不输出配置值；入口路径不追踪单个导入片段。同插件的显式导入覆盖有效，相同键同值允许共存。自动或显式接入都会启用该扩展的冲突检查，不改变通用插件配置规则。
+
+Kestrel 投影使用 `PostConfigure` 并关闭该投影的热重载；原始带路径配置不能提前手动 `Load()`。自定义 `ConfigureKestrel` 回调先于后置投影；若另有 `PostConfigure<KestrelServerOptions>`，按正常注册顺序执行，需在接入端点扩展之前登记，避免之后替换投影。扩展不包装监听工厂、不禁止原生地址来源，额外监听及重复绑定由 Kestrel 处理；启用范围约束后，未匹配声明的请求被拒绝。空端点集合可以构造，范围管线会拒绝全部请求。HTTP/3 实际启动仍受平台及 TLS 条件约束。
+
+扩展通过 `AddWebEndpointPipeline()` 登记私有 `IStartupFilter`，在应用初始化器加入的中间件、自动路由和静态文件之前执行范围校验，无需再次调用 `UseWebEndpoints()`。自定义启动过滤器的顺序仍由宿主管理。身份验证和授权保留原职责；控制器和 Hub 不自动添加基路径。仅需配置转换时直接使用 KestrelUtility；不依赖插件的范围管线可单独使用 Web 的端点注册及启动过滤器扩展。
+
+`AddWebEndpointMonitoring()` 随自动接入一同启用；显式接入时仍可独立选择，须在端点扩展之后登记，重复调用无副作用。它在宿主启动时订阅配置通知，停止或释放时解除订阅。网络配置或跨插件冲突变化仅产生一次 `WebEndpointsChanged` 警告，不刷新监听及路由；业务配置变化不提示。未启用监视仍保持快照，但不产生重启提示。初始化失败时释放已构建的宿主。
+
+需要自选配置节或独立控制监视时，可以在构建器回调中、服务扫描之前显式注册。自动注册器会保留这一选择，不再增加快照或监视器。配置节默认是 `Kestrel`：
+
+```csharp
+using Zongsoft.Web.Hosting;
+
+var app = Zongsoft.Web.Application.Web(args, builder =>
+{
+	builder.Services.AddWebEndpoints(builder.Configuration, "Server");
+	// 显式接入时可自行选择是否启用监视。
+	builder.Services.AddWebEndpointMonitoring();
+});
+```
 
 ## 启动流程与扩展点
 

@@ -2,21 +2,22 @@
 
 [English](endpoints.md) | [简体中文](endpoints.zh-Hans.md)
 
-`Zongsoft.Web.Hosting` 为宿主提供启动端点快照、Kestrel 配置投影和请求范围约束。独立 ASP.NET 宿主必须在配置加载完成后显式接入；仅引用程序集或添加 binding 处理指令不会启动这套管线。Plugins.Web 的构建器已自动接入，不要重复注册快照或中间件；gRPC 服务注册由 Web.Grpc 完成。
+`Zongsoft.Web.Hosting` 提供独立的 Kestrel 配置转换工具，以及不依赖服务器配置的逻辑端点集合和请求范围约束。独立 ASP.NET 宿主必须在配置加载完成后显式接入；仅引用程序集或添加 binding 处理指令不会启动这套管线。Plugins.Web 通过 IServiceRegistration 扫描，在 Web 宿主存在 Kestrel:Endpoints 声明且未显式注册端点时自动接入转换、范围与监视，无需修改 hosting；gRPC 服务注册由 Web.Grpc 完成。
 
 ## 宿主接入
 
-下列片段放在 ASP.NET Core WebApplicationBuilder 的配置完成阶段。Kestrel 配置必须已有有效端点；示例中的 builder 是现有构建器。
+下列普通 HTTP 示例放在 ASP.NET Core WebApplicationBuilder 的配置完成阶段。示例中的 builder 是现有构建器；projection 的生命周期应覆盖应用运行及释放。
 
 ```csharp
 using Zongsoft.Web.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets;
 
-var endpoints = builder.Services.AddWebEndpoints(
-	builder.Configuration.GetSection("Kestrel"));
+using var projection = KestrelUtility.Convert(
+	builder.Configuration.GetSection("Kestrel"), out var declarations);
+var endpoints = builder.Services.AddWebEndpoints(declarations);
 
-builder.WebHost.ConfigureKestrel(endpoints.Configure);
-builder.Services.Configure<SocketTransportOptions>(endpoints.Configure);
+builder.WebHost.ConfigureKestrel(options => options.Configure(projection, reloadOnChange: false));
+builder.Services.Configure<SocketTransportOptions>(options => KestrelUtility.Configure(options, endpoints));
 
 var app = builder.Build();
 app.UseWebEndpoints();
@@ -24,7 +25,11 @@ app.UseRouting();
 // 身份验证、授权、静态文件及现有端点映射在此之后接入。
 ```
 
-`AddWebEndpoints` 返回注册的 `WebEndpointCollection`，供宿主完成最终 Kestrel 配置。应在其它 Kestrel 配置回调之后安装投影，在原配置端点加载之前完成；不得先加载含路径的原 URL，也不应另用 Listen、urls 或环境变量创建未登记监听。网络配置变更时，宿主通过 `HasChanged(kestrelSection)` 判断并报告需要重启，不重新配置监听或路由。
+`KestrelUtility.Convert(configuration, out declarations, protocols)` 从一次输入生成独立的 ConfigurationRoot 和只读逻辑端点列表；简写规范化规则可以通过 protocols 传入。返回配置由调用方释放；原配置及逻辑端点不随其修改而变化。只转换时不注册服务、安装中间件、订阅重载或启动监听；没有端点时返回保留原生选项的独立配置。调用方指定配置节，工具不硬编码 Kestrel 根路径。
+
+`AddWebEndpoints(declarations)` 从逻辑端点及已经注册的协议规则建立请求范围快照。也可以直接构造 WebEndpoint 和 WebEndpointCollection，完全不读取配置、不使用 Kestrel。Kestrel 投影须在原始端点加载之前应用。配置变更比较、重启提示与投影生命周期由宿主负责，集合不再提供 Configure 或 HasChanged。
+
+`AddWebEndpoints(factory)` 在最终服务提供器中延迟创建集合，允许后续插件服务注册补全协议；该工厂只执行一次，不临时构建容器。`AddWebEndpointPipeline()` 通过私有启动过滤器在应用管线之前安装范围中间件，重复注册无副作用；也可自行选择下面的手动接入。
 
 `UseWebEndpoints` 必须位于路由、转发头及可能提前返回的普通 HTTP 中间件之前，不可重复安装。它不代替身份验证和授权。范围约束只管监听及路由归属；任意自定义中间件仍由应用负责。静态文件及普通端点不能通过 gRPC 专用范围接收普通请求。
 
@@ -39,15 +44,17 @@ Kestrel:Endpoints:orders:Url=http://127.0.0.1:4317/orders
 Kestrel:Endpoints:orders:Protocols=grpc+http2
 ```
 
-两个逻辑范围共用一个 HTTP/2 物理监听。原配置保留完整 URL；投影 URL 只含 scheme、主机及端口。证书、SNI、默认连接选项保留；相同 socket 的各项连接选项必须一致。监听重叠、同类别同范围冲突、同类别仅大小写不同的路径及明文 HTTP 多版本混用均失败。SNI 原生 Protocols 不能扩大端点声明的版本集合。
+两个逻辑范围共用一个 HTTP/2 物理监听。转换工具保留原始完整 URL，输出 URL 只含 scheme、主机及端口；证书、SNI、默认连接选项保留。相同 socket 的连接选项必须一致，监听重叠、明文 HTTP 多版本混用及 SNI 扩大声明能力由转换工具拒绝。同类别同范围冲突及同类别仅大小写不同的路径由 WebEndpointCollection 单独校验。转换成功不代表请求范围没有歧义。
 
-`WebEndpoint` 公开配置名称、`NetworkAddress`、只读 `NetworkProtocol` 集合及所有类别的 HTTP 承载版本 `HttpProtocols`；`GetProtocols(kind)` 返回指定请求类别的版本，默认类别为 `http`。集合按路径长度降序及名称序数排序。未配置项不会从服务器默认值推导能力；显式的 `EndpointDefaults:Protocols` 可作为端点配置默认值。
+`WebEndpoint` 通过名称、NetworkAddress 和协议集合构造，复制并保留只读声明；Supports(httpVersion) 判断是否声明了指定 HTTP 主版本。WebEndpointCollection 按路径长度降序及名称序数排序，规范化协议并构建请求类别范围；模型及通用管线不引用 Kestrel 类型。转换器只使用显式协议或 EndpointDefaults:Protocols，不推断未声明能力。
 
-Web 主库内置普通 HTTP 规则。上层协议必须在创建快照前通过 `AddWebEndpointProtocol` 注册；仅有通用协议语法并不表示已安装对应运行规则。未注册、重名、独立类别重复或快照创建后追加注册均报错，不静默退回普通 HTTP。重复注册同一实例在快照创建前无副作用。`WebEndpointCollection` 的可选第二参数也可直接接收协议规则集合；它复制注册集合，规则实例应保持不可变或线程安全。
+纯转换对 grpc+http2、custom+http2 等显式承载不要求注册应用协议；裸名称需要传入规则才能补全。转换不检查业务处理器。启用请求范围时，上层协议必须有对应运行规则，不能从转换成功推断运行规则已注册。
+
+Web 主库内置普通 HTTP 规则。上层协议必须在创建快照前通过 `AddWebEndpointProtocol` 注册；仅有通用协议语法并不表示已安装对应运行规则。未注册、重名、独立类别重复均报错；即时声明重载创建快照后不允许追加协议，工厂重载允许在最终容器构建前补充注册，不静默退回普通 HTTP。重复注册同一实例在快照创建前无副作用。`WebEndpointCollection` 的可选第二参数也可直接接收协议规则集合；它复制注册集合，规则实例应保持不可变或线程安全。
 
 编码协议可共用普通 HTTP 类别。例如 `services.AddWebEndpointProtocol(new WebEndpointProtocol("protobuf"));` 表达 `protobuf → protobuf+http`；`protobuf,protobuf+http2` 归并为 `protobuf+http2`。这一声明不安装序列化器。运行端需要具体 HTTP 版本，仅有 `http` 或展开后的 `protobuf+http` 不足以配置监听；直接 TCP/UDP 组合不由此 Kestrel 适配器承载。
 
-原生 gRPC 规则在独立包 `Zongsoft.Web.Grpc` 中。显式宿主先调用该包的 `services.AddGrpcWebEndpoints()`，再调用 `AddWebEndpoints`。插件的 `GrpcInitializer.Registration` 已自动注册这项规则；Plugins.Web 在全部插件注册完成后自动建立快照。该规则将裸 `grpc` 展开为 `grpc+http2`，接受 HTTP/2、HTTP/3 承载，拒绝不适用的承载；Web 主库不包含 gRPC 名称判断。
+原生 gRPC 规则在独立包 `Zongsoft.Web.Grpc` 中。即时声明重载先调用该包的 `services.AddGrpcWebEndpoints()`；工厂重载在最终容器构建前完成协议注册即可。插件的 `GrpcInitializer.Registration` 已自动注册这项规则；Plugins.Web 通过显式端点扩展在最终服务提供器中建立快照。该规则将裸 `grpc` 展开为 `grpc+http2`，接受 HTTP/2、HTTP/3 承载，拒绝不适用的承载；Web 主库不包含 gRPC 名称判断。
 
 `grpc+http3` 的 HTTPS 声明可生成 HTTP/3 投影，创建快照不探测后端或 QUIC 支持。实际启动仍受 Kestrel、TLS 和平台条件约束。HTTP/3 的运行验收与 TCP socket 绑定验证分别进行。
 
@@ -88,11 +95,11 @@ gRPC 扩展须在该组内注册服务及区域 fallback。普通未标注路由
 
 gRPC 的媒体类型、方法限制、精确方法路径及 grpc-status 响应均由该包的私有策略实现。主库的中间件和匹配策略是 `WebEndpointExtension` 的私有嵌套类，不作为公开扩展点。
 
-这些设施消费 Kestrel 运行配置，不解析 binding PI、不生成外部入口，也不自动为控制器加前缀。它们将含路径的声明转换为物理监听，并在请求到达时兑现逻辑范围。普通 HTTP 同样可以声明 `/api` 与 `/admin` 的不同监听范围。部署工具另行消费 binding 暴露声明生成代理映射。
+KestrelUtility 消费服务器配置；逻辑端点集合与通用请求管线只消费端点声明和协议规则。这些设施不解析 binding PI、不生成外部入口，也不自动为控制器加前缀。普通 HTTP 同样可以声明 `/api` 与 `/admin` 的不同监听范围。部署工具另行消费 binding 暴露声明生成代理映射。
 
 ## 验证与交付
 
-[快照与投影测试](../test/Hosting/WebEndpointCollectionTest.cs)覆盖通用协议、共享监听、配置冲突、快照独立性及 IPv6 TCP 绑定；[普通请求测试](../test/Hosting/WebEndpointPipelineTest.cs)在不引用 gRPC 扩展的项目中验证独立运行、类别与注册契约。[gRPC 专项测试](../grpc/test/GrpcEndpointPipelineTest.cs)覆盖媒体类型、原始路径、范围隔离和本机隔离 Kestrel 的 HTTP/1、HTTP/2 请求；[协议注册测试](../grpc/test/GrpcEndpointProtocolTest.cs)覆盖简写、插件注册及缺失扩展。带 gRPC 媒体类型的请求验证范围分派，不等同于完整 gRPC 调用验收。
+[转换测试](../test/Hosting/KestrelUtilityTest.cs)覆盖独立转换、简写规则、共享监听、原配置隔离及 IPv6 TCP 绑定；[逻辑端点测试](../test/Hosting/WebEndpointCollectionTest.cs)覆盖无配置构造、声明复制和范围冲突；[普通请求测试](../test/Hosting/WebEndpointPipelineTest.cs)在不引用 gRPC 扩展的项目中验证独立运行、类别与注册契约。[gRPC 专项测试](../grpc/test/GrpcEndpointPipelineTest.cs)覆盖媒体类型、原始路径、范围隔离和本机隔离 Kestrel 的 HTTP/1、HTTP/2 请求；[协议注册测试](../grpc/test/GrpcEndpointProtocolTest.cs)覆盖简写、插件注册及缺失扩展。带 gRPC 媒体类型的请求验证范围分派，不等同于完整 gRPC 调用验收。
 
 Debug 使用本地 Core 输出，Release 的最低 Core 包依赖见项目文件。发布 Web 前须提供包含网络值 API 的对应 Core 构建产物；本地 Release 验证使用隔离包源，不代表该包已经推送。插件宿主接入见 [Plugins.Web](../../Zongsoft.Plugins.Web/README.zh-Hans.md)；完整 gRPC 服务/反射/流、Nginx 和实际 HTTP/3 运行属于后续集成验收。
 
