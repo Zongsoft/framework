@@ -28,6 +28,9 @@ description: 修改或审查 Zongsoft.Diagnostics 的诊断配置、OTLP 客户�
 
 ## 配置与验证
 
+- Prometheus 的 urls 保存完整地址，允许省略尾斜杠；仅登记 HttpListener 前缀时补齐，不改写绑定或 ScrapeEndpointPath。多个地址的声明路径必须按 Ordinal 一致，protocol 省略时默认为 http1，显式配置只接受单个 http1，空值、协议列表、其它协议及 protocols 设置无效。独立 path 设置、缺少 urls 或空地址项在登记导出器前失败；不拼接另一份 path、不启动默认监听。运行与 binding PI 共读 Settings 中的 urls；PI 用常量模板 http1 声明固定能力，工具不补默认协议。公开使用方式见 README。
+- Prometheus 的公开入口、选项投影及临时回环抓取由 [主库测试](test) 验证；不为测试扩大实现作用域。原始 option 的 PI 和模板检查不等同于后续 Packager 提取器验收。
+
 - 服务端选项的 telemetry 端点为 HTTP/2；新增传输需核对 `.option`、`.plugin`、生成项目和 Web gRPC。
 - 最小范围为主库或对应 Client/Server 项目，不默认构建所有协议消费者。
 - 当前样例在 [server/samples](protocols/server/samples)，只打印指标，不证明持久化、全部信号覆盖或端到端可靠性。

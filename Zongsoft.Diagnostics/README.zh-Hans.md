@@ -18,6 +18,45 @@
 
 使用 `driver="telemetry"` 导出 OTLP 数据。将 `server` 设置为接收端点，`protocol` 设置为 `grpc` 或 `HttpProtobuf`；接收端点必须支持所选的 OTLP 传输协议。
 
+## Prometheus 监听
+
+`prometheus` 导出器接受 HTTP 抓取请求。`urls` 保存包含抓取路径的完整监听地址，尾斜杠可省略，绑定声明读取同一份地址，并用常量模板声明本启动器固定的 HTTP/1 能力：
+
+```xml
+<!-- Zongsoft.Diagnostics/src/Zongsoft.Diagnostics.option；只列监听相关配置 -->
+<?binding name="prometheus"
+	path="Diagnostics/Diagnostor/Meters/Exporters/*"
+	filter="Driver:prometheus"
+	template="${option.Settings['urls']}"
+	protocols="http1"
+	separators=",;|"?>
+<options>
+	<option path="/Diagnostics">
+		<diagnostor>
+			<meters>
+				<filter>*</filter>
+				<exporters>
+					<exporter exporter.name="prometheus" driver="prometheus"
+						settings="urls=http://127.0.0.1:9464/metrics,http://localhost:9464/metrics;totalSuffix=true;cacheDuration=300ms;" />
+				</exporters>
+			</meters>
+		</diagnostor>
+	</option>
+</options>
+```
+
+`urls` 必填；省略 `protocol` 时默认为 `http1`，显式指定时只接受忽略大小写的单个 `http1`，例如 `urls=http://127.0.0.1:9464/metrics;protocol=http1`。空值、协议列表（包括重复的 `http1`）和 `protocols` 设置均无效。绑定使用常量模板 `protocols="http1"`，省略设置也不需要制作工具猜测默认协议；本启动器未实现 HTTP/2、HTTP/3 或应用层协议组合。这是运行配置校验，与制作工具的绑定映射检查职责独立。
+
+每个 URL 使用 `http` 或 `https`；同一导出器的所有地址必须具有完全相同且区分大小写的路径。`/metrics` 和 `/metrics/` 都是合法声明，但它们是不同路径，不能在同一导出器中混用；未指定路径时表示根路径 `/`。路径段只允许 ASCII 字母、数字及 `-`、`.`、`_`、`~`，不允许中间空段和独立的 `.`、`..` 段；声明不能包含凭据、查询、片段或编码路径。绑定及两种导出器选项保留声明中的原始路径。仅在向 `HttpListener` 登记监听前缀时，按该 API 的要求补齐缺少的尾斜杠；已有尾斜杠时不重复添加。上例的抓取客户端请求 `/metrics`，启动器不生成重定向。前缀匹配由平台 HttpListener 处理：Windows 直连也接纳 `/metrics`，不发生跳转；`/metrics/` 下的子路径返回同一份指标。如果配置声明为 `/metrics/`，这种底层行为也不扩大该反向代理声明的范围。
+
+地址以 `,`、`;` 或 `|` 分隔；中间空项和尾部分隔符均报错。在连接设置内部使用分号分隔地址时，将整个 `urls` 值加引号，例如 `urls='http://127.0.0.1:9464/metrics/;http://localhost:9464/metrics/';`。独立的 `path` 设置必须移除，即使值为空也会报错。缺少地址时不会回退到隐含监听。
+
+`totalSuffix` 默认为 `true`，`cacheDuration` 默认为 `300ms`，二者同时应用于 ASP.NET Core 导出器选项和独立监听；负缓存时间按零处理，过大的值限制到所支持的毫秒范围。登记导出器选项不会自动添加 ASP.NET Core 路由。独立监听由诊断提供程序持有，并随其释放。
+
+默认地址仅限回环访问。反向代理位于另一个容器时，必须显式配置该容器可达的监听地址，绑定工具不改写回环地址。HTTPS 前缀需要配置平台的 `HttpListener` 证书。绑定指令表达暴露意图，本身不启动监听；出站 `telemetry` 导出器不参与该绑定。
+
+定向验证位于 [test](test)。先执行 `dotnet build Zongsoft.Diagnostics.slnx -p:GeneratePackageOnBuild=false -p:ZongsoftCodeStyleStrict=true`，再执行 `dotnet test test/Zongsoft.Diagnostics.Tests.csproj --no-build`。测试检查公开导出器选项，并实际抓取临时回环 HTTP 监听；不启动业务宿主，不代替反向代理或 HTTPS 部署验收。
+
 ## 内置 OpenTelemetry 协议
 
 [`proto`](proto) 目录是指向上游 [OpenTelemetry Protocol 仓库](https://github.com/open-telemetry/opentelemetry-proto)的 Git 子模块，其中包含 [OTLP 协议规范](proto/docs/specification.md)以及对应的语言无关接口类型（[`.proto` 文件](proto/opentelemetry/proto)）。该子模块必须保持干净；协议说明和本项目专用指引应维护在本 README 中，不得写入上游工作树。

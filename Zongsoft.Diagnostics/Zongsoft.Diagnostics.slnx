@@ -1,5 +1,6 @@
 <Solution>
 	<Project Path="src/Zongsoft.Diagnostics.csproj" />
+	<Project Path="test/Zongsoft.Diagnostics.Tests.csproj" />
 	<Project Path="protocols/client/src/Zongsoft.Diagnostics.Protocols.Client.csproj" />
 	<Project Path="protocols/server/src/Zongsoft.Diagnostics.Protocols.Server.csproj" />
 </Solution>

@@ -98,4 +98,16 @@
 	<resheader name="writer">
 		<value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.3500.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
 	</resheader>
+	<data name="Prometheus.PathObsolete.Message" xml:space="preserve">
+		<value>Put the scrape path in every Prometheus urls entry and remove the separate path setting.</value>
+	</data>
+	<data name="Prometheus.ProtocolInvalid.Message" xml:space="preserve">
+		<value>Prometheus protocol must be a single HTTP/1 value (http1); the protocols setting is not supported.</value>
+	</data>
+	<data name="Prometheus.UrlsInvalid.Message" xml:space="preserve">
+		<value>Prometheus urls must contain complete HTTP or HTTPS addresses with literal paths and no empty entries, credentials, query, or fragment.</value>
+	</data>
+	<data name="Prometheus.PathsDifferent.Message" xml:space="preserve">
+		<value>All URLs of a Prometheus exporter must have the same case-sensitive scrape path.</value>
+	</data>
 </root>

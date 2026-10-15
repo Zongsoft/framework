@@ -18,6 +18,45 @@ The [Zongsoft.Diagnostics.option](src/Zongsoft.Diagnostics.option) configuration
 
 Use `driver="telemetry"` for OTLP export. Set `server` to the receiver endpoint and `protocol` to `grpc` or `HttpProtobuf`; the endpoint must accept the selected OTLP transport.
 
+## Prometheus listener
+
+The `prometheus` exporter accepts HTTP scrape requests. Its `urls` setting contains the complete listening prefixes, including the scrape path, with an optional trailing slash. The binding declaration reads those same addresses and declares this launcher's fixed HTTP/1 capability with a constant template:
+
+```xml
+<!-- Zongsoft.Diagnostics/src/Zongsoft.Diagnostics.option; listener-related fragment -->
+<?binding name="prometheus"
+	path="Diagnostics/Diagnostor/Meters/Exporters/*"
+	filter="Driver:prometheus"
+	template="${option.Settings['urls']}"
+	protocols="http1"
+	separators=",;|"?>
+<options>
+	<option path="/Diagnostics">
+		<diagnostor>
+			<meters>
+				<filter>*</filter>
+				<exporters>
+					<exporter exporter.name="prometheus" driver="prometheus"
+						settings="urls=http://127.0.0.1:9464/metrics,http://localhost:9464/metrics;totalSuffix=true;cacheDuration=300ms;" />
+				</exporters>
+			</meters>
+		</diagnostor>
+	</option>
+</options>
+```
+
+`urls` is required; `protocol` defaults to `http1` when omitted. If specified, it accepts a single case-insensitive `http1` value, for example `urls=http://127.0.0.1:9464/metrics;protocol=http1`. Empty values, protocol lists (including repeated `http1` values), and the `protocols` setting are invalid. The binding uses the constant template `protocols="http1"`, so omitting the setting does not require the packaging tool to infer a default. HTTP/2, HTTP/3 and application protocol combinations are not implemented by this launcher. This is runtime configuration validation, independent of the packaging tool's binding mapping checks.
+
+Every URL must use `http` or `https` and have the same case-sensitive path as the other URLs in that exporter. Both `/metrics` and `/metrics/` are valid declarations, but they are distinct paths and cannot be mixed within one exporter. An omitted path means `/`. Path segments contain ASCII letters, digits, `-`, `.`, `_` or `~`; empty interior segments and standalone `.` or `..` segments are invalid. Credentials, queries, fragments and encoded paths are invalid in declarations. The binding and both exporter options retain the declared path. Only when registering a prefix with `HttpListener` does the launcher append a missing `/`, as required by that API; an existing trailing slash is preserved. Configure the scraper to request `/metrics` for the example above. This launcher does not redirect requests. Prefix matching is performed by the platform HttpListener: Windows direct access also accepts `/metrics` without redirecting, and requests below `/metrics/` return the same metrics. If the configuration instead declares `/metrics/`, this native behavior does not expand that declared reverse-proxy range.
+
+Separate addresses with `,`, `;` or `|`. Empty entries fail, including trailing separators. Quote the whole `urls` value when using semicolons inside the connection settings, for example `urls='http://127.0.0.1:9464/metrics/;http://localhost:9464/metrics/';`. Remove the separate `path` setting: its presence is an error, even when empty. Missing addresses do not fall back to an implicit listener.
+
+`totalSuffix` defaults to `true`; `cacheDuration` defaults to `300ms`. Both apply to the ASP.NET Core exporter options and the independent listener; a negative cache duration becomes zero and an oversized duration is capped at the supported millisecond range. Registering exporter options does not add an ASP.NET Core route. The diagnostic provider owns the independent listener and releases it on disposal.
+
+The default addresses are loopback addresses. For a reverse proxy in another container, configure a listener reachable from that container; the binding tool does not rewrite loopback addresses. HTTPS prefixes require the platform's `HttpListener` certificate configuration. The binding instruction declares exposure intent and does not itself start a listener. Outbound `telemetry` exporters do not participate in this binding.
+
+Focused validation lives in [test](test). Build the solution with `dotnet build Zongsoft.Diagnostics.slnx -p:GeneratePackageOnBuild=false -p:ZongsoftCodeStyleStrict=true`, then run `dotnet test test/Zongsoft.Diagnostics.Tests.csproj --no-build`. Tests inspect the public exporter options and exercise a temporary loopback HTTP listener; they do not start a business host or validate reverse-proxy or HTTPS deployment.
+
 ## Bundled OpenTelemetry Protocol
 
 The [`proto`](proto) directory is a Git submodule pinned to the upstream [OpenTelemetry Protocol repository](https://github.com/open-telemetry/opentelemetry-proto). It contains the [OTLP protocol specification](proto/docs/specification.md) and the corresponding language-independent interface types ([`.proto` files](proto/opentelemetry/proto)). Keep this submodule clean: protocol documentation and project-specific guidance belong in this README rather than in the upstream working tree.

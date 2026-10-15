@@ -10,8 +10,8 @@
 
 namespace Zongsoft.Diagnostics.Properties {
     using System;
-    
-    
+
+
     /// <summary>
     ///   一个强类型的资源类，用于查找本地化的字符串等。
     /// </summary>
@@ -19,19 +19,19 @@ namespace Zongsoft.Diagnostics.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   返回此类使用的缓存的 ResourceManager 实例。
         /// </summary>
@@ -45,10 +45,10 @@ namespace Zongsoft.Diagnostics.Properties {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
-        ///   重写当前线程的 CurrentUICulture 属性，对
-        ///   使用此强类型资源类的所有资源查找执行重写。
+        ///   使用此强类型资源类，为所有资源查找
+        ///   重写当前线程的 CurrentUICulture 属性。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -57,6 +57,42 @@ namespace Zongsoft.Diagnostics.Properties {
             }
             set {
                 resourceCulture = value;
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Put the scrape path in every Prometheus urls entry and remove the separate path setting. 的本地化字符串。
+        /// </summary>
+        internal static string Prometheus_PathObsolete_Message {
+            get {
+                return ResourceManager.GetString("Prometheus.PathObsolete.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 All URLs of a Prometheus exporter must have the same case-sensitive scrape path. 的本地化字符串。
+        /// </summary>
+        internal static string Prometheus_PathsDifferent_Message {
+            get {
+                return ResourceManager.GetString("Prometheus.PathsDifferent.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Prometheus protocol must be a single HTTP/1 value (http1); the protocols setting is not supported. 的本地化字符串。
+        /// </summary>
+        internal static string Prometheus_ProtocolInvalid_Message {
+            get {
+                return ResourceManager.GetString("Prometheus.ProtocolInvalid.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Prometheus urls must contain complete HTTP or HTTPS addresses with literal paths and no empty entries, credentials, query, or fragment. 的本地化字符串。
+        /// </summary>
+        internal static string Prometheus_UrlsInvalid_Message {
+            get {
+                return ResourceManager.GetString("Prometheus.UrlsInvalid.Message", resourceCulture);
             }
         }
     }

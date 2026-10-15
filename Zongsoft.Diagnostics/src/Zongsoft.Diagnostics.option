@@ -1,5 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 
+<?binding name="prometheus"
+	path="Diagnostics/Diagnostor/Meters/Exporters/*"
+	filter="driver:prometheus"
+	template="${option.Settings['urls']}"
+	protocols="http1"
+	separators=",;|"?>
+
 <options>
 	<option path="/Diagnostics">
 		<diagnostor>
@@ -11,7 +18,7 @@
 					          settings="server=http://localhost:4317;protocol=grpc;processorType=batch;timeout=30s;interval=15s;" />
 
 					<exporter exporter.name="prometheus" driver="prometheus"
-					          settings="urls=http://127.0.0.1:9464,http://localhost:9464;path=/metrics;totalSuffix=true;cacheDuration=300ms;" />
+					          settings="urls=http://127.0.0.1:9464/metrics,http://localhost:9464/metrics;totalSuffix=true;cacheDuration=300ms;" />
 				</exporters>
 			</meters>
 
