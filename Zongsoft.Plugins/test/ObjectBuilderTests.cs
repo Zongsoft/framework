@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Globalization;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Collections;
@@ -257,6 +258,99 @@ public class ObjectBuilderTests
 		Assert.Equal(21, target.Child.Number);
 	}
 
+	[Theory]
+	[InlineData("{option:/Fixture/Url}", "tcp://127.0.0.1:1883")]
+	[InlineData("{path:/Values/Text}", "resolved path text")]
+	[InlineData("{static:System.String.Empty, System.Private.CoreLib}", "")]
+	public void StringPropertiesResolveExpressionsBeforeConversion(string expression, string expected)
+	{
+		using var scope = new PluginTestScope(settings: new Dictionary<string, string> { ["Fixture:Url"] = "tcp://127.0.0.1:1883" });
+		scope.WritePlugin($"<extension path=\"/Items\"><object name=\"Item\" type=\"{typeof(ComplexObject).AssemblyQualifiedName}\" Text=\"{expression}\" /></extension>");
+		scope.Tree.Load();
+		scope.Tree.Mount("/Values/Text", "resolved path text");
+
+		var value = Assert.IsType<ComplexObject>(scope.Builtin("/Items/Item").Build());
+
+		Assert.Equal(expected, value.Text);
+		Assert.NotEqual(expression, value.Text);
+	}
+
+	[Fact]
+	public void ObjectPropertyPreservesResolvedNodeIdentity()
+	{
+		using var scope = new PluginTestScope();
+		scope.WritePlugin($$"""
+			<extension path="/Items">
+				<object name="Source" type="{{typeof(SimpleObject).AssemblyQualifiedName}}" Number="29" />
+				<object name="Target" type="{{typeof(ReferenceObject).AssemblyQualifiedName}}" Reference="{path:/Items/Source}" />
+			</extension>
+			""");
+		scope.Tree.Load();
+
+		var target = Assert.IsType<ReferenceObject>(scope.Builtin("/Items/Target").Build());
+
+		Assert.Same(scope.Builtin("/Items/Source").GetValue(ObtainMode.Never), target.Reference);
+		Assert.Equal(29, Assert.IsType<SimpleObject>(target.Reference).Number);
+	}
+
+	[Fact]
+	public void ConstructorAndPropertyConvertTheSameConfiguredText()
+	{
+		ConvertedNumberConverter.Calls = 0;
+		using var scope = new PluginTestScope();
+		scope.WritePlugin($"<extension path=\"/Items\"><object name=\"Item\" type=\"{typeof(ConvertedConstructorObject).AssemblyQualifiedName}\" Token=\"37\" /></extension>");
+		scope.Tree.Load();
+
+		var value = Assert.IsType<ConvertedConstructorObject>(scope.Builtin("/Items/Item").Build());
+
+		Assert.Equal("37", value.ConstructorToken);
+		Assert.Equal(37, value.Token.Number);
+		Assert.Equal(1, ConvertedNumberConverter.Calls);
+	}
+
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public void PropertyConverterAppliesToColdAndCachedValues(bool cached)
+	{
+		ConvertedNumberConverter.Calls = 0;
+		using var scope = new PluginTestScope();
+		scope.WritePlugin($"<extension path=\"/Items\"><object name=\"Item\" type=\"{typeof(ConvertedObject).AssemblyQualifiedName}\" Token=\"43\" /></extension>");
+		scope.Tree.Load();
+		var builtin = scope.Builtin("/Items/Item");
+		Assert.False(TypeDescriptor.GetConverter(typeof(ConvertedNumber)).CanConvertFrom(typeof(string)));
+
+		if(cached)
+			Assert.Equal("43", builtin.Properties["Token"].Value);
+
+		Assert.Equal(0, ConvertedNumberConverter.Calls);
+
+		var value = Assert.IsType<ConvertedObject>(builtin.Build());
+
+		Assert.Equal(43, value.Token.Number);
+		Assert.Equal(1, ConvertedNumberConverter.Calls);
+	}
+
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public void UnconvertiblePropertyFailsWithoutCachingAnObject(bool cached)
+	{
+		using var scope = new PluginTestScope();
+		scope.WritePlugin($"<extension path=\"/Items\"><object name=\"Item\" type=\"{typeof(SimpleObject).AssemblyQualifiedName}\" Number=\"not-a-number\" /></extension>");
+		scope.Tree.Load();
+		var builtin = scope.Builtin("/Items/Item");
+
+		if(cached)
+			Assert.Equal("not-a-number", builtin.Properties["Number"].Value);
+
+		var error = Assert.Throws<PluginException>(() => builtin.Build());
+
+		Assert.NotNull(error.InnerException);
+		Assert.False(builtin.IsBuilded);
+		Assert.Null(builtin.Value);
+	}
+
 	[Fact]
 	public void FailedConstructionDoesNotPoisonSubsequentBuilds()
 	{
@@ -417,6 +511,43 @@ public class ObjectBuilderTests
 		public string Text { get; set; }
 		public SimpleObject Child { get; set; }
 		public SimpleObject Detail { get; } = new();
+	}
+
+	public sealed class ReferenceObject
+	{
+		public object Reference { get; set; }
+	}
+
+	public sealed class ConvertedConstructorObject(string token)
+	{
+		public string ConstructorToken { get; } = token;
+		[TypeConverter(typeof(ConvertedNumberConverter))]
+		public ConvertedNumber Token { get; set; }
+	}
+
+	public sealed class ConvertedObject
+	{
+		[TypeConverter(typeof(ConvertedNumberConverter))]
+		public ConvertedNumber Token { get; set; }
+	}
+
+	public sealed class ConvertedNumber(int number)
+	{
+		public int Number { get; } = number;
+	}
+
+	public sealed class ConvertedNumberConverter : TypeConverter
+	{
+		public static int Calls { get; set; }
+		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType) => sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+		{
+			if(value is not string text)
+				return base.ConvertFrom(context, culture, value);
+
+			Calls++;
+			return new ConvertedNumber(int.Parse(text, CultureInfo.InvariantCulture));
+		}
 	}
 
 	[DefaultProperty(nameof(Items))]

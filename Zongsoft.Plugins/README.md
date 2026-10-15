@@ -29,7 +29,7 @@ Extensions are organized as a path-addressable tree. Framework services are comm
 
 ### Builders and Parsers
 
-Builders create nodes such as `object`, `lazy`, and `expose`. Parsers resolve values such as `path`, `type`, `static`, `option`, `service`, and `resource`. A value expression is evaluated when its node is built, so dependency order and path context matter.
+Builders create nodes such as `object`, `lazy`, and `expose`. Parsers resolve values such as `path`, `type`, `static`, `option`, `service`, and `resource`. A value expression is evaluated when its node is built, so dependency order and path context matter. Property assignment resolves expressions or referenced nodes before converting the result with the target member type and converter. This also applies to string and object properties; expressions such as `{option:...}` are not assigned as raw text. The resolved value may already be cached before the member type and converter are known, so assignment still attempts conversion. A null result is preserved rather than converted to a value type's default, which could mask a failed conversion.
 
 ### Application Context
 

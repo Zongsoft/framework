@@ -153,8 +153,8 @@ public static class PluginUtility
 					//更新扩展属性的类型转换器
 					property.Converter = Common.Convert.GetTypeConverter(ctx.Member);
 
-					//如果属性值转换成功则返回转换后的值，否则返回内部值
-					return Common.Convert.TryConvertValue(property.RawValue, property.Type, () => property.Converter, out var value) ? value : property.Value;
+					//保留空值，避免将转换失败的结果替换为值类型默认值
+					return property.Value != null && Common.Convert.TryConvertValue(property.Value, property.Type, () => property.Converter, out var value) ? value : property.Value;
 				});
 			}
 			catch(Exception ex)
