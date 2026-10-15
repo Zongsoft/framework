@@ -2,4 +2,4 @@ artifacts/Zongsoft.Net.plugin
 lib/${Framework}/Zongsoft.Net.*
 lib/${Framework}/*/Zongsoft.Net.resources.*
 
-nuget:Pipelines.Sockets.Unofficial@2.2.8
+nuget:Pipelines.Sockets.Unofficial@2.2.16

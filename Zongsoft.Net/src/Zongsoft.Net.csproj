@@ -19,7 +19,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Pipelines.Sockets.Unofficial" VersionOverride="2.2.8" />
+		<PackageReference Include="Pipelines.Sockets.Unofficial" VersionOverride="2.2.16" />
 	</ItemGroup>
 
 	<Choose>
