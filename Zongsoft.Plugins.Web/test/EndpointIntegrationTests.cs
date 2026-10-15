@@ -34,6 +34,12 @@ public class EndpointIntegrationTests
 	[Fact]
 	public Task DifferentPluginValuesReportEntryOriginsWithoutValues() => EndpointTestScope.RunAsync(nameof(DifferentPluginValuesReportEntryOriginsWithoutValues));
 
+	[Theory]
+	[InlineData("same")]
+	[InlineData("distinct")]
+	[InlineData("missing")]
+	public Task WebFactoryLoadsHostConfigurationBeforeWebConfiguration(string configuration) => EndpointTestScope.RunAsync(nameof(WebFactoryLoadsHostConfigurationBeforeWebConfiguration), configuration);
+
 	[Fact]
 	public Task HostFileProviderSurvivesEndpointIntegration() => EndpointTestScope.RunAsync(nameof(HostFileProviderSurvivesEndpointIntegration));
 

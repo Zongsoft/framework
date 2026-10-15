@@ -23,6 +23,7 @@ internal static partial class EndpointScenarios
 		nameof(EndpointIntegrationTests.PluginImportsProduceOneEffectiveEndpoint) => PluginImportsProduceOneEffectiveEndpoint(scope),
 		nameof(EndpointIntegrationTests.EqualPluginValuesAreAllowed) => EqualPluginValuesAreAllowed(scope),
 		nameof(EndpointIntegrationTests.DifferentPluginValuesReportEntryOriginsWithoutValues) => DifferentPluginValuesReportEntryOriginsWithoutValues(scope),
+		nameof(EndpointIntegrationTests.WebFactoryLoadsHostConfigurationBeforeWebConfiguration) => WebFactoryLoadsHostConfigurationBeforeWebConfiguration(scope, argument),
 		nameof(EndpointIntegrationTests.HostFileProviderSurvivesEndpointIntegration) => HostFileProviderSurvivesEndpointIntegration(scope),
 		nameof(EndpointIntegrationTests.EmptyExplicitEndpointsRejectRequests) => EmptyExplicitEndpointsRejectRequests(scope),
 		nameof(EndpointIntegrationTests.NativeBuilderUsesAddressSourcesWithoutEndpointServices) => NativeBuilderUsesAddressSourcesWithoutEndpointServices(scope, argument),

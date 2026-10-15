@@ -24,7 +24,7 @@ description: 开发、审查、调试或测试 Zongsoft.Plugins 与 Zongsoft.Plu
 2. [PluginLoader](src/PluginLoader.cs) 按文件目录组织父子插件、解析依赖；文件系统层级与 extension path 分离。不要把注释中的排序描述当作确定的文件枚举顺序。
 3. [PluginApplicationContext](src/PluginApplicationContext.cs) 初始化后挂载应用上下文；首次取得 Workbench 构建工作台子节点，Startup 子树后置，随宿主 Started/Stopping 打开/关闭工作台。
 4. [ObjectBuilder](src/Builders/ObjectBuilder.cs)、[BuilderManager](src/Builders/BuilderManager.cs) 处理节点构造和缓存；[ServicesParser](src/Services/ServicesParser.cs) 根据属性类型与当前树节点上下文定位服务。
-5. [PluginConfigurationProvider](src/Configuration/PluginConfigurationProvider.cs) 先查找与 `.plugin` 文件同名的 `.option`，缺失时才尝试插件 name 对应的 `.option`，只加载第一个存在的入口；两者都缺失则结束，首选文件解析失败不回退。不扫描附属后缀，其他片段由入口通过 `<?import ...?>` 显式导入。宿主 LoadConfiguration(name) 同样只加载 name.option。显式 Load 重新选择入口并递归包括子插件；入口及导入文件重载、插件加载/卸载、整体重载均向宿主传递变更通知，替换或释放时解除订阅。整体重载失败清理已建立的提供程序；整体重载、插件树加载/卸载与释放串行执行，通知不代表跨文件事务。
+5. [PluginConfigurationProvider](src/Configuration/PluginConfigurationProvider.cs) 先查找与 `.plugin` 文件同名的 `.option`，缺失时才尝试插件 name 对应的 `.option`，只加载第一个存在的入口；两者都缺失则结束，首选文件解析失败不回退。不扫描附属后缀，其他片段由入口通过 `<?import ...?>` 显式导入。宿主 LoadConfiguration(name) 同样只加载 name.option。无参 LoadConfiguration() 先加载应用名配置，入口程序集名不同时再追加加载其同名配置；Application.Web 在此之后加载 web.option，同名键由后加载的文件覆盖。显式 Load 重新选择入口并递归包括子插件；入口及导入文件重载、插件加载/卸载、整体重载均向宿主传递变更通知，替换或释放时解除订阅。整体重载失败清理已建立的提供程序；整体重载、插件树加载/卸载与释放串行执行，通知不代表跨文件事务。
 6. 跨插件提供程序使用并发字典枚举，不承诺冲突键的跨插件覆盖顺序。通过 Providers 取得各插件的 CompositeConfigurationProvider，其中单个 XML 提供程序包含入口及其导入后的生效值；文件来源标识入口，不追踪单键的导入来源。由宿主消费层比较各插件生效值并判断网络键等领域冲突，不把 Kestrel 或 gRPC 规则硬编码进 Plugins。
 
 ### 易混淆契约

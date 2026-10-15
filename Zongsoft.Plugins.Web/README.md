@@ -51,7 +51,7 @@ var application = Application.Web(args, builder =>
 await application.RunAsync();
 ```
 
-`Application.Web` loads `web.option`, builds the plugin-aware service provider, initializes `WebApplicationContext`, installs the framework middleware pipeline, maps controllers, and maps discovered SignalR hubs. Use the overload with a name when the host must select a named application profile.
+Like daemon and terminal hosts, `Application.Web` first loads the application-named `.option`, also loads the entry-assembly-named `.option` when the names differ, and finally loads `web.option`. Missing files are optional; later configuration overrides earlier keys. It then builds the plugin-aware service provider, initializes `WebApplicationContext`, installs the framework middleware pipeline, maps controllers, and maps discovered SignalR hubs. The named overload sets the application name without excluding the entry assembly configuration.
 
 > 💡 Keep application-specific service registration in the builder callback. Put reusable components and their relationships in plugin manifests so other hosts can compose them in the same way.
 
@@ -137,7 +137,7 @@ Prepare a compatible host, dedicated initialized database, `Discussions` connect
 
 ## Listener Configuration and Request Ranges
 
-`WebApplicationBuilder.Build()` loads plugin configuration, registers services and builds the host. `Application.Web()` also loads `web.option` and composes the application pipeline. During the existing service scan, Plugins.Web's private `WebEndpointExtension.Registration` automatically enables endpoint conversion, request scopes and change monitoring when a Web host has entries under `Kestrel:Endpoints`. No change to the hosting program is required:
+`WebApplicationBuilder.Build()` loads plugin configuration, registers services and builds the host. `Application.Web()` loads the named host configuration followed by `web.option` before building, then composes the application pipeline. During the existing service scan, Plugins.Web's private `WebEndpointExtension.Registration` automatically enables endpoint conversion, request scopes and change monitoring when a Web host has entries under `Kestrel:Endpoints`. No change to the hosting program is required:
 
 ```csharp
 var app = Zongsoft.Web.Application.Web(args);

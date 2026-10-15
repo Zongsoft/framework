@@ -47,7 +47,10 @@ public static class Application
 	{
 		var builder = new WebApplicationBuilder(name, args, configure);
 
-		//添加 web.option 宿主配置文件
+		//加载宿主配置文件
+		builder.LoadConfiguration();
+
+		//加载 Web 配置文件
 		builder.LoadConfiguration("web");
 
 		var app = builder.Build();
@@ -105,7 +108,10 @@ public static class Application
 			configure?.Invoke(host);
 		});
 
-		//添加 web.option 宿主配置文件
+		//加载宿主配置文件
+		builder.LoadConfiguration();
+
+		//加载 Web 配置文件
 		builder.LoadConfiguration("web");
 
 		return builder.Build();

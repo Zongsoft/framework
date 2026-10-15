@@ -72,6 +72,33 @@ internal static partial class EndpointScenarios
 		Assert.DoesNotContain(beta, error.Data.Values.Cast<object>().Select(value => value?.ToString()));
 	}
 
+	private static async Task WebFactoryLoadsHostConfigurationBeforeWebConfiguration(EndpointTestScope scope, string configuration)
+	{
+		var assemblyName = typeof(TestProgram).Assembly.GetName().Name;
+		var applicationName = configuration == "distinct" ? typeof(Zongsoft.Web.WebApplicationBuilder).Assembly.GetName().Name : assemblyName;
+
+		if(configuration == "distinct")
+			scope.Write($"{applicationName}.option", "<options><option path=\"Fixture\"><settings application=\"application\" priority=\"application\" hostPriority=\"application\" /></option></options>");
+
+		if(configuration != "missing")
+			scope.Write($"{assemblyName}.option", "<options><option path=\"Fixture\"><settings host=\"host\" priority=\"host\" hostPriority=\"host\" /></option></options>");
+
+		scope.Write("web.option", "<options><option path=\"Fixture\"><settings web=\"web\" priority=\"web\" /></option></options>");
+		scope.Plugin("Feature", "<options><option path=\"Fixture\"><settings plugin=\"plugin\" /></option></options>");
+
+		await using var application = Zongsoft.Web.Application.Web(applicationName, Arguments(scope), Configure);
+
+		Assert.Equal(configuration == "distinct" ? "application" : null, application.Configuration["Fixture:settings:application"]);
+		Assert.Equal(configuration == "missing" ? null : "host", application.Configuration["Fixture:settings:host"]);
+		Assert.Equal(configuration == "missing" ? null : "host", application.Configuration["Fixture:settings:hostPriority"]);
+		Assert.Equal("web", application.Configuration["Fixture:settings:web"]);
+		Assert.Equal("web", application.Configuration["Fixture:settings:priority"]);
+		Assert.Equal("plugin", application.Configuration["Fixture:settings:plugin"]);
+
+		var files = ((IConfigurationRoot)application.Configuration).Providers.OfType<FileConfigurationProvider>();
+		Assert.Single(files, provider => provider.Source.Path == $"{assemblyName}.option");
+	}
+
 	private static async Task HostFileProviderSurvivesEndpointIntegration(EndpointTestScope scope)
 	{
 		var files = new MemoryFileProvider(
