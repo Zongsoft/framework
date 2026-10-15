@@ -58,6 +58,12 @@ dotnet add package Zongsoft.Core
 - **运行时辅助** _(`Zongsoft.Resources`、`Zongsoft.Scheduling`、`Zongsoft.Versioning`、`Zongsoft.Terminals`)_
   > 资源定位、触发器抽象、语义化版本解析，以及终端/控制台命令执行。
 
+## 服务注册
+
+`ServiceCollectionExtension.Register` 在整个程序集中发现 `IServiceRegistration` 实现，包括内部类和私有嵌套类。优先使用公开静态字段或属性供应的实例，否则调用公开或非公开的无参构造函数。未闭合的泛型类型，以及没有供应实例的抽象注册器不会被实例化；注册异常向调用方传播。
+
+普通 `[Service]` 注册及选项扫描仍要求类型对外可见。非公开外层类型中的公共嵌套服务也不属于对外可见类型；因此可以隐藏注册辅助类，而不会自动公开内部服务。
+
 ## 仓库结构
 
 ```text

@@ -137,7 +137,7 @@ Prepare a compatible host, dedicated initialized database, `Discussions` connect
 
 ## Listener Configuration and Request Ranges
 
-`WebApplicationBuilder.Build()` loads plugin configuration, registers services and builds the host. `Application.Web()` also loads `web.option` and composes the application pipeline. During the existing service scan, Plugins.Web's `WebEndpointExtension.Registration` automatically enables endpoint conversion, request scopes and change monitoring when a Web host has entries under `Kestrel:Endpoints`. No change to the hosting program is required:
+`WebApplicationBuilder.Build()` loads plugin configuration, registers services and builds the host. `Application.Web()` also loads `web.option` and composes the application pipeline. During the existing service scan, Plugins.Web's private `WebEndpointExtension.Registration` automatically enables endpoint conversion, request scopes and change monitoring when a Web host has entries under `Kestrel:Endpoints`. No change to the hosting program is required:
 
 ```csharp
 var app = Zongsoft.Web.Application.Web(args);

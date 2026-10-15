@@ -58,6 +58,12 @@ The package is intentionally broad: it is the common layer that higher-level _**
 - **Runtime helpers** _(`Zongsoft.Resources`, `Zongsoft.Scheduling`, `Zongsoft.Versioning`, `Zongsoft.Terminals`)_
   > Resource lookup, trigger abstractions, semantic version parsing, and terminal/console command execution.
 
+## Service Registration
+
+`ServiceCollectionExtension.Register` discovers `IServiceRegistration` implementations throughout an assembly, including internal classes and private nested classes. It uses an instance supplied by a public static field or property first; otherwise, it invokes a public or non-public parameterless constructor. Open generic types and abstract registrars without a supplied instance are not instantiated. Registration failures propagate to the caller.
+
+Ordinary `[Service]` registrations and option scanning still require externally visible types. A public nested service inside a non-public containing type is not externally visible. This keeps implementation-only services out of automatic registration while allowing private registration helpers.
+
 ## Repository Layout
 
 ```text

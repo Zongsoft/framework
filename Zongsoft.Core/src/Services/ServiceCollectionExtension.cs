@@ -56,16 +56,18 @@ public static class ServiceCollectionExtension
 		if(assembly == null)
 			throw new ArgumentNullException(nameof(assembly));
 
-		foreach(var exportedType in assembly.ExportedTypes)
+		foreach(var type in assembly.DefinedTypes)
 		{
-			var type = exportedType.GetTypeInfo();
-
-			//如果是非公共类、泛型原型类则忽略
-			if(type.IsNotPublic || !type.IsClass || (type.IsGenericType && type.IsGenericTypeDefinition))
+			//忽略非类类型及包含未绑定泛型参数的类型
+			if(!type.IsClass || type.ContainsGenericParameters)
 				continue;
 
 			//使用 IServiceRegistration 服务注册器注册服务
 			if(RegisterServices(services, type, configuration))
+				continue;
+
+			//普通服务及选项仍只扫描对外可见的类型
+			if(!type.IsVisible)
 				continue;
 
 			//获取服务注册注解
@@ -156,7 +158,7 @@ public static class ServiceCollectionExtension
 				}
 			}
 
-			return (IServiceRegistration)Activator.CreateInstance(type);
+			return type.IsAbstract ? null : (IServiceRegistration)Activator.CreateInstance(type, true);
 		}
 	}
 

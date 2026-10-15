@@ -25,7 +25,7 @@ description: 设计、修改、审查或测试 Zongsoft.Core 的公共契约与�
 
 ## 服务注册与解析调用链
 
-- [ServiceCollectionExtension](src/Services/ServiceCollectionExtension.cs) 扫描程序集 ExportedTypes：优先执行 `IServiceRegistration`，否则处理 `ServiceAttribute`；通常将实现注册为 Singleton，契约指向同一实例，Members 分支读取静态成员。不要推断成 transient。
+- [ServiceCollectionExtension](src/Services/ServiceCollectionExtension.cs) 扫描程序集 DefinedTypes，跳过非类和未闭合的泛型类型：`IServiceRegistration` 支持非公开实现，优先使用公开静态字段或属性供应实例，否则以公开或非公开无参构造创建；无实例供应的抽象注册器不实例化。普通 `ServiceAttribute` 与选项扫描仍要求 Type.IsVisible；通常将实现注册为 Singleton，契约指向同一实例，Members 分支读取静态成员。不要推断成 transient。
 - 模块归属来自 [ApplicationModuleAttribute](src/Services/ApplicationModuleAttribute.cs)，可沿点分主程序集约定查找；[ApplicationModule.Services](src/Services/ApplicationModule.cs) 延迟建立命名容器，模块注册优先，再回退共享服务。模块容器不是每次 HTTP 请求的作用域。
 - [ServiceProvider](src/Services/ServiceProvider.cs) 对集合结果先收集模块项，再补共享项，按具体类型去重；修改顺序与去重方式会影响 Find 和默认服务选择。
 - [ServiceProviderExtension](src/Services/ServiceProviderExtension.cs) 区分别名 Resolve 与匹配器 Find；[ServiceLocator](src/Services/ServiceLocator.cs) 的 `name@provider` 先解析提供者，再调用 `IServiceProvider<T>.GetService(name)`，不是解析模块容器。

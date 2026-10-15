@@ -159,7 +159,7 @@ public static class WebEndpointExtension
 
 	#region 服务注册
 	/// <summary>通过服务扫描为具有端点声明的插件 Web 宿主自动接入端点及监视。</summary>
-	public sealed class Registration : IServiceRegistration
+	private sealed class Registration : IServiceRegistration
 	{
 		/// <summary>在已有配置声明且未显式接入端点时登记服务，快照由最终容器创建。</summary>
 		/// <param name="services">宿主服务集合。</param>

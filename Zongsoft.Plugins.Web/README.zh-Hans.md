@@ -137,7 +137,7 @@ Web 清单依赖领域插件，领域项目只面向其公共依赖；数据提�
 
 ## 监听配置与请求范围
 
-`WebApplicationBuilder.Build()` 负责加载插件配置、完成服务注册和构建宿主。`Application.Web()` 另行加载 `web.option` 并装配应用管线。在现有服务扫描阶段，Plugins.Web 的 `WebEndpointExtension.Registration` 发现 Web 宿主的 `Kestrel:Endpoints` 下存在端点项，就自动接入端点转换、请求范围及配置监视，无需修改 hosting 程序：
+`WebApplicationBuilder.Build()` 负责加载插件配置、完成服务注册和构建宿主。`Application.Web()` 另行加载 `web.option` 并装配应用管线。在现有服务扫描阶段，Plugins.Web 的私有注册器 `WebEndpointExtension.Registration` 发现 Web 宿主的 `Kestrel:Endpoints` 下存在端点项，就自动接入端点转换、请求范围及配置监视，无需修改 hosting 程序：
 
 ```csharp
 var app = Zongsoft.Web.Application.Web(args);

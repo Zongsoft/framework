@@ -26,7 +26,7 @@ dotnet add package Zongsoft.Web.Grpc
 
 ## 服务发现
 
-实现由 `Grpc.Tools` 生成的服务基类，通过框架服务系统注册具体类型，并赋予 `gRPC` 标签。启动时，`GrpcInitializer.Registration` 调用 `AddGrpcWebEndpoints`、`AddGrpc` 与 `AddGrpcReflection`；`GrpcInitializer` 读取带标签的类型，调用 `MapGrpcService<T>`，并映射反射服务。
+实现由 `Grpc.Tools` 生成的服务基类，通过框架服务系统注册具体类型，并赋予 `gRPC` 标签。启动时，程序集扫描发现私有注册器 `GrpcInitializer.Registration`，由它调用 `AddGrpcWebEndpoints`、`AddGrpc` 与 `AddGrpcReflection`；`GrpcInitializer` 读取带标签的类型，调用 `MapGrpcService<T>`，并映射反射服务。
 
 > 💡 `gRPC` 标签是发现契约。只有 DI 注册而没有该标签的服务不会被此初始化器映射。
 

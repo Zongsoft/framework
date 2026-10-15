@@ -53,9 +53,11 @@ public class GrpcEndpointProtocolTest
 	{
 		using var configuration = Configuration("grpc");
 		var services = new ServiceCollection();
-		new GrpcInitializer.Registration().Register(services, configuration);
+		Zongsoft.Services.ServiceCollectionExtension.Register(services, typeof(GrpcInitializer).Assembly, configuration);
 		var snapshot = services.AddWebEndpoints(Declarations(configuration));
 		Assert.Contains(Assert.Single(snapshot).Protocols, protocol => protocol.Name == "grpc" && protocol.HttpVersion == 2);
+		using var provider = services.BuildServiceProvider();
+		Assert.IsType<GrpcInitializer>(Assert.Single(provider.GetServices<Zongsoft.Services.IApplicationInitializer<Microsoft.AspNetCore.Builder.IApplicationBuilder>>()));
 	}
 
 	private static ConfigurationRoot Configuration(string protocol) =>

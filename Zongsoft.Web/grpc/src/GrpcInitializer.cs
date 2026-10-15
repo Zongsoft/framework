@@ -81,7 +81,7 @@ public class GrpcInitializer : IApplicationInitializer<IApplicationBuilder>
 	#endregion
 
 	#region 服务注册
-	public sealed class Registration : IServiceRegistration
+	private sealed class Registration : IServiceRegistration
 	{
 		public void Register(IServiceCollection services, IConfiguration configuration)
 		{
