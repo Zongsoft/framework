@@ -32,6 +32,8 @@ using System;
 using NetMQ;
 using NetMQ.Sockets;
 
+using Zongsoft.Communication;
+
 namespace Zongsoft.Messaging.ZeroMQ;
 
 public sealed partial class ZeroQueueServer
@@ -41,8 +43,8 @@ public sealed partial class ZeroQueueServer
 		private sealed class ZeroBroadcastServer
 		{
 			#region 成员字段
-			private readonly int _incoming;
-			private readonly int _outgoing;
+			private readonly NetworkAddress _incoming;
+			private readonly NetworkAddress _outgoing;
 			private readonly string _epoch;
 			private readonly NetMQPoller _poller;
 			private XPublisherSocket _publisher;
@@ -50,7 +52,7 @@ public sealed partial class ZeroQueueServer
 			#endregion
 
 			#region 构造函数
-			public ZeroBroadcastServer(int incoming, int outgoing, string epoch, NetMQPoller poller)
+			public ZeroBroadcastServer(NetworkAddress incoming, NetworkAddress outgoing, string epoch, NetMQPoller poller)
 			{
 				_incoming = incoming;
 				_outgoing = outgoing;

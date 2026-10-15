@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>2.2.0</Version>
+		<Version>2.3.0</Version>
 		<Product>Zongsoft ZeroMQ Library</Product>
 		<Description>This is a library about the ZeroMQ messaging development.</Description>
 		<RootNamespace>Zongsoft.Messaging.ZeroMQ</RootNamespace>
@@ -33,7 +33,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.63.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.64.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>
@@ -45,7 +45,8 @@
 		<None Include="$(MSBuildProjectName).option" Pack="true" PackagePath="\artifacts" />
 		<None Include="$(MSBuildProjectName).plugin" Pack="true" PackagePath="\artifacts" />
 		<None Include="$(MSBuildProjectName)-daemon.plugin" Pack="true" PackagePath="\artifacts" />
-		<None Include="$(MSBuildProjectName).Storage.plugin" Pack="true" PackagePath="\artifacts" />
+		<None Include="$(MSBuildProjectName)-daemon.option" Pack="true" PackagePath="\artifacts" />
+		<None Include="$(MSBuildProjectName).Storage-daemon.plugin" Pack="true" PackagePath="\artifacts" />
 	</ItemGroup>
 
 	<ItemGroup>

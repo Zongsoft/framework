@@ -28,15 +28,15 @@
  */
 
 using System;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
 using NetMQ;
 using NetMQ.Sockets;
 
-using Zongsoft.Services;
 using Zongsoft.Components;
-using Zongsoft.Configuration;
+using Zongsoft.Communication;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 
@@ -47,26 +47,69 @@ public sealed partial class ZeroQueueServer : WorkerBase
 	#endregion
 
 	#region 成员字段
-	private ushort _port;
+	private NetworkAddress _discovery;
+	private NetworkAddress _control;
+	private NetworkAddress _incoming;
+	private NetworkAddress _outgoing;
+	private string _storageName;
 	private ServerAgent _agent;
 	private IMessageStorage _storage;
 	private IMessageStorageFactory _storages;
 	#endregion
 
 	#region 构造函数
-	public ZeroQueueServer(string name = null) : base(name) => _port = PORT;
+	public ZeroQueueServer(string name = null) : base(name)
+	{
+		_discovery = NetworkAddress.Parse($"tcp://0.0.0.0:{PORT}");
+		_incoming = NetworkAddress.Parse("tcp://0.0.0.0:32101");
+		_outgoing = NetworkAddress.Parse("tcp://0.0.0.0:32102");
+	}
 	#endregion
 
 	#region 公共属性
-	public ushort Port
+	/// <summary>获取或设置发现服务的完整 TCP 侦听地址。</summary>
+	public string Discovery
 	{
-		get => _port;
+		get => _discovery.ToString()[..^1];
+		set => _discovery = this.GetAddress(value);
+	}
+
+	/// <summary>获取或设置可靠投递控制的完整 TCP 侦听地址；为空时禁用可靠投递。</summary>
+	public string Control
+	{
+		get => _control?.ToString()[..^1];
+		set => _control = this.GetAddress(value, true);
+	}
+
+	/// <summary>获取或设置消息流入的完整 TCP 侦听地址。</summary>
+	public string Incoming
+	{
+		get => _incoming.ToString()[..^1];
+		set => _incoming = this.GetAddress(value);
+	}
+
+	/// <summary>获取或设置消息流出的完整 TCP 侦听地址。</summary>
+	public string Outgoing
+	{
+		get => _outgoing.ToString()[..^1];
+		set => _outgoing = this.GetAddress(value);
+	}
+
+	/// <summary>获取或设置可靠投递使用的存储配置名，与服务器名称相互独立。</summary>
+	public string Storage
+	{
+		get => _storageName;
 		set
 		{
 			if(this.State != WorkerState.Stopped)
-				throw new InvalidOperationException(Properties.Resources.ZeroQueueServer_PortImmutable_Message);
+				throw new InvalidOperationException(Properties.Resources.ZeroQueueServer_StorageImmutable_Message);
 
-			_port = value > 0 ? value : PORT;
+			value = string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+			if(string.Equals(_storageName, value, StringComparison.Ordinal))
+				return;
+
+			_storageName = value;
+			DisposeStorage(Interlocked.Exchange(ref _storage, null));
 		}
 	}
 
@@ -90,16 +133,16 @@ public sealed partial class ZeroQueueServer : WorkerBase
 	#region 重写方法
 	protected override async Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
-		var (control, incoming, outgoing) = GetPorts(this.Name, args);
-		Validate(_port, control, incoming, outgoing);
-
 		var storage = _storage;
 		ServerAgent agent = null;
 
 		try
 		{
-			if(storage == null && _storages != null)
-				_storage = storage = _storages.Create(this.Name);
+			cancellation.ThrowIfCancellationRequested();
+			this.Validate();
+
+			if(_control != null && storage == null)
+				_storage = storage = _storages.Create(_storageName) ?? throw new InvalidOperationException(string.Format(Properties.Resources.ZeroQueueServer_StorageMissing_Message, _storageName));
 
 			var pending = new System.Collections.Generic.List<Message>();
 			if(storage != null)
@@ -108,7 +151,7 @@ public sealed partial class ZeroQueueServer : WorkerBase
 					pending.Add(entry);
 			}
 
-			agent = new ServerAgent(_port, control, incoming, outgoing, storage, pending);
+			agent = new ServerAgent(_discovery, _control, _incoming, _outgoing, storage, pending);
 			await agent.StartAsync(cancellation);
 			_agent = agent;
 		}
@@ -121,18 +164,6 @@ public sealed partial class ZeroQueueServer : WorkerBase
 				await DisposeStorageAsync(storage);
 
 			throw;
-		}
-
-		static void Validate(ushort discovery, int control, int incoming, int outgoing)
-		{
-			if(incoming is < 0 or > ushort.MaxValue || outgoing is < 0 or > ushort.MaxValue || control is < 0 or > ushort.MaxValue)
-				throw new ArgumentOutOfRangeException(nameof(incoming), string.Format(Properties.Resources.ZeroQueueServer_DataPortOutOfRange_Message, ushort.MaxValue));
-
-			if(incoming > 0 && outgoing > 0 && incoming == outgoing || incoming > 0 && incoming == control || outgoing > 0 && outgoing == control)
-				throw new ArgumentException(Properties.Resources.ZeroQueueServer_DataPortsConflict_Message);
-
-			if(incoming == discovery || outgoing == discovery || control == discovery)
-				throw new ArgumentException(Properties.Resources.ZeroQueueServer_DiscoveryPortConflict_Message);
 		}
 	}
 
@@ -180,49 +211,31 @@ public sealed partial class ZeroQueueServer : WorkerBase
 			disposable.Dispose();
 	}
 
-	private static (int control, int incoming, int outgoing) GetPorts(string name, string[] args)
+	private NetworkAddress GetAddress(string text, bool optional = false)
 	{
-		var control = 0;
-		var incoming = 0;
-		var outgoing = 0;
+		if(this.State != WorkerState.Stopped)
+			throw new InvalidOperationException(Properties.Resources.ZeroQueueServer_AddressImmutable_Message);
 
-		if(args != null)
-		{
-			for(var index = 0; index < args.Length; index++)
-			{
-				var parts = args[index].Split(['=', ':'], 2, StringSplitOptions.TrimEntries);
-				if(parts.Length != 2)
-					continue;
+		if(optional && string.IsNullOrWhiteSpace(text))
+			return null;
 
-				var key = parts[0].StartsWith("--", StringComparison.Ordinal) ? parts[0][2..] : parts[0];
-				if(!key.Equals("control", StringComparison.OrdinalIgnoreCase) &&
-				   !key.Equals("incoming", StringComparison.OrdinalIgnoreCase) &&
-				   !key.Equals("outgoing", StringComparison.OrdinalIgnoreCase))
-					continue;
+		if(!NetworkAddress.TryParse(text, out var address) ||
+		   address.Scheme != "tcp" || address.Path != "/" ||
+		   address.HostType == UriHostNameType.Dns ||
+		   !IPAddress.TryParse(address.Zone == null ? address.Host : $"{address.Host}%{address.Zone}", out _))
+			throw new ArgumentException(Properties.Resources.ZeroQueueServer_AddressInvalid_Message, nameof(text));
 
-				if(!int.TryParse(parts[1], out var port) || port is < 0 or > ushort.MaxValue)
-					throw new ArgumentException(string.Format(Properties.Resources.ZeroQueueServer_NamedPortOutOfRange_Message, key, ushort.MaxValue), nameof(args));
+		return address;
+	}
 
-				if(key.Equals("incoming", StringComparison.OrdinalIgnoreCase))
-					incoming = port;
-				else if(key.Equals("outgoing", StringComparison.OrdinalIgnoreCase))
-					outgoing = port;
-				else
-					control = port;
-			}
-		}
+	private void Validate()
+	{
+		if(_discovery.Port == _incoming.Port || _discovery.Port == _outgoing.Port || _incoming.Port == _outgoing.Port ||
+		   _control != null && (_control.Port == _discovery.Port || _control.Port == _incoming.Port || _control.Port == _outgoing.Port))
+			throw new ArgumentException(Properties.Resources.ZeroQueueServer_PortsConflict_Message);
 
-		if(incoming > 0 || outgoing > 0 || control > 0)
-			return (control, incoming, outgoing);
-
-		var servers = ApplicationContext.Current?.Configuration.GetOption<Configuration.ServerOptionsCollection>("/Messaging/ZeroMQ/Servers");
-		if(servers == null)
-			return default;
-
-		if(name != null && servers.TryGetValue(name, out var server) && !server.Port.IsEmpty)
-			return (server.Port.Control, server.Port.Incoming, server.Port.Outgoing);
-
-		return (servers.Port.Control, servers.Port.Incoming, servers.Port.Outgoing);
+		if((_control != null) != (_storageName != null) || _control != null && _storages == null)
+			throw new InvalidOperationException(Properties.Resources.ZeroQueueServer_ControlStorageRequired_Message);
 	}
 	#endregion
 
@@ -230,7 +243,7 @@ public sealed partial class ZeroQueueServer : WorkerBase
 	private sealed partial class ServerAgent : IAsyncDisposable
 	{
 		#region 私有成员
-		private readonly ushort _port;
+		private readonly NetworkAddress _discovery;
 		private readonly NetMQQueue<Command> _commands;
 		private readonly NetMQPoller _poller;
 		private readonly ZeroBroadcastServer _broadcast;
@@ -242,9 +255,9 @@ public sealed partial class ZeroQueueServer : WorkerBase
 		#endregion
 
 		#region 构造函数
-		public ServerAgent(ushort port, int control, int incoming, int outgoing, IMessageStorage storage, System.Collections.Generic.IReadOnlyList<Message> pendingEntries)
+		public ServerAgent(NetworkAddress discovery, NetworkAddress control, NetworkAddress incoming, NetworkAddress outgoing, IMessageStorage storage, System.Collections.Generic.IReadOnlyList<Message> pendingEntries)
 		{
-			_port = port;
+			_discovery = discovery;
 			_epoch = Guid.NewGuid().ToString("N");
 			_commands = new NetMQQueue<Command>();
 			_commands.ReceiveReady += this.OnCommandReady;
@@ -254,7 +267,7 @@ public sealed partial class ZeroQueueServer : WorkerBase
 			_runner = Task.Factory.StartNew(() =>
 			{
 				if(Thread.CurrentThread.Name == null)
-					Thread.CurrentThread.Name = $"{nameof(ZeroQueueServer)}#{port}.Actor";
+					Thread.CurrentThread.Name = $"{nameof(ZeroQueueServer)}#{discovery.Port}.Actor";
 
 				_poller.Run(new SynchronizationContext());
 			}, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
@@ -325,7 +338,7 @@ public sealed partial class ZeroQueueServer : WorkerBase
 			try
 			{
 				_responser.ReceiveReady += this.OnReceiveReady;
-				_responser.Bind($"tcp://*:{_port}");
+				Bind(_responser, _discovery);
 				_poller.Add(_responser);
 				_broadcast.Start();
 				_control.Start();
@@ -358,15 +371,12 @@ public sealed partial class ZeroQueueServer : WorkerBase
 		#endregion
 
 		#region 私有方法
-		private static int Bind(NetMQSocket socket, int port)
+		private static int Bind(NetMQSocket socket, NetworkAddress address)
 		{
-			if(port > 0)
-			{
-				socket.Bind($"tcp://*:{port}");
-				return port;
-			}
-
-			return socket.BindRandomPort("tcp://*");
+			socket.Options.IPv4Only = address.HostType != UriHostNameType.IPv6;
+			var host = address.Zone == null ? address.Host : $"{address.Host}%{address.Zone}";
+			socket.Bind(address.HostType == UriHostNameType.IPv6 ? $"tcp://[{host}]:{address.Port}" : $"tcp://{host}:{address.Port}");
+			return address.Port;
 		}
 
 		#endregion

@@ -31,6 +31,36 @@ internal static class ZeroTestUtility
 		return new ZeroQueue("ZeroMQ", settings);
 	}
 
+	public static ZeroQueueServer CreateServer(ushort discovery = 0, IMessageStorageFactory storages = null, string name = null, string storage = "test-store")
+	{
+		var ports = new HashSet<ushort>();
+		if(discovery > 0)
+			ports.Add(discovery);
+
+		return new ZeroQueueServer(name)
+		{
+			Discovery = GetAddress(discovery > 0 ? discovery : NextPort()),
+			Incoming = GetAddress(NextPort()),
+			Outgoing = GetAddress(NextPort()),
+			Control = storages == null ? null : GetAddress(NextPort()),
+			Storage = storages == null ? null : storage,
+			Storages = storages,
+		};
+
+		ushort NextPort()
+		{
+			ushort port;
+			do
+			{
+				port = GetFreePort();
+			}
+			while(!ports.Add(port));
+
+			return port;
+		}
+	}
+
+	public static string GetAddress(ushort port) => $"tcp://127.0.0.1:{port}";
 	public static ushort GetFreePort()
 	{
 		using var listener = new TcpListener(IPAddress.Loopback, 0);
@@ -43,7 +73,7 @@ internal static class ZeroTestUtility
 		try
 		{
 			using var socket = new ResponseSocket();
-			socket.Bind($"tcp://*:{port}");
+			socket.Bind($"tcp://127.0.0.1:{port}");
 			return true;
 		}
 		catch
@@ -85,7 +115,6 @@ internal static class ZeroTestUtility
 	}
 
 	private static string GetDiscoveryRequest() => Protocol.GetDiscoveryRequest($"tests-{Guid.NewGuid():N}");
-
 	private static bool TryGetServerPorts(string response, out (ushort Control, ushort Incoming, ushort Outgoing) result)
 	{
 		result = default;
@@ -268,11 +297,11 @@ internal sealed class ZeroServerScope : IDisposable
 
 	private ZeroServerScope(ZeroQueueServer server) => _server = server;
 
-	public ushort Port => _server.Port;
+	public ushort Port => (ushort)new Uri(_server.Discovery).Port;
 
 	public static async Task<ZeroServerScope> StartAsync()
 	{
-		var server = new ZeroQueueServer { Port = ZeroTestUtility.GetFreePort() };
+		var server = ZeroTestUtility.CreateServer();
 		await server.StartAsync([]);
 		return new ZeroServerScope(server);
 	}

@@ -148,7 +148,7 @@ public class ZeroQueuePublishingTests
 
 		var port = ZeroTestUtility.GetFreePort();
 		using var publisher = ZeroTestUtility.CreateQueue(port, "retry-publisher", settings => settings.Timeout = TimeSpan.FromMilliseconds(100));
-		var server = new ZeroQueueServer { Port = port };
+		var server = ZeroTestUtility.CreateServer(port);
 
 		await Assert.ThrowsAsync<TimeoutException>(() =>
 			publisher.ProduceAsync("topic/retry", ReadOnlyMemory<byte>.Empty).AsTask());

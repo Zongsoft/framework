@@ -17,7 +17,17 @@
 	</manifest>
 
 	<extension path="/Workbench/Messaging/Zero">
-		<object name="QueueServer" type="Zongsoft.Messaging.ZeroMQ.ZeroQueueServer, Zongsoft.Messaging.ZeroMQ">
+		<object name="QueueServer" type="Zongsoft.Messaging.ZeroMQ.ZeroQueueServer, Zongsoft.Messaging.ZeroMQ"
+		        Enabled="{option:/Messaging/ZeroMQ/Server/Enabled}"
+		        Storage="{option:/Messaging/ZeroMQ/Server/Storage}"
+		        Control="{option:/Messaging/ZeroMQ/Server/Control}"
+		        Incoming="{option:/Messaging/ZeroMQ/Server/Incoming}"
+		        Outgoing="{option:/Messaging/ZeroMQ/Server/Outgoing}"
+		        Discovery="{option:/Messaging/ZeroMQ/Server/Discovery}">
+			<object.constructor>
+				<parameter name="name" value="{option:/Messaging/ZeroMQ/Server/Name}" />
+			</object.constructor>
+
 			<expose name="Storages" value="{path:../@Storages}" />
 		</object>
 	</extension>

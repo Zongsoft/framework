@@ -199,21 +199,6 @@
   <data name="ZeroQueue.StorageRemoveFailed.Message" xml:space="preserve">
     <value>The '{0}' message storage failed to remove message '{1}'; the operation will be retried.</value>
   </data>
-  <data name="ZeroQueueServer.PortImmutable.Message" xml:space="preserve">
-    <value>Cannot change the discovery port while the server is running.</value>
-  </data>
-  <data name="ZeroQueueServer.DataPortOutOfRange.Message" xml:space="preserve">
-    <value>Data ports must be between 0 and {0}.</value>
-  </data>
-  <data name="ZeroQueueServer.DataPortsConflict.Message" xml:space="preserve">
-    <value>The incoming and outgoing ports must be different.</value>
-  </data>
-  <data name="ZeroQueueServer.DiscoveryPortConflict.Message" xml:space="preserve">
-    <value>A data port cannot equal the discovery port.</value>
-  </data>
-  <data name="ZeroQueueServer.NamedPortOutOfRange.Message" xml:space="preserve">
-    <value>The '{0}' port must be between 0 and {1}.</value>
-  </data>
   <data name="ZeroQueueEventChannel.QueueRequired.Message" xml:space="preserve">
     <value>A message queue must be specified before opening or sending events.</value>
   </data>
@@ -223,9 +208,6 @@
   <data name="ZeroResponse.TypeUnsupported.Message" xml:space="preserve">
     <value>The '{0}' type of response is not supported.</value>
   </data>
-  <data name="ServerOptions.InvalidPortFormat.Message" xml:space="preserve">
-    <value>Invalid server port format: {0}</value>
-  </data>
   <data name="ZeroQueue.ControlUnavailable.Message" xml:space="preserve">
     <value>The ZeroMQ broker reliable control channel is unavailable. Configure a message storage on the server.</value>
   </data>
@@ -234,5 +216,20 @@
   </data>
   <data name="ZeroQueue.HeaderValueInvalid.Message" xml:space="preserve">
     <value>The '{0}' message header value cannot contain a carriage return or line feed.</value>
+  </data>
+  <data name="ZeroQueueServer.AddressImmutable.Message" xml:space="preserve">
+    <value>The listening addresses cannot be changed while the ZeroMQ server is running.</value>
+  </data>
+  <data name="ZeroQueueServer.AddressInvalid.Message" xml:space="preserve">
+    <value>A listening address must use tcp, an IP address or IPv4 wildcard, and an explicit port from 1 through 65535, without a non-root path, query, or fragment.</value>
+  </data>
+  <data name="ZeroQueueServer.PortsConflict.Message" xml:space="preserve">
+    <value>The discovery, control, incoming, and outgoing ports must be different.</value>
+  </data>
+  <data name="ZeroQueueServer.ControlStorageRequired.Message" xml:space="preserve">
+    <value>Configure Control and Storage together, with a storage factory for reliable delivery; otherwise leave both empty.</value>
+  </data>
+  <data name="ZeroQueueServer.StorageMissing.Message" xml:space="preserve">
+    <value>The message storage '{0}' could not be created.</value>
   </data>
 </root>

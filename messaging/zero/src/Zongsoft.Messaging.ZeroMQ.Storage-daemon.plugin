@@ -8,7 +8,7 @@
 
 	<manifest>
 		<dependencies>
-			<dependency name="Zongsoft.Messaging.ZeroMQ" />
+			<dependency name="Zongsoft.Messaging.ZeroMQ.Daemon" />
 		</dependencies>
 	</manifest>
 

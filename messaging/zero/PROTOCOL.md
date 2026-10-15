@@ -10,7 +10,7 @@ This document specifies the current, backward-incompatible `1.0` wire protocol u
 | Broadcast | XPUB / SUB | XSUB / XPUB | `MostOnce` broadcast |
 | Control | DEALER | ROUTER | `LeastOnce` registration, acceptance, delivery, and acknowledgement |
 
-The Control endpoint is enabled only when the Broker has an `IMessageStorage`. Discovery, Broadcast, and Control remain independent; Control does not implement the request/response adapter's application semantics.
+The Control endpoint requires a Control address, a Storage name, and a valid storage factory. Both Control and Storage are unset when reliable delivery is disabled. Discovery, Broadcast, and Control remain independent; Control does not implement the request/response adapter's application semantics.
 
 ## 2. Discovery
 
@@ -41,7 +41,7 @@ Epoch:<broker-epoch>
 Ports:<incoming>,<outgoing>
 ```
 
-Clients accept exactly two or three port values. A Broker restart creates a new `Epoch`; clients invalidate prior Broadcast subscription state and reconnect.
+Clients accept exactly two or three port values. A Broker restart creates a new `Epoch`; clients invalidate prior Broadcast subscription state and reconnect. Clients connect to these ports on the discovery host, so every role must be reachable through that host at the same advertised port. Listening URLs do not define advertised hosts or port translation.
 
 ## 3. Broadcast
 

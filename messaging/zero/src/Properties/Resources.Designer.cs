@@ -10,8 +10,8 @@
 
 namespace Zongsoft.Messaging.ZeroMQ.Properties {
     using System;
-    
-    
+
+
     /// <summary>
     ///   一个强类型的资源类，用于查找本地化的字符串等。
     /// </summary>
@@ -19,19 +19,19 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "17.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
-        
+
         private static global::System.Resources.ResourceManager resourceMan;
-        
+
         private static global::System.Globalization.CultureInfo resourceCulture;
-        
+
         [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
         internal Resources() {
         }
-        
+
         /// <summary>
         ///   返回此类使用的缓存的 ResourceManager 实例。
         /// </summary>
@@ -45,10 +45,10 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
                 return resourceMan;
             }
         }
-        
+
         /// <summary>
-        ///   重写当前线程的 CurrentUICulture 属性，对
-        ///   使用此强类型资源类的所有资源查找执行重写。
+        ///   使用此强类型资源类，为所有资源查找
+        ///   重写当前线程的 CurrentUICulture 属性。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -57,15 +57,6 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
             }
             set {
                 resourceCulture = value;
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 Invalid server port format: {0} 的本地化字符串。
-        /// </summary>
-        internal static string ServerOptions_InvalidPortFormat_Message {
-            get {
-                return ResourceManager.GetString("ServerOptions.InvalidPortFormat.Message", resourceCulture);
             }
         }
 
@@ -77,7 +68,7 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
                 return ResourceManager.GetString("ZeroMQ.Settings.Client", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Filter 的本地化字符串。
         /// </summary>
@@ -86,7 +77,7 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
                 return ResourceManager.GetString("ZeroMQ.Settings.Filter", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Acceptable sender instance identifiers, multiple identifiers separated by commas. Messages sent by this instance are not accepted by default.
         ///
@@ -99,7 +90,7 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
                 return ResourceManager.GetString("ZeroMQ.Settings.Filter.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Group 的本地化字符串。
         /// </summary>
@@ -108,7 +99,7 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
                 return ResourceManager.GetString("ZeroMQ.Settings.Group", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 A message queue group identifier is a unit of message isolation. 的本地化字符串。
         /// </summary>
@@ -117,7 +108,7 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
                 return ResourceManager.GetString("ZeroMQ.Settings.Group.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Heartbeat 的本地化字符串。
         /// </summary>
@@ -126,7 +117,7 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
                 return ResourceManager.GetString("ZeroMQ.Settings.Heartbeat", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Heartbeat interval for maintaining network connection. The default value is 10 seconds. 的本地化字符串。
         /// </summary>
@@ -135,7 +126,7 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
                 return ResourceManager.GetString("ZeroMQ.Settings.Heartbeat.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Instance 的本地化字符串。
         /// </summary>
@@ -144,7 +135,7 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
                 return ResourceManager.GetString("ZeroMQ.Settings.Instance", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 The instance identifier of the message queue. Each sent message carries the instance identifier to which it belongs, the message receiver can determine the sender based on the instance identifier. Defaults to auto-generate. 的本地化字符串。
         /// </summary>
@@ -153,7 +144,7 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
                 return ResourceManager.GetString("ZeroMQ.Settings.Instance.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Port 的本地化字符串。
         /// </summary>
@@ -162,7 +153,7 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
                 return ResourceManager.GetString("ZeroMQ.Settings.Port", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Port number of the ZeroMQ message queue server. The default value is 7969. 的本地化字符串。
         /// </summary>
@@ -171,7 +162,7 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
                 return ResourceManager.GetString("ZeroMQ.Settings.Port.Description", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Server 的本地化字符串。
         /// </summary>
@@ -180,7 +171,7 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
                 return ResourceManager.GetString("ZeroMQ.Settings.Server", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Timeout 的本地化字符串。
         /// </summary>
@@ -189,7 +180,7 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
                 return ResourceManager.GetString("ZeroMQ.Settings.Timeout", resourceCulture);
             }
         }
-        
+
         /// <summary>
         ///   查找类似 Topic 的本地化字符串。
         /// </summary>
@@ -200,20 +191,20 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
         }
 
         /// <summary>
-        ///   查找类似 Failed to acquire queue exchange information from the &apos;{0}:{1}&apos; server. 的本地化字符串。
+        ///   查找类似 The ZeroMQ broker did not confirm whether the message was accepted before the control operation timed out. 的本地化字符串。
         /// </summary>
-        internal static string ZeroQueue_ExchangeUnavailable_Message {
+        internal static string ZeroQueue_ControlTimeout_Message {
             get {
-                return ResourceManager.GetString("ZeroQueue.ExchangeUnavailable.Message", resourceCulture);
+                return ResourceManager.GetString("ZeroQueue.ControlTimeout.Message", resourceCulture);
             }
         }
 
         /// <summary>
-        ///   查找类似 The ZeroMQ publisher has not been initialized. 的本地化字符串。
+        ///   查找类似 The ZeroMQ broker reliable control channel is unavailable. Configure a message storage on the server. 的本地化字符串。
         /// </summary>
-        internal static string ZeroQueue_PublisherUninitialized_Message {
+        internal static string ZeroQueue_ControlUnavailable_Message {
             get {
-                return ResourceManager.GetString("ZeroQueue.PublisherUninitialized.Message", resourceCulture);
+                return ResourceManager.GetString("ZeroQueue.ControlUnavailable.Message", resourceCulture);
             }
         }
 
@@ -236,47 +227,38 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
         }
 
         /// <summary>
-        ///   查找类似 The ZeroMQ broker did not confirm whether the message was accepted before the control operation timed out. 的本地化字符串。
+        ///   查找类似 Failed to acquire queue exchange information from the &apos;{0}:{1}&apos; server. 的本地化字符串。
         /// </summary>
-        internal static string ZeroQueue_ControlTimeout_Message {
+        internal static string ZeroQueue_ExchangeUnavailable_Message {
             get {
-                return ResourceManager.GetString("ZeroQueue.ControlTimeout.Message", resourceCulture);
+                return ResourceManager.GetString("ZeroQueue.ExchangeUnavailable.Message", resourceCulture);
             }
         }
 
         /// <summary>
-        ///   查找类似 The topic of an active ZeroMQ subscription cannot be changed. 的本地化字符串。
+        ///   查找类似 The &apos;{0}&apos; message header value cannot contain a carriage return or line feed. 的本地化字符串。
         /// </summary>
-        internal static string ZeroQueue_SubscriptionTopicImmutable_Message {
+        internal static string ZeroQueue_HeaderValueInvalid_Message {
             get {
-                return ResourceManager.GetString("ZeroQueue.SubscriptionTopicImmutable.Message", resourceCulture);
+                return ResourceManager.GetString("ZeroQueue.HeaderValueInvalid.Message", resourceCulture);
             }
         }
 
         /// <summary>
-        ///   查找类似 The required server address is missing in the connection settings. 的本地化字符串。
+        ///   查找类似 The ZeroMQ publisher has not been initialized. 的本地化字符串。
         /// </summary>
-        internal static string ZeroQueue_ServerRequired_Message {
+        internal static string ZeroQueue_PublisherUninitialized_Message {
             get {
-                return ResourceManager.GetString("ZeroQueue.ServerRequired.Message", resourceCulture);
+                return ResourceManager.GetString("ZeroQueue.PublisherUninitialized.Message", resourceCulture);
             }
         }
 
         /// <summary>
-        ///   查找类似 The ZeroMQ broker reliable control channel is unavailable. Configure a message storage on the server. 的本地化字符串。
+        ///   查找类似 The reliable message entry &apos;{0}&apos; in the &apos;{1}&apos; storage is invalid and was ignored. 的本地化字符串。
         /// </summary>
-        internal static string ZeroQueue_ControlUnavailable_Message {
+        internal static string ZeroQueue_ReliableEntryInvalid_Message {
             get {
-                return ResourceManager.GetString("ZeroQueue.ControlUnavailable.Message", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   查找类似 The message storage cannot be changed while the ZeroMQ server is running. 的本地化字符串。
-        /// </summary>
-        internal static string ZeroQueueServer_StorageImmutable_Message {
-            get {
-                return ResourceManager.GetString("ZeroQueueServer.StorageImmutable.Message", resourceCulture);
+                return ResourceManager.GetString("ZeroQueue.ReliableEntryInvalid.Message", resourceCulture);
             }
         }
 
@@ -299,20 +281,11 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
         }
 
         /// <summary>
-        ///   查找类似 The reliable message entry &apos;{0}&apos; in the &apos;{1}&apos; storage is invalid and was ignored. 的本地化字符串。
+        ///   查找类似 The required server address is missing in the connection settings. 的本地化字符串。
         /// </summary>
-        internal static string ZeroQueue_ReliableEntryInvalid_Message {
+        internal static string ZeroQueue_ServerRequired_Message {
             get {
-                return ResourceManager.GetString("ZeroQueue.ReliableEntryInvalid.Message", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   查找类似 The &apos;{0}&apos; message storage failed to persist message &apos;{1}&apos;. 的本地化字符串。
-        /// </summary>
-        internal static string ZeroQueue_StorageSetFailed_Message {
-            get {
-                return ResourceManager.GetString("ZeroQueue.StorageSetFailed.Message", resourceCulture);
+                return ResourceManager.GetString("ZeroQueue.ServerRequired.Message", resourceCulture);
             }
         }
 
@@ -326,6 +299,24 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
         }
 
         /// <summary>
+        ///   查找类似 The &apos;{0}&apos; message storage failed to persist message &apos;{1}&apos;. 的本地化字符串。
+        /// </summary>
+        internal static string ZeroQueue_StorageSetFailed_Message {
+            get {
+                return ResourceManager.GetString("ZeroQueue.StorageSetFailed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The topic of an active ZeroMQ subscription cannot be changed. 的本地化字符串。
+        /// </summary>
+        internal static string ZeroQueue_SubscriptionTopicImmutable_Message {
+            get {
+                return ResourceManager.GetString("ZeroQueue.SubscriptionTopicImmutable.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 A message queue must be specified before opening or sending events. 的本地化字符串。
         /// </summary>
         internal static string ZeroQueueEventChannel_QueueRequired_Message {
@@ -335,58 +326,58 @@ namespace Zongsoft.Messaging.ZeroMQ.Properties {
         }
 
         /// <summary>
-        ///   查找类似 Data ports must be between 0 and {0}. 的本地化字符串。
+        ///   查找类似 The listening addresses cannot be changed while the ZeroMQ server is running. 的本地化字符串。
         /// </summary>
-        internal static string ZeroQueueServer_DataPortOutOfRange_Message {
+        internal static string ZeroQueueServer_AddressImmutable_Message {
             get {
-                return ResourceManager.GetString("ZeroQueueServer.DataPortOutOfRange.Message", resourceCulture);
+                return ResourceManager.GetString("ZeroQueueServer.AddressImmutable.Message", resourceCulture);
             }
         }
 
         /// <summary>
-        ///   查找类似 The incoming and outgoing ports must be different. 的本地化字符串。
+        ///   查找类似 A listening address must use tcp, an IP address or IPv4 wildcard, and an explicit port from 1 through 65535, without a non-root path, query, or fragment. 的本地化字符串。
         /// </summary>
-        internal static string ZeroQueueServer_DataPortsConflict_Message {
+        internal static string ZeroQueueServer_AddressInvalid_Message {
             get {
-                return ResourceManager.GetString("ZeroQueueServer.DataPortsConflict.Message", resourceCulture);
+                return ResourceManager.GetString("ZeroQueueServer.AddressInvalid.Message", resourceCulture);
             }
         }
 
         /// <summary>
-        ///   查找类似 A data port cannot equal the discovery port. 的本地化字符串。
+        ///   查找类似 Configure Control and Storage together, with a storage factory for reliable delivery; otherwise leave both empty. 的本地化字符串。
         /// </summary>
-        internal static string ZeroQueueServer_DiscoveryPortConflict_Message {
+        internal static string ZeroQueueServer_ControlStorageRequired_Message {
             get {
-                return ResourceManager.GetString("ZeroQueueServer.DiscoveryPortConflict.Message", resourceCulture);
+                return ResourceManager.GetString("ZeroQueueServer.ControlStorageRequired.Message", resourceCulture);
             }
         }
 
         /// <summary>
-        ///   查找类似 The &apos;{0}&apos; port must be between 0 and {1}. 的本地化字符串。
+        ///   查找类似 The discovery, control, incoming, and outgoing ports must be different. 的本地化字符串。
         /// </summary>
-        internal static string ZeroQueueServer_NamedPortOutOfRange_Message {
+        internal static string ZeroQueueServer_PortsConflict_Message {
             get {
-                return ResourceManager.GetString("ZeroQueueServer.NamedPortOutOfRange.Message", resourceCulture);
+                return ResourceManager.GetString("ZeroQueueServer.PortsConflict.Message", resourceCulture);
             }
         }
 
         /// <summary>
-        ///   查找类似 Cannot change the discovery port while the server is running. 的本地化字符串。
+        ///   查找类似 The message storage cannot be changed while the ZeroMQ server is running. 的本地化字符串。
         /// </summary>
-        internal static string ZeroQueueServer_PortImmutable_Message {
+        internal static string ZeroQueueServer_StorageImmutable_Message {
             get {
-                return ResourceManager.GetString("ZeroQueueServer.PortImmutable.Message", resourceCulture);
+                return ResourceManager.GetString("ZeroQueueServer.StorageImmutable.Message", resourceCulture);
             }
         }
 
-		/// <summary>
-		///   查找类似 The '{0}' message header value cannot contain a carriage return or line feed. 的本地化字符串。
-		/// </summary>
-		internal static string ZeroQueue_HeaderValueInvalid_Message {
-			get {
-				return ResourceManager.GetString("ZeroQueue.HeaderValueInvalid.Message", resourceCulture);
-			}
-		}
+        /// <summary>
+        ///   查找类似 The message storage &apos;{0}&apos; could not be created. 的本地化字符串。
+        /// </summary>
+        internal static string ZeroQueueServer_StorageMissing_Message {
+            get {
+                return ResourceManager.GetString("ZeroQueueServer.StorageMissing.Message", resourceCulture);
+            }
+        }
 
         /// <summary>
         ///   查找类似 The queue cannot be replaced after the requester has subscribed to a reply topic. 的本地化字符串。

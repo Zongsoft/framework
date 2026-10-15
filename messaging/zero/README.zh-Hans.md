@@ -54,34 +54,69 @@ dotnet build messaging/zero/Zongsoft.Messaging.ZeroMQ.slnx
 | 发布者进站端点 | `32101` | 应用发布者连接此端点。 |
 | 订阅者出站端点 | `32102` | 应用订阅者连接此端点。 |
 
-`7969` 是内置发现端口。运行端点未配置时会随机选择，Broker 重启后客户端会重新发现。生产环境仍建议固定三个运行端口，以简化防火墙与运维配置。
+服务器使用明确的固定地址。直接构造的服务器默认监听 Discovery 7969、Incoming 32101、Outgoing 32102，Control 与 Storage 默认为空；daemon 配置显式启用 Control 32100。停止后修改地址再启动时，客户端会重新发现运行端口。
 
-服务器会在所有网络接口上绑定 TCP 端点，且不会配置身份认证或传输加密。跨不可信网络使用前，请通过主机或网络边界限制访问，或另行增加经过认证的安全传输层。
+服务器按各角色配置的 IP 绑定 TCP 端点，且不会配置身份认证或传输加密。IPv6 由 NetMQ 的 IPv6 模式承载；[::] 通配监听可能同时接受 IPv4，不能据此声称仅限 IPv6。跨不可信网络使用前，请通过主机或网络边界限制访问，或另行增加经过认证的安全传输层。
 
 <a name="configuration"></a>
 ## 配置
 
 ### 服务端
 
-随包提供的守护进程插件会自动启动 `ZeroQueueServer`。在 `/Messaging/ZeroMQ/Servers` 下配置数据端点：
+[daemon 配置文件](src/Zongsoft.Messaging.ZeroMQ-daemon.option) 是服务端与绑定声明的共同来源：
 
 ```xml
-<configuration>
+<?xml version="1.0" encoding="utf-8" ?>
+
+<?binding name="zeromq/control"
+	path="Messaging/ZeroMQ/Server"
+	filter="enabled:true"
+	template="${option.control}"
+	protocols="tcp"?>
+<?binding name="zeromq/incoming"
+	path="Messaging/ZeroMQ/Server"
+	filter="enabled:true"
+	template="${option.incoming}"
+	protocols="tcp"?>
+<?binding name="zeromq/outgoing"
+	path="Messaging/ZeroMQ/Server"
+	filter="enabled:true"
+	template="${option.outgoing}"
+	protocols="tcp"?>
+<?binding name="zeromq/discovery"
+	path="Messaging/ZeroMQ/Server"
+	filter="enabled:true"
+	template="${option.discovery}"
+	protocols="tcp"?>
+
+<options>
 	<option path="/Messaging/ZeroMQ">
-		<servers port="32100,32101,32102">
-			<server server.name="unnamed" />
-		</servers>
+		<server name="QueueServer" enabled="true"
+		        storage="QueueServer"
+		        control="tcp://0.0.0.0:32100"
+		        incoming="tcp://0.0.0.0:32101"
+		        outgoing="tcp://0.0.0.0:32102"
+		        discovery="tcp://0.0.0.0:7969" />
 	</option>
-</configuration>
+</options>
 ```
 
-三个数字依次表示可靠性控制、发布者进站和订阅者出站端口。两段式配置表示 `Incoming,Outgoing`，此时 Server 挂载 Storage 后会随机绑定 Control 端口；仅当 Server 已挂载 `IMessageStorage` 时才启动 Control。端口优先级依次为启动参数、命名服务器自身的 `Port`、`Servers.Port` 默认值，仍未定义时才随机选择；`*` 明确要求随机端口。
+Discovery、Incoming、Outgoing 必填。Control 与 Storage 同时配置时启用可靠投递，且 Storages 工厂必须能创建指定存储；任何缺项或创建失败都会使启动失败。两者均省略或为空时仅提供广播。Name 是服务器标识，Storage 是独立的存储配置名。Enabled=false 阻止启动，四条 PI 的筛选条件同时排除其绑定；空 Control 不产生绑定。
 
-独立应用可以直接启动交换服务：
+地址必须使用 tcp、显式 IP 地址或 IPv4 通配符 * 及固定端口 1–65535；IPv6 使用方括号。不接受 DNS 名称、非根路径、查询、片段或随机端口；各角色端口必须互异。地址和存储配置仅在停止后可更改，启动参数不覆盖它们。PI 的 protocols="tcp" 是常量模板，表示四个角色均使用 TCP。
+
+Discovery 只公布端口，客户端沿用连接 Discovery 的主机。因此所有角色必须能经同一发布主机、同号端口访问；配置不同侦听 IP 不会公布多个主机，也不提供任意 NAT 端口转换。
+
+[独立服务端范例](samples/server/Program.cs) 在回环地址启动不带持久化的广播服务：
 
 ```csharp
-using var server = new ZeroQueueServer();
-await server.StartAsync(["--incoming:32101", "--outgoing:32102"]);
+using var server = new ZeroQueueServer()
+{
+	Discovery = "tcp://127.0.0.1:7969",
+	Incoming = "tcp://127.0.0.1:32101",
+	Outgoing = "tcp://127.0.0.1:32102",
+};
+await server.StartAsync([]);
 ```
 
 ### 客户端连接
@@ -205,7 +240,7 @@ Assert.True(await WaitForPendingCountAsync(scope, 0, TimeSpan.FromSeconds(5)));
 
 Broker 只在发送瞬间存在在线匹配订阅时接纳消息：没有订阅返回 `null` 且不写入 Storage；存在订阅则先持久化 Pending，再返回消息标识。之后按主题在在线订阅者间竞争投递，任一消费者确认即删除 Pending。未确认会沿用同一 `Message.Identifier` 重投，也可能改投另一个消费者，因此处理器必须保证业务幂等。
 
-`ZeroQueueServer.Storages` 只能在 Server 停止时赋值。首次启动时 Server 调用 `Storages.Create(Name)`，并取得返回存储器的所有权；普通 Stop 保留它以供重启复用，替换工厂、启动失败或释放 Server 时优先调用 `IAsyncDisposable` 释放。Broker 未配置存储工厂时仍提供 `MostOnce` Broadcast，但不启动 Control，发现响应的 `Ports` 只包含 `Incoming,Outgoing`；此时 `LeastOnce` 操作会失败。
+`ZeroQueueServer.Storage` 与 `Storages` 只能在停止状态修改。启用 Control 后首次启动时调用 `Storages.Create(Storage)`，Server 拥有返回的存储器；普通 Stop 保留它以供重启复用，更换存储名、替换工厂、启动失败或释放 Server 时优先调用 `IAsyncDisposable` 释放。未配置 Control 和 Storage 时不调用工厂，发现响应仅包含 Incoming、Outgoing，LeastOnce 操作不可用。
 
 | 消息选项 | 支持情况 |
 | --- | --- |
@@ -251,7 +286,7 @@ await channel.SendAsync(eventContext);
 - Queue 在构造时快照连接、端口、分组、过滤、超时和心跳设置；运行中修改原设置对象不会改变既有连接；
 - 支持空业务载荷。
 
-消息存储是独立插件，不属于 ZeroMQ 驱动。本包不提供默认文件存储；需要 `LeastOnce` 时，应用注入 `IMessageStorageFactory`，工厂按 Broker 名查找同名连接并创建其独占存储器。Storage 支持按精确主题读取和清理；选择实现时应确认它能在 `SetAsync` 返回前持有消息快照，并满足所需的进程重启耐久性。
+消息存储是独立插件，不属于 ZeroMQ 驱动。本包不提供默认文件存储；需要 `LeastOnce` 时，应用注入 `IMessageStorageFactory`，工厂按 Server.Storage 指定的配置名查找连接并创建独占存储器。Storage 支持按精确主题读取和清理；选择实现时应确认它能在 `SetAsync` 返回前持有消息快照，并满足所需的进程重启耐久性。
 
 完整的发现、Broadcast 和 Control 帧定义参见 [ZeroMQ 1.0 协议](PROTOCOL.zh-Hans.md)。
 
@@ -273,13 +308,13 @@ await channel.SendAsync(eventContext);
 
 优先通过宿主组合本能力；包引用用于编译，而插件加载还需要部署清单和运行产物。完整流程见[插件化入门](../../Zongsoft.Plugins/README.zh-Hans.md)。
 
-部署清单按 `Zongsoft.Messaging.ZeroMQ-${site}.plugin` 选择附加插件；`site=daemon` 包含 Broker 启动贡献，必须明确区分纯客户端与 Broker 宿主。启动前配置端点及存储工厂。
+部署清单按 site=daemon 同时选择 daemon 插件、同名 option 和 Storage-daemon 插件；纯客户端仅加载主插件和客户端配置。Storage 插件依赖 Daemon，并把 /Workspace/Messaging/Storages/Redis 工厂挂接给服务器；使用其它工厂时修改这一插件贡献。启用可靠投递前必须提供该工厂及 Server.Storage 指定的连接配置。
 
 | 运行产物 | 源码依据 |
 | --- | --- |
 | `Zongsoft.Messaging.ZeroMQ.Daemon` | [Zongsoft.Messaging.ZeroMQ-daemon.plugin](src/Zongsoft.Messaging.ZeroMQ-daemon.plugin) |
 | `Zongsoft.Messaging.ZeroMQ` | [Zongsoft.Messaging.ZeroMQ.plugin](src/Zongsoft.Messaging.ZeroMQ.plugin) |
-| `Zongsoft.Messaging.ZeroMQ.Storage` | [Zongsoft.Messaging.ZeroMQ.Storage.plugin](src/Zongsoft.Messaging.ZeroMQ.Storage.plugin) |
+| `Zongsoft.Messaging.ZeroMQ.Storage` | [Zongsoft.Messaging.ZeroMQ.Storage-daemon.plugin](src/Zongsoft.Messaging.ZeroMQ.Storage-daemon.plugin) |
 | 文件复制及依赖 | [Zongsoft.Messaging.ZeroMQ.deploy](src/Zongsoft.Messaging.ZeroMQ.deploy) |
 
 在已有宿主的 `.deploy` 中加入以下片段（保留宿主原有 Main 等基础清单，不要用片段覆盖整份文件）：
@@ -291,4 +326,4 @@ nuget:Zongsoft.Messaging.ZeroMQ
 
 按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
 
-清单列出的附属产物包括：`Zongsoft.Messaging.ZeroMQ.option`、`Zongsoft.Messaging.ZeroMQ.plugin`、`Zongsoft.Messaging.ZeroMQ-${site}.plugin`、`Zongsoft.Messaging.ZeroMQ.Storage.plugin`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。
+清单列出的附属产物包括：`Zongsoft.Messaging.ZeroMQ.option`、`Zongsoft.Messaging.ZeroMQ.plugin`、`Zongsoft.Messaging.ZeroMQ-${site}.plugin`、`Zongsoft.Messaging.ZeroMQ-${site}.option`、`Zongsoft.Messaging.ZeroMQ.Storage-${site}.plugin`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。

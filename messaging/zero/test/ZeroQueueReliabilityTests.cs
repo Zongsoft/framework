@@ -781,13 +781,13 @@ public class ZeroQueueReliabilityTests
 			_storage = storage;
 		}
 
-		public ushort Port => _server.Port;
+		public ushort Port => (ushort)new Uri(_server.Discovery).Port;
 		public MemoryMessageStorage Storage => _storage as MemoryMessageStorage;
 
 		public static async Task<ReliableServerScope> StartAsync(IMessageStorage storage = null)
 		{
 			storage ??= new MemoryMessageStorage();
-			var server = new ZeroQueueServer { Port = ZeroTestUtility.GetFreePort(), Storages = new TestMessageStorageFactory(storage) };
+			var server = ZeroTestUtility.CreateServer(storages: new TestMessageStorageFactory(storage));
 			await server.StartAsync([]);
 			return new ReliableServerScope(server, storage);
 		}

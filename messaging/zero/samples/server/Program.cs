@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
 
 using Zongsoft.Common;
 using Zongsoft.Terminals;
@@ -13,19 +11,28 @@ internal class Program
 {
 	static async Task Main(string[] args)
 	{
-		using var server = new ZeroQueueServer();
-		await server.StartAsync(["--incoming:32101", "--outgoing:32102"]);
+		using var server = new ZeroQueueServer()
+		{
+			Discovery = "tcp://127.0.0.1:7969",
+			Incoming = "tcp://127.0.0.1:32101",
+			Outgoing = "tcp://127.0.0.1:32102",
+		};
+		await server.StartAsync([]);
 
 		var executor = Terminal.Console.Executor;
-		executor.Command("start", async (context, cancellation) => await server.StartAsync([.. GetArgs(context)], cancellation));
-		executor.Command("stop", async (context, cancellation) => await server.StopAsync([.. GetArgs(context)], cancellation));
+		executor.Command("start", async (context, cancellation) => await server.StartAsync([], cancellation));
+		executor.Command("stop", async (context, cancellation) => await server.StopAsync([], cancellation));
 
 		executor.Command("info", context =>
 		{
 			context.Output.Write(CommandOutletColor.Cyan, "State: ");
 			context.Output.WriteLine(server.State == WorkerState.Running ? CommandOutletColor.Green : CommandOutletColor.Magenta, server.State);
-			context.Output.Write(CommandOutletColor.Cyan, "Port: ");
-			context.Output.WriteLine(CommandOutletColor.Green, server.Port);
+			context.Output.Write(CommandOutletColor.Cyan, "Discovery: ");
+			context.Output.WriteLine(CommandOutletColor.Green, server.Discovery);
+			context.Output.Write(CommandOutletColor.Cyan, "Incoming: ");
+			context.Output.WriteLine(CommandOutletColor.Green, server.Incoming);
+			context.Output.Write(CommandOutletColor.Cyan, "Outgoing: ");
+			context.Output.WriteLine(CommandOutletColor.Green, server.Outgoing);
 		});
 
 		var splash = CommandOutletContent.Create()
@@ -35,19 +42,5 @@ internal class Program
 
 		//运行终端命令执行器
 		await executor.RunAsync(splash);
-	}
-
-	static IEnumerable<string> GetArgs(CommandContextBase context)
-	{
-		foreach(var option in context.Options)
-		{
-			if(option.Key.Length == 1)
-				yield return option.Value == null ? $"-{option.Key}" : $"-{option.Key}:{option.Value}";
-			else
-				yield return option.Value == null ? $"--{option.Key}" : $"--{option.Key}:{option.Value}";
-		}
-
-		foreach(var argument in context.Arguments)
-			yield return argument;
 	}
 }

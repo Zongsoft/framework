@@ -183,13 +183,15 @@ public class ZeroQueueSubscriptionTests
 		var incoming = ZeroTestUtility.GetFreePort();
 		var outgoing = ZeroTestUtility.GetFreePort();
 		var control = ZeroTestUtility.GetFreePort();
-		var args = new[] { $"--incoming:{incoming}", $"--outgoing:{outgoing}", $"--control:{control}" };
 		var topic = "topic/restart";
-		var server = new ZeroQueueServer { Port = port, Storages = new TestMessageStorageFactory(new MemoryMessageStorage()) };
+		var server = ZeroTestUtility.CreateServer(port, new TestMessageStorageFactory(new MemoryMessageStorage()));
+		server.Incoming = ZeroTestUtility.GetAddress(incoming);
+		server.Outgoing = ZeroTestUtility.GetAddress(outgoing);
+		server.Control = ZeroTestUtility.GetAddress(control);
 
 		try
 		{
-			await server.StartAsync(args);
+			await server.StartAsync([]);
 			var original = ZeroTestUtility.GetServerPorts(port);
 
 			Assert.Equal(control, original.Control);
@@ -211,7 +213,7 @@ public class ZeroQueueSubscriptionTests
 			Assert.True(await ZeroTestUtility.WaitUntilAsync(() =>
 				ZeroTestUtility.CanBindZeroMq(original.Control) && ZeroTestUtility.CanBindZeroMq(original.Incoming) && ZeroTestUtility.CanBindZeroMq(original.Outgoing), TimeSpan.FromSeconds(5)));
 
-			await server.StartAsync(args);
+			await server.StartAsync([]);
 			var restarted = ZeroTestUtility.GetServerPorts(port);
 
 			Assert.Equal(original, restarted);
@@ -228,21 +230,21 @@ public class ZeroQueueSubscriptionTests
 	}
 
 	[Fact]
-	public async Task SubscribersRediscoverRandomExchangePortsAfterServerRestart()
+	public async Task SubscribersRediscoverChangedExchangeAddressesAfterServerRestart()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
 
 		var port = ZeroTestUtility.GetFreePort();
-		var topic = "topic/random-restart";
-		var server = new ZeroQueueServer { Port = port };
+		var topic = "topic/changed-restart";
+		var server = ZeroTestUtility.CreateServer(port);
 
 		try
 		{
 			await server.StartAsync([]);
 			var original = ZeroTestUtility.GetServerPorts(port);
-			using var publisher = CreateRestartQueue(port, "random-publisher");
-			using var subscriber = CreateRestartQueue(port, "random-subscriber");
+			using var publisher = CreateRestartQueue(port, "changed-publisher");
+			using var subscriber = CreateRestartQueue(port, "changed-subscriber");
 			using var handler = new MessageBuffer();
 
 			await subscriber.SubscribeAsync(topic, handler);
@@ -251,9 +253,15 @@ public class ZeroQueueSubscriptionTests
 
 			await server.StopAsync([]);
 			Assert.True(await ZeroTestUtility.WaitUntilAsync(() =>
-				ZeroTestUtility.CanBindZeroMq(original.Control) && ZeroTestUtility.CanBindZeroMq(original.Incoming) && ZeroTestUtility.CanBindZeroMq(original.Outgoing), TimeSpan.FromSeconds(5)));
+				ZeroTestUtility.CanBindZeroMq(original.Incoming) && ZeroTestUtility.CanBindZeroMq(original.Outgoing), TimeSpan.FromSeconds(5)));
+			using var changed = ZeroTestUtility.CreateServer(port);
+			server.Incoming = changed.Incoming;
+			server.Outgoing = changed.Outgoing;
 			await server.StartAsync([]);
-			Assert.NotEqual(default, ZeroTestUtility.GetServerPorts(port));
+			var restarted = ZeroTestUtility.GetServerPorts(port);
+			Assert.Equal(new Uri(changed.Incoming).Port, restarted.Incoming);
+			Assert.Equal(new Uri(changed.Outgoing).Port, restarted.Outgoing);
+			Assert.NotEqual(original, restarted);
 
 			await ZeroTestUtility.PublishUntilAcceptedAsync(publisher, topic, Encoding.UTF8.GetBytes("after"), timeout: TimeSpan.FromSeconds(10));
 			var after = await handler.ReceiveAsync(TimeSpan.FromSeconds(5));

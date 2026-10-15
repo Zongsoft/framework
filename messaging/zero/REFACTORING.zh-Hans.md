@@ -64,14 +64,11 @@ Core 通过 `MessageQueueFeature.Compression` 表达能力，并在进入不支�
 
 发现成功响应只包含 `Protocol-Version`、`Epoch` 和 `Ports`。启用 Control 时端口顺序是 `Control,Incoming,Outgoing`；未启用时是 `Incoming,Outgoing`。详细格式参见 [中文协议](PROTOCOL.zh-Hans.md)或[英文协议](PROTOCOL.md)。
 
-服务端端口解析优先级：
+服务端由 daemon option 的 /Messaging/ZeroMQ/Server 提供 Name、Enabled、Storage 和四个角色的完整固定 TCP URL。插件构建器直接注入服务器属性，运行库不读取全局配置或解析位置端口串，也不接受启动参数覆盖。Discovery、Incoming、Outgoing 必需；Control 与 Storage 同时配置并要求有效工厂，否则均为空。各角色端口互异。
 
-1. 启动参数显式指定；
-2. 命名服务器自身的 `Port`；
-3. 服务器集合的默认 `Servers.Port`；
-4. 随机端口。
+Storage 以 Create(Storage) 按独立配置名创建；Name 仅标识服务器。地址、存储名和工厂只允许在停止状态修改，换名或换工厂释放缓存实例，普通 Stop 保留实例。四条 binding PI 与运行配置读取同一字段，不启动监听或探测后端能力。
 
-固定运行端口仍有利于防火墙配置，但 Broker 重启后客户端会根据新的 Epoch 和发现结果重新连接。
+监听绑定保持单一 ServerAgent/Poller 线程归属。IPv6 通配使用 NetMQ 的双栈模式，不承诺 IPv6-only。Discovery 帧仍只公布端口，要求所有角色经同一发布主机、同号端口可达；没有新增公告地址或 NAT 转换协议。
 
 ## 6. 背压与生命周期
 

@@ -54,34 +54,69 @@ dotnet build messaging/zero/Zongsoft.Messaging.ZeroMQ.slnx
 | Publisher incoming | `32101` | Application publishers connect here. |
 | Subscriber outgoing | `32102` | Application subscribers connect here. |
 
-`7969` is the built-in discovery-port default. Omitted runtime ports are selected dynamically and rediscovered after a Broker restart. Fixed control, incoming, and outgoing ports are still recommended for predictable firewall and operations configuration.
+The server uses explicit fixed addresses. A directly constructed server defaults to Discovery 7969, Incoming 32101, and Outgoing 32102, with Control and Storage unset. The daemon configuration explicitly enables Control 32100. Clients rediscover runtime ports after a stopped server changes addresses and restarts.
 
-The server binds TCP endpoints on all network interfaces and does not configure authentication or encryption. Restrict access at the host or network boundary, or add an authenticated transport before using it across an untrusted network.
+The server binds each role to its configured IP and does not configure authentication or encryption. NetMQ IPv6 mode may also accept IPv4 through the [::] wildcard; it does not promise IPv6-only wildcard binding. Restrict access at the host or network boundary, or add an authenticated transport before using it across an untrusted network.
 
 <a name="configuration"></a>
 ## Configuration
 
 ### Server
 
-The packaged daemon plugin starts `ZeroQueueServer` automatically. Configure its data endpoints under `/Messaging/ZeroMQ/Servers`:
+The [daemon option file](src/Zongsoft.Messaging.ZeroMQ-daemon.option) supplies both server settings and binding declarations:
 
 ```xml
-<configuration>
+<?xml version="1.0" encoding="utf-8" ?>
+
+<?binding name="zeromq/control"
+	path="Messaging/ZeroMQ/Server"
+	filter="enabled:true"
+	template="${option.control}"
+	protocols="tcp"?>
+<?binding name="zeromq/incoming"
+	path="Messaging/ZeroMQ/Server"
+	filter="enabled:true"
+	template="${option.incoming}"
+	protocols="tcp"?>
+<?binding name="zeromq/outgoing"
+	path="Messaging/ZeroMQ/Server"
+	filter="enabled:true"
+	template="${option.outgoing}"
+	protocols="tcp"?>
+<?binding name="zeromq/discovery"
+	path="Messaging/ZeroMQ/Server"
+	filter="enabled:true"
+	template="${option.discovery}"
+	protocols="tcp"?>
+
+<options>
 	<option path="/Messaging/ZeroMQ">
-		<servers port="32100,32101,32102">
-			<server server.name="unnamed" />
-		</servers>
+		<server name="QueueServer" enabled="true"
+		        storage="QueueServer"
+		        control="tcp://0.0.0.0:32100"
+		        incoming="tcp://0.0.0.0:32101"
+		        outgoing="tcp://0.0.0.0:32102"
+		        discovery="tcp://0.0.0.0:7969" />
 	</option>
-</configuration>
+</options>
 ```
 
-The three values are reliability control, publisher incoming, and subscriber outgoing. A two-value configuration is `Incoming,Outgoing`; when Storage is available, Control is selected dynamically. Control starts only when the Server has an `IMessageStorage`. Port precedence is: explicit startup arguments, the named server's own `Port`, the collection-level `Servers.Port`, then dynamic selection. `*` explicitly requests dynamic ports.
+Discovery, Incoming, and Outgoing are required. Configure Control and Storage together to enable reliable delivery; the Storages factory must create the named storage. Missing dependencies or failed creation prevent startup. Omit or empty both fields for broadcast only. Name identifies the broker, while Storage selects an independent storage configuration. Enabled=false prevents startup and excludes all four bindings; an empty Control produces no binding.
 
-The [actual server sample](samples/server/Program.cs) starts a broadcast server without persistent storage. Its startup excerpt is below; see the plugin/storage sections for reliable broker composition:
+Addresses require tcp, a literal IP address or IPv4 wildcard *, and an explicit port from 1 through 65535. Bracket IPv6 addresses. DNS names, non-root paths, queries, fragments, and random ports are rejected. Each role must use a distinct port. Addresses and storage settings can change only while stopped; startup arguments do not override them. The protocols="tcp" values are constant templates describing the TCP transport.
+
+Discovery advertises ports only; clients reuse the discovery host. All roles must therefore be reachable through that host at the same advertised ports. Separate listening IPs do not advertise separate hosts or support arbitrary NAT port translation.
+
+The [standalone server sample](samples/server/Program.cs) starts a loopback broadcast server without persistence:
 
 ```csharp
-using var server = new ZeroQueueServer();
-await server.StartAsync(["--incoming:32101", "--outgoing:32102"]);
+using var server = new ZeroQueueServer()
+{
+	Discovery = "tcp://127.0.0.1:7969",
+	Incoming = "tcp://127.0.0.1:32101",
+	Outgoing = "tcp://127.0.0.1:32102",
+};
+await server.StartAsync([]);
 ```
 
 ### Client Connection
@@ -205,7 +240,7 @@ The fixture checks that Pending remains before acknowledgement and is removed af
 
 The Broker accepts a publication only when an online matching subscription exists. No match returns `null` without writing Storage. With a match, the Broker persists Pending first and then returns the identifier. Delivery competes among online subscribers; any one acknowledgement removes Pending. Retries reuse `Message.Identifier` and may choose another consumer, so handlers must be idempotent.
 
-Assign `ZeroQueueServer.Storages` only while the Server is stopped. On first start, the Server calls `Storages.Create(Name)` and owns the returned storage. Ordinary Stop retains that storage for restart; replacing the factory, a failed start, or disposing the Server releases it, preferring `IAsyncDisposable`. A Broker without a storage factory still serves `MostOnce` Broadcast, but does not start Control and returns only `Incoming,Outgoing` in discovery `Ports`; `LeastOnce` operations then fail.
+Set `ZeroQueueServer.Storage` and `Storages` only while stopped. With Control enabled, first start calls `Storages.Create(Storage)` and the server owns the result. Stop retains it for restart; changing the storage name or factory, a failed start, or server disposal releases it, preferring `IAsyncDisposable`. When Control and Storage are unset, no factory is called and discovery includes only Incoming and Outgoing; LeastOnce is unavailable.
 
 | Messaging option | Support |
 | --- | --- |
@@ -251,7 +286,7 @@ The selected `MessageReliability` determines the contract:
 - A queue snapshots its connection, ports, group, filter, timeout, and heartbeat settings at construction; mutating the original settings object does not reconfigure a running queue;
 - Empty business payloads are supported.
 
-Message storage is an independent plugin concept, not part of the ZeroMQ driver. This package provides no default file store. Applications using `LeastOnce` inject an `IMessageStorageFactory`; the factory looks up a connection with the same name as the Broker and creates its exclusive storage. Storage supports exact-topic reads and clears. An implementation must hold a message snapshot before `SetAsync` returns and provide the required restart durability.
+Message storage is an independent plugin concept, not part of the ZeroMQ driver. This package provides no default file store. Applications using `LeastOnce` inject an `IMessageStorageFactory`; the factory selects the connection named by Server.Storage and creates its exclusive storage. Storage supports exact-topic reads and clears. An implementation must hold a message snapshot before `SetAsync` returns and provide the required restart durability.
 
 See the [ZeroMQ 1.0 protocol](PROTOCOL.md) for the complete Discovery, Broadcast, and Control frame definitions.
 
@@ -273,13 +308,13 @@ If messages are not received:
 
 Compose this feature through the host; a package reference supplies compile-time APIs, while plugin loading also requires deployed manifests and runtime assets. See [the complete plugin workflow](../../Zongsoft.Plugins/README.md).
 
-The deployment manifest selects `Zongsoft.Messaging.ZeroMQ-${site}.plugin`. `site=daemon` includes the broker startup contribution; client-only and broker hosts must be deliberately distinguished. Configure the endpoint and storage factory before starting the broker.
+The deployment manifest selects the daemon plugin, matching option file, and Storage-daemon plugin together for site=daemon. Client-only hosts load the main plugin and client settings. The Storage plugin depends on Daemon and attaches the factory at /Workspace/Messaging/Storages/Redis; change that contribution to use another factory. Reliable delivery requires this factory and the connection selected by Server.Storage.
 
 | Runtime artifact | Source of truth |
 | --- | --- |
 | `Zongsoft.Messaging.ZeroMQ.Daemon` | [Zongsoft.Messaging.ZeroMQ-daemon.plugin](src/Zongsoft.Messaging.ZeroMQ-daemon.plugin) |
 | `Zongsoft.Messaging.ZeroMQ` | [Zongsoft.Messaging.ZeroMQ.plugin](src/Zongsoft.Messaging.ZeroMQ.plugin) |
-| `Zongsoft.Messaging.ZeroMQ.Storage` | [Zongsoft.Messaging.ZeroMQ.Storage.plugin](src/Zongsoft.Messaging.ZeroMQ.Storage.plugin) |
+| `Zongsoft.Messaging.ZeroMQ.Storage` | [Zongsoft.Messaging.ZeroMQ.Storage-daemon.plugin](src/Zongsoft.Messaging.ZeroMQ.Storage-daemon.plugin) |
 | File copying and dependencies | [Zongsoft.Messaging.ZeroMQ.deploy](src/Zongsoft.Messaging.ZeroMQ.deploy) |
 
 Add this fragment to an existing host `.deploy` (retain Main and the host’s other base manifests; do not replace the whole file):
@@ -291,4 +326,4 @@ nuget:Zongsoft.Messaging.ZeroMQ
 
 Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
 
-Additional artifacts listed by the deployment manifest include `Zongsoft.Messaging.ZeroMQ.option`, `Zongsoft.Messaging.ZeroMQ.plugin`, `Zongsoft.Messaging.ZeroMQ-${site}.plugin`, `Zongsoft.Messaging.ZeroMQ.Storage.plugin`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.
+Additional artifacts listed by the deployment manifest include `Zongsoft.Messaging.ZeroMQ.option`, `Zongsoft.Messaging.ZeroMQ.plugin`, `Zongsoft.Messaging.ZeroMQ-${site}.plugin`, `Zongsoft.Messaging.ZeroMQ-${site}.option`, `Zongsoft.Messaging.ZeroMQ.Storage-${site}.plugin`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.

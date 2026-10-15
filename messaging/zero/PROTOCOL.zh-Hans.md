@@ -10,7 +10,7 @@
 | Broadcast | XPUB / SUB | XSUB / XPUB | `MostOnce` 广播 |
 | Control | DEALER | ROUTER | `LeastOnce` 注册、接纳、投递与确认 |
 
-Control 端点只有在 Broker 配置 `IMessageStorage` 后才启用。发现、Broadcast 和 Control 相互独立；Control 不承载请求响应适配器的业务语义。
+Control 端点要求同时配置 Control 地址、Storage 名称及有效存储工厂；未启用时 Control 和 Storage 均为空。发现、Broadcast 和 Control 相互独立；Control 不承载请求响应适配器的业务语义。
 
 ## 2. 发现协议
 
@@ -41,7 +41,7 @@ Epoch:<broker-epoch>
 Ports:<incoming>,<outgoing>
 ```
 
-客户端只接受两个或三个端口值。Broker 重启会生成新的 `Epoch`，客户端据此使已有 Broadcast 订阅状态失效并重新连接。
+客户端只接受两个或三个端口值。Broker 重启会生成新的 `Epoch`，客户端据此使已有 Broadcast 订阅状态失效并重新连接。客户端沿用 Discovery 的主机连接这些端口，故各角色必须经同一发布主机、同号端口可达；监听 URL 不承担公告主机或端口转换语义。
 
 ## 3. Broadcast 协议
 

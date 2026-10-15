@@ -37,6 +37,8 @@ using System.Collections.Generic;
 using NetMQ;
 using NetMQ.Sockets;
 
+using Zongsoft.Communication;
+
 namespace Zongsoft.Messaging.ZeroMQ;
 
 public sealed partial class ZeroQueueServer
@@ -53,7 +55,7 @@ public sealed partial class ZeroQueueServer
 			#endregion
 
 			#region 成员字段
-			private readonly int _configuredPort;
+			private readonly NetworkAddress _address;
 			private readonly IMessageStorage _storage;
 			private readonly IReadOnlyList<Message> _pendingEntries;
 			private readonly NetMQPoller _poller;
@@ -69,9 +71,9 @@ public sealed partial class ZeroQueueServer
 			#endregion
 
 			#region 构造函数
-			public ZeroControlServer(int port, IMessageStorage storage, IReadOnlyList<Message> pendingEntries, NetMQPoller poller, Action<Action> dispatch)
+			public ZeroControlServer(NetworkAddress address, IMessageStorage storage, IReadOnlyList<Message> pendingEntries, NetMQPoller poller, Action<Action> dispatch)
 			{
-				_configuredPort = port;
+				_address = address;
 				_storage = storage;
 				_pendingEntries = pendingEntries ?? [];
 				_poller = poller ?? throw new ArgumentNullException(nameof(poller));
@@ -99,7 +101,7 @@ public sealed partial class ZeroQueueServer
 				{
 					router.Options.RouterMandatory = true;
 					router.ReceiveReady += this.OnReceiveReady;
-					this.Port = Bind(router, _configuredPort);
+					this.Port = Bind(router, _address);
 					_poller.Add(router);
 					_router = router;
 					Volatile.Write(ref _active, 1);

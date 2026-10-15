@@ -30,15 +30,15 @@ dotnet run --project messaging/zero/samples/client/Zongsoft.Messaging.ZeroMQ.Sam
 
 ## Server Commands
 
-The server starts automatically with `--incoming:32101 --outgoing:32102`. Use the following commands to inspect or restart it:
+The server starts automatically with explicit loopback Discovery, Incoming, and Outgoing URLs. Use the following commands to inspect or restart it:
 
 ```text
 info
 stop
-start --incoming:32101 --outgoing:32102
+start
 ```
 
-`info` prints the worker state and discovery port. Options supplied to `start` are forwarded to `ZeroQueueServer`, allowing the incoming and outgoing endpoints to be changed; clients discover those endpoint changes automatically through port `7969`.
+`info` prints the worker state and all three listening URLs. `start` reuses those addresses. To use other addresses, change the server properties while stopped; startup arguments do not override them.
 
 ## Client Subscriptions
 
@@ -98,10 +98,10 @@ unsubscribe demo
 ```
 
 5. Three received messages are expected with a ready matching route and no other producers; `MostOnce` is not an acknowledgment or replay guarantee. A null publication identifier means there was no matching route at publication time. See the [delivery and filter rules](../README.md) before interpreting the output.
-6. Run `stop`, `info`, and `start --incoming:32101 --outgoing:32102` in the server to exercise its lifecycle.
+6. Run `stop`, `info`, and `start` in the server to exercise its lifecycle.
 
 ## Safety and Cleanup
 
-🚨 The [sample server](server/Program.cs) has no message storage attached and does not establish authentication or encryption. Its listeners bind network interfaces; isolate the ports with your local environment/firewall and never expose them publicly. This sample demonstrates broadcast delivery, not durable recovery.
+🚨 The [sample server](server/Program.cs) has no message storage attached and does not establish authentication or encryption. Its listeners bind 127.0.0.1 for local use. This sample demonstrates broadcast delivery, not durable recovery.
 
 Unsubscribe in the clients, then run `close` and `exit` (confirm the prompt). Run `stop` and `exit` in the server. This sample creates no persistent message store to erase. For plugin deployment and public queue-provider use, follow the [library guide](../README.md); concrete queue construction here belongs to a standalone diagnostic tool.

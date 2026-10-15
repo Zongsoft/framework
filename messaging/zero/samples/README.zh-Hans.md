@@ -30,15 +30,15 @@ dotnet run --project messaging/zero/samples/client/Zongsoft.Messaging.ZeroMQ.Sam
 
 ## 服务端命令
 
-服务端会以 `--incoming:32101 --outgoing:32102` 自动启动。使用以下命令查看或重启服务：
+服务端按明确的回环 Discovery、Incoming、Outgoing URL 自动启动。使用以下命令查看或重启服务：
 
 ```text
 info
 stop
-start --incoming:32101 --outgoing:32102
+start
 ```
 
-`info` 输出工作状态和发现端口。传给 `start` 的选项会转交给 `ZeroQueueServer`，因此可修改消息流入和流出端点；客户端会通过 `7969` 端口自动发现这些变化。
+`info` 输出工作状态和三个侦听 URL；`start` 复用这些地址。需要更换地址时，应在停止后修改服务器属性，启动参数不覆盖地址。
 
 ## 客户端订阅
 
@@ -98,10 +98,10 @@ unsubscribe demo
 ```
 
 5. 匹配路由就绪且没有其他生产者时，预期收到三条消息；`MostOnce` 不提供确认或补发保证。发布标识为空表示发布当时没有匹配路由。解释输出前先阅读[投递与过滤规则](../README.zh-Hans.md)。
-6. 在服务端依次执行 `stop`、`info` 和 `start --incoming:32101 --outgoing:32102`，观察其生命周期。
+6. 在服务端依次执行 `stop`、`info` 和 `start`，观察其生命周期。
 
 ## 安全与清理
 
-🚨 [示例服务端](server/Program.cs) 未挂载消息存储，也未建立身份认证或加密。监听器绑定网络接口，请通过本地环境、防火墙隔离端口，不要对公网开放。这个范例演示广播投递，不是持久化恢复。
+🚨 [示例服务端](server/Program.cs) 未挂载消息存储，也未建立身份认证或加密。监听器绑定 127.0.0.1，供本机使用。这个范例演示广播投递，不是持久化恢复。
 
 客户端取消订阅后执行 `close`、`exit`（确认退出提示）；服务端执行 `stop`、`exit`。该范例未创建需要擦除的持久消息存储。插件部署和公共队列提供者用法见[类库说明](../README.zh-Hans.md)；此处直接构造队列仅属于独立诊断工具的用法。

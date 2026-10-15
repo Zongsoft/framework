@@ -199,21 +199,6 @@
   <data name="ZeroQueue.StorageRemoveFailed.Message" xml:space="preserve">
     <value>消息存储器“{0}”删除消息“{1}”失败，稍后将重试。</value>
   </data>
-  <data name="ZeroQueueServer.PortImmutable.Message" xml:space="preserve">
-    <value>服务器运行期间不能更改发现端口。</value>
-  </data>
-  <data name="ZeroQueueServer.DataPortOutOfRange.Message" xml:space="preserve">
-    <value>数据端口必须介于 0 和 {0} 之间。</value>
-  </data>
-  <data name="ZeroQueueServer.DataPortsConflict.Message" xml:space="preserve">
-    <value>传入端口和传出端口不能相同。</value>
-  </data>
-  <data name="ZeroQueueServer.DiscoveryPortConflict.Message" xml:space="preserve">
-    <value>数据端口不能与发现端口相同。</value>
-  </data>
-  <data name="ZeroQueueServer.NamedPortOutOfRange.Message" xml:space="preserve">
-    <value>“{0}”端口必须介于 0 和 {1} 之间。</value>
-  </data>
   <data name="ZeroQueueEventChannel.QueueRequired.Message" xml:space="preserve">
     <value>必须先指定消息队列，才能打开或发送事件。</value>
   </data>
@@ -223,9 +208,6 @@
   <data name="ZeroResponse.TypeUnsupported.Message" xml:space="preserve">
     <value>不支持“{0}”响应类型。</value>
   </data>
-  <data name="ServerOptions.InvalidPortFormat.Message" xml:space="preserve">
-    <value>无效的服务器端口格式：{0}。</value>
-  </data>
   <data name="ZeroQueue.ControlUnavailable.Message" xml:space="preserve">
     <value>ZeroMQ 交换服务器的可靠控制通道不可用，请为服务器配置消息存储。</value>
   </data>
@@ -234,5 +216,20 @@
   </data>
   <data name="ZeroQueue.HeaderValueInvalid.Message" xml:space="preserve">
     <value>消息头“{0}”的值不能包含回车符或换行符。</value>
+  </data>
+  <data name="ZeroQueueServer.AddressImmutable.Message" xml:space="preserve">
+    <value>ZeroMQ 服务器运行时不能修改侦听地址。</value>
+  </data>
+  <data name="ZeroQueueServer.AddressInvalid.Message" xml:space="preserve">
+    <value>侦听地址必须使用 tcp 协议、IP 地址或 IPv4 通配符以及 1 至 65535 的显式端口，且不能包含非根路径、查询或片段。</value>
+  </data>
+  <data name="ZeroQueueServer.PortsConflict.Message" xml:space="preserve">
+    <value>发现、控制、流入与流出的端口号必须互不相同。</value>
+  </data>
+  <data name="ZeroQueueServer.ControlStorageRequired.Message" xml:space="preserve">
+    <value>启用可靠投递必须同时配置 Control、Storage 及存储工厂；不启用时 Control 与 Storage 均应为空。</value>
+  </data>
+  <data name="ZeroQueueServer.StorageMissing.Message" xml:space="preserve">
+    <value>无法创建名为“{0}”的消息存储。</value>
   </data>
 </root>
