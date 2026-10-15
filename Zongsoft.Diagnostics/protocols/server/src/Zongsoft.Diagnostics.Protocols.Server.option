@@ -1,9 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 
+<?binding name="telemetry"
+	path="Kestrel/Endpoints/telemetry"
+	template="${option.Url}"
+	protocols="${option.Protocols}"
+	required="true"?>
+
 <options>
 	<option path="kestrel">
 		<endpoints>
-			<telemetry url="http://*:4317" protocols="Http2" />
+			<telemetry url="http://*:4317/opentelemetry" protocols="grpc+http2" />
 		</endpoints>
 	</option>
 </options>

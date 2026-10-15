@@ -31,20 +31,44 @@ The build generates messages for the imported schema and client stubs for collec
 ```csharp
 using Grpc.Net.Client;
 using OpenTelemetry.Proto.Collector.Metrics.V1;
+using Zongsoft.Diagnostics.Protocols.Client;
 
 using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-using var channel = GrpcChannel.ForAddress("https://collector.example.invalid");
+var address = new Uri("https://collector.example.invalid/opentelemetry");
+using var channel = GrpcChannel.ForAddress(address, new GrpcChannelOptions
+{
+	HttpHandler = new GrpcClientHandler(address.AbsolutePath, new SocketsHttpHandler()),
+	DisposeHttpClient = true,
+});
 var client = new MetricsService.MetricsServiceClient(channel);
 var response = await client.ExportAsync(
 	new ExportMetricsServiceRequest(),
 	cancellationToken: cancellation.Token);
 ```
 
+`GrpcClientHandler` adds the declared base path to the generated RPC path. The path must match the receiver; the bundled server uses `/opentelemetry`. A plain `GrpcChannel` does not apply the path in its address; this follows the [official subdirectory guidance](https://learn.microsoft.com/aspnet/core/grpc/troubleshoot#calling-grpc-services-hosted-in-a-sub-directory).
+
+The handler accepts `/` or an absolute literal path containing ASCII letters, digits, `-._~` and separators. One trailing slash is allowed; empty interior segments, `.` or `..` segments, encoded characters, queries and fragments are rejected. `Path` retains the declared spelling; joining with the native RPC path uses one slash. Each handler chain may contain only one instance, and a request cannot have the prefix applied twice. The handler preserves the authority, escaped request path and query, headers, content, HTTP version, cancellation and response; it does not buffer messages or choose a transport. It supports unary and streaming calls.
+
+The caller supplies the transport handler, including any proxy, TLS or HTTP/2 settings. Disposing `GrpcClientHandler` disposes its inner handler. In the example, `DisposeHttpClient = true` transfers disposal to the channel; when sharing a handler or HTTP client, retain ownership and dispose it after all channels stop. See [client options](https://learn.microsoft.com/aspnet/core/grpc/configuration#configure-client-options).
+
+Official OpenTelemetry exporters already append their RPC path to `Endpoint`; configure the complete endpoint, such as `http://localhost:4317/opentelemetry`, without installing `GrpcClientHandler` in that pipeline. This handler is for direct generated-client calls.
+
 Populate messages according to the [OTLP specification](https://opentelemetry.io/docs/specs/otlp/). The empty request demonstrates call shape only; a useful exporter must attribute telemetry correctly and handle partial success.
 
 🚨 Do not disable TLS validation or embed credentials. Configure deadlines, message limits, proxy behavior, retry/batching and backpressure, and always propagate cancellation.
 
 Generated types reflect the protocol revision pinned by this repository. Protobuf can remain wire-compatible while generated source APIs change; do not use these messages as an application-owned long-term persistence format.
+
+## Local Verification
+
+Run from the repository root:
+
+```shell
+dotnet test Zongsoft.Diagnostics/protocols/client/test/Zongsoft.Diagnostics.Protocols.Client.Tests.csproj -p:GeneratePackageOnBuild=false
+```
+
+Tests exercise path validation, duplicate installation, query and request preservation through public send APIs. A local HTTP/2 server verifies unary and all three streaming call types, large messages, metadata, status, trailers, cancellation, deadlines and channel ownership of HttpHandler/HttpClient. ASP.NET Core is used by the test project only; the client library does not reference Web hosting projects.
 
 ## Related Resources
 

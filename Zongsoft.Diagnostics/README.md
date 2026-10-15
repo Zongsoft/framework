@@ -16,7 +16,7 @@
 
 The [Zongsoft.Diagnostics.option](src/Zongsoft.Diagnostics.option) configuration file defines the default _**O**pen**T**elemetry_ metric and trace exporters, together with the [_**P**rometheus_](https://prometheus.io) metric exporter.
 
-Use `driver="telemetry"` for OTLP export. Set `server` to the receiver endpoint and `protocol` to `grpc` or `HttpProtobuf`; the endpoint must accept the selected OTLP transport.
+Use `driver="telemetry"` for OTLP export. Set `server` to the receiver endpoint and `protocol` to `grpc` or `HttpProtobuf`; the endpoint must accept the selected OTLP transport. The bundled Diagnostics receiver uses `/opentelemetry`, so its paired exporter configuration uses `server=http://localhost:4317/opentelemetry;protocol=grpc`. Official SDK exporters use this full endpoint directly; direct generated clients use the [client base-path handler](protocols/client/README.md#direct-client-pattern).
 
 ## Prometheus listener
 
@@ -28,8 +28,7 @@ The `prometheus` exporter accepts HTTP scrape requests. Its `urls` setting conta
 	path="Diagnostics/Diagnostor/Meters/Exporters/*"
 	filter="Driver:prometheus"
 	template="${option.Settings['urls']}"
-	protocols="http1"
-	separators=",;|"?>
+	protocols="http1"?>
 <options>
 	<option path="/Diagnostics">
 		<diagnostor>

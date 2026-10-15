@@ -12,7 +12,7 @@
 
 [**Z**ongsoft.**D**iagnostics.**P**rotocols.**S**erver](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Diagnostics/protocols/server) is the [_**g**RPC_](https://grpc.io) server plugin library for diagnostics and telemetry in the [_**Z**ongsoft_](https://github.com/Zongsoft/framework) open-source framework. It provides [_**g**RPC_](https://grpc.io) server features based on [_**O**pen**T**elemetry_](https://opentelemetry.io), allowing telemetry data to be listened for and processed through the [_**g**RPC_](https://grpc.io) protocol. See the [samples](./samples/) for examples.
 
-It implements the OTLP logs, metrics, and traces collector services, converts generated protobuf messages into Zongsoft telemetry models, and fans each accepted batch out to registered `IHandler` implementations.
+It implements the OTLP logs, metrics, and traces collector services and dispatches accepted requests to registered `IHandler` implementations. Metrics are converted to framework meter collections; logs and traces currently expose the original request through `Parameters` and pass a null handler argument.
 
 ## Installation and Endpoint
 
@@ -20,17 +20,36 @@ It implements the OTLP logs, metrics, and traces collector services, converts ge
 dotnet add package Zongsoft.Diagnostics.Protocols.Server
 ```
 
-Deploy the plugin and option artifacts. The supplied option defines an HTTP/2 Kestrel endpoint named `telemetry` at `http://*:4317`, the conventional OTLP/gRPC port. Override that endpoint in deployment configuration when binding, TLS, or network policy differs.
+Deploy the plugin and option artifacts. The supplied option declares `telemetry` at `http://*:4317/opentelemetry` with `protocols="grpc+http2"`. Each concrete processor carries `[Handler("/opentelemetry")]`. Plugins.Web projects the complete URL into the physical Kestrel listener, and Web.Grpc mounts all three services under that path. Keep the handler path and declared endpoint path identical; changing the deployment address does not change the handler attribute.
 
 🚨 The default wildcard plaintext listener is suitable only for a trusted development network. Production deployments should bind deliberately, enable TLS or terminate it at a trusted proxy, authenticate senders, and firewall the endpoint.
+
+The source configuration is [Zongsoft.Diagnostics.Protocols.Server.option](src/Zongsoft.Diagnostics.Protocols.Server.option):
+
+```xml
+<?binding name="telemetry"
+	path="Kestrel/Endpoints/telemetry"
+	template="${option.Url}"
+	protocols="${option.Protocols}"
+	required="true"?>
+<options>
+	<option path="kestrel">
+		<endpoints>
+			<telemetry url="http://*:4317/opentelemetry" protocols="grpc+http2" />
+		</endpoints>
+	</option>
+</options>
+```
+
+Set the official OpenTelemetry exporter's Endpoint to the complete address. Direct generated clients use [GrpcClientHandler](../client/README.md#direct-client-pattern). Both send `/opentelemetry/<native-service-name>/<method-name>`; a proxy must preserve that complete path. Reflection is mounted in the same region. Calls without the prefix or with an incorrect prefix do not reach business handlers; unknown RPCs within the region return UNIMPLEMENTED.
 
 ## Processing Model
 
 | OTLP signal | Service singleton | Handler argument |
 | --- | --- | --- |
-| logs | `Listener.Logs` | converted Zongsoft log collections |
+| logs | `Listener.Logs` | null; original `ExportLogsServiceRequest` in `Parameters` |
 | metrics | `Listener.Metrics` | `IEnumerable<Meter>` |
-| traces | `Listener.Traces` | converted trace collections |
+| traces | `Listener.Traces` | null; original `ExportTraceServiceRequest` in `Parameters` |
 
 Register handlers on the relevant processor's `Handlers` collection, normally through the plugin tree. Each batch is dispatched to handlers concurrently with `Parallel.ForEachAsync`. A handler exception is logged and isolated so another handler can still run; request cancellation is propagated.
 
@@ -49,6 +68,16 @@ See the [sample plugin](samples/README.md) for a concrete `HandlerBase<IEnumerab
 The processors currently return a successful empty OTLP response after dispatch and log handler failures. If durable ingestion is required, handlers must explicitly enqueue or persist before returning and define their own overload strategy. Bound queue sizes and execution time; slow handlers extend the export call and uncontrolled parallel work can exhaust resources.
 
 Timestamp conversion uses OTLP Unix nanoseconds with millisecond precision in the framework model. Validate attribute types, histogram/summary semantics, and data loss expectations against the pinned [OTLP specification](https://opentelemetry.io/docs/specs/otlp/).
+
+## Local Verification
+
+Run from the repository root:
+
+```shell
+dotnet test Zongsoft.Diagnostics/protocols/server/test/Zongsoft.Diagnostics.Protocols.Server.Tests.csproj -p:GeneratePackageOnBuild=false
+```
+
+Tests use isolated child processes and real `Application.Web` plugin loading, options and the existing samples, including automatic listener projection and service mounting. They check payloads for all three signals from the official SDK and generated clients, sample metric output, regional reflection, incorrect paths, cancellation propagation and port release after shutdown. All network traffic stays on loopback; this does not verify a proxy or production-host deployment.
 
 ## Related Resources
 

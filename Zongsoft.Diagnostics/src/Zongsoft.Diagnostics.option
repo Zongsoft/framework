@@ -4,8 +4,7 @@
 	path="Diagnostics/Diagnostor/Meters/Exporters/*"
 	filter="driver:prometheus"
 	template="${option.Settings['urls']}"
-	protocols="http1"
-	separators=",;|"?>
+	protocols="http1"?>
 
 <options>
 	<option path="/Diagnostics">
@@ -15,7 +14,7 @@
 
 				<exporters>
 					<exporter exporter.name="telemetry" driver="telemetry"
-					          settings="server=http://localhost:4317;protocol=grpc;processorType=batch;timeout=30s;interval=15s;" />
+					          settings="server=http://localhost:4317/opentelemetry;protocol=grpc;processorType=batch;timeout=30s;interval=15s;" />
 
 					<exporter exporter.name="prometheus" driver="prometheus"
 					          settings="urls=http://127.0.0.1:9464/metrics,http://localhost:9464/metrics;totalSuffix=true;cacheDuration=300ms;" />
@@ -27,7 +26,7 @@
 
 				<exporters>
 					<exporter exporter.name="telemetry" driver="telemetry"
-					          settings="server=http://localhost:4317;protocol=grpc;processorType=batch;timeout=30s;interval=15s;" />
+					          settings="server=http://localhost:4317/opentelemetry;protocol=grpc;processorType=batch;timeout=30s;interval=15s;" />
 				</exporters>
 			</traces>
 		</diagnostor>

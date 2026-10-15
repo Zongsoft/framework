@@ -1,0 +1,16 @@
+syntax = "proto3";
+package pathfixture;
+option csharp_namespace = "Zongsoft.Diagnostics.Protocols.Client.Tests.Contracts";
+
+message Frame {
+	string text = 1;
+	bytes payload = 2;
+	int32 sequence = 3;
+}
+
+service PathProbe {
+	rpc Unary(Frame) returns (Frame);
+	rpc ServerStream(Frame) returns (stream Frame);
+	rpc ClientStream(stream Frame) returns (Frame);
+	rpc Duplex(stream Frame) returns (stream Frame);
+}

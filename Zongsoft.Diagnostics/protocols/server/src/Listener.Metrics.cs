@@ -55,6 +55,7 @@ partial class Listener
 	public static readonly MetricsProcessor Metrics = new();
 	#endregion
 
+	[Handler("/opentelemetry")]
 	[System.Reflection.DefaultMember(nameof(Handlers))]
 	public class MetricsProcessor : MetricsService.MetricsServiceBase
 	{

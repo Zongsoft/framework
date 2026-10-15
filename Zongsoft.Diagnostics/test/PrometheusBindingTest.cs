@@ -34,7 +34,7 @@ public class PrometheusBindingTest
 		Assert.Equal("Diagnostics/Diagnostor/Meters/Exporters/*", attributes["path"]);
 		Assert.Equal("driver:prometheus", attributes["filter"]);
 		Assert.Equal("http1", attributes["protocols"]);
-		Assert.Equal(",;|", attributes["separators"]);
+		Assert.False(attributes.ContainsKey("separators"));
 
 		var settings = configuration["Diagnostics:diagnostor:meters:exporters:prometheus:settings"];
 		var connectionSettings = new ConnectionSettings(settings);

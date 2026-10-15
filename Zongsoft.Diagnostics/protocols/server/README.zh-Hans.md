@@ -12,7 +12,7 @@
 
 [**Z**ongsoft.**D**iagnostics.**P**rotocols.**S**erver](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Diagnostics/protocols/server) 是基于 [_**O**pen**T**elemetry_](https://opentelemetry.io) 的 [_**g**RPC_](https://grpc.io) 诊断遥测服务端协议包。
 
-它实现 OTLP 日志、指标与追踪采集服务，把生成式 Protobuf 消息转换成 Zongsoft 遥测模型，再把每个已接收批次分发给注册的 `IHandler` 实现。
+它实现 OTLP 日志、指标与追踪采集服务，并向注册的 `IHandler` 分发收到的请求。指标转换成框架计量器集合；日志和追踪目前通过 `Parameters` 提供原始请求，处理器的普通参数为 null。
 
 ## 安装与端点
 
@@ -20,17 +20,36 @@
 dotnet add package Zongsoft.Diagnostics.Protocols.Server
 ```
 
-请部署插件与选项产物。随包选项在 `http://*:4317` 定义名为 `telemetry` 的 HTTP/2 Kestrel 端点，即约定的 OTLP/gRPC 端口。绑定、TLS 或网络策略不同时，请在部署配置中覆盖该端点。
+请部署插件与选项产物。随包选项声明 `telemetry` 地址为 `http://*:4317/opentelemetry`，协议为 `grpc+http2`；三个具体处理类均标注 `[Handler("/opentelemetry")]`。Plugins.Web 将完整 URL 投影为 Kestrel 的物理监听，Web.Grpc 将三类服务挂载到该路径。处理类与端点的路径必须一致，修改部署地址不会改变 Handler 注解。
 
 🚨 默认的通配明文监听只适用于可信开发网络。生产部署应明确绑定地址、启用 TLS 或由可信代理终止 TLS、验证发送方，并用防火墙限制端点。
+
+源配置见 [Zongsoft.Diagnostics.Protocols.Server.option](src/Zongsoft.Diagnostics.Protocols.Server.option)：
+
+```xml
+<?binding name="telemetry"
+	path="Kestrel/Endpoints/telemetry"
+	template="${option.Url}"
+	protocols="${option.Protocols}"
+	required="true"?>
+<options>
+	<option path="kestrel">
+		<endpoints>
+			<telemetry url="http://*:4317/opentelemetry" protocols="grpc+http2" />
+		</endpoints>
+	</option>
+</options>
+```
+
+官方 OpenTelemetry 导出器将 Endpoint 设为完整地址即可；直接使用生成式客户端时配置 [GrpcClientHandler](../client/README.zh-Hans.md#直接调用模式)。两者最终发送 `/opentelemetry/<原生服务名>/<方法名>`，代理应保留完整路径。反射服务也挂载于该区域；不带前缀或错误前缀的调用不会进入业务处理器，区域内未知 RPC 返回 UNIMPLEMENTED。
 
 ## 处理模型
 
 | OTLP 信号 | 服务单例 | 处理器参数 |
 | --- | --- | --- |
-| 日志 | `Listener.Logs` | 转换后的 Zongsoft 日志集合 |
+| 日志 | `Listener.Logs` | null；原始 `ExportLogsServiceRequest` 位于 `Parameters` |
 | 指标 | `Listener.Metrics` | `IEnumerable<Meter>` |
-| 追踪 | `Listener.Traces` | 转换后的追踪集合 |
+| 追踪 | `Listener.Traces` | null；原始 `ExportTraceServiceRequest` 位于 `Parameters` |
 
 通常通过插件树把处理器注册到对应 Processor 的 `Handlers` 集合。每个批次使用 `Parallel.ForEachAsync` 并发分发；单个处理器异常会被记录并隔离，不阻断其他处理器，请求取消信号会继续传递。
 
@@ -49,6 +68,16 @@ dotnet add package Zongsoft.Diagnostics.Protocols.Server
 当前 Processor 在分发后返回空的成功 OTLP 响应，并记录处理器失败。需要可靠接收时，处理器必须在返回前显式入队或持久化，并定义自己的过载策略。请限制队列和执行时间；慢处理器会延长导出调用，不受控的并行工作会耗尽资源。
 
 时间戳从 OTLP Unix 纳秒转换为框架模型时保留到毫秒。请对照固定版本的 [OTLP 规范](https://opentelemetry.io/docs/specs/otlp/)验证属性类型、直方图/摘要语义和可接受的数据损失。
+
+## 本地验证
+
+从仓库根目录运行：
+
+```shell
+dotnet test Zongsoft.Diagnostics/protocols/server/test/Zongsoft.Diagnostics.Protocols.Server.Tests.csproj -p:GeneratePackageOnBuild=false
+```
+
+测试在隔离子进程内通过真实 `Application.Web` 加载插件、选项及现有 samples，自动投影监听并挂载服务。它检查官方 SDK 和生成式客户端的三信号载荷、样例指标输出、区域反射、错误路径、取消传播及停止后端口释放。所有网络通信限定在本机回环地址；此验证不包含代理或生产宿主部署。
 
 ## 延伸阅读
 

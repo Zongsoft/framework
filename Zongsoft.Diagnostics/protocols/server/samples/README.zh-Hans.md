@@ -24,11 +24,17 @@ dotnet build Zongsoft.Diagnostics/protocols/server/samples/Zongsoft.Diagnostics.
 ## 验证
 
 1. 启动已加载诊断协议服务端和本范例插件的 Zongsoft 宿主；
-2. 配置 OpenTelemetry 客户端或采集器，将指标导出到宿主的 OTLP gRPC 端点；
+2. 配置 OpenTelemetry 客户端或采集器，将指标导出到宿主的完整 OTLP gRPC 端点，例如 `http://127.0.0.1:4317/opentelemetry`；官方 SDK 导出器直接使用该地址，生成式客户端使用[基路径处理器](../../client/README.zh-Hans.md#直接调用模式)；
 3. 产生应用指标；
 4. 确认 `MetricHandler` 将每个指标计量器及其内容写入终端。
 
 如果没有输出，请检查 OTLP 端点、传输安全设置、服务端插件是否启用，以及 `/Workbench/Diagnostics/Telemetry/Listener/Metrics` 注册路径。
+
+也可从仓库根目录运行自动集成测试；它在临时插件树中加载本范例，通过官方 SDK 上报合成指标并断言终端输出：
+
+```shell
+dotnet test Zongsoft.Diagnostics/protocols/server/test/Zongsoft.Diagnostics.Protocols.Server.Tests.csproj --filter FullyQualifiedName~OfficialExportersReachHandlersAndSample -p:GeneratePackageOnBuild=false
+```
 
 ## 背景与关键代码
 

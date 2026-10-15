@@ -50,6 +50,7 @@ partial class Listener
 	public static readonly LogsProcessor Logs = new();
 	#endregion
 
+	[Handler("/opentelemetry")]
 	[System.Reflection.DefaultMember(nameof(Handlers))]
 	public class LogsProcessor : LogsService.LogsServiceBase
 	{

@@ -16,7 +16,7 @@
 
 通过 [Zongsoft.Diagnostics.option](src/Zongsoft.Diagnostics.option) 配置文件默认定义了 _**O**pen**T**elemetry_ 标准的指标 _(Metric)_、跟踪 _(Trace)_ 导出器，以及 [_**P**rometheus_](https://prometheus.io) _指标_ 导出器。
 
-使用 `driver="telemetry"` 导出 OTLP 数据。将 `server` 设置为接收端点，`protocol` 设置为 `grpc` 或 `HttpProtobuf`；接收端点必须支持所选的 OTLP 传输协议。
+使用 `driver="telemetry"` 导出 OTLP 数据。将 `server` 设置为接收端点，`protocol` 设置为 `grpc` 或 `HttpProtobuf`；接收端点必须支持所选的 OTLP 传输协议。随附 Diagnostics 接收端使用 `/opentelemetry`，配套导出器配置为 `server=http://localhost:4317/opentelemetry;protocol=grpc`。官方 SDK 导出器直接使用完整地址；生成式客户端使用[客户端基路径处理器](protocols/client/README.zh-Hans.md#直接调用模式)。
 
 ## Prometheus 监听
 
@@ -28,8 +28,7 @@
 	path="Diagnostics/Diagnostor/Meters/Exporters/*"
 	filter="Driver:prometheus"
 	template="${option.Settings['urls']}"
-	protocols="http1"
-	separators=",;|"?>
+	protocols="http1"?>
 <options>
 	<option path="/Diagnostics">
 		<diagnostor>

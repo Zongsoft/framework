@@ -24,11 +24,17 @@ Deploy the generated assembly together with `Zongsoft.Diagnostics.Protocols.Serv
 ## Verify
 
 1. Start the Zongsoft host with the diagnostics protocol server and this sample plugin loaded.
-2. Configure an OpenTelemetry client or collector to export metrics to the host's OTLP gRPC endpoint.
+2. Configure an OpenTelemetry client or collector to export metrics to the host's complete OTLP gRPC endpoint, for example `http://127.0.0.1:4317/opentelemetry`. Official SDK exporters use this endpoint directly; generated clients use the [base-path handler](../../client/README.md#direct-client-pattern).
 3. Produce application metrics.
 4. Confirm that `MetricHandler` writes each received meter and its contents to the terminal.
 
 If no output appears, verify the OTLP endpoint, transport security, server plugin activation, and the `/Workbench/Diagnostics/Telemetry/Listener/Metrics` registration path.
+
+The automated integration test loads this sample in a temporary plugin tree, exports a synthetic metric through the official SDK and asserts the terminal output. Run it from the repository root:
+
+```shell
+dotnet test Zongsoft.Diagnostics/protocols/server/test/Zongsoft.Diagnostics.Protocols.Server.Tests.csproj --filter FullyQualifiedName~OfficialExportersReachHandlersAndSample -p:GeneratePackageOnBuild=false
+```
 
 ## Background and Key Code
 

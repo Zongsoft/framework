@@ -31,20 +31,44 @@ dotnet add package Zongsoft.Diagnostics.Protocols.Client
 ```csharp
 using Grpc.Net.Client;
 using OpenTelemetry.Proto.Collector.Metrics.V1;
+using Zongsoft.Diagnostics.Protocols.Client;
 
 using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-using var channel = GrpcChannel.ForAddress("https://collector.example.invalid");
+var address = new Uri("https://collector.example.invalid/opentelemetry");
+using var channel = GrpcChannel.ForAddress(address, new GrpcChannelOptions
+{
+	HttpHandler = new GrpcClientHandler(address.AbsolutePath, new SocketsHttpHandler()),
+	DisposeHttpClient = true,
+});
 var client = new MetricsService.MetricsServiceClient(channel);
 var response = await client.ExportAsync(
 	new ExportMetricsServiceRequest(),
 	cancellationToken: cancellation.Token);
 ```
 
+`GrpcClientHandler` 将声明的基路径加到生成的 RPC 路径前。路径必须与接收端一致，随附服务端使用 `/opentelemetry`。原生 `GrpcChannel` 不会应用地址中的路径，参见[官方子目录调用说明](https://learn.microsoft.com/aspnet/core/grpc/troubleshoot#calling-grpc-services-hosted-in-a-sub-directory)。
+
+处理器接受 `/` 或以斜杠开头的字面路径，路径段允许 ASCII 字母、数字和 `-._~`。允许一个尾斜杠；中间空段、独立的 `.`、`..` 段、编码字符、查询及片段均无效。`Path` 保留声明原文，连接原生 RPC 路径时只使用一个斜杠。每条处理链只允许安装一个本处理器，每个请求只应用一次前缀。它保留 authority、转义后的请求路径和查询、请求头、消息内容、HTTP 版本、取消信号及响应，不缓冲消息、不选择传输协议，适用于单次及流式调用。
+
+调用方提供内部传输处理器及其代理、TLS、HTTP/2 设置。释放 `GrpcClientHandler` 会释放内部处理器；上例通过 `DisposeHttpClient = true` 交给通道释放。共享处理器或 HTTP 客户端时由调用方持有，并在所有通道停止后释放，详见[客户端选项](https://learn.microsoft.com/aspnet/core/grpc/configuration#configure-client-options)。
+
+官方 OpenTelemetry 导出器已经会向 `Endpoint` 追加 RPC 路径，应直接配置完整端点，例如 `http://localhost:4317/opentelemetry`，不要在该管线再次安装 `GrpcClientHandler`。本处理器用于直接调用生成式客户端。
+
 请按照 [OTLP 规范](https://opentelemetry.io/docs/specs/otlp/)填充消息。空请求只演示调用形状；实用导出器必须正确归属遥测并处理部分成功。
 
 🚨 不要关闭 TLS 验证或硬编码凭据。请配置截止时间、消息大小、代理、重试/批处理与背压，并始终传递取消信号。
 
 生成类型对应仓库锁定的协议版本。Protobuf 可能保持线协议兼容，但生成式源码 API 仍会变化；不要把这些消息当作应用自有的长期持久化格式。
+
+## 本地验证
+
+从仓库根目录运行：
+
+```shell
+dotnet test Zongsoft.Diagnostics/protocols/client/test/Zongsoft.Diagnostics.Protocols.Client.Tests.csproj -p:GeneratePackageOnBuild=false
+```
+
+测试通过公开发送接口检查基路径校验、重复安装、查询串和请求对象保留，并使用本地 HTTP/2 服务检查一元调用、三种流式调用、大消息、元数据、状态、trailers、取消与 deadline，以及通道对 HttpHandler/HttpClient 的释放约定。测试项目使用 ASP.NET Core 搭建回环服务，客户端库本身不引用 Web 托管项目。
 
 ## 延伸阅读
 

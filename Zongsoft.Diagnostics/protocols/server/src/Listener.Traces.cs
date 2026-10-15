@@ -50,6 +50,7 @@ partial class Listener
 	public static readonly TracesProcessor Traces = new();
 	#endregion
 
+	[Handler("/opentelemetry")]
 	[System.Reflection.DefaultMember(nameof(Handlers))]
 	public class TracesProcessor : TraceService.TraceServiceBase
 	{
