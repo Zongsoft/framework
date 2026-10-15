@@ -22,7 +22,7 @@ namespace Zongsoft.Diagnostics.Tests;
 public class PrometheusBindingTest
 {
 	[Fact]
-	public void BundledBindingPreservesUrlsWhileLauncherCompletesListenerPrefixes()
+	public void BundledBindingPreservesUrlsAndSharesTheScrapePath()
 	{
 		var path = Path.Combine(AppContext.BaseDirectory, "Zongsoft.Diagnostics.option");
 		using var stream = File.OpenRead(path);
@@ -52,13 +52,8 @@ public class PrometheusBindingTest
 		var services = new ServiceCollection();
 		services.AddOpenTelemetry().WithMetrics(builder => new PrometheusExporterLauncher().Launch(builder, settings));
 		using var provider = services.BuildServiceProvider();
-		var options = provider.GetRequiredService<IOptions<PrometheusHttpListenerOptions>>().Value;
-		using var listener = new HttpListener();
-		Assert.NotNull(options.ConfigureHttpListener);
-		options.ConfigureHttpListener(options, listener);
-
-		Assert.Equal(new[] { "http://127.0.0.1:9464/metrics/", "http://localhost:9464/metrics/" }, listener.Prefixes.Order(StringComparer.Ordinal));
+		var options = provider.GetRequiredService<IOptions<PrometheusAspNetCoreOptions>>().Value;
 		Assert.Equal("/metrics", options.ScrapeEndpointPath);
-		Assert.False(listener.IsListening);
+		Assert.Equal(urls, evaluator.Evaluate(attributes["template"]));
 	}
 }

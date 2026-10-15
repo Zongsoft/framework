@@ -60,6 +60,7 @@ public sealed class WebEndpoint
 
 		this.Name = name;
 		this.Address = address;
+		this.Path = address.Path.Length > 1 ? address.Path.TrimEnd('/') : address.Path;
 		this.Protocols = Array.AsReadOnly(NetworkProtocol.Parse(string.Join(',', declarations), ','));
 		this.IPAddress = address.HostType == UriHostNameType.Dns ? null : System.Net.IPAddress.Parse(address.Zone == null ? address.Host : $"{address.Host}%{address.Zone}");
 	}
@@ -68,6 +69,8 @@ public sealed class WebEndpoint
 	#region 公共属性
 	/// <summary>获取端点名称。</summary>
 	public string Name { get; }
+	/// <summary>获取用于范围匹配的基路径；除根路径外不含尾斜杠，比较时忽略大小写。</summary>
+	public string Path { get; }
 	/// <summary>获取保留基路径的地址。</summary>
 	public NetworkAddress Address { get; }
 	/// <summary>获取只读协议声明。</summary>

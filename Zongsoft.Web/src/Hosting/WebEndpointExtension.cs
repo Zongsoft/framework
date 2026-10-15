@@ -268,7 +268,7 @@ public static class WebEndpointExtension
 
 				var endpoint = candidates[i].Endpoint;
 				var metadata = endpoint.Metadata.GetMetadata<WebEndpointMetadata>();
-				var valid = metadata == null ? feature.Kind == "http" : metadata.Kind == feature.Kind && metadata.Path == feature.Endpoint.Address.Path;
+				var valid = metadata == null ? feature.Kind == "http" : metadata.Kind == feature.Kind && string.Equals(metadata.Path, feature.Endpoint.Path, StringComparison.OrdinalIgnoreCase);
 				valid = valid && feature.Protocol.Accepts(endpoint, feature);
 
 				if(!valid)

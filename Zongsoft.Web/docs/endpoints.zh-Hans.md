@@ -44,7 +44,7 @@ Kestrel:Endpoints:orders:Url=http://127.0.0.1:4317/orders
 Kestrel:Endpoints:orders:Protocols=grpc+http2
 ```
 
-两个逻辑范围共用一个 HTTP/2 物理监听。转换工具保留原始完整 URL，输出 URL 只含 scheme、主机及端口；证书、SNI、默认连接选项保留。相同 socket 的连接选项必须一致，监听重叠、明文 HTTP 多版本混用及 SNI 扩大声明能力由转换工具拒绝。同类别同范围冲突及同类别仅大小写不同的路径由 WebEndpointCollection 单独校验。转换成功不代表请求范围没有歧义。
+两个逻辑范围共用一个 HTTP/2 物理监听。转换工具保留原始完整 URL，输出 URL 只含 scheme、主机及端口；证书、SNI、默认连接选项保留。相同 socket 的连接选项必须一致，监听重叠、明文 HTTP 多版本混用及 SNI 扩大声明能力由转换工具拒绝。WebEndpointCollection 合并等效声明，并单独校验同监听、同类别的范围冲突。转换成功不代表请求范围没有歧义。
 
 `WebEndpoint` 通过名称、NetworkAddress 和协议集合构造，复制并保留只读声明；Supports(httpVersion) 判断是否声明了指定 HTTP 主版本。WebEndpointCollection 按路径长度降序及名称序数排序，规范化协议并构建请求类别范围；模型及通用管线不引用 Kestrel 类型。转换器只使用显式协议或 EndpointDefaults:Protocols，不推断未声明能力。
 
@@ -62,7 +62,7 @@ Web 主库内置普通 HTTP 规则。上层协议必须在创建快照前通过 
 
 ## 路径与类别
 
-声明基路径只能使用 ASCII 字母、数字和 -._~ 分段；拒绝中间空段、独立点段、转义、模板及通配符。保留大小写和尾斜杠。`/metrics` 匹配自身及子路径；`/metrics/` 不匹配无尾斜杠的自身。
+声明基路径只能使用 ASCII 字母、数字和 -._~ 分段；拒绝中间空段、独立点段、转义、模板及通配符。基路径忽略大小写及可选尾斜杠，`/metrics`、`/Metrics/` 均匹配自身和路径段子路径；`/metrics-extra` 不匹配。WebEndpoint.Address 保留原始声明，Path 去除非根路径的尾斜杠。等效的同后端声明合并，独立后端由代理制作阶段检查冲突；同一逻辑区域可关联多个监听。
 
 管线读取真实 Connection.LocalIpAddress/LocalPort、连接协议和 IHttpRequestFeature.RawTarget；不使用 Host 或转发头选择监听。原始 path 去掉 query，保留百分号编码和点段；absolute-form 提取原路径，OPTIONS * 不进入映射。无效请求目标返回 400。
 
@@ -79,7 +79,7 @@ routes.MapGroup("/opentelemetry")
 	.WithMetadata(new WebEndpointMetadata("/opentelemetry", "grpc"));
 ```
 
-gRPC 扩展须在该组内注册服务及区域 fallback。普通未标注路由仅参与 HTTP 类别；标注路由必须与已选范围精确对应。gRPC 固定方法路由额外比较原始完整路径的大小写及编码。较短区域的 fallback 不能接管子区域未知方法。Web 主库不引入 gRPC 包；Web.Grpc 在这些路由组内实现 Handler 服务挂载、区域反射及区域 fallback，详见其[服务契约](../grpc/README.zh-Hans.md#基路径与区域)。
+gRPC 扩展须在该组内注册服务及区域 fallback。普通未标注路由仅参与 HTTP 类别；标注路由与已选基路径忽略大小写及可选尾斜杠关联。gRPC 适配层仅对基路径之后的服务名、方法名检查精确大小写及编码。较短区域的 fallback 不能接管子区域未知方法。Web 主库不引入 gRPC 包；Web.Grpc 在这些路由组内实现 Handler 服务挂载、区域反射及区域 fallback，详见其[服务契约](../grpc/README.zh-Hans.md#基路径与区域)。
 
 ## 协议扩展与职责
 

@@ -70,7 +70,7 @@ namespace Zongsoft.Diagnostics.Properties {
         }
 
         /// <summary>
-        ///   查找类似 All URLs of a Prometheus exporter must have the same case-sensitive scrape path. 的本地化字符串。
+        ///   查找类似 All URLs of a Prometheus exporter must have equivalent scrape base paths, ignoring case and an optional trailing slash. 的本地化字符串。
         /// </summary>
         internal static string Prometheus_PathsDifferent_Message {
             get {
@@ -88,7 +88,7 @@ namespace Zongsoft.Diagnostics.Properties {
         }
 
         /// <summary>
-        ///   查找类似 Prometheus urls must contain complete HTTP or HTTPS addresses with literal paths and no empty entries, credentials, query, or fragment. 的本地化字符串。
+        ///   查找类似 Prometheus urls must contain complete HTTP or HTTPS listening addresses using IP, wildcard, localhost, or DNS names, with literal paths and no empty entries, credentials, query, or fragment. 的本地化字符串。
         /// </summary>
         internal static string Prometheus_UrlsInvalid_Message {
             get {

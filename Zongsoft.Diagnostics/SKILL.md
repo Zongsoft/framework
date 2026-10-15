@@ -28,8 +28,8 @@ description: 修改或审查 Zongsoft.Diagnostics 的诊断配置、OTLP 客户�
 
 ## 配置与验证
 
-- Prometheus 的 urls 保存完整地址，允许省略尾斜杠；仅登记 HttpListener 前缀时补齐，不改写绑定或 ScrapeEndpointPath。多个地址的声明路径必须按 Ordinal 一致，protocol 省略时默认为 http1，显式配置只接受单个 http1，空值、协议列表、其它协议及 protocols 设置无效。独立 path 设置、缺少 urls 或空地址项在登记导出器前失败；不拼接另一份 path、不启动默认监听。运行与 binding PI 共读 Settings 中的 urls；PI 用常量模板 http1 声明固定能力，工具不补默认协议。公开使用方式见 README。
-- Prometheus 的公开入口、选项投影及临时回环抓取由 [主库测试](test) 验证；不为测试扩大实现作用域。原始 option 的 PI 和模板检查不等同于后续 Packager 提取器验收。
+- Prometheus urls 保存完整地址；基路径忽略大小写及可选尾斜杠，同一 exporter 的所有地址须等效。独立 Kestrel 服务器复用 ASP.NET Core Prometheus 导出器，按原始 URI 路径段匹配；不解码或消点后换范围，不重定向。监听归指标提供程序所有并随之释放；监听和请求处理集中在私有嵌套的 [ScrapeServer](src/Telemetry/PrometheusExporterLauncher.ScrapeServer.cs)。普通域名不做 DNS 解析，展开为可用的 IPv4/IPv6 通配监听，再按规范化 Host 匹配；域名大小写、末尾点号及国际化形式等效。IP、通配地址和 localhost 保留各自的网卡/地址族范围；物理监听合并不能合并请求范围，端口和 scheme 也必须匹配。IPv6 TCP 不隐式开启 IPv4。只读取 Kestrel:Certificates，不继承宿主 Endpoints。protocol 默认 http1，显式只接受单个 http1；空值、其它协议、protocols、独立 path 和非法 urls 在注册前失败。PI 共读 urls，以常量模板 http1 声明固定能力。公开用法见 README。
+- Prometheus 的公开入口、选项投影、域名/IP 混合声明及临时回环 HTTP/HTTPS 抓取由 [主库测试](test) 验证；不为测试扩大实现作用域。原始 option 的 PI 和模板检查不等同于后续 Packager 提取器验收。
 
 - 服务端 telemetry 声明 grpc+http2 和 /opentelemetry，三个 Processor 的 Handler 路径保持一致；binding 读取源 Url/Protocols。客户端 GrpcClientHandler 只处理直接 GrpcChannel 的基路径，不用于官方 OTLP 导出器；后者直接配置含前缀的 Endpoint。新增传输需核对 `.option`、`.plugin`、生成项目和 Web gRPC。
 - Logs/Traces 当前以 null argument 加 Parameters 中的原始请求分派；不要把三信号收包验收写成已实现日志/追踪模型转换。Metrics 仍需单独处理上述多资源转换问题。

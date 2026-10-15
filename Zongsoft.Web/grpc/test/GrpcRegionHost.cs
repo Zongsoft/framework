@@ -286,10 +286,10 @@ public static class GrpcRegionServices
 	public sealed class Ordered(RegionProbe probe) : EchoHandler(probe, "ordered") { }
 
 	[Service(Tags = "gRPC"), Handler("/A")]
-	public sealed class CaseMismatch(RegionProbe probe) : EchoHandler(probe, "case") { }
+	public sealed class CaseVariant(RegionProbe probe) : EchoHandler(probe, "case") { }
 
 	[Service(Tags = "gRPC"), Handler("/a/")]
-	public sealed class SlashMismatch(RegionProbe probe) : EchoHandler(probe, "slash") { }
+	public sealed class SlashVariant(RegionProbe probe) : EchoHandler(probe, "slash") { }
 
 	[Service(Tags = "gRPC"), Handler("/a")]
 	public sealed class NotGrpc { }

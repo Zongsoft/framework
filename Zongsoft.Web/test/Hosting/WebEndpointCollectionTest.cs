@@ -31,7 +31,7 @@ public class WebEndpointCollectionTest
 
 	[Theory]
 	[InlineData("https://127.0.0.1:9000/a", "http1", "https://127.0.0.1:9000/a", "protobuf+http2")]
-	[InlineData("http://127.0.0.1:9000/a", "http2", "http://127.0.0.1:9001/A", "http2")]
+	[InlineData("http://127.0.0.1:9000/a", "http1", "http://127.0.0.1:9000/A/", "http2")]
 	public void ConflictingRequestRangesAreRejectedIndependently(string first, string firstProtocols, string second, string secondProtocols)
 	{
 		var endpoints = new[]
@@ -40,6 +40,22 @@ public class WebEndpointCollectionTest
 			new WebEndpoint("b", NetworkAddress.Parse(second), NetworkProtocol.Parse(secondProtocols, ',')),
 		};
 		Assert.Throws<InvalidOperationException>(() => new WebEndpointCollection(endpoints, [new WebEndpointProtocol("protobuf")]));
+	}
+
+	[Theory]
+	[InlineData("/a", "/A/")]
+	[InlineData("/a/", "/a")]
+	public void EquivalentBasePathsMergeOnlyOnTheSameListener(string firstPath, string secondPath)
+	{
+		var first = new WebEndpoint("a", NetworkAddress.Parse("http://127.0.0.1:9000" + firstPath), [NetworkProtocol.Parse("http1")]);
+		var equivalent = new WebEndpoint("alias", NetworkAddress.Parse("http://127.0.0.1:9000" + secondPath), [NetworkProtocol.Parse("http1")]);
+		var other = new WebEndpoint("other", NetworkAddress.Parse("http://127.0.0.1:9001" + secondPath), [NetworkProtocol.Parse("http1")]);
+		var collection = new WebEndpointCollection([first, equivalent, other]);
+
+		Assert.Equal(2, collection.Count);
+		Assert.Equal(firstPath, collection[0].Address.Path);
+		Assert.Equal("/a", collection[0].Path);
+		Assert.Equal([9000, 9001], collection.Select(endpoint => endpoint.Address.Port));
 	}
 
 	[Fact]

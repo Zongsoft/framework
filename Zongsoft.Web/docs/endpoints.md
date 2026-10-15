@@ -42,7 +42,7 @@ Kestrel:Endpoints:orders:Url=http://127.0.0.1:4317/orders
 Kestrel:Endpoints:orders:Protocols=grpc+http2
 ```
 
-These logical scopes share one physical HTTP/2 listener. Conversion preserves the source URLs and outputs scheme, host and port for each physical listener. Certificates, SNI and connection defaults are preserved. The converter rejects incompatible settings on shared sockets, overlapping listeners, mixed cleartext HTTP versions and SNI settings that expand declared capabilities. WebEndpointCollection separately rejects conflicting same-kind scopes and paths differing only in case. Successful conversion does not establish unambiguous request scopes.
+These logical scopes share one physical HTTP/2 listener. Conversion preserves the source URLs and outputs scheme, host and port for each physical listener. Certificates, SNI and connection defaults are preserved. The converter rejects incompatible settings on shared sockets, overlapping listeners, mixed cleartext HTTP versions and SNI settings that expand declared capabilities. WebEndpointCollection separately rejects conflicting same-kind scopes. Successful conversion does not establish unambiguous request scopes.
 
 `WebEndpoint` accepts a name, NetworkAddress and protocol declarations, which it copies into a read-only collection. Supports(httpVersion) checks a declared HTTP major version. WebEndpointCollection normalizes declarations, builds request-kind scopes and sorts by descending path length and ordinal name. The models and common pipeline do not reference Kestrel types. Conversion uses explicit protocols or EndpointDefaults:Protocols without inferring undeclared capabilities.
 
@@ -60,7 +60,7 @@ Hosts may be IP addresses, wildcards or localhost; other DNS names are not liste
 
 ## Paths and request kinds
 
-Declared base paths use ASCII letters, digits and -._~ in segments. Empty interior segments, standalone dot segments, escapes, templates and wildcards fail. Case and trailing slashes remain significant. `/metrics` matches itself and children; `/metrics/` does not match `/metrics`.
+Declared base paths use ASCII letters, digits and -._~ in segments. Empty interior segments, standalone dot segments, escapes, templates and wildcards fail. Base paths ignore case and an optional trailing slash: `/metrics` and `/Metrics/` match themselves and segment children, but not `/metrics-extra`. WebEndpoint.Address retains the declaration; Path removes a non-root trailing slash. Equivalent declarations for the same backend merge; proxy generation rejects equivalent ranges targeting different backends. One logical region may use several listeners.
 
 The pipeline reads actual Connection.LocalIpAddress/LocalPort, connection protocol and IHttpRequestFeature.RawTarget. Host and forwarded headers do not select listeners. Raw paths exclude queries but preserve percent escapes and dot segments. Absolute-form targets retain their original path; OPTIONS * bypasses path mapping. Invalid targets return 400.
 
@@ -77,7 +77,7 @@ routes.MapGroup("/opentelemetry")
 	.WithMetadata(new WebEndpointMetadata("/opentelemetry", "grpc"));
 ```
 
-The gRPC extension must register services and a regional fallback within that group. Unannotated routes participate only in ordinary HTTP. Annotated routes must match the selected scope exactly. Fixed gRPC method routes additionally require the exact raw full path, including case and encoding. A shorter scope's fallback cannot handle unknown methods in a child scope. The Web library adds no gRPC package. Web.Grpc mounts Handler services, regional reflection and regional fallback in these groups; see its [service contract](../grpc/README.md#base-paths-and-regions).
+The gRPC extension must register services and a regional fallback within that group. Unannotated routes participate only in ordinary HTTP. Annotated routes associate with the selected base path ignoring case and an optional trailing slash. The gRPC adapter checks exact case and encoding only for the native service/method path after that base. A shorter scope's fallback cannot handle unknown methods in a child scope. The Web library adds no gRPC package. Web.Grpc mounts Handler services, regional reflection and regional fallback in these groups; see its [service contract](../grpc/README.md#base-paths-and-regions).
 
 ## Protocol extension and responsibilities
 

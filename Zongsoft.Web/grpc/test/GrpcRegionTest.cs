@@ -60,6 +60,25 @@ public class GrpcRegionTest
 		Assert.Equal(1, host.Probe.Created[name]);
 	}
 
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task TemplateCaseAndTrailingSlashDoNotChangeRpcIdentity(bool trailing)
+	{
+		var first = GrpcRegionHost.Port();
+		var second = GrpcRegionHost.Port();
+		var service = trailing ? typeof(S.SlashVariant) : typeof(S.CaseVariant);
+		await using var host = await GrpcRegionHost.StartAsync([service], [(first, "/a"), (second, "/A/")]);
+
+		foreach(var port in new[] { first, second })
+		{
+			var client = new P.Echo.EchoClient(host.Channel(port, "/A/"));
+			Assert.Equal((trailing ? "slash" : "case") + ":hello", (await client.UnaryAsync(new P.Frame { Text = "hello" }, deadline: Deadline())).Text);
+			await Unknown(host.Channel(port, "/A"), "fixture.echo", "Unary");
+			await Unknown(host.Channel(port, "/A"), "fixture.Echo", "unary");
+		}
+	}
+
 	[Fact]
 	public async Task MultipleMountsKeepOneContainerOwnedService()
 	{
@@ -163,7 +182,6 @@ public class GrpcRegionTest
 	[InlineData("/a", "fixture.echo", "Unary")]
 	[InlineData("/a", "fixture.Echo", "unary")]
 	[InlineData("/a", "fixture.Echo", "Unary/")]
-	[InlineData("/A", "fixture.Echo", "Unary")]
 	[InlineData("/a/child", "fixture.Echo", "Unary")]
 	public async Task UnknownCallsNeverEscapeTheirSelectedRegion(string region, string service, string method)
 	{
@@ -237,8 +255,6 @@ public class GrpcRegionTest
 	[InlineData("duplicate")]
 	[InlineData("path")]
 	[InlineData("order")]
-	[InlineData("case")]
-	[InlineData("slash")]
 	[InlineData("type")]
 	[InlineData("global-fallback")]
 	[InlineData("service-fallback")]
@@ -255,8 +271,6 @@ public class GrpcRegionTest
 			"service-fallback-late" => [typeof(S.Alpha), typeof(S.Beta)],
 			"path" => [typeof(S.InvalidPath)],
 			"order" => [typeof(S.Ordered)],
-			"case" => [typeof(S.CaseMismatch)],
-			"slash" => [typeof(S.SlashMismatch)],
 			"type" => [typeof(S.NotGrpc)],
 			_ => [typeof(S.Alpha)],
 		};

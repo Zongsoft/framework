@@ -74,6 +74,12 @@ public sealed class WebEndpointCollection : IReadOnlyList<WebEndpoint>
 
 			var declarations = WebEndpointUtility.Normalize(declaration.Protocols, policies, declaration.Name + ":Protocols", true);
 			var endpoint = new WebEndpoint(declaration.Name, declaration.Address, declarations);
+
+			if(_scopes.Keys.Any(existing => WebEndpointUtility.SameSocket(endpoint, existing) &&
+			   endpoint.Address.Scheme == existing.Address.Scheme && string.Equals(endpoint.Path, existing.Path, StringComparison.OrdinalIgnoreCase) &&
+			   endpoint.Protocols.SequenceEqual(existing.Protocols)))
+				continue;
+
 			var versions = declarations.GroupBy(protocol => policies[protocol.Name ?? "http"].Kind)
 				.ToDictionary(group => group.Key, group => group.Select(protocol => protocol.HttpVersion).ToHashSet(), StringComparer.Ordinal);
 
@@ -81,7 +87,7 @@ public sealed class WebEndpointCollection : IReadOnlyList<WebEndpoint>
 		}
 
 		_endpoints = _scopes.Keys
-			.OrderByDescending(endpoint => endpoint.Address.Path.Length)
+			.OrderByDescending(endpoint => endpoint.Path.Length)
 			.ThenBy(endpoint => endpoint.Name, StringComparer.Ordinal)
 			.ToArray();
 
@@ -95,11 +101,11 @@ public sealed class WebEndpointCollection : IReadOnlyList<WebEndpoint>
 				var scope = _scopes[endpoint];
 				var otherScope = _scopes[other];
 
-				if(string.Equals(endpoint.Address.Path, other.Address.Path, StringComparison.OrdinalIgnoreCase))
+				if(string.Equals(endpoint.Path, other.Path, StringComparison.OrdinalIgnoreCase))
 				{
 					foreach(var kind in scope.Versions.Keys.Intersect(otherScope.Versions.Keys))
 					{
-						if(endpoint.Address.Path != other.Address.Path || WebEndpointUtility.SameSocket(endpoint, other) &&
+						if(WebEndpointUtility.SameSocket(endpoint, other) &&
 						   SharesTransport(scope.Versions[kind], otherScope.Versions[kind]))
 							throw WebEndpointUtility.Invalid(endpoint.Name, "ConflictingRange");
 					}
@@ -154,13 +160,13 @@ public sealed class WebEndpointCollection : IReadOnlyList<WebEndpoint>
 
 			if(scope.Versions.ContainsKey(kind) && scope.Transports.Contains(transport) &&
 			   endpoint.Contains(context.Connection.LocalIpAddress, context.Connection.LocalPort) &&
-			   Matche(endpoint.Address.Path, path))
+			   Matche(endpoint.Path, path))
 				return endpoint;
 		}
 
 		return null;
 
-		static bool Matche(string prefix, string path) => path.StartsWith(prefix, StringComparison.Ordinal) &&
+		static bool Matche(string prefix, string path) => path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) &&
 		(
 			prefix.EndsWith('/') ||
 			path.Length == prefix.Length ||

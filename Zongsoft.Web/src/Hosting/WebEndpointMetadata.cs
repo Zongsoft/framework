@@ -35,18 +35,18 @@ namespace Zongsoft.Web.Hosting;
 public sealed class WebEndpointMetadata
 {
 	/// <summary>初始化端点范围元数据。</summary>
-	/// <param name="path">完整的字面基路径，与监听地址的路径精确关联。</param>
+	/// <param name="path">完整的字面基路径，与监听范围忽略大小写及可选尾斜杠关联。</param>
 	/// <param name="kind">请求类别，默认普通 HTTP。</param>
 	public WebEndpointMetadata(string path, string kind = "http")
 	{
 		if(!WebEndpointUtility.IsPath(path))
 			throw new ArgumentException(Properties.Resources.Path_FormatInvalid_Message, nameof(path));
 
-		this.Path = path;
+		this.Path = path.Length > 1 ? path.TrimEnd('/') : path;
 		this.Kind = WebEndpointUtility.GetName(kind);
 	}
 
-	/// <summary>获取完整的字面基路径。</summary>
+	/// <summary>获取除根路径外不含尾斜杠的字面基路径。</summary>
 	public string Path { get; }
 	/// <summary>获取请求类别。</summary>
 	public string Kind { get; }

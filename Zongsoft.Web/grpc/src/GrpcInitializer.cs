@@ -74,8 +74,8 @@ public class GrpcInitializer : IApplicationInitializer<IApplicationBuilder>
 		var endpoints = app.ServiceProvider.GetService<WebEndpointCollection>();
 		var regions = (endpoints ?? Enumerable.Empty<WebEndpoint>())
 			.Where(endpoint => endpoint.Protocols.Any(protocol => protocol.Name == "grpc"))
-			.Select(endpoint => endpoint.Address.Path).Distinct(StringComparer.Ordinal)
-			.ToDictionary(path => path, path => new Region(path), StringComparer.Ordinal);
+			.Select(endpoint => endpoint.Path).Distinct(StringComparer.OrdinalIgnoreCase)
+			.ToDictionary(path => path, path => new Region(path), StringComparer.OrdinalIgnoreCase);
 
 		if(services.Length == 0 && regions.Count == 0)
 			return;

@@ -20,6 +20,10 @@ public class WebEndpointPipelineTest
 {
 	[Theory]
 	[InlineData(9000, "/api/item", 200)]
+	[InlineData(9000, "/API/Item", 200)]
+	[InlineData(9000, "/API", 200)]
+	[InlineData(9000, "/api/", 200)]
+	[InlineData(9000, "/API-extra", 404)]
 	[InlineData(9000, "/admin/item", 404)]
 	[InlineData(9001, "/admin/item", 200)]
 	[InlineData(9001, "/api/item", 404)]
@@ -37,6 +41,7 @@ public class WebEndpointPipelineTest
 		application.UseRouting();
 		application.UseEndpoints(routes =>
 		{
+			routes.Map("/api", context => Task.CompletedTask).WithMetadata(new WebEndpointMetadata("/API/"));
 			routes.Map("/api/item", context => Task.CompletedTask).WithMetadata(new WebEndpointMetadata("/api"));
 			routes.Map("/admin/item", context => Task.CompletedTask).WithMetadata(new WebEndpointMetadata("/admin"));
 		});

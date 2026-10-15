@@ -84,9 +84,16 @@ public static class GrpcEndpointExtension
 			return StatusCodes.Status405MethodNotAllowed;
 		}
 
-		public override bool Accepts(Endpoint endpoint, WebEndpointFeature feature) =>
-			endpoint is not RouteEndpoint route || route.RoutePattern.Parameters.Count != 0 ||
-			string.Equals(route.RoutePattern.RawText, feature.Path, StringComparison.Ordinal);
+		public override bool Accepts(Endpoint endpoint, WebEndpointFeature feature)
+		{
+			if(endpoint is not RouteEndpoint route || route.RoutePattern.Parameters.Count != 0)
+				return true;
+
+			//基路径按 Web 范围关联；原生服务名和方法名仍须逐字匹配
+			var offset = feature.Endpoint.Path == "/" ? 0 : feature.Endpoint.Path.Length;
+			return route.RoutePattern.RawText?.Length > offset && feature.Path.Length > offset &&
+				route.RoutePattern.RawText.AsSpan(offset).Equals(feature.Path.AsSpan(offset), StringComparison.Ordinal);
+		}
 
 		public override Task RejectAsync(HttpContext context)
 		{

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Diagnostics library.
  *
@@ -29,7 +29,6 @@
 
 using System;
 
-using OpenTelemetry;
 using OpenTelemetry.Metrics;
 
 using Zongsoft.Services;
@@ -39,11 +38,11 @@ using Zongsoft.Configuration;
 namespace Zongsoft.Diagnostics.Telemetry;
 
 [Service<IExporterLauncher<MeterProviderBuilder>>]
-public class PrometheusExporterLauncher() : ExporterLauncherBase<MeterProviderBuilder>("Prometheus")
+public partial class PrometheusExporterLauncher() : ExporterLauncherBase<MeterProviderBuilder>("Prometheus")
 {
 	/// <summary>根据完整监听前缀注册 Prometheus 指标导出器。</summary>
 	/// <param name="builder">指标提供程序构建器。</param>
-	/// <param name="settings">必须包含 urls 的连接设置；protocol 默认为 http1，多个地址须采用相同的字面路径。</param>
+	/// <param name="settings">必须包含 urls 的连接设置；protocol 默认为 http1，多个地址须采用等效的基路径。</param>
 	/// <exception cref="ArgumentNullException"><paramref name="builder"/> 为空。</exception>
 	/// <exception cref="ArgumentException">监听地址、协议或抓取路径无效，或仍配置独立的 path 设置。</exception>
 	public override void Launch(MeterProviderBuilder builder, string settings)
@@ -67,17 +66,20 @@ public class PrometheusExporterLauncher() : ExporterLauncherBase<MeterProviderBu
 
 		string path = null;
 		var prefixes = urls.Split([',', ';', '|'], StringSplitOptions.TrimEntries);
+		var addresses = new NetworkAddress[prefixes.Length];
 
-		foreach(var prefix in prefixes)
+		for(var index = 0; index < prefixes.Length; index++)
 		{
-			if(!NetworkAddress.TryParse(prefix, out var address) ||
+			if(!NetworkAddress.TryParse(prefixes[index], out var address) ||
 			   address.Scheme is not ("http" or "https") || !IsPath(address.Path))
 				throw new ArgumentException(Properties.Resources.Prometheus_UrlsInvalid_Message, nameof(settings));
 
-			if(path != null && !string.Equals(path, address.Path, StringComparison.Ordinal))
+			var basePath = address.Path.Length > 1 ? address.Path.TrimEnd('/') : address.Path;
+			if(path != null && !string.Equals(path, basePath, StringComparison.OrdinalIgnoreCase))
 				throw new ArgumentException(Properties.Resources.Prometheus_PathsDifferent_Message, nameof(settings));
 
-			path = address.Path;
+			path ??= basePath;
+			addresses[index] = address;
 		}
 
 		var disableTotalSuffix = !connectionSettings.GetValue("totalSuffix", true);
@@ -90,21 +92,7 @@ public class PrometheusExporterLauncher() : ExporterLauncherBase<MeterProviderBu
 			options.ScrapeResponseCacheDurationMilliseconds = cacheDuration;
 		});
 
-		builder.AddPrometheusHttpListener(options =>
-		{
-			options.ScrapeEndpointPath = path;
-			options.DisableTotalNameSuffixForCounters = disableTotalSuffix;
-			options.ScrapeResponseCacheDurationMilliseconds = cacheDuration;
-
-			options.ConfigureHttpListener = (_, listener) =>
-			{
-				listener.Prefixes.Clear();
-
-				//HttpListener 要求前缀以斜杠结尾；只适配监听前缀，保留配置及抓取路径
-				foreach(var prefix in prefixes)
-					listener.Prefixes.Add(prefix.EndsWith('/') ? prefix : prefix + "/");
-			};
-		});
+		builder.AddInstrumentation((services, provider) => new ScrapeServer(services, provider, addresses, path));
 	}
 
 	private static bool IsPath(string path)

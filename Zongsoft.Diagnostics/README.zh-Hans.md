@@ -46,15 +46,19 @@
 
 `urls` 必填；省略 `protocol` 时默认为 `http1`，显式指定时只接受忽略大小写的单个 `http1`，例如 `urls=http://127.0.0.1:9464/metrics;protocol=http1`。空值、协议列表（包括重复的 `http1`）和 `protocols` 设置均无效。绑定使用常量模板 `protocols="http1"`，省略设置也不需要制作工具猜测默认协议；本启动器未实现 HTTP/2、HTTP/3 或应用层协议组合。这是运行配置校验，与制作工具的绑定映射检查职责独立。
 
-每个 URL 使用 `http` 或 `https`；同一导出器的所有地址必须具有完全相同且区分大小写的路径。`/metrics` 和 `/metrics/` 都是合法声明，但它们是不同路径，不能在同一导出器中混用；未指定路径时表示根路径 `/`。路径段只允许 ASCII 字母、数字及 `-`、`.`、`_`、`~`，不允许中间空段和独立的 `.`、`..` 段；声明不能包含凭据、查询、片段或编码路径。绑定及两种导出器选项保留声明中的原始路径。仅在向 `HttpListener` 登记监听前缀时，按该 API 的要求补齐缺少的尾斜杠；已有尾斜杠时不重复添加。上例的抓取客户端请求 `/metrics`，启动器不生成重定向。前缀匹配由平台 HttpListener 处理：Windows 直连也接纳 `/metrics`，不发生跳转；`/metrics/` 下的子路径返回同一份指标。如果配置声明为 `/metrics/`，这种底层行为也不扩大该反向代理声明的范围。
+每个 URL 使用 http 或 https，监听地址支持 IP、通配地址、localhost 及普通域名。同一导出器的基路径忽略大小写和可选尾斜杠，/metrics、/Metrics/ 等效，未指定路径表示根 /。声明路径段只允许 ASCII 字母、数字及 -._~，拒绝中间空段、独立点段、凭据、query、fragment 和编码路径。源配置保持原文，抓取选项去掉非根路径的尾斜杠。独立 Kestrel 服务器使用原始 URI 按路径段匹配，不解码或折叠点段后选择范围；自身及子路径均可抓取，/metrics-extra 返回 404，无重定向或双斜杠补偿。Windows 与 Linux 行为一致。
+
+IP 声明保留网卡地址和地址族范围：`*`、`0.0.0.0` 只监听 IPv4，`[::]` 只监听 IPv6，`localhost` 监听可用的 IPv4/IPv6 回环地址。普通域名在启动时不做 DNS 解析，而是在可用的 IPv4/IPv6 通配地址上监听，按 HTTP Host 匹配声明的域名，忽略大小写及末尾点号；国际化域名与其 ASCII 形式等效。例如 `urls=http://metrics.example.com:9464/metrics` 接受 9464 端口上使用该域名的请求，调用方须将域名解析到本服务器。这是主机路由规则，不是身份认证。
+
+同一导出器的多条声明可以共用物理监听，但每个请求仍须符合某条原始声明的 scheme、本地端口、网卡地址、地址族，以及普通域名声明的 Host 条件。因此，域名与 `127.0.0.1` 混用时，仅该回环地址接受任意 Host，其它本地地址仍要求声明的域名；不同域名、端口不会相互扩大访问范围。
 
 地址以 `,`、`;` 或 `|` 分隔；中间空项和尾部分隔符均报错。在连接设置内部使用分号分隔地址时，将整个 `urls` 值加引号，例如 `urls='http://127.0.0.1:9464/metrics/;http://localhost:9464/metrics/';`。独立的 `path` 设置必须移除，即使值为空也会报错。缺少地址时不会回退到隐含监听。
 
-`totalSuffix` 默认为 `true`，`cacheDuration` 默认为 `300ms`，二者同时应用于 ASP.NET Core 导出器选项和独立监听；负缓存时间按零处理，过大的值限制到所支持的毫秒范围。登记导出器选项不会自动添加 ASP.NET Core 路由。独立监听由诊断提供程序持有，并随其释放。
+`totalSuffix` 默认为 `true`，`cacheDuration` 默认为 `300ms`，二者应用于独立监听复用的 ASP.NET Core 导出器；负缓存时间按零处理，过大的值限制到所支持的毫秒范围。登记导出器选项不会自动添加 ASP.NET Core 路由。独立监听由诊断提供程序持有，并随其释放。
 
-默认地址仅限回环访问。反向代理位于另一个容器时，必须显式配置该容器可达的监听地址，绑定工具不改写回环地址。HTTPS 前缀需要配置平台的 `HttpListener` 证书。绑定指令表达暴露意图，本身不启动监听；出站 `telemetry` 导出器不参与该绑定。
+默认地址仅限回环访问。反向代理位于另一个容器时，必须显式配置该容器可达的监听地址，绑定工具不改写回环地址。独立服务器占用声明的端口，不能与其它服务器共享同一 socket。HTTPS 使用指标服务容器中 IConfiguration（缺省取 ApplicationContext.Current.Configuration）的 Kestrel:Certificates 配置；不继承宿主 Endpoints，也不使用 HTTP.sys 证书绑定。绑定指令表达暴露意图，本身不启动监听；出站 `telemetry` 导出器不参与该绑定。
 
-定向验证位于 [test](test)。先执行 `dotnet build Zongsoft.Diagnostics.slnx -p:GeneratePackageOnBuild=false -p:ZongsoftCodeStyleStrict=true`，再执行 `dotnet test test/Zongsoft.Diagnostics.Tests.csproj --no-build`。测试检查公开导出器选项，并实际抓取临时回环 HTTP 监听；不启动业务宿主，不代替反向代理或 HTTPS 部署验收。
+定向验证位于 [test](test)。先执行 `dotnet build Zongsoft.Diagnostics.slnx -p:GeneratePackageOnBuild=false -p:ZongsoftCodeStyleStrict=true`，再执行 `dotnet test test/Zongsoft.Diagnostics.Tests.csproj --no-build`。测试检查公开导出器选项，并通过临时 HTTP/HTTPS 监听验证域名与 IP 混用、IPv4/IPv6 隔离、实际指标输出、证书选择、释放及启动失败清理。域名请求直接连接回环地址，无须 DNS 或 hosts 文件改动。不启动业务宿主，不代替反向代理及生产 HTTPS 部署验收。
 
 ## 内置 OpenTelemetry 协议
 
