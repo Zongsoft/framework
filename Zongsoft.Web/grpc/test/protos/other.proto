@@ -1,5 +1,10 @@
 syntax = "proto3";
 package fixture;
+
 option csharp_namespace = "Zongsoft.Web.Grpc.Tests.Protocols";
 import "common.proto";
-service Other { rpc Ping(Frame) returns (Frame); }
+
+service Other
+{
+	rpc Ping(Frame) returns (Frame);
+}

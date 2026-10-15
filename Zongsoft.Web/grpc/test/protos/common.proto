@@ -1,6 +1,7 @@
 syntax = "proto3";
 package fixture;
 option csharp_namespace = "Zongsoft.Web.Grpc.Tests.Protocols";
+
 message Frame {
 	string text = 1;
 	bytes payload = 2;

@@ -1,13 +1,16 @@
 syntax = "proto3";
 package fixture;
+
 option csharp_namespace = "Zongsoft.Web.Grpc.Tests.Protocols";
 import "common.proto";
+
 service Echo {
 	rpc Unary(Frame) returns (Frame);
 	rpc ServerStream(Frame) returns (stream Frame);
 	rpc ClientStream(stream Frame) returns (Frame);
 	rpc Duplex(stream Frame) returns (stream Frame);
 }
+
 service Auxiliary { rpc Ping(Frame) returns (Frame); }
 service Third { rpc Ping(Frame) returns (Frame); }
 service Unmounted { rpc Ping(Frame) returns (Frame); }
