@@ -11,7 +11,7 @@ using Zongsoft.IO;
 
 namespace Zongsoft.Net.Tests;
 
-public class WebFileSystemTests
+public class WebFileSystemTest
 {
 	[Fact]
 	public void SchemeIsWebFileSystemScheme()
@@ -35,13 +35,14 @@ public class WebFileSystemTests
 		var created = new DateTime(2026, 8, 29, 10, 11, 12, DateTimeKind.Utc);
 		var modified = new DateTime(2026, 8, 30, 11, 12, 13, DateTimeKind.Utc);
 		var response = new HttpResponseMessage(HttpStatusCode.OK);
+
 		response.Headers.TryAddWithoutValidation("X-File-Name", "report.zongsoft-test");
 		response.Headers.TryAddWithoutValidation("X-File-Size", "1234");
 		response.Headers.TryAddWithoutValidation("X-File-Type", "application/x-zongsoft-test");
 		response.Headers.TryAddWithoutValidation("X-File-Creation", created.ToString("O"));
 		response.Headers.TryAddWithoutValidation("X-File-Modification", modified.ToString("O"));
-		var provider = CreateFileProvider(new TestHttpClientFactory(new StubHandler(response)));
 
+		var provider = CreateFileProvider(new TestHttpClientFactory(new StubHandler(response)));
 		var info = provider.GetInfo("example.test/reports/report.txt");
 
 		Assert.Equal("report.zongsoft-test", info.Name);

@@ -66,7 +66,7 @@ Custom packetizers must consume bytes only after a complete frame is available. 
 
 Compose this feature through the host; a package reference supplies compile-time APIs, while plugin loading also requires deployed manifests and runtime assets. See [the complete plugin workflow](../Zongsoft.Plugins/README.md).
 
-The manifest contributes the FTP file-system provider; the TCP API examples remain explicitly constructed network objects. Loading this plugin does not automatically start a TCP listener.
+The manifest contributes the Web file-system provider; the TCP API examples remain explicitly constructed network objects. Loading this plugin does not automatically start a TCP listener.
 
 | Runtime artifact | Source of truth |
 | --- | --- |

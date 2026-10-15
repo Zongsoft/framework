@@ -7,7 +7,7 @@ using Xunit;
 
 namespace Zongsoft.Net.Tests;
 
-public class PacketizerTests
+public class PacketizerTest
 {
 	[Fact]
 	public void HeadedPackWritesBigEndianLengthAndSegmentedPayload()

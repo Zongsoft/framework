@@ -12,7 +12,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Net.Tests;
 
-public class TcpClientTests
+public class TcpClientTest
 {
 	[Fact]
 	public void ConstructorRejectsNullPacketizer()

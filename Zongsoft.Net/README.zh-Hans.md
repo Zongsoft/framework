@@ -66,7 +66,7 @@ await client.DisconnectAsync(cancellationToken);
 
 优先通过宿主组合本能力；包引用用于编译，而插件加载还需要部署清单和运行产物。完整流程见[插件化入门](../Zongsoft.Plugins/README.zh-Hans.md)。
 
-清单贡献 FTP 文件系统提供程序；TCP API 示例仍是由应用显式创建的网络对象，加载插件不会自动启动 TCP 监听器。
+清单贡献 Web 文件系统提供程序；TCP API 示例仍是由应用显式创建的网络对象，加载插件不会自动启动 TCP 监听器。
 
 | 运行产物 | 源码依据 |
 | --- | --- |

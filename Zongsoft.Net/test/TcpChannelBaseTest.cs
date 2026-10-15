@@ -11,7 +11,7 @@ using Xunit;
 
 namespace Zongsoft.Net.Tests;
 
-public class TcpChannelBaseTests
+public class TcpChannelBaseTest
 {
 	[Fact]
 	public async Task SendAsyncPackagePacksAndFlushesOutput()

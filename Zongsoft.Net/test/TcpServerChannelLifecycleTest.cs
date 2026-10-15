@@ -15,7 +15,7 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Net.Tests;
 
-public class TcpServerChannelLifecycleTests
+public class TcpServerChannelLifecycleTest
 {
 	[Fact]
 	public async Task ClientAsyncHandlerOwnsDisposablePayloadUntilCompletionAndDisposesOnce()

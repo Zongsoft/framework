@@ -46,6 +46,7 @@ public static class TcpServer
 	private class HeadlessServer : TcpServer<IMemoryOwner<byte>>, ISender
 	{
 		public HeadlessServer() : base(HeadlessPacketizer.Instance) => this.Address = new IPEndPoint(IPAddress.Loopback, 7969);
+
 		#region 公共方法
 		public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray()).AsTask().GetAwaiter().GetResult();
 		public ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
@@ -66,6 +67,7 @@ public static class TcpServer
 	private class HeadedServer : TcpServer<ReadOnlySequence<byte>>, ISender
 	{
 		public HeadedServer() : base(HeadedPacketizer.Instance) => this.Address = new IPEndPoint(IPAddress.Loopback, 7969);
+
 		#region 公共方法
 		public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray()).AsTask().GetAwaiter().GetResult();
 		public ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
