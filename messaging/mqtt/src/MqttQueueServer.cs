@@ -28,8 +28,10 @@
  */
 
 using System;
+using System.Net;
 using System.Buffers;
 using System.Threading;
+using System.Net.Sockets;
 using System.Threading.Tasks;
 
 using MQTTnet.Server;
@@ -48,36 +50,45 @@ public partial class MqttQueueServer : ListenerBase<Message>
 	#endregion
 
 	#region 成员字段
-	private ushort _port;
+	private NetworkAddress _address;
 	private MqttServer _server;
 	private IMessageStorage _storage;
 	#endregion
 
 	#region 构造函数
+	/// <summary>初始化使用默认 TCP 侦听地址的 MQTT 服务器。</summary>
+	/// <param name="name">服务器名称；为空时使用类型名称。</param>
 	public MqttQueueServer(string name = null) : base(name)
 	{
-		_port = PORT;
+		_address = NetworkAddress.Parse($"tcp://0.0.0.0:{PORT}");
 		this.Channels = new ChannelCollection();
 		this.Sessions = new SessionCollection();
 	}
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取或设置服务器侦听的端口号，默认值为：<see cref="PORT"/>。</summary>
-	public ushort Port
+	/// <summary>获取或设置服务器的完整 TCP 侦听地址，默认为 <c>tcp://0.0.0.0:1883/</c>。</summary>
+	/// <remarks>地址必须包含 IP 地址或 IPv4 通配符及显式端口，不支持 DNS 名称或非根路径；IPv6 必须使用方括号。</remarks>
+	/// <exception cref="ArgumentException">地址不是有效的 TCP 侦听地址。</exception>
+	/// <exception cref="InvalidOperationException">服务器尚未停止。</exception>
+	public string Url
 	{
-		get => _port;
+		get => _address.ToString();
 		set
 		{
 			if(this.State != WorkerState.Stopped)
-				throw new InvalidOperationException(Properties.Resources.MqttQueueServer_PortImmutable_Message);
+				throw new InvalidOperationException(Properties.Resources.MqttQueueServer_UrlImmutable_Message);
 
-			_port = value > 0 ? value : PORT;
+			if(!NetworkAddress.TryParse(value, out var address) ||
+			   address.Scheme != "tcp" || address.Path != "/" ||
+			   address.HostType == UriHostNameType.Dns ||
+			   !IPAddress.TryParse(address.Zone == null ? address.Host : $"{address.Host}%{address.Zone}", out var ip) ||
+			   ip.Equals(IPAddress.None))
+				throw new ArgumentException(Properties.Resources.MqttQueueServer_UrlInvalid_Message, nameof(value));
+
+			_address = address;
 		}
 	}
-
-	/// <summary>获取一个值，指示是否启用 MQTTnet 内部日志。</summary>
-	public bool Logable { get; set; }
 
 	public IMessageStorage Storage
 	{
@@ -90,6 +101,9 @@ public partial class MqttQueueServer : ListenerBase<Message>
 			_storage = value;
 		}
 	}
+
+	/// <summary>获取一个值，指示是否启用 MQTTnet 内部日志。</summary>
+	public bool Logable { get; set; }
 
 	/// <summary>获取当前连接到服务器的客户端通道集合。</summary>
 	public ChannelCollection Channels { get; }
@@ -145,12 +159,22 @@ public partial class MqttQueueServer : ListenerBase<Message>
 	#endregion
 
 	#region 重写方法
+	/// <summary>按配置的地址和地址族启动 Broker。</summary>
+	/// <param name="args">启动参数；不用于覆盖侦听地址。</param>
+	/// <param name="cancellation">启动前及 SDK 启动完成后检查的取消标记。</param>
+	/// <returns>表示 Broker 启动及通道、会话关联的异步任务。</returns>
 	protected override async Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
+		cancellation.ThrowIfCancellationRequested();
+
+		var address = _address;
+		var ip = IPAddress.Parse(address.Zone == null ? address.Host : $"{address.Host}%{address.Zone}");
 		var factory = new MqttServerFactory(this.Logable ? MqttLogger.Instance : MqttNetNullLogger.Instance);
 		var options = factory.CreateServerOptionsBuilder()
 			.WithDefaultEndpoint()
-			.WithDefaultEndpointPort(_port)
+			.WithDefaultEndpointPort(address.Port)
+			.WithDefaultEndpointBoundIPAddress(address.AddressFamily == AddressFamily.InterNetwork ? ip : IPAddress.None)
+			.WithDefaultEndpointBoundIPV6Address(address.AddressFamily == AddressFamily.InterNetworkV6 ? ip : IPAddress.None)
 			.Build();
 
 		var server = factory.CreateMqttServer(options);
@@ -158,7 +182,10 @@ public partial class MqttQueueServer : ListenerBase<Message>
 
 		try
 		{
-			await server.StartAsync().WaitAsync(cancellation);
+			//MQTTnet 不接受取消令牌，先等待启动完成，再检查取消并由失败分支清理。
+			await server.StartAsync();
+			cancellation.ThrowIfCancellationRequested();
+
 			_server = server;
 			await this.Channels.BindAsync(server);
 			await this.Sessions.BindAsync(server);
@@ -174,8 +201,14 @@ public partial class MqttQueueServer : ListenerBase<Message>
 		}
 	}
 
+	/// <summary>停止 Broker 并释放监听和关联状态。</summary>
+	/// <param name="args">停止参数。</param>
+	/// <param name="cancellation">开始停止前检查的取消标记；停止开始后完成资源清理。</param>
+	/// <returns>表示 Broker 停止及资源释放的异步任务。</returns>
 	protected override async Task OnStopAsync(string[] args, CancellationToken cancellation)
 	{
+		cancellation.ThrowIfCancellationRequested();
+
 		var server = Interlocked.Exchange(ref _server, null);
 
 		await this.Channels.BindAsync(null);
@@ -187,7 +220,8 @@ public partial class MqttQueueServer : ListenerBase<Message>
 		try
 		{
 			server.InterceptingPublishAsync -= this.OnMessageReceivedAsync;
-			await server.StopAsync().WaitAsync(cancellation);
+			//停止开始后完成 SDK 清理，避免取消等待留下仍在使用的资源。
+			await server.StopAsync();
 		}
 		finally
 		{

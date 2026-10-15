@@ -156,7 +156,7 @@ public class MqttQueuePublishingTests
 			return;
 
 		var port = MqttTestUtility.GetFreePort();
-		using var server = new MqttQueueServer { Port = port };
+		using var server = new MqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
 		using var publisher = MqttTestUtility.CreateQueue(port, "publisher");
 		using var subscriber = MqttTestUtility.CreateQueue(port, "subscriber");
 		using var messages = new MqttMessageBuffer();

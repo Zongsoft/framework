@@ -165,10 +165,13 @@
   <data name="MqttQueue.SubscriptionRestoreFailed.Message" xml:space="preserve">
     <value>MQTT 订阅“{0}”恢复失败。</value>
   </data>
-  <data name="MqttQueueServer.PortImmutable.Message" xml:space="preserve">
-    <value>MQTT 服务器运行期间不能更改端口。</value>
+  <data name="MqttQueueServer.UrlImmutable.Message" xml:space="preserve">
+    <value>MQTT 服务器运行期间不能更改侦听地址。</value>
   </data>
 	<data name="Messaging.ReconnectIntervalInvalid.Message" xml:space="preserve">
 		<value>重连间隔必须大于零。</value>
+	</data>
+	<data name="MqttQueueServer.UrlInvalid.Message" xml:space="preserve">
+		<value>MQTT 服务器地址必须使用 tcp、IP 地址或 * 及 1 至 65535 的显式端口，不能包含非根路径、凭据、查询或片段。</value>
 	</data>
 </root>

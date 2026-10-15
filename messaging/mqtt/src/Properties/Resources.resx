@@ -145,10 +145,13 @@
   <data name="MqttQueue.SubscriptionRestoreFailed.Message" xml:space="preserve">
     <value>Failed to restore the MQTT subscription '{0}'.</value>
   </data>
-  <data name="MqttQueueServer.PortImmutable.Message" xml:space="preserve">
-    <value>The MQTT server port cannot be changed while the server is running.</value>
+  <data name="MqttQueueServer.UrlImmutable.Message" xml:space="preserve">
+    <value>The MQTT server URL cannot be changed while the server is running.</value>
   </data>
 	<data name="Messaging.ReconnectIntervalInvalid.Message" xml:space="preserve">
 		<value>The reconnect interval must be greater than zero.</value>
+	</data>
+	<data name="MqttQueueServer.UrlInvalid.Message" xml:space="preserve">
+		<value>The MQTT server URL must use tcp, a literal IP address or *, and an explicit port from 1 to 65535, without a non-root path, credentials, query or fragment.</value>
 	</data>
 </root>

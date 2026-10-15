@@ -205,20 +205,29 @@ namespace Zongsoft.Messaging.Mqtt.Properties {
         }
 
         /// <summary>
-        ///   查找类似 The MQTT server port cannot be changed while the server is running. 的本地化字符串。
-        /// </summary>
-        internal static string MqttQueueServer_PortImmutable_Message {
-            get {
-                return ResourceManager.GetString("MqttQueueServer.PortImmutable.Message", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   查找类似 The message storage cannot be changed while the MQTT server is running. 的本地化字符串。
         /// </summary>
         internal static string MqttQueueServer_StorageImmutable_Message {
             get {
                 return ResourceManager.GetString("MqttQueueServer.StorageImmutable.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The MQTT server URL cannot be changed while the server is running. 的本地化字符串。
+        /// </summary>
+        internal static string MqttQueueServer_UrlImmutable_Message {
+            get {
+                return ResourceManager.GetString("MqttQueueServer.UrlImmutable.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The MQTT server URL must use tcp, a literal IP address or *, and an explicit port from 1 to 65535, without a non-root path, credentials, query or fragment. 的本地化字符串。
+        /// </summary>
+        internal static string MqttQueueServer_UrlInvalid_Message {
+            get {
+                return ResourceManager.GetString("MqttQueueServer.UrlInvalid.Message", resourceCulture);
             }
         }
     }

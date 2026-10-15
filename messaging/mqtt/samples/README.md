@@ -28,6 +28,8 @@ Then start the client in another terminal:
 dotnet run --project messaging/mqtt/samples/client/Zongsoft.Messaging.Mqtt.Samples.Client.csproj
 ```
 
+The server sample binds only to IPv4 loopback by default. Pass a complete TCP URL as its first argument to select another listener, for example `dotnet run --project messaging/mqtt/samples/server/Zongsoft.Messaging.Mqtt.Samples.Server.csproj -- tcp://127.0.0.1:1884`. Configure clients to use the same endpoint.
+
 ## Server Commands
 
 The server starts automatically. Use these commands in its terminal:
@@ -39,7 +41,7 @@ stop
 start
 ```
 
-`info` displays the worker state, listening port, connected channels, sessions, and all retained messages. With `--topic:<name>`, it displays only the retained message for that topic. `stop` and `start` let you exercise broker lifecycle behavior without restarting the process.
+`info` displays the worker state, listening URL, connected channels, sessions, and all retained messages. With `--topic:<name>`, it displays only the retained message for that topic. `stop` and `start` let you exercise broker lifecycle behavior without restarting the process.
 
 ## Client Subscriptions
 

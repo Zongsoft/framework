@@ -44,14 +44,14 @@ Open the first terminal and run:
 dotnet run --project messaging/mqtt/samples/server/Zongsoft.Messaging.Mqtt.Samples.Server.csproj
 ```
 
-The Broker starts automatically on port `1883`. Enter `info` at the interactive prompt to confirm its state and inspect connected channels and sessions.
+The Broker sample starts automatically at `tcp://127.0.0.1:1883`. Enter `info` at the interactive prompt to confirm its state and inspect connected channels and sessions.
 The sample also assigns an `IHandler<Message>` to the Broker, so every message published by a client is displayed in the Broker terminal.
 
 | Command | Description |
 | --- | --- |
 | `info [--topic:<topic>]` | Show the Broker state, channels, sessions, and retained messages; optionally show one retained message and its content. |
 | `stop` | Stop the Broker and release its listening port. |
-| `start` | Start the Broker again on port `1883`. |
+| `start` | Start the Broker again at the configured URL. |
 
 ### 2. Start a subscriber
 
@@ -128,7 +128,7 @@ if(!retained.IsEmpty)
 The [actual server sample](samples/server/Program.cs) uses its own `Handler.Instance`; the handler is defined in that source file and prints received messages:
 
 ```csharp
-using var server = new MqttQueueServer() { Handler = Handler.Instance };
+using var server = new MqttQueueServer() { Url = "tcp://127.0.0.1:1883", Handler = Handler.Instance };
 await server.StartAsync([]);
 ```
 
@@ -170,7 +170,7 @@ Wait for the client's reconnect interval, which defaults to two seconds, and pub
 
 Compose this feature through the host; a package reference supplies compile-time APIs, while plugin loading also requires deployed manifests and runtime assets. See [the complete plugin workflow](../../Zongsoft.Plugins/README.md).
 
-The manifest registers the connection-settings driver, and service discovery registers the queue provider. Configure a named connection before resolving IMessageQueueProvider. The broker is external; loading the plugin does not create topics, users or a broker service.
+The manifest registers the connection-settings driver, and service discovery registers the queue provider. Configure a named connection before resolving IMessageQueueProvider. The main plugin connects to an external Broker; loading it does not start an embedded Broker.
 
 | Runtime artifact | Source of truth |
 | --- | --- |
@@ -187,3 +187,29 @@ nuget:Zongsoft.Messaging.Mqtt
 Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
 
 Additional artifacts listed by the deployment manifest include `Zongsoft.Messaging.Mqtt.plugin`, `Zongsoft.Messaging.Mqtt.option`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.
+
+## Optional Embedded Broker
+
+The [daemon manifest](src/Zongsoft.Messaging.Mqtt-daemon.plugin) mounts one `MqttQueueServer` at `/Workbench/Messaging/Mqtt/QueueServer` and adds it to `/Workbench/Startup`. Its [matching option file](src/Zongsoft.Messaging.Mqtt-daemon.option) supplies both runtime settings and the exposure declaration:
+
+```xml
+<?binding name="mqtt"
+	path="Messaging/Mqtt/Server"
+	filter="enabled:true"
+	template="${option.url}"
+	protocols="tcp"?>
+
+<options>
+	<option path="/Messaging/Mqtt">
+		<server enabled="true" url="tcp://0.0.0.0:1883" />
+	</option>
+</options>
+```
+
+`protocols="tcp"` is a constant template for native MQTT over TCP. The plugin reads the same `Enabled` and `Url` values through the existing option parser. Setting `enabled="false"` prevents startup and excludes this binding. Configure these values before startup; a running server's URL cannot change. Configuration reload does not automatically restart it.
+
+The package includes both daemon artifacts. The deployment manifest selects `Zongsoft.Messaging.Mqtt-${site}.plugin` and its matching `.option`; `site=daemon` selects this pair. Deploy both together to enable the embedded Broker. The main plugin alone provides client integration and never starts a listener. These artifacts use the host's existing plugin runtime; no host code changes or separate service list are needed.
+
+`MqttQueueServer.Url` defaults to `tcp://0.0.0.0:1883/`. It accepts a literal IPv4 or bracketed IPv6 address, or `*` for the IPv4 wildcard, with an explicit port from 1 to 65535. The getter returns the normalized address including the root slash. Only the declared address family listens; `[::]` does not implicitly add IPv4. DNS names, non-root paths, credentials, queries, fragments and the IPv4 broadcast address are rejected. TLS and WebSocket listeners are outside this configuration.
+
+The API reuses `WorkerBase.Enabled` and its lifecycle. Startup cancellation or failure releases the broker instance; errors follow the existing worker state-change/logging contract. MQTTnet start/stop calls do not accept cancellation tokens, so startup observes cancellation after the SDK call completes, and shutdown finishes cleanup once begun.

@@ -21,6 +21,167 @@ namespace Zongsoft.Messaging.Mqtt.Tests;
 public class MqttQueueServerTests
 {
 	[Fact]
+	public void ServerUrlDefaultsToWildcardTcp()
+	{
+		using var server = new MqttQueueServer();
+		Assert.Equal("tcp://0.0.0.0:1883/", server.Url);
+	}
+
+	[Theory]
+	[InlineData("tcp://127.0.0.1:1", "tcp://127.0.0.1:1/")]
+	[InlineData("tcp://127.0.0.1:65535/", "tcp://127.0.0.1:65535/")]
+	[InlineData("TCP://*:1883", "tcp://0.0.0.0:1883/")]
+	[InlineData("tcp://0.0.0.0:1883", "tcp://0.0.0.0:1883/")]
+	[InlineData("tcp://[0:0:0:0:0:0:0:1]:1883", "tcp://[::1]:1883/")]
+	[InlineData("tcp://[::]:1883", "tcp://[::]:1883/")]
+	[InlineData("tcp://[fe80::1%253]:1883", "tcp://[fe80::1%253]:1883/")]
+	public void ServerUrlAcceptsExplicitTcpAddresses(string url, string expected)
+	{
+		using var server = new MqttQueueServer { Url = url };
+		Assert.Equal(expected, server.Url);
+	}
+
+	[Theory]
+	[InlineData(null)]
+	[InlineData("")]
+	[InlineData("tcp://localhost:1883")]
+	[InlineData("tcp://mqtt.example:1883")]
+	[InlineData("mqtt://127.0.0.1:1883")]
+	[InlineData("udp://127.0.0.1:1883")]
+	[InlineData("http://127.0.0.1:1883")]
+	[InlineData("tcp://127.0.0.1")]
+	[InlineData("tcp://127.0.0.1:0")]
+	[InlineData("tcp://127.0.0.1:65536")]
+	[InlineData("tcp://127.0.0.1:1883/mqtt")]
+	[InlineData("tcp://127.0.0.1:1883/?key=value")]
+	[InlineData("tcp://127.0.0.1:1883/#fragment")]
+	[InlineData("tcp://user@127.0.0.1:1883")]
+	[InlineData("tcp://255.255.255.255:1883")]
+	[InlineData("tcp://::1:1883")]
+	public void ServerUrlRejectsInvalidListenerAddresses(string url)
+	{
+		using var server = new MqttQueueServer { Url = "tcp://127.0.0.1:1884" };
+		Assert.Throws<ArgumentException>("value", () => server.Url = url);
+		Assert.Equal("tcp://127.0.0.1:1884/", server.Url);
+	}
+
+	[Fact]
+	public async Task ServerBindsOnlyConfiguredIpv4Address()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var port = MqttTestUtility.GetFreePort();
+		using var server = new MqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
+		await server.StartAsync([]);
+
+		Assert.Equal(WorkerState.Running, server.State);
+		Assert.True(MqttTestUtility.CanConnect(port));
+		Assert.False(MqttTestUtility.CanBind(port, IPAddress.Loopback));
+		Assert.True(MqttTestUtility.CanBind(port, IPAddress.Parse("127.0.0.2")));
+		Assert.True(MqttTestUtility.CanBind(port, IPAddress.IPv6Loopback));
+
+		await server.StopAsync([]);
+		Assert.True(MqttTestUtility.CanBind(port));
+	}
+
+	[Theory]
+	[InlineData("::1")]
+	[InlineData("::")]
+	public async Task ServerBindsOnlyConfiguredIpv6Address(string host)
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var port = MqttTestUtility.GetFreePort(IPAddress.IPv6Loopback);
+		using var server = new MqttQueueServer { Url = $"tcp://[{host}]:{port}" };
+		await server.StartAsync([]);
+
+		Assert.Equal(WorkerState.Running, server.State);
+		Assert.True(MqttTestUtility.CanConnect(port, IPAddress.IPv6Loopback));
+		Assert.False(MqttTestUtility.CanBind(port, IPAddress.Parse(host)));
+		Assert.False(MqttTestUtility.CanConnect(port, IPAddress.Loopback));
+		Assert.True(MqttTestUtility.CanBind(port, IPAddress.Loopback));
+
+		await server.StopAsync([]);
+		Assert.True(MqttTestUtility.CanBind(port, IPAddress.IPv6Loopback));
+	}
+
+	[Fact]
+	public async Task DisabledServerDoesNotListen()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var port = MqttTestUtility.GetFreePort();
+		using var server = new TestMqttQueueServer { Enabled = false, Url = $"tcp://127.0.0.1:{port}" };
+		await server.StartAsync([]);
+
+		Assert.Equal(WorkerState.Stopped, server.State);
+		Assert.False(server.HasServer);
+		Assert.True(MqttTestUtility.CanBind(port));
+	}
+
+	[Fact]
+	public async Task PrecanceledStartReleasesListenerAndAllowsRetry()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var port = MqttTestUtility.GetFreePort();
+		using var server = new TestMqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
+		using var cancellation = new CancellationTokenSource();
+		var states = new List<WorkerStateChangedEventArgs>();
+		server.StateChanged += (_, args) => states.Add(args);
+		cancellation.Cancel();
+		await server.StartAsync([], cancellation.Token);
+
+		var failure = Assert.Single(states);
+		Assert.Equal("Start", failure.ActionName);
+		Assert.Equal(WorkerState.Stopped, failure.State);
+		Assert.Equal(cancellation.Token, Assert.IsAssignableFrom<OperationCanceledException>(failure.Exception).CancellationToken);
+		Assert.Equal(WorkerState.Stopped, server.State);
+		Assert.False(server.HasServer);
+		Assert.Empty(server.Channels);
+		Assert.Empty(server.Sessions);
+		Assert.True(MqttTestUtility.CanBind(port));
+
+		await server.StartAsync([]);
+		Assert.Equal(WorkerState.Running, server.State);
+		Assert.True(MqttTestUtility.CanConnect(port));
+		await server.StopAsync([]);
+		Assert.True(MqttTestUtility.CanBind(port));
+	}
+
+	[Fact]
+	public async Task CanceledStopKeepsListenerUntilStopped()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var port = MqttTestUtility.GetFreePort();
+		using var server = new TestMqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
+		await server.StartAsync([]);
+		using var cancellation = new CancellationTokenSource();
+		WorkerStateChangedEventArgs failure = null;
+		server.StateChanged += (_, args) => failure = args;
+		cancellation.Cancel();
+		await server.StopAsync([], cancellation.Token);
+
+		Assert.Equal("Stop", failure.ActionName);
+		Assert.IsAssignableFrom<OperationCanceledException>(failure.Exception);
+		Assert.Equal(WorkerState.Running, failure.State);
+		Assert.Equal(WorkerState.Running, server.State);
+		Assert.True(server.HasServer);
+		Assert.True(MqttTestUtility.CanConnect(port));
+
+		await server.StopAsync([]);
+		Assert.Equal(WorkerState.Stopped, server.State);
+		Assert.False(server.HasServer);
+		Assert.True(MqttTestUtility.CanBind(port));
+	}
+
+	[Fact]
 	public void QueueServerDisposesOwnedSynchronousStorageOnce()
 	{
 		var storage = new SynchronousStorage();
@@ -64,7 +225,7 @@ public class MqttQueueServerTests
 			return;
 
 		var storage = new AsynchronousStorage();
-		var server = new MqttQueueServer { Port = MqttTestUtility.GetFreePort(), Storage = storage };
+		var server = new MqttQueueServer { Url = $"tcp://127.0.0.1:{MqttTestUtility.GetFreePort()}", Storage = storage };
 
 		try
 		{
@@ -91,7 +252,7 @@ public class MqttQueueServerTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = new MqttQueueServer { Port = MqttTestUtility.GetFreePort() };
+		using var server = new MqttQueueServer { Url = $"tcp://127.0.0.1:{MqttTestUtility.GetFreePort()}" };
 		var first = new TestMessageStorage();
 		server.Storage = first;
 		Assert.Same(first, server.Storage);
@@ -112,13 +273,13 @@ public class MqttQueueServerTests
 			return;
 
 		var port = MqttTestUtility.GetFreePort();
-		using var server = new TestMqttQueueServer { Port = port };
+		using var server = new TestMqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
 
 		await server.StartAsync([]);
 		Assert.Equal(WorkerState.Running, server.State);
 		Assert.True(server.HasServer);
 		Assert.True(await MqttTestUtility.WaitUntilAsync(() => MqttTestUtility.CanConnect(port), TimeSpan.FromSeconds(5)));
-		Assert.Throws<InvalidOperationException>(() => server.Port = MqttTestUtility.GetFreePort());
+		Assert.Throws<InvalidOperationException>(() => server.Url = $"tcp://127.0.0.1:{MqttTestUtility.GetFreePort()}");
 
 		await server.StopAsync([]);
 		Assert.Equal(WorkerState.Stopped, server.State);
@@ -131,6 +292,8 @@ public class MqttQueueServerTests
 
 		await server.StopAsync([]);
 		Assert.True(await MqttTestUtility.WaitUntilAsync(() => MqttTestUtility.CanBind(port), TimeSpan.FromSeconds(5)));
+		server.Url = "tcp://127.0.0.1:1884";
+		Assert.Equal("tcp://127.0.0.1:1884/", server.Url);
 	}
 
 	[Fact]
@@ -141,13 +304,29 @@ public class MqttQueueServerTests
 
 		var port = MqttTestUtility.GetFreePort();
 		using var blocker = new TcpListener(IPAddress.Any, port);
-		using var server = new TestMqttQueueServer { Port = port };
+		using var server = new TestMqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
+		WorkerStateChangedEventArgs failure = null;
+		server.StateChanged += (_, args) => failure = args;
+		blocker.Server.ExclusiveAddressUse = true;
 		blocker.Start();
 
 		await server.StartAsync([]);
 
 		Assert.Equal(WorkerState.Stopped, server.State);
 		Assert.False(server.HasServer);
+		Assert.Equal("Start", failure.ActionName);
+		Assert.Equal(WorkerState.Stopped, failure.State);
+		Assert.NotNull(failure.Exception);
+		Assert.Empty(server.Channels);
+		Assert.Empty(server.Sessions);
+
+		blocker.Stop();
+		await server.StartAsync([]);
+		Assert.Equal(WorkerState.Running, server.State);
+		Assert.True(server.HasServer);
+		Assert.True(MqttTestUtility.CanConnect(port));
+		await server.StopAsync([]);
+		Assert.True(MqttTestUtility.CanBind(port));
 	}
 
 	[Fact]
@@ -157,7 +336,7 @@ public class MqttQueueServerTests
 			return;
 
 		var port = MqttTestUtility.GetFreePort();
-		using var server = new TestMqttQueueServer { Port = port };
+		using var server = new TestMqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
 		var channels = server.Channels;
 		var sessions = server.Sessions;
 
@@ -229,7 +408,7 @@ public class MqttQueueServerTests
 
 		var port = MqttTestUtility.GetFreePort();
 		var client = $"session-abandon-{Guid.NewGuid():N}";
-		using var server = new MqttQueueServer { Port = port };
+		using var server = new MqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
 		await server.StartAsync([]);
 
 		var settings = Configuration.MqttConnectionSettingsDriver.Instance.GetSettings("Mqtt",
@@ -262,7 +441,7 @@ public class MqttQueueServerTests
 			return;
 
 		var port = MqttTestUtility.GetFreePort();
-		using var server = new MqttQueueServer { Port = port };
+		using var server = new MqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
 		var listener = Assert.IsAssignableFrom<IListener<Message>>(server);
 		var messages = new MqttMessageBuffer();
 		server.Handler = messages;

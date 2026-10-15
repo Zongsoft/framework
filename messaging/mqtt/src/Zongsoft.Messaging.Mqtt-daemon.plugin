@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Messaging.Mqtt.Daemon"
+	title="Zongsoft.Messaging.Mqtt.Daemon Plugin">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Messaging.Mqtt" />
+		</assemblies>
+		<dependencies>
+			<dependency name="Zongsoft.Messaging.Mqtt" />
+		</dependencies>
+	</manifest>
+
+	<extension path="/Workbench/Messaging/Mqtt">
+		<object name="QueueServer" type="Zongsoft.Messaging.Mqtt.MqttQueueServer, Zongsoft.Messaging.Mqtt"
+		        Enabled="{option:/Messaging/Mqtt/Server/Enabled}"
+		        Url="{option:/Messaging/Mqtt/Server/Url}" />
+	</extension>
+
+	<extension path="/Workbench/Startup">
+		<object value="{path:/Workbench/Messaging/Mqtt/QueueServer}" />
+	</extension>
+</plugin>

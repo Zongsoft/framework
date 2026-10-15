@@ -44,14 +44,14 @@ dotnet build messaging/mqtt/Zongsoft.Messaging.Mqtt.slnx
 dotnet run --project messaging/mqtt/samples/server/Zongsoft.Messaging.Mqtt.Samples.Server.csproj
 ```
 
-Broker 会自动监听 `1883` 端口。在交互式命令行中输入 `info`，可以确认运行状态并查看当前客户端通道和会话。
+Broker 范例会自动监听 `tcp://127.0.0.1:1883`。在交互式命令行中输入 `info`，可以确认运行状态并查看当前客户端通道和会话。
 该范例还为 Broker 设置了一个 `IHandler<Message>`，因此客户端发布的每条消息都会显示在 Broker 终端中。
 
 | 命令 | 说明 |
 | --- | --- |
 | `info [--topic:<topic>]` | 显示 Broker 状态、客户端通道、会话和所有保留消息；可选显示指定保留消息及其内容。 |
 | `stop` | 停止 Broker 并释放监听端口。 |
-| `start` | 在 `1883` 端口重新启动 Broker。 |
+| `start` | 按配置的 URL 重新启动 Broker。 |
 
 ### 2. 启动订阅客户端
 
@@ -128,7 +128,7 @@ if(!retained.IsEmpty)
 [真实服务端样例](samples/server/Program.cs)使用同一源码文件中定义的 `Handler.Instance`，向终端输出收到的消息：
 
 ```csharp
-using var server = new MqttQueueServer() { Handler = Handler.Instance };
+using var server = new MqttQueueServer() { Url = "tcp://127.0.0.1:1883", Handler = Handler.Instance };
 await server.StartAsync([]);
 ```
 
@@ -170,7 +170,7 @@ start
 
 优先通过宿主组合本能力；包引用用于编译，而插件加载还需要部署清单和运行产物。完整流程见[插件化入门](../../Zongsoft.Plugins/README.zh-Hans.md)。
 
-清单注册连接设置驱动，服务发现注册队列提供程序。解析 IMessageQueueProvider 前配置具名连接。Broker 位于外部，加载插件不会创建主题、用户或 Broker 服务。
+清单注册连接设置驱动，服务发现注册队列提供程序。解析 IMessageQueueProvider 前配置具名连接。主插件连接外部 Broker，加载它不会启动嵌入式 Broker。
 
 | 运行产物 | 源码依据 |
 | --- | --- |
@@ -187,3 +187,29 @@ nuget:Zongsoft.Messaging.Mqtt
 按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
 
 清单列出的附属产物包括：`Zongsoft.Messaging.Mqtt.plugin`、`Zongsoft.Messaging.Mqtt.option`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。
+
+## 可选嵌入式 Broker
+
+[daemon 插件](src/Zongsoft.Messaging.Mqtt-daemon.plugin) 将一个 `MqttQueueServer` 挂载到 `/Workbench/Messaging/Mqtt/QueueServer`，并加入 `/Workbench/Startup`。[同名配置文件](src/Zongsoft.Messaging.Mqtt-daemon.option) 同时提供运行设置和暴露声明：
+
+```xml
+<?binding name="mqtt"
+	path="Messaging/Mqtt/Server"
+	filter="enabled:true"
+	template="${option.url}"
+	protocols="tcp"?>
+
+<options>
+	<option path="/Messaging/Mqtt">
+		<server enabled="true" url="tcp://0.0.0.0:1883" />
+	</option>
+</options>
+```
+
+`protocols="tcp"` 是原生 MQTT/TCP 的常量模板。插件通过现有 option 解析器读取同一组 `Enabled` 与 `Url`；`enabled="false"` 同时阻止启动并排除绑定。应在启动前配置，运行期间不能更换 URL；配置重载不会自动重启服务器。
+
+包内包含 daemon 的两份附属物。部署清单选择 `Zongsoft.Messaging.Mqtt-${site}.plugin` 及其同名 `.option`，`site=daemon` 对应此组合；部署这两份文件才装配嵌入式 Broker。仅加载主插件提供客户端接入，不创建监听。该装配复用宿主已有的插件运行时，无需修改宿主代码或另写服务总清单。
+
+`MqttQueueServer.Url` 默认为 `tcp://0.0.0.0:1883/`，接受 IPv4、带方括号的 IPv6 地址或表示 IPv4 通配的 `*`，必须显式指定 1 至 65535 的端口。读取属性返回带根斜杠的规范化地址。只监听声明的地址族，`[::]` 不隐含 IPv4；拒绝 DNS 名称、非根路径、凭据、查询、片段及 IPv4 广播地址。此配置不提供 TLS 或 WebSocket 监听。
+
+API 复用 `WorkerBase.Enabled` 和启停流程。启动取消或失败会释放 Broker 实例，错误沿用工作器的状态事件及日志约定。MQTTnet 的启停方法不接受取消令牌，因此启动等待 SDK 调用结束后检查取消，停止一旦开始便完成清理。

@@ -28,6 +28,8 @@ dotnet run --project messaging/mqtt/samples/server/Zongsoft.Messaging.Mqtt.Sampl
 dotnet run --project messaging/mqtt/samples/client/Zongsoft.Messaging.Mqtt.Samples.Client.csproj
 ```
 
+服务端范例默认仅监听 IPv4 回环地址。第一个参数可指定完整 TCP URL，例如 `dotnet run --project messaging/mqtt/samples/server/Zongsoft.Messaging.Mqtt.Samples.Server.csproj -- tcp://127.0.0.1:1884`；客户端应同步配置目标端点。
+
 ## 服务端命令
 
 服务端会自动启动，可在其终端执行：
@@ -39,7 +41,7 @@ stop
 start
 ```
 
-`info` 显示工作状态、监听端口、已连接通道、会话和全部保留消息；指定 `--topic:<名称>` 时，仅显示该主题的保留消息。使用 `stop` 和 `start` 可在不重启进程的情况下演示代理生命周期。
+`info` 显示工作状态、监听 URL、已连接通道、会话和全部保留消息；指定 `--topic:<名称>` 时，仅显示该主题的保留消息。使用 `stop` 和 `start` 可在不重启进程的情况下演示代理生命周期。
 
 ## 客户端订阅
 

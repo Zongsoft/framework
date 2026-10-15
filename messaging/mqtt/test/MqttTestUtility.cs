@@ -24,18 +24,19 @@ internal static class MqttTestUtility
 		return new MqttQueue("MQTT", settings);
 	}
 
-	public static ushort GetFreePort()
+	public static ushort GetFreePort(IPAddress address = null)
 	{
-		using var listener = new TcpListener(IPAddress.Loopback, 0);
+		using var listener = new TcpListener(address ?? IPAddress.Loopback, 0);
 		listener.Start();
 		return (ushort)((IPEndPoint)listener.LocalEndpoint).Port;
 	}
 
-	public static bool CanBind(ushort port)
+	public static bool CanBind(ushort port, IPAddress address = null)
 	{
 		try
 		{
-			using var listener = new TcpListener(IPAddress.Any, port);
+			using var listener = new TcpListener(address ?? IPAddress.Any, port);
+			listener.Server.ExclusiveAddressUse = true;
 			listener.Start();
 			return true;
 		}
@@ -45,12 +46,12 @@ internal static class MqttTestUtility
 		}
 	}
 
-	public static bool CanConnect(ushort port)
+	public static bool CanConnect(ushort port, IPAddress address = null)
 	{
 		try
 		{
-			using var client = new TcpClient();
-			return client.ConnectAsync(IPAddress.Loopback, port).Wait(TimeSpan.FromMilliseconds(250));
+			using var client = new TcpClient((address ?? IPAddress.Loopback).AddressFamily);
+			return client.ConnectAsync(address ?? IPAddress.Loopback, port).Wait(TimeSpan.FromMilliseconds(250));
 		}
 		catch
 		{
@@ -98,11 +99,11 @@ internal sealed class MqttServerScope : IDisposable
 
 	private MqttServerScope(MqttQueueServer server) => _server = server;
 
-	public ushort Port => _server.Port;
+	public ushort Port => (ushort)Zongsoft.Communication.NetworkAddress.Parse(_server.Url).Port;
 
 	public static async Task<MqttServerScope> StartAsync()
 	{
-		var server = new MqttQueueServer { Port = MqttTestUtility.GetFreePort() };
+		var server = new MqttQueueServer { Url = $"tcp://127.0.0.1:{MqttTestUtility.GetFreePort()}" };
 		await server.StartAsync([]);
 		Assert.Equal(Zongsoft.Components.WorkerState.Running, server.State);
 		return new MqttServerScope(server);

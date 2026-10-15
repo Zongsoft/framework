@@ -14,7 +14,7 @@ internal class Program
 {
 	static async Task Main(string[] args)
 	{
-		using var server = new MqttQueueServer() { Handler = Handler.Instance };
+		using var server = new MqttQueueServer() { Url = args.Length > 0 ? args[0] : "tcp://127.0.0.1:1883", Handler = Handler.Instance };
 		await server.StartAsync([]);
 
 		var executor = Terminal.Console.Executor;
@@ -25,8 +25,8 @@ internal class Program
 		{
 			context.Output.Write(CommandOutletColor.Cyan, "State: ");
 			context.Output.WriteLine(server.State == WorkerState.Running ? CommandOutletColor.Green : CommandOutletColor.Magenta, server.State);
-			context.Output.Write(CommandOutletColor.Cyan, "Port: ");
-			context.Output.WriteLine(CommandOutletColor.Green, server.Port);
+			context.Output.Write(CommandOutletColor.Cyan, "URL: ");
+			context.Output.WriteLine(CommandOutletColor.Green, server.Url);
 
 			var channels = server.Channels;
 			context.Output.Write(CommandOutletColor.Cyan, "Channels: ");
