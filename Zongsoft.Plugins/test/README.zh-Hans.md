@@ -58,9 +58,9 @@ git -c core.whitespace=cr-at-eol diff --check -- Zongsoft.Plugins
 | [BuilderExtensionTests](BuilderExtensionTests.cs)、[ExposeBuilderTests](ExposeBuilderTests.cs) | 扩展构建器、完成事件、取消子构建、集合转换/展开、分流追加、expose 首次构建及缓存子节点追加 |
 | [ParserTests](ParserTests.cs)、[PredicateParserTests](PredicateParserTests.cs)、[ResourceParserTests](ResourceParserTests.cs) | path/type/static/object/service/option/predicate/resource，服务别名、同步/异步断言、未知方案和无效表达式；资源只使用测试自有数据 |
 | [CommandTests](CommandTests.cs) | List/Tree/Find、显式构建选项、延迟命令、参数和取消令牌传递、非法参数 |
-| [PluginConfigurationTests](PluginConfigurationTests.cs)、[HostingConfigurationTests](HostingConfigurationTests.cs) | 插件配置与宿主配置分别验证，文件名/环境/host/site 分层优先级、子插件重载、连续变更通知、来源追溯、失败重试与订阅释放 |
+| [PluginConfigurationTests](PluginConfigurationTests.cs)、[HostingConfigurationTests](HostingConfigurationTests.cs) | 插件按清单主名再逻辑名称选择精确入口、不扫描后缀文件且解析失败不回退、按文档顺序显式导入、每插件仅一个入口提供程序、宿主精确名称与物理/非物理文件提供程序、子插件重载、连续变更通知、入口来源追溯、失败重试与订阅释放 |
 | [PluginModelTests](PluginModelTests.cs) | 选项身份、属性转换缓存、行为、基础元素继承与覆盖、依赖集合和构建标志 |
-| [PluginUnloadTests](PluginUnloadTests.cs) | 卸载取消、资源释放、节点/配置移除，以及未实例化基础元素不被创建 |
+| [PluginUnloadTests](PluginUnloadTests.cs) | 卸载取消、资源释放、节点/配置移除、已卸载入口及其导入内容不会转入名称有前缀关系的插件，以及未实例化基础元素不被创建 |
 | [ApplicationLifecycleTests](ApplicationLifecycleTests.cs)、[TestProgram](TestProgram.cs) | 初始化、工作台状态/事件/重试、Startup 工作者筛选，隔离进程中的退出及 Daemon/Terminal/Web 宿主构建；宿主与插件共享程序集只注册一次且能读取完整子插件配置 |
 | [WebIntegrationTests](WebIntegrationTests.cs) | 插件程序集和控制器发现、请求主体/路由、控制器描述及插件诊断接口 |
 

@@ -31,7 +31,7 @@ description: 开发、审查、调试或测试 Zongsoft.Web 及其 OpenAPI、gRP
 
 ## 启动端点与请求范围
 
-[Hosting 端点设施](docs/endpoints.zh-Hans.md) 从最终 Kestrel 配置创建 WebEndpointCollection，保留逻辑 URL、应用协议及路径，独立投影物理监听，禁止网络热重载。宿主在配置加载完成后调用 AddWebEndpoints，再在最终 Kestrel 回调及 SocketTransportOptions 中使用 Configure；在路由、转发头和静态文件之前安装 UseWebEndpoints。HasChanged 只比较配置与启动快照，重启提示和宿主生命周期接入由 Plugins.Web 负责。当前不自动接入现有插件宿主。
+[Hosting 端点设施](docs/endpoints.zh-Hans.md) 从最终 Kestrel 配置创建 WebEndpointCollection，保留逻辑 URL、应用协议及路径，独立投影物理监听，禁止网络热重载。宿主在配置加载完成后调用 AddWebEndpoints，再在最终 Kestrel 回调及 SocketTransportOptions 中使用 Configure；在路由、转发头和静态文件之前安装 UseWebEndpoints。HasChanged 只比较配置与启动快照，重启提示和宿主生命周期接入由 Plugins.Web 负责。Plugins.Web 在最终插件注册后自动接入，使用最终 PostConfigure 应用 Kestrel 投影，并在构建后、应用初始化器前安装范围中间件。
 
 Core 只解析通用网络值；HTTP 基路径限制、Kestrel 承载转换及类别内的范围选择属于 Web。上层协议通过 WebEndpointProtocol 注册，默认普通 HTTP；编码协议可注册默认承载并共用 http 类别。gRPC 简写、媒体类型、方法/版本校验、精确方法路径及无范围响应位于 Web.Grpc 的私有协议策略，由 AddGrpcWebEndpoints 和 GrpcInitializer.Registration 注册。不得在主库重加 grpc/protobuf 名称判断、IsGrpc 或 GrpcProtocols。注册必须先于快照；缺失、重名、类别识别歧义及晚注册失败，不按注册顺序猜归属。
 

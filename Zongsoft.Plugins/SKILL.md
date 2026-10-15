@@ -24,8 +24,8 @@ description: 开发、审查、调试或测试 Zongsoft.Plugins 与 Zongsoft.Plu
 2. [PluginLoader](src/PluginLoader.cs) 按文件目录组织父子插件、解析依赖；文件系统层级与 extension path 分离。不要把注释中的排序描述当作确定的文件枚举顺序。
 3. [PluginApplicationContext](src/PluginApplicationContext.cs) 初始化后挂载应用上下文；首次取得 Workbench 构建工作台子节点，Startup 子树后置，随宿主 Started/Stopping 打开/关闭工作台。
 4. [ObjectBuilder](src/Builders/ObjectBuilder.cs)、[BuilderManager](src/Builders/BuilderManager.cs) 处理节点构造和缓存；[ServicesParser](src/Services/ServicesParser.cs) 根据属性类型与当前树节点上下文定位服务。
-5. [PluginConfigurationProvider](src/Configuration/PluginConfigurationProvider.cs) 只关联已加载清单同主名的 option 及环境/host/site 附属文件；显式 Load 递归包括子插件。关联文件逐次重载、插件加载/卸载及整体重载均向宿主传递变更通知，替换或释放时解除订阅。整体重载失败清理已建立的提供程序；整体重载、插件树加载/卸载与释放串行执行，通知不代表跨文件事务。
-6. 跨插件提供程序使用并发字典枚举，不承诺冲突键的跨插件覆盖顺序。通过 Providers 取得各插件的 CompositeConfigurationProvider，先按插件内分层确定生效值及首个包含该键的文件来源，再由宿主消费层判断网络键等领域冲突；不把 Kestrel 或 gRPC 规则硬编码进 Plugins。
+5. [PluginConfigurationProvider](src/Configuration/PluginConfigurationProvider.cs) 先查找与 `.plugin` 文件同名的 `.option`，缺失时才尝试插件 name 对应的 `.option`，只加载第一个存在的入口；两者都缺失则结束，首选文件解析失败不回退。不扫描附属后缀，其他片段由入口通过 `<?import ...?>` 显式导入。宿主 LoadConfiguration(name) 同样只加载 name.option。显式 Load 重新选择入口并递归包括子插件；入口及导入文件重载、插件加载/卸载、整体重载均向宿主传递变更通知，替换或释放时解除订阅。整体重载失败清理已建立的提供程序；整体重载、插件树加载/卸载与释放串行执行，通知不代表跨文件事务。
+6. 跨插件提供程序使用并发字典枚举，不承诺冲突键的跨插件覆盖顺序。通过 Providers 取得各插件的 CompositeConfigurationProvider，其中单个 XML 提供程序包含入口及其导入后的生效值；文件来源标识入口，不追踪单键的导入来源。由宿主消费层比较各插件生效值并判断网络键等领域冲突，不把 Kestrel 或 gRPC 规则硬编码进 Plugins。
 
 ### 易混淆契约
 
@@ -47,3 +47,7 @@ description: 开发、审查、调试或测试 Zongsoft.Plugins 与 Zongsoft.Plu
 先构建 `Zongsoft.Plugins.slnx`；涉及 Web 再构建 `../Zongsoft.Plugins.Web/Zongsoft.Plugins.Web.slnx`。使用最小插件树覆盖有效配置、缺失依赖、循环/无效节点、初始化失败回滚和确定性释放。
 
 获得宿主运行授权后可在独立部署目录验证；不能把真实业务部署树原样启动作为最小测试。Windows 终端需 PTY/ConPTY，默认内容根受工作目录影响，复制输出保留 runtimes。检查插件列表后必须继续验证契约调用：发现条目不等于 SDK 版本、配置和网络均正确。DLL 更新重启宿主，不把配置变更通知解释为程序集热替换。
+
+## Web 端点接入
+
+Plugins.Web 在上述配置和服务注册完成后检查跨插件 Kestrel 同键异值，建立 WebEndpointCollection，并通过最终 PostConfigure 应用 Kestrel 及 SocketTransportOptions 投影。原配置不修改；初始化器执行前安装范围中间件。网络配置变更只警告一次并保留启动快照，停止/释放解除订阅。监听配置与请求范围规则见 [Plugins.Web](../Zongsoft.Plugins.Web/README.zh-Hans.md#监听配置与请求范围)，不在通用 Plugins 中增加网络规则。

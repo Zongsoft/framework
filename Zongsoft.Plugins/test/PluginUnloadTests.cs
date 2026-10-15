@@ -14,6 +14,32 @@ namespace Zongsoft.Plugins.Tests;
 public class PluginUnloadTests
 {
 	[Fact]
+	public void UnloadingPrefixNamedManifestDoesNotTransferItsConfiguration()
+	{
+		using var scope = new PluginTestScope(false);
+		scope.WriteFile("Feature.plugin", "<plugin name=\"Feature\" />");
+		scope.WriteFile("Feature-daemon.plugin", "<plugin name=\"Daemon\" />");
+		scope.WriteFile("Feature.option", "<options><option path=\"Fixture\"><settings value=\"base\" /></option></options>");
+		scope.WriteFile("Feature-daemon.option", "<options><option path=\"Daemon\"><settings enabled=\"true\" /></option></options><?import path='Feature-daemon-extra.option'?>");
+		scope.WriteFile("Feature-daemon-extra.option", "<options><option path=\"Daemon\"><settings value=\"reserved\" /></option></options>");
+		using var provider = new PluginConfigurationProvider(new PluginConfigurationSource(scope.Options));
+		scope.Tree.Load();
+		var daemon = scope.Tree.Plugins["Daemon"];
+		Assert.True(provider.TryGet("Daemon:settings:value", out var value));
+		Assert.Equal("reserved", value);
+
+		Unload(scope.Tree.Loader, daemon);
+		provider.Load();
+
+		Assert.Equal(PluginStatus.Unloaded, daemon.Status);
+		Assert.False(provider.TryGet("Daemon:settings:enabled", out _));
+		Assert.False(provider.TryGet("Daemon:settings:value", out _));
+		Assert.True(provider.TryGet("Fixture:settings:value", out var remaining));
+		Assert.Equal("base", remaining);
+		Assert.Single(Assert.IsType<CompositeConfigurationProvider>(Assert.Single(provider.Providers)).Providers);
+	}
+
+	[Fact]
 	public void UnloadDestroysBuiltComponentsAndDetachesConfiguration()
 	{
 		using var scope = new PluginTestScope();

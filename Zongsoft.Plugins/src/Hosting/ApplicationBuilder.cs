@@ -29,7 +29,6 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
 
@@ -59,41 +58,14 @@ public abstract class ApplicationBuilderBase<TApplication> : Services.IApplicati
 			this.LoadConfiguration(assemblyName);
 	}
 
+	/// <summary>加载指定名称的宿主配置入口，其余配置由入口显式导入。</summary>
+	/// <param name="name">不含扩展名的配置名称，可以包含相对于配置文件提供程序根目录的路径或绝对路径。</param>
 	public void LoadConfiguration(string name)
 	{
 		if(string.IsNullOrEmpty(name))
 			return;
 
-		//添加宿主配置文件
 		this.Configuration.AddOptionFile($"{name}.option", true);
-
-		//获取宿主附属配置文件
-		var slaves = GetSlaves(
-			name,
-			this.Environment.EnvironmentName,
-			this.Configuration.GetSection("host")?.Value,
-			this.Configuration.GetSection("site")?.Value);
-
-		//依次添加附属配置文件
-		foreach(var slave in slaves)
-			this.Configuration.AddOptionFile(slave, true);
-
-		static IEnumerable<string> GetSlaves(string application, string environment, params string[] slaves)
-		{
-			if(!string.IsNullOrEmpty(environment))
-				yield return $"{application}.{environment.ToLowerInvariant()}.option";
-
-			foreach(var slave in slaves.Distinct(StringComparer.OrdinalIgnoreCase))
-			{
-				if(string.IsNullOrEmpty(slave))
-					continue;
-
-				yield return $"{application}.{slave.ToLowerInvariant()}.option";
-
-				if(!string.IsNullOrEmpty(environment))
-					yield return $"{application}.{slave.ToLowerInvariant()}.{environment.ToLowerInvariant()}.option";
-			}
-		}
 	}
 	#endregion
 
@@ -222,7 +194,7 @@ public abstract class ApplicationBuilderBase<TApplication> : Services.IApplicati
 
 public class ApplicationBuilder : ApplicationBuilderBase<IHost>
 {
-#if NET7_0_OR_GREATER
+	#if NET7_0_OR_GREATER
 	private readonly HostApplicationBuilder _builder;
 	private readonly Action<HostApplicationBuilder> _configure;
 
@@ -278,7 +250,7 @@ public class ApplicationBuilder : ApplicationBuilderBase<IHost>
 		return _builder.Build().Initialize();
 	}
 	#endregion
-#else
+	#else
 	private readonly IHostBuilder _builder;
 	private readonly Action<IHostBuilder> _configure;
 
@@ -385,5 +357,5 @@ public class ApplicationBuilder : ApplicationBuilderBase<IHost>
 		public IDictionary<object, object> Properties { get; }
 		#endregion
 	}
-#endif
+	#endif
 }

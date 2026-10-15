@@ -2,7 +2,7 @@
 
 [English](endpoints.md) | [简体中文](endpoints.zh-Hans.md)
 
-`Zongsoft.Web.Hosting` provides startup endpoint snapshots, Kestrel configuration projection and request-scope constraints. Hosts must explicitly connect these facilities after configuration loading. Referencing the assembly or adding a binding processing instruction does not install the pipeline. Plugin host integration and gRPC service registration belong to Plugins.Web and Web.Grpc.
+`Zongsoft.Web.Hosting` provides startup endpoint snapshots, Kestrel configuration projection and request-scope constraints. Standalone ASP.NET hosts must explicitly connect these facilities after configuration loading. Referencing the assembly or adding a binding processing instruction does not install the pipeline. The Plugins.Web builder now installs them automatically; do not register the snapshot or middleware again. gRPC service registration belongs to Web.Grpc.
 
 ## Host integration
 
@@ -47,7 +47,7 @@ The Web library supplies ordinary HTTP rules. Register upper-level protocols thr
 
 Encoding protocols may share ordinary HTTP. For example, `services.AddWebEndpointProtocol(new WebEndpointProtocol("protobuf"));` declares `protobuf → protobuf+http`; `protobuf,protobuf+http2` normalizes to `protobuf+http2`. This declaration does not install a serializer. Runtime listening requires a specific HTTP version: `http` or the expanded `protobuf+http` alone is insufficient. Direct TCP/UDP combinations are not carried by this Kestrel adapter.
 
-Native gRPC policy belongs to the separate `Zongsoft.Web.Grpc` package. Explicit hosts call its `services.AddGrpcWebEndpoints()` before `AddWebEndpoints`. The plugin's `GrpcInitializer.Registration` registers this policy automatically; complete snapshot integration with the plugin host belongs to the subsequent Plugins.Web work. This policy expands bare `grpc` to `grpc+http2`, accepts HTTP/2 and HTTP/3 carriers, and rejects unsuitable carriers. The Web library contains no gRPC name checks.
+Native gRPC policy belongs to the separate `Zongsoft.Web.Grpc` package. Explicit hosts call its `services.AddGrpcWebEndpoints()` before `AddWebEndpoints`. The plugin's `GrpcInitializer.Registration` registers this policy automatically; Plugins.Web creates the snapshot after all plugin registration completes. This policy expands bare `grpc` to `grpc+http2`, accepts HTTP/2 and HTTP/3 carriers, and rejects unsuitable carriers. The Web library contains no gRPC name checks.
 
 An HTTPS `grpc+http3` declaration can produce an HTTP/3 projection. Snapshot creation does not probe the backend or QUIC support. Actual startup remains subject to Kestrel, TLS and platform requirements. HTTP/3 runtime validation is separate from TCP socket validation.
 
@@ -94,7 +94,7 @@ These facilities consume Kestrel runtime configuration. They do not interpret bi
 
 [Snapshot tests](../test/Hosting/WebEndpointCollectionTest.cs) cover generic protocols, shared listeners, conflicts, independent snapshots and IPv6 TCP binding. [Ordinary pipeline tests](../test/Hosting/WebEndpointPipelineTest.cs) verify independent operation, kinds and registration without referencing the gRPC extension. [gRPC pipeline tests](../grpc/test/GrpcEndpointPipelineTest.cs) cover media types, raw paths, isolation and HTTP/1 plus HTTP/2 requests against an isolated local Kestrel host. [Protocol tests](../grpc/test/GrpcEndpointProtocolTest.cs) cover shorthand, plugin registration and missing extensions. Requests with a gRPC media type verify scope dispatch, not complete gRPC calls.
 
-Debug references local Core output; the project file defines the minimum Release Core package dependency. Supply the corresponding Core build containing the network value APIs before publishing Web. Local Release validation uses an isolated package feed and does not imply publication. Plugin loading, complete gRPC services/reflection/streaming, Nginx and actual HTTP/3 operation require subsequent integration validation.
+Debug references local Core output; the project file defines the minimum Release Core package dependency. Supply the corresponding Core build containing the network value APIs before publishing Web. Local Release validation uses an isolated package feed and does not imply publication. See [Plugins.Web](../../Zongsoft.Plugins.Web/README.md) for plugin host integration. Complete gRPC services/reflection/streaming, Nginx and actual HTTP/3 operation require subsequent integration validation.
 
 See Microsoft's [Kestrel endpoint documentation](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel/endpoints) for configuration loading and [ASP.NET Core routing documentation](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/routing) for the route policy extension points.
 

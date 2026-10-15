@@ -2,7 +2,7 @@
 
 [English](endpoints.md) | [简体中文](endpoints.zh-Hans.md)
 
-`Zongsoft.Web.Hosting` 为宿主提供启动端点快照、Kestrel 配置投影和请求范围约束。宿主必须在配置加载完成后显式接入；仅引用程序集或添加 binding 处理指令不会启动这套管线。插件宿主自动接入和 gRPC 服务注册分别由 Plugins.Web、Web.Grpc 完成。
+`Zongsoft.Web.Hosting` 为宿主提供启动端点快照、Kestrel 配置投影和请求范围约束。独立 ASP.NET 宿主必须在配置加载完成后显式接入；仅引用程序集或添加 binding 处理指令不会启动这套管线。Plugins.Web 的构建器已自动接入，不要重复注册快照或中间件；gRPC 服务注册由 Web.Grpc 完成。
 
 ## 宿主接入
 
@@ -47,7 +47,7 @@ Web 主库内置普通 HTTP 规则。上层协议必须在创建快照前通过 
 
 编码协议可共用普通 HTTP 类别。例如 `services.AddWebEndpointProtocol(new WebEndpointProtocol("protobuf"));` 表达 `protobuf → protobuf+http`；`protobuf,protobuf+http2` 归并为 `protobuf+http2`。这一声明不安装序列化器。运行端需要具体 HTTP 版本，仅有 `http` 或展开后的 `protobuf+http` 不足以配置监听；直接 TCP/UDP 组合不由此 Kestrel 适配器承载。
 
-原生 gRPC 规则在独立包 `Zongsoft.Web.Grpc` 中。显式宿主先调用该包的 `services.AddGrpcWebEndpoints()`，再调用 `AddWebEndpoints`。插件的 `GrpcInitializer.Registration` 已自动注册这项规则；完整插件宿主的快照接入由后续 Plugins.Web 集成完成。该规则将裸 `grpc` 展开为 `grpc+http2`，接受 HTTP/2、HTTP/3 承载，拒绝不适用的承载；Web 主库不包含 gRPC 名称判断。
+原生 gRPC 规则在独立包 `Zongsoft.Web.Grpc` 中。显式宿主先调用该包的 `services.AddGrpcWebEndpoints()`，再调用 `AddWebEndpoints`。插件的 `GrpcInitializer.Registration` 已自动注册这项规则；Plugins.Web 在全部插件注册完成后自动建立快照。该规则将裸 `grpc` 展开为 `grpc+http2`，接受 HTTP/2、HTTP/3 承载，拒绝不适用的承载；Web 主库不包含 gRPC 名称判断。
 
 `grpc+http3` 的 HTTPS 声明可生成 HTTP/3 投影，创建快照不探测后端或 QUIC 支持。实际启动仍受 Kestrel、TLS 和平台条件约束。HTTP/3 的运行验收与 TCP socket 绑定验证分别进行。
 
@@ -94,7 +94,7 @@ gRPC 的媒体类型、方法限制、精确方法路径及 grpc-status 响应�
 
 [快照与投影测试](../test/Hosting/WebEndpointCollectionTest.cs)覆盖通用协议、共享监听、配置冲突、快照独立性及 IPv6 TCP 绑定；[普通请求测试](../test/Hosting/WebEndpointPipelineTest.cs)在不引用 gRPC 扩展的项目中验证独立运行、类别与注册契约。[gRPC 专项测试](../grpc/test/GrpcEndpointPipelineTest.cs)覆盖媒体类型、原始路径、范围隔离和本机隔离 Kestrel 的 HTTP/1、HTTP/2 请求；[协议注册测试](../grpc/test/GrpcEndpointProtocolTest.cs)覆盖简写、插件注册及缺失扩展。带 gRPC 媒体类型的请求验证范围分派，不等同于完整 gRPC 调用验收。
 
-Debug 使用本地 Core 输出，Release 的最低 Core 包依赖见项目文件。发布 Web 前须提供包含网络值 API 的对应 Core 构建产物；本地 Release 验证使用隔离包源，不代表该包已经推送。插件自动装载、完整 gRPC 服务/反射/流、Nginx 和实际 HTTP/3 运行属于后续集成验收。
+Debug 使用本地 Core 输出，Release 的最低 Core 包依赖见项目文件。发布 Web 前须提供包含网络值 API 的对应 Core 构建产物；本地 Release 验证使用隔离包源，不代表该包已经推送。插件宿主接入见 [Plugins.Web](../../Zongsoft.Plugins.Web/README.zh-Hans.md)；完整 gRPC 服务/反射/流、Nginx 和实际 HTTP/3 运行属于后续集成验收。
 
 Kestrel 配置加载规则参见 [Microsoft 官方文档](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel/endpoints)；路由约束基于 [ASP.NET Core 路由扩展点](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/routing)。
 

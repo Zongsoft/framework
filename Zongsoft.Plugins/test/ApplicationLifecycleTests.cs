@@ -35,6 +35,9 @@ public class ApplicationLifecycleTests
 			scope.WriteFile("nested/Child.option", "<options><option path=\"Kestrel/Endpoints\"><telemetry url=\"http://*:4317/opentelemetry\" protocols=\"grpc+http2\" /></option></options>");
 		}
 
+		if(scenario == "web")
+			scope.WriteFile("Feature.option", "<options><option path=\"Kestrel/Endpoints\"><api url=\"http://127.0.0.1:18081/\" protocols=\"http1\" /></option></options>");
+
 		var start = new ProcessStartInfo("dotnet")
 		{
 			UseShellExecute = false,
