@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+	<resheader name="version"><value>2.0</value></resheader>
+	<resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+	<resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+	<data name="Grpc.EndpointsMissing.Message" xml:space="preserve">
+		<value>The gRPC services require declared Web endpoints.</value>
+	</data>
+	<data name="Grpc.FallbackConflict.Message" xml:space="preserve">
+		<value>The gRPC region requires IgnoreUnknownServices to be enabled for global and service options.</value>
+	</data>
+	<data name="Grpc.ServiceInvalid.Message" xml:space="preserve">
+		<value>The tagged gRPC service &apos;{0}&apos; must be a concrete generated service implementation with a business descriptor.</value>
+	</data>
+	<data name="Grpc.HandlerMissing.Message" xml:space="preserve">
+		<value>The gRPC service &apos;{0}&apos; must declare at least one Handler base path.</value>
+	</data>
+	<data name="Grpc.HandlerOrder.Message" xml:space="preserve">
+		<value>The gRPC service &apos;{0}&apos; must use zero Handler order.</value>
+	</data>
+	<data name="Grpc.HandlerUnmatched.Message" xml:space="preserve">
+		<value>The gRPC service &apos;{0}&apos; has no declared gRPC endpoint for Handler path &apos;{1}&apos;.</value>
+	</data>
+	<data name="Grpc.ServiceConflict.Message" xml:space="preserve">
+		<value>The gRPC region &apos;{0}&apos; contains conflicting or inconsistent service methods for &apos;{1}&apos;.</value>
+	</data>
+	<data name="Grpc.RegionEmpty.Message" xml:space="preserve">
+		<value>The gRPC region &apos;{0}&apos; has no registered business services.</value>
+	</data>
+	<data name="Grpc.MethodsInvalid.Message" xml:space="preserve">
+		<value>The mapped methods in gRPC region &apos;{0}&apos; do not match its service descriptors.</value>
+	</data>
+</root>

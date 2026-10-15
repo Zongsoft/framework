@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+	<resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+	<resheader name="version"><value>2.0</value></resheader>
+	<resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms</value></resheader>
+	<resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms</value></resheader>
+	<data name="Grpc.EndpointsMissing.Message" xml:space="preserve">
+		<value>gRPC 服务要求声明对应的 Web 端点。</value>
+	</data>
+	<data name="Grpc.FallbackConflict.Message" xml:space="preserve">
+		<value>gRPC 区域要求全局及服务选项启用 IgnoreUnknownServices。</value>
+	</data>
+	<data name="Grpc.ServiceInvalid.Message" xml:space="preserve">
+		<value>带标签的 gRPC 服务“{0}”必须是具有业务描述符的具体生成服务实现。</value>
+	</data>
+	<data name="Grpc.HandlerMissing.Message" xml:space="preserve">
+		<value>gRPC 服务“{0}”必须通过 Handler 声明至少一个基路径。</value>
+	</data>
+	<data name="Grpc.HandlerOrder.Message" xml:space="preserve">
+		<value>gRPC 服务“{0}”的 Handler 顺序必须为零。</value>
+	</data>
+	<data name="Grpc.HandlerUnmatched.Message" xml:space="preserve">
+		<value>gRPC 服务“{0}”的 Handler 路径“{1}”没有对应的 gRPC 端点声明。</value>
+	</data>
+	<data name="Grpc.ServiceConflict.Message" xml:space="preserve">
+		<value>gRPC 区域“{0}”中“{1}”的服务方法存在冲突或不一致。</value>
+	</data>
+	<data name="Grpc.RegionEmpty.Message" xml:space="preserve">
+		<value>gRPC 区域“{0}”没有注册业务服务。</value>
+	</data>
+	<data name="Grpc.MethodsInvalid.Message" xml:space="preserve">
+		<value>gRPC 区域“{0}”中映射的方法与服务描述符不一致。</value>
+	</data>
+</root>

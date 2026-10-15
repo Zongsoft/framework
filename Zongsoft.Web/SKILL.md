@@ -17,7 +17,7 @@ description: 开发、审查、调试或测试 Zongsoft.Web 及其 OpenAPI、gRP
 - [ControllerActivator](src/ControllerActivator.cs) 与 [ControllerFeatureProvider](src/ControllerFeatureProvider.cs) 负责激活/发现边界；插件程序集由 Plugins.Web 的 WebApplicationContext 加入 ApplicationParts，单独包引用不能证明路由存在。
 - [Binders](src/Binders) 解析条件/排序/范围等文本，[Formatters](src/Formatters) 负责 JSON，[Filters](src/Filters) 负责横切处理。HTTP Schema 与排序格式也受 Core/Data 契约约束。
 - [Plugins.Web Application](../Zongsoft.Plugins.Web/src/Application.cs) 调用初始化器后依次加入 CORS、本地化、方法覆盖、路由、认证、授权、压缩与静态文件，最后映射 Controller/Hub。不能在可选扩展中无意重复注册整条管线。
-- [GrpcInitializer](grpc/src/GrpcInitializer.cs) 注册 gRPC 并按服务标签映射类型；只继承生成基类而未满足注册/标签约定时，不会自动出现端点。
+- [GrpcInitializer](grpc/src/GrpcInitializer.cs) 注册 gRPC，按服务标签发现类型并以 Handler 字面基路径挂载到 Web 端点区域；注解必须与 gRPC 监听路径精确对应，Order 为零。缺注解、缺监听、空区域及服务/方法冲突均失败。反射包装器从区域元数据取得该区域的上游 ReflectionServiceImpl；不建立全局业务服务目录。
 - [Plugins.Web 默认策略](../Zongsoft.Plugins.Web/src/WebApplicationBuilder.cs) 包含宽松 CORS。安全部署必须校准宿主策略，不把默认认证中间件存在等同于所有接口已经授权保护。
 
 ## 契约
@@ -35,7 +35,7 @@ description: 开发、审查、调试或测试 Zongsoft.Web 及其 OpenAPI、gRP
 
 Core 只解析通用网络值；HTTP 基路径限制、Kestrel 承载转换及类别内的范围选择属于 Web。上层协议通过 WebEndpointProtocol 注册，默认普通 HTTP；编码协议可注册默认承载并共用 http 类别。gRPC 简写、媒体类型、方法/版本校验、精确方法路径及无范围响应位于 Web.Grpc 的私有协议策略，由 AddGrpcWebEndpoints 和 GrpcInitializer.Registration 注册。不得在主库重加 grpc/protobuf 名称判断、IsGrpc 或 GrpcProtocols。即时重载要求先注册协议；工厂重载允许最终容器构建前继续注册。缺失、重名及类别识别歧义失败，不按注册顺序猜归属。
 
-按真实本地连接、请求类别和原始 URI 路径选择范围，不改写源配置或请求。已解析路径不得进入另一逻辑范围；这是拒绝校验，不改派后端。WebEndpointFeature 固定选择结果及 Kind，WebEndpointMetadata 关联范围与类别。中间件和 MatcherPolicy 为 WebEndpointExtension 的私有嵌套类，测试通过公开入口执行。Handler 服务挂载、区域 fallback、反射留待 Web.Grpc 的对应步骤；主库不引入 gRPC 依赖。HTTP/3 仅声明及配置投影通过不代表 QUIC 运行验收通过。
+按真实本地连接、请求类别和原始 URI 路径选择范围，不改写源配置或请求。已解析路径不得进入另一逻辑范围；这是拒绝校验，不改派后端。WebEndpointFeature 固定选择结果及 Kind，WebEndpointMetadata 关联范围与类别。中间件和 MatcherPolicy 为 WebEndpointExtension 的私有嵌套类，测试通过公开入口执行。Web.Grpc 将 Handler 服务、区域 fallback 和区域反射放入带范围元数据的 MapGroup；关闭上游全局 unknown-service/method fallback，未知 RPC 不回退到其它范围。主库不引入 gRPC 依赖。HTTP/3 仅声明及配置投影通过不代表 QUIC 运行验收通过。
 
 主库测试为 test/Hosting 的 KestrelUtilityTest、WebEndpointCollectionTest 与 WebEndpointPipelineTest，不引用 gRPC；协议专项在 grpc/test 的独立项目中，通过公开注册和真实 ASP.NET 管线验证，不开放内部方法。grpc 与 openapi 均以 src 存放主项目和插件构件，test 存放测试；README 保留在各扩展根目录。OpenAPI 暂无独立测试项目，test 目录保留说明。Release 使用项目指定的 Core/Web 包，必须包含本次契约；验证使用隔离本地包源，不能把 Debug 本地引用成功当作旧 NuGet 包可用。
 

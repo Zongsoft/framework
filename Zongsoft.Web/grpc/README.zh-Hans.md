@@ -26,9 +26,43 @@ dotnet add package Zongsoft.Web.Grpc
 
 ## 服务发现
 
-实现由 `Grpc.Tools` 生成的服务基类，通过框架服务系统注册具体类型，并赋予 `gRPC` 标签。启动时，程序集扫描发现私有注册器 `GrpcInitializer.Registration`，由它调用 `AddGrpcWebEndpoints`、`AddGrpc` 与 `AddGrpcReflection`；`GrpcInitializer` 读取带标签的类型，调用 `MapGrpcService<T>`，并映射反射服务。
+实现由 `Grpc.Tools` 生成的服务基类，通过框架服务系统注册具体类型，并赋予 `gRPC` 标签。私有注册器 `GrpcInitializer.Registration` 注册协议策略、gRPC 服务器和区域反射包装器；`GrpcInitializer` 读取带标签类型的 `Handler` 注解，将服务挂载到对应的 Web 端点区域。
 
 > 💡 `gRPC` 标签是发现契约。只有 DI 注册而没有该标签的服务不会被此初始化器映射。
+
+### 基路径与区域
+
+每个具体业务服务声明字面基路径，生成的协议服务名和方法名保持原样：
+
+```csharp
+[Zongsoft.Services.Service(Tags = "gRPC")]
+[Zongsoft.Components.Handler("/orders")]
+public class OrderService : Orders.OrdersBase
+{
+	// 实现由应用 proto 文件生成的方法。
+}
+```
+
+插件的选项文件在监听 URL 中声明相同路径：
+
+```xml
+<?binding path="Kestrel/Endpoints/*" template="${option.Url}" protocols="${option.Protocols}"?>
+<options>
+	<option path="Kestrel">
+		<endpoints>
+			<orders url="http://*:4317/orders" protocols="grpc+http2" />
+		</endpoints>
+	</option>
+</options>
+```
+
+生成的 `/demo.Orders/Get` RPC 会挂载到 `/orders/demo.Orders/Get`。客户端必须发送这一完整路径；仅向未经适配的 `GrpcChannel.ForAddress` 传入含基路径地址并不够。框架不隐式添加 `/grpc` 前缀。
+
+`Handler.Template` 必须与 gRPC 端点声明的路径精确对应，包括大小写和尾斜杠。根服务显式声明 `[Handler("/")]`，`Order` 必须为零。读取继承和重复注解后去重，同类型可挂载到多个路径，DI 生命周期不变。多个类型可以共用一个区域；同一区域在多个监听上提供相同服务。缺少注解、路径无对应声明、业务区域为空、协议服务或方法冲突以及非法路径均导致初始化失败。
+
+每个区域都有最低优先级的未知 RPC 端点，返回 `UNIMPLEMENTED`，不会回退到较短区域或其他监听。全局及服务专属的 `IgnoreUnknownServices` 选项不能破坏这一安排：注册器将全局值设为 true，矛盾的选项导致初始化失败。兜底端点经过正常授权管线；单个服务的授权注解不会复制到含有多个服务的整个区域。
+
+每个区域的反射复用上游 `ReflectionServiceImpl`。`list_services` 只包含该区域的业务服务及反射服务；描述符仍包含完整 proto 文件及其依赖，因此共享文件可能公开其他符号，不提供逐符号访问控制。不会从其他区域的注册表补齐未知符号。包装器使用固定的端点元数据，不创建或释放业务服务实例。
 
 ## 宿主注意事项
 
@@ -54,9 +88,9 @@ Zongsoft.Core、Zongsoft.Web、Zongsoft.Plugins、Zongsoft.Plugins.Web 由宿主
 
 本包提供 Web 端点的 gRPC 协议策略：裸 `grpc` 默认 `grpc+http2`，请求按原生 gRPC 媒体类型分类，并执行方法、HTTP 版本、固定方法路径与无范围响应规则。该策略为私有实现，通过 `GrpcEndpointExtension.AddGrpcWebEndpoints` 注册；Web 主库不含这些协议判断。
 
-显式宿主在 `AddWebEndpoints` 创建快照之前调用 `services.AddGrpcWebEndpoints()`；插件服务注册已自动完成这一步。缺少扩展时，建立 gRPC 请求范围会失败，不能作为普通 HTTP 启动。KestrelUtility 单独转换 grpc+http2 等显式承载不需要这项运行规则；转换裸 grpc 时须传入对应规范化规则。Plugins.Web 的服务注册器根据 Web 宿主端点声明自动调用 AddWebEndpoints，延迟到最终服务提供器创建快照；基于 Handler 的服务挂载仍按实施顺序进行，当前协议策略注册不自动改变现有根级服务映射。
+显式宿主在 `AddWebEndpoints` 创建快照之前调用 `services.AddGrpcWebEndpoints()`；插件服务注册已自动完成这一步。缺少扩展时，建立 gRPC 请求范围会失败，不能作为普通 HTTP 启动。KestrelUtility 单独转换 grpc+http2 等显式承载不需要这项运行规则；转换裸 grpc 时须传入对应规范化规则。Plugins.Web 的服务注册器根据 Web 宿主端点声明自动调用 AddWebEndpoints，延迟到最终服务提供器创建快照。服务挂载在快照可用后进行，所有带标签服务都必须具有对应声明；既无业务 gRPC 服务也无 gRPC 声明的宿主不增加反射路由。
 
-`WebEndpointMetadata("/opentelemetry", "grpc")` 可表达路由的范围及请求类别 `Kind`；实际服务必须挂载在同一路径。独立 [协议测试项目](test/Zongsoft.Web.Grpc.Tests.csproj) 验证规则及隔离 HTTP/2 管线，尚不代表区域反射、完整 RPC/流或 HTTP/3 已验收。
+`WebEndpointMetadata("/opentelemetry", "grpc")` 表达路由范围及请求类别 `Kind`，初始化器将它附加到各路由组。独立[测试项目](test/Zongsoft.Web.Grpc.Tests.csproj)覆盖协议规则、区域挂载及真实 HTTP/2 调用；HTTP/3、反向代理和 Diagnostics 客户端适配分别验收。
 
 优先通过宿主组合本能力；包引用用于编译，而插件加载还需要部署清单和运行产物。完整流程见[插件化入门](../../Zongsoft.Plugins/README.zh-Hans.md)。
 

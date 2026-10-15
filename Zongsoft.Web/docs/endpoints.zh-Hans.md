@@ -79,7 +79,7 @@ routes.MapGroup("/opentelemetry")
 	.WithMetadata(new WebEndpointMetadata("/opentelemetry", "grpc"));
 ```
 
-gRPC 扩展须在该组内注册服务及区域 fallback。普通未标注路由仅参与 HTTP 类别；标注路由必须与已选范围精确对应。gRPC 固定方法路由额外比较原始完整路径的大小写及编码。较短区域的 fallback 不能接管子区域未知方法。Web 主库不引入 gRPC 包；Handler 挂载、区域反射及区域 fallback 尚待 Web.Grpc 的后续服务挂载步骤完成。
+gRPC 扩展须在该组内注册服务及区域 fallback。普通未标注路由仅参与 HTTP 类别；标注路由必须与已选范围精确对应。gRPC 固定方法路由额外比较原始完整路径的大小写及编码。较短区域的 fallback 不能接管子区域未知方法。Web 主库不引入 gRPC 包；Web.Grpc 在这些路由组内实现 Handler 服务挂载、区域反射及区域 fallback，详见其[服务契约](../grpc/README.zh-Hans.md#基路径与区域)。
 
 ## 协议扩展与职责
 
@@ -101,7 +101,7 @@ KestrelUtility 消费服务器配置；逻辑端点集合与通用请求管线�
 
 [转换测试](../test/Hosting/KestrelUtilityTest.cs)覆盖独立转换、简写规则、共享监听、原配置隔离及 IPv6 TCP 绑定；[逻辑端点测试](../test/Hosting/WebEndpointCollectionTest.cs)覆盖无配置构造、声明复制和范围冲突；[普通请求测试](../test/Hosting/WebEndpointPipelineTest.cs)在不引用 gRPC 扩展的项目中验证独立运行、类别与注册契约。[gRPC 专项测试](../grpc/test/GrpcEndpointPipelineTest.cs)覆盖媒体类型、原始路径、范围隔离和本机隔离 Kestrel 的 HTTP/1、HTTP/2 请求；[协议注册测试](../grpc/test/GrpcEndpointProtocolTest.cs)覆盖简写、插件注册及缺失扩展。带 gRPC 媒体类型的请求验证范围分派，不等同于完整 gRPC 调用验收。
 
-Debug 使用本地 Core 输出，Release 的最低 Core 包依赖见项目文件。发布 Web 前须提供包含网络值 API 的对应 Core 构建产物；本地 Release 验证使用隔离包源，不代表该包已经推送。插件宿主接入见 [Plugins.Web](../../Zongsoft.Plugins.Web/README.zh-Hans.md)；完整 gRPC 服务/反射/流、Nginx 和实际 HTTP/3 运行属于后续集成验收。
+Debug 使用本地 Core 输出，Release 的最低 Core 包依赖见项目文件。发布 Web 前须提供包含网络值 API 的对应 Core 构建产物；本地 Release 验证使用隔离包源，不代表该包已经推送。插件宿主接入见 [Plugins.Web](../../Zongsoft.Plugins.Web/README.zh-Hans.md)；Web.Grpc 在独立 HTTP/2 测试中验证区域服务、反射和流；Diagnostics 客户端、Nginx 和实际 HTTP/3 运行分别进行集成验收。
 
 Kestrel 配置加载规则参见 [Microsoft 官方文档](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/servers/kestrel/endpoints)；路由约束基于 [ASP.NET Core 路由扩展点](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/routing)。
 
