@@ -109,7 +109,7 @@ public sealed class XmlConfigurationInstruction
 	#endregion
 
 	#region 重写方法
-	public override string ToString() => string.IsNullOrEmpty(this.Data) ? $"<?{this.Name}?>" : $"<?{this.Name} {this.Data} ?>";
+	public override string ToString() => string.IsNullOrEmpty(this.Data) ? $"<?{this.Name}?>" : $"<?{this.Name} {this.Data}?>";
 	#endregion
 
 	#region 私有方法
