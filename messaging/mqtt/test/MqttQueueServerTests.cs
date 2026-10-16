@@ -134,12 +134,10 @@ public class MqttQueueServerTests
 		var states = new List<WorkerStateChangedEventArgs>();
 		server.StateChanged += (_, args) => states.Add(args);
 		cancellation.Cancel();
-		await server.StartAsync([], cancellation.Token);
+		var failure = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => server.StartAsync([], cancellation.Token));
 
-		var failure = Assert.Single(states);
-		Assert.Equal("Start", failure.ActionName);
-		Assert.Equal(WorkerState.Stopped, failure.State);
-		Assert.Equal(cancellation.Token, Assert.IsAssignableFrom<OperationCanceledException>(failure.Exception).CancellationToken);
+		Assert.Empty(states);
+		Assert.Equal(cancellation.Token, failure.CancellationToken);
 		Assert.Equal(WorkerState.Stopped, server.State);
 		Assert.False(server.HasServer);
 		Assert.Empty(server.Channels);
@@ -166,11 +164,10 @@ public class MqttQueueServerTests
 		WorkerStateChangedEventArgs failure = null;
 		server.StateChanged += (_, args) => failure = args;
 		cancellation.Cancel();
-		await server.StopAsync([], cancellation.Token);
+		var canceled = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => server.StopAsync([], cancellation.Token));
 
-		Assert.Equal("Stop", failure.ActionName);
-		Assert.IsAssignableFrom<OperationCanceledException>(failure.Exception);
-		Assert.Equal(WorkerState.Running, failure.State);
+		Assert.Null(failure);
+		Assert.Equal(cancellation.Token, canceled.CancellationToken);
 		Assert.Equal(WorkerState.Running, server.State);
 		Assert.True(server.HasServer);
 		Assert.True(MqttTestUtility.CanConnect(port));
@@ -310,7 +307,7 @@ public class MqttQueueServerTests
 		blocker.Server.ExclusiveAddressUse = true;
 		blocker.Start();
 
-		await server.StartAsync([]);
+		await Assert.ThrowsAnyAsync<Exception>(() => server.StartAsync([]));
 
 		Assert.Equal(WorkerState.Stopped, server.State);
 		Assert.False(server.HasServer);

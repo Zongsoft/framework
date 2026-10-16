@@ -111,7 +111,8 @@ public partial class OpcServer : WorkerBase
 
 	protected override Task OnStopAsync(string[] args, CancellationToken cancellation)
 	{
-		return _launcher.StopAsync().AsTask();
+		var launcher = Interlocked.Exchange(ref _launcher, null);
+		return launcher == null ? Task.CompletedTask : launcher.StopAsync().AsTask();
 	}
 	#endregion
 

@@ -75,7 +75,7 @@ public class ZeroPluginTests
 		Assert.Same(scope.Factory, server.Storages);
 
 		var bindings = XDocument.Load(Path.Combine(scope.DirectoryPath, "plugins", "zeromq", "Zongsoft.Messaging.ZeroMQ-daemon.option"))
-			.Nodes().OfType<XProcessingInstruction>().Where(instruction => instruction.Target == "binding")
+			.Nodes().OfType<XProcessingInstruction>().Where(instruction => instruction.Target == "zongsoft.tools.binding")
 			.Select(instruction => XElement.Parse($"<binding {instruction.Data} />")).ToArray();
 		Assert.Equal(4, bindings.Length);
 
@@ -145,7 +145,7 @@ public class ZeroPluginTests
 		Assert.Equal("false", scope.Configuration["Messaging:ZeroMQ:Server:Enabled"]);
 
 		var bindings = XDocument.Load(Path.Combine(scope.DirectoryPath, "plugins", "zeromq", "Zongsoft.Messaging.ZeroMQ-daemon.option"))
-			.Nodes().OfType<XProcessingInstruction>().Where(instruction => instruction.Target == "binding").ToArray();
+			.Nodes().OfType<XProcessingInstruction>().Where(instruction => instruction.Target == "zongsoft.tools.binding").ToArray();
 		Assert.Equal(4, bindings.Length);
 		Assert.All(bindings, binding => Assert.Equal("enabled:true", (string)XElement.Parse($"<binding {binding.Data} />").Attribute("filter")));
 		Assert.Equal(0, scope.Factory.Count);

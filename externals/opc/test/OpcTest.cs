@@ -51,7 +51,7 @@ public class OpcTest
 		var plugin = LoadXml("Zongsoft.Externals.Opc-daemon.plugin");
 		var option = LoadXml("Zongsoft.Externals.Opc-daemon.option");
 		var server = plugin.Descendants("object").Single(element => (string)element.Attribute("name") == "Server");
-		var binding = option.Nodes().OfType<XProcessingInstruction>().Single(instruction => instruction.Target == "binding");
+		var binding = option.Nodes().OfType<XProcessingInstruction>().Single(instruction => instruction.Target == "zongsoft.tools.binding");
 
 		Assert.Equal("{option:/Externals/Opc/Server/Enabled}", (string)server.Attribute("Enabled"));
 		Assert.Equal("{option:/Externals/Opc/Server/Urls}", (string)server.Attribute("Urls"));

@@ -16,7 +16,7 @@ public class OtlpIntegrationTest(ITestOutputHelper output)
 	public void FixtureBindingsDescribeActualListener()
 	{
 		var document = XDocument.Load(Path.Combine(AppContext.BaseDirectory, "fixtures", "Zongsoft.Diagnostics.Protocols.Server.option"));
-		var instruction = Assert.Single(document.DescendantNodes().OfType<XProcessingInstruction>(), node => node.Target == "binding");
+		var instruction = Assert.Single(document.DescendantNodes().OfType<XProcessingInstruction>(), node => node.Target == "zongsoft.tools.binding");
 		var binding = XElement.Parse($"<binding {instruction.Data}/>");
 		Assert.Equal("Kestrel/Endpoints/telemetry", (string)binding.Attribute("path"));
 		Assert.Equal("${option.Url}", (string)binding.Attribute("template"));

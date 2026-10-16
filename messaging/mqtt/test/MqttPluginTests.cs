@@ -43,7 +43,7 @@ public class MqttPluginTests
 		Assert.Equal($"tcp://127.0.0.1:{scope.Port}", scope.Configuration["Messaging:Mqtt:Server:Url"]);
 
 		var binding = Assert.Single(XDocument.Load(Path.Combine(scope.DirectoryPath, "plugins", "mqtt", "Zongsoft.Messaging.Mqtt-daemon.option"))
-			.Nodes().OfType<XProcessingInstruction>(), instruction => instruction.Target == "binding");
+			.Nodes().OfType<XProcessingInstruction>(), instruction => instruction.Target == "zongsoft.tools.binding");
 		var declaration = XElement.Parse($"<binding {binding.Data} />");
 		Assert.Equal("Messaging/Mqtt/Server", (string)declaration.Attribute("path"));
 		Assert.Equal("enabled:true", (string)declaration.Attribute("filter"));
@@ -95,7 +95,7 @@ public class MqttPluginTests
 		Assert.Equal("false", scope.Configuration["Messaging:Mqtt:Server:Enabled"]);
 
 		var binding = Assert.Single(XDocument.Load(Path.Combine(scope.DirectoryPath, "plugins", "mqtt", "Zongsoft.Messaging.Mqtt-daemon.option"))
-			.Nodes().OfType<XProcessingInstruction>(), instruction => instruction.Target == "binding");
+			.Nodes().OfType<XProcessingInstruction>(), instruction => instruction.Target == "zongsoft.tools.binding");
 		Assert.Equal("enabled:true", (string)XElement.Parse($"<binding {binding.Data} />").Attribute("filter"));
 		Assert.True(MqttTestUtility.CanBind(scope.Port));
 	}

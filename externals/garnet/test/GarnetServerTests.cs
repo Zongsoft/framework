@@ -72,7 +72,7 @@ public class GarnetServerTests
 		Assert.Same(Configuration.GarnetConnectionSettingsDriver.Instance, driver);
 		Assert.Same(driver, ConnectionSettings.Drivers["Garnet"]);
 
-		var instruction = Assert.Single(scope.Option.Nodes().OfType<XProcessingInstruction>(), node => node.Target == "binding");
+		var instruction = Assert.Single(scope.Option.Nodes().OfType<XProcessingInstruction>(), node => node.Target == "zongsoft.tools.binding");
 		var binding = XElement.Parse($"<binding {instruction.Data} />");
 		Assert.Equal("garnet", (string)binding.Attribute("name"));
 		Assert.Equal($"Externals/Garnet/{server.Setting}", (string)binding.Attribute("path"));
