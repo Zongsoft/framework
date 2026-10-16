@@ -262,12 +262,6 @@ public partial class MqttQueueServer : ListenerBase<Message>
 			await Zongsoft.Diagnostics.Logging.GetLogging<MqttQueueServer>().ErrorAsync(ex);
 		}
 	}
-
-	protected override ValueTask OnHandleAsync(Message message, CancellationToken cancellation)
-	{
-		var handler = this.Handler;
-		return handler == null ? ValueTask.CompletedTask : handler.HandleAsync(message, cancellation);
-	}
 	#endregion
 
 	#region 处置方法
