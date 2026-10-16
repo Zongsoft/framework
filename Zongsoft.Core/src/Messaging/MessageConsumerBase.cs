@@ -80,10 +80,7 @@ public abstract class MessageConsumerBase<TQueue> : ChannelBase, IMessageConsume
 	#region 资源释放
 	protected override async ValueTask DisposeAsync(bool disposing)
 	{
-		var handler = Interlocked.Exchange(ref _handler, null);
-		if(handler == null)
-			return;
-
+		Interlocked.Exchange(ref _handler, null);
 		await base.DisposeAsync(disposing);
 	}
 	#endregion

@@ -70,41 +70,61 @@ public class MessageQueueGuarder : WorkerBase
 		var options = this.GetSubscriptionOptions(out var filters);
 		var consumers = new List<IMessageConsumer>();
 
-		foreach(var filter in filters)
+		try
 		{
-			var consumer = await queue.SubscribeAsync(filter.Topic, filter.Tags, this.Handler, options, cancellation);
-
-			if(consumer != null)
-				consumers.Add(consumer);
-		}
-
-		if(args != null && args.Length > 0)
-		{
-			for(int i = 0; i < args.Length; i++)
+			foreach(var filter in filters)
 			{
-				var filter = Zongsoft.Messaging.Options.QueueSubscriptionFilter.Parse(args[i]);
+				var consumer = await queue.SubscribeAsync(filter.Topic, filter.Tags, this.Handler, options, cancellation);
 
-				if(!string.IsNullOrEmpty(filter.Topic))
+				if(consumer != null)
+					consumers.Add(consumer);
+			}
+
+			if(args != null && args.Length > 0)
+			{
+				for(int i = 0; i < args.Length; i++)
 				{
-					var consumer = await queue.SubscribeAsync(filter.Topic, filter.Tags, this.Handler, options, cancellation);
+					var filter = Zongsoft.Messaging.Options.QueueSubscriptionFilter.Parse(args[i]);
 
-					if(consumer != null)
-						consumers.Add(consumer);
+					if(!string.IsNullOrEmpty(filter.Topic))
+					{
+						var consumer = await queue.SubscribeAsync(filter.Topic, filter.Tags, this.Handler, options, cancellation);
+
+						if(consumer != null)
+							consumers.Add(consumer);
+					}
 				}
 			}
 		}
-
-		_subscribers = consumers.ToArray();
+		finally
+		{
+			//发布部分初始化结果，使基类的失败收尾也能释放已经创建的订阅
+			_subscribers = [.. consumers];
+		}
 	}
 
 	protected async override Task OnStopAsync(string[] args, CancellationToken cancellation)
 	{
-		var subscribers = Interlocked.Exchange(ref _subscribers, null);
+		var subscribers = Volatile.Read(ref _subscribers);
 
 		if(subscribers != null)
 		{
+			var tasks = new Task[subscribers.Length];
+
 			for(int i = 0; i < subscribers.Length; i++)
-				await subscribers[i].UnsubscribeAsync(cancellation);
+				tasks[i] = DisposeAsync(subscribers, i);
+
+			await Task.WhenAll(tasks).ConfigureAwait(false);
+			Interlocked.CompareExchange(ref _subscribers, null, subscribers);
+		}
+
+		static async Task DisposeAsync(IMessageConsumer[] subscribers, int index)
+		{
+			if(subscribers[index] == null)
+				return;
+
+			await subscribers[index].DisposeAsync().ConfigureAwait(false);
+			subscribers[index] = null;
 		}
 	}
 	#endregion

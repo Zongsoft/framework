@@ -42,26 +42,49 @@ public abstract class HandlerBase<TArgument> : IHandler<TArgument>, IHandler
 	#endregion
 
 	#region 公共方法
-	public ValueTask HandleAsync(TArgument argument, CancellationToken cancellation = default) => this.OnHandleAsync(argument, Collections.Parameters.Parameter(), cancellation);
+	/// <summary>派发实参，附加参数为 <see langword="null" />，不创建空容器。</summary>
+	/// <param name="argument">待派发的处理实参。</param>
+	/// <param name="cancellation">取消令牌；仅取消等待的入口不影响已经开始的资源清理。</param>
+	/// <returns>处理操作，调用方必须恰好消费一次。</returns>
+	public ValueTask HandleAsync(TArgument argument, CancellationToken cancellation = default) => this.OnHandleAsync(argument, null, cancellation);
+	/// <summary>原样转发实参与附加参数，保留参数对象身份。</summary>
+	/// <param name="argument">待派发的处理实参。</param>
+	/// <param name="parameters">附加参数；<see langword="null" /> 原样传递，不创建空容器。</param>
+	/// <param name="cancellation">取消令牌；仅取消等待的入口不影响已经开始的资源清理。</param>
+	/// <returns>处理操作。</returns>
 	public ValueTask HandleAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default)
 	{
-		if(parameters == null)
-			return this.OnHandleAsync(argument, null, cancellation);
-		else
-			return this.OnHandleAsync(argument, parameters, cancellation);
+		return this.OnHandleAsync(argument, parameters, cancellation);
 	}
 	#endregion
 
 	#region 抽象方法
+	/// <summary>处理实参；实现必须允许附加参数为 <see langword="null" />。</summary>
+	/// <param name="argument">待派发的处理实参。</param>
+	/// <param name="parameters">附加参数；<see langword="null" /> 原样传递，不创建空容器。</param>
+	/// <param name="cancellation">取消令牌；仅取消等待的入口不影响已经开始的资源清理。</param>
+	/// <returns>处理操作。</returns>
 	protected abstract ValueTask OnHandleAsync(TArgument argument, Collections.Parameters parameters, CancellationToken cancellation);
 	#endregion
 
 	#region 显式实现
+	/// <summary>转换对象实参并通过无附加参数入口派发。</summary>
+	/// <param name="argument">待派发的处理实参。</param>
+	/// <param name="cancellation">取消令牌；仅取消等待的入口不影响已经开始的资源清理。</param>
+	/// <returns>处理操作。</returns>
 	ValueTask IHandler.HandleAsync(object argument, CancellationToken cancellation) => this.HandleAsync(this.Convert(argument), null, cancellation);
+	/// <summary>转换对象实参并原样传递附加参数。</summary>
+	/// <param name="argument">待派发的处理实参。</param>
+	/// <param name="parameters">附加参数；<see langword="null" /> 原样传递，不创建空容器。</param>
+	/// <param name="cancellation">取消令牌；仅取消等待的入口不影响已经开始的资源清理。</param>
+	/// <returns>处理操作。</returns>
 	ValueTask IHandler.HandleAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation) => this.HandleAsync(this.Convert(argument), parameters, cancellation);
 	#endregion
 
 	#region 参数转换
+	/// <summary>将非泛型调用的实参转换为处理器要求的类型。</summary>
+	/// <param name="argument">待派发的处理实参。</param>
+	/// <returns>转换结果；空引用返回目标类型默认值。</returns>
 	protected virtual TArgument Convert(object argument)
 	{
 		if(argument == null)

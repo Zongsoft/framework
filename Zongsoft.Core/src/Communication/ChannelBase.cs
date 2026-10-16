@@ -30,109 +30,141 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Zongsoft.Communication;
 
-/// <summary>定义通道基本功能的抽象基类。</summary>
-public abstract class ChannelBase : IChannel, IAsyncDisposable
+/// <summary>统一管理通道关闭和资源释放的抽象基类。</summary>
+/// <remarks>并发调用共享完成结果；事件中可以请求关闭，但不能同步等待包含自身的关闭或释放操作。</remarks>
+public abstract class ChannelBase : IChannel
 {
-	#region 事件定义
+	#region 事件声明
+	/// <summary>表示通道传输已经关闭。</summary>
 	public event EventHandler Closed;
+	/// <summary>表示通道开始关闭。</summary>
 	public event EventHandler Closing;
 	#endregion
 
-	#region 常量定义
-	private const int NONE_STATUS = 0;
-	private const int CLOSED_STATUS = 1;
-	private const int CLOSING_STATUS = 2;
-	#endregion
-
-	#region 私有变量
-	private int _status;
-	private volatile AutoResetEvent _semaphore;
-	#endregion
-
-	#region 构造函数
-	protected ChannelBase()
-	{
-		_semaphore = new AutoResetEvent(true);
-	}
+	#region 成员字段
+	private int _closed;
+	private int _disposed;
+	private TaskCompletionSource _closing;
+	private TaskCompletionSource _disposing;
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取一个值，指示当前通道是否已经关闭。</summary>
-	public bool IsClosed => _status == CLOSED_STATUS;
-	/// <summary>获取一个值，指示当前通道是否已经被释放。</summary>
-	public bool IsDisposed => _semaphore == null;
-	#endregion
-
-	#region 激发事件
-	protected virtual void OnClosed() => this.Closed?.Invoke(this, EventArgs.Empty);
-	protected virtual void OnClosing() => this.Closing?.Invoke(this, EventArgs.Empty);
+	/// <summary>获取一个值，指示通道关闭流程已经结束，即使收尾曾发生异常。</summary>
+	public bool IsClosed => Volatile.Read(ref _closed) != 0;
+	/// <summary>获取一个值，指示资源释放流程已经结束。</summary>
+	public bool IsDisposed => Volatile.Read(ref _disposed) != 0;
+	/// <summary>获取一个值，指示通道已开始关闭，不再接受新操作。</summary>
+	protected bool IsClosing => Volatile.Read(ref _closing) != null;
 	#endregion
 
 	#region 关闭方法
-	/// <summary>当前通道被关闭时候由子类实现。</summary>
-	/// <param name="cancellation">监视取消请求的令牌。</param>
-	/// <returns>表示通道关闭操作的异步任务。</returns>
+	/// <summary>请求关闭通道，并等待唯一的关闭操作。</summary>
+	/// <param name="cancellation">开始前取消请求；开始后仅取消本调用方的等待。</param>
+	/// <returns>共享关闭结果；异常不会阻止其余关闭阶段执行。</returns>
+	public ValueTask CloseAsync(CancellationToken cancellation = default)
+	{
+		cancellation.ThrowIfCancellationRequested();
+		var closing = Volatile.Read(ref _closing);
+
+		if(closing == null)
+		{
+			var candidate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+			closing = Interlocked.CompareExchange(ref _closing, candidate, null) ?? candidate;
+
+			if(ReferenceEquals(closing, candidate))
+				_ = this.CloseCoreAsync(candidate);
+		}
+
+		return new(cancellation.CanBeCanceled ? closing.Task.WaitAsync(cancellation) : closing.Task);
+	}
+
+	/// <summary>关闭派生类型拥有的传输。基类确保仅执行一次。</summary>
+	/// <param name="cancellation">资源收尾令牌，不随单个关闭调用者取消。</param>
+	/// <returns>传输关闭操作。</returns>
 	protected abstract ValueTask OnCloseAsync(CancellationToken cancellation);
 
-	/// <summary>关闭当前通道。</summary>
-	/// <param name="cancellation">监视取消请求的令牌。</param>
-	/// <returns>表示通道关闭操作的异步任务。</returns>
-	/// <remarks>
-	///		<para>注意：该方法不允许线程重入，即在多线程调用中，本方法内部会以同步机制运行。</para>
-	///		<para>如果当前通道是已关闭的(即<seealso cref="IsClosed"/>属性为真)，则该方法不执行任何操作。</para>
-	/// </remarks>
-	public async ValueTask CloseAsync(CancellationToken cancellation = default)
+	/// <summary>执行每个关闭阶段，即使通知或派生关闭抛错也继续后续清理。</summary>
+	/// <param name="completion">已发布的共享完成信号。</param>
+	/// <returns>唯一关闭执行任务。</returns>
+	private async Task CloseCoreAsync(TaskCompletionSource completion)
 	{
-		var semaphore = _semaphore ?? throw new ObjectDisposedException(this.GetType().Name);
+		List<Exception> errors = null;
 
-		try
-		{
-			semaphore.WaitOne();
+		try { this.OnClosing(); }
+		catch(Exception exception) { (errors ??= []).Add(exception); }
 
-			//将状态设置为关闭中
-			_status = CLOSING_STATUS;
+		try { await this.OnCloseAsync(CancellationToken.None).ConfigureAwait(false); }
+		catch(Exception exception) { (errors ??= []).Add(exception); }
 
-			//激发“Closing”关闭前事件
-			this.OnClosing();
+		Volatile.Write(ref _closed, 1);
 
-			//执行子类实现的真正关闭动作
-			await this.OnCloseAsync(cancellation);
+		try { this.OnClosed(); }
+		catch(Exception exception) { (errors ??= []).Add(exception); }
 
-			//设置状态为已关闭
-			Interlocked.Exchange(ref _status, CLOSED_STATUS);
-
-			//激发“Closed”关闭后事件
-			this.OnClosed();
-		}
-		finally
-		{
-			//如果状态不是已关闭则恢复到未关闭状态
-			if(_status != CLOSED_STATUS)
-				_status = NONE_STATUS;
-
-			_semaphore.Set();
-		}
+		if(errors == null)
+			completion.TrySetResult();
+		else
+			completion.TrySetException(errors);
 	}
 	#endregion
 
-	#region 处置方法
-	protected virtual async ValueTask DisposeAsync(bool disposing)
-	{
-		if(disposing)
-			await this.CloseAsync();
+	#region 事件通知
+	/// <summary>通知通道开始关闭。</summary>
+	protected virtual void OnClosing() => this.Closing?.Invoke(this, EventArgs.Empty);
+	/// <summary>通知通道关闭流程结束。</summary>
+	protected virtual void OnClosed() => this.Closed?.Invoke(this, EventArgs.Empty);
+	#endregion
 
-		var semaphore = Interlocked.Exchange(ref _semaphore, null);
-		if(semaphore != null)
-			semaphore.Dispose();
+	#region 释放资源
+	/// <summary>关闭完成后释放派生类型拥有的资源；注入的共享服务不由通道释放。</summary>
+	/// <param name="disposing">是否释放托管资源。</param>
+	/// <returns>派生资源释放操作。</returns>
+	protected virtual ValueTask DisposeAsync(bool disposing) => ValueTask.CompletedTask;
+
+	/// <summary>关闭通道并释放资源。并发调用等待同一结果。</summary>
+	/// <returns>完整的资源释放操作。</returns>
+	public ValueTask DisposeAsync()
+	{
+		var disposing = Volatile.Read(ref _disposing);
+
+		if(disposing == null)
+		{
+			var candidate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+			disposing = Interlocked.CompareExchange(ref _disposing, candidate, null) ?? candidate;
+			if(ReferenceEquals(disposing, candidate))
+				_ = this.DisposeCoreAsync(candidate);
+		}
+
+		return new(disposing.Task);
 	}
 
-	public async ValueTask DisposeAsync()
+	/// <summary>在关闭后释放派生资源并聚合两个阶段的错误。</summary>
+	/// <param name="completion">已发布的共享完成信号。</param>
+	/// <returns>唯一释放执行任务。</returns>
+	private async Task DisposeCoreAsync(TaskCompletionSource completion)
 	{
-		await this.DisposeAsync(true);
+		List<Exception> errors = null;
+
+		try { await this.CloseAsync().ConfigureAwait(false); }
+		catch(Exception exception)
+		{
+			errors = _closing.Task.Exception is { } failure ? [.. failure.InnerExceptions] : [exception];
+		}
+
+		try { await this.DisposeAsync(true).ConfigureAwait(false); }
+		catch(Exception exception) { (errors ??= []).Add(exception); }
+
+		Volatile.Write(ref _disposed, 1);
 		GC.SuppressFinalize(this);
+
+		if(errors == null)
+			completion.TrySetResult();
+		else
+			completion.TrySetException(errors);
 	}
 	#endregion
 }

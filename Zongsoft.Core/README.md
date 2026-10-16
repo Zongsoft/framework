@@ -72,6 +72,14 @@ The text format is `algorithm#factor:nonce|value`; `#factor` may be omitted when
 
 Ordinary `[Service]` registrations and option scanning still require externally visible types. A public nested service inside a non-public containing type is not externally visible. This keeps implementation-only services out of automatic registration while allowing private registration helpers.
 
+## Communication Lifetimes
+
+`ChannelBase.CloseAsync` executes once and shares its result with concurrent callers. Cancellation before entry prevents closing; after entry it only cancels that caller's wait. Closing and closed notifications cannot bypass transport cleanup. Disposal waits for closing before invoking the derived resource cleanup once. A closed channel cannot be reopened; create a new instance. Lifecycle callbacks may request closing but must not synchronously wait for the operation that contains them.
+
+`WorkerBase` coordinates start, stop, pause and resume asynchronously and supports `IAsyncDisposable`. Startup failures propagate and invoke the stop hook to clean partially initialized resources. Stop failures retain `Stopping` and block restart until cleanup succeeds; notification failures do not roll back established state. Synchronous entry points block on the same asynchronous operations.
+
+`ListenerBase<T>` dispatches handler arguments without decoding bytes and does not own injected handlers. An absent handler is a no-op with cancellation checking. Parameterless `HandlerBase<T>` calls pass null parameters; explicitly supplied parameters retain their identity. Both `IPacketizer` interfaces define only `Pack` and `Unpack`: encode without flushing, leave incomplete input untouched, and advance input after successful decoding. Exact frame lengths and decoded-resource release belong to the transport implementation; Net supplies these through its packetizer base class.
+
 ## Repository Layout
 
 ```text

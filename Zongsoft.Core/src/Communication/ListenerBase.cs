@@ -28,7 +28,6 @@
  */
 
 using System;
-using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -37,10 +36,12 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Communication;
 
-/// <summary>提供通讯侦听功能的抽象基类。</summary>
-public abstract class ListenerBase<T> : WorkerBase, IListener<T>, IReceiver, IHandleable<T>, IHandleable
+/// <summary>提供工作器生命周期和泛型实参派发的监听器基类。</summary>
+/// <typeparam name="T">处理器实参类型，与传输层的线协议包类型相互独立。</typeparam>
+/// <remarks>注入的处理器由提供者拥有；未配置处理器时完成空处理，仍检查取消。</remarks>
+public abstract class ListenerBase<T> : WorkerBase, IListener<T>, IHandleable<T>, IHandleable
 {
-	#region 成员变量
+	#region 成员字段
 	private IHandler<T> _handler;
 	#endregion
 
@@ -49,59 +50,49 @@ public abstract class ListenerBase<T> : WorkerBase, IListener<T>, IReceiver, IHa
 	#endregion
 
 	#region 公共属性
+	/// <summary>获取一个值，指示工作器处于 <see cref="WorkerState.Running" /> 状态。</summary>
 	public virtual bool IsListening => this.State == WorkerState.Running;
-	public virtual IPacketizer<T> Packetizer { get; }
-	public IHandler<T> Handler { get => _handler; set => _handler = value; }
-	IHandler IHandleable.Handler { get => _handler; set => _handler = value as IHandler<T> ?? throw new ArgumentException(string.Format(Properties.Resources.Communication_ListenerHandlerMismatch_Message, value)); }
-	#endregion
 
-	#region 虚拟方法
-	protected virtual ValueTask OnReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation)
+	/// <summary>获取或设置共享处理器，不同连接可能并发调用该处理器。</summary>
+	public IHandler<T> Handler
 	{
-		var message = data;
-
-		if(this.OnDeserialize(ref message, out var value))
-		{
-			var task = this.OnHandleAsync(value, cancellation);
-
-			if(!task.IsCompletedSuccessfully)
-				return new ValueTask(task.AsTask());
-		}
-
-		return ValueTask.CompletedTask;
+		get => Volatile.Read(ref _handler);
+		set => Volatile.Write(ref _handler, value);
 	}
 
-	protected virtual ValueTask OnHandleAsync(T package, CancellationToken cancellation) => this.Handler?.HandleAsync(package, cancellation) ?? ValueTask.FromCanceled(cancellation);
-	#endregion
-
-	#region 协议转换
-	protected virtual bool OnDeserialize(ref ReadOnlySequence<byte> data, out T result)
+	/// <summary>获取或设置与监听实参类型匹配的共享处理器。</summary>
+	IHandler IHandleable.Handler
 	{
-		var packetizer = this.Packetizer;
-
-		if(packetizer == null)
-			throw new InvalidOperationException(Properties.Resources.Communication_ListenerPacketizerRequired_Message);
-
-		return packetizer.Unpack(ref data, out result);
+		get => this.Handler;
+		set => this.Handler = value == null ? null : value as IHandler<T> ?? throw new ArgumentException(string.Format(Properties.Resources.Communication_ListenerHandlerMismatch_Message, value));
 	}
 	#endregion
 
-	#region 显式实现
-	ValueTask IListener<T>.HandleAsync(T package, CancellationToken cancellation)
+	#region 处理方法
+	/// <summary>检查取消并派发实参，不取得处理器的释放所有权。</summary>
+	/// <param name="argument">处理器实参。</param>
+	/// <param name="cancellation">处理取消令牌。</param>
+	/// <returns>处理完成操作；调用方必须恰好消费一次。</returns>
+	protected virtual ValueTask OnHandleAsync(T argument, CancellationToken cancellation)
 	{
-		var task = this.OnHandleAsync(package, cancellation);
-		return task.IsCompletedSuccessfully ? ValueTask.CompletedTask : new ValueTask(task.AsTask());
+		cancellation.ThrowIfCancellationRequested();
+		return this.Handler?.HandleAsync(argument, cancellation) ?? ValueTask.CompletedTask;
 	}
-	ValueTask IReceiver.ReceiveAsync(in ReadOnlySequence<byte> data, CancellationToken cancellation) => this.OnReceiveAsync(data, cancellation);
+
+	/// <summary>通过泛型入口派发实参，不复制或额外分配参数容器。</summary>
+	/// <param name="package">待派发或编解码的报文。</param>
+	/// <param name="cancellation">取消令牌；仅取消等待的入口不影响已经开始的资源清理。</param>
+	/// <returns>恰好消费一次的处理操作。</returns>
+	ValueTask IListener<T>.HandleAsync(T package, CancellationToken cancellation) => this.OnHandleAsync(package, cancellation);
 	#endregion
 
 	#region 释放资源
+	/// <summary>清除处理器引用；共享处理器仍由注入者拥有。</summary>
+	/// <param name="disposing">是否释放托管资源。</param>
 	protected override void Dispose(bool disposing)
 	{
-		var handler = Interlocked.Exchange(ref _handler, null);
-
-		if(handler is IDisposable disposable)
-			disposable.Dispose();
+		Interlocked.Exchange(ref _handler, null);
+		base.Dispose(disposing);
 	}
 	#endregion
 }

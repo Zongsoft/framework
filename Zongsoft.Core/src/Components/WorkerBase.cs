@@ -33,340 +33,356 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Components;
 
-/// <summary>表示后台工作器的基类。</summary>
-/// <remarks>
-///		<para>该实现提供了对<see cref="OnStartAsync(string[], CancellationToken)"/>、<see cref="OnStopAsync(string[], CancellationToken)"/>、<see cref="OnPauseAsync"/>、<see cref="OnResumeAsync"/>这四个方法之间的线程重入的隔离。</para>
-///		<para>对于子类的实现者而言，无需担心这些方法会在多线程中会导致状态的不一致，并确保了它们不会发生线程重入。</para>
-/// </remarks>
-public abstract class WorkerBase : IWorker, IDisposable
+/// <summary>以异步操作串行协调启动、停止、暂停及释放的工作器基类。</summary>
+/// <remarks>同步入口阻塞等待异步结果。生命周期回调不得等待包含自身的操作；通知异常不回滚已经完成的状态转换。</remarks>
+public abstract class WorkerBase : IWorker, IDisposable, IAsyncDisposable
 {
-	#region 常量定义
-	private const int DISPOSED = -1;
-	private const int DISPOSING = 1;
-	#endregion
-
 	#region 事件声明
+	/// <summary>表示生命周期转换已经确定结果；通知异常不会回滚状态。</summary>
 	public event EventHandler<WorkerStateChangedEventArgs> StateChanged;
 	#endregion
 
 	#region 成员字段
 	private string _name;
-	private bool _enabled;
+	private bool _enabled = true;
 	private bool _canPauseAndContinue;
 	private int _state;
-	private volatile int _disposing;
-	private readonly AutoResetEvent _semaphore;
+	private int _disposed;
+	private Operation _operation;
+	private TaskCompletionSource _disposing;
 	#endregion
 
 	#region 构造函数
 	protected WorkerBase() : this(null) { }
-	protected WorkerBase(string name)
-	{
-		_name = string.IsNullOrWhiteSpace(name) ? this.GetType().Name : name.Trim();
-		_enabled = true;
-		_canPauseAndContinue = false;
-		_state = (int)WorkerState.Stopped;
-		_semaphore = new AutoResetEvent(true);
-	}
+	protected WorkerBase(string name) => _name = string.IsNullOrWhiteSpace(name) ? this.GetType().Name : name.Trim();
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取或设置工作器的名称。</summary>
+	/// <summary>获取或设置工作器名称。</summary>
 	public string Name
 	{
 		get => _name;
-		protected set => _name = value ?? throw new ArgumentNullException();
+		protected set => _name = value ?? throw new ArgumentNullException(nameof(value));
 	}
 
-	/// <summary>获取或设置是否禁用当前工作器。</summary>
-	/// <remarks>如果当前工作器</remarks>
+	/// <summary>获取或设置工作器是否启用；禁用会通过同步入口停止工作器。</summary>
 	public bool Enabled
 	{
-		get => _enabled;
+		get => Volatile.Read(ref _enabled);
 		set
 		{
-			if(_enabled == value)
-				return;
-
-			_enabled = value;
-
+			Volatile.Write(ref _enabled, value);
 			if(!value)
 				this.Stop();
 		}
 	}
 
-	/// <summary>获取或设置工作器工作器是否可以暂停和继续。</summary>
+	/// <summary>获取或设置工作器是否支持暂停和恢复；仅允许在已停止时设置。</summary>
 	public bool CanPauseAndContinue
 	{
 		get => _canPauseAndContinue;
 		protected set
 		{
-			if(_state != (int)WorkerState.Stopped)
+			if(this.State != WorkerState.Stopped)
 				throw new InvalidOperationException();
 
 			_canPauseAndContinue = value;
 		}
 	}
 
-	/// <summary>获取工作器的状态。</summary>
-	public WorkerState State => (WorkerState)_state;
-
-	/// <summary>获取一个值，指示当前工作器是否已释放。</summary>
-	public bool IsDisposed => _disposing == DISPOSED;
+	/// <summary>获取当前生命周期状态。停止失败时保持停止中，不允许再次启动。</summary>
+	public WorkerState State => (WorkerState)Volatile.Read(ref _state);
+	/// <summary>获取一个值，指示释放流程已经结束。</summary>
+	public bool IsDisposed => Volatile.Read(ref _disposed) != 0;
 	#endregion
 
 	#region 公共方法
+	/// <summary>同步等待 <see cref="StartAsync(string[], CancellationToken)" />。</summary>
+	/// <param name="args">生命周期操作参数。</param>
 	public void Start(params string[] args) => this.StartAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
-	public async Task StartAsync(string[] args, CancellationToken cancellation = default)
-	{
-		if(this.IsDisposed)
-			throw new ObjectDisposedException($"{this.GetType().Name}:{this.Name}");
+	/// <summary>启动工作器；并发启动共用同一结果，首个启动令牌传给扩展点。</summary>
+	/// <param name="cancellation">取消令牌；仅取消等待的入口不影响已经开始的资源清理。</param>
+	/// <returns>启动结果；初始化失败对调用者可见。</returns>
+	public Task StartAsync(CancellationToken cancellation = default) => this.ChangeStateAsync(WorkerState.Starting, null, cancellation);
+	/// <summary>启动工作器；并发启动共用同一结果，首个启动令牌传给扩展点。</summary>
+	/// <param name="args">生命周期操作参数。</param>
+	/// <param name="cancellation">取消令牌；仅取消等待的入口不影响已经开始的资源清理。</param>
+	/// <returns>启动结果；初始化失败对调用者可见。</returns>
+	public Task StartAsync(string[] args, CancellationToken cancellation = default) => this.ChangeStateAsync(WorkerState.Starting, args, cancellation);
 
-		//如果不可用或当前状态不是已停止则返回
-		if(!_enabled || _state != (int)WorkerState.Stopped)
-			return;
-
-		try
-		{
-			//等待信号量
-			_semaphore.WaitOne();
-
-			if(!_enabled || _state != (int)WorkerState.Stopped)
-				return;
-
-			//更新当前状态为“正在启动中”
-			_state = (int)WorkerState.Starting;
-
-			//调用启动抽象方法，以执行实际的启动操作
-			await this.OnStartAsync(args, cancellation);
-
-			//更新当前状态为“运行中”
-			_state = (int)WorkerState.Running;
-
-			//激发“StateChanged”事件
-			this.OnStateChanged(nameof(Start), WorkerState.Running);
-		}
-		catch(Exception ex)
-		{
-			_state = (int)WorkerState.Stopped;
-
-			//激发“StateChanged”事件
-			this.OnStateChanged(nameof(Start), WorkerState.Stopped, ex);
-
-			if(System.Diagnostics.Debugger.IsAttached)
-				throw;
-			else
-				Zongsoft.Diagnostics.Logging.GetLogging(this).Error(ex);
-		}
-		finally
-		{
-			//释放信号量
-			_semaphore.Set();
-		}
-	}
-
+	/// <summary>同步等待 <see cref="StopAsync(string[], CancellationToken)" />。</summary>
+	/// <param name="args">生命周期操作参数。</param>
 	public void Stop(params string[] args) => this.StopAsync(args).ConfigureAwait(false).GetAwaiter().GetResult();
-	public async Task StopAsync(string[] args, CancellationToken cancellation = default)
-	{
-		if(_state == (int)WorkerState.Stopping || _state == (int)WorkerState.Stopped)
-			return;
+	/// <summary>停止工作器；开始后取消只影响本调用方等待。</summary>
+	/// <param name="cancellation">取消令牌；仅取消等待的入口不影响已经开始的资源清理。</param>
+	/// <returns>停止结果；失败保持 <see cref="WorkerState.Stopping" />，可再次请求停止。</returns>
+	public Task StopAsync(CancellationToken cancellation = default) => this.ChangeStateAsync(WorkerState.Stopping, null, cancellation);
+	/// <summary>停止工作器；开始后取消只影响本调用方等待。</summary>
+	/// <param name="args">生命周期操作参数。</param>
+	/// <param name="cancellation">取消令牌；仅取消等待的入口不影响已经开始的资源清理。</param>
+	/// <returns>停止结果；失败保持 <see cref="WorkerState.Stopping" />，可再次请求停止。</returns>
+	public Task StopAsync(string[] args, CancellationToken cancellation = default) => this.ChangeStateAsync(WorkerState.Stopping, args, cancellation);
 
-		int originalState = -1;
-
-		try
-		{
-			//等待信号量
-			_semaphore.WaitOne();
-
-			if(_state == (int)WorkerState.Stopping || _state == (int)WorkerState.Stopped)
-				return;
-
-			//更新当前状态为“正在停止中”，并保存原来的状态
-			originalState = Interlocked.Exchange(ref _state, (int)WorkerState.Stopping);
-
-			//调用停止抽象方法，以执行实际的停止操作
-			await this.OnStopAsync(args, cancellation);
-
-			//更新当前状态为已停止
-			_state = (int)WorkerState.Stopped;
-
-			//激发“StateChanged”事件
-			this.OnStateChanged(nameof(Stop), WorkerState.Stopped);
-		}
-		catch(Exception ex)
-		{
-			//还原状态
-			_state = originalState;
-
-			//激发“StateChanged”事件
-			this.OnStateChanged(nameof(Stop), (WorkerState)originalState, ex);
-
-			if(System.Diagnostics.Debugger.IsAttached)
-				throw;
-			else
-				Zongsoft.Diagnostics.Logging.GetLogging(this).Error(ex);
-		}
-		finally
-		{
-			//释放信号量
-			_semaphore.Set();
-		}
-	}
-
+	/// <summary>同步等待 <see cref="PauseAsync" />。</summary>
 	public void Pause() => this.PauseAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-	public async Task PauseAsync(CancellationToken cancellation = default)
+	/// <summary>在支持暂停时协调一次暂停转换。</summary>
+	/// <param name="cancellation">取消令牌；仅取消等待的入口不影响已经开始的资源清理。</param>
+	/// <returns>暂停结果。</returns>
+	public Task PauseAsync(CancellationToken cancellation = default) => this.ChangeStateAsync(WorkerState.Pausing, null, cancellation);
+
+	/// <summary>同步等待 <see cref="ResumeAsync" />。</summary>
+	public void Resume() => this.ResumeAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+	/// <summary>在支持恢复时协调一次恢复转换。</summary>
+	/// <param name="cancellation">取消令牌；仅取消等待的入口不影响已经开始的资源清理。</param>
+	/// <returns>恢复结果。</returns>
+	public Task ResumeAsync(CancellationToken cancellation = default) => this.ChangeStateAsync(WorkerState.Resuming, null, cancellation);
+	#endregion
+
+	#region 状态转换
+	/// <summary>合并相同操作，异步等待不同操作，并原子取得下一次转换权。</summary>
+	/// <param name="state">目标转换状态。</param>
+	/// <param name="args">生命周期操作参数。</param>
+	/// <param name="cancellation">取消令牌；仅取消等待的入口不影响已经开始的资源清理。</param>
+	/// <returns>本调用方的等待任务。</returns>
+	private async Task ChangeStateAsync(WorkerState state, string[] args, CancellationToken cancellation)
 	{
-		if(this.IsDisposed)
-			throw new ObjectDisposedException($"{this.GetType().Name}:{this.Name}");
+		while(true)
+		{
+			cancellation.ThrowIfCancellationRequested();
 
-		//如果不可用则退出
-		if(!_enabled)
+			if(state != WorkerState.Stopping)
+				ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposing) != null, this);
+
+			var current = Volatile.Read(ref _operation);
+
+			if(current != null)
+			{
+				if(current.State == state)
+				{
+					await current.Completion.Task.WaitAsync(cancellation).ConfigureAwait(false);
+					return;
+				}
+
+				try { await current.Completion.Task.WaitAsync(cancellation).ConfigureAwait(false); }
+				catch when(current.Completion.Task.IsCompleted && !cancellation.IsCancellationRequested) { }
+
+				continue;
+			}
+
+			var operation = new Operation(state);
+			if(Interlocked.CompareExchange(ref _operation, operation, null) != null)
+				continue;
+
+			//操作对象发布后才读取并改变状态，保证等待者不会错过正在进行的转换
+			_ = this.ExecuteAsync(operation, args, cancellation);
+			await operation.Completion.Task.WaitAsync(cancellation).ConfigureAwait(false);
+
 			return;
-
-		//如果不支持暂停继续则抛出异常
-		if(!_canPauseAndContinue)
-			throw new NotSupportedException(string.Format(Properties.Resources.Worker_PauseResumeUnsupported_Message, _name));
-
-		if(_state != (int)WorkerState.Running)
-			return;
-
-		int originalState = -1;
-
-		try
-		{
-			//等待信号量
-			_semaphore.WaitOne();
-
-			if(_state != (int)WorkerState.Running)
-				return;
-
-			//更新当前状态为“正在暂停中”，并保存原来的状态
-			originalState = Interlocked.Exchange(ref _state, (int)WorkerState.Pausing);
-
-			//执行暂停操作
-			await this.OnPauseAsync(cancellation);
-
-			//更新当前状态为“已经暂停”
-			_state = (int)WorkerState.Paused;
-
-			//激发“StateChanged”事件
-			this.OnStateChanged(nameof(Pause), WorkerState.Paused);
-		}
-		catch(Exception ex)
-		{
-			//还原状态
-			_state = originalState;
-
-			//激发“StateChanged”事件
-			this.OnStateChanged(nameof(Pause), (WorkerState)originalState, ex);
-
-			if(System.Diagnostics.Debugger.IsAttached)
-				throw;
-			else
-				Zongsoft.Diagnostics.Logging.GetLogging(this).Error(ex);
-		}
-		finally
-		{
-			//释放信号量
-			_semaphore.Set();
 		}
 	}
 
-	public void Resume() => this.ResumeAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-	public async Task ResumeAsync(CancellationToken cancellation = default)
+	/// <summary>执行派生扩展点并发布稳定状态和共享结果。</summary>
+	/// <param name="operation">持有状态转换权的操作。</param>
+	/// <param name="args">生命周期操作参数。</param>
+	/// <param name="cancellation">取消令牌；仅取消等待的入口不影响已经开始的资源清理。</param>
+	/// <returns>唯一状态转换执行任务。</returns>
+	private async Task ExecuteAsync(Operation operation, string[] args, CancellationToken cancellation)
 	{
-		if(this.IsDisposed)
-			throw new ObjectDisposedException($"{this.GetType().Name}:{this.Name}");
-
-		//如果不可用则退出
-		if(!_enabled)
-			return;
-
-		//如果不支持暂停继续则抛出异常
-		if(!_canPauseAndContinue)
-			throw new NotSupportedException(string.Format(Properties.Resources.Worker_PauseResumeUnsupported_Message, _name));
-
-		if(_state != (int)WorkerState.Paused)
-			return;
-
-		int originalState = -1;
+		Exception error = null;
+		var original = this.State;
+		var transition = operation.State;
+		var action = transition switch
+		{
+			WorkerState.Starting => nameof(Start),
+			WorkerState.Stopping => nameof(Stop),
+			WorkerState.Pausing => nameof(Pause),
+			_ => nameof(Resume),
+		};
 
 		try
 		{
-			//等待信号量
-			_semaphore.WaitOne();
+			cancellation.ThrowIfCancellationRequested();
 
-			if(_state != (int)WorkerState.Paused)
-				return;
+			if(transition != WorkerState.Stopping)
+				ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposing) != null, this);
 
-			//更新当前状态为“正在恢复中”，并保存原来的状态
-			originalState = Interlocked.Exchange(ref _state, (int)WorkerState.Resuming);
+			if(transition is WorkerState.Pausing or WorkerState.Resuming && !_canPauseAndContinue)
+				throw new NotSupportedException(string.Format(Properties.Resources.Worker_PauseResumeUnsupported_Message, _name));
 
-			//执行恢复操作
-			await this.OnResumeAsync(cancellation);
+			if(transition == WorkerState.Starting && original == WorkerState.Stopping)
+				throw new InvalidOperationException();
 
-			_state = (int)WorkerState.Running;
+			var execute = transition switch
+			{
+				WorkerState.Starting => this.Enabled && original == WorkerState.Stopped,
+				WorkerState.Stopping => original != WorkerState.Stopped,
+				WorkerState.Pausing => this.Enabled && original == WorkerState.Running,
+				_ => this.Enabled && original == WorkerState.Paused,
+			};
 
-			//激发“StateChanged”事件
-			this.OnStateChanged(nameof(Resume), WorkerState.Running);
+			if(execute)
+			{
+				Volatile.Write(ref _state, (int)transition);
+
+				try
+				{
+					switch(transition)
+					{
+						case WorkerState.Starting:
+							await this.OnStartAsync(args, cancellation).ConfigureAwait(false);
+							break;
+						case WorkerState.Stopping:
+							await this.OnStopAsync(args, CancellationToken.None).ConfigureAwait(false);
+							break;
+						case WorkerState.Pausing:
+							await this.OnPauseAsync(cancellation).ConfigureAwait(false);
+							break;
+						default:
+							await this.OnResumeAsync(cancellation).ConfigureAwait(false);
+							break;
+					}
+
+					Volatile.Write(ref _state, (int)(transition switch
+					{
+						WorkerState.Stopping => WorkerState.Stopped,
+						WorkerState.Pausing => WorkerState.Paused,
+						_ => WorkerState.Running,
+					}));
+				}
+				catch(Exception exception)
+				{
+					error = exception;
+
+					if(transition == WorkerState.Starting)
+					{
+						Volatile.Write(ref _state, (int)WorkerState.Stopping);
+
+						try
+						{
+							await this.OnStopAsync(args, CancellationToken.None).ConfigureAwait(false);
+							Volatile.Write(ref _state, (int)WorkerState.Stopped);
+						}
+						catch(Exception cleanup) { error = new AggregateException(exception, cleanup); }
+					}
+					else if(transition != WorkerState.Stopping)
+						Volatile.Write(ref _state, (int)original);
+				}
+
+				try { this.OnStateChanged(action, this.State, error); }
+				catch(Exception notification) { error = error == null ? notification : new AggregateException(error, notification); }
+			}
 		}
-		catch(Exception ex)
-		{
-			//还原状态
-			_state = originalState;
+		catch(Exception exception) { error = exception; }
 
-			//激发“StateChanged”事件
-			this.OnStateChanged(nameof(Resume), (WorkerState)originalState, ex);
+		Interlocked.CompareExchange(ref _operation, null, operation);
 
-			if(System.Diagnostics.Debugger.IsAttached)
-				throw;
-			else
-				Zongsoft.Diagnostics.Logging.GetLogging(this).Error(ex);
-		}
-		finally
-		{
-			//释放信号量
-			_semaphore.Set();
-		}
+		if(error == null)
+			operation.Completion.TrySetResult();
+		else if(error is OperationCanceledException canceled)
+			operation.Completion.TrySetCanceled(canceled.CancellationToken);
+		else
+			operation.Completion.TrySetException(error);
 	}
 	#endregion
 
-	#region 抽象方法
+	#region 扩展方法
+	/// <summary>启动工作器；失败后的部分资源由停止扩展点清理。</summary>
+	/// <param name="args">启动参数。</param>
+	/// <param name="cancellation">启动取消令牌。</param>
+	/// <returns>启动操作。</returns>
 	protected abstract Task OnStartAsync(string[] args, CancellationToken cancellation);
+
+	/// <summary>停止并清理工作器，必须允许启动仅完成部分初始化的情况。</summary>
+	/// <param name="args">停止参数。</param>
+	/// <param name="cancellation">收尾令牌，不随调用者取消等待。</param>
+	/// <returns>停止操作；成功意味着所拥有的运行资源已经退场。</returns>
 	protected abstract Task OnStopAsync(string[] args, CancellationToken cancellation);
+
+	/// <summary>暂停工作器。</summary>
+	/// <param name="cancellation">取消令牌。</param>
+	/// <returns>暂停操作。</returns>
 	protected virtual Task OnPauseAsync(CancellationToken cancellation) => Task.CompletedTask;
+
+	/// <summary>恢复工作器。</summary>
+	/// <param name="cancellation">取消令牌。</param>
+	/// <returns>恢复操作。</returns>
 	protected virtual Task OnResumeAsync(CancellationToken cancellation) => Task.CompletedTask;
+
+	/// <summary>在状态确定后发出通知，通知失败不会回滚状态。</summary>
+	/// <param name="actionName">操作名称。</param>
+	/// <param name="state">操作后的状态。</param>
+	/// <param name="exception">操作故障，没有故障时为空。</param>
+	protected virtual void OnStateChanged(string actionName, WorkerState state, Exception exception = null) => this.StateChanged?.Invoke(this, new(actionName, state, exception));
 	#endregion
 
 	#region 重写方法
-	public override string ToString() => _enabled ? $"[{this.State}] {_name}" : $"[{this.State}](Disabled) {_name}";
-	#endregion
-
-	#region 事件激发
-	protected virtual void OnStateChanged(string actionName, WorkerState state, Exception exception = null)
-	{
-		this.StateChanged?.Invoke(this, new WorkerStateChangedEventArgs(actionName, state, exception));
-	}
+	/// <summary>格式化当前状态、启用状态和名称。</summary>
+	/// <returns>工作器诊断文本。</returns>
+	public override string ToString() => this.Enabled ? $"[{this.State}] {_name}" : $"[{this.State}](Disabled) {_name}";
 	#endregion
 
 	#region 释放资源
-	protected virtual void Dispose(bool disposing) => this.Stop();
-	void IDisposable.Dispose()
-	{
-		var disposing = Interlocked.CompareExchange(ref _disposing, DISPOSING, 0);
-		if(disposing != 0)
-			return;
+	/// <summary>停止完成后释放派生资源。</summary>
+	/// <param name="disposing">是否释放托管资源。</param>
+	protected virtual void Dispose(bool disposing) { }
 
-		try
+	/// <summary>停止完成后异步释放派生资源。默认调用同步释放扩展点。</summary>
+	/// <param name="disposing">是否释放托管资源。</param>
+	/// <returns>返回派生资源释放操作。</returns>
+	protected virtual ValueTask DisposeAsync(bool disposing)
+	{
+		this.Dispose(disposing);
+		return ValueTask.CompletedTask;
+	}
+
+	/// <summary>停止并释放工作器，并发调用共享完成结果。</summary>
+	/// <returns>返回资源释放操作。</returns>
+	public ValueTask DisposeAsync()
+	{
+		var disposing = Volatile.Read(ref _disposing);
+
+		if(disposing == null)
 		{
-			this.Dispose(true);
-			_semaphore.Dispose();
-			GC.SuppressFinalize(this);
+			var candidate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+			disposing = Interlocked.CompareExchange(ref _disposing, candidate, null) ?? candidate;
+
+			if(ReferenceEquals(disposing, candidate))
+				_ = this.DisposeCoreAsync(candidate);
 		}
-		finally
-		{
-			_disposing = DISPOSED;
-		}
+
+		return new(disposing.Task);
+	}
+
+	/// <summary>同步等待 <see cref="DisposeAsync()" />。</summary>
+	void IDisposable.Dispose() => this.DisposeAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+	/// <summary>停止后继续尝试派生资源释放，并保留两个阶段的故障。</summary>
+	/// <param name="completion">已发布的共享完成信号。</param>
+	/// <returns>唯一释放执行任务。</returns>
+	private async Task DisposeCoreAsync(TaskCompletionSource completion)
+	{
+		Exception error = null;
+
+		try { await this.StopAsync().ConfigureAwait(false); }
+		catch(Exception exception) { error = exception; }
+
+		try { await this.DisposeAsync(true).ConfigureAwait(false); }
+		catch(Exception exception) { error = error == null ? exception : new AggregateException(error, exception); }
+
+		Volatile.Write(ref _disposed, 1);
+		GC.SuppressFinalize(this);
+
+		if(error == null)
+			completion.TrySetResult();
+		else
+			completion.TrySetException(error);
+	}
+	#endregion
+
+	#region 嵌套类型
+	private sealed class Operation(WorkerState state)
+	{
+		public readonly WorkerState State = state;
+		public readonly TaskCompletionSource Completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
 	}
 	#endregion
 }
