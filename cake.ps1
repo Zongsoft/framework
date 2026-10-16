@@ -36,16 +36,17 @@ try
 			Write-Host "<== Failed ($LASTEXITCODE): $project" -ForegroundColor Red
 		}
 	}
-
-	if($failedProjects.Count -gt 0)
-	{
-		$details = ($failedProjects | ForEach-Object { " - $_" }) -join [Environment]::NewLine
-		throw "The following Cake projects failed:$([Environment]::NewLine)$details"
-	}
-
-	Write-Host "`nAll Cake projects completed successfully." -ForegroundColor Green
 }
 finally
 {
 	Pop-Location
 }
+
+if($failedProjects.Count -gt 0)
+{
+	Write-Host "The following Cake projects failed:" -ForegroundColor Red
+	$failedProjects | ForEach-Object { Write-Host "  - $_" -ForegroundColor Red }
+	exit 1
+}
+
+Write-Host "`nAll Cake projects completed successfully." -ForegroundColor Green
