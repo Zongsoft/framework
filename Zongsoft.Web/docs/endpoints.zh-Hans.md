@@ -2,7 +2,7 @@
 
 [English](endpoints.md) | [简体中文](endpoints.zh-Hans.md)
 
-`Zongsoft.Web.Hosting` 提供独立的 Kestrel 配置转换工具，以及不依赖服务器配置的逻辑端点集合和请求范围约束。独立 ASP.NET 宿主必须在配置加载完成后显式接入；仅引用程序集或添加 binding 处理指令不会启动这套管线。Plugins.Web 通过 IServiceRegistration 扫描，在 Web 宿主存在 Kestrel:Endpoints 声明且未显式注册端点时自动接入转换、范围与监视，无需修改 hosting；gRPC 服务注册由 Web.Grpc 完成。
+`Zongsoft.Web.Hosting` 提供独立的 Kestrel 配置转换工具，以及不依赖服务器配置的逻辑端点集合和请求范围约束。独立 ASP.NET 宿主必须在配置加载完成后显式接入；仅引用程序集或添加 zongsoft.tools.binding 处理指令不会启动这套管线。Plugins.Web 通过 IServiceRegistration 扫描，在 Web 宿主存在 Kestrel:Endpoints 声明且未显式注册端点时自动接入转换、范围与监视，无需修改 hosting；gRPC 服务注册由 Web.Grpc 完成。
 
 ## 宿主接入
 
@@ -95,7 +95,7 @@ gRPC 扩展须在该组内注册服务及区域 fallback。普通未标注路由
 
 gRPC 的媒体类型、方法限制、精确方法路径及 grpc-status 响应均由该包的私有策略实现。主库的中间件和匹配策略是 `WebEndpointExtension` 的私有嵌套类，不作为公开扩展点。
 
-KestrelUtility 消费服务器配置；逻辑端点集合与通用请求管线只消费端点声明和协议规则。这些设施不解析 binding PI、不生成外部入口，也不自动为控制器加前缀。普通 HTTP 同样可以声明 `/api` 与 `/admin` 的不同监听范围。部署工具另行消费 binding 暴露声明生成代理映射。
+KestrelUtility 消费服务器配置；逻辑端点集合与通用请求管线只消费端点声明和协议规则。这些设施不解析 zongsoft.tools.binding PI、不生成外部入口，也不自动为控制器加前缀。普通 HTTP 同样可以声明 `/api` 与 `/admin` 的不同监听范围。部署工具另行消费 binding 暴露声明生成代理映射。
 
 ## 验证与交付
 

@@ -144,7 +144,7 @@ var app = Zongsoft.Web.Application.Web(args);
 await app.RunAsync();
 ```
 
-注册器复用 `IServiceRegistration` 契约。非 Web 宿主、没有端点项或已经注册 `WebEndpointCollection` 时不自动接入。没有声明时，原生 `urls`/`http_ports`/`https_ports`、`app.Urls` 及代码 `Listen(...)` 沿用 ASP.NET Core 行为。是否接入按服务扫描时的配置判断；启动后才增加端点声明需要重启。binding 处理指令面向部署工具声明暴露意图，运行时注册消费端点配置。
+注册器复用 `IServiceRegistration` 契约。非 Web 宿主、没有端点项或已经注册 `WebEndpointCollection` 时不自动接入。没有声明时，原生 `urls`/`http_ports`/`https_ports`、`app.Urls` 及代码 `Listen(...)` 沿用 ASP.NET Core 行为。是否接入按服务扫描时的配置判断；启动后才增加端点声明需要重启。zongsoft.tools.binding 处理指令面向部署工具声明暴露意图，运行时注册消费端点配置。
 
 自动注册调用 `AddWebEndpoints(configuration).AddWebEndpointMonitoring()`。这两个方法只登记工厂与回调，不临时构建服务提供程序或捕获快照。实际快照由最终容器首次消费时创建，后续服务扫描注册的协议规则可以参与。跨插件冲突或无效声明在首次解析端点/服务器选项或启动时失败，不能依赖 `Build()` 立即抛出。
 

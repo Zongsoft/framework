@@ -25,7 +25,7 @@ dotnet add package Zongsoft.Externals.Garnet
 ```xml
 <?xml version="1.0" encoding="utf-8" ?>
 
-<?binding name="garnet"
+<?zongsoft.tools.binding name="garnet"
 	path="Externals/Garnet/default"
 	template="tcp://${option.Value['address']}"
 	protocols="tcp"

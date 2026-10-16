@@ -24,7 +24,7 @@
 
 ```xml
 <!-- Zongsoft.Diagnostics/src/Zongsoft.Diagnostics.option；只列监听相关配置 -->
-<?binding name="prometheus"
+<?zongsoft.tools.binding name="prometheus"
 	path="Diagnostics/Diagnostor/Meters/Exporters/*"
 	filter="Driver:prometheus"
 	template="${option.Settings['urls']}"

@@ -27,7 +27,7 @@ public class PrometheusBindingTest
 		var path = Path.Combine(AppContext.BaseDirectory, "Zongsoft.Diagnostics.option");
 		using var stream = File.OpenRead(path);
 		var configuration = XmlStreamConfigurationProvider.Read(stream, out var instructions, path);
-		var binding = Assert.Single(instructions, instruction => instruction.Name == "binding");
+		var binding = Assert.Single(instructions, instruction => instruction.Name == "zongsoft.tools.binding");
 		var attributes = binding.GetAttributes();
 
 		Assert.Equal("prometheus", attributes["name"]);

@@ -6,4 +6,4 @@ nuget:Grpc.Core.Api@2.76.0
 nuget:Grpc.Reflection@2.76.0
 nuget:Grpc.Net.Common@2.76.0
 nuget:Grpc.AspNetCore.Server@2.76.0
-nuget:Google.Protobuf@3.31.1
+nuget:Google.Protobuf@3.34.0

@@ -13,7 +13,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Google.Protobuf" VersionOverride="3.31.1" />
+		<PackageReference Include="Google.Protobuf" VersionOverride="3.34.0" />
 		<PackageReference Include="Grpc.Reflection" VersionOverride="2.76.0" />
 		<PackageReference Include="Grpc.AspNetCore.Server" VersionOverride="2.76.0" />
 	</ItemGroup>

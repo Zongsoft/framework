@@ -74,7 +74,7 @@ LeastOnce 使用 ROUTER/DEALER 命令 `REGISTER`、`UNREGISTER`、`PING`、`PUBL
 - `Server` 必填；Discovery `Port` 默认 `7969`；`Timeout`、`Heartbeat` 默认 `10s`。
 - `Topic`、`Group`、`Client`、`Instance`、`Filter` 影响路由或身份。默认 Filter 排除当前 Instance；`Filter=*` 接收所有实例。
 - `ReconnectInterval` 控制重新发现。
-- daemon option 的 `/Messaging/ZeroMQ/Server` 是服务端与四条 binding PI 的共同来源。Discovery、Incoming、Outgoing 是必需的完整固定 TCP URL；Control 与 Storage 同时配置并要求有效 Storages 工厂，否则均为空。Enabled=false 排除启动和声明。地址只允许 IP 字面量或 IPv4 通配符及显式端口，拒绝 DNS、非根路径和随机端口，各角色端口互异；启动参数不覆盖地址。
+- daemon option 的 `/Messaging/ZeroMQ/Server` 是服务端与四条 zongsoft.tools.binding PI 的共同来源。Discovery、Incoming、Outgoing 是必需的完整固定 TCP URL；Control 与 Storage 同时配置并要求有效 Storages 工厂，否则均为空。Enabled=false 排除启动和声明。地址只允许 IP 字面量或 IPv4 通配符及显式端口，拒绝 DNS、非根路径和随机端口，各角色端口互异；启动参数不覆盖地址。
 - Server 的地址、`Storage` 名称及 `Storages` 工厂只能在停止状态变更。工厂以 `Create(Storage)` 创建实例，与 Broker Name 独立；换名或替换工厂释放旧实例，Stop 保留实例。未配置 Control 和 Storage 时不调用工厂，Discovery 省略 Control 并继续提供 Broadcast。
 - Server 按角色指定的 IP 绑定 TCP；NetMQ 的 [::] 通配监听可能接受 IPv4，不承诺 IPv6-only。本适配器不配置认证或加密。Discovery 只公告端口，所有角色必须通过同一发布主机及同号端口可达；任意 NAT 端口转换不在当前协议范围。
 

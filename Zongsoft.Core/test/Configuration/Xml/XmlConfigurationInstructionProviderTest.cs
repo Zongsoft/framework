@@ -93,7 +93,7 @@ public class XmlConfigurationInstructionProviderTest
 
 		try
 		{
-			File.WriteAllText(path, "<?binding path='Example'?><configuration />");
+			File.WriteAllText(path, "<?zongsoft.tools.binding path='Example'?><configuration />");
 			using var stream = File.OpenRead(path);
 
 			XmlStreamConfigurationProvider.Read(stream, out var inferred);
@@ -117,13 +117,13 @@ public class XmlConfigurationInstructionProviderTest
 
 		try
 		{
-			File.WriteAllText(path, "<?binding path='Example'?><configuration><option path='Example'><item value='loaded' /></option></configuration>");
+			File.WriteAllText(path, "<?zongsoft.tools.binding path='Example'?><configuration><option path='Example'><item value='loaded' /></option></configuration>");
 			using var configuration = (ConfigurationRoot)new ConfigurationBuilder().AddOptionFile(path).Build();
 			var provider = Assert.IsType<XmlConfigurationProvider>(Assert.Single(configuration.Providers));
 
 			var instruction = Assert.Single(provider.Instructions);
 
-			Assert.Equal("binding", instruction.Name);
+			Assert.Equal("zongsoft.tools.binding", instruction.Name);
 			Assert.Equal(path, instruction.FilePath);
 			Assert.Equal("loaded", configuration["Example:item:value"]);
 			Assert.Equal("Example", instruction.GetAttributes()["PATH"]);

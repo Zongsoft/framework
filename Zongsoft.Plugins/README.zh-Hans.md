@@ -148,7 +148,7 @@ nuget:Zongsoft.Discussions.Web
 
 诊断冲突时，通过 `PluginConfigurationProvider.Providers` 分别读取各插件的生效值；每项是一个 `CompositeConfigurationProvider`，包含处理所选入口及其导入的单个 XML 提供程序。对于 `FileConfigurationProvider` 实例 `file`，由 `file.Source.FileProvider.GetFileInfo(file.Source.Path).PhysicalPath` 取得配置入口的本地路径；该来源不追踪单个键来自哪个导入文件。先在同插件内完成导入覆盖，再比较插件间的值，不能把正常覆盖报为冲突。Plugins 保留通用入口信息；网络键的冲突规则由 Web 宿主消费层负责，不能仅凭最终合并值判断。
 
-`<?binding ...?>` 是供交付工具消费的暴露声明，Plugins 不执行其中的模板、不生成代理配置，也不因此启动监听。
+`<?zongsoft.tools.binding ...?>` 是供交付工具消费的暴露声明，Plugins 不执行其中的模板、不生成代理配置，也不因此启动监听。
 
 ### 验证与操作风险
 

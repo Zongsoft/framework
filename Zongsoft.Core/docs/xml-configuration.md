@@ -10,7 +10,7 @@ Processing instructions (PIs) are collected as original definitions rather than 
 
 ```xml
 <?xml version="1.0" encoding="utf-8" ?>
-<?binding path="Kestrel/Endpoints" url="Url" ?>
+<?zongsoft.tools.binding path="Kestrel/Endpoints/*" template="${option.Url}" ?>
 <configuration>
 	<option path="/Kestrel">
 		<endpoints>
@@ -22,7 +22,7 @@ Processing instructions (PIs) are collected as original definitions rather than 
 </configuration>
 ```
 
-Here `binding` is only a collected declaration. The reader does not interpret `path` or `url`, or generate `.bindings`.
+Here `zongsoft.tools.binding` is only a collected declaration. The reader does not interpret `path` or `template`, or generate `.bindings`.
 
 The following example requires an application-provided `app.option` and demonstrates a single file provider:
 
@@ -143,7 +143,7 @@ sealed class FeatureInstructionProcessor() : XmlConfigurationInstructionProcesso
 }
 ```
 
-This example consumes free-form data directly; attribute parsing is optional. Import is the only built-in instruction. Core does not define `set` or `binding` semantics.
+This example consumes free-form data directly; attribute parsing is optional. Import is the only built-in instruction. Core does not define `set` or `zongsoft.tools.binding` semantics.
 
 ## Instruction definitions
 
@@ -158,7 +158,7 @@ This example consumes free-form data directly; attribute parsing is optional. Im
 | `FilePath` | Source file path or caller-supplied source identifier; empty for anonymous input. |
 | `LineNumber` / `LinePosition` | One-based position of the PI name; a line starting with `<?example?>` reports column 3. |
 
-In the example, `binding.Path` is empty and `example.Path` is `/configuration/option/endpoints/endpoint`, rather than the mapped configuration path `/Kestrel/endpoints/http`. A `path="..."` parameter in `Data` is independent of the object's `Path` property.
+In the example, the `Path` of `zongsoft.tools.binding` is empty and `example.Path` is `/configuration/option/endpoints/endpoint`, rather than the mapped configuration path `/Kestrel/endpoints/http`. A `path="..."` parameter in `Data` is independent of the object's `Path` property.
 
 PIs can occur before the root, inside any element, and after the root; individual processors may restrict placement. Pure parsing collects every PI in the current stream, while selected imports collect only their effective scopes. Outside-root paths are empty. Repeated sibling elements may share a path; line and column distinguish their locations. XML declarations and PI-like text inside comments or CDATA are excluded.
 

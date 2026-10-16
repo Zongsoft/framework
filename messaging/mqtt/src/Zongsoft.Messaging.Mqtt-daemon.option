@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<?binding name="mqtt"
+<?zongsoft.tools.binding name="mqtt"
 	path="Messaging/Mqtt/Server"
 	filter="enabled:true"
 	template="${option.url}"

@@ -83,4 +83,4 @@ nuget:Zongsoft.Hardwares
 
 按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
 
-清单列出的附属产物包括：`Zongsoft.Hardwares.option`、`Zongsoft.Hardwares.plugin`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。
+部署清单在所有平台包含 `Zongsoft.Hardwares.plugin` 和 `System.Management` 依赖。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。

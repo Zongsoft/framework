@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 
-<?binding name="telemetry"
+<?zongsoft.tools.binding name="telemetry"
 	path="Kestrel/Endpoints/telemetry"
 	template="${option.Url}"
 	protocols="${option.Protocols}"

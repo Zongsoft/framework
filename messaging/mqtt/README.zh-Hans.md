@@ -193,7 +193,7 @@ nuget:Zongsoft.Messaging.Mqtt
 [daemon 插件](src/Zongsoft.Messaging.Mqtt-daemon.plugin) 将一个 `MqttQueueServer` 挂载到 `/Workbench/Messaging/Mqtt/QueueServer`，并加入 `/Workbench/Startup`。[同名配置文件](src/Zongsoft.Messaging.Mqtt-daemon.option) 同时提供运行设置和暴露声明：
 
 ```xml
-<?binding name="mqtt"
+<?zongsoft.tools.binding name="mqtt"
 	path="Messaging/Mqtt/Server"
 	filter="enabled:true"
 	template="${option.url}"

@@ -2,7 +2,7 @@
 
 [English](endpoints.md) | [简体中文](endpoints.zh-Hans.md)
 
-`Zongsoft.Web.Hosting` provides independent Kestrel configuration conversion, server-independent logical endpoints and request-scope constraints. Standalone ASP.NET hosts must explicitly connect these facilities after configuration loading. Referencing the assembly or adding a binding processing instruction does not install the pipeline. Plugins.Web uses IServiceRegistration scanning to automatically connect conversion, scopes and monitoring when a Web host declares Kestrel:Endpoints and has no explicit endpoint registration; hosting code needs no changes. gRPC service registration belongs to Web.Grpc.
+`Zongsoft.Web.Hosting` provides independent Kestrel configuration conversion, server-independent logical endpoints and request-scope constraints. Standalone ASP.NET hosts must explicitly connect these facilities after configuration loading. Referencing the assembly or adding a zongsoft.tools.binding processing instruction does not install the pipeline. Plugins.Web uses IServiceRegistration scanning to automatically connect conversion, scopes and monitoring when a Web host declares Kestrel:Endpoints and has no explicit endpoint registration; hosting code needs no changes. gRPC service registration belongs to Web.Grpc.
 
 ## Host integration
 
@@ -93,7 +93,7 @@ The gRPC extension must register services and a regional fallback within that gr
 
 The gRPC package's private policy owns media types, method restrictions, exact method paths and grpc-status responses. The Web middleware and matcher policy are private nested classes of `WebEndpointExtension`, not public extension points.
 
-KestrelUtility consumes server configuration. Logical endpoint collections and the common request pipeline consume endpoint declarations and protocol policies. These facilities do not interpret binding processing instructions, generate external entrances or prepend paths to controllers. Ordinary HTTP can likewise use separate `/api` and `/admin` listener scopes. Deployment tools consume binding exposure declarations separately to generate proxy mappings.
+KestrelUtility consumes server configuration. Logical endpoint collections and the common request pipeline consume endpoint declarations and protocol policies. These facilities do not interpret zongsoft.tools.binding processing instructions, generate external entrances or prepend paths to controllers. Ordinary HTTP can likewise use separate `/api` and `/admin` listener scopes. Deployment tools consume binding exposure declarations separately to generate proxy mappings.
 
 ## Validation and delivery
 

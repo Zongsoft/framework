@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 
-<?binding name="prometheus"
+<?zongsoft.tools.binding name="prometheus"
 	path="Diagnostics/Diagnostor/Meters/Exporters/*"
 	filter="driver:prometheus"
 	template="${option.Settings['urls']}"

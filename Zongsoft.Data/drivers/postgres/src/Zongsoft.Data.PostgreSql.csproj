@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>1.7.0</Version>
+		<Version>1.8.0</Version>
 		<Product>Zongsoft Data Driver for PostgreSQL</Product>
 		<Description>This is a data driver for PostgreSQL of the Zongsoft data engine.</Description>
 		<RootNamespace>Zongsoft.Data.PostgreSql</RootNamespace>
@@ -43,8 +43,8 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.63.0" />
-				<PackageReference Include="Zongsoft.Data" VersionOverride="7.31.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.64.0" />
+				<PackageReference Include="Zongsoft.Data" VersionOverride="7.32.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

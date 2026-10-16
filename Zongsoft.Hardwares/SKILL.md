@@ -13,6 +13,7 @@ description: 修改或审查 Zongsoft.Hardwares 的跨平台硬件采集、系�
 - [HardwareCollector](src/HardwareCollector.cs) 为单例采集入口；`HardwareCollector.windows.cs`、`.linux.cs`、`.macos.cs` 封装系统差异，`HardwareCollector.Net.cs` 补充网络设备。
 - 设备有 Code、Name、Type、Model、Serie 等字段；唯一值通过 `HasUnique(out string)` 判断，不能凭名称添加假设的 `Identifier` 属性。聚合指纹是 `HardwareProfile.Identifier`。
 - 探测是观察系统信息，不是证明硬件可信。不要在本包加入授权或设备认证策略。
+- 部署清单在所有平台携带 `System.Management`：插件扫描会枚举程序集中的类型，即使运行平台不会进入 Windows 采集分支，也必须能解析 Windows 采集器引用的类型。平台判断仅控制采集调用，不能用它省略程序集依赖。
 
 ## 内部流程与不变量
 

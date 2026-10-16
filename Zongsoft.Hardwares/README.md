@@ -83,4 +83,4 @@ nuget:Zongsoft.Hardwares
 
 Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
 
-Additional artifacts listed by the deployment manifest include `Zongsoft.Hardwares.option`, `Zongsoft.Hardwares.plugin`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.
+The deployment manifest includes `Zongsoft.Hardwares.plugin` and the `System.Management` dependency on every platform. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.

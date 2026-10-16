@@ -193,7 +193,7 @@ Additional artifacts listed by the deployment manifest include `Zongsoft.Messagi
 The [daemon manifest](src/Zongsoft.Messaging.Mqtt-daemon.plugin) mounts one `MqttQueueServer` at `/Workbench/Messaging/Mqtt/QueueServer` and adds it to `/Workbench/Startup`. Its [matching option file](src/Zongsoft.Messaging.Mqtt-daemon.option) supplies both runtime settings and the exposure declaration:
 
 ```xml
-<?binding name="mqtt"
+<?zongsoft.tools.binding name="mqtt"
 	path="Messaging/Mqtt/Server"
 	filter="enabled:true"
 	template="${option.url}"

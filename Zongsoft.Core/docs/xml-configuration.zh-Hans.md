@@ -10,7 +10,7 @@ XML 处理指令（PI）以原始定义单独收集，不自动映射为配置�
 
 ```xml
 <?xml version="1.0" encoding="utf-8" ?>
-<?binding path="Kestrel/Endpoints" url="Url" ?>
+<?zongsoft.tools.binding path="Kestrel/Endpoints/*" template="${option.Url}" ?>
 <configuration>
 	<option path="/Kestrel">
 		<endpoints>
@@ -22,7 +22,7 @@ XML 处理指令（PI）以原始定义单独收集，不自动映射为配置�
 </configuration>
 ```
 
-这里的 `binding` 只是被收集的声明。读取器不会解释 `path` 或 `url` 参数，不生成 `.bindings`。
+这里的 `zongsoft.tools.binding` 只是被收集的声明。读取器不会解释 `path` 或 `template` 参数，不生成 `.bindings`。
 
 下例需要应用提供 `app.option`，展示单个文件提供程序的使用方式：
 
@@ -143,7 +143,7 @@ sealed class FeatureInstructionProcessor() : XmlConfigurationInstructionProcesso
 }
 ```
 
-此示例直接使用自由文本数据；属性式参数解析是可选能力。Core 内置指令只有 Import，不提供 `set` 或 `binding` 业务规则。
+此示例直接使用自由文本数据；属性式参数解析是可选能力。Core 内置指令只有 Import，不提供 `set` 或 `zongsoft.tools.binding` 业务规则。
 
 ## 指令定义
 
@@ -158,7 +158,7 @@ sealed class FeatureInstructionProcessor() : XmlConfigurationInstructionProcesso
 | `FilePath` | 来源文件路径或调用方提供的来源标识；匿名来源为空字符串。 |
 | `LineNumber` / `LinePosition` | PI 名称起点的行列号，从 1 开始；例如行首 `<?example?>` 的列号为 3。 |
 
-示例中 `binding` 的 `Path` 为空字符串；`example` 的 `Path` 是 `/configuration/option/endpoints/endpoint`，并非配置路径 `/Kestrel/endpoints/http`。指令数据里的 `path="..."` 参数与对象的 `Path` 属性彼此独立。
+示例中 `zongsoft.tools.binding` 的 `Path` 为空字符串；`example` 的 `Path` 是 `/configuration/option/endpoints/endpoint`，并非配置路径 `/Kestrel/endpoints/http`。指令数据里的 `path="..."` 参数与对象的 `Path` 属性彼此独立。
 
 PI 可以出现在根元素之前、所有元素内部以及根元素之后；具体处理器可以限制位置。纯解析收集当前流的全部 PI，按路径导入只收集有效范围内的 PI。根元素之外的 `Path` 为空字符串，同层级的重复元素可以具有相同路径，具体位置由行列号区分。XML 声明、注释和 CDATA 内形似 PI 的文字不会成为指令。
 

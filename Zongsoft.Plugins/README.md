@@ -148,7 +148,7 @@ Do not depend on an incidental ordering of multiple plugins defining the same co
 
 To diagnose conflicts, read each plugin's effective value through `PluginConfigurationProvider.Providers`. Each entry is a `CompositeConfigurationProvider` containing one XML provider for the selected entry and its imports. For a `FileConfigurationProvider` named `file`, obtain the entry's local path from `file.Source.FileProvider.GetFileInfo(file.Source.Path).PhysicalPath`. This identifies the entry, not the imported file supplying an individual key. Compare values after imports have been applied within each plugin, so normal overrides are not reported as conflicts. Plugins preserves generic entry information; the Web host consumer owns network-key conflict rules and must not rely solely on the final merged value.
 
-`<?binding ...?>` declares exposure for delivery tools. Plugins does not evaluate its templates, generate proxy configuration or start listeners because of this instruction.
+`<?zongsoft.tools.binding ...?>` declares exposure for delivery tools. Plugins does not evaluate its templates, generate proxy configuration or start listeners because of this instruction.
 
 ### Verification and Operational Risks
 

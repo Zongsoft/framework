@@ -27,7 +27,7 @@ Deploy the plugin and option artifacts. The supplied option declares `telemetry`
 The source configuration is [Zongsoft.Diagnostics.Protocols.Server.option](src/Zongsoft.Diagnostics.Protocols.Server.option):
 
 ```xml
-<?binding name="telemetry"
+<?zongsoft.tools.binding name="telemetry"
 	path="Kestrel/Endpoints/telemetry"
 	template="${option.Url}"
 	protocols="${option.Protocols}"

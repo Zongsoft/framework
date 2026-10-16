@@ -144,7 +144,7 @@ var app = Zongsoft.Web.Application.Web(args);
 await app.RunAsync();
 ```
 
-The registrar uses the existing `IServiceRegistration` contract. It does not run for non-Web hosts, and skips hosts without endpoint entries or with an already registered `WebEndpointCollection`. Without declarations, native `urls`/`http_ports`/`https_ports`, `app.Urls` and code `Listen(...)` retain ASP.NET Core behavior. Detection uses the configuration available during service scanning; endpoint declarations added after startup require a restart. The binding processing instruction declares exposure to deployment tools; runtime registration consumes endpoint configuration.
+The registrar uses the existing `IServiceRegistration` contract. It does not run for non-Web hosts, and skips hosts without endpoint entries or with an already registered `WebEndpointCollection`. Without declarations, native `urls`/`http_ports`/`https_ports`, `app.Urls` and code `Listen(...)` retain ASP.NET Core behavior. Detection uses the configuration available during service scanning; endpoint declarations added after startup require a restart. The zongsoft.tools.binding processing instruction declares exposure to deployment tools; runtime registration consumes endpoint configuration.
 
 Automatic registration calls `AddWebEndpoints(configuration).AddWebEndpointMonitoring()`. These methods register factories and callbacks without creating a temporary provider or capturing a snapshot. The final provider creates the snapshot on first consumption, including protocol policies registered later in the service scan. Invalid declarations or plugin conflicts fail when resolving endpoint/server options or starting the host; do not rely on `Build()` throwing immediately.
 

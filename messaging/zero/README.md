@@ -68,22 +68,22 @@ The [daemon option file](src/Zongsoft.Messaging.ZeroMQ-daemon.option) supplies b
 ```xml
 <?xml version="1.0" encoding="utf-8" ?>
 
-<?binding name="zeromq/control"
+<?zongsoft.tools.binding name="zeromq/control"
 	path="Messaging/ZeroMQ/Server"
 	filter="enabled:true"
 	template="${option.control}"
 	protocols="tcp"?>
-<?binding name="zeromq/incoming"
+<?zongsoft.tools.binding name="zeromq/incoming"
 	path="Messaging/ZeroMQ/Server"
 	filter="enabled:true"
 	template="${option.incoming}"
 	protocols="tcp"?>
-<?binding name="zeromq/outgoing"
+<?zongsoft.tools.binding name="zeromq/outgoing"
 	path="Messaging/ZeroMQ/Server"
 	filter="enabled:true"
 	template="${option.outgoing}"
 	protocols="tcp"?>
-<?binding name="zeromq/discovery"
+<?zongsoft.tools.binding name="zeromq/discovery"
 	path="Messaging/ZeroMQ/Server"
 	filter="enabled:true"
 	template="${option.discovery}"

@@ -18,29 +18,29 @@ public class XmlConfigurationInstructionTest
 	{
 		var xml = string.Join("\r\n", [
 			"<?xml version=\"1.0\"?>",
-			"<?binding path=\"Kestrel/Endpoints\" url='Url' ?>",
+			"<?zongsoft.tools.binding path=\"Kestrel/Endpoints\" url='Url' ?>",
 			"<!-- <?ignored id='comment'?> -->",
 			"<configuration>",
-			"\t<?binding id=\"root\"?>",
+			"\t<?zongsoft.tools.binding id=\"root\"?>",
 			"\t<option path=\"/Kestrel\">",
 			"\t\t<endpoints>",
 			"\t\t\t<endpoint endpoint.name=\"http\" url=\"http://*:8069\">",
-			"\t\t\t\t<?binding id=\"nested\"?>",
+			"\t\t\t\t<?zongsoft.tools.binding id=\"nested\"?>",
 			"\t\t\t</endpoint>",
-			"\t\t\t<?binding id=\"sibling\"?>",
+			"\t\t\t<?zongsoft.tools.binding id=\"sibling\"?>",
 			"\t\t\t<endpoint endpoint.name=\"https\" url=\"https://*:8070\" />",
-			"\t\t\t<?binding id=\"after-empty\"?>",
+			"\t\t\t<?zongsoft.tools.binding id=\"after-empty\"?>",
 			"\t\t</endpoints>",
 			"\t\t<values><![CDATA[<?ignored id='cdata'?>]]></values>",
 			"\t</option>",
 			"</configuration>",
-			"<?binding id=\"after\"?>",
+			"<?zongsoft.tools.binding id=\"after\"?>",
 		]);
 		using var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml));
 
 		var data = XmlStreamConfigurationProvider.Read(stream, out var instructions, "app.option");
 
-		Assert.Equal(["binding", "binding", "binding", "binding", "binding", "binding"], instructions.Select(instruction => instruction.Name));
+		Assert.Equal(["zongsoft.tools.binding", "zongsoft.tools.binding", "zongsoft.tools.binding", "zongsoft.tools.binding", "zongsoft.tools.binding", "zongsoft.tools.binding"], instructions.Select(instruction => instruction.Name));
 		Assert.Equal([
 			"path=\"Kestrel/Endpoints\" url='Url' ", "id=\"root\"", "id=\"nested\"",
 			"id=\"sibling\"", "id=\"after-empty\"", "id=\"after\"",

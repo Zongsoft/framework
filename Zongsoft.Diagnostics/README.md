@@ -24,7 +24,7 @@ The `prometheus` exporter accepts HTTP scrape requests. Its `urls` setting conta
 
 ```xml
 <!-- Zongsoft.Diagnostics/src/Zongsoft.Diagnostics.option; listener-related fragment -->
-<?binding name="prometheus"
+<?zongsoft.tools.binding name="prometheus"
 	path="Diagnostics/Diagnostor/Meters/Exporters/*"
 	filter="Driver:prometheus"
 	template="${option.Settings['urls']}"
@@ -56,7 +56,7 @@ Separate addresses with `,`, `;` or `|`. Empty entries fail, including trailing 
 
 `totalSuffix` defaults to `true`; `cacheDuration` defaults to `300ms`. Both apply to the ASP.NET Core exporter options and the independent listener; a negative cache duration becomes zero and an oversized duration is capped at the supported millisecond range. Registering exporter options does not add an ASP.NET Core route. The diagnostic provider owns the independent listener and releases it on disposal.
 
-The default addresses are loopback addresses. For a reverse proxy in another container, configure a listener reachable from that container; the binding tool does not rewrite loopback addresses. The independent server owns its declared ports and cannot share a socket with another server. HTTPS uses Kestrel:Certificates from IConfiguration in the metrics service container, falling back to ApplicationContext.Current.Configuration. It does not inherit host Endpoints or HTTP.sys certificate bindings. The binding instruction declares exposure intent and does not itself start a listener. Outbound `telemetry` exporters do not participate in this binding.
+The default addresses are loopback addresses. For a reverse proxy in another container, configure a listener reachable from that container; the binding tool does not rewrite loopback addresses. The independent server owns its declared ports and cannot share a socket with another server. HTTPS uses Kestrel:Certificates from IConfiguration in the metrics service container, falling back to ApplicationContext.Current.Configuration. It does not inherit host Endpoints or HTTP.sys certificate bindings. The zongsoft.tools.binding instruction declares exposure intent and does not itself start a listener. Outbound `telemetry` exporters do not participate in this binding.
 
 Focused validation lives in [test](test). Build the solution with `dotnet build Zongsoft.Diagnostics.slnx -p:GeneratePackageOnBuild=false -p:ZongsoftCodeStyleStrict=true`, then run `dotnet test test/Zongsoft.Diagnostics.Tests.csproj --no-build`. Tests inspect the public exporter options and exercise temporary HTTP/HTTPS listeners, including domain and IP combinations, IPv4/IPv6 isolation, real metric output, certificate selection, disposal and startup-failure cleanup. Domain requests connect directly to loopback without DNS or hosts-file changes. They do not start a business host or replace reverse-proxy and production HTTPS deployment validation.
 
