@@ -1,4 +1,6 @@
 artifacts/Zongsoft.Externals.Opc.plugin
+artifacts/Zongsoft.Externals.Opc-${site}.plugin
+artifacts/Zongsoft.Externals.Opc-${site}.option
 lib/${Framework}/Zongsoft.Externals.Opc.*
 lib/${Framework}/*/Zongsoft.Externals.Opc.resources.*
 

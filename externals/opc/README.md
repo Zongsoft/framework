@@ -82,6 +82,14 @@ openssl pkcs12 -inkey certificate.private.pem -in certificate.der -export -out c
 openssl pkcs12 -inkey certificate.private.pem -passin pass:"password" -in certificate.der -export -out certificate.pfx -passout pass:"password" -name "FriendlyName"
 ```
 
+## OPC UA Server
+
+To start an OPC UA server through plugins, deploy the optional daemon plugin and option selected by `site=daemon`. The main plugin only supplies the OPC client and server types; it does not start a listener by itself.
+
+`Server.Urls` in the daemon option determines the actual service listener addresses and accepts multiple explicit `opc.tcp` URLs separated by commas. `Server.Discovery` is the registration target and controls server announcement separately; it is not a listener. The binding is generated from the same `Urls` value and preserves URL paths. `Server.Enabled` controls both startup and the declaration.
+
+The binding declares OPC UA over TCP only. Certificates, trust stores, security policies and externally announced Endpoints remain part of OPC UA runtime configuration; the declaration does not imply HTTP health checks, proxying or NAT mapping.
+
 ## Plugin-Based Integration
 
 Compose this feature through the host; a package reference supplies compile-time APIs, while plugin loading also requires deployed manifests and runtime assets. See [the complete plugin workflow](../../Zongsoft.Plugins/README.md).

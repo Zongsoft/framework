@@ -82,6 +82,14 @@ openssl pkcs12 -inkey certificate.private.pem -in certificate.der -export -out c
 openssl pkcs12 -inkey certificate.private.pem -passin pass:"password" -in certificate.der -export -out certificate.pfx -passout pass:"password" -name "FriendlyName"
 ```
 
+## OPC UA 服务端
+
+需要以插件方式启动 OPC UA 服务时，部署 `site=daemon` 对应的可选 daemon 插件和 option。主插件只提供 OPC 客户端与服务器类型，不会自行启动监听。
+
+daemon 配置中的 `Server.Urls` 决定实际服务监听地址，支持以逗号分隔多个显式 `opc.tcp` URL；`Server.Discovery` 是注册目标，单独控制服务器公告，不会作为监听地址。binding 从相同 `Urls` 生成，保留 URL 路径。启用条件由 `Server.Enabled` 同时控制启动与声明。
+
+绑定只声明 OPC UA TCP 服务。证书、信任目录、安全策略及对外 Endpoint 公告仍由 OPC UA 运行配置管理；此声明不代表 HTTP 健康检查、代理或 NAT 映射。
+
 ## 插件化接入
 
 优先通过宿主组合本能力；包引用用于编译，而插件加载还需要部署清单和运行产物。完整流程见[插件化入门](../../Zongsoft.Plugins/README.zh-Hans.md)。

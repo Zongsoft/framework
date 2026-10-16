@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<?binding name="opc"
+	path="Externals/Opc/Server"
+	filter="enabled:true"
+	template="${option.urls}"
+	protocols="opc.tcp"
+	required="true"?>
+
+<options>
+	<option path="/Externals/Opc">
+		<server enabled="true"
+		        urls="opc.tcp://localhost:4840"
+		        discovery="opc.tcp://localhost:4840" />
+	</option>
+</options>

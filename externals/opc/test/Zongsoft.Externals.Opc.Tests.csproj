@@ -23,4 +23,9 @@
 	<ItemGroup>
 		<ProjectReference Include="..\src\Zongsoft.Externals.Opc.csproj" />
 	</ItemGroup>
+
+	<ItemGroup>
+		<None Include="..\src\Zongsoft.Externals.Opc-daemon.plugin" Link="Zongsoft.Externals.Opc-daemon.plugin" CopyToOutputDirectory="PreserveNewest" />
+		<None Include="..\src\Zongsoft.Externals.Opc-daemon.option" Link="Zongsoft.Externals.Opc-daemon.option" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
 </Project>

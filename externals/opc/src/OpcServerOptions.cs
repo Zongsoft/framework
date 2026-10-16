@@ -38,6 +38,11 @@ namespace Zongsoft.Externals.Opc;
 
 public class OpcServerOptions
 {
+	#region 成员字段
+	private string _discovery;
+	private string[] _urls;
+	#endregion
+
 	#region 构造函数
 	public OpcServerOptions(string name) : this(name, null) { }
 	public OpcServerOptions(string name, string @namespace, params string[] urls)
@@ -60,10 +65,18 @@ public class OpcServerOptions
 	#region 公共属性
 	public string Name { get; }
 	public string Namespace { get; init; }
-	public string Discovery { get; init; }
-	public string[] Urls { get; init; }
+	public string Discovery { get => _discovery; init => _discovery = value; }
+	public string[] Urls { get => _urls; init => _urls = value; }
 	public bool Anonymous { get; init; }
 	public StorageOptionsCollection Storages { get; }
+	#endregion
+
+	#region 内部方法
+	internal void Configure(string[] urls, string discovery)
+	{
+		_urls = urls;
+		_discovery = discovery;
+	}
 	#endregion
 
 	#region 内部方法

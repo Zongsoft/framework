@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Externals.Opc.Daemon"
+	title="Zongsoft.Externals.Opc.Daemon Plugin">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Externals.Opc" />
+		</assemblies>
+		<dependencies>
+			<dependency name="Zongsoft.Externals.Opc" />
+		</dependencies>
+	</manifest>
+
+	<extension path="/Workbench/Externals/Opc">
+		<object name="Server" type="Zongsoft.Externals.Opc.OpcServer, Zongsoft.Externals.Opc"
+		        Enabled="{option:/Externals/Opc/Server/Enabled}"
+		        Urls="{option:/Externals/Opc/Server/Urls}"
+		        Discovery="{option:/Externals/Opc/Server/Discovery}" />
+	</extension>
+
+	<extension path="/Workbench/Startup">
+		<object value="{path:/Workbench/Externals/Opc/Server}" />
+	</extension>
+</plugin>
