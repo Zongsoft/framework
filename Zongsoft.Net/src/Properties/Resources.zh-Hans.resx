@@ -123,4 +123,22 @@
 	<data name="Network.HandlerMismatch.Message" xml:space="preserve">
 		<value>指定的处理器“{0}”不匹配。</value>
 	</data>
+	<data name="Network.SendCapacity.Message" xml:space="preserve">
+		<value>发送操作超过配置的容量。</value>
+	</data>
+	<data name="Network.FrameInvalid.Message" xml:space="preserve">
+		<value>报文长度或分帧契约不合法。</value>
+	</data>
+	<data name="Network.FrameIncomplete.Message" xml:space="preserve">
+		<value>连接结束时仍有未完成的帧。</value>
+	</data>
+	<data name="Network.ConnectionClosed.Message" xml:space="preserve">
+		<value>连接已停止接受新操作。</value>
+	</data>
+	<data name="Network.Timeout.Message" xml:space="preserve">
+		<value>连接操作超过配置的期限。</value>
+	</data>
+	<data name="Network.AddressImmutable.Message" xml:space="preserve">
+		<value>服务运行期间不能修改监听地址。</value>
+	</data>
 </root>

@@ -1,0 +1,5 @@
+<Solution>
+	<Project Path="Zongsoft.Net.Benchmarks.csproj">
+		<Build Solution="Debug|*" Project="false" />
+	</Project>
+</Solution>

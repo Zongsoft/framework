@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Net library.
  *
@@ -28,74 +28,36 @@
  */
 
 using System;
-using System.Net;
-using System.Buffers;
-using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Pipelines.Sockets.Unofficial;
+using Zongsoft.Communication;
 
 namespace Zongsoft.Net;
 
-public class TcpClientChannel<T> : TcpChannelBase<T>
+/// <summary>客户端拥有的 TCP 连接通道。</summary>
+/// <typeparam name="T">报文类型。</typeparam>
+public sealed class TcpClientChannel<T> : TcpChannelBase<T>
 {
-	#region 成员字段
-	private readonly TcpClient<T> _client;
-	#endregion
+	internal TcpClientChannel(TcpClient<T> client, TcpTransport transport, PacketizerBase<T> packetizer, TcpClientOptions options) : base(transport, packetizer, options) => this.Client = client;
 
-	#region 构造函数
-	public TcpClientChannel(TcpClient<T> client, SocketConnection connection, EndPoint address) : base(connection, address)
-	{
-		_client = client ?? throw new ArgumentNullException(nameof(client));
+	/// <summary>获取所属客户端。</summary>
+	public TcpClient<T> Client { get; }
 
-		this.ReceiveAsync()
-			.ContinueWith(task => GC.KeepAlive(task.Exception), TaskContinuationOptions.OnlyOnFaulted);
-	}
-	#endregion
-
-	#region 公共属性
-	public TcpClient<T> Client => _client;
-	#endregion
-
-	#region 协议解析
-	protected override void Pack(PipeWriter writer, in T package) => _client.Packetizer.Pack(writer, package);
-	protected override bool Unpack(ref ReadOnlySequence<byte> data, out T package) => _client.Packetizer.Unpack(ref data, out package);
-	#endregion
-
-	#region 接收数据
-	protected sealed override ValueTask OnReceiveAsync(in T package)
-	{
-		ValueTask task;
-
-		try
-		{
-			task = _client.OnHandleAsync(package, CancellationToken.None);
-		}
-		catch
-		{
-			if(package is IDisposable disposable)
-				disposable.Dispose();
-
-			throw;
-		}
-
-		if(package is not IDisposable resource)
-			return task;
-
-		if(task.IsCompletedSuccessfully)
-		{
-			resource.Dispose();
-			return ValueTask.CompletedTask;
-		}
-
-		return AwaitAndDisposeAsync(task, resource);
-
-		static async ValueTask AwaitAndDisposeAsync(ValueTask task, IDisposable disposable)
-		{
-			try { await task; }
-			finally { disposable.Dispose(); }
-		}
-	}
-	#endregion
+	/// <summary>向连接所有者派发上下文，保持借用报文的异步处理窗口。</summary>
+	/// <param name="context">当前通道和处理期间有效的借用报文。</param>
+	/// <param name="cancellation">连接关闭时通知处理器的取消令牌。</param>
+	/// <returns>本次报文处理操作。</returns>
+	protected override ValueTask OnReceiveAsync(TcpReceiveContext<T> context, CancellationToken cancellation) => this.Client.HandleAsync(context, cancellation);
+	/// <summary>资源清理后由连接所有者归还登记与额度。</summary>
+	private protected override void OnCompleted() => this.Client.Unregister(this);
+	/// <summary>向连接所有者报告关闭开始。</summary>
+	/// <param name="args">当前通道状态快照。</param>
+	private protected override void OnClosing(TcpChannelEventArgs<T> args) => this.Client.OnClosing(args);
+	/// <summary>向连接所有者报告完整退场。</summary>
+	/// <param name="args">当前通道的最终状态快照。</param>
+	private protected override void OnClosed(TcpChannelEventArgs<T> args) => this.Client.OnClosed(args);
+	/// <summary>向连接所有者报告首个故障。</summary>
+	/// <param name="args">包含首个异常的状态快照。</param>
+	private protected override void OnError(TcpChannelEventArgs<T> args) => this.Client.OnError(args);
 }

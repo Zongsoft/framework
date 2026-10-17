@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Net library.
  *
@@ -28,85 +28,36 @@
  */
 
 using System;
-using System.Net;
-using System.Buffers;
-using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Zongsoft.Communication;
+
 namespace Zongsoft.Net;
 
-public class TcpServerChannel<T> : TcpChannelBase<T>, IEquatable<TcpServerChannel<T>>
+/// <summary>服务端拥有的 TCP 连接通道。</summary>
+/// <typeparam name="T">报文类型。</typeparam>
+public sealed class TcpServerChannel<T> : TcpChannelBase<T>
 {
-	#region 成员字段
-	private readonly TcpServerChannelManager<T> _manager;
-	#endregion
+	internal TcpServerChannel(TcpServer<T> server, TcpTransport transport, PacketizerBase<T> packetizer, TcpServerOptions options) : base(transport, packetizer, options) => this.Server = server;
 
-	#region 构造函数
-	public TcpServerChannel(TcpServerChannelManager<T> manager, IDuplexPipe transport, IPEndPoint address) : base(transport, address)
-	{
-		_manager = manager ?? throw new ArgumentNullException(nameof(manager));
-	}
-	#endregion
+	/// <summary>获取所属服务端。</summary>
+	public TcpServer<T> Server { get; }
 
-	#region 保护属性
-	protected TcpServerChannelManager<T> Manager => _manager;
-	#endregion
-
-	#region 开启接收
-	public new Task ReceiveAsync(CancellationToken cancellationToken = default) => base.ReceiveAsync(cancellationToken);
-	#endregion
-
-	#region 协议解析
-	protected override void Pack(PipeWriter writer, in T package) => _manager.Pack(writer, package);
-	protected override bool Unpack(ref ReadOnlySequence<byte> data, out T package) => _manager.Unpack(ref data, out package);
-	#endregion
-
-	#region 接收数据
-	protected override void OnReceiving() => _manager.Add(this);
-	protected sealed override ValueTask OnReceiveAsync(in T package)
-	{
-		ValueTask task;
-
-		try
-		{
-			task = _manager.HandleAsync(this, package, CancellationToken.None);
-		}
-		catch
-		{
-			if(package is IDisposable disposable)
-				disposable.Dispose();
-
-			throw;
-		}
-
-		if(package is not IDisposable resource)
-			return task;
-
-		if(task.IsCompletedSuccessfully)
-		{
-			resource.Dispose();
-			return ValueTask.CompletedTask;
-		}
-
-		return AwaitAndDisposeAsync(task, resource);
-
-		static async ValueTask AwaitAndDisposeAsync(ValueTask task, IDisposable disposable)
-		{
-			try { await task; }
-			finally { disposable.Dispose(); }
-		}
-	}
-	#endregion
-
-	#region 关闭处理
-	protected override void OnClosed() => _manager.Remove(this);
-	#endregion
-
-	#region 重写方法
-	public bool Equals(TcpServerChannel<T> channel) => channel != null && this.Address.Equals(channel.Address);
-	public override bool Equals(object obj) => obj is TcpServerChannel<T> channel && this.Equals(channel);
-	public override int GetHashCode() => this.Address.GetHashCode();
-	public override string ToString() => this.Address.ToString();
-	#endregion
+	/// <summary>向连接所有者派发上下文，保持借用报文的异步处理窗口。</summary>
+	/// <param name="context">当前通道和处理期间有效的借用报文。</param>
+	/// <param name="cancellation">连接关闭时通知处理器的取消令牌。</param>
+	/// <returns>本次报文处理操作。</returns>
+	protected override ValueTask OnReceiveAsync(TcpReceiveContext<T> context, CancellationToken cancellation) => this.Server.HandleAsync(context, cancellation);
+	/// <summary>资源清理后由连接所有者归还登记与额度。</summary>
+	private protected override void OnCompleted() => this.Server.Unregister(this);
+	/// <summary>向连接所有者报告关闭开始。</summary>
+	/// <param name="args">当前通道状态快照。</param>
+	private protected override void OnClosing(TcpChannelEventArgs<T> args) => this.Server.Channels.OnClosing(args);
+	/// <summary>向连接所有者报告完整退场。</summary>
+	/// <param name="args">当前通道的最终状态快照。</param>
+	private protected override void OnClosed(TcpChannelEventArgs<T> args) => this.Server.Channels.OnClosed(args);
+	/// <summary>向连接所有者报告首个故障。</summary>
+	/// <param name="args">包含首个异常的状态快照。</param>
+	private protected override void OnError(TcpChannelEventArgs<T> args) => this.Server.Channels.OnError(args);
 }

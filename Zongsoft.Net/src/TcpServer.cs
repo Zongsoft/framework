@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Net library.
  *
@@ -30,213 +30,150 @@
 using System;
 using System.Net;
 using System.Buffers;
-using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Zongsoft.Components;
 using Zongsoft.Communication;
 
 namespace Zongsoft.Net;
 
+/// <summary>创建独立的二进制 TCP 服务端。</summary>
 public static class TcpServer
 {
-	public static readonly TcpServer<IMemoryOwner<byte>> Headless = new HeadlessServer();
-	public static readonly TcpServer<ReadOnlySequence<byte>> Headed = new HeadedServer();
+	#region 公共方法
+	/// <summary>获取一个新的带四字节长度前缀的服务端。</summary>
+	public static TcpServer<ReadOnlySequence<byte>> Headed => CreateHeaded();
+	/// <summary>获取一个新的原始字节流服务端。</summary>
+	public static TcpServer<ReadOnlySequence<byte>> Headless => CreateHeadless();
 
-	private class HeadlessServer : TcpServer<IMemoryOwner<byte>>, ISender
+	/// <summary>创建带长度前缀的独立服务端。</summary>
+	/// <param name="options">连接和服务设置，构造时复制。</param>
+	/// <returns>默认监听 loopback:7969 的服务端。</returns>
+	public static TcpServer<ReadOnlySequence<byte>> CreateHeaded(TcpServerOptions options = null)
 	{
-		public HeadlessServer() : base(HeadlessPacketizer.Instance) => this.Address = new IPEndPoint(IPAddress.Loopback, 7969);
-
-		#region 公共方法
-		public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray()).AsTask().GetAwaiter().GetResult();
-		public ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
-		{
-			var task = base.BroadcastAsync(data, cancellation);
-
-			if(task.IsCompletedSuccessfully)
-			{
-				task.GetAwaiter().GetResult();
-				return ValueTask.CompletedTask;
-			}
-
-			return new ValueTask(task.AsTask());
-		}
-		#endregion
+		options = (TcpServerOptions)(options ?? new()).Snapshot();
+		ArgumentOutOfRangeException.ThrowIfLessThan(options.MaximumFrameLength, (long)options.MaximumPacketLength + 4);
+		return new(new HeadedPacketizer(options.MaximumPacketLength), options);
 	}
 
-	private class HeadedServer : TcpServer<ReadOnlySequence<byte>>, ISender
+	/// <summary>创建不定义业务消息边界的独立服务端。</summary>
+	/// <param name="options">连接和服务设置，构造时复制。</param>
+	/// <returns>默认监听 loopback:7969 的服务端。</returns>
+	public static TcpServer<ReadOnlySequence<byte>> CreateHeadless(TcpServerOptions options = null)
 	{
-		public HeadedServer() : base(HeadedPacketizer.Instance) => this.Address = new IPEndPoint(IPAddress.Loopback, 7969);
-
-		#region 公共方法
-		public void Send(ReadOnlySpan<byte> data) => this.SendAsync(data.ToArray()).AsTask().GetAwaiter().GetResult();
-		public ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
-		{
-			var task = base.BroadcastAsync(data, cancellation);
-
-			if(task.IsCompletedSuccessfully)
-			{
-				task.GetAwaiter().GetResult();
-				return ValueTask.CompletedTask;
-			}
-
-			return new ValueTask(task.AsTask());
-		}
-		#endregion
-
-		#region 重写方法
-		internal protected override TcpServerChannel<ReadOnlySequence<byte>> CreateChannel(IDuplexPipe transport, IPEndPoint address) => new SizedChannel(this.Channels, transport, address);
-		#endregion
-
-		private class SizedChannel(TcpServerChannelManager<ReadOnlySequence<byte>> manager, IDuplexPipe transport, IPEndPoint address) : TcpServerChannel<ReadOnlySequence<byte>>(manager, transport, address)
-		{
-			#region 重写方法
-			protected override ValueTask<FlushResult> OnSendAsync(PipeWriter writer, ReadOnlyMemory<byte> data, CancellationToken cancellation)
-			{
-				return HeadedPacketizer.Instance.PackAsync(writer, new ReadOnlySequence<byte>(data), cancellation);
-			}
-			#endregion
-		}
+		options = (TcpServerOptions)(options ?? new()).Snapshot();
+		return new(new HeadlessPacketizer(options.MaximumPacketLength), options);
 	}
+	#endregion
 }
 
-public class TcpServer<T> : ListenerBase<T>, ISender<T>
+/// <summary>使用官方 Socket 受理连接并按当前通道派发报文的 TCP 服务端。</summary>
+/// <typeparam name="T">报文类型。</typeparam>
+public partial class TcpServer<T> : ListenerBase<TcpReceiveContext<T>>, ISender<T>
 {
 	#region 成员字段
-	private readonly IPacketizer<T> _packetizer;
-	private TcpServerChannelManager<T> _channels;
+	private readonly TcpServerOptions _options;
+	private readonly Broadcaster _broadcaster;
+	private IPEndPoint _address = new(IPAddress.Loopback, 7969);
+	private long _accepted;
+	private long _rejected;
+	private long _completedBytesSent;
+	private long _completedBytesReceived;
+	private long _completedFramesSent;
+	private long _completedFramesReceived;
 	#endregion
 
 	#region 构造函数
-	public TcpServer(IPacketizer<T> packetizer) : this(nameof(TcpServer<T>), packetizer) { }
-	public TcpServer(string name, IPacketizer<T> packetizer) : base(name)
+	/// <summary>创建 TCP 服务端。</summary>
+	/// <param name="packetizer">可跨连接并发使用的分帧器。</param>
+	/// <param name="options">可选连接和服务设置，构造时复制。</param>
+	public TcpServer(PacketizerBase<T> packetizer, TcpServerOptions options = null) : this(nameof(TcpServer<T>), packetizer, options) { }
+	/// <summary>创建具名 TCP 服务端。</summary>
+	/// <param name="name">工作器名称。</param>
+	/// <param name="packetizer">可跨连接并发使用的分帧器。</param>
+	/// <param name="options">可选连接和服务设置，构造时复制。</param>
+	public TcpServer(string name, PacketizerBase<T> packetizer, TcpServerOptions options = null) : base(name)
 	{
-		_packetizer = packetizer ?? throw new ArgumentNullException(nameof(packetizer));
-		_channels = this.CreateChannels();
+		_options = (TcpServerOptions)(options ?? new()).Snapshot();
+		this.Packetizer = packetizer ?? throw new ArgumentNullException(nameof(packetizer));
+		this.Channels = new();
+		_broadcaster = new(this);
 	}
 	#endregion
 
 	#region 公共属性
-	public IPEndPoint Address { get; set; }
-	public override IPacketizer<T> Packetizer => _packetizer;
-	public TcpServerChannelManager<T> Channels => _channels;
-	#endregion
-
-	#region 接受方法
-	public Task AcceptAsync(IDuplexPipe transport, IPEndPoint address, CancellationToken cancellation = default)
+	/// <summary>获取或设置监听端点。端口零由系统分配；成功启动后返回实际端点。</summary>
+	public IPEndPoint Address
 	{
-		if(transport == null)
-			throw new ArgumentNullException(nameof(transport));
-
-		var channel = this.CreateChannel(transport, address);
-		return channel.ReceiveAsync(cancellation);
-	}
-	#endregion
-
-	#region 广播方法
-	public async ValueTask<int> BroadcastAsync(T package, CancellationToken cancellation = default)
-	{
-		int count = 0;
-
-		foreach(var channel in _channels)
+		get
 		{
-			try
-			{
-				await channel.SendAsync(package, cancellation);
-				count++;
-			}
-			catch { }
+			var address = Volatile.Read(ref _address);
+			return new(address.Address, address.Port);
 		}
-
-		return count;
-	}
-
-	protected async ValueTask<int> BroadcastAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
-	{
-		int count = 0;
-
-		foreach(var channel in _channels)
+		set
 		{
-			try
-			{
-				await channel.SendAsync(data, cancellation);
-				count++;
-			}
-			catch { }
-		}
+			ArgumentNullException.ThrowIfNull(value);
+			if(this.State != WorkerState.Stopped)
+				throw new InvalidOperationException(Properties.Resources.Network_AddressImmutable_Message);
 
-		return count;
-	}
-
-	async ValueTask ISender<T>.SendAsync(T package, CancellationToken cancellation)
-	{
-		foreach(var channel in _channels)
-		{
-			try
-			{
-				await channel.SendAsync(package, cancellation);
-			}
-			catch { }
+			Volatile.Write(ref _address, new(value.Address, value.Port));
 		}
 	}
+
+	/// <summary>获取分帧器。</summary>
+	public PacketizerBase<T> Packetizer { get; }
+	/// <summary>获取连接实时视图。连接完成资源清理后移除。</summary>
+	public TcpServerChannelManager<T> Channels { get; }
+	/// <summary>获取累计接纳连接数。</summary>
+	public long AcceptedConnections => Interlocked.Read(ref _accepted);
+	/// <summary>获取累计容量拒绝连接数。</summary>
+	public long RejectedConnections => Interlocked.Read(ref _rejected);
+	/// <summary>获取包含已结束连接的累计 Socket 发送字节数。</summary>
+	public long TotalBytesSent => this.Sum(static channel => channel.TotalBytesSent, Interlocked.Read(ref _completedBytesSent));
+	/// <summary>获取包含已结束连接的累计 Socket 接收字节数。</summary>
+	public long TotalBytesReceived => this.Sum(static channel => channel.TotalBytesReceived, Interlocked.Read(ref _completedBytesReceived));
+	/// <summary>获取包含已结束连接的累计发送帧数。</summary>
+	public long TotalFramesSent => this.Sum(static channel => channel.TotalFramesSent, Interlocked.Read(ref _completedFramesSent));
+	/// <summary>获取包含已结束连接的累计解码帧数。</summary>
+	public long TotalFramesReceived => this.Sum(static channel => channel.TotalFramesReceived, Interlocked.Read(ref _completedFramesReceived));
+	/// <summary>获取同一时钟与维护周期的共享连接监测统计快照；读取不触发扫描，未启用 <see cref="TcpConnectionOptions.EnableDiagnostics" /> 时各项为零。</summary>
+	public TcpMonitorStatistics Statistics => _options.EnableDiagnostics ? TcpConnectionMonitor.GetStatistics(_options) : default;
 	#endregion
 
-	#region 虚拟方法
-	protected virtual TcpServerChannelManager<T> CreateChannels() => new(this);
-	internal protected virtual TcpServerChannel<T> CreateChannel(IDuplexPipe transport, IPEndPoint address) => new(_channels, transport, address);
-	#endregion
+	#region 内部方法
+	/// <summary>向监听器处理扩展点派发当前连接上下文。</summary>
+	/// <param name="context">当前通道和处理期间有效的借用报文。</param>
+	/// <param name="cancellation">取消令牌；仅取消等待的入口不影响已经开始的资源清理。</param>
+	/// <returns>处理操作。</returns>
+	internal ValueTask HandleAsync(TcpReceiveContext<T> context, CancellationToken cancellation) => this.OnHandleAsync(context, cancellation);
 
-	#region 重写方法
-	protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
+	/// <summary>注销已经清理的连接登记，累计统计并归还接入额度。</summary>
+	/// <param name="channel">已经退场的连接。</param>
+	internal void Unregister(TcpServerChannel<T> channel)
 	{
-		var channels = _channels;
+		TcpConnectionMonitor.Remove(channel);
 
-		if(channels == null)
-			throw new ObjectDisposedException(this.Name);
-
-		int port = 7969, value;
-		var address = IPAddress.Any;
-
-		if(args != null && args.Length > 0)
+		if(this.Channels.Remove(channel))
 		{
-			switch(args.Length)
-			{
-				case 1:
-					if(int.TryParse(args[0], out value))
-						port = value;
-
-					break;
-				case 2:
-					if(int.TryParse(args[1], out value))
-						port = value;
-
-					if(!string.IsNullOrWhiteSpace(args[0]) && IPAddress.TryParse(args[0], out var ip))
-						address = ip;
-
-					break;
-			}
+			Interlocked.Add(ref _completedBytesSent, channel.TotalBytesSent);
+			Interlocked.Add(ref _completedBytesReceived, channel.TotalBytesReceived);
+			Interlocked.Add(ref _completedFramesSent, channel.TotalFramesSent);
+			Interlocked.Add(ref _completedFramesReceived, channel.TotalFramesReceived);
+			Interlocked.Decrement(ref _admitted);
 		}
-
-		channels.Listen(this.Address = new IPEndPoint(address, port));
-
-		//返回完成任务
-		return Task.CompletedTask;
 	}
 
-	protected override Task OnStopAsync(string[] args, CancellationToken cancellation)
+	/// <summary>将活动连接指标加入已完成连接的累计值。</summary>
+	/// <param name="selector">取得当前通道所需统计值的委托。</param>
+	/// <param name="total">已结束连接的累计值。</param>
+	/// <returns>并发变化期间的近似累计快照。</returns>
+	private long Sum(Func<TcpServerChannel<T>, long> selector, long total)
 	{
-		_channels?.Stop();
-		return Task.CompletedTask;
-	}
-	#endregion
+		foreach(var channel in this.Channels)
+			total += selector(channel);
 
-	#region 处置方法
-	protected override void Dispose(bool disposing)
-	{
-		var channels = Interlocked.Exchange(ref _channels, null);
-
-		if(channels != null)
-			channels.Dispose();
+		return total;
 	}
 	#endregion
 }

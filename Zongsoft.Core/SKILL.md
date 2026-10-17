@@ -111,4 +111,10 @@ Import 使用必需的 path 和默认 true 的 required；None 按 required 处�
 
 ChannelBase 以按需创建的共享完成任务协调一次关闭和释放，不创建内核事件；派生 DisposeAsync(bool) 在关闭结束后执行，不负责启动关闭。关闭异常不回滚状态，重复调用观察原结果；关闭后不得复用实例。WorkerBase 以原子发布的操作对象协调异步启停，启动失败调用 OnStopAsync 清理部分初始化资源，停止失败保持 Stopping，成功收尾前不允许重启。停止启动后调用者取消仅取消等待，派生停止实现负责实际完成与期限。DisposeAsync(bool) 默认调用原同步 Dispose(bool) 扩展点，基类已负责停止。
 
+- ChannelBase 的关闭权和释放权各只取得一次，完成结果安全发布给并发及后续调用者；关闭前已取消的令牌阻止操作，开始后的取消只结束当前等待。Closing、Closed 各通知一次，通知或扩展点故障不能跳过剩余清理。派生实现不能在关闭流程使用字段前清空它们。
+- 生命周期回调可以请求重入操作，但不得同步等待包含自身的操作；通知在状态确定后发出，通知故障不能恢复已失效资源或覆盖原始故障。同步入口集中复用异步流程，正常异步调用链不使用同步等待。
+- WorkerBase 的启动、停止、暂停和恢复共享相应操作的完成结果，取得执行权后重新验证状态；启动失败清理不完整初始化，停止失败可再次 StopAsync 收尾。下游不叠加另一套工作器状态机，不根据是否附加调试器决定异常是否传播。
+
 ListenerBase<T> 的 T 是处理器实参，不提供 Packetizer 或 IReceiver；传输解码由实际接收者负责。注入处理器不由监听器释放，无处理器时检查取消后返回成功。HandlerBase<T> 无参数入口传递 null，显式 Parameters 保留引用身份。两种 IPacketizer 接口均只提供 Pack 与 Unpack；Pack 不 Flush，Unpack 失败不消费、成功须推进。帧长度与解码资源释放属于具体传输层，由 Net 的 PacketizerBase<T> 提供 GetLength 与 Release，不扩充 Core 接口。回归入口为 ChannelLifecycleTest、WorkerLifecycleTest 和 ListenerDispatchTest。
+
+通信相关变更的验证应覆盖并发关闭／释放、重入、事件与扩展点抛错、独立取消等待、启动失败、停止重试及派生清理恰好一次。ChannelBase 的直接下游包括消息消费者、事件通道、事务事件通道、缓存订阅及 ZeroMQ／Redis 通道；WorkerBase 包括事件交换器、消息守护器、诊断工作器、ZeroMQ、OPC 和 Hangfire 服务；ListenerBase 包括 MQTT 服务。修改 HandlerBase 时在全仓搜索派生类型和参数访问，核对允许 null 的调用链。先阅读下游就近约定，验证实际受影响项目，不为测试扩大生产可见性。

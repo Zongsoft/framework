@@ -1,62 +1,116 @@
 using System;
+using System.IO;
 using System.Net;
+using System.Linq;
 using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Xunit;
 
-using Zongsoft.Collections;
-using Zongsoft.Communication;
-using Zongsoft.Components;
-
 namespace Zongsoft.Net.Tests;
 
 public class TcpClientTest
 {
 	[Fact]
-	public void ConstructorRejectsNullPacketizer()
+	public void ConstructorRejectsNullPacketizer() => Assert.Throws<ArgumentNullException>(() => new TcpClient<string>(null));
+
+	[Fact]
+	public async Task StaticClientsAreIndependentAndOptionsAreCopied()
 	{
-		Assert.Throws<ArgumentNullException>(() => new TcpClient<string>(null));
+		await using var server = TestNetwork.Server();
+		var options = new TcpClientOptions();
+		await using var first = TcpClient.CreateHeaded(options);
+		await using var second = TcpClient.Headed;
+		options.MaximumPendingSends = 0;
+		Assert.NotSame(first, second);
+		Assert.Equal(new IPEndPoint(IPAddress.Loopback, 7969), first.Address);
+		var address = (IPEndPoint)first.Address;
+		address.Port = 1;
+		Assert.Equal(7969, ((IPEndPoint)first.Address).Port);
+		await server.StartAsync();
+		await first.ConnectAsync(server.Address);
+		await first.SendAsync(new ReadOnlySequence<byte>(new byte[] { 1 }));
 	}
 
 	[Fact]
-	public async Task SendAsyncWithoutAddressRejectsBeforeConnecting()
+	public async Task ConcurrentConnectsShareChannelAndDisconnectAllowsFreshConnection()
 	{
-		var client = new TcpClient<string>(new StringPacketizer());
-
-		await Assert.ThrowsAsync<InvalidOperationException>(() => client.SendAsync("payload").AsTask());
+		await using var server = TestNetwork.Server();
+		await server.StartAsync();
+		await using var client = TcpClient.Headed;
+		client.Address = server.Address;
+		var channels = await Task.WhenAll(Enumerable.Range(0, 64).Select(_ => client.ConnectAsync()));
+		Assert.All(channels, channel => Assert.Same(channels[0], channel));
+		await client.DisconnectAsync();
+		Assert.True(channels[0].WaitAsync().IsCompletedSuccessfully);
+		var next = await client.ConnectAsync();
+		Assert.NotEqual(channels[0].Identifier, next.Identifier);
+		Assert.NotSame(channels[0], next);
 	}
 
 	[Fact]
-	public void NonGenericHandlerRejectsIncompatibleType()
+	public async Task PreCanceledConnectionDoesNotCreateOrPublishChannel()
 	{
-		IHandleable handleable = new TcpClient<string>(new StringPacketizer());
-
-		Assert.Throws<ArgumentException>(() => handleable.Handler = new ObjectHandler());
+		await using var client = TcpClient.Headed;
+		using var cancellation = new CancellationTokenSource();
+		cancellation.Cancel();
+		await Assert.ThrowsAnyAsync<OperationCanceledException>(() => client.ConnectAsync(cancellation: cancellation.Token));
+		Assert.Null(client.Channel);
 	}
 
 	[Fact]
-	public void StaticClientsDefaultToLoopbackPort7969()
+	public async Task ConnectDisposeRaceCannotLeavePublishedChannel()
 	{
-		Assert.Equal(new IPEndPoint(IPAddress.Loopback, 7969), TcpClient.Headless.Address);
-		Assert.Equal(new IPEndPoint(IPAddress.Loopback, 7969), TcpClient.Headed.Address);
-		Assert.NotSame(TcpClient.Headless.Packetizer, TcpClient.Headed.Packetizer);
-	}
+		await using var server = TestNetwork.Server();
+		await server.StartAsync();
 
-	private sealed class StringPacketizer : IPacketizer<string>
-	{
-		public void Pack(IBufferWriter<byte> writer, in string package) { }
-		public bool Unpack(ref ReadOnlySequence<byte> data, out string package)
+		for(var i = 0; i < 100; i++)
 		{
-			package = null;
-			return false;
+			var client = TcpClient.Headed;
+			var connecting = client.ConnectAsync(server.Address);
+			var disposing = client.DisposeAsync().AsTask();
+
+			try { await connecting; }
+			catch(OperationCanceledException) { }
+
+			await disposing.WaitAsync(TestNetwork.Timeout);
+			Assert.Null(client.Channel);
+			await Assert.ThrowsAsync<ObjectDisposedException>(() => client.ConnectAsync());
 		}
 	}
 
-	private sealed class ObjectHandler : IHandler
+	[Fact]
+	public async Task AddressChangeRetiresOriginalChannelAndRoutesNextSendToNewServer()
 	{
-		public ValueTask HandleAsync(object argument, CancellationToken cancellation = default) => ValueTask.CompletedTask;
-		public ValueTask HandleAsync(object argument, Parameters parameters, CancellationToken cancellation = default) => ValueTask.CompletedTask;
+		await using var first = TestNetwork.Server();
+		await using var second = TestNetwork.Server();
+		await first.StartAsync();
+		await second.StartAsync();
+		await using var client = TcpClient.Headed;
+		var original = await client.ConnectAsync(first.Address);
+		client.Address = second.Address;
+		var current = await client.ConnectAsync();
+		await original.WaitAsync().WaitAsync(TestNetwork.Timeout);
+		Assert.Equal(second.Address, current.RemoteEndPoint);
+		Assert.Same(current, client.Channel);
+	}
+
+	[Fact]
+	public async Task RepliesReturnOnlyToOriginatingClient()
+	{
+		await using var server = TestNetwork.Server();
+		server.Handler = new ReceiveHandler<ReadOnlySequence<byte>>((context, token) => context.Channel.SendAsync(context.Package, token));
+		await server.StartAsync();
+		await using var first = TcpClient.Headed;
+		await using var second = TcpClient.Headed;
+		var reply1 = TestNetwork.Signal<byte[]>();
+		var reply2 = TestNetwork.Signal<byte[]>();
+		first.Handler = new ReceiveHandler<ReadOnlySequence<byte>>((context, _) => { reply1.TrySetResult(context.Package.ToArray()); return ValueTask.CompletedTask; });
+		second.Handler = new ReceiveHandler<ReadOnlySequence<byte>>((context, _) => { reply2.TrySetResult(context.Package.ToArray()); return ValueTask.CompletedTask; });
+		first.Address = second.Address = server.Address;
+		await Task.WhenAll(first.SendAsync(new ReadOnlySequence<byte>(new byte[] { 1, 2 })).AsTask(), second.SendAsync(new ReadOnlySequence<byte>(new byte[] { 3, 4 })).AsTask());
+		Assert.Equal(new byte[] { 1, 2 }, await reply1.Task.WaitAsync(TestNetwork.Timeout));
+		Assert.Equal(new byte[] { 3, 4 }, await reply2.Task.WaitAsync(TestNetwork.Timeout));
 	}
 }

@@ -1,147 +1,151 @@
 using System;
-using System.Net;
+using System.IO;
 using System.Buffers;
-using System.Reflection;
-using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Runtime.CompilerServices;
 
 using Xunit;
 
-using Zongsoft.Collections;
 using Zongsoft.Communication;
-using Zongsoft.Components;
 
 namespace Zongsoft.Net.Tests;
 
 public class TcpServerChannelLifecycleTest
 {
-	[Fact]
-	public async Task ClientAsyncHandlerOwnsDisposablePayloadUntilCompletionAndDisposesOnce()
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task LeaseIsReleasedOnceAfterAsyncHandlerEvenWhenClosed(bool fail)
 	{
-		var handler = new DelayedHandler();
-		var client = new TcpClient<DisposablePayload>(new PayloadPacketizer()) { Handler = handler };
-		var channel = RuntimeHelpers.GetUninitializedObject(typeof(TcpClientChannel<DisposablePayload>));
-		var clientField = channel.GetType().GetField("_client", BindingFlags.Instance | BindingFlags.NonPublic);
-		var receive = channel.GetType().GetMethod("OnReceiveAsync", BindingFlags.Instance | BindingFlags.NonPublic);
-		var payload = new DisposablePayload();
-		clientField.SetValue(channel, client);
-
-		receive.Invoke(channel, [payload]);
-		await handler.Started.Task.WaitAsync(TimeSpan.FromSeconds(5));
-		var disposedBeforeCompletion = payload.DisposeCount;
-
-		handler.Release();
-		await handler.Processing.WaitAsync(TimeSpan.FromSeconds(5));
-		await payload.FirstDisposed.Task.WaitAsync(TimeSpan.FromSeconds(5));
-
-		Assert.Equal(0, disposedBeforeCompletion);
-		Assert.Equal(1, payload.DisposeCount);
-		Assert.False(payload.SecondDisposed.Task.IsCompleted);
-	}
-
-	[Fact]
-	public async Task AsyncHandlerOwnsDisposablePayloadUntilCompletionAndDisposesOnce()
-	{
-		using var server = new TcpServer<DisposablePayload>(new PayloadPacketizer());
-		var handler = new DelayedHandler();
-		var transport = new TestDuplexPipe();
-		server.Handler = handler;
-		var accepting = server.AcceptAsync(transport, new IPEndPoint(IPAddress.Loopback, 32123));
-
-		await transport.WriteAndCompleteAsync(new byte[] { 1 });
-		await handler.Started.Task.WaitAsync(TimeSpan.FromSeconds(5));
-		var payload = handler.Payload;
-		var disposedBeforeCompletion = payload.DisposeCount;
-
-		handler.Release();
-		await handler.Processing.WaitAsync(TimeSpan.FromSeconds(5));
-		await accepting.WaitAsync(TimeSpan.FromSeconds(5));
-		await payload.FirstDisposed.Task.WaitAsync(TimeSpan.FromSeconds(5));
-
-		Assert.Equal(0, disposedBeforeCompletion);
-		Assert.Equal(1, payload.DisposeCount);
-		Assert.False(payload.SecondDisposed.Task.IsCompleted);
-	}
-
-	private sealed class DisposablePayload : IDisposable
-	{
-		private int _disposeCount;
-
-		public int DisposeCount => Volatile.Read(ref _disposeCount);
-		public TaskCompletionSource FirstDisposed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-		public TaskCompletionSource SecondDisposed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-
-		public void Dispose()
+		var packetizer = new LeasePacketizer();
+		await using var server = new TcpServer<Lease>(packetizer).AtLoopback();
+		TcpChannelEventArgs<Lease> closing = null;
+		TcpChannelEventArgs<Lease> closed = null;
+		TcpChannelEventArgs<Lease> error = null;
+		var releasedAtNotification = 0;
+		server.Channels.Closing += (_, args) => closing = args;
+		server.Channels.Closed += (_, args) => { closed = args; releasedAtNotification = packetizer.Last.ReleaseCount; };
+		server.Channels.Error += (_, args) => error = args;
+		var entered = TestNetwork.Signal<TcpReceiveContext<Lease>>();
+		var release = TestNetwork.Signal();
+		server.Handler = new ReceiveHandler<Lease>(async (context, _) =>
 		{
-			var count = Interlocked.Increment(ref _disposeCount);
-			if(count == 1)
-				this.FirstDisposed.TrySetResult();
-			else if(count == 2)
-				this.SecondDisposed.TrySetResult();
+			entered.TrySetResult(context);
+			await release.Task;
+			Assert.Equal(0, context.Package.ReleaseCount);
+			Assert.Equal(17, context.Package.Bytes.FirstSpan[0]);
+
+			if(fail)
+				throw new InvalidOperationException();
+		});
+		await server.StartAsync();
+		using var socket = await TestNetwork.ConnectAsync(server.Address);
+		await TestNetwork.SendAsync(socket, new byte[] { 17 });
+		var received = await entered.Task.WaitAsync(TestNetwork.Timeout);
+		await received.Channel.CloseAsync();
+		Assert.False(received.Channel.WaitAsync().IsCompleted);
+		Assert.Equal(TcpCloseReason.Local, closing.CloseReason);
+		Assert.Null(closing.Error);
+		Assert.Null(closed);
+		Assert.Equal(0, received.Package.ReleaseCount);
+		release.TrySetResult();
+
+		if(fail)
+			await Assert.ThrowsAsync<InvalidOperationException>(() => received.Channel.WaitAsync().WaitAsync(TestNetwork.Timeout));
+		else
+			await received.Channel.WaitAsync().WaitAsync(TestNetwork.Timeout);
+
+		Assert.Equal(1, received.Package.ReleaseCount);
+		Assert.Equal(1, releasedAtNotification);
+		Assert.Same(received.Channel, closed.Channel);
+		Assert.Equal(TcpCloseReason.Local, closed.CloseReason);
+		Assert.Null(closing.Error);
+
+		if(fail)
+		{
+			Assert.IsType<InvalidOperationException>(closed.Error);
+			Assert.Same(closed.Error, error.Error);
 		}
+		else
+		{
+			Assert.Null(closed.Error);
+			Assert.Null(error);
+		}
+
+		Assert.Empty(server.Channels);
 	}
 
-	private sealed class PayloadPacketizer : IPacketizer<DisposablePayload>
+	[Fact]
+	public async Task ShutdownTimeoutRetainsBorrowedMemoryUntilUncooperativeHandlerExits()
 	{
-		public void Pack(IBufferWriter<byte> writer, in DisposablePayload package) { }
-
-		public bool Unpack(ref ReadOnlySequence<byte> data, out DisposablePayload package)
+		var packetizer = new LeasePacketizer();
+		await using var server = new TcpServer<Lease>(packetizer, new() { ShutdownTimeout = TimeSpan.FromMilliseconds(100) }).AtLoopback();
+		TcpChannelEventArgs<Lease> error = null;
+		server.Channels.Error += (_, args) => error = args;
+		var entered = TestNetwork.Signal<TcpReceiveContext<Lease>>();
+		var release = TestNetwork.Signal();
+		server.Handler = new ReceiveHandler<Lease>(async (context, _) =>
 		{
-			if(data.IsEmpty)
-			{
-				package = null;
-				return false;
-			}
+			entered.TrySetResult(context);
+			await release.Task;
+			Assert.Equal(23, context.Package.Bytes.FirstSpan[0]);
+		});
+		await server.StartAsync();
+		using var socket = await TestNetwork.ConnectAsync(server.Address);
+		await TestNetwork.SendAsync(socket, new byte[] { 23 });
+		var received = await entered.Task.WaitAsync(TestNetwork.Timeout);
+		await Assert.ThrowsAsync<TimeoutException>(() => server.StopAsync());
+		Assert.NotNull(error);
+		Assert.Equal(TcpCloseReason.ShutdownTimeout, error.CloseReason);
+		Assert.IsType<TimeoutException>(error.Error);
+		Assert.Equal(0, received.Package.ReleaseCount);
+		Assert.False(received.Channel.WaitAsync().IsCompleted);
+		Assert.Single(server.Channels);
+		release.TrySetResult();
+		await Assert.ThrowsAsync<TimeoutException>(() => received.Channel.WaitAsync().WaitAsync(TestNetwork.Timeout));
+		Assert.Equal(1, received.Package.ReleaseCount);
+		await server.StopAsync();
+	}
 
-			package = new DisposablePayload();
-			data = data.Slice(1);
+	[Fact]
+	public async Task SuccessfulDecodeWithoutProgressIsReleasedAndRejected()
+	{
+		var packetizer = new LeasePacketizer(false);
+		await using var server = new TcpServer<Lease>(packetizer).AtLoopback();
+		await server.StartAsync();
+		using var socket = await TestNetwork.ConnectAsync(server.Address);
+		await TestNetwork.UntilAsync(() => server.Channels.Count == 1);
+		var channel = Assert.Single(server.Channels);
+		await TestNetwork.SendAsync(socket, new byte[] { 1 });
+		var exception = await Assert.ThrowsAsync<TcpException>(() => channel.WaitAsync().WaitAsync(TestNetwork.Timeout));
+
+		Assert.Equal(TcpError.InvalidFrame, exception.ErrorCode);
+		Assert.Equal(1, packetizer.Last.ReleaseCount);
+	}
+
+	private sealed class Lease(ReadOnlySequence<byte> bytes)
+	{
+		internal ReadOnlySequence<byte> Bytes { get; } = bytes;
+		internal int ReleaseCount;
+	}
+
+	private sealed class LeasePacketizer(bool consume = true) : PacketizerBase<Lease>
+	{
+		internal Lease Last { get; private set; }
+		public override long GetLength(in Lease package) => package.Bytes.Length;
+		public override void Pack(IBufferWriter<byte> writer, in Lease package)
+		{
+			foreach(var segment in package.Bytes)
+				writer.Write(segment.Span);
+		}
+		public override void Release(in Lease package) => Interlocked.Increment(ref package.ReleaseCount);
+		public override bool Unpack(ref ReadOnlySequence<byte> data, out Lease package)
+		{
+			package = this.Last = new(data.Slice(0, 1));
+			if(consume)
+				data = data.Slice(1);
+
 			return true;
-		}
-	}
-
-	private sealed class DelayedHandler : IHandler<DisposablePayload>
-	{
-		private readonly TaskCompletionSource _release = new(TaskCreationOptions.RunContinuationsAsynchronously);
-		private Task _processing = Task.CompletedTask;
-
-		public DisposablePayload Payload { get; private set; }
-		public Task Processing => _processing;
-		public TaskCompletionSource Started { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-
-		public ValueTask HandleAsync(DisposablePayload argument, CancellationToken cancellation = default)
-		{
-			_processing = this.HandleCoreAsync(argument);
-			return new ValueTask(_processing);
-		}
-
-		public ValueTask HandleAsync(DisposablePayload argument, Parameters parameters, CancellationToken cancellation = default) => this.HandleAsync(argument, cancellation);
-		public ValueTask HandleAsync(object argument, CancellationToken cancellation = default) => this.HandleAsync((DisposablePayload)argument, cancellation);
-		public ValueTask HandleAsync(object argument, Parameters parameters, CancellationToken cancellation = default) => this.HandleAsync((DisposablePayload)argument, cancellation);
-
-		public void Release() => _release.TrySetResult();
-
-		private async Task HandleCoreAsync(DisposablePayload argument)
-		{
-			this.Payload = argument;
-			this.Started.TrySetResult();
-			await _release.Task;
-		}
-	}
-
-	private sealed class TestDuplexPipe : IDuplexPipe
-	{
-		private readonly Pipe _input = new();
-		private readonly Pipe _output = new();
-
-		public PipeReader Input => _input.Reader;
-		public PipeWriter Output => _output.Writer;
-
-		public async Task WriteAndCompleteAsync(ReadOnlyMemory<byte> data)
-		{
-			await _input.Writer.WriteAsync(data);
-			await _input.Writer.CompleteAsync();
 		}
 	}
 }

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Net library.
  *
@@ -28,117 +28,88 @@
  */
 
 using System;
+using System.IO;
 using System.Buffers;
 using System.Buffers.Binary;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Zongsoft.Net;
 
-internal class HeadlessPacketizer : Zongsoft.Communication.IPacketizer<IMemoryOwner<byte>>
+internal sealed class HeadlessPacketizer(int maximumLength) : PacketizerBase<ReadOnlySequence<byte>>
 {
-	#region 单例字段
-	public static readonly HeadlessPacketizer Instance = new();
-	#endregion
-
-	#region 私有构造
-	private HeadlessPacketizer() { }
-	#endregion
-
-	#region 公共方法
-	public void Pack(IBufferWriter<byte> writer, in IMemoryOwner<byte> package)
+	public override long GetLength(in ReadOnlySequence<byte> package)
 	{
-		if(package != null)
-			writer.Write(package.Memory.Span);
+		if(package.Length > maximumLength)
+			throw new TcpException(TcpError.InvalidFrame);
+
+		return package.Length;
 	}
 
-	public bool Unpack(ref ReadOnlySequence<byte> data, out IMemoryOwner<byte> package)
+	public override void Pack(IBufferWriter<byte> writer, in ReadOnlySequence<byte> package)
 	{
-		package = Zongsoft.Common.Buffer.Lease(data);
+		this.GetLength(in package);
+
+		foreach(var segment in package)
+		{
+			if(!segment.IsEmpty)
+				writer.Write(segment.Span);
+		}
+	}
+
+	public override bool Unpack(ref ReadOnlySequence<byte> data, out ReadOnlySequence<byte> package)
+	{
+		if(data.IsEmpty)
+		{
+			package = default;
+			return false;
+		}
+
+		package = data.Slice(0, Math.Min(data.Length, maximumLength));
+		data = data.Slice(package.End);
 		return true;
 	}
-	#endregion
 }
 
-internal class HeadedPacketizer : Zongsoft.Communication.IPacketizer<ReadOnlySequence<byte>>
+internal sealed class HeadedPacketizer(int maximumLength) : PacketizerBase<ReadOnlySequence<byte>>
 {
-	#region 常量定义
 	private const int HEAD_SIZE = 4;
-	#endregion
 
-	#region 单例字段
-	public static readonly HeadedPacketizer Instance = new();
-	#endregion
-
-	#region 公共属性
-	public string Name => nameof(HeadedPacketizer);
-	#endregion
-
-	#region 打包方法
-	public void Pack(IBufferWriter<byte> writer, in ReadOnlySequence<byte> package)
+	public override long GetLength(in ReadOnlySequence<byte> package)
 	{
-		var header = writer.GetSpan(HEAD_SIZE);
-		BinaryPrimitives.WriteInt32BigEndian(header, (int)package.Length);
+		if(package.Length > maximumLength)
+			throw new TcpException(TcpError.InvalidFrame);
+
+		return checked(package.Length + HEAD_SIZE);
+	}
+
+	public override void Pack(IBufferWriter<byte> writer, in ReadOnlySequence<byte> package)
+	{
+		this.GetLength(in package);
+		BinaryPrimitives.WriteUInt32BigEndian(writer.GetSpan(HEAD_SIZE), checked((uint)package.Length));
 		writer.Advance(HEAD_SIZE);
 
 		foreach(var segment in package)
-			writer.Write(segment.Span);
+		{
+			if(!segment.IsEmpty)
+				writer.Write(segment.Span);
+		}
 	}
 
-	public async ValueTask<System.IO.Pipelines.FlushResult> PackAsync(System.IO.Pipelines.PipeWriter writer, ReadOnlySequence<byte> package, CancellationToken cancellation)
+	public override bool Unpack(ref ReadOnlySequence<byte> data, out ReadOnlySequence<byte> package)
 	{
-		var header = writer.GetMemory(HEAD_SIZE);
-		BinaryPrimitives.WriteInt32BigEndian(header.Span, (int)package.Length);
-		writer.Advance(HEAD_SIZE);
+		package = default;
 
-		System.IO.Pipelines.FlushResult result = default;
-
-		foreach(var segment in package)
-		{
-			result = await writer.WriteAsync(segment, cancellation);
-
-			if(result.IsCanceled)
-				return result;
-		}
-
-		return result;
-	}
-	#endregion
-
-	#region 解包方法
-	public bool Unpack(ref ReadOnlySequence<byte> input, out ReadOnlySequence<byte> package)
-	{
-		if(!Zongsoft.Common.Buffer.TryGetUInt32BigEndian(input, out var length))
-		{
-			package = default;
+		if(!Zongsoft.Common.Buffer.TryGetUInt32BigEndian(data, out var length))
 			return false;
-		}
 
-		if(input.Length < length + HEAD_SIZE)
-		{
-			package = default;
+		if(length > maximumLength)
+			throw new TcpException(TcpError.InvalidFrame);
+
+		var frameLength = checked((long)length + HEAD_SIZE);
+		if(data.Length < frameLength)
 			return false;
-		}
 
-		package = input.Slice(HEAD_SIZE, length);
-		input = input.Slice(package.End);
-
-		this.OnUnpacked(package);
-
+		package = data.Slice(HEAD_SIZE, length);
+		data = data.Slice(frameLength);
 		return true;
 	}
-
-	protected virtual void OnUnpacked(ReadOnlySequence<byte> result) { }
-
-	private static int UnpackHeader(ReadOnlySpan<byte> input, out PackageHeader header)
-	{
-		var length = BinaryPrimitives.ReadInt32LittleEndian(input);
-		header = default;
-		return length;
-	}
-	#endregion
-
-	#region 包头结构
-	private readonly struct PackageHeader { }
-	#endregion
 }

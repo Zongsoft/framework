@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Net library.
  *
@@ -28,239 +28,288 @@
  */
 
 using System;
+using System.IO;
 using System.Net;
-using System.IO.Pipelines;
-using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
-
-using Pipelines.Sockets.Unofficial;
 
 using Zongsoft.Communication;
 
 namespace Zongsoft.Net;
 
-public abstract class TcpChannelBase<T> : ChannelBase, ISender, ISender<T>
+/// <summary>由单一接收者和单一写入者协调的 TCP 通道。</summary>
+/// <typeparam name="T">线协议报文类型。</typeparam>
+/// <remarks><see cref="ChannelBase.CloseAsync" /> 关闭传输，<see cref="WaitAsync" /> 等待处理器、发送和缓冲清理。处理器内可以关闭通道，不得等待自身的完成或释放。</remarks>
+public abstract partial class TcpChannelBase<T> : ChannelBase, ISender<T>, ITcpMonitoredConnection
 {
-	#region 私有变量
-	private bool _initialized;
-	private readonly SemaphoreSlim _singleWriter;
-	#endregion
-
 	#region 成员字段
-	private IDuplexPipe _transport;
+	private readonly TcpTransport _transport;
+	private readonly TcpConnectionOptions _options;
+	private readonly PacketizerBase<T> _packetizer;
+	private readonly CancellationTokenSource _lifetime = new();
+	private readonly TaskCompletionSource _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+	private readonly Sender _sender;
+	private readonly Receiver _receiver;
+	private Task _cancelling = Task.CompletedTask;
+	private Exception _failure;
+	private int _started;
+	private int _closeReason;
+	private int _errorReported;
 	#endregion
 
 	#region 构造函数
-	protected TcpChannelBase(IDuplexPipe transport, EndPoint address)
+	private protected TcpChannelBase(TcpTransport transport, PacketizerBase<T> packetizer, TcpConnectionOptions options)
 	{
 		_transport = transport;
-		this.Address = address;
-		_singleWriter = new SemaphoreSlim(1);
+		_packetizer = packetizer;
+		_options = options;
+		_sender = new(this);
+		_receiver = new(this);
+
+		this.Identifier = TcpTransport.GetIdentity();
 	}
 	#endregion
 
 	#region 公共属性
-	public EndPoint Address { get; }
-	public long TotalBytesSent => _transport is IMeasuredDuplexPipe transport ? transport.TotalBytesSent : 0;
-	public long TotalBytesReceived => _transport is IMeasuredDuplexPipe transport ? transport.TotalBytesReceived : 0;
-	protected IDuplexPipe Transport => _transport;
+	/// <summary>获取稳定的连接标识，不以远端地址作为连接身份。</summary>
+	public long Identifier { get; }
+	/// <summary>获取本地实际端点。</summary>
+	public EndPoint LocalEndPoint => _transport.LocalEndPoint;
+	/// <summary>获取远端端点。</summary>
+	public EndPoint RemoteEndPoint => _transport.RemoteEndPoint;
+	/// <summary>获取已完成 Socket 发送的累计字节数，不表示远端业务确认。</summary>
+	public long TotalBytesSent => _transport.BytesSent;
+	/// <summary>获取从 Socket 接收的累计字节数。</summary>
+	public long TotalBytesReceived => _transport.BytesReceived;
+	/// <summary>获取成功编码并完成 Flush 的报文数。</summary>
+	public long TotalFramesSent => _sender.Frames;
+	/// <summary>获取成功解码的报文数。</summary>
+	public long TotalFramesReceived => _receiver.Frames;
+	/// <summary>获取已接纳但尚未完成的发送操作数。</summary>
+	public int PendingSendCount => _sender.Count;
+	/// <summary>获取预留及尚未完成 Socket 发送的线协议字节数。</summary>
+	public long PendingSendBytes => _sender.Bytes;
+	/// <summary>获取可选诊断计数；未启用 <see cref="TcpConnectionOptions.EnableDiagnostics" /> 时全部为零。</summary>
+	public TcpChannelStatistics Statistics => new(
+		_receiver.Reads,
+		_receiver.BudgetExhaustions,
+		_receiver.MaximumFrames,
+		_sender.Waits);
 	#endregion
 
-	#region 初始化器
-	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private void Initialize(in T package)
-	{
-		if(_initialized)
-			return;
-
-		lock(this)
-		{
-			if(Volatile.Read(ref _initialized))
-				return;
-
-			if(this.OnInitialize(package))
-				Volatile.Write(ref _initialized, true);
-		}
-	}
-
-	protected virtual bool OnInitialize(in T package) => true;
+	#region 私有属性
+	/// <summary>获取连接结束的首个原因，供生命周期通知创建快照。</summary>
+	private TcpCloseReason CloseReason => (TcpCloseReason)Volatile.Read(ref _closeReason);
+	/// <summary>获取首个收发、处理或清理故障；尚无故障时为 <see langword="null" />。</summary>
+	private Exception Failure => Volatile.Read(ref _failure);
 	#endregion
 
-	#region 发送数据
-	public async ValueTask SendAsync(T package, CancellationToken cancellation = default)
-	{
-		if(!_singleWriter.Wait(0, cancellation))
-		{
-			await this.SendSlowAsync(package, cancellation);
-			return;
-		}
-
-		bool release = true;
-
-		try
-		{
-			var writer = _transport?.Output ?? throw new ObjectDisposedException(this.ToString());
-			this.Pack(writer, package);
-			await writer.FlushAsync(cancellation);
-		}
-		finally
-		{
-			if(release)
-				_singleWriter.Release();
-		}
-	}
-
-	private async ValueTask SendSlowAsync(T package, CancellationToken cancellation)
-	{
-		await _singleWriter.WaitAsync(cancellation);
-
-		try
-		{
-			var writer = _transport?.Output ?? throw new ObjectDisposedException(this.GetType().FullName);
-			this.Pack(writer, package);
-			await writer.FlushAsync(cancellation);
-		}
-		finally
-		{
-			_singleWriter.Release();
-		}
-	}
-
-	public ValueTask SendAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
-	{
-		if(!_singleWriter.Wait(0, cancellation))
-			return this.SendSlowAsync(data, cancellation);
-
-		bool release = true;
-
-		try
-		{
-			var writer = _transport?.Output ?? throw new ObjectDisposedException(this.GetType().FullName);
-			var result = this.OnSendAsync(writer, data, cancellation);
-
-			if(result.IsCompletedSuccessfully)
-				return default;
-
-			release = false;
-			return AwaitFlushAndRelease(result);
-		}
-		finally
-		{
-			if(release)
-				_singleWriter.Release();
-		}
-
-		async ValueTask AwaitFlushAndRelease(ValueTask<FlushResult> flush)
-		{
-			try { await flush; }
-			finally { _singleWriter.Release(); }
-		}
-	}
-
-	private async ValueTask SendSlowAsync(ReadOnlyMemory<byte> data, CancellationToken cancellation)
-	{
-		await _singleWriter.WaitAsync(cancellation);
-
-		try
-		{
-			var writer = _transport?.Output ?? throw new ObjectDisposedException(this.GetType().FullName);
-			await this.OnSendAsync(writer, data, cancellation);
-		}
-		finally
-		{
-			_singleWriter.Release();
-		}
-	}
-
-	protected virtual ValueTask<FlushResult> OnSendAsync(PipeWriter writer, ReadOnlyMemory<byte> data, CancellationToken cancellation) => writer.WriteAsync(data, cancellation);
+	#region 等待完成
+	/// <summary>等待处理器、已接纳发送、缓冲清理及生命周期通知全部结束，不主动关闭连接。</summary>
+	/// <param name="cancellation">仅取消当前调用方的等待，不影响通道及其他等待者。</param>
+	/// <returns>共享完成结果；通道发生故障时传播首个异常，完成后仍可再次等待。</returns>
+	/// <remarks>处理器不得等待自身退场；同步事件回调不得阻塞等待包含自身的操作。</remarks>
+	public Task WaitAsync(CancellationToken cancellation = default) => _completion.Task.WaitAsync(cancellation);
 	#endregion
 
-	#region 协议解析
-	protected abstract void Pack(PipeWriter writer, in T package);
-	protected abstract bool Unpack(ref ReadOnlySequence<byte> data, out T package);
-	#endregion
+	#region 接收流程
+	/// <summary>获取一个值，指示连接仍可接纳新操作。</summary>
+	internal bool IsActive => _receiver.IsActive;
 
-	#region 接收消息
-	protected async Task ReceiveAsync(CancellationToken cancellation = default)
+	/// <summary>取得唯一接收权，协调接收结束、发送排空和资源清理。</summary>
+	internal void Start()
 	{
-		var reader = _transport?.Input ?? throw new ObjectDisposedException(this.ToString());
+		if(Interlocked.CompareExchange(ref _started, 1, 0) != 0)
+			throw new InvalidOperationException();
 
-		try
+		_ = ReceiveAsync();
+
+		async Task ReceiveAsync()
 		{
-			//开启异步接收
-			this.OnReceiving();
-
-			bool unpacked = false;
-
-			while(!cancellation.IsCancellationRequested)
+			try
 			{
-				if(!(unpacked && reader.TryRead(out var result)))
-					result = await reader.ReadAsync(cancellation);
+				if(await _receiver.RunAsync().ConfigureAwait(false))
+					this.RecordFailure(TcpCloseReason.Remote, null);
 
-				if(result.IsCanceled)
-					break;
-
-				var buffer = result.Buffer;
-
-				unpacked = false;
-				while(this.Unpack(ref buffer, out var package))
-				{
-					unpacked = true;
-
-					if(!_initialized)
-						this.Initialize(package);
-
-					await this.OnReceiveAsync(in package);
-				}
-
-				reader.AdvanceTo(buffer.Start, buffer.End);
-
-				if(!unpacked && result.IsCompleted)
-					break;
+				if(!this.IsClosing)
+					await _sender.DrainAsync().ConfigureAwait(false);
 			}
+			catch(OperationCanceledException) when(_lifetime.IsCancellationRequested) { }
+			catch(Exception exception) { this.RecordFailure(GetCloseReason(exception), exception); }
+			finally
+			{
+				try { await _transport.Input.CompleteAsync(this.Failure).ConfigureAwait(false); }
+				catch(Exception exception) { this.RecordFailure(TcpCloseReason.TransportError, exception); }
 
-			try { reader.Complete(); } catch { }
-		}
-		catch(Exception ex)
-		{
-			try { reader.Complete(ex); } catch { }
-		}
-		finally
-		{
-			try { await this.CloseAsync(cancellation); } catch { }
+				await this.FinishAsync().ConfigureAwait(false);
+			}
 		}
 	}
 
-	protected abstract ValueTask OnReceiveAsync(in T package);
-	protected virtual void OnReceiving() { }
+	/// <summary>处理当前报文；完成前不得释放或在其他任务中继续使用其借用内存。</summary>
+	/// <param name="context">接收通道和报文。</param>
+	/// <param name="cancellation">连接关闭令牌。</param>
+	/// <returns>本次报文的业务处理操作。</returns>
+	protected abstract ValueTask OnReceiveAsync(TcpReceiveContext<T> context, CancellationToken cancellation);
 	#endregion
 
-	#region 关闭方法
+	#region 超时检查
+	/// <summary>获取构造时固定的连接设置快照。</summary>
+	TcpConnectionOptions ITcpMonitoredConnection.Settings => _options;
+
+	/// <summary>由共享维护任务终止连接并保存故障。</summary>
+	/// <param name="reason">连接关闭原因。</param>
+	/// <param name="exception">首个故障；正常关闭时为 <see langword="null" />。</param>
+	void ITcpMonitoredConnection.Abort(TcpCloseReason reason, Exception exception) => this.Abort(reason, exception);
+
+	/// <summary>协调收发期限检查，并按首个超时原因关闭连接。</summary>
+	/// <param name="now">由配置的 <see cref="TimeProvider" /> 提供的单调时间戳。</param>
+	/// <returns>相对于记录期限的检测延迟；未超时返回 <see cref="TimeSpan.Zero" />。</returns>
+	TimeSpan ITcpMonitoredConnection.CheckTimeout(long now)
+	{
+		if(this.IsClosing)
+			return TimeSpan.Zero;
+
+		var reason = _receiver.CheckTimeout(now, out var delay);
+		if(reason == TcpCloseReason.None && _sender.CheckTimeout(now, out delay))
+			reason = TcpCloseReason.SendTimeout;
+
+		if(reason == TcpCloseReason.None)
+			return TimeSpan.Zero;
+
+		delay += _options.TimeProvider.GetElapsedTime(now);
+		this.Abort(reason, new TimeoutException(Properties.Resources.Network_Timeout_Message));
+		return delay;
+	}
+	#endregion
+
+	#region 事件通知
+	/// <summary>固定开始关闭的原因，并转发所属连接管理对象的通知。</summary>
+	protected sealed override void OnClosing()
+	{
+		Interlocked.CompareExchange(ref _closeReason, (int)TcpCloseReason.Local, 0);
+
+		try { base.OnClosing(); }
+		finally
+		{
+			this.OnClosing(new(this, this.CloseReason, this.Failure));
+			this.ReportError();
+		}
+	}
+
+	/// <summary>通知所属连接管理对象开始关闭。</summary>
+	/// <param name="args">开始关闭时的状态快照。</param>
+	private protected abstract void OnClosing(TcpChannelEventArgs<T> args);
+	/// <summary>通知所属连接管理对象已经完整退场。</summary>
+	/// <param name="args">移除登记后的最终状态快照。</param>
+	private protected abstract void OnClosed(TcpChannelEventArgs<T> args);
+	/// <summary>通知所属连接管理对象首个结束故障。</summary>
+	/// <param name="args">包含首个异常的状态快照。</param>
+	private protected abstract void OnError(TcpChannelEventArgs<T> args);
+
+	/// <summary>在开始关闭或最终清理时报告首个故障，每条通道只通知一次。</summary>
+	private void ReportError()
+	{
+		var failure = this.Failure;
+		if(failure != null && Interlocked.CompareExchange(ref _errorReported, 1, 0) == 0)
+			this.OnError(new(this, this.CloseReason, failure));
+	}
+	#endregion
+
+	#region 错误分类
+	/// <summary>将报文错误和其他收发异常映射为通道结束原因。</summary>
+	/// <param name="exception">分帧器或传输报告的异常。</param>
+	/// <returns>协议错误或传输错误。</returns>
+	private static TcpCloseReason GetCloseReason(Exception exception) => exception is
+		InvalidDataException or TcpException { ErrorCode: TcpError.InvalidFrame or TcpError.IncompleteFrame } ?
+		TcpCloseReason.ProtocolError : TcpCloseReason.TransportError;
+	#endregion
+
+	#region 关闭流程
+	/// <summary>停止开始新的报文处理，允许当前处理和已接纳发送排空。</summary>
+	internal void RequestShutdown() => _receiver.RequestShutdown();
+
+	/// <summary>立即请求关闭传输；当前处理持有的缓冲仍由接收流程归还。</summary>
+	/// <param name="reason">连接关闭原因。</param>
+	/// <param name="exception">首个故障；正常关闭时为 <see langword="null" />。</param>
+	internal void Abort(TcpCloseReason reason, Exception exception)
+	{
+		this.RecordFailure(reason, exception);
+		_ = this.CloseAsync().AsTask();
+	}
+
+	/// <summary>原子保存首个结束原因和首个非空故障。</summary>
+	/// <param name="reason">连接关闭原因。</param>
+	/// <param name="exception">首个故障；正常关闭时为 <see langword="null" />。</param>
+	private void RecordFailure(TcpCloseReason reason, Exception exception)
+	{
+		Interlocked.CompareExchange(ref _failure, exception, null);
+		Interlocked.CompareExchange(ref _closeReason, (int)reason, 0);
+	}
+
+	/// <summary>取消收发并关闭 Socket，在取得唯一写入权后完成输出管道。</summary>
+	/// <param name="cancellation">取消令牌；仅取消等待的入口不影响已经开始的资源清理。</param>
+	/// <returns>传输关闭任务，不等待业务处理器退场。</returns>
 	protected override async ValueTask OnCloseAsync(CancellationToken cancellation)
 	{
-		Volatile.Write(ref _initialized, false);
-		var transport = Interlocked.Exchange(ref _transport, null);
+		_ = _sender.Stop();
+		_cancelling = _lifetime.CancelAsync();
+		_transport.Input.CancelPendingRead();
+		_transport.Output.CancelPendingFlush();
+		_transport.Dispose();
 
-		if(transport != null)
+		await _sender.CompleteAsync(this.Failure).ConfigureAwait(false);
+	}
+
+	/// <summary>等待发送和取消回调退场，释放协调资源并发布最终结果。</summary>
+	/// <returns>通道最终清理任务。</returns>
+	private async Task FinishAsync()
+	{
+		try { await this.CloseAsync().ConfigureAwait(false); }
+		catch(Exception exception) { this.RecordFailure(TcpCloseReason.TransportError, exception); }
+
+		try
 		{
-			try { transport.Input.Complete(); } catch { }
-			try { transport.Input.CancelPendingRead(); } catch { }
-			try { transport.Output.Complete(); } catch { }
-			try { transport.Output.CancelPendingFlush(); } catch { }
+			await _sender.Stop().ConfigureAwait(false);
+			await _cancelling.ConfigureAwait(false);
+		}
+		catch(Exception exception) { this.RecordFailure(TcpCloseReason.TransportError, exception); }
 
-			switch(transport)
-			{
-				case IAsyncDisposable disposable:
-					await disposable.DisposeAsync();
-					break;
-				case IDisposable disposable:
-					disposable.Dispose();
-					break;
-			}
+		_lifetime.Dispose();
+		_sender.Dispose();
+
+		try { this.OnCompleted(); }
+		catch(Exception exception) { this.RecordFailure(TcpCloseReason.TransportError, exception); }
+
+		this.ReportError();
+		this.OnClosed(new(this, this.CloseReason, this.Failure));
+
+		if(this.Failure == null)
+			_completion.TrySetResult();
+		else
+		{
+			_completion.TrySetException(this.Failure);
+
+			//所属客户端或服务端已记录故障；标记为已观察，同时保留 await 的异常结果。
+			_ = _completion.Task.Exception;
+		}
+	}
+
+	/// <summary>通知连接所有者移除登记并累计统计。</summary>
+	private protected virtual void OnCompleted() { }
+
+	/// <summary>等待全部通道任务完成，并清理尚未启动的通道。</summary>
+	/// <param name="disposing">是否释放托管资源。</param>
+	/// <returns>与 <see cref="WaitAsync" /> 相同的完成结果。</returns>
+	protected override async ValueTask DisposeAsync(bool disposing)
+	{
+		if(Interlocked.CompareExchange(ref _started, -1, 0) == 0)
+		{
+			try { await _transport.Input.CompleteAsync().ConfigureAwait(false); }
+			finally { await this.FinishAsync().ConfigureAwait(false); }
 		}
 
-		try { _singleWriter.Dispose(); } catch { }
+		await this.WaitAsync().ConfigureAwait(false);
 	}
 	#endregion
 }

@@ -1,63 +1,55 @@
 # Zongsoft.Net 范例
 
-[English](README.md) |
-[简体中文](README.zh-Hans.md)
+[English](README.md) | [简体中文](README.zh-Hans.md)
 
------
-
-## 项目
+两个范例项目面向 .NET 10，Net 库支持 .NET 8、9、10。安装 .NET 10 SDK，运行前先以 Debug 构建本地 Core。默认端点为 `127.0.0.1:7969`，无需数据库、Broker 或真实设备。
 
 | 项目 | 用途 |
 | --- | --- |
-| [server](server) | 运行带长度包头的 TCP 服务端，显示收到的 UTF-8 消息并广播确认响应。 |
-| [client](client) | 连接 TCP 服务端，发送或接收带长度包头的 UTF-8 消息。 |
+| [server](server/Program.cs) | 独立 TCP 服务，逐帧向当前通道回复；广播是独立命令 |
+| [client](client/Program.cs) | 交互发送、自动请求响应、心跳和有界设备合批 |
+| [共享协议](shared/SampleProtocol.cs) | 可选 LF 文本分帧器，演示精确长度、失败不消费和成功推进 |
 
-两个项目均面向 .NET 10，并使用带长度前缀的 `TcpServer.Headed` 和 `TcpClient.Headed` API。默认端点为 `127.0.0.1:7969`。
+## 交互运行
 
-## 运行
-
-在仓库根目录启动服务端：
-
-```shell
-dotnet run --project Zongsoft.Net/samples/server/Zongsoft.Net.Samples.Server.csproj
-```
-
-然后在另一个终端启动客户端：
+先在仓库根目录执行一次 `dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -c Debug -p:GeneratePackageOnBuild=false`，然后在两个终端分别执行：
 
 ```shell
-dotnet run --project Zongsoft.Net/samples/client/Zongsoft.Net.Samples.Client.csproj
+dotnet run --project Zongsoft.Net/samples/server/Zongsoft.Net.Samples.Server.csproj -f net10.0 -- 127.0.0.1 7969
+dotnet run --project Zongsoft.Net/samples/client/Zongsoft.Net.Samples.Client.csproj -f net10.0 -- 127.0.0.1 7969
 ```
 
-服务端可接受可选的 IP 地址和端口，客户端也接受相同的两个位置参数：
+客户端命令：`connect`、`disconnect`、`info`、`send <消息>`。发送前尚未建连时自动建连。服务端命令：`start`、`stop`、`info`、`broadcast <消息>`。普通请求收到 `ACK: <消息>`，只回复发起连接；`PING` 返回 `PONG`。广播输出成功、失败和容量拒绝数。
+
+可启动两个客户端验证响应路由：客户端一发送消息时，客户端二不收到该 ACK；服务端执行广播时，两端都收到广播。
+
+## 自动演示与冒烟
+
+以下命令同样分两个进程执行。服务端 `--count N` 在处理 N 条请求后排空停止，最长等待 60 秒；客户端自动模式验证响应后退出。服务端打印 `READY` 和 `STOPPED`，客户端成功后打印 `DISCONNECTED` 或 `BATCH completed=17`。端口可以使用零，由 `READY` 给出实际端口。
+
+普通请求响应：
 
 ```shell
-dotnet run --project Zongsoft.Net/samples/server/Zongsoft.Net.Samples.Server.csproj -- 0.0.0.0 9000
-dotnet run --project Zongsoft.Net/samples/client/Zongsoft.Net.Samples.Client.csproj -- 127.0.0.1 9000
+dotnet run --project Zongsoft.Net/samples/server/Zongsoft.Net.Samples.Server.csproj -f net10.0 -- 127.0.0.1 7969 --count 1
+dotnet run --project Zongsoft.Net/samples/client/Zongsoft.Net.Samples.Client.csproj -f net10.0 -- 127.0.0.1 7969 --smoke
 ```
 
-## 命令
+自定义分帧：共享的 `LinePacketizer` 派生自 Net 的 `PacketizerBase<ReadOnlySequence<byte>>`，实现 `GetLength`、`Pack`、`Unpack`，借用序列沿用默认无操作的 `Release`。两端都加 `--custom`；服务端仍用 `--count 1`，客户端仍用 `--smoke`。文本正文不能包含 LF，最大 64 KiB，尾部的 LF 是线协议的一部分。Headed 与此协议不能混用。
 
-客户端支持 `connect`、`disconnect`、`info` 和 `send <消息>`；发送消息时如未连接会自动建立连接。
+长连接心跳：服务端用 `--count 3`，客户端用 `--heartbeat`。演示每秒发送一次 `PING` 并等待 `PONG`，共三次。生产环境可按设备需要使用 60—300 秒间隔和随机抖动，同时配置更宽裕的空闲期限；收到字节不等于业务健康确认。
 
-服务端支持 `start [地址] [端口]`、`stop`、`info` 和 `broadcast <消息>`；每条客户端消息都会显示出来，并以 `ACK:` 前缀向所有已连接客户端广播确认响应。
+## 设备合批与半包
 
-## 建议场景
+服务端用 `--count 17`，客户端用 `--batch`。该模式仅使用 Headed：模拟器用原始 Socket 控制设备端写入，积累最多 17 个小帧，主动等待 20 毫秒后发送前 16 个完整帧及下一帧的前两个包头字节；验证 16 个有序响应后，再发送剩余字节并验证最后响应。
 
-1. 启动服务端和客户端；
-2. 在客户端执行 `connect` 和 `send Hello Zongsoft.Net`；
-3. 确认服务端显示消息，客户端收到 `ACK: Hello Zongsoft.Net`；
-4. 在服务端执行 `broadcast Maintenance starts soon`，确认客户端收到广播。
+库收到多帧后逐帧调用处理器；批尾半包留到后续读取，达到处理预算后仍继续处理已有完整帧。模拟器只在设备侧使用有界积累，不把整个批次作为一条大消息。主动等待会增加消息延迟，TCP 可能合并或拆分任意一次写入；本演示不承诺网络保留批次边界。
 
-## 分帧与关键代码
+## 编码与缓冲复用
 
-TCP 是字节流，不是消息队列。带头分帧器加入四字节长度前缀，使接收方可拼合分次读取并拆分相邻消息。两端必须使用相同分帧规则，替换任一端前先读[类库指南](../README.zh-Hans.md)。
+文本发送、回复与广播使用 Core 的 `Buffer.Encode` 扩展获得 UTF-8 池化租约；在 `using` 作用域内等待发送或广播完成，再归还租约。设备合批在 `Pack` 将内容复制到合批写入器后归还每条消息的租约。接收保持借用序列，直接按跨段输入解码为字符串；需要在回调结束后保存原始报文时，可使用 `context.Package.Lease()` 并明确移交和释放所有者，详见[类库契约](../README.zh-Hans.md)。
 
-命令注册与处理器见 [client/Program.cs](client/Program.cs) 和 [server/Program.cs](server/Program.cs)。ACK 文本只是样例应用数据，不是持久协议确认。
+## 取消与清理
 
-## 前置条件与清理
+两个应用都使用独立实例、`await using` 和取消令牌。交互模式需要终端，自动模式可重定向输出；Ctrl+C 请求取消并在退出时清理。正常结束会等待发送排空，自动模式超时或响应错误以失败退出。ACK 只是应用示例文本，不是持久化确认。
 
-需要 .NET 10 与交互终端。Debug 构建可能需要本地 Core 产物；缺少引用程序集时先构建 `Zongsoft.Core/src/Zongsoft.Core.csproj -f net10.0`。
-
-退出终端前在客户端执行 `disconnect`、服务端执行 `stop`。样例不创建数据库或消息文件。端口被占用通常意味着之前的服务器进程仍在运行。
-
-🚨 绑定 `0.0.0.0` 会暴露所有接口。本演示没有身份验证及加密，应使用 loopback，不能当作生产安全传输。
+`CloseAsync` 关闭传输，`WaitAsync` 等待处理与资源清理全部完成；处理器不能等待包含自身的完整退出。借用序列仅在当前异步处理完成前有效。参见[类库契约](../README.zh-Hans.md)。样例没有认证或加密，保持回环绑定；改成公网监听前应由应用补齐相应协议保护。

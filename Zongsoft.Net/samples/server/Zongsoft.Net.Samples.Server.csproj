@@ -7,6 +7,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\Zongsoft.Net.csproj" />
+		<Compile Include="..\shared\SampleProtocol.cs" Link="SampleProtocol.cs" />
 	</ItemGroup>
 
 	<Choose>
@@ -19,7 +20,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.63.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.65.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

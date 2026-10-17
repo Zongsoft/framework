@@ -9,73 +9,127 @@
 //------------------------------------------------------------------------------
 
 namespace Zongsoft.Net.Properties {
-    using System;
+	using System;
 
 
-    /// <summary>
-    ///   一个强类型的资源类，用于查找本地化的字符串等。
-    /// </summary>
-    // 此类是由 StronglyTypedResourceBuilder
-    // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
-    // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
-    // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-    [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resources {
+	/// <summary>
+	///   一个强类型的资源类，用于查找本地化的字符串等。
+	/// </summary>
+	// 此类是由 StronglyTypedResourceBuilder
+	// 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
+	// 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
+	// (以 /str 作为命令选项)，或重新生成 VS 项目。
+	[global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
+	[global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+	[global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
+	internal class Resources {
 
-        private static global::System.Resources.ResourceManager resourceMan;
+		private static global::System.Resources.ResourceManager resourceMan;
 
-        private static global::System.Globalization.CultureInfo resourceCulture;
+		private static global::System.Globalization.CultureInfo resourceCulture;
 
-        [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        internal Resources() {
-        }
+		[global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
+		internal Resources() {
+		}
 
-        /// <summary>
-        ///   返回此类使用的缓存的 ResourceManager 实例。
-        /// </summary>
-        [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager {
-            get {
-                if (object.ReferenceEquals(resourceMan, null)) {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Zongsoft.Net.Properties.Resources", typeof(Resources).Assembly);
-                    resourceMan = temp;
-                }
-                return resourceMan;
-            }
-        }
+		/// <summary>
+		///   返回此类使用的缓存的 ResourceManager 实例。
+		/// </summary>
+		[global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
+		internal static global::System.Resources.ResourceManager ResourceManager {
+			get {
+				if (object.ReferenceEquals(resourceMan, null)) {
+					global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("Zongsoft.Net.Properties.Resources", typeof(Resources).Assembly);
+					resourceMan = temp;
+				}
+				return resourceMan;
+			}
+		}
 
-        /// <summary>
-        ///   使用此强类型资源类，为所有资源查找
-        ///   重写当前线程的 CurrentUICulture 属性。
-        /// </summary>
-        [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture {
-            get {
-                return resourceCulture;
-            }
-            set {
-                resourceCulture = value;
-            }
-        }
+		/// <summary>
+		///   使用此强类型资源类，为所有资源查找
+		///   重写当前线程的 CurrentUICulture 属性。
+		/// </summary>
+		[global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
+		internal static global::System.Globalization.CultureInfo Culture {
+			get {
+				return resourceCulture;
+			}
+			set {
+				resourceCulture = value;
+			}
+		}
 
-        /// <summary>
-        ///   查找类似 The destination address to connect to is not specified. 的本地化字符串。
-        /// </summary>
-        internal static string Network_DestinationRequired_Message {
-            get {
-                return ResourceManager.GetString("Network.DestinationRequired.Message", resourceCulture);
-            }
-        }
+		/// <summary>
+		///   查找类似 The listening address cannot be changed while the server is active. 的本地化字符串。
+		/// </summary>
+		internal static string Network_AddressImmutable_Message {
+			get {
+				return ResourceManager.GetString("Network.AddressImmutable.Message", resourceCulture);
+			}
+		}
 
-        /// <summary>
-        ///   查找类似 The specified ‘{0}’ handler does not match. 的本地化字符串。
-        /// </summary>
-        internal static string Network_HandlerMismatch_Message {
-            get {
-                return ResourceManager.GetString("Network.HandlerMismatch.Message", resourceCulture);
-            }
-        }
-    }
+		/// <summary>
+		///   查找类似 The connection no longer accepts operations. 的本地化字符串。
+		/// </summary>
+		internal static string Network_ConnectionClosed_Message {
+			get {
+				return ResourceManager.GetString("Network.ConnectionClosed.Message", resourceCulture);
+			}
+		}
+
+		/// <summary>
+		///   查找类似 The destination address to connect to is not specified. 的本地化字符串。
+		/// </summary>
+		internal static string Network_DestinationRequired_Message {
+			get {
+				return ResourceManager.GetString("Network.DestinationRequired.Message", resourceCulture);
+			}
+		}
+
+		/// <summary>
+		///   查找类似 The connection ended with an incomplete frame. 的本地化字符串。
+		/// </summary>
+		internal static string Network_FrameIncomplete_Message {
+			get {
+				return ResourceManager.GetString("Network.FrameIncomplete.Message", resourceCulture);
+			}
+		}
+
+		/// <summary>
+		///   查找类似 The packet length or framing contract is invalid. 的本地化字符串。
+		/// </summary>
+		internal static string Network_FrameInvalid_Message {
+			get {
+				return ResourceManager.GetString("Network.FrameInvalid.Message", resourceCulture);
+			}
+		}
+
+		/// <summary>
+		///   查找类似 The specified ‘{0}’ handler does not match. 的本地化字符串。
+		/// </summary>
+		internal static string Network_HandlerMismatch_Message {
+			get {
+				return ResourceManager.GetString("Network.HandlerMismatch.Message", resourceCulture);
+			}
+		}
+
+		/// <summary>
+		///   查找类似 The send operation exceeds the configured capacity. 的本地化字符串。
+		/// </summary>
+		internal static string Network_SendCapacity_Message {
+			get {
+				return ResourceManager.GetString("Network.SendCapacity.Message", resourceCulture);
+			}
+		}
+
+		/// <summary>
+		///   查找类似 The connection operation exceeded its configured deadline. 的本地化字符串。
+		/// </summary>
+		internal static string Network_Timeout_Message {
+			get {
+				return ResourceManager.GetString("Network.Timeout.Message", resourceCulture);
+			}
+		}
+	}
 }

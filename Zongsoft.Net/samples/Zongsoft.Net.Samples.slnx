@@ -1,0 +1,4 @@
+<Solution>
+	<Project Path="client/Zongsoft.Net.Samples.Client.csproj" />
+	<Project Path="server/Zongsoft.Net.Samples.Server.csproj" />
+</Solution>

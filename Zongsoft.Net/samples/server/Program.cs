@@ -1,5 +1,6 @@
 using System;
 using System.Text;
+using System.Linq;
 using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,65 +12,77 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Net.Samples;
 
-internal class Program
+internal static class Program
 {
-	static async Task Main(string[] args)
+	#region 程序入口
+	private static async Task Main(string[] args)
 	{
-		var server = TcpServer.Headed;
-		server.Handler = new Handler(server);
-		await server.StartAsync(args.Length == 0 ? ["127.0.0.1", "7969"] : args);
+		using var cancellation = new CancellationTokenSource();
+		Console.CancelKeyPress += Cancel;
 
-		var executor = Terminal.Console.Executor;
-		executor.Command("start", async (context, cancellation) => await server.StartAsync([.. GetArgs(context)], cancellation));
-		executor.Command("stop", async (context, cancellation) => await server.StopAsync([], cancellation));
-
-		executor.Command("info", context =>
+		try
 		{
-			context.Output.Write(CommandOutletColor.Cyan, "State: ");
-			context.Output.WriteLine(server.IsListening ? CommandOutletColor.Green : CommandOutletColor.Magenta, server.State);
-			context.Output.Write(CommandOutletColor.Cyan, "Address: ");
-			context.Output.WriteLine(CommandOutletColor.Green, server.Address);
-			context.Output.Write(CommandOutletColor.Cyan, "Channels: ");
-			context.Output.WriteLine(CommandOutletColor.Green, server.Channels.Count);
-		});
+			var countIndex = Array.IndexOf(args, "--count");
+			var count = countIndex < 0 ? 0 : int.Parse(args[countIndex + 1]);
+			var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+			await using var server = new TcpServer<ReadOnlySequence<byte>>(SampleProtocol.Create(args.Contains("--custom")));
+			server.Address = SampleProtocol.GetAddress(args);
+			server.Handler = new Handler(count, completed);
+			await server.StartAsync(cancellation: cancellation.Token);
+			Console.WriteLine($"READY {server.Address}");
 
-		executor.Command("broadcast", async (context, cancellation) =>
+			if(count > 0)
+				await completed.Task.WaitAsync(TimeSpan.FromSeconds(60), cancellation.Token);
+			else
+			{
+				var executor = Terminal.Console.Executor;
+				executor.Command("start", async (_, token) => await server.StartAsync(cancellation: token));
+				executor.Command("stop", async (_, token) => await server.StopAsync(cancellation: token));
+				executor.Command("info", _ => Console.WriteLine($"{server.State} {server.Address} connections={server.Channels.Count} received={server.TotalBytesReceived} sent={server.TotalBytesSent}"));
+				executor.Command("broadcast", async (context, token) =>
+				{
+					if(context.Arguments.IsEmpty)
+						throw new CommandException(Server.Properties.Resources.Network_BroadcastMessageRequired_Message);
+
+					using(var message = string.Join(' ', context.Arguments).Encode())
+					{
+						var result = await server.BroadcastAsync(new ReadOnlySequence<byte>(message.Memory), token);
+						Console.WriteLine($"Broadcast succeeded={result.Succeeded}, failed={result.Failed}, rejected={result.Rejected}");
+					}
+				});
+				await executor.RunAsync(cancellation: cancellation.Token);
+			}
+
+			await server.StopAsync();
+			Console.WriteLine($"STOPPED connections={server.Channels.Count} frames={server.TotalFramesReceived}");
+		}
+		catch(OperationCanceledException) when(cancellation.IsCancellationRequested) { }
+		finally { Console.CancelKeyPress -= Cancel; }
+
+		void Cancel(object sender, ConsoleCancelEventArgs args)
 		{
-			if(context.Arguments.IsEmpty)
-				throw new CommandException(global::Zongsoft.Net.Samples.Server.Properties.Resources.Network_BroadcastMessageRequired_Message);
-
-			var message = Encoding.UTF8.GetBytes(string.Join(' ', context.Arguments));
-			var count = await server.BroadcastAsync(new ReadOnlySequence<byte>(message), cancellation);
-			context.Output.WriteLine(CommandOutletColor.DarkGreen, $"Broadcast to {count} client(s).");
-		});
-
-		var splash = CommandOutletContent.Create()
-			.AppendLine(CommandOutletColor.Yellow, new string('·', 50))
-			.AppendLine(CommandOutletColor.Blue, "Welcome to the TCP Server.".Justify(50))
-			.AppendLine(CommandOutletColor.Yellow, new string('·', 50));
-
-		await executor.RunAsync(splash);
-		await server.StopAsync([]);
-	}
-
-	static System.Collections.Generic.IEnumerable<string> GetArgs(CommandContextBase context)
-	{
-		foreach(var argument in context.Arguments)
-			yield return argument;
-	}
-
-	private sealed class Handler(TcpServer<ReadOnlySequence<byte>> server) : HandlerBase<ReadOnlySequence<byte>>
-	{
-		private readonly TcpServer<ReadOnlySequence<byte>> _server = server;
-
-		protected override async ValueTask OnHandleAsync(ReadOnlySequence<byte> message, Parameters parameters, CancellationToken cancellation)
-		{
-			var data = message.ToArray();
-			var text = Encoding.UTF8.GetString(data);
-			Terminal.Console.Executor.Output.WriteLine(CommandOutletColor.Cyan, $"[Received] {text}");
-
-			var response = Encoding.UTF8.GetBytes($"ACK: {text}");
-			await _server.BroadcastAsync(new ReadOnlySequence<byte>(response), cancellation);
+			args.Cancel = true;
+			cancellation.Cancel();
 		}
 	}
+	#endregion
+
+	#region 接收处理
+	private sealed class Handler(int count, TaskCompletionSource completed) : HandlerBase<TcpReceiveContext<ReadOnlySequence<byte>>>
+	{
+		private int _handled;
+
+		protected override async ValueTask OnHandleAsync(TcpReceiveContext<ReadOnlySequence<byte>> context, Parameters parameters, CancellationToken cancellation)
+		{
+			var text = Encoding.UTF8.GetString(context.Package);
+			Console.WriteLine($"[{context.Channel.Identifier}] {text}");
+
+			using(var response = (text == "PING" ? "PONG" : $"ACK: {text}").Encode())
+				await context.Channel.SendAsync(response.Memory, cancellation);
+
+			if(count > 0 && Interlocked.Increment(ref _handled) >= count)
+				completed.TrySetResult();
+		}
+	}
+	#endregion
 }
