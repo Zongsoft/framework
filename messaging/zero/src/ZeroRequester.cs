@@ -170,7 +170,13 @@ public class ZeroRequester : IRequester, IDisposable, IAsyncDisposable
 		_tokens.Remove(identifier, out _);
 	}
 
-	private void OnEvicted(object sender, CacheEvictedEventArgs args) => this.Remove(args.Key as string);
+	private void OnEvicted(object sender, CacheEvictedEventArgs args)
+	{
+		//后续响应会替换缓存项以刷新有效期，此时必须保留仍在接收响应的请求令牌
+		if(args.Reason != CacheEvictedReason.Replaced)
+			this.Remove(args.Key as string);
+	}
+
 	private ZeroRequest GetRequest(string identifier) => identifier != null && _tokens.TryGetValue(identifier, out var token) ? token.Request : null;
 	#endregion
 
@@ -201,13 +207,14 @@ public class ZeroRequester : IRequester, IDisposable, IAsyncDisposable
 		_pending.Evicted -= this.OnEvicted;
 		_pending.Dispose();
 		_queue = null;
+
 		GC.SuppressFinalize(this);
 	}
 	#endregion
 
+	#region 嵌套子类
 	private sealed class Adapter(ZeroRequester requester) : HandlerBase<Message>
 	{
-		#region 重写方法
 		protected override ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
 		{
 			if(message.IsEmpty)
@@ -220,24 +227,28 @@ public class ZeroRequester : IRequester, IDisposable, IAsyncDisposable
 			var request = requester.GetRequest(identifier);
 			return request == null ? ValueTask.CompletedTask : requester.OnRespondedAsync(request.Response(message.Topic, data), cancellation);
 		}
-		#endregion
 	}
 
 	private sealed class Token : IRequestToken, IDisposable
 	{
+		#region 成员字段
 		private Action<ZeroRequest> _disposed;
-		private ConcurrentQueue<ZeroResponse> _responses = new();
 		private readonly SemaphoreSlim _signal = new(0);
+		private ConcurrentQueue<ZeroResponse> _responses = new();
+		#endregion
 
+		#region 构造函数
 		public Token(ZeroRequest request, Action<ZeroRequest> disposed)
 		{
 			this.Request = request ?? throw new ArgumentNullException(nameof(request));
 			_disposed = disposed ?? throw new ArgumentNullException(nameof(disposed));
 		}
+		#endregion
 
 		#region 显式实现
 		IRequest IRequestToken.Request => this.Request;
 		#endregion
+
 		#region 公共属性
 		public ZeroRequest Request { get; }
 		#endregion
@@ -311,4 +322,5 @@ public class ZeroRequester : IRequester, IDisposable, IAsyncDisposable
 		}
 		#endregion
 	}
+	#endregion
 }

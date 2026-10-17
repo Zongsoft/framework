@@ -256,7 +256,9 @@ Set `ZeroQueueServer.Storage` and `Storages` only while stopped. With Control en
 
 ### Request and Response
 
-`ZeroRequester` and `ZeroResponder` exchange requests through logical URL topics; the default reply topic is `<url>/reply`. The real [ZeroRequesterTests.RequesterReceivesImmediateResponses](test/ZeroRequesterTests.cs) starts separate requester/responder queues, registers the same file's `EchoHandler`, sends to `rpc/echo`, and checks payload and request-identifier correlation. It stops/disposes the responder in `finally` and also disposes each request token.
+`ZeroRequester` and `ZeroResponder` exchange requests through logical URL topics; the default reply topic is `<url>/reply`. The real [ZeroRequesterTests.RequesterReceivesImmediateResponses](test/ZeroRequesterTests.cs) starts separate requester/responder queues, registers the [EchoHandler fixture](test/ZeroTestUtility.cs), sends to `rpc/echo`, and checks payload and request-identifier correlation. It stops/disposes the responder in `finally` and also disposes each request token.
+
+One request can receive multiple replies. Each reply refreshes the ten-minute pending-cache expiry; a `Replaced` notification preserves the active token. Actual expiration removes its registration, while disposing the token also clears buffered replies. Dispose tokens when finished collecting replies. [ZeroRequesterMultipleReplyTests](test/ZeroRequesterMultipleReplyTests.cs) covers 3/8 replies over real sockets and deterministic cache replacement, expiration, late replies, and token/requester disposal. Set `ZONGSOFT_MESSAGING_TESTS=true` to enable the socket tests.
 
 [ZeroResponderTests](test/ZeroResponderTests.cs) additionally checks subscription rollback on startup failure. No nonexistent `PingHandler` is supplied here. Applications use shared communication contracts and host composition; standalone tests own their directly constructed instances.
 

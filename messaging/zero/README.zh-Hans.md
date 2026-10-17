@@ -256,7 +256,9 @@ Broker 只在发送瞬间存在在线匹配订阅时接纳消息：没有订阅�
 
 ### 请求与响应
 
-`ZeroRequester` 与 `ZeroResponder` 通过逻辑 URL 主题交换请求，默认回复主题为 `<url>/reply`。真实用例见 [ZeroRequesterTests.RequesterReceivesImmediateResponses](test/ZeroRequesterTests.cs)：它启动独立请求与响应队列，注册同文件内的 `EchoHandler`，向 `rpc/echo` 发送消息并检查内容与请求标识一致。测试在 `finally` 中停止、释放响应器，请求令牌也单独释放。
+`ZeroRequester` 与 `ZeroResponder` 通过逻辑 URL 主题交换请求，默认回复主题为 `<url>/reply`。真实用例见 [ZeroRequesterTests.RequesterReceivesImmediateResponses](test/ZeroRequesterTests.cs)：它启动独立请求与响应队列，注册 [EchoHandler 夹具](test/ZeroTestUtility.cs)，向 `rpc/echo` 发送消息并检查内容与请求标识一致。测试在 `finally` 中停止、释放响应器，请求令牌也单独释放。
+
+同一个请求可以接收多份响应。每份响应刷新待处理缓存的十分钟有效期；`Replaced` 通知保留活动令牌，真正过期时移除令牌登记，主动释放令牌还会清空已缓存的响应。收集结束后应释放令牌。[ZeroRequesterMultipleReplyTests](test/ZeroRequesterMultipleReplyTests.cs)覆盖真实 socket 的 3／8 响应，以及确定性的缓存替换、过期、迟到响应和令牌／请求器释放检查。设置 `ZONGSOFT_MESSAGING_TESTS=true` 才启用 socket 测试。
 
 [ZeroResponderTests](test/ZeroResponderTests.cs)进一步验证启动失败时回滚已建立的订阅。这里不提供不存在的 `PingHandler`；应用应通过公共通信契约和宿主装配使用响应器，独立测试才自行拥有实例生命周期。
 
