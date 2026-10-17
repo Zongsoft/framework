@@ -48,5 +48,6 @@ public class TcpServerOptions : TcpConnectionOptions
 		ArgumentOutOfRangeException.ThrowIfNegativeOrZero(this.MaximumConnections);
 		ArgumentOutOfRangeException.ThrowIfNegativeOrZero(this.BroadcastConcurrency);
 		ArgumentOutOfRangeException.ThrowIfNegativeOrZero(this.MaximumConcurrentBroadcasts);
+		ArgumentOutOfRangeException.ThrowIfGreaterThan(this.SendTimeout, MaximumTimerDuration, nameof(this.SendTimeout));
 	}
 }

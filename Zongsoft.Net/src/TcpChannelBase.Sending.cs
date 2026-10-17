@@ -246,19 +246,20 @@ public abstract partial class TcpChannelBase<T>
 		{
 			var options = _channel._options;
 			using var deadline = new CancellationTokenSource(options.ShutdownTimeout, options.TimeProvider);
+			using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(deadline.Token, _channel._lifetime.Token);
 
 			try
 			{
-				await this.Stop().WaitAsync(deadline.Token).ConfigureAwait(false);
+				await this.Stop().WaitAsync(cancellation.Token).ConfigureAwait(false);
 				var target = Interlocked.Read(ref _committed);
 
 				while(_channel._transport.BytesSent < target)
 				{
-					deadline.Token.ThrowIfCancellationRequested();
-					await Task.Delay(TimeSpan.FromMilliseconds(10), options.TimeProvider, deadline.Token).ConfigureAwait(false);
+					cancellation.Token.ThrowIfCancellationRequested();
+					await Task.Delay(TimeSpan.FromMilliseconds(10), options.TimeProvider, cancellation.Token).ConfigureAwait(false);
 				}
 			}
-			catch(OperationCanceledException) when(deadline.IsCancellationRequested)
+			catch(OperationCanceledException) when(deadline.IsCancellationRequested && !_channel._lifetime.IsCancellationRequested)
 			{
 				var exception = new TimeoutException(Properties.Resources.Network_Timeout_Message);
 				_channel.RecordFailure(TcpCloseReason.ShutdownTimeout, exception);

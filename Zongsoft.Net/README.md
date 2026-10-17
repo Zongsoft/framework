@@ -76,7 +76,8 @@ Concurrent initial sends share a connection attempt. The first caller's cancella
 
 - Completing `SendAsync` means local submission and its backpressure wait completed, not remote delivery or application confirmation. Cancellation after writing terminates the connection and leaves remote delivery uncertain.
 - `CloseAsync` closes the transport. `WaitAsync(cancellation)` waits for handlers, admitted sends, buffer cleanup, and lifecycle notifications. Waiting does not close the connection; cancellation affects only that waiter, and later waits can still observe the channel's failure. A handler may await `CloseAsync`, but must not await its own `WaitAsync`, `DisposeAsync`, or owning service's shutdown.
-- `DisconnectAsync` and `StopAsync` let the current handler and sends drain. A timeout closes the transport and reports failure. Individual channel I/O or handler failures are reported through `Error` and that channel's `WaitAsync`, without being rethrown by client disconnect or server shutdown; shutdown or drain timeouts and server acceptance failures still propagate. A handler ignoring cancellation retains its borrowed memory and channel registration until it actually exits. A failed stop remains `Stopping`; stop can be retried after cleanup.
+- `DisconnectAsync` and `StopAsync` wait for the current handler, sends, and final notifications to finish. A timeout closes the transport and reports failure. Individual channel I/O or handler failures are reported through `Error` and that channel's `WaitAsync`, without being rethrown by client disconnect or server shutdown; shutdown or drain timeouts and server acceptance failures still propagate. A handler ignoring cancellation retains its borrowed memory and channel registration until it actually exits. The server shutdown deadline covers acceptance shutdown, current handlers, send draining, and final notifications together. A failed stop remains `Stopping`; retries continue waiting for unfinished operations, and the server can restart after cleanup.
+- Canceling `DisconnectAsync` cancels only that wait; shutdown still follows `ShutdownTimeout`. Disconnect affects connections owned when it starts. Connections established during shutdown are unaffected by the older operation's timeout. An explicit `CloseAsync` ends send draining; pending data is no longer guaranteed to be delivered.
 - `BroadcastAsync` bounds admitted broadcasts and per-broadcast send concurrency, returning `TcpBroadcastResult` with `Succeeded/Failed/Rejected` counts. Caller cancellation propagates. Channel enumeration is live and need not include concurrent additions.
 
 | Setting | Default | Purpose |
@@ -93,6 +94,8 @@ Concurrent initial sends share a connection attempt. The first caller's cancella
 | `SendTimeout` / `FrameTimeout` | 30 s / 30 s | Stalled sending and complete-frame reception since the first retained byte |
 | `IdleTimeout` / `MaintenanceInterval` | Disabled / 1 s | No actual receive activity and shared scan interval |
 | `NoDelay` / `ZeroLengthReads` | Enabled / enabled | Small-message latency and idle receive-buffer strategy |
+
+Time settings are validated when a client or server is constructed. `MaintenanceInterval` must be at least 1 ms. It, `ConnectTimeout`, `ShutdownTimeout`, and server `SendTimeout` must not exceed 4,294,967,294 ms. Timeouts must be positive; client `SendTimeout`, `FrameTimeout`, and `IdleTimeout` do not have this timer limit, and zero still disables the idle timeout.
 
 Buffer thresholds provide flow control, not hard process-memory caps. Heartbeat intervals should be shorter than the idle deadline and leave margin for jitter and monitoring. Dripping bytes do not renew `FrameTimeout`. Device identity, application acknowledgments, command correlation, retry idempotency, and heartbeat formats belong to the application protocol.
 
@@ -132,6 +135,14 @@ Errors identified by this library use `TcpException` with an `ErrorCode`. It der
 Broadcast counts only `SendRejected` as `Rejected`; other channel send errors count as `Failed`. Caller cancellation still propagates. Error codes describe an operation failure; observe the owner's `Closed` arguments for the final connection state, and await channel `WaitAsync` for complete cleanup. Capacity rejection and encoding errors before any write do not actively close the connection.
 
 Cancellation, timeout, underlying Socket, and application-handler exceptions are not universally converted to `TcpException`. An acceptance failure reported during server shutdown preserves its original exception in `InnerException`. A custom packetizer's `InvalidDataException` counts as a protocol failure. Use `catch(TcpException exception) when(exception.ErrorCode == TcpError.SendRejected)` to handle capacity rejection separately.
+
+## Web file system
+
+`WebFileSystem` uses the host's `IHttpClientFactory` to access a Web file service. Reading a file returns a download stream that the caller must dispose promptly. The stream need not support seeking or provide its length in advance. Pass cancellation tokens to asynchronous stream operations. Directory queries support Web JSON responses and patterns containing special characters.
+
+A writable stream uploads its content when disposed. `Flush` flushes local writes without submitting the upload. Use `await using` in asynchronous code to await the upload and observe HTTP or network failures. To retry a failed upload, open a new stream and write the content again. Repeated disposal does not upload again.
+
+Opening files supports only `FileMode.Open + FileAccess.Read` for downloads and `FileMode.Create + FileAccess.Write` for creating or overwriting files. Other combinations, including append, exclusive creation, open-or-create, truncation, and combined read/write access, immediately throw `NotSupportedException`. Specify access explicitly. `FileShare` does not provide remote file sharing locks.
 
 ## Related Resources
 

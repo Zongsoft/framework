@@ -31,6 +31,11 @@ namespace Zongsoft.Net;
 /// <summary>TCP 连接的缓冲、容量、时间与调度设置。实例构造时复制设置。</summary>
 public class TcpConnectionOptions
 {
+	#region 静态字段
+	/// <summary>系统计时器支持的最大有限期限。</summary>
+	private protected static readonly TimeSpan MaximumTimerDuration = TimeSpan.FromMilliseconds(uint.MaxValue - 1L);
+	#endregion
+
 	#region 连接设置
 	/// <summary>获取或设置是否采集读取、预算耗尽、发送等待及共享维护扫描诊断，默认关闭。</summary>
 	public bool EnableDiagnostics { get; set; }
@@ -69,15 +74,15 @@ public class TcpConnectionOptions
 	#endregion
 
 	#region 时间设置
-	/// <summary>获取或设置发送停滞期限，默认为三十秒。</summary>
+	/// <summary>获取或设置发送停滞期限，默认为三十秒；须大于零，服务端广播期限不得超过 4,294,967,294 毫秒。</summary>
 	public TimeSpan SendTimeout { get; set; } = TimeSpan.FromSeconds(30);
 	/// <summary>获取或设置接收完整帧的期限，从首个残留字节开始计算，后续字节不重置期限；超时以 <see cref="TcpCloseReason.FrameTimeout" /> 关闭。</summary>
 	public TimeSpan FrameTimeout { get; set; } = TimeSpan.FromSeconds(30);
 	/// <summary>获取或设置无实际接收活动的空闲期限；零表示禁用。</summary>
 	public TimeSpan IdleTimeout { get; set; }
-	/// <summary>获取或设置停止及发送排空期限。</summary>
+	/// <summary>获取或设置停止及发送排空期限；须大于零且不超过 4,294,967,294 毫秒。</summary>
 	public TimeSpan ShutdownTimeout { get; set; } = TimeSpan.FromSeconds(10);
-	/// <summary>获取或设置共享维护扫描的周期。</summary>
+	/// <summary>获取或设置共享维护扫描的周期，范围为 1 至 4,294,967,294 毫秒。</summary>
 	public TimeSpan MaintenanceInterval { get; set; } = TimeSpan.FromSeconds(1);
 	/// <summary>获取或设置单调时间与异步期限的提供者。</summary>
 	public TimeProvider TimeProvider { get; set; } = TimeProvider.System;
@@ -109,7 +114,9 @@ public class TcpConnectionOptions
 		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(this.FrameTimeout, TimeSpan.Zero);
 		ArgumentOutOfRangeException.ThrowIfLessThan(this.IdleTimeout, TimeSpan.Zero);
 		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(this.ShutdownTimeout, TimeSpan.Zero);
-		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(this.MaintenanceInterval, TimeSpan.Zero);
+		ArgumentOutOfRangeException.ThrowIfGreaterThan(this.ShutdownTimeout, MaximumTimerDuration, nameof(this.ShutdownTimeout));
+		ArgumentOutOfRangeException.ThrowIfLessThan(this.MaintenanceInterval, TimeSpan.FromMilliseconds(1), nameof(this.MaintenanceInterval));
+		ArgumentOutOfRangeException.ThrowIfGreaterThan(this.MaintenanceInterval, MaximumTimerDuration, nameof(this.MaintenanceInterval));
 		ArgumentNullException.ThrowIfNull(this.TimeProvider);
 	}
 	#endregion

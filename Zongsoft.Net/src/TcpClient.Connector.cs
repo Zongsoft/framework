@@ -127,7 +127,7 @@ public partial class TcpClient<T>
 			{
 				ObjectDisposedException.ThrowIf(_disposed, this);
 
-				if(_channel is { IsActive: true } channel)
+				if(_attempt == null && _channel is { IsActive: true } channel)
 					return Task.FromResult(channel);
 
 				if(_attempt != null)
@@ -162,47 +162,80 @@ public partial class TcpClient<T>
 		{
 			cancellation.ThrowIfCancellationRequested();
 			Attempt attempt;
+			ICollection<TcpClientChannel<T>> channels;
 
 			lock(_sync)
 			{
 				_generation++;
 				attempt = _attempt;
 				Interlocked.Exchange(ref _channel, null);
+				channels = _channels.Values;
 			}
 
 			attempt?.Cancel();
-			var tasks = new List<Task>();
+			var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+			_ = DisconnectCoreAsync();
+			await completion.Task.WaitAsync(cancellation).ConfigureAwait(false);
 
-			if(attempt != null)
-				tasks.Add(attempt.ObserveAsync());
-
-			foreach(var entry in _channels)
-				tasks.Add(entry.Value.ShutdownAsync());
-
-			try
+			async Task DisconnectCoreAsync()
 			{
-				await Task.WhenAll(tasks)
-					.WaitAsync(_options.ShutdownTimeout, _options.TimeProvider, cancellation)
-					.ConfigureAwait(false);
-			}
-			catch(TimeoutException exception)
-			{
-				foreach(var entry in _channels)
-					entry.Value.Abort(TcpCloseReason.ShutdownTimeout, exception);
+				try
+				{
+					var tasks = new List<Task>(channels.Count + 1);
 
-				throw;
+					if(attempt != null)
+						tasks.Add(attempt.ObserveAsync());
+
+					foreach(var channel in channels)
+						tasks.Add(channel.ShutdownAsync());
+
+					var pending = Task.WhenAll(tasks);
+
+					try
+					{
+						//关闭期限独立于调用方等待，且只处理断开时已拥有的连接。
+						await pending.WaitAsync(_options.ShutdownTimeout, _options.TimeProvider).ConfigureAwait(false);
+					}
+					catch(TimeoutException exception)
+					{
+						foreach(var channel in channels)
+							channel.Abort(TcpCloseReason.ShutdownTimeout, exception);
+
+						_ = ObserveAsync(pending);
+						throw;
+					}
+
+					completion.TrySetResult();
+				}
+				catch(Exception exception)
+				{
+					completion.TrySetException(exception);
+					_ = completion.Task.Exception;
+				}
+
+				static async Task ObserveAsync(Task pending)
+				{
+					//超时后的处理器仍可继续清理，其故障由通道通知和 WaitAsync 保留。
+					try { await pending.ConfigureAwait(false); }
+					catch { }
+				}
 			}
 		}
 		#endregion
 
 		#region 连接注销
-		/// <summary>注销已经清理的连接登记，保留累计字节数。</summary>
+		/// <summary>注销已经清理的当前连接，保留最终通知期间的所有权。</summary>
 		/// <param name="channel">已经退场的连接。</param>
 		internal void Unregister(TcpClientChannel<T> channel)
 		{
 			TcpConnectionMonitor.Remove(channel);
 			Interlocked.CompareExchange(ref _channel, null, channel);
+		}
 
+		/// <summary>最终通知及等待完成后归还连接所有权，累计字节数。</summary>
+		/// <param name="channel">已经完成通知的连接。</param>
+		internal void Complete(TcpClientChannel<T> channel)
+		{
 			if(_channels.TryRemove(channel.Identifier, out _))
 			{
 				Interlocked.Add(ref _bytesSent, channel.TotalBytesSent);
@@ -292,8 +325,8 @@ public partial class TcpClient<T>
 			public Attempt(EndPoint address, long generation, CancellationToken caller, TcpClientOptions options)
 			{
 				_address = address;
-				this.Generation = generation;
 				_caller = caller;
+				this.Generation = generation;
 				_deadline = new(options.ConnectTimeout, options.TimeProvider);
 				_completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
 				_cancellation = CancellationTokenSource.CreateLinkedTokenSource(caller, _deadline.Token);
@@ -314,8 +347,8 @@ public partial class TcpClient<T>
 			public async Task RunAsync(Connector owner)
 			{
 				Socket socket = null;
-				TcpClientChannel<T> channel = null;
 				Exception error = null;
+				TcpClientChannel<T> channel = null;
 
 				try
 				{
@@ -333,6 +366,7 @@ public partial class TcpClient<T>
 					lock(owner._sync)
 					{
 						_cancellation.Token.ThrowIfCancellationRequested();
+
 						if(owner._disposed || this.Generation != owner._generation)
 							throw new OperationCanceledException();
 

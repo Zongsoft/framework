@@ -31,12 +31,13 @@ namespace Zongsoft.Net;
 /// <summary>TCP 客户端的连接设置。</summary>
 public class TcpClientOptions : TcpConnectionOptions
 {
-	/// <summary>获取或设置 DNS 解析及连接尝试的共同期限。</summary>
+	/// <summary>获取或设置 DNS 解析及连接尝试的共同期限；须大于零且不超过 4,294,967,294 毫秒。</summary>
 	public TimeSpan ConnectTimeout { get; set; } = TimeSpan.FromSeconds(10);
 
 	internal override void Validate()
 	{
 		base.Validate();
 		ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(this.ConnectTimeout, TimeSpan.Zero);
+		ArgumentOutOfRangeException.ThrowIfGreaterThan(this.ConnectTimeout, MaximumTimerDuration, nameof(this.ConnectTimeout));
 	}
 }

@@ -64,10 +64,31 @@ public abstract partial class TcpChannelBase<T> : ChannelBase, ISender<T>, ITcpM
 		_transport = transport;
 		_packetizer = packetizer;
 		_options = options;
-		_sender = new(this);
-		_receiver = new(this);
 
-		this.Identifier = TcpTransport.GetIdentity();
+		try
+		{
+			_sender = new(this);
+			_receiver = new(this);
+			this.Identifier = TcpTransport.GetIdentity();
+		}
+		catch(Exception exception)
+		{
+			//尚未启动接收或发布通道，构造者负责归还传输及其两端缓冲。
+			try
+			{
+				_transport.Dispose();
+
+				try { _transport.Input.Complete(exception); }
+				finally { _transport.Output.Complete(exception); }
+			}
+			finally
+			{
+				_sender?.Dispose();
+				_lifetime.Dispose();
+			}
+
+			throw;
+		}
 	}
 	#endregion
 
@@ -231,6 +252,9 @@ public abstract partial class TcpChannelBase<T> : ChannelBase, ISender<T>, ITcpM
 	/// <returns>所属对象的停止等待任务；排空超时仍传播给停止调用方。</returns>
 	internal async Task ShutdownAsync()
 	{
+		if(_completion.Task.IsCompleted)
+			return;
+
 		_receiver.RequestShutdown();
 
 		try { await _completion.Task.ConfigureAwait(false); }
@@ -245,6 +269,10 @@ public abstract partial class TcpChannelBase<T> : ChannelBase, ISender<T>, ITcpM
 	/// <param name="exception">首个故障；正常关闭时为 <see langword="null" />。</param>
 	internal void Abort(TcpCloseReason reason, Exception exception)
 	{
+		//传输已经关闭时，所有者等待退场超时不能改写已经交付的最终通知。
+		if(reason == TcpCloseReason.ShutdownTimeout && this.IsClosed)
+			return;
+
 		this.RecordFailure(reason, exception);
 		_ = this.CloseAsync().AsTask();
 	}
@@ -293,7 +321,7 @@ public abstract partial class TcpChannelBase<T> : ChannelBase, ISender<T>, ITcpM
 		_lifetime.Dispose();
 		_sender.Dispose();
 
-		try { this.OnCompleted(); }
+		try { this.OnUnregister(); }
 		catch(Exception exception) { this.RecordFailure(TcpCloseReason.TransportError, exception); }
 
 		this.ReportError();
@@ -308,9 +336,13 @@ public abstract partial class TcpChannelBase<T> : ChannelBase, ISender<T>, ITcpM
 			//所属客户端或服务端已记录故障；标记为已观察，同时保留 await 的异常结果。
 			_ = _completion.Task.Exception;
 		}
+
+		this.OnCompleted();
 	}
 
-	/// <summary>通知连接所有者移除登记并累计统计。</summary>
+	/// <summary>通知连接所有者移除活动登记，保留最终通知期间的所有权。</summary>
+	private protected virtual void OnUnregister() { }
+	/// <summary>完成最终通知与等待结果后，归还所有者的退场登记。</summary>
 	private protected virtual void OnCompleted() { }
 
 	/// <summary>等待全部通道任务完成，并清理尚未启动的通道。</summary>

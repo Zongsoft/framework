@@ -50,6 +50,7 @@ public sealed class TcpServerChannelManager<T> : IReadOnlyCollection<TcpServerCh
 	#region 成员字段
 	private readonly TcpChannelNotifier<T> _notifier;
 	private readonly ConcurrentDictionary<long, TcpServerChannel<T>> _channels = new();
+	private readonly ConcurrentDictionary<long, TcpServerChannel<T>> _pending = new();
 	#endregion
 
 	#region 构造函数
@@ -65,12 +66,29 @@ public sealed class TcpServerChannelManager<T> : IReadOnlyCollection<TcpServerCh
 	/// <summary>按唯一标识登记连接，不以远端端点作为身份。</summary>
 	/// <param name="channel">需要登记或移除的当前连接。</param>
 	/// <returns>是否新增成功。</returns>
-	internal bool Add(TcpServerChannel<T> channel) => _channels.TryAdd(channel.Identifier, channel);
+	internal bool Add(TcpServerChannel<T> channel)
+	{
+		if(!_pending.TryAdd(channel.Identifier, channel))
+			return false;
+		if(_channels.TryAdd(channel.Identifier, channel))
+			return true;
+
+		_pending.TryRemove(channel.Identifier, out _);
+		return false;
+	}
 
 	/// <summary>仅移除当前标识对应的连接。</summary>
 	/// <param name="channel">需要登记或移除的当前连接。</param>
 	/// <returns>是否移除成功。</returns>
 	internal bool Remove(TcpServerChannel<T> channel) => _channels.TryRemove(channel.Identifier, out _);
+
+	/// <summary>最终通知及等待完成后归还连接所有权。</summary>
+	/// <param name="channel">已经完成通知的连接。</param>
+	internal void Complete(TcpServerChannel<T> channel) => _pending.TryRemove(channel.Identifier, out _);
+
+	/// <summary>取得仍需等待完整退场的连接快照，包括正在执行最终通知的连接。</summary>
+	/// <returns>所有者尚未完成的连接快照。</returns>
+	internal ICollection<TcpServerChannel<T>> GetPending() => _pending.Values;
 
 	/// <summary>按稳定标识获取连接。</summary>
 	/// <param name="identifier">连接标识。</param>

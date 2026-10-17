@@ -76,7 +76,8 @@ await client.DisconnectAsync(cancellation.Token);
 
 - `SendAsync` 完成表示报文已提交本地发送流程并通过背压等待，不表示远端收到或业务确认。写入后取消会终止连接，远端是否收到仍不确定。
 - `CloseAsync` 关闭传输；`WaitAsync(cancellation)` 等待处理器、已接纳发送、缓冲清理和生命周期通知全部完成。等待不主动关闭连接，取消只结束当前等待，通道故障仍可由之后的等待者观察。处理器可以等待 `CloseAsync`，但不能等待包含自身的 `WaitAsync`、`DisposeAsync` 或所属服务的停止。
-- `DisconnectAsync`、`StopAsync` 等待当前处理和发送排空；超时强制关闭传输并报错。单条通道的收发或处理故障由 `Error` 事件和该通道的 `WaitAsync` 报告，不会在客户端断开或服务停止时重复抛出；停止或排空超时及服务端受理故障仍会传播。拒绝响应取消的处理器继续持有借用内存，直到实际退出才归还、移除通道。停止失败保持 `Stopping`，完成收尾后可再次停止。
+- `DisconnectAsync`、`StopAsync` 等待当前处理、发送排空和最终通知完成；超时强制关闭传输并报错。单条通道的收发或处理故障由 `Error` 事件和该通道的 `WaitAsync` 报告，不会在客户端断开或服务停止时重复抛出；停止或排空超时及服务端受理故障仍会传播。拒绝响应取消的处理器继续持有借用内存，直到实际退出才归还、移除通道。服务停止的 `ShutdownTimeout` 同时覆盖受理退出、当前处理、发送排空与最终通知。停止失败保持 `Stopping`，再次停止会继续等待尚未退出的操作；完成收尾后可以重启。
+- `DisconnectAsync` 的取消令牌只取消本次等待，已经开始的关闭仍遵守 `ShutdownTimeout`。断开只作用于调用时已有的连接；期间重新建立的连接不受旧操作的超时影响。主动 `CloseAsync` 会结束发送排空等待，尚未发送的数据不再保证交付。
 - `BroadcastAsync` 限制全局广播次数和每次并发发送数，返回 `TcpBroadcastResult`，分别统计 `Succeeded/Failed/Rejected`；调用者取消向上传播。连接集合是实时视图，不承诺包含并发新连接。
 
 | 设置 | 默认值 | 含义 |
@@ -93,6 +94,8 @@ await client.DisconnectAsync(cancellation.Token);
 | `SendTimeout` / `FrameTimeout` | 30 秒 / 30 秒 | 无发送进展与首个残留字节起的完整帧接收期限 |
 | `IdleTimeout` / `MaintenanceInterval` | 禁用 / 1 秒 | 无实际接收活动的期限与共享扫描周期 |
 | `NoDelay` / `ZeroLengthReads` | 开启 / 开启 | 小消息及时发送与空闲接收缓冲策略 |
+
+时间配置在创建客户端或服务端时校验。`MaintenanceInterval` 至少为 1 毫秒；它与 `ConnectTimeout`、`ShutdownTimeout` 及服务端的 `SendTimeout` 均不得超过 4,294,967,294 毫秒。各项超时必须大于零；客户端的 `SendTimeout`、`FrameTimeout` 和 `IdleTimeout` 不受此计时器上限限制，空闲期限仍可设为零禁用。
 
 缓冲阈值用于流控，不是进程总内存的硬上限。心跳间隔应小于空闲期限并预留抖动和监测周期；持续滴入字节不会重置 `FrameTimeout`。设备身份、业务确认、命令关联、重试幂等及心跳格式由应用协议定义。
 
@@ -132,6 +135,14 @@ await client.DisconnectAsync(cancellation.Token);
 广播只把 `SendRejected` 计入 `Rejected`，其他通道发送异常计入 `Failed`；调用者取消仍向上传播。异常错误码描述本次操作失败，连接最终状态通过所有者的 `Closed` 事件参数观察，等待完整清理使用通道 `WaitAsync`。容量拒绝及尚未写入的编码错误不会主动关闭连接。
 
 取消、超时、底层 Socket 和业务处理器异常不会一律转换为 `TcpException`；服务停止时汇总的受理故障通过 `InnerException` 保留原始异常。自定义分帧器的 `InvalidDataException` 归类为协议错误。可用 `catch(TcpException exception) when(exception.ErrorCode == TcpError.SendRejected)` 单独处理容量拒绝。
+
+## Web 文件系统
+
+`WebFileSystem` 通过宿主的 `IHttpClientFactory` 访问 Web 文件服务。读取文件返回下载流，调用方应及时释放；流不保证支持定位或预先获取长度，异步读取时向流操作传递取消令牌。目录查询支持 Web JSON 响应与包含特殊字符的筛选条件。
+
+写入流在释放时上传内容，`Flush` 只刷新本地写入，不提交上传。异步代码使用 `await using`，等待上传完成并观察 HTTP 或网络异常；失败后如需重试，应重新打开流并写入内容。重复释放不会重复上传。
+
+打开文件只支持 `FileMode.Open + FileAccess.Read` 下载，以及 `FileMode.Create + FileAccess.Write` 创建或覆盖上传。追加、独占创建、打开或创建、截断及读写混合等其他组合会立即抛出 `NotSupportedException`；请显式指定访问权限。`FileShare` 不提供远程文件共享锁。
 
 ## 延伸阅读
 

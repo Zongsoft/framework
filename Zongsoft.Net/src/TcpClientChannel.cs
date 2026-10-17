@@ -50,7 +50,9 @@ public sealed class TcpClientChannel<T> : TcpChannelBase<T>
 	/// <returns>本次报文处理操作。</returns>
 	protected override ValueTask OnReceiveAsync(TcpReceiveContext<T> context, CancellationToken cancellation) => this.Client.HandleAsync(context, cancellation);
 	/// <summary>资源清理后由连接所有者归还登记与额度。</summary>
-	private protected override void OnCompleted() => this.Client.Unregister(this);
+	private protected override void OnUnregister() => this.Client.Unregister(this);
+	/// <summary>最终通知及等待完成后归还连接所有权。</summary>
+	private protected override void OnCompleted() => this.Client.Complete(this);
 	/// <summary>向连接所有者报告关闭开始。</summary>
 	/// <param name="args">当前通道状态快照。</param>
 	private protected override void OnClosing(TcpChannelEventArgs<T> args) => this.Client.OnClosing(args);

@@ -27,6 +27,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 
@@ -78,8 +79,7 @@ internal static class TcpConnectionMonitor
 	{
 		private readonly object _sync = new();
 		private readonly ConcurrentDictionary<long, ITcpMonitoredConnection> _connections = new();
-
-		private CancellationTokenSource _cancellation;
+		private Runner _runner;
 		private Task _maintenance = Task.CompletedTask;
 		private int _diagnosticConnections;
 		private long _scans;
@@ -96,17 +96,17 @@ internal static class TcpConnectionMonitor
 				if(_connections.TryAdd(connection.Identifier, connection) && connection.Settings.EnableDiagnostics)
 					Interlocked.Increment(ref _diagnosticConnections);
 
-				if(_cancellation == null)
+				if(_runner == null)
 				{
-					_cancellation = new();
-					_maintenance = this.RunAsync(_maintenance, _cancellation);
+					_runner = new(this, clock, interval);
+					_maintenance = _runner.RunAsync(_maintenance);
 				}
 			}
 		}
 
 		internal void Remove(long identifier)
 		{
-			CancellationTokenSource source = null;
+			Runner runner = null;
 
 			lock(_sync)
 			{
@@ -115,38 +115,87 @@ internal static class TcpConnectionMonitor
 
 				if(_connections.IsEmpty)
 				{
-					source = _cancellation;
-					_cancellation = null;
+					runner = _runner;
+					_runner = null;
 				}
 			}
 
-			try { source?.Cancel(); }
-			catch(ObjectDisposedException) { }
+			runner?.Stop();
 		}
 
-		private async Task RunAsync(Task previous, CancellationTokenSource source)
+		//每一代扫描拥有自己的取消源；分组只协调登记及代次串联。
+		private sealed class Runner(Group group, TimeProvider clock, TimeSpan interval)
 		{
-			//代次串联，避免空组关闭与新连接登记交错时并行扫描同一连接。
-			await Task.Yield();
-			await previous.ConfigureAwait(false);
+			private readonly CancellationTokenSource _cancellation = new();
 
-			try
+			public void Stop()
 			{
-				using var timer = new PeriodicTimer(interval, clock);
-				while(await timer.WaitForNextTickAsync(source.Token).ConfigureAwait(false))
+				try { _cancellation.Cancel(); }
+				catch(ObjectDisposedException) { }
+			}
+
+			public async Task RunAsync(Task previous)
+			{
+				//先发布本代登记，再等待上一代退出，避免并行扫描。
+				await Task.Yield();
+
+				try
+				{
+					//上一代的故障已经在其边界处理，不能阻止新代次进入自己的清理范围。
+					try { await previous.ConfigureAwait(false); }
+					catch { }
+
+					_cancellation.Token.ThrowIfCancellationRequested();
+					using var timer = new PeriodicTimer(interval, clock);
+
+					while(await timer.WaitForNextTickAsync(_cancellation.Token).ConfigureAwait(false))
+						await ScanAsync().ConfigureAwait(false);
+				}
+				catch(OperationCanceledException) when(_cancellation.IsCancellationRequested) { }
+				catch(Exception exception)
+				{
+					ICollection<ITcpMonitoredConnection> connections;
+
+					lock(group._sync)
+					{
+						//失败只影响这一快照；之后加入的连接启动下一代并等待本代退出。
+						connections = ReferenceEquals(group._runner, this) ? group._connections.Values : [];
+						if(ReferenceEquals(group._runner, this))
+							group._runner = null;
+					}
+
+					foreach(var connection in connections)
+						connection.Abort(TcpCloseReason.TransportError, exception);
+
+					try { Diagnostics.Logging.GetLogging(typeof(TcpConnectionMonitor)).Error(exception); }
+					catch { } //日志提供者故障不能阻止后续代次继续监测。
+				}
+				finally
+				{
+					lock(group._sync)
+					{
+						if(ReferenceEquals(group._runner, this))
+							group._runner = null;
+					}
+
+					_cancellation.Dispose();
+				}
+
+				async Task ScanAsync()
 				{
 					var count = 0;
 					var now = clock.GetTimestamp();
 					var started = now;
-					var diagnostics = Volatile.Read(ref _diagnosticConnections) > 0;
+					var diagnostics = Volatile.Read(ref group._diagnosticConnections) > 0;
 					var maximumDelay = TimeSpan.Zero;
 
 					try
 					{
-						foreach(var entry in _connections)
+						foreach(var entry in group._connections)
 						{
-							source.Token.ThrowIfCancellationRequested();
+							_cancellation.Token.ThrowIfCancellationRequested();
 							var delay = entry.Value.CheckTimeout(now);
+
 							if(diagnostics && delay > maximumDelay)
 								maximumDelay = delay;
 
@@ -162,34 +211,16 @@ internal static class TcpConnectionMonitor
 						if(diagnostics)
 						{
 							var elapsed = clock.GetElapsedTime(started);
-							Interlocked.Exchange(ref _maximumDuration, Math.Max(_maximumDuration, elapsed.Ticks));
-							Interlocked.Exchange(ref _maximumTimeoutDelay, Math.Max(_maximumTimeoutDelay, maximumDelay.Ticks));
+							Interlocked.Exchange(ref group._maximumDuration, Math.Max(group._maximumDuration, elapsed.Ticks));
+							Interlocked.Exchange(ref group._maximumTimeoutDelay, Math.Max(group._maximumTimeoutDelay, maximumDelay.Ticks));
 
 							if(elapsed > interval)
-								Interlocked.Increment(ref _overruns);
+								Interlocked.Increment(ref group._overruns);
 
-							Interlocked.Increment(ref _scans);
+							Interlocked.Increment(ref group._scans);
 						}
 					}
 				}
-			}
-			catch(OperationCanceledException) when(source.IsCancellationRequested) { }
-			catch(Exception exception)
-			{
-				foreach(var entry in _connections)
-					entry.Value.Abort(TcpCloseReason.TransportError, exception);
-
-				Diagnostics.Logging.GetLogging(typeof(TcpConnectionMonitor)).Error(exception);
-			}
-			finally
-			{
-				lock(_sync)
-				{
-					if(ReferenceEquals(_cancellation, source))
-						_cancellation = null;
-				}
-
-				source.Dispose();
 			}
 		}
 	}

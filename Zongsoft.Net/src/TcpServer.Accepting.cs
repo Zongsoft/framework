@@ -39,10 +39,8 @@ namespace Zongsoft.Net;
 public partial class TcpServer<T>
 {
 	#region 成员字段
-	private Socket _listener;
-	private CancellationTokenSource _acceptCancellation;
-	private Task _accepting;
-	private Exception _acceptError;
+	private Acceptor _acceptor;
+	private Task _shutdown = Task.CompletedTask;
 	private int _admitted;
 	#endregion
 
@@ -75,18 +73,13 @@ public partial class TcpServer<T>
 
 			listener.Bind(address);
 			listener.Listen(_options.Backlog);
-
 			cancellation.ThrowIfCancellationRequested();
 
 			Volatile.Write(ref _address, (IPEndPoint)listener.LocalEndPoint);
-			_acceptError = null;
-
 			_broadcaster.Start();
 
-			_acceptCancellation = new();
-			_listener = listener;
-			_accepting = AcceptAsync(listener, _acceptCancellation.Token);
-
+			_acceptor = new(this, listener);
+			_acceptor.Start();
 			return Task.CompletedTask;
 		}
 		catch
@@ -94,107 +87,175 @@ public partial class TcpServer<T>
 			listener.Dispose();
 			throw;
 		}
-
-		async Task AcceptAsync(Socket listener, CancellationToken cancellation)
-		{
-			try
-			{
-				while(!cancellation.IsCancellationRequested)
-				{
-					var socket = await listener.AcceptAsync(cancellation).ConfigureAwait(false);
-
-					if(cancellation.IsCancellationRequested)
-					{
-						socket.Dispose();
-						break;
-					}
-
-					if(Interlocked.Increment(ref _admitted) > _options.MaximumConnections)
-					{
-						Interlocked.Decrement(ref _admitted);
-						Interlocked.Increment(ref _rejected);
-						socket.Dispose();
-						continue;
-					}
-
-					TcpServerChannel<T> channel = null;
-
-					try
-					{
-						var transport = new TcpTransport(socket, _options);
-						channel = new(this, transport, this.Packetizer, _options);
-
-						if(!this.Channels.Add(channel))
-							throw new InvalidOperationException();
-
-						Interlocked.Increment(ref _accepted);
-						TcpConnectionMonitor.Add(channel);
-
-						channel.Start();
-					}
-					catch(Exception exception)
-					{
-						if(channel == null)
-						{
-							socket.Dispose();
-							Interlocked.Decrement(ref _admitted);
-						}
-						else
-							await channel.DisposeAsync().ConfigureAwait(false);
-
-						Diagnostics.Logging.GetLogging(this).Error(exception);
-					}
-				}
-			}
-			catch(OperationCanceledException) when(cancellation.IsCancellationRequested) { }
-			catch(ObjectDisposedException) when(cancellation.IsCancellationRequested) { }
-			catch(SocketException) when(cancellation.IsCancellationRequested) { }
-			catch(Exception exception) { _acceptError = exception; }
-		}
 	}
 
-	/// <summary>停止受理及广播接纳，限时等待通道和广播退场。</summary>
+	/// <summary>以同一期限等待受理、通道最终通知及广播退场。</summary>
 	/// <param name="args">生命周期操作参数。</param>
 	/// <param name="cancellation">取消令牌；仅取消等待的入口不影响已经开始的资源清理。</param>
-	/// <returns>全部运行资源的退出结果；超时强制关闭传输并保留尚在运行的处理器登记。</returns>
+	/// <returns>全部运行资源的退出结果；超时强制关闭传输，尚未完成的受理与通道仍由服务持有。</returns>
 	protected override async Task OnStopAsync(string[] args, CancellationToken cancellation)
 	{
 		var broadcasting = _broadcaster.Stop();
-
-		var source = Interlocked.Exchange(ref _acceptCancellation, null);
-		if(source != null)
-			await source.CancelAsync().ConfigureAwait(false);
-
-		Interlocked.Exchange(ref _listener, null)?.Dispose();
-
-		var accepting = Interlocked.Exchange(ref _accepting, null);
-		if(accepting != null)
-			await accepting.ConfigureAwait(false);
-
-		source?.Dispose();
-		var tasks = new List<Task>(this.Channels.Count + 1) { broadcasting };
-
-		foreach(var channel in this.Channels)
-			tasks.Add(channel.ShutdownAsync());
+		var acceptor = _acceptor;
+		var accepting = acceptor?.StopAsync() ?? Task.CompletedTask;
+		var previous = _shutdown;
+		var stopping = _shutdown = StopAsync();
 
 		try
 		{
-			await Task.WhenAll(tasks)
-				.WaitAsync(_options.ShutdownTimeout, _options.TimeProvider, cancellation)
-				.ConfigureAwait(false);
+			await stopping.WaitAsync(_options.ShutdownTimeout, _options.TimeProvider, cancellation).ConfigureAwait(false);
 		}
 		catch(TimeoutException exception)
 		{
-			foreach(var channel in this.Channels)
+			foreach(var channel in this.Channels.GetPending())
 				channel.Abort(TcpCloseReason.ShutdownTimeout, exception);
 
+			_ = ObserveAsync(stopping);
 			throw;
 		}
+		finally
+		{
+			//等待超时不等于受理已经退场；重试必须继续等待同一个受理任务。
+			if(accepting.IsCompleted && ReferenceEquals(_acceptor, acceptor))
+				_acceptor = null;
 
-		var error = Interlocked.Exchange(ref _acceptError, null);
+			if(stopping.IsCompleted)
+				_shutdown = Task.CompletedTask;
+		}
 
-		if(error != null)
-			throw new TcpException(TcpError.ConnectionClosed, null, error);
+		async Task StopAsync()
+		{
+			await Task.Yield();
+
+			//重试先等待前次清理退场，避免迟到的清理触及重启后的连接。
+			try { await previous.ConfigureAwait(false); }
+			catch { }
+
+			try { await accepting.ConfigureAwait(false); }
+			catch { } //受理故障仍交给下方的 WhenAll 汇总，不能跳过通道清理。
+
+			var channels = this.Channels.GetPending();
+			var tasks = new List<Task>(channels.Count + 2) { broadcasting, accepting };
+
+			foreach(var channel in channels)
+				tasks.Add(channel.ShutdownAsync());
+
+			await Task.WhenAll(tasks).ConfigureAwait(false);
+		}
+
+		static async Task ObserveAsync(Task task)
+		{
+			//超时后继续清理；通道保留自己的故障，受理登记保留到实际退出。
+			try { await task.ConfigureAwait(false); }
+			catch { }
+		}
+	}
+	#endregion
+
+	#region 嵌套类型
+	//每次启动拥有独立的监听 Socket、取消源及受理任务，不随停止等待超时而丢失。
+	private sealed class Acceptor(TcpServer<T> server, Socket listener)
+	{
+		private readonly CancellationTokenSource _cancellation = new();
+		private Task _accepting = Task.CompletedTask;
+		private Task _stopping;
+		private Exception _error;
+
+		public void Start()
+		{
+			_accepting = AcceptAsync(_cancellation.Token);
+
+			async Task AcceptAsync(CancellationToken cancellation)
+			{
+				try
+				{
+					while(!cancellation.IsCancellationRequested)
+					{
+						var socket = await listener.AcceptAsync(cancellation).ConfigureAwait(false);
+
+						if(cancellation.IsCancellationRequested)
+						{
+							socket.Dispose();
+							break;
+						}
+
+						if(Interlocked.Increment(ref server._admitted) > server._options.MaximumConnections)
+						{
+							Interlocked.Decrement(ref server._admitted);
+							Interlocked.Increment(ref server._rejected);
+							socket.Dispose();
+							continue;
+						}
+
+						await InitializeAsync(socket, cancellation).ConfigureAwait(false);
+					}
+				}
+				catch(OperationCanceledException) when(cancellation.IsCancellationRequested) { }
+				catch(ObjectDisposedException) when(cancellation.IsCancellationRequested) { }
+				catch(SocketException) when(cancellation.IsCancellationRequested) { }
+				catch(Exception exception) { _error = exception; }
+			}
+
+			async Task InitializeAsync(Socket socket, CancellationToken cancellation)
+			{
+				TcpServerChannel<T> channel = null;
+				var registered = false;
+
+				try
+				{
+					var transport = new TcpTransport(socket, server._options);
+					channel = new(server, transport, server.Packetizer, server._options);
+					cancellation.ThrowIfCancellationRequested();
+
+					if(!(registered = server.Channels.Add(channel)))
+						throw new InvalidOperationException();
+
+					Interlocked.Increment(ref server._accepted);
+					TcpConnectionMonitor.Add(channel);
+					channel.Start();
+				}
+				catch(Exception exception)
+				{
+					try
+					{
+						if(channel == null)
+							socket.Dispose();
+						else
+							await channel.DisposeAsync().ConfigureAwait(false);
+					}
+					catch(Exception cleanup) { exception = new AggregateException(exception, cleanup); }
+					finally
+					{
+						if(!registered)
+							Interlocked.Decrement(ref server._admitted);
+					}
+
+					if(exception is OperationCanceledException && cancellation.IsCancellationRequested)
+						return;
+
+					try { Diagnostics.Logging.GetLogging(server).Error(exception); }
+					catch { } //日志提供者故障不能终止后续连接受理。
+				}
+			}
+		}
+
+		public Task StopAsync()
+		{
+			//由 WorkerBase 串行调用，后续停止重试复用同一清理任务。
+			return _stopping ??= StopCoreAsync();
+
+			async Task StopCoreAsync()
+			{
+				var cancelling = _cancellation.CancelAsync();
+				listener.Dispose();
+
+				try { await Task.WhenAll(cancelling, _accepting).ConfigureAwait(false); }
+				finally { _cancellation.Dispose(); }
+
+				if(_error != null)
+					throw new TcpException(TcpError.ConnectionClosed, null, _error);
+			}
+		}
 	}
 	#endregion
 }

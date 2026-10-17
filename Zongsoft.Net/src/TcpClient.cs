@@ -169,9 +169,13 @@ public partial class TcpClient<T> : IHandleable<TcpReceiveContext<T>>, ISender<T
 		return this.Handler?.HandleAsync(context, cancellation) ?? ValueTask.CompletedTask;
 	}
 
-	/// <summary>注销已经清理的连接登记并累计其字节统计。</summary>
+	/// <summary>注销已经清理的当前连接，保留最终通知期间的所有权。</summary>
 	/// <param name="channel">已经退场的连接。</param>
 	internal void Unregister(TcpClientChannel<T> channel) => _connector.Unregister(channel);
+
+	/// <summary>最终通知与等待完成后归还连接所有权。</summary>
+	/// <param name="channel">已经完成通知的连接。</param>
+	internal void Complete(TcpClientChannel<T> channel) => _connector.Complete(channel);
 	#endregion
 
 	#region 事件通知

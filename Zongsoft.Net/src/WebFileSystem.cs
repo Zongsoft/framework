@@ -56,74 +56,75 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 	private sealed class DirectoryProvider(IHttpClientFactory factory) : Zongsoft.IO.IDirectory
 	{
+		private static readonly System.Text.Json.JsonSerializerOptions _serialization = new(System.Text.Json.JsonSerializerDefaults.Web);
 		private readonly IHttpClientFactory _factory = factory;
 
 		#region 公共方法
 		public bool Create(string fullPath, IEnumerable<KeyValuePair<string, string>> properties = null)
 		{
-			var client = this.GetClient(fullPath, out var path);
-			var request = new HttpRequestMessage(HttpMethod.Post, path);
-			var response = client.Send(request);
+			using var client = this.GetClient(fullPath, out var path);
+			using var request = new HttpRequestMessage(HttpMethod.Post, path);
+			using var response = client.Send(request);
 			return response.IsSuccessStatusCode;
 		}
 
 		public async ValueTask<bool> CreateAsync(string fullPath, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default)
 		{
-			var client = this.GetClient(fullPath, out var path);
-			var response = await client.PostAsync(path, null, cancellation);
+			using var client = this.GetClient(fullPath, out var path);
+			using var response = await client.PostAsync(path, null, cancellation).ConfigureAwait(false);
 			return response.IsSuccessStatusCode;
 		}
 
 		public bool Delete(string fullPath)
 		{
-			var client = this.GetClient(fullPath, out var path);
-			var request = new HttpRequestMessage(HttpMethod.Delete, path);
-			var response = client.Send(request);
+			using var client = this.GetClient(fullPath, out var path);
+			using var request = new HttpRequestMessage(HttpMethod.Delete, path);
+			using var response = client.Send(request);
 			return response.IsSuccessStatusCode;
 		}
 
 		public async ValueTask<bool> DeleteAsync(string fullPath, CancellationToken cancellation = default)
 		{
-			var client = this.GetClient(fullPath, out var path);
-			var response = await client.DeleteAsync(path, cancellation);
+			using var client = this.GetClient(fullPath, out var path);
+			using var response = await client.DeleteAsync(path, cancellation).ConfigureAwait(false);
 			return response.IsSuccessStatusCode;
 		}
 
 		public bool Exists(string fullPath)
 		{
-			var client = this.GetClient(fullPath, out var path);
-			var request = new HttpRequestMessage(HttpMethod.Head, path);
-			var response = client.Send(request);
+			using var client = this.GetClient(fullPath, out var path);
+			using var request = new HttpRequestMessage(HttpMethod.Head, path);
+			using var response = client.Send(request);
 			return response.IsSuccessStatusCode;
 		}
 
 		public async ValueTask<bool> ExistsAsync(string fullPath, CancellationToken cancellation = default)
 		{
-			var client = this.GetClient(fullPath, out var path);
-			var request = new HttpRequestMessage(HttpMethod.Head, path);
-			var response = await client.SendAsync(request, cancellation);
+			using var client = this.GetClient(fullPath, out var path);
+			using var request = new HttpRequestMessage(HttpMethod.Head, path);
+			using var response = await client.SendAsync(request, cancellation).ConfigureAwait(false);
 			return response.IsSuccessStatusCode;
 		}
 
 		public IEnumerable<PathInfo> GetChildren(string fullPath, string pattern, bool recursive = false)
 		{
-			var client = this.GetClient(fullPath, out var path);
-			var request = new HttpRequestMessage(HttpMethod.Get, $"{path}?pattern={pattern}&recursive={recursive}");
-			var response = client.Send(request);
+			using var client = this.GetClient(fullPath, out var path);
+			using var request = new HttpRequestMessage(HttpMethod.Get, $"{path}?pattern={Uri.EscapeDataString(pattern ?? string.Empty)}&recursive={recursive}");
+			using var response = client.Send(request, HttpCompletionOption.ResponseHeadersRead);
 
-			if(response.Content.Headers.ContentLength == null || response.Content.Headers.ContentLength.Value == 0)
+			if(!response.IsSuccessStatusCode || response.Content.Headers.ContentLength == 0)
 				yield break;
 
-			var stream = response.Content.ReadAsStream();
-			var result = System.Text.Json.JsonSerializer.Deserialize<Result>(stream);
+			using var stream = response.Content.ReadAsStream();
+			var result = System.Text.Json.JsonSerializer.Deserialize<Result>(stream, _serialization);
 
-			if(result.Directories != null)
+			if(result?.Directories != null)
 			{
 				foreach(var directory in result.Directories)
 					yield return new IO.DirectoryInfo(directory.Name, directory.Creation, directory.Modification);
 			}
 
-			if(result.Files != null)
+			if(result?.Files != null)
 			{
 				foreach(var file in result.Files)
 					yield return new IO.FileInfo(file.Name, file.Size, file.Type, file.Creation, file.Modification);
@@ -132,22 +133,22 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public async IAsyncEnumerable<PathInfo> GetChildrenAsync(string fullPath, string pattern, bool recursive, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 		{
-			var client = this.GetClient(fullPath, out var path);
-			var response = await client.GetAsync($"{path}?pattern={pattern}&recursive={recursive}", cancellation);
+			using var client = this.GetClient(fullPath, out var path);
+			using var response = await client.GetAsync($"{path}?pattern={Uri.EscapeDataString(pattern ?? string.Empty)}&recursive={recursive}", HttpCompletionOption.ResponseHeadersRead, cancellation).ConfigureAwait(false);
 
-			if(response.Content.Headers.ContentLength == null || response.Content.Headers.ContentLength.Value == 0)
+			if(!response.IsSuccessStatusCode || response.Content.Headers.ContentLength == 0)
 				yield break;
 
-			var stream = await response.Content.ReadAsStreamAsync(cancellation);
-			var result = System.Text.Json.JsonSerializer.Deserialize<Result>(stream);
+			using var stream = await response.Content.ReadAsStreamAsync(cancellation).ConfigureAwait(false);
+			var result = await System.Text.Json.JsonSerializer.DeserializeAsync<Result>(stream, _serialization, cancellation).ConfigureAwait(false);
 
-			if(result.Directories != null)
+			if(result?.Directories != null)
 			{
 				foreach(var directory in result.Directories)
 					yield return new IO.DirectoryInfo(directory.Name, directory.Creation, directory.Modification);
 			}
 
-			if(result.Files != null)
+			if(result?.Files != null)
 			{
 				foreach(var file in result.Files)
 					yield return new IO.FileInfo(file.Name, file.Size, file.Type, file.Creation, file.Modification);
@@ -156,59 +157,71 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public IEnumerable<IO.DirectoryInfo> GetDirectories(string fullPath, string pattern, bool recursive = false)
 		{
-			var client = this.GetClient(fullPath, out var path);
-			var request = new HttpRequestMessage(HttpMethod.Get, $"{path}?mode=directory&pattern={pattern}&recursive={recursive}");
-			var response = client.Send(request);
-			return response.IsSuccessStatusCode ? GetDirectoryInfos(response.Content) : [];
+			using var client = this.GetClient(fullPath, out var path);
+			using var request = new HttpRequestMessage(HttpMethod.Get, $"{path}?mode=directory&pattern={Uri.EscapeDataString(pattern ?? string.Empty)}&recursive={recursive}");
+			using var response = client.Send(request, HttpCompletionOption.ResponseHeadersRead);
+
+			if(!response.IsSuccessStatusCode || response.Content.Headers.ContentLength == 0)
+				return [];
+
+			using var stream = response.Content.ReadAsStream();
+			var infos = System.Text.Json.JsonSerializer.Deserialize<DirectoryInfo[]>(stream, _serialization);
+			return infos?.Select(info => new IO.DirectoryInfo(info.Name, info.Creation, info.Modification)) ?? [];
 		}
 
 		public async IAsyncEnumerable<IO.DirectoryInfo> GetDirectoriesAsync(string fullPath, string pattern, bool recursive, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 		{
-			var client = this.GetClient(fullPath, out var path);
-			var response = await client.GetAsync($"{path}?mode=directory&pattern={pattern}&recursive={recursive}", cancellation);
+			using var client = this.GetClient(fullPath, out var path);
+			using var response = await client.GetAsync($"{path}?mode=directory&pattern={Uri.EscapeDataString(pattern ?? string.Empty)}&recursive={recursive}", HttpCompletionOption.ResponseHeadersRead, cancellation).ConfigureAwait(false);
 
-			if(response.IsSuccessStatusCode)
-			{
-				var infos = GetDirectoryInfosAsync(response.Content, cancellation);
-				await foreach(var info in infos)
-					yield return info;
-			}
+			if(!response.IsSuccessStatusCode || response.Content.Headers.ContentLength == 0)
+				yield break;
+
+			var infos = await response.Content.ReadFromJsonAsync<DirectoryInfo[]>(cancellation).ConfigureAwait(false);
+			foreach(var info in infos ?? [])
+				yield return new IO.DirectoryInfo(info.Name, info.Creation, info.Modification);
 		}
 
 		public IEnumerable<IO.FileInfo> GetFiles(string fullPath, string pattern, bool recursive = false)
 		{
-			var client = this.GetClient(fullPath, out var path);
-			var request = new HttpRequestMessage(HttpMethod.Get, $"{path}?mode=file&pattern={pattern}&recursive={recursive}");
-			var response = client.Send(request);
-			return response.IsSuccessStatusCode ? GetFileInfos(response.Content) : [];
+			using var client = this.GetClient(fullPath, out var path);
+			using var request = new HttpRequestMessage(HttpMethod.Get, $"{path}?mode=file&pattern={Uri.EscapeDataString(pattern ?? string.Empty)}&recursive={recursive}");
+			using var response = client.Send(request, HttpCompletionOption.ResponseHeadersRead);
+
+			if(!response.IsSuccessStatusCode || response.Content.Headers.ContentLength == 0)
+				return [];
+
+			using var stream = response.Content.ReadAsStream();
+			var infos = System.Text.Json.JsonSerializer.Deserialize<FileInfo[]>(stream, _serialization);
+			return infos?.Select(info => new IO.FileInfo(info.Name, info.Size, info.Type, info.Creation, info.Modification)) ?? [];
 		}
 
 		public async IAsyncEnumerable<IO.FileInfo> GetFilesAsync(string fullPath, string pattern, bool recursive, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 		{
-			var client = this.GetClient(fullPath, out var path);
-			var response = await client.GetAsync($"{path}?mode=file&pattern={pattern}&recursive={recursive}", cancellation);
+			using var client = this.GetClient(fullPath, out var path);
+			using var response = await client.GetAsync($"{path}?mode=file&pattern={Uri.EscapeDataString(pattern ?? string.Empty)}&recursive={recursive}", HttpCompletionOption.ResponseHeadersRead, cancellation).ConfigureAwait(false);
 
-			if(response.IsSuccessStatusCode)
-			{
-				var infos = GetFileInfosAsync(response.Content, cancellation);
-				await foreach(var info in infos)
-					yield return info;
-			}
+			if(!response.IsSuccessStatusCode || response.Content.Headers.ContentLength == 0)
+				yield break;
+
+			var infos = await response.Content.ReadFromJsonAsync<FileInfo[]>(cancellation).ConfigureAwait(false);
+			foreach(var info in infos ?? [])
+				yield return new IO.FileInfo(info.Name, info.Size, info.Type, info.Creation, info.Modification);
 		}
 
 		public IO.DirectoryInfo GetInfo(string fullPath)
 		{
-			var client = this.GetClient(fullPath, out var path);
-			var request = new HttpRequestMessage(HttpMethod.Head, path);
-			var response = client.Send(request);
+			using var client = this.GetClient(fullPath, out var path);
+			using var request = new HttpRequestMessage(HttpMethod.Head, path);
+			using var response = client.Send(request);
 			return GetDirectoryInfo(response);
 		}
 
 		public async ValueTask<IO.DirectoryInfo> GetInfoAsync(string fullPath, CancellationToken cancellation = default)
 		{
-			var client = this.GetClient(fullPath, out var path);
-			var request = new HttpRequestMessage(HttpMethod.Head, path);
-			var response = await client.SendAsync(request, cancellation);
+			using var client = this.GetClient(fullPath, out var path);
+			using var request = new HttpRequestMessage(HttpMethod.Head, path);
+			using var response = await client.SendAsync(request, cancellation).ConfigureAwait(false);
 			return GetDirectoryInfo(response);
 		}
 
@@ -219,33 +232,7 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 		#endregion
 
 		#region 私有方法
-		private HttpClient GetClient(ReadOnlySpan<char> fullPath, out string path)
-		{
-			if(fullPath.IsEmpty)
-				throw new ArgumentNullException(nameof(fullPath));
-
-			var client = _factory.CreateClient();
-			var index = fullPath.IndexOf('/');
-
-			if(index == 0)
-			{
-				fullPath = fullPath[1..];
-				index = fullPath.IndexOf('/');
-			}
-
-			if(index < 0)
-			{
-				path = string.Empty;
-				client.BaseAddress = new Uri($"http://{fullPath.Trim('/')}/Directories/");
-			}
-			else
-			{
-				path = fullPath[(index + 1)..].ToString();
-				client.BaseAddress = new Uri($"http://{fullPath[..index].Trim('/')}/Directories/");
-			}
-
-			return client;
-		}
+		private HttpClient GetClient(ReadOnlySpan<char> fullPath, out string path) => WebFileSystem.GetClient(_factory, fullPath, "Directories", out path);
 
 		private static Zongsoft.IO.DirectoryInfo GetDirectoryInfo(HttpResponseMessage response)
 		{
@@ -257,46 +244,6 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 			var modification = DateTime.TryParse(GetHeader(response, "X-Directory-Modification"), out datetime) ? datetime : DateTime.MinValue;
 
 			return new IO.DirectoryInfo(name, creation, modification);
-		}
-
-		private static IEnumerable<Zongsoft.IO.DirectoryInfo> GetDirectoryInfos(HttpContent content)
-		{
-			if(content == null || content.Headers.ContentLength == null || content.Headers.ContentLength.Value == 0)
-				return null;
-
-			var stream = content.ReadAsStream();
-			var infos = System.Text.Json.JsonSerializer.Deserialize<DirectoryInfo[]>(stream);
-			return infos.Select(info => new IO.DirectoryInfo(info.Name, info.Creation, info.Modification));
-		}
-
-		private static async IAsyncEnumerable<Zongsoft.IO.DirectoryInfo> GetDirectoryInfosAsync(HttpContent content, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
-		{
-			if(content == null || content.Headers.ContentLength == null || content.Headers.ContentLength.Value == 0)
-				yield break;
-
-			var infos = await content.ReadFromJsonAsync<DirectoryInfo[]>(cancellation);
-			foreach(var info in infos)
-				yield return new IO.DirectoryInfo(info.Name, info.Creation, info.Modification);
-		}
-
-		private static IEnumerable<Zongsoft.IO.FileInfo> GetFileInfos(HttpContent content)
-		{
-			if(content == null || content.Headers.ContentLength == null || content.Headers.ContentLength.Value == 0)
-				return null;
-
-			var stream = content.ReadAsStream();
-			var infos = System.Text.Json.JsonSerializer.Deserialize<FileInfo[]>(stream);
-			return infos.Select(info => new IO.FileInfo(info.Name, info.Size, info.Type, info.Creation, info.Modification));
-		}
-
-		private static async IAsyncEnumerable<Zongsoft.IO.FileInfo> GetFileInfosAsync(HttpContent content, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation)
-		{
-			if(content == null || content.Headers.ContentLength == null || content.Headers.ContentLength.Value == 0)
-				yield break;
-
-			var infos = await content.ReadFromJsonAsync<FileInfo[]>(cancellation);
-			foreach(var info in infos)
-				yield return new IO.FileInfo(info.Name, info.Size, info.Type, info.Creation, info.Modification);
 		}
 		#endregion
 
@@ -343,105 +290,115 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 
 		public bool Delete(string fullPath)
 		{
-			var client = this.GetClient(fullPath, out var path);
-			var request = new HttpRequestMessage(HttpMethod.Delete, path);
-			var response = client.Send(request);
+			using var client = this.GetClient(fullPath, out var path);
+			using var request = new HttpRequestMessage(HttpMethod.Delete, path);
+			using var response = client.Send(request);
 			return response.IsSuccessStatusCode;
 		}
 
 		public async ValueTask<bool> DeleteAsync(string fullPath, CancellationToken cancellation = default)
 		{
-			var client = this.GetClient(fullPath, out var path);
-			var response = await client.DeleteAsync(path, cancellation);
+			using var client = this.GetClient(fullPath, out var path);
+			using var response = await client.DeleteAsync(path, cancellation).ConfigureAwait(false);
 			return response.IsSuccessStatusCode;
 		}
 
 		public bool Exists(string fullPath)
 		{
-			var client = this.GetClient(fullPath, out var path);
-			var request = new HttpRequestMessage(HttpMethod.Head, path);
-			var response = client.Send(request);
+			using var client = this.GetClient(fullPath, out var path);
+			using var request = new HttpRequestMessage(HttpMethod.Head, path);
+			using var response = client.Send(request);
 			return response.IsSuccessStatusCode;
 		}
 
 		public async ValueTask<bool> ExistsAsync(string fullPath, CancellationToken cancellation = default)
 		{
-			var client = this.GetClient(fullPath, out var path);
-			var request = new HttpRequestMessage(HttpMethod.Head, path);
-			var response = await client.SendAsync(request, cancellation);
+			using var client = this.GetClient(fullPath, out var path);
+			using var request = new HttpRequestMessage(HttpMethod.Head, path);
+			using var response = await client.SendAsync(request, cancellation).ConfigureAwait(false);
 			return response.IsSuccessStatusCode;
 		}
 
 		public Zongsoft.IO.FileInfo GetInfo(string fullPath)
 		{
-			var client = this.GetClient(fullPath, out var path);
-			var request = new HttpRequestMessage(HttpMethod.Head, path);
-			var response = client.Send(request);
+			using var client = this.GetClient(fullPath, out var path);
+			using var request = new HttpRequestMessage(HttpMethod.Head, path);
+			using var response = client.Send(request);
 			return GetFileInfo(response);
 		}
 
 		public async ValueTask<Zongsoft.IO.FileInfo> GetInfoAsync(string fullPath, CancellationToken cancellation = default)
 		{
-			var client = this.GetClient(fullPath, out var path);
-			var request = new HttpRequestMessage(HttpMethod.Head, path);
-			var response = await client.SendAsync(request, cancellation);
+			using var client = this.GetClient(fullPath, out var path);
+			using var request = new HttpRequestMessage(HttpMethod.Head, path);
+			using var response = await client.SendAsync(request, cancellation).ConfigureAwait(false);
 			return GetFileInfo(response);
 		}
 
 		public Stream Open(string path, FileMode mode, FileAccess access, FileShare share, IEnumerable<KeyValuePair<string, string>> properties = null)
 		{
+			ValidateOpen(mode, access);
 			var client = this.GetClient(path, out var p);
-			bool writable = (mode != FileMode.Open) || (access & FileAccess.Write) == FileAccess.Write;
+			HttpResponseMessage response = null;
 
-			if(writable)
-				return new WebUploadStream(client, p);
+			try
+			{
+				if(mode == FileMode.Create)
+					return new UploadStream(client, p);
 
-			var response = client.Send(new HttpRequestMessage(HttpMethod.Get, p));
-			response.EnsureSuccessStatusCode();
-			return response.Content.ReadAsStream();
+				using var request = new HttpRequestMessage(HttpMethod.Get, p);
+				response = client.Send(request, HttpCompletionOption.ResponseHeadersRead);
+				response.EnsureSuccessStatusCode();
+				return new DownloadStream(client, response, response.Content.ReadAsStream());
+			}
+			catch
+			{
+				response?.Dispose();
+				client.Dispose();
+				throw;
+			}
 		}
 
 		public async ValueTask<Stream> OpenAsync(string path, FileMode mode, FileAccess access, FileShare share, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default)
 		{
+			cancellation.ThrowIfCancellationRequested();
+			ValidateOpen(mode, access);
 			var client = this.GetClient(path, out var p);
-			bool writable = (mode != FileMode.Open) || (access & FileAccess.Write) == FileAccess.Write;
+			HttpResponseMessage response = null;
 
-			if(writable)
-				return new WebUploadStream(client, p);
+			try
+			{
+				if(mode == FileMode.Create)
+					return new UploadStream(client, p);
 
-			var response = await client.SendAsync(new HttpRequestMessage(HttpMethod.Get, p), cancellation);
-			response.EnsureSuccessStatusCode();
-			return await response.Content.ReadAsStreamAsync(cancellation);
+				using var request = new HttpRequestMessage(HttpMethod.Get, p);
+				response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellation).ConfigureAwait(false);
+				response.EnsureSuccessStatusCode();
+				var stream = await response.Content.ReadAsStreamAsync(cancellation).ConfigureAwait(false);
+				return new DownloadStream(client, response, stream);
+			}
+			catch
+			{
+				response?.Dispose();
+				client.Dispose();
+				throw;
+			}
 		}
 		#endregion
 
 		#region 私有方法
-		private HttpClient GetClient(ReadOnlySpan<char> fullPath, out string path)
+		private HttpClient GetClient(ReadOnlySpan<char> fullPath, out string path) => WebFileSystem.GetClient(_factory, fullPath, "Files", out path);
+
+		private static void ValidateOpen(FileMode mode, FileAccess access)
 		{
-			if(fullPath.IsEmpty)
-				throw new ArgumentNullException(nameof(fullPath));
+			if(!Enum.IsDefined(mode))
+				throw new ArgumentOutOfRangeException(nameof(mode));
+			if(!Enum.IsDefined(access))
+				throw new ArgumentOutOfRangeException(nameof(access));
 
-			var client = _factory.CreateClient();
-			var index = fullPath.IndexOf('/');
-
-			if(index == 0)
-			{
-				fullPath = fullPath[1..];
-				index = fullPath.IndexOf('/');
-			}
-
-			if(index < 0)
-			{
-				path = string.Empty;
-				client.BaseAddress = new Uri($"http://{fullPath.Trim('/')}/Files/");
-			}
-			else
-			{
-				path = fullPath[(index + 1)..].ToString();
-				client.BaseAddress = new Uri($"http://{fullPath[..index].Trim('/')}/Files/");
-			}
-
-			return client;
+			//Web 文件服务仅提供完整下载与覆盖上传，不模拟追加、独占创建或远程随机读写。
+			if((mode, access) is not ((FileMode.Open, FileAccess.Read) or (FileMode.Create, FileAccess.Write)))
+				throw new NotSupportedException();
 		}
 
 		private static Zongsoft.IO.FileInfo GetFileInfo(HttpResponseMessage response)
@@ -459,72 +416,196 @@ public class WebFileSystem : Zongsoft.IO.IFileSystem
 		}
 		#endregion
 
-		private struct FileInfo
+		private sealed class DownloadStream(HttpClient client, HttpResponseMessage response, Stream stream) : Stream
 		{
-			#region 公共属性
-			public string Name { get; set; }
-			public long Size { get; set; }
-			public string Type { get; set; }
-			public DateTimeOffset Creation { get; set; }
-			public DateTimeOffset Modification { get; set; }
+			#region 成员字段
+			private Stream _stream = stream;
+			#endregion
+
+			#region 成员属性
+			private Stream Content => _stream ?? throw new ObjectDisposedException(nameof(DownloadStream));
+
+			public override bool CanRead => _stream?.CanRead == true;
+			public override bool CanSeek => _stream?.CanSeek == true;
+			public override bool CanWrite => false;
+			public override long Length => this.Content.Length;
+			public override long Position { get => this.Content.Position; set => this.Content.Position = value; }
+			#endregion
+
+			#region 重写方法
+			public override void Flush() => this.Content.Flush();
+			public override Task FlushAsync(CancellationToken cancellation) => this.Content.FlushAsync(cancellation);
+			public override int Read(byte[] buffer, int offset, int count) => this.Content.Read(buffer, offset, count);
+			public override int Read(Span<byte> buffer) => this.Content.Read(buffer);
+			public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellation) => this.Content.ReadAsync(buffer, offset, count, cancellation);
+			public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellation = default) => this.Content.ReadAsync(buffer, cancellation);
+			public override long Seek(long offset, SeekOrigin origin) => this.Content.Seek(offset, origin);
+			public override void SetLength(long value) => throw new NotSupportedException();
+			public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+			#endregion
+
+			#region 释放资源
+			protected override void Dispose(bool disposing)
+			{
+				if(disposing && Interlocked.Exchange(ref _stream, null) != null)
+				{
+					try { response.Dispose(); }
+					finally { client.Dispose(); }
+				}
+
+				base.Dispose(disposing);
+			}
+
+			public override async ValueTask DisposeAsync()
+			{
+				var content = Interlocked.Exchange(ref _stream, null);
+				if(content == null)
+					return;
+
+				try { await content.DisposeAsync().ConfigureAwait(false); }
+				finally
+				{
+					try { response.Dispose(); }
+					finally { client.Dispose(); }
+
+					base.Dispose(true);
+					GC.SuppressFinalize(this);
+				}
+			}
+			#endregion
+		}
+
+		private sealed class UploadStream : Stream
+		{
+			#region 成员字段
+			private readonly HttpClient _client;
+			private readonly string _path;
+			private FileStream _fileStream;
+			#endregion
+
+			#region 构造函数
+			public UploadStream(HttpClient client, string path)
+			{
+				_client = client;
+				_path = path;
+				var temporary = System.IO.Path.Combine(System.IO.Path.GetTempPath(), System.IO.Path.GetRandomFileName());
+				_fileStream = new FileStream(temporary, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None, 4096,
+					FileOptions.Asynchronous | FileOptions.SequentialScan | FileOptions.DeleteOnClose);
+			}
+			#endregion
+
+			#region 成员属性
+			private FileStream Content => _fileStream ?? throw new ObjectDisposedException(nameof(UploadStream));
+			public override bool CanSeek => _fileStream != null;
+			public override bool CanRead => false;
+			public override bool CanWrite => _fileStream != null;
+			public override long Length => this.Content.Length;
+			public override long Position { get => this.Content.Position; set => this.Content.Position = value; }
+			#endregion
+
+			#region 重写方法
+			public override void Flush() => this.Content.Flush();
+			public override Task FlushAsync(CancellationToken cancellation) => this.Content.FlushAsync(cancellation);
+			public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+			public override long Seek(long offset, SeekOrigin origin) => this.Content.Seek(offset, origin);
+			public override void SetLength(long value) => this.Content.SetLength(value);
+			public override void Write(byte[] buffer, int offset, int count) => this.Content.Write(buffer, offset, count);
+			public override void Write(ReadOnlySpan<byte> buffer) => this.Content.Write(buffer);
+			public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellation) => this.Content.WriteAsync(buffer, offset, count, cancellation);
+			public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellation = default) => this.Content.WriteAsync(buffer, cancellation);
+			#endregion
+
+			#region 释放资源
+			protected override void Dispose(bool disposing)
+			{
+				if(!disposing)
+					return;
+
+				var stream = Interlocked.Exchange(ref _fileStream, null);
+				if(stream == null)
+					return;
+
+				try
+				{
+					using var request = this.CreateRequest(stream);
+					using var response = _client.Send(request);
+					response.EnsureSuccessStatusCode();
+				}
+				finally
+				{
+					try { stream.Dispose(); }
+					finally { _client.Dispose(); }
+
+					base.Dispose(disposing);
+				}
+			}
+
+			public override async ValueTask DisposeAsync()
+			{
+				var stream = Interlocked.Exchange(ref _fileStream, null);
+				if(stream == null)
+					return;
+
+				try
+				{
+					using var request = this.CreateRequest(stream);
+					using var response = await _client.SendAsync(request).ConfigureAwait(false);
+					response.EnsureSuccessStatusCode();
+				}
+				finally
+				{
+					try { await stream.DisposeAsync().ConfigureAwait(false); }
+					finally { _client.Dispose(); }
+
+					base.Dispose(true);
+					GC.SuppressFinalize(this);
+				}
+			}
+			#endregion
+
+			#region 私有方法
+			private HttpRequestMessage CreateRequest(FileStream stream)
+			{
+				stream.Seek(0, SeekOrigin.Begin);
+				var index = _path.LastIndexOf('/');
+				return new HttpRequestMessage(HttpMethod.Post, index < 0 ? string.Empty : _path[..index])
+				{
+					Content = new MultipartFormDataContent
+					{
+						{ new StreamContent(stream), "File", _path[(index + 1)..] }
+					},
+				};
+			}
 			#endregion
 		}
 	}
 
 	#region 私有方法
+	private static HttpClient GetClient(IHttpClientFactory factory, ReadOnlySpan<char> fullPath, string category, out string path)
+	{
+		if(fullPath.IsEmpty)
+			throw new ArgumentNullException(nameof(fullPath));
+
+		fullPath = fullPath.TrimStart('/');
+		var index = fullPath.IndexOf('/');
+		path = index < 0 ? string.Empty : fullPath[(index + 1)..].ToString();
+		var authority = index < 0 ? fullPath : fullPath[..index];
+		var address = new Uri($"http://{authority}/{category}/");
+		var client = factory.CreateClient();
+
+		try
+		{
+			client.BaseAddress = address;
+			return client;
+		}
+		catch
+		{
+			client.Dispose();
+			throw;
+		}
+	}
+
 	private static string GetHeader(HttpResponseMessage response, string name) =>
 		response.Headers.TryGetValues(name, out var values) ? values.FirstOrDefault() : null;
 	#endregion
-
-	private sealed class WebUploadStream : Stream
-	{
-		private readonly HttpClient _client;
-		private readonly string _path;
-		private readonly string _filePath;
-		private readonly FileStream _fileStream;
-
-		public WebUploadStream(HttpClient client, string path)
-		{
-			_client = client;
-			_path = path;
-			_filePath = System.IO.Path.GetTempFileName();
-			_fileStream = System.IO.File.Open(_filePath, FileMode.Create, FileAccess.ReadWrite);
-		}
-
-		#region 重写属性
-		public override bool CanSeek => false;
-		public override bool CanRead => false;
-		public override bool CanWrite => true;
-		public override long Length => _fileStream.Length;
-		public override long Position { get => _fileStream.Position; set => _fileStream.Position = value; }
-		#endregion
-
-		#region 重写方法
-		public override void Flush() { }
-		public override int Read(byte[] buffer, int offset, int count) => _fileStream.Read(buffer, offset, count);
-		public override long Seek(long offset, SeekOrigin origin) => _fileStream.Seek(offset, origin);
-		public override void SetLength(long value) => _fileStream.SetLength(value);
-		public override void Write(byte[] buffer, int offset, int count) => _fileStream.Write(buffer, offset, count);
-
-		protected override void Dispose(bool disposing)
-		{
-			_fileStream.Seek(0, SeekOrigin.Begin);
-
-			var content = new MultipartFormDataContent
-			{
-				{ new StreamContent(_fileStream), "File", System.IO.Path.GetFileName(_path) }
-			};
-
-			var request = new HttpRequestMessage(HttpMethod.Post, System.IO.Path.GetDirectoryName(_path))
-			{
-				Content = content,
-			};
-
-			_client.Send(request);
-			_client.Dispose();
-			_fileStream.Dispose();
-			System.IO.File.Delete(_filePath);
-		}
-		#endregion
-	}
 }

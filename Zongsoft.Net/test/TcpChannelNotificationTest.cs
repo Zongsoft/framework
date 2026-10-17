@@ -39,6 +39,57 @@ namespace Zongsoft.Net.Tests;
 public class TcpChannelNotificationTest
 {
 	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task OwnerShutdownWaitsForClosedNotificationAfterUnregister(bool clientSide)
+	{
+		await using var server = TestNetwork.Server();
+		await using var client = TcpClient.Headed;
+		var entered = TestNetwork.Signal();
+		using var release = new ManualResetEventSlim();
+		var returned = false;
+		EventHandler<TcpChannelEventArgs<ReadOnlySequence<byte>>> closed = (_, _) =>
+		{
+			entered.TrySetResult();
+			if(!release.Wait(TestNetwork.Timeout))
+				return;
+
+			returned = true;
+		};
+
+		if(clientSide)
+			client.Closed += closed;
+		else
+			server.Channels.Closed += closed;
+
+		await server.StartAsync();
+		var connected = await client.ConnectAsync(server.Address);
+		await TestNetwork.UntilAsync(() => server.Channels.Count == 1);
+		TcpChannelBase<ReadOnlySequence<byte>> channel = clientSide ? connected : Assert.Single(server.Channels);
+
+		try
+		{
+			await channel.CloseAsync();
+			await entered.Task.WaitAsync(TestNetwork.Timeout);
+
+			if(clientSide)
+				Assert.Null(client.Channel);
+			else
+				Assert.Empty(server.Channels);
+
+			var stopping = clientSide ? client.DisconnectAsync().AsTask() : server.StopAsync();
+			Assert.False(stopping.IsCompleted);
+			Assert.False(channel.WaitAsync().IsCompleted);
+
+			release.Set();
+			await stopping.WaitAsync(TestNetwork.Timeout);
+			Assert.True(returned);
+			Assert.True(channel.WaitAsync().IsCompletedSuccessfully);
+		}
+		finally { release.Set(); }
+	}
+
+	[Theory]
 	[InlineData(false, false)]
 	[InlineData(false, true)]
 	[InlineData(true, false)]

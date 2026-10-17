@@ -1,6 +1,6 @@
 ---
 name: zongsoft-net
-description: 修改或审查 Zongsoft.Net 的 TcpClient、TcpServer、Channel、Packetizer、缓冲区与收发关闭竞态时使用；不用于消息代理专有线协议或业务 HTTP 客户端。
+description: 修改或审查 Zongsoft.Net 的 TCP 通信、Web 文件系统、缓冲区与收发关闭竞态时使用；不用于消息代理专有线协议或业务 HTTP 客户端。
 ---
 
 # Zongsoft.Net 实现协作
@@ -10,11 +10,11 @@ description: 修改或审查 Zongsoft.Net 的 TcpClient、TcpServer、Channel、
 ## 源码与职责
 
 - [TcpClient](src/TcpClient.cs) 提供客户端入口、报文派发和通道通知；私有嵌套 [Connector](src/TcpClient.Connector.cs) 拥有地址代次、当前及退场中的连接、累计统计和断开／释放协调，其嵌套 Attempt 拥有单次建连的目标、取消源和完成信号。建连使用官方 Socket API。
-- [TcpServer](src/TcpServer.cs) 管理服务状态、通道登记和累计统计；[受理流程](src/TcpServer.Accepting.cs) 将唯一 Accept 循环限定为启动方法的局部函数。私有嵌套 [Broadcaster](src/TcpServer.Broadcasting.cs) 拥有广播接纳、并发派发和停止排空状态。
+- [TcpServer](src/TcpServer.cs) 管理服务状态、通道登记和累计统计；[受理流程](src/TcpServer.Accepting.cs) 的私有嵌套 Acceptor 拥有每次启动的监听 Socket、取消源和受理完成任务，Accept 与单连接初始化分别使用局部函数。私有嵌套 [Broadcaster](src/TcpServer.Broadcasting.cs) 拥有广播接纳、并发派发和停止排空状态。
 - [TcpTransport](src/TcpTransport.cs) 是内部第三方传输唯一所有者，以 IDuplexPipe 为内部数据边界，不向公共 API 暴露 SocketConnection 或第三方选项；使用 Pipelines.Sockets.Unofficial 2.2.16，升级时验证收发、背压和释放语义。运行只依赖 Microsoft.NETCore.App。
 - [TcpChannelBase](src/TcpChannelBase.cs) 协调接收结束、发送排空、关闭和最终完成。私有嵌套 [Receiver](src/TcpChannelBase.Receiving.cs) 独占输入借用缓冲、分帧进度、处理预算和接收超时；私有嵌套 [Sender](src/TcpChannelBase.Sending.cs) 独占输出编码、接纳额度、写入锁、排空和发送超时，其限长 FrameWriter 继续嵌套。具体通道仅向所属处理器派发并归还登记。
 - 通道 `Statistics` 汇总收发组件的诊断计数，类型为 `TcpChannelStatistics`，由 `EnableDiagnostics` 开关控制。组件只暴露宿主所需的操作，不把锁、取消源或完成信号交给其他组件修改。
-- 客户端、连接器及服务端以 Unregister 注销已经清理的通道，累计统计并归还登记／接入额度；通道管理器的 Remove 仍是集合操作。BroadcastAsync 返回专用 [TcpBroadcastResult](src/TcpBroadcastResult.cs)，不将广播计数泛化为服务端任意操作的结果。
+- 客户端、连接器及服务端以 Unregister 注销已经清理的活动通道并归还接入额度；最终通知和完成结果发布后，以 Complete 归还所有权登记。服务端管理器分别保存活动集合与待完成集合；客户端保留待完成连接的字节计数，最终移除时转入累计值。BroadcastAsync 返回专用 [TcpBroadcastResult](src/TcpBroadcastResult.cs)，不将广播计数泛化为服务端任意操作的结果。
 - 客户端与 [TcpServerChannelManager](src/TcpServerChannelManager.cs) 提供 Closing／Closed／Error；[TcpChannelEventArgs](src/TcpChannelEventArgs.cs) 携带 Channel、CloseReason、Error 不可变快照。[TcpChannelNotifier](src/TcpChannelNotifier.cs) 是两个所有者共享的内部通知实现，逐个隔离并记录订阅者异常，不递归派发 Error。
 - [TcpException](src/TcpException.cs) 与 [TcpError](src/TcpError.cs) 统一库自身的帧、容量和关闭状态错误。标准取消、超时、Socket 和处理器异常不一律包装；停止时汇总的受理故障保留 InnerException；广播只将 SendRejected 计为容量拒绝，其他错误计为失败。
 - [PacketizerBase<T>](src/PacketizerBase.cs) 实现 Core 的 IPacketizer<T>，在 Net 层定义 GetLength 与 Release；客户端、服务端及通道统一接收此基类。Core 的两种 IPacketizer 接口只定义 Pack 与 Unpack。自定义协议派生该基类，资源型解码报文重写 Release。
@@ -25,18 +25,22 @@ description: 修改或审查 Zongsoft.Net 的 TcpClient、TcpServer、Channel、
 
 ## 配置与连接所有权
 
+- 计时器相关配置在快照验证时检查有效范围：MaintenanceInterval 至少为 1 毫秒，MaintenanceInterval、ConnectTimeout、ShutdownTimeout 及服务端广播使用的 SendTimeout 最大为 4,294,967,294 毫秒；仅做经过时间比较的客户端 SendTimeout、FrameTimeout、IdleTimeout 不套用计时器上限。
+
 - 客户端与服务端创建入口每次返回独立实例；构造时复制并验证选项，运行中不读取调用者可变配置。端点地址族必须匹配 Socket；端口零返回实际绑定端点，启动参数不静默覆盖已配置地址。
 - Socket 创建、连接、配置、传输包装与通道登记的每个失败分支都有唯一释放者；不得依赖 ConcurrentDictionary.GetOrAdd 的工厂只执行一次。并发首次连接共用 Attempt，首调用者控制尝试取消，其余调用者只取消自身等待。
-- Connector 用地址代次阻止过期连接发布；断开、释放和地址变更使旧尝试失效。旧通道注销不能移除新通道；断开后的发送可以重新建连，不自动重放失败或结果不确定的消息。
-- 服务端接入额度包含已接纳而尚在初始化的连接，失败与退出只归还一次。Accept 循环不等待单连接退场；先登记后启动接收，以稳定连接标识区分同一远端地址的多次连接。
+- Connector 用地址代次阻止过期连接发布；断开、释放和地址变更使旧尝试失效。断开在连接管理锁内取得当前通道快照，关闭期限独立于调用方等待取消；超时只终止该快照中的连接。通道已登记但尚未开始接收时，并发建连调用仍等待同一个 Attempt。旧通道注销不能移除新通道；断开后的发送可以重新建连，不自动重放失败或结果不确定的消息。
+- 服务端接入额度包含已接纳而尚在初始化的连接，失败与退出只归还一次。正常受理不等待已启动连接退场，初始化失败则完成该连接的清理；先登记后启动接收，以稳定连接标识区分同一远端地址的多次连接。
 - 收发 Pipe 使用共享内存池与线程池调度，useSynchronizationContext 为 false。默认开启 NoDelay 和 ZeroLengthReads，不启用 InlineReads、InlineWrites 或 PipeScheduler.Inline；不为每个连接预租大块接收缓冲或默认配置巨大 Socket 缓冲。
 
 ## 所有权与并发
 
 - 构造不启动接收。连接登记后启动唯一接收循环；后台故障由所有者的 Error 通知记录，并保留给 `WaitAsync` 的当前及后续等待者。
-- `CloseAsync` 结束传输；`WaitAsync(cancellation)` 等待处理器、发送、借用内存清理与生命周期通知，不主动关闭连接，取消只影响当前等待者。关闭不得提前完成仍被处理器使用的输入 Pipe。
+- `CloseAsync` 结束传输；`WaitAsync(cancellation)` 等待处理器、发送、借用内存清理与生命周期通知，不主动关闭连接，取消只影响当前等待者。关闭不得提前完成仍被处理器使用的输入 Pipe。发送排空同时观察关闭令牌，传输已关闭后不继续等待无法完成的发送量。
 - 所属对象通过通道的内部 `ShutdownAsync` 请求排空并等待完整退场，单连接故障由 `Error` 与公开 `WaitAsync` 保留；不能直接将通道故障任务并入所属对象的停止结果，导致结果随注销时机变化。真正的停止／排空超时及受理故障仍传播，业务处理器抛出的 `TimeoutException` 不等于排空超时。
 - 所有者 Closing 在关闭开始时触发，Closed 在清理并移除登记后触发；通道继承的 Core Closed 仅表示传输关闭。每通道 Error 最多一次，已知故障在 Closing 后报告，迟到故障在最终 Closed 前报告；容量拒绝及尚未形成通道的建连失败仍由对应调用返回。
+- 移出活动集合不代表完成通知；所有者的停止快照包含正在通知的连接，直到通道完成结果已经发布才移除所有权登记。已经完成的通道不重复请求停止或传播此前的排空故障。
+- 传输已经关闭时，所有者等待退场超时由停止调用报告，不再改写通道的关闭结果或已经交付的最终通知；处理器和资源清理自身的迟到故障仍由接收及收尾流程记录。
 - 所有者事件在连接管理锁外同步调用；回调不能阻塞等待包含自身的完整停止／释放。关闭原因与首个非空异常分别保留，已交付的事件快照不可变，不以同步通知代替可在完成后继续等待的契约。
 - `Unpack` 成功后，在处理器等待结束的 finally 中调用 Release；失败不得消费，成功必须推进。内存扩展发送仍经过分帧器。
 - 保留必要短临界区：客户端地址与建连代次、连接发送接纳复合额度、服务广播接纳、共享维护任务登记。编码、回调和 I/O 不进入同步临界区；不同连接收发没有全局互斥。
@@ -72,14 +76,16 @@ description: 修改或审查 Zongsoft.Net 的 TcpClient、TcpServer、Channel、
 - FlushResult 的 IsCanceled、IsCompleted 与异常遵循一致失败语义；无竞争且同步完成时直接返回完成 ValueTask，需要等待才进入异步路径。停止排空以实际 Socket 发送计数达到目标为依据，不以 Flush 或 CompleteAsync 代替，不忙等。
 - Broadcaster 独立限制全局广播接纳数与每次并发发送数，枚举实时连接集合，不为所有连接建立任务数组或全量副本。只将 SendRejected 计入 Rejected，其他发送错误计入 Failed；调用者取消传播。
 - 停止先禁止广播和受理，再等待接入流程、当前处理与发送排空。期限届满关闭传输并报告失败；仍运行的处理器保留输入、登记和监测责任，不能提前报告完整退场。停止失败保持 Stopping，清理后允许重试。
+- 服务端停止以一个 ShutdownTimeout 覆盖受理退出、通道及广播退场；超时不丢失 Acceptor 的任务和资源所有权。清理任务按停止重试串联，防止迟到清理影响重启后的连接；初始化完成后再次检查受理取消，未登记的连接清理时仍归还接入额度。
 - 接收、发送、受理、广播和监测后台任务均有明确所有者观察故障。重启创建新运行代次，不复用已取消的取消源或完成信号，不通过反射接管第三方收发循环。
 
 ## 共享监测与计量
 
 - 按 TimeProvider 与 MaintenanceInterval 分组共享扫描，使用单调时间；最后连接退场后停止对应运行代次。每 256 条连接让出后刷新时间，代次完成串联避免并行扫描。
+- Group 的私有嵌套 Runner 拥有每代取消源和执行流程，局部扫描函数负责单次扫描。上一代故障不阻止新代进入清理范围；故障时在登记锁内截取受影响连接并让后续登记进入新代。日志提供者异常在监测及受理边界隔离，不中断清理或后续运行。
 - IdleTimeout 基于实际接收进度，SendTimeout 基于发送停滞；FrameTimeout 从首次残留未完成帧开始，碎片持续到达不延长。监测采样实际收发计数，不能用调用 SendAsync 或收到业务 ACK 的时刻替代。
 - 建连及显式短期限等待使用相应异步 API；正常收发避免为每次操作创建关联 CancellationTokenSource 或 Task.Delay，不用墙上时间判断超时。
-- 通道字节来自完成的 Socket I/O，发送帧数来自成功 Flush；注销时累计到所有者。并发读取是近似快照，不为每次读取加全局锁。
+- 通道字节来自完成的 Socket I/O，发送帧数来自成功 Flush；连接退场时累计到所有者。并发读取是近似快照，不为每次读取加全局锁。
 - 客户端／服务端 Statistics 只读取所属时钟与周期组的已有监测计数，不触发扫描。组内存在启用诊断的连接才采集，未启用实例返回零；连接全部退出后仍能读取累计值。
 - MaximumTimeoutDelay 从记录期限算起，包含批内等待，不包含关闭和业务退场。实际收发进度采样另有最多一个实际采样间隔的观测误差，扫描超期时可超过配置周期。MaximumScanDuration 包含分批让出的等待，OverrunCount 用于识别容量或调度不足。
 - 诊断不添加设备、连接或端口等高基数标签，不按心跳创建日志字典或逐条记录。性能结论区分库分配、驱动与采样开销，分别解释内核缓冲、池保留和托管内存。
@@ -91,6 +97,13 @@ description: 修改或审查 Zongsoft.Net 的 TcpClient、TcpServer、Channel、
 - 生命周期、处理器和日志复用 [Core 通信生命周期与派发](../Zongsoft.Core/SKILL.md#通信生命周期与派发)。ChannelBase 拥有一次关闭／释放和共享完成结果；WorkerBase 拥有异步启停状态，Net 不叠加服务启停状态机。ListenerBase 派发处理器，实际流接收者拥有解码；注入处理器由提供者释放，无处理器也须执行取消检查及报文归还。HandlerBase 无附加参数时传递 null，显式 Parameters 保留身份。
 - 共享维护器需要可注入时钟与代次完成等待；Common.Timer 的系统时钟和同步停止不满足该契约。通用 ObjectPool 的同步容量控制不替代异步发送接纳；不为复用引入错误的所有权或额外完整报文副本。
 - 没有测量证据时，不另造 SocketAsyncEventArgs 引擎、对象池、线程调度器或 IValueTaskSource 状态机。共享生命周期等待使用可由多调用者等待的 Task。
+
+## Web 文件系统资源所有权
+
+- `DirectoryProvider` 与 `FileProvider` 复用 Web 文件服务地址解析；操作拥有工厂创建的 HttpClient、请求与响应，并在完成或异常时释放。目录 JSON 使用 Web 选项，查询参数按值编码，未知 Content-Length 不表示空内容。
+- `FileProvider` 的私有嵌套 DownloadStream 持有响应与客户端，读取通过 ResponseHeadersRead 按需进行，释放流时归还资源；失败创建不移交所有权。
+- 私有嵌套 UploadStream 拥有 DeleteOnClose 临时文件，释放时取得一次上传权；同步与异步入口分别使用对应 I/O，HTTP 失败必须传播，请求、响应、文件和客户端在失败路径同样释放。
+- Open 与 OpenAsync 在创建客户端或临时文件之前共用模式校验，仅支持 Open/Read 与 Create/Write。其他合法枚举组合抛出 NotSupportedException，非法枚举值使用 ArgumentOutOfRangeException；不通过读取后重传模拟追加或独占创建。
 
 ## 多目标与依赖
 
