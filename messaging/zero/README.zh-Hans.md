@@ -71,22 +71,22 @@ dotnet build messaging/zero/Zongsoft.Messaging.ZeroMQ.slnx
 <?zongsoft.tools.binding name="zeromq/control"
 	path="Messaging/ZeroMQ/Server"
 	filter="enabled:true"
-	template="${option.control}"
+	template="${this.control}"
 	protocols="tcp"?>
 <?zongsoft.tools.binding name="zeromq/incoming"
 	path="Messaging/ZeroMQ/Server"
 	filter="enabled:true"
-	template="${option.incoming}"
+	template="${this.incoming}"
 	protocols="tcp"?>
 <?zongsoft.tools.binding name="zeromq/outgoing"
 	path="Messaging/ZeroMQ/Server"
 	filter="enabled:true"
-	template="${option.outgoing}"
+	template="${this.outgoing}"
 	protocols="tcp"?>
 <?zongsoft.tools.binding name="zeromq/discovery"
 	path="Messaging/ZeroMQ/Server"
 	filter="enabled:true"
-	template="${option.discovery}"
+	template="${this.discovery}"
 	protocols="tcp"?>
 
 <options>
@@ -193,7 +193,7 @@ finally
 
 提供者按名复用队列，业务操作不要释放共享队列。示例仅取消自己创建的唯一主题订阅，并等待处理器完成后才退出；发送返回非空标识仍不等于业务处理完成。独立工具若直接构造 `ZeroQueue`，才由工具负责其完整生命周期。
 
-主题订阅采用前缀匹配。一个 `ZeroQueue` 对每个逻辑主题只保留一个消费者；再次订阅同一个主题会返回已有消费者，不会替换处理器或选项。设置 `Group=Demo` 后，网络上的物理主题为 `Demo:topic/reliable`，处理器收到的 `Message.Topic` 仍为逻辑主题 `topic/reliable`。
+主题订阅采用前缀匹配。一个 `ZeroQueue` 对每个逻辑主题只保留一个消费者；再次订阅时，仅当处理器、标签和订阅选项一致才复用已有消费者，不一致则抛出 `InvalidOperationException`，不会替换已有订阅。设置 `Group=Demo` 后，网络上的物理主题为 `Demo:topic/reliable`，处理器收到的 `Message.Topic` 仍为逻辑主题 `topic/reliable`。
 
 同一订阅内的处理器按接收顺序串行执行。待处理队列达到容量后，该订阅会暂停从 Poller 接收，消费腾出空间后再恢复；背压只作用于相应订阅，不会阻塞其他 Socket。
 
@@ -272,7 +272,7 @@ await channel.OpenAsync(exchanger);
 await channel.SendAsync(eventContext);
 ```
 
-插件清单会为宿主应用自动注册该通道。请求响应和事件通道支持 `Group`；分组前缀只在网络边界添加，适配器始终使用逻辑主题。
+插件清单只将包装该传输的 `TransactionEventChannel` 注册到 `EventExchanger.Channels`，由它统一打开订阅。其 `Transport` 子节点构建原始 ZeroMQ 传输，`Filtering` 子节点暴露该传输的同一个过滤器实例，对应路径为 `/Workbench/Events/Exchanger/Channels/ZeroMQ/Transport` 和 `/Workbench/Events/Exchanger/Channels/ZeroMQ/Filtering`。传输归属包装通道，提前被引用构建时也不会加入交换器，无需改变全局 `expose` 行为。原 `/Workbench/Events/Exchanger/Transports/ZeroMQ` 路径移除；自定义引用或扩展应迁移到包装通道的 `Transport` 子节点，其 `Filtering` 扩展迁移到包装通道的 `Filtering` 子节点。请求响应和事件通道支持 `Group`；分组前缀只在网络边界添加，适配器始终使用逻辑主题。
 
 <a name="semantics"></a>
 ## 投递语义

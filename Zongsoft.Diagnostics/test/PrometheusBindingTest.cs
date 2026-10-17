@@ -42,7 +42,7 @@ public class PrometheusBindingTest
 		Assert.False(connectionSettings.Contains("protocols"));
 
 		var evaluator = new TemplateEvaluator();
-		evaluator.Providers.Add(new Variables { ["option"] = new { Settings = connectionSettings } });
+		evaluator.Providers.Add(new Variables { ["this"] = new { Settings = connectionSettings } });
 		var urls = evaluator.Evaluate(attributes["template"]);
 		var protocols = evaluator.Evaluate(attributes["protocols"]);
 

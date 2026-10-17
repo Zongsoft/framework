@@ -2,7 +2,6 @@
 	<PropertyGroup>
 		<IsPackable>false</IsPackable>
 		<IsTestProject>true</IsTestProject>
-		<!-- NetMQ 集成测试会启动真实 sockets/pollers；跨 TFM 并行运行会互相干扰端口和全局 NetMQ 状态。 -->
 		<TestTfmsInParallel>false</TestTfmsInParallel>
 		<StartupObject>Zongsoft.Messaging.ZeroMQ.Tests.TestProgram</StartupObject>
 	</PropertyGroup>
@@ -19,6 +18,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<Reference Include="Zongsoft.Core">
+			<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+		</Reference>
+
 		<ProjectReference Include="..\src\Zongsoft.Messaging.ZeroMQ.csproj" />
 		<ProjectReference Include="..\..\..\Zongsoft.Plugins\src\Zongsoft.Plugins.csproj" />
 	</ItemGroup>
@@ -27,11 +30,5 @@
 		<None Include="..\..\..\Zongsoft.Plugins\plugins\Main.plugin" Link="Fixtures\Main.plugin" CopyToOutputDirectory="PreserveNewest" />
 		<None Include="..\src\*.plugin" Link="Fixtures\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
 		<None Include="..\src\*.option" Link="Fixtures\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Reference Include="Zongsoft.Core">
-			<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
-		</Reference>
 	</ItemGroup>
 </Project>

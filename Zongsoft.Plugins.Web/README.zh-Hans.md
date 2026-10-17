@@ -149,7 +149,7 @@ await app.RunAsync();
 自动注册调用 `AddWebEndpoints(configuration).AddWebEndpointMonitoring()`。这两个方法只登记工厂与回调，不临时构建服务提供程序或捕获快照。实际快照由最终容器首次消费时创建，后续服务扫描注册的协议规则可以参与。跨插件冲突或无效声明在首次解析端点/服务器选项或启动时失败，不能依赖 `Build()` 立即抛出。
 
 ```xml
-<!-- web.option、显式导入的 web-default.option 或插件入口配置 -->
+<!-- web.option 或插件入口配置 -->
 <options>
 	<option path="Kestrel">
 		<endpoints>

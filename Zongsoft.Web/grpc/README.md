@@ -46,7 +46,7 @@ public class OrderService : Orders.OrdersBase
 The plugin's option file declares the same path in its listening URL:
 
 ```xml
-<?zongsoft.tools.binding path="Kestrel/Endpoints/*" template="${option.Url}" protocols="${option.Protocols}"?>
+<?zongsoft.tools.binding path="Kestrel/Endpoints/*" template="${this.Url}" protocols="${this.Protocols}"?>
 <options>
 	<option path="Kestrel">
 		<endpoints>

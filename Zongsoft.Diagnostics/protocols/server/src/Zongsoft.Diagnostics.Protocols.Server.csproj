@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>1.4.0</Version>
+		<Version>1.5.0</Version>
 		<Product>Zongsoft OpenTelemetry gRPC Server Protocols</Product>
 		<Description>This is a gRPC server protocol library of OpenTelemetry.</Description>
 		<IncludeSymbols>true</IncludeSymbols>

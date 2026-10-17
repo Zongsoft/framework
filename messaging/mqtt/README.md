@@ -196,7 +196,7 @@ The [daemon manifest](src/Zongsoft.Messaging.Mqtt-daemon.plugin) mounts one `Mqt
 <?zongsoft.tools.binding name="mqtt"
 	path="Messaging/Mqtt/Server"
 	filter="enabled:true"
-	template="${option.url}"
+	template="${this.url}"
 	protocols="tcp"?>
 
 <options>

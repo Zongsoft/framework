@@ -77,7 +77,7 @@ Core 不为应用名称补全默认承载：不把 `grpc` 展开为 `grpc+http2`
 
 ## 模板与消费者职责
 
-先使用既有 [TemplateEvaluator](expressions.zh-Hans.md) 对 `protocols` 模板求值，再解析结果，例如调用 `NetworkProtocol.Parse(text, ',')`。`${option.Protocols}` 与 `${option.Settings['protocols']}` 共用同一求值器，`NetworkProtocol` 不实现第二套插值语法。
+先使用既有 [TemplateEvaluator](expressions.zh-Hans.md) 对 `protocols` 模板求值，再解析结果，例如调用 `NetworkProtocol.Parse(text, ',')`。`${this.Protocols}` 与 `${this.Settings['protocols']}` 共用同一求值器，`NetworkProtocol` 不实现第二套插值语法。
 
 绑定消费者负责应用协议简写的默认承载、绑定专用的路径限制、地址与协议一致性校验及映射选择；Core 的值解析不承担这些策略。解析 `grpc+http3` 不检查后端，也不要求后端运行。
 

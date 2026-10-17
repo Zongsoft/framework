@@ -71,22 +71,22 @@ The [daemon option file](src/Zongsoft.Messaging.ZeroMQ-daemon.option) supplies b
 <?zongsoft.tools.binding name="zeromq/control"
 	path="Messaging/ZeroMQ/Server"
 	filter="enabled:true"
-	template="${option.control}"
+	template="${this.control}"
 	protocols="tcp"?>
 <?zongsoft.tools.binding name="zeromq/incoming"
 	path="Messaging/ZeroMQ/Server"
 	filter="enabled:true"
-	template="${option.incoming}"
+	template="${this.incoming}"
 	protocols="tcp"?>
 <?zongsoft.tools.binding name="zeromq/outgoing"
 	path="Messaging/ZeroMQ/Server"
 	filter="enabled:true"
-	template="${option.outgoing}"
+	template="${this.outgoing}"
 	protocols="tcp"?>
 <?zongsoft.tools.binding name="zeromq/discovery"
 	path="Messaging/ZeroMQ/Server"
 	filter="enabled:true"
-	template="${option.discovery}"
+	template="${this.discovery}"
 	protocols="tcp"?>
 
 <options>
@@ -193,7 +193,7 @@ finally
 
 The provider reuses named queues; business operations must not dispose a shared queue. This example cancels only its own unique-topic subscription and waits for its handler before exiting. A non-null publish identifier still does not mean business processing completed. A standalone tool that constructs `ZeroQueue` directly owns its entire lifetime.
 
-Subscriptions use prefix matching. One `ZeroQueue` keeps one consumer for each logical topic; subscribing to the same topic again returns the existing consumer and does not replace its handler or options. With `Group=Demo`, the physical wire topic is `Demo:topic/reliable`, while handlers receive the logical `Message.Topic` value `topic/reliable`.
+Subscriptions use prefix matching. One `ZeroQueue` keeps one consumer for each logical topic. A repeated subscription reuses that consumer only when the handler, tags, and subscription options match; a mismatch throws `InvalidOperationException` instead of replacing the existing subscription. With `Group=Demo`, the physical wire topic is `Demo:topic/reliable`, while handlers receive the logical `Message.Topic` value `topic/reliable`.
 
 Each subscriber invokes its handler sequentially in receive order. When its bounded pending queue reaches capacity, that subscriber pauses Poller reads and resumes after the handler frees capacity; other sockets remain responsive.
 
@@ -272,7 +272,7 @@ await channel.OpenAsync(exchanger);
 await channel.SendAsync(eventContext);
 ```
 
-The plugin manifest registers this channel automatically for hosted applications. Request/response and event channels support `Group`; the prefix is applied only at the network boundary and adapters always use logical topics.
+The plugin manifest registers only the wrapping `TransactionEventChannel` in `EventExchanger.Channels`, which opens the subscription. Its `Transport` child constructs the raw ZeroMQ transport, and its `Filtering` child exposes that transport's filtering instance. The reference paths are `/Workbench/Events/Exchanger/Channels/ZeroMQ/Transport` and `/Workbench/Events/Exchanger/Channels/ZeroMQ/Filtering`. Keeping the transport under its wrapper prevents it from being appended to the exchanger, including when a reference builds it first, without changing global `expose` behavior. The former `/Workbench/Events/Exchanger/Transports/ZeroMQ` path is removed; custom references or extensions at that path must move to the wrapper's `Transport` child, and its `Filtering` extensions to the wrapper's `Filtering` child. Request/response and event channels support `Group`; the prefix is applied only at the network boundary and adapters always use logical topics.
 
 <a name="semantics"></a>
 ## Delivery Semantics

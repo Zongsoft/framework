@@ -29,8 +29,8 @@ The source configuration is [Zongsoft.Diagnostics.Protocols.Server.option](src/Z
 ```xml
 <?zongsoft.tools.binding name="telemetry"
 	path="Kestrel/Endpoints/telemetry"
-	template="${option.Url}"
-	protocols="${option.Protocols}"
+	template="${this.Url}"
+	protocols="${this.Protocols}"
 	required="true"?>
 <options>
 	<option path="kestrel">

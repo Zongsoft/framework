@@ -10,7 +10,7 @@ Processing instructions (PIs) are collected as original definitions rather than 
 
 ```xml
 <?xml version="1.0" encoding="utf-8" ?>
-<?zongsoft.tools.binding path="Kestrel/Endpoints/*" template="${option.Url}" ?>
+<?zongsoft.tools.binding path="Kestrel/Endpoints/*" template="${this.Url}" ?>
 <configuration>
 	<option path="/Kestrel">
 		<endpoints>

@@ -3,22 +3,22 @@
 <?zongsoft.tools.binding name="zeromq/control"
 	path="Messaging/ZeroMQ/Server"
 	filter="enabled:true"
-	template="${option.control}"
+	template="${this.control}"
 	protocols="tcp"?>
 <?zongsoft.tools.binding name="zeromq/incoming"
 	path="Messaging/ZeroMQ/Server"
 	filter="enabled:true"
-	template="${option.incoming}"
+	template="${this.incoming}"
 	protocols="tcp"?>
 <?zongsoft.tools.binding name="zeromq/outgoing"
 	path="Messaging/ZeroMQ/Server"
 	filter="enabled:true"
-	template="${option.outgoing}"
+	template="${this.outgoing}"
 	protocols="tcp"?>
 <?zongsoft.tools.binding name="zeromq/discovery"
 	path="Messaging/ZeroMQ/Server"
 	filter="enabled:true"
-	template="${option.discovery}"
+	template="${this.discovery}"
 	protocols="tcp"?>
 
 <options>

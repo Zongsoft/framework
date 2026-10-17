@@ -77,7 +77,7 @@ Collection parsing removes duplicates and returns a caller-owned array sorted by
 
 ## Templates and consumer responsibilities
 
-Evaluate a `protocols` template through the existing [TemplateEvaluator](expressions.md), then parse the resulting text, for example with `NetworkProtocol.Parse(text, ',')`. Expressions such as `${option.Protocols}` and `${option.Settings['protocols']}` use the same evaluator; there is no second interpolation parser in `NetworkProtocol`.
+Evaluate a `protocols` template through the existing [TemplateEvaluator](expressions.md), then parse the resulting text, for example with `NetworkProtocol.Parse(text, ',')`. Expressions such as `${this.Protocols}` and `${this.Settings['protocols']}` use the same evaluator; there is no second interpolation parser in `NetworkProtocol`.
 
 The binding consumer applies application shorthand defaults, validates binding-specific path restrictions, checks address/protocol consistency, and chooses mappings. Core parsing alone does none of these. Parsing `grpc+http3` does not inspect the backend or require it to run.
 

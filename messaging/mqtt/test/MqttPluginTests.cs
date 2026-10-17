@@ -47,7 +47,7 @@ public class MqttPluginTests
 		var declaration = XElement.Parse($"<binding {binding.Data} />");
 		Assert.Equal("Messaging/Mqtt/Server", (string)declaration.Attribute("path"));
 		Assert.Equal("enabled:true", (string)declaration.Attribute("filter"));
-		Assert.Equal("${option.url}", (string)declaration.Attribute("template"));
+		Assert.Equal("${this.url}", (string)declaration.Attribute("template"));
 		Assert.Equal("tcp", (string)declaration.Attribute("protocols"));
 		Assert.Null(declaration.Attribute("required"));
 

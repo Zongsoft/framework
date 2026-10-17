@@ -29,8 +29,8 @@ dotnet add package Zongsoft.Diagnostics.Protocols.Server
 ```xml
 <?zongsoft.tools.binding name="telemetry"
 	path="Kestrel/Endpoints/telemetry"
-	template="${option.Url}"
-	protocols="${option.Protocols}"
+	template="${this.Url}"
+	protocols="${this.Protocols}"
 	required="true"?>
 <options>
 	<option path="kestrel">

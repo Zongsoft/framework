@@ -136,7 +136,7 @@ nuget:Zongsoft.Discussions.Web
 
 插件配置提供程序在清单旁只选择一个入口：先将插件文件扩展名 `.plugin` 改为 `.option` 查找；只有该文件不存在，才查找 `<plugin name="…">.option`。例如 `Feature-daemon.plugin` 的插件名为 `Feature.Daemon`，优先选择 `Feature-daemon.option`，不存在时才使用 `Feature.Daemon.option`。两者都不存在则不加载配置。第一个入口只要存在，就不会再加载第二个；空文件或无效 XML 不触发回退，解析错误直接报错。
 
-提供程序不扫描后缀、环境名、宿主名、站点名或子目录。配置片段仅通过 `<?import path="…" required="false"?>` 显式导入；路径相对于声明文件，末尾导入覆盖前面的同名键。可选导入只允许文件缺失，不忽略解析错误。宿主 `LoadConfiguration("web")` 只加载 `web.option`，尊重配置文件提供程序及其根目录；需要 `web-default.option` 时应显式导入。新增或删除插件入口后，调用提供程序的 `Load()` 或重启以重新选择入口；现有入口及导入文件的变化遵循 XML 提供程序的变更通知机制。准确规则见[提供程序源码](src/Configuration/PluginConfigurationProvider.cs)。
+提供程序不扫描后缀、环境名、宿主名、站点名或子目录。配置片段仅通过 `<?import path="…" required="false"?>` 显式导入；路径相对于声明文件，末尾导入覆盖前面的同名键。可选导入只允许文件缺失，不忽略解析错误。宿主 `LoadConfiguration("web")` 只加载 `web.option`，尊重配置文件提供程序及其根目录。新增或删除插件入口后，调用提供程序的 `Load()` 或重启以重新选择入口；现有入口及导入文件的变化遵循 XML 提供程序的变更通知机制。准确规则见[提供程序源码](src/Configuration/PluginConfigurationProvider.cs)。
 
 首次加载和显式 `Load()` 均包含所有已加载的子插件。加载、卸载、整体重载及已关联文件的重载会通知宿主配置，并为下一次变更提供新令牌；替换、卸载或释放提供程序会解除旧文件订阅。整体重载失败会清理已建立的提供程序，调用方应处理异常后重试。整体重载、插件树加载/卸载与释放应串行调用；通知不代表多个文件的原子更新，不自动新增监听或热替换程序集。
 

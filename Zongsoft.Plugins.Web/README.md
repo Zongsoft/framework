@@ -149,7 +149,7 @@ The registrar uses the existing `IServiceRegistration` contract. It does not run
 Automatic registration calls `AddWebEndpoints(configuration).AddWebEndpointMonitoring()`. These methods register factories and callbacks without creating a temporary provider or capturing a snapshot. The final provider creates the snapshot on first consumption, including protocol policies registered later in the service scan. Invalid declarations or plugin conflicts fail when resolving endpoint/server options or starting the host; do not rely on `Build()` throwing immediately.
 
 ```xml
-<!-- web.option, explicitly imported web-default.option or a plugin entry -->
+<!-- web.option or a plugin entry -->
 <options>
 	<option path="Kestrel">
 		<endpoints>

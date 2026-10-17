@@ -46,7 +46,7 @@ public class OrderService : Orders.OrdersBase
 插件的选项文件在监听 URL 中声明相同路径：
 
 ```xml
-<?zongsoft.tools.binding path="Kestrel/Endpoints/*" template="${option.Url}" protocols="${option.Protocols}"?>
+<?zongsoft.tools.binding path="Kestrel/Endpoints/*" template="${this.Url}" protocols="${this.Protocols}"?>
 <options>
 	<option path="Kestrel">
 		<endpoints>

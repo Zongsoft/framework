@@ -79,8 +79,8 @@ public class GarnetServerTests
 		Assert.Equal("true", (string)binding.Attribute("required"));
 
 		var settings = scope.Configuration.GetOption<SettingsCollection>("/Externals/Garnet")[server.Setting];
-		//工具的 option.Value 参数字典视图使用与运行实例相同的设置。
-		var evaluator = new TemplateEvaluator { Providers = { new Variables { ["option"] = new { Value = settings } } } };
+		//工具的 this.Value 参数字典视图使用与运行实例相同的设置。
+		var evaluator = new TemplateEvaluator { Providers = { new Variables { ["this"] = new { Value = settings } } } };
 		var address = evaluator.Evaluate((string)binding.Attribute("template"));
 		Assert.Equal($"tcp://127.0.0.1:{scope.Port}", address);
 		Assert.Equal("tcp", evaluator.Evaluate((string)binding.Attribute("protocols")));

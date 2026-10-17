@@ -3,7 +3,7 @@
 <?zongsoft.tools.binding name="opc"
 	path="Externals/Opc/Server"
 	filter="enabled:true"
-	template="${option.urls}"
+	template="${this.urls}"
 	protocols="opc.tcp"
 	required="true"?>
 

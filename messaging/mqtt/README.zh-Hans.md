@@ -196,7 +196,7 @@ nuget:Zongsoft.Messaging.Mqtt
 <?zongsoft.tools.binding name="mqtt"
 	path="Messaging/Mqtt/Server"
 	filter="enabled:true"
-	template="${option.url}"
+	template="${this.url}"
 	protocols="tcp"?>
 
 <options>

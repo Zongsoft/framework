@@ -110,7 +110,7 @@ public class NetworkProtocolTest
 	[InlineData("my@app+tcp")]
 	[InlineData("my\0app+tcp")]
 	[InlineData("应用+tcp")]
-	[InlineData("${option.Protocols}")]
+	[InlineData("${this.Protocols}")]
 	public void RejectInvalidCombinations(string text)
 	{
 		Assert.False(NetworkProtocol.TryParse(text, out var result));
@@ -242,16 +242,16 @@ public class NetworkProtocolTest
 		var evaluator = new TemplateEvaluator();
 		evaluator.Providers.Add(new Variables
 		{
-			["option"] = new
+			["this"] = new
 			{
 				Protocols = "HTTP2+GRPC, grpc+http3",
 				Settings = new Settings("protocols='protobuf+http1,http3+protobuf';"),
 			},
 		});
 
-		Assert.Equal(["grpc+http2", "grpc+http3"], NetworkProtocol.Parse(evaluator.Evaluate("${option.Protocols}"), ',').Select(protocol => protocol.ToString()));
-		Assert.Equal(["protobuf+http1", "protobuf+http3"], NetworkProtocol.Parse(evaluator.Evaluate("${option.Settings['protocols']}"), ',').Select(protocol => protocol.ToString()));
-		Assert.Throws<TemplateEvaluationException>(() => evaluator.Evaluate("${option.Missing}"));
+		Assert.Equal(["grpc+http2", "grpc+http3"], NetworkProtocol.Parse(evaluator.Evaluate("${this.Protocols}"), ',').Select(protocol => protocol.ToString()));
+		Assert.Equal(["protobuf+http1", "protobuf+http3"], NetworkProtocol.Parse(evaluator.Evaluate("${this.Settings['protocols']}"), ',').Select(protocol => protocol.ToString()));
+		Assert.Throws<TemplateEvaluationException>(() => evaluator.Evaluate("${this.Missing}"));
 	}
 
 	[Fact]

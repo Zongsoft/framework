@@ -27,7 +27,7 @@
 <?zongsoft.tools.binding name="prometheus"
 	path="Diagnostics/Diagnostor/Meters/Exporters/*"
 	filter="Driver:prometheus"
-	template="${option.Settings['urls']}"
+	template="${this.Settings['urls']}"
 	protocols="http1"?>
 <options>
 	<option path="/Diagnostics">

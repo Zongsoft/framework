@@ -25,7 +25,7 @@
 
 Load `Zongsoft.Externals.Redis.plugin` and configure `/Externals/Redis/ConnectionSettings`. Messaging connections can be configured separately under `/Messaging/ConnectionSettings`; both use the `Redis` driver. See the [distributed-lock sample](samples/distributedlock), the [distributed-cache sample](samples/distributedcache), the [messaging sample](samples/messaging), and the [tests](test) for working examples.
 
-For reliable Broker storage, name the Redis connection exactly after the Broker and inject the factory path. The daemon-created ZeroMQ Broker is named `QueueServer`:
+For reliable Broker storage, inject the factory path. ZeroMQ calls `Storages.Create(Storage)`, first looking for a Redis connection named after `Storage` under `/Externals/Redis/ConnectionSettings`. `Storage` is independent of the Broker's `Name`. The default daemon configuration sets both to `QueueServer`, so the example uses that connection name:
 
 Set a stable storage identifier before the process starts:
 
@@ -45,7 +45,7 @@ $env:ZONGSOFT_MESSAGING_STORAGE_IDENTIFIER = "broker-storage-01"
 </extension>
 ```
 
-The factory never falls back to a default connection. It freezes `ZONGSOFT_MESSAGING_STORAGE_IDENTIFIER` on first use and falls back to `Environment.MachineName` when the variable is empty. Storage keys use `Zongsoft.Messaging.Storage:{ConnectionSettings.Name}:{StorageIdentifier}` as their prefix; overlong partitions use a stable SHA-256 form.
+If that connection is absent, the factory tries the connection named `Redis` under `/Messaging/Storages/ConnectionSettings`. It does not select an arbitrary default connection, and the resulting settings must be `RedisConnectionSettings`. It freezes `ZONGSOFT_MESSAGING_STORAGE_IDENTIFIER` on first use and falls back to `Environment.MachineName` when the variable is empty. Storage keys use `Zongsoft.Messaging.Storage:{ConnectionSettings.Name}:{StorageIdentifier}` as their prefix; overlong partitions use a stable SHA-256 form.
 
 When upgrading from the former `nodeId` option, set `ZONGSOFT_MESSAGING_STORAGE_IDENTIFIER` to the same value before starting the Broker. The partition text remains compatible when the value is unchanged; omitting it may select the machine-name partition and leave previous reliable messages under the old prefix.
 

@@ -17,7 +17,7 @@ description: 创建、修改、审查或调试 framework/externals 下的第三�
 - 表达式：Core `IExpressionEvaluator` → 服务匹配 → [Lua](lua/src/LuaExpressionEvaluator.cs)、[Python](python/src/PythonExpressionEvaluator.cs)、[Scriban](scriban/src/ScribanExpressionEvaluator.cs)。使用消费者接口与配置选定名字，语言语法并不因公共接口而相同。
 - Lua 每次 Evaluate 创建/释放 NLua 状态；Python 复用 ScriptEngine 并切换 Runtime IO；Scriban 每次创建 TemplateContext 且当前读取 variables.Count。不能把“独立字典”概括成所有运行时均线程隔离。
 - 缓存/序号/锁：[RedisServiceProvider](redis/src/RedisServiceProvider.cs) 注册别名 Redis，并用静态按名缓存供应实例；[EtcdServiceProvider](etcd/src/EtcdServiceProvider.cs) 的契约和别名须独立核对，不能假定存在 `@Etcd` 注册。
-- Redis 普通服务可回退默认连接；可靠消息存储工厂要求严格匹配 Broker 名。修改任何回退或缓存键都要同时覆盖对应消费者。
+- Redis 普通服务可回退默认连接；可靠消息存储工厂先在 `/Externals/Redis/ConnectionSettings` 按传入的配置名匹配 Redis 连接，再尝试 `/Messaging/Storages/ConnectionSettings` 中名为 `Redis` 的连接。ZeroMQ 传入独立的 `Storage` 配置名，而不是 Broker 的 `Name`。修改任何回退或缓存键都要同时覆盖对应消费者。
 - 先检查 `.plugin` 的程序集及扩展节点，再检查 ServiceAttribute/IServiceRegistration；某些对象只挂载在插件树，不存在对应容器注册，禁止编造 Resolve 示例。
 - ClosedXml 的四个公共归档/模板服务按 Spreadsheet 格式匹配。内部表格名由 Spreadsheet.GetTableName 生成 `__{QualifiedName}__`，不是 Model.Name；类型描述器与 service.GetDescriptor() 的映射上下文不能互换。更改命名时同步生成、提取、手工模板说明及往返测试。
 - 包含 Web/Gateway 的适配器要追踪“路由 → 请求解码 → 分发器 → Handler → 回复”全链路，不能把可扩展网关描述为自动验签或自动处理全部业务回调。

@@ -35,13 +35,13 @@ ZeroMQ 的可靠性上限为 `LeastOnce`。`ExactlyOnce` 是否受支持由其�
 
 `IMessageStorage` 是独立于任何消息驱动的 Core 契约：
 
-- `Name` 表示实现名称；存储实例由 `IMessageStorageFactory.Create(Broker.Name)` 创建；
+- `Name` 表示存储实例名称；ZeroMQ 以 `IMessageStorageFactory.Create(Server.Storage)` 按独立存储配置名创建实例，服务器的 `Name` 不参与这次选择；
 - `SetAsync` 完成前必须持有 Message 及其 Data、Tags 等可变内容的快照；
 - `GetAsync()` 用于 Broker 启动恢复，`GetAsync(topic)` 使用区分大小写的精确主题匹配；`MessageStorageBase<TSettings>` 将两者统一委托给一个模板方法，以 `null` 表示不限定主题、空字符串表示默认主题；
 - `RemoveAsync` 按 Identifier 删除；两个 `ClearAsync` 分别清除全部或精确主题的消息并返回实际删除数，基类同样以 `null` 哨兵统一委托给一个模板方法；
 - 返回的恢复消息不包含确认回调；Storage 实现负责 TTL 过滤。
 
-每个队列服务器挂载一个 Storage Factory，并拥有该工厂为 Broker 创建的 Storage。普通 Stop 不释放 Storage；替换 Factory、启动失败或 Server Dispose 时优先使用 `IAsyncDisposable` 释放。ZeroMQ Broker 未挂载 Factory 时仍提供 Broadcast，但不启动 Control。
+每个队列服务器挂载一个 Storage Factory，并拥有该工厂为 Broker 创建的 Storage。普通 Stop 不释放 Storage；更换存储配置名、替换 Factory、启动失败或 Server Dispose 时优先使用 `IAsyncDisposable` 释放。Control 和 Storage 均为空时仅提供 Broadcast，无需调用工厂；已配置 Control 时缺少有效工厂会导致启动失败。
 
 `ZeroControlServer.StorageWorker` 使用容量 1024 的单读者通道串行执行存储 I/O。Poller 只做非阻塞投递，完成结果通过 `ServerAgent` 命令队列返回 Poller 后才修改协议状态或发送 ROUTER 响应。
 

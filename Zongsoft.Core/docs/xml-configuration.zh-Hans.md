@@ -10,7 +10,7 @@ XML 处理指令（PI）以原始定义单独收集，不自动映射为配置�
 
 ```xml
 <?xml version="1.0" encoding="utf-8" ?>
-<?zongsoft.tools.binding path="Kestrel/Endpoints/*" template="${option.Url}" ?>
+<?zongsoft.tools.binding path="Kestrel/Endpoints/*" template="${this.Url}" ?>
 <configuration>
 	<option path="/Kestrel">
 		<endpoints>

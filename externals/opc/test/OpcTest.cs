@@ -58,7 +58,7 @@ public class OpcTest
 		Assert.Equal("{option:/Externals/Opc/Server/Discovery}", (string)server.Attribute("Discovery"));
 		Assert.Contains("path=\"Externals/Opc/Server\"", binding.Data);
 		Assert.Contains("filter=\"enabled:true\"", binding.Data);
-		Assert.Contains("template=\"${option.urls}\"", binding.Data);
+		Assert.Contains("template=\"${this.urls}\"", binding.Data);
 		Assert.Contains("protocols=\"opc.tcp\"", binding.Data);
 		Assert.Contains("required=\"true\"", binding.Data);
 		Assert.Contains(plugin.Descendants("object").Where(element => element.Attribute("value") != null), element => (string)element.Attribute("value") == "{path:/Workbench/Externals/Opc/Server}");

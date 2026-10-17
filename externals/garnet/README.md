@@ -27,7 +27,7 @@ Deploy the plugin and option artifacts. The packaged plugin selects the followin
 
 <?zongsoft.tools.binding name="garnet"
 	path="Externals/Garnet/default"
-	template="tcp://${option.Value['address']}"
+	template="tcp://${this.Value['address']}"
 	protocols="tcp"
 	required="true"?>
 
