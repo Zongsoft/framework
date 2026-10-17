@@ -113,10 +113,10 @@ public class ZeroQueueServerBindingTests
 		SetAddress(server, second, $"tcp://127.0.0.2:{new Uri(GetAddress(server, first)).Port}");
 		Exception failure = null;
 		server.StateChanged += (_, args) => failure = args.Exception;
-		await server.StartAsync([]);
+		var exception = await Assert.ThrowsAsync<ArgumentException>(() => server.StartAsync([]));
 
 		Assert.Equal(WorkerState.Stopped, server.State);
-		Assert.IsType<ArgumentException>(failure);
+		Assert.Same(exception, failure);
 		Assert.Equal(0, factory.Count);
 	}
 
@@ -136,10 +136,10 @@ public class ZeroQueueServerBindingTests
 		server.Storages = factoryAvailable ? factory : null;
 		Exception failure = null;
 		server.StateChanged += (_, args) => failure = args.Exception;
-		await server.StartAsync([]);
+		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => server.StartAsync([]));
 
 		Assert.Equal(WorkerState.Stopped, server.State);
-		Assert.IsType<InvalidOperationException>(failure);
+		Assert.Same(exception, failure);
 		Assert.Equal(0, factory.Count);
 		Assert.True(ZeroTestUtility.CanBindZeroMq((ushort)new Uri(server.Discovery).Port));
 	}
@@ -154,10 +154,10 @@ public class ZeroQueueServerBindingTests
 		using var server = ZeroTestUtility.CreateServer(storages: factory, name: "broker", storage: "missing-store");
 		Exception failure = null;
 		server.StateChanged += (_, args) => failure = args.Exception;
-		await server.StartAsync([]);
+		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => server.StartAsync([]));
 
 		Assert.Equal(WorkerState.Stopped, server.State);
-		Assert.IsType<InvalidOperationException>(failure);
+		Assert.Same(exception, failure);
 		Assert.Equal("missing-store", factory.LastName);
 		Assert.Equal(1, factory.Count);
 		Assert.True(ZeroTestUtility.CanBindZeroMq((ushort)new Uri(server.Discovery).Port));

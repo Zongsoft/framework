@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
+using NetMQ;
 using NetMQ.Sockets;
 
 using Xunit;
@@ -235,7 +236,7 @@ public class ZeroQueueServerTests
 
 		try
 		{
-			await server.StartAsync([]);
+			await Assert.ThrowsAsync<AddressAlreadyInUseException>(() => server.StartAsync([]));
 
 			Assert.Equal(Zongsoft.Components.WorkerState.Stopped, server.State);
 			Assert.Equal(1, factory.Count);
@@ -324,10 +325,10 @@ public class ZeroQueueServerTests
 		blocker.Bind(blocked);
 		Exception failure = null;
 		server.StateChanged += (_, args) => failure = args.Exception;
-		await server.StartAsync([]);
+		var exception = await Assert.ThrowsAsync<AddressAlreadyInUseException>(() => server.StartAsync([]));
 
 		Assert.Equal(Zongsoft.Components.WorkerState.Stopped, server.State);
-		Assert.NotNull(failure);
+		Assert.Same(exception, failure);
 		Assert.Equal(1, factory.Count);
 		Assert.Equal(1, storage.AsyncDisposeCount);
 		Assert.Equal(0, storage.DisposeCount);

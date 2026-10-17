@@ -27,7 +27,7 @@ public class ZeroResponderTests
 
 		try
 		{
-			await responder.StartAsync([]);
+			await Assert.ThrowsAsync<NullReferenceException>(() => responder.StartAsync([]));
 
 			Assert.Equal(WorkerState.Stopped, responder.State);
 			Assert.True(await ZeroTestUtility.WaitUntilAsync(() => queue.Subscribers.Count == 0, TimeSpan.FromSeconds(5)));
