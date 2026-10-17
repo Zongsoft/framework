@@ -1,7 +1,8 @@
 using System;
 using System.Linq;
-using System.Reflection;
 using System.Text.Json;
+using System.Reflection;
+using System.Threading.Tasks;
 using System.Security.Claims;
 
 using Xunit;
@@ -10,29 +11,31 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.ApplicationParts;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 using Zongsoft.Web;
 
-namespace Zongsoft.Plugins.Tests;
+namespace Zongsoft.Plugins.Web.Tests;
 
 [Trait("Category", "Integration")]
 public class WebIntegrationTests
 {
 	[Fact]
+	public Task WebHostConstructionInitializesPluginServices() => EndpointTestScope.RunAsync(nameof(WebHostConstructionInitializesPluginServices));
+
+	[Fact]
 	public void WebContextDiscoversPluginAssembliesAndInitializesOnce()
 	{
-		using var scope = new PluginTestScope();
-		scope.WriteFile("Feature.plugin", "<plugin name=\"Feature\"><manifest><dependencies><dependency name=\"Main\" /></dependencies><assemblies><assembly name=\"Zongsoft.Plugins.Tests\" /></assemblies></manifest></plugin>");
 		var manager = new ApplicationPartManager();
 		manager.FeatureProviders.Add(new Microsoft.AspNetCore.Mvc.Controllers.ControllerFeatureProvider());
-		var services = new ServiceCollection();
-		services.AddSingleton(manager);
-		services.AddSingleton<IApplicationFeatureProvider, ControllerFeatureProvider>();
-		services.AddHttpContextAccessor();
-		var provider = new Services.ServiceProviderFactory().CreateServiceProvider(services);
-		using var serviceLifetime = (IDisposable)provider;
-		using var application = new WebApplicationContext(provider, scope.Options);
+		using var scope = new WebTestScope(services =>
+		{
+			services.AddSingleton(manager);
+			services.AddSingleton<IApplicationFeatureProvider, ControllerFeatureProvider>();
+		});
+		scope.WriteFile("Feature.plugin", $"<plugin name=\"Feature\"><manifest><dependencies><dependency name=\"Main\" /></dependencies><assemblies><assembly name=\"{typeof(WebIntegrationTests).Assembly.GetName().Name}\" /></assemblies></manifest></plugin>");
+		var application = scope.Application;
 
 		Assert.True(application.Initialize());
 		var count = manager.ApplicationParts.Count;
@@ -53,13 +56,9 @@ public class WebIntegrationTests
 	[Fact]
 	public void RequestPrincipalAndRouteValuesFollowCurrentHttpContext()
 	{
-		using var scope = new PluginTestScope();
 		var accessor = new HttpContextAccessor();
-		var services = new ServiceCollection();
-		services.AddSingleton<IHttpContextAccessor>(accessor);
-		var provider = new Services.ServiceProviderFactory().CreateServiceProvider(services);
-		using var serviceLifetime = (IDisposable)provider;
-		using var application = new WebApplicationContext(provider, scope.Options);
+		using var scope = new WebTestScope(services => services.AddSingleton<IHttpContextAccessor>(accessor));
+		var application = scope.Application;
 		Assert.Null(application.HttpContext);
 		Assert.Null(application.Principal);
 		var session = application.Session;
@@ -92,10 +91,10 @@ public class WebIntegrationTests
 	[Fact]
 	public void PluginControllerReportsMetadataWithoutBuildingValues()
 	{
-		using var scope = new PluginTestScope();
+		using var scope = new WebTestScope();
 		scope.WritePlugin("<extension path=\"/Items\"><object name=\"Item\" type=\"System.Object\" /></extension>");
 		scope.Application.Initialize();
-		var controller = new Web.Controllers.PluginController();
+		var controller = new Controllers.PluginController();
 		var builtin = scope.Builtin("/Items/Item");
 
 		var node = JsonSerializer.SerializeToElement(controller.Get("/Items/Item"));
@@ -113,7 +112,7 @@ public class WebIntegrationTests
 	[Fact]
 	public void ApplicationConventionPublishesControllerDescriptors()
 	{
-		using var scope = new PluginTestScope();
+		using var scope = new WebTestScope();
 		var application = new ApplicationModel();
 		application.Controllers.Add(new ControllerModel(typeof(FixtureController).GetTypeInfo(), []) { ControllerName = "Fixture" });
 
@@ -124,4 +123,44 @@ public class WebIntegrationTests
 	}
 
 	public sealed class FixtureController : ControllerBase;
+	public sealed class ProbeService;
+
+	private sealed class WebTestScope : IDisposable
+	{
+		private readonly EndpointTestScope _files = new();
+		private readonly ConfigurationManager _configuration = new();
+		private readonly IDisposable _services;
+
+		public WebTestScope(Action<IServiceCollection> configure = null)
+		{
+			var services = new ServiceCollection();
+			services.AddSingleton<IConfiguration>(_configuration);
+			services.AddSingleton<ApplicationPartManager>();
+			services.AddHttpContextAccessor();
+			configure?.Invoke(services);
+			var provider = new Services.ServiceProviderFactory().CreateServiceProvider(services);
+			_services = (IDisposable)provider;
+			this.Application = new WebApplicationContext(provider, new PluginOptions(_configuration, _files.DirectoryPath, "Development"));
+		}
+
+		public string DirectoryPath => _files.DirectoryPath;
+		public WebApplicationContext Application { get; }
+		public void WriteFile(string path, string content) => _files.Write($"plugins/{path}", content);
+		public void WritePlugin(string content) => this.WriteFile("Feature.plugin", $"<plugin name=\"Feature\"><manifest><dependencies><dependency name=\"Main\" /></dependencies></manifest>{content}</plugin>");
+		public Builtin Builtin(string path) => (Builtin)this.Application.PluginTree.Find(path).Value;
+
+		public void Dispose()
+		{
+			try
+			{
+				this.Application.Dispose();
+				_services.Dispose();
+				((IDisposable)_configuration).Dispose();
+			}
+			finally
+			{
+				_files.Dispose();
+			}
+		}
+	}
 }

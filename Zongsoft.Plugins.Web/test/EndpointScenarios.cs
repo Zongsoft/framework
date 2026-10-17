@@ -17,6 +17,7 @@ internal static partial class EndpointScenarios
 {
 	public static Task RunAsync(string name, EndpointTestScope scope, string argument) => name switch
 	{
+		nameof(WebIntegrationTests.WebHostConstructionInitializesPluginServices) => WebHostConstructionInitializesPluginServices(scope),
 		nameof(EndpointIntegrationTests.NonWebServiceScanningIgnoresEndpointDeclarations) => NonWebServiceScanningIgnoresEndpointDeclarations(),
 		nameof(EndpointIntegrationTests.AutomaticIntegrationRejectsUnregisteredProtocols) => AutomaticIntegrationRejectsUnregisteredProtocols(scope),
 		nameof(EndpointIntegrationTests.PluginRegistrationPrecedesEndpointSnapshot) => PluginRegistrationPrecedesEndpointSnapshot(scope),

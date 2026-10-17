@@ -17,9 +17,16 @@
 
 	<ItemGroup>
 		<ProjectReference Include="../src/Zongsoft.Plugins.Web.csproj" />
-		<ProjectReference Include="../../Zongsoft.Core/src/Zongsoft.Core.csproj" />
 		<ProjectReference Include="../../Zongsoft.Plugins/src/Zongsoft.Plugins.csproj" />
-		<ProjectReference Include="../../Zongsoft.Web/src/Zongsoft.Web.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Reference Include="Zongsoft.Core">
+			<HintPath>../../Zongsoft.Core/src/bin/$(Configuration)/$(TargetFramework)/Zongsoft.Core.dll</HintPath>
+		</Reference>
+		<Reference Include="Zongsoft.Web">
+			<HintPath>../../Zongsoft.Web/src/bin/$(Configuration)/$(TargetFramework)/Zongsoft.Web.dll</HintPath>
+		</Reference>
 	</ItemGroup>
 
 	<ItemGroup>

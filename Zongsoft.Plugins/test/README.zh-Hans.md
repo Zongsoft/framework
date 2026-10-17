@@ -2,7 +2,7 @@
 
 [English](README.md) | [简体中文](README.zh-Hans.md)
 
-本项目验证插件装配的可观察行为，为后续重构提供回归基线。测试遵循 [framework 约定](../../AGENTS.md)和 [Zongsoft 开发规范](../../../guidelines/zongsoft.csharp.guidelines.md)，不修改生产类型的可见性，不断言框架本地化文案。
+本项目验证插件装配的可观察行为，为后续重构提供回归基线。项目引用仅指向 Plugins，Core 通过 `HintPath` 引用本地程序集；本项目不依赖 Web。程序集引用不传递 NuGet 依赖，因此显式声明 Core 所需的 `Microsoft.Extensions.ObjectPool` 和 `Microsoft.Extensions.Caching.Memory` 运行时包。Web 桥接及宿主构建测试归属 [Plugins.Web 测试项目](../../Zongsoft.Plugins.Web/test/README.zh-Hans.md)。测试遵循 [framework 约定](../../AGENTS.md)和 [Zongsoft 开发规范](../../../guidelines/zongsoft.csharp.guidelines.md)，不修改生产类型的可见性，不断言框架本地化文案。
 
 ## 调查依据
 
@@ -20,9 +20,6 @@
 
 ```powershell
 dotnet build ./Zongsoft.Core/src/Zongsoft.Core.csproj -p:GeneratePackageOnBuild=false
-dotnet build ./Zongsoft.Plugins/src/Zongsoft.Plugins.csproj -p:GeneratePackageOnBuild=false
-dotnet build ./Zongsoft.Web/src/Zongsoft.Web.csproj -p:GeneratePackageOnBuild=false
-dotnet build ./Zongsoft.Plugins.Web/Zongsoft.Plugins.Web.slnx -p:GeneratePackageOnBuild=false
 dotnet build ./Zongsoft.Plugins/Zongsoft.Plugins.slnx -p:GeneratePackageOnBuild=false
 
 dotnet test ./Zongsoft.Plugins/test/Zongsoft.Plugins.Tests.csproj -f net8.0 --no-build --no-restore
@@ -30,7 +27,7 @@ dotnet test ./Zongsoft.Plugins/test/Zongsoft.Plugins.Tests.csproj -f net9.0 --no
 dotnet test ./Zongsoft.Plugins/test/Zongsoft.Plugins.Tests.csproj -f net10.0 --no-build --no-restore
 ```
 
-宿主子进程和 Web 桥接用例标记为 `Category=Integration`，仍然完全在本地运行。只运行单元测试时添加 `--filter 'Category!=Integration'`；只运行集成测试时添加 `--filter 'Category=Integration'`。子进程通过 PATH 中的 `dotnet` 启动当前目标框架的测试程序集，不打开交互终端、不启动 HTTP 监听；30 秒超时后只终止该测试创建的进程。
+宿主子进程用例标记为 `Category=Integration`，仍然完全在本地运行。只运行单元测试时添加 `--filter 'Category!=Integration'`；只运行集成测试时添加 `--filter 'Category=Integration'`。子进程通过 PATH 中的 `dotnet` 启动当前目标框架的测试程序集，不打开交互终端、不启动 HTTP 监听；30 秒超时后只终止该测试创建的进程。
 
 规范检查保持只读：
 
@@ -63,8 +60,7 @@ git -c core.whitespace=cr-at-eol diff --check -- Zongsoft.Plugins
 | [PluginConfigurationTests](PluginConfigurationTests.cs)、[HostingConfigurationTests](HostingConfigurationTests.cs) | 插件按清单主名再逻辑名称选择精确入口、不扫描后缀文件且解析失败不回退、按文档顺序显式导入、每插件仅一个入口提供程序、宿主精确名称与物理/非物理文件提供程序、子插件重载、连续变更通知、入口来源追溯、失败重试与订阅释放 |
 | [PluginModelTests](PluginModelTests.cs) | 选项身份、属性转换缓存、行为、基础元素继承与覆盖、依赖集合 |
 | [PluginUnloadTests](PluginUnloadTests.cs) | 卸载取消、资源释放、节点/配置移除、已卸载入口及其导入内容不会转入名称有前缀关系的插件，以及未实例化基础元素不被创建 |
-| [ApplicationLifecycleTests](ApplicationLifecycleTests.cs)、[TestProgram](TestProgram.cs) | 初始化、工作台状态/事件/重试、Startup 工作者筛选，隔离进程中的退出及 Daemon/Terminal/Web 宿主构建；宿主与插件共享程序集只注册一次且能读取完整子插件配置 |
-| [WebIntegrationTests](WebIntegrationTests.cs) | 插件程序集和控制器发现、请求主体/路由、控制器描述及插件诊断接口 |
+| [ApplicationLifecycleTests](ApplicationLifecycleTests.cs)、[TestProgram](TestProgram.cs) | 初始化、工作台状态/事件/重试、Startup 工作者筛选，隔离进程中的退出及 Daemon/Terminal 宿主构建；宿主与插件共享程序集只注册一次且能读取完整子插件配置 |
 
 `PluginTestScope` 为每个用例建立唯一临时目录并释放配置提供程序及服务容器。框架的 `ApplicationContext.Current`、`BuilderManager.Current` 和插件树缓存是进程级状态，因此测试程序集禁用用例并行；并发构建用例仍显式发起并行调用。测试订阅的全局事件会解除。插件树缺少公开释放入口，测试不反射清空其静态缓存；缓存随测试进程结束释放。
 
@@ -77,7 +73,6 @@ git -c core.whitespace=cr-at-eol diff --check -- Zongsoft.Plugins
 | 程序集 | 行覆盖率 | 分支覆盖率 |
 | --- | ---: | ---: |
 | Zongsoft.Plugins | 79.67% | 70.47% |
-| Zongsoft.Plugins.Web | 68.83% | 42.94% |
 
 Plugins 的主要类型行覆盖率：`PluginResolver` 92.35%、`PluginLoader` 84.40%、`BuilderManager` 93.90%、`ObjectBuilder` 83.76%、`PluginConfigurationProvider` 98.43%、`PluginApplicationContext` 95.65%、`WorkbenchBase` 98.80%。这些数字是执行覆盖指标，不等同于全部行为正确或重构安全。
 
@@ -87,7 +82,7 @@ Plugins 的主要类型行覆盖率：`PluginResolver` 92.35%、`PluginLoader` 8
 dotnet test ./Zongsoft.Plugins/test/Zongsoft.Plugins.Tests.csproj -f net10.0 --no-build --no-restore --collect "XPlat Code Coverage" --settings ./Zongsoft.Plugins/test/coverage.runsettings --results-directory ./Zongsoft.Plugins/test/TestResults
 ```
 
-[coverage.runsettings](coverage.runsettings)只选择两个目标程序集；报告写入被 Git 忽略的 `TestResults`。Core/Web 相关代码会被测试调用，但不纳入这里的覆盖率。
+[coverage.runsettings](coverage.runsettings)只选择 Zongsoft.Plugins 程序集；报告写入被 Git 忽略的 `TestResults`。Core 相关代码会被测试调用，但不纳入这里的覆盖率。
 
 ## 重构前需单独解决的问题
 
@@ -102,10 +97,9 @@ dotnet test ./Zongsoft.Plugins/test/Zongsoft.Plugins.Tests.csproj -f net10.0 --n
 | 多层相对路径 | `PluginTreeNode.Find` 遇到 `..` 使用最初节点的 `_parent`，而不是当前迭代节点的父级；需补 `../..`、`Child/..` 的期望路径测试。 |
 | 相等性与哈希 | `Builtin` 相等比较忽略大小写，但哈希未采用相同规则；空 `PluginTreeNode` 的相等性不含树实例而哈希包含树实例。应明确跨树身份并验证集合行为。 |
 | 表达式与资源格式参数 | 独立 `ParserExpression` 把起始 `{`、分隔 `:` 加入其结果；实际 `Parser.Parse` 使用另一条路径。`ResourceParser` 将 `CaptureCollection` 直接复制到 `string[]`。需分别补有效表达式和带参数资源的回归；现有用例只覆盖前者非法输入、后者无参数查找。 |
-| Web Session 字典契约 | `ContainsKey` 要求本地字典及路由同时含键，与 `TryGetValue` 不同；Count/枚举未包含本地条目，CopyTo 先自增下标。当前用例覆盖请求切换和路由读取，完整字典一致性需要修复后回归。 |
 
 PluginSchemaTests 将产品 XSD 复制到夹具中，启用 `ReportValidationWarnings`，同时检测标准声明缺失和结构错误；适用的合法用例还实际执行加载与构建。动态成员名称通过 `lax` 保持可扩展，其缺失模式提示与结构错误分开验证。自定义模式可以使用 `BuiltinElementType` 声明构建器元素。已知后代结构错误仍须验证失败。这些测试不访问外部清单调查目录。
 
 文档差异：`Plugin.GetParser` 的注释描述递归依赖查找，实际基础元素查询只查直接依赖、从插件和父插件；消费者不能仅凭传递依赖获得 Main 的基础注册。当前测试以运行时兼容行为为准，这处契约需在重构时统一。
 
-未覆盖真实网络请求、交互终端、业务插件启动、程序集热替换/卸载、操作系统文件监视通知及所有异常回滚组合。Web 构建和 Daemon 启停通过不代表上述路径已经验证。
+未覆盖真实网络请求、交互终端、业务插件启动、程序集热替换/卸载、操作系统文件监视通知及所有异常回滚组合。Daemon 启停通过不代表上述路径已经验证。

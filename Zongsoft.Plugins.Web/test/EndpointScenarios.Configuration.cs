@@ -19,6 +19,22 @@ namespace Zongsoft.Plugins.Web.Tests;
 
 internal static partial class EndpointScenarios
 {
+	private static async Task WebHostConstructionInitializesPluginServices(EndpointTestScope scope)
+	{
+		scope.Plugin("Feature", EndpointTestScope.Endpoint("api", "http://127.0.0.1:18081/"));
+		scope.Write("plugins/Feature.plugin", $"<plugin name=\"Feature\"><manifest><dependencies><dependency name=\"Main\" /></dependencies></manifest><extension path=\"/Workspace/Environment/Services\"><object name=\"FixtureService\" type=\"{typeof(WebIntegrationTests.ProbeService).AssemblyQualifiedName}\" /></extension></plugin>");
+		await using var application = Application(scope, endpoints: false);
+		var context = application.Services.GetRequiredService<Zongsoft.Web.WebApplicationContext>();
+
+		Assert.Equal("Web", context.ApplicationType);
+		Assert.Same(context, application.Services.GetRequiredService<PluginApplicationContext>());
+		Assert.Same(context, application.Services.GetRequiredService<Services.IApplicationContext>());
+		Assert.False(context.Initialize());
+		Assert.Equal(WorkbenchStatus.None, context.Workbench.Status);
+		Assert.IsType<Zongsoft.Web.ControllerActivator>(application.Services.GetRequiredService<Microsoft.AspNetCore.Mvc.Controllers.IControllerActivator>());
+		Assert.Same(application.Services.GetRequiredService<WebIntegrationTests.ProbeService>(), context.PluginTree.Find("/Workspace/Environment/Services/FixtureService").UnwrapValue(ObtainMode.Never));
+	}
+
 	private static async Task PluginRegistrationPrecedesEndpointSnapshot(EndpointTestScope scope)
 	{
 		scope.Plugin("Feature", EndpointTestScope.Endpoint("api", "http://127.0.0.1:18081/api", "custom") + "<?import path='Feature-registration.option'?>");

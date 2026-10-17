@@ -2,7 +2,7 @@
 
 [English](README.md) | [简体中文](README.zh-Hans.md)
 
-This project verifies observable plugin composition behavior before refactoring. Tests follow the [framework instructions](../../AGENTS.md) and [Zongsoft guidelines](../../../guidelines/zongsoft.csharp.guidelines.md). They do not widen production visibility or assert localized framework messages.
+This project verifies observable plugin composition behavior before refactoring. It references the Plugins project and the local Core assembly through `HintPath`; it has no Web dependency. Core runtime packages `Microsoft.Extensions.ObjectPool` and `Microsoft.Extensions.Caching.Memory` are declared explicitly because assembly references do not carry NuGet dependencies. Web bridge and host construction tests belong to [Plugins.Web tests](../../Zongsoft.Plugins.Web/test/README.md). Tests follow the [framework instructions](../../AGENTS.md) and [Zongsoft guidelines](../../../guidelines/zongsoft.csharp.guidelines.md). They do not widen production visibility or assert localized framework messages.
 
 ## Research Basis
 
@@ -20,9 +20,6 @@ On a clean checkout, build these projects in order first. Production Debug proje
 
 ```powershell
 dotnet build ./Zongsoft.Core/src/Zongsoft.Core.csproj -p:GeneratePackageOnBuild=false
-dotnet build ./Zongsoft.Plugins/src/Zongsoft.Plugins.csproj -p:GeneratePackageOnBuild=false
-dotnet build ./Zongsoft.Web/src/Zongsoft.Web.csproj -p:GeneratePackageOnBuild=false
-dotnet build ./Zongsoft.Plugins.Web/Zongsoft.Plugins.Web.slnx -p:GeneratePackageOnBuild=false
 dotnet build ./Zongsoft.Plugins/Zongsoft.Plugins.slnx -p:GeneratePackageOnBuild=false
 
 dotnet test ./Zongsoft.Plugins/test/Zongsoft.Plugins.Tests.csproj -f net8.0 --no-build --no-restore
@@ -30,7 +27,7 @@ dotnet test ./Zongsoft.Plugins/test/Zongsoft.Plugins.Tests.csproj -f net9.0 --no
 dotnet test ./Zongsoft.Plugins/test/Zongsoft.Plugins.Tests.csproj -f net10.0 --no-build --no-restore
 ```
 
-Host subprocess and Web bridge tests carry `Category=Integration` and remain entirely local. Add `--filter 'Category!=Integration'` for unit tests or `--filter 'Category=Integration'` for integration tests. Subprocesses invoke the current target framework's test assembly with `dotnet` from PATH. They open no interactive terminal or HTTP listener. A 30-second timeout terminates only the test's own process.
+Host subprocess tests carry `Category=Integration` and remain entirely local. Add `--filter 'Category!=Integration'` for unit tests or `--filter 'Category=Integration'` for integration tests. Subprocesses invoke the current target framework's test assembly with `dotnet` from PATH. They open no interactive terminal or HTTP listener. A 30-second timeout terminates only the test's own process.
 
 Read-only style checks:
 
@@ -63,8 +60,7 @@ Builds enable `ZongsoftCodeStyleStrict` by default. Formatting temporarily selec
 | [PluginConfigurationTests](PluginConfigurationTests.cs), [HostingConfigurationTests](HostingConfigurationTests.cs) | Exact plugin entry selection by manifest basename then logical name, no suffix scanning or fallback on parse failure, explicit imports in document order, one provider per plugin entry, host exact-name loading with physical/nonphysical file providers, descendant reloads, repeated notifications, entry provenance, failure/retry and subscription disposal |
 | [PluginModelTests](PluginModelTests.cs) | Options identity, property cache/conversion, behaviors, foundation inheritance/overrides and dependencies |
 | [PluginUnloadTests](PluginUnloadTests.cs) | Cancellation, resource disposal, removal of nodes/configuration, unloaded entries and their imports do not transfer to prefix-named plugins, unused foundations remain uninstantiated |
-| [ApplicationLifecycleTests](ApplicationLifecycleTests.cs), [TestProgram](TestProgram.cs) | Initialization, workbench states/events/retry, startup worker selection, process exit, Daemon/Terminal/Web construction, one assembly registration across host/plugin manifests with complete descendant configuration |
-| [WebIntegrationTests](WebIntegrationTests.cs) | Plugin assemblies, controller discovery, request principal/routes, descriptors, plugin diagnostics |
+| [ApplicationLifecycleTests](ApplicationLifecycleTests.cs), [TestProgram](TestProgram.cs) | Initialization, workbench states/events/retry, startup worker selection, process exit, Daemon/Terminal construction, one assembly registration across host/plugin manifests with complete descendant configuration |
 
 `PluginTestScope` creates a unique temporary directory per test and disposes configuration providers and service containers. Assembly-level parallelism is disabled because ApplicationContext, BuilderManager, and plugin tree caches contain process-wide state. The concurrency test still makes concurrent calls explicitly. Global test event handlers are removed. PluginTree has no public disposal API; tests do not clear its private static cache, which lives until the test process exits.
 
@@ -77,7 +73,6 @@ On 2026-10-11, all 151 cases passed on each target framework, with no skips. The
 | Assembly | Lines | Branches |
 | --- | ---: | ---: |
 | Zongsoft.Plugins | 79.67% | 70.47% |
-| Zongsoft.Plugins.Web | 68.83% | 42.94% |
 
 Selected Plugins line coverage: PluginResolver 92.35%, PluginLoader 84.40%, BuilderManager 93.90%, ObjectBuilder 83.76%, PluginConfigurationProvider 98.43%, PluginApplicationContext 95.65%, WorkbenchBase 98.80%. Execution coverage is not a proof of correctness or refactoring safety.
 
@@ -87,7 +82,7 @@ Regenerate the report:
 dotnet test ./Zongsoft.Plugins/test/Zongsoft.Plugins.Tests.csproj -f net10.0 --no-build --no-restore --collect "XPlat Code Coverage" --settings ./Zongsoft.Plugins/test/coverage.runsettings --results-directory ./Zongsoft.Plugins/test/TestResults
 ```
 
-[coverage.runsettings](coverage.runsettings) selects the two target assemblies. Reports are written under Git-ignored `TestResults`. Related Core/Web code is exercised but excluded from these assembly totals.
+[coverage.runsettings](coverage.runsettings) selects only Zongsoft.Plugins. Reports are written under Git-ignored `TestResults`. Related Core code is exercised but excluded from these assembly totals.
 
 ## Refactoring Follow-ups
 
@@ -102,10 +97,9 @@ Tests record the current composition contracts, including descendant configurati
 | Multiple parent segments | PluginTreeNode.Find resolves `..` through the original node's parent. Add expected results for `../..` and `Child/..`. |
 | Equality/hash agreement | Builtin equality ignores case but hashing does not. Empty tree-node equality omits tree identity while hashing includes it. Define identity before testing hash collections. |
 | Expression/resource arguments | ParserExpression includes the opening brace and colon in parsed values; Parser.Parse uses another implementation. ResourceParser copies CaptureCollection directly into string[]. Add valid expression and formatted-resource regressions; current cases cover malformed expressions and argument-free resource lookup. |
-| Web Session dictionary | ContainsKey requires keys in both local and route dictionaries, unlike TryGetValue. Count/enumeration omit local entries and CopyTo increments before writing. Current cases cover request switching and route reads, not full dictionary consistency. |
 
 PluginSchemaTests copies the shipped XSD into the fixtures and enables `ReportValidationWarnings` to detect missing standard declarations as well as errors. Positive cases also exercise loading and construction where appropriate. Dynamic member names remain permitted by `lax`; their missing-schema warnings are tested separately from structural errors. Custom schemas can declare a builder element with `BuiltinElementType`. Known malformed descendants must still fail validation. These tests do not access the external manifest survey directories.
 
 Documentation differences remain: Plugin.GetParser's comments describe recursive dependency lookup, but foundations are found through direct dependencies, slaves, and parents; transitive dependencies alone do not expose Main registrations. Tests preserve runtime compatibility while this contract awaits reconciliation.
 
-Real HTTP requests, interactive terminals, business startup, assembly replacement/unloading, operating-system file notifications, and every failure rollback combination are outside this baseline. Web construction and Daemon lifecycle success do not establish those behaviors.
+Real HTTP requests, interactive terminals, business startup, assembly replacement/unloading, operating-system file notifications, and every failure rollback combination are outside this baseline. Daemon lifecycle success does not establish those behaviors.

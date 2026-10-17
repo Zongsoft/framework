@@ -50,20 +50,6 @@ internal static class TestProgram
 				return 0;
 			}
 
-			if(args[1] == "web")
-			{
-				await using var app = Zongsoft.Web.Application.Web(typeof(TestProgram).Assembly.GetName().Name, [$"--contentRoot={directory}"], builder => builder.Environment.EnvironmentName = "Development");
-				var context = app.Services.GetRequiredService<Zongsoft.Web.WebApplicationContext>();
-				Assert.Same(context, app.Services.GetRequiredService<PluginApplicationContext>());
-				Assert.Same(context, app.Services.GetRequiredService<Services.IApplicationContext>());
-				Assert.False(context.Initialize());
-				Assert.Equal(WorkbenchStatus.None, context.Workbench.Status);
-				Assert.IsType<Zongsoft.Web.ControllerActivator>(app.Services.GetRequiredService<Microsoft.AspNetCore.Mvc.Controllers.IControllerActivator>());
-				Assert.Same(app.Services.GetRequiredService<ApplicationLifecycleTests.ProbeService>(), context.PluginTree.Find("/Workspace/Environment/Services/FixtureService").UnwrapValue(ObtainMode.Never));
-				File.AppendAllLines(trace, ["created"]);
-				return 0;
-			}
-
 			if(args[1] == "daemon")
 			{
 				using var host = Hosting.Application.Daemon(typeof(TestProgram).Assembly.GetName().Name, [$"--contentRoot={directory}"], builder =>

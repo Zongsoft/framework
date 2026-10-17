@@ -20,7 +20,6 @@ public class ApplicationLifecycleTests
 	[InlineData("workbench", new[] { "opening:Opening", "opened:Running", "closing:Closing", "closed:None" })]
 	[InlineData("daemon", new[] { "opened", "started", "closed" })]
 	[InlineData("terminal", new[] { "created" })]
-	[InlineData("web", new[] { "created" })]
 	[InlineData("registration", new[] { "registered" })]
 	public async Task HostLifecycleRunsInAnIsolatedProcessAsync(string scenario, string[] expected)
 	{
@@ -34,9 +33,6 @@ public class ApplicationLifecycleTests
 			scope.WriteFile("nested/Child.plugin", $"<plugin name=\"Child\"><manifest><assemblies><assembly name=\"{assembly}\" /></assemblies></manifest></plugin>");
 			scope.WriteFile("nested/Child.option", "<options><option path=\"Kestrel/Endpoints\"><telemetry url=\"http://*:4317/opentelemetry\" protocols=\"grpc+http2\" /></option></options>");
 		}
-
-		if(scenario == "web")
-			scope.WriteFile("Feature.option", "<options><option path=\"Kestrel/Endpoints\"><api url=\"http://127.0.0.1:18081/\" protocols=\"http1\" /></option></options>");
 
 		var start = new ProcessStartInfo("dotnet")
 		{
