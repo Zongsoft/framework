@@ -312,4 +312,7 @@
 	<data name="AppenderBehavior.Appending.Description" xml:space="preserve">
 		<value>追加</value>
 	</data>
+	<data name="Builtin.CircularConstruction.Message" xml:space="preserve">
+		<value>循环构造依赖导致“{0}”构件无法提供实例。</value>
+	</data>
 </root>

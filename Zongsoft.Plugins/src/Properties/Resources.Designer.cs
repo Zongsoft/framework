@@ -636,6 +636,8 @@ namespace Zongsoft.Plugins.Properties {
             }
         }
 
+		internal static string Builtin_CircularConstruction_Message => ResourceManager.GetString("Builtin.CircularConstruction.Message", resourceCulture);
+
         /// <summary>
         ///   查找类似 Failed to create the Workbench. 的本地化字符串。
         /// </summary>

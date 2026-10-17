@@ -7,7 +7,6 @@
         description="Created Date: 2012-06-09 by Popeye Zhong, Modified Date: 2025-03-25 by Popeye Zhong.">
 
 	<builders>
-		<builder name="lazy" type="Zongsoft.Plugins.Builders.LazyBuilder, Zongsoft.Plugins"/>
 		<builder name="expose" type="Zongsoft.Plugins.Builders.ExposeBuilder, Zongsoft.Plugins"/>
 		<builder name="object" type="Zongsoft.Plugins.Builders.ObjectBuilder, Zongsoft.Plugins"/>
 	</builders>

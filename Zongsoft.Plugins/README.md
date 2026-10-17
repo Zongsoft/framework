@@ -21,7 +21,7 @@ The framework supports terminal applications, background services, Web hosts, an
 
 ### Plugin Manifest
 
-A `*.plugin` file is an XML composition contract. It identifies a plugin, declares assembly and plugin dependencies, and contributes objects to extension paths. The format is described by [`Zongsoft.Plugins.xsd`](Zongsoft.Plugins.xsd).
+A `*.plugin` file is an XML composition contract. It identifies a plugin, declares assembly and plugin dependencies, and contributes objects to extension paths. The format is described by [`Zongsoft.Plugins.xsd`](Zongsoft.Plugins.xsd). Extensions are optional and repeatable. The `manifest`, `builders` and `parsers` sections are each optional and may occur at most once. When present, `builders` must contain at least one `builder`, and `parsers` at least one `parser`. Sections follow the order `manifest` → `builders` → `parsers` → `extension`. The schema validates standard declarations and nested `object`/`expose` components while allowing dynamic properties and custom builders. Missing-schema warnings for member elements such as `QueueServer.Storages` indicate the limits of static validation; see the [validation boundary](implementation.md#5-manifest-format-and-declaration-model).
 
 ### Plugin Tree
 
@@ -29,7 +29,7 @@ Extensions are organized as a path-addressable tree. Framework services are comm
 
 ### Builders and Parsers
 
-Builders create nodes such as `object`, `lazy`, and `expose`. Parsers resolve values such as `path`, `type`, `static`, `option`, `service`, and `resource`. A value expression is evaluated when its node is built, so dependency order and path context matter. Property assignment resolves expressions or referenced nodes before converting the result with the target member type and converter. This also applies to string and object properties; expressions such as `{option:...}` are not assigned as raw text. The resolved value may already be cached before the member type and converter are known, so assignment still attempts conversion. A null result is preserved rather than converted to a value type's default, which could mask a failed conversion.
+Builders create nodes such as `object` and `expose`. Parsers resolve values such as `path`, `type`, `static`, `option`, `service`, and `resource`. A value expression is evaluated when its node is built, so dependency order and path context matter. Property assignment resolves expressions or referenced nodes before converting the result with the target member type and converter. This also applies to string and object properties; expressions such as `{option:...}` are not assigned as raw text. The resolved value may already be cached before the member type and converter are known, so assignment still attempts conversion. A null result is preserved rather than converted to a value type's default, which could mask a failed conversion.
 
 ### Application Context
 
@@ -199,14 +199,13 @@ Windows terminal automation needs valid console handles. Start from the deployme
 
 ## Loading and Lifecycle
 
-1. Discover manifests and resolve plugin dependencies.
-2. Load declared assemblies and register application services.
-3. Build extension nodes when required by the tree.
-4. Initialize the application context and modules.
-5. Start workers and the underlying host.
-6. Stop workers and dispose constructed components when the host shuts down.
+The host loads manifests, assemblies, the plugin tree and options before registering services and initializing the application context. The workbench visits ordinary extensions, then reads Startup and registers workers when opened. Constructing an instance and starting a worker are separate stages.
 
-Construction failures include the plugin path and component context. Avoid side effects in constructors; perform startable work through application modules or workers so shutdown and failure cleanup remain deterministic.
+BuilderManager coordinates optional OnBuilding callbacks, instance creation, child assembly, optional OnBuilded callbacks, owner appending, and completion state. The owner's builder supplies IAppender. An expose node does not append itself but can receive child objects. Initial construction and cached traversal follow the same appending rules.
+
+BuilderSettings contains only a type hint. IBuilderLifecycle is an optional interface implemented by BuilderBase; its OnBuilding and OnBuilded hooks run around creation and child assembly without repeating on completed cache reuse. Concrete builders set context.AppendToOwner and context.BuildChildren during Build; the manager preserves those decisions with the returned instance. Result is read-only to consumers. Module lookup creates only the instance; normal Auto access completes assembly later. After partial assembly fails with a published instance, subsequent Auto reads rethrow the failure.
+
+ObtainMode.Alway updates the node cache without appending the result and does not replace old references in owner collections. Unloading and host shutdown do not imply object-graph rollback or assembly hot replacement. Avoid startup side effects in constructors. See [Architecture and implementation](implementation.md) for plugin discovery, tree and object relationships, construction diagrams, expressions, configuration, services, host lifecycle and cleanup boundaries.
 
 ## Configuration
 

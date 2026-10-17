@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Plugins library.
  *
@@ -39,9 +39,7 @@ public class BuilderContext
 
 	#region 成员字段
 	private IBuilder _builder;
-	private IAppender _appender;
 	private int _depth;
-	private bool _cancel;
 	private Builtin _builtin;
 	private BuilderSettings _settings;
 	private object _result;
@@ -54,15 +52,13 @@ public class BuilderContext
 	{
 		_builder = builder ?? throw new ArgumentNullException(nameof(builder));
 		_builtin = builtin ?? throw new ArgumentNullException(nameof(builtin));
-		_appender = builder as IAppender;
 		_settings = settings;
 
 		_depth = depth;
 		_owner = owner;
 		_ownerNode = ownerNode;
-
-		if(builtin.HasBehaviors)
-			_cancel = builtin.Behaviors.GetBehaviorValue<bool>(builtin.Scheme + ".break");
+		this.AppendToOwner = true;
+		this.BuildChildren = !builtin.HasBehaviors || !builtin.Behaviors.GetBehaviorValue<bool>(builtin.Scheme + ".break");
 
 		_syncRoot = new object();
 	}
@@ -75,23 +71,16 @@ public class BuilderContext
 	/// <summary>获取当前的构建器对象。</summary>
 	public IBuilder Builder => _builder;
 
-	/// <summary>获取或设置构建过程的追加器。</summary>
-	/// <remarks>注意：该属性可能会被构建过程设置为空(<c>null</c>)，以阻止后续的追加动作。</remarks>
-	public IAppender Appender
-	{
-		get => _appender;
-		set => _appender = value;
-	}
+	/// <summary>获取或设置本次构建结果是否追加到所有者。</summary>
+	/// <remarks>由构建器在 Build 中设置。管理器随实例保存此决定；追加能力仍由所有者的 IAppender 提供。</remarks>
+	public bool AppendToOwner { get; set; }
+
+	/// <summary>获取或设置本次构建完成前是否自动装配子节点。</summary>
+	/// <remarks>由构建器在 Build 中设置。只影响自动遍历，不禁止以后显式访问子节点。</remarks>
+	public bool BuildChildren { get; set; }
 
 	/// <summary>获取构建选项参数。</summary>
 	public BuilderSettings Settings => _settings;
-
-	/// <summary>获取或设置是否取消后续构建。</summary>
-	public bool Cancel
-	{
-		get => _cancel;
-		set => _cancel = value;
-	}
 
 	/// <summary>获取当前构建器要操作的构件。</summary>
 	public Builtin Builtin => _builtin;
@@ -150,12 +139,12 @@ public class BuilderContext
 		}
 	}
 
-	/// <summary>获取或设置由构建器创建的目标对象。</summary>
-	/// <remarks>该属性返回值会被添加到<see cref="Owner"/>对象的子集中。</remarks>
+	/// <summary>获取由构建器创建的目标对象。</summary>
+	/// <remarks>构建管理器保存 <see cref="IBuilder.Build"/> 的返回值；生命周期回调不能替换已装配的目标对象。</remarks>
 	public object Result
 	{
 		get => _result;
-		set => _result = value;
+		internal set => _result = value;
 	}
 	#endregion
 

@@ -210,7 +210,7 @@ public class PluginLoaderTests
 		scope.Tree.Load();
 
 		Assert.Equal(2, scope.Tree.Plugins.Count);
-		Assert.Equal(3, scope.Tree.Plugins["Main"].Builders.Count);
+		Assert.Equal(2, scope.Tree.Plugins["Main"].Builders.Count);
 		Assert.Equal(9, scope.Tree.Plugins["Main"].Parsers.Count);
 		Assert.Equal("Zongsoft.Terminal", scope.Tree.Find("/Workbench/Executor").Plugin.Name);
 		Assert.NotNull(scope.Tree.Find("/Workbench/Events/Exchanger/Channels"));

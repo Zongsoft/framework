@@ -75,24 +75,6 @@ public class ObjectBuilderTests
 		Assert.Same(service, value.Service);
 	}
 
-	[Theory]
-	[InlineData("object", false)]
-	[InlineData("lazy", true)]
-	public void LazyBuilderDefersChildren(string scheme, bool deferred)
-	{
-		using var scope = new PluginTestScope();
-		scope.WritePlugin($"<extension path=\"/Items\"><{scheme} name=\"Container\" type=\"System.Collections.ArrayList\"><object name=\"Child\" type=\"System.Object\" /></{scheme}></extension>");
-		scope.Tree.Load();
-		var child = scope.Builtin("/Items/Container/Child");
-
-		var value = Assert.IsType<ArrayList>(scope.Builtin("/Items/Container").GetValue(ObtainMode.Auto));
-
-		Assert.Equal(deferred ? 0 : 1, value.Count);
-		Assert.Equal(!deferred, child.IsBuilded);
-		var childValue = child.GetValue(ObtainMode.Auto);
-		Assert.Same(childValue, Assert.Single(value.Cast<object>()));
-	}
-
 	[Fact]
 	public void ObtainModesPreserveCachedIdentityAndRebuildWithoutAppending()
 	{
@@ -133,7 +115,7 @@ public class ObjectBuilderTests
 	}
 
 	[Fact]
-	public void BuildSettingsDeferChildrenAndExposeCompletionContext()
+	public void ValueEventsPublishTheInstanceBeforeChildrenAreAssembled()
 	{
 		using var scope = new PluginTestScope();
 		scope.WritePlugin("<extension path=\"/Items\"><object name=\"Container\" type=\"System.Collections.ArrayList\"><object name=\"Child\" type=\"System.Object\" /></object></extension>");
@@ -151,24 +133,17 @@ public class ObjectBuilderTests
 		builtin.ValueChanged += (_, args) =>
 		{
 			Assert.Same(builtin.Value, args.Value);
+			Assert.Empty(Assert.IsType<ArrayList>(args.Value));
+			Assert.False(builtin.IsBuilded);
 			events.Add("changed");
 		};
 
-		var settings = BuilderSettings.Create(BuilderSettingsFlags.IgnoreChildren);
-		settings.Builded = context =>
-		{
-			Assert.Same(builtin, context.Builtin);
-			Assert.Same(scope.Tree, context.PluginTree);
-			Assert.Same(builtin.Value, context.Result);
-			Assert.True(builtin.IsBuilded);
-			events.Add("callback");
-		};
+		var result = Assert.IsType<ArrayList>(builtin.GetValue(ObtainMode.Auto));
 
-		var result = Assert.IsType<ArrayList>(builtin.GetValue(ObtainMode.Auto, settings));
-
-		Assert.Empty(result);
-		Assert.False(scope.Builtin("/Items/Container/Child").IsBuilded);
-		Assert.Equal(new[] { "changing", "changed", "callback" }, events);
+		Assert.Single(result);
+		Assert.True(builtin.IsBuilded);
+		Assert.True(scope.Builtin("/Items/Container/Child").IsBuilded);
+		Assert.Equal(new[] { "changing", "changed" }, events);
 	}
 
 	[Theory]
@@ -372,11 +347,12 @@ public class ObjectBuilderTests
 	public void DestroyDisposesBuiltValueOnceAndClearsCache()
 	{
 		using var scope = new PluginTestScope();
-		scope.WritePlugin($"<extension path=\"/Items\"><object name=\"Item\" type=\"{typeof(DisposableObject).AssemblyQualifiedName}\" /></extension>");
+		scope.WritePlugin($"<builders><builder name=\"object\" type=\"{typeof(BuilderLifecycleTests.RecordingBuilder).AssemblyQualifiedName}\" /></builders><extension path=\"/Items\"><object name=\"Item\" type=\"{typeof(DisposableObject).AssemblyQualifiedName}\" /></extension>");
 		scope.Tree.Load();
-		BuilderContext captured = null;
+		var builder = Assert.IsType<BuilderLifecycleTests.RecordingBuilder>(scope.Tree.Plugins["Feature"].GetBuilder("object"));
 		var builtin = scope.Builtin("/Items/Item");
-		var value = Assert.IsType<DisposableObject>(builtin.Build(new BuilderSettings(null, context => captured = context)));
+		var value = Assert.IsType<DisposableObject>(builtin.Build());
+		var captured = Assert.Single(builder.Completed);
 
 		captured.Builder.Destroy(captured);
 		captured.Builder.Destroy(captured);

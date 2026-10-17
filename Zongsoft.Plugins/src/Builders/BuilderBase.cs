@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Plugins library.
  *
@@ -32,7 +32,7 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Plugins.Builders;
 
-public abstract class BuilderBase : IBuilder
+public abstract class BuilderBase : IBuilder, IBuilderLifecycle
 {
 	#region 成员变量
 	private IEnumerable<string> _ignoredProperties;
@@ -98,6 +98,11 @@ public abstract class BuilderBase : IBuilder
 
 			builtin.Value = null;
 		}
+
+		builtin.IsBuilded = false;
+		builtin.BuildFailure = null;
+		builtin.AppendedOwner = null;
+		builtin.AppendedValue = null;
 	}
 
 	/// <summary>当构建器所属的插件被卸载，该方法被调用。</summary>
@@ -123,27 +128,21 @@ public abstract class BuilderBase : IBuilder
 		}
 	}
 
-	protected virtual void OnBuildComplete(BuilderContext context)
-	{
-		if(context.OwnerNode == null || context.OwnerNode.NodeType != PluginTreeNodeType.Builtin)
-			return;
-
-		//获取构建上下文所关联的追加器
-		var appender = context.Appender;
-
-		//注意：如果追加器为空表示忽略后续的追加操作
-		if(appender != null && (context.Settings == null || !context.Settings.HasFlags(BuilderSettingsFlags.IgnoreAppending)))
-			appender.Append(new AppenderContext(context.Result, context.Node, context.Owner, context.OwnerNode, AppenderBehavior.Appending));
-	}
-
+	/// <summary>在调用 Build 创建实例之前执行。</summary>
+	/// <param name="context">本次构建的上下文。</param>
+	protected virtual void OnBuilding(BuilderContext context) { }
+	/// <summary>在声明行为应用之后、向所有者追加之前执行。</summary>
+	/// <param name="context">包含已发布实例的构建上下文。</param>
+	protected virtual void OnBuilded(BuilderContext context) { }
 	protected virtual void Dispose(bool disposing) { }
 	#endregion
 
 	#region 显式实现
-	void IBuilder.OnBuildComplete(BuilderContext context)
+	void IBuilderLifecycle.OnBuilding(BuilderContext context) => this.OnBuilding(context);
+	void IBuilderLifecycle.OnBuilded(BuilderContext context)
 	{
 		this.ApplyBehaviors(context);
-		this.OnBuildComplete(context);
+		this.OnBuilded(context);
 	}
 	#endregion
 }

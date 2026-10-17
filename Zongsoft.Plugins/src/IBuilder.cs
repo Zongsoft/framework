@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Plugins library.
  *
@@ -45,14 +45,9 @@ public interface IBuilder : IDisposable
 	/// <returns>创建成功后的目标对象，有关该返回值的详细定义请参考说明部分。</returns>
 	/// <remarks>
 	///		<para>该方法返回值会被作为对应<see cref="Builtin"/>的子构件对应目标对象的所有者(即上级对象)。</para>
-	///		<para>如果该方法内部设置了<paramref name="context"/>参数对象中的<seealso cref="Builders.BuilderContext.Result"/>属性不为空(<c>null</c>)。</para>
+	///		<para>实现者可以在本方法中通过构建上下文决定是否装配子节点、是否向所有者追加。管理器将这些决定与返回的实例一起保存。</para>
 	/// </remarks>
 	object Build(Builders.BuilderContext context);
-
-	/// <summary>当创建完成后由创建管理器调用。</summary>
-	/// <param name="context">指定的创建器上下文对象。</param>
-	/// <remarks>注意：对于创建器的实现者，请在本方法内实现将目标对象添加到所有者对应的子集中去的逻辑，切勿在<see cref="Build"/>方法中实现添加逻辑，因为构建逻辑可被外部调用者覆盖，因此务必将创建于添加子集的逻辑分别处理。</remarks>
-	void OnBuildComplete(Builders.BuilderContext context);
 
 	/// <summary>卸载指定构件对应的目标对象。</summary>
 	/// <param name="context">包含构件、构建结果和构建设置的上下文。</param>

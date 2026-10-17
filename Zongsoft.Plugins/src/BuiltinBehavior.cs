@@ -34,13 +34,6 @@ namespace Zongsoft.Plugins;
 
 public class BuiltinBehavior
 {
-	#region 成员字段
-	private Builtin _builtin;
-	private string _name;
-	private string _text;
-	private PluginElementPropertyCollection _properties;
-	#endregion
-
 	#region 构造函数
 	public BuiltinBehavior(Builtin builtin, string name, string text = null)
 	{
@@ -50,53 +43,18 @@ public class BuiltinBehavior
 		if(string.IsNullOrWhiteSpace(name))
 			throw new ArgumentNullException(nameof(name));
 
-		_builtin = builtin;
-		_name = name.Trim();
-		_text = text;
-		_properties = new PluginElementPropertyCollection(builtin);
+		this.Builtin = builtin;
+		this.Name = name.Trim();
+		this.Text = text;
+		this.Properties = new PluginElementPropertyCollection(builtin);
 	}
 	#endregion
 
 	#region 公共属性
-	public Builtin Builtin
-	{
-		get
-		{
-			return _builtin;
-		}
-		internal set
-		{
-			_builtin = value;
-		}
-	}
-
-	public string Name
-	{
-		get
-		{
-			return _name;
-		}
-	}
-
-	public string Text
-	{
-		get
-		{
-			return _text;
-		}
-		set
-		{
-			_text = value;
-		}
-	}
-
-	public PluginElementPropertyCollection Properties
-	{
-		get
-		{
-			return _properties;
-		}
-	}
+	public string Name { get; }
+	public string Text { get; set; }
+	public Builtin Builtin { get; internal set; }
+	public PluginElementPropertyCollection Properties { get; }
 	#endregion
 
 	#region 公共方法
@@ -107,7 +65,7 @@ public class BuiltinBehavior
 
 		PluginElementProperty property;
 
-		if(_properties.TryGetValue(propertyName, out property))
+		if(this.Properties.TryGetValue(propertyName, out property))
 			return (T)property.GetValue(typeof(T), defaultValue);
 
 		return defaultValue;
@@ -120,7 +78,7 @@ public class BuiltinBehavior
 
 		PluginElementProperty property;
 
-		if(_properties.TryGetValue(propertyName, out property))
+		if(this.Properties.TryGetValue(propertyName, out property))
 			return property.GetValue(valueType, defaultValue);
 
 		return defaultValue;

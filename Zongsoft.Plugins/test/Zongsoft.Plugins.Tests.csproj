@@ -25,5 +25,6 @@
 
 	<ItemGroup>
 		<None Include="../plugins/*.plugin" Link="Fixtures/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+		<None Include="../Zongsoft.Plugins.xsd" Link="Fixtures/Zongsoft.Plugins.xsd" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 </Project>

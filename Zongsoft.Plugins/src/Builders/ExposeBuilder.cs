@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Plugins library.
  *
@@ -32,18 +32,12 @@ using System;
 namespace Zongsoft.Plugins.Builders;
 
 /// <summary>构件暴露创建器。</summary>
-/// <remarks>该构建器区别于<seealso cref="ObjectBuilder"/>的主要特征在于它不会执行追加操作。</remarks>
+/// <remarks>其目标对象不追加到所有者，但仍通过继承的 <see cref="IAppender"/> 接收子节点。</remarks>
 public class ExposeBuilder : ObjectBuilder
 {
 	public override object Build(BuilderContext context)
 	{
-		//忽略追加操作
-		context.Appender = null;
-
-		if(context.Settings != null)
-			context.Settings.SetFlags(BuilderSettingsFlags.IgnoreAppending);
-
-		//调用基类同名方法
+		context.AppendToOwner = false;
 		return base.Build(context);
 	}
 }

@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Plugins library.
  *
@@ -45,10 +45,6 @@ public sealed class Builtin : PluginElement, IEquatable<Builtin>
 	public event EventHandler<ValueChangingEventArgs> ValueChanging;
 	#endregion
 
-	#region 同步变量
-	private readonly object _syncRoot = new object();
-	#endregion
-
 	#region 成员变量
 	private readonly string _scheme;
 	private string _position;
@@ -78,6 +74,9 @@ public sealed class Builtin : PluginElement, IEquatable<Builtin>
 		_position = string.Empty;
 		_scheme = scheme.Trim();
 
+		this.AppendToOwner = true;
+		this.BuildChildren = true;
+
 		//将当前构件加入到所属插件的构件集中
 		plugin.RegisterBuiltin(this);
 	}
@@ -102,7 +101,7 @@ public sealed class Builtin : PluginElement, IEquatable<Builtin>
 	/// <summary>获取构件的构建器名称，即构件在插件文件中的元素名。</summary>
 	public string Scheme => _scheme;
 
-	/// <summary>获取构件是否已经构建过，只要构件被构建过该值则返回真，否则返回假。</summary>
+	/// <summary>获取构件是否已经完成构建及其构建器要求的子节点装配。</summary>
 	public bool IsBuilded
 	{
 		get => _isBuilded;
@@ -114,7 +113,7 @@ public sealed class Builtin : PluginElement, IEquatable<Builtin>
 			_isBuilded = value;
 
 			//激发“PropertyChanged”事件
-			this.OnPropertyChanged("IsBuilded");
+			this.OnPropertyChanged(nameof(this.IsBuilded));
 		}
 	}
 
@@ -233,48 +232,21 @@ public sealed class Builtin : PluginElement, IEquatable<Builtin>
 	/// <remarks>对于自定义构建器的目标类型，将由构建器标注的<seealso cref="Builders.BuilderBehaviorAttribute"/>特性提供，详情请参考它的描述信息。</remarks>
 	public Type GetValueType()
 	{
-		if(_value != null)
-			return _value.GetType();
-
-		if(_builtinType != null)
-			return _builtinType.Type;
-
-		var builder = this.Plugin.GetBuilder(_scheme);
-
-		if(builder == null)
-			throw new PluginException(string.Format(global::Zongsoft.Plugins.Properties.Resources.Builtin_BuilderNotFound_Message, _scheme, this.FullPath));
-
-		return builder.GetValueType(this);
+		return Builders.BuilderManager.Current.GetValueType(this);
 	}
 
 	public object GetValue(ObtainMode obtainMode, Builders.BuilderSettings settings = null)
 	{
-		switch(obtainMode)
-		{
-			case ObtainMode.Alway:
-				//注意：当获取方式为始终创建新的实例时，必须忽略后续的追加操作，
-				//以避免将重复新建的实例追加到所有者集合中可能导致的集合项键冲突的错误。
-
-				if(settings == null)
-					settings = Builders.BuilderSettings.Create(Builders.BuilderSettingsFlags.IgnoreAppending);
-				else
-					settings.SetFlags(Builders.BuilderSettingsFlags.IgnoreAppending);
-
-				return this.Build(settings);
-			case ObtainMode.Auto:
-				if(_value == null)
-				{
-					lock(_syncRoot)
-					{
-						if(_value == null)
-							return this.Build(settings);
-					}
-				}
-				break;
-		}
-
-		return _value;
+		return Builders.BuilderManager.Current.GetValue(this, obtainMode, settings);
 	}
+	#endregion
+
+	#region 构建状态
+	internal bool AppendToOwner { get; set; }
+	internal bool BuildChildren { get; set; }
+	internal object AppendedOwner { get; set; }
+	internal object AppendedValue { get; set; }
+	internal System.Runtime.ExceptionServices.ExceptionDispatchInfo BuildFailure { get; set; }
 	#endregion
 
 	#region 构建方法

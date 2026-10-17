@@ -145,14 +145,4 @@ public class PluginModelTests
 		Assert.Throws<NotSupportedException>(() => collection.Add(new PluginDependency("Other")));
 		Assert.Throws<NotSupportedException>(() => collection.Remove(copy[1]));
 	}
-
-	[Fact]
-	public void SettingsFlagsAccumulateWithoutDiscardingExistingOptions()
-	{
-		var settings = BuilderSettings.Create(BuilderSettingsFlags.IgnoreChildren);
-		settings.SetFlags(BuilderSettingsFlags.IgnoreAppending);
-
-		Assert.True(settings.HasFlags(BuilderSettingsFlags.IgnoreChildren | BuilderSettingsFlags.IgnoreAppending));
-		Assert.Equal(BuilderSettingsFlags.IgnoreChildren | BuilderSettingsFlags.IgnoreAppending, settings.Flags);
-	}
 }

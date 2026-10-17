@@ -14,7 +14,7 @@ description: 开发、审查、调试或测试 Zongsoft.Plugins 与 Zongsoft.Plu
 ## 配置契约
 
 - `.plugin` 的节点名称、属性、路径、依赖和顺序可能影响装配；保持局部格式，不做无关排序。
-- 解析规则应与 XSD 和现有容错行为一致。若二者不一致，先以加载器测试确认兼容边界并记录差异。
+- XSD 允许零个或多个 extension；manifest、builders、parsers 各自可省略且最多一个，各节按 manifest → builders → parsers → extension 排列。builders 出现时必须至少包含一个 builder，parsers 出现时必须至少包含一个 parser。模式声明 object/expose、构造及属性行为；动态属性使用 skip，动态子元素使用 lax，保留已知元素的结构校验。ReportValidationWarnings 对动态成员名给出的缺失模式提示不等于结构错误，不得通过把整个子树改成 skip 来隐藏。自定义构建器可以附加模式声明并复用 BuiltinElementType。上下文、类型、表达式及依赖仍由运行时检查；读取器未主动校验各节次数及顺序。用 PluginSchemaTests 分别验证模式约束和合法清单的加载行为。
 - 插件依赖描述运行时装载顺序；不要以项目编译成功替代插件可加载性验证。
 - `.option`、`.mapping`、`.deploy` 分别属于配置、数据和部署契约，不把其语义混入插件解析器。
 
@@ -24,7 +24,10 @@ description: 开发、审查、调试或测试 Zongsoft.Plugins 与 Zongsoft.Plu
 2. [PluginLoader](src/PluginLoader.cs) 按文件目录组织父子插件、解析依赖；文件系统层级与 extension path 分离。不要把注释中的排序描述当作确定的文件枚举顺序。
 3. [PluginApplicationContext](src/PluginApplicationContext.cs) 初始化后挂载应用上下文；首次取得 Workbench 构建工作台子节点，Startup 子树后置，随宿主 Started/Stopping 打开/关闭工作台。
 4. [ObjectBuilder](src/Builders/ObjectBuilder.cs)、[BuilderManager](src/Builders/BuilderManager.cs) 处理节点构造和缓存；[ServicesParser](src/Services/ServicesParser.cs) 根据属性类型与当前树节点上下文定位服务。
-5. [PluginConfigurationProvider](src/Configuration/PluginConfigurationProvider.cs) 先查找与 `.plugin` 文件同名的 `.option`，缺失时才尝试插件 name 对应的 `.option`，只加载第一个存在的入口；两者都缺失则结束，首选文件解析失败不回退。不扫描附属后缀，其他片段由入口通过 `<?import ...?>` 显式导入。宿主 LoadConfiguration(name) 同样只加载 name.option。无参 LoadConfiguration() 先加载应用名配置，入口程序集名不同时再追加加载其同名配置；Application.Web 在此之后加载 web.option，同名键由后加载的文件覆盖。显式 Load 重新选择入口并递归包括子插件；入口及导入文件重载、插件加载/卸载、整体重载均向宿主传递变更通知，替换或释放时解除订阅。整体重载失败清理已建立的提供程序；整体重载、插件树加载/卸载与释放串行执行，通知不代表跨文件事务。
+	- 具体构建器在 Build 中设置 context.AppendToOwner 和 context.BuildChildren；管理器随实例保存决定，缓存路径沿用。IAppender 由所有者构建器提供，不是子节点追加自身的许可。不要在 IBuilder 增加固定策略查询或让调用方的 settings 积累流程标志。
+	- IBuilderLifecycle 是独立可选能力，由 BuilderBase 显式实现并转发到受保护的 OnBuilding、OnBuilded。OnBuilding 在重入保护建立后、实际 Build 前调用；OnBuilded 在所需子节点装配后、所有者追加前调用，先应用声明行为。缓存复用不重放，延后完成不重复前置回调。BuilderSettings 只提供 TargetType。
+	- 模块定位只取得实例，创建时调用 OnBuilding，后续正常装配时调用 OnBuilded；两次回调可能使用不同上下文。IsBuilded 在装配完成后才成立。普通 Auto 必须补完未完成节点；部分失败不得作为成功缓存返回。完整架构、装配时序与生命周期边界见 [implementation.zh-Hans.md](implementation.zh-Hans.md)。
+5. [PluginConfigurationProvider](src/Configuration/PluginConfigurationProvider.cs) 先查找与 `.plugin` 文件同名的 `.option`，缺失时才尝试插件 name 对应的 `.option`，只加载第一个存在的入口；两者都缺失则结束，首选文件解析失败不回退。不扫描附属后缀，其他片段由入口通过 `<?import ...?>` 显式导入。宿主 LoadConfiguration(name) 同样只加载 name.option。无参 LoadConfiguration() 先加载应用名配置，入口程序集名不同时再追加加载其同名配置；Application.Web 在此之后加载 web.option，同名键由后加载的文件覆盖。显式 Load 重新选择入口并递归包括子插件；入口及导入文件重载、插件加载/卸载、整体重载均向宿主传递变更通知，替换或释放时解除订阅。整体重载失败清理已建立的提供程序。内部同步保护提供程序的发布、清理与释放，不覆盖整次 Load 和所有树事件；调用方应串行执行显式重载、加载/卸载与释放，通知不代表跨文件事务。
 6. 跨插件提供程序使用并发字典枚举，不承诺冲突键的跨插件覆盖顺序。通过 Providers 取得各插件的 CompositeConfigurationProvider，其中单个 XML 提供程序包含入口及其导入后的生效值；文件来源标识入口，不追踪单键的导入来源。由宿主消费层比较各插件生效值并判断网络键等领域冲突，不把 Kestrel 或 gRPC 规则硬编码进 Plugins。
 
 ### 易混淆契约

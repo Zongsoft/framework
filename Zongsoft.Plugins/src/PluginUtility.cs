@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Plugins library.
  *
@@ -504,7 +504,9 @@ public static class PluginUtility
 
 			if(valueType == null || typeof(IApplicationModule).IsAssignableFrom(valueType))
 			{
-				var value = node.UnwrapValue(ObtainMode.Auto, Builders.BuilderSettings.Create(Builders.BuilderSettingsFlags.IgnoreChildren));
+				//模块定位只取得实例，其子节点在正常构建入口中完成装配。
+				var value = node.NodeType == PluginTreeNodeType.Builtin ?
+					Builders.BuilderManager.Current.GetInstance((Builtin)node.Value) : node.Value;
 
 				if(value != null && value is IApplicationModule module)
 					return module;

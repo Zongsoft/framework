@@ -312,4 +312,7 @@
 	<data name="AppenderBehavior.Appending.Description" xml:space="preserve">
 		<value>Append</value>
 	</data>
+	<data name="Builtin.CircularConstruction.Message" xml:space="preserve">
+		<value>A circular construction dependency prevents the '{0}' builtin from providing its instance.</value>
+	</data>
 </root>

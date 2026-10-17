@@ -11,40 +11,7 @@ namespace Zongsoft.Plugins.Tests;
 public class BuilderExtensionTests
 {
 	[Fact]
-	public void CompletionEventFollowsChildConstructionAndAppending()
-	{
-		using var scope = new PluginTestScope();
-		scope.WritePlugin("<extension path=\"/Items\"><object name=\"Parent\" type=\"System.Collections.ArrayList\"><object name=\"Child\" type=\"System.Object\" /></object></extension>");
-		scope.Tree.Load();
-		var built = new List<string>();
-		BuilderManager.Current.BuildCompleted += Completed;
-
-		try
-		{
-			scope.Builtin("/Items/Parent").Build();
-			Assert.Equal(new[] { "Child", "Parent" }, built);
-		}
-		finally
-		{
-			BuilderManager.Current.BuildCompleted -= Completed;
-		}
-
-		void Completed(object sender, BuilderEventArgs args)
-		{
-			Assert.Same(BuilderManager.Current, sender);
-			Assert.Same(scope.Tree, args.Context.PluginTree);
-			built.Add(args.Context.Builtin.Name);
-
-			if(args.Context.Depth == 1)
-			{
-				Assert.Same(scope.Tree.Find("/Items/Parent"), args.Context.OwnerNode);
-				Assert.Same(args.Context.Result, Assert.Single(Assert.IsType<ArrayList>(args.Context.Owner)));
-			}
-		}
-	}
-
-	[Fact]
-	public void CustomBuilderCanSupplyResultAndCancelDescendants()
+	public void CustomBuilderCanSupplyResultAndDeferDescendants()
 	{
 		using var scope = new PluginTestScope();
 		scope.WritePlugin($"<builders><builder name=\"cancel\" type=\"{typeof(CancellingBuilder).AssemblyQualifiedName}\" /></builders><extension path=\"/Items\"><cancel name=\"Parent\"><object name=\"Child\" type=\"System.Object\" /></cancel></extension>");
@@ -96,14 +63,14 @@ public class BuilderExtensionTests
 	public void DestroyDisposesElementsOfAnOwnedCollection()
 	{
 		using var scope = new PluginTestScope();
-		scope.WritePlugin($"<extension path=\"/Items\"><object name=\"Parent\" type=\"System.Collections.ArrayList\"><object name=\"Child\" type=\"{typeof(ObjectBuilderTests.DisposableObject).AssemblyQualifiedName}\" /></object></extension>");
+		scope.WritePlugin($"<builders><builder name=\"object\" type=\"{typeof(BuilderLifecycleTests.RecordingBuilder).AssemblyQualifiedName}\" /></builders><extension path=\"/Items\"><object name=\"Parent\" type=\"System.Collections.ArrayList\"><object name=\"Child\" type=\"{typeof(ObjectBuilderTests.DisposableObject).AssemblyQualifiedName}\" /></object></extension>");
 		scope.Tree.Load();
-		BuilderContext context = null;
+		var builder = Assert.IsType<BuilderLifecycleTests.RecordingBuilder>(scope.Tree.Plugins["Feature"].GetBuilder("object"));
 		var parent = scope.Builtin("/Items/Parent");
-		parent.Build(new BuilderSettings(null, value => context = value));
+		parent.Build();
 		var child = Assert.IsType<ObjectBuilderTests.DisposableObject>(scope.Builtin("/Items/Parent/Child").Value);
 
-		context.Builder.Destroy(context);
+		builder.Destroy(builder.Completed.Find(context => context.Builtin == parent));
 
 		Assert.Equal(1, child.Disposals);
 		Assert.Null(parent.Value);
@@ -116,9 +83,8 @@ public class BuilderExtensionTests
 	{
 		public override object Build(BuilderContext context)
 		{
-			context.Cancel = true;
-			context.Result = new ArrayList();
-			return null;
+			context.BuildChildren = false;
+			return new ArrayList();
 		}
 	}
 
