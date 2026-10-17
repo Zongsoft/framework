@@ -175,10 +175,7 @@ public partial class TcpServer<T>
 		var tasks = new List<Task>(this.Channels.Count + 1) { broadcasting };
 
 		foreach(var channel in this.Channels)
-		{
-			channel.RequestShutdown();
-			tasks.Add(channel.WaitAsync());
-		}
+			tasks.Add(channel.ShutdownAsync());
 
 		try
 		{

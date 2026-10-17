@@ -76,7 +76,7 @@ await client.DisconnectAsync(cancellation.Token);
 
 - `SendAsync` 完成表示报文已提交本地发送流程并通过背压等待，不表示远端收到或业务确认。写入后取消会终止连接，远端是否收到仍不确定。
 - `CloseAsync` 关闭传输；`WaitAsync(cancellation)` 等待处理器、已接纳发送、缓冲清理和生命周期通知全部完成。等待不主动关闭连接，取消只结束当前等待，通道故障仍可由之后的等待者观察。处理器可以等待 `CloseAsync`，但不能等待包含自身的 `WaitAsync`、`DisposeAsync` 或所属服务的停止。
-- `DisconnectAsync`、`StopAsync` 等待当前处理和发送排空；超时强制关闭传输并报错。拒绝响应取消的处理器继续持有借用内存，直到实际退出才归还、移除通道。停止失败保持 `Stopping`，完成收尾后可再次停止。
+- `DisconnectAsync`、`StopAsync` 等待当前处理和发送排空；超时强制关闭传输并报错。单条通道的收发或处理故障由 `Error` 事件和该通道的 `WaitAsync` 报告，不会在客户端断开或服务停止时重复抛出；停止或排空超时及服务端受理故障仍会传播。拒绝响应取消的处理器继续持有借用内存，直到实际退出才归还、移除通道。停止失败保持 `Stopping`，完成收尾后可再次停止。
 - `BroadcastAsync` 限制全局广播次数和每次并发发送数，返回 `TcpBroadcastResult`，分别统计 `Succeeded/Failed/Rejected`；调用者取消向上传播。连接集合是实时视图，不承诺包含并发新连接。
 
 | 设置 | 默认值 | 含义 |

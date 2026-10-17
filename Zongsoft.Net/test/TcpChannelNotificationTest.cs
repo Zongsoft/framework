@@ -38,12 +38,82 @@ namespace Zongsoft.Net.Tests;
 
 public class TcpChannelNotificationTest
 {
+	[Theory]
+	[InlineData(false, false)]
+	[InlineData(false, true)]
+	[InlineData(true, false)]
+	[InlineData(true, true)]
+	public async Task OwnerShutdownWaitsForFaultingHandlerWithoutRepeatingChannelFailure(bool clientSide, bool timeout)
+	{
+		await using var server = TestNetwork.Server();
+		await using var client = TcpClient.Headed;
+
+		var entered = TestNetwork.Signal<TcpChannelBase<ReadOnlySequence<byte>>>();
+		var release = TestNetwork.Signal();
+
+		Exception failure = timeout ? new TimeoutException() : new ApplicationException();
+		var notifications = new ConcurrentQueue<string>();
+		TcpChannelEventArgs<ReadOnlySequence<byte>> closed = null;
+		var handler = new ReceiveHandler<ReadOnlySequence<byte>>(async (context, _) =>
+		{
+			entered.TrySetResult(context.Channel);
+			await release.Task;
+			throw failure;
+		});
+
+		if(clientSide)
+		{
+			client.Handler = handler;
+			client.Error += (_, _) => notifications.Enqueue("error");
+			client.Closed += (_, args) => { closed = args; notifications.Enqueue("closed"); };
+		}
+		else
+		{
+			server.Handler = handler;
+			server.Channels.Error += (_, _) => notifications.Enqueue("error");
+			server.Channels.Closed += (_, args) => { closed = args; notifications.Enqueue("closed"); };
+		}
+
+		await server.StartAsync();
+		await client.ConnectAsync(server.Address);
+		await TestNetwork.UntilAsync(() => server.Channels.Count == 1);
+
+		try
+		{
+			if(clientSide)
+				await server.BroadcastAsync(ReadOnlySequence<byte>.Empty);
+			else
+				await client.SendAsync(ReadOnlySequence<byte>.Empty);
+
+			var channel = await entered.Task.WaitAsync(TestNetwork.Timeout);
+			var stopping = clientSide ? client.DisconnectAsync().AsTask() : server.StopAsync();
+			Assert.False(stopping.IsCompleted);
+			Assert.Null(closed);
+
+			release.TrySetResult();
+			await stopping.WaitAsync(TestNetwork.Timeout);
+
+			Assert.Equal(["error", "closed"], notifications.ToArray());
+			Assert.Same(failure, closed.Error);
+			Assert.Equal(TcpCloseReason.HandlerError, closed.CloseReason);
+			Assert.Same(failure, await Record.ExceptionAsync(() => channel.WaitAsync()));
+			Assert.Same(failure, await Record.ExceptionAsync(() => channel.WaitAsync()));
+
+			if(clientSide)
+				Assert.Null(client.Channel);
+			else
+				Assert.Empty(server.Channels);
+		}
+		finally { release.TrySetResult(); }
+	}
+
 	[Fact]
 	public async Task ClientNotificationsWaitForHandlerAndIgnoreSubscriberFailures()
 	{
 		await using var server = TestNetwork.Server();
 		server.Handler = new ReceiveHandler<ReadOnlySequence<byte>>((context, token) => context.Channel.SendAsync(context.Package, token));
 		await server.StartAsync();
+
 		await using var client = TcpClient.Headed;
 		var entered = TestNetwork.Signal();
 		var release = TestNetwork.Signal();
@@ -99,6 +169,7 @@ public class TcpChannelNotificationTest
 		var closingCount = -1;
 		var closedCount = -1;
 		object sender = null;
+
 		server.Channels.Closing += (_, args) =>
 		{
 			closing = args;
@@ -114,6 +185,7 @@ public class TcpChannelNotificationTest
 			closedCount = server.Channels.Count;
 			notifications.Enqueue("closed");
 		};
+
 		await server.StartAsync();
 		using var socket = await TestNetwork.ConnectAsync(server.Address);
 		await TestNetwork.UntilAsync(() => server.Channels.Count == 1);
@@ -166,6 +238,7 @@ public class TcpChannelNotificationTest
 		TcpChannelEventArgs<ReadOnlySequence<byte>> closed = null;
 		object sender = null;
 		var errors = 0;
+
 		client.Closed += (source, args) => { sender = source; closed = args; };
 		client.Error += (_, _) => Interlocked.Increment(ref errors);
 		var channel = await client.ConnectAsync(server.Address);
@@ -188,6 +261,7 @@ public class TcpChannelNotificationTest
 		reserved.Bind(new IPEndPoint(IPAddress.Loopback, 0));
 		await using var client = TcpClient.Headed;
 		var notifications = 0;
+
 		client.Closing += (_, _) => Interlocked.Increment(ref notifications);
 		client.Closed += (_, _) => Interlocked.Increment(ref notifications);
 		client.Error += (_, _) => Interlocked.Increment(ref notifications);

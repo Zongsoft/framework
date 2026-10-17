@@ -177,10 +177,7 @@ public partial class TcpClient<T>
 				tasks.Add(attempt.ObserveAsync());
 
 			foreach(var entry in _channels)
-			{
-				entry.Value.RequestShutdown();
-				tasks.Add(entry.Value.WaitAsync());
-			}
+				tasks.Add(entry.Value.ShutdownAsync());
 
 			try
 			{

@@ -55,6 +55,7 @@ public abstract partial class TcpChannelBase<T> : ChannelBase, ISender<T>, ITcpM
 	private int _started;
 	private int _closeReason;
 	private int _errorReported;
+	private bool _shutdownTimedOut;
 	#endregion
 
 	#region 构造函数
@@ -226,8 +227,18 @@ public abstract partial class TcpChannelBase<T> : ChannelBase, ISender<T>, ITcpM
 	#endregion
 
 	#region 关闭流程
-	/// <summary>停止开始新的报文处理，允许当前处理和已接纳发送排空。</summary>
-	internal void RequestShutdown() => _receiver.RequestShutdown();
+	/// <summary>停止接收新报文，等待当前处理、发送及通知退场；通道故障仍由 <see cref="WaitAsync" /> 和所属对象的错误事件报告。</summary>
+	/// <returns>所属对象的停止等待任务；排空超时仍传播给停止调用方。</returns>
+	internal async Task ShutdownAsync()
+	{
+		_receiver.RequestShutdown();
+
+		try { await _completion.Task.ConfigureAwait(false); }
+		catch when(!Volatile.Read(ref _shutdownTimedOut))
+		{
+			//单连接故障已由 Error 通知并保留在完成结果中，不因注销与停止的先后次序改变所属对象的停止结果。
+		}
+	}
 
 	/// <summary>立即请求关闭传输；当前处理持有的缓冲仍由接收流程归还。</summary>
 	/// <param name="reason">连接关闭原因。</param>
@@ -243,6 +254,10 @@ public abstract partial class TcpChannelBase<T> : ChannelBase, ISender<T>, ITcpM
 	/// <param name="exception">首个故障；正常关闭时为 <see langword="null" />。</param>
 	private void RecordFailure(TcpCloseReason reason, Exception exception)
 	{
+		//半关闭可能已经记录 Remote，仍需保留排空超时对所属对象停止结果的影响。
+		if(reason == TcpCloseReason.ShutdownTimeout)
+			Volatile.Write(ref _shutdownTimedOut, true);
+
 		Interlocked.CompareExchange(ref _failure, exception, null);
 		Interlocked.CompareExchange(ref _closeReason, (int)reason, 0);
 	}

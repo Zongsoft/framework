@@ -49,6 +49,7 @@ public class TcpSendCapacityTest
 		using var gate = new ManualResetEventSlim();
 		var entered = TestNetwork.Signal();
 		var packetizer = new BlockingPacketizer(gate, entered);
+
 		await using var client = new TcpClient<int>(packetizer, new()
 		{
 			EnableDiagnostics = true,
@@ -57,6 +58,7 @@ public class TcpSendCapacityTest
 			MaximumFrameLength = 4,
 			MaximumPendingSendBytes = bytes,
 		});
+
 		var channel = await client.ConnectAsync(server.Address);
 		var first = Task.Run(async () => await channel.SendAsync(1));
 		await entered.Task.WaitAsync(TestNetwork.Timeout);
@@ -94,6 +96,7 @@ public class TcpSendCapacityTest
 		await server.StartAsync();
 		using var gate = new ManualResetEventSlim();
 		var entered = TestNetwork.Signal();
+
 		await using var client = new TcpClient<int>(new BlockingPacketizer(gate, entered));
 		var channel = await client.ConnectAsync(server.Address);
 		var first = Task.Run(async () => await channel.SendAsync(1));
@@ -107,7 +110,6 @@ public class TcpSendCapacityTest
 		catch(Exception exception) when(exception is IOException or OperationCanceledException) { }
 
 		var closed = await Assert.ThrowsAsync<TcpException>(() => second);
-
 		Assert.Equal(TcpError.ConnectionClosed, closed.ErrorCode);
 
 		await closing.WaitAsync(TestNetwork.Timeout);
@@ -118,14 +120,96 @@ public class TcpSendCapacityTest
 		Assert.Equal(0, channel.PendingSendCount);
 	}
 
-	[Theory]
-	[InlineData(false)]
-	[InlineData(true)]
-	public async Task NonReadingPeerCannotExceedSendBudgetAndAbortReturnsAllReservations(bool cancel)
+	[Fact]
+	public async Task CancellationAfterWritingClosesChannelAndReturnsAllReservations()
 	{
-		using var listener = new System.Net.Sockets.Socket(System.Net.Sockets.AddressFamily.InterNetwork, System.Net.Sockets.SocketType.Stream, System.Net.Sockets.ProtocolType.Tcp);
+		await using var server = TestNetwork.Server();
+		await server.StartAsync();
+
+		using var gate = new ManualResetEventSlim();
+		var entered = TestNetwork.Signal();
+
+		await using var client = new TcpClient<int>(new BlockingPacketizer(gate, entered, blockAfterWrite: true));
+		var channel = await client.ConnectAsync(server.Address);
+		using var cancellation = new CancellationTokenSource();
+		var writing = Task.Run(async () => await channel.SendAsync(1, cancellation.Token));
+
+		try
+		{
+			await entered.Task.WaitAsync(TestNetwork.Timeout);
+			var waiting = channel.SendAsync(2, cancellation.Token).AsTask();
+			Assert.Equal(2, channel.PendingSendCount);
+			Assert.Equal(8, channel.PendingSendBytes);
+
+			cancellation.Cancel();
+			await Assert.ThrowsAnyAsync<OperationCanceledException>(() => waiting.WaitAsync(TestNetwork.Timeout));
+
+			Assert.Equal(1, channel.PendingSendCount);
+			Assert.False(channel.IsClosed);
+		}
+		finally { gate.Set(); }
+
+		await Assert.ThrowsAnyAsync<OperationCanceledException>(() => writing.WaitAsync(TestNetwork.Timeout));
+		await Assert.ThrowsAnyAsync<OperationCanceledException>(() => channel.WaitAsync().WaitAsync(TestNetwork.Timeout));
+
+		Assert.True(channel.IsClosed);
+		Assert.Equal(0, channel.PendingSendCount);
+		Assert.Equal(0, channel.PendingSendBytes);
+	}
+
+	[Fact]
+	public async Task DisconnectPreservesDrainTimeoutAfterRemoteHalfClose()
+	{
+		using var listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 		listener.Bind(new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 0));
 		listener.Listen(1);
+
+		using var gate = new ManualResetEventSlim();
+		var entered = TestNetwork.Signal();
+		var closing = TestNetwork.Signal<TcpChannelEventArgs<int>>();
+
+		await using var client = new TcpClient<int>(new BlockingPacketizer(gate, entered), new() { ShutdownTimeout = TimeSpan.FromMilliseconds(100) });
+		client.Closing += (_, args) => closing.TrySetResult(args);
+		var connecting = client.ConnectAsync(listener.LocalEndPoint);
+
+		using var peer = await listener.AcceptAsync();
+		var channel = await connecting;
+		var sending = Task.Run(async () => await channel.SendAsync(1));
+
+		try
+		{
+			await entered.Task.WaitAsync(TestNetwork.Timeout);
+			peer.Shutdown(SocketShutdown.Send);
+			var notification = await closing.Task.WaitAsync(TestNetwork.Timeout);
+
+			Assert.Equal(TcpCloseReason.Remote, notification.CloseReason);
+			Assert.IsType<TimeoutException>(notification.Error);
+			Assert.False(channel.WaitAsync().IsCompleted);
+
+			var disconnecting = client.DisconnectAsync().AsTask();
+			gate.Set();
+			var failure = await Assert.ThrowsAsync<TimeoutException>(() => disconnecting.WaitAsync(TestNetwork.Timeout));
+
+			Assert.Same(notification.Error, failure);
+			Assert.Same(failure, await Record.ExceptionAsync(() => channel.WaitAsync()));
+
+			try { await sending.WaitAsync(TestNetwork.Timeout); }
+			catch(Exception exception) when(exception is IOException or OperationCanceledException) { }
+
+			Assert.Null(client.Channel);
+			Assert.Equal(0, channel.PendingSendCount);
+			Assert.Equal(0, channel.PendingSendBytes);
+		}
+		finally { gate.Set(); }
+	}
+
+	[Fact]
+	public async Task NonReadingPeerCannotExceedSendBudgetAndCloseReturnsAllReservations()
+	{
+		using var listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp) { ReceiveBufferSize = 1024 };
+		listener.Bind(new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 0));
+		listener.Listen(1);
+
 		await using var client = TcpClient.CreateHeaded(new()
 		{
 			MaximumPacketLength = 1024 * 1024,
@@ -136,17 +220,16 @@ public class TcpSendCapacityTest
 			SendPauseThreshold = 1024,
 			SendResumeThreshold = 512,
 		});
+
 		var connecting = client.ConnectAsync(listener.LocalEndPoint);
 		using var peer = await listener.AcceptAsync();
-		peer.ReceiveBufferSize = 1024;
 		var channel = await connecting;
-		using var cancellation = new CancellationTokenSource();
 		var body = new ReadOnlySequence<byte>(new byte[1024 * 1024]);
 		var sends = new System.Collections.Generic.List<Task>();
 
 		for(var i = 0; i < 32; i++)
 		{
-			sends.Add(channel.SendAsync(body, cancellation.Token).AsTask());
+			sends.Add(channel.SendAsync(body).AsTask());
 			Assert.InRange(channel.PendingSendCount, 0, 2);
 			Assert.InRange(channel.PendingSendBytes, 0, 2 * 1024 * 1024 + 8);
 		}
@@ -154,10 +237,7 @@ public class TcpSendCapacityTest
 		Assert.Contains(sends, task => task.IsFaulted && task.Exception.InnerException is TcpException { ErrorCode: TcpError.SendRejected });
 		Assert.Contains(sends, task => !task.IsCompleted);
 
-		if(cancel)
-			cancellation.Cancel();
-		else
-			await channel.CloseAsync();
+		await channel.CloseAsync();
 
 		foreach(var send in sends)
 		{
@@ -182,6 +262,7 @@ public class TcpSendCapacityTest
 		var entered = TestNetwork.Signal();
 		await using var server = new TcpServer<int>(new BlockingPacketizer(gate, entered), new() { MaximumConcurrentBroadcasts = 1, BroadcastConcurrency = 1 }).AtLoopback();
 		await server.StartAsync();
+
 		using var socket = await TestNetwork.ConnectAsync(server.Address);
 		await TestNetwork.UntilAsync(() => server.Channels.Count == 1);
 		var broadcast = Task.Run(async () => await server.BroadcastAsync(1));
@@ -191,7 +272,6 @@ public class TcpSendCapacityTest
 		try
 		{
 			var exception = await Assert.ThrowsAsync<TcpException>(() => server.BroadcastAsync(2).AsTask());
-
 			Assert.Equal(TcpError.SendRejected, exception.ErrorCode);
 
 			stopping = server.StopAsync();
@@ -205,17 +285,26 @@ public class TcpSendCapacityTest
 		Assert.Empty(server.Channels);
 		Assert.Equal(new byte[4], await TestNetwork.ReceiveAsync(socket, 4));
 	}
-	private sealed class BlockingPacketizer(ManualResetEventSlim gate, TaskCompletionSource entered) : PacketizerBase<int>
+	private sealed class BlockingPacketizer(ManualResetEventSlim gate, TaskCompletionSource entered, bool blockAfterWrite = false) : PacketizerBase<int>
 	{
 		public override long GetLength(in int package) => 4;
 		public override void Pack(IBufferWriter<byte> writer, in int package)
 		{
+			if(blockAfterWrite)
+				writer.Write(new byte[4]);
+
 			entered.TrySetResult();
 			if(!gate.Wait(TestNetwork.Timeout))
 				throw new TimeoutException();
 
-			writer.Write(new byte[4]);
+			if(!blockAfterWrite)
+				writer.Write(new byte[4]);
 		}
-		public override bool Unpack(ref ReadOnlySequence<byte> data, out int package) { package = 0; return false; }
+
+		public override bool Unpack(ref ReadOnlySequence<byte> data, out int package)
+		{
+			package = 0;
+			return false;
+		}
 	}
 }
