@@ -17,9 +17,9 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 
-using Zongsoft.Diagnostics.Protocols.Client.Tests.Contracts;
+using Zongsoft.Diagnostics.Protocols.Client.IntegrationTests.Contracts;
 
-namespace Zongsoft.Diagnostics.Protocols.Client.Tests;
+namespace Zongsoft.Diagnostics.Protocols.Client.IntegrationTests;
 
 internal sealed class GrpcPathHost(WebApplication application, Uri address, GrpcPathProbe probe) : IAsyncDisposable
 {

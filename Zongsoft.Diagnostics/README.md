@@ -14,51 +14,102 @@
 
 [**Z**ongsoft.**D**iagnostics](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Diagnostics) is the diagnostics plugin library for the [_**Z**ongsoft_](https://github.com/Zongsoft/framework) open-source framework. It provides diagnostics and telemetry features based on [_**O**pen**T**elemetry_](https://opentelemetry.io).
 
-The [Zongsoft.Diagnostics.option](src/Zongsoft.Diagnostics.option) configuration file defines the default _**O**pen**T**elemetry_ metric and trace exporters, together with the [_**P**rometheus_](https://prometheus.io) metric exporter.
+The [Zongsoft.Diagnostics.option](src/Zongsoft.Diagnostics.option) configuration file defines the default _**O**pen**T**elemetry_ metric and trace exporters.
 
-Use `driver="telemetry"` for OTLP export. Set `server` to the receiver endpoint and `protocol` to `grpc` or `HttpProtobuf`; the endpoint must accept the selected OTLP transport. The bundled Diagnostics receiver uses `/opentelemetry`, so its paired exporter configuration uses `server=http://localhost:4317/opentelemetry;protocol=grpc`. Official SDK exporters use this full endpoint directly; direct generated clients use the [client base-path handler](protocols/client/README.md#direct-client-pattern).
+Use `driver="opentelemetry"` for OTLP export. Set `server` to the receiver endpoint and `protocol` to `grpc` or `HttpProtobuf`; the endpoint must accept the selected OTLP transport. The bundled Diagnostics receiver uses `/opentelemetry`, so its paired exporter configuration uses `server=http://localhost:4317/opentelemetry;protocol=grpc`. Official SDK exporters use this full endpoint directly; direct generated clients use the [client base-path handler](protocols/client/README.md#direct-client-pattern).
 
-## Prometheus listener
+## Enable or disable exporters
 
-The `prometheus` exporter accepts HTTP scrape requests. Its `urls` setting contains the complete listening prefixes, including the scrape path, with an optional trailing slash. The binding declaration reads those same addresses and declares this launcher's fixed HTTP/1 capability with a constant template:
+The code entry points are `Zongsoft.Diagnostics.Telemetry.ExporterLauncher.Default` (OTLP) and `ExporterLauncher.Console`. Both expose `Meters`, `Tracers`, and `Logs` launcher instances. The host discovers them through assembly scanning; configuration uses `driver="opentelemetry"` or `driver="opentelemetry.console"`. The private registration class in [ExporterLauncher.cs](src/Telemetry/ExporterLauncher.cs) connects logging automatically.
+
+Each metric or trace exporter accepts `enabled="true|false"`. Omission defaults to `true`, preserving existing configurations. `enabled="false"` excludes that exporter before driver resolution and provider construction, so disabled exporters do not require a registered driver or parse their connection settings. If every exporter for a signal is disabled, its provider is not created. The XML and its boolean values must still be valid configuration.
+
+For example, retain a shared OTLP declaration in Web configuration while disabling its metric export:
 
 ```xml
-<!-- Zongsoft.Diagnostics/src/Zongsoft.Diagnostics.option; listener-related fragment -->
-<?zongsoft.tools.binding name="prometheus"
-	path="Diagnostics/Diagnostor/Meters/Exporters/*"
-	filter="Driver:prometheus"
-	template="${this.Settings['urls']}"
-	protocols="http1"?>
-<options>
-	<option path="/Diagnostics">
-		<diagnostor>
-			<meters>
-				<filter>*</filter>
-				<exporters>
-					<exporter exporter.name="prometheus" driver="prometheus"
-						settings="urls=http://127.0.0.1:9464/metrics,http://localhost:9464/metrics;totalSuffix=true;cacheDuration=300ms;" />
-				</exporters>
-			</meters>
-		</diagnostor>
-	</option>
-</options>
+<exporter exporter.name="telemetry" driver="opentelemetry" enabled="false"
+	settings="server=http://127.0.0.1:4317;protocol=grpc;" />
 ```
 
-`urls` is required; `protocol` defaults to `http1` when omitted. If specified, it accepts a single case-insensitive `http1` value, for example `urls=http://127.0.0.1:9464/metrics;protocol=http1`. Empty values, protocol lists (including repeated `http1` values), and the `protocols` setting are invalid. The binding uses the constant template `protocols="http1"`, so omitting the setting does not require the packaging tool to infer a default. HTTP/2, HTTP/3 and application protocol combinations are not implemented by this launcher. This is runtime configuration validation, independent of the packaging tool's binding mapping checks.
+This switch is independent for metrics and traces. The Web plugin can still contribute an enabled Prometheus exporter to the same metrics configuration.
 
-Each URL uses http or https with an IP address, wildcard, localhost or DNS hostname. All URLs in an exporter must have equivalent base paths, ignoring case and an optional trailing slash: /metrics and /Metrics/ are equivalent; an omitted path means /. Declaration segments allow ASCII letters, digits and -._~; interior empty segments, standalone dot segments, credentials, queries, fragments and encoded paths are rejected. Source configuration stays unchanged; the scrape option removes a non-root trailing slash. An independent Kestrel server matches raw URI paths at segment boundaries, without decoding or collapsing dot segments to select a range. The base and its children can be scraped; /metrics-extra returns 404. No redirects or double-slash workaround are used, and Windows and Linux follow the same rules.
+## Strongly typed exporter settings
 
-IP declarations retain their interface and address-family scope: `*` and `0.0.0.0` listen on IPv4, `[::]` on IPv6 only, and `localhost` on both available loopback families. Ordinary DNS names are not resolved at startup: they listen on the available IPv4/IPv6 wildcard interfaces and accept requests with the declared HTTP Host name, ignoring case and a final dot. Internationalized names and their ASCII forms are equivalent. For example, `urls=http://metrics.example.com:9464/metrics` accepts that host on port 9464; the caller must resolve it to this server. This is host routing, not authentication.
+`settings` remains semicolon-delimited text. The string contracts of `FilteringExporter.Settings` and `IExporterLauncher.Launch` are unchanged. Internally, launchers use [ExporterLauncherSettingsDriver](src/Configuration/ExporterLauncherSettingsDriver.Default.cs) to create typed settings, with SDK option projection kept in `Telemetry/ExporterLauncher.cs`.
 
-Multiple declarations can share a physical listener within this exporter. Each request must still match an original declaration's scheme, local port, interface/address family and, for DNS names, Host name. Combining a domain with `127.0.0.1` therefore allows arbitrary Host names on that loopback address only; other local addresses still require the declared domain. Different domains and ports do not grant access to one another.
+| Driver name | Settings type | Driver entry |
+| --- | --- | --- |
+| `opentelemetry` | `ExporterLauncherSettings` | `ExporterLauncherSettingsDriver.Default` |
+| `opentelemetry.console` | `ExporterLauncherSettings.Console` | `ExporterLauncherSettingsDriver.Console` |
 
-Separate addresses with `,`, `;` or `|`. Empty entries fail, including trailing separators. Quote the whole `urls` value when using semicolons inside the connection settings, for example `urls='http://127.0.0.1:9464/metrics/;http://localhost:9464/metrics/';`. Remove the separate `path` setting: its presence is an error, even when empty. Missing addresses do not fall back to an implicit listener.
+Both settings types live in `Zongsoft.Diagnostics.Configuration` and independently inherit the connection-settings base; Console does not inherit OTLP properties. Private drivers expose instances through typed public interfaces. The `.plugin` explicitly registers both under `/Workbench/Configuration/ConnectionSettings/Drivers`, without relying on discovery of an `Instance` member. Direct API calls need no plugin host:
 
-`totalSuffix` defaults to `true`; `cacheDuration` defaults to `300ms`. Both apply to the ASP.NET Core exporter options and the independent listener; a negative cache duration becomes zero and an oversized duration is capped at the supported millisecond range. Registering exporter options does not add an ASP.NET Core route. The diagnostic provider owns the independent listener and releases it on disposal.
+```csharp
+var settings = ExporterLauncherSettingsDriver.Default.GetSettings(
+	"server=http://localhost:4317;protocol=grpc;timeout=30s;interval=5s;");
+var consoleSettings = ExporterLauncherSettingsDriver.Console.GetSettings(
+	"target=Console,Debug;interval=10s;");
+```
 
-The default addresses are loopback addresses. For a reverse proxy in another container, configure a listener reachable from that container; the binding tool does not rewrite loopback addresses. The independent server owns its declared ports and cannot share a socket with another server. HTTPS uses Kestrel:Certificates from IConfiguration in the metrics service container, falling back to ApplicationContext.Current.Configuration. It does not inherit host Endpoints or HTTP.sys certificate bindings. The zongsoft.tools.binding instruction declares exposure intent and does not itself start a listener. Outbound `telemetry` exporters do not participate in this binding.
+| Parameter | Type | Default and purpose |
+| --- | --- | --- |
+| `server` | `string` | OTLP endpoint; omission selects `http://localhost:4317` or `http://localhost:4318` according to protocol |
+| `protocol` | `OtlpExportProtocol` | OTLP: `Grpc`; also supports `HttpProtobuf` |
+| `processorType` | `ExportProcessorType` | OTLP: `Batch`; also supports `Simple`, selecting the log/trace processor |
+| `timeout` | `TimeSpan` | `30s`; OTLP export/batch timeout and Console metric-reader timeout |
+| `interval` | `TimeSpan` | `10s`; metric interval and OTLP batch delay |
+| `maxBatchSize` | `int` | OTLP batch: `512` |
+| `maxQueueSize` | `int` | OTLP batch: `2048` |
+| `target` | `ConsoleExporterOutputTargets` | Console: `Console`; also supports `Debug` or `Console,Debug` |
 
-Focused validation lives in [test](test). Build the solution with `dotnet build Zongsoft.Diagnostics.slnx -p:GeneratePackageOnBuild=false -p:ZongsoftCodeStyleStrict=true`, then run `dotnet test test/Zongsoft.Diagnostics.Tests.csproj --no-build`. Tests inspect the public exporter options and exercise temporary HTTP/HTTPS listeners, including domain and IP combinations, IPv4/IPv6 isolation, real metric output, certificate selection, disposal and startup-failure cleanup. Domain requests connect directly to loopback without DNS or hosts-file changes. They do not start a business host or replace reverse-proxy and production HTTPS deployment validation.
+Keys are case-insensitive. Durations support connection-settings formats such as `1500ms` and `5s`; typed defaults are not inserted into the original `Value`. Unknown keys remain in the dictionary, following the base settings contract; they do not add exporter behavior.
+
+**An absent or entirely empty `settings` leaves SDK defaults and environment configuration untouched.** The defaults above apply to omitted parameters in nonempty settings text. Invalid typed values read by an enabled exporter now fail rather than silently using defaults. Projection also validates enums, absolute HTTP/HTTPS endpoints, durations between 1 and 2147483647 milliseconds, positive batch/queue sizes, and `maxBatchSize <= maxQueueSize`. An explicitly empty `server` is invalid. The existing OTLP projection reads processor and batch settings for all three signals; they only control log/trace processing. Console logs and traces read only `target`, ignoring metric-only timing parameters. Disabled exporters do not parse settings.
+
+New configuration uses `opentelemetry` and `opentelemetry.console`. Launchers continue accepting the case-insensitive aliases `telemetry`, `OpenTelemetry`, and `Console`; OTLP also retains empty-driver matching. `exporter.name="telemetry"` is the configuration entry name, distinct from its driver. Existing host variables and switches under `diagnostics.telemetry` and `diagnostics.logging` retain their names.
+
+## Microsoft ILogger logs
+
+During service registration, the plugin reads `/Diagnostics/Diagnostor/Logs` and connects `Microsoft.Extensions.Logging.ILogger` to OpenTelemetry. Hosts need no `Program.cs` changes or ASP.NET Core dependency. Zongsoft's own `Logging`/`ILogger` and `Console.WriteLine` are outside this pipeline.
+
+Logs are disabled by default. To enable them, place this node inside `<diagnostor>`:
+
+```xml
+<logs includeScopes="true" includeFormattedMessage="true">
+	<exporters>
+		<exporter exporter.name="telemetry" driver="opentelemetry" enabled="true"
+			settings="server=http://127.0.0.1:4317;protocol=grpc;processorType=batch;timeout=30s;interval=5s;" />
+	</exporters>
+</logs>
+```
+
+For local debugging, add a Console log exporter inside `<logs><exporters>`. It can coexist with an OTLP exporter:
+
+```xml
+<exporter exporter.name="console" driver="opentelemetry.console" enabled="true" settings="target=Console;" />
+```
+
+The `target` setting follows the metric and trace Console exporters: it defaults to `Console` and also supports `Debug` or `Console,Debug`. Logs are exported individually; `interval`, `timeout`, and batch settings do not apply. This is OpenTelemetry's detailed log output. If the host also enables the standard Console logging provider, the same log may appear twice.
+
+Logging is independent of metrics and tracing. If `<logs>` is absent, has no exporters, or all exporters have `enabled="false"`, no logging provider is registered. Disabled entries do not resolve drivers or parse settings. A missing enabled driver fails startup with `Signal=logs` and `ExporterDriver` in exception Data.
+
+Categories and levels follow standard host `Logging:LogLevel` settings, including provider-specific `Logging:OpenTelemetry:LogLevel` rules. There is no additional `<filter>`. `includeScopes` and `includeFormattedMessage` default to true. The SDK exports structured attributes, exceptions and the current Activity's TraceId/SpanId. Startup logs without an Activity normally have no trace identifiers.
+
+The log resource uses `IHostEnvironment.ApplicationName` (or the current application domain name without a host environment), with `OTEL_SERVICE_NAME` and `OTEL_RESOURCE_ATTRIBUTES` overrides. Metrics, traces and logs in the same process share the default `service.instance.id`. Host DI owns the provider and flushes pending batches on normal disposal; the metric/trace worker does not start or stop logging. Configuration changes require a host restart, and logs written before registration are not replayed. Existing OpenTelemetry dependencies include logging; plugin manifests and deployment dependencies need no ASP.NET Core additions.
+
+The receiver must support OTLP logs. Aspire Dashboard accepts them directly. The existing metrics-only Collector example needs a separate logs pipeline and log backend; Prometheus does not store logs.
+
+## General and Web hosts
+
+The common library has no ASP.NET Core dependency. Daemon and terminal deploy only this package, sending OTLP metrics to a Collector that Prometheus scrapes. Direct Web scraping moved to [Zongsoft.Diagnostics.Web](../Zongsoft.Diagnostics.Web/README.md), deployed only to Web hosts.
+
+A Collector normally accepts `server=http://127.0.0.1:4317;protocol=grpc`, without the Zongsoft receiver's `/opentelemetry` prefix. Collector and Prometheus YAML configuration files are read by their respective services. Containers require service names and reachable listening addresses.
+
+The worker sets `service.name` from the application name; the SDK generates a process `service.instance.id` shared by metrics and traces. `OTEL_SERVICE_NAME` and `OTEL_RESOURCE_ATTRIBUTES` override defaults. A missing enabled exporter fails startup with InvalidOperationException and ExporterDriver/Signal data. Partial startup releases already-created providers.
+
+Build Core first, then run `dotnet test test/Zongsoft.Diagnostics.Tests.csproj -p:GeneratePackageOnBuild=false` to check the ordinary .NET runtime, exporter registration, resource identity, exported metrics/traces and lifecycle.
+
+`Zongsoft.Diagnostics.slnx` and the default Cake `test` task include only unit tests. Protocol integration tests live in separate `protocols/client/test/integration` and `protocols/server/test/integration` projects. Each integration project has its own solution in the same directory: [client](protocols/client/test/integration/Zongsoft.Diagnostics.Protocols.Client.Tests.slnx) and [server](protocols/server/test/integration/Zongsoft.Diagnostics.Protocols.Server.Tests.slnx). Prepare the dependencies in [Local Verification](protocols/server/README.md#local-verification), then run `dotnet cake build.cake --target=integration-test` from this directory to exercise the local HTTP/2 and OTLP services explicitly.
 
 ## Bundled OpenTelemetry Protocol
 

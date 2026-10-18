@@ -31,7 +31,7 @@ using CL = client::OpenTelemetry.Proto.Collector.Logs.V1;
 
 using Xunit;
 
-namespace Zongsoft.Diagnostics.Protocols.Server.Tests;
+namespace Zongsoft.Diagnostics.Protocols.Server.IntegrationTests;
 
 internal static class OtlpScenarios
 {

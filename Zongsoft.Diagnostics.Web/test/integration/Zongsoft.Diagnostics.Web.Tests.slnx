@@ -1,0 +1,4 @@
+<Solution>
+	<Project Path="../../src/Zongsoft.Diagnostics.Web.csproj" />
+	<Project Path="Zongsoft.Diagnostics.Web.Tests.csproj" />
+</Solution>

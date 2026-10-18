@@ -13,7 +13,7 @@ xUnit 测试通过公开的 `Zongsoft.Web.WebApplicationBuilder` 与 `Applicatio
 - 自动接入后重复扫描程序集仍只有一个监视器；显式接入保留可选监视，重复登记只提示一次；业务变化不提示，网络及新增插件冲突提示重启，监听与范围保持快照。停止和直接释放都会解除订阅；初始化失败释放已创建服务。
 - 原生 TCP/多路复用工厂实例不被包装，选择器、取消、特征和容器所有权保持原义；IPv6 TCP 保留独立地址族。传输替身不代表实际 QUIC 验收。
 
-Debug 构建依赖本地 Core、Plugins、Web 输出。先依次构建这三个源码项目，再构建本解决方案并运行测试。测试项目通过项目引用依赖 Plugins.Web 和 Plugins，通过 `HintPath` 引用本地 Core、Web 程序集，不通过项目引用构建 Core 或 Web：
+Debug 构建依赖本地 Core、Plugins、Web 输出。先依次构建这三个源码项目，再构建本解决方案并运行测试。测试项目只通过项目引用依赖 Plugins.Web，通过 `HintPath` 引用本地 Core、Plugins、Web 程序集：
 
 ```powershell
 dotnet build ../Zongsoft.Core/src/Zongsoft.Core.csproj -p:GeneratePackageOnBuild=false

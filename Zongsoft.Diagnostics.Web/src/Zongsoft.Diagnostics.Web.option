@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<?zongsoft.tools.binding name="prometheus"
+	path="Diagnostics/Diagnostor/Meters/Exporters/*"
+	filter="driver:prometheus"
+	template="${this.Settings['urls']}"
+	protocols="http1"?>
+
+<options>
+	<option path="/Diagnostics">
+		<diagnostor>
+			<meters>
+				<exporters>
+					<exporter exporter.name="prometheus" driver="prometheus"
+					          settings="urls=http://127.0.0.1:9465/metrics,http://localhost:9465/metrics;totalSuffix=true;cacheDuration=300ms;" />
+				</exporters>
+			</meters>
+		</diagnostor>
+	</option>
+</options>

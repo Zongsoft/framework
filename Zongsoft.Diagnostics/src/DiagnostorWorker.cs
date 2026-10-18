@@ -28,15 +28,14 @@
  */
 
 using System;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using OpenTelemetry;
-using OpenTelemetry.Logs;
 using OpenTelemetry.Trace;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
 
 using Zongsoft.Services;
 using Zongsoft.Components;
@@ -55,48 +54,39 @@ public class DiagnostorWorker(string name, Diagnostor.Configurator configurator)
 	protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
 		var diagnostor = _diagnostor ?? throw new ObjectDisposedException(nameof(DiagnostorWorker));
-		var meters = diagnostor.Meters;
+		var meters = ResolveExporters<MeterProviderBuilder>(diagnostor.Meters, "meters");
+		var traces = ResolveExporters<TracerProviderBuilder>(diagnostor.Traces, "traces");
 
-		if(meters != null && Validate(meters))
+		try
 		{
-			var builder = Sdk.CreateMeterProviderBuilder();
-
-			//填充计量器（支持星号，默认计量器）
-			FillMeters(builder, meters.Filters);
-
-			if(meters.Exporters != null)
+			if(meters.Length > 0)
 			{
-				foreach(var exporter in meters.Exporters)
-				{
-					var launcher = ApplicationContext.Current?.Services.Find<Telemetry.IExporterLauncher<MeterProviderBuilder>>(exporter.Driver);
-					if(launcher != null)
-						launcher.Launch(builder, exporter.Settings);
-				}
+				var builder = Sdk.CreateMeterProviderBuilder().ConfigureResource(ConfigureResource);
+				FillMeters(builder, diagnostor.Meters.Filters);
+
+				foreach(var exporter in meters)
+					exporter.Launcher.Launch(builder, exporter.Settings);
+
+				_meters = builder.Build();
 			}
 
-			_meters = builder.Build();
+			if(traces.Length > 0)
+			{
+				var builder = Sdk.CreateTracerProviderBuilder().ConfigureResource(ConfigureResource);
+				FillTracers(builder, diagnostor.Traces.Filters);
+
+				foreach(var exporter in traces)
+					exporter.Launcher.Launch(builder, exporter.Settings);
+
+				_tracers = builder.Build();
+			}
 		}
-
-		var traces = diagnostor.Traces;
-
-		if(traces != null && Validate(traces))
+		catch(Exception exception)
 		{
-			var builder = Sdk.CreateTracerProviderBuilder();
+			try { this.ReleaseProviders(); }
+			catch(Exception cleanup) { throw new AggregateException(exception, cleanup); }
 
-			//填充追踪器（支持星号，默认追踪器）
-			FillTracers(builder, traces.Filters);
-
-			if(traces.Exporters != null)
-			{
-				foreach(var exporter in traces.Exporters)
-				{
-					var launcher = ApplicationContext.Current?.Services.Find<Telemetry.IExporterLauncher<TracerProviderBuilder>>(exporter.Driver);
-					if(launcher != null)
-						launcher.Launch(builder, exporter.Settings);
-				}
-			}
-
-			_tracers = builder.Build();
+			throw;
 		}
 
 		return Task.CompletedTask;
@@ -104,27 +94,76 @@ public class DiagnostorWorker(string name, Diagnostor.Configurator configurator)
 
 	protected override Task OnStopAsync(string[] args, CancellationToken cancellation)
 	{
-		var meters = Interlocked.Exchange(ref _meters, null);
-		if(meters != null)
-		{
-			meters.Shutdown();
-			meters.Dispose();
-		}
-
-		var tracers = Interlocked.Exchange(ref _tracers, null);
-		if(tracers != null)
-		{
-			tracers.Shutdown();
-			tracers.Dispose();
-		}
-
+		this.ReleaseProviders();
 		return Task.CompletedTask;
 	}
 
-	protected override void Dispose(bool disposing) => _diagnostor = null;
+	protected override void Dispose(bool disposing)
+	{
+		try { this.ReleaseProviders(); }
+		finally { _diagnostor = null; }
+	}
 	#endregion
 
 	#region 私有方法
+	private static void ConfigureResource(ResourceBuilder resource)
+	{
+		var name = ApplicationContext.Current?.Name;
+
+		if(string.IsNullOrWhiteSpace(name))
+			name = AppDomain.CurrentDomain.FriendlyName;
+
+		resource.AddService(serviceName: name).AddEnvironmentVariableDetector();
+	}
+
+	private static (Telemetry.IExporterLauncher<TBuilder> Launcher, string Settings)[] ResolveExporters<TBuilder>(Diagnostor.Filtering filtering, string signal)
+	{
+		if(!Validate(filtering))
+			return [];
+
+		var exporters = new List<(Telemetry.IExporterLauncher<TBuilder>, string)>(filtering.Exporters.Count);
+
+		foreach(var exporter in filtering.Exporters)
+		{
+			var launcher = ApplicationContext.Current?.Services.Find<Telemetry.IExporterLauncher<TBuilder>>(exporter.Driver);
+
+			if(launcher == null)
+			{
+				var exception = new InvalidOperationException(string.Format(Properties.Resources.Exporter_Missing_Message, exporter.Driver, signal));
+				exception.Data["ExporterDriver"] = exporter.Driver;
+				exception.Data["Signal"] = signal;
+				throw exception;
+			}
+
+			exporters.Add((launcher, exporter.Settings));
+		}
+
+		return [.. exporters];
+	}
+
+	private void ReleaseProviders()
+	{
+		var meters = Interlocked.Exchange(ref _meters, null);
+		var tracers = Interlocked.Exchange(ref _tracers, null);
+
+		try
+		{
+			if(meters != null)
+			{
+				try { meters.Shutdown(); }
+				finally { meters.Dispose(); }
+			}
+		}
+		finally
+		{
+			if(tracers != null)
+			{
+				try { tracers.Shutdown(); }
+				finally { tracers.Dispose(); }
+			}
+		}
+	}
+
 	private static readonly string[] DEFAULT_METERS =
 	[
 		"System.Runtime",

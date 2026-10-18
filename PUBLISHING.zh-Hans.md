@@ -68,6 +68,8 @@
 
 > 💡 提示：`Zongsoft.Data` 采用特殊处理。选择 `Zongsoft.Data` 只发布核心数据包，不会连带发布任何驱动；每个数据驱动都是独立的发布选项，需要分别选择和发布。
 
+本次诊断模块拆分须先发布 `Zongsoft.Diagnostics` **1.13.0**；待 nuget.org 可以获取该版本后，再通过独立的发布选项发布 `Zongsoft.Diagnostics.Web` **1.0.0**，因为其 Release 构建依赖 `Zongsoft.Diagnostics` 1.13.0。
+
 ### Zongsoft.Data 本地 Cake 命令
 
 在 `Zongsoft.Data` 目录中执行对应的本地 Cake 命令：
@@ -118,6 +120,7 @@ gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Commands
 gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Security
 gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Reporting
 gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Diagnostics
+gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Diagnostics.Web
 gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Intelligences
 gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Hardwares
 

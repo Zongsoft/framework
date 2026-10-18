@@ -12,6 +12,11 @@
 		</assemblies>
 	</manifest>
 
+	<extension path="/Workbench/Configuration/ConnectionSettings/Drivers">
+		<object name="opentelemetry" value="{static:Zongsoft.Diagnostics.Configuration.ExporterLauncherSettingsDriver.Default, Zongsoft.Diagnostics}" />
+		<object name="opentelemetry.console" value="{static:Zongsoft.Diagnostics.Configuration.ExporterLauncherSettingsDriver.Console, Zongsoft.Diagnostics}" />
+	</extension>
+
 	<extension path="/Workbench/Diagnostics">
 		<object name="Meters" value="{static:Zongsoft.Diagnostics.Telemetry.MeterProvider.Default, Zongsoft.Core}" />
 		<object name="Exporters" value="{static:Zongsoft.Diagnostics.Telemetry.ExporterProvider.Default, Zongsoft.Core}" />

@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -35,6 +35,8 @@ using Zongsoft.Services;
 using Zongsoft.Communication;
 using Zongsoft.Configuration;
 
+using WebResources = Zongsoft.Diagnostics.Web.Properties.Resources;
+
 namespace Zongsoft.Diagnostics.Telemetry;
 
 [Service<IExporterLauncher<MeterProviderBuilder>>]
@@ -52,17 +54,17 @@ public partial class PrometheusExporterLauncher() : ExporterLauncherBase<MeterPr
 		var connectionSettings = new ConnectionSettings(settings);
 
 		if(connectionSettings.Contains("path"))
-			throw new ArgumentException(Properties.Resources.Prometheus_PathObsolete_Message, nameof(settings));
+			throw new ArgumentException(WebResources.Prometheus_PathObsolete_Message, nameof(settings));
 
 		if(connectionSettings.Contains("protocols") ||
 		   !NetworkProtocol.TryParse(connectionSettings.GetValue("protocol", "http1"), out var protocol) ||
 		   protocol.Name != null || protocol.Carrier != "http1")
-			throw new ArgumentException(Properties.Resources.Prometheus_ProtocolInvalid_Message, nameof(settings));
+			throw new ArgumentException(WebResources.Prometheus_ProtocolInvalid_Message, nameof(settings));
 
 		var urls = connectionSettings.GetValue<string>("urls");
 
 		if(string.IsNullOrWhiteSpace(urls))
-			throw new ArgumentException(Properties.Resources.Prometheus_UrlsInvalid_Message, nameof(settings));
+			throw new ArgumentException(WebResources.Prometheus_UrlsInvalid_Message, nameof(settings));
 
 		string path = null;
 		var prefixes = urls.Split([',', ';', '|'], StringSplitOptions.TrimEntries);
@@ -72,11 +74,11 @@ public partial class PrometheusExporterLauncher() : ExporterLauncherBase<MeterPr
 		{
 			if(!NetworkAddress.TryParse(prefixes[index], out var address) ||
 			   address.Scheme is not ("http" or "https") || !IsPath(address.Path))
-				throw new ArgumentException(Properties.Resources.Prometheus_UrlsInvalid_Message, nameof(settings));
+				throw new ArgumentException(WebResources.Prometheus_UrlsInvalid_Message, nameof(settings));
 
 			var basePath = address.Path.Length > 1 ? address.Path.TrimEnd('/') : address.Path;
 			if(path != null && !string.Equals(path, basePath, StringComparison.OrdinalIgnoreCase))
-				throw new ArgumentException(Properties.Resources.Prometheus_PathsDifferent_Message, nameof(settings));
+				throw new ArgumentException(WebResources.Prometheus_PathsDifferent_Message, nameof(settings));
 
 			path ??= basePath;
 			addresses[index] = address;

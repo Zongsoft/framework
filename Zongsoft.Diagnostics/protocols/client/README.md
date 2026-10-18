@@ -65,10 +65,19 @@ Generated types reflect the protocol revision pinned by this repository. Protobu
 Run from the repository root:
 
 ```shell
-dotnet test Zongsoft.Diagnostics/protocols/client/test/Zongsoft.Diagnostics.Protocols.Client.Tests.csproj -p:GeneratePackageOnBuild=false
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -p:GeneratePackageOnBuild=false
+dotnet test Zongsoft.Diagnostics/protocols/client/test/unit/Zongsoft.Diagnostics.Protocols.Client.Tests.csproj -p:GeneratePackageOnBuild=false
 ```
 
-Tests exercise path validation, duplicate installation, query and request preservation through public send APIs. A local HTTP/2 server verifies unary and all three streaming call types, large messages, metadata, status, trailers, cancellation, deadlines and channel ownership of HttpHandler/HttpClient. ASP.NET Core is used by the test project only; the client library does not reference Web hosting projects.
+Unit tests exercise path validation, duplicate installation, query and request preservation through public send APIs and in-memory handlers. The unit test project has no ASP.NET Core dependency and does not start a server.
+
+The separate integration test project uses a local HTTP/2 server to verify unary and all three streaming call types, large messages, metadata, status, trailers, cancellation, deadlines and channel ownership of HttpHandler/HttpClient. Run it explicitly:
+
+```shell
+dotnet test Zongsoft.Diagnostics/protocols/client/test/integration/Zongsoft.Diagnostics.Protocols.Client.Tests.slnx -p:GeneratePackageOnBuild=false
+```
+
+ASP.NET Core and the test-only gRPC service belong to the integration project. The client library does not reference Web hosting projects; the normal client solution and Cake `test` task exclude integration tests.
 
 ## Related Resources
 

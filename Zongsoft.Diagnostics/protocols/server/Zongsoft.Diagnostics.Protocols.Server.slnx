@@ -1,4 +1,4 @@
 <Solution>
 	<Project Path="src/Zongsoft.Diagnostics.Protocols.Server.csproj" />
-	<Project Path="test/Zongsoft.Diagnostics.Protocols.Server.Tests.csproj" />
+	<Project Path="test/unit/Zongsoft.Diagnostics.Protocols.Server.Tests.csproj" />
 </Solution>

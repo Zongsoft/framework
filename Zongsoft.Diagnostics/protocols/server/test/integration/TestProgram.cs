@@ -3,7 +3,7 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Zongsoft.Diagnostics.Protocols.Server.Tests;
+namespace Zongsoft.Diagnostics.Protocols.Server.IntegrationTests;
 
 internal static class TestProgram
 {

@@ -71,13 +71,26 @@ Timestamp conversion uses OTLP Unix nanoseconds with millisecond precision in th
 
 ## Local Verification
 
-Run from the repository root:
+Unit tests check the endpoint and binding declarations without starting a server or referencing ASP.NET Core. Build Core first, then run from the repository root:
 
 ```shell
-dotnet test Zongsoft.Diagnostics/protocols/server/test/Zongsoft.Diagnostics.Protocols.Server.Tests.csproj -p:GeneratePackageOnBuild=false
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -p:GeneratePackageOnBuild=false
+dotnet test Zongsoft.Diagnostics/protocols/server/test/unit/Zongsoft.Diagnostics.Protocols.Server.Tests.csproj -p:GeneratePackageOnBuild=false
 ```
 
-Tests use isolated child processes and real `Application.Web` plugin loading, options and the existing samples, including automatic listener projection and service mounting. They check payloads for all three signals from the official SDK and generated clients, sample metric output, regional reflection, incorrect paths, cancellation propagation and port release after shutdown. All network traffic stays on loopback; this does not verify a proxy or production-host deployment.
+The separate integration test project references only the server project through `ProjectReference`. Other Zongsoft dependencies, including the client and sample, use local assemblies through `HintPath`. Build them first in the same configuration and target frameworks. Run these Debug commands from the repository root:
+
+```shell
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -p:GeneratePackageOnBuild=false
+dotnet build Zongsoft.Web/grpc/src/Zongsoft.Web.Grpc.csproj -p:GeneratePackageOnBuild=false
+dotnet build Zongsoft.Diagnostics/protocols/client/src/Zongsoft.Diagnostics.Protocols.Client.csproj -p:GeneratePackageOnBuild=false
+dotnet build Zongsoft.Diagnostics/protocols/server/samples/Zongsoft.Diagnostics.Protocols.Server.Samples.csproj -p:GeneratePackageOnBuild=false
+dotnet test Zongsoft.Diagnostics/protocols/server/test/integration/Zongsoft.Diagnostics.Protocols.Server.Tests.slnx -p:GeneratePackageOnBuild=false
+```
+
+Integration tests use isolated child processes with a plain `WebApplication`, explicit Kestrel endpoints, registered gRPC services and the existing sample handler. They do not load a plugin tree; plugin-host composition is covered in Plugins.Web. They check payloads for all three signals from the official SDK and generated clients, sample metric output, regional reflection, incorrect paths, cancellation propagation and port release after shutdown. All network traffic stays on loopback; this does not verify a proxy or production-host deployment.
+
+The normal server solution and Cake `test` task run only unit tests. The [server integration solution](test/integration/Zongsoft.Diagnostics.Protocols.Server.Tests.slnx) and [client integration solution](../client/test/integration/Zongsoft.Diagnostics.Protocols.Client.Tests.slnx) each live beside their integration project. After preparing the dependencies above, run `dotnet cake build.cake --target=integration-test` from the `Zongsoft.Diagnostics` directory to build and run both.
 
 ## Related Resources
 

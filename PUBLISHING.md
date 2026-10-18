@@ -68,6 +68,8 @@ The selected Cake script builds its solution and publishes every applicable `.nu
 
 > 💡 Tip: `Zongsoft.Data` is handled specially. Selecting `Zongsoft.Data` publishes only the core data package and never includes a driver; each data driver is a separate workflow option and must be selected and published independently.
 
+For the diagnostics split, publish `Zongsoft.Diagnostics` **1.13.0** first. Once that version is available from nuget.org, publish `Zongsoft.Diagnostics.Web` **1.0.0** using its separate workflow option: its Release build depends on `Zongsoft.Diagnostics` 1.13.0.
+
 ### Local Cake commands for Zongsoft.Data
 
 Run the equivalent local Cake commands from the `Zongsoft.Data` directory:
@@ -118,6 +120,7 @@ gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Commands
 gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Security
 gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Reporting
 gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Diagnostics
+gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Diagnostics.Web
 gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Intelligences
 gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Hardwares
 

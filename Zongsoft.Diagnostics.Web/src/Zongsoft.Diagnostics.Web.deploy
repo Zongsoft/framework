@@ -1,0 +1,7 @@
+artifacts/Zongsoft.Diagnostics.Web.option
+artifacts/Zongsoft.Diagnostics.Web.plugin
+lib/${Framework}/Zongsoft.Diagnostics.Web.*
+lib/${Framework}/*/Zongsoft.Diagnostics.Web.resources.*
+
+nuget:OpenTelemetry.Exporter.Prometheus.AspNetCore@1.18.0-beta.1
+nuget:OpenTelemetry.Instrumentation.AspNetCore@1.18.0

@@ -71,13 +71,26 @@ dotnet add package Zongsoft.Diagnostics.Protocols.Server
 
 ## 本地验证
 
-从仓库根目录运行：
+单元测试只检查端点和绑定声明，不启动服务，也不引用 ASP.NET Core。先构建 Core，再从仓库根目录执行：
 
 ```shell
-dotnet test Zongsoft.Diagnostics/protocols/server/test/Zongsoft.Diagnostics.Protocols.Server.Tests.csproj -p:GeneratePackageOnBuild=false
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -p:GeneratePackageOnBuild=false
+dotnet test Zongsoft.Diagnostics/protocols/server/test/unit/Zongsoft.Diagnostics.Protocols.Server.Tests.csproj -p:GeneratePackageOnBuild=false
 ```
 
-测试在隔离子进程内通过真实 `Application.Web` 加载插件、选项及现有 samples，自动投影监听并挂载服务。它检查官方 SDK 和生成式客户端的三信号载荷、样例指标输出、区域反射、错误路径、取消传播及停止后端口释放。所有网络通信限定在本机回环地址；此验证不包含代理或生产宿主部署。
+独立的集成测试项目只通过项目引用依赖服务端本项目；客户端、样例及其它 Zongsoft 依赖均通过 HintPath 引用本地程序集，须先按相同配置和目标框架构建。在仓库根目录执行以下 Debug 命令：
+
+```shell
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -p:GeneratePackageOnBuild=false
+dotnet build Zongsoft.Web/grpc/src/Zongsoft.Web.Grpc.csproj -p:GeneratePackageOnBuild=false
+dotnet build Zongsoft.Diagnostics/protocols/client/src/Zongsoft.Diagnostics.Protocols.Client.csproj -p:GeneratePackageOnBuild=false
+dotnet build Zongsoft.Diagnostics/protocols/server/samples/Zongsoft.Diagnostics.Protocols.Server.Samples.csproj -p:GeneratePackageOnBuild=false
+dotnet test Zongsoft.Diagnostics/protocols/server/test/integration/Zongsoft.Diagnostics.Protocols.Server.Tests.slnx -p:GeneratePackageOnBuild=false
+```
+
+集成测试在隔离子进程内直接创建 WebApplication，显式配置 Kestrel 端点、注册 gRPC 服务和现有样例处理器；不加载插件树，插件宿主装配由 Plugins.Web 测试负责。它检查官方 SDK 和生成式客户端的三信号载荷、样例指标输出、区域反射、错误路径、取消传播及停止后端口释放。所有网络通信限定在本机回环地址；此验证不包含代理或生产宿主部署。
+
+普通服务端解决方案和 Cake `test` 任务只运行单元测试。[服务端集成测试解决方案](test/integration/Zongsoft.Diagnostics.Protocols.Server.Tests.slnx)与[客户端集成测试解决方案](../client/test/integration/Zongsoft.Diagnostics.Protocols.Client.Tests.slnx)均与各自的集成测试项目同目录。准备好上述依赖后，在 `Zongsoft.Diagnostics` 目录执行 `dotnet cake build.cake --target=integration-test`，即可构建并运行两个协议集成测试项目。
 
 ## 延伸阅读
 

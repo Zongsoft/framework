@@ -1,6 +1,6 @@
 syntax = "proto3";
 package pathfixture;
-option csharp_namespace = "Zongsoft.Diagnostics.Protocols.Client.Tests.Contracts";
+option csharp_namespace = "Zongsoft.Diagnostics.Protocols.Client.IntegrationTests.Contracts";
 
 message Frame {
 	string text = 1;

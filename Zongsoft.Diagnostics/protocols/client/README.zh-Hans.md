@@ -65,10 +65,19 @@ var response = await client.ExportAsync(
 从仓库根目录运行：
 
 ```shell
-dotnet test Zongsoft.Diagnostics/protocols/client/test/Zongsoft.Diagnostics.Protocols.Client.Tests.csproj -p:GeneratePackageOnBuild=false
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -p:GeneratePackageOnBuild=false
+dotnet test Zongsoft.Diagnostics/protocols/client/test/unit/Zongsoft.Diagnostics.Protocols.Client.Tests.csproj -p:GeneratePackageOnBuild=false
 ```
 
-测试通过公开发送接口检查基路径校验、重复安装、查询串和请求对象保留，并使用本地 HTTP/2 服务检查一元调用、三种流式调用、大消息、元数据、状态、trailers、取消与 deadline，以及通道对 HttpHandler/HttpClient 的释放约定。测试项目使用 ASP.NET Core 搭建回环服务，客户端库本身不引用 Web 托管项目。
+单元测试通过公开发送接口和内存处理器检查基路径校验、重复安装、查询串和请求对象保留。单元测试项目不依赖 ASP.NET Core，也不启动服务。
+
+独立的集成测试项目使用本地 HTTP/2 服务检查一元调用、三种流式调用、大消息、元数据、状态、trailers、取消与 deadline，以及通道对 HttpHandler/HttpClient 的释放约定。需要时显式运行：
+
+```shell
+dotnet test Zongsoft.Diagnostics/protocols/client/test/integration/Zongsoft.Diagnostics.Protocols.Client.Tests.slnx -p:GeneratePackageOnBuild=false
+```
+
+ASP.NET Core 和测试专用的 gRPC 服务仅由集成测试项目引用。客户端库本身不引用 Web 托管项目；普通客户端解决方案和 Cake `test` 任务不包含集成测试。
 
 ## 延伸阅读
 

@@ -9,9 +9,9 @@ using Grpc.Net.Client;
 
 using Xunit;
 
-using Zongsoft.Diagnostics.Protocols.Client.Tests.Contracts;
+using Zongsoft.Diagnostics.Protocols.Client.IntegrationTests.Contracts;
 
-namespace Zongsoft.Diagnostics.Protocols.Client.Tests;
+namespace Zongsoft.Diagnostics.Protocols.Client.IntegrationTests;
 
 [Trait("Category", "Integration")]
 public class GrpcClientHandlerIntegrationTest

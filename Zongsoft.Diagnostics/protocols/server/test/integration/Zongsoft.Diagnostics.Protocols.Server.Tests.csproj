@@ -1,0 +1,50 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<IsPackable>false</IsPackable>
+		<IsTestProject>true</IsTestProject>
+		<OutputType>Exe</OutputType>
+		<AssemblyName>Zongsoft.Diagnostics.Protocols.Server.IntegrationTests</AssemblyName>
+		<RootNamespace>Zongsoft.Diagnostics.Protocols.Server.IntegrationTests</RootNamespace>
+		<StartupObject>Zongsoft.Diagnostics.Protocols.Server.IntegrationTests.TestProgram</StartupObject>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="../../src/Zongsoft.Diagnostics.Protocols.Server.csproj" />
+
+		<Reference Include="Zongsoft.Diagnostics.Protocols.Server.Samples">
+			<HintPath>../../samples/bin/$(Configuration)/$(TargetFramework)/Zongsoft.Diagnostics.Protocols.Server.Samples.dll</HintPath>
+		</Reference>
+		<Reference Include="Zongsoft.Diagnostics.Protocols.Client" Aliases="client">
+			<HintPath>../../../client/src/bin/$(Configuration)/$(TargetFramework)/Zongsoft.Diagnostics.Protocols.Client.dll</HintPath>
+		</Reference>
+		<Reference Include="Zongsoft.Core">
+			<HintPath>../../../../../Zongsoft.Core/src/bin/$(Configuration)/$(TargetFramework)/Zongsoft.Core.dll</HintPath>
+		</Reference>
+		<Reference Include="Zongsoft.Web">
+			<HintPath>../../../../../Zongsoft.Web/src/bin/$(Configuration)/$(TargetFramework)/Zongsoft.Web.dll</HintPath>
+		</Reference>
+		<Reference Include="Zongsoft.Web.Grpc">
+			<HintPath>../../../../../Zongsoft.Web/grpc/src/bin/$(Configuration)/$(TargetFramework)/Zongsoft.Web.Grpc.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Grpc.Reflection" VersionOverride="2.76.0" />
+		<PackageReference Include="Grpc.AspNetCore.Server" VersionOverride="2.76.0" />
+		<PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" VersionOverride="1.18.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" />
+		<PackageReference Include="xunit.v3" />
+		<PackageReference Include="xunit.v3.core" />
+		<PackageReference Include="xunit.v3.assert" />
+		<PackageReference Include="xunit.analyzers" />
+		<PackageReference Include="xunit.v3.runner.msbuild" />
+		<PackageReference Include="xunit.runner.visualstudio" />
+	</ItemGroup>
+</Project>

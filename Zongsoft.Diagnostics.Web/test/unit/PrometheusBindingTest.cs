@@ -17,14 +17,14 @@ using Zongsoft.Diagnostics.Telemetry;
 
 using Xunit;
 
-namespace Zongsoft.Diagnostics.Tests;
+namespace Zongsoft.Diagnostics.Web.Tests;
 
 public class PrometheusBindingTest
 {
 	[Fact]
 	public void BundledBindingPreservesUrlsAndSharesTheScrapePath()
 	{
-		var path = Path.Combine(AppContext.BaseDirectory, "Zongsoft.Diagnostics.option");
+		var path = Path.Combine(AppContext.BaseDirectory, "Zongsoft.Diagnostics.Web.option");
 		using var stream = File.OpenRead(path);
 		var configuration = XmlStreamConfigurationProvider.Read(stream, out var instructions, path);
 		var binding = Assert.Single(instructions, instruction => instruction.Name == "zongsoft.tools.binding");
@@ -46,7 +46,7 @@ public class PrometheusBindingTest
 		var urls = evaluator.Evaluate(attributes["template"]);
 		var protocols = evaluator.Evaluate(attributes["protocols"]);
 
-		Assert.Equal("http://127.0.0.1:9464/metrics,http://localhost:9464/metrics", urls);
+		Assert.Equal("http://127.0.0.1:9465/metrics,http://localhost:9465/metrics", urls);
 		Assert.Equal("http1", protocols);
 
 		var services = new ServiceCollection();

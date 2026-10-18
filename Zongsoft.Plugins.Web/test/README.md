@@ -13,7 +13,7 @@ The tests cover:
 - Automatic monitoring remains singular even after repeated assembly scanning. Explicit registration keeps monitoring optional; duplicate explicit monitoring is idempotent: business changes stay quiet, network changes and new plugin conflicts warn once, listeners and scopes remain fixed. Stop and direct disposal release subscriptions; initialization failure disposes constructed services.
 - Native TCP/multiplexed factories are not wrapped; selectors, cancellation, features and DI ownership remain intact. IPv6 TCP uses separate address families. Transport doubles do not validate real QUIC.
 
-Debug builds consume local Core, Plugins and Web outputs. Build those source projects in that order, then build this solution and run the tests. The test project references Plugins.Web and Plugins as projects, and Core and Web as local assemblies through `HintPath`; it does not build Core or Web through project references:
+Debug builds consume local Core, Plugins and Web outputs. Build those source projects in that order, then build this solution and run the tests. The test project references only Plugins.Web as a project; Core, Plugins and Web are local assembly references through `HintPath`:
 
 ```powershell
 dotnet build ../Zongsoft.Core/src/Zongsoft.Core.csproj -p:GeneratePackageOnBuild=false

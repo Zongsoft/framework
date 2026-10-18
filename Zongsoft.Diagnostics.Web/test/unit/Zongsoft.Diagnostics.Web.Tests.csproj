@@ -2,18 +2,29 @@
 	<PropertyGroup>
 		<IsPackable>false</IsPackable>
 		<IsTestProject>true</IsTestProject>
-		<RootNamespace>Zongsoft.Diagnostics.Protocols.Client.Tests</RootNamespace>
+		<RootNamespace>Zongsoft.Diagnostics.Web.Tests</RootNamespace>
 		<GenerateDocumentationFile>false</GenerateDocumentationFile>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\src\Zongsoft.Diagnostics.Protocols.Client.csproj" />
-		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+		<ProjectReference Include="..\..\src\Zongsoft.Diagnostics.Web.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Grpc.AspNetCore.Server" VersionOverride="2.76.0" />
-		<PackageReference Include="Grpc.Tools" VersionOverride="2.78.0" PrivateAssets="all" />
+		<None Include="..\..\src\Zongsoft.Diagnostics.Web.option" Link="Zongsoft.Diagnostics.Web.option" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Reference Include="Zongsoft.Core">
+			<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="OpenTelemetry.Extensions.Hosting" VersionOverride="1.18.0" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Microsoft.NET.Test.Sdk" />
 		<PackageReference Include="xunit.v3" />
 		<PackageReference Include="xunit.v3.core" />
@@ -21,9 +32,5 @@
 		<PackageReference Include="xunit.analyzers" />
 		<PackageReference Include="xunit.v3.runner.msbuild" />
 		<PackageReference Include="xunit.runner.visualstudio" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Protobuf Include="protos/*.proto" ProtoRoot="protos" GrpcServices="Both" />
 	</ItemGroup>
 </Project>

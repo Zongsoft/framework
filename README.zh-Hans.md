@@ -57,7 +57,8 @@ Zongsoft 的典型应用由“宿主 + 业务插件 + 能力插件”组成。�
 - [_**Z**ongsoft.**C**ommands_](Zongsoft.Commands) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Commands)](https://nuget.org/packages/Zongsoft.Commands)
 	> 提供了一些常用的命令，为应用层提供以命令行方式执行特定功能的能力。
 - [_**Z**ongsoft.**D**iagnostics_](Zongsoft.Diagnostics) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Diagnostics)](https://nuget.org/packages/Zongsoft.Diagnostics)
-	> 提供了 _**O**pen**T**elemetry_ 协议相关的诊断能力，包括 _**O**pen**T**elemetry_ 协议的接收处理，以及 _**C**onsole_、_**P**rometheus_、_**Z**ipkin_ 等输出器插件等。
+	> 提供通用 OpenTelemetry 诊断配置、Console/OTLP 导出及协议接收处理，不依赖 ASP.NET Core。
+	> - [Zongsoft.Diagnostics.Web](Zongsoft.Diagnostics.Web)：仅供 Web 宿主的 Prometheus/Kestrel 抓取插件；daemon、terminal 通过 Collector 导出指标。
 - [_**Z**ongsoft.**H**ardwares_](Zongsoft.Hardwares) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Hardwares)](https://nuget.org/packages/Zongsoft.Hardwares)
 	> 提供了跨平台获取硬件信息的功能。
 - [_**Z**ongsoft.**I**ntelligences_](Zongsoft.Intelligences) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Intelligences)](https://nuget.org/packages/Zongsoft.Intelligences)

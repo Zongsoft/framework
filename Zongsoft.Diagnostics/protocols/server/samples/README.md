@@ -30,10 +30,10 @@ Deploy the generated assembly together with `Zongsoft.Diagnostics.Protocols.Serv
 
 If no output appears, verify the OTLP endpoint, transport security, server plugin activation, and the `/Workbench/Diagnostics/Telemetry/Listener/Metrics` registration path.
 
-The automated integration test loads this sample in a temporary plugin tree, exports a synthetic metric through the official SDK and asserts the terminal output. Run it from the repository root:
+The automated integration test registers this sample handler directly in a local WebApplication, exports a synthetic metric through the official SDK and asserts the terminal output. First build the local dependencies listed under [Local Verification](../README.md#local-verification), then run it from the repository root:
 
 ```shell
-dotnet test Zongsoft.Diagnostics/protocols/server/test/Zongsoft.Diagnostics.Protocols.Server.Tests.csproj --filter FullyQualifiedName~OfficialExportersReachHandlersAndSample -p:GeneratePackageOnBuild=false
+dotnet test Zongsoft.Diagnostics/protocols/server/test/integration/Zongsoft.Diagnostics.Protocols.Server.Tests.csproj --filter FullyQualifiedName~OfficialExportersReachHandlersAndSample -p:GeneratePackageOnBuild=false
 ```
 
 ## Background and Key Code

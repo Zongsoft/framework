@@ -57,7 +57,8 @@ A typical Zongsoft application consists of a host, business plugins and capabili
 - [_**Z**ongsoft.**C**ommands_](Zongsoft.Commands) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Commands)](https://nuget.org/packages/Zongsoft.Commands)
 	> Provides some commonly used commands, enabling the application layer to execute specific functions via the command line.
 - [_**Z**ongsoft.**D**iagnostics_](Zongsoft.Diagnostics) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Diagnostics)](https://nuget.org/packages/Zongsoft.Diagnostics)
-	> Provides diagnostic capabilities related to the _**O**pen**T**elemetry_ protocol, including reception and processing of the _**O**pen**T**elemetry_ protocol, as well as exporter plugins such as _**C**onsole_, _**P**rometheus_, _**Z**ipkin_, and more.
+	> Provides common OpenTelemetry configuration, Console/OTLP export and protocol processing without an ASP.NET Core dependency.
+	> - [Zongsoft.Diagnostics.Web](Zongsoft.Diagnostics.Web): Prometheus/Kestrel scraping for Web hosts only; daemon and terminal export metrics through a Collector.
 - [_**Z**ongsoft.**H**ardwares_](Zongsoft.Hardwares) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Hardwares)](https://nuget.org/packages/Zongsoft.Hardwares)
 	> Provides cross-platform functionality for retrieving hardware information.
 - [_**Z**ongsoft.**I**ntelligences_](Zongsoft.Intelligences) [![NuGet Version](https://img.shields.io/nuget/v/Zongsoft.Intelligences)](https://nuget.org/packages/Zongsoft.Intelligences)

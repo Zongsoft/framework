@@ -9,6 +9,7 @@ Zongsoft.Commands/build.cake
 Zongsoft.Security/build.cake
 Zongsoft.Reporting/build.cake
 Zongsoft.Diagnostics/build.cake
+Zongsoft.Diagnostics.Web/build.cake
 Zongsoft.Intelligences/build.cake
 
 # Messaging libraries

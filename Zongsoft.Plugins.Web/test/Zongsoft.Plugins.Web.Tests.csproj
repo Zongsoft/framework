@@ -6,6 +6,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<ProjectReference Include="../src/Zongsoft.Plugins.Web.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Microsoft.NET.Test.Sdk" />
 		<PackageReference Include="xunit.v3" />
 		<PackageReference Include="xunit.v3.core" />
@@ -16,16 +20,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="../src/Zongsoft.Plugins.Web.csproj" />
-		<ProjectReference Include="../../Zongsoft.Plugins/src/Zongsoft.Plugins.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
 		<Reference Include="Zongsoft.Core">
 			<HintPath>../../Zongsoft.Core/src/bin/$(Configuration)/$(TargetFramework)/Zongsoft.Core.dll</HintPath>
 		</Reference>
 		<Reference Include="Zongsoft.Web">
 			<HintPath>../../Zongsoft.Web/src/bin/$(Configuration)/$(TargetFramework)/Zongsoft.Web.dll</HintPath>
+		</Reference>
+		<Reference Include="Zongsoft.Plugins">
+			<HintPath>../../Zongsoft.Plugins/src/bin/$(Configuration)/$(TargetFramework)/Zongsoft.Plugins.dll</HintPath>
 		</Reference>
 	</ItemGroup>
 

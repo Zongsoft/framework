@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>1.5.0</Version>
+		<Version>1.6.0</Version>
 		<Product>Zongsoft OpenTelemetry gRPC Server Protocols</Product>
 		<Description>This is a gRPC server protocol library of OpenTelemetry.</Description>
 		<IncludeSymbols>true</IncludeSymbols>
@@ -16,6 +16,9 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageReference Include="Google.Protobuf" VersionOverride="3.34.0" />
 		<PackageReference Include="Grpc.Core.Api" VersionOverride="2.76.0" />
 		<PackageReference Include="Grpc.Net.Common" VersionOverride="2.76.0" />

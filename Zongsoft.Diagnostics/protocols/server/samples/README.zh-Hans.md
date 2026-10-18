@@ -30,10 +30,10 @@ dotnet build Zongsoft.Diagnostics/protocols/server/samples/Zongsoft.Diagnostics.
 
 如果没有输出，请检查 OTLP 端点、传输安全设置、服务端插件是否启用，以及 `/Workbench/Diagnostics/Telemetry/Listener/Metrics` 注册路径。
 
-也可从仓库根目录运行自动集成测试；它在临时插件树中加载本范例，通过官方 SDK 上报合成指标并断言终端输出：
+先按[本地验证](../README.zh-Hans.md#本地验证)构建本地依赖，再从仓库根目录运行自动集成测试；它在本地 WebApplication 中直接注册本范例处理器，通过官方 SDK 上报合成指标并断言终端输出：
 
 ```shell
-dotnet test Zongsoft.Diagnostics/protocols/server/test/Zongsoft.Diagnostics.Protocols.Server.Tests.csproj --filter FullyQualifiedName~OfficialExportersReachHandlersAndSample -p:GeneratePackageOnBuild=false
+dotnet test Zongsoft.Diagnostics/protocols/server/test/integration/Zongsoft.Diagnostics.Protocols.Server.Tests.csproj --filter FullyQualifiedName~OfficialExportersReachHandlersAndSample -p:GeneratePackageOnBuild=false
 ```
 
 ## 背景与关键代码

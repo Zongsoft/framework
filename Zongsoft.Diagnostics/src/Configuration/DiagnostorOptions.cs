@@ -37,8 +37,19 @@ namespace Zongsoft.Diagnostics.Configuration;
 
 public class DiagnostorOptions
 {
+	#region 公共属性
 	public Filtering Meters { get; set; }
 	public Filtering Traces { get; set; }
+	public Logging Logs { get; set; }
+	#endregion
+
+	#region 嵌套子类
+	public sealed class Logging
+	{
+		public bool IncludeScopes { get; set; } = true;
+		public bool IncludeFormattedMessage { get; set; } = true;
+		public FilteringExporterCollection Exporters { get; set; }
+	}
 
 	public sealed class Filtering
 	{
@@ -50,6 +61,7 @@ public class DiagnostorOptions
 	public sealed class FilteringExporter
 	{
 		public string Name { get; set; }
+		public bool Enabled { get; set; } = true;
 		public string Driver { get; set; }
 		public string Settings { get; set; }
 	}
@@ -58,4 +70,5 @@ public class DiagnostorOptions
 	{
 		protected override string GetKeyForItem(FilteringExporter exporter) => exporter.Name;
 	}
+	#endregion
 }

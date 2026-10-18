@@ -12,4 +12,5 @@
 ## 验证
 
 - 分别构建 client/server `.slnx`；修改解析映射时增加或运行聚焦协议样例/测试。
+- `test/unit` 目录仅保留单元测试，不引用 ASP.NET Core，也不启动网络监听或测试子进程。Kestrel、gRPC 收发和端口生命周期测试放在独立的 `test/integration` 项目，通过同目录的 `client/test/integration/Zongsoft.Diagnostics.Protocols.Client.Tests.slnx`、`server/test/integration/Zongsoft.Diagnostics.Protocols.Server.Tests.slnx` 或 Cake `integration-test` 任务显式运行。
 - 网络验证使用本地可控端口，并确保取消、断连和释放路径不会遗留后台任务。

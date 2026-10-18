@@ -10,10 +10,8 @@ nuget:OpenTelemetry.Extensions.Hosting@1.18.0
 nuget:OpenTelemetry.Extensions.Propagators@1.18.0
 nuget:OpenTelemetry.Instrumentation.Http@1.18.0
 nuget:OpenTelemetry.Instrumentation.Runtime@1.18.0
-nuget:OpenTelemetry.Instrumentation.AspNetCore@1.18.0
 nuget:OpenTelemetry.Exporter.Console@1.18.0
 nuget:OpenTelemetry.Exporter.InMemory@1.18.0
 nuget:OpenTelemetry.Exporter.OpenTelemetryProtocol@1.18.0
-nuget:OpenTelemetry.Exporter.Prometheus.AspNetCore@1.18.0-beta.1
 nuget:OpenTelemetry.PersistentStorage.Abstractions@1.1.1
 nuget:OpenTelemetry.PersistentStorage.FileSystem@1.1.1

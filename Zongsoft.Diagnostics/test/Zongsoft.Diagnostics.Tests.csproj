@@ -11,6 +11,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<None Include="..\src\Zongsoft.Diagnostics.plugin" Link="Zongsoft.Diagnostics.plugin" CopyToOutputDirectory="PreserveNewest" />
 		<None Include="..\src\Zongsoft.Diagnostics.option" Link="Zongsoft.Diagnostics.option" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 
@@ -18,6 +19,10 @@
 		<Reference Include="Zongsoft.Core">
 			<HintPath>..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
 		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" />
 	</ItemGroup>
 
 	<ItemGroup>
