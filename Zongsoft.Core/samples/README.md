@@ -23,15 +23,17 @@ dotnet build Zongsoft.Core/samples/samples.slnx
 ## Event Exchanger
 
 ```shell
-dotnet run --project Zongsoft.Core/samples/eventexchanger/Zongsoft.Samples.EventExchanger.csproj
+dotnet run --project Zongsoft.Core/samples/eventexchanger/Zongsoft.Samples.EventExchanger.csproj -- --local
 ```
+
+`--local` runs local handlers without creating a message queue. Without this option, start a local ZeroMQ broker before running the sample. See the [event exchange guide](eventexchanger/README.md) for build prerequisites and remote delivery between two processes.
 
 The program accepts the following interactive input:
 
 - `start` or `restart` starts the exchanger; `stop` stops it.
 - `info` lists the current event channels; `reset` resets sample counters.
-- `<quantity>` raises one round containing the specified number of events.
-- `<quantity>/<rounds>` or `<quantity>@<rounds>` raises multiple rounds.
+- `<quantity>` raises one event containing the specified number of metrics.
+- `<quantity>/<rounds>` or `<quantity>@<rounds>` raises the specified number of events concurrently, each containing `<quantity>` metrics.
 - `clear` clears the terminal and `exit` quits.
 
 Example sequence:
@@ -85,7 +87,7 @@ Use `create`, `open`, `close`, `pause`, `resume`, `error`, `reset`, and `info` t
 
 An event exchanger dispatches registered events through channels; a spooler groups pending items into batches; a superviser observes activity and failures; cache scanning triggers expiration observation. These mechanisms solve different lifecycle problems and are not interchangeable durable queues.
 
-The samples use local in-process objects. Start with a few dozen events/items before the larger examples above. Their timing output is an interactive observation, not a reproducible performance benchmark.
+The event exchange sample also supports ZeroMQ delivery between processes; `--local` keeps event handling within the current process. The other samples use local in-process objects. Start with a few dozen events/items before the larger examples above. Their timing output is an interactive observation, not a reproducible performance benchmark.
 
 ## Code and Cleanup
 

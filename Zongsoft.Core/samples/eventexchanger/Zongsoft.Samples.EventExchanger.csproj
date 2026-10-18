@@ -7,14 +7,18 @@
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Hosting" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+		<PackageReference Include="Microsoft.Extensions.ObjectPool" />
 		<PackageReference Include="Microsoft.Extensions.Primitives" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Memory" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
-		<PackageReference Include="NetMQ" VersionOverride="4.0.4.3" />
-		<PackageReference Include="Microsoft.Extensions.ObjectPool" />
 	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="NetMQ" VersionOverride="4.0.4.4" />
+	</ItemGroup>
+
 
 	<ItemGroup>
 		<Reference Include="Zongsoft.Core">

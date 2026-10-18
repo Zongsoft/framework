@@ -7,23 +7,128 @@ using System.Collections.Concurrent;
 using Xunit;
 
 using Zongsoft.Components;
+using Zongsoft.Common;
 
 namespace Zongsoft.Data.Transactions.Tests;
 
 [CollectionDefinition(Name, DisableParallelization = true)]
-public sealed class TransactionEventChannelCollection
+public sealed class TransactionEventDispatchCollection
 {
-	public const string Name = nameof(TransactionEventChannelCollection);
+	public const string Name = nameof(TransactionEventDispatchCollection);
 }
 
-[Collection(TransactionEventChannelCollection.Name)]
-public sealed class TransactionEventChannelTest
+[Collection(TransactionEventDispatchCollection.Name)]
+public sealed class TransactionEventDispatchTest
 {
+	[Theory]
+	[InlineData(true)]
+	[InlineData(false)]
+	public async Task SharedProviderCapturesEachRootTransaction(bool commit)
+	{
+		var provider = Transaction.Features;
+		Assert.Contains(provider, FeatureProvider.Default.Providers);
+		Assert.Empty(provider.GetFeatures());
+		IPredication captured;
+
+		using(var root = new Transaction())
+		{
+			captured = Assert.IsAssignableFrom<IPredication>(Assert.Single(provider.GetFeatures()));
+			var waiting = captured.PredicateAsync(null).AsTask();
+			var readyAtNotification = false;
+			root.Context.Completed += (_, _) => readyAtNotification = waiting.IsCompletedSuccessfully;
+
+			using(var child = new Transaction())
+			{
+				Assert.Same(captured, Assert.Single(provider.GetFeatures()));
+				child.Commit();
+				Assert.False(waiting.IsCompleted);
+			}
+
+			if(commit)
+				root.Commit();
+			else
+				root.Rollback();
+
+			Assert.True(readyAtNotification);
+			Assert.Equal(commit, await waiting.WaitAsync(TimeSpan.FromSeconds(30)));
+		}
+
+		Assert.Empty(provider.GetFeatures());
+
+		using(var next = new Transaction())
+		{
+			Assert.NotSame(captured, Assert.Single(provider.GetFeatures()));
+			Assert.Equal(commit, await captured.PredicateAsync(null));
+			Assert.Equal(commit, await captured.PredicateAsync(new object(), new Collections.Parameters()));
+		}
+	}
+
+	[Fact]
+	public async Task ConcurrentCaptureSharesDecisionAndCancellationOnlyEndsOneWait()
+	{
+		using var transaction = new Transaction();
+		var captures = await Task.WhenAll(Enumerable.Range(0, 16).Select(_ => Task.Run(() =>
+			Assert.IsAssignableFrom<IPredication>(Assert.Single(Transaction.Features.GetFeatures())))));
+		var feature = captures[0];
+		Assert.All(captures, captured => Assert.Same(feature, captured));
+		using var cancellation = new CancellationTokenSource();
+		var canceled = feature.PredicateAsync(null, cancellation.Token).AsTask();
+		var pending = feature.PredicateAsync(null).AsTask();
+
+		cancellation.Cancel();
+		await Assert.ThrowsAnyAsync<OperationCanceledException>(() => canceled);
+		Assert.False(pending.IsCompleted);
+		Assert.Equal(TransactionStatus.Active, transaction.Context.Status);
+		await transaction.CommitAsync();
+
+		Assert.True(await pending.WaitAsync(TimeSpan.FromSeconds(10)));
+		Assert.True(await feature.PredicateAsync(null));
+	}
+
+	[Fact]
+	public async Task CapturedTransactionDoesNotFollowLaterAmbientTransaction()
+	{
+		var inner = new RecordingChannel();
+		await RunAsync(inner, async exchanger =>
+		{
+			using(var transaction = new Transaction())
+			{
+				await exchanger.ExchangeAsync(CreateContext(new() { Message = "first" }), CancellationToken.None);
+				transaction.Rollback();
+			}
+
+			using(var transaction = new Transaction())
+			{
+				await exchanger.ExchangeAsync(CreateContext(new() { Message = "second" }), CancellationToken.None);
+				transaction.Commit();
+			}
+
+			await inner.WaitForCountAsync(1);
+		});
+
+		var received = Assert.IsType<EventContext<object>>(Assert.Single(inner.Contexts));
+		Assert.Equal("second", Assert.IsType<MutableArgument>(received.Argument).Message);
+	}
+
+	[Fact]
+	public async Task EventsAfterRollbackAreDiscardedUntilAmbientTransactionExits()
+	{
+		var channel = new RecordingChannel();
+		await RunAsync(channel, async exchanger =>
+		{
+			using var transaction = new Transaction();
+			transaction.Rollback();
+			await exchanger.ExchangeAsync(CreateContext(new() { Message = "discarded" }), CancellationToken.None);
+		});
+
+		Assert.Empty(channel.Contexts);
+	}
+
 	[Fact]
 	public async Task SendAsync_ActiveTransaction_DefersUntilCommitAndSnapshotsPayloadAsync()
 	{
 		var inner = new RecordingChannel();
-		var channel = new TransactionEventChannel(inner);
+		var channel = inner;
 
 		await RunAsync(channel, async exchanger =>
 		{
@@ -58,7 +163,7 @@ public sealed class TransactionEventChannelTest
 	public async Task SendAsync_RolledBackTransaction_DiscardsBufferedEventsAsync()
 	{
 		var inner = new RecordingChannel();
-		var channel = new TransactionEventChannel(inner);
+		var channel = inner;
 
 		await RunAsync(channel, async exchanger =>
 		{
@@ -78,7 +183,7 @@ public sealed class TransactionEventChannelTest
 	public async Task SendAsync_UndeterminedTransaction_DiscardsBufferedEventsAsync()
 	{
 		var inner = new RecordingChannel();
-		var channel = new TransactionEventChannel(inner);
+		var channel = inner;
 
 		await RunAsync(channel, async exchanger =>
 		{
@@ -99,7 +204,7 @@ public sealed class TransactionEventChannelTest
 	public async Task SendAsync_Commit_DoesNotWaitForUnderlyingAsyncDeliveryAsync()
 	{
 		var inner = new RecordingChannel(blockSend: true);
-		var channel = new TransactionEventChannel(inner);
+		var channel = inner;
 
 		await RunAsync(channel, async exchanger =>
 		{
@@ -128,7 +233,7 @@ public sealed class TransactionEventChannelTest
 	{
 		var visibleValue = "old";
 		var inner = new RecordingChannel(() => visibleValue);
-		var channel = new TransactionEventChannel(inner);
+		var channel = inner;
 
 		await RunAsync(channel, async exchanger =>
 		{
@@ -157,7 +262,7 @@ public sealed class TransactionEventChannelTest
 	public async Task SendAsync_NestedTransaction_FlushesFromRootInEnqueueOrderAsync()
 	{
 		var inner = new RecordingChannel();
-		var channel = new TransactionEventChannel(inner);
+		var channel = inner;
 
 		await RunAsync(channel, async exchanger =>
 		{
@@ -184,7 +289,7 @@ public sealed class TransactionEventChannelTest
 	public async Task SendAsync_WithoutTransaction_DelegatesImmediatelyAsync()
 	{
 		var inner = new RecordingChannel();
-		var channel = new TransactionEventChannel(inner);
+		var channel = inner;
 
 		await RunAsync(channel, async exchanger =>
 		{
@@ -212,6 +317,9 @@ public sealed class TransactionEventChannelTest
 		Assert.Equal(WorkerState.Stopped, exchanger.State);
 		Assert.Empty(exchanger.Channels);
 
+		await using var dispatcher = new EventDispatcher();
+		var original = exchanger.Dispatcher;
+		exchanger.Dispatcher = dispatcher;
 		exchanger.Channels.Add(channel);
 
 		try
@@ -224,6 +332,7 @@ public sealed class TransactionEventChannelTest
 		{
 			await exchanger.StopAsync([]);
 			exchanger.Channels.Remove(channel);
+			exchanger.Dispatcher = original;
 			await channel.DisposeAsync();
 		}
 
@@ -257,7 +366,7 @@ public sealed class TransactionEventChannelTest
 		public EventContext[] Contexts => _contexts.ToArray();
 		public string[] ObservedValues => _observedValues.ToArray();
 
-		public ValueTask OpenAsync(EventExchanger exchanger, CancellationToken cancellation = default)
+		public ValueTask OpenAsync(IEventReceiver receiver, CancellationToken cancellation = default)
 		{
 			this.IsClosed = false;
 			return ValueTask.CompletedTask;

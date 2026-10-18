@@ -23,15 +23,17 @@ dotnet build Zongsoft.Core/samples/samples.slnx
 ## 事件交换器
 
 ```shell
-dotnet run --project Zongsoft.Core/samples/eventexchanger/Zongsoft.Samples.EventExchanger.csproj
+dotnet run --project Zongsoft.Core/samples/eventexchanger/Zongsoft.Samples.EventExchanger.csproj -- --local
 ```
+
+`--local` 只运行本地事件处理程序，不创建消息队列。省略该选项时，需先启动本机 ZeroMQ 消息代理。构建前提和双进程远程投递方式见[事件交换范例说明](eventexchanger/README.zh-Hans.md)。
 
 程序接受以下交互输入：
 
 - `start` 或 `restart` 启动交换器，`stop` 停止交换器；
 - `info` 列出当前事件通道，`reset` 重置范例计数；
-- `<数量>` 触发一轮指定数量的事件；
-- `<数量>/<轮数>` 或 `<数量>@<轮数>` 触发多轮事件；
+- `<数量>` 激发一次事件，其中包含指定数量的指标；
+- `<数量>/<轮数>` 或 `<数量>@<轮数>` 并发激发指定轮数的事件，每项事件包含指定数量的指标；
 - `clear` 清空终端，`exit` 退出。
 
 示例执行顺序：
@@ -85,7 +87,7 @@ dotnet run --project Zongsoft.Core/samples/superviser/Zongsoft.Samples.Supervise
 
 事件交换器通过通道分派注册事件，Spooler 将待处理项归为批次，Superviser 观察活动及失败，缓存扫描触发过期观察。这些机制解决不同的生命周期问题，不是可互换的持久队列。
 
-样例使用本地进程内对象。先用几十个事件/条目，再尝试前面的大批量示例。时间输出只是交互观察，不是可复现性能基准。
+事件交换范例还支持通过 ZeroMQ 在进程间投递事件，`--local` 将事件处理限制在当前进程内；其它范例使用本地进程内对象。先用几十个事件/条目，再尝试前面的大批量示例。时间输出只是交互观察，不是可复现性能基准。
 
 ## 关键代码与清理
 

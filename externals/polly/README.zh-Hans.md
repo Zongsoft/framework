@@ -92,3 +92,7 @@ nuget:Zongsoft.Externals.Polly
 按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
 
 清单列出的附属产物包括：`Zongsoft.Externals.Polly.plugin`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。
+
+## 事件投递
+
+Polly 插件提供 `Executor.Pipelines`，不会自动为事件投递添加策略。环境延期由 `EventDispatcher` 求值实现 `IFeature` 与 `IPredication` 的环境条件，策略管线只包围实际投递。应用插件可以在初始化时为 `EventDispatcher.Pipeline` 显式组合重试、超时和回退；配置示例及生命周期见[事件调度](../../Zongsoft.Core/docs/event-dispatching.zh-Hans.md)。无返回值的回退执行回调后仍保留原异常，调用方应区分回退回调完成和投递成功。

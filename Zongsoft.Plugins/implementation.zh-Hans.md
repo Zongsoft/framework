@@ -404,13 +404,11 @@ flowchart LR
 
 | 路径 | 声明 | 职责 |
 | --- | --- | --- |
-| `/Workbench/Events/Exchanger/Transports/ZeroMQ` | 带类型的 `expose` | 创建并暴露原始 `ZeroQueueEventChannel` |
 | `/Workbench/Events/Exchanger/Channels` | Main 中的 `expose` | 暴露 `EventExchanger.Channels` |
-| `…/Channels/ZeroMQ` | `object` | 创建 `TransactionEventChannel` 并将包装通道加入 Channels |
-| `…/Channels/ZeroMQ/Transport` | `expose` | 为包装通道构造函数提供原始传输对象 |
-| Filtering 节点 | `expose` | 发布已有筛选集合，供其他声明扩展 |
+| `…/Channels/ZeroMQ` | `object` | 创建 `ZeroQueueEventChannel` 并加入 Channels |
+| `…/Channels/ZeroMQ/Filtering` | `expose` | 暴露通道已有的筛选器，供其他声明扩展 |
 
-`Transports` 是分组路径。原始传输对象的 expose 决定禁止将它追加到交换器；真正追加到所暴露 `Channels` 集合的是包装通道构件。某个节点被构建或引用，不等于它已经进入该集合。
+通道和筛选器的提前引用共享已构建的实例。通道构件加入所暴露的集合，筛选器 expose 不追加到通道。交换器的调度器处理环境延期，通道本身负责传输。应用插件可以通过 `object.property` 为 `EventDispatcher.Pipeline` 装配 `IFeaturePipeline<EventContext>`，再将调度器赋给交换器的 `Dispatcher` 属性。管线在环境允许后执行，只包围实际投递。
 
 ## 11. 表达式解析
 
@@ -503,6 +501,8 @@ Core 的 `Locate<T>("name@provider")` 选择提供实例的服务提供者，与
 `Application.Daemon` 和 `Application.Terminal` 基于 Microsoft 宿主，注册各自的插件应用上下文，加载配置、构建宿主并初始化上下文。[ApplicationExtension](src/Hosting/ApplicationExtension.cs) 提供宿主初始化桥接。ASP.NET Core 集成位于独立的 [Zongsoft.Plugins.Web](../Zongsoft.Plugins.Web/README.zh-Hans.md)。
 
 `PluginApplicationContext.Initialize` 先执行基类初始化，再确保插件树加载并挂载应用上下文。首次取得 `Workbench` 时创建或解析工作台，将结果挂载到树上，遍历工作台普通扩展，最后发出 `WorkbenchCreated`。
+
+宿主在完整插件配置加载后，扫描已加载的入口引用、入口程序集和插件清单程序集；所有来源共用去重集合。注册器可读取最终插件配置，同一程序集在一次宿主构建中只注册一次。Core 的 `FeatureProvider.Default` 默认包含事务环境提供者；应用服务容器中的 `IFeatureProvider` 提供附加环境条件，默认特性提供者在捕获时合并来源并按实例去重。
 
 工作台遍历跳过配置的 Startup 子树。对于尚未完成的构件，调用 `Builtin.Build()`，然后继续递归访问子节点。这与管理器的子节点遍历是两个独立入口：`BuildChildren = false` 只控制某次管理器操作，不禁止后续显式访问或宿主遍历。其他节点的引用也可以在正常 Startup 遍历之前触发对象构建。
 

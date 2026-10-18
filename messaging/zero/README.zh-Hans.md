@@ -264,7 +264,7 @@ Broker 只在发送瞬间存在在线匹配订阅时接纳消息：没有订阅�
 
 ### 事件通道
 
-`ZeroQueueEventChannel` 通过 `Events/...` 主题连接 `EventExchanger` 与消息队列：
+`ZeroQueueEventChannel` 通过 `Events/...` 主题连接 `EventExchanger` 与消息队列。主题由 Core 的 `Events.GetTopic()` 统一生成，接收消息由 `Events.GetHandler(receiver)` 还原并交给 `IEventReceiver`；通道负责筛选、队列选项与订阅生命周期：
 
 ```csharp
 await using var channel = new ZeroQueueEventChannel(queue);
@@ -272,7 +272,9 @@ await channel.OpenAsync(exchanger);
 await channel.SendAsync(eventContext);
 ```
 
-插件清单只将包装该传输的 `TransactionEventChannel` 注册到 `EventExchanger.Channels`，由它统一打开订阅。其 `Transport` 子节点构建原始 ZeroMQ 传输，`Filtering` 子节点暴露该传输的同一个过滤器实例，对应路径为 `/Workbench/Events/Exchanger/Channels/ZeroMQ/Transport` 和 `/Workbench/Events/Exchanger/Channels/ZeroMQ/Filtering`。传输归属包装通道，提前被引用构建时也不会加入交换器，无需改变全局 `expose` 行为。原 `/Workbench/Events/Exchanger/Transports/ZeroMQ` 路径移除；自定义引用或扩展应迁移到包装通道的 `Transport` 子节点，其 `Filtering` 扩展迁移到包装通道的 `Filtering` 子节点。请求响应和事件通道支持 `Group`；分组前缀只在网络边界添加，适配器始终使用逻辑主题。
+插件在 `/Workbench/Events/Exchanger/Channels/ZeroMQ` 直接创建 `ZeroQueueEventChannel` 并加入交换器。`Filtering` 子节点暴露该通道的筛选器，路径为 `/Workbench/Events/Exchanger/Channels/ZeroMQ/Filtering`。提前引用通道或筛选器仍使用同一实例，通道只挂载一次。通道支持关闭后重新打开，关闭时释放订阅而不释放共享队列。请求响应和事件通道支持 `Group`；分组前缀只在网络边界添加，适配器使用逻辑主题。
+
+环境延期由 Core 的 `EventDispatcher` 处理；事务提交后才开始远程投递，回滚或状态不确定时放弃事件。默认 ZeroMQ 投递不应用 Polly 策略，应用插件可通过 `EventDispatcher.Pipeline` 显式组合重试、超时或回退。详见[事件调度与环境特性](../../Zongsoft.Core/docs/event-dispatching.zh-Hans.md)。
 
 <a name="semantics"></a>
 ## 投递语义

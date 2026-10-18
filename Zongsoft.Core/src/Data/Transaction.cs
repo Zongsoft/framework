@@ -31,7 +31,9 @@ using System;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
+using Zongsoft.Components;
 using Zongsoft.Data.Transactions;
 
 namespace Zongsoft.Data;
@@ -39,7 +41,14 @@ namespace Zongsoft.Data;
 /// <summary>表示事务的控制范围。</summary>
 public class Transaction : IDisposable, IAsyncDisposable, IEquatable<Transaction>
 {
+	#region 静态字段
+	/// <summary>表示捕获当前事务环境特性的共享提供者。</summary>
+	/// <remarks>每次捕获时读取当前根事务；返回的特性绑定到该事务，不随之后的环境变化。</remarks>
+	public static readonly IFeatureProvider Features = new FeatureProvider();
+	#endregion
+
 	#region 成员字段
+	/// <summary>当前事务对应的环境上下文。</summary>
 	private readonly TransactionContext _context;
 	#endregion
 
@@ -124,6 +133,20 @@ public class Transaction : IDisposable, IAsyncDisposable, IEquatable<Transaction
 		TransactionContext.Exit(_context);
 		GC.SuppressFinalize(this);
 		return new ValueTask(_context.RollbackAsync(CancellationToken.None));
+	}
+	#endregion
+
+	#region 嵌套子类
+	/// <summary>提供当前根事务绑定的条件特性。</summary>
+	private sealed class FeatureProvider : IFeatureProvider
+	{
+		/// <summary>捕获当前根事务共享的条件特性。</summary>
+		/// <returns>根事务的条件特性；没有当前事务时为空集合。</returns>
+		public IEnumerable<IFeature> GetFeatures()
+		{
+			var context = TransactionContext.Current?.Root;
+			return context?.GetFeatures() ?? [];
+		}
 	}
 	#endregion
 }

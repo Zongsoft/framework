@@ -38,7 +38,7 @@ using Zongsoft.Data.Transactions;
 namespace Zongsoft.Data;
 
 /// <summary>表示事务的环境上下文和生命周期。</summary>
-public sealed class TransactionContext
+public sealed partial class TransactionContext
 {
 	#region 公共事件
 	/// <summary>当事务上下文完成时发生。</summary>
@@ -66,6 +66,7 @@ public sealed class TransactionContext
 		this.Status = TransactionStatus.Active;
 		this.Parameters = new();
 		_enlistments = new();
+		this.OnInitialized();
 	}
 	#endregion
 
@@ -98,6 +99,7 @@ public sealed class TransactionContext
 	#endregion
 
 	#region 内部属性
+	/// <summary>获取创建此上下文的事务。</summary>
 	internal Transaction Transaction { get; }
 	#endregion
 
@@ -121,24 +123,46 @@ public sealed class TransactionContext
 	#endregion
 
 	#region 内部方法
+	/// <summary>将指定上下文设为当前调用流的环境事务。</summary>
+	/// <param name="context">进入的事务上下文。</param>
 	internal static void Enter(TransactionContext context) => _current.Value = context;
+	/// <summary>退出当前上下文并恢复其父上下文。</summary>
+	/// <param name="context">要退出的事务上下文；非当前上下文时不执行。</param>
 	internal static void Exit(TransactionContext context)
 	{
 		if(object.ReferenceEquals(_current.Value, context))
 			_current.Value = context.Parent;
 	}
 
+	/// <summary>提交事务并等待登记的同步回调全部结束。</summary>
 	internal void Commit() => this.Complete(EnlistmentPhase.Commit);
+	/// <summary>提交事务并等待登记的异步回调全部结束。</summary>
+	/// <param name="cancellation">调用方的取消令牌；事务终结不受取消影响。</param>
+	/// <returns>事务提交及完成通知结束的任务。</returns>
 	internal Task CommitAsync(CancellationToken cancellation = default) => this.CompleteAsync(EnlistmentPhase.Commit, cancellation);
+	/// <summary>回滚事务并等待登记的同步回调全部结束。</summary>
 	internal void Rollback() => this.Complete(EnlistmentPhase.Rollback);
+	/// <summary>回滚事务并等待登记的异步回调全部结束。</summary>
+	/// <param name="cancellation">调用方的取消令牌；事务终结不受取消影响。</param>
+	/// <returns>事务回滚及完成通知结束的任务。</returns>
 	internal Task RollbackAsync(CancellationToken cancellation = default) => this.CompleteAsync(EnlistmentPhase.Rollback, cancellation);
 	#endregion
 
 	#region 重写方法
+	/// <summary>获取包含标识、状态与隔离级别的事务描述。</summary>
+	/// <returns>当前事务上下文的文本表示。</returns>
 	public override string ToString() => $"{this.Identifier}({this.Status}/{this.IsolationLevel})";
 	#endregion
 
+	#region 分部方法
+	/// <summary>在事务上下文进入调用环境前初始化内部扩展。</summary>
+	partial void OnInitialized();
+	#endregion
+
 	#region 私有方法
+	/// <summary>在事务尚未终结时登记不重复的回调。</summary>
+	/// <param name="enlistment">待登记的事务回调。</param>
+	/// <returns>登记成功返回 <see langword="true"/>，否则返回 <see langword="false"/>。</returns>
 	private bool EnlistCore(IEnlistment enlistment)
 	{
 		lock(_enlistments)
@@ -151,6 +175,8 @@ public sealed class TransactionContext
 		}
 	}
 
+	/// <summary>同步终结事务，并汇总登记回调的执行结果。</summary>
+	/// <param name="phase">请求执行的事务终结阶段。</param>
 	private void Complete(EnlistmentPhase phase)
 	{
 		if(!this.TryComplete(ref phase, out var enlistments, out var nested))
@@ -179,6 +205,10 @@ public sealed class TransactionContext
 		this.FinishCompletion(phase, exceptions);
 	}
 
+	/// <summary>异步终结事务，并等待登记回调实际完成。</summary>
+	/// <param name="phase">请求执行的事务终结阶段。</param>
+	/// <param name="cancellation">调用方的取消令牌；事务终结不受取消影响。</param>
+	/// <returns>所有登记回调及完成通知结束的任务。</returns>
 	private async Task CompleteAsync(EnlistmentPhase phase, CancellationToken cancellation)
 	{
 		//事务终结不可取消：保留取消参数只为维持调用契约，不将其传入登记回调或底层资源终结
@@ -211,6 +241,11 @@ public sealed class TransactionContext
 		this.FinishCompletion(phase, exceptions);
 	}
 
+	/// <summary>以互斥方式开始终结，并确定实际阶段及待执行的登记回调。</summary>
+	/// <param name="phase">请求的终结阶段；仅允许回滚时将提交改为回滚。</param>
+	/// <param name="enlistments">输出根事务的登记回调快照。</param>
+	/// <param name="nested">输出当前上下文是否属于嵌套事务。</param>
+	/// <returns>首次开始终结返回 <see langword="true"/>，已开始终结返回 <see langword="false"/>。</returns>
 	private bool TryComplete(ref EnlistmentPhase phase, out IEnlistment[] enlistments, out bool nested)
 	{
 		lock(_enlistments)
@@ -247,6 +282,9 @@ public sealed class TransactionContext
 		}
 	}
 
+	/// <summary>保存最终状态并通知订阅者，随后传播登记回调的异常。</summary>
+	/// <param name="phase">实际执行的事务终结阶段。</param>
+	/// <param name="exceptions">登记回调的异常集合；<see langword="null"/> 表示全部成功。</param>
 	private void FinishCompletion(EnlistmentPhase phase, List<Exception> exceptions)
 	{
 		this.Status = exceptions == null ? ToStatus(phase) : TransactionStatus.Undetermined;
@@ -258,6 +296,7 @@ public sealed class TransactionContext
 			throw new AggregateException(exceptions);
 	}
 
+	/// <summary>依次通知完成事件的订阅者，并记录订阅者异常。</summary>
 	private void OnCompleted()
 	{
 		var handlers = this.Completed;
@@ -277,6 +316,9 @@ public sealed class TransactionContext
 		}
 	}
 
+	/// <summary>将事务终结阶段转换为最终状态。</summary>
+	/// <param name="phase">事务终结阶段。</param>
+	/// <returns>对应的提交、终止或未决状态。</returns>
 	private static TransactionStatus ToStatus(EnlistmentPhase phase) => phase switch
 	{
 		EnlistmentPhase.Abort or EnlistmentPhase.Rollback => TransactionStatus.Aborted,

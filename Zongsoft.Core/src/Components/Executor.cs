@@ -89,31 +89,31 @@ public static class Executor
 		public ExecutorProxy(IHandler<TArgument> handler, IEnumerable<IFeature> features)
 		{
 			_handler = handler ?? throw new ArgumentNullException(nameof(handler));
-			_pipeline = Pipelines?.Build<TArgument>(features);
+			_pipeline = features == null ? null : Pipelines?.Build<TArgument>(features);
 		}
 
 		public ExecutorProxy(Action<TArgument> handler, IEnumerable<IFeature> features)
 		{
 			_handler = Handler.Handle(handler);
-			_pipeline = Pipelines?.Build<TArgument>(features);
+			_pipeline = features == null ? null : Pipelines?.Build<TArgument>(features);
 		}
 
 		public ExecutorProxy(Action<TArgument, Parameters> handler, IEnumerable<IFeature> features)
 		{
 			_handler = Handler.Handle(handler);
-			_pipeline = Pipelines?.Build<TArgument>(features);
+			_pipeline = features == null ? null : Pipelines?.Build<TArgument>(features);
 		}
 
 		public ExecutorProxy(Func<TArgument, CancellationToken, ValueTask> handler, IEnumerable<IFeature> features)
 		{
 			_handler = Handler.Handle(handler);
-			_pipeline = Pipelines?.Build<TArgument>(features);
+			_pipeline = features == null ? null : Pipelines?.Build<TArgument>(features);
 		}
 
 		public ExecutorProxy(Func<TArgument, Parameters, CancellationToken, ValueTask> handler, IEnumerable<IFeature> features)
 		{
 			_handler = Handler.Handle(handler);
-			_pipeline = Pipelines?.Build<TArgument>(features);
+			_pipeline = features == null ? null : Pipelines?.Build<TArgument>(features);
 		}
 
 		protected override IHandler GetHandler(IExecutorContext<TArgument> context) => _handler;
@@ -136,31 +136,31 @@ public static class Executor
 		public ExecutorProxy(IHandler<TArgument, TResult> handler, IEnumerable<IFeature> features)
 		{
 			_handler = handler ?? throw new ArgumentNullException(nameof(handler));
-			_pipeline = Pipelines?.Build<TArgument, TResult>(features);
+			_pipeline = features == null ? null : Pipelines?.Build<TArgument, TResult>(features);
 		}
 
 		public ExecutorProxy(Func<TArgument, TResult> handler, IEnumerable<IFeature> features)
 		{
 			_handler = Handler.Handle(handler);
-			_pipeline = Pipelines?.Build<TArgument, TResult>(features);
+			_pipeline = features == null ? null : Pipelines?.Build<TArgument, TResult>(features);
 		}
 
 		public ExecutorProxy(Func<TArgument, Parameters, TResult> handler, IEnumerable<IFeature> features)
 		{
 			_handler = Handler.Handle(handler);
-			_pipeline = Pipelines?.Build<TArgument, TResult>(features);
+			_pipeline = features == null ? null : Pipelines?.Build<TArgument, TResult>(features);
 		}
 
 		public ExecutorProxy(Func<TArgument, CancellationToken, ValueTask<TResult>> handler, IEnumerable<IFeature> features)
 		{
 			_handler = Handler.Handle(handler);
-			_pipeline = Pipelines?.Build<TArgument, TResult>(features);
+			_pipeline = features == null ? null : Pipelines?.Build<TArgument, TResult>(features);
 		}
 
 		public ExecutorProxy(Func<TArgument, Parameters, CancellationToken, ValueTask<TResult>> handler, IEnumerable<IFeature> features)
 		{
 			_handler = Handler.Handle(handler);
-			_pipeline = Pipelines?.Build<TArgument, TResult>(features);
+			_pipeline = features == null ? null : Pipelines?.Build<TArgument, TResult>(features);
 		}
 
 		protected override IHandler GetHandler(IExecutorContext<TArgument, TResult> context) => _handler;

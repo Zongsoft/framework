@@ -16,22 +16,10 @@
 		<object name="ZeroMQ" value="{static:Zongsoft.Messaging.ZeroMQ.Configuration.ZeroConnectionSettingsDriver.Instance, Zongsoft.Messaging.ZeroMQ}" />
 	</extension>
 
-	<!-- 暴露消息队列事件传输，订阅由事务通道统一管理 -->
-	<extension path="/Workbench/Events/Exchanger/Transports">
-		<expose name="ZeroMQ" type="Zongsoft.Messaging.ZeroMQ.ZeroQueueEventChannel, Zongsoft.Messaging.ZeroMQ" queue="zeromq@zeromq">
-			<expose name="Filtering" value="{path:../@Filtering}" />
-		</expose>
-	</extension>
-
-	<!-- 挂载事务事件交换通道 -->
+	<!-- 挂载事件传输通道；环境延期由交换器的调度器处理 -->
 	<extension path="/Workbench/Events/Exchanger/Channels">
-		<object name="ZeroMQ" type="Zongsoft.Data.Transactions.TransactionEventChannel, Zongsoft.Core">
-			<object.constructor>
-				<parameter name="channel" value="{path:Transport}" />
-			</object.constructor>
-
-			<expose name="Transport" value="{path:/Workbench/Events/Exchanger/Transports/ZeroMQ}" />
-			<expose name="Filtering" value="{path:/Workbench/Events/Exchanger/Transports/ZeroMQ@Filtering}" />
+		<object name="ZeroMQ" type="Zongsoft.Messaging.ZeroMQ.ZeroQueueEventChannel, Zongsoft.Messaging.ZeroMQ" queue="zeromq@zeromq">
+			<expose name="Filtering" value="{path:../@Filtering}" />
 		</object>
 	</extension>
 

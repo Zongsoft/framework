@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Messaging.ZeroMQ library.
  *
@@ -32,26 +32,29 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Components;
-using Zongsoft.Collections;
-using Zongsoft.Communication;
 
 namespace Zongsoft.Messaging.ZeroMQ;
 
+/// <summary>通过消息队列传输事件，并将收到的事件交给 <see cref="IEventReceiver"/>。</summary>
+/// <remarks>拥有事件订阅，借用 <see cref="Queue"/>；关闭后可重新打开，释放后不可重用。</remarks>
 [System.Reflection.DefaultMember(nameof(Filtering))]
 [System.ComponentModel.DefaultProperty(nameof(Filtering))]
-public class ZeroQueueEventChannel : ChannelBase, IEventChannel
+public class ZeroQueueEventChannel : IEventChannel
 {
-	#region 常量定义
-	private const string TOPIC = "Events";
-	#endregion
-
 	#region 成员字段
 	private IMessageQueue _queue;
 	private IMessageConsumer _subscriber;
+	private volatile bool _disposed;
+	private readonly SemaphoreSlim _lifecycle = new(1, 1);
 	#endregion
 
 	#region 构造函数
+	/// <summary>创建由插件或调用方设置消息队列的事件通道。</summary>
+	/// <param name="options">消息入队选项；<see langword="null"/> 时启用阈值为 4096 字节的 Brotli 压缩。</param>
 	public ZeroQueueEventChannel(MessageEnqueueOptions options = null) : this(null, options) { }
+	/// <summary>创建借用指定消息队列的事件通道。</summary>
+	/// <param name="queue">用于传输事件的消息队列；可在打开前通过 <see cref="Queue"/> 设置。</param>
+	/// <param name="options">消息入队选项；<see langword="null"/> 时使用默认压缩设置。</param>
 	public ZeroQueueEventChannel(IMessageQueue queue, MessageEnqueueOptions options = null)
 	{
 		_queue = queue;
@@ -67,6 +70,8 @@ public class ZeroQueueEventChannel : ChannelBase, IEventChannel
 	#endregion
 
 	#region 公共属性
+	/// <summary>获取或设置用于传输事件的消息队列。</summary>
+	/// <remarks>通道借用此队列，不负责释放；应在打开订阅前完成设置。</remarks>
 	[System.ComponentModel.TypeConverter(typeof(MessageQueueConverter))]
 	public IMessageQueue Queue
 	{
@@ -74,66 +79,106 @@ public class ZeroQueueEventChannel : ChannelBase, IEventChannel
 		set => _queue = value ?? throw new ArgumentNullException(nameof(value));
 	}
 
+	/// <summary>获取决定事件是否向远端发送的筛选条件。</summary>
 	public EventFiltering Filtering { get; }
+	/// <summary>获取或设置事件消息的入队选项。</summary>
 	public MessageEnqueueOptions Options { get; set; }
 	#endregion
 
-	#region 内部方法
-	internal static string GetEventName(string topic) => topic != null && topic.Length > TOPIC.Length + 1 && topic.StartsWith(TOPIC + "/", StringComparison.Ordinal) ? topic[(TOPIC.Length + 1)..] : null;
-	#endregion
-
 	#region 公共方法
-	public async ValueTask OpenAsync(EventExchanger exchanger, CancellationToken cancellation = default)
+	/// <summary>建立事件主题订阅；已打开时保持现有订阅。</summary>
+	/// <param name="receiver">处理远端事件的接收器。</param>
+	/// <param name="cancellation">订阅操作的取消令牌。</param>
+	/// <returns>订阅建立完成的任务。</returns>
+	public async ValueTask OpenAsync(IEventReceiver receiver, CancellationToken cancellation = default)
 	{
-		if(_queue == null)
-			throw new InvalidOperationException(Properties.Resources.ZeroQueueEventChannel_QueueRequired_Message);
+		ArgumentNullException.ThrowIfNull(receiver);
 
-		_subscriber = await _queue.SubscribeAsync(TOPIC, new Handler(exchanger), cancellation);
+		await _lifecycle.WaitAsync(cancellation).ConfigureAwait(false);
+
+		try
+		{
+			ObjectDisposedException.ThrowIf(_disposed, this);
+
+			if(_subscriber != null)
+				return;
+			if(_queue == null)
+				throw new InvalidOperationException(Properties.Resources.ZeroQueueEventChannel_QueueRequired_Message);
+
+			_subscriber = await _queue.SubscribeAsync(Events.GetTopic(), Events.GetHandler(receiver), cancellation).ConfigureAwait(false);
+		}
+		finally
+		{
+			_lifecycle.Release();
+		}
 	}
 
+	/// <summary>筛选并序列化事件，将符合条件的事件发送到消息队列。</summary>
+	/// <param name="context">待发送的事件上下文。</param>
+	/// <param name="cancellation">筛选及发送操作的取消令牌。</param>
+	/// <returns>消息入队或筛选排除完成的任务。</returns>
 	public async ValueTask SendAsync(EventContext context, CancellationToken cancellation = default)
 	{
+		ObjectDisposedException.ThrowIf(_disposed, this);
+
 		if(_queue == null)
 			throw new InvalidOperationException(Properties.Resources.ZeroQueueEventChannel_QueueRequired_Message);
 
 		if(await this.Filtering.PredicateAsync(context, cancellation))
-			await _queue.ProduceAsync($"{TOPIC}/{context.QualifiedName}", Events.Marshaler.Marshal(context), this.Options, cancellation);
+			await _queue.ProduceAsync(Events.GetTopic(context.QualifiedName), Events.Marshaler.Marshal(context), this.Options, cancellation);
+	}
+	#endregion
+
+	#region 生命周期
+	/// <summary>关闭并释放当前事件订阅，保留再次打开通道的能力。</summary>
+	/// <param name="cancellation">取消进入关闭流程的等待；订阅清理开始后不受取消影响。</param>
+	/// <returns>当前订阅释放完成的任务。</returns>
+	public async ValueTask CloseAsync(CancellationToken cancellation = default)
+	{
+		await _lifecycle.WaitAsync(cancellation).ConfigureAwait(false);
+
+		try
+		{
+			await this.CloseCoreAsync().ConfigureAwait(false);
+		}
+		finally
+		{
+			_lifecycle.Release();
+		}
+	}
+
+	/// <summary>释放事件订阅，并永久关闭通道。</summary>
+	/// <returns>通道拥有的订阅释放完成的任务。</returns>
+	public async ValueTask DisposeAsync()
+	{
+		await _lifecycle.WaitAsync().ConfigureAwait(false);
+
+		try
+		{
+			if(_disposed)
+				return;
+
+			await this.CloseCoreAsync().ConfigureAwait(false);
+			_disposed = true;
+		}
+		finally { _lifecycle.Release(); }
+	}
+
+	/// <summary>在已取得生命周期互斥锁时释放当前订阅。</summary>
+	/// <returns>订阅释放并清除引用的任务。</returns>
+	private async ValueTask CloseCoreAsync()
+	{
+		if(_subscriber == null)
+			return;
+
+		await _subscriber.DisposeAsync().ConfigureAwait(false);
+		_subscriber = null;
 	}
 	#endregion
 
 	#region 重写方法
-	protected override ValueTask OnCloseAsync(CancellationToken cancellation) => _subscriber == null ? ValueTask.CompletedTask : _subscriber.CloseAsync(cancellation);
-	protected override ValueTask DisposeAsync(bool disposing)
-	{
-		_queue = null;
-		_subscriber = null;
-		return base.DisposeAsync(disposing);
-	}
-
+	/// <summary>获取包含通道类型与消息队列的描述。</summary>
+	/// <returns>当前事件通道的文本表示。</returns>
 	public override string ToString() => _queue == null ? $"{nameof(ZeroQueueEventChannel)}" : $"{nameof(ZeroQueueEventChannel)}:{_queue}";
-	#endregion
-
-	#region 嵌套子类
-	private sealed class Handler(EventExchanger exchanger) : HandlerBase<Message>()
-	{
-		private readonly EventExchanger _exchanger = exchanger ?? throw new ArgumentNullException(nameof(exchanger));
-
-		protected override ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
-		{
-			if(message.IsEmpty)
-				return ValueTask.CompletedTask;
-
-			//从主题中提取所属的事件名称(完整限定名)
-			var name = GetEventName(message.Topic);
-			if(string.IsNullOrEmpty(name))
-				return ValueTask.CompletedTask;
-
-			//将消息内容还原成事件参数对象
-			(var argument, parameters) = Events.Marshaler.Unmarshal(name, message.Data);
-
-			//通过事件交换器重放接收到事件
-			return _exchanger.RaiseAsync(name, argument, parameters, cancellation);
-		}
-	}
 	#endregion
 }

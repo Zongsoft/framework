@@ -43,6 +43,9 @@ public interface IExecutorContext
 	/// <summary>获取可用于在本次执行过程中在各处理模块之间组织和共享数据的键/值集合。</summary>
 	Collections.Parameters Parameters { get; }
 
+	/// <summary>获取本次执行绑定的运行时特性快照；不作为管线策略配置。</summary>
+	System.Collections.Generic.IReadOnlyList<IFeature> Features { get; }
+
 	/// <summary>设置一个异常。</summary>
 	/// <param name="exception">发生的异常对象。</param>
 	void Error(Exception exception);

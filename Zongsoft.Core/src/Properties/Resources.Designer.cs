@@ -19,7 +19,7 @@ namespace Zongsoft.Properties {
     // 类通过类似于 ResGen 或 Visual Studio 的工具自动生成的。
     // 若要添加或移除成员，请编辑 .ResX 文件，然后重新运行 ResGen
     // (以 /str 作为命令选项)，或重新生成 VS 项目。
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "18.0.0.0")]
+    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "4.0.0.0")]
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
     internal class Resources {
@@ -47,8 +47,8 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
-        ///   重写当前线程的 CurrentUICulture 属性，对
-        ///   使用此强类型资源类的所有资源查找执行重写。
+        ///   使用此强类型资源类，为所有资源查找
+        ///   重写当前线程的 CurrentUICulture 属性。
         /// </summary>
         [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
         internal static global::System.Globalization.CultureInfo Culture {
@@ -1347,6 +1347,33 @@ namespace Zongsoft.Properties {
             }
         }
         
+        /// <summary>
+        ///   查找类似 The event dispatcher has reached its capacity. 的本地化字符串。
+        /// </summary>
+        internal static string EventDispatcher_CapacityExceeded_Message {
+            get {
+                return ResourceManager.GetString("EventDispatcher.CapacityExceeded.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The event dispatcher is not accepting work. 的本地化字符串。
+        /// </summary>
+        internal static string EventDispatcher_Closed_Message {
+            get {
+                return ResourceManager.GetString("EventDispatcher.Closed.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The event dispatcher does not support the runtime feature {0}. 的本地化字符串。
+        /// </summary>
+        internal static string EventDispatcher_FeatureUnsupported_Message {
+            get {
+                return ResourceManager.GetString("EventDispatcher.FeatureUnsupported.Message", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   查找类似 Unrecognized execution argument: &apos;{0}&apos;. 的本地化字符串。
         /// </summary>
@@ -2982,24 +3009,6 @@ namespace Zongsoft.Properties {
         internal static string TokenScanner_InvalidLength_Message {
             get {
                 return ResourceManager.GetString("TokenScanner.InvalidLength.Message", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   查找类似 The committed event &apos;{0}&apos; cannot be dispatched because the transaction event channel is closed. 的本地化字符串。
-        /// </summary>
-        internal static string TransactionEventChannel_DispatchClosed {
-            get {
-                return ResourceManager.GetString("TransactionEventChannel.DispatchClosed", resourceCulture);
-            }
-        }
-        
-        /// <summary>
-        ///   查找类似 The dispatching task of the transaction event channel &apos;{0}&apos; did not complete in a timely manner; the channel will be closed anyway. 的本地化字符串。
-        /// </summary>
-        internal static string TransactionEventChannel_DispatchingTimeout {
-            get {
-                return ResourceManager.GetString("TransactionEventChannel.DispatchingTimeout", resourceCulture);
             }
         }
         

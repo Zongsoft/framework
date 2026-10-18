@@ -11,21 +11,23 @@ internal class Program
 {
 	static async Task Main(string[] args)
 	{
-		ApplicationContext context = new();
+		using ApplicationContext context = new();
 
 		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `exit`  to quit the program.");
 		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `start` to start the event exchanger.");
 		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `stop`  to stop the event exchanger.");
 		Terminal.Write(CommandOutletColor.Red, "Tips: ");
-		Terminal.WriteLine(CommandOutletColor.DarkGray, "Input other text is added to the cache as value.");
+		Terminal.WriteLine(CommandOutletColor.DarkGray, "Input quantity/rounds to raise events; use --local to run without ZeroMQ.");
 		Terminal.WriteLine();
 
 		var text = string.Empty;
-		var sample = new EventExchangerSample();
+		await using var sample = new EventExchangerSample(!Array.Exists(args, argument => argument == "--local"));
 
 		while(true)
 		{
-			text = Console.ReadLine().Trim();
+			text = Console.ReadLine()?.Trim();
+			if(text == null)
+				return;
 
 			switch(text)
 			{
@@ -44,11 +46,14 @@ internal class Program
 					break;
 				case "start":
 				case "restart":
-					EventExchanger.Instance.Start();
+					if(text == "restart")
+						await EventExchanger.Instance.StopAsync();
+
+					await EventExchanger.Instance.StartAsync();
 					Terminal.WriteLine(CommandOutletColor.DarkGreen, "The event exchanger has started.");
 					break;
 				case "stop":
-					EventExchanger.Instance.Stop();
+					await EventExchanger.Instance.StopAsync();
 					Terminal.WriteLine(CommandOutletColor.DarkMagenta, "The event exchanger has stopped.");
 					break;
 				default:

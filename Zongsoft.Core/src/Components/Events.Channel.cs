@@ -30,106 +30,49 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using System.ComponentModel;
 
 using Zongsoft.Messaging;
 using Zongsoft.Collections;
-using Zongsoft.Communication;
 
 namespace Zongsoft.Components;
 
 partial class Events
 {
-	#region 静态方法
-	public static IEventChannel Channel([TypeConverter(typeof(MessageQueueConverter))]this IMessageQueue queue, MessageEnqueueOptions options = null)
+	private const string TOPIC = "Events";
+
+	/// <summary>获取事件消息的逻辑主题。</summary>
+	/// <param name="qualifiedName">事件的完整限定名；<see langword="null"/> 或空字符串表示事件主题根。</param>
+	/// <returns>事件主题根 <c>Events</c> 或指定事件的 <c>Events/完整限定名</c> 主题。</returns>
+	/// <remarks>不包含队列分组前缀或订阅通配符；具体订阅表达式由消息队列适配器决定。</remarks>
+	public static string GetTopic(string qualifiedName = null) => string.IsNullOrEmpty(qualifiedName) ? TOPIC : $"{TOPIC}/{qualifiedName}";
+
+	/// <summary>创建将队列消息还原为事件并交给指定接收器的处理器。</summary>
+	/// <param name="receiver">接收还原事件的接收器。</param>
+	/// <returns>绑定到 <paramref name="receiver"/> 的独立消息处理器。</returns>
+	/// <exception cref="ArgumentNullException"><paramref name="receiver"/> 为 <see langword="null"/>。</exception>
+	/// <remarks>忽略空消息及不以 <c>Events/</c> 开头或缺少事件名的逻辑主题。接收失败和取消向调用方传播，不自动确认消息。</remarks>
+	public static IHandler<Message> GetHandler(IEventReceiver receiver)
 	{
-		ArgumentNullException.ThrowIfNull(queue);
-		return new MessageQueueEventChannel(queue, options);
+		ArgumentNullException.ThrowIfNull(receiver);
+		return new MessageHandler(receiver);
 	}
-	#endregion
 
-	[DefaultProperty(nameof(Filtering))]
-	[System.Reflection.DefaultMember(nameof(Filtering))]
-	private sealed class MessageQueueEventChannel : ChannelBase, IEventChannel
+	private sealed class MessageHandler(IEventReceiver receiver) : HandlerBase<Message>()
 	{
-		#region 常量定义
-		private const string TOPIC = "Events";
-		#endregion
+		private readonly IEventReceiver _receiver = receiver;
 
-		#region 成员字段
-		private IMessageQueue _queue;
-		private IMessageConsumer _subscriber;
-		#endregion
-
-		#region 构造函数
-		internal MessageQueueEventChannel(IMessageQueue queue, MessageEnqueueOptions options = null)
+		protected override ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
 		{
-			_queue = queue ?? throw new ArgumentNullException(nameof(queue));
-			this.Options = options;
-			this.Filtering = new();
+			if(message.IsEmpty)
+				return ValueTask.CompletedTask;
+
+			var topic = message.Topic;
+			if(topic == null || topic.Length <= TOPIC.Length + 1 || !topic.StartsWith(TOPIC + "/", StringComparison.Ordinal))
+				return ValueTask.CompletedTask;
+
+			var name = topic[(TOPIC.Length + 1)..];
+			(var argument, parameters) = Marshaler.Unmarshal(name, message.Data);
+			return _receiver.ReceiveAsync(name, argument, parameters, cancellation);
 		}
-		#endregion
-
-		#region 公共属性
-		public EventFiltering Filtering { get; }
-		public MessageEnqueueOptions Options { get; set; }
-		#endregion
-
-		#region 公共方法
-		public async ValueTask OpenAsync(EventExchanger exchanger, CancellationToken cancellation = default)
-		{
-			if(_queue == null)
-				throw new ObjectDisposedException(this.GetType().Name);
-
-			_subscriber = await _queue.SubscribeAsync(TOPIC, new Handler(exchanger), cancellation);
-		}
-
-		public async ValueTask SendAsync(EventContext context, CancellationToken cancellation = default)
-		{
-			if(_queue == null)
-				throw new ObjectDisposedException(this.GetType().Name);
-
-			if(await this.Filtering.PredicateAsync(context, cancellation))
-				await _queue.ProduceAsync($"{TOPIC}/{context.QualifiedName}", Events.Marshaler.Marshal(context), this.Options, cancellation);
-		}
-		#endregion
-
-		#region 重写方法
-		protected override ValueTask OnCloseAsync(CancellationToken cancellation) => _subscriber == null ? ValueTask.CompletedTask : _subscriber.CloseAsync(cancellation);
-		protected override ValueTask DisposeAsync(bool disposing)
-		{
-			_queue = null;
-			_subscriber = null;
-			return base.DisposeAsync(disposing);
-		}
-
-		public override string ToString() => _queue == null ? $"{nameof(MessageQueueEventChannel)}(disposed)" : $"{nameof(MessageQueueEventChannel)}:{_queue}";
-		#endregion
-
-		#region 嵌套子类
-		private sealed class Handler(EventExchanger exchanger) : HandlerBase<Message>()
-		{
-			private readonly EventExchanger _exchanger = exchanger ?? throw new ArgumentNullException(nameof(exchanger));
-
-			protected override ValueTask OnHandleAsync(Message message, Parameters parameters, CancellationToken cancellation)
-			{
-				if(message.IsEmpty)
-					return ValueTask.CompletedTask;
-
-				//从主题中提取所属的事件名称(完整限定名)
-				var name = GetEventName(message.Topic);
-				if(string.IsNullOrEmpty(name))
-					return ValueTask.CompletedTask;
-
-				//将消息内容还原成事件参数对象
-				(var argument, parameters) = Events.Marshaler.Unmarshal(name, message.Data);
-
-				//通过事件交换器重放接收到事件
-				return _exchanger.RaiseAsync(name, argument, parameters, cancellation);
-			}
-
-			private static string GetEventName(string topic) => topic != null && topic.Length > TOPIC.Length + 1 && topic.StartsWith(TOPIC) ? topic[(TOPIC.Length + 1)..] : null;
-		}
-		#endregion
 	}
 }

@@ -35,6 +35,7 @@ using System.Xml.Linq;
 using System.Threading;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -84,7 +85,7 @@ public class ZeroPluginTests
 			var binding = Assert.Single(bindings, declaration => (string)declaration.Attribute("name") == $"zeromq/{role}");
 			Assert.Equal("Messaging/ZeroMQ/Server", (string)binding.Attribute("path"));
 			Assert.Equal("enabled:true", (string)binding.Attribute("filter"));
-			Assert.Equal("${option." + role + "}", (string)binding.Attribute("template"));
+			Assert.Equal("${this." + role + "}", (string)binding.Attribute("template"));
 			Assert.Equal("tcp", (string)binding.Attribute("protocols"));
 			Assert.Null(binding.Attribute("required"));
 			var address = role switch
@@ -100,6 +101,44 @@ public class ZeroPluginTests
 		await server.StartAsync([]);
 		Assert.Equal(WorkerState.Running, server.State);
 		Assert.Equal(new Uri(server.Control).Port, ZeroTestUtility.GetServerPorts(scope.Port).Control);
+
+		using(var queue = ZeroTestUtility.CreateQueue(scope.Port, "plugin-events"))
+		{
+			var transport = Assert.IsType<ZeroQueueEventChannel>(scope.Application.PluginTree.Find("/Workbench/Events/Exchanger/Channels/ZeroMQ").UnwrapValue(ObtainMode.Never));
+			transport.Queue = queue;
+			var dispatcher = Assert.IsType<EventDispatcher>(EventExchanger.Instance.Dispatcher);
+			var original = dispatcher.Pipeline;
+			var pipeline = new RecordingPipeline();
+			dispatcher.Pipeline = pipeline;
+
+			try
+			{
+				await EventExchanger.Instance.StartAsync([]);
+				Assert.Equal(WorkerState.Running, EventExchanger.Instance.State);
+				Assert.Single(queue.Subscribers);
+				Assert.True(queue.Subscribers.TryGetValue("Events", out _));
+
+				using var transaction = new Data.Transaction();
+				await EventExchanger.Instance.ExchangeAsync(new EventContext<int>(new EventRegistry(), "Changed", 1), CancellationToken.None);
+
+				Assert.Equal(0, pipeline.Delivered);
+
+				transaction.Commit();
+				await EventExchanger.Instance.StopAsync([]);
+
+				Assert.Equal(1, pipeline.Delivered);
+				Assert.Empty(queue.Subscribers);
+
+				await EventExchanger.Instance.StartAsync([]);
+
+				Assert.Single(queue.Subscribers);
+			}
+			finally
+			{
+				await EventExchanger.Instance.StopAsync([]);
+				dispatcher.Pipeline = original;
+			}
+		}
 
 		using(var publisher = ZeroTestUtility.CreateQueue(scope.Port, "plugin-publisher"))
 		using(var subscriber = ZeroTestUtility.CreateQueue(scope.Port, "plugin-subscriber"))
@@ -152,25 +191,39 @@ public class ZeroPluginTests
 		Assert.True(ZeroTestUtility.CanBindZeroMq(scope.Port));
 	}
 
-	[Fact]
-	public async Task ClientPluginDoesNotCreateServer()
+	[Theory]
+	[InlineData(null)]
+	[InlineData("Channel")]
+	[InlineData("Filtering")]
+	public async Task ClientPluginDoesNotCreateServer(string prebuilt = null)
 	{
 		if(!Global.IsTestingEnabled)
 			return;
 
 		if(!TestProgram.IsPluginProbe)
 		{
-			await RunProbeAsync(nameof(ClientPluginDoesNotCreateServer));
+			await RunProbeAsync(prebuilt == null ? nameof(ClientPluginDoesNotCreateServer) : $"{nameof(ClientPluginDoesNotCreateServer)}.{prebuilt}");
 			return;
 		}
 
 		using var scope = new PluginScope(false, false);
+		var exposed = prebuilt == null ? null : scope.Application.PluginTree.Find(prebuilt == "Channel" ? "/Workbench/Events/Exchanger/Channels/ZeroMQ" : "/Workbench/Events/Exchanger/Channels/ZeroMQ/Filtering").UnwrapValue(ObtainMode.Auto);
 		scope.Workbench.Open();
 		Assert.Empty(scope.Application.Workers.OfType<ZeroQueueServer>());
 		Assert.Null(scope.Application.PluginTree.Find("/Workbench/Messaging/Zero/QueueServer"));
 		Assert.Null(scope.Configuration["Messaging:ZeroMQ:Server:Discovery"]);
 		Assert.NotNull(scope.Application.PluginTree.Find("/Workbench/Configuration/ConnectionSettings/Drivers/ZeroMQ"));
 		Assert.Equal("ZeroMQ", scope.Configuration["Messaging:ConnectionSettings:ZeroMQ:Driver"]);
+		var channel = Assert.IsType<ZeroQueueEventChannel>(Assert.Single(EventExchanger.Instance.Channels));
+		var transport = channel;
+		Assert.Null(scope.Application.PluginTree.Find("/Workbench/Events/Exchanger/Transports"));
+		Assert.Same(transport, scope.Application.PluginTree.Find("/Workbench/Events/Exchanger/Channels/ZeroMQ").UnwrapValue(ObtainMode.Never));
+		Assert.Same(transport.Filtering, scope.Application.PluginTree.Find("/Workbench/Events/Exchanger/Channels/ZeroMQ/Filtering").UnwrapValue(ObtainMode.Never));
+		Assert.Same(channel, scope.Application.PluginTree.Find("/Workbench/Events/Exchanger/Channels/ZeroMQ").UnwrapValue(ObtainMode.Never));
+
+		if(prebuilt != null)
+			Assert.Same(prebuilt == "Channel" ? transport : (object)transport.Filtering, exposed);
+
 		Assert.True(ZeroTestUtility.CanBindZeroMq(scope.Port));
 	}
 
@@ -290,5 +343,24 @@ public class ZeroPluginTests
 	}
 
 	private sealed class TestApplicationContext(IServiceProvider services, PluginOptions options) : PluginApplicationContext(services, options);
+	private sealed class RecordingPipeline : IFeaturePipeline<EventContext>
+	{
+		public int Delivered { get; private set; }
+		public IEnumerable<IFeature> Features => [];
+		public void Execute(Action<EventContext> executor, EventContext argument) => throw new NotSupportedException();
+		public void Execute(Action<EventContext, Collections.Parameters> executor, EventContext argument, Collections.Parameters parameters) => throw new NotSupportedException();
+		public ValueTask ExecuteAsync(Func<EventContext, CancellationToken, ValueTask> executor, EventContext argument, CancellationToken cancellation = default) =>
+			this.ExecuteAsync((context, _, token) => executor(context, token), argument, null, cancellation);
+		public async ValueTask ExecuteAsync(Func<EventContext, Collections.Parameters, CancellationToken, ValueTask> executor, EventContext argument, Collections.Parameters parameters, CancellationToken cancellation = default)
+		{
+			await executor(argument, parameters, cancellation);
+			this.Delivered++;
+		}
+	}
+
+	private sealed class EventRegistry : EventRegistryBase
+	{
+		public EventRegistry() : base("PluginTests") => this.Event<int>("Changed");
+	}
 	private sealed class TestWorkbench(PluginApplicationContext application) : WorkbenchBase(application);
 }

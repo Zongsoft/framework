@@ -1,6 +1,8 @@
 using System;
 using System.IO;
+using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Xunit;
 
@@ -23,17 +25,40 @@ internal static class TestProgram
 
 		try
 		{
+			if(args[1] == "environment")
+			{
+				Assert.Null(Services.ApplicationContext.Current);
+				await VerifyEnvironmentAsync();
+				File.AppendAllLines(trace, ["environment"]);
+				return 0;
+			}
+
 			if(args[1] == "registration")
 			{
+				var environment = new FeatureProvider();
 				using var host = Hosting.Application.Daemon(typeof(TestProgram).Assembly.GetName().Name, [$"--contentRoot={directory}"], builder =>
 				{
 					builder.Environment.EnvironmentName = "Development";
 					builder.Configuration["Fixture:registration:enabled"] = "true";
+					builder.Services.AddSingleton<Components.IFeatureProvider>(environment);
+					builder.Services.AddSingleton<Components.IFeatureProvider>(Components.FeatureProvider.Default);
 				});
 				var snapshot = Assert.Single(host.Services.GetServices<ApplicationLifecycleTests.RegistrationSnapshot>());
 
 				Assert.Equal("http://*:4317/opentelemetry", snapshot.Url);
 				Assert.Equal("grpc+http2", snapshot.Protocols);
+				Assert.Collection(host.Services.GetServices<Components.IFeatureProvider>(),
+					provider => Assert.Same(environment, provider),
+					provider => Assert.Same(Components.FeatureProvider.Default, provider));
+				Components.FeatureProvider.Default.Providers.Add(environment);
+
+				try { await VerifyEnvironmentAsync(); }
+				finally { Components.FeatureProvider.Default.Providers.Remove(environment); }
+
+				Assert.Equal(2, environment.Reads);
+				Assert.Empty(new Components.FeatureProvider().GetFeatures());
+				Assert.Equal(2, environment.Reads);
+
 				File.AppendAllLines(trace, ["registered"]);
 				return 0;
 			}
@@ -96,6 +121,55 @@ internal static class TestProgram
 		{
 			File.AppendAllText(trace, error.ToString());
 			return 1;
+		}
+	}
+
+	private static async Task VerifyEnvironmentAsync()
+	{
+		await using var dispatcher = new Components.EventDispatcher();
+		await dispatcher.StartAsync();
+		var delivered = new List<int>();
+		var executor = Components.Executor.Build<Components.EventContext>(context =>
+			delivered.Add((int)((Components.EventContext<object>)context).Argument));
+		var registry = new EventRegistry();
+
+		using(var transaction = new Data.Transaction())
+		{
+			await dispatcher.DispatchAsync(new Components.EventContext<int>(registry, "Changed", 1), executor);
+
+			Assert.Empty(delivered);
+			await transaction.CommitAsync();
+		}
+
+		using(var transaction = new Data.Transaction())
+		{
+			await dispatcher.DispatchAsync(new Components.EventContext<int>(registry, "Changed", 2), executor);
+			await transaction.RollbackAsync();
+		}
+
+		await dispatcher.StopAsync();
+
+		Assert.Equal([1], delivered);
+	}
+
+	private sealed class EventRegistry : Components.EventRegistryBase
+	{
+		public EventRegistry() : base("PluginEnvironments") => this.Event<int>("Changed");
+	}
+
+	private sealed class Condition : Components.IFeature, Common.IPredication
+	{
+		public ValueTask<bool> PredicateAsync(object argument, CancellationToken cancellation = default) => this.PredicateAsync(argument, null, cancellation);
+		public ValueTask<bool> PredicateAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation = default) => ValueTask.FromResult(true);
+	}
+
+	private sealed class FeatureProvider : Components.IFeatureProvider
+	{
+		public int Reads { get; private set; }
+		public IEnumerable<Components.IFeature> GetFeatures()
+		{
+			this.Reads++;
+			return [new Condition()];
 		}
 	}
 

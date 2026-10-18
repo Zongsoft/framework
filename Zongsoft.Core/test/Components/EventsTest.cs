@@ -148,6 +148,156 @@ public class EventsTest
 		Assert.Equal("StringValue", (string)value);
 	}
 
+	[Theory]
+	[InlineData(null, "Events")]
+	[InlineData("", "Events")]
+	[InlineData("Orders.Created", "Events/Orders.Created")]
+	[InlineData("ModuleB:Target1.Created", "Events/ModuleB:Target1.Created")]
+	[InlineData("Domain/Changed", "Events/Domain/Changed")]
+	public void TestGetTopic(string name, string expected) => Assert.Equal(expected, Events.GetTopic(name));
+
+	[Fact]
+	public void TestGetHandlerRequiresReceiver() => Assert.Throws<ArgumentNullException>("receiver", () => Events.GetHandler(null));
+
+	[Theory]
+	[InlineData(null)]
+	[InlineData("")]
+	[InlineData("Events")]
+	[InlineData("Events/")]
+	[InlineData("events/ModuleB:Target1.Created")]
+	[InlineData("EventsX/ModuleB:Target1.Created")]
+	[InlineData("tenant:Events/ModuleB:Target1.Created")]
+	public async Task TestMessageHandlerIgnoresInvalidTopics(string topic)
+	{
+		var receiver = new EventReceiver();
+		var handler = Events.GetHandler(receiver);
+
+		await handler.HandleAsync(new Messaging.Message(topic, "invalid-json"u8.ToArray()));
+
+		Assert.Equal(0, receiver.Count);
+	}
+
+	[Theory]
+	[InlineData("Events/Orders.Created", "Orders.Created")]
+	[InlineData("Events/Domain/Changed", "Domain/Changed")]
+	public async Task TestMessageHandlerPreservesLogicalEventName(string topic, string expected)
+	{
+		var receiver = new EventReceiver();
+		var handler = Events.GetHandler(receiver);
+
+		await handler.HandleAsync(new Messaging.Message(topic, "{}"u8.ToArray()));
+
+		Assert.Equal(1, receiver.Count);
+		Assert.Equal(expected, receiver.Name);
+	}
+
+	[Fact]
+	public async Task TestMessageHandlerIgnoresEmptyMessages()
+	{
+		var receiver = new EventReceiver();
+		var handler = Events.GetHandler(receiver);
+
+		await handler.HandleAsync(Messaging.Message.Empty);
+		await handler.HandleAsync(new Messaging.Message("Events/ModuleB:Target1.Created", []));
+
+		Assert.Equal(0, receiver.Count);
+	}
+
+	[Fact]
+	public async Task TestMessageHandlerRestoresEventAndDoesNotAcknowledge()
+	{
+		using var cancellation = new CancellationTokenSource();
+		var receiver = new EventReceiver();
+		var other = new EventReceiver();
+		var handler = Events.GetHandler(receiver);
+		var otherHandler = Events.GetHandler(other);
+		var argument = new CreatedArgument("created");
+		var context = new EventContext<CreatedArgument>(ModuleB.Current.Events, "Target1.Created", argument, new Parameters { ["Correlation"] = "event-123" });
+		var acknowledged = 0;
+		var message = new Messaging.Message(Events.GetTopic(context.QualifiedName), Events.Marshaler.Marshal(context), () => acknowledged++);
+
+		await handler.HandleAsync(message, new Parameters { ["Transport"] = "queue" }, cancellation.Token);
+
+		Assert.Equal(1, receiver.Count);
+		Assert.Equal(context.QualifiedName, receiver.Name);
+		Assert.Equal("created", Assert.IsType<CreatedArgument>(receiver.Argument).Message);
+		Assert.NotSame(argument, receiver.Argument);
+		Assert.Equal("event-123", receiver.Parameters["Correlation"]);
+		Assert.False(receiver.Parameters.Contains("Transport"));
+		Assert.Equal(cancellation.Token, receiver.Cancellation);
+		Assert.Equal(0, acknowledged);
+
+		Assert.NotSame(handler, otherHandler);
+		Assert.Equal(0, other.Count);
+		await otherHandler.HandleAsync(message);
+
+		Assert.Equal(1, other.Count);
+		Assert.Equal(1, receiver.Count);
+	}
+
+	[Fact]
+	public async Task TestMessageHandlerPropagatesReceiveCompletionAndFailure()
+	{
+		var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var receiver = new EventReceiver { Completion = _ => new(completion.Task) };
+		var handler = Events.GetHandler(receiver);
+		var pending = handler.HandleAsync(new Messaging.Message("Events/Orders.Created", "{}"u8.ToArray())).AsTask();
+
+		Assert.False(pending.IsCompleted);
+		var failure = new InvalidOperationException("Receive failed");
+		completion.SetException(failure);
+
+		Assert.Same(failure, await Assert.ThrowsAsync<InvalidOperationException>(() => pending));
+	}
+
+	[Fact]
+	public async Task TestMessageHandlerPropagatesReceiveCancellation()
+	{
+		using var cancellation = new CancellationTokenSource();
+		var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var receiver = new EventReceiver { Completion = token => new(completion.Task.WaitAsync(token)) };
+		var handler = Events.GetHandler(receiver);
+		var pending = handler.HandleAsync(new Messaging.Message("Events/Orders.Created", "{}"u8.ToArray()), cancellation.Token).AsTask();
+
+		cancellation.Cancel();
+
+		var exception = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => pending);
+		Assert.Equal(cancellation.Token, exception.CancellationToken);
+		Assert.False(completion.Task.IsCompleted);
+	}
+
+	[Fact]
+	public async Task TestMessageHandlerPropagatesMalformedEventPayload()
+	{
+		var receiver = new EventReceiver();
+		var handler = Events.GetHandler(receiver);
+		var message = new Messaging.Message("Events/ModuleB:Target1.Created", "invalid-json"u8.ToArray());
+
+		await Assert.ThrowsAsync<System.Text.Json.JsonException>(() => handler.HandleAsync(message).AsTask());
+
+		Assert.Equal(0, receiver.Count);
+	}
+
+	private sealed class EventReceiver : IEventReceiver
+	{
+		public int Count { get; private set; }
+		public string Name { get; private set; }
+		public object Argument { get; private set; }
+		public Parameters Parameters { get; private set; }
+		public CancellationToken Cancellation { get; private set; }
+		public Func<CancellationToken, ValueTask> Completion { get; init; }
+
+		public ValueTask ReceiveAsync(string name, object argument, Parameters parameters, CancellationToken cancellation = default)
+		{
+			this.Count++;
+			this.Name = name;
+			this.Argument = argument;
+			this.Parameters = parameters;
+			this.Cancellation = cancellation;
+			return this.Completion?.Invoke(cancellation) ?? ValueTask.CompletedTask;
+		}
+	}
+
 	private class CreatedHandler : HandlerBase<CreatedArgument>
 	{
 		protected override ValueTask OnHandleAsync(CreatedArgument argument, Parameters parameters, CancellationToken cancellation) => throw new NotImplementedException();

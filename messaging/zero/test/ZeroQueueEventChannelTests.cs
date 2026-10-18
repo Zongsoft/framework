@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Xunit;
@@ -9,6 +10,38 @@ namespace Zongsoft.Messaging.ZeroMQ.Tests;
 
 public class ZeroQueueEventChannelTests
 {
+	[Fact]
+	public async Task ChannelCanReopenAndDoesNotOwnQueue()
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		using var server = await ZeroServerScope.StartAsync();
+		using var queue = ZeroTestUtility.CreateQueue(server.Port, "event-lifecycle");
+		await using var channel = new ZeroQueueEventChannel(queue);
+		var receiver = new Receiver();
+		await Task.WhenAll(channel.OpenAsync(receiver).AsTask(), channel.OpenAsync(receiver).AsTask());
+
+		var first = Assert.Single(queue.Subscribers);
+		await Task.WhenAll(channel.CloseAsync().AsTask(), channel.CloseAsync().AsTask());
+
+		Assert.Empty(queue.Subscribers);
+		Assert.False(queue.IsDisposed);
+
+		using var canceled = new CancellationTokenSource();
+		canceled.Cancel();
+		await Assert.ThrowsAnyAsync<OperationCanceledException>(() => channel.OpenAsync(receiver, canceled.Token).AsTask());
+		await channel.OpenAsync(receiver);
+
+		Assert.NotSame(first, Assert.Single(queue.Subscribers));
+
+		await channel.DisposeAsync();
+		await Assert.ThrowsAsync<ObjectDisposedException>(() => channel.OpenAsync(receiver).AsTask());
+
+		Assert.Empty(queue.Subscribers);
+		Assert.False(queue.IsDisposed);
+	}
+
 	[Fact]
 	public async Task DefaultEventChannelUsesBroadcastWithoutStorage()
 	{
@@ -36,18 +69,9 @@ public class ZeroQueueEventChannelTests
 		Assert.NotEmpty(message.Data);
 	}
 
-	[Theory]
-	[InlineData("Events/Orders.Created", "Orders.Created")]
-	[InlineData("Events/Domain/Changed", "Domain/Changed")]
-	public void EventNameUsesLogicalTopicBoundary(string topic, string expected) => Assert.Equal(expected, ZeroQueueEventChannel.GetEventName(topic));
-
-	[Theory]
-	[InlineData(null)]
-	[InlineData("")]
-	[InlineData("Events")]
-	[InlineData("EventsX/Orders.Created")]
-	[InlineData("tenant:Events/Orders.Created")]
-	public void EventNameRejectsNonLogicalEventTopics(string topic) => Assert.Null(ZeroQueueEventChannel.GetEventName(topic));
-
 	private sealed class TestEventRegistry(string name) : EventRegistryBase(name);
+	private sealed class Receiver : IEventReceiver
+	{
+		public ValueTask ReceiveAsync(string name, object argument, Collections.Parameters parameters, CancellationToken cancellation = default) => ValueTask.CompletedTask;
+	}
 }

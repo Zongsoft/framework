@@ -72,6 +72,10 @@ dotnet add package Zongsoft.Core
 
 普通 `[Service]` 注册及选项扫描仍要求类型对外可见。非公开外层类型中的公共嵌套服务也不属于对外可见类型；因此可以隐藏注册辅助类，而不会自动公开内部服务。
 
+## 事件调度
+
+`EventExchanger` 通过 `IEventDispatcher` 捕获环境特性，再由内部固定的 `IExecutor<EventContext>` 执行远程投递。`FeatureProvider.Default` 默认包含 `Transaction.Features`，该共享提供者捕获事务绑定的 `IFeature` 与 `IPredication` 组合特性，独立使用时同样有效；应用可扩展其 `Providers` 集合，或注册 `IFeatureProvider` 服务追加条件。通道通过 `IEventReceiver` 接收事件；消息队列通道复用 `Events.GetTopic()` 的主题约定与 `Events.GetHandler(receiver)` 的通用接收处理器。默认投递不启用策略管线；应用插件可以通过 `EventDispatcher.Pipeline` 显式组合 Polly 策略。详见[事件调度与环境特性](docs/event-dispatching.zh-Hans.md)。
+
 ## 通信生命周期
 
 `ChannelBase.CloseAsync` 只执行一次，并与并发调用者共享结果。进入前取消会阻止关闭，开始后取消只影响本调用方的等待；前后通知异常不能跳过传输清理。释放先等待关闭，再执行一次派生资源清理。关闭后不能重新打开通道，应创建新实例。生命周期回调可以请求关闭，但不能同步等待包含自身的操作。

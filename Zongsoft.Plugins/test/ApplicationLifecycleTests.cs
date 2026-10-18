@@ -21,6 +21,7 @@ public class ApplicationLifecycleTests
 	[InlineData("daemon", new[] { "opened", "started", "closed" })]
 	[InlineData("terminal", new[] { "created" })]
 	[InlineData("registration", new[] { "registered" })]
+	[InlineData("environment", new[] { "environment" })]
 	public async Task HostLifecycleRunsInAnIsolatedProcessAsync(string scenario, string[] expected)
 	{
 		using var scope = new PluginTestScope();

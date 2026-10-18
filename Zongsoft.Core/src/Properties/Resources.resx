@@ -343,12 +343,6 @@
   <data name="ErrorOccurred.Label" xml:space="preserve">
 		<value>Error occurred: </value>
 	</data>
-  <data name="TransactionEventChannel.DispatchingTimeout" xml:space="preserve">
-		<value>The dispatching task of the transaction event channel '{0}' did not complete in a timely manner; the channel will be closed anyway.</value>
-	</data>
-  <data name="TransactionEventChannel.DispatchClosed" xml:space="preserve">
-		<value>The committed event '{0}' cannot be dispatched because the transaction event channel is closed.</value>
-	</data>
   <data name="Schema.EmptyParsingStack.Message" xml:space="preserve">
 		<value>ParsingError: The parsing stack is empty.</value>
 	</data>
@@ -1123,4 +1117,13 @@
   <data name="Configuration.Xml.LinkResolutionFailed.Message" xml:space="preserve">
 		<value>Unable to resolve the XML configuration path link: {0}.</value>
 	</data>
+  <data name="EventDispatcher.Closed.Message" xml:space="preserve">
+    <value>The event dispatcher is not accepting work.</value>
+  </data>
+  <data name="EventDispatcher.CapacityExceeded.Message" xml:space="preserve">
+    <value>The event dispatcher has reached its capacity.</value>
+  </data>
+  <data name="EventDispatcher.FeatureUnsupported.Message" xml:space="preserve">
+    <value>The event dispatcher does not support the runtime feature {0}.</value>
+  </data>
 </root>

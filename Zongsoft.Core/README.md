@@ -72,6 +72,10 @@ The text format is `algorithm#factor:nonce|value`; `#factor` may be omitted when
 
 Ordinary `[Service]` registrations and option scanning still require externally visible types. A public nested service inside a non-public containing type is not externally visible. This keeps implementation-only services out of automatic registration while allowing private registration helpers.
 
+## Event Dispatch
+
+`EventExchanger` uses `IEventDispatcher` to capture ambient features and a fixed private `IExecutor<EventContext>` for remote delivery. `FeatureProvider.Default` includes `Transaction.Features`, the shared provider of transaction-bound features implementing `IFeature` and `IPredication`, including in standalone use. Applications can extend its `Providers` collection or register `IFeatureProvider` services to add conditions. Channels receive events through `IEventReceiver`. Queue event channels share the topic convention in `Events.GetTopic()` and the incoming message handler from `Events.GetHandler(receiver)`. Default delivery has no policy pipeline; application plugins can explicitly configure Polly policies through `EventDispatcher.Pipeline`. See [event dispatch and ambient features](docs/event-dispatching.md).
+
 ## Communication Lifetimes
 
 `ChannelBase.CloseAsync` executes once and shares its result with concurrent callers. Cancellation before entry prevents closing; after entry it only cancels that caller's wait. Closing and closed notifications cannot bypass transport cleanup. Disposal waits for closing before invoking the derived resource cleanup once. A closed channel cannot be reopened; create a new instance. Lifecycle callbacks may request closing but must not synchronously wait for the operation that contains them.

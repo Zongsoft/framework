@@ -22,7 +22,7 @@ description: 创建、审查、调试、测试或重构 messaging/zero 下的 Zo
 - `ZeroQueueServer` 暴露 Discovery REP、MostOnce XSUB/XPUB 数据端点和可选 LeastOnce ROUTER Control 端点。`ServerAgent` 拥有单一 Poller；`ZeroBroadcastServer` 拥有 XSUB/XPUB；`ZeroControlServer` 拥有在线注册、Broker Pending、竞争投递、重试、ACK 和有界 `StorageWorker`。存储结果通过 Actor 命令返回 Poller。
 - `ZeroQueue` 是唯一公共队列门面。私有 `ZeroQueue.Transport` Actor 负责 Discovery；内部 `ZeroBroadcast` 和 `ZeroControl` 共享 Poller，分别拥有 XPUB/SUB 广播状态与 DEALER 可靠控制状态。没有第二个生产传输前不要引入 Transport 接口。
 - 一个 `ZeroSubscriber` 使用一个物理 Topic 的 `SubscriberSocket` 和有界、有序 Handler Channel。`MessageQueueBase.Subscribers` 是唯一逻辑 Topic 注册表：初始化项可共享但不可见，只有成功初始化的消费者进入公共活动视图。
-- `ZeroRequester`/`ZeroResponder` 将通信 URL 映射为队列 Topic；`ZeroQueueEventChannel` 将事件映射到 `Events/...`。
+- `ZeroRequester`/`ZeroResponder` 将通信 URL 映射为队列 Topic；`ZeroQueueEventChannel` 通过 Core 的 `Events.GetTopic()` 映射事件主题，通过 `Events.GetHandler(receiver)` 还原接收消息；逻辑主题和处理器的公共实现位于 `Events.Channel.cs`，ZeroMQ 保留筛选、选项和订阅生命周期。
 - daemon 插件启动 `ZeroQueueServer`；主插件注册连接驱动、事件传输、Requester 和 Responder。
 
 ## 不可破坏的不变量

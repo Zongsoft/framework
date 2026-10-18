@@ -49,6 +49,7 @@ public abstract class ApplicationBuilderBase<TApplication> : Services.IApplicati
 	#endregion
 
 	#region 公共方法
+	/// <summary>按应用名称及宿主程序集名称加载配置入口。</summary>
 	public void LoadConfiguration()
 	{
 		this.LoadConfiguration(this.Environment.ApplicationName);
@@ -70,10 +71,15 @@ public abstract class ApplicationBuilderBase<TApplication> : Services.IApplicati
 	#endregion
 
 	#region 抽象方法
+	/// <summary>构建已加载配置并完成服务注册的应用宿主。</summary>
+	/// <returns>可启动的应用宿主。</returns>
 	public abstract TApplication Build();
 	#endregion
 
 	#region 虚拟方法
+	/// <summary>根据当前宿主环境创建插件加载选项。</summary>
+	/// <param name="configuration">插件选项使用的配置。</param>
+	/// <returns>包含宿主环境信息的插件加载选项。</returns>
 	protected virtual PluginOptions CreateOptions(IConfiguration configuration) => new(configuration, this.Environment);
 	/// <summary>加载完整插件配置，并按程序集去重注册宿主和插件服务。</summary>
 	/// <param name="services">承载宿主和插件服务的集合。</param>
@@ -121,6 +127,10 @@ public abstract class ApplicationBuilderBase<TApplication> : Services.IApplicati
 	#endregion
 
 	#region 私有方法
+	/// <summary>在已加载的程序集集合中查找指定程序集。</summary>
+	/// <param name="name">包含版本等标识信息的程序集名称。</param>
+	/// <param name="assemblies">已加载的程序集集合。</param>
+	/// <returns>完整名称匹配的程序集；未找到时返回 <see langword="null"/>。</returns>
 	private static Assembly GetAssembly(AssemblyName name, Assembly[] assemblies)
 	{
 		for(int i = 0; i < assemblies.Length; i++)
@@ -132,6 +142,11 @@ public abstract class ApplicationBuilderBase<TApplication> : Services.IApplicati
 		return null;
 	}
 
+	/// <summary>递归注册已加载插件的程序集服务，并避免重复扫描同一程序集。</summary>
+	/// <param name="plugin">当前插件。</param>
+	/// <param name="services">用于添加插件服务的集合。</param>
+	/// <param name="configuration">提供给服务注册过程的完整配置。</param>
+	/// <param name="registry">已注册程序集的集合。</param>
 	private static void RegisterPlugin(Plugin plugin, IServiceCollection services, IConfiguration configuration, ISet<Assembly> registry)
 	{
 		if(plugin == null || plugin.Status != PluginStatus.Loaded)
@@ -152,6 +167,9 @@ public abstract class ApplicationBuilderBase<TApplication> : Services.IApplicati
 	#endregion
 
 	#region 静态方法
+	/// <summary>从应用设置文件对应的配置提供程序读取宿主名称。</summary>
+	/// <param name="configuration">包含文件配置提供程序的配置根。</param>
+	/// <returns>配置中的应用名称；未配置时返回 <see langword="null"/>。</returns>
 	protected static string GetApplicationName(IConfigurationRoot configuration)
 	{
 		if(configuration == null)
@@ -171,6 +189,8 @@ public abstract class ApplicationBuilderBase<TApplication> : Services.IApplicati
 		return null;
 	}
 
+	/// <summary>从当前目录的应用设置文件读取宿主名称。</summary>
+	/// <returns>应用名称；文件不存在或未配置时返回 <see langword="null"/>。</returns>
 	protected static string GetApplicationName()
 	{
 		var filePath = Path.Combine(System.Environment.CurrentDirectory, "appsettings.json");

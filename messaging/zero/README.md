@@ -264,7 +264,7 @@ One request can receive multiple replies. Each reply refreshes the ten-minute pe
 
 ### Event Channel
 
-`ZeroQueueEventChannel` connects an `EventExchanger` to queue topics under `Events/...`:
+`ZeroQueueEventChannel` connects an `EventExchanger` to queue topics under `Events/...`. Core supplies the topic convention through `Events.GetTopic()` and restores incoming messages through `Events.GetHandler(receiver)`, forwarding them to `IEventReceiver`. The channel manages filtering, queue options, and subscription lifetime:
 
 ```csharp
 await using var channel = new ZeroQueueEventChannel(queue);
@@ -272,7 +272,9 @@ await channel.OpenAsync(exchanger);
 await channel.SendAsync(eventContext);
 ```
 
-The plugin manifest registers only the wrapping `TransactionEventChannel` in `EventExchanger.Channels`, which opens the subscription. Its `Transport` child constructs the raw ZeroMQ transport, and its `Filtering` child exposes that transport's filtering instance. The reference paths are `/Workbench/Events/Exchanger/Channels/ZeroMQ/Transport` and `/Workbench/Events/Exchanger/Channels/ZeroMQ/Filtering`. Keeping the transport under its wrapper prevents it from being appended to the exchanger, including when a reference builds it first, without changing global `expose` behavior. The former `/Workbench/Events/Exchanger/Transports/ZeroMQ` path is removed; custom references or extensions at that path must move to the wrapper's `Transport` child, and its `Filtering` extensions to the wrapper's `Filtering` child. Request/response and event channels support `Group`; the prefix is applied only at the network boundary and adapters always use logical topics.
+The plugin creates `ZeroQueueEventChannel` directly at `/Workbench/Events/Exchanger/Channels/ZeroMQ` and adds it to the exchanger. Its `Filtering` child exposes the channel's filtering instance at `/Workbench/Events/Exchanger/Channels/ZeroMQ/Filtering`. Early references to either node share the same instance and append the channel once. Channels can reopen after closing; closing disposes the subscription while leaving the borrowed queue alive. Request/response and event channels support `Group`, applying the prefix only at the network boundary and using logical topics inside the adapter.
+
+Core's `EventDispatcher` handles ambient deferral: remote delivery starts after commit, while rollback or an undetermined outcome discards events. Default ZeroMQ delivery does not apply Polly policies. An application plugin can explicitly compose retry, timeout or fallback through `EventDispatcher.Pipeline`. See [event dispatch and ambient features](../../Zongsoft.Core/docs/event-dispatching.md).
 
 <a name="semantics"></a>
 ## Delivery Semantics

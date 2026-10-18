@@ -136,7 +136,7 @@ public class ZeroRequesterMultipleReplyTests
 		using var requesterQueue = ZeroTestUtility.CreateQueue(server.Port, "multiple-requester");
 		using var responderQueue = ZeroTestUtility.CreateQueue(server.Port, "multiple-responder");
 		await using var requester = new ZeroRequester { Queue = requesterQueue };
-		await using var responder = new ZeroResponder { Queue = responderQueue };
+		using var responder = new ZeroResponder { Queue = responderQueue };
 		responder.Handlers.Add(new MultipleReplyHandler());
 		await responder.StartAsync([]);
 

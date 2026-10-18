@@ -15,6 +15,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.ObjectPool" />
+		<PackageReference Include="Microsoft.Extensions.Configuration" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Memory" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<Reference Include="Zongsoft.Core">
 			<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
 		</Reference>

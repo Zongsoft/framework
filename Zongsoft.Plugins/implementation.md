@@ -404,13 +404,11 @@ The [ZeroMQ manifest](../messaging/zero/src/Zongsoft.Messaging.ZeroMQ.plugin) pr
 
 | Path | Declaration | Role |
 | --- | --- | --- |
-| `/Workbench/Events/Exchanger/Transports/ZeroMQ` | Typed `expose` | Construct and expose the raw `ZeroQueueEventChannel` |
 | `/Workbench/Events/Exchanger/Channels` | `expose` from Main | Expose `EventExchanger.Channels` |
-| `…/Channels/ZeroMQ` | `object` | Construct `TransactionEventChannel` and append the wrapper to Channels |
-| `…/Channels/ZeroMQ/Transport` | `expose` | Supply the raw transport to the wrapper constructor |
-| Filtering nodes | `expose` | Publish existing filtering collections for extension |
+| `…/Channels/ZeroMQ` | `object` | Construct `ZeroQueueEventChannel` and append it to Channels |
+| `…/Channels/ZeroMQ/Filtering` | `expose` | Expose the channel's filtering instance for extensions |
 
-`Transports` is a grouping path. The raw transport's expose decision suppresses its appending to the exchanger. The wrapper is the component appended to the exposed `Channels` collection. A node being constructed or referenced does not, by itself, mean it has been inserted into that collection.
+Early references to the channel or filtering node reuse the constructed instance. The channel component is appended to the exposed collection; the filtering expose is not appended to the channel. The exchanger's dispatcher handles ambient deferral, while the channel handles transport. Application plugins can use `object.property` to assign an `IFeaturePipeline<EventContext>` to `EventDispatcher.Pipeline`, then assign that dispatcher to the exchanger's `Dispatcher` property. The pipeline runs only after ambient conditions allow execution and wraps actual delivery.
 
 ## 11. Expression parsing
 
@@ -499,6 +497,8 @@ File provenance identifies the entry file. It does not track which imported file
 The provider locks publication/clearing of entry providers and coordinates disposal; it does not hold a global lock across an entire load, every tree operation and all change callbacks. Callers should serialize explicit lifecycle operations. Notifications are not cross-file transactions and do not reconstruct objects, open new network listeners or replace loaded assemblies.
 
 ## 14. Application context, workbench and workers
+
+After loading the complete plugin configuration, the host scans loaded entry references, the entry assembly and plugin manifest assemblies using one shared deduplication set. Registrars see the final plugin configuration, and each assembly is registered once per host build. Core's `FeatureProvider.Default` includes the transaction provider by default. Application services registered as `IFeatureProvider` add ambient conditions; the default feature provider combines sources and deduplicates them by reference on each capture.
 
 `Application.Daemon` and `Application.Terminal` build on Microsoft hosting, register their plugin-aware application contexts, load configuration, build the host and initialize the context. [ApplicationExtension](src/Hosting/ApplicationExtension.cs) supplies the host initialization bridge. ASP.NET Core integration is implemented in [Zongsoft.Plugins.Web](../Zongsoft.Plugins.Web/README.md).
 

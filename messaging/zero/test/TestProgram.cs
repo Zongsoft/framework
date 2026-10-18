@@ -61,6 +61,12 @@ internal static class TestProgram
 				case nameof(ZeroPluginTests.ClientPluginDoesNotCreateServer):
 					await tests.ClientPluginDoesNotCreateServer();
 					break;
+				case nameof(ZeroPluginTests.ClientPluginDoesNotCreateServer) + ".Channel":
+					await tests.ClientPluginDoesNotCreateServer("Channel");
+					break;
+				case nameof(ZeroPluginTests.ClientPluginDoesNotCreateServer) + ".Filtering":
+					await tests.ClientPluginDoesNotCreateServer("Filtering");
+					break;
 				default:
 					return 2;
 			}

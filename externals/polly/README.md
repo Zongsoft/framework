@@ -92,3 +92,7 @@ nuget:Zongsoft.Externals.Polly
 Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
 
 Additional artifacts listed by the deployment manifest include `Zongsoft.Externals.Polly.plugin`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.
+
+## Event Delivery
+
+The Polly plugin supplies `Executor.Pipelines` without automatically adding delivery policies. `EventDispatcher` evaluates ambient features implementing `IFeature` and `IPredication`; policy pipelines wrap actual delivery only. Application plugins can explicitly compose retry, timeout and fallback on `EventDispatcher.Pipeline` during initialization. See [event dispatch](../../Zongsoft.Core/docs/event-dispatching.md) for configuration and lifetime semantics. Void fallback invokes its callback while preserving the original exception, so callback completion does not imply successful delivery.

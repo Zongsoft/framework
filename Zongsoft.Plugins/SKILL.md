@@ -20,7 +20,7 @@ description: 开发、审查、调试或测试 Zongsoft.Plugins 与 Zongsoft.Plu
 
 ## 源码路由与实际时序
 
-1. [ApplicationBuilder](src/Hosting/ApplicationBuilder.cs) 添加 PluginConfigurationSource，加载整棵插件树及其配置，扫描已加载的入口引用、入口程序集和插件 Manifest.Assemblies，再构建宿主。三类程序集共用去重集合，每次宿主构建中同一程序集只注册一次；注册器可读取子插件的最终配置。
+1. [ApplicationBuilder](src/Hosting/ApplicationBuilder.cs) 添加 PluginConfigurationSource，加载整棵插件树及其配置，扫描已加载的入口引用、入口程序集和插件 Manifest.Assemblies，最后构建宿主。全部来源共用去重集合，每次宿主构建中同一程序集只注册一次；注册器可读取子插件的最终配置。Core 的 FeatureProvider.Default 内置事务环境提供者，插件通过 IFeatureProvider 服务追加条件，环境默认值不依赖程序集服务扫描。
 2. [PluginLoader](src/PluginLoader.cs) 按文件目录组织父子插件、解析依赖；文件系统层级与 extension path 分离。不要把注释中的排序描述当作确定的文件枚举顺序。
 3. [PluginApplicationContext](src/PluginApplicationContext.cs) 初始化后挂载应用上下文；首次取得 Workbench 构建工作台子节点，Startup 子树后置，随宿主 Started/Stopping 打开/关闭工作台。
 4. [ObjectBuilder](src/Builders/ObjectBuilder.cs)、[BuilderManager](src/Builders/BuilderManager.cs) 处理节点构造和缓存；[ServicesParser](src/Services/ServicesParser.cs) 根据属性类型与当前树节点上下文定位服务。

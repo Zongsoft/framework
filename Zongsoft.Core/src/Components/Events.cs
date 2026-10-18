@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -44,6 +44,8 @@ public static partial class Events
 	#endregion
 
 	#region 公共方法
+	/// <summary>获取当前应用所有模块的事件总数。</summary>
+	/// <returns>已注册事件的总数；没有当前应用或模块时为零。</returns>
 	public static int GetCount()
 	{
 		var context = ApplicationContext.Current;
@@ -61,7 +63,14 @@ public static partial class Events
 		return count;
 	}
 
+	/// <summary>获取指定事件的描述。</summary>
+	/// <param name="qualifiedName">事件的完整限定名；没有模块名前缀时查找公共模块。</param>
+	/// <returns>匹配的事件描述；事件不存在时为 <see langword="null"/>。</returns>
 	public static EventDescriptor GetEvent(string qualifiedName) => GetEvent(qualifiedName, out _);
+	/// <summary>获取指定事件的描述及其所属注册表。</summary>
+	/// <param name="qualifiedName">事件的完整限定名；没有模块名前缀时查找公共模块。</param>
+	/// <param name="registry">所属模块的事件注册表；模块或注册表不存在时为 <see langword="null"/>。</param>
+	/// <returns>匹配的事件描述；事件不存在时为 <see langword="null"/>。</returns>
 	public static EventDescriptor GetEvent(string qualifiedName, out EventRegistryBase registry)
 	{
 		var context = ApplicationContext.Current;
@@ -100,6 +109,8 @@ public static partial class Events
 		}
 	}
 
+	/// <summary>枚举当前应用所有模块的事件描述。</summary>
+	/// <returns>延迟枚举的事件描述，公共模块优先；没有当前应用或模块时为空序列。</returns>
 	public static IEnumerable<EventDescriptor> GetEvents()
 	{
 		var context = ApplicationContext.Current;
@@ -132,7 +143,14 @@ public static partial class Events
 		}
 	}
 
+	/// <summary>获取指定应用模块的事件描述集合。</summary>
+	/// <param name="module">应用模块。</param>
+	/// <returns>模块的事件描述集合；模块或注册表不存在时为空序列。</returns>
 	public static IEnumerable<EventDescriptor> GetEvents(this IApplicationModule module) => GetEvents(module, out _);
+	/// <summary>获取指定应用模块的事件描述集合及注册表。</summary>
+	/// <param name="module">应用模块。</param>
+	/// <param name="registry">模块的事件注册表；不存在时为 <see langword="null"/>。</param>
+	/// <returns>模块的事件描述集合；模块或注册表不存在时为空序列。</returns>
 	public static IEnumerable<EventDescriptor> GetEvents(this IApplicationModule module, out EventRegistryBase registry)
 	{
 		if(module == null)
@@ -147,6 +165,9 @@ public static partial class Events
 	#endregion
 
 	#region 私有方法
+	/// <summary>通过缓存的访问器读取模块的事件注册表。</summary>
+	/// <param name="module">提供事件注册表的应用模块。</param>
+	/// <returns>模块的事件注册表；模块不提供注册表时为 <see langword="null"/>。</returns>
 	private static EventRegistryBase GetEventRegistry(IApplicationModule module) =>
 		_accessors.GetOrAdd(module, CreateAccessor)?.Invoke(module);
 
@@ -157,6 +178,9 @@ public static partial class Events
 	 *		return ((IApplicationModule<TEvents>)module).Events;
 	 * }
 	 */
+	/// <summary>为应用模块创建事件注册表访问器。</summary>
+	/// <param name="module">用于确定模块类型的实例。</param>
+	/// <returns>读取事件注册表的委托；模块不继承 <see cref="ApplicationModule{TEvents}"/> 时为 <see langword="null"/>。</returns>
 	private static Func<IApplicationModule, EventRegistryBase> CreateAccessor(IApplicationModule module)
 	{
 		var type = module.GetType();
