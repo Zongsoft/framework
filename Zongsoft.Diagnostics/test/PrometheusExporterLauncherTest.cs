@@ -168,7 +168,6 @@ public class PrometheusExporterLauncherTest(ITestOutputHelper output)
 		using var reservation = new TcpListener(IPAddress.Loopback, 0);
 		reservation.Start();
 		var port = ((IPEndPoint)reservation.LocalEndpoint).Port;
-		reservation.Stop();
 
 		var url = $"http://127.0.0.1:{port}{path}";
 		var prefix = $"http://127.0.0.1:{port}{path.TrimEnd('/')}/";
@@ -177,6 +176,8 @@ public class PrometheusExporterLauncherTest(ITestOutputHelper output)
 		var counter = meter.CreateCounter<long>("zongsoft_test_requests");
 		var builder = Sdk.CreateMeterProviderBuilder().AddMeter(meter.Name);
 		new PrometheusExporterLauncher().Launch(builder, $"urls={url};cacheDuration=0ms");
+
+		reservation.Stop();
 
 		using(var provider = builder.Build())
 		using(var client = new HttpClient(new HttpClientHandler { UseProxy = false, AllowAutoRedirect = false }))
@@ -247,9 +248,9 @@ public class PrometheusExporterLauncherTest(ITestOutputHelper output)
 		using var reservation = new TcpListener(IPAddress.Loopback, 0);
 		reservation.Start();
 		var port = ((IPEndPoint)reservation.LocalEndpoint).Port;
-		reservation.Stop();
 		var builder = Sdk.CreateMeterProviderBuilder();
 		new PrometheusExporterLauncher().Launch(builder, $"urls=http://127.0.0.1:{port}/metrics/");
+		reservation.Stop();
 		using var provider = builder.Build();
 		using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 		using var client = new TcpClient();
@@ -264,12 +265,18 @@ public class PrometheusExporterLauncherTest(ITestOutputHelper output)
 	[Trait("Category", "Integration")]
 	public async Task EquivalentAddressesShareTheListenerAndStartFailureReleasesPorts()
 	{
+		//先占用失败端口，避免它复用下方正常监听释放后的端口。
+		using var occupied = new TcpListener(IPAddress.Loopback, 0);
+		occupied.Start();
+		var blocked = ((IPEndPoint)occupied.LocalEndpoint).Port;
 		using var reservation = new TcpListener(IPAddress.Loopback, 0);
 		reservation.Start();
 		var port = ((IPEndPoint)reservation.LocalEndpoint).Port;
-		reservation.Stop();
 		var builder = Sdk.CreateMeterProviderBuilder();
 		new PrometheusExporterLauncher().Launch(builder, $"urls=http://127.0.0.1:{port}/metrics,http://localhost:{port}/METRICS/");
+
+		Assert.NotEqual(blocked, port);
+		reservation.Stop();
 
 		using(var provider = builder.Build())
 		using(var client = new HttpClient(new HttpClientHandler { UseProxy = false }) { Timeout = TimeSpan.FromSeconds(10) })
@@ -284,9 +291,6 @@ public class PrometheusExporterLauncherTest(ITestOutputHelper output)
 			}
 		}
 
-		using var occupied = new TcpListener(IPAddress.Loopback, 0);
-		occupied.Start();
-		var blocked = ((IPEndPoint)occupied.LocalEndpoint).Port;
 		var invalid = Sdk.CreateMeterProviderBuilder();
 		new PrometheusExporterLauncher().Launch(invalid, $"urls=http://127.0.0.1:{port}/metrics,http://127.0.0.1:{blocked}/metrics");
 		Assert.Throws<IOException>(() => invalid.Build());
@@ -304,9 +308,9 @@ public class PrometheusExporterLauncherTest(ITestOutputHelper output)
 		using var reservation = new TcpListener(IPAddress.Loopback, 0);
 		reservation.Start();
 		var port = ((IPEndPoint)reservation.LocalEndpoint).Port;
-		reservation.Stop();
 		using var occupied = new TcpListener(IPAddress.Loopback, 0);
 		occupied.Start();
+		Assert.NotEqual(port, ((IPEndPoint)occupied.LocalEndpoint).Port);
 		using var key = RSA.Create(2048);
 		var request = new CertificateRequest("CN=localhost", key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
 		using var certificate = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddMinutes(-1), DateTimeOffset.UtcNow.AddHours(1));
@@ -322,6 +326,8 @@ public class PrometheusExporterLauncherTest(ITestOutputHelper output)
 			}).Build();
 			var builder = Sdk.CreateMeterProviderBuilder().ConfigureServices(services => services.AddSingleton<IConfiguration>(configuration));
 			new PrometheusExporterLauncher().Launch(builder, $"urls=https://{host}:{port}/metrics/");
+			//证书和宿主端点准备期间保留端口，直到抓取服务器即将接管监听。
+			reservation.Stop();
 			using var provider = builder.Build();
 			using var client = CreateClient(IPAddress.Loopback, certificate);
 			using var response = await client.GetAsync($"https://{host}:{port}/METRICS");
@@ -349,13 +355,13 @@ public class PrometheusExporterLauncherTest(ITestOutputHelper output)
 		second.Start();
 		var port = ((IPEndPoint)first.LocalEndpoint).Port;
 		var otherPort = ((IPEndPoint)second.LocalEndpoint).Port;
-		first.Stop();
-		second.Stop();
 		using var meter = new Meter($"Zongsoft.Diagnostics.Tests.{Guid.NewGuid():N}");
 		var counter = meter.CreateCounter<long>("zongsoft_domain_requests");
 		var builder = Sdk.CreateMeterProviderBuilder().AddMeter(meter.Name);
 		new PrometheusExporterLauncher().Launch(builder,
 			$"urls=http://metrics.example.invalid.:{port}/MeTrIcS/,http://bücher.example.invalid:{port}/metrics,http://secondary.example.invalid:{otherPort}/METRICS;cacheDuration=0ms");
+		first.Stop();
+		second.Stop();
 		using var provider = builder.Build();
 		counter.Add(9);
 
@@ -419,9 +425,9 @@ public class PrometheusExporterLauncherTest(ITestOutputHelper output)
 		using var reservation = new TcpListener(IPAddress.Loopback, 0);
 		reservation.Start();
 		var port = ((IPEndPoint)reservation.LocalEndpoint).Port;
-		reservation.Stop();
 		var builder = Sdk.CreateMeterProviderBuilder();
 		new PrometheusExporterLauncher().Launch(builder, $"urls=http://metrics.example.invalid:{port}/metrics,http://{host}:{port}/METRICS/");
+		reservation.Stop();
 		using var provider = builder.Build();
 
 		foreach(var (address, allowed) in new[] { (IPAddress.Loopback, ipv4Allowed), (IPAddress.Parse("127.0.0.2"), otherIpv4Allowed), (IPAddress.IPv6Loopback, ipv6Allowed) })
@@ -444,9 +450,9 @@ public class PrometheusExporterLauncherTest(ITestOutputHelper output)
 		using var reservation = new TcpListener(IPAddress.IPv6Loopback, 0);
 		reservation.Start();
 		var port = ((IPEndPoint)reservation.LocalEndpoint).Port;
-		reservation.Stop();
 		var builder = Sdk.CreateMeterProviderBuilder();
 		new PrometheusExporterLauncher().Launch(builder, $"urls=http://[::]:{port}/metrics");
+		reservation.Stop();
 		using var provider = builder.Build();
 		using var ipv6 = CreateClient(IPAddress.IPv6Loopback);
 		using var response = await ipv6.GetAsync($"http://localhost:{port}/metrics");
@@ -467,10 +473,10 @@ public class PrometheusExporterLauncherTest(ITestOutputHelper output)
 		occupied.Start();
 		var port = ((IPEndPoint)reservation.LocalEndpoint).Port;
 		var blocked = ((IPEndPoint)occupied.LocalEndpoint).Port;
-		reservation.Stop();
 		var builder = Sdk.CreateMeterProviderBuilder();
 		new PrometheusExporterLauncher().Launch(builder, $"urls=http://metrics.example.invalid:{port}/metrics,http://127.0.0.1:{blocked}/metrics");
 
+		reservation.Stop();
 		Assert.Throws<IOException>(() => builder.Build());
 
 		foreach(var address in Socket.OSSupportsIPv6 ? new[] { IPAddress.Loopback, IPAddress.IPv6Loopback } : [IPAddress.Loopback])
