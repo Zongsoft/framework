@@ -49,7 +49,7 @@ description: 开发、审查、调试或测试 Zongsoft.Plugins 与 Zongsoft.Plu
 
 先构建 `Zongsoft.Plugins.slnx`；涉及 Web 再构建 `../Zongsoft.Plugins.Web/Zongsoft.Plugins.Web.slnx`。使用最小插件树覆盖有效配置、缺失依赖、循环/无效节点、初始化失败回滚和确定性释放。
 
-Plugins 测试只项目引用 Plugins，Core 使用 HintPath 程序集引用；Web 桥接及 Web 宿主用例归属 Plugins.Web 测试。Plugins.Web 测试的 Core、Web 也使用 HintPath 程序集引用，不通过项目引用构建它们。干净工作区按测试 README 先生成依赖程序集。
+Plugins 测试只项目引用 Plugins，Core 使用 HintPath 程序集引用；Web 桥接及 Web 宿主用例归属 Plugins.Web 测试。Plugins.Web 测试只项目引用 Plugins.Web，Core、Plugins、Web 使用 HintPath 程序集引用，不通过项目引用构建它们。干净工作区按测试 README 先生成依赖程序集。
 
 获得宿主运行授权后可在独立部署目录验证；不能把真实业务部署树原样启动作为最小测试。Windows 终端需 PTY/ConPTY，默认内容根受工作目录影响，复制输出保留 runtimes。检查插件列表后必须继续验证契约调用：发现条目不等于 SDK 版本、配置和网络均正确。DLL 更新重启宿主，不把配置变更通知解释为程序集热替换。
 
