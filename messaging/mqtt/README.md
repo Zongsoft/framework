@@ -29,10 +29,10 @@ The client connects to `127.0.0.1:1883` by default. Each client process creates 
 
 ### Prerequisites and build
 
-Install the .NET 10 SDK. From the repository root, build the core library first and then the MQTT solution:
+Install the .NET 10 SDK. From the repository root, build Core first, then the MQTT solution:
 
 ```shell
-dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -f net10.0
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj
 dotnet build messaging/mqtt/Zongsoft.Messaging.Mqtt.slnx
 ```
 

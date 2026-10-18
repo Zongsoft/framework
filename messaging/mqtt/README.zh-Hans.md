@@ -29,10 +29,10 @@
 
 ### 环境准备与构建
 
-安装 .NET 10 SDK。在仓库根目录中先构建核心库，再构建 MQTT 解决方案：
+安装 .NET 10 SDK。在仓库根目录中先构建 Core，再构建 MQTT 解决方案：
 
 ```shell
-dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -f net10.0
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj
 dotnet build messaging/mqtt/Zongsoft.Messaging.Mqtt.slnx
 ```
 

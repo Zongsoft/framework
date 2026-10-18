@@ -91,7 +91,7 @@ dotnet build messaging\zero\src\Zongsoft.Messaging.ZeroMQ.csproj -f net9.0
 dotnet build messaging\zero\src\Zongsoft.Messaging.ZeroMQ.csproj -f net10.0
 ```
 
-集成测试显式启用，并使用真实 Socket/Poller：
+测试项目直接构造被测组件，不引用 Zongsoft.Plugins 或加载插件宿主。Socket/Poller 集成测试显式启用：
 
 ```powershell
 $env:ZONGSOFT_MESSAGING_TESTS = 'true'

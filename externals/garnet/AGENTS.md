@@ -13,5 +13,5 @@
 
 ## 验证
 
-- 构建 `Zongsoft.Externals.Garnet.slnx` 并先运行本地测试。
+- 按相同配置和目标框架先构建 Core，再构建 `Zongsoft.Externals.Garnet.slnx` 并运行连接配置测试；测试项目通过 HintPath 引用 Core，不引用 Plugins 或加载插件宿主。
 - 需要 Garnet 服务的场景先确认测试端点，不默认连接共享或生产实例。

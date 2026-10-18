@@ -3,12 +3,10 @@
 		<IsPackable>false</IsPackable>
 		<IsTestProject>true</IsTestProject>
 		<TestTfmsInParallel>false</TestTfmsInParallel>
-		<StartupObject>Zongsoft.Externals.Garnet.Tests.TestProgram</StartupObject>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\src\Zongsoft.Externals.Garnet.csproj" />
-		<ProjectReference Include="..\..\..\Zongsoft.Plugins\src\Zongsoft.Plugins.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -25,11 +23,5 @@
 		<Reference Include="Zongsoft.Core">
 			<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
 		</Reference>
-	</ItemGroup>
-
-	<ItemGroup>
-		<None Include="..\..\..\Zongsoft.Plugins\plugins\Main.plugin" Link="Fixtures\Main.plugin" CopyToOutputDirectory="PreserveNewest" />
-		<None Include="..\src\*.plugin" Link="Fixtures\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-		<None Include="..\src\*.option" Link="Fixtures\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 </Project>

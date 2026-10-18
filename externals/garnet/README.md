@@ -70,7 +70,7 @@ The settings object owns address validation, native argument conversion, and pat
 
 ## Lifecycle and Persistence
 
-Starting creates the underlying `Garnet.GarnetServer` and saves it only after `Start` succeeds. Cancellation or startup failure disposes the created instance; stopping or disposing the worker clears and disposes the server. Startup failures are reported through `StateChanged`, with the worker returning to `Stopped`. Friendly names such as `EnableAOF`, `CheckpointDirectory`, and `EnableTLS` map to native options. Process-level commands such as `help/version` are rejected.
+Starting creates the underlying `Garnet.GarnetServer` and saves it only after `Start` succeeds. Cancellation or startup failure disposes the created instance; stopping or disposing the worker clears and disposes the server. Startup failures propagate to the caller and are reported through `StateChanged`, with the worker returning to `Stopped`. Friendly names such as `EnableAOF`, `CheckpointDirectory`, and `EnableTLS` map to native options. Process-level commands such as `help/version` are rejected.
 
 > 💡 Redis protocol compatibility does not imply that every Redis command, module, persistence mode, or client behavior is identical. Validate the exact commands used by the consuming application.
 

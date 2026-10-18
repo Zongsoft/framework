@@ -70,7 +70,7 @@ AuthenticationMode 直接采用 Garnet SDK 的 `GarnetAuthenticationMode?`，包
 
 ## 生命周期与持久化
 
-启动会创建底层 `Garnet.GarnetServer` 并调用 `Start`，成功后才保存实例；取消或启动失败时释放已创建的实例，停止和释放工作器会清空并释放服务器。启动失败通过工作器 `StateChanged` 事件报告异常并回到 `Stopped`。适配器把 `EnableAOF`、`CheckpointDirectory`、`EnableTLS` 等友好名称映射为 Garnet 选项，同时透传原生选项名；拒绝 `help/version` 等进程级命令。
+启动会创建底层 `Garnet.GarnetServer` 并调用 `Start`，成功后才保存实例；取消或启动失败时释放已创建的实例，停止和释放工作器会清空并释放服务器。启动失败向调用方传播异常，同时通过工作器 `StateChanged` 事件报告异常并回到 `Stopped`。适配器把 `EnableAOF`、`CheckpointDirectory`、`EnableTLS` 等友好名称映射为 Garnet 选项，同时透传原生选项名；拒绝 `help/version` 等进程级命令。
 
 > 💡 兼容 Redis 协议不表示全部 Redis 命令、模块、持久化模式或客户端行为完全相同。请验证应用实际使用的命令集。
 
