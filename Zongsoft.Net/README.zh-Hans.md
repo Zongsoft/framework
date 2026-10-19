@@ -117,9 +117,38 @@ await client.DisconnectAsync(cancellation.Token);
 
 关闭开始时已经存在的故障按 `Closing`、`Error`、`Closed` 顺序通知；后续处理器或清理故障在最终 `Closed` 前报告，不修改此前交付的快照。关闭原因保留首个原因，异常保留首个非空故障，因此主动关闭后处理器失败时，最终快照可以同时包含 `Local` 和该异常。容量拒绝及尚未形成通道的建连失败由相应调用返回，不触发通道 `Error`。
 
-事件同步调用；每个订阅者的异常单独记录并隔离，不阻止后续订阅者或资源清理，也不递归触发 `Error`。回调应及时返回，不得阻塞等待包含自身的停止、释放或 `WaitAsync`。应在启动或建连前订阅；完成后才开始等待时，使用仍能观察原始完成结果的 `WaitAsync`。
+事件同步调用；每个订阅者的异常单独隔离并通过 `TcpDiagnostics.Error` 报告，不阻止后续订阅者或资源清理，也不递归触发通道 `Error`。回调应及时返回，不得阻塞等待包含自身的停止、释放或 `WaitAsync`。应在启动或建连前订阅；完成后才开始等待时，使用仍能观察原始完成结果的 `WaitAsync`。
 
 通道自身的 `Closing`、`Closed` 表示传输关闭阶段；上述客户端／管理器的 `Closed` 表示通道已完整清理。需要确认资源全部归还时，等待通道 `WaitAsync` 或使用所有者的 `Closed`。
+
+## 遥测与日志策略
+
+本库不调用全局日志器、不写日志文件，也不创建 OpenTelemetry 提供程序或导出器。通道故障仍由事件及 `WaitAsync` 保留；建连、受理、初始化、共享监测及订阅者故障另可订阅 `TcpDiagnostics.Error`。参数包含 `Source`、`Operation`、原始 `Exception`、UTC `Timestamp` 和发生时的 `ActivityContext`；共享监测没有单一所有者，`Source` 为空。订阅者异常被隔离，同线程重入不再次通知。使用者负责解除订阅，回调只做快速处理或有界入队，日志级别、过滤和输出由使用者决定。
+
+Meter 与 ActivitySource 的名称均为 `TcpDiagnostics.Name`（`Zongsoft.Net`），可分别通过 OpenTelemetry 的 `AddMeter("Zongsoft.Net")` 和 `AddSource("Zongsoft.Net")` 订阅。`tcp.connect` 是客户端一次合并建连尝试的 Client Activity，包含连接准备和初始化；并发等待者不重复创建。失败设置 `error.type` 和 Error 状态，取消以 `zongsoft.net.outcome=canceled` 表示。接收循环与共享维护任务不继承首次建连的 Activity，不逐次 Socket I/O 创建 Span，不向 TCP 数据中注入跟踪头；跨进程传播由应用协议实现。
+
+下表名称均以 `zongsoft.net.tcp.` 为前缀，属于 Zongsoft 自定义指标。role 指 `zongsoft.net.role`（client/server），direction 指 `network.io.direction`（transmit/receive）。Observable 指标维护进程内累计或当前存量，中途订阅仍能观察；未启动接收的初始化失败不计入已创建连接。
+
+| 名称后缀 | 类型／单位 | 含义与标签 |
+| --- | --- | --- |
+| `connections.active` / `connections.created` | ObservableUpDownCounter / ObservableCounter，`{connection}` | 尚未完成清理的已启动连接／累计已启动连接；role |
+| `io.bytes` / `frames` | ObservableCounter，`By` / `{frame}` | 完成 Socket I/O 的字节／成功解码或本地 Flush 成功的帧；role、direction |
+| `send.pending` / `send.pending_bytes` | ObservableUpDownCounter，`{operation}` / `By` | 采样时未完成发送数／预留及尚未完成 Socket 发送的字节；role |
+| `connect.duration` | Histogram，`s` | 单次合并建连耗时；`zongsoft.net.outcome` 为 success/error/canceled |
+| `connection.duration` / `connections.closed` | Histogram，`s` / Counter，`{connection}` | 接收启动至完成清理的时间／关闭数；role，关闭数另有 `zongsoft.net.close_reason`（枚举名称） |
+| `rejections` / `errors` | Counter，`{operation}` / `{error}` | 接入及单通道发送容量拒绝／故障通知数；`zongsoft.net.operation` 标明阶段，拒绝另有 role；errors 包括 channel |
+| `monitor.scan.duration` / `monitor.timeout.delay` / `monitor.overruns` | Histogram，`s` / Histogram，`s` / Counter，`{scan}` | `EnableDiagnostics` 启用时的扫描耗时、单次超时检测延迟及扫描超期数；共享扫描只记录一次 |
+
+字节、帧和待发送量复用维护扫描更新，最终清理补齐累计值。因此活跃连接数立即更新，进度类指标为近似快照，采样滞后随维护周期及调度负载变化。指标回调不遍历连接或触发扫描，不以连接 ID、远端端口、报文内容或异常文本为标签。事件及 Meter/Activity 回调可能同步执行；监听器必须及时返回，导出采用宿主批处理策略，不能在回调内等待落盘或停止。遥测开关和采样不影响操作结果或功能事件。
+
+Zongsoft 宿主复用 [Diagnostics](../Zongsoft.Diagnostics/README.zh-Hans.md) 的 OTLP/Console 导出；Web 宿主还可复用 [Diagnostics.Web](../Zongsoft.Diagnostics.Web/README.zh-Hans.md) 的 Prometheus 端点。在 `/Diagnostics/Diagnostor/Meters/filter` 和 `/Diagnostics/Diagnostor/Traces/filter` 显式加入 `Zongsoft.Net`，保留其他所需来源及现有 exporters。仅订阅 Net 时，对应节点为：
+
+```xml
+<meters><filter>Zongsoft.Net</filter><!-- 保留现有 exporters --></meters>
+<traces><filter>Zongsoft.Net</filter><!-- 保留现有 exporters --></traces>
+```
+
+Diagnostics 的裸 `*` 会展开预定义来源和应用模块，不等同于订阅任意来源。日志可由宿主订阅事件后通过 Microsoft `ILogger` 接入现有 Logs 配置；ActivityEvent 会受采样影响，不能替代操作故障通知。异步转交日志时，应将捕获的 ActivityContext 保留为结构化字段，消费线程的 Activity.Current 不代表原始故障上下文。
 
 ## 异常处理
 

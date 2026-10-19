@@ -68,6 +68,10 @@ Keys are case-insensitive. Durations support connection-settings formats such as
 
 New configuration uses `opentelemetry` and `opentelemetry.console`. Launchers continue accepting the case-insensitive aliases `telemetry`, `OpenTelemetry`, and `Console`; OTLP also retains empty-driver matching. `exporter.name="telemetry"` is the configuration entry name, distinct from its driver. Existing host variables and switches under `diagnostics.telemetry` and `diagnostics.logging` retain their names.
 
+## Zongsoft.Net telemetry sources
+
+The TCP library exposes a BCL Meter and ActivitySource named `Zongsoft.Net` without creating providers or exporters. Explicitly include that name in the existing `Meters/filter` and `Traces/filter`, preserving other required sources and exporters. A bare `*` expands predefined sources and application modules; it does not subscribe to every library. See the [Net telemetry contract](../Zongsoft.Net/README.md#telemetry-and-logging-policy) for instruments, units, and trace boundaries. The host decides whether fault events become logs and can use the Microsoft ILogger configuration below.
+
 ## Microsoft ILogger logs
 
 During service registration, the plugin reads `/Diagnostics/Diagnostor/Logs` and connects `Microsoft.Extensions.Logging.ILogger` to OpenTelemetry. Hosts need no `Program.cs` changes or ASP.NET Core dependency. Zongsoft's own `Logging`/`ILogger` and `Console.WriteLine` are outside this pipeline.

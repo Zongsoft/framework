@@ -6,6 +6,8 @@
 
 通用包负责 `/Diagnostics/Diagnostor/Meters/filter` 和唯一的 DiagnostorWorker；本包只添加 `prometheus` 导出器和绑定声明，不重复创建工作器或提供程序。通用配置将同一批指标的 OTLP 导出器设为 `enabled="false"`，避免重复采集。hosting 仓库共用一份 Diagnostics 模板：方案默认 `diagnostics.telemetry:enabled=true`，各 Web 站点在导入方案后覆盖为 `false`。
 
+TCP 指标复用此端点：在通用 `Meters/filter` 中显式加入 `Zongsoft.Net`，无需新增提供程序或 TCP 专属导出器。指标含义与采样边界见 [Net 遥测契约](../Zongsoft.Net/README.zh-Hans.md#遥测与日志策略)；跟踪和日志继续使用通用 Diagnostics 的对应导出配置。
+
 ## Prometheus 监听
 
 `prometheus` 导出器接受 HTTP 抓取请求。`urls` 保存包含抓取路径的完整监听地址，尾斜杠可省略，绑定声明读取同一份地址，并用常量模板声明本启动器固定的 HTTP/1 能力：

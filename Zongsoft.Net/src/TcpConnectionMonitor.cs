@@ -138,6 +138,7 @@ internal static class TcpConnectionMonitor
 			{
 				//先发布本代登记，再等待上一代退出，避免并行扫描。
 				await Task.Yield();
+				System.Diagnostics.Activity.Current = null;
 
 				try
 				{
@@ -167,8 +168,7 @@ internal static class TcpConnectionMonitor
 					foreach(var connection in connections)
 						connection.Abort(TcpCloseReason.TransportError, exception);
 
-					try { Diagnostics.Logging.GetLogging(typeof(TcpConnectionMonitor)).Error(exception); }
-					catch { } //日志提供者故障不能阻止后续代次继续监测。
+					TcpDiagnostics.Report(null, "monitor", exception);
 				}
 				finally
 				{
@@ -218,6 +218,7 @@ internal static class TcpConnectionMonitor
 								Interlocked.Increment(ref group._overruns);
 
 							Interlocked.Increment(ref group._scans);
+							TcpDiagnostics.Scan(elapsed, interval);
 						}
 					}
 				}

@@ -349,6 +349,8 @@ public partial class TcpClient<T>
 				Socket socket = null;
 				Exception error = null;
 				TcpClientChannel<T> channel = null;
+				var started = System.Diagnostics.Stopwatch.GetTimestamp();
+				var activity = TcpDiagnostics.StartConnect();
 
 				try
 				{
@@ -405,6 +407,11 @@ public partial class TcpClient<T>
 					_cancellation.Dispose();
 					_deadline.Dispose();
 				}
+
+				if(error != null && error is not OperationCanceledException)
+					TcpDiagnostics.Report(owner._client, "connect", error);
+
+				TcpDiagnostics.CompleteConnect(activity, started, error);
 
 				if(error == null)
 					_completion.TrySetResult(channel);

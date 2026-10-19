@@ -21,6 +21,7 @@ internal static class Program
 	#region 程序入口
 	private static async Task Main(string[] args)
 	{
+		await using var diagnostics = args.Contains("--diagnostics") ? new SampleDiagnostics() : null;
 		using var cancellation = new CancellationTokenSource();
 		var interrupted = false;
 		Console.CancelKeyPress += Cancel;
@@ -105,6 +106,7 @@ internal static class Program
 	{
 		using var socket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
 		await socket.ConnectAsync(address, cancellation);
+
 		var packetizer = TcpClient.Headed.Packetizer;
 		var writer = new ArrayBufferWriter<byte>(2048);
 		var boundary = 0;
@@ -128,6 +130,7 @@ internal static class Program
 		Console.WriteLine("BATCH first=16, tail=2 header bytes");
 		await SendAsync(writer.WrittenMemory[boundary..]);
 		await ReceiveAsync(17);
+
 		socket.Shutdown(SocketShutdown.Send);
 		Console.WriteLine("BATCH completed=17");
 

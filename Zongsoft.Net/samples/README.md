@@ -46,6 +46,12 @@ The library invokes handlers per frame, retains incomplete tails, and continues 
 
 Text sends, replies, and broadcasts use Core's `Buffer.Encode` extension to obtain pooled UTF-8 leases. Each `using` scope awaits the send or complete broadcast before returning the lease. Device batching returns each message lease after `Pack` copies its contents into the batch writer. Receiving keeps borrowed sequences and decodes segmented input directly into strings. To retain raw bytes beyond the callback, use `context.Package.Lease()` with explicit ownership transfer and disposal; see the [library contract](../README.md).
 
+## Optional diagnostic output
+
+Add `--diagnostics` to either program to subscribe explicitly to `TcpDiagnostics.Error`. Shared [SampleDiagnostics](shared/SampleDiagnostics.cs) only attempts to enqueue in the callback, using a capacity of 64. A separate consumer prints the operation, exception type, and captured TraceId; a full queue drops and counts incoming events. Disposal unsubscribes and drains the queue. The example does not print payloads, addresses, or exception text. Channel handling faults remain available through channel events and `WaitAsync`; the application decides whether to turn them into logs.
+
+Hosts can subscribe to the `Zongsoft.Net` metric and trace sources through Diagnostics OTLP/Console or Diagnostics.Web Prometheus exporters. See [telemetry and logging policy](../README.md#telemetry-and-logging-policy). These samples do not create exporters.
+
 ## Cancellation and cleanup
 
 Both programs use independent instances, `await using`, and cancellation tokens. Interactive mode requires a terminal; scripted modes support redirected output. Ctrl+C requests cancellation and cleanup. Normal exit drains sends; scripted timeouts and incorrect responses produce failure exits. ACK is sample application text, not durable confirmation.

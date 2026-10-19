@@ -6,6 +6,8 @@ Deploy this plugin only to Web hosts. It requires `Microsoft.AspNetCore.App` and
 
 The common package owns `/Diagnostics/Diagnostor/Meters/filter` and the single DiagnostorWorker. This plugin adds only the `prometheus` exporter and binding; it does not create another worker or provider. Set `enabled="false"` on the common metric OTLP exporter to avoid duplicate collection. The hosting repositories share one common Diagnostics template: scheme defaults set `diagnostics.telemetry:enabled=true`, and each Web site overrides it to `false` after importing the scheme.
 
+TCP metrics use the same endpoint: explicitly include `Zongsoft.Net` in the common `Meters/filter`. No additional provider or TCP exporter is needed. See the [Net telemetry contract](../Zongsoft.Net/README.md#telemetry-and-logging-policy) for instrument semantics and sampling boundaries; traces and logs use their respective exporters in common Diagnostics.
+
 ## Prometheus listener
 
 The `prometheus` exporter accepts HTTP scrape requests. Its `urls` setting contains the complete listening prefixes, including the scrape path, with an optional trailing slash. The binding declaration reads those same addresses and declares this launcher's fixed HTTP/1 capability with a constant template:

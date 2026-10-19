@@ -106,7 +106,13 @@ public abstract partial class TcpChannelBase<T>
 			if(length < 0 || length > options.MaximumFrameLength)
 				throw new TcpException(TcpError.InvalidFrame);
 
-			Reserve();
+			try { Reserve(); }
+			catch(TcpException exception) when(exception.ErrorCode == TcpError.SendRejected)
+			{
+				TcpDiagnostics.Reject(options is TcpServerOptions, "send");
+				throw;
+			}
+
 			var acquired = false;
 			var committed = false;
 			var encoding = false;

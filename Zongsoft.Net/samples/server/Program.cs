@@ -17,6 +17,7 @@ internal static class Program
 	#region 程序入口
 	private static async Task Main(string[] args)
 	{
+		await using var diagnostics = args.Contains("--diagnostics") ? new SampleDiagnostics() : null;
 		using var cancellation = new CancellationTokenSource();
 		Console.CancelKeyPress += Cancel;
 
@@ -25,6 +26,7 @@ internal static class Program
 			var countIndex = Array.IndexOf(args, "--count");
 			var count = countIndex < 0 ? 0 : int.Parse(args[countIndex + 1]);
 			var completed = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
 			await using var server = new TcpServer<ReadOnlySequence<byte>>(SampleProtocol.Create(args.Contains("--custom")));
 			server.Address = SampleProtocol.GetAddress(args);
 			server.Handler = new Handler(count, completed);

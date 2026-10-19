@@ -50,6 +50,7 @@ public abstract partial class TcpChannelBase<T> : ChannelBase, ISender<T>, ITcpM
 	private readonly TaskCompletionSource _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
 	private readonly Sender _sender;
 	private readonly Receiver _receiver;
+	private TcpDiagnostics.Connection _telemetry;
 	private Task _cancelling = Task.CompletedTask;
 	private Exception _failure;
 	private int _started;
@@ -112,11 +113,13 @@ public abstract partial class TcpChannelBase<T> : ChannelBase, ISender<T>, ITcpM
 	/// <summary>获取预留及尚未完成 Socket 发送的线协议字节数。</summary>
 	public long PendingSendBytes => _sender.Bytes;
 	/// <summary>获取可选诊断计数；未启用 <see cref="TcpConnectionOptions.EnableDiagnostics" /> 时全部为零。</summary>
-	public TcpChannelStatistics Statistics => new(
+	public TcpChannelStatistics Statistics => new
+	(
 		_receiver.Reads,
 		_receiver.BudgetExhaustions,
 		_receiver.MaximumFrames,
-		_sender.Waits);
+		_sender.Waits
+	);
 	#endregion
 
 	#region 私有属性
@@ -144,7 +147,16 @@ public abstract partial class TcpChannelBase<T> : ChannelBase, ISender<T>, ITcpM
 		if(Interlocked.CompareExchange(ref _started, 1, 0) != 0)
 			throw new InvalidOperationException();
 
-		_ = ReceiveAsync();
+		_telemetry = new(_options is TcpServerOptions);
+		//长连接接收流程不继承首次建连或启动请求的 Activity。
+		var activity = System.Diagnostics.Activity.Current;
+
+		try
+		{
+			System.Diagnostics.Activity.Current = null;
+			_ = ReceiveAsync();
+		}
+		finally { System.Diagnostics.Activity.Current = activity; }
 
 		async Task ReceiveAsync()
 		{
@@ -189,6 +201,7 @@ public abstract partial class TcpChannelBase<T> : ChannelBase, ISender<T>, ITcpM
 	/// <returns>相对于记录期限的检测延迟；未超时返回 <see cref="TimeSpan.Zero" />。</returns>
 	TimeSpan ITcpMonitoredConnection.CheckTimeout(long now)
 	{
+		this.SampleTelemetry();
 		if(this.IsClosing)
 			return TimeSpan.Zero;
 
@@ -200,6 +213,9 @@ public abstract partial class TcpChannelBase<T> : ChannelBase, ISender<T>, ITcpM
 			return TimeSpan.Zero;
 
 		delay += _options.TimeProvider.GetElapsedTime(now);
+		if(_options.EnableDiagnostics)
+			TcpDiagnostics.Timeout(delay);
+
 		this.Abort(reason, new TimeoutException(Properties.Resources.Network_Timeout_Message));
 		return delay;
 	}
@@ -234,7 +250,10 @@ public abstract partial class TcpChannelBase<T> : ChannelBase, ISender<T>, ITcpM
 	{
 		var failure = this.Failure;
 		if(failure != null && Interlocked.CompareExchange(ref _errorReported, 1, 0) == 0)
+		{
+			TcpDiagnostics.Failure("channel");
 			this.OnError(new(this, this.CloseReason, failure));
+		}
 	}
 	#endregion
 
@@ -296,6 +315,7 @@ public abstract partial class TcpChannelBase<T> : ChannelBase, ISender<T>, ITcpM
 	protected override async ValueTask OnCloseAsync(CancellationToken cancellation)
 	{
 		_ = _sender.Stop();
+
 		_cancelling = _lifetime.CancelAsync();
 		_transport.Input.CancelPendingRead();
 		_transport.Output.CancelPendingFlush();
@@ -324,6 +344,9 @@ public abstract partial class TcpChannelBase<T> : ChannelBase, ISender<T>, ITcpM
 		try { this.OnUnregister(); }
 		catch(Exception exception) { this.RecordFailure(TcpCloseReason.TransportError, exception); }
 
+		this.SampleTelemetry();
+		_telemetry?.Complete(this.CloseReason);
+
 		this.ReportError();
 		this.OnClosed(new(this, this.CloseReason, this.Failure));
 
@@ -339,6 +362,11 @@ public abstract partial class TcpChannelBase<T> : ChannelBase, ISender<T>, ITcpM
 
 		this.OnCompleted();
 	}
+
+	private void SampleTelemetry() => _telemetry?.Sample(
+		this.TotalBytesSent, this.TotalBytesReceived,
+		this.TotalFramesSent, this.TotalFramesReceived,
+		this.PendingSendCount, this.PendingSendBytes);
 
 	/// <summary>通知连接所有者移除活动登记，保留最终通知期间的所有权。</summary>
 	private protected virtual void OnUnregister() { }

@@ -52,11 +52,10 @@ internal sealed class TcpChannelNotifier<T>(object owner)
 	/// <param name="args">通道移除后的最终状态快照。</param>
 	internal void OnClosed(TcpChannelEventArgs<T> args) => this.Raise(this.Closed, args);
 
-	/// <summary>记录并通知导致通道结束的首个故障。</summary>
+	/// <summary>通知导致通道结束的首个故障。</summary>
 	/// <param name="args">包含非空 <see cref="TcpChannelEventArgs{T}.Error" /> 的快照。</param>
 	internal void OnError(TcpChannelEventArgs<T> args)
 	{
-		Log(args.Error);
 		this.Raise(this.Error, args);
 	}
 
@@ -71,16 +70,8 @@ internal sealed class TcpChannelNotifier<T>(object owner)
 		foreach(EventHandler<TcpChannelEventArgs<T>> handler in handlers.GetInvocationList())
 		{
 			try { handler(owner, args); }
-			catch(Exception exception) { Log(exception); }
+			catch(Exception exception) { TcpDiagnostics.Report(owner, "notification", exception); }
 		}
-	}
-
-	/// <summary>记录通知边界故障，日志提供者失败也不能中断通道清理。</summary>
-	/// <param name="exception">通道或订阅者报告的异常。</param>
-	private static void Log(Exception exception)
-	{
-		try { Diagnostics.Logging.GetLogging(typeof(TcpChannelNotifier<T>)).Error(exception); }
-		catch { } //日志提供者自身故障不能再次派发 Error，避免递归通知。
 	}
 	#endregion
 }

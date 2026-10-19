@@ -8,6 +8,7 @@
 	<ItemGroup>
 		<ProjectReference Include="..\..\src\Zongsoft.Net.csproj" />
 		<Compile Include="..\shared\SampleProtocol.cs" Link="SampleProtocol.cs" />
+		<Compile Include="..\shared\SampleDiagnostics.cs" Link="SampleDiagnostics.cs" />
 	</ItemGroup>
 
 	<Choose>

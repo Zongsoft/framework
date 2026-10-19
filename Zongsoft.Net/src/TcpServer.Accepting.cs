@@ -184,6 +184,7 @@ public partial class TcpServer<T>
 							Interlocked.Decrement(ref server._admitted);
 							Interlocked.Increment(ref server._rejected);
 							socket.Dispose();
+							TcpDiagnostics.Reject(true, "accept");
 							continue;
 						}
 
@@ -193,7 +194,11 @@ public partial class TcpServer<T>
 				catch(OperationCanceledException) when(cancellation.IsCancellationRequested) { }
 				catch(ObjectDisposedException) when(cancellation.IsCancellationRequested) { }
 				catch(SocketException) when(cancellation.IsCancellationRequested) { }
-				catch(Exception exception) { _error = exception; }
+				catch(Exception exception)
+				{
+					_error = exception;
+					TcpDiagnostics.Report(server, "accept", exception);
+				}
 			}
 
 			async Task InitializeAsync(Socket socket, CancellationToken cancellation)
@@ -233,8 +238,7 @@ public partial class TcpServer<T>
 					if(exception is OperationCanceledException && cancellation.IsCancellationRequested)
 						return;
 
-					try { Diagnostics.Logging.GetLogging(server).Error(exception); }
-					catch { } //日志提供者故障不能终止后续连接受理。
+					TcpDiagnostics.Report(server, "initialize", exception);
 				}
 			}
 		}

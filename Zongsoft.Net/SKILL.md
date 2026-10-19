@@ -15,7 +15,7 @@ description: 修改或审查 Zongsoft.Net 的 TCP 通信、Web 文件系统、�
 - [TcpChannelBase](src/TcpChannelBase.cs) 协调接收结束、发送排空、关闭和最终完成。私有嵌套 [Receiver](src/TcpChannelBase.Receiving.cs) 独占输入借用缓冲、分帧进度、处理预算和接收超时；私有嵌套 [Sender](src/TcpChannelBase.Sending.cs) 独占输出编码、接纳额度、写入锁、排空和发送超时，其限长 FrameWriter 继续嵌套。具体通道仅向所属处理器派发并归还登记。
 - 通道 `Statistics` 汇总收发组件的诊断计数，类型为 `TcpChannelStatistics`，由 `EnableDiagnostics` 开关控制。组件只暴露宿主所需的操作，不把锁、取消源或完成信号交给其他组件修改。
 - 客户端、连接器及服务端以 Unregister 注销已经清理的活动通道并归还接入额度；最终通知和完成结果发布后，以 Complete 归还所有权登记。服务端管理器分别保存活动集合与待完成集合；客户端保留待完成连接的字节计数，最终移除时转入累计值。BroadcastAsync 返回专用 [TcpBroadcastResult](src/TcpBroadcastResult.cs)，不将广播计数泛化为服务端任意操作的结果。
-- 客户端与 [TcpServerChannelManager](src/TcpServerChannelManager.cs) 提供 Closing／Closed／Error；[TcpChannelEventArgs](src/TcpChannelEventArgs.cs) 携带 Channel、CloseReason、Error 不可变快照。[TcpChannelNotifier](src/TcpChannelNotifier.cs) 是两个所有者共享的内部通知实现，逐个隔离并记录订阅者异常，不递归派发 Error。
+- 客户端与 [TcpServerChannelManager](src/TcpServerChannelManager.cs) 提供 Closing／Closed／Error；[TcpChannelEventArgs](src/TcpChannelEventArgs.cs) 携带 Channel、CloseReason、Error 不可变快照。[TcpChannelNotifier](src/TcpChannelNotifier.cs) 是两个所有者共享的内部通知实现，逐个隔离订阅者异常，通过 TcpDiagnostics.Error 报告，不递归派发通道 Error。
 - [TcpException](src/TcpException.cs) 与 [TcpError](src/TcpError.cs) 统一库自身的帧、容量和关闭状态错误。标准取消、超时、Socket 和处理器异常不一律包装；停止时汇总的受理故障保留 InnerException；广播只将 SendRejected 计为容量拒绝，其他错误计为失败。
 - [PacketizerBase<T>](src/PacketizerBase.cs) 实现 Core 的 IPacketizer<T>，在 Net 层定义 GetLength 与 Release；客户端、服务端及通道统一接收此基类。Core 的两种 IPacketizer 接口只定义 Pack 与 Unpack。自定义协议派生该基类，资源型解码报文重写 Release。
 - [Packetizer](src/Packetizer.cs) 的 Headed/Headless 都输出借用序列。Headed 是 UInt32 大端正文长度，空帧合法；Headless 是有界原始流片段。业务边界不得依赖 TCP 分段。
@@ -82,7 +82,7 @@ description: 修改或审查 Zongsoft.Net 的 TCP 通信、Web 文件系统、�
 ## 共享监测与计量
 
 - 按 TimeProvider 与 MaintenanceInterval 分组共享扫描，使用单调时间；最后连接退场后停止对应运行代次。每 256 条连接让出后刷新时间，代次完成串联避免并行扫描。
-- Group 的私有嵌套 Runner 拥有每代取消源和执行流程，局部扫描函数负责单次扫描。上一代故障不阻止新代进入清理范围；故障时在登记锁内截取受影响连接并让后续登记进入新代。日志提供者异常在监测及受理边界隔离，不中断清理或后续运行。
+- Group 的私有嵌套 Runner 拥有每代取消源和执行流程，局部扫描函数负责单次扫描。上一代故障不阻止新代进入清理范围；故障时在登记锁内截取受影响连接并让后续登记进入新代。监测与受理故障通过 TcpDiagnostics.Error 报告；订阅者异常被隔离，不中断清理或后续运行。
 - IdleTimeout 基于实际接收进度，SendTimeout 基于发送停滞；FrameTimeout 从首次残留未完成帧开始，碎片持续到达不延长。监测采样实际收发计数，不能用调用 SendAsync 或收到业务 ACK 的时刻替代。
 - 建连及显式短期限等待使用相应异步 API；正常收发避免为每次操作创建关联 CancellationTokenSource 或 Task.Delay，不用墙上时间判断超时。
 - 通道字节来自完成的 Socket I/O，发送帧数来自成功 Flush；连接退场时累计到所有者。并发读取是近似快照，不为每次读取加全局锁。
@@ -90,11 +90,15 @@ description: 修改或审查 Zongsoft.Net 的 TCP 通信、Web 文件系统、�
 - MaximumTimeoutDelay 从记录期限算起，包含批内等待，不包含关闭和业务退场。实际收发进度采样另有最多一个实际采样间隔的观测误差，扫描超期时可超过配置周期。MaximumScanDuration 包含分批让出的等待，OverrunCount 用于识别容量或调度不足。
 - 诊断不添加设备、连接或端口等高基数标签，不按心跳创建日志字典或逐条记录。性能结论区分库分配、驱动与采样开销，分别解释内核缓冲、池保留和托管内存。
 
+- [TcpDiagnostics](src/TcpDiagnostics.cs) 拥有 BCL Meter 与 ActivitySource，名称均为 Zongsoft.Net；本库不调用全局日志器，不引用 OpenTelemetry SDK 或创建导出器。导出复用 Diagnostics 与 Diagnostics.Web，宿主显式配置来源过滤。
+- 已启动连接以私有差量快照维护进程累计值和存量，复用维护扫描及最终清理更新；Observable 回调只读固定数量的原子计数，不枚举连接或执行 I/O。完成只累计一次，迟到采样不再写入。
+- 一次合并建连只有一个 tcp.connect Activity；长期接收与维护循环不继承首次建连的上下文。没有采样仍保留故障通知与操作结果。诊断和同步测量回调均在管理锁外执行，回调抛错隔离；监听器仍须及时返回。
+
 ## Core 复用
 
 - 跨段定长读数复用 `Zongsoft.Common.Buffer.TryGet*`；文本编码使用 `Encode`，在发送／广播等待完成后释放其所有者。只在需要独立保存借用报文时调用 `Lease`，明确移交及失败释放；`Owned` 不复制，也不延长原内存寿命。
 - `Buffer` 不是 `MemoryPool<byte>` 或 `IBufferWriter<byte>`。保留 Pipe 自身内存池及限长写入装饰器，不能为复用引入全帧中转副本。接收文本直接使用支持序列的 BCL 解码入口。
-- 生命周期、处理器和日志复用 [Core 通信生命周期与派发](../Zongsoft.Core/SKILL.md#通信生命周期与派发)。ChannelBase 拥有一次关闭／释放和共享完成结果；WorkerBase 拥有异步启停状态，Net 不叠加服务启停状态机。ListenerBase 派发处理器，实际流接收者拥有解码；注入处理器由提供者释放，无处理器也须执行取消检查及报文归还。HandlerBase 无附加参数时传递 null，显式 Parameters 保留身份。
+- 生命周期和处理器复用 [Core 通信生命周期与派发](../Zongsoft.Core/SKILL.md#通信生命周期与派发)。ChannelBase 拥有一次关闭／释放和共享完成结果；WorkerBase 拥有异步启停状态，Net 不叠加服务启停状态机。ListenerBase 派发处理器，实际流接收者拥有解码；注入处理器由提供者释放，无处理器也须执行取消检查及报文归还。HandlerBase 无附加参数时传递 null，显式 Parameters 保留身份。
 - 共享维护器需要可注入时钟与代次完成等待；Common.Timer 的系统时钟和同步停止不满足该契约。通用 ObjectPool 的同步容量控制不替代异步发送接纳；不为复用引入错误的所有权或额外完整报文副本。
 - 没有测量证据时，不另造 SocketAsyncEventArgs 引擎、对象池、线程调度器或 IValueTaskSource 状态机。共享生命周期等待使用可由多调用者等待的 Task。
 

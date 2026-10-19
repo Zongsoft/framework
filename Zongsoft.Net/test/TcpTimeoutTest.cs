@@ -26,6 +26,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Buffers;
 using System.Net.Sockets;
 using System.Threading;
@@ -47,22 +48,27 @@ public sealed class TcpTimeoutCollection { }
 public class TcpTimeoutTest
 {
 	[Fact]
-	public async Task MonitorRecoversWhenConnectionJoinsDuringFaultAndLoggingFails()
+	public async Task MonitorRecoversWhenConnectionJoinsDuringFaultAndDiagnosticSubscriberThrows()
 	{
+		var logger = new TcpCountingLogger();
 		var clock = new ManualClock();
 		var failure = new InvalidOperationException();
 		var entered = TestNetwork.Signal();
-		var release = TestNetwork.Signal();
-		var logger = new ControlledLogger(async _ =>
+		using var release = new ManualResetEventSlim();
+		EventHandler<TcpDiagnosticEventArgs> diagnostic = (_, args) =>
 		{
+			if(args.Operation != "monitor" || !ReferenceEquals(args.Exception, failure))
+				return;
+
 			entered.TrySetResult();
-			await release.Task;
+			release.Wait(TestNetwork.Timeout);
 			throw new ApplicationException();
-		});
+		};
 		await using var server = TestNetwork.Server(new() { TimeProvider = clock, IdleTimeout = TimeSpan.FromSeconds(5) });
 		var closed = new ConcurrentDictionary<long, TcpChannelEventArgs<ReadOnlySequence<byte>>>();
 		server.Channels.Closed += (_, args) => closed[args.Channel.Identifier] = args;
 		Logging.Loggers.Add(logger);
+		TcpDiagnostics.Error += diagnostic;
 
 		try
 		{
@@ -76,7 +82,7 @@ public class TcpTimeoutTest
 
 			using var second = await TestNetwork.ConnectAsync(server.Address);
 			await TestNetwork.UntilAsync(() => server.AcceptedConnections == 2);
-			release.TrySetResult();
+			release.Set();
 			await advancing.WaitAsync(TestNetwork.Timeout);
 			Assert.Same(failure, await Record.ExceptionAsync(() => original.WaitAsync().WaitAsync(TestNetwork.Timeout)));
 			await TestNetwork.UntilAsync(() => server.Channels.Count == 1 && clock.ActiveTimers == 1);
@@ -87,43 +93,58 @@ public class TcpTimeoutTest
 			await Assert.ThrowsAsync<TimeoutException>(() => replacement.WaitAsync());
 			Assert.Equal(TcpCloseReason.IdleTimeout, closed[replacement.Identifier].CloseReason);
 			await TestNetwork.UntilAsync(() => clock.ActiveTimers == 0);
+			Assert.Equal(0, logger.Count);
 		}
 		finally
 		{
-			release.TrySetResult();
+			release.Set();
 
 			try { await server.StopAsync().WaitAsync(TestNetwork.Timeout); }
-			finally { Logging.Loggers.Remove(logger); }
+			finally
+			{
+				TcpDiagnostics.Error -= diagnostic;
+				Logging.Loggers.Remove(logger);
+			}
 		}
 	}
 
 	[Fact]
-	public async Task AcceptanceContinuesWhenFailureLoggingThrows()
+	public async Task AcceptanceContinuesWhenDiagnosticSubscriberThrows()
 	{
-		var clock = new ManualClock { TimestampFailure = new InvalidOperationException() };
-		var logged = TestNetwork.Signal();
-		var logger = new ControlledLogger(_ =>
+		var logger = new TcpCountingLogger();
+		var failure = new InvalidOperationException();
+		var clock = new ManualClock { TimestampFailure = failure };
+		var reported = TestNetwork.Signal<TcpDiagnosticEventArgs>();
+		EventHandler<TcpDiagnosticEventArgs> diagnostic = (_, args) =>
 		{
-			logged.TrySetResult();
+			if(args.Operation != "initialize" || !ReferenceEquals(args.Exception, failure))
+				return;
+
+			reported.TrySetResult(args);
 			throw new ApplicationException();
-		});
+		};
 		var server = TestNetwork.Server(new() { TimeProvider = clock });
 		Logging.Loggers.Add(logger);
+		TcpDiagnostics.Error += diagnostic;
 
 		try
 		{
 			await server.StartAsync();
 			using var first = await TestNetwork.ConnectAsync(server.Address);
-			await logged.Task.WaitAsync(TestNetwork.Timeout);
+			var notification = await reported.Task.WaitAsync(TestNetwork.Timeout);
+			Assert.Same(server, notification.Source);
+			Assert.Same(failure, notification.Exception);
 			using var second = await TestNetwork.ConnectAsync(server.Address);
 			await TestNetwork.UntilAsync(() => server.Channels.Count == 1);
 
 			Assert.Equal(1, server.AcceptedConnections);
 			await server.StopAsync().WaitAsync(TestNetwork.Timeout);
+			Assert.Equal(0, logger.Count);
 		}
 		finally
 		{
 			await Record.ExceptionAsync(() => server.DisposeAsync().AsTask().WaitAsync(TestNetwork.Timeout));
+			TcpDiagnostics.Error -= diagnostic;
 			Logging.Loggers.Remove(logger);
 		}
 	}
@@ -131,16 +152,20 @@ public class TcpTimeoutTest
 	[Fact]
 	public async Task ShutdownDeadlineIncludesAcceptanceAndRetryStillWaitsForIt()
 	{
-		var clock = new ManualClock { TimestampFailure = new InvalidOperationException() };
+		var failure = new InvalidOperationException();
+		var clock = new ManualClock { TimestampFailure = failure };
 		var entered = TestNetwork.Signal();
-		var release = TestNetwork.Signal();
-		var logger = new ControlledLogger(async _ =>
+		using var release = new ManualResetEventSlim();
+		EventHandler<TcpDiagnosticEventArgs> diagnostic = (_, args) =>
 		{
+			if(args.Operation != "initialize" || !ReferenceEquals(args.Exception, failure))
+				return;
+
 			entered.TrySetResult();
-			await release.Task;
-		});
+			release.Wait(TestNetwork.Timeout);
+		};
 		var server = TestNetwork.Server(new() { TimeProvider = clock, ShutdownTimeout = TimeSpan.FromSeconds(5) });
-		Logging.Loggers.Add(logger);
+		TcpDiagnostics.Error += diagnostic;
 
 		try
 		{
@@ -158,7 +183,7 @@ public class TcpTimeoutTest
 				Assert.Equal(WorkerState.Stopping, server.State);
 			}
 
-			release.TrySetResult();
+			release.Set();
 			await server.StopAsync().WaitAsync(TestNetwork.Timeout);
 			Assert.Equal(WorkerState.Stopped, server.State);
 
@@ -170,15 +195,16 @@ public class TcpTimeoutTest
 		}
 		finally
 		{
-			release.TrySetResult();
+			release.Set();
 			await Record.ExceptionAsync(() => server.DisposeAsync().AsTask().WaitAsync(TestNetwork.Timeout));
-			Logging.Loggers.Remove(logger);
+			TcpDiagnostics.Error -= diagnostic;
 		}
 	}
 
 	[Fact]
 	public async Task SharedIdleScanUsesMonotonicTimeAndReleasesTimerAfterLastConnection()
 	{
+		using var metrics = new TcpMeasurements();
 		var clock = new ManualClock();
 		await using var server = TestNetwork.Server(new() { TimeProvider = clock, IdleTimeout = TimeSpan.FromSeconds(5), EnableDiagnostics = true });
 		var closed = new ConcurrentDictionary<long, TcpChannelEventArgs<ReadOnlySequence<byte>>>();
@@ -188,6 +214,9 @@ public class TcpTimeoutTest
 		using var second = await TestNetwork.ConnectAsync(server.Address);
 		await TestNetwork.UntilAsync(() => server.Channels.Count == 2 && clock.ActiveTimers == 1);
 		var channels = new List<TcpServerChannel<ReadOnlySequence<byte>>>(server.Channels);
+		var timestampReads = clock.TimestampReads;
+		metrics.Observe();
+		Assert.Equal(timestampReads, clock.TimestampReads);
 		clock.Utc = DateTimeOffset.UnixEpoch.AddYears(200);
 		clock.Advance(TimeSpan.FromSeconds(1));
 		await TestNetwork.UntilAsync(() => server.Statistics.ScanCount == 1);
@@ -203,8 +232,15 @@ public class TcpTimeoutTest
 
 		await TestNetwork.UntilAsync(() => clock.ActiveTimers == 0);
 		Assert.Empty(server.Channels);
-		await TestNetwork.UntilAsync(() => server.Statistics.ScanCount == 2);
+		await TestNetwork.UntilAsync(() => server.Statistics.ScanCount == 2 && metrics.Find("zongsoft.net.tcp.monitor.scan.duration").Count() == 2);
 		Assert.Equal(TimeSpan.FromSeconds(6), server.Statistics.MaximumTimeoutDelay);
+		Assert.Equal(2, metrics.Find("zongsoft.net.tcp.monitor.scan.duration").Count());
+		Assert.Equal(2, metrics.Find("zongsoft.net.tcp.monitor.timeout.delay").Count());
+		Assert.All(metrics.Find("zongsoft.net.tcp.monitor.timeout.delay"), sample =>
+		{
+			Assert.Equal("s", sample.Instrument.Unit);
+			Assert.Equal(6, sample.Value);
+		});
 	}
 
 	[Fact]
@@ -238,6 +274,7 @@ public class TcpTimeoutTest
 	[Fact]
 	public async Task MonitorReportsScansThatExceedTheirPeriod()
 	{
+		using var metrics = new TcpMeasurements();
 		var clock = new ManualClock();
 		await using var server = TestNetwork.Server(new() { TimeProvider = clock, EnableDiagnostics = true });
 		await server.StartAsync();
@@ -252,10 +289,33 @@ public class TcpTimeoutTest
 		Assert.Equal(TimeSpan.FromSeconds(2), server.Statistics.MaximumScanDuration);
 		Assert.Equal(TimeSpan.Zero, server.Statistics.MaximumTimeoutDelay);
 		Assert.False(Assert.Single(server.Channels).IsClosed);
+		await TestNetwork.UntilAsync(() => metrics.Find("zongsoft.net.tcp.monitor.overruns").Any());
+		var scan = Assert.Single(metrics.Find("zongsoft.net.tcp.monitor.scan.duration"));
+		Assert.Equal(2, scan.Value);
+		Assert.Equal("s", scan.Instrument.Unit);
+		Assert.Equal(1, Assert.Single(metrics.Find("zongsoft.net.tcp.monitor.overruns")).Value);
 
 		await server.StopAsync();
 		await TestNetwork.UntilAsync(() => clock.ActiveTimers == 0);
 		Assert.Equal(1, server.Statistics.OverrunCount);
+	}
+
+	[Fact]
+	public async Task DisabledDiagnosticsDoNotPublishMonitorTimingMetrics()
+	{
+		using var metrics = new TcpMeasurements();
+		var clock = new ManualClock();
+		await using var server = TestNetwork.Server(new() { TimeProvider = clock });
+		await server.StartAsync();
+		using var socket = await TestNetwork.ConnectAsync(server.Address);
+		await TestNetwork.UntilAsync(() => server.Channels.Count == 1 && clock.ActiveTimers == 1);
+		var reads = clock.TimestampReads;
+		clock.Advance(TimeSpan.FromSeconds(1));
+		await TestNetwork.UntilAsync(() => clock.TimestampReads > reads);
+		await server.StopAsync();
+		Assert.Empty(metrics.Find("zongsoft.net.tcp.monitor.scan.duration"));
+		Assert.Empty(metrics.Find("zongsoft.net.tcp.monitor.timeout.delay"));
+		Assert.Empty(metrics.Find("zongsoft.net.tcp.monitor.overruns"));
 	}
 
 	[Fact]
@@ -511,13 +571,6 @@ public class TcpTimeoutTest
 				await server.StopAsync();
 		}
 		finally { release.Set(); }
-	}
-
-	private sealed class ControlledLogger(Func<ILog, ValueTask> write) : ILogger
-	{
-		public string Name => nameof(ControlledLogger);
-		public ValueTask FlushAsync(CancellationToken cancellation = default) => ValueTask.CompletedTask;
-		public ValueTask LogAsync<TLog>(TLog log, CancellationToken cancellation = default) where TLog : ILog => write(log);
 	}
 
 	private sealed class ManualClock : TimeProvider

@@ -117,9 +117,38 @@ Subscribe on `server.Channels` or `client` to observe their channels. Each `TcpC
 
 A failure already known when closure starts is reported in `Closing`, `Error`, `Closed` order. Later handler or cleanup failures are reported before final `Closed`, without changing previously delivered snapshots. The first close reason and first non-null exception are preserved separately: a handler failing after local closure can produce a final snapshot with both `Local` and that exception. Capacity rejection and connection failures before a channel exists are returned by their operations and do not raise channel `Error`.
 
-Events run synchronously. Subscriber exceptions are logged and isolated individually; they do not prevent later subscribers or cleanup and do not recursively raise `Error`. Return promptly and never block waiting for shutdown, disposal, or `WaitAsync` that includes the callback itself. Subscribe before starting or connecting. To wait after completion, use `WaitAsync`, which retains the original completion result.
+Events run synchronously. Subscriber exceptions are isolated individually and reported through `TcpDiagnostics.Error`; they do not prevent later subscribers or cleanup and do not recursively raise channel `Error`. Return promptly and never block waiting for shutdown, disposal, or `WaitAsync` that includes the callback itself. Subscribe before starting or connecting. To wait after completion, use `WaitAsync`, which retains the original completion result.
 
 The channel's own `Closing` and `Closed` events describe transport closure. The client/manager `Closed` above describes complete channel cleanup. Await channel `WaitAsync` or use the owner's `Closed` when all resources must have been returned.
+
+## Telemetry and logging policy
+
+The library does not call the global logger, write log files, or create OpenTelemetry providers/exporters. Channel events and `WaitAsync` retain operational failures. Subscribe to `TcpDiagnostics.Error` for connect, accept, initialize, shared monitor, and notification-subscriber failures. Arguments contain `Source`, `Operation`, the original `Exception`, UTC `Timestamp`, and the captured `ActivityContext`. Shared monitoring has no single owner and uses a null source. Subscriber exceptions are isolated; same-thread reentry is suppressed. Unsubscribe when finished. Callbacks must return promptly or enqueue to a bounded application-owned queue; the application chooses logging levels, filtering, and output.
+
+The Meter and ActivitySource are both named `TcpDiagnostics.Name` (`Zongsoft.Net`). Subscribe independently using OpenTelemetry `AddMeter("Zongsoft.Net")` and `AddSource("Zongsoft.Net")`. `tcp.connect` is one Client Activity per coalesced client connection attempt, including preparation and initialization. Failures set `error.type` and Error status; cancellation uses `zongsoft.net.outcome=canceled`. Receive and maintenance loops do not inherit the first connect Activity. There is no Span per Socket I/O or automatic trace-header insertion; protocol adapters own cross-process propagation.
+
+All names below have the `zongsoft.net.tcp.` prefix and are Zongsoft-specific metrics. role means `zongsoft.net.role` (client/server); direction means `network.io.direction` (transmit/receive). Observable instruments retain process-wide totals or current state for late subscribers. Initialization failures before receive startup do not count as created connections.
+
+| Name suffix | Instrument / unit | Meaning and tags |
+| --- | --- | --- |
+| `connections.active` / `connections.created` | ObservableUpDownCounter / ObservableCounter, `{connection}` | Started connections awaiting full cleanup / cumulative started connections; role |
+| `io.bytes` / `frames` | ObservableCounter, `By` / `{frame}` | Completed Socket I/O bytes / decoded or locally flushed frames; role, direction |
+| `send.pending` / `send.pending_bytes` | ObservableUpDownCounter, `{operation}` / `By` | Sampled outstanding sends / reserved and not-yet-sent wire bytes; role |
+| `connect.duration` | Histogram, `s` | Coalesced connection-attempt duration; `zongsoft.net.outcome` is success/error/canceled |
+| `connection.duration` / `connections.closed` | Histogram, `s` / Counter, `{connection}` | Receive startup to completed cleanup / closures; role, plus enum-valued `zongsoft.net.close_reason` for closures |
+| `rejections` / `errors` | Counter, `{operation}` / `{error}` | Admission and per-channel send capacity rejections / reported failures; `zongsoft.net.operation` identifies the stage, rejections also carry role; errors include channel failures |
+| `monitor.scan.duration` / `monitor.timeout.delay` / `monitor.overruns` | Histogram, `s` / Histogram, `s` / Counter, `{scan}` | Scan duration, individual timeout detection delay, and overruns with `EnableDiagnostics`; shared scans are recorded once |
+
+Maintenance scans update byte/frame/backlog totals; final cleanup accounts for remaining progress. Active counts update immediately, while progress is an approximate snapshot whose lag depends on the maintenance interval and scheduling. Collection callbacks neither enumerate connections nor trigger scans. Connection IDs, remote ports, payloads, and exception text are not metric tags. Event and Meter/Activity callbacks can run synchronously: return promptly and use host-side batching without waiting for I/O or shutdown in callbacks. Sampling and telemetry settings do not change operational results or lifecycle events.
+
+Zongsoft hosts reuse the OTLP/Console exporters in [Diagnostics](../Zongsoft.Diagnostics/README.md); Web hosts may also use the existing [Diagnostics.Web](../Zongsoft.Diagnostics.Web/README.md) Prometheus endpoint. Explicitly include `Zongsoft.Net` in `/Diagnostics/Diagnostor/Meters/filter` and `/Diagnostics/Diagnostor/Traces/filter`, retaining other required sources and existing exporters. To select only Net, the relevant nodes are:
+
+```xml
+<meters><filter>Zongsoft.Net</filter><!-- retain existing exporters --></meters>
+<traces><filter>Zongsoft.Net</filter><!-- retain existing exporters --></traces>
+```
+
+Diagnostics expands bare `*` to predefined sources and application modules, not every source. Application subscribers can forward logs through Microsoft `ILogger` and the existing Logs configuration. Sampled ActivityEvents do not replace operational failure reporting. When deferring logging, preserve the captured ActivityContext as structured fields; Activity.Current on the consumer thread is not the original fault context.
 
 ## Error handling
 

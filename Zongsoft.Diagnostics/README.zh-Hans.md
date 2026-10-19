@@ -68,6 +68,10 @@ var consoleSettings = ExporterLauncherSettingsDriver.Console.GetSettings(
 
 新配置统一使用 `opentelemetry` 和 `opentelemetry.console`；启动器仍兼容 `telemetry`、`OpenTelemetry`、`Console`（忽略大小写），OTLP 也保留空驱动名匹配。`exporter.name="telemetry"` 是配置项名称，与驱动名称不同；既有 `diagnostics.telemetry`、`diagnostics.logging` 宿主变量及开关不改名。
 
+## Zongsoft.Net 遥测来源
+
+TCP 库通过 BCL Meter 与 ActivitySource 提供名称为 `Zongsoft.Net` 的遥测来源，不创建提供程序或导出器。在现有 `Meters/filter` 和 `Traces/filter` 中显式加入该名称，并保留所需的其他来源及导出器。裸 `*` 展开预定义来源和应用模块，不代表自动订阅所有库；指标、单位和跟踪边界见 [Net 遥测契约](../Zongsoft.Net/README.zh-Hans.md#遥测与日志策略)。故障事件是否转换为日志由宿主决定，可以沿用下面的 Microsoft ILogger 导出配置。
+
 ## Microsoft ILogger 日志
 
 插件在服务注册阶段读取 `/Diagnostics/Diagnostor/Logs`，自动将 `Microsoft.Extensions.Logging.ILogger` 接入 OpenTelemetry。宿主无需修改 `Program.cs`，也不需要 ASP.NET Core。Zongsoft 自有 `Logging`/`ILogger` 和 `Console.WriteLine` 不在此管线中。

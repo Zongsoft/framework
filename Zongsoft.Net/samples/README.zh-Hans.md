@@ -48,6 +48,12 @@ dotnet run --project Zongsoft.Net/samples/client/Zongsoft.Net.Samples.Client.csp
 
 文本发送、回复与广播使用 Core 的 `Buffer.Encode` 扩展获得 UTF-8 池化租约；在 `using` 作用域内等待发送或广播完成，再归还租约。设备合批在 `Pack` 将内容复制到合批写入器后归还每条消息的租约。接收保持借用序列，直接按跨段输入解码为字符串；需要在回调结束后保存原始报文时，可使用 `context.Package.Lease()` 并明确移交和释放所有者，详见[类库契约](../README.zh-Hans.md)。
 
+## 可选诊断输出
+
+两端均可添加 `--diagnostics`，显式订阅 `TcpDiagnostics.Error`。共享 [SampleDiagnostics](shared/SampleDiagnostics.cs) 在回调中仅尝试写入容量为 64 的队列，由独立消费循环输出操作、异常类型和发生时捕获的 TraceId；队满丢弃并计数，退出时解除订阅并排空。此示例不输出报文、地址或异常正文。通道处理故障仍通过通道事件和 `WaitAsync` 观察；是否转换为日志由应用决定。
+
+指标及连接跟踪可由宿主订阅 `Zongsoft.Net` 来源，沿用 Diagnostics 的 OTLP/Console 或 Diagnostics.Web 的 Prometheus 导出，见[遥测与日志策略](../README.zh-Hans.md#遥测与日志策略)。范例自身不创建导出器。
+
 ## 取消与清理
 
 两个应用都使用独立实例、`await using` 和取消令牌。交互模式需要终端，自动模式可重定向输出；Ctrl+C 请求取消并在退出时清理。正常结束会等待发送排空，自动模式超时或响应错误以失败退出。ACK 只是应用示例文本，不是持久化确认。

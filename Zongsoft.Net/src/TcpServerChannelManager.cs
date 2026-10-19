@@ -104,7 +104,7 @@ public sealed class TcpServerChannelManager<T> : IReadOnlyCollection<TcpServerCh
 	/// <summary>转发完整退场通知。</summary>
 	/// <param name="args">移除登记后的最终状态快照。</param>
 	internal void OnClosed(TcpChannelEventArgs<T> args) => _notifier.OnClosed(args);
-	/// <summary>转发并记录通道的首个结束故障。</summary>
+	/// <summary>转发通道的首个结束故障。</summary>
 	/// <param name="args">包含首个异常的状态快照。</param>
 	internal void OnError(TcpChannelEventArgs<T> args) => _notifier.OnError(args);
 	#endregion
