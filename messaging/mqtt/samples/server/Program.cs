@@ -14,7 +14,7 @@ internal class Program
 {
 	static async Task Main(string[] args)
 	{
-		using var server = new MqttQueueServer() { Url = args.Length > 0 ? args[0] : "tcp://127.0.0.1:1883", Handler = Handler.Instance };
+		await using var server = new MqttQueueServer() { Url = args.Length > 0 ? args[0] : "tcp://127.0.0.1:1883", Handler = Handler.Instance };
 		await server.StartAsync([]);
 
 		var executor = Terminal.Console.Executor;

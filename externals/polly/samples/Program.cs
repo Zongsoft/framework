@@ -15,7 +15,7 @@ internal class Program
 {
 	private static readonly FeatureBuilder _features = new();
 
-	static void Main(string[] args)
+	static async Task Main(string[] args)
 	{
 		Executor.Pipelines = FeaturePipelineBuilder.Instance;
 
@@ -259,7 +259,7 @@ internal class Program
 			.AppendLine(CommandOutletColor.Yellow, new string('·', 60));
 
 		//运行终端命令执行器
-		Terminal.Console.Executor.Run(splash);
+		await Terminal.Console.Executor.RunAsync(splash);
 	}
 
 	static ValueTask OnFallbackAsync<T>(Argument<T> argument, CancellationToken cancellation)

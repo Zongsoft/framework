@@ -110,7 +110,7 @@ Discovery advertises ports only; clients reuse the discovery host. All roles mus
 The [standalone server sample](samples/server/Program.cs) starts a loopback broadcast server without persistence:
 
 ```csharp
-using var server = new ZeroQueueServer()
+await using var server = new ZeroQueueServer()
 {
 	Discovery = "tcp://127.0.0.1:7969",
 	Incoming = "tcp://127.0.0.1:32101",
@@ -240,7 +240,7 @@ The fixture checks that Pending remains before acknowledgement and is removed af
 
 The Broker accepts a publication only when an online matching subscription exists. No match returns `null` without writing Storage. With a match, the Broker persists Pending first and then returns the identifier. Delivery competes among online subscribers; any one acknowledgement removes Pending. Retries reuse `Message.Identifier` and may choose another consumer, so handlers must be idempotent.
 
-Set `ZeroQueueServer.Storage` and `Storages` only while stopped. With Control enabled, first start calls `Storages.Create(Storage)` and the server owns the result. Stop retains it for restart; changing the storage name or factory, a failed start, or server disposal releases it, preferring `IAsyncDisposable`. When Control and Storage are unset, no factory is called and discovery includes only Incoming and Outgoing; LeastOnce is unavailable.
+Set `ZeroQueueServer.Storage` and `Storages` only while stopped. With Control enabled, each start calls `Storages.Create(Storage)` and the server owns the result. Stop, failed-start cleanup and disposal release owned storage, preferring `IAsyncDisposable`. Restart after a successful stop creates a new storage instance while retaining the factory and configuration. Failed cleanup retains remaining resources for an explicit retry; once disposal begins, only another `DisposeAsync` may retry cleanup. When Control and Storage are unset, no factory is called and discovery includes only Incoming and Outgoing; LeastOnce is unavailable.
 
 | Messaging option | Support |
 | --- | --- |

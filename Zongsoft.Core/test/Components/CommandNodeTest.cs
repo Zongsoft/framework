@@ -38,6 +38,46 @@ public class CommandNodeTest
 		Assert.Same(typeof(DummyCommand), nodes["WeaklyDummy"].Command.GetType());
 	}
 
+	[Theory]
+	[InlineData("/plugin/list")]
+	[InlineData("/PLUGIN/LIST")]
+	[InlineData("/plugins/ls")]
+	public void FindAbsolutePathFromRootAndDescendant(string path)
+	{
+		var root = new CommandNode();
+		var group = root.Children.Add("Plugin");
+		var command = group.Children.Add(new DummyCommand("List"));
+		group.Aliases.Add("plugins");
+		command.Aliases.Add("ls");
+
+		Assert.Same(command, root.Find(path));
+		Assert.Same(command, command.Find(path));
+	}
+
+	[Fact]
+	public void FindRootPathFromDescendant()
+	{
+		var root = new CommandNode();
+		var group = root.Children.Add("Plugin");
+		var command = group.Children.Add(new DummyCommand("List"));
+
+		Assert.Same(root, root.Find("/"));
+		Assert.Same(root, command.Find("/"));
+	}
+
+	[Theory]
+	[InlineData("list")]
+	[InlineData("./list")]
+	[InlineData("../plugin/list")]
+	public void FindRelativePathPreservesCurrentAndParentSegments(string path)
+	{
+		var root = new CommandNode();
+		var group = root.Children.Add("Plugin");
+		var command = group.Children.Add(new DummyCommand("List"));
+
+		Assert.Same(command, group.Find(path));
+	}
+
 	private class DummyCommand : ICommand
 	{
 		#region 事件声明

@@ -46,10 +46,8 @@ public enum WorkerState
 
 	/// <summary>正在暂停中。</summary>
 	Pausing,
-
 	/// <summary>已经暂停。</summary>
 	Paused,
-
 	/// <summary>正在恢复中。</summary>
 	Resuming,
 }

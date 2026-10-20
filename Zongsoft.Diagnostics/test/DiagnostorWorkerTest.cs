@@ -64,7 +64,7 @@ public class DiagnostorWorkerTest
 		using var environment = new ResourceEnvironment();
 		var metrics = new MetricsLauncher();
 		var traces = new TracesLauncher();
-		using var context = CreateContext(metrics, traces);
+		await using var context = CreateContext(metrics, traces);
 		await using var worker = new DiagnostorWorker("test", new TestConfigurator());
 		await worker.StartAsync();
 
@@ -100,7 +100,7 @@ public class DiagnostorWorkerTest
 	{
 		using var environment = new ResourceEnvironment("configured-service", "service.namespace=test,service.instance.id=instance-one");
 		var metrics = new MetricsLauncher();
-		using var context = CreateContext(metrics, new TracesLauncher());
+		await using var context = CreateContext(metrics, new TracesLauncher());
 		await using var worker = new DiagnostorWorker("test", new TestConfigurator());
 		await worker.StartAsync();
 		var resource = metrics.Provider.GetResource().Attributes.ToDictionary(item => item.Key, item => item.Value);
@@ -116,7 +116,7 @@ public class DiagnostorWorkerTest
 	{
 		var metrics = new MetricsLauncher();
 		var traces = new TracesLauncher();
-		using var context = CreateContext(metrics, traces);
+		await using var context = CreateContext(metrics, traces);
 		await using var worker = new DiagnostorWorker("test", new TestConfigurator(signal));
 		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => worker.StartAsync());
 		Assert.Equal("missing", exception.Data["ExporterDriver"]);
@@ -130,7 +130,7 @@ public class DiagnostorWorkerTest
 	{
 		var metrics = new MetricsLauncher();
 		var traces = new TracesLauncher { Fail = true };
-		using var context = CreateContext(metrics, traces);
+		await using var context = CreateContext(metrics, traces);
 		await using var worker = new DiagnostorWorker("test", new TestConfigurator());
 		await Assert.ThrowsAsync<InvalidOperationException>(() => worker.StartAsync());
 		Assert.Equal(1, metrics.Disposed);
@@ -153,7 +153,7 @@ public class DiagnostorWorkerTest
 		using var configuration = CreateConfiguration($"<exporter exporter.name=\"test\" driver=\"test\" {attribute} />");
 		var metrics = new MetricsLauncher();
 		var traces = new TracesLauncher();
-		using var context = CreateContext(metrics, traces, configuration);
+		await using var context = CreateContext(metrics, traces, configuration);
 		await using var worker = new DiagnostorWorker("test", new Configuration.Configurator("/Diagnostics/Diagnostor"));
 		await worker.StartAsync();
 
@@ -174,14 +174,14 @@ public class DiagnostorWorkerTest
 	}
 
 	[Fact]
-	public void ConfigurationFiltersDisabledExportersAndPreservesEnabledSettings()
+	public async Task ConfigurationFiltersDisabledExportersAndPreservesEnabledSettings()
 	{
 		using var configuration = CreateConfiguration("""
 			<exporter exporter.name="legacy" driver="first" settings="key=one;" />
 			<exporter exporter.name="disabled" driver="missing" enabled="false" settings="invalid settings" />
 			<exporter exporter.name="enabled" driver="second" enabled="true" settings="key=two;" />
 			""");
-		using var context = CreateContext(new MetricsLauncher(), new TracesLauncher(), configuration);
+		await using var context = CreateContext(new MetricsLauncher(), new TracesLauncher(), configuration);
 		var diagnostor = new Diagnostor("test", new Configuration.Configurator("/Diagnostics/Diagnostor"));
 
 		foreach(var filtering in new[] { diagnostor.Meters, diagnostor.Traces })
@@ -201,7 +201,7 @@ public class DiagnostorWorkerTest
 			""");
 		var metrics = new MetricsLauncher();
 		var traces = new TracesLauncher();
-		using var context = CreateContext(metrics, traces, configuration);
+		await using var context = CreateContext(metrics, traces, configuration);
 		await using var worker = new DiagnostorWorker("test", new Configuration.Configurator("/Diagnostics/Diagnostor"));
 		await worker.StartAsync();
 		Assert.Null(metrics.Provider);
@@ -243,10 +243,10 @@ public class DiagnostorWorkerTest
 	private sealed class TestContext(IServiceProvider services) : ApplicationContext(services)
 	{
 		protected override string GetName() => "diagnostics-test-service";
-		protected override void Dispose(bool disposing)
+		protected override async ValueTask DisposeAsync(bool disposing)
 		{
-			base.Dispose(disposing);
-			((IDisposable)this.Services).Dispose();
+			try { await base.DisposeAsync(disposing); }
+			finally { await ((IAsyncDisposable)this.Services).DisposeAsync(); }
 		}
 	}
 

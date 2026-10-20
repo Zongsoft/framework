@@ -13,7 +13,7 @@ internal static class Program
 	#region 静态方法
 	static async Task Main(string[] args)
 	{
-		using var server = new OpcServer();
+		await using var server = new OpcServer();
 		server.Options.Storages.Define("http://zongsoft.com/opc/ua").Initialize();
 		await server.StartAsync(args);
 

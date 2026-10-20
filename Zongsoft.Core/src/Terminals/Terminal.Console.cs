@@ -31,6 +31,8 @@ using System;
 using System.IO;
 using System.Text;
 using System.ComponentModel;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Components;
 
@@ -45,7 +47,7 @@ partial class Terminal
 	/// 		<item>https://en.wikipedia.org/wiki/ANSI_escape_code</item>
 	/// 	</list>
 	/// </remarks>
-	private class ConsoleTerminal : ITerminal, ICommandOutlet
+	private partial class ConsoleTerminal : ITerminal, ICommandOutlet
 	{
 		#region 单例字段
 		public static readonly ConsoleTerminal Instance = new();
@@ -65,24 +67,16 @@ partial class Terminal
 		#endif
 		#endregion
 
+		#region 输入字段
+		private readonly TextReader _standardInput = new StandardReader();
+		private TextReader _input;
+		#endregion
+
 		#region 私有构造
 		private ConsoleTerminal()
 		{
 			_locker = new();
 			this.Executor = new ConsoleExecutor(this);
-
-			try
-			{
-				if(!System.Console.IsInputRedirected)
-					System.Console.TreatControlCAsInput = false;
-			}
-			catch(IOException) { }
-
-			try
-			{
-				System.Console.CancelKeyPress += this.Console_CancelKeyPress;
-			}
-			catch(IOException) { }
 		}
 		#endregion
 
@@ -97,8 +91,16 @@ partial class Terminal
 
 		public TextReader Input
 		{
-			get => System.Console.In;
-			set => System.Console.SetIn(value);
+			get
+			{
+				lock(_locker)
+					return _input ?? _standardInput;
+			}
+			set
+			{
+				lock(_locker)
+					_input = value;
+			}
 		}
 
 		public TextWriter Output
@@ -121,6 +123,8 @@ partial class Terminal
 		#endregion
 
 		#region 公共方法
+		public bool Abort() => this.OnAborting();
+
 		public void Clear()
 		{
 			const string CLEAR_SEQUENCE = "\u001b[3J\u001b[2J\u001b[1J\u001b[0J";
@@ -149,7 +153,8 @@ partial class Terminal
 
 			try
 			{
-				if(System.Console.CursorLeft > 0)
+				//Unix 的光标位置查询也会读取标准输入，不能与输入后端混用。
+				if(!System.Console.IsOutputRedirected && (!OperatingSystem.IsWindows() || System.Console.CursorLeft > 0))
 					System.Console.WriteLine();
 			}
 			catch { }
@@ -211,10 +216,6 @@ partial class Terminal
 
 		protected virtual void OnResetted() => this.Resetted?.Invoke(this, EventArgs.Empty);
 		protected virtual void OnResetting() => this.Resetting?.Invoke(this, EventArgs.Empty);
-		#endregion
-
-		#region 中断事件
-		private void Console_CancelKeyPress(object sender, ConsoleCancelEventArgs e) => e.Cancel = this.OnAborting();
 		#endregion
 
 		#region 私有方法

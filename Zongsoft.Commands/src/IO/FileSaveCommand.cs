@@ -57,18 +57,18 @@ public class FileSaveCommand : CommandBase<CommandContext>, ICommandCompletion
 	#endregion
 
 	#region 执行方法
-	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		//打开一个或多个文件流
-		var result = FileUtility.OpenFile(context,
+		var result = await FileUtility.OpenFileAsync(context,
 			context.Options.GetValue<FileMode>(KEY_MODE_OPTION),
 			context.Options.GetValue<FileAccess>(KEY_ACCESS_OPTION),
-			context.Options.GetValue<FileShare>(KEY_SHARE_OPTION));
+			context.Options.GetValue<FileShare>(KEY_SHARE_OPTION), cancellation).ConfigureAwait(false);
 
 		if(result != null)
 			FileUtility.Save(result, context.Value, context.Options.GetValue<Encoding>(KEY_ENCODING_OPTION));
 
-		return ValueTask.FromResult(result);
+		return result;
 	}
 	#endregion
 

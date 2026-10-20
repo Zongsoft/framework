@@ -16,6 +16,24 @@
 
 The raw dictionary exposes explicit parameters; typed reads supply defaults. `Value` retains all explicit main parameters and extension properties. Retaining an unknown entry does not mean the OPC client consumes it. See the [Core settings contract](../../Zongsoft.Core/docs/settings.md) for the complete rules.
 
+## Notification Buffer Tests
+
+[SubscriberSpoolingTest](test/SubscriberSpoolingTest.cs) produces notifications through a real, disconnected `Subscriber` and the OPC UA SDK's `MonitoredItem.SaveValueInCache`. The path includes entry lookup, value extraction, the consumer callback, and `Spooler` batching. It creates no session, opens no port, and generates no certificate.
+
+A single awaitable producer controls the test notification source. The synchronous consumer only captures the current `PutAsync`; after the notification callback returns, the producer awaits admission before sending another reading, retaining at most one pending operation. Coverage includes successive and repeated values, identifier/value pairing, slow consumption at capacity, flush completion, cancellation and error propagation, an explicit final flush after detaching consumers, non-draining disposal, and periodic callback cancellation, cleanup and failure notification.
+
+From the repository root, build the current Core before running OPC tests. Use Debug so the adapter references the workspace Core assembly; Release references the published package.
+
+```shell
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -c Debug -p:GeneratePackageOnBuild=false
+dotnet build externals/opc/Zongsoft.Externals.Opc.slnx -c Debug -p:GeneratePackageOnBuild=false
+dotnet test externals/opc/test/Zongsoft.Externals.Opc.Tests.csproj -c Debug -f net8.0 --no-build --filter FullyQualifiedName~SubscriberSpoolingTest
+```
+
+Replace `net8.0` with `net9.0` and `net10.0` to check the other targets. The owner decides whether to flush remaining items explicitly before closing; `DisposeAsync` does not drain the buffer itself.
+
+The awaitable test producer is not an asynchronous backpressure solution for production subscription callbacks: `Consume(Action)` does not await asynchronous admission. These tests do not cover server sampling, network Publish dispatch, reconnection, or overflow in the SDK's own queues. Applications must choose an explicit capacity policy; discarding `PutAsync` or using an `async void` consumer does not observe completion or failures. For protocol end-to-end checks, use the [local client/server samples](samples/README.md).
+
 ## Certificate Generation
 
 If X509 certificates are used for authentication, use [OpenSSL](https://docs.openssl.org) to generate the X509 certificate files.

@@ -108,7 +108,7 @@ internal class Program
 		//executor.Exit += (_, _) => queue.Dispose();
 
 		//运行终端命令执行器
-		executor.Run(splash);
+		await executor.RunAsync(splash);
 	}
 
 	internal sealed class Handler : HandlerBase<Message>

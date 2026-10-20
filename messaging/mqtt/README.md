@@ -128,7 +128,7 @@ if(!retained.IsEmpty)
 The [actual server sample](samples/server/Program.cs) uses its own `Handler.Instance`; the handler is defined in that source file and prints received messages:
 
 ```csharp
-using var server = new MqttQueueServer() { Url = "tcp://127.0.0.1:1883", Handler = Handler.Instance };
+await using var server = new MqttQueueServer() { Url = "tcp://127.0.0.1:1883", Handler = Handler.Instance };
 await server.StartAsync([]);
 ```
 
@@ -212,4 +212,4 @@ The package includes both daemon artifacts. The deployment manifest selects `Zon
 
 `MqttQueueServer.Url` defaults to `tcp://0.0.0.0:1883/`. It accepts a literal IPv4 or bracketed IPv6 address, or `*` for the IPv4 wildcard, with an explicit port from 1 to 65535. The getter returns the normalized address including the root slash. Only the declared address family listens; `[::]` does not implicitly add IPv4. DNS names, non-root paths, credentials, queries, fragments and the IPv4 broadcast address are rejected. TLS and WebSocket listeners are outside this configuration.
 
-The API reuses `WorkerBase.Enabled` and its lifecycle. Startup cancellation or failure releases the broker instance and propagates the exception to the caller. Concurrent lifecycle calls await the shared operation; failed shutdown can be retried to finish cleanup. MQTTnet start/stop calls do not accept cancellation tokens, so startup observes cancellation after the SDK call completes, and shutdown finishes cleanup once begun.
+The API reuses `WorkerBase.Enabled` and its lifecycle. Stop also releases the server-owned `Storage`; configure a new instance after a successful stop if storage is needed on restart. A failed disposal can be retried with `DisposeAsync`, retaining resources until their cleanup succeeds. Startup cancellation or failure releases the broker instance and propagates the exception to the caller. Matching in-flight actions share their result. Stop waits for the current operation; a start requested during stop returns without scheduling a restart. Failed shutdown can be retried to finish cleanup. MQTTnet start/stop calls do not accept cancellation tokens, so startup observes cancellation after the SDK call completes, and shutdown finishes cleanup once begun.

@@ -201,7 +201,7 @@ public partial class MqttQueueServer : ListenerBase<Message>
 		}
 	}
 
-	/// <summary>停止 Broker 并释放监听和关联状态。</summary>
+	/// <summary>停止 Broker 并释放监听、关联状态和自有存储。</summary>
 	/// <param name="args">停止参数。</param>
 	/// <param name="cancellation">开始停止前检查的取消标记；停止开始后完成资源清理。</param>
 	/// <returns>表示 Broker 停止及资源释放的异步任务。</returns>
@@ -209,28 +209,28 @@ public partial class MqttQueueServer : ListenerBase<Message>
 	{
 		cancellation.ThrowIfCancellationRequested();
 
-		var server = Interlocked.Exchange(ref _server, null);
-
 		await this.Channels.BindAsync(null);
 		await this.Sessions.BindAsync(null);
 
-		if(server == null)
-			return;
-
-		try
+		var server = _server;
+		if(server != null)
 		{
 			server.InterceptingPublishAsync -= this.OnMessageReceivedAsync;
 			//停止开始后完成 SDK 清理，避免取消等待留下仍在使用的资源。
 			await server.StopAsync();
-		}
-		finally
-		{
 			server.Dispose();
+			_server = null;
 		}
+
+		await DisposeStorageAsync(_storage);
+		_storage = null;
 	}
 	#endregion
 
 	#region 消息处理
+	/// <summary>将 Broker 收到的消息交给配置的处理器。</summary>
+	/// <param name="args">MQTTnet 发布通知。</param>
+	/// <returns>消息处理及故障记录完成的任务。</returns>
 	private async Task OnMessageReceivedAsync(InterceptingPublishEventArgs args)
 	{
 		if(args?.ApplicationMessage == null)
@@ -264,36 +264,14 @@ public partial class MqttQueueServer : ListenerBase<Message>
 	}
 	#endregion
 
-	#region 处置方法
-	protected override void Dispose(bool disposing)
-	{
-		if(disposing)
-		{
-			try
-			{
-				this.Stop();
-				base.Dispose(disposing);
-				this.Channels.BindAsync(null).GetAwaiter().GetResult();
-				this.Sessions.BindAsync(null).GetAwaiter().GetResult();
-
-				var server = Interlocked.Exchange(ref _server, null);
-				if(server != null)
-				{
-					server.InterceptingPublishAsync -= this.OnMessageReceivedAsync;
-					server.Dispose();
-				}
-			}
-			finally
-			{
-				DisposeStorage(Interlocked.Exchange(ref _storage, null));
-			}
-		}
-	}
-
-	private static void DisposeStorage(IMessageStorage storage)
+	#region 私有方法
+	/// <summary>优先异步释放服务器拥有的存储。</summary>
+	/// <param name="storage">待释放的存储，可为空。</param>
+	/// <returns>存储释放完成的操作。</returns>
+	private static async ValueTask DisposeStorageAsync(IMessageStorage storage)
 	{
 		if(storage is IAsyncDisposable asynchronous)
-			asynchronous.DisposeAsync().AsTask().GetAwaiter().GetResult();
+			await asynchronous.DisposeAsync().ConfigureAwait(false);
 		else if(storage is IDisposable disposable)
 			disposable.Dispose();
 	}

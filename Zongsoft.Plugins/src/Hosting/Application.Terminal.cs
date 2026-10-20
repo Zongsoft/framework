@@ -28,8 +28,13 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Hosting.Internal;
 using Microsoft.Extensions.DependencyInjection;
 
 using Zongsoft.Services;
@@ -39,6 +44,7 @@ namespace Zongsoft.Plugins.Hosting;
 
 partial class Application
 {
+	#region 终端宿主
 	private sealed class TerminalApplicationBuilder : ApplicationBuilder
 	{
 		#if NET7_0_OR_GREATER
@@ -60,7 +66,25 @@ partial class Application
 			services.AddSingleton(provider => new TerminalApplicationContext(provider, options));
 			services.AddSingleton<PluginApplicationContext>(provider => provider.GetRequiredService<TerminalApplicationContext>());
 			services.AddSingleton<IApplicationContext>(provider => provider.GetRequiredService<TerminalApplicationContext>());
-			services.Configure<ConsoleLifetimeOptions>(options => options.SuppressStatusMessages = false);
+
+			//只替换通用宿主的默认控制台生命周期，保留应用显式指定的实现。
+			for(int i = services.Count - 1; i >= 0; i--)
+			{
+				if(services[i].ServiceType != typeof(IHostLifetime))
+					continue;
+
+				if(services[i].ImplementationType == typeof(ConsoleLifetime))
+				{
+					services[i] = ServiceDescriptor.Singleton<IHostLifetime>(provider => new TerminalLifetime(
+						provider.GetRequiredService<IHostApplicationLifetime>(),
+						provider.GetRequiredService<IHostEnvironment>(),
+						provider.GetRequiredService<IOptions<ConsoleLifetimeOptions>>(),
+						provider.GetRequiredService<ILoggerFactory>(),
+						() => provider.GetRequiredService<TerminalApplicationContext>().GetTerminal()));
+				}
+
+				break;
+			}
 
 			base.RegisterServices(services, options);
 		}
@@ -79,17 +103,37 @@ partial class Application
 
 	private sealed class TerminalApplicationContext(IServiceProvider services, PluginOptions options) : PluginApplicationContext(services, options)
 	{
+		private TerminalWorkbench _terminal;
 		public override string ApplicationType => "Terminal";
-		protected override IWorkbenchBase CreateWorkbench(out PluginTreeNode node) => base.CreateWorkbench(out node) ?? new TerminalWorkbench(this);
+		public ITerminal GetTerminal() => _terminal?.Terminal ?? Terminals.Terminal.Default;
+		protected override IWorkbenchBase CreateWorkbench(out PluginTreeNode node) => base.CreateWorkbench(out node) ?? (_terminal = new TerminalWorkbench(this));
+
+		protected override async Task OnStoppingAsync(CancellationToken cancellation)
+		{
+			var stopping = _terminal?.StopAsync() ?? Task.CompletedTask;
+			var disposal = new PluginDisposal();
+
+			try { await base.OnStoppingAsync(cancellation).ConfigureAwait(false); }
+			catch(Exception exception) { disposal.Errors.Add(exception); }
+
+			try { await stopping.ConfigureAwait(false); }
+			catch(Exception exception) { disposal.Errors.Add(exception); }
+
+			disposal.ThrowIfFailed();
+		}
 	}
 
-	private sealed class TerminalWorkbench(PluginApplicationContext applicationContext) : WorkbenchBase(applicationContext)
+	private sealed class TerminalWorkbench(PluginApplicationContext applicationContext) : WorkbenchBase(applicationContext), IAsyncDisposable
 	{
 		#region 成员字段
 		private ITerminalExecutor _executor;
+		private ITerminalExecutor _activeExecutor;
+		private readonly CancellationTokenSource _cancellation = new();
+		private Task _running = Task.CompletedTask;
 		#endregion
 
 		#region 公共属性
+		public ITerminal Terminal => (Volatile.Read(ref _activeExecutor) ?? this.Executor)?.Terminal;
 		public ITerminalExecutor Executor
 		{
 			get => _executor ?? Terminals.Terminal.Default.Executor;
@@ -114,12 +158,61 @@ partial class Application
 		#region 私有方法
 		private void Run(object sender, EventArgs e)
 		{
-			if(this.Executor == null)
-				throw new InvalidOperationException(Properties.Resources.Terminal_ExecutorRequired_Message);
-
-			Environment.ExitCode = this.Executor.Run();
-			this.Close();
+			var executor = this.Executor ?? throw new InvalidOperationException(Properties.Resources.Terminal_ExecutorRequired_Message);
+			Volatile.Write(ref _activeExecutor, executor);
+			var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+			_running = completion.Task;
+			_ = this.RunAsync(executor, completion);
 		}
+
+		private async Task RunAsync(ITerminalExecutor executor, TaskCompletionSource completion)
+		{
+			Exception failure = null;
+
+			try { Environment.ExitCode = await executor.RunAsync(_cancellation.Token).ConfigureAwait(false); }
+			catch(OperationCanceledException) when(_cancellation.IsCancellationRequested) { }
+			catch(Exception exception)
+			{
+				Environment.ExitCode = 1;
+				failure = exception;
+			}
+
+			try { this.ApplicationContext.Exit(); }
+			catch(Exception exception) { failure = failure == null ? exception : new AggregateException(failure, exception); }
+
+			if(failure == null)
+				completion.TrySetResult();
+			else
+			{
+				completion.TrySetException(failure);
+				_ = completion.Task.Exception;
+			}
+		}
+
+		public async Task StopAsync()
+		{
+			var disposal = new PluginDisposal();
+
+			try { await _cancellation.CancelAsync().ConfigureAwait(false); }
+			catch(Exception exception) { disposal.Errors.Add(exception); }
+
+			try { await _running.ConfigureAwait(false); }
+			catch(Exception exception) { disposal.Errors.Add(exception); }
+
+			disposal.ThrowIfFailed();
+		}
+
+		public async ValueTask DisposeAsync()
+		{
+			try { await this.StopAsync().ConfigureAwait(false); }
+			finally
+			{
+				_cancellation.Dispose();
+				this.Dispose();
+			}
+		}
+
 		#endregion
 	}
+	#endregion
 }

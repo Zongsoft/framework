@@ -85,14 +85,4 @@ public abstract class ListenerBase<T> : WorkerBase, IListener<T>, IHandleable<T>
 	/// <returns>恰好消费一次的处理操作。</returns>
 	ValueTask IListener<T>.HandleAsync(T package, CancellationToken cancellation) => this.OnHandleAsync(package, cancellation);
 	#endregion
-
-	#region 释放资源
-	/// <summary>清除处理器引用；共享处理器仍由注入者拥有。</summary>
-	/// <param name="disposing">是否释放托管资源。</param>
-	protected override void Dispose(bool disposing)
-	{
-		Interlocked.Exchange(ref _handler, null);
-		base.Dispose(disposing);
-	}
-	#endregion
 }

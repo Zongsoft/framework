@@ -30,6 +30,8 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Zongsoft.Terminals;
@@ -39,8 +41,9 @@ namespace Zongsoft.IO.Commands;
 
 internal static class FileUtility
 {
-	public static object OpenFile(CommandContext context, FileMode mode, FileAccess access, FileShare share)
+	public static async ValueTask<object> OpenFileAsync(CommandContext context, FileMode mode, FileAccess access, FileShare share, CancellationToken cancellation)
 	{
+		cancellation.ThrowIfCancellationRequested();
 		List<string> paths;
 
 		if(context.Arguments.IsEmpty)
@@ -55,7 +58,12 @@ internal static class FileUtility
 			do
 			{
 				context.Output.Write(CommandOutletColor.DarkYellow, prompt);
-				filePath = terminal.Input.ReadLine().Trim();
+				filePath = await terminal.Input.ReadLineAsync(cancellation).ConfigureAwait(false);
+
+				if(filePath == null)
+					return null;
+
+				filePath = filePath.Trim();
 			} while(string.IsNullOrEmpty(filePath));
 
 			paths = [filePath];
@@ -80,6 +88,7 @@ internal static class FileUtility
 		{
 			foreach(var path in paths)
 			{
+				cancellation.ThrowIfCancellationRequested();
 				streams.Add(FileSystem.File.Open(
 						path,
 						mode,

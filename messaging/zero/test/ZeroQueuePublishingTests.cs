@@ -20,7 +20,7 @@ public class ZeroQueuePublishingTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "missing-publisher");
 		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "missing-subscriber");
 		using var handler = new MessageBuffer();
@@ -41,7 +41,7 @@ public class ZeroQueuePublishingTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "identifier-publisher");
 		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "identifier-subscriber");
 		using var handler = new MessageBuffer();
@@ -72,7 +72,7 @@ public class ZeroQueuePublishingTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "compression-publisher");
 		using var subscriber = new SubscriberSocket();
 		var topic = "topic/compression";
@@ -99,7 +99,7 @@ public class ZeroQueuePublishingTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "concurrent-publisher");
 		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "concurrent-subscriber");
 		using var handler = new MessageBuffer();
@@ -125,7 +125,7 @@ public class ZeroQueuePublishingTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "snapshot-publisher");
 		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "snapshot-subscriber");
 		using var handler = new MessageBuffer();
@@ -167,7 +167,7 @@ public class ZeroQueuePublishingTests
 		finally
 		{
 			await server.StopAsync([]);
-			((IDisposable)server).Dispose();
+			await server.DisposeAsync();
 		}
 	}
 
@@ -177,7 +177,7 @@ public class ZeroQueuePublishingTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		var settings = Configuration.ZeroConnectionSettingsDriver.Instance.GetSettings("ZeroMQ",
 			$"server=127.0.0.1;port={server.Port};client=snapshot-settings;topic=original;group=tenant;Timeout=5s;");
 		using var publisher = new ZeroQueue("ZeroMQ", settings);
@@ -208,7 +208,7 @@ public class ZeroQueuePublishingTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		//短心跳会更频繁触发 poller 回调，用来覆盖发布者初始化和发送路径的竞态保护。
 		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "publisher", settings => settings.Heartbeat = TimeSpan.FromMilliseconds(10));
 		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "subscriber");
@@ -227,7 +227,7 @@ public class ZeroQueuePublishingTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "publisher");
 		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "subscriber");
 		using var handler = new MessageBuffer();

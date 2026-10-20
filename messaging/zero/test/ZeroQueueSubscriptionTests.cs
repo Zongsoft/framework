@@ -22,7 +22,7 @@ public class ZeroQueueSubscriptionTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var queue = ZeroTestUtility.CreateQueue(server.Port, "backpressure-subscriber");
 		var handler = new BlockingHandler();
 		var subscriber = await queue.SubscribeAsync("topic/backpressure", handler);
@@ -49,7 +49,7 @@ public class ZeroQueueSubscriptionTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		var queue = ZeroTestUtility.CreateQueue(server.Port, "dispose-active");
 		var consumer = await queue.SubscribeAsync("topic/dispose", new MessageCollector());
 		var channel = consumer.Channel;
@@ -71,7 +71,7 @@ public class ZeroQueueSubscriptionTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "empty-publisher");
 		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "empty-subscriber");
 		using var handler = new MessageBuffer();
@@ -90,7 +90,7 @@ public class ZeroQueueSubscriptionTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "group-publisher", settings => settings.Group = "tenant");
 		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "group-subscriber", settings => settings.Group = "tenant");
 		using var handler = new MessageBuffer();
@@ -108,7 +108,7 @@ public class ZeroQueueSubscriptionTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "publisher");
 		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "subscriber");
 		var handler = new MessageCollector();
@@ -158,7 +158,7 @@ public class ZeroQueueSubscriptionTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "publisher");
 		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "subscriber");
 		using(var disposable = ZeroTestUtility.CreateQueue(server.Port, "disposable"))
@@ -225,7 +225,7 @@ public class ZeroQueueSubscriptionTests
 		finally
 		{
 			await server.StopAsync([]);
-			((IDisposable)server).Dispose();
+			await server.DisposeAsync();
 		}
 	}
 
@@ -254,7 +254,7 @@ public class ZeroQueueSubscriptionTests
 			await server.StopAsync([]);
 			Assert.True(await ZeroTestUtility.WaitUntilAsync(() =>
 				ZeroTestUtility.CanBindZeroMq(original.Incoming) && ZeroTestUtility.CanBindZeroMq(original.Outgoing), TimeSpan.FromSeconds(5)));
-			using var changed = ZeroTestUtility.CreateServer(port);
+			await using var changed = ZeroTestUtility.CreateServer(port);
 			server.Incoming = changed.Incoming;
 			server.Outgoing = changed.Outgoing;
 			await server.StartAsync([]);
@@ -270,7 +270,7 @@ public class ZeroQueueSubscriptionTests
 		finally
 		{
 			await server.StopAsync([]);
-			((IDisposable)server).Dispose();
+			await server.DisposeAsync();
 		}
 	}
 
@@ -280,7 +280,7 @@ public class ZeroQueueSubscriptionTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "subscriber");
 		using var handler = new MessageBuffer();
 		var topic = "topic/malformed";

@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace Zongsoft.Plugins.Builders;
@@ -36,6 +38,7 @@ public abstract class BuilderBase : IBuilder, IBuilderLifecycle
 {
 	#region 成员变量
 	private IEnumerable<string> _ignoredProperties;
+	private readonly AsyncLocal<Destruction> _destruction = new();
 	#endregion
 
 	#region 构造函数
@@ -76,33 +79,72 @@ public abstract class BuilderBase : IBuilder, IBuilderLifecycle
 		return PluginUtility.BuildBuiltin(context.Builtin, context.Settings, this.IgnoredProperties);
 	}
 
-	public virtual void Destroy(BuilderContext context)
+	/// <summary>异步释放构件拥有的结果，并等待并发销毁完成。</summary>
+	/// <param name="context">待销毁构件的上下文。</param>
+	/// <param name="cancellation">仅取消本次等待；已经开始的释放继续完成。</param>
+	/// <returns>结果释放及构件缓存清理完成的操作。</returns>
+	public virtual ValueTask DestroyAsync(BuilderContext context, CancellationToken cancellation = default)
 	{
-		if(context == null || context.Builtin == null)
-			return;
+		cancellation.ThrowIfCancellationRequested();
+		if(context?.Builtin == null)
+			return ValueTask.CompletedTask;
 
-		var builtin = context.Builtin;
-
-		if(builtin.HasValue)
+		for(var active = _destruction.Value; active != null; active = active.Parent)
 		{
-			if(builtin.Value is IDisposable disposable)
-				disposable.Dispose();
-			else if(builtin.Value is System.Collections.IEnumerable collection)
-			{
-				foreach(object item in collection)
-				{
-					if(item is IDisposable disposableItem)
-						disposableItem.Dispose();
-				}
-			}
-
-			builtin.Value = null;
+			if(active.Active && ReferenceEquals(active.Builtin, context.Builtin))
+				throw new InvalidOperationException();
 		}
 
-		builtin.IsBuilded = false;
-		builtin.BuildFailure = null;
-		builtin.AppendedOwner = null;
-		builtin.AppendedValue = null;
+		var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var pending = BuilderManager.Current.BeginDestroy(context.Builtin, completion);
+
+		if(pending == null)
+		{
+			pending = completion;
+			_ = this.DestroyCoreAsync(context, completion);
+		}
+
+		return new(cancellation.CanBeCanceled ? pending.Task.WaitAsync(cancellation) : pending.Task);
+	}
+
+	private async Task DestroyCoreAsync(BuilderContext context, TaskCompletionSource completion)
+	{
+		var builtin = context.Builtin;
+		var disposal = context.Disposal ?? new PluginDisposal();
+		var offset = disposal.Errors.Count;
+		var invocation = new Destruction(builtin, _destruction.Value);
+		_destruction.Value = invocation;
+		Exception failure = null;
+
+		try
+		{
+			if(builtin.OwnsValue)
+				await disposal.ReleaseAsync(builtin.Value).ConfigureAwait(false);
+
+			builtin.Reset(disposal.Errors);
+
+			if(disposal.Errors.Count > offset)
+			{
+				var errors = disposal.Errors.GetRange(offset, disposal.Errors.Count - offset);
+				disposal.Errors.RemoveRange(offset, disposal.Errors.Count - offset);
+				throw new AggregateException(errors);
+			}
+
+		}
+		catch(Exception exception) { failure = exception; }
+		finally
+		{
+			invocation.Active = false;
+			_destruction.Value = invocation.Parent;
+		}
+
+		if(failure == null)
+			completion.TrySetResult();
+		else
+		{
+			completion.TrySetException(failure);
+			_ = completion.Task.Exception;
+		}
 	}
 
 	/// <summary>当构建器所属的插件被卸载，该方法被调用。</summary>
@@ -143,6 +185,15 @@ public abstract class BuilderBase : IBuilder, IBuilderLifecycle
 	{
 		this.ApplyBehaviors(context);
 		this.OnBuilded(context);
+	}
+	#endregion
+
+	#region 嵌套类型
+	private sealed class Destruction(Builtin builtin, Destruction parent)
+	{
+		public readonly Builtin Builtin = builtin;
+		public readonly Destruction Parent = parent;
+		public volatile bool Active = true;
 	}
 	#endregion
 }

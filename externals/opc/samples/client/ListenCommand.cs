@@ -67,27 +67,25 @@ public sealed class ListenCommand(OpcClient client) : CommandBase<CommandContext
 				TimeSpan.FromMilliseconds(context.Options.GetValue<int>("period")),
 				context.Options.GetValue<int>("limit"));
 
+		context.Result = subscribers;
+
 		//挂载消费者的通知回调函数
 		foreach(var subscriber in subscribers)
 		{
-			if(_spooler == null)
-				subscriber.Consume((subscriber, entry, value) => Dump(context.Output, subscriber, entry, value));
+			if(_spooler is { } spooler)
+				subscriber.Consume((subscriber, entry, value) => spooler.PutAsync(new(entry.Name, value), cancellation).AsTask().GetAwaiter().GetResult());
 			else
-				subscriber.Consume((subscriber, entry, value) => _spooler.PutAsync(new(entry.Name, value), cancellation).AsTask().GetAwaiter().GetResult());
+				subscriber.Consume((subscriber, entry, value) => Dump(context.Output, subscriber, entry, value));
 		}
 
 		//显示欢迎信息
 		context.Output.WriteLine(Welcome(subscribers));
 
-		context.Result = subscribers;
 		return ValueTask.CompletedTask;
 	}
 
-	private ValueTask OnExitAsync(CommandContext context, Exception exception, CancellationToken cancellation)
+	private async ValueTask OnExitAsync(CommandContext context, Exception exception, CancellationToken cancellation)
 	{
-		if(exception != null)
-			throw exception;
-
 		if(context.Result is IEnumerable<Subscriber> subscribers)
 		{
 			//依次取消所有订阅者的消费事件
@@ -95,14 +93,18 @@ public sealed class ListenCommand(OpcClient client) : CommandBase<CommandContext
 				subscriber.Consume();
 		}
 
-		//处置释放缓冲器
-		_spooler?.Dispose();
-
-		//重置统计计数器
-		_total = 0;
-		_timestamp = DateTime.Now;
-
-		return ValueTask.CompletedTask;
+		try
+		{
+			//释放不排空；原始运行异常由 ReactiveAsync 在清理完成后传播。
+			if(_spooler != null)
+				await _spooler.DisposeAsync();
+		}
+		finally
+		{
+			_spooler = null;
+			_total = 0;
+			_timestamp = DateTime.Now;
+		}
 	}
 	#endregion
 

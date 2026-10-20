@@ -36,227 +36,280 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Caching;
 
-/// <summary>提供数据缓冲功能的类。</summary>
-/// <typeparam name="T">指定的缓冲数据类型。</typeparam>
-/// <remarks>在高频写数据的场景中（譬如日志记录、物联网的数据采集等），可使用本缓冲器来降低写入频率。该类底层采用 <seealso cref="System.Threading.Channels"/> 技术进行异步生成与消费高频数据，具有优秀的高并发性能。</remarks>
-public class Spooler<T> : IEnumerable<T>, IDisposable
+/// <summary>缓冲高频输入，并按周期、数量或显式请求串行执行批量处理。</summary>
+/// <typeparam name="T">缓冲的数据类型。</typeparam>
+/// <remarks>
+///		<para>回调通过枚举取走数据；取走不表示持久化成功。缓冲器不重试、不去重、不写日志，释放不排空数据。</para>
+///		<para>调用方应避免在回调及故障通知中等待本缓冲器的刷新、异步释放或满载投递，以免形成循环等待。</para>
+///		<para>在高频写数据的场景中（譬如日志记录、物联网的数据采集等），可使用本缓冲器来降低写入频率。该类底层采用 <seealso cref="System.Threading.Channels"/> 技术进行异步生成与消费高频数据，具有优秀的高并发性能。</para>
+/// </remarks>
+public partial class Spooler<T> : IEnumerable<T>, IAsyncDisposable
 {
-	#region 成员字段
-	private readonly int _limit;
+	#region 事件声明
+	/// <summary>定时刷新运行失败时发生；该次定时运行结束，仍可显式刷新或由满载写入触发刷新。</summary>
+	/// <remarks>修改事件参数不改变运行结果。订阅者异常中断后续通知，并由异步释放传播。</remarks>
+	public event EventHandler<Diagnostics.FailureEventArgs> Failed;
 	#endregion
 
-	#region 私有变量
-	private SemaphoreSlim _flushing;
-	private Common.Timer _timer;
-	private Channel<T> _channel;
+	#region 成员字段
+	private readonly int _limit;
+	private readonly Common.Timer _timer;
+	private readonly SemaphoreSlim _flushing; //串行化刷新，关闭时等待持有者退出
+	private readonly IDisposable _diagnostics;
+	private readonly TaskCompletionSource _disposal;
+
+	private Channel<T> _channel; //置空表示已经开始关闭
 	private Func<IEnumerable<T>, CancellationToken, ValueTask> _flusher;
 	#endregion
 
 	#region 构造函数
-	public Spooler(Func<IEnumerable<T>, CancellationToken, ValueTask> flusher, TimeSpan period, int limit = 0) : this(period, limit) =>
-		_flusher = flusher ?? throw new ArgumentNullException(nameof(flusher));
-	protected Spooler(TimeSpan period, int limit = 0)
+	/// <summary>使用指定回调初始化缓冲器，并启动周期刷新。</summary>
+	/// <param name="flusher">通过枚举取走数据的处理回调。</param>
+	/// <param name="period">周期刷新间隔。</param>
+	/// <param name="limit">缓冲及每个枚举器的数量上限；小于或等于零表示不限数量。</param>
+	/// <param name="clock">周期刷新使用的时钟；为空时使用系统时钟。</param>
+	public Spooler(Func<IEnumerable<T>, CancellationToken, ValueTask> flusher, TimeSpan period, int limit = 0, TimeProvider clock = null) :
+		this(flusher == null ? throw new ArgumentNullException(nameof(flusher)) : period, limit, clock) => _flusher = flusher;
+
+	/// <summary>为派生类初始化缓冲器，并启动周期刷新。</summary>
+	/// <param name="period">周期刷新间隔。</param>
+	/// <param name="limit">缓冲及每个枚举器的数量上限；小于或等于零表示不限数量。</param>
+	/// <param name="clock">周期刷新使用的时钟；为空时使用系统时钟。</param>
+	protected Spooler(TimeSpan period, int limit = 0, TimeProvider clock = null)
 	{
 		_limit = Math.Max(limit, 0);
-		_timer = new Common.Timer(period, this.OnTickAsync);
+		_flushing = new(1, 1);
+		_disposal = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		_channel = _limit > 0 ? Channel.CreateBounded<T>(_limit) : Channel.CreateUnbounded<T>();
-		_timer.Start();
+
+		_timer = new Common.Timer(period, this.OnTickAsync, clock: clock);
+		_timer.Failed += this.OnFailed;
+		_diagnostics = Spooler<object>.Metrics.Register(_channel.Reader);
+
+		try { _timer.Start(); }
+		catch
+		{
+			_diagnostics.Dispose();
+			throw;
+		}
 	}
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取当前缓冲区的数量。</summary>
-	public int Count => this.GetChannel(out var channel) && channel.Reader.CanCount ? channel.Reader.Count : -1;
-
-	/// <summary>获取一个值，指示当前缓冲区是否空了。</summary>
-	public bool IsEmpty => this.GetChannel(out var channel) && channel.Reader.CanCount && channel.Reader.Count == 0;
-
-	/// <summary>获取缓冲数量限制，如果缓冲数量超过该属性值则立即触发刷新回调；如果为零则表示忽略该限制。</summary>
+	/// <summary>获取尚未从缓冲区取出的数据数量，不包含已经取出但仍在处理的数据。</summary>
+	public int Count => this.GetChannel().Reader.Count;
+	/// <summary>获取缓冲区是否为空；为空不表示处理回调已经完成。</summary>
+	public bool IsEmpty => this.Count == 0;
+	/// <summary>获取缓冲容量及单次枚举的数量上限；零表示无数量限制。缓冲区满后的下一次写入触发刷新。</summary>
 	public int Limit => _limit;
-
-	#if NET8_0_OR_GREATER
-	/// <summary>获取或设置缓冲的刷新周期，不能低于<c>1</c>毫秒(Millisecond)。</summary>
+	/// <summary>获取或设置周期刷新间隔；该间隔不保证单条数据的最大处理延迟。</summary>
 	public TimeSpan Period
 	{
-		get => _timer != null ? _timer.Period : throw new ObjectDisposedException(nameof(Spooler<T>));
+		get
+		{
+			ObjectDisposedException.ThrowIf(Volatile.Read(ref _channel) == null, this);
+			return _timer.Period;
+		}
 		set
 		{
-			var timer = _timer ?? throw new ObjectDisposedException(nameof(Spooler<T>));
-
-			if(timer.Period == value)
-				return;
-
-			timer.Period = value;
+			ObjectDisposedException.ThrowIf(Volatile.Read(ref _channel) == null, this);
+			_timer.Period = value;
 		}
 	}
-	#endif
 	#endregion
 
 	#region 公共方法
+	/// <summary>丢弃尚未取出的数据，不影响正在执行的处理回调。</summary>
 	public void Clear()
 	{
-		while(this.GetChannel(out var channel) && channel.Reader.TryRead(out _));
+		var reader = this.GetChannel().Reader;
+		while(reader.TryRead(out _));
 	}
 
+	/// <summary>接收数据；缓冲区满时由本次操作刷新已有数据，再尝试接收。</summary>
+	/// <param name="value">待接收的数据。</param>
+	/// <param name="cancellation">取消尚未完成的投递及其触发的刷新；已接收的数据不撤回。</param>
+	/// <returns>表示数据已经接收的操作，不表示该条数据已经处理。</returns>
 	public ValueTask PutAsync(T value, CancellationToken cancellation = default)
 	{
-		var channel = _channel;
-		if(channel == null)
-			return ValueTask.FromException(new ObjectDisposedException(nameof(Spooler<T>)));
+		var channel = Volatile.Read(ref _channel);
 
-		return channel.Writer.TryWrite(value) ? ValueTask.CompletedTask : this.PutCoreAsync(value, cancellation);
+		if(channel == null)
+			return ValueTask.FromException(new ObjectDisposedException(this.GetType().FullName));
+		if(cancellation.IsCancellationRequested)
+			return ValueTask.FromCanceled(cancellation);
+
+		if(!channel.Writer.TryWrite(value))
+			return this.PutCoreAsync(value, cancellation);
+
+		Spooler<object>.Metrics.Accept();
+		return ValueTask.CompletedTask;
 	}
 
 	[System.Runtime.CompilerServices.AsyncMethodBuilder(typeof(System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder))]
 	private async ValueTask PutCoreAsync(T value, CancellationToken cancellation)
 	{
-		while(true)
+		var started = Spooler<object>.Metrics.StartWaiting();
+
+		try
 		{
-			cancellation.ThrowIfCancellationRequested();
-			var consumed = await this.FlushCoreAsync(cancellation, true);
-			cancellation.ThrowIfCancellationRequested();
+			while(true)
+			{
+				cancellation.ThrowIfCancellationRequested();
+				var consumed = await this.FlushCoreAsync(cancellation, true).ConfigureAwait(false);
 
-			if(this.GetChannel(out var channel) && channel.Writer.TryWrite(value))
-				return;
+				cancellation.ThrowIfCancellationRequested();
+				var channel = this.GetChannel();
 
-			// A callback which declines to consume must not turn backpressure into polling.
-			if(!consumed)
-				await channel.Writer.WaitToWriteAsync(cancellation);
+				if(channel.Writer.TryWrite(value))
+				{
+					Spooler<object>.Metrics.Accept();
+					return;
+				}
+
+				//回调未消费时等待容量；完成通道返回 false 时必须退出，不能空转。
+				if(!consumed && !await channel.Writer.WaitToWriteAsync(cancellation).ConfigureAwait(false))
+					throw new ObjectDisposedException(this.GetType().FullName);
+			}
 		}
+		finally { Spooler<object>.Metrics.StopWaiting(started); }
 	}
 
-	public ValueTask FlushAsync(CancellationToken cancellation = default)
-	{
-		var pending = this.FlushCoreAsync(cancellation);
-		if(!pending.IsCompletedSuccessfully)
-			return new ValueTask(pending.AsTask());
-
-		pending.GetAwaiter().GetResult();
-		return ValueTask.CompletedTask;
-	}
+	/// <summary>等待正在执行的刷新，然后对仍在缓冲区的数据执行一轮刷新。</summary>
+	/// <param name="cancellation">取消本次等待及由本次操作执行的回调，不取消其它操作的回调。</param>
+	/// <returns>表示本轮回调已经完成的操作；部分枚举可以留下数据，持续输入可能被本轮枚举取到。</returns>
+	public async ValueTask FlushAsync(CancellationToken cancellation = default) => await this.FlushCoreAsync(cancellation).ConfigureAwait(false);
 
 	[System.Runtime.CompilerServices.AsyncMethodBuilder(typeof(System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder<>))]
-	private async ValueTask<bool> FlushCoreAsync(CancellationToken cancellation, bool full = false)
+	private async ValueTask<bool> FlushCoreAsync(CancellationToken cancellation, bool full = false, bool periodic = false)
 	{
-		if(cancellation.IsCancellationRequested || this.IsEmpty)
+		if(this.GetChannel(periodic) == null)
 			return true;
 
-		var flushing = LazyInitializer.EnsureInitialized(ref _flushing, static () => new SemaphoreSlim(1, 1));
-		await flushing.WaitAsync(cancellation);
+		await _flushing.WaitAsync(cancellation).ConfigureAwait(false);
 
 		try
 		{
 			cancellation.ThrowIfCancellationRequested();
-			var reader = this.GetChannel().Reader;
+			var channel = this.GetChannel(periodic);
+			if(channel == null)
+				return true;
+
+			var reader = channel.Reader;
 			var count = reader.Count;
 
-			// A waiting writer may now have room; do not flush an unnecessary partial batch.
+			//先取得刷新权再判断空队列，确保不会越过正在处理的回调。
 			if(count == 0 || (full && count < _limit))
 				return true;
 
-			var batch = new Iterable(reader, _limit);
-			await this.OnFlushAsync(batch, cancellation);
-			return batch.Consumed;
+			var trigger = (periodic, full) switch
+			{
+				(true, _) => "periodic",
+				(_, true) => "capacity",
+				_ => "explicit",
+			};
+
+			return await InvokeAsync(this, reader, trigger, cancellation).ConfigureAwait(false);
 		}
-		finally
+		finally { _flushing.Release(); }
+
+		[System.Runtime.CompilerServices.AsyncMethodBuilder(typeof(System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder<>))]
+		static async ValueTask<bool> InvokeAsync(Spooler<T> owner, ChannelReader<T> reader, string trigger, CancellationToken cancellation)
 		{
-			// Dispose can run while callbacks or waiters still need this managed gate.
-			flushing.Release();
+			var batch = new Iterable(reader, owner._limit);
+			var started = Spooler<object>.Metrics.StartFlushing();
+			var outcome = "success";
+
+			try
+			{
+				await owner.OnFlushAsync(batch, cancellation).ConfigureAwait(false);
+				return batch.Consumed;
+			}
+			catch(OperationCanceledException exception) when(cancellation.IsCancellationRequested && exception.CancellationToken == cancellation)
+			{
+				outcome = "canceled";
+				throw;
+			}
+			catch
+			{
+				outcome = "error";
+				Spooler<object>.Metrics.Fail(trigger);
+				throw;
+			}
+			finally { Spooler<object>.Metrics.StopFlushing(started, trigger, outcome); }
 		}
 	}
 	#endregion
 
 	#region 虚拟方法
-	protected virtual ValueTask OnFlushAsync(IEnumerable<T> items, CancellationToken cancellation)
-	{
-		var flusher = _flusher;
-		return flusher != null ? flusher.Invoke(items, cancellation) : ValueTask.CompletedTask;
-	}
+	/// <summary>处理缓冲数据；枚举时取走数据，每个枚举器最多取出 Limit 项，零表示不限数量。</summary>
+	/// <param name="items">消费性序列；重复枚举继续取数，不重放已经取出的数据。</param>
+	/// <param name="cancellation">触发本轮刷新的操作令牌。</param>
+	/// <returns>表示本轮处理完成的操作；异常不会自动重试已经取出的数据。</returns>
+	protected virtual ValueTask OnFlushAsync(IEnumerable<T> items, CancellationToken cancellation) => _flusher?.Invoke(items, cancellation) ?? ValueTask.CompletedTask;
 	#endregion
 
 	#region 时钟方法
-	private ValueTask OnTickAsync(object state, CancellationToken cancellation) => this.FlushAsync(cancellation);
+	private async ValueTask OnTickAsync(object state, CancellationToken cancellation)
+	{
+		//仅在进入业务回调之前识别正常关闭，回调抛出的异常必须保留。
+		await this.FlushCoreAsync(cancellation, periodic: true).ConfigureAwait(false);
+	}
+
+	private void OnFailed(object sender, Diagnostics.FailureEventArgs args) => this.Failed?.Invoke(this, args);
 	#endregion
 
 	#region 私有方法
-	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private Channel<T> GetChannel() => _channel ?? throw new ObjectDisposedException(nameof(Spooler<T>));
-	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private bool GetChannel(out Channel<T> channel) => (channel = _channel ?? throw new ObjectDisposedException(nameof(Spooler<T>))) != null;
+	private Channel<T> GetChannel(bool closing = false)
+	{
+		var channel = Volatile.Read(ref _channel);
+		return channel == null && !closing ? throw new ObjectDisposedException(this.GetType().FullName) : channel;
+	}
 	#endregion
 
 	#region 处置方法
-	public void Dispose()
+	/// <summary>停止接收并等待在途刷新、计时器清理和故障通知结束；不排空缓冲数据。</summary>
+	/// <returns>表示异步释放完成的操作；周期运行或故障通知的异常由该操作传播。</returns>
+	/// <remarks>显式刷新异常由原操作传播；本方法只等待其退出。回调和故障通知应由所有者在回调外等待释放。</remarks>
+	public async ValueTask DisposeAsync()
 	{
-		this.Dispose(true);
+		await this.DisposeAsyncCore().ConfigureAwait(false);
 		GC.SuppressFinalize(this);
 	}
 
-	protected virtual void Dispose(bool disposing)
+	/// <summary>停止接收并等待缓冲器的在途工作结束；派生类可在等待基类实现后异步释放回调依赖的资源。</summary>
+	/// <returns>表示在途工作及计时器清理结束的操作；重复调用共享相同的完成结果。</returns>
+	protected virtual ValueTask DisposeAsyncCore()
 	{
-		_flusher = null;
-		var timer = Interlocked.Exchange(ref _timer, null);
 		var channel = Interlocked.Exchange(ref _channel, null);
+		if(channel == null)
+			return new(_disposal.Task);
 
-		if(disposing)
+		channel.Writer.TryComplete();
+		_timer.Stop();
+		_diagnostics.Dispose();
+
+		_ = FinishAsync();
+		return new(_disposal.Task);
+
+		async Task FinishAsync()
 		{
-			timer?.Dispose();
-			channel?.Writer.TryComplete();
+			try
+			{
+				await _flushing.WaitAsync().ConfigureAwait(false);
+				_flusher = null;
+				_flushing.Release(); //保留纯托管信号量，让关闭前已排队的操作依次检查关闭状态
+
+				await _timer.DisposeAsync().ConfigureAwait(false);
+				_disposal.TrySetResult();
+			}
+			catch(Exception exception) { _disposal.TrySetException(exception); }
 		}
 	}
 	#endregion
 
 	#region 枚举遍历
 	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-	public IEnumerator<T> GetEnumerator() => new Iterator(_channel?.Reader, _limit);
-	#endregion
-
-	#region 嵌套子类
-	// The first enumeration reuses the batch itself, avoiding a second allocation.
-	private sealed class Iterable(ChannelReader<T> reader, int limit) : Iterator(reader, limit), IEnumerable<T>
-	{
-		private readonly ChannelReader<T> _reader = reader;
-		private readonly int _limit = limit;
-		private int _enumerated;
-		private List<Iterator> _iterators;
-
-		public bool Consumed => this.HasConsumed || (_iterators?.Exists(iterator => iterator.HasConsumed) ?? false);
-		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-		public IEnumerator<T> GetEnumerator()
-		{
-			if(Interlocked.Exchange(ref _enumerated, 1) == 0)
-				return this;
-
-			var iterator = new Iterator(_reader, _limit);
-
-			lock(this)
-				(_iterators ??= []).Add(iterator);
-
-			return iterator;
-		}
-	}
-
-	private class Iterator(ChannelReader<T> reader, int limit) : IEnumerator<T>
-	{
-		private T _value;
-		private int _count;
-		private readonly int _limit = limit;
-		private ChannelReader<T> _reader = reader;
-
-		public bool HasConsumed => _count != 0;
-		public T Current => _value;
-		object IEnumerator.Current => _value;
-
-		public void Reset() { }
-		public void Dispose() => _reader = null;
-		public bool MoveNext()
-		{
-			if(_reader == null || (_limit > 0 && _count >= _limit) || !_reader.TryRead(out _value))
-				return false;
-
-			_count = _limit > 0 ? _count + 1 : 1;
-			return true;
-		}
-	}
+	public IEnumerator<T> GetEnumerator() => new Iterator(Volatile.Read(ref _channel)?.Reader, _limit);
 	#endregion
 }

@@ -132,11 +132,11 @@ public class ZeroRequesterMultipleReplyTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var requesterQueue = ZeroTestUtility.CreateQueue(server.Port, "multiple-requester");
 		using var responderQueue = ZeroTestUtility.CreateQueue(server.Port, "multiple-responder");
 		await using var requester = new ZeroRequester { Queue = requesterQueue };
-		using var responder = new ZeroResponder { Queue = responderQueue };
+		await using var responder = new ZeroResponder { Queue = responderQueue };
 		responder.Handlers.Add(new MultipleReplyHandler());
 		await responder.StartAsync([]);
 

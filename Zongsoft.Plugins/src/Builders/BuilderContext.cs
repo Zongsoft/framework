@@ -57,11 +57,16 @@ public class BuilderContext
 		_depth = depth;
 		_owner = owner;
 		_ownerNode = ownerNode;
+		this.OwnsResult = true;
 		this.AppendToOwner = true;
 		this.BuildChildren = !builtin.HasBehaviors || !builtin.Behaviors.GetBehaviorValue<bool>(builtin.Scheme + ".break");
 
 		_syncRoot = new object();
 	}
+	#endregion
+
+	#region 内部属性
+	internal PluginDisposal Disposal { get; set; }
 	#endregion
 
 	#region 公共属性
@@ -74,6 +79,10 @@ public class BuilderContext
 	/// <summary>获取或设置本次构建结果是否追加到所有者。</summary>
 	/// <remarks>由构建器在 Build 中设置。管理器随实例保存此决定；追加能力仍由所有者的 IAppender 提供。</remarks>
 	public bool AppendToOwner { get; set; }
+
+	/// <summary>获取或设置插件是否拥有本次构建结果的释放责任。</summary>
+	/// <remarks>创建的新实例默认为拥有；返回由服务容器、其他构件或调用方拥有的对象时应设置为假。</remarks>
+	public bool OwnsResult { get; set; }
 
 	/// <summary>获取或设置本次构建完成前是否自动装配子节点。</summary>
 	/// <remarks>由构建器在 Build 中设置。只影响自动遍历，不禁止以后显式访问子节点。</remarks>

@@ -30,6 +30,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace Zongsoft.Plugins;
@@ -163,102 +164,78 @@ public class PluginLoader
 		}
 	}
 
-	/// <summary>卸载所有插件。</summary>
-	internal void Unload()
+	internal async ValueTask UnloadAsync(Plugin plugin, PluginDisposal disposal, bool force)
 	{
-		if(_topmosts == null || _topmosts.Count < 1)
-			return;
-
-		var plugins = new Plugin[_topmosts.Count];
-		_topmosts.CopyTo(plugins, 0);
-
-		foreach(var plugin in plugins)
+		if(plugin == null)
 		{
-			this.Unload(plugin);
+			foreach(var item in _topmosts.ToArray())
+				await this.UnloadPluginAsync(item, disposal, force).ConfigureAwait(false);
 		}
-	}
-
-	/// <summary>卸载指定的插件。</summary>
-	/// <param name="plugin">指定要卸载的插件。</param>
-	/// <remarks>如果指定的插件状态不是已经加载的（即插件对象的Status属性值不等于<seealso cref="Zongsoft.Plugins.PluginStatus.Loaded"/>），则不能对其进行卸载。</remarks>
-	/// <exception cref="System.ArgumentNullException">当<paramref name="plugin"/>参数为空(<c>null</c>)。</exception>
-	internal void Unload(Plugin plugin)
-	{
-		if(plugin == null || plugin.Status != PluginStatus.Loaded)
-			return;
-
-		//激发“PluginUnloading”事件，如果事件处理程序取消后续执行则返回
-		if(this.OnPluginUnloading(plugin))
-			return;
-
-		//设置插件状态
-		plugin.Status = PluginStatus.Unloading;
-
-		//递推卸载子插件
-		foreach(Plugin child in plugin.Children)
-		{
-			this.Unload(child);
-			plugin.Children.Remove(child.Name);
-		}
-
-		//获取指定插件的直隶从属插件集
-		var slaves = plugin.GetSlaves(false);
-
-		//递归卸载附属插件
-		foreach(Plugin slave in slaves)
-		{
-			this.Unload(slave);
-			slave.Manifest.Dependencies.Remove(plugin);
-		}
-
-		//将指定插件中的所有构件依次从插件树中卸载掉，因为UnmountBuiltin方法会改变PluginTree对象的内部构件列表，所以不能使用foreach而必须使用while进行遍历
-		//注意：对构件的卸载必须在卸载构建器之前，因为卸载构件需要使用到对应构建器的Destroy方法。
-		while(plugin.InnerBuiltins.Count > 0)
-			_resolver.PluginTree.Unmount(plugin.InnerBuiltins[0]);
-
-		//卸载当前插件下的所有固定元素(构建器、解析器、模块)
-		this.UnloadFixedElements(plugin);
-
-		//将指定卸载的插件从当前根插件列表中删除
-		if(_topmosts != null && plugin.Parent == null)
-			_topmosts.Remove(plugin.Name);
-
-		//设置插件状态
-		plugin.Status = PluginStatus.Unloaded;
-
-		//激发“PluginUnloaded”事件
-		this.OnPluginUnloaded(new PluginUnloadedEventArgs(plugin));
+		else
+			await this.UnloadPluginAsync(plugin, disposal, force).ConfigureAwait(false);
 	}
 	#endregion
 
 	#region 私有方法
-	private void UnloadFixedElements(Plugin plugin)
+	private async ValueTask<bool> UnloadPluginAsync(Plugin plugin, PluginDisposal disposal, bool force)
 	{
-		if(plugin == null)
-			return;
+		if(plugin.Status is PluginStatus.Unloaded or PluginStatus.Unloading)
+			return true;
 
-		foreach(BuilderElement builderElement in plugin.Builders)
+		var args = new PluginUnloadingEventArgs(plugin);
+
+		try { this.OnPluginUnloading(args); }
+		catch(Exception exception) { disposal.Errors.Add(exception); }
+
+		if(args.Cancel && !force)
+			return false;
+
+		var previous = plugin.Status;
+		plugin.Status = PluginStatus.Unloading;
+		var unloaded = true;
+
+		foreach(var child in plugin.Children.ToArray())
+			unloaded &= await this.UnloadPluginAsync(child, disposal, force).ConfigureAwait(false);
+
+		foreach(var slave in plugin.GetSlaves(false).ToArray())
+			unloaded &= await this.UnloadPluginAsync(slave, disposal, force).ConfigureAwait(false);
+
+		//被依赖者只有在所有依赖方同意卸载之后才能释放。
+		if(!unloaded)
 		{
-			this.UnloadBuilder(builderElement);
+			plugin.Status = previous;
+			return false;
 		}
 
-		foreach(FixedElement<IParser> element in plugin.Parsers)
+		foreach(var builtin in plugin.InnerBuiltins.ToArray())
+			await _resolver.PluginTree.UnmountAsync(builtin, disposal).ConfigureAwait(false);
+
+		foreach(var element in plugin.Builders.ToArray())
 		{
-			if(element.HasValue && element.Value is IDisposable disposable)
-				disposable.Dispose();
+			if(element.HasValue)
+				await disposal.ReleaseAsync(element.GetValue()).ConfigureAwait(false);
+		}
+
+		foreach(var element in plugin.Parsers.ToArray())
+		{
+			if(element.HasValue)
+				await disposal.ReleaseAsync(element.GetValue()).ConfigureAwait(false);
 		}
 
 		plugin.Builders.Clear();
 		plugin.Parsers.Clear();
-	}
 
-	private void UnloadBuilder(BuilderElement builderElement)
-	{
-		if(builderElement == null)
-			return;
+		if(plugin.Parent == null)
+			_topmosts.Remove(plugin.Name);
+		else
+			plugin.Parent.Children.Remove(plugin.Name);
 
-		if(builderElement.HasValue)
-			builderElement.Value.Dispose();
+		plugin.Status = PluginStatus.Unloaded;
+
+		try { this.OnPluginUnloaded(new PluginUnloadedEventArgs(plugin)); }
+		catch(Exception exception) { disposal.Errors.Add(exception); }
+
+		return true;
 	}
 
 	private void PreloadPluginFiles(string directoryPath, Plugin parent, PluginOptions options)

@@ -28,7 +28,8 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Plugins;
 
@@ -51,5 +52,7 @@ public interface IBuilder : IDisposable
 
 	/// <summary>卸载指定构件对应的目标对象。</summary>
 	/// <param name="context">包含构件、构建结果和构建设置的上下文。</param>
-	void Destroy(Builders.BuilderContext context);
+	/// <param name="cancellation">取消等待的通知。</param>
+	/// <returns>构件结果释放完成的操作。</returns>
+	ValueTask DestroyAsync(Builders.BuilderContext context, CancellationToken cancellation = default);
 }

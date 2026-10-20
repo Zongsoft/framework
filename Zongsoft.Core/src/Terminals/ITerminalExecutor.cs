@@ -44,11 +44,18 @@ public interface ITerminalExecutor : ICommandExecutor
 	/// <summary>获取所属的终端。</summary>
 	ITerminal Terminal { get; }
 
-	int Run(CancellationToken cancellation = default);
-	int Run(string splash, CancellationToken cancellation = default);
-	int Run(CommandOutletContent splash, CancellationToken cancellation = default);
-
+	/// <summary>异步运行终端命令循环。</summary>
+	/// <param name="cancellation">取消本次运行的令牌。</param>
+	/// <returns>命令循环结束后的退出码。</returns>
 	Task<int> RunAsync(CancellationToken cancellation = default);
+	/// <summary>使用指定的欢迎文本异步运行终端命令循环。</summary>
+	/// <param name="splash">运行开始时显示的欢迎文本。</param>
+	/// <param name="cancellation">取消本次运行的令牌。</param>
+	/// <returns>命令循环结束后的退出码。</returns>
 	Task<int> RunAsync(string splash, CancellationToken cancellation = default);
+	/// <summary>使用指定的欢迎内容异步运行终端命令循环。</summary>
+	/// <param name="splash">运行开始时显示的欢迎内容。</param>
+	/// <param name="cancellation">取消本次运行的令牌。</param>
+	/// <returns>命令循环结束后的退出码。</returns>
 	Task<int> RunAsync(CommandOutletContent splash, CancellationToken cancellation = default);
 }

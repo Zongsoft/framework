@@ -11,7 +11,7 @@
 | --- | --- |
 | [eventexchanger](eventexchanger) | 演示 `EventExchanger`、事件通道、并发发布和分派统计。 |
 | [memorycache](memorycache) | 演示缓存容量限制、过期、逐出通知和 `MemoryCacheScanner`。 |
-| [spooler](spooler) | 在并行负载下演示 `Spooler<T>` 批处理及键冲突行为。 |
+| [spooler](spooler) | 在并行负载下演示 `Spooler<T>` 批处理及重复值输入。 |
 | [superviser](superviser) | 演示受督对象生命周期、失活、失败处理和手动移除。 |
 
 所有项目均面向 .NET 10。在仓库根目录构建完整范例解决方案：
@@ -73,7 +73,7 @@ spool 100000 1000
 spool --count:100000 --collision:1000
 ```
 
-`count` 表示产生的值数量。`collision` 为正数时将随机值限制在指定范围内，从而产生重复键；为零时使用不受限的随机值。范例会报告处理数量、批处理情况和耗时。
+`count` 表示产生的值数量。`collision` 为正数时将随机值限制在指定范围内，从而产生重复值；为零时使用不受限的随机值。范例会报告处理数量、批处理情况和耗时。
 
 ## 督管器
 

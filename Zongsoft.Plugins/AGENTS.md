@@ -14,3 +14,5 @@
 
 - 构建 `Zongsoft.Plugins.slnx`。
 - 使用 `plugins/Main.plugin`、`Terminal.plugin` 或聚焦测试夹具验证解析、依赖和生命周期；不要以真实业务宿主作为首选测试环境。
+
+- 主解决方案和默认 `build.cake` 的 `test` 目标只包含 `test/unit`。宿主生命周期、子进程和 Web 端点用例位于 `test/integration`，通过独立解决方案和 `integration-test` 目标显式运行。

@@ -51,7 +51,7 @@ public class ExitCommand : CommandBase<CommandContext>
 	#endregion
 
 	#region 重写方法
-	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		var terminal = context.GetTerminal() ??
 			throw new NotSupportedException(string.Format(Properties.Resources.Terminal_CommandRequiresTerminal_Message, this.Name));
@@ -61,10 +61,12 @@ public class ExitCommand : CommandBase<CommandContext>
 
 		terminal.Write(Properties.Resources.ExitCommand_Confirm);
 
-		if(string.Equals(terminal.Input.ReadLine().Trim(), "yes", StringComparison.OrdinalIgnoreCase))
+		var answer = await terminal.Input.ReadLineAsync(cancellation).ConfigureAwait(false);
+
+		if(string.Equals(answer?.Trim(), "yes", StringComparison.OrdinalIgnoreCase))
 			throw new Terminal.ExitException();
 
-		return ValueTask.FromResult<object>(null);
+		return null;
 	}
 	#endregion
 }

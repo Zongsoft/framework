@@ -11,7 +11,7 @@ internal class Program
 {
 	static async Task Main(string[] args)
 	{
-		using var server = new ZeroQueueServer()
+		await using var server = new ZeroQueueServer()
 		{
 			Discovery = "tcp://127.0.0.1:7969",
 			Incoming = "tcp://127.0.0.1:32101",

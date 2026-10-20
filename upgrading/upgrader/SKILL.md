@@ -34,7 +34,7 @@ description: 处理 upgrading/upgrader 下的 Zongsoft.Upgrading.Upgrader 客户
 6. 当发布元数据提供大小和校验和时，验证包大小和校验和。
 7. 将包解压到临时 `.app` 目录。
 8. 在应用目录中保存 `.deployment` 描述文件。
-9. 从 `{ApplicationPath}/.deployer` 启动 `Zongsoft.Upgrading.Deployer`，然后关闭宿主。
+9. 等待 `DeployAsync()`：从 `{ApplicationPath}/.deployer` 启动 `Zongsoft.Upgrading.Deployer`，异步刷新日志，请求宿主停止并等待 `ApplicationStopped`（最多三十秒），然后释放部署锁并退出当前进程。
 
 ## 跨项目契约
 
@@ -75,7 +75,7 @@ description: 处理 upgrading/upgrader 下的 Zongsoft.Upgrading.Upgrader 客户
 - 只有当大小和校验和仍然匹配时，才能复用已下载的本地包文件。
 - 保持 `.deployment` 创建为 deployer 继续执行的唯一信号。
 - 保持 Linux deployer 启动足够脱离当前进程，使其能在宿主关闭后继续运行。
-- 保留 interlocked 升级标志，避免并发 worker tick 阻塞或重入。
+- 升级检查由 Common.Timer 串行执行，每次启动创建独立计时器，首次短延迟检查与后续周期检查属于同一次运行；OnStopAsync 等待回调退出并释放计时器，停止成功后可重新启动，DisposeAsync 通过同一停止流程永久关闭工作器。Stopped 通知只唤醒工作器持有的部署任务，该任务在事件调用链外等待 StopAsync 确认通知收尾及运行结果后，才执行部署与宿主关闭。停止与部署交接通过原子状态取得结束流程的所有权：停止先开始则取消自动部署；部署交接先开始则由部署流程关闭宿主，任何停止调用均不反向等待该部署流程，计时资源此时已经完成清理。
 - 保持 plugin/option/deploy 产物与 NuGet 包布局一致。
 - 发布名称必须匹配运行时 `Application.ApplicationName`。验证宿主升级时，先读部署目录 `.version`、启动代码或 upgrader/deployer 日志中的 `app.name`，不要只依赖打包脚本中的历史默认名称。
 - 全量部署可能清理应用根目录下的 `logs/`，导致 upgrader 发现、下载、解压和启动 deployer 的成功日志在部署后消失；集成验证需要在观察循环中把 upgrader 日志快照复制到外部 `.artifacts`。

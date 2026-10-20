@@ -15,7 +15,7 @@ public class TextFileLoggerTest
 		const int COUNT = 512;
 
 		using var context = new LoggerContext();
-		using var logger = context.CreateLogger(16);
+		await using var logger = context.CreateLogger(16);
 
 		await Parallel.ForAsync(0, COUNT, TestContext.Current.CancellationToken, async (index, cancellation) =>
 		{
@@ -34,7 +34,7 @@ public class TextFileLoggerTest
 		const int COUNT = 256;
 
 		using var context = new LoggerContext();
-		using var logger = context.CreateLogger(16);
+		await using var logger = context.CreateLogger(16);
 
 		await Parallel.ForAsync(0, COUNT, TestContext.Current.CancellationToken, async (index, cancellation) =>
 		{
@@ -87,14 +87,12 @@ public class TextFileLoggerTest
 		}
 	}
 
-	private sealed class TestTextFileLogger : TextFileLogger<LogEntry>, IDisposable
+	private sealed class TestTextFileLogger : TextFileLogger<LogEntry>
 	{
 		public TestTextFileLogger(TimeSpan period, int capacity, string filePath) : base(period, capacity, filePath) =>
 			this.Formatter = XmlLogFormatter.Default;
 
 		public new ValueTask LogAsync(LogEntry log, CancellationToken cancellation = default) => base.LogAsync(log, cancellation);
 		public ValueTask FlushAsync(CancellationToken cancellation = default) => ((ILogger)this).FlushAsync(cancellation);
-
-		public void Dispose() => this.Logging?.Dispose();
 	}
 }

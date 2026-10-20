@@ -18,7 +18,7 @@ public class ZeroResponderTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var queue = ZeroTestUtility.CreateQueue(server.Port, "responder");
 		var responder = new ZeroResponder { Queue = queue };
 
@@ -34,7 +34,7 @@ public class ZeroResponderTests
 		}
 		finally
 		{
-			((IDisposable)responder).Dispose();
+			await responder.DisposeAsync();
 		}
 	}
 

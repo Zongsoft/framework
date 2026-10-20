@@ -308,10 +308,7 @@ public abstract class PluginElementCollection<TElement> : ICollection<TElement> 
 		return this.BaseRemove(item);
 	}
 
-	void ICollection<TElement>.CopyTo(TElement[] array, int arrayIndex)
-	{
-		throw new NotSupportedException();
-	}
+	void ICollection<TElement>.CopyTo(TElement[] array, int arrayIndex) => _innerList.CopyTo(array, arrayIndex);
 	#endregion
 
 	#region IEnumerable<T> 成员

@@ -34,7 +34,6 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Zongsoft.Components;
-using Zongsoft.Data.Transactions;
 
 namespace Zongsoft.Data;
 
@@ -81,11 +80,6 @@ public class Transaction : IDisposable, IAsyncDisposable, IEquatable<Transaction
 	#endregion
 
 	#region 公共方法
-	/// <summary>向当前事务登记一个事务处理过程的回调。</summary>
-	/// <param name="enlistment">要登记的非空事务回调。</param>
-	/// <returns>登记成功返回真；事务已开始终结或回调已登记时返回假。</returns>
-	public bool Enlist(IEnlistment enlistment) => _context.Enlist(enlistment);
-
 	/// <summary>提交事务。</summary>
 	public void Commit() => _context.Commit();
 

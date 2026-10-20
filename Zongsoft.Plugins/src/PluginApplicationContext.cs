@@ -28,6 +28,9 @@
  */
 
 using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Microsoft.Extensions.Hosting;
@@ -44,6 +47,7 @@ public class PluginApplicationContext : Zongsoft.Services.ApplicationContext
 	#region 私有变量
 	private readonly object _syncRoot;
 	private IWorkbenchBase _workbench;
+	private bool _ownsWorkbench;
 	#endregion
 
 	#region 构造函数
@@ -79,8 +83,10 @@ public class PluginApplicationContext : Zongsoft.Services.ApplicationContext
 						//创建工作台对象
 						_workbench = this.CreateWorkbench(out var node) ?? throw new InvalidOperationException(global::Zongsoft.Plugins.Properties.Resources.Workbench_CreationFailed_Message);
 
-						//将当前工作台对象挂载到插件结构中
-						this.PluginTree.Mount(node, _workbench);
+						//构件保留自身节点及释放责任；默认工作台由应用上下文拥有。
+						_ownsWorkbench = node.NodeType == PluginTreeNodeType.Empty;
+						if(_ownsWorkbench)
+							this.PluginTree.Mount(node, _workbench);
 
 						//查找“Startup”启动目录节点
 						var startup = this.PluginTree.Find(this.Options.GetStartupMountion());
@@ -134,32 +140,64 @@ public class PluginApplicationContext : Zongsoft.Services.ApplicationContext
 	#endregion
 
 	#region 重写方法
-	protected override void OnStarted()
+	protected override async Task OnStartedAsync(CancellationToken cancellation)
 	{
+		cancellation.ThrowIfCancellationRequested();
 		this.Workbench.Open();
-		base.OnStarted();
+		await base.OnStartedAsync(cancellation).ConfigureAwait(false);
 	}
 
-	protected override void OnStopping()
+	protected override async Task OnStoppingAsync(CancellationToken cancellation)
 	{
-		this.Workbench.Close();
-		base.OnStopping();
+		var errors = new PluginDisposal();
+
+		try { await base.OnStoppingAsync(cancellation).ConfigureAwait(false); }
+		catch(Exception exception) { errors.Errors.Add(exception); }
+
+		try { _workbench?.Close(); }
+		catch(Exception exception) { errors.Errors.Add(exception); }
+
+		errors.ThrowIfFailed();
 	}
 	#endregion
 
 	#region 处置方法
-	protected override void Dispose(bool disposing)
+	protected override async ValueTask DisposeAsync(bool disposing)
 	{
-		if(disposing)
-		{
-			if(_workbench is IDisposable disposable)
-				disposable.Dispose();
-			else
-				_workbench?.Close();
-		}
+		if(!disposing)
+			return;
 
-		//执行基类的处置操作
-		base.Dispose(disposing);
+		//插件创建的对象由插件树释放，引用对象保留其原有所有者。
+		ExcludePluginResources(this.Plugins);
+		var disposal = new PluginDisposal();
+
+		try { await this.PluginTree.DisposeAsync().ConfigureAwait(false); }
+		catch(Exception exception) { disposal.Errors.Add(exception); }
+
+		if(_ownsWorkbench)
+			await disposal.ReleaseAsync(_workbench).ConfigureAwait(false);
+		_workbench = null;
+
+		try { await base.DisposeAsync(disposing).ConfigureAwait(false); }
+		catch(Exception exception) { disposal.Errors.Add(exception); }
+
+		disposal.ThrowIfFailed();
+
+		void ExcludePluginResources(IEnumerable<Plugin> plugins)
+		{
+			foreach(var plugin in plugins)
+			{
+				foreach(var builtin in plugin.InnerBuiltins)
+				{
+					if(builtin.Value is Services.IApplicationModule module)
+						this.Modules.Remove(module.Name);
+					if(builtin.Value is Services.IApplicationInitializer initializer)
+						this.Initializers.Remove(initializer);
+				}
+
+				ExcludePluginResources(plugin.Children);
+			}
+		}
 	}
 	#endregion
 

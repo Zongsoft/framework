@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Zongsoft.Common;
@@ -9,7 +10,7 @@ namespace Zongsoft.Samples;
 
 internal class Program
 {
-	static void Main(string[] args)
+	static async Task Main(string[] args)
 	{
 		using var superviser = new MySuperviser(new SupervisableOptions(TimeSpan.FromSeconds(10), 5));
 
@@ -113,7 +114,7 @@ internal class Program
 			.AppendLine(CommandOutletColor.Cyan, $"Welcome to the Superviser & Supervisable sample.".Justify(60))
 			.AppendLine(CommandOutletColor.Gray, new string('·', 60));
 
-		Terminal.Console.Executor.Run(splash);
+		await Terminal.Console.Executor.RunAsync(splash);
 	}
 
 	private static IEnumerable<MySupervisable> Get(MySuperviser superviser, params string[] names)

@@ -145,6 +145,9 @@ public partial class CommandNode : Zongsoft.Collections.HierarchicalNode<Command
 			{
 				parts = new string[match.Groups["part"].Captures.Count + 1];
 				parts[0] = match.Groups["prefix"].Value;
+
+				if(parts[0] == "/" && parts.Length > 1)
+					parts[0] = string.Empty;
 			}
 
 			for(int i = 0; i < match.Groups["part"].Captures.Count; i++)

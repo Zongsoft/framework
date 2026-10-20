@@ -151,6 +151,8 @@ This extension library provides both _command-line_ and _**REST**ful **API**_ ac
 	> ai.assistant.chat --interactive
 	> ```
 
+Interactive mode sends each entered line as a user message. `exit`, `quit` and EOF leave the chat. Both input and streamed responses observe the command cancellation token; the command does not own or dispose the terminal input. See [Terminal input](../Zongsoft.Core/docs/terminal-input.md).
+
 ### RESTful API
 
 - Get the AI assistant list:

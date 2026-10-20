@@ -11,7 +11,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\src\Zongsoft.Core.csproj" />
+		<ProjectReference Include="..\src\Zongsoft.Core.csproj" Condition="'$(BenchmarkCorePath)' == ''" />
+		<Reference Include="Zongsoft.Core" Condition="'$(BenchmarkCorePath)' != ''">
+			<HintPath>$(BenchmarkCorePath)</HintPath>
+			<Private>true</Private>
+		</Reference>
 	</ItemGroup>
 
 	<ItemGroup>

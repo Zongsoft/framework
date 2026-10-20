@@ -99,7 +99,7 @@ description: 修改或审查 Zongsoft.Net 的 TCP 通信、Web 文件系统、�
 - 跨段定长读数复用 `Zongsoft.Common.Buffer.TryGet*`；文本编码使用 `Encode`，在发送／广播等待完成后释放其所有者。只在需要独立保存借用报文时调用 `Lease`，明确移交及失败释放；`Owned` 不复制，也不延长原内存寿命。
 - `Buffer` 不是 `MemoryPool<byte>` 或 `IBufferWriter<byte>`。保留 Pipe 自身内存池及限长写入装饰器，不能为复用引入全帧中转副本。接收文本直接使用支持序列的 BCL 解码入口。
 - 生命周期和处理器复用 [Core 通信生命周期与派发](../Zongsoft.Core/SKILL.md#通信生命周期与派发)。ChannelBase 拥有一次关闭／释放和共享完成结果；WorkerBase 拥有异步启停状态，Net 不叠加服务启停状态机。ListenerBase 派发处理器，实际流接收者拥有解码；注入处理器由提供者释放，无处理器也须执行取消检查及报文归还。HandlerBase 无附加参数时传递 null，显式 Parameters 保留身份。
-- 共享维护器需要可注入时钟与代次完成等待；Common.Timer 的系统时钟和同步停止不满足该契约。通用 ObjectPool 的同步容量控制不替代异步发送接纳；不为复用引入错误的所有权或额外完整报文副本。
+- Common.Timer 支持注入 TimeProvider，并通过 StopAsync、DisposeAsync 等待回调与清理完成。共享监测由 TcpConnectionMonitor.Group.Runner 使用 PeriodicTimer，结合连接登记管理运行代次并等待上一代完成；它不是 Common.Timer 的调用方。通用 ObjectPool 的同步容量控制不替代异步发送接纳；不为复用引入错误的所有权或额外完整报文副本。
 - 没有测量证据时，不另造 SocketAsyncEventArgs 引擎、对象池、线程调度器或 IValueTaskSource 状态机。共享生命周期等待使用可由多调用者等待的 Task。
 
 ## Web 文件系统资源所有权

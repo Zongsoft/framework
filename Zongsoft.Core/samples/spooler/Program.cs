@@ -19,7 +19,7 @@ internal class Program
 	static int _COUNT_     = 100_0000;
 	static int _COLLISION_ = 0;
 
-	static void Main(string[] args)
+	static async Task Main(string[] args)
 	{
 		var stopwater = new Stopwatch();
 		var executor = Terminal.Console.Executor;
@@ -73,12 +73,12 @@ internal class Program
 			.AppendLine(CommandOutletColor.DarkCyan, "Welcome to the Stasher & Spooler sample.".Justify(50))
 			.AppendLine(CommandOutletColor.Yellow, new string('*', 50));
 
-		executor.Run(splash);
+		await executor.RunAsync(splash);
 	}
 
 	static async ValueTask TestSpoolerAsync(int count, int collision, CancellationToken cancellation)
 	{
-		using var spooler = new Spooler<int>(Handler.HandleAsync, TimeSpan.FromMilliseconds(_PERIOD_), _LIMIT_);
+		await using var spooler = new Spooler<int>(Handler.HandleAsync, TimeSpan.FromMilliseconds(_PERIOD_), _LIMIT_);
 
 		await Parallel.ForAsync(0, count, cancellation, async (index, cancellation) =>
 		{

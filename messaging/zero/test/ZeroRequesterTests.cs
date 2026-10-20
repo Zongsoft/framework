@@ -18,7 +18,7 @@ public class ZeroRequesterTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var requesterQueue = ZeroTestUtility.CreateQueue(server.Port, "requester");
 		using var responderQueue = ZeroTestUtility.CreateQueue(server.Port, "responder");
 
@@ -44,7 +44,7 @@ public class ZeroRequesterTests
 		finally
 		{
 			await responder.StopAsync([]);
-			((IDisposable)responder).Dispose();
+			await responder.DisposeAsync();
 		}
 	}
 
@@ -54,7 +54,7 @@ public class ZeroRequesterTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var requesterQueue = ZeroTestUtility.CreateQueue(server.Port, "requester");
 		using var responderQueue = ZeroTestUtility.CreateQueue(server.Port, "responder");
 
@@ -93,7 +93,7 @@ public class ZeroRequesterTests
 		finally
 		{
 			await responder.StopAsync([]);
-			((IDisposable)responder).Dispose();
+			await responder.DisposeAsync();
 		}
 	}
 
@@ -103,7 +103,7 @@ public class ZeroRequesterTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var queue = ZeroTestUtility.CreateQueue(server.Port, "requester");
 		await using var requester = new ZeroRequester { Queue = queue };
 
@@ -120,7 +120,7 @@ public class ZeroRequesterTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var first = ZeroTestUtility.CreateQueue(server.Port, "requester-first");
 		using var second = ZeroTestUtility.CreateQueue(server.Port, "requester-second");
 		using var responderQueue = ZeroTestUtility.CreateQueue(server.Port, "requester-responder");
@@ -145,7 +145,7 @@ public class ZeroRequesterTests
 		finally
 		{
 			await responder.StopAsync([]);
-			((IDisposable)responder).Dispose();
+			await responder.DisposeAsync();
 		}
 	}
 
@@ -155,7 +155,7 @@ public class ZeroRequesterTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var requesterQueue = ZeroTestUtility.CreateQueue(server.Port, "group-requester", settings => settings.Group = "tenant");
 		using var responderQueue = ZeroTestUtility.CreateQueue(server.Port, "group-responder", settings => settings.Group = "tenant");
 		await using var requester = new ZeroRequester { Queue = requesterQueue };
@@ -179,7 +179,7 @@ public class ZeroRequesterTests
 		finally
 		{
 			await responder.StopAsync([]);
-			((IDisposable)responder).Dispose();
+			await responder.DisposeAsync();
 		}
 	}
 }

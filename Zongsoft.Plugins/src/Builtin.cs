@@ -46,6 +46,7 @@ public sealed class Builtin : PluginElement, IEquatable<Builtin>
 	#endregion
 
 	#region 成员变量
+	internal System.Threading.Tasks.TaskCompletionSource Destroying;
 	private readonly string _scheme;
 	private string _position;
 	private BuiltinType _builtinType;
@@ -54,6 +55,30 @@ public sealed class Builtin : PluginElement, IEquatable<Builtin>
 	private PluginTreeNode _node;
 	private PluginExtendedPropertyCollection _properties;
 	private BuiltinBehaviorCollection _behaviors;
+	#endregion
+
+	#region 内部属性
+	internal bool OwnsValue { get; set; }
+	#endregion
+
+	#region 内部方法
+	//先清除已释放的实例，通知异常不能使它重新成为可用值。
+	internal void Reset(System.Collections.Generic.List<Exception> errors)
+	{
+		var value = _value;
+		_value = null;
+		_isBuilded = false;
+		this.BuildFailure = null;
+		this.AppendedOwner = null;
+		this.AppendedValue = null;
+
+		try { if(value != null) this.OnValueChanged(null); }
+		catch(Exception exception) { errors.Add(exception); }
+
+		try { this.OnPropertyChanged(nameof(this.IsBuilded)); }
+		catch(Exception exception) { errors.Add(exception); }
+	}
+
 	#endregion
 
 	#region 构造函数
@@ -74,6 +99,7 @@ public sealed class Builtin : PluginElement, IEquatable<Builtin>
 		_position = string.Empty;
 		_scheme = scheme.Trim();
 
+		this.OwnsValue = true;
 		this.AppendToOwner = true;
 		this.BuildChildren = true;
 

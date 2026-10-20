@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Threading.Tasks;
 
 using Microsoft.Extensions.Hosting;
 
@@ -35,57 +36,57 @@ namespace Zongsoft.Plugins.Hosting;
 
 public static partial class Application
 {
-#if NET7_0_OR_GREATER
-	public static IHost Daemon(Action<HostApplicationBuilder> configure = null) => Daemon(null, null, configure);
-	public static IHost Daemon(string[] args, Action<HostApplicationBuilder> configure = null) => Daemon(null, args, configure);
-	public static IHost Daemon(string name, Action<HostApplicationBuilder> configure = null) => Daemon(name, null, configure);
-	public static IHost Daemon(string name, string[] args, Action<HostApplicationBuilder> configure = null)
+	#if NET7_0_OR_GREATER
+	public static ValueTask<IHost> DaemonAsync(Action<HostApplicationBuilder> configure = null) => DaemonAsync(null, null, configure);
+	public static ValueTask<IHost> DaemonAsync(string[] args, Action<HostApplicationBuilder> configure = null) => DaemonAsync(null, args, configure);
+	public static ValueTask<IHost> DaemonAsync(string name, Action<HostApplicationBuilder> configure = null) => DaemonAsync(name, null, configure);
+	public static ValueTask<IHost> DaemonAsync(string name, string[] args, Action<HostApplicationBuilder> configure = null)
 	{
 		var builder = new DaemonApplicationBuilder(name, args, configure);
 
 		//加载宿主配置文件
 		builder.LoadConfiguration();
 
-		return builder.Build();
+		return builder.BuildAsync();
 	}
 
-	public static IHost Terminal(Action<HostApplicationBuilder> configure = null) => Terminal(null, null, configure);
-	public static IHost Terminal(string[] args, Action<HostApplicationBuilder> configure = null) => Terminal(null, args, configure);
-	public static IHost Terminal(string name, Action<HostApplicationBuilder> configure = null) => Terminal(name, null, configure);
-	public static IHost Terminal(string name, string[] args, Action<HostApplicationBuilder> configure = null)
+	public static ValueTask<IHost> TerminalAsync(Action<HostApplicationBuilder> configure = null) => TerminalAsync(null, null, configure);
+	public static ValueTask<IHost> TerminalAsync(string[] args, Action<HostApplicationBuilder> configure = null) => TerminalAsync(null, args, configure);
+	public static ValueTask<IHost> TerminalAsync(string name, Action<HostApplicationBuilder> configure = null) => TerminalAsync(name, null, configure);
+	public static ValueTask<IHost> TerminalAsync(string name, string[] args, Action<HostApplicationBuilder> configure = null)
 	{
 		var builder = new TerminalApplicationBuilder(name, args, configure);
 
 		//加载宿主配置文件
 		builder.LoadConfiguration();
 
-		return builder.Build();
+		return builder.BuildAsync();
 	}
-#else
-	public static IHost Daemon(Action<IHostBuilder> configure = null) => Daemon(null, null, configure);
-	public static IHost Daemon(string[] args, Action<IHostBuilder> configure = null) => Daemon(null, args, configure);
-	public static IHost Daemon(string name, Action<IHostBuilder> configure = null) => Daemon(name, null, configure);
-	public static IHost Daemon(string name, string[] args, Action<IHostBuilder> configure = null)
+	#else
+	public static ValueTask<IHost> DaemonAsync(Action<IHostBuilder> configure = null) => DaemonAsync(null, null, configure);
+	public static ValueTask<IHost> DaemonAsync(string[] args, Action<IHostBuilder> configure = null) => DaemonAsync(null, args, configure);
+	public static ValueTask<IHost> DaemonAsync(string name, Action<IHostBuilder> configure = null) => DaemonAsync(name, null, configure);
+	public static ValueTask<IHost> DaemonAsync(string name, string[] args, Action<IHostBuilder> configure = null)
 	{
 		var builder = new DaemonApplicationBuilder(name, args, configure);
 
 		//加载宿主配置文件
 		builder.LoadConfiguration();
 
-		return builder.Build();
+		return builder.BuildAsync();
 	}
 
-	public static IHost Terminal(Action<IHostBuilder> configure = null) => Terminal(null, null, configure);
-	public static IHost Terminal(string[] args, Action<IHostBuilder> configure = null) => Terminal(null, args, configure);
-	public static IHost Terminal(string name, Action<IHostBuilder> configure = null) => Terminal(name, null, configure);
-	public static IHost Terminal(string name, string[] args, Action<IHostBuilder> configure = null)
+	public static ValueTask<IHost> TerminalAsync(Action<IHostBuilder> configure = null) => TerminalAsync(null, null, configure);
+	public static ValueTask<IHost> TerminalAsync(string[] args, Action<IHostBuilder> configure = null) => TerminalAsync(null, args, configure);
+	public static ValueTask<IHost> TerminalAsync(string name, Action<IHostBuilder> configure = null) => TerminalAsync(name, null, configure);
+	public static ValueTask<IHost> TerminalAsync(string name, string[] args, Action<IHostBuilder> configure = null)
 	{
 		var builder = new TerminalApplicationBuilder(name, args, configure);
 
 		//加载宿主配置文件
 		builder.LoadConfiguration();
 
-		return builder.Build();
+		return builder.BuildAsync();
 	}
-#endif
+	#endif
 }

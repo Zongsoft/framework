@@ -47,46 +47,36 @@ public class DiagnostorWorker(string name, Diagnostor.Configurator configurator)
 	#region 成员字段
 	private MeterProvider _meters;
 	private TracerProvider _tracers;
-	private Diagnostor _diagnostor = new(name, configurator);
+	private readonly Diagnostor _diagnostor = new(name, configurator);
 	#endregion
 
 	#region 重写方法
 	protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
-		var diagnostor = _diagnostor ?? throw new ObjectDisposedException(nameof(DiagnostorWorker));
+		var diagnostor = _diagnostor;
 		var meters = ResolveExporters<MeterProviderBuilder>(diagnostor.Meters, "meters");
 		var traces = ResolveExporters<TracerProviderBuilder>(diagnostor.Traces, "traces");
 
-		try
+		if(meters.Length > 0)
 		{
-			if(meters.Length > 0)
-			{
-				var builder = Sdk.CreateMeterProviderBuilder().ConfigureResource(ConfigureResource);
-				FillMeters(builder, diagnostor.Meters.Filters);
+			var builder = Sdk.CreateMeterProviderBuilder().ConfigureResource(ConfigureResource);
+			FillMeters(builder, diagnostor.Meters.Filters);
 
-				foreach(var exporter in meters)
-					exporter.Launcher.Launch(builder, exporter.Settings);
+			foreach(var exporter in meters)
+				exporter.Launcher.Launch(builder, exporter.Settings);
 
-				_meters = builder.Build();
-			}
-
-			if(traces.Length > 0)
-			{
-				var builder = Sdk.CreateTracerProviderBuilder().ConfigureResource(ConfigureResource);
-				FillTracers(builder, diagnostor.Traces.Filters);
-
-				foreach(var exporter in traces)
-					exporter.Launcher.Launch(builder, exporter.Settings);
-
-				_tracers = builder.Build();
-			}
+			_meters = builder.Build();
 		}
-		catch(Exception exception)
-		{
-			try { this.ReleaseProviders(); }
-			catch(Exception cleanup) { throw new AggregateException(exception, cleanup); }
 
-			throw;
+		if(traces.Length > 0)
+		{
+			var builder = Sdk.CreateTracerProviderBuilder().ConfigureResource(ConfigureResource);
+			FillTracers(builder, diagnostor.Traces.Filters);
+
+			foreach(var exporter in traces)
+				exporter.Launcher.Launch(builder, exporter.Settings);
+
+			_tracers = builder.Build();
 		}
 
 		return Task.CompletedTask;
@@ -96,12 +86,6 @@ public class DiagnostorWorker(string name, Diagnostor.Configurator configurator)
 	{
 		this.ReleaseProviders();
 		return Task.CompletedTask;
-	}
-
-	protected override void Dispose(bool disposing)
-	{
-		try { this.ReleaseProviders(); }
-		finally { _diagnostor = null; }
 	}
 	#endregion
 
@@ -143,23 +127,20 @@ public class DiagnostorWorker(string name, Diagnostor.Configurator configurator)
 
 	private void ReleaseProviders()
 	{
-		var meters = Interlocked.Exchange(ref _meters, null);
-		var tracers = Interlocked.Exchange(ref _tracers, null);
-
 		try
 		{
-			if(meters != null)
+			if(_meters != null)
 			{
-				try { meters.Shutdown(); }
-				finally { meters.Dispose(); }
+				try { _meters.Shutdown(); }
+				finally { _meters.Dispose(); _meters = null; }
 			}
 		}
 		finally
 		{
-			if(tracers != null)
+			if(_tracers != null)
 			{
-				try { tracers.Shutdown(); }
-				finally { tracers.Dispose(); }
+				try { _tracers.Shutdown(); }
+				finally { _tracers.Dispose(); _tracers = null; }
 			}
 		}
 	}

@@ -20,7 +20,7 @@
 
 ```mermaid
 flowchart LR
-	A[Application.Web] --> B[WebApplicationBuilder]
+	A[Application.WebAsync] --> B[WebApplicationBuilder]
 	B --> C[加载宿主及插件配置]
 	C --> D[构建服务提供器]
 	D --> E[初始化 WebApplicationContext]
@@ -43,7 +43,7 @@ dotnet add package Zongsoft.Plugins.Web
 ```csharp
 using Zongsoft.Web;
 
-var application = Application.Web(args, builder =>
+var application = await Application.WebAsync(args, builder =>
 {
 	builder.Services.AddHttpContextAccessor();
 });
@@ -51,7 +51,7 @@ var application = Application.Web(args, builder =>
 await application.RunAsync();
 ```
 
-`Application.Web` 与 daemon、terminal 一样，先加载应用名对应的 `.option`，入口程序集名不同时再追加加载其同名 `.option`，最后加载 `web.option`；文件缺失可以省略，后加载的配置覆盖前面同名键。随后构建插件感知的服务提供器、初始化 `WebApplicationContext`、安装框架中间件管线，并映射控制器与已发现的 SignalR Hub。带名称的重载指定应用名，仍会加载入口程序集名对应的配置。
+`Application.WebAsync` 与 daemon、terminal 一样，先加载应用名对应的 `.option`，入口程序集名不同时再追加加载其同名 `.option`，最后加载 `web.option`；文件缺失可以省略，后加载的配置覆盖前面同名键。随后构建插件感知的服务提供器、初始化 `WebApplicationContext`、安装框架中间件管线，并映射控制器与已发现的 SignalR Hub。带名称的重载指定应用名，仍会加载入口程序集名对应的配置。
 
 > 💡 应用专属的服务注册可放在构建器回调中；可复用组件及其关系宜写入插件清单，使其他宿主也能以相同方式装配。
 
@@ -137,16 +137,16 @@ Web 清单依赖领域插件，领域项目只面向其公共依赖；数据提�
 
 ## 监听配置与请求范围
 
-`WebApplicationBuilder.Build()` 负责加载插件配置、完成服务注册和构建宿主。`Application.Web()` 在构建前按顺序加载宿主具名配置和 `web.option`，并在构建后装配应用管线。在现有服务扫描阶段，Plugins.Web 的私有注册器 `WebEndpointExtension.Registration` 发现 Web 宿主的 `Kestrel:Endpoints` 下存在端点项，就自动接入端点转换、请求范围及配置监视，无需修改 hosting 程序：
+`WebApplicationBuilder.BuildAsync()` 负责加载插件配置、完成服务注册和构建宿主。`Application.WebAsync()` 在构建前按顺序加载宿主具名配置和 `web.option`，并在构建后装配应用管线。在现有服务扫描阶段，Plugins.Web 的私有注册器 `WebEndpointExtension.Registration` 发现 Web 宿主的 `Kestrel:Endpoints` 下存在端点项，就自动接入端点转换、请求范围及配置监视，无需修改 hosting 程序：
 
 ```csharp
-var app = Zongsoft.Web.Application.Web(args);
+var app = await Zongsoft.Web.Application.WebAsync(args);
 await app.RunAsync();
 ```
 
 注册器复用 `IServiceRegistration` 契约。非 Web 宿主、没有端点项或已经注册 `WebEndpointCollection` 时不自动接入。没有声明时，原生 `urls`/`http_ports`/`https_ports`、`app.Urls` 及代码 `Listen(...)` 沿用 ASP.NET Core 行为。是否接入按服务扫描时的配置判断；启动后才增加端点声明需要重启。zongsoft.tools.binding 处理指令面向部署工具声明暴露意图，运行时注册消费端点配置。
 
-自动注册调用 `AddWebEndpoints(configuration).AddWebEndpointMonitoring()`。这两个方法只登记工厂与回调，不临时构建服务提供程序或捕获快照。实际快照由最终容器首次消费时创建，后续服务扫描注册的协议规则可以参与。跨插件冲突或无效声明在首次解析端点/服务器选项或启动时失败，不能依赖 `Build()` 立即抛出。
+自动注册调用 `AddWebEndpoints(configuration).AddWebEndpointMonitoring()`。这两个方法只登记工厂与回调，不临时构建服务提供程序或捕获快照。实际快照由最终容器首次消费时创建，后续服务扫描注册的协议规则可以参与。跨插件冲突或无效声明在首次解析端点/服务器选项或启动时失败，不能依赖 `BuildAsync()` 立即抛出。
 
 ```xml
 <!-- web.option 或插件入口配置 -->
@@ -174,7 +174,7 @@ Kestrel 投影使用 `PostConfigure` 并关闭该投影的热重载；原始带�
 ```csharp
 using Zongsoft.Web.Hosting;
 
-var app = Zongsoft.Web.Application.Web(args, builder =>
+var app = await Zongsoft.Web.Application.WebAsync(args, builder =>
 {
 	builder.Services.AddWebEndpoints(builder.Configuration, "Server");
 	// 显式接入时可自行选择是否启用监视。

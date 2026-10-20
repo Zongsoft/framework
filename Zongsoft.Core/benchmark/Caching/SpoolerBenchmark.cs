@@ -277,12 +277,14 @@ public abstract class SpoolerBenchmarkBase
 
 	#region 公共方法
 	[GlobalCleanup]
-	public void Cleanup()
+	public async Task CleanupAsync()
 	{
 		if(_runs > 0)
 			Console.WriteLine(FormattableString.Invariant($"CALLBACKS Runs={_runs} Min={_minimumCalls} Max={_maximumCalls} Mean={(double)_totalCalls / _runs:F4}"));
 
-		_spooler?.Dispose();
+		if(_spooler != null)
+			await _spooler.DisposeAsync();
+
 		_batchGate.Dispose();
 		_sinkGate.Dispose();
 

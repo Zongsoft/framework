@@ -30,6 +30,7 @@ using System.Buffers;
 using System.Net.Sockets;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Xunit;
 
@@ -168,7 +169,10 @@ public class TcpSendCapacityTest
 		var entered = TestNetwork.Signal();
 		var closing = TestNetwork.Signal<TcpChannelEventArgs<int>>();
 
-		await using var client = new TcpClient<int>(new BlockingPacketizer(gate, entered), new() { ShutdownTimeout = TimeSpan.FromMilliseconds(100) });
+		var timeout = TimeSpan.FromMilliseconds(100);
+		var clock = new ShutdownClock(timeout);
+
+		await using var client = new TcpClient<int>(new BlockingPacketizer(gate, entered), new() { ShutdownTimeout = timeout, TimeProvider = clock });
 		client.Closing += (_, args) => closing.TrySetResult(args);
 		var connecting = client.ConnectAsync(listener.LocalEndPoint);
 
@@ -180,13 +184,17 @@ public class TcpSendCapacityTest
 		{
 			await entered.Task.WaitAsync(TestNetwork.Timeout);
 			peer.Shutdown(SocketShutdown.Send);
+			await clock.Scheduled.WaitAsync(TestNetwork.Timeout);
+			clock.Advance(timeout);
 			var notification = await closing.Task.WaitAsync(TestNetwork.Timeout);
 
 			Assert.Equal(TcpCloseReason.Remote, notification.CloseReason);
 			Assert.IsType<TimeoutException>(notification.Error);
 			Assert.False(channel.WaitAsync().IsCompleted);
 
+			//只触发排空期限；断开的新期限保持未到期，清理速度不参与异常身份断言。
 			var disconnecting = client.DisconnectAsync().AsTask();
+			Assert.False(disconnecting.IsCompleted);
 			gate.Set();
 			var failure = await Assert.ThrowsAsync<TimeoutException>(() => disconnecting.WaitAsync(TestNetwork.Timeout));
 
@@ -285,6 +293,96 @@ public class TcpSendCapacityTest
 		Assert.Empty(server.Channels);
 		Assert.Equal(new byte[4], await TestNetwork.ReceiveAsync(socket, 4));
 	}
+
+	private sealed class ShutdownClock(TimeSpan timeout) : TimeProvider
+	{
+		private readonly object _sync = new();
+		private readonly List<ScheduledTimer> _timers = [];
+		private readonly TaskCompletionSource _scheduled = TestNetwork.Signal();
+		private long _ticks;
+
+		public Task Scheduled => _scheduled.Task;
+		public override long TimestampFrequency => TimeSpan.TicksPerSecond;
+		public override long GetTimestamp() => Interlocked.Read(ref _ticks);
+		public override DateTimeOffset GetUtcNow() => DateTimeOffset.UnixEpoch.AddTicks(this.GetTimestamp());
+
+		public override ITimer CreateTimer(TimerCallback callback, object state, TimeSpan dueTime, TimeSpan period)
+		{
+			ScheduledTimer timer;
+
+			lock(_sync)
+			{
+				timer = new ScheduledTimer(this, callback, state);
+				timer.Change(dueTime, period);
+				_timers.Add(timer);
+			}
+
+			if(dueTime == timeout && period == Timeout.InfiniteTimeSpan)
+				_scheduled.TrySetResult();
+
+			return timer;
+		}
+
+		public void Advance(TimeSpan elapsed)
+		{
+			var pending = new List<ScheduledTimer>();
+
+			lock(_sync)
+			{
+				_ticks += elapsed.Ticks;
+
+				foreach(var timer in _timers)
+				{
+					if(timer.Due > _ticks)
+						continue;
+
+					pending.Add(timer);
+					timer.Due = timer.Period > 0 ? _ticks + timer.Period : long.MaxValue;
+				}
+			}
+
+			foreach(var timer in pending)
+				timer.Invoke();
+		}
+
+		private sealed class ScheduledTimer(ShutdownClock clock, TimerCallback callback, object state) : ITimer
+		{
+			private bool _disposed;
+
+			public long Due;
+			public long Period;
+			public void Invoke() => callback(state);
+
+			public bool Change(TimeSpan dueTime, TimeSpan period)
+			{
+				lock(clock._sync)
+				{
+					if(_disposed)
+						return false;
+
+					this.Due = dueTime == Timeout.InfiniteTimeSpan ? long.MaxValue : clock._ticks + dueTime.Ticks;
+					this.Period = period.Ticks;
+					return true;
+				}
+			}
+
+			public void Dispose()
+			{
+				lock(clock._sync)
+				{
+					_disposed = true;
+					clock._timers.Remove(this);
+				}
+			}
+
+			public ValueTask DisposeAsync()
+			{
+				this.Dispose();
+				return ValueTask.CompletedTask;
+			}
+		}
+	}
+
 	private sealed class BlockingPacketizer(ManualResetEventSlim gate, TaskCompletionSource entered, bool blockAfterWrite = false) : PacketizerBase<int>
 	{
 		public override long GetLength(in int package) => 4;

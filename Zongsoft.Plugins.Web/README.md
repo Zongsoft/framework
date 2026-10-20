@@ -20,7 +20,7 @@ Use this package when a web application is assembled from Zongsoft plugins. Use 
 
 ```mermaid
 flowchart LR
-	A[Application.Web] --> B[WebApplicationBuilder]
+	A[Application.WebAsync] --> B[WebApplicationBuilder]
 	B --> C[Load host and plugin configuration]
 	C --> D[Build the service provider]
 	D --> E[Initialize WebApplicationContext]
@@ -43,7 +43,7 @@ The package brings in `Zongsoft.Core`, `Zongsoft.Plugins`, and `Zongsoft.Web`. A
 ```csharp
 using Zongsoft.Web;
 
-var application = Application.Web(args, builder =>
+var application = await Application.WebAsync(args, builder =>
 {
 	builder.Services.AddHttpContextAccessor();
 });
@@ -51,7 +51,7 @@ var application = Application.Web(args, builder =>
 await application.RunAsync();
 ```
 
-Like daemon and terminal hosts, `Application.Web` first loads the application-named `.option`, also loads the entry-assembly-named `.option` when the names differ, and finally loads `web.option`. Missing files are optional; later configuration overrides earlier keys. It then builds the plugin-aware service provider, initializes `WebApplicationContext`, installs the framework middleware pipeline, maps controllers, and maps discovered SignalR hubs. The named overload sets the application name without excluding the entry assembly configuration.
+Like daemon and terminal hosts, `Application.WebAsync` first loads the application-named `.option`, also loads the entry-assembly-named `.option` when the names differ, and finally loads `web.option`. Missing files are optional; later configuration overrides earlier keys. It then builds the plugin-aware service provider, initializes `WebApplicationContext`, installs the framework middleware pipeline, maps controllers, and maps discovered SignalR hubs. The named overload sets the application name without excluding the entry assembly configuration.
 
 > 💡 Keep application-specific service registration in the builder callback. Put reusable components and their relationships in plugin manifests so other hosts can compose them in the same way.
 
@@ -137,16 +137,16 @@ Prepare a compatible host, dedicated initialized database, `Discussions` connect
 
 ## Listener Configuration and Request Ranges
 
-`WebApplicationBuilder.Build()` loads plugin configuration, registers services and builds the host. `Application.Web()` loads the named host configuration followed by `web.option` before building, then composes the application pipeline. During the existing service scan, Plugins.Web's private `WebEndpointExtension.Registration` automatically enables endpoint conversion, request scopes and change monitoring when a Web host has entries under `Kestrel:Endpoints`. No change to the hosting program is required:
+`WebApplicationBuilder.BuildAsync()` loads plugin configuration, registers services and builds the host. `Application.WebAsync()` loads the named host configuration followed by `web.option` before building, then composes the application pipeline. During the existing service scan, Plugins.Web's private `WebEndpointExtension.Registration` automatically enables endpoint conversion, request scopes and change monitoring when a Web host has entries under `Kestrel:Endpoints`. No change to the hosting program is required:
 
 ```csharp
-var app = Zongsoft.Web.Application.Web(args);
+var app = await Zongsoft.Web.Application.WebAsync(args);
 await app.RunAsync();
 ```
 
 The registrar uses the existing `IServiceRegistration` contract. It does not run for non-Web hosts, and skips hosts without endpoint entries or with an already registered `WebEndpointCollection`. Without declarations, native `urls`/`http_ports`/`https_ports`, `app.Urls` and code `Listen(...)` retain ASP.NET Core behavior. Detection uses the configuration available during service scanning; endpoint declarations added after startup require a restart. The zongsoft.tools.binding processing instruction declares exposure to deployment tools; runtime registration consumes endpoint configuration.
 
-Automatic registration calls `AddWebEndpoints(configuration).AddWebEndpointMonitoring()`. These methods register factories and callbacks without creating a temporary provider or capturing a snapshot. The final provider creates the snapshot on first consumption, including protocol policies registered later in the service scan. Invalid declarations or plugin conflicts fail when resolving endpoint/server options or starting the host; do not rely on `Build()` throwing immediately.
+Automatic registration calls `AddWebEndpoints(configuration).AddWebEndpointMonitoring()`. These methods register factories and callbacks without creating a temporary provider or capturing a snapshot. The final provider creates the snapshot on first consumption, including protocol policies registered later in the service scan. Invalid declarations or plugin conflicts fail when resolving endpoint/server options or starting the host; do not rely on `BuildAsync()` throwing immediately.
 
 ```xml
 <!-- web.option or a plugin entry -->
@@ -174,7 +174,7 @@ Explicit registration is available for a custom configuration section or for ind
 ```csharp
 using Zongsoft.Web.Hosting;
 
-var app = Zongsoft.Web.Application.Web(args, builder =>
+var app = await Zongsoft.Web.Application.WebAsync(args, builder =>
 {
 	builder.Services.AddWebEndpoints(builder.Configuration, "Server");
 	// Optional for explicit registration.

@@ -19,6 +19,22 @@ description: 设计、修改、审查或测试 Zongsoft.Core 的公共契约与�
 - 可选能力通过 Feature、Provider、Factory 或现有扩展点表达，不用宽泛接口成员迫使所有实现伪支持。
 - 热路径优化先确认分配、锁竞争和复杂度，再用聚焦测试或基准证明。
 
+## 应用宿主生命周期
+
+ApplicationContext 通过 IHostedLifecycleService 等待工作器启动、失败回滚和停止；同一阶段共享完成任务，取消等待不放弃清理，回调不得反向等待所属上下文生命周期。Exit()/Exit(exitCode) 只请求 IHostApplicationLifetime.StopApplication，不强制结束进程。上下文通过 DisposeAsync 等待实际停止，再释放自有初始化器和模块；容器解析的初始化器由容器释放。IApplicationBuilder<TApplication> 使用 BuildAsync，创建入口须等待初始化失败时的异步释放。服务容器视图不拥有其引用的容器，根容器支持异步释放。
+
+## 终端输入
+
+ITerminalExecutor 仅通过三个 RunAsync 重载运行命令循环，调用方等待 Task<int> 获取退出码。ITerminal.Input 使用 TextReader；普通流和内存文本直接使用 StreamReader、StringReader。Terminal.Console.Input 默认返回唯一的进程级行读取器，ReadLine 与两种 ReadLineAsync 共用状态；首次读取启动一个后台线程，按需调用 Console.In.ReadLine，不预读下一行。标准输入同时只允许一个等待者，取消只结束等待，未完成读取及结果留给下一次调用，EOF/故障保留；Peek 和字符读取不受支持。标准输入 Dispose/Close 无操作，执行器停止不关闭输入或等待底层标准输入读取。注入读取器由创建者释放，其取消语义取决于具体 TextReader，不承诺标准输入的结果保留行为。读取开始后不得更换 Console.In 或混用其它标准输入读取入口。具体契约见 [终端输入](docs/terminal-input.zh-Hans.md)。
+
+ITerminal.Abort 同步触发 Aborting 并返回最终 Cancel，异常向调用方传播。Core 不订阅全局进程信号或修改控制台模式。Plugins 终端宿主对 Ctrl+C 优先通知终端、未处理时停止，SIGQUIT/SIGTERM 直接停止，等待业务清理。ReactiveAsync 在运行取消或进入失败后仍等待不可取消的退出清理，保留运行和清理故障。
+
+## 周期任务生命周期
+
+[Common.Timer](docs/timers.zh-Hans.md) 通过构造回调组合行为，构造时不启动时钟；每次 Start 创建独立的私有 Runner 并串行执行回调。每次运行使用接受 TimeProvider 的 PeriodicTimer，顺序等待 tick 与回调，由 PeriodicTimer 合并到期通知；所有生命周期状态共用同一个短锁。Start、Stop、StopAsync、Dispose、DisposeAsync 均无取消参数；每次运行创建内部取消源，停止和释放请求取消在途回调。Stop 不等待回调和清理结束，StopAsync 等待实际退出及收尾；Dispose 永久关闭但不等待，DisposeAsync 永久关闭并等待同一次清理，重复释放不重复清理。调用方在释放后不得再启动或访问 Period，仍可读取 IsRunning、IsDisposed。Failed 在清理结束后通知故障，Stopped 随后通知每次实际运行已结束；派生类通过 OnFailed(FailureEventArgs) 和 OnStopped(EventArgs) 定制通知，调用基类方法以通知订阅者；Failed 逐个调用订阅者，Stopped 使用普通事件调用、订阅者抛错中断后续通知；异步停止与异步释放等待通知调用结束并保留运行和通知异常，计时器内部观察后台任务异常、不写日志。回调及取消或事件通知不得反向等待自身运行；回调内请求停止或释放用 Stop、Dispose，由调用方保证不存在循环依赖，计时器不检测执行上下文。运行结束前不得释放回调依赖的外部资源。所有者通过事件衔接业务任务时，业务任务在事件调用链外等待 StopAsync 后继续。自定义 TimeProvider.CreateTimer 须成功返回有效计时器；不额外包装 PeriodicTimer 的失败构造终结器限制，具体约束见计时器文档。测试见 test/Common/TimerTest.cs，使用受控时钟和同步信号验证时序。
+
+[Spooler<T>](docs/spoolers.zh-Hans.md) 以周期、满载写入或显式 FlushAsync 串行触发消费性 IEnumerable<T> 回调；支持组合和继承，Limit=0 为无界，正数同时限制容量与每次枚举数量。生产者在满载时参与刷新；FlushAsync 等待在途回调，再处理一轮剩余数据，不建立接收水位。仅实现 IAsyncDisposable；通道引用置空统一表示关闭并确定唯一关闭执行者，DisposeAsync 停止接收并结束容量等待，排队刷新取得执行权后检查关闭状态；释放等待在途刷新、计时器清理及故障通知，重复调用共享结果，不排空缓冲区。派生类通过 DisposeAsyncCore 在等待基类后清理回调依赖；周期和通知异常由异步释放传播，显式操作异常仍归原调用方。直接操作传播异常，周期故障终止该次定时运行并通过 Failed 通知，不永久关闭缓冲器、不重试、不写日志。Failed 使用普通事件调用，订阅者抛错中断后续通知，运行及通知异常保留到异步释放。调用方负责避免在回调与通知中等待自身刷新、异步释放或满载投递，有容量时允许投递；所有者在回调外等待释放，观察异步投递并管理依赖资源。两个构造函数均可传入 TimeProvider clock 控制周期触发。`Zongsoft.Caching.Spooler` 指标源发布接收数、当前队列、回调耗时、满载投递耗时和回调故障数；无监听器时不读取操作时钟，队列使用弱引用注册表按需采集，关闭时注销并清空 reader 委托。FileLogger 拥有其缓冲器，通过 Failed 转发周期故障；仅提供异步释放，停止接收并等待缓冲及直接写入后清理同步资源，不自动排空。测试见 test/Caching/SpoolerTest.cs、SpoolerDiagnosticsTest.cs 及 test/Diagnostics/FileLoggerLifecycleTest.cs；性能工作负载位于 benchmark。
+
 ## 网络声明值
 
 [NetworkAddress 和 NetworkProtocol](docs/networking.zh-Hans.md) 提供通用网络地址及协议组合的解析、规范化和相等语义，均实现 `ISpanParsable<T>`（包含 `IParsable<T>`），公开 string 与 `ReadOnlySpan<char>` 重载。NetworkAddress 不设置应用方案白名单，保留地址族、区分大小写的 IPv6 区域及原始路径。NetworkProtocol 接受任意合法上层名称与 tcp、udp、http、http1、http2、http3 承载组合，组合顺序无关，不补全应用协议的默认承载。集合使用必须指定分隔符的 Parse/TryParse 重载，在相同上层名称内归并 HTTP 泛称，保留所有显式版本及未指定承载的名称。先通过 TemplateEvaluator 求值，再解析协议文本；应用简写、绑定路径限制及地址与协议的一致性由消费者负责。二者不执行 zongsoft.tools.binding PI、不探测后端、不选择最高版本、不生成代理配置。EndpointConverter 的 EndPoint 转换及 HandlerAttribute 的元数据契约保持独立。测试为 Communication/NetworkAddressTest 与 NetworkProtocolTest。
@@ -109,11 +125,13 @@ Import 使用必需的 path 和默认 true 的 required；None 按 required 处�
 物理路径相对于实际声明文件目录，FileStream 的实际路径不受诊断标识覆盖；无物理来源的普通流仅可导入绝对路径。虚拟来源复用同一 IFileProvider 并规范化逻辑路径，不退回磁盘。循环只针对活动链，物理身份解析目录和文件链接，重复或菱形依赖重新读取。ImportOptions.MaximumDepth 默认为 64，必须为正，根文件计一层。XmlConfigurationProvider 的私有嵌套类 FileProvider 将有效依赖接入文件基类的重载通知；监听缺失可选文件、无匹配已读文件，刷新及释放订阅，失败沿用基类清空与 OnLoadException 规则。静态读取和流提供程序不关闭调用方流，导入流由会话关闭。Core 不提供 set 或 binding 业务语义；需要最终值的消费者在构建完成后结合 Instructions 和最终配置提取。
 ## 通信生命周期与派发
 
-ChannelBase 以按需创建的共享完成任务协调一次关闭和释放，不创建内核事件；派生 DisposeAsync(bool) 在关闭结束后执行，不负责启动关闭。关闭异常不回滚状态，重复调用观察原结果；关闭后不得复用实例。WorkerBase 以原子发布的操作对象协调异步启停，启动失败调用 OnStopAsync 清理部分初始化资源，停止失败保持 Stopping，成功收尾前不允许重启。停止启动后调用者取消仅取消等待，派生停止实现负责实际完成与期限。DisposeAsync(bool) 默认调用原同步 Dispose(bool) 扩展点，基类已负责停止。
+ChannelBase 以按需创建的共享完成任务协调一次关闭和释放，不创建内核事件；派生 DisposeAsync(bool) 在关闭结束后执行，不负责启动关闭。关闭异常不回滚状态，重复调用观察原结果；关闭后不得复用实例。IWorker 仅提供 StartAsync、StopAsync、PauseAsync、ResumeAsync；WorkerBase 和 IListener<T> 仅公开 IAsyncDisposable 释放契约，所有者使用 await using 或等待 DisposeAsync。StateChanged.ActionName 仍为 Start、Stop、Pause、Resume。WorkerBase 通过短锁原子协调操作接收与释放标记，扩展点及通知均在锁外执行；启动失败调用 OnStopAsync 清理部分初始化资源，停止失败保持 Stopping，成功收尾前不允许重启。停止开始后调用者取消仅取消等待，派生停止实现负责实际完成与期限。OnStopAsync 停止运行并释放全部自有资源，支持未启动、部分初始化及失败后重试；停止成功后可重新启动。DisposeAsync 永久关闭普通生命周期入口，复用 OnStopAsync 清理，不另设释放钩子。并发释放共享当前尝试，失败后可再次 DisposeAsync 重试，成功后幂等；IsDisposed 表示清理已成功，通知失败不改变清理结果。释放开始后新的 StartAsync、StopAsync、PauseAsync、ResumeAsync 均抛 ObjectDisposedException，已接收操作继续收尾；诊断属性和 ToString 可读。回归测试见 WorkerDisposalTest。
 
 - ChannelBase 的关闭权和释放权各只取得一次，完成结果安全发布给并发及后续调用者；关闭前已取消的令牌阻止操作，开始后的取消只结束当前等待。Closing、Closed 各通知一次，通知或扩展点故障不能跳过剩余清理。派生实现不能在关闭流程使用字段前清空它们。
-- 生命周期回调可以请求重入操作，但不得同步等待包含自身的操作；通知在状态确定后发出，通知故障不能恢复已失效资源或覆盖原始故障。同步入口集中复用异步流程，正常异步调用链不使用同步等待。
-- WorkerBase 的启动、停止、暂停和恢复共享相应操作的完成结果，取得执行权后重新验证状态；启动失败清理不完整初始化，停止失败可再次 StopAsync 收尾。下游不叠加另一套工作器状态机，不根据是否附加调试器决定异常是否传播。
+- ChannelBase 的生命周期回调可以请求重入操作，但不得同步等待包含自身的操作；通知在状态确定后发出，通知故障不能恢复已失效资源或覆盖原始故障。同步入口集中复用异步流程，正常异步调用链不使用同步等待。
+- WorkerBase 的 Enabled 仅控制是否允许启动；启动后修改仅影响下一次启动，不触发停止，也不影响暂停、恢复、停止或释放，回调中可直接修改该属性。相同的在途动作共享完成结果；停止等待当前动作结束后再检查状态，启动、暂停和恢复遇到其它在途动作直接返回，不排队执行。状态与 Enabled 在接收动作时检查；启动失败清理不完整初始化，尚未释放时停止失败可再次 StopAsync 收尾。生命周期扩展点和 StateChanged不得反向等待所属工作器的生命周期或释放操作；调用方负责避免循环依赖，由回调外的所有者在当前操作结束后协调后续动作。不同工作器之间可按所有权关系依次调用。暂停保留资源与内部状态，恢复继续使用；暂停或恢复失败时实现者负责撤销部分动作，基类恢复原稳定状态。CanPauseAndContinue 为 false 时拒绝暂停和恢复。测试见 WorkerCallbackTest。下游不叠加另一套工作器状态机，不根据是否附加调试器决定异常是否传播。
+
+`start`、`stop`、`pause` 和 `resume` 命令等待对应的异步工作器操作，并传递命令取消标记。`--timeout` 仅限制等待，默认五秒、非正数取五秒、上限三十秒；超时抛出 TimeoutException，不取消工作器操作，不再输出完成结果，后续结果由工作器负责通知。命令等待退出后继续观察任务故障，不持有命令上下文。暂停与恢复命令忽略不适用于当前状态的请求。完成扩展点接收 CommandContext、IWorker 和 TimeSpan timeout，结果处理不再等待状态；恢复结果扩展点为 WorkerResumeCommand.OnResumed。测试见 WorkerCommandTest。
 
 ListenerBase<T> 的 T 是处理器实参，不提供 Packetizer 或 IReceiver；传输解码由实际接收者负责。注入处理器不由监听器释放，无处理器时检查取消后返回成功。HandlerBase<T> 无参数入口传递 null，显式 Parameters 保留引用身份。两种 IPacketizer 接口均只提供 Pack 与 Unpack；Pack 不 Flush，Unpack 失败不消费、成功须推进。帧长度与解码资源释放属于具体传输层，由 Net 的 PacketizerBase<T> 提供 GetLength 与 Release，不扩充 Core 接口。回归入口为 ChannelLifecycleTest、WorkerLifecycleTest 和 ListenerDispatchTest。
 

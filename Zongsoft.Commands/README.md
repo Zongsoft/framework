@@ -85,6 +85,8 @@ Custom commands normally derive from `CommandBase<CommandContext>`, declare opti
 
 ## Errors and Safety
 
+Interactive file prompts await `TextReader.ReadLineAsync` with the command cancellation token. EOF ends the prompt without opening a file. Commands using `Terminal.ReactiveAsync` await their cleanup after interruption or cancellation; cleanup receives the operation failure and a noncancelable token. See [Terminal input](../Zongsoft.Core/docs/terminal-input.md).
+
 - Invalid or missing options are reported as command option exceptions; do not silently substitute security-sensitive values.
 - File deletion, key export, scheduling changes, and message publication can alter external state. Confirm the active host, environment, and provider before invoking them.
 - Cancellation is propagated to asynchronous commands, but an external provider may already have accepted an operation.

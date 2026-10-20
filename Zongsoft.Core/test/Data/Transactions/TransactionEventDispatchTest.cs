@@ -188,7 +188,7 @@ public sealed class TransactionEventDispatchTest
 		await RunAsync(channel, async exchanger =>
 		{
 			using var transaction = new Transaction();
-			Assert.True(transaction.Enlist(new ThrowingEnlistment()));
+			Assert.True(transaction.Context.Enlist(new ThrowingEnlistment()));
 			await exchanger.ExchangeAsync(CreateContext(new() { Message = "discarded" }), CancellationToken.None);
 
 			Assert.Equal(0, inner.SendCount);
@@ -238,7 +238,7 @@ public sealed class TransactionEventDispatchTest
 		await RunAsync(channel, async exchanger =>
 		{
 			using var transaction = new Transaction();
-			Assert.True(transaction.Enlist(new DelegateEnlistment(context =>
+			Assert.True(transaction.Context.Enlist(new DelegateEnlistment(context =>
 			{
 				if(context.Phase == EnlistmentPhase.Commit)
 					visibleValue = "new";

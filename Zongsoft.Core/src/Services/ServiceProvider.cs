@@ -30,6 +30,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -37,13 +38,14 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Zongsoft.Services;
 
-internal class ServiceProvider : IServiceProvider, IDisposable
+internal class ServiceProvider : IServiceProvider, IDisposable, IAsyncDisposable
 {
 	#region 静态字段
 	private static readonly MethodInfo _GetFacotryMethod_ = typeof(ServiceProvider).GetMethod(nameof(GetFactory), 1, (BindingFlags.Static | BindingFlags.NonPublic), null, Array.Empty<Type>(), null);
 	#endregion
 
 	#region 成员字段
+	private readonly bool _owned;
 	private readonly string _name;
 	private readonly IServiceProvider _provider;
 	#endregion
@@ -69,6 +71,7 @@ internal class ServiceProvider : IServiceProvider, IDisposable
 		services.AddSingleton(this);
 		services.AddSingleton<IServiceProvider>(this);
 
+		_owned = true;
 		_provider = services.BuildServiceProvider(options);
 		ServiceAssistant.Make(services, this);
 	}
@@ -151,8 +154,19 @@ internal class ServiceProvider : IServiceProvider, IDisposable
 	#region 处置方法
 	public void Dispose()
 	{
-		if(_provider is IDisposable disposable)
+		if(_owned && _provider is IDisposable disposable)
 			disposable.Dispose();
+	}
+
+	/// <summary>异步释放根容器；模块服务视图不拥有被引用的容器。</summary>
+	/// <returns>根容器拥有的服务全部释放的操作。</returns>
+	public ValueTask DisposeAsync()
+	{
+		if(_owned && _provider is IAsyncDisposable disposable)
+			return disposable.DisposeAsync();
+
+		this.Dispose();
+		return ValueTask.CompletedTask;
 	}
 	#endregion
 

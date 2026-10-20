@@ -151,6 +151,8 @@ podman exec -it ollama ollama pull qwen3:0.6b
 	> ai.assistant.chat --interactive
 	> ```
 
+交互模式将每次输入的行作为用户消息发送；`exit`、`quit` 和 EOF 均结束对话。输入等待与流式响应均传递命令取消令牌；命令不拥有、也不释放终端输入。详见[终端输入](../Zongsoft.Core/docs/terminal-input.zh-Hans.md)。
+
 ### RESTful API 接口
 
 - 获取AI助手列表

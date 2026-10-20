@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -37,9 +37,23 @@ namespace Zongsoft.Terminals;
 
 partial class Terminal
 {
+	/// <summary>获取命令执行器所属的终端。</summary>
+	/// <param name="executor">命令执行器。</param>
+	/// <returns>所属终端；不是终端执行器时返回 <see langword="null"/>。</returns>
 	public static ITerminal GetTerminal(this ICommandExecutor executor) => (executor as ITerminalExecutor)?.Terminal;
+	/// <summary>获取命令上下文所属的终端。</summary>
+	/// <param name="context">命令上下文。</param>
+	/// <returns>所属终端；上下文为空或不属于终端时返回 <see langword="null"/>。</returns>
 	public static ITerminal GetTerminal(this CommandContextBase context) => (context?.Executor as ITerminalExecutor)?.Terminal;
+	/// <summary>尝试获取命令上下文所属的终端。</summary>
+	/// <param name="context">命令上下文。</param>
+	/// <param name="terminal">接收所属终端；不存在时为 <see langword="null"/>。</param>
+	/// <returns>存在所属终端则返回 <see langword="true"/>，否则返回 <see langword="false"/>。</returns>
 	public static bool TryGetTerminal(this CommandContextBase context, out ITerminal terminal) => TryGetTerminal(context?.Executor, out terminal);
+	/// <summary>尝试获取命令执行器所属的终端。</summary>
+	/// <param name="executor">命令执行器。</param>
+	/// <param name="terminal">接收所属终端；不存在时为 <see langword="null"/>。</param>
+	/// <returns>存在所属终端则返回 <see langword="true"/>，否则返回 <see langword="false"/>。</returns>
 	public static bool TryGetTerminal(this ICommandExecutor executor, out ITerminal terminal)
 	{
 		terminal = (executor as ITerminalExecutor)?.Terminal;
@@ -52,6 +66,11 @@ partial class Terminal
 	/// <param name="exit">退出被动响应模式的处理方法。</param>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回的响应命令结果。</returns>
+	/// <remarks>
+	/// 	<para>终端中断结束等待，运行取消向调用方传播。</para>
+	/// 	<para>进入失败或运行取消后仍等待 exit 完成，并传入原始异常及不可取消的清理令牌；</para>
+	/// 	<para>运行与清理同时失败时抛出 <see cref="System.AggregateException"/>。</para>
+	/// </remarks>
 	/// <exception cref="NotSupportedException">当前命令执行器不是一个终端命令执行器。</exception>
 	public static async ValueTask<object> ReactiveAsync(this CommandContext context,
 		Func<CommandContext, CancellationToken, ValueTask> enter,
@@ -62,50 +81,44 @@ partial class Terminal
 		var terminal = context.GetTerminal() ??
 			throw new NotSupportedException(string.Format(Properties.Resources.Terminal_CommandRequiresTerminal_Message, context.Command?.Name));
 
-		//创建信号量，默认为堵塞状态
-		using var semaphore = new AutoResetEvent(false);
-
-		//挂载当前终端的中断事件
+		cancellation.ThrowIfCancellationRequested();
+		var signal = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 		terminal.Aborting += Terminal_Aborting;
-
-		//定义异常对象
-		Exception exception = null;
+		Exception failure = null;
 
 		try
 		{
-			//进入被动响应模式
 			if(enter != null)
-				await enter(context, cancellation);
+				await enter(context, cancellation).ConfigureAwait(false);
+
+			await signal.Task.WaitAsync(cancellation).ConfigureAwait(false);
 		}
-		catch(Exception ex)
+		catch(Exception exception) { failure = exception; }
+		finally { terminal.Aborting -= Terminal_Aborting; }
+
+		try
 		{
-			//设置当前异常对象
-			exception = ex;
+			//退出负责释放已建立的订阅，不沿用已经取消的运行令牌。
+			if(exit != null)
+				await exit(context, failure, CancellationToken.None).ConfigureAwait(false);
+		}
+		catch(Exception exception)
+		{
+			if(failure != null)
+				throw new AggregateException(failure, exception);
 
-			//释放信号量
-			semaphore.Set();
+			throw;
 		}
 
-		//等待信号量
-		semaphore.WaitOne();
+		if(failure != null)
+			System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(failure).Throw();
 
-		//注销当前终端的中断事件
-		terminal.Aborting -= Terminal_Aborting;
-
-		//退出被动响应模式
-		if(exit != null)
-			await exit(context, exception, cancellation);
-
-		//返回结果
 		return context.Result;
 
-		void Terminal_Aborting(object sender, System.ComponentModel.CancelEventArgs e)
+		void Terminal_Aborting(object sender, System.ComponentModel.CancelEventArgs args)
 		{
-			//阻止命令执行器被关闭
-			e.Cancel = true;
-
-			//释放信号量
-			semaphore?.Set();
+			args.Cancel = true;
+			signal.TrySetResult();
 		}
 	}
 }

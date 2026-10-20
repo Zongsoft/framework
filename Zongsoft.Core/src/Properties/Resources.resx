@@ -1126,4 +1126,19 @@
   <data name="EventDispatcher.FeatureUnsupported.Message" xml:space="preserve">
     <value>The event dispatcher does not support the runtime feature {0}.</value>
   </data>
+	<data name="Timer.Stopping.Message" xml:space="preserve">
+		<value>The timer cannot start until its current run has finished stopping.</value>
+	</data>
+  <data name="FileLogger.SelfWait.Message" xml:space="preserve">
+    <value>The file logger cannot await its own disposal from a write callback or failure notification.</value>
+  </data>
+	<data name="Terminal.InputUnreadable.Message" xml:space="preserve">
+		<value>The terminal input stream must be readable.</value>
+	</data>
+	<data name="Terminal.InputReading.Message" xml:space="preserve">
+		<value>A terminal input read is already in progress.</value>
+	</data>
+	<data name="Terminal.ExecutorRunning.Message" xml:space="preserve">
+		<value>The terminal executor is already running.</value>
+	</data>
 </root>

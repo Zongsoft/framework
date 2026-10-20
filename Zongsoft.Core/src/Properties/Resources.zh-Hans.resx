@@ -1120,4 +1120,19 @@
   <data name="EventDispatcher.FeatureUnsupported.Message" xml:space="preserve">
     <value>事件调度器不支持运行时特性 {0}。</value>
   </data>
+	<data name="Timer.Stopping.Message" xml:space="preserve">
+		<value>计时器当前运行尚未停止完成，不能再次启动。</value>
+	</data>
+  <data name="FileLogger.SelfWait.Message" xml:space="preserve">
+    <value>文件日志器不能在写入回调或故障通知中等待自身释放。</value>
+  </data>
+	<data name="Terminal.InputUnreadable.Message" xml:space="preserve">
+		<value>终端输入流必须支持读取。</value>
+	</data>
+	<data name="Terminal.InputReading.Message" xml:space="preserve">
+		<value>终端输入已有读取正在进行。</value>
+	</data>
+	<data name="Terminal.ExecutorRunning.Message" xml:space="preserve">
+		<value>终端执行器已经在运行。</value>
+	</data>
 </root>

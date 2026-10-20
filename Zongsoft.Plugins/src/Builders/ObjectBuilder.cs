@@ -65,6 +65,8 @@ public class ObjectBuilder : BuilderBase, IAppender
 		//如果定义了value属性，则优先采用该属性值作为构建结果
 		if(context.Builtin.Properties.TryGetValue("value", out var property))
 		{
+			context.OwnsResult = false;
+
 			if(Parsers.Parser.CanParse(property.RawValue))
 			{
 				var result = Parsers.Parser.Parse(property.RawValue, context.Builtin, "value", this.GetValueType(context.Builtin));

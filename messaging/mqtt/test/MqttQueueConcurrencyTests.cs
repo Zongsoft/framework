@@ -34,7 +34,7 @@ public class MqttQueueConcurrencyTests
 		const int DELIVERY_COUNT = SUBSCRIBER_COUNT * MESSAGE_COUNT;
 		const double MINIMUM_DELIVERIES_PER_SECOND = 5;
 
-		using var server = await MqttServerScope.StartAsync();
+		await using var server = await MqttServerScope.StartAsync();
 		var identity = Guid.NewGuid().ToString("N");
 		var topic = $"tests/concurrent/fanout/{identity}";
 		var publishers = Enumerable.Range(0, PUBLISHER_COUNT)
@@ -101,7 +101,7 @@ public class MqttQueueConcurrencyTests
 		const int TIMED_DELIVERY_COUNT = (SUBSCRIBER_COUNT - 1) * (PUBLISHER_COUNT * SECOND_WAVE_PER_PUBLISHER + 1);
 		const double MINIMUM_DELIVERIES_PER_SECOND = 3;
 
-		using var server = await MqttServerScope.StartAsync();
+		await using var server = await MqttServerScope.StartAsync();
 		var identity = Guid.NewGuid().ToString("N");
 		var topic = $"tests/concurrent/unsubscribe/{identity}";
 		var publishers = Enumerable.Range(0, PUBLISHER_COUNT)

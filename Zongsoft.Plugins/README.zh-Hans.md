@@ -51,12 +51,24 @@ dotnet add package Zongsoft.Plugins
 using Microsoft.Extensions.Hosting;
 using Zongsoft.Plugins.Hosting;
 
-await Application.Terminal(args).RunAsync();
+await (await Application.TerminalAsync(args)).RunAsync();
 ```
 
-后台服务使用 `Application.Daemon(args)`；Web 应用使用配套的 [Zongsoft.Plugins.Web](../Zongsoft.Plugins.Web/README.zh-Hans.md) 包。
+后台服务使用 `Application.DaemonAsync(args)`；Web 应用使用配套的 [Zongsoft.Plugins.Web](../Zongsoft.Plugins.Web/README.zh-Hans.md) 包。
 
 构建器会加载应用配置、发现插件目录、构建插件树、注册模块与服务、初始化应用上下文，最后启动宿主。
+
+## 终端信号与停止
+
+`Application.TerminalAsync` 的默认生命周期在启动时注册 SIGINT、SIGQUIT 和 SIGTERM，并在异步释放宿主时解除注册。Core 的终端对象只提供 `ITerminal.Abort()` 通知。
+
+- Ctrl+C／SIGINT 先通知正在运行的执行器所属终端；`Aborting` 处理器设置 `Cancel = true` 后继续运行，未处理则请求宿主停止。`ReactiveAsync` 可用它结束响应等待，清理完成后继续接收命令。
+- Ctrl+Break／SIGQUIT 与 SIGTERM 直接请求宿主停止，不受 `Aborting` 否决。停止取消终端运行令牌，等待输入调用方结束等待、命令退出清理和工作器停止；进程级标准输入读取不阻碍宿主停止。
+- 停止期间的重复信号不重复中断通知，也不触发立即退出。中断处理器必须同步及时返回，不能等待所属宿主停止；处理器异常触发停止，并通过 `StopAsync` 和异步释放向调用方传播。
+
+应用显式注册的 `IHostLifetime` 保留，由该实现负责信号策略。一个进程的控制台信号应由一个活动宿主统一管理。状态消息使用 `Microsoft.Hosting.Lifetime` 日志类别，服从应用配置的日志提供程序、过滤器以及 `ConsoleLifetimeOptions.SuppressStatusMessages`。终端宿主不更改应用的控制台输入模式。
+
+使用 `RunAsync`，或显式调用 `StartAsync`、`StopAsync` 并异步释放宿主，以等待完整收尾。操作系统强制终止不属于可等待的停止通知。
 
 ## 声明插件
 

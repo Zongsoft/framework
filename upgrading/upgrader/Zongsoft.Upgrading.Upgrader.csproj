@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>0.1.0</Version>
+		<Version>0.2.0</Version>
 		<Product>Zongsoft Upgrading Upgrader</Product>
 		<Description>This is a upgrader for automatic upgrading.</Description>
 		<RootNamespace>Zongsoft.Upgrading</RootNamespace>
@@ -13,6 +13,7 @@
 
 	<PropertyGroup>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<DefaultItemExcludes>$(DefaultItemExcludes);test\**</DefaultItemExcludes>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -30,7 +31,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.63.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.67.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

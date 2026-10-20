@@ -1,30 +1,31 @@
-# Web 宿主集成测试
+# Web 插件测试
 
-[English](README.md)
+[English](README.md) | [简体中文](README.zh-Hans.md)
 
-xUnit 测试通过公开的 `Zongsoft.Web.WebApplicationBuilder` 与 `Application.Web` 入口验证宿主集成。端点场景和 Web 宿主构建在独立进程及临时插件目录中运行。[WebIntegrationTests](WebIntegrationTests.cs) 还使用进程内隔离夹具验证控制器发现、请求主体/路由、控制器描述和插件诊断；测试程序集禁用用例并行。夹具保留产品交付的 `Main.plugin` 注册，移除工作台扩展，因此不启动业务工作器或外部服务。
+[单元测试](unit/Zongsoft.Plugins.Web.Tests.csproj) 使用内存组件验证控制器发现、请求主体与路由值、控制器描述和插件元数据，不构建 Web 宿主、不启动子进程、不绑定端口。
 
-测试覆盖：
+[集成测试](integration/Zongsoft.Plugins.Web.Tests.csproj) 在隔离进程中验证公开的 `WebApplicationBuilder.BuildAsync` 和 `Application.WebAsync` 入口，覆盖插件配置与服务扫描、端点投影、路径作用域、本地 HTTP 请求、原生传输选择、监视器所有权、停止以及初始化失败后的异步释放。程序集名称为 `Zongsoft.Plugins.Web.IntegrationTests`。
 
-- Web 宿主构建验证插件上下文仅初始化一次、控制器激活器注册及宿主容器中的插件服务，不启动监听。
-- 没有 Kestrel:Endpoints 声明时保持原生构建行为：允许其他跨插件键覆盖，原生 urls、http_ports、app.Urls 及代码 Listen 可处理真实 HTTP 请求；https_ports 验证构建阶段不禁止该配置，不宣称 TLS 握手。
-- 既有程序集扫描为声明端点的 Web 宿主自动接入，延迟消费完整插件配置及随后注册的协议；验证 Import、入口来源和跨插件冲突。非 Web 服务扫描不启用，未注册的应用协议在启动时失败。显式 AddWebEndpoints 优先，可在存在默认 Kestrel 声明时选择其他配置节。
-- 公开的 Application.Web 与 WebApplicationBuilder 入口无须手工接入。含路径声明共享监听，启动过滤器在初始化器、静态文件和路由之前约束真实回环请求；额外代码监听可以启动，其请求在无匹配范围时被拒绝。空范围集合拒绝全部请求。
-- 自动接入后重复扫描程序集仍只有一个监视器；显式接入保留可选监视，重复登记只提示一次；业务变化不提示，网络及新增插件冲突提示重启，监听与范围保持快照。停止和直接释放都会解除订阅；初始化失败释放已创建服务。
-- 原生 TCP/多路复用工厂实例不被包装，选择器、取消、特征和容器所有权保持原义；IPv6 TCP 保留独立地址族。传输替身不代表实际 QUIC 验收。
+Plugins.Web 主解决方案和 Cake `test` 任务只包含单元测试。集成测试有独立的[解决方案](integration/Zongsoft.Plugins.Web.Tests.slnx)和 Cake `integration-test` 任务。两个项目仅通过 `ProjectReference` 引用 Plugins.Web；Core、Plugins 和 Web 使用本地程序集 `HintPath`。共用的[文件夹具](.shared/PluginTestDirectory.cs) 管理临时插件目录，复用产品交付的 Main 注册。
 
-Debug 构建依赖本地 Core、Plugins、Web 输出。先依次构建这三个源码项目，再构建本解决方案并运行测试。测试项目只通过项目引用依赖 Plugins.Web，通过 `HintPath` 引用本地 Core、Plugins、Web 程序集：
+## 运行方式
+
+从框架根目录运行，需要 .NET 10 SDK 和 .NET 8、9、10 Runtime。按顺序构建本地 Debug 依赖：
 
 ```powershell
-dotnet build ../Zongsoft.Core/src/Zongsoft.Core.csproj -p:GeneratePackageOnBuild=false
-dotnet build ../Zongsoft.Plugins/src/Zongsoft.Plugins.csproj -p:GeneratePackageOnBuild=false
-dotnet build ../Zongsoft.Web/src/Zongsoft.Web.csproj -p:GeneratePackageOnBuild=false
-dotnet build ./Zongsoft.Plugins.Web.slnx -p:GeneratePackageOnBuild=false -m:1
-dotnet test ./test/Zongsoft.Plugins.Web.Tests.csproj --no-build -f net8.0
-dotnet test ./test/Zongsoft.Plugins.Web.Tests.csproj --no-build -f net9.0
-dotnet test ./test/Zongsoft.Plugins.Web.Tests.csproj --no-build -f net10.0
+dotnet build ./Zongsoft.Core/src/Zongsoft.Core.csproj -p:GeneratePackageOnBuild=false
+dotnet build ./Zongsoft.Plugins/src/Zongsoft.Plugins.csproj -p:GeneratePackageOnBuild=false
+dotnet build ./Zongsoft.Web/src/Zongsoft.Web.csproj -p:GeneratePackageOnBuild=false
+dotnet build ./Zongsoft.Plugins.Web/Zongsoft.Plugins.Web.slnx -p:GeneratePackageOnBuild=false
+dotnet test ./Zongsoft.Plugins.Web/test/unit/Zongsoft.Plugins.Web.Tests.csproj --no-build --no-restore
 ```
 
-测试标记为 `Category=Integration`。子进程必须同时满足退出码为零及写入完成标记；提前退出不能让测试通过。本机 HTTP 测试在使用前临时取得可用端口，设置请求与进程超时，并取消工作台关闭时的退出进程行为，以完成 HTTP 停止验证。运行环境需要 IPv4 和 IPv6 回环 socket 支持。本项目不包含 gRPC 处理器挂载、反向代理部署或业务宿主启动。
+按需显式运行集成测试：
 
-请求上下文用例覆盖主体切换和路由读取。Session 字典的完整一致性仍不在覆盖范围：ContainsKey 要求本地字典及路由同时含键，Count/枚举未包含本地条目，CopyTo 先自增下标。
+```powershell
+dotnet test ./Zongsoft.Plugins.Web/test/integration/Zongsoft.Plugins.Web.Tests.slnx -p:GeneratePackageOnBuild=false
+```
+
+添加 `-f net8.0`、`-f net9.0` 或 `-f net10.0` 可选择单个目标框架。VSTest 发现并执行 xUnit v3 测试。集成子进程通过 PATH 中的 `dotnet` 运行，必须同时满足退出码为零及存在完成标记。本地 HTTP 用例限制请求与进程等待时间，需要 IPv4/IPv6 回环套接字支持，不访问真实外部服务。传输替身不验证真实 QUIC，HTTPS 端口投影不代表完成 TLS 握手。
+
+程序集禁用用例并行以隔离进程级应用状态。夹具等待应用和服务容器释放后删除文件。初始器失败用例通过门闩控制异步释放，验证工厂在清理完成前保持未完成状态。

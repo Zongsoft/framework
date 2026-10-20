@@ -75,13 +75,11 @@ public interface IApplicationContext : IApplicationModule
 	#endregion
 
 	#region 方法定义
-	/// <summary>退出当前应用程序。</summary>
-	/// <param name="timeout">等待应用程序停止的超时时间。</param>
-	void Exit(TimeSpan timeout = default);
+	/// <summary>请求宿主停止；本方法不等待资源收尾，不直接退出进程。</summary>
+	void Exit();
 
-	/// <summary>退出当前应用程序。</summary>
-	/// <param name="exitCode">退出代码。</param>
-	/// <param name="timeout">等待应用程序停止的超时时间。</param>
-	void Exit(int exitCode, TimeSpan timeout = default);
+	/// <summary>设置进程退出代码并请求宿主停止；退出由宿主入口完成。</summary>
+	/// <param name="exitCode">进程退出代码。</param>
+	void Exit(int exitCode);
 	#endregion
 }

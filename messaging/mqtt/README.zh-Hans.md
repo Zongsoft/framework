@@ -128,7 +128,7 @@ if(!retained.IsEmpty)
 [真实服务端样例](samples/server/Program.cs)使用同一源码文件中定义的 `Handler.Instance`，向终端输出收到的消息：
 
 ```csharp
-using var server = new MqttQueueServer() { Url = "tcp://127.0.0.1:1883", Handler = Handler.Instance };
+await using var server = new MqttQueueServer() { Url = "tcp://127.0.0.1:1883", Handler = Handler.Instance };
 await server.StartAsync([]);
 ```
 
@@ -212,4 +212,4 @@ nuget:Zongsoft.Messaging.Mqtt
 
 `MqttQueueServer.Url` 默认为 `tcp://0.0.0.0:1883/`，接受 IPv4、带方括号的 IPv6 地址或表示 IPv4 通配的 `*`，必须显式指定 1 至 65535 的端口。读取属性返回带根斜杠的规范化地址。只监听声明的地址族，`[::]` 不隐含 IPv4；拒绝 DNS 名称、非根路径、凭据、查询、片段及 IPv4 广播地址。此配置不提供 TLS 或 WebSocket 监听。
 
-API 复用 `WorkerBase.Enabled` 和启停流程。启动取消或失败会释放 Broker 实例，并向启动调用者传播异常；并发启动／停止等待共享的生命周期操作，停止失败允许重试清理。MQTTnet 的启停方法不接受取消令牌，因此启动等待 SDK 调用结束后检查取消，停止一旦开始便完成清理。
+API 复用 `WorkerBase.Enabled` 和启停流程。停止同时释放服务器拥有的 `Storage`；若重启仍需存储，应在停止成功后重新配置实例。释放失败可再次 `DisposeAsync` 重试，清理成功前保留未释放资源。启动取消或失败会释放 Broker 实例，并向启动调用者传播异常；相同的在途动作共享结果；停止等待当前操作，启动遇到在途停止时直接返回，不安排重启。停止失败允许重试清理。MQTTnet 的启停方法不接受取消令牌，因此启动等待 SDK 调用结束后检查取消，停止一旦开始便完成清理。

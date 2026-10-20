@@ -30,6 +30,7 @@
 using System;
 using System.IO;
 using System.Reflection;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Microsoft.Extensions.Hosting;
@@ -73,7 +74,7 @@ public abstract class ApplicationBuilderBase<TApplication> : Services.IApplicati
 	#region 抽象方法
 	/// <summary>构建已加载配置并完成服务注册的应用宿主。</summary>
 	/// <returns>可启动的应用宿主。</returns>
-	public abstract TApplication Build();
+	public abstract ValueTask<TApplication> BuildAsync();
 	#endregion
 
 	#region 虚拟方法
@@ -106,6 +107,9 @@ public abstract class ApplicationBuilderBase<TApplication> : Services.IApplicati
 		if(entry != null && registry.Add(entry))
 			Zongsoft.Services.ServiceCollectionExtension.Register(services, entry, this.Configuration);
 
+		//由宿主等待应用工作器的启动和停止。
+		services.AddSingleton<IHostedService>(provider => provider.GetRequiredService<PluginApplicationContext>());
+
 		//添加默认的HTTP客户端服务
 		services.AddHttpClient();
 
@@ -121,7 +125,14 @@ public abstract class ApplicationBuilderBase<TApplication> : Services.IApplicati
 		{
 			//依次注册服务节点下的所有服务
 			foreach(var child in node.Children)
-				services.AddSingleton(child.ValueType, provider => child.UnwrapValue(ObtainMode.Auto));
+				services.AddSingleton(child.ValueType, provider =>
+				{
+					var result = child.UnwrapValue(ObtainMode.Auto);
+					if(child.Value is Builtin builtin)
+						builtin.OwnsValue = false;
+
+					return result;
+				});
 		}
 	}
 	#endregion
@@ -253,7 +264,7 @@ public class ApplicationBuilder : ApplicationBuilderBase<IHost>
 	#endregion
 
 	#region 重写方法
-	public override IHost Build()
+	public override ValueTask<IHost> BuildAsync()
 	{
 		_configure?.Invoke(_builder);
 
@@ -267,7 +278,7 @@ public class ApplicationBuilder : ApplicationBuilderBase<IHost>
 		this.RegisterServices(_builder.Services, options);
 
 		//创建并初始化宿主
-		return _builder.Build().Initialize();
+		return _builder.Build().InitializeAsync();
 	}
 	#endregion
 	#else
@@ -306,7 +317,7 @@ public class ApplicationBuilder : ApplicationBuilderBase<IHost>
 	#endregion
 
 	#region 重写方法
-	public override IHost Build()
+	public override ValueTask<IHost> BuildAsync()
 	{
 		_configure?.Invoke(_builder);
 
@@ -345,7 +356,7 @@ public class ApplicationBuilder : ApplicationBuilderBase<IHost>
 		}
 
 		//创建并初始化宿主
-		return _builder.Build().Initialize();
+		return _builder.Build().InitializeAsync();
 	}
 	#endregion
 

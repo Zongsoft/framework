@@ -13,3 +13,5 @@
 
 - 构建 `Zongsoft.Plugins.Web.slnx`。
 - 涉及控制器或路由发现时，配合最小 Web 宿主验证注册结果和启停释放，不默认启动外部业务应用。
+
+- 主解决方案和默认 `build.cake` 的 `test` 目标只包含 `test/unit`。宿主生命周期、子进程和 Web 端点用例位于 `test/integration`，通过独立解决方案和 `integration-test` 目标显式运行。

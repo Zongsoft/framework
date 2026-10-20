@@ -175,8 +175,6 @@ public abstract class WorkbenchBase : IWorkbenchBase, IDisposable
 			//激发“Closed”事件
 			this.OnClosed(EventArgs.Empty);
 
-			//退出应用程序
-			this.ApplicationContext.Exit();
 		}
 		catch
 		{
@@ -221,7 +219,7 @@ public abstract class WorkbenchBase : IWorkbenchBase, IDisposable
 
 		object target = node.UnwrapValue(ObtainMode.Auto);
 
-		if(target is IWorker worker && worker.Enabled)
+		if(target is IWorker worker)
 			this.ApplicationContext.Workers.Add(worker);
 
 		foreach(PluginTreeNode child in node.Children)

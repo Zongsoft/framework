@@ -26,8 +26,10 @@ public class ZeroQueueServerTests
 		await server.StartAsync([]);
 		await server.StopAsync([]);
 
-		((IDisposable)server).Dispose();
-		((IDisposable)server).Dispose();
+		Assert.Equal(1, storage.DisposeCount);
+
+		await server.DisposeAsync();
+		await server.DisposeAsync();
 
 		Assert.Equal(1, storage.DisposeCount);
 		Assert.Equal(1, factory.Count);
@@ -45,21 +47,24 @@ public class ZeroQueueServerTests
 		await server.StartAsync([]);
 		await server.StopAsync([]);
 
-		((IDisposable)server).Dispose();
-		((IDisposable)server).Dispose();
+		Assert.Equal(1, storage.AsyncDisposeCount);
+		Assert.Equal(0, storage.DisposeCount);
+
+		await server.DisposeAsync();
+		await server.DisposeAsync();
 
 		Assert.Equal(1, storage.AsyncDisposeCount);
 		Assert.Equal(0, storage.DisposeCount);
 	}
 
 	[Fact]
-	public void QueueServerDoesNotCreateStorageBeforeStart()
+	public async Task QueueServerDoesNotCreateStorageBeforeStart()
 	{
 		var storage = new AsynchronousStorage();
 		var factory = new TestMessageStorageFactory(storage);
 		var server = new ZeroQueueServer { Storages = factory };
 
-		((IDisposable)server).Dispose();
+		await server.DisposeAsync();
 
 		Assert.Equal(0, factory.Count);
 		Assert.Equal(0, storage.AsyncDisposeCount);
@@ -67,37 +72,36 @@ public class ZeroQueueServerTests
 	}
 
 	[Fact]
-	public async Task QueueServerStopDoesNotDisposeStorageAndAllowsRestart()
+	public async Task QueueServerStopDisposesStorageAndRestartCreatesNewStorage()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
 
-		var storage = new AsynchronousStorage();
-		var factory = new TestMessageStorageFactory(storage);
-		var server = ZeroTestUtility.CreateServer(storages: factory);
+		var factory = new TestMessageStorageFactory(_ => new AsynchronousStorage());
+		await using var server = ZeroTestUtility.CreateServer(storages: factory);
+		await server.StartAsync([]);
+		var first = Assert.IsType<AsynchronousStorage>(factory.Storage);
+		await server.StopAsync([]);
+		Assert.Equal(1, first.AsyncDisposeCount);
 
-		try
-		{
-			await server.StartAsync([]);
-			await server.StopAsync([]);
-			Assert.Equal(0, storage.AsyncDisposeCount);
+		await server.StartAsync([]);
+		var second = Assert.IsType<AsynchronousStorage>(factory.Storage);
+		Assert.NotSame(first, second);
+		Assert.Equal(0, second.AsyncDisposeCount);
+		Assert.Equal(2, factory.Count);
+		await server.StopAsync([]);
+		Assert.Equal(1, second.AsyncDisposeCount);
 
-			await server.StartAsync([]);
-			await server.StopAsync([]);
-			Assert.Equal(0, storage.AsyncDisposeCount);
-		}
-		finally
-		{
-			((IDisposable)server).Dispose();
-		}
-
-		Assert.Equal(1, storage.AsyncDisposeCount);
-		Assert.Equal(0, storage.DisposeCount);
-		Assert.Equal(1, factory.Count);
+		await server.DisposeAsync();
+		Assert.Equal(1, first.AsyncDisposeCount);
+		Assert.Equal(1, second.AsyncDisposeCount);
+		Assert.Equal(0, first.DisposeCount);
+		Assert.Equal(0, second.DisposeCount);
+		Assert.Equal(2, factory.Count);
 	}
 
 	[Fact]
-	public async Task ReplacingFactoryWhileStoppedDisposesActiveStorage()
+	public async Task ReplacingFactoryWhileStoppedUsesNewStorageOnRestart()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
@@ -110,16 +114,19 @@ public class ZeroQueueServerTests
 		{
 			await server.StartAsync([]);
 			await server.StopAsync([]);
+			Assert.Equal(1, first.AsyncDisposeCount);
+
 			server.Storages = new TestMessageStorageFactory(second);
 			Assert.Equal(1, first.AsyncDisposeCount);
+			Assert.Equal(0, second.AsyncDisposeCount);
 
 			await server.StartAsync([]);
 			await server.StopAsync([]);
-			Assert.Equal(0, second.AsyncDisposeCount);
+			Assert.Equal(1, second.AsyncDisposeCount);
 		}
 		finally
 		{
-			((IDisposable)server).Dispose();
+			await server.DisposeAsync();
 		}
 
 		Assert.Equal(1, second.AsyncDisposeCount);
@@ -132,7 +139,7 @@ public class ZeroQueueServerTests
 			return;
 
 		var port = ZeroTestUtility.GetFreePort();
-		var server = ZeroTestUtility.CreateServer(port, new TestMessageStorageFactory(new MemoryMessageStorage()));
+		var server = ZeroTestUtility.CreateServer(port, new TestMessageStorageFactory(_ => new MemoryMessageStorage()));
 
 		try
 		{
@@ -152,7 +159,7 @@ public class ZeroQueueServerTests
 		}
 		finally
 		{
-			((IDisposable)server).Dispose();
+			await server.DisposeAsync();
 		}
 	}
 
@@ -165,7 +172,7 @@ public class ZeroQueueServerTests
 		var port = ZeroTestUtility.GetFreePort();
 		var storage = new MemoryMessageStorage();
 		var factory = new TestMessageStorageFactory(storage);
-		using var server = ZeroTestUtility.CreateServer(port);
+		await using var server = ZeroTestUtility.CreateServer(port);
 		server.Storages = factory;
 		await server.StartAsync([]);
 
@@ -216,7 +223,7 @@ public class ZeroQueueServerTests
 		finally
 		{
 			await server.StopAsync([]);
-			((IDisposable)server).Dispose();
+			await server.DisposeAsync();
 		}
 	}
 
@@ -244,7 +251,7 @@ public class ZeroQueueServerTests
 		}
 		finally
 		{
-			((IDisposable)server).Dispose();
+			await server.DisposeAsync();
 		}
 	}
 
@@ -257,13 +264,13 @@ public class ZeroQueueServerTests
 		var first = new AsynchronousStorage();
 		var second = new AsynchronousStorage();
 		var factory = new TestMessageStorageFactory(name => name == "first-store" ? first : second);
-		using var server = ZeroTestUtility.CreateServer(storages: factory, name: "broker-name", storage: "first-store");
+		await using var server = ZeroTestUtility.CreateServer(storages: factory, name: "broker-name", storage: "first-store");
 		await server.StartAsync([]);
 		Assert.Equal(Zongsoft.Components.WorkerState.Running, server.State);
 		Assert.Equal("first-store", factory.LastName);
 		Assert.Equal("broker-name", server.Name);
 		await server.StopAsync([]);
-		Assert.Equal(0, first.AsyncDisposeCount);
+		Assert.Equal(1, first.AsyncDisposeCount);
 		server.Storage = " second-store ";
 		Assert.Equal(1, first.AsyncDisposeCount);
 		Assert.Equal("second-store", server.Storage);
@@ -273,24 +280,25 @@ public class ZeroQueueServerTests
 		Assert.Equal(2, factory.Count);
 		Assert.Equal(0, second.AsyncDisposeCount);
 		await server.StopAsync([]);
-		((IDisposable)server).Dispose();
+		Assert.Equal(1, second.AsyncDisposeCount);
+		await server.DisposeAsync();
 		Assert.Equal(1, first.AsyncDisposeCount);
 		Assert.Equal(1, second.AsyncDisposeCount);
 	}
 
 	[Fact]
-	public async Task DisablingControlReleasesCachedStorageAndDoesNotCreateAnother()
+	public async Task DisablingControlAfterStopDoesNotCreateStorage()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
 
 		var storage = new AsynchronousStorage();
 		var factory = new TestMessageStorageFactory(storage);
-		using var server = ZeroTestUtility.CreateServer(storages: factory);
+		await using var server = ZeroTestUtility.CreateServer(storages: factory);
 		await server.StartAsync([]);
 		Assert.Equal(Zongsoft.Components.WorkerState.Running, server.State);
 		await server.StopAsync([]);
-		Assert.Equal(0, storage.AsyncDisposeCount);
+		Assert.Equal(1, storage.AsyncDisposeCount);
 		server.Control = null;
 		server.Storage = null;
 		Assert.Equal(1, storage.AsyncDisposeCount);
@@ -314,7 +322,7 @@ public class ZeroQueueServerTests
 
 		var storage = new AsynchronousStorage();
 		var factory = new TestMessageStorageFactory(storage);
-		using var server = ZeroTestUtility.CreateServer(storages: factory);
+		await using var server = ZeroTestUtility.CreateServer(storages: factory);
 		var blocked = role switch
 		{
 			"Incoming" => server.Incoming,

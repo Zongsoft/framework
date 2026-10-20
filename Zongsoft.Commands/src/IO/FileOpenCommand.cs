@@ -56,12 +56,10 @@ public class FileOpenCommand : CommandBase<CommandContext>, ICommandCompletion
 	#region 执行方法
 	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
-		var result = FileUtility.OpenFile(context,
+		return FileUtility.OpenFileAsync(context,
 			context.Options.GetValue<FileMode>(KEY_MODE_OPTION),
 			context.Options.GetValue<FileAccess>(KEY_ACCESS_OPTION),
-			context.Options.GetValue<FileShare>(KEY_SHARE_OPTION));
-
-		return ValueTask.FromResult(result);
+			context.Options.GetValue<FileShare>(KEY_SHARE_OPTION), cancellation);
 	}
 	#endregion
 

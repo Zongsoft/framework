@@ -21,9 +21,9 @@ namespace Zongsoft.Messaging.Mqtt.Tests;
 public class MqttQueueServerTests
 {
 	[Fact]
-	public void ServerUrlDefaultsToWildcardTcp()
+	public async Task ServerUrlDefaultsToWildcardTcp()
 	{
-		using var server = new MqttQueueServer();
+		await using var server = new MqttQueueServer();
 		Assert.Equal("tcp://0.0.0.0:1883/", server.Url);
 	}
 
@@ -35,9 +35,9 @@ public class MqttQueueServerTests
 	[InlineData("tcp://[0:0:0:0:0:0:0:1]:1883", "tcp://[::1]:1883/")]
 	[InlineData("tcp://[::]:1883", "tcp://[::]:1883/")]
 	[InlineData("tcp://[fe80::1%253]:1883", "tcp://[fe80::1%253]:1883/")]
-	public void ServerUrlAcceptsExplicitTcpAddresses(string url, string expected)
+	public async Task ServerUrlAcceptsExplicitTcpAddresses(string url, string expected)
 	{
-		using var server = new MqttQueueServer { Url = url };
+		await using var server = new MqttQueueServer { Url = url };
 		Assert.Equal(expected, server.Url);
 	}
 
@@ -58,9 +58,9 @@ public class MqttQueueServerTests
 	[InlineData("tcp://user@127.0.0.1:1883")]
 	[InlineData("tcp://255.255.255.255:1883")]
 	[InlineData("tcp://::1:1883")]
-	public void ServerUrlRejectsInvalidListenerAddresses(string url)
+	public async Task ServerUrlRejectsInvalidListenerAddresses(string url)
 	{
-		using var server = new MqttQueueServer { Url = "tcp://127.0.0.1:1884" };
+		await using var server = new MqttQueueServer { Url = "tcp://127.0.0.1:1884" };
 		Assert.Throws<ArgumentException>("value", () => server.Url = url);
 		Assert.Equal("tcp://127.0.0.1:1884/", server.Url);
 	}
@@ -72,7 +72,7 @@ public class MqttQueueServerTests
 			return;
 
 		var port = MqttTestUtility.GetFreePort();
-		using var server = new MqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
+		await using var server = new MqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
 		await server.StartAsync([]);
 
 		Assert.Equal(WorkerState.Running, server.State);
@@ -94,7 +94,7 @@ public class MqttQueueServerTests
 			return;
 
 		var port = MqttTestUtility.GetFreePort(IPAddress.IPv6Loopback);
-		using var server = new MqttQueueServer { Url = $"tcp://[{host}]:{port}" };
+		await using var server = new MqttQueueServer { Url = $"tcp://[{host}]:{port}" };
 		await server.StartAsync([]);
 
 		Assert.Equal(WorkerState.Running, server.State);
@@ -114,7 +114,7 @@ public class MqttQueueServerTests
 			return;
 
 		var port = MqttTestUtility.GetFreePort();
-		using var server = new TestMqttQueueServer { Enabled = false, Url = $"tcp://127.0.0.1:{port}" };
+		await using var server = new TestMqttQueueServer { Enabled = false, Url = $"tcp://127.0.0.1:{port}" };
 		await server.StartAsync([]);
 
 		Assert.Equal(WorkerState.Stopped, server.State);
@@ -129,7 +129,7 @@ public class MqttQueueServerTests
 			return;
 
 		var port = MqttTestUtility.GetFreePort();
-		using var server = new TestMqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
+		await using var server = new TestMqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
 		using var cancellation = new CancellationTokenSource();
 		var states = new List<WorkerStateChangedEventArgs>();
 		server.StateChanged += (_, args) => states.Add(args);
@@ -158,7 +158,7 @@ public class MqttQueueServerTests
 			return;
 
 		var port = MqttTestUtility.GetFreePort();
-		using var server = new TestMqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
+		await using var server = new TestMqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
 		await server.StartAsync([]);
 		using var cancellation = new CancellationTokenSource();
 		WorkerStateChangedEventArgs failure = null;
@@ -179,68 +179,150 @@ public class MqttQueueServerTests
 	}
 
 	[Fact]
-	public void QueueServerDisposesOwnedSynchronousStorageOnce()
+	public async Task QueueServerDisposesOwnedSynchronousStorageOnce()
 	{
 		var storage = new SynchronousStorage();
 		var server = new MqttQueueServer { Storage = storage };
 
-		((IDisposable)server).Dispose();
-		((IDisposable)server).Dispose();
+		await server.DisposeAsync();
+		await server.DisposeAsync();
 
 		Assert.Equal(1, storage.DisposeCount);
 	}
 
 	[Fact]
-	public void QueueServerDisposesOwnedAsynchronousStorageOnce()
+	public async Task QueueServerDisposesOwnedAsynchronousStorageOnce()
 	{
 		var storage = new AsynchronousStorage();
 		var server = new MqttQueueServer { Storage = storage };
 
-		((IDisposable)server).Dispose();
-		((IDisposable)server).Dispose();
+		await server.DisposeAsync();
+		await server.DisposeAsync();
 
 		Assert.Equal(1, storage.AsyncDisposeCount);
 		Assert.Equal(0, storage.DisposeCount);
 	}
 
 	[Fact]
-	public void QueueServerOwnsAndDisposesAssignedStorage()
+	public async Task QueueServerDisposalWaitsForOwnedStorageCleanup()
+	{
+		var timeout = TimeSpan.FromSeconds(10);
+		var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var storage = new AsynchronousStorage { Release = release.Task };
+		var server = new LifecycleServer { Storage = storage };
+		await server.StartAsync([]).WaitAsync(timeout);
+
+		var disposal = server.DisposeAsync().AsTask();
+		var repeated = server.DisposeAsync().AsTask();
+
+		try
+		{
+			await storage.Entered.Task.WaitAsync(timeout);
+			await Assert.ThrowsAsync<ObjectDisposedException>(() => server.StopAsync([]).WaitAsync(timeout));
+
+			Assert.Equal(WorkerState.Stopping, server.State);
+			Assert.Equal(1, server.Starts);
+			Assert.Equal(1, server.Stops);
+			Assert.Equal(1, storage.AsyncDisposeCount);
+			Assert.Equal(0, storage.DisposeCount);
+			Assert.Same(storage, server.Storage);
+			Assert.False(server.IsDisposed);
+			Assert.False(disposal.IsCompleted);
+			Assert.False(repeated.IsCompleted);
+		}
+		finally
+		{
+			release.TrySetResult();
+			await Task.WhenAll(disposal, repeated).WaitAsync(timeout);
+		}
+
+		await server.DisposeAsync();
+		Assert.True(server.IsDisposed);
+		Assert.Equal(WorkerState.Stopped, server.State);
+		Assert.Null(server.Storage);
+		Assert.Equal(1, server.Stops);
+		Assert.Equal(1, storage.AsyncDisposeCount);
+		Assert.Equal(0, storage.DisposeCount);
+	}
+
+	[Fact]
+	public async Task QueueServerDisposalCanRetryFailedStorageCleanup()
+	{
+		var failure = new InvalidOperationException();
+		var storage = new AsynchronousStorage { FirstFailure = failure };
+		var server = new MqttQueueServer { Storage = storage };
+
+		Assert.Same(failure, await Assert.ThrowsAsync<InvalidOperationException>(() => server.DisposeAsync().AsTask()));
+		Assert.Equal(WorkerState.Stopping, server.State);
+		Assert.False(server.IsDisposed);
+		Assert.Same(storage, server.Storage);
+		Assert.Equal(1, storage.AsyncDisposeCount);
+		Assert.Equal(0, storage.DisposeCount);
+
+		await Assert.ThrowsAsync<ObjectDisposedException>(() => server.StartAsync([]));
+		await Assert.ThrowsAsync<ObjectDisposedException>(() => server.StopAsync([]));
+		await Assert.ThrowsAsync<ObjectDisposedException>(() => server.PauseAsync());
+		await Assert.ThrowsAsync<ObjectDisposedException>(() => server.ResumeAsync());
+		Assert.Equal(1, storage.AsyncDisposeCount);
+
+		await server.DisposeAsync();
+
+		Assert.True(server.IsDisposed);
+		Assert.Equal(WorkerState.Stopped, server.State);
+		Assert.Null(server.Storage);
+		Assert.Equal(2, storage.AsyncDisposeCount);
+		Assert.Equal(0, storage.DisposeCount);
+
+		await server.DisposeAsync();
+		Assert.Equal(2, storage.AsyncDisposeCount);
+	}
+
+	[Fact]
+	public async Task QueueServerOwnsAndDisposesAssignedStorage()
 	{
 		var storage = new AsynchronousStorage();
 		var server = new MqttQueueServer { Storage = storage };
 
-		((IDisposable)server).Dispose();
+		await server.DisposeAsync();
 
 		Assert.Equal(1, storage.AsyncDisposeCount);
 		Assert.Equal(0, storage.DisposeCount);
 	}
 
 	[Fact]
-	public async Task QueueServerStopDoesNotDisposeStorageAndAllowsRestart()
+	public async Task QueueServerStopDisposesStorageAndAllowsRestartWithNewStorage()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
 
-		var storage = new AsynchronousStorage();
-		var server = new MqttQueueServer { Url = $"tcp://127.0.0.1:{MqttTestUtility.GetFreePort()}", Storage = storage };
+		var first = new AsynchronousStorage();
+		var second = new AsynchronousStorage();
+		var server = new MqttQueueServer { Url = $"tcp://127.0.0.1:{MqttTestUtility.GetFreePort()}", Storage = first };
 
 		try
 		{
 			await server.StartAsync([]);
 			await server.StopAsync([]);
-			Assert.Equal(0, storage.AsyncDisposeCount);
+			Assert.Equal(1, first.AsyncDisposeCount);
+			Assert.Null(server.Storage);
 
+			server.Storage = second;
 			await server.StartAsync([]);
+			Assert.Same(second, server.Storage);
+			Assert.Equal(0, second.AsyncDisposeCount);
 			await server.StopAsync([]);
-			Assert.Equal(0, storage.AsyncDisposeCount);
+			Assert.Equal(1, second.AsyncDisposeCount);
+			Assert.Null(server.Storage);
 		}
 		finally
 		{
-			((IDisposable)server).Dispose();
+			await server.DisposeAsync();
 		}
 
-		Assert.Equal(1, storage.AsyncDisposeCount);
-		Assert.Equal(0, storage.DisposeCount);
+		Assert.Equal(1, first.AsyncDisposeCount);
+		Assert.Equal(1, second.AsyncDisposeCount);
+		Assert.Equal(0, first.DisposeCount);
+		Assert.Equal(0, second.DisposeCount);
 	}
 
 	[Fact]
@@ -249,7 +331,7 @@ public class MqttQueueServerTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = new MqttQueueServer { Url = $"tcp://127.0.0.1:{MqttTestUtility.GetFreePort()}" };
+		await using var server = new MqttQueueServer { Url = $"tcp://127.0.0.1:{MqttTestUtility.GetFreePort()}" };
 		var first = new TestMessageStorage();
 		server.Storage = first;
 		Assert.Same(first, server.Storage);
@@ -270,7 +352,7 @@ public class MqttQueueServerTests
 			return;
 
 		var port = MqttTestUtility.GetFreePort();
-		using var server = new TestMqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
+		await using var server = new TestMqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
 
 		await server.StartAsync([]);
 		Assert.Equal(WorkerState.Running, server.State);
@@ -301,7 +383,7 @@ public class MqttQueueServerTests
 
 		var port = MqttTestUtility.GetFreePort();
 		using var blocker = new TcpListener(IPAddress.Any, port);
-		using var server = new TestMqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
+		await using var server = new TestMqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
 		WorkerStateChangedEventArgs failure = null;
 		server.StateChanged += (_, args) => failure = args;
 		blocker.Server.ExclusiveAddressUse = true;
@@ -333,7 +415,7 @@ public class MqttQueueServerTests
 			return;
 
 		var port = MqttTestUtility.GetFreePort();
-		using var server = new TestMqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
+		await using var server = new TestMqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
 		var channels = server.Channels;
 		var sessions = server.Sessions;
 
@@ -405,7 +487,7 @@ public class MqttQueueServerTests
 
 		var port = MqttTestUtility.GetFreePort();
 		var client = $"session-abandon-{Guid.NewGuid():N}";
-		using var server = new MqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
+		await using var server = new MqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
 		await server.StartAsync([]);
 
 		var settings = Configuration.MqttConnectionSettingsDriver.Instance.GetSettings("Mqtt",
@@ -438,7 +520,7 @@ public class MqttQueueServerTests
 			return;
 
 		var port = MqttTestUtility.GetFreePort();
-		using var server = new MqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
+		await using var server = new MqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
 		var listener = Assert.IsAssignableFrom<IListener<Message>>(server);
 		var messages = new MqttMessageBuffer();
 		server.Handler = messages;
@@ -458,6 +540,24 @@ public class MqttQueueServerTests
 
 		await server.StopAsync([]);
 		Assert.False(listener.IsListening);
+	}
+
+	private sealed class LifecycleServer : MqttQueueServer
+	{
+		public int Starts;
+		public int Stops;
+
+		protected override Task OnStartAsync(string[] args, CancellationToken cancellation)
+		{
+			Interlocked.Increment(ref this.Starts);
+			return Task.CompletedTask;
+		}
+
+		protected override Task OnStopAsync(string[] args, CancellationToken cancellation)
+		{
+			Interlocked.Increment(ref this.Stops);
+			return base.OnStopAsync(args, cancellation);
+		}
 	}
 
 	private sealed class TestMqttQueueServer : MqttQueueServer
@@ -502,11 +602,18 @@ public class MqttQueueServerTests
 
 		public int DisposeCount => _disposeCount;
 		public int AsyncDisposeCount => _asyncDisposeCount;
+		public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		public Task Release { get; init; } = Task.CompletedTask;
+		public Exception FirstFailure { get; init; }
 		public void Dispose() => Interlocked.Increment(ref _disposeCount);
-		public ValueTask DisposeAsync()
+		public async ValueTask DisposeAsync()
 		{
-			Interlocked.Increment(ref _asyncDisposeCount);
-			return ValueTask.CompletedTask;
+			var attempt = Interlocked.Increment(ref _asyncDisposeCount);
+			this.Entered.TrySetResult();
+			await this.Release;
+
+			if(attempt == 1 && this.FirstFailure != null)
+				throw this.FirstFailure;
 		}
 	}
 }

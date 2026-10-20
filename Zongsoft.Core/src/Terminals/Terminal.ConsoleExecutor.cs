@@ -39,7 +39,7 @@ namespace Zongsoft.Terminals;
 
 partial class Terminal
 {
-	private class ConsoleExecutor : CommandExecutor, ITerminalExecutor
+	private partial class ConsoleExecutor : CommandExecutor, ITerminalExecutor
 	{
 		#region 事件声明
 		public event EventHandler CurrentChanged;
@@ -49,6 +49,7 @@ partial class Terminal
 		#region 成员字段
 		private ITerminal _terminal;
 		private CommandNode _current;
+		private int _running;
 		#endregion
 
 		#region 构造函数
@@ -91,78 +92,6 @@ partial class Terminal
 		{
 			get => _terminal.Error;
 			set => _terminal.Error = value ?? TextWriter.Null;
-		}
-		#endregion
-
-		#region 运行方法
-		public int Run(CancellationToken cancellation = default) => this.Run((CommandOutletContent)null, cancellation);
-		public int Run(string splash, CancellationToken cancellation = default) => this.Run(CommandOutletContent.Create(splash), cancellation);
-		public int Run(CommandOutletContent splash, CancellationToken cancellation = default)
-		{
-			return this.RunAsync(splash, cancellation).ConfigureAwait(false).GetAwaiter().GetResult();
-		}
-
-		public Task<int> RunAsync(CancellationToken cancellation = default) => this.RunAsync((CommandOutletContent)null, cancellation);
-		public Task<int> RunAsync(string splash, CancellationToken cancellation = default) => this.RunAsync(CommandOutletContent.Create(splash), cancellation);
-		public async Task<int> RunAsync(CommandOutletContent splash, CancellationToken cancellation = default)
-		{
-			if(this.Root.Children.Count < 1)
-				return 0;
-
-			//初始化终端文本编码方案
-			_terminal.Encoding = System.Text.Encoding.UTF8;
-
-			//如果未指定闪屏信息，则创建默认的闪屏信息
-			if(splash == null || splash.IsEmpty)
-			{
-				splash = CommandOutletContent.Create(SPLASH);
-
-				if(ApplicationContext.Current != null)
-					splash.Last
-						.AppendLine(CommandOutletColor.Yellow, new string('·', 50))
-						.AppendLine(CommandOutletColor.DarkCyan, Common.StringExtension.Justify(ApplicationContext.Current.Identifier.ToString(), 50))
-						.AppendLine(CommandOutletColor.Yellow, new string('·', 50));
-			}
-
-			//打印闪屏信息
-			_terminal.WriteLine(splash);
-
-			while(true)
-			{
-				//重置控制台，准备执行命令
-				_terminal.Reset();
-
-				//如果已经取消运行则退出
-				if(cancellation.IsCancellationRequested)
-					return 0;
-
-				try
-				{
-					var commandText = _terminal.Input.ReadLine();
-
-					if(!string.IsNullOrWhiteSpace(commandText))
-						await this.ExecuteAsync(commandText, null, cancellation);
-				}
-				catch(OperationCanceledException)
-				{
-					return 0;
-				}
-				catch(ExitException ex)
-				{
-					if(this.RaiseExit(ex.ExitCode))
-						return ex.ExitCode;
-				}
-				catch(Exception ex)
-				{
-					var content = CommandOutletContent.Create(CommandOutletColor.DarkRed, Properties.Resources.ErrorOccurred_Label)
-						.Append(CommandOutletColor.DarkGray, '[')
-						.Append(CommandOutletColor.DarkMagenta, ex.GetType().Name)
-						.Append(CommandOutletColor.DarkGray, "] ")
-						.Append(CommandOutletColor.DarkRed, ex.Message);
-
-					_terminal.WriteLine(content);
-				}
-			}
 		}
 		#endregion
 
@@ -224,16 +153,6 @@ partial class Terminal
 		#endregion
 
 		#region 激发事件
-		private bool RaiseExit(int exitCode)
-		{
-			var args = new ExitEventArgs(exitCode);
-
-			//激发“Exit”退出事件
-			this.OnExit(args);
-
-			return !args.Cancel;
-		}
-
 		protected virtual void OnExit(ExitEventArgs args) => this.Exit?.Invoke(this, args);
 		protected virtual void OnCurrentChanged(EventArgs args) => this.CurrentChanged?.Invoke(this, args);
 		#endregion

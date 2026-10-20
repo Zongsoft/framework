@@ -11,7 +11,7 @@
 | --- | --- |
 | [eventexchanger](eventexchanger) | Exercises `EventExchanger`, event channels, concurrent publishing, and dispatch statistics. |
 | [memorycache](memorycache) | Demonstrates cache limits, expiration, eviction notifications, and `MemoryCacheScanner`. |
-| [spooler](spooler) | Exercises `Spooler<T>` batching and key-collision behavior under parallel load. |
+| [spooler](spooler) | Exercises `Spooler<T>` batching with repeated input values under parallel load. |
 | [superviser](superviser) | Demonstrates supervised object lifecycle, inactivity, failure handling, and manual removal. |
 
 All projects target .NET 10. Build the complete sample solution from the repository root:
@@ -73,7 +73,7 @@ spool 100000 1000
 spool --count:100000 --collision:1000
 ```
 
-`count` is the number of values produced. A positive `collision` value limits random values to that range and therefore creates duplicate keys; zero uses unrestricted random values. The sample reports handled counts, batching behavior, and elapsed time.
+`count` is the number of values produced. A positive `collision` value limits random values to that range and therefore creates duplicate values; zero uses unrestricted random values. The sample reports handled counts, batching behavior, and elapsed time.
 
 ## Superviser
 

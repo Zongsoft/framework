@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Threading.Tasks;
 using System.Linq;
 
 using Microsoft.AspNetCore.Builder;
@@ -88,7 +89,7 @@ public class WebApplicationBuilder : ApplicationBuilderBase<WebApplication>
 	public override ConfigurationManager Configuration => _builder.Configuration;
 	public override IHostEnvironment Environment => _builder.Environment;
 
-	public override WebApplication Build()
+	public override async ValueTask<WebApplication> BuildAsync()
 	{
 		WebApplication application = null;
 
@@ -106,14 +107,19 @@ public class WebApplicationBuilder : ApplicationBuilderBase<WebApplication>
 			this.RegisterServices(_builder.Services, options);
 
 			application = _builder.Build();
-			return application.Initialize();
+			application.Services.GetRequiredService<PluginApplicationContext>().Initialize();
+			return application;
 		}
-		catch
+		catch(Exception exception)
 		{
-			if(application != null)
-				application.DisposeAsync().AsTask().GetAwaiter().GetResult();
-			else
-				((IDisposable)this.Configuration).Dispose();
+			try
+			{
+				if(application != null)
+					await application.DisposeAsync().ConfigureAwait(false);
+				else
+					((IDisposable)this.Configuration).Dispose();
+			}
+			catch(Exception cleanup) { throw new AggregateException(exception, cleanup); }
 
 			throw;
 		}

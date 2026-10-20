@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Runtime.ExceptionServices;
 
@@ -63,6 +64,19 @@ public class BuilderManager
 	#endregion
 
 	#region 内部方法
+	internal TaskCompletionSource BeginDestroy(Builtin builtin, TaskCompletionSource completion)
+	{
+		lock(_syncRoot)
+		{
+			if(this.TryGetContext(builtin, out _))
+				throw new InvalidOperationException();
+
+			var previous = builtin.Destroying;
+			builtin.Destroying ??= completion;
+			return previous;
+		}
+	}
+
 	internal Type GetValueType(Builtin builtin)
 	{
 		lock(_syncRoot)
@@ -94,6 +108,8 @@ public class BuilderManager
 			if(mode == ObtainMode.Never)
 				return builtin.Value;
 
+			CheckAvailable(builtin);
+
 			if(this.TryGetContext(builtin, out var context))
 				return GetValue(context);
 
@@ -112,6 +128,8 @@ public class BuilderManager
 	{
 		lock(_syncRoot)
 		{
+			CheckAvailable(builtin);
+
 			if(this.TryGetContext(builtin, out var activeContext))
 				return activeContext.Result;
 
@@ -178,6 +196,7 @@ public class BuilderManager
 
 	private object BuildCore(BuilderContext context, bool reuse, bool append)
 	{
+		CheckAvailable(context.Builtin);
 		if(this.TryGetContext(context.Builtin, out var activeContext))
 			return GetValue(activeContext);
 
@@ -195,6 +214,7 @@ public class BuilderManager
 				{
 					context.AppendToOwner = builtin.AppendToOwner;
 					context.BuildChildren = builtin.BuildChildren;
+					context.OwnsResult = builtin.OwnsValue;
 				}
 			}
 			else
@@ -253,12 +273,15 @@ public class BuilderManager
 
 	private void CreateInstance(BuilderContext context)
 	{
+		CheckAvailable(context.Builtin);
+		context.Builtin.Destroying = null;
 		if(context.Builder is IBuilderLifecycle lifecycle)
 			lifecycle.OnBuilding(context);
 
 		context.Result = context.Builder.Build(context);
 		context.Builtin.AppendToOwner = context.AppendToOwner;
 		context.Builtin.BuildChildren = context.BuildChildren;
+		context.Builtin.OwnsValue = context.OwnsResult;
 		context.Builtin.Value = context.Result;
 	}
 
@@ -316,6 +339,12 @@ public class BuilderManager
 			builtin.AppendedOwner = owner;
 			builtin.AppendedValue = context.Result;
 		}
+	}
+
+	private static void CheckAvailable(Builtin builtin)
+	{
+		if(builtin.Plugin.Status is PluginStatus.Unloading or PluginStatus.Unloaded || builtin.Destroying is { Task.IsCompleted: false })
+			throw new InvalidOperationException();
 	}
 
 	private static IBuilder GetBuilder(Builtin builtin)

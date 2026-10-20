@@ -205,7 +205,7 @@ public class ZeroQueueReliabilityTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "control-subscriber");
 		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "control-publisher");
 
@@ -804,7 +804,7 @@ public class ZeroQueueReliabilityTests
 		public async ValueTask DisposeAsync()
 		{
 			await _server.StopAsync([]);
-			((IDisposable)_server).Dispose();
+			await _server.DisposeAsync();
 		}
 	}
 }

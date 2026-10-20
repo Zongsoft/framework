@@ -293,7 +293,7 @@ internal class Program
 			.AppendLine(CommandOutletColor.Yellow, new string('·', 50));
 
 		//运行终端命令执行器
-		executor.Run(splash);
+		await executor.RunAsync(splash);
 
 		//清场退出
 		await ShutdownAsync(client);

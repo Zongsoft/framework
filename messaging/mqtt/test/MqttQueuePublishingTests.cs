@@ -16,7 +16,7 @@ public class MqttQueuePublishingTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await MqttServerScope.StartAsync();
+		await using var server = await MqttServerScope.StartAsync();
 		using var publisher = MqttTestUtility.CreateQueue(server.Port, "publisher");
 		using var subscriber = MqttTestUtility.CreateQueue(server.Port, "subscriber");
 		using var messages = new MqttMessageBuffer();
@@ -40,7 +40,7 @@ public class MqttQueuePublishingTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await MqttServerScope.StartAsync();
+		await using var server = await MqttServerScope.StartAsync();
 		using var publisher = MqttTestUtility.CreateQueue(server.Port, "exact-publisher");
 		using var subscriber = MqttTestUtility.CreateQueue(server.Port, "exact-subscriber");
 		using var messages = new MqttMessageBuffer();
@@ -61,7 +61,7 @@ public class MqttQueuePublishingTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await MqttServerScope.StartAsync();
+		await using var server = await MqttServerScope.StartAsync();
 		using var publisher = MqttTestUtility.CreateQueue(server.Port, "publisher");
 		using var subscriber = MqttTestUtility.CreateQueue(server.Port, "subscriber");
 		using var messages = new MqttMessageBuffer();
@@ -98,7 +98,7 @@ public class MqttQueuePublishingTests
 
 		const int COUNT = 500;
 
-		using var server = await MqttServerScope.StartAsync();
+		await using var server = await MqttServerScope.StartAsync();
 		using var publisher = MqttTestUtility.CreateQueue(server.Port, "publisher");
 		using var subscriber = MqttTestUtility.CreateQueue(server.Port, "subscriber");
 		using var messages = new MqttMessageBuffer();
@@ -131,7 +131,7 @@ public class MqttQueuePublishingTests
 
 		const int COUNT = 32;
 
-		using var server = await MqttServerScope.StartAsync();
+		await using var server = await MqttServerScope.StartAsync();
 		using var publisher = MqttTestUtility.CreateQueue(server.Port, "publisher");
 		using var subscriber = MqttTestUtility.CreateQueue(server.Port, "subscriber");
 		var handler = new ConcurrentMessageHandler(COUNT);
@@ -156,7 +156,7 @@ public class MqttQueuePublishingTests
 			return;
 
 		var port = MqttTestUtility.GetFreePort();
-		using var server = new MqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
+		await using var server = new MqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
 		using var publisher = MqttTestUtility.CreateQueue(port, "publisher");
 		using var subscriber = MqttTestUtility.CreateQueue(port, "subscriber");
 		using var messages = new MqttMessageBuffer();

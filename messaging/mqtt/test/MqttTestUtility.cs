@@ -93,7 +93,7 @@ internal static class MqttTestUtility
 
 }
 
-internal sealed class MqttServerScope : IDisposable
+internal sealed class MqttServerScope : IAsyncDisposable
 {
 	private readonly MqttQueueServer _server;
 
@@ -109,7 +109,7 @@ internal sealed class MqttServerScope : IDisposable
 		return new MqttServerScope(server);
 	}
 
-	public void Dispose() => ((IDisposable)_server).Dispose();
+	public ValueTask DisposeAsync() => _server.DisposeAsync();
 }
 
 internal sealed class MqttMessageBuffer : HandlerBase<Message>, IDisposable

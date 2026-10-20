@@ -16,7 +16,7 @@ public class ZeroQueueEventChannelTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var queue = ZeroTestUtility.CreateQueue(server.Port, "event-lifecycle");
 		await using var channel = new ZeroQueueEventChannel(queue);
 		var receiver = new Receiver();
@@ -48,7 +48,7 @@ public class ZeroQueueEventChannelTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = await ZeroServerScope.StartAsync();
+		await using var server = await ZeroServerScope.StartAsync();
 		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "event-publisher");
 		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "event-subscriber");
 		using var messages = new MessageBuffer();

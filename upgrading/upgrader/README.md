@@ -76,7 +76,7 @@ The packaged plugin registers an `Upgrader` worker under `/Workbench/Startup`:
 </extension>
 ```
 
-The worker checks for upgrades every `period`. If the period is five minutes or longer, it also schedules one short-delay check about ten seconds after startup.
+The worker checks for upgrades serially. When `period` is five minutes or longer, the first check runs about ten seconds after startup and subsequent checks use the configured period; otherwise the first check also waits one configured period. Each start creates a separate timer. Stopping waits for an active check to finish and disposes the timer; a successful stop permits another start. Disposal uses the same stop path and permanently closes the worker. Once upgrade preparation succeeds, the periodic task ends and releases its clock. The owned business task then awaits `DeployAsync()`, so host shutdown does not wait on its own timer callback or notification.
 
 ## Manual Usage
 
@@ -86,10 +86,12 @@ Applications can invoke the upgrader directly:
 using Zongsoft.Upgrading;
 
 if(await Upgrader.UpgradeAsync("Web", cancellationToken))
-	Upgrader.Deploy();
+	await Upgrader.DeployAsync();
 ```
 
 `UpgradeAsync` returns `true` when an upgrade was prepared successfully or when a deployment descriptor already exists and is waiting to be deployed.
+
+`DeployAsync()` checks the deployment descriptor and deployer executable, then starts the deployer. After a successful launch, it asynchronously flushes logs, requests host shutdown, and waits up to thirty seconds for `ApplicationStopped`. It then releases the deployment lock and exits the current process. With no host context, it exits directly. If the descriptor or executable is unavailable, it logs an error and returns. Callers must await this method.
 
 ## Channel Behavior
 

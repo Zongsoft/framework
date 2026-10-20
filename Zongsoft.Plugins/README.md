@@ -51,12 +51,24 @@ The hosting helpers integrate plugin initialization with [.NET Generic Host](htt
 using Microsoft.Extensions.Hosting;
 using Zongsoft.Plugins.Hosting;
 
-await Application.Terminal(args).RunAsync();
+await (await Application.TerminalAsync(args)).RunAsync();
 ```
 
-Use `Application.Daemon(args)` for a background service. Web applications use the companion [Zongsoft.Plugins.Web](../Zongsoft.Plugins.Web/README.md) package.
+Use `Application.DaemonAsync(args)` for a background service. Web applications use the companion [Zongsoft.Plugins.Web](../Zongsoft.Plugins.Web/README.md) package.
 
 The builder loads application configuration, discovers the plugin directory, builds the plugin tree, registers modules and services, initializes the application context, and then starts the host.
+
+## Terminal signals and shutdown
+
+The default lifetime used by `Application.TerminalAsync` registers SIGINT, SIGQUIT and SIGTERM during startup and removes registrations when the host is asynchronously disposed. Core terminals only provide the `ITerminal.Abort()` notification.
+
+- Ctrl+C / SIGINT first notifies the running executor's terminal. Setting `Aborting` arguments to `Cancel = true` keeps the host running; an unhandled request stops it. `ReactiveAsync` uses this notification to finish its wait, await cleanup and resume accepting commands.
+- Ctrl+Break / SIGQUIT and SIGTERM directly request host shutdown and cannot be vetoed by `Aborting`. Shutdown cancels the terminal run token and waits for the input caller, command cleanup and workers to finish. The process-wide standard input read does not delay host shutdown.
+- Repeated signals during shutdown neither repeat abort notifications nor force immediate termination. Abort handlers must return promptly and must not wait synchronously for their own host to stop. Handler failures request shutdown and propagate through `StopAsync` and asynchronous disposal.
+
+An explicitly registered `IHostLifetime` is preserved and owns its signal policy. One active host should coordinate console signals for the process. Status messages use the `Microsoft.Hosting.Lifetime` logging category and honor application logging providers, filters and `ConsoleLifetimeOptions.SuppressStatusMessages`. The terminal host does not change the application's console input mode.
+
+Use `RunAsync`, or explicitly call `StartAsync`, `StopAsync` and asynchronously dispose the host, to await cleanup. Forced operating-system termination is outside cooperative shutdown.
 
 ## Declaring a Plugin
 

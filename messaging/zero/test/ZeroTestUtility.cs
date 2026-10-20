@@ -291,7 +291,7 @@ internal sealed class TestMessageStorageFactory : IMessageStorageFactory
 	}
 }
 
-internal sealed class ZeroServerScope : IDisposable
+internal sealed class ZeroServerScope : IAsyncDisposable
 {
 	private readonly ZeroQueueServer _server;
 
@@ -306,11 +306,7 @@ internal sealed class ZeroServerScope : IDisposable
 		return new ZeroServerScope(server);
 	}
 
-	public void Dispose()
-	{
-		_server.Stop();
-		((IDisposable)_server).Dispose();
-	}
+	public ValueTask DisposeAsync() => _server.DisposeAsync();
 }
 
 internal sealed class MessageCollector : HandlerBase<Message>

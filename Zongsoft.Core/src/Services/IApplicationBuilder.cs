@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Threading.Tasks;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -41,5 +42,7 @@ public interface IApplicationBuilder<TApplication> where TApplication : IHost
 	ConfigurationManager Configuration { get; }
 	IHostEnvironment Environment { get; }
 
-	TApplication Build();
+	/// <summary>创建并初始化宿主；初始化失败时等待已经创建的资源释放。</summary>
+	/// <returns>初始化完成的宿主。</returns>
+	ValueTask<TApplication> BuildAsync();
 }

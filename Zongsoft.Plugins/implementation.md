@@ -242,7 +242,7 @@ A component's element name selects its builder. An expression's scheme selects i
 
 ### 8.1 Contracts and state
 
-[IBuilder](src/IBuilder.cs) provides `GetValueType`, `Build`, `Destroy` and disposal. [IBuilderLifecycle](src/IBuilderLifecycle.cs) is an independent, optional interface with `OnBuilding` and `OnBuilded` callbacks. [IAppender](src/IAppender.cs) provides the owner's ability to receive a child object.
+[IBuilder](src/IBuilder.cs) provides `GetValueType`, `Build`, `DestroyAsync` and disposal. [IBuilderLifecycle](src/IBuilderLifecycle.cs) is an independent, optional interface with `OnBuilding` and `OnBuilded` callbacks. [IAppender](src/IAppender.cs) provides the owner's ability to receive a child object.
 
 `BuilderBase` implements both `IBuilder` and `IBuilderLifecycle`. Its explicit lifecycle implementation dispatches to protected virtual methods; `OnBuilded` applies declared behaviors before invoking the derived hook. A builder can implement the lifecycle interface directly without inheriting this base class. The manager invokes the capability through the interface.
 
@@ -500,7 +500,7 @@ The provider locks publication/clearing of entry providers and coordinates dispo
 
 After loading the complete plugin configuration, the host scans loaded entry references, the entry assembly and plugin manifest assemblies using one shared deduplication set. Registrars see the final plugin configuration, and each assembly is registered once per host build. Core's `FeatureProvider.Default` includes the transaction provider by default. Application services registered as `IFeatureProvider` add ambient conditions; the default feature provider combines sources and deduplicates them by reference on each capture.
 
-`Application.Daemon` and `Application.Terminal` build on Microsoft hosting, register their plugin-aware application contexts, load configuration, build the host and initialize the context. [ApplicationExtension](src/Hosting/ApplicationExtension.cs) supplies the host initialization bridge. ASP.NET Core integration is implemented in [Zongsoft.Plugins.Web](../Zongsoft.Plugins.Web/README.md).
+`Application.DaemonAsync` and `Application.TerminalAsync` build on Microsoft hosting, register their plugin-aware application contexts, load configuration, build the host and initialize the context. [ApplicationExtension](src/Hosting/ApplicationExtension.cs) supplies the host initialization bridge. ASP.NET Core integration is implemented in [Zongsoft.Plugins.Web](../Zongsoft.Plugins.Web/README.md).
 
 `PluginApplicationContext.Initialize` runs base initialization, ensures the tree is loaded and mounts the application context. The `Workbench` property constructs or resolves the workbench on first access, mounts the resulting object, visits ordinary workbench extensions and raises `WorkbenchCreated`.
 
@@ -519,32 +519,33 @@ stateDiagram-v2
 	Closing --> None: OnClose succeeds
 ```
 
-Opening raises the opening event, mounts the workbench when needed, invokes `OnOpen` and raises `Opened`. The default `OnOpen` recursively resolves Startup nodes and adds enabled `IWorker` instances to the application's worker collection. A disabled worker can still be constructed; `Enabled` controls selection/start, not instance creation.
+Opening raises the opening event, mounts the workbench when needed, invokes `OnOpen` and raises `Opened`. The default `OnOpen` resolves Startup nodes and registers every `IWorker`; `Enabled` selects startup, but does not exclude a registered worker from shutdown.
 
-`PluginApplicationContext.OnStarted` opens the workbench before calling the base application context. The base queues enabled workers' `Start` methods on the thread pool and then raises `Started`. Manifest order and child construction order do not provide a worker-readiness barrier.
+The context implements `IHostedLifecycleService`. Its `StartedAsync` phase opens the workbench and awaits enabled workers' concurrent `StartAsync` operations before raising the application's `Started` event. A startup failure cancels the remaining startup operations, waits for them to settle, and stops registered workers. Startup and cleanup failures are preserved together. Workers coordinate their own dependencies; manifest order does not order concurrent startup.
 
-The terminal context uses the application-started notification to run its terminal executor, sets the process exit code and closes its workbench.
+The terminal workbench owns its executor's `RunAsync` task. Completion sets the exit code and requests host shutdown through `Exit`; shutdown cancels and awaits the input loop. The executor must return asynchronously and honor cancellation for host startup and shutdown to remain unblocked. The built-in console executor still reads through synchronous `ReadLine`, so its input cancellation is outside this guarantee.
 
-Stopping closes the workbench before invoking the base context's worker-stop logic. A successful default workbench close raises `Closed` and calls `ApplicationContext.Exit`, which ultimately calls `Environment.Exit`. Consequently, this path does not promise that subsequent stop/dispose callbacks will all run before process exit. Workbench disposal also closes it.
+`Exit()` / `Exit(exitCode)` sets the exit code and calls `IHostApplicationLifetime.StopApplication()`. It does not wait for shutdown or call `Environment.Exit`. `StopAsync` awaits registered workers before closing the workbench, continuing after individual failures. Cancelling the host's wait does not cancel owned cleanup; final `DisposeAsync` still awaits it. `Workbench.Close` changes workbench state and raises its events. A caller that also wants application shutdown explicitly requests `Exit`.
+
+The context supports asynchronous disposal only: actual worker shutdown precedes plugin resources, then context-owned initializers and modules. Container-resolved initializers, borrowed references and container-owned services retain their original owner. `BuildAsync`, `DaemonAsync`, `TerminalAsync` and `WebAsync` await disposal of a constructed host when initialization fails, preserving initialization and cleanup errors. When managing a host manually, await `StopAsync` before asynchronous disposal; `RunAsync` owns the standard shutdown flow.
 
 ## 15. Unloading, destruction and ownership
 
-Plugin unloading and public tree unmounting have different effects.
-
 | Operation | Effect |
 | --- | --- |
-| Public `PluginTree.Unmount(node/path)` | Read the cached value with `Never`, clear the node, remove it if leaf, return the value |
-| Internal loader `Unload(plugin)` | Process cancellation, unload descendants/dependents, unmount plugin components, dispose instantiated foundations, change status and raise events |
-| `IBuilder.Destroy` | Release the component value according to that builder's ownership contract |
-| Default `BuilderBase.Destroy` | Dispose the value if `IDisposable`; otherwise dispose disposable items if it is enumerable; clear component cache/completion/failure/append records |
+| `PluginTree.Unmount(node/path)` | Read and detach the cached value and return it, without taking disposal ownership |
+| `PluginTree.UnloadAsync(plugin)` | Process cancellation, await descendants and dependents, destroy components and instantiated foundations |
+| `PluginTree.UnloadAsync()` | Unload all plugins |
+| `PluginTree.DisposeAsync()` | Await pending unloads, release all plugins, detach assembly resolution and evict the cached tree; ignore unload-event cancellation |
+| `IBuilder.DestroyAsync` | Await disposal under the builder's ownership contract and clear construction state |
 
-Public unmount does not invoke builder destruction. Loader unloading does not instantiate unused builders or parsers solely to dispose them.
+`BuilderContext.OwnsResult` defaults to true. Standard `object` and `expose` declarations own instances created through `type`; `value` expressions return borrowed objects. Appending and disposal ownership are independent decisions. The host container takes ownership of a component service on first resolution. A custom builder returning a shared object should set `OwnsResult = false`.
 
-The default destruction path is synchronous and does not handle `IAsyncDisposable` on its own. It does not distinguish an owned object from a borrowed reference or a shared singleton. `ExposeBuilder` inherits this default destruction behavior; suppressing owner appending does not imply non-ownership during destruction.
+Default destruction prefers `IAsyncDisposable.DisposeAsync`, falling back to `IDisposable.Dispose`. Collections without either interface release members that have no independent component owner. An unload operation deduplicates by reference; collection traversal does not dispose borrowed component values. Concurrent destruction shares one completion task, reconstruction during destruction is rejected, and cleanup callbacks cannot await their own destruction or tree unload.
 
-No general inverse of successful appending is executed. Removing a tree node does not automatically remove its object from every collection, unsubscribe application events or dispose objects reachable through other paths. Exceptions can interrupt destruction, and nested unload traversal mutates collections while visiting them; unloading is not an atomic object-graph transaction.
+Unload visits child nodes, descendants and dependents first using snapshots. A disposal failure does not skip remaining resources; cleanup errors are reported together. Cancellation only ends the caller's wait, while final disposal awaits actual cleanup. Unused builders and parsers are not instantiated for disposal.
 
-Default-context assemblies and the static tree cache remain process resources. Configuration reload, component reconstruction, tree unmount and plugin unload are separate operations, none of which provides general assembly hot replacement.
+Unloading is not an atomic object-graph transaction. Appending has no general inverse: other collection references and application event subscriptions remain their owners' responsibility. Assemblies stay in the default load context; cache eviction does not provide assembly hot replacement.
 
 ## 16. Extension contracts and diagnosis
 

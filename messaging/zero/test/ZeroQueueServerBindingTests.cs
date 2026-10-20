@@ -49,9 +49,9 @@ public class ZeroQueueServerBindingTests
 	[InlineData("tcp://*:4317", "tcp://0.0.0.0:4317")]
 	[InlineData("tcp://[::1]:4317/", "tcp://[::1]:4317")]
 	[InlineData("tcp://[::]:65535", "tcp://[::]:65535")]
-	public void AddressesAreNormalized(string text, string expected)
+	public async Task AddressesAreNormalized(string text, string expected)
 	{
-		using var server = new ZeroQueueServer();
+		await using var server = new ZeroQueueServer();
 		foreach(var role in new[] { "Discovery", "Control", "Incoming", "Outgoing" })
 		{
 			SetAddress(server, role, text);
@@ -71,9 +71,9 @@ public class ZeroQueueServerBindingTests
 	[InlineData("tcp://127.0.0.1:4317#server")]
 	[InlineData("127.0.0.1:4317")]
 	[InlineData("tcp://user@127.0.0.1:4317")]
-	public void InvalidAddressesDoNotReplaceExistingAddresses(string text)
+	public async Task InvalidAddressesDoNotReplaceExistingAddresses(string text)
 	{
-		using var server = new ZeroQueueServer();
+		await using var server = new ZeroQueueServer();
 		foreach(var role in new[] { "Discovery", "Control", "Incoming", "Outgoing" })
 		{
 			var previous = GetAddress(server, role);
@@ -86,9 +86,9 @@ public class ZeroQueueServerBindingTests
 	[InlineData(null)]
 	[InlineData("")]
 	[InlineData(" ")]
-	public void RequiredAddressesRejectEmptyAndControlNormalizesEmpty(string text)
+	public async Task RequiredAddressesRejectEmptyAndControlNormalizesEmpty(string text)
 	{
-		using var server = new ZeroQueueServer { Control = "tcp://127.0.0.1:4317" };
+		await using var server = new ZeroQueueServer { Control = "tcp://127.0.0.1:4317" };
 		foreach(var role in new[] { "Discovery", "Incoming", "Outgoing" })
 			Assert.Throws<ArgumentException>(() => SetAddress(server, role, text));
 
@@ -109,7 +109,7 @@ public class ZeroQueueServerBindingTests
 			return;
 
 		var factory = new TestMessageStorageFactory(new MemoryMessageStorage());
-		using var server = ZeroTestUtility.CreateServer(storages: factory);
+		await using var server = ZeroTestUtility.CreateServer(storages: factory);
 		SetAddress(server, second, $"tcp://127.0.0.2:{new Uri(GetAddress(server, first)).Port}");
 		Exception failure = null;
 		server.StateChanged += (_, args) => failure = args.Exception;
@@ -130,7 +130,7 @@ public class ZeroQueueServerBindingTests
 			return;
 
 		var factory = new TestMessageStorageFactory(new MemoryMessageStorage());
-		using var server = ZeroTestUtility.CreateServer(storages: factory);
+		await using var server = ZeroTestUtility.CreateServer(storages: factory);
 		server.Control = control ? server.Control : null;
 		server.Storage = storage ? "pending-store" : null;
 		server.Storages = factoryAvailable ? factory : null;
@@ -151,7 +151,7 @@ public class ZeroQueueServerBindingTests
 			return;
 
 		var factory = new TestMessageStorageFactory(_ => null);
-		using var server = ZeroTestUtility.CreateServer(storages: factory, name: "broker", storage: "missing-store");
+		await using var server = ZeroTestUtility.CreateServer(storages: factory, name: "broker", storage: "missing-store");
 		Exception failure = null;
 		server.StateChanged += (_, args) => failure = args.Exception;
 		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => server.StartAsync([]));
@@ -169,7 +169,7 @@ public class ZeroQueueServerBindingTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = ZeroTestUtility.CreateServer();
+		await using var server = ZeroTestUtility.CreateServer();
 		var discovery = (ushort)new Uri(server.Discovery).Port;
 		await server.StartAsync(["--incoming:1", "--outgoing:2", "--control:3"]);
 		var ports = ZeroTestUtility.GetServerPorts(discovery);
@@ -186,7 +186,7 @@ public class ZeroQueueServerBindingTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = ZeroTestUtility.CreateServer();
+		await using var server = ZeroTestUtility.CreateServer();
 		await server.StartAsync([]);
 		Assert.Equal(WorkerState.Running, server.State);
 
@@ -196,7 +196,7 @@ public class ZeroQueueServerBindingTests
 		Assert.Throws<InvalidOperationException>(() => server.Storage = "changed");
 		Assert.Throws<InvalidOperationException>(() => server.Storages = new TestMessageStorageFactory(new MemoryMessageStorage()));
 		await server.StopAsync([]);
-		using var changed = ZeroTestUtility.CreateServer();
+		await using var changed = ZeroTestUtility.CreateServer();
 		server.Discovery = changed.Discovery;
 		server.Incoming = changed.Incoming;
 		server.Outgoing = changed.Outgoing;
@@ -213,7 +213,7 @@ public class ZeroQueueServerBindingTests
 		if(!Global.IsTestingEnabled)
 			return;
 
-		using var server = ZeroTestUtility.CreateServer(storages: new TestMessageStorageFactory(new MemoryMessageStorage()));
+		await using var server = ZeroTestUtility.CreateServer(storages: new TestMessageStorageFactory(new MemoryMessageStorage()));
 		await server.StartAsync([]);
 		Assert.Equal(WorkerState.Running, server.State);
 
@@ -234,7 +234,7 @@ public class ZeroQueueServerBindingTests
 		if(!Global.IsTestingEnabled || !Socket.OSSupportsIPv6)
 			return;
 
-		using var server = CreateIPv6Server();
+		await using var server = CreateIPv6Server();
 		await server.StartAsync([]);
 		Assert.Equal(WorkerState.Running, server.State);
 		await Task.Run(() =>
@@ -277,7 +277,7 @@ public class ZeroQueueServerBindingTests
 			return;
 
 		var storage = new MemoryMessageStorage();
-		using var server = CreateIPv6Server(reliability == MessageReliability.LeastOnce ? new TestMessageStorageFactory(storage) : null);
+		await using var server = CreateIPv6Server(reliability == MessageReliability.LeastOnce ? new TestMessageStorageFactory(storage) : null);
 		await server.StartAsync([]);
 		Assert.Equal(WorkerState.Running, server.State);
 		var port = (ushort)new Uri(server.Discovery).Port;

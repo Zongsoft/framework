@@ -145,7 +145,6 @@ Use the `spooling` option to enable buffered listening mode. Buffered mode also 
 
 > - `limit`: the buffer item limit. The default value is `1000`.
 > - `period`: the buffer period in milliseconds. The default value is `1000`.
-> - `distinct`: enables de-duplication. De-duplication is disabled by default.
 
 - Listen:
 
@@ -159,11 +158,14 @@ listen
 
 ```bash
 listen -spooling -limit:10000
-listen -spooling -limit:10000 -distinct
 ```
+
+Buffered mode counts notifications individually, including successive and repeated values from the same node; it does not de-duplicate them. When the buffer is full, the sample waits synchronously for `PutAsync`, applying backpressure to the notification thread. Slow consumption therefore increases notification processing time; this policy is unsuitable when acquisition requires non-blocking notification threads. The `distinct` option is declared but currently has no processing logic.
 
 ## Expected Result and Cleanup
 
 After a successful connection and subscription to an existing variable, changing it in the local server should produce a value notification in `listen`. A successful connection alone does not prove the node exists or that the account can access it.
+
+Leaving listening mode detaches consumers before awaiting buffer disposal. Cancellation and runtime failures also perform this cleanup. Disposal does not drain pending readings; buffered mode observes notification counts and does not guarantee persistence.
 
 Press `Ctrl+C` to leave listening mode, then run `unsubscribe`, `disconnect`, and `exit` (confirm the exit prompt). Stop the sample server separately. Keep certificate trust files unless you deliberately created a disposable test store; never delete a shared certificate directory as routine cleanup.

@@ -242,7 +242,7 @@ XSD 无法确定动态名称是否对应已注册构建器或有效成员、构�
 
 ### 8.1 契约与状态
 
-[IBuilder](src/IBuilder.cs) 提供 `GetValueType`、`Build`、`Destroy` 和释放功能。[IBuilderLifecycle](src/IBuilderLifecycle.cs) 是独立的可选接口，提供 `OnBuilding`、`OnBuilded` 回调。[IAppender](src/IAppender.cs) 提供所有者接收子对象的能力。
+[IBuilder](src/IBuilder.cs) 提供 `GetValueType`、`Build`、`DestroyAsync` 和释放功能。[IBuilderLifecycle](src/IBuilderLifecycle.cs) 是独立的可选接口，提供 `OnBuilding`、`OnBuilded` 回调。[IAppender](src/IAppender.cs) 提供所有者接收子对象的能力。
 
 `BuilderBase` 同时实现 `IBuilder` 和 `IBuilderLifecycle`，显式生命周期实现转发到受保护的虚方法；其中 `OnBuilded` 先应用声明行为，再调用派生类钩子。构建器也可以直接实现生命周期接口，无须继承该基类；管理器按接口能力调用。
 
@@ -498,7 +498,7 @@ Core 的 `Locate<T>("name@provider")` 选择提供实例的服务提供者，与
 
 ## 14. 应用上下文、工作台与工作器
 
-`Application.Daemon` 和 `Application.Terminal` 基于 Microsoft 宿主，注册各自的插件应用上下文，加载配置、构建宿主并初始化上下文。[ApplicationExtension](src/Hosting/ApplicationExtension.cs) 提供宿主初始化桥接。ASP.NET Core 集成位于独立的 [Zongsoft.Plugins.Web](../Zongsoft.Plugins.Web/README.zh-Hans.md)。
+`Application.DaemonAsync` 和 `Application.TerminalAsync` 基于 Microsoft 宿主，注册各自的插件应用上下文，加载配置、构建宿主并初始化上下文。[ApplicationExtension](src/Hosting/ApplicationExtension.cs) 提供宿主初始化桥接。ASP.NET Core 集成位于独立的 [Zongsoft.Plugins.Web](../Zongsoft.Plugins.Web/README.zh-Hans.md)。
 
 `PluginApplicationContext.Initialize` 先执行基类初始化，再确保插件树加载并挂载应用上下文。首次取得 `Workbench` 时创建或解析工作台，将结果挂载到树上，遍历工作台普通扩展，最后发出 `WorkbenchCreated`。
 
@@ -519,32 +519,33 @@ stateDiagram-v2
 	Closing --> None: OnClose 成功
 ```
 
-打开过程触发打开事件，按需挂载工作台，调用 `OnOpen` 并触发 `Opened`。默认 `OnOpen` 递归解析 Startup 节点，把启用的 `IWorker` 实例加入应用工作器集合。禁用的工作器仍可能被创建；`Enabled` 控制收集和启动，不控制实例创建。
+打开过程触发打开事件，按需挂载工作台，调用 `OnOpen` 并触发 `Opened`。默认 `OnOpen` 递归解析 Startup 节点，将所有 `IWorker` 实例登记到应用工作器集合；`Enabled` 只筛选启动，不排除停止阶段的收尾。
 
-`PluginApplicationContext.OnStarted` 先打开工作台，再调用基类应用上下文。基类将启用工作器的 `Start` 排入线程池，然后触发 `Started`。清单顺序和子节点构建顺序不提供工作器启动完成屏障。
+应用上下文通过 `IHostedLifecycleService` 接入宿主。在 `StartedAsync` 阶段打开工作台、并发等待启用工作器的 `StartAsync`，全部成功后才发出应用 `Started` 通知。启动失败会取消其他启动操作，等待其结束，再停止已登记的工作器；清理失败与启动失败一起传播。工作器之间的依赖仍由工作器自身协调，清单顺序不规定并发启动顺序。
 
-终端上下文在应用已启动通知中运行终端执行器，设置进程退出码并关闭工作台。
+终端执行器的 `RunAsync` 由工作台持有，循环完成后设置退出码并调用 `Exit` 请求宿主停止；停止阶段取消并等待输入循环。执行器必须异步返回并响应取消，才能保证宿主启动和停止不被输入阻塞。内置控制台执行器的读取仍使用同步 `ReadLine`，其输入取消不在这一保证内。
 
-停止时先关闭工作台，再调用基类上下文的工作器停止逻辑。默认工作台成功关闭后触发 `Closed`，并调用最终执行 `Environment.Exit` 的 `ApplicationContext.Exit`。因此，该路径不保证后续全部停止或释放回调都能在进程退出前执行。释放工作台也会调用关闭。
+`Exit()` / `Exit(exitCode)` 只设置退出码并调用 `IHostApplicationLifetime.StopApplication()`，不等待关闭，也不调用 `Environment.Exit`。`StopAsync` 等待所有登记的工作器收尾后关闭工作台；一个故障不阻止剩余工作器停止。宿主取消等待不撤销收尾任务，最终 `DisposeAsync` 仍等待它完成。`Workbench.Close` 只改变工作台状态并发出关闭通知；调用方需要退出应用时显式请求 `Exit`。
+
+上下文只提供异步释放，释放顺序为实际停止、插件资源、上下文拥有的初始化器和模块。容器解析的初始化器、通过引用取得的对象及容器拥有的服务保留其原有所有者。`BuildAsync`、`DaemonAsync`、`TerminalAsync`、`WebAsync` 在初始化失败时等待已经构建的宿主释放，并保留初始化及清理错误。手动管理宿主时先等待 `StopAsync`，再异步释放宿主；`RunAsync` 负责其标准关闭流程。
 
 ## 15. 卸载、销毁与所有权
 
-插件卸载与公开的插件树卸载有不同效果。
-
 | 操作 | 效果 |
 | --- | --- |
-| 公开 `PluginTree.Unmount(node/path)` | 以 `Never` 读取缓存值，清空节点，叶节点则移除，返回原值 |
-| 加载器内部 `Unload(plugin)` | 处理取消、卸载后代及依赖方、卸载所属构件、释放已实例化基础元素、改变状态并通知 |
-| `IBuilder.Destroy` | 按该构建器的所有权契约释放构件值 |
-| 默认 `BuilderBase.Destroy` | 值实现 `IDisposable` 则释放值；否则若可枚举则释放其中可释放项；清理缓存、完成、失败和追加记录 |
+| `PluginTree.Unmount(node/path)` | 读取缓存值、移除挂载并返回原值；不接管返回对象的释放责任 |
+| `PluginTree.UnloadAsync(plugin)` | 处理取消、等待后代和依赖方卸载、销毁所属构件及已实例化基础元素 |
+| `PluginTree.UnloadAsync()` | 卸载所有插件 |
+| `PluginTree.DisposeAsync()` | 等待在途卸载，最终释放所有插件、解除程序集解析订阅并移除树缓存；忽略卸载事件的取消 |
+| `IBuilder.DestroyAsync` | 按构建器所有权契约等待构件结果释放并清理构建状态 |
 
-公开卸载节点不调用构建器销毁。加载器卸载不会为了释放而创建尚未使用的构建器或解析器。
+`BuilderContext.OwnsResult` 默认为真。标准 `object` / `expose` 的 `type` 创建结果归插件所有，`value` 求值返回的对象是借用；禁止追加与释放责任是两个独立决定。注册到宿主服务容器的构件服务在首次解析时由容器接管。自定义构建器返回共享对象时应设置 `OwnsResult = false`。
 
-默认销毁路径是同步的，不单独处理 `IAsyncDisposable`，也不区分自有对象、借用引用或共享单例。`ExposeBuilder` 继承该默认销毁行为；禁止向所有者追加，不代表销毁时自动视为无所有权。
+默认销毁优先等待 `IAsyncDisposable.DisposeAsync`，只有未实现它时才调用 `IDisposable.Dispose`。无释放接口的集合继续处理其中没有独立构件所有者的元素；一次卸载按引用身份去重。借用对象不会因集合遍历而被释放。并发销毁共享同一完成任务，销毁期间禁止重建；回调反向等待自身销毁或插件树卸载会被拒绝。
 
-框架不通用地执行成功追加的逆操作。移除树节点不会自动从所有集合移除对象、退订应用事件或释放其他路径可达的对象。异常可以中断销毁；嵌套卸载遍历还会在访问集合时修改集合，因此卸载不是原子的对象图事务。
+卸载按子节点、后代及依赖方优先的顺序进行，遍历使用快照。一个释放失败不会跳过后续资源，错误在清理完成后一起传播。取消令牌只取消等待；最终释放等待实际操作。未使用的构建器和解析器不会为清理而实例化。
 
-默认上下文中的程序集和静态插件树缓存仍属于进程资源。配置重载、构件重新构建、树节点卸载和插件卸载是不同操作，均不提供通用的程序集热替换。
+卸载不是原子的对象图事务。框架不通用地执行成功追加的逆操作；其他集合中的引用与应用事件订阅需要其所有者处理。程序集仍位于默认加载上下文，释放树缓存不提供程序集热替换。
 
 ## 16. 扩展契约与诊断
 

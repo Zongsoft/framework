@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Threading.Tasks;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,13 +37,25 @@ namespace Zongsoft.Plugins.Hosting;
 
 public static class ApplicationExtension
 {
-	public static TApplication Initialize<TApplication>(this TApplication app) where TApplication : IHost
+	public static async ValueTask<TApplication> InitializeAsync<TApplication>(this TApplication app) where TApplication : IHost
 	{
-		//初始化应用上下文
-		app?.Services
-			.GetRequiredService<PluginApplicationContext>()
-			.Initialize();
+		try
+		{
+			app?.Services.GetRequiredService<PluginApplicationContext>().Initialize();
+			return app;
+		}
+		catch(Exception exception)
+		{
+			try
+			{
+				if(app is IAsyncDisposable asynchronous)
+					await asynchronous.DisposeAsync().ConfigureAwait(false);
+				else
+					app?.Dispose();
+			}
+			catch(Exception cleanup) { throw new AggregateException(exception, cleanup); }
 
-		return app;
+			throw;
+		}
 	}
 }

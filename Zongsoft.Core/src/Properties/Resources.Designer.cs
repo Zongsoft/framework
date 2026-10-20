@@ -1420,6 +1420,15 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 The file logger cannot await its own disposal from a write callback or failure notification. 的本地化字符串。
+        /// </summary>
+        internal static string FileLogger_SelfWait_Message {
+            get {
+                return ResourceManager.GetString("FileLogger.SelfWait.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 No file or directory provider was found for &apos;{0}&apos;. 的本地化字符串。
         /// </summary>
         internal static string FileSystem_ProviderNotFound_Message {
@@ -2977,6 +2986,33 @@ namespace Zongsoft.Properties {
         }
         
         /// <summary>
+        ///   查找类似 The terminal executor is already running. 的本地化字符串。
+        /// </summary>
+        internal static string Terminal_ExecutorRunning_Message {
+            get {
+                return ResourceManager.GetString("Terminal.ExecutorRunning.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 A terminal input read is already in progress. 的本地化字符串。
+        /// </summary>
+        internal static string Terminal_InputReading_Message {
+            get {
+                return ResourceManager.GetString("Terminal.InputReading.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The terminal input stream must be readable. 的本地化字符串。
+        /// </summary>
+        internal static string Terminal_InputUnreadable_Message {
+            get {
+                return ResourceManager.GetString("Terminal.InputUnreadable.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   查找类似 The operating system &apos;{0}&apos; is not supported. 的本地化字符串。
         /// </summary>
         internal static string Terminal_UnsupportedOperatingSystem_Message {
@@ -2985,6 +3021,15 @@ namespace Zongsoft.Properties {
             }
         }
         
+        /// <summary>
+        ///   查找类似 The timer cannot start until its current run has finished stopping. 的本地化字符串。
+        /// </summary>
+        internal static string Timer_Stopping_Message {
+            get {
+                return ResourceManager.GetString("Timer.Stopping.Message", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   查找类似 The value &apos;{0}&apos; is not a valid TimeSpan. 的本地化字符串。
         /// </summary>

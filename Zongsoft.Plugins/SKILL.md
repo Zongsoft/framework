@@ -27,7 +27,7 @@ description: 开发、审查、调试或测试 Zongsoft.Plugins 与 Zongsoft.Plu
 	- 具体构建器在 Build 中设置 context.AppendToOwner 和 context.BuildChildren；管理器随实例保存决定，缓存路径沿用。IAppender 由所有者构建器提供，不是子节点追加自身的许可。不要在 IBuilder 增加固定策略查询或让调用方的 settings 积累流程标志。
 	- IBuilderLifecycle 是独立可选能力，由 BuilderBase 显式实现并转发到受保护的 OnBuilding、OnBuilded。OnBuilding 在重入保护建立后、实际 Build 前调用；OnBuilded 在所需子节点装配后、所有者追加前调用，先应用声明行为。缓存复用不重放，延后完成不重复前置回调。BuilderSettings 只提供 TargetType。
 	- 模块定位只取得实例，创建时调用 OnBuilding，后续正常装配时调用 OnBuilded；两次回调可能使用不同上下文。IsBuilded 在装配完成后才成立。普通 Auto 必须补完未完成节点；部分失败不得作为成功缓存返回。完整架构、装配时序与生命周期边界见 [implementation.zh-Hans.md](implementation.zh-Hans.md)。
-5. [PluginConfigurationProvider](src/Configuration/PluginConfigurationProvider.cs) 先查找与 `.plugin` 文件同名的 `.option`，缺失时才尝试插件 name 对应的 `.option`，只加载第一个存在的入口；两者都缺失则结束，首选文件解析失败不回退。不扫描附属后缀，其他片段由入口通过 `<?import ...?>` 显式导入。宿主 LoadConfiguration(name) 同样只加载 name.option。无参 LoadConfiguration() 先加载应用名配置，入口程序集名不同时再追加加载其同名配置；Application.Web 在此之后加载 web.option，同名键由后加载的文件覆盖。显式 Load 重新选择入口并递归包括子插件；入口及导入文件重载、插件加载/卸载、整体重载均向宿主传递变更通知，替换或释放时解除订阅。整体重载失败清理已建立的提供程序。内部同步保护提供程序的发布、清理与释放，不覆盖整次 Load 和所有树事件；调用方应串行执行显式重载、加载/卸载与释放，通知不代表跨文件事务。
+5. [PluginConfigurationProvider](src/Configuration/PluginConfigurationProvider.cs) 先查找与 `.plugin` 文件同名的 `.option`，缺失时才尝试插件 name 对应的 `.option`，只加载第一个存在的入口；两者都缺失则结束，首选文件解析失败不回退。不扫描附属后缀，其他片段由入口通过 `<?import ...?>` 显式导入。宿主 LoadConfiguration(name) 同样只加载 name.option。无参 LoadConfiguration() 先加载应用名配置，入口程序集名不同时再追加加载其同名配置；Application.WebAsync 在此之后加载 web.option，同名键由后加载的文件覆盖。显式 Load 重新选择入口并递归包括子插件；入口及导入文件重载、插件加载/卸载、整体重载均向宿主传递变更通知，替换或释放时解除订阅。整体重载失败清理已建立的提供程序。内部同步保护提供程序的发布、清理与释放，不覆盖整次 Load 和所有树事件；调用方应串行执行显式重载、加载/卸载与释放，通知不代表跨文件事务。
 6. 跨插件提供程序使用并发字典枚举，不承诺冲突键的跨插件覆盖顺序。通过 Providers 取得各插件的 CompositeConfigurationProvider，其中单个 XML 提供程序包含入口及其导入后的生效值；文件来源标识入口，不追踪单键的导入来源。由宿主消费层比较各插件生效值并判断网络键等领域冲突，不把 Kestrel 或 gRPC 规则硬编码进 Plugins。
 
 ### 易混淆契约
@@ -40,6 +40,8 @@ description: 开发、审查、调试或测试 Zongsoft.Plugins 与 Zongsoft.Plu
 
 ## 生命周期与 Web
 
+- 宿主创建使用 BuildAsync、DaemonAsync、TerminalAsync、WebAsync，初始化失败须等待宿主异步释放。应用上下文通过 IHostedLifecycleService 等待工作器启动和停止；Exit 只请求宿主停止，Workbench.Close 不隐式退出。插件通过 UnloadAsync/DisposeAsync 收尾，构建结果以 OwnsResult 区分自有实例与借用引用；IBuilder.DestroyAsync 优先等待异步释放。
+- TerminalAsync 的默认 TerminalLifetime 替换 ConsoleLifetime，显式自定义 IHostLifetime 保留。启动注册 SIGINT/SIGQUIT/SIGTERM，释放解除；SIGINT 调用正在运行执行器所属终端的 Abort，已处理继续、未处理停止，SIGQUIT/SIGTERM 直接停止。停止期间抑制重复信号，等待终端循环及清理；信号通知异常由 StopAsync/DisposeAsync 传播。Core 终端不注册全局信号；处理器必须及时返回，不得等待宿主停止。状态日志服从 ILogger 和 ConsoleLifetimeOptions.SuppressStatusMessages。
 - 修改组件创建、启动/停止、卸载时分别验证失败清理；不要宣称现有所有构造失败均有事务性回滚。依赖初始化与插件节点构建是不同阶段。
 - 服务解析应尊重作用域、具名服务和插件容器边界，避免隐式全局单例。
 - Plugins.Web 的 [Application](../Zongsoft.Plugins.Web/src/Application.cs) 初始化上下文、执行 `IApplicationInitializer<IApplicationBuilder>`，再装配中间件与 Controller/Hub 端点；[WebApplicationBuilder](../Zongsoft.Plugins.Web/src/WebApplicationBuilder.cs) 配置服务和默认策略。业务路由与控制器实现留在业务插件。
@@ -48,6 +50,8 @@ description: 开发、审查、调试或测试 Zongsoft.Plugins 与 Zongsoft.Plu
 ## 验证
 
 先构建 `Zongsoft.Plugins.slnx`；涉及 Web 再构建 `../Zongsoft.Plugins.Web/Zongsoft.Plugins.Web.slnx`。使用最小插件树覆盖有效配置、缺失依赖、循环/无效节点、初始化失败回滚和确定性释放。
+
+两库的主解决方案和默认 Cake test 仅包括 test/unit；test/integration 使用独立解决方案及 integration-test 目标显式运行，宿主子进程及 Web 端点测试归属集成测试。
 
 Plugins 测试只项目引用 Plugins，Core 使用 HintPath 程序集引用；Web 桥接及 Web 宿主用例归属 Plugins.Web 测试。Plugins.Web 测试只项目引用 Plugins.Web，Core、Plugins、Web 使用 HintPath 程序集引用，不通过项目引用构建它们。干净工作区按测试 README 先生成依赖程序集。
 

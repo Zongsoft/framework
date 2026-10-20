@@ -74,7 +74,7 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 			if(context.Options.Contains(STREAMING_OPTION))
 				throw new CommandOptionException("The interactive chat mode does not support streaming responses.");
 
-			await Chat(context, client);
+			await ChatAsync(context, client, cancellation).ConfigureAwait(false);
 			return _history;
 		}
 
@@ -94,7 +94,7 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 		if(context.Arguments.IsEmpty)
 			return null;
 
-		var message = await Dialogue(context.GetTerminal(), client, GetMessage(role, context));
+		var message = await DialogueAsync(context.GetTerminal(), client, [GetMessage(role, context)], cancellation).ConfigureAwait(false);
 
 		return format switch
 		{
@@ -106,7 +106,7 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 	#endregion
 
 	#region 私有方法
-	private static async ValueTask Chat(CommandContext context, IChatClient service)
+	private static async ValueTask ChatAsync(CommandContext context, IChatClient service, CancellationToken cancellation)
 	{
 		var terminal = context.GetTerminal() ??
 			throw new CommandException(Properties.Resources.Chat_TerminalRequired_Message);
@@ -123,7 +123,11 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 		{
 			terminal.Write(CommandOutletStyles.Bold, CommandOutletColor.Cyan, "You:> ");
 
-			var text = terminal.Input.ReadLine();
+			var text = await terminal.Input.ReadLineAsync(cancellation).ConfigureAwait(false);
+
+			if(text == null)
+				break;
+
 			if(string.IsNullOrWhiteSpace(text))
 				continue;
 
@@ -131,22 +135,22 @@ public class ChatCommand() : CommandBase<CommandContext>("Chat")
 			   string.Equals("quit", text, StringComparison.OrdinalIgnoreCase))
 				break;
 
-			var message = await Dialogue(terminal, service, GetMessage(null, context));
+			var message = await DialogueAsync(terminal, service, [new ChatMessage(ChatRole.User, text)], cancellation).ConfigureAwait(false);
 
 			if(message != null && message.Contents.Count > 0)
 				terminal.WriteLine();
 		}
 	}
 
-	private static async ValueTask<ChatMessage> Dialogue(ITerminal terminal, IChatClient client, params IEnumerable<ChatMessage> messages)
+	private static async ValueTask<ChatMessage> DialogueAsync(ITerminal terminal, IChatClient client, IEnumerable<ChatMessage> messages, CancellationToken cancellation)
 	{
 		if(messages == null || !messages.Any())
 			return default;
 
 		ChatMessage result = null;
-		var response = client.GetStreamingResponseAsync(messages);
+		var response = client.GetStreamingResponseAsync(messages, cancellationToken: cancellation);
 
-		await foreach(var entry in response)
+		await foreach(var entry in response.WithCancellation(cancellation).ConfigureAwait(false))
 		{
 			if(entry == null || entry.Contents.Count == 0)
 				break;

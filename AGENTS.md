@@ -47,7 +47,7 @@ Zongsoft 重构涉及 Yuanshan 调用方适配时，在同一任务中维护 [Yu
 - 文档改动检查 `git diff --check`、链接、CRLF 和内容差异。
 - 代码改动先构建受影响的具体 `.csproj` 或 `.slnx`；公共契约变化再验证直接下游。
 - 测试项目只通过 `ProjectReference` 引用本项目的被测项目；其它 Zongsoft 项目使用 `Reference` 与 `HintPath` 引用已构建的程序集，所需第三方依赖显式声明，并在构建流程中先生成依赖程序集。
-- 除 Zongsoft.Plugins.Tests、Zongsoft.Plugins.Web.Tests 外，测试项目不引用 Zongsoft.Plugins，也不通过插件宿主装配被测对象。Diagnostics 协议服务端集成测试直接装配本地 WebApplication、gRPC 服务及处理器，独立于单元测试项目。
+- 除 Zongsoft.Plugins 和 Zongsoft.Plugins.Web 的单元测试与集成测试项目外，测试项目不引用 Zongsoft.Plugins，也不通过插件宿主装配被测对象。Diagnostics 协议服务端集成测试直接装配本地 WebApplication、gRPC 服务及处理器，独立于单元测试项目。
 - 多目标框架问题分别验证 `net8.0`、`net9.0`、`net10.0`。
 - 集成测试先确认环境变量、端口、容器和外部服务就绪；不能满足时明确说明，不以临时代码绕过。
 - 仓库完整 CI 通过 `cake.ps1`/`cake.sh` 串联各项目；普通定向修改无需默认运行全仓构建。

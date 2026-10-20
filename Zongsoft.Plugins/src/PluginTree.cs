@@ -29,13 +29,16 @@
 
 using System;
 using System.IO;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Collections.Concurrent;
 
 namespace Zongsoft.Plugins;
 
-public class PluginTree
+public partial class PluginTree : IAsyncDisposable
 {
 	#region 事件定义
 	public event EventHandler<PluginMountEventArgs> Mounted;
@@ -67,19 +70,23 @@ public class PluginTree
 			this.Root.Children.Clear();
 		};
 
-		AssemblyLoadContext.Default.Resolving += this.Default_Resolving;
 	}
 	#endregion
 
 	#region 静态构建
-	private static readonly ConcurrentDictionary<PluginOptions, PluginTree> _instances = new();
+	private static readonly ConcurrentDictionary<PluginOptions, Lazy<PluginTree>> _instances = new();
 
 	public static PluginTree Get(PluginOptions options)
 	{
 		if(options == null)
 			throw new ArgumentNullException(nameof(options));
 
-		return _instances.GetOrAdd(options, key => new PluginTree(key));
+		return _instances.GetOrAdd(options, key => new Lazy<PluginTree>(() =>
+		{
+			var tree = new PluginTree(key);
+			AssemblyLoadContext.Default.Resolving += tree.Default_Resolving;
+			return tree;
+		})).Value;
 	}
 	#endregion
 
@@ -103,6 +110,9 @@ public class PluginTree
 	#region 加载方法
 	public PluginTree Load()
 	{
+		ObjectDisposedException.ThrowIf(_disposing != null, this);
+		if(!_unloading.IsCompleted)
+			throw new InvalidOperationException();
 		if(this.Status == PluginTreeStatus.None)
 			this.Loader.Load(this.Options);
 
@@ -317,62 +327,56 @@ public class PluginTree
 		return value;
 	}
 
-	internal void Unmount(Builtin builtin)
+	internal async ValueTask UnmountAsync(Builtin builtin, PluginDisposal disposal)
 	{
-		if(builtin == null)
+		if(!builtin.Plugin.InnerBuiltins.Contains(builtin))
 			return;
 
-		this.UnmountItem(builtin.Plugin, builtin.FullPath);
-	}
-
-	private void UnmountItem(Plugin plugin, string path)
-	{
-		if(string.IsNullOrWhiteSpace(path))
-			throw new ArgumentNullException(nameof(path));
-
-		PluginTreeNode node = this.Find(path);
-
+		var node = builtin.Node;
 		if(node != null)
-			this.UnmountItem(plugin, node);
-	}
-
-	private void UnmountItem(Plugin plugin, PluginTreeNode node)
-	{
-		if(node == null)
-			return;
-
-		if(plugin != null)
 		{
-			foreach(PluginTreeNode child in node.Children)
-			{
-				this.UnmountItem(plugin, child);
-			}
+			foreach(var child in node.Children.ToArray())
+				await this.UnmountChildrenAsync(builtin.Plugin, child, disposal).ConfigureAwait(false);
 		}
 
-		if(node.NodeType == PluginTreeNodeType.Custom)
+		try
 		{
-			this.Unmount(node);
-			return;
-		}
-
-		if(node.NodeType == PluginTreeNodeType.Builtin)
-		{
-			Builtin builtin = (Builtin)node.Value;
-
-			if(string.ReferenceEquals(builtin.Plugin, plugin))
+			if(builtin.HasValue)
 			{
-				IBuilder builder = node.Plugin.GetBuilder(builtin.Scheme);
+				var builder = builtin.Plugin.GetBuilder(builtin.Scheme);
 				if(builder != null)
-					builder.Destroy(Builders.BuilderContext.CreateContext(builder, builtin));
-
-				plugin.UnregisterBuiltin(builtin);
-				node.Value = null;
+				{
+					var context = Builders.BuilderContext.CreateContext(builder, builtin);
+					context.Disposal = disposal;
+					await builder.DestroyAsync(context).ConfigureAwait(false);
+				}
 			}
+			else
+				builtin.Reset(disposal.Errors);
 		}
-
-		if(node.Children.Count < 1 && node.Parent != null)
-			node.Parent.Children.Remove(node);
+		catch(Exception exception) { disposal.Errors.Add(exception); }
+		finally
+		{
+			builtin.Plugin.UnregisterBuiltin(builtin);
+			if(node != null && ReferenceEquals(node.Value, builtin))
+				node.Value = null;
+			builtin.Node = null;
+			if(node != null && node.Children.Count == 0 && node.NodeType == PluginTreeNodeType.Empty)
+				node.Remove();
+		}
 	}
+
+	private async ValueTask UnmountChildrenAsync(Plugin plugin, PluginTreeNode node, PluginDisposal disposal)
+	{
+		if(node.Value is Builtin builtin && ReferenceEquals(builtin.Plugin, plugin))
+			await this.UnmountAsync(builtin, disposal).ConfigureAwait(false);
+		else
+		{
+			foreach(var child in node.Children.ToArray())
+				await this.UnmountChildrenAsync(plugin, child, disposal).ConfigureAwait(false);
+		}
+	}
+
 	#endregion
 
 	#region 事件方法

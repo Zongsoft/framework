@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Threading.Tasks;
 
 using Microsoft.Extensions.Hosting;
 using Microsoft.AspNetCore.Hosting;
@@ -40,10 +41,10 @@ namespace Zongsoft.Web;
 public static class Application
 {
 	#if NET7_0_OR_GREATER
-	public static WebApplication Web(Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> configure = null) => Web(null, null, configure);
-	public static WebApplication Web(string[] args, Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> configure = null) => Web(null, args, configure);
-	public static WebApplication Web(string name, Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> configure = null) => Web(name, null, configure);
-	public static WebApplication Web(string name, string[] args, Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> configure = null)
+	public static ValueTask<WebApplication> WebAsync(Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> configure = null) => WebAsync(null, null, configure);
+	public static ValueTask<WebApplication> WebAsync(string[] args, Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> configure = null) => WebAsync(null, args, configure);
+	public static ValueTask<WebApplication> WebAsync(string name, Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> configure = null) => WebAsync(name, null, configure);
+	public static async ValueTask<WebApplication> WebAsync(string name, string[] args, Action<Microsoft.AspNetCore.Builder.WebApplicationBuilder> configure = null)
 	{
 		var builder = new WebApplicationBuilder(name, args, configure);
 
@@ -53,7 +54,7 @@ public static class Application
 		//加载 Web 配置文件
 		builder.LoadConfiguration("web");
 
-		var app = builder.Build();
+		var app = await builder.BuildAsync().ConfigureAwait(false);
 
 		try
 		{
@@ -85,22 +86,24 @@ public static class Application
 
 			return app;
 		}
-		catch
+		catch(Exception exception)
 		{
-			app.DisposeAsync().AsTask().GetAwaiter().GetResult();
+			try { await app.DisposeAsync().ConfigureAwait(false); }
+			catch(Exception cleanup) { throw new AggregateException(exception, cleanup); }
+
 			throw;
 		}
 	}
 	#else
-	public static IHost Web(Action<WebHostBuilderContext, IApplicationBuilder> applicate = null) => Web(null, null, null, applicate);
-	public static IHost Web(string[] args, Action<WebHostBuilderContext, IApplicationBuilder> applicate = null) => Web(null, args, null, applicate);
-	public static IHost Web(Action<IHostBuilder> configure, Action<WebHostBuilderContext, IApplicationBuilder> applicate = null) => Web(null, null, configure, applicate);
-	public static IHost Web(string[] args, Action<IHostBuilder> configure, Action<WebHostBuilderContext, IApplicationBuilder> applicate = null) => Web(null, args, configure, applicate);
+	public static ValueTask<IHost> WebAsync(Action<WebHostBuilderContext, IApplicationBuilder> applicate = null) => WebAsync(null, null, null, applicate);
+	public static ValueTask<IHost> WebAsync(string[] args, Action<WebHostBuilderContext, IApplicationBuilder> applicate = null) => WebAsync(null, args, null, applicate);
+	public static ValueTask<IHost> WebAsync(Action<IHostBuilder> configure, Action<WebHostBuilderContext, IApplicationBuilder> applicate = null) => WebAsync(null, null, configure, applicate);
+	public static ValueTask<IHost> WebAsync(string[] args, Action<IHostBuilder> configure, Action<WebHostBuilderContext, IApplicationBuilder> applicate = null) => WebAsync(null, args, configure, applicate);
 
-	public static IHost Web(string name, Action<WebHostBuilderContext, IApplicationBuilder> applicate = null) => Web(name, null, null, applicate);
-	public static IHost Web(string name, string[] args, Action<WebHostBuilderContext, IApplicationBuilder> applicate = null) => Web(name, args, null, applicate);
-	public static IHost Web(string name, Action<IHostBuilder> configure, Action<WebHostBuilderContext, IApplicationBuilder> applicate = null) => Web(name, null, configure, applicate);
-	public static IHost Web(string name, string[] args, Action<IHostBuilder> configure, Action<WebHostBuilderContext, IApplicationBuilder> applicate = null)
+	public static ValueTask<IHost> WebAsync(string name, Action<WebHostBuilderContext, IApplicationBuilder> applicate = null) => WebAsync(name, null, null, applicate);
+	public static ValueTask<IHost> WebAsync(string name, string[] args, Action<WebHostBuilderContext, IApplicationBuilder> applicate = null) => WebAsync(name, args, null, applicate);
+	public static ValueTask<IHost> WebAsync(string name, Action<IHostBuilder> configure, Action<WebHostBuilderContext, IApplicationBuilder> applicate = null) => WebAsync(name, null, configure, applicate);
+	public static ValueTask<IHost> WebAsync(string name, string[] args, Action<IHostBuilder> configure, Action<WebHostBuilderContext, IApplicationBuilder> applicate = null)
 	{
 		var builder = new WebApplicationBuilder(name, args, host =>
 		{
@@ -114,7 +117,7 @@ public static class Application
 		//加载 Web 配置文件
 		builder.LoadConfiguration("web");
 
-		return builder.Build();
+		return builder.BuildAsync();
 
 		static void Configure(IHostBuilder builder, Action<WebHostBuilderContext, IApplicationBuilder> applicate)
 		{

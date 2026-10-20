@@ -36,6 +36,10 @@ namespace Zongsoft.Upgrading;
 
 partial class Upgrader
 {
+	/// <summary>根据宿主平台启动部署器进程。</summary>
+	/// <param name="deployer">部署器程序的文件路径。</param>
+	/// <param name="deployment">部署描述文件路径。</param>
+	/// <returns>启动的进程；启动失败时为空。</returns>
 	internal static Process Launch(string deployer, string deployment)
 	{
 		if(OperatingSystem.IsLinux())
@@ -54,6 +58,10 @@ partial class Upgrader
 		return LaunchDirect(deployer, deployment);
 	}
 
+	/// <summary>直接启动部署器并传递当前宿主信息。</summary>
+	/// <param name="deployer">部署器程序的文件路径。</param>
+	/// <param name="deployment">部署描述文件路径。</param>
+	/// <returns>启动的进程；系统未创建进程时为空。</returns>
 	private static Process LaunchDirect(string deployer, string deployment)
 	{
 		var info = new ProcessStartInfo(deployer)
@@ -84,6 +92,10 @@ partial class Upgrader
 		return Process.Start(info);
 	}
 
+	/// <summary>通过 systemd-run 启动独立的部署器进程。</summary>
+	/// <param name="deployer">部署器程序的文件路径。</param>
+	/// <param name="deployment">部署描述文件路径。</param>
+	/// <returns>启动的进程；启动命令立即报告失败时为空。</returns>
 	private static Process LaunchWithSystemd(string deployer, string deployment)
 	{
 		var text = new System.Text.StringBuilder();
@@ -119,6 +131,13 @@ partial class Upgrader
 		return process.WaitForExit(1000) && process.ExitCode != 0 ? null : process;
 	}
 
+	/// <summary>读取当前宿主的配置值。</summary>
+	/// <param name="key">配置项路径。</param>
+	/// <returns>配置值；宿主或配置项不存在时为空。</returns>
 	private static string GetConfiguration(string key) => GetConfiguration(Services.ApplicationContext.Current?.Configuration, key);
+	/// <summary>读取指定配置源的值。</summary>
+	/// <param name="configuration">配置源。</param>
+	/// <param name="key">配置项路径。</param>
+	/// <returns>配置值；参数为空或配置项不存在时为空。</returns>
 	private static string GetConfiguration(IConfiguration configuration, string key) => string.IsNullOrEmpty(key) || configuration == null ? null : configuration.GetSection(key)?.Value;
 }

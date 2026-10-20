@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using System.Reflection;
 using System.Globalization;
 using System.ComponentModel;
@@ -24,11 +25,11 @@ public sealed class ServiceLocatorTest
 	private const string WRONG_CONTAINER_NAME = "service-locator-wrong-container";
 
 	[Fact]
-	public void Locate_EmptyQualifiedName_GenericAndRuntimeOverloadsReturnSameService()
+	public async Task Locate_EmptyQualifiedName_GenericAndRuntimeOverloadsReturnSameService()
 	{
 		var expected = new NamedService("default", "default");
 		using var services = CreateServices(collection => collection.AddSingleton<ITestService>(expected));
-		using var application = new ApplicationScope(services.Provider);
+		await using var application = new ApplicationScope(services.Provider);
 
 		Assert.Same(expected, services.Provider.Locate<ITestService>(null));
 		Assert.Same(expected, services.Provider.Locate(string.Empty, typeof(ITestService)));
@@ -169,14 +170,14 @@ public sealed class ServiceLocatorTest
 	}
 
 	[Fact]
-	public void Converter_ConvertFrom_UsesPropertyDescriptorServiceType()
+	public async Task Converter_ConvertFrom_UsesPropertyDescriptorServiceType()
 	{
 		const string NAME = "service-locator-contextual-converter";
 
 		var expected = new NamedService(NAME, "contextual");
 		using var services = CreateServices(collection =>
 			collection.AddSingleton<Zongsoft.Services.IServiceProvider<ITestService>>(new NamedProvider(expected)));
-		using var application = new ApplicationScope(services.Provider);
+		await using var application = new ApplicationScope(services.Provider);
 		var descriptor = TypeDescriptor.GetProperties(typeof(ConverterOptions))[nameof(ConverterOptions.Service)];
 		var context = new DescriptorContext(descriptor);
 		var converter = new ServiceLocator.Converter();
@@ -185,14 +186,14 @@ public sealed class ServiceLocatorTest
 	}
 
 	[Fact]
-	public void Converter_ConvertFrom_ExplicitServiceTypeTakesPrecedenceOverContext()
+	public async Task Converter_ConvertFrom_ExplicitServiceTypeTakesPrecedenceOverContext()
 	{
 		const string NAME = "service-locator-explicit-precedence";
 
 		var expected = new NamedService(NAME, "explicit");
 		using var services = CreateServices(collection =>
 			collection.AddSingleton<Zongsoft.Services.IServiceProvider<ITestService>>(new NamedProvider(expected)));
-		using var application = new ApplicationScope(services.Provider);
+		await using var application = new ApplicationScope(services.Provider);
 		var descriptor = TypeDescriptor.GetProperties(typeof(ConverterOptions))[nameof(ConverterOptions.Other)];
 		var context = new DescriptorContext(descriptor);
 		var converter = new ServiceLocator.Converter(typeof(ITestService));
@@ -201,14 +202,14 @@ public sealed class ServiceLocatorTest
 	}
 
 	[Fact]
-	public void GetTypeConverter_ExplicitConverter_UsesTypeConstructorWithoutContext()
+	public async Task GetTypeConverter_ExplicitConverter_UsesTypeConstructorWithoutContext()
 	{
 		const string NAME = "service-locator-explicit-converter";
 
 		var expected = new NamedService(NAME, "explicit");
 		using var services = CreateServices(collection =>
 			collection.AddSingleton<Zongsoft.Services.IServiceProvider<ITestService>>(new NamedProvider(expected)));
-		using var application = new ApplicationScope(services.Provider);
+		await using var application = new ApplicationScope(services.Provider);
 		var member = typeof(ConverterOptions).GetProperty(nameof(ConverterOptions.Service));
 		var converter = Zongsoft.Common.Convert.GetTypeConverter(member, explicitly: true);
 
@@ -341,7 +342,7 @@ public sealed class ServiceLocatorTest
 		public void Dispose() => (this.Provider as IDisposable)?.Dispose();
 	}
 
-	private sealed class ApplicationScope : IDisposable
+	private sealed class ApplicationScope : IAsyncDisposable
 	{
 		private static readonly FieldInfo _CurrentField_ = typeof(ApplicationContext).GetField("_current", BindingFlags.Static | BindingFlags.NonPublic);
 
@@ -354,10 +355,10 @@ public sealed class ServiceLocatorTest
 			_current = new TestApplicationContext(services);
 		}
 
-		public void Dispose()
+		public async ValueTask DisposeAsync()
 		{
-			_current.Dispose();
-			_CurrentField_.SetValue(null, _previous);
+			try { await _current.DisposeAsync(); }
+			finally { _CurrentField_.SetValue(null, _previous); }
 		}
 	}
 

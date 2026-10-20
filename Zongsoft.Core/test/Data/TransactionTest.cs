@@ -49,7 +49,7 @@ public class TransactionTest
 
 		using(var child = new Transaction())
 		{
-			Assert.True(child.Enlist(recorder));
+			Assert.True(child.Context.Enlist(recorder));
 			child.Commit();
 			Assert.Empty(recorder.Contexts);
 		}
@@ -145,7 +145,7 @@ public class TransactionTest
 				using var transaction = new Transaction();
 				var enlistment = new Recorder();
 
-				Assert.True(transaction.Enlist(enlistment));
+				Assert.True(transaction.Context.Enlist(enlistment));
 
 				if(Interlocked.Decrement(ref remaining) == 0)
 					ready.SetResult();
@@ -178,7 +178,7 @@ public class TransactionTest
 			var enrolling = Task.Run(async () =>
 			{
 				await start.Task;
-				return transaction.Enlist(enlistment);
+				return transaction.Context.Enlist(enlistment);
 			});
 
 			var completing = Task.Run(async () =>
@@ -215,8 +215,8 @@ public class TransactionTest
 			completedStatus = transaction.Context.Status;
 		};
 
-		Assert.True(transaction.Enlist(new ThrowingEnlistment()));
-		Assert.True(transaction.Enlist(following));
+		Assert.True(transaction.Context.Enlist(new ThrowingEnlistment()));
+		Assert.True(transaction.Context.Enlist(following));
 
 		Assert.Throws<InvalidOperationException>(transaction.Commit);
 
@@ -234,7 +234,7 @@ public class TransactionTest
 	{
 		using var transaction = new Transaction();
 		var enlistment = new PathRecorder();
-		Assert.True(transaction.Enlist(enlistment));
+		Assert.True(transaction.Context.Enlist(enlistment));
 
 		Complete(transaction, phase);
 
@@ -249,7 +249,7 @@ public class TransactionTest
 	{
 		using var transaction = new Transaction();
 		var enlistment = new AsyncRecorder();
-		Assert.True(transaction.Enlist(enlistment));
+		Assert.True(transaction.Context.Enlist(enlistment));
 
 		TransactionStatus? statusAtCompletion = null;
 		transaction.Context.Completed += (_, _) =>
@@ -272,7 +272,7 @@ public class TransactionTest
 	{
 		using var transaction = new Transaction();
 		var enlistment = new AsyncRecorder();
-		Assert.True(transaction.Enlist(enlistment));
+		Assert.True(transaction.Context.Enlist(enlistment));
 
 		TransactionStatus? statusAtCompletion = null;
 		transaction.Context.Completed += (_, _) => statusAtCompletion = transaction.Context.Status;
@@ -291,7 +291,7 @@ public class TransactionTest
 	{
 		using var transaction = new Transaction();
 		var enlistment = new PathRecorder();
-		Assert.True(transaction.Enlist(enlistment));
+		Assert.True(transaction.Context.Enlist(enlistment));
 		using var cancellation = new CancellationTokenSource();
 		cancellation.Cancel();
 
@@ -312,7 +312,7 @@ public class TransactionTest
 	{
 		using var transaction = new Transaction();
 		var enlistment = new GatedEnlistment();
-		Assert.True(transaction.Enlist(enlistment));
+		Assert.True(transaction.Context.Enlist(enlistment));
 		using var cancellation = new CancellationTokenSource();
 
 		var completion = CompleteAsync(transaction, phase, cancellation.Token);

@@ -85,6 +85,8 @@ var checksum = await CommandExecutor.Default.ExecuteAsync(
 
 ## 错误与安全
 
+交互文件提示通过 `TextReader.ReadLineAsync` 异步读取，并传递命令取消令牌；EOF 结束提示，不打开文件。使用 `Terminal.ReactiveAsync` 的命令在中断或取消后等待退出清理，清理收到运行异常和不可取消的令牌。详见[终端输入](../Zongsoft.Core/docs/terminal-input.zh-Hans.md)。
+
 - 无效或缺失的选项会以命令选项异常报告；安全敏感参数不得静默采用默认值。
 - 文件删除、密钥导出、调度修改和消息发布都会改变外部状态，执行前应确认宿主、环境和提供程序。
 - 取消会传递给异步命令，但外部提供程序可能已经接受操作。

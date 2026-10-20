@@ -110,7 +110,7 @@ Discovery 只公布端口，客户端沿用连接 Discovery 的主机。因此�
 [独立服务端范例](samples/server/Program.cs) 在回环地址启动不带持久化的广播服务：
 
 ```csharp
-using var server = new ZeroQueueServer()
+await using var server = new ZeroQueueServer()
 {
 	Discovery = "tcp://127.0.0.1:7969",
 	Incoming = "tcp://127.0.0.1:32101",
@@ -240,7 +240,7 @@ Assert.True(await WaitForPendingCountAsync(scope, 0, TimeSpan.FromSeconds(5)));
 
 Broker 只在发送瞬间存在在线匹配订阅时接纳消息：没有订阅返回 `null` 且不写入 Storage；存在订阅则先持久化 Pending，再返回消息标识。之后按主题在在线订阅者间竞争投递，任一消费者确认即删除 Pending。未确认会沿用同一 `Message.Identifier` 重投，也可能改投另一个消费者，因此处理器必须保证业务幂等。
 
-`ZeroQueueServer.Storage` 与 `Storages` 只能在停止状态修改。启用 Control 后首次启动时调用 `Storages.Create(Storage)`，Server 拥有返回的存储器；普通 Stop 保留它以供重启复用，更换存储名、替换工厂、启动失败或释放 Server 时优先调用 `IAsyncDisposable` 释放。未配置 Control 和 Storage 时不调用工厂，发现响应仅包含 Incoming、Outgoing，LeastOnce 操作不可用。
+`ZeroQueueServer.Storage` 与 `Storages` 只能在停止状态修改。启用 Control 后每次启动调用 `Storages.Create(Storage)`，Server 拥有返回的存储器；停止、启动失败清理和释放 Server 都释放自有存储，优先调用 `IAsyncDisposable`。停止成功后重启会创建新的存储实例，工厂和配置保留。清理失败保留未释放的资源供显式重试；释放开始后仅允许再次 `DisposeAsync` 重试清理。未配置 Control 和 Storage 时不调用工厂，发现响应仅包含 Incoming、Outgoing，LeastOnce 操作不可用。
 
 | 消息选项 | 支持情况 |
 | --- | --- |

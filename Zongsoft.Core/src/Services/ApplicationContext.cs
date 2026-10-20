@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Reflection;
 using System.Security.Claims;
@@ -40,7 +41,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Zongsoft.Services;
 
 [DefaultMember(nameof(Modules))]
-public class ApplicationContext : IApplicationContext, IApplicationModule, IDisposable
+public partial class ApplicationContext : IApplicationContext, IApplicationModule, IHostedLifecycleService, IAsyncDisposable
 {
 	#region 单例字段
 	private volatile static IApplicationContext _current;
@@ -59,10 +60,9 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 	private readonly ServiceProvider _services;
 	private readonly List<Components.IWorker> _workers;
 	private List<IApplicationInitializer> _initializers;
+	private readonly HashSet<object> _serviceInitializers = new(ReferenceEqualityComparer.Instance);
 
-	private readonly CancellationTokenRegistration _applicationStarted;
-	private readonly CancellationTokenRegistration _applicationStopped;
-	private readonly CancellationTokenRegistration _applicationStopping;
+	private readonly IHostApplicationLifetime _lifetime;
 	#endregion
 
 	#region 构造函数
@@ -78,15 +78,7 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 		this.Modules = new ApplicationModuleCollection();
 		this.Properties = new Collections.Parameters();
 
-		var lifetime = _services.GetService<IHostApplicationLifetime>();
-
-		if(lifetime != null)
-		{
-			_applicationStarted = lifetime.ApplicationStarted.Register(this.OnStarted);
-			_applicationStopped = lifetime.ApplicationStopped.Register(this.OnStopped);
-			_applicationStopping = lifetime.ApplicationStopping.Register(this.OnStopping);
-		}
-
+		_lifetime = _services.GetService<IHostApplicationLifetime>();
 		_current = this;
 	}
 	#endregion
@@ -146,32 +138,18 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 	#endregion
 
 	#region 公共方法
-	public void Exit(TimeSpan timeout = default) => this.Exit(System.Environment.ExitCode, timeout);
-	public void Exit(int exitCode, TimeSpan timeout = default)
+	/// <summary>请求宿主停止；本方法不等待收尾，也不终止进程。</summary>
+	public void Exit() => this.Exit(System.Environment.ExitCode);
+	/// <summary>设置退出代码并请求宿主停止；进程由宿主入口在收尾完成后退出。</summary>
+	/// <param name="exitCode">宿主入口使用的进程退出代码。</param>
+	public void Exit(int exitCode)
 	{
 		if(_disposed != 0)
 			return;
 
-		var host = _services.Resolve<IHost>();
-		var lifetime = _services.GetService<IHostApplicationLifetime>();
-
-		if(host != null && lifetime != null)
-		{
-			//如果应用程序正在停止或已经停止，则不再执行停止操作，否则会导致死锁
-			var exiting = lifetime.ApplicationStopping.IsCancellationRequested || lifetime.ApplicationStopped.IsCancellationRequested;
-
-			if(!exiting)
-			{
-				if(timeout > TimeSpan.Zero)
-					host.StopAsync(timeout).GetAwaiter().GetResult();
-				else
-					host.StopAsync().GetAwaiter().GetResult();
-
-				host.WaitForShutdown();
-			}
-		}
-
-		System.Environment.Exit(exitCode);
+		var lifetime = _lifetime ?? _services.GetRequiredService<IHostApplicationLifetime>();
+		System.Environment.ExitCode = exitCode;
+		lifetime.StopApplication();
 	}
 	#endregion
 
@@ -196,7 +174,11 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 		var services = this.Services;
 
 		if(services != null)
-			_initializers.AddRange(services.ResolveAll<IApplicationInitializer>());
+		{
+			var initializers = services.ResolveAll<IApplicationInitializer>().ToArray();
+			_serviceInitializers.UnionWith(initializers);
+			_initializers.AddRange(initializers);
+		}
 
 		foreach(var initializer in _initializers)
 			initializer?.Initialize(this);
@@ -206,81 +188,13 @@ public class ApplicationContext : IApplicationContext, IApplicationModule, IDisp
 	#endregion
 
 	#region 激发事件
-	protected virtual void OnStarted()
-	{
-		//先启动所有的工作器
-		foreach(var worker in _workers)
-		{
-			if(worker != null && worker.Enabled)
-				ThreadPool.QueueUserWorkItem(state => ((Components.IWorker)state).Start(), worker);
-		}
-
-		//后触发“Started”事件
-		this.Started?.Invoke(this, EventArgs.Empty);
-	}
-
-	protected virtual void OnStopped()
-	{
-		this.Stopped?.Invoke(this, EventArgs.Empty);
-	}
-
-	protected virtual void OnStopping()
-	{
-		//先触发“Stopping”事件
-		this.Stopping?.Invoke(this, EventArgs.Empty);
-
-		//后停止所有的工作器
-		foreach(var worker in _workers)
-		{
-			if(worker != null && worker.Enabled)
-				worker.Stop();
-		}
-	}
+	protected virtual void OnStarted() => this.Started?.Invoke(this, EventArgs.Empty);
+	protected virtual void OnStopped() => this.Stopped?.Invoke(this, EventArgs.Empty);
+	protected virtual void OnStopping() => this.Stopping?.Invoke(this, EventArgs.Empty);
 	#endregion
 
 	#region 重写方法
 	public override string ToString() => $"{this.Name}@{this.Version}";
-	#endregion
-
-	#region 处置方法
-	public void Dispose()
-	{
-		this.Dispose(true);
-		GC.SuppressFinalize(this);
-	}
-
-	protected virtual void Dispose(bool disposing)
-	{
-		if(Interlocked.Exchange(ref _disposed, 1) != 0)
-			return;
-
-		if(disposing)
-		{
-			_applicationStarted.Dispose();
-			_applicationStopped.Dispose();
-			_applicationStopping.Dispose();
-
-			var initializers = Interlocked.Exchange(ref _initializers, null);
-
-			if(initializers != null)
-			{
-				foreach(var initializer in initializers)
-				{
-					if(initializer is IDisposable disposable)
-						disposable.Dispose();
-				}
-			}
-
-			foreach(var module in this.Modules)
-			{
-				if(module is IDisposable disposable)
-					disposable.Dispose();
-			}
-
-			//清空模块集
-			this.Modules.Clear();
-		}
-	}
 	#endregion
 
 	#region 嵌套子类

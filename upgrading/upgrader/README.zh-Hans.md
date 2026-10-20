@@ -76,7 +76,7 @@ dotnet add package Zongsoft.Upgrading.Upgrader
 </extension>
 ```
 
-该工作器按 `period` 周期检查升级。如果周期大于或等于五分钟，还会在启动约十秒后安排一次短延迟检查。
+该工作器串行检查升级。如果 `period` 大于或等于五分钟，首次检查在启动约十秒后发生，随后按配置周期检查；其它情况下首次检查也等待一个配置周期。每次启动创建独立计时器；停止会等待正在执行的检查退出并释放计时器，停止成功后可重新启动。释放通过同一停止流程永久关闭工作器。升级准备成功后先结束周期任务并释放计时资源，再由所属业务任务等待 `DeployAsync()`，避免宿主停止反向等待当前计时回调或通知。
 
 ## 手动调用
 
@@ -86,10 +86,12 @@ dotnet add package Zongsoft.Upgrading.Upgrader
 using Zongsoft.Upgrading;
 
 if(await Upgrader.UpgradeAsync("Web", cancellationToken))
-	Upgrader.Deploy();
+	await Upgrader.DeployAsync();
 ```
 
 当升级已准备完成，或者已有部署描述文件正在等待部署时，`UpgradeAsync` 返回 `true`。
+
+`DeployAsync()` 检查部署描述文件及部署器程序，然后启动部署器。成功启动后异步刷新日志，请求宿主停止并等待 `ApplicationStopped` 通知，最多等待三十秒；随后释放部署锁并退出当前进程。没有宿主上下文时直接退出。部署文件或程序不可用时记录错误并返回。调用方必须等待该方法。
 
 ## 通道行为
 

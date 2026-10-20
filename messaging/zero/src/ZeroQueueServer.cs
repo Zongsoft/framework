@@ -109,7 +109,6 @@ public sealed partial class ZeroQueueServer : WorkerBase
 				return;
 
 			_storageName = value;
-			DisposeStorage(Interlocked.Exchange(ref _storage, null));
 		}
 	}
 
@@ -125,84 +124,55 @@ public sealed partial class ZeroQueueServer : WorkerBase
 				return;
 
 			_storages = value;
-			DisposeStorage(Interlocked.Exchange(ref _storage, null));
 		}
 	}
 	#endregion
 
 	#region 重写方法
+	/// <summary>加载可靠消息并启动服务器的 Actor。</summary>
+	/// <param name="args">启动参数。</param>
+	/// <param name="cancellation">启动取消令牌。</param>
+	/// <returns>存储加载和服务器启动完成的任务。</returns>
 	protected override async Task OnStartAsync(string[] args, CancellationToken cancellation)
 	{
-		var storage = _storage;
-		ServerAgent agent = null;
+		cancellation.ThrowIfCancellationRequested();
+		this.Validate();
 
-		try
+		if(_control != null)
+			_storage = _storages.Create(_storageName) ?? throw new InvalidOperationException(string.Format(Properties.Resources.ZeroQueueServer_StorageMissing_Message, _storageName));
+
+		var pending = new System.Collections.Generic.List<Message>();
+		if(_storage != null)
 		{
-			cancellation.ThrowIfCancellationRequested();
-			this.Validate();
-
-			if(_control != null && storage == null)
-				_storage = storage = _storages.Create(_storageName) ?? throw new InvalidOperationException(string.Format(Properties.Resources.ZeroQueueServer_StorageMissing_Message, _storageName));
-
-			var pending = new System.Collections.Generic.List<Message>();
-			if(storage != null)
-			{
-				await foreach(var entry in storage.GetAsync(cancellation))
-					pending.Add(entry);
-			}
-
-			agent = new ServerAgent(_discovery, _control, _incoming, _outgoing, storage, pending);
-			await agent.StartAsync(cancellation);
-			_agent = agent;
+			await foreach(var entry in _storage.GetAsync(cancellation))
+				pending.Add(entry);
 		}
-		catch
-		{
-			if(agent != null)
-				await agent.DisposeAsync();
 
-			if(storage != null && ReferenceEquals(Interlocked.CompareExchange(ref _storage, null, storage), storage))
-				await DisposeStorageAsync(storage);
-
-			throw;
-		}
+		_agent = new ServerAgent(_discovery, _control, _incoming, _outgoing, _storage, pending);
+		await _agent.StartAsync(cancellation);
 	}
 
+	/// <summary>等待服务器 Actor、传输资源及自有存储释放。</summary>
+	/// <param name="args">停止参数。</param>
+	/// <param name="cancellation">停止阶段令牌；清理开始后等待其完成。</param>
+	/// <returns>服务器停止完成的任务。</returns>
 	protected override async Task OnStopAsync(string[] args, CancellationToken cancellation)
 	{
-		var agent = Interlocked.Exchange(ref _agent, null);
-		if(agent != null)
-			await agent.DisposeAsync();
-	}
-	#endregion
-
-	#region 释放资源
-	protected override void Dispose(bool disposing)
-	{
-		if(disposing)
+		if(_agent != null)
 		{
-			try
-			{
-				base.Dispose(disposing);
-				Interlocked.Exchange(ref _agent, null)?.DisposeAsync().AsTask().GetAwaiter().GetResult();
-			}
-			finally
-			{
-				DisposeStorage(Interlocked.Exchange(ref _storage, null));
-				_storages = null;
-			}
+			await _agent.DisposeAsync();
+			_agent = null;
 		}
+
+		await DisposeStorageAsync(_storage);
+		_storage = null;
 	}
 	#endregion
 
 	#region 私有方法
-	private static void DisposeStorage(IMessageStorage storage)
-	{
-		if(storage is IAsyncDisposable asynchronous)
-			asynchronous.DisposeAsync().AsTask().GetAwaiter().GetResult();
-		else if(storage is IDisposable disposable)
-			disposable.Dispose();
-	}
-
+	/// <summary>优先异步释放服务器拥有的存储。</summary>
+	/// <param name="storage">待释放的存储，可为空。</param>
+	/// <returns>存储释放完成的操作。</returns>
 	private static async ValueTask DisposeStorageAsync(IMessageStorage storage)
 	{
 		if(storage is IAsyncDisposable asynchronous)
@@ -211,6 +181,10 @@ public sealed partial class ZeroQueueServer : WorkerBase
 			disposable.Dispose();
 	}
 
+	/// <summary>在停止状态解析并验证服务器端点。</summary>
+	/// <param name="text">完整的 TCP 地址。</param>
+	/// <param name="optional">是否允许空地址。</param>
+	/// <returns>有效地址，允许空地址时可为空。</returns>
 	private NetworkAddress GetAddress(string text, bool optional = false)
 	{
 		if(this.State != WorkerState.Stopped)
@@ -228,6 +202,7 @@ public sealed partial class ZeroQueueServer : WorkerBase
 		return address;
 	}
 
+	/// <summary>验证端口唯一性及可靠投递的存储配置。</summary>
 	private void Validate()
 	{
 		if(_discovery.Port == _incoming.Port || _discovery.Port == _outgoing.Port || _incoming.Port == _outgoing.Port ||

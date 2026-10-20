@@ -57,7 +57,7 @@ public class FileCommand : CommandBase<CommandContext>, ICommandCompletion
 	#endregion
 
 	#region 执行方法
-	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		bool isSaving = context.Value != null;
 
@@ -68,13 +68,13 @@ public class FileCommand : CommandBase<CommandContext>, ICommandCompletion
 			access = isSaving ? FileAccess.ReadWrite : FileAccess.Read;
 
 		//打开一个或多个文件流
-		var result = FileUtility.OpenFile(context, mode, access, context.Options.GetValue<FileShare>(KEY_SHARE_OPTION));
+		var result = await FileUtility.OpenFileAsync(context, mode, access, context.Options.GetValue<FileShare>(KEY_SHARE_OPTION), cancellation).ConfigureAwait(false);
 
 		//如果是写入操作则执行保存方法
 		if(isSaving && result != null)
 			FileUtility.Save(result, context.Value, context.Options.GetValue<Encoding>(KEY_ENCODING_OPTION));
 
-		return ValueTask.FromResult(result);
+		return result;
 	}
 	#endregion
 

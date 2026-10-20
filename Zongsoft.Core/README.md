@@ -76,11 +76,39 @@ Ordinary `[Service]` registrations and option scanning still require externally 
 
 `EventExchanger` uses `IEventDispatcher` to capture ambient features and a fixed private `IExecutor<EventContext>` for remote delivery. `FeatureProvider.Default` includes `Transaction.Features`, the shared provider of transaction-bound features implementing `IFeature` and `IPredication`, including in standalone use. Applications can extend its `Providers` collection or register `IFeatureProvider` services to add conditions. Channels receive events through `IEventReceiver`. Queue event channels share the topic convention in `Events.GetTopic()` and the incoming message handler from `Events.GetHandler(receiver)`. Default delivery has no policy pipeline; application plugins can explicitly configure Polly policies through `EventDispatcher.Pipeline`. See [event dispatch and ambient features](docs/event-dispatching.md).
 
+## Application Lifetime
+
+`ApplicationContext` participates in the host's awaited startup and shutdown phases. `Exit()` and `Exit(exitCode)` request host shutdown; they do not terminate the process. `DisposeAsync()` waits for owned worker cleanup before releasing context resources. Application builders expose `BuildAsync()` so initialization failure can await asynchronous disposal. Container-resolved initializers and borrowed service-provider views retain their original owner.
+
+## Terminal Input
+
+`ITerminal.Input` uses `TextReader`, accepting `StreamReader` and `StringReader` directly. `Terminal.Console.Input` provides shared line input with process lifetime: only one caller can wait, and cancellation preserves the read and its result for a subsequent call. Executors do not dispose input. Injected readers follow their own cancellation and ownership contracts. See [Terminal input](docs/terminal-input.md).
+
+`ITerminalExecutor` runs its command loop through three `RunAsync` overloads and returns the exit code when the loop ends. Callers must await the task.
+
+`ITerminal.Abort()` synchronously notifies interruption and returns whether it was handled; it does not stop the executor or process. Hosts own process-signal policy. Core registers no global console signal handlers.
+
+## Periodic Work
+
+`Common.Timer` executes its constructor callback serially and accepts a `TimeProvider`. `Start()` schedules periodic execution. Startup, stopping, and disposal accept no cancellation tokens. `Stop()` requests internal cancellation without waiting for callbacks or cleanup; `StopAsync()` waits for shutdown. `Dispose()` permanently closes the timer without waiting, while `DisposeAsync()` awaits cleanup even after synchronous disposal. Callers must avoid using business operations after disposal or awaiting completion from within the same run. `Failed` reports run failures, and `Stopped` reports that the callback and resource cleanup have ended. Asynchronous stopping and disposal wait for notifications to return and propagate run and notification failures. The timer observes background task exceptions internally and does not write logs. See [Asynchronous periodic timers](docs/timers.md).
+
+[`Spooler<T>`](docs/spoolers.md) serializes batch callbacks triggered by a period, a full-buffer write, or an explicit flush. It supports consuming enumeration and inheritance. `PutAsync` admits data; `FlushAsync` waits for an active flush and processes remaining data once. Disposal is asynchronous: `DisposeAsync` stops admission and waits for active flushes and cleanup without draining the buffer. Periodic errors raise `Failed` and propagate from asynchronous disposal; the buffer does not write logs.
+
+Both constructors accept an optional `TimeProvider`. The `Zongsoft.Caching.Spooler` meter exposes admission, queue, flush duration, full-buffer wait, and failure metrics for application-selected export. `FileLogger` supports only asynchronous disposal and releases its resources after active file writes finish.
+
 ## Communication Lifetimes
 
 `ChannelBase.CloseAsync` executes once and shares its result with concurrent callers. Cancellation before entry prevents closing; after entry it only cancels that caller's wait. Closing and closed notifications cannot bypass transport cleanup. Disposal waits for closing before invoking the derived resource cleanup once. A closed channel cannot be reopened; create a new instance. Lifecycle callbacks may request closing but must not synchronously wait for the operation that contains them.
 
-`WorkerBase` coordinates start, stop, pause and resume asynchronously and supports `IAsyncDisposable`. Startup failures propagate and invoke the stop hook to clean partially initialized resources. Stop failures retain `Stopping` and block restart until cleanup succeeds; notification failures do not roll back established state. Synchronous entry points block on the same asynchronous operations.
+`WorkerBase` coordinates start, stop, pause and resume asynchronously and supports `IAsyncDisposable`. Matching in-flight actions share their result. Stop waits for the current action; start, pause and resume return without scheduling work when a different action is in progress. Starting during stop does not schedule a restart, and pausing during startup does not schedule a subsequent pause. Startup failures propagate and invoke the stop hook to clean partially initialized resources. Stop failures retain `Stopping` and block restart until cleanup succeeds; notification failures do not roll back established state. `IWorker` exposes `StartAsync`, `StopAsync`, `PauseAsync` and `ResumeAsync`. `WorkerBase` and `IListener<T>` expose disposal through `IAsyncDisposable`; owners use `await using` or await `DisposeAsync`. `Enabled` only controls whether a worker may start. Changes after startup begins apply to the next start; they do not stop the current run or affect pause, resume, stop or disposal.
+
+State notifications retain the action names `Start`, `Stop`, `Pause` and `Resume`. `OnStopAsync` stops execution and releases all owned resources, including partial initialization and retries after failure. A successfully stopped worker can start again. Pause preserves resources and internal state; resume continues with them. If either operation fails, its implementation must undo partial changes while the base class restores `Running` or `Paused`. Implementations without pause/resume support expose `CanPauseAndContinue = false`.
+
+`DisposeAsync` permanently disables the instance and cleans up through `OnStopAsync`, including instances that have never started. Concurrent disposal calls share the current attempt. Cleanup failures propagate; a later `DisposeAsync` retries cleanup, and successful disposal makes subsequent calls no-ops. Once disposal begins, new start, stop, pause and resume calls throw `ObjectDisposedException`; previously accepted operations finish their cleanup. `IsDisposed` indicates successful cleanup. Diagnostic properties and `ToString` remain readable. Notification failures do not undo completed cleanup. Canceling a stop waiter only ends that wait.
+
+Lifecycle hooks and `StateChanged` handlers must complete their own work without waiting for lifecycle or disposal operations on the same worker. Callers are responsible for avoiding dependency cycles. The owner coordinates subsequent operations outside the callback after the current operation completes. Calls to other workers are supported when they do not create a dependency cycle. Callbacks may change `Enabled`; assigning it does not initiate a lifecycle operation. See `WorkerCallbackTest` for worker composition and sequential operations from background tasks.
+
+`start`, `stop`, `pause` and `resume` commands await the corresponding asynchronous worker operation and forward command cancellation. Their `--timeout` option limits command waiting only: it defaults to five seconds, uses five seconds for non-positive values, and is capped at thirty seconds. Expiration raises `TimeoutException` without canceling the worker operation; its eventual result remains the worker's responsibility, and the command does not produce late completion output. Pause and resume ignore requests that do not apply to the current state. Completion hooks receive the command context, worker and timeout; the resume hook is `WorkerResumeCommand.OnResumed`.
 
 `ListenerBase<T>` dispatches handler arguments without decoding bytes and does not own injected handlers. An absent handler is a no-op with cancellation checking. Parameterless `HandlerBase<T>` calls pass null parameters; explicitly supplied parameters retain their identity. Both `IPacketizer` interfaces define only `Pack` and `Unpack`: encode without flushing, leave incomplete input untouched, and advance input after successful decoding. Exact frame lengths and decoded-resource release belong to the transport implementation; Net supplies these through its packetizer base class.
 
@@ -89,7 +117,7 @@ Ordinary `[Service]` registrations and option scanning still require externally 
 ```text
 Zongsoft.Core/
   src/        Main library source code.
-  test/       xUnit tests for core behaviors.
+  test/       xUnit unit tests; test/integration contains separate OS input tests.
   samples/    Console samples for MemoryCache, Spooler, Superviser, and EventExchanger.
   benchmark/  BenchmarkDotNet benchmarks for reflection, data model helpers, and Spooler batching.
 ```
