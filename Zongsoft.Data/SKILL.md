@@ -91,7 +91,7 @@ sorting ::= "(" { ["~"|"-"|"+"]identifier } [,...n] ")"
 ### 重构注意事项
 
 - 保持「`SchemaParserBase`（通用文本解析）→ `SchemaParser`（元数据解析）→ 语句构建器（SQL 生成）」的分层，不要把元数据逻辑下沉到基类。
-- 状态机位于 `SchemaParserBase.StateContext`（包括普通成员、点路径、排除、限量与排序状态），重构词法或语法时先跑 `Zongsoft.Core/test/Data/SchemaTest.cs` 中的回归用例。
+- 状态机位于 `SchemaParserBase.StateContext`（包括普通成员、点路径、排除、限量与排序状态），重构词法或语法时先跑 `Zongsoft.Core/test/unit/Data/SchemaTest.cs` 中的回归用例。
 - 已确认的 XSD 与加载器差异（重构时统一）：`complexProperty` 的 `immutable` XSD 缺省 `true`、加载器缺省 `false`；`command` 的 `mutability` XSD 缺省 `none`、加载器缺省 `Delete|Insert|Update`。
 - 通配符只展开映射中的简单属性，不自动枚举模型计算成员，也不要在解析后的 Schema 中保留 `*` 来源。
 - `Schema.Text` 保留原始表达式，`Schema.ToString()` 输出当前成员树的规范化花括号文本；空的映射导航输出 `{}` 以避免再次解析时被当作裸导航自动展开。

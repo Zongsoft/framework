@@ -81,7 +81,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 		var options = context.Options.TryGetValue<MessageReliability>("qos", out var reliability) ? new MessageEnqueueOptions(reliability) : MessageEnqueueOptions.Default;
 		var tags = context.Options.TryGetValue<string>("tags", out value) ? value : null;
 
-		var result = await ExecuteCoreAsync(context, data => queue.ProduceAsync(this.Topic, tags, data, options), cancellation);
+		var result = await ExecuteCoreAsync(context, data => queue.ProduceAsync(this.Topic, tags, data, options, cancellation), cancellation);
 		return result;
 	}
 
@@ -101,17 +101,20 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 					list.Add(messageId);
 					break;
 				case Stream stream:
-					using(var reader = new BinaryReader(stream))
+					await using(stream)
 					{
-						messageId = await invoke(reader.ReadBytes((int)(stream.Length - stream.Position)));
-						PrintMessage(context.Output, list.Count, ContentType.Binary, (int)stream.Length, stream.ToString(), messageId);
+						using var buffer = new MemoryStream();
+						await stream.CopyToAsync(buffer, cancellation);
+						messageId = await invoke(buffer.ToArray());
+						PrintMessage(context.Output, list.Count, ContentType.Binary, checked((int)buffer.Length), stream.ToString(), messageId);
 						list.Add(messageId);
 					}
 					break;
 			}
 
-			var entries = ResolveValue(context, list.Count, async data => data == null ? null : await invoke(data));
-			list.AddRange(entries.Synchronize(cancellation));
+			var entries = ResolveValue(context, list.Count, async data => data == null ? null : await invoke(data), cancellation);
+			await foreach(var entry in entries.WithCancellation(cancellation))
+				list.Add(entry);
 		}
 
 		return list;
@@ -119,7 +122,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 	#endregion
 
 	#region 私有方法
-	private static async IAsyncEnumerable<string> ResolveValue(CommandContext context, int cardinal, Func<byte[], ValueTask<string>> fallback)
+	private static async IAsyncEnumerable<string> ResolveValue(CommandContext context, int cardinal, Func<byte[], ValueTask<string>> fallback, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellation)
 	{
 		string messageId;
 		byte[] data;
@@ -135,7 +138,7 @@ public class QueueProduceCommand : CommandBase<CommandContext>
 						continue;
 					}
 
-					data = File.ReadAllBytes(arg.ToString());
+					data = await File.ReadAllBytesAsync(arg, cancellation);
 					messageId = await fallback(data);
 					PrintMessage(context.Output, cardinal++, ContentType.File, data.Length, arg, messageId);
 					yield return messageId;

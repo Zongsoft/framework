@@ -108,7 +108,7 @@ podman exec --workdir /Zongsoft/framework/upgrading/deployer -it zongsoft.framew
 
 修改清理或复制行为时，验证 `Fully` 和 `Delta` 两种模式，并保留包目录遍历语义。
 
-修改重启行为时，更新匹配的 launcher 文件，并确认 `Launcher.Launch` 仍按 `app.type` 的 `Web`、`Daemon`、`Terminal` 和 fallback 选择。
+修改重启行为时，更新匹配的 launcher 文件，并确认 `Launcher.LaunchAsync` 仍按 `app.type` 的 `Web`、`Daemon`、`Terminal` 和 fallback 选择。
 
 修改命令行参数时，更新 `README.md`，并保持兼容 upgrader 生成的参数：
 

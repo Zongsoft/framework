@@ -58,7 +58,6 @@ public abstract class MessageStorageBase<TSettings> : IMessageStorage where TSet
 	#region 公共属性
 	/// <summary>获取存储器的名称。</summary>
 	public virtual string Name { get; }
-
 	#endregion
 
 	#region 保护属性

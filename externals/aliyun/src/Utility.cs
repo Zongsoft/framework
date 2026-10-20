@@ -126,10 +126,6 @@ public static class Utility
 	/// <typeparam name="T">返回值的类型。</typeparam>
 	/// <param name="thunk">异步任务的委托。</param>
 	/// <returns>返回以同步方式返回异步任务的执行结果。</returns>
-	public static T ExecuteTask<T>(Func<Task<T>> thunk)
-	{
-		return Task.Run(() => ExecuteTaskDelegate(() => thunk())).Result;
-	}
 	#endregion
 
 	#region 私有方法

@@ -94,3 +94,7 @@ nuget:Zongsoft.Externals.Aliyun
 Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
 
 Additional artifacts listed by the deployment manifest include `Zongsoft.Externals.Aliyun.plugin`, `Zongsoft.Externals.Aliyun.option`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.
+
+## Asynchronous storage and messaging
+
+OSS operations and streams require asynchronous I/O. The shared synchronous file-system contracts remain, but this adapter rejects synchronous storage access. Use `await using` for owned cloud streams; disposal waits for multipart completion and propagates commit or abort failures. After a failed write, disposal aborts the upload rather than committing partial data. Message queues and topics also require awaited disposal.

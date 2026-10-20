@@ -69,7 +69,7 @@ reset
 close
 ```
 
-`info` displays the queue and every active subscription, including its tags. `reset` clears the received-message counter. `close` disposes the queue; restart the process before issuing more messaging commands.
+`info` displays the queue and every active subscription, including its tags. `reset` clears the received-message counter. `close` awaits queue disposal, including subscription cleanup; restart the process before issuing more messaging commands.
 
 ### Suggested Scenario
 

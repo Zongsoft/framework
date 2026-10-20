@@ -46,7 +46,7 @@ using StackExchange.Redis;
 
 namespace Zongsoft.Externals.Redis;
 
-public sealed partial class RedisService : IDisposable, IAsyncDisposable
+public sealed partial class RedisService : IAsyncDisposable
 {
 	#region 成员字段
 	private readonly string _name;
@@ -154,31 +154,6 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 
 			return _database;
 		}
-	}
-
-	internal IDictionary<string, string> GetStringEntries(string prefix)
-	{
-		if(string.IsNullOrEmpty(prefix))
-			throw new ArgumentNullException(nameof(prefix));
-
-		this.Connect();
-		var physicalPrefix = this.GetKey(prefix) + ":";
-		var keys = this.ScanKeys(EscapePattern(physicalPrefix) + "*").ToArray();
-		var result = new Dictionary<string, string>(keys.Length, StringComparer.OrdinalIgnoreCase);
-
-		if(keys.Length == 0)
-			return result;
-
-		var batch = _database.CreateBatch();
-		var tasks = new Task<RedisValue>[keys.Length];
-		for(int i = 0; i < keys.Length; i++)
-			tasks[i] = batch.StringGetAsync(keys[i]);
-		batch.Execute();
-		Task.WaitAll(tasks);
-
-		for(int i = 0; i < keys.Length; i++)
-			result[((string)keys[i])[physicalPrefix.Length..]] = tasks[i].Result;
-		return result;
 	}
 	#endregion
 
@@ -625,8 +600,42 @@ public sealed partial class RedisService : IDisposable, IAsyncDisposable
 	}
 	#endregion
 
+	#region 内部方法
+	internal async ValueTask<IDictionary<string, string>> GetConfigurationAsync(string prefix, CancellationToken cancellation)
+	{
+		ArgumentException.ThrowIfNullOrEmpty(prefix);
+		await this.ConnectAsync(cancellation);
+		var key = this.GetKey(prefix);
+		var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+		if(await _database.KeyTypeAsync(key) == RedisType.Hash)
+		{
+			var entries = await _database.HashGetAllAsync(key);
+			cancellation.ThrowIfCancellationRequested();
+
+			foreach(var entry in entries)
+				result[entry.Name] = entry.Value;
+		}
+		else
+		{
+			var physicalPrefix = key + ":";
+			var keys = new List<RedisKey>();
+			await foreach(var entry in this.ScanKeysAsync(EscapePattern(physicalPrefix) + "*", cancellation))
+				keys.Add(entry);
+
+			//逐键命令适用于跨哈希槽配置；所有请求均完成后再发布快照。
+			var values = await Task.WhenAll(keys.Select(entry => _database.StringGetAsync(entry)));
+			cancellation.ThrowIfCancellationRequested();
+
+			for(int i = 0; i < keys.Count; i++)
+				result[((string)keys[i])[physicalPrefix.Length..]] = values[i];
+		}
+
+		return result;
+	}
+	#endregion
+
 	#region 处置方法
-	public void Dispose() => this.DisposeAsync().AsTask().GetAwaiter().GetResult();
 	public ValueTask DisposeAsync()
 	{
 		var disposal = Volatile.Read(ref _disposal);

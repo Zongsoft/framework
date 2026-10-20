@@ -87,6 +87,15 @@ namespace Zongsoft.Externals.Redis.Properties {
             }
         }
 
+		/// <summary>
+		///   查找类似 Await LoadAsync before adding this remote configuration source to a configuration builder. 的本地化字符串。
+		/// </summary>
+		internal static string Configuration_AsyncLoadRequired_Message {
+			get {
+				return ResourceManager.GetString("Configuration.AsyncLoadRequired.Message", resourceCulture);
+			}
+		}
+
         /// <summary>
         ///   查找类似 Connected 的本地化字符串。
         /// </summary>

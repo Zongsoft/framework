@@ -412,42 +412,6 @@ namespace Zongsoft.Plugins.Properties {
         }
 
         /// <summary>
-        ///   查找类似 Can not parse for the predication. 的本地化字符串。
-        /// </summary>
-        internal static string Predication_ParseFailed_Message {
-            get {
-                return ResourceManager.GetString("Predication.ParseFailed.Message", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   查找类似 The &apos;{0}&apos; ServiceProvider is not exists on the predication parsing. 的本地化字符串。
-        /// </summary>
-        internal static string Predication_ServiceProviderNotFound_Message {
-            get {
-                return ResourceManager.GetString("Predication.ServiceProviderNotFound.Message", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   查找类似 Can not parse for the predication because of a syntax error. 的本地化字符串。
-        /// </summary>
-        internal static string Predication_SyntaxInvalid_Message {
-            get {
-                return ResourceManager.GetString("Predication.SyntaxInvalid.Message", resourceCulture);
-            }
-        }
-
-        /// <summary>
-        ///   查找类似 Can not parse for the predication because the parser text is empty. 的本地化字符串。
-        /// </summary>
-        internal static string Predication_TextRequired_Message {
-            get {
-                return ResourceManager.GetString("Predication.TextRequired.Message", resourceCulture);
-            }
-        }
-
-        /// <summary>
         ///   查找类似 Missing the required command executor of the terminal. 的本地化字符串。
         /// </summary>
         internal static string Terminal_ExecutorRequired_Message {

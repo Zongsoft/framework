@@ -428,13 +428,12 @@ A standalone expression preserves the returned object. A recognized expression s
 | `service` | [ServicesParser](src/Services/ServicesParser.cs): container or service resolution |
 | `resource` | [ResourceParser](src/Resources/ResourceParser.cs): resource lookup and optional formatting |
 | `command` | [CommandParser](src/Components/CommandParser.cs): a command delegate for later execution |
-| `predicate` | [PredicateParser](src/Parsers/PredicateParser.cs): immediate predicate evaluation |
 
 The path parser accepts an obtain-mode suffix, such as `{path:/Workbench/Catalog,Never}`, and uses `Auto` by default. `~` identifies the plugin file and `~/` its directory. Member resolution uses `@`, not a slash between the object and its CLR member.
 
 Resource lookup searches plugin assemblies, dependencies and ancestors, with framework/entry-assembly fallbacks. Resource base names include the assembly name and conventional `Resources` / `Properties.Resources` names. A missing resource returns the input resource text.
 
-A command expression creates a delegate that calls `CommandExecutor.Default.ExecuteAsync` when invoked; parsing does not execute it. A predicate expression evaluates during parsing, resolving a named predicate from application/module services. An incomplete asynchronous predicate is synchronously awaited by this parser.
+A command expression creates a delegate that calls `CommandExecutor.Default.ExecuteAsync` when invoked; parsing does not execute it.
 
 ## 12. Dependency injection and module lookup
 

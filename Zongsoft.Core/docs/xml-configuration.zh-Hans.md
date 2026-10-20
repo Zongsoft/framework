@@ -210,4 +210,4 @@ var values = XmlStreamConfigurationProvider.Read(stream, out var instructions);
 
 重载失败遵循 `FileConfigurationProvider` 的清空与异常处理规则，包括 `OnLoadException`；不恢复上一次成功结果。已经发现的依赖继续接收通知，以便后续变更重新触发加载。多文件读取不提供文件系统事务快照。
 
-配置映射回归位于 [OptionConfigurationTest.cs](../test/Configuration/Xml/OptionConfigurationTest.cs)。同目录的 PI、[处理器](../test/Configuration/Xml/XmlConfigurationProcessorTest.cs)、[导入](../test/Configuration/Xml/XmlConfigurationImportTest.cs)和[重载](../test/Configuration/Xml/XmlConfigurationImportReloadTest.cs)测试覆盖词法、原始定义、回调快照、路径筛选、覆盖顺序、错误、流所有权、循环与通知释放。
+配置映射回归位于 [OptionConfigurationTest.cs](../test/unit/Configuration/Xml/OptionConfigurationTest.cs)。同目录的 PI、[处理器](../test/unit/Configuration/Xml/XmlConfigurationProcessorTest.cs)、[导入](../test/unit/Configuration/Xml/XmlConfigurationImportTest.cs)和[重载](../test/unit/Configuration/Xml/XmlConfigurationImportReloadTest.cs)测试覆盖词法、原始定义、回调快照、路径筛选、覆盖顺序、错误、流所有权、循环与通知释放。

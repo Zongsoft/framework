@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -108,34 +108,6 @@ public struct Message
 
 	#region 公共方法
 	/// <summary>应答消息。</summary>
-	public readonly void Acknowledge() => this.Acknowledge(TimeSpan.Zero);
-
-	/// <summary>应答消息。</summary>
-	/// <param name="delay">指定的应答延迟。</param>
-	public readonly void Acknowledge(TimeSpan delay)
-	{
-		var acknowledger = _acknowledger;
-
-		if(acknowledger == null)
-			return;
-
-		if(acknowledger.Method.ReturnType == null || acknowledger.Method.ReturnType == typeof(void))
-		{
-			if(acknowledger.Method.GetParameters().Length == 0)
-				acknowledger.DynamicInvoke();
-			else
-				acknowledger.DynamicInvoke(delay);
-		}
-		else
-		{
-			if(acknowledger.Method.GetParameters().Length == 1)
-				((ValueTask)acknowledger.DynamicInvoke(CancellationToken.None)).GetAwaiter().GetResult();
-			else
-				((ValueTask)acknowledger.DynamicInvoke(delay, CancellationToken.None)).GetAwaiter().GetResult();
-		}
-	}
-
-	/// <summary>应答消息。</summary>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
 	/// <returns>返回的异步任务。</returns>
 	public readonly ValueTask AcknowledgeAsync(CancellationToken cancellation = default) => this.AcknowledgeAsync(TimeSpan.Zero, cancellation);
@@ -146,22 +118,21 @@ public struct Message
 	/// <returns>返回的异步任务。</returns>
 	public readonly ValueTask AcknowledgeAsync(TimeSpan delay, CancellationToken cancellation = default)
 	{
-		var acknowledger = _acknowledger;
-
-		if(acknowledger == null)
-			return ValueTask.CompletedTask;
-
-		if(_acknowledger.Method.ReturnType == null || _acknowledger.Method.ReturnType == typeof(void))
+		switch(_acknowledger)
 		{
-			if(acknowledger.Method.GetParameters().Length == 0)
-				acknowledger.DynamicInvoke();
-			else
-				acknowledger.DynamicInvoke(delay);
-
-			return ValueTask.CompletedTask;
+			case Action acknowledge:
+				acknowledge();
+				return ValueTask.CompletedTask;
+			case Action<TimeSpan> acknowledge:
+				acknowledge(delay);
+				return ValueTask.CompletedTask;
+			case Func<CancellationToken, ValueTask> acknowledge:
+				return acknowledge(cancellation);
+			case Func<TimeSpan, CancellationToken, ValueTask> acknowledge:
+				return acknowledge(delay, cancellation);
+			default:
+				return ValueTask.CompletedTask;
 		}
-
-		return acknowledger.Method.GetParameters().Length == 1 ? (ValueTask)_acknowledger.DynamicInvoke(cancellation) : (ValueTask)_acknowledger.DynamicInvoke(delay, cancellation);
 	}
 	#endregion
 

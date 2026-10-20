@@ -364,7 +364,7 @@ public class RedisCacheNotificationTests
 	}
 
 	[Fact]
-	public async Task SynchronousServiceDispose_ClosesActiveSubscription()
+	public async Task DisposeAsync_ClosesActiveSubscription()
 	{
 		EnsureRedisNotifications();
 
@@ -372,7 +372,7 @@ public class RedisCacheNotificationTests
 		using var buffer = new NotificationBuffer();
 		var subscription = await cache.SubscribeAsync(buffer);
 
-		cache.Dispose();
+		await cache.DisposeAsync();
 
 		Assert.True(subscription.IsClosed);
 		Assert.True(subscription.IsDisposed);

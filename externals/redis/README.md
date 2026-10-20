@@ -155,3 +155,9 @@ nuget:Zongsoft.Externals.Redis
 Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
 
 Additional artifacts listed by the deployment manifest include `Zongsoft.Externals.Redis.plugin`, `Zongsoft.Externals.Redis.option`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.
+
+## Asynchronous configuration and disposal
+
+Preload a `RedisConfigurationSource` with `await source.LoadAsync(cancellation)` before adding it to a configuration builder. `Build` and `Load` then expose the loaded in-memory snapshot; they do not wait for Redis. Keep the source alive while configuration is used and await `source.DisposeAsync()` at shutdown to stop notifications and drain pending work. An uninitialized source is rejected. A configuration root's synchronous disposal alone does not own this asynchronous lifetime.
+
+Owned Redis services, message storage, queues and distributed locks require awaited disposal. Use their asynchronous operations in application paths. Native Redis synchronous contracts remain available where required by the data engine.

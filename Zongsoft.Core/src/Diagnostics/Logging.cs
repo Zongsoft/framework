@@ -39,7 +39,12 @@ namespace Zongsoft.Diagnostics;
 public sealed class Logging
 {
 	#region 静态字段
+	private const int PENDING_LIMIT = 4096;
 	private static readonly List<ILogger> _loggers = new();
+	private static readonly object _sync = new();
+	private static readonly Queue<(Func<ValueTask> Operation, TaskCompletionSource Completion)> _pending = new();
+	private static Task _consumer = Task.CompletedTask;
+	private static Exception _failure;
 	private static readonly ConcurrentDictionary<string, Logging> _factory = new(StringComparer.Ordinal);
 	private static readonly Lazy<Logging> _default = new(() => new(Assembly.GetEntryAssembly().GetName().Name), true);
 	#endregion
@@ -163,35 +168,110 @@ public sealed class Logging
 	#endregion
 
 	#region 静态日志
-	/// <summary>将所有日志刷新到持久化存储。</summary>
-	public static void Flush() => FlushAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-
-	/// <summary>将所有日志刷新到持久化存储。</summary>
+	/// <summary>等待此前同步入口已接受的日志，并将所有日志刷新到持久化存储。</summary>
 	/// <param name="cancellation">指定的异步操作取消标记。</param>
-	/// <returns>返回的异步任务。</returns>
+	/// <returns>返回的异步任务，包含排队日志或刷新失败。</returns>
 	public static ValueTask FlushAsync(CancellationToken cancellation = default)
 	{
-		if(_loggers.Count == 0)
-			return ((ILogger)TextFileLogger.Default).FlushAsync(cancellation);
+		var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var loggers = GetLoggers();
 
-		var tasks = new List<Task>(_loggers.Count);
+		lock(_sync)
+		{
+			_pending.Enqueue((() => DispatchAsync(loggers, logger => logger.FlushAsync(cancellation)), completion));
+			StartConsumer();
+		}
 
-		foreach(var logger in _loggers)
-			tasks.Add(logger.FlushAsync(cancellation).AsTask());
+		return new(completion.Task);
+	}
+
+	/// <summary>将日志放入有界内存队列；调用方必须在释放日志器前等待 FlushAsync。</summary>
+	/// <typeparam name="TLog">日志类型。</typeparam>
+	/// <param name="log">待记录的日志。</param>
+	public static void Log<TLog>(TLog log) where TLog : ILog
+	{
+		if(log == null)
+			return;
+
+		var loggers = GetLoggers();
+
+		lock(_sync)
+		{
+			if(_pending.Count >= PENDING_LIMIT)
+				throw new InvalidOperationException(Properties.Resources.Logging_QueueFull_Message);
+
+			_pending.Enqueue((() => DispatchAsync(loggers, logger => logger.LogAsync(log)), null));
+			StartConsumer();
+		}
+	}
+
+	public static ValueTask LogAsync<TLog>(TLog log, CancellationToken cancellation = default) where TLog : ILog =>
+		log == null ? ValueTask.CompletedTask : DispatchAsync(GetLoggers(), logger => logger.LogAsync(log, cancellation));
+	#endregion
+
+	#region 私有方法
+	private static ILogger[] GetLoggers() => _loggers.Count == 0 ? [TextFileLogger.Default] : _loggers.ToArray();
+
+	private static ValueTask DispatchAsync(ILogger[] loggers, Func<ILogger, ValueTask> operation)
+	{
+		var tasks = new Task[loggers.Length];
+
+		for(var i = 0; i < loggers.Length; i++)
+		{
+			try { tasks[i] = operation(loggers[i]).AsTask(); }
+			catch(Exception exception) { tasks[i] = Task.FromException(exception); }
+		}
 
 		return new(Task.WhenAll(tasks));
 	}
 
-	public static void Log<TLog>(TLog log) where TLog : ILog => LogAsync(log).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-	public static ValueTask LogAsync<TLog>(TLog log, CancellationToken cancellation = default) where TLog : ILog
+	private static void StartConsumer()
 	{
-		if(log == null)
-			return ValueTask.CompletedTask;
+		//唯一后台任务由 FlushAsync 的队列屏障等待；空闲时退出。
+		if(_consumer.IsCompleted)
+			_consumer = Task.Run(ConsumeAsync);
+	}
 
-		if(_loggers.Count == 0 && log is LogEntry entry)
-			return TextFileLogger.Default.LogAsync(entry, cancellation);
-		else
-			return new ValueTask(Parallel.ForEachAsync(_loggers, (logger, cancellation) => logger.LogAsync(log, cancellation)));
+	private static async Task ConsumeAsync()
+	{
+		while(true)
+		{
+			(Func<ValueTask> Operation, TaskCompletionSource Completion) pending;
+
+			lock(_sync)
+			{
+				if(!_pending.TryDequeue(out pending))
+				{
+					_consumer = Task.CompletedTask;
+					return;
+				}
+			}
+
+			Exception failure = null;
+
+			try { await pending.Operation().ConfigureAwait(false); }
+			catch(Exception exception) { failure = exception; }
+
+			if(pending.Completion == null)
+			{
+				//保留首个失败直至下一次刷新，避免持续故障时无限积累异常。
+				_failure ??= failure;
+				continue;
+			}
+
+			if(_failure != null)
+			{
+				failure = failure == null ? _failure : new AggregateException(_failure, failure);
+				_failure = null;
+			}
+
+			if(failure is OperationCanceledException canceled)
+				pending.Completion.TrySetCanceled(canceled.CancellationToken);
+			else if(failure != null)
+				pending.Completion.TrySetException(failure);
+			else
+				pending.Completion.TrySetResult();
+		}
 	}
 	#endregion
 }

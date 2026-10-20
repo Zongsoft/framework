@@ -29,10 +29,11 @@
 
 using System;
 using System.IO;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Net.Http;
 using System.Xml;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Zongsoft.Externals.Aliyun.Storages;
 
@@ -60,7 +61,7 @@ internal class StorageSearchResultResolver : IDisposable
 	#endregion
 
 	#region 解析方法
-	public async Task<StorageSearchResult> Resolve(HttpResponseMessage response)
+	public async Task<StorageSearchResult> ResolveAsync(HttpResponseMessage response, CancellationToken cancellation)
 	{
 		if(response == null)
 			throw new ArgumentNullException("response");
@@ -72,9 +73,8 @@ internal class StorageSearchResultResolver : IDisposable
 			return null;
 
 		StorageSearchResult result = null;
-		//var contentStream = await response.Content.ReadAsStreamAsync();
-		var contentText = await response.Content.ReadAsStringAsync();
-		var contentStream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(contentText));
+		var content = await response.Content.ReadAsByteArrayAsync(cancellation);
+		using var contentStream = new MemoryStream(content);
 
 		this.ResolveCore(contentStream, (bucketName, pattern, marker) =>
 		{
@@ -85,7 +85,7 @@ internal class StorageSearchResultResolver : IDisposable
 		return result;
 	}
 
-	public string Reload(StorageSearchResult owner, HttpResponseMessage response)
+	public async Task<string> ReloadAsync(StorageSearchResult owner, HttpResponseMessage response, CancellationToken cancellation)
 	{
 		if(owner == null)
 			throw new ArgumentNullException("owner");
@@ -99,7 +99,9 @@ internal class StorageSearchResultResolver : IDisposable
 		if(response.Content.Headers.ContentLength == null || response.Content.Headers.ContentLength < 1)
 			return null;
 
-		return this.ResolveCore(response.Content.ReadAsStreamAsync().Result, (_, __, ___) => owner);
+		var content = await response.Content.ReadAsByteArrayAsync(cancellation);
+		using var stream = new MemoryStream(content);
+		return this.ResolveCore(stream, (_, __, ___) => owner);
 	}
 
 	private string ResolveCore(Stream stream, Func<string, string, string, StorageSearchResult> thunk)

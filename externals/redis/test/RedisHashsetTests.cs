@@ -24,11 +24,11 @@ public class RedisHashsetTests
 
 	[Theory]
 	[MemberData(nameof(SetOperations))]
-	public void SetAlgebra_DuplicatesAndNullMembers_MatchesHashSet(string operation, string[] items, string[] expected)
+	public async Task SetAlgebra_DuplicatesAndNullMembers_MatchesHashSet(string operation, string[] items, string[] expected)
 	{
 		EnsureRedis();
 
-		using var cache = CreateCache(out var cacheNamespace);
+		await using var cache = CreateCache(out var cacheNamespace);
 		Assert.True(cache.SetValue("set", new HashSet<string> { "alpha", "beta" }));
 		var set = Assert.IsType<RedisHashset>(cache.GetValue<ISet<string>>("set"));
 		var operand = items.Concat([null]);
@@ -56,11 +56,11 @@ public class RedisHashsetTests
 	}
 
 	[Fact]
-	public void SetRelationships_DuplicatesEmptyAndNullMembers_MatchHashSet()
+	public async Task SetRelationships_DuplicatesEmptyAndNullMembers_MatchHashSet()
 	{
 		EnsureRedis();
 
-		using var cache = CreateCache(out _);
+		await using var cache = CreateCache(out _);
 		Assert.True(cache.SetValue("set", new HashSet<string> { "alpha", "beta" }));
 		var set = Assert.IsType<RedisHashset>(cache.GetValue<ISet<string>>("set"));
 
@@ -80,11 +80,11 @@ public class RedisHashsetTests
 	}
 
 	[Fact]
-	public void SetAlgebra_EmptyAndSelfOperands_HaveStandardSemantics()
+	public async Task SetAlgebra_EmptyAndSelfOperands_HaveStandardSemantics()
 	{
 		EnsureRedis();
 
-		using var cache = CreateCache(out var cacheNamespace);
+		await using var cache = CreateCache(out var cacheNamespace);
 		Assert.True(cache.SetValue("set", new HashSet<string> { "alpha", "beta" }));
 		var set = Assert.IsType<RedisHashset>(cache.GetValue<ISet<string>>("set"));
 
@@ -109,11 +109,11 @@ public class RedisHashsetTests
 	}
 
 	[Fact]
-	public void SetMethods_NullEnumerable_ThrowArgumentNullException()
+	public async Task SetMethods_NullEnumerable_ThrowArgumentNullException()
 	{
 		EnsureRedis();
 
-		using var cache = CreateCache(out _);
+		await using var cache = CreateCache(out _);
 		Assert.True(cache.SetValue("set", new HashSet<string> { "alpha" }));
 		var set = Assert.IsType<RedisHashset>(cache.GetValue<ISet<string>>("set"));
 
@@ -134,7 +134,7 @@ public class RedisHashsetTests
 	{
 		EnsureRedis();
 
-		using var cache = CreateCache(out var cacheNamespace);
+		await using var cache = CreateCache(out var cacheNamespace);
 		using var connection = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password},connectTimeout=2000");
 		var database = connection.GetDatabase();
 		var destination = $"destination-{Guid.NewGuid():N}";
@@ -158,11 +158,11 @@ public class RedisHashsetTests
 	}
 
 	[Fact]
-	public void CopyTo_ValidatesCapacityAndCopiesAtRequestedOffset()
+	public async Task CopyTo_ValidatesCapacityAndCopiesAtRequestedOffset()
 	{
 		EnsureRedis();
 
-		using var cache = CreateCache(out _);
+		await using var cache = CreateCache(out _);
 		Assert.True(cache.SetValue("set", new HashSet<string> { "alpha", "beta" }));
 		var set = (ICollection<string>)cache.GetValue<ISet<string>>("set");
 

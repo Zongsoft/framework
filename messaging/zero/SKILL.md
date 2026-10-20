@@ -58,12 +58,12 @@ LeastOnce 使用 ROUTER/DEALER 命令 `REGISTER`、`UNREGISTER`、`PING`、`PUBL
 
 ## 可靠投递实现
 
-- 规范线协议见 [PROTOCOL.md](PROTOCOL.md) 和 [PROTOCOL.zh-Hans.md](PROTOCOL.zh-Hans.md)；若 `.testagent/status.md` 存在，可用于了解实现状态，但需以源码复核。
-- Stage 2A 的 `MessageReliability.MostOnce` 依赖应用 XPUB 的即时订阅检测，只在该 XPUB 当前知道匹配 Prefix 时发送，没有确认和重试。
+- 规范线协议见 [PROTOCOL.md](PROTOCOL.md) 和 [PROTOCOL.zh-Hans.md](PROTOCOL.zh-Hans.md)。
+- `MessageReliability.MostOnce` 依赖应用 XPUB 的即时订阅检测，只在该 XPUB 当前知道匹配 Prefix 时发送，没有确认和重试。
 - 订阅传播只代表路由可见性；不等待未来订阅，也不据此推断远端收到消息。
 - Discovery 和 Welcome 携带 Broker Epoch；断连或 Epoch 变化会使缓存订阅 Ready 失效，并重新发现配置的固定运行时端口。
 - MostOnce 没有匹配 Prefix 时立即返回 `null`，以后也不会补发。
-- Stage 2B 的 `LeastOnce` 使用可寻址运行时 Session、显式 `Message.AcknowledgeAsync`、仅 Broker 持久化、竞争消费者和同标识重试；重复投递是契约的一部分。
+- `LeastOnce` 使用可寻址运行时 Session、显式 `Message.AcknowledgeAsync`、仅 Broker 持久化、竞争消费者和同标识重试；重复投递是契约的一部分。
 - Broker 接受要求存在在线匹配订阅，先持久化 Pending 再返回 `ACCEPTED`，不等待 Handler ACK。每次尝试选择一个在线消费者，任意有效 ACK 删除 Pending；新订阅或重连订阅可消费已接受 Pending。
 - Core 拥有传输无关的 `IMessageStorage` 与 `MessageStorageBase<TSettings>`。Storage 是独立插件，每个 Broker 使用独立配置实例。基类用一个模板方法处理全部消息和精确 Topic 的读/清理：null Topic 表示不过滤，空字符串表示默认 Topic。Server 拥有工厂创建的 Storage，在停止、启动失败清理或自身释放时释放 Storage，优先 IAsyncDisposable；释放失败保留引用供显式重试。`IMessageStorage` 不再声明 `Disposable` 或 `Settings`。持久化完整外层 `Message` 元数据，ZeroMQ 的 Expiration、Protocol Version、Compression、Retry 信封保持私有。
 - 不支持 `ExactlyOnce`，并且必须在创建传输状态前失败。

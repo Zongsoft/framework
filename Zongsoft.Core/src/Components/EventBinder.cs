@@ -58,9 +58,6 @@ public static class EventBinder
 			case PropertyInfo property:
 				Bind(descriptor, target, property);
 				break;
-			case Delegate @delegate:
-				Bind(descriptor, @delegate);
-				break;
 		}
 	}
 
@@ -113,21 +110,6 @@ public static class EventBinder
 		_binding[descriptor] = trigger;
 	}
 
-	public static Delegate Bind(this EventDescriptor descriptor, Delegate @delegate)
-	{
-		if(descriptor == null)
-			throw new ArgumentNullException(nameof(descriptor));
-
-		if(@delegate == null)
-			throw new ArgumentNullException(nameof(@delegate));
-
-		(_, var trigger) = GetAdapter(descriptor, @delegate.GetType());
-
-		if(_binding.TryGetValue(descriptor, out var binding))
-			Delegate.Remove(@delegate, binding);
-
-		return _binding[descriptor] = Delegate.Combine(@delegate, trigger);
-	}
 
 	public static void Unbind(this EventDescriptor descriptor, object target, string name)
 	{
@@ -144,9 +126,6 @@ public static class EventBinder
 				break;
 			case PropertyInfo property:
 				Unbind(descriptor, target, property);
-				break;
-			case Delegate @delegate:
-				Unbind(descriptor, @delegate);
 				break;
 		}
 	}
@@ -192,103 +171,40 @@ public static class EventBinder
 		property.SetValue(target, null);
 		_binding.Remove(descriptor);
 	}
-
-	public static Delegate Unbind(this EventDescriptor descriptor, Delegate @delegate)
-	{
-		if(descriptor == null)
-			throw new ArgumentNullException(nameof(descriptor));
-
-		if(@delegate == null)
-			throw new ArgumentNullException(nameof(@delegate));
-
-		return _binding.TryGetValue(descriptor, out var binding) ?
-			Delegate.Remove(@delegate, binding) : null;
-	}
 	#endregion
 
 	#region 私有方法
 	private static (object adapter, Delegate trigger) GetAdapter(this EventDescriptor descriptor, Type delegateType)
 	{
-		if(delegateType == typeof(Action))
-		{
-			var adapter = new ActionAdapter(descriptor);
-			var trigger = new Action(adapter.Raise);
-			return (adapter, trigger);
-		}
+		var invoke = delegateType.GetMethod("Invoke");
+		if(invoke == null || (invoke.ReturnType != typeof(ValueTask) && invoke.ReturnType != typeof(Task)))
+			throw new NotSupportedException(Properties.Resources.EventBinder_AsyncDelegateRequired_Message);
 
-		if(delegateType == typeof(EventHandler))
+		var parameters = invoke.GetParameters();
+		var count = parameters.Length;
+		if(count > 0 && parameters[count - 1].ParameterType == typeof(CancellationToken))
+			count--;
+
+		object adapter;
+		if(count == 0)
+			adapter = new AsyncAdapter(descriptor);
+		else
 		{
-			if(descriptor.GetArgumentType() != typeof(EventArgs))
+			var argument = count == 1 ? parameters[0].ParameterType : parameters[1].ParameterType;
+			if(descriptor.GetArgumentType() != argument)
 				throw new InvalidOperationException(Properties.Resources.EventBinder_ArgumentTypeMismatch_Message);
 
-			var adapter = new EventHandlerAdapter(descriptor as EventDescriptor<EventArgs>);
-			var trigger = new EventHandler(adapter.Raise);
-			return (adapter, trigger);
+			if(count > 3 || (count > 1 && parameters[0].ParameterType != typeof(object)) ||
+				(count == 3 && !typeof(Collections.Parameters).IsAssignableFrom(parameters[2].ParameterType)))
+				throw new NotSupportedException(Properties.Resources.EventBinder_AsyncDelegateRequired_Message);
+
+			adapter = Activator.CreateInstance(count == 3 ?
+				typeof(AsyncAdapter<,>).MakeGenericType(argument, parameters[2].ParameterType) :
+				typeof(AsyncAdapter<>).MakeGenericType(argument), [descriptor]);
 		}
 
-		if(delegateType.IsGenericType)
-		{
-			var prototype = delegateType.GetGenericTypeDefinition();
-
-			if(prototype == typeof(EventHandler<>))
-			{
-				if(descriptor.GetArgumentType() != delegateType.GenericTypeArguments[0])
-					throw new InvalidOperationException(Properties.Resources.EventBinder_ArgumentTypeMismatch_Message);
-
-				var adapter = Activator.CreateInstance(
-					typeof(EventHandlerAdapter<>).MakeGenericType(delegateType.GenericTypeArguments[0]),
-					[descriptor]);
-				var trigger = Delegate.CreateDelegate(delegateType, adapter, nameof(EventHandlerAdapter<EventArgs>.Raise));
-				return (adapter, trigger);
-			}
-
-			if(prototype == typeof(Action<,,>))
-			{
-				if(descriptor.GetArgumentType() != delegateType.GenericTypeArguments[1])
-					throw new InvalidOperationException(Properties.Resources.EventBinder_ArgumentTypeMismatch_Message);
-
-				if(delegateType.GenericTypeArguments[0] == typeof(object) &&
-				   IsParametersType(delegateType.GenericTypeArguments[2]))
-				{
-					var adapter = Activator.CreateInstance(
-						typeof(ActionAdapterWithCaller<,>).MakeGenericType(delegateType.GenericTypeArguments[1], delegateType.GenericTypeArguments[2]),
-						[descriptor]);
-					var trigger = Delegate.CreateDelegate(delegateType, adapter, nameof(ActionAdapterWithCaller<object, Collections.Parameters>.Raise));
-					return (adapter, trigger);
-				}
-			}
-
-			if(prototype == typeof(Action<,>))
-			{
-				if(descriptor.GetArgumentType() != delegateType.GenericTypeArguments[1])
-					throw new InvalidOperationException(Properties.Resources.EventBinder_ArgumentTypeMismatch_Message);
-
-				if(delegateType.GenericTypeArguments[0] == typeof(object))
-				{
-					var adapter = Activator.CreateInstance(
-						typeof(ActionAdapterWithCaller<>).MakeGenericType(delegateType.GenericTypeArguments[1]),
-						[descriptor]);
-					var trigger = Delegate.CreateDelegate(delegateType, adapter, nameof(ActionAdapterWithCaller<object>.Raise));
-					return (adapter, trigger);
-				}
-			}
-
-			if(prototype == typeof(Action<>))
-			{
-				if(descriptor.GetArgumentType() != delegateType.GenericTypeArguments[0])
-					throw new InvalidOperationException(Properties.Resources.EventBinder_ArgumentTypeMismatch_Message);
-
-				var adapter = Activator.CreateInstance(
-					typeof(ActionAdapter<>).MakeGenericType(delegateType.GenericTypeArguments[0]),
-					[descriptor]);
-				var trigger = Delegate.CreateDelegate(delegateType, adapter, nameof(ActionAdapter<object>.Raise));
-				return (adapter, trigger);
-			}
-		}
-
-		return default;
-
-		static bool IsParametersType(Type type) => typeof(Collections.Parameters).IsAssignableFrom(type);
+		return (adapter, Delegate.CreateDelegate(delegateType, adapter,
+			invoke.ReturnType == typeof(ValueTask) ? nameof(AsyncAdapter.RaiseAsync) : nameof(AsyncAdapter.RaiseTaskAsync)));
 	}
 
 	private static object GetMember(object target, string name)
@@ -313,26 +229,6 @@ public static class EventBinder
 		};
 	}
 
-	private static async void Complete(this ValueTask task)
-	{
-		if(task.IsCompletedSuccessfully)
-			return;
-
-		if(task.IsFaulted)
-		{
-			var exception = task.AsTask().Exception;
-			if(exception == null || exception.InnerException is OperationCanceledException)
-				return;
-
-			if(exception.InnerExceptions.Count == 1)
-				throw exception.InnerException;
-			else
-				throw exception;
-		}
-
-		await task;
-	}
-
 	private static Type GetArgumentType(this EventDescriptor descriptor)
 	{
 		return descriptor != null && descriptor.GetType().IsGenericType ? descriptor.GetType().GenericTypeArguments[0] : null;
@@ -340,40 +236,32 @@ public static class EventBinder
 	#endregion
 
 	#region 嵌套子类
-	private class ActionAdapter(EventDescriptor descriptor)
+	private sealed class AsyncAdapter(EventDescriptor descriptor)
 	{
-		private readonly EventDescriptor _descriptor = descriptor;
-		public void Raise() => _descriptor.HandleAsync().Complete();
+		public ValueTask RaiseAsync() => descriptor.HandleAsync();
+		public ValueTask RaiseAsync(CancellationToken cancellation) => descriptor.HandleAsync(cancellation);
+		public Task RaiseTaskAsync() => this.RaiseAsync().AsTask();
+		public Task RaiseTaskAsync(CancellationToken cancellation) => this.RaiseAsync(cancellation).AsTask();
 	}
 
-	private class ActionAdapter<TArgument>(EventDescriptor<TArgument> descriptor)
+	private sealed class AsyncAdapter<TArgument>(EventDescriptor<TArgument> descriptor)
 	{
-		private readonly EventDescriptor<TArgument> _descriptor = descriptor;
-		public void Raise(TArgument argument) => _descriptor.HandleAsync(argument).Complete();
+		public ValueTask RaiseAsync(TArgument argument) => descriptor.HandleAsync(argument);
+		public ValueTask RaiseAsync(TArgument argument, CancellationToken cancellation) => descriptor.HandleAsync(argument, cancellation);
+		public ValueTask RaiseAsync(object sender, TArgument argument) => descriptor.HandleAsync(argument);
+		public ValueTask RaiseAsync(object sender, TArgument argument, CancellationToken cancellation) => descriptor.HandleAsync(argument, cancellation);
+		public Task RaiseTaskAsync(TArgument argument) => this.RaiseAsync(argument).AsTask();
+		public Task RaiseTaskAsync(TArgument argument, CancellationToken cancellation) => this.RaiseAsync(argument, cancellation).AsTask();
+		public Task RaiseTaskAsync(object sender, TArgument argument) => this.RaiseAsync(sender, argument).AsTask();
+		public Task RaiseTaskAsync(object sender, TArgument argument, CancellationToken cancellation) => this.RaiseAsync(sender, argument, cancellation).AsTask();
 	}
 
-	private class ActionAdapterWithCaller<TArgument>(EventDescriptor<TArgument> descriptor)
+	private sealed class AsyncAdapter<TArgument, TParameters>(EventDescriptor<TArgument> descriptor) where TParameters : Collections.Parameters
 	{
-		private readonly EventDescriptor<TArgument> _descriptor = descriptor;
-		public void Raise(object _, TArgument argument) => _descriptor.HandleAsync(argument).Complete();
-	}
-
-	private class ActionAdapterWithCaller<TArgument, TParameters>(EventDescriptor<TArgument> descriptor) where TParameters : Collections.Parameters
-	{
-		private readonly EventDescriptor<TArgument> _descriptor = descriptor;
-		public void Raise(object _, TArgument argument, TParameters parameters) => _descriptor.HandleAsync(argument, parameters).Complete();
-	}
-
-	private class EventHandlerAdapter(EventDescriptor<EventArgs> descriptor)
-	{
-		private readonly EventDescriptor<EventArgs> _descriptor = descriptor;
-		public void Raise(object _, EventArgs argument) => _descriptor.HandleAsync(argument).Complete();
-	}
-
-	private class EventHandlerAdapter<TArgument>(EventDescriptor<TArgument> descriptor) where TArgument : EventArgs
-	{
-		private readonly EventDescriptor<TArgument> _descriptor = descriptor;
-		public void Raise(object _, TArgument argument) => _descriptor.HandleAsync(argument).Complete();
+		public ValueTask RaiseAsync(object sender, TArgument argument, TParameters parameters) => descriptor.HandleAsync(argument, parameters);
+		public ValueTask RaiseAsync(object sender, TArgument argument, TParameters parameters, CancellationToken cancellation) => descriptor.HandleAsync(argument, parameters, cancellation);
+		public Task RaiseTaskAsync(object sender, TArgument argument, TParameters parameters) => this.RaiseAsync(sender, argument, parameters).AsTask();
+		public Task RaiseTaskAsync(object sender, TArgument argument, TParameters parameters, CancellationToken cancellation) => this.RaiseAsync(sender, argument, parameters, cancellation).AsTask();
 	}
 	#endregion
 }

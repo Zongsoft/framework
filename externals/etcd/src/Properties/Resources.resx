@@ -116,4 +116,7 @@
 	<data name="Etcd.NamespaceImmutable.Message" xml:space="preserve">
 		<value>The namespace cannot be changed after the etcd service has been activated.</value>
 	</data>
+	<data name="Operation.AsyncOnly.Message" xml:space="preserve">
+		<value>This provider only supports asynchronous operations. Use the corresponding Async method and await disposal.</value>
+	</data>
 </root>

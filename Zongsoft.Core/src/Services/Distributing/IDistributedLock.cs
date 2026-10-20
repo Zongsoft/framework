@@ -43,7 +43,7 @@ namespace Zongsoft.Services.Distributing;
 /// 
 /// 	async Task FooAsync(MyModel model, CancellationToken cancellation)
 /// 	{
-/// 		using var locker = await this.Locker.AcquireAsync($"LOCKER:{nameof(MyService)}:{model.Key}", TimeSpan.FromSeconds(60), cancellation);
+/// 		await using var locker = await this.Locker.AcquireAsync($"LOCKER:{nameof(MyService)}:{model.Key}", TimeSpan.FromSeconds(60), cancellation);
 /// 		await locker.EnterAsync(cancellation);
 /// 
 /// 		//TODO: Some business code implementation.
@@ -55,7 +55,7 @@ namespace Zongsoft.Services.Distributing;
 /// }
 /// </code>
 /// </example>
-public interface IDistributedLock : IDisposable, IAsyncDisposable
+public interface IDistributedLock : IAsyncDisposable
 {
 	#region 公共属性
 	/// <summary>获取分布式锁的标识。</summary>

@@ -303,14 +303,26 @@ public class SubscriberSpoolingTest
 	}
 
 	[Fact]
-	public async Task SaveValueInCache_ConsumerFailure_PropagatesAtPublicBoundary()
+	public async Task SaveValueInCache_ConsumerFailure_IsIsolatedAndLaterNotificationsContinue()
 	{
 		await using var fixture = await Fixture.CreateAsync(TEMPERATURE);
 		var failure = new ApplicationException("Consumer failure.");
-		fixture.Subscriber.Consume((_, _, _) => throw failure);
+		var calls = 0;
+		var values = new List<object>();
+		fixture.Subscriber.Consume((_, _, value) =>
+		{
+			if(++calls == 1)
+				throw failure;
 
-		Assert.Same(failure, Assert.Throws<ApplicationException>(() => fixture.Notify(TEMPERATURE, 42)));
-		Assert.Equal(1UL, fixture.Subscriber.Statistics.NotificationCount);
+			values.Add(value);
+		});
+
+		Assert.Null(Record.Exception(() => fixture.Notify(TEMPERATURE, 42)));
+		fixture.Notify(TEMPERATURE, 43);
+
+		Assert.Equal(2, calls);
+		Assert.Equal([43], values);
+		Assert.Equal(2UL, fixture.Subscriber.Statistics.NotificationCount);
 	}
 
 	private sealed record Reading(string Name, object Value);
@@ -395,7 +407,13 @@ public class SubscriberSpoolingTest
 		{
 			var subscription = (Subscription)this.Subscriber.Subscription;
 			var monitor = Assert.Single(subscription.MonitoredItems, item => item.StartNodeId == NodeId.Parse(name));
-			monitor.SaveValueInCache(new MonitoredItemNotification { Value = new DataValue(new Variant(value)) });
+			var variant = value switch
+			{
+				int number => new Variant(number),
+				string text => new Variant(text),
+				_ => throw new ArgumentOutOfRangeException(nameof(value)),
+			};
+			monitor.SaveValueInCache(new MonitoredItemNotification { Value = new DataValue(variant) });
 		}
 
 		public async ValueTask DisposeAsync()

@@ -87,6 +87,15 @@ namespace Zongsoft.Externals.Amazon.Properties {
             }
         }
 
+		/// <summary>
+		///   查找类似 This provider only supports asynchronous operations. Use the corresponding Async method and await disposal. 的本地化字符串。
+		/// </summary>
+		internal static string Operation_AsyncOnly_Message {
+			get {
+				return ResourceManager.GetString("Operation.AsyncOnly.Message", resourceCulture);
+			}
+		}
+
         /// <summary>
         ///   查找类似 The specified &apos;{0}&apos; scheme value does not contain the bucket name. 的本地化字符串。
         /// </summary>

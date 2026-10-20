@@ -79,7 +79,7 @@ partial class OpcClient
 		if(response == null)
 			yield break;
 
-		foreach(var result in response.Results)
+		foreach(var result in response.Results.ToArray())
 		{
 			if(StatusCode.IsNotGood(result.StatusCode))
 				continue;
@@ -88,7 +88,7 @@ partial class OpcClient
 			{
 				bool ignored = !options.IncludeBuiltins;
 
-				foreach(var reference in result.References)
+				foreach(var reference in result.References.ToArray())
 				{
 					if(IsIgnored(options, reference))
 						continue;
@@ -112,7 +112,7 @@ partial class OpcClient
 			}
 			else
 			{
-				foreach(var reference in result.References)
+				foreach(var reference in result.References.ToArray())
 				{
 					if(IsIgnored(options, reference))
 						continue;
@@ -135,7 +135,7 @@ partial class OpcClient
 			reference.NodeClass == NodeClass.Variable ?
 			await OpcClient.GetDataTypeAsync(session, (NodeId)reference.NodeId, cancellation) :
 			OpcNodeType.Get(reference.TypeDefinition);
-		static IEnumerable<NodeId> GetNodeIds(BrowseOptions options, ICollection<ReferenceDescription> references) => references
+		static IEnumerable<NodeId> GetNodeIds(BrowseOptions options, ArrayOf<ReferenceDescription> references) => references.ToArray()
 			.Where(reference => !reference.NodeId.IsNull && !IsIgnored(options, reference))
 			.Select(reference => (NodeId)reference.NodeId);
 	}
@@ -149,16 +149,16 @@ partial class OpcClient
 		ResultMask = (uint)BrowseResultMask.All,
 	};
 
-	private static Task<BrowseResponse> BrowseAsync(ISession session, BrowseOptions options, IEnumerable<NodeId> nodeIds, CancellationToken cancellation)
+	private static ValueTask<BrowseResponse> BrowseAsync(ISession session, BrowseOptions options, IEnumerable<NodeId> nodeIds, CancellationToken cancellation)
 	{
 		if(nodeIds == null || !nodeIds.Any())
-			return Task.FromResult<BrowseResponse>(null);
+			return ValueTask.FromResult<BrowseResponse>(null);
 
-		var arguments = new BrowseDescriptionCollection();
+		var arguments = new List<BrowseDescription>();
 		foreach(var nodeId in nodeIds)
 			arguments.Add(GetBrowseArgument(nodeId, options.Kind.ToClass(), options.IncludeSubtypes));
 
-		return arguments.Count > 0 ? session.BrowseAsync(default, default, 0, arguments, cancellation) : null;
+		return arguments.Count > 0 ? session.BrowseAsync(default, default, 0, [.. arguments], cancellation) : ValueTask.FromResult<BrowseResponse>(null);
 	}
 
 	private static OpcNode ToNode(ReferenceDescription reference, OpcNodeType type, bool hierarchically)
@@ -169,16 +169,16 @@ partial class OpcClient
 				(NodeId)reference.NodeId,
 				reference.NodeClass.ToKind(),
 				type,
-				reference.BrowseName?.Name,
-				reference.DisplayName?.ToString()
+				reference.BrowseName.Name,
+				reference.DisplayName.ToString()
 			) :
 			OpcNode.Hierarchy
 			(
 				(NodeId)reference.NodeId,
 				reference.NodeClass.ToKind(),
 				type,
-				reference.BrowseName?.Name,
-				reference.DisplayName?.ToString()
+				reference.BrowseName.Name,
+				reference.DisplayName.ToString()
 			);
 	}
 	#endregion

@@ -13,7 +13,7 @@ internal class Program
 {
 	static async Task Main(string[] args)
 	{
-		using var cache = new RedisService("Redis",
+		await using var cache = new RedisService("Redis",
 			Configuration.RedisConnectionSettingsDriver.Instance.GetSettings("Redis", $"server=127.0.0.1:6379;password=xxxxxx;group=Zongsoft.Externals.Redis.Samples;client=Sample-{Guid.NewGuid():N};timeout=10s;deadline=3;idleTimeout=30s;"))
 		{
 			Namespace = "DistributedCache",
@@ -23,7 +23,7 @@ internal class Program
 		var executor = Terminal.Console.Executor;
 
 		executor.Command("reset", context => Handler.Instance.Reset());
-		executor.Command("close", context => cache.Dispose());
+		executor.Command("close", (context, cancellation) => cache.DisposeAsync());
 
 		executor.Command("set", async (context, cancellation) =>
 		{
@@ -195,7 +195,7 @@ internal class Program
 			context.Output.WriteLine(CommandOutletColor.DarkGreen, "The subscription was cancelled.");
 		});
 
-		executor.Command("info", context =>
+		executor.Command("info", async (context, cancellation) =>
 		{
 			var content = CommandOutletContent.Create()
 				.AppendLine(CommandOutletColor.Yellow, new string('-', 50))
@@ -203,7 +203,7 @@ internal class Program
 				.Append(CommandOutletColor.DarkCyan, "Name".PadRight(13)).Append(CommandOutletColor.DarkGray, ": ").AppendLine(CommandOutletColor.Green, cache.Name)
 				.Append(CommandOutletColor.DarkCyan, "Namespace".PadRight(13)).Append(CommandOutletColor.DarkGray, ": ").AppendLine(CommandOutletColor.Green, string.IsNullOrEmpty(cache.Namespace) ? "N/A" : cache.Namespace)
 				.Append(CommandOutletColor.DarkCyan, "Database".PadRight(13)).Append(CommandOutletColor.DarkGray, ": ").AppendLine(CommandOutletColor.Green, cache.DatabaseId)
-				.Append(CommandOutletColor.DarkCyan, "Count".PadRight(13)).Append(CommandOutletColor.DarkGray, ": ").AppendLine(CommandOutletColor.Green, cache.GetCount())
+				.Append(CommandOutletColor.DarkCyan, "Count".PadRight(13)).Append(CommandOutletColor.DarkGray, ": ").AppendLine(CommandOutletColor.Green, await cache.GetCountAsync(cancellation))
 				.AppendLine(CommandOutletColor.Yellow, new string('-', 50));
 
 			if(subscription != null && !subscription.IsClosed)

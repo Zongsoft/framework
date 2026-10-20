@@ -1,5 +1,7 @@
 ﻿using System;
 using System.IO;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 using System.Security.Cryptography;
 
 namespace Zongsoft.Externals.Amazon.Tests;
@@ -19,10 +21,20 @@ internal static class Utility
 		return algorithm.ComputeHash(stream);
 	}
 
-	public static byte[] ComputeHash(string filePath, HashAlgorithm algorithm = null)
+	public static async Task<byte[]> ComputeHashAsync(string filePath)
 	{
-		algorithm ??= SHA1.Create();
-		using var stream = Zongsoft.IO.FileSystem.File.Open(filePath, FileMode.Open, FileAccess.Read);
-		return algorithm.ComputeHash(stream);
+		using var algorithm = SHA1.Create();
+		await using var stream = await Zongsoft.IO.FileSystem.File.OpenAsync(filePath, FileMode.Open, FileAccess.Read);
+		return await algorithm.ComputeHashAsync(stream);
+	}
+
+	public static async Task<T[]> ToArrayAsync<T>(IAsyncEnumerable<T> source)
+	{
+		var items = new List<T>();
+
+		await foreach(var item in source)
+			items.Add(item);
+
+		return items.ToArray();
 	}
 }

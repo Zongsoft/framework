@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -33,10 +33,12 @@ using System.Threading.Tasks;
 
 namespace Zongsoft.Services.Distributing;
 
-public abstract class DistributedLockBase<TManager> : IDistributedLock, IDisposable, IAsyncDisposable where TManager : class, IDistributedLockManager
+public abstract class DistributedLockBase<TManager> : IDistributedLock where TManager : class, IDistributedLockManager
 {
 	#region 私有变量
 	private TManager _manager;
+	private TaskCompletionSource _disposal;
+	private TaskCompletionSource<bool> _exit;
 	private DateTime? _heldTime;
 	#endregion
 
@@ -102,15 +104,28 @@ public abstract class DistributedLockBase<TManager> : IDistributedLock, IDisposa
 
 	public ValueTask<bool> ExitAsync(CancellationToken cancellation = default)
 	{
-		if(_manager != null)
+		var completion = Volatile.Read(ref _exit);
+		if(completion == null)
 		{
-			var manager = Interlocked.Exchange(ref _manager, null);
-
-			if(manager != null && _heldTime.HasValue)
-				return manager.ReleaseAsync(this.Key, this.Token, cancellation);
+			var candidate = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+			completion = Interlocked.CompareExchange(ref _exit, candidate, null) ?? candidate;
+			if(ReferenceEquals(completion, candidate))
+				_ = ReleaseAsync(candidate);
 		}
 
-		return ValueTask.FromResult(false);
+		return new(completion.Task);
+
+		async Task ReleaseAsync(TaskCompletionSource<bool> completion)
+		{
+			try
+			{
+				var manager = Interlocked.Exchange(ref _manager, null);
+				completion.TrySetResult(manager != null && _heldTime.HasValue &&
+					await manager.ReleaseAsync(this.Key, this.Token, cancellation).ConfigureAwait(false));
+			}
+			catch(OperationCanceledException exception) { completion.TrySetCanceled(exception.CancellationToken); }
+			catch(Exception exception) { completion.TrySetException(exception); }
+		}
 	}
 
 	public async ValueTask<bool> RenewAsync(CancellationToken cancellation = default)
@@ -137,42 +152,35 @@ public abstract class DistributedLockBase<TManager> : IDistributedLock, IDisposa
 	#endregion
 
 	#region 释放方法
-	public void Dispose()
+	public ValueTask DisposeAsync()
 	{
-		this.Dispose(true);
-		GC.SuppressFinalize(this);
-	}
-
-	protected virtual void Dispose(bool disposing)
-	{
-		if(disposing)
+		var completion = Volatile.Read(ref _disposal);
+		if(completion == null)
 		{
-			var task = this.ExitAsync();
-			if(task.IsCompletedSuccessfully)
-				return;
-
-			task.AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+			var candidate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+			completion = Interlocked.CompareExchange(ref _disposal, candidate, null) ?? candidate;
+			if(ReferenceEquals(completion, candidate))
+				_ = CompleteAsync(completion);
 		}
-	}
 
-	public async ValueTask DisposeAsync()
-	{
-		await this.DisposeAsync(true);
-		GC.SuppressFinalize(this);
+		return new(completion.Task);
+
+		async Task CompleteAsync(TaskCompletionSource completion)
+		{
+			try
+			{
+				await this.DisposeAsync(true).ConfigureAwait(false);
+				GC.SuppressFinalize(this);
+				completion.TrySetResult();
+			}
+			catch(Exception exception) { completion.TrySetException(exception); }
+		}
 	}
 
 	protected virtual async ValueTask DisposeAsync(bool disposing)
 	{
 		if(disposing)
-		{
-			var task = this.ExitAsync();
-			if(task.IsCompletedSuccessfully)
-				return;
-
-			await AwaitUnlock(task);
-		}
-
-		static async ValueTask<bool> AwaitUnlock(ValueTask<bool> task) => await task;
+			await this.ExitAsync().ConfigureAwait(false);
 	}
 	#endregion
 

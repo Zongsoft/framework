@@ -16,23 +16,15 @@
 
 The raw dictionary exposes explicit parameters; typed reads supply defaults. `Value` retains all explicit main parameters and extension properties. Retaining an unknown entry does not mean the OPC client consumes it. See the [Core settings contract](../../Zongsoft.Core/docs/settings.md) for the complete rules.
 
-## Notification Buffer Tests
+## Asynchronous Notifications and Lifetime
 
-[SubscriberSpoolingTest](test/SubscriberSpoolingTest.cs) produces notifications through a real, disconnected `Subscriber` and the OPC UA SDK's `MonitoredItem.SaveValueInCache`. The path includes entry lookup, value extraction, the consumer callback, and `Spooler` batching. It creates no session, opens no port, and generates no certificate.
+Use `Subscriber.Consume(Func<Subscriber, Entry, object, CancellationToken, ValueTask>)` for asynchronous notification handlers. Notifications are processed in order. `SubscriberOptions.NotificationCapacity` limits pending notifications and defaults to 2048; capacity overflow is reported by `FlushAsync` or `DisposeAsync`. The three-argument `Consume(Action)` overload is for local handlers that finish synchronously.
 
-A single awaitable producer controls the test notification source. The synchronous consumer only captures the current `PutAsync`; after the notification callback returns, the producer awaits admission before sending another reading, retaining at most one pending operation. Coverage includes successive and repeated values, identifier/value pairing, slow consumption at capacity, flush completion, cancellation and error propagation, an explicit final flush after detaching consumers, non-draining disposal, and periodic callback cancellation, cleanup and failure notification.
+Await `Subscriber.FlushAsync` to finish accepted notifications and observe processing errors. Canceling the wait does not cancel accepted notifications. Use `await using` or await `DisposeAsync` for owned subscribers and OPC clients.
 
-From the repository root, build the current Core before running OPC tests. Use Debug so the adapter references the workspace Core assembly; Release references the published package.
+When using a `Spooler`, detach the consumer, await `Subscriber.FlushAsync`, then await `Spooler.FlushAsync` if buffered values must be processed before disposal. `Spooler.DisposeAsync` does not drain its buffer.
 
-```shell
-dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -c Debug -p:GeneratePackageOnBuild=false
-dotnet build externals/opc/Zongsoft.Externals.Opc.slnx -c Debug -p:GeneratePackageOnBuild=false
-dotnet test externals/opc/test/Zongsoft.Externals.Opc.Tests.csproj -c Debug -f net8.0 --no-build --filter FullyQualifiedName~SubscriberSpoolingTest
-```
-
-Replace `net8.0` with `net9.0` and `net10.0` to check the other targets. The owner decides whether to flush remaining items explicitly before closing; `DisposeAsync` does not drain the buffer itself.
-
-The awaitable test producer is not an asynchronous backpressure solution for production subscription callbacks: `Consume(Action)` does not await asynchronous admission. These tests do not cover server sampling, network Publish dispatch, reconnection, or overflow in the SDK's own queues. Applications must choose an explicit capacity policy; discarding `PutAsync` or using an `async void` consumer does not observe completion or failures. For protocol end-to-end checks, use the [local client/server samples](samples/README.md).
+The adapter requires OPC Foundation SDK 2.0.1. Keep the SDK dependencies consistent within a host. Server authentication supports asynchronous validators; client connections require trusted server certificates. See the [local client/server examples](samples/README.md) for setup.
 
 ## Certificate Generation
 

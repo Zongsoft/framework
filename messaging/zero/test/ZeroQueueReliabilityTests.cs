@@ -27,8 +27,8 @@ public class ZeroQueueReliabilityTests
 			return;
 
 		await using var scope = await ReliableServerScope.StartAsync();
-		using var publisher = CreateQueue(scope.Port, "publisher", "publisher");
-		using var subscriber = CreateQueue(scope.Port, "subscriber", "subscriber");
+		await using var publisher = CreateQueue(scope.Port, "publisher", "publisher");
+		await using var subscriber = CreateQueue(scope.Port, "subscriber", "subscriber");
 		var handler = new AcknowledgingHandler(1, false);
 		await subscriber.SubscribeAsync("topic/reliable", handler, ReliableSubscribeOptions());
 
@@ -50,8 +50,8 @@ public class ZeroQueueReliabilityTests
 			return;
 
 		await using var scope = await ReliableServerScope.StartAsync();
-		using var publisher = CreateQueue(scope.Port, "metadata-publisher", "publisher");
-		using var subscriber = CreateQueue(scope.Port, "metadata-subscriber", "subscriber");
+		await using var publisher = CreateQueue(scope.Port, "metadata-publisher", "publisher");
+		await using var subscriber = CreateQueue(scope.Port, "metadata-subscriber", "subscriber");
 		var handler = new AcknowledgingHandler(1, false);
 		await subscriber.SubscribeAsync("topic/metadata", handler, ReliableSubscribeOptions());
 
@@ -80,7 +80,7 @@ public class ZeroQueueReliabilityTests
 			return;
 
 		await using var scope = await ReliableServerScope.StartAsync();
-		using var publisher = CreateQueue(scope.Port, "missing-publisher", null);
+		await using var publisher = CreateQueue(scope.Port, "missing-publisher", null);
 		var started = DateTime.UtcNow;
 
 		var identifier = await publisher.ProduceAsync("topic/missing-reliable", ReadOnlyMemory<byte>.Empty, ReliableEnqueueOptions());
@@ -98,9 +98,9 @@ public class ZeroQueueReliabilityTests
 			return;
 
 		await using var scope = await ReliableServerScope.StartAsync();
-		using var publisher = CreateQueue(scope.Port, "compete-publisher", null);
-		using var first = CreateQueue(scope.Port, "compete-first", null);
-		using var second = CreateQueue(scope.Port, "compete-second", null);
+		await using var publisher = CreateQueue(scope.Port, "compete-publisher", null);
+		await using var first = CreateQueue(scope.Port, "compete-first", null);
+		await using var second = CreateQueue(scope.Port, "compete-second", null);
 		var firstHandler = new AcknowledgingHandler(1, true);
 		var secondHandler = new AcknowledgingHandler(1, true);
 		await first.SubscribeAsync("topic/compete", firstHandler, ReliableSubscribeOptions());
@@ -125,14 +125,14 @@ public class ZeroQueueReliabilityTests
 			return;
 
 		await using var scope = await ReliableServerScope.StartAsync();
-		using var publisher = CreateQueue(scope.Port, "retry-publisher", null);
-		using var first = CreateQueue(scope.Port, "retry-first", null);
+		await using var publisher = CreateQueue(scope.Port, "retry-publisher", null);
+		await using var first = CreateQueue(scope.Port, "retry-first", null);
 		var firstHandler = new AcknowledgingHandler(1, false);
 		await first.SubscribeAsync("topic/retry", firstHandler, ReliableSubscribeOptions());
 
 		var identifier = await publisher.ProduceAsync("topic/retry", Encoding.UTF8.GetBytes("retry"), ReliableEnqueueOptions());
 		var firstDelivery = await firstHandler.ReceiveAsync(TimeSpan.FromSeconds(5));
-		using var second = CreateQueue(scope.Port, "retry-second", null);
+		await using var second = CreateQueue(scope.Port, "retry-second", null);
 		var secondHandler = new AcknowledgingHandler(1, true);
 		await second.SubscribeAsync("topic/retry", secondHandler, ReliableSubscribeOptions());
 		var secondDelivery = await secondHandler.ReceiveAsync(TimeSpan.FromSeconds(5));
@@ -149,8 +149,8 @@ public class ZeroQueueReliabilityTests
 			return;
 
 		await using var scope = await ReliableServerScope.StartAsync();
-		using var publisher = CreateQueue(scope.Port, "restart-publisher", null);
-		using var subscriber = CreateQueue(scope.Port, "restart-subscriber", null);
+		await using var publisher = CreateQueue(scope.Port, "restart-publisher", null);
+		await using var subscriber = CreateQueue(scope.Port, "restart-subscriber", null);
 		var handler = new AcknowledgingHandler(2, true);
 		await subscriber.SubscribeAsync("topic/restart", handler, ReliableSubscribeOptions());
 
@@ -170,8 +170,8 @@ public class ZeroQueueReliabilityTests
 			return;
 
 		await using var scope = await ReliableServerScope.StartAsync();
-		using var publisher = CreateQueue(scope.Port, "expired-publisher", null);
-		using var subscriber = CreateQueue(scope.Port, "expired-subscriber", null);
+		await using var publisher = CreateQueue(scope.Port, "expired-publisher", null);
+		await using var subscriber = CreateQueue(scope.Port, "expired-subscriber", null);
 		await subscriber.SubscribeAsync("topic/expired", new AcknowledgingHandler(int.MaxValue, false), ReliableSubscribeOptions());
 
 		var identifier = await publisher.ProduceAsync("topic/expired", Encoding.UTF8.GetBytes("expired"), ReliableEnqueueOptions(TimeSpan.FromMilliseconds(500)));
@@ -187,8 +187,8 @@ public class ZeroQueueReliabilityTests
 			return;
 
 		await using var scope = await ReliableServerScope.StartAsync();
-		using var publisher = ZeroTestUtility.CreateQueue(scope.Port, "unstable-publisher", settings => settings.Instance = null);
-		using var subscriber = ZeroTestUtility.CreateQueue(scope.Port, "unstable-subscriber", settings => settings.Instance = null);
+		await using var publisher = ZeroTestUtility.CreateQueue(scope.Port, "unstable-publisher", settings => settings.Instance = null);
+		await using var subscriber = ZeroTestUtility.CreateQueue(scope.Port, "unstable-subscriber", settings => settings.Instance = null);
 		var handler = new AcknowledgingHandler(1, true);
 		await subscriber.SubscribeAsync("topic/unstable", handler, ReliableSubscribeOptions());
 
@@ -206,8 +206,8 @@ public class ZeroQueueReliabilityTests
 			return;
 
 		await using var server = await ZeroServerScope.StartAsync();
-		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "control-subscriber");
-		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "control-publisher");
+		await using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "control-subscriber");
+		await using var publisher = ZeroTestUtility.CreateQueue(server.Port, "control-publisher");
 
 		await Assert.ThrowsAsync<InvalidOperationException>(() =>
 			subscriber.SubscribeAsync("topic/control", new AcknowledgingHandler(1, true), ReliableSubscribeOptions()).AsTask());
@@ -223,8 +223,8 @@ public class ZeroQueueReliabilityTests
 			return;
 
 		await using var scope = await ReliableServerScope.StartAsync(new FailingMessageStorage());
-		using var publisher = CreateQueue(scope.Port, "failure-publisher", null);
-		using var subscriber = CreateQueue(scope.Port, "failure-subscriber", null);
+		await using var publisher = CreateQueue(scope.Port, "failure-publisher", null);
+		await using var subscriber = CreateQueue(scope.Port, "failure-subscriber", null);
 		await subscriber.SubscribeAsync("topic/failure", new AcknowledgingHandler(1, true), ReliableSubscribeOptions());
 
 		await Assert.ThrowsAsync<InvalidOperationException>(() =>
@@ -257,8 +257,8 @@ public class ZeroQueueReliabilityTests
 			Assert.Equal(Protocol.Commands.Error, response);
 		}
 
-		using var publisher = CreateQueue(scope.Port, "valid-publisher", null);
-		using var subscriber = CreateQueue(scope.Port, "valid-subscriber", null);
+		await using var publisher = CreateQueue(scope.Port, "valid-publisher", null);
+		await using var subscriber = CreateQueue(scope.Port, "valid-subscriber", null);
 		var handler = new AcknowledgingHandler(1, true);
 		await subscriber.SubscribeAsync("topic/valid-control", handler, ReliableSubscribeOptions());
 
@@ -275,8 +275,8 @@ public class ZeroQueueReliabilityTests
 
 		var storage = new BlockingMessageStorage();
 		await using var scope = await ReliableServerScope.StartAsync(storage);
-		using var publisher = ZeroTestUtility.CreateQueue(scope.Port, "timeout-publisher", settings => settings.Timeout = TimeSpan.FromMilliseconds(250));
-		using var subscriber = CreateQueue(scope.Port, "timeout-subscriber", null);
+		await using var publisher = ZeroTestUtility.CreateQueue(scope.Port, "timeout-publisher", settings => settings.Timeout = TimeSpan.FromMilliseconds(250));
+		await using var subscriber = CreateQueue(scope.Port, "timeout-subscriber", null);
 		var handler = new AcknowledgingHandler(int.MaxValue, false);
 		await subscriber.SubscribeAsync("topic/timeout", handler, ReliableSubscribeOptions());
 
@@ -300,8 +300,8 @@ public class ZeroQueueReliabilityTests
 
 		var storage = new BlockingMessageStorage();
 		await using var scope = await ReliableServerScope.StartAsync(storage);
-		using var publisher = CreateQueue(scope.Port, "cancel-publisher", null);
-		using var subscriber = CreateQueue(scope.Port, "cancel-subscriber", null);
+		await using var publisher = CreateQueue(scope.Port, "cancel-publisher", null);
+		await using var subscriber = CreateQueue(scope.Port, "cancel-subscriber", null);
 		var handler = new AcknowledgingHandler(int.MaxValue, false);
 		await subscriber.SubscribeAsync("topic/cancel", handler, ReliableSubscribeOptions());
 		using var cancellation = new CancellationTokenSource();
@@ -327,8 +327,8 @@ public class ZeroQueueReliabilityTests
 
 		var storage = new BlockingMessageStorage();
 		await using var scope = await ReliableServerScope.StartAsync(storage);
-		using var publisher = CreateQueue(scope.Port, "nonblocking-publisher", null);
-		using var subscriber = CreateQueue(scope.Port, "nonblocking-subscriber", null);
+		await using var publisher = CreateQueue(scope.Port, "nonblocking-publisher", null);
+		await using var subscriber = CreateQueue(scope.Port, "nonblocking-subscriber", null);
 		var reliableHandler = new AcknowledgingHandler(1, true);
 		var broadcastHandler = new AcknowledgingHandler(1, false);
 		await subscriber.SubscribeAsync("topic/nonblocking/reliable", reliableHandler, ReliableSubscribeOptions());
@@ -373,8 +373,8 @@ public class ZeroQueueReliabilityTests
 
 		var storage = new RetryingRemoveMessageStorage();
 		await using var scope = await ReliableServerScope.StartAsync(storage);
-		using var publisher = CreateQueue(scope.Port, "remove-retry-publisher", null);
-		using var subscriber = CreateQueue(scope.Port, "remove-retry-subscriber", null);
+		await using var publisher = CreateQueue(scope.Port, "remove-retry-publisher", null);
+		await using var subscriber = CreateQueue(scope.Port, "remove-retry-subscriber", null);
 		var handler = new AcknowledgingHandler(1, false);
 		await subscriber.SubscribeAsync("topic/remove-retry", handler, ReliableSubscribeOptions());
 
@@ -409,8 +409,8 @@ public class ZeroQueueReliabilityTests
 
 		var storage = new BlockingMessageStorage();
 		await using var scope = await ReliableServerScope.StartAsync(storage);
-		using var publisher = CreateQueue(scope.Port, "stop-drain-publisher", null);
-		using var subscriber = CreateQueue(scope.Port, "stop-drain-subscriber", null);
+		await using var publisher = CreateQueue(scope.Port, "stop-drain-publisher", null);
+		await using var subscriber = CreateQueue(scope.Port, "stop-drain-subscriber", null);
 		var handler = new AcknowledgingHandler(1, false);
 		await subscriber.SubscribeAsync("topic/stop-drain", handler, ReliableSubscribeOptions());
 
@@ -430,7 +430,7 @@ public class ZeroQueueReliabilityTests
 
 		await stopping.WaitAsync(TimeSpan.FromSeconds(5));
 		var stored = Assert.Single(await ZeroTestUtility.CollectAsync(storage.Inner.GetAsync()));
-		publisher.Dispose();
+		await publisher.DisposeAsync();
 
 		try { await publication.WaitAsync(TimeSpan.FromSeconds(1)); }
 		catch(Exception) { }
@@ -453,7 +453,7 @@ public class ZeroQueueReliabilityTests
 
 		var storage = new BlockingMessageStorage();
 		await using var scope = await ReliableServerScope.StartAsync(storage);
-		using var subscriber = CreateQueue(scope.Port, "capacity-subscriber", null);
+		await using var subscriber = CreateQueue(scope.Port, "capacity-subscriber", null);
 		await subscriber.SubscribeAsync("topic/capacity", new AcknowledgingHandler(int.MaxValue, false), ReliableSubscribeOptions());
 		var control = ZeroTestUtility.GetServerPorts(scope.Port).Control;
 
@@ -480,8 +480,8 @@ public class ZeroQueueReliabilityTests
 			return;
 
 		await using var scope = await ReliableServerScope.StartAsync();
-		using var publisher = CreateQueue(scope.Port, "combined-publisher", null);
-		using var subscriber = CreateQueue(scope.Port, "combined-subscriber", null);
+		await using var publisher = CreateQueue(scope.Port, "combined-publisher", null);
+		await using var subscriber = CreateQueue(scope.Port, "combined-subscriber", null);
 		var broadcastHandler = new AcknowledgingHandler(1, true);
 		var reliableHandler = new AcknowledgingHandler(1, true);
 		var broadcast = await subscriber.SubscribeAsync("topic/combined-broadcast", broadcastHandler);
@@ -505,8 +505,8 @@ public class ZeroQueueReliabilityTests
 			return;
 
 		await using var scope = await ReliableServerScope.StartAsync();
-		using var publisher = CreateQueue(scope.Port, "filter-publisher", "publisher");
-		using var subscriber = ZeroTestUtility.CreateQueue(scope.Port, "filter-subscriber", settings => settings.Filter = "!publisher");
+		await using var publisher = CreateQueue(scope.Port, "filter-publisher", "publisher");
+		await using var subscriber = ZeroTestUtility.CreateQueue(scope.Port, "filter-subscriber", settings => settings.Filter = "!publisher");
 		var handler = new AcknowledgingHandler(1, true);
 		await subscriber.SubscribeAsync("topic/filter", handler, ReliableSubscribeOptions());
 
@@ -672,8 +672,8 @@ public class ZeroQueueReliabilityTests
 			return;
 
 		await using var scope = await ReliableServerScope.StartAsync();
-		using var publisher = CreateQueue(scope.Port, "compressed-publisher", "publisher");
-		using var subscriber = CreateQueue(scope.Port, "compressed-subscriber", "subscriber");
+		await using var publisher = CreateQueue(scope.Port, "compressed-publisher", "publisher");
+		await using var subscriber = CreateQueue(scope.Port, "compressed-subscriber", "subscriber");
 		var handler = new AcknowledgingHandler(2, false);
 		await subscriber.SubscribeAsync("topic/compressed", handler, ReliableSubscribeOptions());
 		var payload = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Repeat((byte)'A', 16 * 1024));

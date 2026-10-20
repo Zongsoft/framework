@@ -14,12 +14,12 @@ internal class Program
 {
 	static async Task Main(string[] args)
 	{
-		using var queue = new MqttQueue("MQTT",
+		await using var queue = new MqttQueue("MQTT",
 			Configuration.MqttConnectionSettingsDriver.Instance.GetSettings("Mqtt", $"server=127.0.0.1:1883;client=Zongsoft.Messaging.Mqtt.Sample-{Guid.NewGuid():N};"));
 
 		var executor = Terminal.Console.Executor;
 		executor.Command("reset", context => Handler.Instance.Reset());
-		executor.Command("close", context => queue.Dispose());
+		executor.Command("close", (context, cancellation) => queue.DisposeAsync());
 
 		executor.Command("info", context =>
 		{

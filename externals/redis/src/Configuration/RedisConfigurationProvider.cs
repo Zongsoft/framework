@@ -28,22 +28,18 @@
  */
 
 using System;
-using System.Linq;
-using System.Collections;
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Microsoft.Extensions.Configuration;
 
 using Zongsoft.Caching;
 using Zongsoft.Components;
 
-using StackExchange.Redis;
-
 namespace Zongsoft.Externals.Redis.Configuration;
 
-public class RedisConfigurationProvider : ConfigurationProvider, IDisposable, IAsyncDisposable
+public class RedisConfigurationProvider : ConfigurationProvider, IAsyncDisposable
 {
 	#region 私有字段
 	private readonly RedisConfigurationSource _source;
@@ -51,14 +47,15 @@ public class RedisConfigurationProvider : ConfigurationProvider, IDisposable, IA
 	private readonly object _sync = new();
 	private RedisService _redis;
 	private IDistributedCacheSubscription _subscription;
-	private Task _subscriptionTask;
-	private Task _reloadTask;
-	private int _disposed;
+	private Task _loadTask;
+	private TaskCompletionSource _reload;
+	private TaskCompletionSource _disposal;
+	private bool _reloadRequested;
+	private volatile bool _loaded;
 	#endregion
 
 	#region 构造函数
 	public RedisConfigurationProvider(RedisConfigurationSource source) : this(source, null) { }
-
 	internal RedisConfigurationProvider(RedisConfigurationSource source, RedisService redis)
 	{
 		_source = source ?? throw new ArgumentNullException(nameof(source));
@@ -67,264 +64,190 @@ public class RedisConfigurationProvider : ConfigurationProvider, IDisposable, IA
 	#endregion
 
 	#region 内部属性
+	internal bool IsLoaded => _loaded;
 	internal Task SubscriptionTask
 	{
 		get
 		{
 			lock(_sync)
-				return _subscriptionTask ?? Task.CompletedTask;
+				return _loadTask ?? Task.CompletedTask;
 		}
 	}
 	#endregion
 
 	#region 加载方法
+	/// <summary>读取已经异步加载的快照；首次加载必须等待 LoadAsync。</summary>
 	public override void Load()
 	{
-		this.LoadCore();
-
-		lock(_sync)
-			_subscriptionTask ??= this.SubscribeAsync();
+		if(!_loaded)
+			throw new InvalidOperationException(Properties.Resources.Configuration_AsyncLoadRequired_Message);
 	}
 
-	private void LoadCore()
+	/// <summary>异步加载配置与变更订阅，并将完整快照发布到配置系统。</summary>
+	/// <param name="cancellation">取消标记。</param>
+	/// <returns>加载和订阅完成的任务。</returns>
+	public ValueTask LoadAsync(CancellationToken cancellation = default)
 	{
-		var redis = _redis ??= RedisServiceProvider.GetRedis(_source.Name);
-		var entry = redis.GetEntry(_source.Namespace, out RedisEntryType entryType);
-
-		if(entry == null || entryType == RedisEntryType.None)
+		lock(_sync)
 		{
-			this.Data = redis.GetStringEntries(_source.Namespace);
-			return;
+			ObjectDisposedException.ThrowIf(_disposal != null, this);
+			_loadTask = this.LoadCoreAsync(_loadTask ?? Task.CompletedTask, cancellation);
+			return new(_loadTask);
+		}
+	}
+
+	private async Task LoadCoreAsync(Task previous, CancellationToken cancellation)
+	{
+		await previous.ConfigureAwait(ConfigureAwaitOptions.SuppressThrowing);
+		using var source = CancellationTokenSource.CreateLinkedTokenSource(cancellation, _lifetime.Token);
+		source.Token.ThrowIfCancellationRequested();
+		var redis = _redis ??= RedisServiceProvider.GetRedis(_source.Name);
+		var data = await redis.GetConfigurationAsync(_source.Namespace, source.Token);
+
+		if(_subscription == null)
+		{
+			var options = new DistributedCacheSubscriptionOptions(_source.Namespace, DistributedCacheNotificationKind.All);
+			_subscription = await redis.SubscribeAsync(Handler.Handle<DistributedCacheNotification>(this.OnNotificationAsync), options, _lifetime.Token);
+			//订阅建立后再次读取，覆盖首次读取与订阅建立之间的变化。
+			data = await redis.GetConfigurationAsync(_source.Namespace, source.Token);
 		}
 
-		if(entry is IDictionary<string, string> dictionary)
-			this.Data = new Dictionary<string, string>(dictionary, StringComparer.OrdinalIgnoreCase);
-		else
-			this.Data = redis.GetStringEntries(_source.Namespace);
+		source.Token.ThrowIfCancellationRequested();
+		this.Data = data;
+		_loaded = true;
+		this.OnReload();
 	}
 	#endregion
 
 	#region 通知方法
-	private async Task SubscribeAsync()
-	{
-		try
-		{
-			var options = new DistributedCacheSubscriptionOptions(_source.Namespace, DistributedCacheNotificationKind.All);
-			_subscription = await _redis.SubscribeAsync(Handler.Handle<DistributedCacheNotification>(this.OnNotificationAsync), options, _lifetime.Token);
-			this.LoadCore();
-			this.OnReload();
-		}
-		catch(OperationCanceledException) when(_lifetime.IsCancellationRequested)
-		{
-		}
-		catch(Exception exception)
-		{
-			Zongsoft.Diagnostics.Logging.GetLogging(typeof(RedisConfigurationProvider)).Error(exception);
-		}
-	}
-
 	private ValueTask OnNotificationAsync(DistributedCacheNotification notification, CancellationToken cancellation)
 	{
 		if(!string.Equals(notification.Key, _source.Namespace, StringComparison.Ordinal) &&
 		   !notification.Key.StartsWith(_source.Namespace + ":", StringComparison.Ordinal))
 			return ValueTask.CompletedTask;
 
+		TaskCompletionSource reload = null;
+
 		lock(_sync)
 		{
-			if(_disposed == 0 && (_reloadTask == null || _reloadTask.IsCompleted))
-				_reloadTask = this.ReloadAsync(_lifetime.Token);
+			if(_disposal != null)
+				return ValueTask.CompletedTask;
+
+			_reloadRequested = true;
+			if(_reload == null)
+				_reload = reload = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		}
+
+		if(reload != null)
+			_ = this.ReloadAsync(reload);
 
 		return ValueTask.CompletedTask;
 	}
 
-	private async Task ReloadAsync(CancellationToken cancellation)
+	private async Task ReloadAsync(TaskCompletionSource completion)
 	{
 		try
 		{
-			await Task.Delay(TimeSpan.FromMilliseconds(50), cancellation);
-			this.LoadCore();
-			this.OnReload();
+			while(true)
+			{
+				await Task.Delay(TimeSpan.FromMilliseconds(50), _lifetime.Token);
+
+				lock(_sync)
+					_reloadRequested = false;
+
+				await this.LoadAsync(_lifetime.Token);
+
+				lock(_sync)
+				{
+					if(_reloadRequested && _disposal == null)
+						continue;
+
+					_reload = null;
+					completion.TrySetResult();
+					return;
+				}
+			}
 		}
-		catch(OperationCanceledException) when(cancellation.IsCancellationRequested)
-		{
-		}
+		catch(OperationCanceledException) when(_lifetime.IsCancellationRequested) { completion.TrySetResult(); }
+		catch(ObjectDisposedException) when(_lifetime.IsCancellationRequested) { completion.TrySetResult(); }
 		catch(Exception exception)
 		{
-			Zongsoft.Diagnostics.Logging.GetLogging(typeof(RedisConfigurationProvider)).Error(exception);
+			try { await Diagnostics.Logging.GetLogging(typeof(RedisConfigurationProvider)).ErrorAsync(exception); }
+			catch(Exception logging) { exception = new AggregateException(exception, logging); }
+
+			completion.TrySetException(exception);
+			_ = completion.Task.Exception;
+		}
+		finally
+		{
+			lock(_sync)
+			{
+				if(ReferenceEquals(_reload, completion))
+					_reload = null;
+			}
 		}
 	}
 	#endregion
 
 	#region 释放方法
-	public void Dispose() => this.DisposeAsync().AsTask().GetAwaiter().GetResult();
-	public async ValueTask DisposeAsync()
+	/// <summary>停止重载、等待加载与订阅退出；Redis 服务仍由服务容器或调用方拥有。</summary>
+	/// <returns>释放完成的共享任务。</returns>
+	public ValueTask DisposeAsync()
 	{
-		if(Interlocked.Exchange(ref _disposed, 1) != 0)
-			return;
-
-		_lifetime.Cancel();
-		Task subscriptionTask;
-		Task reloadTask;
+		TaskCompletionSource completion;
+		Task loading;
+		Task reloading;
+		bool execute;
 
 		lock(_sync)
 		{
-			subscriptionTask = _subscriptionTask;
-			reloadTask = _reloadTask;
+			execute = _disposal == null;
+			completion = _disposal ??= new(TaskCreationOptions.RunContinuationsAsynchronously);
+			loading = _loadTask;
+			reloading = _reload?.Task;
 		}
 
-		if(subscriptionTask != null)
-		{
-			try { await subscriptionTask; }
-			catch(OperationCanceledException) { }
-		}
+		if(execute)
+			_ = this.DisposeCoreAsync(completion, loading, reloading);
 
-		if(reloadTask != null)
-		{
-			try { await reloadTask; }
-			catch(OperationCanceledException) { }
-		}
-
-		if(_subscription != null)
-			await _subscription.DisposeAsync();
-
-		_lifetime.Dispose();
-		GC.SuppressFinalize(this);
+		return new(completion.Task);
 	}
-	#endregion
 
-	#region 嵌套子类
-	private sealed class RedisConfigurationDictionary : IDictionary<string, string>
+	private async Task DisposeCoreAsync(TaskCompletionSource completion, Task loading, Task reloading)
 	{
-		private readonly IServer _server;
-		private readonly IDatabase _database;
-		private readonly string _namespace;
+		List<Exception> errors = null;
 
-		internal RedisConfigurationDictionary(IServer server, IDatabase database, string @namespace)
+		try
 		{
-			_server = server ?? throw new ArgumentNullException(nameof(server));
-			_database = database ?? throw new ArgumentNullException(nameof(database));
+			try { await _lifetime.CancelAsync(); }
+			catch(Exception exception) { (errors ??= []).Add(exception); }
 
-			if(string.IsNullOrEmpty(@namespace))
-				throw new ArgumentNullException(nameof(@namespace));
-
-			_namespace = @namespace;
-		}
-
-		public int Count => _server.Scan(_database.Database, GetPattern(_namespace)).Count();
-		public bool IsReadOnly => false;
-
-		public string this[string key]
-		{
-			get => _database.StringGet(this.GetKey(key));
-			set => _database.StringSet(this.GetKey(key), value);
-		}
-
-		public ICollection<string> Keys => _server.Scan(_database.Database, GetPattern(_namespace))
-			.Select(key => ((string)key)[(_namespace.Length + 1)..])
-			.ToArray();
-
-		public ICollection<string> Values
-		{
-			get
+			foreach(var task in new[] { loading, reloading })
 			{
-				var keys = _server.Scan(_database.Database, GetPattern(_namespace)).ToArray();
+				if(task == null)
+					continue;
 
-				if(keys.Length == 0)
-					return Array.Empty<string>();
-
-				var values = this.GetValues(keys);
-				var result = new string[values.Length];
-
-				for(int i = 0; i < values.Length; i++)
-					result[i] = values[i];
-
-				return result;
+				try { await task; }
+				catch(OperationCanceledException) when(_lifetime.IsCancellationRequested) { }
+				catch(Exception exception) { (errors ??= []).Add(exception); }
 			}
+
+			try
+			{
+				if(_subscription != null)
+					await _subscription.DisposeAsync();
+			}
+			catch(Exception exception) { (errors ??= []).Add(exception); }
+
+			_lifetime.Dispose();
+			GC.SuppressFinalize(this);
+
+			if(errors != null)
+				completion.TrySetException(new AggregateException(errors));
+			else
+				completion.TrySetResult();
 		}
-
-		public void Add(string key, string value)
-		{
-			if(!_database.StringSet(this.GetKey(key), value, when: When.NotExists))
-				throw new ArgumentException(string.Format(Properties.Resources.DictionaryKeyAlreadyExists_Message, key, _namespace));
-		}
-
-		void ICollection<KeyValuePair<string, string>>.Add(KeyValuePair<string, string> field) => this.Add(field.Key, field.Value);
-
-		public bool Remove(string key) => _database.KeyDelete(this.GetKey(key));
-		bool ICollection<KeyValuePair<string, string>>.Remove(KeyValuePair<string, string> field) => this.Remove(field.Key);
-
-		public void Clear()
-		{
-			foreach(var key in _server.Scan(_database.Database, GetPattern(_namespace)))
-				_database.KeyDelete(key);
-		}
-
-		public bool Contains(string key) => _database.KeyExists(this.GetKey(key));
-		bool IDictionary<string, string>.ContainsKey(string key) => this.Contains(key);
-		bool ICollection<KeyValuePair<string, string>>.Contains(KeyValuePair<string, string> field) => this.Contains(field.Key);
-
-		public bool TryGetValue(string key, out string value)
-		{
-			var result = _database.StringGet(this.GetKey(key));
-			value = result;
-			return result.HasValue;
-		}
-
-		public void CopyTo(KeyValuePair<string, string>[] array, int arrayIndex)
-		{
-			ArgumentNullException.ThrowIfNull(array);
-
-			if(arrayIndex < 0 || arrayIndex > array.Length)
-				throw new ArgumentOutOfRangeException(nameof(arrayIndex));
-
-			var keys = _server.Scan(_database.Database, GetPattern(_namespace)).ToArray();
-
-			if(keys.Length > array.Length - arrayIndex)
-				throw new ArgumentException(Properties.Resources.DestinationArrayInsufficient_Message, nameof(array));
-
-			var values = this.GetValues(keys);
-
-			for(int i = 0; i < keys.Length; i++)
-				array[arrayIndex + i] = new KeyValuePair<string, string>(((string)keys[i])[(_namespace.Length + 1)..], values[i]);
-		}
-
-		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-		public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
-		{
-			var keys = _server.Scan(_database.Database, GetPattern(_namespace)).ToArray();
-			var values = this.GetValues(keys);
-
-			for(int i = 0; i < keys.Length; i++)
-				yield return new(((string)keys[i])[(_namespace.Length + 1)..], values[i]);
-		}
-
-		private RedisValue[] GetValues(RedisKey[] keys)
-		{
-			if(keys == null || keys.Length == 0)
-				return [];
-
-			var batch = _database.CreateBatch();
-			var tasks = new System.Threading.Tasks.Task<RedisValue>[keys.Length];
-
-			for(int i = 0; i < keys.Length; i++)
-				tasks[i] = batch.StringGetAsync(keys[i]);
-
-			batch.Execute();
-			System.Threading.Tasks.Task.WaitAll(tasks);
-
-			var values = new RedisValue[keys.Length];
-
-			for(int i = 0; i < tasks.Length; i++)
-				values[i] = tasks[i].Result;
-
-			return values;
-		}
-
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private string GetKey(string key) => $"{_namespace}:{key}";
-		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-		private static string GetPattern(string @namespace) => $"{@namespace}:*";
+		catch(Exception exception) { completion.TrySetException(exception); }
 	}
 	#endregion
 }

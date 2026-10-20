@@ -19,7 +19,7 @@ dotnet run --project Zongsoft.Hardwares/samples/Zongsoft.Hardwares.Samples.cspro
 
 ## 关键代码与预期结果
 
-[Program.cs](Program.cs) 调用 `HardwareCollector.Instance.Collect()`，构造 `Zongsoft.IO.Hardwares.HardwareProfile`，打印 `profile.Identifier`，再对每个设备执行 `CommandOutletDumper.Dump`。
+[Program.cs](Program.cs) 在异步入口中使用 `await foreach` 遍历 `HardwareCollector.Instance.CollectAsync()`，构造 `Zongsoft.IO.Hardwares.HardwareProfile`，打印 `profile.Identifier`，再对每个设备执行 `CommandOutletDumper.Dump`。
 
 预期输出是指纹字符串及层级硬件属性，不保证固定的设备数量或顺序。固件信息缺失、虚拟机间标识不同，本身不代表采集失败，应比较实际字段及平台权限。
 

@@ -65,10 +65,10 @@ public abstract class TextFileLogger<TLog> : FileLogger<TLog, string> where TLog
 	protected override async ValueTask WriteLogsAsync(Stream output, IEnumerable<TLog> logs, CancellationToken cancellation)
 	{
 		//注意：此处不能关闭stream参数传入的流，该流由基类确保安全释放！
-		using(var writer = new StreamWriter(output, System.Text.Encoding.UTF8, 1024 * 16, true))
+		await using(var writer = new StreamWriter(output, System.Text.Encoding.UTF8, 1024 * 16, true))
 		{
 			foreach(var log in logs)
-				await writer.WriteLineAsync(this.Format(log));
+				await writer.WriteLineAsync(this.Format(log).AsMemory(), cancellation);
 		}
 	}
 	#endregion

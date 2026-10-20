@@ -51,8 +51,8 @@ public class KafkaQueuePublishingTests
 		{
 			if(consumer != null)
 				await consumer.DisposeAsync();
-			subscriber.Dispose();
-			publisher.Dispose();
+			await subscriber.DisposeAsync();
+			await publisher.DisposeAsync();
 			restored = await KafkaTestUtility.DeleteResourcesAsync(topic, [group], TimeSpan.FromSeconds(45));
 		}
 
@@ -103,8 +103,8 @@ public class KafkaQueuePublishingTests
 		{
 			if(consumer != null)
 				await consumer.DisposeAsync();
-			subscriber.Dispose();
-			publisher.Dispose();
+			await subscriber.DisposeAsync();
+			await publisher.DisposeAsync();
 			restored = await KafkaTestUtility.DeleteResourcesAsync(topic, [group], TimeSpan.FromSeconds(45));
 		}
 

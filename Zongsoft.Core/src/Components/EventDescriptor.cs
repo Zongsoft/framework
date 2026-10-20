@@ -114,21 +114,26 @@ public class EventDescriptor : IEquatable<EventDescriptor>
 	public ValueTask HandleAsync(CancellationToken cancellation = default) => this.HandleAsync(null, null, cancellation);
 	public ValueTask HandleAsync(Parameters parameters, CancellationToken cancellation = default) => this.HandleAsync(null, parameters, cancellation);
 	public ValueTask HandleAsync(object argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
-	public ValueTask HandleAsync(object argument, Parameters parameters, CancellationToken cancellation = default)
+	public async ValueTask HandleAsync(object argument, Parameters parameters, CancellationToken cancellation = default)
 	{
-		if(this.OnPredicateAsync(argument, parameters, cancellation).AsTask().ConfigureAwait(false).GetAwaiter().GetResult())
+		if(await this.OnPredicateAsync(argument, parameters, cancellation).ConfigureAwait(false))
 		{
 			var tasks = new List<Task>(this.Handlers.Count);
 
 			foreach(var handler in this.Handlers)
 			{
-				tasks.Add(handler.HandleAsync(argument, parameters, cancellation).AsTask());
+				try
+				{
+					tasks.Add(handler.HandleAsync(argument, parameters, cancellation).AsTask());
+				}
+				catch(Exception exception)
+				{
+					tasks.Add(Task.FromException(exception));
+				}
 			}
 
-			return new ValueTask(Task.WhenAll(tasks));
+			await Task.WhenAll(tasks).ConfigureAwait(false);
 		}
-
-		return ValueTask.CompletedTask;
 	}
 	#endregion
 
@@ -182,24 +187,28 @@ public class EventDescriptor<TArgument> : EventDescriptor
 
 	#region 处理方法
 	public ValueTask HandleAsync(TArgument argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
-	public ValueTask HandleAsync(TArgument argument, Parameters parameters, CancellationToken cancellation = default)
+	public async ValueTask HandleAsync(TArgument argument, Parameters parameters, CancellationToken cancellation = default)
 	{
-		if(this.OnPredicateAsync(argument, parameters, cancellation).AsTask().ConfigureAwait(false).GetAwaiter().GetResult())
+		if(await this.OnPredicateAsync(argument, parameters, cancellation).ConfigureAwait(false))
 		{
 			var tasks = new List<Task>(this.Handlers.Count);
 
 			foreach(var handler in this.Handlers)
 			{
-				if(handler is IHandler<TArgument> generic)
-					tasks.Add(generic.HandleAsync(argument, parameters, cancellation).AsTask());
-				else
-					tasks.Add(handler.HandleAsync(argument, parameters, cancellation).AsTask());
+				try
+				{
+					tasks.Add(handler is IHandler<TArgument> generic ?
+						generic.HandleAsync(argument, parameters, cancellation).AsTask() :
+						handler.HandleAsync(argument, parameters, cancellation).AsTask());
+				}
+				catch(Exception exception)
+				{
+					tasks.Add(Task.FromException(exception));
+				}
 			}
 
-			return new ValueTask(Task.WhenAll(tasks));
+			await Task.WhenAll(tasks).ConfigureAwait(false);
 		}
-
-		return ValueTask.CompletedTask;
 	}
 	#endregion
 }

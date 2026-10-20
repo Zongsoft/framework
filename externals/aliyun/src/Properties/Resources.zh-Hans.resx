@@ -234,4 +234,10 @@
   <data name="Text.PhoneSendCommand.Options.Template" xml:space="preserve">
     <value>短信模板名称。</value>
   </data>
+	<data name="Operation.AsyncOnly.Message" xml:space="preserve">
+		<value>此提供程序仅支持异步操作，请使用对应的 Async 方法并等待异步释放。</value>
+	</data>
+  <data name="Storage.UploadResponseInvalid.Message" xml:space="preserve">
+    <value>存储上传应答缺少有效的上传编号、分片校验值或完成结果。</value>
+  </data>
 </root>

@@ -73,7 +73,7 @@ public sealed class ListenCommand(OpcClient client) : CommandBase<CommandContext
 		foreach(var subscriber in subscribers)
 		{
 			if(_spooler is { } spooler)
-				subscriber.Consume((subscriber, entry, value) => spooler.PutAsync(new(entry.Name, value), cancellation).AsTask().GetAwaiter().GetResult());
+				subscriber.Consume((subscriber, entry, value, token) => spooler.PutAsync(new(entry.Name, value), token));
 			else
 				subscriber.Consume((subscriber, entry, value) => Dump(context.Output, subscriber, entry, value));
 		}
@@ -86,18 +86,34 @@ public sealed class ListenCommand(OpcClient client) : CommandBase<CommandContext
 
 	private async ValueTask OnExitAsync(CommandContext context, Exception exception, CancellationToken cancellation)
 	{
-		if(context.Result is IEnumerable<Subscriber> subscribers)
-		{
-			//依次取消所有订阅者的消费事件
-			foreach(var subscriber in subscribers)
-				subscriber.Consume();
-		}
+		List<Exception> errors = null;
 
 		try
 		{
-			//释放不排空；原始运行异常由 ReactiveAsync 在清理完成后传播。
+			if(context.Result is IEnumerable<Subscriber> subscribers)
+			{
+				//先停止接受新通知，再等待已接受的异步消费者完成。
+				foreach(var subscriber in subscribers)
+				{
+					try { subscriber.Consume(); }
+					catch(Exception error) { (errors ??= []).Add(error); }
+				}
+
+				foreach(var subscriber in subscribers)
+				{
+					try { await subscriber.FlushAsync(); }
+					catch(Exception error) { (errors ??= []).Add(error); }
+				}
+			}
+
 			if(_spooler != null)
-				await _spooler.DisposeAsync();
+			{
+				try { await _spooler.FlushAsync(); }
+				catch(Exception error) { (errors ??= []).Add(error); }
+
+				try { await _spooler.DisposeAsync(); }
+				catch(Exception error) { (errors ??= []).Add(error); }
+			}
 		}
 		finally
 		{
@@ -105,6 +121,9 @@ public sealed class ListenCommand(OpcClient client) : CommandBase<CommandContext
 			_total = 0;
 			_timestamp = DateTime.Now;
 		}
+
+		if(errors != null)
+			throw new AggregateException(errors);
 	}
 	#endregion
 

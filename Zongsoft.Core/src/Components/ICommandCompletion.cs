@@ -28,11 +28,15 @@
  */
 
 using System;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Components;
 
 /// <summary>表示命令链执行完成的回调接口。</summary>
 public interface ICommandCompletion
 {
-	void OnCompleted(CommandCompletionContext context);
+	/// <summary>等待命令链的清理操作完成。</summary>
+	/// <param name="context">命令完成的结果及失败信息。</param>
+	/// <returns>清理操作完成的任务。</returns>
+	ValueTask OnCompletedAsync(CommandCompletionContext context);
 }

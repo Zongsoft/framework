@@ -43,11 +43,11 @@ public interface IRequestToken : IDisposable
 	/// <summary>获取当前请求对应的响应集。</summary>
 	/// <param name="cancellation">指定的响应操作取消标记。</param>
 	/// <returns>返回的响应集，如果当前请求尚未响应则返回的响应集为空集。</returns>
-	IEnumerable<IResponse> GetResponses(CancellationToken cancellation = default);
+	IAsyncEnumerable<IResponse> GetResponsesAsync(CancellationToken cancellation = default);
 
-	/// <summary>获取当前请求对应的响应集，注意：遍历返回的响应集会导致调用线程被堵塞<paramref name="timeout"/>参数指定的时长。</summary>
+	/// <summary>获取当前请求对应的响应集，遍历时异步等待应答，最多等待<paramref name="timeout"/>指定的时长。</summary>
 	/// <param name="timeout">指定的响应等待时长。</param>
 	/// <param name="cancellation">指定的响应操作取消标记。</param>
 	/// <returns>返回的响应集，如果当前请求在<paramref name="timeout"/>指定的时长内尚未响应则返回的响应集为空集。</returns>
-	IEnumerable<IResponse> GetResponses(TimeSpan timeout, CancellationToken cancellation = default);
+	IAsyncEnumerable<IResponse> GetResponsesAsync(TimeSpan timeout, CancellationToken cancellation = default);
 }

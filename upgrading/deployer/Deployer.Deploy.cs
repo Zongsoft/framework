@@ -50,14 +50,14 @@ partial class Deployer
 	public static async ValueTask DeployAsync(Argument argument, CancellationToken cancellation = default)
 	{
 		//等待宿主程序退出
-		if(!WaitHostExit(argument))
+		if(!await WaitHostExitAsync(argument, cancellation))
 		{
 			await Diagnostics.Logging.GetLogging().ErrorAsync($"Failed to wait for the '[{argument.AppId}]{argument.HostPath}({string.Join(',', argument.HostArgs)})' host process to exit, the deployment cannot proceed.", cancellation);
 			return;
 		}
 
 		//获取部署配置信息并以排他性的锁定部署文件
-		using var deployment = GetDeployment(argument);
+		using var deployment = await GetDeploymentAsync(argument, cancellation);
 		if(deployment == null)
 			return;
 
@@ -94,7 +94,7 @@ partial class Deployer
 		await OnDeployedAsync(argument, manifest, cancellation);
 
 		//启动宿主程序
-		Launcher.Launch(argument, deployment);
+		await Launcher.LaunchAsync(argument, deployment, cancellation);
 	}
 	#endregion
 
@@ -118,19 +118,19 @@ partial class Deployer
 	#endregion
 
 	#region 私有方法
-	private static Deployment GetDeployment(Argument argument)
+	private static async ValueTask<Deployment> GetDeploymentAsync(Argument argument, CancellationToken cancellation)
 	{
 		var deployment = argument.Deployment;
 
 		if(string.IsNullOrWhiteSpace(deployment))
 		{
-			Diagnostics.Logging.GetLogging<Program>().Error("No deployment file specified.");
+			await Diagnostics.Logging.GetLogging<Program>().ErrorAsync("No deployment file specified.", cancellation);
 			return null;
 		}
 
 		if(!File.Exists(deployment))
 		{
-			Diagnostics.Logging.GetLogging<Program>().Error($"The specified '{deployment}' deployment file does not exist.");
+			await Diagnostics.Logging.GetLogging<Program>().ErrorAsync($"The specified '{deployment}' deployment file does not exist.", cancellation);
 			return null;
 		}
 
@@ -144,54 +144,43 @@ partial class Deployer
 				}
 				catch(IOException) when(i < 39)
 				{
-					Thread.Sleep(250);
+					await Task.Delay(250, cancellation);
 				}
 			}
 		}
-		catch(Exception ex)
+		catch(Exception ex) when(ex is not OperationCanceledException)
 		{
-			Diagnostics.Logging.GetLogging<Program>().Error(ex);
+			await Diagnostics.Logging.GetLogging<Program>().ErrorAsync(ex, cancellation);
 		}
 
 		return null;
 	}
 
-	private static bool WaitHostExit(Argument argument)
+	private static async ValueTask<bool> WaitHostExitAsync(Argument argument, CancellationToken cancellation)
 	{
 		if(argument.AppId == 0)
 			return true;
 
-		//获取指定编号的进程
-		var process = GetProcess(argument.AppId);
+		using var process = GetProcess(argument.AppId);
 
-		//如果进程已退出则返回成功
 		if(Utility.HasExited(process))
 			return true;
 
+		using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+		timeout.CancelAfter(TimeSpan.FromSeconds(62));
+
 		try
 		{
-			var times = 0;
-
-			//等待进程退出，期间每隔1秒钟检查一次进程状态
-			while(!process.WaitForExit(1000))
-			{
-				//刷新进程状态
-				process.Refresh();
-
-				//如果进程已退出则返回成功
-				if(Utility.HasExited(process))
-					return true;
-
-				//如果等待超时次数过多则返回失败
-				if(times++ > 60)
-					return false;
-			}
-
+			await process.WaitForExitAsync(timeout.Token);
 			return true;
 		}
-		catch(Exception ex)
+		catch(OperationCanceledException) when(!cancellation.IsCancellationRequested)
 		{
-			Diagnostics.Logging.GetLogging().Error(ex);
+			return false;
+		}
+		catch(Exception ex) when(ex is not OperationCanceledException)
+		{
+			await Diagnostics.Logging.GetLogging().ErrorAsync(ex, cancellation);
 			return false;
 		}
 
@@ -207,7 +196,7 @@ partial class Deployer
 	/// <summary>表示部署事件的参数类。</summary>
 	public class DeployEventArgs : ReleaseEventArgs
 	{
-		public DeployEventArgs(Argument argument, Manifest manifest) : base(manifest.Trunk == null ? manifest.Deltas : [manifest.Trunk, ..manifest.Deltas])
+		public DeployEventArgs(Argument argument, Manifest manifest) : base(manifest.Trunk == null ? manifest.Deltas : [manifest.Trunk, .. manifest.Deltas])
 		{
 			this.Argument = argument;
 		}

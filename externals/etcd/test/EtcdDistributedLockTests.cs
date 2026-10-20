@@ -14,8 +14,8 @@ public class EtcdDistributedLockTests
 	[Fact]
 	public async Task CompetitionOwnershipAndFencingTokensMatchContract()
 	{
-		RequireEtcd();
-		using var service = CreateService();
+		await RequireEtcdAsync();
+		await using var service = CreateService();
 		var manager = (IDistributedLockManager)service;
 
 		await using var owner = await service.AcquireAsync("resource", TimeSpan.FromSeconds(3));
@@ -37,8 +37,8 @@ public class EtcdDistributedLockTests
 	[Fact]
 	public async Task ManualAndAutomaticRenewalKeepOwnershipAlive()
 	{
-		RequireEtcd();
-		using var service = CreateService();
+		await RequireEtcdAsync();
+		await using var service = CreateService();
 
 		await using(var manual = await service.AcquireAsync("manual", TimeSpan.FromSeconds(2)))
 		{
@@ -66,8 +66,8 @@ public class EtcdDistributedLockTests
 	[Fact]
 	public async Task EnterAsync_ObservesCancellationWhileContended()
 	{
-		RequireEtcd();
-		using var service = CreateService();
+		await RequireEtcdAsync();
+		await using var service = CreateService();
 		await using var owner = await service.AcquireAsync("cancel", TimeSpan.FromSeconds(3));
 		await using var contender = await service.AcquireAsync("cancel", TimeSpan.FromSeconds(3));
 		using var source = new CancellationTokenSource(TimeSpan.FromMilliseconds(300));
@@ -78,9 +78,9 @@ public class EtcdDistributedLockTests
 	}
 
 	private static EtcdService CreateService() => new("test", Global.ConnectionString) { Namespace = "locks:" + Guid.NewGuid().ToString("N") };
-	private static void RequireEtcd()
+	private static async Task RequireEtcdAsync()
 	{
 		Assert.SkipUnless(Global.IsTestingEnabled, "Set ZONGSOFT_ETCD_TESTS=1 to run etcd integration tests.");
-		Assert.SkipUnless(Global.IsAvailable(), $"etcd is unavailable at {Global.Server}.");
+		Assert.SkipUnless(await Global.IsAvailableAsync(), $"etcd is unavailable at {Global.Server}.");
 	}
 }

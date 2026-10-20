@@ -109,4 +109,4 @@ remove orders:1001
 
 在 `close` 释放客户端之前，仅删除本次剩余的测试键（上述示例为 `greeting`、`token`、`config` 和 `orders:1002`）。然后在各终端执行 `exit` 并确认退出提示。带 TTL 的测试键可等待其过期；不要清空共享命名空间。键空间通知是瞬时观察机制，不是持久事件日志。
 
-独立范例的 [Program.cs](Program.cs) 自行持有 Redis 客户端。应用代码请采用[插件与公共缓存接口示例](../../README.zh-Hans.md)，不要构造或释放共享提供者实例。
+独立范例的 [Program.cs](Program.cs) 通过 `await using` 持有 Redis 客户端，`close` 同样等待 `DisposeAsync` 完成。`info` 命令异步查询条目数。应用代码请采用[插件与公共缓存接口示例](../../README.zh-Hans.md)，不要构造或释放共享提供者实例。

@@ -40,7 +40,7 @@ public class MessageQueueGuarderTest
 	[Fact]
 	public async Task FailedDisposalDoesNotSkipOtherConsumersAndCanBeRetried()
 	{
-		using var queue = new Queue();
+		await using var queue = new Queue();
 		await using var guarder = new MessageQueueGuarder { Queue = queue, Options = new() };
 		await guarder.StartAsync(["first", "second"]);
 		queue.Created[0].Fail = true;
@@ -63,7 +63,7 @@ public class MessageQueueGuarderTest
 	[Fact]
 	public async Task FailedSubscriptionCleansPreviouslyCreatedConsumers()
 	{
-		using var queue = new Queue { FailSecond = true };
+		await using var queue = new Queue { FailSecond = true };
 		await using var guarder = new MessageQueueGuarder { Queue = queue, Options = new() };
 		await Assert.ThrowsAsync<InvalidOperationException>(() => guarder.StartAsync(["first", "second"]));
 		Assert.Equal(WorkerState.Stopped, guarder.State);

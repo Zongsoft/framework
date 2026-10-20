@@ -30,6 +30,8 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Text.Json;
 using System.Collections.Generic;
 
@@ -38,12 +40,31 @@ namespace Zongsoft.Hardwares;
 partial class HardwareCollector
 {
 	[System.Runtime.Versioning.SupportedOSPlatform("Linux")]
-	private static class LinuxGatherer
+	private sealed class LinuxGatherer(IReadOnlyDictionary<(string File, string Arguments), CommandResult> results)
 	{
 		private const string DMI = "/sys/devices/virtual/dmi/id/";
 
 		#region 静态方法
-		public static IEnumerable<IO.Hardwares.IHardware> Gather()
+		public static async ValueTask<IEnumerable<IO.Hardwares.IHardware>> GatherAsync(CancellationToken cancellation)
+		{
+			(string File, string Arguments, int Timeout)[] commands =
+			[
+				("lscpu", "", 5000),
+				("dmidecode", "-t processor", 8000),
+				("dmidecode", "-t memory", 8000),
+				("lsblk", "-J -b -o NAME,KNAME,PATH,MODEL,SERIAL,SIZE,TYPE,VENDOR,TRAN,ROTA,FSTYPE,MOUNTPOINT,LABEL,UUID,PARTUUID,PARTLABEL", 8000),
+			];
+			var results = new Dictionary<(string, string), CommandResult>();
+
+			foreach(var command in commands)
+				results[(command.File, command.Arguments)] = await HardwareUtility.ExecuteAsync(command.File, command.Arguments, command.Timeout, cancellation);
+
+			return new LinuxGatherer(results).Gather();
+		}
+		#endregion
+
+		#region 采集方法
+		private IEnumerable<IO.Hardwares.IHardware> Gather()
 		{
 			var mainboard = GetMainboard();
 			if(mainboard != null)
@@ -53,13 +74,13 @@ partial class HardwareCollector
 			if(bios != null)
 				yield return bios;
 
-			foreach(var processor in GetProcessors())
+			foreach(var processor in this.GetProcessors())
 				yield return processor;
 
-			foreach(var memory in GetMemories())
+			foreach(var memory in this.GetMemories())
 				yield return memory;
 
-			foreach(var disk in GetDisks())
+			foreach(var disk in this.GetDisks())
 				yield return disk;
 		}
 		#endregion
@@ -121,10 +142,10 @@ partial class HardwareCollector
 				properties: properties);
 		}
 
-		private static IEnumerable<IO.Hardwares.IHardware> GetProcessors()
+		private IEnumerable<IO.Hardwares.IHardware> GetProcessors()
 		{
 			var processors = ParseCpuInfo();
-			var dmiProcessors = GetDmiProcessors().ToArray();
+			var dmiProcessors = this.GetDmiProcessors().ToArray();
 
 			if(processors.Count == 0)
 			{
@@ -156,7 +177,7 @@ partial class HardwareCollector
 					yield break;
 				}
 
-				var result = HardwareUtility.Execute("lscpu", "");
+				var result = results[("lscpu", "")];
 
 				if(result.Succeeded)
 				{
@@ -208,9 +229,9 @@ partial class HardwareCollector
 			}
 		}
 
-		private static IEnumerable<Dictionary<string, string>> GetDmiProcessors()
+		private IEnumerable<Dictionary<string, string>> GetDmiProcessors()
 		{
-			var result = HardwareUtility.Execute("dmidecode", "-t processor", 8000);
+			var result = results[("dmidecode", "-t processor")];
 
 			if(!result.Succeeded)
 				yield break;
@@ -221,9 +242,9 @@ partial class HardwareCollector
 
 		private static string CompactIdentifier(string value) => string.IsNullOrEmpty(value) ? null : new string(value.Where(chr => !char.IsWhiteSpace(chr)).ToArray());
 
-		private static IEnumerable<IO.Hardwares.IHardware> GetMemories()
+		private IEnumerable<IO.Hardwares.IHardware> GetMemories()
 		{
-			var memories = GetDmiMemories().ToArray();
+			var memories = this.GetDmiMemories().ToArray();
 
 			if(memories.Length > 0)
 			{
@@ -253,9 +274,9 @@ partial class HardwareCollector
 					properties: properties);
 		}
 
-		private static IEnumerable<IO.Hardwares.IHardware> GetDmiMemories()
+		private IEnumerable<IO.Hardwares.IHardware> GetDmiMemories()
 		{
-			var result = HardwareUtility.Execute("dmidecode", "-t memory", 8000);
+			var result = results[("dmidecode", "-t memory")];
 
 			if(!result.Succeeded)
 				yield break;
@@ -293,9 +314,9 @@ partial class HardwareCollector
 			}
 		}
 
-		private static IEnumerable<IO.Hardwares.IHardware> GetDisks()
+		private IEnumerable<IO.Hardwares.IHardware> GetDisks()
 		{
-			var disks = GetLsblkDisks().ToArray();
+			var disks = this.GetLsblkDisks().ToArray();
 
 			if(disks.Length > 0)
 			{
@@ -309,9 +330,9 @@ partial class HardwareCollector
 				yield return disk;
 		}
 
-		private static IEnumerable<IO.Hardwares.IHardware> GetLsblkDisks()
+		private IEnumerable<IO.Hardwares.IHardware> GetLsblkDisks()
 		{
-			var result = HardwareUtility.Execute("lsblk", "-J -b -o NAME,KNAME,PATH,MODEL,SERIAL,SIZE,TYPE,VENDOR,TRAN,ROTA,FSTYPE,MOUNTPOINT,LABEL,UUID,PARTUUID,PARTLABEL", 8000);
+			var result = results[("lsblk", "-J -b -o NAME,KNAME,PATH,MODEL,SERIAL,SIZE,TYPE,VENDOR,TRAN,ROTA,FSTYPE,MOUNTPOINT,LABEL,UUID,PARTUUID,PARTLABEL")];
 
 			if(!result.Succeeded)
 				yield break;

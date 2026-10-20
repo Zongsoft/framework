@@ -29,6 +29,7 @@
 
 using System;
 using System.Text;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections;
@@ -50,6 +51,10 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 
 	#region 成员字段
 	private volatile int _disposing;
+	private int _operations;
+	private TaskCompletionSource _idle;
+	private TaskCompletionSource _disposal;
+	private readonly object _lifecycle = new();
 	private readonly CancellationTokenSource _cancellation = new();
 	#endregion
 
@@ -110,7 +115,18 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 		if(options != null && !options.Compression.IsEmpty && !this.Features.Contains(MessageQueueFeature.Compression))
 			throw OperationException.Unsupported(string.Format(Properties.Resources.Messaging_FeatureNotSupported_Message, MessageQueueFeature.Compression.Name, this.GetType().Name));
 
-		return this.OnProduceAsync(topic, tags, data, options, cancellation);
+		this.EnterOperation();
+		return ProduceAsync();
+
+		async ValueTask<string> ProduceAsync()
+		{
+			try
+			{
+				using var source = CancellationTokenSource.CreateLinkedTokenSource(cancellation, _cancellation.Token);
+				return await this.OnProduceAsync(topic, tags, data, options, source.Token).ConfigureAwait(false);
+			}
+			finally { this.ExitOperation(); }
+		}
 	}
 
 	protected abstract ValueTask<string> OnProduceAsync(string topic, string tags, ReadOnlyMemory<byte> data, MessageEnqueueOptions options, CancellationToken cancellation);
@@ -174,6 +190,7 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 
 		async Task<TSubscriber> InitializeSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, Subscription subscription)
 		{
+			this.EnterOperation();
 			TSubscriber subscriber = default;
 
 			try
@@ -211,7 +228,7 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 
 				return subscriber;
 			}
-			catch
+			catch(Exception exception)
 			{
 				if(subscriber != null)
 				{
@@ -220,7 +237,8 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 					if(this.Remove(topic, subscription, out var removed))
 						this.OnUnsubscribed(removed);
 
-					await subscriber.DisposeAsync();
+					try { await subscriber.DisposeAsync(); }
+					catch(Exception failure) when(!ReferenceEquals(exception, failure)) { throw new AggregateException(exception, failure); }
 				}
 
 				throw;
@@ -232,6 +250,8 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 					this.Subscribers.Remove(topic, subscription);
 					subscription.TryRemove(out _);
 				}
+
+				this.ExitOperation();
 			}
 
 			void OnClosed(object sender, EventArgs args)
@@ -275,24 +295,81 @@ public abstract class MessageQueueBase<TSubscriber> : IMessageQueue where TSubsc
 	#endregion
 
 	#region 资源释放
-	protected virtual void Dispose(bool disposing) { }
-	public void Dispose()
+	protected virtual ValueTask DisposeAsync(bool disposing) => ValueTask.CompletedTask;
+
+	public ValueTask DisposeAsync()
 	{
-		var disposing = Interlocked.CompareExchange(ref _disposing, DISPOSING, 0);
-		if(disposing != 0)
-			return;
+		TaskCompletionSource completion;
+		Task idle;
+
+		lock(_lifecycle)
+		{
+			if(_disposal != null)
+				return new(_disposal.Task);
+
+			_disposing = DISPOSING;
+			completion = _disposal = new(TaskCreationOptions.RunContinuationsAsynchronously);
+			idle = _operations == 0 ? Task.CompletedTask : (_idle = new(TaskCreationOptions.RunContinuationsAsynchronously)).Task;
+		}
+
+		_ = this.DisposeAsyncCore(completion, idle);
+		return new(completion.Task);
+	}
+
+	private async Task DisposeAsyncCore(TaskCompletionSource completion, Task idle)
+	{
+		List<Exception> failures = null;
 
 		try
 		{
-			_cancellation.Cancel();
-			this.Dispose(true);
-			GC.SuppressFinalize(this);
+			try { await _cancellation.CancelAsync().ConfigureAwait(false); }
+			catch(Exception exception) { (failures ??= []).Add(exception); }
+
+			await idle.ConfigureAwait(false);
+
+			foreach(var subscriber in this.Subscribers.ToArray())
+			{
+				try { await subscriber.DisposeAsync().ConfigureAwait(false); }
+				catch(Exception exception) { (failures ??= []).Add(exception); }
+			}
+
+			try { await this.DisposeAsync(true).ConfigureAwait(false); }
+			catch(Exception exception) { (failures ??= []).Add(exception); }
 		}
+		catch(Exception exception) { (failures ??= []).Add(exception); }
 		finally
 		{
 			_cancellation.Dispose();
 			_disposing = DISPOSED;
+			GC.SuppressFinalize(this);
 		}
+
+		if(failures == null)
+			completion.TrySetResult();
+		else
+			completion.TrySetException(failures.Count == 1 ? failures[0] : new AggregateException(failures));
+	}
+
+	private void EnterOperation()
+	{
+		lock(_lifecycle)
+		{
+			ObjectDisposedException.ThrowIf(_disposing != 0, this);
+			_operations++;
+		}
+	}
+
+	private void ExitOperation()
+	{
+		TaskCompletionSource idle = null;
+
+		lock(_lifecycle)
+		{
+			if(--_operations == 0)
+				idle = _idle;
+		}
+
+		idle?.TrySetResult();
 	}
 	#endregion
 

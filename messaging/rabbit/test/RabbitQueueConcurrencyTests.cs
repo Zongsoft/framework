@@ -138,7 +138,7 @@ public class RabbitQueueConcurrencyTests
 		}
 		finally
 		{
-			queue.Dispose();
+			await queue.DisposeAsync();
 			await RabbitTestUtility.DeleteTestExchangeAsync(exchange);
 		}
 
@@ -277,7 +277,7 @@ public class RabbitQueueConcurrencyTests
 		finally
 		{
 			foreach(var queue in queues)
-				queue.Dispose();
+				await queue.DisposeAsync();
 			foreach(var audit in audits)
 				audit.Dispose();
 		}

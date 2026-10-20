@@ -117,7 +117,7 @@ public static class CredentialManager
 		}
 
 		//获取分布式锁
-		using var locker = await Locker.AcquireAsync(key + ":LOCKER", TimeSpan.FromSeconds(5), cancellation);
+		await using var locker = await Locker.AcquireAsync(key + ":LOCKER", TimeSpan.FromSeconds(5), cancellation);
 
 		if(locker != null)
 		{
@@ -191,7 +191,7 @@ public static class CredentialManager
 		}
 
 		//获取分布式锁
-		using var locker = await Locker.AcquireAsync(key + ":LOCKER", TimeSpan.FromSeconds(5), cancellation);
+		await using var locker = await Locker.AcquireAsync(key + ":LOCKER", TimeSpan.FromSeconds(5), cancellation);
 
 		if(locker != null)
 		{

@@ -17,7 +17,7 @@ public class RabbitSubscriberTests
 	[Fact]
 	public async Task DeliveryMapsMessageAndAcknowledgement()
 	{
-		using var queue = CreateQueue("Delivery-Unit");
+		await using var queue = CreateQueue("Delivery-Unit");
 		var channel = DispatchProxy.Create<IChannel, ChannelProxy>();
 		var proxy = (ChannelProxy)(object)channel;
 		var handler = new RecordingHandler();
@@ -42,7 +42,7 @@ public class RabbitSubscriberTests
 	[Fact]
 	public async Task DeliveryWithoutMessageIdLeavesIdentifierEmpty()
 	{
-		using var queue = CreateQueue("Delivery-NoId");
+		await using var queue = CreateQueue("Delivery-NoId");
 		var channel = DispatchProxy.Create<IChannel, ChannelProxy>();
 		var proxy = (ChannelProxy)(object)channel;
 		var handler = new RecordingHandler();
@@ -60,9 +60,9 @@ public class RabbitSubscriberTests
 	}
 
 	[Fact]
-	public void NullChannelThrowsArgumentNullException()
+	public async Task NullChannelThrowsArgumentNullException()
 	{
-		using var queue = CreateQueue("Subscriber-Null");
+		await using var queue = CreateQueue("Subscriber-Null");
 
 		Assert.Throws<ArgumentNullException>(() => new RabbitSubscriber(queue, null, "orders.*", null, new RecordingHandler()));
 	}
@@ -70,7 +70,7 @@ public class RabbitSubscriberTests
 	[Fact]
 	public async Task DisposeClosesAndDisposesChannel()
 	{
-		using var queue = CreateQueue("Subscriber-Dispose");
+		await using var queue = CreateQueue("Subscriber-Dispose");
 		var channel = DispatchProxy.Create<IChannel, ChannelProxy>();
 		var proxy = (ChannelProxy)(object)channel;
 		proxy.IsOpen = true;

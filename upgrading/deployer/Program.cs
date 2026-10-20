@@ -67,10 +67,12 @@ internal class Program
 		}
 		catch(Exception ex)
 		{
-			Diagnostics.Logging.GetLogging().Error(ex);
+			await Diagnostics.Logging.GetLogging().ErrorAsync(ex);
 		}
-
-		//等待后台线程和任务完成
-		await Task.Delay(500);
+		finally
+		{
+			//包括参数校验失败路径，均等待已接受的日志持久化。
+			await Diagnostics.Logging.FlushAsync();
+		}
 	}
 }

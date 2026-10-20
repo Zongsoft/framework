@@ -14,7 +14,7 @@ public class MessageConsumerBaseTest
 	[Fact]
 	public async Task DisposeAsyncClosesAndMarksConsumerDisposed()
 	{
-		using var queue = new TestQueue();
+		await using var queue = new TestQueue();
 		var consumer = new TestConsumer(queue, new TestHandler());
 		var closed = 0;
 		consumer.Closed += (_, _) => Interlocked.Increment(ref closed);
@@ -44,7 +44,7 @@ public class MessageConsumerBaseTest
 	{
 		const int CONCURRENCY = 64;
 
-		using var queue = new TestQueue();
+		await using var queue = new TestQueue();
 		var consumer = new TestConsumer(queue, new TestHandler());
 		var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 		var closed = 0;

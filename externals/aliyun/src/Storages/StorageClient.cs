@@ -152,13 +152,13 @@ public class StorageClient
 
 		string baseName, resourcePath;
 		var url = _serviceCenter.GetBaseUrl(path, out baseName, out resourcePath) + "?list-type=2&prefix=" + Uri.EscapeDataString(resourcePath) + "&delimiter=/&max-keys=100";
-		var response = await _http.GetAsync(url, cancellation);
+		using var response = await _http.GetAsync(url, cancellation);
 
 		//确保返回的内容是成功
 		response.EnsureSuccessStatusCode();
 
 		var resolver = new StorageSearchResultResolver(_serviceCenter, _http, getUrl);
-		return await resolver.Resolve(response);
+		return await resolver.ResolveAsync(response, cancellation);
 	}
 	#endregion
 

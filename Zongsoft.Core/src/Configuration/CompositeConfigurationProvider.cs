@@ -29,6 +29,8 @@
 
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Microsoft.Extensions.Primitives;
@@ -36,10 +38,12 @@ using Microsoft.Extensions.Configuration;
 
 namespace Zongsoft.Configuration;
 
-public class CompositeConfigurationProvider : ICompositeConfigurationProvider, IConfigurationProvider, IDisposable
+public class CompositeConfigurationProvider : ICompositeConfigurationProvider, IConfigurationProvider, IDisposable, IAsyncDisposable
 {
 	#region 私有变量
 	private IConfigurationProvider[] _providers;
+	private readonly object _sync = new();
+	private TaskCompletionSource _disposal;
 	private CompositeChangeToken _reloadToken;
 	#endregion
 
@@ -110,33 +114,99 @@ public class CompositeConfigurationProvider : ICompositeConfigurationProvider, I
 	#endregion
 
 	#region 处置方法
+	/// <summary>同步释放同步配置源；含有仅支持异步释放的配置源时必须使用 DisposeAsync。</summary>
 	public void Dispose()
 	{
-		this.Dispose(true);
-		GC.SuppressFinalize(this);
+		lock(_sync)
+		{
+			if(_disposal != null)
+			{
+				if(!_disposal.Task.IsCompleted)
+					throw new InvalidOperationException(Properties.Resources.Disposal_AsyncRequired_Message);
+				return;
+			}
+
+			if(_providers.Any(provider => provider is IAsyncDisposable && provider is not IDisposable))
+				throw new InvalidOperationException(Properties.Resources.Disposal_AsyncRequired_Message);
+
+			this.Dispose(true);
+			GC.SuppressFinalize(this);
+		}
 	}
 
 	protected virtual void Dispose(bool disposing)
 	{
-		var providers = _providers;
+		if(!disposing)
+			return;
 
-		for(int i = 0; i < providers.Length; i++)
+		var providers = Interlocked.Exchange(ref _providers, []);
+		List<Exception> errors = null;
+
+		foreach(var provider in providers)
 		{
-			if(providers[i] is IDisposable disposable)
-				disposable.Dispose();
-			else if(providers[i] is IAsyncDisposable asyncDisposable)
-				Destory(asyncDisposable);
+			try { (provider as IDisposable)?.Dispose(); }
+			catch(Exception exception) { (errors ??= []).Add(exception); }
 		}
 
-		Array.Resize(ref _providers, 0);
+		if(errors != null)
+			throw new AggregateException(errors);
+	}
 
-		static async void Destory(IAsyncDisposable disposable)
+	/// <summary>等待所有子配置源释放，并传播清理故障；并发调用共享同一结果。</summary>
+	/// <returns>所有子配置源释放完成的任务。</returns>
+	public ValueTask DisposeAsync()
+	{
+		TaskCompletionSource completion;
+		bool execute;
+
+		lock(_sync)
+		{
+			execute = _disposal == null;
+			completion = _disposal ??= new(TaskCreationOptions.RunContinuationsAsynchronously);
+		}
+
+		if(execute)
+			_ = this.DisposeCoreAsync(completion);
+
+		return new(completion.Task);
+	}
+
+	protected virtual async ValueTask DisposeAsync(bool disposing)
+	{
+		if(!disposing)
+			return;
+
+		var providers = Interlocked.Exchange(ref _providers, []);
+		List<Exception> errors = null;
+
+		foreach(var provider in providers)
 		{
 			try
 			{
-				await disposable.DisposeAsync();
+				if(provider is IAsyncDisposable asynchronous)
+					await asynchronous.DisposeAsync().ConfigureAwait(false);
+				else if(provider is IDisposable synchronous)
+					synchronous.Dispose();
 			}
-			catch { }
+			catch(Exception exception) { (errors ??= []).Add(exception); }
+		}
+
+		if(errors != null)
+			throw new AggregateException(errors);
+	}
+
+	private async Task DisposeCoreAsync(TaskCompletionSource completion)
+	{
+		try
+		{
+			await this.DisposeAsync(true).ConfigureAwait(false);
+			GC.SuppressFinalize(this);
+			completion.TrySetResult();
+		}
+		catch(Exception exception)
+		{
+			completion.TrySetException(exception);
+			_ = completion.Task.Exception;
 		}
 	}
 	#endregion

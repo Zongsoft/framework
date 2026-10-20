@@ -38,12 +38,12 @@ namespace Zongsoft.Externals.Opc.Security;
 public class AuthenticationIdentity
 {
 	#region 内部方法
-	internal static AuthenticationIdentity GetIdentity(UserIdentityToken token) => token switch
+	internal static AuthenticationIdentity GetIdentity(IUserIdentityTokenHandler token) => token switch
 	{
-		AnonymousIdentityToken => null,
-		UserNameIdentityToken user => new Account(user.UserName, user.DecryptedPassword == null ? string.Empty : Encoding.UTF8.GetString(user.DecryptedPassword)),
-		X509IdentityToken x509 => new Certificate(x509.Certificate),
-		IssuedIdentityToken => throw new Zongsoft.Security.SecurityException(),
+		AnonymousIdentityTokenHandler => null,
+		UserNameIdentityTokenHandler user => new Account(user.UserName, user.DecryptedPassword == null ? string.Empty : Encoding.UTF8.GetString(user.DecryptedPassword)),
+		X509IdentityTokenHandler x509 => new Certificate(((X509IdentityToken)x509.Token).CertificateData.ToArray()),
+		IssuedIdentityTokenHandler => throw new Zongsoft.Security.SecurityException(),
 		_ => null,
 	};
 	#endregion
@@ -75,9 +75,28 @@ public class AuthenticationIdentity
 		#endregion
 	}
 
-	public sealed class Certificate : AuthenticationIdentity, IEquatable<Certificate>, IEquatable<AuthenticationIdentity>
+	public sealed class Certificate : AuthenticationIdentity, IDisposable, IEquatable<Certificate>, IEquatable<AuthenticationIdentity>
 	{
+		#region 构造与资源
+		private readonly bool _owned;
 		public Certificate(X509Certificate2 x509) => this.X509 = x509;
+		internal Certificate(byte[] data)
+		{
+#if NET9_0_OR_GREATER
+			this.X509 = X509CertificateLoader.LoadCertificate(data);
+#else
+			this.X509 = new X509Certificate2(data);
+#endif
+			_owned = true;
+		}
+
+		public void Dispose()
+		{
+			if(_owned)
+				this.X509?.Dispose();
+		}
+		#endregion
+
 		#region 公共属性
 		public X509Certificate2 X509 { get; }
 		#endregion
@@ -87,7 +106,7 @@ public class AuthenticationIdentity
 		public bool Equals(AuthenticationIdentity other) => this.Equals(other as Certificate);
 		#endregion
 		#region 重写方法
-		public override bool Equals(object obj) => this.Equals(obj as Account);
+		public override bool Equals(object obj) => this.Equals(obj as Certificate);
 		public override int GetHashCode() => HashCode.Combine(this.X509);
 		public override string ToString() => this.X509?.ToString();
 		#endregion

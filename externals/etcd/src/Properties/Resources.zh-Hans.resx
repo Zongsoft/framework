@@ -135,4 +135,7 @@
 	<data name="Etcd.NamespaceImmutable.Message" xml:space="preserve">
 		<value>etcd 服务激活后不能更改命名空间。</value>
 	</data>
+	<data name="Operation.AsyncOnly.Message" xml:space="preserve">
+		<value>此提供程序仅支持异步操作，请使用对应的 Async 方法并等待异步释放。</value>
+	</data>
 </root>

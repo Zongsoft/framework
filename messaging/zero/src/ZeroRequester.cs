@@ -30,6 +30,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
@@ -42,7 +43,7 @@ namespace Zongsoft.Messaging.ZeroMQ;
 
 [System.Reflection.DefaultMember(nameof(Handlers))]
 [System.ComponentModel.DefaultProperty(nameof(Handlers))]
-public class ZeroRequester : IRequester, IDisposable, IAsyncDisposable
+public class ZeroRequester : IRequester, IAsyncDisposable
 {
 	#region 静态常量
 	private static readonly TimeSpan PENDING_EXPIRATION = TimeSpan.FromSeconds(600);
@@ -55,6 +56,11 @@ public class ZeroRequester : IRequester, IDisposable, IAsyncDisposable
 	private readonly ConcurrentDictionary<string, Token> _tokens;
 	private readonly ConcurrentDictionary<string, Task<ZeroSubscriber>> _subscriptions;
 	private int _disposed;
+	private readonly object _sync = new();
+	private readonly CancellationTokenSource _lifetime = new();
+	private TaskCompletionSource _disposal;
+	private TaskCompletionSource _drained;
+	private int _operations;
 	#endregion
 
 	#region 构造函数
@@ -96,29 +102,46 @@ public class ZeroRequester : IRequester, IDisposable, IAsyncDisposable
 	#region 公共方法
 	public async ValueTask<IRequestToken> RequestAsync(string url, ReadOnlyMemory<byte> data, CancellationToken cancellation = default)
 	{
-		if(Volatile.Read(ref _disposed) != 0)
-			throw new ObjectDisposedException(nameof(ZeroRequester));
+		lock(_sync)
+		{
+			ObjectDisposedException.ThrowIf(_disposed != 0, this);
+			_operations++;
+		}
 
-		var queue = this.Queue;
-		if(queue == null)
-			return null;
-
-		var request = new ZeroRequest(url, data);
-		var token = new Token(request, request => this.Remove(request.Identifier));
-
-		if(!_tokens.TryAdd(request.Identifier, token))
-			return null;
+		using var lifetime = CancellationTokenSource.CreateLinkedTokenSource(cancellation, _lifetime.Token);
+		cancellation = lifetime.Token;
 
 		try
 		{
-			await this.SubscribeAsync(queue, url + "/reply", cancellation);
-			await queue.ProduceAsync(url, request.Pack(), null, cancellation);
-			return token;
+			var queue = this.Queue;
+			if(queue == null)
+				return null;
+
+			var request = new ZeroRequest(url, data);
+			var token = new Token(request, request => this.Remove(request.Identifier));
+
+			if(!_tokens.TryAdd(request.Identifier, token))
+				return null;
+
+			try
+			{
+				await this.SubscribeAsync(queue, url + "/reply", cancellation);
+				await queue.ProduceAsync(url, request.Pack(), null, cancellation);
+				return token;
+			}
+			catch
+			{
+				token.Dispose();
+				throw;
+			}
 		}
-		catch
+		finally
 		{
-			token.Dispose();
-			throw;
+			lock(_sync)
+			{
+				if(--_operations == 0)
+					_drained?.TrySetResult();
+			}
 		}
 	}
 	#endregion
@@ -143,7 +166,10 @@ public class ZeroRequester : IRequester, IDisposable, IAsyncDisposable
 	#region 私有方法
 	private async ValueTask SubscribeAsync(ZeroQueue queue, string topic, CancellationToken cancellation)
 	{
-		var task = _subscriptions.GetOrAdd(topic, key => queue.SubscribeAsync(key, _adapter, CancellationToken.None).AsTask());
+		Task<ZeroSubscriber> task;
+
+		lock(_sync)
+			task = _subscriptions.GetOrAdd(topic, key => queue.SubscribeAsync(key, _adapter, _lifetime.Token).AsTask());
 
 		try
 		{
@@ -181,34 +207,67 @@ public class ZeroRequester : IRequester, IDisposable, IAsyncDisposable
 	#endregion
 
 	#region 释放资源
-	public void Dispose() => this.DisposeAsync().AsTask().GetAwaiter().GetResult();
-	public async ValueTask DisposeAsync()
+	public ValueTask DisposeAsync()
 	{
-		if(Interlocked.Exchange(ref _disposed, 1) != 0)
-			return;
+		TaskCompletionSource completion;
+		Task drained;
+		bool execute;
 
-		foreach(var token in _tokens.Values)
-			token.Dispose();
-
-		_tokens.Clear();
-
-		foreach(var subscription in _subscriptions.Values)
+		lock(_sync)
 		{
-			try
-			{
-				var subscriber = await subscription;
-				if(subscriber != null)
-					await subscriber.DisposeAsync();
-			}
-			catch { }
+			execute = _disposal == null;
+			completion = _disposal ??= new(TaskCreationOptions.RunContinuationsAsynchronously);
+			_disposed = 1;
+			drained = _operations == 0 ? Task.CompletedTask : (_drained ??= new(TaskCreationOptions.RunContinuationsAsynchronously)).Task;
 		}
 
-		_subscriptions.Clear();
-		_pending.Evicted -= this.OnEvicted;
-		_pending.Dispose();
-		_queue = null;
+		if(execute)
+			_ = this.DisposeCoreAsync(completion, drained);
 
-		GC.SuppressFinalize(this);
+		return new(completion.Task);
+	}
+
+	private async Task DisposeCoreAsync(TaskCompletionSource completion, Task drained)
+	{
+		List<Exception> errors = null;
+
+		try
+		{
+			try { await _lifetime.CancelAsync(); }
+			catch(Exception exception) { (errors ??= []).Add(exception); }
+
+			await drained;
+
+			foreach(var token in _tokens.Values)
+				token.Dispose();
+
+			_tokens.Clear();
+
+			foreach(var subscription in _subscriptions.Values)
+			{
+				try
+				{
+					var subscriber = await subscription;
+					if(subscriber != null)
+						await subscriber.DisposeAsync();
+				}
+				catch(OperationCanceledException) when(_lifetime.IsCancellationRequested) { }
+				catch(Exception exception) { (errors ??= []).Add(exception); }
+			}
+
+			_subscriptions.Clear();
+			_pending.Evicted -= this.OnEvicted;
+			_pending.Dispose();
+			_lifetime.Dispose();
+			_queue = null;
+			GC.SuppressFinalize(this);
+
+			if(errors != null)
+				completion.TrySetException(new AggregateException(errors));
+			else
+				completion.TrySetResult();
+		}
+		catch(Exception exception) { completion.TrySetException(exception); }
 	}
 	#endregion
 
@@ -266,8 +325,8 @@ public class ZeroRequester : IRequester, IDisposable, IAsyncDisposable
 		#endregion
 
 		#region 公共方法
-		public IEnumerable<IResponse> GetResponses(CancellationToken cancellation = default) => this.GetResponses(TimeSpan.Zero, cancellation);
-		public IEnumerable<IResponse> GetResponses(TimeSpan timeout, CancellationToken cancellation = default)
+		public IAsyncEnumerable<IResponse> GetResponsesAsync(CancellationToken cancellation = default) => this.GetResponsesAsync(TimeSpan.Zero, cancellation);
+		public async IAsyncEnumerable<IResponse> GetResponsesAsync(TimeSpan timeout, [EnumeratorCancellation] CancellationToken cancellation = default)
 		{
 			var responses = _responses;
 			if(responses == null || cancellation.IsCancellationRequested)
@@ -300,7 +359,7 @@ public class ZeroRequester : IRequester, IDisposable, IAsyncDisposable
 
 				bool signaled;
 
-				try { signaled = _signal.Wait(remaining, cancellation); }
+				try { signaled = await _signal.WaitAsync(remaining, cancellation); }
 				catch(OperationCanceledException) { yield break; }
 
 				if(!signaled)

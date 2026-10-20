@@ -49,7 +49,7 @@ internal static class RedisConnectionPool
 	public static RedisConnectionLease Acquire(ConfigurationOptions options)
 	{
 		ArgumentNullException.ThrowIfNull(options);
-		var key = GetKey(options);
+		var key = "sync:" + GetKey(options);
 
 		while(true)
 		{
@@ -66,7 +66,7 @@ internal static class RedisConnectionPool
 			}
 			catch
 			{
-				entry.Release().AsTask().GetAwaiter().GetResult();
+				entry.Release();
 				throw;
 			}
 		}
@@ -93,7 +93,7 @@ internal static class RedisConnectionPool
 			}
 			catch
 			{
-				_ = entry.Release().AsTask();
+				await entry.ReleaseAsync();
 				throw;
 			}
 		}
@@ -139,17 +139,49 @@ internal static class RedisConnectionPool
 
 		public ConnectionMultiplexer GetConnection(ConfigurationOptions options)
 		{
-			var task = this.GetConnectionTask(options, false);
-			return task.IsCompletedSuccessfully ? task.Result : task.GetAwaiter().GetResult();
+			lock(_sync)
+			{
+				ObjectDisposedException.ThrowIf(_disposed, this);
+				if(_connectionTask == null)
+				{
+					var connection = ConnectionMultiplexer.Connect(options);
+					Initialize(connection);
+					_connectionTask = Task.FromResult(connection);
+				}
+
+				//同步租约独立于异步连接初始化，此处任务始终已经成功完成。
+				return _connectionTask.Result;
+			}
 		}
 
 		public async ValueTask<ConnectionMultiplexer> GetConnectionAsync(ConfigurationOptions options, CancellationToken cancellation)
 		{
-			var task = this.GetConnectionTask(options, true);
+			var task = this.GetConnectionTask(options);
 			return task.IsCompletedSuccessfully ? task.Result : await task.WaitAsync(cancellation);
 		}
 
-		public async ValueTask Release()
+		public void Release()
+		{
+			ConnectionMultiplexer connection;
+
+			lock(_sync)
+			{
+				if(_references <= 0 || --_references > 0)
+					return;
+
+				_disposed = true;
+				connection = _connectionTask?.IsCompletedSuccessfully == true ? _connectionTask.Result : null;
+			}
+
+			_entries.TryRemove(new KeyValuePair<string, Entry>(_key, this));
+			if(connection == null)
+				return;
+
+			try { connection.Dispose(); }
+			finally { RedisDiagnostics.ActiveConnections.Add(-1, new KeyValuePair<string, object>("redis.client.name", connection.ClientName)); }
+		}
+
+		public async ValueTask ReleaseAsync()
 		{
 			Task<ConnectionMultiplexer> task = null;
 
@@ -164,30 +196,22 @@ internal static class RedisConnectionPool
 
 			_entries.TryRemove(new KeyValuePair<string, Entry>(_key, this));
 
-			if(task != null)
-			{
-				try
-				{
-					var connection = await task;
+			if(task == null)
+				return;
 
-					try
-					{
-						await connection.DisposeAsync();
-					}
-					finally
-					{
-						RedisDiagnostics.ActiveConnections.Add(-1, new KeyValuePair<string, object>("redis.client.name", connection.ClientName));
-					}
-				}
-				catch
-				{
-				}
-			}
+			ConnectionMultiplexer connection;
+
+			try { connection = await task; }
+			catch { return; }
+
+			try { await connection.DisposeAsync(); }
+			finally { RedisDiagnostics.ActiveConnections.Add(-1, new KeyValuePair<string, object>("redis.client.name", connection.ClientName)); }
+
 		}
 		#endregion
 
 		#region 私有方法
-		private Task<ConnectionMultiplexer> GetConnectionTask(ConfigurationOptions options, bool asynchronously)
+		private Task<ConnectionMultiplexer> GetConnectionTask(ConfigurationOptions options)
 		{
 			TaskCompletionSource<ConnectionMultiplexer> source = null;
 
@@ -202,21 +226,7 @@ internal static class RedisConnectionPool
 				_connectionTask = source.Task;
 			}
 
-			if(asynchronously)
-				_ = ConnectAsync(options, source);
-			else
-			{
-				try
-				{
-					var connection = ConnectionMultiplexer.Connect(options);
-					Initialize(connection);
-					source.SetResult(connection);
-				}
-				catch(Exception exception)
-				{
-					source.SetException(exception);
-				}
-			}
+			_ = ConnectAsync(options, source);
 
 			return source.Task;
 
@@ -234,13 +244,14 @@ internal static class RedisConnectionPool
 				}
 			}
 
-			static void Initialize(ConnectionMultiplexer connection)
-			{
-				RedisDiagnostics.ActiveConnections.Add(1, new KeyValuePair<string, object>("redis.client.name", connection.ClientName));
-				connection.ConnectionFailed += static (_, _) => RedisDiagnostics.ConnectionFailures.Add(1);
-				connection.ConnectionRestored += static (_, _) => RedisDiagnostics.ConnectionRestorations.Add(1);
-				connection.ErrorMessage += static (_, _) => RedisDiagnostics.ConnectionErrors.Add(1);
-			}
+		}
+
+		private static void Initialize(ConnectionMultiplexer connection)
+		{
+			RedisDiagnostics.ActiveConnections.Add(1, new KeyValuePair<string, object>("redis.client.name", connection.ClientName));
+			connection.ConnectionFailed += static (_, _) => RedisDiagnostics.ConnectionFailures.Add(1);
+			connection.ConnectionRestored += static (_, _) => RedisDiagnostics.ConnectionRestorations.Add(1);
+			connection.ErrorMessage += static (_, _) => RedisDiagnostics.ConnectionErrors.Add(1);
 		}
 		#endregion
 	}
@@ -273,13 +284,13 @@ internal sealed class RedisConnectionLease : IDisposable, IAsyncDisposable
 	public void Dispose()
 	{
 		var entry = Interlocked.Exchange(ref _entry, null);
-		entry?.Release().AsTask().GetAwaiter().GetResult();
+		entry?.Release();
 	}
 
 	public ValueTask DisposeAsync()
 	{
 		var entry = Interlocked.Exchange(ref _entry, null);
-		return entry?.Release() ?? ValueTask.CompletedTask;
+		return entry?.ReleaseAsync() ?? ValueTask.CompletedTask;
 	}
 	#endregion
 

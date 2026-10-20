@@ -119,7 +119,7 @@ sorting ::=
 ")"
 ```
 
-💡 下文 `Department.Manager` / `Secret` 语法示例来自真实的 [SchemaParserTest](test/SchemaParserTest.cs) 夹具及 [Core SchemaTest](../Zongsoft.Core/test/Data/SchemaTest.cs)，用于测试解析，不表示 Discussions 包含组织管理模块。
+💡 下文 `Department.Manager` / `Secret` 语法示例来自真实的 [SchemaParserTest](test/SchemaParserTest.cs) 夹具及 [Core SchemaTest](../Zongsoft.Core/test/unit/Data/SchemaTest.cs)，用于测试解析，不表示 Discussions 包含组织管理模块。
 
 <a name="schema-overview"></a>
 #### 说明
@@ -371,7 +371,7 @@ this.DataAccess.Update<Thread>(new
 
 `Operand.Field` 引用数据库中的原值，`+ 1` 由数据库执行，而非客户端先读再写。阅读完整服务时需保留周围的授权和历史记录处理。
 
-不依赖数据库的运算优先级用例见 [OperandTest.Test1](../Zongsoft.Core/test/Data/OperandTest.cs)：它构造下列表达式并断言语法树。常量是测试输入，不是订单业务：
+不依赖数据库的运算优先级用例见 [OperandTest.Test1](../Zongsoft.Core/test/unit/Data/OperandTest.cs)：它构造下列表达式并断言语法树。常量是测试输入，不是订单业务：
 
 ```csharp
 Operand a = Operand.Constant(1);

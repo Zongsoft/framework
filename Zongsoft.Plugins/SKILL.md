@@ -34,7 +34,7 @@ description: 开发、审查、调试或测试 Zongsoft.Plugins 与 Zongsoft.Plu
 
 - `{service:@}` 返回应用容器，`{service:@Orders}` 返回已挂载 Orders 模块容器；`~` 按目标成员类型取得服务，`*` 取得集合。具名服务别名与模块名称不是同一概念。
 - Core 的 `Locate<T>("Orders@Redis")` 选择供应具名实例的服务提供者，不能翻译成 `{service:Orders@Redis}`。
-- 基础解析器/构建器由 [Main.plugin](plugins/Main.plugin) 注册；仅拷贝业务 DLL 不会补齐这些装配依赖。
+- 基础解析器/构建器由 [Main.plugin](plugins/Main.plugin) 注册；仅拷贝业务 DLL 不会补齐这些装配依赖。内置表达式方案为 `path`、`type`、`object`、`static`、`option`、`service`、`resource`、`command`；表达式在对象装配时求值，网络条件检查放在可等待的应用初始化阶段。宿主部署的基础清单须与程序集版本一致。
 - 配置 XML 的文本节点是集合项，标量用属性；加载配置后断言实际键和值，不能只验证 XML 可解析。
 - 当前服务特性扫描默认单例。README 消费示例优先使用契约和容器，不手工 new 每个实现，也不逐次 Dispose 共享服务。
 

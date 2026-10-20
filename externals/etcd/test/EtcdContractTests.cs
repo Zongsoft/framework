@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 
 using Xunit;
 
@@ -25,12 +26,12 @@ public class EtcdContractTests
 	}
 
 	[Fact]
-	public void Constructors_ValidateAndNormalizeInputs()
+	public async Task Constructors_ValidateAndNormalizeInputs()
 	{
 		Assert.Throws<ArgumentNullException>(() => new EtcdService(" "));
 		Assert.Throws<ArgumentNullException>(() => new EtcdService("test", " "));
 
-		using var service = new EtcdService(" sample ", Global.ConnectionString) { Namespace = " scope: " };
+		await using var service = new EtcdService(" sample ", Global.ConnectionString) { Namespace = " scope: " };
 		Assert.Equal("sample", service.Name);
 		Assert.Equal("scope", service.Namespace);
 		Assert.IsAssignableFrom<ISequence>(service);
@@ -39,9 +40,9 @@ public class EtcdContractTests
 	}
 
 	[Fact]
-	public async System.Threading.Tasks.Task Operations_ValidateBeforeConnecting()
+	public async Task Operations_ValidateBeforeConnecting()
 	{
-		using var service = new EtcdService("test", Global.ConnectionString);
+		await using var service = new EtcdService("test", Global.ConnectionString);
 		await Assert.ThrowsAsync<ArgumentNullException>(() => service.IncreaseAsync(null).AsTask());
 		await Assert.ThrowsAsync<ArgumentNullException>(() => service.AcquireAsync(null, TimeSpan.FromSeconds(1)).AsTask());
 		await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => service.AcquireAsync("lock", TimeSpan.Zero).AsTask());
@@ -49,11 +50,11 @@ public class EtcdContractTests
 	}
 
 	[Fact]
-	public async System.Threading.Tasks.Task Dispose_IsIdempotentAndRejectsOperations()
+	public async Task Dispose_IsIdempotentAndRejectsOperations()
 	{
 		var service = new EtcdService("test", Global.ConnectionString);
-		service.Dispose();
-		service.Dispose();
+		await service.DisposeAsync();
+		await service.DisposeAsync();
 
 		await Assert.ThrowsAsync<ObjectDisposedException>(() => service.HeartbeatAsync().AsTask());
 	}

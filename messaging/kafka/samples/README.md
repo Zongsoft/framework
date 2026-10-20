@@ -82,3 +82,5 @@ You should observe three received messages; the handler acknowledges each one af
 [Program.cs](Program.cs) is a standalone diagnostic program that owns its queue; applications should use the plugin deployment and public provider workflow in the [library guide](../README.md). Three received messages are expected for an isolated topic with no other producers and a ready subscription, not a guarantee of exactly-once delivery under arbitrary network conditions. Calling the acknowledgment API is not a business transaction commit; see the driver guide for durability and acknowledgment semantics.
 
 🚨 Use a dedicated local broker and a unique test topic, never a production topic. Unsubscribe this run's subscriptions, run `close`, then `exit` and confirm. Client shutdown does not delete broker-side topics, queues, consumer state, or durable messages. If cleanup is needed, use the broker's management tools only for test resources created by this run; never purge a shared broker.
+
+The client owns its queue with `await using`. The `close` command and normal program exit await `DisposeAsync`, including pending work and subscription cleanup.

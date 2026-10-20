@@ -93,3 +93,7 @@ nuget:Zongsoft.Externals.Amazon
 Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
 
 Additional artifacts listed by the deployment manifest include `Zongsoft.Externals.Amazon.plugin`, `Zongsoft.Externals.Amazon.option`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.
+
+## Asynchronous file access
+
+S3 files and streams require asynchronous operations and `await using` for owned streams. Shared synchronous file-system contracts remain, but the S3 adapter rejects synchronous remote operations. Synchronous stream read, write, flush and disposal cannot bridge to network tasks. Await disposal to observe upload completion or abort failures.

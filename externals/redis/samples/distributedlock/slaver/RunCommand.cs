@@ -16,7 +16,7 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 	{
 		var settings = RunSettings.Get(context);
 
-		using var redis = Utility.GetRedis(context, settings.Namespace);
+		await using var redis = Utility.GetRedis(context, settings.Namespace);
 		using var timeout = new CancellationTokenSource(settings.Timeout);
 		using var linked = CancellationTokenSource.CreateLinkedTokenSource(cancellation, timeout.Token);
 

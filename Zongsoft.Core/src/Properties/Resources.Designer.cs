@@ -1122,6 +1122,15 @@ namespace Zongsoft.Properties {
             }
         }
         
+		/// <summary>
+		///   查找类似 This operation requires asynchronous disposal. Await DisposeAsync before disposing its synchronous owner. 的本地化字符串。
+		/// </summary>
+		internal static string Disposal_AsyncRequired_Message {
+			get {
+				return ResourceManager.GetString("Disposal.AsyncRequired.Message", resourceCulture);
+			}
+		}
+
         /// <summary>
         ///   查找类似 The distributed cache &apos;{0}&apos; does not support notifications. 的本地化字符串。
         /// </summary>
@@ -1329,6 +1338,15 @@ namespace Zongsoft.Properties {
             }
         }
         
+		/// <summary>
+		///   查找类似 Event bindings require a supported delegate signature returning Task or ValueTask. 的本地化字符串。
+		/// </summary>
+		internal static string EventBinder_AsyncDelegateRequired_Message {
+			get {
+				return ResourceManager.GetString("EventBinder.AsyncDelegateRequired.Message", resourceCulture);
+			}
+		}
+
         /// <summary>
         ///   查找类似 The member &apos;{0}&apos; of type &apos;{1}&apos; cannot be bound to an event because its type is not a delegate. 的本地化字符串。
         /// </summary>
@@ -1527,6 +1545,15 @@ namespace Zongsoft.Properties {
             }
         }
         
+		/// <summary>
+		///   查找类似 The logging queue is full. Use the asynchronous logging API or await FlushAsync before retrying. 的本地化字符串。
+		/// </summary>
+		internal static string Logging_QueueFull_Message {
+			get {
+				return ResourceManager.GetString("Logging.QueueFull.Message", resourceCulture);
+			}
+		}
+
         /// <summary>
         ///   查找类似 Invalid member expression. 的本地化字符串。
         /// </summary>

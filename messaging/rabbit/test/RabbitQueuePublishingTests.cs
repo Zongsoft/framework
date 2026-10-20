@@ -50,8 +50,8 @@ public class RabbitQueuePublishingTests
 		{
 			if(consumer != null)
 				await consumer.DisposeAsync();
-			subscriber.Dispose();
-			publisher.Dispose();
+			await subscriber.DisposeAsync();
+			await publisher.DisposeAsync();
 			await RabbitTestUtility.DeleteTestQueueAsync(queueName);
 			await RabbitTestUtility.DeleteTestExchangeAsync(exchange);
 		}
@@ -103,7 +103,7 @@ public class RabbitQueuePublishingTests
 		{
 			if(consumer != null)
 				await consumer.DisposeAsync();
-			queue.Dispose();
+			await queue.DisposeAsync();
 		}
 
 		Assert.True(consumer.IsClosed);
@@ -155,8 +155,8 @@ public class RabbitQueuePublishingTests
 		{
 			if(consumer != null)
 				await consumer.DisposeAsync();
-			subscriber.Dispose();
-			publisher.Dispose();
+			await subscriber.DisposeAsync();
+			await publisher.DisposeAsync();
 			await RabbitTestUtility.DeleteTestQueueAsync(queueName);
 			await RabbitTestUtility.DeleteTestExchangeAsync(exchange);
 		}

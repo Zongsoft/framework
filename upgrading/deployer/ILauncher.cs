@@ -32,6 +32,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Upgrading;
 
@@ -43,5 +45,7 @@ public interface ILauncher
 
 	/// <summary>启动宿主应用程序。</summary>
 	/// <param name="argument">部署器的调用参数。</param>
-	void Launch(Deployer.Argument argument);
+	/// <param name="cancellation">取消标记。</param>
+	/// <returns>启动与日志刷新完成的任务。</returns>
+	ValueTask LaunchAsync(Deployer.Argument argument, CancellationToken cancellation = default);
 }

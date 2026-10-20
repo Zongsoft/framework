@@ -62,6 +62,9 @@ internal class StorageUploader : IAsyncDisposable
 
 	#region 私有变量
 	private int _disposed;
+	private readonly SemaphoreSlim _gate = new(1, 1);
+	private TaskCompletionSource _disposal;
+	private Exception _failure;
 	private string _identifier;
 	private readonly string _path;
 	private byte[] _buffer;
@@ -98,9 +101,23 @@ internal class StorageUploader : IAsyncDisposable
 	public ValueTask WriteAsync(byte[] data, int offset, CancellationToken cancellation = default) => this.WriteAsync(data, offset, -1, cancellation);
 	public async ValueTask WriteAsync(byte[] data, int offset, int count, CancellationToken cancellation = default)
 	{
-		//确认当前是否可用的
 		this.EnsureDisposed();
+		await _gate.WaitAsync(cancellation);
 
+		try
+		{
+			this.EnsureDisposed();
+			if(_failure != null)
+				System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(_failure).Throw();
+
+			try { await this.WriteCoreAsync(data, offset, count, cancellation); }
+			catch(Exception exception) { _failure ??= exception; throw; }
+		}
+		finally { _gate.Release(); }
+	}
+
+	private async ValueTask WriteCoreAsync(byte[] data, int offset, int count, CancellationToken cancellation)
+	{
 		//如果发送的数据为空则返回
 		if(data == null || data.Length == 0)
 			return;
@@ -182,11 +199,25 @@ internal class StorageUploader : IAsyncDisposable
 		await this.FlushAsync(multipart, cancellation);
 	}
 
-	public ValueTask<long> FlushAsync(CancellationToken cancellation = default)
+	public async ValueTask<long> FlushAsync(CancellationToken cancellation = default)
 	{
-		//确认当前是否可用的
 		this.EnsureDisposed();
+		await _gate.WaitAsync(cancellation);
 
+		try
+		{
+			this.EnsureDisposed();
+			if(_failure != null)
+				System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(_failure).Throw();
+
+			try { return await this.FlushCoreAsync(cancellation); }
+			catch(Exception exception) { _failure ??= exception; throw; }
+		}
+		finally { _gate.Release(); }
+	}
+
+	private ValueTask<long> FlushCoreAsync(CancellationToken cancellation)
+	{
 		if(string.IsNullOrEmpty(_identifier) || _buffer == null || _bufferedCount == 0)
 			return ValueTask.FromResult(0L);
 
@@ -214,7 +245,7 @@ internal class StorageUploader : IAsyncDisposable
 	private async ValueTask<string> InitiateAsync(CancellationToken cancellation)
 	{
 		//创建初始化请求包
-		var request = _client.CreateHttpRequest(HttpMethod.Post, _path + "?uploads", StorageClient.EnsureCreation(_extendedProperties));
+		using var request = _client.CreateHttpRequest(HttpMethod.Post, _path + "?uploads", StorageClient.EnsureCreation(_extendedProperties));
 
 		//保持长连接
 		request.Headers.Connection.Add("keep-alive");
@@ -231,21 +262,21 @@ internal class StorageUploader : IAsyncDisposable
 			request.Content.Headers.ContentType = contentType;
 		}
 
-		var response = await _client.HttpClient.SendAsync(request, cancellation);
+		using var response = await _client.HttpClient.SendAsync(request, cancellation);
 
 		//确保应答状态是成功
 		response.EnsureSuccessStatusCode();
 
 		//解析应答结果中的上传编号
-		var match = _Initiate_Regex_.Match(response.Content.ReadAsStringAsync(cancellation).Result);
+		var match = _Initiate_Regex_.Match(await response.Content.ReadAsStringAsync(cancellation));
 
-		return match.Success ? match.Groups["value"].Value : null;
+		return match.Success ? match.Groups["value"].Value : throw new InvalidDataException(Properties.Resources.Storage_UploadResponseInvalid_Message);
 	}
 
 	private async ValueTask<string> UploadAsync(StorageMultipart multipart, int retries, CancellationToken cancellation = default)
 	{
 		//创建请求
-		var request = _client.CreateHttpRequest(HttpMethod.Put, _path + $"?partNumber={multipart.Index + 1}&uploadId={_identifier}", _extendedProperties);
+		using var request = _client.CreateHttpRequest(HttpMethod.Put, _path + $"?partNumber={multipart.Index + 1}&uploadId={_identifier}", _extendedProperties);
 
 		//保持长连接
 		request.Headers.Connection.Add("keep-alive");
@@ -253,15 +284,15 @@ internal class StorageUploader : IAsyncDisposable
 		request.Content = new ByteArrayContent(multipart.Data, multipart.Offset, multipart.Count);
 
 		//上传数据段
-		var response = await _client.HttpClient.SendAsync(request, cancellation);
+		using var response = await _client.HttpClient.SendAsync(request, cancellation);
 
 		//如果应答成功，则获取其返回的上传片段的校验标识
 		if(response.IsSuccessStatusCode)
-			return multipart.Checksum = response.Headers.ETag.Tag;
+			return multipart.Checksum = response.Headers.ETag?.Tag ?? throw new InvalidDataException(Properties.Resources.Storage_UploadResponseInvalid_Message);
 
 		//如果重试次数为零则返回空
 		if(retries < 1)
-			return null;
+			response.EnsureSuccessStatusCode();
 
 		await Task.Delay(TimeSpan.FromMilliseconds(Random.Shared.Next(10, 999)), cancellation);
 		return await this.UploadAsync(multipart, retries - 1, cancellation);
@@ -272,12 +303,8 @@ internal class StorageUploader : IAsyncDisposable
 		//批量上传当前片段(支持失败重试)
 		multipart.Checksum = await this.UploadAsync(multipart, RETRY_COUNT, cancellation);
 
-		//如果发送失败，则取消整个批量上传并返回
 		if(string.IsNullOrEmpty(multipart.Checksum))
-		{
-			await this.AbortAsync(cancellation);
-			return 0L;
-		}
+			throw new InvalidDataException(Properties.Resources.Storage_UploadResponseInvalid_Message);
 
 		//重置缓存数量
 		_bufferedCount = 0;
@@ -287,69 +314,40 @@ internal class StorageUploader : IAsyncDisposable
 		return multipart.Count;
 	}
 
-	private async ValueTask<bool> CompleteAsync(CancellationToken cancellation = default)
+	private async ValueTask CompleteAsync(CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(_identifier))
-			return false;
-		//尝试将缓存区内的部分数据补发完成（注：补发失败则终止批量上传任务并退出）
-		if(!(await FlushBufferAsync(cancellation)))
-			return true;
+			return;
+
+		if(_bufferedCount > 0)
+			await this.FlushAsync(new StorageMultipart(_multiparts.Count, _buffer, 0, _bufferedCount), cancellation);
 
 		var text = new StringBuilder("<CompleteMultipartUpload>");
 
-		for(int i = 0; i < _multiparts.Count; i++)
-		{
-			text.Append(
-			$"<Part>" +
-				$"<PartNumber>{_multiparts[i].Index + 1}</PartNumber>" +
-				$"<ETag>\"{_multiparts[i].Checksum}\"</ETag>" +
-			$"</Part>");
-		}
+		foreach(var part in _multiparts)
+			text.Append($"<Part><PartNumber>{part.Index + 1}</PartNumber><ETag>\"{part.Checksum}\"</ETag></Part>");
 
 		text.Append("</CompleteMultipartUpload>");
+		using var content = new StringContent(text.ToString());
+		using var response = await _client.HttpClient.PostAsync(
+			_client.ServiceCenter.GetRequestUrl(_path + "?uploadId=" + _identifier), content, cancellation);
+		response.EnsureSuccessStatusCode();
+		//OSS可能以HTTP 200返回最终合并失败，必须确认结果根节点。
+		var result = System.Xml.Linq.XDocument.Parse(await response.Content.ReadAsStringAsync(cancellation));
 
-		var response = await _client.HttpClient.PostAsync(
-			_client.ServiceCenter.GetRequestUrl(_path + "?uploadId=" + _identifier),
-			new StringContent(text.ToString()),
-			cancellation);
+		if(result.Root?.Name.LocalName != "CompleteMultipartUploadResult")
+			throw new InvalidDataException(Properties.Resources.Storage_UploadResponseInvalid_Message);
 
-		if(response.IsSuccessStatusCode)
-		{
-			this.Done();
-			return true;
-		}
-
-		return await this.AbortAsync(cancellation);
-
-		async ValueTask<bool> FlushBufferAsync(CancellationToken cancellation)
-		{
-			if(_bufferedCount <= 0)
-				return true;
-
-			var multipart = new StorageMultipart(_multiparts == null ? 1 : _multiparts.Count + 1, _buffer, 0, _bufferedCount);
-			return (await this.FlushAsync(multipart, cancellation)) > 0;
-		}
+		this.Done();
 	}
 
-	private async ValueTask<bool> AbortAsync(CancellationToken cancellation = default)
+	private async ValueTask AbortAsync(CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(_identifier))
-			return false;
+			return;
 
-		try
-		{
-			_client.HttpClient.DefaultRequestHeaders.ConnectionClose = true;
-			var response = await _client.HttpClient.DeleteAsync(_client.ServiceCenter.GetRequestUrl($"{_path}?uploadId={_identifier}"), cancellation);
-
-			if(response.IsSuccessStatusCode)
-				this.Done();
-
-			return response.IsSuccessStatusCode;
-		}
-		catch
-		{
-			return false;
-		}
+		using var response = await _client.HttpClient.DeleteAsync(_client.ServiceCenter.GetRequestUrl($"{_path}?uploadId={_identifier}"), cancellation);
+		response.EnsureSuccessStatusCode();
 	}
 
 	private void EnsureDisposed()
@@ -360,29 +358,55 @@ internal class StorageUploader : IAsyncDisposable
 	#endregion
 
 	#region 释放资源
-	public async ValueTask DisposeAsync()
+	public ValueTask DisposeAsync()
 	{
-		await this.DisposeAsync(true);
-		GC.SuppressFinalize(this);
+		var completion = Volatile.Read(ref _disposal);
+		if(completion == null)
+		{
+			var candidate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+			completion = Interlocked.CompareExchange(ref _disposal, candidate, null) ?? candidate;
+
+			if(ReferenceEquals(completion, candidate))
+			{
+				Interlocked.Exchange(ref _disposed, 1);
+				_ = this.DisposeCoreAsync(candidate);
+			}
+		}
+
+		return new(completion.Task);
+	}
+
+	private async Task DisposeCoreAsync(TaskCompletionSource completion)
+	{
+		await _gate.WaitAsync();
+
+		try
+		{
+			await this.DisposeAsync(true);
+			GC.SuppressFinalize(this);
+			completion.TrySetResult();
+		}
+		catch(Exception exception) { completion.TrySetException(exception); }
+		finally { _gate.Release(); }
 	}
 
 	protected virtual async Task DisposeAsync(bool disposing)
 	{
-		//设置释放标志
-		var disposed = Interlocked.Exchange(ref _disposed, 1);
-
-		//如果已经释放了则退出
-		if(disposed != 0)
-			return;
-
 		try
 		{
-			//确认提交整个上传操作
+			if(_failure != null)
+				System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(_failure).Throw();
+
 			await this.CompleteAsync();
 		}
-		catch
+		catch(Exception failure)
 		{
+			try { await this.AbortAsync(); }
+			catch(Exception cleanup) { throw new AggregateException(failure, cleanup); }
+
+			throw;
 		}
+		finally { this.Done(); }
 	}
 	#endregion
 

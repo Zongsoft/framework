@@ -904,6 +904,9 @@
   <data name="Enum.UndefinedValue.Message" xml:space="preserve">
 		<value>The enumeration value '{0}' is undefined.</value>
 	</data>
+  <data name="EventBinder.AsyncDelegateRequired.Message" xml:space="preserve">
+		<value>Event bindings require a supported delegate signature returning Task or ValueTask.</value>
+	</data>
   <data name="EventBinder.DelegateRequired.Message" xml:space="preserve">
 		<value>The member '{0}' of type '{1}' cannot be bound to an event because its type is not a delegate.</value>
 	</data>
@@ -1141,4 +1144,10 @@
 	<data name="Terminal.ExecutorRunning.Message" xml:space="preserve">
 		<value>The terminal executor is already running.</value>
 	</data>
+  <data name="Disposal.AsyncRequired.Message" xml:space="preserve">
+    <value>This operation requires asynchronous disposal. Await DisposeAsync before disposing its synchronous owner.</value>
+  </data>
+  <data name="Logging.QueueFull.Message" xml:space="preserve">
+    <value>The logging queue is full. Use the asynchronous logging API or await FlushAsync before retrying.</value>
+  </data>
 </root>

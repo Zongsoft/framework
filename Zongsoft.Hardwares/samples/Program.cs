@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Zongsoft.Terminals;
 using Zongsoft.Components;
@@ -7,9 +9,12 @@ namespace Zongsoft.Hardwares.Samples;
 
 internal class Program
 {
-	static void Main(string[] args)
+	static async Task Main(string[] args)
 	{
-		var hardwares = HardwareCollector.Instance.Collect();
+		var hardwares = new List<IO.Hardwares.IHardware>();
+		await foreach(var hardware in HardwareCollector.Instance.CollectAsync())
+			hardwares.Add(hardware);
+
 		var profile = new IO.Hardwares.HardwareProfile(hardwares);
 
 		Terminal.WriteLine(CommandOutletColor.Magenta, profile.Identifier);

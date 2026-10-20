@@ -215,7 +215,6 @@ public class DuckDBExpressionVisitor : ExpressionVisitorBase
 			DataAggregateFunction.VariancePopulation => "VAR_POP",
 			_ => throw new NotSupportedException(string.Format(Properties.Resources.ExpressionVisitor_AggregateInvalid_Message, function)),
 		};
-
 		#endregion
 	}
 

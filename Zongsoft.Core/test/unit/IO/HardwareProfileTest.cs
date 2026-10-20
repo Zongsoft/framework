@@ -159,15 +159,12 @@ public class HardwareProfileTest
 
 		using var provider = services.BuildServiceProvider();
 
-		var profile = HardwareProfile.Load(provider);
+		var profile = await HardwareProfile.LoadAsync(provider, TestContext.Current.CancellationToken);
 		Assert.Equal(3, profile.Count);
 		Assert.NotNull(profile.Mainboard);
 		Assert.Single(profile.Memories);
 		Assert.Single(profile.Storages);
 		Assert.Empty(profile.Processors);
-
-		profile = await HardwareProfile.LoadAsync(provider, TestContext.Current.CancellationToken);
-		Assert.Equal(3, profile.Count);
 	}
 
 	private sealed class Collector(IEnumerable<IHardware> hardwares) : IHardwareCollector

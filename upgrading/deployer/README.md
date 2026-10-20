@@ -16,6 +16,8 @@
 
 The deployer receives the deployment descriptor created by the upgrader, waits until the host process has stopped, copies the extracted package files into the application directory, invokes deployment executors, restarts the application, and then exits.
 
+The launcher is awaited through `ILauncher.LaunchAsync`. Every exit path awaits `Logging.FlushAsync`; there is no fixed delay standing in for background completion.
+
 ## Responsibilities
 
 - Parse command-line arguments passed by the upgrader.

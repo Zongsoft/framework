@@ -105,3 +105,5 @@ unsubscribe demo
 🚨 The [sample server](server/Program.cs) has no message storage attached and does not establish authentication or encryption. Its listeners bind 127.0.0.1 for local use. This sample demonstrates broadcast delivery, not durable recovery.
 
 Unsubscribe in the clients, then run `close` and `exit` (confirm the prompt). Run `stop` and `exit` in the server. This sample creates no persistent message store to erase. For plugin deployment and public queue-provider use, follow the [library guide](../README.md); concrete queue construction here belongs to a standalone diagnostic tool.
+
+The client owns its queue with `await using`. The `close` command and normal program exit await `DisposeAsync`, including pending work and subscription cleanup.

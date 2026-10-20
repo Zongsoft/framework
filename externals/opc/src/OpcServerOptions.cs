@@ -99,7 +99,7 @@ public class OpcServerOptions
 
 				MaxSubscriptionCount = 1000,
 				MaxNotificationsPerPublish = 1000,
-				MinMetadataSamplingInterval = 100,
+				MinSupportedSamplingInterval = 100,
 				RegistrationEndpoint = string.IsNullOrEmpty(this.Discovery) ? null : new EndpointDescription(this.Discovery),
 
 				SecurityPolicies =
@@ -179,10 +179,10 @@ public class OpcServerOptions
 
 		if(this.Anonymous) //如果启用匿名登录则添加匿名策略
 		{
-			configuration.ServerConfiguration.UserTokenPolicies.Add(new UserTokenPolicy(UserTokenType.Anonymous)
+			configuration.ServerConfiguration.UserTokenPolicies = [.. configuration.ServerConfiguration.UserTokenPolicies, new UserTokenPolicy(UserTokenType.Anonymous)
 			{
 				SecurityPolicyUri = "http://opcfoundation.org/UA/SecurityPolicy#None",
-			});
+			}];
 		}
 
 		return configuration;

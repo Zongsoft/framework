@@ -20,7 +20,7 @@ internal sealed class RunCommand : CommandBase<CommandContext>
 		var settings = RunSettings.Get(context);
 		var expected = settings.Workers * settings.Iterations;
 
-		using var redis = Utility.GetRedis(context, settings.Namespace);
+		await using var redis = Utility.GetRedis(context, settings.Namespace);
 		await Utility.ResetAsync(redis, cancellation);
 
 		WriteHeader(context.Output, settings);

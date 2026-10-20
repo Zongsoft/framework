@@ -249,7 +249,7 @@ Stage 为 Parsing、Resolving、Resolution、Resolved、Recursion、Formatting�
 - [模板解析](../src/Text/Templating/TemplateEvaluator.Parser.cs)：模板分区与基于现有 Lexer 的引用语法，内部节点均私有。
 - [TokenScanner](../src/Expressions/TokenScanner.cs)：Span 扫描并保留源码位置及消耗长度；流按 UTF-8/BOM 解码，释放扫描器时关闭输入流。
 - [Reflector](../src/Reflection/Reflector.cs)：模板直接使用既有 GetValue 读取成员与默认索引器，保留原始读取异常。
-- [模板测试](../test/Text/Templating/TemplateEvaluatorTest.cs)、[词法测试](../test/Expressions/LexerBoundaryTest.cs)：通过公开入口验证语义。
+- [模板测试](../test/unit/Text/Templating/TemplateEvaluatorTest.cs)、[词法测试](../test/unit/Expressions/LexerBoundaryTest.cs)：通过公开入口验证语义。
 
 [IExpressionEvaluator](../src/Expressions/IExpressionEvaluator.cs) 承担脚本求值契约。[MemberExpressionParser](../src/Reflection/Expressions/MemberExpressionParser.cs) 接受 Span，但其语法允许空白和方法，数值与转义规则也不同，没有模板命名空间和逐引用诊断；[MemberExpressionEvaluator](../src/Reflection/Expressions/MemberExpressionEvaluator.cs) 的默认索引流程没有填充动态参数，也不承担模板事件、提供器和字符串递归语义。模板直接复用 [Lexer](../src/Expressions/Lexer.cs) 与 Reflector，不增加语法树转换层，内部节点、Parser 及语法保护保持私有，不增加仅供测试使用的入口。数组、参数转换和接口访问等通用能力应由 Reflector 的既有入口扩展。
 

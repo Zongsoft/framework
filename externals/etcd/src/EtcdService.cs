@@ -107,7 +107,6 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 		await client.GetAsync(this.GetKey("__heartbeat__"), null, null, cancellation);
 	}
 
-	public bool Exists(string key) => this.ExistsAsync(key).AsTask().GetAwaiter().GetResult();
 	public async ValueTask<bool> ExistsAsync(string key, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(key))
@@ -118,7 +117,6 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 		return response.Count > 0;
 	}
 
-	public string GetValue(string key) => this.GetValueAsync(key).AsTask().GetAwaiter().GetResult();
 	public async ValueTask<string> GetValueAsync(string key, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(key))
@@ -129,7 +127,6 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 		return response.Kvs.Count == 0 ? null : response.Kvs[0].Value.ToStringUtf8();
 	}
 
-	public void SetValue(string key, string value, TimeSpan? expiry = null) => this.SetValueAsync(key, value, expiry).AsTask().GetAwaiter().GetResult();
 	public async ValueTask SetValueAsync(string key, string value, TimeSpan? expiry = null, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(key))
@@ -161,7 +158,6 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 		}
 	}
 
-	public bool Remove(string key) => this.RemoveAsync(key).AsTask().GetAwaiter().GetResult();
 	public async ValueTask<bool> RemoveAsync(string key, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(key))
@@ -172,7 +168,6 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 		return response.Deleted > 0;
 	}
 
-	public IReadOnlyDictionary<string, string> Find(string prefix = null) => this.FindAsync(prefix).AsTask().GetAwaiter().GetResult();
 	public async ValueTask<IReadOnlyDictionary<string, string>> FindAsync(string prefix = null, CancellationToken cancellation = default)
 	{
 		var client = await this.ConnectAsync(cancellation);
@@ -196,7 +191,6 @@ public sealed partial class EtcdService : IDisposable, IAsyncDisposable
 		return result;
 	}
 
-	public long Count(string prefix = null) => this.CountAsync(prefix).AsTask().GetAwaiter().GetResult();
 	public async ValueTask<long> CountAsync(string prefix = null, CancellationToken cancellation = default)
 	{
 		var client = await this.ConnectAsync(cancellation);

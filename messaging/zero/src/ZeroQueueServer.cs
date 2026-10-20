@@ -353,7 +353,6 @@ public sealed partial class ZeroQueueServer : WorkerBase
 			socket.Bind(address.HostType == UriHostNameType.IPv6 ? $"tcp://[{host}]:{address.Port}" : $"tcp://{host}:{address.Port}");
 			return address.Port;
 		}
-
 		#endregion
 
 		#region 异步释放

@@ -48,7 +48,7 @@ partial class Authenticator
 		#endregion
 
 		#region 重写方法
-		protected override ValueTask<bool> OnAuthenticateAsync(OpcServer server, AuthenticationIdentity.Account identity, CancellationToken cancellation = default)
+		protected override async ValueTask<bool> OnAuthenticateAsync(OpcServer server, AuthenticationIdentity.Account identity, CancellationToken cancellation = default)
 		{
 			var path = Path.Combine(Path.GetDirectoryName(this.GetType().Assembly.Location), FILE_NAME);
 
@@ -56,30 +56,31 @@ partial class Authenticator
 			{
 				path = Path.Combine(AppContext.BaseDirectory, FILE_NAME);
 				if(!File.Exists(path))
-					return ValueTask.FromResult(false);
+					return false;
 			}
 
-			var profile = Zongsoft.Configuration.Profiles.Profile.Load(path);
+			using var reader = new StringReader(await File.ReadAllTextAsync(path, cancellation));
+			var profile = Zongsoft.Configuration.Profiles.Profile.Load(reader);
 
 			if(profile.Sections.TryGetValue(server.Name, out var section))
 			{
 				//从当前服务器用户配置集中查找指定用户名的配置项
 				if(section.Entries.TryGetValue(identity.UserName, out var entry))
 					return Password.TryParse(entry.Value, out var password) ?
-						ValueTask.FromResult(password.Verify(identity.Password)) :
-						ValueTask.FromResult(string.Equals(entry.Value, identity.Password));
+						password.Verify(identity.Password) :
+						string.Equals(entry.Value, identity.Password);
 			}
 
 			//从通用(全局)用户配置集中查找指定用户名的配置项
 			if(profile.Entries.TryGetValue(identity.UserName, out var global))
 				return Password.TryParse(global.Value, out var password) ?
-					ValueTask.FromResult(password.Verify(identity.Password)) :
-					ValueTask.FromResult(string.Equals(global.Value, identity.Password));
+					password.Verify(identity.Password) :
+					string.Equals(global.Value, identity.Password);
 
-			return ValueTask.FromResult(false);
+			return false;
 		}
 
-		protected override ValueTask<bool> OnAuthenticateAsync(OpcServer server, AuthenticationIdentity.Certificate identity, CancellationToken cancellation = default)
+		protected override async ValueTask<bool> OnAuthenticateAsync(OpcServer server, AuthenticationIdentity.Certificate identity, CancellationToken cancellation = default)
 		{
 			var path = Path.Combine(Path.GetDirectoryName(this.GetType().Assembly.Location), CERTIFICATES_DIRECTORY);
 
@@ -88,7 +89,7 @@ partial class Authenticator
 				path = Path.Combine(AppContext.BaseDirectory, CERTIFICATES_DIRECTORY);
 
 				if(!Directory.Exists(path))
-					return ValueTask.FromResult(false);
+					return false;
 			}
 
 			var files = Directory.EnumerateFiles(path, "*.pem")
@@ -98,13 +99,18 @@ partial class Authenticator
 
 			foreach(var file in files)
 			{
-				var certificate = System.Security.Cryptography.X509Certificates.X509CertificateLoader.LoadCertificateFromFile(file);
+				var data = await File.ReadAllBytesAsync(file, cancellation);
+#if NET9_0_OR_GREATER
+				using var certificate = System.Security.Cryptography.X509Certificates.X509CertificateLoader.LoadCertificate(data);
+#else
+				using var certificate = new System.Security.Cryptography.X509Certificates.X509Certificate2(data);
+#endif
 
 				if(certificate != null && certificate.Verify() && certificate.Equals(identity.X509))
-					return ValueTask.FromResult(true);
+					return true;
 			}
 
-			return ValueTask.FromResult(false);
+			return false;
 		}
 		#endregion
 	}

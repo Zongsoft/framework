@@ -46,12 +46,13 @@ internal static class MqttTestUtility
 		}
 	}
 
-	public static bool CanConnect(ushort port, IPAddress address = null)
+	public static async Task<bool> CanConnectAsync(ushort port, IPAddress address = null)
 	{
 		try
 		{
 			using var client = new TcpClient((address ?? IPAddress.Loopback).AddressFamily);
-			return client.ConnectAsync(address ?? IPAddress.Loopback, port).Wait(TimeSpan.FromMilliseconds(250));
+			await client.ConnectAsync(address ?? IPAddress.Loopback, port).WaitAsync(TimeSpan.FromMilliseconds(250));
+			return true;
 		}
 		catch
 		{

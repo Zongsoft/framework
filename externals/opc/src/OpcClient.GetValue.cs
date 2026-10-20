@@ -52,15 +52,14 @@ partial class OpcClient
 		if(result == null)
 			return null;
 
-		if(StatusCode.IsBad(result.StatusCode))
-			throw new InvalidOperationException(string.Format(Properties.Resources.Opc_ValueReadFailed_Message, result.StatusCode, identifier));
+		var data = result.Value;
 
-		if(result.Value is ExtensionObject extension)
-			return extension.Body;
+		if(StatusCode.IsBad(data.StatusCode))
+			throw new InvalidOperationException(string.Format(Properties.Resources.Opc_ValueReadFailed_Message, data.StatusCode, identifier));
 
-		return result.Value;
+		return Utility.GetValue(data);
 
-		static async ValueTask<DataValue> ReadValueAsync(ISession session, NodeId id, CancellationToken cancellation)
+		static async ValueTask<DataValue?> ReadValueAsync(ISession session, NodeId id, CancellationToken cancellation)
 		{
 			try
 			{
@@ -91,7 +90,7 @@ partial class OpcClient
 			var entry = result[i];
 
 			if(StatusCode.IsGood(entry.StatusCode))
-				yield return new(nodes[i].ToString(), entry.Value is ExtensionObject extension ? extension.Body : entry.Value);
+				yield return new(nodes[i].ToString(), Utility.GetValue(entry));
 			else
 				yield return new(nodes[i].ToString(), new Failure((int)entry.StatusCode.Code, entry.StatusCode.ToString()));
 		}

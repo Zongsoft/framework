@@ -59,7 +59,7 @@ public sealed class RedisMessageStorageIntegrationTests
 			Assert.Null(Find(messages, "null").Data);
 			Assert.Empty(Find(messages, "empty").Data);
 
-			replaced.Acknowledge();
+			await replaced.AcknowledgeAsync();
 			Assert.Equal(0, acknowledged);
 		}
 		finally

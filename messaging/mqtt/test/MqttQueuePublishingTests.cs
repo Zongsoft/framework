@@ -17,8 +17,8 @@ public class MqttQueuePublishingTests
 			return;
 
 		await using var server = await MqttServerScope.StartAsync();
-		using var publisher = MqttTestUtility.CreateQueue(server.Port, "publisher");
-		using var subscriber = MqttTestUtility.CreateQueue(server.Port, "subscriber");
+		await using var publisher = MqttTestUtility.CreateQueue(server.Port, "publisher");
+		await using var subscriber = MqttTestUtility.CreateQueue(server.Port, "subscriber");
 		using var messages = new MqttMessageBuffer();
 		var topic = $"tests/basic/{Guid.NewGuid():N}";
 
@@ -41,8 +41,8 @@ public class MqttQueuePublishingTests
 			return;
 
 		await using var server = await MqttServerScope.StartAsync();
-		using var publisher = MqttTestUtility.CreateQueue(server.Port, "exact-publisher");
-		using var subscriber = MqttTestUtility.CreateQueue(server.Port, "exact-subscriber");
+		await using var publisher = MqttTestUtility.CreateQueue(server.Port, "exact-publisher");
+		await using var subscriber = MqttTestUtility.CreateQueue(server.Port, "exact-subscriber");
 		using var messages = new MqttMessageBuffer();
 		var topic = $"tests/exact/{Guid.NewGuid():N}";
 		await subscriber.SubscribeAsync(topic, messages, new MessageSubscribeOptions(MessageReliability.ExactlyOnce));
@@ -62,8 +62,8 @@ public class MqttQueuePublishingTests
 			return;
 
 		await using var server = await MqttServerScope.StartAsync();
-		using var publisher = MqttTestUtility.CreateQueue(server.Port, "publisher");
-		using var subscriber = MqttTestUtility.CreateQueue(server.Port, "subscriber");
+		await using var publisher = MqttTestUtility.CreateQueue(server.Port, "publisher");
+		await using var subscriber = MqttTestUtility.CreateQueue(server.Port, "subscriber");
 		using var messages = new MqttMessageBuffer();
 		var prefix = $"tests/wildcard/{Guid.NewGuid():N}";
 		var filter = $"{prefix}/+";
@@ -85,7 +85,7 @@ public class MqttQueuePublishingTests
 
 		Assert.Null(await messages.TryReceiveAsync(TimeSpan.FromMilliseconds(500)));
 
-		subscriber.Dispose();
+		await subscriber.DisposeAsync();
 		Assert.True(subscriber.IsDisposed);
 		Assert.Empty(subscriber.Subscribers);
 	}
@@ -99,8 +99,8 @@ public class MqttQueuePublishingTests
 		const int COUNT = 500;
 
 		await using var server = await MqttServerScope.StartAsync();
-		using var publisher = MqttTestUtility.CreateQueue(server.Port, "publisher");
-		using var subscriber = MqttTestUtility.CreateQueue(server.Port, "subscriber");
+		await using var publisher = MqttTestUtility.CreateQueue(server.Port, "publisher");
+		await using var subscriber = MqttTestUtility.CreateQueue(server.Port, "subscriber");
 		using var messages = new MqttMessageBuffer();
 		var topic = $"tests/concurrent/{Guid.NewGuid():N}";
 
@@ -111,13 +111,13 @@ public class MqttQueuePublishingTests
 			.Select(index => publisher.ProduceAsync(topic, BitConverter.GetBytes(index)).AsTask())
 			.ToArray();
 
-		await Task.WhenAll(publishing);
+		var identifiers = await Task.WhenAll(publishing);
 		var received = await messages.ReceiveManyAsync(COUNT, TimeSpan.FromSeconds(30));
 		stopwatch.Stop();
 
 		Assert.Equal(COUNT, received.Length);
 		Assert.Equal(COUNT, received.Select(message => BitConverter.ToInt32(message.Data)).Distinct().Count());
-		Assert.All(publishing, task => Assert.Null(task.Result));
+		Assert.All(identifiers, Assert.Null);
 		Assert.InRange(stopwatch.Elapsed, TimeSpan.Zero, TimeSpan.FromSeconds(30));
 		Assert.True(COUNT / stopwatch.Elapsed.TotalSeconds >= 1,
 			$"MQTT concurrent producer throughput was below 1 publication/s; {COUNT} published-and-received payloads took {stopwatch.Elapsed}.");
@@ -132,8 +132,8 @@ public class MqttQueuePublishingTests
 		const int COUNT = 32;
 
 		await using var server = await MqttServerScope.StartAsync();
-		using var publisher = MqttTestUtility.CreateQueue(server.Port, "publisher");
-		using var subscriber = MqttTestUtility.CreateQueue(server.Port, "subscriber");
+		await using var publisher = MqttTestUtility.CreateQueue(server.Port, "publisher");
+		await using var subscriber = MqttTestUtility.CreateQueue(server.Port, "subscriber");
 		var handler = new ConcurrentMessageHandler(COUNT);
 		var topic = $"tests/consumers/{Guid.NewGuid():N}";
 
@@ -157,8 +157,8 @@ public class MqttQueuePublishingTests
 
 		var port = MqttTestUtility.GetFreePort();
 		await using var server = new MqttQueueServer { Url = $"tcp://127.0.0.1:{port}" };
-		using var publisher = MqttTestUtility.CreateQueue(port, "publisher");
-		using var subscriber = MqttTestUtility.CreateQueue(port, "subscriber");
+		await using var publisher = MqttTestUtility.CreateQueue(port, "publisher");
+		await using var subscriber = MqttTestUtility.CreateQueue(port, "subscriber");
 		using var messages = new MqttMessageBuffer();
 		var topic = $"tests/reconnect/{Guid.NewGuid():N}";
 

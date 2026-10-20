@@ -211,5 +211,5 @@ All of these variable sources can be explicitly added to `TemplateEvaluator.Prov
 - [Environment variable views](../src/Common/Variables.Environments.cs): platform environment variable access.
 - [Command option collection](../src/Components/CommandLine.Options.cs): variable indexing and lookup for command options.
 - [ProfileExtension](../src/Configuration/Profiles/ProfileExtension.cs): configuration variable adapters.
-- [In-memory variable tests](../test/Common/VariablesTest.cs), [dictionary wrapper tests](../test/Common/VariablesWrappingTest.cs), [object-keyed dictionary tests](../test/Common/VariablesObjectWrappingTest.cs) and [environment variable tests](../test/Common/VariablesEnvironmentsTest.cs).
-- [Command option variable tests](../test/Components/CommandLineVariablesTest.cs) and [Profile variable tests](../test/Configuration/Profiles/ProfileVariablesTest.cs).
+- [In-memory variable tests](../test/unit/Common/VariablesTest.cs), [dictionary wrapper tests](../test/unit/Common/VariablesWrappingTest.cs), [object-keyed dictionary tests](../test/unit/Common/VariablesObjectWrappingTest.cs) and [environment variable tests](../test/unit/Common/VariablesEnvironmentsTest.cs).
+- [Command option variable tests](../test/unit/Components/CommandLineVariablesTest.cs) and [Profile variable tests](../test/unit/Configuration/Profiles/ProfileVariablesTest.cs).

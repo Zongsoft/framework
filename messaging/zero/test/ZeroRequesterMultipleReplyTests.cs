@@ -20,7 +20,7 @@ public class ZeroRequesterMultipleReplyTests
 	[InlineData(8)]
 	public async Task CacheReplacementKeepsTokenForAllReplies(int count)
 	{
-		using var requester = new ZeroRequester();
+		await using var requester = new ZeroRequester();
 		var (request, token, tokens, pending) = Register(requester);
 		using var lifetime = token;
 		using var replaced = new SemaphoreSlim(0);
@@ -43,17 +43,17 @@ public class ZeroRequesterMultipleReplyTests
 			Assert.True(pending.Contains(request.Identifier));
 		}
 
-		AssertReplies(token.GetResponses().ToArray(), request.Identifier, count);
+		AssertReplies(await ZeroTestUtility.ReadResponsesAsync(token), request.Identifier, count);
 	}
 
 	[Fact]
 	public async Task ExpiredTokenIsRemovedAndLateRepliesAreIgnored()
 	{
-		using var requester = new ZeroRequester();
+		await using var requester = new ZeroRequester();
 		var (request, token, tokens, pending) = Register(requester);
 		using var lifetime = token;
 		await ReplyAsync(requester, request, 0);
-		AssertReplies(token.GetResponses().ToArray(), request.Identifier, 1);
+		AssertReplies(await ZeroTestUtility.ReadResponsesAsync(token), request.Identifier, 1);
 
 		var expired = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 		pending.Evicted += (_, args) =>
@@ -78,14 +78,14 @@ public class ZeroRequesterMultipleReplyTests
 		Assert.False(pending.Contains(request.Identifier));
 
 		await ReplyAsync(requester, request, 1);
-		Assert.Empty(token.GetResponses());
+		Assert.Empty(await ZeroTestUtility.ReadResponsesAsync(token));
 		Assert.False(pending.Contains(request.Identifier));
 	}
 
 	[Fact]
 	public async Task TokenDisposalRemovesPendingEntryAndIgnoresLateReplies()
 	{
-		using var requester = new ZeroRequester();
+		await using var requester = new ZeroRequester();
 		var (request, token, tokens, pending) = Register(requester);
 		using var lifetime = token;
 		await ReplyAsync(requester, request, 0);
@@ -96,10 +96,10 @@ public class ZeroRequesterMultipleReplyTests
 		token.Dispose();
 		Assert.False(tokens.Contains(request.Identifier));
 		Assert.False(pending.Contains(request.Identifier));
-		Assert.Empty(token.GetResponses());
+		Assert.Empty(await ZeroTestUtility.ReadResponsesAsync(token));
 
 		await ReplyAsync(requester, request, 1);
-		Assert.Empty(token.GetResponses());
+		Assert.Empty(await ZeroTestUtility.ReadResponsesAsync(token));
 		Assert.False(tokens.Contains(request.Identifier));
 		Assert.False(pending.Contains(request.Identifier));
 	}
@@ -107,7 +107,7 @@ public class ZeroRequesterMultipleReplyTests
 	[Fact]
 	public async Task RequesterDisposalRemovesAllTokens()
 	{
-		using var requester = new ZeroRequester();
+		await using var requester = new ZeroRequester();
 		var first = Register(requester);
 		var second = Register(requester);
 		using var firstToken = first.Token;
@@ -119,8 +119,8 @@ public class ZeroRequesterMultipleReplyTests
 		await requester.DisposeAsync();
 		await requester.DisposeAsync();
 		Assert.Empty(first.Tokens);
-		Assert.Empty(first.Token.GetResponses());
-		Assert.Empty(second.Token.GetResponses());
+		Assert.Empty(await ZeroTestUtility.ReadResponsesAsync(first.Token));
+		Assert.Empty(await ZeroTestUtility.ReadResponsesAsync(second.Token));
 		await Assert.ThrowsAsync<ObjectDisposedException>(() => requester.RequestAsync("rpc/multiple-replies", ReadOnlyMemory<byte>.Empty).AsTask());
 	}
 
@@ -133,8 +133,8 @@ public class ZeroRequesterMultipleReplyTests
 			return;
 
 		await using var server = await ZeroServerScope.StartAsync();
-		using var requesterQueue = ZeroTestUtility.CreateQueue(server.Port, "multiple-requester");
-		using var responderQueue = ZeroTestUtility.CreateQueue(server.Port, "multiple-responder");
+		await using var requesterQueue = ZeroTestUtility.CreateQueue(server.Port, "multiple-requester");
+		await using var responderQueue = ZeroTestUtility.CreateQueue(server.Port, "multiple-responder");
 		await using var requester = new ZeroRequester { Queue = requesterQueue };
 		await using var responder = new ZeroResponder { Queue = responderQueue };
 		responder.Handlers.Add(new MultipleReplyHandler());
@@ -148,7 +148,7 @@ public class ZeroRequesterMultipleReplyTests
 			for(var attempt = 0; attempt < 10 && !ready; attempt++)
 			{
 				using var warmup = await requester.RequestAsync("rpc/multiple-replies", new byte[] { 1 });
-				var replies = warmup.GetResponses(TimeSpan.FromMilliseconds(500)).Take(1).ToArray();
+				var replies = await ZeroTestUtility.ReadResponsesAsync(warmup, TimeSpan.FromMilliseconds(500), 1);
 
 				if(replies.Length == 1)
 				{
@@ -160,13 +160,84 @@ public class ZeroRequesterMultipleReplyTests
 			Assert.True(ready);
 			using var token = await requester.RequestAsync("rpc/multiple-replies", new byte[] { (byte)count });
 			Assert.NotNull(token);
-			var responses = token.GetResponses(TimeSpan.FromSeconds(3)).Take(count).ToArray();
+			var responses = await ZeroTestUtility.ReadResponsesAsync(token, TimeSpan.FromSeconds(3), count);
 			AssertReplies(responses, token.Request.Identifier, count);
 		}
 		finally
 		{
 			await responder.StopAsync([]);
 		}
+	}
+
+	[Theory]
+	[InlineData(0)]
+	[InlineData(1)]
+	[InlineData(2)]
+	[InlineData(3)]
+	public async Task GetResponsesAsync_WaitingForReply_DoesNotBlockAndWakesForCompletion(int completion)
+	{
+		await using var requester = new ZeroRequester();
+		var (request, token, _, _) = Register(requester);
+		using var lifetime = token;
+		using var cancellation = new CancellationTokenSource();
+		await using var responses = token.GetResponsesAsync(TimeSpan.FromMinutes(1), cancellation.Token).GetAsyncEnumerator();
+		var returned = new TaskCompletionSource<Task<bool>>(TaskCreationOptions.RunContinuationsAsynchronously);
+		var invocation = Task.Run(() =>
+		{
+			try { returned.SetResult(responses.MoveNextAsync().AsTask()); }
+			catch(Exception exception) { returned.SetResult(Task.FromException<bool>(exception)); }
+		});
+
+		try
+		{
+			var pending = await returned.Task.WaitAsync(TimeSpan.FromSeconds(5));
+			Assert.False(pending.IsCompleted);
+
+			switch(completion)
+			{
+				case 0:
+					await ReplyAsync(requester, request, 42);
+					break;
+				case 1:
+					token.Dispose();
+					break;
+				case 2:
+					await requester.DisposeAsync();
+					break;
+				case 3:
+					cancellation.Cancel();
+					break;
+			}
+
+			Assert.Equal(completion == 0, await pending.WaitAsync(TimeSpan.FromSeconds(5)));
+
+			if(completion == 0)
+			{
+				Assert.Equal(request.Identifier, responses.Current.Request.Identifier);
+				Assert.Equal(new byte[] { 42 }, responses.Current.Data.ToArray());
+			}
+		}
+		finally
+		{
+			token.Dispose();
+			await invocation.WaitAsync(TimeSpan.FromSeconds(5));
+			var pending = await returned.Task.WaitAsync(TimeSpan.FromSeconds(5));
+			await pending.WaitAsync(TimeSpan.FromSeconds(5));
+		}
+	}
+
+	[Fact]
+	public async Task GetResponsesAsync_PreCanceledEnumeration_LeavesBufferedRepliesAvailable()
+	{
+		await using var requester = new ZeroRequester();
+		var (request, token, _, _) = Register(requester);
+		using var lifetime = token;
+		using var cancellation = new CancellationTokenSource();
+		await ReplyAsync(requester, request, 0);
+		cancellation.Cancel();
+
+		Assert.Empty(await ZeroTestUtility.ReadResponsesAsync(token, cancellation: cancellation.Token));
+		AssertReplies(await ZeroTestUtility.ReadResponsesAsync(token), request.Identifier, 1);
 	}
 
 	private static ValueTask ReplyAsync(ZeroRequester requester, IRequest request, byte index) =>

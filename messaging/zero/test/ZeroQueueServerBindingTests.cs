@@ -281,8 +281,8 @@ public class ZeroQueueServerBindingTests
 		await server.StartAsync([]);
 		Assert.Equal(WorkerState.Running, server.State);
 		var port = (ushort)new Uri(server.Discovery).Port;
-		using var publisher = ZeroTestUtility.CreateQueue(port, "ipv6-publisher", settings => settings.Server = "[::1]");
-		using var subscriber = ZeroTestUtility.CreateQueue(port, "ipv6-subscriber", settings => settings.Server = "[::1]");
+		await using var publisher = ZeroTestUtility.CreateQueue(port, "ipv6-publisher", settings => settings.Server = "[::1]");
+		await using var subscriber = ZeroTestUtility.CreateQueue(port, "ipv6-subscriber", settings => settings.Server = "[::1]");
 		using var handler = new MessageBuffer();
 		await subscriber.SubscribeAsync("topic/ipv6-client", handler, new MessageSubscribeOptions(reliability));
 		var identifier = await ZeroTestUtility.PublishUntilAcceptedAsync(publisher, "topic/ipv6-client", Encoding.UTF8.GetBytes("ipv6-client-message"), new MessageEnqueueOptions(reliability));

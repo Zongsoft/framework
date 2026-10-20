@@ -76,7 +76,7 @@ public class MqttQueueServerTests
 		await server.StartAsync([]);
 
 		Assert.Equal(WorkerState.Running, server.State);
-		Assert.True(MqttTestUtility.CanConnect(port));
+		Assert.True(await MqttTestUtility.CanConnectAsync(port));
 		Assert.False(MqttTestUtility.CanBind(port, IPAddress.Loopback));
 		Assert.True(MqttTestUtility.CanBind(port, IPAddress.Parse("127.0.0.2")));
 		Assert.True(MqttTestUtility.CanBind(port, IPAddress.IPv6Loopback));
@@ -98,9 +98,9 @@ public class MqttQueueServerTests
 		await server.StartAsync([]);
 
 		Assert.Equal(WorkerState.Running, server.State);
-		Assert.True(MqttTestUtility.CanConnect(port, IPAddress.IPv6Loopback));
+		Assert.True(await MqttTestUtility.CanConnectAsync(port, IPAddress.IPv6Loopback));
 		Assert.False(MqttTestUtility.CanBind(port, IPAddress.Parse(host)));
-		Assert.False(MqttTestUtility.CanConnect(port, IPAddress.Loopback));
+		Assert.False(await MqttTestUtility.CanConnectAsync(port, IPAddress.Loopback));
 		Assert.True(MqttTestUtility.CanBind(port, IPAddress.Loopback));
 
 		await server.StopAsync([]);
@@ -146,7 +146,7 @@ public class MqttQueueServerTests
 
 		await server.StartAsync([]);
 		Assert.Equal(WorkerState.Running, server.State);
-		Assert.True(MqttTestUtility.CanConnect(port));
+		Assert.True(await MqttTestUtility.CanConnectAsync(port));
 		await server.StopAsync([]);
 		Assert.True(MqttTestUtility.CanBind(port));
 	}
@@ -170,7 +170,7 @@ public class MqttQueueServerTests
 		Assert.Equal(cancellation.Token, canceled.CancellationToken);
 		Assert.Equal(WorkerState.Running, server.State);
 		Assert.True(server.HasServer);
-		Assert.True(MqttTestUtility.CanConnect(port));
+		Assert.True(await MqttTestUtility.CanConnectAsync(port));
 
 		await server.StopAsync([]);
 		Assert.Equal(WorkerState.Stopped, server.State);
@@ -357,7 +357,7 @@ public class MqttQueueServerTests
 		await server.StartAsync([]);
 		Assert.Equal(WorkerState.Running, server.State);
 		Assert.True(server.HasServer);
-		Assert.True(await MqttTestUtility.WaitUntilAsync(() => MqttTestUtility.CanConnect(port), TimeSpan.FromSeconds(5)));
+		Assert.True(await MqttTestUtility.WaitUntilAsync(() => MqttTestUtility.CanConnectAsync(port), TimeSpan.FromSeconds(5)));
 		Assert.Throws<InvalidOperationException>(() => server.Url = $"tcp://127.0.0.1:{MqttTestUtility.GetFreePort()}");
 
 		await server.StopAsync([]);
@@ -367,7 +367,7 @@ public class MqttQueueServerTests
 
 		await server.StartAsync([]);
 		Assert.Equal(WorkerState.Running, server.State);
-		Assert.True(await MqttTestUtility.WaitUntilAsync(() => MqttTestUtility.CanConnect(port), TimeSpan.FromSeconds(5)));
+		Assert.True(await MqttTestUtility.WaitUntilAsync(() => MqttTestUtility.CanConnectAsync(port), TimeSpan.FromSeconds(5)));
 
 		await server.StopAsync([]);
 		Assert.True(await MqttTestUtility.WaitUntilAsync(() => MqttTestUtility.CanBind(port), TimeSpan.FromSeconds(5)));
@@ -403,7 +403,7 @@ public class MqttQueueServerTests
 		await server.StartAsync([]);
 		Assert.Equal(WorkerState.Running, server.State);
 		Assert.True(server.HasServer);
-		Assert.True(MqttTestUtility.CanConnect(port));
+		Assert.True(await MqttTestUtility.CanConnectAsync(port));
 		await server.StopAsync([]);
 		Assert.True(MqttTestUtility.CanBind(port));
 	}
@@ -425,7 +425,7 @@ public class MqttQueueServerTests
 		Assert.Empty(await server.GetRetainedMessagesAsync());
 
 		await server.StartAsync([]);
-		using var queue = MqttTestUtility.CreateQueue(port, "server-status");
+		await using var queue = MqttTestUtility.CreateQueue(port, "server-status");
 		await queue.ProduceAsync($"tests/status/{Guid.NewGuid():N}", Encoding.UTF8.GetBytes("status"));
 
 		Assert.True(await MqttTestUtility.WaitUntilAsync(
@@ -472,7 +472,7 @@ public class MqttQueueServerTests
 		await abstraction.DisposeAsync();
 		Assert.True(abstraction.IsDisposed);
 
-		queue.Dispose();
+		await queue.DisposeAsync();
 		Assert.True(await MqttTestUtility.WaitUntilAsync(
 			() => !channels.Contains(channel.Identifier) && !sessions.Contains(channel.Identifier), TimeSpan.FromSeconds(5)));
 		Assert.Same(channels, server.Channels);
@@ -509,7 +509,7 @@ public class MqttQueueServerTests
 		}
 		finally
 		{
-			queue.Dispose();
+			await queue.DisposeAsync();
 		}
 	}
 
@@ -528,7 +528,7 @@ public class MqttQueueServerTests
 		await server.StartAsync([]);
 		Assert.True(listener.IsListening);
 
-		using var queue = MqttTestUtility.CreateQueue(port, "server-listener");
+		await using var queue = MqttTestUtility.CreateQueue(port, "server-listener");
 		var topic = $"tests/listener/{Guid.NewGuid():N}";
 		var payload = Encoding.UTF8.GetBytes("listener");
 		await queue.ProduceAsync(topic, payload);

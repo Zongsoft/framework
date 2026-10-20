@@ -15,13 +15,13 @@ internal class Program
 {
 	static async Task Main(string[] args)
 	{
-		using var queue = new RedisQueue("Redis",
+		await using var queue = new RedisQueue("Redis",
 			Configuration.RedisConnectionSettingsDriver.Instance.GetSettings("Redis",
 				$"server=127.0.0.1:6379;password=xxxxxx;group=Zongsoft.Externals.Redis.Samples;client=Sample-{Guid.NewGuid():N};timeout=10s;deadline=3;idleTimeout=30s;"));
 
 		var executor = Terminal.Console.Executor;
 		executor.Command("reset", context => Handler.Instance.Reset());
-		executor.Command("close", context => queue.Dispose());
+		executor.Command("close", (context, cancellation) => queue.DisposeAsync());
 
 		executor.Command("info", context =>
 		{

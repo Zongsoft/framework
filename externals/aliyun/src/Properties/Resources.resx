@@ -234,4 +234,10 @@
 	<data name="Pushing.ChannelUnsupported.Message" xml:space="preserve">
 		<value>Unsupported ‘{0}’ channel.</value>
 	</data>
+	<data name="Operation.AsyncOnly.Message" xml:space="preserve">
+		<value>This provider only supports asynchronous operations. Use the corresponding Async method and await disposal.</value>
+	</data>
+  <data name="Storage.UploadResponseInvalid.Message" xml:space="preserve">
+    <value>The storage upload response is missing a valid upload identifier, part checksum, or completion result.</value>
+  </data>
 </root>

@@ -85,13 +85,13 @@ public class RedisLifecycleAndConnectionTests
 	}
 
 	[Fact]
-	public void ScopeViews_AreImmutableBeforeActivation()
+	public async Task ScopeViews_AreImmutableBeforeActivation()
 	{
-		using var root = CreateCache();
+		await using var root = CreateCache();
 		root.Namespace = "root";
 		root.Use(1);
-		using var namespaceView = root.WithNamespace("view");
-		using var databaseView = root.WithDatabase(2);
+		await using var namespaceView = root.WithNamespace("view");
+		await using var databaseView = root.WithDatabase(2);
 
 		Assert.Equal("view", namespaceView.Namespace);
 		Assert.Equal(1, namespaceView.DatabaseId);

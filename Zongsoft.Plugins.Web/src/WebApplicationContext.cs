@@ -51,7 +51,6 @@ public class WebApplicationContext(IServiceProvider services, PluginOptions opti
 	#region 成员字段
 	private IHttpContextAccessor _http;
 	private SessionCollection _session;
-
 	#endregion
 
 	#region 公共属性

@@ -104,12 +104,14 @@ public class MessageTopic : MessageQueueBase<MessageTopic.Consumer>
 	#endregion
 
 	#region 资源释放
-	protected override void Dispose(bool disposing)
+	protected override ValueTask DisposeAsync(bool disposing)
 	{
 		var http = Interlocked.Exchange(ref _http, null);
 
 		if(http != null)
 			http.Dispose();
+
+		return ValueTask.CompletedTask;
 	}
 	#endregion
 

@@ -390,6 +390,9 @@ partial class ApplicationContext
 			try { await this.DisposeAsync(true).ConfigureAwait(false); }
 			catch(Exception exception) { (errors ??= []).Add(exception); }
 
+			try { await Diagnostics.Logging.FlushAsync().ConfigureAwait(false); }
+			catch(Exception exception) { (errors ??= []).Add(exception); }
+
 			_disposed = 1;
 			GC.SuppressFinalize(this);
 			ThrowErrors(errors);

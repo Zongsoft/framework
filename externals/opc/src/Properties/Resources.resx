@@ -197,4 +197,7 @@ Aes256Sha256RsaPss</value>
 	<data name="Opc.ValueWriteFailed.Message" xml:space="preserve">
 		<value>[{0}] Failed to write the value of the “{1}” node.</value>
 	</data>
+  <data name="Subscription.QueueFull.Message" xml:space="preserve">
+    <value>The asynchronous subscription notification queue is full.</value>
+  </data>
 </root>

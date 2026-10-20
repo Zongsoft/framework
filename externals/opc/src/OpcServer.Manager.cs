@@ -59,9 +59,9 @@ partial class OpcServer
 		#endregion
 
 		#region 公共方法
-		public (AddNodesResult result, DiagnosticInfo diagnostic) AddNode(OperationContext context, AddNodesItem node)
+		public async ValueTask<(AddNodesResult result, DiagnosticInfo diagnostic)> AddNodeAsync(OperationContext context, AddNodesItem node, CancellationToken cancellation)
 		{
-			var parent = node.ParentNodeId == null || node.ParentNodeId.IsNull ? null : this.FindPredefinedNode<NodeState>((NodeId)node.ParentNodeId);
+			var parent = node.ParentNodeId.IsNull ? null : this.FindPredefinedNode<NodeState>((NodeId)node.ParentNodeId);
 
 			if(parent == null)
 			{
@@ -72,7 +72,7 @@ partial class OpcServer
 					node.BrowseName = new QualifiedName(node.BrowseName.Name[(index + 1)..], this.NamespaceIndex);
 				}
 
-				parent ??= this.FindNodeInAddressSpace(Objects.ObjectsFolder);
+				parent ??= await this.Server.NodeManager.FindNodeInAddressSpaceAsync(ObjectIds.ObjectsFolder, cancellation);
 			}
 
 			if(node.NodeClass == NodeClass.Object)
@@ -82,13 +82,13 @@ partial class OpcServer
 					var displayName = node.BrowseName.Name;
 					var description = (string)null;
 
-					if(node.NodeAttributes?.Body is ObjectAttributes attributes)
+					if(node.NodeAttributes.TryGetValue<ObjectAttributes>(out var attributes))
 					{
-						displayName = attributes.DisplayName?.Text;
-						description = attributes.Description?.Text;
+						displayName = attributes.DisplayName.Text;
+						description = attributes.Description.Text;
 					}
 
-					var folder = this.CreateFolder(parent, null, node.BrowseName.Name, displayName, description);
+					var folder = this.CreateFolder(parent, default, node.BrowseName.Name, displayName, description);
 					this.AddPredefinedNode(this.SystemContext, folder);
 
 					return (new AddNodesResult()
@@ -102,23 +102,23 @@ partial class OpcServer
 			}
 			else if(node.NodeClass == NodeClass.Variable)
 			{
-				if(node.NodeAttributes?.Body is VariableAttributes attributes)
+				if(node.NodeAttributes.TryGetValue<VariableAttributes>(out var attributes))
 				{
 					var variable = this.CreateVariable(
 						parent,
 						node.BrowseName.Name,
 						attributes.Value,
-						attributes.DisplayName?.Text,
+						attributes.DisplayName.Text,
 						attributes.DataType,
 						attributes.ValueRank,
-						attributes.Description?.Text);
+						attributes.Description.Text);
 
 					variable.Historizing = attributes.Historizing;
 					variable.AccessLevel = attributes.AccessLevel;
 					variable.UserAccessLevel = attributes.UserAccessLevel;
 					variable.WriteMask = (AttributeWriteMask)attributes.WriteMask;
 					variable.UserWriteMask = (AttributeWriteMask)attributes.UserWriteMask;
-					variable.ArrayDimensions = attributes.ArrayDimensions?.ToArray();
+					variable.ArrayDimensions = attributes.ArrayDimensions.ToArray();
 					variable.Description = attributes.Description;
 
 					this.AddPredefinedNode(this.SystemContext, variable);
@@ -157,7 +157,7 @@ partial class OpcServer
 
 		public bool TryGetValue(NodeId nodeId, out object value)
 		{
-			if(nodeId == null || nodeId.IsNullNodeId)
+			if(nodeId.IsNull)
 			{
 				value = null;
 				return false;
@@ -173,7 +173,7 @@ partial class OpcServer
 			var errors = new ServiceResult[1];
 
 			this.Read(this.SystemContext.OperationContext, 0, [request], result, errors);
-			value = result[0].Value;
+			value = Utility.GetValue(result[0]);
 			return ServiceResult.IsGood(errors[0]);
 		}
 
@@ -198,10 +198,10 @@ partial class OpcServer
 
 			for(int i = 0; i < request.Length; i++)
 			{
-				if(result[i] == null || errors[i] == null) //NotFound
+				if(result[i].IsNull || errors[i] == null) //NotFound
 					yield return new(request[i].NodeId, null);
 				else if(ServiceResult.IsGood(errors[i]))
-					yield return new(request[i].NodeId, result[i].Value);
+					yield return new(request[i].NodeId, Utility.GetValue(result[i]));
 				else
 					yield return new(request[i].NodeId, Failure.GetFailure(errors[i].StatusCode));
 			}
@@ -219,14 +219,14 @@ partial class OpcServer
 
 		public bool SetValue<T>(NodeId nodeId, T value)
 		{
-			if(nodeId == null || nodeId.IsNullNodeId)
+			if(nodeId.IsNull)
 				return false;
 
 			var request = new WriteValue()
 			{
 				NodeId = nodeId,
 				AttributeId = Attributes.Value,
-				Value = new DataValue(new Variant(value), StatusCodes.Good),
+				Value = new DataValue(VariantHelper.CastFromWithReflectionFallback(value), StatusCodes.Good),
 			};
 
 			var errors = new ServiceResult[1];
@@ -243,7 +243,7 @@ partial class OpcServer
 			{
 				NodeId = entry.Key,
 				AttributeId = Attributes.Value,
-				Value = new DataValue(new Variant(entry.Value), StatusCodes.Good),
+				Value = new DataValue(VariantHelper.CastFromWithReflectionFallback(entry.Value), StatusCodes.Good),
 			}).ToArray();
 
 			if(request.Length == 0)
@@ -276,7 +276,7 @@ partial class OpcServer
 
 		protected override void AddPredefinedNode(ISystemContext context, NodeState node)
 		{
-			if(node.NodeId == null || node.NodeId.IsNullNodeId)
+			if(node.NodeId.IsNull)
 				node.NodeId = this.New(context, node);
 
 			switch(node)
@@ -295,7 +295,7 @@ partial class OpcServer
 							NodeId = new NodeId(Guid.NewGuid(), node.NodeId.NamespaceIndex),
 							SymbolicName = $"{node.SymbolicName}Type",
 							BrowseName = new QualifiedName($"{node.BrowseName}Type", node.NodeId.NamespaceIndex),
-							DisplayName = $"{node.DisplayName}Type",
+							DisplayName = new($"{node.DisplayName}Type"),
 							InverseName = new LocalizedText($"IsTypeOf{node.BrowseName}"),
 							SuperTypeId = ReferenceTypeIds.NonHierarchicalReferences,
 						};
@@ -324,15 +324,10 @@ partial class OpcServer
 
 		public override NodeId New(ISystemContext context, NodeState node)
 		{
-			if(node.NodeId == null || node.NodeId.IsNullNodeId)
+			if(node.NodeId.IsNull)
 				return this.GenerateId();
 
 			return base.New(context, node);
-		}
-
-		public override void Write(OperationContext context, IList<WriteValue> nodesToWrite, IList<ServiceResult> errors)
-		{
-			base.Write(context, nodesToWrite, errors);
 		}
 		#endregion
 
@@ -345,7 +340,7 @@ partial class OpcServer
 					prefab.Node = this.DefineType(type.Type);
 					break;
 				case Prefab.FolderPrefab folder:
-					prefab.Node = this.CreateFolder(folder.Folder?.Node, null, folder.Name, folder.Label, folder.Description);
+					prefab.Node = this.CreateFolder(folder.Folder?.Node, default, folder.Name, folder.Label, folder.Description);
 					break;
 				case Prefab.ObjectPrefab target:
 					prefab.Node = this.DefineValue(target.Folder?.Node, target.Value, target.Name);

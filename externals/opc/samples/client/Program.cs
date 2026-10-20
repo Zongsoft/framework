@@ -16,7 +16,7 @@ internal class Program
 
 	static async Task Main(string[] args)
 	{
-		using var client = new OpcClient();
+		await using var client = new OpcClient();
 		var executor = Terminal.Console.Executor;
 
 		executor.Command("reset", context =>
@@ -314,6 +314,6 @@ internal class Program
 		Terminal.WriteLine(CommandOutletColor.DarkGray, ']');
 
 		//释放客户端
-		client.Dispose();
+		await client.DisposeAsync();
 	}
 }

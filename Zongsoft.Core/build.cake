@@ -44,12 +44,31 @@ Task("test")
 		Configuration = edition,
 	};
 
-	var projects = GetFiles("**/test/*.csproj");
+	var projects = GetFiles("test/unit/*.csproj");
 
 	foreach(var project in projects)
 	{
 		DotNetTest(project.FullPath, settings);
 	}
+});
+
+Task("integration-test")
+	.Description("终端输入与进程集成测试")
+	.IsDependentOn("build")
+	.Does(() =>
+{
+	DotNetBuild("test/integration/Zongsoft.Core.Tests.slnx", new DotNetBuildSettings
+	{
+		Configuration = edition,
+		MSBuildSettings = new DotNetMSBuildSettings().WithProperty("GeneratePackageOnBuild", "false"),
+	});
+
+	DotNetTest("test/integration/Zongsoft.Core.Tests.csproj", new DotNetTestSettings
+	{
+		NoBuild = true,
+		NoRestore = true,
+		Configuration = edition,
+	});
 });
 
 Task("pack")

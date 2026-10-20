@@ -174,15 +174,6 @@
 	<data name="Builtin.TypeInvalid.Message" xml:space="preserve">
 		<value>无法从内置元素“{1}”的文本“{0}”解析类型。</value>
 	</data>
-	<data name="Predication.SyntaxInvalid.Message" xml:space="preserve">
-		<value>断言解析失败：语法错误。</value>
-	</data>
-	<data name="Predication.TextRequired.Message" xml:space="preserve">
-		<value>断言解析失败：解析文本为空。</value>
-	</data>
-	<data name="Predication.ParseFailed.Message" xml:space="preserve">
-		<value>断言解析失败。</value>
-	</data>
 	<data name="Plugin.ElementTypeUnsupported.Message" xml:space="preserve">
 		<value>不支持“{0}”元素类型。</value>
 	</data>
@@ -236,9 +227,6 @@
 	</data>
 	<data name="Plugin.InstanceCreationFailed.Message" xml:space="preserve">
 		<value>在“{1}”中创建“{0}”类型的实例时发生异常。</value>
-	</data>
-	<data name="Predication.ServiceProviderNotFound.Message" xml:space="preserve">
-		<value>解析断言时未找到服务提供程序“{0}”。</value>
 	</data>
 	<data name="Plugin.AssemblyFileNotFound.Message" xml:space="preserve">
 		<value>插件“{1}”中指定的程序集文件“{0}”不存在。</value>

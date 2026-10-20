@@ -174,7 +174,7 @@ Reader 记录声明基线，Loaded 中的修改保持待保存状态。Save() �
 
 deployer 使用 Loading 记录导入文件哈希，根文件单独登记；packager 在 Loading 中收集合并前的引用者声明，在 Loaded 中收集各解析来源，包括根文件；containerizer 在 Loading 中验证来源声明。按路径另行打开并计算哈希不保证摘要严格对应解析字节，这由下游负责。
 
-导入回归见 [ProfileImportTest](../test/Configuration/Profiles/ProfileImportTest.cs)。
+导入回归见 [ProfileImportTest](../test/unit/Configuration/Profiles/ProfileImportTest.cs)。
 
 ## 声明与保存
 
@@ -244,7 +244,7 @@ Reader 在读取声明时登记原始基线，Loaded 回调中的修改保持待
 
 路径资源由 Writer 管理。Stream 保持既有关闭行为；TextWriter 不关闭。流与文本写入器可能在异常前收到部分输出，不能回滚。
 
-[ProfileWriterTest](../test/Configuration/Profiles/ProfileWriterTest.cs) 覆盖来源写回、范围隔离、声明往返、重复实例、准备/提交失败与重试。Linux/macOS 的权限和链接验证必须原生执行，不能用 Windows 结果代替。哈希严格对应解析字节仍由下游输入快照方案处理，Core 不依赖部署、NuGet 或哈希类型。
+[ProfileWriterTest](../test/unit/Configuration/Profiles/ProfileWriterTest.cs) 覆盖来源写回、范围隔离、声明往返、重复实例、准备/提交失败与重试。Linux/macOS 的权限和链接验证必须原生执行，不能用 Windows 结果代替。哈希严格对应解析字节仍由下游输入快照方案处理，Core 不依赖部署、NuGet 或哈希类型。
 
 ## 变量视图
 
@@ -312,4 +312,4 @@ var text = evaluator.Evaluate("Database=${mysql:db_name};Storage=${io.rustfs:dat
 
 这些扩展只提供变量来源。Profile 加载、导入参数与 Save 不自动求值，ProfileEntry.Value 保留原文。运行期间变量来源的组合和模板求值由调用方显式组织。
 
-实现见 [ProfileExtension](../src/Configuration/Profiles/ProfileExtension.cs)，契约见 [IVariables](variables.zh-Hans.md#变量契约)，行为测试见 [ProfileVariablesTest](../test/Configuration/Profiles/ProfileVariablesTest.cs)。
+实现见 [ProfileExtension](../src/Configuration/Profiles/ProfileExtension.cs)，契约见 [IVariables](variables.zh-Hans.md#变量契约)，行为测试见 [ProfileVariablesTest](../test/unit/Configuration/Profiles/ProfileVariablesTest.cs)。

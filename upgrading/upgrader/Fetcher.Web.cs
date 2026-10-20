@@ -78,15 +78,16 @@ partial class Fetcher
 			if(client == null)
 				yield break;
 
-			using var request = new HttpRequestMessage(HttpMethod.Get, $"{Application.ApplicationName}/{edition}?{GetParameters(version, IO.Hardwares.HardwareProfile.Current)}");
-			SetProfileHeader(request, IO.Hardwares.HardwareProfile.Current);
+			var profile = await IO.Hardwares.HardwareProfile.GetCurrentAsync(cancellation);
+			using var request = new HttpRequestMessage(HttpMethod.Get, $"{Application.ApplicationName}/{edition}?{GetParameters(version, profile)}");
+			SetProfileHeader(request, profile);
 
 			using var response = await client.SendAsync(request, cancellation);
 			if(!response.IsSuccessStatusCode)
 				yield break;
 
 			//尝试创建一个跟踪器实例，并将其赋值给当前获取器的跟踪器属性，以便在后续的升级过程中使用
-			this.Tracer ??= new WebTracer(this);
+			this.Tracer ??= new WebTracer(this, profile?.Identifier);
 
 			var releases = Release.LoadAsync(await response.Content.ReadAsStreamAsync(cancellation), cancellation);
 			await foreach(var release in releases)
@@ -267,10 +268,10 @@ partial class Fetcher
 		#endregion
 
 		#region 嵌套子类
-		private sealed class WebTracer(WebFetcher fetcher) : ITracer
+		private sealed class WebTracer(WebFetcher fetcher, string fingerprint) : ITracer
 		{
 			private readonly WebFetcher _fetcher = fetcher;
-			private readonly string _fingerprint = IO.Hardwares.HardwareProfile.Current?.Identifier;
+			private readonly string _fingerprint = fingerprint;
 
 			public async ValueTask TraceAsync(string phase, string message, IEnumerable<KeyValuePair<string, string>> parameters, CancellationToken cancellation)
 			{

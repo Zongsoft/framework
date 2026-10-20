@@ -197,4 +197,7 @@ Aes256Sha256RsaPss</value>
 	<data name="Opc.ValueWriteFailed.Message" xml:space="preserve">
 		<value>[{0}] 写入节点“{1}”的值失败。</value>
 	</data>
+  <data name="Subscription.QueueFull.Message" xml:space="preserve">
+    <value>异步订阅通知队列已满。</value>
+  </data>
 </root>

@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Opc.Ua;
 using Opc.Ua.Client;
@@ -36,13 +38,15 @@ using Zongsoft.Services;
 
 namespace Zongsoft.Externals.Opc;
 
-public partial class OpcClient : IDisposable
+public partial class OpcClient : IAsyncDisposable
 {
 	#region 事件定义
 	public event EventHandler<HeartbeatEventArgs> Heartbeat;
 	#endregion
 
 	#region 成员字段
+	private readonly SemaphoreSlim _lifecycle = new(1, 1);
+	private TaskCompletionSource _disposal;
 	private ISession _session;
 	private OpcClientState _state;
 	private DefaultSessionFactory _sessionFactory;
@@ -115,8 +119,6 @@ public partial class OpcClient : IDisposable
 			},
 		};
 
-		//挂载证书验证事件
-		_configuration.CertificateValidator.CertificateValidation += this.OnCertificateValidation;
 	}
 	#endregion
 
@@ -136,11 +138,6 @@ public partial class OpcClient : IDisposable
 	#endregion
 
 	#region 事件处理
-	private void OnCertificateValidation(CertificateValidator validator, CertificateValidationEventArgs args)
-	{
-		args.Accept = args.AcceptAll = true;
-	}
-
 	private void Session_KeepAlive(ISession session, KeepAliveEventArgs args)
 	{
 		this.Heartbeat?.Invoke(this,
@@ -175,27 +172,51 @@ public partial class OpcClient : IDisposable
 	#endregion
 
 	#region 私有方法
-	private ISession GetSession() => _session ?? throw new InvalidOperationException(string.Format(Properties.Resources.Opc_ClientNotConnected_Message, nameof(OpcClient), this.Name));
+	private ISession GetSession()
+	{
+		ObjectDisposedException.ThrowIf(_disposal != null, this);
+		return _session ?? throw new InvalidOperationException(string.Format(Properties.Resources.Opc_ClientNotConnected_Message, nameof(OpcClient), this.Name));
+	}
 	#endregion
 
 	#region 处置方法
-	public void Dispose()
+	/// <summary>等待订阅、会话和连接操作全部退出。</summary>
+	/// <returns>共享的异步释放任务。</returns>
+	public ValueTask DisposeAsync()
 	{
-		this.Dispose(true);
-		GC.SuppressFinalize(this);
-	}
-
-	protected virtual void Dispose(bool disposing)
-	{
-		var session = _session;
-
-		if(session != null && !session.Disposed)
+		var completion = Volatile.Read(ref _disposal);
+		if(completion == null)
 		{
-			session.KeepAlive -= this.Session_KeepAlive;
-			session.Dispose();
+			var candidate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+			completion = Interlocked.CompareExchange(ref _disposal, candidate, null) ?? candidate;
+			if(ReferenceEquals(completion, candidate))
+				_ = this.DisposeCoreAsync(candidate);
 		}
 
-		_configuration = null;
+		return new(completion.Task);
+	}
+
+	private async Task DisposeCoreAsync(TaskCompletionSource completion)
+	{
+		await _lifecycle.WaitAsync();
+
+		try
+		{
+			await this.DisposeAsync(true);
+			GC.SuppressFinalize(this);
+			completion.TrySetResult();
+		}
+		catch(Exception exception) { completion.TrySetException(exception); }
+		finally { _lifecycle.Release(); }
+	}
+
+	protected virtual async ValueTask DisposeAsync(bool disposing)
+	{
+		if(!disposing)
+			return;
+
+		try { await this.DisconnectCoreAsync(CancellationToken.None); }
+		finally { _configuration = null; }
 	}
 	#endregion
 

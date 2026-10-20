@@ -73,6 +73,6 @@ manifest.Save(AppContext.BaseDirectory);
 
 文件和流输出 UTF-8 无 BOM 文本及平台默认换行；文本写入器采用其 `NewLine` 和编码设置。写入前检查版本信息完整性及 Profile 输出语法，文件末尾保留换行。
 
-无论成功或失败，传入的流及文本读写器均保持打开，由调用方负责释放。加载从当前位置读取至结尾；保存从当前位置写入，不重置位置或截断流，也不要求流支持定位。格式、集合及布局保留行为见 [回归测试](../test/Services/ApplicationManifestTest.cs)。
+无论成功或失败，传入的流及文本读写器均保持打开，由调用方负责释放。加载从当前位置读取至结尾；保存从当前位置写入，不重置位置或截断流，也不要求流支持定位。格式、集合及布局保留行为见 [回归测试](../test/unit/Services/ApplicationManifestTest.cs)。
 
 此 API 提供清单模型及文件读写。宿主应用上下文和升级组件仍使用 `ApplicationIdentifier`，尚未自动读取 `.edition`。

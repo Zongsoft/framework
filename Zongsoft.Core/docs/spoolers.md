@@ -52,7 +52,7 @@ Subclasses can override `DisposeAsyncCore`, await its base implementation, and r
 
 Owners needing remaining data processed must first stop and await producers, await explicit flushing, and then await asynchronous disposal. Partial consumption requires an owner decision about further flushes; a callback that consumes nothing must not be driven by an infinite drain loop. Release callback dependencies after asynchronous disposal finishes.
 
-See [SpoolerTest](../test/Caching/SpoolerTest.cs) for behavioral coverage.
+See [SpoolerTest](../test/unit/Caching/SpoolerTest.cs) for behavioral coverage.
 
 ## File logger ownership
 
@@ -76,4 +76,4 @@ Subscribe to the `Zongsoft.Caching.Spooler` meter. Instruments use `System.Diagn
 
 Batching does not automatically create per-item spans or infer parent contexts from multiple inputs. Applications can establish business tracing inside their callbacks.
 
-See [SpoolerDiagnosticsTest](../test/Caching/SpoolerDiagnosticsTest.cs), [FileLoggerLifecycleTest](../test/Diagnostics/FileLoggerLifecycleTest.cs), and the [benchmark workloads](../benchmark/README.md).
+See [SpoolerDiagnosticsTest](../test/unit/Caching/SpoolerDiagnosticsTest.cs), [FileLoggerLifecycleTest](../test/unit/Diagnostics/FileLoggerLifecycleTest.cs), and the [benchmark workloads](../benchmark/README.md).

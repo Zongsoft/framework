@@ -46,9 +46,9 @@ public class MessageQueueBaseTest
 	}
 
 	[Fact]
-	public void MessageQueueInterfaceExposesBaseFeatureCollection()
+	public async Task MessageQueueInterfaceExposesBaseFeatureCollection()
 	{
-		using var queue = new TestQueue();
+		await using var queue = new TestQueue();
 		IMessageQueue contract = queue;
 
 		Assert.Same(queue.Features, contract.Features);
@@ -58,7 +58,7 @@ public class MessageQueueBaseTest
 	[Fact]
 	public async Task UnsupportedDelayFailsBeforeDriverOperation()
 	{
-		using var queue = new TestQueue();
+		await using var queue = new TestQueue();
 		var options = new MessageEnqueueOptions(TimeSpan.FromSeconds(1));
 
 		var exception = await Assert.ThrowsAsync<OperationException>(() => queue.ProduceAsync("tests/delay", ReadOnlyMemory<byte>.Empty, options).AsTask());
@@ -70,7 +70,7 @@ public class MessageQueueBaseTest
 	[Fact]
 	public async Task SupportedDelayReachesDriverOperation()
 	{
-		using var queue = new TestQueue();
+		await using var queue = new TestQueue();
 		queue.Features.Add(MessageQueueFeature.Delay);
 
 		var options = new MessageEnqueueOptions(TimeSpan.FromSeconds(1));
@@ -83,7 +83,7 @@ public class MessageQueueBaseTest
 	[Fact]
 	public async Task UnsupportedCompressionFailsBeforeDriverOperation()
 	{
-		using var queue = new TestQueue();
+		await using var queue = new TestQueue();
 		var options = new MessageEnqueueOptions() { Compression = new("Brotli", 4096) };
 
 		var exception = await Assert.ThrowsAsync<OperationException>(() => queue.ProduceAsync("tests/compression", new byte[4096], options).AsTask());
@@ -95,7 +95,7 @@ public class MessageQueueBaseTest
 	[Fact]
 	public async Task SupportedCompressionReachesDriverOperation()
 	{
-		using var queue = new TestQueue();
+		await using var queue = new TestQueue();
 		queue.Features.Add(MessageQueueFeature.Compression);
 
 		var options = new MessageEnqueueOptions() { Compression = new("GZip", 1024) };
@@ -108,7 +108,7 @@ public class MessageQueueBaseTest
 	[Fact]
 	public async Task ConcurrentSubscribersShareOneInitializationAndExposeOnlyActiveConsumer()
 	{
-		using var queue = new TestQueue();
+		await using var queue = new TestQueue();
 		var handler = new TestHandler();
 		queue.BlockInitialization();
 
@@ -135,7 +135,7 @@ public class MessageQueueBaseTest
 	[Fact]
 	public async Task FailedInitializationRollsBackAndCanRetry()
 	{
-		using var queue = new TestQueue();
+		await using var queue = new TestQueue();
 		queue.EnqueueResult(false);
 		queue.EnqueueResult(true);
 
@@ -156,12 +156,13 @@ public class MessageQueueBaseTest
 	[Fact]
 	public async Task ExceptionalInitializationRollsBackAndCanRetry()
 	{
-		using var queue = new TestQueue();
-		queue.EnqueueResult(new InvalidOperationException("Invalid subscription."));
+		await using var queue = new TestQueue();
+		var failure = new InvalidOperationException("Invalid subscription.");
+		queue.EnqueueResult(failure);
 		queue.EnqueueResult(true);
 
 		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => queue.SubscribeAsync("tests/exception", new TestHandler()).AsTask());
-		Assert.Equal("Invalid subscription.", exception.Message);
+		Assert.Same(failure, exception);
 		Assert.Empty(queue.Subscribers);
 		Assert.Equal(1, queue.DisposedCount);
 
@@ -172,7 +173,7 @@ public class MessageQueueBaseTest
 	[Fact]
 	public async Task CallerCancellationDoesNotCancelSharedInitialization()
 	{
-		using var queue = new TestQueue();
+		await using var queue = new TestQueue();
 		using var cancellation = new CancellationTokenSource();
 		var handler = new TestHandler();
 		queue.BlockInitialization();
@@ -201,7 +202,7 @@ public class MessageQueueBaseTest
 		var subscription = queue.SubscribeAsync("tests/disposal", new TestHandler()).AsTask();
 		await queue.InitializationStarted.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
-		queue.Dispose();
+		await queue.DisposeAsync();
 
 		await Assert.ThrowsAnyAsync<OperationCanceledException>(() => subscription);
 		Assert.Empty(queue.Subscribers);
@@ -212,7 +213,7 @@ public class MessageQueueBaseTest
 	[Fact]
 	public async Task FailedInitializationIsRemovedAfterAllWaitersCancel()
 	{
-		using var queue = new TestQueue();
+		await using var queue = new TestQueue();
 		using var cancellation = new CancellationTokenSource();
 		queue.BlockInitialization();
 		queue.EnqueueResult(new InvalidOperationException("Delayed failure."));
@@ -243,7 +244,7 @@ public class MessageQueueBaseTest
 	[Fact]
 	public async Task ConsumerClosedDuringInitializationIsNotCached()
 	{
-		using var queue = new TestQueue();
+		await using var queue = new TestQueue();
 		queue.CloseDuringInitialization = true;
 
 		var subscriber = await queue.SubscribeAsync("tests/closed", new TestHandler());
@@ -257,7 +258,7 @@ public class MessageQueueBaseTest
 	[Fact]
 	public async Task ActiveConsumerCloseRemovesEntryAndAllowsResubscribe()
 	{
-		using var queue = new TestQueue();
+		await using var queue = new TestQueue();
 		var first = await queue.SubscribeAsync("tests/resubscribe", new TestHandler());
 
 		Assert.NotNull(first);
@@ -280,7 +281,7 @@ public class MessageQueueBaseTest
 	[Fact]
 	public async Task ConflictingSubscriptionDoesNotReplaceExistingConsumer()
 	{
-		using var queue = new TestQueue();
+		await using var queue = new TestQueue();
 		var handler = new TestHandler();
 		var first = await queue.SubscribeAsync("tests/conflict", "alpha,beta", handler, new MessageSubscribeOptions(MessageReliability.MostOnce));
 
@@ -296,7 +297,7 @@ public class MessageQueueBaseTest
 	[Fact]
 	public async Task UnsupportedReliabilityFailsBeforeDriverOperation()
 	{
-		using var queue = new TestQueue { MaximumReliability = MessageReliability.LeastOnce };
+		await using var queue = new TestQueue { MaximumReliability = MessageReliability.LeastOnce };
 		var options = new MessageEnqueueOptions(MessageReliability.ExactlyOnce);
 
 		await Assert.ThrowsAsync<NotSupportedException>(() => queue.ProduceAsync("tests/reliability", new byte[] { 1, 2, 3 }, options).AsTask());
@@ -311,7 +312,7 @@ public class MessageQueueBaseTest
 	[Fact]
 	public async Task AllProducerOverloadsUseTheSameReliabilityUpperBound()
 	{
-		using var queue = new TestQueue { MaximumReliability = MessageReliability.LeastOnce };
+		await using var queue = new TestQueue { MaximumReliability = MessageReliability.LeastOnce };
 		var options = new MessageEnqueueOptions(MessageReliability.ExactlyOnce);
 		var bytes = new byte[] { 1, 2, 3 }.AsMemory();
 		var text = "payload".AsMemory();
@@ -332,7 +333,7 @@ public class MessageQueueBaseTest
 	[Fact]
 	public async Task AllSubscriberOverloadsUseTheSameReliabilityUpperBound()
 	{
-		using var queue = new TestQueue { MaximumReliability = MessageReliability.LeastOnce };
+		await using var queue = new TestQueue { MaximumReliability = MessageReliability.LeastOnce };
 		IMessageQueue contract = queue;
 		var options = new MessageSubscribeOptions(MessageReliability.ExactlyOnce);
 		var handler = new TestHandler();
@@ -352,7 +353,7 @@ public class MessageQueueBaseTest
 	[Fact]
 	public async Task ReliabilityUpperBoundAllowsLowerAndEqualValues()
 	{
-		using var queue = new TestQueue { MaximumReliability = MessageReliability.LeastOnce };
+		await using var queue = new TestQueue { MaximumReliability = MessageReliability.LeastOnce };
 
 		await queue.ProduceAsync("tests/most", ReadOnlyMemory<byte>.Empty, new MessageEnqueueOptions(MessageReliability.MostOnce));
 		await queue.ProduceAsync("tests/least", ReadOnlyMemory<byte>.Empty, new MessageEnqueueOptions(MessageReliability.LeastOnce));

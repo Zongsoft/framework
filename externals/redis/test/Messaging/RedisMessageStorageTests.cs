@@ -31,10 +31,10 @@ public sealed class RedisMessageStorageTests
 	private const string IDENTIFIER_ENVIRONMENT_VARIABLE = "ZONGSOFT_MESSAGING_STORAGE_IDENTIFIER";
 
 	[Fact]
-	public void Constructor_ExposesRedisContractWithFrozenPartition()
+	public async Task Constructor_ExposesRedisContractWithFrozenPartition()
 	{
 		var settings = CreateSettings("typed");
-		using var storage = new RedisMessageStorage("test", settings, "Zongsoft.Messaging.Storage:typed:identifier-one");
+		await using var storage = new RedisMessageStorage("test", settings, "Zongsoft.Messaging.Storage:typed:identifier-one");
 
 		Assert.Equal("test", storage.Name);
 		Assert.Same(settings, storage.ConnectionSettings);
@@ -48,7 +48,7 @@ public sealed class RedisMessageStorageTests
 	[Fact]
 	public async Task Operations_PreCanceledTokenDoNotActivateStorage()
 	{
-		using var storage = CreateStorage("cancelled", "identifier-cancelled");
+		await using var storage = CreateStorage("cancelled", "identifier-cancelled");
 		using var source = new CancellationTokenSource();
 		source.Cancel();
 
@@ -75,7 +75,7 @@ public sealed class RedisMessageStorageTests
 	}
 
 	[Fact]
-	public void Snapshot_RoundTripsCompleteIndependentMetadataWithoutAcknowledger()
+	public async Task Snapshot_RoundTripsCompleteIndependentMetadataWithoutAcknowledger()
 	{
 		var acknowledged = 0;
 		var timestamp = new DateTime(2026, 9, 1, 2, 3, 4, DateTimeKind.Unspecified);
@@ -102,11 +102,11 @@ public sealed class RedisMessageStorageTests
 		Assert.Equal([1, 2, 3, 4], restored.Data);
 
 		restored.Data[1] = 88;
-		restored.Acknowledge();
+		await restored.AcknowledgeAsync();
 		var reread = snapshot.ToMessage();
 		Assert.Equal([1, 2, 3, 4], reread.Data);
 		Assert.Equal(0, acknowledged);
-		message.Acknowledge();
+		await message.AcknowledgeAsync();
 		Assert.Equal(1, acknowledged);
 	}
 
@@ -140,13 +140,13 @@ public sealed class RedisMessageStorageTests
 			.Build();
 
 		var services = new ServiceCollection().AddSingleton<IConfigurationRoot>(configuration);
-		using var scope = new ServiceScope(new ServiceProviderFactory().CreateServiceProvider(services));
+		await using var scope = new ServiceScope(new ServiceProviderFactory().CreateServiceProvider(services));
 		await using var application = new ApplicationScope(scope.Provider);
 		var factory = RedisMessageStorageFactory.Instance;
 		Environment.SetEnvironmentVariable(IDENTIFIER_ENVIRONMENT_VARIABLE, "  redis-test-identifier  ");
-		RedisMessageStorage first = factory.Create("QueueServer");
+		await using RedisMessageStorage first = factory.Create("QueueServer");
 		Environment.SetEnvironmentVariable(IDENTIFIER_ENVIRONMENT_VARIABLE, "changed-identifier");
-		RedisMessageStorage second = factory.Create("QueueServer");
+		await using RedisMessageStorage second = factory.Create("QueueServer");
 
 		Assert.NotSame(first, second);
 		Assert.Equal("QueueServer", first.ConnectionSettings.Name);
@@ -154,9 +154,6 @@ public sealed class RedisMessageStorageTests
 		Assert.Equal(first.Partition, second.Partition);
 		Assert.Throws<ConfigurationException>(() => factory.Create("missing"));
 		Assert.Throws<ArgumentNullException>(() => factory.Create(null));
-
-		first.Dispose();
-		second.Dispose();
 	}
 
 	[Fact]
@@ -187,10 +184,10 @@ public sealed class RedisMessageStorageTests
 	private static string GetConnectionString() => $"server={Global.Server};password={Global.Password};timeout=5s";
 	private static Message CreateMessage(string identifier, string topic, byte[] data) => new(identifier, topic, data) { Timestamp = DateTime.UtcNow };
 
-	private sealed class ServiceScope(IServiceProvider provider) : IDisposable
+	private sealed class ServiceScope(IServiceProvider provider) : IAsyncDisposable
 	{
 		public IServiceProvider Provider { get; } = provider;
-		public void Dispose() => (this.Provider as IDisposable)?.Dispose();
+		public ValueTask DisposeAsync() => ((IAsyncDisposable)this.Provider).DisposeAsync();
 	}
 
 	private sealed class ApplicationScope : IAsyncDisposable

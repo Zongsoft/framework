@@ -29,6 +29,8 @@
 
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Text.Json;
 using System.Collections.Generic;
 
@@ -37,12 +39,34 @@ namespace Zongsoft.Hardwares;
 partial class HardwareCollector
 {
 	[System.Runtime.Versioning.SupportedOSPlatform("MacOS")]
-	private static class MacosGatherer
+	private sealed class MacosGatherer(IReadOnlyDictionary<(string File, string Arguments), CommandResult> results)
 	{
 		#region 静态方法
-		public static IEnumerable<IO.Hardwares.IHardware> Gather()
+		public static async ValueTask<IEnumerable<IO.Hardwares.IHardware>> GatherAsync(CancellationToken cancellation)
 		{
-			var profile = GetHardwareProfile();
+			(string File, string Arguments, int Timeout)[] commands =
+			[
+				("sysctl", "-n machdep.cpu.brand_string", 5000),
+				("sysctl", "-n hw.physicalcpu", 5000),
+				("sysctl", "-n hw.logicalcpu", 5000),
+				("sysctl", "-n hw.memsize", 5000),
+				("system_profiler", "SPHardwareDataType -json", 15000),
+				("system_profiler", "SPMemoryDataType -json", 15000),
+				("system_profiler", "SPNVMeDataType SPSerialATADataType SPStorageDataType -json", 15000),
+			];
+			var results = new Dictionary<(string, string), CommandResult>();
+
+			foreach(var command in commands)
+				results[(command.File, command.Arguments)] = await HardwareUtility.ExecuteAsync(command.File, command.Arguments, command.Timeout, cancellation);
+
+			return new MacosGatherer(results).Gather();
+		}
+		#endregion
+
+		#region 采集方法
+		private IEnumerable<IO.Hardwares.IHardware> Gather()
+		{
+			var profile = this.GetHardwareProfile();
 
 			var mainboard = GetMainboard(profile);
 			if(mainboard != null)
@@ -52,14 +76,14 @@ partial class HardwareCollector
 			if(bios != null)
 				yield return bios;
 
-			var processor = GetProcessor(profile);
+			var processor = this.GetProcessor(profile);
 			if(processor != null)
 				yield return processor;
 
-			foreach(var memory in GetMemories(profile))
+			foreach(var memory in this.GetMemories(profile))
 				yield return memory;
 
-			foreach(var disk in GetDisks())
+			foreach(var disk in this.GetDisks())
 				yield return disk;
 		}
 		#endregion
@@ -109,18 +133,18 @@ partial class HardwareCollector
 				properties: properties);
 		}
 
-		private static IO.Hardwares.IHardware GetProcessor(IReadOnlyDictionary<string, string> profile)
+		private IO.Hardwares.IHardware GetProcessor(IReadOnlyDictionary<string, string> profile)
 		{
 			var name = HardwareUtility.Coalesce(
 				Get(profile, "chip_type"),
 				Get(profile, "processor_name"),
-				HardwareUtility.Execute("sysctl", "-n machdep.cpu.brand_string").Output,
+				results[("sysctl", "-n machdep.cpu.brand_string")].Output,
 				"Processor");
 
 			var properties = new List<IO.Hardwares.HardwareProperty>();
 			Add(properties, profile, "chip_type", "processor_name", "processor_speed", "number_processors", "total_number_cores", "l2_cache", "l3_cache", "hyper_threading");
-			HardwareUtility.Add(properties, "hw.physicalcpu", HardwareUtility.Execute("sysctl", "-n hw.physicalcpu").Output);
-			HardwareUtility.Add(properties, "hw.logicalcpu", HardwareUtility.Execute("sysctl", "-n hw.logicalcpu").Output);
+			HardwareUtility.Add(properties, "hw.physicalcpu", results[("sysctl", "-n hw.physicalcpu")].Output);
+			HardwareUtility.Add(properties, "hw.logicalcpu", results[("sysctl", "-n hw.logicalcpu")].Output);
 
 			return HardwareUtility.Create(
 				null,
@@ -135,9 +159,9 @@ partial class HardwareCollector
 				properties: properties);
 		}
 
-		private static IEnumerable<IO.Hardwares.IHardware> GetMemories(IReadOnlyDictionary<string, string> profile)
+		private IEnumerable<IO.Hardwares.IHardware> GetMemories(IReadOnlyDictionary<string, string> profile)
 		{
-			var memories = GetPhysicalMemories().ToArray();
+			var memories = this.GetPhysicalMemories().ToArray();
 
 			if(memories.Length > 0)
 			{
@@ -147,14 +171,14 @@ partial class HardwareCollector
 				yield break;
 			}
 
-			var systemMemory = GetSystemMemory(profile);
+			var systemMemory = this.GetSystemMemory(profile);
 			if(systemMemory != null)
 				yield return systemMemory;
 		}
 
-		private static IO.Hardwares.IHardware GetSystemMemory(IReadOnlyDictionary<string, string> profile)
+		private IO.Hardwares.IHardware GetSystemMemory(IReadOnlyDictionary<string, string> profile)
 		{
-			var bytes = HardwareUtility.ParseBytes(HardwareUtility.Execute("sysctl", "-n hw.memsize").Output);
+			var bytes = HardwareUtility.ParseBytes(results[("sysctl", "-n hw.memsize")].Output);
 			var properties = new List<IO.Hardwares.HardwareProperty>();
 			Add(properties, profile, "memory");
 			HardwareUtility.Add(properties, "Capacity", bytes);
@@ -175,11 +199,11 @@ partial class HardwareCollector
 				properties: properties);
 		}
 
-		private static IEnumerable<IO.Hardwares.IHardware> GetPhysicalMemories()
+		private IEnumerable<IO.Hardwares.IHardware> GetPhysicalMemories()
 		{
 			var index = 0;
 
-			foreach(var entry in GetSystemProfile("SPMemoryDataType"))
+			foreach(var entry in this.GetSystemProfile("SPMemoryDataType"))
 			{
 				if(!IsPhysicalMemory(entry))
 					continue;
@@ -211,11 +235,11 @@ partial class HardwareCollector
 			}
 		}
 
-		private static IEnumerable<IO.Hardwares.IHardware> GetDisks()
+		private IEnumerable<IO.Hardwares.IHardware> GetDisks()
 		{
 			var index = 0;
 
-			foreach(var entry in GetStorageEntries(GetSystemProfileEntries("SPNVMeDataType", "SPSerialATADataType", "SPStorageDataType")))
+			foreach(var entry in GetStorageEntries(this.GetSystemProfileEntries("SPNVMeDataType", "SPSerialATADataType", "SPStorageDataType")))
 			{
 				if(IsVolume(entry.Values))
 					continue;
@@ -248,16 +272,16 @@ partial class HardwareCollector
 			}
 		}
 
-		private static IReadOnlyDictionary<string, string> GetHardwareProfile()
+		private IReadOnlyDictionary<string, string> GetHardwareProfile()
 		{
-			var profiles = GetSystemProfile("SPHardwareDataType");
+			var profiles = this.GetSystemProfile("SPHardwareDataType");
 			return profiles.FirstOrDefault() ?? new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 		}
 
-		private static IEnumerable<Dictionary<string, string>> GetSystemProfile(params string[] dataTypes)
+		private IEnumerable<Dictionary<string, string>> GetSystemProfile(params string[] dataTypes)
 		{
 			var arguments = string.Join(' ', dataTypes ?? []) + " -json";
-			var result = HardwareUtility.Execute("system_profiler", arguments, 15000);
+			var result = results[("system_profiler", arguments)];
 
 			if(!result.Succeeded)
 				yield break;
@@ -289,10 +313,10 @@ partial class HardwareCollector
 			}
 		}
 
-		private static IEnumerable<ProfileEntry> GetSystemProfileEntries(params string[] dataTypes)
+		private IEnumerable<ProfileEntry> GetSystemProfileEntries(params string[] dataTypes)
 		{
 			var arguments = string.Join(' ', dataTypes ?? []) + " -json";
-			var result = HardwareUtility.Execute("system_profiler", arguments, 15000);
+			var result = results[("system_profiler", arguments)];
 
 			if(!result.Succeeded)
 				yield break;

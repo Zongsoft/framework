@@ -155,3 +155,9 @@ nuget:Zongsoft.Externals.Redis
 按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
 
 清单列出的附属产物包括：`Zongsoft.Externals.Redis.plugin`、`Zongsoft.Externals.Redis.option`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。
+
+## 异步配置及释放
+
+将 `RedisConfigurationSource` 加入配置构建器前，先执行 `await source.LoadAsync(cancellation)`。此后 `Build` 和 `Load` 只暴露已加载的内存快照，不等待 Redis；未初始化的源会被拒绝。在配置使用期间保持源存活，退出时等待 `source.DisposeAsync()`，停止通知并收尾在途操作。仅释放配置根不能完成这个异步生命周期。
+
+自有 Redis 服务、消息存储、队列和分布式锁需要等待异步释放。业务链路使用异步操作，数据引擎需要的原生同步 Redis 契约继续保留。

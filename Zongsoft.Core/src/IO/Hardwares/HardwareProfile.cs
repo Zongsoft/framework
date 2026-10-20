@@ -44,6 +44,8 @@ namespace Zongsoft.IO.Hardwares;
 public partial class HardwareProfile : IReadOnlyCollection<IHardware>
 {
 	#region 常量定义
+	private static readonly SemaphoreSlim _loading = new(1, 1);
+	private static HardwareProfile _current;
 	private const char CATEGORY_SEPARATOR = '/';
 	#endregion
 
@@ -74,23 +76,19 @@ public partial class HardwareProfile : IReadOnlyCollection<IHardware>
 	}
 	#endregion
 
-	#region 静态属性
-	/// <summary>获取本机的硬件信息。</summary>
-	public static HardwareProfile Current
+	#region 静态方法
+	/// <summary>异步获取并缓存本机的硬件信息；失败和取消不缓存。</summary>
+	/// <param name="cancellation">异步操作的取消标记。</param>
+	/// <returns>返回本机硬件配置档案。</returns>
+	public static async ValueTask<HardwareProfile> GetCurrentAsync(CancellationToken cancellation = default)
 	{
-		get
-		{
-			if(field != null)
-				return field;
+		if(Volatile.Read(ref _current) is { } current)
+			return current;
 
-			try
-			{
-				field ??= Load();
-			}
-			catch { }
+		await _loading.WaitAsync(cancellation).ConfigureAwait(false);
 
-			return field;
-		}
+		try { return _current ??= await LoadAsync(cancellation).ConfigureAwait(false); }
+		finally { _loading.Release(); }
 	}
 	#endregion
 
@@ -212,34 +210,6 @@ public partial class HardwareProfile : IReadOnlyCollection<IHardware>
 	#endregion
 
 	#region 静态方法
-	/// <summary>从指定服务容器加载硬件配置档案。</summary>
-	/// <param name="services">提供硬件采集器的服务容器。</param>
-	/// <returns>返回加载得到的硬件配置档案。</returns>
-	public static HardwareProfile Load(IServiceProvider services = null)
-	{
-		if(services == null)
-			services = Services.ApplicationContext.Current?.Services ?? throw new ArgumentNullException(nameof(services));
-
-		return new HardwareProfile(Collect(services));
-
-		static IEnumerable<IHardware> Collect(IServiceProvider serviceProvider)
-		{
-			foreach(var collector in serviceProvider.GetServices<IHardwareCollector>())
-			{
-				var hardwares = collector.Collect();
-
-				if(hardwares == null)
-					continue;
-
-				foreach(var hardware in hardwares)
-				{
-					if(hardware != null)
-						yield return hardware;
-				}
-			}
-		}
-	}
-
 	/// <summary>从当前应用服务容器异步加载硬件配置档案。</summary>
 	/// <param name="cancellation">异步操作的取消标记。</param>
 	/// <returns>返回加载得到的硬件配置档案。</returns>

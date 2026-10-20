@@ -73,6 +73,6 @@ Saving to an existing file first reads that destination's blank lines and commen
 
 File and stream output uses UTF-8 without BOM and the platform default newline. Text writers use their configured `NewLine` and encoding. Saving validates version completeness and Profile output syntax before writing; output ends with a newline.
 
-Caller-provided streams and text readers/writers remain open on success or failure. Loading reads from the current position to the end; saving writes at the current position without resetting or truncating a stream. Streams need not support seeking. See the [regression tests](../test/Services/ApplicationManifestTest.cs) for format, collection and layout preservation coverage.
+Caller-provided streams and text readers/writers remain open on success or failure. Loading reads from the current position to the end; saving writes at the current position without resetting or truncating a stream. Streams need not support seeking. See the [regression tests](../test/unit/Services/ApplicationManifestTest.cs) for format, collection and layout preservation coverage.
 
 This API provides the manifest model and its file format. Host application contexts and upgrading components still use `ApplicationIdentifier` and do not automatically consume `.edition`.

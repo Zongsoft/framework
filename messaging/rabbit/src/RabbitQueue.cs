@@ -219,25 +219,32 @@ public class RabbitQueue : MessageQueueBase<RabbitSubscriber, Configuration.Rabb
 	#endregion
 
 	#region 资源释放
-	protected override void Dispose(bool disposing)
+	protected override async ValueTask DisposeAsync(bool disposing)
 	{
-		if(disposing)
+		if(!disposing)
+			return;
+
+		var channel = Interlocked.Exchange(ref _channel, null);
+		var connection = Interlocked.Exchange(ref _connection, null);
+
+		try
 		{
-			foreach(var subscriber in this.Subscribers)
-				subscriber.DisposeAsync().AsTask().GetAwaiter().GetResult();
-
-			var channel = Interlocked.Exchange(ref _channel, null);
-			channel?.Dispose();
-
-			var connection = Interlocked.Exchange(ref _connection, null);
-			connection?.Dispose();
-
-			_initializing.Dispose();
-			_publishing.Dispose();
+			if(channel != null)
+				await channel.DisposeAsync().ConfigureAwait(false);
 		}
-
-		_channel = null;
-		_connection = null;
+		finally
+		{
+			try
+			{
+				if(connection != null)
+					await connection.DisposeAsync().ConfigureAwait(false);
+			}
+			finally
+			{
+				_initializing.Dispose();
+				_publishing.Dispose();
+			}
+		}
 	}
 	#endregion
 }

@@ -13,7 +13,7 @@ internal sealed class ResetCommand : CommandBase<CommandContext>
 	{
 		var @namespace = Utility.GetNamespace(context);
 
-		using var redis = Utility.GetRedis(context, @namespace);
+		await using var redis = Utility.GetRedis(context, @namespace);
 		await Utility.ResetAsync(redis, cancellation);
 
 		context.Output.Write(CommandOutletColor.DarkGreen, "Reset completed: ");

@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using System.Net;
 using System.Text;
 
@@ -12,7 +13,7 @@ namespace Zongsoft.Messaging.Mqtt.Tests;
 public class MqttQueueFactoryTests
 {
 	[Fact]
-	public void CreateQueueWithSettings()
+	public async Task CreateQueueWithSettings()
 	{
 		var settings = Configuration.MqttConnectionSettingsDriver.Instance.GetSettings("Mqtt",
 			"server=127.0.0.1:5101;client=Factory-Test;username=program;password=secret;timeout=5s;reconnectInterval=3s;keepAlive=20s;cleanSession=true;protocolVersion=V500;");
@@ -33,17 +34,17 @@ public class MqttQueueFactoryTests
 		Assert.Equal(MqttProtocolVersion.V500, options.ProtocolVersion);
 
 		var factory = new MqttQueueFactory();
-		using var queue = factory.Create(settings);
+		await using var queue = factory.Create(settings);
 		var mqtt = Assert.IsType<MqttQueue>(queue);
 		Assert.False(mqtt.Features.Contains(MessageQueueFeature.Delay.Name));
 		Assert.True(mqtt.Features.Contains(MessageQueueFeature.Compression.Name));
 	}
 
 	[Fact]
-	public void CreateQueueWithConnectionString()
+	public async Task CreateQueueWithConnectionString()
 	{
 		var factory = new MqttQueueFactory();
-		using var queue = factory.Create("MQTT", "server=127.0.0.1:5101;client=Factory-ConnectionString;");
+		await using var queue = factory.Create("MQTT", "server=127.0.0.1:5101;client=Factory-ConnectionString;");
 
 		var mqtt = Assert.IsType<MqttQueue>(queue);
 		Assert.Equal("MQTT", mqtt.Name);

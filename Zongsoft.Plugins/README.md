@@ -205,7 +205,7 @@ For moderator lookup, the controller reads the request's data schema and calls `
 
 ### Verification and Ownership
 
-Use the route templates in the existing [.http requests](../../discussions/docs/http/forum.http), substituting identifiers from your test site and forum. Do not copy identities or service addresses. Check plugin loading, container resolution, configuration, mappings, database and permissions before interpreting results. This section references current source; a historical isolated probe does not certify the complete Discussions business workflow.
+Use the route templates in the existing [.http requests](../../discussions/docs/http/forum.http), substituting identifiers from your test site and forum. Do not copy identities or service addresses. Check plugin loading, container resolution, configuration, mappings, database and permissions before interpreting results.
 
 Windows terminal automation needs valid console handles. Start from the deployment directory and preserve dependencies such as `runtimes/`. Individual consumers do not dispose shared container services. Restart the isolated host after assembly changes, and clean only resources created for your test.
 

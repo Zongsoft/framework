@@ -36,10 +36,6 @@ namespace Zongsoft.IO.Hardwares;
 /// <summary>表示硬件信息采集器。</summary>
 public interface IHardwareCollector
 {
-	/// <summary>采集硬件信息。</summary>
-	/// <returns>返回采集到的硬件设备集。</returns>
-	IEnumerable<IHardware> Collect();
-
 	/// <summary>异步采集硬件信息。</summary>
 	/// <param name="cancellation">异步操作的取消标记。</param>
 	/// <returns>返回采集到的硬件设备异步序列。</returns>

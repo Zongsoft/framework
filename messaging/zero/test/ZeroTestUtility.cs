@@ -21,6 +21,20 @@ namespace Zongsoft.Messaging.ZeroMQ.Tests;
 
 internal static class ZeroTestUtility
 {
+	public static async Task<IResponse[]> ReadResponsesAsync(IRequestToken token, TimeSpan timeout = default, int count = int.MaxValue, CancellationToken cancellation = default)
+	{
+		var responses = new List<IResponse>();
+		await foreach(var response in token.GetResponsesAsync(timeout, cancellation))
+		{
+			responses.Add(response);
+
+			if(responses.Count >= count)
+				break;
+		}
+
+		return responses.ToArray();
+	}
+
 	public static ZeroQueue CreateQueue(ushort serverPort, string client, Action<Configuration.ZeroConnectionSettings> configure = null)
 	{
 		var settings = Configuration.ZeroConnectionSettingsDriver.Instance.GetSettings("ZeroMQ",

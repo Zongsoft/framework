@@ -160,12 +160,12 @@ listen
 listen -spooling -limit:10000
 ```
 
-Buffered mode counts notifications individually, including successive and repeated values from the same node; it does not de-duplicate them. When the buffer is full, the sample waits synchronously for `PutAsync`, applying backpressure to the notification thread. Slow consumption therefore increases notification processing time; this policy is unsuitable when acquisition requires non-blocking notification threads. The `distinct` option is declared but currently has no processing logic.
+Buffered mode counts notifications individually, including successive and repeated values from the same node; it does not de-duplicate them. The four-argument async consumer awaits `PutAsync` on the subscriber's sequential dispatcher. `SubscriberOptions.NotificationCapacity` bounds pending notifications, with a default of 2048; overflow is reported when the subscription is flushed or disposed. The SDK notification callback does not wait for buffer admission. The `distinct` option is declared but currently has no processing logic.
 
 ## Expected Result and Cleanup
 
 After a successful connection and subscription to an existing variable, changing it in the local server should produce a value notification in `listen`. A successful connection alone does not prove the node exists or that the account can access it.
 
-Leaving listening mode detaches consumers before awaiting buffer disposal. Cancellation and runtime failures also perform this cleanup. Disposal does not drain pending readings; buffered mode observes notification counts and does not guarantee persistence.
+Leaving listening mode detaches consumers, awaits each subscriber's accepted notifications, then explicitly flushes and disposes the buffer. Cancellation and runtime failures also perform this cleanup; failures remain observable after all cleanup has been attempted. The client is disposed asynchronously on exit. Buffered mode observes notification counts and does not guarantee persistence.
 
 Press `Ctrl+C` to leave listening mode, then run `unsubscribe`, `disconnect`, and `exit` (confirm the exit prompt). Stop the sample server separately. Keep certificate trust files unless you deliberately created a disposable test store; never delete a shared certificate directory as routine cleanup.

@@ -120,3 +120,7 @@ nuget:Zongsoft.Commands
 Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
 
 Additional artifacts listed by the deployment manifest include `Zongsoft.Commands.plugin`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.
+
+## Asynchronous cleanup
+
+File commands complete after copying and closing their streams, including cloud uploads. Queue production waits for input before publishing. Await command execution and handle cancellation or failures at the call site.

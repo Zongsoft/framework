@@ -138,4 +138,7 @@
 	<data name="Storage.RegionInvalid.Message" xml:space="preserve">
 		<value>指定的区域“{0}”无效。</value>
 	</data>
+	<data name="Operation.AsyncOnly.Message" xml:space="preserve">
+		<value>此提供程序仅支持异步操作，请使用对应的 Async 方法并等待异步释放。</value>
+	</data>
 </root>

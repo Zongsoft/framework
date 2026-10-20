@@ -68,8 +68,7 @@ public static class HttpUtility
 
 	public static async ValueTask<TResult> PostAsync<TRequest, TResult>(this HttpClient client, string url, TRequest request, ICertificate certificate, CancellationToken cancellation = default)
 	{
-		//var json = System.Text.Json.JsonSerializer.Serialize(request, request.GetType(), Json.Options);
-		var content = JsonContent.Create(request, request.GetType(), null, Json.Options);
+		using var content = JsonContent.Create(request, request.GetType(), null, Json.GetOptions(certificate));
 
 		if(certificate != null)
 			content.Headers.Add("Wechatpay-Serial", certificate.Identifier);

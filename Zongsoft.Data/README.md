@@ -117,7 +117,7 @@ sorting ::=
 ")"
 ```
 
-💡 The `Department.Manager` / `Secret` grammar examples below come from the actual [SchemaParserTest](test/SchemaParserTest.cs) fixture and [Core SchemaTest](../Zongsoft.Core/test/Data/SchemaTest.cs). They test parsing, not a Discussions organization module.
+💡 The `Department.Manager` / `Secret` grammar examples below come from the actual [SchemaParserTest](test/SchemaParserTest.cs) fixture and [Core SchemaTest](../Zongsoft.Core/test/unit/Data/SchemaTest.cs). They test parsing, not a Discussions organization module.
 
 <a name="schema-overview"></a>
 #### Schema Overview
@@ -368,7 +368,7 @@ this.DataAccess.Update<Thread>(new
 
 `Operand.Field` refers to the stored value; `+ 1` is evaluated by the database rather than by a client-side read/modify/write loop. Keep the surrounding authorization and history handling when reading this service.
 
-For operator precedence without a database, [OperandTest.Test1](../Zongsoft.Core/test/Data/OperandTest.cs) constructs the expression below and checks its tree. These constants are test inputs, not an order-processing application:
+For operator precedence without a database, [OperandTest.Test1](../Zongsoft.Core/test/unit/Data/OperandTest.cs) constructs the expression below and checks its tree. These constants are test inputs, not an order-processing application:
 ```csharp
 Operand a = Operand.Constant(1);
 Operand b = Operand.Constant(2);

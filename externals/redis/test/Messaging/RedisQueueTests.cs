@@ -36,7 +36,7 @@ public class RedisQueueTests
 
 		using var administration = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password}");
 		var database = administration.GetDatabase();
-		using var queue = RedisTestUtility.CreateQueue(name, group, $"client-{identity}");
+		await using var queue = RedisTestUtility.CreateQueue(name, group, $"client-{identity}");
 		using var messages = new RedisMessageBuffer();
 		RedisSubscriber subscriber = null;
 
@@ -91,7 +91,7 @@ public class RedisQueueTests
 
 		try
 		{
-			using(var firstQueue = RedisTestUtility.CreateQueue(name, group, $"first-{identity}"))
+			await using(var firstQueue = RedisTestUtility.CreateQueue(name, group, $"first-{identity}"))
 			using(var firstMessages = new RedisMessageBuffer())
 			{
 				var firstSubscriber = await firstQueue.SubscribeAsync(topic, firstMessages);
@@ -99,7 +99,7 @@ public class RedisQueueTests
 				await firstSubscriber.DisposeAsync();
 			}
 
-			using var secondQueue = RedisTestUtility.CreateQueue(name, group, $"second-{identity}");
+			await using var secondQueue = RedisTestUtility.CreateQueue(name, group, $"second-{identity}");
 			using var secondMessages = new RedisMessageBuffer();
 			var secondSubscriber = await secondQueue.SubscribeAsync(topic, secondMessages);
 			var identifier = await secondQueue.ProduceAsync(topic, Encoding.UTF8.GetBytes("existing group"));
@@ -133,7 +133,7 @@ public class RedisQueueTests
 
 		using var administration = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password}");
 		var database = administration.GetDatabase();
-		using var queue = RedisTestUtility.CreateQueue(name, client: $"client-{identity}");
+		await using var queue = RedisTestUtility.CreateQueue(name, client: $"client-{identity}");
 		using var messages = new RedisMessageBuffer();
 		RedisSubscriber subscriber = null;
 
@@ -184,18 +184,18 @@ public class RedisQueueTests
 			Assert.Equal("exact stream", Encoding.UTF8.GetString(received.Value.Data));
 
 			await subscriber.DisposeAsync();
-			queue.Dispose();
+			await queue.DisposeAsync();
 			Assert.True(await database.PingAsync() >= TimeSpan.Zero);
 		}
 		finally
 		{
-			queue.Dispose();
+			await queue.DisposeAsync();
 			await database.KeyDeleteAsync(key);
 		}
 	}
 
 	[Fact]
-	public void QueueRetentionProperties_DefaultAndConfiguredValuesAreHonored()
+	public async Task QueueRetentionProperties_DefaultAndConfiguredValuesAreHonored()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
@@ -208,8 +208,8 @@ public class RedisQueueTests
 
 		using var connection = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password}");
 		var database = connection.GetDatabase();
-		using var defaults = new RedisQueue(key, database);
-		using var configured = new RedisQueue(key, database, settings);
+		await using var defaults = new RedisQueue(key, database);
+		await using var configured = new RedisQueue(key, database, settings);
 
 		Assert.Equal(100000, defaults.MaximumLength);
 		Assert.True(defaults.UseApproximateMaximumLength);
@@ -219,7 +219,7 @@ public class RedisQueueTests
 		Assert.False(configured.UseApproximateMaximumLength);
 
 		settings.MaximumLength = 0;
-		using var fallback = new RedisQueue(key, database, settings);
+		await using var fallback = new RedisQueue(key, database, settings);
 		Assert.Equal(100000, fallback.MaximumLength);
 	}
 
@@ -234,7 +234,7 @@ public class RedisQueueTests
 		var key = $"tests:retention:exact:{Guid.NewGuid():N}";
 		using var connection = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password}");
 		var database = connection.GetDatabase();
-		using var queue = new RedisQueue(key, database)
+		await using var queue = new RedisQueue(key, database)
 		{
 			MaximumLength = 3,
 			UseApproximateMaximumLength = false,
@@ -275,7 +275,7 @@ public class RedisQueueTests
 
 		using var administration = ConnectionMultiplexer.Connect($"{Global.Server},password={Global.Password}");
 		var database = administration.GetDatabase();
-		using var queue = RedisTestUtility.CreateQueue(name, group, $"client-{identity}", 2, "1s");
+		await using var queue = RedisTestUtility.CreateQueue(name, group, $"client-{identity}", 2, "1s");
 		using var messages = new RedisMessageBuffer(false);
 		RedisSubscriber subscriber = null;
 
@@ -311,7 +311,7 @@ public class RedisQueueTests
 	}
 
 	[Fact]
-	public void FactoryCreatesRedisQueue()
+	public async Task FactoryCreatesRedisQueue()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
@@ -319,7 +319,7 @@ public class RedisQueueTests
 		Assert.SkipUnless(Global.IsAvailable(), REDIS_UNAVAILABLE);
 
 		var factory = new RedisQueueFactory();
-		using var queue = factory.Create("factory", $"server={Global.Server};password={Global.Password};group=factory;client=factory;");
+		await using var queue = factory.Create("factory", $"server={Global.Server};password={Global.Password};group=factory;client=factory;");
 
 		Assert.Equal("Redis", factory.Name);
 		Assert.IsType<RedisQueue>(queue);

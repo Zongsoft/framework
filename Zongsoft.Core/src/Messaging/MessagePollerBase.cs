@@ -36,159 +36,124 @@ namespace Zongsoft.Messaging;
 /// <summary>提供消息队列轮询功能的类。</summary>
 public abstract class MessagePollerBase : IMessagePoller
 {
-	#region 常量定义
-	private const int DISPOSED = -1;
-	private const int DISPOSING = 1;
-	#endregion
-
-	#region 私有变量
-	private CancellationTokenSource _cancellation;
-	#endregion
-
 	#region 成员字段
-	private volatile int _disposing;
-	#endregion
-
-	#region 构造函数
-	/// <summary>构建消息队列轮询器。</summary>
-	protected MessagePollerBase() { }
+	private readonly SemaphoreSlim _lifecycle = new(1, 1);
+	private CancellationTokenSource _cancellation;
+	private Task _polling = Task.CompletedTask;
+	private TaskCompletionSource _disposal;
 	#endregion
 
 	#region 公共属性
-	public bool IsDisposed => _disposing == DISPOSED;
-	public bool IsPolling
-	{
-		get
-		{
-			var cancellation = _cancellation;
-			return cancellation != null && !cancellation.IsCancellationRequested;
-		}
-	}
+	public bool IsDisposed => Volatile.Read(ref _disposal)?.Task.IsCompleted == true;
+	public bool IsPolling => !Volatile.Read(ref _polling).IsCompleted;
 	#endregion
 
-	#region 公共方法
-	/// <summary>开始队列轮询。</summary>
-	public void Start() => this.Start(null, 1000);
-
-	/// <summary>开始队列轮询。</summary>
-	/// <param name="options">轮询的出队选项。</param>
-	/// <param name="interval">轮询失败的等待间隔（单位：毫秒）。</param>
-	public void Start(MessageDequeueOptions options, int interval = 1000)
+	#region 生命周期
+	public ValueTask StartAsync(CancellationToken cancellation = default) => this.StartAsync(null, 1000, cancellation);
+	public async ValueTask StartAsync(MessageDequeueOptions options, int interval = 1000, CancellationToken cancellation = default)
 	{
-		if(this.IsPolling)
-			return;
+		await _lifecycle.WaitAsync(cancellation).ConfigureAwait(false);
 
-		_cancellation = new CancellationTokenSource();
-		Task.Factory.StartNew(this.Poll, new PollArgument(options, interval), _cancellation.Token, TaskCreationOptions.LongRunning, TaskScheduler.Default);
+		try
+		{
+			ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposal) != null, this);
+			if(!_polling.IsCompleted)
+				return;
+
+			await _polling.ConfigureAwait(false);
+			_cancellation?.Dispose();
+			_cancellation = new CancellationTokenSource();
+
+			var token = _cancellation.Token;
+			_polling = Task.Run(() => this.PollAsync(options ?? MessageDequeueOptions.Default, Math.Clamp(interval, 100, 60000), token));
+		}
+		finally { _lifecycle.Release(); }
 	}
 
-	/// <summary>停止队列轮询。</summary>
-	public void Stop()
+	public async ValueTask StopAsync(CancellationToken cancellation = default)
 	{
-		var cancellation = Interlocked.Exchange(ref _cancellation, null);
+		await _lifecycle.WaitAsync(cancellation).ConfigureAwait(false);
 
-		if(cancellation != null && !cancellation.IsCancellationRequested)
-			cancellation.Cancel(false);
+		try
+		{
+			if(_cancellation != null)
+				await _cancellation.CancelAsync().ConfigureAwait(false);
+
+			await _polling.ConfigureAwait(false);
+		}
+		finally
+		{
+			_cancellation?.Dispose();
+			_cancellation = null;
+			_lifecycle.Release();
+		}
 	}
 	#endregion
 
 	#region 轮询方法
-	private void Poll(object argument)
+	private async Task PollAsync(MessageDequeueOptions options, int interval, CancellationToken cancellation)
 	{
-		var cancellation = _cancellation;
-		var settings = (PollArgument)argument;
-
-		while(!cancellation.IsCancellationRequested)
-		{
-			Message message;
-			Exception exception = null;
-
-			try
-			{
-				//以同步方式从消息队列中获取一条消息
-				message = this.Receive(settings.Options, cancellation.Token);
-			}
-			catch(Exception ex)
-			{
-				message = default;
-				exception = ex;
-
-				//错误日志
-				Zongsoft.Diagnostics.Logging.GetLogging(this).Error(ex);
-			}
-
-			//如果消息获取失败则休息一小会
-			if(exception != null || message.IsEmpty)
-				Thread.Sleep(settings.Interval);
-			else
-				Handle(message, cancellation.Token);
-		}
-
-		void Handle(in Message message, CancellationToken cancellation)
-		{
-			if(cancellation.IsCancellationRequested)
-				return;
-
-			try
-			{
-				Task.Factory.StartNew(async argument =>
-				{
-					var message = (Message)argument;
-					await this.OnHandleAsync(message, cancellation);
-				}, message, cancellation);
-			}
-			catch(Exception ex)
-			{
-				Zongsoft.Diagnostics.Logging.GetLogging(this).Error(ex, message);
-			}
-		}
-	}
-
-	protected abstract Message Receive(MessageDequeueOptions options, CancellationToken cancellation);
-	#endregion
-
-	#region 处理方法
-	protected abstract ValueTask OnHandleAsync(Message message, CancellationToken cancellation);
-	#endregion
-
-	#region 释放资源
-	public void Dispose()
-	{
-		var disposing = Interlocked.CompareExchange(ref _disposing, DISPOSING, 0);
-		if(disposing != 0)
-			return;
-
 		try
 		{
-			this.Dispose(true);
-			GC.SuppressFinalize(this);
+			while(!cancellation.IsCancellationRequested)
+			{
+				try
+				{
+					var message = await this.ReceiveAsync(options, cancellation).ConfigureAwait(false);
+					cancellation.ThrowIfCancellationRequested();
+
+					if(message.IsEmpty)
+						await Task.Delay(interval, cancellation).ConfigureAwait(false);
+					else
+						await this.OnHandleAsync(message, cancellation).ConfigureAwait(false);
+				}
+				catch(OperationCanceledException) when(cancellation.IsCancellationRequested) { break; }
+				catch(Exception exception)
+				{
+					await Diagnostics.Logging.GetLogging(this).ErrorAsync(exception, cancellation).ConfigureAwait(false);
+					await Task.Delay(interval, cancellation).ConfigureAwait(false);
+				}
+			}
 		}
-		finally
-		{
-			_disposing = DISPOSED;
-		}
+		catch(OperationCanceledException) when(cancellation.IsCancellationRequested) { }
 	}
 
-	protected virtual void Dispose(bool disposing)
-	{
-		var cancellation = Interlocked.Exchange(ref _cancellation, null);
-
-		if(cancellation != null && !cancellation.IsCancellationRequested)
-			cancellation.Cancel(false);
-	}
+	protected abstract ValueTask<Message> ReceiveAsync(MessageDequeueOptions options, CancellationToken cancellation);
+	protected abstract ValueTask OnHandleAsync(Message message, CancellationToken cancellation);
+	protected virtual ValueTask DisposeAsync(bool disposing) => ValueTask.CompletedTask;
 	#endregion
 
-	#region 轮询参数
-	private class PollArgument
+	#region 资源释放
+	public ValueTask DisposeAsync()
 	{
-		public PollArgument(MessageDequeueOptions options, int interval = 1000)
+		var disposal = Volatile.Read(ref _disposal);
+		if(disposal == null)
 		{
-			this.Options = options ?? MessageDequeueOptions.Default;
-			this.Interval = Math.Min(Math.Max(interval, 100), 60 * 1000);
+			var candidate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+			disposal = Interlocked.CompareExchange(ref _disposal, candidate, null) ?? candidate;
+			if(ReferenceEquals(disposal, candidate))
+				_ = this.DisposeAsyncCore(candidate);
 		}
 
-		public readonly MessageDequeueOptions Options;
-		public readonly int Interval;
+		return new ValueTask(disposal.Task);
+	}
+
+	private async Task DisposeAsyncCore(TaskCompletionSource completion)
+	{
+		Exception failure = null;
+
+		try { await this.StopAsync().ConfigureAwait(false); }
+		catch(Exception exception) { failure = exception; }
+
+		try { await this.DisposeAsync(true).ConfigureAwait(false); }
+		catch(Exception exception) { failure = failure == null ? exception : new AggregateException(failure, exception); }
+
+		GC.SuppressFinalize(this);
+
+		if(failure == null)
+			completion.TrySetResult();
+		else
+			completion.TrySetException(failure);
 	}
 	#endregion
 }

@@ -195,7 +195,6 @@ public class LoggingTest
 			Environment.SetEnvironmentVariable("OTEL_RESOURCE_ATTRIBUTES", originalAttributes);
 		}
 	}
-
 	#endregion
 
 	#region 辅助方法

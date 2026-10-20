@@ -52,7 +52,7 @@ await spooler.FlushAsync(cancellation);
 
 需要处理剩余数据时，所有者应先停止并等待生产者，再等待显式刷新，最后等待异步释放。回调若只部分消费，所有者需要自行决定是否继续刷新；回调不消费时不能用无限排空循环等待。回调使用的外部资源应在异步释放结束后释放。
 
-回归测试见 [SpoolerTest](../test/Caching/SpoolerTest.cs)。
+回归测试见 [SpoolerTest](../test/unit/Caching/SpoolerTest.cs)。
 
 ## 文件日志的所有权
 
@@ -76,4 +76,4 @@ await spooler.FlushAsync(cancellation);
 
 批处理不自动为每条数据创建跟踪跨度，也不推断多条输入的父跟踪关系。应用可在处理回调中按业务上下文建立跟踪。
 
-指标测试见 [SpoolerDiagnosticsTest](../test/Caching/SpoolerDiagnosticsTest.cs)，文件日志生命周期测试见 [FileLoggerLifecycleTest](../test/Diagnostics/FileLoggerLifecycleTest.cs)，性能工作负载见 [benchmark](../benchmark/README.zh-Hans.md)。
+指标测试见 [SpoolerDiagnosticsTest](../test/unit/Caching/SpoolerDiagnosticsTest.cs)，文件日志生命周期测试见 [FileLoggerLifecycleTest](../test/unit/Diagnostics/FileLoggerLifecycleTest.cs)，性能工作负载见 [benchmark](../benchmark/README.zh-Hans.md)。

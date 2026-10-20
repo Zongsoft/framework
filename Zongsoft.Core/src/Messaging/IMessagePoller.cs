@@ -28,18 +28,24 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Messaging;
 
 /// <summary>表示消息队列轮询器的接口。</summary>
-public interface IMessagePoller : IDisposable
+public interface IMessagePoller : IAsyncDisposable
 {
 	/// <summary>获取一个值，指示是否处于轮询中。</summary>
 	bool IsPolling { get; }
 
 	/// <summary>启动轮询。</summary>
-	void Start();
+	/// <param name="cancellation">取消令牌。</param>
+	/// <returns>启动完成任务。</returns>
+	ValueTask StartAsync(CancellationToken cancellation = default);
 
 	/// <summary>停止轮询。</summary>
-	void Stop();
+	/// <param name="cancellation">等待生命周期锁时使用的取消令牌；已开始的停止会等待处理完成。</param>
+	/// <returns>轮询和在途处理全部结束的任务。</returns>
+	ValueTask StopAsync(CancellationToken cancellation = default);
 }

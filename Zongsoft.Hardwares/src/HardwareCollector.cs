@@ -50,33 +50,24 @@ public sealed partial class HardwareCollector : IO.Hardwares.IHardwareCollector
 	#endregion
 
 	#region 采集方法
-	public IEnumerable<IO.Hardwares.IHardware> Collect() => OnCollect();
 	public async IAsyncEnumerable<IO.Hardwares.IHardware> CollectAsync([System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 	{
-		foreach(var hardware in this.Collect())
+		cancellation.ThrowIfCancellationRequested();
+		IEnumerable<IO.Hardwares.IHardware> hardwares = [];
+
+		if(OperatingSystem.IsWindows())
+			hardwares = WindowsGatherer.Gather();
+		else if(OperatingSystem.IsLinux())
+			hardwares = await LinuxGatherer.GatherAsync(cancellation);
+		else if(OperatingSystem.IsMacOS())
+			hardwares = await MacosGatherer.GatherAsync(cancellation);
+
+		foreach(var hardware in hardwares.Concat(GetNetworks()))
 		{
 			cancellation.ThrowIfCancellationRequested();
 			yield return hardware;
-			await Task.Yield();
 		}
 	}
 	#endregion
 
-	#region 私有方法
-	private static IEnumerable<IO.Hardwares.IHardware> OnCollect()
-	{
-		var networks = GetNetworks();
-
-		if(OperatingSystem.IsWindows())
-			return WindowsGatherer.Gather().Concat(networks);
-
-		if(OperatingSystem.IsLinux())
-			return LinuxGatherer.Gather().Concat(networks);
-
-		if(OperatingSystem.IsMacOS())
-			return MacosGatherer.Gather().Concat(networks);
-
-		return networks;
-	}
-	#endregion
 }

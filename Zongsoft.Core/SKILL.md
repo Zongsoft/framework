@@ -19,21 +19,32 @@ description: 设计、修改、审查或测试 Zongsoft.Core 的公共契约与�
 - 可选能力通过 Feature、Provider、Factory 或现有扩展点表达，不用宽泛接口成员迫使所有实现伪支持。
 - 热路径优化先确认分配、锁竞争和复杂度，再用聚焦测试或基准证明。
 
+## 异步调用与资源契约
+
+- `Message.AcknowledgeAsync`、发送器扩展和 `IRequestToken.GetResponsesAsync` 的消费必须可等待；响应通过 `await foreach` 枚举，保留取消、超时和提前结束的清理语义。临时数据流由创建者在发送完成后释放。
+- `IMessageQueue`、`IMessagePoller` 与 `IDistributedLock` 使用异步释放。队列和轮询器停止接收操作后等待在途工作及自有资源清理；重复释放共享完成结果。借用容器服务不由调用者释放。
+- 事件注册器通过 `RaiseAsync` 等待处理器；`EventBinder` 只绑定可等待的委托事件。认证事件使用 `Func<object, TArgs, CancellationToken, ValueTask>`，等待所有处理器；认证失败通知使用不可取消标记，通知故障保留原认证异常。
+- 命令完成协议为 `ICommandCompletion.OnCompletedAsync`。执行器按逆序等待全部清理，单项失败不能跳过其余资源。Windows Shell 等待进程退出并排空 stdout/stderr；超时返回 -1，取消保留调用方令牌，两者都不终止已启动进程。
+- 日志异步入口等待日志器。同步原生回调可向容量 4096 的有界队列投递，满载明确失败；`Logging.FlushAsync` 等待此前投递、刷新日志器并传播后台错误。上下文在自有模块和初始化器清理后刷新日志，宿主容器随后释放共享日志器。
+- `HardwareProfile.LoadAsync/GetCurrentAsync` 与 `IHardwareCollector.CollectAsync` 构成硬件采集入口；外部进程输出应异步读取并等待退出。
+- `IFile` 和 `ISequence` 同时提供同步与异步契约；是否支持同步远程调用由适配器明确声明。Core 不为异步适配器提供阻塞包装。
+- `IDataAccess`、`IDataService` 的同步契约、同步生命周期回调和同步枚举支持由数据引擎负责。调用方保持其完成顺序，不能以弃置任务隐藏同步边界，也不能将边界扩散到通用事件、文件或消息接口。
+
 ## 应用宿主生命周期
 
-ApplicationContext 通过 IHostedLifecycleService 等待工作器启动、失败回滚和停止；同一阶段共享完成任务，取消等待不放弃清理，回调不得反向等待所属上下文生命周期。Exit()/Exit(exitCode) 只请求 IHostApplicationLifetime.StopApplication，不强制结束进程。上下文通过 DisposeAsync 等待实际停止，再释放自有初始化器和模块；容器解析的初始化器由容器释放。IApplicationBuilder<TApplication> 使用 BuildAsync，创建入口须等待初始化失败时的异步释放。服务容器视图不拥有其引用的容器，根容器支持异步释放。
+ApplicationContext 通过 IHostedLifecycleService 等待工作器启动、失败回滚和停止；同一阶段共享完成任务，取消等待不放弃清理，回调不得反向等待所属上下文生命周期。Exit()/Exit(exitCode) 只请求 IHostApplicationLifetime.StopApplication，不强制结束进程。上下文通过 DisposeAsync 等待实际停止，再释放自有初始化器和模块；自有资源清理后等待 Logging.FlushAsync，共享日志接收器由宿主释放。容器解析的初始化器由容器释放。IApplicationBuilder<TApplication> 使用 BuildAsync，创建入口须等待初始化失败时的异步释放。服务容器视图不拥有其引用的容器，根容器支持异步释放。
 
 ## 终端输入
 
-ITerminalExecutor 仅通过三个 RunAsync 重载运行命令循环，调用方等待 Task<int> 获取退出码。ITerminal.Input 使用 TextReader；普通流和内存文本直接使用 StreamReader、StringReader。Terminal.Console.Input 默认返回唯一的进程级行读取器，ReadLine 与两种 ReadLineAsync 共用状态；首次读取启动一个后台线程，按需调用 Console.In.ReadLine，不预读下一行。标准输入同时只允许一个等待者，取消只结束等待，未完成读取及结果留给下一次调用，EOF/故障保留；Peek 和字符读取不受支持。标准输入 Dispose/Close 无操作，执行器停止不关闭输入或等待底层标准输入读取。注入读取器由创建者释放，其取消语义取决于具体 TextReader，不承诺标准输入的结果保留行为。读取开始后不得更换 Console.In 或混用其它标准输入读取入口。具体契约见 [终端输入](docs/terminal-input.zh-Hans.md)。
+ITerminalExecutor 仅通过三个 RunAsync 重载运行命令循环，调用方等待 Task<int> 获取退出码。ITerminal.Input 使用 TextReader；普通流和内存文本直接使用 StreamReader、StringReader。Terminal.Console.Input 默认返回唯一的进程级行读取器，仅两种 ReadLineAsync 共用读取状态，ReadLine 始终抛出 NotSupportedException，不消费待领取结果；首次读取启动一个后台线程，按需调用 Console.In.ReadLine，不预读下一行。标准输入同时只允许一个等待者，取消只结束等待，未完成读取及结果留给下一次调用，EOF/故障保留；Peek 和字符读取不受支持。标准输入 Dispose/Close 无操作，执行器停止不关闭输入或等待底层标准输入读取。注入读取器由创建者释放，其取消语义取决于具体 TextReader，不承诺标准输入的结果保留行为。读取开始后不得更换 Console.In 或混用其它标准输入读取入口。具体契约见 [终端输入](docs/terminal-input.zh-Hans.md)。
 
 ITerminal.Abort 同步触发 Aborting 并返回最终 Cancel，异常向调用方传播。Core 不订阅全局进程信号或修改控制台模式。Plugins 终端宿主对 Ctrl+C 优先通知终端、未处理时停止，SIGQUIT/SIGTERM 直接停止，等待业务清理。ReactiveAsync 在运行取消或进入失败后仍等待不可取消的退出清理，保留运行和清理故障。
 
 ## 周期任务生命周期
 
-[Common.Timer](docs/timers.zh-Hans.md) 通过构造回调组合行为，构造时不启动时钟；每次 Start 创建独立的私有 Runner 并串行执行回调。每次运行使用接受 TimeProvider 的 PeriodicTimer，顺序等待 tick 与回调，由 PeriodicTimer 合并到期通知；所有生命周期状态共用同一个短锁。Start、Stop、StopAsync、Dispose、DisposeAsync 均无取消参数；每次运行创建内部取消源，停止和释放请求取消在途回调。Stop 不等待回调和清理结束，StopAsync 等待实际退出及收尾；Dispose 永久关闭但不等待，DisposeAsync 永久关闭并等待同一次清理，重复释放不重复清理。调用方在释放后不得再启动或访问 Period，仍可读取 IsRunning、IsDisposed。Failed 在清理结束后通知故障，Stopped 随后通知每次实际运行已结束；派生类通过 OnFailed(FailureEventArgs) 和 OnStopped(EventArgs) 定制通知，调用基类方法以通知订阅者；Failed 逐个调用订阅者，Stopped 使用普通事件调用、订阅者抛错中断后续通知；异步停止与异步释放等待通知调用结束并保留运行和通知异常，计时器内部观察后台任务异常、不写日志。回调及取消或事件通知不得反向等待自身运行；回调内请求停止或释放用 Stop、Dispose，由调用方保证不存在循环依赖，计时器不检测执行上下文。运行结束前不得释放回调依赖的外部资源。所有者通过事件衔接业务任务时，业务任务在事件调用链外等待 StopAsync 后继续。自定义 TimeProvider.CreateTimer 须成功返回有效计时器；不额外包装 PeriodicTimer 的失败构造终结器限制，具体约束见计时器文档。测试见 test/Common/TimerTest.cs，使用受控时钟和同步信号验证时序。
+[Common.Timer](docs/timers.zh-Hans.md) 通过构造回调组合行为，构造时不启动时钟；每次 Start 创建独立的私有 Runner 并串行执行回调。每次运行使用接受 TimeProvider 的 PeriodicTimer，顺序等待 tick 与回调，由 PeriodicTimer 合并到期通知；所有生命周期状态共用同一个短锁。Start、Stop、StopAsync、Dispose、DisposeAsync 均无取消参数；每次运行创建内部取消源，停止和释放请求取消在途回调。Stop 不等待回调和清理结束，StopAsync 等待实际退出及收尾；Dispose 永久关闭但不等待，DisposeAsync 永久关闭并等待同一次清理，重复释放不重复清理。调用方在释放后不得再启动或访问 Period，仍可读取 IsRunning、IsDisposed。Failed 在清理结束后通知故障，Stopped 随后通知每次实际运行已结束；派生类通过 OnFailed(FailureEventArgs) 和 OnStopped(EventArgs) 定制通知，调用基类方法以通知订阅者；Failed 逐个调用订阅者，Stopped 使用普通事件调用、订阅者抛错中断后续通知；异步停止与异步释放等待通知调用结束并保留运行和通知异常，计时器内部观察后台任务异常、不写日志。回调及取消或事件通知不得反向等待自身运行；回调内请求停止或释放用 Stop、Dispose，由调用方保证不存在循环依赖，计时器不检测执行上下文。运行结束前不得释放回调依赖的外部资源。所有者通过事件衔接业务任务时，业务任务在事件调用链外等待 StopAsync 后继续。自定义 TimeProvider.CreateTimer 须成功返回有效计时器；不额外包装 PeriodicTimer 的失败构造终结器限制，具体约束见计时器文档。测试见 test/unit/Common/TimerTest.cs，使用受控时钟和同步信号验证时序。
 
-[Spooler<T>](docs/spoolers.zh-Hans.md) 以周期、满载写入或显式 FlushAsync 串行触发消费性 IEnumerable<T> 回调；支持组合和继承，Limit=0 为无界，正数同时限制容量与每次枚举数量。生产者在满载时参与刷新；FlushAsync 等待在途回调，再处理一轮剩余数据，不建立接收水位。仅实现 IAsyncDisposable；通道引用置空统一表示关闭并确定唯一关闭执行者，DisposeAsync 停止接收并结束容量等待，排队刷新取得执行权后检查关闭状态；释放等待在途刷新、计时器清理及故障通知，重复调用共享结果，不排空缓冲区。派生类通过 DisposeAsyncCore 在等待基类后清理回调依赖；周期和通知异常由异步释放传播，显式操作异常仍归原调用方。直接操作传播异常，周期故障终止该次定时运行并通过 Failed 通知，不永久关闭缓冲器、不重试、不写日志。Failed 使用普通事件调用，订阅者抛错中断后续通知，运行及通知异常保留到异步释放。调用方负责避免在回调与通知中等待自身刷新、异步释放或满载投递，有容量时允许投递；所有者在回调外等待释放，观察异步投递并管理依赖资源。两个构造函数均可传入 TimeProvider clock 控制周期触发。`Zongsoft.Caching.Spooler` 指标源发布接收数、当前队列、回调耗时、满载投递耗时和回调故障数；无监听器时不读取操作时钟，队列使用弱引用注册表按需采集，关闭时注销并清空 reader 委托。FileLogger 拥有其缓冲器，通过 Failed 转发周期故障；仅提供异步释放，停止接收并等待缓冲及直接写入后清理同步资源，不自动排空。测试见 test/Caching/SpoolerTest.cs、SpoolerDiagnosticsTest.cs 及 test/Diagnostics/FileLoggerLifecycleTest.cs；性能工作负载位于 benchmark。
+[Spooler<T>](docs/spoolers.zh-Hans.md) 以周期、满载写入或显式 FlushAsync 串行触发消费性 IEnumerable<T> 回调；支持组合和继承，Limit=0 为无界，正数同时限制容量与每次枚举数量。生产者在满载时参与刷新；FlushAsync 等待在途回调，再处理一轮剩余数据，不建立接收水位。仅实现 IAsyncDisposable；通道引用置空统一表示关闭并确定唯一关闭执行者，DisposeAsync 停止接收并结束容量等待，排队刷新取得执行权后检查关闭状态；释放等待在途刷新、计时器清理及故障通知，重复调用共享结果，不排空缓冲区。派生类通过 DisposeAsyncCore 在等待基类后清理回调依赖；周期和通知异常由异步释放传播，显式操作异常仍归原调用方。直接操作传播异常，周期故障终止该次定时运行并通过 Failed 通知，不永久关闭缓冲器、不重试、不写日志。Failed 使用普通事件调用，订阅者抛错中断后续通知，运行及通知异常保留到异步释放。调用方负责避免在回调与通知中等待自身刷新、异步释放或满载投递，有容量时允许投递；所有者在回调外等待释放，观察异步投递并管理依赖资源。两个构造函数均可传入 TimeProvider clock 控制周期触发。`Zongsoft.Caching.Spooler` 指标源发布接收数、当前队列、回调耗时、满载投递耗时和回调故障数；无监听器时不读取操作时钟，队列使用弱引用注册表按需采集，关闭时注销并清空 reader 委托。FileLogger 拥有其缓冲器，通过 Failed 转发周期故障；仅提供异步释放，停止接收并等待缓冲及直接写入后清理同步资源，不自动排空。测试见 test/unit/Caching/SpoolerTest.cs、SpoolerDiagnosticsTest.cs 及 test/unit/Diagnostics/FileLoggerLifecycleTest.cs；性能工作负载位于 benchmark。
 
 ## 网络声明值
 
@@ -50,10 +61,10 @@ ITerminal.Abort 同步触发 Aborting 并返回最终 Cancel，异常向调用�
 
 ## 配置与验证陷阱
 
-- 修改普通设置（`Settings`）、连接设置（`ConnectionSettings`）、字典接口、`Value` 或配置绑定时，先读[设置契约](docs/settings.zh-Hans.md)，从[配置测试](test/Configuration)中选择对应行为的回归；驱动原生参数通过 `GetOptions()` 生成。
+- 修改普通设置（`Settings`）、连接设置（`ConnectionSettings`）、字典接口、`Value` 或配置绑定时，先读[设置契约](docs/settings.zh-Hans.md)，从[配置测试](test/unit/Configuration)中选择对应行为的回归；驱动原生参数通过 `GetOptions()` 生成。
 - [XmlStreamConfigurationProvider](src/Configuration/Xml/XmlStreamConfigurationProvider.cs) 将 XML 属性映射为配置键，文本节点则按 `[value]` 集合项处理。写标量配置时核对实际键，不能套用其它 XML Provider 的直觉。
 - 连接设置驱动、服务注册、提供者首次创建分属不同阶段。服务出现在容器中不证明配置或底层 SDK 可用。
-- 服务测试路由：[ServiceLocatorTest](test/Services/ServiceLocatorTest.cs)、[TaggedServiceTest](test/Services/TaggedServiceTest.cs)。插件装配回归需另验证应用与模块容器、属性注入、配置键和共享实例身份。
+- 服务测试路由：[ServiceLocatorTest](test/unit/Services/ServiceLocatorTest.cs)、[TaggedServiceTest](test/unit/Services/TaggedServiceTest.cs)。插件装配回归需另验证应用与模块容器、属性注入、配置键和共享实例身份。
 - 所有权以实际注册与工厂为准，普通消费者不释放解析到的共享实例；实例被缓存、弱引用或静态复用也不等于自动实现取消/请求隔离。
 
 ## 领域路由
@@ -64,17 +75,19 @@ ITerminal.Abort 同步触发 Aborting 并返回最终 Cancel，异常向调用�
 
 ## 验证
 
-构建 `Zongsoft.Core.slnx` 并运行对应测试。公共行为变化至少选择一个真实下游实现做定向构建；多目标差异分别验证 net8.0、net9.0、net10.0。
+`Zongsoft.Core.slnx` 和默认 Cake `test` 只包含 `test/unit/Zongsoft.Core.Tests.csproj`。终端输入和 Shell 进程测试位于 `test/integration`，通过 `test/integration/Zongsoft.Core.Tests.slnx` 或 Cake `integration-test` 显式执行；Windows Shell 场景只在 Windows 运行。构建主解决方案并运行对应单元测试，集成测试按所改行为单独选择。公共行为变化至少选择一个真实下游实现做定向构建；多目标差异分别验证 net8.0、net9.0、net10.0。
+
+集成测试通过重定向标准输入管道和隔离子进程验证进程级读取器；受控 `TextReader` 使用显式门闩模拟阻塞的原生输入。Windows Shell 用唯一命名管道控制测试子进程，并持有进程句柄完成期限控制和清理；不将这类场景加入默认单元测试。
 
 ## 监视器资源释放
 
 `Superviser<T>` 的缓存逐出通知异步执行；`Count == 0` 或 `Unsupervised` 事件已经触发，都不能证明回调已经结束。观察者在写入缓存前计数，在逐出回调的 `finally` 中清理并递减；只有 `Dispose(bool)` 完成且全部观察者回调结束后，才能以原子交换取得缓存并释放。释放完成路径与最后一个回调都要尝试收尾，以覆盖空监视器和回调先结束的情况。不要在 `DISPOSING` 阶段释放缓存，也不要按缓存条目数提前注销逐出处理器，否则可能遗漏取消监视通知。
 
-`MemoryCacheScanner` 只定时调用缓存的内部 `Scan()`：用私有缺失键触发底层缓存按 `ScanFrequency` 执行后台过期检查，不插入条目、不刷新业务条目的滑动有效期，也不调用 `Compact(0)` 创建压缩候选列表。底层过期扫描间隔在缓存构造时设置；`Scan()` 仅触发检查并忽略缓存已被并发释放时的 `ObjectDisposedException`，不负责同步 `Options` 的后续修改。定时器是扫描器的私有同步锁，仅串行化 `Start/Stop/Dispose`；回调通过 `Volatile.Read` 取得缓存后在锁外触发检查。`Dispose()` 清除引用并停止定时器，不等待已经开始的底层检查或逐出通知，不释放缓存；释放后 `Stop/Dispose` 幂等，`Start` 抛 `ObjectDisposedException`。监视器无需与扫描器交换完成回调。回归测试见 [SuperviserDisposalTest](test/Components/SuperviserDisposalTest.cs) 和 [MemoryCacheScannerTest](test/Caching/MemoryCacheScannerTest.cs)，覆盖空闲过期、滑动有效期、停止/重启、并发控制、阻塞和重入释放，以及原始逐出回调竞态。
+`MemoryCacheScanner` 只定时调用缓存的内部 `Scan()`：用私有缺失键触发底层缓存按 `ScanFrequency` 执行后台过期检查，不插入条目、不刷新业务条目的滑动有效期，也不调用 `Compact(0)` 创建压缩候选列表。底层过期扫描间隔在缓存构造时设置；`Scan()` 仅触发检查并忽略缓存已被并发释放时的 `ObjectDisposedException`，不负责同步 `Options` 的后续修改。定时器是扫描器的私有同步锁，仅串行化 `Start/Stop/Dispose`；回调通过 `Volatile.Read` 取得缓存后在锁外触发检查。`Dispose()` 清除引用并停止定时器，不等待已经开始的底层检查或逐出通知，不释放缓存；释放后 `Stop/Dispose` 幂等，`Start` 抛 `ObjectDisposedException`。监视器无需与扫描器交换完成回调。回归测试见 [SuperviserDisposalTest](test/unit/Components/SuperviserDisposalTest.cs) 和 [MemoryCacheScannerTest](test/unit/Caching/MemoryCacheScannerTest.cs)，覆盖空闲过期、滑动有效期、停止/重启、并发控制、阻塞和重入释放，以及原始逐出回调竞态。
 
 ## 字典变量视图
 
-IVariables、Variables（含 Variables.Environments.cs）和 VariablesExtension 位于 src/Common，命名空间为 Zongsoft.Common。变量契约独立于表达式和模板语法；ProfileExtension 留在 Configuration.Profiles，TemplateEvaluator 留在 Text.Templating，均使用此公共契约。变量行为测试位于 test/Common。
+IVariables、Variables（含 Variables.Environments.cs）和 VariablesExtension 位于 src/Common，命名空间为 Zongsoft.Common。变量契约独立于表达式和模板语法；ProfileExtension 留在 Configuration.Profiles，TemplateEvaluator 留在 Text.Templating，均使用此公共契约。变量行为测试位于 test/unit/Common。
 
 Variables.Wrap 提供 Wrap<TDictionary>(TDictionary dictionary, bool reuse = false) where TDictionary : IDictionary，以及 IDictionary<string, object> 和 IDictionary<object, object> 两个接口重载；VariablesExtension.ToVariables 提供相应三个扩展方法。非泛型 IDictionary 的具体实现优先匹配受约束泛型入口，避免普通 Dictionary 直接调用的重载歧义。公开入口不接受任意 object；同时实现两个泛型接口但未实现非泛型 IDictionary 的类型须显式转换，裸 null 须指定字典类型。内部适配器依次优先使用字符串键泛型接口、对象键泛型接口和非泛型接口，null 抛 ArgumentNullException，参数名为 dictionary。字典本身实现 IVariables 时直接返回，其它字典由私有嵌套适配器包装。默认每次新建适配器，不读取、登记或移除缓存条目；reuse=true 时统一 ConditionalWeakTable<object, IVariables> 按引用身份复用，不同静态接口类型共享视图且不阻止无外部引用对象回收。缓存同步不扩展到源字典。仅字符串键提供变量，其它键忽略且不调用 ToString；查询遵循 Variables 的完整键约定和 OrdinalIgnoreCase；标准 Dictionary、ConcurrentDictionary 使用相同比较器时直接查询，其它来源按枚举顺序返回第一个匹配项，不检查重名，null 值仍查询成功。测试覆盖引用身份、并发复用、关闭复用、GC 生命周期、实时修改和模板集成。详见 [变量文档](docs/variables.zh-Hans.md#字典变量视图)。
 
@@ -88,7 +101,7 @@ Variables.Environments(EnvironmentVariableTarget target = EnvironmentVariableTar
 
 ## 命令选项变量
 
-[CommandLine.CmdletOptionCollection](src/Components/CommandLine.Options.cs) 显式实现 IVariables 的四个查询重载：不带布尔参数等价于 fallback=false。只提供全局变量；false 只查全局显式选项，true 允许从具名回退到全局并在显式值缺失时查询已声明的默认值。选项名称中的点号和连字符映射为下划线，结果须符合 ASCII 标识符 [A-Za-z_][A-Za-z0-9_]*；非法选项连同短名称整体忽略，其它合法短名称仍可查询。查询参数不裁剪、不转换、不拆命名空间，名称为 null 抛 ArgumentNullException，其它非法名称返回 false。CommandOptionDescriptor 和 CommandOptionAttribute 的 HasDefaultValue 保留默认值声明状态，无默认参数的构造保持 false，显式 null 也属于已声明；Describe 仅复制已声明默认值，DefaultValue 不合成类型零值。普通 GetValue/TryGetValue 等选项 API 使用原始选项名并允许已声明默认值回退，缺失时 GetValue 抛未找到异常、TryGetValue 返回 false；可选读取使用 TryGetValue 或带调用方默认值的 GetValue。内部选项字典与描述集合统一使用 OrdinalIgnoreCase。显式值与默认值独立保留，各层重名分别按枚举顺序取首项；null、空字符串、false 和 0 均终止回退。CmdletOptionCollection 使用同文件上下两个 partial 声明，IVariables 实现在文件下部，查询逻辑直接放在带命名空间的显式 TryGetValue 中，无命名空间重载转发该入口。首次有效查询惰性创建 OrdinalIgnoreCase 名称索引，之后直接字典查找；私有只读 VariableEntry 保存 Specified、显式值以及默认值的描述引用。名称映射建立后固定，不跟踪描述集合增删或替换；默认值仍从原描述实时读取。通过 Volatile.Read 与 LazyInitializer 安全发布索引，初始化后只读，不扩展描述集合的并发保证。不复制默认值、不展开模板，集合可直接注册到 TemplateEvaluator.Providers。测试入口为 [CommandLineVariablesTest](test/Components/CommandLineVariablesTest.cs)，使用公开 CommandContext 创建集合。
+[CommandLine.CmdletOptionCollection](src/Components/CommandLine.Options.cs) 显式实现 IVariables 的四个查询重载：不带布尔参数等价于 fallback=false。只提供全局变量；false 只查全局显式选项，true 允许从具名回退到全局并在显式值缺失时查询已声明的默认值。选项名称中的点号和连字符映射为下划线，结果须符合 ASCII 标识符 [A-Za-z_][A-Za-z0-9_]*；非法选项连同短名称整体忽略，其它合法短名称仍可查询。查询参数不裁剪、不转换、不拆命名空间，名称为 null 抛 ArgumentNullException，其它非法名称返回 false。CommandOptionDescriptor 和 CommandOptionAttribute 的 HasDefaultValue 保留默认值声明状态，无默认参数的构造保持 false，显式 null 也属于已声明；Describe 仅复制已声明默认值，DefaultValue 不合成类型零值。普通 GetValue/TryGetValue 等选项 API 使用原始选项名并允许已声明默认值回退，缺失时 GetValue 抛未找到异常、TryGetValue 返回 false；可选读取使用 TryGetValue 或带调用方默认值的 GetValue。内部选项字典与描述集合统一使用 OrdinalIgnoreCase。显式值与默认值独立保留，各层重名分别按枚举顺序取首项；null、空字符串、false 和 0 均终止回退。CmdletOptionCollection 使用同文件上下两个 partial 声明，IVariables 实现在文件下部，查询逻辑直接放在带命名空间的显式 TryGetValue 中，无命名空间重载转发该入口。首次有效查询惰性创建 OrdinalIgnoreCase 名称索引，之后直接字典查找；私有只读 VariableEntry 保存 Specified、显式值以及默认值的描述引用。名称映射建立后固定，不跟踪描述集合增删或替换；默认值仍从原描述实时读取。通过 Volatile.Read 与 LazyInitializer 安全发布索引，初始化后只读，不扩展描述集合的并发保证。不复制默认值、不展开模板，集合可直接注册到 TemplateEvaluator.Providers。测试入口为 [CommandLineVariablesTest](test/unit/Components/CommandLineVariablesTest.cs)，使用公开 CommandContext 创建集合。
 
 ## Profile 指令与读取
 
@@ -128,7 +141,7 @@ Import 使用必需的 path 和默认 true 的 required；None 按 required 处�
 ChannelBase 以按需创建的共享完成任务协调一次关闭和释放，不创建内核事件；派生 DisposeAsync(bool) 在关闭结束后执行，不负责启动关闭。关闭异常不回滚状态，重复调用观察原结果；关闭后不得复用实例。IWorker 仅提供 StartAsync、StopAsync、PauseAsync、ResumeAsync；WorkerBase 和 IListener<T> 仅公开 IAsyncDisposable 释放契约，所有者使用 await using 或等待 DisposeAsync。StateChanged.ActionName 仍为 Start、Stop、Pause、Resume。WorkerBase 通过短锁原子协调操作接收与释放标记，扩展点及通知均在锁外执行；启动失败调用 OnStopAsync 清理部分初始化资源，停止失败保持 Stopping，成功收尾前不允许重启。停止开始后调用者取消仅取消等待，派生停止实现负责实际完成与期限。OnStopAsync 停止运行并释放全部自有资源，支持未启动、部分初始化及失败后重试；停止成功后可重新启动。DisposeAsync 永久关闭普通生命周期入口，复用 OnStopAsync 清理，不另设释放钩子。并发释放共享当前尝试，失败后可再次 DisposeAsync 重试，成功后幂等；IsDisposed 表示清理已成功，通知失败不改变清理结果。释放开始后新的 StartAsync、StopAsync、PauseAsync、ResumeAsync 均抛 ObjectDisposedException，已接收操作继续收尾；诊断属性和 ToString 可读。回归测试见 WorkerDisposalTest。
 
 - ChannelBase 的关闭权和释放权各只取得一次，完成结果安全发布给并发及后续调用者；关闭前已取消的令牌阻止操作，开始后的取消只结束当前等待。Closing、Closed 各通知一次，通知或扩展点故障不能跳过剩余清理。派生实现不能在关闭流程使用字段前清空它们。
-- ChannelBase 的生命周期回调可以请求重入操作，但不得同步等待包含自身的操作；通知在状态确定后发出，通知故障不能恢复已失效资源或覆盖原始故障。同步入口集中复用异步流程，正常异步调用链不使用同步等待。
+- ChannelBase 的生命周期回调可以请求重入操作，但不得同步等待包含自身的操作；通知在状态确定后发出，通知故障不能恢复已失效资源或覆盖原始故障。关闭与释放只通过可等待的异步入口执行，不引入同步阻塞桥接。
 - WorkerBase 的 Enabled 仅控制是否允许启动；启动后修改仅影响下一次启动，不触发停止，也不影响暂停、恢复、停止或释放，回调中可直接修改该属性。相同的在途动作共享完成结果；停止等待当前动作结束后再检查状态，启动、暂停和恢复遇到其它在途动作直接返回，不排队执行。状态与 Enabled 在接收动作时检查；启动失败清理不完整初始化，尚未释放时停止失败可再次 StopAsync 收尾。生命周期扩展点和 StateChanged不得反向等待所属工作器的生命周期或释放操作；调用方负责避免循环依赖，由回调外的所有者在当前操作结束后协调后续动作。不同工作器之间可按所有权关系依次调用。暂停保留资源与内部状态，恢复继续使用；暂停或恢复失败时实现者负责撤销部分动作，基类恢复原稳定状态。CanPauseAndContinue 为 false 时拒绝暂停和恢复。测试见 WorkerCallbackTest。下游不叠加另一套工作器状态机，不根据是否附加调试器决定异常是否传播。
 
 `start`、`stop`、`pause` 和 `resume` 命令等待对应的异步工作器操作，并传递命令取消标记。`--timeout` 仅限制等待，默认五秒、非正数取五秒、上限三十秒；超时抛出 TimeoutException，不取消工作器操作，不再输出完成结果，后续结果由工作器负责通知。命令等待退出后继续观察任务故障，不持有命令上下文。暂停与恢复命令忽略不适用于当前状态的请求。完成扩展点接收 CommandContext、IWorker 和 TimeSpan timeout，结果处理不再等待状态；恢复结果扩展点为 WorkerResumeCommand.OnResumed。测试见 WorkerCommandTest。

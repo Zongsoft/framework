@@ -29,6 +29,7 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -89,17 +90,17 @@ internal static class FileUtility
 			foreach(var path in paths)
 			{
 				cancellation.ThrowIfCancellationRequested();
-				streams.Add(FileSystem.File.Open(
+				streams.Add(await FileSystem.File.OpenAsync(
 						path,
 						mode,
 						access,
-						share));
+						share, cancellation));
 			}
 		}
-		catch
+		catch(Exception failure)
 		{
-			foreach(var stream in streams)
-				stream?.Dispose();
+			try { await DisposeAsync(streams); }
+			catch(Exception cleanup) { throw new AggregateException(failure, cleanup); }
 
 			throw;
 		}
@@ -112,82 +113,103 @@ internal static class FileUtility
 		};
 	}
 
-	public static void Save(object output, object parameter, Encoding encoding = null)
+	public static async ValueTask DisposeAsync(object output)
+	{
+		var streams = output is Stream stream ? [stream] : output as IEnumerable<Stream>;
+		if(streams == null)
+			return;
+
+		List<Exception> errors = null;
+
+		foreach(var item in streams)
+		{
+			if(item == null)
+				continue;
+
+			try { await item.DisposeAsync(); }
+			catch(Exception failure) { (errors ??= []).Add(failure); }
+		}
+
+		if(errors != null)
+			throw new AggregateException(errors);
+	}
+
+	public static async ValueTask SaveAsync(object output, object parameter, Encoding encoding, CancellationToken cancellation)
 	{
 		if(output == null || parameter == null)
 			return;
 
-		if(output is IEnumerable<Stream> streams)
+		try
 		{
-			foreach(var stream in streams)
+			if(output is IEnumerable<Stream> streams)
 			{
-				if(stream != null)
-					WriteToStream(stream, parameter);
+				foreach(var stream in streams)
+				{
+					if(stream != null)
+						await WriteToStreamAsync(stream, parameter, encoding, cancellation);
+				}
 			}
+			else if(output is Stream stream)
+				await WriteToStreamAsync(stream, parameter, encoding, cancellation);
 		}
-		else if(output is Stream stream)
+		catch(Exception failure)
 		{
-			WriteToStream(stream, parameter);
+			try { await DisposeAsync(output); }
+			catch(Exception cleanup) { throw new AggregateException(failure, cleanup); }
+
+			throw;
 		}
 	}
 
-	private static void WriteToStream(Stream destination, object parameter, Encoding encoding = null)
+	private static async ValueTask WriteToStreamAsync(Stream destination, object parameter, Encoding encoding, CancellationToken cancellation)
 	{
 		encoding ??= Encoding.UTF8;
 
 		switch(parameter)
 		{
 			case Stream stream:
-				stream.CopyTo(destination);
+				await stream.CopyToAsync(destination, cancellation);
 				break;
-			case TextReader textReader:
-				textReader.CopyTo(destination, encoding);
-				break;
-			case BinaryReader binaryReader:
-				binaryReader.CopyTo(destination);
-				break;
-			case Memory<byte> memory:
-				destination.Write(memory.Span);
-				break;
-			case ReadOnlyMemory<byte> memory:
-				destination.Write(memory.Span);
-				break;
-			case IEnumerable<byte> bytes:
-				if(bytes.GetType().IsArray)
+			case TextReader reader:
+				await using(var writer = new StreamWriter(destination, encoding, 4096, true))
 				{
-					var array = (byte[])bytes;
-					destination.Write(array, 0, array.Length);
-				}
-				else
-				{
-					foreach(var byteValue in bytes)
-					{
-						destination.WriteByte(byteValue);
-					}
+					var characters = new char[4096];
+					int count;
+
+					while((count = await reader.ReadAsync(characters.AsMemory(), cancellation)) > 0)
+						await writer.WriteAsync(characters.AsMemory(0, count), cancellation);
 				}
 
 				break;
-			case string str:
-				var buffer1 = encoding.GetBytes(str);
-				destination.Write(buffer1, 0, buffer1.Length);
+			case BinaryReader reader:
+				await reader.BaseStream.CopyToAsync(destination, cancellation);
 				break;
-			case IEnumerable<string> strs:
-				foreach(var str in strs)
-				{
-					var buffer1x = encoding.GetBytes(str);
-					destination.Write(buffer1x, 0, buffer1x.Length);
-				}
+			case Memory<byte> memory:
+				await destination.WriteAsync(memory, cancellation);
+				break;
+			case ReadOnlyMemory<byte> memory:
+				await destination.WriteAsync(memory, cancellation);
+				break;
+			case IEnumerable<byte> bytes:
+				foreach(var chunk in bytes.Chunk(8192))
+					await destination.WriteAsync(chunk, cancellation);
+
+				break;
+			case string text:
+				await destination.WriteAsync(encoding.GetBytes(text), cancellation);
 				break;
 			case StringBuilder text:
-				var buffer2 = encoding.GetBytes(text.ToString());
-				destination.Write(buffer2, 0, buffer2.Length);
+				await destination.WriteAsync(encoding.GetBytes(text.ToString()), cancellation);
+				break;
+			case IEnumerable<string> texts:
+				foreach(var text in texts)
+					await destination.WriteAsync(encoding.GetBytes(text), cancellation);
+
 				break;
 			case IEnumerable<StringBuilder> texts:
 				foreach(var text in texts)
-				{
-					var buffer2x = encoding.GetBytes(text.ToString());
-					destination.Write(buffer2x, 0, buffer2x.Length);
-				}
+					await destination.WriteAsync(encoding.GetBytes(text.ToString()), cancellation);
+
 				break;
 		}
 	}

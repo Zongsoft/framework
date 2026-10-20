@@ -93,3 +93,7 @@ nuget:Zongsoft.Externals.Amazon
 按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
 
 清单列出的附属产物包括：`Zongsoft.Externals.Amazon.plugin`、`Zongsoft.Externals.Amazon.option`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。
+
+## 异步文件访问
+
+S3 文件及流使用异步操作，自有流以 `await using` 释放。公共同步文件系统契约保留，但 S3 适配器拒绝同步远程操作；同步读写、刷新和释放不能桥接网络任务。等待释放才能观察上传完成或中止错误。

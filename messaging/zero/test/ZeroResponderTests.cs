@@ -19,7 +19,7 @@ public class ZeroResponderTests
 			return;
 
 		await using var server = await ZeroServerScope.StartAsync();
-		using var queue = ZeroTestUtility.CreateQueue(server.Port, "responder");
+		await using var queue = ZeroTestUtility.CreateQueue(server.Port, "responder");
 		var responder = new ZeroResponder { Queue = queue };
 
 		responder.Handlers.Add(new RollbackHandler());

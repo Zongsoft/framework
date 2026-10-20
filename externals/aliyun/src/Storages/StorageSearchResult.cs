@@ -28,19 +28,22 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Zongsoft.Externals.Aliyun.Storages;
 
 [Serializable]
-public class StorageSearchResult : IEnumerable<Zongsoft.IO.PathInfo>, IEnumerator<Zongsoft.IO.PathInfo>
+public class StorageSearchResult : IAsyncEnumerable<Zongsoft.IO.PathInfo>, IAsyncEnumerator<Zongsoft.IO.PathInfo>
 {
 	#region 私有变量
 	private int _index;
+	private CancellationToken _cancellation;
 	private string _marker;
 	private IList<Zongsoft.IO.PathInfo> _items;
 	#endregion
@@ -68,31 +71,12 @@ public class StorageSearchResult : IEnumerable<Zongsoft.IO.PathInfo>, IEnumerato
 
 	#region 公共属性
 	/// <summary>获取结果列表所属的存储容器(Bucket)名称。</summary>
-	public string Name
-	{
-		get
-		{
-			return _name;
-		}
-	}
-
-	public string Pattern
-	{
-		get
-		{
-			return _pattern;
-		}
-	}
+	public string Name => _name;
+	public string Pattern => _pattern;
 	#endregion
 
 	#region 内部属性
-	internal StorageSearchResultResolver Resolver
-	{
-		get
-		{
-			return _resolver;
-		}
-	}
+	internal StorageSearchResultResolver Resolver => _resolver;
 	#endregion
 
 	#region 内部方法
@@ -126,37 +110,18 @@ public class StorageSearchResult : IEnumerable<Zongsoft.IO.PathInfo>, IEnumerato
 	#endregion
 
 	#region 遍历方法
-	public IEnumerator<Zongsoft.IO.PathInfo> GetEnumerator()
+	public IAsyncEnumerator<Zongsoft.IO.PathInfo> GetAsyncEnumerator(CancellationToken cancellation = default)
 	{
+		_cancellation = cancellation;
 		return this;
 	}
 
-	System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-	{
-		return this;
-	}
+	public Zongsoft.IO.PathInfo Current => _items == null || _index < 0 || _index >= _items.Count ? null : _items[_index];
 
-	Zongsoft.IO.PathInfo IEnumerator<Zongsoft.IO.PathInfo>.Current
+	public async ValueTask<bool> MoveNextAsync()
 	{
-		get
-		{
-			if(_items == null || _index < 0 || _index >= _items.Count)
-				return null;
+		_cancellation.ThrowIfCancellationRequested();
 
-			return _items[_index];
-		}
-	}
-
-	object System.Collections.IEnumerator.Current
-	{
-		get
-		{
-			return ((IEnumerator<Zongsoft.IO.PathInfo>)this).Current;
-		}
-	}
-
-	bool System.Collections.IEnumerator.MoveNext()
-	{
 		if(_items == null)
 			return false;
 
@@ -171,13 +136,13 @@ public class StorageSearchResult : IEnumerable<Zongsoft.IO.PathInfo>, IEnumerato
 			return false;
 
 		var url = resolver.ServiceCenter.GetRequestUrl(_name) + string.Format("?list-type=2&prefix={0}&delimiter=%2F&marker={1}&max-keys=21", Uri.EscapeDataString(_pattern), _marker);
-		var response = resolver.Client.GetAsync(url).Result;
+		using var response = await resolver.Client.GetAsync(url, _cancellation);
 
 		if(response == null || (!response.IsSuccessStatusCode))
 			return false;
 
 		_items.Clear();
-		_marker = resolver.Reload(this, response);
+		_marker = await resolver.ReloadAsync(this, response, _cancellation);
 
 		if(_items == null || _items.Count < 1)
 			return false;
@@ -185,15 +150,10 @@ public class StorageSearchResult : IEnumerable<Zongsoft.IO.PathInfo>, IEnumerato
 		_index = 0;
 		return true;
 	}
-
-	void System.Collections.IEnumerator.Reset()
-	{
-		_index = 0;
-	}
 	#endregion
 
 	#region 释放资源
-	void IDisposable.Dispose()
+	public ValueTask DisposeAsync()
 	{
 		var items = System.Threading.Interlocked.Exchange(ref _items, null);
 
@@ -207,6 +167,8 @@ public class StorageSearchResult : IEnumerable<Zongsoft.IO.PathInfo>, IEnumerato
 			if(resolver != null)
 				resolver.Dispose();
 		}
+
+		return ValueTask.CompletedTask;
 	}
 	#endregion
 }

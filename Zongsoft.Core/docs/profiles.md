@@ -174,7 +174,7 @@ Reader records declaration baselines; edits in Loaded remain dirty. Save() write
 
 Deployer uses Loading for imported-file hashes and records the root separately. Packager uses Loading to collect the referer's declarations before merging and Loaded to collect each parsed source, including the root. Containerizer validates source declarations in Loading. Reopening a path for hashing does not guarantee a digest of exactly the parsed bytes; that concern belongs to consumers.
 
-See [ProfileImportTest](../test/Configuration/Profiles/ProfileImportTest.cs) for regression coverage.
+See [ProfileImportTest](../test/unit/Configuration/Profiles/ProfileImportTest.cs) for regression coverage.
 
 ## Declarations and saving
 
@@ -244,7 +244,7 @@ File and Stream defaults use Encoding.UTF8. An explicit encoding applies only to
 
 Writer owns path resources. Supplied streams are closed; supplied TextWriter instances remain open. Stream/text outputs may contain partial output after failure and cannot be rolled back.
 
-[ProfileWriterTest](../test/Configuration/Profiles/ProfileWriterTest.cs) covers source writes, scope isolation, round trips, duplicate instances and preparation/commit failures with retry. Linux/macOS permission and link checks require native execution; Windows results do not substitute for them. Strict hashing of the parsed bytes remains a downstream snapshot concern; Core has no deployment, NuGet or hashing dependency.
+[ProfileWriterTest](../test/unit/Configuration/Profiles/ProfileWriterTest.cs) covers source writes, scope isolation, round trips, duplicate instances and preparation/commit failures with retry. Linux/macOS permission and link checks require native execution; Windows results do not substitute for them. Strict hashing of the parsed bytes remains a downstream snapshot concern; Core has no deployment, NuGet or hashing dependency.
 
 ## Variable views
 
@@ -312,4 +312,4 @@ When a template queries a conflicting variable, TemplateEvaluator throws Templat
 
 These extensions only supply variables. Profile loading, import arguments and Save do not evaluate templates automatically; ProfileEntry.Value retains the original text. The caller explicitly composes variable sources and invokes template evaluation.
 
-See [ProfileExtension](../src/Configuration/Profiles/ProfileExtension.cs), the [IVariables contract](variables.md#variable-contract), and [ProfileVariablesTest](../test/Configuration/Profiles/ProfileVariablesTest.cs).
+See [ProfileExtension](../src/Configuration/Profiles/ProfileExtension.cs), the [IVariables contract](variables.md#variable-contract), and [ProfileVariablesTest](../test/unit/Configuration/Profiles/ProfileVariablesTest.cs).

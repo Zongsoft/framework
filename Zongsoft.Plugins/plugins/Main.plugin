@@ -20,7 +20,6 @@
 		<parser name="command" type="Zongsoft.Components.CommandParser, Zongsoft.Plugins" />
 		<parser name="service" type="Zongsoft.Services.ServicesParser, Zongsoft.Plugins" />
 		<parser name="resource" type="Zongsoft.Resources.ResourceParser, Zongsoft.Plugins" />
-		<parser name="predicate" type="Zongsoft.Plugins.Parsers.PredicateParser, Zongsoft.Plugins" />
 	</parsers>
 
 	<!-- 挂载工作台下的必须的组件 -->

@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -36,7 +36,7 @@ using Zongsoft.Components;
 namespace Zongsoft.Messaging;
 
 /// <summary>表示消息队列的接口。</summary>
-public interface IMessageQueue : IMessageProducer, IDisposable
+public interface IMessageQueue : IMessageProducer, IAsyncDisposable
 {
 	#region 属性定义
 	/// <summary>获取消息队列的名称。</summary>

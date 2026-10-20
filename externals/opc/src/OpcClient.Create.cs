@@ -52,7 +52,7 @@ partial class OpcClient
 		{
 			BrowseName = new QualifiedName(name),
 			NodeClass = NodeClass.Object,
-			ReferenceTypeId = ReferenceTypes.Organizes,
+			ReferenceTypeId = ReferenceTypeIds.Organizes,
 			TypeDefinition = ObjectTypeIds.FolderType,
 			NodeAttributes = new ExtensionObject(new ObjectAttributes()
 			{
@@ -70,13 +70,13 @@ partial class OpcClient
 		if(response.ResponseHeader != null && StatusCode.IsBad(response.ResponseHeader.ServiceResult))
 			throw new InvalidOperationException(string.Format(Properties.Resources.Opc_FolderCreationFailed_Message, response.ResponseHeader.ServiceResult));
 
-		if(response.Results != null && response.Results.Count > 0)
+		if(response.Results.Count > 0)
 		{
 			//如果失败原因为指定标识不存在则返回失败（不触发异常）
 			if(response.Results[0].StatusCode == StatusCodes.BadNodeIdUnknown)
 				return false;
 
-			var failures = response.Results.Where(result => StatusCode.IsBad(result.StatusCode));
+			var failures = response.Results.ToArray().Where(result => StatusCode.IsBad(result.StatusCode));
 
 			if(failures.Any())
 				throw new InvalidOperationException(string.Format(Properties.Resources.Opc_FolderCreationFailed_Message, string.Join(',', failures)));
@@ -94,15 +94,15 @@ partial class OpcClient
 
 		var variableNode = new AddNodesItem
 		{
-			ReferenceTypeId = ReferenceTypes.HasComponent,
-			RequestedNewNodeId = null,
+			ReferenceTypeId = ReferenceTypeIds.HasComponent,
+			RequestedNewNodeId = default,
 			BrowseName = new QualifiedName(name),
 			NodeClass = NodeClass.Variable,
 			TypeDefinition = VariableTypeIds.BaseDataVariableType,
 			NodeAttributes = new ExtensionObject(new VariableAttributes()
 			{
-				DisplayName = label,
-				Description = description,
+				DisplayName = new(label),
+				Description = new(description),
 				DataType = Utility.GetBuiltinType(type, out var rank),
 				ValueRank = rank,
 				ArrayDimensions = [],
@@ -122,13 +122,13 @@ partial class OpcClient
 		if(response.ResponseHeader != null && StatusCode.IsBad(response.ResponseHeader.ServiceResult))
 			throw new InvalidOperationException(string.Format(Properties.Resources.Opc_VariableCreationFailed_Message, response.ResponseHeader.ServiceResult));
 
-		if(response.Results != null && response.Results.Count > 0)
+		if(response.Results.Count > 0)
 		{
 			//如果失败原因为指定标识不存在则返回失败（不触发异常）
 			if(response.Results[0].StatusCode == StatusCodes.BadNodeIdUnknown)
 				return false;
 
-			var failures = response.Results.Where(result => StatusCode.IsBad(result.StatusCode));
+			var failures = response.Results.ToArray().Where(result => StatusCode.IsBad(result.StatusCode));
 
 			if(failures.Any())
 				throw new InvalidOperationException(string.Format(Properties.Resources.Opc_VariableCreationFailed_Message, string.Join(',', failures)));

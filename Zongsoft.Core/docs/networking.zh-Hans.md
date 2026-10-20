@@ -81,4 +81,4 @@ Core 不为应用名称补全默认承载：不把 `grpc` 展开为 `grpc+http2`
 
 绑定消费者负责应用协议简写的默认承载、绑定专用的路径限制、地址与协议一致性校验及映射选择；Core 的值解析不承担这些策略。解析 `grpc+http3` 不检查后端，也不要求后端运行。
 
-现有 `EndpointConverter` 与 `HandlerAttribute` 保持原有行为。新增 API 不引入 ASP.NET Core、gRPC、Nginx 或工具依赖。测试入口为 [NetworkAddressTest](../test/Communication/NetworkAddressTest.cs) 和 [NetworkProtocolTest](../test/Communication/NetworkProtocolTest.cs)。
+现有 `EndpointConverter` 与 `HandlerAttribute` 保持原有行为。新增 API 不引入 ASP.NET Core、gRPC、Nginx 或工具依赖。测试入口为 [NetworkAddressTest](../test/unit/Communication/NetworkAddressTest.cs) 和 [NetworkProtocolTest](../test/unit/Communication/NetworkProtocolTest.cs)。

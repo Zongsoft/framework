@@ -283,5 +283,14 @@ namespace Zongsoft.Externals.Opc.Properties {
                 return ResourceManager.GetString("Subscription.AlreadyRegistered.Message", resourceCulture);
             }
         }
+
+		/// <summary>
+		///   查找类似 The asynchronous subscription notification queue is full. 的本地化字符串。
+		/// </summary>
+		internal static string Subscription_QueueFull_Message {
+			get {
+				return ResourceManager.GetString("Subscription.QueueFull.Message", resourceCulture);
+			}
+		}
     }
 }

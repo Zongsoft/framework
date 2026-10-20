@@ -303,7 +303,7 @@ public class ZeroQueueConcurrencyTests
 		finally
 		{
 			foreach(var queue in publishers.Concat(subscribers))
-				queue.Dispose();
+				await queue.DisposeAsync();
 		}
 	}
 

@@ -132,7 +132,6 @@ public class MessageQueue : MessageQueueBase<MessageQueue.Consumer>
 	#endregion
 
 	#region 入队方法
-	public string Enqueue(ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null) => this.EnqueueAsync(data, options, CancellationToken.None).AsTask().GetAwaiter().GetResult();
 	public ValueTask<string> EnqueueAsync(ReadOnlyMemory<byte> data, MessageEnqueueOptions options = null, CancellationToken cancellation = default) => this.EnqueueAsync(data.ToArray(), options, cancellation);
 	public async ValueTask<string> EnqueueAsync(byte[] data, MessageEnqueueOptions options = null, CancellationToken cancellation = default)
 	{
@@ -240,12 +239,14 @@ public class MessageQueue : MessageQueueBase<MessageQueue.Consumer>
 	#endregion
 
 	#region 资源释放
-	protected override void Dispose(bool disposing)
+	protected override ValueTask DisposeAsync(bool disposing)
 	{
 		var http = Interlocked.Exchange(ref _http, null);
 
 		if(http != null)
 			http.Dispose();
+
+		return ValueTask.CompletedTask;
 	}
 	#endregion
 
@@ -253,22 +254,6 @@ public class MessageQueue : MessageQueueBase<MessageQueue.Consumer>
 	public class Consumer(MessageQueue queue, IHandler<Message> handler, MessageSubscribeOptions options = null) : MessageConsumerBase<MessageQueue>(queue, handler, options)
 	{
 		protected override ValueTask OnCloseAsync(CancellationToken cancellation) => ValueTask.CompletedTask;
-	}
-
-	private class MessageQueuePoller(MessageQueue queue, IHandler<Message> handler) : MessagePollerBase
-	{
-		private readonly MessageQueue _queue = queue;
-		private readonly IHandler<Message> _handler = handler;
-
-		protected override Message Receive(MessageDequeueOptions options, CancellationToken cancellation)
-		{
-			return _queue.DequeueAsync(options, cancellation).AsTask().GetAwaiter().GetResult();
-		}
-
-		protected override ValueTask OnHandleAsync(Message message, CancellationToken cancellation)
-		{
-			return _handler.HandleAsync(message, cancellation);
-		}
 	}
 	#endregion
 }

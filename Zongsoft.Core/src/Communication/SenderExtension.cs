@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -38,57 +38,6 @@ namespace Zongsoft.Communication;
 public static class SenderExtension
 {
 	#region 静态方法
-	public static void Send(this ISender sender, byte[] data)
-	{
-		ArgumentNullException.ThrowIfNull(sender);
-		ArgumentNullException.ThrowIfNull(data);
-		sender.SendAsync(data).AsTask().GetAwaiter().GetResult();
-	}
-	public static void Send(this ISender sender, byte[] data, int offset)
-	{
-		ArgumentNullException.ThrowIfNull(sender);
-		ArgumentNullException.ThrowIfNull(data);
-		sender.SendAsync(data.AsMemory(offset)).AsTask().GetAwaiter().GetResult();
-	}
-	public static void Send(this ISender sender, byte[] data, int offset, int count)
-	{
-		ArgumentNullException.ThrowIfNull(sender);
-		ArgumentNullException.ThrowIfNull(data);
-		sender.SendAsync(data.AsMemory(offset, count)).AsTask().GetAwaiter().GetResult();
-	}
-	public static void Send(this ISender sender, string text, Encoding encoding = null)
-	{
-		ArgumentNullException.ThrowIfNull(sender);
-
-		if(string.IsNullOrEmpty(text))
-			return;
-
-		encoding ??= Encoding.UTF8;
-		var count = encoding.GetByteCount(text);
-		var buffer = ArrayPool<byte>.Shared.Rent(count);
-
-		try
-		{
-			var written = encoding.GetBytes(text.AsSpan(), buffer);
-			sender.SendAsync(buffer.AsMemory(0, written)).AsTask().GetAwaiter().GetResult();
-		}
-		finally
-		{
-			ArrayPool<byte>.Shared.Return(buffer, true);
-		}
-	}
-	public static void Send(this ISender sender, IMemoryOwner<byte> data)
-	{
-		ArgumentNullException.ThrowIfNull(sender);
-		ArgumentNullException.ThrowIfNull(data);
-
-		try
-		{
-			sender.SendAsync(data.Memory).AsTask().GetAwaiter().GetResult();
-		}
-		finally { data.Dispose(); }
-	}
-
 	public static ValueTask SendAsync(this ISender sender, byte[] data, CancellationToken cancellation = default)
 	{
 		ArgumentNullException.ThrowIfNull(sender);
@@ -128,34 +77,13 @@ public static class SenderExtension
 			ArrayPool<byte>.Shared.Return(buffer, true);
 		}
 	}
-	public static ValueTask SendAsync(this ISender sender, IMemoryOwner<byte> data, CancellationToken cancellation = default)
+	public static async ValueTask SendAsync(this ISender sender, IMemoryOwner<byte> data, CancellationToken cancellation = default)
 	{
 		ArgumentNullException.ThrowIfNull(sender);
 		ArgumentNullException.ThrowIfNull(data);
 
-		try
-		{
-			var result = sender.SendAsync(data.Memory, cancellation);
-
-			if(result.IsCompletedSuccessfully)
-				return default;
-
-			var final = Awaited(data, result);
-			data = null;
-			return final;
-		}
-		finally
-		{
-			data?.Dispose();
-		}
-
-		static async ValueTask Awaited(IMemoryOwner<byte> mmemory, ValueTask write)
-		{
-			using(mmemory)
-			{
-				await write;
-			}
-		}
+		using(data)
+			await sender.SendAsync(data.Memory, cancellation).ConfigureAwait(false);
 	}
 	#endregion
 }

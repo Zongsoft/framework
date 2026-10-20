@@ -8,11 +8,10 @@
 
 	<ItemGroup>
 		<Compile Remove="IO\FileSystemTest.cs" />
-		<Compile Remove="integration\**\*.cs" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\src\Zongsoft.Core.csproj" />
+		<ProjectReference Include="../../src/Zongsoft.Core.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

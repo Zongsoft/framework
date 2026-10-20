@@ -74,7 +74,7 @@ partial class OpcClient
 		if(response.Results.Count < 2)
 			return null;
 
-		var rank = response.Results[1].GetValueOrDefault<int>();
-		return OpcNodeType.Get((NodeId)response.Results[0].Value, rank);
+		var rank = response.Results[1].WrappedValue.GetInt32();
+		return OpcNodeType.Get(response.Results[0].WrappedValue.GetNodeId(), rank);
 	}
 }

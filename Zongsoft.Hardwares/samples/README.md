@@ -19,7 +19,7 @@ Use an interactive terminal: the program ends with `Console.ReadKey()`.
 
 ## Key Code and Expected Result
 
-[Program.cs](Program.cs) calls `HardwareCollector.Instance.Collect()`, constructs `Zongsoft.IO.Hardwares.HardwareProfile`, prints `profile.Identifier`, and uses `CommandOutletDumper.Dump` for each hardware item.
+[Program.cs](Program.cs) uses `await foreach` to consume `HardwareCollector.Instance.CollectAsync()` from its asynchronous entry point, constructs `Zongsoft.IO.Hardwares.HardwareProfile`, prints `profile.Identifier`, and uses `CommandOutletDumper.Dump` for each hardware item.
 
 Expect a profile string followed by hierarchical hardware properties, not a fixed number or order of devices. Missing firmware information and different identifiers across virtual machines are not by themselves collection failures. Compare the actual fields and platform permissions.
 

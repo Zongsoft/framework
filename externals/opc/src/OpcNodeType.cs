@@ -39,7 +39,7 @@ public partial class OpcNodeType : IEquatable<OpcNodeType>
 	#region 构造函数
 	internal OpcNodeType(NodeId nodeId, Type type)
 	{
-		this.NodeId = nodeId ?? throw new ArgumentNullException(nameof(nodeId));
+		this.NodeId = nodeId.IsNull ? throw new ArgumentNullException(nameof(nodeId)) : nodeId;
 		this.Identifier = nodeId.ToString();
 		this.Type = type ?? typeof(object);
 		this.Name = Common.TypeAlias.GetAlias(this.Type);
@@ -82,7 +82,7 @@ public partial class OpcNodeType : IEquatable<OpcNodeType>
 	#region 重写方法
 	public bool Equals(OpcNodeType other) => other is not null && this.NodeId == other.NodeId && this.Identifier == other.Identifier;
 	public override bool Equals(object obj) => obj is OpcNodeType other && this.Equals(other);
-	public override int GetHashCode() => this.NodeId == null || this.NodeId.IsNullNodeId ? HashCode.Combine(this.Identifier) : this.NodeId.GetHashCode();
+	public override int GetHashCode() => this.NodeId.IsNull ? HashCode.Combine(this.Identifier) : this.NodeId.GetHashCode();
 	public override string ToString() => string.IsNullOrEmpty(this.Name) ? this.Identifier : $"{this.Name}|{this.Identifier}";
 	#endregion
 
@@ -113,7 +113,7 @@ partial class OpcNodeType
 	internal static OpcNodeType Get(ExpandedNodeId id, int rank = 0) => Get((NodeId)id, rank);
 	internal static OpcNodeType Get(NodeId id, int rank = 0)
 	{
-		if(id == null || id.IsNullNodeId)
+		if(id.IsNull)
 			return null;
 
 		var key = new Key(id, rank);

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
@@ -18,13 +19,81 @@ public class RedisConfigurationProviderTests
 	private const string NOTIFICATIONS_UNAVAILABLE = "Redis keyspace notifications must include K and A (notify-keyspace-events KA).";
 
 	[Fact]
-	public async Task Load_MaterializesCaseInsensitiveLocalSnapshotAndNotificationReloadsIt()
+	public async Task Load_WithoutAwaitedSnapshot_RejectsBeforeConnecting()
+	{
+		await using var cache = CreateCache(out _);
+		await using var source = new RedisConfigurationSource("offline");
+		await using var provider = new RedisConfigurationProvider(source, cache);
+
+		Assert.Throws<InvalidOperationException>(() => provider.Load());
+		Assert.Throws<InvalidOperationException>(() => source.Build(new Microsoft.Extensions.Configuration.ConfigurationBuilder()));
+		Assert.False(provider.IsLoaded);
+		Assert.False(provider.TryGet("missing", out _));
+	}
+
+	[Fact]
+	public async Task LoadAsync_PreCanceled_DoesNotPublishSnapshot()
+	{
+		await using var cache = CreateCache(out _);
+		await using var source = new RedisConfigurationSource("offline");
+		await using var provider = new RedisConfigurationProvider(source, cache);
+		using var cancellation = new CancellationTokenSource();
+		cancellation.Cancel();
+
+		var exception = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => provider.LoadAsync(cancellation.Token).AsTask());
+
+		Assert.True(exception.CancellationToken.IsCancellationRequested);
+		Assert.False(provider.IsLoaded);
+		Assert.False(provider.TryGet("missing", out _));
+		Assert.Throws<InvalidOperationException>(() => provider.Load());
+	}
+
+	[Fact]
+	public async Task DisposeAsync_BeforeLoad_SharesCompletionAndLeavesInjectedServiceOwnedByCaller()
+	{
+		await using var cache = CreateCache(out _);
+		await using var source = new RedisConfigurationSource("offline");
+		var provider = new RedisConfigurationProvider(source, cache);
+		var disposals = Enumerable.Range(0, 16).Select(_ => provider.DisposeAsync().AsTask()).ToArray();
+
+		Assert.All(disposals, disposal => Assert.Same(disposals[0], disposal));
+		await Task.WhenAll(disposals);
+		await Assert.ThrowsAsync<ObjectDisposedException>(() => provider.LoadAsync().AsTask());
+		cache.Namespace = "still-owned-by-caller";
+
+		Assert.Equal("still-owned-by-caller", cache.Namespace);
+		Assert.False(provider.IsLoaded);
+	}
+
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task SourceDisposeAsync_RejectsFutureLoadAndBuild(bool canceledLoad)
+	{
+		var source = new RedisConfigurationSource("offline");
+
+		if(canceledLoad)
+		{
+			using var cancellation = new CancellationTokenSource();
+			cancellation.Cancel();
+			await Assert.ThrowsAnyAsync<OperationCanceledException>(() => source.LoadAsync(cancellation.Token).AsTask());
+		}
+
+		await source.DisposeAsync();
+		await source.DisposeAsync();
+
+		await Assert.ThrowsAsync<ObjectDisposedException>(() => source.LoadAsync().AsTask());
+		Assert.Throws<ObjectDisposedException>(() => source.Build(new Microsoft.Extensions.Configuration.ConfigurationBuilder()));
+	}
+
+	[Fact]
+	public async Task LoadAsync_MaterializesCaseInsensitiveLocalSnapshotAndNotificationReloadsIt()
 	{
 		EnsureRedisNotifications();
 
 		await using var cache = CreateCache(out var cacheNamespace);
 		const string CONFIGURATION_KEY = "configuration";
-		cache.SetValue(CONFIGURATION_KEY, new Dictionary<string, string>
+		await cache.SetValueAsync(CONFIGURATION_KEY, new Dictionary<string, string>
 		{
 			["Feature"] = "old",
 			["Nested:Value"] = "one",
@@ -32,7 +101,7 @@ public class RedisConfigurationProviderTests
 
 		var source = new RedisConfigurationSource("test") { Namespace = CONFIGURATION_KEY };
 		await using var provider = new RedisConfigurationProvider(source, cache);
-		provider.Load();
+		await provider.LoadAsync();
 
 		Assert.True(provider.TryGet("feature", out var oldValue));
 		Assert.Equal("old", oldValue);
@@ -59,11 +128,11 @@ public class RedisConfigurationProviderTests
 
 		await using var cache = CreateCache(out var cacheNamespace);
 		const string CONFIGURATION_KEY = "settings";
-		cache.SetValue(CONFIGURATION_KEY, new Dictionary<string, string> { ["Value"] = "one" });
+		await cache.SetValueAsync(CONFIGURATION_KEY, new Dictionary<string, string> { ["Value"] = "one" });
 
 		var source = new RedisConfigurationSource("test") { Namespace = CONFIGURATION_KEY };
 		await using var provider = new RedisConfigurationProvider(source, cache);
-		provider.Load();
+		await provider.LoadAsync();
 		await provider.SubscriptionTask.WaitAsync(TimeSpan.FromSeconds(10));
 
 		var unrelatedReload = GetNextReloadAsync(provider);
@@ -90,7 +159,7 @@ public class RedisConfigurationProviderTests
 
 		var source = new RedisConfigurationSource("test") { Namespace = CONFIGURATION_KEY };
 		await using var provider = new RedisConfigurationProvider(source, cache);
-		provider.Load();
+		await provider.LoadAsync();
 		await provider.SubscriptionTask.WaitAsync(TimeSpan.FromSeconds(10));
 
 		Assert.True(provider.TryGet("First", out var first));
@@ -117,11 +186,11 @@ public class RedisConfigurationProviderTests
 
 		await using var cache = CreateCache(out var cacheNamespace);
 		const string CONFIGURATION_KEY = "dispose";
-		cache.SetValue(CONFIGURATION_KEY, new Dictionary<string, string> { ["Value"] = "before" });
+		await cache.SetValueAsync(CONFIGURATION_KEY, new Dictionary<string, string> { ["Value"] = "before" });
 
 		var source = new RedisConfigurationSource("test") { Namespace = CONFIGURATION_KEY };
 		var provider = new RedisConfigurationProvider(source, cache);
-		provider.Load();
+		await provider.LoadAsync();
 		await provider.SubscriptionTask.WaitAsync(TimeSpan.FromSeconds(10));
 		await provider.DisposeAsync();
 

@@ -166,18 +166,14 @@ partial class RedisService : IDistributedLockManager
 		protected override ValueTask<bool> OnRenewAsync(CancellationToken cancellation) =>
 			this.Manager?.RenewAsync(this.Key, this.Token, this.Expiry, cancellation) ?? ValueTask.FromResult(false);
 
-		protected override void Dispose(bool disposing)
-		{
-			if(disposing)
-				this.StopRenewalAsync().AsTask().GetAwaiter().GetResult();
-			base.Dispose(disposing);
-		}
-
 		protected override async ValueTask DisposeAsync(bool disposing)
 		{
-			if(disposing)
-				await this.StopRenewalAsync();
-			await base.DisposeAsync(disposing);
+			try
+			{
+				if(disposing)
+					await this.StopRenewalAsync();
+			}
+			finally { await base.DisposeAsync(disposing); }
 		}
 
 		private void StartRenewal()
@@ -198,7 +194,9 @@ partial class RedisService : IDistributedLockManager
 		private async ValueTask StopRenewalAsync()
 		{
 			var source = Interlocked.Exchange(ref _renewalCancellation, null);
-			source?.Cancel();
+			if(source != null)
+				await source.CancelAsync();
+
 			var task = Interlocked.Exchange(ref _renewalTask, null);
 
 			if(task != null)

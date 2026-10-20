@@ -11,6 +11,8 @@
 
 两个项目都使用 Zongsoft 的命令执行器和终端输出 API，写法与仓库中其他 samples 保持一致。命令参数由 `Zongsoft.Components.CommandLine` 解析；带值选项请使用 `--name:value` 或 `--name=value` 格式。
 
+各命令通过 `await using` 持有 Redis 客户端，命令完成前会等待客户端异步释放。获取的锁也使用异步释放。
+
 ## 参考资料
 
 - Redis 官方分布式锁文档：https://redis.io/docs/latest/develop/clients/patterns/distributed-locks/

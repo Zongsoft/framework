@@ -65,8 +65,8 @@ partial class OpcServer
 			return variable;
 		}
 
-		public BaseInstanceState DefineValue(object value, string name = null) => this.DefineValue(null, null, value, name);
-		public BaseInstanceState DefineValue(NodeState parent, object value, string name = null) => this.DefineValue(parent, null, value, name);
+		public BaseInstanceState DefineValue(object value, string name = null) => this.DefineValue(null, default, value, name);
+		public BaseInstanceState DefineValue(NodeState parent, object value, string name = null) => this.DefineValue(parent, default, value, name);
 		public BaseInstanceState DefineValue(NodeId identifier, object value, string name = null) => this.DefineValue(null, identifier, value, name);
 		public BaseInstanceState DefineValue(NodeState parent, NodeId identifier, object value, string name = null)
 		{
@@ -80,7 +80,7 @@ partial class OpcServer
 
 			type = Utility.DiscriminateType(type, out _);
 
-			if(identifier == null || identifier.IsNullNodeId)
+			if(identifier.IsNull)
 				identifier = this.GenerateId();
 
 			if(string.IsNullOrEmpty(name))
@@ -95,10 +95,10 @@ partial class OpcServer
 					NodeId = identifier,
 					SymbolicName = name,
 					BrowseName = new(name, this.NamespaceIndex),
-					DisplayName = name,
+					DisplayName = new(name),
 					DataType = definition.NodeId,
 					TypeDefinitionId = definition.NodeId,
-					Value = value,
+					Value = VariantHelper.CastFromWithReflectionFallback(value),
 					ValueRank = rank,
 				};
 
@@ -111,7 +111,7 @@ partial class OpcServer
 					NodeId = identifier,
 					SymbolicName = name,
 					BrowseName = new(name, this.NamespaceIndex),
-					DisplayName = name,
+					DisplayName = new(name),
 					TypeDefinitionId = definition.NodeId,
 					ReferenceTypeId = ReferenceTypeIds.HasComponent,
 				} :
@@ -120,12 +120,12 @@ partial class OpcServer
 					NodeId = identifier,
 					SymbolicName = name,
 					BrowseName = new(name, this.NamespaceIndex),
-					DisplayName = name,
+					DisplayName = new(name),
 					DataType = definition.NodeId,
 					TypeDefinitionId = VariableTypeIds.PropertyType,
 					ReferenceTypeId = ReferenceTypeIds.HasProperty,
 					ValueRank = rank,
-					Value = value,
+					Value = VariantHelper.CastFromWithReflectionFallback(value),
 				};
 
 			var children = new List<BaseInstanceState>();
@@ -190,7 +190,7 @@ partial class OpcServer
 			var nodeId = Utility.GetBuiltinTypeCore(type);
 
 			//如果指定类型是内置类型，则获取并返回该内置类型的节点定义
-			if(nodeId != null && this.Server.NodeManager.GetManagerHandle(nodeId, out INodeManager _) is NodeHandle handle && handle.Node is BaseTypeState result)
+			if(!nodeId.IsNull && this.Server.NodeManager.GetManagerHandle(nodeId, out INodeManager _) is NodeHandle handle && handle.Node is BaseTypeState result)
 				return result;
 
 			lock(this.Lock)
@@ -209,7 +209,7 @@ partial class OpcServer
 		#region 私有方法
 		private DataTypeState DefineEnumeration(Type type)
 		{
-			EnumDefinition enumeration = new EnumDefinition();
+			var enumFields = new List<EnumField>();
 			var entries = EnumUtility.GetEnumEntries(type, true);
 			var enumNames = new LocalizedText[entries.Length];
 			var enumValues = new EnumValueType[entries.Length];
@@ -218,11 +218,11 @@ partial class OpcServer
 			{
 				var value = (long)System.Convert.ChangeType(entries[i].Value, typeof(long));
 
-				enumeration.Fields.Add(new()
+				enumFields.Add(new()
 				{
 					Name = entries[i].Name,
-					DisplayName = entries[i].Name,
-					Description = entries[i].Description,
+					DisplayName = new(entries[i].Name),
+					Description = new(entries[i].Description),
 					Value = value,
 				});
 
@@ -230,8 +230,8 @@ partial class OpcServer
 				enumValues[i] = new()
 				{
 					Value = value,
-					DisplayName = entries[i].Name,
-					Description = entries[i].Description,
+					DisplayName = new(entries[i].Name),
+					Description = new(entries[i].Description),
 				};
 			}
 
@@ -240,50 +240,50 @@ partial class OpcServer
 				NodeId = this.GenerateId(),
 				SymbolicName = $"{type.Name}DataType",
 				BrowseName = new QualifiedName($"{type.Namespace}.{type.Name}", this.NamespaceIndex),
-				DisplayName = $"{type.Namespace}.{type.Name}",
+				DisplayName = new($"{type.Namespace}.{type.Name}"),
 				SuperTypeId = DataTypeIds.Enumeration,
-				DataTypeDefinition = new(enumeration),
+				DataTypeDefinition = new(new EnumDefinition { Fields = [.. enumFields] }),
 			};
 
 			var enumStringsProperty = new PropertyState(definition)
 			{
 				NodeId = this.GenerateId(),
 				BrowseName = new QualifiedName("EnumStrings", 0),
-				DisplayName = "EnumStrings",
+				DisplayName = new("EnumStrings"),
 				DataType = DataTypeIds.LocalizedText,
 				ValueRank = ValueRanks.OneDimension,
-				ArrayDimensions = new ReadOnlyList<uint>([(uint)enumNames.Length]),
+				ArrayDimensions = [(uint)enumNames.Length],
 				TypeDefinitionId = VariableTypeIds.PropertyType,
 				AccessLevel = AccessLevels.CurrentRead,
 				UserAccessLevel = AccessLevels.CurrentRead,
-				Value = enumNames,
+				Value = Variant.From(enumNames.ToArrayOf()),
 				MinimumSamplingInterval = 0,
 				Historizing = false
 			};
 
 			definition.AddChild(enumStringsProperty);
-			definition.AddReference(ReferenceTypes.HasProperty, false, enumStringsProperty.NodeId);
-			enumStringsProperty.AddReference(ReferenceTypes.HasProperty, true, definition.NodeId);
+			definition.AddReference(ReferenceTypeIds.HasProperty, false, enumStringsProperty.NodeId);
+			enumStringsProperty.AddReference(ReferenceTypeIds.HasProperty, true, definition.NodeId);
 
 			var enumValuesProperty = new PropertyState(definition)
 			{
 				NodeId = this.GenerateId(),
 				BrowseName = new QualifiedName("EnumValues", 0),
-				DisplayName = "EnumValues",
+				DisplayName = new("EnumValues"),
 				DataType = DataTypeIds.EnumValueType,
 				ValueRank = ValueRanks.OneDimension,
-				ArrayDimensions = new ReadOnlyList<uint>([(uint)enumValues.Length]),
+				ArrayDimensions = [(uint)enumValues.Length],
 				TypeDefinitionId = VariableTypeIds.PropertyType,
 				AccessLevel = AccessLevels.CurrentRead,
 				UserAccessLevel = AccessLevels.CurrentRead,
-				Value = enumValues,
+				Value = Variant.FromStructure(enumValues.ToArrayOf()),
 				MinimumSamplingInterval = 0,
 				Historizing = false
 			};
 
 			definition.AddChild(enumValuesProperty);
-			definition.AddReference(ReferenceTypes.HasProperty, false, enumValuesProperty.NodeId);
-			enumValuesProperty.AddReference(ReferenceTypes.HasProperty, true, definition.NodeId);
+			definition.AddReference(ReferenceTypeIds.HasProperty, false, enumValuesProperty.NodeId);
+			enumValuesProperty.AddReference(ReferenceTypeIds.HasProperty, true, definition.NodeId);
 
 			if(!this.PredefinedNodes.ContainsKey(definition.NodeId))
 				this.AddPredefinedNode(this.SystemContext, definition);
@@ -294,6 +294,7 @@ partial class OpcServer
 
 		private DataTypeState DefineDataType(Type type)
 		{
+			var structureFields = new List<StructureField>();
 			var structure = new StructureDefinition()
 			{
 				BaseDataType = DataTypeIds.Structure,
@@ -308,7 +309,7 @@ partial class OpcServer
 						if(field.IsInitOnly)
 							break;
 
-						structure.Fields.Add(new()
+						structureFields.Add(new()
 						{
 							Name = field.Name,
 							DataType = Utility.GetBuiltinType(field.FieldType, out var fieldRank),
@@ -316,7 +317,7 @@ partial class OpcServer
 						});
 						break;
 					case PropertyInfo property:
-						structure.Fields.Add(new()
+						structureFields.Add(new()
 						{
 							Name = property.Name,
 							DataType = Utility.GetBuiltinType(property.PropertyType, out var propertyRank),
@@ -326,12 +327,14 @@ partial class OpcServer
 				}
 			}
 
+			structure.Fields = [.. structureFields];
+
 			var definition = new DataTypeState()
 			{
 				NodeId = this.GenerateId(),
 				SymbolicName = $"{type.Name}DataType",
 				BrowseName = new QualifiedName($"{type.Namespace}.{type.Name}", this.NamespaceIndex),
-				DisplayName = $"{type.Namespace}.{type.Name}",
+				DisplayName = new($"{type.Namespace}.{type.Name}"),
 				SuperTypeId = DataTypeIds.Structure,
 				DataTypeDefinition = new(structure),
 			};
@@ -351,7 +354,7 @@ partial class OpcServer
 				IsAbstract = type.IsAbstract,
 				SymbolicName = $"{type.Name}Type",
 				BrowseName = new QualifiedName($"{type.Namespace}.{type.Name}", this.NamespaceIndex),
-				DisplayName = $"{type.Namespace}.{type.Name}",
+				DisplayName = new($"{type.Namespace}.{type.Name}"),
 				SuperTypeId = ObjectTypeIds.BaseObjectType,
 			};
 
@@ -379,11 +382,11 @@ partial class OpcServer
 			var state = new PropertyState(parent)
 			{
 				NodeId = this.GenerateId(),
-				ReferenceTypeId = ReferenceTypes.HasProperty,
+				ReferenceTypeId = ReferenceTypeIds.HasProperty,
 				TypeDefinitionId = VariableTypeIds.PropertyType,
 				SymbolicName = member.Name,
 				BrowseName = new(member.Name, this.NamespaceIndex),
-				DisplayName = member.Name,
+				DisplayName = new(member.Name),
 				DataType = this.DefineType(member.Type, out var rank).NodeId,
 				ValueRank = rank,
 				AccessLevel = member.IsReadOnly ? AccessLevels.CurrentRead : AccessLevels.CurrentReadOrWrite,
@@ -391,24 +394,24 @@ partial class OpcServer
 				MinimumSamplingInterval = MinimumSamplingIntervals.Indeterminate,
 			};
 
-			state.AddReference(ReferenceTypes.HasModellingRule, false, ObjectIds.ModellingRule_Mandatory);
+			state.AddReference(ReferenceTypeIds.HasModellingRule, false, ObjectIds.ModellingRule_Mandatory);
 			parent.AddChild(state);
 			return state;
 		}
 
 		private FolderState CreateFolder(NodeState parent, ExpandedNodeId id, string name, string displayName, string description)
 		{
-			var nodeId = id == null || id.IsNull ? this.GenerateId() : (NodeId)id;
+			var nodeId = id.IsNull ? this.GenerateId() : (NodeId)id;
 
 			var folder = new FolderState(parent)
 			{
 				SymbolicName = name,
-				ReferenceTypeId = ReferenceTypes.Organizes,
+				ReferenceTypeId = ReferenceTypeIds.Organizes,
 				TypeDefinitionId = ObjectTypeIds.FolderType,
 				NodeId = nodeId,
 				BrowseName = new QualifiedName(name, this.NamespaceIndex),
-				DisplayName = string.IsNullOrEmpty(displayName) ? name : displayName,
-				Description = description,
+				DisplayName = new(string.IsNullOrEmpty(displayName) ? name : displayName),
+				Description = new(description),
 				WriteMask = AttributeWriteMask.None,
 				UserWriteMask = AttributeWriteMask.None,
 				EventNotifier = EventNotifiers.None
@@ -430,12 +433,12 @@ partial class OpcServer
 			var variable = new BaseDataVariableState(parent)
 			{
 				SymbolicName = name,
-				ReferenceTypeId = ReferenceTypes.Organizes,
+				ReferenceTypeId = ReferenceTypeIds.Organizes,
 				TypeDefinitionId = VariableTypeIds.BaseDataVariableType,
 				NodeId = nodeId,
 				BrowseName = new QualifiedName(name, this.NamespaceIndex),
-				DisplayName = displayName,
-				Description = description,
+				DisplayName = new(displayName),
+				Description = new(description),
 				WriteMask = AttributeWriteMask.DisplayName | AttributeWriteMask.Description,
 				UserWriteMask = AttributeWriteMask.DisplayName | AttributeWriteMask.Description,
 				DataType = dataType,
@@ -443,18 +446,18 @@ partial class OpcServer
 				AccessLevel = AccessLevels.CurrentReadOrWrite,
 				UserAccessLevel = AccessLevels.CurrentReadOrWrite,
 				Historizing = false,
-				Value = value,
+				Value = VariantHelper.CastFromWithReflectionFallback(value),
 				StatusCode = StatusCodes.Good,
 				Timestamp = DateTime.Now,
 			};
 
 			if(valueRank == ValueRanks.OneDimension)
 			{
-				variable.ArrayDimensions = new ReadOnlyList<uint>([0]);
+				variable.ArrayDimensions = [0];
 			}
 			else if(valueRank == ValueRanks.TwoDimensions)
 			{
-				variable.ArrayDimensions = new ReadOnlyList<uint>([0, 0]);
+				variable.ArrayDimensions = [0, 0];
 			}
 
 			parent?.AddChild(variable);

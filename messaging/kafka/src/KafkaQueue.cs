@@ -80,10 +80,10 @@ public class KafkaQueue : MessageQueueBase<KafkaSubscriber, Configuration.KafkaC
 	#endregion
 
 	#region 订阅方法
-	protected override ValueTask<bool> OnSubscribeAsync(KafkaSubscriber subscriber, CancellationToken cancellation = default)
+	protected override async ValueTask<bool> OnSubscribeAsync(KafkaSubscriber subscriber, CancellationToken cancellation = default)
 	{
-		subscriber.Subscribe(_builder.Build());
-		return ValueTask.FromResult(true);
+		await subscriber.SubscribeAsync(_builder.Build(), cancellation);
+		return true;
 	}
 
 	protected override ValueTask<KafkaSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation)
@@ -97,19 +97,14 @@ public class KafkaQueue : MessageQueueBase<KafkaSubscriber, Configuration.KafkaC
 	#endregion
 
 	#region 资源释放
-	protected override void Dispose(bool disposing)
+	protected override ValueTask DisposeAsync(bool disposing)
 	{
-		if(disposing)
-		{
-			foreach(var subscriber in this.Subscribers)
-				subscriber.DisposeAsync().AsTask().GetAwaiter().GetResult();
-		}
-
 		var producer = Interlocked.Exchange(ref _producer, null);
 		if(producer != null)
 			producer.Dispose();
 
 		_builder = null;
+		return ValueTask.CompletedTask;
 	}
 	#endregion
 }

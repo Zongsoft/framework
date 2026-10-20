@@ -113,5 +113,14 @@ namespace Zongsoft.Externals.Etcd.Properties {
                 return ResourceManager.GetString("Etcd.SettingsRequired.Message", resourceCulture);
             }
         }
+
+		/// <summary>
+		///   查找类似 This provider only supports asynchronous operations. Use the corresponding Async method and await disposal. 的本地化字符串。
+		/// </summary>
+		internal static string Operation_AsyncOnly_Message {
+			get {
+				return ResourceManager.GetString("Operation.AsyncOnly.Message", resourceCulture);
+			}
+		}
     }
 }

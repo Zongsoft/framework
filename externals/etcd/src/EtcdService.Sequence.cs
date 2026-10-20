@@ -46,11 +46,9 @@ partial class EtcdService : ISequence
 	public ValueTask<long> DecreaseAsync(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default) => this.IncreaseAsync(key, -interval, seed, expiry, cancellation);
 	public ValueTask<double> DecreaseAsync(string key, double interval, double seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default) => this.IncreaseAsync(key, -interval, seed, expiry, cancellation);
 
-	public long Increase(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null) =>
-		this.IncreaseAsync(key, interval, seed, expiry).AsTask().GetAwaiter().GetResult();
+	public long Increase(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 
-	public double Increase(string key, double interval, double seed = 0, TimeSpan? expiry = null) =>
-		this.IncreaseAsync(key, interval, seed, expiry).AsTask().GetAwaiter().GetResult();
+	public double Increase(string key, double interval, double seed = 0, TimeSpan? expiry = null) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 
 	public ValueTask<long> IncreaseAsync(string key, int interval = 1, int seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default) =>
 		this.ChangeAsync(key, interval, seed, expiry, static value => long.Parse(value, NumberStyles.Integer, CultureInfo.InvariantCulture), static value => value.ToString(CultureInfo.InvariantCulture), cancellation);
@@ -58,8 +56,8 @@ partial class EtcdService : ISequence
 	public ValueTask<double> IncreaseAsync(string key, double interval, double seed = 0, TimeSpan? expiry = null, CancellationToken cancellation = default) =>
 		this.ChangeAsync(key, interval, seed, expiry, static value => double.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture), static value => value.ToString("R", CultureInfo.InvariantCulture), cancellation);
 
-	public void Reset(string key, int value = 0, TimeSpan? expiry = null) => this.ResetAsync(key, value, expiry).AsTask().GetAwaiter().GetResult();
-	public void Reset(string key, double value, TimeSpan? expiry = null) => this.ResetAsync(key, value, expiry).AsTask().GetAwaiter().GetResult();
+	public void Reset(string key, int value = 0, TimeSpan? expiry = null) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
+	public void Reset(string key, double value, TimeSpan? expiry = null) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 	public ValueTask ResetAsync(string key, int value = 0, TimeSpan? expiry = null, CancellationToken cancellation = default) =>
 		this.ResetAsync(key, value.ToString(CultureInfo.InvariantCulture), expiry, cancellation);
 	public ValueTask ResetAsync(string key, double value, TimeSpan? expiry = null, CancellationToken cancellation = default) =>

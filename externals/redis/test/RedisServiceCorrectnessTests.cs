@@ -292,7 +292,7 @@ public class RedisServiceCorrectnessTests
 	{
 		EnsureRedis();
 
-		using var cache = CreateCache(out var cacheNamespace);
+		await using var cache = CreateCache(out var cacheNamespace);
 		using var connection = CreateConnection();
 		var database = connection.GetDatabase();
 		var dictionaryKey = $"{cacheNamespace}:dictionary-sync";
@@ -358,8 +358,8 @@ public class RedisServiceCorrectnessTests
 		var cache = CreateCache(out _);
 		Assert.False(cache.Exists("connect"));
 
-		cache.Dispose();
-		cache.Dispose();
+		await cache.DisposeAsync();
+		await cache.DisposeAsync();
 		await cache.DisposeAsync();
 
 		Assert.Throws<ObjectDisposedException>(() => cache.Exists("after-dispose"));
@@ -373,11 +373,11 @@ public class RedisServiceCorrectnessTests
 		EnsureRedis();
 
 		var cache = CreateCache(out _);
-		using var start = new ManualResetEventSlim(false);
+		var start = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 		var exceptions = new ConcurrentQueue<Exception>();
 		var operations = Enumerable.Range(0, 32).Select(_ => Task.Run(async () =>
 		{
-			start.Wait();
+			await start.Task;
 
 			try
 			{
@@ -393,11 +393,11 @@ public class RedisServiceCorrectnessTests
 		})).ToArray();
 		var disposal = Task.Run(async () =>
 		{
-			start.Wait();
+			await start.Task;
 			await cache.DisposeAsync();
 		});
 
-		start.Set();
+		start.SetResult();
 		await Task.WhenAll(operations.Append(disposal)).WaitAsync(TimeSpan.FromSeconds(15));
 
 		Assert.Empty(exceptions);

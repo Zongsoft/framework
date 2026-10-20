@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -61,7 +61,7 @@ public class EventsTest
 	}
 
 	[Fact]
-	public void TestRaiseEvent()
+	public async Task TestRaiseEvent()
 	{
 		var createdHandler = new CreatedHandler();
 		var descriptor = Events.GetEvent("ModuleB:Target1.Created");
@@ -70,7 +70,7 @@ public class EventsTest
 		Assert.Equal("ModuleB:Target1.Created", descriptor.QualifiedName);
 		descriptor.Handlers.Add(createdHandler);
 		Assert.Contains(createdHandler, descriptor.Handlers);
-		Assert.Throws<NotImplementedException>(OnCreate);
+		await Assert.ThrowsAsync<NotImplementedException>(OnCreate);
 		descriptor.Handlers.Remove(createdHandler);
 		Assert.DoesNotContain(createdHandler, descriptor.Handlers);
 
@@ -81,12 +81,12 @@ public class EventsTest
 		Assert.Equal("ModuleB:Target1.StatusChanged", descriptor.QualifiedName);
 		descriptor.Handlers.Add(changedHandler);
 		Assert.Contains(changedHandler, descriptor.Handlers);
-		Assert.Throws<NotImplementedException>(OnStatusChanged);
+		await Assert.ThrowsAsync<NotImplementedException>(OnStatusChanged);
 		descriptor.Handlers.Remove(changedHandler);
 		Assert.DoesNotContain(changedHandler, descriptor.Handlers);
 
-		static void OnCreate() => ModuleB.Current.Events.Target1.OnCreated(new("MyMessage"), Parameters.Parameter("MyInteger", 100));
-		static void OnStatusChanged() => ModuleB.Current.Events.Target1.OnStatusChanged(new(1, "MyStatusChanged"), Parameters.Parameter("MyInteger", 200));
+		static async Task OnCreate() => await ModuleB.Current.Events.Target1.OnCreatedAsync(new("MyMessage"), Parameters.Parameter("MyInteger", 100));
+		static async Task OnStatusChanged() => await ModuleB.Current.Events.Target1.OnStatusChangedAsync(new(1, "MyStatusChanged"), Parameters.Parameter("MyInteger", 200));
 	}
 
 	[Fact]
@@ -362,8 +362,8 @@ public class ModuleB : ApplicationModule<ModuleB.EventRegistry>
 			#endregion
 
 			#region 公共方法
-			public bool OnCreated(CreatedArgument argument, Parameters parameters = null) => _registry.Raise(Created.Name, argument, parameters);
-			public bool OnStatusChanged(StatusChangedArgument argument, Parameters parameters = null) => _registry.Raise(StatusChanged.Name, argument, parameters);
+			public ValueTask<bool> OnCreatedAsync(CreatedArgument argument, Parameters parameters = null) => _registry.RaiseAsync(Created.Name, argument, parameters);
+			public ValueTask<bool> OnStatusChangedAsync(StatusChangedArgument argument, Parameters parameters = null) => _registry.RaiseAsync(StatusChanged.Name, argument, parameters);
 			#endregion
 		}
 
@@ -383,8 +383,8 @@ public class ModuleB : ApplicationModule<ModuleB.EventRegistry>
 			#endregion
 
 			#region 公共方法
-			public bool OnCreated(CreatedArgument argument, Parameters parameters = null) => _registry.Raise(Created.Name, argument, parameters);
-			public bool OnStatusChanged(StatusChangedArgument argument, Parameters parameters = null) => _registry.Raise(StatusChanged.Name, argument, parameters);
+			public ValueTask<bool> OnCreatedAsync(CreatedArgument argument, Parameters parameters = null) => _registry.RaiseAsync(Created.Name, argument, parameters);
+			public ValueTask<bool> OnStatusChangedAsync(StatusChangedArgument argument, Parameters parameters = null) => _registry.RaiseAsync(StatusChanged.Name, argument, parameters);
 			#endregion
 		}
 
@@ -403,7 +403,7 @@ public class ModuleB : ApplicationModule<ModuleB.EventRegistry>
 			#endregion
 
 			#region 公共方法
-			public bool OnAcquired(CreatedArgument argument, Parameters parameters = null) => _registry.Raise(Acquired.Name, argument, parameters);
+			public ValueTask<bool> OnAcquiredAsync(CreatedArgument argument, Parameters parameters = null) => _registry.RaiseAsync(Acquired.Name, argument, parameters);
 			#endregion
 		}
 	}

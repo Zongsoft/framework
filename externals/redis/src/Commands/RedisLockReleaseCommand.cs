@@ -51,9 +51,9 @@ public class RedisLockReleaseCommand : CommandBase<CommandContext>
 	{
 		var redis = context.Find<RedisCommand>(true)?.Redis ?? throw new CommandException(Properties.Resources.MissingRequiredRedisService_Message);
 
-		if(context.Value is IDisposable disposable)
+		if(context.Value is IAsyncDisposable disposable)
 		{
-			disposable.Dispose();
+			await disposable.DisposeAsync();
 		}
 		else if(context.Value is IEnumerable<Services.Distributing.IDistributedLock> lockers)
 		{

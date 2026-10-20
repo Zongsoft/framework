@@ -8,7 +8,7 @@ namespace Zongsoft.Messaging.RabbitMQ.Tests;
 public class RabbitQueueFactoryTests
 {
 	[Fact]
-	public void CreateQueueWithSettingsMapsConnectionFactory()
+	public async Task CreateQueueWithSettingsMapsConnectionFactory()
 	{
 		var settings = Configuration.RabbitConnectionSettingsDriver.Instance.GetSettings("RabbitMQ",
 			"server=127.0.0.1;port=5673;username=program;password=secret;container=/tests;client=Factory-Test;" +
@@ -33,7 +33,7 @@ public class RabbitQueueFactoryTests
 		Assert.True(options.AutomaticRecoveryEnabled);
 
 		var factory = new RabbitQueueFactory();
-		using var queue = factory.Create(settings);
+		await using var queue = factory.Create(settings);
 		var rabbit = Assert.IsType<RabbitQueue>(queue);
 		Assert.Equal("RabbitMQ", rabbit.Name);
 		Assert.Same(settings, rabbit.Settings);
@@ -42,10 +42,10 @@ public class RabbitQueueFactoryTests
 	}
 
 	[Fact]
-	public void CreateQueueWithConnectionString()
+	public async Task CreateQueueWithConnectionString()
 	{
 		var factory = new RabbitQueueFactory();
-		using var queue = factory.Create("Events",
+		await using var queue = factory.Create("Events",
 			"server=127.0.0.1;port=5672;username=program;password=xxxxxx;client=Factory-Connection;queue=events.queue;group=events.exchange;");
 
 		var rabbit = Assert.IsType<RabbitQueue>(queue);
@@ -90,7 +90,7 @@ public class RabbitQueueFactoryTests
 	public async Task ProduceWithEmptyTopicThrows()
 	{
 		var settings = Configuration.RabbitConnectionSettingsDriver.Instance.GetSettings("RabbitMQ", "server=127.0.0.1;client=Empty-Topic;");
-		using var queue = new RabbitQueue("RabbitMQ", settings);
+		await using var queue = new RabbitQueue("RabbitMQ", settings);
 
 		await Assert.ThrowsAsync<ArgumentNullException>(() => queue.ProduceAsync(string.Empty, ReadOnlyMemory<byte>.Empty).AsTask());
 	}

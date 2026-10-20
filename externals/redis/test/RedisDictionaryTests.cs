@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -12,11 +13,11 @@ public class RedisDictionaryTests
 	private const string TESTS_DISABLED = "Redis integration tests require ZONGSOFT_REDIS_TESTS=1.";
 
 	[Fact]
-	public void KeysAndValues_ReturnConvertedStringCollections()
+	public async Task KeysAndValues_ReturnConvertedStringCollections()
 	{
 		EnsureRedis();
 
-		using var cache = CreateCache();
+		await using var cache = CreateCache();
 		var dictionary = cache.CreateDictionary("dictionary");
 		dictionary.Add("alpha", "one");
 		dictionary.Add("beta", "two");
@@ -28,11 +29,11 @@ public class RedisDictionaryTests
 	}
 
 	[Fact]
-	public void PairContainsAndRemove_RequireBothKeyAndValueToMatch()
+	public async Task PairContainsAndRemove_RequireBothKeyAndValueToMatch()
 	{
 		EnsureRedis();
 
-		using var cache = CreateCache();
+		await using var cache = CreateCache();
 		var dictionary = cache.CreateDictionary("dictionary");
 		var pairs = (ICollection<KeyValuePair<string, string>>)dictionary;
 		var exact = new KeyValuePair<string, string>("alpha", "one");
@@ -49,11 +50,11 @@ public class RedisDictionaryTests
 	}
 
 	[Fact]
-	public void CopyTo_ValidatesBoundsAndCopiesEveryEntryAtOffset()
+	public async Task CopyTo_ValidatesBoundsAndCopiesEveryEntryAtOffset()
 	{
 		EnsureRedis();
 
-		using var cache = CreateCache();
+		await using var cache = CreateCache();
 		var dictionary = cache.CreateDictionary("dictionary");
 		dictionary.Add("alpha", "one");
 		dictionary.Add("beta", "two");

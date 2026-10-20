@@ -211,7 +211,6 @@ partial class Application
 				this.Dispose();
 			}
 		}
-
 		#endregion
 	}
 	#endregion

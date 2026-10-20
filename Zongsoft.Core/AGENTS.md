@@ -14,6 +14,7 @@
 
 ## 验证
 
-- 构建 `Zongsoft.Core.slnx`，运行 `test/Zongsoft.Core.Tests.csproj` 中的相关测试。
+- 构建 `Zongsoft.Core.slnx`，运行 `test/unit/Zongsoft.Core.Tests.csproj` 中的相关测试。
+- 主解决方案与默认 Cake `test` 目标只包含 `test/unit`；`test/integration` 通过独立的 `Zongsoft.Core.Tests.slnx` 或 `integration-test` 目标显式执行，不加入主解决方案。
 - 性能相关改动才运行 `benchmark`；样例用于人工冒烟，不代替单元测试。
 - 公共契约变化后定向构建受影响的直接下游项目。

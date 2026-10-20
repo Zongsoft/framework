@@ -24,7 +24,7 @@ public class TerminalInputTests
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public Task RepeatedCancellationKeepsOneReadForAllLineMethods() => TerminalProcess.RunAsync("controlled-line");
+	public Task RepeatedCancellationKeepsOneReadForAsyncMethodsAndRejectsSyncReads() => TerminalProcess.RunAsync("controlled-line");
 
 	[Fact]
 	[Trait("Category", "Integration")]

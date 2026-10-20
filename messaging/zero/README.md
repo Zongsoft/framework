@@ -260,6 +260,8 @@ Set `ZeroQueueServer.Storage` and `Storages` only while stopped. With Control en
 
 One request can receive multiple replies. Each reply refreshes the ten-minute pending-cache expiry; a `Replaced` notification preserves the active token. Actual expiration removes its registration, while disposing the token also clears buffered replies. Dispose tokens when finished collecting replies. [ZeroRequesterMultipleReplyTests](test/ZeroRequesterMultipleReplyTests.cs) covers 3/8 replies over real sockets and deterministic cache replacement, expiration, late replies, and token/requester disposal. Set `ZONGSOFT_MESSAGING_TESTS=true` to enable the socket tests.
 
+Enumerate responses with `await foreach` over `token.GetResponsesAsync(timeout, cancellation)`. A positive timeout waits asynchronously for replies; the default zero timeout reads only currently buffered responses. Cancellation ends enumeration, and disposing the token or requester wakes a pending wait. `ZeroRequester.DisposeAsync` waits for accepted requests and reply-subscription cleanup; repeated calls share completion or failure. The offline tests verify pending enumeration returns promptly and wakes for replies, cancellation and disposal.
+
 [ZeroResponderTests](test/ZeroResponderTests.cs) additionally checks subscription rollback on startup failure. No nonexistent `PingHandler` is supplied here. Applications use shared communication contracts and host composition; standalone tests own their directly constructed instances.
 
 ### Event Channel

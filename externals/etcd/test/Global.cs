@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Externals.Etcd.Tests;
 
@@ -9,13 +10,13 @@ public static class Global
 
 	public static bool IsTestingEnabled => System.Diagnostics.Debugger.IsAttached || IsEnabled("ZONGSOFT_ETCD_TESTS");
 
-	public static bool IsAvailable()
+	public static async Task<bool> IsAvailableAsync()
 	{
 		try
 		{
 			using var source = new System.Threading.CancellationTokenSource(TimeSpan.FromSeconds(2));
-			using var service = new EtcdService("test", ConnectionString);
-			service.HeartbeatAsync(source.Token).AsTask().GetAwaiter().GetResult();
+			await using var service = new EtcdService("test", ConnectionString);
+			await service.HeartbeatAsync(source.Token);
 			return true;
 		}
 		catch

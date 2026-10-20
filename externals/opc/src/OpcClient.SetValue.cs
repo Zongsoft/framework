@@ -56,7 +56,7 @@ partial class OpcClient
 				new WriteValue()
 				{
 					NodeId = NodeId.Parse(identifier),
-					Value = new DataValue(new Variant(value), StatusCodes.Good),
+					Value = new DataValue(VariantHelper.CastFromWithReflectionFallback(value), StatusCodes.Good),
 					AttributeId = Attributes.Value,
 				}
 			],
@@ -65,13 +65,13 @@ partial class OpcClient
 		if(response.ResponseHeader != null && StatusCode.IsBad(response.ResponseHeader.ServiceResult))
 			throw new InvalidOperationException(string.Format(Properties.Resources.Opc_ValueWriteFailed_Message, response.ResponseHeader.ServiceResult, identifier));
 
-		if(response.Results != null && response.Results.Count > 0)
+		if(response.Results.Count > 0)
 		{
 			//如果失败原因为指定标识不存在则返回失败（不触发异常）
 			if(response.Results[0] == StatusCodes.BadNodeIdUnknown)
 				return false;
 
-			var failures = response.Results.Where(StatusCode.IsBad);
+			var failures = response.Results.ToArray().Where(StatusCode.IsBad);
 
 			if(failures.Any())
 				throw new InvalidOperationException(string.Format(Properties.Resources.Opc_ValueWriteFailed_Message, string.Join(',', failures), identifier));
@@ -93,7 +93,7 @@ partial class OpcClient
 		var nodes = entries.Select(entry => new WriteValue()
 		{
 			NodeId = NodeId.Parse(entry.Key),
-			Value = new DataValue(new Variant(entry.Value)),
+			Value = new DataValue(VariantHelper.CastFromWithReflectionFallback(entry.Value)),
 		});
 
 		var session = this.GetSession();
@@ -102,8 +102,8 @@ partial class OpcClient
 		if(response.ResponseHeader != null && StatusCode.IsBad(response.ResponseHeader.ServiceResult))
 			throw new InvalidOperationException(string.Format(Properties.Resources.Opc_ValuesWriteFailed_Message, response.ResponseHeader.ServiceResult));
 
-		if(response.Results != null && response.Results.Count > 0)
-			return response.Results.Where(StatusCode.IsBad).Select(Failure.GetFailure).ToArray();
+		if(response.Results.Count > 0)
+			return response.Results.ToArray().Where(StatusCode.IsBad).Select(Failure.GetFailure).ToArray();
 
 		return null;
 	}

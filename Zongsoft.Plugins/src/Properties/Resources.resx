@@ -174,15 +174,6 @@
 	<data name="Builtin.TypeInvalid.Message" xml:space="preserve">
 		<value>Can not get type from '{0}' text for '{1}' builtin.</value>
 	</data>
-	<data name="Predication.SyntaxInvalid.Message" xml:space="preserve">
-		<value>Can not parse for the predication because of a syntax error.</value>
-	</data>
-	<data name="Predication.TextRequired.Message" xml:space="preserve">
-		<value>Can not parse for the predication because the parser text is empty.</value>
-	</data>
-	<data name="Predication.ParseFailed.Message" xml:space="preserve">
-		<value>Can not parse for the predication.</value>
-	</data>
 	<data name="Plugin.ElementTypeUnsupported.Message" xml:space="preserve">
 		<value>Can not support the '{0}' element type.</value>
 	</data>
@@ -236,9 +227,6 @@
 	</data>
 	<data name="Plugin.InstanceCreationFailed.Message" xml:space="preserve">
 		<value>An exception occurred while creating an instance of type '{0}' in '{1}'.</value>
-	</data>
-	<data name="Predication.ServiceProviderNotFound.Message" xml:space="preserve">
-		<value>The '{0}' ServiceProvider is not exists on the predication parsing.</value>
 	</data>
 	<data name="Plugin.AssemblyFileNotFound.Message" xml:space="preserve">
 		<value>The '{0}' assembly file is not exists. in '{1}' plugin file.</value>

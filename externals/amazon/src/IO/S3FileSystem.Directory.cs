@@ -48,7 +48,7 @@ partial class S3FileSystem
 		public bool Create(string path, IEnumerable<KeyValuePair<string, string>> properties = null) => true;
 		public ValueTask<bool> CreateAsync(string path, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default) => ValueTask.FromResult(true);
 
-		public bool Delete(string path) => this.DeleteAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public bool Delete(string path) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public async ValueTask<bool> DeleteAsync(string path, CancellationToken cancellation = default)
 		{
 			path = Resolve(path, out var region, out var bucket);
@@ -91,7 +91,7 @@ partial class S3FileSystem
 			}
 		}
 
-		public bool Exists(string path) => this.ExistsAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public bool Exists(string path) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public async ValueTask<bool> ExistsAsync(string path, CancellationToken cancellation = default)
 		{
 			path = Resolve(path, out var region, out var bucket);
@@ -114,7 +114,7 @@ partial class S3FileSystem
 			}
 		}
 
-		public void Move(string source, string destination) => this.MoveAsync(source, destination).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public void Move(string source, string destination) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public async ValueTask MoveAsync(string source, string destination, CancellationToken cancellation = default)
 		{
 			var srcPath = Resolve(source, out var srcRegion, out var srcBucket);
@@ -198,13 +198,13 @@ partial class S3FileSystem
 			}
 		}
 
-		public Zongsoft.IO.DirectoryInfo GetInfo(string path) => this.GetInfoAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public Zongsoft.IO.DirectoryInfo GetInfo(string path) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public ValueTask<Zongsoft.IO.DirectoryInfo> GetInfoAsync(string path, CancellationToken cancellation = default) => ValueTask.FromResult<Zongsoft.IO.DirectoryInfo>(null);
 
-		public bool SetInfo(string path, IEnumerable<KeyValuePair<string, string>> properties) => this.SetInfoAsync(path, properties).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public bool SetInfo(string path, IEnumerable<KeyValuePair<string, string>> properties) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public ValueTask<bool> SetInfoAsync(string path, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default) => ValueTask.FromResult(false);
 
-		public IEnumerable<Zongsoft.IO.PathInfo> GetChildren(string path, string pattern, bool recursive = false) => this.GetChildrenAsync(path, pattern, recursive).ToBlockingEnumerable();
+		public IEnumerable<Zongsoft.IO.PathInfo> GetChildren(string path, string pattern, bool recursive = false) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public async IAsyncEnumerable<Zongsoft.IO.PathInfo> GetChildrenAsync(string path, string pattern, bool recursive, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 		{
 			var prefix = Resolve(path, out var region, out var bucket);
@@ -256,7 +256,7 @@ partial class S3FileSystem
 			} while(continuation != null && !cancellation.IsCancellationRequested);
 		}
 
-		public IEnumerable<Zongsoft.IO.DirectoryInfo> GetDirectories(string path, string pattern, bool recursive = false) => this.GetDirectoriesAsync(path, pattern, recursive).ToBlockingEnumerable();
+		public IEnumerable<Zongsoft.IO.DirectoryInfo> GetDirectories(string path, string pattern, bool recursive = false) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public async IAsyncEnumerable<Zongsoft.IO.DirectoryInfo> GetDirectoriesAsync(string path, string pattern, bool recursive, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 		{
 			var children = this.GetChildrenAsync(path, pattern, recursive, cancellation);
@@ -268,7 +268,7 @@ partial class S3FileSystem
 			}
 		}
 
-		public IEnumerable<Zongsoft.IO.FileInfo> GetFiles(string path, string pattern, bool recursive = false) => this.GetFilesAsync(path, pattern, recursive).ToBlockingEnumerable();
+		public IEnumerable<Zongsoft.IO.FileInfo> GetFiles(string path, string pattern, bool recursive = false) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public async IAsyncEnumerable<Zongsoft.IO.FileInfo> GetFilesAsync(string path, string pattern, bool recursive, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 		{
 			var children = this.GetChildrenAsync(path, pattern, recursive, cancellation);

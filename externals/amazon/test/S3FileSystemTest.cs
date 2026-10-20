@@ -18,8 +18,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 	[Fact]
 	public void GetUrl()
 	{
-		if(!Global.IsTestingEnabled)
-			return;
+		Assert.SkipUnless(Global.IsTestingEnabled, "S3 integration tests require an explicitly enabled debugger session.");
 
 		var url = FileSystem.GetUrl("zfs.s3:/zongsoft-fs/Wukong.png");
 		Assert.NotNull(url);
@@ -29,8 +28,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 	[Fact]
 	public async Task ExistsAsync()
 	{
-		if(!Global.IsTestingEnabled)
-			return;
+		Assert.SkipUnless(Global.IsTestingEnabled, "S3 integration tests require an explicitly enabled debugger session.");
 
 		var existed = await FileSystem.File.ExistsAsync($"zfs.s3:/zongsoft-fs/NoExisted-{Guid.NewGuid()}.ext");
 		Assert.False(existed);
@@ -39,8 +37,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 	[Fact]
 	public async Task DeleteAsync()
 	{
-		if(!Global.IsTestingEnabled)
-			return;
+		Assert.SkipUnless(Global.IsTestingEnabled, "S3 integration tests require an explicitly enabled debugger session.");
 
 		var result = await FileSystem.File.DeleteAsync($"zfs.s3:/zongsoft-fs/NoExisted-{Guid.NewGuid()}.ext");
 		Assert.False(result);
@@ -52,8 +49,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 	[Fact]
 	public async Task GetInfoAsync()
 	{
-		if(!Global.IsTestingEnabled)
-			return;
+		Assert.SkipUnless(Global.IsTestingEnabled, "S3 integration tests require an explicitly enabled debugger session.");
 
 		var info = await FileSystem.File.GetInfoAsync($"zfs.s3:/zongsoft-fs/NoExisted-{Guid.NewGuid()}.ext");
 		Assert.Null(info);
@@ -62,8 +58,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 	[Fact]
 	public async Task SetInfoAsync()
 	{
-		if(!Global.IsTestingEnabled)
-			return;
+		Assert.SkipUnless(Global.IsTestingEnabled, "S3 integration tests require an explicitly enabled debugger session.");
 
 		var tags = new Dictionary<string, string>
 		{
@@ -80,25 +75,23 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 		const int COUNT = 10;
 		const string DIRECTORY = "zfs.s3:/zongsoft-fs/Directory/";
 
-		if(!Global.IsTestingEnabled)
-			return;
+		Assert.SkipUnless(Global.IsTestingEnabled, "S3 integration tests require an explicitly enabled debugger session.");
 
 		var buffer = new byte[1024];
-		var children = FileSystem.Directory.GetChildrenAsync($"zfs.s3:/zongsoft-fs/NoExisted-{Guid.NewGuid()}/").ToBlockingEnumerable().ToArray();
+		var children = await Utility.ToArrayAsync(FileSystem.Directory.GetChildrenAsync($"zfs.s3:/zongsoft-fs/NoExisted-{Guid.NewGuid()}/"));
 		Assert.Empty(children);
 
 		for(int i = 0; i < COUNT; i++)
 		{
-			using(var stream = await FileSystem.File.OpenAsync($"{DIRECTORY}/{GetFileName(i)}", FileMode.OpenOrCreate))
+			await using(var stream = await FileSystem.File.OpenAsync($"{DIRECTORY}/{GetFileName(i)}", FileMode.OpenOrCreate))
 			{
 				Random.Shared.NextBytes(buffer);
-				stream.Write(buffer);
+				await stream.WriteAsync(buffer);
 			}
 		}
 
-		Assert.True(FileSystem.Directory.Exists(DIRECTORY));
-		children = FileSystem.Directory.GetChildrenAsync(DIRECTORY)
-			.ToBlockingEnumerable()
+		Assert.True(await FileSystem.Directory.ExistsAsync(DIRECTORY));
+		children = (await Utility.ToArrayAsync(FileSystem.Directory.GetChildrenAsync(DIRECTORY)))
 			.OrderBy(info => info.Name)
 			.ToArray();
 
@@ -110,7 +103,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 			Assert.Equal(GetFileName(i), children[i].Name);
 		}
 
-		children = FileSystem.Directory.GetChildrenAsync(DIRECTORY, "*.ext").ToBlockingEnumerable().ToArray();
+		children = await Utility.ToArrayAsync(FileSystem.Directory.GetChildrenAsync(DIRECTORY, "*.ext"));
 		Assert.NotEmpty(children);
 		Assert.Equal(COUNT / 2, children.Length);
 
@@ -123,8 +116,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 	[Fact]
 	public async Task OpenAsync()
 	{
-		if(!Global.IsTestingEnabled)
-			return;
+		Assert.SkipUnless(Global.IsTestingEnabled, "S3 integration tests require an explicitly enabled debugger session.");
 
 		var properties = new Dictionary<string, string>()
 		{
@@ -135,7 +127,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 		var filePath = $"zfs.s3:/zongsoft-fs/${Zongsoft.Common.Randomizer.GenerateString()}.bin";
 
 		using var source = new MemoryStream();
-		using(var target = await FileSystem.File.OpenAsync(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, properties))
+		await using(var target = await FileSystem.File.OpenAsync(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, properties))
 		{
 			Assert.NotNull(target);
 
@@ -147,7 +139,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 			}
 		}
 
-		Assert.True(FileSystem.File.Exists(filePath));
+		Assert.True(await FileSystem.File.ExistsAsync(filePath));
 		var info = await FileSystem.File.GetInfoAsync(filePath);
 		Assert.NotNull(info);
 		Assert.Equal(source.Length, info.Size);
@@ -159,15 +151,14 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 			Assert.Equal(property.Value, info.Properties[property.Key]);
 		}
 
-		Assert.True(Enumerable.SequenceEqual(Utility.ComputeHash(source), Utility.ComputeHash(filePath)));
-		Assert.True(FileSystem.File.Delete(filePath));
+		Assert.True(Enumerable.SequenceEqual(Utility.ComputeHash(source), await Utility.ComputeHashAsync(filePath)));
+		Assert.True(await FileSystem.File.DeleteAsync(filePath));
 	}
 
 	[Fact]
 	public async Task AppendAsync()
 	{
-		if(!Global.IsTestingEnabled)
-			return;
+		Assert.SkipUnless(Global.IsTestingEnabled, "S3 integration tests require an explicitly enabled debugger session.");
 
 		const int FIRST_LENGTH = 512;
 		const int LAST_LENGTH = 1024;
@@ -181,7 +172,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 		var filePath = $"zfs.s3:/zongsoft-fs/${Zongsoft.Common.Randomizer.GenerateString()}.bin";
 
 		using var first = new MemoryStream();
-		using(var target = await FileSystem.File.OpenAsync(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, properties))
+		await using(var target = await FileSystem.File.OpenAsync(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, properties))
 		{
 			Assert.NotNull(target);
 
@@ -193,13 +184,13 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 			}
 		}
 
-		Assert.True(Enumerable.SequenceEqual(Utility.ComputeHash(first), Utility.ComputeHash(filePath)));
+		Assert.True(Enumerable.SequenceEqual(Utility.ComputeHash(first), await Utility.ComputeHashAsync(filePath)));
 
 		properties["Author"] = "Popeye";
 		properties["Creation"] = DateTime.Now.ToString();
 
 		using var last = new MemoryStream();
-		using(var target = await FileSystem.File.OpenAsync(filePath, FileMode.Append, FileAccess.ReadWrite, properties))
+		await using(var target = await FileSystem.File.OpenAsync(filePath, FileMode.Append, FileAccess.ReadWrite, properties))
 		{
 			Assert.NotNull(target);
 
@@ -211,7 +202,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 			}
 		}
 
-		Assert.True(FileSystem.File.Exists(filePath));
+		Assert.True(await FileSystem.File.ExistsAsync(filePath));
 		var info = await FileSystem.File.GetInfoAsync(filePath);
 		Assert.NotNull(info);
 		Assert.Equal(first.Length + last.Length, info.Size);
@@ -226,7 +217,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 		buffer = new byte[first.Length + last.Length];
 		Array.Copy(first.ToArray(), 0, buffer, 0, first.Length);
 		Array.Copy(last.ToArray(), 0, buffer, first.Length, last.Length);
-		Assert.True(Enumerable.SequenceEqual(Utility.ComputeHash(buffer), Utility.ComputeHash(filePath)));
-		Assert.True(FileSystem.File.Delete(filePath));
+		Assert.True(Enumerable.SequenceEqual(Utility.ComputeHash(buffer), await Utility.ComputeHashAsync(filePath)));
+		Assert.True(await FileSystem.File.DeleteAsync(filePath));
 	}
 }

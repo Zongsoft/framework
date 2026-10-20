@@ -72,24 +72,13 @@ public class FileCommand : CommandBase<CommandContext>, ICommandCompletion
 
 		//如果是写入操作则执行保存方法
 		if(isSaving && result != null)
-			FileUtility.Save(result, context.Value, context.Options.GetValue<Encoding>(KEY_ENCODING_OPTION));
+			await FileUtility.SaveAsync(result, context.Value, context.Options.GetValue<Encoding>(KEY_ENCODING_OPTION), cancellation);
 
 		return result;
 	}
 	#endregion
 
 	#region 执行完成
-	public void OnCompleted(CommandCompletionContext context)
-	{
-		if(context.Result is IEnumerable<Stream> streams)
-		{
-			foreach(var stream in streams)
-				stream?.Close();
-		}
-		else if(context.Result is Stream stream)
-		{
-			stream.Close();
-		}
-	}
+	public ValueTask OnCompletedAsync(CommandCompletionContext context) => FileUtility.DisposeAsync(context.Result);
 	#endregion
 }

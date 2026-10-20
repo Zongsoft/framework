@@ -12,13 +12,13 @@ A process uses one terminal, and its default standard input lives for the proces
 
 ## Standard input
 
-`Terminal.Console.Input` defaults to one process-wide `TextReader`; assign `Input = null` to restore it. It supports `ReadLine()`, `ReadLineAsync()` and `ReadLineAsync(CancellationToken)` through the same reading state. The synchronous entry waits for a complete line; the asynchronous entries do not block the calling thread. This reader only provides line input; `Peek`, character and character-block reads are unsupported.
+`Terminal.Console.Input` defaults to one process-wide `TextReader`; assign `Input = null` to restore it. It supports `ReadLineAsync()` and `ReadLineAsync(CancellationToken)` through the same reading state, without blocking the calling thread. `ReadLine()` always throws `NotSupportedException`, including while an async read is pending and after EOF or failure; it never consumes a pending result. This reader only provides asynchronous line input; `Peek`, character and character-block reads are unsupported.
 
-The first read starts one background thread that calls `Console.In.ReadLine()` on demand. It does not read another line without a request. .NET handles decoding, line endings and console editing.
+Input is read only when requested. .NET handles decoding, line endings and console editing.
 
 Only one caller can wait at a time. Concurrent waits throw `InvalidOperationException`. Cancellation ends only that wait. The reader retains the unfinished read and its result. A subsequent call awaits the same operation without starting another read or discarding its result. A result is consumed only when successfully returned to a caller. Completion racing with cancellation may produce either outcome.
 
-EOF and read failures remain in the reader. Subsequent calls return EOF or propagate the same failure without retrying the source. Host shutdown does not wait for this process-wide read; the background thread ends with the process. `Dispose()` and `Close()` do nothing and never close standard input.
+EOF and read failures remain in the reader. Subsequent calls return EOF or propagate the same failure without retrying the source. Host shutdown does not wait for an unfinished standard-input read. `Dispose()` and `Close()` do nothing and never close standard input.
 
 Configure `Console.InputEncoding` before the first read. Once reading starts, do not replace `Console.In` or mix this reader with `Console.In`, `Console.ReadKey` or another standard input entry. The operating system and .NET own console modes and unsubmitted editing state.
 
@@ -55,4 +55,4 @@ The [Plugins terminal host](../../Zongsoft.Plugins/README.md#terminal-signals-an
 
 ## Verification
 
-Unit tests in `test/Terminals` cover text-reader injection, executor cancellation, EOF, failures, ownership and command cleanup. Separate [integration tests](../test/integration/README.md) use isolated child processes to verify shared standard input, retained results and failures after cancellation, synchronous and asynchronous reads, and process exit. They are excluded from the main solution's default unit tests.
+Unit tests in `test/unit/Terminals` cover text-reader injection, executor cancellation, EOF, failures, ownership and command cleanup. Separate [integration tests](../test/integration/README.md) use isolated child processes to verify shared standard input, retained results and failures after cancellation, both asynchronous overloads, rejection of synchronous reads, and process exit. They are excluded from the main solution's default unit tests.

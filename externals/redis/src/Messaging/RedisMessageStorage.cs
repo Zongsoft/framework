@@ -42,7 +42,7 @@ using Zongsoft.Externals.Redis.Configuration;
 namespace Zongsoft.Externals.Redis.Messaging;
 
 /// <summary>提供基于 Redis 的消息存储。</summary>
-public sealed partial class RedisMessageStorage : MessageStorageBase<RedisConnectionSettings>, IDisposable, IAsyncDisposable
+public sealed partial class RedisMessageStorage : MessageStorageBase<RedisConnectionSettings>, IAsyncDisposable
 {
 	#region 常量定义
 	private const int BATCH_SIZE = 100;
@@ -138,7 +138,6 @@ public sealed partial class RedisMessageStorage : MessageStorageBase<RedisConnec
 	#endregion
 
 	#region 释放方法
-	public void Dispose() => this.DisposeAsync().AsTask().GetAwaiter().GetResult();
 	public async ValueTask DisposeAsync()
 	{
 		RedisConnectionLease lease = null;

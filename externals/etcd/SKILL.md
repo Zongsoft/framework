@@ -49,7 +49,6 @@ description: 实现、审查、调试、测试或重构 Zongsoft.Externals.Etcd 
 
 ## 测试
 
-- 若存在 `.testagent/research.md` 和 `.testagent/plan.md`，先核对其结论是否仍符合当前源码。
 - 网络无关验证默认运行；集成测试用 `ZONGSOFT_ETCD_TESTS=1` 显式开启，并先探测 `127.0.0.1:2379`。
 - 使用唯一 Namespace，禁用集成测试并行。
 - 覆盖并发递增、租约过期、所有权不匹配、手动/自动续期、竞争、取消和严格递增的栅栏令牌。

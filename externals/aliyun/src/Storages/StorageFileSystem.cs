@@ -167,7 +167,7 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 		#endregion
 
 		#region 公共方法
-		public bool Create(string path, IEnumerable<KeyValuePair<string, string>> properties = null) => this.CreateAsync(path, properties).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public bool Create(string path, IEnumerable<KeyValuePair<string, string>> properties = null) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public ValueTask<bool> CreateAsync(string path, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default)
 		{
 			var directory = this.EnsureDirectoryPath(path, out var bucketName);
@@ -175,7 +175,7 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 			return client.CreateAsync(directory, properties, cancellation);
 		}
 
-		public bool Delete(string path) => this.DeleteAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public bool Delete(string path) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public ValueTask<bool> DeleteAsync(string path, CancellationToken cancellation = default)
 		{
 			var directory = this.EnsureDirectoryPath(path, out var bucketName);
@@ -186,7 +186,7 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 		public void Move(string source, string destination) => throw new NotSupportedException();
 		public ValueTask MoveAsync(string source, string destination, CancellationToken cancellation = default) => throw new NotSupportedException();
 
-		public bool Exists(string path) => this.ExistsAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public bool Exists(string path) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public ValueTask<bool> ExistsAsync(string path, CancellationToken cancellation = default)
 		{
 			var directory = this.EnsureDirectoryPath(path, out var bucketName);
@@ -194,7 +194,7 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 			return client.ExistsAsync(directory, cancellation);
 		}
 
-		public Zongsoft.IO.DirectoryInfo GetInfo(string path) => this.GetInfoAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public Zongsoft.IO.DirectoryInfo GetInfo(string path) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public async ValueTask<Zongsoft.IO.DirectoryInfo> GetInfoAsync(string path, CancellationToken cancellation = default)
 		{
 			var directory = this.EnsureDirectoryPath(path, out var bucketName);
@@ -203,7 +203,7 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 			return this.GenerateInfo(path, properties);
 		}
 
-		public bool SetInfo(string path, IEnumerable<KeyValuePair<string, string>> properties) => this.SetInfoAsync(path, properties).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public bool SetInfo(string path, IEnumerable<KeyValuePair<string, string>> properties) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public ValueTask<bool> SetInfoAsync(string path, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default)
 		{
 			var directory = this.EnsureDirectoryPath(path, out var bucketName);
@@ -211,13 +211,7 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 			return client.SetExtendedPropertiesAsync(directory, properties, cancellation);
 		}
 
-		public IEnumerable<Zongsoft.IO.PathInfo> GetChildren(string path, string pattern, bool recursive = false)
-		{
-			if(recursive)
-				throw new NotSupportedException();
-
-			return Zongsoft.Collections.Enumerable.Synchronize(this.GetChildrenAsync(path, pattern, recursive));
-		}
+		public IEnumerable<Zongsoft.IO.PathInfo> GetChildren(string path, string pattern, bool recursive = false) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 
 		public async IAsyncEnumerable<Zongsoft.IO.PathInfo> GetChildrenAsync(string path, string pattern, bool recursive, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 		{
@@ -231,17 +225,11 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 			if(result == null)
 				yield break;
 
-			foreach(var item in result)
+			await foreach(var item in result.WithCancellation(cancellation))
 				yield return item;
 		}
 
-		public IEnumerable<Zongsoft.IO.DirectoryInfo> GetDirectories(string path, string pattern, bool recursive = false)
-		{
-			if(recursive)
-				throw new NotSupportedException();
-
-			return Zongsoft.Collections.Enumerable.Synchronize(this.GetDirectoriesAsync(path, pattern, recursive));
-		}
+		public IEnumerable<Zongsoft.IO.DirectoryInfo> GetDirectories(string path, string pattern, bool recursive = false) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 
 		public async IAsyncEnumerable<Zongsoft.IO.DirectoryInfo> GetDirectoriesAsync(string path, string pattern, bool recursive, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 		{
@@ -255,20 +243,14 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 			if(result == null)
 				yield break;
 
-			foreach(var item in result)
+			await foreach(var item in result.WithCancellation(cancellation))
 			{
 				if(item.IsDirectory)
 					yield return (Zongsoft.IO.DirectoryInfo)item;
 			}
 		}
 
-		public IEnumerable<Zongsoft.IO.FileInfo> GetFiles(string path, string pattern, bool recursive = false)
-		{
-			if(recursive)
-				throw new NotSupportedException();
-
-			return Zongsoft.Collections.Enumerable.Synchronize(this.GetFilesAsync(path, pattern, recursive));
-		}
+		public IEnumerable<Zongsoft.IO.FileInfo> GetFiles(string path, string pattern, bool recursive = false) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 
 		public async IAsyncEnumerable<Zongsoft.IO.FileInfo> GetFilesAsync(string path, string pattern, bool recursive, [System.Runtime.CompilerServices.EnumeratorCancellation]CancellationToken cancellation = default)
 		{
@@ -282,7 +264,7 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 			if(result == null)
 				yield break;
 
-			foreach(var item in result)
+			await foreach(var item in result.WithCancellation(cancellation))
 			{
 				if(item.IsFile)
 					yield return (Zongsoft.IO.FileInfo)item;
@@ -359,7 +341,7 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 		#endregion
 
 		#region 公共方法
-		public bool Delete(string path) => this.DeleteAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public bool Delete(string path) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public ValueTask<bool> DeleteAsync(string path, CancellationToken cancellation = default)
 		{
 			path = this.EnsureFilePath(path, out var bucketName);
@@ -367,7 +349,7 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 			return client.DeleteAsync(path, cancellation);
 		}
 
-		public bool Exists(string path) => this.ExistsAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public bool Exists(string path) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public ValueTask<bool> ExistsAsync(string path, CancellationToken cancellation = default)
 		{
 			path = this.EnsureFilePath(path, out var bucketName);
@@ -375,7 +357,7 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 			return client.ExistsAsync(path, cancellation);
 		}
 
-		public void Copy(string source, string destination, bool overwrite = true) => this.CopyAsync(source, destination, overwrite).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public void Copy(string source, string destination, bool overwrite = true) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public async ValueTask CopyAsync(string source, string destination, bool overwrite, CancellationToken cancellation = default)
 		{
 			source = this.EnsureFilePath(source, out var sourceBucket);
@@ -398,7 +380,7 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 				if(!overwrite && await destinationClient.ExistsAsync(destination, cancellation))
 					return;
 
-				using(var sourceStream = await sourceClient.DownloadAsync(source, null, cancellation))
+				await using(var sourceStream = await sourceClient.DownloadAsync(source, null, cancellation))
 				{
 					await using(var uploader = destinationClient.GetUploader(destination))
 					{
@@ -414,7 +396,7 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 			}
 		}
 
-		public void Move(string source, string destination) => this.MoveAsync(source, destination).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public void Move(string source, string destination) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public async ValueTask MoveAsync(string source, string destination, CancellationToken cancellation = default)
 		{
 			source = this.EnsureFilePath(source, out var sourceBucket);
@@ -432,7 +414,7 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 				var sourceClient = _fileSystem.GetClient(sourceBucket);
 				var destinationClient = _fileSystem.GetClient(destinationBucket);
 
-				using(var sourceStream = await sourceClient.DownloadAsync(source, null, cancellation))
+				await using(var sourceStream = await sourceClient.DownloadAsync(source, null, cancellation))
 				{
 					await using(var uploader = destinationClient.GetUploader(destination))
 					{
@@ -450,7 +432,7 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 			}
 		}
 
-		public Zongsoft.IO.FileInfo GetInfo(string path) => this.GetInfoAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public Zongsoft.IO.FileInfo GetInfo(string path) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public async ValueTask<Zongsoft.IO.FileInfo> GetInfoAsync(string path, CancellationToken cancellation = default)
 		{
 			path = this.EnsureFilePath(path, out var bucketName);
@@ -459,7 +441,7 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 			return this.GenerateInfo(path, properties);
 		}
 
-		public bool SetInfo(string path, IEnumerable<KeyValuePair<string, string>> properties) => this.SetInfoAsync(path, properties).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public bool SetInfo(string path, IEnumerable<KeyValuePair<string, string>> properties) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public async ValueTask<bool> SetInfoAsync(string path, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default)
 		{
 			path = this.EnsureFilePath(path, out var bucketName);
@@ -467,18 +449,7 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 			return await client.SetExtendedPropertiesAsync(path, properties, cancellation);
 		}
 
-		public Stream Open(string path, FileMode mode, FileAccess access, FileShare share, IEnumerable<KeyValuePair<string, string>> properties = null)
-		{
-			path = this.EnsureFilePath(path, out var bucketName);
-			var client = _fileSystem.GetClient(bucketName);
-
-			bool writable = (mode != FileMode.Open) || (access & FileAccess.Write) == FileAccess.Write;
-
-			if(writable)
-				return new StorageFileStream(client.GetUploader(path, properties));
-
-			return client.DownloadAsync(path, properties as IDictionary<string, string>, default).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-		}
+		public Stream Open(string path, FileMode mode, FileAccess access, FileShare share, IEnumerable<KeyValuePair<string, string>> properties = null) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 
 		public ValueTask<Stream> OpenAsync(string path, FileMode mode, FileAccess access, FileShare share, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default)
 		{
@@ -545,6 +516,7 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 		{
 			#region 成员字段
 			private StorageUploader _uploader;
+			private TaskCompletionSource _disposal;
 			#endregion
 
 			#region 构造函数
@@ -554,7 +526,7 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 			#region 公共属性
 			public override bool CanRead => false;
 			public override bool CanSeek => false;
-			public override bool CanWrite => true;
+			public override bool CanWrite => _uploader != null && _disposal == null;
 			public override long Length => _uploader?.Count ?? 0;
 			public override long Position
 			{
@@ -568,11 +540,7 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 			public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
 			public override void SetLength(long value) => throw new NotSupportedException();
 
-			public override void Write(byte[] buffer, int offset, int count)
-			{
-				var uploader = this.EnsureUploader();
-				uploader.WriteAsync(buffer, offset, count).AsTask().GetAwaiter().GetResult();
-			}
+			public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 
 			public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellation)
 			{
@@ -580,11 +548,7 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 				return uploader.WriteAsync(buffer, offset, count, cancellation).AsTask();
 			}
 
-			public override void Flush()
-			{
-				var uploader = this.EnsureUploader();
-				uploader.FlushAsync().AsTask().GetAwaiter().GetResult();
-			}
+			public override void Flush() => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 
 			public override Task FlushAsync(CancellationToken cancellation)
 			{
@@ -596,21 +560,36 @@ public class StorageFileSystem : Zongsoft.IO.IFileSystem
 			#region 释放资源
 			public override ValueTask DisposeAsync()
 			{
-				var uploader = Interlocked.Exchange(ref _uploader, null);
-				return uploader == null ? default : uploader.DisposeAsync();
+				var completion = Volatile.Read(ref _disposal);
+				if(completion == null)
+				{
+					var candidate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+					completion = Interlocked.CompareExchange(ref _disposal, candidate, null) ?? candidate;
+					if(ReferenceEquals(completion, candidate))
+						_ = CompleteAsync(candidate);
+				}
+
+				return new ValueTask(completion.Task);
+
+				async Task CompleteAsync(TaskCompletionSource completion)
+				{
+					try
+					{
+						var uploader = Interlocked.Exchange(ref _uploader, null);
+						if(uploader != null)
+							await uploader.DisposeAsync();
+
+						GC.SuppressFinalize(this);
+						completion.TrySetResult();
+					}
+					catch(Exception exception) { completion.TrySetException(exception); }
+				}
 			}
 
 			protected override void Dispose(bool disposing)
 			{
-				var uploader = Interlocked.Exchange(ref _uploader, null);
-				if(uploader == null)
-					return;
-
-				var task = uploader.DisposeAsync();
-				if(task.IsCompleted)
-					return;
-
-				task.AsTask().GetAwaiter().GetResult();
+				if(disposing && _uploader != null)
+					throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 			}
 			#endregion
 

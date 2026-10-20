@@ -29,6 +29,8 @@
 
 using System;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Microsoft.Extensions.Configuration;
 
@@ -39,14 +41,15 @@ partial class Upgrader
 	/// <summary>根据宿主平台启动部署器进程。</summary>
 	/// <param name="deployer">部署器程序的文件路径。</param>
 	/// <param name="deployment">部署描述文件路径。</param>
+	/// <param name="cancellation">启动等待操作的取消标记。</param>
 	/// <returns>启动的进程；启动失败时为空。</returns>
-	internal static Process Launch(string deployer, string deployment)
+	internal static async ValueTask<Process> LaunchAsync(string deployer, string deployment, CancellationToken cancellation)
 	{
 		if(OperatingSystem.IsLinux())
 		{
 			if(Application.IsWeb() || Application.IsDaemon())
 			{
-				var process = LaunchWithSystemd(deployer, deployment);
+				var process = await LaunchWithSystemdAsync(deployer, deployment, cancellation);
 
 				if(process != null)
 					return process;
@@ -95,8 +98,9 @@ partial class Upgrader
 	/// <summary>通过 systemd-run 启动独立的部署器进程。</summary>
 	/// <param name="deployer">部署器程序的文件路径。</param>
 	/// <param name="deployment">部署描述文件路径。</param>
+	/// <param name="cancellation">启动等待操作的取消标记。</param>
 	/// <returns>启动的进程；启动命令立即报告失败时为空。</returns>
-	private static Process LaunchWithSystemd(string deployer, string deployment)
+	private static async ValueTask<Process> LaunchWithSystemdAsync(string deployer, string deployment, CancellationToken cancellation)
 	{
 		var text = new System.Text.StringBuilder();
 
@@ -128,7 +132,28 @@ partial class Upgrader
 		if(process == null)
 			return null;
 
-		return process.WaitForExit(1000) && process.ExitCode != 0 ? null : process;
+		using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+		timeout.CancelAfter(TimeSpan.FromSeconds(1));
+
+		try
+		{
+			await process.WaitForExitAsync(timeout.Token);
+
+			if(process.ExitCode == 0)
+				return process;
+
+			process.Dispose();
+			return null;
+		}
+		catch(OperationCanceledException) when(!cancellation.IsCancellationRequested)
+		{
+			return process;
+		}
+		catch
+		{
+			process.Dispose();
+			throw;
+		}
 	}
 
 	/// <summary>读取当前宿主的配置值。</summary>

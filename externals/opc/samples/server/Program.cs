@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Common;
@@ -105,7 +104,7 @@ internal static class Program
 			}
 		});
 
-		executor.Command("set", context =>
+		executor.Command("set", async (context, cancellation) =>
 		{
 			if(context.Arguments.Count < 2)
 				throw new CommandException(Properties.Resources.Command_ArgumentsRequired_Message);
@@ -142,7 +141,7 @@ internal static class Program
 				{
 					var succeed = server.SetValue(context.Arguments[0], Add(value, i));
 
-					Thread.Sleep(100);
+					await Task.Delay(100, cancellation);
 
 					var content = CommandOutletContent.Create()
 						.Append(CommandOutletColor.DarkGray, "[")

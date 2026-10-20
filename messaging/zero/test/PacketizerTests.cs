@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Xunit;
@@ -28,10 +29,10 @@ public class PacketizerTests
 	}
 
 	[Fact]
-	public void ZeroQueueDoesNotAdvertiseDelay()
+	public async Task ZeroQueueDoesNotAdvertiseDelay()
 	{
 		var settings = Configuration.ZeroConnectionSettingsDriver.Instance.GetSettings("Features", "server=127.0.0.1");
-		using var queue = new ZeroQueue("Features", settings);
+		await using var queue = new ZeroQueue("Features", settings);
 
 		Assert.False(queue.Features.Contains(MessageQueueFeature.Delay.Name));
 		Assert.True(queue.Features.Contains(MessageQueueFeature.Compression.Name));

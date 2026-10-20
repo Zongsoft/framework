@@ -8,7 +8,7 @@ $ErrorActionPreference = 'Stop'
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $sourceProject = Join-Path $projectRoot 'src\Zongsoft.Core.csproj'
-$testProject = Join-Path $projectRoot 'test\Zongsoft.Core.Tests.csproj'
+$testProject = Join-Path $projectRoot 'test\unit\Zongsoft.Core.Tests.csproj'
 $benchmarkProject = Join-Path $projectRoot 'benchmark\Zongsoft.Core.Benchmarks.csproj'
 $artifactRoot = [IO.Path]::GetFullPath($ArtifactPath)
 

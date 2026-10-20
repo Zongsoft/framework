@@ -898,6 +898,9 @@
   <data name="Enum.UndefinedValue.Message" xml:space="preserve">
 		<value>未定义枚举值“{0}”。</value>
 	</data>
+  <data name="EventBinder.AsyncDelegateRequired.Message" xml:space="preserve">
+		<value>事件绑定需要使用返回 Task 或 ValueTask 的受支持委托签名。</value>
+	</data>
   <data name="EventBinder.DelegateRequired.Message" xml:space="preserve">
 		<value>成员“{0}”的类型“{1}”不是委托类型，无法绑定事件。</value>
 	</data>
@@ -1135,4 +1138,10 @@
 	<data name="Terminal.ExecutorRunning.Message" xml:space="preserve">
 		<value>终端执行器已经在运行。</value>
 	</data>
+  <data name="Disposal.AsyncRequired.Message" xml:space="preserve">
+    <value>此操作需要异步释放。请先等待 DisposeAsync 完成，再释放其同步所有者。</value>
+  </data>
+  <data name="Logging.QueueFull.Message" xml:space="preserve">
+    <value>日志队列已满。请使用异步日志接口，或等待 FlushAsync 完成后重试。</value>
+  </data>
 </root>

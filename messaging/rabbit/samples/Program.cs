@@ -14,12 +14,12 @@ internal class Program
 {
 	static async Task Main(string[] args)
 	{
-		using var queue = new RabbitQueue("RabbitMQ",
+		await using var queue = new RabbitQueue("RabbitMQ",
 			Configuration.RabbitConnectionSettingsDriver.Instance.GetSettings("RabbitMQ", $"server=127.0.0.1;port=5672;client=Zongsoft.Messaging.RabbitMQ.Sample-{Guid.NewGuid():N};username=program;password=xxxxxx;"));
 
 		var executor = Terminal.Console.Executor;
 		executor.Command("reset", context => Handler.Instance.Reset());
-		executor.Command("close", context => queue.Dispose());
+		executor.Command("close", (context, cancellation) => queue.DisposeAsync());
 
 		executor.Command("info", context =>
 		{

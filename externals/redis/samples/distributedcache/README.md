@@ -109,4 +109,4 @@ You should observe `Updated` notifications for the two `set` commands and a `Rem
 
 Remove only this run's remaining keys (for the examples above: `greeting`, `token`, `config`, and `orders:1002`) before `close` disposes the client. Use `exit` and confirm the exit prompt in each terminal. Wait for a test key's TTL if it has already expired; do not purge a shared namespace. Keyspace notifications are transient observations, not a durable event log.
 
-The standalone [Program.cs](Program.cs) owns its Redis client. For application code, follow the [plugin and public cache interface example](../../README.md) instead of constructing or disposing a shared provider instance.
+The standalone [Program.cs](Program.cs) owns its Redis client with `await using`; `close` also awaits `DisposeAsync`. The `info` command awaits the entry count query. For application code, follow the [plugin and public cache interface example](../../README.md) instead of constructing or disposing a shared provider instance.

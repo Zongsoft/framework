@@ -30,6 +30,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
 
 using Confluent.Kafka;
 
@@ -38,7 +39,7 @@ namespace Zongsoft.Messaging.Kafka;
 public class KafkaSubscriber : MessageConsumerBase<KafkaQueue>
 {
 	#region 私有变量
-	private readonly object _syncRoot = new();
+	private readonly NativeWorker _worker = new();
 	private int _closed = 1;
 	#endregion
 
@@ -55,33 +56,31 @@ public class KafkaSubscriber : MessageConsumerBase<KafkaQueue>
 	#endregion
 
 	#region 重写方法
-	protected override ValueTask OnCloseAsync(CancellationToken cancellation)
+	protected override async ValueTask OnCloseAsync(CancellationToken cancellation)
 	{
-		_poller?.Stop();
+		if(_poller != null)
+			await _poller.StopAsync(cancellation);
 
 		if(Interlocked.Exchange(ref _closed, 1) == 0)
 		{
-			lock(_syncRoot)
-				_consumer?.Close();
+			await _worker.InvokeAsync(() => _consumer?.Close());
 		}
 
-		return ValueTask.CompletedTask;
 	}
 	#endregion
 
 	#region 内部方法
-	internal void Subscribe(IConsumer<string, byte[]> consumer)
+	internal async ValueTask SubscribeAsync(IConsumer<string, byte[]> consumer, CancellationToken cancellation)
 	{
-		if(consumer == null)
-			throw new ArgumentNullException(nameof(consumer));
-
-		lock(_syncRoot)
+		ArgumentNullException.ThrowIfNull(consumer);
+		await _worker.InvokeAsync(() =>
 		{
-			if(_consumer != null)
-				throw new InvalidOperationException(Properties.Resources.Messaging_TopicAlreadySubscribed_Message);
-
 			try
 			{
+				cancellation.ThrowIfCancellationRequested();
+				if(_consumer != null)
+					throw new InvalidOperationException(Properties.Resources.Messaging_TopicAlreadySubscribed_Message);
+
 				consumer.Subscribe(this.Topic);
 				_consumer = consumer;
 				_closed = 0;
@@ -91,12 +90,12 @@ public class KafkaSubscriber : MessageConsumerBase<KafkaQueue>
 				consumer.Dispose();
 				throw;
 			}
-		}
+		});
 
-		_poller.Start();
+		await _poller.StartAsync(cancellation);
 	}
 
-	internal Message Receive(MessageDequeueOptions options, CancellationToken cancellation)
+	private Message Receive(MessageDequeueOptions options, CancellationToken cancellation)
 	{
 		CancellationTokenSource source = null;
 		ConsumeResult<string, byte[]> result = null;
@@ -110,14 +109,11 @@ public class KafkaSubscriber : MessageConsumerBase<KafkaQueue>
 
 		try
 		{
-			//同步方式从消息队列中拉取消息(堵塞当前线程)
-			lock(_syncRoot)
-			{
-				if(_consumer == null)
-					throw new InvalidOperationException(Properties.Resources.Messaging_TopicNotSubscribed_Message);
+			//Confluent.Kafka 仅提供同步 Consume，在本订阅拥有的原生工作线程上执行。
+			if(_consumer == null)
+				throw new InvalidOperationException(Properties.Resources.Messaging_TopicNotSubscribed_Message);
 
-				result = _consumer.Consume(cancellation);
-			}
+			result = _consumer.Consume(cancellation);
 		}
 		catch(OperationCanceledException)
 		{
@@ -128,7 +124,7 @@ public class KafkaSubscriber : MessageConsumerBase<KafkaQueue>
 			source?.Dispose();
 		}
 
-		if(result.IsPartitionEOF)
+		if(result == null || result.IsPartitionEOF)
 			return Message.Empty;
 
 		var data = result.Message.Value;
@@ -136,31 +132,40 @@ public class KafkaSubscriber : MessageConsumerBase<KafkaQueue>
 			data = MessageCompression.Decompress(System.Text.Encoding.UTF8.GetString(compression), data);
 
 		//构建接收到的消息
-		return new Message(result.Message.Key, result.Topic, data, () => this.Commit(result))
+		return new Message(result.Message.Key, result.Topic, data, cancellation => this.CommitAsync(result, cancellation))
 		{
 			Timestamp = result.Message.Timestamp.UtcDateTime,
 		};
 	}
 
-	private void Commit(ConsumeResult<string, byte[]> result)
+	private ValueTask CommitAsync(ConsumeResult<string, byte[]> result, CancellationToken cancellation) => _worker.InvokeAsync(() =>
 	{
-		lock(_syncRoot)
-			_consumer?.Commit(result);
-	}
+		cancellation.ThrowIfCancellationRequested();
+		_consumer?.Commit(result);
+	});
 	#endregion
 
 	#region 处置方法
 	protected override async ValueTask DisposeAsync(bool disposing)
 	{
-		await base.DisposeAsync(disposing);
-
-		var poller = Interlocked.Exchange(ref _poller, null);
-		poller?.Dispose();
-
-		lock(_syncRoot)
+		try
 		{
-			var consumer = Interlocked.Exchange(ref _consumer, null);
-			consumer?.Dispose();
+			await base.DisposeAsync(disposing);
+		}
+		finally
+		{
+			var poller = Interlocked.Exchange(ref _poller, null);
+
+			try
+			{
+				if(poller != null)
+					await poller.DisposeAsync();
+			}
+			finally
+			{
+				try { await _worker.InvokeAsync(() => Interlocked.Exchange(ref _consumer, null)?.Dispose()); }
+				finally { await _worker.DisposeAsync(); }
+			}
 		}
 	}
 	#endregion
@@ -168,15 +173,58 @@ public class KafkaSubscriber : MessageConsumerBase<KafkaQueue>
 	#region 嵌套子类
 	private sealed class Poller(KafkaSubscriber subscriber) : MessagePollerBase
 	{
-		private KafkaSubscriber _subscriber = subscriber ?? throw new ArgumentNullException(nameof(subscriber));
+		protected override ValueTask<Message> ReceiveAsync(MessageDequeueOptions options, CancellationToken cancellation) =>
+			subscriber._worker.InvokeAsync(() => subscriber.Receive(options, cancellation));
+		protected override ValueTask OnHandleAsync(Message message, CancellationToken cancellation) => subscriber.Handler?.HandleAsync(message, cancellation) ?? ValueTask.CompletedTask;
+	}
 
-		protected override Message Receive(MessageDequeueOptions options, CancellationToken cancellation) => _subscriber?.Receive(options, cancellation) ?? Message.Empty;
-		protected override ValueTask OnHandleAsync(Message message, CancellationToken cancellation) => _subscriber?.Handler?.HandleAsync(message, cancellation) ?? ValueTask.CompletedTask;
+	//原生消费、提交和关闭必须串行执行；此线程由订阅创建并在异步释放时排空。
+	private sealed class NativeWorker : IAsyncDisposable
+	{
+		private readonly BlockingCollection<Action> _commands = new();
+		private readonly TaskCompletionSource _stopped = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		private int _disposing;
 
-		protected override void Dispose(bool disposing)
+		public NativeWorker()
 		{
-			base.Dispose(disposing);
-			_subscriber = null;
+			new Thread(this.Run) { IsBackground = true, Name = nameof(KafkaSubscriber) }.Start();
+		}
+
+		public ValueTask InvokeAsync(Action action) => new(this.InvokeAsync(() => { action(); return true; }).AsTask());
+		public ValueTask<T> InvokeAsync<T>(Func<T> action)
+		{
+			var completion = new TaskCompletionSource<T>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+			try
+			{
+				_commands.Add(() =>
+				{
+					try { completion.TrySetResult(action()); }
+					catch(OperationCanceledException exception) { completion.TrySetCanceled(exception.CancellationToken); }
+					catch(Exception exception) { completion.TrySetException(exception); }
+				});
+			}
+			catch(InvalidOperationException) { completion.TrySetException(new ObjectDisposedException(nameof(KafkaSubscriber))); }
+
+			return new ValueTask<T>(completion.Task);
+		}
+
+		private void Run()
+		{
+			try
+			{
+				foreach(var command in _commands.GetConsumingEnumerable())
+					command();
+				_stopped.TrySetResult();
+			}
+			catch(Exception exception) { _stopped.TrySetException(exception); }
+		}
+
+		public ValueTask DisposeAsync()
+		{
+			if(Interlocked.Exchange(ref _disposing, 1) == 0)
+				_commands.CompleteAdding();
+			return new ValueTask(_stopped.Task);
 		}
 	}
 	#endregion

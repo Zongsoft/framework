@@ -22,7 +22,7 @@ description: 修改或审查 Zongsoft.Hardwares 的跨平台硬件采集、系�
 3. 归一化设备及属性，再附加网络设备；不支持的平台仍有网络部分。
 4. 调用方按需要生成 Profile 或遍历采集结果。
 
-- `CollectAsync` 在同步采集基础上逐项检查取消并让出调度，不等于每次系统查询均可异步取消。
+- `CollectAsync` 按平台收集并逐项检查取消；Linux/macOS 的外部命令异步读取输出并等待退出，Windows 的本地系统查询保持原生同步行为，不承诺可中断在途系统查询。`HardwareProfile` 通过 `LoadAsync/GetCurrentAsync` 等待采集完成。
 - 修改序列号清理、空值判定、容量单位与设备排序前，检查 Profile 的输入顺序和哈希使用；格式变化可能造成应用重绑定。
 - 同一字段跨 Windows/Linux/macOS 可能缺失或含不同单位，不得用虚构默认序列号填补。
 - 系统命令路径、超时、退出码、编码与本地化输出须作为解析输入处理；不能拼接不可信 shell 参数。

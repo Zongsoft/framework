@@ -50,6 +50,18 @@ partial class OpcClient
 	public ValueTask<Subscriber> SubscribeAsync(IEnumerable<KeyValuePair<string, object>> identifiers, SubscriberOptions options, CancellationToken cancellation = default) => this.SubscribeAsync(identifiers, options, null, cancellation);
 	public async ValueTask<Subscriber> SubscribeAsync(IEnumerable<KeyValuePair<string, object>> identifiers, SubscriberOptions options, Action<Subscriber, Subscriber.Entry, object> consumer, CancellationToken cancellation = default)
 	{
+		await _lifecycle.WaitAsync(cancellation);
+
+		try
+		{
+			ObjectDisposedException.ThrowIf(_disposal != null, this);
+			return await this.SubscribeCoreAsync(identifiers, options, consumer, cancellation);
+		}
+		finally { _lifecycle.Release(); }
+	}
+
+	private async ValueTask<Subscriber> SubscribeCoreAsync(IEnumerable<KeyValuePair<string, object>> identifiers, SubscriberOptions options, Action<Subscriber, Subscriber.Entry, object> consumer, CancellationToken cancellation)
+	{
 		if(identifiers == null)
 			throw new ArgumentNullException(nameof(identifiers));
 
@@ -67,13 +79,21 @@ partial class OpcClient
 		var session = this.GetSession();
 		var subscriber = new Subscriber(options, consumer);
 
-		for(int i = 0; i < entries.Length; i++)
-			await subscriber.Entries.AddAsync(entries[i], cancellation);
+		var registered = false;
 
-		if(session.AddSubscription((Subscription)subscriber.Subscription) && await _subscribers.RegisterAsync(subscriber, cancellation))
-			return subscriber;
+		try
+		{
+			for(int i = 0; i < entries.Length; i++)
+				await subscriber.Entries.AddAsync(entries[i], cancellation);
 
-		return null;
+			registered = session.AddSubscription((Subscription)subscriber.Subscription) && await _subscribers.RegisterAsync(subscriber, cancellation);
+			return registered ? subscriber : null;
+		}
+		finally
+		{
+			if(!registered)
+				await subscriber.DisposeAsync();
+		}
 
 		bool Exists(string identifier)
 		{

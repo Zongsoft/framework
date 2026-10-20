@@ -119,4 +119,7 @@
 	<data name="Storage.RegionInvalid.Message" xml:space="preserve">
 		<value>The specified region '{0}' is not valid.</value>
 	</data>
+	<data name="Operation.AsyncOnly.Message" xml:space="preserve">
+		<value>This provider only supports asynchronous operations. Use the corresponding Async method and await disposal.</value>
+	</data>
 </root>

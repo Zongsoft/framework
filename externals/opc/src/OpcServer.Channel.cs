@@ -60,13 +60,13 @@ partial class OpcServer
 
 		#region 公共属性
 		public string Identifier => _identifier;
-		public string Name => _session.SessionDiagnostics.SessionName;
+		public string Name => _session.SessionName;
 		public bool Activated => _session.Activated;
 		public DateTime Creation => _creation;
 		public DateTime Timestamp => _session.ClientLastContactTime;
-		public ChannelStatistics Statistics => _statistics.Update(_session.SessionDiagnostics);
+		public ChannelStatistics Statistics => _session.ReadDiagnostics(_statistics.Update);
 		public Security.AuthenticationIdentity Identity => Security.AuthenticationIdentity.GetIdentity(_session.IdentityToken);
-		public System.Security.Cryptography.X509Certificates.X509Certificate Certificate => _session.ClientCertificate;
+		public global::Opc.Ua.Security.Certificates.Certificate Certificate => _session.ClientCertificate;
 		#endregion
 
 		#region 重写方法

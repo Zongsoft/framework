@@ -74,7 +74,7 @@ public partial class OpcServer : WorkerBase
 	public OpcServerOptions Options => _options ??= new OpcServerOptions(this.Name);
 	public StorageCollection Storages { get; }
 	public ChannelCollection Channels { get; }
-	public System.Security.Cryptography.X509Certificates.X509Certificate2 Certificate => this.Configuration?.SecurityConfiguration?.ApplicationCertificate?.Certificate;
+	public System.Security.Cryptography.X509Certificates.X509Certificate2 Certificate { get; private set; }
 	#endregion
 
 	#region 内部属性
@@ -102,17 +102,41 @@ public partial class OpcServer : WorkerBase
 			DisableCertificateAutoCreation = false,
 		};
 
-		//必须：检查应用启动器的安全证书
-		await _launcher.CheckApplicationInstanceCertificatesAsync(false, null, cancellation);
+		try
+		{
+			//必须：检查应用启动器的安全证书
+			await _launcher.CheckApplicationInstanceCertificatesAsync(false, null, cancellation);
 
-		//启动服务器实例
-		await _launcher.StartAsync(new Server(this));
+			//证书副本由服务器拥有，停止时释放。
+			using(var certificate = await configuration.CertificateManager.CertificateProvider.GetPrivateKeyCertificateAsync(configuration.SecurityConfiguration.ApplicationCertificate, null, configuration.ApplicationUri, cancellation))
+				this.Certificate = certificate?.AsX509Certificate2();
+
+			//启动服务器实例
+			await _launcher.StartAsync(new Server(this), cancellation);
+		}
+		catch(Exception failure)
+		{
+			try { await this.OnStopAsync(args, CancellationToken.None); }
+			catch(Exception cleanup) { throw new AggregateException(failure, cleanup); }
+
+			throw;
+		}
 	}
 
-	protected override Task OnStopAsync(string[] args, CancellationToken cancellation)
+	protected override async Task OnStopAsync(string[] args, CancellationToken cancellation)
 	{
 		var launcher = Interlocked.Exchange(ref _launcher, null);
-		return launcher == null ? Task.CompletedTask : launcher.StopAsync().AsTask();
+
+		try
+		{
+			if(launcher != null)
+				await launcher.StopAsync();
+		}
+		finally
+		{
+			this.Certificate?.Dispose();
+			this.Certificate = null;
+		}
 	}
 	#endregion
 
@@ -193,7 +217,7 @@ public partial class OpcServer : WorkerBase
 
 partial class OpcServer
 {
-	private sealed class Server(OpcServer server) : StandardServer
+	private sealed class Server(OpcServer server) : StandardServer(null)
 	{
 		#region 成员字段
 		private readonly OpcServer _server = server;
@@ -216,7 +240,8 @@ partial class OpcServer
 
 			server.SessionManager.SessionCreated += this.SessionManager_SessionCreated;
 			server.SessionManager.SessionClosing += this.SessionManager_SessionClosing;
-			server.SessionManager.ImpersonateUser += this.SessionManager_ImpersonateUser;
+			foreach(var tokenType in Enum.GetValues<UserTokenType>())
+				server.IdentityRegistry.Register(new AuthenticationAdapter(_server, tokenType));
 			base.OnServerStarted(server);
 		}
 
@@ -228,7 +253,6 @@ partial class OpcServer
 			//注销所有相关事件处理
 			this.ServerInternal.SessionManager.SessionCreated -= this.SessionManager_SessionCreated;
 			this.ServerInternal.SessionManager.SessionClosing -= this.SessionManager_SessionClosing;
-			this.ServerInternal.SessionManager.ImpersonateUser -= this.SessionManager_ImpersonateUser;
 
 			//重置服务器的启动时间
 			_server._started = null;
@@ -248,24 +272,24 @@ partial class OpcServer
 			return new MasterNodeManager(server, configuration, null, [.. _server.Storages.Select(storage => storage.Manager)]);
 		}
 
-		[Obsolete("Sync methods are deprecated in this version. Use AddNodesAsync instead.")]
-		public override ResponseHeader AddNodes(SecureChannelContext secureChannelContext, RequestHeader requestHeader, AddNodesItemCollection nodes, out AddNodesResultCollection results, out DiagnosticInfoCollection diagnostics)
+		public override async ValueTask<AddNodesResponse> AddNodesAsync(SecureChannelContext secureChannelContext, RequestHeader requestHeader, ArrayOf<AddNodesItem> nodes, RequestLifetime requestLifetime)
 		{
-			var context = this.ValidateRequest(secureChannelContext, requestHeader, RequestType.AddNodes);
+			using var context = await this.ValidateRequestAsync(secureChannelContext, requestHeader, RequestType.AddNodes, requestLifetime);
 
 			try
 			{
-				if(nodes == null || nodes.Count == 0)
+				if(nodes.Count == 0)
 					throw new ServiceResultException(StatusCodes.BadNothingToDo);
 
 				var succeed = true;
 				var storage = (Storage)null;
-				results = new AddNodesResultCollection(nodes.Count);
-				diagnostics = new DiagnosticInfoCollection(nodes.Count);
+				var results = new List<AddNodesResult>(nodes.Count);
+				var diagnostics = new List<DiagnosticInfo>(nodes.Count);
 
-				foreach(var node in nodes)
+				for(var index = 0; index < nodes.Count; index++)
 				{
-					if(node == null || node.RequestedNewNodeId == null || node.RequestedNewNodeId.IsNull)
+					var node = nodes[index];
+					if(node == null || node.RequestedNewNodeId.IsNull)
 						storage = _server.Storages[0];
 					else
 						storage = string.IsNullOrEmpty(node.RequestedNewNodeId.NamespaceUri) ?
@@ -278,7 +302,7 @@ partial class OpcServer
 
 						results.Add(new AddNodesResult()
 						{
-							AddedNodeId = new NodeId(node.RequestedNewNodeId.Identifier, node.RequestedNewNodeId.NamespaceIndex),
+							AddedNodeId = node.RequestedNewNodeId.InnerNodeId,
 							StatusCode = StatusCodes.BadNodeIdInvalid,
 						});
 
@@ -291,7 +315,7 @@ partial class OpcServer
 						break;
 					}
 
-					(var result, var diagnostic) = storage.Manager.AddNode(context, node);
+					(var result, var diagnostic) = await storage.Manager.AddNodeAsync(context, node, requestLifetime.CancellationToken);
 
 					succeed &= StatusCode.IsGood(result.StatusCode);
 
@@ -301,19 +325,24 @@ partial class OpcServer
 						diagnostics.Add(diagnostic);
 				}
 
-				return this.CreateResponse(requestHeader, succeed ? StatusCodes.Good : StatusCodes.UncertainNotAllNodesAvailable);
+				return new AddNodesResponse
+				{
+					ResponseHeader = this.CreateResponse(requestHeader, succeed ? StatusCodes.Good : StatusCodes.UncertainNotAllNodesAvailable),
+					Results = [.. results],
+					DiagnosticInfos = [.. diagnostics],
+				};
 			}
 			catch(ServiceResultException ex)
 			{
-				lock(this.ServerInternal.DiagnosticsLock)
+				this.ServerInternal.UpdateServerDiagnostics(diagnostics =>
 				{
-					this.ServerInternal.ServerDiagnostics.RejectedRequestsCount++;
+					diagnostics.RejectedRequestsCount++;
 
 					if(this.IsSecurityError(ex.StatusCode))
 					{
-						this.ServerInternal.ServerDiagnostics.SecurityRejectedRequestsCount++;
+						diagnostics.SecurityRejectedRequestsCount++;
 					}
-				}
+				});
 
 				throw this.TranslateException(context, ex);
 			}
@@ -334,64 +363,52 @@ partial class OpcServer
 		{
 			_server.Channels.Remove(session?.Id.ToString());
 		}
+		#endregion
+	}
 
-		private void SessionManager_ImpersonateUser(ISession session, ImpersonateEventArgs args)
+	private sealed class AuthenticationAdapter(OpcServer server, UserTokenType tokenType) : global::Opc.Ua.Identity.IUserTokenAuthenticator
+	{
+		#region 成员字段
+		private readonly bool _allowed = server.Options.GetConfiguration().ServerConfiguration.UserTokenPolicies.ToArray().Any(policy => policy.TokenType == tokenType);
+		#endregion
+
+		#region 公共属性
+		public UserTokenType TokenType => tokenType;
+		public string IssuedTokenProfileUri => null;
+		#endregion
+
+		#region 验证方法
+
+		public async ValueTask<global::Opc.Ua.Identity.AuthenticationResult> AuthenticateAsync(global::Opc.Ua.Identity.AuthenticationContext context, CancellationToken cancellation = default)
 		{
-			if(!this.CanAuthenticate(args.NewIdentity))
-			{
-				args.IdentityValidationError = new ServiceResult(StatusCodes.BadIdentityTokenRejected);
-				return;
-			}
+			cancellation.ThrowIfCancellationRequested();
+
+			if(!_allowed)
+				return global::Opc.Ua.Identity.AuthenticationResult.Reject(new ServiceResult(StatusCodes.BadIdentityTokenRejected));
+
+			Security.AuthenticationIdentity identity = null;
 
 			try
 			{
-				//获取请求的身份
-				var identity = Security.AuthenticationIdentity.GetIdentity(args.NewIdentity);
+				identity = Security.AuthenticationIdentity.GetIdentity(context.TokenHandler);
+				var authenticated = tokenType == UserTokenType.Anonymous ||
+					identity != null && server.Authenticator != null && await server.Authenticator.AuthenticateAsync(server, identity, cancellation);
+				cancellation.ThrowIfCancellationRequested();
 
-				//执行身份验证
-				var authenticated = identity == null || _server.Authenticator.AuthenticateAsync(_server, identity).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-
-				if(authenticated)
-					args.Identity = new UserIdentity(args.NewIdentity);
-				else
-					args.IdentityValidationError = new ServiceResult(StatusCodes.BadSecurityChecksFailed);
+				return authenticated ?
+					global::Opc.Ua.Identity.AuthenticationResult.Accept(new UserIdentity(context.TokenHandler)) :
+					global::Opc.Ua.Identity.AuthenticationResult.Reject(new ServiceResult(StatusCodes.BadSecurityChecksFailed));
 			}
-			catch(Exception ex)
+			catch(OperationCanceledException) when(cancellation.IsCancellationRequested) { throw; }
+			catch(Exception exception)
 			{
-				args.IdentityValidationError = new ServiceResult(StatusCodes.BadSecurityChecksFailed, ex);
+				return global::Opc.Ua.Identity.AuthenticationResult.Reject(new ServiceResult(StatusCodes.BadSecurityChecksFailed, exception));
 			}
-		}
-		#endregion
-
-		#region 私有方法
-		private bool CanAuthenticate(UserIdentityToken token)
-		{
-			var configuration = _server?.Configuration;
-
-			if(configuration == null)
-				return false;
-
-			var tokenType = GetIdentityType(token);
-
-			if(token == null)
-				return configuration.ServerConfiguration.UserTokenPolicies.Find(policy => policy.TokenType == tokenType) != null;
-			else
-				return _server?.Authenticator != null && configuration.ServerConfiguration.UserTokenPolicies.Find(policy => policy.TokenType == tokenType) != null;
-		}
-
-		private static UserTokenType GetIdentityType(UserIdentityToken token)
-		{
-			if(token == null)
-				return UserTokenType.Anonymous;
-
-			return token switch
+			finally
 			{
-				AnonymousIdentityToken => UserTokenType.Anonymous,
-				UserNameIdentityToken => UserTokenType.UserName,
-				X509IdentityToken => UserTokenType.Certificate,
-				IssuedIdentityToken => UserTokenType.IssuedToken,
-				_ => throw new Zongsoft.Security.SecurityException(),
-			};
+				if(identity is IDisposable disposable)
+					disposable.Dispose();
+			}
 		}
 		#endregion
 	}

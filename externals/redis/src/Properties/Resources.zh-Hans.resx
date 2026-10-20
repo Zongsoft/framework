@@ -417,4 +417,7 @@
 	<data name="Redis.ConnectionSettingInvalid.Message" xml:space="preserve">
 		<value>名为“{0}”的 Redis 连接设置不存在，或其驱动不是 Redis。</value>
 	</data>
+  <data name="Configuration.AsyncLoadRequired.Message" xml:space="preserve">
+    <value>请先等待 LoadAsync 完成，再将此远程配置源添加到配置构建器。</value>
+  </data>
 </root>

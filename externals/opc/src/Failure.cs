@@ -41,7 +41,7 @@ public readonly struct Failure(int code, string reason, string message = null)
 
 	#region 静态方法
 	internal static Failure GetFailure(global::Opc.Ua.StatusCode status) =>
-		new((int)status.Code, global::Opc.Ua.StatusCodes.GetBrowseName(status.Code), status.ToString());
+		new((int)status.Code, status.SymbolicId, status.ToString());
 	#endregion
 
 	#region 重写方法

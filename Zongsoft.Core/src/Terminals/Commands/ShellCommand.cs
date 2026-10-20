@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
@@ -52,7 +53,7 @@ public class ShellCommand : CommandBase<CommandContext>
 	#endregion
 
 	#region 重写方法
-	protected override ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
+	protected override async ValueTask<object> OnExecuteAsync(CommandContext context, CancellationToken cancellation)
 	{
 		if(Environment.OSVersion.Platform == PlatformID.MacOSX ||
 		   Environment.OSVersion.Platform == PlatformID.Unix)
@@ -62,9 +63,15 @@ public class ShellCommand : CommandBase<CommandContext>
 			throw new NotSupportedException(string.Format(Properties.Resources.Terminal_CommandRequiresTerminal_Message, this.Name));
 
 		if(context.Arguments.Count < 1)
-			return ValueTask.FromResult<object>(0);
+			return 0;
 
-		ProcessStartInfo info = new ProcessStartInfo(@"cmd.exe", " /C " + context.Arguments[0])
+		cancellation.ThrowIfCancellationRequested();
+
+		var timeout = context.Options.GetValue<TimeSpan>(TIMEOUT_OPTION);
+		using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+		deadline.CancelAfter(timeout > TimeSpan.Zero ? timeout : TimeSpan.FromSeconds(30));
+
+		var info = new ProcessStartInfo(@"cmd.exe", " /C " + context.Arguments[0])
 		{
 			CreateNoWindow = true,
 			UseShellExecute = false,
@@ -73,37 +80,30 @@ public class ShellCommand : CommandBase<CommandContext>
 			RedirectStandardOutput = true,
 		};
 
-		using(var process = Process.Start(info))
+		using var process = Process.Start(info);
+
+		try
 		{
-			process.OutputDataReceived += delegate(object sender, DataReceivedEventArgs eventArgs)
-			{
-				terminal.WriteLine(eventArgs.Data);
-			};
+			await Task.WhenAll(
+				process.WaitForExitAsync(deadline.Token),
+				CopyAsync(process.StandardOutput, terminal.Output, deadline.Token),
+				CopyAsync(process.StandardError, terminal.Error, deadline.Token));
 
-			process.BeginOutputReadLine();
-
-			//while(!process.StandardOutput.EndOfStream)
-			//{
-			//	terminal.WriteLine(process.StandardOutput.ReadLine());
-			//}
-
-			//terminal.Write(process.StandardOutput.ReadToEnd());
-
-			//process.WaitForExit();
-
-			if(!process.HasExited)
-			{
-				var timeout = context.Options.GetValue<TimeSpan>(TIMEOUT_OPTION);
-
-				if(!process.WaitForExit(timeout > TimeSpan.Zero ? timeout : TimeSpan.FromSeconds(30)))
-				{
-					process.Close();
-					return ValueTask.FromResult<object>(-1);
-				}
-			}
-
-			return ValueTask.FromResult<object>(process.ExitCode);
+			return process.ExitCode;
 		}
+		catch(OperationCanceledException) when(deadline.IsCancellationRequested)
+		{
+			cancellation.ThrowIfCancellationRequested();
+			return -1;
+		}
+	}
+	#endregion
+
+	#region 私有方法
+	private static async Task CopyAsync(StreamReader reader, TextWriter writer, CancellationToken cancellation)
+	{
+		while(await reader.ReadLineAsync(cancellation) is string line)
+			await writer.WriteLineAsync(line.AsMemory(), cancellation);
 	}
 	#endregion
 }

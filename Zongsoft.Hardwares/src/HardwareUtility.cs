@@ -32,6 +32,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Globalization;
 using System.Collections.Generic;
 
@@ -191,8 +193,10 @@ internal static class HardwareUtility
 		}
 	}
 
-	public static CommandResult Execute(string fileName, string arguments, int timeout = 5000)
+	public static async ValueTask<CommandResult> ExecuteAsync(string fileName, string arguments, int timeout = 5000, CancellationToken cancellation = default)
 	{
+		cancellation.ThrowIfCancellationRequested();
+
 		if(string.IsNullOrEmpty(fileName))
 			return CommandResult.Empty;
 
@@ -214,21 +218,30 @@ internal static class HardwareUtility
 			if(!process.Start())
 				return CommandResult.Empty;
 
-			var output = process.StandardOutput.ReadToEndAsync();
-			var error = process.StandardError.ReadToEndAsync();
+			using var source = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+			source.CancelAfter(timeout);
+			var output = process.StandardOutput.ReadToEndAsync(source.Token);
+			var error = process.StandardError.ReadToEndAsync(source.Token);
 
-			if(!process.WaitForExit(timeout))
+			try
 			{
-				try
-				{
-					process.Kill(true);
-				}
+				await process.WaitForExitAsync(source.Token).ConfigureAwait(false);
+				return new CommandResult(process.ExitCode, await output.ConfigureAwait(false), await error.ConfigureAwait(false));
+			}
+			catch(OperationCanceledException) when(source.IsCancellationRequested)
+			{
+				try { process.Kill(true); }
 				catch(InvalidOperationException) { }
 
+				await process.WaitForExitAsync().ConfigureAwait(false);
+
+				try { await Task.WhenAll(output, error).ConfigureAwait(false); }
+				catch(OperationCanceledException) { }
+
+				cancellation.ThrowIfCancellationRequested();
 				return CommandResult.Empty;
 			}
 
-			return new CommandResult(process.ExitCode, output.GetAwaiter().GetResult(), error.GetAwaiter().GetResult());
 		}
 		catch(InvalidOperationException)
 		{

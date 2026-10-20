@@ -19,8 +19,8 @@ public class ZeroRequesterTests
 			return;
 
 		await using var server = await ZeroServerScope.StartAsync();
-		using var requesterQueue = ZeroTestUtility.CreateQueue(server.Port, "requester");
-		using var responderQueue = ZeroTestUtility.CreateQueue(server.Port, "responder");
+		await using var requesterQueue = ZeroTestUtility.CreateQueue(server.Port, "requester");
+		await using var responderQueue = ZeroTestUtility.CreateQueue(server.Port, "responder");
 
 		var responder = new ZeroResponder { Queue = responderQueue };
 		responder.Handlers.Add(new EchoHandler());
@@ -35,7 +35,7 @@ public class ZeroRequesterTests
 				using var token = await requester.RequestAsync("rpc/echo", Encoding.UTF8.GetBytes($"message-{i}"));
 				Assert.NotNull(token);
 
-				var response = token.GetResponses(TimeSpan.FromSeconds(5)).FirstOrDefault();
+				var response = (await ZeroTestUtility.ReadResponsesAsync(token, TimeSpan.FromSeconds(5), 1)).FirstOrDefault();
 				Assert.NotNull(response);
 				Assert.Equal($"message-{i}", Encoding.UTF8.GetString(response.Data.Span));
 				Assert.Equal(token.Request.Identifier, response.Request.Identifier);
@@ -55,8 +55,8 @@ public class ZeroRequesterTests
 			return;
 
 		await using var server = await ZeroServerScope.StartAsync();
-		using var requesterQueue = ZeroTestUtility.CreateQueue(server.Port, "requester");
-		using var responderQueue = ZeroTestUtility.CreateQueue(server.Port, "responder");
+		await using var requesterQueue = ZeroTestUtility.CreateQueue(server.Port, "requester");
+		await using var responderQueue = ZeroTestUtility.CreateQueue(server.Port, "responder");
 
 		var responder = new ZeroResponder { Queue = responderQueue };
 		responder.Handlers.Add(new EchoHandler());
@@ -65,7 +65,7 @@ public class ZeroRequesterTests
 		try
 		{
 			await using var requester = new ZeroRequester { Queue = requesterQueue };
-			//先并发完成请求，避免同步等待回复占满线程池、阻塞回复处理器。
+			//并发完成请求，再异步收集各请求的首份响应。
 			var tasks = Enumerable.Range(0, 20).Select(index =>
 				requester.RequestAsync("rpc/echo", Encoding.UTF8.GetBytes($"concurrent-{index}")).AsTask());
 			var tokens = await Task.WhenAll(tasks);
@@ -79,7 +79,7 @@ public class ZeroRequesterTests
 					var token = tokens[index];
 					Assert.NotNull(token);
 
-					var response = token.GetResponses(TimeSpan.FromSeconds(5)).FirstOrDefault();
+					var response = (await ZeroTestUtility.ReadResponsesAsync(token, TimeSpan.FromSeconds(5), 1)).FirstOrDefault();
 					Assert.NotNull(response);
 					Assert.Equal($"concurrent-{index}", Encoding.UTF8.GetString(response.Data.Span));
 				}
@@ -104,7 +104,7 @@ public class ZeroRequesterTests
 			return;
 
 		await using var server = await ZeroServerScope.StartAsync();
-		using var queue = ZeroTestUtility.CreateQueue(server.Port, "requester");
+		await using var queue = ZeroTestUtility.CreateQueue(server.Port, "requester");
 		await using var requester = new ZeroRequester { Queue = queue };
 
 		using var cancellation = new CancellationTokenSource();
@@ -121,9 +121,9 @@ public class ZeroRequesterTests
 			return;
 
 		await using var server = await ZeroServerScope.StartAsync();
-		using var first = ZeroTestUtility.CreateQueue(server.Port, "requester-first");
-		using var second = ZeroTestUtility.CreateQueue(server.Port, "requester-second");
-		using var responderQueue = ZeroTestUtility.CreateQueue(server.Port, "requester-responder");
+		await using var first = ZeroTestUtility.CreateQueue(server.Port, "requester-first");
+		await using var second = ZeroTestUtility.CreateQueue(server.Port, "requester-second");
+		await using var responderQueue = ZeroTestUtility.CreateQueue(server.Port, "requester-responder");
 		var responder = new ZeroResponder { Queue = responderQueue };
 		responder.Handlers.Add(new EchoHandler());
 		await responder.StartAsync([]);
@@ -156,8 +156,8 @@ public class ZeroRequesterTests
 			return;
 
 		await using var server = await ZeroServerScope.StartAsync();
-		using var requesterQueue = ZeroTestUtility.CreateQueue(server.Port, "group-requester", settings => settings.Group = "tenant");
-		using var responderQueue = ZeroTestUtility.CreateQueue(server.Port, "group-responder", settings => settings.Group = "tenant");
+		await using var requesterQueue = ZeroTestUtility.CreateQueue(server.Port, "group-requester", settings => settings.Group = "tenant");
+		await using var responderQueue = ZeroTestUtility.CreateQueue(server.Port, "group-responder", settings => settings.Group = "tenant");
 		await using var requester = new ZeroRequester { Queue = requesterQueue };
 		var responder = new ZeroResponder { Queue = responderQueue };
 		responder.Handlers.Add(new EchoHandler());
@@ -169,7 +169,7 @@ public class ZeroRequesterTests
 			for(var attempt = 0; attempt < 10 && response == null; attempt++)
 			{
 				using var token = await requester.RequestAsync("rpc/echo", Encoding.UTF8.GetBytes("grouped"));
-				response = token.GetResponses(TimeSpan.FromMilliseconds(500)).FirstOrDefault();
+				response = (await ZeroTestUtility.ReadResponsesAsync(token, TimeSpan.FromMilliseconds(500), 1)).FirstOrDefault();
 			}
 
 			Assert.NotNull(response);

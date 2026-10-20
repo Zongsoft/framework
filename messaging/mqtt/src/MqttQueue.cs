@@ -80,7 +80,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 			}
 			finally
 			{
-				_connection.Release();
+				await _connection.ReleaseAsync();
 			}
 		}
 		catch(Exception ex)
@@ -114,7 +114,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 		}
 		finally
 		{
-			_connection.Release();
+			await _connection.ReleaseAsync();
 		}
 	}
 	#endregion
@@ -159,7 +159,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 		}
 		finally
 		{
-			_connection.Release();
+			await _connection.ReleaseAsync();
 		}
 	}
 	#endregion
@@ -175,7 +175,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 		try { payload = args.ApplicationMessage.GetPayload(); }
 		catch(Exception exception)
 		{
-			Diagnostics.Logging.GetLogging(this).Error(exception);
+			await Diagnostics.Logging.GetLogging(this).ErrorAsync(exception);
 			return;
 		}
 
@@ -198,10 +198,9 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 			return;
 		}
 
-		//MQTTnet 为保证顺序会等待消息回调完成；这里使用有界并发派发，
-		//避免慢消费者阻塞网络接收，同时限制在途消息数量以提供反压。
+		//等待消息处理完成，将反压、异常和取消保留在 MQTTnet 的异步回调链中。
 		await _dispatchers.WaitAsync(_cancellation.Token);
-		_ = Task.Run(() => this.DispatchAsync(subscriber.Handler, message, args, _cancellation.Token));
+		await this.DispatchAsync(subscriber.Handler, message, args, _cancellation.Token);
 
 		ValueTask AcknowledgeAsync(CancellationToken cancellation)
 		{
@@ -223,7 +222,6 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 			return null;
 		}
 	}
-
 	#endregion
 
 	#region 消息派发
@@ -257,47 +255,30 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 	#endregion
 
 	#region 处置方法
-	protected override void Dispose(bool disposing)
+	protected override async ValueTask DisposeAsync(bool disposing)
 	{
 		if(!disposing)
 			return;
 
-		_cancellation.Cancel();
-		_connection.Dispose();
-		var handlersCompleted = this.WaitForHandlers(TimeSpan.FromSeconds(5));
+		await _cancellation.CancelAsync();
 
-		if(handlersCompleted)
-			_dispatchers.Dispose();
-
-		_cancellation.Dispose();
-	}
-
-	private bool WaitForHandlers(TimeSpan timeout)
-	{
-		var deadline = DateTime.UtcNow + timeout;
-		var acquired = 0;
-
-		while(acquired < _HandlerConcurrency_)
+		try
 		{
-			var remaining = deadline - DateTime.UtcNow;
-			if(remaining <= TimeSpan.Zero || !_dispatchers.Wait(remaining))
-				break;
-
-			acquired++;
+			await _connection.DisposeAsync();
 		}
+		finally
+		{
+			for(int i = 0; i < _HandlerConcurrency_; i++)
+				await _dispatchers.WaitAsync();
 
-		if(acquired == _HandlerConcurrency_)
-			return true;
-
-		if(acquired > 0)
-			_dispatchers.Release(acquired);
-
-		return false;
+			_dispatchers.Dispose();
+			_cancellation.Dispose();
+		}
 	}
 	#endregion
 
 	#region 嵌套子类
-	private sealed class ConnectionManager : IDisposable
+	private sealed class ConnectionManager : IAsyncDisposable
 	{
 		#region 成员字段
 		private int _disposed;
@@ -345,7 +326,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 		#region 公共方法
 		/// <summary>获取一个已连接且受共享生命周期锁保护的客户端。</summary>
 		/// <param name="cancellation">监视取消请求的令牌。</param>
-		/// <returns>返回持有共享生命周期锁的已连接客户端；使用完毕后必须调用 <see cref="Release"/> 释放锁。</returns>
+		/// <returns>返回持有共享生命周期锁的已连接客户端；使用完毕后必须调用 <see cref="ReleaseAsync"/> 释放锁。</returns>
 		public async ValueTask<IMqttClient> AcquireAsync(CancellationToken cancellation)
 		{
 			while(true)
@@ -357,14 +338,15 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 				if(client != null && client.IsConnected)
 					return client;
 
-				this.Release();
+				await this.ReleaseAsync();
 			}
 		}
 
 		/// <summary>释放当前客户端的共享生命周期锁。</summary>
-		public void Release()
+		/// <returns>表示共享生命周期锁释放操作的异步任务。</returns>
+		public async ValueTask ReleaseAsync()
 		{
-			_readers.Wait();
+			await _readers.WaitAsync();
 
 			try
 			{
@@ -494,16 +476,16 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 		#endregion
 
 		#region 处置方法
-		public void Dispose()
+		public async ValueTask DisposeAsync()
 		{
 			if(Interlocked.Exchange(ref _disposed, 1) != 0)
 				return;
 
-			try { _maintenance.GetAwaiter().GetResult(); }
+			try { await _maintenance; }
 			catch(OperationCanceledException) { }
 
 			var client = Interlocked.Exchange(ref _client, null);
-			_lifecycle.Wait();
+			await _lifecycle.WaitAsync();
 
 			try
 			{
@@ -517,7 +499,7 @@ public class MqttQueue : MessageQueueBase<MqttSubscriber, Configuration.MqttConn
 						try
 						{
 							using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
-							client.DisconnectAsync(cancellationToken: cancellation.Token).GetAwaiter().GetResult();
+							await client.DisconnectAsync(cancellationToken: cancellation.Token);
 						}
 						catch { }
 					}

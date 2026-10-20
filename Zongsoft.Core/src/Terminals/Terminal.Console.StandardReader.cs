@@ -53,7 +53,7 @@ partial class Terminal
 
 			public override int Peek() => throw new NotSupportedException(Properties.Resources.OperationException_Unsupported_Message);
 			public override int Read() => throw new NotSupportedException(Properties.Resources.OperationException_Unsupported_Message);
-			public override string ReadLine() => this.ReadLineAsync(CancellationToken.None).AsTask().GetAwaiter().GetResult();
+			public override string ReadLine() => throw new NotSupportedException(Properties.Resources.OperationException_Unsupported_Message);
 			public override Task<string> ReadLineAsync() => this.ReadLineAsync(CancellationToken.None).AsTask();
 			public override ValueTask<string> ReadLineAsync(CancellationToken cancellationToken)
 			{

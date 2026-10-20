@@ -12,13 +12,13 @@
 
 ## 标准输入
 
-`Terminal.Console.Input` 默认返回同一个进程级 `TextReader`，设置 `Input = null` 可恢复该默认输入。它支持 `ReadLine()`、`ReadLineAsync()` 和 `ReadLineAsync(CancellationToken)`，三个入口共用同一读取状态。同步入口等待整行返回；异步入口不阻塞调用线程。此读取器仅提供按行输入，`Peek`、逐字符及字符块读取不受支持。
+`Terminal.Console.Input` 默认返回同一个进程级 `TextReader`，设置 `Input = null` 可恢复该默认输入。它支持 `ReadLineAsync()` 和 `ReadLineAsync(CancellationToken)`，两个入口共用同一读取状态，均不阻塞调用线程。`ReadLine()` 始终抛出 `NotSupportedException`，包括异步读取尚未结束、EOF 和故障状态，不会消费待领取的结果。此读取器仅提供异步按行输入，`Peek`、逐字符及字符块读取不受支持。
 
-首次读取时启动一个后台线程，按需调用 `Console.In.ReadLine()`；没有调用方请求下一行时不预读下一行。文本解码、行结束符和控制台编辑由 .NET 处理。
+标准输入按请求逐行读取，不预读未请求的下一行。文本解码、行结束符和控制台编辑由 .NET 处理。
 
 同一时刻只允许一个调用方等待输入，并发等待抛出 `InvalidOperationException`。取消只结束本次等待，尚未完成的读取及其结果由读取器持有。后续调用接续同一次读取，不另起读取，也不丢弃已经取得的结果。结果只有在成功返回给调用方时才被领取；输入完成与取消竞争时，允许成功或取消两种结果。
 
-EOF 和读取故障保留在读取器中，后续调用返回 EOF 或传播同一故障，不自动重试。宿主停止不等待进程级读取完成，后台线程随进程退出结束。`Dispose()` 和 `Close()` 不执行任何操作，也不会关闭标准输入。
+EOF 和读取故障保留在读取器中，后续调用返回 EOF 或传播同一故障，不自动重试。宿主停止不等待尚未完成的标准输入读取。`Dispose()` 和 `Close()` 不执行任何操作，也不会关闭标准输入。
 
 在首次读取前配置 `Console.InputEncoding`。读取开始后不得更换 `Console.In`，或混用 `Console.In`、`Console.ReadKey` 及其它标准输入读取入口。控制台模式及尚未提交的编辑内容由操作系统和 .NET 管理。
 
@@ -55,4 +55,4 @@ finally { terminal.Input = previous; }
 
 ## 验证
 
-单元测试位于 `test/Terminals`，验证文本读取器注入、执行器取消、EOF、故障、输入所有权和命令清理。独立的[集成测试](../test/integration/README.zh-Hans.md)通过隔离子进程验证共享标准输入、取消后的结果与故障保留、同步及异步读取和进程退出，不进入主解决方案的默认单元测试。
+单元测试位于 `test/unit/Terminals`，验证文本读取器注入、执行器取消、EOF、故障、输入所有权和命令清理。独立的[集成测试](../test/integration/README.zh-Hans.md)通过隔离子进程验证共享标准输入、取消后的结果与故障保留、两个异步读取入口、同步读取拒绝和进程退出，不进入主解决方案的默认单元测试。

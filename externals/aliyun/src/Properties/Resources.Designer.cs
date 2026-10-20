@@ -105,6 +105,15 @@ namespace Zongsoft.Externals.Aliyun.Properties {
             }
         }
 
+		/// <summary>
+		///   查找类似 This provider only supports asynchronous operations. Use the corresponding Async method and await disposal. 的本地化字符串。
+		/// </summary>
+		internal static string Operation_AsyncOnly_Message {
+			get {
+				return ResourceManager.GetString("Operation.AsyncOnly.Message", resourceCulture);
+			}
+		}
+
         /// <summary>
         ///   查找类似 The &apos;{0}&apos; pattern contains invalid characters. 的本地化字符串。
         /// </summary>
@@ -176,6 +185,15 @@ namespace Zongsoft.Externals.Aliyun.Properties {
                 return ResourceManager.GetString("Storage.ConfigurationRequired.Message", resourceCulture);
             }
         }
+
+		/// <summary>
+		///   查找类似 The storage upload response is missing a valid upload identifier, part checksum, or completion result. 的本地化字符串。
+		/// </summary>
+		internal static string Storage_UploadResponseInvalid_Message {
+			get {
+				return ResourceManager.GetString("Storage.UploadResponseInvalid.Message", resourceCulture);
+			}
+		}
 
         /// <summary>
         ///   查找类似 Missing required configuration of the phone service(aliyun). 的本地化字符串。

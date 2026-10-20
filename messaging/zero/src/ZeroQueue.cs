@@ -261,15 +261,13 @@ public sealed partial class ZeroQueue : MessageQueueBase<ZeroSubscriber, Configu
 	#endregion
 
 	#region 处置方法
-	protected override void Dispose(bool disposing)
+	protected override async ValueTask DisposeAsync(bool disposing)
 	{
 		if(!disposing)
 			return;
 
-		foreach(var subscriber in this.Subscribers)
-			subscriber.DisposeAsync().AsTask().GetAwaiter().GetResult();
-
-		_transport?.DisposeAsync().AsTask().GetAwaiter().GetResult();
+		if(_transport != null)
+			await _transport.DisposeAsync().ConfigureAwait(false);
 	}
 	#endregion
 }

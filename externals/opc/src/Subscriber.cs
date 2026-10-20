@@ -30,6 +30,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Channels;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -43,6 +44,11 @@ public partial class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber
 	#region 成员字段
 	private Subscription _subscription;
 	private Action<Subscriber, Entry, object> _consumer;
+	private Func<Subscriber, Entry, object, CancellationToken, ValueTask> _asyncConsumer;
+	private readonly Channel<Notification> _notifications;
+	private readonly Task _dispatch;
+	private TaskCompletionSource _disposal;
+	private Exception _failure;
 	#endregion
 
 	#region 构造函数
@@ -63,6 +69,14 @@ public partial class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber
 		_subscription.PublishStatusChanged += this.Subscription_PublishStatusChanged;
 
 		_consumer = consumer;
+		_notifications = Channel.CreateBounded<Notification>(new BoundedChannelOptions(options?.NotificationCapacity > 0 ? options.NotificationCapacity : SubscriberOptions.QUEUE_SIZE)
+		{
+			SingleReader = true,
+			SingleWriter = false,
+			AllowSynchronousContinuations = false,
+			FullMode = BoundedChannelFullMode.Wait,
+		});
+		_dispatch = this.DispatchAsync();
 		this.Options = options;
 		this.Statistics = new();
 		this.Entries = new EntryCollection(this);
@@ -89,67 +103,105 @@ public partial class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber
 	#endregion
 
 	#region 公共方法
-	public void Consume(Action<Subscriber, Entry, object> consumer = null) => _consumer = consumer;
-	#endregion
-
-	#region 取消订阅
-	private async ValueTask UnsubscribeAsync(CancellationToken cancellation = default)
+	public void Consume(Action<Subscriber, Entry, object> consumer = null)
 	{
-		try
-		{
-			//清空订阅的监视条目
-			await this.Entries.ClearAsync(cancellation);
-		}
-		catch { }
+		ObjectDisposedException.ThrowIf(_disposal != null, this);
+		_asyncConsumer = null;
+		_consumer = consumer;
+	}
 
-		try
-		{
-			//从服务器中删除当前订阅
-			await _subscription?.DeleteAsync(true, cancellation);
-		}
-		catch { }
+	/// <summary>注册异步通知处理器；通知由此订阅拥有的有界队列顺序处理。</summary>
+	/// <param name="consumer">异步处理器；处理失败通过 FlushAsync 或 DisposeAsync 传播。</param>
+	public void Consume(Func<Subscriber, Entry, object, CancellationToken, ValueTask> consumer)
+	{
+		ObjectDisposedException.ThrowIf(_disposal != null, this);
+		_consumer = null;
+		_asyncConsumer = consumer;
+	}
+
+	/// <summary>等待此前接受的异步通知处理完成。</summary>
+	/// <param name="cancellation">取消等待的标记。</param>
+	/// <returns>通知处理完成的任务。</returns>
+	public async ValueTask FlushAsync(CancellationToken cancellation = default)
+	{
+		ObjectDisposedException.ThrowIf(_disposal != null, this);
+		var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		using var registration = cancellation.Register(() => completion.TrySetCanceled(cancellation));
+		await _notifications.Writer.WriteAsync(new(null, null, null, completion), cancellation);
+		await completion.Task;
 	}
 	#endregion
 
 	#region 处置方法
-	private CancellationTokenSource _cancellation = new();
+	private readonly CancellationTokenSource _cancellation = new();
 	public Microsoft.Extensions.Primitives.IChangeToken Disposed => Common.Notification.GetToken(_cancellation);
+	public bool IsDisposed => _disposal != null;
 
-	public bool IsDisposed => _cancellation?.IsCancellationRequested ?? true;
-
-	public async ValueTask DisposeAsync()
+	public ValueTask DisposeAsync()
 	{
-		await this.DisposeAsync(true);
-		GC.SuppressFinalize(this);
+		var completion = Volatile.Read(ref _disposal);
+		if(completion == null)
+		{
+			var candidate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+			completion = Interlocked.CompareExchange(ref _disposal, candidate, null) ?? candidate;
+			if(ReferenceEquals(completion, candidate))
+				_ = this.DisposeCoreAsync(candidate);
+		}
+
+		return new(completion.Task);
+	}
+
+	private async Task DisposeCoreAsync(TaskCompletionSource completion)
+	{
+		try
+		{
+			await this.DisposeAsync(true);
+			GC.SuppressFinalize(this);
+			completion.TrySetResult();
+		}
+		catch(Exception exception) { completion.TrySetException(exception); }
 	}
 
 	protected virtual async ValueTask DisposeAsync(bool disposing)
 	{
-		var cancellation = Interlocked.Exchange(ref _cancellation, null);
-		if(cancellation == null)
+		if(!disposing)
 			return;
 
-		_subscription.StateChanged -= this.Subscription_StateChanged;
-		_subscription.PublishStatusChanged -= this.Subscription_PublishStatusChanged;
+		var subscription = _subscription;
+		subscription.StateChanged -= this.Subscription_StateChanged;
+		subscription.PublishStatusChanged -= this.Subscription_PublishStatusChanged;
+		_notifications.Writer.TryComplete();
+		List<Exception> errors = null;
 
-		if(disposing)
-		{
-			//取消订阅
-			await this.UnsubscribeAsync();
-
-			//处置订阅
-			_subscription.Dispose();
-		}
-
-		_subscription = null;
-		_consumer = null;
+		try { await this.Entries.ClearAsync(); }
+		catch(Exception exception) { (errors ??= []).Add(exception); }
 
 		try
 		{
-			cancellation.Cancel();
-			cancellation.Dispose();
+			if(subscription.Created)
+				await subscription.DeleteAsync(true, CancellationToken.None);
 		}
-		catch { }
+		catch(Exception exception) { (errors ??= []).Add(exception); }
+
+		await _dispatch;
+		var failure = Interlocked.Exchange(ref _failure, null);
+
+		if(failure != null)
+			(errors ??= []).Add(failure);
+
+		try { subscription.Dispose(); }
+		catch(Exception exception) { (errors ??= []).Add(exception); }
+
+		_subscription = null;
+		_consumer = null;
+		_asyncConsumer = null;
+
+		try { await _cancellation.CancelAsync(); }
+		catch(Exception exception) { (errors ??= []).Add(exception); }
+		finally { _cancellation.Dispose(); }
+
+		if(errors != null)
+			throw new AggregateException(errors);
 	}
 	#endregion
 
@@ -159,20 +211,52 @@ public partial class Subscriber : IEquatable<Subscriber>, IEnumerable<Subscriber
 
 	internal void OnNotification(MonitoredItem monitoredItem, MonitoredItemNotificationEventArgs args)
 	{
-		var consumer = _consumer;
+		if(this.IsDisposed)
+			return;
 
-		//累加统计项的相关计数器
 		this.Statistics.IncreaseNotificationCount();
+		var consumer = _consumer;
+		var asynchronous = _asyncConsumer;
+		var entry = monitoredItem.Handle as Entry;
 
-		if(consumer != null && this.Entries.TryGetValue(monitoredItem.StartNodeId, out var entry))
+		if(entry == null || (consumer == null && asynchronous == null))
+			return;
+
+		var value = args.NotificationValue is MonitoredItemNotification notification ?
+			Utility.GetValue(notification.Value) : args.NotificationValue;
+
+		if(asynchronous != null)
 		{
-			var value = args.NotificationValue is MonitoredItemNotification notification ?
-				notification.Value.Value :
-				args.NotificationValue;
+			if(!_notifications.Writer.TryWrite(new(asynchronous, entry, value, null)) && !this.IsDisposed)
+				Interlocked.CompareExchange(ref _failure, new InvalidOperationException(Properties.Resources.Subscription_QueueFull_Message), null);
+		}
+		else
+			consumer(this, entry, value);
+	}
 
-			consumer.Invoke(this, entry, value);
+	private async Task DispatchAsync()
+	{
+		await foreach(var notification in _notifications.Reader.ReadAllAsync())
+		{
+			if(notification.Completion != null)
+			{
+				var failure = Volatile.Read(ref _failure);
+				if(failure == null)
+					notification.Completion.TrySetResult();
+				else if(notification.Completion.TrySetException(failure))
+					Interlocked.CompareExchange(ref _failure, null, failure);
+
+				continue;
+			}
+
+			try { await notification.Consumer(this, notification.Entry, notification.Value, CancellationToken.None); }
+			catch(Exception exception) { Interlocked.CompareExchange(ref _failure, exception, null); }
 		}
 	}
+	#endregion
+
+	#region 嵌套类型
+	private readonly record struct Notification(Func<Subscriber, Entry, object, CancellationToken, ValueTask> Consumer, Entry Entry, object Value, TaskCompletionSource Completion);
 	#endregion
 
 	#region 枚举遍历

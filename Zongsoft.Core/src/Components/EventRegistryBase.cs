@@ -106,16 +106,6 @@ public class EventRegistryBase : IFilterable<EventContext>, IEnumerable<EventDes
 	#endregion
 
 	#region 激发方法
-	protected bool Raise<TArgument>(string name, TArgument argument, Collections.Parameters parameters = null)
-	{
-		var task = this.RaiseAsync(name, argument, parameters);
-
-		if(task.IsCompletedSuccessfully)
-			return task.Result;
-		else
-			return task.AsTask().GetAwaiter().GetResult();
-	}
-
 	protected ValueTask<bool> RaiseAsync<TArgument>(string name, TArgument argument, CancellationToken cancellation = default) => this.RaiseAsync(name, argument, null, cancellation);
 	protected async ValueTask<bool> RaiseAsync<TArgument>(string name, TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default)
 	{

@@ -15,7 +15,7 @@ internal sealed class ReportCommand : CommandBase<CommandContext>
 		var expectViolations = context.Options.Switch("expect-violations") ||
 			string.Equals(context.Options.GetValue<string>("scenario", null), "expiry", System.StringComparison.OrdinalIgnoreCase);
 
-		using var redis = Utility.GetRedis(context);
+		await using var redis = Utility.GetRedis(context);
 
 		var entered = await Utility.ReadCounterAsync(redis, Utility.Keys.Entered, cancellation);
 		var completed = await Utility.ReadCounterAsync(redis, Utility.Keys.Completed, cancellation);

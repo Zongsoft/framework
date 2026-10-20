@@ -30,6 +30,8 @@
 using System;
 using System.IO;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
@@ -41,6 +43,25 @@ namespace Zongsoft.Externals.Opc;
 
 internal static class Utility
 {
+	#region 工具方法
+	public static object GetValue(DataValue value)
+	{
+		var result = value.WrappedValue.AsBoxedObject(Variant.BoxingBehavior.Legacy);
+		if(result is not ExtensionObject extension)
+			return result;
+
+		if(extension.TryGetValue(out IEncodeable encoded))
+			return encoded;
+		if(extension.TryGetAsBinary(out var binary))
+			return binary;
+		if(extension.TryGetAsXml(out var xml))
+			return xml;
+		if(extension.TryGetAsJson(out var json))
+			return json;
+
+		return null;
+	}
+
 	public static MessageSecurityMode GetSecurityMode(this OpcSecurityMode mode) => mode switch
 	{
 		OpcSecurityMode.None => MessageSecurityMode.None,
@@ -67,7 +88,7 @@ internal static class Utility
 		//注意：枚举类型必须返回空！
 		//因为 Type.GetTypeCode(..) 会返回枚举类型的基元类型
 		if(type == null || type.IsEnum)
-			return null;
+			return default;
 
 		if(type == typeof(Guid))
 			return DataTypeIds.Guid;
@@ -91,13 +112,13 @@ internal static class Utility
 			TypeCode.Decimal => DataTypeIds.Decimal,
 			TypeCode.DateTime => DataTypeIds.DateTime,
 			TypeCode.String => DataTypeIds.String,
-			_ => null,
+			_ => default,
 		};
 	}
 
 	public static Type GetDataType(this NodeId id, int rank)
 	{
-		if(id == null || id.IsNullNodeId)
+		if(id.IsNull)
 			return null;
 
 		if(id == DataTypeIds.Byte)
@@ -218,7 +239,7 @@ internal static class Utility
 		return Common.TypeExtension.IsNullable(elementType, out underlyingType) ? underlyingType : elementType;
 	}
 
-	public static IUserIdentity GetIdentity(this Configuration.OpcConnectionSettings settings)
+	public static async ValueTask<IUserIdentity> GetIdentityAsync(this Configuration.OpcConnectionSettings settings, CancellationToken cancellation)
 	{
 		if(settings == null)
 			return null;
@@ -227,12 +248,16 @@ internal static class Utility
 			return new UserIdentity(settings.UserName, Encoding.UTF8.GetBytes(settings.Password ?? string.Empty));
 
 		if(!string.IsNullOrEmpty(settings.Certificate))
-			return new UserIdentity(GetCertificate(settings.Certificate, settings.CertificateSecret));
+		{
+			using var certificate = await GetCertificateAsync(settings.Certificate, settings.CertificateSecret, cancellation);
+			var identifier = new CertificateIdentifier { Thumbprint = certificate.Thumbprint, SubjectName = certificate.Subject };
+			return await UserIdentity.CreateAsync(identifier, new CertificatePasswordProvider(settings.CertificateSecret.AsSpan()), new IdentityCertificateProvider(settings.Certificate, settings.CertificateSecret), cancellation);
+		}
 
 		return null;
 	}
 
-	private static X509Certificate2 GetCertificate(string text, string secret = null)
+	private static async ValueTask<X509Certificate2> GetCertificateAsync(string text, string secret, CancellationToken cancellation)
 	{
 		if(string.IsNullOrEmpty(text))
 			return null;
@@ -255,20 +280,20 @@ internal static class Utility
 		//如果证书文本包含冒号则表示采用虚拟文件路径
 		if(text.Contains(':'))
 		{
-			using var stream = Zongsoft.IO.FileSystem.File.Open(text, FileMode.Open, FileAccess.Read);
-			return LoadX509(stream, secret);
+			await using var stream = await Zongsoft.IO.FileSystem.File.OpenAsync(text, FileMode.Open, FileAccess.Read, cancellation: cancellation);
+			return await LoadX509Async(stream, secret, cancellation);
 		}
 
 		//解析相对文件路径
 		if(!Path.IsPathRooted(text))
 		{
-			text = Path.Combine(typeof(Utility).Assembly.Location, "certificates", text);
+			text = Path.Combine(Path.GetDirectoryName(typeof(Utility).Assembly.Location), "certificates", text);
 			if(!File.Exists(text))
 				text = Path.Combine(ApplicationContext.Current.ApplicationPath, "certificates", text);
 		}
 
-		using var file = File.OpenRead(text);
-		return LoadX509(file, secret);
+		await using var file = new FileStream(text, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.Asynchronous);
+		return await LoadX509Async(file, secret, cancellation);
 
 		static X509Store GetX509Store(ReadOnlySpan<char> identifier)
 		{
@@ -283,12 +308,13 @@ internal static class Utility
 				return new(identifier[..index].ToString(), StoreLocation.CurrentUser);
 		}
 
-		static X509Certificate2 LoadX509(Stream stream, string secret)
+		static async ValueTask<X509Certificate2> LoadX509Async(Stream stream, string secret, CancellationToken cancellation)
 		{
-			var data = new byte[stream.Length];
+			using var buffer = new MemoryStream();
+			await stream.CopyToAsync(buffer, cancellation);
+			var data = buffer.ToArray();
 
 			#if NET9_0_OR_GREATER
-			stream.ReadExactly(data, 0, data.Length);
 
 			//获取证书类型
 			var type = X509Certificate2.GetCertContentType(data);
@@ -298,11 +324,23 @@ internal static class Utility
 				X509CertificateLoader.LoadPkcs12(data, secret, X509KeyStorageFlags.Exportable) :
 				X509CertificateLoader.LoadCertificate([.. data]);
 			#else
-			stream.Read(data, 0, data.Length);
 			return string.IsNullOrEmpty(secret) ?
 				new X509Certificate2(data) :
 				new X509Certificate2(data, secret);
 			#endif
 		}
 	}
+	#endregion
+
+	#region 证书提供
+	private sealed class IdentityCertificateProvider(string path, string secret) : ICertificateProvider
+	{
+		public global::Opc.Ua.Security.Certificates.Certificate TryGetPrivateKeyCertificate(string thumbprint) => null;
+		public async ValueTask<global::Opc.Ua.Security.Certificates.Certificate> GetPrivateKeyCertificateAsync(CertificateIdentifier identifier, ICertificatePasswordProvider passwordProvider = null, string applicationUri = null, CancellationToken ct = default)
+		{
+			var certificate = await GetCertificateAsync(path, secret, ct);
+			return global::Opc.Ua.Security.Certificates.Certificate.From(certificate);
+		}
+	}
+	#endregion
 }

@@ -64,17 +64,6 @@ public class FileOpenCommand : CommandBase<CommandContext>, ICommandCompletion
 	#endregion
 
 	#region 完成回调
-	public void OnCompleted(CommandCompletionContext context)
-	{
-		if(context.Result is IEnumerable<Stream> streams)
-		{
-			foreach(var stream in streams)
-				stream?.Close();
-		}
-		else if(context.Result is Stream stream)
-		{
-			stream.Close();
-		}
-	}
+	public ValueTask OnCompletedAsync(CommandCompletionContext context) => FileUtility.DisposeAsync(context.Result);
 	#endregion
 }

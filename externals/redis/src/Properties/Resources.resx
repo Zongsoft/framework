@@ -417,4 +417,7 @@
 	<data name="Redis.ConnectionSettingInvalid.Message" xml:space="preserve">
 		<value>The '{0}' Redis connection setting does not exist or its driver does not match Redis.</value>
 	</data>
+  <data name="Configuration.AsyncLoadRequired.Message" xml:space="preserve">
+    <value>Await LoadAsync before adding this remote configuration source to a configuration builder.</value>
+  </data>
 </root>

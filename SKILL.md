@@ -43,7 +43,6 @@ description: 在 Zongsoft framework 仓库中进行修改、审查或排障前�
 | 平台硬件采集 | [Hardwares](Zongsoft.Hardwares/SKILL.md) |
 | 报表资源与数据加载 | [Reporting](Zongsoft.Reporting/SKILL.md) |
 | 对话服务与模型会话 | [Intelligences](Zongsoft.Intelligences/SKILL.md) |
-| ML.NET 管道及元数据 | [Learning](Zongsoft.Learning/SKILL.md) |
 | 消息驱动与存储 | [messaging](messaging/SKILL.md)、[ZeroMQ 协议](messaging/zero/SKILL.md) |
 | 第三方适配 | [externals](externals/SKILL.md)、[Etcd](externals/etcd/SKILL.md) |
 | 升级链路 | [deployer](upgrading/deployer/SKILL.md)、[tool](upgrading/tool/SKILL.md)、[upgrader](upgrading/upgrader/SKILL.md)、[web](upgrading/web/SKILL.md) |
@@ -55,6 +54,8 @@ description: 在 Zongsoft framework 仓库中进行修改、审查或排障前�
 3. 分清插件名、模块名、服务别名、连接名。ServiceLocator 的 `name@provider` 与插件解析器的 `{service:...@module}` 不同。
 4. 核对 `.deploy` 与包内产物、目标框架、原生资源、宿主根目录公共程序集；部署器默认跳过 Zongsoft 传递依赖，必须在宿主方案中显式组合。
 5. README 展示公共接口消费与必要的配置/部署，SKILL 记录内部约束；不要在两处复制实现类清单。
+6. 文档仅描述最终状态；任务计划、重构经过、扫描数量、历史测试结果和临时输出路径不进入长期文档。结束前删除本任务的过程文件，并检查正式文档没有指向临时文件或已删除文档的链接。
+7. C# 格式整理保持原有编码和换行，`#endregion` 紧接前一个非空行。
 
 ## 验证选择
 

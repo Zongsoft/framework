@@ -21,8 +21,8 @@ public class ZeroQueuePublishingTests
 			return;
 
 		await using var server = await ZeroServerScope.StartAsync();
-		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "missing-publisher");
-		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "missing-subscriber");
+		await using var publisher = ZeroTestUtility.CreateQueue(server.Port, "missing-publisher");
+		await using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "missing-subscriber");
 		using var handler = new MessageBuffer();
 		var topic = "topic/missing";
 
@@ -42,8 +42,8 @@ public class ZeroQueuePublishingTests
 			return;
 
 		await using var server = await ZeroServerScope.StartAsync();
-		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "identifier-publisher");
-		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "identifier-subscriber");
+		await using var publisher = ZeroTestUtility.CreateQueue(server.Port, "identifier-publisher");
+		await using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "identifier-subscriber");
 		using var handler = new MessageBuffer();
 		var topic = "topic/identifier";
 
@@ -73,7 +73,7 @@ public class ZeroQueuePublishingTests
 			return;
 
 		await using var server = await ZeroServerScope.StartAsync();
-		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "compression-publisher");
+		await using var publisher = ZeroTestUtility.CreateQueue(server.Port, "compression-publisher");
 		using var subscriber = new SubscriberSocket();
 		var topic = "topic/compression";
 		var payload = Enumerable.Repeat((byte)'A', 16 * 1024).ToArray();
@@ -100,8 +100,8 @@ public class ZeroQueuePublishingTests
 			return;
 
 		await using var server = await ZeroServerScope.StartAsync();
-		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "concurrent-publisher");
-		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "concurrent-subscriber");
+		await using var publisher = ZeroTestUtility.CreateQueue(server.Port, "concurrent-publisher");
+		await using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "concurrent-subscriber");
 		using var handler = new MessageBuffer();
 		var topic = "topic/concurrent";
 
@@ -126,8 +126,8 @@ public class ZeroQueuePublishingTests
 			return;
 
 		await using var server = await ZeroServerScope.StartAsync();
-		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "snapshot-publisher");
-		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "snapshot-subscriber");
+		await using var publisher = ZeroTestUtility.CreateQueue(server.Port, "snapshot-publisher");
+		await using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "snapshot-subscriber");
 		using var handler = new MessageBuffer();
 		var topic = "topic/snapshot";
 
@@ -147,7 +147,7 @@ public class ZeroQueuePublishingTests
 			return;
 
 		var port = ZeroTestUtility.GetFreePort();
-		using var publisher = ZeroTestUtility.CreateQueue(port, "retry-publisher", settings => settings.Timeout = TimeSpan.FromMilliseconds(100));
+		await using var publisher = ZeroTestUtility.CreateQueue(port, "retry-publisher", settings => settings.Timeout = TimeSpan.FromMilliseconds(100));
 		var server = ZeroTestUtility.CreateServer(port);
 
 		await Assert.ThrowsAsync<TimeoutException>(() =>
@@ -156,7 +156,7 @@ public class ZeroQueuePublishingTests
 		try
 		{
 			await server.StartAsync([]);
-			using var subscriber = ZeroTestUtility.CreateQueue(port, "retry-subscriber");
+			await using var subscriber = ZeroTestUtility.CreateQueue(port, "retry-subscriber");
 			using var handler = new MessageBuffer();
 			await subscriber.SubscribeAsync("topic/retry", handler);
 
@@ -180,11 +180,11 @@ public class ZeroQueuePublishingTests
 		await using var server = await ZeroServerScope.StartAsync();
 		var settings = Configuration.ZeroConnectionSettingsDriver.Instance.GetSettings("ZeroMQ",
 			$"server=127.0.0.1;port={server.Port};client=snapshot-settings;topic=original;group=tenant;Timeout=5s;");
-		using var publisher = new ZeroQueue("ZeroMQ", settings);
+		await using var publisher = new ZeroQueue("ZeroMQ", settings);
 		settings.Topic = "changed";
 		settings.Group = "changed";
 
-		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "snapshot-settings-subscriber", options => options.Group = "tenant");
+		await using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "snapshot-settings-subscriber", options => options.Group = "tenant");
 		using var handler = new MessageBuffer();
 		await subscriber.SubscribeAsync("original", handler);
 
@@ -210,8 +210,8 @@ public class ZeroQueuePublishingTests
 
 		await using var server = await ZeroServerScope.StartAsync();
 		//短心跳会更频繁触发 poller 回调，用来覆盖发布者初始化和发送路径的竞态保护。
-		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "publisher", settings => settings.Heartbeat = TimeSpan.FromMilliseconds(10));
-		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "subscriber");
+		await using var publisher = ZeroTestUtility.CreateQueue(server.Port, "publisher", settings => settings.Heartbeat = TimeSpan.FromMilliseconds(10));
+		await using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "subscriber");
 		using var handler = new MessageBuffer();
 
 		await subscriber.SubscribeAsync("topic/heartbeat", handler);
@@ -228,8 +228,8 @@ public class ZeroQueuePublishingTests
 			return;
 
 		await using var server = await ZeroServerScope.StartAsync();
-		using var publisher = ZeroTestUtility.CreateQueue(server.Port, "publisher");
-		using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "subscriber");
+		await using var publisher = ZeroTestUtility.CreateQueue(server.Port, "publisher");
+		await using var subscriber = ZeroTestUtility.CreateQueue(server.Port, "subscriber");
 		using var handler = new MessageBuffer();
 		var topic = "topic/burst";
 		var count = 100;

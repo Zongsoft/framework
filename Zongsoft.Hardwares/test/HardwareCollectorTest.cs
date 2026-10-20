@@ -1,4 +1,5 @@
-using System.Linq;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Xunit;
@@ -8,26 +9,25 @@ namespace Zongsoft.Hardwares.Tests;
 public class HardwareCollectorTest
 {
 	[Fact]
-	public void TestCollect()
+	public async Task TestCollect()
 	{
-		var hardwares = HardwareCollector.Instance.Collect();
-
-		Assert.NotNull(hardwares);
-		Assert.DoesNotContain(hardwares, hardware => hardware == null);
+		await foreach(var hardware in HardwareCollector.Instance.CollectAsync(TestContext.Current.CancellationToken))
+			Assert.NotNull(hardware);
 	}
 
 	[Fact]
-	public async Task TestCollectAsync()
+	public async Task CollectAsync_PreCanceled_PropagatesCancellation()
 	{
-		var count = 0;
+		using var cancellation = new CancellationTokenSource();
+		cancellation.Cancel();
 
-		await foreach(var hardware in HardwareCollector.Instance.CollectAsync())
+		var exception = await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
 		{
-			Assert.NotNull(hardware);
-			count++;
-		}
+			await foreach(var hardware in HardwareCollector.Instance.CollectAsync(cancellation.Token))
+				Assert.Fail("A canceled collection must not yield hardware.");
+		});
 
-		Assert.True(count >= 0);
+		Assert.Equal(cancellation.Token, exception.CancellationToken);
 	}
 
 	[Fact]

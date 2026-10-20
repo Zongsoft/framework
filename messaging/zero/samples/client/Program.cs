@@ -14,12 +14,12 @@ internal class Program
 {
 	static async Task Main(string[] args)
 	{
-		using var queue = new ZeroQueue("ZeroMQ",
+		await using var queue = new ZeroQueue("ZeroMQ",
 			Configuration.ZeroConnectionSettingsDriver.Instance.GetSettings("ZeroMQ", "server=127.0.0.1;client=Zongsoft.Messaging.ZeroMQ.Sample;Group=Demo;"));
 
 		var executor = Terminal.Console.Executor;
 		executor.Command("reset", context => Handler.Instance.Reset());
-		executor.Command("close", context => queue.Dispose());
+		executor.Command("close", (context, cancellation) => queue.DisposeAsync());
 
 		executor.Command("info", context =>
 		{
@@ -103,9 +103,6 @@ internal class Program
 			.AppendLine(CommandOutletColor.Yellow, new string('·', 50))
 			.AppendLine(CommandOutletColor.Cyan, "Welcome to the ZeroMQ Client.".Justify(50))
 			.AppendLine(CommandOutletColor.Yellow, new string('·', 50));
-
-		//挂载终端命令执行器退出事件，在退出时释放消息队列资源
-		//executor.Exit += (_, _) => queue.Dispose();
 
 		//运行终端命令执行器
 		await executor.RunAsync(splash);

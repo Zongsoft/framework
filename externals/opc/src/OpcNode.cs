@@ -38,7 +38,7 @@ public partial class OpcNode
 	#region 构造函数
 	internal OpcNode(NodeId id, OpcNodeKind kind, OpcNodeType type, string label = null, string description = null)
 	{
-		this.Id = id ?? throw new ArgumentNullException(nameof(id));
+		this.Id = id.IsNull ? throw new ArgumentNullException(nameof(id)) : id;
 		this.Name = id.ToString();
 		this.Kind = kind;
 		this.Type = type;

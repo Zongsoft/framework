@@ -31,6 +31,7 @@ using System;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
@@ -48,23 +49,33 @@ internal static class Json
 		Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
 	};
 
+	internal static JsonSerializerOptions GetOptions(ICertificate certificate)
+	{
+		var resolver = new DefaultJsonTypeInfoResolver();
+
+		resolver.Modifiers.Add(info =>
+		{
+			foreach(var property in info.Properties)
+			{
+				if(property.CustomConverter is CryptographyConverter)
+					property.CustomConverter = new CryptographyConverter(certificate);
+			}
+		});
+
+		return new JsonSerializerOptions(Options) { TypeInfoResolver = resolver };
+	}
+
 	internal class CryptographyConverter : JsonConverter<string>
 	{
-		private Lazy<ICertificate> _certificate;
+		private readonly ICertificate _certificate;
+		public CryptographyConverter() { }
+		public CryptographyConverter(ICertificate certificate) => _certificate = certificate;
 
-		public CryptographyConverter()
-		{
-			_certificate = new Lazy<ICertificate>(() => AuthorityUtility.GetAuthority().GetCertificateAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult());
-		}
-
-		public override string Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options)
-		{
-			return reader.GetString();
-		}
-
+		public override string Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options) => reader.GetString();
 		public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
 		{
-			writer.WriteBase64StringValue(_certificate.Value.Encrypt(value));
+			var certificate = _certificate ?? throw new InvalidOperationException(Properties.Resources.Wechat_CertificateNotFound_Message);
+			writer.WriteBase64StringValue(certificate.Encrypt(value));
 		}
 	}
 

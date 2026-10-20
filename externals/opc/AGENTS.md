@@ -2,6 +2,8 @@
 
 本目录遵循 [../AGENTS.md](../AGENTS.md)。本项目适配 OPC UA 连接、读写、订阅与证书安全。
 
+实现与离线验证约束见 [SKILL.md](SKILL.md)；双语 README 仅说明公开配置、调用方式和运行要求。
+
 ## 工作边界
 
 - 保持 Session、Subscription、MonitoredItem 和证书对象的生命周期与重连语义明确。

@@ -16,23 +16,15 @@
 
 原始字典只返回显式参数，默认值由类型化读取提供。`Value` 保留全部显式主参数与扩展属性；保留未知项不意味着 OPC 客户端会使用它们。完整规则见 [Core 设置契约](../../Zongsoft.Core/docs/settings.zh-Hans.md)。
 
-## 通知缓冲验证
+## 异步通知与生命周期
 
-[SubscriberSpoolingTest](test/SubscriberSpoolingTest.cs) 使用未连接的实际 `Subscriber` 和 OPC UA SDK `MonitoredItem.SaveValueInCache` 产生通知，经过条目查找、值解包、消费者回调和 `Spooler` 批处理。测试不创建会话、不打开端口，也不生成证书。
+异步通知处理器使用 `Subscriber.Consume(Func<Subscriber, Entry, object, CancellationToken, ValueTask>)`，通知按顺序处理。`SubscriberOptions.NotificationCapacity` 限制待处理通知数量，默认值为 2048；超出容量时，通过 `FlushAsync` 或 `DisposeAsync` 报告错误。三参数 `Consume(Action)` 用于同步完成的本地处理器。
 
-测试由单个可等待的生产者控制通知源：同步消费者仅捕获本次 `PutAsync`，生产者在通知回调返回后等待投递完成，再发送下一条，最多保留一项未完成投递。覆盖同节点连续值和重复值、多节点标识与值的配对、满载慢消费、刷新等待、取消和异常传播、解绑后的显式最终刷新、释放不排空，以及周期回调的取消、清理等待和故障通知。
+等待 `Subscriber.FlushAsync` 可完成已接受通知并观察处理错误，取消等待不会取消已接受通知。自有订阅者和 OPC 客户端使用 `await using` 或等待 `DisposeAsync`。
 
-在仓库根目录先构建当前 Core，再运行 OPC 测试。使用 Debug 使适配器引用工作区 Core 程序集；Release 配置引用发布包。
+配合 `Spooler` 使用时，先解绑消费者并等待 `Subscriber.FlushAsync`；若剩余缓冲值必须在释放前处理，再等待 `Spooler.FlushAsync`。`Spooler.DisposeAsync` 不排空缓冲区。
 
-```shell
-dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -c Debug -p:GeneratePackageOnBuild=false
-dotnet build externals/opc/Zongsoft.Externals.Opc.slnx -c Debug -p:GeneratePackageOnBuild=false
-dotnet test externals/opc/test/Zongsoft.Externals.Opc.Tests.csproj -c Debug -f net8.0 --no-build --filter FullyQualifiedName~SubscriberSpoolingTest
-```
-
-分别将 `net8.0` 替换为 `net9.0`、`net10.0` 验证其余目标。关闭时是否显式刷新剩余数据由所有者决定，`DisposeAsync` 本身不排空缓冲区。
-
-测试中的可等待生产者不是生产环境同步订阅回调的异步背压方案；实际 `Consume(Action)` 不会等待异步投递。测试不覆盖服务器采样、网络 Publish 分派、重连和 SDK 内部队列溢出。生产环境必须由应用明确满载策略，不能丢弃 `PutAsync` 返回值或使用 `async void` 回调；协议端到端验证使用 [samples 的本地 client/server](samples/README.zh-Hans.md)。
+适配器依赖 OPC Foundation SDK 2.0.1，同一宿主中的 SDK 依赖应保持一致。服务端认证支持异步验证器，客户端连接需要配置受信任的服务端证书。接入方式见[本地客户端/服务端示例](samples/README.zh-Hans.md)。
 
 ## 证书生成
 

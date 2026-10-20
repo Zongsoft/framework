@@ -5,9 +5,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Core" VersionOverride="1.5.378.134" />
-		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Types" VersionOverride="1.5.378.134" />
-		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Client" VersionOverride="1.5.378.134" />
+		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Core" VersionOverride="2.0.1" />
+		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Types" VersionOverride="2.0.1" />
+		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Client" VersionOverride="2.0.1" />
 	</ItemGroup>
 
 	<ItemGroup>

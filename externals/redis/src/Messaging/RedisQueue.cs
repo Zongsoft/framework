@@ -38,7 +38,7 @@ using StackExchange.Redis;
 
 namespace Zongsoft.Externals.Redis.Messaging;
 
-public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisConnectionSettings>, IAsyncDisposable
+public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisConnectionSettings>
 {
 	#region 常量定义
 	private const int DEFAULT_MAXIMUM_LENGTH = 100000;
@@ -48,7 +48,7 @@ public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisC
 	private IDatabase _database;
 	private IConnectionMultiplexer _connection;
 	private RedisConnectionLease _connectionLease;
-	private TaskCompletionSource<bool> _disposal;
+	private readonly SemaphoreSlim _initializing = new(1, 1);
 	#endregion
 
 	#region 构造函数
@@ -57,10 +57,7 @@ public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisC
 		if(settings == null)
 			throw new ArgumentNullException(nameof(settings));
 
-		_connectionLease = RedisConnectionPool.Acquire(settings.GetOptions());
-		_connection = _connectionLease.Connection;
-		_database = _connection.GetDatabase();
-		this.Capabilities = GetCapabilities(_connection);
+
 		this.MaximumLength = settings.MaximumLength == 0 ? DEFAULT_MAXIMUM_LENGTH : settings.MaximumLength;
 		this.UseApproximateMaximumLength = settings.UseApproximateMaximumLength;
 		this.Features.Add(MessageQueueFeature.Compression);
@@ -82,7 +79,7 @@ public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisC
 	/// <summary>获取或设置是否使用近似裁剪消息流。</summary>
 	public bool UseApproximateMaximumLength { get; set; }
 	/// <summary>获取该队列当前可用的 Redis 服务端能力。</summary>
-	public RedisCapabilities Capabilities { get; }
+	public RedisCapabilities Capabilities { get; private set; }
 	#endregion
 
 	#region 内部属性
@@ -96,7 +93,7 @@ public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisC
 		if(string.IsNullOrEmpty(topic) && this.Settings != null)
 			throw new ArgumentNullException(nameof(topic));
 
-		cancellation.ThrowIfCancellationRequested();
+		await this.InitializeAsync(cancellation);
 		var payload = data.ToArray();
 		var compression = options?.Compression ?? default;
 		var compressor = default(string);
@@ -122,9 +119,10 @@ public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisC
 		return subscriber.SubscribeAsync(cancellation);
 	}
 
-	protected override ValueTask<RedisSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation)
+	protected override async ValueTask<RedisSubscriber> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation)
 	{
-		return ValueTask.FromResult(new RedisSubscriber(this, topic, tags, handler, options));
+		await this.InitializeAsync(cancellation);
+		return new RedisSubscriber(this, topic, tags, handler, options);
 	}
 	#endregion
 
@@ -134,66 +132,55 @@ public class RedisQueue : MessageQueueBase<RedisSubscriber, Configuration.RedisC
 	#endregion
 
 	#region 资源释放
-	public async ValueTask DisposeAsync()
+	protected override async ValueTask DisposeAsync(bool disposing)
 	{
-		await this.DisposeAsyncCore();
-		base.Dispose();
-		GC.SuppressFinalize(this);
-	}
+		if(!disposing)
+			return;
 
-	protected override void Dispose(bool disposing)
-	{
-		if(disposing)
-			this.DisposeAsyncCore().GetAwaiter().GetResult();
-	}
+		Interlocked.Exchange(ref _database, null);
+		Interlocked.Exchange(ref _connection, null);
+		var lease = Interlocked.Exchange(ref _connectionLease, null);
 
-	private Task DisposeAsyncCore()
-	{
-		var disposal = Volatile.Read(ref _disposal);
-		if(disposal == null)
-		{
-			var candidate = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-			disposal = Interlocked.CompareExchange(ref _disposal, candidate, null) ?? candidate;
-			if(ReferenceEquals(disposal, candidate))
-				_ = this.DisposeAsyncCore(candidate);
-		}
-
-		return disposal.Task;
-	}
-
-	private async Task DisposeAsyncCore(TaskCompletionSource<bool> completion)
-	{
 		try
 		{
-			foreach(var subscriber in this.Subscribers)
-			{
-				try
-				{
-					await subscriber.DisposeAsync();
-				}
-				catch(Exception exception)
-				{
-					Zongsoft.Diagnostics.Logging.GetLogging(typeof(RedisQueue)).Error(exception);
-				}
-			}
-
-			Interlocked.Exchange(ref _database, null);
-			Interlocked.Exchange(ref _connection, null);
-			var lease = Interlocked.Exchange(ref _connectionLease, null);
-
 			if(lease != null)
 				await lease.DisposeAsync();
-
-			completion.TrySetResult(true);
 		}
-		catch(Exception exception)
-		{
-			completion.TrySetException(exception);
-		}
+		finally { _initializing.Dispose(); }
 	}
 	#endregion
 
 	#region 私有方法
+	private async ValueTask InitializeAsync(CancellationToken cancellation)
+	{
+		if(_database != null)
+			return;
+
+		await _initializing.WaitAsync(cancellation);
+
+		try
+		{
+			if(_database != null)
+				return;
+
+			var lease = await RedisConnectionPool.AcquireAsync(this.Settings.GetOptions(), cancellation);
+
+			try
+			{
+				this.Capabilities = GetCapabilities(lease.Connection);
+				_connection = lease.Connection;
+				_database = _connection.GetDatabase();
+				_connectionLease = lease;
+			}
+			catch
+			{
+				await lease.DisposeAsync();
+				throw;
+			}
+		}
+		finally { _initializing.Release(); }
+	}
+
 	private static RedisCapabilities GetCapabilities(IConnectionMultiplexer connection)
 	{
 		var found = false;

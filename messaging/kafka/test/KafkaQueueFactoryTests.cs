@@ -10,7 +10,7 @@ namespace Zongsoft.Messaging.Kafka.Tests;
 public class KafkaQueueFactoryTests
 {
 	[Fact]
-	public void CreateQueueWithSettingsMapsConsumerAndProducerOptions()
+	public async Task CreateQueueWithSettingsMapsConsumerAndProducerOptions()
 	{
 		var settings = Configuration.KafkaConnectionSettingsDriver.Instance.GetSettings("Kafka",
 			"server=127.0.0.1:9092;client=Factory-Test;group=Factory-Group;securityProtocol=Plaintext;username=program;password=secret;" +
@@ -42,7 +42,7 @@ public class KafkaQueueFactoryTests
 		Assert.Equal(12000, producer.MessageTimeoutMs);
 
 		var factory = new KafkaQueueFactory();
-		using var queue = factory.Create(settings);
+		await using var queue = factory.Create(settings);
 		var kafka = Assert.IsType<KafkaQueue>(queue);
 		Assert.Equal("Kafka", kafka.Name);
 		Assert.Same(settings, kafka.Settings);
@@ -51,10 +51,10 @@ public class KafkaQueueFactoryTests
 	}
 
 	[Fact]
-	public void CreateQueueWithConnectionString()
+	public async Task CreateQueueWithConnectionString()
 	{
 		var factory = new KafkaQueueFactory();
-		using var queue = factory.Create("Events", "server=127.0.0.1:9092;client=Factory-ConnectionString;group=Factory-Group;");
+		await using var queue = factory.Create("Events", "server=127.0.0.1:9092;client=Factory-ConnectionString;group=Factory-Group;");
 
 		var kafka = Assert.IsType<KafkaQueue>(queue);
 		Assert.Equal("Events", kafka.Name);
@@ -84,7 +84,7 @@ public class KafkaQueueFactoryTests
 	public async Task ProduceWithEmptyTopicThrows()
 	{
 		var settings = Configuration.KafkaConnectionSettingsDriver.Instance.GetSettings("Kafka", "server=127.0.0.1:9092;client=Empty-Topic;");
-		using var queue = new KafkaQueue("Kafka", settings);
+		await using var queue = new KafkaQueue("Kafka", settings);
 
 		await Assert.ThrowsAsync<ArgumentNullException>(() => queue.ProduceAsync(string.Empty, ReadOnlyMemory<byte>.Empty).AsTask());
 	}

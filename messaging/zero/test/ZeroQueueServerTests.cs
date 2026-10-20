@@ -210,8 +210,8 @@ public class ZeroQueueServerTests
 			Assert.False(ZeroTestUtility.CanBindZeroMq(outgoing));
 			Assert.False(ZeroTestUtility.CanBindZeroMq(control));
 
-			using var publisher = ZeroTestUtility.CreateQueue(port, "publisher");
-			using var subscriber = ZeroTestUtility.CreateQueue(port, "subscriber");
+			await using var publisher = ZeroTestUtility.CreateQueue(port, "publisher");
+			await using var subscriber = ZeroTestUtility.CreateQueue(port, "subscriber");
 			using var handler = new MessageBuffer();
 
 			await subscriber.SubscribeAsync("topic/explicit", handler);

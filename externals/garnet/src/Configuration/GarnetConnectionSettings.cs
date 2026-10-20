@@ -378,7 +378,6 @@ public sealed class GarnetConnectionSettings : ConnectionSettingsBase<GarnetConn
 			}
 		}
 	}
-
 	#endregion
 
 	#region 重写方法

@@ -33,6 +33,8 @@
 
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Diagnostics;
 
 namespace Zongsoft.Upgrading;
@@ -52,7 +54,7 @@ public abstract partial class Launcher
 	#endregion
 
 	#region 公共方法
-	public static void Launch(Deployer.Argument argument, Deployer.Deployment deployment)
+	public static async ValueTask LaunchAsync(Deployer.Argument argument, Deployer.Deployment deployment, CancellationToken cancellation = default)
 	{
 		if(argument == null || deployment == null)
 			return;
@@ -65,18 +67,18 @@ public abstract partial class Launcher
 		{
 			case "web":
 			case WebLauncher.NAME:
-				Web.Launch(argument);
+				await Web.LaunchAsync(argument, cancellation);
 				break;
 			case "daemon":
 			case DaemonLauncher.NAME:
-				Daemon.Launch(argument);
+				await Daemon.LaunchAsync(argument, cancellation);
 				break;
 			case "terminal":
 			case TerminalLauncher.NAME:
-				Terminal.Launch(argument);
+				await Terminal.LaunchAsync(argument, cancellation);
 				break;
 			default:
-				Universal.Launch(argument);
+				await Universal.LaunchAsync(argument, cancellation);
 				break;
 		}
 	}
@@ -129,10 +131,11 @@ partial class Launcher : ILauncher
 
 	#region 显式实现
 	string ILauncher.Name => this.Name;
-	void ILauncher.Launch(Deployer.Argument argument)
+	async ValueTask ILauncher.LaunchAsync(Deployer.Argument argument, CancellationToken cancellation)
 	{
-		var process = this.OnLaunch(argument);
-		this.OnLaunched(argument, process);
+		cancellation.ThrowIfCancellationRequested();
+		using var process = this.OnLaunch(argument);
+		await this.OnLaunchedAsync(argument, process, cancellation);
 	}
 	#endregion
 
@@ -141,18 +144,18 @@ partial class Launcher : ILauncher
 	#endregion
 
 	#region 虚拟方法
-	protected virtual void OnLaunched(Deployer.Argument argument, Process process)
+	protected virtual async ValueTask OnLaunchedAsync(Deployer.Argument argument, Process process, CancellationToken cancellation)
 	{
 		if(process == null)
 			return;
 
 		if(process.HasExited())
-			Diagnostics.Logging.GetLogging().Info($"The {(string.IsNullOrEmpty(this.Name) ? nameof(Universal) : this.Name)} launcher has launched successfully.", Utility.GetProcessInfo(process));
+			await Diagnostics.Logging.GetLogging().InfoAsync($"The {(string.IsNullOrEmpty(this.Name) ? nameof(Universal) : this.Name)} launcher has launched successfully.", Utility.GetProcessInfo(process));
 		else
-			Diagnostics.Logging.GetLogging().Info($"The {(string.IsNullOrEmpty(this.Name) ? nameof(Universal) : this.Name)} launcher successfully launched the '[{process.Id}]{process.ProcessName}' program.", Utility.GetProcessInfo(process));
+			await Diagnostics.Logging.GetLogging().InfoAsync($"The {(string.IsNullOrEmpty(this.Name) ? nameof(Universal) : this.Name)} launcher successfully launched the '[{process.Id}]{process.ProcessName}' program.", Utility.GetProcessInfo(process));
 
 		//确保日志存储器落盘完成
-		Diagnostics.Logging.Flush();
+		await Diagnostics.Logging.FlushAsync(cancellation);
 	}
 	#endregion
 }

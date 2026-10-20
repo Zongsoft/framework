@@ -376,7 +376,6 @@ public partial class PluginTree : IAsyncDisposable
 				await this.UnmountChildrenAsync(plugin, child, disposal).ConfigureAwait(false);
 		}
 	}
-
 	#endregion
 
 	#region 事件方法

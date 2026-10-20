@@ -81,4 +81,4 @@ Evaluate a `protocols` template through the existing [TemplateEvaluator](express
 
 The binding consumer applies application shorthand defaults, validates binding-specific path restrictions, checks address/protocol consistency, and chooses mappings. Core parsing alone does none of these. Parsing `grpc+http3` does not inspect the backend or require it to run.
 
-The existing `EndpointConverter` and `HandlerAttribute` are unchanged. These APIs introduce no ASP.NET Core, gRPC, Nginx or tool dependency. Tests are [NetworkAddressTest](../test/Communication/NetworkAddressTest.cs) and [NetworkProtocolTest](../test/Communication/NetworkProtocolTest.cs).
+The existing `EndpointConverter` and `HandlerAttribute` are unchanged. These APIs introduce no ASP.NET Core, gRPC, Nginx or tool dependency. Tests are [NetworkAddressTest](../test/unit/Communication/NetworkAddressTest.cs) and [NetworkProtocolTest](../test/unit/Communication/NetworkProtocolTest.cs).

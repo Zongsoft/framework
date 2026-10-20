@@ -43,6 +43,8 @@ public class SubscriberOptions
 	public TimeSpan SamplingInterval { get; set; }
 
 	public int QueueSize { get; set; }
+	/// <summary>获取或设置异步通知缓冲容量；非正数使用默认值 2048。满载失败通过 FlushAsync 或 DisposeAsync 报告。</summary>
+	public int NotificationCapacity { get; set; } = QUEUE_SIZE;
 	public int KeepAliveCount { get; set; }
 	public int LifetimeCount { get; set; }
 	public byte Priority { get; set; }

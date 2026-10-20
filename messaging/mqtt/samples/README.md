@@ -99,3 +99,5 @@ info
 🚨 Use a dedicated local broker, isolate its listener port, and publish only fake data on unique test topics. The sample startup does not configure a production authentication/TLS policy or durable message storage.
 
 Unsubscribe in the client, run `close`, then `exit` and confirm. Run `stop` and `exit` in the sample server. If you instead connected to an external broker, client shutdown does not remove that broker's retained messages or persisted sessions: clean only test resources owned by this run, not the shared broker.
+
+The client owns its queue with `await using`. The `close` command and normal program exit await `DisposeAsync`, including pending work and subscription cleanup.

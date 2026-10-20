@@ -412,7 +412,8 @@ public partial class PaymentManager
 				if(request == null)
 					throw new ArgumentNullException(nameof(request));
 
-				var result = await _merchant.Client.PostAsync<ApplyRequest, ApplyResult>("offlineface/contracts/presign", request, cancellation);
+				var certificate = await _merchant.Authority.GetCertificateAsync(cancellation);
+				var result = await _merchant.Client.PostAsync<ApplyRequest, ApplyResult>("offlineface/contracts/presign", request, certificate, cancellation);
 				return result.Token;
 			}
 

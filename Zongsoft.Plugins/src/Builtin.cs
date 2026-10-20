@@ -78,7 +78,6 @@ public sealed class Builtin : PluginElement, IEquatable<Builtin>
 		try { this.OnPropertyChanged(nameof(this.IsBuilded)); }
 		catch(Exception exception) { errors.Add(exception); }
 	}
-
 	#endregion
 
 	#region 构造函数

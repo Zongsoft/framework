@@ -12,8 +12,8 @@ public class EtcdServiceTests
 	[Fact]
 	public async Task BasicKv_RoundTripsFindsCountsAndDeletes()
 	{
-		RequireEtcd();
-		using var service = CreateService();
+		await RequireEtcdAsync();
+		await using var service = CreateService();
 
 		await service.SetValueAsync("one", "壹");
 		await service.SetValueAsync("订单:two", "贰");
@@ -35,8 +35,8 @@ public class EtcdServiceTests
 	[Fact]
 	public async Task Sequence_IntegerDoubleExpiryAndConcurrencyMatchContract()
 	{
-		RequireEtcd();
-		using var service = CreateService();
+		await RequireEtcdAsync();
+		await using var service = CreateService();
 
 		Assert.Equal(12, await service.IncreaseAsync("integer", 2, 10));
 		Assert.Equal(15, await service.IncreaseAsync("integer", 3, 100));
@@ -61,10 +61,10 @@ public class EtcdServiceTests
 	}
 
 	private static EtcdService CreateService() => new("test", Global.ConnectionString) { Namespace = "tests:" + Guid.NewGuid().ToString("N") };
-	private static void RequireEtcd()
+	private static async Task RequireEtcdAsync()
 	{
 		Assert.SkipUnless(Global.IsTestingEnabled, "Set ZONGSOFT_ETCD_TESTS=1 to run etcd integration tests.");
-		Assert.SkipUnless(Global.IsAvailable(), $"etcd is unavailable at {Global.Server}.");
+		Assert.SkipUnless(await Global.IsAvailableAsync(), $"etcd is unavailable at {Global.Server}.");
 	}
 
 	internal static async Task EventuallyAsync(Func<Task<bool>> condition, TimeSpan timeout)

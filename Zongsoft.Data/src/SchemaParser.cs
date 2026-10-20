@@ -227,7 +227,6 @@ public class SchemaParser : SchemaParserBase<SchemaMember>
 
 		return type == null ? null : Zongsoft.Common.TypeExtension.GetElementType(type) ?? type;
 	}
-
 	#endregion
 
 	#region 嵌套子类

@@ -69,9 +69,10 @@ public partial class Upgrader
 	}
 
 	/// <summary>启动部署器，等待宿主停止后退出当前进程。</summary>
+	/// <param name="cancellation">启动等待操作的取消标记。</param>
 	/// <returns>部署文件或部署器不可用时完成；成功交接后当前进程退出。</returns>
 	/// <remarks>部署器启动成功后刷新日志并请求宿主停止，最多等待三十秒后释放部署锁并退出。没有宿主上下文时直接退出。</remarks>
-	public static async ValueTask DeployAsync()
+	public static async ValueTask DeployAsync(CancellationToken cancellation = default)
 	{
 		//确保升级的部署文件存在
 		if(!Deployer.HasDeployment(out var deployment))
@@ -94,7 +95,7 @@ public partial class Upgrader
 		using var locking = deployment.Open(FileMode.Open, FileAccess.ReadWrite, FileShare.None);
 
 		//启动升级部署器程序
-		using var process = Launch(deployer, deployment.FullName);
+		using var process = await LaunchAsync(deployer, deployment.FullName, cancellation);
 
 		//如果升级部署器程序启动成功则退出当前进程
 		if(process != null)

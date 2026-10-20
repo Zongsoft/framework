@@ -147,7 +147,7 @@ public partial class CommandExecutor : ICommandExecutor
 			complateInvoked = true;
 
 			//执行命令完成通知
-			this.OnCompletes(completes, ex);
+			await this.OnCompletesAsync(completes, ex);
 
 			//激发“Error”事件
 			if(!this.OnFailed(context, ex))
@@ -156,7 +156,7 @@ public partial class CommandExecutor : ICommandExecutor
 
 		//执行命令完成通知
 		if(!complateInvoked)
-			this.OnCompletes(completes, null);
+			await this.OnCompletesAsync(completes, null);
 
 		//创建事件参数对象
 		var executedArgs = new CommandExecutorExecutedEventArgs(context);
@@ -197,17 +197,27 @@ public partial class CommandExecutor : ICommandExecutor
 		//初始化第一个输入参数
 		var value = session.Value;
 
-		while(queue.TryDequeue(out var entry))
+		try
 		{
-			//创建命令执行上下文
-			var context = this.CreateContext(session, entry.Item1, entry.Item2, value);
+			while(queue.TryDequeue(out var entry))
+			{
+				//创建命令执行上下文
+				var context = this.CreateContext(session, entry.Item1, entry.Item2, value);
 
-			//执行当前命令
-			value = await this.OnExecuteAsync(context, cancellation);
+				//执行当前命令
+				value = await this.OnExecuteAsync(context, cancellation);
 
-			//判断命令是否需要完成通知，如果是则加入到清理栈中
-			if(context.Command is ICommandCompletion completion)
-				completes.Push(new CommandCompletionContext(session, completion, value));
+				//判断命令是否需要完成通知，如果是则加入到清理栈中
+				if(context.Command is ICommandCompletion completion)
+					completes.Push(new CommandCompletionContext(session, completion, value));
+			}
+		}
+		catch(Exception failure)
+		{
+			try { await this.OnCompletesAsync(completes, failure); }
+			catch(Exception cleanup) { throw new AggregateException(failure, cleanup); }
+
+			throw;
 		}
 
 		//返回最后一个命令的执行结果
@@ -253,10 +263,12 @@ public partial class CommandExecutor : ICommandExecutor
 	#endregion
 
 	#region 私有方法
-	private void OnCompletes(IEnumerable<CommandCompletionContext> contexts, Exception exception)
+	private async ValueTask OnCompletesAsync(IEnumerable<CommandCompletionContext> contexts, Exception exception)
 	{
 		if(contexts == null)
 			return;
+
+		List<Exception> errors = null;
 
 		foreach(var context in contexts)
 		{
@@ -264,8 +276,12 @@ public partial class CommandExecutor : ICommandExecutor
 			context.Exception = exception;
 
 			//回调命令执行器会话完成通知
-			context.Command.OnCompleted(context);
+			try { await context.Command.OnCompletedAsync(context); }
+			catch(Exception failure) { (errors ??= []).Add(failure); }
 		}
+
+		if(errors != null)
+			throw new AggregateException(errors);
 	}
 	#endregion
 
@@ -354,7 +370,7 @@ public partial class CommandExecutor : ICommandExecutor
 
 		public override void Write(string value) => _logging.Error(value);
 		public override void Write(string format, params object[] args) => _logging.Error(string.Format(format, args));
-		public override Task WriteAsync(string value) => Task.Run(() => _logging.Error(value));
+		public override Task WriteAsync(string value) => _logging.ErrorAsync(value).AsTask();
 		public override void WriteLine(object value)
 		{
 			if(value == null)
@@ -376,7 +392,7 @@ public partial class CommandExecutor : ICommandExecutor
 
 		public override void WriteLine(string value) => _logging.Error(value + this.NewLine);
 		public override void WriteLine(string format, params object[] args) => _logging.Error(string.Format(format, args) + this.NewLine);
-		public override Task WriteLineAsync(string value) => Task.Run(() => _logging.Error(value + this.NewLine));
+		public override Task WriteLineAsync(string value) => _logging.ErrorAsync(value + this.NewLine).AsTask();
 		#endregion
 	}
 	#endregion

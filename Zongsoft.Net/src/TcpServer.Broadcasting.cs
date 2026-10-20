@@ -152,7 +152,6 @@ public partial class TcpServer<T>
 				completed?.TrySetResult();
 			}
 		}
-
 		#endregion
 	}
 	#endregion

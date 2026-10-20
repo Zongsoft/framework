@@ -428,13 +428,12 @@ flowchart LR
 | `service` | [ServicesParser](src/Services/ServicesParser.cs)：容器或服务解析 |
 | `resource` | [ResourceParser](src/Resources/ResourceParser.cs)：资源查找及可选格式化 |
 | `command` | [CommandParser](src/Components/CommandParser.cs)：供后续调用的命令委托 |
-| `predicate` | [PredicateParser](src/Parsers/PredicateParser.cs)：立即计算的断言结果 |
 
 路径解析器支持获取模式后缀，例如 `{path:/Workbench/Catalog,Never}`，默认使用 `Auto`。`~` 表示插件文件，`~/` 表示其目录。成员解析使用 `@`，不能用节点路径的斜杠代替对象与 CLR 成员之间的分隔符。
 
 资源查找覆盖插件程序集、依赖和祖先，并回退到框架及入口程序集。资源基础名称包括程序集名及约定的 `Resources`、`Properties.Resources` 名称。资源不存在时返回输入的资源文本。
 
-命令表达式创建委托，在调用时执行 `CommandExecutor.Default.ExecuteAsync`，解析阶段不执行命令。断言表达式则在解析阶段求值，从应用或模块服务中解析具名断言；异步断言尚未完成时，解析器同步等待其结果。
+命令表达式创建委托，在调用时执行 `CommandExecutor.Default.ExecuteAsync`，解析阶段不执行命令。
 
 ## 12. 依赖注入与模块定位
 

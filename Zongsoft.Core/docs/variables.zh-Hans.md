@@ -211,5 +211,5 @@ var text = evaluator.Evaluate("${install_path}");
 - [环境变量视图](../src/Common/Variables.Environments.cs)：平台环境变量访问。
 - [命令选项集合](../src/Components/CommandLine.Options.cs)：命令选项的变量索引与查询。
 - [ProfileExtension](../src/Configuration/Profiles/ProfileExtension.cs)：配置变量适配。
-- [内存变量测试](../test/Common/VariablesTest.cs)、[字典包装测试](../test/Common/VariablesWrappingTest.cs)、[对象键字典测试](../test/Common/VariablesObjectWrappingTest.cs)、[环境变量测试](../test/Common/VariablesEnvironmentsTest.cs)。
-- [命令选项变量测试](../test/Components/CommandLineVariablesTest.cs)、[Profile 变量测试](../test/Configuration/Profiles/ProfileVariablesTest.cs)。
+- [内存变量测试](../test/unit/Common/VariablesTest.cs)、[字典包装测试](../test/unit/Common/VariablesWrappingTest.cs)、[对象键字典测试](../test/unit/Common/VariablesObjectWrappingTest.cs)、[环境变量测试](../test/unit/Common/VariablesEnvironmentsTest.cs)。
+- [命令选项变量测试](../test/unit/Components/CommandLineVariablesTest.cs)、[Profile 变量测试](../test/unit/Configuration/Profiles/ProfileVariablesTest.cs)。

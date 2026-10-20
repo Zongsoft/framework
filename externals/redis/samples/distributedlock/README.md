@@ -11,6 +11,8 @@ The sample contains two executable projects:
 
 Both projects use Zongsoft's command executor and terminal output APIs, following the style of other samples in this repository. Command options are parsed by `Zongsoft.Components.CommandLine`; use `--name:value` or `--name=value` for option values.
 
+Each command owns its Redis client with `await using`, so command completion waits for asynchronous client disposal. Acquired locks are also released asynchronously.
+
 ## References
 
 - Redis official distributed-lock pattern: https://redis.io/docs/latest/develop/clients/patterns/distributed-locks/

@@ -288,7 +288,7 @@ public class KafkaQueueConcurrencyTests
 		finally
 		{
 			foreach(var queue in queues)
-				queue.Dispose();
+				await queue.DisposeAsync();
 			foreach(var audit in audits)
 				audit.Dispose();
 		}

@@ -44,8 +44,8 @@ namespace Zongsoft.Security.Privileges;
 public static partial class Authentication
 {
 	#region 事件定义
-	public static event EventHandler<AuthenticatedEventArgs> Authenticated;
-	public static event EventHandler<AuthenticatingEventArgs> Authenticating;
+	public static event Func<object, AuthenticatedEventArgs, CancellationToken, ValueTask> Authenticated;
+	public static event Func<object, AuthenticatingEventArgs, CancellationToken, ValueTask> Authenticating;
 	#endregion
 
 	#region 成员字段
@@ -97,7 +97,7 @@ public static partial class Authentication
 		var authority = Authority ?? throw new InvalidOperationException(Properties.Resources.Authentication_MissingAuthority_Message);
 
 		//激发“Authenticating”事件
-		OnAuthenticating(new AuthenticatingEventArgs(scheme, data, scenario, parameters));
+		await OnAuthenticatingAsync(new AuthenticatingEventArgs(scheme, data, scenario, parameters), cancellation);
 
 		try
 		{
@@ -119,14 +119,15 @@ public static partial class Authentication
 		catch(Exception ex)
 		{
 			//确保激发“Authenticated”事件
-			OnAuthenticated(new AuthenticatedEventArgs(ex, scheme, principal, scenario, parameters));
+			try { await OnAuthenticatedAsync(new AuthenticatedEventArgs(ex, scheme, principal, scenario, parameters), CancellationToken.None); }
+			catch(Exception notification) { throw new AggregateException(ex, notification); }
 
 			//重抛异常
 			throw;
 		}
 
 		//激发“Authenticated”事件
-		OnAuthenticated(new AuthenticatedEventArgs(scheme, principal, scenario, parameters));
+		await OnAuthenticatedAsync(new AuthenticatedEventArgs(scheme, principal, scenario, parameters), cancellation);
 
 		//返回成功
 		return principal;
@@ -154,8 +155,25 @@ public static partial class Authentication
 	#endregion
 
 	#region 激发事件
-	private static void OnAuthenticated(AuthenticatedEventArgs args) => Authenticated?.Invoke(null, args);
-	private static void OnAuthenticating(AuthenticatingEventArgs args) => Authenticating?.Invoke(null, args);
+	private static ValueTask OnAuthenticatedAsync(AuthenticatedEventArgs args, CancellationToken cancellation) => NotifyAsync(Authenticated, args, cancellation);
+	private static ValueTask OnAuthenticatingAsync(AuthenticatingEventArgs args, CancellationToken cancellation) => NotifyAsync(Authenticating, args, cancellation);
+
+	private static ValueTask NotifyAsync<TArgs>(Func<object, TArgs, CancellationToken, ValueTask> handlers, TArgs args, CancellationToken cancellation)
+	{
+		if(handlers == null)
+			return ValueTask.CompletedTask;
+
+		var delegates = handlers.GetInvocationList();
+		var tasks = new Task[delegates.Length];
+
+		for(var i = 0; i < delegates.Length; i++)
+		{
+			try { tasks[i] = ((Func<object, TArgs, CancellationToken, ValueTask>)delegates[i])(null, args, cancellation).AsTask(); }
+			catch(Exception exception) { tasks[i] = Task.FromException(exception); }
+		}
+
+		return new(Task.WhenAll(tasks));
+	}
 	#endregion
 
 	#region 嵌套子类

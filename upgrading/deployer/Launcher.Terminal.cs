@@ -33,6 +33,8 @@
 
 using System;
 using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Upgrading;
 
@@ -55,14 +57,14 @@ partial class Launcher
 			return Process.Start(info);
 		}
 
-		protected override void OnLaunched(Deployer.Argument argument, Process process)
+		protected override async ValueTask OnLaunchedAsync(Deployer.Argument argument, Process process, CancellationToken cancellation)
 		{
 			//调用基类同名方法
-			base.OnLaunched(argument, process);
+			await base.OnLaunchedAsync(argument, process, cancellation);
 
 			//注意：如果是Linux或Unix系统则需要等待进程退出，否则宿主应用无法读取控制台输入
 			if(OperatingSystem.IsLinux() || OperatingSystem.IsFreeBSD())
-				process.WaitForExit();
+				await process.WaitForExitAsync(cancellation);
 		}
 	}
 }

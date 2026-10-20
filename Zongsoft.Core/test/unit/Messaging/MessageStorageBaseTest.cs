@@ -61,7 +61,7 @@ public class MessageStorageBaseTest
 		Assert.Equal(new byte[] { 1, 2, 3 }, stored.Data);
 		Assert.Equal(timestamp, stored.Timestamp);
 		Assert.Equal(expiry, storage.Expiry);
-		stored.Acknowledge();
+		await stored.AcknowledgeAsync();
 		Assert.Equal(0, acknowledged);
 		Assert.True(await storage.RemoveAsync("message-1"));
 		Assert.Empty(storage.Messages);
@@ -171,7 +171,7 @@ public class MessageStorageBaseTest
 		Assert.Equal([1, 2, 3], stored.Data);
 		stored.Data[0] = 9;
 		stored.Tags = "changed";
-		stored.Acknowledge();
+		await stored.AcknowledgeAsync();
 		Assert.Equal(0, acknowledged);
 
 		var second = new List<Message>();

@@ -47,7 +47,7 @@ partial class S3FileSystem
 		private readonly S3FileSystem _fileSystem = fileSystem ?? throw new ArgumentNullException(nameof(fileSystem));
 
 		#region 公共方法
-		public void Copy(string source, string destination, bool overwrite = true) => this.CopyAsync(source, destination, overwrite).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public void Copy(string source, string destination, bool overwrite = true) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public ValueTask CopyAsync(string source, string destination, bool overwrite, CancellationToken cancellation = default)
 		{
 			var srcPath = Resolve(source, out var srcRegion, out var srcBucket);
@@ -94,7 +94,7 @@ partial class S3FileSystem
 			}
 		}
 
-		public void Move(string source, string destination) => this.MoveAsync(source, destination).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public void Move(string source, string destination) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public ValueTask MoveAsync(string source, string destination, CancellationToken cancellation = default)
 		{
 			var srcPath = Resolve(source, out var srcRegion, out var srcBucket);
@@ -149,7 +149,7 @@ partial class S3FileSystem
 			}
 		}
 
-		public bool Delete(string path) => this.DeleteAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public bool Delete(string path) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public async ValueTask<bool> DeleteAsync(string path, CancellationToken cancellation = default)
 		{
 			path = Resolve(path, out var region, out var bucket);
@@ -166,7 +166,7 @@ partial class S3FileSystem
 			}
 		}
 
-		public bool Exists(string path) => this.ExistsAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public bool Exists(string path) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public async ValueTask<bool> ExistsAsync(string path, CancellationToken cancellation = default)
 		{
 			path = Resolve(path, out var region, out var bucket);
@@ -183,7 +183,7 @@ partial class S3FileSystem
 			}
 		}
 
-		public Zongsoft.IO.FileInfo GetInfo(string path) => this.GetInfoAsync(path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public Zongsoft.IO.FileInfo GetInfo(string path) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public async ValueTask<Zongsoft.IO.FileInfo> GetInfoAsync(string path, CancellationToken cancellation = default)
 		{
 			path = Resolve(path, out var region, out var bucket);
@@ -228,7 +228,7 @@ partial class S3FileSystem
 			}
 		}
 
-		public bool SetInfo(string path, IEnumerable<KeyValuePair<string, string>> properties) => this.SetInfoAsync(path, properties).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
+		public bool SetInfo(string path, IEnumerable<KeyValuePair<string, string>> properties) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		public async ValueTask<bool> SetInfoAsync(string path, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default)
 		{
 			if(properties == null)
@@ -263,54 +263,7 @@ partial class S3FileSystem
 			}
 		}
 
-		public Stream Open(string path, FileMode mode, FileAccess access, FileShare share, IEnumerable<KeyValuePair<string, string>> properties = null)
-		{
-			path = Resolve(path, out var region, out var bucket);
-			var client = _fileSystem.GetClient(region);
-
-			switch(mode)
-			{
-				case FileMode.Open:
-					if(!Exists(client, bucket, path))
-						throw new FileNotFoundException(Properties.Resources.File_RequiredFileNotFound_Message, _fileSystem.GetPath(region, bucket, path));
-					break;
-				case FileMode.CreateNew:
-					if(Exists(client, bucket, path))
-						throw new IOException(string.Format(Properties.Resources.File_AlreadyExists_Message, _fileSystem.GetPath(region, bucket, path)));
-					break;
-				case FileMode.Append:
-				case FileMode.Truncate:
-					access |= FileAccess.Write;
-					break;
-			}
-
-			if((access & FileAccess.Write) == FileAccess.Write)
-			{
-				return mode == FileMode.Append ?
-					new S3Stream(client, OpenStream(client, bucket, path), bucket, path, properties) :
-					new S3Stream(client, null, bucket, path, properties);
-			}
-
-			return OpenStream(client, bucket, path);
-
-			static Stream OpenStream(AmazonS3Client client, string bucket, string path)
-			{
-				try
-				{
-					var response = client.GetObjectAsync(new()
-					{
-						BucketName = bucket,
-						Key = path,
-					}).ConfigureAwait(false).GetAwaiter().GetResult();
-
-					return response.ResponseStream;
-				}
-				catch(AmazonS3Exception ex) when(ex.StatusCode == System.Net.HttpStatusCode.NotFound)
-				{
-					return null;
-				}
-			}
-		}
+		public Stream Open(string path, FileMode mode, FileAccess access, FileShare share, IEnumerable<KeyValuePair<string, string>> properties = null) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 
 		public async ValueTask<Stream> OpenAsync(string path, FileMode mode, FileAccess access, FileShare share, IEnumerable<KeyValuePair<string, string>> properties, CancellationToken cancellation = default)
 		{
@@ -363,7 +316,6 @@ partial class S3FileSystem
 		#endregion
 
 		#region 私有方法
-		private static bool Exists(AmazonS3Client client, string bucket, string path) => ExistsAsync(client, bucket, path).AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
 		private static async ValueTask<bool> ExistsAsync(AmazonS3Client client, string bucket, string path, CancellationToken cancellation = default)
 		{
 			try
@@ -395,6 +347,8 @@ partial class S3FileSystem
 		private string _uploadId;
 		private int _partNumber;
 		private List<PartETag> _parts;
+		private TaskCompletionSource _disposal;
+		private bool _failed;
 
 		public S3Stream(AmazonS3Client client, Stream stream, string bucket, string path, IEnumerable<KeyValuePair<string, string>> properties)
 		{
@@ -410,44 +364,50 @@ partial class S3FileSystem
 		}
 
 		#region 重写属性
-		public override bool CanRead => true;
+		public override bool CanRead => _client != null && _disposal == null;
 		public override bool CanSeek => false;
-		public override bool CanWrite => true;
+		public override bool CanWrite => _client != null && _disposal == null;
 		public override long Length => _length;
 		public override long Position { get => _position; set => throw new NotSupportedException(); }
 		#endregion
 
 		#region 重写方法
-		public override void Flush() { }
+		public override void Flush() => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
+		public override Task FlushAsync(CancellationToken cancellation)
+		{
+			cancellation.ThrowIfCancellationRequested();
+			ObjectDisposedException.ThrowIf(_disposal != null, this);
+			return Task.CompletedTask;
+		}
 		public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
 		public override void SetLength(long value) => throw new NotSupportedException();
-		public override int Read(byte[] buffer, int offset, int count)
-		{
-			_stream ??= _client.GetObjectAsync(new GetObjectRequest()
-			{
-				BucketName = _bucket,
-				Key = _path,
-				ByteRange = new ByteRange(offset, count)
-			}).ConfigureAwait(false).GetAwaiter().GetResult().ResponseStream;
-
-			return _stream.Read(buffer, offset, count);
-		}
+		public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 
 		public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellation)
 		{
+			ObjectDisposedException.ThrowIf(_disposal != null, this);
 			_stream ??= (await _client.GetObjectAsync(new GetObjectRequest()
 			{
 				BucketName = _bucket,
-				Key = _path,
-				ByteRange = new ByteRange(offset, count)
+				Key = _path
 			}, cancellation).ConfigureAwait(false)).ResponseStream;
 
 			return await _stream.ReadAsync(buffer, offset, count, cancellation);
 		}
 
-		public override void Write(byte[] buffer, int offset, int count) => this.WriteAsync(buffer, offset, count, CancellationToken.None).ConfigureAwait(false).GetAwaiter().GetResult();
+		public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 
 		public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellation)
+		{
+			ValidateBufferArguments(buffer, offset, count);
+			ObjectDisposedException.ThrowIf(_disposal != null, this);
+			cancellation.ThrowIfCancellationRequested();
+
+			try { await this.WriteCoreAsync(buffer, offset, count, cancellation); }
+			catch { _failed = true; throw; }
+		}
+
+		private async Task WriteCoreAsync(byte[] buffer, int offset, int count, CancellationToken cancellation)
 		{
 			if(string.IsNullOrEmpty(_uploadId))
 			{
@@ -481,40 +441,20 @@ partial class S3FileSystem
 				int bytesRead;
 				var bytes = ArrayPool<byte>.Shared.Rent(5 * MB);
 
-				while((bytesRead = _stream.Read(bytes, 0, bytes.Length)) > 0)
-					await this.UploadAsync(bytes, 0, bytesRead, cancellation);
-
-				ArrayPool<byte>.Shared.Return(bytes);
-				_stream.Dispose();
-				_stream = null;
+				try
+				{
+					while((bytesRead = await _stream.ReadAsync(bytes, 0, bytes.Length, cancellation)) > 0)
+						await this.UploadAsync(bytes, 0, bytesRead, cancellation);
+				}
+				finally
+				{
+					ArrayPool<byte>.Shared.Return(bytes);
+					await _stream.DisposeAsync();
+					_stream = null;
+				}
 			}
 
 			await this.UploadAsync(buffer, offset, count, cancellation);
-		}
-
-		public override void Close()
-		{
-			if(_uploadId != null)
-			{
-				if(_bufferSize > 0)
-					this.UploadPartAsync().AsTask().ConfigureAwait(false).GetAwaiter().GetResult();
-
-				if(_length > 0)
-					_client.CompleteMultipartUploadAsync(new()
-					{
-						UploadId = _uploadId,
-						BucketName = _bucket,
-						Key = _path,
-						PartETags = _parts,
-					}).ConfigureAwait(false).GetAwaiter().GetResult();
-				else
-					_client.AbortMultipartUploadAsync(new()
-					{
-						UploadId = _uploadId,
-						BucketName = _bucket,
-						Key = _path,
-					}).ConfigureAwait(false).GetAwaiter().GetResult();
-			}
 		}
 		#endregion
 
@@ -547,6 +487,7 @@ partial class S3FileSystem
 			if(_bufferSize < 1)
 				return;
 
+			using var stream = new MemoryStream(_buffer, 0, _bufferSize);
 			var request = new UploadPartRequest()
 			{
 				UploadId = _uploadId,
@@ -554,7 +495,7 @@ partial class S3FileSystem
 				Key = _path,
 				PartNumber = ++_partNumber,
 				PartSize = _bufferSize,
-				InputStream = new MemoryStream(_buffer, 0, _bufferSize),
+				InputStream = stream,
 			};
 
 			var response = await _client.UploadPartAsync(request, cancellation);
@@ -566,13 +507,84 @@ partial class S3FileSystem
 		#region 重写方法
 		protected override void Dispose(bool disposing)
 		{
-			ArrayPool<byte>.Shared.Return(_buffer);
-			_stream?.Dispose();
-			_stream = null;
-			_client = null;
-			_buffer = null;
-			_parts = null;
+			if(disposing && _client != null)
+				throw new NotSupportedException(Properties.Resources.Operation_AsyncOnly_Message);
 		}
+
+		public override ValueTask DisposeAsync()
+		{
+			var completion = Volatile.Read(ref _disposal);
+			if(completion == null)
+			{
+				var candidate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+				completion = Interlocked.CompareExchange(ref _disposal, candidate, null) ?? candidate;
+				if(ReferenceEquals(completion, candidate))
+					_ = this.DisposeAsyncCore(candidate);
+			}
+
+			return new ValueTask(completion.Task);
+		}
+
+		private async Task DisposeAsyncCore(TaskCompletionSource completion)
+		{
+			Exception failure = null;
+
+			try
+			{
+				if(_uploadId != null)
+				{
+					if(_failed || _length == 0)
+						await this.AbortAsync();
+					else
+					{
+						await this.UploadPartAsync();
+						await _client.CompleteMultipartUploadAsync(new()
+						{
+							UploadId = _uploadId,
+							BucketName = _bucket,
+							Key = _path,
+							PartETags = _parts,
+						});
+					}
+				}
+			}
+			catch(Exception exception)
+			{
+				failure = exception;
+
+				try { await this.AbortAsync(); }
+				catch(Exception abort) { failure = new AggregateException(exception, abort); }
+			}
+
+			try
+			{
+				if(_stream != null)
+					await _stream.DisposeAsync();
+			}
+			catch(Exception exception) { failure = failure == null ? exception : new AggregateException(failure, exception); }
+			finally
+			{
+				ArrayPool<byte>.Shared.Return(_buffer);
+				_stream = null;
+				_client = null;
+				_buffer = null;
+				_parts = null;
+				_uploadId = null;
+				GC.SuppressFinalize(this);
+			}
+
+			if(failure == null)
+				completion.TrySetResult();
+			else
+				completion.TrySetException(failure);
+		}
+
+		private Task AbortAsync() => _client.AbortMultipartUploadAsync(new()
+		{
+			UploadId = _uploadId,
+			BucketName = _bucket,
+			Key = _path,
+		});
 		#endregion
 	}
 }

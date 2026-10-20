@@ -30,6 +30,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
 
 using Opc.Ua;
 using Opc.Ua.Client;
@@ -48,6 +49,18 @@ partial class OpcClient
 	}
 
 	public async ValueTask ConnectAsync(Configuration.OpcConnectionSettings settings, CancellationToken cancellation = default)
+	{
+		await _lifecycle.WaitAsync(cancellation);
+
+		try
+		{
+			ObjectDisposedException.ThrowIf(_disposal != null, this);
+			await this.ConnectCoreAsync(settings, cancellation);
+		}
+		finally { _lifecycle.Release(); }
+	}
+
+	private async ValueTask ConnectCoreAsync(Configuration.OpcConnectionSettings settings, CancellationToken cancellation)
 	{
 		if(settings == null || string.IsNullOrEmpty(settings.Server))
 			throw new ArgumentNullException(nameof(settings));
@@ -80,10 +93,10 @@ partial class OpcClient
 			string.IsNullOrEmpty(settings.Instance) ? settings.Client : $"{settings.Client}:{settings.Instance}";
 
 		var locales = string.IsNullOrEmpty(settings.Locales) ? ["en"] : settings.Locales.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-		var identity = settings.GetIdentity();
+		var identity = await settings.GetIdentityAsync(cancellation);
 
 		//断开原有会话
-		await this.DisconnectAsync(cancellation);
+		await this.DisconnectCoreAsync(cancellation);
 
 		//创建新的会话
 		var session = await _sessionFactory.CreateAsync(
@@ -97,49 +110,91 @@ partial class OpcClient
 			locales,
 			cancellation);
 
-		//保存当前连接设置
-		_settings = settings;
+		try
+		{
+			//保存当前连接设置
+			_settings = settings;
 
-		//构建会话状态信息
-		_state = new OpcClientState(session);
+			//构建会话状态信息
+			_state = new OpcClientState(session);
 
-		//设置会话相关信息
-		session.DeleteSubscriptionsOnClose = true;
-		session.KeepAliveInterval = (int)settings.Heartbeat.TotalMilliseconds;
-		session.KeepAlive += this.Session_KeepAlive;
+			//设置会话相关信息
+			session.DeleteSubscriptionsOnClose = true;
+			session.KeepAliveInterval = (int)settings.Heartbeat.TotalMilliseconds;
+			session.KeepAlive += this.Session_KeepAlive;
 
-		if(!session.Connected)
-			await session.OpenAsync(name, identity, cancellation);
+			if(!session.Connected)
+				await session.OpenAsync(name, identity, cancellation);
 
-		//置空命名空间集
-		_namespaces = null;
+			//置空命名空间集
+			_namespaces = null;
 
-		//保存当前为新建会话
-		_session = session;
+			//保存当前为新建会话
+			_session = session;
+		}
+		catch
+		{
+			session.KeepAlive -= this.Session_KeepAlive;
+			await session.DisposeAsync();
+			throw;
+		}
 	}
 
-	public ValueTask ReconnectAsync(CancellationToken cancellation = default)
+	public async ValueTask ReconnectAsync(CancellationToken cancellation = default)
 	{
-		var session = _session;
-		return session == null ? ValueTask.CompletedTask : new ValueTask(session.ReconnectAsync(cancellation));
+		await _lifecycle.WaitAsync(cancellation);
+
+		try
+		{
+			ObjectDisposedException.ThrowIf(_disposal != null, this);
+			if(_session != null)
+				await _session.ReconnectAsync(cancellation);
+		}
+		finally { _lifecycle.Release(); }
 	}
 
 	public async ValueTask DisconnectAsync(CancellationToken cancellation = default)
 	{
-		var session = _session;
-		if(session == null || !session.Connected)
+		await _lifecycle.WaitAsync(cancellation);
+
+		try { await this.DisconnectCoreAsync(cancellation); }
+		finally { _lifecycle.Release(); }
+	}
+
+	private async ValueTask DisconnectCoreAsync(CancellationToken cancellation)
+	{
+		var session = Interlocked.Exchange(ref _session, null);
+		if(session == null)
 			return;
+
+		List<Exception> errors = null;
+
+		foreach(var subscriber in _subscribers)
+		{
+			try { await subscriber.DisposeAsync(); }
+			catch(Exception exception) { (errors ??= []).Add(exception); }
+		}
+
+		session.KeepAlive -= this.Session_KeepAlive;
 
 		try
 		{
-			foreach(var subscriber in _subscribers)
-				await subscriber.DisposeAsync();
+			if(session.Connected)
+			{
+				var status = await session.CloseAsync(cancellation);
+				if(StatusCode.IsBad(status))
+					throw new ServiceResultException(status);
+			}
 		}
-		catch { }
+		catch(Exception exception) { (errors ??= []).Add(exception); }
 
-		var status = await session.CloseAsync(cancellation);
+		try { await session.DisposeAsync(); }
+		catch(Exception exception) { (errors ??= []).Add(exception); }
 
-		if(StatusCode.IsGood(status))
-			session.KeepAlive -= this.Session_KeepAlive;
+		_namespaces = null;
+		_state = null;
+
+		if(errors != null)
+			throw new AggregateException(errors);
 	}
 }
