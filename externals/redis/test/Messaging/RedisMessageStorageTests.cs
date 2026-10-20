@@ -132,7 +132,7 @@ public sealed class RedisMessageStorageTests
 	}
 
 	[Fact]
-	public void Factory_UsesExactNamedSettingsAndCreatesIndependentInstances()
+	public async Task Factory_UsesExactNamedSettingsAndCreatesIndependentInstances()
 	{
 		using var environment = new EnvironmentVariableScope("constructor-identifier");
 		var configuration = new ConfigurationBuilder()
@@ -141,7 +141,7 @@ public sealed class RedisMessageStorageTests
 
 		var services = new ServiceCollection().AddSingleton<IConfigurationRoot>(configuration);
 		using var scope = new ServiceScope(new ServiceProviderFactory().CreateServiceProvider(services));
-		using var application = new ApplicationScope(scope.Provider);
+		await using var application = new ApplicationScope(scope.Provider);
 		var factory = RedisMessageStorageFactory.Instance;
 		Environment.SetEnvironmentVariable(IDENTIFIER_ENVIRONMENT_VARIABLE, "  redis-test-identifier  ");
 		RedisMessageStorage first = factory.Create("QueueServer");
@@ -193,7 +193,7 @@ public sealed class RedisMessageStorageTests
 		public void Dispose() => (this.Provider as IDisposable)?.Dispose();
 	}
 
-	private sealed class ApplicationScope : IDisposable
+	private sealed class ApplicationScope : IAsyncDisposable
 	{
 		private static readonly FieldInfo _CurrentField_ = typeof(ApplicationContext).GetField("_current", BindingFlags.Static | BindingFlags.NonPublic);
 		private readonly IApplicationContext _previous;
@@ -205,10 +205,10 @@ public sealed class RedisMessageStorageTests
 			_current = new TestApplicationContext(services);
 		}
 
-		public void Dispose()
+		public async ValueTask DisposeAsync()
 		{
-			_current.Dispose();
-			_CurrentField_.SetValue(null, _previous);
+			try { await _current.DisposeAsync(); }
+			finally { _CurrentField_.SetValue(null, _previous); }
 		}
 	}
 
