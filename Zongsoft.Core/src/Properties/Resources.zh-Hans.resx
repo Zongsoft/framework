@@ -1141,7 +1141,4 @@
   <data name="Disposal.AsyncRequired.Message" xml:space="preserve">
     <value>此操作需要异步释放。请先等待 DisposeAsync 完成，再释放其同步所有者。</value>
   </data>
-  <data name="Logging.QueueFull.Message" xml:space="preserve">
-    <value>日志队列已满。请使用异步日志接口，或等待 FlushAsync 完成后重试。</value>
-  </data>
 </root>

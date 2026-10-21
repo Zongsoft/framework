@@ -86,6 +86,12 @@ Use `RaiseAsync` to raise events and await their handlers. Bound event handlers 
 
 `ITerminal.Abort()` synchronously notifies interruption and returns whether it was handled; it does not stop the executor or process. Hosts own process-signal policy. Core registers no global console signal handlers.
 
+## Logging
+
+Synchronous methods such as `Error(...)`, `Log(...)`, and `Flush()` invoke loggers immediately and return without waiting for asynchronous work. `Logging` does not buffer records or track outstanding operations. Logger failures are observed but are not propagated to synchronous callers; each logger owns its buffering, completion, and failure reporting.
+
+Use awaited asynchronous methods when completion or error propagation is required. `FlushAsync()` delegates to the registered loggers and does not wait for earlier unawaited logging calls. Before releasing loggers, stop producing records, await owned asynchronous logging operations, and await `FlushAsync()`. A logger's processing completion does not necessarily mean persistence.
+
 ## Periodic Work
 
 `Common.Timer` executes its constructor callback serially and accepts a `TimeProvider`. `Start()` schedules periodic execution. Startup, stopping, and disposal accept no cancellation tokens. `Stop()` requests internal cancellation without waiting for callbacks or cleanup; `StopAsync()` waits for shutdown. `Dispose()` permanently closes the timer without waiting, while `DisposeAsync()` awaits cleanup even after synchronous disposal. Callers must avoid using business operations after disposal or awaiting completion from within the same run. `Failed` reports run failures, and `Stopped` reports that the callback and resource cleanup have ended. Asynchronous stopping and disposal wait for notifications to return and propagate run and notification failures. See [Asynchronous periodic timers](docs/timers.md).

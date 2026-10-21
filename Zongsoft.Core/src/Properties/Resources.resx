@@ -1147,7 +1147,4 @@
   <data name="Disposal.AsyncRequired.Message" xml:space="preserve">
     <value>This operation requires asynchronous disposal. Await DisposeAsync before disposing its synchronous owner.</value>
   </data>
-  <data name="Logging.QueueFull.Message" xml:space="preserve">
-    <value>The logging queue is full. Use the asynchronous logging API or await FlushAsync before retrying.</value>
-  </data>
 </root>

@@ -25,7 +25,7 @@ description: 设计、修改、审查或测试 Zongsoft.Core 的公共契约与�
 - `IMessageQueue`、`IMessagePoller` 与 `IDistributedLock` 使用异步释放。队列和轮询器停止接收操作后等待在途工作及自有资源清理；重复释放共享完成结果。借用容器服务不由调用者释放。
 - 事件注册器通过 `RaiseAsync` 等待处理器；`EventBinder` 只绑定可等待的委托事件。认证事件使用 `Func<object, TArgs, CancellationToken, ValueTask>`，等待所有处理器；认证失败通知使用不可取消标记，通知故障保留原认证异常。
 - 命令完成协议为 `ICommandCompletion.OnCompletedAsync`。执行器按逆序等待全部清理，单项失败不能跳过其余资源。Windows Shell 等待进程退出并排空 stdout/stderr；超时返回 -1，取消保留调用方令牌，两者都不终止已启动进程。
-- 日志异步入口等待日志器。同步原生回调可向容量 4096 的有界队列投递，满载明确失败；`Logging.FlushAsync` 等待此前投递、刷新日志器并传播后台错误。上下文在自有模块和初始化器清理后刷新日志，宿主容器随后释放共享日志器。
+- 日志异步入口由调用方等待并观察失败。`Logging` 立即调用日志器，将每个 `ValueTask` 恰好一次转换为 `Task`，返回的异步结果涵盖全部已发起操作；单个日志器同步抛错不跳过其余日志器，取消标记原样传递。同步 `Log` 与 `Flush` 通过 `Common.Asynchronous.FireAndForget` 观察返回任务，不阻塞等待，不向调用方传播日志器失败。`Logging` 不缓存日志、不维护在途任务集合、批次或错误状态；缓存、完成保证和故障报告由具体日志器负责。`FlushAsync` 只转发刷新，不作为此前同步调用或未等待异步调用的完成屏障。上下文在自有模块和初始化器清理后刷新日志，宿主容器随后释放共享日志器；有完成要求的清理日志必须使用并等待异步入口。
 - `HardwareProfile.LoadAsync/GetCurrentAsync` 与 `IHardwareCollector.CollectAsync` 构成硬件采集入口；外部进程输出应异步读取并等待退出。
 - `IFile` 和 `ISequence` 同时提供同步与异步契约；是否支持同步远程调用由适配器明确声明。Core 不为异步适配器提供阻塞包装。
 - `IDataAccess`、`IDataService` 的同步契约、同步生命周期回调和同步枚举支持由数据引擎负责。调用方保持其完成顺序，不能以弃置任务隐藏同步边界，也不能将边界扩散到通用事件、文件或消息接口。

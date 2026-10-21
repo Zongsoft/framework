@@ -1545,15 +1545,6 @@ namespace Zongsoft.Properties {
             }
         }
         
-		/// <summary>
-		///   查找类似 The logging queue is full. Use the asynchronous logging API or await FlushAsync before retrying. 的本地化字符串。
-		/// </summary>
-		internal static string Logging_QueueFull_Message {
-			get {
-				return ResourceManager.GetString("Logging.QueueFull.Message", resourceCulture);
-			}
-		}
-
         /// <summary>
         ///   查找类似 Invalid member expression. 的本地化字符串。
         /// </summary>
