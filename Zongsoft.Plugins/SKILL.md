@@ -41,11 +41,14 @@ description: 开发、审查、调试或测试 Zongsoft.Plugins 与 Zongsoft.Plu
 ## 生命周期与 Web
 
 - 宿主创建使用 BuildAsync、DaemonAsync、TerminalAsync、WebAsync，初始化失败须等待宿主异步释放。应用上下文通过 IHostedLifecycleService 等待工作器启动和停止；Exit 只请求宿主停止，Workbench.Close 不隐式退出。插件通过 UnloadAsync/DisposeAsync 收尾，构建结果以 OwnsResult 区分自有实例与借用引用；IBuilder.DestroyAsync 优先等待异步释放。
+- 插件自有的 ILogger 在释放边界先等待 FlushAsync(None)，再按引用身份移除 Logging.Loggers 中的全部同实例登记，最后执行原有释放；刷新或注销失败记录后仍继续清理，并由统一释放结果传播。释放记录去重，借用或宿主容器拥有的日志器不在此处刷新、注销或释放；Logger/Spooler 自身的 Dispose 不自动排空契约保持不变。
 - TerminalAsync 的默认 TerminalLifetime 替换 ConsoleLifetime，显式自定义 IHostLifetime 保留。启动注册 SIGINT/SIGQUIT/SIGTERM，释放解除；SIGINT 调用正在运行执行器所属终端的 Abort，已处理继续、未处理停止，SIGQUIT/SIGTERM 直接停止。停止期间抑制重复信号，等待终端循环及清理；信号通知异常由 StopAsync/DisposeAsync 传播。Core 终端不注册全局信号；处理器必须及时返回，不得等待宿主停止。状态日志服从 ILogger 和 ConsoleLifetimeOptions.SuppressStatusMessages。
 - 修改组件创建、启动/停止、卸载时分别验证失败清理；不要宣称现有所有构造失败均有事务性回滚。依赖初始化与插件节点构建是不同阶段。
 - 服务解析应尊重作用域、具名服务和插件容器边界，避免隐式全局单例。
 - Plugins.Web 的 [Application](../Zongsoft.Plugins.Web/src/Application.cs) 初始化上下文、执行 `IApplicationInitializer<IApplicationBuilder>`，再装配中间件与 Controller/Hub 端点；[WebApplicationBuilder](../Zongsoft.Plugins.Web/src/WebApplicationBuilder.cs) 配置服务和默认策略。业务路由与控制器实现留在业务插件。
 - 修改 Web 激活或作用域时同时验证请求作用域结束、应用停止和插件卸载。
+
+PluginDisposal 对自有 ILogger 先等待 FlushAsync(CancellationToken.None)，再按引用身份从 Logging.Loggers 移除注册，随后等待实例释放；刷新或解除注册失败仍尝试后续清理，并汇总异常。相同实例仅释放一次，借用对象遵守原所有权。
 
 ## 验证
 

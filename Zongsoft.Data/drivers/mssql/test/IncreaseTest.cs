@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 using Xunit;
@@ -16,13 +17,14 @@ public class IncreaseTest(DatabaseFixture database)
 	[Theory]
 	[InlineData(false)]
 	[InlineData(true)]
-	public async Task IncreaseReturnsUpdatedValue(bool asynchronous)
+	public async Task IncreaseReturnsUpdatedValue(bool cancellationProvided)
 	{
 		if(!Global.IsTestingEnabled)
 			return;
 
 		const uint TENANT_ID = 900100;
 		var accessor = _database.Accessor;
+		using var cancellation = new CancellationTokenSource();
 		var criteria = Condition.Equal(nameof(Tenant.TenantId), TENANT_ID);
 		await accessor.DeleteAsync<Tenant>(criteria);
 
@@ -41,18 +43,18 @@ public class IncreaseTest(DatabaseFixture database)
 				"TenantId,TenantNo,Name,RegisteredCapital,CreatorId",
 				DataInsertOptions.Sequence(DataSequenceBehavior.Never)));
 
-			Assert.Equal(12L, asynchronous ?
-				await accessor.IncreaseAsync<Tenant>(nameof(Tenant.RegisteredCapital), criteria, 2) :
-				accessor.Increase<Tenant>(nameof(Tenant.RegisteredCapital), criteria, 2));
+			Assert.Equal(12L, cancellationProvided ?
+				await accessor.IncreaseAsync<Tenant>(nameof(Tenant.RegisteredCapital), criteria, 2, cancellation.Token) :
+				await accessor.IncreaseAsync<Tenant>(nameof(Tenant.RegisteredCapital), criteria, 2));
 
-			Assert.Equal(9L, asynchronous ?
-				await accessor.IncreaseAsync("Tenant", nameof(Tenant.RegisteredCapital), criteria, -3) :
-				accessor.Increase("Tenant", nameof(Tenant.RegisteredCapital), criteria, -3));
+			Assert.Equal(9L, cancellationProvided ?
+				await accessor.IncreaseAsync("Tenant", nameof(Tenant.RegisteredCapital), criteria, -3, cancellation.Token) :
+				await accessor.IncreaseAsync("Tenant", nameof(Tenant.RegisteredCapital), criteria, -3));
 
-			Assert.Equal((ushort)9, accessor.Select<ushort>("Tenant", criteria, nameof(Tenant.RegisteredCapital)).Single());
-			Assert.Equal(0L, asynchronous ?
-				await accessor.IncreaseAsync<Tenant>(nameof(Tenant.RegisteredCapital), Condition.Equal(nameof(Tenant.TenantId), TENANT_ID + 1)) :
-				accessor.Increase<Tenant>(nameof(Tenant.RegisteredCapital), Condition.Equal(nameof(Tenant.TenantId), TENANT_ID + 1)));
+			Assert.Equal((ushort)9, (await Global.ToArrayAsync(accessor.SelectAsync<ushort>("Tenant", criteria, nameof(Tenant.RegisteredCapital)))).Single());
+			Assert.Equal(0L, cancellationProvided ?
+				await accessor.IncreaseAsync<Tenant>(nameof(Tenant.RegisteredCapital), Condition.Equal(nameof(Tenant.TenantId), TENANT_ID + 1), cancellation.Token) :
+				await accessor.IncreaseAsync<Tenant>(nameof(Tenant.RegisteredCapital), Condition.Equal(nameof(Tenant.TenantId), TENANT_ID + 1)));
 		}
 		finally
 		{

@@ -28,16 +28,19 @@
  */
 
 using System;
-using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Reporting;
 
 public interface IReportRepository
 {
-	bool Delete(string key);
+	ValueTask<bool> DeleteAsync(string key, CancellationToken cancellation = default);
 
-	string Create(IReport report, ReportRepositoryOptions options = null);
-	string Create(string name, string type, byte[] data, ReportRepositoryOptions options = null);
-	string Update(string key, IReport report);
-	string Update(string key, string type, byte[] data);
+	ValueTask<string> CreateAsync(IReport report, CancellationToken cancellation = default) => this.CreateAsync(report, null, cancellation);
+	ValueTask<string> CreateAsync(IReport report, ReportRepositoryOptions options, CancellationToken cancellation = default);
+	ValueTask<string> CreateAsync(string name, string type, byte[] data, CancellationToken cancellation = default) => this.CreateAsync(name, type, data, null, cancellation);
+	ValueTask<string> CreateAsync(string name, string type, byte[] data, ReportRepositoryOptions options, CancellationToken cancellation = default);
+	ValueTask<string> UpdateAsync(string key, IReport report, CancellationToken cancellation = default);
+	ValueTask<string> UpdateAsync(string key, string type, byte[] data, CancellationToken cancellation = default);
 }

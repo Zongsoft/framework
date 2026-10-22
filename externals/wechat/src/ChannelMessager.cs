@@ -74,6 +74,7 @@ public class ChannelMessager
 		return result.Entries.Select(template => template.ToTemplate());
 	}
 
+	public ValueTask<string> SendAsync(string destination, string template, object data, CancellationToken cancellation) => this.SendAsync(destination, template, data, null, cancellation);
 	public async ValueTask<string> SendAsync(string destination, string template, object data, string url = null, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(destination))

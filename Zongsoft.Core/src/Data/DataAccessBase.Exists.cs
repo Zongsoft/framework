@@ -35,8 +35,9 @@ namespace Zongsoft.Data;
 
 partial class DataAccessBase
 {
-	public bool Exists<T>(ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null) => this.Exists(this.GetName<T>(), criteria, options, existing, existed);
-	public bool Exists(string name, ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null)
+	#region 数据访问
+	public ValueTask<bool> ExistsAsync<T>(ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, CancellationToken, ValueTask<bool>> existing = null, Func<DataExistContextBase, CancellationToken, ValueTask> existed = null, CancellationToken cancellation = default) => this.ExistsAsync(this.GetName<T>(), criteria, options, existing, existed, cancellation);
+	public async ValueTask<bool> ExistsAsync(string name, ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, CancellationToken, ValueTask<bool>> existing = null, Func<DataExistContextBase, CancellationToken, ValueTask> existed = null, CancellationToken cancellation = default)
 	{
 		//确实是否已处置
 		this.EnsureDisposed();
@@ -45,86 +46,46 @@ partial class DataAccessBase
 			throw new ArgumentNullException(nameof(name));
 
 		//创建数据访问上下文对象
-		var context = this.CreateExistContext(name, criteria, options);
+		using var context = this.CreateExistContext(name, criteria, options);
 
 		//处理数据访问操作前的回调
-		if(existing != null && existing(context))
+		if(existing != null && await existing(context, cancellation))
 			return context.Result;
 
 		//激发“Existing”事件，如果被中断则返回
-		if(this.OnExisting(context))
+		if(await this.OnExistingAsync(context, cancellation))
 			return context.Result;
 
 		//调用数据访问过滤器前事件
-		this.OnFiltering(context);
-
-		//执行存在操作方法
-		this.OnExists(context);
-
-		//调用数据访问过滤器后事件
-		this.OnFiltered(context);
-
-		//激发“Existed”事件
-		this.OnExisted(context);
-
-		//处理数据访问操作后的回调
-		if(existed != null)
-			existed(context);
-
-		var result = context.Result;
-
-		//处置上下文资源
-		context.Dispose();
-
-		//返回最终的结果
-		return result;
-	}
-
-	public ValueTask<bool> ExistsAsync<T>(ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null, CancellationToken cancellation = default) => this.ExistsAsync(this.GetName<T>(), criteria, options, existing, existed, cancellation);
-	public async ValueTask<bool> ExistsAsync(string name, ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, bool> existing = null, Action<DataExistContextBase> existed = null, CancellationToken cancellation = default)
-	{
-		//确实是否已处置
-		this.EnsureDisposed();
-
-		if(string.IsNullOrEmpty(name))
-			throw new ArgumentNullException(nameof(name));
-
-		//创建数据访问上下文对象
-		var context = this.CreateExistContext(name, criteria, options);
-
-		//处理数据访问操作前的回调
-		if(existing != null && existing(context))
-			return context.Result;
-
-		//激发“Existing”事件，如果被中断则返回
-		if(this.OnExisting(context))
-			return context.Result;
-
-		//调用数据访问过滤器前事件
-		this.OnFiltering(context);
+		await this.OnFilteringAsync(context, cancellation);
 
 		//执行存在操作方法
 		await this.OnExistsAsync(context, cancellation);
 
 		//调用数据访问过滤器后事件
-		this.OnFiltered(context);
+		await this.OnFilteredAsync(context, cancellation);
 
 		//激发“Existed”事件
-		this.OnExisted(context);
+		await this.OnExistedAsync(context, cancellation);
 
 		//处理数据访问操作后的回调
 		if(existed != null)
-			existed(context);
+			await existed(context, cancellation);
 
 		var result = context.Result;
-
-		//处置上下文资源
-		context.Dispose();
 
 		//返回最终的结果
 		return result;
 	}
-
-	protected abstract void OnExists(DataExistContextBase context);
 	protected abstract ValueTask OnExistsAsync(DataExistContextBase context, CancellationToken cancellation);
+	#endregion
+
+	#region 便利取消
+	public ValueTask<bool> ExistsAsync<T>(ICondition criteria, DataExistsOptions options, Func<DataExistContextBase, CancellationToken, ValueTask<bool>> existing, CancellationToken cancellation) => this.ExistsAsync<T>(criteria, options, existing, default(Func<DataExistContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<bool> ExistsAsync<T>(ICondition criteria, DataExistsOptions options, CancellationToken cancellation) => this.ExistsAsync<T>(criteria, options, default(Func<DataExistContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataExistContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<bool> ExistsAsync<T>(ICondition criteria, CancellationToken cancellation) => this.ExistsAsync<T>(criteria, default(DataExistsOptions), default(Func<DataExistContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataExistContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<bool> ExistsAsync(string name, ICondition criteria, DataExistsOptions options, Func<DataExistContextBase, CancellationToken, ValueTask<bool>> existing, CancellationToken cancellation) => this.ExistsAsync(name, criteria, options, existing, default(Func<DataExistContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<bool> ExistsAsync(string name, ICondition criteria, DataExistsOptions options, CancellationToken cancellation) => this.ExistsAsync(name, criteria, options, default(Func<DataExistContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataExistContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<bool> ExistsAsync(string name, ICondition criteria, CancellationToken cancellation) => this.ExistsAsync(name, criteria, default(DataExistsOptions), default(Func<DataExistContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataExistContextBase, CancellationToken, ValueTask>), cancellation);
+	#endregion
 }

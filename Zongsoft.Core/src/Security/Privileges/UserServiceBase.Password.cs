@@ -62,7 +62,7 @@ partial class UserServiceBase<TUser>
 			this.Name,
 			this.GetCriteria(identifier) & Condition.NotEqual("Password", null),
 			DataExistsOptions.SuppressValidator(),
-			cancellation: cancellation);
+			cancellation);
 	}
 
 	public virtual async ValueTask<bool> ChangePasswordAsync(Identifier identifier, string oldPassword, string newPassword, CancellationToken cancellation = default)

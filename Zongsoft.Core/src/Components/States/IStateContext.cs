@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace Zongsoft.Components.States;
@@ -42,5 +44,6 @@ public interface IStateContext<TKey, TValue> where TKey : struct, IEquatable<TKe
 	StateVector<TValue> State { get; }
 	string Description { get; set; }
 
-	bool SetState(string description = null);
+	ValueTask<bool> SetStateAsync(CancellationToken cancellation = default) => this.SetStateAsync(null, cancellation);
+	ValueTask<bool> SetStateAsync(string description, CancellationToken cancellation = default);
 }

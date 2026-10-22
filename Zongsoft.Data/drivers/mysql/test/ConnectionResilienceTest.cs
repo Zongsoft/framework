@@ -25,12 +25,12 @@ public class ConnectionResilienceTest
 		var settings = Configuration.MySqlConnectionSettingsDriver.Instance.GetSettings(
 			name,
 			"Server=127.0.0.1;Port=1;Database=unavailable;UserName=invalid;Password=invalid;" +
-			"ConnectionTimeout=1;Pooling=true;MaximumPoolSize=5;AllowLoadLocalInfile=true;" +
+			"ConnectionTimeout=00:00:01;Pooling=true;MaximumPoolSize=5;AllowLoadLocalInfile=true;" +
 			"CircuitBreaker.Duration=00:01:00;CircuitBreaker.MaximumDuration=00:01:00");
 		Assert.Equal("00:01:00", settings.Properties["CircuitBreaker.Duration"]);
 		Assert.Equal("00:01:00", settings.Properties["CircuitBreaker.MaximumDuration"]);
 
-		using IDataAccess accessor = DataAccessProvider.Instance.GetAccessor(name, new DataAccessOptions([settings]));
+		await using IDataAccess accessor = DataAccessProvider.Instance.GetAccessor(name, new DataAccessOptions([settings]));
 		var criteria = Condition.Equal(nameof(UserModel.UserId), uint.MaxValue);
 
 		var initialFailure = await Record.ExceptionAsync(async () => await accessor.ExistsAsync<UserModel>(criteria));

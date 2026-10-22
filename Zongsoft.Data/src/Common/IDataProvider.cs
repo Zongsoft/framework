@@ -38,13 +38,13 @@ public interface IDataProvider
 {
 	#region 事件定义
 	/// <summary>提供数据访问错误的事件。</summary>
-	event EventHandler<DataAccessErrorEventArgs> Error;
+	event Func<object, DataAccessErrorEventArgs, CancellationToken, ValueTask> Error;
 
 	/// <summary>提供数据访问开始执行的事件。</summary>
-	event EventHandler<DataAccessEventArgs<IDataAccessContext>> Executing;
+	event Func<object, DataAccessEventArgs<IDataAccessContext>, CancellationToken, ValueTask> Executing;
 
 	/// <summary>提供数据访问执行完成的事件。</summary>
-	event EventHandler<DataAccessEventArgs<IDataAccessContext>> Executed;
+	event Func<object, DataAccessEventArgs<IDataAccessContext>, CancellationToken, ValueTask> Executed;
 	#endregion
 
 	#region 属性定义
@@ -59,19 +59,11 @@ public interface IDataProvider
 	#endregion
 
 	#region 方法定义
-	/// <summary>执行数据操作。</summary>
-	/// <param name="context">数据操作的上下文。</param>
-	void Execute(IDataAccessContext context);
-
 	/// <summary>异步执行数据操作。</summary>
 	/// <param name="context">数据操作的上下文。</param>
 	/// <param name="cancellation">指定的异步取消标记。</param>
 	/// <returns>返回的异步操作任务。</returns>
 	ValueTask ExecuteAsync(IDataAccessContext context, CancellationToken cancellation = default);
-
-	/// <summary>导入数据操作。</summary>
-	/// <param name="context">数据导入的上下文。</param>
-	void Import(DataImportContext context);
 
 	/// <summary>异步导入数据操作。</summary>
 	/// <param name="context">数据导入的上下文。</param>

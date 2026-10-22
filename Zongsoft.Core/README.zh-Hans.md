@@ -74,6 +74,44 @@ dotnet add package Zongsoft.Core
 
 通过 `RaiseAsync` 触发事件并等待处理器完成，绑定的事件处理器必须返回可等待结果。`EventExchanger` 支持按事务状态控制事件投递，应用可通过 `IFeatureProvider` 增加条件，或通过 `EventDispatcher.Pipeline` 配置策略。详见[事件调度与环境特性](docs/event-dispatching.zh-Hans.md)。
 
+## 异步数据操作
+
+IDataAccess 和 IDataService 使用异步数据库方法。标量和写入操作返回 ValueTask，查询返回 IAsyncEnumerable<T>；取消令牌位于参数末尾。查询用 await foreach 消费，提前结束也会释放读取资源。自建数据访问器使用 await using，共享访问器由其所有者释放。
+
+InsertManyAsync、UpsertManyAsync、UpdateManyAsync 和访问层 ImportAsync 支持内存集合与 IAsyncEnumerable<T>。事件处理器接受取消令牌并返回 ValueTask；需要数据库或网络访问的处理器应等待操作完成。
+
+单条查询的 Getted 事件提供已经取得的 Result 快照；读取该属性不会再次查询。IPageable.Paginated 在首条结果输出前完成，适合设置分页响应信息。数据服务的模板导出通过 GetModelAsync 等待模型提供程序取数。
+
+状态机使用 `await using`，通过 `await machine.RunAsync(state, description, cancellation)` 发起流转。每次运行完成后再开始下一次或释放状态机；释放会等待状态持久化与事务终结。
+
+`DataDictionary.GetDictionariesAsync<T>(items, cancellation)` 将内存集合转换为数据字典异步序列；异步输入使用 `GetDictionariesAsync<T, TSource>(items, cancellation)`。需要逐条准备数据时，在令牌前传入 `Func<IDataDictionary<T>, CancellationToken, ValueTask>` 回调。枚举时按输入顺序等待回调，跳过空元素，不预先读取整个集合。
+
+## 数据验证与结果处理
+
+实现 `IDataValidator.ValidateAsync` 验证查询条件，通过 `OnImportAsync`、`OnInsertAsync`、`OnUpdateAsync` 提供字段值。字段验证返回 `DataValidatorResult`：`default` 表示不替换原值；`HasValue = true` 表示使用 `Value` 替换，允许明确写入 `null`。替代值依赖当前记录时，可通过 `IDataValueBinder.BindAsync` 在绑定时计算。
+
+`Pageable.FilterAsync` 和 `MapAsync` 为 `IAsyncEnumerable<T>` 提供可等待的筛选和映射回调。枚举时逐条处理，保留分页信息，并将枚举取消令牌传给回调。筛选返回 `Pageable.FilterResult<T>`：`Accepted = true` 表示输出 `Data`，允许替换记录或输出 `null`；`default` 表示丢弃当前记录。
+
+## 事务
+
+`Transaction` 使用 `CommitAsync`、`RollbackAsync` 和 `DisposeAsync`，通过 `await using` 管理范围。未提交的事务在释放时回滚；嵌套事务回滚使根事务只能回滚。提交仅在接受决议前响应取消，已经开始的提交、回滚和释放会等待实际完成。重复终结等待相同结果，失败也会继续向等待者传播。
+
+`RollbackAsync(exception)` 在回滚及完成通知成功时正常返回；失败时抛出包含该业务异常与终结异常的 `AggregateException`。调用方可以在 `catch` 中等待回滚，再根据业务需要选择是否用 `throw;` 继续传播原异常：
+
+```csharp
+catch(Exception exception)
+{
+	await transaction.RollbackAsync(exception);
+	throw; // 省略此行表示回滚成功后不再传播业务异常。
+}
+```
+
+批量更新、角色和用户的批量删除，以及状态机停止会保留业务操作与事务终结同时失败时的两类异常；只有业务操作失败时，继续传播原异常。
+
+该异常参数只在首次发起回滚时采用；提交或回滚已经开始时，后续调用只等待已有结果，不会重新回滚或追加异常。传入 `null` 时只传播终结异常。不带参数的回滚使用 `RollbackAsync()`；带取消令牌的调用应传入明确类型的令牌，`RollbackAsync(default)` 无法区分两个重载。
+
+`TransactionContext.Completed` 接受返回 `ValueTask` 的处理器，并按订阅顺序等待所有处理器。通知失败不会改变已确定的事务状态；提交时连接中断等无法确认结果的情况保持 `Undetermined`，应用不能据此假定写入已回滚或自动重试。处理器不得等待包含自身的事务终结任务。
+
 ## 应用生命周期
 
 `ApplicationContext` 接入宿主可等待的启动与停止阶段。`Exit()` 和 `Exit(exitCode)` 只请求宿主停止，不强制结束进程；`DisposeAsync()` 等待工作器实际收尾后释放上下文资源。应用构建器使用 `BuildAsync()`，以便初始化失败时等待异步释放。容器解析的初始化器和借用的服务容器视图保留其原有所有者。

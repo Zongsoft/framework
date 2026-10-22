@@ -40,6 +40,8 @@ partial class DataSession
 	private sealed class SessionCommand : DbCommand
 	{
 		#region 成员字段
+		private readonly object _sync = new();
+		private TaskCompletionSource _disposal;
 		private readonly DataSession _session;
 		private readonly DbCommand _command;
 		#endregion
@@ -108,62 +110,21 @@ partial class DataSession
 				_command.Cancel();
 		}
 
-		public override void Prepare() => _command.Prepare();
+		public override void Prepare() => throw new NotSupportedException();
+		public override Task PrepareAsync(CancellationToken cancellation = default) => _command.PrepareAsync(cancellation);
 		protected override DbParameter CreateDbParameter() => _command.CreateParameter();
 
-		public override object ExecuteScalar()
-		{
-			//获取当前命令的数据连接租约
-			using var lease = _session.PrepareCommand(_command);
+		public override object ExecuteScalar() => throw new NotSupportedException();
 
-			//返回数据命令执行结果
-			return _command.ExecuteScalar();
-		}
+		public override Task<object> ExecuteScalarAsync(CancellationToken cancellation) =>
+			this.ExecuteAsync(_command.ExecuteScalarAsync, cancellation);
 
-		public override async Task<object> ExecuteScalarAsync(CancellationToken cancellation)
-		{
-			//获取当前命令的数据连接租约
-			await using var lease = await _session.PrepareCommandAsync(_command, cancellation);
+		public override int ExecuteNonQuery() => throw new NotSupportedException();
 
-			//返回数据命令执行结果
-			return await _command.ExecuteScalarAsync(cancellation);
-		}
+		public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellation) =>
+			this.ExecuteAsync(_command.ExecuteNonQueryAsync, cancellation);
 
-		public override int ExecuteNonQuery()
-		{
-			//获取当前命令的数据连接租约
-			using var lease = _session.PrepareCommand(_command);
-
-			//返回数据命令执行结果
-			return _command.ExecuteNonQuery();
-		}
-
-		public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellation)
-		{
-			//获取当前命令的数据连接租约
-			await using var lease = await _session.PrepareCommandAsync(_command, cancellation);
-
-			//返回数据命令执行结果
-			return await _command.ExecuteNonQueryAsync(cancellation);
-		}
-
-		protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
-		{
-			//获取当前读取命令的数据连接租约
-			var lease = _session.PrepareReader(_command);
-
-			try
-			{
-				//构建会话数据读取器，由读取器接管连接租约
-				var reader = _command.ExecuteReader(behavior & ~CommandBehavior.CloseConnection);
-				return new SessionReader(reader, lease);
-			}
-			catch
-			{
-				lease.Dispose();
-				throw;
-			}
-		}
+		protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => throw new NotSupportedException();
 
 		protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellation)
 		{
@@ -180,6 +141,52 @@ partial class DataSession
 			{
 				await lease.DisposeAsync().ConfigureAwait(false);
 				throw;
+			}
+		}
+
+		private async Task<T> ExecuteAsync<T>(Func<CancellationToken, Task<T>> execute, CancellationToken cancellation)
+		{
+			await using var lease = await _session.PrepareCommandAsync(_command, cancellation).ConfigureAwait(false);
+			return await execute(cancellation).ConfigureAwait(false);
+		}
+		#endregion
+
+		#region 处置方法
+		protected override void Dispose(bool disposing)
+		{
+			if(disposing && _disposal?.Task.IsCompletedSuccessfully != true)
+				throw new NotSupportedException();
+
+			base.Dispose(false);
+		}
+
+		public override ValueTask DisposeAsync()
+		{
+			TaskCompletionSource disposal;
+
+			lock(_sync)
+			{
+				if(_disposal != null)
+					return new ValueTask(_disposal.Task);
+
+				_disposal = disposal = new(TaskCreationOptions.RunContinuationsAsynchronously);
+			}
+
+			_ = this.DisposeAsyncCore(disposal);
+			return new ValueTask(disposal.Task);
+		}
+
+		private async Task DisposeAsyncCore(TaskCompletionSource disposal)
+		{
+			try
+			{
+				await _command.DisposeAsync().ConfigureAwait(false);
+				GC.SuppressFinalize(this);
+				disposal.TrySetResult();
+			}
+			catch(Exception exception)
+			{
+				disposal.TrySetException(exception);
 			}
 		}
 		#endregion

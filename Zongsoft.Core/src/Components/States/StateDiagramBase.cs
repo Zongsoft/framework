@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace Zongsoft.Components.States;
@@ -47,11 +49,11 @@ public abstract class StateDiagramBase<TKey, TValue> : IStateDiagram<TKey, TValu
 	#endregion
 
 	#region 公共方法
-	public void Transfer(IStateContext<TKey, TValue> context, IStateHandler<TKey, TValue> handler)
+	public async ValueTask TransferAsync(IStateContext<TKey, TValue> context, IStateHandler<TKey, TValue> handler, CancellationToken cancellation = default)
 	{
-		this.OnTransfering(context);
-		this.OnTransfer(context, handler);
-		this.OnTransferred(context);
+		await this.OnTransferingAsync(context, cancellation);
+		await this.OnTransferAsync(context, handler, cancellation);
+		await this.OnTransferredAsync(context, cancellation);
 	}
 	#endregion
 
@@ -74,29 +76,29 @@ public abstract class StateDiagramBase<TKey, TValue> : IStateDiagram<TKey, TValu
 		return false;
 	}
 
-	protected virtual void OnTransfer(IStateContext<TKey, TValue> context, IStateHandler<TKey, TValue> handler) => handler.Handle(context);
-	protected virtual void OnTransfering(IStateContext<TKey, TValue> context) { }
-	protected virtual void OnTransferred(IStateContext<TKey, TValue> context) { }
+	protected virtual ValueTask OnTransferAsync(IStateContext<TKey, TValue> context, IStateHandler<TKey, TValue> handler, CancellationToken cancellation) => handler.HandleAsync(context, cancellation);
+	protected virtual ValueTask OnTransferingAsync(IStateContext<TKey, TValue> context, CancellationToken cancellation) => ValueTask.CompletedTask;
+	protected virtual ValueTask OnTransferredAsync(IStateContext<TKey, TValue> context, CancellationToken cancellation) => ValueTask.CompletedTask;
 	#endregion
 
 	#region 抽象方法
-	protected abstract State<TKey, TValue> GetState(TKey key);
-	protected abstract bool SetState(TKey key, TValue value, string description, IDictionary<object, object> parameters);
-	protected virtual bool SetState(State<TKey, TValue> state, string description, IDictionary<object, object> parameters)
+	protected abstract ValueTask<State<TKey, TValue>> GetStateAsync(TKey key, CancellationToken cancellation);
+	protected abstract ValueTask<bool> SetStateAsync(TKey key, TValue value, string description, IDictionary<object, object> parameters, CancellationToken cancellation);
+	protected virtual ValueTask<bool> SetStateAsync(State<TKey, TValue> state, string description, IDictionary<object, object> parameters, CancellationToken cancellation)
 	{
 		ArgumentNullException.ThrowIfNull(state);
-		return this.SetState(state.Key, state.Value, description, parameters);
+		return this.SetStateAsync(state.Key, state.Value, description, parameters, cancellation);
 	}
 	#endregion
 
 	#region 显式实现
 	bool IStateDiagram<TKey, TValue>.CanTransfer(TValue source, TValue destination) => this.CanTransfer(source, destination);
-	State<TKey, TValue> IStateDiagram<TKey, TValue>.GetState(TKey key) => this.GetState(key);
-	bool IStateDiagram<TKey, TValue>.SetState(TKey key, TValue value, string description, IDictionary<object, object> parameters) => this.SetState(key, value, description, parameters);
-	bool IStateDiagram<TKey, TValue>.SetState(State<TKey, TValue> state, string description, IDictionary<object, object> parameters)
+	ValueTask<State<TKey, TValue>> IStateDiagram<TKey, TValue>.GetStateAsync(TKey key, CancellationToken cancellation) => this.GetStateAsync(key, cancellation);
+	ValueTask<bool> IStateDiagram<TKey, TValue>.SetStateAsync(TKey key, TValue value, string description, IDictionary<object, object> parameters, CancellationToken cancellation) => this.SetStateAsync(key, value, description, parameters, cancellation);
+	ValueTask<bool> IStateDiagram<TKey, TValue>.SetStateAsync(State<TKey, TValue> state, string description, IDictionary<object, object> parameters, CancellationToken cancellation)
 	{
 		ArgumentNullException.ThrowIfNull(state);
-		return this.SetState(state, description, parameters);
+		return this.SetStateAsync(state, description, parameters, cancellation);
 	}
 	#endregion
 }

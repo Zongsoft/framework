@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
@@ -58,20 +60,20 @@ public class DataAccessFilterCollection : ICollection<object>
 	#endregion
 
 	#region 公共方法
-	public void InvokeFiltering(IDataAccessContextBase context)
+	public async ValueTask InvokeFilteringAsync(IDataAccessContextBase context, CancellationToken cancellation = default)
 	{
-		_global.OnFiltering(context);
+		await _global.OnFilteringAsync(context, cancellation);
 
 		if(_filters != null && _filters.TryGetValue(context.Name, out var descriptor))
-			descriptor.OnFiltering(context);
+			await descriptor.OnFilteringAsync(context, cancellation);
 	}
 
-	public void InvokeFiltered(IDataAccessContextBase context)
+	public async ValueTask InvokeFilteredAsync(IDataAccessContextBase context, CancellationToken cancellation = default)
 	{
-		_global.OnFiltered(context);
+		await _global.OnFilteredAsync(context, cancellation);
 
 		if(_filters != null && _filters.TryGetValue(context.Name, out var descriptor))
-			descriptor.OnFiltered(context);
+			await descriptor.OnFilteredAsync(context, cancellation);
 	}
 
 	public int Add(IEnumerable<object> filters)
@@ -303,7 +305,7 @@ public class DataAccessFilterCollection : ICollection<object>
 			_aggregates?.Clear();
 		}
 
-		public void OnFiltering(IDataAccessContextBase context)
+		public async ValueTask OnFilteringAsync(IDataAccessContextBase context, CancellationToken cancellation = default)
 		{
 			switch(context)
 			{
@@ -312,7 +314,7 @@ public class DataAccessFilterCollection : ICollection<object>
 					if(exists != null)
 					{
 						foreach(var filter in exists)
-							filter.OnFiltering(existing);
+							await filter.OnFilteringAsync(existing, cancellation);
 					}
 
 					break;
@@ -321,7 +323,7 @@ public class DataAccessFilterCollection : ICollection<object>
 					if(selects != null)
 					{
 						foreach(var filter in selects)
-							filter.OnFiltering(selection);
+							await filter.OnFilteringAsync(selection, cancellation);
 					}
 
 					break;
@@ -330,7 +332,7 @@ public class DataAccessFilterCollection : ICollection<object>
 					if(deletes != null)
 					{
 						foreach(var filter in deletes)
-							filter.OnFiltering(deletion);
+							await filter.OnFilteringAsync(deletion, cancellation);
 					}
 
 					break;
@@ -339,7 +341,7 @@ public class DataAccessFilterCollection : ICollection<object>
 					if(inserts != null)
 					{
 						foreach(var filter in inserts)
-							filter.OnFiltering(insertion);
+							await filter.OnFilteringAsync(insertion, cancellation);
 					}
 
 					break;
@@ -348,7 +350,7 @@ public class DataAccessFilterCollection : ICollection<object>
 					if(updates != null)
 					{
 						foreach(var filter in updates)
-							filter.OnFiltering(updation);
+							await filter.OnFilteringAsync(updation, cancellation);
 					}
 
 					break;
@@ -357,7 +359,7 @@ public class DataAccessFilterCollection : ICollection<object>
 					if(upserts != null)
 					{
 						foreach(var filter in upserts)
-							filter.OnFiltering(upsertion);
+							await filter.OnFilteringAsync(upsertion, cancellation);
 					}
 
 					break;
@@ -366,7 +368,7 @@ public class DataAccessFilterCollection : ICollection<object>
 					if(executes != null)
 					{
 						foreach(var filter in executes)
-							filter.OnFiltering(execution);
+							await filter.OnFilteringAsync(execution, cancellation);
 					}
 
 					break;
@@ -375,14 +377,14 @@ public class DataAccessFilterCollection : ICollection<object>
 					if(aggregates != null)
 					{
 						foreach(var filter in aggregates)
-							filter.OnFiltering(aggregation);
+							await filter.OnFilteringAsync(aggregation, cancellation);
 					}
 
 					break;
 			}
 		}
 
-		public void OnFiltered(IDataAccessContextBase context)
+		public async ValueTask OnFilteredAsync(IDataAccessContextBase context, CancellationToken cancellation = default)
 		{
 			switch(context)
 			{
@@ -391,7 +393,7 @@ public class DataAccessFilterCollection : ICollection<object>
 					if(exists != null)
 					{
 						foreach(var filter in exists)
-							filter.OnFiltered(existing);
+							await filter.OnFilteredAsync(existing, cancellation);
 					}
 
 					break;
@@ -400,7 +402,7 @@ public class DataAccessFilterCollection : ICollection<object>
 					if(selects != null)
 					{
 						foreach(var filter in selects)
-							filter.OnFiltered(selection);
+							await filter.OnFilteredAsync(selection, cancellation);
 					}
 
 					break;
@@ -409,7 +411,7 @@ public class DataAccessFilterCollection : ICollection<object>
 					if(deletes != null)
 					{
 						foreach(var filter in deletes)
-							filter.OnFiltered(deletion);
+							await filter.OnFilteredAsync(deletion, cancellation);
 					}
 
 					break;
@@ -418,7 +420,7 @@ public class DataAccessFilterCollection : ICollection<object>
 					if(inserts != null)
 					{
 						foreach(var filter in inserts)
-							filter.OnFiltered(insertion);
+							await filter.OnFilteredAsync(insertion, cancellation);
 					}
 
 					break;
@@ -427,7 +429,7 @@ public class DataAccessFilterCollection : ICollection<object>
 					if(updates != null)
 					{
 						foreach(var filter in updates)
-							filter.OnFiltered(updation);
+							await filter.OnFilteredAsync(updation, cancellation);
 					}
 
 					break;
@@ -436,7 +438,7 @@ public class DataAccessFilterCollection : ICollection<object>
 					if(upserts != null)
 					{
 						foreach(var filter in upserts)
-							filter.OnFiltered(upsertion);
+							await filter.OnFilteredAsync(upsertion, cancellation);
 					}
 
 					break;
@@ -445,7 +447,7 @@ public class DataAccessFilterCollection : ICollection<object>
 					if(executes != null)
 					{
 						foreach(var filter in executes)
-							filter.OnFiltered(execution);
+							await filter.OnFilteredAsync(execution, cancellation);
 					}
 
 					break;
@@ -454,7 +456,7 @@ public class DataAccessFilterCollection : ICollection<object>
 					if(aggregates != null)
 					{
 						foreach(var filter in aggregates)
-							filter.OnFiltered(aggregation);
+							await filter.OnFilteredAsync(aggregation, cancellation);
 					}
 
 					break;

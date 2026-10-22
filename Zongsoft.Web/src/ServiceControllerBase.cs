@@ -221,7 +221,7 @@ public abstract class ServiceControllerBase<TModel, TService> : ControllerBase w
 			}
 			catch
 			{
-				DeleteFile(file.Path.Url);
+				await DeleteFileAsync(file.Path.Url);
 			}
 		}
 
@@ -266,7 +266,7 @@ public abstract class ServiceControllerBase<TModel, TService> : ControllerBase w
 			if((entry = await uploaded(file, cancellation)) != null)
 				yield return entry;
 			else
-				DeleteFile(file.Path.Url);
+				await DeleteFileAsync(file.Path.Url);
 		}
 	}
 	#endregion
@@ -373,12 +373,12 @@ public abstract class ServiceControllerBase<TModel, TService> : ControllerBase w
 
 	#region 私有方法
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private static void DeleteFile(string filePath)
+	private static async ValueTask DeleteFileAsync(string filePath)
 	{
 		try
 		{
 			if(filePath != null && filePath.Length > 0)
-				FileSystem.File.Delete(filePath);
+				await FileSystem.File.DeleteAsync(filePath, CancellationToken.None);
 		}
 		catch { }
 	}

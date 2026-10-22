@@ -12,7 +12,7 @@ using Zongsoft.Data.Tests.Models;
 namespace Zongsoft.Data.MsSql.Tests;
 
 [Collection("Database")]
-public class TransactionTest(DatabaseFixture database) : IDisposable
+public class TransactionTest(DatabaseFixture database) : IAsyncDisposable
 {
 	private readonly DatabaseFixture _database = database;
 
@@ -26,14 +26,14 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		var target = GetTarget();
 		var action = "Single.Commit";
 
-		using(var transaction = new Transaction())
+		await using(var transaction = new Transaction())
 		{
 			Assert.Same(transaction, Transaction.Current);
 
 			await InsertLogAsync(accessor, target, action);
 			Assert.True(await ExistsLogAsync(accessor, target, action));
 
-			transaction.Commit();
+			await transaction.CommitAsync();
 		}
 
 		Assert.Null(Transaction.Current);
@@ -50,14 +50,14 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		var target = GetTarget();
 		var action = "Single.Rollback";
 
-		using(var transaction = new Transaction())
+		await using(var transaction = new Transaction())
 		{
 			Assert.Same(transaction, Transaction.Current);
 
 			await InsertLogAsync(accessor, target, action);
 			Assert.True(await ExistsLogAsync(accessor, target, action));
 
-			transaction.Rollback();
+			await transaction.RollbackAsync();
 		}
 
 		Assert.Null(Transaction.Current);
@@ -73,32 +73,32 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		var accessor = _database.Accessor;
 		var target = GetTarget();
 
-		using(var outer = new Transaction())
+		await using(var outer = new Transaction())
 		{
 			Assert.Same(outer, Transaction.Current);
 			await InsertLogAsync(accessor, target, "Nested.Outer");
 
-			using(var middle = new Transaction())
+			await using(var middle = new Transaction())
 			{
 				Assert.Same(middle, Transaction.Current);
 				Assert.Same(outer.Context, middle.Context.Parent);
 				await InsertLogAsync(accessor, target, "Nested.Middle");
 
-				using(var inner = new Transaction())
+				await using(var inner = new Transaction())
 				{
 					Assert.Same(inner, Transaction.Current);
 					Assert.Same(middle.Context, inner.Context.Parent);
 					await InsertLogAsync(accessor, target, "Nested.Inner");
 
-					inner.Commit();
+					await inner.CommitAsync();
 				}
 
 				Assert.Same(middle, Transaction.Current);
-				middle.Commit();
+				await middle.CommitAsync();
 			}
 
 			Assert.Same(outer, Transaction.Current);
-			outer.Commit();
+			await outer.CommitAsync();
 		}
 
 		Assert.Null(Transaction.Current);
@@ -116,17 +116,17 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		var accessor = _database.Accessor;
 		var target = GetTarget();
 
-		using(var outer = new Transaction())
+		await using(var outer = new Transaction())
 		{
 			await InsertLogAsync(accessor, target, "Nested.Abort.Outer");
 
-			using(var inner = new Transaction())
+			await using(var inner = new Transaction())
 			{
 				await InsertLogAsync(accessor, target, "Nested.Abort.Inner");
-				inner.Rollback();
+				await inner.RollbackAsync();
 			}
 
-			outer.Commit();
+			await outer.CommitAsync();
 		}
 
 		Assert.False(await ExistsLogAsync(accessor, target, "Nested.Abort.Outer"));
@@ -142,23 +142,23 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		var accessor = _database.Accessor;
 		var target = GetTarget();
 
-		using(var transaction = new Transaction())
+		await using(var transaction = new Transaction())
 		{
 			await InsertLogAsync(accessor, target, "Multiple.First");
-			transaction.Commit();
+			await transaction.CommitAsync();
 		}
 
-		using(var transaction = new Transaction())
+		await using(var transaction = new Transaction())
 		{
 			await InsertLogAsync(accessor, target, "Multiple.Second");
-			transaction.Rollback();
+			await transaction.RollbackAsync();
 		}
 
-		using(var transaction = new Transaction())
+		await using(var transaction = new Transaction())
 		{
 			await InsertLogAsync(accessor, target, "Multiple.Third");
 			Assert.True(await ExistsLogAsync(accessor, target, "Multiple.Third"));
-			transaction.Commit();
+			await transaction.CommitAsync();
 		}
 
 		Assert.True(await ExistsLogAsync(accessor, target, "Multiple.First"));
@@ -180,7 +180,7 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 
 		var tasks = Enumerable.Range(0, COUNT).Select(index => Task.Run(async () =>
 		{
-			using(var transaction = new Transaction())
+			await using(var transaction = new Transaction())
 			{
 				if(Interlocked.Decrement(ref remaining) == 0)
 					ready.SetResult();
@@ -198,9 +198,9 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 				}
 
 				if(index % 2 == 0)
-					transaction.Commit();
+					await transaction.CommitAsync();
 				else
-					transaction.Rollback();
+					await transaction.RollbackAsync();
 			}
 
 			Assert.Null(Transaction.Current);
@@ -226,15 +226,15 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		{
 			var action = index % 2 == 0 ? $"Concurrent.Commit.{index}" : $"Concurrent.Rollback.{index}";
 
-			using(var transaction = new Transaction())
+			await using(var transaction = new Transaction())
 			{
 				await InsertLogAsync(accessor, target, action);
 				Assert.True(await ExistsLogAsync(accessor, target, action));
 
 				if(index % 2 == 0)
-					transaction.Commit();
+					await transaction.CommitAsync();
 				else
-					transaction.Rollback();
+					await transaction.RollbackAsync();
 			}
 		}));
 
@@ -261,7 +261,7 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		var target = GetTarget();
 		var action = "Reader.Commit";
 
-		using(var transaction = new Transaction())
+		await using(var transaction = new Transaction())
 		{
 			await InsertLogAsync(accessor, target, action);
 			var session = GetSession(transaction);
@@ -274,11 +274,11 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 			{
 				Assert.True(await enumerator.MoveNextAsync());
 
-				//提交操作在另一线程执行，并阻塞等待当前读取器释放
-				var committing = Task.Run(transaction.Commit);
+				//在另一线程开始异步提交，并等待读取器释放
+				var committing = Task.Run(() => transaction.CommitAsync());
 
-				//等待提交线程进入完成流程（真实提交被延迟）
-				SpinWait.SpinUntil(() => session.IsCompleted, TimeSpan.FromSeconds(5));
+				//等待会话进入终结流程（真实提交被延迟）
+				await WaitForCompletionAsync(session);
 				Assert.True(session.IsCompleted);
 
 				//读取器未释放前，提交尚未完成（真实提交被延迟）
@@ -287,7 +287,7 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 				//释放读取器后提交完成
 				await enumerator.DisposeAsync();
 				await committing;
-				AssertSessionReleased(session);
+				await AssertSessionReleasedAsync(session);
 			}
 		}
 
@@ -304,7 +304,7 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		var target = GetTarget();
 		var action = "Reader.CommitAsync";
 
-		using(var transaction = new Transaction())
+		await using(var transaction = new Transaction())
 		{
 			await InsertLogAsync(accessor, target, action);
 			var session = GetSession(transaction);
@@ -327,7 +327,7 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 				//释放读取器后提交完成
 				await enumerator.DisposeAsync();
 				await committing;
-				AssertSessionReleased(session);
+				await AssertSessionReleasedAsync(session);
 			}
 		}
 
@@ -344,7 +344,7 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		var target = GetTarget();
 		var action = "Reader.Commit.Dispose";
 
-		using(var transaction = new Transaction())
+		await using(var transaction = new Transaction())
 		{
 			await InsertLogAsync(accessor, target, action);
 			var session = GetSession(transaction);
@@ -356,18 +356,18 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 			{
 				Assert.True(await enumerator.MoveNextAsync());
 
-				var committing = Task.Run(transaction.Commit);
-				SpinWait.SpinUntil(() => session.IsCompleted, TimeSpan.FromSeconds(5));
+				var committing = Task.Run(() => transaction.CommitAsync());
+				await WaitForCompletionAsync(session);
 
 				//释放读取器后提交完成
 				await enumerator.DisposeAsync();
 				await committing;
 
-				AssertSessionReleased(session);
-				session.Dispose();
+				await AssertSessionReleasedAsync(session);
+				await session.DisposeAsync();
 			}
 
-			AssertSessionReleased(session);
+			await AssertSessionReleasedAsync(session);
 		}
 
 		Assert.True(await ExistsLogAsync(accessor, target, action));
@@ -383,7 +383,7 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		var target = GetTarget();
 		var action = "Reader.Multiple";
 
-		using(var transaction = new Transaction())
+		await using(var transaction = new Transaction())
 		{
 			await InsertLogAsync(accessor, target, action);
 			var session = GetSession(transaction);
@@ -398,8 +398,8 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 			await second.DisposeAsync();
 			await first.DisposeAsync();
 
-			transaction.Commit();
-			AssertSessionReleased(session);
+			await transaction.CommitAsync();
+			await AssertSessionReleasedAsync(session);
 		}
 
 		Assert.True(await ExistsLogAsync(accessor, target, action));
@@ -416,7 +416,7 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		var action = "Reader.Failure";
 		var command = Mapping.Commands.Script(MsSqlDriver.NAME, "SELECT * FROM [__Zongsoft_Missing_Table__]");
 
-		using(var transaction = new Transaction())
+		await using(var transaction = new Transaction())
 		{
 			await InsertLogAsync(accessor, target, action);
 			var session = GetSession(transaction);
@@ -425,8 +425,8 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 			await using var enumerator = accessor.ExecuteAsync<Log>(command.QualifiedName).GetAsyncEnumerator();
 			await Assert.ThrowsAnyAsync<DbException>(() => enumerator.MoveNextAsync().AsTask());
 
-			transaction.Commit();
-			AssertSessionReleased(session);
+			await transaction.CommitAsync();
+			await AssertSessionReleasedAsync(session);
 		}
 
 		Assert.True(await ExistsLogAsync(accessor, target, action));
@@ -442,7 +442,7 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		var target = GetTarget();
 		var action = "Reader.Cancellation";
 
-		using(var transaction = new Transaction())
+		await using(var transaction = new Transaction())
 		{
 			await InsertLogAsync(accessor, target, action);
 			var session = GetSession(transaction);
@@ -454,8 +454,8 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 			await using var enumerator = accessor.SelectAsync<UserModel>().GetAsyncEnumerator(cancellation.Token);
 			await Assert.ThrowsAnyAsync<OperationCanceledException>(() => enumerator.MoveNextAsync().AsTask());
 
-			transaction.Commit();
-			AssertSessionReleased(session);
+			await transaction.CommitAsync();
+			await AssertSessionReleasedAsync(session);
 		}
 
 		Assert.True(await ExistsLogAsync(accessor, target, action));
@@ -468,9 +468,9 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
-		using var transaction = new Transaction();
+		await using var transaction = new Transaction();
 		using var cancellation = new CancellationTokenSource();
-		var enumerator = accessor.SelectAsync<UserModel>().GetAsyncEnumerator(cancellation.Token);
+		await using var enumerator = accessor.SelectAsync<UserModel>().GetAsyncEnumerator(cancellation.Token);
 
 		Assert.True(await enumerator.MoveNextAsync());
 		cancellation.Cancel();
@@ -479,7 +479,7 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		await enumerator.DisposeAsync();
 
 		var session = GetSession(transaction);
-		RollbackAndAssertSessionReleased(transaction, session);
+		await RollbackAndAssertSessionReleasedAsync(transaction, session);
 
 		Assert.IsAssignableFrom<OperationCanceledException>(exception);
 	}
@@ -493,7 +493,7 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		var accessor = _database.Accessor;
 		var command = Mapping.Commands.Script(MsSqlDriver.NAME, "SELECT 1 UNION ALL SELECT 2");
 
-		using var transaction = new Transaction();
+		await using var transaction = new Transaction();
 		var results = accessor.ExecuteAsync<int>(command.QualifiedName);
 
 		await foreach(var result in results)
@@ -503,7 +503,7 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		}
 
 		var session = GetSession(transaction);
-		RollbackAndAssertSessionReleased(transaction, session);
+		await RollbackAndAssertSessionReleasedAsync(transaction, session);
 	}
 
 	private static async Task InsertLogAsync(DataAccess accessor, string target, string action)
@@ -524,19 +524,28 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 		Assert.True(log.LogId > 0);
 	}
 
+	private static async Task WaitForCompletionAsync(DataSession session)
+	{
+		using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+		while(!session.IsCompleted)
+			await Task.Delay(1, cancellation.Token);
+	}
+
 	private static string GetTarget() => $"{nameof(TransactionTest)}:{Guid.NewGuid():N}-{Environment.TickCount64:X}";
 	private static DataSession GetSession(Transaction transaction) => Assert.IsType<DataSession>(transaction.Context.Parameters["Zongsoft.Data:DataSession"]);
-	private static void RollbackAndAssertSessionReleased(Transaction transaction, DataSession session)
+	private static async Task RollbackAndAssertSessionReleasedAsync(Transaction transaction, DataSession session)
 	{
-		transaction.Rollback();
+		await transaction.RollbackAsync();
 
 		try
 		{
-			AssertSessionReleased(session);
+			await AssertSessionReleasedAsync(session);
 		}
 		finally
 		{
-			session.Connection?.Close();
+			if(session.Connection != null)
+				await Assert.IsAssignableFrom<DbConnection>(session.Connection).CloseAsync();
 		}
 	}
 
@@ -545,24 +554,24 @@ public class TransactionTest(DatabaseFixture database) : IDisposable
 			Condition.Equal(nameof(Log.Target), target) &
 			Condition.Equal(nameof(Log.Action), action));
 
-	private static void AssertSessionReleased(DataSession session)
+	private static async Task AssertSessionReleasedAsync(DataSession session)
 	{
-		AssertSessionCompleted(session);
+		await AssertSessionCompletedAsync(session);
 		Assert.Null(session.Transaction);
 		Assert.Null(session.Connection);
 	}
 
-	private static void AssertSessionCompleted(DataSession session)
+	private static async Task AssertSessionCompletedAsync(DataSession session)
 	{
 		Assert.True(session.IsCompleted);
-		Assert.Throws<DataException>(() => session.AcquireLease());
+		await Assert.ThrowsAsync<DataException>(() => session.AcquireLeaseAsync().AsTask());
 	}
 
-	void IDisposable.Dispose()
+	async ValueTask IAsyncDisposable.DisposeAsync()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
 
-		_database.Accessor.Execute("TruncateLog");
+		await _database.Accessor.ExecuteAsync("TruncateLog");
 	}
 }

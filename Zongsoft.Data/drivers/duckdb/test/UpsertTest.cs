@@ -11,7 +11,7 @@ using Zongsoft.Data.Tests.Models;
 namespace Zongsoft.Data.DuckDB.Tests;
 
 [Collection("Database")]
-public class UpsertTest(DatabaseFixture database) : IDisposable
+public class UpsertTest(DatabaseFixture database) : IAsyncDisposable
 {
 	private readonly DatabaseFixture _database = database;
 
@@ -47,7 +47,7 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 			Condition.Equal(nameof(UserModel.UserId), 100),
 			nameof(UserModel.Name));
 
-		var enumerator = result.GetAsyncEnumerator();
+		await using var enumerator = result.GetAsyncEnumerator();
 		Assert.True(await enumerator.MoveNextAsync());
 		var name = enumerator.Current;
 		await enumerator.DisposeAsync();
@@ -201,11 +201,11 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
-		Assert.Equal(0, await accessor.UpsertManyAsync<UserModel>(null));
+		Assert.Equal(0, await accessor.UpsertManyAsync<UserModel>((UserModel[])null));
 		Assert.Equal(0, await accessor.UpsertManyAsync(Array.Empty<UserModel>()));
-		Assert.Equal(0, await accessor.UpsertManyAsync<RoleModel>(null, $"*, {nameof(RoleModel.Children)}{{*}}"));
+		Assert.Equal(0, await accessor.UpsertManyAsync<RoleModel>((RoleModel[])null, $"*, {nameof(RoleModel.Children)}{{*}}"));
 		Assert.Equal(0, await accessor.UpsertManyAsync(Array.Empty<RoleModel>(), $"*, {nameof(RoleModel.Children)}{{*}}"));
-		Assert.Equal(0, await accessor.UpsertManyAsync<Employee>(null, $"*, {nameof(Employee.User)}{{*}}"));
+		Assert.Equal(0, await accessor.UpsertManyAsync<Employee>((Employee[])null, $"*, {nameof(Employee.User)}{{*}}"));
 		Assert.Equal(0, await accessor.UpsertManyAsync(Array.Empty<Employee>(), $"*, {nameof(Employee.User)}{{*}}"));
 
 		await accessor.DeleteAsync<UserModel>(Condition.Between(nameof(UserModel.UserId), OFFSET, OFFSET + COUNT));
@@ -431,15 +431,15 @@ public class UpsertTest(DatabaseFixture database) : IDisposable
 		await accessor.DeleteAsync<MemberModel>(Condition.Between(nameof(MemberModel.RoleId), OFFSET, OFFSET + COUNT));
 	}
 
-	void IDisposable.Dispose()
+	async ValueTask IAsyncDisposable.DisposeAsync()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
 
 		var accessor = _database.Accessor;
-		accessor.Delete<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
-		accessor.Delete<UserModel>(Condition.Like(nameof(UserModel.Name), "#%"));
-		accessor.Delete<RoleModel>(Condition.In(nameof(RoleModel.RoleId), [10, 11, 12]));
-		accessor.Delete<MemberModel>(Condition.Equal(nameof(MemberModel.RoleId), 10));
+		await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
+		await accessor.DeleteAsync<UserModel>(Condition.Like(nameof(UserModel.Name), "#%"));
+		await accessor.DeleteAsync<RoleModel>(Condition.In(nameof(RoleModel.RoleId), [10, 11, 12]));
+		await accessor.DeleteAsync<MemberModel>(Condition.Equal(nameof(MemberModel.RoleId), 10));
 	}
 }

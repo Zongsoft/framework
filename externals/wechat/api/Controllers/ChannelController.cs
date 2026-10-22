@@ -51,7 +51,8 @@ public class ChannelController : ControllerBase
 		if(string.IsNullOrEmpty(id))
 			return this.BadRequest();
 
-		if(!ChannelManager.TryGetChannel(id, out var channel))
+		var channel = await ChannelManager.FindChannelAsync(id, cancellation);
+		if(channel == null)
 			return this.NotFound();
 
 		var content = await this.Request.ReadAsStringAsync(cancellation);
@@ -78,7 +79,8 @@ public class ChannelController : ControllerBase
 		[HttpGet("/[area]/{id}/[controller]")]
 		public async ValueTask<IActionResult> GetCredential(string id, CancellationToken cancellation = default)
 		{
-			if(!ChannelManager.TryGetChannel(id, out var channel))
+			var channel = await ChannelManager.FindChannelAsync(id, cancellation);
+			if(channel == null)
 				return this.NotFound();
 
 			var credential = await channel.GetCredentialAsync(false, cancellation);
@@ -88,7 +90,8 @@ public class ChannelController : ControllerBase
 		[HttpPost("/[area]/{id}/[controller]/[action]")]
 		public async ValueTask<IActionResult> Refresh(string key, CancellationToken cancellation = default)
 		{
-			if(!ChannelManager.TryGetChannel(key, out var channel))
+			var channel = await ChannelManager.FindChannelAsync(key, cancellation);
+			if(channel == null)
 				return this.NotFound();
 
 			var credential = await channel.GetCredentialAsync(true, cancellation);
@@ -102,7 +105,8 @@ public class ChannelController : ControllerBase
 		[HttpGet("{identifier?}")]
 		public async ValueTask<IActionResult> Get(string id, string identifier = null, [FromQuery] string bookmark = null, CancellationToken cancellation = default)
 		{
-			if(!ChannelManager.TryGetChannel(id, out var channel))
+			var channel = await ChannelManager.FindChannelAsync(id, cancellation);
+			if(channel == null)
 				return this.NotFound();
 
 			if(string.IsNullOrEmpty(identifier))
@@ -123,7 +127,8 @@ public class ChannelController : ControllerBase
 		[HttpGet("/[area]/{id}/[controller]/Templates")]
 		public async ValueTask<IActionResult> GetTemplatesAsync(string id, CancellationToken cancellation = default)
 		{
-			if(!ChannelManager.TryGetChannel(id, out var channel))
+			var channel = await ChannelManager.FindChannelAsync(id, cancellation);
+			if(channel == null)
 				return this.NotFound();
 
 			var result = await channel.Messager.GetTemplatesAsync(cancellation);
@@ -136,7 +141,8 @@ public class ChannelController : ControllerBase
 			if(string.IsNullOrEmpty(template) || data == null)
 				return this.BadRequest();
 
-			if(!ChannelManager.TryGetChannel(id, out var channel))
+			var channel = await ChannelManager.FindChannelAsync(id, cancellation);
+			if(channel == null)
 				return this.NotFound();
 
 			var result = await channel.Messager.SendAsync(destination, template, data, url, cancellation);
@@ -153,7 +159,8 @@ public class ChannelController : ControllerBase
 			if(string.IsNullOrEmpty(token))
 				return this.BadRequest();
 
-			if(!ChannelManager.TryGetChannel(id, out var channel))
+			var channel = await ChannelManager.FindChannelAsync(id, cancellation);
+			if(channel == null)
 				return this.NotFound();
 
 			var result = await channel.Authentication.AuthenticateAsync(token, cancellation);

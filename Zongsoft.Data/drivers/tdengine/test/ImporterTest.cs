@@ -15,7 +15,7 @@ public class ImporterTest(DatabaseFixture database)
 	private readonly DatabaseFixture _database = database;
 
 	[Fact]
-	public void TestImportModel()
+	public async Task TestImportModel()
 	{
 		const int COUNT = 100;
 		const uint GATEWAY_ID = 201;
@@ -29,15 +29,15 @@ public class ImporterTest(DatabaseFixture database)
 
 		try
 		{
-			accessor.Delete<Models.GatewayHistory>(GetTimeCriteria(timestamp, COUNT));
+			await accessor.DeleteAsync<Models.GatewayHistory>(GetTimeCriteria(timestamp, COUNT));
 
-			var count = accessor.Import(GenerateModels(COUNT, timestamp, GATEWAY_ID, METRIC_ID));
+			var count = await accessor.ImportAsync(GenerateModels(COUNT, timestamp, GATEWAY_ID, METRIC_ID));
 			Assert.Equal(COUNT, count);
 
-			var models = accessor.Select<Models.GatewayHistory>(criteria);
+			var models = accessor.SelectAsync<Models.GatewayHistory>(criteria);
 
 			count = 0;
-			foreach(var model in models)
+			await foreach(var model in models)
 			{
 				Assert.Equal(GATEWAY_ID, model.GatewayId);
 				Assert.Equal(METRIC_ID, model.MetricId);
@@ -49,7 +49,7 @@ public class ImporterTest(DatabaseFixture database)
 		}
 		finally
 		{
-			accessor.Delete<Models.GatewayHistory>(GetTimeCriteria(timestamp, COUNT));
+			await accessor.DeleteAsync<Models.GatewayHistory>(GetTimeCriteria(timestamp, COUNT));
 		}
 	}
 

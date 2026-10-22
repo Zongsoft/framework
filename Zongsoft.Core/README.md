@@ -74,6 +74,44 @@ Use `ServiceCollectionExtension.Register` to register services from an assembly.
 
 Use `RaiseAsync` to raise events and await their handlers. Bound event handlers must return an awaitable result. `EventExchanger` supports transaction-aware delivery, and applications can add conditions through `IFeatureProvider` or configure policies through `EventDispatcher.Pipeline`. See [event dispatch and ambient features](docs/event-dispatching.md).
 
+## Asynchronous data operations
+
+IDataAccess and IDataService expose asynchronous database methods. Scalar and write operations return ValueTask; queries return IAsyncEnumerable<T>, with cancellation tokens last. Consume queries with await foreach; leaving enumeration early still releases reader resources. Use await using for accessors you own, and leave shared accessors to their owner.
+
+InsertManyAsync, UpsertManyAsync, UpdateManyAsync and accessor ImportAsync accept both in-memory collections and IAsyncEnumerable<T>. Event handlers accept a cancellation token and return ValueTask. Await database and network work inside handlers.
+
+The Getted event for a single-record query exposes an already obtained Result snapshot; reading it never queries again. IPageable.Paginated completes before the first record is yielded, allowing pagination response metadata to be set in time. Template export awaits GetModelAsync to obtain its model.
+
+State machines use `await using` and `await machine.RunAsync(state, description, cancellation)`. Wait for each run before starting the next or disposing the machine; disposal waits for state persistence and transaction completion.
+
+`DataDictionary.GetDictionariesAsync<T>(items, cancellation)` converts an in-memory collection to an asynchronous sequence of data dictionaries. For asynchronous input, use `GetDictionariesAsync<T, TSource>(items, cancellation)`. To prepare each item, pass a `Func<IDataDictionary<T>, CancellationToken, ValueTask>` callback before the token. Enumeration awaits each callback in input order, skips null items, and does not buffer the entire collection.
+
+## Data Validation and Result Processing
+
+Implement `IDataValidator.ValidateAsync` for query conditions and `OnImportAsync`, `OnInsertAsync`, and `OnUpdateAsync` for field values. Field validation returns `DataValidatorResult`: `default` leaves the value unchanged; `HasValue = true` supplies a replacement, including `null`. Use `IDataValueBinder.BindAsync` when the replacement depends on the record being bound.
+
+`Pageable.FilterAsync` and `MapAsync` accept asynchronous callbacks over `IAsyncEnumerable<T>`. They process items when enumerated, preserve paging information, and pass the enumeration cancellation token to the callback. A filter returns `Pageable.FilterResult<T>`: `Accepted = true` emits `Data`, including a replacement or `null`; `default` discards the item.
+
+## Transactions
+
+`Transaction` exposes `CommitAsync`, `RollbackAsync`, and `DisposeAsync`. Manage its scope with `await using`; disposal rolls back a transaction that has not committed. Rolling back a nested transaction makes the root transaction rollback-only. Cancellation is checked before accepting a commit; accepted completion and cleanup wait until finished. Repeated calls observe the same completion result, including failures.
+
+`RollbackAsync(exception)` returns normally when rollback and completion notifications succeed. On failure, it throws an `AggregateException` containing the supplied business exception and completion errors. Await rollback in a `catch` block, then decide whether to propagate the original exception with `throw;`:
+
+```csharp
+catch(Exception exception)
+{
+	await transaction.RollbackAsync(exception);
+	throw; // Omit this line to handle the business error after successful rollback.
+}
+```
+
+Batch updates, batch role and user deletion, and state-machine stopping preserve both errors when the operation and transaction completion fail. When only the operation fails, its original exception propagates.
+
+The exception is accepted only when initiating rollback. Once commit or rollback has started, subsequent calls observe the existing result without repeating rollback or adding exceptions. Passing `null` propagates only completion errors. Use `RollbackAsync()` without arguments or pass an explicitly typed cancellation token; `RollbackAsync(default)` is ambiguous between the overloads.
+
+`TransactionContext.Completed` accepts handlers returning `ValueTask` and awaits every handler in subscription order. Notification failures do not change an established transaction outcome. An uncertain outcome, such as a connection failure during commit, remains `Undetermined`; applications must not assume the write rolled back or retry it automatically. Handlers must not await the transaction completion task that includes themselves.
+
 ## Application Lifetime
 
 `ApplicationContext` participates in the host's awaited startup and shutdown phases. `Exit()` and `Exit(exitCode)` request host shutdown; they do not terminate the process. `DisposeAsync()` waits for owned worker cleanup before releasing context resources. Application builders expose `BuildAsync()` so initialization failure can await asynchronous disposal. Container-resolved initializers and borrowed service-provider views retain their original owner.

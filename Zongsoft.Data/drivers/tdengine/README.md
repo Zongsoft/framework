@@ -17,9 +17,9 @@
 
 ## When to Use This Driver
 
-Choose this package when a Zongsoft data model is stored in TDengine. The public application contract remains `IDataAccess`/`IDataService<T>`; this package translates expressions and mutations into the database dialect and creates connections through TDengine.Connector.
+Choose this package when a Zongsoft data model is stored in TDengine. The public application contract remains `IDataAccess`/`IDataService<T>`; this driver accesses TDengine over WebSocket.
 
-TDengine is a time-series system with native and WebSocket connectivity. Super tables, tags, timestamp precision, protocol selection, and connector/server version compatibility must be treated as part of the data contract.
+This driver supports WebSocket only, using the taosAdapter port 6041 by default. Explicit Native configuration is rejected. Super tables, tags, timestamp precision, and server compatibility remain part of the data contract.
 
 ## Installation and Plugin Deployment
 
@@ -37,13 +37,13 @@ Deploy `Zongsoft.Data.TDengine.plugin` with the assembly. Its manifest registers
 		<connectionSettings default="Application">
 			<connectionSetting connectionSetting.name="Application"
 			                   driver="TDengine"
-			                   value="Server=127.0.0.1;Port=6030;Database=docs;UserName=docs_app;Password=REPLACE_WITH_TEST_PASSWORD;Protocol=Native" />
+			                   value="Server=127.0.0.1;Port=6041;Database=docs;UserName=docs_app;Password=REPLACE_WITH_TEST_PASSWORD;Protocol=WebSocket" />
 		</connectionSettings>
 	</option>
 </options>
 ```
 
-The `driver` value is case-insensitive but should use the canonical `TDengine` spelling. The `value` follows the [Core settings contract](../../../Zongsoft.Core/docs/settings.md): it contains explicit driver parameters and extension properties. `GetOptions()` maps driver parameters to the native options consumed by TDengine.Connector; extension properties remain in the framework settings and its complete `Value`. For native provider capabilities, consult the [provider documentation](https://docs.tdengine.com/developer-guide/connectors-reference/csharp/) for supported keywords.
+The `driver` value is case-insensitive but should use the canonical `TDengine` spelling. The `value` follows the [Core settings contract](../../../Zongsoft.Core/docs/settings.md): it contains explicit driver parameters and extension properties. Use the settings exposed by this driver and ensure its taosAdapter WebSocket endpoint is reachable.
 
 > 💡 Keep entity mappings, criteria, paging, transactions, and `IDataAccess` usage in the shared [Zongsoft.Data guide](../../README.md). Switching drivers should not require application services to depend on provider connection classes.
 
@@ -64,15 +64,17 @@ var data = provider.GetService("Application")
 Console.WriteLine(data.Name);
 ```
 
-Obtaining an accessor does not prove query execution succeeded. Follow the [real Discussions composition in the Data guide](../../README.md#plugin-quickstart) through its module, mapping and services. That walkthrough does not establish Discussions compatibility with this driver: verify database structures, field types and required operations, rather than assuming a driver-name change makes the application portable. Business services use shared contracts instead of constructing database connections.
+See the [Data plugin example](../../README.md#plugin-quickstart) for host configuration and named accessors. Prepare tables and field types for the selected database, and use the operations supported by this driver. Application services access data through the public contracts.
 
 ## Runtime Behavior
 
-The driver supplies a provider-specific statement builder/visitor, command parameterization, execution primitives, and an importer. The data engine selects it from the named connection setting. Ambient data transactions are honored where the provider and operation support them.
+Use the asynchronous methods on `IDataAccess` / `IDataService<T>` and consume query results with `await foreach`. Await transaction completion, rollback, and resource disposal. Imports accept in-memory collections and asynchronous sources, and operations propagate cancellation tokens. This driver does not support database transactions; ambient transactions cannot roll back TDengine writes.
 
 🚨 Never commit production connection strings. Use deployment-time configuration or a secret provider, grant the database identity only the required permissions, and verify destructive mutations against a disposable database first.
 
 ## Compatibility and Testing
+
+The connector dependency is the community-maintained [TDengine.Connector.Async 3.2.1.7](https://www.nuget.org/packages/TDengine.Connector.Async/3.2.1.7). Deploy the dependency version matching this driver.
 
 Database behavior is not completely portable. Verify identifier casing, null and comparison rules, date/time precision, generated values, transaction semantics, and bulk-import constraints on the same server/provider versions used in production. Repository tests require an explicitly configured disposable database and are not ordinary offline unit tests.
 
@@ -85,7 +87,7 @@ Database behavior is not completely portable. Verify identifier casing, null and
 ## Unit Testing
 
 > [!IMPORTANT]
-> When running unit tests, especially over the Native protocol, ensure that the installed TDengine client matches the server version and edition (Community or Enterprise). Version mismatches can cause connection or protocol compatibility failures. For example, when testing against TDengine TSDB-OSS `3.4.2.2` on Windows x64, install the [TDengine TSDB-OSS Client 3.4.2.2 for Windows x64](https://downloads.tdengine.com/tdengine-tsdb-oss/3.4.2.2/tdengine-tsdb-oss-client-3.4.2.2-windows-x64.exe). Other platforms and versions are available from the [official download center](https://tdengine.com/downloads/).
+> Database tests require a reachable TDengine server and taosAdapter WebSocket endpoint. A local taosc client is not required. Prepare database accounts, permissions, and mappings before testing.
 
 ## Plugin-Based Integration
 

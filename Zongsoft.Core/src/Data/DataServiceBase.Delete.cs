@@ -35,90 +35,6 @@ namespace Zongsoft.Data;
 
 partial class DataServiceBase<TModel>
 {
-	#region 公共方法
-	public int Delete(string key, DataDeleteOptions options = null) => this.Delete(key, null, options);
-	public int Delete(string key, string schema, DataDeleteOptions options = null) => this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key, options, out _), schema, options);
-
-	public int Delete<TKey1>(TKey1 key1, DataDeleteOptions options = null)
-		where TKey1 : IEquatable<TKey1> => this.Delete(key1, null, options);
-	public int Delete<TKey1>(TKey1 key1, string schema, DataDeleteOptions options = null)
-		where TKey1 : IEquatable<TKey1> => this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, options, out _), schema, options);
-
-	public int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataDeleteOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2> => this.Delete(key1, key2, null, options);
-	public int Delete<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, DataDeleteOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2> => this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, options, out _), schema, options);
-
-	public int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataDeleteOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3> => this.Delete(key1, key2, key3, null, options);
-	public int Delete<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, DataDeleteOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3> => this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, options, out _), schema, options);
-
-	public int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataDeleteOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3>
-		where TKey4 : IEquatable<TKey4> => this.Delete(key1, key2, key3, key4, null, options);
-	public int Delete<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, DataDeleteOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3>
-		where TKey4 : IEquatable<TKey4> => this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, options, out _), schema, options);
-
-	public int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataDeleteOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3>
-		where TKey4 : IEquatable<TKey4>
-		where TKey5 : IEquatable<TKey5> => this.Delete(key1, key2, key3, key4, key5, null, options);
-	public int Delete<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, DataDeleteOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3>
-		where TKey4 : IEquatable<TKey4>
-		where TKey5 : IEquatable<TKey5> => this.Delete(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, key5, options, out _), schema, options);
-
-	public int Delete(ICondition criteria, DataDeleteOptions options = null) => this.Delete(criteria, null, options);
-	public int Delete(ICondition criteria, string schema, DataDeleteOptions options = null)
-	{
-		//确认是否可以执行该操作
-		this.EnsureDelete(options);
-
-		//构建数据操作的选项对象
-		if(options == null)
-			options = new DataDeleteOptions();
-
-		//进行授权验证
-		this.Authorize(DataServiceMethod.Delete(), options);
-
-		//修整删除条件
-		criteria = this.OnValidate(DataServiceMethod.Delete(), criteria, options);
-
-		//执行删除操作
-		return this.OnDelete(criteria, this.GetSchema(schema), options);
-	}
-
-	public int Delete(Data.Condition criteria, DataDeleteOptions options = null) => this.Delete((ICondition)criteria, options);
-	public int Delete(Data.Condition criteria, string schema, DataDeleteOptions options = null) => this.Delete((ICondition)criteria, schema, options);
-	public int Delete(ConditionCollection criteria, DataDeleteOptions options = null) => this.Delete((ICondition)criteria, options);
-	public int Delete(ConditionCollection criteria, string schema, DataDeleteOptions options = null) => this.Delete((ICondition)criteria, schema, options);
-	#endregion
-
-	#region 保护方法
-	protected virtual int OnDelete(ICondition criteria, ISchema schema, DataDeleteOptions options)
-	{
-		if(criteria == null)
-			throw new NotSupportedException(Properties.Resources.DataService_DeleteRequiresCriteria_Message);
-
-		return this.DataAccess.Delete(this.Name, criteria, schema, options, ctx => this.OnDeleting(ctx), ctx => this.OnDeleted(ctx));
-	}
-	#endregion
 
 	#region 公共方法
 	public ValueTask<int> DeleteAsync(string key, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync(key, null, options, cancellation);
@@ -170,7 +86,7 @@ partial class DataServiceBase<TModel>
 		where TKey5 : IEquatable<TKey5> => this.DeleteAsync(this.ConvertKey(DataServiceMethod.Delete(), key1, key2, key3, key4, key5, options, out _), schema, options, cancellation);
 
 	public ValueTask<int> DeleteAsync(ICondition criteria, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync(criteria, null, options, cancellation);
-	public ValueTask<int> DeleteAsync(ICondition criteria, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default)
+	public async ValueTask<int> DeleteAsync(ICondition criteria, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default)
 	{
 		//确认是否可以执行该操作
 		this.EnsureDelete(options);
@@ -180,13 +96,13 @@ partial class DataServiceBase<TModel>
 			options = new DataDeleteOptions();
 
 		//进行授权验证
-		this.Authorize(DataServiceMethod.Delete(), options);
+		await this.AuthorizeAsync(DataServiceMethod.Delete(), options, cancellation);
 
 		//修整删除条件
-		criteria = this.OnValidate(DataServiceMethod.Delete(), criteria, options);
+		criteria = await this.OnValidateAsync(DataServiceMethod.Delete(), criteria, options, cancellation);
 
 		//执行删除操作
-		return this.OnDeleteAsync(criteria, this.GetSchema(schema), options, cancellation);
+		return await this.OnDeleteAsync(criteria, this.GetSchema(schema), options, cancellation);
 	}
 
 	public ValueTask<int> DeleteAsync(Data.Condition criteria, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync((ICondition)criteria, options, cancellation);
@@ -201,7 +117,60 @@ partial class DataServiceBase<TModel>
 		if(criteria == null)
 			throw new NotSupportedException(Properties.Resources.DataService_DeleteRequiresCriteria_Message);
 
-		return this.DataAccess.DeleteAsync(this.Name, criteria, schema, options, ctx => this.OnDeleting(ctx), ctx => this.OnDeleted(ctx), cancellation);
+		return this.DataAccess.DeleteAsync(this.Name, criteria, schema, options, this.OnDeletingAsync, this.OnDeletedAsync, cancellation);
 	}
+	#endregion
+
+	#region 便利取消
+	public ValueTask<int> DeleteAsync(string key, CancellationToken cancellation) => this.DeleteAsync(key, default(DataDeleteOptions), cancellation);
+	public ValueTask<int> DeleteAsync(string key, string schema, CancellationToken cancellation) => this.DeleteAsync(key, schema, default(DataDeleteOptions), cancellation);
+
+	public ValueTask<int> DeleteAsync<TKey1>(TKey1 key1, CancellationToken cancellation)
+		where TKey1 : IEquatable<TKey1> => this.DeleteAsync<TKey1>(key1, default(DataDeleteOptions), cancellation);
+	public ValueTask<int> DeleteAsync<TKey1>(TKey1 key1, string schema, CancellationToken cancellation)
+		where TKey1 : IEquatable<TKey1> => this.DeleteAsync<TKey1>(key1, schema, default(DataDeleteOptions), cancellation);
+	public ValueTask<int> DeleteAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, CancellationToken cancellation)
+		where TKey1 : IEquatable<TKey1>
+		where TKey2 : IEquatable<TKey2> => this.DeleteAsync<TKey1, TKey2>(key1, key2, default(DataDeleteOptions), cancellation);
+	public ValueTask<int> DeleteAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, CancellationToken cancellation)
+		where TKey1 : IEquatable<TKey1>
+		where TKey2 : IEquatable<TKey2> => this.DeleteAsync<TKey1, TKey2>(key1, key2, schema, default(DataDeleteOptions), cancellation);
+	public ValueTask<int> DeleteAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, CancellationToken cancellation)
+		where TKey1 : IEquatable<TKey1>
+		where TKey2 : IEquatable<TKey2>
+		where TKey3 : IEquatable<TKey3> => this.DeleteAsync<TKey1, TKey2, TKey3>(key1, key2, key3, default(DataDeleteOptions), cancellation);
+	public ValueTask<int> DeleteAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, CancellationToken cancellation)
+		where TKey1 : IEquatable<TKey1>
+		where TKey2 : IEquatable<TKey2>
+		where TKey3 : IEquatable<TKey3> => this.DeleteAsync<TKey1, TKey2, TKey3>(key1, key2, key3, schema, default(DataDeleteOptions), cancellation);
+	public ValueTask<int> DeleteAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, CancellationToken cancellation)
+		where TKey1 : IEquatable<TKey1>
+		where TKey2 : IEquatable<TKey2>
+		where TKey3 : IEquatable<TKey3>
+		where TKey4 : IEquatable<TKey4> => this.DeleteAsync<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, default(DataDeleteOptions), cancellation);
+	public ValueTask<int> DeleteAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, CancellationToken cancellation)
+		where TKey1 : IEquatable<TKey1>
+		where TKey2 : IEquatable<TKey2>
+		where TKey3 : IEquatable<TKey3>
+		where TKey4 : IEquatable<TKey4> => this.DeleteAsync<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, schema, default(DataDeleteOptions), cancellation);
+	public ValueTask<int> DeleteAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, CancellationToken cancellation)
+		where TKey1 : IEquatable<TKey1>
+		where TKey2 : IEquatable<TKey2>
+		where TKey3 : IEquatable<TKey3>
+		where TKey4 : IEquatable<TKey4>
+		where TKey5 : IEquatable<TKey5> => this.DeleteAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, default(DataDeleteOptions), cancellation);
+	public ValueTask<int> DeleteAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, CancellationToken cancellation)
+		where TKey1 : IEquatable<TKey1>
+		where TKey2 : IEquatable<TKey2>
+		where TKey3 : IEquatable<TKey3>
+		where TKey4 : IEquatable<TKey4>
+		where TKey5 : IEquatable<TKey5> => this.DeleteAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, schema, default(DataDeleteOptions), cancellation);
+
+	public ValueTask<int> DeleteAsync(ICondition criteria, CancellationToken cancellation) => this.DeleteAsync(criteria, default(DataDeleteOptions), cancellation);
+	public ValueTask<int> DeleteAsync(ICondition criteria, string schema, CancellationToken cancellation) => this.DeleteAsync(criteria, schema, default(DataDeleteOptions), cancellation);
+	public ValueTask<int> DeleteAsync(Data.Condition criteria, CancellationToken cancellation) => this.DeleteAsync(criteria, default(DataDeleteOptions), cancellation);
+	public ValueTask<int> DeleteAsync(Data.Condition criteria, string schema, CancellationToken cancellation) => this.DeleteAsync(criteria, schema, default(DataDeleteOptions), cancellation);
+	public ValueTask<int> DeleteAsync(ConditionCollection criteria, CancellationToken cancellation) => this.DeleteAsync(criteria, default(DataDeleteOptions), cancellation);
+	public ValueTask<int> DeleteAsync(ConditionCollection criteria, string schema, CancellationToken cancellation) => this.DeleteAsync(criteria, schema, default(DataDeleteOptions), cancellation);
 	#endregion
 }

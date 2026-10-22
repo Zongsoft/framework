@@ -29,6 +29,7 @@
 
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Concurrent;
 
 namespace Zongsoft.Externals.Wechat;
@@ -44,21 +45,13 @@ public static class ChannelManager
 	#endregion
 
 	#region 公共方法
-	public static Channel GetChannel(string code)
+	public static async ValueTask<Channel> GetChannelAsync(string code, CancellationToken cancellation = default)
 	{
-		Initialize();
-
-		return _channels.GetOrAdd(code ?? string.Empty, key =>
-		{
-			var provider = Provider;
-			if(provider == null)
-				throw new WechatException(string.Format(Properties.Resources.Wechat_ChannelNotFound_Message, key));
-
-			return new Channel(provider.GetAccount(key, AccountType.Channel));
-		});
+		var result = await FindChannelAsync(code ?? string.Empty, cancellation);
+		return result ?? throw new WechatException(string.Format(Properties.Resources.Wechat_ChannelNotFound_Message, code ?? string.Empty));
 	}
 
-	public static Channel GetChannel(this Account account)
+	public static ValueTask<Channel> GetChannelAsync(this Account account, CancellationToken cancellation = default)
 	{
 		if(account.IsEmpty)
 			throw new ArgumentNullException(nameof(account));
@@ -66,43 +59,29 @@ public static class ChannelManager
 		if(account.Type != AccountType.Channel)
 			throw new ArgumentException(string.Format(Properties.Resources.Wechat_AccountNotChannel_Message, account.Code));
 
-		return GetChannel(account.Code);
+		return GetChannelAsync(account.Code, cancellation);
 	}
 
-	public static bool TryGetChannel(string code, out Channel result)
+	public static async ValueTask<Channel> FindChannelAsync(string code, CancellationToken cancellation = default)
 	{
 		Initialize();
 
-		if(_channels.TryGetValue(code, out result))
-			return true;
+		if(_channels.TryGetValue(code, out var result))
+			return result;
 
 		var provider = Provider;
+		if(provider == null)
+			return null;
 
-		if(provider != null)
-		{
-			var account = provider.GetAccount(code, AccountType.Channel);
+		var account = await provider.GetAccountAsync(code, AccountType.Channel, cancellation);
+		if(account.IsEmpty)
+			return null;
 
-			lock(_channels)
-			{
-				if(_channels.TryGetValue(code, out result))
-					return true;
-
-				result = _channels[code] = new Channel(account);
-			}
-		}
-
-		return result != null;
+		return _channels.GetOrAdd(code, _ => new Channel(account));
 	}
 
-	public static bool TryGetChannel(this Account account, out Channel result)
-	{
-		result = null;
-
-		if(account.IsEmpty || account.Type != AccountType.Channel)
-			return false;
-
-		return TryGetChannel(account.Code, out result);
-	}
+	public static ValueTask<Channel> FindChannelAsync(this Account account, CancellationToken cancellation = default) =>
+		account.IsEmpty || account.Type != AccountType.Channel ? ValueTask.FromResult<Channel>(null) : FindChannelAsync(account.Code, cancellation);
 	#endregion
 
 	#region 私有方法

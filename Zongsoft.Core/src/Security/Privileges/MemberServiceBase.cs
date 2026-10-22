@@ -66,7 +66,7 @@ public abstract partial class MemberServiceBase<TRole, TMember> : IMemberService
 	public virtual ValueTask<int> SetParentsAsync(Member member, IEnumerable<Identifier> roles, CancellationToken cancellation = default)
 	{
 		if(roles == null)
-			return this.Accessor.DeleteAsync(this.Name, this.GetCriteria(member), cancellation: cancellation);
+			return this.Accessor.DeleteAsync(this.Name, this.GetCriteria(member), cancellation);
 
 		var members = roles.Select(role => this.Create(role, member));
 		return this.Accessor.UpsertManyAsync(this.Name, members, cancellation);
@@ -104,7 +104,7 @@ public abstract partial class MemberServiceBase<TRole, TMember> : IMemberService
 			return 0;
 
 		if(shouldResetting)
-			await this.Accessor.DeleteAsync(this.Name, criteria, cancellation: cancellation);
+			await this.Accessor.DeleteAsync(this.Name, criteria, cancellation);
 
 		return await this.Accessor.UpsertManyAsync(members.Select(member => this.Create(role, member)), cancellation);
 	}
@@ -117,7 +117,7 @@ public abstract partial class MemberServiceBase<TRole, TMember> : IMemberService
 		if(criteria == null)
 			return ValueTask.FromResult(0);
 
-		return this.Accessor.DeleteAsync(this.Name, criteria, cancellation: cancellation);
+		return this.Accessor.DeleteAsync(this.Name, criteria, cancellation);
 	}
 
 	public virtual async ValueTask<bool> RemoveAsync(Identifier role, Member member, CancellationToken cancellation = default)
@@ -126,7 +126,7 @@ public abstract partial class MemberServiceBase<TRole, TMember> : IMemberService
 			return false;
 
 		var criteria = this.GetCriteria(role, member);
-		return criteria != null && await this.Accessor.DeleteAsync(this.Name, criteria, cancellation: cancellation) > 0;
+		return criteria != null && await this.Accessor.DeleteAsync(this.Name, criteria, cancellation) > 0;
 	}
 
 	public virtual async ValueTask<int> RemoveAsync(Identifier role, IEnumerable<Member> members, CancellationToken cancellation = default)
@@ -135,7 +135,7 @@ public abstract partial class MemberServiceBase<TRole, TMember> : IMemberService
 			return 0;
 
 		if(members == null || !members.Any())
-			return await this.Accessor.DeleteAsync(this.Name, this.GetCriteria(role), cancellation: cancellation);
+			return await this.Accessor.DeleteAsync(this.Name, this.GetCriteria(role), cancellation);
 
 		var count = 0;
 
@@ -144,7 +144,7 @@ public abstract partial class MemberServiceBase<TRole, TMember> : IMemberService
 			var criteria = this.GetCriteria(role, member);
 
 			if(criteria != null)
-				count += await this.Accessor.DeleteAsync(this.Name, criteria, cancellation: cancellation);
+				count += await this.Accessor.DeleteAsync(this.Name, criteria, cancellation);
 		}
 
 		return count;
@@ -162,7 +162,7 @@ public abstract partial class MemberServiceBase<TRole, TMember> : IMemberService
 			var criteria = this.GetCriteria(member);
 
 			if(criteria != null)
-				count += await this.Accessor.DeleteAsync(this.Name, criteria, cancellation: cancellation);
+				count += await this.Accessor.DeleteAsync(this.Name, criteria, cancellation);
 		}
 
 		return count;

@@ -28,20 +28,23 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Data.Common.Expressions;
 
 public class ExistStatementBuilder : IStatementBuilder<DataExistContext>
 {
 	#region 公共方法
-	public IEnumerable<IStatementBase> Build(DataExistContext context)
+	public async IAsyncEnumerable<IStatementBase> BuildAsync(DataExistContext context, [EnumeratorCancellation] CancellationToken cancellation = default)
 	{
 		//创建存在语句
 		var statement = this.CreateStatement(context);
 
 		//生成条件子句
-		statement.Where = statement.Where(context.Validate(), context.Aliaser);
+		statement.Where = statement.Where(await context.ValidateAsync(cancellation).ConfigureAwait(false), context.Aliaser);
 
 		//生成选择成员为主键项
 		foreach(var key in statement.Table.Entity.Key)

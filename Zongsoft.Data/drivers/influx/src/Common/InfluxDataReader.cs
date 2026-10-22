@@ -42,12 +42,22 @@ using Zongsoft.Collections;
 
 namespace Zongsoft.Data.Influx.Common;
 
-public class InfluxDataReader(IAsyncEnumerable<PointDataValues> data) : DbDataReader
+public class InfluxDataReader : DbDataReader
 {
 	#region 成员字段
 	private Entry[] _entries;
-	private IAsyncEnumerable<PointDataValues> _data = data;
-	private IAsyncEnumerator<PointDataValues> _iterator = data.GetAsyncEnumerator();
+	private readonly CancellationTokenSource _cancellation;
+	private IAsyncEnumerator<PointDataValues> _iterator;
+	private Task _disposing;
+	#endregion
+
+	#region 构造函数
+	public InfluxDataReader(IAsyncEnumerable<PointDataValues> data, CancellationToken cancellation = default)
+	{
+		ArgumentNullException.ThrowIfNull(data);
+		_cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
+		_iterator = data.GetAsyncEnumerator(_cancellation.Token);
+	}
 	#endregion
 
 	#region 公共属性
@@ -57,7 +67,7 @@ public class InfluxDataReader(IAsyncEnumerable<PointDataValues> data) : DbDataRe
 	public override int Depth => 0;
 	public override int FieldCount => _entries == null ? 0 : _entries.Length;
 	public override bool HasRows => true;
-	public override bool IsClosed => false;
+	public override bool IsClosed => _disposing != null;
 	public override int RecordsAffected => -1;
 	#endregion
 
@@ -229,26 +239,18 @@ public class InfluxDataReader(IAsyncEnumerable<PointDataValues> data) : DbDataRe
 	#endregion
 
 	#region 枚举遍历
-	public override IEnumerator GetEnumerator() => _data.Synchronize().GetEnumerator();
+	public override IEnumerator GetEnumerator() => throw new NotSupportedException();
 	#endregion
 
 	#region 读取方法
-	public override bool Read()
-	{
-		if(_iterator.MoveNextAsync().AsTask().Wait(1000))
-		{
-			if(_entries == null)
-				this.Fill();
-
-			return true;
-		}
-
-		return false;
-	}
-
+	public override bool Read() => throw new NotSupportedException();
 	public override async Task<bool> ReadAsync(CancellationToken cancellation)
 	{
-		if(await _iterator.MoveNextAsync())
+		ObjectDisposedException.ThrowIf(this.IsClosed, this);
+		cancellation.ThrowIfCancellationRequested();
+		using var registration = cancellation.Register(_cancellation.Cancel);
+
+		if(await _iterator.MoveNextAsync().ConfigureAwait(false))
 		{
 			if(_entries == null)
 				this.Fill();
@@ -263,23 +265,30 @@ public class InfluxDataReader(IAsyncEnumerable<PointDataValues> data) : DbDataRe
 	#region 处置方法
 	protected override void Dispose(bool disposing)
 	{
-		Dispose(_iterator);
+		if(disposing && _disposing is not { IsCompleted: true })
+			throw new NotSupportedException();
+	}
 
-		_data = null;
-		_entries = null;
-
-		async void Dispose(IAsyncEnumerator<PointDataValues> iterator)
+	public override ValueTask DisposeAsync() => new(_disposing ??= this.DisposeCoreAsync());
+	private async Task DisposeCoreAsync()
+	{
+		try
 		{
-			await iterator.DisposeAsync();
+			if(_iterator != null)
+				await _iterator.DisposeAsync().ConfigureAwait(false);
+		}
+		finally
+		{
+			_iterator = null;
+			_entries = null;
+			_cancellation.Dispose();
+			GC.SuppressFinalize(this);
 		}
 	}
 
-	public override ValueTask DisposeAsync()
-	{
-		_data = null;
-		_entries = null;
-		return _iterator?.DisposeAsync() ?? default;
-	}
+	public override void Close() => this.Dispose(true);
+	public override Task CloseAsync() => this.DisposeAsync().AsTask();
+	public override Task<bool> NextResultAsync(CancellationToken cancellation) => throw new NotSupportedException();
 	#endregion
 
 	#region 私有方法

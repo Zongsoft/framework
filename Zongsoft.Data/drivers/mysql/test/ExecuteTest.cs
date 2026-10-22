@@ -11,7 +11,7 @@ using Zongsoft.Data.Tests.Models;
 namespace Zongsoft.Data.MySql.Tests;
 
 [Collection("Database")]
-public class ExecuteTest(DatabaseFixture database) : IDisposable
+public class ExecuteTest(DatabaseFixture database) : IAsyncDisposable
 {
 	private readonly DatabaseFixture _database = database;
 
@@ -75,12 +75,12 @@ public class ExecuteTest(DatabaseFixture database) : IDisposable
 		#endif
 	}
 
-	void IDisposable.Dispose()
+	async ValueTask IAsyncDisposable.DisposeAsync()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
 
 		var accessor = _database.Accessor;
-		accessor.Execute("TruncateLog");
+		await accessor.ExecuteAsync("TruncateLog");
 	}
 }

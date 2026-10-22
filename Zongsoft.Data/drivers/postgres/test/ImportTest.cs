@@ -10,7 +10,7 @@ using Zongsoft.Data.Tests.Models;
 namespace Zongsoft.Data.PostgreSql.Tests;
 
 [Collection("Database")]
-public class ImportTest(DatabaseFixture database) : IDisposable
+public class ImportTest(DatabaseFixture database) : IAsyncDisposable
 {
 	private const string PREFIX = "$Imported:";
 	private readonly DatabaseFixture _database = database;
@@ -67,7 +67,7 @@ public class ImportTest(DatabaseFixture database) : IDisposable
 
 		try
 		{
-			using(var transaction = new Transaction())
+			await using(var transaction = new Transaction())
 			{
 				var user = Model.Build<UserModel>(model =>
 				{
@@ -77,13 +77,13 @@ public class ImportTest(DatabaseFixture database) : IDisposable
 
 				Assert.Same(transaction, Transaction.Current);
 				var count = asynchronous ?
-					await accessor.ImportAsync([user]) :
-					accessor.Import([user]);
+					await accessor.ImportAsync(Zongsoft.Collections.Enumerable.EnumerateAsync<UserModel>(new[] { user })) :
+					await accessor.ImportAsync([user]);
 
 				Assert.Equal(1, count);
 				Assert.Same(transaction, Transaction.Current);
 				Assert.True(await accessor.ExistsAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), USER_ID)));
-				transaction.Rollback();
+				await transaction.RollbackAsync();
 			}
 
 			Assert.Null(Transaction.Current);
@@ -112,7 +112,7 @@ public class ImportTest(DatabaseFixture database) : IDisposable
 
 		try
 		{
-			using(var transaction = new Transaction())
+			await using(var transaction = new Transaction())
 			{
 				var user = Model.Build<UserModel>(model =>
 				{
@@ -123,12 +123,12 @@ public class ImportTest(DatabaseFixture database) : IDisposable
 				Assert.Same(transaction, Transaction.Current);
 				var options = DataImportOptions.SuppressTransaction().Build();
 				var count = asynchronous ?
-					await accessor.ImportAsync([user], options) :
-					accessor.Import([user], options);
+					await accessor.ImportAsync(Zongsoft.Collections.Enumerable.EnumerateAsync<UserModel>(new[] { user }), options) :
+					await accessor.ImportAsync([user], options);
 
 				Assert.Equal(1, count);
 				Assert.Same(transaction, Transaction.Current);
-				transaction.Rollback();
+				await transaction.RollbackAsync();
 			}
 
 			Assert.Null(Transaction.Current);
@@ -160,14 +160,14 @@ public class ImportTest(DatabaseFixture database) : IDisposable
 			var users = Model.Build<UserModel>(2, (model, index) =>
 			{
 				model.UserId = index == 0 ? FIRST_USER_ID : SECOND_USER_ID;
-				model.Name = $"{PREFIX}LocalCommit:{(asynchronous ? "Async" : "Sync")}:{index}";
+				model.Name = $"{PREFIX}LocalCommit:{(asynchronous ? "Async" : "Memory")}:{index}";
 			});
 
 			Assert.Null(Transaction.Current);
 
 			var count = asynchronous ?
-				await accessor.ImportAsync(users) :
-				accessor.Import(users);
+				await accessor.ImportAsync(Zongsoft.Collections.Enumerable.EnumerateAsync<UserModel>(users)) :
+				await accessor.ImportAsync(users);
 
 			Assert.Equal(2, count);
 			Assert.Null(Transaction.Current);
@@ -208,8 +208,8 @@ public class ImportTest(DatabaseFixture database) : IDisposable
 			Assert.Null(Transaction.Current);
 
 			var exception = asynchronous ?
-				await Record.ExceptionAsync(async () => await accessor.ImportAsync(users, options)) :
-				Record.Exception(() => accessor.Import(users, options));
+				await Record.ExceptionAsync(async () => await accessor.ImportAsync(Zongsoft.Collections.Enumerable.EnumerateAsync<UserModel>(users), options)) :
+				await Record.ExceptionAsync(async () => await accessor.ImportAsync(users, options));
 
 			Assert.NotNull(exception);
 			Assert.Null(Transaction.Current);
@@ -429,13 +429,13 @@ public class ImportTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(COUNT, count);
 	}
 
-	void IDisposable.Dispose()
+	async ValueTask IAsyncDisposable.DisposeAsync()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
 
 		var accessor = _database.Accessor;
-		accessor.Delete<UserModel>(Condition.Like(nameof(UserModel.Name), $"{PREFIX}%"));
+		await accessor.DeleteAsync<UserModel>(Condition.Like(nameof(UserModel.Name), $"{PREFIX}%"));
 	}
 
 	[Model("Security.User")]

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup>
-		<Version>7.4.0</Version>
+		<Version>7.5.0</Version>
 		<OutputType>Library</OutputType>
 		<Product>Zongsoft Wechat Web Library</Product>
 		<Description>This is a web api library about Wechat.</Description>
@@ -24,9 +24,9 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.63.0" />
-				<PackageReference Include="Zongsoft.Web" VersionOverride="7.18.0" />
-				<PackageReference Include="Zongsoft.Externals.Wechat" VersionOverride="7.6.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.70.0" />
+				<PackageReference Include="Zongsoft.Web" VersionOverride="7.20.0" />
+				<PackageReference Include="Zongsoft.Externals.Wechat" VersionOverride="7.8.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

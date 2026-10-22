@@ -46,45 +46,17 @@ partial class DataServiceBase<TModel> : IDataExportable
 	#endregion
 
 	#region 数据文件生成
-	public void Export(Stream output, object data, string format = null, DataExportOptions options = null) => this.Export(output, data, null, format, options);
-	public void Export(Stream output, object data, string[] members, string format = null, DataExportOptions options = null)
-	{
-		if(output == null)
-			throw new ArgumentNullException(nameof(output));
-
-		//进行授权验证
-		this.Authorize(DataServiceMethod.Export(), options);
-
-		//执行数据文件生成导出
-		this.OnExport(output, data, members, format, options);
-	}
-
 	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, object data, string format = null, DataExportOptions options = null, CancellationToken cancellation = default) => this.ExportAsync(output, data, null, format, options, cancellation);
-	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, object data, string[] members, string format = null, DataExportOptions options = null, CancellationToken cancellation = default)
+	public async ValueTask<DataArchiveFormat> ExportAsync(Stream output, object data, string[] members, string format = null, DataExportOptions options = null, CancellationToken cancellation = default)
 	{
 		if(output == null)
 			throw new ArgumentNullException(nameof(output));
 
 		//进行授权验证
-		this.Authorize(DataServiceMethod.Export(), options);
+		await this.AuthorizeAsync(DataServiceMethod.Export(), options, cancellation);
 
 		//执行数据文件生成导出
-		return this.OnExportAsync(output, data, members, format, options, cancellation);
-	}
-
-	protected virtual DataArchiveFormat OnExport(Stream output, object data, string[] members, string format, DataExportOptions options)
-	{
-		var generator = this.ServiceProvider.Find<IDataArchiveGenerator>(format) ?? throw OperationException.Unfound();
-		var task = generator.GenerateAsync(
-			output,
-			this.Descriptor.Model,
-			data,
-			members == null || members.Length == 0 ? null : new DataArchiveGeneratorOptions(members));
-
-		if(!task.IsCompletedSuccessfully)
-			task.AsTask().GetAwaiter().GetResult();
-
-		return generator.Format;
+		return await this.OnExportAsync(output, data, members, format, options, cancellation);
 	}
 
 	protected virtual async ValueTask<DataArchiveFormat> OnExportAsync(Stream output, object data, string[] members, string format, DataExportOptions options, CancellationToken cancellation)
@@ -102,32 +74,8 @@ partial class DataServiceBase<TModel> : IDataExportable
 	#endregion
 
 	#region 数据模板渲染
-	public void Export(Stream output, string template, object argument, string format = null, DataExportOptions options = null) => this.Export(output, template, argument, null, format, options);
-	public void Export(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, string format = null, DataExportOptions options = null)
-	{
-		if(output == null)
-			throw new ArgumentNullException(nameof(output));
-
-		if(string.IsNullOrEmpty(template))
-			throw new ArgumentNullException(nameof(template));
-
-		//进行授权验证
-		this.Authorize(DataServiceMethod.Export(), options);
-
-		//获取指定的数据模板
-		var templateObject = DataTemplateUtility.GetTemplate(this.ServiceProvider, template, format);
-		if(templateObject == null)
-			throw OperationException.Unfound();
-
-		//获取数据模板对应的模型数据和参数
-		var model = this.GetExportModel(templateObject, argument, parameters, options);
-
-		//执行数据模板渲染导出
-		this.OnExport(output, templateObject, model.Data, model.Parameters, options);
-	}
-
 	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, string template, object argument, string format = null, DataExportOptions options = null, CancellationToken cancellation = default) => this.ExportAsync(output, template, argument, null, format, options, cancellation);
-	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, string format = null, DataExportOptions options = null, CancellationToken cancellation = default)
+	public async ValueTask<DataArchiveFormat> ExportAsync(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, string format = null, DataExportOptions options = null, CancellationToken cancellation = default)
 	{
 		if(output == null)
 			throw new ArgumentNullException(nameof(output));
@@ -136,7 +84,7 @@ partial class DataServiceBase<TModel> : IDataExportable
 			throw new ArgumentNullException(nameof(template));
 
 		//进行授权验证
-		this.Authorize(DataServiceMethod.Export(), options);
+		await this.AuthorizeAsync(DataServiceMethod.Export(), options, cancellation);
 
 		//获取指定的数据模板
 		var templateObject = DataTemplateUtility.GetTemplate(this.ServiceProvider, template, format) ??
@@ -147,19 +95,19 @@ partial class DataServiceBase<TModel> : IDataExportable
 		);
 
 		//获取数据模板对应的模型数据和参数
-		var model = this.GetExportModel(templateObject, argument, parameters, options);
+		var model = await this.GetExportModelAsync(templateObject, argument, parameters, options, cancellation);
 
 		//执行数据模板渲染导出
-		return this.OnExportAsync(output, templateObject, model.Data, model.Parameters, options, cancellation);
+		return await this.OnExportAsync(output, templateObject, model.Data, model.Parameters, options, cancellation);
 	}
 
-	protected virtual IDataTemplateModel GetExportModel(IDataTemplate template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, DataExportOptions options)
+	protected virtual async ValueTask<IDataTemplateModel> GetExportModelAsync(IDataTemplate template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, DataExportOptions options, CancellationToken cancellation)
 	{
 		var provider = this.ServiceProvider.Find<IDataTemplateModelProvider>(template) ??
 			throw OperationException.Unfound($"No data template model provider found for '{template.Name}' template.");
 
 		//获取指定模板和参数对应数据模型
-		var model = provider.GetModel(template, argument);
+		var model = await provider.GetModelAsync(template, argument, cancellation);
 
 		//如果传入的参数集不为空，则需传入的参数集加入到模型参数集中
 		if(parameters != null)
@@ -176,22 +124,22 @@ partial class DataServiceBase<TModel> : IDataExportable
 		return model;
 	}
 
-	protected virtual DataArchiveFormat OnExport(Stream output, IDataTemplate template, object data, IEnumerable<KeyValuePair<string, object>> parameters, DataExportOptions options)
-	{
-		var renderer = this.ServiceProvider.Find<IDataTemplateRenderer>(template);
-		var task = renderer.RenderAsync(output, template, data, parameters);
-
-		if(!task.IsCompletedSuccessfully)
-			task.AsTask().GetAwaiter().GetResult();
-
-		return renderer.Format;
-	}
-
 	protected virtual async ValueTask<DataArchiveFormat> OnExportAsync(Stream output, IDataTemplate template, object data, IEnumerable<KeyValuePair<string, object>> parameters, DataExportOptions options, CancellationToken cancellation)
 	{
 		var renderer = this.ServiceProvider.Find<IDataTemplateRenderer>(template) ?? throw OperationException.Unfound($"No renderer found for '{template.Name}' template.");
 		await renderer.RenderAsync(output, template, data, parameters, cancellation);
 		return renderer.Format;
 	}
+	#endregion
+
+	#region 便利取消
+	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, object data, string format, CancellationToken cancellation) => this.ExportAsync(output, data, format, default(DataExportOptions), cancellation);
+	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, object data, CancellationToken cancellation) => this.ExportAsync(output, data, default(string), default(DataExportOptions), cancellation);
+	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, object data, string[] members, string format, CancellationToken cancellation) => this.ExportAsync(output, data, members, format, default(DataExportOptions), cancellation);
+	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, object data, string[] members, CancellationToken cancellation) => this.ExportAsync(output, data, members, default(string), default(DataExportOptions), cancellation);
+	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, string template, object argument, string format, CancellationToken cancellation) => this.ExportAsync(output, template, argument, format, default(DataExportOptions), cancellation);
+	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, string template, object argument, CancellationToken cancellation) => this.ExportAsync(output, template, argument, default(string), default(DataExportOptions), cancellation);
+	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, string format, CancellationToken cancellation) => this.ExportAsync(output, template, argument, parameters, format, default(DataExportOptions), cancellation);
+	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation) => this.ExportAsync(output, template, argument, parameters, default(string), default(DataExportOptions), cancellation);
 	#endregion
 }

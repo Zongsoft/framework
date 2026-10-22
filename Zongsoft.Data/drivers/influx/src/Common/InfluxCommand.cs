@@ -30,6 +30,8 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 
 using InfluxDB3.Client;
 using InfluxDB3.Client.Config;
@@ -64,11 +66,23 @@ public class InfluxCommand : DbCommand
 
 	#region 重写方法
 	public override void Cancel() { }
-	public override void Prepare() { }
+	public override void Prepare() => throw new NotSupportedException();
+	public override Task PrepareAsync(CancellationToken cancellation = default)
+	{
+		cancellation.ThrowIfCancellationRequested();
+		return Task.CompletedTask;
+	}
 	protected override DbParameter CreateDbParameter() => new InfluxParameter();
 
 	public override object ExecuteScalar() => throw new NotSupportedException();
-	public override int ExecuteNonQuery() => throw new NotImplementedException();
-	protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => new InfluxDataReader(this.Client.QueryPoints(this.CommandText, InfluxDB3.Client.Query.QueryType.SQL));
+	public override int ExecuteNonQuery() => throw new NotSupportedException();
+	public override Task<object> ExecuteScalarAsync(CancellationToken cancellation) => throw new NotSupportedException();
+	public override Task<int> ExecuteNonQueryAsync(CancellationToken cancellation) => throw new NotImplementedException();
+	protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => throw new NotSupportedException();
+	protected override Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellation)
+	{
+		cancellation.ThrowIfCancellationRequested();
+		return Task.FromResult<DbDataReader>(new InfluxDataReader(this.Client.QueryPoints(this.CommandText, InfluxDB3.Client.Query.QueryType.SQL), cancellation));
+	}
 	#endregion
 }

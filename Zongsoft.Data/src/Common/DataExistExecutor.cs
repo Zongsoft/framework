@@ -37,35 +37,6 @@ namespace Zongsoft.Data.Common;
 
 public class DataExistExecutor : IDataExecutor<ExistStatement>
 {
-	#region 同步执行
-	public bool Execute(IDataAccessContext context, ExistStatement statement)
-	{
-		if(context is DataExistContext ctx)
-			return this.OnExecute(ctx, statement);
-
-		throw new DataException(string.Format(Properties.Resources.DataExecutor_UnsupportedContext_Message, this.GetType().Name, context.GetType().Name));
-	}
-
-	protected virtual bool OnExecute(DataExistContext context, ExistStatement statement)
-	{
-		//根据生成的脚本创建对应的数据命令
-		var command = context.Session.Build(context, statement);
-
-		//处理语句的插槽替换运算
-		StatementSlotter.Evaluate(context, statement, command);
-
-		//执行命令
-		var result = command.ExecuteScalar();
-
-		if(result == null || System.Convert.IsDBNull(result))
-			context.Result = false;
-		else
-			context.Result = Zongsoft.Common.Convert.ConvertValue<int>(result) > 0;
-
-		return true;
-	}
-	#endregion
-
 	#region 异步执行
 	public ValueTask<bool> ExecuteAsync(IDataAccessContext context, ExistStatement statement, CancellationToken cancellation)
 	{
@@ -78,7 +49,7 @@ public class DataExistExecutor : IDataExecutor<ExistStatement>
 	protected virtual async ValueTask<bool> OnExecuteAsync(DataExistContext context, ExistStatement statement, CancellationToken cancellation)
 	{
 		//根据生成的脚本创建对应的数据命令
-		var command = context.Session.Build(context, statement);
+		await using var command = context.Session.Build(context, statement);
 
 		//处理语句的插槽替换运算
 		StatementSlotter.Evaluate(context, statement, command);

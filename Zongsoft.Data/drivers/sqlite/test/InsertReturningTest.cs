@@ -10,7 +10,7 @@ using Zongsoft.Data.Tests.Models;
 namespace Zongsoft.Data.SQLite.Tests;
 
 [Collection("Database")]
-public class InsertReturningTest(DatabaseFixture database) : IDisposable
+public class InsertReturningTest(DatabaseFixture database) : IAsyncDisposable
 {
 	private readonly DatabaseFixture _database = database;
 
@@ -208,15 +208,15 @@ public class InsertReturningTest(DatabaseFixture database) : IDisposable
 		await accessor.DeleteAsync<MemberModel>(Condition.Between(nameof(MemberModel.RoleId), OFFSET, OFFSET + COUNT));
 	}
 
-	void IDisposable.Dispose()
+	async ValueTask IAsyncDisposable.DisposeAsync()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
 
 		var accessor = _database.Accessor;
-		accessor.Delete<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
-		accessor.Delete<UserModel>(Condition.Like(nameof(UserModel.Name), "$%"));
-		accessor.Delete<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), 10));
-		accessor.Delete<MemberModel>(Condition.Equal(nameof(MemberModel.RoleId), 10));
+		await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
+		await accessor.DeleteAsync<UserModel>(Condition.Like(nameof(UserModel.Name), "$%"));
+		await accessor.DeleteAsync<RoleModel>(Condition.Equal(nameof(RoleModel.RoleId), 10));
+		await accessor.DeleteAsync<MemberModel>(Condition.Equal(nameof(MemberModel.RoleId), 10));
 	}
 }

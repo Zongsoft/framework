@@ -28,12 +28,17 @@
  */
 
 using System;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
 public static class DataAccessContextExtension
 {
+	#region 上下文数据
 	extension(IDataAccessContextBase context)
 	{
 		public string Driver => context switch
@@ -78,7 +83,35 @@ public static class DataAccessContextExtension
 		return [DataDictionary.GetDictionary<T>(context.Data)];
 	}
 
-	public static bool Validate(this IDataMutateContextBase context, DataAccessMethod method, Metadata.IDataEntityProperty property, out object value)
+	public static IAsyncEnumerable<IDataDictionary<T>> GetDataDictionariesAsync<T>(this DataInsertContextBase context, CancellationToken cancellation = default) => GetDataDictionariesAsync<T>((IDataMutateContextBase)context, cancellation);
+	public static IAsyncEnumerable<IDataDictionary<T>> GetDataDictionariesAsync<T>(this DataUpsertContextBase context, CancellationToken cancellation = default) => GetDataDictionariesAsync<T>((IDataMutateContextBase)context, cancellation);
+	public static IAsyncEnumerable<IDataDictionary<T>> GetDataDictionariesAsync<T>(this DataUpdateContextBase context, CancellationToken cancellation = default) => GetDataDictionariesAsync<T>((IDataMutateContextBase)context, cancellation);
+
+	private static IAsyncEnumerable<IDataDictionary<T>> GetDataDictionariesAsync<T>(IDataMutateContextBase context, CancellationToken cancellation)
+	{
+		ArgumentNullException.ThrowIfNull(context);
+
+		if(context.Count > 0 && context.IsMultiple() && Collections.Enumerable.IsAsyncEnumerable(context.Data, out var elementType))
+		{
+			var method = typeof(DataAccessContextExtension).GetMethod(nameof(EnumerateDataDictionariesAsync), BindingFlags.NonPublic | BindingFlags.Static).MakeGenericMethod(typeof(T), elementType);
+			return (IAsyncEnumerable<IDataDictionary<T>>)method.Invoke(null, [context.Data, cancellation]);
+		}
+
+		return Collections.Enumerable.EnumerateAsync<IDataDictionary<T>>(GetDataDictionaries<T>(context), cancellation);
+	}
+
+	private static async IAsyncEnumerable<IDataDictionary<T>> EnumerateDataDictionariesAsync<T, TItem>(IAsyncEnumerable<TItem> items, [EnumeratorCancellation] CancellationToken cancellation)
+	{
+		await foreach(var item in items.WithCancellation(cancellation))
+		{
+			if(item != null)
+				yield return DataDictionary.GetDictionary<T>(item);
+		}
+	}
+	#endregion
+
+	#region 数据验证
+	public static ValueTask<DataValidatorResult> ValidateAsync(this IDataMutateContextBase context, DataAccessMethod method, Metadata.IDataEntityProperty property, CancellationToken cancellation = default)
 	{
 		if(context == null)
 			throw new ArgumentNullException(nameof(context));
@@ -92,24 +125,24 @@ public static class DataAccessContextExtension
 				switch(method)
 				{
 					case DataAccessMethod.Insert:
-						return validator.OnInsert(context, property, out value);
+						return validator.OnInsertAsync(context, property, cancellation);
 					case DataAccessMethod.Update:
-						return validator.OnUpdate(context, property, out value);
+						return validator.OnUpdateAsync(context, property, cancellation);
 				}
 			}
 		}
 
-		value = null;
-		return false;
+		return ValueTask.FromResult(default(DataValidatorResult));
 	}
 
-	public static bool Validate(this DataInsertContextBase context, Metadata.IDataEntityProperty property, out object value)
+	public static ValueTask<DataValidatorResult> ValidateAsync(this DataInsertContextBase context, Metadata.IDataEntityProperty property, CancellationToken cancellation = default)
 	{
-		return Validate(context, DataAccessMethod.Insert, property, out value);
+		return ValidateAsync(context, DataAccessMethod.Insert, property, cancellation);
 	}
 
-	public static bool Validate(this DataUpdateContextBase context, Metadata.IDataEntityProperty property, out object value)
+	public static ValueTask<DataValidatorResult> ValidateAsync(this DataUpdateContextBase context, Metadata.IDataEntityProperty property, CancellationToken cancellation = default)
 	{
-		return Validate(context, DataAccessMethod.Update, property, out value);
+		return ValidateAsync(context, DataAccessMethod.Update, property, cancellation);
 	}
+	#endregion
 }

@@ -235,7 +235,7 @@ internal static class Utility
 		};
 	}
 
-	internal static bool IsMultiple(object data, out IEnumerable enumerable) => (enumerable = data as IEnumerable) != null && data is not IDataDictionary;
+	internal static bool IsMultiple(object data, out IEnumerable enumerable) => (enumerable = data as IEnumerable) != null && data is not IDataDictionary and not IDictionary and not IDictionary<string, object>;
 
 	internal static int GetRecordCount(object data, out ICollection result)
 	{

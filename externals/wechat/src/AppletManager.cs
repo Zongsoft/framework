@@ -29,6 +29,7 @@
 
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Concurrent;
 
 namespace Zongsoft.Externals.Wechat;
@@ -44,21 +45,13 @@ public static class AppletManager
 	#endregion
 
 	#region 公共方法
-	public static Applet GetApplet(string code)
+	public static async ValueTask<Applet> GetAppletAsync(string code, CancellationToken cancellation = default)
 	{
-		Initialize();
-
-		return _applets.GetOrAdd(code ?? string.Empty, key =>
-		{
-			var provider = Provider;
-			if(provider == null)
-				throw new WechatException(string.Format(Properties.Resources.Wechat_AppletNotFound_Message, key));
-
-			return new Applet(provider.GetAccount(key, AccountType.Applet));
-		});
+		var result = await FindAppletAsync(code ?? string.Empty, cancellation);
+		return result ?? throw new WechatException(string.Format(Properties.Resources.Wechat_AppletNotFound_Message, code ?? string.Empty));
 	}
 
-	public static Applet GetApplet(this Account account)
+	public static ValueTask<Applet> GetAppletAsync(this Account account, CancellationToken cancellation = default)
 	{
 		if(account.IsEmpty)
 			throw new ArgumentNullException(nameof(account));
@@ -66,43 +59,29 @@ public static class AppletManager
 		if(account.Type != AccountType.Applet)
 			throw new ArgumentException(string.Format(Properties.Resources.Wechat_AccountNotApplet_Message, account.Code));
 
-		return GetApplet(account.Code);
+		return GetAppletAsync(account.Code, cancellation);
 	}
 
-	public static bool TryGetApplet(string code, out Applet result)
+	public static async ValueTask<Applet> FindAppletAsync(string code, CancellationToken cancellation = default)
 	{
 		Initialize();
 
-		if(_applets.TryGetValue(code, out result))
-			return true;
+		if(_applets.TryGetValue(code, out var result))
+			return result;
 
 		var provider = Provider;
+		if(provider == null)
+			return null;
 
-		if(provider != null)
-		{
-			var account = provider.GetAccount(code, AccountType.Applet);
+		var account = await provider.GetAccountAsync(code, AccountType.Applet, cancellation);
+		if(account.IsEmpty)
+			return null;
 
-			lock(_applets)
-			{
-				if(_applets.TryGetValue(code, out result))
-					return true;
-
-				result = _applets[code] = new Applet(account);
-			}
-		}
-
-		return result != null;
+		return _applets.GetOrAdd(code, _ => new Applet(account));
 	}
 
-	public static bool TryGetApplet(this Account account, out Applet result)
-	{
-		result = null;
-
-		if(account.IsEmpty || account.Type != AccountType.Applet)
-			return false;
-
-		return TryGetApplet(account.Code, out result);
-	}
+	public static ValueTask<Applet> FindAppletAsync(this Account account, CancellationToken cancellation = default) =>
+		account.IsEmpty || account.Type != AccountType.Applet ? ValueTask.FromResult<Applet>(null) : FindAppletAsync(account.Code, cancellation);
 	#endregion
 
 	#region 私有方法

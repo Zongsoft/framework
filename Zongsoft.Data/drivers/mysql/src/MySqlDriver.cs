@@ -30,6 +30,8 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 
 using MySqlConnector;
 
@@ -63,7 +65,7 @@ public class MySqlDriver : DataDriverBase
 	#endregion
 
 	#region 公共方法
-	public override Exception OnError(IDataAccessContext context, Exception exception)
+	public override async ValueTask<Exception> OnErrorAsync(IDataAccessContext context, Exception exception, CancellationToken cancellation = default)
 	{
 		if(exception is MySqlException error)
 		{
@@ -92,7 +94,7 @@ public class MySqlDriver : DataDriverBase
 					 */
 					if(TryGetConstraint(error.Message, out var table, out var key, out var value))
 					{
-						(var kind, var fields) = GetIndexer(context, table, key);
+						(var kind, var fields) = await GetIndexerAsync(context, table, key, cancellation).ConfigureAwait(false);
 						return new DataConstraintException(NAME, error.Number, kind, key, value, table, fields);
 					}
 
@@ -177,7 +179,7 @@ public class MySqlDriver : DataDriverBase
 		return false;
 	}
 
-	private static (DataConstraintKind, string[]) GetIndexer(IDataAccessContext context, string tableName, string indexName)
+	private static async ValueTask<(DataConstraintKind, string[])> GetIndexerAsync(IDataAccessContext context, string tableName, string indexName, CancellationToken cancellation)
 	{
 		if(context == null || context.Source == null)
 			return default;
@@ -187,7 +189,7 @@ public class MySqlDriver : DataDriverBase
 
 		try
 		{
-			var table = context.Source.GetSchema("Indexes");
+			var table = await context.Source.GetSchemaAsync("Indexes", cancellation).ConfigureAwait(false);
 			var rows = table.Select($"TABLE_NAME='{tableName}' AND INDEX_NAME='{indexName}'");
 			if(rows == null || rows.Length == 0)
 				return default;
@@ -195,7 +197,7 @@ public class MySqlDriver : DataDriverBase
 			var isUnique = rows[0].Field<bool>("UNIQUE");
 			var isPrimary = rows[0].Field<bool>("PRIMARY");
 
-			table = context.Source.GetSchema("IndexColumns");
+			table = await context.Source.GetSchemaAsync("IndexColumns", cancellation).ConfigureAwait(false);
 			rows = table.Select($"TABLE_NAME='{tableName}' AND INDEX_NAME='{indexName}'", "ORDINAL_POSITION");
 
 			var result = new string[rows.Length];
@@ -206,13 +208,17 @@ public class MySqlDriver : DataDriverBase
 
 			return (isPrimary ? DataConstraintKind.PrimaryKey : DataConstraintKind.Unique, result);
 		}
+		catch(OperationCanceledException) when(cancellation.IsCancellationRequested)
+		{
+			throw;
+		}
 		catch
 		{
 			return default;
 		}
 	}
 
-	private static (string, string[], string, string[]) GetForeignKey(IDataAccessContext context, string tableName, string foreignKey)
+	private static async ValueTask<(string, string[], string, string[])> GetForeignKeyAsync(IDataAccessContext context, string tableName, string foreignKey, CancellationToken cancellation)
 	{
 		if(context == null || context.Source == null)
 			return default;
@@ -222,7 +228,7 @@ public class MySqlDriver : DataDriverBase
 
 		try
 		{
-			var table = context.Source.GetSchema("KeyColumnUsage");
+			var table = await context.Source.GetSchemaAsync("KeyColumnUsage", cancellation).ConfigureAwait(false);
 			var rows = table.Select($"TABLE_NAME='{tableName}' AND CONSTRAINT_NAME='{foreignKey}'", "ORDINAL_POSITION");
 			if(rows == null || rows.Length == 0)
 				return default;
@@ -243,6 +249,10 @@ public class MySqlDriver : DataDriverBase
 				rows[0].Field<string>("REFERENCED_TABLE_NAME"),
 				foreignerFields
 			);
+		}
+		catch(OperationCanceledException) when(cancellation.IsCancellationRequested)
+		{
+			throw;
 		}
 		catch
 		{

@@ -79,6 +79,16 @@ public static class Pageable
 		return Wrap(result, source as IPageable);
 	}
 
+	public static IAsyncEnumerable<T> FilterAsync<T>(this IAsyncEnumerable<T> source, Func<T, CancellationToken, ValueTask<FilterResult<T>>> predicate)
+	{
+		ArgumentNullException.ThrowIfNull(source);
+
+		if(predicate == null)
+			return source;
+
+		return Wrap(FilterAsyncIterator(source, predicate), source as IPageable);
+	}
+
 	public static IEnumerable<TResult> Map<TSource, TResult>(this IEnumerable<TSource> source, Func<TSource, TResult> mapper)
 	{
 		if(source == null)
@@ -101,6 +111,14 @@ public static class Pageable
 
 		var result = MapIterator(source, mapper);
 		return Wrap(result, source as IPageable);
+	}
+
+	public static IAsyncEnumerable<TResult> MapAsync<TSource, TResult>(this IAsyncEnumerable<TSource> source, Func<TSource, CancellationToken, ValueTask<TResult>> mapper)
+	{
+		ArgumentNullException.ThrowIfNull(source);
+		ArgumentNullException.ThrowIfNull(mapper);
+
+		return Wrap(MapAsyncIterator(source, mapper), source as IPageable);
 	}
 
 	internal static IEnumerable<T> Wrap<T>(IEnumerable<T> source, IPageable pageable) => pageable == null ? source : new PageableEnumerable<T>(source, pageable);
@@ -139,6 +157,17 @@ public static class Pageable
 		}
 	}
 
+	private static async IAsyncEnumerable<T> FilterAsyncIterator<T>(IAsyncEnumerable<T> source, Func<T, CancellationToken, ValueTask<FilterResult<T>>> predicate, [EnumeratorCancellation] CancellationToken cancellation = default)
+	{
+		await foreach(var item in source.WithCancellation(cancellation).ConfigureAwait(false))
+		{
+			var result = await predicate(item, cancellation).ConfigureAwait(false);
+
+			if(result.Accepted)
+				yield return result.Data;
+		}
+	}
+
 	private static IEnumerable<TResult> MapIterator<TSource, TResult>(IEnumerable<TSource> source, Func<TSource, TResult> mapper)
 	{
 		foreach(var item in source)
@@ -150,16 +179,31 @@ public static class Pageable
 		await foreach(var item in source.WithCancellation(cancellation).ConfigureAwait(false))
 			yield return mapper(item);
 	}
+
+	private static async IAsyncEnumerable<TResult> MapAsyncIterator<TSource, TResult>(IAsyncEnumerable<TSource> source, Func<TSource, CancellationToken, ValueTask<TResult>> mapper, [EnumeratorCancellation] CancellationToken cancellation = default)
+	{
+		await foreach(var item in source.WithCancellation(cancellation).ConfigureAwait(false))
+			yield return await mapper(item, cancellation).ConfigureAwait(false);
+	}
 	#endregion
 
 	#region 嵌套子类
+	/// <summary>表示异步筛选是否接受当前记录，以及接受后输出的记录。</summary>
+	public struct FilterResult<T>
+	{
+		/// <summary>指示是否输出当前记录。</summary>
+		public bool Accepted;
+		/// <summary>指定接受后输出的记录，允许为空。</summary>
+		public T Data;
+	}
+
 	private abstract class PageableWrapper(IPageable pageable) : IPageable
 	{
 		private readonly object _syncRoot = new();
 		private readonly IPageable _pageable = pageable;
-		private EventHandler<PagingEventArgs> _paginated;
+		private Func<object, PagingEventArgs, CancellationToken, ValueTask> _paginated;
 
-		public event EventHandler<PagingEventArgs> Paginated
+		public event Func<object, PagingEventArgs, CancellationToken, ValueTask> Paginated
 		{
 			add
 			{
@@ -169,7 +213,7 @@ public static class Pageable
 				lock(_syncRoot)
 				{
 					if(_paginated == null)
-						_pageable.Paginated += this.OnPaginated;
+						_pageable.Paginated += this.OnPaginatedAsync;
 
 					_paginated += value;
 				}
@@ -187,20 +231,24 @@ public static class Pageable
 					_paginated -= value;
 
 					if(_paginated == null)
-						_pageable.Paginated -= this.OnPaginated;
+						_pageable.Paginated -= this.OnPaginatedAsync;
 				}
 			}
 		}
 
 		public bool Suppressed => _pageable.Suppressed;
-		private void OnPaginated(object sender, PagingEventArgs args)
+		private async ValueTask OnPaginatedAsync(object sender, PagingEventArgs args, CancellationToken cancellation)
 		{
-			EventHandler<PagingEventArgs> paginated;
+			Func<object, PagingEventArgs, CancellationToken, ValueTask> paginated;
 
 			lock(_syncRoot)
 				paginated = _paginated;
 
-			paginated?.Invoke(this, args);
+			if(paginated != null)
+			{
+				foreach(Func<object, PagingEventArgs, CancellationToken, ValueTask> handler in paginated.GetInvocationList())
+					await handler(this, args, cancellation);
+			}
 		}
 	}
 

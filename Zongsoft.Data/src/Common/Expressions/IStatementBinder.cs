@@ -37,6 +37,5 @@ namespace Zongsoft.Data.Common.Expressions;
 
 public interface IStatementBinder
 {
-	void Bind(IDataMutateContextBase context, IStatementBase statement, DbCommand command);
 	ValueTask BindAsync(IDataMutateContextBase context, IStatementBase statement, DbCommand command, CancellationToken cancellation = default);
 }

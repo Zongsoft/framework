@@ -10,7 +10,7 @@ using Zongsoft.Data.Tests.Models;
 namespace Zongsoft.Data.PostgreSql.Tests;
 
 [Collection("Database")]
-public class InsertTest(DatabaseFixture database) : IDisposable
+public class InsertTest(DatabaseFixture database) : IAsyncDisposable
 {
 	private readonly DatabaseFixture _database = database;
 
@@ -150,10 +150,10 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		Assert.Equal(1, count);
 		Assert.True(log.LogId > 0);
 
-		var model = accessor.Select<LogModel>(
+		var model = (await Global.ToArrayAsync(accessor.SelectAsync<LogModel>(
 			Condition.Equal(nameof(LogModel.LogId), log.LogId),
 			$"*,{nameof(LogModel.User)}{{*}}",
-			Paging.Limit(1)).FirstOrDefault();
+			Paging.Limit(1)))).FirstOrDefault();
 
 		Assert.NotNull(model);
 		Assert.Equal(log.LogId, model.LogId);
@@ -199,8 +199,8 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 		for(int i = 0; i < COUNT; i++)
 			Assert.True(logs[i].LogId > 0);
 
-		var models = accessor.Select<LogModel>(
-			Condition.In(nameof(LogModel.LogId), logs.Select(log => log.LogId)));
+		var models = (await Global.ToArrayAsync(accessor.SelectAsync<LogModel>(
+			Condition.In(nameof(LogModel.LogId), logs.Select(log => log.LogId)))));
 
 		foreach(var model in models)
 		{
@@ -490,11 +490,11 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			return;
 
 		var accessor = _database.Accessor;
-		Assert.Equal(0, await accessor.InsertManyAsync<UserModel>(null));
+		Assert.Equal(0, await accessor.InsertManyAsync<UserModel>((UserModel[])null));
 		Assert.Equal(0, await accessor.InsertManyAsync(Array.Empty<UserModel>()));
-		Assert.Equal(0, await accessor.InsertManyAsync<RoleModel>(null, $"*, {nameof(RoleModel.Children)}{{*}}"));
+		Assert.Equal(0, await accessor.InsertManyAsync<RoleModel>((RoleModel[])null, $"*, {nameof(RoleModel.Children)}{{*}}"));
 		Assert.Equal(0, await accessor.InsertManyAsync(Array.Empty<RoleModel>(), $"*, {nameof(RoleModel.Children)}{{*}}"));
-		Assert.Equal(0, await accessor.InsertManyAsync<Employee>(null, $"*, {nameof(Employee.User)}{{*}}"));
+		Assert.Equal(0, await accessor.InsertManyAsync<Employee>((Employee[])null, $"*, {nameof(Employee.User)}{{*}}"));
 		Assert.Equal(0, await accessor.InsertManyAsync(Array.Empty<Employee>(), $"*, {nameof(Employee.User)}{{*}}"));
 
 		var count = await accessor.InsertManyAsync(Model.Build<UserModel>(COUNT, (model, index) =>
@@ -750,10 +750,10 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			$"*,{nameof(RoleModel.Children)}{{*}}",
 			[Sorting.Ascending(nameof(RoleModel.RoleId))]).ToArrayAsync();
 		#else
-		var roles = accessor.SelectAsync<RoleModel>(
+		var roles = await Global.ToArrayAsync(accessor.SelectAsync<RoleModel>(
 			Condition.Between(nameof(RoleModel.RoleId), ROLE_OFFSET, ROLE_OFFSET + models.Length - 1),
 			$"*,{nameof(RoleModel.Children)}{{*}}",
-			[Sorting.Ascending(nameof(RoleModel.RoleId))]).ToBlockingEnumerable().ToArray();
+			[Sorting.Ascending(nameof(RoleModel.RoleId))]));
 		#endif
 
 		for(int i = 0; i < roles.Length; i++)
@@ -856,16 +856,16 @@ public class InsertTest(DatabaseFixture database) : IDisposable
 			value >= minimum.Universal && value <= maximum.Universal);
 	}
 
-	void IDisposable.Dispose()
+	async ValueTask IAsyncDisposable.DisposeAsync()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
 
 		var accessor = _database.Accessor;
-		accessor.Delete<Employee>(Condition.In(nameof(Employee.UserId), [100, 404]));
-		accessor.Delete<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
-		accessor.Delete<UserModel>(Condition.Like(nameof(UserModel.Name), "$%"));
-		accessor.Delete<RoleModel>(Condition.In(nameof(RoleModel.RoleId), [10, 11, 12]));
-		accessor.Delete<MemberModel>(Condition.Equal(nameof(MemberModel.RoleId), 10));
+		await accessor.DeleteAsync<Employee>(Condition.In(nameof(Employee.UserId), [100, 404]));
+		await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
+		await accessor.DeleteAsync<UserModel>(Condition.Like(nameof(UserModel.Name), "$%"));
+		await accessor.DeleteAsync<RoleModel>(Condition.In(nameof(RoleModel.RoleId), [10, 11, 12]));
+		await accessor.DeleteAsync<MemberModel>(Condition.Equal(nameof(MemberModel.RoleId), 10));
 	}
 }

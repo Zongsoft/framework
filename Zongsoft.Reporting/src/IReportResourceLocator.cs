@@ -28,12 +28,14 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace Zongsoft.Reporting;
 
 public interface IReportResourceLocator
 {
-	IReportResource GetResource(string name);
-	IEnumerable<IReportResource> GetResources(string type);
+	ValueTask<IReportResource> GetResourceAsync(string name, CancellationToken cancellation = default);
+	IAsyncEnumerable<IReportResource> GetResourcesAsync(string type, CancellationToken cancellation = default);
 }

@@ -64,13 +64,13 @@ var data = provider.GetService("Application")
 Console.WriteLine(data.Name);
 ```
 
-取得访问器不等于查询成功。真实业务装配请参阅 [Data 中的 Discussions 用例](../../README.zh-Hans.md#plugin-quickstart)，并沿其中的模块、映射及服务源码阅读。该用例不表示 Discussions 已兼容本驱动；数据库结构、字段类型和所需操作必须逐项验证，不能只改驱动名就推定可移植。业务服务通过公共契约调用，不自行构造数据库连接。
+宿主装配与具名访问器的用法见 [Data 插件示例](../../README.zh-Hans.md#plugin-quickstart)。准备与所选数据库匹配的表结构和字段类型，并使用本驱动支持的操作；业务服务通过公共契约访问数据。
 
-底层提供程序为 `ClickHouse.Driver` 1.4.0。数据引擎使用 ADO.NET 连接和命令；批量导入通过 `ClickHouseClient.InsertBinaryAsync` 执行，使用租约连接的设置和当前数据库。`Compression` 设置同时控制批量写入压缩。提供程序不支持 `UseServerTimezone` 开关；日期时间行为由 ClickHouse 列类型及显式查询转换确定。
+提供程序为 `ClickHouse.Driver` 1.4.0。`Compression` 设置同时控制批量写入压缩；没有 `UseServerTimezone` 设置，日期时间行为由 ClickHouse 列类型及显式查询转换确定。
 
 ## 运行行为
 
-本驱动提供数据库专属的语句构建器/访问器、命令参数化、执行基元与导入器。数据引擎根据具名连接设置选择它；在提供程序和操作支持时，驱动会加入环境数据事务。
+数据库操作通过 `IDataAccess` / `IDataService<T>` 的异步方法执行，查询结果使用 `await foreach` 消费；事务提交、回滚和资源释放均需要等待完成。导入支持内存集合与异步数据源，取消令牌传递给实际操作。 本驱动尚未完整实现，异步 API 不表示所有查询或写入能力均可用；未支持的操作会明确失败，使用前须验证所需功能。
 
 🚨 切勿提交生产连接字符串。请使用部署期配置或秘密提供程序、为数据库身份授予最小权限，并先在可丢弃数据库中验证破坏性变更。
 

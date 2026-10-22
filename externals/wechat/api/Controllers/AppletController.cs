@@ -52,7 +52,8 @@ public class AppletController : ControllerBase
 		if(string.IsNullOrEmpty(token))
 			return this.BadRequest();
 
-		if(!AppletManager.TryGetApplet(id, out var applet))
+		var applet = await AppletManager.FindAppletAsync(id, cancellation);
+		if(applet == null)
 			return this.NotFound();
 
 		var result = await applet.LoginAsync(token, cancellation);
@@ -68,7 +69,8 @@ public class AppletController : ControllerBase
 		if(string.IsNullOrEmpty(token))
 			return this.BadRequest();
 
-		if(!AppletManager.TryGetApplet(id, out var applet))
+		var applet = await AppletManager.FindAppletAsync(id, cancellation);
+		if(applet == null)
 			return this.NotFound();
 
 		var result = await applet.GetPhoneNumberAsync(token, cancellation);
@@ -83,7 +85,8 @@ public class AppletController : ControllerBase
 		[HttpGet("/[area]/{id}/[controller]/{identifier?}")]
 		public async ValueTask<IActionResult> Get(string id, string identifier = null, [FromQuery] string bookmark = null, CancellationToken cancellation = default)
 		{
-			if(!AppletManager.TryGetApplet(id, out var applet))
+			var applet = await AppletManager.FindAppletAsync(id, cancellation);
+			if(applet == null)
 				return this.NotFound();
 
 			if(string.IsNullOrEmpty(identifier))
@@ -105,7 +108,8 @@ public class AppletController : ControllerBase
 		[HttpGet("/[area]/{key}/[controller]")]
 		public async ValueTask<IActionResult> GetCredential(string key, CancellationToken cancellation = default)
 		{
-			if(!AppletManager.TryGetApplet(key, out var applet))
+			var applet = await AppletManager.FindAppletAsync(key, cancellation);
+			if(applet == null)
 				return this.NotFound();
 
 			var credential = await applet.GetCredentialAsync(false, cancellation);
@@ -116,7 +120,8 @@ public class AppletController : ControllerBase
 		[HttpPost("/[area]/{key}/[controller]/[action]")]
 		public async ValueTask<IActionResult> Refresh(string key, CancellationToken cancellation = default)
 		{
-			if(!AppletManager.TryGetApplet(key, out var applet))
+			var applet = await AppletManager.FindAppletAsync(key, cancellation);
+			if(applet == null)
 				return this.NotFound();
 
 			var credential = await applet.GetCredentialAsync(true, cancellation);

@@ -29,6 +29,8 @@
 
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -73,7 +75,8 @@ public class StateContext<TKey, TValue> : IStateContext<TKey, TValue> where TKey
 	#endregion
 
 	#region 公共方法
-	public bool SetState(string description = null) => this.Diagram.SetState(this.Key, this.State.Destination, description ?? this.Description, this.Parameters);
+	public ValueTask<bool> SetStateAsync(CancellationToken cancellation = default) => this.SetStateAsync(null, cancellation);
+	public ValueTask<bool> SetStateAsync(string description, CancellationToken cancellation = default) => this.Diagram.SetStateAsync(this.Key, this.State.Destination, description ?? this.Description, this.Parameters, cancellation);
 	#endregion
 
 	private class ParameterCollection : IDictionary<object, object>

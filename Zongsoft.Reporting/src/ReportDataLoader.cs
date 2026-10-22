@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Data;
 using Zongsoft.Services;
@@ -62,12 +64,12 @@ public class ReportDataLoader : IReportDataLoader
 	#endregion
 
 	#region 数据加载
-	public object Load(IReport report, IReportDataModel model)
+	public ValueTask<object> LoadAsync(IReport report, IReportDataModel model, CancellationToken cancellation = default)
 	{
 		if(_serviceProvider.Resolve(model.Name) is not IDataService service)
-			return null;
+			return ValueTask.FromResult<object>(null);
 
-		return service.Select(null, model.Schema, Paging.Page(1));
+		return ValueTask.FromResult<object>(service.SelectAsync(null, model.Schema, Paging.Page(1), cancellation));
 	}
 	#endregion
 }

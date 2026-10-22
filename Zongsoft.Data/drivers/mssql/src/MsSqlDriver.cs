@@ -30,6 +30,8 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Microsoft.Data.SqlClient;
 
@@ -63,7 +65,7 @@ public partial class MsSqlDriver : DataDriverBase
 	#endregion
 
 	#region 公共方法
-	public override Exception OnError(IDataAccessContext context, Exception exception)
+	public override ValueTask<Exception> OnErrorAsync(IDataAccessContext context, Exception exception, CancellationToken cancellation = default)
 	{
 		if(exception is SqlException error)
 		{
@@ -72,13 +74,13 @@ public partial class MsSqlDriver : DataDriverBase
 				case 2601:
 				case 2627:
 					if(TryGetConflict(error.Message, out var key, out var value))
-						return new DataConflictException(this.Name, error.Number, key, value);
+						return new ValueTask<Exception>(new DataConflictException(this.Name, error.Number, key, value));
 					else
-						return new DataConflictException(this.Name, error.Number, null, null, error);
+						return new ValueTask<Exception>(new DataConflictException(this.Name, error.Number, null, null, error));
 			}
 		}
 
-		return exception;
+		return new ValueTask<Exception>(exception);
 	}
 
 	public override DbCommand CreateCommand() => new SqlCommand();

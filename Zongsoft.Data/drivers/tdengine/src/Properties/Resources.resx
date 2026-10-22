@@ -160,4 +160,31 @@
 	<data name="ExpressionVisitor.SequenceUnsupported.Message" xml:space="preserve">
 		<value>The TDengine driver does not support the &apos;{0}&apos; sequence function.</value>
 	</data>
+	<data name="Driver.AsyncRequired.Message" xml:space="preserve">
+		<value>Use the asynchronous operation.</value>
+	</data>
+	<data name="Driver.ConnectionClosedRequired.Message" xml:space="preserve">
+		<value>The connection must be closed.</value>
+	</data>
+	<data name="Driver.ConnectionOpenRequired.Message" xml:space="preserve">
+		<value>An open connection is required.</value>
+	</data>
+	<data name="Driver.TextCommandRequired.Message" xml:space="preserve">
+		<value>Only text commands are supported.</value>
+	</data>
+	<data name="Driver.ConnectionTypeRequired.Message" xml:space="preserve">
+		<value>A TDengine connection is required.</value>
+	</data>
+	<data name="Driver.TableNameDuplicate.Message" xml:space="preserve">
+		<value>The table name is already set.</value>
+	</data>
+	<data name="Driver.ParameterNameInvalid.Message" xml:space="preserve">
+		<value>Parameter names must start with $, @ or #.</value>
+	</data>
+	<data name="Driver.CommandTextRequired.Message" xml:space="preserve">
+		<value>The command text is required.</value>
+	</data>
+	<data name="Driver.WebSocketRequired.Message" xml:space="preserve">
+		<value>Only the WebSocket protocol is supported.</value>
+	</data>
 </root>

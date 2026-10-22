@@ -63,15 +63,15 @@ public abstract class WechatAuthenticatorBase : IAuthenticator, IAuthenticator<s
 
 		return account.Type switch
 		{
-			AccountType.Applet => await GetAppletToken(AppletManager.GetApplet(account), secret, parameters, cancellation),
-			AccountType.Channel => await GetChannelToken(ChannelManager.GetChannel(account), secret, parameters, cancellation),
+			AccountType.Applet => await GetAppletToken(await AppletManager.GetAppletAsync(account, cancellation), secret, parameters, cancellation),
+			AccountType.Channel => await GetChannelToken(await ChannelManager.GetChannelAsync(account, cancellation), secret, parameters, cancellation),
 			_ => throw new InvalidOperationException(),
 		};
 	}
 	#endregion
 
 	#region 身份签发
-	ValueTask<ClaimsIdentity> IAuthenticator.IssueAsync(object identity, string scenario, Parameters parameters, CancellationToken cancellation) => this.IssueAsync((Identity)identity, scenario, parameters);
+	ValueTask<ClaimsIdentity> IAuthenticator.IssueAsync(object identity, string scenario, Parameters parameters, CancellationToken cancellation) => this.IssueAsync((Identity)identity, scenario, parameters, cancellation);
 	public ValueTask<ClaimsIdentity> IssueAsync(Identity identity, string scenario, Parameters parameters, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(identity.OpenId))
@@ -116,7 +116,7 @@ public abstract class WechatAuthenticatorBase : IAuthenticator, IAuthenticator<s
 			else if(data is System.IO.Stream stream)
 			{
 				using var reader = new System.IO.StreamReader(stream, System.Text.Encoding.UTF8);
-				text = await reader.ReadToEndAsync();
+				text = await reader.ReadToEndAsync(cancellation);
 			}
 			else
 				throw new InvalidOperationException(string.Format(Properties.Resources.Identity_DataTypeUnsupported_Message, data.GetType().FullName));

@@ -180,4 +180,31 @@
 	<data name="ExpressionVisitor.SequenceUnsupported.Message" xml:space="preserve">
 		<value>TDengine 驱动不支持序列函数“{0}”。</value>
 	</data>
+	<data name="Driver.AsyncRequired.Message" xml:space="preserve">
+		<value>请使用异步操作。</value>
+	</data>
+	<data name="Driver.ConnectionClosedRequired.Message" xml:space="preserve">
+		<value>连接必须处于关闭状态。</value>
+	</data>
+	<data name="Driver.ConnectionOpenRequired.Message" xml:space="preserve">
+		<value>需要已打开的连接。</value>
+	</data>
+	<data name="Driver.TextCommandRequired.Message" xml:space="preserve">
+		<value>仅支持文本命令。</value>
+	</data>
+	<data name="Driver.ConnectionTypeRequired.Message" xml:space="preserve">
+		<value>需要 TDengine 连接。</value>
+	</data>
+	<data name="Driver.TableNameDuplicate.Message" xml:space="preserve">
+		<value>已设置数据表名称。</value>
+	</data>
+	<data name="Driver.ParameterNameInvalid.Message" xml:space="preserve">
+		<value>参数名称必须以 $、@ 或 # 开头。</value>
+	</data>
+	<data name="Driver.CommandTextRequired.Message" xml:space="preserve">
+		<value>必须指定命令文本。</value>
+	</data>
+	<data name="Driver.WebSocketRequired.Message" xml:space="preserve">
+		<value>仅支持 WebSocket 协议。</value>
+	</data>
 </root>

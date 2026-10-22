@@ -14,7 +14,7 @@ public class SelectTest(DatabaseFixture database)
 	private readonly DatabaseFixture _database = database;
 
 	[Fact]
-	public void TestSelect()
+	public async Task TestSelect()
 	{
 		Assert.SkipUnless(Global.IsTestingEnabled, TESTING_DISABLED_REASON);
 
@@ -29,12 +29,12 @@ public class SelectTest(DatabaseFixture database)
 
 		try
 		{
-			accessor.Delete<Models.GatewayHistory>(criteria);
+			await accessor.DeleteAsync<Models.GatewayHistory>(criteria);
 
-			var count = accessor.Insert("GatewayHistory", new Models.GatewayHistory(100, 10001, 123.56, null, timestamp));
+			var count = await accessor.InsertAsync("GatewayHistory", new Models.GatewayHistory(100, 10001, 123.56, null, timestamp));
 			Assert.Equal(1, count);
 
-			var models = accessor.Select<Models.GatewayHistory>(criteria).ToArray();
+			var models = await Global.ToArrayAsync(accessor.SelectAsync<Models.GatewayHistory>(criteria));
 			var model = Assert.Single(models);
 			Assert.Equal((uint)100, model.GatewayId);
 			Assert.Equal((ulong)10001, model.MetricId);
@@ -42,7 +42,7 @@ public class SelectTest(DatabaseFixture database)
 		}
 		finally
 		{
-			accessor.Delete<Models.GatewayHistory>(criteria);
+			await accessor.DeleteAsync<Models.GatewayHistory>(criteria);
 		}
 	}
 

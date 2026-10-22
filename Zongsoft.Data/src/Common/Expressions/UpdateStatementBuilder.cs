@@ -29,8 +29,11 @@
 
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 using Zongsoft.Data.Metadata;
 
@@ -54,12 +57,12 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 	#endregion
 
 	#region 构建方法
-	public IEnumerable<IStatementBase> Build(DataUpdateContext context)
+	public async IAsyncEnumerable<IStatementBase> BuildAsync(DataUpdateContext context, [EnumeratorCancellation] CancellationToken cancellation = default)
 	{
-		return [this.Build(context, context.Data)];
+		yield return await this.BuildAsync(context, context.Data, cancellation).ConfigureAwait(false);
 	}
 
-	private UpdateStatement Build(DataUpdateContext context, object data)
+	private async ValueTask<UpdateStatement> BuildAsync(DataUpdateContext context, object data, CancellationToken cancellation)
 	{
 		var statement = this.CreateStatement(context);
 
@@ -69,15 +72,15 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 			//依次生成各个数据成员的关联（包括它的子元素集）
 			foreach(var member in context.Schema.Members)
 			{
-				this.BuildSchema(context, statement, statement.Table, data, member);
+				await this.BuildSchemaAsync(context, statement, statement.Table, data, member, cancellation).ConfigureAwait(false);
 			}
 		}
 
 		//生成条件子句
 		if(statement.Where == null)
-			statement.Where = Where(context, statement);
+			statement.Where = await WhereAsync(context, statement, cancellation).ConfigureAwait(false);
 		else
-			statement.Where = ConditionExpression.And(statement.Where, Where(context, statement));
+			statement.Where = ConditionExpression.And(statement.Where, await WhereAsync(context, statement, cancellation).ConfigureAwait(false));
 
 		if(statement.Fields.Count == 0)
 			throw new DataException(Properties.Resources.UpdateStatement_MissingSetClause_Message);
@@ -125,7 +128,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 	#endregion
 
 	#region 私有方法
-	private void BuildSchema(DataUpdateContext context, UpdateStatement statement, TableIdentifier table, object data, SchemaMember member)
+	private async ValueTask BuildSchemaAsync(DataUpdateContext context, UpdateStatement statement, TableIdentifier table, object data, SchemaMember member, CancellationToken cancellation)
 	{
 		if(member.Ignored)
 			return;
@@ -135,7 +138,9 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 			return;
 
 		//确认指定成员是否有必须的写入值
-		var provided = context.Validate(member.Token.Property, out var value);
+		var validation = await context.ValidateAsync(member.Token.Property, cancellation).ConfigureAwait(false);
+		var provided = validation.HasValue;
+		var value = validation.Value;
 
 		//指定成员不是必须要生成的且也没有必须写入的值，则返回
 		if(!Utility.IsGenerateRequired(ref data, member.Name) && !provided)
@@ -178,10 +183,10 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 			if(complex.Multiplicity == DataAssociationMultiplicity.Many)
 			{
 				//注：在构建一对多的导航属性的UPSERT语句时不能指定容器数据(即data参数值为空)，因为批量操作语句不支持在构建阶段绑定到具体数据
-				var upserts = UpsertStatementBuilder.BuildUpserts(context, complex.Foreign, data, member, member.Children);
+				var upserts = UpsertStatementBuilder.BuildUpsertsAsync(context, complex.Foreign, data, member, member.Children, cancellation);
 
 				//将新建的语句加入到主语句的从属集中
-				foreach(var upsert in upserts)
+				await foreach(var upsert in upserts.ConfigureAwait(false))
 				{
 					statement.Slaves.Add(upsert);
 				}
@@ -189,14 +194,14 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 			else
 			{
 				if(context.Source.Features.Support(Feature.Updation.Multitable))
-					this.BuildComplex(context, statement, data, member);
+					await this.BuildComplexAsync(context, statement, data, member, cancellation).ConfigureAwait(false);
 				else
-					this.BuildComplexStandalone(context, statement, data, member);
+					await this.BuildComplexStandaloneAsync(context, statement, data, member, cancellation).ConfigureAwait(false);
 			}
 		}
 	}
 
-	private void BuildComplex(DataUpdateContext context, UpdateStatement statement, object data, SchemaMember member)
+	private async ValueTask BuildComplexAsync(DataUpdateContext context, UpdateStatement statement, object data, SchemaMember member, CancellationToken cancellation)
 	{
 		if(!member.HasChildren)
 			return;
@@ -235,11 +240,11 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 			if(container is IModel model && !model.HasChanges(child.Name))
 				continue;
 
-			this.BuildSchema(context, statement, table, container, child);
+			await this.BuildSchemaAsync(context, statement, table, container, child, cancellation).ConfigureAwait(false);
 		}
 	}
 
-	private void BuildComplexStandalone(DataUpdateContext context, UpdateStatement statement, object data, SchemaMember member)
+	private async ValueTask BuildComplexStandaloneAsync(DataUpdateContext context, UpdateStatement statement, object data, SchemaMember member, CancellationToken cancellation)
 	{
 		if(!member.HasChildren)
 			return;
@@ -284,7 +289,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 
 		foreach(var child in member.Children)
 		{
-			this.BuildSchema(context, slave, slave.Table, member.Token.GetValue(data), child);
+			await this.BuildSchemaAsync(context, slave, slave.Table, member.Token.GetValue(data), child, cancellation).ConfigureAwait(false);
 		}
 	}
 
@@ -316,7 +321,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 		return target;
 	}
 
-	private static IExpression Where(DataUpdateContext context, UpdateStatement statement)
+	private static async ValueTask<IExpression> WhereAsync(DataUpdateContext context, UpdateStatement statement, CancellationToken cancellation)
 	{
 		if(context.Criteria == null)
 		{
@@ -334,11 +339,11 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 				statement.Parameters.Add(parameter);
 			}
 
-			criteria.Add(statement.Where(context.Validate(), context.Aliaser));
+			criteria.Add(statement.Where(await context.ValidateAsync(cancellation).ConfigureAwait(false), context.Aliaser));
 			return criteria.Count > 0 ? criteria : null;
 		}
 
-		return statement.Where(context.Validate(), context.Aliaser);
+		return statement.Where(await context.ValidateAsync(cancellation).ConfigureAwait(false), context.Aliaser);
 	}
 	#endregion
 

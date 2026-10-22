@@ -41,9 +41,9 @@ namespace Zongsoft.Data.Common;
 public class DataProvider : IDataProvider
 {
 	#region 事件声明
-	public event EventHandler<DataAccessErrorEventArgs> Error;
-	public event EventHandler<DataAccessEventArgs<IDataAccessContext>> Executing;
-	public event EventHandler<DataAccessEventArgs<IDataAccessContext>> Executed;
+	public event Func<object, DataAccessErrorEventArgs, CancellationToken, ValueTask> Error;
+	public event Func<object, DataAccessEventArgs<IDataAccessContext>, CancellationToken, ValueTask> Executing;
+	public event Func<object, DataAccessEventArgs<IDataAccessContext>, CancellationToken, ValueTask> Executed;
 	#endregion
 
 	#region 成员字段
@@ -92,58 +92,10 @@ public class DataProvider : IDataProvider
 	#endregion
 
 	#region 执行方法
-	public void Execute(IDataAccessContext context)
-	{
-		//激发“Executing”事件
-		this.OnExecuting(context);
-
-		try
-		{
-			object data = null;
-			var mutation = context as IDataMutateContextBase;
-
-			//保存当前操作的原始值
-			if(mutation != null)
-				data = mutation.Data;
-
-			//进行具体的执行处理
-			this.OnExecute(context);
-
-			//尝试提交当前数据会话
-			context.Session.Commit();
-
-			//还原当前操作的原始值
-			if(mutation != null)
-				mutation.Data = data;
-		}
-		catch(Exception ex)
-		{
-			//尝试回滚当前数据会话
-			context.Session.Rollback();
-
-			//激发“Error”事件
-			var handledException = this.OnError(context, ex);
-
-			//如果“Error”事件处理完异常则退出
-			if(handledException == null)
-				return;
-
-			//如果“Error”事件没有处理异常，则重抛以尽量避免异常过多嵌套
-			if(object.ReferenceEquals(ex, handledException))
-				throw;
-
-			throw handledException is DataException ? handledException :
-			      new DataException(Properties.Resources.DataProvider_ExecutionFailed_Message, handledException);
-		}
-
-		//激发“Executed”事件
-		this.OnExecuted(context);
-	}
-
 	public async ValueTask ExecuteAsync(IDataAccessContext context, CancellationToken cancellation)
 	{
 		//激发“Executing”事件
-		this.OnExecuting(context);
+		await this.OnExecutingAsync(context, cancellation);
 
 		try
 		{
@@ -170,7 +122,7 @@ public class DataProvider : IDataProvider
 			await context.Session.RollbackAsync(CancellationToken.None);
 
 			//激发“Error”事件
-			var handledException = this.OnError(context, ex);
+			var handledException = await this.OnErrorAsync(context, ex, CancellationToken.None);
 
 			//如果“Error”事件处理完异常则退出
 			if(handledException == null)
@@ -185,51 +137,15 @@ public class DataProvider : IDataProvider
 		}
 
 		//激发“Executed”事件
-		this.OnExecuted(context);
+		await this.OnExecutedAsync(context, cancellation);
 	}
 	#endregion
 
 	#region 导入方法
-	public void Import(DataImportContext context)
-	{
-		//激发“Executing”事件
-		this.OnExecuting(context);
-
-		try
-		{
-			context.Source.Driver.Importer.Import(context);
-
-			//尝试提交当前数据会话
-			context.Session.Commit();
-		}
-		catch(Exception ex)
-		{
-			//尝试回滚当前数据会话
-			context.Session.Rollback();
-
-			//激发“Error”事件
-			var handledException = this.OnError(context, ex);
-
-			//如果“Error”事件处理完异常则退出
-			if(handledException == null)
-				return;
-
-			//如果“Error”事件没有处理异常，则重抛以尽量避免异常过多嵌套
-			if(object.ReferenceEquals(ex, handledException))
-				throw;
-
-			throw handledException is DataException ? handledException :
-				  new DataException(Properties.Resources.DataProvider_ExecutionFailed_Message, handledException);
-		}
-
-		//激发“Executed”事件
-		this.OnExecuted(context);
-	}
-
 	public async ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation)
 	{
 		//激发“Executing”事件
-		this.OnExecuting(context);
+		await this.OnExecutingAsync(context, cancellation);
 
 		try
 		{
@@ -244,7 +160,7 @@ public class DataProvider : IDataProvider
 			await context.Session.RollbackAsync(CancellationToken.None);
 
 			//激发“Error”事件
-			var handledException = this.OnError(context, ex);
+			var handledException = await this.OnErrorAsync(context, ex, CancellationToken.None);
 
 			//如果“Error”事件处理完异常则退出
 			if(handledException == null)
@@ -259,41 +175,32 @@ public class DataProvider : IDataProvider
 		}
 
 		//激发“Executed”事件
-		this.OnExecuted(context);
+		await this.OnExecutedAsync(context, cancellation);
 	}
 	#endregion
 
 	#region 虚拟方法
-	protected virtual void OnExecute(IDataAccessContext context)
-	{
-		//根据上下文生成对应执行语句集
-		var statements = context.Source.Driver.Builder.Build(context);
-
-		foreach(var statement in statements)
-		{
-			//由执行器执行语句
-			_executor.Execute(context, statement);
-		}
-	}
-
 	protected virtual async ValueTask OnExecuteAsync(IDataAccessContext context, CancellationToken cancellation)
 	{
-		//根据上下文生成对应执行语句集
-		var statements = context.Source.Driver.Builder.Build(context);
-
-		foreach(var statement in statements)
+		if(context is IDataMutateContext mutation && mutation.IsMultiple() &&
+			DataInput.TryGetAsync(mutation.Data, out var source, out var elementType))
 		{
-			//由执行器执行语句
-			await _executor.ExecuteAsync(context, statement, cancellation);
+			await foreach(var batch in DataInput.BatchAsync(source, elementType, cancellation).ConfigureAwait(false))
+			{
+				mutation.Data = batch;
+				await this.ExecuteStatementsAsync(context, cancellation);
+			}
 		}
+		else
+			await this.ExecuteStatementsAsync(context, cancellation);
 	}
 	#endregion
 
 	#region 激发事件
-	protected virtual Exception OnError(IDataAccessContext context, Exception exception)
+	protected virtual async ValueTask<Exception> OnErrorAsync(IDataAccessContext context, Exception exception, CancellationToken cancellation)
 	{
 		//通知数据驱动器发生了一个异常
-		exception = context.Source.Driver.OnError(context, exception);
+		exception = await context.Source.Driver.OnErrorAsync(context, exception, cancellation);
 
 		//如果驱动器已经处理了异常则返回空
 		if(exception == null)
@@ -307,7 +214,7 @@ public class DataProvider : IDataProvider
 			var args = new DataAccessErrorEventArgs(context, exception);
 
 			//激发“Error”事件
-			error(this, args);
+			await this.RaiseAsync(error, args, cancellation);
 
 			//如果异常处理已经完成则返回空，否则返回处理后的异常
 			return args.ExceptionHandled ? null : args.Exception;
@@ -316,8 +223,32 @@ public class DataProvider : IDataProvider
 		return exception;
 	}
 
-	protected virtual void OnExecuting(IDataAccessContext context) => this.Executing?.Invoke(this, new DataAccessEventArgs(context));
-	protected virtual void OnExecuted(IDataAccessContext context) => this.Executed?.Invoke(this, new DataAccessEventArgs(context));
+	protected virtual ValueTask OnExecutingAsync(IDataAccessContext context, CancellationToken cancellation) => this.RaiseAsync(this.Executing, new DataAccessEventArgs(context), cancellation);
+	protected virtual ValueTask OnExecutedAsync(IDataAccessContext context, CancellationToken cancellation) => this.RaiseAsync(this.Executed, new DataAccessEventArgs(context), cancellation);
+	#endregion
+
+	#region 私有方法
+	private async ValueTask ExecuteStatementsAsync(IDataAccessContext context, CancellationToken cancellation)
+	{
+		//根据上下文生成对应执行语句集
+		var statements = context.Source.Driver.Builder.BuildAsync(context, cancellation);
+
+		await foreach(var statement in statements.ConfigureAwait(false))
+		{
+			//由执行器执行语句
+			await _executor.ExecuteAsync(context, statement, cancellation);
+		}
+	}
+
+
+	private async ValueTask RaiseAsync<TArgs>(Func<object, TArgs, CancellationToken, ValueTask> handlers, TArgs args, CancellationToken cancellation)
+	{
+		if(handlers != null)
+		{
+			foreach(Func<object, TArgs, CancellationToken, ValueTask> handler in handlers.GetInvocationList())
+				await handler(this, args, cancellation);
+		}
+	}
 	#endregion
 
 	#region 嵌套子类
@@ -359,28 +290,6 @@ public class DataProvider : IDataProvider
 		#endregion
 
 		#region 执行方法
-		public void Execute(IDataAccessContext context, IStatementBase statement)
-		{
-			var continued = statement switch
-			{
-				SelectStatement select => _select.Execute(context, select),
-				InsertStatement insert => _insert.Execute(context, insert),
-				UpdateStatement update => _update.Execute(context, update),
-				UpsertStatement upsert => _upsert.Execute(context, upsert),
-				DeleteStatement delete => _delete.Execute(context, delete),
-				ExistStatement exist => _exist.Execute(context, exist),
-				AggregateStatement aggregate => _aggregate.Execute(context, aggregate),
-				ExecutionStatement execution => _execution.Execute(context, execution),
-				_ => context.Session.Build(context, statement).ExecuteNonQuery() > 0,
-			};
-
-			if(continued && statement.HasSlaves)
-			{
-				foreach(var slave in statement.Slaves)
-					this.Execute(context, slave);
-			}
-		}
-
 		public async ValueTask ExecuteAsync(IDataAccessContext context, IStatementBase statement, CancellationToken cancellation)
 		{
 			var continued = statement switch
@@ -393,7 +302,7 @@ public class DataProvider : IDataProvider
 				ExistStatement exist => await _exist.ExecuteAsync(context, exist, cancellation),
 				AggregateStatement aggregate => await _aggregate.ExecuteAsync(context, aggregate, cancellation),
 				ExecutionStatement execution => await _execution.ExecuteAsync(context, execution, cancellation),
-				_ => await context.Session.Build(context, statement).ExecuteNonQueryAsync(cancellation) > 0,
+				_ => await ExecuteCommandAsync(context, statement, cancellation),
 			};
 
 			if(continued && statement.HasSlaves)
@@ -401,6 +310,12 @@ public class DataProvider : IDataProvider
 				foreach(var slave in statement.Slaves)
 					await this.ExecuteAsync(context, slave, cancellation);
 			}
+		}
+
+		private static async ValueTask<bool> ExecuteCommandAsync(IDataAccessContext context, IStatementBase statement, CancellationToken cancellation)
+		{
+			await using var command = context.Session.Build(context, statement);
+			return await command.ExecuteNonQueryAsync(cancellation) > 0;
 		}
 		#endregion
 	}

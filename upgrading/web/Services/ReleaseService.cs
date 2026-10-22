@@ -34,6 +34,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Zongsoft.Data;
+using Zongsoft.Collections;
 using Zongsoft.Upgrading.Models;
 
 namespace Zongsoft.Upgrading.Services;
@@ -52,15 +53,15 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 	#endregion
 
 	#region 公共方法
-	public async ValueTask<bool> PublishAsync(uint releaseId, CancellationToken cancellation = default) => await this.UpdateAsync(new { Published = true }, Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), null, cancellation) > 0;
-	public async ValueTask<bool> DeprecateAsync(uint releaseId, CancellationToken cancellation = default) => await this.UpdateAsync(new { Deprecated = true }, Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), null, cancellation) > 0;
+	public async ValueTask<bool> PublishAsync(uint releaseId, CancellationToken cancellation = default) => await this.UpdateAsync(new { Published = true }, Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), cancellation) > 0;
+	public async ValueTask<bool> DeprecateAsync(uint releaseId, CancellationToken cancellation = default) => await this.UpdateAsync(new { Deprecated = true }, Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), cancellation) > 0;
 
 	public async ValueTask<string> GetFilePathAsync(uint releaseId, CancellationToken cancellation = default)
 	{
 		if(releaseId == 0)
 			throw new DataArgumentException(nameof(releaseId));
 
-		if(await this.GetAsync(releaseId, null, cancellation) is not Models.Release release)
+		if(await this.GetAsync(releaseId, cancellation) is not Models.Release release)
 			return null;
 
 		var path = Settings.Current?["storage"];
@@ -76,11 +77,7 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 
 	public async ValueTask<bool> SetFilePathAsync(uint releaseId, string value, long size, CancellationToken cancellation = default)
 	{
-		#if NET10_0_OR_GREATER
-		var path = (await this.SelectAsync(Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), nameof(Models.Release.Path), null, cancellation).FirstOrDefaultAsync(cancellation))?.Path;
-		#else
-		var path = this.SelectAsync(Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), nameof(Models.Release.Path), null, cancellation).ToBlockingEnumerable(cancellation).FirstOrDefault()?.Path;
-		#endif
+		var path = (await this.SelectAsync(Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), nameof(Models.Release.Path), cancellation).FirstOrDefault(cancellation))?.Path;
 
 		var count = await this.UpdateAsync(new
 		{
@@ -88,10 +85,10 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 			Size = (ulong)size,
 			Checksum = await ChecksumAsync(value, cancellation),
 			Modification = DateTime.Now,
-		}, Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), null, cancellation);
+		}, Condition.Equal(nameof(Models.Release.ReleaseId), releaseId), cancellation);
 
 		if(count > 0 && !string.Equals(path, value, StringComparison.OrdinalIgnoreCase))
-			DeleteFile(path);
+			await DeleteFileAsync(path, cancellation);
 
 		return count > 0;
 
@@ -100,7 +97,7 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 			if(string.IsNullOrEmpty(path))
 				return null;
 
-			using var stream = await Zongsoft.IO.FileSystem.File.OpenAsync(path, System.IO.FileMode.Open, System.IO.FileAccess.Read, cancellation);
+			await using var stream = await Zongsoft.IO.FileSystem.File.OpenAsync(path, System.IO.FileMode.Open, System.IO.FileAccess.Read, cancellation);
 			var checksum = await Zongsoft.Common.Checksum.ComputeAsync(null, stream, cancellation);
 			return checksum.ToString();
 		}
@@ -167,65 +164,68 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 	#endregion
 
 	#region 重写方法
-	protected override void OnValidate(DataServiceMethod method, ISchema schema, IDataDictionary<Models.Release> data, IDataMutateOptions options)
+	protected override async ValueTask OnValidateAsync(DataServiceMethod method, ISchema schema, IDataDictionary<Models.Release> data, IDataMutateOptions options, CancellationToken cancellation)
 	{
 		if(data.TryGetValue(nameof(Models.Release.Edition), out string edition) && string.IsNullOrWhiteSpace(edition))
 			data.SetValue(nameof(Models.Release.Edition), "_");
 
-		base.OnValidate(method, schema, data, options);
+		await base.OnValidateAsync(method, schema, data, options, cancellation);
 	}
 
-	protected override void OnInserted(DataInsertContextBase context)
+	protected override async ValueTask<int> OnInsertManyAsync(IAsyncEnumerable<IDataDictionary<Models.Release>> items, ISchema schema, DataInsertOptions options, CancellationToken cancellation)
+	{
+		var records = new List<IDataDictionary<Models.Release>>();
+
+		await foreach(var item in items.WithCancellation(cancellation))
+			records.Add(item);
+
+		return await base.OnInsertManyAsync(records.Asynchronize(), schema, options, cancellation);
+	}
+
+	protected override async ValueTask OnInsertedAsync(DataInsertContextBase context, CancellationToken cancellation)
 	{
 		if(context.Count > 0)
 		{
 			if(context.IsMultiple)
 			{
-				foreach(var dictionary in DataDictionary.GetDictionaries<Models.Release>((System.Collections.IEnumerable)context.Data))
-					this.Synchronize(dictionary);
+				await foreach(var dictionary in Zongsoft.Collections.Enumerable.EnumerateAsync<IDataDictionary<Models.Release>>(context.Data, cancellation))
+					await this.SynchronizeAsync(dictionary, cancellation);
 			}
 			else
 			{
-				this.Synchronize(DataDictionary.GetDictionary<Models.Release>(context.Data));
+				await this.SynchronizeAsync(DataDictionary.GetDictionary<Models.Release>(context.Data), cancellation);
 			}
 		}
 
-		base.OnInserted(context);
-	}
-
-	protected override int OnDelete(ICondition criteria, ISchema schema, DataDeleteOptions options)
-	{
-		options.Parameters.SetValue("$DELETED", this.Select(criteria, nameof(Models.Release.Path)).Select(p => p.Path).ToArray());
-		return base.OnDelete(criteria, schema, options);
+		await base.OnInsertedAsync(context, cancellation);
 	}
 
 	protected override async ValueTask<int> OnDeleteAsync(ICondition criteria, ISchema schema, DataDeleteOptions options, CancellationToken cancellation)
 	{
-		var source = this.SelectAsync(criteria, nameof(Models.Release.Path), null, cancellation);
+		var paths = new List<string>();
 
-		#if NET10_0_OR_GREATER
-		options.Parameters.SetValue("$DELETED", (await source.ToArrayAsync(cancellation)).Select(release => release.Path).ToArray());
-		#else
-		options.Parameters.SetValue("$DELETED", source.ToBlockingEnumerable(cancellation).Select(release => release.Path).ToArray());
-		#endif
+		await foreach(var release in this.SelectAsync(criteria, nameof(Models.Release.Path), cancellation).WithCancellation(cancellation))
+			paths.Add(release.Path);
+
+		options.Parameters.SetValue("$DELETED", paths.ToArray());
 
 		return await base.OnDeleteAsync(criteria, schema, options, cancellation);
 	}
 
-	protected override void OnDeleted(DataDeleteContextBase context)
+	protected override async ValueTask OnDeletedAsync(DataDeleteContextBase context, CancellationToken cancellation)
 	{
 		if(context.Count > 0 && context.Options.Parameters.TryGetValue("$DELETED", out var value) && value is IEnumerable<string> paths)
 		{
 			foreach(var path in paths)
-				DeleteFile(path);
+				await DeleteFileAsync(path, cancellation);
 		}
 
-		base.OnDeleted(context);
+		await base.OnDeletedAsync(context, cancellation);
 	}
 	#endregion
 
 	#region 虚拟方法
-	protected virtual void Synchronize(IDataDictionary<Models.Release> dictionary)
+	protected virtual async ValueTask SynchronizeAsync(IDataDictionary<Models.Release> dictionary, CancellationToken cancellation)
 	{
 		if(dictionary == null || dictionary.IsEmpty)
 			return;
@@ -234,10 +234,10 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 			return;
 
 		//获取应用程序的标识
-		var applicationId = this.DataAccess.Select<uint?>(
+		var applicationId = await this.DataAccess.SelectAsync<uint?>(
 			Model.Naming.Get<Models.Application>(),
 			Condition.Equal(nameof(Models.Application.Name), name),
-			nameof(Models.Application.ApplicationId)).FirstOrDefault();
+			nameof(Models.Application.ApplicationId), cancellation).FirstOrDefault(cancellation);
 
 		if(applicationId.HasValue)
 		{
@@ -247,7 +247,7 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 				editionModel.ApplicationId = applicationId.Value;
 				editionModel.Name = value;
 				editionModel.Title = value;
-				this.DataAccess.Insert(editionModel, DataInsertOptions.IgnoreConstraint());
+				await this.DataAccess.InsertAsync(editionModel, DataInsertOptions.IgnoreConstraint(), cancellation);
 			}
 
 			return;
@@ -262,19 +262,19 @@ public class ReleaseService(IServiceProvider serviceProvider, DataServiceMutabil
 		if(dictionary.TryGetValue(data => data.Edition, out var edition) && !string.IsNullOrWhiteSpace(edition) && edition != "_")
 			applicationModel.Editions = [Model.Build<ApplicationEdition>(e => e.Name = e.Title = edition)];
 
-		this.DataAccess.Insert(applicationModel, $"*,{nameof(Models.Application.Editions)}{{*}}", DataInsertOptions.IgnoreConstraint());
+		await this.DataAccess.InsertAsync(applicationModel, $"*,{nameof(Models.Application.Editions)}{{*}}", DataInsertOptions.IgnoreConstraint(), cancellation);
 	}
 	#endregion
 
 	#region 私有方法
-	static void DeleteFile(string path)
+	static async ValueTask DeleteFileAsync(string path, CancellationToken cancellation)
 	{
 		if(string.IsNullOrEmpty(path))
 			return;
 
 		try
 		{
-			Zongsoft.IO.FileSystem.File.Delete(path);
+			await Zongsoft.IO.FileSystem.File.DeleteAsync(path, cancellation);
 		}
 		catch { }
 	}

@@ -32,7 +32,7 @@ using System;
 namespace Zongsoft.Data;
 
 /// <summary>为数据服务的获取事件提供数据。</summary>
-public class DataGettingEventArgs<T> : DataGettedEventArgs<T>
+public class DataGettingEventArgs<T> : DataAccessEventArgs<DataSelectContextBase>
 {
 	#region 构造函数
 	public DataGettingEventArgs(DataSelectContextBase context) : base(context) => this.Cancel = false;

@@ -42,67 +42,31 @@ namespace Zongsoft.Data.PostgreSql;
 public class PostgreSqlImporter : DataImporterBase
 {
 	#region 公共方法
-	protected override void OnImport(DataImportContext context, MemberCollection members)
-	{
-		using var lease = context.Session.AcquireLease(context.Options.TransactionSuppressed);
-
-		using var bulker = GetBulker(
-			context.Entity.GetTableName(),
-			members,
-			(NpgsqlConnection)lease.Connection,
-			context.Options);
-
-		foreach(var item in context.Data)
-		{
-			var target = item;
-			if(target is null)
-				continue;
-
-			bulker.StartRow();
-
-			for(int i = 0; i < members.Count; i++)
-			{
-				if(members[i].Property.IsSimplex(out var simplex))
-				{
-					var value = members[i].GetValue(ref target);
-
-					if(value is null || Convert.IsDBNull(value))
-						bulker.WriteNull();
-					else
-					{
-						var pgType = PostgreSqlUtility.GetDataType(simplex.Type);
-						bulker.Write(Zongsoft.Common.Convert.ConvertValue(value, pgType.AsType()), pgType);
-					}
-				}
-			}
-		}
-
-		context.Count = (int)bulker.Complete();
-	}
-
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
 		await using var lease = await context.Session.AcquireLeaseAsync(context.Options.TransactionSuppressed, cancellation);
 
-		using var bulker = await GetBulkerAsync(
+		await using var bulker = await GetBulkerAsync(
 			context.Entity.GetTableName(),
 			members,
 			(NpgsqlConnection)lease.Connection,
 			context.Options, cancellation);
 
-		foreach(var item in context.Data)
+		await foreach(var item in GetRecordsAsync(context).WithCancellation(cancellation).ConfigureAwait(false))
 		{
 			var target = item;
 			if(target is null)
 				continue;
 
-			bulker.StartRow();
+			await bulker.StartRowAsync(cancellation).ConfigureAwait(false);
 
 			for(int i = 0; i < members.Count; i++)
 			{
 				if(members[i].Property.IsSimplex(out var simplex))
 				{
-					var value = members[i].GetValue(ref target);
+					var prepared = await members[i].GetValueAsync(target, cancellation).ConfigureAwait(false);
+					target = prepared.Target;
+					var value = prepared.Value;
 
 					if(value is null || Convert.IsDBNull(value))
 						await bulker.WriteNullAsync(cancellation);
@@ -120,13 +84,6 @@ public class PostgreSqlImporter : DataImporterBase
 	#endregion
 
 	#region 私有方法
-	private static NpgsqlBinaryImporter GetBulker(string name, MemberCollection members, NpgsqlConnection connection, IDataImportOptions options)
-	{
-		var fields = string.Join(',', members.Select(member => $"\"{member.Name}\""));
-
-		return connection.BeginBinaryImport($"COPY \"{name}\" ({fields}) FROM STDIN (FORMAT Binary)");
-	}
-
 	private static async Task<NpgsqlBinaryImporter> GetBulkerAsync(string name, MemberCollection members, NpgsqlConnection connection, IDataImportOptions options, CancellationToken cancellation)
 	{
 		var fields = string.Join(',', members.Select(member => $"\"{member.Name}\""));

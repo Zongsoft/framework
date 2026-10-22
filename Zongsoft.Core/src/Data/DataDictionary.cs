@@ -30,9 +30,12 @@
 using System;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 using Zongsoft.Reflection;
 
@@ -168,6 +171,40 @@ public static class DataDictionary
 		{
 			handle?.Invoke(dictionary);
 			return dictionary;
+		}
+	}
+
+	public static IAsyncEnumerable<IDataDictionary<T>> GetDictionariesAsync<T>(IEnumerable items, CancellationToken cancellation = default) => GetDictionariesAsync<T>(items, null, cancellation);
+	public static async IAsyncEnumerable<IDataDictionary<T>> GetDictionariesAsync<T>(IEnumerable items, Func<IDataDictionary<T>, CancellationToken, ValueTask> handle, [EnumeratorCancellation] CancellationToken cancellation = default)
+	{
+		foreach(var dictionary in GetDictionaries<T>(items))
+		{
+			cancellation.ThrowIfCancellationRequested();
+
+			if(handle != null)
+				await handle(dictionary, cancellation);
+
+			yield return dictionary;
+		}
+	}
+
+	public static IAsyncEnumerable<IDataDictionary<T>> GetDictionariesAsync<T, TSource>(IAsyncEnumerable<TSource> items, CancellationToken cancellation = default) => GetDictionariesAsync<T, TSource>(items, null, cancellation);
+	public static async IAsyncEnumerable<IDataDictionary<T>> GetDictionariesAsync<T, TSource>(IAsyncEnumerable<TSource> items, Func<IDataDictionary<T>, CancellationToken, ValueTask> handle, [EnumeratorCancellation] CancellationToken cancellation = default)
+	{
+		if(items == null)
+			throw new ArgumentNullException(nameof(items));
+
+		await foreach(var item in items.WithCancellation(cancellation))
+		{
+			if(item == null)
+				continue;
+
+			var dictionary = GetDictionary<T>(item);
+
+			if(handle != null)
+				await handle(dictionary, cancellation);
+
+			yield return dictionary;
 		}
 	}
 	#endregion
@@ -614,7 +651,6 @@ internal class GenericDictionary(IDictionary<string, object> dictionary) : IData
 	}
 
 	public object GetValue(string name) => _dictionary[name];
-
 	public TValue GetValue<TValue>(string name, TValue defaultValue)
 	{
 		if(_dictionary.TryGetValue(name, out var value))

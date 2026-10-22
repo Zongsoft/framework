@@ -24,7 +24,7 @@ This package defines provider-neutral contracts for locating report definitions,
 | report | `IReport` | provider-backed document with parameters, data locator, render and export operations |
 | resource | `IReportResource` | named embedded/external asset used by a report |
 | data model | `IReportDataModel` | describes source, schema, paging, and provider settings |
-| locator/loader | `IReportDataLocator`, `IReportDataLoader` | selects a loader and materializes report data |
+| locator/loader | `IReportDataLocator`, `IReportDataLoader` | selects a loader and asynchronously obtains report data |
 | repository/archive | `IReportRepository`, `IReportArchiveLocator` | persists definitions or finds generated output |
 
 Rendering produces the report's presentation format; exporting produces a selected interchange/output format. Exact options and supported formats belong to the provider.
@@ -39,20 +39,26 @@ Also install a reporting provider that implements `IReportResourceResolver` and 
 
 ## Definition Example
 
-The framework's [FileReportDescriptor](src/ReportDescriptor.cs) is a concrete reference for opening a definition through the framework file system. Its `Open` implementation is:
+Open a template asynchronously through a descriptor and dispose the stream after use:
 
 ```csharp
-public Stream Open()
-{
-	return Zongsoft.IO.FileSystem.File.Open(this.FilePath, FileMode.Open, FileAccess.Read);
-}
+var descriptor = new FileReportDescriptor("templates/sales.rdlx");
+await using var stream = await descriptor.OpenAsync(cancellation);
 ```
 
-This is a source excerpt, not a bundled report demo. Neither this package nor the Grapecity adapter includes a ready-to-run report definition. Supply a trusted definition supported by your deployed provider; its format, data sources, and parameters must come from that actual definition.
+This package does not bundle a ready-to-run report definition. Supply a trusted template supported by your chosen provider, then use that provider's opening API to obtain IReport. The actual definition determines its format, data sources, and parameters.
 
-A descriptor only opens the definition; it does not instantiate a report. Use the provider's report-opening API (for example, [Grapecity's `Report.Open`](../externals/grapecity/README.md)) to obtain an `IReport`. `IReportResourceResolver.Resolve` instead produces an `IReportResource` for an asset such as an image; it is not a report factory. Only call rendering/export operations that the chosen provider actually implements.
+Descriptors open templates; IReportResourceResolver.ResolveAsync parses assets such as images. Only call rendering and export operations implemented by the selected provider.
 
 > 💡 Keep business queries behind `IReportDataLoader`. A template should name a data model and parameters, not embed deployment credentials or unrestricted ad-hoc access.
+
+## Asynchronous Data Loading
+
+Call `await loader.LoadAsync(report, model, cancellation)` to obtain data. The returned object can be an asynchronous query result; the report provider must consume it asynchronously before passing ready data to a rendering API that requires an in-memory collection.
+
+The current GrapeCity adapter is incompatible with this version's asynchronous loading, location, and storage contracts and cannot be used with it.
+
+Template and resource lookup, repository creation/update/deletion, and report saving use cancellable Async methods. IReportArchiveLocator.OpenAsync returns ReportArchiveResult: default means no archive; a missing file path can still yield valid Archive metadata; callers own a non-null Stream and dispose it with await using.
 
 ## Lifecycle and Limits
 

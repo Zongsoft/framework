@@ -28,10 +28,12 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Externals.Wechat;
 
 public interface IAccountProvider
 {
-	Account GetAccount(string code, AccountType type);
+	ValueTask<Account> GetAccountAsync(string code, AccountType type, CancellationToken cancellation = default);
 }

@@ -42,28 +42,28 @@ namespace Zongsoft.Data;
 
 /// <summary>表示数据访问的抽象基类。</summary>
 [System.Reflection.DefaultMember(nameof(Filters))]
-public abstract partial class DataAccessBase : IDataAccess, IDisposable
+public abstract partial class DataAccessBase : IDataAccess, IAsyncDisposable
 {
 	#region 事件定义
-	public event EventHandler<DataAccessErrorEventArgs> Error;
-	public event EventHandler<DataExecutedEventArgs> Executed;
-	public event EventHandler<DataExecutingEventArgs> Executing;
-	public event EventHandler<DataExistedEventArgs> Existed;
-	public event EventHandler<DataExistingEventArgs> Existing;
-	public event EventHandler<DataAggregatedEventArgs> Aggregated;
-	public event EventHandler<DataAggregatingEventArgs> Aggregating;
-	public event EventHandler<DataImportedEventArgs> Imported;
-	public event EventHandler<DataImportingEventArgs> Importing;
-	public event EventHandler<DataDeletedEventArgs> Deleted;
-	public event EventHandler<DataDeletingEventArgs> Deleting;
-	public event EventHandler<DataInsertedEventArgs> Inserted;
-	public event EventHandler<DataInsertingEventArgs> Inserting;
-	public event EventHandler<DataUpsertedEventArgs> Upserted;
-	public event EventHandler<DataUpsertingEventArgs> Upserting;
-	public event EventHandler<DataUpdatedEventArgs> Updated;
-	public event EventHandler<DataUpdatingEventArgs> Updating;
-	public event EventHandler<DataSelectedEventArgs> Selected;
-	public event EventHandler<DataSelectingEventArgs> Selecting;
+	public event Func<object, DataAccessErrorEventArgs, CancellationToken, ValueTask> Error;
+	public event Func<object, DataExecutedEventArgs, CancellationToken, ValueTask> Executed;
+	public event Func<object, DataExecutingEventArgs, CancellationToken, ValueTask> Executing;
+	public event Func<object, DataExistedEventArgs, CancellationToken, ValueTask> Existed;
+	public event Func<object, DataExistingEventArgs, CancellationToken, ValueTask> Existing;
+	public event Func<object, DataAggregatedEventArgs, CancellationToken, ValueTask> Aggregated;
+	public event Func<object, DataAggregatingEventArgs, CancellationToken, ValueTask> Aggregating;
+	public event Func<object, DataImportedEventArgs, CancellationToken, ValueTask> Imported;
+	public event Func<object, DataImportingEventArgs, CancellationToken, ValueTask> Importing;
+	public event Func<object, DataDeletedEventArgs, CancellationToken, ValueTask> Deleted;
+	public event Func<object, DataDeletingEventArgs, CancellationToken, ValueTask> Deleting;
+	public event Func<object, DataInsertedEventArgs, CancellationToken, ValueTask> Inserted;
+	public event Func<object, DataInsertingEventArgs, CancellationToken, ValueTask> Inserting;
+	public event Func<object, DataUpsertedEventArgs, CancellationToken, ValueTask> Upserted;
+	public event Func<object, DataUpsertingEventArgs, CancellationToken, ValueTask> Upserting;
+	public event Func<object, DataUpdatedEventArgs, CancellationToken, ValueTask> Updated;
+	public event Func<object, DataUpdatingEventArgs, CancellationToken, ValueTask> Updating;
+	public event Func<object, DataSelectedEventArgs, CancellationToken, ValueTask> Selected;
+	public event Func<object, DataSelectingEventArgs, CancellationToken, ValueTask> Selecting;
 	#endregion
 
 	#region 常量定义
@@ -73,6 +73,8 @@ public abstract partial class DataAccessBase : IDataAccess, IDisposable
 
 	#region 私有变量
 	private volatile int _disposing;
+	private readonly object _disposeSync = new();
+	private Task _disposal;
 	#endregion
 
 	#region 成员字段
@@ -133,8 +135,8 @@ public abstract partial class DataAccessBase : IDataAccess, IDisposable
 		return name;
 	}
 
-	protected virtual void OnFiltering(IDataAccessContextBase context) => _filters.InvokeFiltering(context);
-	protected virtual void OnFiltered(IDataAccessContextBase context) => _filters.InvokeFiltered(context);
+	protected virtual ValueTask OnFilteringAsync(IDataAccessContextBase context, CancellationToken cancellation) => _filters.InvokeFilteringAsync(context, cancellation);
+	protected virtual ValueTask OnFilteredAsync(IDataAccessContextBase context, CancellationToken cancellation) => _filters.InvokeFilteredAsync(context, cancellation);
 	#endregion
 
 	#region 抽象方法
@@ -143,7 +145,7 @@ public abstract partial class DataAccessBase : IDataAccess, IDisposable
 	protected abstract DataExecuteContextBase CreateExecuteContext(string name, bool isScalar, Type resultType, IEnumerable<Parameter> parameters, IDataExecuteOptions options);
 	protected abstract DataExistContextBase CreateExistContext(string name, ICondition criteria, IDataExistsOptions options);
 	protected abstract DataAggregateContextBase CreateAggregateContext(string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options);
-	protected abstract DataImportContextBase CreateImportContext(string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options);
+	protected abstract DataImportContextBase CreateImportContext(string name, object data, IEnumerable<string> members, IDataImportOptions options);
 	protected abstract DataDeleteContextBase CreateDeleteContext(string name, ICondition criteria, ISchema schema, IDataDeleteOptions options);
 	protected abstract DataInsertContextBase CreateInsertContext(string name, bool isMultiple, object data, ISchema schema, IDataInsertOptions options);
 	protected abstract DataUpsertContextBase CreateUpsertContext(string name, bool isMultiple, object data, ISchema schema, IDataUpsertOptions options);
@@ -152,155 +154,147 @@ public abstract partial class DataAccessBase : IDataAccess, IDisposable
 	#endregion
 
 	#region 激发事件
-	protected virtual void OnError(DataAccessErrorEventArgs args) => this.Error?.Invoke(this, args);
-	protected virtual void OnExecuted(DataExecuteContextBase context) => this.Executed?.Invoke(this, new DataExecutedEventArgs(context));
-	protected virtual bool OnExecuting(DataExecuteContextBase context)
+	protected virtual ValueTask OnErrorAsync(DataAccessErrorEventArgs args, CancellationToken cancellation) => this.RaiseAsync(this.Error, args, cancellation);
+	protected virtual ValueTask OnExecutedAsync(DataExecuteContextBase context, CancellationToken cancellation) => this.RaiseAsync(this.Executed, new DataExecutedEventArgs(context), cancellation);
+	protected virtual async ValueTask<bool> OnExecutingAsync(DataExecuteContextBase context, CancellationToken cancellation)
 	{
-		var e = this.Executing;
-		if(e == null)
-			return false;
-
 		var args = new DataExecutingEventArgs(context);
-		e(this, args);
+		await this.RaiseAsync(this.Executing, args, cancellation);
 		return args.Cancel;
 	}
 
-	protected virtual void OnExisted(DataExistContextBase context) => this.Existed?.Invoke(this, new DataExistedEventArgs(context));
-	protected virtual bool OnExisting(DataExistContextBase context)
+	protected virtual ValueTask OnExistedAsync(DataExistContextBase context, CancellationToken cancellation) => this.RaiseAsync(this.Existed, new DataExistedEventArgs(context), cancellation);
+	protected virtual async ValueTask<bool> OnExistingAsync(DataExistContextBase context, CancellationToken cancellation)
 	{
-		var e = this.Existing;
-		if(e == null)
-			return false;
-
 		var args = new DataExistingEventArgs(context);
-		e(this, args);
+		await this.RaiseAsync(this.Existing, args, cancellation);
 		return args.Cancel;
 	}
 
-	protected virtual void OnAggregated(DataAggregateContextBase context) => this.Aggregated?.Invoke(this, new DataAggregatedEventArgs(context));
-	protected virtual bool OnAggregating(DataAggregateContextBase context)
+	protected virtual ValueTask OnAggregatedAsync(DataAggregateContextBase context, CancellationToken cancellation) => this.RaiseAsync(this.Aggregated, new DataAggregatedEventArgs(context), cancellation);
+	protected virtual async ValueTask<bool> OnAggregatingAsync(DataAggregateContextBase context, CancellationToken cancellation)
 	{
-		var e = this.Aggregating;
-		if(e == null)
-			return false;
-
 		var args = new DataAggregatingEventArgs(context);
-		e(this, args);
+		await this.RaiseAsync(this.Aggregating, args, cancellation);
 		return args.Cancel;
 	}
 
-	protected virtual void OnImported(DataImportContextBase context) => this.Imported?.Invoke(this, new DataImportedEventArgs(context));
-	protected virtual bool OnImporting(DataImportContextBase context)
+	protected virtual ValueTask OnImportedAsync(DataImportContextBase context, CancellationToken cancellation) => this.RaiseAsync(this.Imported, new DataImportedEventArgs(context), cancellation);
+	protected virtual async ValueTask<bool> OnImportingAsync(DataImportContextBase context, CancellationToken cancellation)
 	{
-		var e = this.Importing;
-		if(e == null)
-			return false;
-
 		var args = new DataImportingEventArgs(context);
-		e(this, args);
+		await this.RaiseAsync(this.Importing, args, cancellation);
 		return args.Cancel;
 	}
 
-	protected virtual void OnDeleted(DataDeleteContextBase context) => this.Deleted?.Invoke(this, new DataDeletedEventArgs(context));
-	protected virtual bool OnDeleting(DataDeleteContextBase context)
+	protected virtual ValueTask OnDeletedAsync(DataDeleteContextBase context, CancellationToken cancellation) => this.RaiseAsync(this.Deleted, new DataDeletedEventArgs(context), cancellation);
+	protected virtual async ValueTask<bool> OnDeletingAsync(DataDeleteContextBase context, CancellationToken cancellation)
 	{
-		var e = this.Deleting;
-		if(e == null)
-			return false;
-
 		var args = new DataDeletingEventArgs(context);
-		e(this, args);
+		await this.RaiseAsync(this.Deleting, args, cancellation);
 		return args.Cancel;
 	}
 
-	protected virtual void OnInserted(DataInsertContextBase context) => this.Inserted?.Invoke(this, new DataInsertedEventArgs(context));
-	protected virtual bool OnInserting(DataInsertContextBase context)
+	protected virtual ValueTask OnInsertedAsync(DataInsertContextBase context, CancellationToken cancellation) => this.RaiseAsync(this.Inserted, new DataInsertedEventArgs(context), cancellation);
+	protected virtual async ValueTask<bool> OnInsertingAsync(DataInsertContextBase context, CancellationToken cancellation)
 	{
-		var e = this.Inserting;
-		if(e == null)
-			return false;
-
 		var args = new DataInsertingEventArgs(context);
-		e(this, args);
+		await this.RaiseAsync(this.Inserting, args, cancellation);
 		return args.Cancel;
 	}
 
-	protected virtual void OnUpserted(DataUpsertContextBase context) => this.Upserted?.Invoke(this, new DataUpsertedEventArgs(context));
-	protected virtual bool OnUpserting(DataUpsertContextBase context)
+	protected virtual ValueTask OnUpsertedAsync(DataUpsertContextBase context, CancellationToken cancellation) => this.RaiseAsync(this.Upserted, new DataUpsertedEventArgs(context), cancellation);
+	protected virtual async ValueTask<bool> OnUpsertingAsync(DataUpsertContextBase context, CancellationToken cancellation)
 	{
-		var e = this.Upserting;
-		if(e == null)
-			return false;
-
 		var args = new DataUpsertingEventArgs(context);
-		e(this, args);
+		await this.RaiseAsync(this.Upserting, args, cancellation);
 		return args.Cancel;
 	}
 
-	protected virtual void OnUpdated(DataUpdateContextBase context) => this.Updated?.Invoke(this, new DataUpdatedEventArgs(context));
-	protected virtual bool OnUpdating(DataUpdateContextBase context)
+	protected virtual ValueTask OnUpdatedAsync(DataUpdateContextBase context, CancellationToken cancellation) => this.RaiseAsync(this.Updated, new DataUpdatedEventArgs(context), cancellation);
+	protected virtual async ValueTask<bool> OnUpdatingAsync(DataUpdateContextBase context, CancellationToken cancellation)
 	{
-		var e = this.Updating;
-		if(e == null)
-			return false;
-
 		var args = new DataUpdatingEventArgs(context);
-		e(this, args);
+		await this.RaiseAsync(this.Updating, args, cancellation);
 		return args.Cancel;
 	}
 
-	protected virtual void OnSelected(DataSelectContextBase context) => this.Selected?.Invoke(this, new DataSelectedEventArgs(context));
-	protected virtual bool OnSelecting(DataSelectContextBase context)
+	protected virtual ValueTask OnSelectedAsync(DataSelectContextBase context, CancellationToken cancellation) => this.RaiseAsync(this.Selected, new DataSelectedEventArgs(context), cancellation);
+	protected virtual async ValueTask<bool> OnSelectingAsync(DataSelectContextBase context, CancellationToken cancellation)
 	{
-		var e = this.Selecting;
-		if(e == null)
-			return false;
-
 		var args = new DataSelectingEventArgs(context);
-		e(this, args);
+		await this.RaiseAsync(this.Selecting, args, cancellation);
 		return args.Cancel;
 	}
 	#endregion
 
 	#region 处置方法
-	public void Dispose()
+	public ValueTask DisposeAsync()
 	{
-		var disposing = Interlocked.CompareExchange(ref _disposing, DISPOSING, 0);
-		if(disposing != 0)
-			return;
+		TaskCompletionSource completion;
 
-		try
+		lock(_disposeSync)
 		{
-			this.Dispose(true);
-			GC.SuppressFinalize(this);
+			if(_disposal != null)
+				return new ValueTask(_disposal);
+
+			_disposing = DISPOSING;
+			completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+			_disposal = completion.Task;
 		}
-		finally
-		{
-			_disposing = DISPOSED;
-		}
+
+		_ = this.CompleteDisposeAsync(completion);
+		return new ValueTask(completion.Task);
 	}
 
-	protected virtual void Dispose(bool disposing)
+	protected virtual async ValueTask DisposeAsyncCore()
 	{
-		var cancellation = Interlocked.Exchange(ref _cancellation, null);
+		using var cancellation = Interlocked.Exchange(ref _cancellation, null);
 
 		if(cancellation != null)
+			await cancellation.CancelAsync();
+	}
+
+	private async Task CompleteDisposeAsync(TaskCompletionSource completion)
+	{
+		try
 		{
-			cancellation.Cancel();
-			cancellation.Dispose();
+			await this.DisposeAsyncCore();
+			GC.SuppressFinalize(this);
+			_disposing = DISPOSED;
+			completion.TrySetResult();
+		}
+		catch(Exception exception)
+		{
+			_disposing = DISPOSED;
+			completion.TrySetException(exception);
 		}
 	}
 	#endregion
 
 	#region 私有方法
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	static int GetRecordsAffected(object value) => value == null || System.Convert.IsDBNull(value) ? 0 : (int)System.Convert.ChangeType(value, typeof(int));
-	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private static IEnumerable<T> ToEnumerable<T>(object result) => Collections.Enumerable.Enumerate<T>(result);
-	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private static IAsyncEnumerable<T> ToAsyncEnumerable<T>(object result, CancellationToken cancellation) => result is IAsyncEnumerable<T> enumerable ? enumerable : Collections.Enumerable.EnumerateAsync<T>(result, cancellation);
-	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private void EnsureDisposed() => ObjectDisposedException.ThrowIf(this.IsDisposed, this);
+
+	private async ValueTask RaiseAsync<TArgs>(Func<object, TArgs, CancellationToken, ValueTask> handlers, TArgs args, CancellationToken cancellation)
+	{
+		if(handlers == null)
+			return;
+
+		foreach(Func<object, TArgs, CancellationToken, ValueTask> handler in handlers.GetInvocationList())
+			await handler(this, args, cancellation);
+	}
+
+	private static IAsyncEnumerable<T> ToAsyncEnumerable<T>(object result, CancellationToken cancellation)
+	{
+		if(result is IAsyncEnumerable<T> enumerable)
+			return enumerable;
+
+		if(result != null && (Collections.Enumerable.IsAsyncEnumerable(result) || result is not IEnumerable))
+			throw new InvalidOperationException(string.Format(Properties.Resources.Conversion_Type_Message, result.GetType(), typeof(IAsyncEnumerable<T>)));
+
+		return Collections.Enumerable.EnumerateAsync<T>(result, cancellation);
+	}
 	#endregion
 
 	#region 嵌套子类
@@ -322,12 +316,8 @@ public abstract partial class DataAccessBase : IDataAccess, IDisposable
 		#endregion
 
 		#region 公共方法
-		public long Increase(string name, string field, int interval = 1) => this.Increase(GetProperty(name, field), interval);
-		public abstract long Increase(Metadata.IDataEntitySimplexProperty property, int interval = 1);
-
 		public ValueTask<long> IncreaseAsync(string name, string field, CancellationToken cancellation = default) => this.IncreaseAsync(name, field, 1, cancellation);
 		public ValueTask<long> IncreaseAsync(string name, string field, int interval, CancellationToken cancellation = default) => this.IncreaseAsync(GetProperty(name, field), interval, cancellation);
-
 		public ValueTask<long> IncreaseAsync(Metadata.IDataEntitySimplexProperty property, CancellationToken cancellation = default) => this.IncreaseAsync(property, 1, cancellation);
 		public abstract ValueTask<long> IncreaseAsync(Metadata.IDataEntitySimplexProperty property, int interval, CancellationToken cancellation = default);
 		#endregion

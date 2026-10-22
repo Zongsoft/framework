@@ -37,6 +37,5 @@ namespace Zongsoft.Data.Common;
 /// <remarks>注意：数据导入即不参与环境事务也不支持数据事务。</remarks>
 public interface IDataImporter
 {
-	void Import(DataImportContext context);
 	ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation = default);
 }

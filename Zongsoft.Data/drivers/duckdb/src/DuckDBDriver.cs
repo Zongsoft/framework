@@ -66,7 +66,7 @@ public partial class DuckDBDriver : DataDriverBase
 	#endregion
 
 	#region 公共方法
-	public override Exception OnError(IDataAccessContext context, Exception exception)
+	public override ValueTask<Exception> OnErrorAsync(IDataAccessContext context, Exception exception, CancellationToken cancellation = default)
 	{
 		if(exception is DuckDBException error)
 		{
@@ -77,7 +77,7 @@ public partial class DuckDBDriver : DataDriverBase
 			}
 		}
 
-		return exception;
+		return new ValueTask<Exception>(exception);
 	}
 
 	public override DbCommand CreateCommand() => new DuckDBCommandAdapter();
@@ -109,6 +109,18 @@ public partial class DuckDBDriver : DataDriverBase
 		{
 			using var reader = base.ExecuteDbDataReader(CommandBehavior.SingleResult | CommandBehavior.SingleRow);
 			return reader.Read() && reader.FieldCount > 0 ? reader.GetValue(0) : null;
+		}
+
+		public override async Task<object> ExecuteScalarAsync(CancellationToken cancellation)
+		{
+			await using var reader = await this.ExecuteReaderAsync(CommandBehavior.SingleResult | CommandBehavior.SingleRow, cancellation).ConfigureAwait(false);
+			return await reader.ReadAsync(cancellation).ConfigureAwait(false) && reader.FieldCount > 0 ? reader.GetValue(0) : null;
+		}
+
+		protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellation)
+		{
+			var reader = await base.ExecuteDbDataReaderAsync(behavior, cancellation).ConfigureAwait(false);
+			return reader is DataReader ? reader : new DataReader(reader);
 		}
 
 		protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) => new DataReader(base.ExecuteDbDataReader(behavior));
@@ -188,6 +200,7 @@ public partial class DuckDBDriver : DataDriverBase
 
 			public override void Close() => _reader.Close();
 			public override Task CloseAsync() => _reader.CloseAsync();
+			public override ValueTask DisposeAsync() => _reader.DisposeAsync();
 			protected override void Dispose(bool disposing)
 			{
 				if(disposing)

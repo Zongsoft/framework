@@ -30,6 +30,8 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Npgsql;
 
@@ -64,52 +66,19 @@ public partial class PostgreSqlDriver : DataDriverBase
 	#endregion
 
 	#region 公共方法
-	public override Exception OnError(IDataAccessContext context, Exception exception)
+	public override async ValueTask<Exception> OnErrorAsync(IDataAccessContext context, Exception exception, CancellationToken cancellation = default)
 	{
-		if(exception is NpgsqlException error)
+		if(exception is PostgresException error)
 		{
-			switch(error.ErrorCode)
+			switch(error.SqlState)
 			{
-				case 1406:
-					/*
-					 * 参考文档：https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_data_too_long
-					 */
-					var index = error.Message.IndexOf('\'');
-
-					if(index >= 0)
-					{
-						var last = error.Message.IndexOf('\'', index + 1);
-						var name = error.Message.Substring(index + 1, last - index);
-						return new DataArgumentException(name, error.Message);
-					}
-
-					break;
-				case 1062:
-				case 1586:
-					/*
-					 * 参考文档：唯一约束冲突
-					 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_dup_entry
-					 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_dup_entry_with_key_name
-					 */
-					if(TryGetConstraint(error.Message, out var table, out var key, out var value))
-					{
-						(var kind, var fields) = GetIndexer(context, table, key);
-						return new DataConstraintException(NAME, error.ErrorCode, kind, key, value, table, fields);
-					}
-
-					return new DataConflictException(NAME, error.ErrorCode, null, null, error);
-				case 1216:
-				case 1217:
-				case 1451:
-				case 1452:
-					/*
-					 * 参考文档：外键引用约束
-					 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_no_referenced_row
-					 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_row_is_referenced
-					 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_row_is_referenced_2
-					 * https://dev.mysql.com/doc/mysql-errors/8.0/en/server-error-reference.html#error_er_no_referenced_row_2
-					 */
-					return new DataConflictException(NAME, error.ErrorCode, null, null, error);
+				case PostgresErrorCodes.StringDataRightTruncation:
+					return new DataArgumentException(error.ColumnName, error);
+				case PostgresErrorCodes.UniqueViolation:
+					(var kind, var fields) = await GetIndexerAsync(context, error.SchemaName, error.TableName, error.ConstraintName, cancellation).ConfigureAwait(false);
+					return new DataConstraintException(NAME, 23505, kind, error.ConstraintName, null, error.TableName, fields, error);
+				case PostgresErrorCodes.ForeignKeyViolation:
+					return new DataConflictException(NAME, 23503, error.ConstraintName, null, error);
 			}
 		}
 
@@ -134,119 +103,49 @@ public partial class PostgreSqlDriver : DataDriverBase
 	#endregion
 
 	#region 私有方法
-	private static bool TryGetConstraint(string message, out string table, out string name, out string value)
+	private static async ValueTask<(DataConstraintKind, string[])> GetIndexerAsync(IDataAccessContext context, string schemaName, string tableName, string indexName, CancellationToken cancellation)
 	{
-		table = null;
-		name = null;
-		value = null;
-
-		if(string.IsNullOrEmpty(message))
-			return false;
-
-		var end = message.LastIndexOf('\'');
-		var start = end > 0 ? message.LastIndexOf('\'', end - 1) : -1;
-
-		if(start > 0 && end > 0)
-		{
-			var constraint = message.Substring(start + 1, end - start - 1);
-
-			if(constraint != null)
-			{
-				var index = constraint.IndexOf('.');
-
-				if(index > 0)
-				{
-					table = constraint[..index];
-					name = constraint[(index + 1)..];
-				}
-				else
-				{
-					table = null;
-					name = constraint;
-				}
-			}
-
-			end = message.LastIndexOf('\'', start - 1);
-			start = message.IndexOf('\'');
-
-			if(end > 0 && start > 0 && start < end)
-				value = message.Substring(start + 1, end - start - 1);
-
-			return true;
-		}
-
-		return false;
-	}
-
-	private static (DataConstraintKind, string[]) GetIndexer(IDataAccessContext context, string tableName, string indexName)
-	{
-		if(context == null || context.Source == null)
-			return default;
-
-		if(string.IsNullOrEmpty(tableName) || string.IsNullOrEmpty(indexName))
+		if(context?.Source == null || string.IsNullOrEmpty(schemaName) || string.IsNullOrEmpty(tableName) || string.IsNullOrEmpty(indexName))
 			return default;
 
 		try
 		{
-			var table = context.Source.GetSchema("Indexes");
-			var rows = table.Select($"TABLE_NAME='{tableName}' AND INDEX_NAME='{indexName}'");
-			if(rows == null || rows.Length == 0)
-				return default;
+			await using var connection = await DataConnectorManager.GetConnector(context.Source).ConnectAsync(cancellation).ConfigureAwait(false);
+			await using var command = connection.CreateCommand();
 
-			var isUnique = rows[0].Field<bool>("UNIQUE");
-			var isPrimary = rows[0].Field<bool>("PRIMARY");
+			command.CommandText = """
+				SELECT x.indisprimary,
+					CASE WHEN x.indexprs IS NULL THEN ARRAY(
+						SELECT a.attname::text
+						FROM pg_catalog.unnest(x.indkey) WITH ORDINALITY AS k(number, position)
+						JOIN pg_catalog.pg_attribute AS a ON a.attrelid = x.indrelid AND a.attnum = k.number
+						WHERE k.position <= x.indnkeyatts
+						ORDER BY k.position
+					) ELSE ARRAY[]::text[] END
+				FROM pg_catalog.pg_index AS x
+				JOIN pg_catalog.pg_class AS t ON t.oid = x.indrelid
+				JOIN pg_catalog.pg_namespace AS n ON n.oid = t.relnamespace
+				JOIN pg_catalog.pg_class AS i ON i.oid = x.indexrelid
+				WHERE n.nspname = @schema AND t.relname = @table AND i.relname = @index AND x.indisunique
+				""";
 
-			table = context.Source.GetSchema("IndexColumns");
-			rows = table.Select($"TABLE_NAME='{tableName}' AND INDEX_NAME='{indexName}'", "ORDINAL_POSITION");
+			command.Parameters.Add(new NpgsqlParameter("schema", schemaName));
+			command.Parameters.Add(new NpgsqlParameter("table", tableName));
+			command.Parameters.Add(new NpgsqlParameter("index", indexName));
 
-			var result = new string[rows.Length];
-			for(int i = 0; i < rows.Length; i++)
-			{
-				result[i] = rows[i].Field<string>("COLUMN_NAME");
-			}
+			await using var reader = await command.ExecuteReaderAsync(CommandBehavior.SingleRow, cancellation).ConfigureAwait(false);
+			if(await reader.ReadAsync(cancellation).ConfigureAwait(false))
+				return (reader.GetBoolean(0) ? DataConstraintKind.PrimaryKey : DataConstraintKind.Unique, reader.GetFieldValue<string[]>(1));
 
-			return (isPrimary ? DataConstraintKind.PrimaryKey : DataConstraintKind.Unique, result);
+			return default;
+		}
+		catch(OperationCanceledException) when(cancellation.IsCancellationRequested)
+		{
+			throw;
 		}
 		catch
 		{
-			return default;
-		}
-	}
-
-	private static (string, string[], string, string[]) GetForeignKey(IDataAccessContext context, string tableName, string foreignKey)
-	{
-		if(context == null || context.Source == null)
-			return default;
-
-		if(string.IsNullOrEmpty(tableName) || string.IsNullOrEmpty(foreignKey))
-			return default;
-
-		try
-		{
-			var table = context.Source.GetSchema("KeyColumnUsage");
-			var rows = table.Select($"TABLE_NAME='{tableName}' AND CONSTRAINT_NAME='{foreignKey}'", "ORDINAL_POSITION");
-			if(rows == null || rows.Length == 0)
-				return default;
-
-			var principalFields = new string[rows.Length];
-			var foreignerFields = new string[rows.Length];
-
-			for(int i = 0; i < rows.Length; i++)
-			{
-				principalFields[i] = rows[i].Field<string>("COLUMN_NAME");
-				foreignerFields[i] = rows[i].Field<string>("REFERENCED_COLUMN_NAME");
-			}
-
-			return new
-			(
-				rows[0].Field<string>("TABLE_NAME"),
-				principalFields,
-				rows[0].Field<string>("REFERENCED_TABLE_NAME"),
-				foreignerFields
-			);
-		}
-		catch
-		{
+			//元数据获取失败时保留服务器已提供的约束信息。
 			return default;
 		}
 	}

@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace Zongsoft.Components.States;
@@ -41,10 +43,12 @@ public interface IStateDiagram<TKey, TValue> where TKey : struct, IEquatable<TKe
 	#region 方法定义
 	bool CanTransfer(StateVector<TValue> state) => this.CanTransfer(state.Source, state.Destination);
 	bool CanTransfer(TValue source, TValue destination);
-	void Transfer(IStateContext<TKey, TValue> context, IStateHandler<TKey, TValue> handler);
+	ValueTask TransferAsync(IStateContext<TKey, TValue> context, IStateHandler<TKey, TValue> handler, CancellationToken cancellation = default);
 
-	State<TKey, TValue> GetState(TKey key);
-	bool SetState(TKey key, TValue value, string description, IDictionary<object, object> parameters = null);
-	bool SetState(State<TKey, TValue> state, string description, IDictionary<object, object> parameters = null);
+	ValueTask<State<TKey, TValue>> GetStateAsync(TKey key, CancellationToken cancellation = default);
+	ValueTask<bool> SetStateAsync(TKey key, TValue value, string description, CancellationToken cancellation = default) => this.SetStateAsync(key, value, description, null, cancellation);
+	ValueTask<bool> SetStateAsync(TKey key, TValue value, string description, IDictionary<object, object> parameters, CancellationToken cancellation = default);
+	ValueTask<bool> SetStateAsync(State<TKey, TValue> state, string description, CancellationToken cancellation = default) => this.SetStateAsync(state, description, null, cancellation);
+	ValueTask<bool> SetStateAsync(State<TKey, TValue> state, string description, IDictionary<object, object> parameters, CancellationToken cancellation = default);
 	#endregion
 }

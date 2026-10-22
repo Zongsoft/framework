@@ -10,7 +10,7 @@ using Zongsoft.Data.Tests.Models;
 namespace Zongsoft.Data.MsSql.Tests;
 
 [Collection("Database")]
-public class UpsertSequenceTest(DatabaseFixture database) : IDisposable
+public class UpsertSequenceTest(DatabaseFixture database) : IAsyncDisposable
 {
 	private readonly DatabaseFixture _database = database;
 
@@ -44,7 +44,7 @@ public class UpsertSequenceTest(DatabaseFixture database) : IDisposable
 			Condition.Equal(nameof(UserModel.UserId), model.UserId),
 			nameof(UserModel.Name));
 
-		var enumerator = result.GetAsyncEnumerator();
+		await using var enumerator = result.GetAsyncEnumerator();
 		Assert.True(await enumerator.MoveNextAsync());
 		var name = enumerator.Current;
 		await enumerator.DisposeAsync();
@@ -326,14 +326,14 @@ public class UpsertSequenceTest(DatabaseFixture database) : IDisposable
 		}
 	}
 
-	void IDisposable.Dispose()
+	async ValueTask IAsyncDisposable.DisposeAsync()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
 
 		var accessor = _database.Accessor;
-		accessor.Delete<MemberModel>(Condition.Like($"{nameof(MemberModel.Role)}.{nameof(RoleModel.Name)}", "$%"));
-		accessor.Delete<RoleModel>(Condition.Like(nameof(RoleModel.Name), "$%"));
-		accessor.Delete<UserModel>(Condition.Like(nameof(UserModel.Name), "$%"));
+		await accessor.DeleteAsync<MemberModel>(Condition.Like($"{nameof(MemberModel.Role)}.{nameof(RoleModel.Name)}", "$%"));
+		await accessor.DeleteAsync<RoleModel>(Condition.Like(nameof(RoleModel.Name), "$%"));
+		await accessor.DeleteAsync<UserModel>(Condition.Like(nameof(UserModel.Name), "$%"));
 	}
 }

@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Data;
 
@@ -38,6 +40,7 @@ public interface IDataValueBinder
 	/// <param name="context">当前数据访问上下文对象。</param>
 	/// <param name="data">待写入的数据项。</param>
 	/// <param name="value">待写入的属性值。</param>
+	/// <param name="cancellation">异步操作的取消令牌。</param>
 	/// <returns>返回写入的数据值。</returns>
-	object Bind(IDataMutateContextBase context, object data, object value);
+	ValueTask<object> BindAsync(IDataMutateContextBase context, object data, object value, CancellationToken cancellation = default);
 }

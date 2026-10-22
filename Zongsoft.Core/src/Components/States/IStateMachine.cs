@@ -28,15 +28,18 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace Zongsoft.Components.States;
 
-public interface IStateMachine : IDisposable
+public interface IStateMachine : IAsyncDisposable
 {
 	bool HasParameters { get; }
 	IDictionary<object, object> Parameters { get; }
 	IStateHandlerProvider Handlers { get; set; }
 
-	void Run<TKey, TValue>(State<TKey, TValue> state, string description, IEnumerable<KeyValuePair<object, object>> parameters = null) where TKey : struct, IEquatable<TKey> where TValue : struct;
+	ValueTask RunAsync<TKey, TValue>(State<TKey, TValue> state, string description, CancellationToken cancellation = default) where TKey : struct, IEquatable<TKey> where TValue : struct;
+	ValueTask RunAsync<TKey, TValue>(State<TKey, TValue> state, string description, IEnumerable<KeyValuePair<object, object>> parameters, CancellationToken cancellation = default) where TKey : struct, IEquatable<TKey> where TValue : struct;
 }

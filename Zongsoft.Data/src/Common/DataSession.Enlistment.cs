@@ -39,16 +39,10 @@ partial class DataSession
 	{
 		private readonly DataSession _session = session;
 
-		public void OnEnlist(Transactions.EnlistmentContext context)
-		{
-			if(GetCompletion(context.Phase, out var completion))
-				_session.CompleteAndWait(completion);
-		}
-
 		public async ValueTask OnEnlistAsync(Transactions.EnlistmentContext context, CancellationToken cancellation)
 		{
 			if(GetCompletion(context.Phase, out var completion))
-				await _session.CompleteAndWaitAsync(completion).ConfigureAwait(false);
+				await _session.RequestCompletionAsync(completion).ConfigureAwait(false);
 		}
 
 		private static bool GetCompletion(Transactions.EnlistmentPhase phase, out CompletionKind completion)

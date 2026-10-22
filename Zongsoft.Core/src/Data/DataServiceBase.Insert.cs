@@ -38,136 +38,21 @@ namespace Zongsoft.Data;
 partial class DataServiceBase<TModel>
 {
 	#region 公共方法
-	public int Insert(object data, DataInsertOptions options = null) => this.Insert(data, string.Empty, options);
-	public int Insert(object data, string schema, DataInsertOptions options = null)
-	{
-		//确认是否可以执行该操作
-		this.EnsureInsert(options);
-
-		if(data == null)
-			return 0;
-
-		//构建数据操作的选项对象
-		if(options == null)
-			options = new DataInsertOptions();
-
-		//进行授权验证
-		this.Authorize(DataServiceMethod.Insert(), options);
-
-		//解析数据模式表达式
-		var schematic = this.GetSchema(schema, data.GetType());
-
-		//将当前插入数据对象转换成数据字典
-		var dictionary = DataDictionary.GetDictionary<TModel>(data);
-
-		//验证待新增的数据
-		this.OnValidate(DataServiceMethod.Insert(), schematic, dictionary, options);
-
-		return this.OnInsert(dictionary, schematic, options);
-	}
-	#endregion
-
-	#region 保护方法
-	protected virtual int OnInsert(IDataDictionary<TModel> data, ISchema schema, DataInsertOptions options)
-	{
-		if(data == null || data.Data == null || !data.HasChanges())
-			return 0;
-
-		//执行数据引擎的插入操作
-		return this.DataAccess.Insert(this.Name, data, schema, options, ctx => this.OnInserting(ctx), ctx => this.OnInserted(ctx));
-	}
-	#endregion
-
-	#region 公共方法
-	public int InsertMany(IEnumerable items, DataInsertOptions options = null) => this.InsertMany(items, string.Empty, options);
-	public int InsertMany(IEnumerable items, string schema, DataInsertOptions options = null)
-	{
-		//确认是否可以执行该操作
-		this.EnsureInsert(options);
-
-		if(items == null)
-			return 0;
-
-		//构建数据操作的选项对象
-		if(options == null)
-			options = new DataInsertOptions();
-
-		//进行授权验证
-		this.Authorize(DataServiceMethod.InsertMany(), options);
-
-		//解析数据模式表达式
-		var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
-
-		//将当前新增数据集合对象转换成数据字典集合
-		var dictionaries = DataDictionary.GetDictionaries<TModel>(items, dictionary =>
-		{
-			//验证待新增的数据
-			this.OnValidate(DataServiceMethod.InsertMany(), schematic, dictionary, options);
-		});
-
-		return this.OnInsertMany(dictionaries, schematic, options);
-	}
-
-	public int InsertMany(string key, IEnumerable items, DataInsertOptions options = null) => this.InsertMany(key, items, null, options);
-	public int InsertMany(string key, IEnumerable items, string schema, DataInsertOptions options = null)
-	{
-		//确认是否可以执行该操作
-		this.EnsureInsert(options);
-
-		if(items == null)
-			return 0;
-
-		//构建数据操作的选项对象
-		if(options == null)
-			options = new DataInsertOptions();
-
-		//进行授权验证
-		this.Authorize(DataServiceMethod.InsertMany(), options);
-
-		//解析数据模式表达式
-		var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
-
-		//将当前新增数据集合对象转换成数据字典集合
-		var dictionaries = DataDictionary.GetDictionaries<TModel>(items, dictionary =>
-		{
-			//处理数据模型
-			this.OnModel(key, dictionary, options);
-
-			//验证待新增的数据
-			this.OnValidate(DataServiceMethod.InsertMany(), schematic, dictionary, options);
-		});
-
-		return this.OnInsertMany(dictionaries, schematic, options);
-	}
-	#endregion
-
-	#region 保护方法
-	protected virtual int OnInsertMany(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataInsertOptions options)
-	{
-		if(items == null)
-			return 0;
-
-		//执行数据引擎的插入操作
-		return this.DataAccess.InsertMany(this.Name, items, schema, options, ctx => this.OnInserting(ctx), ctx => this.OnInserted(ctx));
-	}
-	#endregion
-
-	#region 公共方法
 	public ValueTask<int> InsertAsync(object data, DataInsertOptions options = null, CancellationToken cancellation = default) => this.InsertAsync(data, string.Empty, options, cancellation);
-	public ValueTask<int> InsertAsync(object data, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
+	public async ValueTask<int> InsertAsync(object data, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
 	{
 		//确认是否可以执行该操作
 		this.EnsureInsert(options);
 
 		if(data == null)
-			return ValueTask.FromResult(0);
+			return 0;
 
 		//构建数据操作的选项对象
 		if(options == null)
 			options = new DataInsertOptions();
 
 		//进行授权验证
-		this.Authorize(DataServiceMethod.Insert(), options);
+		await this.AuthorizeAsync(DataServiceMethod.Insert(), options, cancellation);
 
 		//解析数据模式表达式
 		var schematic = this.GetSchema(schema, data.GetType());
@@ -176,9 +61,9 @@ partial class DataServiceBase<TModel>
 		var dictionary = DataDictionary.GetDictionary<TModel>(data);
 
 		//验证待新增的数据
-		this.OnValidate(DataServiceMethod.Insert(), schematic, dictionary, options);
+		await this.OnValidateAsync(DataServiceMethod.Insert(), schematic, dictionary, options, cancellation);
 
-		return this.OnInsertAsync(dictionary, schematic, options, cancellation);
+		return await this.OnInsertAsync(dictionary, schematic, options, cancellation);
 	}
 	#endregion
 
@@ -189,81 +74,154 @@ partial class DataServiceBase<TModel>
 			return ValueTask.FromResult(0);
 
 		//执行数据引擎的插入操作
-		return this.DataAccess.InsertAsync(this.Name, data, schema, options, ctx => this.OnInserting(ctx), ctx => this.OnInserted(ctx), cancellation);
+		return this.DataAccess.InsertAsync(this.Name, data, schema, options, this.OnInsertingAsync, this.OnInsertedAsync, cancellation);
 	}
 	#endregion
 
 	#region 公共方法
 	public ValueTask<int> InsertManyAsync(IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default) => this.InsertManyAsync(items, string.Empty, options, cancellation);
-	public ValueTask<int> InsertManyAsync(IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
+	public async ValueTask<int> InsertManyAsync(IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
 	{
 		//确认是否可以执行该操作
 		this.EnsureInsert(options);
 
 		if(items == null)
-			return ValueTask.FromResult(0);
+			return 0;
 
 		//构建数据操作的选项对象
 		if(options == null)
 			options = new DataInsertOptions();
 
 		//进行授权验证
-		this.Authorize(DataServiceMethod.InsertMany(), options);
+		await this.AuthorizeAsync(DataServiceMethod.InsertMany(), options, cancellation);
 
 		//解析数据模式表达式
 		var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
 
 		//将当前新增数据集合对象转换成数据字典集合
-		var dictionaries = DataDictionary.GetDictionaries<TModel>(items, dictionary =>
+		var dictionaries = DataDictionary.GetDictionariesAsync<TModel>(items, async (dictionary, token) =>
 		{
 			//验证待新增的数据
-			this.OnValidate(DataServiceMethod.InsertMany(), schematic, dictionary, options);
-		});
+			await this.OnValidateAsync(DataServiceMethod.InsertMany(), schematic, dictionary, options, token);
+		}, cancellation);
 
-		return this.OnInsertManyAsync(dictionaries, schematic, options, cancellation);
+		return await this.OnInsertManyAsync(dictionaries, schematic, options, cancellation);
 	}
 
 	public ValueTask<int> InsertManyAsync(string key, IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default) => this.InsertManyAsync(key, items, null, options, cancellation);
-	public ValueTask<int> InsertManyAsync(string key, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
+	public async ValueTask<int> InsertManyAsync(string key, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
 	{
 		//确认是否可以执行该操作
 		this.EnsureInsert(options);
 
 		if(items == null)
-			return ValueTask.FromResult(0);
+			return 0;
 
 		//构建数据操作的选项对象
 		if(options == null)
 			options = new DataInsertOptions();
 
 		//进行授权验证
-		this.Authorize(DataServiceMethod.InsertMany(), options);
+		await this.AuthorizeAsync(DataServiceMethod.InsertMany(), options, cancellation);
 
 		//解析数据模式表达式
 		var schematic = this.GetSchema(schema, Common.TypeExtension.GetElementType(items.GetType()));
 
 		//将当前新增数据集合对象转换成数据字典集合
-		var dictionaries = DataDictionary.GetDictionaries<TModel>(items, dictionary =>
+		var dictionaries = DataDictionary.GetDictionariesAsync<TModel>(items, async (dictionary, token) =>
 		{
 			//处理数据模型
 			this.OnModel(key, dictionary, options);
 
 			//验证待新增的数据
-			this.OnValidate(DataServiceMethod.InsertMany(), schematic, dictionary, options);
-		});
+			await this.OnValidateAsync(DataServiceMethod.InsertMany(), schematic, dictionary, options, token);
+		}, cancellation);
 
-		return this.OnInsertManyAsync(dictionaries, schematic, options, cancellation);
+		return await this.OnInsertManyAsync(dictionaries, schematic, options, cancellation);
 	}
 	#endregion
 
-	#region 保护方法
-	protected virtual ValueTask<int> OnInsertManyAsync(IEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataInsertOptions options, CancellationToken cancellation = default)
+
+	#region 便利取消
+	public ValueTask<int> InsertAsync(object data, CancellationToken cancellation) => this.InsertAsync(data, default(DataInsertOptions), cancellation);
+	public ValueTask<int> InsertAsync(object data, string schema, CancellationToken cancellation) => this.InsertAsync(data, schema, default(DataInsertOptions), cancellation);
+	public ValueTask<int> InsertManyAsync(IEnumerable items, CancellationToken cancellation) => this.InsertManyAsync(items, default(DataInsertOptions), cancellation);
+	public ValueTask<int> InsertManyAsync(IEnumerable items, string schema, CancellationToken cancellation) => this.InsertManyAsync(items, schema, default(DataInsertOptions), cancellation);
+	public ValueTask<int> InsertManyAsync(string key, IEnumerable items, CancellationToken cancellation) => this.InsertManyAsync(key, items, default(DataInsertOptions), cancellation);
+	public ValueTask<int> InsertManyAsync(string key, IEnumerable items, string schema, CancellationToken cancellation) => this.InsertManyAsync(key, items, schema, default(DataInsertOptions), cancellation);
+	#endregion
+
+	#region 异步数据源
+	public ValueTask<int> InsertManyAsync<T>(IAsyncEnumerable<T> items, DataInsertOptions options = null, CancellationToken cancellation = default) => this.InsertManyAsync<T>(items, string.Empty, options, cancellation);
+	public async ValueTask<int> InsertManyAsync<T>(IAsyncEnumerable<T> items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
+	{
+		//确认是否可以执行该操作
+		this.EnsureInsert(options);
+
+		if(items == null)
+			return 0;
+
+		//构建数据操作的选项对象
+		if(options == null)
+			options = new DataInsertOptions();
+
+		//进行授权验证
+		await this.AuthorizeAsync(DataServiceMethod.InsertMany(), options, cancellation);
+
+		//解析数据模式表达式
+		var schematic = this.GetSchema(schema, typeof(T));
+
+		//将当前新增数据集合对象转换成数据字典集合
+		var dictionaries = DataDictionary.GetDictionariesAsync<TModel, T>(items, async (dictionary, token) =>
+		{
+			//验证待新增的数据
+			await this.OnValidateAsync(DataServiceMethod.InsertMany(), schematic, dictionary, options, token);
+		}, cancellation);
+
+		return await this.OnInsertManyAsync(dictionaries, schematic, options, cancellation);
+	}
+	public ValueTask<int> InsertManyAsync<T>(string key, IAsyncEnumerable<T> items, DataInsertOptions options = null, CancellationToken cancellation = default) => this.InsertManyAsync<T>(key, items, null, options, cancellation);
+	public async ValueTask<int> InsertManyAsync<T>(string key, IAsyncEnumerable<T> items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default)
+	{
+		//确认是否可以执行该操作
+		this.EnsureInsert(options);
+
+		if(items == null)
+			return 0;
+
+		//构建数据操作的选项对象
+		if(options == null)
+			options = new DataInsertOptions();
+
+		//进行授权验证
+		await this.AuthorizeAsync(DataServiceMethod.InsertMany(), options, cancellation);
+
+		//解析数据模式表达式
+		var schematic = this.GetSchema(schema, typeof(T));
+
+		//将当前新增数据集合对象转换成数据字典集合
+		var dictionaries = DataDictionary.GetDictionariesAsync<TModel, T>(items, async (dictionary, token) =>
+		{
+			//处理数据模型
+			this.OnModel(key, dictionary, options);
+
+			//验证待新增的数据
+			await this.OnValidateAsync(DataServiceMethod.InsertMany(), schematic, dictionary, options, token);
+		}, cancellation);
+
+		return await this.OnInsertManyAsync(dictionaries, schematic, options, cancellation);
+	}
+	protected virtual ValueTask<int> OnInsertManyAsync(IAsyncEnumerable<IDataDictionary<TModel>> items, ISchema schema, DataInsertOptions options, CancellationToken cancellation = default)
 	{
 		if(items == null)
 			return ValueTask.FromResult(0);
 
 		//执行数据引擎的插入操作
-		return this.DataAccess.InsertManyAsync(this.Name, items, schema, options, ctx => this.OnInserting(ctx), ctx => this.OnInserted(ctx), cancellation);
+		return this.DataAccess.InsertManyAsync(this.Name, items, schema, options, this.OnInsertingAsync, this.OnInsertedAsync, cancellation);
 	}
+	public ValueTask<int> InsertManyAsync<T>(IAsyncEnumerable<T> items, CancellationToken cancellation) => this.InsertManyAsync<T>(items, default(DataInsertOptions), cancellation);
+	public ValueTask<int> InsertManyAsync<T>(IAsyncEnumerable<T> items, string schema, CancellationToken cancellation) => this.InsertManyAsync<T>(items, schema, default(DataInsertOptions), cancellation);
+	public ValueTask<int> InsertManyAsync<T>(string key, IAsyncEnumerable<T> items, CancellationToken cancellation) => this.InsertManyAsync<T>(key, items, default(DataInsertOptions), cancellation);
+	public ValueTask<int> InsertManyAsync<T>(string key, IAsyncEnumerable<T> items, string schema, CancellationToken cancellation) => this.InsertManyAsync<T>(key, items, schema, default(DataInsertOptions), cancellation);
 	#endregion
 }

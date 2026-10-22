@@ -41,7 +41,7 @@ This method-body fragment requires `Zongsoft.Components` and an application-supp
 
 ## Transaction provider
 
-`Transaction.Features` exposes a private provider that captures the current root transaction. `TransactionContext.Feature.cs` contains a private feature implementing `IFeature` and `IPredication`. It subscribes to the root transaction's `Completed` notification, after all enlisted callbacks finish, and maps `Committed` to permission and both `Aborted` and `Undetermined` to denial. The transaction condition ignores the event and additional parameters and depends only on its captured root transaction. Its decision is available before transaction completion returns; delivery continues asynchronously under dispatcher ownership.
+`Transaction.Features` exposes a private provider that captures the current root transaction. `TransactionContext.Feature.cs` contains a private feature implementing `IFeature` and `IPredication`. After all enlisted callbacks finish and before user `Completed` handlers run, it maps `Committed` to permission and both `Aborted` and `Undetermined` to denial. The transaction condition ignores the event and additional parameters and depends only on its captured root transaction. Its decision is available before transaction completion returns; delivery continues asynchronously under dispatcher ownership.
 
 A root transaction and its children share the same feature instance. The feature remains bound to that transaction rather than following later ambient changes. Repeated and concurrent waits observe the same completion; canceling one wait does not cancel the transaction or other waits. Committing does not wait for remote delivery.
 

@@ -28,7 +28,9 @@
  */
 
 using System;
-using System.Collections;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
@@ -43,16 +45,34 @@ public interface IDataSearcher
 	IDataSearcherConditioner Conditioner { get; }
 	#endregion
 
-	#region 公共方法
-	int Count(string keyword, IDataOptions options = null);
-	bool Exists(string keyword, IDataOptions options = null);
+	#region 异步方法
+	ValueTask<int> CountAsync(string keyword, IDataOptions options = null, CancellationToken cancellation = default);
+	ValueTask<bool> ExistsAsync(string keyword, IDataOptions options = null, CancellationToken cancellation = default);
+	IAsyncEnumerable<object> SearchAsync(string keyword, params Sorting[] sortings);
+	IAsyncEnumerable<object> SearchAsync(string keyword, Sorting[] sortings, CancellationToken cancellation = default);
+	IAsyncEnumerable<object> SearchAsync(string keyword, IDataOptions options, params Sorting[] sortings);
+	IAsyncEnumerable<object> SearchAsync(string keyword, IDataOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+	IAsyncEnumerable<object> SearchAsync(string keyword, Paging paging, params Sorting[] sortings);
+	IAsyncEnumerable<object> SearchAsync(string keyword, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
+	IAsyncEnumerable<object> SearchAsync(string keyword, string schema, params Sorting[] sortings);
+	IAsyncEnumerable<object> SearchAsync(string keyword, string schema, Sorting[] sortings, CancellationToken cancellation = default);
+	IAsyncEnumerable<object> SearchAsync(string keyword, string schema, IDataOptions options, params Sorting[] sortings);
+	IAsyncEnumerable<object> SearchAsync(string keyword, string schema, IDataOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+	IAsyncEnumerable<object> SearchAsync(string keyword, string schema, Paging paging, params Sorting[] sortings);
+	IAsyncEnumerable<object> SearchAsync(string keyword, string schema, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
+	IAsyncEnumerable<object> SearchAsync(string keyword, string schema, Paging paging, IDataOptions options, params Sorting[] sortings);
+	IAsyncEnumerable<object> SearchAsync(string keyword, string schema, Paging paging, IDataOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+	#endregion
 
-	IEnumerable Search(string keyword, params Sorting[] sortings);
-	IEnumerable Search(string keyword, IDataOptions options, params Sorting[] sortings);
-	IEnumerable Search(string keyword, Paging paging, params Sorting[] sortings);
-	IEnumerable Search(string keyword, string schema, params Sorting[] sortings);
-	IEnumerable Search(string keyword, string schema, IDataOptions options, params Sorting[] sortings);
-	IEnumerable Search(string keyword, string schema, Paging paging, params Sorting[] sortings);
-	IEnumerable Search(string keyword, string schema, Paging paging, IDataOptions options, params Sorting[] sortings);
+	#region 便利取消
+	ValueTask<int> CountAsync(string keyword, CancellationToken cancellation) => this.CountAsync(keyword, default(IDataOptions), cancellation);
+	ValueTask<bool> ExistsAsync(string keyword, CancellationToken cancellation) => this.ExistsAsync(keyword, default(IDataOptions), cancellation);
+	IAsyncEnumerable<object> SearchAsync(string keyword, CancellationToken cancellation) => this.SearchAsync(keyword, default(Sorting[]), cancellation);
+	IAsyncEnumerable<object> SearchAsync(string keyword, IDataOptions options, CancellationToken cancellation) => this.SearchAsync(keyword, options, default(Sorting[]), cancellation);
+	IAsyncEnumerable<object> SearchAsync(string keyword, Paging paging, CancellationToken cancellation) => this.SearchAsync(keyword, paging, default(Sorting[]), cancellation);
+	IAsyncEnumerable<object> SearchAsync(string keyword, string schema, CancellationToken cancellation) => this.SearchAsync(keyword, schema, default(Sorting[]), cancellation);
+	IAsyncEnumerable<object> SearchAsync(string keyword, string schema, IDataOptions options, CancellationToken cancellation) => this.SearchAsync(keyword, schema, options, default(Sorting[]), cancellation);
+	IAsyncEnumerable<object> SearchAsync(string keyword, string schema, Paging paging, CancellationToken cancellation) => this.SearchAsync(keyword, schema, paging, default(Sorting[]), cancellation);
+	IAsyncEnumerable<object> SearchAsync(string keyword, string schema, Paging paging, IDataOptions options, CancellationToken cancellation) => this.SearchAsync(keyword, schema, paging, options, default(Sorting[]), cancellation);
 	#endregion
 }

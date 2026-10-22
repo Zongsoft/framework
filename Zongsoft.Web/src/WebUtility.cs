@@ -70,7 +70,7 @@ public static class WebUtility
 		//如果数据是可分页类型则挂载其分页事件
 		if(data is IPageable pageable)
 		{
-			pageable.Paginated += OnPaginated;
+			pageable.Paginated += OnPaginatedAsync;
 		}
 		else
 		{
@@ -85,12 +85,13 @@ public static class WebUtility
 		//返回数据
 		return new OkObjectResult(data);
 
-		void OnPaginated(object sender, PagingEventArgs args)
+		ValueTask OnPaginatedAsync(object sender, PagingEventArgs args, CancellationToken cancellation)
 		{
 			if(sender is IPageable pageable)
-				pageable.Paginated -= OnPaginated;
+				pageable.Paginated -= OnPaginatedAsync;
 
 			controller.Response.Headers.SetPagination(args.Paging);
+			return ValueTask.CompletedTask;
 		}
 	}
 

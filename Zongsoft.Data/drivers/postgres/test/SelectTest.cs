@@ -22,9 +22,9 @@ public class SelectTest(DatabaseFixture database)
 
 		var accessor = _database.Accessor;
 		var users = accessor.SelectAsync<UserModel>();
-		Assert.NotEmpty(users);
+		Assert.NotEmpty(await Global.ToArrayAsync(users));
 
-		var enumerator = users.GetAsyncEnumerator();
+		await using var enumerator = users.GetAsyncEnumerator();
 		Assert.True(await enumerator.MoveNextAsync());
 		var user = enumerator.Current;
 		await enumerator.DisposeAsync();
@@ -35,15 +35,15 @@ public class SelectTest(DatabaseFixture database)
 	}
 
 	[Fact]
-	public void Select_CurrentReturnsSameModelInstance()
+	public async Task Select_CurrentReturnsSameModelInstance()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
 
 		var accessor = _database.Accessor;
-		using var enumerator = accessor.Select<UserModel>().GetEnumerator();
+		await using var enumerator = accessor.SelectAsync<UserModel>().GetAsyncEnumerator();
 
-		Assert.True(enumerator.MoveNext());
+		Assert.True(await enumerator.MoveNextAsync());
 		var user = enumerator.Current;
 
 		Assert.NotNull(user);
@@ -162,13 +162,13 @@ public class SelectTest(DatabaseFixture database)
 		var count = await accessor.InsertAsync(model, $"*,{nameof(RoleModel.Children)}{{*}}", DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 		Assert.Equal(3, count);
 
-		var members = accessor.SelectAsync<MemberModel>(
+		var members = await Global.ToArrayAsync(accessor.SelectAsync<MemberModel>(
 			Condition.Equal($"{nameof(MemberModel.Role)}.{nameof(RoleModel.Name)}", model.Name),
 			$"*, {nameof(MemberModel.Role)}{{*}}",
 			[
 				Sorting.Ascending(nameof(MemberModel.RoleId)),
 				Sorting.Ascending(nameof(MemberModel.MemberId))
-			]).ToBlockingEnumerable().ToArray();
+			]));
 
 		Assert.Equal(2, members.Length);
 
@@ -226,10 +226,9 @@ public class SelectTest(DatabaseFixture database)
 				DataInsertOptions.Sequence(DataSequenceBehavior.Never));
 			Assert.Equal(6, count);
 
-			var result = accessor.SelectAsync<RoleModel>(
+			var result = Assert.Single(await Global.ToArrayAsync(accessor.SelectAsync<RoleModel>(
 				roleCriteria,
-				$"*,{nameof(RoleModel.Children)}:2(~{nameof(MemberModel.MemberType)},~{nameof(MemberModel.MemberId)}){{*}}")
-				.ToBlockingEnumerable().Single();
+				$"*,{nameof(RoleModel.Children)}:2(~{nameof(MemberModel.MemberType)},~{nameof(MemberModel.MemberId)}){{*}}")));
 
 			Assert.NotNull(result.Children);
 			Assert.Collection(result.Children,
@@ -279,7 +278,7 @@ public class SelectTest(DatabaseFixture database)
 			$$"""*, {{nameof(UserModel.Parents)}}{*}""");
 		Assert.NotNull(users);
 
-		var enumerator = users.GetAsyncEnumerator();
+		await using var enumerator = users.GetAsyncEnumerator();
 		Assert.True(await enumerator.MoveNextAsync());
 		var user = enumerator.Current;
 
@@ -324,9 +323,8 @@ public class SelectTest(DatabaseFixture database)
 
 			Assert.Equal(1, await accessor.InsertAsync(employee));
 
-			var result = accessor.SelectAsync<Employee>(criteria,
-				$"{nameof(Employee.TenantId)},{nameof(Employee.UserId)},{nameof(Employee.Birthdate)},{nameof(Employee.Age)}")
-				.ToBlockingEnumerable().Single();
+			var result = Assert.Single(await Global.ToArrayAsync(accessor.SelectAsync<Employee>(criteria,
+				$"{nameof(Employee.TenantId)},{nameof(Employee.UserId)},{nameof(Employee.Birthdate)},{nameof(Employee.Age)}")));
 
 			Assert.Equal((short)expectedAge, result.Age);
 		}
@@ -362,7 +360,7 @@ public class SelectTest(DatabaseFixture database)
 			$$"""*, {{nameof(UserModel.Parents)}}{*, {{nameof(MemberModel.Role)}}{*} }""");
 		Assert.NotNull(users);
 
-		var enumerator = users.GetAsyncEnumerator();
+		await using var enumerator = users.GetAsyncEnumerator();
 		Assert.True(await enumerator.MoveNextAsync());
 		var user = enumerator.Current;
 
@@ -410,7 +408,7 @@ public class SelectTest(DatabaseFixture database)
 			$$"""*, {{nameof(UserModel.Roles)}}{*}""");
 		Assert.NotNull(users);
 
-		var enumerator = users.GetAsyncEnumerator();
+		await using var enumerator = users.GetAsyncEnumerator();
 		Assert.True(await enumerator.MoveNextAsync());
 		var user = enumerator.Current;
 

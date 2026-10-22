@@ -14,14 +14,9 @@
 
 [**Z**ongsoft.**D**ata.**D**uckDB](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/duckdb) is a low-level data engine driver in the [_**Z**ongsoft_](https://github.com/Zongsoft/framework) open-source framework. It provides access to [_**D**uckDB_](https://duckdb.org) and is transparent to upper-layer applications; deploy this plugin library to the application plugin directory to enable it.
 
-## Importer Implementation
+## Bulk Imports
 
-The DuckDB importer uses two writing strategies:
-
-1. For regular data types, it uses the [DuckDB.NET Appender](https://duckdb.net/docs/standard-appender.html) for bulk loading. The standard Appender requires values to match all physical table columns exactly in count, order, and type, while the Zongsoft data engine supports importing any selected subset of fields. The importer therefore creates a connection-local temporary table containing only the selected fields, bulk-appends the input rows to it, and then executes one `INSERT ... SELECT` statement to write them to the target table. This preserves field mapping and target-table defaults; when `IDataImportOptions.ConstraintIgnored` is enabled, the final statement uses `INSERT OR IGNORE`.
-2. For database-specific custom types represented by `DbType.Object`, the concrete DuckDB type cannot be determined safely at runtime for the Appender. The importer falls back to parameterized row-by-row `INSERT` statements so that DuckDB.NET can perform its normal parameter binding and conversion.
-
-Both strategies enlist in the ambient Zongsoft data transaction by default. They use an independent connection when `IDataImportOptions.TransactionSuppressed` is true, when no ambient transaction exists, or when the driver does not support transactions. An independent connection uses an internal transaction to keep the current import batch atomic and roll a failed batch back completely.
+Imports accept selected fields and preserve defaults for omitted target columns. Set `IDataImportOptions.ConstraintIgnored` to ignore supported constraint conflicts. Imports join the ambient Zongsoft transaction by default; `TransactionSuppressed` opts out. Without an ambient transaction, each import batch is atomic.
 
 ## When to Use DuckDB
 
@@ -52,7 +47,7 @@ A file database persists across connections; `DataSource=:memory:` is useful for
 
 The consumer obtains `IServiceProvider<IDataAccess>` through `ApplicationContext.Current.Services` or the application's `Module.Current.Services`, then selects the `Analytics` accessor. The engine chooses DuckDB from connection settings; business modules depend only on shared contracts.
 
-Obtaining an accessor does not prove query execution succeeded. Follow the [real Discussions composition in the Data guide](../../README.md#plugin-quickstart) through its module, mapping and services. That walkthrough does not establish Discussions compatibility with this driver: verify database structures, field types and required operations, rather than assuming a driver-name change makes the application portable. Business services use shared contracts instead of constructing database connections.
+See the [Data plugin example](../../README.md#plugin-quickstart) for host configuration and named accessors. Prepare tables and field types for the selected database, and use the operations supported by this driver. Application services access data through the public contracts.
 
 ## Minimal Connection Check
 
@@ -71,6 +66,8 @@ Console.WriteLine(await command.ExecuteScalarAsync());
 The result is 42. This low-level example deliberately owns its connection; engine-managed operations instead own sessions and transactions.
 
 ## Limits and Troubleshooting
+
+Use asynchronous data APIs for queries and imports, consume results with `await foreach`, and await transaction completion and disposal. DuckDB execution and bulk appends remain synchronous underneath these APIs.
 
 - Imported field names must match mappings and actual column types; defaults apply only to omitted target columns.
 - The connection adapter delegates transaction creation to DuckDB without an explicit ADO.NET isolation level; do not rely on requesting different isolation modes.

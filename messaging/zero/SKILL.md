@@ -9,7 +9,7 @@ description: 创建、审查、调试、测试或重构 messaging/zero 下的 Zo
 
 ## 从当前状态开始
 
-1. 阅读 [AGENTS.md](AGENTS.md)、[../AGENTS.md](../AGENTS.md)；诊断、规划或重构时阅读 [REFACTORING.zh-Hans.md](REFACTORING.zh-Hans.md)，使用其中结论前以当前源码重新核对。
+1. 阅读 [AGENTS.md](AGENTS.md)、[../AGENTS.md](../AGENTS.md)；诊断、规划或重构时阅读 [架构说明](ARCHITECTURE.zh-Hans.md)，使用其中结论前以当前源码重新核对。
 2. 编辑前检查 `git status --short`，不要覆盖或还原用户拥有的项目及部署文件变更。
 3. 只阅读任务相关的 Core 抽象：
 	- 队列：`MessageQueueBase`、`MessageConsumerBase`、`IMessageQueue`、`Message`、`MessageOptions`、`MessageReliability`。
@@ -105,7 +105,7 @@ dotnet test messaging\zero\test\Zongsoft.Messaging.ZeroMQ.Tests.csproj -f net10.
 
 ## 文档与样式
 
-- `README.md` 与 `README.zh-Hans.md` 面向使用者并保持同步；实现分析放在 `REFACTORING.zh-Hans.md`。
+- `README.md` 与 `README.zh-Hans.md` 面向使用者并保持同步；实现分析放在 `ARCHITECTURE.zh-Hans.md`。
 - 面向用户的异常和诊断文本放入 `src/Properties/Resources.resx`，并添加对应 `Resources.zh-Hans.resx`；协议 Token、Topic、Endpoint Scheme 和线字段名保持文化无关。
 - 仓库文本使用 CRLF，代码和代码示例使用 Tab；Unix 脚本按要求使用 LF。
 - 运行时行为变化时，同步 README 能力矩阵、投递语义、测试和实现评估状态。

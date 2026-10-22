@@ -28,7 +28,10 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Data.Common.Expressions;
 
@@ -55,16 +58,16 @@ public abstract class StatementBuilderBase : IStatementBuilder
 	#endregion
 
 	#region 公共方法
-	public virtual IEnumerable<IStatementBase> Build(IDataAccessContext context) => context.Method switch
+	public virtual IAsyncEnumerable<IStatementBase> BuildAsync(IDataAccessContext context, CancellationToken cancellation = default) => context.Method switch
 	{
-		DataAccessMethod.Select => this.GetBuilder(ref _select, this.CreateSelectStatementBuilder).Build((DataSelectContext)context),
-		DataAccessMethod.Delete => this.GetBuilder(ref _delete, this.CreateDeleteStatementBuilder).Build((DataDeleteContext)context),
-		DataAccessMethod.Insert => this.GetBuilder(ref _insert, this.CreateInsertStatementBuilder).Build((DataInsertContext)context),
-		DataAccessMethod.Update => this.GetBuilder(ref _update, this.CreateUpdateStatementBuilder).Build((DataUpdateContext)context),
-		DataAccessMethod.Upsert => this.GetBuilder(ref _upsert, this.CreateUpsertStatementBuilder).Build((DataUpsertContext)context),
-		DataAccessMethod.Exists => this.GetBuilder(ref _exist, this.CreateExistStatementBuilder).Build((DataExistContext)context),
-		DataAccessMethod.Execute => this.GetBuilder(ref _execution, this.CreateExecutionStatementBuilder).Build((DataExecuteContext)context),
-		DataAccessMethod.Aggregate => this.GetBuilder(ref _aggregate, this.CreateAggregateStatementBuilder).Build((DataAggregateContext)context),
+		DataAccessMethod.Select => this.GetBuilder(ref _select, this.CreateSelectStatementBuilder).BuildAsync((DataSelectContext)context, cancellation),
+		DataAccessMethod.Delete => this.GetBuilder(ref _delete, this.CreateDeleteStatementBuilder).BuildAsync((DataDeleteContext)context, cancellation),
+		DataAccessMethod.Insert => this.GetBuilder(ref _insert, this.CreateInsertStatementBuilder).BuildAsync((DataInsertContext)context, cancellation),
+		DataAccessMethod.Update => this.GetBuilder(ref _update, this.CreateUpdateStatementBuilder).BuildAsync((DataUpdateContext)context, cancellation),
+		DataAccessMethod.Upsert => this.GetBuilder(ref _upsert, this.CreateUpsertStatementBuilder).BuildAsync((DataUpsertContext)context, cancellation),
+		DataAccessMethod.Exists => this.GetBuilder(ref _exist, this.CreateExistStatementBuilder).BuildAsync((DataExistContext)context, cancellation),
+		DataAccessMethod.Execute => this.GetBuilder(ref _execution, this.CreateExecutionStatementBuilder).BuildAsync((DataExecuteContext)context, cancellation),
+		DataAccessMethod.Aggregate => this.GetBuilder(ref _aggregate, this.CreateAggregateStatementBuilder).BuildAsync((DataAggregateContext)context, cancellation),
 		_ => throw new DataException(string.Format(Properties.Resources.DataAccess_OperationUnsupported_Message, context.Method)),
 	};
 	#endregion

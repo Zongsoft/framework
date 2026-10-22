@@ -37,32 +37,6 @@ namespace Zongsoft.Data.Common;
 
 public class DataAggregateExecutor : IDataExecutor<AggregateStatement>
 {
-	#region 同步执行
-	public bool Execute(IDataAccessContext context, AggregateStatement statement)
-	{
-		if(context is DataAggregateContext ctx)
-			return this.OnExecute(ctx, statement);
-
-		throw new DataException(string.Format(Properties.Resources.DataExecutor_UnsupportedContext_Message, this.GetType().Name, context.GetType().Name));
-	}
-
-	protected virtual bool OnExecute(DataAggregateContext context, AggregateStatement statement)
-	{
-		//根据生成的脚本创建对应的数据命令
-		var command = context.Session.Build(context, statement);
-
-		//执行命令
-		var result = command.ExecuteScalar();
-
-		if(result == null || System.Convert.IsDBNull(result))
-			context.Result = null;
-		else
-			context.Result = result;
-
-		return true;
-	}
-	#endregion
-
 	#region 异步执行
 	public ValueTask<bool> ExecuteAsync(IDataAccessContext context, AggregateStatement statement, CancellationToken cancellation)
 	{
@@ -75,7 +49,7 @@ public class DataAggregateExecutor : IDataExecutor<AggregateStatement>
 	protected virtual async ValueTask<bool> OnExecuteAsync(DataAggregateContext context, AggregateStatement statement, CancellationToken cancellation)
 	{
 		//根据生成的脚本创建对应的数据命令
-		var command = context.Session.Build(context, statement);
+		await using var command = context.Session.Build(context, statement);
 
 		//执行命令
 		var result = await command.ExecuteScalarAsync(cancellation);

@@ -17,9 +17,9 @@
 
 ## 适用场景
 
-当 Zongsoft 数据模型存储于 TDengine 时选择本包。上层应用仍面向 `IDataAccess`/`IDataService<T>`；本包负责把表达式和数据变更翻译为对应方言，并通过 TDengine.Connector 创建连接。
+当 Zongsoft 数据模型存储于 TDengine 时选择本包。上层应用仍面向 `IDataAccess`/`IDataService<T>`；本驱动通过 WebSocket 访问 TDengine。
 
-TDengine 是支持 Native 与 WebSocket 连接的时序系统。超级表、标签、时间戳精度、协议选择和客户端/服务器版本兼容性都属于数据契约。
+本驱动仅支持 WebSocket，默认连接 taosAdapter 的 6041 端口；显式配置 Native 会被拒绝。超级表、标签、时间戳精度和服务器兼容性都属于数据契约。
 
 ## 安装与插件部署
 
@@ -37,13 +37,13 @@ dotnet add package Zongsoft.Data.TDengine
 		<connectionSettings default="Application">
 			<connectionSetting connectionSetting.name="Application"
 			                   driver="TDengine"
-			                   value="Server=127.0.0.1;Port=6030;Database=docs;UserName=docs_app;Password=REPLACE_WITH_TEST_PASSWORD;Protocol=Native" />
+			                   value="Server=127.0.0.1;Port=6041;Database=docs;UserName=docs_app;Password=REPLACE_WITH_TEST_PASSWORD;Protocol=WebSocket" />
 		</connectionSettings>
 	</option>
 </options>
 ```
 
-`driver` 不区分大小写，但建议使用规范拼写 `TDengine`。`value` 遵循 [Core 设置契约](../../../Zongsoft.Core/docs/settings.zh-Hans.md)，包含显式驱动参数和扩展属性。`GetOptions()` 将驱动参数映射为 TDengine.Connector 使用的原生选项；扩展属性保留在框架连接设置（`ConnectionSettings`）及其完整 `Value` 中。提供程序自身能力请查阅[提供程序文档](https://docs.tdengine.com/developer-guide/connectors-reference/csharp/)。
+`driver` 不区分大小写，但建议使用规范拼写 `TDengine`。`value` 遵循 [Core 设置契约](../../../Zongsoft.Core/docs/settings.zh-Hans.md)，包含显式驱动参数和扩展属性。连接配置只接受本驱动公开的设置项，WebSocket 连接要求 taosAdapter 可访问。
 
 > 💡 实体映射、条件、分页、事务和 `IDataAccess` 用法统一参阅 [Zongsoft.Data 指南](../../README.zh-Hans.md)。切换驱动不应迫使应用服务依赖提供程序连接类型。
 
@@ -64,15 +64,17 @@ var data = provider.GetService("Application")
 Console.WriteLine(data.Name);
 ```
 
-取得访问器不等于查询成功。真实业务装配请参阅 [Data 中的 Discussions 用例](../../README.zh-Hans.md#plugin-quickstart)，并沿其中的模块、映射及服务源码阅读。该用例不表示 Discussions 已兼容本驱动；数据库结构、字段类型和所需操作必须逐项验证，不能只改驱动名就推定可移植。业务服务通过公共契约调用，不自行构造数据库连接。
+宿主装配与具名访问器的用法见 [Data 插件示例](../../README.zh-Hans.md#plugin-quickstart)。准备与所选数据库匹配的表结构和字段类型，并使用本驱动支持的操作；业务服务通过公共契约访问数据。
 
 ## 运行行为
 
-本驱动提供数据库专属的语句构建器/访问器、命令参数化、执行基元与导入器。数据引擎根据具名连接设置选择它；在提供程序和操作支持时，驱动会加入环境数据事务。
+数据库操作通过 `IDataAccess` / `IDataService<T>` 的异步方法执行，查询结果使用 `await foreach` 消费；事务提交、回滚和资源释放均需要等待完成。导入支持内存集合与异步数据源，取消令牌传递给实际操作。 本驱动不支持数据库事务；环境事务不会使 TDengine 写入具备回滚能力。
 
 🚨 切勿提交生产连接字符串。请使用部署期配置或秘密提供程序、为数据库身份授予最小权限，并先在可丢弃数据库中验证破坏性变更。
 
 ## 兼容性与测试
+
+连接器依赖为社区维护的 [TDengine.Connector.Async 3.2.1.7](https://www.nuget.org/packages/TDengine.Connector.Async/3.2.1.7)，部署时使用与本驱动匹配的依赖版本。
 
 数据库行为无法完全移植。请在与生产相同的服务器/提供程序版本上验证标识符大小写、空值和比较规则、日期时间精度、生成值、事务语义与批量导入约束。仓库测试需要显式配置可丢弃数据库，不属于普通离线单元测试。
 
@@ -85,7 +87,7 @@ Console.WriteLine(data.Name);
 ## 单元测试
 
 > [!IMPORTANT]
-> 运行单元测试时，尤其是使用 Native 协议时，请确保本机安装的 TDengine 客户端与服务器的版本号及版本类型（社区版或企业版）保持一致，否则可能出现连接失败或协议不兼容等问题。例如，在 Windows x64 上测试 TDengine TSDB-OSS `3.4.2.2` 时，请安装 [TDengine TSDB-OSS 3.4.2.2 Windows x64 客户端](https://downloads.tdengine.com/tdengine-tsdb-oss/3.4.2.2/tdengine-tsdb-oss-client-3.4.2.2-windows-x64.exe)。其他平台或版本的客户端可前往 [TDengine 官方下载中心](https://tdengine.com/downloads/) 获取。
+> 数据库测试需要可访问的 TDengine 和 taosAdapter，并使用 WebSocket 端口。无需安装本机 taosc 客户端；服务器账号、数据库权限和映射仍须准备就绪。
 
 ## 插件化接入
 

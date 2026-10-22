@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>2.11.0</Version>
+		<Version>2.12.0</Version>
 		<Product>Zongsoft Data Driver for TDengine</Product>
 		<Description>This is a data driver for TDengine of the Zongsoft data engine.</Description>
 		<RootNamespace>Zongsoft.Data.TDengine</RootNamespace>
@@ -12,7 +12,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="TDengine.Connector" VersionOverride="3.2.1" />
+		<PackageReference Include="TDengine.Connector.Async" VersionOverride="3.2.1.7" />
 	</ItemGroup>
 
 	<ItemGroup>
@@ -35,8 +35,8 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.64.0" />
-				<PackageReference Include="Zongsoft.Data" VersionOverride="7.32.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.70.0" />
+				<PackageReference Include="Zongsoft.Data" VersionOverride="7.33.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
@@ -134,8 +134,8 @@ public class EnumerableTest
 		object secondSender = null;
 		PagingEventArgs firstObserved = null;
 		PagingEventArgs secondObserved = null;
-		firstPageable.Paginated += (sender, args) => (firstSender, firstObserved) = (sender, args);
-		secondPageable.Paginated += (sender, args) => (secondSender, secondObserved) = (sender, args);
+		firstPageable.Paginated += (sender, args, _) => { (firstSender, firstObserved) = (sender, args); return ValueTask.CompletedTask; };
+		secondPageable.Paginated += (sender, args, _) => { (secondSender, secondObserved) = (sender, args); return ValueTask.CompletedTask; };
 
 		var objectValues = await CollectAsync(objects);
 		var integerValues = await CollectAsync(integers);
@@ -274,14 +274,14 @@ public class EnumerableTest
 				var asynchronized = Enumerable.Asynchronize(asynchronizeSource);
 				result = asynchronized;
 				setSuppressed = value => asynchronizeSource.Suppressed = value;
-				enumerate = async () => Assert.Equal([1, 2], await CollectAsync(asynchronized));
+				enumerate = async () => { Assert.Equal([1, 2], await CollectAsync(asynchronized)); await asynchronizeSource.NotifyAsync(); };
 				break;
 			case PageableAdapter.EnumerateAsync:
 				var enumerateSource = new PageableEnumerable<int>([1, 2], eventArgs);
 				var enumerated = Enumerable.EnumerateAsync<int>(enumerateSource);
 				result = enumerated;
 				setSuppressed = value => enumerateSource.Suppressed = value;
-				enumerate = async () => Assert.Equal([1, 2], await CollectAsync(enumerated));
+				enumerate = async () => { Assert.Equal([1, 2], await CollectAsync(enumerated)); await enumerateSource.NotifyAsync(); };
 				break;
 			case PageableAdapter.Synchronize:
 				var synchronizeSource = new PageableAsyncEnumerable<int>([1, 2], eventArgs, suppressed: false);
@@ -301,7 +301,7 @@ public class EnumerableTest
 		var pageable = Assert.IsAssignableFrom<IPageable>(result);
 		object sender = null;
 		PagingEventArgs observed = null;
-		pageable.Paginated += (source, args) => (sender, observed) = (source, args);
+		pageable.Paginated += (source, args, _) => { (sender, observed) = (source, args); return ValueTask.CompletedTask; };
 		Assert.False(pageable.Suppressed);
 		setSuppressed(true);
 		Assert.True(pageable.Suppressed);
@@ -420,7 +420,7 @@ public class EnumerableTest
 
 	private sealed class PageableAsyncEnumerable<T>(IEnumerable<T> items, PagingEventArgs eventArgs, bool suppressed) : IAsyncEnumerable<T>, IPageable
 	{
-		public event EventHandler<PagingEventArgs> Paginated;
+		public event Func<object, PagingEventArgs, CancellationToken, ValueTask> Paginated;
 		public bool Suppressed { get; set; } = suppressed;
 
 		public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation = default)
@@ -434,7 +434,11 @@ public class EnumerableTest
 				if(!notified)
 				{
 					notified = true;
-					this.Paginated?.Invoke(this, eventArgs);
+					if(this.Paginated != null)
+					{
+						foreach(Func<object, PagingEventArgs, CancellationToken, ValueTask> handler in this.Paginated.GetInvocationList())
+							await handler(this, eventArgs, cancellation);
+					}
 				}
 
 				yield return item;
@@ -445,29 +449,19 @@ public class EnumerableTest
 
 	private sealed class PageableEnumerable<T>(IEnumerable<T> items, PagingEventArgs eventArgs) : IEnumerable<T>, IPageable
 	{
-		public event EventHandler<PagingEventArgs> Paginated;
+		public event Func<object, PagingEventArgs, CancellationToken, ValueTask> Paginated;
 		public bool Suppressed { get; set; }
-
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-		public IEnumerator<T> GetEnumerator() => this.Enumerate().GetEnumerator();
-
-		private IEnumerable<T> Enumerate()
+		public IEnumerator<T> GetEnumerator() => items.GetEnumerator();
+		public async ValueTask NotifyAsync()
 		{
-			var notified = false;
-
-			foreach(var item in items)
+			if(this.Paginated != null)
 			{
-				if(!notified)
-				{
-					notified = true;
-					this.Paginated?.Invoke(this, eventArgs);
-				}
-
-				yield return item;
+				foreach(Func<object, PagingEventArgs, CancellationToken, ValueTask> handler in this.Paginated.GetInvocationList())
+					await handler(this, eventArgs, CancellationToken.None);
 			}
 		}
 	}
-
 	private sealed class TrackingEnumerable<T>(IReadOnlyList<T> items) : IEnumerable<T>
 	{
 		public int DisposalCount { get; private set; }

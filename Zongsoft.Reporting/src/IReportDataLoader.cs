@@ -28,10 +28,12 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Reporting;
 
 public interface IReportDataLoader
 {
-	object Load(IReport report, IReportDataModel model);
+	ValueTask<object> LoadAsync(IReport report, IReportDataModel model, CancellationToken cancellation = default);
 }

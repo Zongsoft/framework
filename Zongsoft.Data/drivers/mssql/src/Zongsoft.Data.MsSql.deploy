@@ -3,3 +3,4 @@ lib/${Framework}/Zongsoft.Data.MsSql.*
 lib/${Framework}/*/Zongsoft.Data.MsSql.resources.*
 
 nuget:Microsoft.Data.SqlClient@7.0.2
+nuget:System.Security.Cryptography.Pkcs@9.0.21

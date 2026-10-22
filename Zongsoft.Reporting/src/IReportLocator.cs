@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace Zongsoft.Reporting;
@@ -36,6 +38,6 @@ public interface IReportLocator
 {
 	int Priority { get; set; }
 
-	IReportDescriptor GetReport(string key);
-	IEnumerable<IReportDescriptor> GetReports();
+	ValueTask<IReportDescriptor> GetReportAsync(string key, CancellationToken cancellation = default);
+	IAsyncEnumerable<IReportDescriptor> GetReportsAsync(CancellationToken cancellation = default);
 }

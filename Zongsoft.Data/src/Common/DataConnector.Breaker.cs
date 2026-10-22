@@ -146,7 +146,7 @@ public sealed partial class DataConnector
 		#endregion
 
 		#region 公共事件
-		public event EventHandler<DataConnectionFailureEventArgs> Failed;
+		public event Func<object, DataConnectionFailureEventArgs, CancellationToken, ValueTask> Failed;
 		public event EventHandler<CircuitBreakerStateChangedEventArgs> StateChanged;
 		#endregion
 
@@ -182,45 +182,6 @@ public sealed partial class DataConnector
 		#endregion
 
 		#region 公共方法
-		public void Execute(Action operation)
-		{
-			if(operation == null)
-				throw new ArgumentNullException(nameof(operation));
-
-			var permit = this.Acquire();
-
-			try
-			{
-				operation();
-				this.Succeed(permit);
-			}
-			catch(Exception exception)
-			{
-				this.Fail(permit, exception);
-				throw;
-			}
-		}
-
-		public TResult Execute<TResult>(Func<TResult> operation)
-		{
-			if(operation == null)
-				throw new ArgumentNullException(nameof(operation));
-
-			var permit = this.Acquire();
-
-			try
-			{
-				var result = operation();
-				this.Succeed(permit);
-				return result;
-			}
-			catch(Exception exception)
-			{
-				this.Fail(permit, exception);
-				throw;
-			}
-		}
-
 		public async Task ExecuteAsync(Func<CancellationToken, Task> operation, CancellationToken cancellation = default)
 		{
 			if(operation == null)
@@ -240,7 +201,7 @@ public sealed partial class DataConnector
 			}
 			catch(Exception exception)
 			{
-				this.Fail(permit, exception);
+				await this.FailAsync(permit, exception).ConfigureAwait(false);
 				throw;
 			}
 		}
@@ -265,7 +226,7 @@ public sealed partial class DataConnector
 			}
 			catch(Exception exception)
 			{
-				this.Fail(permit, exception);
+				await this.FailAsync(permit, exception).ConfigureAwait(false);
 				throw;
 			}
 		}
@@ -390,7 +351,7 @@ public sealed partial class DataConnector
 			this.OnStateChanged(args);
 		}
 
-		private void Fail(Permit permit, Exception exception)
+		private async ValueTask FailAsync(Permit permit, Exception exception)
 		{
 			CircuitBreakerStateChangedEventArgs args = null;
 			DataConnectionFailureEventArgs failure = null;
@@ -412,7 +373,7 @@ public sealed partial class DataConnector
 				failure = new(this.Source, exception, _failures, _retryAt, _retryAt.HasValue ? _retryAt.Value - now : TimeSpan.Zero);
 			}
 
-			this.OnFailed(failure);
+			await this.OnFailedAsync(failure).ConfigureAwait(false);
 			this.OnStateChanged(args);
 		}
 
@@ -460,18 +421,18 @@ public sealed partial class DataConnector
 
 		private DataConnectionException CreateUnavailableException(DateTimeOffset now) => new(this.Source, _retryAt, _retryAt.HasValue ? _retryAt.Value - now : TimeSpan.Zero, _lastException);
 
-		private void OnFailed(DataConnectionFailureEventArgs args)
+		private async ValueTask OnFailedAsync(DataConnectionFailureEventArgs args)
 		{
 			var handlers = this.Failed;
 
 			if(args == null || handlers == null)
 				return;
 
-			foreach(EventHandler<DataConnectionFailureEventArgs> handler in handlers.GetInvocationList())
+			foreach(Func<object, DataConnectionFailureEventArgs, CancellationToken, ValueTask> handler in handlers.GetInvocationList())
 			{
 				try
 				{
-					handler(this, args);
+					await handler(this, args, CancellationToken.None).ConfigureAwait(false);
 				}
 				catch
 				{

@@ -14,14 +14,9 @@
 
 [**Z**ongsoft.**D**ata.**D**uckDB](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/duckdb) 是 [_**Z**ongsoft_](https://github.com/Zongsoft/framework) 开源框架中的数据引擎的底层驱动，提供了 [_**D**uckDB_](https://duckdb.org) 数据库访问的相关功能，对上层应用透明，只需将该插件库部署到应用程序的插件目录中即可。
 
-## 导入器实现
+## 批量导入
 
-DuckDB 导入器根据数据类型采用两种写入方式：
-
-1. 对于常规数据类型，使用 [DuckDB.NET Appender](https://duckdb.net/docs/standard-appender.html) 进行批量写入。标准 Appender 要求写入值与目标表的全部物理列在数量、顺序和类型上完全一致，而 Zongsoft 数据引擎允许只导入任意字段子集。因此，导入器先创建一个仅包含导入字段的连接级临时表，通过 Appender 将数据批量写入该表，再以一条 `INSERT ... SELECT` 语句写入目标表。这既保留了字段映射和目标表默认值，也能在启用 `IDataImportOptions.ConstraintIgnored` 时通过 `INSERT OR IGNORE` 忽略约束冲突。
-2. 对于以 `DbType.Object` 表示的数据库自定义类型，运行时无法为 Appender 安全确定具体的 DuckDB 类型，因此回退为参数化的逐行 `INSERT`，由 DuckDB.NET 完成常规的参数绑定和类型转换。
-
-两种方式默认加入 Zongsoft 的环境事务；当 `IDataImportOptions.TransactionSuppressed` 为真、当前没有环境事务或驱动不支持事务时，则使用独立连接。独立连接使用内部事务保证当前导入批次的原子性，确保失败时完整回滚。
+导入支持选择字段，并保留目标表中未指定列的默认值。设置 `IDataImportOptions.ConstraintIgnored` 可忽略支持的约束冲突。导入默认加入 Zongsoft 环境事务，`TransactionSuppressed` 用于退出该事务；没有环境事务时，单次导入批次保持原子性。
 
 ## 何时选择 DuckDB
 
@@ -52,7 +47,7 @@ dotnet add package Zongsoft.Data.DuckDB
 
 消费模块通过 `ApplicationContext.Current.Services` 或应用定义的 `Module.Current.Services` 取得 `IServiceProvider<IDataAccess>`，再按连接名 `Analytics` 获取访问器。引擎根据连接配置选择 DuckDB，业务模块只依赖公共契约。
 
-取得访问器不等于查询成功。真实业务装配请参阅 [Data 中的 Discussions 用例](../../README.zh-Hans.md#plugin-quickstart)，并沿其中的模块、映射及服务源码阅读。该用例不表示 Discussions 已兼容本驱动；数据库结构、字段类型和所需操作必须逐项验证，不能只改驱动名就推定可移植。业务服务通过公共契约调用，不自行构造数据库连接。
+宿主装配与具名访问器的用法见 [Data 插件示例](../../README.zh-Hans.md#plugin-quickstart)。准备与所选数据库匹配的表结构和字段类型，并使用本驱动支持的操作；业务服务通过公共契约访问数据。
 
 ## 最小连接验证
 
@@ -71,6 +66,8 @@ Console.WriteLine(await command.ExecuteScalarAsync());
 结果为 42。这个底层示例明确拥有连接；数据引擎操作则由会话与事务管理连接。
 
 ## 限制与排障
+
+通过异步数据接口查询和导入，使用 `await foreach` 消费结果，并等待事务与资源释放。DuckDB 底层执行及批量 Appender 保持同步；异步 API 不表示底层数据库 I/O 会让出线程。
 
 - 导入字段名必须与映射及实际列类型一致，默认值只应用于省略的目标列。
 - 连接适配器让 DuckDB 自行创建事务，不传递显式 ADO.NET 隔离级别；不能依赖请求不同隔离模式。

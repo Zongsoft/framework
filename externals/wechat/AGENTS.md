@@ -9,6 +9,12 @@
 - 不输出 AppSecret、API Key、证书、OpenId、支付签名或真实交易数据。
 - 修改平台或支付能力时同步主插件、Web/gateway 插件、选项、部署文件和项目引用。
 
+## 账户查询
+
+- 账户提供者通过 IAccountProvider.GetAccountAsync 查询；AppletManager、ChannelManager 的 Get…Async 为必需获取，Find…Async 为可空查找。向提供者传递末尾取消令牌，不缓存未完成或失败的任务。
+- 从配置初始化的账户与动态查询账户共用实例缓存；认证、Web API 和消息发送均等待账户准备完成。
+- 本地账户解析、签名、加解密与已有对象转换保持同步；不能在这些入口中引入数据库或网络阻塞等待。
+
 ## 验证
 
 - 构建 `Zongsoft.Externals.Wechat.slnx` 并运行脱敏、网络无关测试。

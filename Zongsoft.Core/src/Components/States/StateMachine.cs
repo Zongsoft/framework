@@ -30,6 +30,8 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
@@ -43,7 +45,7 @@ public class StateMachine : IStateMachine
 	#endregion
 
 	#region 成员字段
-	private int _disposed;
+	private TaskCompletionSource _disposal;
 	private readonly Stack<object> _stack;
 	private IStateHandlerProvider _handlers;
 	private volatile Dictionary<object, object> _parameters;
@@ -84,11 +86,14 @@ public class StateMachine : IStateMachine
 	#endregion
 
 	#region 运行方法
-	public void Run<TKey, TValue>(State<TKey, TValue> state, string description, IEnumerable<KeyValuePair<object, object>> parameters = null) where TKey : struct, IEquatable<TKey> where TValue : struct
+	public ValueTask RunAsync<TKey, TValue>(State<TKey, TValue> state, string description, CancellationToken cancellation = default) where TKey : struct, IEquatable<TKey> where TValue : struct => this.RunAsync(state, description, null, cancellation);
+	public async ValueTask RunAsync<TKey, TValue>(State<TKey, TValue> state, string description, IEnumerable<KeyValuePair<object, object>> parameters, CancellationToken cancellation = default) where TKey : struct, IEquatable<TKey> where TValue : struct
 	{
 		ArgumentNullException.ThrowIfNull(state);
-		var context = this.GetContext(state, description);
+		ObjectDisposedException.ThrowIf(_disposal != null, this);
+		cancellation.ThrowIfCancellationRequested();
 
+		var context = await this.GetContextAsync(state, description, cancellation);
 		if(context == null)
 			return;
 
@@ -106,32 +111,36 @@ public class StateMachine : IStateMachine
 			if(count++ == 0)
 				_stack.Push(context);
 
-			state.Diagram.Transfer(context, handler);
+			await state.Diagram.TransferAsync(context, handler, cancellation);
 		}
 	}
 	#endregion
 
 	#region  停止方法
-	private void Stop()
+	private async ValueTask StopAsync()
 	{
 		if(_stack.Count == 0)
 			return;
 
 		var frames = _stack.Reverse().ToArray();
 
-		using(var transaction = new Data.Transaction())
+		await using var transaction = new Data.Transaction();
+
+		try
 		{
 			for(int i = 0; i < frames.Length; i++)
-			{
-				this.OnStop(frames[i]);
-			}
+				await this.OnStopAsync(frames[i]);
 
-			//提交事务
-			transaction.Commit();
+			await transaction.CommitAsync().ConfigureAwait(false);
+		}
+		catch(Exception exception)
+		{
+			await transaction.RollbackAsync(exception).ConfigureAwait(false);
+			throw;
 		}
 	}
 
-	private void OnStop(object context)
+	private async ValueTask OnStopAsync(object context)
 	{
 		var contextType = context.GetType();
 		var method = _getHandlers.GetOrAdd((contextType.GenericTypeArguments[0], contextType.GenericTypeArguments[1]), key => __GetHandlersMethodTemplate__.MakeGenericMethod(key.Item1, key.Item2));
@@ -143,9 +152,19 @@ public class StateMachine : IStateMachine
 
 			for(int i = 0; i < contract.InterfaceMethods.Length; i++)
 			{
-				if(contract.InterfaceMethods[i].Name == "Finish")
+				if(contract.InterfaceMethods[i].Name == nameof(IStateHandler<int, int>.FinishAsync))
 				{
-					contract.TargetMethods[i].Invoke(handler, new object[] { context });
+					var completion = (ValueTask)contract.TargetMethods[i].Invoke(handler, new object[] { context, CancellationToken.None });
+
+					try
+					{
+						await completion;
+					}
+					catch(Exception exception)
+					{
+						throw new TargetInvocationException(exception);
+					}
+
 					break;
 				}
 			}
@@ -185,14 +204,14 @@ public class StateMachine : IStateMachine
 		return false;
 	}
 
-	private IStateContext<TKey, TValue> GetContext<TKey, TValue>(State<TKey, TValue> destination, string description) where TKey : struct, IEquatable<TKey> where TValue : struct
+	private async ValueTask<IStateContext<TKey, TValue>> GetContextAsync<TKey, TValue>(State<TKey, TValue> destination, string description, CancellationToken cancellation) where TKey : struct, IEquatable<TKey> where TValue : struct
 	{
 		//如果指定状态实例已经被处理过
 		if(this.IsTransferred(destination, out var source))
 			return null;
 
 		//获取指定状态实例的当前状态
-		source ??= destination.Diagram.GetState(destination.Key)?.Value;
+		source ??= (await destination.Diagram.GetStateAsync(destination.Key, cancellation))?.Value;
 
 		//如果源状态与目的状态相同则返回空
 		if(source == null || source.Value.Equals(destination.Value))
@@ -214,23 +233,45 @@ public class StateMachine : IStateMachine
 	#endregion
 
 	#region 处置方法
-	public void Dispose()
+	public ValueTask DisposeAsync()
 	{
-		this.Dispose(true);
-		GC.SuppressFinalize(this);
+		TaskCompletionSource disposal;
+
+		lock(_stack)
+		{
+			if(_disposal != null)
+				return new ValueTask(_disposal.Task);
+
+			_disposal = disposal = new(TaskCreationOptions.RunContinuationsAsynchronously);
+		}
+
+		_ = this.DisposeAsyncCore(disposal);
+		return new ValueTask(disposal.Task);
 	}
 
-	protected virtual void Dispose(bool disposing)
+	private async Task DisposeAsyncCore(TaskCompletionSource disposal)
 	{
-		if(System.Threading.Interlocked.CompareExchange(ref _disposed, 1, 0) != 0)
-			return;
-
-		if(disposing)
+		try
 		{
-			this.Stop();
+			await this.DisposeAsyncCore().ConfigureAwait(false);
+			GC.SuppressFinalize(this);
+			disposal.TrySetResult();
+		}
+		catch(Exception exception)
+		{
+			disposal.TrySetException(exception);
+		}
+	}
 
-			if(_stack != null)
-				_stack.Clear();
+	protected virtual async ValueTask DisposeAsyncCore()
+	{
+		try
+		{
+			await this.StopAsync().ConfigureAwait(false);
+		}
+		finally
+		{
+			_stack.Clear();
 		}
 	}
 	#endregion

@@ -29,6 +29,8 @@
 
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -62,13 +64,15 @@ public abstract class DataExistContextBase : DataAccessContextBase<IDataExistsOp
 	#endregion
 
 	#region 公共方法
-	public ICondition Validate(ICondition criteria = null)
+	public ValueTask<ICondition> ValidateAsync(CancellationToken cancellation = default) => this.ValidateAsync(null, cancellation);
+
+	public ValueTask<ICondition> ValidateAsync(ICondition criteria, CancellationToken cancellation = default)
 	{
 		var validator = this.Options.ValidatorSuppressed ? null : this.Validator;
 
 		return validator == null ?
-			criteria ?? this.Criteria :
-			validator.Validate(this, criteria ?? this.Criteria);
+			ValueTask.FromResult(criteria ?? this.Criteria) :
+			validator.ValidateAsync(this, criteria ?? this.Criteria, cancellation);
 	}
 	#endregion
 }
@@ -135,13 +139,15 @@ public abstract class DataAggregateContextBase : DataAccessContextBase<IDataAggr
 	#endregion
 
 	#region 公共方法
-	public ICondition Validate(ICondition criteria = null)
+	public ValueTask<ICondition> ValidateAsync(CancellationToken cancellation = default) => this.ValidateAsync(null, cancellation);
+
+	public ValueTask<ICondition> ValidateAsync(ICondition criteria, CancellationToken cancellation = default)
 	{
 		var validator = this.Options.ValidatorSuppressed ? null : this.Validator;
 
 		return validator == null ?
-			criteria ?? this.Criteria :
-			validator.Validate(this, criteria ?? this.Criteria);
+			ValueTask.FromResult(criteria ?? this.Criteria) :
+			validator.ValidateAsync(this, criteria ?? this.Criteria, cancellation);
 	}
 
 	public T? GetValue<T>() where T : struct, IEquatable<T>
@@ -154,7 +160,7 @@ public abstract class DataAggregateContextBase : DataAccessContextBase<IDataAggr
 public abstract class DataImportContextBase : DataAccessContextBase<IDataImportOptions>
 {
 	#region 构造函数
-	protected DataImportContextBase(IDataAccess dataAccess, string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options = null) : base(dataAccess, name, DataAccessMethod.Import, options ?? new DataImportOptions())
+	protected DataImportContextBase(IDataAccess dataAccess, string name, object data, IEnumerable<string> members, IDataImportOptions options = null) : base(dataAccess, name, DataAccessMethod.Import, options ?? new DataImportOptions())
 	{
 		this.Data = data ?? throw new ArgumentNullException(nameof(data));
 		this.Members = members == null ? Array.Empty<string>() : members.ToArray();
@@ -173,7 +179,7 @@ public abstract class DataImportContextBase : DataAccessContextBase<IDataImportO
 	public int Count { get; set; }
 
 	/// <summary>获取或设置导入操作的数据。</summary>
-	public IEnumerable Data { get; set; }
+	public object Data { get; set; }
 
 	/// <summary>获取或设置导入操作的数据成员(字段)名数组。</summary>
 	public string[] Members { get; set; }
@@ -188,7 +194,7 @@ public abstract class DataImportContextBase : DataAccessContextBase<IDataImportO
 			if(data == null)
 				return null;
 
-			return Common.TypeExtension.GetElementType(data.GetType());
+			return Collections.Enumerable.IsAsyncEnumerable(data, out var elementType) ? elementType : Common.TypeExtension.GetElementType(data.GetType());
 		}
 	}
 	#endregion
@@ -196,12 +202,8 @@ public abstract class DataImportContextBase : DataAccessContextBase<IDataImportO
 
 public abstract class DataSelectContextBase : DataAccessContextBase<IDataSelectOptions>
 {
-	#region 委托定义
-	public delegate bool FilterDelegate(DataSelectContextBase context, ref object data);
-	#endregion
-
 	#region 成员字段
-	private IEnumerable _result;
+	private object _result;
 	#endregion
 
 	#region 构造函数
@@ -243,7 +245,7 @@ public abstract class DataSelectContextBase : DataAccessContextBase<IDataSelectO
 	public Sorting[] Sortings { get; set; }
 
 	/// <summary>获取或设置查询操作的结果集。</summary>
-	public IEnumerable Result
+	public object Result
 	{
 		get => _result;
 		set => _result = value ?? throw new ArgumentNullException();
@@ -254,13 +256,15 @@ public abstract class DataSelectContextBase : DataAccessContextBase<IDataSelectO
 	#endregion
 
 	#region 公共方法
-	public ICondition Validate(ICondition criteria = null)
+	public ValueTask<ICondition> ValidateAsync(CancellationToken cancellation = default) => this.ValidateAsync(null, cancellation);
+
+	public ValueTask<ICondition> ValidateAsync(ICondition criteria, CancellationToken cancellation = default)
 	{
 		var validator = this.Options.ValidatorSuppressed ? null : this.Validator;
 
 		return validator == null ?
-			criteria ?? this.Criteria :
-			validator.Validate(this, criteria ?? this.Criteria);
+			ValueTask.FromResult(criteria ?? this.Criteria) :
+			validator.ValidateAsync(this, criteria ?? this.Criteria, cancellation);
 	}
 	#endregion
 }
@@ -300,13 +304,15 @@ public abstract class DataDeleteContextBase : DataAccessContextBase<IDataDeleteO
 	#endregion
 
 	#region 公共方法
-	public ICondition Validate(ICondition criteria = null)
+	public ValueTask<ICondition> ValidateAsync(CancellationToken cancellation = default) => this.ValidateAsync(null, cancellation);
+
+	public ValueTask<ICondition> ValidateAsync(ICondition criteria, CancellationToken cancellation = default)
 	{
 		var validator = this.Options.ValidatorSuppressed ? null : this.Validator;
 
 		return validator == null ?
-			criteria ?? this.Criteria :
-			validator.Validate(this, criteria ?? this.Criteria);
+			ValueTask.FromResult(criteria ?? this.Criteria) :
+			validator.ValidateAsync(this, criteria ?? this.Criteria, cancellation);
 	}
 	#endregion
 
@@ -359,8 +365,8 @@ public abstract class DataInsertContextBase : DataAccessContextBase<IDataInsertO
 			if(data == null)
 				return null;
 
-			if(this.IsMultiple && data is IEnumerable)
-				return Common.TypeExtension.GetElementType(data.GetType());
+			if(this.IsMultiple && (data is IEnumerable || Collections.Enumerable.IsAsyncEnumerable(data)))
+				return Collections.Enumerable.IsAsyncEnumerable(data, out var elementType) ? elementType : Common.TypeExtension.GetElementType(data.GetType());
 
 			return data.GetType();
 		}
@@ -413,13 +419,15 @@ public abstract class DataUpdateContextBase : DataAccessContextBase<IDataUpdateO
 	#endregion
 
 	#region 公共方法
-	public ICondition Validate(ICondition criteria = null)
+	public ValueTask<ICondition> ValidateAsync(CancellationToken cancellation = default) => this.ValidateAsync(null, cancellation);
+
+	public ValueTask<ICondition> ValidateAsync(ICondition criteria, CancellationToken cancellation = default)
 	{
 		var validator = this.Options.ValidatorSuppressed ? null : this.Validator;
 
 		return validator == null ?
-			criteria ?? this.Criteria :
-			validator.Validate(this, criteria ?? this.Criteria);
+			ValueTask.FromResult(criteria ?? this.Criteria) :
+			validator.ValidateAsync(this, criteria ?? this.Criteria, cancellation);
 	}
 	#endregion
 }
@@ -468,8 +476,8 @@ public abstract class DataUpsertContextBase : DataAccessContextBase<IDataUpsertO
 			if(data == null)
 				return null;
 
-			if(this.IsMultiple && data is IEnumerable)
-				return Common.TypeExtension.GetElementType(data.GetType());
+			if(this.IsMultiple && (data is IEnumerable || Collections.Enumerable.IsAsyncEnumerable(data)))
+				return Collections.Enumerable.IsAsyncEnumerable(data, out var elementType) ? elementType : Common.TypeExtension.GetElementType(data.GetType());
 
 			return data.GetType();
 		}

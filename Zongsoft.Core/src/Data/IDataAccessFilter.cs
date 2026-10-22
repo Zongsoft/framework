@@ -28,12 +28,14 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Data;
 
 /// <summary>表示数据访问过滤器的接口。</summary>
 public interface IDataAccessFilter<in TContext> where TContext : IDataAccessContextBase
 {
-	void OnFiltered(TContext context);
-	void OnFiltering(TContext context);
+	ValueTask OnFilteredAsync(TContext context, CancellationToken cancellation = default);
+	ValueTask OnFilteringAsync(TContext context, CancellationToken cancellation = default);
 }

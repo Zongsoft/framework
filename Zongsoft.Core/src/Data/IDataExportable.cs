@@ -38,16 +38,22 @@ namespace Zongsoft.Data;
 /// <summary>表示提供数据导出功能的接口。</summary>
 public interface IDataExportable
 {
+	#region 数据导出
 	/// <summary>获取一个值，指示是否支持导出操作。</summary>
 	bool CanExport { get; }
-
-	void Export(Stream output, object data, string format = null, DataExportOptions options = null);
-	void Export(Stream output, object data, string[] members, string format = null, DataExportOptions options = null);
 	ValueTask<Archiving.DataArchiveFormat> ExportAsync(Stream output, object data, string format = null, DataExportOptions options = null, CancellationToken cancellation = default);
 	ValueTask<Archiving.DataArchiveFormat> ExportAsync(Stream output, object data, string[] members, string format = null, DataExportOptions options = null, CancellationToken cancellation = default);
-
-	void Export(Stream output, string template, object argument, string format = null, DataExportOptions options = null);
-	void Export(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, string format = null, DataExportOptions options = null);
 	ValueTask<Archiving.DataArchiveFormat> ExportAsync(Stream output, string template, object argument, string format = null, DataExportOptions options = null, CancellationToken cancellation = default);
 	ValueTask<Archiving.DataArchiveFormat> ExportAsync(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, string format = null, DataExportOptions options = null, CancellationToken cancellation = default);
+	#endregion
+	#region 取消重载
+	ValueTask<Archiving.DataArchiveFormat> ExportAsync(Stream output, object data, string format, CancellationToken cancellation) => this.ExportAsync(output, data, format, default(DataExportOptions), cancellation);
+	ValueTask<Archiving.DataArchiveFormat> ExportAsync(Stream output, object data, CancellationToken cancellation) => this.ExportAsync(output, data, default(string), default(DataExportOptions), cancellation);
+	ValueTask<Archiving.DataArchiveFormat> ExportAsync(Stream output, object data, string[] members, string format, CancellationToken cancellation) => this.ExportAsync(output, data, members, format, default(DataExportOptions), cancellation);
+	ValueTask<Archiving.DataArchiveFormat> ExportAsync(Stream output, object data, string[] members, CancellationToken cancellation) => this.ExportAsync(output, data, members, default(string), default(DataExportOptions), cancellation);
+	ValueTask<Archiving.DataArchiveFormat> ExportAsync(Stream output, string template, object argument, string format, CancellationToken cancellation) => this.ExportAsync(output, template, argument, format, default(DataExportOptions), cancellation);
+	ValueTask<Archiving.DataArchiveFormat> ExportAsync(Stream output, string template, object argument, CancellationToken cancellation) => this.ExportAsync(output, template, argument, default(string), default(DataExportOptions), cancellation);
+	ValueTask<Archiving.DataArchiveFormat> ExportAsync(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, string format, CancellationToken cancellation) => this.ExportAsync(output, template, argument, parameters, format, default(DataExportOptions), cancellation);
+	ValueTask<Archiving.DataArchiveFormat> ExportAsync(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation) => this.ExportAsync(output, template, argument, parameters, default(string), default(DataExportOptions), cancellation);
+	#endregion
 }

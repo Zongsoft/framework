@@ -38,180 +38,13 @@ namespace Zongsoft.Data;
 partial class DataServiceBase<TModel>
 {
 	#region 公共方法
-	public int Update(string key, object data, DataUpdateOptions options = null) => this.Update(key, data, null, options);
-	public int Update(string key, object data, string schema, DataUpdateOptions options = null) => this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key, options, out _), schema, options);
-
-	public int UpdateMany(string key, IEnumerable items, DataUpdateOptions options = null) => this.UpdateMany(key, items, null, options);
-	public int UpdateMany(string key, IEnumerable items, string schema, DataUpdateOptions options = null)
-	{
-		if(items == null)
-			return 0;
-
-		//确认是否可以执行该操作
-		this.EnsureUpdate(options);
-
-		//创建事务
-		var transaction = new Transaction();
-
-		try
-		{
-			var count = 0;
-
-			foreach(var item in items)
-			{
-				if(item == null)
-					continue;
-
-				var dictionary = DataDictionary.GetDictionary<TModel>(item);
-
-				//处理数据模型
-				this.OnModel(key, dictionary, options);
-
-				//执行数据更新
-				count += this.Update(dictionary.Data, schema, options);
-			}
-
-			//提交事务
-			transaction.Commit();
-
-			//返回更新数
-			return count;
-		}
-		catch
-		{
-			//回滚事务
-			transaction.Rollback();
-			//重抛异常
-			throw;
-		}
-	}
-
-	public int Update<TKey1>(TKey1 key1, object data, DataUpdateOptions options = null)
-		where TKey1 : IEquatable<TKey1> => this.Update(key1, null, data, options);
-	public int Update<TKey1>(TKey1 key1, string schema, object data, DataUpdateOptions options = null)
-		where TKey1 : IEquatable<TKey1> => this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, options, out _), schema, options);
-
-	public int Update<TKey1, TKey2>(TKey1 key1, TKey2 key2, object data, DataUpdateOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2> => this.Update(key1, key2, null, data, options);
-	public int Update<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, object data, DataUpdateOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2> => this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, options, out _), schema, options);
-
-	public int Update<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, object data, DataUpdateOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3> => this.Update(key1, key2, key3, null, data, options);
-	public int Update<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, object data, DataUpdateOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3> => this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, options, out _), schema, options);
-
-	public int Update<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, object data, DataUpdateOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3>
-		where TKey4 : IEquatable<TKey4> => this.Update(key1, key2, key3, key4, null, data, options);
-	public int Update<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, object data, DataUpdateOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3>
-		where TKey4 : IEquatable<TKey4> => this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, key4, options, out _), schema, options);
-
-	public int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, object data, DataUpdateOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3>
-		where TKey4 : IEquatable<TKey4>
-		where TKey5 : IEquatable<TKey5> => this.Update(key1, key2, key3, key4, key5, null, data, options);
-	public int Update<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, object data, DataUpdateOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3>
-		where TKey4 : IEquatable<TKey4>
-		where TKey5 : IEquatable<TKey5> => this.Update(data, this.ConvertKey(DataServiceMethod.Update(), key1, key2, key3, key4, key5, options, out _), schema, options);
-
-	public int Update(object data, DataUpdateOptions options = null) => this.Update(data, (ICondition)null, string.Empty, options);
-	public int Update(object data, string schema, DataUpdateOptions options = null) => this.Update(data, (ICondition)null, schema, options);
-	public int Update(object data, ICondition criteria, DataUpdateOptions options = null) => this.Update(data, criteria, string.Empty, options);
-	public int Update(object data, ICondition criteria, string schema, DataUpdateOptions options = null)
-	{
-		//确认是否可以执行该操作
-		this.EnsureUpdate(options);
-
-		if(data == null)
-			return 0;
-
-		//构建数据操作的选项对象
-		if(options == null)
-			options = new DataUpdateOptions();
-
-		//进行授权验证
-		this.Authorize(DataServiceMethod.Update(), options);
-
-		//将当前更新数据对象转换成数据字典
-		var dictionary = DataDictionary.GetDictionary<TModel>(data);
-
-		//如果指定了更新条件，则尝试将条件中的主键值同步设置到数据字典中
-		if(criteria != null)
-		{
-			//获取当前数据服务的实体主键集
-			var keys = Mapping.Entities[this.Name].Key;
-
-			if(keys != null && keys.Length > 0)
-			{
-				foreach(var key in keys)
-				{
-					criteria.Match(key.Name, c => dictionary.TrySetValue(c.Name, c.Value));
-				}
-			}
-		}
-
-		//修整过滤条件
-		criteria = this.OnValidate(DataServiceMethod.Update(), criteria ?? this.GetUpdateKey(dictionary), options);
-
-		//解析数据模式表达式
-		var schematic = this.GetSchema(schema, data.GetType());
-
-		//验证待更新的数据
-		this.OnValidate(DataServiceMethod.Update(), schematic, dictionary, options);
-
-		//如果缺少必须的更新条件则抛出异常
-		if(criteria == null)
-		{
-			//再次从数据中获取主键条件
-			criteria = this.GetUpdateKey(dictionary);
-
-			if(criteria == null)
-				throw new DataOperationException(string.Format(Properties.Resources.DataService_UpdateRequiresCriteria_Message, this.Name));
-		}
-
-		//执行更新操作
-		return this.OnUpdate(dictionary, criteria, schematic, options);
-	}
-
-	public int Update(object data, Data.Condition criteria, DataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, options);
-	public int Update(object data, Data.Condition criteria, string schema, DataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, schema, options);
-	public int Update(object data, ConditionCollection criteria, DataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, options);
-	public int Update(object data, ConditionCollection criteria, string schema, DataUpdateOptions options = null) => this.Update(data, (ICondition)criteria, schema, options);
-	#endregion
-
-	#region 保护方法
-	protected virtual int OnUpdate(IDataDictionary<TModel> data, ICondition criteria, ISchema schema, DataUpdateOptions options)
-	{
-		if(data == null || data.Data == null || !data.HasChanges())
-			return 0;
-
-		return this.DataAccess.Update(this.Name, data, criteria, schema, options, ctx => this.OnUpdating(ctx), ctx => this.OnUpdated(ctx));
-	}
-	#endregion
-
-	#region 公共方法
 	public ValueTask<int> UpdateAsync(string key, object data, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(key, data, null, options, cancellation);
 	public ValueTask<int> UpdateAsync(string key, object data, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, this.ConvertKey(DataServiceMethod.Update(), key, options, out _), schema, options, cancellation);
 
-	public ValueTask<int> UpdateManyAsync(string key, IEnumerable items, DataUpdateOptions options, CancellationToken cancellation = default) => this.UpdateManyAsync(key, items, null, options, cancellation);
-	public async ValueTask<int> UpdateManyAsync(string key, IEnumerable items, string schema, DataUpdateOptions options, CancellationToken cancellation = default)
+	public ValueTask<int> UpdateManyAsync(string key, IEnumerable items, CancellationToken cancellation) => this.UpdateManyAsync(key, items, null, null, cancellation);
+	public ValueTask<int> UpdateManyAsync(string key, IEnumerable items, string schema, CancellationToken cancellation) => this.UpdateManyAsync(key, items, schema, null, cancellation);
+	public ValueTask<int> UpdateManyAsync(string key, IEnumerable items, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateManyAsync(key, items, null, options, cancellation);
+	public async ValueTask<int> UpdateManyAsync(string key, IEnumerable items, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default)
 	{
 		if(items == null)
 			return 0;
@@ -220,7 +53,7 @@ partial class DataServiceBase<TModel>
 		this.EnsureUpdate(options);
 
 		//创建事务
-		var transaction = new Transaction();
+		await using var transaction = new Transaction();
 
 		try
 		{
@@ -246,11 +79,9 @@ partial class DataServiceBase<TModel>
 			//返回更新数
 			return count;
 		}
-		catch
+		catch(Exception exception)
 		{
-			//回滚事务
-			await transaction.RollbackAsync(cancellation);
-			//重抛异常
+			await transaction.RollbackAsync(exception);
 			throw;
 		}
 	}
@@ -299,20 +130,20 @@ partial class DataServiceBase<TModel>
 	public ValueTask<int> UpdateAsync(object data, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, (ICondition)null, string.Empty, options, cancellation);
 	public ValueTask<int> UpdateAsync(object data, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, (ICondition)null, schema, options, cancellation);
 	public ValueTask<int> UpdateAsync(object data, ICondition criteria, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, criteria, string.Empty, options, cancellation);
-	public ValueTask<int> UpdateAsync(object data, ICondition criteria, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default)
+	public async ValueTask<int> UpdateAsync(object data, ICondition criteria, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default)
 	{
 		//确认是否可以执行该操作
 		this.EnsureUpdate(options);
 
 		if(data == null)
-			return ValueTask.FromResult(0);
+			return 0;
 
 		//构建数据操作的选项对象
 		if(options == null)
 			options = new DataUpdateOptions();
 
 		//进行授权验证
-		this.Authorize(DataServiceMethod.Update(), options);
+		await this.AuthorizeAsync(DataServiceMethod.Update(), options, cancellation);
 
 		//将当前更新数据对象转换成数据字典
 		var dictionary = DataDictionary.GetDictionary<TModel>(data);
@@ -333,13 +164,13 @@ partial class DataServiceBase<TModel>
 		}
 
 		//修整过滤条件
-		criteria = this.OnValidate(DataServiceMethod.Update(), criteria ?? this.GetUpdateKey(dictionary), options);
+		criteria = await this.OnValidateAsync(DataServiceMethod.Update(), criteria ?? this.GetUpdateKey(dictionary), options, cancellation);
 
 		//解析数据模式表达式
 		var schematic = this.GetSchema(schema, data.GetType());
 
 		//验证待更新的数据
-		this.OnValidate(DataServiceMethod.Update(), schematic, dictionary, options);
+		await this.OnValidateAsync(DataServiceMethod.Update(), schematic, dictionary, options, cancellation);
 
 		//如果缺少必须的更新条件则抛出异常
 		if(criteria == null)
@@ -352,7 +183,7 @@ partial class DataServiceBase<TModel>
 		}
 
 		//执行更新操作
-		return this.OnUpdateAsync(dictionary, criteria, schematic, options, cancellation);
+		return await this.OnUpdateAsync(dictionary, criteria, schematic, options, cancellation);
 	}
 
 	public ValueTask<int> UpdateAsync(object data, Data.Condition criteria, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, (ICondition)criteria, options, cancellation);
@@ -367,7 +198,96 @@ partial class DataServiceBase<TModel>
 		if(data == null || data.Data == null || !data.HasChanges())
 			return ValueTask.FromResult(0);
 
-		return this.DataAccess.UpdateAsync(this.Name, data, criteria, schema, options, ctx => this.OnUpdating(ctx), ctx => this.OnUpdated(ctx), cancellation);
+		return this.DataAccess.UpdateAsync(this.Name, data, criteria, schema, options, this.OnUpdatingAsync, this.OnUpdatedAsync, cancellation);
+	}
+	#endregion
+
+	#region 便利取消
+	public ValueTask<int> UpdateAsync(string key, object data, CancellationToken cancellation) => this.UpdateAsync(key, data, default(DataUpdateOptions), cancellation);
+	public ValueTask<int> UpdateAsync(string key, object data, string schema, CancellationToken cancellation) => this.UpdateAsync(key, data, schema, default(DataUpdateOptions), cancellation);
+	public ValueTask<int> UpdateAsync<TKey1>(TKey1 key1, object data, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> => this.UpdateAsync<TKey1>(key1, data, default(DataUpdateOptions), cancellation);
+	public ValueTask<int> UpdateAsync<TKey1>(TKey1 key1, string schema, object data, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> => this.UpdateAsync<TKey1>(key1, schema, data, default(DataUpdateOptions), cancellation);
+	public ValueTask<int> UpdateAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, object data, CancellationToken cancellation) where TKey1 : IEquatable<TKey1>
+		where TKey2 : IEquatable<TKey2> => this.UpdateAsync<TKey1, TKey2>(key1, key2, data, default(DataUpdateOptions), cancellation);
+	public ValueTask<int> UpdateAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, object data, CancellationToken cancellation) where TKey1 : IEquatable<TKey1>
+		where TKey2 : IEquatable<TKey2> => this.UpdateAsync<TKey1, TKey2>(key1, key2, schema, data, default(DataUpdateOptions), cancellation);
+	public ValueTask<int> UpdateAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, object data, CancellationToken cancellation) where TKey1 : IEquatable<TKey1>
+		where TKey2 : IEquatable<TKey2>
+		where TKey3 : IEquatable<TKey3> => this.UpdateAsync<TKey1, TKey2, TKey3>(key1, key2, key3, data, default(DataUpdateOptions), cancellation);
+	public ValueTask<int> UpdateAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, object data, CancellationToken cancellation) where TKey1 : IEquatable<TKey1>
+		where TKey2 : IEquatable<TKey2>
+		where TKey3 : IEquatable<TKey3> => this.UpdateAsync<TKey1, TKey2, TKey3>(key1, key2, key3, schema, data, default(DataUpdateOptions), cancellation);
+	public ValueTask<int> UpdateAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, object data, CancellationToken cancellation) where TKey1 : IEquatable<TKey1>
+		where TKey2 : IEquatable<TKey2>
+		where TKey3 : IEquatable<TKey3>
+		where TKey4 : IEquatable<TKey4> => this.UpdateAsync<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, data, default(DataUpdateOptions), cancellation);
+	public ValueTask<int> UpdateAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, object data, CancellationToken cancellation) where TKey1 : IEquatable<TKey1>
+		where TKey2 : IEquatable<TKey2>
+		where TKey3 : IEquatable<TKey3>
+		where TKey4 : IEquatable<TKey4> => this.UpdateAsync<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, schema, data, default(DataUpdateOptions), cancellation);
+	public ValueTask<int> UpdateAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, object data, CancellationToken cancellation) where TKey1 : IEquatable<TKey1>
+		where TKey2 : IEquatable<TKey2>
+		where TKey3 : IEquatable<TKey3>
+		where TKey4 : IEquatable<TKey4>
+		where TKey5 : IEquatable<TKey5> => this.UpdateAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, data, default(DataUpdateOptions), cancellation);
+	public ValueTask<int> UpdateAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, object data, CancellationToken cancellation) where TKey1 : IEquatable<TKey1>
+		where TKey2 : IEquatable<TKey2>
+		where TKey3 : IEquatable<TKey3>
+		where TKey4 : IEquatable<TKey4>
+		where TKey5 : IEquatable<TKey5> => this.UpdateAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, schema, data, default(DataUpdateOptions), cancellation);
+	public ValueTask<int> UpdateAsync(object data, CancellationToken cancellation) => this.UpdateAsync(data, default(DataUpdateOptions), cancellation);
+	public ValueTask<int> UpdateAsync(object data, string schema, CancellationToken cancellation) => this.UpdateAsync(data, schema, default(DataUpdateOptions), cancellation);
+	public ValueTask<int> UpdateAsync(object data, ICondition criteria, CancellationToken cancellation) => this.UpdateAsync(data, criteria, default(DataUpdateOptions), cancellation);
+	public ValueTask<int> UpdateAsync(object data, ICondition criteria, string schema, CancellationToken cancellation) => this.UpdateAsync(data, criteria, schema, default(DataUpdateOptions), cancellation);
+	public ValueTask<int> UpdateAsync(object data, Data.Condition criteria, CancellationToken cancellation) => this.UpdateAsync(data, criteria, default(DataUpdateOptions), cancellation);
+	public ValueTask<int> UpdateAsync(object data, Data.Condition criteria, string schema, CancellationToken cancellation) => this.UpdateAsync(data, criteria, schema, default(DataUpdateOptions), cancellation);
+	public ValueTask<int> UpdateAsync(object data, ConditionCollection criteria, CancellationToken cancellation) => this.UpdateAsync(data, criteria, default(DataUpdateOptions), cancellation);
+	public ValueTask<int> UpdateAsync(object data, ConditionCollection criteria, string schema, CancellationToken cancellation) => this.UpdateAsync(data, criteria, schema, default(DataUpdateOptions), cancellation);
+	#endregion
+	#region 异步更新源
+	public ValueTask<int> UpdateManyAsync<T>(string key, IAsyncEnumerable<T> items, CancellationToken cancellation) => this.UpdateManyAsync<T>(key, items, null, null, cancellation);
+	public ValueTask<int> UpdateManyAsync<T>(string key, IAsyncEnumerable<T> items, string schema, CancellationToken cancellation) => this.UpdateManyAsync<T>(key, items, schema, null, cancellation);
+	public ValueTask<int> UpdateManyAsync<T>(string key, IAsyncEnumerable<T> items, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateManyAsync<T>(key, items, null, options, cancellation);
+	public async ValueTask<int> UpdateManyAsync<T>(string key, IAsyncEnumerable<T> items, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default)
+	{
+		if(items == null)
+			return 0;
+
+		//确认是否可以执行该操作
+		this.EnsureUpdate(options);
+
+		//创建事务
+		await using var transaction = new Transaction();
+
+		try
+		{
+			var count = 0;
+
+			await foreach(var item in items.WithCancellation(cancellation))
+			{
+				if(item == null)
+					continue;
+
+				var dictionary = DataDictionary.GetDictionary<TModel>(item);
+
+				//处理数据模型
+				this.OnModel(key, dictionary, options);
+
+				//执行数据更新
+				count += await this.UpdateAsync(dictionary.Data, schema, options, cancellation);
+			}
+
+			//提交事务（异步等待真实提交完成，避免阻塞请求线程）
+			await transaction.CommitAsync(cancellation);
+
+			//返回更新数
+			return count;
+		}
+		catch(Exception exception)
+		{
+			await transaction.RollbackAsync(exception);
+			throw;
+		}
 	}
 	#endregion
 }

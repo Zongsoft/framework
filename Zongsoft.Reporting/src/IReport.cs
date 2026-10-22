@@ -29,6 +29,8 @@
 
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Reporting;
 
@@ -47,7 +49,7 @@ public interface IReport
 	#region 公共方法
 	T AsReport<T>() where T : class;
 
-	void Save(Stream stream);
+	ValueTask SaveAsync(Stream stream, CancellationToken cancellation = default);
 	void Render(Stream stream, IReportRenderOptions options);
 	void RenderToFile(string filePath, IReportRenderOptions options);
 

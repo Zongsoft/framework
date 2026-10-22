@@ -23,7 +23,7 @@ description: 在 Zongsoft framework 仓库中进行修改、审查或排障前�
 ## 依赖与兼容
 
 - Core 是底层契约；先检查目标项目的 `Choose`：很多 Debug 构建通过 HintPath 引用本机 Core 输出，Release 使用 NuGet；不能把重新编译插件当成已同步宿主公共程序集。
-- 默认目标框架由 `Directory.Build.props` 定义，项目可覆盖；样例和宿主可能仅使用 net10.0。包版本有中央定义也有项目级 `VersionOverride`，以实际项目为准。
+- 默认目标框架由 `Directory.Build.props` 定义，项目可覆盖；样例和宿主可能仅使用 net10.0。版本核对同时读取项目 Version、PackageReference 的 Version/VersionOverride、中央 PackageVersion、部署清单和 packages；Debug 的 HintPath 构建不能证明 Release 的包依赖已同步。仅调整受影响项目及其直接依赖，保留未改动项目的兼容最低版本。
 - `Zongsoft.CodeAnalysis` 为集中版本管理的 NuGet 分析器包，源码与规则在 guidelines 维护；接入与检查方式详见 [代码规范检查](README.zh-Hans.md#code-analysis)。
 - `Zongsoft.Diagnostics/proto` 是外部子模块，除非任务明确要求，否则不修改上游协议内容。
 - 双语 README、资源文件和插件清单属于用户可见契约；行为变化时检查同步需要。
@@ -55,7 +55,7 @@ description: 在 Zongsoft framework 仓库中进行修改、审查或排障前�
 4. 核对 `.deploy` 与包内产物、目标框架、原生资源、宿主根目录公共程序集；部署器默认跳过 Zongsoft 传递依赖，必须在宿主方案中显式组合。
 5. README 展示公共接口消费与必要的配置/部署，SKILL 记录内部约束；不要在两处复制实现类清单。
 6. 文档仅描述最终状态；任务计划、重构经过、扫描数量、历史测试结果和临时输出路径不进入长期文档。结束前删除本任务的过程文件，并检查正式文档没有指向临时文件或已删除文档的链接。
-7. C# 格式整理保持原有编码和换行，`#endregion` 紧接前一个非空行。
+7. C# 格式整理遵循 [AGENTS.md](AGENTS.md) 的编码、换行与 region 空行规则。
 
 ## 验证选择
 

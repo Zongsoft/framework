@@ -1,4 +1,4 @@
-# Zongsoft.Messaging.ZeroMQ 架构与重构评估
+# Zongsoft.Messaging.ZeroMQ 架构
 
 ## 1. 当前架构
 
@@ -78,7 +78,7 @@ Storage 以 Create(Storage) 按独立配置名创建；Name 仅标识服务器�
 - 初始化失败、取消或关闭会回滚 Core 订阅项；竞争失败创建的消费者会立即释放。
 - Queue 构造时快照连接、端口、分组、过滤、超时、心跳和重连设置，不反向修改配置对象。
 
-## 7. 当前限制与后续事项
+## 7. 使用限制
 
 | 事项 | 影响与建议 |
 | --- | --- |
@@ -87,7 +87,5 @@ Storage 以 Create(Storage) 按独立配置名创建；Name 仅标识服务器�
 | 接纳结果不确定 | Control 超时或断线时由业务决定是否重试，并容忍重复。 |
 | Storage 性能 | 每条可靠消息需要持久写入；实现应公开耐久级别、容量、延迟和监控指标。 |
 | 网络安全 | TCP 端点默认绑定外部接口且无认证、加密，应部署在可信边界或安全隧道内。 |
-| 请求响应适配 | `ZeroRequester`/`ZeroResponder` 仍使用队列主题，后续可独立评估专用 DEALER/ROUTER 通道。 |
-| Storage 插件 | Redis、SQLite、DuckDB、etcd 应作为独立插件实现；SQLite/Redis 优先，DuckDB/etcd 需明确适用限制。 |
-
-当前实施进度和测试证据仅记录在 [`.testagent/status.md`](../../.testagent/status.md)，避免把阶段过程混入架构说明。
+| 请求响应适配 | `ZeroRequester`/`ZeroResponder` 使用队列主题承载请求与响应。 |
+| Storage 插件 | 存储实现由独立插件提供，部署前确认其耐久性、并发和运行环境要求。 |

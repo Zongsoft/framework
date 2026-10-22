@@ -29,14 +29,19 @@
 
 using System;
 using System.Data;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Data.Common.Expressions;
 
 public class ExecutionStatementBuilder : IStatementBuilder<DataExecuteContext>
 {
 	#region 公共方法
-	public IEnumerable<IStatementBase> Build(DataExecuteContext context)
+	public IAsyncEnumerable<IStatementBase> BuildAsync(DataExecuteContext context, CancellationToken cancellation = default) => Collections.Enumerable.EnumerateAsync<IStatementBase>(this.Build(context), cancellation);
+
+	private IEnumerable<IStatementBase> Build(DataExecuteContext context)
 	{
 		var statement = this.CreateStatement(context);
 

@@ -28,8 +28,11 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 using Zongsoft.Data.Metadata;
 
@@ -38,14 +41,14 @@ namespace Zongsoft.Data.Common.Expressions;
 public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 {
 	#region 构建方法
-	public IEnumerable<IStatementBase> Build(DataUpsertContext context)
+	public IAsyncEnumerable<IStatementBase> BuildAsync(DataUpsertContext context, CancellationToken cancellation = default)
 	{
-		return BuildUpserts(context, context.Entity, context.Data, null, context.Schema.Members);
+		return BuildUpsertsAsync(context, context.Entity, context.Data, null, context.Schema.Members, cancellation);
 	}
 	#endregion
 
 	#region 私有方法
-	internal static IEnumerable<UpsertStatement> BuildUpserts(IDataMutateContext context, IDataEntity entity, object data, SchemaMember owner, IEnumerable<SchemaMember> schemas)
+	internal static async IAsyncEnumerable<UpsertStatement> BuildUpsertsAsync(IDataMutateContext context, IDataEntity entity, object data, SchemaMember owner, IEnumerable<SchemaMember> schemas, [EnumeratorCancellation] CancellationToken cancellation = default)
 	{
 		var inherits = entity.GetInherits();
 		var sequenceRetrievable = IsSequenceRetrievable(context);
@@ -125,7 +128,9 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 					else
 					{
 						//确认当前成员是否有提供的写入值
-						var provided = context.Validate(DataAccessMethod.Insert, simplex, out var value);
+						var validation = await context.ValidateAsync(DataAccessMethod.Insert, simplex, cancellation).ConfigureAwait(false);
+						var provided = validation.HasValue;
+						var value = validation.Value;
 
 						var field = statement.Table.CreateField(schema.Token);
 						statement.Fields.Add(field);
@@ -175,8 +180,9 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 						}
 
 						//确认当前成员是否有提供的写入值
-						if(context.IsMultiple() && context.Validate(DataAccessMethod.Update, simplex, out value))
+						if(context.IsMultiple() && (validation = await context.ValidateAsync(DataAccessMethod.Update, simplex, cancellation).ConfigureAwait(false)).HasValue)
 						{
+							value = validation.Value;
 							parameter = Expression.Parameter(field, schema, value);
 							statement.Parameters.Add(parameter);
 							statement.Updation.Add(new FieldValue(field, parameter));
@@ -195,14 +201,14 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 						throw new DataException(string.Format(Properties.Resources.Statement_MissingComplexPropertyMembers_Message, schema.FullPath));
 
 					var complex = (IDataEntityComplexProperty)schema.Token.Property;
-					var slaves = BuildUpserts(
+					var slaves = BuildUpsertsAsync(
 						context,
 						complex.Foreign,
 						data,
 						schema,
-						schema.Children);
+						schema.Children, cancellation);
 
-					foreach(var slave in slaves)
+					await foreach(var slave in slaves.ConfigureAwait(false))
 					{
 						slave.Schema = schema;
 						statement.Slaves.Add(slave);

@@ -39,16 +39,6 @@ namespace Zongsoft.Data.Common;
 public class DataUpsertExecutor : DataMutateExecutor<UpsertStatement>
 {
 	#region 重写方法
-	protected override bool OnMutated(IDataMutateContext context, UpsertStatement statement, int count)
-	{
-		//执行获取新增后的自增型字段值
-		if(count > 0 && statement.SequenceRetriever != null)
-			context.Provider.Executor.Execute(context, statement.SequenceRetriever);
-
-		//调用基类同名方法
-		return base.OnMutated(context, statement, count);
-	}
-
 	protected override async ValueTask<bool> OnMutatedAsync(IDataMutateContext context, UpsertStatement statement, int count, CancellationToken cancellation)
 	{
 		//执行获取新增后的自增型字段值

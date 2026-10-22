@@ -35,55 +35,6 @@ namespace Zongsoft.Data;
 
 partial class DataServiceBase<TModel>
 {
-	#region 公共方法
-	public bool Exists(string key, DataExistsOptions options = null) => this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key, options, out _), options);
-	public bool Exists<TKey1>(TKey1 key1, DataExistsOptions options = null)
-		where TKey1 : IEquatable<TKey1> => this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, options, out _), options);
-	public bool Exists<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataExistsOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2> => this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, options, out _), options);
-	public bool Exists<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataExistsOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3> => this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, options, out _), options);
-	public bool Exists<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataExistsOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3>
-		where TKey4 : IEquatable<TKey4> => this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, options, out _), options);
-	public bool Exists<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataExistsOptions options = null)
-		where TKey1 : IEquatable<TKey1>
-		where TKey2 : IEquatable<TKey2>
-		where TKey3 : IEquatable<TKey3>
-		where TKey4 : IEquatable<TKey4>
-		where TKey5 : IEquatable<TKey5> => this.Exists(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, key5, options, out _), options);
-
-	public bool Exists(ICondition criteria, DataExistsOptions options = null)
-	{
-		//构建数据操作的选项对象
-		if(options == null)
-			options = new DataExistsOptions();
-
-		//进行授权验证
-		this.Authorize(DataServiceMethod.Exists(), options);
-
-		//修整查询条件
-		criteria = this.OnValidate(DataServiceMethod.Exists(), criteria, options);
-
-		//执行存在操作
-		return this.OnExists(criteria, options);
-	}
-
-	public bool Exists(Data.Condition criteria, DataExistsOptions options = null) => this.Exists((ICondition)criteria, options);
-	public bool Exists(ConditionCollection criteria, DataExistsOptions options = null) => this.Exists((ICondition)criteria, options);
-	#endregion
-
-	#region 保护方法
-	protected virtual bool OnExists(ICondition criteria, DataExistsOptions options)
-	{
-		return this.DataAccess.Exists(this.Name, criteria, options, ctx => this.OnExisting(ctx), ctx => this.OnExisted(ctx));
-	}
-	#endregion
 
 	#region 公共方法
 	public ValueTask<bool> ExistsAsync(string key, DataExistsOptions options = null, CancellationToken cancellation = default) => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key, options, out _), options, cancellation);
@@ -108,27 +59,60 @@ partial class DataServiceBase<TModel>
 		where TKey4 : IEquatable<TKey4>
 		where TKey5 : IEquatable<TKey5> => this.ExistsAsync(this.ConvertKey(DataServiceMethod.Exists(), key1, key2, key3, key4, key5, options, out _), options, cancellation);
 
-	public ValueTask<bool> ExistsAsync(ICondition criteria, DataExistsOptions options = null, CancellationToken cancellation = default)
+	public async ValueTask<bool> ExistsAsync(ICondition criteria, DataExistsOptions options = null, CancellationToken cancellation = default)
 	{
 		//构建数据操作的选项对象
 		if(options == null)
 			options = new DataExistsOptions();
 
 		//进行授权验证
-		this.Authorize(DataServiceMethod.Exists(), options);
+		await this.AuthorizeAsync(DataServiceMethod.Exists(), options, cancellation);
 
 		//修整查询条件
-		criteria = this.OnValidate(DataServiceMethod.Exists(), criteria, options);
+		criteria = await this.OnValidateAsync(DataServiceMethod.Exists(), criteria, options, cancellation);
 
 		//执行存在操作
-		return this.OnExistsAsync(criteria, options, cancellation);
+		return await this.OnExistsAsync(criteria, options, cancellation);
 	}
 	#endregion
 
 	#region 保护方法
 	protected virtual ValueTask<bool> OnExistsAsync(ICondition criteria, DataExistsOptions options, CancellationToken cancellation)
 	{
-		return this.DataAccess.ExistsAsync(this.Name, criteria, options, ctx => this.OnExisting(ctx), ctx => this.OnExisted(ctx), cancellation);
+		return this.DataAccess.ExistsAsync(this.Name, criteria, options, this.OnExistingAsync, this.OnExistedAsync, cancellation);
 	}
+	#endregion
+
+	#region 便利重载
+	public ValueTask<bool> ExistsAsync(Data.Condition criteria, DataExistsOptions options = null, CancellationToken cancellation = default) => this.ExistsAsync((ICondition)criteria, options, cancellation);
+	public ValueTask<bool> ExistsAsync(ConditionCollection criteria, DataExistsOptions options = null, CancellationToken cancellation = default) => this.ExistsAsync((ICondition)criteria, options, cancellation);
+	#endregion
+
+	#region 便利取消
+	public ValueTask<bool> ExistsAsync<TKey1>(TKey1 key1, CancellationToken cancellation)
+		where TKey1 : IEquatable<TKey1> => this.ExistsAsync<TKey1>(key1, default(DataExistsOptions), cancellation);
+	public ValueTask<bool> ExistsAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, CancellationToken cancellation)
+		where TKey1 : IEquatable<TKey1>
+		where TKey2 : IEquatable<TKey2> => this.ExistsAsync<TKey1, TKey2>(key1, key2, default(DataExistsOptions), cancellation);
+	public ValueTask<bool> ExistsAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, CancellationToken cancellation)
+		where TKey1 : IEquatable<TKey1>
+		where TKey2 : IEquatable<TKey2>
+		where TKey3 : IEquatable<TKey3> => this.ExistsAsync<TKey1, TKey2, TKey3>(key1, key2, key3, default(DataExistsOptions), cancellation);
+	public ValueTask<bool> ExistsAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, CancellationToken cancellation)
+		where TKey1 : IEquatable<TKey1>
+		where TKey2 : IEquatable<TKey2>
+		where TKey3 : IEquatable<TKey3>
+		where TKey4 : IEquatable<TKey4> => this.ExistsAsync<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, default(DataExistsOptions), cancellation);
+	public ValueTask<bool> ExistsAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, CancellationToken cancellation)
+		where TKey1 : IEquatable<TKey1>
+		where TKey2 : IEquatable<TKey2>
+		where TKey3 : IEquatable<TKey3>
+		where TKey4 : IEquatable<TKey4>
+		where TKey5 : IEquatable<TKey5> => this.ExistsAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, default(DataExistsOptions), cancellation);
+
+	public ValueTask<bool> ExistsAsync(string key, CancellationToken cancellation) => this.ExistsAsync(key, default(DataExistsOptions), cancellation);
+	public ValueTask<bool> ExistsAsync(ICondition criteria, CancellationToken cancellation) => this.ExistsAsync(criteria, default(DataExistsOptions), cancellation);
+	public ValueTask<bool> ExistsAsync(Data.Condition criteria, CancellationToken cancellation) => this.ExistsAsync(criteria, default(DataExistsOptions), cancellation);
+	public ValueTask<bool> ExistsAsync(ConditionCollection criteria, CancellationToken cancellation) => this.ExistsAsync(criteria, default(DataExistsOptions), cancellation);
 	#endregion
 }

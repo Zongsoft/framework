@@ -77,7 +77,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		if(criteria == null)
 			return ValueTask.FromResult(false);
 
-		return this.Accessor.ExistsAsync(this.Name, criteria, cancellation: cancellation);
+		return this.Accessor.ExistsAsync(this.Name, criteria, cancellation);
 	}
 
 	public virtual async ValueTask<bool> EnableAsync(Identifier identifier, CancellationToken cancellation = default)
@@ -171,7 +171,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		if(criteria == null)
 			return false;
 
-		if(await this.Accessor.DeleteAsync(this.Name, criteria, cancellation: cancellation) > 0)
+		if(await this.Accessor.DeleteAsync(this.Name, criteria, cancellation) > 0)
 		{
 			//删除成员表中当前角色的所有子集
 			await Authentication.Servicer.Members.RemoveAsync(identifier, null, cancellation);
@@ -194,37 +194,45 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		var total = 0;
 
 		//创建事务
-		using var transaction = new Transaction();
+		await using var transaction = new Transaction();
 
-		foreach(var identifier in identifiers)
+		try
 		{
-			if(identifier.IsEmpty)
-				continue;
-
-			//确保不能删除内置角色
-			var criteria = this.GetCriteria(identifier) & Condition.NotIn(nameof(IRole.Name), [IRole.Administrators, IRole.Security]);
-			if(criteria == null)
-				continue;
-
-			var count = await this.Accessor.DeleteAsync(this.Name, criteria, cancellation: cancellation);
-
-			if(count > 0)
+			foreach(var identifier in identifiers)
 			{
-				total += count;
+				if(identifier.IsEmpty)
+					continue;
 
-				//删除成员表中当前角色的所有子集
-				await Authentication.Servicer.Members.RemoveAsync(identifier, null, cancellation);
+				//确保不能删除内置角色
+				var criteria = this.GetCriteria(identifier) & Condition.NotIn(nameof(IRole.Name), [IRole.Administrators, IRole.Security]);
+				if(criteria == null)
+					continue;
 
-				//删除成员表中当前角色的所有父级
-				await Authentication.Servicer.Members.RemoveAsync(Member.Role(identifier), cancellation);
+				var count = await this.Accessor.DeleteAsync(this.Name, criteria, cancellation);
+
+				if(count > 0)
+				{
+					total += count;
+
+					//删除成员表中当前角色的所有子集
+					await Authentication.Servicer.Members.RemoveAsync(identifier, null, cancellation);
+
+					//删除成员表中当前角色的所有父级
+					await Authentication.Servicer.Members.RemoveAsync(Member.Role(identifier), cancellation);
+				}
 			}
+
+			//提交事务
+			await transaction.CommitAsync(cancellation);
+
+			//返回删除数量
+			return total;
 		}
-
-		//提交事务
-		await transaction.CommitAsync(cancellation);
-
-		//返回删除数量
-		return total;
+		catch(Exception exception)
+		{
+			await transaction.RollbackAsync(exception);
+			throw;
+		}
 	}
 
 	public virtual async ValueTask<bool> UpdateAsync(TRole role, CancellationToken cancellation = default)
@@ -238,7 +246,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 
 		//确保修改的不是内置角色
 		var criteria = this.GetCriteria(role.Identifier) & Condition.NotIn(nameof(IRole.Name), [IRole.Administrators, IRole.Security]);
-		if(!await this.Accessor.ExistsAsync(this.Name, criteria, cancellation: cancellation))
+		if(!await this.Accessor.ExistsAsync(this.Name, criteria, cancellation))
 			return false;
 
 		return await this.Accessor.UpdateAsync(role, cancellation) > 0;

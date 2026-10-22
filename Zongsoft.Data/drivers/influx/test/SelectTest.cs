@@ -22,7 +22,7 @@ public class SelectTest(DatabaseFixture database)
 		Assert.NotEmpty(Mapping.Entities);
 		Assert.True(Mapping.Entities.Contains("MachineHistory"));
 
-		//var models = accessor.Select<Models.MachineHistory>();
+		//var models = accessor.SelectAsync<Models.MachineHistory>();
 		//Assert.NotNull(models);
 		//Assert.NotEmpty(models);
 	}

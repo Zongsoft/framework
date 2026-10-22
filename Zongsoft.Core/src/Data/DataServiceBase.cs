@@ -31,6 +31,8 @@ using System;
 using System.Data;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Zongsoft.Common;
@@ -43,22 +45,22 @@ namespace Zongsoft.Data;
 public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IMatchable, IMatchable<string>
 {
 	#region 事件定义
-	public event EventHandler<DataGettedEventArgs<TModel>> Getted;
-	public event EventHandler<DataGettingEventArgs<TModel>> Getting;
-	public event EventHandler<DataExistedEventArgs> Existed;
-	public event EventHandler<DataExistingEventArgs> Existing;
-	public event EventHandler<DataAggregatedEventArgs> Aggregated;
-	public event EventHandler<DataAggregatingEventArgs> Aggregating;
-	public event EventHandler<DataDeletedEventArgs> Deleted;
-	public event EventHandler<DataDeletingEventArgs> Deleting;
-	public event EventHandler<DataInsertedEventArgs> Inserted;
-	public event EventHandler<DataInsertingEventArgs> Inserting;
-	public event EventHandler<DataUpsertedEventArgs> Upserted;
-	public event EventHandler<DataUpsertingEventArgs> Upserting;
-	public event EventHandler<DataUpdatedEventArgs> Updated;
-	public event EventHandler<DataUpdatingEventArgs> Updating;
-	public event EventHandler<DataSelectedEventArgs> Selected;
-	public event EventHandler<DataSelectingEventArgs> Selecting;
+	public event Func<object, DataGettedEventArgs<TModel>, CancellationToken, ValueTask> Getted;
+	public event Func<object, DataGettingEventArgs<TModel>, CancellationToken, ValueTask> Getting;
+	public event Func<object, DataExistedEventArgs, CancellationToken, ValueTask> Existed;
+	public event Func<object, DataExistingEventArgs, CancellationToken, ValueTask> Existing;
+	public event Func<object, DataAggregatedEventArgs, CancellationToken, ValueTask> Aggregated;
+	public event Func<object, DataAggregatingEventArgs, CancellationToken, ValueTask> Aggregating;
+	public event Func<object, DataDeletedEventArgs, CancellationToken, ValueTask> Deleted;
+	public event Func<object, DataDeletingEventArgs, CancellationToken, ValueTask> Deleting;
+	public event Func<object, DataInsertedEventArgs, CancellationToken, ValueTask> Inserted;
+	public event Func<object, DataInsertingEventArgs, CancellationToken, ValueTask> Inserting;
+	public event Func<object, DataUpsertedEventArgs, CancellationToken, ValueTask> Upserted;
+	public event Func<object, DataUpsertingEventArgs, CancellationToken, ValueTask> Upserting;
+	public event Func<object, DataUpdatedEventArgs, CancellationToken, ValueTask> Updated;
+	public event Func<object, DataUpdatingEventArgs, CancellationToken, ValueTask> Updating;
+	public event Func<object, DataSelectedEventArgs, CancellationToken, ValueTask> Selected;
+	public event Func<object, DataSelectingEventArgs, CancellationToken, ValueTask> Selecting;
 	#endregion
 
 	#region 成员字段
@@ -77,7 +79,7 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	protected DataServiceBase(IServiceProvider serviceProvider)
 	{
 		_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-		_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
+		_attribute = GetAttribute(this.GetType());
 		_filters = new DataServiceFilterCollection<TModel>(this);
 
 		//创建数据搜索器
@@ -102,7 +104,7 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	protected DataServiceBase(IServiceProvider serviceProvider, DataServiceMutability? mutability)
 	{
 		_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-		_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
+		_attribute = GetAttribute(this.GetType());
 		_filters = _filters = new DataServiceFilterCollection<TModel>(this);
 		_mutability = mutability;
 
@@ -132,7 +134,7 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 
 		_name = name.Trim();
 		_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-		_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
+		_attribute = GetAttribute(this.GetType());
 		_filters = _filters = new DataServiceFilterCollection<TModel>(this);
 
 		//创建数据搜索器
@@ -161,7 +163,7 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 
 		_name = name.Trim();
 		_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-		_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
+		_attribute = GetAttribute(this.GetType());
 		_filters = _filters = new DataServiceFilterCollection<TModel>(this);
 		_mutability = mutability;
 
@@ -187,7 +189,7 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	protected DataServiceBase(IDataService service)
 	{
 		this.Service = service ?? throw new ArgumentNullException(nameof(service));
-		_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
+		_attribute = GetAttribute(this.GetType());
 		_filters = _filters = new DataServiceFilterCollection<TModel>(this);
 		_mutability = DataServiceMutability.All;
 
@@ -213,7 +215,7 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	protected DataServiceBase(IDataService service, DataServiceMutability? mutability)
 	{
 		this.Service = service ?? throw new ArgumentNullException(nameof(service));
-		_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
+		_attribute = GetAttribute(this.GetType());
 		_filters = _filters = new DataServiceFilterCollection<TModel>(this);
 		_mutability = mutability;
 
@@ -243,7 +245,7 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 
 		_name = name.Trim();
 		this.Service = service ?? throw new ArgumentNullException(nameof(service));
-		_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
+		_attribute = GetAttribute(this.GetType());
 		_filters = _filters = new DataServiceFilterCollection<TModel>(this);
 		_mutability = DataServiceMutability.All;
 
@@ -273,7 +275,7 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 
 		_name = name.Trim();
 		this.Service = service ?? throw new ArgumentNullException(nameof(service));
-		_attribute = (DataServiceAttribute)System.Attribute.GetCustomAttribute(this.GetType(), typeof(DataServiceAttribute), true);
+		_attribute = GetAttribute(this.GetType());
 		_filters = _filters = new DataServiceFilterCollection<TModel>(this);
 		_mutability = mutability;
 
@@ -473,13 +475,13 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	#endregion
 
 	#region 授权验证
-	protected virtual void Authorize(DataServiceMethod method, IDataOptions options)
+	protected virtual async ValueTask AuthorizeAsync(DataServiceMethod method, IDataOptions options, CancellationToken cancellation)
 	{
 		var authorizer = this.Authorizer;
 
 		if(authorizer != null)
 		{
-			authorizer.Authorize(this, method, options);
+			await authorizer.AuthorizeAsync(this, method, options, cancellation);
 		}
 		else
 		{
@@ -520,9 +522,11 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	/// <param name="criteria">查询条件。</param>
 	/// <param name="options">执行方法的可选项。</param>
 	/// <returns>处理后的条件。</returns>
-	protected virtual ICondition OnValidate(DataServiceMethod method, ICondition criteria, IDataOptions options)
+	/// <param name="cancellation">取消标记。</param>
+	protected virtual async ValueTask<ICondition> OnValidateAsync(DataServiceMethod method, ICondition criteria, IDataOptions options, CancellationToken cancellation)
 	{
-		return this.Validator?.Validate(this, method, criteria, options) ?? criteria;
+		var validator = this.Validator;
+		return validator == null ? criteria : await validator.ValidateAsync(this, method, criteria, options, cancellation) ?? criteria;
 	}
 
 	/// <summary>数据验证方法，适用于 <c>Insert</c>、<c>Update</c>、<c>Upsert</c> 等方法。</summary>
@@ -530,196 +534,202 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	/// <param name="schema">数据模式。</param>
 	/// <param name="data">待验证的数据。</param>
 	/// <param name="options">执行方法的可选项。</param>
-	protected virtual void OnValidate(DataServiceMethod method, ISchema schema, IDataDictionary<TModel> data, IDataMutateOptions options)
-	{
-		this.Validator?.Validate(this, method, schema, data, options);
-	}
+	/// <param name="cancellation">取消标记。</param>
+	/// <returns>表示异步操作的任务。</returns>
+	protected virtual ValueTask OnValidateAsync(DataServiceMethod method, ISchema schema, IDataDictionary<TModel> data, IDataMutateOptions options, CancellationToken cancellation) => this.Validator?.ValidateAsync(this, method, schema, data, options, cancellation) ?? ValueTask.CompletedTask;
 	#endregion
 
 	#region 触发过滤
-	protected void OnFiltered(DataServiceMethod method, object result, params object[] arguments) => this.OnFiltered(method, null, result, arguments);
-	protected void OnFiltered(DataServiceMethod method, IDataAccessContextBase context, params object[] arguments) => this.OnFiltered(method, context, null, arguments);
-	protected void OnFiltered(DataServiceMethod method, IDataAccessContextBase context, object result, params object[] arguments) => _filters.OnFiltered(method, context, result, arguments);
+	protected ValueTask OnFilteredAsync(DataServiceMethod method, object result, params object[] arguments) => this.OnFilteredAsync(method, null, result, arguments, CancellationToken.None);
+	protected ValueTask OnFilteredAsync(DataServiceMethod method, object result, object[] arguments, CancellationToken cancellation) => this.OnFilteredAsync(method, null, result, arguments, cancellation);
+	protected ValueTask OnFilteredAsync(DataServiceMethod method, IDataAccessContextBase context, params object[] arguments) => this.OnFilteredAsync(method, context, null, arguments, CancellationToken.None);
+	protected ValueTask OnFilteredAsync(DataServiceMethod method, IDataAccessContextBase context, CancellationToken cancellation) => this.OnFilteredAsync(method, context, null, [], cancellation);
+	protected ValueTask OnFilteredAsync(DataServiceMethod method, IDataAccessContextBase context, object[] arguments, CancellationToken cancellation) => this.OnFilteredAsync(method, context, null, arguments, cancellation);
+	protected ValueTask OnFilteredAsync(DataServiceMethod method, IDataAccessContextBase context, object result, params object[] arguments) => this.OnFilteredAsync(method, context, result, arguments, CancellationToken.None);
+	protected ValueTask OnFilteredAsync(DataServiceMethod method, IDataAccessContextBase context, object result, object[] arguments, CancellationToken cancellation) => _filters.OnFilteredAsync(method, context, result, arguments, cancellation);
 
-	protected bool OnFiltering(DataServiceMethod method, params object[] arguments) => this.OnFiltering(method, null, arguments);
-	protected bool OnFiltering(DataServiceMethod method, IDataAccessContextBase context, params object[] arguments) => _filters.OnFiltering(method, context, null, arguments);
+	protected ValueTask<bool> OnFilteringAsync(DataServiceMethod method, params object[] arguments) => this.OnFilteringAsync(method, null, arguments, CancellationToken.None);
+	protected ValueTask<bool> OnFilteringAsync(DataServiceMethod method, CancellationToken cancellation) => this.OnFilteringAsync(method, null, [], cancellation);
+	protected ValueTask<bool> OnFilteringAsync(DataServiceMethod method, object[] arguments, CancellationToken cancellation) => this.OnFilteringAsync(method, null, arguments, cancellation);
+	protected ValueTask<bool> OnFilteringAsync(DataServiceMethod method, IDataAccessContextBase context, params object[] arguments) => this.OnFilteringAsync(method, context, arguments, CancellationToken.None);
+	protected ValueTask<bool> OnFilteringAsync(DataServiceMethod method, IDataAccessContextBase context, CancellationToken cancellation) => this.OnFilteringAsync(method, context, [], cancellation);
+	protected ValueTask<bool> OnFilteringAsync(DataServiceMethod method, IDataAccessContextBase context, object[] arguments, CancellationToken cancellation) => _filters.OnFilteringAsync(method, context, [null, arguments], cancellation);
 	#endregion
 
 	#region 激发事件
-	protected virtual void OnGetted(DataSelectContextBase context)
+	protected virtual async ValueTask OnGettedAsync(DataSelectContextBase context, TModel result, CancellationToken cancellation)
 	{
-		this.Getted?.Invoke(this, new DataGettedEventArgs<TModel>(context));
-		this.OnFiltered(DataServiceMethod.Get(), context);
+		await this.RaiseAsync(this.Getted, new DataGettedEventArgs<TModel>(context, result), cancellation);
 	}
 
-	protected virtual bool OnGetting(DataSelectContextBase context)
+	protected virtual async ValueTask<bool> OnGettingAsync(DataSelectContextBase context, CancellationToken cancellation)
 	{
 		var e = this.Getting;
 
 		if(e != null)
 		{
 			var args = new DataGettingEventArgs<TModel>(context);
-			e.Invoke(this, args);
+			await this.RaiseAsync(e, args, cancellation);
 
 			if(args.Cancel)
 				return true;
 		}
 
-		return this.OnFiltering(DataServiceMethod.Get(), context);
+		return await this.OnFilteringAsync(DataServiceMethod.Get(), context, cancellation);
 	}
 
-	protected virtual void OnExisted(DataExistContextBase context)
+	protected virtual async ValueTask OnExistedAsync(DataExistContextBase context, CancellationToken cancellation)
 	{
-		this.Existed?.Invoke(this, new DataExistedEventArgs(context));
-		this.OnFiltered(DataServiceMethod.Exists(), context);
+		await this.RaiseAsync(this.Existed, new DataExistedEventArgs(context), cancellation);
+		await this.OnFilteredAsync(DataServiceMethod.Exists(), context, cancellation);
 	}
 
-	protected virtual bool OnExisting(DataExistContextBase context)
+	protected virtual async ValueTask<bool> OnExistingAsync(DataExistContextBase context, CancellationToken cancellation)
 	{
 		var e = this.Existing;
 
 		if(e != null)
 		{
 			var args = new DataExistingEventArgs(context);
-			e.Invoke(this, args);
+			await this.RaiseAsync(e, args, cancellation);
 
 			if(args.Cancel)
 				return true;
 		}
 
-		return this.OnFiltering(DataServiceMethod.Exists(), context);
+		return await this.OnFilteringAsync(DataServiceMethod.Exists(), context, cancellation);
 	}
 
-	protected virtual void OnAggregated(DataAggregateContextBase context)
+	protected virtual async ValueTask OnAggregatedAsync(DataAggregateContextBase context, CancellationToken cancellation)
 	{
-		this.Aggregated?.Invoke(this, new DataAggregatedEventArgs(context));
-		this.OnFiltered(DataServiceMethod.Aggregate(context.Aggregate.Function), context);
+		await this.RaiseAsync(this.Aggregated, new DataAggregatedEventArgs(context), cancellation);
+		await this.OnFilteredAsync(DataServiceMethod.Aggregate(context.Aggregate.Function), context, cancellation);
 	}
 
-	protected virtual bool OnAggregating(DataAggregateContextBase context)
+	protected virtual async ValueTask<bool> OnAggregatingAsync(DataAggregateContextBase context, CancellationToken cancellation)
 	{
 		var e = this.Aggregating;
 
 		if(e != null)
 		{
 			var args = new DataAggregatingEventArgs(context);
-			e.Invoke(this, args);
+			await this.RaiseAsync(e, args, cancellation);
 
 			if(args.Cancel)
 				return true;
 		}
 
-		return this.OnFiltering(DataServiceMethod.Aggregate(context.Aggregate.Function), context);
+		return await this.OnFilteringAsync(DataServiceMethod.Aggregate(context.Aggregate.Function), context, cancellation);
 	}
 
-	protected virtual void OnDeleted(DataDeleteContextBase context)
+	protected virtual async ValueTask OnDeletedAsync(DataDeleteContextBase context, CancellationToken cancellation)
 	{
-		this.Deleted?.Invoke(this, new DataDeletedEventArgs(context));
-		this.OnFiltered(DataServiceMethod.Delete(), context);
+		await this.RaiseAsync(this.Deleted, new DataDeletedEventArgs(context), cancellation);
+		await this.OnFilteredAsync(DataServiceMethod.Delete(), context, cancellation);
 	}
 
-	protected virtual bool OnDeleting(DataDeleteContextBase context)
+	protected virtual async ValueTask<bool> OnDeletingAsync(DataDeleteContextBase context, CancellationToken cancellation)
 	{
 		var e = this.Deleting;
 
 		if(e != null)
 		{
 			var args = new DataDeletingEventArgs(context);
-			e.Invoke(this, args);
+			await this.RaiseAsync(e, args, cancellation);
 
 			if(args.Cancel)
 				return true;
 		}
 
-		return this.OnFiltering(DataServiceMethod.Delete(), context);
+		return await this.OnFilteringAsync(DataServiceMethod.Delete(), context, cancellation);
 	}
 
-	protected virtual void OnInserted(DataInsertContextBase context)
+	protected virtual async ValueTask OnInsertedAsync(DataInsertContextBase context, CancellationToken cancellation)
 	{
-		this.Inserted?.Invoke(this, new DataInsertedEventArgs(context));
-		this.OnFiltered(context.IsMultiple ? DataServiceMethod.InsertMany() : DataServiceMethod.Insert(), context);
+		await this.RaiseAsync(this.Inserted, new DataInsertedEventArgs(context), cancellation);
+		await this.OnFilteredAsync(context.IsMultiple ? DataServiceMethod.InsertMany() : DataServiceMethod.Insert(), context, cancellation);
 	}
 
-	protected virtual bool OnInserting(DataInsertContextBase context)
+	protected virtual async ValueTask<bool> OnInsertingAsync(DataInsertContextBase context, CancellationToken cancellation)
 	{
 		var e = this.Inserting;
 
 		if(e != null)
 		{
 			var args = new DataInsertingEventArgs(context);
-			e.Invoke(this, args);
+			await this.RaiseAsync(e, args, cancellation);
 
 			if(args.Cancel)
 				return true;
 		}
 
-		return this.OnFiltering(context.IsMultiple ? DataServiceMethod.InsertMany() : DataServiceMethod.Insert(), context);
+		return await this.OnFilteringAsync(context.IsMultiple ? DataServiceMethod.InsertMany() : DataServiceMethod.Insert(), context, cancellation);
 	}
 
-	protected virtual void OnUpserted(DataUpsertContextBase context)
+	protected virtual async ValueTask OnUpsertedAsync(DataUpsertContextBase context, CancellationToken cancellation)
 	{
-		this.Upserted?.Invoke(this, new DataUpsertedEventArgs(context));
-		this.OnFiltered(context.IsMultiple ? DataServiceMethod.UpsertMany() : DataServiceMethod.Upsert(), context);
+		await this.RaiseAsync(this.Upserted, new DataUpsertedEventArgs(context), cancellation);
+		await this.OnFilteredAsync(context.IsMultiple ? DataServiceMethod.UpsertMany() : DataServiceMethod.Upsert(), context, cancellation);
 	}
 
-	protected virtual bool OnUpserting(DataUpsertContextBase context)
+	protected virtual async ValueTask<bool> OnUpsertingAsync(DataUpsertContextBase context, CancellationToken cancellation)
 	{
 		var e = this.Upserting;
 
 		if(e != null)
 		{
 			var args = new DataUpsertingEventArgs(context);
-			e.Invoke(this, args);
+			await this.RaiseAsync(e, args, cancellation);
 
 			if(args.Cancel)
 				return true;
 		}
 
-		return this.OnFiltering(context.IsMultiple ? DataServiceMethod.UpsertMany() : DataServiceMethod.Upsert(), context);
+		return await this.OnFilteringAsync(context.IsMultiple ? DataServiceMethod.UpsertMany() : DataServiceMethod.Upsert(), context, cancellation);
 	}
 
-	protected virtual void OnUpdated(DataUpdateContextBase context)
+	protected virtual async ValueTask OnUpdatedAsync(DataUpdateContextBase context, CancellationToken cancellation)
 	{
-		this.Updated?.Invoke(this, new DataUpdatedEventArgs(context));
-		this.OnFiltered(DataServiceMethod.Update(), context);
+		await this.RaiseAsync(this.Updated, new DataUpdatedEventArgs(context), cancellation);
+		await this.OnFilteredAsync(DataServiceMethod.Update(), context, cancellation);
 	}
 
-	protected virtual bool OnUpdating(DataUpdateContextBase context)
+	protected virtual async ValueTask<bool> OnUpdatingAsync(DataUpdateContextBase context, CancellationToken cancellation)
 	{
 		var e = this.Updating;
 
 		if(e != null)
 		{
 			var args = new DataUpdatingEventArgs(context);
-			e.Invoke(this, args);
+			await this.RaiseAsync(e, args, cancellation);
 
 			if(args.Cancel)
 				return true;
 		}
 
-		return this.OnFiltering(DataServiceMethod.Update(), context);
+		return await this.OnFilteringAsync(DataServiceMethod.Update(), context, cancellation);
 	}
 
-	protected virtual void OnSelected(DataSelectContextBase context)
+	protected virtual async ValueTask OnSelectedAsync(DataSelectContextBase context, CancellationToken cancellation)
 	{
-		this.Selected?.Invoke(this, new DataSelectedEventArgs(context));
-		this.OnFiltered(DataServiceMethod.Select(), context);
+		await this.RaiseAsync(this.Selected, new DataSelectedEventArgs(context), cancellation);
+		await this.OnFilteredAsync(DataServiceMethod.Select(), context, cancellation);
 	}
 
-	protected virtual bool OnSelecting(DataSelectContextBase context)
+	protected virtual async ValueTask<bool> OnSelectingAsync(DataSelectContextBase context, CancellationToken cancellation)
 	{
 		var e = this.Selecting;
 
 		if(e != null)
 		{
 			var args = new DataSelectingEventArgs(context);
-			e.Invoke(this, args);
+			await this.RaiseAsync(e, args, cancellation);
 
 			if(args.Cancel)
 				return true;
 		}
 
-		return this.OnFiltering(DataServiceMethod.Select(), context);
+		return await this.OnFilteringAsync(DataServiceMethod.Select(), context, cancellation);
 	}
 	#endregion
 
@@ -812,6 +822,27 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	#endregion
 
 	#region 私有方法
+	private static DataServiceAttribute GetAttribute(Type type)
+	{
+		for(; type != null; type = type.BaseType)
+		{
+			var attribute = type.GetCustomAttribute<DataServiceAttribute>(false);
+
+			if(attribute != null)
+				return attribute;
+		}
+
+		return null;
+	}
+	private async ValueTask RaiseAsync<TArgs>(Func<object, TArgs, CancellationToken, ValueTask> handlers, TArgs args, CancellationToken cancellation)
+	{
+		if(handlers == null)
+			return;
+
+		foreach(Func<object, TArgs, CancellationToken, ValueTask> handler in handlers.GetInvocationList())
+			await handler(this, args, cancellation);
+	}
+
 	private ICondition ConvertKey(DataServiceMethod method, string key, IDataOptions options, out bool singular)
 	{
 		if(string.IsNullOrWhiteSpace(key))
@@ -951,7 +982,7 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	/// <summary>创建一个匿名用户的数据服务授权验证器。</summary>
 	/// <param name="authorize">指定数据服务操作的授权验证函数；该验证函数返回真(<c>True</c>)表示验证通过。</param>
 	/// <returns>返回创建的数据服务授权验证器。</returns>
-	public static IDataServiceAuthorizer<TModel> Anonymous(Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> authorize) =>
+	public static IDataServiceAuthorizer<TModel> Anonymous(Func<IDataService<TModel>, DataServiceMethod, IDataOptions, CancellationToken, ValueTask<bool>> authorize) =>
 		authorize == null ? AnonymousAuthorizer.Default : new AnonymousAuthorizer(authorize);
 
 	/// <summary>创建一个非匿名用户的数据服务授权验证器。</summary>
@@ -963,7 +994,7 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 	/// <summary>创建一个非匿名用户的数据服务授权验证器。</summary>
 	/// <param name="authorize">指定数据服务操作的授权验证函数；该验证函数返回真(<c>True</c>)表示验证通过。</param>
 	/// <returns>返回创建的数据服务授权验证器。</returns>
-	public static IDataServiceAuthorizer<TModel> Nonanonymous(Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> authorize) =>
+	public static IDataServiceAuthorizer<TModel> Nonanonymous(Func<IDataService<TModel>, DataServiceMethod, IDataOptions, CancellationToken, ValueTask<bool>> authorize) =>
 		authorize == null ? NonanonymousAuthorizer.Default : new NonanonymousAuthorizer(authorize);
 	#endregion
 
@@ -980,30 +1011,30 @@ public abstract partial class DataServiceBase<TModel> : IDataService<TModel>, IM
 		private Condition() { }
 	}
 
-	private class AnonymousAuthorizer(Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> authorize) : IDataServiceAuthorizer<TModel>
+	private class AnonymousAuthorizer(Func<IDataService<TModel>, DataServiceMethod, IDataOptions, CancellationToken, ValueTask<bool>> authorize) : IDataServiceAuthorizer<TModel>
 	{
 		public static readonly AnonymousAuthorizer Default = new AnonymousAuthorizer(null);
-		public static readonly AnonymousAuthorizer ReadOnly = new AnonymousAuthorizer((service, method, options) => method.IsReading);
+		public static readonly AnonymousAuthorizer ReadOnly = new AnonymousAuthorizer((service, method, options, cancellation) => ValueTask.FromResult(method.IsReading));
 
-		private readonly Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> _authorize = authorize;
+		private readonly Func<IDataService<TModel>, DataServiceMethod, IDataOptions, CancellationToken, ValueTask<bool>> _authorize = authorize;
 
-		public void Authorize(IDataService<TModel> service, DataServiceMethod method, IDataOptions options)
+		public async ValueTask AuthorizeAsync(IDataService<TModel> service, DataServiceMethod method, IDataOptions options, CancellationToken cancellation)
 		{
-			if(_authorize != null && !_authorize(service, method, options))
+			if(_authorize != null && !await _authorize(service, method, options, cancellation))
 				throw new Security.Privileges.AuthorizationException();
 		}
 	}
 
-	private class NonanonymousAuthorizer(Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> authorize) : IDataServiceAuthorizer<TModel>
+	private class NonanonymousAuthorizer(Func<IDataService<TModel>, DataServiceMethod, IDataOptions, CancellationToken, ValueTask<bool>> authorize) : IDataServiceAuthorizer<TModel>
 	{
 		public static readonly NonanonymousAuthorizer Default = new NonanonymousAuthorizer(null);
-		public static readonly NonanonymousAuthorizer ReadOnly = new NonanonymousAuthorizer((service, method, options) => method.IsReading);
+		public static readonly NonanonymousAuthorizer ReadOnly = new NonanonymousAuthorizer((service, method, options, cancellation) => ValueTask.FromResult(method.IsReading));
 
-		private readonly Func<IDataService<TModel>, DataServiceMethod, IDataOptions, bool> _authorize = authorize;
+		private readonly Func<IDataService<TModel>, DataServiceMethod, IDataOptions, CancellationToken, ValueTask<bool>> _authorize = authorize;
 
-		public void Authorize(IDataService<TModel> service, DataServiceMethod method, IDataOptions options)
+		public async ValueTask AuthorizeAsync(IDataService<TModel> service, DataServiceMethod method, IDataOptions options, CancellationToken cancellation)
 		{
-			if(Zongsoft.Security.ClaimsPrincipalExtension.IsAnonymous(service.Principal) || (_authorize != null && !_authorize(service, method, options)))
+			if(Zongsoft.Security.ClaimsPrincipalExtension.IsAnonymous(service.Principal) || (_authorize != null && !await _authorize(service, method, options, cancellation)))
 				throw new Security.Privileges.AuthorizationException();
 		}
 	}

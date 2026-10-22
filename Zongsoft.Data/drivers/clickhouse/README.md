@@ -64,13 +64,13 @@ var data = provider.GetService("Application")
 Console.WriteLine(data.Name);
 ```
 
-Obtaining an accessor does not prove query execution succeeded. Follow the [real Discussions composition in the Data guide](../../README.md#plugin-quickstart) through its module, mapping and services. That walkthrough does not establish Discussions compatibility with this driver: verify database structures, field types and required operations, rather than assuming a driver-name change makes the application portable. Business services use shared contracts instead of constructing database connections.
+See the [Data plugin example](../../README.md#plugin-quickstart) for host configuration and named accessors. Prepare tables and field types for the selected database, and use the operations supported by this driver. Application services access data through the public contracts.
 
-The provider is `ClickHouse.Driver` 1.4.0. ADO.NET connections and commands serve the data engine; bulk imports use `ClickHouseClient.InsertBinaryAsync` with the leased connection's settings and current database. The `Compression` setting also controls binary-insert compression. The provider has no `UseServerTimezone` switch; configure date/time behavior through ClickHouse column types and explicit query conversions.
+The provider is `ClickHouse.Driver` 1.4.0. The `Compression` setting controls bulk-insert compression as well. There is no `UseServerTimezone` setting; configure date/time behavior through ClickHouse column types and explicit query conversions.
 
 ## Runtime Behavior
 
-The driver supplies a provider-specific statement builder/visitor, command parameterization, execution primitives, and an importer. The data engine selects it from the named connection setting. Ambient data transactions are honored where the provider and operation support them.
+Use the asynchronous methods on `IDataAccess` / `IDataService<T>` and consume query results with `await foreach`. Await transaction completion, rollback, and resource disposal. Imports accept in-memory collections and asynchronous sources, and operations propagate cancellation tokens. This driver is incomplete. Asynchronous APIs do not imply support for every query or write operation; unsupported operations fail explicitly. Verify the capabilities required by your application.
 
 🚨 Never commit production connection strings. Use deployment-time configuration or a secret provider, grant the database identity only the required permissions, and verify destructive mutations against a disposable database first.
 

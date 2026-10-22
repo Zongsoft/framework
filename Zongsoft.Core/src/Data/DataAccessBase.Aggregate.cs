@@ -36,71 +36,17 @@ namespace Zongsoft.Data;
 partial class DataAccessBase
 {
 	#region 公共方法
-	public TValue? Aggregate<T, TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(this.GetName<T>(), new DataAggregate(function, member), criteria, options, null, null);
-	public TValue? Aggregate<T, TValue>(DataAggregateFunction function, string member, string alias, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(this.GetName<T>(), new DataAggregate(function, member, alias), criteria, options, null, null);
-	public TValue? Aggregate<T, TValue>(DataAggregateFunction function, string member, bool distinct, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(this.GetName<T>(), new DataAggregate(function, member, distinct), criteria, options, null, null);
-	public TValue? Aggregate<T, TValue>(DataAggregateFunction function, string member, bool distinct, string alias, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(this.GetName<T>(), new DataAggregate(function, member, distinct, alias), criteria, options, null, null);
-	public TValue? Aggregate<T, TValue>(DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(this.GetName<T>(), aggregate, criteria, options, aggregating, aggregated);
-
-	public TValue? Aggregate<TValue>(string name, DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(name, new DataAggregate(function, member), criteria, options, null, null);
-	public TValue? Aggregate<TValue>(string name, DataAggregateFunction function, string member, string alias, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(name, new DataAggregate(function, member, alias), criteria, options, null, null);
-	public TValue? Aggregate<TValue>(string name, DataAggregateFunction function, string member, bool distinct, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(name, new DataAggregate(function, member, distinct), criteria, options, null, null);
-	public TValue? Aggregate<TValue>(string name, DataAggregateFunction function, string member, bool distinct, string alias, ICondition criteria = null, DataAggregateOptions options = null) where TValue : struct, IEquatable<TValue> => this.Aggregate<TValue>(name, new DataAggregate(function, member, distinct, alias), criteria, options, null, null);
-	public TValue? Aggregate<TValue>(string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null) where TValue : struct, IEquatable<TValue>
-	{
-		//确实是否已处置
-		this.EnsureDisposed();
-
-		if(string.IsNullOrEmpty(name))
-			throw new ArgumentNullException(nameof(name));
-
-		//创建数据访问上下文对象
-		var context = this.CreateAggregateContext(name, aggregate, criteria, options);
-
-		//处理数据访问操作前的回调
-		if(aggregating != null && aggregating(context))
-			return context.GetValue<TValue>();
-
-		//激发“Aggregating”事件，如果被中断则返回
-		if(this.OnAggregating(context))
-			return context.GetValue<TValue>();
-
-		//调用数据访问过滤器前事件
-		this.OnFiltering(context);
-
-		//执行聚合操作方法
-		this.OnAggregate(context);
-
-		//调用数据访问过滤器后事件
-		this.OnFiltered(context);
-
-		//激发“Aggregated”事件
-		this.OnAggregated(context);
-
-		//处理数据访问操作后的回调
-		if(aggregated != null)
-			aggregated(context);
-
-		var value = context.GetValue<TValue>();
-
-		//处置上下文资源
-		context.Dispose();
-
-		//返回最终的结果
-		return value;
-	}
-
 	public ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(this.GetName<T>(), new DataAggregate(function, member), criteria, options, null, null, cancellation);
 	public ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregateFunction function, string member, string alias, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(this.GetName<T>(), new DataAggregate(function, member, alias), criteria, options, null, null, cancellation);
 	public ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregateFunction function, string member, bool distinct, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(this.GetName<T>(), new DataAggregate(function, member, distinct), criteria, options, null, null, cancellation);
 	public ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregateFunction function, string member, bool distinct, string alias, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(this.GetName<T>(), new DataAggregate(function, member, distinct, alias), criteria, options, null, null, cancellation);
-	public ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(this.GetName<T>(), aggregate, criteria, options, aggregating, aggregated, cancellation);
+	public ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, CancellationToken, ValueTask<bool>> aggregating = null, Func<DataAggregateContextBase, CancellationToken, ValueTask> aggregated = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(this.GetName<T>(), aggregate, criteria, options, aggregating, aggregated, cancellation);
 
 	public ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(name, new DataAggregate(function, member), criteria, options, null, null, cancellation);
 	public ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, string alias, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(name, new DataAggregate(function, member, alias), criteria, options, null, null, cancellation);
 	public ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, bool distinct, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(name, new DataAggregate(function, member, distinct), criteria, options, null, null, cancellation);
 	public ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, bool distinct, string alias, ICondition criteria = null, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(name, new DataAggregate(function, member, distinct, alias), criteria, options, null, null, cancellation);
-	public async ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, bool> aggregating = null, Action<DataAggregateContextBase> aggregated = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>
+	public async ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregate aggregate, ICondition criteria = null, DataAggregateOptions options = null, Func<DataAggregateContextBase, CancellationToken, ValueTask<bool>> aggregating = null, Func<DataAggregateContextBase, CancellationToken, ValueTask> aggregated = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>
 	{
 		//确实是否已处置
 		this.EnsureDisposed();
@@ -109,36 +55,33 @@ partial class DataAccessBase
 			throw new ArgumentNullException(nameof(name));
 
 		//创建数据访问上下文对象
-		var context = this.CreateAggregateContext(name, aggregate, criteria, options);
+		using var context = this.CreateAggregateContext(name, aggregate, criteria, options);
 
 		//处理数据访问操作前的回调
-		if(aggregating != null && aggregating(context))
+		if(aggregating != null && await aggregating(context, cancellation))
 			return context.GetValue<TValue>();
 
 		//激发“Aggregating”事件，如果被中断则返回
-		if(this.OnAggregating(context))
+		if(await this.OnAggregatingAsync(context, cancellation))
 			return context.GetValue<TValue>();
 
 		//调用数据访问过滤器前事件
-		this.OnFiltering(context);
+		await this.OnFilteringAsync(context, cancellation);
 
 		//执行聚合操作方法
 		await this.OnAggregateAsync(context, cancellation);
 
 		//调用数据访问过滤器后事件
-		this.OnFiltered(context);
+		await this.OnFilteredAsync(context, cancellation);
 
 		//激发“Aggregated”事件
-		this.OnAggregated(context);
+		await this.OnAggregatedAsync(context, cancellation);
 
 		//处理数据访问操作后的回调
 		if(aggregated != null)
-			aggregated(context);
+			await aggregated(context, cancellation);
 
 		var value = context.GetValue<TValue>();
-
-		//处置上下文资源
-		context.Dispose();
 
 		//返回最终的结果
 		return value;
@@ -146,7 +89,33 @@ partial class DataAccessBase
 	#endregion
 
 	#region 保护方法
-	protected abstract void OnAggregate(DataAggregateContextBase context);
 	protected abstract ValueTask OnAggregateAsync(DataAggregateContextBase context, CancellationToken cancellation);
+	#endregion
+
+	#region 便利取消
+	public ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregateFunction function, string member, ICondition criteria, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<T, TValue>(function, member, criteria, default(DataAggregateOptions), cancellation);
+	public ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregateFunction function, string member, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<T, TValue>(function, member, default(ICondition), default(DataAggregateOptions), cancellation);
+	public ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregateFunction function, string member, string alias, ICondition criteria, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<T, TValue>(function, member, alias, criteria, default(DataAggregateOptions), cancellation);
+	public ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregateFunction function, string member, string alias, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<T, TValue>(function, member, alias, default(ICondition), default(DataAggregateOptions), cancellation);
+	public ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregateFunction function, string member, bool distinct, ICondition criteria, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<T, TValue>(function, member, distinct, criteria, default(DataAggregateOptions), cancellation);
+	public ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregateFunction function, string member, bool distinct, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<T, TValue>(function, member, distinct, default(ICondition), default(DataAggregateOptions), cancellation);
+	public ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregateFunction function, string member, bool distinct, string alias, ICondition criteria, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<T, TValue>(function, member, distinct, alias, criteria, default(DataAggregateOptions), cancellation);
+	public ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregateFunction function, string member, bool distinct, string alias, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<T, TValue>(function, member, distinct, alias, default(ICondition), default(DataAggregateOptions), cancellation);
+	public ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregate aggregate, ICondition criteria, DataAggregateOptions options, Func<DataAggregateContextBase, CancellationToken, ValueTask<bool>> aggregating, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<T, TValue>(aggregate, criteria, options, aggregating, default(Func<DataAggregateContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregate aggregate, ICondition criteria, DataAggregateOptions options, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<T, TValue>(aggregate, criteria, options, default(Func<DataAggregateContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataAggregateContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregate aggregate, ICondition criteria, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<T, TValue>(aggregate, criteria, default(DataAggregateOptions), default(Func<DataAggregateContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataAggregateContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<TValue?> AggregateAsync<T, TValue>(DataAggregate aggregate, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<T, TValue>(aggregate, default(ICondition), default(DataAggregateOptions), default(Func<DataAggregateContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataAggregateContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, ICondition criteria, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(name, function, member, criteria, default(DataAggregateOptions), cancellation);
+	public ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(name, function, member, default(ICondition), default(DataAggregateOptions), cancellation);
+	public ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, string alias, ICondition criteria, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(name, function, member, alias, criteria, default(DataAggregateOptions), cancellation);
+	public ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, string alias, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(name, function, member, alias, default(ICondition), default(DataAggregateOptions), cancellation);
+	public ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, bool distinct, ICondition criteria, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(name, function, member, distinct, criteria, default(DataAggregateOptions), cancellation);
+	public ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, bool distinct, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(name, function, member, distinct, default(ICondition), default(DataAggregateOptions), cancellation);
+	public ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, bool distinct, string alias, ICondition criteria, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(name, function, member, distinct, alias, criteria, default(DataAggregateOptions), cancellation);
+	public ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregateFunction function, string member, bool distinct, string alias, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(name, function, member, distinct, alias, default(ICondition), default(DataAggregateOptions), cancellation);
+	public ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregate aggregate, ICondition criteria, DataAggregateOptions options, Func<DataAggregateContextBase, CancellationToken, ValueTask<bool>> aggregating, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(name, aggregate, criteria, options, aggregating, default(Func<DataAggregateContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregate aggregate, ICondition criteria, DataAggregateOptions options, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(name, aggregate, criteria, options, default(Func<DataAggregateContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataAggregateContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregate aggregate, ICondition criteria, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(name, aggregate, criteria, default(DataAggregateOptions), default(Func<DataAggregateContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataAggregateContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<TValue?> AggregateAsync<TValue>(string name, DataAggregate aggregate, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(name, aggregate, default(ICondition), default(DataAggregateOptions), default(Func<DataAggregateContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataAggregateContextBase, CancellationToken, ValueTask>), cancellation);
 	#endregion
 }

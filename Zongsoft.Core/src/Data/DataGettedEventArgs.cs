@@ -35,27 +35,11 @@ namespace Zongsoft.Data;
 public class DataGettedEventArgs<T> : DataAccessEventArgs<DataSelectContextBase>
 {
 	#region 构造函数
-	public DataGettedEventArgs(DataSelectContextBase context) : base(context) { }
+	public DataGettedEventArgs(DataSelectContextBase context, T result) : base(context) => this.Result = result;
 	#endregion
 
 	#region 公共属性
 	/// <summary>获取查询操作的首条数据。</summary>
-	public T Result
-	{
-		get
-		{
-			var items = this.Context.Result;
-
-			if(items != null)
-			{
-				var iterator = items.GetEnumerator();
-
-				if(iterator != null && iterator.MoveNext())
-					return (T)iterator.Current;
-			}
-
-			return default;
-		}
-	}
+	public T Result { get; }
 	#endregion
 }

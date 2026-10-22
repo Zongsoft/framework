@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>1.8.0</Version>
+		<Version>1.9.0</Version>
 		<Product>Zongsoft Data Driver for PostgreSQL</Product>
 		<Description>This is a data driver for PostgreSQL of the Zongsoft data engine.</Description>
 		<RootNamespace>Zongsoft.Data.PostgreSql</RootNamespace>
@@ -8,18 +8,21 @@
 		<IsPackable>true</IsPackable>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
-		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/mysql</RepositoryUrl>
+		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/postgres</RepositoryUrl>
 	</PropertyGroup>
 
 	<ItemGroup Condition="$(TargetFramework) == 'net8.0'">
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
 		<PackageReference Include="Npgsql" VersionOverride="8.0.9" />
 	</ItemGroup>
 
 	<ItemGroup Condition="$(TargetFramework) == 'net9.0'">
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
 		<PackageReference Include="Npgsql" VersionOverride="9.0.5" />
 	</ItemGroup>
 
 	<ItemGroup Condition="$(TargetFramework) == 'net10.0'">
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
 		<PackageReference Include="Npgsql" VersionOverride="10.0.3" />
 	</ItemGroup>
 
@@ -43,8 +46,8 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.64.0" />
-				<PackageReference Include="Zongsoft.Data" VersionOverride="7.32.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.70.0" />
+				<PackageReference Include="Zongsoft.Data" VersionOverride="7.33.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

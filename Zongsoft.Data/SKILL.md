@@ -44,7 +44,7 @@ Schema 代码分两层，改动前先确认所属层：
 
 ### 解析流程
 
-1. `DataAccessBase` 的每个数据访问方法（`Select/Insert/Update/Upsert/Delete`）在创建上下文时调用 `this.Schema.Parse(name, schemaText, modelType)` 把文本解析为 `ISchema`；空文本默认解析为 `"*"`（`SchemaParser.Parse` 中处理）。
+1. `DataAccessBase` 的每个数据访问方法（`SelectAsync/InsertAsync/UpdateAsync/UpsertAsync/DeleteAsync`）在创建上下文时调用 `this.Schema.Parse(name, schemaText, modelType)` 把文本解析为 `ISchema`；空文本默认解析为 `"*"`（`SchemaParser.Parse` 中处理）。
 2. `SchemaParser.Parse` 从 `Mapping.Entities[name]` 取实体，用 `new SchemaData(entity, modelType)` 作为回调数据，调用 `SchemaParserBase.Parse`。
 3. `Resolve(token)` 先按元素名在实体元数据中查找属性：
    - 父级为导航属性时切换到外部实体（`complex.Foreign`），并沿 `ForeignProperty` 链继续切换（导航跳板）。
@@ -55,7 +55,7 @@ Schema 代码分两层，改动前先确认所属层：
    - 映射成员始终优先于同名模型成员。
 4. 解析结果写入 `SchemaMemberCollection<SchemaMember>`；已存在同名的成员会复用并追加子成员（`Include` 语义），排除用 `Exclude` 移除。
 5. 语句构建器消费 `context.Schema.Members`：
-   - `SelectStatementBuilder`：为映射简单成员生成 `SELECT` 字段，复杂成员生成 `JOIN`（`?`/`!`）或独立子查询（`*`，经 `statement.Slaves` 惰性加载，`DataSelectExecutor.PopulateSlaves` 填充）；忽略成员不生成数据库字段，计算属性所需的映射字段必须在 schema 中显式声明。
+   - `SelectStatementBuilder`：为映射简单成员生成 `SELECT` 字段，复杂成员生成 `JOIN`（`?`/`!`）或独立子查询（`*`，经 `statement.Slaves` 惰性加载，`DataSelectExecutor.PopulateSlavesAsync` 填充）；忽略成员不生成数据库字段，计算属性所需的映射字段必须在 schema 中显式声明。
    - `InsertStatementBuilder` / `UpdateStatementBuilder` / `UpsertStatementBuilder`：按模式决定写入成员与级联子表（一对多子记录按 UPSERT 语义），跳过忽略成员。
    - `DeleteStatementBuilder`：按模式生成级联删除子表语句，跳过忽略成员。
    - 模式成员的正数 `Limit` 和 `Sortings` 应用到对应子查询；`Limit <= 0` 表示不限。
@@ -103,13 +103,40 @@ sorting ::= "(" { ["~"|"-"|"+"]identifier } [,...n] ")"
 
 `IDataDriver` 当前公开 `Binder`、`Builder` 和 `Slotter`：
 
-- 使用 `IStatementBuilder` 构建数据库方言语句。
-- 使用 `IStatementBinder` 在命令参数创建完成后绑定数据。`StatementExtension.Bind(...)` 根据当前数据访问上下文取得 `context.Source.Driver.Binder`，没有驱动绑定器时回退到 `StatementBinder.Default`。
+- 使用 `IStatementBuilder.BuildAsync` 按序准备数据库方言语句，在原字段/条件验证点等待，保持前后局部操作次序。CreateStatement、表达式组装与 SQL 文本输出是纯本地同步操作；不要提前枚举全部字段进行验证。
+- 使用 `IStatementBinder` 在命令参数创建完成后绑定数据。`StatementExtension.BindAsync(...)` 根据当前数据访问上下文取得 `context.Source.Driver.Binder`，没有驱动绑定器时回退到 `StatementBinder.Default`。
 - 需要在通用绑定完成后整理命令时，继承 `StatementBinder` 并重写绑定完成回调；不要把单一驱动的命令整理需求加入 `IDataDriver`。
 - TDengine DELETE 会由表达式访问器把条件参数安全内联到 SQL，但参数对象仍会由通用命令创建过程生成。`TDengineStatementBinder` 必须等参数绑定完成后再清除这些已不被 SQL 引用的参数；不要在命令创建或绑定之前清空参数。
 - 保持 `IStatementSlotEvaluator` 只负责评估单个 `StatementSlot`。`StatementSlotter` 是静态协调类，它通过 `context.Source.Driver.Slotter` 获取当前评估器并替换命令文本中的插槽。
 
 在 `DataDriverBase` 中通过 `CreateBinder()`、`CreateSlotter()`、`CreateVisitor()` 和 `CreateImporter()` 提供驱动实现。除非需求确实具有通用语义，否则优先重写这些工厂或对应实现类。
+
+## 验证、绑定与导入字段
+
+IStatementBinder.BindAsync 等待序列取值、IDataValueBinder.BindAsync 和 OnBoundAsync；字段替代结果通过 DataValidatorResult.HasValue 判断，Value 为 null 仍是有效替代值。参数写回的时机、字段顺序和默认值处理保持由原语句及 Schema 决定。
+
+DataImporterBase.Member.GetValueAsync 返回 MemberValue（Target、Value）：Target 是序列或验证器回写后的当前行对象，Value 是按数据库字段类型、长度及可空规则转换后的值。驱动须在每次等待后先更新当前行 target，再使用 Value，才能保留结构体重新装箱的结果；不扩大为改写调用方原集合。序列命中时保留原先直接返回序列值、不再执行后续验证的顺序。纯反射读取/写入保持同步。
+
+## 异步执行与结果所有权
+
+DataProvider 的 Executing、Executed、Error 均为可等待委托，按注册顺序逐项等待。Executing 保持在执行 try 外；成功时先提交会话，再还原输入并通知 Executed。失败先回滚，再等待 IDataDriver.OnErrorAsync 与 Error；错误处理使用 CancellationToken.None，被处理的异常不触发 Executed。保留原异常转换、回滚故障与通知故障的传播边界。
+
+DataAccess 的数据库执行重写、事件和过滤器只保留异步入口。序列键的实体/字段/依赖文本由 ParseSequenceKey 本地解析，缺少依赖值时等待字段验证器；无上下文不能调用验证器。IDataSequencer 仅异步；内部 ISequenceBase 的强制同步成员抛 NotSupportedException。普通字典和反射对象的依赖值均参与键生成，@ 后内容仅作为依赖值。
+
+DataProvider 对异步批量新增/增改输入按最多 256 行准备一个类型化批次，逐批执行语句，共用同一上下文、会话和事务，全部完成后才提交。输入仅枚举一次，支持值类型装箱，批次等待传递取消令牌。原有内存集合由既有语句构建流程处理。DataImporterBase.GetRecordsAsync 为驱动提供内存与异步输入的统一消费入口；具体导入器负责其原生批量接口的有界缓存及事务限制。
+
+查询和命名命令的结果只提供 IAsyncEnumerable。每次枚举创建独立 DbCommand，未枚举不创建命令或读取器；每次读取前主动检查取消令牌，不能依赖提供程序的 ReadAsync 在已有缓冲行时响应取消；失败、提前结束和自然结束均等待读取器、连接租约与命令释放。关联查询保存父记录的参数快照；IEnumerable/集合/数组导航在父记录输出前异步物化，IAsyncEnumerable 导航保持异步消费。字段读取与模型反射只处理已读取的本地值。命名命令的输出参数在读取器关闭后回写原 Parameter 对象。
+
+## 驱动异步边界
+
+DuckDB 的标准 Appender 必须匹配全部物理列；选择字段导入通过连接级临时表接收所选字段，再以 INSERT ... SELECT 写入目标表，保留未指定列默认值，ConstraintIgnored 使用 INSERT OR IGNORE。DbType.Object 的自定义类型使用参数化逐行写入。默认借用环境事务；无环境事务或显式抑制时，由导入器拥有独立连接与批次事务，失败等待回滚。
+
+- 八个驱动的错误转换使用 OnErrorAsync，导入统一通过 GetRecordsAsync 消费数据，并按字段顺序等待 Member.GetValueAsync；每次返回后先更新 Target，再使用 Value。
+- MySQL 异常转换所需元数据通过 GetSchemaAsync 读取。临时导入文件的准备、写入和加载共用清理范围，写入与流释放可等待。SQL Server 先异步准备 DataTable 再取得连接租约；SqlBulkCopy 的同步 Dispose 只清理批量对象，不释放调用方拥有的连接。PostgreSQL BinaryImport 的 StartRow、Write、Complete、Dispose 均等待异步接口。
+- SQLite 底层 Open 和命令执行受 Microsoft.Data.Sqlite 的同步限制；SqliteConnector.OpenAsync 等待 PRAGMA 完成后通知 Open，PRAGMA 缓存策略保持按连接字符串使用。DuckDB 命令读取和释放向提供程序异步入口转发，标准 Appender 的本地写入及释放仍同步。不要以 Task.Run 或阻塞等待包装这些限制。
+- TDengine 使用社区维护的 TDengine.Connector.Async 3.2.1.7，默认且只接受 WebSocket。SDK 的 ADO.NET 类型仍以同步客户端执行；TDengineDriver 内部 Connection、Command、Reader 直接调用 ITDengineClientAsync、IStmtAsync、IRowsAsync。命令拥有预备语句，读取器拥有结果集，连接拥有客户端；改变命令文本只标记重新准备，旧语句在下一次异步执行或释放时清理。重复释放等待同一清理任务，同步执行/读取和未完成清理时的同步释放明确拒绝。Database 与 ServerVersion 在 OpenAsync 中异步读取并缓存，ChangeDatabaseAsync 更新数据库名称；属性读取不发起网络请求。
+- TDengine 导入通过 DataSession.Connector.ConnectAsync 打开独立 SDK 客户端，保持按子表聚合和每批最多 1000 行的原生语句提交；所有准备、绑定、提交与释放均等待并传递取消。事务仍明确不受支持。
+- ClickHouse 的批量写入使用 ClickHouseClient.InsertBinaryAsync，采用租约连接的设置及当前数据库，Compression 同时控制批量压缩。ClickHouse、InfluxDB 尚未完整实现；只维护受影响异步接口，不以接口存在推断业务能力。InfluxDataReader 只异步读取与释放，取消令牌传入源枚举器；InfluxDB3.Client 1.0.0 仅提供同步 Dispose，其本地客户端释放保留该 SDK 边界。
 
 ## 数据连接与故障保护
 
@@ -119,16 +146,16 @@ sorting ::= "(" { ["~"|"-"|"+"]identifier } [,...n] ")"
 DataSession
   → DataConnectorManager.GetConnector(IDataSource)
   → DataConnector
-  → DbConnection.Open/OpenAsync
+  → DbConnection.OpenAsync
 ```
 
 - `DataSession.Connector` 是驱动层建立独立连接的公共入口。普通命令和数据导入都应通过该 Connector 打开连接，不要直接重复实现连接保护。
 - `DataConnectorManager` 是公共静态管理器，使用 `ConditionalWeakTable<IDataSource, DataConnector>` 为每个数据源共享 Connector。
 - `DataConnector` 是公共类，但熔断器、状态、选项和状态变更事件均为内部实现，不要通过 `IDataDriver`、`DataSession` 或 Feature 暴露熔断器。
 - Connector 使用信号量串行化同一数据源的物理连接建立。首次失败会打开内部熔断器，等待者及后续请求在恢复时间到达前快速抛出 `DataConnectionException`，避免连接池和线程池被失败连接风暴耗尽。
-- `DataConnector.Failed` 只在真实物理连接失败时通知业务层，熔断期间的快速拒绝不会重复触发，避免形成通知或日志风暴。事件参数 `DataConnectionFailureEventArgs` 提供数据源、连续失败次数、下次重试时间和 `ExceptionHandled`；业务订阅者可将 `ExceptionHandled` 设为 `true` 以接管默认处理。
-- 未被业务层处理的连接失败默认调用 `Zongsoft.Diagnostics.Logging.GetLogging<DataConnector>().Error(...)` 写入错误日志。日志消息从资源文件读取，并可包含数据源名、驱动名、服务器地址、数据库名、用户名、连续失败次数和重试时间；不要记录完整连接字符串、密码或其他凭据。
-- `DataConnectionException` 提供 `SourceName`、`DriverName`、`RetryAt` 和 `RetryAfter`。首次物理连接失败仍抛出提供程序原始异常；熔断后的快速拒绝才抛出该异常。
+- `DataConnector.Failed` 只在真实物理连接失败时通知业务层，熔断期间的快速拒绝不会重复触发，避免形成通知或日志风暴。事件参数 `DataConnectionFailureEventArgs` 提供数据源、连续失败次数、下次重试时间和 `ExceptionHandled`；业务订阅者可将 `ExceptionHandled` 设为 `true` 以接管默认处理。处理器签名为 `Func<object, DataConnectionFailureEventArgs, CancellationToken, ValueTask>`，依注册顺序逐个等待；故障通知使用 CancellationToken.None，处理器异常逐个隔离，仍传播连接异常。
+- 未被业务层处理的连接失败默认调用 `Zongsoft.Diagnostics.Logging.GetLogging<DataConnector>().ErrorAsync(...)` 写入错误日志，并等待日志完成；日志异常仍隔离。日志消息从资源文件读取，并可包含数据源名、驱动名、服务器地址、数据库名、用户名、连续失败次数和重试时间；不要记录完整连接字符串、密码或其他凭据。
+- `DataConnectionException` 提供 `SourceName`、`DriverName`、`RetryAt` 和 `RetryAfter`。首次物理连接失败且清理成功时抛出提供程序原始异常；熔断后的快速拒绝才抛出该异常。
 - 熔断配置从数据源 `Properties` 读取：`CircuitBreaker.FailureThreshold`、`CircuitBreaker.Duration`、`CircuitBreaker.MaximumDuration` 和 `CircuitBreaker.Jitter`。
 - 类型化连接设置（`ConnectionSettingsBase<TDriver, TOptions>`）按驱动描述器区分主参数和扩展属性集（`Properties`）；有效复合路径属于主参数，未知项属于扩展参数。完整 `Value` 包含两者，原生选项由 `GetOptions()` 生成。熔断配置写入设置文本或 `settings.Properties`，不得写入提供程序的原生连接字符串；校验主参数修改后扩展项仍可经 `Value` 重建。具体写入约束及默认值语义见 [Core 设置契约](../Zongsoft.Core/docs/settings.zh-Hans.md)。
 - SQLite 和 DuckDB 当前也经过相同 Connector、信号量和熔断路径，并没有自动跳过。现有基准显示：DuckDB 没有可见退化；SQLite 默认池化连接在 16 路并发打开时每连接增加约 3 微秒，顺序打开没有稳定差异。该绝对成本不足以支持增加禁用机制，因此保持统一保护；Connector 实现或典型负载发生明显变化后再重新测量。不要在核心中硬编码驱动名称。
@@ -136,11 +163,22 @@ DataSession
 驱动导入器需要独立连接时，使用：
 
 ```csharp
-using var connection = context.Session.Connector.Connect();
 await using var connection = await context.Session.Connector.ConnectAsync(cancellation);
 ```
 
-对于提供原生连接函数的驱动，使用 Connector 对应的泛型同步或异步重载。
+对于提供原生连接函数的驱动，使用 Connector 对应的泛型异步重载。内部 StateChanged 只承载本地状态通知，保持同步。
+
+IDataSource.GetSchemaAsync 负责元数据获取；DataSource 串行保护同一数据源的缓存访问，连接建立、GetSchemaAsync 和释放均被等待。获取失败返回 null，刷新失败不覆盖已有缓存；调用令牌取消时传播取消异常，连接释放异常按标准 finally 语义传播。
+
+PostgreSQL 异常转换以 PostgresException.SqlState 为依据：23505 返回 DataConstraintException，23503 返回 DataConflictException，22001 返回 DataArgumentException；其它错误原样返回，转换结果保留原异常。名称来自结构化字段，不解析 Message/Detail，冲突 Value 保持 null。唯一约束通过同一数据源的 Connector 建立独立连接，参数化查询 pg_catalog 并严格匹配 Schema、表和索引；按索引键顺序返回字段，排除 INCLUDE 列，表达式索引返回空字段。元数据不可用时保留已知唯一约束信息，调用令牌取消仍传播；连接、命令和读取器均异步释放。
+
+## 会话与资源所有权
+
+DataSession 和 ConnectionLease 仅通过 DisposeAsync 释放。会话连接准备依次等待 OpenAsync 和 BeginTransactionAsync；不在异步入口调用同步 BeginTransaction。共享租约计入会话活动，接受提交或回滚后停止接受新的普通活动，终结任务等待最后共享租约归还，再按事务提交/回滚、事务释放、连接释放的顺序收尾。CommitAsync/RollbackAsync/DisposeAsync 的重复调用必须观察已接受的结果；释放租约前等待会话终结会造成循环等待，调用方应先归还租约再等待终结。
+
+独立租约拥有独立连接，不参与环境事务，也不随会话终结释放；外部连接租约不释放借用的连接或事务。环境事务登记等待会话真正终结，操作级 CommitAsync/RollbackAsync 不代替环境事务决定。连接关闭不得丢弃未终结的事务引用；提交结果不明确时保留故障，不能隐式重试写入或报告已经回滚。
+
+SessionCommand 负责转发命令的 DisposeAsync，SessionReader 负责转发 ReadAsync/NextResultAsync 和 DisposeAsync；CloseAsync 与 DisposeAsync 共享读取器终结结果，先释放读取器，再归还租约。命令、读取器和租约的重复释放共享结果。作用域内持有的租约使用 await using；需要转移所有权的资源仅在准备失败时释放，采用标准异常传播语义。会话和读取器的终结器仍须尝试释放全部自有资源，并汇总各项终结故障。ADO.NET 必须实现的同步执行、读取、Prepare 和枚举成员抛出 NotSupportedException；同步 Close/Dispose 仅在异步清理成功结束后无操作。已读取行的本地字段访问保持同步。
 
 ## 驱动测试
 
@@ -161,7 +199,7 @@ rg --files Zongsoft.Data/drivers | rg -- "-pod\.yaml$|Tests\.csproj$"
 连接故障韧性测试至少验证：
 
 1. 使用不可达端点和较小连接池触发一次真实物理连接失败。
-2. 首次失败保留提供程序原始异常，下一次请求得到 `DataConnectionException`。
+2. 首次失败且清理成功时保留提供程序原始异常，下一次请求得到 `DataConnectionException`。
 3. 并发执行查询、新增和数据导入，并在明确时限内全部快速拒绝。
 4. 并发完成后运行线程池哨兵任务，确认进程仍能调度工作。
 5. 将 `CircuitBreaker.Duration` 等设置写入连接字符串，并断言未知设置已进入 `settings.Properties`。

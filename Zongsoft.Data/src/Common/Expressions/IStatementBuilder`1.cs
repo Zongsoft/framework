@@ -28,7 +28,10 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Data.Common.Expressions;
 
@@ -37,6 +40,7 @@ public interface IStatementBuilder<TContext> where TContext : IDataAccessContext
 {
 	/// <summary>根据指定的数据访问上下文生成对应的数据操作语句。</summary>
 	/// <param name="context">指定的数据访问上下文。</param>
+	/// <param name="cancellation">验证与准备语句的取消令牌。</param>
 	/// <returns>返回生成的数据操作语句。</returns>
-	IEnumerable<IStatementBase> Build(TContext context);
+	IAsyncEnumerable<IStatementBase> BuildAsync(TContext context, CancellationToken cancellation = default);
 }

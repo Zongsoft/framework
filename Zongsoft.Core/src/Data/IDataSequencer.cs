@@ -37,9 +37,6 @@ public interface IDataSequencer
 {
 	Common.ISequenceBase Sequence { get; set; }
 
-	long Increase(string name, string field, int interval = 1);
-	long Increase(Metadata.IDataEntitySimplexProperty property, int interval = 1);
-
 	ValueTask<long> IncreaseAsync(string name, string field, CancellationToken cancellation = default);
 	ValueTask<long> IncreaseAsync(string name, string field, int interval, CancellationToken cancellation = default);
 	ValueTask<long> IncreaseAsync(Metadata.IDataEntitySimplexProperty property, CancellationToken cancellation = default);

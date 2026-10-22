@@ -111,14 +111,6 @@ partial class DataSession
 		}
 	}
 
-	private void Release(LeaseKind kind)
-	{
-		if(!this.Exit(kind))
-			return;
-
-		Throw(this.Finish());
-	}
-
 	private ValueTask ReleaseAsync(LeaseKind kind)
 	{
 		return this.Exit(kind) ? this.ReleaseAsyncCore() : ValueTask.CompletedTask;
@@ -126,65 +118,18 @@ partial class DataSession
 
 	private async ValueTask ReleaseAsyncCore()
 	{
-		Throw(await this.FinishAsync().ConfigureAwait(false));
-	}
-
-	private void ReleaseFailed(LeaseKind kind, Exception exception)
-	{
-		try
-		{
-			this.Release(kind);
-		}
-		catch(Exception ex)
-		{
-			throw Combine(exception, ex);
-		}
-	}
-
-	private async ValueTask ReleaseFailedAsync(LeaseKind kind, Exception exception)
-	{
-		try
-		{
-			await this.ReleaseAsync(kind).ConfigureAwait(false);
-		}
-		catch(Exception ex)
-		{
-			throw Combine(exception, ex);
-		}
+		await this.FinishAsync().ConfigureAwait(false);
+		await _completionSource.Task.ConfigureAwait(false);
 	}
 	#endregion
 
 	#region 完成管理
-	private void RequestCompletion(CompletionKind completion)
-	{
-		if(this.TryComplete(completion))
-			Throw(this.Finish());
-	}
-
 	private ValueTask RequestCompletionAsync(CompletionKind completion, CancellationToken cancellation = default)
 	{
-		return this.TryComplete(completion, cancellation) ? this.RequestCompletionAsyncCore() : ValueTask.CompletedTask;
-	}
+		if(this.TryComplete(completion, cancellation))
+			_ = this.FinishAsync();
 
-	private async ValueTask RequestCompletionAsyncCore()
-	{
-		Throw(await this.FinishAsync().ConfigureAwait(false));
-	}
-
-	private void CompleteAndWait(CompletionKind completion)
-	{
-		if(this.TryComplete(completion))
-			this.Finish();
-
-		_completionSource.Task.GetAwaiter().GetResult();
-	}
-
-	private async ValueTask CompleteAndWaitAsync(CompletionKind completion)
-	{
-		if(this.TryComplete(completion))
-			await this.FinishAsync().ConfigureAwait(false);
-
-		await _completionSource.Task.ConfigureAwait(false);
+		return new ValueTask(_completionSource.Task);
 	}
 
 	private bool TryComplete(CompletionKind completion, CancellationToken cancellation = default)
@@ -202,71 +147,7 @@ partial class DataSession
 	#endregion
 
 	#region 资源终结
-	private Exception Finish()
-	{
-		var transaction = Interlocked.Exchange(ref _transaction, null);
-		var connection = Interlocked.Exchange(ref _connection, null);
-		Exception exception = null;
-		List<Exception> exceptions = null;
-
-		if(transaction != null)
-		{
-			try
-			{
-				if(_completion == CompletionKind.Commit)
-					transaction.Commit();
-				else if(_completion == CompletionKind.Rollback)
-					transaction.Rollback();
-			}
-			catch(Exception ex)
-			{
-				Add(ref exception, ref exceptions, ex);
-			}
-
-			try
-			{
-				transaction.Dispose();
-			}
-			catch(Exception ex)
-			{
-				Add(ref exception, ref exceptions, ex);
-			}
-		}
-
-		if(connection != null)
-		{
-			try
-			{
-				connection.StateChange -= this.Connection_StateChange;
-			}
-			catch(Exception ex)
-			{
-				Add(ref exception, ref exceptions, ex);
-			}
-
-			try
-			{
-				connection.Dispose();
-			}
-			catch(Exception ex)
-			{
-				Add(ref exception, ref exceptions, ex);
-			}
-		}
-
-		try
-		{
-			_semaphore.Dispose();
-		}
-		catch(Exception ex)
-		{
-			Add(ref exception, ref exceptions, ex);
-		}
-
-		return this.NotifyCompletion(ToException(exception, exceptions));
-	}
-
-	private async ValueTask<Exception> FinishAsync()
+	private async Task FinishAsync()
 	{
 		var transaction = Interlocked.Exchange(ref _transaction, null);
 		var connection = Interlocked.Exchange(ref _connection, null);
@@ -301,15 +182,6 @@ partial class DataSession
 		{
 			try
 			{
-				connection.StateChange -= this.Connection_StateChange;
-			}
-			catch(Exception ex)
-			{
-				Add(ref exception, ref exceptions, ex);
-			}
-
-			try
-			{
 				await connection.DisposeAsync().ConfigureAwait(false);
 			}
 			catch(Exception ex)
@@ -327,17 +199,15 @@ partial class DataSession
 			Add(ref exception, ref exceptions, ex);
 		}
 
-		return this.NotifyCompletion(ToException(exception, exceptions));
+		this.NotifyCompletion(ToException(exception, exceptions));
 	}
 
-	private Exception NotifyCompletion(Exception exception)
+	private void NotifyCompletion(Exception exception)
 	{
 		if(exception == null)
-			_completionSource?.TrySetResult();
+			_completionSource.TrySetResult();
 		else
-			_completionSource?.TrySetException(exception);
-
-		return exception;
+			_completionSource.TrySetException(exception);
 	}
 	#endregion
 
@@ -370,21 +240,16 @@ partial class DataSession
 
 		return new AggregateException(exception, cleanup);
 	}
-
-	private static void Throw(Exception exception)
-	{
-		if(exception != null)
-			System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(exception).Throw();
-	}
 	#endregion
 
 	#region 嵌套子类
 	/// <summary>表示一次数据操作实际使用的数据连接及其关联事务的租约。</summary>
 	/// <remarks>释放租约会归还其独占连接或关联的会话活动。</remarks>
-	public sealed class ConnectionLease : IDisposable, IAsyncDisposable
+	public sealed class ConnectionLease : IAsyncDisposable
 	{
 		#region 成员字段
-		private int _disposed;
+		private readonly object _sync = new();
+		private TaskCompletionSource _disposal;
 		private readonly LeaseKind _kind;
 		private readonly DataSession _session;
 		#endregion
@@ -421,28 +286,37 @@ partial class DataSession
 		#endregion
 
 		#region 处置方法
-		public void Dispose()
-		{
-			if(Interlocked.Exchange(ref _disposed, 1) != 0)
-				return;
-
-			if(_kind == LeaseKind.Owned)
-				this.Connection.Dispose();
-			else if(_kind is LeaseKind.Session or LeaseKind.SessionReader)
-				_session.Release(_kind);
-		}
-
 		public ValueTask DisposeAsync()
 		{
-			if(Interlocked.Exchange(ref _disposed, 1) != 0)
-				return ValueTask.CompletedTask;
+			TaskCompletionSource disposal;
 
-			return _kind switch
+			lock(_sync)
 			{
-				LeaseKind.Owned => this.Connection.DisposeAsync(),
-				LeaseKind.Session or LeaseKind.SessionReader => _session.ReleaseAsync(_kind),
-				_ => ValueTask.CompletedTask,
-			};
+				if(_disposal != null)
+					return new ValueTask(_disposal.Task);
+
+				_disposal = disposal = new(TaskCreationOptions.RunContinuationsAsynchronously);
+			}
+
+			_ = this.DisposeAsyncCore(disposal);
+			return new ValueTask(disposal.Task);
+		}
+
+		private async Task DisposeAsyncCore(TaskCompletionSource disposal)
+		{
+			try
+			{
+				if(_kind == LeaseKind.Owned)
+					await this.Connection.DisposeAsync().ConfigureAwait(false);
+				else if(_kind is LeaseKind.Session or LeaseKind.SessionReader)
+					await _session.ReleaseAsync(_kind).ConfigureAwait(false);
+
+				disposal.TrySetResult();
+			}
+			catch(Exception exception)
+			{
+				disposal.TrySetException(exception);
+			}
 		}
 		#endregion
 	}

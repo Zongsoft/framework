@@ -80,10 +80,11 @@ public class Transmitter : ITransmitter, IMatchable, IMatchable<string>
 		if(index <= 0 || index >= destination.Length - 1)
 			throw new ArgumentException(Properties.Resources.Wechat_DestinationInvalid_Message);
 
-		if(!ChannelManager.TryGetChannel(destination[..index], out var channelObject))
+		var channelObject = await ChannelManager.FindChannelAsync(destination[..index], cancellation);
+		if(channelObject == null)
 			throw new ArgumentException(string.Format(Properties.Resources.Wechat_ChannelNotFound_Message, destination[..index]));
 
-		await channelObject.Messager.SendAsync(destination[(index + 1)..], template, data, cancellation: cancellation);
+		await channelObject.Messager.SendAsync(destination[(index + 1)..], template, data, cancellation);
 	}
 	#endregion
 

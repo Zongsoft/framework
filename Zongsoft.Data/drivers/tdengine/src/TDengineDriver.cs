@@ -30,6 +30,8 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 
 using TDengine.Driver;
 using TDengine.Data.Client;
@@ -64,7 +66,7 @@ public partial class TDengineDriver : DataDriverBase
 	#endregion
 
 	#region 公共方法
-	public override Exception OnError(IDataAccessContext context, Exception exception)
+	public override ValueTask<Exception> OnErrorAsync(IDataAccessContext context, Exception exception, CancellationToken cancellation = default)
 	{
 		if(exception is TDengineError error)
 		{
@@ -75,20 +77,17 @@ public partial class TDengineDriver : DataDriverBase
 			}
 		}
 
-		return exception;
+		return new ValueTask<Exception>(exception);
 	}
 
-	public override DbCommand CreateCommand() => new TDengineCommand();
-	public override DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text) => new TDengineCommand()
+	public override DbCommand CreateCommand() => new Command();
+	public override DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text) => new Command()
 	{
 		CommandText = text,
 		CommandType = commandType,
 	};
 
-	public override DbConnection CreateConnection(string connectionString = null) => new TDengineConnection(connectionString ?? string.Empty)
-	{
-		ConnectionStringBuilder = Configuration.TDengineConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions()
-	};
+	public override DbConnection CreateConnection(string connectionString = null) => new Connection(connectionString ?? string.Empty);
 
 	public override DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null) =>
 		Configuration.TDengineConnectionSettingsDriver.Instance.GetSettings(connectionString).GetOptions();

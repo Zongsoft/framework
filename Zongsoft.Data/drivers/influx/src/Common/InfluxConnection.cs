@@ -30,6 +30,8 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 
 using InfluxDB3.Client;
 using InfluxDB3.Client.Config;
@@ -62,27 +64,43 @@ public class InfluxConnection : DbConnection
 	#endregion
 
 	#region 重写方法
-	public override void Open()
+	public override void Open() => throw new NotSupportedException();
+	public override Task OpenAsync(CancellationToken cancellation)
 	{
+		cancellation.ThrowIfCancellationRequested();
 		if(_client != null)
-			return;
+			return Task.CompletedTask;
 
 		_state = ConnectionState.Connecting;
 		_configuration = _builder.GetConfiguration();
 		_client ??= new InfluxDBClient(_configuration);
 		_state = ConnectionState.Open;
+		return Task.CompletedTask;
 	}
 
 	public override void Close()
 	{
-		//_client?.Dispose();
-		//_client = null;
+		_client?.Dispose();
+		_client = null;
 		_state = ConnectionState.Closed;
+	}
+
+	public override Task CloseAsync()
+	{
+		this.Close();
+		return Task.CompletedTask;
+	}
+
+	public override ValueTask DisposeAsync()
+	{
+		this.Dispose();
+		return ValueTask.CompletedTask;
 	}
 
 	protected override void Dispose(bool disposing)
 	{
-		//this.Close();
+		if(disposing)
+			this.Close();
 		base.Dispose(disposing);
 	}
 

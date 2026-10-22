@@ -47,30 +47,17 @@ partial class DataServiceBase<TModel> : IDataImportable
 	#endregion
 
 	#region 公共方法
-	public int Import(Stream input, DataImportOptions options = null) => this.Import(input, null, options);
-	public int Import(Stream input, string format, DataImportOptions options = null)
+	public ValueTask<int> ImportAsync(Stream input, DataImportOptions options = null, CancellationToken cancellation = default) => this.ImportAsync(input, null, options, cancellation);
+	public async ValueTask<int> ImportAsync(Stream input, string format, DataImportOptions options = null, CancellationToken cancellation = default)
 	{
 		if(input == null)
 			return 0;
 
 		//进行授权验证
-		this.Authorize(DataServiceMethod.Import(), options);
+		await this.AuthorizeAsync(DataServiceMethod.Import(), options, cancellation);
 
 		//执行导出操作
-		return this.OnImport(input, format, options);
-	}
-
-	public ValueTask<int> ImportAsync(Stream input, DataImportOptions options = null, CancellationToken cancellation = default) => this.ImportAsync(input, null, options, cancellation);
-	public ValueTask<int> ImportAsync(Stream input, string format, DataImportOptions options = null, CancellationToken cancellation = default)
-	{
-		if(input == null)
-			return ValueTask.FromResult(0);
-
-		//进行授权验证
-		this.Authorize(DataServiceMethod.Import(), options);
-
-		//执行导出操作
-		return this.OnImportAsync(input, format, options, cancellation);
+		return await this.OnImportAsync(input, format, options, cancellation);
 	}
 	#endregion
 
@@ -81,21 +68,17 @@ partial class DataServiceBase<TModel> : IDataImportable
 		return this.ServiceProvider.Find<IDataArchiveExtractor>(format) ?? throw OperationException.Unsupported($"The '{format}' format data archive import is not supported.");
 	}
 
-	protected virtual int OnImport(Stream input, string format, DataImportOptions options = null)
-	{
-		var extractor = this.GetExtractor(format, options, out var extracting);
-		var data = extractor.ExtractAsync<TModel>(input, extracting).Synchronize();
-		return this.OnImport(data, extracting.Members, options);
-	}
-
 	protected virtual ValueTask<int> OnImportAsync(Stream input, string format, DataImportOptions options = null, CancellationToken cancellation = default)
 	{
 		var extractor = this.GetExtractor(format, options, out var extracting);
 		var data = extractor.ExtractAsync<TModel>(input, extracting, cancellation);
 		return this.OnImportAsync(data, extracting.Members, options, cancellation);
 	}
+	protected virtual ValueTask<int> OnImportAsync(IAsyncEnumerable<TModel> items, string[] members, DataImportOptions options, CancellationToken cancellation) => this.DataAccess.ImportAsync(this.Name, items, members, options, cancellation);
+	#endregion
 
-	protected virtual int OnImport(IEnumerable<TModel> items, string[] members, DataImportOptions options) => this.DataAccess.Import(this.Name, items, members, options);
-	protected virtual ValueTask<int> OnImportAsync(IAsyncEnumerable<TModel> items, string[] members, DataImportOptions options, CancellationToken cancellation) => this.DataAccess.ImportAsync(this.Name, items.Synchronize(), members, options, cancellation);
+	#region 便利取消
+	public ValueTask<int> ImportAsync(Stream input, CancellationToken cancellation) => this.ImportAsync(input, default(DataImportOptions), cancellation);
+	public ValueTask<int> ImportAsync(Stream input, string format, CancellationToken cancellation) => this.ImportAsync(input, format, default(DataImportOptions), cancellation);
 	#endregion
 }

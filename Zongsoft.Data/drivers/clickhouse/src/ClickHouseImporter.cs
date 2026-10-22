@@ -46,21 +46,9 @@ namespace Zongsoft.Data.ClickHouse;
 public class ClickHouseImporter : DataImporterBase
 {
 	#region 公共方法
-	protected override void OnImport(DataImportContext context, MemberCollection members)
-	{
-		var records = GetRecords(context, members);
-		if(records == null)
-			return;
-
-		using var lease = context.Session.AcquireLease(context.Options.TransactionSuppressed);
-		var connection = (ClickHouseConnection)lease.Connection;
-		using var client = new ClickHouseClient(connection.Settings);
-		context.Count = (int)client.InsertBinaryAsync(context.Entity.GetTableName(), context.Members, records, GetOptions(connection)).ConfigureAwait(false).GetAwaiter().GetResult();
-	}
-
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
-		var records = GetRecords(context, members);
+		var records = await GetRecordsAsync(context, members, cancellation).ConfigureAwait(false);
 		if(records == null)
 			return;
 
@@ -78,7 +66,7 @@ public class ClickHouseImporter : DataImporterBase
 		Compressor = connection.UseCompression ? ZstdCompressor.Default : null,
 	};
 
-	private static List<object[]> GetRecords(DataImportContext context, MemberCollection members)
+	private static async ValueTask<List<object[]>> GetRecordsAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation)
 	{
 		if(members == null || members.Count == 0)
 			return null;
@@ -86,14 +74,16 @@ public class ClickHouseImporter : DataImporterBase
 		//构建导入的数据记录集
 		var records = new List<object[]>();
 
-		foreach(var item in context.Data)
+		await foreach(var item in GetRecordsAsync(context).WithCancellation(cancellation).ConfigureAwait(false))
 		{
 			var target = item;
 			var record = new object[members.Count];
 
 			for(int i = 0; i < members.Count; i++)
 			{
-				record[i] = members[i].GetValue(ref target);
+				var prepared = await members[i].GetValueAsync(target, cancellation).ConfigureAwait(false);
+				target = prepared.Target;
+				record[i] = prepared.Value;
 			}
 
 			records.Add(record);

@@ -38,80 +38,20 @@ namespace Zongsoft.Data;
 partial class DataAccessBase
 {
 	#region 公共方法
-	public int Insert<T>(T data) => data == null ? 0 : this.Insert(this.GetName<T>(), data, string.Empty, null, null, null);
-	public int Insert<T>(T data, DataInsertOptions options) => data == null ? 0 : this.Insert(this.GetName<T>(), data, string.Empty, options, null, null);
-	public int Insert<T>(T data, string schema) => data == null ? 0 : this.Insert(this.GetName<T>(), data, schema, null, null, null);
-	public int Insert<T>(T data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null) => data == null ? 0 : this.Insert(this.GetName<T>(), data, schema, options, inserting, inserted);
-	public int Insert<T>(object data) => data == null ? 0 : this.Insert(this.GetName<T>(), data, string.Empty, null, null, null);
-	public int Insert<T>(object data, DataInsertOptions options) => data == null ? 0 : this.Insert(this.GetName<T>(), data, string.Empty, options, null, null);
-	public int Insert<T>(object data, string schema) => data == null ? 0 : this.Insert(this.GetName<T>(), data, schema, null, null, null);
-	public int Insert<T>(object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null) => data == null ? 0 : this.Insert(this.GetName<T>(), data, schema, options, inserting, inserted);
-
-	public int Insert(string name, object data) => this.Insert(name, data, string.Empty, null, null, null);
-	public int Insert(string name, object data, DataInsertOptions options) => this.Insert(name, data, string.Empty, options, null, null);
-	public int Insert(string name, object data, string schema) => this.Insert(name, data, schema, null, null, null);
-	public int Insert(string name, object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null) => this.Insert(name, data, this.Schema.Parse(name, schema, data.GetType()), options, inserting, inserted);
-	public int Insert(string name, object data, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null)
-	{
-		//确实是否已处置
-		this.EnsureDisposed();
-
-		if(string.IsNullOrEmpty(name))
-			throw new ArgumentNullException(nameof(name));
-
-		if(data == null)
-			return 0;
-
-		//创建数据访问上下文对象
-		var context = this.CreateInsertContext(name, false, data, schema, options);
-
-		//处理数据访问操作前的回调
-		if(inserting != null && inserting(context))
-			return context.Count;
-
-		//激发“Inserting”事件，如果被中断则返回
-		if(this.OnInserting(context))
-			return context.Count;
-
-		//调用数据访问过滤器前事件
-		this.OnFiltering(context);
-
-		//执行数据插入操作
-		this.OnInsert(context);
-
-		//调用数据访问过滤器后事件
-		this.OnFiltered(context);
-
-		//激发“Inserted”事件
-		this.OnInserted(context);
-
-		//处理数据访问操作后的回调
-		if(inserted != null)
-			inserted(context);
-
-		var result = context.Count;
-
-		//处置上下文资源
-		context.Dispose();
-
-		//返回最终的结果
-		return result;
-	}
-
 	public ValueTask<int> InsertAsync<T>(T data, CancellationToken cancellation = default) => data == null ? ValueTask.FromResult(0) : this.InsertAsync(this.GetName<T>(), data, string.Empty, null, null, null, cancellation);
 	public ValueTask<int> InsertAsync<T>(T data, DataInsertOptions options, CancellationToken cancellation = default) => data == null ? ValueTask.FromResult(0) : this.InsertAsync(this.GetName<T>(), data, string.Empty, options, null, null, cancellation);
 	public ValueTask<int> InsertAsync<T>(T data, string schema, CancellationToken cancellation = default) => data == null ? ValueTask.FromResult(0) : this.InsertAsync(this.GetName<T>(), data, schema, null, null, null, cancellation);
-	public ValueTask<int> InsertAsync<T>(T data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default) => data == null ? ValueTask.FromResult(0) : this.InsertAsync(this.GetName<T>(), data, schema, options, inserting, inserted, cancellation);
+	public ValueTask<int> InsertAsync<T>(T data, string schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting = null, Func<DataInsertContextBase, CancellationToken, ValueTask> inserted = null, CancellationToken cancellation = default) => data == null ? ValueTask.FromResult(0) : this.InsertAsync(this.GetName<T>(), data, schema, options, inserting, inserted, cancellation);
 	public ValueTask<int> InsertAsync<T>(object data, CancellationToken cancellation = default) => data == null ? ValueTask.FromResult(0) : this.InsertAsync(this.GetName<T>(), data, string.Empty, null, null, null, cancellation);
 	public ValueTask<int> InsertAsync<T>(object data, DataInsertOptions options, CancellationToken cancellation = default) => data == null ? ValueTask.FromResult(0) : this.InsertAsync(this.GetName<T>(), data, string.Empty, options, null, null, cancellation);
 	public ValueTask<int> InsertAsync<T>(object data, string schema, CancellationToken cancellation = default) => data == null ? ValueTask.FromResult(0) : this.InsertAsync(this.GetName<T>(), data, schema, null, null, null, cancellation);
-	public ValueTask<int> InsertAsync<T>(object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default) => data == null ? ValueTask.FromResult(0) : this.InsertAsync(this.GetName<T>(), data, schema, options, inserting, inserted, cancellation);
+	public ValueTask<int> InsertAsync<T>(object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting = null, Func<DataInsertContextBase, CancellationToken, ValueTask> inserted = null, CancellationToken cancellation = default) => data == null ? ValueTask.FromResult(0) : this.InsertAsync(this.GetName<T>(), data, schema, options, inserting, inserted, cancellation);
 
 	public ValueTask<int> InsertAsync(string name, object data, CancellationToken cancellation = default) => this.InsertAsync(name, data, string.Empty, null, null, null, cancellation);
 	public ValueTask<int> InsertAsync(string name, object data, DataInsertOptions options, CancellationToken cancellation = default) => this.InsertAsync(name, data, string.Empty, options, null, null, cancellation);
 	public ValueTask<int> InsertAsync(string name, object data, string schema, CancellationToken cancellation = default) => this.InsertAsync(name, data, schema, null, null, null, cancellation);
-	public ValueTask<int> InsertAsync(string name, object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default) => this.InsertAsync(name, data, this.Schema.Parse(name, schema, data.GetType()), options, inserting, inserted, cancellation);
-	public async ValueTask<int> InsertAsync(string name, object data, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default)
+	public ValueTask<int> InsertAsync(string name, object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting = null, Func<DataInsertContextBase, CancellationToken, ValueTask> inserted = null, CancellationToken cancellation = default) => this.InsertAsync(name, data, this.Schema.Parse(name, schema, data.GetType()), options, inserting, inserted, cancellation);
+	public async ValueTask<int> InsertAsync(string name, object data, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting = null, Func<DataInsertContextBase, CancellationToken, ValueTask> inserted = null, CancellationToken cancellation = default)
 	{
 		//确实是否已处置
 		this.EnsureDisposed();
@@ -123,95 +63,33 @@ partial class DataAccessBase
 			return 0;
 
 		//创建数据访问上下文对象
-		var context = this.CreateInsertContext(name, false, data, schema, options);
+		using var context = this.CreateInsertContext(name, false, data, schema, options);
 
 		//处理数据访问操作前的回调
-		if(inserting != null && inserting(context))
+		if(inserting != null && await inserting(context, cancellation))
 			return context.Count;
 
 		//激发“Inserting”事件，如果被中断则返回
-		if(this.OnInserting(context))
+		if(await this.OnInsertingAsync(context, cancellation))
 			return context.Count;
 
 		//调用数据访问过滤器前事件
-		this.OnFiltering(context);
+		await this.OnFilteringAsync(context, cancellation);
 
 		//执行数据插入操作
 		await this.OnInsertAsync(context, cancellation);
 
 		//调用数据访问过滤器后事件
-		this.OnFiltered(context);
+		await this.OnFilteredAsync(context, cancellation);
 
 		//激发“Inserted”事件
-		this.OnInserted(context);
+		await this.OnInsertedAsync(context, cancellation);
 
 		//处理数据访问操作后的回调
 		if(inserted != null)
-			inserted(context);
+			await inserted(context, cancellation);
 
 		var result = context.Count;
-
-		//处置上下文资源
-		context.Dispose();
-
-		//返回最终的结果
-		return result;
-	}
-
-	public int InsertMany<T>(IEnumerable<T> items) => items == null ? 0 : this.InsertMany(this.GetName<T>(), items, string.Empty, null, null, null);
-	public int InsertMany<T>(IEnumerable<T> items, DataInsertOptions options) => items == null ? 0 : this.InsertMany(this.GetName<T>(), items, string.Empty, options, null, null);
-	public int InsertMany<T>(IEnumerable<T> items, string schema) => items == null ? 0 : this.InsertMany(this.GetName<T>(), items, schema, null, null, null);
-	public int InsertMany<T>(IEnumerable<T> items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null) => items == null ? 0 : this.InsertMany(this.GetName<T>(), items, schema, options, inserting, inserted);
-	public int InsertMany<T>(IEnumerable items) => items == null ? 0 : this.InsertMany(this.GetName<T>(), items, string.Empty, null, null, null);
-	public int InsertMany<T>(IEnumerable items, DataInsertOptions options) => items == null ? 0 : this.InsertMany(this.GetName<T>(), items, string.Empty, options, null, null);
-	public int InsertMany<T>(IEnumerable items, string schema) => items == null ? 0 : this.InsertMany(this.GetName<T>(), items, schema, null, null, null);
-	public int InsertMany<T>(IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null) => items == null ? 0 : this.InsertMany(this.GetName<T>(), items, schema, options, inserting, inserted);
-	public int InsertMany(string name, IEnumerable items) => this.InsertMany(name, items, string.Empty, null, null, null);
-	public int InsertMany(string name, IEnumerable items, DataInsertOptions options) => this.InsertMany(name, items, string.Empty, options, null, null);
-	public int InsertMany(string name, IEnumerable items, string schema) => this.InsertMany(name, items, schema, null, null, null);
-	public int InsertMany(string name, IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null) => this.InsertMany(name, items, this.Schema.Parse(name, schema, Common.TypeExtension.GetElementType(items.GetType())), options, inserting, inserted);
-	public int InsertMany(string name, IEnumerable items, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null)
-	{
-		//确实是否已处置
-		this.EnsureDisposed();
-
-		if(string.IsNullOrEmpty(name))
-			throw new ArgumentNullException(nameof(name));
-
-		if(items == null)
-			return 0;
-
-		//创建数据访问上下文对象
-		var context = this.CreateInsertContext(name, true, items, schema, options);
-
-		//处理数据访问操作前的回调
-		if(inserting != null && inserting(context))
-			return context.Count;
-
-		//激发“Inserting”事件，如果被中断则返回
-		if(this.OnInserting(context))
-			return context.Count;
-
-		//调用数据访问过滤器前事件
-		this.OnFiltering(context);
-
-		//执行数据插入操作
-		this.OnInsert(context);
-
-		//调用数据访问过滤器后事件
-		this.OnFiltered(context);
-
-		//激发“Inserted”事件
-		this.OnInserted(context);
-
-		//处理数据访问操作后的回调
-		if(inserted != null)
-			inserted(context);
-
-		var result = context.Count;
-
-		//处置上下文资源
-		context.Dispose();
 
 		//返回最终的结果
 		return result;
@@ -220,16 +98,50 @@ partial class DataAccessBase
 	public ValueTask<int> InsertManyAsync<T>(IEnumerable<T> items, CancellationToken cancellation = default) => items == null ? ValueTask.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, string.Empty, null, null, null, cancellation);
 	public ValueTask<int> InsertManyAsync<T>(IEnumerable<T> items, DataInsertOptions options, CancellationToken cancellation = default) => items == null ? ValueTask.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, string.Empty, options, null, null, cancellation);
 	public ValueTask<int> InsertManyAsync<T>(IEnumerable<T> items, string schema, CancellationToken cancellation = default) => items == null ? ValueTask.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, schema, null, null, null, cancellation);
-	public ValueTask<int> InsertManyAsync<T>(IEnumerable<T> items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default) => items == null ? ValueTask.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, schema, options, inserting, inserted, cancellation);
+	public ValueTask<int> InsertManyAsync<T>(IEnumerable<T> items, string schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting = null, Func<DataInsertContextBase, CancellationToken, ValueTask> inserted = null, CancellationToken cancellation = default) => items == null ? ValueTask.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, schema, options, inserting, inserted, cancellation);
 	public ValueTask<int> InsertManyAsync<T>(IEnumerable items, CancellationToken cancellation = default) => items == null ? ValueTask.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, string.Empty, null, null, null, cancellation);
 	public ValueTask<int> InsertManyAsync<T>(IEnumerable items, DataInsertOptions options, CancellationToken cancellation = default) => items == null ? ValueTask.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, string.Empty, options, null, null, cancellation);
 	public ValueTask<int> InsertManyAsync<T>(IEnumerable items, string schema, CancellationToken cancellation = default) => items == null ? ValueTask.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, schema, null, null, null, cancellation);
-	public ValueTask<int> InsertManyAsync<T>(IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default) => items == null ? ValueTask.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, schema, options, inserting, inserted, cancellation);
+	public ValueTask<int> InsertManyAsync<T>(IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting = null, Func<DataInsertContextBase, CancellationToken, ValueTask> inserted = null, CancellationToken cancellation = default) => items == null ? ValueTask.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, schema, options, inserting, inserted, cancellation);
 	public ValueTask<int> InsertManyAsync(string name, IEnumerable items, CancellationToken cancellation = default) => this.InsertManyAsync(name, items, string.Empty, null, null, null, cancellation);
 	public ValueTask<int> InsertManyAsync(string name, IEnumerable items, DataInsertOptions options, CancellationToken cancellation = default) => this.InsertManyAsync(name, items, string.Empty, options, null, null, cancellation);
 	public ValueTask<int> InsertManyAsync(string name, IEnumerable items, string schema, CancellationToken cancellation = default) => this.InsertManyAsync(name, items, schema, null, null, null, cancellation);
-	public ValueTask<int> InsertManyAsync(string name, IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default) => this.InsertManyAsync(name, items, this.Schema.Parse(name, schema, Common.TypeExtension.GetElementType(items.GetType())), options, inserting, inserted, cancellation);
-	public async ValueTask<int> InsertManyAsync(string name, IEnumerable items, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, bool> inserting = null, Action<DataInsertContextBase> inserted = null, CancellationToken cancellation = default)
+	public ValueTask<int> InsertManyAsync(string name, IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting = null, Func<DataInsertContextBase, CancellationToken, ValueTask> inserted = null, CancellationToken cancellation = default) => this.InsertManyAsync(name, items, this.Schema.Parse(name, schema, Common.TypeExtension.GetElementType(items.GetType())), options, inserting, inserted, cancellation);
+	public ValueTask<int> InsertManyAsync(string name, IEnumerable items, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting = null, Func<DataInsertContextBase, CancellationToken, ValueTask> inserted = null, CancellationToken cancellation = default) => this.InsertManyCoreAsync(name, items, schema, options, inserting, inserted, cancellation);
+	#endregion
+
+	#region 保护方法
+	protected abstract ValueTask OnInsertAsync(DataInsertContextBase context, CancellationToken cancellation);
+	#endregion
+
+	#region 便利取消
+	public ValueTask<int> InsertAsync<T>(T data, string schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting, CancellationToken cancellation) => this.InsertAsync<T>(data, schema, options, inserting, default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> InsertAsync<T>(T data, string schema, DataInsertOptions options, CancellationToken cancellation) => this.InsertAsync<T>(data, schema, options, default(Func<DataInsertContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> InsertAsync<T>(object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting, CancellationToken cancellation) => this.InsertAsync<T>(data, schema, options, inserting, default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> InsertAsync<T>(object data, string schema, DataInsertOptions options, CancellationToken cancellation) => this.InsertAsync<T>(data, schema, options, default(Func<DataInsertContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> InsertAsync(string name, object data, string schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting, CancellationToken cancellation) => this.InsertAsync(name, data, schema, options, inserting, default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> InsertAsync(string name, object data, string schema, DataInsertOptions options, CancellationToken cancellation) => this.InsertAsync(name, data, schema, options, default(Func<DataInsertContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> InsertAsync(string name, object data, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting, CancellationToken cancellation) => this.InsertAsync(name, data, schema, options, inserting, default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> InsertAsync(string name, object data, ISchema schema, DataInsertOptions options, CancellationToken cancellation) => this.InsertAsync(name, data, schema, options, default(Func<DataInsertContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> InsertManyAsync<T>(IEnumerable<T> items, string schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting, CancellationToken cancellation) => this.InsertManyAsync<T>(items, schema, options, inserting, default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> InsertManyAsync<T>(IEnumerable<T> items, string schema, DataInsertOptions options, CancellationToken cancellation) => this.InsertManyAsync<T>(items, schema, options, default(Func<DataInsertContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> InsertManyAsync<T>(IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting, CancellationToken cancellation) => this.InsertManyAsync<T>(items, schema, options, inserting, default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> InsertManyAsync<T>(IEnumerable items, string schema, DataInsertOptions options, CancellationToken cancellation) => this.InsertManyAsync<T>(items, schema, options, default(Func<DataInsertContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> InsertManyAsync(string name, IEnumerable items, string schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting, CancellationToken cancellation) => this.InsertManyAsync(name, items, schema, options, inserting, default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> InsertManyAsync(string name, IEnumerable items, string schema, DataInsertOptions options, CancellationToken cancellation) => this.InsertManyAsync(name, items, schema, options, default(Func<DataInsertContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> InsertManyAsync(string name, IEnumerable items, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting, CancellationToken cancellation) => this.InsertManyAsync(name, items, schema, options, inserting, default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> InsertManyAsync(string name, IEnumerable items, ISchema schema, DataInsertOptions options, CancellationToken cancellation) => this.InsertManyAsync(name, items, schema, options, default(Func<DataInsertContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	#endregion
+	#region 异步数据源
+	public ValueTask<int> InsertManyAsync<T>(IAsyncEnumerable<T> items, CancellationToken cancellation = default) => items == null ? ValueTask.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, string.Empty, null, null, null, cancellation);
+	public ValueTask<int> InsertManyAsync<T>(IAsyncEnumerable<T> items, DataInsertOptions options, CancellationToken cancellation = default) => items == null ? ValueTask.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, string.Empty, options, null, null, cancellation);
+	public ValueTask<int> InsertManyAsync<T>(IAsyncEnumerable<T> items, string schema, CancellationToken cancellation = default) => items == null ? ValueTask.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, schema, null, null, null, cancellation);
+	public ValueTask<int> InsertManyAsync<T>(IAsyncEnumerable<T> items, string schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting = null, Func<DataInsertContextBase, CancellationToken, ValueTask> inserted = null, CancellationToken cancellation = default) => items == null ? ValueTask.FromResult(0) : this.InsertManyAsync(this.GetName<T>(), items, schema, options, inserting, inserted, cancellation);
+	public ValueTask<int> InsertManyAsync<T>(string name, IAsyncEnumerable<T> items, CancellationToken cancellation = default) => this.InsertManyAsync<T>(name, items, string.Empty, null, null, null, cancellation);
+	public ValueTask<int> InsertManyAsync<T>(string name, IAsyncEnumerable<T> items, DataInsertOptions options, CancellationToken cancellation = default) => this.InsertManyAsync<T>(name, items, string.Empty, options, null, null, cancellation);
+	public ValueTask<int> InsertManyAsync<T>(string name, IAsyncEnumerable<T> items, string schema, CancellationToken cancellation = default) => this.InsertManyAsync<T>(name, items, schema, null, null, null, cancellation);
+	public ValueTask<int> InsertManyAsync<T>(string name, IAsyncEnumerable<T> items, string schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting = null, Func<DataInsertContextBase, CancellationToken, ValueTask> inserted = null, CancellationToken cancellation = default) => this.InsertManyAsync<T>(name, items, this.Schema.Parse(name, schema, typeof(T)), options, inserting, inserted, cancellation);
+	private async ValueTask<int> InsertManyCoreAsync(string name, object items, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting = null, Func<DataInsertContextBase, CancellationToken, ValueTask> inserted = null, CancellationToken cancellation = default)
 	{
 		//确实是否已处置
 		this.EnsureDisposed();
@@ -241,44 +153,43 @@ partial class DataAccessBase
 			return 0;
 
 		//创建数据访问上下文对象
-		var context = this.CreateInsertContext(name, true, items, schema, options);
+		using var context = this.CreateInsertContext(name, true, items, schema, options);
 
 		//处理数据访问操作前的回调
-		if(inserting != null && inserting(context))
+		if(inserting != null && await inserting(context, cancellation))
 			return context.Count;
 
 		//激发“Inserting”事件，如果被中断则返回
-		if(this.OnInserting(context))
+		if(await this.OnInsertingAsync(context, cancellation))
 			return context.Count;
 
 		//调用数据访问过滤器前事件
-		this.OnFiltering(context);
+		await this.OnFilteringAsync(context, cancellation);
 
 		//执行数据插入操作
 		await this.OnInsertAsync(context, cancellation);
 
 		//调用数据访问过滤器后事件
-		this.OnFiltered(context);
+		await this.OnFilteredAsync(context, cancellation);
 
 		//激发“Inserted”事件
-		this.OnInserted(context);
+		await this.OnInsertedAsync(context, cancellation);
 
 		//处理数据访问操作后的回调
 		if(inserted != null)
-			inserted(context);
+			await inserted(context, cancellation);
 
 		var result = context.Count;
-
-		//处置上下文资源
-		context.Dispose();
 
 		//返回最终的结果
 		return result;
 	}
-	#endregion
-
-	#region 保护方法
-	protected abstract void OnInsert(DataInsertContextBase context);
-	protected abstract ValueTask OnInsertAsync(DataInsertContextBase context, CancellationToken cancellation);
+	public ValueTask<int> InsertManyAsync<T>(string name, IAsyncEnumerable<T> items, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting = null, Func<DataInsertContextBase, CancellationToken, ValueTask> inserted = null, CancellationToken cancellation = default) => this.InsertManyCoreAsync(name, items, schema, options, inserting, inserted, cancellation);
+	public ValueTask<int> InsertManyAsync<T>(IAsyncEnumerable<T> items, string schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting, CancellationToken cancellation) => this.InsertManyAsync<T>(items, schema, options, inserting, default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> InsertManyAsync<T>(IAsyncEnumerable<T> items, string schema, DataInsertOptions options, CancellationToken cancellation) => this.InsertManyAsync<T>(items, schema, options, default(Func<DataInsertContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> InsertManyAsync<T>(string name, IAsyncEnumerable<T> items, string schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting, CancellationToken cancellation) => this.InsertManyAsync<T>(name, items, schema, options, inserting, default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> InsertManyAsync<T>(string name, IAsyncEnumerable<T> items, string schema, DataInsertOptions options, CancellationToken cancellation) => this.InsertManyAsync<T>(name, items, schema, options, default(Func<DataInsertContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> InsertManyAsync<T>(string name, IAsyncEnumerable<T> items, ISchema schema, DataInsertOptions options, Func<DataInsertContextBase, CancellationToken, ValueTask<bool>> inserting, CancellationToken cancellation) => this.InsertManyAsync<T>(name, items, schema, options, inserting, default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> InsertManyAsync<T>(string name, IAsyncEnumerable<T> items, ISchema schema, DataInsertOptions options, CancellationToken cancellation) => this.InsertManyAsync<T>(name, items, schema, options, default(Func<DataInsertContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataInsertContextBase, CancellationToken, ValueTask>), cancellation);
 	#endregion
 }

@@ -191,7 +191,7 @@ public class EventDispatcherTest
 		var executor = new ProbeExecutor();
 		await dispatcher.StartAsync();
 
-		using(var transaction = new Data.Transaction())
+		await using(var transaction = new Data.Transaction())
 		{
 			await dispatcher.DispatchAsync(Context(1), executor);
 
@@ -280,13 +280,13 @@ public class EventDispatcherTest
 		await using var dispatcher = new EventDispatcher(new FeatureProvider());
 		var executor = new ProbeExecutor();
 		await dispatcher.StartAsync();
-		using var transaction = new Data.Transaction();
+		await using var transaction = new Data.Transaction();
 
 		await dispatcher.DispatchAsync(Context(1), executor);
 
 		Assert.Empty(Assert.Single(executor.Contexts).Features);
 		Assert.Equal(Data.Transactions.TransactionStatus.Active, transaction.Context.Status);
-		transaction.Rollback();
+		await transaction.RollbackAsync();
 	}
 
 	[Fact]

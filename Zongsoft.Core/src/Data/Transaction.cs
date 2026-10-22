@@ -38,7 +38,7 @@ using Zongsoft.Components;
 namespace Zongsoft.Data;
 
 /// <summary>表示事务的控制范围。</summary>
-public class Transaction : IDisposable, IAsyncDisposable, IEquatable<Transaction>
+public class Transaction : IAsyncDisposable, IEquatable<Transaction>
 {
 	#region 静态字段
 	/// <summary>表示捕获当前事务环境特性的共享提供者。</summary>
@@ -81,22 +81,26 @@ public class Transaction : IDisposable, IAsyncDisposable, IEquatable<Transaction
 
 	#region 公共方法
 	/// <summary>提交事务。</summary>
-	public void Commit() => _context.Commit();
-
-	/// <summary>提交事务。</summary>
-	/// <param name="cancellation">保留用于兼容现有调用；事务终结不响应此取消标记。</param>
+	/// <param name="cancellation">仅在接受提交决议前响应取消；已经开始的终结不受取消影响。</param>
 	/// <returns>表示事务提交及全部登记回调完成的任务。</returns>
-	/// <remarks>等待所有登记回调（含数据会话的真实提交）完成后再返回；事务终结一旦调用便不会被取消。</remarks>
+	/// <remarks>等待所有登记回调（含数据会话的真实提交）完成后再返回；提交决议一经接受便不可取消。</remarks>
 	public Task CommitAsync(CancellationToken cancellation = default) => _context.CommitAsync(cancellation);
-
-	/// <summary>回滚事务。</summary>
-	public void Rollback() => _context.Rollback();
 
 	/// <summary>回滚事务。</summary>
 	/// <param name="cancellation">保留用于兼容现有调用；事务终结不响应此取消标记。</param>
 	/// <returns>表示事务回滚及全部登记回调完成的任务。</returns>
 	/// <remarks>等待所有登记回调（含数据会话的真实回滚）完成后再返回；事务终结一旦调用便不会被取消。</remarks>
 	public Task RollbackAsync(CancellationToken cancellation = default) => _context.RollbackAsync(cancellation);
+
+	/// <summary>回滚事务，并在回滚失败时保留引发回滚的业务异常。</summary>
+	/// <param name="exception">引发回滚的业务异常；为空时只传播事务终结异常。</param>
+	/// <param name="cancellation">保留用于兼容现有调用；事务终结不响应此取消标记。</param>
+	/// <returns>表示事务回滚及全部登记回调和完成通知结束的任务。</returns>
+	/// <remarks>
+	///		<para>回滚及完成通知成功时正常返回，由调用方决定是否重新抛出业务异常；失败时将非空业务异常与终结异常合并为聚合异常。</para>
+	///		<para>事务终结不响应取消。已经开始终结时复用已有结果，不重复回滚，也不追加异常；后续释放复用同一结果。</para>
+	/// </remarks>
+	public Task RollbackAsync(Exception exception, CancellationToken cancellation = default) => _context.RollbackAsync(exception, cancellation);
 	#endregion
 
 	#region 重写方法
@@ -106,25 +110,12 @@ public class Transaction : IDisposable, IAsyncDisposable, IEquatable<Transaction
 	#endregion
 
 	#region 处置方法
-	public void Dispose()
-	{
-		this.Dispose(true);
-		GC.SuppressFinalize(this);
-	}
-
-	protected virtual void Dispose(bool disposing)
-	{
-		//先退出环境上下文再回滚，与 DisposeAsync 的顺序保持一致；
-		//避免回滚抛异常时 Exit 未执行而导致环境事务上下文残留。
-		TransactionContext.Exit(_context);
-		this.Rollback();
-	}
-
 	public ValueTask DisposeAsync()
 	{
 		//注意：AsyncLocal 写入无法穿越 async 方法的上下文边界传回调用方，
 		//因此退出环境上下文的操作必须在调用方上下文中同步执行，然后再异步回滚。
 		TransactionContext.Exit(_context);
+
 		GC.SuppressFinalize(this);
 		return new ValueTask(_context.RollbackAsync(CancellationToken.None));
 	}

@@ -151,7 +151,7 @@ public class DataAggregateContext : DataAggregateContextBase, IDataAccessContext
 public class DataImportContext : DataImportContextBase, IDataAccessContext
 {
 	#region 构造函数
-	public DataImportContext(DataAccess dataAccess, string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options = null) : base(dataAccess, name, data, members, options)
+	public DataImportContext(DataAccess dataAccess, string name, object data, IEnumerable<string> members, IDataImportOptions options = null) : base(dataAccess, name, data, members, options)
 	{
 		this.Provider = dataAccess.Provider;
 		this.Session = DataAccessContextUtility.GetSession(() => this.Provider.Multiplexer.GetSource(this));

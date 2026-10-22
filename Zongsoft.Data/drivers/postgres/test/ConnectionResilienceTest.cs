@@ -30,7 +30,7 @@ public class ConnectionResilienceTest
 		Assert.Equal("00:01:00", settings.Properties["CircuitBreaker.Duration"]);
 		Assert.Equal("00:01:00", settings.Properties["CircuitBreaker.MaximumDuration"]);
 
-		using IDataAccess accessor = DataAccessProvider.Instance.GetAccessor(name, new DataAccessOptions([settings]));
+		await using IDataAccess accessor = DataAccessProvider.Instance.GetAccessor(name, new DataAccessOptions([settings]));
 		var criteria = Condition.Equal(nameof(UserModel.UserId), 999_999u);
 
 		var initialFailure = await Record.ExceptionAsync(async () => await accessor.ExistsAsync<UserModel>(criteria));

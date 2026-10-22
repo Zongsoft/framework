@@ -8,7 +8,7 @@ using Xunit;
 
 namespace Zongsoft.Data.Tests;
 
-public class PageableTest
+public partial class PageableTest
 {
 	[Fact]
 	public void Filter_NonGeneric_UsesActualCurrentItem()
@@ -104,6 +104,8 @@ public class PageableTest
 	[InlineData((int)TransformKind.SyncMap)]
 	[InlineData((int)TransformKind.AsyncFilter)]
 	[InlineData((int)TransformKind.AsyncMap)]
+	[InlineData((int)TransformKind.AsyncCallbackFilter)]
+	[InlineData((int)TransformKind.AsyncCallbackMap)]
 	public async Task PagedTransforms_RepeatedEnumeration_ForwardsSameEventFromOuterResult(int kindValue)
 	{
 		var eventArgs = CreatePagingEventArgs();
@@ -120,11 +122,12 @@ public class PageableTest
 				result = filtered;
 				setSuppressed = value => filteredSource.Suppressed = value;
 				getSubscriberCount = () => filteredSource.SubscriberCount;
-				enumerate = () =>
+				enumerate = async () =>
 				{
 					Assert.Equal([1, 2], filtered);
+					await filteredSource.NotifyAsync();
 					Assert.Equal([1, 2], filtered);
-					return Task.CompletedTask;
+					await filteredSource.NotifyAsync();
 				};
 				break;
 			case TransformKind.SyncMap:
@@ -133,11 +136,12 @@ public class PageableTest
 				result = mapped;
 				setSuppressed = value => mappedSource.Suppressed = value;
 				getSubscriberCount = () => mappedSource.SubscriberCount;
-				enumerate = () =>
+				enumerate = async () =>
 				{
 					Assert.Equal([1, 2], mapped);
+					await mappedSource.NotifyAsync();
 					Assert.Equal([1, 2], mapped);
-					return Task.CompletedTask;
+					await mappedSource.NotifyAsync();
 				};
 				break;
 			case TransformKind.AsyncFilter:
@@ -164,6 +168,31 @@ public class PageableTest
 					Assert.Equal([1, 2], await CollectAsync(asyncMapped));
 				};
 				break;
+			case TransformKind.AsyncCallbackFilter:
+				var callbackFilteredSource = new PageableAsyncEnumerable<int>([1, 2], eventArgs);
+				var callbackFiltered = Pageable.FilterAsync(callbackFilteredSource, (value, _) =>
+					ValueTask.FromResult(new Pageable.FilterResult<int> { Accepted = true, Data = value }));
+				result = callbackFiltered;
+				setSuppressed = value => callbackFilteredSource.Suppressed = value;
+				getSubscriberCount = () => callbackFilteredSource.SubscriberCount;
+				enumerate = async () =>
+				{
+					Assert.Equal([1, 2], await CollectAsync(callbackFiltered));
+					Assert.Equal([1, 2], await CollectAsync(callbackFiltered));
+				};
+				break;
+			case TransformKind.AsyncCallbackMap:
+				var callbackMappedSource = new PageableAsyncEnumerable<int>([1, 2], eventArgs);
+				var callbackMapped = Pageable.MapAsync<int, int>(callbackMappedSource, (value, _) => ValueTask.FromResult(value));
+				result = callbackMapped;
+				setSuppressed = value => callbackMappedSource.Suppressed = value;
+				getSubscriberCount = () => callbackMappedSource.SubscriberCount;
+				enumerate = async () =>
+				{
+					Assert.Equal([1, 2], await CollectAsync(callbackMapped));
+					Assert.Equal([1, 2], await CollectAsync(callbackMapped));
+				};
+				break;
 			default:
 				throw new ArgumentOutOfRangeException(nameof(kindValue));
 		}
@@ -171,10 +200,11 @@ public class PageableTest
 		var senders = new List<object>();
 		var observed = new List<PagingEventArgs>();
 		var pageable = Assert.IsAssignableFrom<IPageable>(result);
-		EventHandler<PagingEventArgs> handler = (sender, args) =>
+		Func<object, PagingEventArgs, CancellationToken, ValueTask> handler = (sender, args, _) =>
 		{
 			senders.Add(sender);
 			observed.Add(args);
+			return ValueTask.CompletedTask;
 		};
 		pageable.Paginated += handler;
 		Assert.Equal(1, getSubscriberCount());
@@ -237,22 +267,33 @@ public class PageableTest
 		Assert.Equal(1, asyncSource.DisposalCount);
 	}
 
-	[Fact]
-	public async Task PagedTransform_ConcurrentEnumerations_ForwardEveryEvent()
+	[Theory]
+	[InlineData((int)TransformKind.AsyncMap)]
+	[InlineData((int)TransformKind.AsyncCallbackFilter)]
+	[InlineData((int)TransformKind.AsyncCallbackMap)]
+	public async Task PagedTransform_ConcurrentEnumerations_ForwardEveryEvent(int kindValue)
 	{
 		var eventArgs = CreatePagingEventArgs();
 		var source = new ConcurrentPageableAsyncEnumerable<int>(1, eventArgs);
-		var result = Pageable.Map<int, int>(source, value => value);
+		var result = (TransformKind)kindValue switch
+		{
+			TransformKind.AsyncCallbackFilter => Pageable.FilterAsync(source, (value, _) =>
+				ValueTask.FromResult(new Pageable.FilterResult<int> { Accepted = true, Data = value })),
+			TransformKind.AsyncCallbackMap => Pageable.MapAsync<int, int>(source, (value, _) => ValueTask.FromResult(value)),
+			_ => Pageable.Map<int, int>(source, value => value),
+		};
 		var pageable = Assert.IsAssignableFrom<IPageable>(result);
 		var senders = new List<object>();
 		var observed = new List<PagingEventArgs>();
-		pageable.Paginated += (sender, args) =>
+		pageable.Paginated += (sender, args, _) =>
 		{
 			lock(senders)
 			{
 				senders.Add(sender);
 				observed.Add(args);
 			}
+
+			return ValueTask.CompletedTask;
 		};
 		Assert.Equal(1, source.SubscriberCount);
 
@@ -271,11 +312,16 @@ public class PageableTest
 		var syncMap = Pageable.Map<int, int>([1, 2], value => value);
 		var asyncFilter = Pageable.Filter<int>(new AsyncEnumerable<int>([1, 2]), (ref int value) => true);
 		var asyncMap = Pageable.Map<int, int>(new AsyncEnumerable<int>([1, 2]), value => value);
+		var callbackFilter = Pageable.FilterAsync(new AsyncEnumerable<int>([1, 2]), (value, _) =>
+			ValueTask.FromResult(new Pageable.FilterResult<int> { Accepted = true, Data = value }));
+		var callbackMap = Pageable.MapAsync<int, int>(new AsyncEnumerable<int>([1, 2]), (value, _) => ValueTask.FromResult(value));
 
 		Assert.False(syncFilter is IPageable);
 		Assert.False(syncMap is IPageable);
 		Assert.False(asyncFilter is IPageable);
 		Assert.False(asyncMap is IPageable);
+		Assert.False(callbackFilter is IPageable);
+		Assert.False(callbackMap is IPageable);
 	}
 
 	private static PagingEventArgs CreatePagingEventArgs() => new("PageableTest", Paging.Page(1, 10));
@@ -315,42 +361,30 @@ public class PageableTest
 
 	private sealed class PageableEnumerable<T>(IEnumerable<T> items, PagingEventArgs eventArgs) : IEnumerable<T>, IPageable
 	{
-		private EventHandler<PagingEventArgs> _paginated;
-
-		public event EventHandler<PagingEventArgs> Paginated
+		private Func<object, PagingEventArgs, CancellationToken, ValueTask> _paginated;
+		public event Func<object, PagingEventArgs, CancellationToken, ValueTask> Paginated
 		{
 			add => _paginated += value;
 			remove => _paginated -= value;
 		}
-
 		public int SubscriberCount => _paginated?.GetInvocationList().Length ?? 0;
 		public bool Suppressed { get; set; }
-
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-		public IEnumerator<T> GetEnumerator() => this.Enumerate().GetEnumerator();
-
-		private IEnumerable<T> Enumerate()
+		public IEnumerator<T> GetEnumerator() => items.GetEnumerator();
+		public async ValueTask NotifyAsync()
 		{
-			var notified = false;
-
-			foreach(var item in items)
+			if(_paginated != null)
 			{
-				if(!notified)
-				{
-					notified = true;
-					_paginated?.Invoke(this, eventArgs);
-				}
-
-				yield return item;
+				foreach(Func<object, PagingEventArgs, CancellationToken, ValueTask> handler in _paginated.GetInvocationList())
+					await handler(this, eventArgs, CancellationToken.None);
 			}
 		}
 	}
-
 	private sealed class PageableAsyncEnumerable<T>(IEnumerable<T> items, PagingEventArgs eventArgs) : IAsyncEnumerable<T>, IPageable
 	{
-		private EventHandler<PagingEventArgs> _paginated;
+		private Func<object, PagingEventArgs, CancellationToken, ValueTask> _paginated;
 
-		public event EventHandler<PagingEventArgs> Paginated
+		public event Func<object, PagingEventArgs, CancellationToken, ValueTask> Paginated
 		{
 			add => _paginated += value;
 			remove => _paginated -= value;
@@ -370,7 +404,11 @@ public class PageableTest
 				if(!notified)
 				{
 					notified = true;
-					_paginated?.Invoke(this, eventArgs);
+					if(_paginated != null)
+					{
+						foreach(Func<object, PagingEventArgs, CancellationToken, ValueTask> handler in _paginated.GetInvocationList())
+							await handler(this, eventArgs, cancellation);
+					}
 				}
 
 				yield return item;
@@ -447,10 +485,10 @@ public class PageableTest
 	private sealed class ConcurrentPageableAsyncEnumerable<T>(T item, PagingEventArgs eventArgs) : IAsyncEnumerable<T>, IPageable
 	{
 		private int _enumerators;
-		private EventHandler<PagingEventArgs> _paginated;
+		private Func<object, PagingEventArgs, CancellationToken, ValueTask> _paginated;
 		private readonly TaskCompletionSource _ready = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-		public event EventHandler<PagingEventArgs> Paginated
+		public event Func<object, PagingEventArgs, CancellationToken, ValueTask> Paginated
 		{
 			add => _paginated += value;
 			remove => _paginated -= value;
@@ -465,7 +503,12 @@ public class PageableTest
 				_ready.TrySetResult();
 
 			await _ready.Task.WaitAsync(cancellation);
-			_paginated?.Invoke(this, eventArgs);
+			if(_paginated != null)
+			{
+				foreach(Func<object, PagingEventArgs, CancellationToken, ValueTask> handler in _paginated.GetInvocationList())
+					await handler(this, eventArgs, cancellation);
+			}
+
 			yield return item;
 		}
 	}
@@ -476,5 +519,7 @@ public class PageableTest
 		SyncMap,
 		AsyncFilter,
 		AsyncMap,
+		AsyncCallbackFilter,
+		AsyncCallbackMap,
 	}
 }

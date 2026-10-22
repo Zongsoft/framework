@@ -29,7 +29,8 @@
 
 using System;
 using System.IO;
-using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Reporting;
 
@@ -37,5 +38,7 @@ public interface IReportResourceResolver
 {
 	string Name { get; }
 
-	IReportResource Resolve(string name, Stream stream, string title = null, string description = null);
+	ValueTask<IReportResource> ResolveAsync(string name, Stream stream, CancellationToken cancellation = default) => this.ResolveAsync(name, stream, null, null, cancellation);
+	ValueTask<IReportResource> ResolveAsync(string name, Stream stream, string title, CancellationToken cancellation = default) => this.ResolveAsync(name, stream, title, null, cancellation);
+	ValueTask<IReportResource> ResolveAsync(string name, Stream stream, string title, string description, CancellationToken cancellation = default);
 }

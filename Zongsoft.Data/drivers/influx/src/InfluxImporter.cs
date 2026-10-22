@@ -44,69 +44,57 @@ namespace Zongsoft.Data.Influx;
 public class InfluxImporter : DataImporterBase
 {
 	#region 重写方法
-	protected override void OnImport(DataImportContext context, MemberCollection members)
-	{
-		var connection = (Common.InfluxConnection)context.Session.Connector.Connect();
-		WritePoints(connection, GetPoints(context, members, connection.Configuration.WriteOptions.Precision));
-
-		static async void WritePoints(Common.InfluxConnection connection, IEnumerable<PointData> points)
-		{
-			try
-			{
-				await connection.Client.WritePointsAsync(points);
-				connection.Dispose();
-			}
-			catch { throw; }
-		}
-	}
-
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
 		await using var connection = (Common.InfluxConnection)await context.Session.Connector.ConnectAsync(cancellation);
-		await connection.Client.WritePointsAsync(GetPoints(context, members, connection.Configuration.WriteOptions.Precision), null, null, null, cancellation);
+		var points = await GetPointsAsync(context, members, connection.Configuration.WriteOptions.Precision, cancellation).ConfigureAwait(false);
+		await connection.Client.WritePointsAsync(points, null, null, null, cancellation).ConfigureAwait(false);
 	}
 	#endregion
 
 	#region 私有方法
-	private static IEnumerable<PointData> GetPoints(DataImportContext context, MemberCollection members, WritePrecision? precision)
+	private static async ValueTask<List<PointData>> GetPointsAsync(DataImportContext context, MemberCollection members, WritePrecision? precision, CancellationToken cancellation)
 	{
-		if(context == null || context.Data == null)
-			yield break;
+		var points = new List<PointData>();
 
-		foreach(var item in context.Data)
+		await foreach(var item in GetRecordsAsync(context).WithCancellation(cancellation).ConfigureAwait(false))
 		{
+			var target = item;
 			var record = PointDataValues.Measurement(context.Entity.GetTableName());
 
 			foreach(var member in members)
 			{
+				var prepared = await member.GetValueAsync(target, cancellation).ConfigureAwait(false);
+				target = prepared.Target;
+
 				if(member.Property.IsTimestamp())
 				{
-					var timestamp = GetTimestamp(item, member, precision);
+					var timestamp = GetTimestamp(prepared.Value, precision);
 
 					if(timestamp > 0)
 						record.SetTimestamp(timestamp, precision);
 				}
 				else
 				{
-					var data = item;
-
 					if(member.Property.IsTagField())
-						record.SetTag(member.Name, member.GetValue(ref data).ToString());
+						record.SetTag(member.Name, prepared.Value.ToString());
 					else
-						record.SetField(member.Name, member.GetValue(ref data));
+						record.SetField(member.Name, prepared.Value);
 				}
 			}
 
 			context.Count++;
-			yield return record.AsPoint();
+			points.Add(record.AsPoint());
 		}
+
+		return points;
 	}
 
-	private static long GetTimestamp(object data, Member member, WritePrecision? precision)
+	private static long GetTimestamp(object data, WritePrecision? precision)
 	{
 		var unit = precision.HasValue && precision.Value == WritePrecision.S ? Zongsoft.Common.TimestampUnit.Second : Zongsoft.Common.TimestampUnit.Millisecond;
 
-		var value = member.GetValue(ref data) switch
+		var value = data switch
 		{
 			DateTimeOffset timestamp => unit == Zongsoft.Common.TimestampUnit.Second ? timestamp.ToUnixTimeSeconds() : timestamp.ToUnixTimeMilliseconds(),
 			DateTime datetime => Zongsoft.Common.Timestamp.Unix.ToTimestamp(datetime, unit),

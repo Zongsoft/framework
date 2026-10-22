@@ -43,163 +43,84 @@ namespace Zongsoft.Data.MySql;
 public class MySqlImporter : DataImporterBase
 {
 	#region 公共方法
-	protected override void OnImport(DataImportContext context, MemberCollection members)
-	{
-		using var lease = context.Session.AcquireLease(context.Options.TransactionSuppressed);
-
-		var bulker = GetBulker(
-			context.Entity.GetTableName(),
-			Path.GetTempFileName(),
-			(MySqlConnection)lease.Connection,
-			context.Options);
-
-		//添加导入的列名（注：待 MySql.Data 修复后可去掉对字段名的反引号`标注）
-		bulker.Columns.AddRange(members.Select(member => $"`{member.Name}`"));
-
-		using var file = File.OpenWrite(bulker.FileName);
-		using var writer = new StreamWriter(file, System.Text.Encoding.UTF8);
-
-		//写入表头（字段名列表）
-		for(int i = 0; i < members.Count; i++)
-		{
-			if(i > 0)
-				writer.Write(" | ");
-
-			writer.Write(members[i].Name);
-		}
-
-		//写入表头与表体的分隔行符
-		writer.Write(bulker.LineTerminator);
-
-		//写入表体
-		foreach(var item in context.Data)
-		{
-			var target = item;
-
-			for(int i = 0; i < members.Count; i++)
-			{
-				if(i > 0)
-					writer.Write(bulker.FieldTerminator);
-
-				var value = members[i].GetValue(ref target);
-
-				if(bulker.FieldQuotationCharacter != '\0')
-					writer.Write(bulker.FieldQuotationCharacter);
-
-				if(value is null)
-					writer.Write(@"\N");
-				else
-				{
-					if(value is DateTime timestamp)
-						writer.Write(timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffK"));
-					else if(value is bool boolean)
-						writer.Write(boolean ? "1" : "0");
-					else if(value is string text)
-						writer.Write(text.ReplaceLineEndings(string.Empty));
-					else
-						writer.Write(value);
-				}
-
-				if(bulker.FieldQuotationCharacter != '\0')
-					writer.Write(bulker.FieldQuotationCharacter);
-			}
-
-			//写入表体的分隔行符
-			writer.Write(bulker.LineTerminator);
-		}
-
-		writer.Flush();
-		writer.Close();
-		file.Dispose();
-
-		try
-		{
-			context.Count = bulker.Load();
-		}
-		finally
-		{
-			//删除数据导入的临时文件
-			DeleteFile(bulker.FileName);
-		}
-	}
-
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
 		await using var lease = await context.Session.AcquireLeaseAsync(context.Options.TransactionSuppressed, cancellation);
-
-		var bulker = GetBulker(
-			context.Entity.GetTableName(),
-			Path.GetTempFileName(),
-			(MySqlConnection)lease.Connection,
-			context.Options);
-
-		//添加导入的列名（注：待 MySql.Data 修复后可去掉对字段名的反引号`标注）
-		bulker.Columns.AddRange(members.Select(member => $"`{member.Name}`"));
-
-		using var file = File.OpenWrite(bulker.FileName);
-		using var writer = new StreamWriter(file, System.Text.Encoding.UTF8);
-
-		//写入表头（字段名列表）
-		for(int i = 0; i < members.Count; i++)
-		{
-			if(i > 0)
-				await writer.WriteAsync(" | ");
-
-			await writer.WriteAsync(members[i].Name);
-		}
-
-		//写入表头与表体的分隔行符
-		await writer.WriteAsync(bulker.LineTerminator);
-
-		//写入表体
-		foreach(var item in context.Data)
-		{
-			var target = item;
-
-			for(int i = 0; i < members.Count; i++)
-			{
-				if(i > 0)
-					await writer.WriteAsync(bulker.FieldTerminator);
-
-				var value = members[i].GetValue(ref target);
-
-				if(bulker.FieldQuotationCharacter != '\0')
-					await writer.WriteAsync(bulker.FieldQuotationCharacter);
-
-				if(value is null)
-					writer.Write(@"\N");
-				else
-				{
-					if(value is DateTime timestamp)
-						await writer.WriteAsync(timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffK"));
-					else if(value is bool boolean)
-						await writer.WriteAsync(boolean ? "1" : "0");
-					else if(value is string text)
-						writer.Write(text.ReplaceLineEndings(string.Empty));
-					else
-						await writer.WriteAsync(value.ToString());
-				}
-
-				if(bulker.FieldQuotationCharacter != '\0')
-					await writer.WriteAsync(bulker.FieldQuotationCharacter);
-			}
-
-			//写入表体的分隔行符
-			await writer.WriteAsync(bulker.LineTerminator);
-		}
-
-		await writer.FlushAsync(cancellation);
-		writer.Close();
-		file.Dispose();
+		var filePath = Path.GetTempFileName();
 
 		try
 		{
-			context.Count = await bulker.LoadAsync(cancellation);
+			var bulker = GetBulker(
+				context.Entity.GetTableName(),
+				filePath,
+				(MySqlConnection)lease.Connection,
+				context.Options);
+
+			//添加导入的列名（注：待 MySql.Data 修复后可去掉对字段名的反引号`标注）
+			bulker.Columns.AddRange(members.Select(member => $"`{member.Name}`"));
+
+			await using(var file = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, FileOptions.Asynchronous))
+			await using(var writer = new StreamWriter(file, System.Text.Encoding.UTF8))
+			{
+				//写入表头（字段名列表）
+				for(int i = 0; i < members.Count; i++)
+				{
+					if(i > 0)
+						await writer.WriteAsync((" | ").AsMemory(), cancellation).ConfigureAwait(false);
+
+					await writer.WriteAsync((members[i].Name).AsMemory(), cancellation).ConfigureAwait(false);
+				}
+
+				//写入表头与表体的分隔行符
+				await writer.WriteAsync((bulker.LineTerminator).AsMemory(), cancellation).ConfigureAwait(false);
+
+				//写入表体
+				await foreach(var item in GetRecordsAsync(context).WithCancellation(cancellation).ConfigureAwait(false))
+				{
+					var target = item;
+
+					for(int i = 0; i < members.Count; i++)
+					{
+						if(i > 0)
+							await writer.WriteAsync((bulker.FieldTerminator).AsMemory(), cancellation).ConfigureAwait(false);
+
+						var prepared = await members[i].GetValueAsync(target, cancellation).ConfigureAwait(false);
+						target = prepared.Target;
+						var value = prepared.Value;
+
+						if(bulker.FieldQuotationCharacter != '\0')
+							await writer.WriteAsync((bulker.FieldQuotationCharacter.ToString()).AsMemory(), cancellation).ConfigureAwait(false);
+
+						if(value is null)
+							await writer.WriteAsync((@"\N").AsMemory(), cancellation).ConfigureAwait(false);
+						else
+						{
+							if(value is DateTime timestamp)
+								await writer.WriteAsync((timestamp.ToString("yyyy-MM-ddTHH:mm:ss.fffK")).AsMemory(), cancellation).ConfigureAwait(false);
+							else if(value is bool boolean)
+								await writer.WriteAsync((boolean ? "1" : "0").AsMemory(), cancellation).ConfigureAwait(false);
+							else if(value is string text)
+								await writer.WriteAsync((text.ReplaceLineEndings(string.Empty)).AsMemory(), cancellation).ConfigureAwait(false);
+							else
+								await writer.WriteAsync((value.ToString()).AsMemory(), cancellation).ConfigureAwait(false);
+						}
+
+						if(bulker.FieldQuotationCharacter != '\0')
+							await writer.WriteAsync((bulker.FieldQuotationCharacter.ToString()).AsMemory(), cancellation).ConfigureAwait(false);
+					}
+
+					//写入表体的分隔行符
+					await writer.WriteAsync((bulker.LineTerminator).AsMemory(), cancellation).ConfigureAwait(false);
+				}
+
+				await writer.FlushAsync(cancellation);
+			}
+
+			context.Count = await bulker.LoadAsync(cancellation).ConfigureAwait(false);
 		}
 		finally
 		{
-			//删除数据导入的临时文件
-			DeleteFile(bulker.FileName);
+			DeleteFile(filePath);
 		}
 	}
 	#endregion

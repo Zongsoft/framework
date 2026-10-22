@@ -248,5 +248,14 @@ namespace Zongsoft.Data.TDengine.Properties {
                 return ResourceManager.GetString("TDengine.Settings.UserName", resourceCulture);
             }
         }
+		internal static string Driver_AsyncRequired_Message => ResourceManager.GetString("Driver.AsyncRequired.Message", resourceCulture);
+		internal static string Driver_ConnectionClosedRequired_Message => ResourceManager.GetString("Driver.ConnectionClosedRequired.Message", resourceCulture);
+		internal static string Driver_ConnectionOpenRequired_Message => ResourceManager.GetString("Driver.ConnectionOpenRequired.Message", resourceCulture);
+		internal static string Driver_TextCommandRequired_Message => ResourceManager.GetString("Driver.TextCommandRequired.Message", resourceCulture);
+		internal static string Driver_ConnectionTypeRequired_Message => ResourceManager.GetString("Driver.ConnectionTypeRequired.Message", resourceCulture);
+		internal static string Driver_TableNameDuplicate_Message => ResourceManager.GetString("Driver.TableNameDuplicate.Message", resourceCulture);
+		internal static string Driver_ParameterNameInvalid_Message => ResourceManager.GetString("Driver.ParameterNameInvalid.Message", resourceCulture);
+		internal static string Driver_CommandTextRequired_Message => ResourceManager.GetString("Driver.CommandTextRequired.Message", resourceCulture);
+		internal static string Driver_WebSocketRequired_Message => ResourceManager.GetString("Driver.WebSocketRequired.Message", resourceCulture);
     }
 }

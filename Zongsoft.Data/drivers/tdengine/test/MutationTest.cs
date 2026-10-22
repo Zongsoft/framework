@@ -24,16 +24,16 @@ public class MutationTest(DatabaseFixture database)
 
 	[Fact]
 	[Trait("Category", "Unit")]
-	public void UpdateIsExplicitlyUnsupported()
+	public async Task UpdateIsExplicitlyUnsupported()
 	{
 		var model = new GatewayHistory(200, 20001, 1.25, null, new DateTime(2097, 1, 1, 0, 0, 0, DateTimeKind.Local));
 
-		Assert.Throws<NotSupportedException>(() => _database.Accessor.Update(model));
+		await Assert.ThrowsAsync<NotSupportedException>(() => _database.Accessor.UpdateAsync(model).AsTask());
 	}
 
 	[Fact]
 	[Trait("Category", "Unit")]
-	public void MultipleInsertIsExplicitlyUnsupported()
+	public async Task MultipleInsertIsExplicitlyUnsupported()
 	{
 		var timestamp = new DateTime(2097, 1, 10, 0, 0, 0, DateTimeKind.Local);
 		var models = new[]
@@ -42,7 +42,7 @@ public class MutationTest(DatabaseFixture database)
 			new GatewayHistory(208, 20009, 12.5, null, timestamp.AddMilliseconds(1)),
 		};
 
-		Assert.Throws<NotSupportedException>(() => _database.Accessor.InsertMany(models));
+		await Assert.ThrowsAsync<NotSupportedException>(() => _database.Accessor.InsertManyAsync(models).AsTask());
 	}
 
 	[Fact]
@@ -60,11 +60,11 @@ public class MutationTest(DatabaseFixture database)
 		{
 			await accessor.DeleteAsync<GatewayHistory>(criteria);
 
-			using(var transaction = new Transaction())
+			await using(var transaction = new Transaction())
 			{
 				Assert.Same(transaction, Transaction.Current);
 				Assert.Equal(1, await accessor.InsertAsync(model));
-				transaction.Rollback();
+				await transaction.RollbackAsync();
 			}
 
 			Assert.Null(Transaction.Current);
@@ -94,7 +94,7 @@ public class MutationTest(DatabaseFixture database)
 			Assert.Equal(1, await accessor.InsertAsync(original));
 			Assert.Equal(1, await accessor.UpsertAsync(replacement));
 
-			var rows = accessor.Select<GatewayHistory>(criteria).ToArray();
+			var rows = await Global.ToArrayAsync(accessor.SelectAsync<GatewayHistory>(criteria));
 			var row = Assert.Single(rows);
 			Assert.Equal(replacement.GatewayId, row.GatewayId);
 			Assert.Equal(replacement.MetricId, row.MetricId);
@@ -122,10 +122,10 @@ public class MutationTest(DatabaseFixture database)
 		try
 		{
 			await accessor.DeleteAsync<GatewayHistory>(criteria);
-			Assert.Equal(1, accessor.Import([original]));
+			Assert.Equal(1, await accessor.ImportAsync([original]));
 			Assert.Equal(1, await accessor.UpsertAsync(replacement));
 
-			var row = Assert.Single(accessor.Select<GatewayHistory>(criteria));
+			var row = Assert.Single(await Global.ToArrayAsync(accessor.SelectAsync<GatewayHistory>(criteria)));
 			Assert.Equal(replacement.Value, row.Value);
 		}
 		finally
@@ -179,7 +179,7 @@ public class MutationTest(DatabaseFixture database)
 			Assert.Equal(1, await accessor.InsertAsync(new GatewayHistory(205, 20006, 7.25, null, new DateTime(2097, 1, 7, 0, 0, 0, DateTimeKind.Local))));
 
 			Assert.Equal(2, await accessor.DeleteAsync<GatewayHistory>(null));
-			Assert.Empty(accessor.Select<GatewayHistory>());
+			Assert.Empty(await Global.ToArrayAsync(accessor.SelectAsync<GatewayHistory>()));
 		}
 		finally
 		{

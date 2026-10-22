@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Runtime.ExceptionServices;
@@ -66,6 +67,23 @@ internal sealed class PluginDisposal
 	{
 		if(value == null || !_released.Add(value))
 			return;
+
+		if(value is Diagnostics.ILogger logger)
+		{
+			try { await logger.FlushAsync(CancellationToken.None).ConfigureAwait(false); }
+			catch(Exception exception) { this.Errors.Add(exception); }
+
+			try
+			{
+				var loggers = (IList<Diagnostics.ILogger>)Diagnostics.Logging.Loggers;
+				for(var index = loggers.Count - 1; index >= 0; index--)
+				{
+					if(ReferenceEquals(loggers[index], logger))
+						loggers.RemoveAt(index);
+				}
+			}
+			catch(Exception exception) { this.Errors.Add(exception); }
+		}
 
 		try
 		{

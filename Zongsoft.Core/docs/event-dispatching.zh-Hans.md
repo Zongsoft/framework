@@ -49,7 +49,7 @@ await dispatcher.StartAsync();
 
 ## 事务提供者
 
-`Transaction.Features` 暴露私有提供者，由它捕获当前根事务。`TransactionContext.Feature.cs` 中的私有特性实现 `IFeature` 和 `IPredication`，订阅根事务的 `Completed` 通知，在全部登记回调结束后，将 `Committed` 映射为允许执行，将 `Aborted` 和 `Undetermined` 映射为放弃执行。事务条件不使用事件对象及附加参数，只依赖已捕获的根事务。事务终结返回前条件结果已经确定，实际投递由调度器异步管理。
+`Transaction.Features` 暴露私有提供者，由它捕获当前根事务。`TransactionContext.Feature.cs` 中的私有特性实现 `IFeature` 和 `IPredication`，在全部登记回调结束、用户 `Completed` 处理器开始前，将 `Committed` 映射为允许执行，将 `Aborted` 和 `Undetermined` 映射为放弃执行。事务条件不使用事件对象及附加参数，只依赖已捕获的根事务。事务终结返回前条件结果已经确定，实际投递由调度器异步管理。
 
 同一根事务及其子事务共享一个特性实例。该特性绑定到原事务，不跟随后续调用环境变化；重复、并发等待观察相同的完成结果，取消某次等待不取消事务或其它等待。提交事务不等待远程投递。
 

@@ -31,7 +31,7 @@ public class ConnectionResilienceTest
 		Assert.Equal("00:01:00", settings.Properties["CircuitBreaker.Duration"]);
 		Assert.Equal("00:01:00", settings.Properties["CircuitBreaker.MaximumDuration"]);
 
-		using IDataAccess accessor = DataAccessProvider.Instance.GetAccessor(name, new DataAccessOptions([settings]));
+		await using IDataAccess accessor = DataAccessProvider.Instance.GetAccessor(name, new DataAccessOptions([settings]));
 		var timestamp = new DateTime(2098, 1, 1, 0, 0, 0, DateTimeKind.Local);
 		var criteria = Condition.Equal(nameof(GatewayHistory.Timestamp), timestamp);
 

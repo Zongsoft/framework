@@ -30,6 +30,8 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
@@ -50,10 +52,12 @@ public sealed class TDengineStatementBinder : StatementBinder
 
 	private TDengineStatementBinder() { }
 
-	protected override void OnBound(IDataMutateContextBase context, IStatementBase statement, DbCommand command)
+	protected override ValueTask OnBoundAsync(IDataMutateContextBase context, IStatementBase statement, DbCommand command, CancellationToken cancellation)
 	{
 		//DELETE 的参数值已由 TDengineExpressionVisitor 内联到命令文本中，此处仅移除不再被 SQL 引用的参数对象。
 		if(statement is DeleteStatement)
 			command.Parameters.Clear();
+
+		return ValueTask.CompletedTask;
 	}
 }

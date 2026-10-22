@@ -43,7 +43,6 @@ namespace Zongsoft.Data.Common.Expressions;
 public static class StatementExtension
 {
 	#region 静态方法
-	public static void Bind(this IStatementBase statement, IDataMutateContextBase context, DbCommand command) => GetBinder(context).Bind(context, statement, command);
 	public static ValueTask BindAsync(this IStatementBase statement, IDataMutateContextBase context, DbCommand command, CancellationToken cancellation) => GetBinder(context).BindAsync(context, statement, command, cancellation);
 	#endregion
 	#region 私有方法

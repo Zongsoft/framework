@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
@@ -188,7 +190,7 @@ public class DataServiceFilterCollection<TModel> : ICollection<IDataServiceFilte
 	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private DataServiceContext<TModel> CreateContext(DataServiceMethod method, IDataAccessContextBase context, object result, params object[] arguments) => new DataServiceContext<TModel>(_service, method, context, result, arguments);
 
-	internal void OnFiltered(DataServiceMethod method, IDataAccessContextBase accessContext, object result, params object[] arguments)
+	internal async ValueTask OnFilteredAsync(DataServiceMethod method, IDataAccessContextBase accessContext, object result, object[] arguments, CancellationToken cancellation)
 	{
 		DataServiceContext<TModel> context = null;
 
@@ -197,7 +199,7 @@ public class DataServiceFilterCollection<TModel> : ICollection<IDataServiceFilte
 			context ??= this.CreateContext(method, accessContext, result, arguments);
 
 			foreach(var filter in filters)
-				filter.OnFiltered(context);
+				await filter.OnFilteredAsync(context, cancellation);
 		}
 
 		if(_filters.TryGetValue(string.Empty, out filters) && filters != null && filters.Count > 0)
@@ -205,11 +207,11 @@ public class DataServiceFilterCollection<TModel> : ICollection<IDataServiceFilte
 			context ??= this.CreateContext(method, accessContext, result, arguments);
 
 			foreach(var filter in filters)
-				filter.OnFiltered(context);
+				await filter.OnFilteredAsync(context, cancellation);
 		}
 	}
 
-	internal bool OnFiltering(DataServiceMethod method, IDataAccessContextBase accessContext, params object[] arguments)
+	internal async ValueTask<bool> OnFilteringAsync(DataServiceMethod method, IDataAccessContextBase accessContext, object[] arguments, CancellationToken cancellation)
 	{
 		DataServiceContext<TModel> context = null;
 
@@ -219,7 +221,7 @@ public class DataServiceFilterCollection<TModel> : ICollection<IDataServiceFilte
 
 			foreach(var filter in filters)
 			{
-				if(filter.OnFiltering(context))
+				if(await filter.OnFilteringAsync(context, cancellation))
 					return true;
 			}
 		}
@@ -230,7 +232,7 @@ public class DataServiceFilterCollection<TModel> : ICollection<IDataServiceFilte
 
 			foreach(var filter in filters)
 			{
-				if(filter.OnFiltering(context))
+				if(await filter.OnFilteringAsync(context, cancellation))
 					return true;
 			}
 		}

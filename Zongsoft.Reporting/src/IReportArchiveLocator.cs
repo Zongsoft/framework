@@ -28,13 +28,15 @@
  */
 
 using System;
-using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace Zongsoft.Reporting;
 
 public interface IReportArchiveLocator
 {
-	Stream Open(string key, out ReportArchive archive);
-	IEnumerable<ReportArchive> Find(string type, string contentType = null);
+	ValueTask<ReportArchiveResult> OpenAsync(string key, CancellationToken cancellation = default);
+	IAsyncEnumerable<ReportArchive> FindAsync(string type, CancellationToken cancellation = default) => this.FindAsync(type, null, cancellation);
+	IAsyncEnumerable<ReportArchive> FindAsync(string type, string contentType, CancellationToken cancellation = default);
 }

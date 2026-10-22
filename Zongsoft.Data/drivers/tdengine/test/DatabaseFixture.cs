@@ -1,13 +1,14 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 using Xunit;
 
 namespace Zongsoft.Data.TDengine.Tests;
 
-public class DatabaseFixture : IDisposable
+public class DatabaseFixture : IAsyncDisposable
 {
 	#region 常量定义
-	private const string CONNECTION_STRING = @"Server=127.0.0.1;Port=6030;UserName=root;Password=taosdata;Database=zongsoft;AutoReconnect=true;EnableCompression=true;";
+	private const string CONNECTION_STRING = @"Server=127.0.0.1;Port=6041;UserName=root;Password=taosdata;Database=zongsoft;AutoReconnect=true;EnableCompression=true;";
 	#endregion
 
 	#region 私有变量
@@ -21,7 +22,7 @@ public class DatabaseFixture : IDisposable
 		DataEnvironment.Drivers.Add(TDengineDriver.Instance);
 
 		this.ConnectionSettings = Configuration.TDengineConnectionSettingsDriver.Instance.GetSettings(CONNECTION_STRING);
-		this.ConnectionSettings.Protocol = Configuration.TDengineConnectionProtocol.Native;
+		this.ConnectionSettings.Protocol = Configuration.TDengineConnectionProtocol.WebSocket;
 		this.Accessor = DataAccessProvider.Instance.GetAccessor("Zongsoft.Data.TDengine.Tests", new DataAccessOptions([this.ConnectionSettings]));
 	}
 	#endregion
@@ -32,10 +33,17 @@ public class DatabaseFixture : IDisposable
 	#endregion
 
 	#region 释放方法
-	public void Dispose()
+	public async ValueTask DisposeAsync()
 	{
-		Mapping.Loaders.Remove(_loader);
-		DataEnvironment.Drivers.Remove(TDengineDriver.Instance);
+		try
+		{
+			await ((IAsyncDisposable)this.Accessor).DisposeAsync();
+		}
+		finally
+		{
+			Mapping.Loaders.Remove(_loader);
+			DataEnvironment.Drivers.Remove(TDengineDriver.Instance);
+		}
 	}
 	#endregion
 }

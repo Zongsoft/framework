@@ -46,6 +46,7 @@ public sealed class TDengineConnectionSettings : ConnectionSettingsBase<TDengine
 	#endregion
 
 	#region 公共属性
+	[DefaultValue((ushort)6041)]
 	public ushort Port
 	{
 		get => this.GetValue<ushort>();
@@ -89,7 +90,7 @@ public sealed class TDengineConnectionSettings : ConnectionSettingsBase<TDengine
 		set => this.SetValue(value);
 	}
 
-	[DefaultValue(TDengineConnectionProtocol.Native)]
+	[DefaultValue(TDengineConnectionProtocol.WebSocket)]
 	[ConnectionSetting(Ignored = true)]
 	public TDengineConnectionProtocol Protocol
 	{
@@ -126,6 +127,9 @@ public sealed class TDengineConnectionSettings : ConnectionSettingsBase<TDengine
 	protected override TDengineConnectionStringBuilder CreateOptions() => new(string.Empty);
 	protected override void Populate(TDengineConnectionStringBuilder options)
 	{
+		if(this.Protocol != TDengineConnectionProtocol.WebSocket)
+			throw new NotSupportedException(Zongsoft.Data.TDengine.Properties.Resources.Driver_WebSocketRequired_Message);
+
 		base.Populate(options);
 		options.Protocol = this.Protocol.ToString();
 	}

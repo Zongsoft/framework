@@ -91,7 +91,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		if(criteria == null)
 			return ValueTask.FromResult(false);
 
-		return this.Accessor.ExistsAsync(this.Name, criteria, cancellation: cancellation);
+		return this.Accessor.ExistsAsync(this.Name, criteria, cancellation);
 	}
 
 	public virtual async ValueTask<bool> EnableAsync(Identifier identifier, CancellationToken cancellation = default)
@@ -284,7 +284,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		if(criteria == null)
 			return false;
 
-		return await this.Accessor.DeleteAsync(this.Name, criteria, cancellation: cancellation) > 0;
+		return await this.Accessor.DeleteAsync(this.Name, criteria, cancellation) > 0;
 	}
 
 	public virtual async ValueTask<int> DeleteAsync(IEnumerable<Identifier> identifiers, CancellationToken cancellation = default)
@@ -296,33 +296,41 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		var total = 0;
 
 		//创建事务
-		using var transaction = new Transaction();
+		await using var transaction = new Transaction();
 
-		foreach(var identifier in identifiers)
+		try
 		{
-			if(identifier.IsEmpty)
-				continue;
-
-			//确保不能禁用内置用户
-			var criteria = this.GetCriteria(identifier) & Condition.NotEqual(nameof(IUser.Name), IUser.Administrator);
-			if(criteria == null)
-				continue;
-
-			var count = await this.Accessor.DeleteAsync(this.Name, criteria, cancellation: cancellation);
-			if(count > 0)
+			foreach(var identifier in identifiers)
 			{
-				total += count;
+				if(identifier.IsEmpty)
+					continue;
 
-				//删除成员表中当前用户的所有父级
-				await Authentication.Servicer.Members.RemoveAsync(Member.User(identifier), cancellation);
+				//确保不能禁用内置用户
+				var criteria = this.GetCriteria(identifier) & Condition.NotEqual(nameof(IUser.Name), IUser.Administrator);
+				if(criteria == null)
+					continue;
+
+				var count = await this.Accessor.DeleteAsync(this.Name, criteria, cancellation);
+				if(count > 0)
+				{
+					total += count;
+
+					//删除成员表中当前用户的所有父级
+					await Authentication.Servicer.Members.RemoveAsync(Member.User(identifier), cancellation);
+				}
 			}
+
+			//提交事务
+			await transaction.CommitAsync(cancellation);
+
+			//返回删除数量
+			return total;
 		}
-
-		//提交事务
-		await transaction.CommitAsync(cancellation);
-
-		//返回删除数量
-		return total;
+		catch(Exception exception)
+		{
+			await transaction.RollbackAsync(exception);
+			throw;
+		}
 	}
 
 	public virtual async ValueTask<bool> UpdateAsync(TUser user, CancellationToken cancellation = default)
@@ -336,7 +344,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 
 		//确保修改的不是内置用户
 		var criteria = this.GetCriteria(user.Identifier) & Condition.NotEqual(nameof(IUser.Name), IUser.Administrator);
-		if(!await this.Accessor.ExistsAsync(this.Name, criteria, cancellation: cancellation))
+		if(!await this.Accessor.ExistsAsync(this.Name, criteria, cancellation))
 			return false;
 
 		return await this.Accessor.UpdateAsync(user, cancellation) > 0;

@@ -1,10 +1,11 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 using Xunit;
 
 namespace Zongsoft.Data.Influx.Tests;
 
-public class DatabaseFixture : IDisposable
+public class DatabaseFixture : IAsyncDisposable
 {
 	#region 常量定义
 	private const string CONNECTION_STRING = @"server=http://192.168.2.222:8086;database=Test;organization=0f99a31eaaa485f5;token=DqImDLUR5rf3OObPO0qGw-YNTxh8MBW-gZBgFKAPFkizRVuYK7DEkdeB-Oxq4RmSizpaXcqzNVq_ZT6JjrB2eQ==";
@@ -31,10 +32,17 @@ public class DatabaseFixture : IDisposable
 	#endregion
 
 	#region 释放方法
-	public void Dispose()
+	public async ValueTask DisposeAsync()
 	{
-		Mapping.Loaders.Remove(_loader);
-		DataEnvironment.Drivers.Remove(InfluxDriver.Instance);
+		try
+		{
+			await ((IAsyncDisposable)this.Accessor).DisposeAsync();
+		}
+		finally
+		{
+			Mapping.Loaders.Remove(_loader);
+			DataEnvironment.Drivers.Remove(InfluxDriver.Instance);
+		}
 	}
 	#endregion
 }

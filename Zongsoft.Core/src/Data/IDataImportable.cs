@@ -40,9 +40,10 @@ public interface IDataImportable
 	/// <summary>获取一个值，指示是否支持导入操作。</summary>
 	bool CanImport { get; }
 
-	int Import(Stream input, DataImportOptions options = null);
-	int Import(Stream input, string format, DataImportOptions options = null);
-
 	ValueTask<int> ImportAsync(Stream input, DataImportOptions options = null, CancellationToken cancellation = default);
 	ValueTask<int> ImportAsync(Stream input, string format, DataImportOptions options = null, CancellationToken cancellation = default);
+	#region 取消重载
+	ValueTask<int> ImportAsync(Stream input, CancellationToken cancellation) => this.ImportAsync(input, (DataImportOptions)null, cancellation);
+	ValueTask<int> ImportAsync(Stream input, string format, CancellationToken cancellation) => this.ImportAsync(input, format, null, cancellation);
+	#endregion
 }

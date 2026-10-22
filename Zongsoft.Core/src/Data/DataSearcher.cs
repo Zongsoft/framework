@@ -29,10 +29,13 @@
 
 using System;
 using System.Linq;
-using System.Collections;
-using System.Collections.Generic;
 using System.Reflection;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 using System.ComponentModel;
+
+using Zongsoft.Collections;
 
 namespace Zongsoft.Data;
 
@@ -63,71 +66,6 @@ public class DataSearcher<TModel> : IDataSearcher<TModel>, IDataSearcher
 	}
 	#endregion
 
-	#region 计数方法
-	public int Count(string keyword, IDataOptions options = null) => this.OnCount(this.Resolve(nameof(Count), keyword, options), options);
-	protected virtual int OnCount(ICondition criteria, IDataOptions options = null) => this.DataService.Count(criteria, options as DataAggregateOptions);
-	#endregion
-
-	#region 存在方法
-	public bool Exists(string keyword, IDataOptions options = null) => this.OnExists(this.Resolve(nameof(Exists), keyword, options), options);
-	protected virtual bool OnExists(ICondition criteria, IDataOptions options = null)
-	{
-		return this.DataService.Exists(criteria, options as DataExistsOptions);
-	}
-	#endregion
-
-	#region 搜索方法
-	public IEnumerable<TModel> Search(string keyword, params Sorting[] sortings)
-	{
-		return this.Search(keyword, string.Empty, null, null, sortings);
-	}
-
-	public IEnumerable<TModel> Search(string keyword, IDataOptions options, params Sorting[] sortings)
-	{
-		return this.Search(keyword, string.Empty, null, options, sortings);
-	}
-
-	public IEnumerable<TModel> Search(string keyword, Paging paging, params Sorting[] sortings)
-	{
-		return this.Search(keyword, string.Empty, paging, null, sortings);
-	}
-
-	public IEnumerable<TModel> Search(string keyword, string schema, params Sorting[] sortings)
-	{
-		return this.Search(keyword, schema, null, null, sortings);
-	}
-
-	public IEnumerable<TModel> Search(string keyword, string schema, IDataOptions options, params Sorting[] sortings)
-	{
-		return this.Search(keyword, schema, null, options, sortings);
-	}
-
-	public IEnumerable<TModel> Search(string keyword, string schema, Paging paging, params Sorting[] sortings)
-	{
-		return this.Search(keyword, schema, paging, null, sortings);
-	}
-
-	public IEnumerable<TModel> Search(string keyword, string schema, Paging paging, IDataOptions options, params Sorting[] sortings)
-	{
-		return this.OnSearch(
-			this.Resolve(nameof(Search), keyword, options),
-			schema,
-			paging,
-			options,
-			sortings);
-	}
-
-	protected virtual IEnumerable<TModel> OnSearch(ICondition criteria, string schema, Paging paging, IDataOptions options, params Sorting[] sortings)
-	{
-		return this.DataService.Select(
-			criteria,
-			schema,
-			paging,
-			options as DataSelectOptions,
-			sortings);
-	}
-	#endregion
-
 	#region 条件解析
 	protected virtual ICondition Resolve(string method, string keyword, IDataOptions options = null)
 	{
@@ -137,43 +75,6 @@ public class DataSearcher<TModel> : IDataSearcher<TModel>, IDataSearcher
 			throw new InvalidOperationException(Properties.Resources.DataSearcher_MissingResolver_Message);
 
 		return conditioner.Resolve(method, keyword, options);
-	}
-	#endregion
-
-	#region 显式实现
-	IEnumerable IDataSearcher.Search(string keyword, params Sorting[] sortings)
-	{
-		return this.Search(keyword, string.Empty, null, null, sortings);
-	}
-
-	IEnumerable IDataSearcher.Search(string keyword, IDataOptions options, params Sorting[] sortings)
-	{
-		return this.Search(keyword, string.Empty, null, options, sortings);
-	}
-
-	IEnumerable IDataSearcher.Search(string keyword, Paging paging, params Sorting[] sortings)
-	{
-		return this.Search(keyword, string.Empty, paging, null, sortings);
-	}
-
-	IEnumerable IDataSearcher.Search(string keyword, string schema, params Sorting[] sortings)
-	{
-		return this.Search(keyword, schema, null, null, sortings);
-	}
-
-	IEnumerable IDataSearcher.Search(string keyword, string schema, IDataOptions options, params Sorting[] sortings)
-	{
-		return this.Search(keyword, schema, null, options, sortings);
-	}
-
-	IEnumerable IDataSearcher.Search(string keyword, string schema, Paging paging, params Sorting[] sortings)
-	{
-		return this.Search(keyword, schema, paging, null, sortings);
-	}
-
-	IEnumerable IDataSearcher.Search(string keyword, string schema, Paging paging, IDataOptions options, params Sorting[] sortings)
-	{
-		return this.Search(keyword, schema, paging, options, sortings);
 	}
 	#endregion
 
@@ -441,5 +342,56 @@ public class DataSearcher<TModel> : IDataSearcher<TModel>, IDataSearcher
 		}
 		#endregion
 	}
+	#endregion
+
+	#region 异步方法
+	public ValueTask<int> CountAsync(string keyword, IDataOptions options = null, CancellationToken cancellation = default) => this.OnCountAsync(this.Resolve("Count", keyword, options), options, cancellation);
+	protected virtual ValueTask<int> OnCountAsync(ICondition criteria, IDataOptions options = null, CancellationToken cancellation = default) => this.DataService.CountAsync(criteria, options as DataAggregateOptions, cancellation);
+
+	public ValueTask<bool> ExistsAsync(string keyword, IDataOptions options = null, CancellationToken cancellation = default) => this.OnExistsAsync(this.Resolve("Exists", keyword, options), options, cancellation);
+	protected virtual ValueTask<bool> OnExistsAsync(ICondition criteria, IDataOptions options = null, CancellationToken cancellation = default) => this.DataService.ExistsAsync(criteria, options as DataExistsOptions, cancellation);
+
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, params Sorting[] sortings) => this.SearchAsync(keyword, string.Empty, null, null, sortings, CancellationToken.None);
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, Sorting[] sortings, CancellationToken cancellation = default) => this.SearchAsync(keyword, string.Empty, null, null, sortings, cancellation);
+	IAsyncEnumerable<object> IDataSearcher.SearchAsync(string keyword, params Sorting[] sortings) => this.SearchAsync(keyword, string.Empty, null, null, sortings, CancellationToken.None).Cast();
+	IAsyncEnumerable<object> IDataSearcher.SearchAsync(string keyword, Sorting[] sortings, CancellationToken cancellation) => this.SearchAsync(keyword, string.Empty, null, null, sortings, cancellation).Cast(cancellation);
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, IDataOptions options, params Sorting[] sortings) => this.SearchAsync(keyword, string.Empty, null, options, sortings, CancellationToken.None);
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, IDataOptions options, Sorting[] sortings, CancellationToken cancellation = default) => this.SearchAsync(keyword, string.Empty, null, options, sortings, cancellation);
+	IAsyncEnumerable<object> IDataSearcher.SearchAsync(string keyword, IDataOptions options, params Sorting[] sortings) => this.SearchAsync(keyword, string.Empty, null, options, sortings, CancellationToken.None).Cast();
+	IAsyncEnumerable<object> IDataSearcher.SearchAsync(string keyword, IDataOptions options, Sorting[] sortings, CancellationToken cancellation) => this.SearchAsync(keyword, string.Empty, null, options, sortings, cancellation).Cast(cancellation);
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, Paging paging, params Sorting[] sortings) => this.SearchAsync(keyword, string.Empty, paging, null, sortings, CancellationToken.None);
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, Paging paging, Sorting[] sortings, CancellationToken cancellation = default) => this.SearchAsync(keyword, string.Empty, paging, null, sortings, cancellation);
+	IAsyncEnumerable<object> IDataSearcher.SearchAsync(string keyword, Paging paging, params Sorting[] sortings) => this.SearchAsync(keyword, string.Empty, paging, null, sortings, CancellationToken.None).Cast();
+	IAsyncEnumerable<object> IDataSearcher.SearchAsync(string keyword, Paging paging, Sorting[] sortings, CancellationToken cancellation) => this.SearchAsync(keyword, string.Empty, paging, null, sortings, cancellation).Cast(cancellation);
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, string schema, params Sorting[] sortings) => this.SearchAsync(keyword, schema, null, null, sortings, CancellationToken.None);
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, string schema, Sorting[] sortings, CancellationToken cancellation = default) => this.SearchAsync(keyword, schema, null, null, sortings, cancellation);
+	IAsyncEnumerable<object> IDataSearcher.SearchAsync(string keyword, string schema, params Sorting[] sortings) => this.SearchAsync(keyword, schema, null, null, sortings, CancellationToken.None).Cast();
+	IAsyncEnumerable<object> IDataSearcher.SearchAsync(string keyword, string schema, Sorting[] sortings, CancellationToken cancellation) => this.SearchAsync(keyword, schema, null, null, sortings, cancellation).Cast(cancellation);
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, string schema, IDataOptions options, params Sorting[] sortings) => this.SearchAsync(keyword, schema, null, options, sortings, CancellationToken.None);
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, string schema, IDataOptions options, Sorting[] sortings, CancellationToken cancellation = default) => this.SearchAsync(keyword, schema, null, options, sortings, cancellation);
+	IAsyncEnumerable<object> IDataSearcher.SearchAsync(string keyword, string schema, IDataOptions options, params Sorting[] sortings) => this.SearchAsync(keyword, schema, null, options, sortings, CancellationToken.None).Cast();
+	IAsyncEnumerable<object> IDataSearcher.SearchAsync(string keyword, string schema, IDataOptions options, Sorting[] sortings, CancellationToken cancellation) => this.SearchAsync(keyword, schema, null, options, sortings, cancellation).Cast(cancellation);
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, string schema, Paging paging, params Sorting[] sortings) => this.SearchAsync(keyword, schema, paging, null, sortings, CancellationToken.None);
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, string schema, Paging paging, Sorting[] sortings, CancellationToken cancellation = default) => this.SearchAsync(keyword, schema, paging, null, sortings, cancellation);
+	IAsyncEnumerable<object> IDataSearcher.SearchAsync(string keyword, string schema, Paging paging, params Sorting[] sortings) => this.SearchAsync(keyword, schema, paging, null, sortings, CancellationToken.None).Cast();
+	IAsyncEnumerable<object> IDataSearcher.SearchAsync(string keyword, string schema, Paging paging, Sorting[] sortings, CancellationToken cancellation) => this.SearchAsync(keyword, schema, paging, null, sortings, cancellation).Cast(cancellation);
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, string schema, Paging paging, IDataOptions options, params Sorting[] sortings) => this.SearchAsync(keyword, schema, paging, options, sortings, CancellationToken.None);
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, string schema, Paging paging, IDataOptions options, Sorting[] sortings, CancellationToken cancellation = default) => this.OnSearchAsync(this.Resolve("Search", keyword, options), schema, paging, options, sortings, cancellation);
+	IAsyncEnumerable<object> IDataSearcher.SearchAsync(string keyword, string schema, Paging paging, IDataOptions options, params Sorting[] sortings) => this.SearchAsync(keyword, schema, paging, options, sortings, CancellationToken.None).Cast();
+	IAsyncEnumerable<object> IDataSearcher.SearchAsync(string keyword, string schema, Paging paging, IDataOptions options, Sorting[] sortings, CancellationToken cancellation) => this.SearchAsync(keyword, schema, paging, options, sortings, cancellation).Cast(cancellation);
+
+	protected virtual IAsyncEnumerable<TModel> OnSearchAsync(ICondition criteria, string schema, Paging paging, IDataOptions options, Sorting[] sortings, CancellationToken cancellation = default) => this.DataService.SelectAsync(criteria, schema, paging, options as DataSelectOptions, sortings, cancellation);
+	#endregion
+
+	#region 便利取消
+	public ValueTask<int> CountAsync(string keyword, CancellationToken cancellation) => this.CountAsync(keyword, default(IDataOptions), cancellation);
+	public ValueTask<bool> ExistsAsync(string keyword, CancellationToken cancellation) => this.ExistsAsync(keyword, default(IDataOptions), cancellation);
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, CancellationToken cancellation) => this.SearchAsync(keyword, default(Sorting[]), cancellation);
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, IDataOptions options, CancellationToken cancellation) => this.SearchAsync(keyword, options, default(Sorting[]), cancellation);
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, Paging paging, CancellationToken cancellation) => this.SearchAsync(keyword, paging, default(Sorting[]), cancellation);
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, string schema, CancellationToken cancellation) => this.SearchAsync(keyword, schema, default(Sorting[]), cancellation);
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, string schema, IDataOptions options, CancellationToken cancellation) => this.SearchAsync(keyword, schema, options, default(Sorting[]), cancellation);
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, string schema, Paging paging, CancellationToken cancellation) => this.SearchAsync(keyword, schema, paging, default(Sorting[]), cancellation);
+	public IAsyncEnumerable<TModel> SearchAsync(string keyword, string schema, Paging paging, IDataOptions options, CancellationToken cancellation) => this.SearchAsync(keyword, schema, paging, options, default(Sorting[]), cancellation);
 	#endregion
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 using System.IO;
 
 using Zongsoft.Data.Metadata;
@@ -7,7 +8,7 @@ using Xunit;
 
 namespace Zongsoft.Data.DuckDB.Tests;
 
-public class DatabaseFixture : IDisposable
+public class DatabaseFixture : IAsyncLifetime
 {
 	#region 静态字段
 	private static readonly string DATABASE_FILE = Path.Combine(AppContext.BaseDirectory, "test.db");
@@ -34,10 +35,6 @@ public class DatabaseFixture : IDisposable
 		this.ConnectionSettings = Configuration.DuckDBConnectionSettingsDriver.Instance.GetSettings(CONNECTION_STRING);
 		this.Accessor = DataAccessProvider.Instance.GetAccessor("Test", new DataAccessOptions([this.ConnectionSettings]));
 		this.Accessor.Sequencer.Sequence = new Zongsoft.Data.Tests.SequenceMocker(TimeSpan.FromMilliseconds(10));
-
-		using var reader = File.OpenText(@"../../../script/init.sql");
-		Mapping.Commands.Add("InitSQL").Script(DuckDBDriver.NAME, reader.ReadToEnd());
-		this.Accessor.Execute("InitSQL");
 	}
 	#endregion
 
@@ -46,11 +43,27 @@ public class DatabaseFixture : IDisposable
 	public Configuration.DuckDBConnectionSettings ConnectionSettings { get; }
 	#endregion
 
-	#region 释放方法
-	public void Dispose()
+	#region 初始化
+	public async ValueTask InitializeAsync()
 	{
-		Mapping.Loaders.Remove(_loader);
-		DataEnvironment.Drivers.Remove(DuckDBDriver.Instance);
+		using var reader = File.OpenText(@"../../../script/init.sql");
+		Mapping.Commands.Add("InitSQL").Script(DuckDBDriver.NAME, await reader.ReadToEndAsync());
+		await this.Accessor.ExecuteAsync("InitSQL");
+	}
+	#endregion
+
+	#region 释放方法
+	public async ValueTask DisposeAsync()
+	{
+		try
+		{
+			await ((IAsyncDisposable)this.Accessor).DisposeAsync();
+		}
+		finally
+		{
+			Mapping.Loaders.Remove(_loader);
+			DataEnvironment.Drivers.Remove(DuckDBDriver.Instance);
+		}
 	}
 	#endregion
 }

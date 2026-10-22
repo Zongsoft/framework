@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 using Zongsoft.Data.Metadata;
 
@@ -6,7 +7,7 @@ using Xunit;
 
 namespace Zongsoft.Data.MsSql.Tests;
 
-public class DatabaseFixture : IDisposable
+public class DatabaseFixture : IAsyncDisposable
 {
 	#region 常量定义
 	private const string CONNECTION_STRING = @"Server=127.0.0.1;Database=zongsoft;UserName=program;Password=xxxxxx;TrustServerCertificate=true;";
@@ -38,10 +39,17 @@ public class DatabaseFixture : IDisposable
 	#endregion
 
 	#region 释放方法
-	public void Dispose()
+	public async ValueTask DisposeAsync()
 	{
-		Mapping.Loaders.Remove(_loader);
-		DataEnvironment.Drivers.Remove(MsSqlDriver.Instance);
+		try
+		{
+			await ((IAsyncDisposable)this.Accessor).DisposeAsync();
+		}
+		finally
+		{
+			Mapping.Loaders.Remove(_loader);
+			DataEnvironment.Drivers.Remove(MsSqlDriver.Instance);
+		}
 	}
 	#endregion
 }

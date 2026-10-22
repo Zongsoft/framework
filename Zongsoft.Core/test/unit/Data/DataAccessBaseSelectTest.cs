@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,6 +20,31 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 	public void Dispose() => Mapping.Entities.Remove(_entityName);
 
 	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task SequencerAsync_DefaultIntervalAndTokenReachProvider(bool byProperty)
+	{
+		var property = new DataEntitySimplexProperty("Id", System.Data.DbType.Int64, false);
+		Mapping.Entities[_entityName].Properties.Add(property);
+		await using var accessor = new TestDataAccess();
+		using var cancellation = new CancellationTokenSource();
+		var sequencer = accessor.Sequencer;
+
+		Assert.Equal(11, byProperty ? await sequencer.IncreaseAsync(property) : await sequencer.IncreaseAsync(_entityName, "Id"));
+		Assert.Equal(11, byProperty ? await sequencer.IncreaseAsync(property, CancellationToken.None) : await sequencer.IncreaseAsync(_entityName, "Id", CancellationToken.None));
+		Assert.Equal(11, byProperty ? await sequencer.IncreaseAsync(property, cancellation.Token) : await sequencer.IncreaseAsync(_entityName, "Id", cancellation.Token));
+		Assert.Equal(11, byProperty ? await sequencer.IncreaseAsync(property, 0, cancellation.Token) : await sequencer.IncreaseAsync(_entityName, "Id", 0, cancellation.Token));
+
+		Assert.Equal(4, accessor.SequenceCalls.Count);
+		Assert.All(accessor.SequenceCalls, call => Assert.Same(property, call.Property));
+		Assert.Equal([1, 1, 1, 0], accessor.SequenceCalls.ConvertAll(call => call.Interval));
+		Assert.Equal(CancellationToken.None, accessor.SequenceCalls[0].Cancellation);
+		Assert.Equal(CancellationToken.None, accessor.SequenceCalls[1].Cancellation);
+		Assert.Equal(cancellation.Token, accessor.SequenceCalls[2].Cancellation);
+		Assert.Equal(cancellation.Token, accessor.SequenceCalls[3].Cancellation);
+	}
+
+	[Theory]
 	[InlineData(PagingMode.None, true, false)]
 	[InlineData(PagingMode.Disabled, true, false)]
 	[InlineData(PagingMode.Enabled, false, true)]
@@ -31,7 +57,7 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 			_ => null,
 		};
 		var result = new PageableAsyncEnumerable([1, 2, 3], suppressed: suppressedAfterPreparation);
-		using var accessor = new TestDataAccess(result, delayProvider: true);
+		await using var accessor = new TestDataAccess(result, delayProvider: true);
 		var selecting = Task.Run(() => this.Select(accessor, paging));
 
 		await accessor.ProviderEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
@@ -44,7 +70,6 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 			pageable = Assert.IsAssignableFrom<IPageable>(sequence);
 			Assert.Equal(suppressedBeforePreparation, pageable.Suppressed);
 			Assert.Equal(1, accessor.ProviderCalls);
-			Assert.Equal(0, accessor.SynchronousProviderCalls);
 			Assert.Single(accessor.Contexts);
 			Assert.Equal(0, accessor.Contexts[0].DisposeCount);
 		}
@@ -63,7 +88,7 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 	public async Task SelectAsync_PreparesOnceForSequentialEnumerations()
 	{
 		var result = new TestAsyncEnumerable([1, 2]);
-		using var accessor = new TestDataAccess(result);
+		await using var accessor = new TestDataAccess(result);
 		var sequence = this.Select(accessor, Paging.Page(1, 2));
 		var pageable = Assert.IsAssignableFrom<IPageable>(sequence);
 
@@ -74,7 +99,6 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 		Assert.Equal([1, 2], second);
 		Assert.True(pageable.Suppressed);
 		Assert.Equal(1, accessor.ProviderCalls);
-		Assert.Equal(0, accessor.SynchronousProviderCalls);
 		Assert.Equal(1, accessor.SelectedCalls);
 		Assert.Single(accessor.Contexts);
 		Assert.Equal(1, accessor.Contexts[0].DisposeCount);
@@ -89,12 +113,12 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 		var paging = Paging.Page(2, 5);
 		var eventArgs = new PagingEventArgs(_entityName, paging);
 		var result = new PageableAsyncEnumerable([1, 2], eventArgs);
-		using var accessor = new TestDataAccess(result, delayProvider: true);
+		await using var accessor = new TestDataAccess(result, delayProvider: true);
 		var sequence = this.Select(accessor, paging);
 		var pageable = Assert.IsAssignableFrom<IPageable>(sequence);
 		object sender = null;
 		PagingEventArgs observed = null;
-		pageable.Paginated += (source, args) =>
+		pageable.Paginated += (source, args, _) =>
 		{
 			sender = source;
 			observed = args;
@@ -116,15 +140,16 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 	}
 
 	[Fact]
-	public void SelectAsync_SelectingShortCircuit_PreservesProvidedResult()
+	public async Task SelectAsync_SelectingShortCircuit_PreservesProvidedResult()
 	{
 		var result = new TestAsyncEnumerable([7, 8]);
 		using var cancellation = new CancellationTokenSource();
-		using var accessor = new TestDataAccess();
-		accessor.Selecting += (_, args) =>
+		await using var accessor = new TestDataAccess();
+		accessor.Selecting += (_, args, _) =>
 		{
 			args.Context.Result = result;
 			args.Cancel = true;
+			return ValueTask.CompletedTask;
 		};
 
 		var sequence = this.Select(accessor, cancellation: cancellation.Token);
@@ -132,24 +157,22 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 		Assert.Same(result, sequence);
 		Assert.False(sequence is IPageable);
 		Assert.Equal(0, accessor.ProviderCalls);
-		Assert.Equal(0, accessor.SynchronousProviderCalls);
 		Assert.Equal(0, accessor.SelectedCalls);
 		Assert.Single(accessor.Contexts);
 		Assert.Equal(1, accessor.Contexts[0].DisposeCount);
 	}
 
 	[Fact]
-	public void SelectAsync_PreCanceled_SkipsProviderAndDisposesContextOnce()
+	public async Task SelectAsync_PreCanceled_SkipsProviderAndDisposesContextOnce()
 	{
 		using var cancellation = new CancellationTokenSource();
 		cancellation.Cancel();
-		using var accessor = new TestDataAccess(delayProvider: true);
+		await using var accessor = new TestDataAccess(delayProvider: true);
 
 		var exception = Assert.ThrowsAny<OperationCanceledException>(() => this.Select(accessor, cancellation: cancellation.Token));
 
 		Assert.Equal(cancellation.Token, exception.CancellationToken);
 		Assert.Equal(0, accessor.ProviderCalls);
-		Assert.Equal(0, accessor.SynchronousProviderCalls);
 		Assert.Equal(0, accessor.SelectedCalls);
 		Assert.Single(accessor.Contexts);
 		Assert.Equal(1, accessor.Contexts[0].DisposeCount);
@@ -159,7 +182,7 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 	public async Task SelectAsync_PreparationCanceled_PropagatesTokenAndDisposesContextOnce()
 	{
 		using var cancellation = new CancellationTokenSource();
-		using var accessor = new TestDataAccess(delayProvider: true);
+		await using var accessor = new TestDataAccess(delayProvider: true);
 		var sequence = this.Select(accessor, cancellation: cancellation.Token);
 		await accessor.ProviderEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
 
@@ -185,7 +208,7 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 	public async Task SelectAsync_EnumerationCanceled_PropagatesTokenAndDisposesEnumerator()
 	{
 		var result = new TestAsyncEnumerable([1, 2, 3]);
-		using var accessor = new TestDataAccess(result);
+		await using var accessor = new TestDataAccess(result);
 		using var cancellation = new CancellationTokenSource();
 		var sequence = this.Select(accessor);
 		var enumerator = sequence.GetAsyncEnumerator(cancellation.Token);
@@ -214,7 +237,7 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 	public async Task SelectAsync_EnumeratorCancellation_DoesNotCancelSharedPreparation()
 	{
 		using var cancellation = new CancellationTokenSource();
-		using var accessor = new TestDataAccess(delayProvider: true);
+		await using var accessor = new TestDataAccess(delayProvider: true);
 		var sequence = this.Select(accessor);
 		var enumerator = sequence.GetAsyncEnumerator(cancellation.Token);
 		var moving = enumerator.MoveNextAsync().AsTask();
@@ -241,10 +264,10 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 	}
 
 	[Fact]
-	public void SelectAsync_FilteringFailure_ThrowsBeforeReturnAndDisposesContextOnce()
+	public async Task SelectAsync_FilteringFailure_ThrowsBeforeReturnAndDisposesContextOnce()
 	{
 		var failure = new InvalidOperationException("Expected pre-provider filter failure.");
-		using var accessor = new TestDataAccess { FilteringFailure = failure };
+		await using var accessor = new TestDataAccess { FilteringFailure = failure };
 
 		var exception = Assert.Throws<InvalidOperationException>(() => this.Select(accessor));
 
@@ -259,7 +282,7 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 	public async Task SelectAsync_FilteredFailure_PropagatesDuringEnumerationAndDisposesContextOnce()
 	{
 		var failure = new InvalidOperationException("Expected post-provider filter failure.");
-		using var accessor = new TestDataAccess { FilteredFailure = failure };
+		await using var accessor = new TestDataAccess { FilteredFailure = failure };
 		var sequence = this.Select(accessor);
 
 		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => CollectAsync(sequence));
@@ -275,14 +298,13 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 	public async Task SelectAsync_ProviderFailure_PreservesExceptionAndDisposesContextOnce()
 	{
 		var failure = new InvalidOperationException("Expected provider failure.");
-		using var accessor = new TestDataAccess { ProviderFailure = failure };
+		await using var accessor = new TestDataAccess { ProviderFailure = failure };
 		var sequence = this.Select(accessor);
 
 		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => CollectAsync(sequence));
 
 		Assert.Same(failure, exception);
 		Assert.Equal(1, accessor.ProviderCalls);
-		Assert.Equal(0, accessor.SynchronousProviderCalls);
 		Assert.Equal(0, accessor.SelectedCalls);
 		Assert.Single(accessor.Contexts);
 		Assert.Equal(1, accessor.Contexts[0].DisposeCount);
@@ -293,21 +315,98 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 	{
 		var failure = new InvalidOperationException("Expected selected callback failure.");
 		var result = new TestAsyncEnumerable([1]);
-		using var accessor = new TestDataAccess(result);
-		var sequence = this.Select(accessor, selected: _ => throw failure);
+		await using var accessor = new TestDataAccess(result);
+		var sequence = this.Select(accessor, selected: (_, _) => throw failure);
 
 		var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => CollectAsync(sequence));
 
 		Assert.Same(failure, exception);
 		Assert.Equal(1, accessor.ProviderCalls);
-		Assert.Equal(0, accessor.SynchronousProviderCalls);
 		Assert.Equal(1, accessor.SelectedCalls);
 		Assert.Equal(0, result.EnumerationCount);
 		Assert.Single(accessor.Contexts);
 		Assert.Equal(1, accessor.Contexts[0].DisposeCount);
 	}
 
-	private IAsyncEnumerable<int> Select(TestDataAccess accessor, Paging paging = null, Func<DataSelectContextBase, bool> selecting = null, Action<DataSelectContextBase> selected = null, CancellationToken cancellation = default) =>
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task SelectAsync_PendingPreHook_PreparesOnce(bool shortCircuit)
+	{
+		var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var result = new TestAsyncEnumerable([7, 8]);
+		await using var accessor = new TestDataAccess(result);
+		using var cancellation = new CancellationTokenSource();
+		var calls = 0;
+		var sequence = this.Select(accessor, selecting: async (context, token) =>
+		{
+			calls++;
+			Assert.Equal(cancellation.Token, token);
+			await release.Task.WaitAsync(token);
+
+			if(shortCircuit)
+				context.Result = result;
+
+			return shortCircuit;
+		}, cancellation: cancellation.Token);
+		var first = CollectAsync(sequence);
+		var second = CollectAsync(sequence);
+
+		try
+		{
+			Assert.False(first.IsCompleted);
+			Assert.False(second.IsCompleted);
+			Assert.Equal(1, calls);
+			Assert.Equal(0, accessor.ProviderCalls);
+			Assert.Equal(0, result.EnumerationCount);
+			release.SetResult();
+			Assert.All(await Task.WhenAll(first, second).WaitAsync(TimeSpan.FromSeconds(5)), values => Assert.Equal([7, 8], values));
+			Assert.Equal(1, calls);
+			Assert.Equal(shortCircuit ? 0 : 1, accessor.ProviderCalls);
+			Assert.Equal(shortCircuit ? 0 : 1, accessor.SelectedCalls);
+			Assert.Equal(1, Assert.Single(accessor.Contexts).DisposeCount);
+			Assert.Equal(2, result.EnumerationCount);
+			Assert.Equal(2, result.EnumeratorDisposeCount);
+		}
+		finally
+		{
+			release.TrySetResult();
+			await Task.WhenAll(first, second).WaitAsync(TimeSpan.FromSeconds(5));
+		}
+	}
+
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task SelectAsync_UnenumeratedPreparation_DisposesContext(bool fails)
+	{
+		var result = new TestAsyncEnumerable([1, 2]);
+		await using var accessor = new TestDataAccess(result, delayProvider: true)
+		{
+			ProviderFailure = fails ? new InvalidOperationException("Expected unenumerated preparation failure.") : null,
+		};
+		var sequence = this.Select(accessor);
+		var context = Assert.Single(accessor.Contexts);
+
+		try
+		{
+			await accessor.ProviderEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+			Assert.Equal(0, context.DisposeCount);
+			accessor.ReleaseProvider();
+			await context.Disposed.Task.WaitAsync(TimeSpan.FromSeconds(5));
+			Assert.Equal(1, context.DisposeCount);
+			Assert.Equal(1, accessor.ProviderCalls);
+			Assert.Equal(0, result.EnumerationCount);
+			Assert.Equal(0, result.EnumeratorDisposeCount);
+			Assert.Equal(fails ? 0 : 1, accessor.SelectedCalls);
+			GC.KeepAlive(sequence);
+		}
+		finally
+		{
+			accessor.ReleaseProvider();
+		}
+	}
+	private IAsyncEnumerable<int> Select(TestDataAccess accessor, Paging paging = null, Func<DataSelectContextBase, CancellationToken, ValueTask<bool>> selecting = null, Func<DataSelectContextBase, CancellationToken, ValueTask> selected = null, CancellationToken cancellation = default) =>
 		accessor.SelectAsync<int>(_entityName, null, (ISchema)null, paging, null, null, selecting, selected, cancellation);
 
 	private static async Task<List<int>> CollectAsync(IAsyncEnumerable<int> sequence)
@@ -325,7 +424,6 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 		private readonly IEnumerable _result;
 		private readonly TaskCompletionSource _providerRelease = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		private int _providerCalls;
-		private int _synchronousProviderCalls;
 		private int _selectedCalls;
 
 		public TestDataAccess(IEnumerable result = null, bool delayProvider = false) : base("P0")
@@ -337,7 +435,6 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 		}
 
 		public int ProviderCalls => _providerCalls;
-		public int SynchronousProviderCalls => _synchronousProviderCalls;
 		public int SelectedCalls => _selectedCalls;
 		public Exception FilteringFailure { get; set; }
 		public Exception FilteredFailure { get; set; }
@@ -345,6 +442,7 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 		public CancellationToken ProviderCancellation { get; private set; }
 		public TaskCompletionSource ProviderEntered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		public List<TestSelectContext> Contexts { get; } = [];
+		public List<(IDataEntitySimplexProperty Property, int Interval, CancellationToken Cancellation)> SequenceCalls { get; } = [];
 
 		public void ReleaseProvider() => _providerRelease.TrySetResult();
 
@@ -353,12 +451,6 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 			var context = new TestSelectContext(this, name, modelType, grouping, criteria, schema, paging, sortings, options);
 			this.Contexts.Add(context);
 			return context;
-		}
-
-		protected override void OnSelect(DataSelectContextBase context)
-		{
-			Interlocked.Increment(ref _synchronousProviderCalls);
-			throw new InvalidOperationException("The asynchronous query entry must not call the synchronous provider.");
 		}
 
 		protected override async ValueTask OnSelectAsync(DataSelectContextBase context, CancellationToken cancellation)
@@ -375,55 +467,55 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 			context.Result = _result;
 		}
 
-		protected override void OnSelected(DataSelectContextBase context)
+		protected override ValueTask OnSelectedAsync(DataSelectContextBase context, CancellationToken cancellation)
 		{
 			Interlocked.Increment(ref _selectedCalls);
-			base.OnSelected(context);
+			return base.OnSelectedAsync(context, cancellation);
 		}
 
-		protected override void OnFiltering(IDataAccessContextBase context)
+		protected override ValueTask OnFilteringAsync(IDataAccessContextBase context, CancellationToken cancellation)
 		{
 			if(this.FilteringFailure != null)
 				throw this.FilteringFailure;
 
-			base.OnFiltering(context);
+			return base.OnFilteringAsync(context, cancellation);
 		}
 
-		protected override void OnFiltered(IDataAccessContextBase context)
+		protected override ValueTask OnFilteredAsync(IDataAccessContextBase context, CancellationToken cancellation)
 		{
 			if(this.FilteredFailure != null)
 				throw this.FilteredFailure;
 
-			base.OnFiltered(context);
+			return base.OnFilteredAsync(context, cancellation);
 		}
 
 		protected override ISchemaParser CreateSchema() => throw new NotSupportedException();
-		protected override IDataSequencer CreateSequencer() => throw new NotSupportedException();
+		protected override IDataSequencer CreateSequencer() => new TestSequencer(this);
 		protected override DataExecuteContextBase CreateExecuteContext(string name, bool isScalar, Type resultType, IEnumerable<Parameter> parameters, IDataExecuteOptions options) => throw new NotSupportedException();
 		protected override DataExistContextBase CreateExistContext(string name, ICondition criteria, IDataExistsOptions options) => throw new NotSupportedException();
 		protected override DataAggregateContextBase CreateAggregateContext(string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options) => throw new NotSupportedException();
-		protected override DataImportContextBase CreateImportContext(string name, IEnumerable data, IEnumerable<string> members, IDataImportOptions options) => throw new NotSupportedException();
+		protected override DataImportContextBase CreateImportContext(string name, object data, IEnumerable<string> members, IDataImportOptions options) => throw new NotSupportedException();
 		protected override DataDeleteContextBase CreateDeleteContext(string name, ICondition criteria, ISchema schema, IDataDeleteOptions options) => throw new NotSupportedException();
 		protected override DataInsertContextBase CreateInsertContext(string name, bool isMultiple, object data, ISchema schema, IDataInsertOptions options) => throw new NotSupportedException();
 		protected override DataUpsertContextBase CreateUpsertContext(string name, bool isMultiple, object data, ISchema schema, IDataUpsertOptions options) => throw new NotSupportedException();
 		protected override DataUpdateContextBase CreateUpdateContext(string name, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options) => throw new NotSupportedException();
 
-		protected override void OnExecute(DataExecuteContextBase context) => throw new NotSupportedException();
 		protected override ValueTask OnExecuteAsync(DataExecuteContextBase context, CancellationToken cancellation) => throw new NotSupportedException();
-		protected override void OnExists(DataExistContextBase context) => throw new NotSupportedException();
 		protected override ValueTask OnExistsAsync(DataExistContextBase context, CancellationToken cancellation) => throw new NotSupportedException();
-		protected override void OnAggregate(DataAggregateContextBase context) => throw new NotSupportedException();
 		protected override ValueTask OnAggregateAsync(DataAggregateContextBase context, CancellationToken cancellation) => throw new NotSupportedException();
-		protected override void OnImport(DataImportContextBase context) => throw new NotSupportedException();
 		protected override ValueTask OnImportAsync(DataImportContextBase context, CancellationToken cancellation = default) => throw new NotSupportedException();
-		protected override void OnDelete(DataDeleteContextBase context) => throw new NotSupportedException();
 		protected override ValueTask OnDeleteAsync(DataDeleteContextBase context, CancellationToken cancellation) => throw new NotSupportedException();
-		protected override void OnInsert(DataInsertContextBase context) => throw new NotSupportedException();
 		protected override ValueTask OnInsertAsync(DataInsertContextBase context, CancellationToken cancellation) => throw new NotSupportedException();
-		protected override void OnUpsert(DataUpsertContextBase context) => throw new NotSupportedException();
 		protected override ValueTask OnUpsertAsync(DataUpsertContextBase context, CancellationToken cancellation) => throw new NotSupportedException();
-		protected override void OnUpdate(DataUpdateContextBase context) => throw new NotSupportedException();
 		protected override ValueTask OnUpdateAsync(DataUpdateContextBase context, CancellationToken cancellation) => throw new NotSupportedException();
+		private sealed class TestSequencer(DataAccessBase accessor) : DataSequencerBase(accessor)
+		{
+			public override ValueTask<long> IncreaseAsync(IDataEntitySimplexProperty property, int interval, CancellationToken cancellation = default)
+			{
+				((TestDataAccess)this.Accessor).SequenceCalls.Add((property, interval, cancellation));
+				return ValueTask.FromResult(11L);
+			}
+		}
 	}
 
 	private sealed class TestSelectContext : DataSelectContextBase
@@ -434,12 +526,14 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 			base(dataAccess, name, modelType, grouping, criteria, schema, paging, sortings, options) { }
 
 		public int DisposeCount => _disposeCount;
+		public TaskCompletionSource Disposed { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 		public override TFeature GetFeature<TFeature>() => default;
 
 		protected override void Dispose(bool disposing)
 		{
 			Interlocked.Increment(ref _disposeCount);
 			base.Dispose(disposing);
+			this.Disposed.TrySetResult();
 		}
 	}
 
@@ -465,29 +559,29 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 		public virtual IAsyncEnumerator<int> GetAsyncEnumerator(CancellationToken cancellation = default)
 		{
 			Interlocked.Increment(ref _enumerationCount);
-			return new Enumerator(_items.GetEnumerator(), cancellation, this.OnFirstMove, () => Interlocked.Increment(ref _enumeratorDisposeCount));
+			return new Enumerator(_items.GetEnumerator(), cancellation, this.OnFirstMoveAsync, () => Interlocked.Increment(ref _enumeratorDisposeCount));
 		}
 
-		protected virtual void OnFirstMove() { }
+		protected virtual ValueTask OnFirstMoveAsync(CancellationToken cancellation) => ValueTask.CompletedTask;
 
-		private sealed class Enumerator(IEnumerator<int> source, CancellationToken cancellation, Action firstMove, Action disposed) : IAsyncEnumerator<int>
+		private sealed class Enumerator(IEnumerator<int> source, CancellationToken cancellation, Func<CancellationToken, ValueTask> firstMove, Action disposed) : IAsyncEnumerator<int>
 		{
 			private bool _started;
 			private int _disposed;
 
 			public int Current => source.Current;
 
-			public ValueTask<bool> MoveNextAsync()
+			public async ValueTask<bool> MoveNextAsync()
 			{
 				cancellation.ThrowIfCancellationRequested();
 
 				if(!_started)
 				{
 					_started = true;
-					firstMove();
+					await firstMove(cancellation);
 				}
 
-				return ValueTask.FromResult(source.MoveNext());
+				return source.MoveNext();
 			}
 
 			public ValueTask DisposeAsync()
@@ -506,11 +600,11 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 	private sealed class PageableAsyncEnumerable(IEnumerable<int> items, PagingEventArgs eventArgs = null, bool suppressed = false) : TestAsyncEnumerable(items), IPageable
 	{
 		private readonly PagingEventArgs _eventArgs = eventArgs;
-		private EventHandler<PagingEventArgs> _paginated;
+		private Func<object, PagingEventArgs, CancellationToken, ValueTask> _paginated;
 		private int _subscriptionCount;
 		private int _unsubscriptionCount;
 
-		public event EventHandler<PagingEventArgs> Paginated
+		public event Func<object, PagingEventArgs, CancellationToken, ValueTask> Paginated
 		{
 			add
 			{
@@ -529,10 +623,13 @@ public sealed class DataAccessBaseSelectTest : IDisposable
 		public int UnsubscriptionCount => _unsubscriptionCount;
 		public int SubscriberCount => _paginated?.GetInvocationList().Length ?? 0;
 
-		protected override void OnFirstMove()
+		protected override async ValueTask OnFirstMoveAsync(CancellationToken cancellation)
 		{
-			if(_eventArgs != null)
-				_paginated?.Invoke(this, _eventArgs);
+			if(_eventArgs != null && _paginated != null)
+			{
+				foreach(var handler in _paginated.GetInvocationList().Cast<Func<object, PagingEventArgs, CancellationToken, ValueTask>>())
+					await handler(this, _eventArgs, cancellation);
+			}
 		}
 	}
 }

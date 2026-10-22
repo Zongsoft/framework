@@ -41,7 +41,7 @@ public sealed partial class DataConnector
 	#region 公共事件
 	/// <summary>当真实物理连接建立失败时发生。</summary>
 	/// <remarks>熔断期间被快速拒绝的连接请求不会重复触发该事件。</remarks>
-	public event EventHandler<DataConnectionFailureEventArgs> Failed;
+	public event Func<object, DataConnectionFailureEventArgs, CancellationToken, ValueTask> Failed;
 	#endregion
 
 	#region 成员字段
@@ -55,7 +55,7 @@ public sealed partial class DataConnector
 	{
 		_source = source ?? throw new ArgumentNullException(nameof(source));
 		_breaker = new CircuitBreaker(source, options, timeProvider);
-		_breaker.Failed += this.OnFailed;
+		_breaker.Failed += this.OnFailedAsync;
 
 		/*
 		 * 数据源发生故障时，高并发请求可能在首个失败结果返回前同时进入底层提供程序，
@@ -79,25 +79,6 @@ public sealed partial class DataConnector
 	#endregion
 
 	#region 公共方法
-	/// <summary>创建并打开当前数据源的数据连接。</summary>
-	/// <returns>返回已打开的数据连接。</returns>
-	public DbConnection Connect()
-	{
-		_breaker.EnsureAvailable();
-		var connection = this.CreateConnection();
-
-		try
-		{
-			this.Open(connection);
-			return connection;
-		}
-		catch
-		{
-			connection?.Dispose();
-			throw;
-		}
-	}
-
 	/// <summary>异步创建并打开当前数据源的数据连接。</summary>
 	/// <param name="cancellation">指定的取消标记。</param>
 	/// <returns>返回表示异步操作的任务，其结果为已打开的数据连接。</returns>
@@ -118,28 +99,6 @@ public sealed partial class DataConnector
 				await connection.DisposeAsync().ConfigureAwait(false);
 
 			throw;
-		}
-	}
-
-	/// <summary>使用指定的连接函数建立原生数据连接。</summary>
-	/// <typeparam name="TResult">指定原生连接的类型。</typeparam>
-	/// <param name="connector">指定的连接函数。</param>
-	/// <returns>返回建立的原生数据连接。</returns>
-	public TResult Connect<TResult>(Func<TResult> connector)
-	{
-		if(connector == null)
-			throw new ArgumentNullException(nameof(connector));
-
-		_breaker.EnsureAvailable();
-		_semaphore.Wait();
-
-		try
-		{
-			return _breaker.Execute(connector);
-		}
-		finally
-		{
-			_semaphore.Release();
 		}
 	}
 
@@ -165,29 +124,6 @@ public sealed partial class DataConnector
 		{
 			_semaphore.Release();
 		}
-	}
-
-	/// <summary>打开指定的数据连接。</summary>
-	/// <param name="connection">指定要打开的数据连接。</param>
-	public void Open(DbConnection connection)
-	{
-		if(connection == null)
-			throw new ArgumentNullException(nameof(connection));
-
-		if(connection.State == ConnectionState.Open)
-			return;
-
-		this.Connect(() =>
-		{
-			if(connection.State == ConnectionState.Open)
-				return connection;
-
-			if(connection.State == ConnectionState.Broken)
-				connection.Close();
-
-			connection.Open();
-			return connection;
-		});
 	}
 
 	/// <summary>异步打开指定的数据连接。</summary>
@@ -217,17 +153,17 @@ public sealed partial class DataConnector
 	#endregion
 
 	#region 私有方法
-	private void OnFailed(object sender, DataConnectionFailureEventArgs failure)
+	private async ValueTask OnFailedAsync(object sender, DataConnectionFailureEventArgs failure, CancellationToken cancellation)
 	{
 		var handlers = this.Failed;
 
 		if(handlers != null)
 		{
-			foreach(EventHandler<DataConnectionFailureEventArgs> handler in handlers.GetInvocationList())
+			foreach(Func<object, DataConnectionFailureEventArgs, CancellationToken, ValueTask> handler in handlers.GetInvocationList())
 			{
 				try
 				{
-					handler(this, failure);
+					await handler(this, failure, cancellation).ConfigureAwait(false);
 				}
 				catch
 				{
@@ -252,7 +188,7 @@ public sealed partial class DataConnector
 				failure.FailureCount,
 				failure.RetryAt?.ToLocalTime());
 
-			Zongsoft.Diagnostics.Logging.GetLogging<DataConnector>().Error(message, failure.Exception);
+			await Zongsoft.Diagnostics.Logging.GetLogging<DataConnector>().ErrorAsync(message, failure.Exception, cancellation).ConfigureAwait(false);
 		}
 		catch
 		{

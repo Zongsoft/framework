@@ -28,14 +28,17 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Data.Common.Expressions;
 
 public class AggregateStatementBuilder : IStatementBuilder<DataAggregateContext>
 {
 	#region 公共方法
-	public IEnumerable<IStatementBase> Build(DataAggregateContext context)
+	public async IAsyncEnumerable<IStatementBase> BuildAsync(DataAggregateContext context, [EnumeratorCancellation] CancellationToken cancellation = default)
 	{
 		var statement = this.CreateStatement(context);
 		var argument = (IExpression)null;
@@ -49,7 +52,7 @@ public class AggregateStatementBuilder : IStatementBuilder<DataAggregateContext>
 		statement.Select.Members.Add(AggregateExpression.Aggregate(context.Aggregate, argument));
 
 		//生成条件子句
-		statement.Where = statement.Where(context.Validate(), context.Aliaser);
+		statement.Where = statement.Where(await context.ValidateAsync(cancellation).ConfigureAwait(false), context.Aliaser);
 
 		yield return statement;
 	}

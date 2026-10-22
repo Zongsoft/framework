@@ -37,8 +37,8 @@ namespace Zongsoft.Data;
 partial class DataAccessBase
 {
 	#region 公共方法
-	public int Execute(string name, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null) => this.Execute(name, null, options, executing, executed);
-	public int Execute(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null)
+	public ValueTask<int> ExecuteAsync(string name, DataExecuteOptions options = null, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing = null, Func<DataExecuteContextBase, CancellationToken, ValueTask> executed = null, CancellationToken cancellation = default) => this.ExecuteAsync(name, null, options, executing, executed, cancellation);
+	public async ValueTask<int> ExecuteAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing = null, Func<DataExecuteContextBase, CancellationToken, ValueTask> executed = null, CancellationToken cancellation = default)
 	{
 		//确实是否已处置
 		this.EnsureDisposed();
@@ -47,52 +47,73 @@ partial class DataAccessBase
 			throw new ArgumentNullException(nameof(name));
 
 		//创建数据访问上下文对象
-		var context = this.CreateExecuteContext(name, false, null, parameters, options);
+		using var context = this.CreateExecuteContext(name, false, null, parameters, options);
 
 		//处理数据访问操作前的回调
-		if(executing != null && executing(context))
-		{
-			//返回委托回调的结果
+		if(executing != null && await executing(context, cancellation))
 			return GetRecordsAffected(context.Result);
-		}
 
 		//激发“Executing”事件，如果被中断则返回
-		if(this.OnExecuting(context))
-		{
-			//返回事件执行后的结果
+		if(await this.OnExecutingAsync(context, cancellation))
 			return GetRecordsAffected(context.Result);
-		}
 
 		//调用数据访问过滤器前事件
-		this.OnFiltering(context);
+		await this.OnFilteringAsync(context, cancellation);
 
 		//执行数据操作方法
-		this.OnExecute(context);
+		await this.OnExecuteAsync(context, cancellation);
 
 		//调用数据访问过滤器后事件
-		this.OnFiltered(context);
+		await this.OnFilteredAsync(context, cancellation);
 
 		//激发“Executed”事件
-		this.OnExecuted(context);
+		await this.OnExecutedAsync(context, cancellation);
 
 		//处理数据访问操作后的回调
-		executed?.Invoke(context);
+		if(executed != null)
+			await executed(context, cancellation);
 
 		var result = GetRecordsAffected(context.Result);
 
-		//处置上下文资源
-		context.Dispose();
-
 		//返回最终的结果
 		return result;
+
+		[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+		static int GetRecordsAffected(object value) => value == null || System.Convert.IsDBNull(value) ? 0 : (int)System.Convert.ChangeType(value, typeof(int));
 	}
 
-	public ValueTask<int> ExecuteAsync(string name, CancellationToken cancellation = default) => this.ExecuteAsync(name, null, null, null, null, cancellation);
-	public ValueTask<int> ExecuteAsync(string name, DataExecuteOptions options, CancellationToken cancellation = default) => this.ExecuteAsync(name, null, options, null, null, cancellation);
-	public ValueTask<int> ExecuteAsync(string name, DataExecuteOptions options, Func<DataExecuteContextBase, bool> executing, Action<DataExecuteContextBase> executed, CancellationToken cancellation = default) => this.ExecuteAsync(name, null, options, executing, executed, cancellation);
-	public ValueTask<int> ExecuteAsync(string name, IEnumerable<Parameter> parameters, CancellationToken cancellation = default) => this.ExecuteAsync(name, parameters, null, null, null, cancellation);
-	public ValueTask<int> ExecuteAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, CancellationToken cancellation = default) => this.ExecuteAsync(name, parameters, options, null, null, cancellation);
-	public async ValueTask<int> ExecuteAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, Func<DataExecuteContextBase, bool> executing, Action<DataExecuteContextBase> executed, CancellationToken cancellation = default)
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, DataExecuteOptions options = null, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing = null, Func<DataExecuteContextBase, CancellationToken, ValueTask> executed = null, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, null, options, executing, executed, cancellation);
+	public async IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing = null, Func<DataExecuteContextBase, CancellationToken, ValueTask> executed = null, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellation = default)
+	{
+		this.EnsureDisposed();
+
+		if(string.IsNullOrEmpty(name))
+			throw new ArgumentNullException(nameof(name));
+
+		IAsyncEnumerable<T> result;
+
+		using(var context = this.CreateExecuteContext(name, false, typeof(T), parameters, options))
+		{
+			if(!(executing != null && await executing(context, cancellation)) && !await this.OnExecutingAsync(context, cancellation))
+			{
+				await this.OnFilteringAsync(context, cancellation);
+				await this.OnExecuteAsync(context, cancellation);
+				await this.OnFilteredAsync(context, cancellation);
+				await this.OnExecutedAsync(context, cancellation);
+
+				if(executed != null)
+					await executed(context, cancellation);
+			}
+
+			result = ToAsyncEnumerable<T>(context.Result, cancellation);
+		}
+
+		await foreach(var item in result.WithCancellation(cancellation))
+			yield return item;
+	}
+
+	public ValueTask<object> ExecuteScalarAsync(string name, DataExecuteOptions options = null, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing = null, Func<DataExecuteContextBase, CancellationToken, ValueTask> executed = null, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, null, options, executing, executed, cancellation);
+	public async ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing = null, Func<DataExecuteContextBase, CancellationToken, ValueTask> executed = null, CancellationToken cancellation = default)
 	{
 		//确实是否已处置
 		this.EnsureDisposed();
@@ -101,263 +122,33 @@ partial class DataAccessBase
 			throw new ArgumentNullException(nameof(name));
 
 		//创建数据访问上下文对象
-		var context = this.CreateExecuteContext(name, false, null, parameters, options);
+		using var context = this.CreateExecuteContext(name, true, typeof(object), parameters, options);
 
 		//处理数据访问操作前的回调
-		if(executing != null && executing(context))
-			return GetRecordsAffected(context.Result);
+		if(executing != null && await executing(context, cancellation))
+			return context.Result;
 
 		//激发“Executing”事件，如果被中断则返回
-		if(this.OnExecuting(context))
-			return GetRecordsAffected(context.Result);
+		if(await this.OnExecutingAsync(context, cancellation))
+			return context.Result;
 
 		//调用数据访问过滤器前事件
-		this.OnFiltering(context);
+		await this.OnFilteringAsync(context, cancellation);
 
 		//执行数据操作方法
 		await this.OnExecuteAsync(context, cancellation);
 
 		//调用数据访问过滤器后事件
-		this.OnFiltered(context);
+		await this.OnFilteredAsync(context, cancellation);
 
 		//激发“Executed”事件
-		this.OnExecuted(context);
+		await this.OnExecutedAsync(context, cancellation);
 
 		//处理数据访问操作后的回调
-		executed?.Invoke(context);
-
-		var result = GetRecordsAffected(context.Result);
-
-		//处置上下文资源
-		context.Dispose();
-
-		//返回最终的结果
-		return result;
-	}
-
-	public IEnumerable<T> Execute<T>(string name, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null) => this.Execute<T>(name, null, options, executing, executed);
-	public IEnumerable<T> Execute<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null)
-	{
-		//确实是否已处置
-		this.EnsureDisposed();
-
-		if(string.IsNullOrEmpty(name))
-			throw new ArgumentNullException(nameof(name));
-
-		//创建数据访问上下文对象
-		var context = this.CreateExecuteContext(name, false, typeof(T), parameters, options);
-
-		//处理数据访问操作前的回调
-		if(executing != null && executing(context))
-		{
-			//返回委托回调的结果
-			return context.Result as IEnumerable<T>;
-		}
-
-		//激发“Executing”事件，如果被中断则返回
-		if(this.OnExecuting(context))
-		{
-			//返回事件执行后的结果
-			return context.Result as IEnumerable<T>;
-		}
-
-		//调用数据访问过滤器前事件
-		this.OnFiltering(context);
-
-		//执行数据操作方法
-		this.OnExecute(context);
-
-		//调用数据访问过滤器后事件
-		this.OnFiltered(context);
-
-		//激发“Executed”事件
-		this.OnExecuted(context);
-
-		//处理数据访问操作后的回调
-		executed?.Invoke(context);
-
-		var result = ToEnumerable<T>(context.Result);
-
-		//处置上下文资源
-		context.Dispose();
-
-		//返回最终的结果
-		return result;
-	}
-
-	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, null, null, null, null, cancellation);
-	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, DataExecuteOptions options, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, null, options, null, null, cancellation);
-	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, DataExecuteOptions options, Func<DataExecuteContextBase, bool> executing, Action<DataExecuteContextBase> executed, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, null, options, executing, executed, cancellation);
-	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, parameters, null, null, null, cancellation);
-	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, parameters, options, null, null, cancellation);
-	public async IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, Func<DataExecuteContextBase, bool> executing, Action<DataExecuteContextBase> executed, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellation = default)
-	{
-		//确实是否已处置
-		this.EnsureDisposed();
-
-		if(string.IsNullOrEmpty(name))
-			throw new ArgumentNullException(nameof(name));
-
-		//创建数据访问上下文对象
-		var context = this.CreateExecuteContext(name, false, typeof(T), parameters, options);
-
-		//处理数据访问操作前的回调
-		if(executing != null && executing(context))
-		{
-			if(context.Result is IAsyncEnumerable<T> asyncEnumerable)
-			{
-				await using var iterator = asyncEnumerable.GetAsyncEnumerator(cancellation);
-				while(await iterator.MoveNextAsync())
-					yield return iterator.Current;
-			}
-			else if(context.Result is IEnumerable<T> enumerable)
-			{
-				var iterator = enumerable.GetEnumerator();
-				while(iterator.MoveNext())
-					yield return iterator.Current;
-			}
-
-			yield break;
-		}
-
-		//激发“Executing”事件，如果被中断则返回
-		if(this.OnExecuting(context))
-		{
-			if(context.Result is IAsyncEnumerable<T> asyncEnumerable)
-			{
-				await using var iterator = asyncEnumerable.GetAsyncEnumerator(cancellation);
-				while(await iterator.MoveNextAsync())
-					yield return iterator.Current;
-			}
-			else if(context.Result is IEnumerable<T> enumerable)
-			{
-				var iterator = enumerable.GetEnumerator();
-				while(iterator.MoveNext())
-					yield return iterator.Current;
-			}
-
-			yield break;
-		}
-
-		//调用数据访问过滤器前事件
-		this.OnFiltering(context);
-
-		//执行数据操作方法
-		await this.OnExecuteAsync(context, cancellation);
-
-		//调用数据访问过滤器后事件
-		this.OnFiltered(context);
-
-		//激发“Executed”事件
-		this.OnExecuted(context);
-
-		//处理数据访问操作后的回调
-		executed?.Invoke(context);
-
-		var result = ToAsyncEnumerable<T>(context.Result, cancellation);
-
-		//处置上下文资源
-		context.Dispose();
-
-		//返回最终的结果
-		await using var enumerator = result.GetAsyncEnumerator(cancellation);
-		while(await enumerator.MoveNextAsync())
-			yield return enumerator.Current;
-	}
-
-	public object ExecuteScalar(string name, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null) => this.ExecuteScalar(name, null, options, executing, executed);
-	public object ExecuteScalar(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, bool> executing = null, Action<DataExecuteContextBase> executed = null)
-	{
-		//确实是否已处置
-		this.EnsureDisposed();
-
-		if(string.IsNullOrEmpty(name))
-			throw new ArgumentNullException(nameof(name));
-
-		//创建数据访问上下文对象
-		var context = this.CreateExecuteContext(name, true, typeof(object), parameters, options);
-
-		//处理数据访问操作前的回调
-		if(executing != null && executing(context))
-		{
-			//返回委托回调的结果
-			return context.Result;
-		}
-
-		//激发“Executing”事件，如果被中断则返回
-		if(this.OnExecuting(context))
-		{
-			//返回事件执行后的结果
-			return context.Result;
-		}
-
-		//调用数据访问过滤器前事件
-		this.OnFiltering(context);
-
-		//执行数据操作方法
-		this.OnExecute(context);
-
-		//调用数据访问过滤器后事件
-		this.OnFiltered(context);
-
-		//激发“Executed”事件
-		this.OnExecuted(context);
-
-		//处理数据访问操作后的回调
-		executed?.Invoke(context);
+		if(executed != null)
+			await executed(context, cancellation);
 
 		var result = context.Result;
-
-		//处置上下文资源
-		context.Dispose();
-
-		//返回最终的结果
-		return result;
-	}
-
-	public ValueTask<object> ExecuteScalarAsync(string name, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, null, null, null, null, cancellation);
-	public ValueTask<object> ExecuteScalarAsync(string name, DataExecuteOptions options, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, null, options, null, null, cancellation);
-	public ValueTask<object> ExecuteScalarAsync(string name, DataExecuteOptions options, Func<DataExecuteContextBase, bool> executing, Action<DataExecuteContextBase> executed, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, null, options, executing, executed, cancellation);
-	public ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, parameters, null, null, null, cancellation);
-	public ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, parameters, options, null, null, cancellation);
-	public async ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, Func<DataExecuteContextBase, bool> executing, Action<DataExecuteContextBase> executed, CancellationToken cancellation = default)
-	{
-		//确实是否已处置
-		this.EnsureDisposed();
-
-		if(string.IsNullOrEmpty(name))
-			throw new ArgumentNullException(nameof(name));
-
-		//创建数据访问上下文对象
-		var context = this.CreateExecuteContext(name, true, typeof(object), parameters, options);
-
-		//处理数据访问操作前的回调
-		if(executing != null && executing(context))
-			return context.Result;
-
-		//激发“Executing”事件，如果被中断则返回
-		if(this.OnExecuting(context))
-			return context.Result;
-
-		//调用数据访问过滤器前事件
-		this.OnFiltering(context);
-
-		//执行数据操作方法
-		await this.OnExecuteAsync(context, cancellation);
-
-		//调用数据访问过滤器后事件
-		this.OnFiltered(context);
-
-		//激发“Executed”事件
-		this.OnExecuted(context);
-
-		//处理数据访问操作后的回调
-		executed?.Invoke(context);
-
-		var result = context.Result;
-
-		//处置上下文资源
-		context.Dispose();
 
 		//返回最终的结果
 		return result;
@@ -365,7 +156,30 @@ partial class DataAccessBase
 	#endregion
 
 	#region 保护方法
-	protected abstract void OnExecute(DataExecuteContextBase context);
 	protected abstract ValueTask OnExecuteAsync(DataExecuteContextBase context, CancellationToken cancellation);
+	#endregion
+
+	#region 取消重载
+	public ValueTask<int> ExecuteAsync(string name, CancellationToken cancellation) => this.ExecuteAsync(name, null, null, null, null, cancellation);
+	public ValueTask<int> ExecuteAsync(string name, DataExecuteOptions options, CancellationToken cancellation) => this.ExecuteAsync(name, null, options, null, null, cancellation);
+	public ValueTask<int> ExecuteAsync(string name, IEnumerable<Parameter> parameters, CancellationToken cancellation) => this.ExecuteAsync(name, parameters, null, null, null, cancellation);
+	public ValueTask<int> ExecuteAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, CancellationToken cancellation) => this.ExecuteAsync(name, parameters, options, null, null, cancellation);
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, CancellationToken cancellation) => this.ExecuteAsync<T>(name, null, null, null, null, cancellation);
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, DataExecuteOptions options, CancellationToken cancellation) => this.ExecuteAsync<T>(name, null, options, null, null, cancellation);
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, CancellationToken cancellation) => this.ExecuteAsync<T>(name, parameters, null, null, null, cancellation);
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, CancellationToken cancellation) => this.ExecuteAsync<T>(name, parameters, options, null, null, cancellation);
+	public ValueTask<object> ExecuteScalarAsync(string name, CancellationToken cancellation) => this.ExecuteScalarAsync(name, null, null, null, null, cancellation);
+	public ValueTask<object> ExecuteScalarAsync(string name, DataExecuteOptions options, CancellationToken cancellation) => this.ExecuteScalarAsync(name, null, options, null, null, cancellation);
+	public ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, CancellationToken cancellation) => this.ExecuteScalarAsync(name, parameters, null, null, null, cancellation);
+	public ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, CancellationToken cancellation) => this.ExecuteScalarAsync(name, parameters, options, null, null, cancellation);
+	#endregion
+
+	#region 便利取消
+	public ValueTask<int> ExecuteAsync(string name, DataExecuteOptions options, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing, CancellationToken cancellation) => this.ExecuteAsync(name, options, executing, default(Func<DataExecuteContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> ExecuteAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing, CancellationToken cancellation) => this.ExecuteAsync(name, parameters, options, executing, default(Func<DataExecuteContextBase, CancellationToken, ValueTask>), cancellation);
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, DataExecuteOptions options, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing, CancellationToken cancellation) => this.ExecuteAsync<T>(name, options, executing, default(Func<DataExecuteContextBase, CancellationToken, ValueTask>), cancellation);
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing, CancellationToken cancellation) => this.ExecuteAsync<T>(name, parameters, options, executing, default(Func<DataExecuteContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<object> ExecuteScalarAsync(string name, DataExecuteOptions options, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing, CancellationToken cancellation) => this.ExecuteScalarAsync(name, options, executing, default(Func<DataExecuteContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing, CancellationToken cancellation) => this.ExecuteScalarAsync(name, parameters, options, executing, default(Func<DataExecuteContextBase, CancellationToken, ValueTask>), cancellation);
 	#endregion
 }

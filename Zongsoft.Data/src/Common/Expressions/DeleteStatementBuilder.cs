@@ -29,7 +29,10 @@
 
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 using Zongsoft.Data.Metadata;
 
@@ -42,20 +45,21 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 	#endregion
 
 	#region 构建方法
-	public IEnumerable<IStatementBase> Build(DataDeleteContext context)
+	public IAsyncEnumerable<IStatementBase> BuildAsync(DataDeleteContext context, CancellationToken cancellation = default)
 	{
 		if(context.Source.Features.Support(Feature.Deletion.Multitable))
-			return this.BuildSimplicity(context);
+			return this.BuildSimplicityAsync(context, cancellation);
 		else
-			return this.BuildComplexity(context);
+			return this.BuildComplexityAsync(context, cancellation);
 	}
 	#endregion
 
 	#region 虚拟方法
 	/// <summary>构建支持多表删除的语句。</summary>
 	/// <param name="context">构建操作需要的数据访问上下文对象。</param>
+	/// <param name="cancellation">验证与准备语句的取消令牌。</param>
 	/// <returns>返回多表删除的语句。</returns>
-	protected virtual IEnumerable<IStatementBase> BuildSimplicity(DataDeleteContext context)
+	protected virtual async IAsyncEnumerable<IStatementBase> BuildSimplicityAsync(DataDeleteContext context, [EnumeratorCancellation] CancellationToken cancellation = default)
 	{
 		var statement = this.CreateStatement(context);
 
@@ -76,20 +80,21 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 		}
 
 		//生成条件子句
-		statement.Where = statement.Where(context.Validate(), context.Aliaser);
+		statement.Where = statement.Where(await context.ValidateAsync(cancellation).ConfigureAwait(false), context.Aliaser);
 
 		yield return statement;
 	}
 
 	/// <summary>构建单表删除的语句，因为不支持多表删除所以单表删除操作由多条语句以主从树形结构来表达需要进行的多批次的删除操作。</summary>
 	/// <param name="context">构建操作需要的数据访问上下文对象。</param>
+	/// <param name="cancellation">验证与准备语句的取消令牌。</param>
 	/// <returns>返回的单表删除的多条语句的主句。</returns>
-	protected virtual IEnumerable<IStatementBase> BuildComplexity(DataDeleteContext context)
+	protected virtual async IAsyncEnumerable<IStatementBase> BuildComplexityAsync(DataDeleteContext context, [EnumeratorCancellation] CancellationToken cancellation = default)
 	{
 		var statement = this.CreateStatement(context);
 
 		//生成条件子句
-		statement.Where = statement.Where(context.Validate(), context.Aliaser);
+		statement.Where = statement.Where(await context.ValidateAsync(cancellation).ConfigureAwait(false), context.Aliaser);
 
 		List<Statement> masters = null;
 

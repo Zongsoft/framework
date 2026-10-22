@@ -30,6 +30,8 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
@@ -66,7 +68,7 @@ public partial class SQLiteDriver : DataDriverBase
 	#endregion
 
 	#region 公共方法
-	public override Exception OnError(IDataAccessContext context, Exception exception)
+	public override ValueTask<Exception> OnErrorAsync(IDataAccessContext context, Exception exception, CancellationToken cancellation = default)
 	{
 		if(exception is SqliteException error)
 		{
@@ -77,7 +79,7 @@ public partial class SQLiteDriver : DataDriverBase
 			}
 		}
 
-		return exception;
+		return new ValueTask<Exception>(exception);
 	}
 
 	public override DbCommand CreateCommand() => new SqliteCommand();
@@ -100,6 +102,7 @@ public partial class SQLiteDriver : DataDriverBase
 	private sealed class SqliteConnector : SqliteConnection
 	{
 		private static readonly ConcurrentDictionary<string, Pragma[]> _pragmas = new();
+		private StateChangeEventArgs _opened;
 
 		public SqliteConnector(string connectionString)
 		{
@@ -126,9 +129,26 @@ public partial class SQLiteDriver : DataDriverBase
 			}
 		}
 
+		public override void Open() => throw new NotSupportedException();
 		protected override void OnStateChange(StateChangeEventArgs args)
 		{
 			if(args.CurrentState == ConnectionState.Open)
+				_opened = args;
+			else
+				base.OnStateChange(args);
+		}
+
+		public override async Task OpenAsync(CancellationToken cancellation)
+		{
+			cancellation.ThrowIfCancellationRequested();
+
+			if(this.State == ConnectionState.Open)
+				return;
+
+			//Microsoft.Data.Sqlite 的连接打开由底层同步实现。
+			base.Open();
+
+			try
 			{
 				if(_pragmas.TryGetValue(this.ConnectionString, out var pragmas) && pragmas != null && pragmas.Length > 0)
 				{
@@ -142,16 +162,21 @@ public partial class SQLiteDriver : DataDriverBase
 							text.AppendLine($"PRAGMA {pragma.Name};");
 					}
 
-					var command = this.CreateCommand();
+					await using var command = this.CreateCommand();
 					command.CommandText = text.ToString();
-					command.ExecuteNonQuery();
+					await command.ExecuteNonQueryAsync(cancellation).ConfigureAwait(false);
 
 					//重置已经执行过的 PRAGMA 集连接
 					_pragmas[this.ConnectionString] = default;
 				}
-			}
 
-			base.OnStateChange(args);
+				if(_opened != null)
+					base.OnStateChange(_opened);
+			}
+			finally
+			{
+				_opened = null;
+			}
 		}
 	}
 

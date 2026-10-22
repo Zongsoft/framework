@@ -96,3 +96,7 @@ dotnet cake build.cake --target=pack --edition=Release --project=gateway/Zongsof
 ```
 
 不指定 `--project` 时构建完整解决方案。
+
+## 账户获取
+
+使用 `IAccountProvider.GetAccountAsync` 提供动态账户。小程序和公众号分别通过 `await AppletManager.GetAppletAsync(code, cancellation)`、`await ChannelManager.GetChannelAsync(code, cancellation)` 获取；允许未找到时使用 `FindAppletAsync`、`FindChannelAsync` 并检查空值。调用支持取消，已获取的实例可以复用。

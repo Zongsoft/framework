@@ -57,61 +57,6 @@ namespace Zongsoft.Data.DuckDB;
 public class DuckDBImporter : DataImporterBase
 {
 	#region 公共方法
-	protected override void OnImport(DataImportContext context, MemberCollection members)
-	{
-		if(!CanAppend(members))
-		{
-			Insert(context, members);
-			return;
-		}
-
-		using var lease = context.Session.AcquireLease(context.Options.TransactionSuppressed);
-		var connection = (DuckDBConnection)lease.Connection;
-		using var transaction = lease.Transaction == null ? connection.BeginTransaction() : null;
-		var current = lease.Transaction ?? transaction;
-
-		try
-		{
-			var temporary = $"__zongsoft_import_{Guid.NewGuid():N}";
-			var fields = GetFields(members);
-
-			using(var command = connection.CreateCommand())
-			{
-				command.Transaction = current;
-				command.CommandText = $"CREATE TEMP TABLE \"{temporary}\" AS SELECT {fields} FROM \"{context.Entity.GetTableName()}\" WHERE false;";
-				command.ExecuteNonQuery();
-			}
-
-			using(var appender = connection.CreateAppender(temporary))
-			{
-				foreach(var item in context.Data)
-				{
-					var target = item;
-					var row = appender.CreateRow();
-
-					for(int i = 0; i < members.Count; i++)
-						Append(row, members[i].GetValue(ref target), members[i]);
-
-					row.EndRow();
-				}
-			}
-
-			using(var command = connection.CreateCommand())
-			{
-				command.Transaction = current;
-				command.CommandText = $"{(context.Options.ConstraintIgnored ? "INSERT OR IGNORE" : "INSERT")} INTO \"{context.Entity.GetTableName()}\" ({fields}) SELECT {fields} FROM \"{temporary}\";";
-				context.Count += command.ExecuteNonQuery();
-			}
-
-			transaction?.Commit();
-		}
-		catch
-		{
-			transaction?.Rollback();
-			throw;
-		}
-	}
-
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
 		if(!CanAppend(members))
@@ -139,7 +84,7 @@ public class DuckDBImporter : DataImporterBase
 
 			using(var appender = connection.CreateAppender(temporary))
 			{
-				foreach(var item in context.Data)
+				await foreach(var item in GetRecordsAsync(context).WithCancellation(cancellation).ConfigureAwait(false))
 				{
 					cancellation.ThrowIfCancellationRequested();
 
@@ -147,13 +92,17 @@ public class DuckDBImporter : DataImporterBase
 					var row = appender.CreateRow();
 
 					for(int i = 0; i < members.Count; i++)
-						Append(row, members[i].GetValue(ref target), members[i]);
+					{
+						var prepared = await members[i].GetValueAsync(target, cancellation).ConfigureAwait(false);
+						target = prepared.Target;
+						Append(row, prepared.Value, members[i]);
+					}
 
 					row.EndRow();
 				}
 			}
 
-			using(var command = connection.CreateCommand())
+			await using(var command = connection.CreateCommand())
 			{
 				command.Transaction = current;
 				command.CommandText = $"{(context.Options.ConstraintIgnored ? "INSERT OR IGNORE" : "INSERT")} INTO \"{context.Entity.GetTableName()}\" ({fields}) SELECT {fields} FROM \"{temporary}\";";
@@ -296,35 +245,6 @@ public class DuckDBImporter : DataImporterBase
 		};
 	}
 
-	private static void Insert(DataImportContext context, MemberCollection members)
-	{
-		using var lease = context.Session.AcquireLease(context.Options.TransactionSuppressed);
-		using var command = GetInsertCommand(context, members, lease.Connection);
-
-		using var transaction = lease.Transaction == null ? lease.Connection.BeginTransaction() : null;
-		command.Transaction = lease.Transaction ?? transaction;
-
-		try
-		{
-			foreach(var item in context.Data)
-			{
-				var target = item;
-
-				for(int i = 0; i < members.Count; i++)
-					command.Parameters[i].Value = members[i].GetValue(ref target) ?? DBNull.Value;
-
-				context.Count += command.ExecuteNonQuery();
-			}
-
-			transaction?.Commit();
-		}
-		catch
-		{
-			transaction?.Rollback();
-			throw;
-		}
-	}
-
 	private static async ValueTask InsertAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation)
 	{
 		await using var lease = await context.Session.AcquireLeaseAsync(context.Options.TransactionSuppressed, cancellation);
@@ -335,12 +255,16 @@ public class DuckDBImporter : DataImporterBase
 
 		try
 		{
-			foreach(var item in context.Data)
+			await foreach(var item in GetRecordsAsync(context).WithCancellation(cancellation).ConfigureAwait(false))
 			{
 				var target = item;
 
 				for(int i = 0; i < members.Count; i++)
-					command.Parameters[i].Value = members[i].GetValue(ref target) ?? DBNull.Value;
+				{
+					var prepared = await members[i].GetValueAsync(target, cancellation).ConfigureAwait(false);
+					target = prepared.Target;
+					command.Parameters[i].Value = prepared.Value ?? DBNull.Value;
+				}
 
 				context.Count += await command.ExecuteNonQueryAsync(cancellation);
 			}

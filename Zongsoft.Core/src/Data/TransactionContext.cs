@@ -42,7 +42,7 @@ public sealed partial class TransactionContext
 {
 	#region 公共事件
 	/// <summary>当事务上下文完成时发生。</summary>
-	public event EventHandler Completed;
+	public event Func<object, EventArgs, CancellationToken, ValueTask> Completed;
 	#endregion
 
 	#region 静态字段
@@ -50,7 +50,7 @@ public sealed partial class TransactionContext
 	#endregion
 
 	#region 成员字段
-	private volatile int _completion;
+	private TaskCompletionSource _completion;
 	private volatile int _rollbackOnly;
 	private readonly Queue<IEnlistment> _enlistments;
 	#endregion
@@ -115,9 +115,9 @@ public sealed partial class TransactionContext
 		if(object.ReferenceEquals(this, this.Root))
 			return this.EnlistCore(enlistment);
 
-		lock(_enlistments)
+		lock(this.Root._enlistments)
 		{
-			return _completion == 0 && this.Root.EnlistCore(enlistment);
+			return _completion == null && this.Root.EnlistCore(enlistment);
 		}
 	}
 	#endregion
@@ -134,18 +134,19 @@ public sealed partial class TransactionContext
 			_current.Value = context.Parent;
 	}
 
-	/// <summary>提交事务并等待登记的同步回调全部结束。</summary>
-	internal void Commit() => this.Complete(EnlistmentPhase.Commit);
 	/// <summary>提交事务并等待登记的异步回调全部结束。</summary>
-	/// <param name="cancellation">调用方的取消令牌；事务终结不受取消影响。</param>
+	/// <param name="cancellation">仅在提交决议被接受前响应的取消令牌。</param>
 	/// <returns>事务提交及完成通知结束的任务。</returns>
-	internal Task CommitAsync(CancellationToken cancellation = default) => this.CompleteAsync(EnlistmentPhase.Commit, cancellation);
-	/// <summary>回滚事务并等待登记的同步回调全部结束。</summary>
-	internal void Rollback() => this.Complete(EnlistmentPhase.Rollback);
+	internal Task CommitAsync(CancellationToken cancellation = default) => this.CompleteAsync(EnlistmentPhase.Commit, null, cancellation);
 	/// <summary>回滚事务并等待登记的异步回调全部结束。</summary>
 	/// <param name="cancellation">调用方的取消令牌；事务终结不受取消影响。</param>
 	/// <returns>事务回滚及完成通知结束的任务。</returns>
-	internal Task RollbackAsync(CancellationToken cancellation = default) => this.CompleteAsync(EnlistmentPhase.Rollback, cancellation);
+	internal Task RollbackAsync(CancellationToken cancellation = default) => this.CompleteAsync(EnlistmentPhase.Rollback, null, CancellationToken.None);
+	/// <summary>回滚事务，并在终结失败时合并引发回滚的业务异常。</summary>
+	/// <param name="exception">仅在首次接受回滚决议时采用的业务异常。</param>
+	/// <param name="cancellation">调用方的取消令牌；事务终结不受取消影响。</param>
+	/// <returns>事务回滚及完成通知结束的共享任务。</returns>
+	internal Task RollbackAsync(Exception exception, CancellationToken cancellation = default) => this.CompleteAsync(EnlistmentPhase.Rollback, exception, CancellationToken.None);
 	#endregion
 
 	#region 重写方法
@@ -157,6 +158,9 @@ public sealed partial class TransactionContext
 	#region 分部方法
 	/// <summary>在事务上下文进入调用环境前初始化内部扩展。</summary>
 	partial void OnInitialized();
+
+	/// <summary>在用户完成通知前发布内部条件特性的最终结果。</summary>
+	partial void OnFinalized();
 	#endregion
 
 	#region 私有方法
@@ -165,9 +169,9 @@ public sealed partial class TransactionContext
 	/// <returns>登记成功返回 <see langword="true"/>，否则返回 <see langword="false"/>。</returns>
 	private bool EnlistCore(IEnlistment enlistment)
 	{
-		lock(_enlistments)
+		lock(this.Root._enlistments)
 		{
-			if(_completion != 0 || _enlistments.Contains(enlistment))
+			if(_completion != null || _enlistments.Contains(enlistment))
 				return false;
 
 			_enlistments.Enqueue(enlistment);
@@ -175,98 +179,32 @@ public sealed partial class TransactionContext
 		}
 	}
 
-	/// <summary>同步终结事务，并汇总登记回调的执行结果。</summary>
-	/// <param name="phase">请求执行的事务终结阶段。</param>
-	private void Complete(EnlistmentPhase phase)
+	/// <summary>接受一次终结决议，所有调用方等待同一完成结果。</summary>
+	/// <param name="phase">请求的终结阶段。</param>
+	/// <param name="cause">首次终结失败时需要保留的业务异常。</param>
+	/// <param name="cancellation">只在提交决议被接受前响应的取消令牌。</param>
+	/// <returns>所有登记回调及完成通知结束的共享任务。</returns>
+	private Task CompleteAsync(EnlistmentPhase phase, Exception cause, CancellationToken cancellation = default)
 	{
-		if(!this.TryComplete(ref phase, out var enlistments, out var nested))
-			return;
+		IEnlistment[] enlistments;
+		TaskCompletionSource completion;
 
-		if(nested)
+		lock(this.Root._enlistments)
 		{
-			this.OnCompleted();
-			return;
-		}
+			if(_completion != null)
+				return _completion.Task;
 
-		List<Exception> exceptions = null;
+			if(cancellation.IsCancellationRequested)
+				return Task.FromCanceled(cancellation);
 
-		foreach(var enlistment in enlistments)
-		{
-			try
-			{
-				enlistment.OnEnlist(new EnlistmentContext(this.Transaction, phase));
-			}
-			catch(Exception exception)
-			{
-				(exceptions ??= []).Add(exception);
-			}
-		}
-
-		this.FinishCompletion(phase, exceptions);
-	}
-
-	/// <summary>异步终结事务，并等待登记回调实际完成。</summary>
-	/// <param name="phase">请求执行的事务终结阶段。</param>
-	/// <param name="cancellation">调用方的取消令牌；事务终结不受取消影响。</param>
-	/// <returns>所有登记回调及完成通知结束的任务。</returns>
-	private async Task CompleteAsync(EnlistmentPhase phase, CancellationToken cancellation)
-	{
-		//事务终结不可取消：保留取消参数只为维持调用契约，不将其传入登记回调或底层资源终结
-		_ = cancellation;
-
-		if(!this.TryComplete(ref phase, out var enlistments, out var nested))
-			return;
-
-		if(nested)
-		{
-			this.OnCompleted();
-			return;
-		}
-
-		List<Exception> exceptions = null;
-
-		foreach(var enlistment in enlistments)
-		{
-			try
-			{
-				//异步执行事务登记回调，确保其真实提交/回滚完成后再继续后续流程
-				await enlistment.OnEnlistAsync(new EnlistmentContext(this.Transaction, phase), CancellationToken.None).ConfigureAwait(false);
-			}
-			catch(Exception exception)
-			{
-				(exceptions ??= []).Add(exception);
-			}
-		}
-
-		this.FinishCompletion(phase, exceptions);
-	}
-
-	/// <summary>以互斥方式开始终结，并确定实际阶段及待执行的登记回调。</summary>
-	/// <param name="phase">请求的终结阶段；仅允许回滚时将提交改为回滚。</param>
-	/// <param name="enlistments">输出根事务的登记回调快照。</param>
-	/// <param name="nested">输出当前上下文是否属于嵌套事务。</param>
-	/// <returns>首次开始终结返回 <see langword="true"/>，已开始终结返回 <see langword="false"/>。</returns>
-	private bool TryComplete(ref EnlistmentPhase phase, out IEnlistment[] enlistments, out bool nested)
-	{
-		lock(_enlistments)
-		{
-			if(_completion != 0)
-			{
-				enlistments = null;
-				nested = false;
-				return false;
-			}
-
-			_completion = 1;
+			_completion = completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
 			if(this.Parent != null)
 			{
 				if(phase is EnlistmentPhase.Abort or EnlistmentPhase.Rollback)
 					this.Root._rollbackOnly = 1;
 
-				this.Status = ToStatus(phase);
-				enlistments = null;
-				nested = true;
+				enlistments = [];
 			}
 			else
 			{
@@ -275,44 +213,73 @@ public sealed partial class TransactionContext
 
 				enlistments = [.. _enlistments];
 				_enlistments.Clear();
-				nested = false;
 			}
-
-			return true;
 		}
+
+		//先发布共享任务，再调用外部回调；所有失败由该任务传递给等待者
+		_ = this.CompleteAsyncCore(phase, cause, enlistments, completion);
+
+		//返回共享任务给所有等待者，避免重复调用外部回调
+		return completion.Task;
 	}
 
-	/// <summary>保存最终状态并通知订阅者，随后传播登记回调的异常。</summary>
-	/// <param name="phase">实际执行的事务终结阶段。</param>
-	/// <param name="exceptions">登记回调的异常集合；<see langword="null"/> 表示全部成功。</param>
-	private void FinishCompletion(EnlistmentPhase phase, List<Exception> exceptions)
+	private async Task CompleteAsyncCore(EnlistmentPhase phase, Exception cause, IEnlistment[] enlistments, TaskCompletionSource completion)
 	{
-		this.Status = exceptions == null ? ToStatus(phase) : TransactionStatus.Undetermined;
-		this.OnCompleted();
-
-		if(exceptions?.Count == 1)
-			System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(exceptions[0]).Throw();
-		if(exceptions?.Count > 1)
-			throw new AggregateException(exceptions);
-	}
-
-	/// <summary>依次通知完成事件的订阅者，并记录订阅者异常。</summary>
-	private void OnCompleted()
-	{
-		var handlers = this.Completed;
-		if(handlers == null)
-			return;
-
-		foreach(EventHandler handler in handlers.GetInvocationList())
+		try
 		{
-			try
+			List<Exception> exceptions = null;
+
+			foreach(var enlistment in enlistments)
 			{
-				handler(this, EventArgs.Empty);
+				try
+				{
+					await enlistment.OnEnlistAsync(new EnlistmentContext(this.Transaction, phase), CancellationToken.None).ConfigureAwait(false);
+				}
+				catch(Exception exception)
+				{
+					(exceptions ??= []).Add(exception);
+				}
 			}
-			catch(Exception exception)
+
+			this.Status = exceptions == null ? ToStatus(phase) : TransactionStatus.Undetermined;
+			this.OnFinalized();
+
+			var handlers = this.Completed;
+			if(handlers != null)
 			{
-				Diagnostics.Logging.GetLogging(this).Error(exception);
+				foreach(Func<object, EventArgs, CancellationToken, ValueTask> handler in handlers.GetInvocationList())
+				{
+					try
+					{
+						await handler(this, EventArgs.Empty, CancellationToken.None).ConfigureAwait(false);
+					}
+					catch(Exception exception)
+					{
+						(exceptions ??= []).Add(exception);
+					}
+				}
 			}
+
+			if(exceptions == null)
+				completion.TrySetResult();
+			else
+				completion.TrySetException(GetException(cause, exceptions));
+		}
+		catch(Exception exception)
+		{
+			completion.TrySetException(GetException(cause, [exception]));
+		}
+
+		static Exception GetException(Exception cause, List<Exception> exceptions)
+		{
+			if(cause == null)
+				return exceptions.Count == 1 ? exceptions[0] : new AggregateException(exceptions);
+
+			//业务异常只在终结失败时参与聚合，不参与事务状态判定
+			exceptions.RemoveAll(exception => object.ReferenceEquals(exception, cause));
+			exceptions.Insert(0, cause);
+
+			return new AggregateException(exceptions);
 		}
 	}
 

@@ -35,6 +35,5 @@ namespace Zongsoft.Data.Common;
 
 public interface IDataExecutor<TStatement> where TStatement : Expressions.IStatementBase
 {
-	bool Execute(IDataAccessContext context, TStatement statement);
 	ValueTask<bool> ExecuteAsync(IDataAccessContext context, TStatement statement, CancellationToken cancellation = default);
 }

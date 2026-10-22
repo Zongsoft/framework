@@ -30,6 +30,8 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
@@ -52,6 +54,7 @@ public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataS
 	private IDataDriver _driver;
 	private FeatureCollection _features;
 	private readonly Dictionary<string, DataTable> _schemas;
+	private readonly SemaphoreSlim _schemaSemaphore = new(1, 1);
 	#endregion
 
 	#region 构造函数
@@ -142,46 +145,49 @@ public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataS
 	#endregion
 
 	#region 公共方法
-	public DataTable GetSchema(string name, bool refresh = false)
+	public ValueTask<DataTable> GetSchemaAsync(string name, CancellationToken cancellation = default) => this.GetSchemaAsync(name, false, cancellation);
+	public async ValueTask<DataTable> GetSchemaAsync(string name, bool refresh, CancellationToken cancellation = default)
 	{
-		DataTable schema;
 		name ??= string.Empty;
+		await _schemaSemaphore.WaitAsync(cancellation).ConfigureAwait(false);
 
-		if(refresh)
+		try
 		{
-			schema = GetSchemaFromDatabase(name);
+			if(!refresh && _schemas.TryGetValue(name, out var cached))
+				return cached;
+
+			var schema = await GetSchemaFromDatabaseAsync(name, cancellation).ConfigureAwait(false);
 			if(schema != null)
-				return _schemas[name] = schema;
+				_schemas[name] = schema;
 
 			return schema;
 		}
-
-		if(_schemas.TryGetValue(name, out schema))
-			return schema;
-
-		lock(_schemas)
+		finally
 		{
-			if(_schemas.TryGetValue(name, out schema))
-				return schema;
-
-			schema = GetSchemaFromDatabase(name);
-			if(schema != null)
-				return _schemas[name] = schema;
-
-			return schema;
+			_schemaSemaphore.Release();
 		}
 
-		DataTable GetSchemaFromDatabase(string name)
+		async ValueTask<DataTable> GetSchemaFromDatabaseAsync(string name, CancellationToken cancellation)
 		{
 			DbConnection connection = null;
 
 			try
 			{
-				connection = DataConnectorManager.GetConnector(this).Connect();
-				return string.IsNullOrEmpty(name) ? connection.GetSchema() : connection.GetSchema(name);
+				connection = await DataConnectorManager.GetConnector(this).ConnectAsync(cancellation).ConfigureAwait(false);
+				return string.IsNullOrEmpty(name) ?
+					await connection.GetSchemaAsync(cancellation).ConfigureAwait(false) :
+					await connection.GetSchemaAsync(name, cancellation).ConfigureAwait(false);
+			}
+			catch(OperationCanceledException) when(cancellation.IsCancellationRequested)
+			{
+				throw;
 			}
 			catch { return null; }
-			finally { connection?.Dispose(); }
+			finally
+			{
+				if(connection != null)
+					await connection.DisposeAsync().ConfigureAwait(false);
+			}
 		}
 	}
 	#endregion

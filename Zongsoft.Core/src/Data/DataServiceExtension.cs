@@ -43,26 +43,10 @@ public static partial class DataServiceExtension
 	#endregion
 
 	#region 递增方法
-	public static long Increase(this IDataService service, string member, ICondition criteria, DataUpdateOptions options = null) => Increase(service, member, criteria, 1, options);
-	public static long Increase(this IDataService service, string member, ICondition criteria, int interval, DataUpdateOptions options = null)
-	{
-		if(options == null)
-			options = DataUpdateOptions.Return(ReturningKind.Newer, member);
-		else
-			options.Returning.Columns.Append(member, ReturningKind.Newer);
-
-		var field = (interval > 0 ? Operand.Field(member) + interval : Operand.Field(member) - (-interval));
-
-		if(service.Update(new Dictionary<string, object>([new KeyValuePair<string, object>(member, field)]), criteria, options) > 0)
-			return options.Returning.Rows.First().TryGetValue(member, ReturningKind.Newer, out var value) ? Zongsoft.Common.Convert.ConvertValue<long>(value) : 0L;
-
-		return 0L;
-	}
-
-	public static ValueTask<long> IncreaseAsync(this IDataService service, string member, ICondition criteria, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, 1, null, cancellation);
-	public static ValueTask<long> IncreaseAsync(this IDataService service, string member, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, 1, options, cancellation);
-	public static ValueTask<long> IncreaseAsync(this IDataService service, string member, ICondition criteria, int interval, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, interval, null, cancellation);
-	public static async ValueTask<long> IncreaseAsync(this IDataService service, string member, ICondition criteria, int interval, DataUpdateOptions options, CancellationToken cancellation = default)
+	public static ValueTask<long> IncreaseAsync(this IDataService service, string member, ICondition criteria, CancellationToken cancellation) => IncreaseAsync(service, member, criteria, 1, null, cancellation);
+	public static ValueTask<long> IncreaseAsync(this IDataService service, string member, ICondition criteria, DataUpdateOptions options = null, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, 1, options, cancellation);
+	public static ValueTask<long> IncreaseAsync(this IDataService service, string member, ICondition criteria, int interval, CancellationToken cancellation) => IncreaseAsync(service, member, criteria, interval, null, cancellation);
+	public static async ValueTask<long> IncreaseAsync(this IDataService service, string member, ICondition criteria, int interval, DataUpdateOptions options = null, CancellationToken cancellation = default)
 	{
 		if(options == null)
 			options = DataUpdateOptions.Return(ReturningKind.Newer, member);
@@ -79,48 +63,15 @@ public static partial class DataServiceExtension
 	#endregion
 
 	#region 递减方法
-	public static long Decrease(this IDataService service, string member, ICondition criteria, DataUpdateOptions options = null) => Increase(service, member, criteria, -1, options);
-	public static long Decrease(this IDataService service, string member, ICondition criteria, int interval, DataUpdateOptions options = null) => Increase(service, member, criteria, -interval, options);
-	public static ValueTask<long> DecreaseAsync(this IDataService service, string member, ICondition criteria, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, -1, null, cancellation);
-	public static ValueTask<long> DecreaseAsync(this IDataService service, string member, ICondition criteria, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, -1, options, cancellation);
-	public static ValueTask<long> DecreaseAsync(this IDataService service, string member, ICondition criteria, int interval, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, -interval, null, cancellation);
-	public static ValueTask<long> DecreaseAsync(this IDataService service, string member, ICondition criteria, int interval, DataUpdateOptions options, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, -interval, options, cancellation);
+	public static ValueTask<long> DecreaseAsync(this IDataService service, string member, ICondition criteria, CancellationToken cancellation) => IncreaseAsync(service, member, criteria, -1, null, cancellation);
+	public static ValueTask<long> DecreaseAsync(this IDataService service, string member, ICondition criteria, DataUpdateOptions options = null, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, -1, options, cancellation);
+	public static ValueTask<long> DecreaseAsync(this IDataService service, string member, ICondition criteria, int interval, CancellationToken cancellation) => IncreaseAsync(service, member, criteria, -interval, null, cancellation);
+	public static ValueTask<long> DecreaseAsync(this IDataService service, string member, ICondition criteria, int interval, DataUpdateOptions options = null, CancellationToken cancellation = default) => IncreaseAsync(service, member, criteria, -interval, options, cancellation);
 	#endregion
 
 	#region 批量更新
-	public static int UpdateMany(this IDataService service, IEnumerable items, DataUpdateOptions options = null) => UpdateMany(service, items, string.Empty, options);
-	public static int UpdateMany(this IDataService service, IEnumerable items, string schema, DataUpdateOptions options = null)
-	{
-		if(service == null)
-			throw new ArgumentNullException(nameof(service));
-
-		if(items == null)
-			return 0;
-
-		var transaction = new Transaction();
-
-		try
-		{
-			int count = 0;
-
-			foreach(var item in items)
-				count += service.Update(item, schema, options);
-
-			//提交事务
-			transaction.Commit();
-
-			//返回更新记录数
-			return count;
-		}
-		catch
-		{
-			//回滚事务
-			transaction.Rollback();
-
-			throw;
-		}
-	}
-
+	public static ValueTask<int> UpdateManyAsync(this IDataService service, IEnumerable items, CancellationToken cancellation) => UpdateManyAsync(service, items, string.Empty, null, cancellation);
+	public static ValueTask<int> UpdateManyAsync(this IDataService service, IEnumerable items, string schema, CancellationToken cancellation) => UpdateManyAsync(service, items, schema, null, cancellation);
 	public static ValueTask<int> UpdateManyAsync(this IDataService service, IEnumerable items, DataUpdateOptions options = null, CancellationToken cancellation = default) => UpdateManyAsync(service, items, string.Empty, options, cancellation);
 	public static async ValueTask<int> UpdateManyAsync(this IDataService service, IEnumerable items, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default)
 	{
@@ -130,7 +81,7 @@ public static partial class DataServiceExtension
 		if(items == null)
 			return 0;
 
-		var transaction = new Transaction();
+		await using var transaction = new Transaction();
 
 		try
 		{
@@ -145,11 +96,43 @@ public static partial class DataServiceExtension
 			//返回更新记录数
 			return count;
 		}
-		catch
+		catch(Exception exception)
 		{
-			//回滚事务
-			await transaction.RollbackAsync(cancellation);
+			await transaction.RollbackAsync(exception);
+			throw;
+		}
+	}
+	#endregion
+	#region 异步更新源
+	public static ValueTask<int> UpdateManyAsync<T>(this IDataService service, IAsyncEnumerable<T> items, CancellationToken cancellation) => UpdateManyAsync<T>(service, items, string.Empty, null, cancellation);
+	public static ValueTask<int> UpdateManyAsync<T>(this IDataService service, IAsyncEnumerable<T> items, string schema, CancellationToken cancellation) => UpdateManyAsync<T>(service, items, schema, null, cancellation);
+	public static ValueTask<int> UpdateManyAsync<T>(this IDataService service, IAsyncEnumerable<T> items, DataUpdateOptions options = null, CancellationToken cancellation = default) => UpdateManyAsync<T>(service, items, string.Empty, options, cancellation);
+	public static async ValueTask<int> UpdateManyAsync<T>(this IDataService service, IAsyncEnumerable<T> items, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default)
+	{
+		if(service == null)
+			throw new ArgumentNullException(nameof(service));
 
+		if(items == null)
+			return 0;
+
+		await using var transaction = new Transaction();
+
+		try
+		{
+			int count = 0;
+
+			await foreach(var item in items.WithCancellation(cancellation))
+				count += await service.UpdateAsync(item, schema, options, cancellation);
+
+			//提交事务（异步等待真实提交完成，避免阻塞调用线程）
+			await transaction.CommitAsync(cancellation);
+
+			//返回更新记录数
+			return count;
+		}
+		catch(Exception exception)
+		{
+			await transaction.RollbackAsync(exception);
 			throw;
 		}
 	}

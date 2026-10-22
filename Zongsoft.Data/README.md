@@ -39,8 +39,8 @@ SQL Server | [/drivers/mssql](https://github.com/Zongsoft/framework/tree/main/Zo
 PostgreSQL | [/drivers/postgres](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/postgres) | _**A**vailable_ |
 SQLite | [/drivers/sqlite](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/sqlite) | _**A**vailable_ |
 DuckDB | [/drivers/duckdb](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/duckdb) | _**A**vailable_ |
-ClickHouse | [/drivers/clickhouse](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/clickhouse) | _**A**vailable_ |
-InfluxDB | [/drivers/influx](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/influx) | _**A**vailable_ |
+ClickHouse | [/drivers/clickhouse](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/clickhouse) | Incomplete |
+InfluxDB | [/drivers/influx](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/influx) | Incomplete |
 TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/tdengine) | _**A**vailable_ |
 
 > 💡 Tip: If you need a driver that is not listed here or commercial support, please contact us ([zongsoft@qq.com](mailto:zongsoft@qq.com)).
@@ -48,7 +48,7 @@ TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Z
 <a name="plugin-quickstart"></a>
 ## A Real Plugin Workflow: Discussions
 
-The [Discussions module](../../discussions/src/Module.cs) obtains its accessor through the Core contract `IDataAccessProvider`. The module name is `Discussions`; its [mapping](../../discussions/src/Zongsoft.Discussions.mapping) uses the same container name. The engine and driver are composed by the host, not constructed by each business service.
+[Discussions](../../discussions/README.md) is a forum module using the Data engine. Deploy its package together with the engine and a database driver; application services use the public `IDataAccess` and `IDataService<T>` contracts.
 
 ### 1. Deploy the Module, Engine, and Driver
 
@@ -68,18 +68,11 @@ nuget:Zongsoft.Discussions
 
 Follow the [Discussions database documentation](../../discussions/database/Zongsoft.Discussions.md) and [module deployment manifest](../../discussions/src/Zongsoft.Discussions.deploy). Deploy the complete mapping and plugin, including validators and filters. Configure a named `Discussions` connection under `/Data/ConnectionSettings`, and configure the site and file storage using [the module option file](../../discussions/src/Zongsoft.Discussions.option). Mapping files describe existing structures; loading one does not initialize a database.
 
-### 3. Locate the Accessor from the Module
+### 3. Access Data through Services
 
-This is the accessor property from `Module.cs`, not a standalone program:
-```csharp
-private IDataAccess _accessor;
-public IDataAccess Accessor => _accessor ??=
-	this.Services.ResolveRequired<IDataAccessProvider>().GetAccessor(this.Name);
-```
+Resolve the module services from the configured host and await their data operations. Consume queries with `await foreach`, pass cancellation to the asynchronous methods, and keep the configured site and identity restrictions. An accessor obtained from `IDataAccessProvider.GetAccessor("Discussions")` is owned by its provider; do not dispose it at the end of each request.
 
-[ForumService](../../discussions/src/Services/ForumService.cs) and [ThreadService](../../discussions/src/Services/ThreadService.cs) inherit `DataServiceBase<T>` and operate through `this.DataAccess`. Read their methods together with [DataValidator](../../discussions/src/Data/DataValidator.cs), which supplies the module's data boundary.
-
-🚨 This is a source walkthrough, not a claim that a fresh Discussions deployment has passed integration testing. Use an isolated database with initialized site/user data and the appropriate identity. Do not bypass validators to make an example run, or dispose a container-owned accessor after each request.
+Initialize the database, site, users, and identity before using the module. Loading mapping files does not create tables. See the [Discussions usage documentation](../../discussions/README.md) for the module configuration.
 
 <a name="schema"></a>
 ## The data schema
@@ -276,9 +269,9 @@ Common mapping elements:
 - `property` maps a scalar member to a field. Important attributes include `type`, `field`, `nullable`, `length`, `precision`, `scale`, `default`, `sequence`, `sortable`, and `immutable`.
 - `sequence="*"` means the database built-in identity/sequence is used. `sequence="#"` means the Zongsoft default external sequencer is used. `sequence="#Name"` means a named external sequencer; `sequence="#Name@seed/interval"` also specifies the seed and interval; `sequence="#(ParentId)"` means an external sequencer grouped by the specified reference property; `sequence="Entity:Property"` references the sequencer of another entity's property.
 - `complexProperty` defines a navigation property. Its `port` points to the target entity, or to a target entity's navigation property such as `ForumUser:User`. `multiplicity` supports `?`（zero-or-one，default）、`!`（exactly one）、`*`（one-to-many）; `link` maps foreign key properties to the current entity（`anchor` specifies the anchor on the current side and defaults to the `port` name when omitted）, and `constraints` add fixed navigation filters（when `actor` is omitted it is inferred from the multiplicity: `Foreign` for one-to-many, otherwise `Principal`）.
-- `command` defines a named SQL command or stored procedure. Commands are executed through `Execute`, `Execute<T>`, or `ExecuteScalar`. `type` supports `text`（default）and `procedure`; `mutability` declares whether the command reads or writes data. It is not merely descriptive metadata: when read/write splitting is configured, the data source selector uses it as the routing basis—`none` selects a readable source, while `delete`、`insert`、`update`、`upsert` select a writable source. The selector does not infer mutability by analyzing the SQL text. The loader parses these enum values case-insensitively, but use lowercase to pass XSD validation.
+- `command` defines a named SQL command or stored procedure. Commands are executed through `ExecuteAsync`, `ExecuteAsync<T>`, or `ExecuteScalarAsync`. `type` supports `text`（default）and `procedure`; `mutability` declares whether the command reads or writes data. It is not merely descriptive metadata: when read/write splitting is configured, the data source selector uses it as the routing basis—`none` selects a readable source, while `delete`、`insert`、`update`、`upsert` select a writable source. The selector does not infer mutability by analyzing the SQL text. The loader parses these enum values case-insensitively, but use lowercase to pass XSD validation.
 
-The current Discussions mapping does not define a forum statistics command or stored procedure. For the command contract, refer to [MetadataCommand](src/Metadata/Profiles/MetadataCommand.cs) and [the XSD](Zongsoft.Data.xsd); do not call a name that has not been deployed.
+[Zongsoft.Data.xsd](Zongsoft.Data.xsd) defines the mapping XML. Use `type="procedure"` and an alias naming an existing stored procedure. Declare output-parameter directions and read the supplied `Parameter` objects after completing the query or ending enumeration and awaiting enumerator disposal.
 
 
 > **Enable XML IntelliSense for mapping files:**
@@ -320,18 +313,18 @@ For read/write separation, use `accessor#source` names and `ReadOnly`/`WriteOnly
 
 All data operations go through the [`Zongsoft.Data.IDataAccess`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) interface in [Zongsoft.Core](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Core). It supports these operations:
 
-- `int Count(...)`
-- `TValue? Aggregate(...)`
-- `bool Exists(...)`
-- `IEnumerable<T> Execute<T>(...)` `object ExecuteScalar(...)`
-- `int Import(...)`
-- `int Delete(...)`
-- `int Insert(...)` `int InsertMany(...)`
-- `int Update(...)` `int UpdateMany(...)`
-- `int Upsert(...)` `int UpsertMany(...)`
-- `IEnumerable<T> Select<T>(...)`
+- `ValueTask<int> CountAsync(...)`
+- `ValueTask<TValue?> AggregateAsync(...)`
+- `ValueTask<bool> ExistsAsync(...)`
+- `IAsyncEnumerable<T> ExecuteAsync<T>(...)` `ValueTask<object> ExecuteScalarAsync(...)`
+- `ValueTask<int> ImportAsync(...)`
+- `ValueTask<int> DeleteAsync(...)`
+- `ValueTask<int> InsertAsync(...)` `ValueTask<int> InsertManyAsync(...)`
+- `ValueTask<int> UpdateAsync(...)` `ValueTask<int> UpdateManyAsync(...)`
+- `ValueTask<int> UpsertAsync(...)` `ValueTask<int> UpsertManyAsync(...)`
+- `IAsyncEnumerable<T> SelectAsync<T>(...)`
 
-💡 Examples use the real [Discussions models](../../discussions/src/Models/Thread.cs) and [mapping](../../discussions/src/Zongsoft.Discussions.mapping). Code explicitly marked as an excerpt comes from the linked service. Other queries are local API adaptations against those models, not additional deployed services. They run inside a module service after plugin composition; `siteId` and `userId` denote validated caller identity values, not user-supplied authorization overrides. See the [database design](../../discussions/database/Zongsoft.Discussions.md) before trying writes.
+💡 Examples use the [Discussions models](../../discussions/src/Models/Thread.cs) and [mapping](../../discussions/src/Zongsoft.Discussions.mapping) to illustrate the current asynchronous API. They run inside a composed module service; siteId and userId are validated identity values. Import Zongsoft.Collections for the awaitable FirstOrDefault extension. Await scalar and write operations, consume query results with await foreach, and pass cancellation tokens as the last positional argument.
 
 <a name="operand"></a>
 ### Operand
@@ -357,9 +350,9 @@ Operands can be used in conditions (`Condition`) and in values written to fields
 
 #### Examples
 
-[ThreadService.OnGet](../../discussions/src/Services/ThreadService.cs) increments the persisted view count after its access checks. The following is its update fragment:
+[ThreadService.OnGet](../../discussions/src/Services/ThreadService.cs) increments the persisted view count after its access checks. The following example expresses that operation with the asynchronous API:
 ```csharp
-this.DataAccess.Update<Thread>(new
+await this.DataAccess.UpdateAsync<Thread>(new
 {
 	TotalViews = Operand.Field(nameof(Thread.TotalViews)) + 1,
 	ViewedTime = DateTime.Now,
@@ -393,7 +386,7 @@ var criteria =
 	Condition.Equal(nameof(Thread.Visible), true);
 ```
 
-The method then excludes the separately loaded topmost threads on the first page before calling `Select<Thread>`. See the complete method for paging behavior.
+The method then excludes the separately loaded topmost threads on the first page before calling `SelectAsync<Thread>`. See the complete method for paging behavior.
 
 Search DTOs are also real models: [ThreadCriteria in Thread.cs](../../discussions/src/Models/Thread.cs) declares nullable fields and a `Range<DateTime>?` time range; its `Title` property uses `[Condition(ConditionOperator.Like)]`. [ThreadService](../../discussions/src/Services/ThreadService.cs) selects that type with `[DataService(typeof(ThreadCriteria))]`. Do not redefine a different DTO with the same name. The Core [Criteria](../Zongsoft.Core/src/Data/Criteria.cs) API supplies parsing and transformation.
 
@@ -404,18 +397,18 @@ Search DTOs are also real models: [ThreadCriteria in Thread.cs](../../discussion
 #### Basic query
 
 - By default, all scalar fields are returned. Use the `schema` argument to choose a smaller field set.
-- Query results are lazy. Actual data access starts when you enumerate the result or call LINQ methods such as `ToList()` or `First()`.
+- Queries return IAsyncEnumerable<T>. Preparation starts on invocation; database rows are read during await foreach. Use await query.FirstOrDefault(cancellation) to obtain the first row.
 
-**Note:** Queries are not paged by default. Avoid calling `ToList()` or `ToArray()` on a large result set unless you really need all rows in memory.
+**Note:** Queries are not paged by default. Prefer streaming or explicit paging and limit the number of records materialized in memory.
 
 ```csharp
 // Query all scalar fields that match the condition(lazy loading).
-var threads = this.DataAccess.Select<Thread>(
+var threads = this.DataAccess.SelectAsync<Thread>(
 	Condition.Equal("SiteId", siteId) &
 	Condition.Equal("Visible", true));
 
 // Query one entity and load only selected fields.
-var forum = this.DataAccess.Select<Forum>(
+var forum = await this.DataAccess.SelectAsync<Forum>(
 	Condition.Equal("SiteId", siteId) &
 	Condition.Equal("ForumId", 100),
 	"SiteId,ForumId,Name,Description,CoverPicturePath").FirstOrDefault();
@@ -424,17 +417,17 @@ var forum = this.DataAccess.Select<Forum>(
 <a name="usage-query-exists"></a>
 #### Exists and aggregate query
 
-Use `Exists` when you only need to know whether a row exists. Use `Count`, `Sum`, `Average`, `Maximum`, `Minimum`, `Median`, `Deviation`, or `Variance` extension methods when you only need aggregate values.
+Use `ExistsAsync` when you only need to know whether a row exists. Use `CountAsync`, `SumAsync`, `AverageAsync`, `MaximumAsync`, `MinimumAsync`, `MedianAsync`, `DeviationAsync`, or `VarianceAsync` extension methods when you only need aggregate values.
 
 ```csharp
-var exists = this.DataAccess.Exists<Thread>(
+var exists = await this.DataAccess.ExistsAsync<Thread>(
 	Condition.Equal(nameof(Thread.ThreadId), threadId) &
 	Condition.Equal(nameof(Thread.Visible), true));
 
-var totalThreads = this.DataAccess.Count<Thread>(
+var totalThreads = await this.DataAccess.CountAsync<Thread>(
 	Condition.Equal(nameof(Thread.ForumId), forumId));
 
-var totalViews = this.DataAccess.Sum<Thread, long>(
+var totalViews = await this.DataAccess.SumAsync<Thread, long>(
 	nameof(Thread.TotalViews),
 	Condition.Equal(nameof(Thread.ForumId), forumId));
 ```
@@ -451,13 +444,13 @@ Scalar queries return a single field value. They avoid loading unused fields and
 3. Specify exactly one property name with the method's `schema` argument.
 
 ```csharp
-var email = this.DataAccess.Select<string>("Discussions.UserProfile",
+var email = await this.DataAccess.SelectAsync<string>("Discussions.UserProfile",
 	Condition.Equal("UserId", userId),
 	"Email" // Load only the Email field, which is a string.
 ).FirstOrDefault();
 
-/* Return a scalar value set(IEnumerable<uint>) */
-var counts = this.DataAccess.Select<uint>("Discussions.History",
+/* Return a scalar value set(IAsyncEnumerable<uint>) */
+var counts = this.DataAccess.SelectAsync<uint>("Discussions.History",
 	Condition.Equal("UserId", userId),
 	"ViewedCount" // Load only the ViewedCount field.
 );
@@ -466,10 +459,10 @@ var counts = this.DataAccess.Select<uint>("Discussions.History",
 <a name="usage-query-3"></a>
 #### Multi-field Query
 
-[ThreadService.SetMostRecentThread](../../discussions/src/Services/ThreadService.cs) loads only the author fields needed to update the forum's latest-thread summary. This excerpt uses the real `UserProfile` model:
+[ThreadService.SetMostRecentThreadAsync](../../discussions/src/Services/ThreadService.cs) loads only the author fields needed to update the forum's latest-thread summary. This asynchronous example uses the `UserProfile` model:
 ```csharp
 var userId = data.GetValue(p => p.CreatorId, this.Principal.Identity.GetIdentifier<uint>());
-var user = this.DataAccess.Select<UserProfile>(
+var user = await this.DataAccess.SelectAsync<UserProfile>(
 	Condition.Equal(nameof(UserProfile.UserId), userId),
 	$"{nameof(UserProfile.UserId)}," +
 	$"{nameof(UserProfile.Name)}," +
@@ -477,25 +470,25 @@ var user = this.DataAccess.Select<UserProfile>(
 	$"{nameof(UserProfile.Avatar)}").FirstOrDefault();
 ```
 
-`data` is the method's `IDataDictionary<Thread>` argument. This is a member-level excerpt, not a complete replacement for the method. Dictionaries and `ExpandoObject` are also supported for scalar projections; see [DictionaryPopulatorProvider](src/Common/DictionaryPopulatorProvider.cs). Navigation population requires a model-shaped target; do not expect nested navigation objects in dictionary projections.
+`data` is the method's `IDataDictionary<Thread>` argument. The example shows the field selection; the complete service also performs authorization and related updates. Dictionaries and `ExpandoObject` are also supported for scalar projections; see [DictionaryPopulatorProvider](src/Common/DictionaryPopulatorProvider.cs). Navigation population requires a model-shaped target; do not expect nested navigation objects in dictionary projections.
 
 <a name="usage-query-4"></a>
 #### Paging query
 
-Pass a `paging` argument to [`Select`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) to run a paged query. See [`Paging`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Paging.cs) for the available options.
+Pass a `paging` argument to [`SelectAsync`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) to run a paged query. See [`Paging`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Paging.cs) for the available options.
 
 ```csharp
 // Page 2, 25 rows per page.
 var paging = Paging.Page(2, 25);
 
-var threads = this.DataAccess.Select<Thread>(
+var threads = this.DataAccess.SelectAsync<Thread>(
 	Condition.Equal(nameof(Thread.SiteId), siteId) &
 	Condition.Equal(nameof(Thread.ForumId), 100),
 	paging
 );
 
 /*
- * After the query returns, the paging object contains the result summary:
+ * After enumeration starts and Paginated completes, the paging object contains the result summary:
  * paging.Count is the total page count.
  * paging.Total is the total row count.
  */
@@ -504,10 +497,10 @@ var threads = this.DataAccess.Select<Thread>(
 <a name="usage-query-5"></a>
 #### Sorting query
 
-Pass `Sorting` values to [`Select`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) to order the result. See [Sorting](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Sorting.cs) for details.
+Pass `Sorting` values to [`SelectAsync`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) to order the result. See [Sorting](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Sorting.cs) for details.
 
 ```csharp
-var threads = this.DataAccess.Select<Thread>(
+var threads = this.DataAccess.SelectAsync<Thread>(
 	Condition.Equal(nameof(Thread.SiteId), siteId) &
 	Condition.Equal(nameof(Thread.ForumId), 100),
 	Paging.Disabled, /* Disable paging for this query. You can pass a Paging object instead. */
@@ -533,7 +526,7 @@ Navigation(complex) properties are included through the `schema` argument. They 
  * 2) Thread.MostRecentPost is a zero-or-one navigation property associated with Post.
  *    In the mapping file this is multiplicity="?", so the generated SQL uses LEFT JOIN.
  */
-var thread = this.DataAccess.Select<Thread>(
+var thread = await this.DataAccess.SelectAsync<Thread>(
 	Condition.Equal("ThreadId", 100001),
 	"*,Post{*},MostRecentPost{*}"
 ).FirstOrDefault();
@@ -551,7 +544,7 @@ var thread = this.DataAccess.Select<Thread>(
  *
  * Note: * means all scalar properties only. Navigation properties must be named explicitly.
  */
-var groups = this.DataAccess.Select<ForumGroup>(
+var groups = this.DataAccess.SelectAsync<ForumGroup>(
 	Condition.Equal("SiteId", siteId),
 	"*,Forums{*, Moderators{*}, MostRecentThread{*, Creator{*}}}"
 );
@@ -652,7 +645,7 @@ public abstract class Forum
 ```
 
 ```csharp
-var forum = this.DataAccess.Select<Forum>(
+var forum = await this.DataAccess.SelectAsync<Forum>(
 	Condition.Equal("SiteId", siteId) &
 	Condition.Equal("ForumId", 100),
 	"*, Users{*, User{Name,Email,Avatar}}, Moderators{Name,Email,Avatar}"
@@ -682,9 +675,9 @@ foreach(var member in forum.Users)
 
 [Grouping](../Zongsoft.Core/src/Data/Grouping.cs) describes grouping keys, aggregate functions and result aliases. It is separate from row paging and sorting.
 
-Discussions defines per-forum counters on [Forum](../../discussions/src/Models/Forum.cs), but it does not define a `ForumStatistic` projection or a grouped statistics service. Its real workflow updates those counters in [ThreadService.SetMostRecentThread](../../discussions/src/Services/ThreadService.cs) and [PostService](../../discussions/src/Services/PostService.cs). Read that workflow before adding a separate aggregate query: stored counters and on-demand aggregates have different cost and consistency characteristics.
+Discussions defines per-forum counters on [Forum](../../discussions/src/Models/Forum.cs), but it does not define a `ForumStatistic` projection or a grouped statistics service. Its real workflow updates those counters in [ThreadService.SetMostRecentThreadAsync](../../discussions/src/Services/ThreadService.cs) and [PostService](../../discussions/src/Services/PostService.cs). Read that workflow before adding a separate aggregate query: stored counters and on-demand aggregates have different cost and consistency characteristics.
 
-For grouping support itself, follow the `IDataAccess.Select` overloads accepting `Grouping` in [the public contract](../Zongsoft.Core/src/Data/IDataAccess.cs), and the selected [database driver](#driver). Choose fields from the actual mapping and a result shape matching the keys/aliases; there is no preinstalled forum statistics command to call.
+For grouping support itself, follow the `IDataAccess.SelectAsync` overloads accepting `Grouping` in [the public contract](../Zongsoft.Core/src/Data/IDataAccess.cs), and the selected [database driver](#driver). Choose fields from the actual mapping and a result shape matching the keys/aliases; there is no preinstalled forum statistics command to call.
 
 <a name="usage-query-12"></a>
 ### Navigation condition
@@ -696,7 +689,7 @@ Navigation conditions filter by fields on associated entities.
  * Query history records whose related thread is valued,
  * and whose first or most recent view time is within the last 30 days.
  */
-var histories = this.DataAccess.Select<History>(
+var histories = this.DataAccess.SelectAsync<History>(
 	Condition.Equal("Thread.IsValued", true) & /* Navigation condition */
 	(
 		Condition.Between("FirstViewedTime", DateTime.Today.AddDays(-30), DateTime.Now) |
@@ -705,7 +698,7 @@ var histories = this.DataAccess.Select<History>(
 );
 
 /* Same query, using Range.Timing to build the time range. */
-var histories = this.DataAccess.Select<History>(
+var histories = this.DataAccess.SelectAsync<History>(
 	Condition.Equal("Thread.IsValued", true) & /* Navigation condition */
 	(
 		Condition.Between("FirstViewedTime", Range.Timing.Last(30, 'D')) |
@@ -725,7 +718,7 @@ return Condition.Exists("Forum.Users",
 	Condition.Equal(nameof(Forum.ForumUser.IsModerator), true));
 ```
 
-`Approve`, `Visible` and other restricted methods combine this predicate with the target thread condition. For a more complex `OR` expression, read [ForumService.OnValidate](../../discussions/src/Services/ForumService.cs): it calls the base validation first, then applies the whole visibility expression with `criteria.And(...)`.
+`Approve`, `Visible` and other restricted methods combine this predicate with the target thread condition. For a more complex `OR` expression, read [ForumService.OnValidateAsync](../../discussions/src/Services/ForumService.cs): it calls the base validation first, then applies the whole visibility expression with `criteria.And(...)`.
 
 🚨 Do not rewrite this as `siteCondition & publicCondition | privateCondition`: the second branch would no longer be constrained by `siteCondition`. Retain the [module validator](../../discussions/src/Data/DataValidator.cs) and service authorization when adapting these excerpts.
 
@@ -740,11 +733,11 @@ For example, the `Tags` field in the `Thread` table is `nvarchar`, but the `Tags
 <a name="usage-execute"></a>
 ### Execute operation
 
-`Execute` runs a named `command` defined in a mapping file. Use it for SQL statements, stored procedures, and commands that do not naturally map to one entity operation. The declared `mutability` is the data source selector's basis for read/write routing: `mutability="none"` selects a readable source, while `insert`, `update`, `delete`, and `upsert` select a writable source; the selector does not inspect the SQL script to determine this. A command without an explicit `mutability` is treated as writable _（`Delete|Insert|Update`）_, so there is usually no need to declare it.
+`ExecuteAsync` runs a named `command` defined in a mapping file. Use it for SQL statements, stored procedures, and commands that do not naturally map to one entity operation. The declared `mutability` is the data source selector's basis for read/write routing: `mutability="none"` selects a readable source, while `insert`, `update`, `delete`, and `upsert` select a writable source; the selector does not inspect the SQL script to determine this. A command without an explicit `mutability` is treated as writable _（`Delete|Insert|Update`）_, so there is usually no need to declare it.
 
 Discussions currently uses entity operations rather than mapped forum-statistics commands. There is no deployed `Forum.GetStatistics` or `Forum.RefreshStatistics` in its mapping. Do not invoke those names.
 
-For an implementation reference, [MetadataCommand](src/Metadata/Profiles/MetadataCommand.cs) owns the command name, alias, parameters and driver-specific scripts. [Zongsoft.Data.xsd](Zongsoft.Data.xsd) defines valid XML. A stored procedure uses `type="procedure"` and an alias naming an existing procedure; output parameters use the declared direction and are returned through the supplied `Parameter` objects. These are extension contracts, not additional Discussions features.
+[Zongsoft.Data.xsd](Zongsoft.Data.xsd) defines the mapping XML. Use `type="procedure"` and an alias naming an existing stored procedure. Declare output-parameter directions and read the supplied `Parameter` objects after completing the query or ending enumeration and awaiting enumerator disposal.
 
 <a name="usage-delete"></a>
 ### Delete operation
@@ -752,7 +745,7 @@ For an implementation reference, [MetadataCommand](src/Metadata/Profiles/Metadat
 This fragment uses the real [Post model](../../discussions/src/Models/Post.cs), with caller-supplied `postId` and an authorized `userId`; it is not an excerpt of the Discussions deletion service. Use that service in application code so its authorization and attachment-cleanup workflow remain active.
 
 ```csharp
-this.DataAccess.Delete<Post>(
+await this.DataAccess.DeleteAsync<Post>(
 	Condition.Equal("Visible", false) &
 	Condition.Equal("CreatorId", userId) &
 	Condition.Equal("PostId", postId)
@@ -766,7 +759,7 @@ this.DataAccess.Delete<Post>(
 Cascade deletion can delete child records associated through zero-or-one, one-to-one, or one-to-many navigation properties.
 
 ```csharp
-this.DataAccess.Delete<Post>(
+await this.DataAccess.DeleteAsync<Post>(
 	Condition.Equal("PostId", 100023),
 	"Votes"
 );
@@ -777,7 +770,7 @@ this.DataAccess.Delete<Post>(
 ### Insert operation
 
 ```csharp
-this.DataAccess.Insert("Discussions.Forum", new {
+await this.DataAccess.InsertAsync("Discussions.Forum", new {
 	SiteId = siteId,
 	GroupId = 100,
 	Name = forumName
@@ -795,7 +788,7 @@ this.DataAccess.Insert("Discussions.Forum", new {
 - `SuppressValidator()` disables validators registered for this insert operation.
 
 ```csharp
-var count = this.DataAccess.Insert<Forum.ForumUser>(
+var count = await this.DataAccess.InsertAsync<Forum.ForumUser>(
 	new {
 		SiteId = siteId,
 		ForumId = 100,
@@ -813,7 +806,7 @@ var options = DataInsertOptions
 	.Sequence(DataSequenceBehavior.Never)
 	.IgnoreConstraint();
 
-this.DataAccess.Insert<Forum>(new {
+await this.DataAccess.InsertAsync<Forum>(new {
 	SiteId = siteId,
 	ForumId = 100,
 	GroupId = 10,
@@ -840,14 +833,14 @@ forum.Users = new Forum.ForumUser[]
 	new Forum.ForumUser { UserId = 102, Permission = Permission.Write }
 };
 
-this.DataAccess.Insert(forum, "*, Users{*}");
+await this.DataAccess.InsertAsync(forum, "*, Users{*}");
 ```
 
 
 <a name="usage-import"></a>
 ### Import operation
 
-`Import` is used for bulk data import. Pass the target entity name, the data collection, and the member list that should be imported.
+`ImportAsync` is used for bulk data import. Pass the target entity name, the data collection, and the member list that should be imported.
 
 ```csharp
 var users = new []
@@ -856,7 +849,7 @@ var users = new []
 	new { SiteId = siteId, ForumId = 100, UserId = 101, Permission = Permission.Write },
 };
 
-var count = this.DataAccess.Import(
+var count = await this.DataAccess.ImportAsync(
 	"Discussions.ForumUser",
 	users,
 	"SiteId,ForumId,UserId,Permission".Split(','));
@@ -868,7 +861,7 @@ Use `DataImportOptions.IgnoreConstraint()` when duplicated rows should be skippe
 var options = DataImportOptions
 	.IgnoreConstraint();
 
-var count = this.DataAccess.Import(
+var count = await this.DataAccess.ImportAsync(
 	"Discussions.ForumUser",
 	users,
 	"SiteId,ForumId,UserId,Permission".Split(','),
@@ -886,7 +879,7 @@ user.Name = name;
 user.Nickname = nickname;
 user.Gender = Gender.Male;
 
-this.DataAccess.Update(user);
+await this.DataAccess.UpdateAsync(user);
 ```
 
 
@@ -896,7 +889,7 @@ this.DataAccess.Update(user);
 The value to write can be an anonymous object, dynamic object _(`ExpandoObject`)_, or dictionary _(`IDictionary`, `IDictionary<string, object>`)_.
 
 ```csharp
-this.DataAccess.Update<UserProfile>(
+await this.DataAccess.UpdateAsync<UserProfile>(
 	new {
 		Name=name,
 		Nickname=nickname,
@@ -916,7 +909,7 @@ Use `schema` to choose the fields to update, or to exclude fields.
  * Only Name and Gender are updated.
  * Other fields are ignored even if their values changed.
  */
-this.DataAccess.Update<UserProfile>(
+await this.DataAccess.UpdateAsync<UserProfile>(
 	user,
 	"Name, Gender"
 );
@@ -925,7 +918,7 @@ this.DataAccess.Update<UserProfile>(
  * * allows all fields, but CreatorId and CreatedTime are excluded.
  * Even if user contains values for these two properties, no SET clauses are generated for them.
  */
-this.DataAccess.Update<UserProfile>(
+await this.DataAccess.UpdateAsync<UserProfile>(
 	user,
 	"*, !CreatorId, !CreatedTime"
 );
@@ -934,15 +927,15 @@ this.DataAccess.Update<UserProfile>(
 <a name="usage-update-complex"></a>
 #### Associated Updates
 
-The real [ThreadService.Approve](../../discussions/src/Services/ThreadService.cs) updates the thread and its content post in one operation:
+The thread and content-post models can be updated in one asynchronous operation:
 ```csharp
-public bool Approve(ulong threadId)
+public async ValueTask<bool> ApproveAsync(ulong threadId, CancellationToken cancellation = default)
 {
 	var criteria = Condition.Equal(nameof(Thread.ThreadId), threadId) &
 	               Condition.Equal(nameof(Thread.Approved), false) &
 	               GetIsModeratorCriteria();
 
-	return this.DataAccess.Update<Thread>(new
+	return await this.DataAccess.UpdateAsync<Thread>(new
 	{
 		Approved = true,
 		ApprovedTime = DateTime.Now,
@@ -950,7 +943,7 @@ public bool Approve(ulong threadId)
 		{
 			Approved = true,
 		}
-	}, criteria, "*,Post{Approved}") > 0;
+	}, criteria, "*,Post{Approved}", cancellation) > 0;
 }
 ```
 
@@ -959,9 +952,8 @@ public bool Approve(ulong threadId)
 <a name="usage-upsert"></a>
 ### Upsert Operations
 
-Upsert inserts a row when its key does not exist and updates it when it does. A real use is the browsing-history update in [ThreadService.SetHistory](../../discussions/src/Services/ThreadService.cs), keyed by user and thread and incrementing `ViewedCount`.
+Upsert inserts a row when its key does not exist and updates it when it does. Browsing history can use the user/thread composite key, record `LastViewedTime`, and increment `ViewedCount`.
 
-🚨 The current source has a discrepancy: that method writes `MostRecentViewedTime`, while [History](../../discussions/src/Models/History.cs) and [the mapping](../../discussions/src/Zongsoft.Discussions.mapping) define `LastViewedTime`. This document does not present the method as a verified runnable example or silently correct the implementation. Align the service/model/mapping before reusing that path.
 
 For the upsert contract and driver restrictions, see [IDataAccess](../Zongsoft.Core/src/Data/IDataAccess.cs), [DataUpsertOptions](../Zongsoft.Core/src/Data/DataUpsertOptions.cs) and the selected driver's README. Key matching, sequence generation, defaults on insertion and updates to existing rows must be considered separately.
 
@@ -973,7 +965,7 @@ Delete, insert, update, and upsert options can request returned values from the 
 ```csharp
 var options = DataUpdateOptions.Return(ReturningKind.Newer, nameof(Thread.TotalViews));
 
-this.DataAccess.Update<Thread>(
+await this.DataAccess.UpdateAsync<Thread>(
 	new {
 		TotalViews = Operand.Field(nameof(Thread.TotalViews)) + 1,
 	},
@@ -987,10 +979,10 @@ if(options.Returning.Rows.Count > 0 &&
 }
 ```
 
-For simple counters, the `Increase` and `Decrease` helpers wrap this pattern:
+For simple counters, the `IncreaseAsync` and `DecreaseAsync` helpers wrap this pattern:
 
 ```csharp
-var totalViews = this.DataAccess.Increase<Thread>(
+var totalViews = await this.DataAccess.IncreaseAsync<Thread>(
 	nameof(Thread.TotalViews),
 	Condition.Equal(nameof(Thread.ThreadId), threadId));
 ```
@@ -1000,7 +992,7 @@ The following adaptation uses the real PostAttachment model to inspect returned 
 ```csharp
 var options = DataDeleteOptions.Return(nameof(PostAttachment.AttachmentId));
 
-this.DataAccess.Delete<PostAttachment>(
+await this.DataAccess.DeleteAsync<PostAttachment>(
 	Condition.Equal(nameof(PostAttachment.PostId), postId),
 	options);
 
@@ -1047,25 +1039,18 @@ Write option members:
 
 A real operation parameter is `"Thread"`, read by [PostService.OnInsert](../../discussions/src/Services/PostService.cs). The service accepts either a `Thread` model or `IDataDictionary<Thread>`, resolves `ForumService` through its service provider, then decides whether the new post is approved. Read the complete method for null handling and file-content storage. These options are operation context, not SQL parameters; there is no built-in `SkipSynchronization` or `SkipAudit` switch.
 
-Before/after callbacks, `IDataAccess` events and filters expose operation stages. [ThreadFilter](../../discussions/src/Data/ThreadFilter.cs) is a real result-filtering example: `OnFiltered` wraps results through [FilteredResult](../../discussions/src/Data/FilteredResult.cs), hiding unapproved content from unauthorized readers or reading externally stored content. The wrapper preserves synchronous/asynchronous enumeration and paging notifications; read both files together.
+Before/after callbacks, IDataAccess events and filters are awaitable. Event handlers accept (sender, args, cancellation), return ValueTask, and complete in subscription order. Use asynchronous enumeration and Pageable.FilterAsync/MapAsync for result processing while retaining pagination. IEnumerable navigation members contain loaded records; consume IAsyncEnumerable navigation members asynchronously.
 
-For transaction scope, the following excerpt is the transaction body of [ThreadService.OnInsert](../../discussions/src/Services/ThreadService.cs), after content validation and schema preparation:
+Manage transactions with `await using` and await completion. For example, insert an order and its lines in one transaction:
+
 ```csharp
-using(var transaction = new Transaction())
-{
-	var count = base.OnInsert(data, schema, options);
-
-	if(count < 1)
-		return count;
-
-	this.SetMostRecentThread(data);
-	transaction.Commit();
-
-	return count;
-}
+await using var transaction = new Transaction();
+await accessor.InsertAsync("Orders", order, cancellation);
+await accessor.InsertManyAsync("OrderLines", lines, cancellation);
+await transaction.CommitAsync(cancellation);
 ```
 
-The private `SetMostRecentThread` helper belongs to that class. The transaction groups insertion and the related summary updates; it does not roll back external file/object-storage writes. Keep authorization and validators enabled in normal application calls.
+`accessor` is an IDataAccess instance; the caller supplies the order and lines. Disposal rolls back an uncommitted transaction. Transactions do not roll back external file or object-storage writes. Keep authorization and validators enabled in normal application calls.
 
 <a name="usage-other"></a>
 ### Other
@@ -1084,8 +1069,6 @@ Zongsoft.Data aims for balanced performance, maintainability, and usability inst
 3. Avoiding reflection on hot paths and caching parsed expression trees.
 
 Because data relationships are described declaratively, the engine can turn user intent into expression trees and then into provider-specific SQL. This keeps application code focused and leaves more room for provider-level optimization.
-
-The implementation uses **emitting** and dynamic compilation to prepare model population and parameter binding paths ahead of time. See [ModelEmitter](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Common/ModelMemberEmitter.cs) and related classes for details.
 
 ## Plugin-Based Integration
 

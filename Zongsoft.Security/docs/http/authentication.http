@@ -11,12 +11,28 @@ Host: {{host}}:{{port}}
 }
 
 {{
-	await require("./authentication.js").saveCredential(response, environmentName, require("vscode"));
+	const path = require("path");
+	const file = require("fs").realpathSync(__filename);
+	let vscode;
+
+	try
+	{
+		vscode = require("vscode");
+	}
+	catch(error)
+	{
+		if(error.code !== "MODULE_NOT_FOUND")
+			throw error;
+	}
+
+	const variables = await require(path.join(path.dirname(file), "authentication.js")).saveCredential(
+		response, typeof environmentName === "undefined" ? undefined : environmentName, vscode);
+	$httpyac.setVariables(variables);
 }}
 
 ### 验证码登录
 # 注：验证码登录需要先通过 Secret 方法获取身份验证码。
-# @name signin
+# @name signin-secret
 @secretToken = {{$input 令牌号 $value: }}
 @secretCode = {{$input 验证码 $value: }}
 POST /Security/Authentication/Signin/Secret/{{secretToken}}?scenario={{scenario}} HTTP/1.1
@@ -26,11 +42,27 @@ Content-Type: text/plain
 {{secretCode}}
 
 {{
-	await require("./authentication.js").saveCredential(response, environmentName, require("vscode"));
+	const path = require("path");
+	const file = require("fs").realpathSync(__filename);
+	let vscode;
+
+	try
+	{
+		vscode = require("vscode");
+	}
+	catch(error)
+	{
+		if(error.code !== "MODULE_NOT_FOUND")
+			throw error;
+	}
+
+	const variables = await require(path.join(path.dirname(file), "authentication.js")).saveCredential(
+		response, typeof environmentName === "undefined" ? undefined : environmentName, vscode);
+	$httpyac.setVariables(variables);
 }}
 
 ### 支付宝登录
-# @name signin
+# @name signin-alipay
 @alipayBroker = {{$input 代理号（支付宝） $value: }}
 @alipayToken = {{$input 令牌值 $value: }}
 POST /Security/Authentication/Signin/Alipay/broker:{{alipayBroker}}?scenario={{scenario}} HTTP/1.1
@@ -40,10 +72,27 @@ Content-Type: text/plain
 {{alipayToken}}
 
 {{
-	await require("./authentication.js").saveCredential(response, environmentName, require("vscode"));
+	const path = require("path");
+	const file = require("fs").realpathSync(__filename);
+	let vscode;
+
+	try
+	{
+		vscode = require("vscode");
+	}
+	catch(error)
+	{
+		if(error.code !== "MODULE_NOT_FOUND")
+			throw error;
+	}
+
+	const variables = await require(path.join(path.dirname(file), "authentication.js")).saveCredential(
+		response, typeof environmentName === "undefined" ? undefined : environmentName, vscode);
+	$httpyac.setVariables(variables);
 }}
 
 ### 微信小程序登录
+# @name signin-wechat-applet
 @wechatApplet = {{$input 小程序编号 $value: }}
 @wechatAppletToken = {{$input 小程序令牌 $value: }}
 POST /Security/Authentication/Signin/Wechat/applet:{{wechatApplet}}?scenario={{scenario}} HTTP/1.1
@@ -53,10 +102,27 @@ Content-Type: text/plain
 {{wechatAppletToken}}
 
 {{
-	await require("./authentication.js").saveCredential(response, environmentName, require("vscode"));
+	const path = require("path");
+	const file = require("fs").realpathSync(__filename);
+	let vscode;
+
+	try
+	{
+		vscode = require("vscode");
+	}
+	catch(error)
+	{
+		if(error.code !== "MODULE_NOT_FOUND")
+			throw error;
+	}
+
+	const variables = await require(path.join(path.dirname(file), "authentication.js")).saveCredential(
+		response, typeof environmentName === "undefined" ? undefined : environmentName, vscode);
+	$httpyac.setVariables(variables);
 }}
 
 ### 微信公众号登录
+# @name signin-wechat-channel
 @wechatChannel = {{$input 公众号编号 $value: }}
 @wechatChannelToken = {{$input 公众号令牌 $value: }}
 POST /Security/Authentication/Signin/Wechat/channel:{{wechatChannel}}?scenario={{scenario}} HTTP/1.1
@@ -66,7 +132,23 @@ Content-Type: text/plain
 {{wechatChannelToken}}
 
 {{
-	await require("./authentication.js").saveCredential(response, environmentName, require("vscode"));
+	const path = require("path");
+	const file = require("fs").realpathSync(__filename);
+	let vscode;
+
+	try
+	{
+		vscode = require("vscode");
+	}
+	catch(error)
+	{
+		if(error.code !== "MODULE_NOT_FOUND")
+			throw error;
+	}
+
+	const variables = await require(path.join(path.dirname(file), "authentication.js")).saveCredential(
+		response, typeof environmentName === "undefined" ? undefined : environmentName, vscode);
+	$httpyac.setVariables(variables);
 }}
 
 ### 续约
@@ -83,12 +165,12 @@ Authorization: Credential {{credentialId}}
 
 
 ### 人机识别生成(验证码)
-# @name captcha
+# @name captcha-create
 POST /Security/Captcha/authencode HTTP/1.1
 Host: {{host}}:{{port}}
 
 ### 人机识别验证(验证码)
-# @name captcha
+# @name captcha-verify
 @captchaToken = {{$input 验证令牌 $value: }}
 @captchaCode = {{$input 验证码值 $value: }}
 POST /Security/Captcha/authencode/Verify HTTP/1.1
@@ -103,7 +185,7 @@ Content-Type: text/plain
 # 1. 通过人机识别接口(Captcha)发起识别；
 # 2. 通过人机识别接口(Captcha/Verify)进行验证；
 # 3. 将人机识别方案(scheme)与验证令牌(即人机识别验证操作的返回结果)以冒号分隔，置于 X-Captcha 请求头。
-# @name secret
+# @name secret-phone
 @phoneNumber = {{$input 手机号码 $value: }}
 @messageChannel = {{$input 验证通道(message|voice) $value:message }}
 @phoneCaptcha = {{$input 人机识别(scheme:token) $value: }}
@@ -116,7 +198,7 @@ X-Captcha: {{phoneCaptcha}}
 # 1. 通过人机识别接口(Captcha)发起识别；
 # 2. 通过人机识别接口(Captcha/Verify)进行验证；
 # 3. 将人机识别方案(scheme)与验证令牌(即人机识别验证操作的返回结果)以冒号分隔，置于 X-Captcha 请求头。
-# @name secret
+# @name secret-email
 @emailAddress = {{$input 邮箱地址 $value: }}
 @emailCaptcha = {{$input 人机识别(scheme:token) $value: }}
 POST /Security/Authentication/Secret/email:{{emailAddress}} HTTP/1.1

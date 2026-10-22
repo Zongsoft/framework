@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,30 +11,30 @@ namespace Zongsoft.Data.Tests;
 public class TransactionTest
 {
 	[Fact]
-	public void AmbientContext_NestedTransactions_RestoresParentContext()
+	public async Task AmbientContext_NestedTransactions_RestoresParentContext()
 	{
 		Assert.Null(TransactionContext.Current);
 		Assert.Null(Transaction.Current);
 
-		using(var root = new Transaction())
+		await using(var root = new Transaction())
 		{
 			Assert.Same(root.Context, TransactionContext.Current);
 			Assert.Same(root, Transaction.Current);
 			Assert.Same(root.Context, root.Context.Root);
 			Assert.Null(root.Context.Parent);
 
-			using(var child = new Transaction())
+			await using(var child = new Transaction())
 			{
 				Assert.Same(child.Context, TransactionContext.Current);
 				Assert.Same(child, Transaction.Current);
 				Assert.Same(root.Context, child.Context.Parent);
 				Assert.Same(root.Context, child.Context.Root);
-				child.Commit();
+				await child.CommitAsync();
 			}
 
 			Assert.Same(root.Context, TransactionContext.Current);
 			Assert.Same(root, Transaction.Current);
-			root.Commit();
+			await root.CommitAsync();
 		}
 
 		Assert.Null(TransactionContext.Current);
@@ -42,19 +42,19 @@ public class TransactionTest
 	}
 
 	[Fact]
-	public void NestedTransactionEnlistment_IsCompletedByRootTransaction()
+	public async Task NestedTransactionEnlistment_IsCompletedByRootTransaction()
 	{
-		using var root = new Transaction();
+		await using var root = new Transaction();
 		var recorder = new Recorder();
 
-		using(var child = new Transaction())
+		await using(var child = new Transaction())
 		{
 			Assert.True(child.Context.Enlist(recorder));
-			child.Commit();
+			await child.CommitAsync();
 			Assert.Empty(recorder.Contexts);
 		}
 
-		root.Commit();
+		await root.CommitAsync();
 
 		var context = Assert.Single(recorder.Contexts);
 		Assert.Same(root, context.Transaction);
@@ -62,23 +62,24 @@ public class TransactionTest
 	}
 
 	[Fact]
-	public void Completed_Commit_NotifiesFinalStateExactlyOnce()
+	public async Task Completed_Commit_NotifiesFinalStateExactlyOnce()
 	{
-		using var transaction = new Transaction();
+		await using var transaction = new Transaction();
 		var count = 0;
 		object sender = null;
 		TransactionStatus? status = null;
 
-		transaction.Context.Completed += (source, _) =>
+		transaction.Context.Completed += (source, _, _) =>
 		{
 			Interlocked.Increment(ref count);
 			sender = source;
 			status = transaction.Context.Status;
+			return ValueTask.CompletedTask;
 		};
 
-		transaction.Commit();
-		transaction.Commit();
-		transaction.Rollback();
+		await transaction.CommitAsync();
+		await transaction.CommitAsync();
+		await transaction.RollbackAsync();
 
 		Assert.Equal(1, count);
 		Assert.Same(transaction.Context, sender);
@@ -87,42 +88,63 @@ public class TransactionTest
 	}
 
 	[Fact]
-	public void Completed_NestedRollback_MakesRootCompletionAborted()
+	public async Task Completed_NestedRollback_MakesRootCompletionAborted()
 	{
-		using var root = new Transaction();
+		await using var root = new Transaction();
+		var recorder = new Recorder();
+		Assert.True(root.Context.Enlist(recorder));
 		var rootNotifications = 0;
 		var childNotifications = 0;
-		root.Context.Completed += (_, _) => Interlocked.Increment(ref rootNotifications);
-
-		using(var child = new Transaction())
+		root.Context.Completed += (_, _, _) =>
 		{
-			child.Context.Completed += (_, _) => Interlocked.Increment(ref childNotifications);
-			child.Rollback();
+			Interlocked.Increment(ref rootNotifications);
+			return ValueTask.CompletedTask;
+		};
+
+		await using(var child = new Transaction())
+		{
+			child.Context.Completed += (_, _, _) =>
+			{
+				Interlocked.Increment(ref childNotifications);
+				return ValueTask.CompletedTask;
+			};
+			await child.RollbackAsync();
 
 			Assert.Equal(1, childNotifications);
 			Assert.Equal(TransactionStatus.Aborted, child.Context.Status);
 			Assert.Equal(TransactionStatus.Active, root.Context.Status);
 		}
 
-		root.Commit();
+		await root.CommitAsync();
 
 		Assert.Equal(1, rootNotifications);
 		Assert.Equal(TransactionStatus.Aborted, root.Context.Status);
+		Assert.Equal(EnlistmentPhase.Rollback, Assert.Single(recorder.Contexts).Phase);
 	}
 
 	[Fact]
-	public void Completed_ThrowingObserver_DoesNotEscapeOrSuppressFollowingObserver()
+	public async Task Completed_ThrowingObserver_PreservesCommittedStateAndReportsFailure()
 	{
-		using var transaction = new Transaction();
+		var transaction = new Transaction();
+		var failure = new InvalidOperationException();
 		var followingNotifications = 0;
-		transaction.Context.Completed += (_, _) => throw new InvalidOperationException("Expected observer failure.");
-		transaction.Context.Completed += (_, _) => Interlocked.Increment(ref followingNotifications);
+		transaction.Context.Completed += (_, _, _) => throw failure;
+		transaction.Context.Completed += (_, _, _) =>
+		{
+			Interlocked.Increment(ref followingNotifications);
+			return ValueTask.CompletedTask;
+		};
 
-		var exception = Record.Exception(transaction.Commit);
-
-		Assert.Null(exception);
-		Assert.Equal(1, followingNotifications);
-		Assert.Equal(TransactionStatus.Committed, transaction.Context.Status);
+		try
+		{
+			Assert.Same(failure, await Assert.ThrowsAsync<InvalidOperationException>(() => transaction.CommitAsync()));
+			Assert.Equal(1, followingNotifications);
+			Assert.Equal(TransactionStatus.Committed, transaction.Context.Status);
+		}
+		finally
+		{
+			Assert.Same(failure, await Assert.ThrowsAsync<InvalidOperationException>(() => transaction.DisposeAsync().AsTask()));
+		}
 	}
 
 	[Fact]
@@ -142,7 +164,7 @@ public class TransactionTest
 		{
 			return await Task.Run(async () =>
 			{
-				using var transaction = new Transaction();
+				await using var transaction = new Transaction();
 				var enlistment = new Recorder();
 
 				Assert.True(transaction.Context.Enlist(enlistment));
@@ -153,9 +175,9 @@ public class TransactionTest
 				await ready.Task.WaitAsync(TimeSpan.FromSeconds(10));
 
 				if(phase == EnlistmentPhase.Commit)
-					transaction.Commit();
+					await transaction.CommitAsync();
 				else
-					transaction.Rollback();
+					await transaction.RollbackAsync();
 
 				var context = Assert.Single(enlistment.Contexts);
 				Assert.Same(transaction, context.Transaction);
@@ -171,7 +193,7 @@ public class TransactionTest
 
 		for(int index = 0; index < COUNT; index++)
 		{
-			using var transaction = new Transaction();
+			await using var transaction = new Transaction();
 			var enlistment = new Recorder();
 			var start = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 
@@ -184,7 +206,7 @@ public class TransactionTest
 			var completing = Task.Run(async () =>
 			{
 				await start.Task;
-				transaction.Commit();
+				await transaction.CommitAsync();
 			});
 
 			start.SetResult();
@@ -203,60 +225,69 @@ public class TransactionTest
 	}
 
 	[Fact]
-	public void CompletionContinuesAfterEnlistmentThrows()
+	public async Task CompletionContinuesAfterEnlistmentThrows()
 	{
-		using var transaction = new Transaction();
+		var transaction = new Transaction();
 		var following = new Recorder();
 		var notifications = 0;
 		TransactionStatus? completedStatus = null;
-		transaction.Context.Completed += (_, _) =>
+		transaction.Context.Completed += (_, _, _) =>
 		{
 			Interlocked.Increment(ref notifications);
 			completedStatus = transaction.Context.Status;
+			return ValueTask.CompletedTask;
 		};
 
 		Assert.True(transaction.Context.Enlist(new ThrowingEnlistment()));
 		Assert.True(transaction.Context.Enlist(following));
 
-		Assert.Throws<InvalidOperationException>(transaction.Commit);
+		try
+		{
+			await Assert.ThrowsAsync<InvalidOperationException>(() => transaction.CommitAsync());
 
-		var context = Assert.Single(following.Contexts);
-		Assert.Same(transaction, context.Transaction);
-		Assert.Equal(EnlistmentPhase.Commit, context.Phase);
-		Assert.Equal(1, notifications);
-		Assert.Equal(TransactionStatus.Undetermined, completedStatus);
+			var context = Assert.Single(following.Contexts);
+			Assert.Same(transaction, context.Transaction);
+			Assert.Equal(EnlistmentPhase.Commit, context.Phase);
+			Assert.Equal(1, notifications);
+			Assert.Equal(TransactionStatus.Undetermined, completedStatus);
+		}
+		finally
+		{
+			await Assert.ThrowsAsync<InvalidOperationException>(() => transaction.DisposeAsync().AsTask());
+		}
 	}
 
 	[Theory]
 	[InlineData(EnlistmentPhase.Commit)]
 	[InlineData(EnlistmentPhase.Rollback)]
-	public void Complete_UsesSynchronousEnlistmentOnly(EnlistmentPhase phase)
+	public async Task CompleteAsync_UsesAsynchronousEnlistmentOnly(EnlistmentPhase phase)
 	{
-		using var transaction = new Transaction();
+		await using var transaction = new Transaction();
 		var enlistment = new PathRecorder();
 		Assert.True(transaction.Context.Enlist(enlistment));
 
-		Complete(transaction, phase);
+		await CompleteAsync(transaction, phase, CancellationToken.None);
 
 		var context = Assert.Single(enlistment.Contexts);
 		Assert.Equal(phase, context.Phase);
-		Assert.Equal(0, enlistment.AsyncCalls);
+		Assert.Equal(1, enlistment.AsyncCalls);
 		Assert.Equal(phase == EnlistmentPhase.Commit ? TransactionStatus.Committed : TransactionStatus.Aborted, transaction.Context.Status);
 	}
 
 	[Fact]
 	public async Task CommitAsync_CompletedFiresAfterAsyncEnlistmentsFinishAsync()
 	{
-		using var transaction = new Transaction();
+		await using var transaction = new Transaction();
 		var enlistment = new AsyncRecorder();
 		Assert.True(transaction.Context.Enlist(enlistment));
 
 		TransactionStatus? statusAtCompletion = null;
-		transaction.Context.Completed += (_, _) =>
+		transaction.Context.Completed += (_, _, _) =>
 		{
 			//断言异步登记回调已经全部完成
 			Assert.True(enlistment.IsCompleted);
 			statusAtCompletion = transaction.Context.Status;
+			return ValueTask.CompletedTask;
 		};
 
 		await transaction.CommitAsync();
@@ -270,12 +301,16 @@ public class TransactionTest
 	[Fact]
 	public async Task RollbackAsync_CompletedFiresAfterAsyncEnlistmentsFinishAsync()
 	{
-		using var transaction = new Transaction();
+		await using var transaction = new Transaction();
 		var enlistment = new AsyncRecorder();
 		Assert.True(transaction.Context.Enlist(enlistment));
 
 		TransactionStatus? statusAtCompletion = null;
-		transaction.Context.Completed += (_, _) => statusAtCompletion = transaction.Context.Status;
+		transaction.Context.Completed += (_, _, _) =>
+		{
+			statusAtCompletion = transaction.Context.Status;
+			return ValueTask.CompletedTask;
+		};
 
 		await transaction.RollbackAsync();
 
@@ -287,16 +322,24 @@ public class TransactionTest
 	[Theory]
 	[InlineData(EnlistmentPhase.Commit)]
 	[InlineData(EnlistmentPhase.Rollback)]
-	public async Task CompleteAsync_PreCancelled_CompletesWithNonCancellableEnlistmentAsync(EnlistmentPhase phase)
+	public async Task CompleteAsync_PreCancelled_RejectsCommitButStillRollsBack(EnlistmentPhase phase)
 	{
-		using var transaction = new Transaction();
+		await using var transaction = new Transaction();
 		var enlistment = new PathRecorder();
 		Assert.True(transaction.Context.Enlist(enlistment));
 		using var cancellation = new CancellationTokenSource();
 		cancellation.Cancel();
 
-		Task completion = CompleteAsync(transaction, phase, cancellation.Token);
-		await completion;
+		if(phase == EnlistmentPhase.Commit)
+		{
+			var failure = await Assert.ThrowsAnyAsync<OperationCanceledException>(() => transaction.CommitAsync(cancellation.Token));
+			Assert.Equal(cancellation.Token, failure.CancellationToken);
+			Assert.Empty(enlistment.Contexts);
+			Assert.Equal(TransactionStatus.Active, transaction.Context.Status);
+			await transaction.CommitAsync();
+		}
+		else
+			await transaction.RollbackAsync(cancellation.Token);
 
 		var context = Assert.Single(enlistment.Contexts);
 		Assert.Equal(phase, context.Phase);
@@ -310,17 +353,22 @@ public class TransactionTest
 	[InlineData(EnlistmentPhase.Rollback)]
 	public async Task CompleteAsync_CancelledAfterDecision_WaitsForAcceptedCompletionAsync(EnlistmentPhase phase)
 	{
-		using var transaction = new Transaction();
+		await using var transaction = new Transaction();
 		var enlistment = new GatedEnlistment();
 		Assert.True(transaction.Context.Enlist(enlistment));
 		using var cancellation = new CancellationTokenSource();
 
 		var completion = CompleteAsync(transaction, phase, cancellation.Token);
-		await enlistment.Entered.WaitAsync(TimeSpan.FromSeconds(5));
-		cancellation.Cancel();
 
-		Assert.False(completion.IsCompleted);
-		enlistment.Release();
+		try
+		{
+			await enlistment.Entered.WaitAsync(TimeSpan.FromSeconds(5));
+			cancellation.Cancel();
+
+			Assert.False(completion.IsCompleted);
+		}
+		finally { enlistment.Release(); }
+
 		await completion.WaitAsync(TimeSpan.FromSeconds(5));
 
 		var context = Assert.Single(enlistment.Contexts);
@@ -348,7 +396,6 @@ public class TransactionTest
 		private readonly System.Collections.Concurrent.ConcurrentQueue<EnlistmentContext> _contexts = new();
 		public System.Collections.Generic.IReadOnlyCollection<EnlistmentContext> Contexts => _contexts.ToArray();
 
-		public void OnEnlist(EnlistmentContext context) => _contexts.Enqueue(context);
 		public ValueTask OnEnlistAsync(EnlistmentContext context, CancellationToken cancellation) { _contexts.Enqueue(context); return ValueTask.CompletedTask; }
 	}
 
@@ -358,7 +405,6 @@ public class TransactionTest
 		public System.Collections.Generic.IReadOnlyCollection<EnlistmentContext> Contexts => _contexts.ToArray();
 		public bool IsCompleted { get; private set; }
 
-		public void OnEnlist(EnlistmentContext context) => _contexts.Enqueue(context);
 		public async ValueTask OnEnlistAsync(EnlistmentContext context, CancellationToken cancellation)
 		{
 			await Task.Yield();
@@ -376,7 +422,6 @@ public class TransactionTest
 		public bool CancellationRequested { get; private set; }
 		public System.Collections.Generic.IReadOnlyCollection<EnlistmentContext> Contexts => _contexts.ToArray();
 
-		public void OnEnlist(EnlistmentContext context) => _contexts.Enqueue(context);
 		public ValueTask OnEnlistAsync(EnlistmentContext context, CancellationToken cancellation)
 		{
 			Interlocked.Increment(ref _asyncCalls);
@@ -388,7 +433,6 @@ public class TransactionTest
 
 	private sealed class ThrowingEnlistment : IEnlistment
 	{
-		public void OnEnlist(EnlistmentContext context) => throw new InvalidOperationException("Expected enlistment failure.");
 		public ValueTask OnEnlistAsync(EnlistmentContext context, CancellationToken cancellation) => throw new InvalidOperationException("Expected enlistment failure.");
 	}
 
@@ -401,7 +445,6 @@ public class TransactionTest
 		public Task Entered => _entered.Task;
 		public System.Collections.Generic.IReadOnlyCollection<EnlistmentContext> Contexts => _contexts.ToArray();
 
-		public void OnEnlist(EnlistmentContext context) => throw new NotSupportedException();
 		public async ValueTask OnEnlistAsync(EnlistmentContext context, CancellationToken cancellation)
 		{
 			_contexts.Enqueue(context);
@@ -414,12 +457,4 @@ public class TransactionTest
 
 	private static Task CompleteAsync(Transaction transaction, EnlistmentPhase phase, CancellationToken cancellation) =>
 		phase == EnlistmentPhase.Commit ? transaction.CommitAsync(cancellation) : transaction.RollbackAsync(cancellation);
-
-	private static void Complete(Transaction transaction, EnlistmentPhase phase)
-	{
-		if(phase == EnlistmentPhase.Commit)
-			transaction.Commit();
-		else
-			transaction.Rollback();
-	}
 }

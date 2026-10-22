@@ -41,37 +41,6 @@ namespace Zongsoft.Data.SQLite;
 public class SQLiteImporter : DataImporterBase
 {
 	#region 公共方法
-	protected override void OnImport(DataImportContext context, MemberCollection members)
-	{
-		using var lease = context.Session.AcquireLease(context.Options.TransactionSuppressed);
-		using var command = GetCommand(context, members, lease.Connection);
-
-		using var transaction = lease.Transaction == null ? lease.Connection.BeginTransaction() : null;
-		command.Transaction = lease.Transaction ?? transaction;
-
-		try
-		{
-			foreach(var item in context.Data)
-			{
-				var target = item;
-
-				for(int i = 0; i < members.Count; i++)
-				{
-					command.Parameters[i].Value = members[i].GetValue(ref target) ?? DBNull.Value;
-				}
-
-				context.Count += command.ExecuteNonQuery();
-			}
-
-			transaction?.Commit();
-		}
-		catch
-		{
-			transaction?.Rollback();
-			throw;
-		}
-	}
-
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
 		await using var lease = await context.Session.AcquireLeaseAsync(context.Options.TransactionSuppressed, cancellation);
@@ -82,13 +51,15 @@ public class SQLiteImporter : DataImporterBase
 
 		try
 		{
-			foreach(var item in context.Data)
+			await foreach(var item in GetRecordsAsync(context).WithCancellation(cancellation).ConfigureAwait(false))
 			{
 				var target = item;
 
 				for(int i = 0; i < members.Count; i++)
 				{
-					command.Parameters[i].Value = members[i].GetValue(ref target) ?? DBNull.Value;
+					var prepared = await members[i].GetValueAsync(target, cancellation).ConfigureAwait(false);
+					target = prepared.Target;
+					command.Parameters[i].Value = prepared.Value ?? DBNull.Value;
 				}
 
 				context.Count += await command.ExecuteNonQueryAsync(cancellation);

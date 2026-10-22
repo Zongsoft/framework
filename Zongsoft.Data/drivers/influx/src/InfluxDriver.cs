@@ -30,6 +30,8 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 
 using InfluxDB3.Client;
 using InfluxDB3.Client.Config;
@@ -60,9 +62,9 @@ public class InfluxDriver : DataDriverBase
 	#endregion
 
 	#region 公共方法
-	public override Exception OnError(IDataAccessContext context, Exception exception)
+	public override ValueTask<Exception> OnErrorAsync(IDataAccessContext context, Exception exception, CancellationToken cancellation = default)
 	{
-		return exception;
+		return new ValueTask<Exception>(exception);
 	}
 
 	public override DbCommand CreateCommand() => new Common.InfluxCommand();

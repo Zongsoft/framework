@@ -7,6 +7,19 @@ async function saveCredential(response, environmentName, vscode) {
 	if(!credentialId)
 		throw new Error("Signin response does not contain CredentialId/credentialId.");
 
+	const signedIn = {
+		credentialId,
+		renewalToken,
+		userId: identity.Identifier ?? identity.identifier,
+		userName: identity.Name ?? identity.name,
+		namespace: identity.Namespace ?? identity.namespace,
+		email: identity.Email ?? identity.email,
+		phone: identity.Phone ?? identity.phone,
+	};
+
+	if(!vscode)
+		return signedIn;
+
 	if(!environmentName)
 		throw new Error("Current httpYac environment does not define environmentName.");
 
@@ -15,14 +28,7 @@ async function saveCredential(response, environmentName, vscode) {
 	const inspected = config.inspect(key);
 	const variables = JSON.parse(JSON.stringify(config.get(key) ?? { "$shared": {} }));
 
-	variables[environmentName] = variables[environmentName] ?? {};
-	variables[environmentName].credentialId = credentialId;
-	variables[environmentName].renewalToken = renewalToken;
-	variables[environmentName].userId = identity.Identifier ?? identity.identifier;
-	variables[environmentName].userName = identity.Name ?? identity.name;
-	variables[environmentName].namespace = identity.Namespace ?? identity.namespace;
-	variables[environmentName].email = identity.Email ?? identity.email;
-	variables[environmentName].phone = identity.Phone ?? identity.phone;
+	variables[environmentName] = Object.assign(variables[environmentName] ?? {}, signedIn);
 
 	const target =
 		inspected?.workspaceValue !== undefined ?
@@ -32,6 +38,7 @@ async function saveCredential(response, environmentName, vscode) {
 	await config.update(key, variables, target);
 
 	console.info(`signin variables saved to httpYac environment '${environmentName}'.`);
+	return signedIn;
 }
 
 module.exports = {

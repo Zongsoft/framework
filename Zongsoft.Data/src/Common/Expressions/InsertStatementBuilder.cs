@@ -28,8 +28,11 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 using Zongsoft.Data.Metadata;
 
@@ -38,14 +41,14 @@ namespace Zongsoft.Data.Common.Expressions;
 public class InsertStatementBuilder : IStatementBuilder<DataInsertContext>
 {
 	#region 构建方法
-	public IEnumerable<IStatementBase> Build(DataInsertContext context)
+	public IAsyncEnumerable<IStatementBase> BuildAsync(DataInsertContext context, CancellationToken cancellation = default)
 	{
-		return this.BuildInserts(context, context.Entity, context.Data, null, context.Schema.Members);
+		return this.BuildInsertsAsync(context, context.Entity, context.Data, null, context.Schema.Members, cancellation);
 	}
 	#endregion
 
 	#region 私有方法
-	private IEnumerable<InsertStatement> BuildInserts(IDataMutateContext context, IDataEntity entity, object data, SchemaMember owner, IEnumerable<SchemaMember> schemas)
+	private async IAsyncEnumerable<InsertStatement> BuildInsertsAsync(IDataMutateContext context, IDataEntity entity, object data, SchemaMember owner, IEnumerable<SchemaMember> schemas, [EnumeratorCancellation] CancellationToken cancellation = default)
 	{
 		if(data == null)
 			throw new ArgumentNullException(nameof(data));
@@ -127,7 +130,9 @@ public class InsertStatementBuilder : IStatementBuilder<DataInsertContext>
 					else
 					{
 						//确认当前成员是否有提供的写入值
-						var provided = context.Validate(DataAccessMethod.Insert, simplex, out var value);
+						var validation = await context.ValidateAsync(DataAccessMethod.Insert, simplex, cancellation).ConfigureAwait(false);
+						var provided = validation.HasValue;
+						var value = validation.Value;
 
 						var field = statement.Table.CreateField(schema.Token);
 						statement.Fields.Add(field);
@@ -162,14 +167,14 @@ public class InsertStatementBuilder : IStatementBuilder<DataInsertContext>
 						throw new DataException(string.Format(Properties.Resources.Statement_MissingComplexPropertyMembers_Message, schema.FullPath));
 
 					var complex = (IDataEntityComplexProperty)schema.Token.Property;
-					var slaves = this.BuildInserts(
+					var slaves = this.BuildInsertsAsync(
 						context,
 						complex.Foreign,
 						data,
 						schema,
-						schema.Children);
+						schema.Children, cancellation);
 
-					foreach(var slave in slaves)
+					await foreach(var slave in slaves.ConfigureAwait(false))
 					{
 						slave.Schema = schema;
 						statement.Slaves.Add(slave);

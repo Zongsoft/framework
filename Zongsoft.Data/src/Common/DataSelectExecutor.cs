@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -42,125 +42,6 @@ namespace Zongsoft.Data.Common;
 
 public class DataSelectExecutor : IDataExecutor<SelectStatement>
 {
-	#region 同步执行
-	public bool Execute(IDataAccessContext context, SelectStatement statement)
-	{
-		switch(context)
-		{
-			case DataSelectContext selection:
-				return this.OnExecute(selection, statement);
-			case DataInsertContext insertion:
-				return this.OnExecute(insertion, statement);
-			case DataUpsertContext upsertion:
-				return this.OnExecute(upsertion, statement);
-			case DataUpdateContext updation:
-				return this.OnExecute(updation, statement);
-		}
-
-		throw new DataException(string.Format(Properties.Resources.DataExecutor_UnsupportedContext_Message, this.GetType().Name, context.GetType().Name));
-	}
-
-	protected virtual bool OnExecute(DataSelectContext context, SelectStatement statement)
-	{
-		//根据生成的脚本创建对应的数据命令
-		var command = context.Session.Build(context, statement);
-
-		//处理语句的插槽替换运算
-		StatementSlotter.Evaluate(context, statement, command);
-
-		context.Result = CreateResults(context.ModelType, context, statement, command, 0, context.Paging);
-		return false;
-	}
-
-	protected virtual bool OnExecute(DataInsertContext context, SelectStatement statement)
-	{
-		//根据生成的脚本创建对应的数据命令
-		var command = context.Session.Build(context, statement);
-
-		//处理语句的插槽替换运算
-		StatementSlotter.Evaluate(context, statement, command);
-
-		//绑定命令参数
-		statement.Bind(context, command);
-
-		using(var reader = command.ExecuteReader())
-		{
-			if(reader.Read())
-			{
-				for(int i = 0; i < reader.FieldCount; i++)
-				{
-					var schema = string.IsNullOrEmpty(statement.Alias) ? context.Schema.Find(reader.GetName(i)) : context.Schema.Find(statement.Alias);
-
-					if(schema != null)
-					{
-						if(schema.Token.Property.IsComplex && schema.Children.TryGetValue(reader.GetName(i), out var child))
-							schema = child;
-
-						var data = context.Data;
-						SetSequenceValue(data, schema, reader.GetValue(i));
-						context.Data = data;
-					}
-				}
-			}
-		}
-
-		return true;
-	}
-
-	protected virtual bool OnExecute(DataUpsertContext context, SelectStatement statement)
-	{
-		//根据生成的脚本创建对应的数据命令
-		var command = context.Session.Build(context, statement);
-
-		//处理语句的插槽替换运算
-		StatementSlotter.Evaluate(context, statement, command);
-
-		//绑定命令参数
-		statement.Bind(context, command);
-
-		using(var reader = command.ExecuteReader())
-		{
-			if(reader.Read())
-			{
-				for(int i = 0; i < reader.FieldCount; i++)
-				{
-					var schema = string.IsNullOrEmpty(statement.Alias) ? context.Schema.Find(reader.GetName(i)) : context.Schema.Find(statement.Alias);
-
-					if(schema != null)
-					{
-						if(schema.Token.Property.IsComplex && schema.Children.TryGetValue(reader.GetName(i), out var child))
-							schema = child;
-
-						var data = context.Data;
-						SetSequenceValue(data, schema, reader.GetValue(i));
-						context.Data = data;
-					}
-				}
-			}
-		}
-
-		return true;
-	}
-
-	protected virtual bool OnExecute(DataUpdateContext context, SelectStatement statement)
-	{
-		var command = context.Session.Build(context, statement);
-		StatementSlotter.Evaluate(context, statement, command);
-		statement.Bind(context, command);
-
-		using(var reader = command.ExecuteReader())
-		{
-			if(context.Options.HasReturning(out var returning))
-			{
-				while(reader.Read())
-					returning.Rows.Populate(reader);
-			}
-		}
-
-		return true;
-	}
-	#endregion
-
 	#region 异步执行
 	public ValueTask<bool> ExecuteAsync(IDataAccessContext context, SelectStatement statement, CancellationToken cancellation)
 	{
@@ -181,20 +62,14 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 
 	protected virtual ValueTask<bool> OnExecuteAsync(DataSelectContext context, SelectStatement statement, CancellationToken cancellation)
 	{
-		//根据生成的脚本创建对应的数据命令
-		var command = context.Session.Build(context, statement);
-
-		//处理语句的插槽替换运算
-		StatementSlotter.Evaluate(context, statement, command);
-
-		context.Result = CreateResults(context.ModelType, context, statement, command, 0, context.Paging);
+		context.Result = CreateResults(context.ModelType, context, statement, 0, context.Paging);
 		return ValueTask.FromResult(false);
 	}
 
 	protected virtual async ValueTask<bool> OnExecuteAsync(DataInsertContext context, SelectStatement statement, CancellationToken cancellation)
 	{
 		//根据生成的脚本创建对应的数据命令
-		var command = context.Session.Build(context, statement);
+		await using var command = context.Session.Build(context, statement);
 
 		//处理语句的插槽替换运算
 		StatementSlotter.Evaluate(context, statement, command);
@@ -202,7 +77,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 		//绑定命令参数
 		await statement.BindAsync(context, command, cancellation);
 
-		using(var reader = await command.ExecuteReaderAsync(cancellation))
+		await using(var reader = await command.ExecuteReaderAsync(cancellation))
 		{
 			if(await reader.ReadAsync(cancellation))
 			{
@@ -229,7 +104,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 	protected virtual async ValueTask<bool> OnExecuteAsync(DataUpsertContext context, SelectStatement statement, CancellationToken cancellation)
 	{
 		//根据生成的脚本创建对应的数据命令
-		var command = context.Session.Build(context, statement);
+		await using var command = context.Session.Build(context, statement);
 
 		//处理语句的插槽替换运算
 		StatementSlotter.Evaluate(context, statement, command);
@@ -237,7 +112,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 		//绑定命令参数
 		await statement.BindAsync(context, command, cancellation);
 
-		using(var reader = await command.ExecuteReaderAsync(cancellation))
+		await using(var reader = await command.ExecuteReaderAsync(cancellation))
 		{
 			if(await reader.ReadAsync(cancellation))
 			{
@@ -263,11 +138,11 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 
 	protected virtual async ValueTask<bool> OnExecuteAsync(DataUpdateContext context, SelectStatement statement, CancellationToken cancellation)
 	{
-		var command = context.Session.Build(context, statement);
+		await using var command = context.Session.Build(context, statement);
 		StatementSlotter.Evaluate(context, statement, command);
 		await statement.BindAsync(context, command, cancellation);
 
-		using(var reader = await command.ExecuteReaderAsync(cancellation))
+		await using(var reader = await command.ExecuteReaderAsync(cancellation))
 		{
 			if(context.Options.HasReturning(out var returning))
 			{
@@ -311,42 +186,41 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 			member.Token.SetValue(ref data, value);
 	}
 
-	private static IEnumerable CreateResults(Type elementType, DataSelectContext context, SelectStatement statement, DbCommand command, int skip, Paging paging = null)
+	private static object CreateResults(Type elementType, DataSelectContext context, SelectStatement statement, int skip, Paging paging = null, KeyValuePair<string, object>[] parameters = null)
 	{
-		return (IEnumerable)System.Activator.CreateInstance(
+		return System.Activator.CreateInstance(
 			typeof(LazyCollection<>).MakeGenericType(elementType),
-			[context, statement, command, skip, paging]);
+			[context, statement, skip, paging, parameters]);
 	}
 	#endregion
 
 	#region 嵌套子类
-	private interface ILazyCollection : IEnumerable
+	private interface ILazyCollection
 	{
-		IEnumerable Materialize(bool array);
 		ValueTask<IEnumerable> MaterializeAsync(bool array, CancellationToken cancellation);
 	}
 
-	private sealed class LazyCollection<T> : ILazyCollection, IPageable, IAsyncEnumerable<T>, IEnumerable<T>
+	private sealed class LazyCollection<T> : ILazyCollection, IPageable, IAsyncEnumerable<T>
 	{
 		#region 事件定义
-		public event EventHandler<PagingEventArgs> Paginated;
+		public event Func<object, PagingEventArgs, CancellationToken, ValueTask> Paginated;
 		#endregion
 
 		#region 成员变量
 		private readonly int _skip;
 		private readonly Paging _paging;
-		private readonly DbCommand _command;
+		private readonly KeyValuePair<string, object>[] _parameters;
 		private readonly DataSelectContext _context;
 		private readonly SelectStatement _statement;
 		#endregion
 
 		#region 构造函数
-		public LazyCollection(DataSelectContext context, SelectStatement statement, DbCommand command, int skip, Paging paging)
+		public LazyCollection(DataSelectContext context, SelectStatement statement, int skip, Paging paging, KeyValuePair<string, object>[] parameters)
 		{
 			_skip = skip;
 			_context = context ?? throw new ArgumentNullException(nameof(context));
 			_statement = statement ?? throw new ArgumentNullException(nameof(statement));
-			_command = command ?? throw new ArgumentNullException(nameof(command));
+			_parameters = parameters;
 			_paging = paging;
 		}
 		#endregion
@@ -356,39 +230,19 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 		#endregion
 
 		#region 遍历迭代
-		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-		public IEnumerator<T> GetEnumerator()
-		{
-			var reader = _command.ExecuteReader();
-
-			try
-			{
-				//如果启用了分页，则先获取分页信息
-				if(_paging != null && _paging.IsPaged())
-				{
-					//首先执行分页查询
-					if(reader.Read())
-						_paging.Total = (long)Convert.ChangeType(reader.GetValue(0), typeof(long));
-
-					//将读取器移到数据查询
-					reader.NextResult();
-
-					//激发分页完成事件
-					this.Paginated?.Invoke(this, new PagingEventArgs(_context.Name, _paging));
-				}
-
-				return new LazyIterator(_context, _statement, reader, _skip);
-			}
-			catch
-			{
-				reader.Dispose();
-				throw;
-			}
-		}
-
 		public async IAsyncEnumerator<T> GetAsyncEnumerator(CancellationToken cancellation)
 		{
-			var reader = await _command.ExecuteReaderAsync(cancellation).ConfigureAwait(false);
+			await using var command = _context.Session.Build(_context, _statement);
+
+			if(_parameters == null)
+				StatementSlotter.Evaluate(_context, _statement, command);
+			else
+			{
+				foreach(var parameter in _parameters)
+					command.Parameters[parameter.Key].Value = parameter.Value;
+			}
+
+			var reader = await command.ExecuteReaderAsync(cancellation).ConfigureAwait(false);
 			LazyIterator iterator;
 
 			try
@@ -404,7 +258,13 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 					await reader.NextResultAsync(cancellation).ConfigureAwait(false);
 
 					//激发分页完成事件
-					this.Paginated?.Invoke(this, new PagingEventArgs(_context.Name, _paging));
+					var handlers = this.Paginated;
+					if(handlers != null)
+					{
+						var args = new PagingEventArgs(_context.Name, _paging);
+						foreach(Func<object, PagingEventArgs, CancellationToken, ValueTask> handler in handlers.GetInvocationList())
+							await handler(this, args, cancellation).ConfigureAwait(false);
+					}
 				}
 
 				iterator = new LazyIterator(_context, _statement, reader, _skip, cancellation);
@@ -422,12 +282,6 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 			}
 		}
 
-		public IEnumerable Materialize(bool array)
-		{
-			var items = new List<T>(this);
-			return array ? items.ToArray() : items;
-		}
-
 		public async ValueTask<IEnumerable> MaterializeAsync(bool array, CancellationToken cancellation)
 		{
 			var items = new List<T>();
@@ -440,7 +294,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 		#endregion
 
 		#region 数据迭代
-		private class LazyIterator : IEnumerator<T>, IAsyncEnumerator<T>
+		private class LazyIterator : IAsyncEnumerator<T>
 		{
 			#region 成员变量
 			private T _current;
@@ -485,31 +339,6 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 			#region 公共成员
 			public T Current => _current;
 
-			public bool MoveNext()
-			{
-				var reader = _reader;
-
-				if(reader == null)
-					return false;
-
-				try
-				{
-					if(reader.Read())
-					{
-						_current = this.Populate();
-						return true;
-					}
-				}
-				catch
-				{
-					this.Dispose();
-					throw;
-				}
-
-				this.Dispose();
-				return false;
-			}
-
 			public async ValueTask<bool> MoveNextAsync()
 			{
 				var reader = _reader;
@@ -519,6 +348,8 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 
 				try
 				{
+					_cancellation.ThrowIfCancellationRequested();
+
 					if(await reader.ReadAsync(_cancellation).ConfigureAwait(false))
 					{
 						_current = await this.PopulateAsync().ConfigureAwait(false);
@@ -537,16 +368,6 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 			#endregion
 
 			#region 私有方法
-			private T Populate()
-			{
-				var model = _populator.Populate<T>(_reader);
-
-				if(model != null && _slaves != null)
-					this.PopulateSlaves(model);
-
-				return model;
-			}
-
 			private async ValueTask<T> PopulateAsync()
 			{
 				var model = _populator.Populate<T>(_reader);
@@ -555,41 +376,6 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 					await this.PopulateSlavesAsync(model).ConfigureAwait(false);
 
 				return model;
-			}
-
-			private void PopulateSlaves(T model)
-			{
-				foreach(var slave in _statement.Slaves)
-				{
-					if(slave is SelectStatement selection && _slaves.TryGetValue(selection.Alias, out var token))
-					{
-						if(token.Schema.Token.MemberType == null)
-							continue;
-
-						object container = GetCurrentContainer(model, token, _skip);
-
-						if(container == null)
-							continue;
-
-						//生成子查询语句对应的命令
-						var command = _context.Session.Build(_context, slave);
-
-						foreach(var parameter in token.Parameters)
-						{
-							command.Parameters[parameter.Name].Value = _reader.GetValue(parameter.Ordinal);
-						}
-
-						//创建一个新的查询结果集
-						var results = (ILazyCollection)CreateResults(Zongsoft.Common.TypeExtension.GetElementType(token.Schema.Token.MemberType), _context, selection, command, _skip + 1);
-						IEnumerable value = results;
-
-						//如果要设置的目标成员类型是一个数组或者集合，则需要将动态的查询结果集转换为固定的列表
-						if(Zongsoft.Common.TypeExtension.IsCollection(token.Schema.Token.MemberType))
-							value = results.Materialize(token.Schema.Token.MemberType.IsArray);
-
-						token.Schema.Token.SetValue(ref container, value);
-					}
-				}
 			}
 
 			private async ValueTask PopulateSlavesAsync(T model)
@@ -606,20 +392,28 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 						if(container == null)
 							continue;
 
-						//生成子查询语句对应的命令
-						var command = _context.Session.Build(_context, slave);
-
+						//先保存父记录的关联参数，子结果可在父读取器前进后再枚举。
+						var parameters = new List<KeyValuePair<string, object>>();
 						foreach(var parameter in token.Parameters)
+							parameters.Add(new(parameter.Name, _reader.GetValue(parameter.Ordinal)));
+
+						var memberType = token.Schema.Token.MemberType;
+						var elementType = Zongsoft.Common.TypeExtension.GetElementType(memberType);
+
+						if(elementType == null)
 						{
-							command.Parameters[parameter.Name].Value = _reader.GetValue(parameter.Ordinal);
+							Zongsoft.Common.TypeExtension.IsAssignableFrom(typeof(IAsyncEnumerable<>), memberType, type =>
+							{
+								elementType = type.GetGenericArguments()[0];
+								return true;
+							});
 						}
 
-						//创建一个新的查询结果集
-						var results = (ILazyCollection)CreateResults(Zongsoft.Common.TypeExtension.GetElementType(token.Schema.Token.MemberType), _context, selection, command, _skip + 1);
-						IEnumerable value = results;
+						var results = (ILazyCollection)CreateResults(elementType, _context, selection, _skip + 1, null, parameters.ToArray());
+						object value = results;
 
 						//集合成员必须异步物化，避免在异步查询路径中同步读取数据库
-						if(Zongsoft.Common.TypeExtension.IsCollection(token.Schema.Token.MemberType))
+						if(typeof(IEnumerable).IsAssignableFrom(token.Schema.Token.MemberType))
 							value = await results.MaterializeAsync(token.Schema.Token.MemberType.IsArray, _cancellation).ConfigureAwait(false);
 
 						token.Schema.Token.SetValue(ref container, value);
@@ -697,20 +491,7 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 			}
 			#endregion
 
-			#region 显式实现
-			object IEnumerator.Current => this.Current;
-			void IEnumerator.Reset() => throw new NotSupportedException();
-			#endregion
-
 			#region 处置方法
-			public void Dispose()
-			{
-				var reader = Interlocked.Exchange(ref _reader, null);
-
-				if(reader != null)
-					reader.Dispose();
-			}
-
 			public async ValueTask DisposeAsync()
 			{
 				var reader = Interlocked.Exchange(ref _reader, null);

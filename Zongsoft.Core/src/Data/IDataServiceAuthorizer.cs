@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Data;
 
@@ -38,5 +40,7 @@ public interface IDataServiceAuthorizer<TModel>
 	/// <param name="service">指定的数据服务对象。</param>
 	/// <param name="method">待验证的数据服务方法。</param>
 	/// <param name="options">待验证方法的选项参数。</param>
-	void Authorize(IDataService<TModel> service, DataServiceMethod method, IDataOptions options);
+	/// <param name="cancellation">取消标记。</param>
+	/// <returns>表示异步操作的任务。</returns>
+	ValueTask AuthorizeAsync(IDataService<TModel> service, DataServiceMethod method, IDataOptions options, CancellationToken cancellation = default);
 }

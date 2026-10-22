@@ -1,6 +1,8 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Xunit;
@@ -14,7 +16,7 @@ namespace Zongsoft.Data.Tests;
 public class DataSourceSelectorTest
 {
 	[Fact]
-	public void GetSource_MultiScriptCommand_PrefersDefaultDriver()
+	public async Task GetSource_MultiScriptCommand_PrefersDefaultDriver()
 	{
 		var command = CreateCommand();
 		command.Script("Secondary", "SELECT 'secondary';");
@@ -26,7 +28,7 @@ public class DataSourceSelectorTest
 
 		try
 		{
-			using var accessor = new DataAccess("Selector");
+			await using var accessor = new DataAccess("Selector");
 			using var context = new DataExecuteContextMocker(accessor, command.QualifiedName);
 
 			Assert.Same(primary, selector.GetSource(context));
@@ -38,7 +40,7 @@ public class DataSourceSelectorTest
 	}
 
 	[Fact]
-	public void GetSource_DefaultDriverWithoutScript_FallsBackToCompatibleScriptDriver()
+	public async Task GetSource_DefaultDriverWithoutScript_FallsBackToCompatibleScriptDriver()
 	{
 		var command = CreateCommand();
 		command.Script("Unavailable", "SELECT 'unavailable';");
@@ -50,7 +52,7 @@ public class DataSourceSelectorTest
 
 		try
 		{
-			using var accessor = new DataAccess("Selector");
+			await using var accessor = new DataAccess("Selector");
 			using var context = new DataExecuteContextMocker(accessor, command.QualifiedName);
 
 			Assert.Same(fallback, selector.GetSource(context));
@@ -82,7 +84,7 @@ public class DataSourceSelectorTest
 		public FeatureCollection Features => null;
 		public IDictionary<string, object> Properties { get; } = new Dictionary<string, object>();
 
-		public DataTable GetSchema(string name, bool refresh = false) => null;
+		public ValueTask<DataTable> GetSchemaAsync(string name, bool refresh = false, CancellationToken cancellation = default) => ValueTask.FromResult<DataTable>(null);
 		public bool Equals(IDataSource other) => ReferenceEquals(this, other);
 	}
 
@@ -97,7 +99,7 @@ public class DataSourceSelectorTest
 		public IStatementSlotEvaluator Slotter => null;
 		public IStatementBuilder Builder => null;
 
-		public Exception OnError(IDataAccessContext context, Exception exception) => exception;
+		public ValueTask<Exception> OnErrorAsync(IDataAccessContext context, Exception exception, CancellationToken cancellation = default) => ValueTask.FromResult(exception);
 		public DbCommand CreateCommand() => throw new NotSupportedException();
 		public DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text) => throw new NotSupportedException();
 		public DbCommand CreateCommand(IDataAccessContextBase context, IStatementBase statement) => throw new NotSupportedException();

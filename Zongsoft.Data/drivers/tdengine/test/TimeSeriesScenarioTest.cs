@@ -53,13 +53,13 @@ public class TimeSeriesScenarioTest(DatabaseFixture database)
 			Assert.Equal(1, await accessor.InsertAsync(sanFrancisco));
 			Assert.Equal(1, await accessor.InsertAsync(losAngeles));
 
-			var rows = accessor.Select<PowerMeterReading>(criteria).ToArray();
+			var rows = await Global.ToArrayAsync(accessor.SelectAsync<PowerMeterReading>(criteria));
 			Assert.Equal(2, rows.Length);
 			Assert.Contains(rows, row => row.MeterId == sanFrancisco.MeterId);
 			Assert.Contains(rows, row => row.MeterId == losAngeles.MeterId);
 
 			var meterCriteria = criteria & Condition.Equal(nameof(PowerMeterReading.MeterId), sanFrancisco.MeterId);
-			var row = Assert.Single(accessor.Select<PowerMeterReading>(meterCriteria));
+			var row = Assert.Single(await Global.ToArrayAsync(accessor.SelectAsync<PowerMeterReading>(meterCriteria)));
 			Assert.Equal(sanFrancisco.Current, row.Current);
 			Assert.Equal(sanFrancisco.Voltage, row.Voltage);
 			Assert.Equal(sanFrancisco.Phase, row.Phase);
@@ -117,7 +117,7 @@ public class TimeSeriesScenarioTest(DatabaseFixture database)
 	}
 
 	[Fact]
-	public async Task SmartMeterImportCrossesNativeBatchBoundaryAsync()
+	public async Task SmartMeterImportCrossesBatchBoundaryAsync()
 	{
 		const int COUNT = 1001;
 
@@ -183,7 +183,7 @@ public class TimeSeriesScenarioTest(DatabaseFixture database)
 			var tagCriteria = criteria &
 				Condition.Equal(nameof(VehicleTelemetry.Vin), telemetry.Vin) &
 				Condition.Equal(nameof(VehicleTelemetry.Model), telemetry.Model);
-			var row = Assert.Single(accessor.Select<VehicleTelemetry>(tagCriteria));
+			var row = Assert.Single(await Global.ToArrayAsync(accessor.SelectAsync<VehicleTelemetry>(tagCriteria)));
 
 			Assert.Equal(telemetry.PlateNumber, row.PlateNumber);
 			Assert.Equal(telemetry.Longitude, row.Longitude);
@@ -215,7 +215,7 @@ public class TimeSeriesScenarioTest(DatabaseFixture database)
 			Assert.Equal(1, await accessor.InsertAsync(original));
 			Assert.Equal(1, await accessor.UpsertAsync(replacement));
 
-			var row = Assert.Single(accessor.Select<VehicleTelemetry>(criteria));
+			var row = Assert.Single(await Global.ToArrayAsync(accessor.SelectAsync<VehicleTelemetry>(criteria)));
 			Assert.Equal(replacement.Vin, row.Vin);
 			Assert.Equal(replacement.Speed, row.Speed);
 			Assert.Equal(replacement.Altitude, row.Altitude);
@@ -247,7 +247,7 @@ public class TimeSeriesScenarioTest(DatabaseFixture database)
 			Assert.Equal(observations.Length, await accessor.ImportAsync(observations));
 
 			var eastCriteria = criteria & Condition.Equal(nameof(EnvironmentObservation.Region), "华东");
-			var east = accessor.Select<EnvironmentObservation>(eastCriteria).ToArray();
+			var east = await Global.ToArrayAsync(accessor.SelectAsync<EnvironmentObservation>(eastCriteria));
 
 			Assert.Equal(2, east.Length);
 			Assert.Contains(east, row => row.StationCode == "EAST-001" && row.Raining && row.Description == "小雨");
@@ -287,7 +287,7 @@ public class TimeSeriesScenarioTest(DatabaseFixture database)
 			await accessor.DeleteAsync<EnvironmentObservation>(timeCriteria);
 			Assert.Equal(observations.Length, await accessor.ImportAsync(observations));
 
-			var rows = accessor.Select<EnvironmentObservation>(thresholdCriteria).ToArray();
+			var rows = await Global.ToArrayAsync(accessor.SelectAsync<EnvironmentObservation>(thresholdCriteria));
 			Assert.Equal(2, rows.Length);
 			Assert.All(rows, row => Assert.True(row.Temperature > 30F));
 			Assert.All(rows, row => Assert.False(row.Raining));
@@ -320,7 +320,7 @@ public class TimeSeriesScenarioTest(DatabaseFixture database)
 			await accessor.DeleteAsync<MotorWaveform>(criteria);
 			Assert.Equal(1, await accessor.InsertAsync(waveform));
 
-			var row = Assert.Single(accessor.Select<MotorWaveform>(criteria));
+			var row = Assert.Single(await Global.ToArrayAsync(accessor.SelectAsync<MotorWaveform>(criteria)));
 			Assert.Equal(waveform.LineId, row.LineId);
 			Assert.Equal(waveform.SiteId, row.SiteId);
 			Assert.Equal(waveform.ElevatorCode, row.ElevatorCode);
@@ -357,11 +357,11 @@ public class TimeSeriesScenarioTest(DatabaseFixture database)
 			Assert.Equal(waveforms.Length, await accessor.ImportAsync(waveforms));
 
 			var measuringCriteria = criteria & Condition.Equal(nameof(MotorWaveform.MeasuringId), "MOTOR-A");
-			var motorA = accessor.Select<MotorWaveform>(measuringCriteria).ToArray();
+			var motorA = await Global.ToArrayAsync(accessor.SelectAsync<MotorWaveform>(measuringCriteria));
 			Assert.Equal(2, motorA.Length);
 			Assert.All(motorA, row => Assert.Equal(1024, row.SampleRate));
 
-			var all = accessor.Select<MotorWaveform>(criteria).ToArray();
+			var all = await Global.ToArrayAsync(accessor.SelectAsync<MotorWaveform>(criteria));
 			Assert.Equal(3, all.Length);
 			Assert.Contains(all, row => row.MeasuringId == "MOTOR-B" && row.SampleRate == 4096);
 		}

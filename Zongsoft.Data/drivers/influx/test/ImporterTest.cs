@@ -13,7 +13,7 @@ public class ImporterTest(DatabaseFixture database)
 	private readonly DatabaseFixture _database = database;
 
 	[Fact]
-	public void TestImport()
+	public async Task TestImport()
 	{
 		const int COUNT = 100;
 
@@ -27,7 +27,7 @@ public class ImporterTest(DatabaseFixture database)
 		Assert.NotEmpty(Mapping.Entities);
 		Assert.True(Mapping.Entities.Contains("MachineHistory"));
 
-		var count = accessor.Import(Generate(COUNT));
+		var count = await accessor.ImportAsync(Generate(COUNT));
 		Assert.Equal(COUNT, count);
 	}
 

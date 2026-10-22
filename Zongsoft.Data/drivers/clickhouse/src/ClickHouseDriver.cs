@@ -62,18 +62,18 @@ public class ClickHouseDriver : DataDriverBase
 	#endregion
 
 	#region 公共方法
-	public override Exception OnError(IDataAccessContext context, Exception exception)
+	public override ValueTask<Exception> OnErrorAsync(IDataAccessContext context, Exception exception, CancellationToken cancellation = default)
 	{
 		if(exception is DbException error)
 		{
 			switch(error.ErrorCode)
 			{
 				case 0:
-					return error;
+					return new ValueTask<Exception>(error);
 			}
 		}
 
-		return exception;
+		return new ValueTask<Exception>(exception);
 	}
 
 	public override DbCommand CreateCommand() => new ClickHouseCommand();

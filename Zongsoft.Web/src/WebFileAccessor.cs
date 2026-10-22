@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -266,11 +266,11 @@ public class WebFileAccessor
 			}
 
 			//调用文件系统根据完整文件路径去创建一个新建文件流
-			using(var stream = FileSystem.File.Open(
+			await using(var stream = await FileSystem.File.OpenAsync(
 				filePath,
 				args.Overwrite ? FileMode.Create : FileMode.CreateNew,
 				FileAccess.Write,
-				fileInfo.HasProperties ? fileInfo.Properties : null))
+				fileInfo.HasProperties ? fileInfo.Properties : null, cancellation))
 			{
 				await file.CopyToAsync(stream, cancellation);
 			}

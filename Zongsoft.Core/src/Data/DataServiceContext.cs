@@ -111,7 +111,7 @@ public class DataServiceContext<TModel> : IDataServiceContext<TModel>
 				importing.Count = (int)value;
 				break;
 			case DataSelectContextBase selection:
-				selection.Result = (IEnumerable)value;
+				selection.Result = value;
 				break;
 			case DataInsertContextBase insertion:
 				insertion.Count = (int)value;

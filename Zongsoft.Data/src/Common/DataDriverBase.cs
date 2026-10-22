@@ -30,6 +30,8 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Data.Common;
 
@@ -67,7 +69,7 @@ public abstract class DataDriverBase : IDataDriver
 	#endregion
 
 	#region 公共方法
-	public virtual Exception OnError(IDataAccessContext context, Exception exception) => exception;
+	public virtual ValueTask<Exception> OnErrorAsync(IDataAccessContext context, Exception exception, CancellationToken cancellation = default) => ValueTask.FromResult(exception);
 	public abstract DbConnection CreateConnection(string connectionString = null);
 	public abstract DbConnectionStringBuilder CreateConnectionBuilder(string connectionString = null);
 	public virtual DbCommand CreateCommand() => this.CreateCommand(null, CommandType.Text);

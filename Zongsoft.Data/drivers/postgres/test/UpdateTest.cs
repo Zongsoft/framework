@@ -10,7 +10,7 @@ using Zongsoft.Data.Tests.Models;
 namespace Zongsoft.Data.PostgreSql.Tests;
 
 [Collection("Database")]
-public class UpdateTest(DatabaseFixture database) : IDisposable
+public class UpdateTest(DatabaseFixture database) : IAsyncDisposable
 {
 	private readonly DatabaseFixture _database = database;
 
@@ -42,7 +42,7 @@ public class UpdateTest(DatabaseFixture database) : IDisposable
 			Condition.Equal(nameof(UserModel.UserId), 100),
 			nameof(UserModel.Name));
 
-		var enumerator = result.GetAsyncEnumerator();
+		await using var enumerator = result.GetAsyncEnumerator();
 		Assert.True(await enumerator.MoveNextAsync());
 		var name = enumerator.Current;
 		await enumerator.DisposeAsync();
@@ -113,9 +113,9 @@ public class UpdateTest(DatabaseFixture database) : IDisposable
 			Condition.Equal(nameof(Employee.TenantId), 1) &
 			Condition.Equal(nameof(Employee.UserId), 100), $"*,{nameof(Employee.User)}{{*}}").FirstOrDefaultAsync();
 		#else
-		var employee = accessor.SelectAsync<Employee>(
+		var employee = await Zongsoft.Collections.Enumerable.FirstOrDefault(accessor.SelectAsync<Employee>(
 			Condition.Equal(nameof(Employee.TenantId), 1) &
-			Condition.Equal(nameof(Employee.UserId), 100), $"*,{nameof(Employee.User)}{{*}}").ToBlockingEnumerable().FirstOrDefault();
+			Condition.Equal(nameof(Employee.UserId), 100), $"*,{nameof(Employee.User)}{{*}}"));
 		#endif
 
 		Assert.NotNull(employee);
@@ -131,13 +131,13 @@ public class UpdateTest(DatabaseFixture database) : IDisposable
 		Assert.Equal("Popeye Zhong", employee.User.Nickname);
 	}
 
-	void IDisposable.Dispose()
+	async ValueTask IAsyncDisposable.DisposeAsync()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
 
 		var accessor = _database.Accessor;
-		accessor.Delete<Employee>(Condition.Equal(nameof(UserModel.UserId), 100));
-		accessor.Delete<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
+		await accessor.DeleteAsync<Employee>(Condition.Equal(nameof(UserModel.UserId), 100));
+		await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), 100));
 	}
 }

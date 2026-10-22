@@ -53,7 +53,13 @@ partial class TransactionContext
 
 	#region 分部方法
 	/// <summary>初始化根事务的条件特性，嵌套事务复用相同实例。</summary>
-	partial void OnInitialized() => _feature = this.Parent?.Root._feature ?? new(this);
+	partial void OnInitialized() => _feature = this.Parent?.Root._feature ?? new();
+
+	partial void OnFinalized()
+	{
+		if(this.Parent == null)
+			_feature.Complete(this.Status);
+	}
 	#endregion
 
 	#region 嵌套子类
@@ -62,10 +68,6 @@ partial class TransactionContext
 	{
 		/// <summary>保存根事务的最终条件结果。</summary>
 		private readonly TaskCompletionSource<bool> _completed = new(TaskCreationOptions.RunContinuationsAsynchronously);
-
-		/// <summary>在根事务进入调用环境前订阅完成通知。</summary>
-		/// <param name="context">条件所绑定的根事务上下文。</param>
-		public Feature(TransactionContext context) => context.Completed += this.OnCompleted;
 
 		/// <summary>根据已绑定根事务的最终状态求值条件。</summary>
 		/// <param name="argument">条件参数；事务条件仅取决于根事务状态。</param>
@@ -80,15 +82,9 @@ partial class TransactionContext
 		/// <returns>成功提交返回 <see langword="true"/>，其它最终状态返回 <see langword="false"/>；事务未完成时保持等待。</returns>
 		public ValueTask<bool> PredicateAsync(object argument, Parameters parameters, CancellationToken cancellation = default) => new(_completed.Task.WaitAsync(cancellation));
 
-		/// <summary>发布事务条件的最终结果并解除订阅。</summary>
-		/// <param name="sender">已经完成的根事务上下文。</param>
-		/// <param name="args">事务完成事件参数。</param>
-		private void OnCompleted(object sender, EventArgs args)
-		{
-			var context = (TransactionContext)sender;
-			context.Completed -= this.OnCompleted;
-			_completed.TrySetResult(context.Status == TransactionStatus.Committed);
-		}
+		/// <summary>在用户完成通知前发布根事务条件的最终结果。</summary>
+		/// <param name="status">根事务的最终状态。</param>
+		public void Complete(TransactionStatus status) => _completed.TrySetResult(status == TransactionStatus.Committed);
 	}
 	#endregion
 }

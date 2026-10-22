@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data;
 using System.Data.Common;
 using System.Threading;
@@ -98,7 +98,7 @@ public class DataMultiplexerTest
 		public FeatureCollection Features => null;
 		public IDictionary<string, object> Properties { get; } = new Dictionary<string, object>();
 
-		public DataTable GetSchema(string name, bool refresh = false) => null;
+		public ValueTask<DataTable> GetSchemaAsync(string name, bool refresh = false, CancellationToken cancellation = default) => ValueTask.FromResult<DataTable>(null);
 		public bool Equals(IDataSource other) => object.ReferenceEquals(this, other);
 	}
 
@@ -113,7 +113,7 @@ public class DataMultiplexerTest
 		public IStatementSlotEvaluator Slotter => null;
 		public IStatementBuilder Builder => null;
 
-		public Exception OnError(IDataAccessContext context, Exception exception) => exception;
+		public ValueTask<Exception> OnErrorAsync(IDataAccessContext context, Exception exception, CancellationToken cancellation = default) => ValueTask.FromResult(exception);
 		public DbCommand CreateCommand() => throw new NotSupportedException();
 		public DbCommand CreateCommand(string text, CommandType commandType = CommandType.Text) => throw new NotSupportedException();
 		public DbCommand CreateCommand(IDataAccessContextBase context, IStatementBase statement) => throw new NotSupportedException();

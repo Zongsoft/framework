@@ -24,7 +24,7 @@
 | 报表 | `IReport` | 带参数、数据定位器、渲染和导出操作的提供程序文档 |
 | 资源 | `IReportResource` | 报表使用的具名内嵌/外部资源 |
 | 数据模型 | `IReportDataModel` | 描述数据源、Schema、分页和提供程序设置 |
-| 定位器/加载器 | `IReportDataLocator`, `IReportDataLoader` | 选择加载器并物化报表数据 |
+| 定位器/加载器 | `IReportDataLocator`, `IReportDataLoader` | 选择加载器并异步取得报表数据 |
 | 仓储/归档 | `IReportRepository`, `IReportArchiveLocator` | 持久化定义或定位生成结果 |
 
 渲染产生报表的呈现格式，导出产生选定的交换/输出格式。准确选项和可用格式由提供程序决定。
@@ -39,20 +39,26 @@ dotnet add package Zongsoft.Reporting
 
 ## 定义示例
 
-框架中的 [FileReportDescriptor](src/ReportDescriptor.cs) 是通过框架文件系统打开定义的真实参考。它的 `Open` 实现如下：
+通过描述符异步打开模板，使用完后释放数据流：
 
 ```csharp
-public Stream Open()
-{
-	return Zongsoft.IO.FileSystem.File.Open(this.FilePath, FileMode.Open, FileAccess.Read);
-}
+var descriptor = new FileReportDescriptor("templates/sales.rdlx");
+await using var stream = await descriptor.OpenAsync(cancellation);
 ```
 
-这是源码摘录，不是随包提供的报表示例。本包和 Grapecity 适配器均未附带可直接运行的报表定义。使用时必须准备部署的提供程序所支持的可信定义；格式、数据源和参数均应以该实际定义为准。
+本包未附带可直接运行的报表定义。请准备所选提供程序支持的可信模板，并使用该提供程序的打开 API 获得 IReport；模板格式、数据源和参数均以实际定义为准。
 
-描述符只打开定义，不实例化报表。应通过提供程序的报表打开 API（例如 [Grapecity 的 `Report.Open`](../externals/grapecity/README.zh-Hans.md)）获得 `IReport`。`IReportResourceResolver.Resolve` 返回的是图片等资源对应的 `IReportResource`，不是报表工厂。渲染和导出只应调用所选提供程序确实实现的操作。
+描述符负责打开模板，IReportResourceResolver.ResolveAsync 负责解析图片等资源。渲染和导出只应调用所选提供程序已经实现的操作。
 
 > 💡 业务查询应封装在 `IReportDataLoader` 后。模板应只命名数据模型与参数，不应嵌入部署凭据或不受限的临时数据访问。
+
+## 异步加载数据
+
+通过 `await loader.LoadAsync(report, model, cancellation)` 取得数据。返回对象可以是异步查询结果；报表提供程序需要异步读取数据，再向要求内存集合的渲染 API 提供已就绪的数据。
+
+当前 GrapeCity 适配器与本版本的异步加载、定位和存储契约不兼容，不能组合使用。
+
+模板和资源的定位、仓储创建/更新/删除、报表保存均使用 Async 入口并支持取消。IReportArchiveLocator.OpenAsync 返回 ReportArchiveResult：未找到时为默认值；没有文件路径时仍可返回有效的 Archive 元数据；非空 Stream 由调用方通过 await using 释放。
 
 ## 生命周期与限制
 

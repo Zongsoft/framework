@@ -28,7 +28,10 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 using Zongsoft.Data.Metadata;
 
@@ -37,7 +40,7 @@ namespace Zongsoft.Data.Common.Expressions;
 public class SelectStatementBuilder : IStatementBuilder<DataSelectContext>
 {
 	#region 构建方法
-	public IEnumerable<IStatementBase> Build(DataSelectContext context)
+	public async IAsyncEnumerable<IStatementBase> BuildAsync(DataSelectContext context, [EnumeratorCancellation] CancellationToken cancellation = default)
 	{
 		var statement = this.CreateStatement(context);
 
@@ -70,7 +73,7 @@ public class SelectStatementBuilder : IStatementBuilder<DataSelectContext>
 		}
 
 		//生成条件子句
-		statement.Where = statement.Where(context.Validate(), context.Aliaser);
+		statement.Where = statement.Where(await context.ValidateAsync(cancellation).ConfigureAwait(false), context.Aliaser);
 
 		//生成排序子句
 		GenerateSortings(context.Aliaser, statement, statement.Table, context.Sortings);

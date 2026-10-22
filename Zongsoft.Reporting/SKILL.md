@@ -11,9 +11,13 @@ description: 修改或审查 Zongsoft.Reporting 的报表描述符、资源解�
 
 - [IReport](src/IReport.cs) 定义保存、渲染和导出能力；[ReportDescriptor](src/ReportDescriptor.cs) 标识定义并打开流。
 - [IReportResourceResolver](src/IReportResourceResolver.cs) 返回资源 `IReportResource`，不是 `IReport` 工厂。勿将模板打开与图片/主题资源解析混为一层。
-- [ReportDataLoader](src/ReportDataLoader.cs) 按 `model.Name` 从服务容器 Resolve，要求结果为 `IDataService`，再用模型 Schema 和 `Paging.Page(1)` 调用 Select；不匹配返回 null。
+- [ReportDataLoader](src/ReportDataLoader.cs) 按 `model.Name` 从服务容器 Resolve，要求结果为 `IDataService`，再用模型 Schema 和 `Paging.Page(1)` 调用 SelectAsync；不匹配返回 null。LoadAsync 返回 ValueTask<object>，默认结果为可异步枚举的数据服务查询，取消标记传给查询；调用者等待 LoadAsync 后异步消费结果。
 - [ReportDataLocator](src/ReportDataLocator.cs) 当前返回 null，不构成完整定位服务。新增能力不能只更新 README 后假定已有默认实现。
+- IReportLocator 与 IReportResourceLocator 的单项查询返回 ValueTask，列表返回 IAsyncEnumerable；IReportRepository 的增改删、IReport.SaveAsync、IReportDescriptor.OpenAsync 及资源 ResolveAsync 均可等待，取消令牌在末尾。FindAsync、CreateAsync、ResolveAsync 保留省略业务选项的令牌便利重载。
+- IReportArchiveLocator.OpenAsync 返回 ReportArchiveResult（Archive、Stream）。default 是未找到；无路径时仍返回 Archive；打开的 Stream 归调用方异步释放。文件 URL 转换不承担文件打开或数据查询。
 - 格式专属逻辑属于 [Grapecity](../externals/grapecity)，本包不引入 ActiveReports 类型。
+
+GrapeCity 的同步 LocateDataSource/GetData 回调不能调用 LoadAsync 完成异步取数，当前适配器不能针对这一契约编译或直接与其旧二进制混用。其异步预加载和商业运行时接入属于独立适配任务。
 
 ## 实现级风险
 
@@ -26,7 +30,7 @@ description: 修改或审查 Zongsoft.Reporting 的报表描述符、资源解�
 
 ## 最小验证
 
-- 最小目标 `src/Zongsoft.Reporting.csproj`，本包无独立测试项目；契约变化再检查 Grapecity 与其 Web 项目。
+- 最小目标 `src/Zongsoft.Reporting.csproj`，本包的接口由直接业务实现验证；GrapeCity 与其 Web 项目暂缓，记录兼容限制，不为其保留同步数据桥。
 - 流使用可观测的内存流替身，验证打开失败、读取异常、重复释放；loader 使用记录型 IDataService 核对模型名称、Schema 和分页。
 - 报表模板采用无凭据的小型夹具；商业运行时、设计器、字体及许可证需显式准备。
 - 不将尚未实现的导出方法写成可用示例，不默认执行商业渲染服务。

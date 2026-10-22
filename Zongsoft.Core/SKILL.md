@@ -16,6 +16,7 @@ description: 设计、修改、审查或测试 Zongsoft.Core 的公共契约与�
 - 公共类型、成员、默认值、异常类型、取消和释放语义都属于兼容契约。
 - 序列化、文本解析、配置键、URL/Topic、时间和数值格式变化需要兼容旧输入或明确迁移策略。
 - 异步 API 不同步阻塞，不吞掉取消或后台异常；集合和注册表明确线程安全与快照语义。
+- 数据异步重载将 CancellationToken 放在末尾，并为常见参数前缀提供直接传令牌的短重载；调用方使用位置令牌检验便利性，不以命名 cancellation 绕过缺失入口。默认值只放在能明确承接省略调用的入口：短入口的令牌可选时，长入口对应的业务参数必填；不能同时匹配同一正常省略调用。调用方以具体类型的常量、实例或默认值区分 null/default 的业务含义，不为未定型表达式排列组合增加重载。保留 params 与位置令牌所需入口，核对类型明确的参数、条件、泛型键和排序的绑定及转发。
 - 可选能力通过 Feature、Provider、Factory 或现有扩展点表达，不用宽泛接口成员迫使所有实现伪支持。
 - 热路径优化先确认分配、锁竞争和复杂度，再用聚焦测试或基准证明。
 
@@ -28,7 +29,47 @@ description: 设计、修改、审查或测试 Zongsoft.Core 的公共契约与�
 - 日志异步入口由调用方等待并观察失败。`Logging` 立即调用日志器，将每个 `ValueTask` 恰好一次转换为 `Task`，返回的异步结果涵盖全部已发起操作；单个日志器同步抛错不跳过其余日志器，取消标记原样传递。同步 `Log` 与 `Flush` 通过 `Common.Asynchronous.FireAndForget` 观察返回任务，不阻塞等待，不向调用方传播日志器失败。`Logging` 不缓存日志、不维护在途任务集合、批次或错误状态；缓存、完成保证和故障报告由具体日志器负责。`FlushAsync` 只转发刷新，不作为此前同步调用或未等待异步调用的完成屏障。上下文在自有模块和初始化器清理后刷新日志，宿主容器随后释放共享日志器；有完成要求的清理日志必须使用并等待异步入口。
 - `HardwareProfile.LoadAsync/GetCurrentAsync` 与 `IHardwareCollector.CollectAsync` 构成硬件采集入口；外部进程输出应异步读取并等待退出。
 - `IFile` 和 `ISequence` 同时提供同步与异步契约；是否支持同步远程调用由适配器明确声明。Core 不为异步适配器提供阻塞包装。
-- `IDataAccess`、`IDataService` 的同步契约、同步生命周期回调和同步枚举支持由数据引擎负责。调用方保持其完成顺序，不能以弃置任务隐藏同步边界，也不能将边界扩散到通用事件、文件或消息接口。
+- `IDataAccess`、`IDataService` 的数据库操作与结果枚举由数据引擎负责。事务终结只使用可等待入口，调用方必须保持完成顺序，不能以弃置任务隐藏同步边界，也不能将边界扩散到通用事件、文件或消息接口。
+
+## 数据访问与服务
+
+IDataAccess、IDataService 的数据库操作使用异步入口；查询返回 IAsyncEnumerable<T>，通过 await foreach 或可等待的集合扩展读取。CT 位于最后，纯内存条件、模式和键转换保持同步。IDataAccess 由所有者等待 DisposeAsync；服务容器提供的共享访问器由容器释放。
+
+DataServiceBase 构造时按类型继承层级选取最近一层声明的 DataServiceAttribute，泛型特性的不同封闭类型不跨层合并。没有本层声明时才继承；同层多个匹配声明维持反射歧义异常。
+
+访问层按前回调、前事件、过滤器前段、执行、过滤器后段、后事件、后回调的顺序等待；前回调或前事件取消时跳过后续执行和后通知。服务层保留前事件后调用前过滤器、后事件后调用后过滤器的顺序。事件使用 Func<object, TArgs, CancellationToken, ValueTask> 并按订阅顺序逐项等待。失败立即向当前操作传播，不以 async void 或后台任务隐藏失败。
+
+SelectAsync 在调用时启动一次准备，枚举时等待同一准备结果；未枚举也观察准备故障并释放上下文。可兼容的已完成短路结果保持对象身份。方法令牌和枚举令牌共同约束枚举；取消一个等待者不取消共享准备。IDataAccessContext 的 Dispose 只清理本地状态，不接管数据会话。
+
+DataSelectContextBase.Result 可承载内存序列或兼容的异步序列。Get 的结果过滤发生在首次读取前；Getted 在取得首条或确认无结果后通知，DataGettedEventArgs.Result 是已有值快照，读取属性不再次枚举。DataGettingEventArgs 只提供待查询上下文与取消标记，不提供尚未取得的 Result。取消的 Get 不执行 Getted。
+
+InsertManyAsync、UpsertManyAsync、UpdateManyAsync 与访问层 ImportAsync 支持 IAsyncEnumerable<T> 及原有内存集合输入。服务批量新增/增改通过 IAsyncEnumerable<IDataDictionary<TModel>> 的 OnInsertManyAsync/OnUpsertManyAsync 扩展点处理，逐条等待 OnModel 后的验证；公共内存入口也走这一扩展点。DataImportContextBase.Data 使用 object，ModelType 识别两种输入的元素类型。GetModelAsync/GetExportModelAsync 等待模板取数，导入流和导出流的所有权属于调用方。
+
+IPageable.Paginated 使用可等待的委托，分页处理完成后才输出首条记录。包装器按需订阅源事件并转发自身作为 sender，取消最后一个订阅者时解除源订阅。纯内存筛选可以同步计算，不允许由同步迭代器读取数据库。
+
+GetDataDictionariesAsync<T> 为插入、复写和更新上下文提供可等待的数据字典遍历，支持异步引用类型、值类型及内存集合；同步 GetDataDictionaries<T> 只用于内存集合。上下文 Data 的重复读取能力由输入数据源决定，需要多次读取的业务在边界保存已验证字典，不能重复消费一次性源。服务导入的 OnImportAsync 数据钩子只接收 IAsyncEnumerable<TModel>。
+
+DataUpdateContextBase 保持单条更新契约；业务后置过滤器若额外接受批量输入，按实际 Data 形态选择字典工厂，不能以 IsMultiple 推断批量。字典本身应视为单条。
+
+DataDictionary.GetDictionariesAsync<T> 转换内存集合，GetDictionariesAsync<T, TSource> 转换异步数据源；公共工厂只负责字典转换与逐条等待 handle，服务授权、模式准备、OnModel 和验证保持在调用方。无回调入口接受末尾可选令牌；带回调入口的 handle 必填，允许显式 null。保留惰性枚举、空元素跳过和源枚举器的释放语义，不缓冲或重复消费输入。
+
+## 数据验证与异步结果转换
+
+IDataValidator 的条件验证使用 ValidateAsync；字段验证使用 OnImportAsync、OnInsertAsync、OnUpdateAsync，返回 DataValidatorResult。HasValue 为 false 表示不提供替代值，为 true 时 Value 允许为 null 或 IDataValueBinder。上下文验证保持显式条件优先、缺少验证器及 ValidatorSuppressed 跳过验证器的行为，不自行改写 Criteria；字段转发保持 Insert/Update 的选择规则。IDataValueBinder.BindAsync 在参数绑定时被等待，不能在返回验证结果时提前执行。
+
+Pageable.FilterAsync/MapAsync 消费 IAsyncEnumerable，按原枚举次序逐条等待回调，把枚举取消令牌传给源与回调。FilterResult<T>.Accepted 决定是否输出 Data，允许接受 null，default 表示丢弃。纯内存 Filter/Map 保留；包装器传递 IPageable、Suppressed 和分页事件，事件 sender 为最外层包装器。重复读取 Current 不重复调用回调；提前退出或失败等待源枚举器释放，并保持标准 await foreach 的异常优先级。
+
+## 事务生命周期
+
+事务调用方的改写以保留现有行为语义为前提：先核对事务范围、提交时机、异常处理、取消和资源归属，再选择 await using、显式终结或 RollbackAsync(Exception)。RollbackAsync(Exception) 只适用于需要保留业务异常原因的回滚路径；调用后是否重抛由原调用方语义决定，不把已经处理的异常改为抛出。语义修正须基于已发现的 bug，说明问题、预期行为及对应验证。
+
+`Transaction` 只实现 IAsyncDisposable；CommitAsync/RollbackAsync/DisposeAsync 共享 TransactionContext 的终结结果。首次提交在发布终结决议前检查取消；已接受的提交、回滚、登记回调与完成通知使用不可取消标记。DisposeAsync 必须在非 async 外壳中同步恢复调用方的 AsyncLocal 环境，再返回终结任务。嵌套上下文只处理本地完成通知，登记进入根事务；嵌套回滚将根事务标记为 rollback-only。
+
+RollbackAsync(Exception) 只在首次接受回滚决议时捕获业务异常；回滚及通知成功时正常返回，不主动重抛业务异常或业务取消。存在终结错误时才合并业务异常，按引用避免重复添加同一业务异常，并将聚合结果发布到共享终结任务，确保后续 DisposeAsync 不覆盖聚合结果。业务异常不参与 Status 判定；已接受的提交或回滚复用原结果，不追加原因、不重新执行回滚。null 原因沿用无原因回滚语义；无类型 default 会使公开回滚重载产生歧义，调用方使用无参数入口或明确类型的令牌。行为验证见 test/unit/Data/TransactionLifecycleTest.cs。
+
+TransactionContext 在短锁内保存终结任务和登记快照，锁外依次等待所有 IEnlistment.OnEnlistAsync。登记失败不能跳过其它登记；登记结果决定 Status，通知失败仅进入最终异常结果。根事务的条件特性在用户 Completed 回调之前发布，回调可等待条件而不能反向等待自身终结任务。Completed 使用 Func<object, EventArgs, CancellationToken, ValueTask> 并逐项等待，失败汇总后向调用方传播。
+
+三个 UpdateManyAsync 批量更新入口、角色与用户批量删除及 StateMachine.StopAsync 使用 await using 管理事务；业务操作和提交置于同一 try 块，catch 中等待 RollbackAsync(exception) 后以 throw 重抛，保留业务失败与回滚失败。参数校验和事务范围保持各入口的既定边界。StateMachine 通过 RunAsync 依次等待 GetStateAsync、TransferAsync 与 HandleAsync；状态值比较、CanTransfer 和处理器定位保持同步。DisposeAsync 按原记录顺序等待 FinishAsync、SetStateAsync、停止事务及清理，完成阶段使用 CancellationToken.None。FinishAsync 的同步及异步失败均保留 TargetInvocationException 包装；派生类通过 DisposeAsyncCore 扩展，重复释放共用完成结果。调用方先等待 RunAsync 完成再释放，不并发使用同一状态机。调用方异常传播见 test/unit/Data/TransactionCallerTest.cs，事务测试位于 test/unit/Data，状态机释放测试位于 test/unit/Components。
 
 ## 应用宿主生命周期
 
@@ -148,4 +189,4 @@ ChannelBase 以按需创建的共享完成任务协调一次关闭和释放，�
 
 ListenerBase<T> 的 T 是处理器实参，不提供 Packetizer 或 IReceiver；传输解码由实际接收者负责。注入处理器不由监听器释放，无处理器时检查取消后返回成功。HandlerBase<T> 无参数入口传递 null，显式 Parameters 保留引用身份。两种 IPacketizer 接口均只提供 Pack 与 Unpack；Pack 不 Flush，Unpack 失败不消费、成功须推进。帧长度与解码资源释放属于具体传输层，由 Net 的 PacketizerBase<T> 提供 GetLength 与 Release，不扩充 Core 接口。回归入口为 ChannelLifecycleTest、WorkerLifecycleTest 和 ListenerDispatchTest。
 
-通信相关变更的验证应覆盖并发关闭／释放、重入、事件与扩展点抛错、独立取消等待、启动失败、停止重试及派生清理恰好一次。ChannelBase 的直接下游包括消息消费者、缓存订阅及 ZeroMQ／Redis 通道；IEventChannel 独立定义可重开的事件通道，FeatureProvider.Default 的 Providers 默认包含 Transaction.Features，并合并当前应用的 IFeatureProvider 服务；FeatureProvider 先按引用固定整个组合的来源快照，再捕获并去重特性，不依赖 Core 服务扫描；运行时条件组合 IFeature 与 Common.IPredication，TransactionContext.Feature.cs 中的私有特性通过根事务 Completed 通知发布条件结果，事务终结返回前结果已确定；EventDispatcher 传入事件上下文及其 Parameters，每次调度每项条件只求值一次，求值使用 CancellationToken.None，事件取消仅作用于结果等待，false 放弃事件而非跳过特性，未知运行时特性明确报错；EventDispatcher 接受单个 IFeatureProvider，默认使用 FeatureProvider.Default，显式指定时由该提供者负责全部来源；EventExchanger 内部固定投递执行器，EventDispatcher.Pipeline 仅停止时可设置，启动时固定会话管线，环境允许后才进入策略；管线在多次调用及启停间复用，由装配方管理资源；WorkerBase 包括事件交换器、事件调度器、消息守护器、诊断工作器、ZeroMQ、OPC 和 Hangfire 服务；ListenerBase 包括 MQTT 服务。修改 HandlerBase 时在全仓搜索派生类型和参数访问，核对允许 null 的调用链。先阅读下游就近约定，验证实际受影响项目，不为测试扩大生产可见性。
+通信相关变更的验证应覆盖并发关闭／释放、重入、事件与扩展点抛错、独立取消等待、启动失败、停止重试及派生清理恰好一次。ChannelBase 的直接下游包括消息消费者、缓存订阅及 ZeroMQ／Redis 通道；IEventChannel 独立定义可重开的事件通道，FeatureProvider.Default 的 Providers 默认包含 Transaction.Features，并合并当前应用的 IFeatureProvider 服务；FeatureProvider 先按引用固定整个组合的来源快照，再捕获并去重特性，不依赖 Core 服务扫描；运行时条件组合 IFeature 与 Common.IPredication，TransactionContext.Feature.cs 中的私有特性在根事务的登记处理结束后、用户 Completed 通知前发布条件结果；EventDispatcher 传入事件上下文及其 Parameters，每次调度每项条件只求值一次，求值使用 CancellationToken.None，事件取消仅作用于结果等待，false 放弃事件而非跳过特性，未知运行时特性明确报错；EventDispatcher 接受单个 IFeatureProvider，默认使用 FeatureProvider.Default，显式指定时由该提供者负责全部来源；EventExchanger 内部固定投递执行器，EventDispatcher.Pipeline 仅停止时可设置，启动时固定会话管线，环境允许后才进入策略；管线在多次调用及启停间复用，由装配方管理资源；WorkerBase 包括事件交换器、事件调度器、消息守护器、诊断工作器、ZeroMQ、OPC 和 Hangfire 服务；ListenerBase 包括 MQTT 服务。修改 HandlerBase 时在全仓搜索派生类型和参数访问，核对允许 null 的调用链。先阅读下游就近约定，验证实际受影响项目，不为测试扩大生产可见性。

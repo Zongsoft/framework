@@ -31,7 +31,6 @@ using System;
 using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections;
 
 using Microsoft.Data.SqlClient;
 
@@ -43,23 +42,10 @@ namespace Zongsoft.Data.MsSql;
 public class MsSqlImporter : DataImporterBase
 {
 	#region 公共方法
-	protected override void OnImport(DataImportContext context, MemberCollection members)
-	{
-		//将数据填充到数据表中
-		var table = GetTable(context.Entity.GetTableName(), context.Data, members);
-		using var lease = context.Session.AcquireLease(context.Options.TransactionSuppressed);
-		using var bulker = GetBulker(table, (SqlConnection)lease.Connection, (SqlTransaction)lease.Transaction);
-
-		bulker.WriteToServer(table);
-
-		//设置返回值
-		context.Count = table.Rows.Count;
-	}
-
 	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
 		//将数据填充到数据表中
-		var table = GetTable(context.Entity.GetTableName(), context.Data, members);
+		using var table = await GetTableAsync(context, members, cancellation).ConfigureAwait(false);
 		await using var lease = await context.Session.AcquireLeaseAsync(context.Options.TransactionSuppressed, cancellation);
 		using var bulker = GetBulker(table, (SqlConnection)lease.Connection, (SqlTransaction)lease.Transaction);
 
@@ -84,9 +70,9 @@ public class MsSqlImporter : DataImporterBase
 		return bulker;
 	}
 
-	private static DataTable GetTable(string name, IEnumerable data, MemberCollection members)
+	private static async ValueTask<DataTable> GetTableAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation)
 	{
-		var table = new DataTable(name);
+		var table = new DataTable(context.Entity.GetTableName());
 
 		foreach(var member in members)
 		{
@@ -94,11 +80,12 @@ public class MsSqlImporter : DataImporterBase
 				table.Columns.Add(member.Property.GetFieldName(out _), GetDbType(property.Type).AsType());
 		}
 
-		foreach(var item in data)
+		await foreach(var item in GetRecordsAsync(context).WithCancellation(cancellation).ConfigureAwait(false))
 		{
 			if(item == null)
 				continue;
 
+			var target = item;
 			var row = table.NewRow();
 
 			for(int i = 0; i < members.Count; i++)
@@ -106,9 +93,10 @@ public class MsSqlImporter : DataImporterBase
 				if(!members[i].IsSimplex(out var property))
 					continue;
 
-				var target = item;
 				var field = members[i].Property.GetFieldName(out _);
-				var value = members[i].GetValue(ref target);
+				var prepared = await members[i].GetValueAsync(target, cancellation).ConfigureAwait(false);
+				target = prepared.Target;
+				var value = prepared.Value;
 				row[field] = value == null || Convert.IsDBNull(value) ?
 					DBNull.Value :
 					Zongsoft.Common.Convert.ConvertValue(value, GetDbType(property.Type).AsType());

@@ -39,8 +39,8 @@ SQL Server | [/drivers/mssql](https://github.com/Zongsoft/framework/tree/main/Zo
 PostgreSQL | [/drivers/postgres](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/postgres) | _**A**vailable_ |
 SQLite | [/drivers/sqlite](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/sqlite) | _**A**vailable_ |
 DuckDB | [/drivers/duckdb](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/duckdb) | _**A**vailable_ |
-ClickHouse | [/drivers/clickhouse](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/clickhouse) | _**A**vailable_ |
-InfluxDB | [/drivers/influx](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/influx) | _**A**vailable_ |
+ClickHouse | [/drivers/clickhouse](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/clickhouse) | 尚未完整实现 |
+InfluxDB | [/drivers/influx](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/influx) | 尚未完整实现 |
 TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Data/drivers/tdengine) | _**A**vailable_ |
 
 > 💡 提示：如果需要未列出的驱动或商业技术支持，请联系我们（[zongsoft@qq.com](mailto:zongsoft@qq.com)）。
@@ -48,7 +48,7 @@ TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Z
 <a name="plugin-quickstart"></a>
 ## 真实插件用例：Discussions
 
-[Discussions 模块](../../discussions/src/Module.cs)通过 Core 中的 `IDataAccessProvider` 契约获取访问器。模块名为 `Discussions`，[映射文件](../../discussions/src/Zongsoft.Discussions.mapping)也使用该容器名。宿主负责装配引擎和驱动，业务服务不自行构造具体实现。
+[Discussions](../../discussions/README.zh-Hans.md) 是使用数据引擎的论坛模块。将其与引擎及数据库驱动一起部署，应用服务通过公共 `IDataAccess` 和 `IDataService<T>` 契约访问数据。
 
 ### 1. 部署模块、引擎与驱动
 
@@ -69,19 +69,11 @@ nuget:Zongsoft.Discussions
 
 按照 [Discussions 数据库说明](../../discussions/database/Zongsoft.Discussions.md)及[模块部署清单](../../discussions/src/Zongsoft.Discussions.deploy)准备数据库，完整部署映射、插件及其中的校验器和过滤器。在 `/Data/ConnectionSettings` 中配置命名为 `Discussions` 的连接，并参考[模块选项](../../discussions/src/Zongsoft.Discussions.option)配置站点和文件存储。映射描述已有结构，加载映射不会初始化数据库。
 
-### 3. 从模块定位访问器
+### 3. 通过服务访问数据
 
-以下摘自 `Module.cs` 的访问器属性，不是独立程序：
+从已配置的宿主解析模块服务，并等待其数据操作。查询使用 `await foreach` 消费，异步方法传入取消令牌，并保留站点和身份限制。通过 `IDataAccessProvider.GetAccessor("Discussions")` 取得的访问器由提供者管理，不在每个请求结束时自行释放。
 
-```csharp
-private IDataAccess _accessor;
-public IDataAccess Accessor => _accessor ??=
-	this.Services.ResolveRequired<IDataAccessProvider>().GetAccessor(this.Name);
-```
-
-[ForumService](../../discussions/src/Services/ForumService.cs) 和 [ThreadService](../../discussions/src/Services/ThreadService.cs) 继承 `DataServiceBase<T>`，通过 `this.DataAccess` 操作数据。应结合提供模块数据边界的 [DataValidator](../../discussions/src/Data/DataValidator.cs) 阅读。
-
-🚨 这里是源码导读，不表示全新部署的 Discussions 已通过集成验证。请使用隔离数据库，先初始化站点、用户及身份上下文，不要为跑通示例绕过校验器，也不要在每个请求结束时释放容器持有的访问器。
+使用模块之前先初始化数据库、站点、用户及身份配置；加载映射文件不会创建表。模块配置和使用方式见 [Discussions 文档](../../discussions/README.zh-Hans.md)。
 
 <a name="schema"></a>
 ## 数据模式
@@ -278,9 +270,9 @@ Department.Manager.FullName,
 - `property` 定义简单属性到字段的映射。常用属性包括 `type`、`field`、`nullable`、`length`、`precision`、`scale`、`default`、`sequence`、`sortable`、`immutable`。
 - `sequence="*"` 表示使用数据库内置自增或序列；`sequence="#"` 表示使用 Zongsoft 默认外部序号器；`sequence="#Name"` 表示指定名称的外部序号器；`sequence="#Name@seed/interval"` 可同时指定序号器的种子值与递增量；`sequence="#(ParentId)"` 表示按指定引用属性分组的外部序号器；`sequence="Entity:Property"` 表示引用另一实体属性的序号器。
 - `complexProperty` 定义导航属性。`port` 指向目标实体，也可以指向目标实体的导航属性，譬如 `ForumUser:User`。`multiplicity` 支持 `?`（一对零或一，默认）、`!`（一对一）、`*`（一对多）；`link` 定义外键属性与当前实体的关联（`anchor` 指定本体实体侧的锚点，省略时与 `port` 同名）；`constraints` 可添加固定的导航过滤条件（`actor` 省略时按多重性推断：一对多默认为 `Foreign`，其余为 `Principal`）。
-- `command` 定义命名 SQL 命令或存储过程，可通过 `Execute`、`Execute<T>`、`ExecuteScalar` 调用。`type` 支持 `text`（默认）与 `procedure`；`mutability` 用来声明命令对数据的读写特性，它不只是描述性元数据，也是配置读写分离后数据源选择器的路由依据：`none` 选择可读数据源，`delete`、`insert`、`update`、`upsert` 选择可写数据源。选择器不会通过分析 SQL 文本来推断读写特性。加载器对枚举值的解析不区分大小写，但为通过 XSD 校验，建议统一使用小写。
+- `command` 定义命名 SQL 命令或存储过程，可通过 `ExecuteAsync`、`ExecuteAsync<T>`、`ExecuteScalarAsync` 调用。`type` 支持 `text`（默认）与 `procedure`；`mutability` 用来声明命令对数据的读写特性，它不只是描述性元数据，也是配置读写分离后数据源选择器的路由依据：`none` 选择可读数据源，`delete`、`insert`、`update`、`upsert` 选择可写数据源。选择器不会通过分析 SQL 文本来推断读写特性。加载器对枚举值的解析不区分大小写，但为通过 XSD 校验，建议统一使用小写。
 
-当前 Discussions 映射没有定义论坛统计命令或存储过程。命令契约请参阅 [MetadataCommand](src/Metadata/Profiles/MetadataCommand.cs) 和 [XSD](Zongsoft.Data.xsd)，不要调用尚未部署的命令名。
+[Zongsoft.Data.xsd](Zongsoft.Data.xsd) 定义映射 XML 格式。存储过程使用 `type="procedure"`，并将 alias 指向已有过程；输出参数声明对应方向，通过传入的 `Parameter` 对象返回。完整消费查询，或结束枚举并等待枚举器释放后，再读取输出参数。
 
 
 > **启用映射文件的XML智能提示：**
@@ -322,18 +314,18 @@ Department.Manager.FullName,
 
 所有数据操作都通过[核心库](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Core)中的 [`Zongsoft.Data.IDataAccess`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) 接口完成，支持下列操作：
 
-- 计数操作： `int Count(...)` 
-- 聚合操作： `TValue? Aggregate(...)`
-- 存在操作： `bool Exists(...)` 
-- 执行操作： `IEnumerable<T> Execute<T>(...)` `object ExecuteScalar(...)` 
-- 导入操作： `int Import(...)`
-- 删除操作： `int Delete(...)` 
-- 新增操作： `int Insert(...)` `int InsertMany(...)` 
-- 更新操作： `int Update(...)` `int UpdateMany(...)` 
-- 新增更新： `int Upsert(...)` `int UpsertMany(...)` 
-- 查询操作： `IEnumerable<T> Select<T>(...)` 
+- 计数操作： `ValueTask<int> CountAsync(...)` 
+- 聚合操作： `ValueTask<TValue?> AggregateAsync(...)`
+- 存在操作： `ValueTask<bool> ExistsAsync(...)` 
+- 执行操作： `IAsyncEnumerable<T> ExecuteAsync<T>(...)` `ValueTask<object> ExecuteScalarAsync(...)` 
+- 导入操作： `ValueTask<int> ImportAsync(...)`
+- 删除操作： `ValueTask<int> DeleteAsync(...)` 
+- 新增操作： `ValueTask<int> InsertAsync(...)` `ValueTask<int> InsertManyAsync(...)` 
+- 更新操作： `ValueTask<int> UpdateAsync(...)` `ValueTask<int> UpdateManyAsync(...)` 
+- 新增更新： `ValueTask<int> UpsertAsync(...)` `ValueTask<int> UpsertManyAsync(...)` 
+- 查询操作： `IAsyncEnumerable<T> SelectAsync<T>(...)` 
 
-💡 示例使用真实的 [Discussions 模型](../../discussions/src/Models/Thread.cs)与[映射](../../discussions/src/Zongsoft.Discussions.mapping)。标注“摘录”的代码来自所链接服务；其余查询是按真实模型改写的局部 API 用法，不代表额外部署的服务。它们位于插件装配完成后的模块服务中，`siteId`、`userId` 表示经过校验的调用方身份值，不是任意请求参数。尝试写入前请先阅读[数据库设计](../../discussions/database/Zongsoft.Discussions.md)。
+💡 示例基于 [Discussions 模型](../../discussions/src/Models/Thread.cs)与[映射](../../discussions/src/Zongsoft.Discussions.mapping)，展示当前异步 API 的局部用法。示例运行在已装配的模块服务中，导入 Zongsoft.Collections 以使用可等待的 FirstOrDefault；siteId、userId 是经过校验的身份值。数据库和网络操作使用 await，查询序列使用 await foreach，取消令牌可作为最后一个位置参数传入。
 
 <a name="operand"></a>
 ### 操作元
@@ -359,10 +351,10 @@ Department.Manager.FullName,
 
 #### 示例
 
-[ThreadService.OnGet](../../discussions/src/Services/ThreadService.cs) 在访问检查之后递增持久化阅读量。以下摘录其更新片段：
+[ThreadService.OnGet](../../discussions/src/Services/ThreadService.cs) 在访问检查之后递增持久化阅读量。以下使用异步 API 表达该更新操作：
 
 ```csharp
-this.DataAccess.Update<Thread>(new
+await this.DataAccess.UpdateAsync<Thread>(new
 {
 	TotalViews = Operand.Field(nameof(Thread.TotalViews)) + 1,
 	ViewedTime = DateTime.Now,
@@ -398,7 +390,7 @@ var criteria =
 	Condition.Equal(nameof(Thread.Visible), true);
 ```
 
-该方法会在第一页排除单独加载的顶部主题，然后调用 `Select<Thread>`；分页细节请阅读完整方法。
+该方法会在第一页排除单独加载的顶部主题，然后调用 `SelectAsync<Thread>`；分页细节请阅读完整方法。
 
 查询 DTO 同样采用真实模型：[Thread.cs 中的 ThreadCriteria](../../discussions/src/Models/Thread.cs) 定义可空字段与 `Range<DateTime>?` 时间范围，`Title` 使用 `[Condition(ConditionOperator.Like)]`。[ThreadService](../../discussions/src/Services/ThreadService.cs) 通过 `[DataService(typeof(ThreadCriteria))]` 指定它，不要另建一个字段不同的同名 DTO。解析与转换由 Core 的 [Criteria](../Zongsoft.Core/src/Data/Criteria.cs) 提供。
 
@@ -409,17 +401,17 @@ var criteria =
 #### 简单查询
 
 - 默认返回全部简单字段，可通过 `schema` 参数显式指定返回哪些字段。
-- 查询结果是延迟加载的，遍历结果集或调用 LINQ 的 `ToList()`、`First()` 等方法时才会真正访问数据库。
-- **注意：** 查询默认不分页。面对大结果集时，不要随意调用 `ToList()`、`ToArray()` 把全部数据加载到内存。
+- 查询返回 IAsyncEnumerable<T>；调用时开始准备，await foreach 枚举时读取数据库。取得首条可使用 await query.FirstOrDefault(cancellation)。
+- **注意：** 查询默认不分页。面对大结果集时优先流式消费，按需要设置分页，限制物化到内存的记录数。
 
 ```csharp
 // 查询满足条件的实体集，默认加载全部简单字段（延迟加载）。
-var threads = this.DataAccess.Select<Thread>(
+var threads = this.DataAccess.SelectAsync<Thread>(
 	Condition.Equal("SiteId", siteId) &
 	Condition.Equal("Visible", true));
 
 // 查询单个实体，并只加载指定字段。
-var forum = this.DataAccess.Select<Forum>(
+var forum = await this.DataAccess.SelectAsync<Forum>(
 	Condition.Equal("SiteId", siteId) &
 	Condition.Equal("ForumId", 100),
 	"SiteId,ForumId,Name,Description,CoverPicturePath").FirstOrDefault();
@@ -428,17 +420,17 @@ var forum = this.DataAccess.Select<Forum>(
 <a name="usage-query-exists"></a>
 #### 存在与聚合查询
 
-只需要判断记录是否存在时使用 `Exists`。只需要聚合值时，可使用 `Count`、`Sum`、`Average`、`Maximum`、`Minimum`、`Median`、`Deviation`、`Variance` 等扩展方法。
+只需要判断记录是否存在时使用 `ExistsAsync`。只需要聚合值时，可使用 `CountAsync`、`SumAsync`、`AverageAsync`、`MaximumAsync`、`MinimumAsync`、`MedianAsync`、`DeviationAsync`、`VarianceAsync` 等扩展方法。
 
 ```csharp
-var exists = this.DataAccess.Exists<Thread>(
+var exists = await this.DataAccess.ExistsAsync<Thread>(
 	Condition.Equal(nameof(Thread.ThreadId), threadId) &
 	Condition.Equal(nameof(Thread.Visible), true));
 
-var totalThreads = this.DataAccess.Count<Thread>(
+var totalThreads = await this.DataAccess.CountAsync<Thread>(
 	Condition.Equal(nameof(Thread.ForumId), forumId));
 
-var totalViews = this.DataAccess.Sum<Thread, long>(
+var totalViews = await this.DataAccess.SumAsync<Thread, long>(
 	nameof(Thread.TotalViews),
 	Condition.Equal(nameof(Thread.ForumId), forumId));
 ```
@@ -455,13 +447,13 @@ var totalViews = this.DataAccess.Sum<Thread, long>(
 1. 通过方法的 `schema` 参数显式指定一个具体属性名。
 
 ```csharp
-var email = this.DataAccess.Select<string>("Discussions.UserProfile",
+var email = await this.DataAccess.SelectAsync<string>("Discussions.UserProfile",
 	Condition.Equal("UserId", userId),
 	"Email" // 只获取 Email 字段，该字段为字符串类型
 ).FirstOrDefault();
 
-/* 返回标量集(IEnumerable<uint>) */
-var counts = this.DataAccess.Select<uint>("Discussions.History",
+/* 返回标量集(IAsyncEnumerable<uint>) */
+var counts = this.DataAccess.SelectAsync<uint>("Discussions.History",
 	Condition.Equal("UserId", userId),
 	"ViewedCount" // 只获取 ViewedCount 字段
 );
@@ -470,11 +462,11 @@ var counts = this.DataAccess.Select<uint>("Discussions.History",
 <a name="usage-query-3"></a>
 #### 多字段查询
 
-[ThreadService.SetMostRecentThread](../../discussions/src/Services/ThreadService.cs) 只加载更新论坛最新主题摘要所需的作者字段。以下摘录使用真实的 `UserProfile` 模型：
+[ThreadService.SetMostRecentThreadAsync](../../discussions/src/Services/ThreadService.cs) 只加载更新论坛最新主题摘要所需的作者字段。以下示例使用真实的 `UserProfile` 模型：
 
 ```csharp
 var userId = data.GetValue(p => p.CreatorId, this.Principal.Identity.GetIdentifier<uint>());
-var user = this.DataAccess.Select<UserProfile>(
+var user = await this.DataAccess.SelectAsync<UserProfile>(
 	Condition.Equal(nameof(UserProfile.UserId), userId),
 	$"{nameof(UserProfile.UserId)}," +
 	$"{nameof(UserProfile.Name)}," +
@@ -482,25 +474,25 @@ var user = this.DataAccess.Select<UserProfile>(
 	$"{nameof(UserProfile.Avatar)}").FirstOrDefault();
 ```
 
-`data` 是该方法的 `IDataDictionary<Thread>` 参数；这只是局部摘录，不能替代整个方法。标量投影也支持字典与 `ExpandoObject`，参阅 [DictionaryPopulatorProvider](src/Common/DictionaryPopulatorProvider.cs)。导航属性填充需要模型形状的目标，不能指望字典投影返回嵌套导航对象。
+`data` 是该方法的 `IDataDictionary<Thread>` 参数；这只是局部用法，不能替代整个方法。标量投影也支持字典与 `ExpandoObject`，参阅 [DictionaryPopulatorProvider](src/Common/DictionaryPopulatorProvider.cs)。导航属性填充需要模型形状的目标，不能指望字典投影返回嵌套导航对象。
 
 <a name="usage-query-4"></a>
 #### 分页查询
 
-向 [`Select`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) 方法传入 `paging` 参数即可进行分页查询，详情请参考 [`Paging`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Paging.cs)。
+向 [`SelectAsync`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) 方法传入 `paging` 参数即可进行分页查询，详情请参考 [`Paging`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Paging.cs)。
 
 ```csharp
 // 第 2 页，每页 25 条。
 var paging = Paging.Page(2, 25);
 
-var threads = this.DataAccess.Select<Thread>(
+var threads = this.DataAccess.SelectAsync<Thread>(
 	Condition.Equal(nameof(Thread.SiteId), siteId) &
 	Condition.Equal(nameof(Thread.ForumId), 100),
 	paging
 );
 
 /*
- * 查询返回后，paging 对象会包含分页结果摘要：
+ * 开始枚举并收到 Paginated 通知后，paging 对象包含分页结果摘要：
  * paging.Count 表示总页数。
  * paging.Total 表示总记录数。
  */
@@ -509,10 +501,10 @@ var threads = this.DataAccess.Select<Thread>(
 <a name="usage-query-5"></a>
 #### 排序查询
 
-向 [`Select`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) 方法传入 `Sorting` 即可进行排序查询，详情请参考 [Sorting](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Sorting.cs)。
+向 [`SelectAsync`](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/IDataAccess.cs) 方法传入 `Sorting` 即可进行排序查询，详情请参考 [Sorting](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Core/src/Data/Sorting.cs)。
 
 ```csharp
-var threads = this.DataAccess.Select<Thread>(
+var threads = this.DataAccess.SelectAsync<Thread>(
 	Condition.Equal(nameof(Thread.SiteId), siteId) &
 	Condition.Equal(nameof(Thread.ForumId), 100),
 	Paging.Disabled, /* 此处指定不分页；也可以传入具体的分页设置。 */
@@ -538,7 +530,7 @@ var threads = this.DataAccess.Select<Thread>(
  * 2) Thread.MostRecentPost 是关联到 Post 的一对零或一导航属性，
  *    在映射文件(.mapping)中为 multiplicity="?"，因此生成的 SQL 使用 LEFT JOIN。
  */
-var thread = this.DataAccess.Select<Thread>(
+var thread = await this.DataAccess.SelectAsync<Thread>(
 	Condition.Equal("ThreadId", 100001),
 	"*,Post{*},MostRecentPost{*}"
 ).FirstOrDefault();
@@ -555,7 +547,7 @@ var thread = this.DataAccess.Select<Thread>(
  * 2) 一对一和一对多导航属性都支持嵌套。
  * 注意：星号(*)只表示所有简单属性，不包含导航属性；导航属性必须显式指定。
  */
-var groups = this.DataAccess.Select<ForumGroup>(
+var groups = this.DataAccess.SelectAsync<ForumGroup>(
 	Condition.Equal("SiteId", siteId),
 	"*,Forums{*, Moderators{*}, MostRecentThread{*, Creator{*}}}"
 );
@@ -655,7 +647,7 @@ public abstract class Forum
 ```
 
 ```csharp
-var forum = this.DataAccess.Select<Forum>(
+var forum = await this.DataAccess.SelectAsync<Forum>(
 	Condition.Equal("SiteId", siteId) &
 	Condition.Equal("ForumId", 100),
 	"*, Users{*, User{Name,Email,Avatar}}, Moderators{Name,Email,Avatar}"
@@ -685,9 +677,9 @@ foreach(var member in forum.Users)
 
 [Grouping](../Zongsoft.Core/src/Data/Grouping.cs) 描述分组键、聚合函数与结果别名，和行级分页、排序是不同概念。
 
-Discussions 在 [Forum](../../discussions/src/Models/Forum.cs) 上定义论坛统计字段，但没有 `ForumStatistic` 投影类型或分组统计服务。真实流程在 [ThreadService.SetMostRecentThread](../../discussions/src/Services/ThreadService.cs) 和 [PostService](../../discussions/src/Services/PostService.cs) 中更新统计值。增加聚合查询前应先阅读该流程：持久化计数器与即时聚合的成本、一致性含义不同。
+Discussions 在 [Forum](../../discussions/src/Models/Forum.cs) 上定义论坛统计字段，但没有 `ForumStatistic` 投影类型或分组统计服务。真实流程在 [ThreadService.SetMostRecentThreadAsync](../../discussions/src/Services/ThreadService.cs) 和 [PostService](../../discussions/src/Services/PostService.cs) 中更新统计值。增加聚合查询前应先阅读该流程：持久化计数器与即时聚合的成本、一致性含义不同。
 
-分组能力本身可沿[公共契约](../Zongsoft.Core/src/Data/IDataAccess.cs)中接受 `Grouping` 的 `Select` 重载及具体[数据库驱动](#driver)阅读。字段必须来自真实映射，结果形状需匹配分组键和别名；这里没有预装的论坛统计命令可供调用。
+分组能力本身可沿[公共契约](../Zongsoft.Core/src/Data/IDataAccess.cs)中接受 `Grouping` 的 `SelectAsync` 重载及具体[数据库驱动](#driver)阅读。字段必须来自真实映射，结果形状需匹配分组键和别名；这里没有预装的论坛统计命令可供调用。
 
 <a name="usage-query-12"></a>
 ### 导航条件
@@ -700,7 +692,7 @@ Discussions 在 [Forum](../../discussions/src/Models/Forum.cs) 上定义论坛�
  * 1) 关联的主题为精华主题(Thread.IsValued=true)；
  * 2) 首次或最后浏览时间位于最近 30 天内。
  */
-var histories = this.DataAccess.Select<History>(
+var histories = this.DataAccess.SelectAsync<History>(
 	Condition.Equal("Thread.IsValued", true) & /* 导航条件 */
 	(
 		Condition.Between("FirstViewedTime", DateTime.Today.AddDays(-30), DateTime.Now) |
@@ -709,7 +701,7 @@ var histories = this.DataAccess.Select<History>(
 );
 
 /* 与上面的查询等价，只是改用 Range.Timing 构造时间范围。 */
-var histories = this.DataAccess.Select<History>(
+var histories = this.DataAccess.SelectAsync<History>(
 	Condition.Equal("Thread.IsValued", true) & /* 导航条件 */
 	(
 		Condition.Between("FirstViewedTime", Range.Timing.Last(30, 'D')) |
@@ -730,7 +722,7 @@ return Condition.Exists("Forum.Users",
 	Condition.Equal(nameof(Forum.ForumUser.IsModerator), true));
 ```
 
-`Approve`、`Visible` 等受限方法将该条件与目标主题条件组合。更复杂的 `OR` 表达式可阅读 [ForumService.OnValidate](../../discussions/src/Services/ForumService.cs)：先调用基类校验，再用 `criteria.And(...)` 附加整个可见性表达式。
+`Approve`、`Visible` 等受限方法将该条件与目标主题条件组合。更复杂的 `OR` 表达式可阅读 [ForumService.OnValidateAsync](../../discussions/src/Services/ForumService.cs)：先调用基类校验，再用 `criteria.And(...)` 附加整个可见性表达式。
 
 🚨 不要改写成 `siteCondition & publicCondition | privateCondition`，否则后一分支不再受站点条件限制。借鉴这些片段时必须保留[模块校验器](../../discussions/src/Data/DataValidator.cs)与服务授权。
 
@@ -744,11 +736,11 @@ return Condition.Exists("Forum.Users",
 <a name="usage-execute"></a>
 ### 执行操作
 
-`Execute` 用于执行映射文件中定义的命名 `command`。适合 SQL 语句、存储过程，以及无法自然归入某个实体 CRUD 操作的命令。声明的 `mutability` 是数据源选择器进行读写路由的依据：`mutability="none"` 选择可读数据源，`insert`、`update`、`delete`、`upsert` 选择可写数据源；选择器不会检查 SQL 脚本来判断读写特性。未声明 `mutability` 的命令会被视为可写命令 _（按 `Delete|Insert|Update` 处理）_，如无必要不必显式声明。
+`ExecuteAsync` 用于执行映射文件中定义的命名 `command`。适合 SQL 语句、存储过程，以及无法自然归入某个实体 CRUD 操作的命令。声明的 `mutability` 是数据源选择器进行读写路由的依据：`mutability="none"` 选择可读数据源，`insert`、`update`、`delete`、`upsert` 选择可写数据源；选择器不会检查 SQL 脚本来判断读写特性。未声明 `mutability` 的命令会被视为可写命令 _（按 `Delete|Insert|Update` 处理）_，如无必要不必显式声明。
 
 Discussions 当前采用实体操作，并未部署论坛统计命令；映射中不存在 `Forum.GetStatistics` 或 `Forum.RefreshStatistics`，不能直接调用这些名称。
 
-实现参考见 [MetadataCommand](src/Metadata/Profiles/MetadataCommand.cs)：它拥有命令名、别名、参数及各驱动脚本；有效 XML 由 [Zongsoft.Data.xsd](Zongsoft.Data.xsd) 定义。存储过程采用 `type="procedure"`，别名必须对应已有过程；输出参数按照声明的方向回写传入的 `Parameter` 对象。这些是扩展契约，不是 Discussions 已实现的附加功能。
+[Zongsoft.Data.xsd](Zongsoft.Data.xsd) 定义映射 XML 格式。存储过程使用 `type="procedure"`，并将 alias 指向已有过程；输出参数声明对应方向，通过传入的 `Parameter` 对象返回。完整消费查询，或结束枚举并等待枚举器释放后，再读取输出参数。
 
 <a name="usage-delete"></a>
 ### 删除操作
@@ -756,7 +748,7 @@ Discussions 当前采用实体操作，并未部署论坛统计命令；映射�
 此片段使用真实的 [Post 模型](../../discussions/src/Models/Post.cs)，`postId` 由调用方提供，`userId` 必须经过权限校验；它不是 Discussions 删除服务的源码摘录。应用中应调用对应服务，以保留授权和附件清理流程。
 
 ```csharp
-this.DataAccess.Delete<Post>(
+await this.DataAccess.DeleteAsync<Post>(
 	Condition.Equal("Visible", false) &
 	Condition.Equal("CreatorId", userId) &
 	Condition.Equal("PostId", postId)
@@ -769,7 +761,7 @@ this.DataAccess.Delete<Post>(
 
 级联删除可删除通过一对零或一、一对一、一对多导航属性关联的子表记录。
 ```csharp
-this.DataAccess.Delete<Post>(
+await this.DataAccess.DeleteAsync<Post>(
 	Condition.Equal("PostId", 100023),
 	"Votes"
 );
@@ -780,7 +772,7 @@ this.DataAccess.Delete<Post>(
 ### 新增操作
 
 ```csharp
-this.DataAccess.Insert("Discussions.Forum", new {
+await this.DataAccess.InsertAsync("Discussions.Forum", new {
 	SiteId = siteId,
 	GroupId = 100,
 	Name = forumName
@@ -798,7 +790,7 @@ this.DataAccess.Insert("Discussions.Forum", new {
 - `SuppressValidator()` 禁用本次新增操作注册的数据验证器。
 
 ```csharp
-var count = this.DataAccess.Insert<Forum.ForumUser>(
+var count = await this.DataAccess.InsertAsync<Forum.ForumUser>(
 	new {
 		SiteId = siteId,
 		ForumId = 100,
@@ -816,7 +808,7 @@ var options = DataInsertOptions
 	.Sequence(DataSequenceBehavior.Never)
 	.IgnoreConstraint();
 
-this.DataAccess.Insert<Forum>(new {
+await this.DataAccess.InsertAsync<Forum>(new {
 	SiteId = siteId,
 	ForumId = 100,
 	GroupId = 10,
@@ -843,14 +835,14 @@ forum.Users = new Forum.ForumUser[]
 	new Forum.ForumUser { UserId = 102, Permission = Permission.Write }
 };
 
-this.DataAccess.Insert(forum, "*, Users{*}");
+await this.DataAccess.InsertAsync(forum, "*, Users{*}");
 ```
 
 
 <a name="usage-import"></a>
 ### 导入操作
 
-`Import` 用于批量导入数据。调用时传入目标实体名、数据集合，以及需要导入的成员列表。
+`ImportAsync` 用于批量导入数据。调用时传入目标实体名、数据集合，以及需要导入的成员列表。
 
 ```csharp
 var users = new []
@@ -859,7 +851,7 @@ var users = new []
 	new { SiteId = siteId, ForumId = 100, UserId = 101, Permission = Permission.Write },
 };
 
-var count = this.DataAccess.Import(
+var count = await this.DataAccess.ImportAsync(
 	"Discussions.ForumUser",
 	users,
 	"SiteId,ForumId,UserId,Permission".Split(','));
@@ -871,7 +863,7 @@ var count = this.DataAccess.Import(
 var options = DataImportOptions
 	.IgnoreConstraint();
 
-var count = this.DataAccess.Import(
+var count = await this.DataAccess.ImportAsync(
 	"Discussions.ForumUser",
 	users,
 	"SiteId,ForumId,UserId,Permission".Split(','),
@@ -889,7 +881,7 @@ user.Name = name;
 user.Nickname = nickname;
 user.Gender = Gender.Male;
 
-this.DataAccess.Update(user);
+await this.DataAccess.UpdateAsync(user);
 ```
 
 
@@ -899,7 +891,7 @@ this.DataAccess.Update(user);
 写入的数据可以是匿名对象、动态对象 _(`ExpandoObject`)_ 或字典 _(`IDictionary`, `IDictionary<string, object>`)_。
 
 ```csharp
-this.DataAccess.Update<UserProfile>(
+await this.DataAccess.UpdateAsync<UserProfile>(
 	new {
 		Name=name,
 		Nickname=nickname,
@@ -919,7 +911,7 @@ this.DataAccess.Update<UserProfile>(
  * 只更新 Name、Gender 两个字段。
  * 其他字段即使发生变化，也不会被写入。
  */
-this.DataAccess.Update<UserProfile>(
+await this.DataAccess.UpdateAsync<UserProfile>(
 	user,
 	"Name, Gender"
 );
@@ -928,7 +920,7 @@ this.DataAccess.Update<UserProfile>(
  * 星号(*)表示允许更新所有字段，但 CreatorId 和 CreatedTime 被排除。
  * 即使 user 对象中包含这两个属性值，也不会为它们生成 SET 子句。
  */
-this.DataAccess.Update<UserProfile>(
+await this.DataAccess.UpdateAsync<UserProfile>(
 	user,
 	"*, !CreatorId, !CreatedTime"
 );
@@ -937,16 +929,16 @@ this.DataAccess.Update<UserProfile>(
 <a name="usage-update-complex"></a>
 #### 关联更新
 
-真实的 [ThreadService.Approve](../../discussions/src/Services/ThreadService.cs) 在一次操作中更新主题及其内容帖：
+基于主题与内容帖模型，可在一次异步操作中更新关联记录：
 
 ```csharp
-public bool Approve(ulong threadId)
+public async ValueTask<bool> ApproveAsync(ulong threadId, CancellationToken cancellation = default)
 {
 	var criteria = Condition.Equal(nameof(Thread.ThreadId), threadId) &
 	               Condition.Equal(nameof(Thread.Approved), false) &
 	               GetIsModeratorCriteria();
 
-	return this.DataAccess.Update<Thread>(new
+	return await this.DataAccess.UpdateAsync<Thread>(new
 	{
 		Approved = true,
 		ApprovedTime = DateTime.Now,
@@ -954,7 +946,7 @@ public bool Approve(ulong threadId)
 		{
 			Approved = true,
 		}
-	}, criteria, "*,Post{Approved}") > 0;
+	}, criteria, "*,Post{Approved}", cancellation) > 0;
 }
 ```
 
@@ -963,9 +955,8 @@ public bool Approve(ulong threadId)
 <a name="usage-upsert"></a>
 ### 增改操作
 
-Upsert 在主键不存在时插入、存在时更新。真实用例是 [ThreadService.SetHistory](../../discussions/src/Services/ThreadService.cs) 按用户和主题维护浏览历史，并递增 `ViewedCount`。
+Upsert 在主键不存在时插入、存在时更新。浏览历史可按用户与主题的组合键增改，记录 `LastViewedTime` 并递增 `ViewedCount`。
 
-🚨 当前源码存在不一致：该方法写入 `MostRecentViewedTime`，而 [History 模型](../../discussions/src/Models/History.cs)与[映射](../../discussions/src/Zongsoft.Discussions.mapping)定义的是 `LastViewedTime`。本文不将其展示为已验证可运行示例，也不悄悄修改实现；复用这条路径前需先对齐服务、模型与映射。
 
 Upsert 契约与驱动限制见 [IDataAccess](../Zongsoft.Core/src/Data/IDataAccess.cs)、[DataUpsertOptions](../Zongsoft.Core/src/Data/DataUpsertOptions.cs) 和所选驱动 README。主键匹配、序号生成、新增时默认值、已有行更新需分别考虑。
 
@@ -977,7 +968,7 @@ Upsert 契约与驱动限制见 [IDataAccess](../Zongsoft.Core/src/Data/IDataAcc
 ```csharp
 var options = DataUpdateOptions.Return(ReturningKind.Newer, nameof(Thread.TotalViews));
 
-this.DataAccess.Update<Thread>(
+await this.DataAccess.UpdateAsync<Thread>(
 	new {
 		TotalViews = Operand.Field(nameof(Thread.TotalViews)) + 1,
 	},
@@ -991,10 +982,10 @@ if(options.Returning.Rows.Count > 0 &&
 }
 ```
 
-对于简单计数器，可直接使用 `Increase` 和 `Decrease` 辅助方法：
+对于简单计数器，可直接使用 `IncreaseAsync` 和 `DecreaseAsync` 辅助方法：
 
 ```csharp
-var totalViews = this.DataAccess.Increase<Thread>(
+var totalViews = await this.DataAccess.IncreaseAsync<Thread>(
 	nameof(Thread.TotalViews),
 	Condition.Equal(nameof(Thread.ThreadId), threadId));
 ```
@@ -1004,7 +995,7 @@ var totalViews = this.DataAccess.Increase<Thread>(
 ```csharp
 var options = DataDeleteOptions.Return(nameof(PostAttachment.AttachmentId));
 
-this.DataAccess.Delete<PostAttachment>(
+await this.DataAccess.DeleteAsync<PostAttachment>(
 	Condition.Equal(nameof(PostAttachment.PostId), postId),
 	options);
 
@@ -1051,26 +1042,18 @@ foreach(var row in options.Returning.Rows)
 
 真实的操作参数包括 [PostService.OnInsert](../../discussions/src/Services/PostService.cs) 读取的 `"Thread"`：服务接受 `Thread` 模型或 `IDataDictionary<Thread>`，再从服务容器定位 `ForumService` 并判断新帖审核状态。空值处理和文件内容存储需阅读完整方法。这些选项属于操作上下文，不是 SQL 参数；不存在内建的 `SkipSynchronization` 或 `SkipAudit` 开关。
 
-前后回调、`IDataAccess` 事件及过滤器提供操作阶段扩展。[ThreadFilter](../../discussions/src/Data/ThreadFilter.cs) 是真实的结果过滤用例：`OnFiltered` 通过 [FilteredResult](../../discussions/src/Data/FilteredResult.cs) 包装结果，屏蔽无权查看的未审核内容，或读取外部存储的帖子内容。包装器保留同步/异步枚举及分页通知，请结合两个文件阅读。
+前后回调、IDataAccess 事件及过滤器均可等待。事件处理器接受 (sender, args, cancellation) 并返回 ValueTask；处理器按订阅顺序完成。结果过滤使用异步枚举及 Pageable.FilterAsync/MapAsync，并保留分页信息。IEnumerable 导航属性提供已加载的内存集合；IAsyncEnumerable 导航属性使用异步枚举读取。
 
-事务范围可参考 [ThreadService.OnInsert](../../discussions/src/Services/ThreadService.cs)。以下摘自内容校验、模式准备之后的事务主体：
+使用 `await using` 管理事务，并等待提交。例如，将订单与明细写入同一个事务：
 
 ```csharp
-using(var transaction = new Transaction())
-{
-	var count = base.OnInsert(data, schema, options);
-
-	if(count < 1)
-		return count;
-
-	this.SetMostRecentThread(data);
-	transaction.Commit();
-
-	return count;
-}
+await using var transaction = new Transaction();
+await accessor.InsertAsync("Orders", order, cancellation);
+await accessor.InsertManyAsync("OrderLines", lines, cancellation);
+await transaction.CommitAsync(cancellation);
 ```
 
-私有方法 `SetMostRecentThread` 属于该类。事务将新增和关联摘要更新组合起来，但不能回滚文件或对象存储写入。普通应用调用应保留授权与校验器。
+`accessor` 为 IDataAccess，订单和明细由调用方提供。未提交时释放事务会回滚；事务不能回滚文件或对象存储写入。普通应用调用应保留授权与校验器。
 
 <a name="usage-other"></a>
 ### 其他
@@ -1089,8 +1072,6 @@ Zongsoft.Data 追求的是性能、可维护性和易用性的平衡，而不是
 3. 在热点路径避免反射，并缓存已解析的表达式树。
 
 由于数据结构关系是声明式表达的，引擎可以把调用意图转换为表达式树，再生成不同数据提供程序的 SQL。应用代码更聚焦，数据提供程序也有更多优化空间。
-
-实现层面使用 **E**mitting 和动态编译技术，提前准备实体组装(**P**opulate)、参数绑定等路径。可通过 [ModelEmitter](https://github.com/Zongsoft/framework/blob/main/Zongsoft.Data/src/Common/ModelMemberEmitter.cs) 等相关类了解细节。
 
 ## 插件化接入
 

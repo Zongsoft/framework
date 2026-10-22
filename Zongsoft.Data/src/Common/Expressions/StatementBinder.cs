@@ -46,46 +46,6 @@ public class StatementBinder : IStatementBinder
 	#endregion
 
 	#region 公共方法
-	public void Bind(IDataMutateContextBase context, IStatementBase statement, DbCommand command)
-	{
-		if(statement.Parameters.Count > 0)
-		{
-			if(Utility.IsMultiple(context.Data, out var items))
-			{
-				var lines = statement switch
-				{
-					InsertStatement insertion => insertion.Values.Chunk(insertion.Fields.Count).ToArray(),
-					UpsertStatement upsertion => upsertion.Values.Chunk(upsertion.Fields.Count).ToArray(),
-					_ => [],
-				};
-
-				if(lines != null && lines.Length > 0)
-				{
-					var index = 0;
-					var sequences = GetSequenceFields(statement);
-
-					foreach(var item in items)
-					{
-						if(sequences != null)
-							SetSequenceValue(context, sequences, item);
-
-						Bind(context, command, item, lines[index++].OfType<ParameterExpression>());
-					}
-				}
-			}
-			else
-			{
-				var sequences = GetSequenceFields(statement);
-				if(sequences != null)
-					SetSequenceValue(context, sequences, context.Data);
-
-				Bind(context, command, context.Data, statement.Parameters);
-			}
-		}
-
-		this.OnBound(context, statement, command);
-	}
-
 	public async ValueTask BindAsync(IDataMutateContextBase context, IStatementBase statement, DbCommand command, CancellationToken cancellation = default)
 	{
 		if(statement.Parameters.Count > 0)
@@ -109,7 +69,7 @@ public class StatementBinder : IStatementBinder
 						if(sequences != null)
 							await SetSequenceValueAsync(context, sequences, item, cancellation);
 
-						Bind(context, command, item, lines[index++].OfType<ParameterExpression>());
+						await BindParametersAsync(context, command, item, lines[index++].OfType<ParameterExpression>(), cancellation).ConfigureAwait(false);
 					}
 				}
 			}
@@ -119,20 +79,20 @@ public class StatementBinder : IStatementBinder
 				if(sequences != null)
 					await SetSequenceValueAsync(context, sequences, context.Data, cancellation);
 
-				Bind(context, command, context.Data, statement.Parameters);
+				await BindParametersAsync(context, command, context.Data, statement.Parameters, cancellation).ConfigureAwait(false);
 			}
 		}
 
-		this.OnBound(context, statement, command);
+		await this.OnBoundAsync(context, statement, command, cancellation).ConfigureAwait(false);
 	}
 	#endregion
 
 	#region 虚拟方法
-	protected virtual void OnBound(IDataMutateContextBase context, IStatementBase statement, DbCommand command) { }
+	protected virtual ValueTask OnBoundAsync(IDataMutateContextBase context, IStatementBase statement, DbCommand command, CancellationToken cancellation) => ValueTask.CompletedTask;
 	#endregion
 
 	#region 私有方法
-	private static void Bind(IDataMutateContextBase context, DbCommand command, object data, IEnumerable<ParameterExpression> parameters)
+	private static async ValueTask BindParametersAsync(IDataMutateContextBase context, DbCommand command, object data, IEnumerable<ParameterExpression> parameters, CancellationToken cancellation)
 	{
 		if(data == null || parameters == null)
 			return;
@@ -146,7 +106,7 @@ public class StatementBinder : IStatementBinder
 				if(parameter.Schema == null || parameter.IsChanged)
 				{
 					if(parameter.Value is IDataValueBinder binder)
-						SetParameterValue(context, dbParameter, binder.Bind(context, data, TryGetParameterValue(data, parameter.Schema, null, out var value) ? value : null));
+						SetParameterValue(context, dbParameter, await binder.BindAsync(context, data, TryGetParameterValue(data, parameter.Schema, null, out var value) ? value : null, cancellation).ConfigureAwait(false));
 					else
 						SetParameterValue(context, dbParameter, parameter.Value);
 
@@ -302,31 +262,6 @@ public class StatementBinder : IStatementBinder
 		};
 	}
 
-	private static void SetSequenceValue(IDataMutateContextBase context, IEnumerable<FieldIdentifier> sequenceFileds, object data)
-	{
-		if(data == null || sequenceFileds == null)
-			return;
-
-		foreach(var field in sequenceFileds)
-		{
-			if(field.Token.Property.IsSimplex(out var simplex))
-			{
-				var sequence = simplex.Sequence;
-
-				if(sequence != null && sequence.IsExternal)
-				{
-					var value = field.Token.GetValue(data);
-
-					if(CanSequence(context.Options, value))
-					{
-						var id = ((DataAccess)context.DataAccess).Increase(context, sequence, data);
-						field.Token.SetValue(ref data, Convert.ChangeType(id, field.Token.MemberType));
-					}
-				}
-			}
-		}
-	}
-
 	private static async ValueTask SetSequenceValueAsync(IDataMutateContextBase context, IEnumerable<FieldIdentifier> sequenceFileds, object data, CancellationToken cancellation)
 	{
 		if(data == null || sequenceFileds == null)
@@ -345,7 +280,7 @@ public class StatementBinder : IStatementBinder
 					if(CanSequence(context.Options, value))
 					{
 						var id = await ((DataAccess)context.DataAccess).IncreaseAsync(context, sequence, data, cancellation);
-						field.Token.SetValue(ref data, Convert.ChangeType(id, field.Token.MemberType));
+						field.Token.SetValue(ref data, Convert.ChangeType(id, field.Token.MemberType ?? simplex.Type.DbType.AsType()));
 					}
 				}
 			}

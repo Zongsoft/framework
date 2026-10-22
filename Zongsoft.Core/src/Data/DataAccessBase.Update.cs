@@ -36,79 +36,6 @@ namespace Zongsoft.Data;
 partial class DataAccessBase
 {
 	#region 公共方法
-	public int Update<T>(T data) => data == null ? 0 : this.Update(this.GetName<T>(), data, null, string.Empty, null, null, null);
-	public int Update<T>(T data, DataUpdateOptions options) => data == null ? 0 : this.Update(this.GetName<T>(), data, null, string.Empty, options, null, null);
-	public int Update<T>(T data, string schema) => data == null ? 0 : this.Update(this.GetName<T>(), data, null, schema, null, null, null);
-	public int Update<T>(T data, string schema, DataUpdateOptions options) => data == null ? 0 : this.Update(this.GetName<T>(), data, null, schema, options, null, null);
-	public int Update<T>(T data, ICondition criteria) => data == null ? 0 : this.Update(this.GetName<T>(), data, criteria, string.Empty, null, null, null);
-	public int Update<T>(T data, ICondition criteria, DataUpdateOptions options) => data == null ? 0 : this.Update(this.GetName<T>(), data, criteria, string.Empty, options, null, null);
-	public int Update<T>(T data, ICondition criteria, string schema) => data == null ? 0 : this.Update(this.GetName<T>(), data, criteria, schema, null, null, null);
-	public int Update<T>(T data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null) => data == null ? 0 : this.Update(this.GetName<T>(), data, criteria, schema, options, updating, updated);
-
-	public int Update<T>(object data) => data == null ? 0 : this.Update(this.GetName<T>(), data, null, string.Empty, null, null, null);
-	public int Update<T>(object data, DataUpdateOptions options) => data == null ? 0 : this.Update(this.GetName<T>(), data, null, string.Empty, options, null, null);
-	public int Update<T>(object data, string schema) => data == null ? 0 : this.Update(this.GetName<T>(), data, null, schema, null, null, null);
-	public int Update<T>(object data, string schema, DataUpdateOptions options) => data == null ? 0 : this.Update(this.GetName<T>(), data, null, schema, options, null, null);
-	public int Update<T>(object data, ICondition criteria) => data == null ? 0 : this.Update(this.GetName<T>(), data, criteria, string.Empty, null, null, null);
-	public int Update<T>(object data, ICondition criteria, DataUpdateOptions options) => data == null ? 0 : this.Update(this.GetName<T>(), data, criteria, string.Empty, options, null, null);
-	public int Update<T>(object data, ICondition criteria, string schema) => data == null ? 0 : this.Update(this.GetName<T>(), data, criteria, schema, null, null, null);
-	public int Update<T>(object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null) => data == null ? 0 : this.Update(this.GetName<T>(), data, criteria, schema, options, updating, updated);
-
-	public int Update(string name, object data) => this.Update(name, data, null, string.Empty, null, null, null);
-	public int Update(string name, object data, DataUpdateOptions options) => this.Update(name, data, null, string.Empty, options, null, null);
-	public int Update(string name, object data, string schema) => this.Update(name, data, null, schema, null, null, null);
-	public int Update(string name, object data, string schema, DataUpdateOptions options) => this.Update(name, data, null, schema, options, null, null);
-	public int Update(string name, object data, ICondition criteria) => this.Update(name, data, criteria, string.Empty, null, null, null);
-	public int Update(string name, object data, ICondition criteria, DataUpdateOptions options) => this.Update(name, data, criteria, string.Empty, options, null, null);
-	public int Update(string name, object data, ICondition criteria, string schema) => this.Update(name, data, criteria, schema, null, null, null);
-	public int Update(string name, object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null) => this.Update(name, data, criteria, this.Schema.Parse(name, schema, data.GetType()), options, updating, updated);
-	public int Update(string name, object data, ICondition criteria, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null)
-	{
-		//确实是否已处置
-		this.EnsureDisposed();
-
-		if(string.IsNullOrEmpty(name))
-			throw new ArgumentNullException(nameof(name));
-
-		if(data == null)
-			return 0;
-
-		//创建数据访问上下文对象
-		var context = this.CreateUpdateContext(name, data, criteria, schema, options);
-
-		//处理数据访问操作前的回调
-		if(updating != null && updating(context))
-			return context.Count;
-
-		//激发“Updating”事件，如果被中断则返回
-		if(this.OnUpdating(context))
-			return context.Count;
-
-		//调用数据访问过滤器前事件
-		this.OnFiltering(context);
-
-		//执行数据更新操作
-		this.OnUpdate(context);
-
-		//调用数据访问过滤器后事件
-		this.OnFiltered(context);
-
-		//激发“Updated”事件
-		this.OnUpdated(context);
-
-		//处理数据访问操作后的回调
-		if(updated != null)
-			updated(context);
-
-		var result = context.Count;
-
-		//处置上下文资源
-		context.Dispose();
-
-		//返回最终的结果
-		return result;
-	}
-
 	public ValueTask<int> UpdateAsync<T>(T data, CancellationToken cancellation = default) =>
 		data == null ? ValueTask.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, null, string.Empty, null, null, null, cancellation);
 	public ValueTask<int> UpdateAsync<T>(T data, DataUpdateOptions options, CancellationToken cancellation = default) =>
@@ -123,7 +50,7 @@ partial class DataAccessBase
 		data == null ? ValueTask.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, criteria, string.Empty, options, null, null, cancellation);
 	public ValueTask<int> UpdateAsync<T>(T data, ICondition criteria, string schema, CancellationToken cancellation = default) =>
 		data == null ? ValueTask.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, criteria, schema, null, null, null, cancellation);
-	public ValueTask<int> UpdateAsync<T>(T data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default) =>
+	public ValueTask<int> UpdateAsync<T>(T data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating = null, Func<DataUpdateContextBase, CancellationToken, ValueTask> updated = null, CancellationToken cancellation = default) =>
 		data == null ? ValueTask.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, criteria, schema, options, updating, updated, cancellation);
 	public ValueTask<int> UpdateAsync<T>(object data, CancellationToken cancellation = default) =>
 		data == null ? ValueTask.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, null, string.Empty, null, null, null, cancellation);
@@ -139,7 +66,7 @@ partial class DataAccessBase
 		data == null ? ValueTask.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, criteria, string.Empty, options, null, null, cancellation);
 	public ValueTask<int> UpdateAsync<T>(object data, ICondition criteria, string schema, CancellationToken cancellation = default) =>
 		data == null ? ValueTask.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, criteria, schema, null, null, null, cancellation);
-	public ValueTask<int> UpdateAsync<T>(object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default) =>
+	public ValueTask<int> UpdateAsync<T>(object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating = null, Func<DataUpdateContextBase, CancellationToken, ValueTask> updated = null, CancellationToken cancellation = default) =>
 		data == null ? ValueTask.FromResult(0) : this.UpdateAsync(this.GetName<T>(), data, criteria, schema, options, updating, updated, cancellation);
 
 	public ValueTask<int> UpdateAsync(string name, object data, CancellationToken cancellation = default) =>
@@ -156,9 +83,9 @@ partial class DataAccessBase
 		this.UpdateAsync(name, data, criteria, string.Empty, options, null, null, cancellation);
 	public ValueTask<int> UpdateAsync(string name, object data, ICondition criteria, string schema, CancellationToken cancellation = default) =>
 		this.UpdateAsync(name, data, criteria, schema, null, null, null, cancellation);
-	public ValueTask<int> UpdateAsync(string name, object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default) =>
+	public ValueTask<int> UpdateAsync(string name, object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating = null, Func<DataUpdateContextBase, CancellationToken, ValueTask> updated = null, CancellationToken cancellation = default) =>
 		this.UpdateAsync(name, data, criteria, this.Schema.Parse(name, schema, data.GetType()), options, updating, updated, cancellation);
-	public async ValueTask<int> UpdateAsync(string name, object data, ICondition criteria, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, bool> updating = null, Action<DataUpdateContextBase> updated = null, CancellationToken cancellation = default)
+	public async ValueTask<int> UpdateAsync(string name, object data, ICondition criteria, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating = null, Func<DataUpdateContextBase, CancellationToken, ValueTask> updated = null, CancellationToken cancellation = default)
 	{
 		//确实是否已处置
 		this.EnsureDisposed();
@@ -170,36 +97,33 @@ partial class DataAccessBase
 			return 0;
 
 		//创建数据访问上下文对象
-		var context = this.CreateUpdateContext(name, data, criteria, schema, options);
+		using var context = this.CreateUpdateContext(name, data, criteria, schema, options);
 
 		//处理数据访问操作前的回调
-		if(updating != null && updating(context))
+		if(updating != null && await updating(context, cancellation))
 			return context.Count;
 
 		//激发“Updating”事件，如果被中断则返回
-		if(this.OnUpdating(context))
+		if(await this.OnUpdatingAsync(context, cancellation))
 			return context.Count;
 
 		//调用数据访问过滤器前事件
-		this.OnFiltering(context);
+		await this.OnFilteringAsync(context, cancellation);
 
 		//执行数据更新操作
 		await this.OnUpdateAsync(context, cancellation);
 
 		//调用数据访问过滤器后事件
-		this.OnFiltered(context);
+		await this.OnFilteredAsync(context, cancellation);
 
 		//激发“Updated”事件
-		this.OnUpdated(context);
+		await this.OnUpdatedAsync(context, cancellation);
 
 		//处理数据访问操作后的回调
 		if(updated != null)
-			updated(context);
+			await updated(context, cancellation);
 
 		var result = context.Count;
-
-		//处置上下文资源
-		context.Dispose();
 
 		//返回最终的结果
 		return result;
@@ -207,7 +131,17 @@ partial class DataAccessBase
 	#endregion
 
 	#region 保护方法
-	protected abstract void OnUpdate(DataUpdateContextBase context);
 	protected abstract ValueTask OnUpdateAsync(DataUpdateContextBase context, CancellationToken cancellation);
+	#endregion
+
+	#region 便利取消
+	public ValueTask<int> UpdateAsync<T>(T data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating, CancellationToken cancellation) => this.UpdateAsync<T>(data, criteria, schema, options, updating, default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> UpdateAsync<T>(T data, ICondition criteria, string schema, DataUpdateOptions options, CancellationToken cancellation) => this.UpdateAsync<T>(data, criteria, schema, options, default(Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> UpdateAsync<T>(object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating, CancellationToken cancellation) => this.UpdateAsync<T>(data, criteria, schema, options, updating, default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> UpdateAsync<T>(object data, ICondition criteria, string schema, DataUpdateOptions options, CancellationToken cancellation) => this.UpdateAsync<T>(data, criteria, schema, options, default(Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> UpdateAsync(string name, object data, ICondition criteria, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating, CancellationToken cancellation) => this.UpdateAsync(name, data, criteria, schema, options, updating, default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> UpdateAsync(string name, object data, ICondition criteria, string schema, DataUpdateOptions options, CancellationToken cancellation) => this.UpdateAsync(name, data, criteria, schema, options, default(Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> UpdateAsync(string name, object data, ICondition criteria, ISchema schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating, CancellationToken cancellation) => this.UpdateAsync(name, data, criteria, schema, options, updating, default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> UpdateAsync(string name, object data, ICondition criteria, ISchema schema, DataUpdateOptions options, CancellationToken cancellation) => this.UpdateAsync(name, data, criteria, schema, options, default(Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
 	#endregion
 }

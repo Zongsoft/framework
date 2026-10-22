@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Data;
 
@@ -35,7 +37,7 @@ namespace Zongsoft.Data;
 public interface IPageable
 {
 	/// <summary>表示完成分页的事件。</summary>
-	event EventHandler<PagingEventArgs> Paginated;
+	event Func<object, PagingEventArgs, CancellationToken, ValueTask> Paginated;
 
 	/// <summary>获取一个值，指示当前分页集是否被禁用。</summary>
 	bool Suppressed { get; }

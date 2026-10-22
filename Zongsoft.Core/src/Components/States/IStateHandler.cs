@@ -28,11 +28,13 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Components.States;
 
 public interface IStateHandler<TKey, TValue> where TKey : struct, IEquatable<TKey> where TValue : struct
 {
-	void Handle(IStateContext<TKey, TValue> context);
-	void Finish(IStateContext<TKey, TValue> context);
+	ValueTask HandleAsync(IStateContext<TKey, TValue> context, CancellationToken cancellation = default);
+	ValueTask FinishAsync(IStateContext<TKey, TValue> context, CancellationToken cancellation = default);
 }

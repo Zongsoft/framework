@@ -64,13 +64,15 @@ var data = provider.GetService("Application")
 Console.WriteLine(data.Name);
 ```
 
-取得访问器不等于查询成功。真实业务装配请参阅 [Data 中的 Discussions 用例](../../README.zh-Hans.md#plugin-quickstart)，并沿其中的模块、映射及服务源码阅读。该用例不表示 Discussions 已兼容本驱动；数据库结构、字段类型和所需操作必须逐项验证，不能只改驱动名就推定可移植。业务服务通过公共契约调用，不自行构造数据库连接。
+宿主装配与具名访问器的用法见 [Data 插件示例](../../README.zh-Hans.md#plugin-quickstart)。准备与所选数据库匹配的表结构和字段类型，并使用本驱动支持的操作；业务服务通过公共契约访问数据。
 
 ## 运行行为
 
-本驱动提供数据库专属的语句构建器/访问器、命令参数化、执行基元与导入器。数据引擎根据具名连接设置选择它；在提供程序和操作支持时，驱动会加入环境数据事务。
+数据库操作通过 `IDataAccess` / `IDataService<T>` 的异步方法执行，查询结果使用 `await foreach` 消费；事务提交、回滚和资源释放均需要等待完成。导入支持内存集合与异步数据源，取消令牌传递给实际操作。
 
 🚨 切勿提交生产连接字符串。请使用部署期配置或秘密提供程序、为数据库身份授予最小权限，并先在可丢弃数据库中验证破坏性变更。
+
+重复键错误返回 `DataConstraintException`（`Code = 23505`），外键冲突返回 `DataConflictException`（`Code = 23503`），字段超长返回 `DataArgumentException`；原始数据库异常保存在 `InnerException` 中。约束名、表名和字段名以数据库可提供的信息为准，字段集合可能为空；冲突值 `Value` 不提供。其他数据库错误保留原异常。
 
 ## 兼容性与测试
 

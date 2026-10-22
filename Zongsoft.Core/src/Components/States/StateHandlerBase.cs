@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Components.States;
 
@@ -45,22 +47,22 @@ public abstract class StateHandlerBase<TKey, TValue> : IStateHandler<TKey, TValu
 	#endregion
 
 	#region 抽象方法
-	protected abstract void OnHandle(StateContext<TKey, TValue> context);
+	protected abstract ValueTask OnHandleAsync(StateContext<TKey, TValue> context, CancellationToken cancellation);
 	#endregion
 
 	#region 虚拟方法
-	protected virtual void OnFinish(StateContext<TKey, TValue> context) => context.SetState();
+	protected virtual async ValueTask OnFinishAsync(StateContext<TKey, TValue> context, CancellationToken cancellation) => await context.SetStateAsync(cancellation);
 	#endregion
 
 	#region 显式实现
-	void IStateHandler<TKey, TValue>.Handle(IStateContext<TKey, TValue> context)
+	ValueTask IStateHandler<TKey, TValue>.HandleAsync(IStateContext<TKey, TValue> context, CancellationToken cancellation)
 	{
-		this.OnHandle(context as StateContext<TKey, TValue> ?? throw new InvalidOperationException(Properties.Resources.StateHandler_InvalidContext_Message));
+		return this.OnHandleAsync(context as StateContext<TKey, TValue> ?? throw new InvalidOperationException(Properties.Resources.StateHandler_InvalidContext_Message), cancellation);
 	}
 
-	void IStateHandler<TKey, TValue>.Finish(IStateContext<TKey, TValue> context)
+	ValueTask IStateHandler<TKey, TValue>.FinishAsync(IStateContext<TKey, TValue> context, CancellationToken cancellation)
 	{
-		this.OnFinish(context as StateContext<TKey, TValue> ?? throw new InvalidOperationException(Properties.Resources.StateHandler_InvalidContext_Message));
+		return this.OnFinishAsync(context as StateContext<TKey, TValue> ?? throw new InvalidOperationException(Properties.Resources.StateHandler_InvalidContext_Message), cancellation);
 	}
 	#endregion
 }

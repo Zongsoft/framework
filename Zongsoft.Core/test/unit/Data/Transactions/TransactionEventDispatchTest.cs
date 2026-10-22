@@ -30,24 +30,28 @@ public sealed class TransactionEventDispatchTest
 		Assert.Empty(provider.GetFeatures());
 		IPredication captured;
 
-		using(var root = new Transaction())
+		await using(var root = new Transaction())
 		{
 			captured = Assert.IsAssignableFrom<IPredication>(Assert.Single(provider.GetFeatures()));
 			var waiting = captured.PredicateAsync(null).AsTask();
 			var readyAtNotification = false;
-			root.Context.Completed += (_, _) => readyAtNotification = waiting.IsCompletedSuccessfully;
+			root.Context.Completed += (_, _, _) =>
+			{
+				readyAtNotification = waiting.IsCompletedSuccessfully;
+				return ValueTask.CompletedTask;
+			};
 
-			using(var child = new Transaction())
+			await using(var child = new Transaction())
 			{
 				Assert.Same(captured, Assert.Single(provider.GetFeatures()));
-				child.Commit();
+				await child.CommitAsync();
 				Assert.False(waiting.IsCompleted);
 			}
 
 			if(commit)
-				root.Commit();
+				await root.CommitAsync();
 			else
-				root.Rollback();
+				await root.RollbackAsync();
 
 			Assert.True(readyAtNotification);
 			Assert.Equal(commit, await waiting.WaitAsync(TimeSpan.FromSeconds(30)));
@@ -55,7 +59,7 @@ public sealed class TransactionEventDispatchTest
 
 		Assert.Empty(provider.GetFeatures());
 
-		using(var next = new Transaction())
+		await using(var next = new Transaction())
 		{
 			Assert.NotSame(captured, Assert.Single(provider.GetFeatures()));
 			Assert.Equal(commit, await captured.PredicateAsync(null));
@@ -66,7 +70,7 @@ public sealed class TransactionEventDispatchTest
 	[Fact]
 	public async Task ConcurrentCaptureSharesDecisionAndCancellationOnlyEndsOneWait()
 	{
-		using var transaction = new Transaction();
+		await using var transaction = new Transaction();
 		var captures = await Task.WhenAll(Enumerable.Range(0, 16).Select(_ => Task.Run(() =>
 			Assert.IsAssignableFrom<IPredication>(Assert.Single(Transaction.Features.GetFeatures())))));
 		var feature = captures[0];
@@ -85,22 +89,49 @@ public sealed class TransactionEventDispatchTest
 		Assert.True(await feature.PredicateAsync(null));
 	}
 
+	[Theory]
+	[InlineData(true)]
+	[InlineData(false)]
+	public async Task Completed_ObserverCanAwaitFeatureBeforeFinishing(bool commit)
+	{
+		await using var transaction = new Transaction();
+		var feature = Assert.IsAssignableFrom<IPredication>(Assert.Single(Transaction.Features.GetFeatures()));
+		var entered = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+		var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		transaction.Context.Completed += async (_, _, cancellation) =>
+		{
+			entered.TrySetResult(await feature.PredicateAsync(null, cancellation).AsTask().WaitAsync(TimeSpan.FromSeconds(5)));
+			await release.Task;
+		};
+		var completion = commit ? transaction.CommitAsync() : transaction.RollbackAsync();
+
+		try
+		{
+			Assert.Equal(commit, await entered.Task.WaitAsync(TimeSpan.FromSeconds(5)));
+			Assert.False(completion.IsCompleted);
+			Assert.Equal(commit ? TransactionStatus.Committed : TransactionStatus.Aborted, transaction.Context.Status);
+		}
+		finally { release.TrySetResult(); }
+
+		await completion.WaitAsync(TimeSpan.FromSeconds(5));
+	}
+
 	[Fact]
 	public async Task CapturedTransactionDoesNotFollowLaterAmbientTransaction()
 	{
 		var inner = new RecordingChannel();
 		await RunAsync(inner, async exchanger =>
 		{
-			using(var transaction = new Transaction())
+			await using(var transaction = new Transaction())
 			{
 				await exchanger.ExchangeAsync(CreateContext(new() { Message = "first" }), CancellationToken.None);
-				transaction.Rollback();
+				await transaction.RollbackAsync();
 			}
 
-			using(var transaction = new Transaction())
+			await using(var transaction = new Transaction())
 			{
 				await exchanger.ExchangeAsync(CreateContext(new() { Message = "second" }), CancellationToken.None);
-				transaction.Commit();
+				await transaction.CommitAsync();
 			}
 
 			await inner.WaitForCountAsync(1);
@@ -116,8 +147,8 @@ public sealed class TransactionEventDispatchTest
 		var channel = new RecordingChannel();
 		await RunAsync(channel, async exchanger =>
 		{
-			using var transaction = new Transaction();
-			transaction.Rollback();
+			await using var transaction = new Transaction();
+			await transaction.RollbackAsync();
 			await exchanger.ExchangeAsync(CreateContext(new() { Message = "discarded" }), CancellationToken.None);
 		});
 
@@ -132,7 +163,7 @@ public sealed class TransactionEventDispatchTest
 
 		await RunAsync(channel, async exchanger =>
 		{
-			using var transaction = new Transaction();
+			await using var transaction = new Transaction();
 			var argument = new MutableArgument
 			{
 				Message = "before",
@@ -147,7 +178,7 @@ public sealed class TransactionEventDispatchTest
 			argument.Detail.Value = "nested-after";
 			context.Parameters["Value"] = "after";
 
-			transaction.Commit();
+			await transaction.CommitAsync();
 			await inner.WaitForCountAsync(1);
 
 			var received = Assert.IsType<EventContext<object>>(Assert.Single(inner.Contexts));
@@ -167,11 +198,11 @@ public sealed class TransactionEventDispatchTest
 
 		await RunAsync(channel, async exchanger =>
 		{
-			using var transaction = new Transaction();
+			await using var transaction = new Transaction();
 			await exchanger.ExchangeAsync(CreateContext(new() { Message = "discarded" }), CancellationToken.None);
 
 			Assert.Equal(0, inner.SendCount);
-			transaction.Rollback();
+			await transaction.RollbackAsync();
 			Assert.Equal(TransactionStatus.Aborted, transaction.Context.Status);
 		});
 
@@ -187,13 +218,20 @@ public sealed class TransactionEventDispatchTest
 
 		await RunAsync(channel, async exchanger =>
 		{
-			using var transaction = new Transaction();
+			var transaction = new Transaction();
 			Assert.True(transaction.Context.Enlist(new ThrowingEnlistment()));
-			await exchanger.ExchangeAsync(CreateContext(new() { Message = "discarded" }), CancellationToken.None);
 
-			Assert.Equal(0, inner.SendCount);
-			Assert.Throws<InvalidOperationException>(transaction.Commit);
-			Assert.Equal(TransactionStatus.Undetermined, transaction.Context.Status);
+			try
+			{
+				await exchanger.ExchangeAsync(CreateContext(new() { Message = "discarded" }), CancellationToken.None);
+				Assert.Equal(0, inner.SendCount);
+				await Assert.ThrowsAsync<InvalidOperationException>(() => transaction.CommitAsync());
+				Assert.Equal(TransactionStatus.Undetermined, transaction.Context.Status);
+			}
+			finally
+			{
+				await Assert.ThrowsAsync<InvalidOperationException>(() => transaction.DisposeAsync().AsTask());
+			}
 		});
 
 		Assert.Equal(0, inner.SendCount);
@@ -208,10 +246,10 @@ public sealed class TransactionEventDispatchTest
 
 		await RunAsync(channel, async exchanger =>
 		{
-			using var transaction = new Transaction();
+			await using var transaction = new Transaction();
 			await exchanger.ExchangeAsync(CreateContext(new() { Message = "asynchronous" }), CancellationToken.None);
 
-			var committing = Task.Run(transaction.Commit);
+			var committing = transaction.CommitAsync();
 			await inner.WaitForSendStartAsync();
 
 			try
@@ -237,7 +275,7 @@ public sealed class TransactionEventDispatchTest
 
 		await RunAsync(channel, async exchanger =>
 		{
-			using var transaction = new Transaction();
+			await using var transaction = new Transaction();
 			Assert.True(transaction.Context.Enlist(new DelegateEnlistment(context =>
 			{
 				if(context.Phase == EnlistmentPhase.Commit)
@@ -249,7 +287,7 @@ public sealed class TransactionEventDispatchTest
 			Assert.Equal("old", visibleValue);
 			Assert.Equal(0, inner.SendCount);
 
-			transaction.Commit();
+			await transaction.CommitAsync();
 			await inner.WaitForCountAsync(1);
 
 			Assert.Equal(TransactionStatus.Committed, transaction.Context.Status);
@@ -266,17 +304,17 @@ public sealed class TransactionEventDispatchTest
 
 		await RunAsync(channel, async exchanger =>
 		{
-			using var root = new Transaction();
+			await using var root = new Transaction();
 
-			using(var child = new Transaction())
+			await using(var child = new Transaction())
 			{
 				await exchanger.ExchangeAsync(CreateContext(new() { Message = "first" }), CancellationToken.None);
 				await exchanger.ExchangeAsync(CreateContext(new() { Message = "second" }), CancellationToken.None);
-				child.Commit();
+				await child.CommitAsync();
 				Assert.Equal(0, inner.SendCount);
 			}
 
-			root.Commit();
+			await root.CommitAsync();
 			await inner.WaitForCountAsync(2);
 
 			Assert.Equal(
@@ -417,13 +455,11 @@ public sealed class TransactionEventDispatchTest
 
 	private sealed class ThrowingEnlistment : IEnlistment
 	{
-		public void OnEnlist(EnlistmentContext context) => throw new InvalidOperationException("Expected enlistment failure.");
 		public ValueTask OnEnlistAsync(EnlistmentContext context, CancellationToken cancellation) => throw new InvalidOperationException("Expected enlistment failure.");
 	}
 
 	private sealed class DelegateEnlistment(Action<EnlistmentContext> enlist) : IEnlistment
 	{
-		public void OnEnlist(EnlistmentContext context) => enlist(context);
 		public ValueTask OnEnlistAsync(EnlistmentContext context, CancellationToken cancellation)
 		{
 			enlist(context);

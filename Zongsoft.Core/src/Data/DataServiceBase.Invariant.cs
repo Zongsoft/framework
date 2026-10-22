@@ -29,13 +29,15 @@
 
 using System;
 using System.Collections;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Data;
 
 partial class DataServiceBase<TModel>
 {
-	#region 插入方法
-	protected int Insert(object data, ISchema schema, DataInsertOptions options = null)
+	#region 异步方法
+	protected async ValueTask<int> InsertAsync(object data, ISchema schema, DataInsertOptions options = null, CancellationToken cancellation = default)
 	{
 		//确认是否可以执行该操作
 		this.EnsureInsert(options);
@@ -48,7 +50,7 @@ partial class DataServiceBase<TModel>
 			options = new DataInsertOptions();
 
 		//进行授权验证
-		this.Authorize(DataServiceMethod.Insert(), options);
+		await this.AuthorizeAsync(DataServiceMethod.Insert(), options, cancellation);
 
 		//将当前插入数据对象转换成数据字典
 		var dictionary = DataDictionary.GetDictionary<TModel>(data);
@@ -57,12 +59,12 @@ partial class DataServiceBase<TModel>
 		schema = this.Schematic(schema, data.GetType());
 
 		//验证待新增的数据
-		this.OnValidate(DataServiceMethod.Insert(), schema, dictionary, options);
+		await this.OnValidateAsync(DataServiceMethod.Insert(), schema, dictionary, options, cancellation);
 
-		return this.OnInsert(dictionary, schema, options);
+		return await this.OnInsertAsync(dictionary, schema, options, cancellation);
 	}
 
-	protected int InsertMany(IEnumerable items, ISchema schema, DataInsertOptions options = null)
+	protected async ValueTask<int> InsertManyAsync(IEnumerable items, ISchema schema, DataInsertOptions options = null, CancellationToken cancellation = default)
 	{
 		//确认是否可以执行该操作
 		this.EnsureInsert(options);
@@ -75,26 +77,16 @@ partial class DataServiceBase<TModel>
 			options = new DataInsertOptions();
 
 		//进行授权验证
-		this.Authorize(DataServiceMethod.InsertMany(), options);
-
-		//将当前插入数据集合对象转换成数据字典集合
-		var dictionares = DataDictionary.GetDictionaries<TModel>(items);
+		await this.AuthorizeAsync(DataServiceMethod.InsertMany(), options, cancellation);
 
 		//修正数据模式对象
 		schema = this.Schematic(schema, Common.TypeExtension.GetElementType(items.GetType()));
 
-		foreach(var dictionary in dictionares)
-		{
-			//验证待新增的数据
-			this.OnValidate(DataServiceMethod.InsertMany(), schema, dictionary, options);
-		}
-
-		return this.OnInsertMany(dictionares, schema, options);
+		var dictionaries = DataDictionary.GetDictionariesAsync<TModel>(items, (dictionary, token) => this.OnValidateAsync(DataServiceMethod.InsertMany(), schema, dictionary, options, token), cancellation);
+		return await this.OnInsertManyAsync(dictionaries, schema, options, cancellation);
 	}
-	#endregion
 
-	#region 增改方法
-	protected int Upsert(object data, ISchema schema, DataUpsertOptions options = null)
+	protected async ValueTask<int> UpsertAsync(object data, ISchema schema, DataUpsertOptions options = null, CancellationToken cancellation = default)
 	{
 		//确认是否可以执行该操作
 		this.EnsureUpsert(options);
@@ -107,7 +99,7 @@ partial class DataServiceBase<TModel>
 			options = new DataUpsertOptions();
 
 		//进行授权验证
-		this.Authorize(DataServiceMethod.Upsert(), options);
+		await this.AuthorizeAsync(DataServiceMethod.Upsert(), options, cancellation);
 
 		//将当前复写数据对象转换成数据字典
 		var dictionary = DataDictionary.GetDictionary<TModel>(data);
@@ -116,12 +108,12 @@ partial class DataServiceBase<TModel>
 		schema = this.Schematic(schema, data.GetType());
 
 		//验证待复写的数据
-		this.OnValidate(DataServiceMethod.Upsert(), schema, dictionary, options);
+		await this.OnValidateAsync(DataServiceMethod.Upsert(), schema, dictionary, options, cancellation);
 
-		return this.OnUpsert(dictionary, schema, options);
+		return await this.OnUpsertAsync(dictionary, schema, options, cancellation);
 	}
 
-	protected int UpsertMany(IEnumerable items, ISchema schema, DataUpsertOptions options = null)
+	protected async ValueTask<int> UpsertManyAsync(IEnumerable items, ISchema schema, DataUpsertOptions options = null, CancellationToken cancellation = default)
 	{
 		//确认是否可以执行该操作
 		this.EnsureUpsert(options);
@@ -134,26 +126,16 @@ partial class DataServiceBase<TModel>
 			options = new DataUpsertOptions();
 
 		//进行授权验证
-		this.Authorize(DataServiceMethod.UpsertMany(), options);
-
-		//将当前复写数据集合对象转换成数据字典集合
-		var dictionares = DataDictionary.GetDictionaries<TModel>(items);
+		await this.AuthorizeAsync(DataServiceMethod.UpsertMany(), options, cancellation);
 
 		//修正数据模式对象
 		schema = this.Schematic(schema, Common.TypeExtension.GetElementType(items.GetType()));
 
-		foreach(var dictionary in dictionares)
-		{
-			//验证待复写的数据
-			this.OnValidate(DataServiceMethod.UpsertMany(), schema, dictionary, options);
-		}
-
-		return this.OnUpsertMany(dictionares, schema, options);
+		var dictionaries = DataDictionary.GetDictionariesAsync<TModel>(items, (dictionary, token) => this.OnValidateAsync(DataServiceMethod.UpsertMany(), schema, dictionary, options, token), cancellation);
+		return await this.OnUpsertManyAsync(dictionaries, schema, options, cancellation);
 	}
-	#endregion
 
-	#region 更新方法
-	protected int Update(object data, ICondition criteria, ISchema schema, DataUpdateOptions options = null)
+	protected async ValueTask<int> UpdateAsync(object data, ICondition criteria, ISchema schema, DataUpdateOptions options = null, CancellationToken cancellation = default)
 	{
 		//确认是否可以执行该操作
 		this.EnsureUpdate(options);
@@ -166,7 +148,7 @@ partial class DataServiceBase<TModel>
 			options = new DataUpdateOptions();
 
 		//进行授权验证
-		this.Authorize(DataServiceMethod.Update(), options);
+		await this.AuthorizeAsync(DataServiceMethod.Update(), options, cancellation);
 
 		//将当前更新数据对象转换成数据字典
 		var dictionary = DataDictionary.GetDictionary<TModel>(data);
@@ -187,13 +169,13 @@ partial class DataServiceBase<TModel>
 		}
 
 		//修整过滤条件
-		criteria = this.OnValidate(DataServiceMethod.Update(), criteria ?? this.GetUpdateKey(dictionary), options);
+		criteria = await this.OnValidateAsync(DataServiceMethod.Update(), criteria ?? this.GetUpdateKey(dictionary), options, cancellation);
 
 		//修正数据模式对象
 		schema = this.Schematic(schema, data.GetType());
 
 		//验证待更新的数据
-		this.OnValidate(DataServiceMethod.Update(), schema, dictionary, options);
+		await this.OnValidateAsync(DataServiceMethod.Update(), schema, dictionary, options, cancellation);
 
 		//如果缺少必须的更新条件则抛出异常
 		if(criteria == null)
@@ -206,8 +188,16 @@ partial class DataServiceBase<TModel>
 		}
 
 		//执行更新操作
-		return this.OnUpdate(dictionary, criteria, schema, options);
+		return await this.OnUpdateAsync(dictionary, criteria, schema, options, cancellation);
 	}
+	#endregion
+
+	#region 便利取消
+	protected ValueTask<int> InsertAsync(object data, ISchema schema, CancellationToken cancellation) => this.InsertAsync(data, schema, default(DataInsertOptions), cancellation);
+	protected ValueTask<int> InsertManyAsync(IEnumerable items, ISchema schema, CancellationToken cancellation) => this.InsertManyAsync(items, schema, default(DataInsertOptions), cancellation);
+	protected ValueTask<int> UpsertAsync(object data, ISchema schema, CancellationToken cancellation) => this.UpsertAsync(data, schema, default(DataUpsertOptions), cancellation);
+	protected ValueTask<int> UpsertManyAsync(IEnumerable items, ISchema schema, CancellationToken cancellation) => this.UpsertManyAsync(items, schema, default(DataUpsertOptions), cancellation);
+	protected ValueTask<int> UpdateAsync(object data, ICondition criteria, ISchema schema, CancellationToken cancellation) => this.UpdateAsync(data, criteria, schema, default(DataUpdateOptions), cancellation);
 	#endregion
 
 	#region 私有方法

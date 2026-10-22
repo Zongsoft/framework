@@ -29,9 +29,10 @@
 
 using System;
 using System.Data;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Reflection;
+using System.Collections.Generic;
 
 using Zongsoft.Reflection;
 using Zongsoft.Collections;
@@ -41,12 +42,14 @@ namespace Zongsoft.Data.Common;
 public abstract class DataImporterBase : IDataImporter
 {
 	#region 导入方法
-	public void Import(DataImportContext context) => this.OnImport(context, GetMembers(context));
 	public ValueTask ImportAsync(DataImportContext context, CancellationToken cancellation = default) => this.OnImportAsync(context, GetMembers(context), cancellation);
 	#endregion
 
+	#region 保护方法
+	protected static IAsyncEnumerable<object> GetRecordsAsync(DataImportContext context) => DataInput.EnumerateAsync(context.Data);
+	#endregion
+
 	#region 抽象方法
-	protected abstract void OnImport(DataImportContext context, MemberCollection members);
 	protected abstract ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default);
 	#endregion
 
@@ -186,12 +189,12 @@ public abstract class DataImporterBase : IDataImporter
 			return complex != null;
 		}
 
-		public object GetValue(ref object target)
+		public async ValueTask<MemberValue> GetValueAsync(object target, CancellationToken cancellation = default)
 		{
 			object value;
 
 			if(!this.IsSimplex(out var property))
-				return null;
+				return new MemberValue { Target = target };
 
 			//判读当前属性是否为Sequence字段
 			if(CanSequence(property.Sequence))
@@ -200,30 +203,33 @@ public abstract class DataImporterBase : IDataImporter
 				if(!this.TryGetMemberValue(ref target, out value) || value == null || Convert.IsDBNull(value) || Zongsoft.Common.Convert.IsZero(value))
 				{
 					//递增当前属性对应的序号
-					var id = _context.DataAccess.Sequencer.Increase(property);
+					var id = await _context.DataAccess.Sequencer.IncreaseAsync(property, 1, cancellation).ConfigureAwait(false);
 
 					//尝试将递增的序号值写入到目标对象的属性
 					this.SetMemberValue(ref target, Zongsoft.Common.Convert.ConvertValue(id, this.Type));
 
 					//返回最新的序号值
-					return Convert.ChangeType(id, property.Type.DbType.AsType());
+					return new MemberValue { Target = target, Value = Convert.ChangeType(id, property.Type.DbType.AsType()) };
 				}
 			}
 
 			//验证当前属性是否需要强制更新其值
-			if(_validator != null && _validator.OnImport(_context, this.Property, out value))
+			var result = _validator == null ? default : await _validator.OnImportAsync(_context, this.Property, cancellation).ConfigureAwait(false);
+			if(result.HasValue)
 			{
+				value = result.Value;
+
 				//尝试验证器返回的值写入到目标对象的属性
 				this.SetMemberValue(ref target, value);
 
 				//返回验证后的值
-				return ConvertValue(value, property.Type, property.Length, property.Nullable);
+				return new MemberValue { Target = target, Value = ConvertValue(value, property.Type, property.Length, property.Nullable) };
 			}
 
 			if(this.TryGetMemberValue(ref target, out value))
-				return ConvertValue(value == null || value is string text && string.IsNullOrEmpty(text) ? property.DefaultValue : value, property.Type, property.Length, property.Nullable);
+				return new MemberValue { Target = target, Value = ConvertValue(value == null || value is string text && string.IsNullOrEmpty(text) ? property.DefaultValue : value, property.Type, property.Length, property.Nullable) };
 			else
-				return ConvertValue(property.DefaultValue, property.Type, property.Length, property.Nullable);
+				return new MemberValue { Target = target, Value = ConvertValue(property.DefaultValue, property.Type, property.Length, property.Nullable) };
 
 			static object ConvertValue(object value, DbType type, int length, bool nullable)
 			{
@@ -290,6 +296,15 @@ public abstract class DataImporterBase : IDataImporter
 			sequence.IsExternal &&
 			(sequence.References == null || sequence.References.Length == 0);
 		#endregion
+	}
+
+	/// <summary>表示导入字段取值后的当前数据对象与数据库字段值。</summary>
+	public struct MemberValue(object target, object value)
+	{
+		/// <summary>获取或设置完成字段回写后的当前数据对象。</summary>
+		public object Target = target;
+		/// <summary>获取或设置转换后写入数据库的字段值。</summary>
+		public object Value = value;
 	}
 
 	public sealed class MemberCollection : System.Collections.ObjectModel.KeyedCollection<string, Member>

@@ -43,36 +43,6 @@ namespace Zongsoft.Data.Common;
 
 public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement> where TStatement : IMutateStatement
 {
-	#region 同步执行
-	public bool Execute(IDataAccessContext context, TStatement statement)
-	{
-		if(context is IDataMutateContext ctx)
-			return this.OnExecute(ctx, statement);
-
-		throw new DataException(string.Format(Properties.Resources.DataExecutor_UnsupportedContext_Message, this.GetType().Name, context.GetType().Name));
-	}
-
-	protected virtual bool OnExecute(IDataMutateContext context, TStatement statement)
-	{
-		if(context.Method != DataAccessMethod.Insert && context.Entity.Immutable)
-			throw new DataException(string.Format(Properties.Resources.DataEntity_Immutable_Message, context.Entity.Name, context.Method));
-
-		var data = context.Data;
-
-		if(statement.Schema != null)
-			context.Data = GetContextData(data, statement.Schema);
-
-		try
-		{
-			return this.Mutate(context, statement);
-		}
-		finally
-		{
-			context.Data = data;
-		}
-	}
-	#endregion
-
 	#region 异步执行
 	public ValueTask<bool> ExecuteAsync(IDataAccessContext context, TStatement statement, CancellationToken cancellation)
 	{
@@ -104,104 +74,6 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 	#endregion
 
 	#region 虚拟方法
-	protected virtual bool OnMutated(IDataMutateContext context, TStatement statement, DbDataReader reader)
-	{
-		Returning returning;
-		SequenceToken[] sequences;
-
-		switch(context)
-		{
-			case DataDeleteContext deletion:
-				if(deletion.Options.HasReturning(out returning))
-				{
-					while(reader.Read())
-						returning.Rows.Populate(reader);
-				}
-				break;
-			case DataInsertContext insertion:
-				sequences = GetSequences(insertion.Schema)
-					.Select(member => new SequenceToken(member, reader.GetOrdinal(member.Name)))
-					.ToArray();
-
-				if(insertion.Options.HasReturning(out returning))
-				{
-					var enumerator = Utility.IsMultiple(context.Data, out var enumerable) ? enumerable.GetEnumerator() : null;
-
-					while(reader.Read())
-					{
-						returning.Rows.Populate(reader);
-
-						if(sequences.Length > 0)
-						{
-							var current = enumerator != null && enumerator.MoveNext() ? enumerator.Current : context.Data;
-
-							foreach(var sequence in sequences)
-								sequence.Member.Token.SetValue(ref current, reader.GetValue(sequence.Ordinal));
-						}
-					}
-				}
-				else if(sequences.Length > 0)
-				{
-					var enumerator = Utility.IsMultiple(context.Data, out var enumerable) ? enumerable.GetEnumerator() : null;
-
-					while(reader.Read())
-					{
-						var current = enumerator != null && enumerator.MoveNext() ? enumerator.Current : context.Data;
-
-						foreach(var sequence in sequences)
-							sequence.Member.Token.SetValue(ref current, reader.GetValue(sequence.Ordinal));
-					}
-				}
-				break;
-			case DataUpsertContext upsertion:
-				sequences = GetSequences(upsertion.Schema)
-					.Select(member => new SequenceToken(member, reader.GetOrdinal(member.Name)))
-					.ToArray();
-
-				if(upsertion.Options.HasReturning(out returning))
-				{
-					var enumerator = Utility.IsMultiple(context.Data, out var enumerable) ? enumerable.GetEnumerator() : null;
-
-					while(reader.Read())
-					{
-						returning.Rows.Populate(reader);
-
-						if(sequences.Length > 0)
-						{
-							var current = enumerator != null && enumerator.MoveNext() ? enumerator.Current : context.Data;
-
-							foreach(var sequence in sequences)
-								sequence.Member.Token.SetValue(ref current, reader.GetValue(sequence.Ordinal));
-						}
-					}
-				}
-				else if(sequences.Length > 0)
-				{
-					var enumerator = Utility.IsMultiple(context.Data, out var enumerable) ? enumerable.GetEnumerator() : null;
-
-					while(reader.Read())
-					{
-						var current = enumerator != null && enumerator.MoveNext() ? enumerator.Current : context.Data;
-
-						foreach(var sequence in sequences)
-							sequence.Member.Token.SetValue(ref current, reader.GetValue(sequence.Ordinal));
-					}
-				}
-				break;
-			case DataUpdateContext updation:
-				if(updation.Options.HasReturning(out returning))
-				{
-					while(reader.Read())
-						returning.Rows.Populate(reader);
-				}
-				break;
-		}
-
-		if(reader.RecordsAffected > 0)
-			context.Count += reader.RecordsAffected;
-
-		return context.Count > 0;
-	}
 	protected virtual async ValueTask<bool> OnMutatedAsync(IDataMutateContext context, TStatement statement, DbDataReader reader, CancellationToken cancellation)
 	{
 		Returning returning;
@@ -300,58 +172,11 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 		return context.Count > 0;
 	}
-
-	protected virtual bool OnMutated(IDataMutateContext context, TStatement statement, int count) => count > 0;
 	protected virtual ValueTask<bool> OnMutatedAsync(IDataMutateContext context, TStatement statement, int count, CancellationToken cancellation) => ValueTask.FromResult(count > 0);
-
-	protected virtual void OnMutating(IDataMutateContext context, TStatement statement) { }
 	protected virtual ValueTask OnMutatingAsync(IDataMutateContext context, TStatement statement, CancellationToken cancellation) => ValueTask.CompletedTask;
 	#endregion
 
 	#region 私有方法
-	private bool Mutate(IDataMutateContext context, TStatement statement)
-	{
-		bool continued;
-
-		//调用写入操作开始方法
-		this.OnMutating(context, statement);
-
-		//根据生成的脚本创建对应的数据命令
-		var command = context.Session.Build(context, statement);
-
-		//处理语句的插槽替换运算
-		StatementSlotter.Evaluate(context, statement, command);
-
-		//绑定命令参数
-		statement.Bind(context, command);
-
-		if(statement.Returning != null && statement.Returning.Table == null)
-		{
-			using(var reader = command.ExecuteReader())
-			{
-				//调用写入操作完成方法
-				continued = this.OnMutated(context, statement, reader);
-			}
-		}
-		else
-		{
-			//执行数据命令操作
-			var count = command.ExecuteNonQuery();
-
-			//累加总受影响的记录数
-			context.Count += count;
-
-			//调用写入操作完成方法
-			continued = this.OnMutated(context, statement, count);
-		}
-
-		//如果需要继续并且有从属语句则尝试绑定从属写操作数据
-		if(continued && statement.HasSlaves)
-			Bind(context.Data, statement.Slaves);
-
-		return continued;
-	}
-
 	private async ValueTask<bool> MutateAsync(IDataMutateContext context, TStatement statement, CancellationToken cancellation)
 	{
 		bool continued;
@@ -360,7 +185,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 		await this.OnMutatingAsync(context, statement, cancellation);
 
 		//根据生成的脚本创建对应的数据命令
-		var command = context.Session.Build(context, statement);
+		await using var command = context.Session.Build(context, statement);
 
 		//处理语句的插槽替换运算
 		StatementSlotter.Evaluate(context, statement, command);
@@ -370,7 +195,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 		if(statement.Returning != null && statement.Returning.Table == null)
 		{
-			using(var reader = await command.ExecuteReaderAsync(cancellation))
+			await using(var reader = await command.ExecuteReaderAsync(cancellation))
 			{
 				//调用写入操作完成方法
 				continued = await this.OnMutatedAsync(context, statement, reader, cancellation);

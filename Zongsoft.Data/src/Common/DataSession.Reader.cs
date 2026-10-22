@@ -42,7 +42,8 @@ partial class DataSession
 	private sealed class SessionReader : DbDataReader
 	{
 		#region 成员字段
-		private int _closed;
+		private readonly object _sync = new();
+		private TaskCompletionSource _disposal;
 		private ConnectionLease _lease;
 		private readonly DbDataReader _reader;
 		#endregion
@@ -91,54 +92,78 @@ partial class DataSession
 		public override T GetFieldValue<T>(int ordinal) => _reader.GetFieldValue<T>(ordinal);
 		public override Task<T> GetFieldValueAsync<T>(int ordinal, CancellationToken cancellationToken) => _reader.GetFieldValueAsync<T>(ordinal, cancellationToken);
 		public override TextReader GetTextReader(int ordinal) => _reader.GetTextReader(ordinal);
-		public override IEnumerator GetEnumerator() => _reader.GetEnumerator();
+		public override IEnumerator GetEnumerator() => throw new NotSupportedException();
 		public override bool IsDBNull(int ordinal) => _reader.IsDBNull(ordinal);
-		public override bool NextResult() => _reader.NextResult();
-		public override bool Read() => _reader.Read();
+		public override bool NextResult() => throw new NotSupportedException();
+		public override Task<bool> NextResultAsync(CancellationToken cancellation) => _reader.NextResultAsync(cancellation);
+		public override bool Read() => throw new NotSupportedException();
+		public override Task<bool> ReadAsync(CancellationToken cancellation) => _reader.ReadAsync(cancellation);
+		public override Task<bool> IsDBNullAsync(int ordinal, CancellationToken cancellation) => _reader.IsDBNullAsync(ordinal, cancellation);
 		#endregion
 
 		#region 关闭方法
 		public override void Close()
 		{
-			if(Interlocked.Exchange(ref _closed, 1) != 0)
-				return;
-
-			try
-			{
-				//关闭数据读取器
-				if(!_reader.IsClosed)
-					_reader.Close();
-			}
-			finally
-			{
-				//获取并清空当前读取器持有的数据连接租约
-				var lease = Interlocked.Exchange(ref _lease, null);
-
-				//释放当前读取器持有的数据连接租约
-				lease?.Dispose();
-			}
+			if(_disposal?.Task.IsCompletedSuccessfully != true)
+				throw new NotSupportedException();
 		}
 
-		public override async Task CloseAsync()
+		public override Task CloseAsync() => this.DisposeAsync().AsTask();
+
+		protected override void Dispose(bool disposing)
 		{
-			if(Interlocked.Exchange(ref _closed, 1) != 0)
-				return;
+			if(disposing)
+				this.Close();
+
+			base.Dispose(false);
+		}
+
+		public override ValueTask DisposeAsync()
+		{
+			TaskCompletionSource disposal;
+
+			lock(_sync)
+			{
+				if(_disposal != null)
+					return new ValueTask(_disposal.Task);
+
+				_disposal = disposal = new(TaskCreationOptions.RunContinuationsAsynchronously);
+			}
+
+			_ = this.DisposeAsyncCore(disposal);
+			return new ValueTask(disposal.Task);
+		}
+
+		private async Task DisposeAsyncCore(TaskCompletionSource disposal)
+		{
+			Exception failure = null;
 
 			try
 			{
-				//关闭数据读取器
-				if(!_reader.IsClosed)
-					await _reader.CloseAsync();
+				await _reader.DisposeAsync().ConfigureAwait(false);
 			}
-			finally
+			catch(Exception exception)
 			{
-				//获取并清空当前读取器持有的数据连接租约
-				var lease = Interlocked.Exchange(ref _lease, null);
+				failure = exception;
+			}
 
-				//释放当前读取器持有的数据连接租约
+			try
+			{
+				var lease = Interlocked.Exchange(ref _lease, null);
 				if(lease != null)
 					await lease.DisposeAsync().ConfigureAwait(false);
 			}
+			catch(Exception exception)
+			{
+				failure = failure == null ? exception : Combine(failure, exception);
+			}
+
+			GC.SuppressFinalize(this);
+
+			if(failure == null)
+				disposal.TrySetResult();
+			else
+				disposal.TrySetException(failure);
 		}
 		#endregion
 	}

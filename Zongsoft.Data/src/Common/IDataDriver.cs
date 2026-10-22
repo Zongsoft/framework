@@ -30,6 +30,8 @@
 using System;
 using System.Data;
 using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Data.Common;
 
@@ -66,8 +68,9 @@ public interface IDataDriver
 	/// <summary>当发生一个错误的通知方法。</summary>
 	/// <param name="context">发生异常的数据访问上下文。</param>
 	/// <param name="exception">发生的异常对象。</param>
+	/// <param name="cancellation">指定的异步取消标记。</param>
 	/// <returns>返回的新异常，如果为空则忽略该异常。</returns>
-	Exception OnError(IDataAccessContext context, Exception exception);
+	ValueTask<Exception> OnErrorAsync(IDataAccessContext context, Exception exception, CancellationToken cancellation = default);
 
 	/// <summary>创建一个数据命令对象。</summary>
 	/// <returns>返回创建的数据命令对象。</returns>

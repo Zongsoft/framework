@@ -10,7 +10,7 @@ using Zongsoft.Data.Tests.Models;
 namespace Zongsoft.Data.SQLite.Tests;
 
 [Collection("Database")]
-public class InsertSequenceTest(DatabaseFixture database) : IDisposable
+public class InsertSequenceTest(DatabaseFixture database) : IAsyncDisposable
 {
 	private readonly DatabaseFixture _database = database;
 
@@ -224,14 +224,14 @@ public class InsertSequenceTest(DatabaseFixture database) : IDisposable
 		await accessor.DeleteAsync<MemberModel>(Condition.In(nameof(RoleModel.RoleId), models.Select(model => model.RoleId)));
 	}
 
-	void IDisposable.Dispose()
+	async ValueTask IAsyncDisposable.DisposeAsync()
 	{
 		if(!Global.IsTestingEnabled)
 			return;
 
 		var accessor = _database.Accessor;
-		accessor.Delete<MemberModel>(Condition.Like($"{nameof(MemberModel.Role)}.{nameof(RoleModel.Name)}", "$%"));
-		accessor.Delete<RoleModel>(Condition.Like(nameof(RoleModel.Name), "$%"));
-		accessor.Delete<UserModel>(Condition.Like(nameof(UserModel.Name), "$%"));
+		await accessor.DeleteAsync<MemberModel>(Condition.Like($"{nameof(MemberModel.Role)}.{nameof(RoleModel.Name)}", "$%"));
+		await accessor.DeleteAsync<RoleModel>(Condition.Like(nameof(RoleModel.Name), "$%"));
+		await accessor.DeleteAsync<UserModel>(Condition.Like(nameof(UserModel.Name), "$%"));
 	}
 }

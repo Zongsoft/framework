@@ -96,3 +96,7 @@ dotnet cake build.cake --target=pack --edition=Release --project=gateway/Zongsof
 ```
 
 Without `--project`, the task builds the complete solution.
+
+## Account lookup
+
+Implement `IAccountProvider.GetAccountAsync` to supply dynamic accounts. Use `await AppletManager.GetAppletAsync(code, cancellation)` or `await ChannelManager.GetChannelAsync(code, cancellation)` to obtain an applet or channel. Use `FindAppletAsync` or `FindChannelAsync` and check for null when absence is allowed. Lookups support cancellation and reuse existing instances.

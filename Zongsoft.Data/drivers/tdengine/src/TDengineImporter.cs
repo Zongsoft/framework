@@ -44,7 +44,7 @@ namespace Zongsoft.Data.TDengine;
 public class TDengineImporter : DataImporterBase
 {
 	#region 重写方法
-	protected override void OnImport(DataImportContext context, MemberCollection members)
+	protected override async ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
 	{
 		var count = 0L;
 		var super = context.Entity.GetTableName();
@@ -52,13 +52,20 @@ public class TDengineImporter : DataImporterBase
 		var fields = members.Where(member => !member.Property.IsTagField()).ToArray();
 		var tables = new Dictionary<string, Table>();
 
-		foreach(var item in context.Data)
+		await foreach(var item in GetRecordsAsync(context).WithCancellation(cancellation).ConfigureAwait(false))
 		{
 			var target = item;
 			if(target == null)
 				continue;
 
-			var tagValues = tags.Select(member => member.GetValue(ref target)).ToArray();
+			var tagValues = new object[tags.Length];
+			for(int i = 0; i < tags.Length; i++)
+			{
+				var prepared = await tags[i].GetValueAsync(target, cancellation).ConfigureAwait(false);
+				target = prepared.Target;
+				tagValues[i] = prepared.Value;
+			}
+
 			var tableName = TDengineUtility.GetTableName(super, tagValues);
 
 			if(string.IsNullOrEmpty(tableName))
@@ -67,7 +74,15 @@ public class TDengineImporter : DataImporterBase
 			if(!tables.TryGetValue(tableName, out var table))
 				tables.Add(tableName, table = new Table(super, tagValues));
 
-			table.Rows.Add([.. fields.Select(member => TDengineUtility.Convert(member.GetValue(ref target)))]);
+			var values = new object[fields.Length];
+			for(int i = 0; i < fields.Length; i++)
+			{
+				var prepared = await fields[i].GetValueAsync(target, cancellation).ConfigureAwait(false);
+				target = prepared.Target;
+				values[i] = TDengineUtility.Convert(prepared.Value);
+			}
+
+			table.Rows.Add(values);
 		}
 
 		if(tables.Count == 0)
@@ -77,26 +92,20 @@ public class TDengineImporter : DataImporterBase
 			$"({string.Join(',', tags.Select(member => '`' + member.Property.GetFieldName() + '`'))}) TAGS({string.Join(',', Enumerable.Repeat('?', tags.Length))})\n" +
 			$"({string.Join(',', fields.Select(member => '`' + member.Property.GetFieldName() + '`'))}) VALUES ({string.Join(',', Enumerable.Repeat('?', fields.Length))})";
 
-		using var client = GetClient(context);
-		using var statement = client.StmtInit();
-		statement.Prepare(script);
+		await using var client = await GetClientAsync(context, cancellation).ConfigureAwait(false);
+		await using var statement = await client.StmtInitAsync(cancellation).ConfigureAwait(false);
+		await statement.PrepareAsync(script, cancellation).ConfigureAwait(false);
 
 		foreach(var table in tables.Values)
-			count += table.Execute(statement);
+			count += await table.ExecuteAsync(statement, cancellation).ConfigureAwait(false);
 
 		context.Count = (int)Math.Min(count, int.MaxValue);
-	}
-
-	protected override ValueTask OnImportAsync(DataImportContext context, MemberCollection members, CancellationToken cancellation = default)
-	{
-		this.OnImport(context, members);
-		return ValueTask.CompletedTask;
 	}
 	#endregion
 
 	#region 私有方法
-	private static ITDengineClient GetClient(DataImportContext context) => context.Session.Connector.Connect(
-		() => DbDriver.Open((ConnectionStringBuilder)TDengineDriver.Instance.CreateConnectionBuilder(context.Source.ConnectionString)));
+	private static Task<ITDengineClientAsync> GetClientAsync(DataImportContext context, CancellationToken cancellation) => context.Session.Connector.ConnectAsync(
+		token => DbDriver.OpenAsync((ConnectionStringBuilder)TDengineDriver.Instance.CreateConnectionBuilder(context.Source.ConnectionString), token), cancellation);
 	#endregion
 
 	#region 嵌套子类
@@ -119,22 +128,22 @@ public class TDengineImporter : DataImporterBase
 		#endregion
 
 		#region 公共方法
-		public long Execute(IStmt statement)
+		public async ValueTask<long> ExecuteAsync(IStmtAsync statement, CancellationToken cancellation)
 		{
 			var count = 0L;
 
 			for(int index = 0; index < _rows.Count; index += CHUNK_SIZE)
 			{
-				statement.SetTableName(this.Name);
-				statement.SetTags(_tags);
+				await statement.SetTableNameAsync(this.Name, cancellation).ConfigureAwait(false);
+				await statement.SetTagsAsync(_tags, cancellation).ConfigureAwait(false);
 
 				var length = Math.Min(CHUNK_SIZE, _rows.Count - index);
 
 				for(int offset = 0; offset < length; offset++)
-					statement.BindRow(_rows[index + offset]);
+					await statement.BindRowAsync(_rows[index + offset], cancellation).ConfigureAwait(false);
 
-				statement.AddBatch();
-				statement.Exec();
+				await statement.AddBatchAsync(cancellation).ConfigureAwait(false);
+				await statement.ExecAsync(cancellation).ConfigureAwait(false);
 				count += statement.Affected();
 			}
 

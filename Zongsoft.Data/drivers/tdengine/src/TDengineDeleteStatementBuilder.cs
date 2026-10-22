@@ -29,7 +29,10 @@
 
 using System;
 using System.Data;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Metadata;
@@ -40,9 +43,9 @@ namespace Zongsoft.Data.TDengine;
 public class TDengineDeleteStatementBuilder : DeleteStatementBuilder
 {
 	#region 重写方法
-	protected override IEnumerable<IStatementBase> BuildComplexity(DataDeleteContext context)
+	protected override async IAsyncEnumerable<IStatementBase> BuildComplexityAsync(DataDeleteContext context, [EnumeratorCancellation] CancellationToken cancellation)
 	{
-		foreach(var statement in base.BuildComplexity(context))
+		await foreach(var statement in base.BuildComplexityAsync(context, cancellation).ConfigureAwait(false))
 		{
 			if(statement is DeleteStatement deletion)
 				Validate(deletion);

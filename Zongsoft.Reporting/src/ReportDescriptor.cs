@@ -29,6 +29,8 @@
 
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Zongsoft.Reporting;
 
@@ -52,7 +54,7 @@ public abstract class ReportDescriptorBase : IReportDescriptor
 	#endregion
 
 	#region 抽象方法
-	public abstract Stream Open();
+	public abstract ValueTask<Stream> OpenAsync(CancellationToken cancellation = default);
 	#endregion
 }
 
@@ -121,9 +123,9 @@ public class FileReportDescriptor : IReportDescriptor
 	#endregion
 
 	#region 公共方法
-	public Stream Open()
+	public ValueTask<Stream> OpenAsync(CancellationToken cancellation = default)
 	{
-		return Zongsoft.IO.FileSystem.File.Open(this.FilePath, FileMode.Open, FileAccess.Read);
+		return Zongsoft.IO.FileSystem.File.OpenAsync(this.FilePath, FileMode.Open, FileAccess.Read, cancellation);
 	}
 	#endregion
 }

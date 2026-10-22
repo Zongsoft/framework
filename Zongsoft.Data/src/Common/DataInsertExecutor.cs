@@ -39,15 +39,6 @@ namespace Zongsoft.Data.Common;
 public class DataInsertExecutor : DataMutateExecutor<InsertStatement>
 {
 	#region 重写方法
-	protected override bool OnMutated(IDataMutateContext context, InsertStatement statement, int count)
-	{
-		//执行获取新增后的自增型字段值
-		if(count > 0 && statement.SequenceRetriever != null)
-			context.Provider.Executor.Execute(context, statement.SequenceRetriever);
-
-		return count > 0;
-	}
-
 	protected override async ValueTask<bool> OnMutatedAsync(IDataMutateContext context, InsertStatement statement, int count, CancellationToken cancellation)
 	{
 		//执行获取新增后的自增型字段值

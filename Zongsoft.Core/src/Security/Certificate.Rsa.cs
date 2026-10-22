@@ -96,7 +96,7 @@ public partial class Certificate
 			if(rsa != null)
 			{
 				_signaturer = null;
-				_rsa.Dispose();
+				rsa.Dispose();
 			}
 		}
 		#endregion

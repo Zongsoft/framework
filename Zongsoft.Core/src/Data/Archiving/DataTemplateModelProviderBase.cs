@@ -28,6 +28,8 @@
  */
 
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 using Zongsoft.Services;
 
@@ -49,7 +51,7 @@ public abstract class DataTemplateModelProviderBase : IDataTemplateModelProvider
 	#endregion
 
 	#region 抽象方法
-	public abstract IDataTemplateModel GetModel(IDataTemplate template, object argument);
+	public abstract ValueTask<IDataTemplateModel> GetModelAsync(IDataTemplate template, object argument, CancellationToken cancellation = default);
 	#endregion
 
 	#region 服务匹配
