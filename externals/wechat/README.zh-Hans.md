@@ -10,6 +10,16 @@
 
 -----
 
+## 当前能力与限制
+
+本库提供小程序登录与手机号兑换、公众号网页授权与模板消息、支付和退款的部分 REST 封装。支付实现同时包含 APIv3 和 APIv2/XML 路径；并非微信全产品接口的完整 SDK。
+
+支付 HTTP 客户端提供请求签名，但没有内置应答签名验证。默认回调网关负责分派，支付回调处理器负责资源解密；该管线没有内置通知签名、时间窗口和业务幂等验证，宿主需要在进入管线前完成验证，并在业务处理时检查订单归属和金额。
+
+Web API 的登录及凭据接口包含微信会话或访问凭据，不能直接作为面向不可信客户端的登录接口。宿主应限制这些入口并转换返回结果。小程序的 `session_key` 必须保留在服务端。
+
+下述第三方平台授权流程是微信平台概念参考；本库尚未提供票据接收、组件令牌和授权者令牌管理的完整服务。
+
 ## 微信第三方平台
 
 ### 相关概念
@@ -20,11 +30,11 @@
 
 - 平台访问令牌 `component_access_token`
 	> - 第三方平台接口的调用凭据，令牌的有效期为 `2` 小时，在令牌快过期时 _(譬如 `1` 小时 `50` 分)_，需调用接口重新获取。
-	> - 参考文档：https://developers.weixin.qq.com/doc/oplatform/Third-party_Platforms/api/component_access_token.html
+	> - 参考文档：https://developers.weixin.qq.com/doc/oplatform/openApi/ticket-token/api_getcomponentaccesstoken.html
 
 - 平台验证票据 `component_verify_ticket`
-	> - 当第三方平台创建审核通过后，微信服务器会向其“授权事件接收URL”每隔10分钟以`POST`的方式推送验证票据，第三方平台接收到该请求后，只需直接返回字符串`success`即可。
-	> - 参考文档：https://developers.weixin.qq.com/doc/oplatform/Third-party_Platforms/api/component_verify_ticket.html
+	> - 当第三方平台创建审核通过后，微信服务器会向其“授权事件接收URL”每隔10分钟以`POST`的方式推送验证票据，第三方平台应先验证消息签名、解密并保存票据，再返回字符串`success`。
+	> - 参考文档：https://developers.weixin.qq.com/doc/oplatform/Third-party_Platforms/2.0/Before_Develop/component_verify_ticket.html
 
 ### 授权流程
 
@@ -35,19 +45,19 @@
 	1. 扫描页面：https://mp.weixin.qq.com/cgi-bin/componentloginpage?component_appid=xxxx&pre_auth_code=xxxxx&redirect_uri=xxxx&auth_type=xxx
 	2. 微信分享：https://mp.weixin.qq.com/safe/bindcomponent?action=bindcomponent&no_scan=1&component_appid=xxxx&pre_auth_code=xxxxx&redirect_uri=xxxx&auth_type=xxx&biz_appid=xxxx#wechat_redirect
 5. 用户授权完成，微信推送回调，在回调中获取授权绑定信息
-	> 通过 https://developers.weixin.qq.com/doc/oplatform/Third-party_Platforms/api/authorization_info.html 获取授权者的 `authorizer_appid`, `authorizer_access_token`, `authorizer_refresh_token`
+	> 通过 https://developers.weixin.qq.com/doc/oplatform/openApi/ticket-token/api_getauthorizerrefreshtoken.html 获取授权者的 `authorizer_appid`, `authorizer_access_token`, `authorizer_refresh_token`
 6. 定时更新授权者的访问凭证
 
 ### 引用
 
 - 普通商户文档中心
-	> https://pay.weixin.qq.com/wiki/doc/apiv3/wxpay/pages/index.shtml
+	> https://pay.weixin.qq.com/doc/v3/merchant/4012081606
 
 - 服务商文档中心
-	> https://pay.weixin.qq.com/wiki/doc/apiv3_partner/pages/index.shtml
+	> https://pay.weixin.qq.com/doc/v3/partner/4012081673
 
-- Gitbook
-	> https://wechatpay-api.gitbook.io/wechatpay-api-v3
+- 微信支付官方 SDK 与工具
+	> https://github.com/wechatpay-apiv3
 
 - API 证书
 	> https://kf.qq.com/faq/161222NneAJf161222U7fARv.html

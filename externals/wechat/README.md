@@ -10,6 +10,16 @@
 
 -----
 
+## Current capabilities and limitations
+
+This library provides selected REST wrappers for mini program login and phone-number exchange, official account OAuth and template messages, payments, and refunds. Payment implementations include both APIv3 and APIv2/XML paths; this is not a complete SDK for all WeChat products.
+
+The payment HTTP client signs outgoing requests but does not verify response signatures. The default callback gateway dispatches requests and the payment callback handler decrypts resources. This pipeline does not validate notification signatures, timestamp windows, or business idempotency. The host must verify notifications before they enter the pipeline and validate order ownership and amounts during business processing.
+
+The Web API login and credential endpoints include WeChat session or access credentials and must not be exposed directly as login endpoints for untrusted clients. Hosts must restrict these endpoints and transform their responses. Mini program `session_key` values must remain on the server.
+
+The third-party platform authorization flow below is a platform reference. The library does not provide complete services for receiving verification tickets or managing component and authorizer tokens.
+
 ## WeChat Third-Party Platform
 
 ### Concepts
@@ -20,11 +30,11 @@
 
 - Platform access token `component_access_token`
 	> - The credential used to call third-party platform APIs. The token is valid for `2` hours. Refresh it before it expires, for example at about `1` hour and `50` minutes.
-	> - Reference: https://developers.weixin.qq.com/doc/oplatform/Third-party_Platforms/api/component_access_token.html
+	> - Reference: https://developers.weixin.qq.com/doc/oplatform/openApi/ticket-token/api_getcomponentaccesstoken.html
 
 - Platform verify ticket `component_verify_ticket`
-	> - After a third-party platform is created and approved, the WeChat server sends the verify ticket to its authorization event receiving URL by `POST` every 10 minutes. The third-party platform only needs to return the string `success`.
-	> - Reference: https://developers.weixin.qq.com/doc/oplatform/Third-party_Platforms/api/component_verify_ticket.html
+	> - After a third-party platform is created and approved, the WeChat server sends the verify ticket to its authorization event receiving URL by `POST` every 10 minutes. The third-party platform must verify the message signature, decrypt and store the ticket, then return the string `success`.
+	> - Reference: https://developers.weixin.qq.com/doc/oplatform/Third-party_Platforms/2.0/Before_Develop/component_verify_ticket.html
 
 ### Authorization Flow
 
@@ -35,19 +45,19 @@
 	1. Scan page: https://mp.weixin.qq.com/cgi-bin/componentloginpage?component_appid=xxxx&pre_auth_code=xxxxx&redirect_uri=xxxx&auth_type=xxx
 	2. WeChat share: https://mp.weixin.qq.com/safe/bindcomponent?action=bindcomponent&no_scan=1&component_appid=xxxx&pre_auth_code=xxxxx&redirect_uri=xxxx&auth_type=xxx&biz_appid=xxxx#wechat_redirect
 5. After the user authorizes, WeChat pushes a callback. Read the authorization binding information in that callback.
-	> Use https://developers.weixin.qq.com/doc/oplatform/Third-party_Platforms/api/authorization_info.html to obtain `authorizer_appid`, `authorizer_access_token`, and `authorizer_refresh_token`.
+	> Use https://developers.weixin.qq.com/doc/oplatform/openApi/ticket-token/api_getauthorizerrefreshtoken.html to obtain `authorizer_appid`, `authorizer_access_token`, and `authorizer_refresh_token`.
 6. Periodically refresh the authorizer access credential.
 
 ### References
 
 - Regular merchant documentation center
-	> https://pay.weixin.qq.com/wiki/doc/apiv3/wxpay/pages/index.shtml
+	> https://pay.weixin.qq.com/doc/v3/merchant/4012081606
 
 - Service provider documentation center
-	> https://pay.weixin.qq.com/wiki/doc/apiv3_partner/pages/index.shtml
+	> https://pay.weixin.qq.com/doc/v3/partner/4012081673
 
-- GitBook
-	> https://wechatpay-api.gitbook.io/wechatpay-api-v3
+- Official WeChat Pay SDKs and tools
+	> https://github.com/wechatpay-apiv3
 
 - API certificate
 	> https://kf.qq.com/faq/161222NneAJf161222U7fARv.html

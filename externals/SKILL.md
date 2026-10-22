@@ -12,6 +12,8 @@ description: 创建、修改、审查或调试 framework/externals 下的第三�
 3. 优先沿用同项目现有 Provider、Factory、ConnectionSettings、Client/Service 和 Web/Gateway 模式。
 4. 仅当多个生产适配器确实共享语义时，才提议修改 Core。
 
+微信账户、支付协议、回调网关及 Automao 调用方变更，继续阅读[微信项目技能](wechat/SKILL.md)。
+
 ## 运行路由与提供者选择
 
 - 表达式：Core `IExpressionEvaluator` → 服务匹配 → [Lua](lua/src/LuaExpressionEvaluator.cs)、[Python](python/src/PythonExpressionEvaluator.cs)、[Scriban](scriban/src/ScribanExpressionEvaluator.cs)。使用消费者接口与配置选定名字，语言语法并不因公共接口而相同。
