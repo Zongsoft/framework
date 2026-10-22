@@ -35,96 +35,30 @@ using Zongsoft.Components;
 
 namespace Zongsoft.Security.Privileges;
 
-/// <summary>提供密码获取、设置、校验功能的基类。</summary>
+/// <summary>提供用户密码设置和验证功能的基类。</summary>
 public abstract class Passworder
 {
-	#region 公共方法
-	public abstract ValueTask<Cipher> GetAsync(Identifier identifier, CancellationToken cancellation);
-	public abstract ValueTask<Cipher> GetAsync(string identity, string @namespace, CancellationToken cancellation);
-	public abstract ValueTask<bool> SetAsync(Identifier identifier, Cipher cipher, CancellationToken cancellation);
-	public abstract ValueTask<bool> VerifyAsync(string password, Cipher cipher, CancellationToken cancellation);
+	/// <summary>设置用户密码；空密码表示清除已设置的密码。</summary>
+	/// <param name="identifier">用户标识。</param>
+	/// <param name="password">密码明文；空引用或空字符串表示清除密码。</param>
+	/// <param name="cancellation">取消令牌。</param>
+	/// <returns>是否成功更新用户密码。</returns>
+	public abstract ValueTask<bool> SetAsync(Identifier identifier, string password, CancellationToken cancellation = default);
 
-	public ValueTask<bool> SetAsync(Identifier identifier, string password, CancellationToken cancellation) => this.SetAsync(identifier, this.GetCipher(password), cancellation);
-	#endregion
+	/// <summary>验证指定用户的密码；用户不存在或密码不匹配时返回失败。</summary>
+	/// <param name="identifier">用户标识。</param>
+	/// <param name="password">待验证的密码明文。</param>
+	/// <param name="cancellation">取消令牌。</param>
+	/// <returns>用户存在且密码匹配时返回成功；存储密码为空时，仅空引用或空字符串验证成功。</returns>
+	/// <exception cref="AuthenticationException">账号已禁用。</exception>
+	public abstract ValueTask<bool> VerifyAsync(Identifier identifier, string password, CancellationToken cancellation = default);
 
-	#region 保护方法
-	protected abstract Cipher GetCipher(string password, string algorithm = null);
-	#endregion
-
-	public class Cipher
-	{
-		#region 常量定义
-		private const string ALGORITHM = "SHA1";
-		#endregion
-
-		#region 成员字段
-		private string _algorithm;
-		#endregion
-
-		#region 构造函数
-		public Cipher() => this.Algorithm = null;
-		public Cipher(string algorithm) => this.Algorithm = algorithm;
-		public Cipher(string algorithm, byte[] value, byte[] nonce)
-		{
-			this.Algorithm = algorithm;
-			this.Value = value;
-			this.Nonce = nonce;
-		}
-		#endregion
-
-		#region 公共属性
-		/// <summary>获取密钥所有者标识，通常为用户标识。</summary>
-		public virtual Identifier Identifier { get; }
-		/// <summary>获取或设置密钥内容，通常为密码哈希值。</summary>
-		public byte[] Value { get; set; }
-		/// <summary>获取或设置密钥随机，通常为密码随机盐。</summary>
-		public byte[] Nonce { get; set; }
-		/// <summary>获取或设置密钥算法名称。</summary>
-		public string Algorithm
-		{
-			get => _algorithm;
-			set => _algorithm = string.IsNullOrEmpty(value) ? ALGORITHM : value.Trim();
-		}
-		#endregion
-
-		#region 公共方法
-		public void Reset(string password, string algorithm = null)
-		{
-			if(string.IsNullOrEmpty(algorithm))
-				algorithm = ALGORITHM;
-
-			this.Algorithm = algorithm;
-
-			if(string.IsNullOrEmpty(password))
-			{
-				this.Value = null;
-				this.Nonce = null;
-			}
-			else
-			{
-				this.Nonce = BitConverter.GetBytes(Random.Shared.NextInt64());
-				this.Value = PasswordUtility.HashPassword(password, this.Nonce, algorithm);
-			}
-		}
-
-		public void Reset(string password, byte[] nonce, string algorithm = null)
-		{
-			if(string.IsNullOrEmpty(algorithm))
-				algorithm = ALGORITHM;
-
-			this.Algorithm = algorithm;
-
-			if(string.IsNullOrEmpty(password))
-			{
-				this.Value = null;
-				this.Nonce = null;
-			}
-			else
-			{
-				this.Nonce = nonce;
-				this.Value = PasswordUtility.HashPassword(password, nonce, algorithm);
-			}
-		}
-		#endregion
-	}
+	/// <summary>验证账号密码，成功时返回用户标识，密码不匹配时返回空标识。</summary>
+	/// <param name="identity">登录账号。</param>
+	/// <param name="namespace">账号所属的命名空间。</param>
+	/// <param name="password">待验证的密码明文。</param>
+	/// <param name="cancellation">取消令牌。</param>
+	/// <returns>密码匹配时返回用户标识，否则返回空标识；存储密码为空时，仅空引用或空字符串验证成功。</returns>
+	/// <exception cref="AuthenticationException">账号不存在或已禁用。</exception>
+	public abstract ValueTask<Identifier> VerifyAsync(string identity, string @namespace, string password, CancellationToken cancellation = default);
 }

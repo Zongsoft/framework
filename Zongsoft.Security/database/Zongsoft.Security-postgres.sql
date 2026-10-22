@@ -29,17 +29,12 @@ CREATE TABLE IF NOT EXISTS "Security_User" (
   "Avatar"            varchar(100) NULL     COLLATE "C.utf8",
   "Nickname"          varchar(50)  NULL     COLLATE "C.utf8",
   "Password"          bytea        NULL,
-  "PasswordSalt"      bigint       NULL,
   "Email"             varchar(50)  NULL     COLLATE "C",
   "Phone"             varchar(50)  NULL     COLLATE "C",
   "Gender"            boolean      NULL,
   "Enabled"           boolean      NOT NULL DEFAULT true,
-  "PasswordQuestion1" varchar(50)  NULL     COLLATE "C.utf8",
-  "PasswordAnswer1"   bytea        NULL,
-  "PasswordQuestion2" varchar(50)  NULL     COLLATE "C.utf8",
-  "PasswordAnswer2"   bytea        NULL,
-  "PasswordQuestion3" varchar(50)  NULL     COLLATE "C.utf8",
-  "PasswordAnswer3"   bytea        NULL,
+  "SecretQuestion"    varchar(500) NULL     COLLATE "C.utf8",
+  "SecretAnswer"      bytea        NULL,
   "Creation"          timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   "Modification"      timestamp    NULL,
   "Description"       varchar(500) NULL     COLLATE "C.utf8",
@@ -60,17 +55,12 @@ COMMENT ON COLUMN "Security_User"."Name"              IS '用户名称，所属�
 COMMENT ON COLUMN "Security_User"."Avatar"            IS '用户头像';
 COMMENT ON COLUMN "Security_User"."Nickname"          IS '用户昵称';
 COMMENT ON COLUMN "Security_User"."Password"          IS '用户的登录口令';
-COMMENT ON COLUMN "Security_User"."PasswordSalt"      IS '口令加密向量(随机数)';
 COMMENT ON COLUMN "Security_User"."Email"             IS '用户的电子邮箱，该邮箱地址在所属命名空间内具有唯一性';
 COMMENT ON COLUMN "Security_User"."Phone"             IS '用户的手机号码，该手机号码在所属命名空间内具有唯一性';
 COMMENT ON COLUMN "Security_User"."Gender"            IS '用户性别';
 COMMENT ON COLUMN "Security_User"."Enabled"           IS '是否启用';
-COMMENT ON COLUMN "Security_User"."PasswordQuestion1" IS '用户的密码问答的题面(1)';
-COMMENT ON COLUMN "Security_User"."PasswordAnswer1"   IS '用户的密码问答的答案(1)';
-COMMENT ON COLUMN "Security_User"."PasswordQuestion2" IS '用户的密码问答的题面(2)';
-COMMENT ON COLUMN "Security_User"."PasswordAnswer2"   IS '用户的密码问答的答案(2)';
-COMMENT ON COLUMN "Security_User"."PasswordQuestion3" IS '用户的密码问答的题面(3)';
-COMMENT ON COLUMN "Security_User"."PasswordAnswer3"   IS '用户的密码问答的答案(3)';
+COMMENT ON COLUMN "Security_User"."SecretQuestion"    IS '用户的密码问答题面集合';
+COMMENT ON COLUMN "Security_User"."SecretAnswer"      IS '用户的密码问答答案集合';
 COMMENT ON COLUMN "Security_User"."Creation"          IS '创建时间';
 COMMENT ON COLUMN "Security_User"."Modification"      IS '修改时间';
 COMMENT ON COLUMN "Security_User"."Description"       IS '描述信息';

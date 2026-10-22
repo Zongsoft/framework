@@ -94,3 +94,9 @@ nuget:Zongsoft.Security
 Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
 
 Additional artifacts listed by the deployment manifest include `Zongsoft.Security.plugin`, `Zongsoft.Security.option`, `Zongsoft.Security.mapping`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.
+
+## Password Storage and Verification
+
+`Passworder` sets and verifies user passwords. `Password` encapsulates the PBKDF2 algorithm, iteration factor, salt and digest. The `Password` column stores the complete binary value with a capacity of 512 bytes; there is no separate `PasswordSalt` column. Only the `Password` format is accepted. A null or empty binary password accepts only null or empty-string input; nonempty input fails. The account must exist and be enabled. Users can supply an empty old password to set a new one.
+
+Recovery questions use `SecretQuestion` (500 characters) and answers use `SecretAnswer` (2048 bytes), supporting three to five pairs. Initialization SQL creates new tables and does not upgrade existing tables; existing databases must meet these column and capacity requirements.

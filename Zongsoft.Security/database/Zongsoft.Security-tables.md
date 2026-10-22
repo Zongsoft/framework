@@ -4,26 +4,21 @@
 
 字段名称 | 数据类型 | 长度 | 可空 | 备注
 ------- |:-------:|:---:|:---:| ----
-UserId            | int       | 4   | ✗ | 主键，用户编号
-Namespace         | varchar   | 50  | ✓ | 命名空间(_表示对应的组织机构标识_)
-Name              | varchar   | 50  | ✗ | 用户名称(_在所属命名空间内具有唯一性_)
-Nickname          | nvarchar  | 50  | ✓ | 用户昵称
-Avatar            | nvarchar  | 100 | ✓ | 用户头像
-Password          | varbinary | 64  | ✓ | 登录密码
-PasswordSalt      | bigint    | 8   | ✓ | 密码盐(_随机数_)
-Email             | varchar   | 50  | ✓ | 绑定的电子邮箱(_在所属命名空间内具有唯一性_)
-Phone             | varchar   | 50  | ✓ | 绑定的手机号码(_在所属命名空间内具有唯一性_)
-Gender            | bool      | -   | ✓ | 用户性别 _(`1`:男; `0`:女)_
-Enabled           | bool      | -   | ✗ | 是否可用
-PasswordQuestion1 | nvarchar  | 50  | ✓ | 用户的密码问答的题面[1]
-PasswordAnswer1   | varbinary | 64  | ✓ | 用户的密码问答的答案[1]
-PasswordQuestion2 | nvarchar  | 50  | ✓ | 用户的密码问答的题面[2]
-PasswordAnswer2   | varbinary | 64  | ✓ | 用户的密码问答的答案[2]
-PasswordQuestion3 | nvarchar  | 50  | ✓ | 用户的密码问答的题面[3]
-PasswordAnswer3   | varbinary | 64  | ✓ | 用户的密码问答的答案[3]
-Creation          | datetime  | -   | ✗ | 创建时间
-Modification      | datetime  | -   | ✓ | 最后修改时间
-Description       | nvarchar  | 500 | ✓ | 描述信息
+UserId            | int       | 4    | ✗ | 主键，用户编号
+Namespace         | varchar   | 50   | ✓ | 命名空间(_表示对应的组织机构标识_)
+Name              | varchar   | 50   | ✗ | 用户名称(_在所属命名空间内具有唯一性_)
+Nickname          | nvarchar  | 50   | ✓ | 用户昵称
+Avatar            | nvarchar  | 100  | ✓ | 用户头像
+Password          | varbinary | 512  | ✓ | 登录密码
+Email             | varchar   | 50   | ✓ | 绑定的电子邮箱(_在所属命名空间内具有唯一性_)
+Phone             | varchar   | 50   | ✓ | 绑定的手机号码(_在所属命名空间内具有唯一性_)
+Gender            | bool      | -    | ✓ | 用户性别 _(`1`:男; `0`:女)_
+Enabled           | bool      | -    | ✗ | 是否可用
+SecretQuestion    | nvarchar  | 500  | ✓ | 密保问题，以换行符分隔
+SecretAnswer      | varbinary | 2048 | ✓ | 密保答案集合
+Creation          | datetime  | -    | ✗ | 创建时间
+Modification      | datetime  | -    | ✓ | 最后修改时间
+Description       | nvarchar  | 500  | ✓ | 描述信息
 
 
 ## 角色表 `Role`

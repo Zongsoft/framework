@@ -82,39 +82,76 @@ public partial class UserService : UserServiceBase<UserModel>
 
 partial class UserService
 {
-	public new class Passworder(UserService service) : PassworderBase<Passworder.UserCipher>(service)
+	public new class Passworder(UserService service) : Zongsoft.Security.Privileges.Passworder
 	{
-		#region 重写方法
-		protected override ValueTask<bool> OnVerifyAsync(string password, UserCipher cipher, CancellationToken cancellation)
-		{
-			//确认用户状态
-			if(!cipher.Enabled)
-				throw new AuthenticationException(SecurityReasons.AccountDisabled);
+		#region 成员字段
+		private readonly UserService _service = service ?? throw new ArgumentNullException(nameof(service));
+		#endregion
 
-			return base.OnVerifyAsync(password, cipher, cancellation);
+		#region 公共方法
+		public override async ValueTask<bool> SetAsync(Zongsoft.Components.Identifier identifier, string password, CancellationToken cancellation = default)
+		{
+			cancellation.ThrowIfCancellationRequested();
+
+			if(identifier.IsEmpty)
+				return false;
+
+			return await _service.Accessor.UpdateAsync(_service.Name, new
+			{
+				Password = (byte[])Zongsoft.Security.Password.Generate(password),
+			}, _service.GetCriteria(identifier), cancellation) > 0;
+		}
+
+		public override async ValueTask<bool> VerifyAsync(Zongsoft.Components.Identifier identifier, string password, CancellationToken cancellation = default)
+		{
+			cancellation.ThrowIfCancellationRequested();
+
+			if(identifier.IsEmpty)
+				return false;
+
+			var record = await this.GetAsync(_service.GetCriteria(identifier), cancellation);
+			return record.HasValue && Verify(password, record.Value);
+		}
+
+		public override async ValueTask<Zongsoft.Components.Identifier> VerifyAsync(string identity, string @namespace, string password, CancellationToken cancellation = default)
+		{
+			cancellation.ThrowIfCancellationRequested();
+
+			if(string.IsNullOrWhiteSpace(identity))
+				throw new AuthenticationException(SecurityReasons.InvalidIdentity);
+
+			var record = await this.GetAsync(_service.GetCriteria(identity, @namespace), cancellation);
+			if(!record.HasValue)
+				throw new AuthenticationException(SecurityReasons.InvalidIdentity);
+
+			return Verify(password, record.Value) ? new(typeof(IUser), record.Value.UserId) : default;
 		}
 		#endregion
 
-		public class UserCipher : Cipher
+		#region 私有方法
+		private async ValueTask<PasswordRecord?> GetAsync(ICondition criteria, CancellationToken cancellation)
 		{
-			#region 公共属性
+			var records = _service.Accessor.SelectAsync<PasswordRecord?>(_service.Name, criteria, cancellation);
+			await using var enumerator = records.GetAsyncEnumerator(cancellation);
+			return await enumerator.MoveNextAsync() ? enumerator.Current : null;
+		}
+
+		private static bool Verify(string password, PasswordRecord record)
+		{
+			if(!record.Enabled)
+				throw new AuthenticationException(SecurityReasons.AccountDisabled);
+
+			return Zongsoft.Security.Password.TryParse(record.Password, out var stored) && stored.Verify(password);
+		}
+		#endregion
+
+		#region 嵌套结构
+		private struct PasswordRecord
+		{
 			public uint UserId { get; set; }
 			public bool Enabled { get; set; }
-
-			public byte[] Password
-			{
-				get => this.Value;
-				set => this.Value = value;
-			}
-
-			public long PasswordSalt
-			{
-				get => BitConverter.ToInt64(this.Nonce);
-				set => this.Nonce = BitConverter.GetBytes(value);
-			}
-
-			public override Identifier Identifier => new(typeof(IUser), this.UserId);
-			#endregion
+			public byte[] Password { get; set; }
 		}
+		#endregion
 	}
 }

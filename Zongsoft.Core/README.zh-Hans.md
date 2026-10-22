@@ -66,6 +66,10 @@ dotnet add package Zongsoft.Core
 
 `Password` 实现 `ISpanParsable<Password>` 和 `IParsable<Password>`，提供字符串与字符跨度的公开 `Parse`、`TryParse` 重载。文本格式不受区域设置影响，接口的格式提供者参数被忽略。空引用或空输入表示空密码；无效文本使 `TryParse` 返回 `false` 并输出空密码，`Parse` 则抛出 `FormatException`。
 
+用户密码服务通过 `Passworder.SetAsync` 设置或清除密码，通过两个 `VerifyAsync` 重载按用户标识或账号验证。账号验证成功返回用户标识；密码不匹配返回空标识；账号不存在或禁用抛出带相应原因码的 `AuthenticationException`。按用户标识验证时，用户不存在返回 `false`。
+
+用户密码为 `null` 或空数据时，密码登录和旧密码校验仅接受 `null` 或空字符串，非空输入（包括纯空白字符串）验证失败。用户可以提交空旧密码设置新密码；账号不存在、已禁用或存储密码格式损坏时仍拒绝验证。随机明文口令使用 `Zongsoft.Common.Randomizer.GenerateSecret`。
+
 ## 服务注册
 
 使用 `ServiceCollectionExtension.Register` 注册程序集中的服务。标注 `[Service]` 的公开类型参与自动注册；需要自定义注册时实现 `IServiceRegistration`。注册失败会向调用方传播。

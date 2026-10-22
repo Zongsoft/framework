@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.70.0</Version>
+		<Version>7.71.0</Version>
+		<PackageReleaseNotes>Breaking change: Password replaces PasswordUtility; Passworder exposes SetAsync and VerifyAsync. Empty stored passwords match only null or empty input.</PackageReleaseNotes>
 		<Product>Zongsoft Core Library</Product>
 		<Description>This is a core library about Zongsoft development framework.</Description>
 		<RootNamespace>Zongsoft</RootNamespace>

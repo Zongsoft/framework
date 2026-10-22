@@ -34,7 +34,7 @@ description: 修改或审查 Zongsoft.Security 的身份、凭据、认证器、
 
 ## 最小验证
 
-- 本仓没有独立 Security 测试项目；先选 `src/Zongsoft.Security.csproj`、`api/Zongsoft.Security.Web.csproj` 或 `captcha/Zongsoft.Security.Captcha.csproj`。
+- 密码服务契约测试位于 `test/Zongsoft.Security.Tests.csproj`，通过内存访问器替身验证真实用户服务，不使用插件宿主。生产构建按范围选择 `src/Zongsoft.Security.csproj`、`api/Zongsoft.Security.Web.csproj` 或 `captcha/Zongsoft.Security.Captcha.csproj`。
 - 使用固定身份、内存/替身缓存与脱敏签名向量验证拒绝、撤销、过期、重复确认和并发。
 - 数据库验证明确选择脚本与隔离库，不能默认触发真实短信、邮件或支付验证。
 - 不恢复已删除的 Postman 文件；现有 HTTP 文档按实际端点检查。
@@ -45,3 +45,7 @@ description: 修改或审查 Zongsoft.Security 的身份、凭据、认证器、
 - 登录后置脚本通过请求文件的真实路径定位 authentication.js，支持通过符号链接访问。VSCode 模式更新所选环境；CLI 模式仅返回并设置本批次变量，不写入 VSCode 配置。CLI 多文件运行须显式复用同一个 variables 对象并串行执行，认证先于业务请求。
 - 登录响应脚本兼容 Identity.UserId/userId 与 Identity.Identifier/identifier；优先使用业务用户的 UserId，并将 userId 与 credentialId 传递给后续请求。
 - 登录结果和请求日志不得输出凭据；离线脚本验证使用虚构响应，不能替代真实 Web 登录及授权验收。
+
+## 用户密码服务
+
+`UserService.Passworder` 直接实现 Core 的 `Passworder`，私有 `PasswordRecord` 仅供查询。设置操作只更新完整的 `Password` 字段，验证先检查账号状态，再解析并验证密码；空存储值仅匹配空引用或空字符串，非空输入及损坏的存储格式返回失败。认证器负责尝试限制与票证创建，密码服务返回标识，不公开数据库记录。框架契约测试位于 `test/PassworderContractTest.cs`；Automao 在自己的安全测试项目内独立验证其具体实现，不引用框架测试源码。

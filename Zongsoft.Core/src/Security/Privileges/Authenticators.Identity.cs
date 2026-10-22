@@ -101,22 +101,17 @@ partial class Authentication
 			if(attempter != null && !await attempter.CheckAsync(attempterKey, cancellation))
 				throw new AuthenticationException(SecurityReasons.AccountSuspended);
 
-			//获取当前用户的密钥信息
-			var cipher = await Authentication.Servicer.Users.Passworder.GetAsync(requirement.Identity, requirement.Namespace, cancellation);
+			//验证账号密码并获取用户标识
+			var identifier = await Authentication.Servicer.Users.Passworder.VerifyAsync(requirement.Identity, requirement.Namespace, requirement.Password, cancellation);
 
-			//如果帐户不存在则验证失败
-			if(cipher == null)
-				throw new AuthenticationException(SecurityReasons.InvalidIdentity);
-
-			//执行密码验证，如果成功则返回验证成功的票证
-			if(await Authentication.Servicer.Users.Passworder.VerifyAsync(requirement.Password, cipher, cancellation))
+			if(!identifier.IsEmpty)
 			{
 				//通知验证尝试成功，即清空验证失败记录
 				if(attempter != null)
 					await attempter.DoneAsync(attempterKey, cancellation);
 
 				//返回验证成功的票证
-				return this.CreateTicket(cipher.Identifier, requirement);
+				return this.CreateTicket(identifier, requirement);
 			}
 
 			//通知验证尝试失败

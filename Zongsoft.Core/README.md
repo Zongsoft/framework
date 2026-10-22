@@ -66,6 +66,10 @@ The text format is `algorithm#factor:nonce|value`; `#factor` may be omitted when
 
 `Password` implements `ISpanParsable<Password>` and `IParsable<Password>`, with public `Parse` and `TryParse` overloads for strings and character spans. The text format is culture-independent and the interface's format provider is ignored. Null or empty input represents an empty password. Invalid text returns `false` and an empty result from `TryParse`; `Parse` throws `FormatException` instead.
 
+User password services expose `Passworder.SetAsync` to set or clear a password and two `VerifyAsync` overloads to verify by user identifier or account. Account verification returns the user identifier on success and an empty identifier for a password mismatch; missing or disabled accounts throw `AuthenticationException` with the corresponding reason code. Verification by user identifier returns `false` for a missing user.
+
+A null or empty stored password accepts only null or empty-string input for sign-in and old-password verification. Nonempty input, including whitespace-only strings, fails. Users can supply an empty old password to set a new one. Missing or disabled accounts and malformed stored passwords still fail verification. Use `Zongsoft.Common.Randomizer.GenerateSecret` for random plaintext secrets.
+
 ## Service Registration
 
 Use `ServiceCollectionExtension.Register` to register services from an assembly. Public types annotated with `[Service]` participate in automatic registration; implement `IServiceRegistration` when an application needs custom registrations. Registration failures propagate to the caller.

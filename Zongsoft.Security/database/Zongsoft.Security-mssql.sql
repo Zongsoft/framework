@@ -14,26 +14,21 @@ GO
 
 IF OBJECT_ID(N'dbo.Security_User', N'U') IS NULL
 CREATE TABLE [dbo].[Security_User] (
-  [UserId]            INT           NOT NULL,
-  [Namespace]         VARCHAR(50)   NULL,
-  [Name]              VARCHAR(50)   NOT NULL,
-  [Nickname]          NVARCHAR(50)  NULL,
-  [Avatar]            NVARCHAR(100) NULL,
-  [Password]          VARBINARY(64) NULL,
-  [PasswordSalt]      BIGINT        NULL,
-  [Email]             VARCHAR(50)   NULL,
-  [Phone]             VARCHAR(50)   NULL,
-  [Gender]            BIT           NULL,
-  [Enabled]           BIT           NOT NULL DEFAULT 1,
-  [PasswordQuestion1] NVARCHAR(50)  NULL,
-  [PasswordAnswer1]   VARBINARY(64) NULL,
-  [PasswordQuestion2] NVARCHAR(50)  NULL,
-  [PasswordAnswer2]   VARBINARY(64) NULL,
-  [PasswordQuestion3] NVARCHAR(50)  NULL,
-  [PasswordAnswer3]   VARBINARY(64) NULL,
-  [Creation]          DATETIME      NOT NULL DEFAULT getdate(),
-  [Modification]      DATETIME      NULL,
-  [Description]       NVARCHAR(500) NULL,
+  [UserId]            INT             NOT NULL,
+  [Namespace]         VARCHAR(50)     NULL,
+  [Name]              VARCHAR(50)     NOT NULL,
+  [Nickname]          NVARCHAR(50)    NULL,
+  [Avatar]            NVARCHAR(100)   NULL,
+  [Password]          VARBINARY(512)  NULL,
+  [Email]             VARCHAR(50)     NULL,
+  [Phone]             VARCHAR(50)     NULL,
+  [Gender]            BIT             NULL,
+  [Enabled]           BIT             NOT NULL DEFAULT 1,
+  [SecretQuestion]    NVARCHAR(500)   NULL,
+  [SecretAnswer]      VARBINARY(2048) NULL,
+  [Creation]          DATETIME        NOT NULL DEFAULT getdate(),
+  [Modification]      DATETIME        NULL,
+  [Description]       NVARCHAR(500)   NULL,
   CONSTRAINT [PK_Security_User] PRIMARY KEY CLUSTERED ([UserId]),
   CONSTRAINT [UX_Security_User_Name] UNIQUE NONCLUSTERED ([Namespace], [Name])
 )
@@ -112,8 +107,6 @@ IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 1 AND major_i
 	EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户名称，所属命名空间内具有唯一性', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'Name'
 IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 1 AND major_id = OBJECT_ID(N'dbo.Security_User') AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'dbo.Security_User'), N'Password', 'ColumnId') AND name = N'MS_Description')
 	EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户的登录口令', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'Password'
-IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 1 AND major_id = OBJECT_ID(N'dbo.Security_User') AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'dbo.Security_User'), N'PasswordSalt', 'ColumnId') AND name = N'MS_Description')
-	EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'口令加密向量(随机数)', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'PasswordSalt'
 IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 1 AND major_id = OBJECT_ID(N'dbo.Security_User') AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'dbo.Security_User'), N'Nickname', 'ColumnId') AND name = N'MS_Description')
 	EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户昵称', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'Nickname'
 IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 1 AND major_id = OBJECT_ID(N'dbo.Security_User') AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'dbo.Security_User'), N'Avatar', 'ColumnId') AND name = N'MS_Description')
@@ -126,18 +119,10 @@ IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 1 AND major_i
 	EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户性别（0:女; 1:男）', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'Gender'
 IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 1 AND major_id = OBJECT_ID(N'dbo.Security_User') AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'dbo.Security_User'), N'Enabled', 'ColumnId') AND name = N'MS_Description')
 	EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'是否可用', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'Enabled'
-IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 1 AND major_id = OBJECT_ID(N'dbo.Security_User') AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'dbo.Security_User'), N'PasswordQuestion1', 'ColumnId') AND name = N'MS_Description')
-	EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户的密码问答的题面(1)', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'PasswordQuestion1'
-IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 1 AND major_id = OBJECT_ID(N'dbo.Security_User') AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'dbo.Security_User'), N'PasswordAnswer1', 'ColumnId') AND name = N'MS_Description')
-	EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户的密码问答的答案(1)', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'PasswordAnswer1'
-IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 1 AND major_id = OBJECT_ID(N'dbo.Security_User') AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'dbo.Security_User'), N'PasswordQuestion2', 'ColumnId') AND name = N'MS_Description')
-	EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户的密码问答的题面(2)', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'PasswordQuestion2'
-IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 1 AND major_id = OBJECT_ID(N'dbo.Security_User') AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'dbo.Security_User'), N'PasswordAnswer2', 'ColumnId') AND name = N'MS_Description')
-	EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户的密码问答的答案(2)', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'PasswordAnswer2'
-IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 1 AND major_id = OBJECT_ID(N'dbo.Security_User') AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'dbo.Security_User'), N'PasswordQuestion3', 'ColumnId') AND name = N'MS_Description')
-	EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户的密码问答的题面(3)', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'PasswordQuestion3'
-IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 1 AND major_id = OBJECT_ID(N'dbo.Security_User') AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'dbo.Security_User'), N'PasswordAnswer3', 'ColumnId') AND name = N'MS_Description')
-	EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户的密码问答的答案(3)', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'PasswordAnswer3'
+IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 1 AND major_id = OBJECT_ID(N'dbo.Security_User') AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'dbo.Security_User'), N'SecretQuestion', 'ColumnId') AND name = N'MS_Description')
+	EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户的密码问答题面集合', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'SecretQuestion'
+IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 1 AND major_id = OBJECT_ID(N'dbo.Security_User') AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'dbo.Security_User'), N'SecretAnswer', 'ColumnId') AND name = N'MS_Description')
+	EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'用户的密码问答答案集合', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'SecretAnswer'
 IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 1 AND major_id = OBJECT_ID(N'dbo.Security_User') AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'dbo.Security_User'), N'Creation', 'ColumnId') AND name = N'MS_Description')
 	EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'创建时间', @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'Security_User', @level2type=N'COLUMN',@level2name=N'Creation'
 IF NOT EXISTS (SELECT 1 FROM sys.extended_properties WHERE class = 1 AND major_id = OBJECT_ID(N'dbo.Security_User') AND minor_id = COLUMNPROPERTY(OBJECT_ID(N'dbo.Security_User'), N'Modification', 'ColumnId') AND name = N'MS_Description')

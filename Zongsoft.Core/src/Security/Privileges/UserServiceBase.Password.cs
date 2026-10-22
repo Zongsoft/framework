@@ -82,12 +82,7 @@ partial class UserServiceBase<TUser>
 		if(attempter != null && !await attempter.CheckAsync($"{ATTEMPTER_PREFIX}#{identifier.Value}", cancellation))
 			throw new SecurityException(Properties.Resources.Security_AccountSuspended_Message);
 
-		//获取用户密钥信息
-		var cipher = await this.Passworder.GetAsync(identifier, cancellation);
-		if(cipher == null)
-			return false;
-
-		if(await this.Passworder.VerifyAsync(oldPassword, cipher, cancellation))
+		if(await this.Passworder.VerifyAsync(identifier, oldPassword, cancellation))
 		{
 			//通知验证尝试成功，即清空验证失败记录
 			if(attempter != null)
@@ -100,14 +95,11 @@ partial class UserServiceBase<TUser>
 				await attempter.FailAsync($"{ATTEMPTER_PREFIX}#{identifier.Value}", cancellation);
 
 			//抛出验证失败异常
-			throw new SecurityException(SecurityReasons.InvalidPassword);
+			throw new SecurityException(SecurityReasons.InvalidPassword, message: null);
 		}
 
-		//将用户密钥重置为新密码
-		cipher.Reset(newPassword);
-
-		//设置指定用户的新密钥
-		return await this.Passworder.SetAsync(identifier, cipher, cancellation);
+		//设置指定用户的新密码
+		return await this.Passworder.SetAsync(identifier, newPassword, cancellation);
 	}
 
 	public virtual ValueTask<string> ForgetPasswordAsync(string identity, string @namespace, Parameters parameters, CancellationToken cancellation = default)
@@ -259,12 +251,7 @@ partial class UserServiceBase<TUser>
 		if(attempter != null && !await attempter.CheckAsync($"{ATTEMPTER_PREFIX}#{identifier.Value}", cancellation))
 			throw new SecurityException(Properties.Resources.Security_AccountSuspended_Message);
 
-		//获取用户密钥信息
-		var cipher = await this.Passworder.GetAsync(identifier, cancellation);
-		if(cipher == null)
-			return false;
-
-		if(await this.Passworder.VerifyAsync(password, cipher, cancellation))
+		if(await this.Passworder.VerifyAsync(identifier, password, cancellation))
 		{
 			//通知验证尝试成功，即清空验证失败记录
 			if(attempter != null)
@@ -277,7 +264,7 @@ partial class UserServiceBase<TUser>
 				await attempter.FailAsync($"{ATTEMPTER_PREFIX}#{identifier.Value}", cancellation);
 
 			//抛出验证失败异常
-			throw new SecurityException(SecurityReasons.InvalidPassword);
+			throw new SecurityException(SecurityReasons.InvalidPassword, message: null);
 		}
 
 		return await this.SetSecretAnswersAsync(identifier, passwordQuestions, passwordAnswers, cancellation);
@@ -337,19 +324,18 @@ partial class UserServiceBase<TUser>
 		if(record == null)
 			return ValueTask.FromResult<IReadOnlyList<byte[]>>(null);
 
-		if(record.Value.SecretAnswer != null && record.Value.SecretAnswer.Length > 0)
+		if(record.Value.SecretAnswer != null && record.Value.SecretAnswer.Length > 1)
 		{
 			var count = record.Value.SecretAnswer[0];
 
-			if(count > 0 && count <= 5)
+			if(count > 0 && count <= 5 && (record.Value.SecretAnswer.Length - 1) % count == 0)
 			{
 				var answers = new List<byte[]>(count);
-				var buffer = new byte[(record.Value.SecretAnswer.Length - 1) / count];
+				var size = (record.Value.SecretAnswer.Length - 1) / count;
 
 				for(int i = 0; i < count; i++)
 				{
-					Array.Copy(record.Value.SecretAnswer, i * buffer.Length + 1, buffer, 0, buffer.Length);
-					answers.Add(buffer);
+					answers.Add(record.Value.SecretAnswer.AsSpan(i * size + 1, size).ToArray());
 				}
 
 				return ValueTask.FromResult<IReadOnlyList<byte[]>>(answers);
@@ -376,13 +362,16 @@ partial class UserServiceBase<TUser>
 		if(questions.Length > 5)
 			throw new ArgumentOutOfRangeException(nameof(questions));
 
-		var buffer = new List<byte>(33 * answers.Length + 1)
+		if(answers.Any(string.IsNullOrEmpty))
+			throw new ArgumentException(null, nameof(answers));
+
+		var buffer = new List<byte>(45 * answers.Length + 1)
 		{
 			(byte)answers.Length
 		};
 
 		for(int i = 0; i < answers.Length; i++)
-			buffer.AddRange((byte[])Password.Generate(answers[i], BitConverter.GetBytes(Random.Shared.NextInt64())));
+			buffer.AddRange((byte[])Password.Generate(answers[i], System.Security.Cryptography.RandomNumberGenerator.GetBytes(8)));
 
 		return await this.Accessor.UpdateAsync(this.Name, new
 		{
@@ -397,70 +386,6 @@ partial class UserServiceBase<TUser>
 	{
 		public string SecretQuestion { get; set; }
 		public byte[] SecretAnswer { get; set; }
-	}
-	#endregion
-
-	#region 嵌套子类
-	public abstract class PassworderBase<TCipher>(UserServiceBase<TUser> service) : Passworder where TCipher : Passworder.Cipher, new()
-	{
-		#region 保护属性
-		protected UserServiceBase<TUser> Service { get; } = service ?? throw new ArgumentNullException(nameof(service));
-		#endregion
-
-		#region 公共方法
-		public override async ValueTask<Cipher> GetAsync(Identifier identifier, CancellationToken cancellation)
-		{
-			if(identifier.IsEmpty)
-				return null;
-
-			var result = this.OnGetAsync(identifier, cancellation);
-			await using var enumerator = result.GetAsyncEnumerator(cancellation);
-			return await enumerator.MoveNextAsync() ? enumerator.Current : null;
-		}
-
-		public override async ValueTask<Cipher> GetAsync(string identity, string @namespace, CancellationToken cancellation)
-		{
-			if(string.IsNullOrEmpty(identity))
-				return null;
-
-			var result = this.OnGetAsync(identity, @namespace, cancellation);
-			await using var enumerator = result.GetAsyncEnumerator(cancellation);
-			return await enumerator.MoveNextAsync() ? enumerator.Current : null;
-		}
-
-		public override ValueTask<bool> SetAsync(Identifier identifier, Cipher cipher, CancellationToken cancellation)
-		{
-			if(identifier.IsEmpty)
-				return ValueTask.FromResult(false);
-
-			return this.OnSetAsync(identifier, cipher as TCipher, cancellation);
-		}
-
-		public override ValueTask<bool> VerifyAsync(string password, Cipher cipher, CancellationToken cancellation)
-		{
-			return this.OnVerifyAsync(password, cipher as TCipher, cancellation);
-		}
-		#endregion
-
-		#region 保护方法
-		protected override Cipher GetCipher(string password, string algorithm = null)
-		{
-			var cipher = new TCipher();
-			cipher.Reset(password, algorithm);
-			return cipher;
-		}
-		#endregion
-
-		#region 虚拟方法
-		protected virtual IAsyncEnumerable<TCipher> OnGetAsync(Identifier identifier, CancellationToken cancellation) =>
-			this.Service.Accessor.SelectAsync<TCipher>(this.Service.Name, this.Service.GetCriteria(identifier), cancellation);
-		protected virtual IAsyncEnumerable<TCipher> OnGetAsync(string identity, string @namespace, CancellationToken cancellation) =>
-			this.Service.Accessor.SelectAsync<TCipher>(this.Service.Name, this.Service.GetCriteria(identity, @namespace), cancellation);
-		protected virtual async ValueTask<bool> OnSetAsync(Identifier identifier, TCipher cipher, CancellationToken cancellation) =>
-			await this.Service.Accessor.UpdateAsync(this.Service.Name, cipher, this.Service.GetCriteria(identifier), cancellation) > 0;
-		protected virtual ValueTask<bool> OnVerifyAsync(string password, TCipher cipher, CancellationToken cancellation) =>
-			ValueTask.FromResult(PasswordUtility.VerifyPassword(password, cipher.Value, cipher.Nonce, cipher.Algorithm));
-		#endregion
 	}
 	#endregion
 }

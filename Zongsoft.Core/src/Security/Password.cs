@@ -119,7 +119,7 @@ public readonly partial struct Password : IEquatable<Password>, ISpanParsable<Pa
 			return false;
 
 		var data = Generate(password, this.Factor, this.Nonce, this.Algorithm);
-		return this.Value.SequenceEqual(data);
+		return CryptographicOperations.FixedTimeEquals(this.Value, data);
 	}
 	#endregion
 

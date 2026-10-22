@@ -94,3 +94,9 @@ nuget:Zongsoft.Security
 按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。
 
 清单列出的附属产物包括：`Zongsoft.Security.plugin`、`Zongsoft.Security.option`、`Zongsoft.Security.mapping`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。
+
+## 密码存储与验证
+
+用户密码由 `Passworder` 设置和验证，`Password` 封装 PBKDF2 算法、迭代因子、盐和摘要。`Password` 字段存储完整二进制数据，容量为 512 字节，不使用独立的 `PasswordSalt` 字段。只接受 `Password` 格式的数据。数据库密码为 `null` 或空二进制数据时，仅使用 `null` 或空字符串登录可以验证成功，非空密码验证失败；账号必须存在且已启用。用户可用空旧密码设置新密码。
+
+密保问题存于 `SecretQuestion`（500 字符），答案存于 `SecretAnswer`（2048 字节），支持三至五组问答。初始化 SQL 用于创建新表，不会升级已有表；已有数据库须满足这些字段和容量要求。
