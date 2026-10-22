@@ -43,4 +43,5 @@ description: 修改或审查 Zongsoft.Security 的身份、凭据、认证器、
 
 - docs/http/authentication.http 的请求名称各自唯一；按身份标识登录、业务请求、续期/退出的顺序组织运行，不把不同认证方式和登出请求作为同一登录准备批次。
 - 登录后置脚本通过请求文件的真实路径定位 authentication.js，支持通过符号链接访问。VSCode 模式更新所选环境；CLI 模式仅返回并设置本批次变量，不写入 VSCode 配置。CLI 多文件运行须显式复用同一个 variables 对象并串行执行，认证先于业务请求。
+- 登录响应脚本兼容 Identity.UserId/userId 与 Identity.Identifier/identifier；优先使用业务用户的 UserId，并将 userId 与 credentialId 传递给后续请求。
 - 登录结果和请求日志不得输出凭据；离线脚本验证使用虚构响应，不能替代真实 Web 登录及授权验收。

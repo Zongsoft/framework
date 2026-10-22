@@ -10,7 +10,7 @@ async function saveCredential(response, environmentName, vscode) {
 	const signedIn = {
 		credentialId,
 		renewalToken,
-		userId: identity.Identifier ?? identity.identifier,
+		userId: identity.UserId ?? identity.userId ?? identity.Identifier ?? identity.identifier,
 		userName: identity.Name ?? identity.name,
 		namespace: identity.Namespace ?? identity.namespace,
 		email: identity.Email ?? identity.email,

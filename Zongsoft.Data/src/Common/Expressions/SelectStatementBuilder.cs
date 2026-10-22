@@ -67,7 +67,7 @@ public class SelectStatementBuilder : IStatementBuilder<DataSelectContext>
 				foreach(var member in context.Schema.Members)
 				{
 					if(!member.Ignored && member.Token.Property.IsComplex)
-						GenerateSchema(context.Aliaser, statement, statement.Table, member);
+						GenerateSchema(context.Aliaser, statement, statement.Table, member, true);
 				}
 			}
 		}
@@ -160,6 +160,9 @@ public class SelectStatementBuilder : IStatementBuilder<DataSelectContext>
 	}
 
 	internal static void GenerateSchema(Aliaser aliaser, SelectStatement statement, ISource origin, SchemaMember member)
+		=> GenerateSchema(aliaser, statement, origin, member, false);
+
+	private static void GenerateSchema(Aliaser aliaser, SelectStatement statement, ISource origin, SchemaMember member, bool grouped)
 	{
 		if(member.Ignored)
 			return;
@@ -254,41 +257,43 @@ public class SelectStatementBuilder : IStatementBuilder<DataSelectContext>
 
 			//对于一对一的导航属性，创建其关联子句即可
 			origin = statement.Join(aliaser, origin, complex, member.FullPath);
-
-			//确保导航属性的外链表的主键都在
-			if(member.HasChildren)
-			{
-				foreach(var key in complex.Foreign.Key)
-				{
-					if(!member.Children.Contains(key.Name))
-						member.Append(new SchemaMember(key));
-				}
-			}
 		}
 		else
-		{
-			var field = origin.CreateField(member.Token.Property);
-
-			//只有数据模式元素是导航子元素以及与当前语句的别名不同（相同则表示为同级），才需要指定字段引用的别名
-			if(member.Parent != null && !string.Equals(member.Path, statement.Alias, StringComparison.OrdinalIgnoreCase))
-			{
-				if(string.IsNullOrEmpty(statement.Alias))
-					field.Alias = member.FullPath;
-				else
-					field.Alias = Zongsoft.Common.StringExtension.TrimStart(member.FullPath, statement.Alias + ".", StringComparison.OrdinalIgnoreCase);
-			}
-
-			if(!statement.Select.Members.Contains(field))
-				statement.Select.Members.Add(field);
-		}
+			GenerateField(statement, origin, member.Token.Property, member.Path);
 
 		if(member.HasChildren)
 		{
 			foreach(var child in member.Children)
 			{
-				GenerateSchema(aliaser, statement, origin, child);
+				GenerateSchema(aliaser, statement, origin, child, grouped);
+			}
+
+			//普通查询补齐导航主键，以区分空关联与字段均为空的实体；聚合投影不引入逐行标识。
+			if(!grouped && member.Token.Property is IDataEntityComplexProperty complex)
+			{
+				foreach(var key in complex.Foreign.Key)
+				{
+					if(!member.Children.Contains(key.Name))
+						GenerateField(statement, origin, key, member.FullPath);
+				}
 			}
 		}
+	}
+
+	private static void GenerateField(SelectStatement statement, ISource origin, IDataEntityProperty property, string path)
+	{
+		var field = origin.CreateField(property);
+
+		//导航字段使用相对于当前语句的完整路径，不修改调用方的数据模式。
+		if(!string.IsNullOrEmpty(path) && !string.Equals(path, statement.Alias, StringComparison.OrdinalIgnoreCase))
+		{
+			var fullPath = path + "." + property.Name;
+			field.Alias = string.IsNullOrEmpty(statement.Alias) ? fullPath :
+				Zongsoft.Common.StringExtension.TrimStart(fullPath, statement.Alias + ".", StringComparison.OrdinalIgnoreCase);
+		}
+
+		if(!statement.Select.Members.Contains(field))
+			statement.Select.Members.Add(field);
 	}
 	#endregion
 }

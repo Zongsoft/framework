@@ -56,6 +56,7 @@ Schema 代码分两层，改动前先确认所属层：
 4. 解析结果写入 `SchemaMemberCollection<SchemaMember>`；已存在同名的成员会复用并追加子成员（`Include` 语义），排除用 `Exclude` 移除。
 5. 语句构建器消费 `context.Schema.Members`：
    - `SelectStatementBuilder`：为映射简单成员生成 `SELECT` 字段，复杂成员生成 `JOIN`（`?`/`!`）或独立子查询（`*`，经 `statement.Slaves` 惰性加载，`DataSelectExecutor.PopulateSlavesAsync` 填充）；忽略成员不生成数据库字段，计算属性所需的映射字段必须在 schema 中显式声明。
+   - 普通查询的一对一导航在投影中补齐外表主键，用于区分空关联与其他所选字段均为 null 的实体；补键只修改语句，不修改可复用的 Schema。分组查询仅投影分组键、聚合项和显式导航字段，不自动补导航主键，也不扩充分组键。导航对象根据所投影字段的非空值组装；调用方需要在聚合结果中区分存在但业务字段均为 null 的关联时，应显式选择可由分组确定的关联键。独立的一对多子查询仍遵守普通查询的补键规则。
    - `InsertStatementBuilder` / `UpdateStatementBuilder` / `UpsertStatementBuilder`：按模式决定写入成员与级联子表（一对多子记录按 UPSERT 语义），跳过忽略成员。
    - `DeleteStatementBuilder`：按模式生成级联删除子表语句，跳过忽略成员。
    - 模式成员的正数 `Limit` 和 `Sortings` 应用到对应子查询；`Limit <= 0` 表示不限。
