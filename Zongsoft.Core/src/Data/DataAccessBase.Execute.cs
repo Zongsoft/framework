@@ -37,7 +37,14 @@ namespace Zongsoft.Data;
 partial class DataAccessBase
 {
 	#region 公共方法
+	public ValueTask<int> ExecuteAsync(string name, CancellationToken cancellation) => this.ExecuteAsync(name, null, null, null, null, cancellation);
+	public ValueTask<int> ExecuteAsync(string name, DataExecuteOptions options, CancellationToken cancellation) => this.ExecuteAsync(name, null, options, null, null, cancellation);
+	public ValueTask<int> ExecuteAsync(string name, DataExecuteOptions options, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing, CancellationToken cancellation) => this.ExecuteAsync(name, options, executing, default(Func<DataExecuteContextBase, CancellationToken, ValueTask>), cancellation);
 	public ValueTask<int> ExecuteAsync(string name, DataExecuteOptions options = null, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing = null, Func<DataExecuteContextBase, CancellationToken, ValueTask> executed = null, CancellationToken cancellation = default) => this.ExecuteAsync(name, null, options, executing, executed, cancellation);
+
+	public ValueTask<int> ExecuteAsync(string name, IEnumerable<Parameter> parameters, CancellationToken cancellation) => this.ExecuteAsync(name, parameters, null, null, null, cancellation);
+	public ValueTask<int> ExecuteAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, CancellationToken cancellation) => this.ExecuteAsync(name, parameters, options, null, null, cancellation);
+	public ValueTask<int> ExecuteAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing, CancellationToken cancellation) => this.ExecuteAsync(name, parameters, options, executing, default(Func<DataExecuteContextBase, CancellationToken, ValueTask>), cancellation);
 	public async ValueTask<int> ExecuteAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing = null, Func<DataExecuteContextBase, CancellationToken, ValueTask> executed = null, CancellationToken cancellation = default)
 	{
 		//确实是否已处置
@@ -82,7 +89,14 @@ partial class DataAccessBase
 		static int GetRecordsAffected(object value) => value == null || System.Convert.IsDBNull(value) ? 0 : (int)System.Convert.ChangeType(value, typeof(int));
 	}
 
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, CancellationToken cancellation) => this.ExecuteAsync<T>(name, null, null, null, null, cancellation);
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, DataExecuteOptions options, CancellationToken cancellation) => this.ExecuteAsync<T>(name, null, options, null, null, cancellation);
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, DataExecuteOptions options, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing, CancellationToken cancellation) => this.ExecuteAsync<T>(name, options, executing, default(Func<DataExecuteContextBase, CancellationToken, ValueTask>), cancellation);
 	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, DataExecuteOptions options = null, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing = null, Func<DataExecuteContextBase, CancellationToken, ValueTask> executed = null, CancellationToken cancellation = default) => this.ExecuteAsync<T>(name, null, options, executing, executed, cancellation);
+
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, CancellationToken cancellation) => this.ExecuteAsync<T>(name, parameters, null, null, null, cancellation);
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, CancellationToken cancellation) => this.ExecuteAsync<T>(name, parameters, options, null, null, cancellation);
+	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing, CancellationToken cancellation) => this.ExecuteAsync<T>(name, parameters, options, executing, default(Func<DataExecuteContextBase, CancellationToken, ValueTask>), cancellation);
 	public async IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing = null, Func<DataExecuteContextBase, CancellationToken, ValueTask> executed = null, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellation = default)
 	{
 		this.EnsureDisposed();
@@ -112,7 +126,14 @@ partial class DataAccessBase
 			yield return item;
 	}
 
+	public ValueTask<object> ExecuteScalarAsync(string name, CancellationToken cancellation) => this.ExecuteScalarAsync(name, null, null, null, null, cancellation);
+	public ValueTask<object> ExecuteScalarAsync(string name, DataExecuteOptions options, CancellationToken cancellation) => this.ExecuteScalarAsync(name, null, options, null, null, cancellation);
+	public ValueTask<object> ExecuteScalarAsync(string name, DataExecuteOptions options, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing, CancellationToken cancellation) => this.ExecuteScalarAsync(name, options, executing, default(Func<DataExecuteContextBase, CancellationToken, ValueTask>), cancellation);
 	public ValueTask<object> ExecuteScalarAsync(string name, DataExecuteOptions options = null, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing = null, Func<DataExecuteContextBase, CancellationToken, ValueTask> executed = null, CancellationToken cancellation = default) => this.ExecuteScalarAsync(name, null, options, executing, executed, cancellation);
+
+	public ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, CancellationToken cancellation) => this.ExecuteScalarAsync(name, parameters, null, null, null, cancellation);
+	public ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, CancellationToken cancellation) => this.ExecuteScalarAsync(name, parameters, options, null, null, cancellation);
+	public ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing, CancellationToken cancellation) => this.ExecuteScalarAsync(name, parameters, options, executing, default(Func<DataExecuteContextBase, CancellationToken, ValueTask>), cancellation);
 	public async ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options = null, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing = null, Func<DataExecuteContextBase, CancellationToken, ValueTask> executed = null, CancellationToken cancellation = default)
 	{
 		//确实是否已处置
@@ -157,29 +178,5 @@ partial class DataAccessBase
 
 	#region 保护方法
 	protected abstract ValueTask OnExecuteAsync(DataExecuteContextBase context, CancellationToken cancellation);
-	#endregion
-
-	#region 取消重载
-	public ValueTask<int> ExecuteAsync(string name, CancellationToken cancellation) => this.ExecuteAsync(name, null, null, null, null, cancellation);
-	public ValueTask<int> ExecuteAsync(string name, DataExecuteOptions options, CancellationToken cancellation) => this.ExecuteAsync(name, null, options, null, null, cancellation);
-	public ValueTask<int> ExecuteAsync(string name, IEnumerable<Parameter> parameters, CancellationToken cancellation) => this.ExecuteAsync(name, parameters, null, null, null, cancellation);
-	public ValueTask<int> ExecuteAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, CancellationToken cancellation) => this.ExecuteAsync(name, parameters, options, null, null, cancellation);
-	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, CancellationToken cancellation) => this.ExecuteAsync<T>(name, null, null, null, null, cancellation);
-	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, DataExecuteOptions options, CancellationToken cancellation) => this.ExecuteAsync<T>(name, null, options, null, null, cancellation);
-	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, CancellationToken cancellation) => this.ExecuteAsync<T>(name, parameters, null, null, null, cancellation);
-	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, CancellationToken cancellation) => this.ExecuteAsync<T>(name, parameters, options, null, null, cancellation);
-	public ValueTask<object> ExecuteScalarAsync(string name, CancellationToken cancellation) => this.ExecuteScalarAsync(name, null, null, null, null, cancellation);
-	public ValueTask<object> ExecuteScalarAsync(string name, DataExecuteOptions options, CancellationToken cancellation) => this.ExecuteScalarAsync(name, null, options, null, null, cancellation);
-	public ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, CancellationToken cancellation) => this.ExecuteScalarAsync(name, parameters, null, null, null, cancellation);
-	public ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, CancellationToken cancellation) => this.ExecuteScalarAsync(name, parameters, options, null, null, cancellation);
-	#endregion
-
-	#region 便利取消
-	public ValueTask<int> ExecuteAsync(string name, DataExecuteOptions options, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing, CancellationToken cancellation) => this.ExecuteAsync(name, options, executing, default(Func<DataExecuteContextBase, CancellationToken, ValueTask>), cancellation);
-	public ValueTask<int> ExecuteAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing, CancellationToken cancellation) => this.ExecuteAsync(name, parameters, options, executing, default(Func<DataExecuteContextBase, CancellationToken, ValueTask>), cancellation);
-	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, DataExecuteOptions options, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing, CancellationToken cancellation) => this.ExecuteAsync<T>(name, options, executing, default(Func<DataExecuteContextBase, CancellationToken, ValueTask>), cancellation);
-	public IAsyncEnumerable<T> ExecuteAsync<T>(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing, CancellationToken cancellation) => this.ExecuteAsync<T>(name, parameters, options, executing, default(Func<DataExecuteContextBase, CancellationToken, ValueTask>), cancellation);
-	public ValueTask<object> ExecuteScalarAsync(string name, DataExecuteOptions options, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing, CancellationToken cancellation) => this.ExecuteScalarAsync(name, options, executing, default(Func<DataExecuteContextBase, CancellationToken, ValueTask>), cancellation);
-	public ValueTask<object> ExecuteScalarAsync(string name, IEnumerable<Parameter> parameters, DataExecuteOptions options, Func<DataExecuteContextBase, CancellationToken, ValueTask<bool>> executing, CancellationToken cancellation) => this.ExecuteScalarAsync(name, parameters, options, executing, default(Func<DataExecuteContextBase, CancellationToken, ValueTask>), cancellation);
 	#endregion
 }

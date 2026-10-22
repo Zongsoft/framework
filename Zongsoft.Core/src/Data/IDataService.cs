@@ -61,13 +61,10 @@ public partial interface IDataService
 
 	/// <summary>获取一个值，指示是否支持删除操作。</summary>
 	bool CanDelete { get; }
-
 	/// <summary>获取一个值，指示是否支持新增操作。</summary>
 	bool CanInsert { get; }
-
 	/// <summary>获取一个值，指示是否支持修改操作。</summary>
 	bool CanUpdate { get; }
-
 	/// <summary>获取一个值，指示是否支持增改操作。</summary>
 	bool CanUpsert { get; }
 
@@ -106,15 +103,523 @@ public partial interface IDataService
 	/// <returns>如果查找成功则返回指定类型的子服务，否则返回空(<c>null</c>)。</returns>
 	IDataService GetSubservice(Type type);
 	#endregion
+
+	#region 存在方法
+	ValueTask<bool> ExistsAsync(string key, CancellationToken cancellation) => this.ExistsAsync(key, default(DataExistsOptions), cancellation);
+	ValueTask<bool> ExistsAsync(string key, DataExistsOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<bool> ExistsAsync<TKey1>(TKey1 key1, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> => this.ExistsAsync<TKey1>(key1, default(DataExistsOptions), cancellation);
+	ValueTask<bool> ExistsAsync<TKey1>(TKey1 key1, DataExistsOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;
+
+	ValueTask<bool> ExistsAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> => this.ExistsAsync<TKey1, TKey2>(key1, key2, default(DataExistsOptions), cancellation);
+	ValueTask<bool> ExistsAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataExistsOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+
+	ValueTask<bool> ExistsAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> => this.ExistsAsync<TKey1, TKey2, TKey3>(key1, key2, key3, default(DataExistsOptions), cancellation);
+	ValueTask<bool> ExistsAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataExistsOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+
+	ValueTask<bool> ExistsAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> => this.ExistsAsync<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, default(DataExistsOptions), cancellation);
+	ValueTask<bool> ExistsAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataExistsOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+
+	ValueTask<bool> ExistsAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> => this.ExistsAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, default(DataExistsOptions), cancellation);
+	ValueTask<bool> ExistsAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataExistsOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+
+	ValueTask<bool> ExistsAsync(ICondition criteria, CancellationToken cancellation) => this.ExistsAsync(criteria, default(DataExistsOptions), cancellation);
+	ValueTask<bool> ExistsAsync(ICondition criteria, DataExistsOptions options = null, CancellationToken cancellation = default);
+	#endregion
+
+	#region 聚合方法
+	ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, string key, CancellationToken cancellation) where TValue : struct, IEquatable<TValue>;
+	ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, string key, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
+
+	ValueTask<TValue?> AggregateAsync<TKey1, TValue>(DataAggregate aggregate, TKey1 key1, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TValue : struct, IEquatable<TValue>;
+	ValueTask<TValue?> AggregateAsync<TKey1, TValue>(DataAggregate aggregate, TKey1 key1, DataAggregateOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TValue : struct, IEquatable<TValue>;
+
+	ValueTask<TValue?> AggregateAsync<TKey1, TKey2, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TValue : struct, IEquatable<TValue>;
+	ValueTask<TValue?> AggregateAsync<TKey1, TKey2, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, DataAggregateOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TValue : struct, IEquatable<TValue>;
+
+	ValueTask<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, TKey3 key3, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TValue : struct, IEquatable<TValue>;
+	ValueTask<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, TKey3 key3, DataAggregateOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TValue : struct, IEquatable<TValue>;
+
+	ValueTask<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TKey4, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TValue : struct, IEquatable<TValue>;
+	ValueTask<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TKey4, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataAggregateOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TValue : struct, IEquatable<TValue>;
+
+	ValueTask<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TKey4, TKey5, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> where TValue : struct, IEquatable<TValue>;
+	ValueTask<TValue?> AggregateAsync<TKey1, TKey2, TKey3, TKey4, TKey5, TValue>(DataAggregate aggregate, TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataAggregateOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> where TValue : struct, IEquatable<TValue>;
+
+	ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, CancellationToken cancellation) where TValue : struct, IEquatable<TValue>;
+	ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
+	ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, ICondition criteria, CancellationToken cancellation) where TValue : struct, IEquatable<TValue>;
+	ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, ICondition criteria, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue>;
+	#endregion
+
+	#region 删除方法
+	ValueTask<int> DeleteAsync(string key, CancellationToken cancellation) => this.DeleteAsync(key, default(DataDeleteOptions), cancellation);
+	ValueTask<int> DeleteAsync(string key, DataDeleteOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> DeleteAsync(string key, string schema, CancellationToken cancellation) => this.DeleteAsync(key, schema, default(DataDeleteOptions), cancellation);
+	ValueTask<int> DeleteAsync(string key, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> DeleteAsync<TKey1>(TKey1 key1, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> => this.DeleteAsync<TKey1>(key1, default(DataDeleteOptions), cancellation);
+	ValueTask<int> DeleteAsync<TKey1>(TKey1 key1, DataDeleteOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;
+
+	ValueTask<int> DeleteAsync<TKey1>(TKey1 key1, string schema, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> => this.DeleteAsync<TKey1>(key1, schema, default(DataDeleteOptions), cancellation);
+	ValueTask<int> DeleteAsync<TKey1>(TKey1 key1, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;
+
+	ValueTask<int> DeleteAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> => this.DeleteAsync<TKey1, TKey2>(key1, key2, default(DataDeleteOptions), cancellation);
+	ValueTask<int> DeleteAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataDeleteOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+
+	ValueTask<int> DeleteAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> => this.DeleteAsync<TKey1, TKey2>(key1, key2, schema, default(DataDeleteOptions), cancellation);
+	ValueTask<int> DeleteAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+
+	ValueTask<int> DeleteAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> => this.DeleteAsync<TKey1, TKey2, TKey3>(key1, key2, key3, default(DataDeleteOptions), cancellation);
+	ValueTask<int> DeleteAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataDeleteOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+
+	ValueTask<int> DeleteAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> => this.DeleteAsync<TKey1, TKey2, TKey3>(key1, key2, key3, schema, default(DataDeleteOptions), cancellation);
+	ValueTask<int> DeleteAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+
+	ValueTask<int> DeleteAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> => this.DeleteAsync<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, default(DataDeleteOptions), cancellation);
+	ValueTask<int> DeleteAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataDeleteOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+
+	ValueTask<int> DeleteAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> => this.DeleteAsync<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, schema, default(DataDeleteOptions), cancellation);
+	ValueTask<int> DeleteAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+
+	ValueTask<int> DeleteAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> => this.DeleteAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, default(DataDeleteOptions), cancellation);
+	ValueTask<int> DeleteAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataDeleteOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+
+	ValueTask<int> DeleteAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> => this.DeleteAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, schema, default(DataDeleteOptions), cancellation);
+	ValueTask<int> DeleteAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+
+	ValueTask<int> DeleteAsync(ICondition criteria, CancellationToken cancellation) => this.DeleteAsync(criteria, default(DataDeleteOptions), cancellation);
+	ValueTask<int> DeleteAsync(ICondition criteria, DataDeleteOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> DeleteAsync(ICondition criteria, string schema, CancellationToken cancellation) => this.DeleteAsync(criteria, schema, default(DataDeleteOptions), cancellation);
+	ValueTask<int> DeleteAsync(ICondition criteria, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default);
+	#endregion
+
+	#region 插入方法
+	ValueTask<int> InsertAsync(object data, CancellationToken cancellation) => this.InsertAsync(data, default(DataInsertOptions), cancellation);
+	ValueTask<int> InsertAsync(object data, DataInsertOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> InsertAsync(object data, string schema, CancellationToken cancellation) => this.InsertAsync(data, schema, default(DataInsertOptions), cancellation);
+	ValueTask<int> InsertAsync(object data, string schema, DataInsertOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> InsertManyAsync(IEnumerable items, CancellationToken cancellation) => this.InsertManyAsync(items, default(DataInsertOptions), cancellation);
+	ValueTask<int> InsertManyAsync(IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> InsertManyAsync(IEnumerable items, string schema, CancellationToken cancellation) => this.InsertManyAsync(items, schema, default(DataInsertOptions), cancellation);
+	ValueTask<int> InsertManyAsync(IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> InsertManyAsync(string key, IEnumerable items, CancellationToken cancellation) => this.InsertManyAsync(key, items, default(DataInsertOptions), cancellation);
+	ValueTask<int> InsertManyAsync(string key, IEnumerable items, DataInsertOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> InsertManyAsync(string key, IEnumerable items, string schema, CancellationToken cancellation) => this.InsertManyAsync(key, items, schema, default(DataInsertOptions), cancellation);
+	ValueTask<int> InsertManyAsync(string key, IEnumerable items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> InsertManyAsync<T>(IAsyncEnumerable<T> items, CancellationToken cancellation) => this.InsertManyAsync<T>(items, default(DataInsertOptions), cancellation);
+	ValueTask<int> InsertManyAsync<T>(IAsyncEnumerable<T> items, DataInsertOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> InsertManyAsync<T>(IAsyncEnumerable<T> items, string schema, CancellationToken cancellation) => this.InsertManyAsync<T>(items, schema, default(DataInsertOptions), cancellation);
+	ValueTask<int> InsertManyAsync<T>(IAsyncEnumerable<T> items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> InsertManyAsync<T>(string key, IAsyncEnumerable<T> items, CancellationToken cancellation) => this.InsertManyAsync<T>(key, items, default(DataInsertOptions), cancellation);
+	ValueTask<int> InsertManyAsync<T>(string key, IAsyncEnumerable<T> items, DataInsertOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> InsertManyAsync<T>(string key, IAsyncEnumerable<T> items, string schema, CancellationToken cancellation) => this.InsertManyAsync<T>(key, items, schema, default(DataInsertOptions), cancellation);
+	ValueTask<int> InsertManyAsync<T>(string key, IAsyncEnumerable<T> items, string schema, DataInsertOptions options = null, CancellationToken cancellation = default);
+	#endregion
+
+	#region 增改方法
+	ValueTask<int> UpsertAsync(object data, CancellationToken cancellation) => this.UpsertAsync(data, default(DataUpsertOptions), cancellation);
+	ValueTask<int> UpsertAsync(object data, DataUpsertOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> UpsertAsync(object data, string schema, CancellationToken cancellation) => this.UpsertAsync(data, schema, default(DataUpsertOptions), cancellation);
+	ValueTask<int> UpsertAsync(object data, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> UpsertManyAsync(IEnumerable items, CancellationToken cancellation) => this.UpsertManyAsync(items, default(DataUpsertOptions), cancellation);
+	ValueTask<int> UpsertManyAsync(IEnumerable items, DataUpsertOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> UpsertManyAsync(IEnumerable items, string schema, CancellationToken cancellation) => this.UpsertManyAsync(items, schema, default(DataUpsertOptions), cancellation);
+	ValueTask<int> UpsertManyAsync(IEnumerable items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> UpsertManyAsync(string key, IEnumerable items, CancellationToken cancellation) => this.UpsertManyAsync(key, items, default(DataUpsertOptions), cancellation);
+	ValueTask<int> UpsertManyAsync(string key, IEnumerable items, DataUpsertOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> UpsertManyAsync(string key, IEnumerable items, string schema, CancellationToken cancellation) => this.UpsertManyAsync(key, items, schema, default(DataUpsertOptions), cancellation);
+	ValueTask<int> UpsertManyAsync(string key, IEnumerable items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> UpsertManyAsync<T>(IAsyncEnumerable<T> items, CancellationToken cancellation) => this.UpsertManyAsync<T>(items, default(DataUpsertOptions), cancellation);
+	ValueTask<int> UpsertManyAsync<T>(IAsyncEnumerable<T> items, DataUpsertOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> UpsertManyAsync<T>(IAsyncEnumerable<T> items, string schema, CancellationToken cancellation) => this.UpsertManyAsync<T>(items, schema, default(DataUpsertOptions), cancellation);
+	ValueTask<int> UpsertManyAsync<T>(IAsyncEnumerable<T> items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> UpsertManyAsync<T>(string key, IAsyncEnumerable<T> items, CancellationToken cancellation) => this.UpsertManyAsync<T>(key, items, default(DataUpsertOptions), cancellation);
+	ValueTask<int> UpsertManyAsync<T>(string key, IAsyncEnumerable<T> items, DataUpsertOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> UpsertManyAsync<T>(string key, IAsyncEnumerable<T> items, string schema, CancellationToken cancellation) => this.UpsertManyAsync<T>(key, items, schema, default(DataUpsertOptions), cancellation);
+	ValueTask<int> UpsertManyAsync<T>(string key, IAsyncEnumerable<T> items, string schema, DataUpsertOptions options = null, CancellationToken cancellation = default);
+	#endregion
+
+	#region 更新方法
+	ValueTask<int> UpdateAsync(string key, object data, CancellationToken cancellation) => this.UpdateAsync(key, data, default(DataUpdateOptions), cancellation);
+	ValueTask<int> UpdateAsync(string key, object data, DataUpdateOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> UpdateAsync(string key, object data, string schema, CancellationToken cancellation) => this.UpdateAsync(key, data, schema, default(DataUpdateOptions), cancellation);
+	ValueTask<int> UpdateAsync(string key, object data, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> UpdateAsync<TKey1>(TKey1 key1, object data, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> => this.UpdateAsync<TKey1>(key1, data, default(DataUpdateOptions), cancellation);
+	ValueTask<int> UpdateAsync<TKey1>(TKey1 key1, object data, DataUpdateOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;
+
+	ValueTask<int> UpdateAsync<TKey1>(TKey1 key1, string schema, object data, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> => this.UpdateAsync<TKey1>(key1, schema, data, default(DataUpdateOptions), cancellation);
+	ValueTask<int> UpdateAsync<TKey1>(TKey1 key1, string schema, object data, DataUpdateOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;
+
+	ValueTask<int> UpdateAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, object data, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> => this.UpdateAsync<TKey1, TKey2>(key1, key2, data, default(DataUpdateOptions), cancellation);
+	ValueTask<int> UpdateAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, object data, DataUpdateOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+
+	ValueTask<int> UpdateAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, object data, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> => this.UpdateAsync<TKey1, TKey2>(key1, key2, schema, data, default(DataUpdateOptions), cancellation);
+	ValueTask<int> UpdateAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, object data, DataUpdateOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+
+	ValueTask<int> UpdateAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, object data, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> => this.UpdateAsync<TKey1, TKey2, TKey3>(key1, key2, key3, data, default(DataUpdateOptions), cancellation);
+	ValueTask<int> UpdateAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, object data, DataUpdateOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+
+	ValueTask<int> UpdateAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, object data, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> => this.UpdateAsync<TKey1, TKey2, TKey3>(key1, key2, key3, schema, data, default(DataUpdateOptions), cancellation);
+	ValueTask<int> UpdateAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, object data, DataUpdateOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+
+	ValueTask<int> UpdateAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, object data, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> => this.UpdateAsync<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, data, default(DataUpdateOptions), cancellation);
+	ValueTask<int> UpdateAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, object data, DataUpdateOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+
+	ValueTask<int> UpdateAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, object data, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> => this.UpdateAsync<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, schema, data, default(DataUpdateOptions), cancellation);
+	ValueTask<int> UpdateAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, object data, DataUpdateOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+
+	ValueTask<int> UpdateAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, object data, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> => this.UpdateAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, data, default(DataUpdateOptions), cancellation);
+	ValueTask<int> UpdateAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, object data, DataUpdateOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+
+	ValueTask<int> UpdateAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, object data, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> => this.UpdateAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, schema, data, default(DataUpdateOptions), cancellation);
+	ValueTask<int> UpdateAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, object data, DataUpdateOptions options = null, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+
+	ValueTask<int> UpdateAsync(object data, CancellationToken cancellation) => this.UpdateAsync(data, default(DataUpdateOptions), cancellation);
+	ValueTask<int> UpdateAsync(object data, DataUpdateOptions options = null, CancellationToken cancellation = default);
+	ValueTask<int> UpdateAsync(object data, ICondition criteria, CancellationToken cancellation) => this.UpdateAsync(data, criteria, default(DataUpdateOptions), cancellation);
+	ValueTask<int> UpdateAsync(object data, ICondition criteria, DataUpdateOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> UpdateAsync(object data, string schema, CancellationToken cancellation) => this.UpdateAsync(data, schema, default(DataUpdateOptions), cancellation);
+	ValueTask<int> UpdateAsync(object data, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default);
+	ValueTask<int> UpdateAsync(object data, ICondition criteria, string schema, CancellationToken cancellation) => this.UpdateAsync(data, criteria, schema, default(DataUpdateOptions), cancellation);
+	ValueTask<int> UpdateAsync(object data, ICondition criteria, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> UpdateManyAsync(string key, IEnumerable items, CancellationToken cancellation) => this.UpdateManyAsync(key, items, null, null, cancellation);
+	ValueTask<int> UpdateManyAsync(string key, IEnumerable items, DataUpdateOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> UpdateManyAsync(string key, IEnumerable items, string schema, CancellationToken cancellation) => this.UpdateManyAsync(key, items, schema, null, cancellation);
+	ValueTask<int> UpdateManyAsync(string key, IEnumerable items, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> UpdateManyAsync<T>(string key, IAsyncEnumerable<T> items, CancellationToken cancellation) => this.UpdateManyAsync<T>(key, items, null, null, cancellation);
+	ValueTask<int> UpdateManyAsync<T>(string key, IAsyncEnumerable<T> items, DataUpdateOptions options = null, CancellationToken cancellation = default);
+
+	ValueTask<int> UpdateManyAsync<T>(string key, IAsyncEnumerable<T> items, string schema, CancellationToken cancellation) => this.UpdateManyAsync<T>(key, items, schema, null, cancellation);
+	ValueTask<int> UpdateManyAsync<T>(string key, IAsyncEnumerable<T> items, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default);
+	#endregion
+
+	#region 查询方法
+	ValueTask<object> GetAsync(string key, params Sorting[] sortings);
+	ValueTask<object> GetAsync(string key, CancellationToken cancellation) => this.GetAsync(key, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync(string key, Sorting[] sortings, CancellationToken cancellation = default);
+	ValueTask<object> GetAsync(string key, DataSelectOptions options, params Sorting[] sortings);
+	ValueTask<object> GetAsync(string key, DataSelectOptions options, CancellationToken cancellation) => this.GetAsync(key, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync(string key, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+
+	ValueTask<object> GetAsync(string key, Paging paging, params Sorting[] sortings);
+	ValueTask<object> GetAsync(string key, Paging paging, CancellationToken cancellation) => this.GetAsync(key, paging, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync(string key, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
+	ValueTask<object> GetAsync(string key, Paging paging, DataSelectOptions options, params Sorting[] sortings);
+	ValueTask<object> GetAsync(string key, Paging paging, DataSelectOptions options, CancellationToken cancellation) => this.GetAsync(key, paging, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync(string key, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+
+	ValueTask<object> GetAsync(string key, string schema, params Sorting[] sortings);
+	ValueTask<object> GetAsync(string key, string schema, CancellationToken cancellation) => this.GetAsync(key, schema, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync(string key, string schema, Sorting[] sortings, CancellationToken cancellation = default);
+	ValueTask<object> GetAsync(string key, string schema, DataSelectOptions options, params Sorting[] sortings);
+	ValueTask<object> GetAsync(string key, string schema, DataSelectOptions options, CancellationToken cancellation) => this.GetAsync(key, schema, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync(string key, string schema, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+
+	ValueTask<object> GetAsync(string key, string schema, Paging paging, params Sorting[] sortings);
+	ValueTask<object> GetAsync(string key, string schema, Paging paging, CancellationToken cancellation) => this.GetAsync(key, schema, paging, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync(string key, string schema, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
+	ValueTask<object> GetAsync(string key, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings);
+	ValueTask<object> GetAsync(string key, string schema, Paging paging, DataSelectOptions options, CancellationToken cancellation) => this.GetAsync(key, schema, paging, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync(string key, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, params Sorting[] sortings) where TKey1 : IEquatable<TKey1>;
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> => this.GetAsync<TKey1>(key1, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, DataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1>;
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, DataSelectOptions options, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> => this.GetAsync<TKey1>(key1, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;
+
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, Paging paging, params Sorting[] sortings) where TKey1 : IEquatable<TKey1>;
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, Paging paging, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> => this.GetAsync<TKey1>(key1, paging, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, Paging paging, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, Paging paging, DataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1>;
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, Paging paging, DataSelectOptions options, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> => this.GetAsync<TKey1>(key1, paging, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;
+
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, string schema, params Sorting[] sortings) where TKey1 : IEquatable<TKey1>;
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, string schema, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> => this.GetAsync<TKey1>(key1, schema, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, string schema, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, string schema, DataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1>;
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, string schema, DataSelectOptions options, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> => this.GetAsync<TKey1>(key1, schema, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, string schema, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;
+
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, string schema, Paging paging, params Sorting[] sortings) where TKey1 : IEquatable<TKey1>;
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, string schema, Paging paging, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> => this.GetAsync<TKey1>(key1, schema, paging, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, string schema, Paging paging, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1>;
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, string schema, Paging paging, DataSelectOptions options, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> => this.GetAsync<TKey1>(key1, schema, paging, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1>(TKey1 key1, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1>;
+
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> => this.GetAsync<TKey1, TKey2>(key1, key2, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataSelectOptions options, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> => this.GetAsync<TKey1, TKey2>(key1, key2, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> => this.GetAsync<TKey1, TKey2>(key1, key2, paging, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, DataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, DataSelectOptions options, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> => this.GetAsync<TKey1, TKey2>(key1, key2, paging, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> => this.GetAsync<TKey1, TKey2>(key1, key2, schema, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, DataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, DataSelectOptions options, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> => this.GetAsync<TKey1, TKey2>(key1, key2, schema, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> => this.GetAsync<TKey1, TKey2>(key1, key2, schema, paging, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, DataSelectOptions options, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> => this.GetAsync<TKey1, TKey2>(key1, key2, schema, paging, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2>(TKey1 key1, TKey2 key2, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2>;
+
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> => this.GetAsync<TKey1, TKey2, TKey3>(key1, key2, key3, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataSelectOptions options, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> => this.GetAsync<TKey1, TKey2, TKey3>(key1, key2, key3, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> => this.GetAsync<TKey1, TKey2, TKey3>(key1, key2, key3, paging, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, DataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, DataSelectOptions options, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> => this.GetAsync<TKey1, TKey2, TKey3>(key1, key2, key3, paging, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> => this.GetAsync<TKey1, TKey2, TKey3>(key1, key2, key3, schema, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, DataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, DataSelectOptions options, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> => this.GetAsync<TKey1, TKey2, TKey3>(key1, key2, key3, schema, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> => this.GetAsync<TKey1, TKey2, TKey3>(key1, key2, key3, schema, paging, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, DataSelectOptions options, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> => this.GetAsync<TKey1, TKey2, TKey3>(key1, key2, key3, schema, paging, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3>(TKey1 key1, TKey2 key2, TKey3 key3, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3>;
+
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> => this.GetAsync<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataSelectOptions options, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> => this.GetAsync<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> => this.GetAsync<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, paging, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, DataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, DataSelectOptions options, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> => this.GetAsync<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, paging, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> => this.GetAsync<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, schema, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, DataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, DataSelectOptions options, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> => this.GetAsync<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, schema, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> => this.GetAsync<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, schema, paging, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, DataSelectOptions options, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> => this.GetAsync<TKey1, TKey2, TKey3, TKey4>(key1, key2, key3, key4, schema, paging, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4>;
+
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> => this.GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataSelectOptions options, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> => this.GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> => this.GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, paging, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, DataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, DataSelectOptions options, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> => this.GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, paging, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> => this.GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, schema, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, DataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, DataSelectOptions options, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> => this.GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, schema, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> => this.GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, schema, paging, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, DataSelectOptions options, CancellationToken cancellation) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5> => this.GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(key1, key2, key3, key4, key5, schema, paging, options, default(Sorting[]), cancellation);
+	ValueTask<object> GetAsync<TKey1, TKey2, TKey3, TKey4, TKey5>(TKey1 key1, TKey2 key2, TKey3 key3, TKey4 key4, TKey5 key5, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default) where TKey1 : IEquatable<TKey1> where TKey2 : IEquatable<TKey2> where TKey3 : IEquatable<TKey3> where TKey4 : IEquatable<TKey4> where TKey5 : IEquatable<TKey5>;
+
+	IAsyncEnumerable<object> SelectAsync(CancellationToken cancellation);
+	IAsyncEnumerable<object> SelectAsync(Sorting[] sortings, CancellationToken cancellation) => this.SelectAsync(default(DataSelectOptions), sortings, cancellation);
+	IAsyncEnumerable<object> SelectAsync(DataSelectOptions options = null, params Sorting[] sortings);
+	IAsyncEnumerable<object> SelectAsync(DataSelectOptions options, CancellationToken cancellation) => this.SelectAsync(options, default(Sorting[]), cancellation);
+	IAsyncEnumerable<object> SelectAsync(DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, params Sorting[] sortings);
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, CancellationToken cancellation) => this.SelectAsync(criteria, default(Sorting[]), cancellation);
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, Sorting[] sortings, CancellationToken cancellation = default);
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, DataSelectOptions options, params Sorting[] sortings);
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, DataSelectOptions options, CancellationToken cancellation) => this.SelectAsync(criteria, options, default(Sorting[]), cancellation);
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, Paging paging, params Sorting[] sortings);
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, Paging paging, CancellationToken cancellation) => this.SelectAsync(criteria, paging, default(Sorting[]), cancellation);
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, Paging paging, DataSelectOptions options, params Sorting[] sortings);
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, Paging paging, DataSelectOptions options, CancellationToken cancellation) => this.SelectAsync(criteria, paging, options, default(Sorting[]), cancellation);
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, string schema, params Sorting[] sortings);
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, string schema, CancellationToken cancellation) => this.SelectAsync(criteria, schema, default(Sorting[]), cancellation);
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, string schema, Sorting[] sortings, CancellationToken cancellation = default);
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, string schema, DataSelectOptions options, params Sorting[] sortings);
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, string schema, DataSelectOptions options, CancellationToken cancellation) => this.SelectAsync(criteria, schema, options, default(Sorting[]), cancellation);
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, string schema, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, string schema, Paging paging, params Sorting[] sortings);
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, string schema, Paging paging, CancellationToken cancellation) => this.SelectAsync(criteria, schema, paging, default(Sorting[]), cancellation);
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, string schema, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings);
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, string schema, Paging paging, DataSelectOptions options, CancellationToken cancellation) => this.SelectAsync(criteria, schema, paging, options, default(Sorting[]), cancellation);
+	IAsyncEnumerable<object> SelectAsync(ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, params Sorting[] sortings);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, CancellationToken cancellation) => this.SelectAsync<T>(grouping, default(Sorting[]), cancellation);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, Sorting[] sortings, CancellationToken cancellation = default);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, DataSelectOptions options, params Sorting[] sortings);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, DataSelectOptions options, CancellationToken cancellation) => this.SelectAsync<T>(grouping, options, default(Sorting[]), cancellation);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, Paging paging, params Sorting[] sortings);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, Paging paging, CancellationToken cancellation) => this.SelectAsync<T>(grouping, paging, default(Sorting[]), cancellation);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, Paging paging, DataSelectOptions options, params Sorting[] sortings);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, Paging paging, DataSelectOptions options, CancellationToken cancellation) => this.SelectAsync<T>(grouping, paging, options, default(Sorting[]), cancellation);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, string schema, params Sorting[] sortings);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, string schema, CancellationToken cancellation) => this.SelectAsync<T>(grouping, schema, default(Sorting[]), cancellation);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, string schema, Sorting[] sortings, CancellationToken cancellation = default);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, string schema, DataSelectOptions options, params Sorting[] sortings);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, string schema, DataSelectOptions options, CancellationToken cancellation) => this.SelectAsync<T>(grouping, schema, options, default(Sorting[]), cancellation);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, string schema, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, string schema, Paging paging, params Sorting[] sortings);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, string schema, Paging paging, CancellationToken cancellation) => this.SelectAsync<T>(grouping, schema, paging, default(Sorting[]), cancellation);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, string schema, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, string schema, Paging paging, DataSelectOptions options, CancellationToken cancellation) => this.SelectAsync<T>(grouping, schema, paging, options, default(Sorting[]), cancellation);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, ICondition criteria, CancellationToken cancellation) => this.SelectAsync<T>(grouping, criteria, (string)null, (Sorting[])null, cancellation);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, ICondition criteria, Sorting[] sortings, CancellationToken cancellation) => this.SelectAsync<T>(grouping, criteria, default(string), sortings, cancellation);
+
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, ICondition criteria, Paging paging, params Sorting[] sortings);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, ICondition criteria, Paging paging, CancellationToken cancellation) => this.SelectAsync<T>(grouping, criteria, paging, default(Sorting[]), cancellation);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, ICondition criteria, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
+
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, ICondition criteria, string schema = null, params Sorting[] sortings);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, ICondition criteria, string schema, CancellationToken cancellation) => this.SelectAsync<T>(grouping, criteria, schema, default(Sorting[]), cancellation);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, ICondition criteria, string schema, Sorting[] sortings, CancellationToken cancellation = default);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, ICondition criteria, string schema, DataSelectOptions options, params Sorting[] sortings);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, ICondition criteria, string schema, DataSelectOptions options, CancellationToken cancellation) => this.SelectAsync<T>(grouping, criteria, schema, options, default(Sorting[]), cancellation);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, ICondition criteria, string schema, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, ICondition criteria, string schema, Paging paging, params Sorting[] sortings);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, ICondition criteria, string schema, Paging paging, CancellationToken cancellation) => this.SelectAsync<T>(grouping, criteria, schema, paging, default(Sorting[]), cancellation);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, ICondition criteria, string schema, Paging paging, Sorting[] sortings, CancellationToken cancellation = default);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, ICondition criteria, string schema, Paging paging, DataSelectOptions options, params Sorting[] sortings);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, ICondition criteria, string schema, Paging paging, DataSelectOptions options, CancellationToken cancellation) => this.SelectAsync<T>(grouping, criteria, schema, paging, options, default(Sorting[]), cancellation);
+	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, ICondition criteria, string schema, Paging paging, DataSelectOptions options, Sorting[] sortings, CancellationToken cancellation = default);
+	#endregion
 }
 
 /*
- * 本接口是为了处理相关方法的泛型条件重载版本的条件参数类型匹配错误的问题。
+ * 具体条件类型重载用于避免与泛型键重载的条件参数类型匹配冲突。
  */
-public partial interface IDataService
+partial interface IDataService
 {
-	#region 排序重载
-	IAsyncEnumerable<object> SelectAsync(Sorting[] sortings, CancellationToken cancellation) => this.SelectAsync(default(DataSelectOptions), sortings, cancellation);
-	IAsyncEnumerable<T> SelectAsync<T>(Grouping grouping, ICondition criteria, Sorting[] sortings, CancellationToken cancellation) => this.SelectAsync<T>(grouping, criteria, default(string), sortings, cancellation);
+	#region 存在方法
+	ValueTask<bool> ExistsAsync(Condition criteria, CancellationToken cancellation) => this.ExistsAsync(criteria, default(DataExistsOptions), cancellation);
+	ValueTask<bool> ExistsAsync(Condition criteria, DataExistsOptions options = null, CancellationToken cancellation = default) => this.ExistsAsync((ICondition)criteria, options, cancellation);
+
+	ValueTask<bool> ExistsAsync(ConditionCollection criteria, CancellationToken cancellation) => this.ExistsAsync(criteria, default(DataExistsOptions), cancellation);
+	ValueTask<bool> ExistsAsync(ConditionCollection criteria, DataExistsOptions options = null, CancellationToken cancellation = default) => this.ExistsAsync((ICondition)criteria, options, cancellation);
+	#endregion
+
+	#region 聚合方法
+	ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, Condition criteria, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, (ICondition)criteria, null, cancellation);
+	ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, Condition criteria, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, (ICondition)criteria, options, cancellation);
+
+	ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, ConditionCollection criteria, CancellationToken cancellation) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, (ICondition)criteria, null, cancellation);
+	ValueTask<TValue?> AggregateAsync<TValue>(DataAggregate aggregate, ConditionCollection criteria, DataAggregateOptions options = null, CancellationToken cancellation = default) where TValue : struct, IEquatable<TValue> => this.AggregateAsync<TValue>(aggregate, (ICondition)criteria, options, cancellation);
+	#endregion
+
+	#region 删除方法
+	ValueTask<int> DeleteAsync(Condition criteria, CancellationToken cancellation) => this.DeleteAsync(criteria, default(DataDeleteOptions), cancellation);
+	ValueTask<int> DeleteAsync(Condition criteria, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync((ICondition)criteria, options, cancellation);
+
+	ValueTask<int> DeleteAsync(Condition criteria, string schema, CancellationToken cancellation) => this.DeleteAsync(criteria, schema, default(DataDeleteOptions), cancellation);
+	ValueTask<int> DeleteAsync(Condition criteria, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync((ICondition)criteria, schema, options, cancellation);
+
+	ValueTask<int> DeleteAsync(ConditionCollection criteria, CancellationToken cancellation) => this.DeleteAsync(criteria, default(DataDeleteOptions), cancellation);
+	ValueTask<int> DeleteAsync(ConditionCollection criteria, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync((ICondition)criteria, options, cancellation);
+
+	ValueTask<int> DeleteAsync(ConditionCollection criteria, string schema, CancellationToken cancellation) => this.DeleteAsync(criteria, schema, default(DataDeleteOptions), cancellation);
+	ValueTask<int> DeleteAsync(ConditionCollection criteria, string schema, DataDeleteOptions options = null, CancellationToken cancellation = default) => this.DeleteAsync((ICondition)criteria, schema, options, cancellation);
+	#endregion
+
+	#region 更新方法
+	ValueTask<int> UpdateAsync(object data, Condition criteria, CancellationToken cancellation) => this.UpdateAsync(data, criteria, default(DataUpdateOptions), cancellation);
+	ValueTask<int> UpdateAsync(object data, Condition criteria, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, (ICondition)criteria, options, cancellation);
+
+	ValueTask<int> UpdateAsync(object data, Condition criteria, string schema, CancellationToken cancellation) => this.UpdateAsync(data, criteria, schema, default(DataUpdateOptions), cancellation);
+	ValueTask<int> UpdateAsync(object data, Condition criteria, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, (ICondition)criteria, schema, options, cancellation);
+
+	ValueTask<int> UpdateAsync(object data, ConditionCollection criteria, CancellationToken cancellation) => this.UpdateAsync(data, criteria, default(DataUpdateOptions), cancellation);
+	ValueTask<int> UpdateAsync(object data, ConditionCollection criteria, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, (ICondition)criteria, options, cancellation);
+
+	ValueTask<int> UpdateAsync(object data, ConditionCollection criteria, string schema, CancellationToken cancellation) => this.UpdateAsync(data, criteria, schema, default(DataUpdateOptions), cancellation);
+	ValueTask<int> UpdateAsync(object data, ConditionCollection criteria, string schema, DataUpdateOptions options = null, CancellationToken cancellation = default) => this.UpdateAsync(data, (ICondition)criteria, schema, options, cancellation);
 	#endregion
 }

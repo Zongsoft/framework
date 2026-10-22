@@ -37,28 +37,31 @@ namespace Zongsoft.Data;
 
 partial class DataAccessBase
 {
-	#region 数据访问
+	#region 公共方法
+	public ValueTask<int> ImportAsync<T>(IEnumerable<T> data, IEnumerable<string> members, CancellationToken cancellation) => this.ImportAsync<T>(data, members, default(DataImportOptions), cancellation);
 	public ValueTask<int> ImportAsync<T>(IEnumerable<T> data, IEnumerable<string> members, DataImportOptions options = null, CancellationToken cancellation = default) =>
 		data == null ? ValueTask.FromResult(0) : this.ImportAsync(this.GetName<T>(), data, members, options, cancellation);
+
 	ValueTask<int> IDataAccess.ImportAsync(string name, IEnumerable data, IEnumerable<string> members, DataImportOptions options, CancellationToken cancellation) =>
 		data == null ? ValueTask.FromResult(0) : this.ImportAsync(name, data, members, options, null, null, cancellation);
+
 	public ValueTask<int> ImportAsync(string name, IEnumerable data, IEnumerable<string> members, DataImportOptions options, CancellationToken cancellation) => this.ImportAsync(name, data, members, options, null, null, cancellation);
+	public ValueTask<int> ImportAsync(string name, IEnumerable data, IEnumerable<string> members, DataImportOptions options, Func<DataImportContextBase, CancellationToken, ValueTask<bool>> importing, CancellationToken cancellation) => this.ImportAsync(name, data, members, options, importing, default(Func<DataImportContextBase, CancellationToken, ValueTask>), cancellation);
 	public ValueTask<int> ImportAsync(string name, IEnumerable data, IEnumerable<string> members, DataImportOptions options, Func<DataImportContextBase, CancellationToken, ValueTask<bool>> importing = null, Func<DataImportContextBase, CancellationToken, ValueTask> imported = null, CancellationToken cancellation = default) => this.ImportCoreAsync(name, data, members, options, importing, imported, cancellation);
+
+	public ValueTask<int> ImportAsync<T>(IAsyncEnumerable<T> data, IEnumerable<string> members, CancellationToken cancellation) => this.ImportAsync<T>(data, members, default(DataImportOptions), cancellation);
+	public ValueTask<int> ImportAsync<T>(IAsyncEnumerable<T> data, IEnumerable<string> members, DataImportOptions options = null, CancellationToken cancellation = default) =>
+		data == null ? ValueTask.FromResult(0) : this.ImportAsync<T>(this.GetName<T>(), data, members, options, cancellation);
+
+	public ValueTask<int> ImportAsync<T>(string name, IAsyncEnumerable<T> data, IEnumerable<string> members, DataImportOptions options, CancellationToken cancellation) => this.ImportAsync<T>(name, data, members, options, null, null, cancellation);
+	public ValueTask<int> ImportAsync<T>(string name, IAsyncEnumerable<T> data, IEnumerable<string> members, DataImportOptions options, Func<DataImportContextBase, CancellationToken, ValueTask<bool>> importing, CancellationToken cancellation) => this.ImportAsync<T>(name, data, members, options, importing, default(Func<DataImportContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> ImportAsync<T>(string name, IAsyncEnumerable<T> data, IEnumerable<string> members, DataImportOptions options, Func<DataImportContextBase, CancellationToken, ValueTask<bool>> importing = null, Func<DataImportContextBase, CancellationToken, ValueTask> imported = null, CancellationToken cancellation = default) => this.ImportCoreAsync(name, data, members, options, importing, imported, cancellation);
+	#endregion
+
+	#region 保护方法
 	protected abstract ValueTask OnImportAsync(DataImportContextBase context, CancellationToken cancellation = default);
 	#endregion
 
-	#region 便利取消
-	public ValueTask<int> ImportAsync<T>(IEnumerable<T> data, IEnumerable<string> members, CancellationToken cancellation) => this.ImportAsync<T>(data, members, default(DataImportOptions), cancellation);
-	public ValueTask<int> ImportAsync(string name, IEnumerable data, IEnumerable<string> members, DataImportOptions options, Func<DataImportContextBase, CancellationToken, ValueTask<bool>> importing, CancellationToken cancellation) => this.ImportAsync(name, data, members, options, importing, default(Func<DataImportContextBase, CancellationToken, ValueTask>), cancellation);
-	#endregion
-	#region 异步数据源
-	public ValueTask<int> ImportAsync<T>(IAsyncEnumerable<T> data, IEnumerable<string> members, DataImportOptions options = null, CancellationToken cancellation = default) =>
-		data == null ? ValueTask.FromResult(0) : this.ImportAsync<T>(this.GetName<T>(), data, members, options, cancellation);
-	public ValueTask<int> ImportAsync<T>(string name, IAsyncEnumerable<T> data, IEnumerable<string> members, DataImportOptions options, CancellationToken cancellation) => this.ImportAsync<T>(name, data, members, options, null, null, cancellation);
-	public ValueTask<int> ImportAsync<T>(string name, IAsyncEnumerable<T> data, IEnumerable<string> members, DataImportOptions options, Func<DataImportContextBase, CancellationToken, ValueTask<bool>> importing = null, Func<DataImportContextBase, CancellationToken, ValueTask> imported = null, CancellationToken cancellation = default) => this.ImportCoreAsync(name, data, members, options, importing, imported, cancellation);
-	public ValueTask<int> ImportAsync<T>(IAsyncEnumerable<T> data, IEnumerable<string> members, CancellationToken cancellation) => this.ImportAsync<T>(data, members, default(DataImportOptions), cancellation);
-	public ValueTask<int> ImportAsync<T>(string name, IAsyncEnumerable<T> data, IEnumerable<string> members, DataImportOptions options, Func<DataImportContextBase, CancellationToken, ValueTask<bool>> importing, CancellationToken cancellation) => this.ImportAsync<T>(name, data, members, options, importing, default(Func<DataImportContextBase, CancellationToken, ValueTask>), cancellation);
-	#endregion
 	#region 私有方法
 	private async ValueTask<int> ImportCoreAsync(string name, object data, IEnumerable<string> members, DataImportOptions options, Func<DataImportContextBase, CancellationToken, ValueTask<bool>> importing = null, Func<DataImportContextBase, CancellationToken, ValueTask> imported = null, CancellationToken cancellation = default)
 	{

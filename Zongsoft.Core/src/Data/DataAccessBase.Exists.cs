@@ -35,8 +35,15 @@ namespace Zongsoft.Data;
 
 partial class DataAccessBase
 {
-	#region 数据访问
+	#region 公共方法
+	public ValueTask<bool> ExistsAsync<T>(ICondition criteria, CancellationToken cancellation) => this.ExistsAsync<T>(criteria, default(DataExistsOptions), default(Func<DataExistContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataExistContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<bool> ExistsAsync<T>(ICondition criteria, DataExistsOptions options, CancellationToken cancellation) => this.ExistsAsync<T>(criteria, options, default(Func<DataExistContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataExistContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<bool> ExistsAsync<T>(ICondition criteria, DataExistsOptions options, Func<DataExistContextBase, CancellationToken, ValueTask<bool>> existing, CancellationToken cancellation) => this.ExistsAsync<T>(criteria, options, existing, default(Func<DataExistContextBase, CancellationToken, ValueTask>), cancellation);
 	public ValueTask<bool> ExistsAsync<T>(ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, CancellationToken, ValueTask<bool>> existing = null, Func<DataExistContextBase, CancellationToken, ValueTask> existed = null, CancellationToken cancellation = default) => this.ExistsAsync(this.GetName<T>(), criteria, options, existing, existed, cancellation);
+
+	public ValueTask<bool> ExistsAsync(string name, ICondition criteria, CancellationToken cancellation) => this.ExistsAsync(name, criteria, default(DataExistsOptions), default(Func<DataExistContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataExistContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<bool> ExistsAsync(string name, ICondition criteria, DataExistsOptions options, CancellationToken cancellation) => this.ExistsAsync(name, criteria, options, default(Func<DataExistContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataExistContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<bool> ExistsAsync(string name, ICondition criteria, DataExistsOptions options, Func<DataExistContextBase, CancellationToken, ValueTask<bool>> existing, CancellationToken cancellation) => this.ExistsAsync(name, criteria, options, existing, default(Func<DataExistContextBase, CancellationToken, ValueTask>), cancellation);
 	public async ValueTask<bool> ExistsAsync(string name, ICondition criteria, DataExistsOptions options = null, Func<DataExistContextBase, CancellationToken, ValueTask<bool>> existing = null, Func<DataExistContextBase, CancellationToken, ValueTask> existed = null, CancellationToken cancellation = default)
 	{
 		//确实是否已处置
@@ -77,15 +84,9 @@ partial class DataAccessBase
 		//返回最终的结果
 		return result;
 	}
-	protected abstract ValueTask OnExistsAsync(DataExistContextBase context, CancellationToken cancellation);
 	#endregion
 
-	#region 便利取消
-	public ValueTask<bool> ExistsAsync<T>(ICondition criteria, DataExistsOptions options, Func<DataExistContextBase, CancellationToken, ValueTask<bool>> existing, CancellationToken cancellation) => this.ExistsAsync<T>(criteria, options, existing, default(Func<DataExistContextBase, CancellationToken, ValueTask>), cancellation);
-	public ValueTask<bool> ExistsAsync<T>(ICondition criteria, DataExistsOptions options, CancellationToken cancellation) => this.ExistsAsync<T>(criteria, options, default(Func<DataExistContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataExistContextBase, CancellationToken, ValueTask>), cancellation);
-	public ValueTask<bool> ExistsAsync<T>(ICondition criteria, CancellationToken cancellation) => this.ExistsAsync<T>(criteria, default(DataExistsOptions), default(Func<DataExistContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataExistContextBase, CancellationToken, ValueTask>), cancellation);
-	public ValueTask<bool> ExistsAsync(string name, ICondition criteria, DataExistsOptions options, Func<DataExistContextBase, CancellationToken, ValueTask<bool>> existing, CancellationToken cancellation) => this.ExistsAsync(name, criteria, options, existing, default(Func<DataExistContextBase, CancellationToken, ValueTask>), cancellation);
-	public ValueTask<bool> ExistsAsync(string name, ICondition criteria, DataExistsOptions options, CancellationToken cancellation) => this.ExistsAsync(name, criteria, options, default(Func<DataExistContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataExistContextBase, CancellationToken, ValueTask>), cancellation);
-	public ValueTask<bool> ExistsAsync(string name, ICondition criteria, CancellationToken cancellation) => this.ExistsAsync(name, criteria, default(DataExistsOptions), default(Func<DataExistContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataExistContextBase, CancellationToken, ValueTask>), cancellation);
+	#region 保护方法
+	protected abstract ValueTask OnExistsAsync(DataExistContextBase context, CancellationToken cancellation);
 	#endregion
 }

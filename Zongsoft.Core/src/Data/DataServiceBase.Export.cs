@@ -46,7 +46,12 @@ partial class DataServiceBase<TModel> : IDataExportable
 	#endregion
 
 	#region 数据文件生成
+	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, object data, CancellationToken cancellation) => this.ExportAsync(output, data, default(string), default(DataExportOptions), cancellation);
+	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, object data, string format, CancellationToken cancellation) => this.ExportAsync(output, data, format, default(DataExportOptions), cancellation);
 	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, object data, string format = null, DataExportOptions options = null, CancellationToken cancellation = default) => this.ExportAsync(output, data, null, format, options, cancellation);
+
+	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, object data, string[] members, CancellationToken cancellation) => this.ExportAsync(output, data, members, default(string), default(DataExportOptions), cancellation);
+	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, object data, string[] members, string format, CancellationToken cancellation) => this.ExportAsync(output, data, members, format, default(DataExportOptions), cancellation);
 	public async ValueTask<DataArchiveFormat> ExportAsync(Stream output, object data, string[] members, string format = null, DataExportOptions options = null, CancellationToken cancellation = default)
 	{
 		if(output == null)
@@ -74,7 +79,12 @@ partial class DataServiceBase<TModel> : IDataExportable
 	#endregion
 
 	#region 数据模板渲染
+	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, string template, object argument, CancellationToken cancellation) => this.ExportAsync(output, template, argument, default(string), default(DataExportOptions), cancellation);
+	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, string template, object argument, string format, CancellationToken cancellation) => this.ExportAsync(output, template, argument, format, default(DataExportOptions), cancellation);
 	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, string template, object argument, string format = null, DataExportOptions options = null, CancellationToken cancellation = default) => this.ExportAsync(output, template, argument, null, format, options, cancellation);
+
+	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation) => this.ExportAsync(output, template, argument, parameters, default(string), default(DataExportOptions), cancellation);
+	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, string format, CancellationToken cancellation) => this.ExportAsync(output, template, argument, parameters, format, default(DataExportOptions), cancellation);
 	public async ValueTask<DataArchiveFormat> ExportAsync(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, string format = null, DataExportOptions options = null, CancellationToken cancellation = default)
 	{
 		if(output == null)
@@ -130,16 +140,5 @@ partial class DataServiceBase<TModel> : IDataExportable
 		await renderer.RenderAsync(output, template, data, parameters, cancellation);
 		return renderer.Format;
 	}
-	#endregion
-
-	#region 便利取消
-	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, object data, string format, CancellationToken cancellation) => this.ExportAsync(output, data, format, default(DataExportOptions), cancellation);
-	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, object data, CancellationToken cancellation) => this.ExportAsync(output, data, default(string), default(DataExportOptions), cancellation);
-	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, object data, string[] members, string format, CancellationToken cancellation) => this.ExportAsync(output, data, members, format, default(DataExportOptions), cancellation);
-	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, object data, string[] members, CancellationToken cancellation) => this.ExportAsync(output, data, members, default(string), default(DataExportOptions), cancellation);
-	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, string template, object argument, string format, CancellationToken cancellation) => this.ExportAsync(output, template, argument, format, default(DataExportOptions), cancellation);
-	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, string template, object argument, CancellationToken cancellation) => this.ExportAsync(output, template, argument, default(string), default(DataExportOptions), cancellation);
-	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, string format, CancellationToken cancellation) => this.ExportAsync(output, template, argument, parameters, format, default(DataExportOptions), cancellation);
-	public ValueTask<DataArchiveFormat> ExportAsync(Stream output, string template, object argument, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation) => this.ExportAsync(output, template, argument, parameters, default(string), default(DataExportOptions), cancellation);
 	#endregion
 }

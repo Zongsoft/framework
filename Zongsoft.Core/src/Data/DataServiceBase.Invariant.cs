@@ -36,7 +36,8 @@ namespace Zongsoft.Data;
 
 partial class DataServiceBase<TModel>
 {
-	#region 异步方法
+	#region 插入方法
+	protected ValueTask<int> InsertAsync(object data, ISchema schema, CancellationToken cancellation) => this.InsertAsync(data, schema, default(DataInsertOptions), cancellation);
 	protected async ValueTask<int> InsertAsync(object data, ISchema schema, DataInsertOptions options = null, CancellationToken cancellation = default)
 	{
 		//确认是否可以执行该操作
@@ -64,6 +65,7 @@ partial class DataServiceBase<TModel>
 		return await this.OnInsertAsync(dictionary, schema, options, cancellation);
 	}
 
+	protected ValueTask<int> InsertManyAsync(IEnumerable items, ISchema schema, CancellationToken cancellation) => this.InsertManyAsync(items, schema, default(DataInsertOptions), cancellation);
 	protected async ValueTask<int> InsertManyAsync(IEnumerable items, ISchema schema, DataInsertOptions options = null, CancellationToken cancellation = default)
 	{
 		//确认是否可以执行该操作
@@ -85,7 +87,10 @@ partial class DataServiceBase<TModel>
 		var dictionaries = DataDictionary.GetDictionariesAsync<TModel>(items, (dictionary, token) => this.OnValidateAsync(DataServiceMethod.InsertMany(), schema, dictionary, options, token), cancellation);
 		return await this.OnInsertManyAsync(dictionaries, schema, options, cancellation);
 	}
+	#endregion
 
+	#region 增改方法
+	protected ValueTask<int> UpsertAsync(object data, ISchema schema, CancellationToken cancellation) => this.UpsertAsync(data, schema, default(DataUpsertOptions), cancellation);
 	protected async ValueTask<int> UpsertAsync(object data, ISchema schema, DataUpsertOptions options = null, CancellationToken cancellation = default)
 	{
 		//确认是否可以执行该操作
@@ -113,6 +118,7 @@ partial class DataServiceBase<TModel>
 		return await this.OnUpsertAsync(dictionary, schema, options, cancellation);
 	}
 
+	protected ValueTask<int> UpsertManyAsync(IEnumerable items, ISchema schema, CancellationToken cancellation) => this.UpsertManyAsync(items, schema, default(DataUpsertOptions), cancellation);
 	protected async ValueTask<int> UpsertManyAsync(IEnumerable items, ISchema schema, DataUpsertOptions options = null, CancellationToken cancellation = default)
 	{
 		//确认是否可以执行该操作
@@ -134,7 +140,10 @@ partial class DataServiceBase<TModel>
 		var dictionaries = DataDictionary.GetDictionariesAsync<TModel>(items, (dictionary, token) => this.OnValidateAsync(DataServiceMethod.UpsertMany(), schema, dictionary, options, token), cancellation);
 		return await this.OnUpsertManyAsync(dictionaries, schema, options, cancellation);
 	}
+	#endregion
 
+	#region 更新方法
+	protected ValueTask<int> UpdateAsync(object data, ICondition criteria, ISchema schema, CancellationToken cancellation) => this.UpdateAsync(data, criteria, schema, default(DataUpdateOptions), cancellation);
 	protected async ValueTask<int> UpdateAsync(object data, ICondition criteria, ISchema schema, DataUpdateOptions options = null, CancellationToken cancellation = default)
 	{
 		//确认是否可以执行该操作
@@ -190,14 +199,6 @@ partial class DataServiceBase<TModel>
 		//执行更新操作
 		return await this.OnUpdateAsync(dictionary, criteria, schema, options, cancellation);
 	}
-	#endregion
-
-	#region 便利取消
-	protected ValueTask<int> InsertAsync(object data, ISchema schema, CancellationToken cancellation) => this.InsertAsync(data, schema, default(DataInsertOptions), cancellation);
-	protected ValueTask<int> InsertManyAsync(IEnumerable items, ISchema schema, CancellationToken cancellation) => this.InsertManyAsync(items, schema, default(DataInsertOptions), cancellation);
-	protected ValueTask<int> UpsertAsync(object data, ISchema schema, CancellationToken cancellation) => this.UpsertAsync(data, schema, default(DataUpsertOptions), cancellation);
-	protected ValueTask<int> UpsertManyAsync(IEnumerable items, ISchema schema, CancellationToken cancellation) => this.UpsertManyAsync(items, schema, default(DataUpsertOptions), cancellation);
-	protected ValueTask<int> UpdateAsync(object data, ICondition criteria, ISchema schema, CancellationToken cancellation) => this.UpdateAsync(data, criteria, schema, default(DataUpdateOptions), cancellation);
 	#endregion
 
 	#region 私有方法

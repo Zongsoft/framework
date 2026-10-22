@@ -37,11 +37,23 @@ partial class DataAccessBase
 {
 	#region 公共方法
 	public ValueTask<int> DeleteAsync<T>(ICondition criteria, string schema = null, CancellationToken cancellation = default) => this.DeleteAsync(this.GetName<T>(), criteria, schema, null, null, null, cancellation);
-	public ValueTask<int> DeleteAsync<T>(ICondition criteria, DataDeleteOptions options, CancellationToken cancellation = default) => this.DeleteAsync(this.GetName<T>(), criteria, string.Empty, options, null, null, cancellation);
+	public ValueTask<int> DeleteAsync<T>(ICondition criteria, string schema, DataDeleteOptions options, CancellationToken cancellation) => this.DeleteAsync<T>(criteria, schema, options, default(Func<DataDeleteContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataDeleteContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> DeleteAsync<T>(ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, CancellationToken, ValueTask<bool>> deleting, CancellationToken cancellation) => this.DeleteAsync<T>(criteria, schema, options, deleting, default(Func<DataDeleteContextBase, CancellationToken, ValueTask>), cancellation);
 	public ValueTask<int> DeleteAsync<T>(ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, CancellationToken, ValueTask<bool>> deleting = null, Func<DataDeleteContextBase, CancellationToken, ValueTask> deleted = null, CancellationToken cancellation = default) => this.DeleteAsync(this.GetName<T>(), criteria, schema, options, deleting, deleted, cancellation);
+
+	public ValueTask<int> DeleteAsync<T>(ICondition criteria, CancellationToken cancellation) => this.DeleteAsync<T>(criteria, default(string), cancellation);
+	public ValueTask<int> DeleteAsync<T>(ICondition criteria, DataDeleteOptions options, CancellationToken cancellation = default) => this.DeleteAsync(this.GetName<T>(), criteria, string.Empty, options, null, null, cancellation);
+
 	public ValueTask<int> DeleteAsync(string name, ICondition criteria, string schema = null, CancellationToken cancellation = default) => this.DeleteAsync(name, criteria, schema, null, null, null, cancellation);
-	public ValueTask<int> DeleteAsync(string name, ICondition criteria, DataDeleteOptions options, CancellationToken cancellation = default) => this.DeleteAsync(name, criteria, string.Empty, options, null, null, cancellation);
+	public ValueTask<int> DeleteAsync(string name, ICondition criteria, string schema, DataDeleteOptions options, CancellationToken cancellation) => this.DeleteAsync(name, criteria, schema, options, default(Func<DataDeleteContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataDeleteContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> DeleteAsync(string name, ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, CancellationToken, ValueTask<bool>> deleting, CancellationToken cancellation) => this.DeleteAsync(name, criteria, schema, options, deleting, default(Func<DataDeleteContextBase, CancellationToken, ValueTask>), cancellation);
 	public ValueTask<int> DeleteAsync(string name, ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, CancellationToken, ValueTask<bool>> deleting = null, Func<DataDeleteContextBase, CancellationToken, ValueTask> deleted = null, CancellationToken cancellation = default) => this.DeleteAsync(name, criteria, this.Schema.Parse(name, schema), options, deleting, deleted, cancellation);
+
+	public ValueTask<int> DeleteAsync(string name, ICondition criteria, CancellationToken cancellation) => this.DeleteAsync(name, criteria, default(string), cancellation);
+	public ValueTask<int> DeleteAsync(string name, ICondition criteria, DataDeleteOptions options, CancellationToken cancellation = default) => this.DeleteAsync(name, criteria, string.Empty, options, null, null, cancellation);
+
+	public ValueTask<int> DeleteAsync(string name, ICondition criteria, ISchema schema, DataDeleteOptions options, CancellationToken cancellation) => this.DeleteAsync(name, criteria, schema, options, default(Func<DataDeleteContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataDeleteContextBase, CancellationToken, ValueTask>), cancellation);
+	public ValueTask<int> DeleteAsync(string name, ICondition criteria, ISchema schema, DataDeleteOptions options, Func<DataDeleteContextBase, CancellationToken, ValueTask<bool>> deleting, CancellationToken cancellation) => this.DeleteAsync(name, criteria, schema, options, deleting, default(Func<DataDeleteContextBase, CancellationToken, ValueTask>), cancellation);
 	public async ValueTask<int> DeleteAsync(string name, ICondition criteria, ISchema schema, DataDeleteOptions options, Func<DataDeleteContextBase, CancellationToken, ValueTask<bool>> deleting = null, Func<DataDeleteContextBase, CancellationToken, ValueTask> deleted = null, CancellationToken cancellation = default)
 	{
 		//确实是否已处置
@@ -86,16 +98,5 @@ partial class DataAccessBase
 
 	#region 保护方法
 	protected abstract ValueTask OnDeleteAsync(DataDeleteContextBase context, CancellationToken cancellation);
-	#endregion
-
-	#region 便利取消
-	public ValueTask<int> DeleteAsync<T>(ICondition criteria, CancellationToken cancellation) => this.DeleteAsync<T>(criteria, default(string), cancellation);
-	public ValueTask<int> DeleteAsync<T>(ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, CancellationToken, ValueTask<bool>> deleting, CancellationToken cancellation) => this.DeleteAsync<T>(criteria, schema, options, deleting, default(Func<DataDeleteContextBase, CancellationToken, ValueTask>), cancellation);
-	public ValueTask<int> DeleteAsync<T>(ICondition criteria, string schema, DataDeleteOptions options, CancellationToken cancellation) => this.DeleteAsync<T>(criteria, schema, options, default(Func<DataDeleteContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataDeleteContextBase, CancellationToken, ValueTask>), cancellation);
-	public ValueTask<int> DeleteAsync(string name, ICondition criteria, CancellationToken cancellation) => this.DeleteAsync(name, criteria, default(string), cancellation);
-	public ValueTask<int> DeleteAsync(string name, ICondition criteria, string schema, DataDeleteOptions options, Func<DataDeleteContextBase, CancellationToken, ValueTask<bool>> deleting, CancellationToken cancellation) => this.DeleteAsync(name, criteria, schema, options, deleting, default(Func<DataDeleteContextBase, CancellationToken, ValueTask>), cancellation);
-	public ValueTask<int> DeleteAsync(string name, ICondition criteria, string schema, DataDeleteOptions options, CancellationToken cancellation) => this.DeleteAsync(name, criteria, schema, options, default(Func<DataDeleteContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataDeleteContextBase, CancellationToken, ValueTask>), cancellation);
-	public ValueTask<int> DeleteAsync(string name, ICondition criteria, ISchema schema, DataDeleteOptions options, Func<DataDeleteContextBase, CancellationToken, ValueTask<bool>> deleting, CancellationToken cancellation) => this.DeleteAsync(name, criteria, schema, options, deleting, default(Func<DataDeleteContextBase, CancellationToken, ValueTask>), cancellation);
-	public ValueTask<int> DeleteAsync(string name, ICondition criteria, ISchema schema, DataDeleteOptions options, CancellationToken cancellation) => this.DeleteAsync(name, criteria, schema, options, default(Func<DataDeleteContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataDeleteContextBase, CancellationToken, ValueTask>), cancellation);
 	#endregion
 }

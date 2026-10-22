@@ -43,10 +43,13 @@ public static partial class DataAccessExtension
 	#region 递增方法
 	public static ValueTask<long> IncreaseAsync<T>(this IDataAccess accessor, string member, ICondition criteria, CancellationToken cancellation) => IncreaseAsync<T>(accessor, member, criteria, 1, null, cancellation);
 	public static ValueTask<long> IncreaseAsync<T>(this IDataAccess accessor, string member, ICondition criteria, DataUpdateOptions options = null, CancellationToken cancellation = default) => IncreaseAsync<T>(accessor, member, criteria, 1, options, cancellation);
+
 	public static ValueTask<long> IncreaseAsync<T>(this IDataAccess accessor, string member, ICondition criteria, int interval, CancellationToken cancellation) => IncreaseAsync<T>(accessor, member, criteria, interval, null, cancellation);
 	public static ValueTask<long> IncreaseAsync<T>(this IDataAccess accessor, string member, ICondition criteria, int interval, DataUpdateOptions options = null, CancellationToken cancellation = default) => IncreaseAsync(accessor, Model.Naming.Get<T>(), member, criteria, interval, options, cancellation);
+
 	public static ValueTask<long> IncreaseAsync(this IDataAccess accessor, string name, string member, ICondition criteria, CancellationToken cancellation) => IncreaseAsync(accessor, name, member, criteria, 1, null, cancellation);
 	public static ValueTask<long> IncreaseAsync(this IDataAccess accessor, string name, string member, ICondition criteria, DataUpdateOptions options = null, CancellationToken cancellation = default) => IncreaseAsync(accessor, name, member, criteria, 1, options, cancellation);
+
 	public static ValueTask<long> IncreaseAsync(this IDataAccess accessor, string name, string member, ICondition criteria, int interval, CancellationToken cancellation) => IncreaseAsync(accessor, name, member, criteria, interval, null, cancellation);
 	public static async ValueTask<long> IncreaseAsync(this IDataAccess accessor, string name, string member, ICondition criteria, int interval, DataUpdateOptions options = null, CancellationToken cancellation = default)
 	{
@@ -72,10 +75,13 @@ public static partial class DataAccessExtension
 	#region 递减方法
 	public static ValueTask<long> DecreaseAsync<T>(this IDataAccess accessor, string member, ICondition criteria, CancellationToken cancellation) => IncreaseAsync<T>(accessor, member, criteria, -1, null, cancellation);
 	public static ValueTask<long> DecreaseAsync<T>(this IDataAccess accessor, string member, ICondition criteria, DataUpdateOptions options = null, CancellationToken cancellation = default) => IncreaseAsync<T>(accessor, member, criteria, -1, options, cancellation);
+
 	public static ValueTask<long> DecreaseAsync<T>(this IDataAccess accessor, string member, ICondition criteria, int interval, CancellationToken cancellation) => IncreaseAsync<T>(accessor, member, criteria, -interval, null, cancellation);
 	public static ValueTask<long> DecreaseAsync<T>(this IDataAccess accessor, string member, ICondition criteria, int interval, DataUpdateOptions options = null, CancellationToken cancellation = default) => IncreaseAsync<T>(accessor, member, criteria, -interval, options, cancellation);
+
 	public static ValueTask<long> DecreaseAsync(this IDataAccess accessor, string name, string member, ICondition criteria, CancellationToken cancellation) => IncreaseAsync(accessor, name, member, criteria, -1, null, cancellation);
 	public static ValueTask<long> DecreaseAsync(this IDataAccess accessor, string name, string member, ICondition criteria, DataUpdateOptions options = null, CancellationToken cancellation = default) => IncreaseAsync(accessor, name, member, criteria, -1, options, cancellation);
+
 	public static ValueTask<long> DecreaseAsync(this IDataAccess accessor, string name, string member, ICondition criteria, int interval, CancellationToken cancellation) => IncreaseAsync(accessor, name, member, criteria, -interval, null, cancellation);
 	public static ValueTask<long> DecreaseAsync(this IDataAccess accessor, string name, string member, ICondition criteria, int interval, DataUpdateOptions options = null, CancellationToken cancellation = default) => IncreaseAsync(accessor, name, member, criteria, -interval, options, cancellation);
 	#endregion
@@ -85,16 +91,23 @@ public static partial class DataAccessExtension
 		UpdateManyAsync(accessor, Model.Naming.Get<T>(), items, string.Empty, null, null, null, cancellation);
 	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IEnumerable<T> items, DataUpdateOptions options, CancellationToken cancellation = default) =>
 		UpdateManyAsync(accessor, Model.Naming.Get<T>(), items, string.Empty, options, null, null, cancellation);
+
 	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IEnumerable<T> items, string schema, CancellationToken cancellation = default) =>
 		UpdateManyAsync(accessor, Model.Naming.Get<T>(), items, schema, null, null, null, cancellation);
+	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IEnumerable<T> items, string schema, DataUpdateOptions options, CancellationToken cancellation) => UpdateManyAsync<T>(accessor, items, schema, options, default(Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
+	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating, CancellationToken cancellation) => UpdateManyAsync<T>(accessor, items, schema, options, updating, default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
 	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating = null, Func<DataUpdateContextBase, CancellationToken, ValueTask> updated = null, CancellationToken cancellation = default) =>
 		UpdateManyAsync(accessor, Model.Naming.Get<T>(), items, schema, options, updating, updated, cancellation);
+
 	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IEnumerable items, CancellationToken cancellation = default) =>
 		UpdateManyAsync(accessor, Model.Naming.Get<T>(), items, string.Empty, null, null, null, cancellation);
 	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IEnumerable items, DataUpdateOptions options, CancellationToken cancellation = default) =>
 		UpdateManyAsync(accessor, Model.Naming.Get<T>(), items, string.Empty, options, null, null, cancellation);
+
 	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IEnumerable items, string schema, CancellationToken cancellation = default) =>
 		UpdateManyAsync(accessor, Model.Naming.Get<T>(), items, schema, null, null, null, cancellation);
+	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IEnumerable items, string schema, DataUpdateOptions options, CancellationToken cancellation) => UpdateManyAsync<T>(accessor, items, schema, options, default(Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
+	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating, CancellationToken cancellation) => UpdateManyAsync<T>(accessor, items, schema, options, updating, default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
 	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating = null, Func<DataUpdateContextBase, CancellationToken, ValueTask> updated = null, CancellationToken cancellation = default) =>
 		UpdateManyAsync(accessor, Model.Naming.Get<T>(), items, schema, options, updating, updated, cancellation);
 
@@ -102,8 +115,11 @@ public static partial class DataAccessExtension
 		UpdateManyAsync(accessor, name, items, string.Empty, null, null, null, cancellation);
 	public static ValueTask<int> UpdateManyAsync(this IDataAccess accessor, string name, IEnumerable items, DataUpdateOptions options, CancellationToken cancellation = default) =>
 		UpdateManyAsync(accessor, name, items, string.Empty, options, null, null, cancellation);
+
 	public static ValueTask<int> UpdateManyAsync(this IDataAccess accessor, string name, IEnumerable items, string schema, CancellationToken cancellation = default) =>
 		UpdateManyAsync(accessor, name, items, schema, null, null, null, cancellation);
+	public static ValueTask<int> UpdateManyAsync(this IDataAccess accessor, string name, IEnumerable items, string schema, DataUpdateOptions options, CancellationToken cancellation) => UpdateManyAsync(accessor, name, items, schema, options, default(Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
+	public static ValueTask<int> UpdateManyAsync(this IDataAccess accessor, string name, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating, CancellationToken cancellation) => UpdateManyAsync(accessor, name, items, schema, options, updating, default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
 	public static async ValueTask<int> UpdateManyAsync(this IDataAccess accessor, string name, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating = null, Func<DataUpdateContextBase, CancellationToken, ValueTask> updated = null, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(name))
@@ -133,31 +149,28 @@ public static partial class DataAccessExtension
 			throw;
 		}
 	}
-	#endregion
 
-	#region 便利取消
-	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating, CancellationToken cancellation) => UpdateManyAsync<T>(accessor, items, schema, options, updating, default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
-	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IEnumerable<T> items, string schema, DataUpdateOptions options, CancellationToken cancellation) => UpdateManyAsync<T>(accessor, items, schema, options, default(Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
-	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating, CancellationToken cancellation) => UpdateManyAsync<T>(accessor, items, schema, options, updating, default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
-	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IEnumerable items, string schema, DataUpdateOptions options, CancellationToken cancellation) => UpdateManyAsync<T>(accessor, items, schema, options, default(Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
-	public static ValueTask<int> UpdateManyAsync(this IDataAccess accessor, string name, IEnumerable items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating, CancellationToken cancellation) => UpdateManyAsync(accessor, name, items, schema, options, updating, default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
-	public static ValueTask<int> UpdateManyAsync(this IDataAccess accessor, string name, IEnumerable items, string schema, DataUpdateOptions options, CancellationToken cancellation) => UpdateManyAsync(accessor, name, items, schema, options, default(Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
-	#endregion
-	#region 异步更新源
 	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IAsyncEnumerable<T> items, CancellationToken cancellation = default) =>
 		UpdateManyAsync<T>(accessor, Model.Naming.Get<T>(), items, string.Empty, null, null, null, cancellation);
 	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IAsyncEnumerable<T> items, DataUpdateOptions options, CancellationToken cancellation = default) =>
 		UpdateManyAsync<T>(accessor, Model.Naming.Get<T>(), items, string.Empty, options, null, null, cancellation);
+
 	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IAsyncEnumerable<T> items, string schema, CancellationToken cancellation = default) =>
 		UpdateManyAsync<T>(accessor, Model.Naming.Get<T>(), items, schema, null, null, null, cancellation);
+	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IAsyncEnumerable<T> items, string schema, DataUpdateOptions options, CancellationToken cancellation) => UpdateManyAsync<T>(accessor, items, schema, options, default(Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
+	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IAsyncEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating, CancellationToken cancellation) => UpdateManyAsync<T>(accessor, items, schema, options, updating, default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
 	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IAsyncEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating = null, Func<DataUpdateContextBase, CancellationToken, ValueTask> updated = null, CancellationToken cancellation = default) =>
 		UpdateManyAsync<T>(accessor, Model.Naming.Get<T>(), items, schema, options, updating, updated, cancellation);
+
 	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, string name, IAsyncEnumerable<T> items, CancellationToken cancellation = default) =>
 		UpdateManyAsync<T>(accessor, name, items, string.Empty, null, null, null, cancellation);
 	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, string name, IAsyncEnumerable<T> items, DataUpdateOptions options, CancellationToken cancellation = default) =>
 		UpdateManyAsync<T>(accessor, name, items, string.Empty, options, null, null, cancellation);
+
 	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, string name, IAsyncEnumerable<T> items, string schema, CancellationToken cancellation = default) =>
 		UpdateManyAsync<T>(accessor, name, items, schema, null, null, null, cancellation);
+	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, string name, IAsyncEnumerable<T> items, string schema, DataUpdateOptions options, CancellationToken cancellation) => UpdateManyAsync<T>(accessor, name, items, schema, options, default(Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
+	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, string name, IAsyncEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating, CancellationToken cancellation) => UpdateManyAsync<T>(accessor, name, items, schema, options, updating, default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
 	public static async ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, string name, IAsyncEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating = null, Func<DataUpdateContextBase, CancellationToken, ValueTask> updated = null, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(name))
@@ -187,9 +200,5 @@ public static partial class DataAccessExtension
 			throw;
 		}
 	}
-	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IAsyncEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating, CancellationToken cancellation) => UpdateManyAsync<T>(accessor, items, schema, options, updating, default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
-	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, IAsyncEnumerable<T> items, string schema, DataUpdateOptions options, CancellationToken cancellation) => UpdateManyAsync<T>(accessor, items, schema, options, default(Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
-	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, string name, IAsyncEnumerable<T> items, string schema, DataUpdateOptions options, Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>> updating, CancellationToken cancellation) => UpdateManyAsync<T>(accessor, name, items, schema, options, updating, default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
-	public static ValueTask<int> UpdateManyAsync<T>(this IDataAccess accessor, string name, IAsyncEnumerable<T> items, string schema, DataUpdateOptions options, CancellationToken cancellation) => UpdateManyAsync<T>(accessor, name, items, schema, options, default(Func<DataUpdateContextBase, CancellationToken, ValueTask<bool>>), default(Func<DataUpdateContextBase, CancellationToken, ValueTask>), cancellation);
 	#endregion
 }
