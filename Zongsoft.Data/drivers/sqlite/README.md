@@ -110,4 +110,4 @@ Additional artifacts listed by the deployment manifest include `Zongsoft.Data.SQ
 
 ### Native Dependency Troubleshooting
 
-Windows x64 manual deployment was verified with a matching `e_sqlite3.dll` discoverable beside the managed components. Do not assume a plugin's nested `runtimes` directory automatically joins native search paths. The project references Microsoft.Data.Sqlite `10.0.10`, while the deployment manifest still selects `10.0.7`. A targeted build also reported `NU1903` for SQLitePCLRaw.lib.e_sqlite3 `2.1.11`. Review actual dependencies and vulnerability information before deployment; a passing local constant query does not establish production suitability.
+Windows x64 manual deployment requires a matching `e_sqlite3.dll` discoverable by the managed components. Do not assume a plugin's nested `runtimes` directory automatically joins native search paths. The project and deployment manifest use Microsoft.Data.Sqlite `10.0.12`, SQLitePCLRaw `3.0.5`, and SourceGear.sqlite3 `3.53.4`; retain the corresponding native assets when deploying.

@@ -138,6 +138,96 @@ public sealed class DataEngineAsyncTest
 		finally { source.Release.TrySetResult(); }
 	}
 
+	[Theory]
+	[InlineData(false, 0)]
+	[InlineData(false, 1)]
+	[InlineData(false, 257)]
+	[InlineData(false, 513)]
+	[InlineData(true, 513)]
+	public async Task BatchAsync_EnumeratesSynchronousSourceOnce(bool upsert, int count)
+	{
+		await using var scope = new Scope();
+		var enumerations = 0;
+		var disposals = 0;
+		var batches = new List<int>();
+		var source = Read();
+		scope.Driver.Batch = (_, batch, _) => batches.Add(batch.Count);
+		var result = upsert ?
+			await scope.Access.UpsertManyAsync(scope.Name, source, (ISchema)null, null) :
+			await scope.Access.InsertManyAsync(scope.Name, source, (ISchema)null, null);
+
+		Assert.Equal(count, result);
+		Assert.Equal(1, enumerations);
+		Assert.Equal(1, disposals);
+		Assert.Equal(Enumerable.Range(1, count), scope.Driver.Rows.Select(row => ((Row)row).Value));
+		Assert.Equal(Enumerable.Range(0, count).Chunk(256).Select(batch => batch.Length), batches);
+
+		if(count > 0)
+			Assert.Equal(1, Assert.Single(scope.Driver.Connections).Transaction.CommitCount);
+
+		IEnumerable<Row> Read()
+		{
+			enumerations++;
+
+			try
+			{
+				for(int index = 1; index <= count; index++)
+					yield return new Row { Value = index };
+			}
+			finally { disposals++; }
+		}
+	}
+
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task BatchAsync_SynchronousSourceFailureRestoresInputAndRollsBack(bool cancelled)
+	{
+		await using var scope = new Scope();
+		using var cancellation = new CancellationTokenSource();
+		var disposed = false;
+		var failure = new InvalidOperationException();
+		var source = Read();
+		IDataMutateContextBase captured = null;
+		scope.Provider.Error += (_, args, _) =>
+		{
+			captured = Assert.IsAssignableFrom<IDataMutateContextBase>(args.Context);
+			Assert.Same(source, captured.Data);
+			return ValueTask.CompletedTask;
+		};
+
+		if(cancelled)
+			await Assert.ThrowsAnyAsync<OperationCanceledException>(() => scope.Access.InsertManyAsync(scope.Name, source, (ISchema)null, null, cancellation.Token).AsTask());
+		else
+			Assert.Same(failure, await Assert.ThrowsAsync<InvalidOperationException>(() => scope.Access.InsertManyAsync(scope.Name, source, (ISchema)null, null).AsTask()));
+
+		Assert.NotNull(captured);
+		Assert.Same(source, captured.Data);
+		Assert.True(disposed);
+		Assert.Equal(256, scope.Driver.Rows.Count);
+		var connection = Assert.Single(scope.Driver.Connections);
+		Assert.Equal(0, connection.Transaction.CommitCount);
+		Assert.Equal(1, connection.Transaction.RollbackCount);
+
+		IEnumerable<Row> Read()
+		{
+			try
+			{
+				for(int index = 0; index < 256; index++)
+					yield return new Row { Value = index };
+
+				if(cancelled)
+				{
+					cancellation.Cancel();
+					yield return new Row { Value = 256 };
+				}
+				else
+					throw failure;
+			}
+			finally { disposed = true; }
+		}
+	}
+
 	[Fact]
 	public async Task ImportAsync_StructSourcePreservesElementTypeAndAwaitsConsumption()
 	{

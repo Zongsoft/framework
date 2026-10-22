@@ -46,7 +46,7 @@ public abstract class DataImporterBase : IDataImporter
 	#endregion
 
 	#region 保护方法
-	protected static IAsyncEnumerable<object> GetRecordsAsync(DataImportContext context) => DataInput.EnumerateAsync(context.Data);
+	protected static IAsyncEnumerable<object> GetRecordsAsync(DataImportContext context) => Utility.EnumerateAsync(context.Data);
 	#endregion
 
 	#region 抽象方法

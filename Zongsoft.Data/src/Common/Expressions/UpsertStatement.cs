@@ -34,7 +34,7 @@ using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.Common.Expressions;
 
-public class UpsertStatement : MutateStatement
+public class UpsertStatement : MutateStatement, IBatchStatement
 {
 	#region 构造函数
 	public UpsertStatement(IDataEntity entity, SchemaMember schema) : base(entity, schema, null)
@@ -47,6 +47,12 @@ public class UpsertStatement : MutateStatement
 	#endregion
 
 	#region 公共属性
+	/// <summary>获取或设置单次执行的最大记录数，默认为 256。</summary>
+	public int BatchSize { get; set; } = 256;
+
+	/// <summary>获取或设置单次执行的参数数量上限，零表示不额外限制。</summary>
+	public int ParameterLimit { get; set; }
+
 	/// <summary>获取或设置增改语句对应的序号字段值的查询语句。</summary>
 	public SelectStatement SequenceRetriever { get; set; }
 

@@ -52,12 +52,8 @@ public class StatementBinder : IStatementBinder
 		{
 			if(Utility.IsMultiple(context.Data, out var items))
 			{
-				var lines = statement switch
-				{
-					InsertStatement insertion => insertion.Values.Chunk(insertion.Fields.Count).ToArray(),
-					UpsertStatement upsertion => upsertion.Values.Chunk(upsertion.Fields.Count).ToArray(),
-					_ => null,
-				};
+				var lines = statement is IBatchStatement batch && batch.Fields.Count > 0 ?
+					batch.Values.Chunk(batch.Fields.Count).ToArray() : null;
 
 				if(lines != null && lines.Length > 0)
 				{

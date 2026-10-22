@@ -39,4 +39,13 @@ public class MsSqlUpsertStatementBuilder : UpsertStatementBuilder
 	#region 构造函数
 	public MsSqlUpsertStatementBuilder() { }
 	#endregion
+
+	#region 重写方法
+	/// <summary>创建具有当前数据库批量写入限制的新增或更新语句。</summary>
+	/// <param name="entity">指定的数据实体元数据。</param>
+	/// <param name="schema">指定的数据模式成员。</param>
+	/// <returns>返回创建的新增或更新语句。</returns>
+	//预留 SqlClient 调用 sp_executesql 时使用的语句和参数声明两个参数。
+	protected override UpsertStatement CreateStatement(Metadata.IDataEntity entity, SchemaMember schema) => new(entity, schema) { ParameterLimit = 2098 };
+	#endregion
 }

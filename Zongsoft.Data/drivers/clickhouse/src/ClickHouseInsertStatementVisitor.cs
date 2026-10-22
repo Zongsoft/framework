@@ -58,9 +58,9 @@ public class ClickHouseInsertStatementVisitor : InsertStatementVisitor
 	{
 		context.WriteLine(" VALUES");
 
-		for(int i = 0; i < statement.Fields.Count; i++)
+		for(int i = 0; i < statement.Values.Count; i++)
 		{
-			var field = statement.Fields[i];
+			var field = statement.Fields[i % rounds];
 			var value = statement.Values[i];
 
 			if(i > 0)

@@ -1041,6 +1041,8 @@ A real operation parameter is `"Thread"`, read by [PostService.OnInsert](../../d
 
 Before/after callbacks, IDataAccess events and filters are awaitable. Event handlers accept (sender, args, cancellation), return ValueTask, and complete in subscription order. Use asynchronous enumeration and Pageable.FilterAsync/MapAsync for result processing while retaining pagination. IEnumerable navigation members contain loaded records; consume IAsyncEnumerable navigation members asynchronously.
 
+`InsertManyAsync` and `UpsertManyAsync` accept in-memory collections and `IAsyncEnumerable<T>`. Each input is enumerated once in batches of up to 256 records, with smaller command batches when required by driver parameter limits. Ordinary relational inserts use multiple `VALUES` rows; constraint suppression and upserts use the database dialect. The result accumulates affected rows, including cascading writes. All batches share the operation's session. When transactions are supported and enabled, completion commits all batches, while failure or cancellation rolls back earlier batches.
+
 Manage transactions with `await using` and await completion. For example, insert an order and its lines in one transaction:
 
 ```csharp

@@ -68,6 +68,8 @@ See the [Data plugin example](../../README.md#plugin-quickstart) for host config
 
 ## Runtime Behavior
 
+`InsertManyAsync` and `UpsertManyAsync` execute records individually in input order, using each record's tags to select its subtable. Use `ImportAsync` when bulk throughput is required. This driver does not support transaction rollback; writes completed before failure or cancellation remain stored.
+
 Use the asynchronous methods on `IDataAccess` / `IDataService<T>` and consume query results with `await foreach`. Await transaction completion, rollback, and resource disposal. Imports accept in-memory collections and asynchronous sources, and operations propagate cancellation tokens. This driver does not support database transactions; ambient transactions cannot roll back TDengine writes.
 
 🚨 Never commit production connection strings. Use deployment-time configuration or a secret provider, grant the database identity only the required permissions, and verify destructive mutations against a disposable database first.

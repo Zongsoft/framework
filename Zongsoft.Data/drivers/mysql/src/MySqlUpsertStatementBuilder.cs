@@ -39,4 +39,12 @@ public class MySqlUpsertStatementBuilder : UpsertStatementBuilder
 	#region 构造函数
 	public MySqlUpsertStatementBuilder() { }
 	#endregion
+
+	#region 重写方法
+	/// <summary>创建具有当前数据库批量写入限制的新增或更新语句。</summary>
+	/// <param name="entity">指定的数据实体元数据。</param>
+	/// <param name="schema">指定的数据模式成员。</param>
+	/// <returns>返回创建的新增或更新语句。</returns>
+	protected override UpsertStatement CreateStatement(Metadata.IDataEntity entity, SchemaMember schema) => new(entity, schema) { ParameterLimit = 65535 };
+	#endregion
 }

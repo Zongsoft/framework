@@ -39,4 +39,10 @@ public class MsSqlUpdateStatementBuilder : UpdateStatementBuilder
 	#region 构造函数
 	public MsSqlUpdateStatementBuilder() { }
 	#endregion
+
+	#region 重写方法
+	/// <summary>创建当前数据库的新增或更新语句构建器。</summary>
+	/// <returns>返回当前数据库的新增或更新语句构建器。</returns>
+	protected override UpsertStatementBuilder CreateUpsertStatementBuilder() => new MsSqlUpsertStatementBuilder();
+	#endregion
 }

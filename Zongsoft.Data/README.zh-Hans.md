@@ -1044,6 +1044,8 @@ foreach(var row in options.Returning.Rows)
 
 前后回调、IDataAccess 事件及过滤器均可等待。事件处理器接受 (sender, args, cancellation) 并返回 ValueTask；处理器按订阅顺序完成。结果过滤使用异步枚举及 Pageable.FilterAsync/MapAsync，并保留分页信息。IEnumerable 导航属性提供已加载的内存集合；IAsyncEnumerable 导航属性使用异步枚举读取。
 
+`InsertManyAsync` 和 `UpsertManyAsync` 支持内存集合与 `IAsyncEnumerable<T>`，输入只枚举一次，按最多 256 条记录分批处理，并按驱动的参数限制进一步缩小批次。普通关系型插入使用多行 `VALUES`；忽略约束和增改采用对应数据库方言。返回值为累计影响行数，包含级联写入。所有批次共用一次操作的会话；在支持且未抑制事务时，全部完成后提交，失败或取消会回滚已执行批次。
+
 使用 `await using` 管理事务，并等待提交。例如，将订单与明细写入同一个事务：
 
 ```csharp

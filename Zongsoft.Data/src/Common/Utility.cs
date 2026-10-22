@@ -31,6 +31,7 @@ using System;
 using System.Data;
 using System.Reflection;
 using System.ComponentModel;
+using System.Threading;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
@@ -43,7 +44,7 @@ internal static class Utility
 	private static readonly ConcurrentDictionary<MemberInfo, TypeConverter> _converters = new();
 	#endregion
 
-	#region 静态方法
+	#region 公共方法
 	public static IList CreateList(Type elementType)
 	{
 		if(elementType == null)
@@ -57,9 +58,20 @@ internal static class Utility
 		if(source == null)
 			throw new ArgumentNullException(nameof(source));
 
-		var elementType = Zongsoft.Common.TypeExtension.GetElementType(source.GetType());
+		var elementType = Collections.Enumerable.IsAsyncEnumerable(source, out var type) ? type :
+			Zongsoft.Common.TypeExtension.GetElementType(source.GetType());
 		return elementType == null ? new List<object>() :
 			(IList)Activator.CreateInstance(typeof(List<>).MakeGenericType(elementType));
+	}
+
+	public static IAsyncEnumerable<object> EnumerateAsync(object source)
+	{
+		if(source is IAsyncEnumerable<object> enumerable)
+			return enumerable;
+
+		return Collections.Enumerable.IsAsyncEnumerable(source, out var elementType) ?
+			(IAsyncEnumerable<object>)Activator.CreateInstance(typeof(AsyncEnumerable<>).MakeGenericType(elementType), [source]) :
+			Collections.Enumerable.EnumerateAsync<object>(source);
 	}
 
 	public static DbType GetDbType(object value)
@@ -287,6 +299,14 @@ internal static class Utility
 		}
 
 		return false;
+	}
+	#endregion
+
+	#region 嵌套子类
+	private sealed class AsyncEnumerable<T>(IAsyncEnumerable<T> source) : IAsyncEnumerable<object>
+	{
+		public IAsyncEnumerator<object> GetAsyncEnumerator(CancellationToken cancellation = default) =>
+			Collections.Enumerable.Cast(source).GetAsyncEnumerator(cancellation);
 	}
 	#endregion
 }

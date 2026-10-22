@@ -71,6 +71,34 @@ public class TimeSeriesScenarioTest(DatabaseFixture database)
 	}
 
 	[Fact]
+	public async Task InsertManyPreservesSubtableTagsAcrossBatchesAsync()
+	{
+		Assert.SkipUnless(Global.IsTestingEnabled, TESTING_DISABLED_REASON);
+		var accessor = _database.Accessor;
+		var timestamp = new DateTime(2098, 1, 4, 0, 0, 0, DateTimeKind.Local);
+		var criteria = GetTimeCriteria(timestamp, timestamp.AddSeconds(257));
+		var rows = Enumerable.Range(0, 257).Select(index => CreatePowerMeter(
+			timestamp.AddSeconds(index), index % 2 == 0 ? "batch-a" : "batch-b", "Batch", index % 2, index, 220, 0)).ToArray();
+
+		try
+		{
+			await accessor.DeleteAsync<PowerMeterReading>(criteria);
+			Assert.Equal(rows.Length, await accessor.InsertManyAsync(rows));
+			var stored = await Global.ToArrayAsync(accessor.SelectAsync<PowerMeterReading>(criteria));
+			Assert.Equal(rows.Length, stored.Length);
+
+			foreach(var row in rows)
+			{
+				var actual = Assert.Single(stored, item => item.Timestamp == row.Timestamp);
+				Assert.Equal(row.MeterId, actual.MeterId);
+				Assert.Equal(row.GroupId, actual.GroupId);
+				Assert.Equal(row.Current, actual.Current);
+			}
+		}
+		finally { await accessor.DeleteAsync<PowerMeterReading>(criteria); }
+	}
+
+	[Fact]
 	public async Task SmartMeterImportAggregatesAcrossSubtablesAsync()
 	{
 		Assert.SkipUnless(Global.IsTestingEnabled, TESTING_DISABLED_REASON);

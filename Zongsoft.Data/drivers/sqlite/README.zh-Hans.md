@@ -110,4 +110,4 @@ nuget:Zongsoft.Data.SQLite
 
 ### 原生依赖排障
 
-Windows x64 的手工部署已验证需要让匹配架构的 `e_sqlite3.dll` 可被托管组件加载，不能假设插件子目录中的 `runtimes` 会自动加入原生搜索路径。当前项目引用 Microsoft.Data.Sqlite `10.0.10`，部署清单仍指定 `10.0.7`；定向构建还报告 SQLitePCLRaw.lib.e_sqlite3 `2.1.11` 的 `NU1903` 安全警告。部署前应审核实际依赖和漏洞信息，不因本地常量查询通过就推断版本已适合生产。
+Windows x64 手工部署需要让匹配架构的 `e_sqlite3.dll` 可被托管组件加载，不能假设插件子目录中的 `runtimes` 会自动加入原生搜索路径。项目与部署清单使用 Microsoft.Data.Sqlite `10.0.12`、SQLitePCLRaw `3.0.5` 和 SourceGear.sqlite3 `3.53.4`，部署时须保留对应原生资源。

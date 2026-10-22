@@ -60,8 +60,9 @@ public class TDengineInsertStatementVisitor : InsertStatementVisitor
 
 		(var tags, var data) = GetSettings(fields, values);
 
-		var slot = GenerateSlot(tags);
-		statement.Slots.Add(slot);
+		if(!statement.Slots.TryGetValue("Subtable", out var slot))
+			statement.Slots.Add(slot = GenerateSlot(tags));
+
 		context.Write($"INSERT INTO `${{{slot.Name}}}` USING ");
 		context.Visit(statement.Table);
 

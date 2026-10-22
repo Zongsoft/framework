@@ -43,12 +43,12 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 	#region 构建方法
 	public IAsyncEnumerable<IStatementBase> BuildAsync(DataUpsertContext context, CancellationToken cancellation = default)
 	{
-		return BuildUpsertsAsync(context, context.Entity, context.Data, null, context.Schema.Members, cancellation);
+		return this.BuildUpsertsAsync(context, context.Entity, context.Data, null, context.Schema.Members, cancellation);
 	}
 	#endregion
 
 	#region 私有方法
-	internal static async IAsyncEnumerable<UpsertStatement> BuildUpsertsAsync(IDataMutateContext context, IDataEntity entity, object data, SchemaMember owner, IEnumerable<SchemaMember> schemas, [EnumeratorCancellation] CancellationToken cancellation = default)
+	internal async IAsyncEnumerable<UpsertStatement> BuildUpsertsAsync(IDataMutateContext context, IDataEntity entity, object data, SchemaMember owner, IEnumerable<SchemaMember> schemas, [EnumeratorCancellation] CancellationToken cancellation = default)
 	{
 		var inherits = entity.GetInherits();
 		var sequenceRetrievable = IsSequenceRetrievable(context);
@@ -90,7 +90,7 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 
 		foreach(var inherit in inherits)
 		{
-			var statement = new UpsertStatement(inherit, owner);
+			var statement = this.CreateStatement(inherit, owner);
 			var sequences = new List<IDataEntitySimplexProperty>();
 
 			if(context is DataUpsertContextBase ctx)
@@ -201,7 +201,7 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 						throw new DataException(string.Format(Properties.Resources.Statement_MissingComplexPropertyMembers_Message, schema.FullPath));
 
 					var complex = (IDataEntityComplexProperty)schema.Token.Property;
-					var slaves = BuildUpsertsAsync(
+					var slaves = this.BuildUpsertsAsync(
 						context,
 						complex.Foreign,
 						data,

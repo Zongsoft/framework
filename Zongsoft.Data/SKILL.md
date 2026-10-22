@@ -105,6 +105,7 @@ sorting ::= "(" { ["~"|"-"|"+"]identifier } [,...n] ")"
 `IDataDriver` 当前公开 `Binder`、`Builder` 和 `Slotter`：
 
 - 使用 `IStatementBuilder.BuildAsync` 按序准备数据库方言语句，在原字段/条件验证点等待，保持前后局部操作次序。CreateStatement、表达式组装与 SQL 文本输出是纯本地同步操作；不要提前枚举全部字段进行验证。
+- `IBatchStatement` 表示写入语句的分批能力，声明按行排列的字段和值，以及 `BatchSize`、`ParameterLimit` 约束。`InsertStatement` 和 `UpsertStatement` 实现此接口，各方言的新增、增改构建器通过 `CreateStatement` 设置约束。执行器和按行参数绑定仅依赖这一能力接口；驱动和通用语句构建器不承担分批策略。级联增改复用当前增改构建器；更新构建器通过 `CreateUpsertStatementBuilder` 提供对应方言的级联增改构建器。
 - 使用 `IStatementBinder` 在命令参数创建完成后绑定数据。`StatementExtension.BindAsync(...)` 根据当前数据访问上下文取得 `context.Source.Driver.Binder`，没有驱动绑定器时回退到 `StatementBinder.Default`。
 - 需要在通用绑定完成后整理命令时，继承 `StatementBinder` 并重写绑定完成回调；不要把单一驱动的命令整理需求加入 `IDataDriver`。
 - TDengine DELETE 会由表达式访问器把条件参数安全内联到 SQL，但参数对象仍会由通用命令创建过程生成。`TDengineStatementBinder` 必须等参数绑定完成后再清除这些已不被 SQL 引用的参数；不要在命令创建或绑定之前清空参数。
@@ -120,11 +121,15 @@ DataImporterBase.Member.GetValueAsync 返回 MemberValue（Target、Value）：T
 
 ## 异步执行与结果所有权
 
-DataProvider 的 Executing、Executed、Error 均为可等待委托，按注册顺序逐项等待。Executing 保持在执行 try 外；成功时先提交会话，再还原输入并通知 Executed。失败先回滚，再等待 IDataDriver.OnErrorAsync 与 Error；错误处理使用 CancellationToken.None，被处理的异常不触发 Executed。保留原异常转换、回滚故障与通知故障的传播边界。
+DataProvider 的 Executing、Executed、Error 均为可等待委托，按注册顺序逐项等待。Executing 保持在执行 try 外；分批执行结束时还原输入；成功时提交会话后通知 Executed。失败先回滚，再等待 IDataDriver.OnErrorAsync 与 Error；错误处理使用 CancellationToken.None，被处理的异常不触发 Executed。保留原异常转换、回滚故障与通知故障的传播边界。
 
 DataAccess 的数据库执行重写、事件和过滤器只保留异步入口。序列键的实体/字段/依赖文本由 ParseSequenceKey 本地解析，缺少依赖值时等待字段验证器；无上下文不能调用验证器。IDataSequencer 仅异步；内部 ISequenceBase 的强制同步成员抛 NotSupportedException。普通字典和反射对象的依赖值均参与键生成，@ 后内容仅作为依赖值。
 
-DataProvider 对异步批量新增/增改输入按最多 256 行准备一个类型化批次，逐批执行语句，共用同一上下文、会话和事务，全部完成后才提交。输入仅枚举一次，支持值类型装箱，批次等待传递取消令牌。原有内存集合由既有语句构建流程处理。DataImporterBase.GetRecordsAsync 为驱动提供内存与异步输入的统一消费入口；具体导入器负责其原生批量接口的有界缓存及事务限制。
+DataProvider 对 IEnumerable 和 IAsyncEnumerable 批量新增/增改输入按最多 256 行准备一个类型化批次，逐批执行语句，共用同一上下文、会话和事务，全部完成后才提交。输入仅枚举一次，支持值类型装箱，批次等待传递取消令牌；分批流程结束或失败均还原上下文的原始输入。输入分批是 DataProvider 的私有执行逻辑；Utility.EnumerateAsync 统一枚举输入，值类型异步源通过 Core 的 Cast 适配，写入与 DataImporterBase.GetRecordsAsync 共用这一入口。
+
+DataMutateExecutor 根据实际语句的字段值和参数集合进一步分批，包括级联语句。StatementBatch 保留每行对应的值表达式、参数名和语句公共参数，逐批绑定对应的数据项，完成或异常退出后还原语句集合。序号回填和 RETURNING 只针对当前执行批次，总影响行数累加；从属语句在父语句各批次完成后继续执行。参数预算扣除公共参数，再按单行最大参数数计算；单行超过预算时拒绝执行。
+
+SQL Server 的参数预算为 2098，预留 SqlClient 调用 sp_executesql 的两个参数；MySQL、PostgreSQL 为 65535，SQLite 为 32766。TDengine 每条语句处理一行，以当前行标签计算子表；重复输出同一语句时复用 Subtable 插槽。普通关系型插入使用多行 VALUES，忽略约束和增改仍使用各驱动的既有方言。DataImporterBase 的具体导入器负责其原生批量接口的有界缓存及事务限制。
 
 查询和命名命令的结果只提供 IAsyncEnumerable。每次枚举创建独立 DbCommand，未枚举不创建命令或读取器；每次读取前主动检查取消令牌，不能依赖提供程序的 ReadAsync 在已有缓冲行时响应取消；失败、提前结束和自然结束均等待读取器、连接租约与命令释放。关联查询保存父记录的参数快照；IEnumerable/集合/数组导航在父记录输出前异步物化，IAsyncEnumerable 导航保持异步消费。字段读取与模型反射只处理已读取的本地值。命名命令的输出参数在读取器关闭后回写原 Parameter 对象。
 

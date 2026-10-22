@@ -31,18 +31,42 @@ public class MutationTest(DatabaseFixture database)
 		await Assert.ThrowsAsync<NotSupportedException>(() => _database.Accessor.UpdateAsync(model).AsTask());
 	}
 
-	[Fact]
-	[Trait("Category", "Unit")]
-	public async Task MultipleInsertIsExplicitlyUnsupported()
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	[Trait("Category", "Integration")]
+	public async Task MultipleWritesPreserveRowsAsync(bool upsert)
 	{
+		Assert.SkipUnless(Global.IsTestingEnabled, TESTING_DISABLED_REASON);
+		var accessor = _database.Accessor;
 		var timestamp = new DateTime(2097, 1, 10, 0, 0, 0, DateTimeKind.Local);
+		var criteria = Condition.GreaterThanEqual(nameof(GatewayHistory.Timestamp), timestamp) &
+			Condition.LessThan(nameof(GatewayHistory.Timestamp), timestamp.AddMilliseconds(2));
 		var models = new[]
 		{
 			new GatewayHistory(208, 20009, 11.5, null, timestamp),
 			new GatewayHistory(208, 20009, 12.5, null, timestamp.AddMilliseconds(1)),
 		};
 
-		await Assert.ThrowsAsync<NotSupportedException>(() => _database.Accessor.InsertManyAsync(models).AsTask());
+		try
+		{
+			await accessor.DeleteAsync<GatewayHistory>(criteria);
+			Assert.Equal(models.Length, upsert ? await accessor.UpsertManyAsync(models) : await accessor.InsertManyAsync(models));
+			var rows = await Global.ToArrayAsync(accessor.SelectAsync<GatewayHistory>(criteria));
+			Assert.Equal(models.Length, rows.Length);
+
+			foreach(var model in models)
+			{
+				var row = Assert.Single(rows, row => row.Timestamp == model.Timestamp);
+				Assert.Equal(model.GatewayId, row.GatewayId);
+				Assert.Equal(model.MetricId, row.MetricId);
+				Assert.Equal(model.Value, row.Value);
+			}
+		}
+		finally
+		{
+			await accessor.DeleteAsync<GatewayHistory>(criteria);
+		}
 	}
 
 	[Fact]

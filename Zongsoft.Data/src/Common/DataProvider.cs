@@ -31,7 +31,9 @@ using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 using Zongsoft.Configuration;
 using Zongsoft.Data.Common.Expressions;
@@ -182,13 +184,21 @@ public class DataProvider : IDataProvider
 	#region 虚拟方法
 	protected virtual async ValueTask OnExecuteAsync(IDataAccessContext context, CancellationToken cancellation)
 	{
-		if(context is IDataMutateContext mutation && mutation.IsMultiple() &&
-			DataInput.TryGetAsync(mutation.Data, out var source, out var elementType))
+		if(context is IDataMutateContext mutation && mutation.IsMultiple())
 		{
-			await foreach(var batch in DataInput.BatchAsync(source, elementType, cancellation).ConfigureAwait(false))
+			var data = mutation.Data;
+
+			try
 			{
-				mutation.Data = batch;
-				await this.ExecuteStatementsAsync(context, cancellation);
+				await foreach(var batch in GetBatchesAsync(data, cancellation).ConfigureAwait(false))
+				{
+					mutation.Data = batch;
+					await this.ExecuteStatementsAsync(context, cancellation);
+				}
+			}
+			finally
+			{
+				mutation.Data = data;
 			}
 		}
 		else
@@ -228,6 +238,28 @@ public class DataProvider : IDataProvider
 	#endregion
 
 	#region 私有方法
+	private static async IAsyncEnumerable<IList> GetBatchesAsync(object data, [EnumeratorCancellation] CancellationToken cancellation)
+	{
+		const int CAPACITY = 256;
+
+		var batch = Utility.CreateList(data);
+
+		await foreach(var item in Utility.EnumerateAsync(data).WithCancellation(cancellation).ConfigureAwait(false))
+		{
+			cancellation.ThrowIfCancellationRequested();
+
+			batch.Add(item);
+			if(batch.Count < CAPACITY)
+				continue;
+
+			yield return batch;
+			batch = Utility.CreateList(batch);
+		}
+
+		if(batch.Count > 0)
+			yield return batch;
+	}
+
 	private async ValueTask ExecuteStatementsAsync(IDataAccessContext context, CancellationToken cancellation)
 	{
 		//根据上下文生成对应执行语句集

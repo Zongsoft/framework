@@ -64,7 +64,19 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 		try
 		{
-			return await this.MutateAsync(context, statement, cancellation);
+			if(statement is not IBatchStatement batchStatement)
+				return await this.MutateAsync(context, statement, cancellation);
+
+			var continued = false;
+
+			foreach(var batch in StatementBatch.Split(batchStatement, context.Data))
+			{
+				cancellation.ThrowIfCancellationRequested();
+				context.Data = batch;
+				continued |= await this.MutateAsync(context, statement, cancellation);
+			}
+
+			return continued;
 		}
 		finally
 		{
