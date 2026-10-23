@@ -2,7 +2,6 @@
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
 		<Version>7.10.0</Version>
-		<PackageReleaseNotes>Requires Zongsoft.Core 7.71.0, Zongsoft.Web 7.20.0 and Zongsoft.Security 7.11.0. User filtering privileges use user identifiers for both reads and writes.</PackageReleaseNotes>
 		<Product>Zongsoft Security Web Library</Product>
 		<Description>This is a web class library about security development.</Description>
 		<RootNamespace>Zongsoft.Security</RootNamespace>
@@ -11,6 +10,7 @@
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/Zongsoft.Security/api</RepositoryUrl>
+		<PackageReleaseNotes></PackageReleaseNotes>
 	</PropertyGroup>
 
 	<ItemGroup>
