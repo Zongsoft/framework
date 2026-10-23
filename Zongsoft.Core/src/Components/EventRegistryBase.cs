@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -30,19 +30,46 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Reflection;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace Zongsoft.Components;
 
 public class EventRegistryBase : IFilterable<EventContext>, IEnumerable<EventDescriptor>
 {
+	#region 静态字段
+	private static readonly ConcurrentDictionary<Type, FieldInfo[]> _fields = new();
+	#endregion
+
+	#region 成员字段
+	private readonly EventRegistryBase _registry;
+	#endregion
+
 	#region 构造函数
+	/// <summary>初始化具有指定名称的事件注册表实例。</summary>
+	/// <param name="name">事件注册表名称；如果为 <see langword="null"/>，则使用空字符串。</param>
 	protected EventRegistryBase(string name)
 	{
 		this.Name = name ?? string.Empty;
 		this.Events = new EventDescriptorCollection(this);
 		this.Filters = new List<IFilter<EventContext>>();
+		this.Initialize();
+	}
+
+	/// <summary>初始化扩展指定事件注册表的实例。</summary>
+	/// <param name="registry">被扩展的事件注册表，扩展实例共享其事件及过滤器集合，并通过根注册表发布事件。</param>
+	/// <exception cref="ArgumentNullException">指定的 <paramref name="registry"/> 参数为空。</exception>
+	protected EventRegistryBase(EventRegistryBase registry)
+	{
+		ArgumentNullException.ThrowIfNull(registry);
+
+		_registry = registry._registry ?? registry;
+		this.Name = _registry.Name;
+		this.Events = _registry.Events;
+		this.Filters = _registry.Filters;
+		this.Initialize();
 	}
 	#endregion
 
@@ -70,12 +97,22 @@ public class EventRegistryBase : IFilterable<EventContext>, IEnumerable<EventDes
 	#endregion
 
 	#region 声明事件
-	protected void Event<TArgument>(EventDescriptor<TArgument> descriptor) => this.Events.Add(descriptor ?? throw new ArgumentNullException(nameof(descriptor)));
+	protected void Event<TArgument>(EventDescriptor<TArgument> descriptor) => this.Event((EventDescriptor)descriptor);
 	protected EventDescriptor Event<TArgument>(string name, string title = null, string description = null)
 	{
 		var descriptor = new EventDescriptor<TArgument>(name, title, description);
-		this.Events.Add(descriptor);
+		this.Event(descriptor);
 		return descriptor;
+	}
+
+	private void Event(EventDescriptor descriptor)
+	{
+		ArgumentNullException.ThrowIfNull(descriptor);
+
+		if(this.Events.TryGetValue(descriptor.Name, out var existing) && ReferenceEquals(existing, descriptor))
+			return;
+
+		this.Events.Add(descriptor);
 	}
 	#endregion
 
@@ -109,6 +146,9 @@ public class EventRegistryBase : IFilterable<EventContext>, IEnumerable<EventDes
 	protected ValueTask<bool> RaiseAsync<TArgument>(string name, TArgument argument, CancellationToken cancellation = default) => this.RaiseAsync(name, argument, null, cancellation);
 	protected async ValueTask<bool> RaiseAsync<TArgument>(string name, TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default)
 	{
+		if(_registry != null)
+			return await _registry.RaiseAsync(name, argument, parameters, cancellation);
+
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
 
@@ -155,6 +195,33 @@ public class EventRegistryBase : IFilterable<EventContext>, IEnumerable<EventDes
 
 	#region 内部方法
 	internal protected virtual EventContext<TArgument> GetContext<TArgument>(string name, TArgument argument, Collections.Parameters parameters) => new(this, name, argument, parameters);
+	#endregion
+
+	#region 私有方法
+	private void Initialize()
+	{
+		foreach(var field in _fields.GetOrAdd(this.GetType(), GetFields))
+			this.Event((EventDescriptor)field.GetValue(null));
+
+		static FieldInfo[] GetFields(Type type)
+		{
+			var fields = new List<FieldInfo>();
+
+			foreach(var property in type.GetProperties(BindingFlags.Instance | BindingFlags.Public))
+			{
+				if(property.GetIndexParameters().Length > 0)
+					continue;
+
+				foreach(var field in property.PropertyType.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy))
+				{
+					if(field.IsInitOnly && field.FieldType.IsGenericType && field.FieldType.GetGenericTypeDefinition() == typeof(EventDescriptor<>))
+						fields.Add(field);
+				}
+			}
+
+			return fields.ToArray();
+		}
+	}
 	#endregion
 
 	#region 过滤方法

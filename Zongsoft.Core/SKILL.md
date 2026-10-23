@@ -190,3 +190,13 @@ ChannelBase 以按需创建的共享完成任务协调一次关闭和释放，�
 ListenerBase<T> 的 T 是处理器实参，不提供 Packetizer 或 IReceiver；传输解码由实际接收者负责。注入处理器不由监听器释放，无处理器时检查取消后返回成功。HandlerBase<T> 无参数入口传递 null，显式 Parameters 保留引用身份。两种 IPacketizer 接口均只提供 Pack 与 Unpack；Pack 不 Flush，Unpack 失败不消费、成功须推进。帧长度与解码资源释放属于具体传输层，由 Net 的 PacketizerBase<T> 提供 GetLength 与 Release，不扩充 Core 接口。回归入口为 ChannelLifecycleTest、WorkerLifecycleTest 和 ListenerDispatchTest。
 
 通信相关变更的验证应覆盖并发关闭／释放、重入、事件与扩展点抛错、独立取消等待、启动失败、停止重试及派生清理恰好一次。ChannelBase 的直接下游包括消息消费者、缓存订阅及 ZeroMQ／Redis 通道；IEventChannel 独立定义可重开的事件通道，FeatureProvider.Default 的 Providers 默认包含 Transaction.Features，并合并当前应用的 IFeatureProvider 服务；FeatureProvider 先按引用固定整个组合的来源快照，再捕获并去重特性，不依赖 Core 服务扫描；运行时条件组合 IFeature 与 Common.IPredication，TransactionContext.Feature.cs 中的私有特性在根事务的登记处理结束后、用户 Completed 通知前发布条件结果；EventDispatcher 传入事件上下文及其 Parameters，每次调度每项条件只求值一次，求值使用 CancellationToken.None，事件取消仅作用于结果等待，false 放弃事件而非跳过特性，未知运行时特性明确报错；EventDispatcher 接受单个 IFeatureProvider，默认使用 FeatureProvider.Default，显式指定时由该提供者负责全部来源；EventExchanger 内部固定投递执行器，EventDispatcher.Pipeline 仅停止时可设置，启动时固定会话管线，环境允许后才进入策略；管线在多次调用及启停间复用，由装配方管理资源；WorkerBase 包括事件交换器、事件调度器、消息守护器、诊断工作器、ZeroMQ、OPC 和 Hangfire 服务；ListenerBase 包括 MQTT 服务。修改 HandlerBase 时在全仓搜索派生类型和参数访问，核对允许 null 的调用链。先阅读下游就近约定，验证实际受影响项目，不为测试扩大生产可见性。
+
+## 数据字典序列化
+
+DataDictionaryConverterFactory 根据声明或实现的 IDataDictionary<T> 契约选择泛型转换器，将 JSON 对象还原为 IDataDictionary<T>；非泛型 IDataDictionary 保持原有转换器。两者均保持字段缺失与显式 null 的区别，不为缺失字段创建模型默认值。事件实参采用 IDataDictionary<T> 时，Events.Marshaler.Unmarshal 及事务延期快照使用同一转换规则。回归入口为 test/unit/Serialization/DataDictionarySerializationTest.cs。
+
+## 事件注册表扩展
+
+EventRegistryBase 接受已有注册表时，共享根注册表的 Name、Events 和 Filters；事件描述器由根集合登记归属，RaiseAsync 委托根注册表执行上下文创建、过滤器、处理器和交换流程。多层扩展直接归一到根注册表。领域扩展不重复加入应用模块集合；消费者和远程接收仍从所属模块的根注册表查找事件。事件集合在启动期装配，不新增并发写入保证。扩展实例上的上下文和过滤方法重写不参与根注册表的发布流程。回归入口为 test/unit/Components/EventRegistryExtensionTest.cs。
+
+两个构造函数均在事件和过滤器集合就绪后执行自动发现：读取具体注册表类型的公开实例非索引属性元数据，从属性声明类型（含继承成员）中读取 public static readonly EventDescriptor<T> 字段，通过 Event(...) 统一登记；不调用实例属性 getter、不读取事件组的静态属性、不扫描未暴露的嵌套类型。按注册表类型缓存字段元数据，每个实例仍向自己的集合登记。空描述符沿用 ArgumentNullException；同一实例重复登记忽略，不同实例的同名声明（不区分大小写）仍由集合抛出 ArgumentException，保持原有描述符和处理器。按名称创建描述符的重载也经过相同入口，因此再次创建同名描述符仍为冲突。回归入口为 test/unit/Components/EventRegistryDiscoveryTest.cs。
