@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+
+<plugin name="Zongsoft.Externals.Wechat.Gateway"
+        title="Zongsoft.Externals.Wechat.Gateway Plugin"
+        author="Zongsoft Studio(zongsoft@qq.com)"
+        copyright="Copyright(C) Zongsoft Studio. 2015-2025. All rights reserved."
+        description="Created Date: 2015-05-15 by Popeye Zhong">
+
+	<manifest>
+		<assemblies>
+			<assembly name="Zongsoft.Externals.Wechat.Gateway" />
+		</assemblies>
+
+		<dependencies>
+			<dependency name="Zongsoft.Externals.Wechat" />
+		</dependencies>
+	</manifest>
+
+	<extension path="/Workbench/Externals/Wechat/Fallback">
+		<object name="Handlers" value="{static:Zongsoft.Externals.Wechat.Gateway.FallbackExecutor.Instance, Zongsoft.Externals.Wechat.Gateway}" />
+	</extension>
+</plugin>

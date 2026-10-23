@@ -14,6 +14,7 @@
 
 	<extension path="/Workbench/Wechat">
 		<object name="Applets" value="{type:Zongsoft.Externals.Wechat.AppletManager, Zongsoft.Externals.Wechat}" />
+		<object name="Components" value="{type:Zongsoft.Externals.Wechat.Platforms.ComponentManager, Zongsoft.Externals.Wechat}" />
 		<object name="Channels" value="{type:Zongsoft.Externals.Wechat.ChannelManager, Zongsoft.Externals.Wechat}" />
 	</extension>
 </plugin>

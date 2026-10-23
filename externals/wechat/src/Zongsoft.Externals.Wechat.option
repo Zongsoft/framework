@@ -2,6 +2,9 @@
 
 <options>
 	<option path="/Externals/Wechat">
+		<!-- 第三方平台需单独配置组件，并由宿主注册 IComponentStore 可靠保存票据及授权事件。 -->
+		<!-- <components><component component.name="ComponentAppId" secret="ComponentSecret" token="CallbackToken" encodingAESKey="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" /></components> -->
+
 		<applets default="MyApplet_AppId">
 			<applet applet.name="MyApplet_AppId" secret="AppSecret" />
 		</applets>
@@ -13,13 +16,22 @@
 
 	<option path="/Externals/Wechat">
 		<caching name="wechat" />
-		<fallback url="http://api.automao.cn/externals/wechat/fallback/{0}/{1}" />
+		<fallback url="https://callbacks.example.invalid/Externals/Wechat/Fallback/{0}/{1}" />
 
-		<authorities default="automao.saas">
-			<authority authority.name="automao.saas" code="12345678" directory="./certificates/" secret="xxxxxx">
+		<authorities default="example.service">
+			<authority authority.name="example.service" code="12345678" apiV2Key="22222222222222222222222222222222" apiV3Key="33333333333333333333333333333333">
+				<signing serialNumber="0123456789ABCDEF" privateKeyFile="./certificates/merchant/private.pem" certificateFile="./certificates/merchant/certificate.pem" />
+
+				<verification mode="PublicKey" encryptionKeyId="PUB_KEY_ID_EXAMPLE">
+					<keys>
+						<key key.name="PUB_KEY_ID_EXAMPLE" file="./certificates/wechat/public.pem" />
+					</keys>
+				</verification>
+
 				<apps default="AppId_1">
 					<app app.name="AppId_1" type="applet" />
 					<app app.name="AppId_2" type="channel" />
+					<app app.name="MobileAppId" type="application" />
 				</apps>
 			</authority>
 		</authorities>

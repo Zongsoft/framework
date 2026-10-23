@@ -29,6 +29,8 @@
 
 using System;
 using System.IO;
+using System.Linq;
+using System.Text;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Net.Http.Headers;
@@ -43,8 +45,6 @@ namespace Zongsoft.Externals.Wechat.Paying;
 
 public static class Uploader
 {
-	private static readonly SHA256 _sha256 = SHA256.Create();
-
 	public static ValueTask<string> UploadAsync(this IAuthority authority, string filePath, CancellationToken cancellation = default)
 	{
 		if(authority == null)
@@ -53,64 +53,76 @@ public static class Uploader
 		if(string.IsNullOrEmpty(filePath))
 			throw new ArgumentNullException(nameof(filePath));
 
-		var extension = System.IO.Path.GetExtension(filePath);
-
-		switch(extension.ToLowerInvariant())
+		var extension = System.IO.Path.GetExtension(filePath).ToLowerInvariant();
+		var type = extension switch
 		{
-			case ".png":
-			case ".jpg":
-			case ".jpeg":
-				return UploadFileAsync(authority, filePath, "merchant/media/upload", cancellation);
-			case ".avi":
-			case ".wmv":
-			case ".mp4":
-			case ".mov":
-			case ".mkv":
-			case ".flv":
-			case ".f4v":
-			case ".m4v":
-			case ".rmvb":
-			case ".mpeg":
-				return UploadFileAsync(authority, filePath, "merchant/media/video_upload", cancellation);
-		}
-
-		throw new OperationException("InvalidFileFormat", string.Format(Properties.Resources.File_FormatUnsupported_Message, extension));
+			".png" => "image/png",
+			".jpg" or ".jpeg" => "image/jpeg",
+			".bmp" => "image/bmp",
+			".pdf" => "application/pdf",
+			".avi" => "video/x-msvideo",
+			".wmv" => "video/x-ms-wmv",
+			".mp4" or ".f4v" or ".m4v" => "video/mp4",
+			".mov" => "video/quicktime",
+			".mkv" => "video/x-matroska",
+			".flv" => "video/x-flv",
+			".rmvb" => "application/vnd.rn-realmedia-vbr",
+			".mpeg" => "video/mpeg",
+			_ => throw new OperationException("InvalidFileFormat", null),
+		};
+		var video = type.StartsWith("video/", StringComparison.Ordinal) || extension == ".rmvb";
+		return UploadFileAsync(authority, filePath, video ? "merchant/media/video_upload" : "merchant/media/upload", type, extension == ".pdf" ? 15 * 1024 * 1024 / 2 : 5 * 1024 * 1024, cancellation);
 	}
 
-	private static async ValueTask<string> UploadFileAsync(this IAuthority authority, string filePath, string url, CancellationToken cancellation = default)
+	private static async ValueTask<string> UploadFileAsync(IAuthority authority, string filePath, string url, string type, int limit, CancellationToken cancellation)
 	{
-		if(authority == null)
-			throw new ArgumentNullException(nameof(authority));
-
-		if(string.IsNullOrEmpty(filePath))
-			throw new ArgumentNullException(nameof(filePath));
+		var fileName = System.IO.Path.GetFileName(filePath);
+		if(string.IsNullOrWhiteSpace(fileName) || Encoding.UTF8.GetByteCount(fileName) > 128 || fileName.Any(character => char.IsControl(character) || character == '"'))
+			throw new ArgumentException(null, nameof(filePath));
 
 		byte[] data;
 
-		using var fileStream = FileSystem.File.Open(filePath, FileMode.Open, FileAccess.Read);
-
+		await using(var file = await FileSystem.File.OpenAsync(filePath, FileMode.Open, FileAccess.Read, cancellation))
 		{
-			using var stream = new MemoryStream();
-			await fileStream.CopyToAsync(stream, cancellation);
-			data = stream.ToArray();
+			if(file.CanSeek && (file.Length == 0 || file.Length > limit))
+				throw new OperationException("InvalidFileSize", null);
+
+			using var content = new MemoryStream();
+			var buffer = new byte[81920];
+			int count;
+
+			while((count = await file.ReadAsync(buffer, cancellation)) > 0)
+			{
+				if(content.Length + count > limit)
+					throw new OperationException("InvalidFileSize", null);
+
+				await content.WriteAsync(buffer.AsMemory(0, count), cancellation);
+			}
+
+			if(content.Length == 0)
+				throw new OperationException("InvalidFileSize", null);
+
+			data = content.ToArray();
 		}
 
-		var client = HttpClientFactory.GetHttpClient(authority.Certificate);
-		var fileName = System.IO.Path.GetFileName(filePath);
-
-		string boundary = Guid.NewGuid().ToString("N");
-		var form = new MultipartFormDataContent(boundary);
-
-		//注意：.NET默认会为boundary值加上双引号，这会导致微信服务器处理异常，故而必须手动指定一个不带双引号的boundary值
+		var client = HttpClientFactory.GetHttpClient(authority);
+		var boundary = Guid.NewGuid().ToString("N");
+		using var form = new MultipartFormDataContent(boundary);
 		form.Headers.ContentType = MediaTypeHeaderValue.Parse("multipart/form-data; boundary=" + boundary);
 
-		var digest = _sha256.ComputeHash(data);
-		var json = JsonContent.Create(new { filename = fileName, sha256 = System.Convert.ToHexString(digest) });
-		form.Add(json, "\"meta\""); //注意：必须加上双引号
-		form.Add(new ByteArrayContent(data), "\"file\"", "\"" + fileName + "\""); //注意：必须加上双引号
+		var digest = SHA256.HashData(data);
+		form.Add(JsonContent.Create(new { filename = fileName, sha256 = System.Convert.ToHexString(digest) }), "meta");
+		var contentFile = new ByteArrayContent(data);
+		contentFile.Headers.ContentType = new MediaTypeHeaderValue(type);
+		form.Add(contentFile, "file", fileName);
 
-		var response = await client.PostAsync(url, form, cancellation);
+		using var message = new HttpRequestMessage(HttpMethod.Post, url) { Content = form };
+		using var response = await client.SendAsync(message, cancellation);
 		var result = await response.GetResultAsync<UploaderResult>(cancellation);
+
+		if(string.IsNullOrWhiteSpace(result.Identifier))
+			throw new FormatException();
+
 		return result.Identifier;
 	}
 

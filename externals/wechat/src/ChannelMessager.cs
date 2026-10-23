@@ -50,8 +50,8 @@ public class ChannelMessager
 	#region 构造函数
 	public ChannelMessager(Account account)
 	{
-		if(account.IsEmpty)
-			throw new ArgumentNullException(nameof(account));
+		if(account.IsEmpty || account.Type != AccountType.Channel)
+			throw new ArgumentException(null, nameof(account));
 
 		this.Account = account;
 	}
@@ -64,14 +64,15 @@ public class ChannelMessager
 	#region 公共方法
 	public async ValueTask<IEnumerable<Template>> GetTemplatesAsync(CancellationToken cancellation = default)
 	{
-		var credential = await CredentialManager.GetCredentialAsync(this.Account, false, cancellation);
+		var credential = await CredentialManager.GetCredentialAsync(this.Account, 7, false, cancellation);
 
 		if(string.IsNullOrEmpty(credential))
 			return default;
 
-		var response = await CredentialManager.Http.GetAsync($"/cgi-bin/template/get_all_private_template?access_token={credential}", cancellation);
+		using var client = AccountHttpClient.Create();
+		using var response = await client.GetAsync($"/cgi-bin/template/get_all_private_template?access_token={Uri.EscapeDataString(credential)}", cancellation);
 		var result = await response.GetResultAsync<TemplateWrapper>(cancellation);
-		return result.Entries.Select(template => template.ToTemplate());
+		return result.Entries?.Select(template => template.ToTemplate()).ToArray() ?? [];
 	}
 
 	public ValueTask<string> SendAsync(string destination, string template, object data, CancellationToken cancellation) => this.SendAsync(destination, template, data, null, cancellation);
@@ -82,19 +83,22 @@ public class ChannelMessager
 		if(string.IsNullOrEmpty(template))
 			throw new ArgumentNullException(nameof(template));
 
-		var credential = await CredentialManager.GetCredentialAsync(this.Account, false, cancellation);
+		var credential = await CredentialManager.GetCredentialAsync(this.Account, 7, false, cancellation);
 
 		if(string.IsNullOrEmpty(credential))
 			return default;
 
+		ArgumentNullException.ThrowIfNull(data);
 		var parameter = new TemplateData(destination, template, data, url);
-		var response = await CredentialManager.Http.PostAsync(
-			$"/cgi-bin/message/template/send?access_token={credential}",
-			new StringContent(JsonSerializer.Serialize(parameter, Json.Options), System.Text.Encoding.UTF8, "application/json"),
-			cancellation);
-
+		using var client = AccountHttpClient.Create();
+		using var content = JsonContent.Create(parameter, options: Json.Options);
+		using var response = await client.PostAsync($"/cgi-bin/message/template/send?access_token={Uri.EscapeDataString(credential)}", content, cancellation);
 		var result = await response.GetResultAsync<MessageResult>(cancellation);
-		return result.MessageId.ToString();
+
+		if(result.MessageId <= 0)
+			throw new FormatException();
+
+		return result.MessageId.ToString(System.Globalization.CultureInfo.InvariantCulture);
 	}
 	#endregion
 
@@ -174,7 +178,6 @@ public class ChannelMessager
 		{
 			this.Destination = destination;
 			this.Template = template;
-			this.Color = null;
 			this.Data = GetTemplateDictionary(data);
 			this.Url = url;
 		}
@@ -186,10 +189,6 @@ public class ChannelMessager
 		[JsonPropertyName("template_id")]
 		[SerializationMember("template_id")]
 		public string Template { get; }
-
-		[JsonPropertyName("topcolor")]
-		[SerializationMember("topcolor")]
-		public string Color { get; set; }
 
 		public string Url { get; set; }
 		public IDictionary<string, TemplateDataEntry> Data { get; }
@@ -212,7 +211,7 @@ public class ChannelMessager
 			if(data is IEnumerable<KeyValuePair<string, object>> objectDictionary)
 			{
 				foreach(var entry in objectDictionary)
-					result.Add(entry.Key, new TemplateDataEntry(entry.Value?.ToString()));
+					result.Add(entry.Key, new TemplateDataEntry(entry.Value));
 
 				return result;
 			}
@@ -220,18 +219,18 @@ public class ChannelMessager
 			if(data is System.Collections.IDictionary dictionary)
 			{
 				foreach(System.Collections.DictionaryEntry entry in dictionary)
-					result.Add(entry.Key.ToString(), new TemplateDataEntry(entry.Value?.ToString()));
+					result.Add(entry.Key.ToString(), new TemplateDataEntry(entry.Value));
 
 				return result;
 			}
 
 			var properties = data.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
 			foreach(var property in properties)
-				result.Add(property.Name, new TemplateDataEntry(Reflector.GetValue(property, ref data)?.ToString()));
+				result.Add(property.Name, new TemplateDataEntry(Reflector.GetValue(property, ref data)));
 
 			var fields = data.GetType().GetFields(BindingFlags.Public | BindingFlags.Instance);
 			foreach(var field in fields)
-				result.Add(field.Name, new TemplateDataEntry(Reflector.GetValue(field, ref data)?.ToString()));
+				result.Add(field.Name, new TemplateDataEntry(Reflector.GetValue(field, ref data)));
 
 			return result;
 		}
@@ -239,14 +238,19 @@ public class ChannelMessager
 
 	private readonly struct TemplateDataEntry
 	{
-		public TemplateDataEntry(string value, string color = null)
+		public TemplateDataEntry(object value)
 		{
-			this.Value = value;
-			this.Color = string.IsNullOrEmpty(color) ? "#173177" : color;
+			var element = JsonSerializer.SerializeToElement(value, Json.Options);
+			if(element.ValueKind == JsonValueKind.Object && element.TryGetProperty("value", out var nested))
+				element = nested;
+
+			if(element.ValueKind is JsonValueKind.Object or JsonValueKind.Array or JsonValueKind.Undefined)
+				throw new ArgumentException(null, nameof(value));
+
+			this.Value = element.Clone();
 		}
 
-		public string Value { get; }
-		public string Color { get; }
+		public JsonElement Value { get; }
 	}
 	#endregion
 }

@@ -39,4 +39,7 @@ public enum AccountType
 
 	/// <summary>公众号</summary>
 	Channel,
+
+	/// <summary>开放平台移动应用，仅作为支付应用身份。</summary>
+	Application,
 }

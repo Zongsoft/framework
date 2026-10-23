@@ -49,10 +49,12 @@ public class AccountCollection : KeyedCollection<string, Account>
 
 			foreach(var option in options)
 			{
-				if(option.Type == AccountType.Applet)
-					this.Add(applets.TryGetValue(option.Name, out var applet) ? Account.Applet(applet.Name, applet.Secret) : throw new WechatException(string.Format(Properties.Resources.Wechat_AppletNotFound_Message, option.Name)));
+				if(option.Type == AccountType.Application)
+					this.Add(Account.Application(option.Name));
+				else if(option.Type == AccountType.Applet)
+					this.Add(applets != null && applets.TryGetValue(option.Name, out var applet) ? Account.Applet(applet.Name, applet.Secret) : throw new WechatException(string.Format(Properties.Resources.Wechat_AppletNotFound_Message, option.Name)));
 				else
-					this.Add(channels.TryGetValue(option.Name, out var channel) ? Account.Channel(channel.Name, channel.Secret) : throw new WechatException(string.Format(Properties.Resources.Wechat_ChannelNotFound_Message, option.Name)));
+					this.Add(channels != null && channels.TryGetValue(option.Name, out var channel) ? Account.Channel(channel.Name, channel.Secret) : throw new WechatException(string.Format(Properties.Resources.Wechat_ChannelNotFound_Message, option.Name)));
 			}
 
 			this.Default = options.Default != null && this.TryGetValue(options.Default, out var account) ? account : (this.Count > 0 ? this[0] : default);

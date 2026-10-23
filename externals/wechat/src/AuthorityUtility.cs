@@ -29,114 +29,88 @@
 
 using System;
 using System.IO;
-using System.Collections.Generic;
-
-using Zongsoft.Security;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 
 namespace Zongsoft.Externals.Wechat;
 
 public static class AuthorityUtility
 {
-	#region 静态字段
-	private static readonly IDictionary<string, IAuthority> _authorities = new Dictionary<string, IAuthority>(StringComparer.OrdinalIgnoreCase);
-	#endregion
+	#region 获取商户
+	public static async ValueTask<IAuthority> GetAuthorityAsync(string name = null, CancellationToken cancellation = default) =>
+		await FindAuthorityAsync(name, cancellation) ?? throw new WechatException(Properties.Resources.Wechat_DefaultAuthorityRequired_Message);
 
-	#region 获取机构
-	public static IAuthority GetAuthority(string name = null)
+	public static ValueTask<IAuthority> FindAuthorityAsync(string name = null, CancellationToken cancellation = default)
 	{
-		if(name == null)
-			name = string.Empty;
+		cancellation.ThrowIfCancellationRequested();
+		var options = string.IsNullOrEmpty(name) ?
+			Utility.GetOptions<Options.AuthorityOptionsCollection>("/Externals/Wechat/Authorities")?.GetDefault() :
+			Utility.GetOptions<Options.AuthorityOptions>($"/Externals/Wechat/Authorities/{name}");
 
-		if(_authorities.TryGetValue(name, out var authority) && authority != null)
-			return authority;
-
-		lock(_authorities)
-		{
-			if(_authorities.TryGetValue(name, out authority))
-				return authority;
-
-			authority = CreateAuthority(name);
-
-			if(authority == null)
-				return null;
-
-			if(string.IsNullOrEmpty(name))
-				_authorities.TryAdd(string.Empty, authority);
-
-			return _authorities.TryAdd(authority.Name, authority) ? authority : _authorities[authority.Name];
-		}
-	}
-
-	private static IAuthority CreateAuthority(string name)
-	{
-		Options.AuthorityOptions options;
-
-		if(string.IsNullOrEmpty(name))
-		{
-			options = Utility.GetOptions<Options.AuthorityOptionsCollection>("/Externals/Wechat/Authorities")?.GetDefault() ??
-				throw new WechatException(Properties.Resources.Wechat_DefaultAuthorityRequired_Message);
-		}
-		else
-		{
-			options = Utility.GetOptions<Options.AuthorityOptions>($"/Externals/Wechat/Authorities/{name}") ??
-				throw new WechatException(string.Format(Properties.Resources.Wechat_AuthorityConfigurationRequired_Message, name));
-		}
-
-		if(string.IsNullOrEmpty(options.Code))
-			throw new WechatException(string.Format(Properties.Resources.Wechat_AuthorityConfigurationInvalid_Message, name));
-
-		var certificate = GetCertificate(options.Directory, options.Code);
-		if(certificate == null)
-			throw new WechatException(string.Format(Properties.Resources.Wechat_CertificateNotFound_Message, options.Code, options.Name));
-
-		return new Authority(options.Name, options.Code, options.Secret, certificate, new AccountCollection(options.Apps));
+		return options == null ? ValueTask.FromResult<IAuthority>(null) : CreateAsync(options, cancellation);
 	}
 	#endregion
 
-	#region 获取证书
-	private static ICertificate GetCertificate(DirectoryInfo directory, string authorityCode)
+	#region 加载快照
+	public static async ValueTask<IAuthority> CreateAsync(Options.AuthorityOptions options, CancellationToken cancellation = default)
 	{
-		if(string.IsNullOrEmpty(authorityCode))
-			throw new ArgumentNullException(nameof(authorityCode));
+		ArgumentNullException.ThrowIfNull(options);
+		cancellation.ThrowIfCancellationRequested();
 
-		if(directory == null || !directory.Exists)
-			return null;
+		//在异步读取前取得本次配置值；发布后不保留可变配置对象或打开的流。
+		var name = options.Name;
+		var code = options.Code;
+		var apiV2Key = string.IsNullOrEmpty(options.ApiV2Key) ? null : options.ApiV2Key;
+		var apiV3Key = string.IsNullOrEmpty(options.ApiV3Key) ? null : options.ApiV3Key;
+		var serial = options.Signing?.SerialNumber;
+		var privateKeyFile = options.Signing?.PrivateKeyFile;
+		var certificateFile = options.Signing?.CertificateFile;
+		var mode = options.Verification?.Mode;
+		var encryptionKeyId = options.Verification?.EncryptionKeyId;
+		var files = options.Verification?.Keys.Select(key => (key.Name, key.File)).ToArray();
+		var accounts = new AccountCollection(options.Apps);
+		Authority.SigningCredential signing = null;
+		Authority.Verifier verification = null;
 
-		var directories = directory.GetDirectories(authorityCode);
-
-		if(directories != null && directories.Length > 0)
-			directory = directories[0];
-
-		var files = directory.GetFiles(authorityCode + "*");
-
-		if(files == null || files.Length == 0)
-			files = directory.GetFiles();
-
-		FileInfo file = null;
-
-		for(int i = 0; i < files.Length; i++)
+		if(options.Signing != null)
 		{
-			if(file == null)
-				file = files[i];
-			else if(files[i].CreationTimeUtc > file.CreationTimeUtc)
-				file = files[i];
+			var pem = await ReadAsync(privateKeyFile, cancellation);
+			var certificate = string.IsNullOrEmpty(certificateFile) ? null : await ReadAsync(certificateFile, cancellation);
+			signing = new(code, serial, pem, certificate: certificate);
 		}
 
-		return ResolveFile(file, authorityCode);
+		if(mode.HasValue)
+		{
+			var keys = new Authority.VerificationKey[files.Length];
+			for(int i = 0; i < files.Length; i++)
+			{
+				var pem = await ReadAsync(files[i].File, cancellation);
+				keys[i] = mode == VerificationMode.PublicKey ?
+					Authority.VerificationKey.FromPublicKey(files[i].Name, pem) : Authority.VerificationKey.FromCertificate(pem);
+
+				if(!string.Equals(files[i].Name, keys[i].Identifier, StringComparison.Ordinal))
+					throw new CryptographicException();
+			}
+
+			verification = new(mode.Value, keys, encryptionKeyId);
+		}
+
+		cancellation.ThrowIfCancellationRequested();
+		return new Authority(name, code, apiV2Key, apiV3Key, signing, verification, accounts);
 	}
+	#endregion
 
-	private static ICertificate ResolveFile(FileInfo file, string authorityCode)
+	#region 私有方法
+	private static async ValueTask<string> ReadAsync(string path, CancellationToken cancellation)
 	{
-		if(file == null || !file.Exists)
-			return null;
-
-		return Certificate.FromPem(
-			Path.GetFileNameWithoutExtension(file.Name),
-			file.OpenRead(),
-			default,
-			new Certificate.CertificateIssuer(authorityCode),
-			new Certificate.CertificateSubject(authorityCode)
-		);
+		ArgumentException.ThrowIfNullOrWhiteSpace(path);
+		await using var stream = await Zongsoft.IO.FileSystem.File.OpenAsync(path, FileMode.Open, FileAccess.Read, FileShare.Read, cancellation);
+		using var reader = new StreamReader(stream, Encoding.UTF8, true, 1024, true);
+		return await reader.ReadToEndAsync(cancellation);
 	}
 	#endregion
 }

@@ -41,26 +41,37 @@ public readonly struct Account : IEquatable<Account>
 		this.Secret = secret;
 		this.Description = description;
 	}
+
+	private Account(Platforms.Component component, AccountType type, string code) : this(type, code)
+	{
+		this.Component = component ?? throw new ArgumentNullException(nameof(component));
+	}
 	#endregion
 
 	#region 公共属性
 	public AccountType Type { get; }
 	public string Code { get; }
+	[System.Text.Json.Serialization.JsonIgnore]
+	[Serialization.SerializationMember(Ignored = true)]
 	public string Secret { get; }
 	public string Description { get; }
+	public string ComponentId => this.Component?.AppId;
+	internal Platforms.Component Component { get; }
 
 	public bool IsEmpty { get => string.IsNullOrEmpty(this.Code); }
 	#endregion
 
 	#region 重写方法
-	public bool Equals(Account other) => this.Type == other.Type && string.Equals(this.Code, other.Code);
+	public bool Equals(Account other) => this.Type == other.Type && string.Equals(this.Code, other.Code) && string.Equals(this.ComponentId, other.ComponentId);
 	public override bool Equals(object obj) => obj is Account other && this.Equals(other);
-	public override int GetHashCode() => HashCode.Combine(this.Type, this.Code);
-	public override string ToString() => string.IsNullOrEmpty(this.Secret) ? $"{this.Type}:{this.Code}" : $"{this.Type}:{this.Code}({this.Secret})";
+	public override int GetHashCode() => HashCode.Combine(this.Type, this.Code, this.ComponentId);
+	public override string ToString() => $"{this.Type}:{this.Code}";
 	#endregion
 
 	#region 构建方法
+	internal static Account Authorizer(Platforms.Component component, AccountType type, string code) => new(component, type, code);
 	public static Account Applet(string code, string secret = null, string description = null) => new(AccountType.Applet, code, secret, description);
+	public static Account Application(string code, string description = null) => new(AccountType.Application, code, null, description);
 	public static Account Channel(string code, string secret = null, string description = null) => new(AccountType.Channel, code, secret, description);
 	#endregion
 

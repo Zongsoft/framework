@@ -29,45 +29,19 @@
 
 using System;
 
-using Zongsoft.Security;
-
 namespace Zongsoft.Externals.Wechat;
 
-/// <summary>表示机构描述符的类。</summary>
-public class AuthorityDescriptor : IEquatable<AuthorityDescriptor>
+/// <summary>表示商户配置快照的描述符。</summary>
+public class AuthorityDescriptor : Authority, IEquatable<AuthorityDescriptor>
 {
-	#region 构造函数
-	public AuthorityDescriptor(string name, string code, string secret, ICertificate certificate)
-	{
-		if(string.IsNullOrEmpty(name))
-			throw new ArgumentNullException(nameof(name));
+	public AuthorityDescriptor(string name, string code, string apiV2Key = null, string apiV3Key = null, SigningCredential signing = null, Verifier verification = null) :
+		base(name, code, apiV2Key, apiV3Key, signing, verification)
+	{ }
 
-		if(string.IsNullOrEmpty(code))
-			throw new ArgumentNullException(nameof(code));
-
-		this.Name = name;
-		this.Code = code;
-		this.Secret = secret;
-		this.Certificate = certificate;
-	}
-	#endregion
-
-	#region 公共属性
-	public string Name { get; }
-	public string Code { get; }
-	public string Secret { get; }
-	public ICertificate Certificate { get; }
-	#endregion
-
-	#region 重写方法
-	public bool Equals(AuthorityDescriptor other) => string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && string.Equals(this.Code, other.Code);
+	public bool Equals(AuthorityDescriptor other) => base.Equals(other);
 	public override bool Equals(object obj) => obj is AuthorityDescriptor other && this.Equals(other);
-	public override int GetHashCode() => HashCode.Combine(this.Name.ToUpperInvariant(), this.Code);
+	public override int GetHashCode() => base.GetHashCode();
 	public override string ToString() => $"{this.Name}#{this.Code}";
-	#endregion
-
-	#region 符号重写
-	public static bool operator ==(AuthorityDescriptor left, AuthorityDescriptor right) => left.Equals(right);
-	public static bool operator !=(AuthorityDescriptor left, AuthorityDescriptor right) => !(left == right);
-	#endregion
+	public static bool operator ==(AuthorityDescriptor left, AuthorityDescriptor right) => Equals(left, right);
+	public static bool operator !=(AuthorityDescriptor left, AuthorityDescriptor right) => !Equals(left, right);
 }

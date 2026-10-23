@@ -28,8 +28,11 @@
  */
 
 using System;
+using System.IO;
 using System.Xml;
+using System.Text;
 using System.Net.Http;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -38,78 +41,80 @@ namespace Zongsoft.Externals.Wechat;
 
 internal static class XmlUtility
 {
-	#region 私有变量
-	private static readonly XmlReaderSettings _settings = new()
-	{
-		IgnoreComments = true,
-		IgnoreWhitespace = true,
-		IgnoreProcessingInstructions = true,
-		ValidationType = ValidationType.None,
-	};
-	#endregion
+	private const int MAXIMUM_LENGTH = 2 * 1024 * 1024;
 
-	#region 公共方法
 	public static StringContent CreateXmlContent(this IEnumerable<KeyValuePair<string, object>> data)
 	{
-		var text = new System.Text.StringBuilder();
-		text.AppendLine("<xml>");
+		ArgumentNullException.ThrowIfNull(data);
+		var text = new StringBuilder();
 
-		foreach(var entry in data)
+		using(var writer = XmlWriter.Create(text, new XmlWriterSettings { OmitXmlDeclaration = true }))
 		{
-			if(entry.Value == null)
-				continue;
+			writer.WriteStartElement("xml");
+			foreach(var entry in data)
+			{
+				var value = Convert.ToString(entry.Value, CultureInfo.InvariantCulture);
+				if(!string.IsNullOrEmpty(value))
+					writer.WriteElementString(entry.Key, value);
+			}
 
-			text.AppendLine($"<{entry.Key}>{entry.Value}</{entry.Key}>");
+			writer.WriteEndElement();
 		}
 
-		text.AppendLine("</xml>");
-		return new StringContent(text.ToString(), System.Text.Encoding.UTF8, "application/xml");
-	}
-
-	public static IDictionary<string, string> GetXmlContent(this HttpResponseMessage response, CancellationToken cancellation = default)
-	{
-		if(response == null || response.Content.Headers.ContentLength <= 0)
-			return null;
-
-		return Resolve(response.Content.ReadAsStream(cancellation));
+		return new StringContent(text.ToString(), Encoding.UTF8, "application/xml");
 	}
 
 	public static async ValueTask<IDictionary<string, string>> GetXmlContentAsync(this HttpResponseMessage response, CancellationToken cancellation = default)
 	{
-		if(response == null || response.Content.Headers.ContentLength <= 0)
-			return null;
+		ArgumentNullException.ThrowIfNull(response);
+		if(response.Content.Headers.ContentLength > MAXIMUM_LENGTH)
+			throw new FormatException();
 
-		return Resolve(await response.Content.ReadAsStreamAsync(cancellation));
-	}
-	#endregion
+		await using var source = await response.Content.ReadAsStreamAsync(cancellation);
+		using var buffer = new MemoryStream();
+		var bytes = new byte[8192];
+		int count;
 
-	#region 私有方法
-	private static IDictionary<string, string> Resolve(System.IO.Stream stream, XmlReaderSettings settings = null)
-	{
-		if(stream == null || !stream.CanRead)
-			return null;
-
-		using var reader = XmlReader.Create(stream, settings ?? _settings);
-
-		if(reader.Read())
+		while((count = await source.ReadAsync(bytes, cancellation)) != 0)
 		{
-			var result = new Dictionary<string, string>();
+			if(buffer.Length + count > MAXIMUM_LENGTH)
+				throw new FormatException();
 
-			while(reader.Read())
-			{
-				if(reader.NodeType == XmlNodeType.Element && !reader.IsEmptyElement)
-				{
-					var key = reader.LocalName;
-
-					if(reader.Read() && (reader.NodeType == XmlNodeType.Text || reader.NodeType == XmlNodeType.CDATA))
-						result[key] = reader.Value;
-				}
-			}
-
-			return result;
+			buffer.Write(bytes, 0, count);
 		}
 
-		return null;
+		cancellation.ThrowIfCancellationRequested();
+		buffer.Position = 0;
+		using var reader = XmlReader.Create(buffer, new XmlReaderSettings
+		{
+			DtdProcessing = DtdProcessing.Prohibit,
+			XmlResolver = null,
+			MaxCharactersInDocument = MAXIMUM_LENGTH,
+			IgnoreWhitespace = true,
+		});
+
+		if(reader.MoveToContent() != XmlNodeType.Element || reader.Name != "xml" || reader.NamespaceURI.Length != 0 || reader.HasAttributes || reader.IsEmptyElement)
+			throw new FormatException();
+
+		var result = new Dictionary<string, string>(StringComparer.Ordinal);
+		reader.ReadStartElement("xml");
+
+		while(reader.NodeType == XmlNodeType.Element)
+		{
+			if(reader.NamespaceURI.Length != 0 || reader.HasAttributes || result.ContainsKey(reader.Name))
+				throw new FormatException();
+
+			var key = reader.Name;
+			result.Add(key, reader.ReadElementContentAsString());
+		}
+
+		if(reader.NodeType != XmlNodeType.EndElement || reader.Name != "xml")
+			throw new FormatException();
+
+		reader.ReadEndElement();
+		if(!reader.EOF)
+			throw new FormatException();
+
+		return result;
 	}
-	#endregion
 }

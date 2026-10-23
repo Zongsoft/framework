@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -42,22 +42,24 @@ namespace Zongsoft.Externals.Wechat.Paying;
 
 public partial class PaymentManager
 {
-	public abstract class PaymentService
+	public abstract partial class PaymentService
 	{
 		#region 私有变量
 		private readonly IAuthority _authority;
 		#endregion
 
 		#region 构造函数
-		protected PaymentService(IAuthority authority)
+		protected PaymentService(IAuthority authority, IAuthority subsidiary = null)
 		{
 			_authority = authority ?? throw new ArgumentNullException(nameof(authority));
+			this.Tickets = new TicketService(this, subsidiary);
 		}
 		#endregion
 
 		#region 公共属性
 		public IAuthority Authority { get => _authority; }
 		public RequestBuilder Request { get; protected set; }
+		public TicketService Tickets { get; }
 		#endregion
 
 		#region 保护属性
@@ -65,41 +67,15 @@ public partial class PaymentManager
 		#endregion
 
 		#region 公共方法
-		public byte[] Signature(string appId, string identifier, out string applet, out string nonce, out long timestamp)
-		{
-			if(_authority.Certificate == null)
-				throw new WechatException(string.Format(Properties.Resources.Wechat_CredentialRequired_Message, _authority.Code));
-
-			nonce = Guid.NewGuid().ToString("N");
-			timestamp = DateTimeOffset.Now.ToUnixTimeSeconds();
-
-			if(string.IsNullOrEmpty(appId))
-			{
-				appId = _authority.Accounts.Default.Code;
-
-				if(string.IsNullOrEmpty(appId))
-					throw new WechatException(string.Format(Properties.Resources.Wechat_DefaultAccountRequired_Message, _authority.Code));
-			}
-			else if(_authority.Accounts.TryGetValue(appId, out var account))
-				appId = account.Code;
-			else
-				throw new WechatException(string.Format(Properties.Resources.Wechat_AppIdUndefined_Message, appId, _authority.Code));
-
-			applet = appId;
-
-			var plaintext = $"{appId}\n{timestamp}\n{nonce}\nprepay_id={identifier}\n";
-			return _authority.Certificate.Signaturer.Signature(System.Text.Encoding.UTF8.GetBytes(plaintext));
-		}
-
 		public virtual ValueTask CancelAsync(string voucher, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(voucher))
 				throw new ArgumentNullException(nameof(voucher));
 
-			return this.Client.PostAsync(this.GetUrl($"transactions/out-trade-no/{voucher}/close"), this.GetCancellation(), cancellation);
+			return this.Client.PostAsync(this.GetUrl($"transactions/out-trade-no/{Uri.EscapeDataString(voucher)}/close"), this.GetCancellation(), cancellation);
 		}
 
-		public abstract ValueTask<PaymentOrder> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default);
+		public abstract ValueTask<PaymentResult> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default);
 		public abstract ValueTask<PaymentOrder> GetAsync(string voucher, CancellationToken cancellation = default);
 		public abstract ValueTask<PaymentOrder> GetCompletedAsync(string key, CancellationToken cancellation = default);
 
@@ -119,24 +95,25 @@ public partial class PaymentManager
 
 			var request = this.GetAuthenticationOnlineRequest(applet, data, device, store, title, extra);
 
-			if(!request.ContainsKey("sign"))
-				request.TryAdd("sign", Utility.Postmark(request, _authority.Secret));
+			var result = await HttpClientFactory.Xml.SendAsync(_authority, "https://payapp.weixin.qq.com/face/get_wxpayface_authinfo", request, false, cancellation);
+			TicketService.ValidateIdentity(result, request, true);
+			var seconds = 0;
 
-			var response = await HttpClientFactory.Xml.Client.PostAsync(@"https://payapp.weixin.qq.com/face/get_wxpayface_authinfo", request.CreateXmlContent(), cancellation);
-			var result = await response.GetXmlContentAsync(cancellation);
+			if(result.TryGetValue("expires_in", out var expires) && (!int.TryParse(expires, System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out seconds) || seconds <= 0))
+				throw new FormatException();
 
-			if(result != null && result.TryGetValue("authinfo", out var value) && value != null)
+			if(result.TryGetValue("authinfo", out var value) && !string.IsNullOrWhiteSpace(value) && value.Length <= 4096)
 				return new
 				{
 					Value = value,
 					AppId = result.TryGetValue("appid", out var appId) ? (string)appId : string.Empty,
-					MerchantId = result.TryGetValue("mch_id", out var merchantId) ? (string)merchantId : string.Empty,
+					MerchantId = (string)request["mch_id"],
 					SubAppId = result.TryGetValue("sub_appid", out var subAppId) ? (string)subAppId : string.Empty,
 					SubMerchantId = result.TryGetValue("sub_mch_id", out var subMerchantId) ? (string)subMerchantId : string.Empty,
-					Expires = result.TryGetValue("expires_in", out var expires) && int.TryParse(expires, out var seconds) ? seconds : 0,
+					Expires = seconds,
 				};
 
-			throw new OperationException(result.TryGetValue("return_code", out var failureCode) ? failureCode : "Unknown", result.TryGetValue("return_msg", out var message) ? message : null);
+			throw new FormatException();
 		}
 
 		/// <summary>初始化人脸识别设备的离线刷脸验证请求。</summary>
@@ -148,72 +125,78 @@ public partial class PaymentManager
 		/// <returns>返回人脸识别验证凭证。</returns>
 		public async ValueTask<object> AuthenticateOfflineAsync(string applet, string data, string device, string organization, CancellationToken cancellation = default)
 		{
-			if(string.IsNullOrEmpty(data))
-				throw new ArgumentNullException(nameof(data), Properties.Resources.Recognition_DataRequired_Message);
-
 			var request = this.GetAuthenticationOfflineRequest(applet, data, device, organization);
-			var response = await this.Client.PostAsJsonAsync(@"https://api.mch.weixin.qq.com/v3/offlineface/authinfo", request, cancellation);
-			var result = await response.GetResultAsync<AuthenticateOfflineResult>(cancellation);
-			return this.GetAuthenticationOfflineResult(organization, result.Value);
+			var result = await this.Client.PostAsync<IDictionary<string, object>, AuthenticateOfflineResult>("offlineface/authinfo", request, cancellation);
+			if(string.IsNullOrWhiteSpace(result.Value) || result.Value.Length > 4096)
+				throw new FormatException();
+
+			return new
+			{
+				Value = result.Value,
+				OrganizationId = organization,
+				AppId = (string)request["sp_appid"],
+				MerchantId = _authority.Code,
+				SubAppId = request.TryGetValue("sub_appid", out var subAppId) ? (string)subAppId : null,
+				SubMerchantId = (string)request["sub_mchid"],
+			};
 		}
 		#endregion
 
 		#region 保护方法
-		protected ValueTask<T> GetAsync<T>(string voucher, string arguments, CancellationToken cancellation = default) where T : PaymentOrder
+		protected async ValueTask<T> GetAsync<T>(string voucher, string arguments, CancellationToken cancellation = default) where T : PaymentOrder
 		{
 			if(string.IsNullOrEmpty(voucher))
 				throw new ArgumentNullException(nameof(voucher));
 
-			return this.Client.GetAsync<T>(this.GetUrl($"transactions/out-trade-no/{voucher}?{arguments}"), cancellation);
+			var order = await this.Client.GetAsync<T>(this.GetUrl($"transactions/out-trade-no/{Uri.EscapeDataString(voucher)}?{arguments}"), cancellation);
+			this.ValidateOrder(order);
+			if(!string.Equals(order.VoucherCode, voucher, StringComparison.Ordinal))
+				throw new FormatException();
+
+			return order;
 		}
 
-		public async ValueTask<string> PayV3Async(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
+		public async ValueTask<PaymentResult> PayV3Async(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
 		{
 			if(request == null)
 				throw new ArgumentNullException(nameof(request));
 
-			var result = await this.Client.PostAsync<PaymentRequest, PayResult>(this.GetUrl("transactions", scenario), request, cancellation);
-			return result.Code;
+			var data = this.GetPaymentRequest(request, scenario, out var application);
+			var result = await this.Client.PostAsync<IDictionary<string, object>, PrepaymentResponse>(this.GetUrl("transactions", scenario), data, cancellation);
+			return new PaymentResult(result.PrepaymentId, result.CodeUrl, scenario, _authority, application);
 		}
 
-		protected ValueTask<T> GetCompletedAsync<T>(string key, string arguments, CancellationToken cancellation = default) where T : PaymentOrder
+		protected async ValueTask<T> GetCompletedAsync<T>(string key, string arguments, CancellationToken cancellation = default) where T : PaymentOrder
 		{
 			if(string.IsNullOrEmpty(key))
 				throw new ArgumentNullException(nameof(key));
 
-			return this.Client.GetAsync<T>(this.GetUrl($"transactions/id/{key}?{arguments}"), cancellation);
+			var order = await this.Client.GetAsync<T>(this.GetUrl($"transactions/id/{Uri.EscapeDataString(key)}?{arguments}"), cancellation);
+			this.ValidateOrder(order);
+			if(!string.Equals(order.Identifier, key, StringComparison.Ordinal))
+				throw new FormatException();
+
+			return order;
 		}
 
 		protected virtual IDictionary<string, object> GetAuthenticationOnlineRequest(string appId, string data, string device, string store, string title, string extra = null)
 		{
-			return new SortedDictionary<string, object>()
-			{
-				{ "appid", string.IsNullOrEmpty(appId) ? _authority.Accounts.Default.Code : appId },
-				{ "mch_id", _authority.Code },
-				{ "now", DateTimeOffset.Now.ToUnixTimeSeconds() },
-				{ "version", "1" },
-				{ "sign_type", "MD5" },
-				{ "nonce_str", Guid.NewGuid().ToString("N") },
-				{ "device_id", device },
-				{ "store_id", store },
-				{ "store_name", title },
-				{ "rawdata", data },
-				{ "attach", string.IsNullOrEmpty(extra) ? null : extra },
-			};
+			if(string.IsNullOrWhiteSpace(data) || data.Length > 2048 || string.IsNullOrWhiteSpace(device) || device.Length > 32 ||
+				string.IsNullOrWhiteSpace(store) || store.Length > 32 || string.IsNullOrWhiteSpace(title) || System.Text.Encoding.UTF8.GetByteCount(title) > 128)
+				throw new ArgumentException();
+
+			var request = this.Tickets.GetIdentity(appId);
+			request["now"] = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+			request["version"] = "1";
+			request["device_id"] = device;
+			request["store_id"] = store;
+			request["store_name"] = title;
+			request["rawdata"] = data;
+			request["attach"] = extra;
+			return request;
 		}
 
-		protected virtual IDictionary<string, object> GetAuthenticationOfflineRequest(string appId, string data, string device, string organization)
-		{
-			return new SortedDictionary<string, object>()
-			{
-				{ "sp_appid", string.IsNullOrEmpty(appId) ? _authority.Accounts.Default.Code : appId },
-				{ "device_id", device },
-				{ "organization_id", organization },
-				{ "raw_data", data },
-			};
-		}
-
-		protected virtual object GetAuthenticationOfflineResult(string organization, string value) => null;
+		protected virtual IDictionary<string, object> GetAuthenticationOfflineRequest(string appId, string data, string device, string organization) => throw new NotSupportedException();
 		#endregion
 
 		#region 抽象方法
@@ -222,10 +205,13 @@ public partial class PaymentManager
 		#endregion
 
 		#region 模型类型
-		private struct PayResult
+		private struct PrepaymentResponse
 		{
 			[JsonPropertyName("prepay_id")]
-			public string Code { get; set; }
+			public string PrepaymentId { get; set; }
+
+			[JsonPropertyName("code_url")]
+			public string CodeUrl { get; set; }
 		}
 
 		private struct AuthenticateOfflineResult
@@ -240,20 +226,20 @@ public partial class PaymentManager
 			public PaymentRequest Create(string appId, string voucher, decimal amount, string payer, string description = null) => this.Create(appId, voucher, amount, null, payer, description);
 			public abstract PaymentRequest Create(string appId, string voucher, decimal amount, string currency, string payer, string description = null);
 
-			public PaymentRequest.TicketRequest Ticket(PaymentHandlerBase handler, string appId, string voucher, decimal amount, string ticketCode, string description = null) => this.Ticket(handler, appId, voucher, amount, null, ticketCode, description);
-			public abstract PaymentRequest.TicketRequest Ticket(PaymentHandlerBase handler, string appId, string voucher, decimal amount, string currency, string ticketCode, string description = null);
-			public PaymentRequest.TicketRequest Ticket(PaymentHandlerBase handler, string appId, string voucher, decimal amount, string ticketCode, PaymentRequest.TicketRequest.BusinessInfo business, string description = null) => this.Ticket(handler, appId, voucher, amount, null, ticketCode, business, description);
-			public abstract PaymentRequest.TicketRequest Ticket(PaymentHandlerBase handler, string appId, string voucher, decimal amount, string currency, string ticketCode, PaymentRequest.TicketRequest.BusinessInfo business, string description = null);
+			public PaymentRequest.TicketRequest Ticket(string appId, string voucher, decimal amount, string ticketCode, string description = null) => this.Ticket(appId, voucher, amount, null, ticketCode, description);
+			public abstract PaymentRequest.TicketRequest Ticket(string appId, string voucher, decimal amount, string currency, string ticketCode, string description = null);
+			public PaymentRequest.TicketRequest Ticket(string appId, string voucher, decimal amount, string ticketCode, PaymentRequest.TicketRequest.BusinessInfo business, string description = null) => this.Ticket(appId, voucher, amount, null, ticketCode, business, description);
+			public abstract PaymentRequest.TicketRequest Ticket(string appId, string voucher, decimal amount, string currency, string ticketCode, PaymentRequest.TicketRequest.BusinessInfo business, string description = null);
 
 			internal abstract string GetFallback();
-			internal static string GetFallback(string key, string format)
+			internal static string GetFallback(string key)
 			{
 				var url = Utility.GetOptions<Options.FallbackOptions>($"/Externals/Wechat/Fallback")?.Url;
 
 				if(string.IsNullOrWhiteSpace(url))
 					return null;
 
-				return string.Format(url, "payment", string.IsNullOrEmpty(format) ? key : $"{key}:{format}");
+				return string.Format(url, "payment", key);
 			}
 		}
 
@@ -290,7 +276,16 @@ public partial class PaymentManager
 			public string FallbackUrl { get; set; }
 
 			[JsonPropertyName("amount")]
-			public AmountInfo Amount { get; set; }
+			public AmountInfo Amount
+			{
+				get;
+				set
+				{
+					Money.Validate(value.Value, nameof(value));
+					Money.Currency(value.Currency);
+					field = value;
+				}
+			}
 
 			[JsonPropertyName("settle_info")]
 			public SettlementInfo Settlement { get; set; }
@@ -303,28 +298,25 @@ public partial class PaymentManager
 			#endregion
 
 			#region 嵌套结构
-			public struct AmountInfo
+			public readonly struct AmountInfo
 			{
 				#region 构造函数
+				[JsonConstructor]
 				public AmountInfo(int value, string currency = null)
 				{
-					this.Value = value;
-					this.Currency = currency;
+					this.Value = Money.Validate(value, nameof(value));
+					this.Currency = Money.Currency(currency);
 				}
 
-				public AmountInfo(decimal value, string currency = null)
-				{
-					this.Value = (int)(value * 100);
-					this.Currency = currency;
-				}
+				public AmountInfo(decimal value, string currency = null) : this(Money.Convert(value, nameof(value)), currency) { }
 				#endregion
 
 				#region 公共属性
 				[JsonPropertyName("total")]
-				public int Value { get; set; }
+				public int Value { get; }
 
 				[JsonPropertyName("currency")]
-				public string Currency { get; set; }
+				public string Currency { get; }
 				#endregion
 
 				#region 重写方法
@@ -382,7 +374,7 @@ public partial class PaymentManager
 				public PlaceInfo(string deviceId, StoreInfo? store = null)
 				{
 					this.DeviceId = deviceId;
-					this.DeviceIp = "127.0.0.1";
+					this.DeviceIp = null;
 					this.Store = store;
 				}
 
@@ -409,15 +401,13 @@ public partial class PaymentManager
 			public abstract class TicketRequest : PaymentRequest
 			{
 				#region 构造函数
-				protected TicketRequest(PaymentHandlerBase handler, string voucher, decimal amount, string ticketCode, string description = null) : base(voucher, amount, null, description)
+				protected TicketRequest(string voucher, decimal amount, string ticketCode, string description = null) : base(voucher, amount, null, description)
 				{
-					this.Handler = handler ?? throw new ArgumentNullException(nameof(handler));
 					this.TicketCode = ticketCode;
 				}
 
-				protected TicketRequest(PaymentHandlerBase handler, string voucher, decimal amount, string currency, string ticketCode, string description = null) : base(voucher, amount, currency, description)
+				protected TicketRequest(string voucher, decimal amount, string currency, string ticketCode, string description = null) : base(voucher, amount, currency, description)
 				{
-					this.Handler = handler ?? throw new ArgumentNullException(nameof(handler));
 					this.TicketCode = ticketCode;
 				}
 				#endregion
@@ -430,10 +420,6 @@ public partial class PaymentManager
 				[Serialization.SerializationMember(Ignored = true)]
 				[JsonPropertyName("business")]
 				public BusinessInfo? Business { get; set; }
-
-				[JsonIgnore]
-				[Serialization.SerializationMember(Ignored = true)]
-				public PaymentHandlerBase Handler { get; }
 				#endregion
 
 				#region 嵌套结构
@@ -503,7 +489,7 @@ public partial class PaymentManager
 			public string Status { get; set; }
 
 			[JsonPropertyName("trade_state_desc")]
-			public string StatusDescription { get; set; }
+			public virtual string StatusDescription { get; set; }
 
 			[JsonPropertyName("bank_type")]
 			public string BankType { get; set; }
@@ -518,7 +504,7 @@ public partial class PaymentManager
 			public string Extra { get; set; }
 
 			[JsonPropertyName("amount")]
-			public AmountInfo Amount { get; set; }
+			public virtual AmountInfo Amount { get; set; }
 
 			[JsonPropertyName("scene_info")]
 			public PlaceInfo Place { get; set; }
@@ -600,131 +586,7 @@ public partial class PaymentManager
 		}
 		#endregion
 
-		protected abstract class CompatibilityBase<TService> where TService : PaymentService
-		{
-			#region 成员字段
-			private readonly TService _service;
-			#endregion
-
-			#region 构造函数
-			protected CompatibilityBase(TService service) => _service = service;
-			#endregion
-
-			#region 公共属性
-			protected TService Service { get => _service; }
-			#endregion
-
-			#region 公共方法
-			public async ValueTask<PaymentOrder> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
-			{
-				var dictionary = this.GetRequest(request, scenario);
-
-				if(!dictionary.ContainsKey("sign"))
-					dictionary.TryAdd("sign", Utility.Postmark(dictionary, _service._authority.Secret));
-
-				var url = request is PaymentRequest.TicketRequest ?
-					@"https://api.mch.weixin.qq.com/pay/micropay" :
-					@"https://api.mch.weixin.qq.com/pay/unifiedorder";
-
-				var response = await HttpClientFactory.Xml.Client.PostAsync(url, dictionary.CreateXmlContent(), cancellation);
-				var content = await response.GetXmlContentAsync(cancellation);
-
-				//注意：统一下单(Unified)返回的支付单号键名为“prepay_id”，因此需将其转存
-				if(content.TryGetValue("prepay_id", out var prepayId))
-					content.TryAdd("transaction_id", prepayId);
-
-				if(content == null || !content.TryGetValue("transaction_id", out var id) || string.IsNullOrEmpty(id))
-					throw new OperationException(content.TryGetValue("return_code", out var failureCode) ? failureCode : "Unknown", content.TryGetValue("return_msg", out var message) ? message : null);
-
-				//将返回的数据组装成支付单实体
-				var order = this.GetOrder(content);
-
-				//注意：因为微信的支付码（含刷脸）支付是无回调，因此必须立即进行支付完成处理
-				if(request is PaymentRequest.TicketRequest ticketRequest)
-				{
-					//从后台线程中进行支付回调处理
-					ThreadPool.QueueUserWorkItem(async state =>
-						await state.Handler.HandleAsync(state.Order, new KeyValuePair<string, object>[] { new(nameof(state.Order.Merchant), state.Order.Merchant) }),
-						(ticketRequest.Handler, Order: order),
-						false);
-				}
-
-				return order;
-			}
-			#endregion
-
-			#region 虚拟方法
-			protected virtual IDictionary<string, object> GetRequest(PaymentRequest request, Scenario scenario)
-			{
-				var dictionary = new SortedDictionary<string, object>
-				{
-					{ "mch_id", _service._authority.Code },
-					{ "out_trade_no", request.VoucherCode },
-					{ "sign_type", "MD5" },
-					{ "nonce_str", Guid.NewGuid().ToString("N") },
-					{ "attach", string.IsNullOrEmpty(request.Extra) ? null : request.Extra },
-					{ "device_info", request.Place.DeviceId },
-					{ "spbill_create_ip", request.Place.DeviceIp },
-					{ "total_fee", request.Amount.Value },
-					{ "fee_type", request.Amount.Currency },
-					{ "body", request.Description },
-					{ "profit_sharing", request.Settlement.ProfitSharingEnabled ? "Y" : "N" },
-				};
-
-				if(request is PaymentRequest.TicketRequest ticket)
-					dictionary["auth_code"] = ticket.TicketCode;
-				else
-				{
-					dictionary["notify_url"] = this.Service.Request.GetFallback();
-					dictionary["trade_type"] = scenario switch
-					{
-						Scenario.Native => "NATIVE",
-						Scenario.App => "APP",
-						Scenario.Web => "JSAPI",
-						_ => "JSAPI",
-					};
-				}
-
-				return dictionary;
-			}
-
-			protected abstract PaymentOrder CreateOrder(IDictionary<string, string> data);
-			#endregion
-
-			#region 私有方法
-			private PaymentOrder GetOrder(IDictionary<string, string> data)
-			{
-				var order = this.CreateOrder(data);
-				if(order == null)
-					return null;
-
-				if(data.TryGetValue("transaction_id", out var id))
-					order.Identifier = id;
-				if(data.TryGetValue("trade_type", out var kind))
-					order.Kind = kind;
-				if(data.TryGetValue("bank_type", out var bankType))
-					order.BankType = bankType;
-				if(data.TryGetValue("out_trade_no", out var voucherCode))
-					order.VoucherCode = voucherCode;
-				if(data.TryGetValue("attach", out var extra))
-					order.Extra = extra;
-				if(data.TryGetValue("time_end", out var finalTime) && DateTime.TryParseExact(finalTime, "yyyyMMddHHmmss", null, System.Globalization.DateTimeStyles.None, out var paidTime))
-					order.PaidTime = paidTime;
-				if(data.TryGetValue("result_code", out var status))
-					order.Status = status;
-				if(data.TryGetValue("err_code", out var errCode))
-					order.StatusDescription = data.TryGetValue("err_code_des", out var errMessage) ? $"[{errCode}]{errMessage}" : errCode;
-
-				var amount = data.TryGetValue("total_fee", out var total) && int.TryParse(total, out var number) ? number : 0;
-				var paidAmount = data.TryGetValue("cash_fee", out var cash) && int.TryParse(cash, out number) ? number : amount;
-				order.Amount = new PaymentOrder.AmountInfo(amount, paidAmount, data.TryGetValue("fee_type", out var currency) ? currency : null);
-
-				return order;
-			}
-			#endregion
-		}
-
-		internal class DirectPaymentService : PaymentService
+		internal partial class DirectPaymentService : PaymentService
 		{
 			#region 常量定义
 			/// <summary>表示直连商户数据格式的标识。</summary>
@@ -733,13 +595,11 @@ public partial class PaymentManager
 
 			#region 成员字段
 			private HttpClient _client;
-			private readonly Compatibility _compatibility;
 			#endregion
 
 			#region 构造函数
 			public DirectPaymentService(IAuthority authority) : base(authority)
 			{
-				_compatibility = new Compatibility(this);
 				this.Request = new DirectBuilder(authority);
 			}
 			#endregion
@@ -755,7 +615,7 @@ public partial class PaymentManager
 					lock(this)
 					{
 						if(_client == null)
-							_client = HttpClientFactory.GetHttpClient(_authority.Certificate);
+							_client = HttpClientFactory.GetHttpClient(_authority);
 					}
 
 					return _client;
@@ -764,23 +624,22 @@ public partial class PaymentManager
 			#endregion
 
 			#region 重写方法
-			public override async ValueTask<PaymentOrder> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
+			public override async ValueTask<PaymentResult> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
 			{
-				if(_authority.Certificate == null || request is PaymentRequest.TicketRequest)
-					return await _compatibility.PayAsync(request, scenario, cancellation);
+				if(request is PaymentRequest.TicketRequest)
+					return new PaymentResult(await this.Tickets.PayAsync((PaymentRequest.TicketRequest)request, cancellation));
 
-				var result = await this.PayV3Async(request, scenario, cancellation);
-				return new DirectOrder(result, request);
+				return await this.PayV3Async(request, scenario, cancellation);
 			}
 
 			public override async ValueTask<PaymentOrder> GetAsync(string voucher, CancellationToken cancellation = default)
 			{
-				return await base.GetAsync<DirectOrder>(voucher, $"mchid={_authority.Code}", cancellation);
+				return await base.GetAsync<DirectOrder>(voucher, $"mchid={Uri.EscapeDataString(_authority.Code)}", cancellation);
 			}
 
 			public override async ValueTask<PaymentOrder> GetCompletedAsync(string key, CancellationToken cancellation = default)
 			{
-				return await base.GetCompletedAsync<DirectOrder>(key, $"mchid={_authority.Code}", cancellation);
+				return await base.GetCompletedAsync<DirectOrder>(key, $"mchid={Uri.EscapeDataString(_authority.Code)}", cancellation);
 			}
 
 			protected override string GetUrl(string path, Scenario? scenario)
@@ -793,53 +652,12 @@ public partial class PaymentManager
 					Scenario.App => $"pay/{path}/app",
 					Scenario.Web => $"pay/{path}/jsapi",
 					Scenario.Native => $"pay/{path}/native",
-					_ => $"pay/{path}/jsapi",
+					_ => throw new ArgumentOutOfRangeException(nameof(scenario)),
 				};
 			}
 
 			protected override object GetCancellation() => new { mchid = _authority.Code };
 			#endregion
-
-			private sealed class Compatibility : CompatibilityBase<DirectPaymentService>
-			{
-				public Compatibility(DirectPaymentService service) : base(service) { }
-
-				#region 重写方法
-				protected override IDictionary<string, object> GetRequest(PaymentRequest request, Scenario scenario)
-				{
-					var dictionary = base.GetRequest(request, scenario);
-
-					if(dictionary != null)
-					{
-						switch(request)
-						{
-							case DirectRequest directRequest:
-								dictionary["appid"] = directRequest.AppId;
-								break;
-							case DirectTicketRequest ticketRequest:
-								dictionary["appid"] = ticketRequest.AppId;
-								break;
-						}
-					}
-
-					return dictionary;
-				}
-
-				protected override PaymentOrder CreateOrder(IDictionary<string, string> data)
-				{
-					var order = new DirectOrder();
-
-					if(data.TryGetValue("mch_id", out var value) && uint.TryParse(value, out var merchantId))
-						order.MerchantId = merchantId;
-					if(data.TryGetValue("appid", out var appId))
-						order.AppId = appId;
-					if(data.TryGetValue("openid", out var openId))
-						order.Payer = new DirectOrder.PayerInfo(openId);
-
-					return order;
-				}
-				#endregion
-			}
 
 			private sealed class DirectBuilder : RequestBuilder
 			{
@@ -847,36 +665,33 @@ public partial class PaymentManager
 				public DirectBuilder(IAuthority authority) => _authority = authority;
 
 				#region 重写方法
-				internal override string GetFallback() => GetFallback(_authority.Code, FORMAT);
+				internal override string GetFallback() => GetFallback(_authority.Code);
 
 				public override PaymentRequest Create(string appId, string voucher, decimal amount, string currency, string payer, string description = null)
 				{
-					if(string.IsNullOrEmpty(appId))
-						appId = _authority.Accounts.Default.Code;
+					appId = GetApplication(_authority, appId).Code;
 
-					return new DirectRequest(voucher, amount, currency, payer, uint.Parse(_authority.Code), appId, description)
+					return new DirectRequest(voucher, amount, currency, payer, _authority.Code, appId, description)
 					{
 						FallbackUrl = this.GetFallback(),
 					};
 				}
 
-				public override PaymentRequest.TicketRequest Ticket(PaymentHandlerBase handler, string appId, string voucher, decimal amount, string currency, string ticketCode, string description = null)
+				public override PaymentRequest.TicketRequest Ticket(string appId, string voucher, decimal amount, string currency, string ticketCode, string description = null)
 				{
-					if(string.IsNullOrEmpty(appId))
-						appId = _authority.Accounts.Default.Code;
+					appId = GetApplication(_authority, appId).Code;
 
-					return new DirectTicketRequest(handler, voucher, amount, currency, ticketCode, uint.Parse(_authority.Code), appId, description)
+					return new DirectTicketRequest(voucher, amount, currency, ticketCode, _authority.Code, appId, description)
 					{
 						FallbackUrl = this.GetFallback(),
 					};
 				}
 
-				public override PaymentRequest.TicketRequest Ticket(PaymentHandlerBase handler, string appId, string voucher, decimal amount, string currency, string ticketCode, PaymentRequest.TicketRequest.BusinessInfo business, string description = null)
+				public override PaymentRequest.TicketRequest Ticket(string appId, string voucher, decimal amount, string currency, string ticketCode, PaymentRequest.TicketRequest.BusinessInfo business, string description = null)
 				{
-					if(string.IsNullOrEmpty(appId))
-						appId = _authority.Accounts.Default.Code;
+					appId = GetApplication(_authority, appId).Code;
 
-					return new DirectTicketRequest(handler, voucher, amount, currency, ticketCode, uint.Parse(_authority.Code), appId, description)
+					return new DirectTicketRequest(voucher, amount, currency, ticketCode, _authority.Code, appId, description)
 					{
 						Business = business,
 						FallbackUrl = this.GetFallback(),
@@ -888,8 +703,8 @@ public partial class PaymentManager
 			private sealed class DirectRequest : PaymentRequest
 			{
 				#region 构造函数
-				internal DirectRequest(string voucher, decimal amount, string payer, uint merchantId, string appId, string description = null) : this(voucher, amount, null, payer, merchantId, appId, description) { }
-				internal DirectRequest(string voucher, decimal amount, string currency, string payer, uint merchantId, string appId, string description = null) : base(voucher, amount, currency, description)
+				internal DirectRequest(string voucher, decimal amount, string payer, string merchantId, string appId, string description = null) : this(voucher, amount, null, payer, merchantId, appId, description) { }
+				internal DirectRequest(string voucher, decimal amount, string currency, string payer, string merchantId, string appId, string description = null) : base(voucher, amount, currency, description)
 				{
 					this.MerchantId = merchantId;
 					this.AppId = appId;
@@ -899,8 +714,7 @@ public partial class PaymentManager
 
 				#region 公共属性
 				[JsonPropertyName("mchid")]
-				[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
-				public uint MerchantId { get; set; }
+				public string MerchantId { get; set; }
 
 				[JsonPropertyName("appid")]
 				public string AppId { get; set; }
@@ -925,8 +739,8 @@ public partial class PaymentManager
 			public sealed class DirectTicketRequest : PaymentRequest.TicketRequest
 			{
 				#region 构造函数
-				internal DirectTicketRequest(PaymentHandlerBase handler, string voucher, decimal amount, string ticket, uint merchantId, string appId, string description = null) : this(handler, voucher, amount, null, ticket, merchantId, appId, description) { }
-				internal DirectTicketRequest(PaymentHandlerBase handler, string voucher, decimal amount, string currency, string ticket, uint merchantId, string appId, string description = null) : base(handler, voucher, amount, currency, ticket, description)
+				internal DirectTicketRequest(string voucher, decimal amount, string ticket, string merchantId, string appId, string description = null) : this(voucher, amount, null, ticket, merchantId, appId, description) { }
+				internal DirectTicketRequest(string voucher, decimal amount, string currency, string ticket, string merchantId, string appId, string description = null) : base(voucher, amount, currency, ticket, description)
 				{
 					this.MerchantId = merchantId;
 					this.AppId = appId;
@@ -936,8 +750,7 @@ public partial class PaymentManager
 
 				#region 公共属性
 				[JsonPropertyName("mchid")]
-				[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
-				public uint MerchantId { get; set; }
+				public string MerchantId { get; set; }
 
 				[JsonPropertyName("appid")]
 				public string AppId { get; set; }
@@ -946,31 +759,15 @@ public partial class PaymentManager
 
 			public sealed class DirectOrder : PaymentOrder
 			{
-				#region 构造函数
-				public DirectOrder() { }
-				public DirectOrder(string identifier, PaymentRequest request)
-				{
-					this.Identifier = identifier;
-
-					if(request is DirectRequest directRequest)
-					{
-						this.Payer = new PayerInfo(directRequest.Payer.OpenId);
-						this.AppId = directRequest.AppId;
-						this.MerchantId = directRequest.MerchantId;
-					}
-				}
-				#endregion
-
 				#region 重写属性
-				public override AuthorityToken Merchant { get => new AuthorityToken(this.MerchantId.ToString(), this.AppId); }
+				public override AuthorityToken Merchant { get => new AuthorityToken(this.MerchantId, this.AppId); }
 				public override string PayerCode => this.Payer.OpenId;
 				public override string PayerType => "OpenId";
 				#endregion
 
 				#region 公共属性
 				[JsonPropertyName("mchid")]
-				[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
-				public uint MerchantId { get; set; }
+				public string MerchantId { get; set; }
 
 				[JsonPropertyName("appid")]
 				public string AppId { get; set; }
@@ -993,7 +790,7 @@ public partial class PaymentManager
 			}
 		}
 
-		internal class BrokerPaymentService : PaymentService
+		internal partial class BrokerPaymentService : PaymentService
 		{
 			#region 常量定义
 			/// <summary>表示服务商数据格式的标识。</summary>
@@ -1003,13 +800,11 @@ public partial class PaymentManager
 			#region 成员字段
 			private HttpClient _client;
 			private readonly IAuthority _subsidiary;
-			private readonly Compatibility _compatibility;
 			#endregion
 
 			#region 构造函数
-			public BrokerPaymentService(IAuthority master, IAuthority subsidiary) : base(master)
+			public BrokerPaymentService(IAuthority master, IAuthority subsidiary) : base(master, subsidiary)
 			{
-				_compatibility = new Compatibility(this);
 				_subsidiary = subsidiary ?? throw new ArgumentNullException(nameof(subsidiary));
 				this.Request = new BrokerBuilder(master, subsidiary);
 			}
@@ -1026,7 +821,7 @@ public partial class PaymentManager
 					lock(this)
 					{
 						if(_client == null)
-							_client = HttpClientFactory.GetHttpClient(_authority.Certificate);
+							_client = HttpClientFactory.GetHttpClient(_authority);
 					}
 
 					return _client;
@@ -1035,31 +830,27 @@ public partial class PaymentManager
 			#endregion
 
 			#region 重写方法
-			public override async ValueTask<PaymentOrder> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
+			public override async ValueTask<PaymentResult> PayAsync(PaymentRequest request, Scenario scenario, CancellationToken cancellation = default)
 			{
-				if(_authority.Certificate == null)
-					return await _compatibility.PayAsync(request, scenario, cancellation);
-
 				if(request is PaymentRequest.TicketRequest ticketRequest)
 				{
 					if(ticketRequest.Business.HasValue)
-						return await this.PayOfflineTicketAsync(ticketRequest, cancellation);
+						return new PaymentResult(await this.PayOfflineTicketAsync(ticketRequest, cancellation));
 					else
-						return await _compatibility.PayAsync(request, scenario, cancellation);
+						return new PaymentResult(await this.Tickets.PayAsync((PaymentRequest.TicketRequest)request, cancellation));
 				}
 
-				var result = await this.PayV3Async(request, scenario, cancellation);
-				return new BrokerOrder(result, request);
+				return await this.PayV3Async(request, scenario, cancellation);
 			}
 
 			public override async ValueTask<PaymentOrder> GetAsync(string voucher, CancellationToken cancellation = default)
 			{
-				return await base.GetAsync<BrokerOrder>(voucher, $"sp_mchid={_authority.Code}&sub_mchid={_subsidiary.Code}", cancellation);
+				return await base.GetAsync<BrokerOrder>(voucher, $"sp_mchid={Uri.EscapeDataString(_authority.Code)}&sub_mchid={Uri.EscapeDataString(_subsidiary.Code)}", cancellation);
 			}
 
 			public override async ValueTask<PaymentOrder> GetCompletedAsync(string key, CancellationToken cancellation = default)
 			{
-				return await base.GetCompletedAsync<BrokerOrder>(key, $"sp_mchid={_authority.Code}&sub_mchid={_subsidiary.Code}", cancellation);
+				return await base.GetCompletedAsync<BrokerOrder>(key, $"sp_mchid={Uri.EscapeDataString(_authority.Code)}&sub_mchid={Uri.EscapeDataString(_subsidiary.Code)}", cancellation);
 			}
 
 			protected override string GetUrl(string path, Scenario? scenario)
@@ -1072,183 +863,12 @@ public partial class PaymentManager
 					Scenario.App => $"pay/partner/{path}/app",
 					Scenario.Web => $"pay/partner/{path}/jsapi",
 					Scenario.Native => $"pay/partner/{path}/native",
-					_ => $"pay/partner/{path}/jsapi",
+					_ => throw new ArgumentOutOfRangeException(nameof(scenario)),
 				};
 			}
 
 			protected override object GetCancellation() => new { sp_mchid = _authority.Code, sub_mchid = _subsidiary.Code };
-
-			protected override IDictionary<string, object> GetAuthenticationOnlineRequest(string appId, string data, string device, string store, string title, string extra = null)
-			{
-				var request = base.GetAuthenticationOnlineRequest(appId, data, device, store, title, extra);
-
-				if(request != null)
-				{
-					request["sub_mch_id"] = _subsidiary.Code;
-
-					if(!_subsidiary.Accounts.Default.IsEmpty)
-						request["sub_appid"] = _subsidiary.Accounts.Default.Code;
-				}
-
-				return request;
-			}
-
-			protected override IDictionary<string, object> GetAuthenticationOfflineRequest(string appId, string data, string device, string organization)
-			{
-				var request = base.GetAuthenticationOfflineRequest(appId, data, device, organization);
-
-				if(request != null)
-				{
-					request["sub_mchid"] = _subsidiary.Code;
-
-					if(!_subsidiary.Accounts.Default.IsEmpty)
-						request["sub_appid"] = _subsidiary.Accounts.Default.Code;
-				}
-
-				return request;
-			}
-
-			protected override object GetAuthenticationOfflineResult(string organization, string value) => new
-			{
-				Value = value,
-				OrganizationId = organization,
-				AppId = this.Authority.Accounts.Default.Code,
-				MerchantId = this.Authority.Code,
-				SubAppId = _subsidiary.Accounts.Default.Code,
-				SubMerchantId = _subsidiary.Code,
-			};
 			#endregion
-
-			#region 私有方法
-			private async ValueTask<PaymentOrder> PayOfflineTicketAsync(PaymentRequest.TicketRequest request, CancellationToken cancellation = default)
-			{
-				var ticket = OfflineTicketRequest.Create(request, uint.Parse(this.Authority.Code), this.Authority.Accounts.Default.Code, uint.Parse(_subsidiary.Code), _subsidiary.Accounts.Default.Code);
-
-				var result = await this.Client.PostAsync<OfflineTicketRequest, BrokerOrder>(
-					@"https://api.mch.weixin.qq.com/v3/offlineface/transactions",
-					ticket,
-					cancellation);
-
-				return result;
-			}
-
-			private class OfflineTicketRequest
-			{
-				[JsonPropertyName("sp_mchid")]
-				[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
-				public uint MerchantId { get; set; }
-				[JsonPropertyName("sp_appid")]
-				public string AppId { get; set; }
-				[JsonPropertyName("sub_mchid")]
-				[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
-				public uint SubMerchantId { get; set; }
-				[JsonPropertyName("sub_appid")]
-				public string SubAppId { get; set; }
-				[JsonPropertyName("out_trade_no")]
-				public string VoucherCode { get; set; }
-				[JsonPropertyName("auth_code")]
-				public string TicketCode { get; set; }
-				[JsonPropertyName("amount")]
-				public PaymentRequest.AmountInfo Amount { get; set; }
-				[JsonPropertyName("attach")]
-				public string Extra { get; set; }
-				[JsonPropertyName("description")]
-				public string Description { get; set; }
-				[JsonPropertyName("scene_info")]
-				public PlaceInfo Place { get; set; }
-				[JsonPropertyName("settle_info")]
-				public PaymentRequest.SettlementInfo Settlement { get; set; }
-				[JsonPropertyName("business")]
-				public PaymentRequest.TicketRequest.BusinessInfo? Business { get; set; }
-
-				public static OfflineTicketRequest Create(PaymentRequest.TicketRequest request, uint merchantId, string appId, uint subMerchantId, string subAppId)
-				{
-					if(request == null || request.Business == null)
-						return default;
-
-					return new OfflineTicketRequest()
-					{
-						AppId = appId,
-						MerchantId = merchantId,
-						SubAppId = subAppId,
-						SubMerchantId = subMerchantId,
-						VoucherCode = request.VoucherCode,
-						TicketCode = request.TicketCode,
-						Amount = request.Amount,
-						Place = new PlaceInfo(request.Place.DeviceIp),
-						Settlement = request.Settlement,
-						Extra = string.IsNullOrEmpty(request.Extra) ? request.Description : request.Extra,
-						Description = string.IsNullOrEmpty(request.Description) ? request.Extra : request.Description,
-						Business = request.Business.Value,
-					};
-				}
-
-				public struct PlaceInfo
-				{
-					public PlaceInfo(string ip)
-					{
-						this.DeviceIp = string.IsNullOrEmpty(ip) ? "127.0.0.1" : ip;
-					}
-
-					[JsonPropertyName("device_ip")]
-					public string DeviceIp { get; set; }
-				}
-			}
-			#endregion
-
-			private sealed class Compatibility : CompatibilityBase<BrokerPaymentService>
-			{
-				public Compatibility(BrokerPaymentService service) : base(service) { }
-
-				#region 重写方法
-				protected override IDictionary<string, object> GetRequest(PaymentRequest request, Scenario scenario)
-				{
-					var dictionary = base.GetRequest(request, scenario);
-
-					if(dictionary != null)
-					{
-						switch(request)
-						{
-							case BrokerRequest brokerRequest:
-								dictionary["appid"] = brokerRequest.AppId;
-								break;
-							case BrokerTicketRequest ticketRequest:
-								dictionary["appid"] = ticketRequest.AppId;
-								break;
-						}
-
-						dictionary["sub_mch_id"] = this.Service._subsidiary.Code;
-						dictionary["sub_appid"] = this.Service._subsidiary.Accounts?.Default.Code;
-					}
-
-					return dictionary;
-				}
-
-				protected override PaymentOrder CreateOrder(IDictionary<string, string> data)
-				{
-					var order = new BrokerOrder();
-
-					if(data.TryGetValue("mch_id", out var value) && uint.TryParse(value, out var merchantId))
-						order.MerchantId = merchantId;
-					if(data.TryGetValue("sub_mch_id", out value) && uint.TryParse(value, out var subMerchantId))
-						order.SubMerchantId = subMerchantId;
-					if(data.TryGetValue("appid", out var appId))
-						order.AppId = appId;
-					if(data.TryGetValue("sub_appid", out var subAppId))
-						order.SubAppId = subAppId;
-
-					if(data.TryGetValue("openid", out var openId))
-					{
-						if(data.TryGetValue("sub_openid", out var subOpenId))
-							order.Payer = new BrokerOrder.PayerInfo(openId, subOpenId);
-						else
-							order.Payer = new BrokerOrder.PayerInfo(openId, null);
-					}
-
-					return order;
-				}
-				#endregion
-			}
 
 			private sealed class BrokerBuilder : RequestBuilder
 			{
@@ -1262,36 +882,56 @@ public partial class PaymentManager
 				}
 
 				#region 重写方法
-				internal override string GetFallback() => GetFallback(_master.Code, FORMAT);
+				internal override string GetFallback() => GetFallback(_master.Code);
 
 				public override PaymentRequest Create(string appId, string voucher, decimal amount, string currency, string payer, string description = null)
 				{
-					if(string.IsNullOrEmpty(appId))
-						appId = _master.Accounts.Default.Code;
+					var application = GetApplication(_master, null);
+					string subAppId = null;
 
-					return new BrokerRequest(voucher, amount, currency, payer, uint.Parse(_master.Code), appId, uint.Parse(_subsidiary.Code), _subsidiary.Accounts?.Default.Code, description)
+					if(!string.IsNullOrEmpty(appId))
+					{
+						if(ContainsApplication(_master, appId))
+							application = GetApplication(_master, appId);
+						else
+							subAppId = GetApplication(_subsidiary, appId).Code;
+					}
+
+					return new BrokerRequest(voucher, amount, currency, payer, _master.Code, application.Code, _subsidiary.Code, subAppId, description)
 					{
 						FallbackUrl = this.GetFallback(),
 					};
 				}
 
-				public override PaymentRequest.TicketRequest Ticket(PaymentHandlerBase handler, string appId, string voucher, decimal amount, string currency, string ticketCode, string description = null)
+				public override PaymentRequest.TicketRequest Ticket(string appId, string voucher, decimal amount, string currency, string ticketCode, string description = null)
 				{
-					if(string.IsNullOrEmpty(appId))
-						appId = _master.Accounts.Default.Code;
+					string subAppId = null;
+					var application = string.IsNullOrEmpty(appId) || ContainsApplication(_master, appId) ? GetApplication(_master, appId) : GetApplication(_subsidiary, appId);
 
-					return new BrokerTicketRequest(handler, voucher, amount, currency, ticketCode, uint.Parse(_master.Code), appId, uint.Parse(_subsidiary.Code), _subsidiary.Accounts?.Default.Code, description)
+					if(!ContainsApplication(_master, application.Code))
+					{
+						subAppId = application.Code;
+						application = GetApplication(_master, null);
+					}
+
+					return new BrokerTicketRequest(voucher, amount, currency, ticketCode, _master.Code, application.Code, _subsidiary.Code, subAppId, description)
 					{
 						FallbackUrl = this.GetFallback(),
 					};
 				}
 
-				public override PaymentRequest.TicketRequest Ticket(PaymentHandlerBase handler, string appId, string voucher, decimal amount, string currency, string ticketCode, PaymentRequest.TicketRequest.BusinessInfo business, string description = null)
+				public override PaymentRequest.TicketRequest Ticket(string appId, string voucher, decimal amount, string currency, string ticketCode, PaymentRequest.TicketRequest.BusinessInfo business, string description = null)
 				{
-					if(string.IsNullOrEmpty(appId))
-						appId = _master.Accounts.Default.Code;
+					string subAppId = null;
+					var application = string.IsNullOrEmpty(appId) || ContainsApplication(_master, appId) ? GetApplication(_master, appId) : GetApplication(_subsidiary, appId);
 
-					return new BrokerTicketRequest(handler, voucher, amount, currency, ticketCode, uint.Parse(_master.Code), appId, uint.Parse(_subsidiary.Code), _subsidiary.Accounts?.Default.Code, description)
+					if(!ContainsApplication(_master, application.Code))
+					{
+						subAppId = application.Code;
+						application = GetApplication(_master, null);
+					}
+
+					return new BrokerTicketRequest(voucher, amount, currency, ticketCode, _master.Code, application.Code, _subsidiary.Code, subAppId, description)
 					{
 						Business = business,
 						FallbackUrl = this.GetFallback(),
@@ -1303,8 +943,8 @@ public partial class PaymentManager
 			private sealed class BrokerRequest : PaymentRequest
 			{
 				#region 构造函数
-				internal BrokerRequest(string voucher, decimal amount, string payer, uint merchantId, string appId, uint subMerchantId, string subAppId = null, string description = null) : this(voucher, amount, null, payer, merchantId, appId, subMerchantId, subAppId, description) { }
-				internal BrokerRequest(string voucher, decimal amount, string currency, string payer, uint merchantId, string appId, uint subMerchantId, string subAppId = null, string description = null) : base(voucher, amount, currency, description)
+				internal BrokerRequest(string voucher, decimal amount, string payer, string merchantId, string appId, string subMerchantId, string subAppId = null, string description = null) : this(voucher, amount, null, payer, merchantId, appId, subMerchantId, subAppId, description) { }
+				internal BrokerRequest(string voucher, decimal amount, string currency, string payer, string merchantId, string appId, string subMerchantId, string subAppId = null, string description = null) : base(voucher, amount, currency, description)
 				{
 					this.MerchantId = merchantId;
 					this.AppId = appId;
@@ -1320,15 +960,13 @@ public partial class PaymentManager
 
 				#region 公共属性
 				[JsonPropertyName("sp_mchid")]
-				[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
-				public uint MerchantId { get; set; }
+				public string MerchantId { get; set; }
 
 				[JsonPropertyName("sp_appid")]
 				public string AppId { get; set; }
 
 				[JsonPropertyName("sub_mchid")]
-				[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
-				public uint SubMerchantId { get; set; }
+				public string SubMerchantId { get; set; }
 
 				[JsonPropertyName("sub_appid")]
 				public string SubAppId { get; set; }
@@ -1366,8 +1004,8 @@ public partial class PaymentManager
 			public sealed class BrokerTicketRequest : PaymentRequest.TicketRequest
 			{
 				#region 构造函数
-				internal BrokerTicketRequest(PaymentHandlerBase handler, string voucher, decimal amount, string ticket, uint merchantId, string appId, uint subMerchantId, string subAppId, string description = null) : this(handler, voucher, amount, null, ticket, merchantId, appId, subMerchantId, subAppId, description) { }
-				internal BrokerTicketRequest(PaymentHandlerBase handler, string voucher, decimal amount, string currency, string ticket, uint merchantId, string appId, uint subMerchantId, string subAppId, string description = null) : base(handler, voucher, amount, currency, ticket, description)
+				internal BrokerTicketRequest(string voucher, decimal amount, string ticket, string merchantId, string appId, string subMerchantId, string subAppId, string description = null) : this(voucher, amount, null, ticket, merchantId, appId, subMerchantId, subAppId, description) { }
+				internal BrokerTicketRequest(string voucher, decimal amount, string currency, string ticket, string merchantId, string appId, string subMerchantId, string subAppId, string description = null) : base(voucher, amount, currency, ticket, description)
 				{
 					this.MerchantId = merchantId;
 					this.AppId = appId;
@@ -1378,15 +1016,13 @@ public partial class PaymentManager
 
 				#region 公共属性
 				[JsonPropertyName("sp_mchid")]
-				[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
-				public uint MerchantId { get; set; }
+				public string MerchantId { get; set; }
 
 				[JsonPropertyName("sp_appid")]
 				public string AppId { get; set; }
 
 				[JsonPropertyName("sub_mchid")]
-				[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
-				public uint SubMerchantId { get; set; }
+				public string SubMerchantId { get; set; }
 
 				[JsonPropertyName("sub_appid")]
 				public string SubAppId { get; set; }
@@ -1395,41 +1031,22 @@ public partial class PaymentManager
 
 			public sealed class BrokerOrder : PaymentOrder
 			{
-				#region 构造函数
-				public BrokerOrder() { }
-				public BrokerOrder(string identifier, PaymentRequest request)
-				{
-					this.Identifier = identifier;
-
-					if(request is BrokerRequest brokerRequest)
-					{
-						this.Payer = new PayerInfo(brokerRequest.Payer.OpenId, brokerRequest.Payer.SubOpenId);
-						this.AppId = brokerRequest.AppId;
-						this.SubAppId = brokerRequest.SubAppId;
-						this.MerchantId = brokerRequest.MerchantId;
-						this.SubMerchantId = brokerRequest.SubMerchantId;
-					}
-				}
-				#endregion
-
 				#region 重写属性
-				public override AuthorityToken Merchant { get => new AuthorityToken(this.MerchantId.ToString(), this.AppId); }
-				public override AuthorityToken? Subsidiary { get => new AuthorityToken(this.SubMerchantId.ToString(), this.SubAppId); }
+				public override AuthorityToken Merchant { get => new AuthorityToken(this.MerchantId, this.AppId); }
+				public override AuthorityToken? Subsidiary { get => new AuthorityToken(this.SubMerchantId, this.SubAppId); }
 				public override string PayerCode => this.Payer.ToString();
 				public override string PayerType => "OpenId";
 				#endregion
 
 				#region 公共属性
 				[JsonPropertyName("sp_mchid")]
-				[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
-				public uint MerchantId { get; set; }
+				public string MerchantId { get; set; }
 
 				[JsonPropertyName("sp_appid")]
 				public string AppId { get; set; }
 
 				[JsonPropertyName("sub_mchid")]
-				[JsonNumberHandling(JsonNumberHandling.WriteAsString | JsonNumberHandling.AllowReadingFromString)]
-				public uint SubMerchantId { get; set; }
+				public string SubMerchantId { get; set; }
 
 				[JsonPropertyName("sub_appid")]
 				public string SubAppId { get; set; }

@@ -44,8 +44,6 @@ namespace Zongsoft.Externals.Wechat;
 
 internal static class Utility
 {
-	private static readonly MD5 _md5 = MD5.Create();
-
 	#region 静态方法
 	public static TOptions GetOptions<TOptions>(string path)
 	{
@@ -96,17 +94,21 @@ internal static class Utility
 			return null;
 
 		var text = new System.Text.StringBuilder();
-		var source = (IEnumerable<KeyValuePair<string, object>>)((data is SortedDictionary<string, object> sorts) ? sorts : data.OrderBy(p => p.Key));
+		var source = data.OrderBy(entry => entry.Key, StringComparer.Ordinal);
 
 		foreach(var entry in source)
 		{
-			if(entry.Value == null)
+			if(entry.Key == "sign" || entry.Value == null)
+				continue;
+
+			var value = System.Convert.ToString(entry.Value, System.Globalization.CultureInfo.InvariantCulture);
+			if(string.IsNullOrEmpty(value))
 				continue;
 
 			if(text.Length > 0)
 				text.Append('&');
 
-			text.Append($"{entry.Key}={entry.Value}");
+			text.Append($"{entry.Key}={value}");
 		}
 
 		if(text.Length > 0)
@@ -114,7 +116,8 @@ internal static class Utility
 
 		text.Append($"key={password}");
 
-		var result = (algorithm ?? _md5).ComputeHash(System.Text.Encoding.UTF8.GetBytes(text.ToString()));
+		var buffer = System.Text.Encoding.UTF8.GetBytes(text.ToString());
+		var result = algorithm == null ? MD5.HashData(buffer) : algorithm.ComputeHash(buffer);
 		return System.Convert.ToHexString(result);
 	}
 

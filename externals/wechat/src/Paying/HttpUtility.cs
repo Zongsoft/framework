@@ -30,34 +30,38 @@
 using System;
 using System.Net.Http;
 using System.Net.Http.Json;
-using System.Net.Http.Headers;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Zongsoft.Common;
-using Zongsoft.Security;
 
 namespace Zongsoft.Externals.Wechat.Paying;
 
-public static class HttpUtility
+public static partial class HttpUtility
 {
 	public static async ValueTask GetAsync(this HttpClient client, string url, CancellationToken cancellation = default)
 	{
-		var response = await client.GetAsync(url, cancellation);
+		using var request = new HttpRequestMessage(HttpMethod.Get, url);
+		using var response = await client.SendAsync(request, cancellation);
 		await EnsureResultAsync(response, cancellation);
 	}
 
 	public static async ValueTask<TResult> GetAsync<TResult>(this HttpClient client, string url, CancellationToken cancellation = default)
 	{
-		var response = await client.GetAsync(url, cancellation);
+		using var request = new HttpRequestMessage(HttpMethod.Get, url);
+		using var response = await client.SendAsync(request, cancellation);
 		return await GetResultAsync<TResult>(response, cancellation);
 	}
 
 	public static ValueTask PostAsync(this HttpClient client, string url, CancellationToken cancellation = default) => PostAsync(client, url, (object)null, cancellation);
 	public static async ValueTask PostAsync<TRequest>(this HttpClient client, string url, TRequest request, CancellationToken cancellation = default)
 	{
-		var content = request is null ? (HttpContent)new StringContent(string.Empty, System.Text.Encoding.UTF8, "application/json") : JsonContent.Create(request, request.GetType(), null, Json.Options);
-		var response = await client.PostAsync(url, content, cancellation);
+		using var message = new HttpRequestMessage(HttpMethod.Post, url)
+		{
+			Content = request is null ? null : JsonContent.Create(request, request.GetType(), null, Json.Options),
+		};
+		using var response = await client.SendAsync(message, cancellation);
 		await EnsureResultAsync(response, cancellation);
 	}
 
@@ -66,60 +70,46 @@ public static class HttpUtility
 		return PostAsync<TRequest, TResult>(client, url, request, null, cancellation);
 	}
 
-	public static async ValueTask<TResult> PostAsync<TRequest, TResult>(this HttpClient client, string url, TRequest request, ICertificate certificate, CancellationToken cancellation = default)
+	public static async ValueTask<TResult> PostAsync<TRequest, TResult>(this HttpClient client, string url, TRequest request, Authority.VerificationKey certificate, CancellationToken cancellation = default)
 	{
-		using var content = JsonContent.Create(request, request.GetType(), null, Json.GetOptions(certificate));
+		using var message = new HttpRequestMessage(HttpMethod.Post, url)
+		{
+			Content = request is null ? null : JsonContent.Create(request, request.GetType(), null, certificate == null ? Json.Options : Json.GetOptions(certificate)),
+		};
 
 		if(certificate != null)
-			content.Headers.Add("Wechatpay-Serial", certificate.Identifier);
+			message.Headers.Add("Wechatpay-Serial", certificate.Identifier);
 
-		var response = await client.PostAsync(url, content, cancellation);
+		using var response = await client.SendAsync(message, cancellation);
 		return await GetResultAsync<TResult>(response, cancellation);
 	}
 
 	public static async ValueTask EnsureResultAsync(this HttpResponseMessage response, CancellationToken cancellation = default)
 	{
-		if(response == null)
-			throw new ArgumentNullException(nameof(response));
+		ArgumentNullException.ThrowIfNull(response);
+		cancellation.ThrowIfCancellationRequested();
 
 		if(response.IsSuccessStatusCode)
 			return;
 
-		if(response.Content.Headers.ContentLength <= 0)
-			throw new OperationException(response.StatusCode.ToString(), response.ReasonPhrase);
-
-		var failure = response.Content.Headers.ContentType.MediaType.Contains("json", StringComparison.OrdinalIgnoreCase) ?
-			await response.Content.ReadFromJsonAsync<FailureResult>(Json.Options, cancellation) :
-			new FailureResult(response.StatusCode.ToString(), await response.Content.ReadAsStringAsync(cancellation));
-
-		throw new OperationException(failure.Code, failure.Message);
+		throw GetFailure(response, await response.Content.ReadAsByteArrayAsync(cancellation), response.Content is VerifiedContent);
 	}
 
 	public static async ValueTask<TResult> GetResultAsync<TResult>(this HttpResponseMessage response, CancellationToken cancellation = default)
 	{
-		if(response == null)
-			throw new ArgumentNullException(nameof(response));
+		await EnsureResultAsync(response, cancellation);
+		if(response.StatusCode == System.Net.HttpStatusCode.NoContent)
+			return default;
 
-		if(response.IsSuccessStatusCode)
+		try
 		{
-			if(response.Content.Headers.ContentLength <= 0 || typeof(TResult) == typeof(void) || typeof(TResult) == typeof(object))
-				return default;
-
-			//var text = await response.Content.ReadAsStringAsync(cancellation);
-			//var result = System.Text.Json.JsonSerializer.Deserialize<TResult>(text, Json.Options);
-			var result = await response.Content.ReadFromJsonAsync<TResult>(Json.Options, cancellation);
-			return result;
+			return JsonSerializer.Deserialize<TResult>(await response.Content.ReadAsByteArrayAsync(cancellation), Json.Options);
 		}
-		else
+		catch(JsonException exception)
 		{
-			if(response.Content.Headers.ContentLength <= 0)
-				throw new OperationException(response.StatusCode.ToString(), response.ReasonPhrase);
-
-			var failure = response.Content.Headers.ContentType.MediaType.Contains("json", StringComparison.OrdinalIgnoreCase) ?
-				await response.Content.ReadFromJsonAsync<FailureResult>(Json.Options, cancellation) :
-				new FailureResult(response.StatusCode.ToString(), await response.Content.ReadAsStringAsync(cancellation));
-
-			throw new OperationException(failure.Code, failure.Message);
+			var failure = new OperationException("INVALID_RESPONSE", null, exception);
+			SetFailureContext(failure, response);
+			throw failure;
 		}
 	}
 }

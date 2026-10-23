@@ -38,6 +38,8 @@ public abstract class PaymentHandlerBase : FallbackHandlerBase<PaymentManager.Pa
 {
 	protected PaymentHandlerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
 
+	public override FallbackKind Kind => FallbackKind.Payment;
+
 	internal protected override Type GetRequestType(string format) =>
 		string.Equals(format, PaymentManager.PaymentService.DirectPaymentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?
 		typeof(PaymentManager.PaymentService.DirectPaymentService.DirectOrder) :
@@ -47,6 +49,8 @@ public abstract class PaymentHandlerBase : FallbackHandlerBase<PaymentManager.Pa
 public abstract class PaymentHandlerBase<TResult> : FallbackHandlerBase<PaymentManager.PaymentService.PaymentOrder, TResult>
 {
 	protected PaymentHandlerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
+
+	public override FallbackKind Kind => FallbackKind.Payment;
 
 	internal protected override Type GetRequestType(string format) =>
 		string.Equals(format, PaymentManager.PaymentService.DirectPaymentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?

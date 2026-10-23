@@ -7,7 +7,7 @@
  *                   /____/
  *
  * Authors:
- *   Tencent (https://developers.weixin.qq.com/doc/oplatform/Third-party_Platforms/Message_Encryption/Technical_Plan.html)
+ *   Tencent (https://developers.weixin.qq.com/doc/service/guide/dev/push/encryption.html)
  *
  * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
  *
@@ -28,184 +28,124 @@
  */
 
 using System;
-using System.IO;
-using System.Net;
 using System.Text;
+using System.Buffers.Binary;
 using System.Security.Cryptography;
 
 namespace Zongsoft.Externals.Wechat.Platforms;
 
-public static class CryptographyUtility
+public static partial class CryptographyUtility
 {
+	#region 静态字段
+	private static readonly UTF8Encoding _encoding = new(false, true);
+	#endregion
+
 	#region 公共方法
-	public static uint HostToNetworkOrder(uint inval)
-	{
-		uint outval = 0;
-
-		for(int i = 0; i < 4; i++)
-			outval = (outval << 8) + ((inval >> (i * 8)) & 255);
-
-		return outval;
-	}
-
-	public static int HostToNetworkOrder(int inval)
-	{
-		int outval = 0;
-
-		for(int i = 0; i < 4; i++)
-			outval = (outval << 8) + ((inval >> (i * 8)) & 255);
-
-		return outval;
-	}
-
-	public static string Decrypt(string ciphertext, string encodingAESKey, out string appId)
-	{
-		var key = Convert.FromBase64String(encodingAESKey + "=");
-		var iv = new byte[16];
-		Array.Copy(key, iv, 16);
-		byte[] btmpMsg = AES_Decrypt(ciphertext, iv, key);
-
-		int len = BitConverter.ToInt32(btmpMsg, 16);
-		len = IPAddress.NetworkToHostOrder(len);
-
-		var bMsg = new byte[len];
-		var bAppid = new byte[btmpMsg.Length - 20 - len];
-		Array.Copy(btmpMsg, 20, bMsg, 0, len);
-		Array.Copy(btmpMsg, 20 + len, bAppid, 0, btmpMsg.Length - 20 - len);
-		string oriMsg = Encoding.UTF8.GetString(bMsg);
-		appId = Encoding.UTF8.GetString(bAppid);
-
-		return oriMsg;
-	}
-
 	public static string Encrypt(string plaintext, string encodingAESKey, string appId)
 	{
-		var key = Convert.FromBase64String(encodingAESKey + "=");
-		var iv = new byte[16];
-		Array.Copy(key, iv, 16);
-		var bRand = Zongsoft.Common.Randomizer.Generate(16);
-		var bAppid = Encoding.UTF8.GetBytes(appId);
-		var btmpMsg = Encoding.UTF8.GetBytes(plaintext);
-		var bMsgLen = BitConverter.GetBytes(HostToNetworkOrder(btmpMsg.Length));
-		var bMsg = new byte[bRand.Length + bMsgLen.Length + bAppid.Length + btmpMsg.Length];
+		ArgumentNullException.ThrowIfNull(plaintext);
+		var buffer = _encoding.GetBytes(plaintext);
 
-		Array.Copy(bRand, bMsg, bRand.Length);
-		Array.Copy(bMsgLen, 0, bMsg, bRand.Length, bMsgLen.Length);
-		Array.Copy(btmpMsg, 0, bMsg, bRand.Length + bMsgLen.Length, btmpMsg.Length);
-		Array.Copy(bAppid, 0, bMsg, bRand.Length + bMsgLen.Length + btmpMsg.Length, bAppid.Length);
+		try { return Encrypt(buffer, encodingAESKey, appId); }
+		finally { CryptographicOperations.ZeroMemory(buffer); }
+	}
 
-		return AES_Encrypt(bMsg, iv, key);
+	public static string Encrypt(ReadOnlySpan<byte> plaintext, string encodingAESKey, string appId)
+	{
+		ArgumentException.ThrowIfNullOrEmpty(appId);
+		var receiver = _encoding.GetBytes(appId);
+		var length = checked(20 + plaintext.Length + receiver.Length);
+		var buffer = new byte[checked(length + 32 - length % 32)];
+		var key = GetKey(encodingAESKey);
+
+		try
+		{
+			RandomNumberGenerator.Fill(buffer.AsSpan(0, 16));
+			BinaryPrimitives.WriteInt32BigEndian(buffer.AsSpan(16, 4), plaintext.Length);
+			plaintext.CopyTo(buffer.AsSpan(20));
+			receiver.CopyTo(buffer.AsSpan(20 + plaintext.Length));
+			buffer.AsSpan(length).Fill((byte)(buffer.Length - length));
+			using var cipher = Aes.Create();
+			cipher.Key = key;
+			return Convert.ToBase64String(cipher.EncryptCbc(buffer, key.AsSpan(0, 16), PaddingMode.None));
+		}
+		finally
+		{
+			CryptographicOperations.ZeroMemory(key);
+			CryptographicOperations.ZeroMemory(buffer);
+		}
+	}
+
+	public static string Decrypt(string ciphertext, string encodingAESKey, string appId)
+	{
+		var buffer = DecryptBytes(ciphertext, encodingAESKey, appId);
+
+		try { return _encoding.GetString(buffer); }
+		finally { CryptographicOperations.ZeroMemory(buffer); }
+	}
+
+	public static byte[] DecryptBytes(string ciphertext, string encodingAESKey, string appId)
+	{
+		ArgumentException.ThrowIfNullOrEmpty(ciphertext);
+		ArgumentException.ThrowIfNullOrEmpty(appId);
+		var encrypted = Convert.FromBase64String(ciphertext);
+
+		if(encrypted.Length == 0 || encrypted.Length % 32 != 0)
+			throw new CryptographicException();
+
+		var receiver = _encoding.GetBytes(appId);
+		var key = GetKey(encodingAESKey);
+		byte[] buffer = null;
+
+		try
+		{
+			using var cipher = Aes.Create();
+			cipher.Key = key;
+			buffer = cipher.DecryptCbc(encrypted, key.AsSpan(0, 16), PaddingMode.None);
+			var padding = buffer[^1];
+
+			if(padding == 0 || padding > 32 || padding > buffer.Length - 20)
+				throw new CryptographicException();
+
+			for(var index = buffer.Length - padding; index < buffer.Length; index++)
+			{
+				if(buffer[index] != padding)
+					throw new CryptographicException();
+			}
+
+			var length = BinaryPrimitives.ReadInt32BigEndian(buffer.AsSpan(16, 4));
+			var available = buffer.Length - padding - 20;
+
+			if(length < 0 || length > available || !CryptographicOperations.FixedTimeEquals(buffer.AsSpan(20 + length, available - length), receiver))
+				throw new CryptographicException();
+
+			return buffer.AsSpan(20, length).ToArray();
+		}
+		finally
+		{
+			CryptographicOperations.ZeroMemory(key);
+
+			if(buffer != null)
+				CryptographicOperations.ZeroMemory(buffer);
+		}
 	}
 	#endregion
 
 	#region 私有方法
-	private static string AES_Encrypt(byte[] input, byte[] iv, byte[] key)
+	private static byte[] GetKey(string encodingAESKey)
 	{
-		using var aes = Aes.Create();
-		//秘钥的大小，以位为单位
-		aes.KeySize = 256;
-		//支持的块大小
-		aes.BlockSize = 128;
-		//填充模式
-		//aes.Padding = PaddingMode.PKCS7;
-		aes.Padding = PaddingMode.None;
-		aes.Mode = CipherMode.CBC;
-		aes.Key = key;
-		aes.IV = iv;
-		var encrypt = aes.CreateEncryptor(aes.Key, aes.IV);
-		byte[] xBuff = null;
+		ArgumentException.ThrowIfNullOrEmpty(encodingAESKey);
 
-		#region 自己进行PKCS7补位，用系统自己带的不行
-		byte[] msg = new byte[input.Length + 32 - input.Length % 32];
-		Array.Copy(input, msg, input.Length);
-		byte[] pad = KCS7Encoder(input.Length);
-		Array.Copy(pad, 0, msg, input.Length, pad.Length);
-		#endregion
+		if(encodingAESKey.Length != 43)
+			throw new ArgumentException(null, nameof(encodingAESKey));
 
-		#region 注释的也是一种方法，效果一样
-		//ICryptoTransform transform = aes.CreateEncryptor();
-		//byte[] xBuff = transform.TransformFinalBlock(msg, 0, msg.Length);
-		#endregion
+		Span<byte> buffer = stackalloc byte[32];
 
-		using(var ms = new MemoryStream())
-		{
-			using(var cs = new CryptoStream(ms, encrypt, CryptoStreamMode.Write))
-			{
-				cs.Write(msg, 0, msg.Length);
-			}
+		if(!Convert.TryFromBase64String(encodingAESKey + "=", buffer, out var length) || length != 32 || Convert.ToBase64String(buffer) != encodingAESKey + "=")
+			throw new ArgumentException(null, nameof(encodingAESKey));
 
-			xBuff = ms.ToArray();
-		}
-
-		return Convert.ToBase64String(xBuff);
-	}
-
-	private static byte[] KCS7Encoder(int text_length)
-	{
-		int block_size = 32;
-		// 计算需要填充的位数
-		int amount_to_pad = block_size - (text_length % block_size);
-
-		if(amount_to_pad == 0)
-		{
-			amount_to_pad = block_size;
-		}
-
-		// 获得补位所用的字符
-		char pad_chr = GetCharacter(amount_to_pad);
-		string tmp = "";
-
-		for(int index = 0; index < amount_to_pad; index++)
-		{
-			tmp += pad_chr;
-		}
-
-		return Encoding.UTF8.GetBytes(tmp);
-	}
-
-	static char GetCharacter(int a)
-	{
-		byte target = (byte)(a & 0xFF);
-		return (char)target;
-	}
-
-	private static byte[] AES_Decrypt(string text, byte[] iv, byte[] key)
-	{
-		using var aes = Aes.Create();
-		aes.KeySize = 256;
-		aes.BlockSize = 128;
-		aes.Mode = CipherMode.CBC;
-		aes.Padding = PaddingMode.None;
-		aes.Key = key;
-		aes.IV = iv;
-		var decrypt = aes.CreateDecryptor(aes.Key, aes.IV);
-		byte[] xBuff = null;
-
-		using(var ms = new MemoryStream())
-		{
-			using(var cs = new CryptoStream(ms, decrypt, CryptoStreamMode.Write))
-			{
-				byte[] xXml = Convert.FromBase64String(text);
-				byte[] msg = new byte[xXml.Length + 32 - xXml.Length % 32];
-				Array.Copy(xXml, msg, xXml.Length);
-				cs.Write(xXml, 0, xXml.Length);
-			}
-
-			xBuff = AES_Decode(ms.ToArray());
-		}
-
-		return xBuff;
-	}
-
-	private static byte[] AES_Decode(byte[] decrypted)
-	{
-		int pad = decrypted[^1];
-		if(pad < 1 || pad > 32)
-			pad = 0;
-
-		byte[] res = new byte[decrypted.Length - pad];
-		Array.Copy(decrypted, 0, res, 0, decrypted.Length - pad);
-		return res;
+		try { return buffer.ToArray(); }
+		finally { CryptographicOperations.ZeroMemory(buffer); }
 	}
 	#endregion
 }

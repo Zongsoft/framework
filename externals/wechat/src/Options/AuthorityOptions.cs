@@ -28,38 +28,48 @@
  */
 
 using System;
-using System.IO;
-
-using Zongsoft.Configuration;
-using Zongsoft.Externals.Wechat.Options;
+using System.Collections.ObjectModel;
 
 namespace Zongsoft.Externals.Wechat.Options;
 
-/// <summary>表示微信支付账户的选项类。</summary>
+/// <summary>微信支付商户配置；私钥与微信验签材料通过明确文件引用加载。</summary>
 public class AuthorityOptions
 {
-	#region 构造函数
-	public AuthorityOptions()
-	{
-		this.Apps = new AppOptionsCollection();
-	}
+	#region 公共属性
+	public string Name { get; set; }
+	public string Code { get; set; }
+	public string ApiV2Key { get; set; }
+	public string ApiV3Key { get; set; }
+	public SigningOptions Signing { get; set; }
+	public VerificationOptions Verification { get; set; }
+	public AppOptionsCollection Apps { get; } = new();
 	#endregion
 
-	#region 公共属性
-	/// <summary>获取或设置账户名称。</summary>
-	public string Name { get; set; }
+	#region 嵌套类型
+	public class SigningOptions
+	{
+		public string SerialNumber { get; set; }
+		public string PrivateKeyFile { get; set; }
+		public string CertificateFile { get; set; }
+	}
 
-	/// <summary>获取或设置账户号码。</summary>
-	public string Code { get; set; }
+	public class VerificationOptions
+	{
+		public VerificationMode Mode { get; set; }
+		public string EncryptionKeyId { get; set; }
+		public KeyOptionsCollection Keys { get; } = new();
+	}
 
-	/// <summary>获取或设置账户密钥。</summary>
-	[ConfigurationProperty("secret")]
-	public string Secret { get; set; }
+	public class KeyOptions
+	{
+		public string Name { get; set; }
+		public string File { get; set; }
+	}
 
-	/// <summary>获取或设置证书文件的存放目录。</summary>
-	public DirectoryInfo Directory { get; set; }
-
-	/// <summary>获取微信小程序应用设置选项集。</summary>
-	public AppOptionsCollection Apps { get; }
+	public class KeyOptionsCollection : KeyedCollection<string, KeyOptions>
+	{
+		public KeyOptionsCollection() : base(StringComparer.Ordinal) { }
+		protected override string GetKeyForItem(KeyOptions item) => item.Name;
+	}
 	#endregion
 }

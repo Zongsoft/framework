@@ -38,8 +38,7 @@ public enum RefundmentStatus
 	[Components.Alias("Success")]
 	Succeed,
 
-	/// <summary>退款异常</summary>
-	[Components.Alias("Abnormal")]
+	/// <summary>退款失败</summary>
 	Failed,
 
 	/// <summary>已关闭</summary>
@@ -48,4 +47,11 @@ public enum RefundmentStatus
 
 	/// <summary>处理中</summary>
 	Processing,
+
+	/// <summary>退款异常，需核对或处理收款账户。</summary>
+	[Components.Alias("Abnormal")]
+	Abnormal,
+
+	/// <summary>未提供或无法识别的状态，必须查询确认。</summary>
+	Unknown,
 }

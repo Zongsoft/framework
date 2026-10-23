@@ -28,17 +28,11 @@
  */
 
 using System;
-using System.Collections.Concurrent;
 
 namespace Zongsoft.Externals.Wechat.Paying;
 
 public partial class PaymentManager
 {
-	#region 静态变量
-	private static readonly ConcurrentDictionary<string, PaymentManager> _managers = new(StringComparer.OrdinalIgnoreCase);
-	private static readonly ConcurrentDictionary<string, MerchantService> _merchants = new(StringComparer.OrdinalIgnoreCase);
-	#endregion
-
 	#region 公共属性
 	public PaymentService Payment { get; private set; }
 	public RefundmentService Refundment { get; private set; }
@@ -47,52 +41,40 @@ public partial class PaymentManager
 	#region 静态构建
 	public static PaymentManager Get(IAuthority authority)
 	{
-		if(authority == null)
-			throw new ArgumentNullException(nameof(authority));
-
-		if(string.IsNullOrEmpty(authority.Code))
-			throw new ArgumentException(Properties.Resources.Wechat_AuthorityInvalid_Message);
-
-		return _managers.GetOrAdd(authority.Code, (key, authority) =>
+		ArgumentNullException.ThrowIfNull(authority);
+		ArgumentException.ThrowIfNullOrWhiteSpace(authority.Code);
+		return new()
 		{
-			return new PaymentManager()
-			{
-				Payment = new PaymentService.DirectPaymentService(authority),
-				Refundment = new RefundmentService.DirectRefundmentService(authority),
-			};
-		}, authority);
+			Payment = new PaymentService.DirectPaymentService(authority),
+			Refundment = new RefundmentService.DirectRefundmentService(authority),
+		};
 	}
 
-	public static PaymentManager Get(string master, IAuthority subsidiary)
+	public static PaymentManager Get(IAuthority master, IAuthority subsidiary)
 	{
-		if(subsidiary == null)
-			throw new ArgumentNullException(nameof(subsidiary));
-
-		if(string.IsNullOrEmpty(subsidiary.Code))
-			throw new ArgumentException(Properties.Resources.Wechat_AuthorityInvalid_Message);
-
-		var authority = AuthorityUtility.GetAuthority(master) ??
-			throw new InvalidOperationException(string.Format(Properties.Resources.Wechat_AuthorityNotFound_Message, master));
-
-		return _managers.GetOrAdd(master + ':' + subsidiary.Code, (key, state) =>
+		ArgumentNullException.ThrowIfNull(master);
+		ArgumentNullException.ThrowIfNull(subsidiary);
+		ArgumentException.ThrowIfNullOrWhiteSpace(master.Code);
+		ArgumentException.ThrowIfNullOrWhiteSpace(subsidiary.Code);
+		return new()
 		{
-			return new PaymentManager()
-			{
-				Payment = new PaymentService.BrokerPaymentService(state.authority, state.subsidiary),
-				Refundment = new RefundmentService.BrokerRefundmentService(state.authority, state.subsidiary),
-			};
-		}, new { authority, subsidiary });
+			Payment = new PaymentService.BrokerPaymentService(master, subsidiary),
+			Refundment = new RefundmentService.BrokerRefundmentService(master, subsidiary),
+		};
+	}
+
+	public static PartnerService GetPartnerService(IAuthority authority)
+	{
+		ArgumentNullException.ThrowIfNull(authority);
+		ArgumentException.ThrowIfNullOrWhiteSpace(authority.Code);
+		return new PartnerService(authority);
 	}
 
 	public static MerchantService GetMerchantService(IAuthority authority)
 	{
-		if(authority == null)
-			throw new ArgumentNullException(nameof(authority));
-
-		if(string.IsNullOrEmpty(authority.Code))
-			throw new ArgumentException(Properties.Resources.Wechat_AuthorityInvalid_Message);
-
-		return _merchants.GetOrAdd(authority.Code, (key, authority) => new MerchantService(authority), authority);
+		ArgumentNullException.ThrowIfNull(authority);
+		ArgumentException.ThrowIfNullOrWhiteSpace(authority.Code);
+		return new MerchantService(authority);
 	}
 	#endregion
 }
@@ -100,5 +82,5 @@ public partial class PaymentManager
 public static class PaymentManagerExtension
 {
 	public static PaymentManager GetPayment(this IAuthority authority) => PaymentManager.Get(authority);
-	public static PaymentManager GetPayment(this IAuthority subsidiary, string master) => PaymentManager.Get(master, subsidiary);
+	public static PaymentManager GetPayment(this IAuthority subsidiary, IAuthority master) => PaymentManager.Get(master, subsidiary);
 }

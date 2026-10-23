@@ -2,51 +2,27 @@
 
 [English](README.md) | [简体中文](README.zh-Hans.md)
 
-## Purpose and Boundary
+## Features and Configuration
 
-This package receives HTTP callbacks and dispatches them to named framework handlers. It complements the [WeChat client adapter](../README.md) and differs from the [Web API package](../api/README.md), which exposes application-facing management operations.
+This plugin receives WeChat Pay APIv3 payment, refund and offline face agreement notifications. The [main adapter](../README.md) supplies merchant configuration, signature verification and resource decryption. Application management endpoints belong to the [Web API package](../api/README.md).
 
-A **callback** is an inbound provider request, potentially retried after timeout. Its route name is only a dispatch key, not proof of sender identity. This gateway does not automatically verify every WeChat product's signature or decrypt every payload.
+| POST route | Supported events |
+| --- | --- |
+| `/Externals/Wechat/Fallback/payment/{merchant}` | `TRANSACTION.SUCCESS` |
+| `/Externals/Wechat/Fallback/refundment/{merchant}` | `REFUND.SUCCESS`, `REFUND.ABNORMAL`, `REFUND.CLOSED` |
+| `/Externals/Wechat/Fallback/offlinefaceagreement/{merchant}` | `FACEPAY.USER_STATE_CHANGE` |
 
-## Installation and Hosting
+`merchant` is the configured merchant or service provider number, digits only, without role suffixes. Query parameters are rejected. Requests require JSON content and are limited to 2 MiB. Public account messages, third-party authorization events and GET URL verification are outside these routes.
 
-```shell
-dotnet add package Zongsoft.Externals.Wechat.Gateway
-```
+Configure `ApiV3Key`, an explicit verification mode and permitted applications as described in [merchant credentials](../docs/implementation.md#merchant-credentials). The adapter verifies the original bytes and a five-minute timestamp window before authenticated decryption and event/merchant checks. The application must validate business ownership, amounts, currency and durable deduplication.
 
-Load the gateway plugin and its Wechat dependency in a [plugin-aware Web host](../../../Zongsoft.Plugins.Web/README.md). Deploy the assembly and `.plugin` according to the included `.deploy` file. Under the framework route conventions the endpoint is `POST /Externals/Wechat/Fallback/{name}/{key?}`.
+## Business Handlers
 
-Configure the account, certificate and callback secrets using the parent adapter's options. The gateway does not provide GET URL-verification handlers automatically.
+Derive from `PaymentHandlerBase`, `RefundmentHandlerBase` or the relevant `FallbackHandlerBase<TRequest>`. Override `OnReceiveAsync` when using durable acceptance. Register `IFallbackHandler` objects at `/Workbench/Externals/Wechat/Fallback/Handlers` under `Payment`, `Refundment` or `OfflineFaceAgreement`, matching their `Kind`. Registration happens during startup, before serving requests.
 
-## Handler Registration
+`Completed`, `Accepted` and `Duplicate` produce an empty HTTP 204 response. `Accepted` means the application durably owns the notification and subsequent processing/recovery. Rejection, processing failure or the four-second acceptance deadline produces 503; malformed input produces 400, server body limits may produce 413, and unknown routes produce 404. Handler failure responses contain JSON `code=FAIL` without exception details.
 
-The following application composition helper registers an already constructed handler. That handler must implement the service-specific verification and response protocol:
-
-```csharp
-using Zongsoft.Components;
-using Zongsoft.Externals.Wechat.Gateway;
-
-static void RegisterCallback(string name, IHandler handler)
-{
-	ArgumentException.ThrowIfNullOrEmpty(name);
-	ArgumentNullException.ThrowIfNull(handler);
-	FallbackExecutor.Instance.Handlers[name] = handler;
-}
-```
-
-Register once during startup, before requests arrive; the dictionary is not a concurrent runtime registry. The executor passes the request body stream and request parameters to the selected handler. Keep body consumption within the request lifetime; snapshot a bounded payload before queuing background work.
-
-## Results and Delivery
-
-A non-null result becomes `200 OK`; null becomes `204 No Content`. OperationException reasons map Unfound to 404, Unsupported to 400, Unprocessed to 422 and Unsatisfied to 412; other reasons produce 500. Check that this result format matches the chosen WeChat callback protocol; it is not a universal acknowledgment format.
-
-💡 Test duplicate notifications and retry after a lost response. Make business writes idempotent using a verified provider event identifier.
-
-## Security and Verification
-
-🚨 Validate signatures over the required original bytes, check timestamps/nonces and replay windows, decrypt only after required verification, bound request size, and use TLS. Never log secrets or full payment/user payloads. The controller does not supply these protections for your handler.
-
-Use local signed fixtures for success, bad signature, expired timestamp, duplicate event, malformed body and handler failure. No real WeChat request is needed for these checks. Implementation routes are in [FallbackExecutor](FallbackExecutor.cs), [controller](Controllers/FallbackController.cs) and the [external adapter skill](../../SKILL.md).
+The typed `HandleAsync` method is for trusted local calls and does not verify network notifications. External requests must use `ReceiveAsync`. Use TLS and exclude keys and complete payment/user payloads from logs. See the [notification contract](../docs/implementation.md#payment-notifications) for details.
 
 ## Plugin-Based Integration
 
@@ -56,19 +32,23 @@ Use a Plugins.Web host and deploy the corresponding main adapter listed below. S
 
 | Runtime artifact | Source of truth |
 | --- | --- |
-| `Zongsoft.Externals.Wechat.Gateway` | [Zongsoft.Externals.Wechat.Gateway.plugin](Zongsoft.Externals.Wechat.Gateway.plugin) |
-| File copying and dependencies | [Zongsoft.Externals.Wechat.Gateway.deploy](Zongsoft.Externals.Wechat.Gateway.deploy) |
+| `Zongsoft.Externals.Wechat.Gateway` | [Zongsoft.Externals.Wechat.Gateway.plugin](src/Zongsoft.Externals.Wechat.Gateway.plugin) |
+| File copying and dependencies | [Zongsoft.Externals.Wechat.Gateway.deploy](src/Zongsoft.Externals.Wechat.Gateway.deploy) |
 
 Add this fragment to an existing host `.deploy` (retain Main and the host’s other base manifests; do not replace the whole file):
 
 ```ini
 [plugins zongsoft externals wechat]
-nuget:Zongsoft.Externals.Wechat
+nuget:Zongsoft.Externals.Wechat@7.10.0
 
 [plugins zongsoft externals wechat gateway]
-nuget:Zongsoft.Externals.Wechat.Gateway
+nuget:Zongsoft.Externals.Wechat.Gateway@7.10.0
 ```
 
 Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
 
 Additional artifacts listed by the deployment manifest include `Zongsoft.Externals.Wechat.Gateway.plugin`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.
+
+## Third-party platform authorization events
+
+`POST /Externals/Wechat/Components/{componentAppId}/Events` accepts encrypted XML for verification tickets and authorization changes. Configure the component separately and register a durable `IComponentStore`. Verified, reliably stored events return `success`; storage failures return 503. See the [component contract](../docs/implementation.md#component-platform) for size limits, signature rules, idempotency and host responsibilities. This route does not receive authorizer messages or create tenant associations automatically.

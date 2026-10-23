@@ -42,8 +42,8 @@ public class UserProvider
 	#region 构造函数
 	public UserProvider(Account account)
 	{
-		if(account.IsEmpty)
-			throw new ArgumentNullException(nameof(account));
+		if(account.IsEmpty || account.Type != AccountType.Channel)
+			throw new ArgumentException(null, nameof(account));
 
 		this.Account = account;
 	}
@@ -56,23 +56,27 @@ public class UserProvider
 	#region 公共方法
 	public async ValueTask<(string bookmark, string[] identifiers)> GetIdentifiersAsync(string cursor, CancellationToken cancellation = default)
 	{
-		var credential = await CredentialManager.GetCredentialAsync(this.Account, false, cancellation);
+		var credential = await CredentialManager.GetCredentialAsync(this.Account, 2, false, cancellation);
 		if(string.IsNullOrEmpty(credential))
 			return default;
 
-		var response = await CredentialManager.Http.GetAsync($"/cgi-bin/user/get?access_token={credential}&next_openid={cursor}", cancellation);
+		using var client = AccountHttpClient.Create();
+		using var response = await client.GetAsync($"/cgi-bin/user/get?access_token={Uri.EscapeDataString(credential)}&next_openid={Uri.EscapeDataString(cursor ?? string.Empty)}", cancellation);
 		var result = await response.GetResultAsync<IdentifierResult>(cancellation);
-		return (result.Bookmark, result.Data.Values);
+		return (result.Bookmark, result.Data.Values ?? []);
 	}
 
 	public async ValueTask<UserInfo> GetInfoAsync(string openId, CancellationToken cancellation = default)
 	{
-		var credential = await CredentialManager.GetCredentialAsync(this.Account, false, cancellation);
-		if(string.IsNullOrEmpty(credential))
-			return default;
-
-		var response = await CredentialManager.Http.GetAsync($"/cgi-bin/user/info?access_token={credential}&openid={openId}", cancellation);
+		ArgumentException.ThrowIfNullOrWhiteSpace(openId);
+		var credential = await CredentialManager.GetCredentialAsync(this.Account, 2, false, cancellation);
+		using var client = AccountHttpClient.Create();
+		using var response = await client.GetAsync($"/cgi-bin/user/info?access_token={Uri.EscapeDataString(credential)}&openid={Uri.EscapeDataString(openId)}", cancellation);
 		var result = await response.GetResultAsync<UserInfoResult>(cancellation);
+
+		if(result.OpenId != openId)
+			throw new FormatException();
+
 		return result.ToInfo();
 	}
 	#endregion

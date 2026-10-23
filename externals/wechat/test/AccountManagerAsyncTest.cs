@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -19,7 +19,7 @@ public sealed class AccountManagerAsyncCollection
 }
 
 [Collection(AccountManagerAsyncCollection.Name)]
-public sealed class AccountManagerAsyncTest(AccountManagerTestContext context) : IClassFixture<AccountManagerTestContext>
+public sealed partial class AccountManagerAsyncTest(AccountManagerTestContext context) : IClassFixture<AccountManagerTestContext>
 {
 	private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(5);
 
@@ -386,13 +386,16 @@ public sealed class AccountManagerTestContext : IAsyncLifetime
 
 		_services = new ServiceProviderFactory().CreateServiceProvider(new ServiceCollection()
 			.AddSingleton<IConfigurationRoot>(_configuration)
-			.AddSingleton<IConfiguration>(_configuration));
+			.AddSingleton<IConfiguration>(_configuration)
+			.AddSingleton<System.Net.Http.IHttpClientFactory>(this.HttpClients)
+			.AddSingleton<System.Net.Http.IHttpMessageHandlerFactory>(this.HttpClients));
 
 		_application = new(_services);
 	}
 
 	public string AppletCode { get; }
 	public string ChannelCode { get; }
+	public CertificateHttpClientFactory HttpClients { get; } = new();
 
 	public ValueTask InitializeAsync() => ValueTask.CompletedTask;
 	public async ValueTask DisposeAsync()
@@ -405,10 +408,68 @@ public sealed class AccountManagerTestContext : IAsyncLifetime
 		{
 			await ((IAsyncDisposable)_services).DisposeAsync();
 			((IDisposable)_configuration).Dispose();
+			this.HttpClients.Dispose();
 		}
 	}
 
 	private sealed class TestApplicationContext(IServiceProvider services) : ApplicationContext(services)
 	{
+	}
+
+	public sealed class CertificateHttpClientFactory : System.Net.Http.IHttpClientFactory, System.Net.Http.IHttpMessageHandlerFactory, IDisposable
+	{
+		private readonly List<System.Net.Http.HttpMessageHandler> _handlers = new();
+		public Func<System.Net.Http.HttpRequestMessage, CancellationToken, Task<System.Net.Http.HttpResponseMessage>> Handler { get; set; }
+		public Func<System.Net.Http.HttpRequestMessage, CancellationToken, Task<System.Net.Http.HttpResponseMessage>> AccountHandler { get; set; }
+		public Func<System.Net.Http.HttpRequestMessage, CancellationToken, Task<System.Net.Http.HttpResponseMessage>> CredentialHandler { get; set; }
+		public Func<System.Net.Http.HttpRequestMessage, CancellationToken, Task<System.Net.Http.HttpResponseMessage>> ComponentHandler { get; set; }
+		public Func<System.Net.Http.HttpRequestMessage, CancellationToken, Task<System.Net.Http.HttpResponseMessage>> PaymentHandler { get; set; }
+		public Func<System.Net.Http.HttpMessageHandler> PaymentTransport { get; set; }
+		public Func<System.Net.Http.HttpRequestMessage, CancellationToken, Task<System.Net.Http.HttpResponseMessage>> XmlHandler { get; set; }
+		public string XmlTransportName { get; private set; }
+		public System.Net.Http.HttpMessageHandler CreateHandler(string name)
+		{
+			System.Net.Http.HttpMessageHandler handler;
+			if(name == "Wechat.Accounts")
+				handler = new HandlerAdapter(this.AccountHandler ?? throw new InvalidOperationException());
+			else if(name == "Wechat.Components")
+				handler = new HandlerAdapter(this.ComponentHandler ?? throw new InvalidOperationException());
+			else if(name == "Wechat.Credentials")
+				handler = new HandlerAdapter(this.CredentialHandler ?? throw new InvalidOperationException());
+			else if(name.StartsWith("Wechat.Payments.Xml", StringComparison.Ordinal))
+			{
+				this.XmlTransportName = name;
+				handler = new HandlerAdapter(this.XmlHandler ?? throw new InvalidOperationException());
+			}
+			else
+			{
+				Assert.Equal("Wechat.Payments", name);
+				handler = this.PaymentTransport?.Invoke() ?? new HandlerAdapter(this.PaymentHandler ?? throw new InvalidOperationException());
+			}
+
+			lock(_handlers)
+				_handlers.Add(handler);
+
+			return handler;
+		}
+
+		public void Dispose()
+		{
+			foreach(var handler in _handlers)
+				handler.Dispose();
+
+			_handlers.Clear();
+		}
+
+		public System.Net.Http.HttpClient CreateClient(string name)
+		{
+			Assert.Equal("Wechat.Certificates", name);
+			return new(new HandlerAdapter(this.Handler ?? throw new InvalidOperationException()));
+		}
+
+		private sealed class HandlerAdapter(Func<System.Net.Http.HttpRequestMessage, CancellationToken, Task<System.Net.Http.HttpResponseMessage>> handler) : System.Net.Http.HttpMessageHandler
+		{
+			protected override Task<System.Net.Http.HttpResponseMessage> SendAsync(System.Net.Http.HttpRequestMessage request, CancellationToken cancellation) => handler(request, cancellation);
+		}
 	}
 }

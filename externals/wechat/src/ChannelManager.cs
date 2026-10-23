@@ -59,7 +59,7 @@ public static class ChannelManager
 		if(account.Type != AccountType.Channel)
 			throw new ArgumentException(string.Format(Properties.Resources.Wechat_AccountNotChannel_Message, account.Code));
 
-		return GetChannelAsync(account.Code, cancellation);
+		return account.Component == null ? GetChannelAsync(account.Code, cancellation) : account.Component.GetChannelAsync(account.Code, cancellation);
 	}
 
 	public static async ValueTask<Channel> FindChannelAsync(string code, CancellationToken cancellation = default)
@@ -69,7 +69,7 @@ public static class ChannelManager
 		if(_channels.TryGetValue(code, out var result))
 			return result;
 
-		var provider = Provider;
+		var provider = Provider ?? Zongsoft.Services.ApplicationContext.Current?.Services.GetService(typeof(IAccountProvider)) as IAccountProvider;
 		if(provider == null)
 			return null;
 
@@ -77,11 +77,11 @@ public static class ChannelManager
 		if(account.IsEmpty)
 			return null;
 
-		return _channels.GetOrAdd(code, _ => new Channel(account));
+		return account.Component == null ? _channels.GetOrAdd(code, _ => new Channel(account)) : new Channel(account);
 	}
 
 	public static ValueTask<Channel> FindChannelAsync(this Account account, CancellationToken cancellation = default) =>
-		account.IsEmpty || account.Type != AccountType.Channel ? ValueTask.FromResult<Channel>(null) : FindChannelAsync(account.Code, cancellation);
+		account.IsEmpty || account.Type != AccountType.Channel ? ValueTask.FromResult<Channel>(null) : account.Component == null ? FindChannelAsync(account.Code, cancellation) : account.Component.GetChannelAsync(account.Code, cancellation);
 	#endregion
 
 	#region 私有方法

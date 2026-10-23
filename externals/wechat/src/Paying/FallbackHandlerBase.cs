@@ -28,55 +28,47 @@
  */
 
 using System;
-using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using Zongsoft.Common;
 using Zongsoft.Services;
-using Zongsoft.Components;
 using Zongsoft.Collections;
 
 namespace Zongsoft.Externals.Wechat.Paying;
 
-public abstract class FallbackHandlerBase<TRequest> : HandlerBase<Stream>
+public abstract class FallbackHandlerBase<TRequest> : IFallbackHandler
 {
-	#region 私有变量
-	private IEnumerable<IServiceProvider<IAuthority>> _providers;
-	#endregion
-
 	#region 构造函数
-	protected FallbackHandlerBase(IServiceProvider serviceProvider)
-	{
-		this.ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-	}
+	protected FallbackHandlerBase(IServiceProvider serviceProvider) => this.ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 	#endregion
 
-	#region 保护属性
+	#region 属性定义
 	protected IServiceProvider ServiceProvider { get; }
+	public abstract FallbackKind Kind { get; }
 	#endregion
 
 	#region 公共方法
-	public ValueTask HandleAsync(TRequest request, CancellationToken cancellation = default) =>
-		this.OnHandleAsync(request, null, cancellation);
+	//仅供已取得可信业务对象的本地调用；外部通知必须经 ReceiveAsync 验证。
+	public ValueTask HandleAsync(TRequest request, CancellationToken cancellation = default) => this.OnHandleAsync(request, null, cancellation);
+	public ValueTask HandleAsync(TRequest request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default) =>
+		this.OnHandleAsync(request, parameters == null ? null : new Dictionary<string, object>(parameters), cancellation);
 
-	public ValueTask HandleAsync(TRequest request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
+	public async ValueTask<FallbackReceipt> ReceiveAsync(FallbackRequest request, CancellationToken cancellation = default)
 	{
-		if(parameters != null && parameters.Any())
-			return this.OnHandleAsync(request, new Dictionary<string, object>(parameters), cancellation);
-		else
-			return this.OnHandleAsync(request, null, cancellation);
-	}
-	#endregion
+		ArgumentNullException.ThrowIfNull(request);
+		if(string.IsNullOrEmpty(request.Merchant) || request.Merchant.Length > 32 || !request.Merchant.All(char.IsAsciiDigit))
+			throw new System.Security.Cryptography.CryptographicException();
 
-	#region 重写方法
-	protected override async ValueTask OnHandleAsync(Stream stream, Parameters parameters, CancellationToken cancellation)
-	{
-		var request = await this.GetRequestAsync(stream, parameters, cancellation);
-		await this.OnHandleAsync(request, parameters, cancellation);
+		var authority = await this.GetAuthorityAsync(request.Merchant, cancellation);
+		var notification = await FallbackNotification.Parser.ParseAsync(this.Kind, request, authority, cancellation);
+		var payload = (TRequest)notification.Payload.Deserialize(this.GetRequestType(notification.Format), Json.Options);
+
+		if(payload == null)
+			throw new JsonException();
+		return await this.OnReceiveAsync(payload, notification, cancellation);
 	}
 	#endregion
 
@@ -86,59 +78,47 @@ public abstract class FallbackHandlerBase<TRequest> : HandlerBase<Stream>
 	#endregion
 
 	#region 虚拟方法
-	internal protected virtual IAuthority GetAuthority(string code, string type)
+	protected virtual async ValueTask<FallbackReceipt> OnReceiveAsync(TRequest request, FallbackNotification notification, CancellationToken cancellation)
 	{
-		var authority = AuthorityUtility.GetAuthority(code);
-
-		if(authority != null)
-			return authority;
-
-		foreach(var provider in _providers ??= this.ServiceProvider.ResolveAll<IServiceProvider<IAuthority>>())
-		{
-			authority = provider.GetService(code);
-
-			if(authority != null)
-				return authority;
-		}
-
-		return null;
+		await this.OnHandleAsync(request, new Parameters { [typeof(FallbackNotification)] = notification }, cancellation);
+		return FallbackReceipt.Completed;
 	}
+
+	protected virtual ValueTask<IAuthority> GetAuthorityAsync(string code, CancellationToken cancellation) =>
+		FallbackNotification.Parser.GetAuthorityAsync(this.ServiceProvider, code, cancellation);
 	#endregion
 }
 
-public abstract class FallbackHandlerBase<TRequest, TResult> : HandlerBase<Stream, TResult>
+public abstract class FallbackHandlerBase<TRequest, TResult> : IFallbackHandler
 {
-	#region 私有变量
-	private IEnumerable<IServiceProvider<IAuthority>> _providers;
-	#endregion
-
 	#region 构造函数
-	protected FallbackHandlerBase(IServiceProvider serviceProvider)
-	{
-		this.ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-	}
+	protected FallbackHandlerBase(IServiceProvider serviceProvider) => this.ServiceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
 	#endregion
 
-	#region 保护属性
+	#region 属性定义
 	protected IServiceProvider ServiceProvider { get; }
+	public abstract FallbackKind Kind { get; }
 	#endregion
 
 	#region 公共方法
+	//仅供已取得可信业务对象的本地调用；外部通知必须经 ReceiveAsync 验证。
 	public ValueTask<TResult> HandleAsync(TRequest request, CancellationToken cancellation = default) => this.OnHandleAsync(request, null, cancellation);
-	public ValueTask<TResult> HandleAsync(TRequest request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default)
-	{
-		if(parameters != null && parameters.Any())
-			return this.OnHandleAsync(request, new Dictionary<string, object>(parameters), cancellation);
-		else
-			return this.OnHandleAsync(request, null, cancellation);
-	}
-	#endregion
+	public ValueTask<TResult> HandleAsync(TRequest request, IEnumerable<KeyValuePair<string, object>> parameters, CancellationToken cancellation = default) =>
+		this.OnHandleAsync(request, parameters == null ? null : new Dictionary<string, object>(parameters), cancellation);
 
-	#region 重写方法
-	protected override async ValueTask<TResult> OnHandleAsync(Stream stream, Parameters parameters, CancellationToken cancellation)
+	public async ValueTask<FallbackReceipt> ReceiveAsync(FallbackRequest request, CancellationToken cancellation = default)
 	{
-		var request = await this.GetRequestAsync(stream, parameters, cancellation);
-		return await this.OnHandleAsync(request, parameters, cancellation);
+		ArgumentNullException.ThrowIfNull(request);
+		if(string.IsNullOrEmpty(request.Merchant) || request.Merchant.Length > 32 || !request.Merchant.All(char.IsAsciiDigit))
+			throw new System.Security.Cryptography.CryptographicException();
+
+		var authority = await this.GetAuthorityAsync(request.Merchant, cancellation);
+		var notification = await FallbackNotification.Parser.ParseAsync(this.Kind, request, authority, cancellation);
+		var payload = (TRequest)notification.Payload.Deserialize(this.GetRequestType(notification.Format), Json.Options);
+
+		if(payload == null)
+			throw new JsonException();
+		return await this.OnReceiveAsync(payload, notification, cancellation);
 	}
 	#endregion
 
@@ -148,96 +128,13 @@ public abstract class FallbackHandlerBase<TRequest, TResult> : HandlerBase<Strea
 	#endregion
 
 	#region 虚拟方法
-	internal protected virtual IAuthority GetAuthority(string code, string type)
+	protected virtual async ValueTask<FallbackReceipt> OnReceiveAsync(TRequest request, FallbackNotification notification, CancellationToken cancellation)
 	{
-		var authority = AuthorityUtility.GetAuthority(code);
-
-		if(authority != null)
-			return authority;
-
-		foreach(var provider in _providers ??= this.ServiceProvider.ResolveAll<IServiceProvider<IAuthority>>())
-		{
-			authority = provider.GetService(code);
-
-			if(authority != null)
-				return authority;
-		}
-
-		return null;
-	}
-	#endregion
-}
-
-internal static class FallbackHandlerUtility
-{
-	#region 静态方法
-	public static ValueTask<TRequest> GetRequestAsync<TRequest>(this FallbackHandlerBase<TRequest> handler, Stream stream, Parameters parameters, CancellationToken cancellation = default)
-	{
-		return GetRequestAsync<TRequest>(stream, parameters, handler.GetAuthority, handler.GetRequestType, cancellation);
+		await this.OnHandleAsync(request, new Parameters { [typeof(FallbackNotification)] = notification }, cancellation);
+		return FallbackReceipt.Completed;
 	}
 
-	public static ValueTask<TRequest> GetRequestAsync<TRequest, TResult>(this FallbackHandlerBase<TRequest, TResult> handler, Stream stream, Parameters parameters, CancellationToken cancellation = default)
-	{
-		return GetRequestAsync<TRequest>(stream, parameters, handler.GetAuthority, handler.GetRequestType, cancellation);
-	}
-	#endregion
-
-	#region 私有方法
-	private static async ValueTask<TRequest> GetRequestAsync<TRequest>(Stream stream, Parameters parameters, Func<string, string, IAuthority> authorityThunk, Func<string, Type> typeThunk, CancellationToken cancellation = default)
-	{
-		if(stream == null)
-			return default;
-
-		if(parameters != null && parameters.TryGetValue("key", out var value) && value is string text)
-		{
-			var (key, format) = Resolve(text);
-			var authority = authorityThunk(key, format);
-
-			if(authority == null)
-				throw OperationException.Unfound($"Didn't find the '{key}' authority or it has no certificate.");
-
-			if(string.IsNullOrEmpty(authority.Secret))
-				throw OperationException.Unsatisfied($"The specified '{key}' authority has no secret key.");
-
-			var message = await JsonSerializer.DeserializeAsync<FallbackMessage>(stream, Json.Options, cancellation);
-			var resource = message.Resource;
-			byte[] data;
-
-			try
-			{
-				data = CryptographyHelper.Decrypt1(authority.Secret, resource.Nonce, resource.AssociatedData, resource.Ciphertext);
-			}
-			catch(Exception ex)
-			{
-				Zongsoft.Diagnostics.Logging.GetLogging(typeof(FallbackHandlerUtility)).Error(ex, string.Format(Properties.Resources.Wechat_CallbackDecryptionFailed_Message, authority.Name));
-				throw;
-			}
-
-			var payload = JsonSerializer.Deserialize(data, typeThunk(format), Json.Options);
-			return (TRequest)payload;
-		}
-
-		throw OperationException.Unfound();
-	}
-
-	private static (string authority, string format) Resolve(ReadOnlySpan<char> key)
-	{
-		if(key.IsEmpty)
-			return default;
-
-		var index = key.LastIndexOf(':');
-
-		switch(index)
-		{
-			case < 0:
-				return (key.ToString(), null);
-			case 0:
-				return (null, key[1..].ToString());
-			case > 0:
-				return index == key.Length - 1 ?
-					(key[..index].ToString(), null) :
-					(key[..index].ToString(), key[(index + 1)..].ToString());
-		}
-	}
+	protected virtual ValueTask<IAuthority> GetAuthorityAsync(string code, CancellationToken cancellation) =>
+		FallbackNotification.Parser.GetAuthorityAsync(this.ServiceProvider, code, cancellation);
 	#endregion
 }

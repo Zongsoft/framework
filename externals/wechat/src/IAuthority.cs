@@ -35,7 +35,13 @@ public interface IAuthority : IEquatable<IAuthority>
 {
 	string Name { get; }
 	string Code { get; }
-	string Secret { get; }
-	Zongsoft.Security.ICertificate Certificate { get; }
+	[System.Text.Json.Serialization.JsonIgnore]
+	[Serialization.SerializationMember(Ignored = true)]
+	string ApiV2Key { get; }
+	[System.Text.Json.Serialization.JsonIgnore]
+	[Serialization.SerializationMember(Ignored = true)]
+	string ApiV3Key { get; }
+	Authority.SigningCredential Signing { get; }
+	Authority.Verifier Verification { get; }
 	AccountCollection Accounts { get; }
 }

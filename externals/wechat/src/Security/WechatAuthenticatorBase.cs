@@ -58,13 +58,13 @@ public abstract class WechatAuthenticatorBase : IAuthenticator, IAuthenticator<s
 		if(string.IsNullOrEmpty(secret))
 			throw new ArgumentNullException(nameof(secret));
 
-		if(!Account.TryParse(key, out var account))
+		if(string.IsNullOrWhiteSpace(key) || key.IndexOfAny(['=', '?', '(', ')', '/']) >= 0 || !Account.TryParse(key, out var account) || string.IsNullOrEmpty(account.Code) || !string.IsNullOrEmpty(account.Secret))
 			throw new ArgumentException(string.Format(Properties.Resources.Wechat_KeyUnrecognized_Message, key), nameof(key));
 
 		return account.Type switch
 		{
-			AccountType.Applet => await GetAppletToken(await AppletManager.GetAppletAsync(account, cancellation), secret, parameters, cancellation),
-			AccountType.Channel => await GetChannelToken(await ChannelManager.GetChannelAsync(account, cancellation), secret, parameters, cancellation),
+			AccountType.Applet => await GetAppletToken(await AppletManager.GetAppletAsync(account.Code, cancellation), secret, parameters, cancellation),
+			AccountType.Channel => await GetChannelToken(await ChannelManager.GetChannelAsync(account.Code, cancellation), secret, parameters, cancellation),
 			_ => throw new InvalidOperationException(),
 		};
 	}
@@ -87,18 +87,14 @@ public abstract class WechatAuthenticatorBase : IAuthenticator, IAuthenticator<s
 	private static async ValueTask<Identity> GetAppletToken(Applet applet, string code, Parameters parameters, CancellationToken cancellation = default)
 	{
 		var result = await applet.LoginAsync(code, cancellation);
-		var info = await applet.Users.GetInfoAsync(result.OpenId, cancellation);
-
-		return string.IsNullOrEmpty(info.UnionId) ?
-			new Identity(applet.Account, result.OpenId, info.Nickname, info.Avatar, info.Description, parameters) :
-			new Identity(applet.Account, result.OpenId, info.UnionId, info.Nickname, info.Avatar, info.Description);
+		return new Identity(applet.Account, result.OpenId, result.UnionId, parameters);
 	}
 
 	private static async ValueTask<Identity> GetChannelToken(Channel channel, string code, Parameters parameters, CancellationToken cancellation = default)
 	{
 		var credential = await channel.Authentication.AuthenticateAsync(code, cancellation);
 		var openId = credential.OpenId;
-		var unionId = string.IsNullOrEmpty(credential.UnionId) ? credential.User.OpenId : credential.UnionId;
+		var unionId = credential.UnionId;
 
 		return string.IsNullOrEmpty(unionId) ?
 			new Identity(channel.Account, openId, credential.User.Nickname, credential.User.Avatar, credential.User.Description, parameters) :

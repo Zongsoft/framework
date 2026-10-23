@@ -55,6 +55,6 @@ public static class PaymentUtility
 		"REVOKED" => PaymentStatus.Revoked,
 		"USERPAYING" => PaymentStatus.Paying,
 		"PAYERROR" => PaymentStatus.Failed,
-		_ => PaymentStatus.None,
+		_ => PaymentStatus.Unknown,
 	};
 }

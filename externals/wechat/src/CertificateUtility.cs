@@ -28,180 +28,179 @@
  */
 
 using System;
+using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Net.Http.Json;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Cryptography;
-using System.Security.Cryptography.X509Certificates;
-
-using Zongsoft.Security;
 
 namespace Zongsoft.Externals.Wechat;
 
 public static class CertificateUtility
 {
-	#region 私有变量
-	private static ICertificate _certificate;
-	private static ICertificate _transitory;
-	private static DateTime _timestamp;
+	#region 静态字段
+	private static readonly SocketsHttpHandler _handler = new() { PooledConnectionLifetime = TimeSpan.FromMinutes(5) };
 	#endregion
 
 	#region 公共方法
-	/// <summary>获取微信平台的数字证书。</summary>
-	/// <param name="authority">获取凭证证书的机构，即指定以哪个机构的身份来获取平台证书。</param>
-	/// <param name="cancellation">异步任务的取消标记。</param>
-	/// <returns>返回的微信平台的数字证书。</returns>
-	public static ValueTask<ICertificate> GetCertificateAsync(this IAuthority authority, CancellationToken cancellation = default)
+	public static ValueTask<Authority.VerificationKey> GetCertificateAsync(this IAuthority authority, CancellationToken cancellation = default) => GetCertificateAsync(authority, null, cancellation);
+	public static ValueTask<Authority.VerificationKey> GetCertificateAsync(this IAuthority authority, string identifier, CancellationToken cancellation = default)
 	{
-		if(_certificate != null && _certificate.Validity.IsValid() && _certificate.Validity.Final > DateTime.UtcNow.AddHours(36))
-			return ValueTask.FromResult(_certificate);
+		ArgumentNullException.ThrowIfNull(authority);
+		cancellation.ThrowIfCancellationRequested();
 
-		return AcquireCertificateAsync(authority, cancellation);
+		if(authority.Verification == null)
+			throw new InvalidOperationException();
+
+		return authority.Verification.GetAsync(authority, identifier, cancellation);
 	}
 
-	/// <summary>获取微信平台的数字证书。</summary>
-	/// <param name="authority">获取凭证证书的机构，即指定以哪个机构的身份来获取平台证书。</param>
-	/// <param name="code">获取对应凭证证书的代号。</param>
-	/// <param name="cancellation">异步任务的取消标记。</param>
-	/// <returns>返回的微信平台的数字证书。</returns>
-	public static async ValueTask<ICertificate> GetCertificateAsync(this IAuthority authority, string code, CancellationToken cancellation = default)
+	public static ValueTask RefreshCertificatesAsync(this IAuthority authority, CancellationToken cancellation = default)
 	{
-		if(string.IsNullOrEmpty(code))
-			return await GetCertificateAsync(authority, cancellation);
+		ArgumentNullException.ThrowIfNull(authority);
 
-		//在现有缓存中查找指定的凭证
-		var found = Find(code);
+		if(authority.Verification == null)
+			throw new InvalidOperationException();
 
-		//如果找到或者凭证刷新时间距离此刻小于特定时长则直接返回
-		if(found != null || (DateTime.Now - _timestamp).TotalHours < 4)
-			return found;
-
-		//刷新获取最新的微信平台数字证书
-		await AcquireCertificateAsync(authority, cancellation);
-
-		//从最新的缓存中查找指定的凭证
-		return Find(code);
-	}
-
-	private static async ValueTask<ICertificate> AcquireCertificateAsync(this IAuthority authority, CancellationToken cancellation = default)
-	{
-		if(authority == null)
-			throw new ArgumentNullException(nameof(authority));
-
-		var response = await Paying.HttpClientFactory.GetHttpClient(authority.Certificate).GetAsync("https://api.mch.weixin.qq.com/v3/certificates", cancellation);
-
-		if(!response.IsSuccessStatusCode)
-			return _certificate;
-
-		//更新获取的时间
-		_timestamp = DateTime.Now;
-
-		var infos = (await response.Content.ReadFromJsonAsync<CertificateResult>(Json.Options, cancellation)).Value;
-
-		if(infos == null || infos.Length == 0)
-			return _certificate ?? _transitory;
-
-		if(infos.Length == 1)
-			return _certificate = Create(authority, infos[0]);
-
-		var sequences = infos.OrderBy(p => p.Expiration);
-		_transitory = Create(authority, sequences.FirstOrDefault());
-		return _certificate = Create(authority, sequences.LastOrDefault());
-
-		static ICertificate Create(IAuthority authority, CertificateResult.CertificateInfo info) =>
-			Zongsoft.Security.Certificate.FromRSAPublicKey(info.SerialNo, GetCertificatePublicKey(authority, info.Data), new CertificateValidity(info.Effective, info.Expiration));
-		//new (info.SerialNo, info.SerialNo, "X509", publicKey: GetCertificatePublicKey(authority, info.Data))
-		//{
-		//	Validity = new CertificateValidity(info.Effective, info.Expiration),
-		//};
-	}
-	#endregion
-
-	#region 私有方法
-	private static ICertificate Find(string code)
-	{
-		if(_certificate != null && string.Equals(_certificate.Identifier, code))
-			return _certificate;
-		if(_transitory != null && string.Equals(_transitory.Identifier, code))
-			return _transitory;
-
-		return null;
-	}
-
-	private static byte[] GetCertificatePublicKey(IAuthority authority, CertificateResult.CertificateData data)
-	{
-		return CryptographyHelper.Decrypt1(
-			Encoding.UTF8.GetBytes(authority.Secret),
-			Encoding.UTF8.GetBytes(data.Nonce),
-			Encoding.UTF8.GetBytes(data.AssociatedData),
-			Convert.FromBase64String(data.Ciphertext));
+		return authority.Verification.RefreshAsync(authority, cancellation);
 	}
 	#endregion
 
 	#region 内部方法
-	internal static byte[] Encrypt(this ICertificate certificate, string text)
+	internal static async Task<Authority.VerificationKey[]> DownloadAsync(IAuthority authority)
 	{
-		var protocol = certificate?.GetProtocol();
+		if(authority.Signing == null || string.IsNullOrEmpty(authority.ApiV3Key))
+			throw new InvalidOperationException();
 
-		return protocol switch
+		var factory = Services.ApplicationContext.Current?.Services.GetService(typeof(IHttpClientFactory)) as IHttpClientFactory;
+		using var client = factory?.CreateClient("Wechat.Certificates") ?? new HttpClient(_handler, false);
+		using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+		using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.mch.weixin.qq.com/v3/certificates");
+
+		var nonce = Guid.NewGuid().ToString("N");
+		var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(CultureInfo.InvariantCulture);
+		var signature = Convert.ToBase64String(authority.Signing.Sign(Encoding.UTF8.GetBytes($"GET\n/v3/certificates\n{timestamp}\n{nonce}\n\n")));
+
+		request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+		request.Headers.Authorization = new AuthenticationHeaderValue("WECHATPAY2-SHA256-RSA2048", $"mchid=\"{authority.Code}\",nonce_str=\"{nonce}\",timestamp=\"{timestamp}\",serial_no=\"{authority.Signing.SerialNumber}\",signature=\"{signature}\"");
+
+		using var response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, timeout.Token);
+		response.EnsureSuccessStatusCode();
+
+		var body = await ReadAsync(response.Content, timeout.Token);
+		var serial = GetHeader(response, "Wechatpay-Serial");
+		var responseTimestamp = GetHeader(response, "Wechatpay-Timestamp");
+		var responseNonce = GetHeader(response, "Wechatpay-Nonce");
+		var responseSignature = GetHeader(response, "Wechatpay-Signature");
+		var trusted = authority.Verification.Find(serial);
+
+		if(trusted == null || !long.TryParse(responseTimestamp, NumberStyles.None, CultureInfo.InvariantCulture, out var seconds) ||
+		   seconds < DateTimeOffset.UtcNow.ToUnixTimeSeconds() - 300 || seconds > DateTimeOffset.UtcNow.ToUnixTimeSeconds() + 300)
+			throw new CryptographicException();
+
+		var prefix = Encoding.UTF8.GetBytes($"{responseTimestamp}\n{responseNonce}\n");
+		var message = new byte[prefix.Length + body.Length + 1];
+		prefix.CopyTo(message, 0);
+		body.CopyTo(message, prefix.Length);
+		message[^1] = (byte)'\n';
+
+		if(!trusted.Verify(message, Convert.FromBase64String(responseSignature)))
+			throw new CryptographicException();
+
+		var result = JsonSerializer.Deserialize<CertificateResult>(body);
+		if(result?.Data == null || result.Data.Length == 0 || result.Data.Length > 32)
+			throw new CryptographicException();
+
+		var keys = new Authority.VerificationKey[result.Data.Length];
+		for(int i = 0; i < keys.Length; i++)
 		{
-			RSA rsa => rsa.Encrypt(Encoding.UTF8.GetBytes(text), RSAEncryptionPadding.OaepSHA1),
-			X509Certificate2 x509 => x509.GetRSAPublicKey().Encrypt(Encoding.UTF8.GetBytes(text), RSAEncryptionPadding.OaepSHA1),
-			_ => throw new WechatException(string.Format(Properties.Resources.Certificate_FormatUnsupported_Message, certificate.Format)),
-		};
-	}
+			var item = result.Data[i];
+			if(item?.Encrypted == null || item.Encrypted.Algorithm != "AEAD_AES_256_GCM")
+				throw new CryptographicException();
 
-	internal static byte[] Decrypt(this ICertificate certificate, byte[] data)
-	{
-		var protocol = certificate?.GetProtocol();
+			var plaintext = CryptographyHelper.Decrypt1(authority.ApiV3Key, item.Encrypted.Nonce, item.Encrypted.AssociatedData, item.Encrypted.Ciphertext);
+			var key = Authority.VerificationKey.FromCertificate(Encoding.UTF8.GetString(plaintext));
 
-		return protocol switch
-		{
-			RSA rsa => rsa.Decrypt(data, RSAEncryptionPadding.OaepSHA1),
-			X509Certificate2 x509 => x509.GetRSAPrivateKey().Decrypt(data, RSAEncryptionPadding.OaepSHA1),
-			_ => throw new WechatException(string.Format(Properties.Resources.Certificate_FormatUnsupported_Message, certificate.Format)),
-		};
+			if(!string.Equals(key.Identifier, item.SerialNumber, StringComparison.Ordinal) || keys.Take(i).Any(previous => previous.Identifier == key.Identifier))
+				throw new CryptographicException();
+
+			//接口的弃用时间可以早于 X.509 的失效时间，二者取交集。
+			keys[i] = key.Restrict(item.Effective == default ? key.Validity.Start.Value : item.Effective, item.Expiration == default ? key.Validity.Final.Value : item.Expiration);
+		}
+
+		return keys;
 	}
 	#endregion
 
-	#region 嵌套结构
-	private struct CertificateResult
+	#region 私有方法
+	private static string GetHeader(HttpResponseMessage response, string name)
+	{
+		if(!response.Headers.TryGetValues(name, out var values))
+			throw new CryptographicException();
+
+		var items = values.ToArray();
+		if(items.Length != 1 || string.IsNullOrWhiteSpace(items[0]))
+			throw new CryptographicException();
+
+		return items[0];
+	}
+
+	private static async ValueTask<byte[]> ReadAsync(HttpContent content, CancellationToken cancellation)
+	{
+		const int LIMIT = 4 * 1024 * 1024;
+
+		await using var stream = await content.ReadAsStreamAsync(cancellation);
+		using var buffer = new MemoryStream();
+		var block = new byte[8192];
+		int count;
+
+		while((count = await stream.ReadAsync(block, cancellation)) > 0)
+		{
+			if(buffer.Length + count > LIMIT)
+				throw new CryptographicException();
+
+			buffer.Write(block, 0, count);
+		}
+
+		return buffer.ToArray();
+	}
+	#endregion
+
+	#region 嵌套类型
+	private sealed class CertificateResult
 	{
 		[JsonPropertyName("data")]
-		public CertificateInfo[] Value { get; set; }
+		public CertificateInfo[] Data { get; set; }
+	}
 
-		public struct CertificateInfo
-		{
-			[JsonPropertyName("serial_no")]
-			public string SerialNo { get; set; }
+	private sealed class CertificateInfo
+	{
+		[JsonPropertyName("serial_no")]
+		public string SerialNumber { get; set; }
+		[JsonPropertyName("effective_time")]
+		public DateTime Effective { get; set; }
+		[JsonPropertyName("expire_time")]
+		public DateTime Expiration { get; set; }
+		[JsonPropertyName("encrypt_certificate")]
+		public EncryptedCertificate Encrypted { get; set; }
+	}
 
-			[JsonPropertyName("effective_time")]
-			public DateTime Effective { get; set; }
-
-			[JsonPropertyName("expire_time")]
-			public DateTime Expiration { get; set; }
-
-			[JsonPropertyName("encrypt_certificate")]
-			public CertificateData Data { get; set; }
-		}
-
-		public struct CertificateData
-		{
-			[JsonPropertyName("algorithm")]
-			public string Algorithm { get; set; }
-
-			[JsonPropertyName("nonce")]
-			public string Nonce { get; set; }
-
-			[JsonPropertyName("associated_data")]
-			public string AssociatedData { get; set; }
-
-			[JsonPropertyName("ciphertext")]
-			public string Ciphertext { get; set; }
-		}
+	private sealed class EncryptedCertificate
+	{
+		[JsonPropertyName("algorithm")]
+		public string Algorithm { get; set; }
+		[JsonPropertyName("nonce")]
+		public string Nonce { get; set; }
+		[JsonPropertyName("associated_data")]
+		public string AssociatedData { get; set; }
+		[JsonPropertyName("ciphertext")]
+		public string Ciphertext { get; set; }
 	}
 	#endregion
 }

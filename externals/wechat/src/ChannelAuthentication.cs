@@ -29,197 +29,112 @@
 
 using System;
 using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Generic;
-
-using Zongsoft.Common;
 
 namespace Zongsoft.Externals.Wechat;
 
-public class ChannelAuthentication
+public partial class ChannelAuthentication
 {
-	#region 构造函数
 	public ChannelAuthentication(Account account)
 	{
-		if(account.IsEmpty)
-			throw new ArgumentNullException(nameof(account));
+		if(account.IsEmpty || account.Type != AccountType.Channel)
+			throw new ArgumentException(null, nameof(account));
 
 		this.Account = account;
 	}
-	#endregion
 
-	#region 公共属性
 	public Account Account { get; }
-	#endregion
 
-	#region 公共方法
 	public async ValueTask<Credential> AuthenticateAsync(string token, CancellationToken cancellation = default)
 	{
-		var response = await CredentialManager.Http.GetAsync($"/sns/oauth2/access_token?appid={this.Account.Code}&secret={this.Account.Secret}&code={token}&grant_type=authorization_code", cancellation);
+		ArgumentException.ThrowIfNullOrWhiteSpace(token);
+
+		if(this.Account.Component == null && string.IsNullOrWhiteSpace(this.Account.Secret))
+			throw new InvalidOperationException();
+
+		var componentToken = this.Account.Component == null ? null : await this.Account.GetComponentCredentialAsync(4, cancellation);
+		var started = DateTimeOffset.UtcNow;
+		using var client = AccountHttpClient.Create();
+		using var response = await client.GetAsync(componentToken == null ?
+			$"sns/oauth2/access_token?appid={Uri.EscapeDataString(this.Account.Code)}&secret={Uri.EscapeDataString(this.Account.Secret)}&code={Uri.EscapeDataString(token)}&grant_type=authorization_code" :
+			$"sns/oauth2/component/access_token?appid={Uri.EscapeDataString(this.Account.Code)}&code={Uri.EscapeDataString(token)}&grant_type=authorization_code&component_appid={Uri.EscapeDataString(this.Account.ComponentId)}&component_access_token={Uri.EscapeDataString(componentToken)}", cancellation);
 		var result = await response.GetResultAsync<AuthenticationResult>(cancellation);
-		var info = await GetUserInfo(result.AccessToken, result.OpenId, cancellation);
-		return result.ToCredential(info);
+		await this.Account.EnsureAuthorizationAsync(4, cancellation);
+		var credential = this.CreateCredential(result, started, default);
+
+		if(HasUserPermission(credential.Permission))
+		{
+			var user = await this.GetUserInfoAsync(credential, cancellation);
+			credential = new Credential(credential.AppId, credential.AccessToken, credential.RenewalToken, credential.OpenId, credential.UnionId ?? user.UnionId, credential.Expiration, credential.Permission, user, credential.ComponentId);
+		}
+
+		return credential;
 	}
 
-	public static async ValueTask<UserInfo> GetUserInfo(string token, string openId, CancellationToken cancellation = default)
+	public async ValueTask<Credential> RefreshAsync(Credential credential, CancellationToken cancellation = default)
 	{
-		var response = await CredentialManager.Http.GetAsync($"/sns/userinfo?access_token={token}&openid={openId}", cancellation);
+		this.EnsureAccount(credential);
+		await this.Account.EnsureAuthorizationAsync(4, cancellation);
+		ArgumentException.ThrowIfNullOrWhiteSpace(credential.RenewalToken);
+		var componentToken = this.Account.Component == null ? null : await this.Account.GetComponentCredentialAsync(4, cancellation);
+		var started = DateTimeOffset.UtcNow;
+		using var client = AccountHttpClient.Create();
+		using var response = await client.GetAsync(componentToken == null ?
+			$"sns/oauth2/refresh_token?appid={Uri.EscapeDataString(this.Account.Code)}&grant_type=refresh_token&refresh_token={Uri.EscapeDataString(credential.RenewalToken)}" :
+			$"sns/oauth2/component/refresh_token?appid={Uri.EscapeDataString(this.Account.Code)}&grant_type=refresh_token&component_appid={Uri.EscapeDataString(this.Account.ComponentId)}&component_access_token={Uri.EscapeDataString(componentToken)}&refresh_token={Uri.EscapeDataString(credential.RenewalToken)}", cancellation);
+		var result = await response.GetResultAsync<AuthenticationResult>(cancellation);
+		await this.Account.EnsureAuthorizationAsync(4, cancellation);
+
+		if(result.OpenId != credential.OpenId || !string.IsNullOrEmpty(result.UnionId) && !string.IsNullOrEmpty(credential.UnionId) && result.UnionId != credential.UnionId)
+			throw new FormatException();
+
+		return this.CreateCredential(result, started, HasUserPermission(result.Permission) ? credential.User : default, credential.UnionId);
+	}
+
+	public async ValueTask ValidateAsync(Credential credential, CancellationToken cancellation = default)
+	{
+		this.EnsureAccount(credential);
+		await this.Account.EnsureAuthorizationAsync(4, cancellation);
+		using var client = AccountHttpClient.Create();
+		using var response = await client.GetAsync($"sns/auth?access_token={Uri.EscapeDataString(credential.AccessToken)}&openid={Uri.EscapeDataString(credential.OpenId)}", cancellation);
+		var result = await response.GetResultAsync<System.Text.Json.JsonElement>(cancellation);
+
+		if(result.ValueKind != System.Text.Json.JsonValueKind.Object || !result.TryGetProperty("errcode", out var code) || !code.TryGetInt32(out var number) || number != 0)
+			throw new FormatException();
+	}
+
+	public async ValueTask<UserInfo> GetUserInfoAsync(Credential credential, CancellationToken cancellation = default)
+	{
+		this.EnsureAccount(credential);
+		await this.Account.EnsureAuthorizationAsync(4, cancellation);
+
+		if(!HasUserPermission(credential.Permission))
+			throw new InvalidOperationException();
+
+		using var client = AccountHttpClient.Create();
+		using var response = await client.GetAsync($"sns/userinfo?access_token={Uri.EscapeDataString(credential.AccessToken)}&openid={Uri.EscapeDataString(credential.OpenId)}&lang=zh_CN", cancellation);
 		var result = await response.GetResultAsync<UserInfoResult>(cancellation);
-		return result.ToInfo(openId);
-	}
-	#endregion
 
-	#region 嵌套结构
-	public readonly struct Credential
+		if(result.OpenId != credential.OpenId || !string.IsNullOrEmpty(result.UnionId) && !string.IsNullOrEmpty(credential.UnionId) && result.UnionId != credential.UnionId)
+			throw new FormatException();
+
+		return result.ToInfo(credential.OpenId, credential.UnionId);
+	}
+
+	private static bool HasUserPermission(string permission) => permission?.Split(',', StringSplitOptions.TrimEntries).Contains("snsapi_userinfo", StringComparer.Ordinal) == true;
+	private void EnsureAccount(Credential credential)
 	{
-		public Credential(string credentialId, string accessToken, string openId, string unionId, TimeSpan period, string permission, in UserInfo user)
-		{
-			this.CredentialId = string.IsNullOrEmpty(credentialId) ? Randomizer.GenerateString(16) : credentialId;
-			this.AccessToken = accessToken;
-			this.OpenId = openId;
-			this.UnionId = unionId;
-			this.Period = period;
-			this.Permission = permission;
-			this.User = user;
-		}
-
-		public readonly string CredentialId { get; }
-		public readonly string AccessToken { get; }
-		public readonly string OpenId { get; }
-		public readonly string UnionId { get; }
-		public readonly TimeSpan Period { get; }
-		public readonly string Permission { get; }
-		public readonly UserInfo User { get; }
+		if(credential.AppId != this.Account.Code || credential.ComponentId != this.Account.ComponentId || string.IsNullOrWhiteSpace(credential.AccessToken) || string.IsNullOrWhiteSpace(credential.OpenId))
+			throw new ArgumentException(null, nameof(credential));
 	}
 
-	private struct AuthenticationResult
+	private Credential CreateCredential(AuthenticationResult result, DateTimeOffset started, UserInfo user, string unionId = null)
 	{
-		#region 公共属性
-		[JsonPropertyName("access_token")]
-		[Serialization.SerializationMember("access_token")]
-		public string AccessToken { get; set; }
+		if(string.IsNullOrWhiteSpace(result.AccessToken) || string.IsNullOrWhiteSpace(result.RenewalToken) || string.IsNullOrWhiteSpace(result.OpenId) || result.Period <= 0 || string.IsNullOrWhiteSpace(result.Permission))
+			throw new FormatException();
 
-		[JsonPropertyName("refresh_token")]
-		[Serialization.SerializationMember("refresh_token")]
-		public string RenewalToken { get; set; }
-
-		[JsonPropertyName("expires_in")]
-		[Serialization.SerializationMember("expires_in")]
-		public int Period { get; set; }
-
-		[JsonPropertyName("openid")]
-		[Serialization.SerializationMember("openid")]
-		public string OpenId { get; set; }
-
-		[JsonPropertyName("unionid")]
-		[Serialization.SerializationMember("unionid")]
-		public string UnionId { get; set; }
-
-		[JsonPropertyName("scope")]
-		[Serialization.SerializationMember("scope")]
-		public string Permission { get; set; }
-		#endregion
-
-		#region 公共方法
-		public Credential ToCredential(UserInfo user) => new
-		(
-			Randomizer.GenerateString(16),
-			this.AccessToken,
-			this.OpenId,
-			this.UnionId,
-			TimeSpan.FromSeconds(this.Period),
-			this.Permission,
-			user
-		);
-		#endregion
+		return new Credential(this.Account.Code, result.AccessToken, result.RenewalToken, result.OpenId,
+			string.IsNullOrWhiteSpace(result.UnionId) ? unionId : result.UnionId, started.AddSeconds(result.Period), result.Permission, user, this.Account.ComponentId);
 	}
-
-	private struct UserInfoResult
-	{
-		#region 公共属性
-		[JsonPropertyName("openid")]
-		[Serialization.SerializationMember("openid")]
-		public string OpenId { get; set; }
-
-		[JsonPropertyName("unionid")]
-		[Serialization.SerializationMember("unionid")]
-		public string UnionId { get; set; }
-
-		[JsonPropertyName("nickname")]
-		[Serialization.SerializationMember("nickname")]
-		public string Nickname { get; set; }
-
-		[JsonPropertyName("language")]
-		[Serialization.SerializationMember("language")]
-		public string Language { get; set; }
-
-		[JsonPropertyName("country")]
-		[Serialization.SerializationMember("country")]
-		public string Country { get; set; }
-
-		[JsonPropertyName("province")]
-		[Serialization.SerializationMember("province")]
-		public string Province { get; set; }
-
-		[JsonPropertyName("city")]
-		[Serialization.SerializationMember("city")]
-		public string City { get; set; }
-
-		[JsonPropertyName("headimgurl")]
-		[Serialization.SerializationMember("headimgurl")]
-		public string Avatar { get; set; }
-
-		[JsonPropertyName("subscribe_time")]
-		[Serialization.SerializationMember("subscribe_time")]
-		public long SubscribedTime { get; set; }
-
-		[JsonPropertyName("remark")]
-		[Serialization.SerializationMember("remark")]
-		public string Description { get; set; }
-
-		[JsonPropertyName("privilege")]
-		[Serialization.SerializationMember("privilege")]
-		public string[] Privileges { get; set; }
-		#endregion
-
-		#region 公共方法
-		public UserInfo ToInfo(string openId, string unionId = null)
-		{
-			return new UserInfo()
-			{
-				OpenId = string.IsNullOrEmpty(openId) ? this.OpenId : openId,
-				UnionId = string.IsNullOrEmpty(unionId) ? this.UnionId : unionId,
-				Nickname = this.Nickname,
-				Language = this.Language,
-				Country = this.Country,
-				Province = this.Province,
-				City = this.City,
-				Avatar = this.Avatar,
-				SubscribedTime = this.SubscribedTime,
-				Description = this.Description,
-				Privileges = this.Privileges,
-			};
-		}
-		#endregion
-	}
-
-	public struct UserInfo
-	{
-		public string OpenId { get; init; }
-		public string UnionId { get; init; }
-		public string Nickname { get; init; }
-		public string Language { get; init; }
-		public string Avatar { get; init; }
-		public string Country { get; init; }
-		public string Province { get; init; }
-		public string City { get; init; }
-		public string Description { get; init; }
-		public long SubscribedTime { get; init; }
-		public string[] Privileges { get; init; }
-	}
-	#endregion
 }

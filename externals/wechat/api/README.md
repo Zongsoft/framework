@@ -16,10 +16,10 @@
 
 ## API Areas
 
-- Applet login, phone-number retrieval, user lookup, and access-credential refresh.
-- Official-account credential, user, message-template, authentication, and postmark operations.
+- Applet application-session login and structured phone-number retrieval.
+- Official-account user, message-template, authentication, and postmark operations.
 - Bank and branch lookup, including bank-card identification.
-- Platform certificate retrieval and temporary media-file upload.
+- WeChat verification-material metadata retrieval and temporary media-file upload.
 
 Load `Zongsoft.Externals.Wechat.Web.plugin` together with `Zongsoft.Externals.Wechat`. The controllers use the `Externals/Wechat` area and resolve configured applets, channels, payment authorities, and related services from the core plugin; only the endpoints required by the host should be exposed publicly.
 
@@ -34,13 +34,17 @@ This package contains controllers only. Account identifiers, applet/channel cred
 ## Typical Applet Flow
 
 1. The client obtains a temporary login code from WeChat.
-2. Call the configured applet endpoint to exchange it through `Applet`/`UserProvider`.
-3. Use the returned application identity according to the host's authentication design.
-4. Refresh access credentials through the credential endpoint only when required by the owning service.
+2. The host exchanges it through `Applet.LoginAsync` and uses OpenID and, when available, UnionID to identify the application user.
+3. The host issues its own application session and keeps the WeChat session key on the server.
+4. Access-credential retrieval and refresh are restricted to the owning server-side service.
+
+`POST Applets/{id}/Login?scenario={scenario}` accepts a plain-text login code and issues an application session through the host authenticator, challengers, and credential provider. `POST Applets/{id}/PhoneNumber` accepts `{ "code": "phone authorization code", "openId": "optional identity" }` and returns the full number, national number, and country code.
+
+Both require the host's `Wechat.Accounts` authorization policy, with the requested `Account` as resource, to validate caller and tenant ownership; a missing policy returns 403. Phone retrieval also requires an authenticated application identity. There are no applet user-directory or applet/channel Credential HTTP endpoints. Protocol secrets are excluded from serialization. See the [identity contract](../docs/implementation.md#applet-identity).
 
 Channel operations similarly resolve a named channel before reading users, sending template messages or performing authentication. Bank/certificate/file controllers delegate to the configured payment/platform services.
 
-> 💡 WeChat access tokens and platform certificates have their own expiry and refresh rules. Use the core managers and cache; do not have every controller consumer implement independent refresh loops.
+`Certificates/{code?}` looks up a public-key ID or platform-certificate serial number for the default merchant; omitting it selects the current encryption material. The result contains `VerificationKey` identity, mode, and validity metadata, without merchant private keys or certificate files. See the [credential contract](../docs/implementation.md#merchant-credentials) for loading and refresh conditions. The host should coordinate token and certificate refresh.
 
 ## Security and Side Effects
 
@@ -63,19 +67,25 @@ Use a Plugins.Web host and deploy the corresponding main adapter listed below. S
 
 | Runtime artifact | Source of truth |
 | --- | --- |
-| `Zongsoft.Externals.Wechat.Web` | [Zongsoft.Externals.Wechat.Web.plugin](Zongsoft.Externals.Wechat.Web.plugin) |
-| File copying and dependencies | [Zongsoft.Externals.Wechat.Web.deploy](Zongsoft.Externals.Wechat.Web.deploy) |
+| `Zongsoft.Externals.Wechat.Web` | [Zongsoft.Externals.Wechat.Web.plugin](src/Zongsoft.Externals.Wechat.Web.plugin) |
+| File copying and dependencies | [Zongsoft.Externals.Wechat.Web.deploy](src/Zongsoft.Externals.Wechat.Web.deploy) |
 
 Add this fragment to an existing host `.deploy` (retain Main and the host’s other base manifests; do not replace the whole file):
 
 ```ini
 [plugins zongsoft externals wechat]
-nuget:Zongsoft.Externals.Wechat
+nuget:Zongsoft.Externals.Wechat@7.10.0
 
 [plugins zongsoft externals wechat web]
-nuget:Zongsoft.Externals.Wechat.Web
+nuget:Zongsoft.Externals.Wechat.Web@7.10.0
 ```
 
 Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.
 
 Additional artifacts listed by the deployment manifest include `Zongsoft.Externals.Wechat.Web.plugin`. Retain assemblies, dependencies and satellite resource directories as well. Restart the host after deployment, check plugin loading and service/driver registration, then verify the workflow above; copied files alone do not prove that the feature is active.
+
+`Channels/{id}/Login` also returns a host application session. Postmark requires an additional `Wechat.JSSDK` site policy and returns a hexadecimal Signature. User and message endpoints require authenticated callers and account authorization, with an explicit id route. See the [channel service contract](../docs/implementation.md#channel-services) for routes, payloads, and host-owned state validation.
+
+## Third-party authorization requests
+
+Authenticated callers can use `POST Components/{componentAppId}/Authorizations` with `Context`, `RedirectUri`, `AccountType` and optional `Mobile`. The host must configure `Wechat.Components` to authorize the business scope, component, account type and redirect site, and register a durable `IComponentStore`. The response contains an authorization URL and expiry only after the server saves its owner-bound state. It does not establish a tenant association or expose component/authorizer credentials. See the [component contract](../docs/implementation.md#component-platform).

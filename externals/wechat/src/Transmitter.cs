@@ -76,6 +76,9 @@ public class Transmitter : ITransmitter, IMatchable, IMatchable<string>
 		if(string.IsNullOrEmpty(template))
 			throw new ArgumentNullException(nameof(template));
 
+		if(!string.IsNullOrEmpty(channel) && !string.Equals(channel, "Message", StringComparison.OrdinalIgnoreCase))
+			throw new ArgumentException(null, nameof(channel));
+
 		var index = destination.IndexOf(':');
 		if(index <= 0 || index >= destination.Length - 1)
 			throw new ArgumentException(Properties.Resources.Wechat_DestinationInvalid_Message);

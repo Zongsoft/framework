@@ -42,10 +42,6 @@ namespace Zongsoft.Externals.Wechat;
 
 public class Channel
 {
-	#region 静态变量
-	private static readonly System.Security.Cryptography.SHA1 SHA1 = System.Security.Cryptography.SHA1.Create();
-	#endregion
-
 	#region 成员字段
 	private volatile UserProvider _users;
 	private volatile ChannelMessager _messager;
@@ -55,11 +51,10 @@ public class Channel
 	#region 构造函数
 	public Channel(Account account)
 	{
-		if(account.IsEmpty)
-			throw new ArgumentNullException(nameof(account));
+		if(account.IsEmpty || account.Type != AccountType.Channel)
+			throw new ArgumentException(null, nameof(account));
 
 		this.Account = account;
-		this.Membership = new Membership(this.Account);
 	}
 	#endregion
 
@@ -77,7 +72,7 @@ public class Channel
 		}
 	}
 
-	public Membership Membership { get; }
+	public Membership GetMembership(IAuthority authority, string brandId) => new(authority, this.Account, brandId);
 
 	public ChannelMessager Messager
 	{
@@ -109,6 +104,13 @@ public class Channel
 	#region 计算邮戳
 	public async ValueTask<(byte[] data, string nonce, long timestamp, TimeSpan period)> PostmarkAsync(string url, CancellationToken cancellation = default)
 	{
+		if(!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme is not ("https" or "http") || !string.IsNullOrEmpty(uri.UserInfo))
+			throw new ArgumentException(null, nameof(url));
+
+		var fragment = url.IndexOf('#');
+		if(fragment >= 0)
+			url = url[..fragment];
+
 		var result = await CredentialManager.GetTicketAsync(this.Account, "jsapi", false, cancellation);
 
 		if(string.IsNullOrEmpty(result.ticket))
@@ -119,7 +121,7 @@ public class Channel
 		var period = result.period;
 
 		var text = $"jsapi_ticket={result.ticket}&noncestr={nonce}&timestamp={timestamp}&url={url}";
-		return (SHA1.ComputeHash(Encoding.UTF8.GetBytes(text)), nonce, timestamp, period);
+		return (System.Security.Cryptography.SHA1.HashData(Encoding.UTF8.GetBytes(text)), nonce, timestamp, period);
 	}
 	#endregion
 }

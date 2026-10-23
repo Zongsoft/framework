@@ -49,7 +49,7 @@ internal static class Json
 		Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
 	};
 
-	internal static JsonSerializerOptions GetOptions(ICertificate certificate)
+	internal static JsonSerializerOptions GetOptions(Authority.VerificationKey certificate)
 	{
 		var resolver = new DefaultJsonTypeInfoResolver();
 
@@ -67,9 +67,9 @@ internal static class Json
 
 	internal class CryptographyConverter : JsonConverter<string>
 	{
-		private readonly ICertificate _certificate;
+		private readonly Authority.VerificationKey _certificate;
 		public CryptographyConverter() { }
-		public CryptographyConverter(ICertificate certificate) => _certificate = certificate;
+		public CryptographyConverter(Authority.VerificationKey certificate) => _certificate = certificate;
 
 		public override string Read(ref Utf8JsonReader reader, Type type, JsonSerializerOptions options) => reader.GetString();
 		public override void Write(Utf8JsonWriter writer, string value, JsonSerializerOptions options)
@@ -81,6 +81,8 @@ internal static class Json
 
 	internal class DateConverter : JsonConverter<DateTime?>
 	{
+		public override bool HandleNull => true;
+
 		public override DateTime? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
 		{
 			var raw = reader.GetString();
@@ -96,7 +98,7 @@ internal static class Json
 			if(value == null)
 				writer.WriteStringValue(Properties.Resources.Wechat_CertificatePermanentValue);
 			else
-				writer.WriteStringValue(value.Value.ToString("yyyy-MM-dd"));
+				writer.WriteStringValue(value.Value.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture));
 		}
 	}
 }

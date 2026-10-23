@@ -45,35 +45,23 @@ public static class BankUtility
 		if(authority == null)
 			throw new ArgumentNullException(nameof(authority));
 
-		if(!page.IsLimited(out var limit, out var offset))
-		{
-			if(page.IsPaged(out var index, out var size))
-			{
-				limit = size;
-				offset = (index - 1) * size;
-			}
-			else
-			{
-				limit = 100;
-				offset = 0;
-			}
-		}
+		if(!Enum.IsDefined(kind))
+			throw new ArgumentOutOfRangeException(nameof(kind));
 
-		var response = kind == BankKind.Personal ?
-			await Paying.HttpClientFactory.GetHttpClient(authority.Certificate).GetAsync($"capital/capitallhh/banks/personal-banking?offset={offset}&limit={limit}", cancellation) :
-			await Paying.HttpClientFactory.GetHttpClient(authority.Certificate).GetAsync($"capital/capitallhh/banks/corporate-banking?offset={offset}&limit={limit}", cancellation);
+		var (limit, offset) = GetPage(page);
 
-		var result = await response.GetResultAsync<Result<Bank>>(cancellation);
+		using var response = kind == BankKind.Personal ?
+			await Paying.HttpClientFactory.GetHttpClient(authority).GetAsync($"capital/capitallhh/banks/personal-banking?offset={offset}&limit={limit}", cancellation) :
+			await Paying.HttpClientFactory.GetHttpClient(authority).GetAsync($"capital/capitallhh/banks/corporate-banking?offset={offset}&limit={limit}", cancellation);
 
-		if(result.HasData)
-		{
-			if(page != null)
-				page.Total = result.Total;
+		var result = await Paying.HttpUtility.GetResultAsync<Result<Bank>>(response, cancellation);
 
-			return result.Data;
-		}
+		if(result.Total < result.Count || result.Count != (result.Data?.Length ?? 0) || result.Offset != offset)
+			throw new FormatException();
+		if(page != null)
+			page.Total = result.Total;
 
-		return null;
+		return result.Data ?? [];
 	}
 
 	public static async ValueTask<IEnumerable<BankBranch>> GetBranchesAsync(this IAuthority authority, string id, string city, Paging page = null, CancellationToken cancellation = default)
@@ -81,12 +69,54 @@ public static class BankUtility
 		if(authority == null)
 			throw new ArgumentNullException(nameof(authority));
 
+		ArgumentException.ThrowIfNullOrWhiteSpace(id);
+		ArgumentException.ThrowIfNullOrWhiteSpace(city);
+		var (limit, offset) = GetPage(page);
+
+		using var response = await Paying.HttpClientFactory.GetHttpClient(authority).GetAsync($"capital/capitallhh/banks/{Uri.EscapeDataString(id)}/branches?city_code={Uri.EscapeDataString(city ?? string.Empty)}&offset={offset}&limit={limit}", cancellation);
+		var result = await Paying.HttpUtility.GetResultAsync<Result<BankBranch>>(response, cancellation);
+
+		if(result.Total < result.Count || result.Count != (result.Data?.Length ?? 0) || result.Offset != offset)
+			throw new FormatException();
+		if(page != null)
+			page.Total = result.Total;
+
+		return result.Data ?? [];
+	}
+
+	public static async ValueTask<IReadOnlyList<Bank>> FindAsync(this IAuthority authority, string code, CancellationToken cancellation = default)
+	{
+		if(authority == null)
+			throw new ArgumentNullException(nameof(authority));
+
+		if(string.IsNullOrEmpty(code))
+			throw new ArgumentNullException(nameof(code));
+
+		var certificate = await authority.GetCertificateAsync(cancellation) ?? throw new System.Security.Cryptography.CryptographicException();
+		var account = Convert.ToBase64String(certificate.Encrypt(code));
+
+		using var request = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, $"capital/capitallhh/banks/search-banks-by-bank-account?account_number={Uri.EscapeDataString(account)}");
+		request.Headers.Add("Wechatpay-Serial", certificate.Identifier);
+
+		using var response = await Paying.HttpClientFactory.GetHttpClient(authority).SendAsync(request, cancellation);
+		var result = await Paying.HttpUtility.GetResultAsync<Result<Bank>>(response, cancellation);
+
+		if(result.Total < 0 || result.Total != (result.Data?.Length ?? 0))
+			throw new FormatException();
+
+		return result.Data ?? [];
+	}
+	#endregion
+
+	#region 私有方法
+	private static (int Limit, int Offset) GetPage(Paging page)
+	{
 		if(!page.IsLimited(out var limit, out var offset))
 		{
 			if(page.IsPaged(out var index, out var size))
 			{
 				limit = size;
-				offset = (index - 1) * size;
+				offset = checked((index - 1) * size);
 			}
 			else
 			{
@@ -95,39 +125,17 @@ public static class BankUtility
 			}
 		}
 
-		var response = await Paying.HttpClientFactory.GetHttpClient(authority.Certificate).GetAsync($"capital/capitallhh/banks/{id}/branches?city_code={city}&offset={offset}&limit={limit}", cancellation);
-		var result = await response.GetResultAsync<Result<BankBranch>>(cancellation);
+		if(limit <= 0 || offset < 0)
+			throw new ArgumentOutOfRangeException(nameof(page));
 
-		if(result.HasData)
-		{
-			if(page != null)
-				page.Total = result.Total;
-
-			return result.Data;
-		}
-
-		return null;
-	}
-
-	public static async ValueTask<Bank?> FindAsync(this IAuthority authority, string code, CancellationToken cancellation = default)
-	{
-		if(authority == null)
-			throw new ArgumentNullException(nameof(authority));
-
-		if(string.IsNullOrEmpty(code))
-			throw new ArgumentNullException(nameof(code));
-
-		var account = Convert.ToBase64String(authority.Certificate.Encrypt(code));
-		var response = await Paying.HttpClientFactory.GetHttpClient(authority.Certificate).GetAsync($"capital/capitallhh/banks/search-banks-by-bank-account?account_number={account}", cancellation);
-		var result = await Paying.HttpUtility.GetResultAsync<Result<Bank>>(response, cancellation);
-
-		return result.HasData ? result.Data[0] : null;
+		return (limit, checked((int)offset));
 	}
 	#endregion
 
 	private struct Result<T>
 	{
 		#region 公共属性
+		[JsonRequired]
 		[JsonPropertyName("total_count")]
 		public int Total { get; set; }
 		[JsonPropertyName("count")]

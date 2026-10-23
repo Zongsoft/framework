@@ -59,7 +59,7 @@ public static class AppletManager
 		if(account.Type != AccountType.Applet)
 			throw new ArgumentException(string.Format(Properties.Resources.Wechat_AccountNotApplet_Message, account.Code));
 
-		return GetAppletAsync(account.Code, cancellation);
+		return account.Component == null ? GetAppletAsync(account.Code, cancellation) : account.Component.GetAppletAsync(account.Code, cancellation);
 	}
 
 	public static async ValueTask<Applet> FindAppletAsync(string code, CancellationToken cancellation = default)
@@ -69,7 +69,7 @@ public static class AppletManager
 		if(_applets.TryGetValue(code, out var result))
 			return result;
 
-		var provider = Provider;
+		var provider = Provider ?? Zongsoft.Services.ApplicationContext.Current?.Services.GetService(typeof(IAccountProvider)) as IAccountProvider;
 		if(provider == null)
 			return null;
 
@@ -77,11 +77,11 @@ public static class AppletManager
 		if(account.IsEmpty)
 			return null;
 
-		return _applets.GetOrAdd(code, _ => new Applet(account));
+		return account.Component == null ? _applets.GetOrAdd(code, _ => new Applet(account)) : new Applet(account);
 	}
 
 	public static ValueTask<Applet> FindAppletAsync(this Account account, CancellationToken cancellation = default) =>
-		account.IsEmpty || account.Type != AccountType.Applet ? ValueTask.FromResult<Applet>(null) : FindAppletAsync(account.Code, cancellation);
+		account.IsEmpty || account.Type != AccountType.Applet ? ValueTask.FromResult<Applet>(null) : account.Component == null ? FindAppletAsync(account.Code, cancellation) : account.Component.GetAppletAsync(account.Code, cancellation);
 	#endregion
 
 	#region 私有方法

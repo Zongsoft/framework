@@ -35,6 +35,8 @@ public abstract class RefundmentHandlerBase : FallbackHandlerBase<PaymentManager
 {
 	protected RefundmentHandlerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
 
+	public override FallbackKind Kind => FallbackKind.Refundment;
+
 	internal protected override Type GetRequestType(string format) =>
 		string.Equals(format, PaymentManager.RefundmentService.DirectRefundmentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?
 		typeof(PaymentManager.RefundmentService.DirectRefundmentService.DirectOrder) :
@@ -44,6 +46,8 @@ public abstract class RefundmentHandlerBase : FallbackHandlerBase<PaymentManager
 public abstract class RefundmentHandlerBase<TResult> : FallbackHandlerBase<PaymentManager.RefundmentService.RefundmentOrder, TResult>
 {
 	protected RefundmentHandlerBase(IServiceProvider serviceProvider) : base(serviceProvider) { }
+
+	public override FallbackKind Kind => FallbackKind.Refundment;
 
 	internal protected override Type GetRequestType(string format) =>
 		string.Equals(format, PaymentManager.RefundmentService.DirectRefundmentService.FORMAT, StringComparison.OrdinalIgnoreCase) ?

@@ -29,387 +29,188 @@
 
 using System;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 using Zongsoft.Common;
 using Zongsoft.Caching;
 using Zongsoft.Services;
-using Zongsoft.Diagnostics;
+using Zongsoft.Services.Distributing;
 
 namespace Zongsoft.Externals.Wechat;
 
-public static class CredentialManager
+public static partial class CredentialManager
 {
 	#region 成员字段
-	private static readonly HttpClient _http;
-	private static readonly ConcurrentDictionary<string, Token> _localCache;
-	private static readonly Logging _logging = Logging.GetLogging(typeof(CredentialManager));
-
-	private static IDistributedCache _cache;
-	private static Services.Distributing.IDistributedLockManager _locker;
-	#endregion
-
-	#region 静态函数
-	static CredentialManager()
+	private static readonly HttpClient _http = new(new SocketsHttpHandler { AllowAutoRedirect = false, PooledConnectionLifetime = TimeSpan.FromMinutes(5) })
 	{
-		_http = new HttpClient();
-		_http.BaseAddress = new Uri("https://api.weixin.qq.com");
-		_http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-		_http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Zongsoft.Externals.Wechat", "1.0"));
-
-		_localCache = new ConcurrentDictionary<string, Token>();
-	}
+		BaseAddress = new Uri("https://api.weixin.qq.com/"),
+		Timeout = TimeSpan.FromSeconds(30),
+	};
+	private static readonly Dictionary<string, Gate> _gates = new(StringComparer.Ordinal);
+	private static IDistributedCache _cache;
+	private static IDistributedLockManager _locker;
 	#endregion
 
 	#region 公共属性
 	public static IDistributedCache Cache
 	{
-		get => _cache ??= ApplicationContext.Current.Services.Resolve<IServiceProvider<IDistributedCache>>()?.GetService(GetCacheName());
+		get => _cache ??= ApplicationContext.Current?.Services.Resolve<IServiceProvider<IDistributedCache>>()?.GetService(GetCacheName());
 		set => _cache = value;
 	}
 
-	public static Services.Distributing.IDistributedLockManager Locker
+	public static IDistributedLockManager Locker
 	{
-		get => _locker ??= ApplicationContext.Current.Services.Resolve<IServiceProvider<Services.Distributing.IDistributedLockManager>>()?.GetService(GetCacheName());
+		get => _locker ??= ApplicationContext.Current?.Services.Resolve<IServiceProvider<IDistributedLockManager>>()?.GetService(GetCacheName());
 		set => _locker = value;
 	}
 	#endregion
 
-	#region 内部属性
-	internal static HttpClient Http { get => _http; }
-	#endregion
-
 	#region 公共方法
-	public static async ValueTask<string> GetCredentialAsync(this Account account, bool refresh, CancellationToken cancellation = default)
-	{
-		if(account.IsEmpty)
-			throw new ArgumentNullException(nameof(account));
+	public static ValueTask<string> GetCredentialAsync(this Account account, bool refresh, CancellationToken cancellation = default) => GetCredentialAsync(account, 0, refresh, cancellation);
 
-		var key = GetCredentalKey(account.Code);
-
-		//首先从本地内存缓存中获取凭证标记，如果获取成功并且凭证未过期则返回该凭证号
-		if(!refresh && _localCache.TryGetValue(key, out var token) && !token.IsExpired)
-			return token.Key;
-
-		var cache = Cache;
-
-		if(cache == null)
-		{
-			_logging.Error("Missing the required distributed cache in the credential manager.");
-			return null;
-		}
-
-		//从外部缓存中获取凭证标记
-		if(!refresh)
-		{
-			(var credentialId, var expiry) = await cache.GetValueExpiryAsync<string>(key, cancellation);
-
-			if(!string.IsNullOrEmpty(credentialId) && expiry > TimeSpan.Zero)
-			{
-				_localCache[key] = new CredentialToken(credentialId, expiry.Value);
-				return credentialId;
-			}
-		}
-
-		//获取分布式锁
-		await using var locker = await Locker.AcquireAsync(key + ":LOCKER", TimeSpan.FromSeconds(5), cancellation);
-
-		if(locker != null)
-		{
-			try
-			{
-				token = await AcquireCredentialAsync(account.Code, account.Secret);
-
-				if(token == null)
-					return null;
-
-				if(cache.SetValue(key, token.Key, token.Expiry.GetPeriod()))
-					_localCache[key] = token;
-
-				return token.Key;
-			}
-			catch(Exception ex)
-			{
-				_logging.Error(ex);
-			}
-		}
-		else
-		{
-			//尝试再次从外部缓存获取凭证
-			for(int i = 0; i < 3; i++)
-			{
-				await Task.Delay(Math.Min(3000, 500 * (i + 1)), cancellation);
-				var (credentialId, expiry) = await cache.GetValueExpiryAsync<string>(key, cancellation);
-
-				if(!string.IsNullOrEmpty(credentialId) && expiry > TimeSpan.Zero)
-				{
-					_localCache.TryAdd(key, new CredentialToken(credentialId, expiry.Value));
-					return credentialId;
-				}
-			}
-
-			_logging.Error("Attempts to acquires credential of the Wechat failed.");
-		}
-
-		return null;
-	}
+	internal static async ValueTask<string> GetCredentialAsync(this Account account, int permission, bool refresh, CancellationToken cancellation = default) =>
+		account.Component == null ? (await GetAsync(account, null, refresh, cancellation)).Value : await GetAuthorizerCredentialAsync(account, permission, refresh, cancellation);
 
 	public static async ValueTask<(string ticket, TimeSpan period)> GetTicketAsync(this Account account, string type, bool refresh, CancellationToken cancellation = default)
 	{
-		if(account.IsEmpty)
-			throw new ArgumentNullException(nameof(account));
+		ArgumentException.ThrowIfNullOrWhiteSpace(type);
+		if(type is not ("jsapi" or "wx_card") || account.Type != AccountType.Channel)
+			throw new ArgumentException(null, nameof(type));
 
-		var key = GetTicketKey(account.Code);
-
-		//首先从本地内存缓存中获取票据标记，如果获取成功并且票据未过期则返回该票据号
-		if(!refresh && _localCache.TryGetValue(key, out var token) && !token.IsExpired)
-			return (token.Key, token.Expiry.GetPeriod());
-
-		var cache = Cache;
-
-		if(cache == null)
-		{
-			_logging.Error("Missing the required distributed cache in the credential manager.");
-			return default;
-		}
-
-		if(!refresh)
-		{
-			//从外部缓存中获取票据标记
-			(var ticketId, var expiry) = await cache.GetValueExpiryAsync<string>(key, cancellation);
-
-			if(!string.IsNullOrEmpty(ticketId) && expiry > TimeSpan.Zero)
-			{
-				_localCache[key] = new TicketToken(ticketId, expiry.Value);
-				return (ticketId, expiry.Value);
-			}
-		}
-
-		//获取分布式锁
-		await using var locker = await Locker.AcquireAsync(key + ":LOCKER", TimeSpan.FromSeconds(5), cancellation);
-
-		if(locker != null)
-		{
-			var credential = await GetCredentialAsync(account, refresh, cancellation);
-
-			if(string.IsNullOrEmpty(credential))
-				return default;
-
-			try
-			{
-				token = await AcquireTicketAsync(credential, type);
-
-				if(token == null)
-					return default;
-
-				if(cache.SetValue(key, token.Key, token.Expiry.GetPeriod()))
-					_localCache[key] = token;
-
-				return (token.Key, token.Expiry.GetPeriod());
-			}
-			catch(Exception ex)
-			{
-				_logging.Error(ex);
-			}
-		}
-		else
-		{
-			//尝试再次从外部缓存票据标记
-			for(int i = 0; i < 3; i++)
-			{
-				await Task.Delay(Math.Min(3000, 500 * (i + 1)), cancellation);
-				var (ticketId, expiry) = await cache.GetValueExpiryAsync<string>(key, cancellation);
-
-				if(!string.IsNullOrEmpty(ticketId) && expiry > TimeSpan.Zero)
-				{
-					_localCache[key] = new TicketToken(ticketId, expiry.Value);
-					return (ticketId, expiry.Value);
-				}
-			}
-
-			_logging.Error("Attempts to acquires ticket of the Wechat failed.");
-		}
-
-		return (null, TimeSpan.Zero);
+		var token = account.Component == null ? await GetAsync(account, type, refresh, cancellation) : await GetAuthorizerTicketAsync(account, type, refresh, cancellation);
+		return (token.Value, token.Remaining);
 	}
 	#endregion
 
 	#region 私有方法
-	private static async ValueTask<Token> AcquireCredentialAsync(string appId, string secret, int retries = 3)
+	private static async ValueTask<Token> GetAsync(Account account, string type, bool refresh, CancellationToken cancellation)
 	{
-		var response = await _http.GetAsync($"/cgi-bin/token?grant_type=client_credential&appid={appId}&secret={secret}");
+		if(account.IsEmpty || account.Type is not (AccountType.Applet or AccountType.Channel))
+			throw new ArgumentException(null, nameof(account));
+
+		var key = $"Zongsoft.Wechat.Self:{account.Type}:{Uri.EscapeDataString(account.Code)}:{(type == null ? "stable-token" : "ticket:" + type)}";
+		return await GetAsync(key, refresh, token => AcquireAsync(account, type, refresh, token), cancellation);
+	}
+
+	private static async ValueTask<Token> GetAsync(string key, bool refresh, Func<CancellationToken, ValueTask<Token>> acquire, CancellationToken cancellation)
+	{
+		cancellation.ThrowIfCancellationRequested();
+		var cache = Cache ?? throw new InvalidOperationException();
+		var previous = await ReadAsync(cache, key, cancellation);
+
+		if(!refresh && previous != null)
+			return previous;
+
+		var gate = EnterGate(key);
+		var entered = false;
 
 		try
 		{
-			return await response.GetResultAsync<CredentialToken>();
-		}
-		catch(AggregateException ex) when(ex.InnerException is OperationException operationException)
-		{
-			if(int.TryParse(operationException.Reason, out var reason) && reason == ErrorCodes.Busy && retries > 0)
-				return await Retry(appId, secret, retries);
+			await gate.Semaphore.WaitAsync(cancellation);
+			entered = true;
+			var manager = Locker ?? throw new InvalidOperationException();
 
-			throw;
-		}
+			for(var attempt = 0; attempt < 60; attempt++)
+			{
+				var current = await ReadAsync(cache, key, cancellation);
+				if(current != null && (!refresh || current.Revision != previous?.Revision))
+					return current;
 
-		static async ValueTask<Token> Retry(string appId, string secret, int retries)
+				await using(var lease = await manager.AcquireAsync(key + ":lock", new DistributedLockOptions(TimeSpan.FromSeconds(60)) { RenewalInterval = TimeSpan.FromSeconds(20) }, cancellation))
+				{
+					if(lease?.IsLocked == true)
+					{
+						current = await ReadAsync(cache, key, cancellation);
+						if(current != null && (!refresh || current.Revision != previous?.Revision))
+							return current;
+
+						var token = await acquire(cancellation);
+						if(!lease.IsLocked)
+							throw new OperationException("CREDENTIAL_LOCK_LOST", null);
+
+						var period = token.Remaining;
+						if(period <= TimeSpan.Zero || !await cache.SetValueAsync(key, JsonSerializer.Serialize(token, Json.Options), period, CacheRequisite.Always, cancellation))
+							throw new OperationException("CREDENTIAL_STORE_FAILED", null);
+
+						return token;
+					}
+				}
+
+				await Task.Delay(TimeSpan.FromMilliseconds(500), cancellation);
+			}
+
+			throw new TimeoutException();
+		}
+		finally
 		{
-			await Task.Delay(Math.Max(500, Zongsoft.Common.Randomizer.GenerateInt32() % 2500));
-			return await AcquireCredentialAsync(appId, secret, retries - 1);
+			if(entered)
+				gate.Semaphore.Release();
+
+			ExitGate(key, gate);
 		}
 	}
 
-	private static async ValueTask<Token> AcquireTicketAsync(string credentialId, string type, int retries = 3)
+	private static async ValueTask<Token> ReadAsync(IDistributedCache cache, string key, CancellationToken cancellation)
 	{
-		if(string.IsNullOrEmpty(credentialId))
-			throw new ArgumentNullException(nameof(credentialId));
+		var started = DateTime.UtcNow;
+		var (value, expiry) = await cache.GetValueExpiryAsync<string>(key, cancellation);
+		if(string.IsNullOrEmpty(value) || !expiry.HasValue || expiry.Value <= TimeSpan.Zero)
+			return null;
 
-		var response = await _http.GetAsync($"/cgi-bin/ticket/getticket?access_token={credentialId}&type={type}");
+		var token = JsonSerializer.Deserialize<Token>(value, Json.Options);
+		if(token == null || string.IsNullOrEmpty(token.Value) || string.IsNullOrEmpty(token.Revision))
+			throw new FormatException();
 
-		try
+		token.Expiration = started.Add(expiry.Value);
+		return token.Remaining > TimeSpan.Zero ? token : null;
+	}
+
+	private static Gate EnterGate(string key)
+	{
+		lock(_gates)
 		{
-			return await response.GetResultAsync<TicketToken>();
-		}
-		catch(AggregateException ex) when(ex.InnerException is OperationException operationException)
-		{
-			if(int.TryParse(operationException.Reason, out var reason) && reason == ErrorCodes.Busy && retries > 0)
-				return await Retry(credentialId, type, retries);
+			if(!_gates.TryGetValue(key, out var gate))
+				_gates.Add(key, gate = new Gate());
 
-			throw;
-		}
-
-		static async ValueTask<Token> Retry(string credentialId, string type, int retries)
-		{
-			await Task.Delay(Math.Max(500, Zongsoft.Common.Randomizer.GenerateInt32() % 2500));
-			return await AcquireTicketAsync(credentialId, type, retries - 1);
+			gate.Users++;
+			return gate;
 		}
 	}
 
-	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private static string GetCredentalKey(string appId) => $"Zongsoft.Wechat.Credential:{appId}";
+	private static void ExitGate(string key, Gate gate)
+	{
+		lock(_gates)
+		{
+			if(--gate.Users == 0)
+			{
+				_gates.Remove(key);
+				gate.Semaphore.Dispose();
+			}
+		}
+	}
 
-	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-	private static string GetTicketKey(string appId) => $"Zongsoft.Wechat.Ticket:{appId}";
-
-	[System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
 	private static string GetCacheName() => Utility.GetOptions<Options.CachingOptions>("/Externals/Wechat/Caching")?.Name;
 	#endregion
 
-	#region 嵌套子类
-	private abstract class Token
+	#region 嵌套类型
+	private sealed class Gate
 	{
-		#region 私有变量
-		private TimeSpan _period;
-		private DateTime _expiry;
-		#endregion
-
-		#region 构造函数
-		protected Token() { }
-		#endregion
-
-		#region 公共属性
-		[Zongsoft.Serialization.SerializationMember("expires_in")]
-		[JsonPropertyName("expires_in")]
-		[JsonConverter(typeof(TimeSpanConverter))]
-		public TimeSpan Period
-		{
-			get => _period;
-			set
-			{
-				//如果有效期超过1分钟，则对其9折处理（以确保该凭证不会被过期使用）
-				_period = value.TotalSeconds < 60 ? value : new TimeSpan((long)(value.Ticks * 0.9));
-				_expiry = DateTime.UtcNow.Add(_period);
-			}
-		}
-
-		public DateTime Expiry { get => _expiry; }
-
-		[JsonIgnore]
-		[Zongsoft.Serialization.SerializationMember(Ignored = true)]
-		public bool IsValid
-		{
-			get => this.Key != null && this.Key.Length > 0;
-		}
-
-		[JsonIgnore]
-		[Zongsoft.Serialization.SerializationMember(Ignored = true)]
-		public bool IsExpired
-		{
-			get => DateTime.UtcNow > _expiry;
-		}
-		#endregion
-
-		#region 抽象属性
-		[Zongsoft.Serialization.SerializationMember(Ignored = true)]
-		[JsonIgnore]
-		internal protected abstract string Key { get; }
-		#endregion
-
-		#region 重写方法
-		public override string ToString() => $"{this.Key}@{_expiry}";
-		#endregion
-
-		#region 类型转换
-		private class TimeSpanConverter : JsonConverter<TimeSpan>
-		{
-			public override TimeSpan Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-			{
-				var value = reader.GetInt32();
-				return TimeSpan.FromSeconds(value);
-			}
-
-			public override void Write(Utf8JsonWriter writer, TimeSpan value, JsonSerializerOptions options)
-			{
-				writer.WriteStringValue(value.TotalSeconds.ToString());
-			}
-		}
-		#endregion
+		public readonly SemaphoreSlim Semaphore = new(1, 1);
+		public int Users;
 	}
 
-	private class CredentialToken : Token
+	private sealed class Token
 	{
-		#region 构造函数
-		public CredentialToken(string credentialId, TimeSpan period)
-		{
-			this.CredentialId = credentialId;
-			this.Period = period;
-		}
-		#endregion
-
-		#region 公共属性
-		[Zongsoft.Serialization.SerializationMember("access_token")]
-		[JsonPropertyName("access_token")]
-		public string CredentialId { get; set; }
-		#endregion
-
-		#region 重写属性
-		internal protected override string Key { get => this.CredentialId; }
-		#endregion
-	}
-
-	private class TicketToken : Token
-	{
-		#region 构造函数
-		public TicketToken(string ticketId, TimeSpan period)
-		{
-			this.TicketId = ticketId;
-			this.Period = period;
-		}
-		#endregion
-
-		#region 公共属性
-		[Zongsoft.Serialization.SerializationMember("ticket")]
-		[JsonPropertyName("ticket")]
-		public string TicketId { get; set; }
-		#endregion
-
-		#region 重写属性
-		internal protected override string Key { get => this.TicketId; }
-		#endregion
+		public string Value { get; set; }
+		public string Revision { get; set; }
+		[JsonIgnore]
+		public DateTime Expiration { get; set; }
+		[JsonIgnore]
+		public TimeSpan Remaining => this.Expiration - DateTime.UtcNow;
 	}
 	#endregion
 }

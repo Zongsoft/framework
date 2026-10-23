@@ -61,4 +61,7 @@ public enum PaymentStatus
 	/// <summary>支付失败（仅付款码支付会返回）</summary>
 	[Components.Alias("PayError")]
 	Failed,
+
+	/// <summary>未提供或无法识别的状态，必须查询确认。</summary>
+	Unknown,
 }
