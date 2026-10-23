@@ -6,8 +6,6 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-using Xunit;
-
 using Zongsoft.Data;
 using Zongsoft.Components;
 using Zongsoft.Security.Privileges;
@@ -118,6 +116,7 @@ public abstract class PassworderContractTest
 		Assert.False(await passworder.VerifyAsync(default(Identifier), "contract-password", TestContext.Current.CancellationToken));
 		using var cancellation = new CancellationTokenSource();
 		cancellation.Cancel();
+
 		await Assert.ThrowsAnyAsync<OperationCanceledException>(() => passworder.SetAsync(_user, "contract-password", cancellation.Token).AsTask());
 		await Assert.ThrowsAnyAsync<OperationCanceledException>(() => passworder.VerifyAsync(_user, "contract-password", cancellation.Token).AsTask());
 		await Assert.ThrowsAnyAsync<OperationCanceledException>(() => passworder.VerifyAsync("user", null, "contract-password", cancellation.Token).AsTask());
@@ -177,6 +176,7 @@ public class PasswordAccessor : DispatchProxy
 		{
 			await Task.Yield();
 			cancellation.ThrowIfCancellationRequested();
+
 			if(!this.Exists)
 				yield break;
 
@@ -185,6 +185,7 @@ public class PasswordAccessor : DispatchProxy
 			type.GetProperty("UserId").SetValue(record, 42u);
 			type.GetProperty("Enabled").SetValue(record, this.Enabled);
 			type.GetProperty("Password").SetValue(record, this.Password);
+
 			yield return (T)record;
 		}
 		finally

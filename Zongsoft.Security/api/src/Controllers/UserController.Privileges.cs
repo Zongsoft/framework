@@ -68,11 +68,11 @@ partial class UserController
 		public IAsyncEnumerable<IPrivilege> GetFiltering(string id, CancellationToken cancellation = default)
 		{
 			var filtering = this.Service.Filtering ?? throw new BadHttpRequestException(null, StatusCodes.Status501NotImplemented);
-			return filtering.GetPrivilegesAsync(new Identifier(typeof(IRole), id), new Parameters(this.Request.GetParameters()), cancellation);
+			return filtering.GetPrivilegesAsync(new Identifier(typeof(IUser), id), new Parameters(this.Request.GetParameters()), cancellation);
 		}
 
 		[HttpPut("/[area]/{id:required}/[controller]")]
-		public async Task<IActionResult> Set(string id, [FromQuery]bool reset = false, CancellationToken cancellation = default)
+		public async Task<IActionResult> Set(string id, [FromQuery] bool reset = false, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(id))
 				return this.BadRequest();
@@ -90,7 +90,7 @@ partial class UserController
 
 		[ActionName("Filtering")]
 		[HttpPut("/[area]/{id:required}/[controller]/[action]")]
-		public async Task<IActionResult> SetFiltering(string id, [FromQuery]bool reset = false, CancellationToken cancellation = default)
+		public async Task<IActionResult> SetFiltering(string id, [FromQuery] bool reset = false, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(id))
 				return this.BadRequest();
@@ -106,7 +106,7 @@ partial class UserController
 				return this.StatusCode(StatusCodes.Status501NotImplemented);
 
 			var privileges = (IEnumerable)await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, modelType.MakeArrayType(), cancellation);
-			var count = await filtering.SetPrivilegesAsync(new Identifier(typeof(IRole), id), privileges.OfType<IPrivilege>(), reset, parameters, cancellation);
+			var count = await filtering.SetPrivilegesAsync(new Identifier(typeof(IUser), id), privileges.OfType<IPrivilege>(), reset, parameters, cancellation);
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
 		#endregion

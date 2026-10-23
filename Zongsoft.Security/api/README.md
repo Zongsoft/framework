@@ -22,7 +22,7 @@ It publishes the framework security services as ASP.NET Core controllers: sign-i
 dotnet add package Zongsoft.Security.Web
 ```
 
-Deploy `Zongsoft.Security.Web.plugin` with a plugin-aware web host. Its manifest depends on `Zongsoft.Security`; the core security plugin, data mapping, database schema, credential authentication, and authorization services must already be available.
+Deploy `Zongsoft.Security.Web.plugin` with a plugin-aware web host. Its manifest depends on `Zongsoft.Security`; the core security plugin, data mapping, database schema, credential authentication, and authorization services must already be available. The host requires Zongsoft.Core 7.71.0 or later, Zongsoft.Web 7.20.0 or later, and Zongsoft.Security 7.11.0 or later.
 
 ## Endpoint Groups
 
@@ -67,8 +67,8 @@ Use a Plugins.Web host and deploy the corresponding main adapter listed below. S
 
 | Runtime artifact | Source of truth |
 | --- | --- |
-| `Zongsoft.Security.Web` | [Zongsoft.Security.Web.plugin](Zongsoft.Security.Web.plugin) |
-| File copying and dependencies | [Zongsoft.Security.Web.deploy](Zongsoft.Security.Web.deploy) |
+| `Zongsoft.Security.Web` | [Zongsoft.Security.Web.plugin](src/Zongsoft.Security.Web.plugin) |
+| File copying and dependencies | [Zongsoft.Security.Web.deploy](src/Zongsoft.Security.Web.deploy) |
 
 Add this fragment to an existing host `.deploy` (retain Main and the host’s other base manifests; do not replace the whole file):
 

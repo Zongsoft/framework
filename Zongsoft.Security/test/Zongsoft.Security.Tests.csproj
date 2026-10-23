@@ -6,6 +6,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<Using Include="Xunit" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="../src/Zongsoft.Security.csproj" />
 
 		<Reference Include="Zongsoft.Core">

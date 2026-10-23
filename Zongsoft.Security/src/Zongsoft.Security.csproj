@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.10.0</Version>
+		<Version>7.11.0</Version>
 		<PackageReleaseNotes>Requires Zongsoft.Core 7.71.0. Password stores the complete binary value in a nullable 512-byte column without PasswordSalt. Recovery answers require 2048-byte storage.</PackageReleaseNotes>
 		<Product>Zongsoft Security Library</Product>
 		<Description>This is a class library about security development.</Description>

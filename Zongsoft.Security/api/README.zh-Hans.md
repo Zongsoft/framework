@@ -22,7 +22,7 @@
 dotnet add package Zongsoft.Security.Web
 ```
 
-请把 `Zongsoft.Security.Web.plugin` 部署到插件化 Web 宿主。清单依赖 `Zongsoft.Security`；核心安全插件、数据映射、数据库结构、凭据身份验证与授权服务必须先可用。
+请把 `Zongsoft.Security.Web.plugin` 部署到插件化 Web 宿主。清单依赖 `Zongsoft.Security`；核心安全插件、数据映射、数据库结构、凭据身份验证与授权服务必须先可用。宿主要求 Zongsoft.Core 7.71.0 或更高版本、Zongsoft.Web 7.20.0 或更高版本，以及 Zongsoft.Security 7.11.0 或更高版本。
 
 ## 端点分组
 
@@ -67,8 +67,8 @@ dotnet add package Zongsoft.Security.Web
 
 | 运行产物 | 源码依据 |
 | --- | --- |
-| `Zongsoft.Security.Web` | [Zongsoft.Security.Web.plugin](Zongsoft.Security.Web.plugin) |
-| 文件复制及依赖 | [Zongsoft.Security.Web.deploy](Zongsoft.Security.Web.deploy) |
+| `Zongsoft.Security.Web` | [Zongsoft.Security.Web.plugin](src/Zongsoft.Security.Web.plugin) |
+| 文件复制及依赖 | [Zongsoft.Security.Web.deploy](src/Zongsoft.Security.Web.deploy) |
 
 在已有宿主的 `.deploy` 中加入以下片段（保留宿主原有 Main 等基础清单，不要用片段覆盖整份文件）：
 

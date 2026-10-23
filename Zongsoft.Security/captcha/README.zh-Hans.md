@@ -40,7 +40,7 @@ dotnet add package Zongsoft.Security.Captcha
 
 🚨 图片验证码只是滥用防护的一种信号。请限制端点速率并监控，使用 TLS，不记录答案或令牌，也不要把验证码当作身份证明；还应为无法完成图片挑战的用户提供无障碍替代方案。
 
-图片渲染依赖 ImageSharp 及其字体/绘图库。请验证目标环境有可用字体，并确保图片尺寸、代理响应头与缓存过期行为一致。
+图片渲染依赖 ImageSharp 及其字体/绘图库，最小尺寸为 60 × 20 像素。请验证目标环境有可用字体，并确保图片尺寸、代理响应头与缓存过期行为一致。
 
 ## 参考
 
@@ -59,8 +59,8 @@ dotnet add package Zongsoft.Security.Captcha
 
 | 运行产物 | 源码依据 |
 | --- | --- |
-| `Zongsoft.Security.Captcha` | [Zongsoft.Security.Captcha.plugin](Zongsoft.Security.Captcha.plugin) |
-| 文件复制及依赖 | [Zongsoft.Security.Captcha.deploy](Zongsoft.Security.Captcha.deploy) |
+| `Zongsoft.Security.Captcha` | [Zongsoft.Security.Captcha.plugin](src/Zongsoft.Security.Captcha.plugin) |
+| 文件复制及依赖 | [Zongsoft.Security.Captcha.deploy](src/Zongsoft.Security.Captcha.deploy) |
 
 在已有宿主的 `.deploy` 中加入以下片段（保留宿主原有 Main 等基础清单，不要用片段覆盖整份文件）：
 

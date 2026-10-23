@@ -40,7 +40,7 @@ The challenge expires after 10 minutes and a successful answer creates a confirm
 
 🚨 A visual CAPTCHA is only one abuse-control signal. Apply endpoint rate limits and monitoring, use TLS, do not log answers or tokens, and do not treat a CAPTCHA as identity proof. Provide an accessible alternative for users who cannot solve an image challenge.
 
-Image rendering uses ImageSharp and its font/drawing packages. Verify that fonts are available and that image dimensions, proxy/header rules, and cache expiry behave consistently in the target environment.
+Image rendering uses ImageSharp and its font/drawing packages, with a minimum size of 60 × 20 pixels. Verify that fonts are available and that image dimensions, proxy/header rules, and cache expiry behave consistently in the target environment.
 
 ## References
 
@@ -59,8 +59,8 @@ Use a Web host with Security configured and a registered distributed-cache provi
 
 | Runtime artifact | Source of truth |
 | --- | --- |
-| `Zongsoft.Security.Captcha` | [Zongsoft.Security.Captcha.plugin](Zongsoft.Security.Captcha.plugin) |
-| File copying and dependencies | [Zongsoft.Security.Captcha.deploy](Zongsoft.Security.Captcha.deploy) |
+| `Zongsoft.Security.Captcha` | [Zongsoft.Security.Captcha.plugin](src/Zongsoft.Security.Captcha.plugin) |
+| File copying and dependencies | [Zongsoft.Security.Captcha.deploy](src/Zongsoft.Security.Captcha.deploy) |
 
 Add this fragment to an existing host `.deploy` (retain Main and the host’s other base manifests; do not replace the whole file):
 

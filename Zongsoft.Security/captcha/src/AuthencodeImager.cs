@@ -172,7 +172,7 @@ public static class AuthencodeImager
 		for(int i = 0; i < text.Length; i++)
 		{
 			//计算字体大小
-			var fontSize = Random.Shared.Next(18, 28);
+			var fontSize = Math.Min(Random.Shared.Next(18, 28), height - 5);
 
 			//绘制随机字符
 			context.DrawText(

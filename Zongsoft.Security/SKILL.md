@@ -11,7 +11,7 @@ description: 修改或审查 Zongsoft.Security 的身份、凭据、认证器、
 
 - [Core Security](../Zongsoft.Core/src/Security) 拥有公共模型和认证授权契约；[src](src) 提供持久化服务、`CredentialProvider`、身份和权限实现。
 - [Privileges](src/Privileges) 中 `Authenticators.Identity` 与 `Authenticators.Secretor` 分别接入身份和秘密验证；不能将身份验证成功等同于所有资源授权。
-- [api](api) 负责 HTTP 参数、结果和路由；[captcha](captcha) 独立实现人机挑战；[database](database) 与映射决定持久化兼容。
+- [api/src](api/src) 负责 HTTP 参数、结果和路由；[captcha/src](captcha/src) 独立实现人机挑战；[database](database) 与映射决定持久化兼容。
 - 修改用户/角色/成员/权限字段时同步检查 `Zongsoft.Security.mapping`、各数据库脚本、服务筛选及 Web 暴露字段，不只改模型。
 
 ## 认证配置与高风险不变量
@@ -24,7 +24,7 @@ description: 修改或审查 Zongsoft.Security 的身份、凭据、认证器、
 
 ## Authencode 的两阶段状态
 
-[AuthencodeCaptcha](captcha/AuthencodeCaptcha.cs) 的挑战图像与最终确认不是同一个令牌：
+[AuthencodeCaptcha](captcha/src/AuthencodeCaptcha.cs) 的挑战图像与最终确认不是同一个令牌：
 
 1. 签发随机挑战 Token 和答案，缓存有效期 10 分钟；格式化器返回 PNG，响应头为 `X-Captcha`。
 2. 答案验证接受 `token:code` 或 `token=code`，成功产生有效期 5 分钟的确认令牌。
@@ -34,7 +34,9 @@ description: 修改或审查 Zongsoft.Security 的身份、凭据、认证器、
 
 ## 最小验证
 
-- 密码服务契约测试位于 `test/Zongsoft.Security.Tests.csproj`，通过内存访问器替身验证真实用户服务，不使用插件宿主。生产构建按范围选择 `src/Zongsoft.Security.csproj`、`api/Zongsoft.Security.Web.csproj` 或 `captcha/Zongsoft.Security.Captcha.csproj`。
+- 密码服务契约测试位于 `test/Zongsoft.Security.Tests.csproj`，通过内存访问器替身验证真实用户服务，不使用插件宿主。生产构建按范围选择 `src/Zongsoft.Security.csproj`、`api/src/Zongsoft.Security.Web.csproj` 或 `captcha/src/Zongsoft.Security.Captcha.csproj`。
+- Web API 与 CAPTCHA 单元测试项目分别位于 `api/test/Zongsoft.Security.Web.Tests.csproj`、`captcha/test/Zongsoft.Security.Captcha.Tests.csproj`，各自只通过项目引用接入对应的被测项目；所需 Core、Web 程序集由 HintPath 引用，构建前先生成依赖程序集。Web API 测试直接构造控制器与授权处理器，验证服务调用、请求参数及响应映射；CAPTCHA 测试通过严格缓存替身验证有效期、失败与取消、原子消费和重放，并检查实际图像编码与响应格式。`build.cake` 的 `**/test/*.csproj` 规则覆盖这三个测试目录。
+- API Release 依赖 Zongsoft.Web 7.20.0 与 Zongsoft.Core 7.71.0 或更高版本，保持 Web 分页处理与 Core 异步分页事件的签名一致。
 - 使用固定身份、内存/替身缓存与脱敏签名向量验证拒绝、撤销、过期、重复确认和并发。
 - 数据库验证明确选择脚本与隔离库，不能默认触发真实短信、邮件或支付验证。
 - 不恢复已删除的 Postman 文件；现有 HTTP 文档按实际端点检查。

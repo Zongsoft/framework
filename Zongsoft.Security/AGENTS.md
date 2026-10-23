@@ -6,12 +6,12 @@
 
 实现流程、源码路由与跨项目风险见 [SKILL.md](SKILL.md)；使用者教程维护在双语 README 中。
 
-- 核心安全模型和服务位于 `src`，Web 接入位于 `api`，人机识别位于 `captcha`。
+- 核心安全模型和服务位于 `src`，Web 接入位于 `api/src`，人机识别位于 `captcha/src`；对应单元测试位于 `test`、`api/test`、`captcha/test`。
 - 修改身份、凭据、角色或权限时，同时核对 `Zongsoft.Security.mapping`、数据库脚本、插件、选项和 Web 端点。
 - 保持令牌解析、密码/密钥处理、权限继承和验证器行为兼容；日志和回复不得暴露敏感值。
 - Web 层只接入安全服务，不复制认证授权规则。
 
 ## 验证
 
-- 构建 `Zongsoft.Security.slnx`；按影响范围分别构建 `api` 或 `captcha`。
+- 构建 `Zongsoft.Security.slnx`；按影响范围分别构建 `api/src/Zongsoft.Security.Web.csproj` 或 `captcha/src/Zongsoft.Security.Captcha.csproj`。
 - 数据模型变化检查所有数据库脚本和映射一致性；认证路径验证失败时优先检查身份上下文、插件依赖和配置。
