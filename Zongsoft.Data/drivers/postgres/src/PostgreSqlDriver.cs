@@ -36,6 +36,7 @@ using System.Threading.Tasks;
 using Npgsql;
 
 using Zongsoft.Data.Common;
+using Zongsoft.Data.Features;
 using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.PostgreSql;
@@ -56,7 +57,7 @@ public partial class PostgreSqlDriver : DataDriverBase
 	{
 		this.Getter = new PostgreSqlGetter();
 		this.Setter = new PostgreSqlSetter();
-		this.Features.Add(Feature.Returning);
+		this.Features.Set<IReturningFeature>(ReturningFeature.Instance);
 	}
 	#endregion
 

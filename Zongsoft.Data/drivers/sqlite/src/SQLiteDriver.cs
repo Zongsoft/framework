@@ -38,6 +38,7 @@ using System.Collections.Concurrent;
 using Microsoft.Data.Sqlite;
 
 using Zongsoft.Data.Common;
+using Zongsoft.Data.Features;
 using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.SQLite;
@@ -58,7 +59,7 @@ public partial class SQLiteDriver : DataDriverBase
 	{
 		this.Getter = new SQLiteGetter();
 		this.Setter = new SQLiteSetter();
-		this.Features.Add(Feature.Returning);
+		this.Features.Set<IReturningFeature>(new ReturningFeature(older: false));
 	}
 	#endregion
 

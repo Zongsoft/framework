@@ -36,6 +36,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 using Zongsoft.Data.Metadata;
+using Zongsoft.Data.Features;
 
 namespace Zongsoft.Data.Common.Expressions;
 
@@ -86,12 +87,15 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 
 		if(context.Options.HasReturning(out var returning))
 		{
-			if(context.Source.Features.Support(Feature.Returning) || context.Source.Features.Support(Feature.Updation.Returning))
+			var feature = context.Source.Features.Get<IReturningFeature>();
+			if(feature != null && (feature.Supports(DataAccessMethod.Update, ReturningKind.Older) || feature.Supports(DataAccessMethod.Update, ReturningKind.Newer)))
 			{
-				statement.Returning ??= new();
-
 				foreach(var column in returning.Columns)
 				{
+					if(!feature.Supports(DataAccessMethod.Update, column.Kind))
+						continue;
+
+					statement.Returning ??= new();
 					var field = statement.Table.CreateField((IDataEntitySimplexProperty)context.Entity.Properties[column.Name], column.Alias);
 					statement.Returning.Append(field, column.Kind);
 				}
@@ -352,7 +356,8 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 	/// <summary>判断当前更新是否使用多表语句。</summary>
 	/// <param name="context">当前更新上下文。</param>
 	/// <returns>返回是否使用多表语句。</returns>
-	protected virtual bool CanUpdateMultiple(DataUpdateContext context) => context.Source.Features.Support(Feature.Updation.Multitable);
+	protected virtual bool CanUpdateMultiple(DataUpdateContext context) =>
+		context.Source.Features.Get<IMultitableFeature>()?.CanUpdate == true;
 
 	/// <summary>获取关联键的原生返回版本。</summary>
 	/// <returns>返回关联键的值版本。</returns>

@@ -7,6 +7,8 @@ using Xunit;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.TDengine.Tests.Models;
 
+using Zongsoft.Data.Features;
+
 namespace Zongsoft.Data.TDengine.Tests;
 
 [Collection("Database")]
@@ -19,7 +21,7 @@ public class MutationTest(DatabaseFixture database)
 	[Trait("Category", "Unit")]
 	public void TransactionIsSuppressed()
 	{
-		Assert.True(TDengineDriver.Instance.Features.Support(Feature.TransactionSuppressed));
+		Assert.True(TDengineDriver.Instance.Features.Get<ITransactionFeature>()?.Suppressed == true);
 	}
 
 	[Fact]

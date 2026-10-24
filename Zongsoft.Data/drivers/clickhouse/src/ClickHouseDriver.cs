@@ -39,6 +39,8 @@ using ClickHouse.Driver.ADO;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
+using Zongsoft.Data.Features;
+
 namespace Zongsoft.Data.ClickHouse;
 
 public class ClickHouseDriver : DataDriverBase
@@ -53,7 +55,7 @@ public class ClickHouseDriver : DataDriverBase
 	#endregion
 
 	#region 私有构造
-	private ClickHouseDriver() => this.Features.Add(Common.Feature.TransactionSuppressed);
+	private ClickHouseDriver() => this.Features.Set<ITransactionFeature>(new TransactionFeature(suppressed: true));
 	#endregion
 
 	#region 公共属性

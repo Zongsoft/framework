@@ -164,6 +164,54 @@ public abstract class ReturningMutationTestBase(IDataAccess accessor, bool enabl
 	}
 
 	[Fact]
+	public async Task InsertAndUpsertRespectReturningCapabilitiesAsync()
+	{
+		Assert.SkipUnless(enabled, "Database tests require ZONGSOFT_DATA_TESTS=1.");
+		var user = Model.Build<UserModel>(user => { user.UserId = 1609101; user.Name = "Inserted"; });
+		var criteria = Condition.Equal(nameof(UserModel.UserId), user.UserId);
+		var insertion = DataInsertOptions.Return(nameof(UserModel.UserId), nameof(UserModel.Name))
+			.Sequence(DataSequenceBehavior.Never).Build();
+		var upsertion = DataUpsertOptions.Return(ReturningKind.Newer, nameof(UserModel.UserId), nameof(UserModel.Name))
+			.Return(ReturningKind.Older, nameof(UserModel.Name)).Sequence(DataSequenceBehavior.Never).Build();
+
+		try
+		{
+			Assert.Equal(1, await accessor.InsertAsync(user, insertion));
+
+			if(upsert)
+			{
+				var row = Assert.Single(insertion.Returning.Rows);
+				Assert.True(row.TryGetValue(nameof(UserModel.UserId), out var identity));
+				Assert.Equal(user.UserId, Convert.ToUInt32(identity));
+
+				Assert.True(row.TryGetValue(nameof(UserModel.Name), out var name));
+				Assert.Equal("Inserted", name);
+			}
+			else
+				Assert.Empty(insertion.Returning.Rows);
+
+			user.Name = "Updated";
+			Assert.True(await accessor.UpsertAsync(user, upsertion) > 0);
+
+			if(upsert)
+			{
+				var row = Assert.Single(upsertion.Returning.Rows);
+				Assert.True(row.TryGetValue(nameof(UserModel.Name), ReturningKind.Newer, out var current));
+				Assert.Equal("Updated", current);
+
+				Assert.Equal(older, row.TryGetValue(nameof(UserModel.Name), ReturningKind.Older, out var previous));
+				if(older)
+					Assert.Equal("Inserted", previous);
+			}
+			else
+				Assert.Empty(upsertion.Returning.Rows);
+
+			Assert.True(await accessor.ExistsAsync<UserModel>(criteria & Condition.Equal(nameof(UserModel.Name), "Updated")));
+		}
+		finally { await accessor.DeleteAsync<UserModel>(criteria); }
+	}
+
+	[Fact]
 	public async Task IgnoredUpsertConflictProducesNoReturningRowAsync()
 	{
 		Assert.SkipUnless(enabled, "Database tests require ZONGSOFT_DATA_TESTS=1.");

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.16.0</Version>
-		<PackageReleaseNotes>批量导入分批准备数据并复用内存缓冲，支持取消和事务回滚。</PackageReleaseNotes>
+		<Version>7.17.0</Version>
+		<PackageReleaseNotes>使用类型化特性提供返回值能力，并按数据源配置判断连接共享。</PackageReleaseNotes>
 		<Product>Zongsoft Data Driver for SQL Server</Product>
 		<Description>This is a data driver for Microsoft SQL Server of the Zongsoft data engine.</Description>
 		<RootNamespace>Zongsoft.Data.MsSql</RootNamespace>
@@ -38,7 +38,7 @@
 		<Otherwise>
 			<ItemGroup>
 				<PackageReference Include="Zongsoft.Core" VersionOverride="7.74.0" />
-				<PackageReference Include="Zongsoft.Data" VersionOverride="7.36.0" />
+				<PackageReference Include="Zongsoft.Data" VersionOverride="7.37.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

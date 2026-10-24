@@ -33,7 +33,6 @@ using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
 
 namespace Zongsoft.Data.Common;
 
@@ -41,10 +40,6 @@ public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataS
 {
 	#region 公共常量
 	public const char SEPARATOR = '#';
-	#endregion
-
-	#region 私有常量
-	private static readonly Regex _MarsFeature_ = new(@"\bMultipleActiveResultSets\s*=\s*True\b", RegexOptions.Compiled | RegexOptions.IgnoreCase | RegexOptions.IgnorePatternWhitespace);
 	#endregion
 
 	#region 成员字段
@@ -127,21 +122,7 @@ public class DataSource : IDataSource, IEquatable<DataSource>, IEquatable<IDataS
 		}
 	}
 
-	public FeatureCollection Features
-	{
-		get
-		{
-			if(_features == null)
-			{
-				_features = new FeatureCollection(this.Driver?.Features);
-
-				if(!string.IsNullOrEmpty(_connectionString) && _MarsFeature_.IsMatch(_connectionString))
-					_features.Add(Feature.MultipleActiveResultSets);
-			}
-
-			return _features;
-		}
-	}
+	public FeatureCollection Features => _features ??= new FeatureCollection(this.Driver?.Features);
 	#endregion
 
 	#region 公共方法

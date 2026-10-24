@@ -607,7 +607,8 @@ public class InsertTest(DatabaseFixture database) : IAsyncDisposable
 
 		var roles = accessor.SelectAsync<RoleModel>(
 			Condition.Between(nameof(RoleModel.RoleId), OFFSET, OFFSET + COUNT),
-			$"*,{nameof(RoleModel.Children)}{{*}}");
+			$"*,{nameof(RoleModel.Children)}{{*}}",
+			[Sorting.Ascending(nameof(RoleModel.RoleId))]);
 
 		int index = 0;
 

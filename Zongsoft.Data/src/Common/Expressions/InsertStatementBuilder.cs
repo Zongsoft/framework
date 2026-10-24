@@ -35,6 +35,7 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 using Zongsoft.Data.Metadata;
+using Zongsoft.Data.Features;
 
 namespace Zongsoft.Data.Common.Expressions;
 
@@ -54,6 +55,7 @@ public class InsertStatementBuilder : IStatementBuilder<DataInsertContext>
 			throw new ArgumentNullException(nameof(data));
 
 		var inherits = entity.GetInherits();
+		var feature = context.Source.Features.Get<IReturningFeature>();
 		var sequenceRetrievable = IsSequenceRetrievable(context);
 		var recordCount = 0;
 
@@ -112,7 +114,7 @@ public class InsertStatementBuilder : IStatementBuilder<DataInsertContext>
 
 					if(simplex.Sequence != null && simplex.Sequence.IsBuiltin && sequenceRetrievable)
 					{
-						if(context.Source.Features.Support(Feature.Returning))
+						if(feature?.Supports(DataAccessMethod.Insert, ReturningKind.Newer) == true)
 						{
 							var field = statement.Table.CreateField(schema.Token);
 
@@ -182,12 +184,14 @@ public class InsertStatementBuilder : IStatementBuilder<DataInsertContext>
 				}
 			}
 
-			if(owner == null && context.Options.HasReturning(out var returning) && context.Source.Features.Support(Feature.Returning))
+			if(owner == null && context.Options.HasReturning(out var returning) && feature != null)
 			{
-				statement.Returning ??= new();
-
 				foreach(var column in returning.Columns)
 				{
+					if(!feature.Supports(DataAccessMethod.Insert, column.Kind))
+						continue;
+
+					statement.Returning ??= new();
 					var field = statement.Table.CreateField((IDataEntitySimplexProperty)context.Entity.Properties[column.Name], column.Alias);
 					statement.Returning.Append(field, column.Kind);
 				}

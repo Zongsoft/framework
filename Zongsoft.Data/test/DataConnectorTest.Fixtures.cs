@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 
 using Zongsoft.Data.Common;
+using Zongsoft.Data.Features;
 using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.Tests;
@@ -312,5 +313,10 @@ public partial class DataConnectorTest
 		public override short GetInt16(int ordinal) => throw new InvalidOperationException("A synchronous provider entry point was used.");
 		public override long GetInt64(int ordinal) => throw new InvalidOperationException("A synchronous provider entry point was used.");
 		public override string GetString(int ordinal) => throw new InvalidOperationException("A synchronous provider entry point was used.");
+	}
+
+	private sealed class SharedConnectionFeature : ConnectionSharingFeature
+	{
+		public override bool CanShare(IDataSource source) => true;
 	}
 }

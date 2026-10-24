@@ -13,6 +13,8 @@ using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Tests.Models;
 using Zongsoft.Data.Common.Expressions;
 
+using Zongsoft.Data.Features;
+
 namespace Zongsoft.Data.MySql.Tests;
 
 [Collection("Database")]
@@ -219,30 +221,36 @@ public class ReturningSafetyTest(DatabaseFixture database)
 		}
 	}
 
-	[Fact]
-	public async Task RejectSuppressedTransactionBeforeWritingAsync()
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task ReturningRespectsTransactionSuppressionAsync(bool suppressed)
 	{
 		Assert.SkipUnless(Global.IsTestingEnabled, "Database tests require ZONGSOFT_DATA_TESTS=1.");
 		var accessor = database.Accessor;
 		var options = DataDeleteOptions.Return(nameof(UserModel.Name)).Build();
 		IDataSource source = null;
-		accessor.Provider.Executing += Suppress;
+		accessor.Provider.Executing += Configure;
 
 		try
 		{
-			await Assert.ThrowsAsync<NotSupportedException>(async () => await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), int.MaxValue), options));
+			if(suppressed)
+				await Assert.ThrowsAsync<NotSupportedException>(async () => await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), int.MaxValue), options));
+			else
+				Assert.Equal(0, await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), int.MaxValue), options));
+
 			Assert.Empty(options.Returning.Rows);
 		}
 		finally
 		{
-			accessor.Provider.Executing -= Suppress;
-			source?.Features.Remove(Feature.TransactionSuppressed);
+			accessor.Provider.Executing -= Configure;
+			source?.Features.Set<ITransactionFeature>(null);
 		}
 
-		ValueTask Suppress(object sender, DataAccessEventArgs<IDataAccessContext> args, System.Threading.CancellationToken cancellation)
+		ValueTask Configure(object sender, DataAccessEventArgs<IDataAccessContext> args, System.Threading.CancellationToken cancellation)
 		{
 			source = args.Context.Source;
-			source.Features.Add(Feature.TransactionSuppressed);
+			source.Features.Set<ITransactionFeature>(new TransactionFeature(suppressed));
 			return ValueTask.CompletedTask;
 		}
 	}

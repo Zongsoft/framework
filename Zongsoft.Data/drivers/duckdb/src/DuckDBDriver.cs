@@ -38,6 +38,7 @@ using System.Threading.Tasks;
 using DuckDB.NET.Data;
 
 using Zongsoft.Data.Common;
+using Zongsoft.Data.Features;
 using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.DuckDB;
@@ -56,7 +57,7 @@ public partial class DuckDBDriver : DataDriverBase
 	#region 私有构造
 	private DuckDBDriver()
 	{
-		this.Features.Add(Feature.Returning);
+		this.Features.Set<IReturningFeature>(new ReturningFeature(older: false));
 	}
 	#endregion
 

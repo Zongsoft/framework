@@ -36,6 +36,7 @@ using System.Threading.Tasks;
 using System.Collections;
 using System.Collections.Generic;
 
+using Zongsoft.Data.Features;
 using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Common.Expressions;
 
@@ -212,7 +213,21 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 	/// <param name="statement">正在执行的写入语句。</param>
 	/// <param name="cancellation">操作的取消令牌。</param>
 	/// <returns>返回是否继续执行从属语句。</returns>
-	protected virtual async ValueTask<bool> MutateAsync(IDataMutateContext context, TStatement statement, CancellationToken cancellation)
+	protected virtual ValueTask<bool> MutateAsync(IDataMutateContext context, TStatement statement, CancellationToken cancellation)
+	{
+		if(statement.Returning != null && context.Source.Features.Get<IReturningFeature>() is { } feature)
+		{
+			return feature.ExecuteAsync(context, statement,
+				token => this.MutateCoreAsync(context, statement, token),
+				(reader, token) => this.OnMutatedAsync(context, statement, reader, token), cancellation);
+		}
+
+		return this.MutateCoreAsync(context, statement, cancellation);
+	}
+	#endregion
+
+	#region 私有方法
+	private async ValueTask<bool> MutateCoreAsync(IDataMutateContext context, TStatement statement, CancellationToken cancellation)
 	{
 		bool continued;
 
@@ -254,9 +269,6 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 		return continued;
 	}
-	#endregion
-
-	#region 私有方法
 	private static void Bind(object data, IEnumerable<IStatementBase> statements)
 	{
 		if(data == null)

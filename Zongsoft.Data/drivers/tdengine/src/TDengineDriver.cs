@@ -39,6 +39,8 @@ using TDengine.Data.Client;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
+using Zongsoft.Data.Features;
+
 namespace Zongsoft.Data.TDengine;
 
 public partial class TDengineDriver : DataDriverBase
@@ -56,7 +58,7 @@ public partial class TDengineDriver : DataDriverBase
 	private TDengineDriver()
 	{
 		this.Setter = new TDengineSetter();
-		this.Features.Add(Feature.TransactionSuppressed);
+		this.Features.Set<ITransactionFeature>(new TransactionFeature(suppressed: true));
 	}
 	#endregion
 

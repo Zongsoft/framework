@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.18.0</Version>
-		<PackageReleaseNotes>使用服务端快照返回更新和删除结果，完善约束元数据解析。</PackageReleaseNotes>
+		<Version>7.19.0</Version>
+		<PackageReleaseNotes>通过独立返回值特性执行更新和删除，统一驱动能力声明。</PackageReleaseNotes>
 		<Product>Zongsoft Data Driver for MySQL</Product>
 		<Description>This is a data driver for MySQL of the Zongsoft data engine.</Description>
 		<RootNamespace>Zongsoft.Data.MySql</RootNamespace>
@@ -38,7 +38,7 @@
 		<Otherwise>
 			<ItemGroup>
 				<PackageReference Include="Zongsoft.Core" VersionOverride="7.74.0" />
-				<PackageReference Include="Zongsoft.Data" VersionOverride="7.36.0" />
+				<PackageReference Include="Zongsoft.Data" VersionOverride="7.37.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

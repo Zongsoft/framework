@@ -8,6 +8,8 @@ using Xunit;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Transactions;
 
+using Zongsoft.Data.Features;
+
 namespace Zongsoft.Data.Tests;
 
 public partial class DataConnectorTest
@@ -112,7 +114,7 @@ public partial class DataConnectorTest
 		var source = new DataSourceMocker(driver);
 
 		if(owned)
-			source.Features.Add(Feature.TransactionSuppressed);
+			source.Features.Set<ITransactionFeature>(new TransactionFeature(suppressed: true));
 
 		var session = new DataSession(source);
 		var lease = await session.AcquireLeaseAsync();

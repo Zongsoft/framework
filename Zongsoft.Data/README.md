@@ -51,7 +51,31 @@ Drivers provide an executor through `IDataDriver.Executor`. Drivers derived from
 
 `DataProvider.Executor` supports replacement or decoration. Its default executor selects the driver from each operation's actual data source. A typed executor's Boolean result controls traversal of subordinate statements; `false` does not trigger a fallback. Executor instances are shared across concurrent operations and must not retain mutable state belonging to an individual operation.
 
-`Feature.Returning` denotes native SQL returning projections. `Feature.Updation.Returning` and `Feature.Deletion.Returning` declare update and delete returning capabilities, which may also be supplied by a driver executor. Drivers declaring these features must implement the corresponding behavior.
+### Feature Extensions
+
+Contracts and default implementations reside in `Zongsoft.Data.Features`. `IReturningFeature` provides returning capabilities and execution behavior by insert, update, upsert or delete operation and older/newer value kind; `IMultitableFeature` declares multi-table support through `CanUpdate` and `CanDelete`.
+
+Register a feature under its interface during driver or data-source initialization:
+
+```csharp
+using Zongsoft.Data.Features;
+
+driver.Features.Set<IReturningFeature>(ReturningFeature.Instance);
+driver.Features.Set<IMultitableFeature>(new MultitableFeature(deletable: true, updatable: true));
+
+var returning = source.Features.Get<IReturningFeature>();
+var canDeleteMultiple = source.Features.Get<IMultitableFeature>()?.CanDelete ?? false;
+```
+
+The example assumes existing `IDataDriver` and `IDataSource` instances named `driver` and `source`. Only register capabilities implemented by the driver. `ReturningFeature` uses native SQL projections: its default supports newer insert values, older/newer update and upsert values, and older delete values. SQLite and DuckDB use `new ReturningFeature(older: false)`; MySQL's implementation supports update and delete only. Retrieval of built-in sequence values for inserts and upserts also follows the corresponding operation's returning capability. Derive from `ReturningFeature` and override `OnExecuteAsync`, or implement `IReturningFeature`, to customize execution. Await callbacks, invoke the ordinary write callback at most once, and dispose any reader created by the feature after awaiting the population callback. The Boolean result controls subordinate statements; `false` does not request a fallback.
+
+`Get<TFeature>()` matches the exact registration type and falls back to the parent collection. A data-source registration overrides its driver's instance; `Set<TFeature>(null)` removes that local override. Instances may be shared concurrently and must not retain operation state. Configure collections before executing operations; collections do not dispose feature instances.
+
+`ITransactionFeature.Suppressed` declares transaction behavior. The default implementation, `TransactionFeature(bool suppressed = false)`, stores an immutable property; `Instance` is the shared default instance with suppression disabled. Register `new TransactionFeature(suppressed: true)` to disable transactions. An absent feature or `Suppressed = false` retains normal transaction behavior. A data source can register the default instance to override suppression inherited from its driver.
+
+`IConnectionSharingFeature.CanShare(IDataSource)` determines whether the current data source allows multiple active readers to share one connection. The default implementation, `ConnectionSharingFeature`, returns `false`. Register its shared `Instance` to disable connection sharing for a data source, or derive from it and override `CanShare` to provide sharing capabilities. When the feature is absent or returns `false`, an additional reader uses an independent connection while another reader remains active. A data source can inherit the feature from its driver or override it locally. The SQL Server driver evaluates this capability from the current data source's connection settings.
+
+`FeatureCollection.Count` and enumeration include local registrations only. Each enumerated entry pairs a contract type with its instance. Use `Set<TFeature>` to register, replace or remove a local feature.
 
 <a name="plugin-quickstart"></a>
 ## A Real Plugin Workflow: Discussions

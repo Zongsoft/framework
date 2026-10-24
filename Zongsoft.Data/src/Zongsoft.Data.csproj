@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.36.0</Version>
-		<PackageReleaseNotes>支持驱动组合执行器和独立返回能力声明，统一返回结果的发布时机。</PackageReleaseNotes>
+		<Version>7.37.0</Version>
+		<PackageReleaseNotes>以类型化特性组合写入返回值、事务与连接共享能力。</PackageReleaseNotes>
 		<Product>Zongsoft Data Library</Product>
 		<Description>This is an Object/Relational Mapping(ORM) data engine.</Description>
 		<RootNamespace>Zongsoft.Data</RootNamespace>

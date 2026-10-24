@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -33,216 +33,50 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common;
 
-public class FeatureCollection : ICollection<Feature>
+/// <summary>按契约类型保存特性实例，并支持从父集合继承特性。</summary>
+/// <remarks>集合应在初始化时配置，不负责释放特性实例；计数和枚举仅包含本地注册。</remarks>
+public class FeatureCollection : IReadOnlyCollection<KeyValuePair<Type, object>>
 {
-	#region 静态常量
-	private static readonly Version _ZeroVersion_ = new();
-	#endregion
-
 	#region 成员字段
 	private readonly FeatureCollection _parent;
-	private readonly IDictionary<string, Version[]> _features;
+	private readonly Dictionary<Type, object> _features = new();
 	#endregion
 
 	#region 构造函数
-	public FeatureCollection()
-	{
-		_features = new Dictionary<string, Version[]>(StringComparer.OrdinalIgnoreCase);
-	}
+	/// <summary>初始化空的特性集合。</summary>
+	public FeatureCollection() { }
 
-	public FeatureCollection(FeatureCollection parent)
-	{
-		_parent = parent;
-		_features = new Dictionary<string, Version[]>(StringComparer.OrdinalIgnoreCase);
-	}
+	/// <summary>初始化具有指定父集合的特性集合。</summary>
+	/// <param name="parent">本地未注册时用于查找特性的父集合。</param>
+	public FeatureCollection(FeatureCollection parent) => _parent = parent;
 	#endregion
 
 	#region 公共属性
+	/// <summary>获取本地注册的特性数量。</summary>
 	public int Count => _features.Count;
 	#endregion
 
 	#region 公共方法
-	public void Add(Feature feature)
+	/// <summary>获取按指定契约类型注册的特性，未在本地注册时查找父集合。</summary>
+	/// <typeparam name="TFeature">特性契约的引用类型，通常为接口。</typeparam>
+	/// <returns>返回注册的共享实例；本地和父集合均未注册时返回空。</returns>
+	public TFeature Get<TFeature>() where TFeature : class => _features.TryGetValue(typeof(TFeature), out var feature) ? (TFeature)feature : _parent?.Get<TFeature>();
+
+	/// <summary>设置指定契约的本地特性，空值移除本地覆盖并恢复父集合的实现。</summary>
+	/// <typeparam name="TFeature">注册所用的特性契约类型。</typeparam>
+	/// <param name="feature">特性实例，或用于移除本地注册的空值。</param>
+	/// <remarks>注册按精确类型匹配，操作期间不得修改集合。</remarks>
+	public void Set<TFeature>(TFeature feature) where TFeature : class
 	{
 		if(feature == null)
-			throw new ArgumentNullException(nameof(feature));
-
-		this.Add(feature.Name, feature.Version);
-	}
-
-	public void Add(string name, Version version = null)
-	{
-		if(string.IsNullOrWhiteSpace(name))
-			throw new ArgumentNullException(nameof(name));
-
-		if(version == null)
-			version = _ZeroVersion_;
-
-		if(_features.TryGetValue(name, out var versions))
-		{
-			var index = -1;
-
-			for(int i = 0; i < versions.Length; i++)
-			{
-				if(versions[i] == version)
-					return;
-
-				if(versions[i] < version)
-				{
-					index = i;
-					break;
-				}
-			}
-
-			var vers = _features[name] = new Version[versions.Length + 1];
-
-			if(index < 0)
-			{
-				Array.Copy(versions, vers, versions.Length);
-				vers[versions.Length] = version;
-			}
-			else if(index == 0)
-			{
-				Array.Copy(versions, 0, vers, 1, versions.Length);
-				vers[0] = version;
-			}
-			else
-			{
-				Array.Copy(versions, 0, vers, 0, index);
-				Array.Copy(versions, index, vers, index + 1, versions.Length - index);
-
-				vers[index] = version;
-			}
-		}
+			_features.Remove(typeof(TFeature));
 		else
-		{
-			_features.Add(name, new Version[] { version });
-		}
-	}
-
-	public void Clear() => _features.Clear();
-	public bool Remove(Feature feature) => feature != null && this.Remove(feature.Name, feature.Version);
-	public bool Remove(string name) => name != null && _features.Remove(name);
-	public bool Remove(string name, Version version)
-	{
-		if(string.IsNullOrEmpty(name))
-			return false;
-
-		if(version == null)
-			return _features.Remove(name);
-
-		if(_features.TryGetValue(name, out var versions))
-		{
-			var index = Array.IndexOf(versions, version);
-
-			if(index >= 0)
-			{
-				if(versions.Length <= 1)
-					_features.Remove(name);
-				else
-				{
-					var vers = new Version[versions.Length - 1];
-
-					Array.Copy(versions, 0, vers, 0, index);
-
-					if(index < versions.Length - 1)
-						Array.Copy(versions, index + 1, vers, index, versions.Length - index);
-
-					_features[name] = vers;
-				}
-			}
-		}
-
-		return false;
-	}
-
-	public bool Support(Feature feature) => feature != null && this.Support(feature.Name, feature.Version);
-	public bool Support(string name, Version version = null)
-	{
-		if(string.IsNullOrEmpty(name))
-			return false;
-
-		if(_parent != null)
-		{
-			if(_parent.Support(name, version))
-				return true;
-		}
-
-		return this.OnSupport(name, version);
-	}
-	#endregion
-
-	#region 虚拟方法
-	protected virtual bool OnSupport(string name, Version version)
-	{
-		if(version == null || version == _ZeroVersion_)
-			return _features.ContainsKey(name);
-
-		if(_features.TryGetValue(name, out var versions))
-		{
-			if(versions == null || versions.Length == 0)
-				return true;
-
-			foreach(var ver in versions)
-			{
-				if(version <= ver)
-					return true;
-			}
-		}
-
-		return false;
-	}
-	#endregion
-
-	#region 显式实现
-	bool ICollection<Feature>.IsReadOnly => false;
-	bool ICollection<Feature>.Contains(Feature feature)
-	{
-		if(feature == null)
-			return false;
-
-		if(_features.TryGetValue(feature.Name, out var versions))
-			return feature.Version == null ||
-				   feature.Version == _ZeroVersion_ ||
-				   Array.Exists(versions, ver => ver == feature.Version);
-
-		return false;
-	}
-
-	void ICollection<Feature>.CopyTo(Feature[] array, int arrayIndex)
-	{
-		if(array == null)
-			throw new ArgumentNullException(nameof(array));
-
-		if(arrayIndex < 0 || arrayIndex >= array.Length)
-			throw new ArgumentOutOfRangeException(nameof(arrayIndex));
-
-		foreach(var feature in _features)
-		{
-			var versions = feature.Value;
-
-			foreach(var version in versions)
-			{
-				if(arrayIndex < array.Length)
-					array[arrayIndex++] = new Feature(feature.Key, version);
-				else
-					return;
-			}
-		}
+			_features[typeof(TFeature)] = feature;
 	}
 	#endregion
 
 	#region 枚举遍历
 	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
-	public IEnumerator<Feature> GetEnumerator()
-	{
-		foreach(var feature in _features)
-		{
-			foreach(var version in feature.Value)
-			{
-				yield return new Feature(feature.Key, version);
-			}
-		}
-	}
+	public IEnumerator<KeyValuePair<Type, object>> GetEnumerator() => _features.GetEnumerator();
 	#endregion
 }

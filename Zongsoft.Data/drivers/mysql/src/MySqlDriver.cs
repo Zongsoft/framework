@@ -37,6 +37,7 @@ using System.Threading.Tasks;
 using MySqlConnector;
 
 using Zongsoft.Data.Common;
+using Zongsoft.Data.Features;
 using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.MySql;
@@ -55,10 +56,8 @@ public class MySqlDriver : DataDriverBase
 	#region 私有构造
 	private MySqlDriver()
 	{
-		this.Features.Add(Feature.Deletion.Multitable);
-		this.Features.Add(Feature.Deletion.Returning);
-		this.Features.Add(Feature.Updation.Multitable);
-		this.Features.Add(Feature.Updation.Returning);
+		this.Features.Set<IMultitableFeature>(new MultitableFeature(true, true));
+		this.Features.Set<IReturningFeature>(new Features.MySqlReturningFeature());
 	}
 	#endregion
 
@@ -133,7 +132,6 @@ public class MySqlDriver : DataDriverBase
 	#endregion
 
 	#region 保护方法
-	protected override IDataExecutor CreateExecutor() => new MySqlExecutor();
 	protected override IDataImporter CreateImporter() => new MySqlImporter();
 	protected override ExpressionVisitorBase CreateVisitor() => new MySqlExpressionVisitor();
 	#endregion

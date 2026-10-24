@@ -33,26 +33,28 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Zongsoft.Data.Common;
+using Zongsoft.Data.Features;
 using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Common.Expressions;
 
-namespace Zongsoft.Data.MySql;
+namespace Zongsoft.Data.MySql.Features;
 
-internal sealed class MySqlExecutor : DataExecutor
+internal sealed class MySqlReturningFeature : ReturningFeature
 {
-	#region 保护方法
-	protected override IDataExecutor<DeleteStatement> CreateDeleteExecutor() => new DeleteExecutor();
-	protected override IDataExecutor<UpdateStatement> CreateUpdateExecutor() => new UpdateExecutor();
-	#endregion
+	#region 重写方法
+	public override bool Supports(DataAccessMethod method, ReturningKind kind) =>
+		method is DataAccessMethod.Update or DataAccessMethod.Delete && base.Supports(method, kind);
 
-	#region 私有方法
-	private static async ValueTask<bool> MutateAsync(IDataMutateContext context, MutateStatement statement,
-		Func<CancellationToken, ValueTask<bool>> mutate,
+	protected override async ValueTask<bool> OnExecuteAsync(IDataMutateContext context, IMutateStatement mutation,
+		Func<CancellationToken, ValueTask<bool>> execute,
 		Func<DbDataReader, CancellationToken, ValueTask<bool>> populate, CancellationToken cancellation)
 	{
+		if(mutation is not MutateStatement statement || statement is not (UpdateStatement or DeleteStatement))
+			throw new NotSupportedException();
+
 		Validate(statement);
 
-		if(context.Source.Features.Support(Feature.TransactionSuppressed))
+		if(context.Source.Features.Get<ITransactionFeature>()?.Suppressed == true)
 			throw new NotSupportedException();
 
 		await using var lease = await context.Session.AcquireLeaseAsync(cancellation: cancellation);
@@ -134,7 +136,7 @@ internal sealed class MySqlExecutor : DataExecutor
 			stable.Where = condition;
 			statement.Where = Expression.Exists(stable);
 			statement.Returning = null;
-			await mutate(cancellation);
+			await execute(cancellation);
 
 			var query = new SelectStatement(stable.Table);
 			if(statement is UpdateStatement)
@@ -239,32 +241,6 @@ internal sealed class MySqlExecutor : DataExecutor
 	#endregion
 
 	#region 嵌套子类
-	private sealed class UpdateExecutor : DataUpdateExecutor
-	{
-		protected override ValueTask<bool> MutateAsync(IDataMutateContext context, UpdateStatement statement, CancellationToken cancellation)
-		{
-			if(statement.Returning == null)
-				return base.MutateAsync(context, statement, cancellation);
-
-			return MySqlExecutor.MutateAsync(context, statement,
-				token => base.MutateAsync(context, statement, token),
-				(reader, token) => this.OnMutatedAsync(context, statement, reader, token), cancellation);
-		}
-	}
-
-	private sealed class DeleteExecutor : DataDeleteExecutor
-	{
-		protected override ValueTask<bool> MutateAsync(IDataMutateContext context, DeleteStatement statement, CancellationToken cancellation)
-		{
-			if(statement.Returning == null)
-				return base.MutateAsync(context, statement, cancellation);
-
-			return MySqlExecutor.MutateAsync(context, statement,
-				token => base.MutateAsync(context, statement, token),
-				(reader, token) => this.OnMutatedAsync(context, statement, reader, token), cancellation);
-		}
-	}
-
 	private sealed class ParameterVisitor : MySqlExpressionVisitor
 	{
 		public HashSet<ParameterExpression> Parameters { get; } = [];

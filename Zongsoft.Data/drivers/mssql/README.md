@@ -68,6 +68,8 @@ See the [Data plugin example](../../README.md#plugin-quickstart) for host config
 
 ## Runtime Behavior
 
+This driver enables Multiple Active Result Sets (MARS) by default, allowing multiple active readers to share one session connection. Set `MultipleActiveResultSets=False` to disable it; additional readers then use independent connections while another reader remains active. Connection sharing follows each data source's effective connection settings.
+
 Use the asynchronous methods on `IDataAccess` / `IDataService<T>` and consume query results with `await foreach`. Await transaction completion, rollback, and resource disposal. Imports accept in-memory collections and asynchronous sources, and operations propagate cancellation tokens.
 
 Imports prepare and write batches of at most 1024 rows, enumerating the input once. By default, batches share the session transaction. Without an ambient transaction, the operation commits after all batches succeed and rolls back its transaction on failure or cancellation. With an ambient transaction, the caller controls completion. When ambient transaction enlistment is explicitly suppressed, completed batches are unaffected by the caller's rollback and may remain after later input or write failures.

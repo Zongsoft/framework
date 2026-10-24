@@ -33,6 +33,8 @@ using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 
+using Zongsoft.Data.Features;
+
 namespace Zongsoft.Data.Common;
 
 /// <summary>表示数据操作的会话类。</summary>
@@ -60,6 +62,8 @@ public partial class DataSession : IAsyncDisposable
 		_source = source ?? throw new ArgumentNullException(nameof(source));
 		_connector = DataConnectorManager.GetConnector(source);
 		_ambient = ambient;
+		_TransactionSupported_ = source.Features.Get<ITransactionFeature>()?.Suppressed != true;
+		_ShareConnectionSupported_ = source.Features.Get<IConnectionSharingFeature>()?.CanShare(source) == true;
 
 		_synchrolock = new object();
 		_semaphore = new SemaphoreSlim(1, 1);
@@ -70,9 +74,6 @@ public partial class DataSession : IAsyncDisposable
 			_semaphore.Dispose();
 			throw new DataException(Properties.Resources.DataSession_AmbientTransactionCompleted_Message);
 		}
-
-		_TransactionSupported_ = !source.Features.Support(Feature.TransactionSuppressed);
-		_ShareConnectionSupported_ = source.Features.Support(Feature.MultipleActiveResultSets);
 	}
 	#endregion
 

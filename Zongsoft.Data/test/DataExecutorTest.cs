@@ -9,6 +9,7 @@ using System.Collections.Concurrent;
 using Xunit;
 
 using Zongsoft.Data.Common;
+using Zongsoft.Data.Features;
 using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Common.Expressions;
 
@@ -147,10 +148,7 @@ public class DataExecutorTest
 	{
 		var driver = new Driver();
 		if(supported)
-		{
-			driver.Features.Add(Feature.Updation.Returning);
-			driver.Features.Add(Feature.Deletion.Returning);
-		}
+			driver.Features.Set<IReturningFeature>(ReturningFeature.Instance);
 
 		var entity = new DataEntity(null, $"Executor{Guid.NewGuid():N}");
 		entity.Properties.Simplex(nameof(Row.Value), DataType.Int32, false);
@@ -180,7 +178,6 @@ public class DataExecutorTest
 				deletions.Add(statement);
 
 			Assert.Equal(supported, Assert.IsType<DeleteStatement>(Assert.Single(deletions)).Returning != null);
-			Assert.False(driver.Features.Support(Feature.Returning));
 			Assert.Empty(driver.Commands);
 		}
 		finally { Mapping.Entities.Remove(entity.Name); }

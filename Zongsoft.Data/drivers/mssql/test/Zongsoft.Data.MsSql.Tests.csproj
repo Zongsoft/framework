@@ -37,6 +37,7 @@
 
 	<ItemGroup>
 		<Compile Include="..\..\..\test\BatchMutationTestBase.cs" Link="BatchMutationTestBase.cs" />
+		<Compile Include="..\..\..\test\DriverFeatureTestBase.cs" Link="DriverFeatureTestBase.cs" />
 		<Compile Include="..\..\..\test\ReturningMutationTestBase.cs" Link="ReturningMutationTestBase.cs" />
 		<Compile Include="..\..\..\test\SequenceMocker.cs" Link="SequenceMocker.cs" />
 		<Compile Include="..\..\..\test\Models\AddressConditionConverter.cs" Link="Models\AddressConditionConverter.cs" />

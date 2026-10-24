@@ -34,6 +34,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
+using Zongsoft.Data.Features;
 using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.Common.Expressions;
@@ -47,7 +48,7 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 	#region 构建方法
 	public IAsyncEnumerable<IStatementBase> BuildAsync(DataDeleteContext context, CancellationToken cancellation = default)
 	{
-		if(context.Source.Features.Support(Feature.Deletion.Multitable))
+		if(context.Source.Features.Get<IMultitableFeature>()?.CanDelete == true)
 			return this.BuildSimplicityAsync(context, cancellation);
 		else
 			return this.BuildComplexityAsync(context, cancellation);
@@ -142,13 +143,19 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 	#region 私有方法
 	private void BuildReturning(DataDeleteContext context, DeleteStatement statement)
 	{
-		if(!context.Options.HasReturning(out var returning) ||
-		   !context.Source.Features.Support(Feature.Returning) && !context.Source.Features.Support(Feature.Deletion.Returning))
+		if(!context.Options.HasReturning(out var returning))
 			return;
 
-		statement.Returning ??= new();
+		var feature = context.Source.Features.Get<IReturningFeature>();
+		if(feature == null || !feature.Supports(DataAccessMethod.Delete, ReturningKind.Older))
+			return;
+
 		foreach(var column in returning.Columns)
 		{
+			if(!feature.Supports(DataAccessMethod.Delete, column.Kind))
+				continue;
+
+			statement.Returning ??= new();
 			var field = statement.Table.CreateField((IDataEntitySimplexProperty)context.Entity.Properties[column.Name], column.Alias);
 			statement.Returning.Append(field, column.Kind);
 		}

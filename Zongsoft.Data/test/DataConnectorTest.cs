@@ -9,6 +9,8 @@ using Xunit;
 
 using Zongsoft.Data.Common;
 
+using Zongsoft.Data.Features;
+
 namespace Zongsoft.Data.Tests;
 
 [Collection(nameof(DataConnectorCollection))]
@@ -179,16 +181,45 @@ public partial class DataConnectorTest
 	}
 
 	[Theory]
+	[InlineData(null, null, true)]
+	[InlineData(null, false, true)]
+	[InlineData(null, true, false)]
+	[InlineData(true, null, false)]
+	[InlineData(true, false, true)]
+	[InlineData(false, true, false)]
+	public async Task AcquireLease_TransactionFeatureControlsSuppression(bool? inherited, bool? local, bool supported)
+	{
+		var driver = new DataDriverMocker();
+
+		if(inherited.HasValue)
+			driver.Features.Set<ITransactionFeature>(new TransactionFeature(inherited.Value));
+
+		var source = new DataSourceMocker(driver);
+
+		if(local.HasValue)
+			source.Features.Set<ITransactionFeature>(local.Value ? new TransactionFeature(suppressed: true) : TransactionFeature.Instance);
+
+		await using var session = new DataSession(source);
+		await using var lease = await session.AcquireLeaseAsync();
+		var connection = Assert.IsType<DbConnectionMocker>(lease.Connection);
+
+		Assert.Equal(supported, lease.Transaction != null);
+		Assert.Equal(supported, connection.Transaction != null);
+		Assert.Equal(ConnectionState.Open, connection.State);
+	}
+
+	[Theory]
+	[InlineData(null)]
 	[InlineData(false)]
 	[InlineData(true)]
-	public async Task SessionReaderLease_RoutesConcurrentReadersByMarsCapability(bool mars)
+	public async Task SessionReaderLease_RoutesConcurrentReadersBySharingCapability(bool? sharing)
 	{
 		var driver = new DataDriverMocker();
 		var source = new DataSourceMocker(driver);
-		source.Features.Add(Feature.TransactionSuppressed);
+		source.Features.Set<ITransactionFeature>(new TransactionFeature(suppressed: true));
 
-		if(mars)
-			source.Features.Add(Feature.MultipleActiveResultSets);
+		if(sharing.HasValue)
+			source.Features.Set<IConnectionSharingFeature>(sharing.Value ? new SharedConnectionFeature() : ConnectionSharingFeature.Instance);
 
 		await using var session = new DataSession(source);
 		await using var firstCommand = session.Build(null, null);
@@ -201,9 +232,9 @@ public partial class DataConnectorTest
 		await using var secondReader = await secondCommand.ExecuteReaderAsync();
 
 		Assert.True(await secondReader.ReadAsync());
-		Assert.Equal(mars ? 1 : 2, driver.Connections.Length);
+		Assert.Equal(sharing == true ? 1 : 2, driver.Connections.Length);
 
-		var independent = mars ? null : driver.Connections[1];
+		var independent = sharing == true ? null : driver.Connections[1];
 
 		if(independent != null)
 			Assert.NotSame(shared, independent);
@@ -232,7 +263,7 @@ public partial class DataConnectorTest
 	{
 		var driver = new DataDriverMocker();
 		var source = new DataSourceMocker(driver);
-		source.Features.Add(Feature.TransactionSuppressed);
+		source.Features.Set<ITransactionFeature>(new TransactionFeature(suppressed: true));
 
 		await using var session = new DataSession(source);
 		await using var firstCommand = session.Build(null, null);
@@ -309,7 +340,7 @@ public partial class DataConnectorTest
 		await using var ambient = mode == IndependentLeaseMode.AmbientSuppressed ? new Transaction() : null;
 
 		if(mode == IndependentLeaseMode.UnsupportedTransaction)
-			source.Features.Add(Feature.TransactionSuppressed);
+			source.Features.Set<ITransactionFeature>(new TransactionFeature(suppressed: true));
 		await using var session = new DataSession(source, ambient?.Context);
 		DbConnectionMocker shared = null;
 		DbTransactionMocker transaction = null;
@@ -455,7 +486,7 @@ public partial class DataConnectorTest
 		await using var ambient = mode == IndependentLeaseMode.AmbientSuppressed ? new Transaction() : null;
 
 		if(mode == IndependentLeaseMode.UnsupportedTransaction)
-			source.Features.Add(Feature.TransactionSuppressed);
+			source.Features.Set<ITransactionFeature>(new TransactionFeature(suppressed: true));
 		await using var session = new DataSession(source, ambient?.Context);
 
 		if(ambient != null)

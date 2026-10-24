@@ -36,6 +36,7 @@ using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 
 using Zongsoft.Data.Common;
+using Zongsoft.Data.Features;
 using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.MsSql;
@@ -54,7 +55,8 @@ public partial class MsSqlDriver : DataDriverBase
 	#region 私有构造
 	private MsSqlDriver()
 	{
-		this.Features.Add(Feature.Returning);
+		this.Features.Set<IReturningFeature>(ReturningFeature.Instance);
+		this.Features.Set<IConnectionSharingFeature>(new MultipleActiveResultSetsFeature());
 		this.Setter = new MsSqlSetter();
 	}
 	#endregion
@@ -145,6 +147,17 @@ public partial class MsSqlDriver : DataDriverBase
 		}
 
 		return false;
+	}
+	#endregion
+
+	#region 嵌套子类
+	private sealed class MultipleActiveResultSetsFeature : ConnectionSharingFeature
+	{
+		public override bool CanShare(IDataSource source)
+		{
+			ArgumentNullException.ThrowIfNull(source);
+			return Configuration.MsSqlConnectionSettingsDriver.Instance.GetSettings(source.ConnectionString).GetOptions().MultipleActiveResultSets;
+		}
 	}
 	#endregion
 }

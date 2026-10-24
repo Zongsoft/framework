@@ -39,6 +39,8 @@ using InfluxDB3.Client.Config;
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 
+using Zongsoft.Data.Features;
+
 namespace Zongsoft.Data.Influx;
 
 public class InfluxDriver : DataDriverBase
@@ -53,7 +55,7 @@ public class InfluxDriver : DataDriverBase
 	#endregion
 
 	#region 私有构造
-	private InfluxDriver() => this.Features.Add(Feature.TransactionSuppressed);
+	private InfluxDriver() => this.Features.Set<ITransactionFeature>(new TransactionFeature(suppressed: true));
 	#endregion
 
 	#region 公共属性

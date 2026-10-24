@@ -51,7 +51,31 @@ TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Z
 
 `DataProvider.Executor` 支持整体替换或装饰；默认执行器按每次操作的实际数据源选择驱动。专用执行器的布尔返回值表示是否继续执行从属语句，返回 `false` 不触发回退。执行器实例会被并发复用，不应保存单次操作的可变状态。
 
-`Feature.Returning` 表示原生 SQL 返回投影能力；`Feature.Updation.Returning` 与 `Feature.Deletion.Returning` 分别表示更新、删除返回能力，也可由驱动执行器提供。声明特性的驱动负责实现相应行为。
+### 特性扩展
+
+特性契约及默认实现位于 `Zongsoft.Data.Features`。`IReturningFeature` 按新增、更新、增改、删除及新旧值种类提供返回值能力和执行行为；`IMultitableFeature` 通过 `CanUpdate`、`CanDelete` 声明多表操作能力。
+
+在驱动或数据源初始化时，按接口类型注册特性：
+
+```csharp
+using Zongsoft.Data.Features;
+
+driver.Features.Set<IReturningFeature>(ReturningFeature.Instance);
+driver.Features.Set<IMultitableFeature>(new MultitableFeature(deletable: true, updatable: true));
+
+var returning = source.Features.Get<IReturningFeature>();
+var canDeleteMultiple = source.Features.Get<IMultitableFeature>()?.CanDelete ?? false;
+```
+
+示例中的 `driver`、`source` 分别为已创建的 `IDataDriver`、`IDataSource`。只能注册驱动实际实现的能力。`ReturningFeature` 使用驱动的原生 SQL 返回投影，默认支持新增的新值、更新和增改的新旧值，以及删除的旧值。SQLite、DuckDB 使用 `new ReturningFeature(older: false)`；MySQL 的实现仅支持更新和删除。新增及增改的内建序号回填同样按相应操作的返回能力决定处理方式。自定义执行行为可继承 `ReturningFeature` 并重写 `OnExecuteAsync`，或实现 `IReturningFeature`。必须等待回调完成，普通写入回调至多调用一次；特性创建的读取器应在等待结果填充回调后释放。布尔返回值控制从属语句执行，`false` 不请求回退。
+
+`Get<TFeature>()` 按注册的精确类型查找，本地未注册时查询父集合。数据源注册覆盖对应驱动的实例；`Set<TFeature>(null)` 移除本地覆盖。实例可能被并发共享，不应保存单次操作状态。集合应在操作开始前配置，且不负责释放特性实例。
+
+事务行为由 `ITransactionFeature.Suppressed` 声明，默认实现 `TransactionFeature(bool suppressed = false)` 保存不可变属性，`Instance` 是默认不抑制事务的共享实例。注册 `new TransactionFeature(suppressed: true)` 可禁用事务；未注册或 `Suppressed` 为 `false` 时保持默认事务行为。数据源可通过注册默认实例覆盖父集合中的事务抑制声明。
+
+`IConnectionSharingFeature.CanShare(IDataSource)` 判断当前数据源是否允许多个活动读取器共享同一连接。默认实现 `ConnectionSharingFeature` 返回 `false`，可注册其共享实例 `Instance` 禁用数据源的连接共享，也可继承该类重写 `CanShare` 提供共享能力。未注册或返回 `false` 时，已有活动读取器期间的新读取器使用独立连接。特性可从驱动继承，也可由数据源覆盖；SQL Server 驱动根据当前数据源的连接配置提供这项能力。
+
+`FeatureCollection` 的 `Count` 和枚举只包含本地注册；枚举项为契约类型与实例的键值对。注册、替换和移除统一使用 `Set<TFeature>`。
 
 <a name="plugin-quickstart"></a>
 ## 真实插件用例：Discussions

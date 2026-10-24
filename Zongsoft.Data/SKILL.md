@@ -139,7 +139,15 @@ SQL Server 的参数预算为 2098，预留 SqlClient 调用 sp_executesql 的�
 
 DataProvider 的私有嵌套 DataExecutor 通过当前上下文的 `Source.Driver.Executor` 转发执行，每次根据实际数据源选择驱动；`DataProvider.Executor` 保留全局替换或装饰入口。`IDataDriver.Executor` 由 DataDriverBase 的 `CreateExecutor()` 创建，默认使用公共 DataExecutor.Instance。公共 DataExecutor 负责语句分派、通用命令执行与从属语句遍历，各类专用执行器通过受保护工厂延迟创建并安全共享。专用执行器返回的布尔值表示是否继续遍历从属语句；false 表示已处理或无需处理，不触发通用执行器回退。执行器不得保存单次操作的上下文、会话或语句状态。
 
-`Feature.Returning` 表示 SQL 方言原生支持；`Feature.Updation.Returning`、`Feature.Deletion.Returning` 分别声明更新与删除返回能力，可以由执行器实现。构建器根据特性声明生成返回投影，不通过驱动实现的执行器接口推断能力。MySqlDriver 提供 MySqlExecutor 并声明两个操作特性；MySqlExecutor 的私有嵌套更新、删除执行器复用通用执行器，模拟返回值的共享流程为其私有方法。
+`Features` 目录及命名空间承载特性接口和实现。同一特性的接口与通用实现放在以实现类命名的同一个文件中，接口在前、实现在后；只有接口的特性保留独立文件。FeatureCollection 的 Get/Set 按精确契约类型管理共享实例，本地未注册时继承父集合，Set(null) 移除本地覆盖；集合只在初始化时配置，不负责释放实例。Count 和枚举仅包含本地注册，枚举项为契约类型与实例的键值对；所有注册变更统一通过 Set 完成，不改变父集合。集合不判断具体特性的能力，也不维护名称、版本或兼容描述。
+
+ITransactionFeature.Suppressed 声明事务抑制行为，TransactionFeature 的构造参数 suppressed 默认为 false，属性只读，Instance 为默认实例。DataSession 仅在 Suppressed 为 true 时禁用事务，未注册或为 false 时保持默认事务行为；数据源可注册默认实例覆盖驱动的抑制声明。MySQL 返回值模拟同样检查该属性。
+
+IConnectionSharingFeature.CanShare(IDataSource) 判断多个活动读取器是否可共用连接。ConnectionSharingFeature 与接口放在同一个文件中，提供默认返回 false 的虚方法及共享 Instance。DataSession 在初始化时获取当前数据源的特性并保存判断结果，未注册或返回 false 时不共享活动读取器连接；判断在分配同步资源及加入环境事务前完成。DataSource 仅继承驱动的特性，不解析数据库专用连接选项。MsSqlDriver 注册继承 ConnectionSharingFeature 的私有嵌套类 MultipleActiveResultSetsFeature，按当前数据源的连接字符串，经与 CreateConnection 相同的 MsSqlConnectionSettingsDriver.GetSettings(...).GetOptions() 流程读取 MultipleActiveResultSets；实例不保存数据源状态。事务和连接共享特性均通过 Get 获取，包含父集合的声明。
+
+IReturningFeature.Supports 按实际语句的操作类型和 ReturningKind 声明能力，构建器据此生成 INSERT/UPDATE/UPSERT/DELETE 投影，忽略不支持的值种类。新增及增改的内建序号取值同样按实际操作的新值能力生成返回字段，否则使用驱动的序号查询。DataMutateExecutor 在有返回投影的写入语句上调用特性；ExecuteAsync 的普通写入回调绕过特性分派，至多调用一次，保留参数绑定、计数和执行器钩子；结果填充回调复用 OnMutatedAsync，不拥有读取器。特性等待所有回调，并释放自己创建的读取器、命令和租约。返回布尔值仍只控制从属语句执行，不表示是否回退。实例不得保存单次操作状态；当前上下文的操作类型不一定等于级联语句的操作类型，能力判定使用实际语句。
+
+ReturningFeature 默认直接等待普通写入回调，使用原生 SQL 返回投影；支持新增新值、更新及增改新旧值和删除旧值。SQLite、DuckDB 使用 older:false，不声明更新或增改旧值。MySqlDriver 注册仅支持 UPDATE/DELETE 的 MySqlReturningFeature，由该特性实现模拟返回值，使用公共 DataExecutor.Instance。IMultitableFeature 只声明 CanUpdate、CanDelete，MultitableFeature 保存不可变能力值；SQL 生成仍属于原有构建器和访问器。
 
 单表关联更新由 UpdateStatement 的内部嵌套类 Link 保存内部返回字段与外键对应关系，DataUpdateExecutor 收集完整键元组、排除含空分量的关联并去重，以最多 128 个元组、900 个总参数的保守预算分批执行。各批次的后续关联键先合并再执行下一层，避免共享目标跨批重复更新。内部关联字段与公开返回列分开收集，不生成临时表。SQLite、DuckDB 使用新值关联键，构建时拒绝修改关联锚点；其他原生驱动使用旧值。
 
