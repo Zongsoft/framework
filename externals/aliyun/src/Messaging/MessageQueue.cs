@@ -64,14 +64,18 @@ public class MessageQueue : MessageQueueBase<MessageQueue.Consumer>
 	#endregion
 
 	#region 订阅方法
-	protected override ValueTask<bool> OnSubscribeAsync(MessageQueue.Consumer subscriber, CancellationToken cancellation = default) => ValueTask.FromResult(true);
+	protected override async ValueTask<bool> OnSubscribeAsync(MessageQueue.Consumer subscriber, CancellationToken cancellation = default)
+	{
+		await subscriber.SubscribeAsync(cancellation);
+		return true;
+	}
 	protected override ValueTask<Consumer> CreateSubscriberAsync(string topic, string tags, IHandler<Message> handler, MessageSubscribeOptions options, CancellationToken cancellation) => ValueTask.FromResult(new Consumer(this, handler, options));
 	#endregion
 
 	#region 数量获取
 	public async ValueTask<long> GetCountAsync(CancellationToken cancellation = default)
 	{
-		var response = await _http.GetAsync(this.GetRequestUrl(), cancellation);
+		using var response = await _http.GetAsync(this.GetRequestUrl(), cancellation);
 
 		if(!response.IsSuccessStatusCode)
 			return -1;
@@ -104,29 +108,23 @@ public class MessageQueue : MessageQueueBase<MessageQueue.Consumer>
 		if(options == null)
 			options = MessageDequeueOptions.Default;
 
-		var waitSeconds = (long)Math.Ceiling(options.Timeout.TotalSeconds);
-		var request = new HttpRequestMessage(HttpMethod.Get, this.GetRequestUrl("messages") + (options != null && options.Timeout >= TimeSpan.Zero ? "?waitseconds=" + waitSeconds.ToString() : string.Empty));
+		var waitSeconds = (int)Math.Clamp(Math.Ceiling(options.Timeout.TotalSeconds), 0, 30);
+		using var request = new HttpRequestMessage(HttpMethod.Get, this.GetRequestUrl("messages") + (options.Timeout >= TimeSpan.Zero ? "?waitseconds=" + waitSeconds.ToString() : string.Empty));
 		request.Headers.Add("x-mns-version", "2015-06-06");
-		var response = await _http.SendAsync(request, cancellation);
+		using var response = await _http.SendAsync(request, cancellation);
 
 		if(response.IsSuccessStatusCode)
 			return MessageUtility.ResolveMessage(this, await response.Content.ReadAsStreamAsync(cancellation));
 
 		var exception = AliyunException.Parse(await response.Content.ReadAsStringAsync(cancellation));
 
-		if(exception != null)
-		{
-			switch(exception.Code)
-			{
-				case MessageUtility.MessageNotExist:
-					return Message.Empty;
-				case MessageUtility.QueueNotExist:
-					throw exception;
-				default:
-					throw exception;
-			}
-		}
+		if(exception?.Code == MessageUtility.MessageNotExist)
+			return Message.Empty;
 
+		if(exception != null)
+			throw exception;
+
+		response.EnsureSuccessStatusCode();
 		return Message.Empty;
 	}
 	#endregion
@@ -154,19 +152,14 @@ public class MessageQueue : MessageQueueBase<MessageQueue.Consumer>
 			((int)options.Delay.TotalSeconds).ToString() +
 			"</DelaySeconds><Priority>" + options.Priority.ToString() + "</Priority></Message>";
 
-		var request = new HttpRequestMessage(HttpMethod.Post, this.GetRequestUrl("messages"))
+		using var request = new HttpRequestMessage(HttpMethod.Post, this.GetRequestUrl("messages"))
 		{
 			Content = new StringContent(text, Encoding.UTF8, "text/xml")
 		};
 		request.Headers.Add("x-mns-version", "2015-06-06");
 
-		var response = await _http.SendAsync(request, cancellation);
-
-		if(!response.IsSuccessStatusCode)
-		{
-			Zongsoft.Diagnostics.Logging.GetLogging(this).Warn("[" + response.StatusCode + "] The message enqueue failed." + Environment.NewLine + await response.Content.ReadAsStringAsync());
-			return null;
-		}
+		using var response = await _http.SendAsync(request, cancellation);
+		await EnsureSuccessAsync(response, cancellation);
 
 		return MessageUtility.GetMessageResponseId(await response.Content.ReadAsStreamAsync(cancellation));
 	}
@@ -185,9 +178,10 @@ public class MessageQueue : MessageQueueBase<MessageQueue.Consumer>
 
 		if(delay <= TimeSpan.Zero)
 		{
-			var request = new HttpRequestMessage(HttpMethod.Delete, this.GetRequestUrl("messages") + "?ReceiptHandle=" + Uri.EscapeDataString(acknowledgementId));
+			using var request = new HttpRequestMessage(HttpMethod.Delete, this.GetRequestUrl("messages") + "?ReceiptHandle=" + Uri.EscapeDataString(acknowledgementId));
 			request.Headers.Add("x-mns-version", "2015-06-06");
-			await _http.SendAsync(request, cancellation);
+			using var response = await _http.SendAsync(request, cancellation);
+			await EnsureSuccessAsync(response, cancellation);
 			return;
 		}
 
@@ -199,19 +193,10 @@ public class MessageQueue : MessageQueueBase<MessageQueue.Consumer>
 		if(string.IsNullOrEmpty(acknowledgementId))
 			return;
 
-		var request = new HttpRequestMessage(HttpMethod.Put, this.GetRequestUrl("messages") + "?ReceiptHandle=" + Uri.EscapeDataString(acknowledgementId) + "&VisibilityTimeout=" + duration.TotalSeconds.ToString());
+		using var request = new HttpRequestMessage(HttpMethod.Put, this.GetRequestUrl("messages") + "?ReceiptHandle=" + Uri.EscapeDataString(acknowledgementId) + "&VisibilityTimeout=" + duration.TotalSeconds.ToString());
 		request.Headers.Add("x-mns-version", "2015-06-06");
-		var response = await _http.SendAsync(request, cancellation);
-
-		if(!response.IsSuccessStatusCode)
-		{
-			var exception = AliyunException.Parse(await response.Content.ReadAsStringAsync(cancellation));
-
-			if(exception != null)
-				throw exception;
-
-			response.EnsureSuccessStatusCode();
-		}
+		using var response = await _http.SendAsync(request, cancellation);
+		await EnsureSuccessAsync(response, cancellation);
 
 		var matches = DELAY_REGEX.Matches(await response.Content.ReadAsStringAsync(cancellation));
 
@@ -234,6 +219,20 @@ public class MessageQueue : MessageQueueBase<MessageQueue.Consumer>
 	internal string GetRequestUrl(params string[] parts) => MessageQueueUtility.GetRequestUrl(this.Name, parts);
 	#endregion
 
+	#region 私有方法
+	private static async ValueTask EnsureSuccessAsync(HttpResponseMessage response, CancellationToken cancellation)
+	{
+		if(response.IsSuccessStatusCode)
+			return;
+
+		var exception = AliyunException.Parse(await response.Content.ReadAsStringAsync(cancellation));
+		if(exception != null)
+			throw exception;
+
+		response.EnsureSuccessStatusCode();
+	}
+	#endregion
+
 	#region 重写方法
 	protected override MessageReliability Reliability => MessageReliability.LeastOnce;
 	#endregion
@@ -251,9 +250,23 @@ public class MessageQueue : MessageQueueBase<MessageQueue.Consumer>
 	#endregion
 
 	#region 嵌套子类
-	public class Consumer(MessageQueue queue, IHandler<Message> handler, MessageSubscribeOptions options = null) : MessageConsumerBase<MessageQueue>(queue, handler, options)
+	public class Consumer : MessageConsumerBase<MessageQueue>
 	{
-		protected override ValueTask OnCloseAsync(CancellationToken cancellation) => ValueTask.CompletedTask;
+		private readonly Poller _poller;
+
+		public Consumer(MessageQueue queue, IHandler<Message> handler, MessageSubscribeOptions options = null) : base(queue, handler, options)
+		{
+			_poller = new Poller(this);
+		}
+
+		internal ValueTask SubscribeAsync(CancellationToken cancellation) => _poller.StartAsync(new MessageDequeueOptions(TimeSpan.FromSeconds(30)), cancellation: cancellation);
+		protected override ValueTask OnCloseAsync(CancellationToken cancellation) => _poller.DisposeAsync();
+
+		private sealed class Poller(Consumer consumer) : MessagePollerBase
+		{
+			protected override ValueTask<Message> ReceiveAsync(MessageDequeueOptions options, CancellationToken cancellation) => consumer.Queue.DequeueAsync(options, cancellation);
+			protected override ValueTask OnHandleAsync(Message message, CancellationToken cancellation) => consumer.Handler?.HandleAsync(message, cancellation) ?? ValueTask.CompletedTask;
+		}
 	}
 	#endregion
 }

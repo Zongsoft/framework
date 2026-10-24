@@ -98,3 +98,11 @@ Additional artifacts listed by the deployment manifest include `Zongsoft.Externa
 ## Asynchronous storage and messaging
 
 OSS operations and streams require asynchronous I/O. The shared synchronous file-system contracts remain, but this adapter rejects synchronous storage access. Use `await using` for owned cloud streams; disposal waits for multipart completion and propagates commit or abort failures. After a failed write, disposal aborts the upload rather than committing partial data. Message queues and topics also require awaited disposal.
+
+### Queue subscriptions
+
+`MessageQueue.SubscribeAsync` starts a receive loop and awaits each handler before receiving another message. It uses 30-second long polling; empty responses and failures wait one second before another receive attempt. `UnsubscribeAsync` cancels receiving and handling, then waits for the active callback to finish. Queue disposal closes its subscriptions before disposing the HTTP client. Handlers must observe cancellation and must not await closing their own subscription from inside its callback.
+
+Queue handlers explicitly call `await message.AcknowledgeAsync(cancellation)` after successful processing. The provider does not acknowledge automatically. A failed or unacknowledged delivery becomes available again when the queue's visibility timeout expires; configure that timeout to cover normal processing time and make side effects tolerate retries. See Alibaba Cloud's [ReceiveMessage](https://help.aliyun.com/en/mns/developer-reference/receivemessage) and [DeleteMessage](https://help.aliyun.com/en/mns/developer-reference/deletemessage) contracts.
+
+Queue delivery supports `LeastOnce`, not `ExactlyOnce`. Queue names select the physical queues; the generic topic/tag arguments do not filter messages within an MNS queue. Send, receive, acknowledgement and visibility-change failures propagate as `AliyunException` when a service error is available, otherwise as an HTTP exception. Only `MessageNotExist` is treated as an empty receive. When scheduling a follow-up message, await successful enqueue before acknowledging the current message.

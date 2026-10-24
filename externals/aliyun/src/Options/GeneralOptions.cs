@@ -54,7 +54,7 @@ public class GeneralOptions
 	public bool IsIntranet { get; set; }
 
 	/// <summary>获取阿里云的凭证提供程序。</summary>
-	public ICertificateProvider Certificates { get; }
+	public ICertificateProvider Certificates { get; private set; }
 	#endregion
 
 	#region 静态方法

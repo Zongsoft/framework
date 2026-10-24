@@ -98,3 +98,11 @@ nuget:Zongsoft.Externals.Aliyun
 ## 异步存储与消息
 
 OSS 操作和流需要使用异步 I/O。公共同步文件系统契约保留，但本适配器拒绝同步存储访问。自有云流使用 `await using`，释放等待分段上传完成并传播提交或中止错误；写入失败后中止上传，避免提交不完整数据。消息队列和主题同样需要等待异步释放。
+
+### 队列订阅
+
+`MessageQueue.SubscribeAsync` 启动接收循环，每条消息等待处理器完成后再接收下一条。接收采用 30 秒长轮询；空结果和失败均等待一秒后重试。`UnsubscribeAsync` 取消接收和处理，并等待当前回调结束。队列释放会先关闭订阅，再释放 HTTP 客户端。处理器必须响应取消，且不能在自己的回调内等待关闭当前订阅。
+
+队列处理器成功完成业务后显式调用 `await message.AcknowledgeAsync(cancellation)`，提供程序不会自动确认。处理失败或没有确认的消息会在队列的可见性超时到期后重新可用；该超时应覆盖正常处理时间，业务副作用需容忍重试。协议语义参见阿里云 [ReceiveMessage](https://help.aliyun.com/en/mns/developer-reference/receivemessage) 和 [DeleteMessage](https://help.aliyun.com/en/mns/developer-reference/deletemessage)。
+
+队列投递支持 `LeastOnce`，不支持 `ExactlyOnce`。队列名选择物理队列，通用接口的 topic/tag 参数不会过滤 MNS 队列内的消息。发送、接收、确认和可见性变更失败时，有服务错误信息则抛出 `AliyunException`，否则抛出 HTTP 异常；只有 `MessageNotExist` 按空队列处理。需要安排后续消息时，应等待入队成功后再确认当前消息。
