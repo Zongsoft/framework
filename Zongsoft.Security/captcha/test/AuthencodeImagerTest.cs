@@ -63,6 +63,21 @@ public class AuthencodeImagerTest
 		Assert.Equal(height, decoded.Height);
 	}
 
+	[Theory]
+	[InlineData("WWW", 60, 120)]
+	[InlineData("MMM", 120, 120)]
+	public void Generate_LargeGlyphs_PreservesRequestedDimensions(string code, int width, int height)
+	{
+		//覆盖随机路径和字体大小下，大字形越过右边界的情况。
+		for(int i = 0; i < 16; i++)
+		{
+			using var image = AuthencodeImager.Generate(code, width, height);
+			Assert.Equal(width, image.Width);
+			Assert.Equal(height, image.Height);
+			AssertRendered(image);
+		}
+	}
+
 	private static void AssertRendered(Image<Rgba32> image)
 	{
 		var coloredPixels = 0;

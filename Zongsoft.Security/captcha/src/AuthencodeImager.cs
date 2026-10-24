@@ -53,8 +53,6 @@ public static class AuthencodeImager
 		if(height < 20)
 			throw new ArgumentOutOfRangeException(nameof(height));
 
-		//构建指定大小的图像
-		var image = new Image<Rgba32>(width, height);
 		var points = new PointF[code.Length];
 
 		//计算每个字符的宽度
@@ -102,6 +100,9 @@ public static class AuthencodeImager
 		//按照定义的路径生成验证码字形
 		IPathCollection glyphs = TextBuilder.GenerateGlyphs(code, path, options);
 
+		//容纳完整字形，并为描边和栅格留出余量，避免文字扫描行超出右边界。
+		var image = new Image<Rgba32>(Math.Max(width, (int)Math.Ceiling(glyphs.Bounds.Right) + 4), height);
+
 		image.Mutate(context => context
 			.Fill(Color.White)
 			.DrawBackgroundNoises(width, height)
@@ -109,6 +110,7 @@ public static class AuthencodeImager
 			.DrawText(options, code, brush)                                             //绘制渐进色背景的文字
 			.DrawText(options, code, Brushes.Percent10(Color.White, Color.Transparent)) //绘制渐进色背景文字上的白点
 			.DrawForegroundNoises(width, height)
+			.Crop(new Rectangle(0, 0, width, height))
 		);
 
 		return image;
