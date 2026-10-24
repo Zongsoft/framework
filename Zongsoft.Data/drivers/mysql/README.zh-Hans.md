@@ -81,6 +81,8 @@ Console.WriteLine(data.Name);
 
 ## 兼容性与测试
 
+`ReturningSafetyTest` 包含触发器场景，测试账号需要创建触发器的权限。启用二进制日志时，还需允许非管理员创建触发器；随附测试配置设置了 `log_bin_trust_function_creators=1`。
+
 数据库行为无法完全移植。请在与生产相同的服务器/提供程序版本上验证标识符大小写、空值和比较规则、日期时间精度、生成值、事务语义与批量导入约束。数据库集成测试需要显式配置可丢弃数据库。`ConnectionSettingsTest` 和 `ConnectionSettingsPropertiesTest` 两个类可离线执行，覆盖原生选项转换、扩展属性集（Properties）和完整设置文本。没有数据库时使用测试筛选器仅运行这两个类。
 
 ## 延伸阅读

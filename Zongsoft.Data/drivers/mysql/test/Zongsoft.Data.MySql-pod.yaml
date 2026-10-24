@@ -54,7 +54,6 @@ data:
   local_infile.cnf: |
     [mysqld]
     local_infile = 1
+    log_bin_trust_function_creators = 1
     [mysql]
-    local_infile = 1
-    [client]
     local_infile = 1

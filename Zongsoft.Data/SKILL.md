@@ -137,18 +137,20 @@ SQL Server 的参数预算为 2098，预留 SqlClient 调用 sp_executesql 的�
 
 ### 写入返回值与关联更新
 
-DataProvider 的默认分派器允许驱动实现已有的 `IDataExecutor<UpdateStatement>`、`IDataExecutor<DeleteStatement>` 窄接口；未实现时使用通用执行器。原生 Returning 特性仍表示 SQL 方言支持，不用于表示驱动的模拟能力。
+DataProvider 的私有嵌套 DataExecutor 通过当前上下文的 `Source.Driver.Executor` 转发执行，每次根据实际数据源选择驱动；`DataProvider.Executor` 保留全局替换或装饰入口。`IDataDriver.Executor` 由 DataDriverBase 的 `CreateExecutor()` 创建，默认使用公共 DataExecutor.Instance。公共 DataExecutor 负责语句分派、通用命令执行与从属语句遍历，各类专用执行器通过受保护工厂延迟创建并安全共享。专用执行器返回的布尔值表示是否继续遍历从属语句；false 表示已处理或无需处理，不触发通用执行器回退。执行器不得保存单次操作的上下文、会话或语句状态。
+
+`Feature.Returning` 表示 SQL 方言原生支持；`Feature.Updation.Returning`、`Feature.Deletion.Returning` 分别声明更新与删除返回能力，可以由执行器实现。构建器根据特性声明生成返回投影，不通过驱动实现的执行器接口推断能力。MySqlDriver 提供 MySqlExecutor 并声明两个操作特性；MySqlExecutor 的私有嵌套更新、删除执行器复用通用执行器，模拟返回值的共享流程为其私有方法。
 
 单表关联更新由 UpdateStatement 的内部嵌套类 Link 保存内部返回字段与外键对应关系，DataUpdateExecutor 收集完整键元组、排除含空分量的关联并去重，以最多 128 个元组、900 个总参数的保守预算分批执行。各批次的后续关联键先合并再执行下一层，避免共享目标跨批重复更新。内部关联字段与公开返回列分开收集，不生成临时表。SQLite、DuckDB 使用新值关联键，构建时拒绝修改关联锚点；其他原生驱动使用旧值。
 
-DataReturning 按操作上下文缓存公开结果，仅收集无导航 Schema 的主实体语句。整个语句树及会话提交成功后才追加至调用方 Returning.Rows，错误路径丢弃本次缓冲。环境事务的提交仍由调用方决定，操作级成功结果不代表环境事务已提交。RowCollection 按当前读取器的实际字段布局解析列序号；数据库列名通过映射解析。
+DataReturning 按操作上下文保存独立的 Returning.RowCollection，仅收集无导航 Schema 的主实体语句，使用 RowCollection.Populate 解析当前记录。整个语句树及会话提交成功后通过 Returning.Rows.AddRange 追加结果；错误路径移除本次暂存集合，保留以前已发布的行。操作执行期间由调用方保持 Returning 选项及列定义不变。环境事务的提交仍由调用方决定，操作级成功结果不代表环境事务已提交。RowCollection 按当前读取器的实际字段布局解析列序号；数据库列名通过映射解析。
 
-MySQL 更新、删除模拟在同一会话连接租约与事务中运行：检查映射主键及事务能力，核实参与表的 InnoDB 引擎，执行 `SELECT ... FOR UPDATE` 冻结目标键及旧值，再核实锁定后的表元数据。锁定查询只绑定其表达式使用的参数并保存绑定结果，写入参数在锁定后绑定。去重的完整主键分批参数化插入连接内临时表，其索引随建表语句一同创建；原生写入及新值回读使用该键表，不重用原筛选条件。临时表在 finally 中以不可取消的清理命令删除，租约归还后才允许提供者提交。不能用独立 Connector 连接或活动读取器的备用连接承载这条事务链。显式返回值的关联更新采用通用单表关联流程。
+MySQL 更新、删除模拟在同一会话连接租约与事务中运行：检查映射主键及事务能力，核实参与表的 InnoDB 引擎，创建带完整主键索引的空临时表，再以 INSERT ... SELECT DISTINCT ... FOR UPDATE 保存目标键、所需旧值及内部关联字段，随后核实锁定后的表元数据。查询参数只绑定一次并保存结果，写入参数在锁定后绑定。原生写入使用快照键集合，不重用原筛选条件。更新后核对主键匹配数量，通过联接快照与目标表直接读取新旧值；删除后直接读取快照。临时表在 finally 中以不可取消的清理命令删除，租约归还后才允许提供者提交。该流程不保存客户端 DataTable，不使用独立 Connector 连接或活动读取器的备用连接。显式返回值的关联更新采用通用单表关联流程。
 
 DuckDB 的标准 Appender 必须匹配全部物理列；选择字段导入通过连接级临时表接收所选字段，再以 INSERT ... SELECT 写入目标表，保留未指定列默认值，ConstraintIgnored 使用 INSERT OR IGNORE。DbType.Object 的自定义类型使用参数化逐行写入。默认借用环境事务；无环境事务或显式抑制时，由导入器拥有独立连接与批次事务，失败等待回滚。
 
 - 八个驱动的错误转换使用 OnErrorAsync，导入统一通过 GetRecordsAsync 消费数据，并按字段顺序等待 Member.GetValueAsync；每次返回后先更新 Target，再使用 Value。
-- MySQL 异常转换所需元数据通过 GetSchemaAsync 读取。临时导入文件的准备、写入和加载共用清理范围，写入与流释放可等待。SQL Server 先异步准备 DataTable 再取得连接租约；SqlBulkCopy 的同步 Dispose 只清理批量对象，不释放调用方拥有的连接。PostgreSQL BinaryImport 的 StartRow、Write、Complete、Dispose 均等待异步接口。
+- MySQL 异常转换所需索引元数据通过 GetSchemaAsync 读取，按标识符直接筛选行并按 ORDINAL_POSITION 排序，不拼接 DataTable.Select 表达式。临时导入文件的准备、写入和加载共用清理范围，写入与流释放可等待。SQL Server 的 GetBatchesAsync 先准备第一批再取得连接租约，后续批次在上次 SqlBulkCopy 写入完成后准备；每批最多 1024 行，列映射和类型只解析一次，同一 DataTable 清空后复用。输入枚举器及表由异步迭代器释放，累计计数仅在全部成功后写回上下文。默认共用会话事务；显式抑制环境事务且使用无事务独立连接时，失败前完成的批次保留。SqlBulkCopy 的同步 Dispose 只清理批量对象，不释放调用方拥有的连接。PostgreSQL BinaryImport 的 StartRow、Write、Complete、Dispose 均等待异步接口。
 - SQLite 底层 Open 和命令执行受 Microsoft.Data.Sqlite 的同步限制；SqliteConnector.OpenAsync 等待 PRAGMA 完成后通知 Open，PRAGMA 缓存策略保持按连接字符串使用。DuckDB 命令读取和释放向提供程序异步入口转发，标准 Appender 的本地写入及释放仍同步。不要以 Task.Run 或阻塞等待包装这些限制。
 - TDengine 使用社区维护的 TDengine.Connector.Async 3.2.1.7，默认且只接受 WebSocket。SDK 的 ADO.NET 类型仍以同步客户端执行；TDengineDriver 内部 Connection、Command、Reader 直接调用 ITDengineClientAsync、IStmtAsync、IRowsAsync。命令拥有预备语句，读取器拥有结果集，连接拥有客户端；改变命令文本只标记重新准备，旧语句在下一次异步执行或释放时清理。重复释放等待同一清理任务，同步执行/读取和未完成清理时的同步释放明确拒绝。Database 与 ServerVersion 在 OpenAsync 中异步读取并缓存，ChangeDatabaseAsync 更新数据库名称；属性读取不发起网络请求。
 - TDengine 导入通过 DataSession.Connector.ConnectAsync 打开独立 SDK 客户端，保持按子表聚合和每批最多 1000 行的原生语句提交；所有准备、绑定、提交与释放均等待并传递取消。事务仍明确不受支持。

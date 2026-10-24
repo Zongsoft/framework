@@ -143,7 +143,7 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 	private void BuildReturning(DataDeleteContext context, DeleteStatement statement)
 	{
 		if(!context.Options.HasReturning(out var returning) ||
-		   !context.Source.Features.Support(Feature.Returning) && context.Source.Driver is not IDataExecutor<DeleteStatement>)
+		   !context.Source.Features.Support(Feature.Returning) && !context.Source.Features.Support(Feature.Deletion.Returning))
 			return;
 
 		statement.Returning ??= new();

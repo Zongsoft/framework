@@ -39,6 +39,13 @@ public abstract class ReturningMutationTestBase(IDataAccess accessor, bool enabl
 			Assert.Equal(count, await accessor.UpdateAsync<UserModel>(new { Enabled = true, Description = (string)null },
 				criteria & Condition.Equal(nameof(UserModel.Enabled), false), options));
 			Assert.Equal(count, options.Returning.Rows.Count);
+
+			Assert.True(options.Returning.Columns.TryGetValue("enabled", ReturningKind.Newer, out var column));
+			Assert.Equal(nameof(UserModel.Enabled), column.Name);
+			Assert.Equal(ReturningKind.Newer, column.Kind);
+			Assert.True(options.Returning.Columns.TryGetValue("enabled", ReturningKind.Older, out column));
+			Assert.Equal(ReturningKind.Older, column.Kind);
+
 			var identifiers = new HashSet<uint>();
 
 			foreach(var row in options.Returning.Rows)
@@ -77,6 +84,13 @@ public abstract class ReturningMutationTestBase(IDataAccess accessor, bool enabl
 
 			Assert.Equal(2, await accessor.DeleteAsync<Employee>(criteria & Condition.LessThan(nameof(Employee.TenantId), 3), options));
 			Assert.Equal(2, options.Returning.Rows.Count);
+
+			Assert.True(options.Returning.Columns.TryGetValue("fullname", out var column));
+			Assert.Equal(nameof(Employee.FullName), column.Name);
+			Assert.Equal(ReturningKind.Older, column.Kind);
+			Assert.False(options.Returning.Columns.TryGetValue("fullname", ReturningKind.Newer, out column));
+			Assert.Equal(default, column);
+
 			var tenants = new HashSet<uint>();
 
 			foreach(var row in options.Returning.Rows)
@@ -362,6 +376,121 @@ public abstract class ReturningMutationTestBase(IDataAccess accessor, bool enabl
 			Mapping.Entities.Remove(mapping.Name);
 			await accessor.DeleteAsync<UserModel>(Condition.Equal(nameof(UserModel.UserId), user.UserId));
 		}
+	}
+
+	[Fact]
+	public async Task ProviderExecutorDecorationPreservesReturningAsync()
+	{
+		Assert.SkipUnless(enabled, "Database tests require ZONGSOFT_DATA_TESTS=1.");
+		var user = Model.Build<UserModel>(user =>
+		{
+			user.UserId = 1610000;
+			user.Name = "Original";
+			user.Enabled = false;
+		});
+		var criteria = Condition.Equal(nameof(UserModel.UserId), user.UserId);
+		var update = DataUpdateOptions.Return(ReturningKind.Newer, nameof(UserModel.Enabled)).Build();
+		var delete = DataDeleteOptions.Return(nameof(UserModel.UserId), nameof(UserModel.Enabled)).Build();
+		var provider = Assert.IsType<DataAccess>(accessor).Provider;
+		var executor = provider.Executor;
+		var executions = 0;
+
+		try
+		{
+			Assert.Equal(1, await accessor.InsertAsync(user, DataInsertOptions.Sequence(DataSequenceBehavior.Never)));
+			provider.Executor = new ObservingExecutor(executor, () => executions++);
+			Assert.Equal(1, await accessor.UpdateAsync<UserModel>(new { Enabled = true }, criteria, update));
+			Assert.True(Assert.Single(update.Returning.Rows).TryGetValue(nameof(UserModel.Enabled), ReturningKind.Newer, out var updated));
+			Assert.True(Convert.ToBoolean(updated));
+			Assert.Equal(1, executions);
+			Assert.Equal(1, await accessor.DeleteAsync<UserModel>(criteria, delete));
+			var row = Assert.Single(delete.Returning.Rows);
+			Assert.True(row.TryGetValue(nameof(UserModel.UserId), out var identity));
+			Assert.Equal(user.UserId, Convert.ToUInt32(identity));
+			Assert.True(row.TryGetValue(nameof(UserModel.Enabled), out var deleted));
+			Assert.True(Convert.ToBoolean(deleted));
+			Assert.Equal(2, executions);
+		}
+		finally
+		{
+			provider.Executor = executor;
+			await accessor.DeleteAsync<UserModel>(criteria);
+		}
+	}
+
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task FailedReturningPreservesPreviouslyPublishedRowsAsync(bool canceled)
+	{
+		Assert.SkipUnless(enabled, "Database tests require ZONGSOFT_DATA_TESTS=1.");
+		var user = Model.Build<UserModel>(user => { user.UserId = 1611000; user.Name = "Original"; });
+		var criteria = Condition.Equal(nameof(UserModel.UserId), user.UserId);
+		var options = DataUpdateOptions.Return(ReturningKind.Newer, nameof(UserModel.Name)).Build();
+		var provider = Assert.IsType<DataAccess>(accessor).Provider;
+		var executor = provider.Executor;
+		using var cancellation = new CancellationTokenSource();
+		var failure = new InvalidOperationException();
+
+		try
+		{
+			Assert.Equal(1, await accessor.InsertAsync(user, DataInsertOptions.Sequence(DataSequenceBehavior.Never)));
+			Assert.Equal(1, await accessor.UpdateAsync<UserModel>(new { Name = "Published" }, criteria, options));
+			Assert.Single(options.Returning.Rows);
+			provider.Executor = new ObservingExecutor(executor, () =>
+			{
+				Assert.Single(options.Returning.Rows);
+				if(canceled)
+				{
+					cancellation.Cancel();
+					cancellation.Token.ThrowIfCancellationRequested();
+				}
+
+				throw failure;
+			});
+
+			if(canceled)
+				await Assert.ThrowsAnyAsync<OperationCanceledException>(async () => await accessor.UpdateAsync<UserModel>(new { Name = "Discarded" }, criteria, options, cancellation.Token));
+			else
+				Assert.Same(failure, await Assert.ThrowsAsync<InvalidOperationException>(async () => await accessor.UpdateAsync<UserModel>(new { Name = "Discarded" }, criteria, options)));
+
+			Assert.True(Assert.Single(options.Returning.Rows).TryGetValue(nameof(UserModel.Name), ReturningKind.Newer, out var value));
+			Assert.Equal("Published", value);
+			provider.Executor = executor;
+			Assert.True(await accessor.ExistsAsync<UserModel>(criteria & Condition.Equal(nameof(UserModel.Name), "Published")));
+		}
+		finally
+		{
+			provider.Executor = executor;
+			await accessor.DeleteAsync<UserModel>(criteria);
+		}
+	}
+
+	[Fact]
+	public async Task ReturningRowsKeepNamesWhenColumnsChangeAsync()
+	{
+		Assert.SkipUnless(enabled, "Database tests require ZONGSOFT_DATA_TESTS=1.");
+		var user = Model.Build<UserModel>(user => { user.UserId = 1612000; user.Name = "Original"; });
+		var criteria = Condition.Equal(nameof(UserModel.UserId), user.UserId);
+		var options = DataUpdateOptions.Return(ReturningKind.Newer, nameof(UserModel.Name)).Build();
+
+		try
+		{
+			Assert.Equal(1, await accessor.InsertAsync(user, DataInsertOptions.Sequence(DataSequenceBehavior.Never)));
+			Assert.Equal(1, await accessor.UpdateAsync<UserModel>(new { Name = "First" }, criteria, options));
+			var first = Assert.Single(options.Returning.Rows);
+			Assert.True(options.Returning.Columns.Prepend(nameof(UserModel.Enabled), ReturningKind.Newer));
+			Assert.Equal(1, await accessor.UpdateAsync<UserModel>(new { Name = "Second", Enabled = true }, criteria, options));
+			Assert.Equal(2, options.Returning.Rows.Count);
+			Assert.True(first.TryGetValue(nameof(UserModel.Name), ReturningKind.Newer, out var name));
+			Assert.Equal("First", name);
+			Assert.False(first.TryGetValue(nameof(UserModel.Enabled), ReturningKind.Newer, out _));
+			Assert.True(options.Returning.Rows[1].TryGetValue(nameof(UserModel.Name), ReturningKind.Newer, out name));
+			Assert.Equal("Second", name);
+			Assert.True(options.Returning.Rows[1].TryGetValue(nameof(UserModel.Enabled), ReturningKind.Newer, out var enabledValue));
+			Assert.True(Convert.ToBoolean(enabledValue));
+		}
+		finally { await accessor.DeleteAsync<UserModel>(criteria); }
 	}
 
 	private static Employee CreateEmployee(uint tenant, uint user) => Model.Build<Employee>(employee =>

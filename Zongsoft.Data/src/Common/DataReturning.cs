@@ -6,7 +6,7 @@
  *  /____/\____/_/ /_/\__  /____/\____/_/  \__/
  *                   /____/
  *
- * Copyright (C) 2026 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2015-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Data library.
  *
@@ -26,92 +26,50 @@
 
 using System;
 using System.Data;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Data.Common;
 
 internal static class DataReturning
 {
-	private static readonly ConditionalWeakTable<IDataAccessContext, List<DataTable>> _buffers = new();
+	private static readonly ConditionalWeakTable<IDataAccessContext, Returning.RowCollection> _buffers = new();
 
 	public static void Populate(IDataAccessContext context, IDataRecord record)
 	{
-		var options = GetOptions(context);
-		if(options == null || !options.HasReturning(out _))
-			return;
-
-		var tables = _buffers.GetOrCreateValue(context);
-		var table = tables.Count > 0 ? tables[^1] : null;
-
-		if(table == null || !Matches(table, record))
+		if(!_buffers.TryGetValue(context, out var buffer))
 		{
-			table = new DataTable();
-			for(int i = 0; i < record.FieldCount; i++)
-				table.Columns.Add(record.GetName(i), typeof(object));
+			var options = GetOptions(context);
+			if(options == null || !options.HasReturning(out var returning))
+				return;
 
-			tables.Add(table);
+			buffer = _buffers.GetValue(context, _ => new Returning.RowCollection(returning.Columns));
 		}
 
-		var values = new object[record.FieldCount];
-		record.GetValues(values);
-		table.Rows.Add(values);
+		buffer.Populate(record);
 	}
 
 	public static void Complete(IDataAccessContext context)
 	{
-		if(!_buffers.TryGetValue(context, out var tables))
+		if(!_buffers.TryGetValue(context, out var buffer))
 			return;
 
 		try
 		{
 			var options = GetOptions(context);
 			if(options != null && options.HasReturning(out var returning))
-			{
-				foreach(var table in tables)
-				{
-					using var reader = table.CreateDataReader();
-					while(reader.Read())
-						returning.Rows.Populate(reader);
-				}
-			}
+				returning.Rows.AddRange(buffer);
 		}
-		finally
-		{
-			Discard(context);
-		}
+		finally { Discard(context); }
 	}
 
-	public static void Discard(IDataAccessContext context)
-	{
-		if(!_buffers.TryGetValue(context, out var tables))
-			return;
-
-		_buffers.Remove(context);
-		foreach(var table in tables)
-			table.Dispose();
-	}
-
-	private static bool Matches(DataTable table, IDataRecord record)
-	{
-		if(table.Columns.Count != record.FieldCount)
-			return false;
-
-		for(int i = 0; i < record.FieldCount; i++)
-		{
-			if(table.Columns[i].ColumnName != record.GetName(i))
-				return false;
-		}
-
-		return true;
-	}
+	public static void Discard(IDataAccessContext context) => _buffers.Remove(context);
 
 	private static IDataMutateOptions GetOptions(IDataAccessContext context) => context switch
 	{
-		DataInsertContext insertion => insertion.Options,
+		DataDeleteContext deletion => deletion.Options,
 		DataUpdateContext updation => updation.Options,
 		DataUpsertContext upsertion => upsertion.Options,
-		DataDeleteContext deletion => deletion.Options,
+		DataInsertContext insertion => insertion.Options,
 		_ => null,
 	};
 }

@@ -18,6 +18,94 @@ public abstract class BatchMutationTestBase(IDataAccess accessor, bool enabled, 
 	[Theory]
 	[InlineData(false)]
 	[InlineData(true)]
+	public async Task ImportPreservesValuesAcrossBatchesAsync(bool streaming)
+	{
+		Assert.SkipUnless(enabled, "Database tests require ZONGSOFT_DATA_TESTS=1.");
+		var marker = Guid.NewGuid().ToString("N");
+		var rows = Model.Build<UserModel>(2051, (row, index) =>
+		{
+			row.UserId = (uint)(1800000 + index);
+			row.Name = $"Import-{index}";
+			row.Namespace = marker;
+			row.Description = index % 2 == 0 ? null : $"Value-{index}";
+		}).ToArray();
+		var criteria = Condition.Equal(nameof(UserModel.Namespace), marker);
+
+		try
+		{
+			var count = streaming ? await accessor.ImportAsync(Stream(rows)) : await accessor.ImportAsync(rows);
+			Assert.Equal(rows.Length, count);
+			var stored = (await ReadAsync(accessor.SelectAsync<UserModel>(criteria))).ToDictionary(row => row.UserId);
+			Assert.Equal(rows.Length, stored.Count);
+
+			foreach(var row in rows)
+			{
+				Assert.True(stored.TryGetValue(row.UserId, out var actual));
+				Assert.Equal(row.Name, actual.Name);
+				Assert.Equal(row.Description, actual.Description);
+			}
+		}
+		finally { await accessor.DeleteAsync<UserModel>(criteria); }
+	}
+
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task ImportSourceFailureRollsBackEarlierBatchesAsync(bool canceled)
+	{
+		Assert.SkipUnless(enabled, "Database tests require ZONGSOFT_DATA_TESTS=1.");
+		var marker = Guid.NewGuid().ToString("N");
+		var criteria = Condition.Equal(nameof(UserModel.Namespace), marker);
+		var failure = new InvalidOperationException();
+		var disposed = false;
+		using var cancellation = new CancellationTokenSource();
+
+		try
+		{
+			var exception = await Record.ExceptionAsync(async () => await accessor.ImportAsync(Source(), cancellation: cancellation.Token));
+			Assert.NotNull(exception);
+
+			if(canceled)
+				Assert.IsAssignableFrom<OperationCanceledException>(exception.GetBaseException());
+			else
+				Assert.Same(failure, exception.GetBaseException());
+
+			Assert.True(disposed);
+			Assert.Equal(0, await accessor.CountAsync<UserModel>(criteria));
+		}
+		finally { await accessor.DeleteAsync<UserModel>(criteria); }
+
+		async IAsyncEnumerable<UserModel> Source()
+		{
+			try
+			{
+				for(int i = 0; i < 1300; i++)
+				{
+					var index = i;
+					yield return Model.Build<UserModel>(row =>
+					{
+						row.UserId = (uint)(1810000 + index);
+						row.Name = $"ImportFailure-{index}";
+						row.Namespace = marker;
+					});
+				}
+
+				await Task.Yield();
+				if(canceled)
+				{
+					cancellation.Cancel();
+					cancellation.Token.ThrowIfCancellationRequested();
+				}
+
+				throw failure;
+			}
+			finally { disposed = true; }
+		}
+	}
+
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
 	public async Task InsertManyPreservesValuesAndGeneratedIdsAcrossBatchesAsync(bool streaming)
 	{
 		Assert.SkipUnless(enabled, "Database tests require ZONGSOFT_DATA_TESTS=1.");

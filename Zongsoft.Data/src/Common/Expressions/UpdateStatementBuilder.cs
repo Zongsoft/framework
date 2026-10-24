@@ -86,7 +86,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 
 		if(context.Options.HasReturning(out var returning))
 		{
-			if(context.Source.Features.Support(Feature.Returning) || context.Source.Driver is IDataExecutor<UpdateStatement>)
+			if(context.Source.Features.Support(Feature.Returning) || context.Source.Features.Support(Feature.Updation.Returning))
 			{
 				statement.Returning ??= new();
 

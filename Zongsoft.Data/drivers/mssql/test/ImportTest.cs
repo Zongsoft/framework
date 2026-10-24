@@ -143,6 +143,79 @@ public class ImportTest(DatabaseFixture database) : IAsyncDisposable
 	[Theory]
 	[InlineData(false)]
 	[InlineData(true)]
+	public async Task ImportTransactionSuppressed_SourceFailureKeepsCompletedBatches(bool canceled)
+	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		IDataAccess accessor = _database.Accessor;
+		var name = $"{PREFIX}Partial:{Guid.NewGuid():N}";
+		var condition = Condition.Equal(nameof(UserModel.Namespace), name);
+		var failure = new InvalidOperationException();
+		using var cancellation = new CancellationTokenSource();
+		var disposed = false;
+
+		try
+		{
+			await using(var transaction = new Transaction())
+			{
+				var options = DataImportOptions.SuppressTransaction().Build();
+				var exception = await Record.ExceptionAsync(async () =>
+					await accessor.ImportAsync(Source(), options, cancellation.Token));
+
+				Assert.NotNull(exception);
+				Assert.True(disposed);
+
+				if(canceled)
+					Assert.IsAssignableFrom<OperationCanceledException>(exception.GetBaseException());
+				else
+					Assert.Same(failure, exception.GetBaseException());
+
+				Assert.Same(transaction, Transaction.Current);
+				await transaction.RollbackAsync();
+			}
+
+			Assert.Equal(1024, await accessor.CountAsync<UserModel>(condition));
+		}
+		finally
+		{
+			await accessor.DeleteAsync<UserModel>(condition);
+		}
+
+		async IAsyncEnumerable<UserModel> Source()
+		{
+			try
+			{
+				for(int i = 0; i < 1300; i++)
+				{
+					yield return Model.Build<UserModel>(model =>
+					{
+						model.UserId = (uint)(1820000 + i);
+						model.Name = $"{PREFIX}Partial:{i}";
+						model.Namespace = name;
+					});
+				}
+
+				await Task.Yield();
+
+				if(canceled)
+				{
+					cancellation.Cancel();
+					cancellation.Token.ThrowIfCancellationRequested();
+				}
+
+				throw failure;
+			}
+			finally
+			{
+				disposed = true;
+			}
+		}
+	}
+
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
 	public async Task ImportWithoutAmbientTransaction_Commits(bool asynchronous)
 	{
 		const uint FIRST_USER_ID = 900010;

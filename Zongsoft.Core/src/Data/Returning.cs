@@ -113,7 +113,7 @@ public class Returning
 		public ColumnCollection(ReturningKind? kind, params Column[] columns)
 		{
 			_kind = kind;
-			_columns = columns ?? [];
+			_columns = columns == null ? [] : [.. columns];
 		}
 		public ColumnCollection(ReturningKind? kind, params IEnumerable<Column> columns)
 		{
@@ -125,20 +125,9 @@ public class Returning
 		public bool IsEmpty => _columns == null || _columns.Length == 0;
 		bool ICollection<Column>.IsReadOnly => false;
 		public Column this[int index] => _columns[index];
-		internal int Version { get; private set; }
 
-		internal int IndexOf(Column column) => this.IndexOf(column.Name, column.Kind);
-		internal int IndexOf(string name, ReturningKind? kind = default)
-		{
-			if(string.IsNullOrEmpty(name))
-				return -1;
-
-			if(kind.HasValue && _kind.HasValue && kind.Value != _kind.Value)
-				throw new ArgumentOutOfRangeException(nameof(kind));
-
-			kind ??= _kind ?? ReturningKind.Older;
-			return Array.IndexOf(_columns, new Column(name, kind.Value));
-		}
+		internal Column[] Items => _columns;
+		internal ReturningKind? Kind => _kind;
 
 		public bool Append(string name, ReturningKind? kind = default)
 		{
@@ -153,7 +142,6 @@ public class Returning
 				return false;
 
 			_columns = [.. _columns, new Column(name, kind.Value)];
-			this.Version++;
 			return true;
 		}
 
@@ -170,28 +158,46 @@ public class Returning
 				return false;
 
 			_columns = [new Column(name, kind.Value), .. _columns];
-			this.Version++;
 			return true;
 		}
 
-		public bool Contains(string name, ReturningKind? kind = default)
+		/// <summary>判断是否包含指定名称和种类的列。</summary>
+		/// <param name="name">不区分大小写的列名。</param>
+		/// <param name="kind">列的种类；为空时使用集合的固定种类，没有固定种类则使用 <see cref="ReturningKind.Older"/>。</param>
+		/// <returns>包含指定列则返回真，否则返回假。</returns>
+		public bool Contains(string name, ReturningKind? kind = default) => this.TryGetValue(name, kind, out _);
+
+		/// <summary>尝试获取指定名称的列。</summary>
+		/// <param name="name">不区分大小写的列名。</param>
+		/// <param name="result">找到的列；查找失败时为默认值。</param>
+		/// <returns>找到指定列则返回真，否则返回假。使用集合的固定种类，没有固定种类则使用 <see cref="ReturningKind.Older"/>。</returns>
+		public bool TryGetValue(string name, out Column result) => this.TryGetValue(name, null, out result);
+
+		/// <summary>尝试获取指定名称和种类的列。</summary>
+		/// <param name="name">不区分大小写的列名。</param>
+		/// <param name="kind">列的种类；为空时使用集合的固定种类，没有固定种类则使用 <see cref="ReturningKind.Older"/>。</param>
+		/// <param name="result">找到的列；查找失败时为默认值。</param>
+		/// <returns>找到指定列则返回真；名称为空、种类与集合不符或列不存在时返回假。</returns>
+		public bool TryGetValue(string name, ReturningKind? kind, out Column result)
 		{
+			result = default;
+
 			if(string.IsNullOrEmpty(name))
 				return false;
 
 			if(kind.HasValue && _kind.HasValue && kind.Value != _kind.Value)
 				return false;
 
-			kind ??= _kind ?? ReturningKind.Older;
-			return _columns != null && Array.Exists(_columns, column => column == new Column(name, kind.Value));
+			var index = Array.IndexOf(_columns, new Column(name, kind ?? _kind ?? ReturningKind.Older));
+			if(index < 0)
+				return false;
+
+			result = _columns[index];
+			return true;
 		}
 
 		public void Add(Column column) => this.Append(column.Name, column.Kind);
-		public void Clear()
-		{
-			_columns = [];
-			this.Version++;
-		}
+		public void Clear() => _columns = [];
 		public bool Contains(Column column) => Array.Exists(_columns, element => element == column);
 		public void CopyTo(Column[] array, int arrayIndex) => _columns.CopyTo(array, arrayIndex);
 		public bool Remove(Column column)
@@ -201,7 +207,6 @@ public class Returning
 				return false;
 
 			_columns = [.. _columns.AsSpan(0, index), .. _columns.AsSpan(index + 1)];
-			this.Version++;
 			return true;
 		}
 
@@ -213,10 +218,19 @@ public class Returning
 		}
 	}
 
-	public readonly struct Row(ColumnCollection columns, params object[] values)
+	public readonly struct Row
 	{
-		private readonly ColumnCollection _columns = columns;
-		public readonly object[] Values = values;
+		private readonly ReturningKind? _kind;
+		private readonly Column[] _columns;
+		public readonly object[] Values;
+
+		public Row(ColumnCollection columns, params object[] values)
+		{
+			_kind = columns?.Kind;
+			_columns = columns?.Items;
+			this.Values = values;
+		}
+
 		public object this[int index] => Values[index];
 
 		public bool TryGetValue(string name, out object value) => this.TryGetValue(name, null, out value);
@@ -228,7 +242,10 @@ public class Returning
 				return false;
 			}
 
-			var index = _columns.IndexOf(name, kind);
+			if(kind.HasValue && _kind.HasValue && kind.Value != _kind.Value)
+				throw new ArgumentOutOfRangeException(nameof(kind));
+
+			var index = Array.IndexOf(_columns, new Column(name, kind ?? _kind ?? ReturningKind.Older));
 			if(index >= 0 && index < this.Values.Length)
 			{
 				value = this.Values[index];
@@ -244,9 +261,9 @@ public class Returning
 	{
 		private readonly List<Row> _rows = [];
 		private readonly ColumnCollection _columns = columns;
+		private Column[] _members;
 		private string[] _names;
 		private int[] _ordinals;
-		private int _version = -1;
 
 		public int Count => _rows.Count;
 		public bool IsEmpty => _rows.Count == 0;
@@ -257,10 +274,11 @@ public class Returning
 			if(record == null)
 				throw new ArgumentNullException(nameof(record));
 
-			var ordinals = this.Initialize(record);
-			var values = new object[_columns.Count];
+			var members = _columns.Items;
+			var ordinals = this.Initialize(record, members);
+			var values = new object[ordinals.Length];
 
-			for(int i = 0; i < _columns.Count; i++)
+			for(int i = 0; i < ordinals.Length; i++)
 			{
 				if(ordinals[i] >= 0)
 					values[i] = record.IsDBNull(ordinals[i]) ? null : record.GetValue(ordinals[i]);
@@ -272,28 +290,39 @@ public class Returning
 			_rows.Add(row);
 		}
 
-		private int[] Initialize(IDataRecord record)
+		/// <summary>将指定集合的行追加到当前集合。</summary>
+		/// <param name="rows">待追加的行集合。</param>
+		/// <exception cref="ArgumentNullException"><paramref name="rows"/> 为空。</exception>
+		public void AddRange(RowCollection rows)
+		{
+			ArgumentNullException.ThrowIfNull(rows);
+			_rows.AddRange(rows._rows);
+		}
+
+		private int[] Initialize(IDataRecord record, Column[] members)
 		{
 			var ordinals = _ordinals;
 
-			if(ordinals == null || _version != _columns.Version || !this.Matches(record))
+			if(ordinals == null || _members != members || !this.Matches(record))
 			{
-				_version = _columns.Version;
-				ordinals = new int[_columns.Count];
-				_names = new string[record.FieldCount];
+				ordinals = new int[members.Length];
+				var names = new string[record.FieldCount];
 
-				for(int i = 0; i < _names.Length; i++)
-					_names[i] = record.GetName(i);
+				for(int i = 0; i < names.Length; i++)
+					names[i] = record.GetName(i);
 
 				for(int i = 0; i < ordinals.Length; i++)
 				{
-					if(record.TryGetOrdinal(_columns[i].Alias, out var ordinal))
+					if(record.TryGetOrdinal(members[i].Alias, out var ordinal))
 						ordinals[i] = ordinal;
-					else if(record.TryGetOrdinal(_columns[i].Name, out ordinal))
+					else if(record.TryGetOrdinal(members[i].Name, out ordinal))
 						ordinals[i] = ordinal;
 					else
 						ordinals[i] = -1;
 				}
+
+				_members = members;
+				_names = names;
 			}
 
 			return _ordinals = ordinals;

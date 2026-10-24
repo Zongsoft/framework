@@ -111,6 +111,9 @@ public class Feature : IEquatable<Feature>, IComparable<Feature>
 		#region 公共字段
 		/// <summary>表示删除语句中“多表删除”的功能特性。</summary>
 		public static readonly Feature Multitable = new(FEATURE_DELETE_PREFIX + nameof(Multitable));
+
+		/// <summary>表示支持返回删除操作的结果值，由原生语句或执行器提供。</summary>
+		public static readonly Feature Returning = new(FEATURE_DELETE_PREFIX + nameof(Returning));
 		#endregion
 	}
 
@@ -124,6 +127,9 @@ public class Feature : IEquatable<Feature>, IComparable<Feature>
 		#region 公共字段
 		/// <summary>表示更新语句中“多表更新”的功能特性。</summary>
 		public static readonly Feature Multitable = new(FEATURE_UPDATE_PREFIX + nameof(Multitable));
+
+		/// <summary>表示支持返回更新操作的结果值，由原生语句或执行器提供。</summary>
+		public static readonly Feature Returning = new(FEATURE_UPDATE_PREFIX + nameof(Returning));
 		#endregion
 	}
 	#endregion

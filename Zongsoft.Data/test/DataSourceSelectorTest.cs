@@ -95,6 +95,7 @@ public class DataSourceSelectorTest
 		public IDataRecordGetter Getter => null;
 		public IDataParameterSetter Setter => null;
 		public IDataImporter Importer => null;
+		public IDataExecutor Executor => DataExecutor.Instance;
 		public IStatementBinder Binder => StatementBinder.Default;
 		public IStatementSlotEvaluator Slotter => null;
 		public IStatementBuilder Builder => null;

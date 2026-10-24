@@ -46,6 +46,8 @@ public abstract class DataDriverBase : IDataDriver
 		this.Slotter = this.CreateSlotter();
 		//创建表达式访问器
 		this.Visitor = this.CreateVisitor();
+		//创建数据语句执行器
+		this.Executor = this.CreateExecutor();
 		//创建数据导入器
 		this.Importer = this.CreateImporter();
 
@@ -58,6 +60,7 @@ public abstract class DataDriverBase : IDataDriver
 
 	#region 公共属性
 	public abstract string Name { get; }
+	public IDataExecutor Executor { get; }
 	public IDataImporter Importer { get; }
 	public FeatureCollection Features { get; }
 	public IDataRecordGetter Getter { get; protected set; }
@@ -106,6 +109,7 @@ public abstract class DataDriverBase : IDataDriver
 
 	#region 保护方法
 	protected abstract IDataImporter CreateImporter();
+	protected virtual IDataExecutor CreateExecutor() => DataExecutor.Instance;
 	protected abstract Expressions.ExpressionVisitorBase CreateVisitor();
 	protected virtual Expressions.IStatementSlotEvaluator CreateSlotter() => null;
 	protected virtual Expressions.IStatementBinder CreateBinder() => Expressions.StatementBinder.Default;

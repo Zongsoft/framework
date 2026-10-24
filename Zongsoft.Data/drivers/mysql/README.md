@@ -81,6 +81,8 @@ The returned rows belong to the targets selected before the mutation, even when 
 
 ## Compatibility and Testing
 
+`ReturningSafetyTest` includes trigger scenarios and requires permission to create triggers. When binary logging is enabled, non-administrative trigger creation must also be allowed; the supplied test configuration sets `log_bin_trust_function_creators=1`.
+
 Database behavior is not completely portable. Verify identifier casing, null and comparison rules, date/time precision, generated values, transaction semantics, and bulk-import constraints on the same server/provider versions used in production. Database integration tests require an explicitly configured disposable database. The `ConnectionSettingsTest` and `ConnectionSettingsPropertiesTest` classes run offline and cover native option conversion, extension properties, and complete settings text. Use a test filter for these classes when no database is available.
 
 ## Related Resources

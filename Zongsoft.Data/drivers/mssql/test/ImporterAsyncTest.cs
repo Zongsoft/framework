@@ -20,7 +20,7 @@ public class ImporterAsyncTest
 	[Theory]
 	[InlineData(false)]
 	[InlineData(true)]
-	public async Task GetTableAsync_AwaitsValidationAndPreservesStructUpdates(bool asynchronousSource)
+	public async Task GetBatchesAsync_AwaitsValidationAndPreservesStructUpdates(bool asynchronousSource)
 	{
 		var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
 		var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -63,10 +63,11 @@ public class ImporterAsyncTest
 				new(context, first, typeof(Row).GetField(nameof(Row.Value))),
 				new(context, second, typeof(Row).GetProperty(nameof(Row.Following))),
 			};
-			var method = typeof(MsSqlImporter).GetMethod("GetTableAsync", BindingFlags.Static | BindingFlags.NonPublic);
+			var method = typeof(MsSqlImporter).GetMethod("GetBatchesAsync", BindingFlags.Static | BindingFlags.NonPublic);
 			Assert.NotNull(method);
 
-			var operation = ((ValueTask<DataTable>)method.Invoke(null, [context, members, cancellation.Token])).AsTask();
+			await using var batches = ((IAsyncEnumerable<DataTable>)method.Invoke(null, [context, members, cancellation.Token])).GetAsyncEnumerator();
+			var operation = batches.MoveNextAsync().AsTask();
 
 			try
 			{
@@ -75,7 +76,8 @@ public class ImporterAsyncTest
 				Assert.Equal(1, validations);
 				release.TrySetResult();
 
-				using var table = await operation.WaitAsync(_timeout);
+				Assert.True(await operation.WaitAsync(_timeout));
+				var table = batches.Current;
 				Assert.Equal(2, validations);
 				Assert.Equal(2, table.Columns.Count);
 				Assert.Equal(typeof(int), table.Columns[nameof(Row.Value)].DataType);
@@ -85,6 +87,7 @@ public class ImporterAsyncTest
 				Assert.Equal(42, table.Rows[0][nameof(Row.Following)]);
 				Assert.Equal(7, rows[0].Value);
 				Assert.Null(session.Connection);
+				Assert.False(await batches.MoveNextAsync());
 			}
 			finally
 			{
@@ -98,6 +101,67 @@ public class ImporterAsyncTest
 
 			try { await ((IAsyncDisposable)accessor).DisposeAsync(); }
 			finally { Mapping.Entities.Remove(entity.QualifiedName); }
+		}
+	}
+
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task GetBatchesAsync_BoundsPreparationAndReleasesInput(bool asynchronousSource)
+	{
+		var entity = new DataEntity(null, $"Importer{Guid.NewGuid():N}");
+		var property = entity.Properties.Simplex(nameof(Row.Value), DataType.Int32, false);
+		var enumerated = 0;
+		var disposed = false;
+		var accessor = new DataAccess(entity.Name);
+		Mapping.Entities.Add(entity);
+
+		try
+		{
+			((DataProvider)accessor.Provider).Multiplexer = new Multiplexer();
+			object input = asynchronousSource ? Zongsoft.Collections.Enumerable.EnumerateAsync<Row>(Source()) : Source();
+			using var context = new DataImportContext(accessor, entity.Name, input, null);
+			await using var session = context.Session;
+			var members = new DataImporterBase.MemberCollection
+			{
+				new(context, property, typeof(Row).GetField(nameof(Row.Value))),
+			};
+			var method = typeof(MsSqlImporter).GetMethod("GetBatchesAsync", BindingFlags.Static | BindingFlags.NonPublic);
+			Assert.NotNull(method);
+
+			await using(var batches = ((IAsyncEnumerable<DataTable>)method.Invoke(null, [context, members, CancellationToken.None])).GetAsyncEnumerator())
+			{
+				Assert.True(await batches.MoveNextAsync());
+				var table = batches.Current;
+				Assert.Equal(1024, table.Rows.Count);
+				Assert.Equal(1024, enumerated);
+				Assert.Equal(0, table.Rows[0][0]);
+				Assert.Equal(1023, table.Rows[1023][0]);
+				Assert.True(await batches.MoveNextAsync());
+				Assert.Same(table, batches.Current);
+				Assert.Equal(1024, table.Rows.Count);
+				Assert.Equal(2048, enumerated);
+				Assert.Equal(1024, table.Rows[0][0]);
+				Assert.Null(session.Connection);
+			}
+
+			Assert.True(disposed);
+			Assert.Equal(2048, enumerated);
+		}
+		finally
+		{
+			try { await ((IAsyncDisposable)accessor).DisposeAsync(); }
+			finally { Mapping.Entities.Remove(entity.QualifiedName); }
+		}
+
+		IEnumerable<Row> Source()
+		{
+			try
+			{
+				while(enumerated < 3000)
+					yield return new Row { Value = enumerated++ };
+			}
+			finally { disposed = true; }
 		}
 	}
 

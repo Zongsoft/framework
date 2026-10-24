@@ -45,6 +45,14 @@ TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Z
 
 > 💡 提示：如果需要未列出的驱动或商业技术支持，请联系我们（[zongsoft@qq.com](mailto:zongsoft@qq.com)）。
 
+### 执行器扩展
+
+驱动通过 `IDataDriver.Executor` 提供执行器。继承 `DataDriverBase` 的驱动默认使用 `DataExecutor.Instance`，可重写 `CreateExecutor()` 返回自定义 `DataExecutor` 派生类，并重写对应的 `CreateUpdateExecutor()`、`CreateDeleteExecutor()` 等工厂方法。直接实现 `IDataDriver` 的驱动也必须提供 `Executor`。
+
+`DataProvider.Executor` 支持整体替换或装饰；默认执行器按每次操作的实际数据源选择驱动。专用执行器的布尔返回值表示是否继续执行从属语句，返回 `false` 不触发回退。执行器实例会被并发复用，不应保存单次操作的可变状态。
+
+`Feature.Returning` 表示原生 SQL 返回投影能力；`Feature.Updation.Returning` 与 `Feature.Deletion.Returning` 分别表示更新、删除返回能力，也可由驱动执行器提供。声明特性的驱动负责实现相应行为。
+
 <a name="plugin-quickstart"></a>
 ## 真实插件用例：Discussions
 
@@ -965,7 +973,7 @@ Upsert 契约与驱动限制见 [IDataAccess](../Zongsoft.Core/src/Data/IDataAcc
 
 删除、新增、更新、增改选项可以向数据库提供程序请求返回值。它适合获取被删除的文件编号、自增值、生成值、更新后的计数值等。该能力只有在当前驱动支持返回值时才可用。
 
-返回行只描述主实体，受影响行数还可能包含关联写入。所有语句执行成功后、完成回调之前向原选项对象追加结果；操作自有事务必须先提交，调用方事务中的返回值则在调用方提交前保持暂定状态。执行失败或提交前取消不追加返回行。返回行顺序不作保证。
+返回行只描述主实体，受影响行数还可能包含关联写入。所有语句执行成功后、完成回调之前向原选项对象追加结果；操作自有事务必须先提交，调用方事务中的返回值则在调用方提交前保持暂定状态。执行失败或提交前取消不追加返回行。返回行顺序不作保证。请在操作开始前配置返回选项和列，并在执行期间保持不变。
 
 SQL Server 和 PostgreSQL 18 及以上支持更新前后的值。SQLite 和 DuckDB 支持更新后的值及删除前的值；不支持的更新/增改旧值列缺失（`TryGetValue` 返回 `false`）。SQLite 和 DuckDB 的关联更新不允许同时写入关联锚点。MySQL 支持更新、删除返回值，须满足[驱动的事务及主键要求](drivers/mysql/README.zh-Hans.md#returning-values)。
 

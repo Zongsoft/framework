@@ -96,6 +96,12 @@ InsertManyAsync、UpsertManyAsync、UpdateManyAsync 和访问层 ImportAsync 支
 
 `Pageable.FilterAsync` 和 `MapAsync` 为 `IAsyncEnumerable<T>` 提供可等待的筛选和映射回调。枚举时逐条处理，保留分页信息，并将枚举取消令牌传给回调。筛选返回 `Pageable.FilterResult<T>`：`Accepted = true` 表示输出 `Data`，允许替换记录或输出 `null`；`default` 表示丢弃当前记录。
 
+`Returning.Columns.TryGetValue(name, kind, out column)` 通过不区分大小写的名称及 `ReturningKind` 查找列。省略 `kind` 的重载或传入空值时，使用集合的固定种类；没有固定种类则使用 `Older`。名称为空、种类与集合不符或列不存在时，返回 `false`，`column` 为默认值。
+
+`Returning.Rows.Populate(record)` 读取当前 `IDataRecord` 并追加一行；它不推进或释放读取器。`Rows.AddRange(rows)` 将另一个行集合的内容追加到当前集合。
+
+返回行通过不区分大小写的名称及 `ReturningKind` 取值，后续修改 `Columns` 不改变已有行的名称映射。`Row[int]` 和 `Values` 保留该行的值位置。缺失列的 `TryGetValue` 返回 `false`，数据库空值返回 `true` 且值为 `null`。集合不支持并发修改。
+
 ## 事务
 
 `Transaction` 使用 `CommitAsync`、`RollbackAsync` 和 `DisposeAsync`，通过 `await using` 管理范围。未提交的事务在释放时回滚；嵌套事务回滚使根事务只能回滚。提交仅在接受决议前响应取消，已经开始的提交、回滚和释放会等待实际完成。重复终结等待相同结果，失败也会继续向等待者传播。

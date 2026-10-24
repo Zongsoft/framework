@@ -278,7 +278,6 @@ public class DataProvider : IDataProvider
 		}
 	}
 
-
 	private async ValueTask RaiseAsync<TArgs>(Func<object, TArgs, CancellationToken, ValueTask> handlers, TArgs args, CancellationToken cancellation)
 	{
 		if(handlers != null)
@@ -294,68 +293,12 @@ public class DataProvider : IDataProvider
 	{
 	}
 
-	private class DataExecutor : IDataExecutor
+	private sealed class DataExecutor : IDataExecutor
 	{
-		#region 单例字段
 		public static readonly DataExecutor Instance = new();
-		#endregion
 
-		#region 成员字段
-		private readonly DataSelectExecutor _select;
-		private readonly DataDeleteExecutor _delete;
-		private readonly DataInsertExecutor _insert;
-		private readonly DataUpdateExecutor _update;
-		private readonly DataUpsertExecutor _upsert;
-
-		private readonly DataExistExecutor _exist;
-		private readonly DataExecuteExecutor _execution;
-		private readonly DataAggregateExecutor _aggregate;
-		#endregion
-
-		#region 私有构造
-		private DataExecutor()
-		{
-			_select = new DataSelectExecutor();
-			_delete = new DataDeleteExecutor();
-			_insert = new DataInsertExecutor();
-			_update = new DataUpdateExecutor();
-			_upsert = new DataUpsertExecutor();
-
-			_exist = new DataExistExecutor();
-			_execution = new DataExecuteExecutor();
-			_aggregate = new DataAggregateExecutor();
-		}
-		#endregion
-
-		#region 执行方法
-		public async ValueTask ExecuteAsync(IDataAccessContext context, IStatementBase statement, CancellationToken cancellation)
-		{
-			var continued = statement switch
-			{
-				SelectStatement select => await _select.ExecuteAsync(context, select, cancellation),
-				InsertStatement insert => await _insert.ExecuteAsync(context, insert, cancellation),
-				UpdateStatement update => await (context.Source.Driver as IDataExecutor<UpdateStatement> ?? _update).ExecuteAsync(context, update, cancellation),
-				UpsertStatement upsert => await _upsert.ExecuteAsync(context, upsert, cancellation),
-				DeleteStatement delete => await (context.Source.Driver as IDataExecutor<DeleteStatement> ?? _delete).ExecuteAsync(context, delete, cancellation),
-				ExistStatement exist => await _exist.ExecuteAsync(context, exist, cancellation),
-				AggregateStatement aggregate => await _aggregate.ExecuteAsync(context, aggregate, cancellation),
-				ExecutionStatement execution => await _execution.ExecuteAsync(context, execution, cancellation),
-				_ => await ExecuteCommandAsync(context, statement, cancellation),
-			};
-
-			if(continued && statement.HasSlaves)
-			{
-				foreach(var slave in statement.Slaves)
-					await this.ExecuteAsync(context, slave, cancellation);
-			}
-		}
-
-		private static async ValueTask<bool> ExecuteCommandAsync(IDataAccessContext context, IStatementBase statement, CancellationToken cancellation)
-		{
-			await using var command = context.Session.Build(context, statement);
-			return await command.ExecuteNonQueryAsync(cancellation) > 0;
-		}
-		#endregion
+		public ValueTask ExecuteAsync(IDataAccessContext context, IStatementBase statement, CancellationToken cancellation = default) =>
+			context.Source.Driver.Executor.ExecuteAsync(context, statement, cancellation);
 	}
 
 	private class DataMultiplexer : IDataMultiplexer

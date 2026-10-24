@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.73.0</Version>
+		<Version>7.74.0</Version>
 		<Product>Zongsoft Core Library</Product>
 		<Description>This is a core library about Zongsoft development framework.</Description>
 		<RootNamespace>Zongsoft</RootNamespace>
@@ -10,7 +10,7 @@
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/Zongsoft.Core</RepositoryUrl>
-		<PackageReleaseNotes></PackageReleaseNotes>
+		<PackageReleaseNotes>提供返回列名称与种类查询、返回行解析和集合追加能力。</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<PropertyGroup>

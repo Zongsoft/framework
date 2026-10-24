@@ -55,6 +55,10 @@ DataDictionary.GetDictionariesAsync<T> 转换内存集合，GetDictionariesAsync
 
 ## 数据验证与异步结果转换
 
+Returning 的 ColumnCollection 使用列数组，构造时复制输入数组，增删列时替换数组。TryGetValue 按不区分大小写的名称与 ReturningKind 查找并返回实际存储的列；省略种类或传入 null 时使用集合固定种类，无固定种类则使用 Older。名称为空、种类与集合不符或列不存在时返回 false，输出默认值；Contains(name, kind) 复用此查找入口。Row 保存采集时的列数组、默认 ReturningKind 和值数组，通过名称与 ReturningKind 查找值。RowCollection 根据列数组身份及读取器字段名缓存列序号，优先匹配别名，再回退到名称；缺失列与数据库空值分别保存。
+
+RowCollection.Populate 解析并追加当前记录，AddRange 直接追加另一个行集合中的行。Core 只负责记录解析和行集合操作，操作过程中的暂存、成功追加与失败丢弃由 Data 引擎负责。集合不支持并发修改。
+
 IDataValidator 的条件验证使用 ValidateAsync；字段验证使用 OnImportAsync、OnInsertAsync、OnUpdateAsync，返回 DataValidatorResult。HasValue 为 false 表示不提供替代值，为 true 时 Value 允许为 null 或 IDataValueBinder。上下文验证保持显式条件优先、缺少验证器及 ValidatorSuppressed 跳过验证器的行为，不自行改写 Criteria；字段转发保持 Insert/Update 的选择规则。IDataValueBinder.BindAsync 在参数绑定时被等待，不能在返回验证结果时提前执行。
 
 Pageable.FilterAsync/MapAsync 消费 IAsyncEnumerable，按原枚举次序逐条等待回调，把枚举取消令牌传给源与回调。FilterResult<T>.Accepted 决定是否输出 Data，允许接受 null，default 表示丢弃。纯内存 Filter/Map 保留；包装器传递 IPageable、Suppressed 和分页事件，事件 sender 为最外层包装器。重复读取 Current 不重复调用回调；提前退出或失败等待源枚举器释放，并保持标准 await foreach 的异常优先级。

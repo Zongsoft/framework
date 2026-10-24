@@ -45,6 +45,14 @@ TDengine | [/drivers/tdengine](https://github.com/Zongsoft/framework/tree/main/Z
 
 > 💡 Tip: If you need a driver that is not listed here or commercial support, please contact us ([zongsoft@qq.com](mailto:zongsoft@qq.com)).
 
+### Executor Extensions
+
+Drivers provide an executor through `IDataDriver.Executor`. Drivers derived from `DataDriverBase` use `DataExecutor.Instance` by default. Override `CreateExecutor()` to supply a custom `DataExecutor` subclass, then override factories such as `CreateUpdateExecutor()` or `CreateDeleteExecutor()`. Drivers implementing `IDataDriver` directly must also provide `Executor`.
+
+`DataProvider.Executor` supports replacement or decoration. Its default executor selects the driver from each operation's actual data source. A typed executor's Boolean result controls traversal of subordinate statements; `false` does not trigger a fallback. Executor instances are shared across concurrent operations and must not retain mutable state belonging to an individual operation.
+
+`Feature.Returning` denotes native SQL returning projections. `Feature.Updation.Returning` and `Feature.Deletion.Returning` declare update and delete returning capabilities, which may also be supplied by a driver executor. Drivers declaring these features must implement the corresponding behavior.
+
 <a name="plugin-quickstart"></a>
 ## A Real Plugin Workflow: Discussions
 
@@ -962,7 +970,7 @@ For the upsert contract and driver restrictions, see [IDataAccess](../Zongsoft.C
 
 Delete, insert, update, and upsert options can request returned values from the database provider. This is useful for deleted file paths, identity values, generated values, and updated counters. The feature is available only when the current driver supports returning values.
 
-Returned rows describe the primary entity; the affected-row count can also include associated writes. Results are appended to the existing options after all statements succeed and before the completion callbacks. An owned transaction must commit first; within a caller-owned transaction, returned values remain provisional until the caller commits. Execution failures or cancellation before commit do not append rows. Row order is unspecified.
+Returned rows describe the primary entity; the affected-row count can also include associated writes. Results are appended to the existing options after all statements succeed and before the completion callbacks. An owned transaction must commit first; within a caller-owned transaction, returned values remain provisional until the caller commits. Execution failures or cancellation before commit do not append rows. Row order is unspecified. Configure returning options and columns before the operation and keep them unchanged during execution.
 
 SQL Server and PostgreSQL 18 or later support both older and newer update values. SQLite and DuckDB provide newer update values and older delete values; unsupported older update/upsert columns are absent (`TryGetValue` returns `false`). Associated updates on SQLite and DuckDB cannot also assign link anchors. MySQL supports update/delete returning under the [driver's transaction and key requirements](drivers/mysql/README.md#returning-values).
 

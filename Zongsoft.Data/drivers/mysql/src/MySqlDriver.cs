@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Data;
 using System.Data.Common;
 using System.Threading;
@@ -40,7 +41,7 @@ using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.MySql;
 
-public class MySqlDriver : DataDriverBase, IDataExecutor<DeleteStatement>, IDataExecutor<UpdateStatement>
+public class MySqlDriver : DataDriverBase
 {
 	#region 公共常量
 	/// <summary>驱动程序的标识：MySql。</summary>
@@ -49,20 +50,15 @@ public class MySqlDriver : DataDriverBase, IDataExecutor<DeleteStatement>, IData
 
 	#region 单例字段
 	public static readonly MySqlDriver Instance = new();
-	private static readonly MySqlDeleteExecutor _delete = new();
-	private static readonly MySqlUpdateExecutor _update = new();
-	#endregion
-
-	#region 显式实现
-	ValueTask<bool> IDataExecutor<DeleteStatement>.ExecuteAsync(IDataAccessContext context, DeleteStatement statement, CancellationToken cancellation) => _delete.ExecuteAsync(context, statement, cancellation);
-	ValueTask<bool> IDataExecutor<UpdateStatement>.ExecuteAsync(IDataAccessContext context, UpdateStatement statement, CancellationToken cancellation) => _update.ExecuteAsync(context, statement, cancellation);
 	#endregion
 
 	#region 私有构造
 	private MySqlDriver()
 	{
 		this.Features.Add(Feature.Deletion.Multitable);
+		this.Features.Add(Feature.Deletion.Returning);
 		this.Features.Add(Feature.Updation.Multitable);
+		this.Features.Add(Feature.Updation.Returning);
 	}
 	#endregion
 
@@ -137,6 +133,7 @@ public class MySqlDriver : DataDriverBase, IDataExecutor<DeleteStatement>, IData
 	#endregion
 
 	#region 保护方法
+	protected override IDataExecutor CreateExecutor() => new MySqlExecutor();
 	protected override IDataImporter CreateImporter() => new MySqlImporter();
 	protected override ExpressionVisitorBase CreateVisitor() => new MySqlExpressionVisitor();
 	#endregion
@@ -152,7 +149,8 @@ public class MySqlDriver : DataDriverBase, IDataExecutor<DeleteStatement>, IData
 			return false;
 
 		var end = message.LastIndexOf('\'');
-		var start = end > 0 ? message.LastIndexOf('\'', end - 1) : -1;
+		var separator = message.LastIndexOf(" for key ", StringComparison.Ordinal);
+		var start = separator >= 0 ? message.IndexOf('\'', separator) : end > 0 ? message.LastIndexOf('\'', end - 1) : -1;
 
 		if(start > 0 && end > 0)
 		{
@@ -174,7 +172,7 @@ public class MySqlDriver : DataDriverBase, IDataExecutor<DeleteStatement>, IData
 				}
 			}
 
-			end = message.LastIndexOf('\'', start - 1);
+			end = message.LastIndexOf('\'', separator > 0 ? separator - 1 : start - 1);
 			start = message.IndexOf('\'');
 
 			if(end > 0 && start > 0 && start < end)
@@ -197,65 +195,31 @@ public class MySqlDriver : DataDriverBase, IDataExecutor<DeleteStatement>, IData
 		try
 		{
 			var table = await context.Source.GetSchemaAsync("Indexes", cancellation).ConfigureAwait(false);
-			var rows = table.Select($"TABLE_NAME='{tableName}' AND INDEX_NAME='{indexName}'");
-			if(rows == null || rows.Length == 0)
+			if(table == null)
 				return default;
 
-			var isUnique = rows[0].Field<bool>("UNIQUE");
-			var isPrimary = rows[0].Field<bool>("PRIMARY");
+			var comparison = table.CaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+			var index = table.Rows.Cast<DataRow>().FirstOrDefault(row =>
+				string.Equals(row.Field<string>("TABLE_NAME"), tableName, comparison) &&
+				string.Equals(row.Field<string>("INDEX_NAME"), indexName, comparison));
 
+			if(index == null)
+				return default;
+
+			var kind = index.Field<bool>("PRIMARY") ? DataConstraintKind.PrimaryKey : DataConstraintKind.Unique;
 			table = await context.Source.GetSchemaAsync("IndexColumns", cancellation).ConfigureAwait(false);
-			rows = table.Select($"TABLE_NAME='{tableName}' AND INDEX_NAME='{indexName}'", "ORDINAL_POSITION");
+			if(table == null)
+				return (kind, null);
 
-			var result = new string[rows.Length];
-			for(int i = 0; i < rows.Length; i++)
-			{
-				result[i] = rows[i].Field<string>("COLUMN_NAME");
-			}
+			comparison = table.CaseSensitive ? StringComparison.Ordinal : StringComparison.OrdinalIgnoreCase;
+			var fields = table.Rows.Cast<DataRow>()
+				.Where(row => string.Equals(row.Field<string>("TABLE_NAME"), tableName, comparison) &&
+					string.Equals(row.Field<string>("INDEX_NAME"), indexName, comparison))
+				.OrderBy(row => Convert.ToInt32(row["ORDINAL_POSITION"]))
+				.Select(row => row.Field<string>("COLUMN_NAME"))
+				.ToArray();
 
-			return (isPrimary ? DataConstraintKind.PrimaryKey : DataConstraintKind.Unique, result);
-		}
-		catch(OperationCanceledException) when(cancellation.IsCancellationRequested)
-		{
-			throw;
-		}
-		catch
-		{
-			return default;
-		}
-	}
-
-	private static async ValueTask<(string, string[], string, string[])> GetForeignKeyAsync(IDataAccessContext context, string tableName, string foreignKey, CancellationToken cancellation)
-	{
-		if(context == null || context.Source == null)
-			return default;
-
-		if(string.IsNullOrEmpty(tableName) || string.IsNullOrEmpty(foreignKey))
-			return default;
-
-		try
-		{
-			var table = await context.Source.GetSchemaAsync("KeyColumnUsage", cancellation).ConfigureAwait(false);
-			var rows = table.Select($"TABLE_NAME='{tableName}' AND CONSTRAINT_NAME='{foreignKey}'", "ORDINAL_POSITION");
-			if(rows == null || rows.Length == 0)
-				return default;
-
-			var principalFields = new string[rows.Length];
-			var foreignerFields = new string[rows.Length];
-
-			for(int i = 0; i < rows.Length; i++)
-			{
-				principalFields[i] = rows[i].Field<string>("COLUMN_NAME");
-				foreignerFields[i] = rows[i].Field<string>("REFERENCED_COLUMN_NAME");
-			}
-
-			return new
-			(
-				rows[0].Field<string>("TABLE_NAME"),
-				principalFields,
-				rows[0].Field<string>("REFERENCED_TABLE_NAME"),
-				foreignerFields
-			);
+			return (kind, fields);
 		}
 		catch(OperationCanceledException) when(cancellation.IsCancellationRequested)
 		{

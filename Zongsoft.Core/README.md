@@ -96,6 +96,12 @@ Implement `IDataValidator.ValidateAsync` for query conditions and `OnImportAsync
 
 `Pageable.FilterAsync` and `MapAsync` accept asynchronous callbacks over `IAsyncEnumerable<T>`. They process items when enumerated, preserve paging information, and pass the enumeration cancellation token to the callback. A filter returns `Pageable.FilterResult<T>`: `Accepted = true` emits `Data`, including a replacement or `null`; `default` discards the item.
 
+`Returning.Columns.TryGetValue(name, kind, out column)` looks up a column by case-insensitive name and `ReturningKind`. The overload without `kind`, or a null `kind`, uses the collection's fixed kind, falling back to `Older` when none is fixed. An empty name, incompatible kind, or missing column returns `false` with a default `column`.
+
+`Returning.Rows.Populate(record)` reads the current `IDataRecord` and appends a row; it does not advance or dispose the reader. `Rows.AddRange(rows)` appends the contents of another row collection.
+
+Rows resolve values by case-insensitive name and `ReturningKind`. Later changes to `Columns` do not change existing rows' name mappings. `Row[int]` and `Values` retain the positions of that row's values. `TryGetValue` returns `false` for missing columns and `true` with a `null` value for database nulls. Collections do not support concurrent mutation.
+
 ## Transactions
 
 `Transaction` exposes `CommitAsync`, `RollbackAsync`, and `DisposeAsync`. Manage its scope with `await using`; disposal rolls back a transaction that has not committed. Rolling back a nested transaction makes the root transaction rollback-only. Cancellation is checked before accepting a commit; accepted completion and cleanup wait until finished. Repeated calls observe the same completion result, including failures.
