@@ -42,6 +42,11 @@ Task("test")
 		NoBuild = true,
 		NoRestore = true,
 		Configuration = edition,
+		ResultsDirectory = MakeAbsolute(Directory("./TestResults")),
+		Loggers = new[] { "console;verbosity=normal", "trx;LogFilePrefix=Zongsoft.Net.Tests" },
+		ArgumentCustomization = arguments => arguments
+			.Append("--blame-hang-timeout 2min")
+			.Append("--blame-hang-dump-type full"),
 	};
 
 	var projects = GetFiles("**/test/*.csproj");

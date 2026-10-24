@@ -39,4 +39,16 @@ jobs:
         run: chmod +x ./cake.sh
 
       - name: Build and test
+        timeout-minutes: 50
         run: ./cake.sh
+
+      - name: Upload Net test diagnostics
+        if: always()
+        uses: actions/upload-artifact@v7
+        timeout-minutes: 5
+        with:
+          name: net-test-diagnostics-${{ github.run_attempt }}
+          path: Zongsoft.Net/TestResults/
+          if-no-files-found: ignore
+          retention-days: 7
+          compression-level: 1

@@ -158,6 +158,51 @@ public class TcpChannelNotificationTest
 		finally { release.TrySetResult(); }
 	}
 
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task HandlerSocketFailureAfterClosingTransportRemainsObservable(bool clientSide)
+	{
+		await using var server = TestNetwork.Server();
+		await using var client = TcpClient.Headed;
+		var failure = new SocketException((int)SocketError.Shutdown);
+		var handled = TestNetwork.Signal<TcpChannelBase<ReadOnlySequence<byte>>>();
+		var reported = TestNetwork.Signal<TcpChannelEventArgs<ReadOnlySequence<byte>>>();
+		var handler = new ReceiveHandler<ReadOnlySequence<byte>>(async (context, _) =>
+		{
+			await context.Channel.CloseAsync();
+			handled.TrySetResult(context.Channel);
+			throw failure;
+		});
+
+		if(clientSide)
+		{
+			client.Handler = handler;
+			client.Error += (_, args) => reported.TrySetResult(args);
+		}
+		else
+		{
+			server.Handler = handler;
+			server.Channels.Error += (_, args) => reported.TrySetResult(args);
+		}
+
+		await server.StartAsync();
+		await client.ConnectAsync(server.Address);
+		await TestNetwork.UntilAsync(() => server.Channels.Count == 1);
+
+		if(clientSide)
+			await server.BroadcastAsync(ReadOnlySequence<byte>.Empty);
+		else
+			await client.SendAsync(ReadOnlySequence<byte>.Empty);
+
+		var channel = await handled.Task.WaitAsync(TestNetwork.Timeout);
+		Assert.Same(failure, await Record.ExceptionAsync(() => channel.WaitAsync().WaitAsync(TestNetwork.Timeout)));
+		var notification = await reported.Task.WaitAsync(TestNetwork.Timeout);
+		Assert.Same(channel, notification.Channel);
+		Assert.Same(failure, notification.Error);
+		Assert.Equal(TcpCloseReason.Local, notification.CloseReason);
+	}
+
 	[Fact]
 	public async Task ClientNotificationsWaitForHandlerAndIgnoreSubscriberFailures()
 	{

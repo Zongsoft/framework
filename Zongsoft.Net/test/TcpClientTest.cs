@@ -5,6 +5,7 @@ using System.Linq;
 using System.Buffers;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Channels;
 
 using Xunit;
 
@@ -80,20 +81,38 @@ public class TcpClientTest
 		}
 	}
 
-	[Fact]
-	public async Task AddressChangeRetiresOriginalChannelAndRoutesNextSendToNewServer()
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task AddressChangeRetiresOriginalChannelAndRoutesNextSendToNewServer(bool zeroLengthReads)
 	{
 		await using var first = TestNetwork.Server();
 		await using var second = TestNetwork.Server();
+		var received = Channel.CreateUnbounded<byte[]>();
+		second.Handler = new ReceiveHandler<ReadOnlySequence<byte>>((context, _) =>
+		{
+			received.Writer.TryWrite(context.Package.ToArray());
+			return ValueTask.CompletedTask;
+		});
 		await first.StartAsync();
 		await second.StartAsync();
-		await using var client = TcpClient.Headed;
-		var original = await client.ConnectAsync(first.Address);
-		client.Address = second.Address;
-		var current = await client.ConnectAsync();
-		await original.WaitAsync().WaitAsync(TestNetwork.Timeout);
-		Assert.Equal(second.Address, current.RemoteEndPoint);
-		Assert.Same(current, client.Channel);
+		await using var client = TcpClient.CreateHeaded(new() { ZeroLengthReads = zeroLengthReads });
+
+		for(var i = 0; i < 100; i++)
+		{
+			var original = await client.ConnectAsync(first.Address).WaitAsync(TestNetwork.Timeout);
+			client.Address = second.Address;
+			var current = await client.ConnectAsync().WaitAsync(TestNetwork.Timeout);
+			await original.WaitAsync().WaitAsync(TestNetwork.Timeout);
+			Assert.Equal(second.Address, current.RemoteEndPoint);
+			Assert.Same(current, client.Channel);
+
+			var bytes = new byte[] { (byte)i };
+			await current.SendAsync(new ReadOnlySequence<byte>(bytes));
+			Assert.Equal(bytes, await received.Reader.ReadAsync().AsTask().WaitAsync(TestNetwork.Timeout));
+			await client.DisconnectAsync().AsTask().WaitAsync(TestNetwork.Timeout);
+			await current.WaitAsync().WaitAsync(TestNetwork.Timeout);
+		}
 	}
 
 	[Fact]

@@ -30,6 +30,7 @@
 using System;
 using System.Buffers;
 using System.Threading;
+using System.Net.Sockets;
 using System.IO.Pipelines;
 using System.Threading.Tasks;
 
@@ -86,7 +87,15 @@ public abstract partial class TcpChannelBase<T>
 
 			while(this.IsActive)
 			{
-				var result = await reader.ReadAsync(cancellation).ConfigureAwait(false);
+				ReadResult result;
+
+				try { result = await reader.ReadAsync(cancellation).ConfigureAwait(false); }
+				catch(SocketException exception) when(cancellation.IsCancellationRequested && exception.SocketErrorCode == SocketError.Shutdown)
+				{
+					//主动关闭 Socket 可能先以 Shutdown 结束读取；此处不包含报文处理和资源释放。
+					return false;
+				}
+
 				if(await ProcessAsync(result).ConfigureAwait(false))
 					return true;
 
