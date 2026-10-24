@@ -94,7 +94,7 @@ public class MsSqlUpsertStatementVisitor : UpsertStatementVisitor
 			context.Write($"{TARGET_ALIAS}.[{field}]={SOURCE_ALIAS}.[{field}]");
 		}
 
-		if(statement.Updation.Count > 0)
+		if(!statement.Options.ConstraintIgnored && statement.Updation.Count > 0)
 		{
 			context.WriteLine();
 			context.Write("WHEN MATCHED");
@@ -135,7 +135,7 @@ public class MsSqlUpsertStatementVisitor : UpsertStatementVisitor
 					context.Write(")");
 			}
 		}
-		else
+		else if(!statement.Options.ConstraintIgnored)
 		{
 			var index = 0;
 

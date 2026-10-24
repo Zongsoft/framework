@@ -112,7 +112,9 @@ public class DataProvider : IDataProvider
 			await this.OnExecuteAsync(context, cancellation);
 
 			//尝试提交当前数据会话
+			cancellation.ThrowIfCancellationRequested();
 			await context.Session.CommitAsync(cancellation);
+			DataReturning.Complete(context);
 
 			//还原当前操作的原始值
 			if(mutation != null)
@@ -120,6 +122,10 @@ public class DataProvider : IDataProvider
 		}
 		catch(Exception ex)
 		{
+			DataReturning.Discard(context);
+			if(context is IDataMutateContext mutation)
+				mutation.Count = 0;
+
 			//尝试回滚当前数据会话
 			await context.Session.RollbackAsync(CancellationToken.None);
 
@@ -328,9 +334,9 @@ public class DataProvider : IDataProvider
 			{
 				SelectStatement select => await _select.ExecuteAsync(context, select, cancellation),
 				InsertStatement insert => await _insert.ExecuteAsync(context, insert, cancellation),
-				UpdateStatement update => await _update.ExecuteAsync(context, update, cancellation),
+				UpdateStatement update => await (context.Source.Driver as IDataExecutor<UpdateStatement> ?? _update).ExecuteAsync(context, update, cancellation),
 				UpsertStatement upsert => await _upsert.ExecuteAsync(context, upsert, cancellation),
-				DeleteStatement delete => await _delete.ExecuteAsync(context, delete, cancellation),
+				DeleteStatement delete => await (context.Source.Driver as IDataExecutor<DeleteStatement> ?? _delete).ExecuteAsync(context, delete, cancellation),
 				ExistStatement exist => await _exist.ExecuteAsync(context, exist, cancellation),
 				AggregateStatement aggregate => await _aggregate.ExecuteAsync(context, aggregate, cancellation),
 				ExecutionStatement execution => await _execution.ExecuteAsync(context, execution, cancellation),

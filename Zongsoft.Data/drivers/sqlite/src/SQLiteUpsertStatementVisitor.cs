@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 
 using Zongsoft.Data.Common;
@@ -94,6 +95,12 @@ public class SQLiteUpsertStatementVisitor : UpsertStatementVisitor
 				context.Write(")");
 		}
 
+		if(statement.Options.ConstraintIgnored)
+		{
+			context.Write(" ON CONFLICT DO NOTHING");
+			return;
+		}
+
 		context.WriteLine(" ON CONFLICT DO UPDATE SET ");
 
 		index = 0;
@@ -141,21 +148,10 @@ public class SQLiteUpsertStatementVisitor : UpsertStatementVisitor
 		}
 	}
 
-	protected override void OnVisiteReturning(ExpressionVisitorContext context, ReturningClause clause)
+	protected override void VisitReturning(ExpressionVisitorContext context, ReturningClause clause)
 	{
-		List<ReturningClause.ReturningMember> removables = [];
-
-		foreach(var member in clause.Members)
-		{
-			if(member.Kind == ReturningKind.Older)
-				removables.Add(member);
-		}
-
-		foreach(var member in removables)
-			clause.Members.Remove(member);
-
-		if(clause.Members.Count > 0)
-			base.OnVisiteReturning(context, clause);
+		var members = clause.Members.Where(member => member.Kind == ReturningKind.Newer).ToArray();
+		base.VisitReturning(context, clause.Table == null ? new ReturningClause(members) : new ReturningClause(clause.Table, members));
 	}
 	#endregion
 }

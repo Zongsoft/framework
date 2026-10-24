@@ -62,7 +62,7 @@ public class ReturningClause
 	/// <summary>获取 Returning/Output 子句的输出(INTO)表定义，如果为空则表示无输出表。</summary>
 	public TableDefinition Table { get; }
 
-	/// <summary>获取 Returning/Output 子句的成员字段集，如果为空集则表示全部字段。</summary>
+	/// <summary>获取 Returning/Output 子句的成员字段集，空集不生成输出子句。</summary>
 	public ICollection<ReturningMember> Members => _members;
 	#endregion
 
@@ -80,7 +80,7 @@ public class ReturningClause
 		public readonly FieldIdentifier Field = field;
 		public readonly ReturningKind Kind = kind;
 
-		public bool Equals(ReturningMember other) => this.Field == other.Field && this.Kind == other.Kind;
+		public bool Equals(ReturningMember other) => object.Equals(this.Field, other.Field) && this.Kind == other.Kind;
 		public override bool Equals(object obj) => obj is ReturningMember other && this.Equals(other);
 		public override int GetHashCode() => HashCode.Combine(this.Field, this.Kind);
 		public override string ToString() => $"{this.Field}({this.Kind})";

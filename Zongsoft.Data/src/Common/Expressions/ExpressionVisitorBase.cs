@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Data;
 using System.Collections.Generic;
 
@@ -177,7 +178,7 @@ public abstract class ExpressionVisitorBase : IExpressionVisitor
 		else
 			context.Write(alias + "." + this.GetIdentifier(field));
 
-		if(!string.IsNullOrEmpty(field.Alias))
+		if(!string.IsNullOrEmpty(field.Alias) && context.Stack.Skip(1).FirstOrDefault() is not (BinaryExpression or MethodExpression or RangeExpression))
 			context.Write(" AS " + this.GetAlias(field.Alias));
 	}
 

@@ -125,7 +125,7 @@ public class Returning
 		public bool IsEmpty => _columns == null || _columns.Length == 0;
 		bool ICollection<Column>.IsReadOnly => false;
 		public Column this[int index] => _columns[index];
-		internal int[] Ordinals { get; set; }
+		internal int Version { get; private set; }
 
 		internal int IndexOf(Column column) => this.IndexOf(column.Name, column.Kind);
 		internal int IndexOf(string name, ReturningKind? kind = default)
@@ -153,6 +153,7 @@ public class Returning
 				return false;
 
 			_columns = [.. _columns, new Column(name, kind.Value)];
+			this.Version++;
 			return true;
 		}
 
@@ -169,6 +170,7 @@ public class Returning
 				return false;
 
 			_columns = [new Column(name, kind.Value), .. _columns];
+			this.Version++;
 			return true;
 		}
 
@@ -185,7 +187,11 @@ public class Returning
 		}
 
 		public void Add(Column column) => this.Append(column.Name, column.Kind);
-		public void Clear() => Array.Clear(_columns);
+		public void Clear()
+		{
+			_columns = [];
+			this.Version++;
+		}
 		public bool Contains(Column column) => Array.Exists(_columns, element => element == column);
 		public void CopyTo(Column[] array, int arrayIndex) => _columns.CopyTo(array, arrayIndex);
 		public bool Remove(Column column)
@@ -195,6 +201,7 @@ public class Returning
 				return false;
 
 			_columns = [.. _columns.AsSpan(0, index), .. _columns.AsSpan(index + 1)];
+			this.Version++;
 			return true;
 		}
 
@@ -237,6 +244,9 @@ public class Returning
 	{
 		private readonly List<Row> _rows = [];
 		private readonly ColumnCollection _columns = columns;
+		private string[] _names;
+		private int[] _ordinals;
+		private int _version = -1;
 
 		public int Count => _rows.Count;
 		public bool IsEmpty => _rows.Count == 0;
@@ -264,11 +274,16 @@ public class Returning
 
 		private int[] Initialize(IDataRecord record)
 		{
-			var ordinals = _columns.Ordinals;
+			var ordinals = _ordinals;
 
-			if(ordinals == null || ordinals.Length == 0 || ordinals.Length != _columns.Count)
+			if(ordinals == null || _version != _columns.Version || !this.Matches(record))
 			{
+				_version = _columns.Version;
 				ordinals = new int[_columns.Count];
+				_names = new string[record.FieldCount];
+
+				for(int i = 0; i < _names.Length; i++)
+					_names[i] = record.GetName(i);
 
 				for(int i = 0; i < ordinals.Length; i++)
 				{
@@ -281,7 +296,21 @@ public class Returning
 				}
 			}
 
-			return _columns.Ordinals = ordinals;
+			return _ordinals = ordinals;
+		}
+
+		private bool Matches(IDataRecord record)
+		{
+			if(_names == null || _names.Length != record.FieldCount)
+				return false;
+
+			for(int i = 0; i < _names.Length; i++)
+			{
+				if(_names[i] != record.GetName(i))
+					return false;
+			}
+
+			return true;
 		}
 
 		IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();

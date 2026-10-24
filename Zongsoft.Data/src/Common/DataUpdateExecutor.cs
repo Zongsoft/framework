@@ -28,6 +28,10 @@
  */
 
 using System;
+using System.Linq;
+using System.Data.Common;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Zongsoft.Data.Common.Expressions;
@@ -36,4 +40,127 @@ namespace Zongsoft.Data.Common;
 
 public class DataUpdateExecutor : DataMutateExecutor<UpdateStatement>
 {
+	protected override async ValueTask<bool> OnExecuteAsync(IDataMutateContext context, UpdateStatement statement, CancellationToken cancellation)
+	{
+		if(statement.Links.Count == 0)
+			return await base.OnExecuteAsync(context, statement, cancellation);
+
+		try
+		{
+			if(!await base.OnExecuteAsync(context, statement, cancellation))
+				return false;
+
+			await this.ExecuteSlavesAsync(context, statement, cancellation);
+			return false;
+		}
+		finally
+		{
+			foreach(var link in statement.Links)
+				link.Keys.Clear();
+		}
+	}
+
+	private async ValueTask ExecuteSlavesAsync(IDataMutateContext context, UpdateStatement statement, CancellationToken cancellation)
+	{
+		if(!statement.HasSlaves)
+			return;
+
+		var data = context.Data;
+		if(statement.Schema != null)
+			context.Data = statement.Schema.Token.GetValue(data);
+
+		try
+		{
+			foreach(var slave in statement.Slaves)
+			{
+				var link = statement.Links.Find(link => link.Statement == slave);
+				if(link == null)
+				{
+					await context.Provider.Executor.ExecuteAsync(context, slave, cancellation);
+					continue;
+				}
+
+				var update = link.Statement;
+				var where = update.Where;
+				var parameters = update.Parameters.ToArray();
+				var size = Math.Min(128, (900 - parameters.Length) / link.Fields.Count);
+
+				if(size <= 0)
+					throw new NotSupportedException();
+
+				try
+				{
+					var continued = false;
+					foreach(var keys in link.Keys.Chunk(size))
+					{
+						cancellation.ThrowIfCancellationRequested();
+						update.Parameters.Clear();
+						foreach(var parameter in parameters)
+							update.Parameters.Add(parameter);
+
+						var criteria = ConditionExpression.Or();
+						foreach(var key in keys)
+						{
+							var condition = ConditionExpression.And();
+							for(int i = 0; i < key.Length; i++)
+							{
+								var field = link.Fields[i].Value;
+								var parameter = Expression.Parameter(field, key[i]);
+								update.Parameters.Add(parameter);
+								condition.Add(Expression.Equal(field, parameter));
+							}
+
+							criteria.Add(condition);
+						}
+
+						update.Where = ConditionExpression.And(where, criteria);
+						continued |= await base.OnExecuteAsync(context, update, cancellation);
+					}
+
+					if(continued)
+						await this.ExecuteSlavesAsync(context, update, cancellation);
+				}
+				finally
+				{
+					update.Where = where;
+					update.Parameters.Clear();
+					foreach(var parameter in parameters)
+						update.Parameters.Add(parameter);
+
+					foreach(var child in update.Links)
+						child.Keys.Clear();
+				}
+			}
+		}
+		finally
+		{
+			context.Data = data;
+		}
+	}
+
+	protected override async ValueTask<bool> OnMutatedAsync(IDataMutateContext context, UpdateStatement statement, DbDataReader reader, CancellationToken cancellation)
+	{
+		var count = 0;
+		while(await reader.ReadAsync(cancellation))
+		{
+			cancellation.ThrowIfCancellationRequested();
+			count++;
+			this.Populate(context, statement, reader);
+
+			foreach(var link in statement.Links)
+			{
+				var keys = new object[link.Fields.Count];
+				for(int i = 0; i < keys.Length; i++)
+					keys[i] = reader.GetValue(reader.GetOrdinal(link.Fields[i].Key.Alias));
+
+				if(!Array.Exists(keys, key => key == null || key == DBNull.Value))
+					link.Keys.Add(keys);
+			}
+		}
+
+		if(reader.RecordsAffected > 0)
+			context.Count += reader.RecordsAffected;
+
+		return count > 0;
+	}
 }

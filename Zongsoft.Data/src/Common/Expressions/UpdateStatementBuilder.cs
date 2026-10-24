@@ -41,10 +41,6 @@ namespace Zongsoft.Data.Common.Expressions;
 
 public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 {
-	#region 常量定义
-	private const string TEMPORARY_ALIAS = "tmp";
-	#endregion
-
 	#region 构造函数
 	public UpdateStatementBuilder()
 	{
@@ -85,15 +81,18 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 		if(statement.Fields.Count == 0)
 			throw new DataException(Properties.Resources.UpdateStatement_MissingSetClause_Message);
 
+		if(this.GetLinkReturningKind() == ReturningKind.Newer)
+			ValidateLinks(statement);
+
 		if(context.Options.HasReturning(out var returning))
 		{
-			if(context.Source.Features.Support(Feature.Returning))
+			if(context.Source.Features.Support(Feature.Returning) || context.Source.Driver is IDataExecutor<UpdateStatement>)
 			{
 				statement.Returning ??= new();
 
 				foreach(var column in returning.Columns)
 				{
-					var field = statement.Table.CreateField(column.Name, column.Alias);
+					var field = statement.Table.CreateField((IDataEntitySimplexProperty)context.Entity.Properties[column.Name], column.Alias);
 					statement.Returning.Append(field, column.Kind);
 				}
 			}
@@ -128,6 +127,17 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 	#endregion
 
 	#region 私有方法
+	private static void ValidateLinks(UpdateStatement statement)
+	{
+		foreach(var link in statement.Links)
+		{
+			if(link.Fields.Any(link => statement.Fields.Any(field => field.Field.Token.Property == link.Key.Token.Property)))
+				throw new NotSupportedException();
+
+			ValidateLinks(link.Statement);
+		}
+	}
+
 	private async ValueTask BuildSchemaAsync(DataUpdateContext context, UpdateStatement statement, TableIdentifier table, object data, SchemaMember member, CancellationToken cancellation)
 	{
 		if(member.Ignored)
@@ -193,7 +203,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 			}
 			else
 			{
-				if(context.Source.Features.Support(Feature.Updation.Multitable))
+				if(this.CanUpdateMultiple(context))
 					await this.BuildComplexAsync(context, statement, data, member, cancellation).ConfigureAwait(false);
 				else
 					await this.BuildComplexStandaloneAsync(context, statement, data, member, cancellation).ConfigureAwait(false);
@@ -232,7 +242,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 				}
 			}
 
-			statement.Where = where;
+			statement.Where = ConditionExpression.And(statement.Where, where);
 		}
 
 		foreach(var child in member.Children)
@@ -250,13 +260,11 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 			return;
 
 		var complex = (IDataEntityComplexProperty)member.Token.Property;
-		statement.Returning = new ReturningClause(TableDefinition.Temporary());
-
+		statement.Returning ??= new();
 		var slave = new UpdateStatement(complex.Foreign, member);
 		statement.Slaves.Add(slave);
-
-		//创建从属更新语句的条件子查询语句
-		var selection = new SelectStatement(statement.Returning.Table.Identifier());
+		var linkage = new UpdateStatement.Link(slave);
+		statement.Links.Add(linkage);
 
 		foreach(var link in complex.Links)
 		{
@@ -270,22 +278,13 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 				}
 				else
 				{
-					if(statement.Returning.Table.Field((IDataEntitySimplexProperty)anchor) != null)
-						statement.Returning.Append(source.CreateField(anchor.Name), ReturningKind.Older);
-
-					var field = selection.Table.CreateField(anchor);
-					selection.Select.Members.Add(field);
-
-					if(selection.Where == null)
-						selection.Where = Expression.Equal(field, slave.Table.CreateField(link.ForeignKey));
-					else
-						selection.Where = Expression.AndAlso(slave.Where,
-										  Expression.Equal(field, slave.Table.CreateField(link.ForeignKey)));
+					var field = source.CreateField(anchor);
+					field.Alias = $"__link{statement.Links.Count}_{linkage.Fields.Count}";
+					statement.Returning.Append(field, this.GetLinkReturningKind());
+					linkage.Fields.Add(new(field, slave.Table.CreateField(link.ForeignKey)));
 				}
 			}
 		}
-
-		slave.Where = Expression.Exists(selection);
 
 		foreach(var child in member.Children)
 		{
@@ -349,6 +348,15 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 
 	#region 虚拟方法
 	protected virtual UpdateStatement CreateStatement(DataUpdateContext context) => new(context.Entity);
+
+	/// <summary>判断当前更新是否使用多表语句。</summary>
+	/// <param name="context">当前更新上下文。</param>
+	/// <returns>返回是否使用多表语句。</returns>
+	protected virtual bool CanUpdateMultiple(DataUpdateContext context) => context.Source.Features.Support(Feature.Updation.Multitable);
+
+	/// <summary>获取关联键的原生返回版本。</summary>
+	/// <returns>返回关联键的值版本。</returns>
+	protected virtual ReturningKind GetLinkReturningKind() => ReturningKind.Older;
 
 	/// <summary>创建用于一对多关联写入的增改语句构建器。</summary>
 	/// <returns>返回当前方言的增改语句构建器。</returns>

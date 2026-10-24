@@ -962,6 +962,10 @@ For the upsert contract and driver restrictions, see [IDataAccess](../Zongsoft.C
 
 Delete, insert, update, and upsert options can request returned values from the database provider. This is useful for deleted file paths, identity values, generated values, and updated counters. The feature is available only when the current driver supports returning values.
 
+Returned rows describe the primary entity; the affected-row count can also include associated writes. Results are appended to the existing options after all statements succeed and before the completion callbacks. An owned transaction must commit first; within a caller-owned transaction, returned values remain provisional until the caller commits. Execution failures or cancellation before commit do not append rows. Row order is unspecified.
+
+SQL Server and PostgreSQL 18 or later support both older and newer update values. SQLite and DuckDB provide newer update values and older delete values; unsupported older update/upsert columns are absent (`TryGetValue` returns `false`). Associated updates on SQLite and DuckDB cannot also assign link anchors. MySQL supports update/delete returning under the [driver's transaction and key requirements](drivers/mysql/README.md#returning-values).
+
 ```csharp
 var options = DataUpdateOptions.Return(ReturningKind.Newer, nameof(Thread.TotalViews));
 

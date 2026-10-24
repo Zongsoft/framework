@@ -39,4 +39,6 @@ public class DuckDBUpdateStatementBuilder : UpdateStatementBuilder
 	#region 构造函数
 	public DuckDBUpdateStatementBuilder() { }
 	#endregion
+
+	protected override ReturningKind GetLinkReturningKind() => ReturningKind.Newer;
 }

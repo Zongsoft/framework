@@ -144,10 +144,13 @@ public class DataSelectExecutor : IDataExecutor<SelectStatement>
 
 		await using(var reader = await command.ExecuteReaderAsync(cancellation))
 		{
-			if(context.Options.HasReturning(out var returning))
+			if(context.Options.HasReturning(out _))
 			{
 				while(await reader.ReadAsync(cancellation))
-					returning.Rows.Populate(reader);
+				{
+					cancellation.ThrowIfCancellationRequested();
+					DataReturning.Populate(context, reader);
+				}
 			}
 		}
 

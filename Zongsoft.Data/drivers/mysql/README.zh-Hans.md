@@ -72,6 +72,13 @@ Console.WriteLine(data.Name);
 
 🚨 切勿提交生产连接字符串。请使用部署期配置或秘密提供程序、为数据库身份授予最小权限，并先在可丢弃数据库中验证破坏性变更。
 
+<a id="returning-values"></a>
+## 返回写入值
+
+`DataUpdateOptions.Return` 支持 `Newer` 和 `Older`，`DataDeleteOptions.Return` 返回删除前的值。映射实体必须包含主键，复合主键必须包含所有分量；请求返回值时不支持修改主键，包括触发器造成的主键变化。所有参与表必须使用 InnoDB，事务必须启用，连接身份须拥有表元数据可见性及 `CREATE TEMPORARY TABLES` 权限。不支持的主键、事务抑制、视图及非事务表会被拒绝。
+
+返回行对应写入前选定的目标，即使更新后的值已不再满足原条件。新值在更新后读取，包含触发器造成的变化。结果遵循[通用返回值契约](../../README.zh-Hans.md#usage-returning)，受影响行数保留 MySqlConnector 配置的匹配行数/实际修改行数行为。此模拟能力不为新增、增改提供通用返回投影。
+
 ## 兼容性与测试
 
 数据库行为无法完全移植。请在与生产相同的服务器/提供程序版本上验证标识符大小写、空值和比较规则、日期时间精度、生成值、事务语义与批量导入约束。数据库集成测试需要显式配置可丢弃数据库。`ConnectionSettingsTest` 和 `ConnectionSettingsPropertiesTest` 两个类可离线执行，覆盖原生选项转换、扩展属性集（Properties）和完整设置文本。没有数据库时使用测试筛选器仅运行这两个类。

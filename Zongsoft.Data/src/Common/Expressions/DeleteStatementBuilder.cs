@@ -81,6 +81,7 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 
 		//生成条件子句
 		statement.Where = statement.Where(await context.ValidateAsync(cancellation).ConfigureAwait(false), context.Aliaser);
+		this.BuildReturning(context, statement);
 
 		yield return statement;
 	}
@@ -123,16 +124,7 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 			}
 		}
 
-		if(context.Options.HasReturning(out var returning) && context.Source.Features.Support(Feature.Returning))
-		{
-			statement.Returning ??= new();
-
-			foreach(var column in returning.Columns)
-			{
-				var field = statement.Table.CreateField(column.Name, column.Alias);
-				statement.Returning.Append(field, column.Kind);
-			}
-		}
+		this.BuildReturning(context, statement);
 
 		if(masters != null)
 		{
@@ -148,6 +140,20 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 	#endregion
 
 	#region 私有方法
+	private void BuildReturning(DataDeleteContext context, DeleteStatement statement)
+	{
+		if(!context.Options.HasReturning(out var returning) ||
+		   !context.Source.Features.Support(Feature.Returning) && context.Source.Driver is not IDataExecutor<DeleteStatement>)
+			return;
+
+		statement.Returning ??= new();
+		foreach(var column in returning.Columns)
+		{
+			var field = statement.Table.CreateField((IDataEntitySimplexProperty)context.Entity.Properties[column.Name], column.Alias);
+			statement.Returning.Append(field, column.Kind);
+		}
+	}
+
 	private static IEnumerable<DeleteStatement> BuildSlave(Aliaser aliaser, DeleteStatement master, SchemaMember schema)
 	{
 		var complex = (IDataEntityComplexProperty)schema.Token.Property;

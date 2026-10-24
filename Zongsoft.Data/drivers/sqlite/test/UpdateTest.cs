@@ -72,12 +72,10 @@ public class UpdateTest(DatabaseFixture database) : IAsyncDisposable
 		Assert.False(returning.Rows[0].TryGetValue(nameof(UserModel.Enabled), ReturningKind.Older, out value));
 	}
 
-	[Fact(Skip = "Cascading updates are not currently supported.")]
+	[Fact]
 	public async Task UpdateEmployeeWithUserAsync()
 	{
-		if(!Global.IsTestingEnabled)
-			return;
-
+		Assert.SkipUnless(Global.IsTestingEnabled, "Database tests require ZONGSOFT_DATA_TESTS=1.");
 		var accessor = _database.Accessor;
 		var count = await accessor.InsertAsync(Model.Build<UserModel>(model =>
 		{

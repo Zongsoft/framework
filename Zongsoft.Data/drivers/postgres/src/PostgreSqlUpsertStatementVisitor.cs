@@ -93,7 +93,7 @@ public class PostgreSqlUpsertStatementVisitor : UpsertStatementVisitor
 
 		if(statement.Options.ConstraintIgnored || !statement.Table.Entity.HasKey)
 		{
-			context.WriteLine("DO NOTHING;");
+			context.Write("DO NOTHING");
 			return;
 		}
 

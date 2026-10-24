@@ -72,6 +72,13 @@ Use the asynchronous methods on `IDataAccess` / `IDataService<T>` and consume qu
 
 🚨 Never commit production connection strings. Use deployment-time configuration or a secret provider, grant the database identity only the required permissions, and verify destructive mutations against a disposable database first.
 
+<a id="returning-values"></a>
+## Returning Values
+
+`DataUpdateOptions.Return` supports `Newer` and `Older`; `DataDeleteOptions.Return` returns the deleted values. The mapped entity must have a primary key, including every component of a composite key. Primary-key changes, including trigger-driven changes, are unsupported when requesting returned values. All participating tables must use InnoDB, transactions must be enabled, and the connection identity needs metadata visibility and `CREATE TEMPORARY TABLES` permission. Unsupported keys, suppressed transactions, views, and nontransactional tables are rejected.
+
+The returned rows belong to the targets selected before the mutation, even when updated values no longer satisfy the original condition. Newer values are read after the update, including trigger changes. Results follow the [shared returning contract](../../README.md#usage-returning); affected-row counts retain MySqlConnector's configured matched/changed-row behavior. Insert/upsert do not provide general returning projections through this emulation.
+
 ## Compatibility and Testing
 
 Database behavior is not completely portable. Verify identifier casing, null and comparison rules, date/time precision, generated values, transaction semantics, and bulk-import constraints on the same server/provider versions used in production. Database integration tests require an explicitly configured disposable database. The `ConnectionSettingsTest` and `ConnectionSettingsPropertiesTest` classes run offline and cover native option conversion, extension properties, and complete settings text. Use a test filter for these classes when no database is available.

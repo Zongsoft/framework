@@ -247,7 +247,7 @@ public class UpsertStatementBuilder : IStatementBuilder<DataUpsertContext>
 
 				foreach(var column in returning.Columns)
 				{
-					var field = statement.Table.CreateField(column.Name, column.Alias);
+					var field = statement.Table.CreateField((IDataEntitySimplexProperty)context.Entity.Properties[column.Name], column.Alias);
 					statement.Returning.Append(field, column.Kind);
 				}
 			}

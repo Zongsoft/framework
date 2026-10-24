@@ -41,6 +41,8 @@ public class MySqlUpdateStatementBuilder : UpdateStatementBuilder
 	#endregion
 
 	#region 重写方法
+	protected override bool CanUpdateMultiple(DataUpdateContext context) => !context.Options.HasReturning(out _) && base.CanUpdateMultiple(context);
+
 	/// <summary>创建当前数据库的新增或更新语句构建器。</summary>
 	/// <returns>返回当前数据库的新增或更新语句构建器。</returns>
 	protected override UpsertStatementBuilder CreateUpsertStatementBuilder() => new MySqlUpsertStatementBuilder();

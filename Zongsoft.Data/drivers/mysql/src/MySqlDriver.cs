@@ -40,7 +40,7 @@ using Zongsoft.Data.Common.Expressions;
 
 namespace Zongsoft.Data.MySql;
 
-public class MySqlDriver : DataDriverBase
+public class MySqlDriver : DataDriverBase, IDataExecutor<DeleteStatement>, IDataExecutor<UpdateStatement>
 {
 	#region 公共常量
 	/// <summary>驱动程序的标识：MySql。</summary>
@@ -49,6 +49,13 @@ public class MySqlDriver : DataDriverBase
 
 	#region 单例字段
 	public static readonly MySqlDriver Instance = new();
+	private static readonly MySqlDeleteExecutor _delete = new();
+	private static readonly MySqlUpdateExecutor _update = new();
+	#endregion
+
+	#region 显式实现
+	ValueTask<bool> IDataExecutor<DeleteStatement>.ExecuteAsync(IDataAccessContext context, DeleteStatement statement, CancellationToken cancellation) => _delete.ExecuteAsync(context, statement, cancellation);
+	ValueTask<bool> IDataExecutor<UpdateStatement>.ExecuteAsync(IDataAccessContext context, UpdateStatement statement, CancellationToken cancellation) => _update.ExecuteAsync(context, statement, cancellation);
 	#endregion
 
 	#region 私有构造

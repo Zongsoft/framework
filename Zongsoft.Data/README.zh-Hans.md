@@ -965,6 +965,10 @@ Upsert 契约与驱动限制见 [IDataAccess](../Zongsoft.Core/src/Data/IDataAcc
 
 删除、新增、更新、增改选项可以向数据库提供程序请求返回值。它适合获取被删除的文件编号、自增值、生成值、更新后的计数值等。该能力只有在当前驱动支持返回值时才可用。
 
+返回行只描述主实体，受影响行数还可能包含关联写入。所有语句执行成功后、完成回调之前向原选项对象追加结果；操作自有事务必须先提交，调用方事务中的返回值则在调用方提交前保持暂定状态。执行失败或提交前取消不追加返回行。返回行顺序不作保证。
+
+SQL Server 和 PostgreSQL 18 及以上支持更新前后的值。SQLite 和 DuckDB 支持更新后的值及删除前的值；不支持的更新/增改旧值列缺失（`TryGetValue` 返回 `false`）。SQLite 和 DuckDB 的关联更新不允许同时写入关联锚点。MySQL 支持更新、删除返回值，须满足[驱动的事务及主键要求](drivers/mysql/README.zh-Hans.md#returning-values)。
+
 ```csharp
 var options = DataUpdateOptions.Return(ReturningKind.Newer, nameof(Thread.TotalViews));
 

@@ -135,6 +135,16 @@ SQL Server 的参数预算为 2098，预留 SqlClient 调用 sp_executesql 的�
 
 ## 驱动异步边界
 
+### 写入返回值与关联更新
+
+DataProvider 的默认分派器允许驱动实现已有的 `IDataExecutor<UpdateStatement>`、`IDataExecutor<DeleteStatement>` 窄接口；未实现时使用通用执行器。原生 Returning 特性仍表示 SQL 方言支持，不用于表示驱动的模拟能力。
+
+单表关联更新由 UpdateStatement 的内部嵌套类 Link 保存内部返回字段与外键对应关系，DataUpdateExecutor 收集完整键元组、排除含空分量的关联并去重，以最多 128 个元组、900 个总参数的保守预算分批执行。各批次的后续关联键先合并再执行下一层，避免共享目标跨批重复更新。内部关联字段与公开返回列分开收集，不生成临时表。SQLite、DuckDB 使用新值关联键，构建时拒绝修改关联锚点；其他原生驱动使用旧值。
+
+DataReturning 按操作上下文缓存公开结果，仅收集无导航 Schema 的主实体语句。整个语句树及会话提交成功后才追加至调用方 Returning.Rows，错误路径丢弃本次缓冲。环境事务的提交仍由调用方决定，操作级成功结果不代表环境事务已提交。RowCollection 按当前读取器的实际字段布局解析列序号；数据库列名通过映射解析。
+
+MySQL 更新、删除模拟在同一会话连接租约与事务中运行：检查映射主键及事务能力，核实参与表的 InnoDB 引擎，执行 `SELECT ... FOR UPDATE` 冻结目标键及旧值，再核实锁定后的表元数据。锁定查询只绑定其表达式使用的参数并保存绑定结果，写入参数在锁定后绑定。去重的完整主键分批参数化插入连接内临时表，其索引随建表语句一同创建；原生写入及新值回读使用该键表，不重用原筛选条件。临时表在 finally 中以不可取消的清理命令删除，租约归还后才允许提供者提交。不能用独立 Connector 连接或活动读取器的备用连接承载这条事务链。显式返回值的关联更新采用通用单表关联流程。
+
 DuckDB 的标准 Appender 必须匹配全部物理列；选择字段导入通过连接级临时表接收所选字段，再以 INSERT ... SELECT 写入目标表，保留未指定列默认值，ConstraintIgnored 使用 INSERT OR IGNORE。DbType.Object 的自定义类型使用参数化逐行写入。默认借用环境事务；无环境事务或显式抑制时，由导入器拥有独立连接与批次事务，失败等待回滚。
 
 - 八个驱动的错误转换使用 OnErrorAsync，导入统一通过 GetRecordsAsync 消费数据，并按字段顺序等待 Member.GetValueAsync；每次返回后先更新 Target，再使用 Value。

@@ -85,7 +85,17 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 	}
 	#endregion
 
-	#region 虚拟方法
+	#region 保护方法
+	/// <summary>收集主实体的返回行，在操作成功后发布。</summary>
+	/// <param name="context">当前写入上下文。</param>
+	/// <param name="statement">正在执行的写入语句。</param>
+	/// <param name="record">已读取的数据行。</param>
+	protected void Populate(IDataMutateContext context, TStatement statement, IDataRecord record)
+	{
+		if(statement.Schema == null && statement.Table?.Entity == context.Entity)
+			DataReturning.Populate(context, record);
+	}
+
 	protected virtual async ValueTask<bool> OnMutatedAsync(IDataMutateContext context, TStatement statement, DbDataReader reader, CancellationToken cancellation)
 	{
 		Returning returning;
@@ -97,7 +107,10 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 				if(deletion.Options.HasReturning(out returning))
 				{
 					while(await reader.ReadAsync(cancellation))
-						returning.Rows.Populate(reader);
+					{
+						cancellation.ThrowIfCancellationRequested();
+						this.Populate(context, statement, reader);
+					}
 				}
 				break;
 			case DataInsertContext insertion:
@@ -111,7 +124,8 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 					while(await reader.ReadAsync(cancellation))
 					{
-						returning.Rows.Populate(reader);
+						cancellation.ThrowIfCancellationRequested();
+						this.Populate(context, statement, reader);
 
 						if(sequences.Length > 0)
 						{
@@ -128,6 +142,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 					while(await reader.ReadAsync(cancellation))
 					{
+						cancellation.ThrowIfCancellationRequested();
 						var current = enumerator != null && enumerator.MoveNext() ? enumerator.Current : context.Data;
 
 						foreach(var sequence in sequences)
@@ -146,7 +161,8 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 					while(await reader.ReadAsync(cancellation))
 					{
-						returning.Rows.Populate(reader);
+						cancellation.ThrowIfCancellationRequested();
+						this.Populate(context, statement, reader);
 
 						if(sequences.Length > 0)
 						{
@@ -163,6 +179,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 					while(await reader.ReadAsync(cancellation))
 					{
+						cancellation.ThrowIfCancellationRequested();
 						var current = enumerator != null && enumerator.MoveNext() ? enumerator.Current : context.Data;
 
 						foreach(var sequence in sequences)
@@ -174,7 +191,10 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 				if(updation.Options.HasReturning(out returning))
 				{
 					while(await reader.ReadAsync(cancellation))
-						returning.Rows.Populate(reader);
+					{
+						cancellation.ThrowIfCancellationRequested();
+						this.Populate(context, statement, reader);
+					}
 				}
 				break;
 		}
@@ -186,10 +206,13 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 	}
 	protected virtual ValueTask<bool> OnMutatedAsync(IDataMutateContext context, TStatement statement, int count, CancellationToken cancellation) => ValueTask.FromResult(count > 0);
 	protected virtual ValueTask OnMutatingAsync(IDataMutateContext context, TStatement statement, CancellationToken cancellation) => ValueTask.CompletedTask;
-	#endregion
 
-	#region 私有方法
-	private async ValueTask<bool> MutateAsync(IDataMutateContext context, TStatement statement, CancellationToken cancellation)
+	/// <summary>执行当前写入语句并处理参数绑定、返回结果和关联数据。</summary>
+	/// <param name="context">当前写入上下文。</param>
+	/// <param name="statement">正在执行的写入语句。</param>
+	/// <param name="cancellation">操作的取消令牌。</param>
+	/// <returns>返回是否继续执行从属语句。</returns>
+	protected virtual async ValueTask<bool> MutateAsync(IDataMutateContext context, TStatement statement, CancellationToken cancellation)
 	{
 		bool continued;
 
@@ -231,7 +254,9 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 		return continued;
 	}
+	#endregion
 
+	#region 私有方法
 	private static void Bind(object data, IEnumerable<IStatementBase> statements)
 	{
 		if(data == null)

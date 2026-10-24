@@ -28,6 +28,7 @@
  */
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Zongsoft.Data.Common.Expressions;
@@ -37,8 +38,9 @@ public class UpdateStatement : MutateStatement
 	#region 构造函数
 	public UpdateStatement(Metadata.IDataEntity entity, SchemaMember schema = null) : base(entity, schema)
 	{
-		this.Fields = new List<FieldValue>();
 		this.Tables = [this.Table];
+		this.Fields = [];
+		this.Links = [];
 	}
 	#endregion
 
@@ -48,5 +50,26 @@ public class UpdateStatement : MutateStatement
 
 	/// <summary>获取更新字段/值的集合。</summary>
 	public ICollection<FieldValue> Fields { get; }
+	#endregion
+
+	#region 内部属性
+	/// <summary>获取关联更新信息的集合，包含从属更新语句、关联字段映射及去重后的目标键。</summary>
+	internal List<Link> Links { get; } = [];
+	#endregion
+
+	#region 嵌套子类
+	internal sealed class Link(UpdateStatement statement)
+	{
+		public readonly UpdateStatement Statement = statement;
+		public readonly List<KeyValuePair<FieldIdentifier, FieldIdentifier>> Fields = [];
+		public readonly HashSet<object[]> Keys = new(KeyComparer.Instance);
+
+		private sealed class KeyComparer : IEqualityComparer<object[]>
+		{
+			public static readonly KeyComparer Instance = new();
+			public bool Equals(object[] left, object[] right) => StructuralComparisons.StructuralEqualityComparer.Equals(left, right);
+			public int GetHashCode(object[] key) => StructuralComparisons.StructuralEqualityComparer.GetHashCode(key);
+		}
+	}
 	#endregion
 }
