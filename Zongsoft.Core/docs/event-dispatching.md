@@ -123,3 +123,9 @@ An application plugin can assign an `IFeaturePipeline<EventContext>` to `EventDi
 This example retries the entire channel fan-out, so channels that already succeeded can receive duplicates. Policies can also be composed in individual channel adapters or decorators. ZeroMQ's default `MostOnce` result for no matching subscriber is not an exception and does not trigger exception retries. Polly's current void fallback invokes its callback while preserving the original exception.
 
 In-memory deferral determines when to send after commit. It does not provide a durable outbox, atomic database/message commit, or exactly-once delivery.
+
+## Remote publication scope
+
+`EventExchanger.Filtering` uses `EventFiltering` before invoking the dispatcher. Excluded events do not create deferred environment snapshots or enter channel serialization; an exchanger without channels also skips dispatch. Local handlers, registry filters and reception are unaffected. The main plugin exposes `/Workbench/Events/Exchanger/Filtering` for deployment configuration. Assemble rules before startup; concurrent mutation is unsupported.
+
+The first matching entry wins. Empty rules and unmatched events allow publication. For an allowlist, place inclusive entries such as `Inventory:Item.Created` first and end with `!` to exclude everything else. `*` matches entire registry or event names, not event-name prefixes. Channel-specific filtering can further restrict delivery. Remote configuration does not determine local business needs or discover remote handlers or online status; data services must also explicitly select operations to prepare and publish.

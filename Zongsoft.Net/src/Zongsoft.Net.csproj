@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.5.0</Version>
+		<Version>7.6.0</Version>
+		<PackageReleaseNotes>修复主动关闭与接收循环之间的竞态，确保关闭期间安全归还接收缓冲。</PackageReleaseNotes>
 		<Product>Zongsoft Net Library</Product>
 		<Description>This is a high-performance network development library.</Description>
 		<IncludeSymbols>true</IncludeSymbols>

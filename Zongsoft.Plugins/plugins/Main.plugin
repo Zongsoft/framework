@@ -38,6 +38,7 @@
 			<!-- 挂载事件交换器 -->
 			<object name="Exchanger" value="{static:Zongsoft.Components.EventExchanger.Instance, Zongsoft.Core}">
 				<expose name="Channels" value="{path:../@Channels}" />
+				<expose name="Filtering" value="{path:../@Filtering}" />
 			</object>
 
 			<!-- 挂载全局事件过滤器集 -->

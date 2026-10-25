@@ -216,6 +216,36 @@ public class PluginLoaderTests
 		Assert.Equal("Zongsoft.Terminal", scope.Tree.Find("/Workbench/Executor").Plugin.Name);
 		Assert.NotNull(scope.Tree.Find("/Workbench/Events/Exchanger/Channels"));
 		Assert.NotNull(scope.Tree.Find("/Workbench/Startup/EventExchanger"));
+		Assert.NotNull(scope.Tree.Find("/Workbench/Events/Exchanger/Filtering"));
 		Assert.All(scope.Tree.Plugins.SelectMany(plugin => plugin.Builtins), builtin => Assert.False(builtin.IsBuilded));
+	}
+
+	[Fact]
+	public async Task RemoteAllowlistBuildsThroughExposedFiltering()
+	{
+		await using var scope = new PluginTestScope();
+		var filtering = Components.EventExchanger.Instance.Filtering;
+		Assert.Empty(filtering);
+		scope.WritePlugin("""
+			<extension path="/Publication">
+				<object name="Exchanger" value="{static:Zongsoft.Components.EventExchanger.Instance, Zongsoft.Core}">
+					<expose name="Filtering" value="{path:../@Filtering}" />
+				</object>
+			</extension>
+			<extension path="/Publication/Exchanger/Filtering">
+				<object name="BuildingUpdated" type="Zongsoft.Components.EventFiltering+Entry, Zongsoft.Core" value="*:Building.Updated" />
+				<object name="ExcludeOthers" type="Zongsoft.Components.EventFiltering+Entry, Zongsoft.Core" value="!" />
+			</extension>
+			""");
+
+		try
+		{
+			scope.Tree.Load();
+			Assert.Same(filtering, scope.Tree.Find("/Publication/Exchanger/Filtering").UnwrapValue(ObtainMode.Auto));
+			Assert.Equal(2, filtering.Count);
+			Assert.Equal(Components.EventFiltering.Entry.Parse("*:Building.Updated"), filtering[0]);
+			Assert.Equal(Components.EventFiltering.Entry.Parse("!"), filtering[1]);
+		}
+		finally { filtering.Clear(); }
 	}
 }

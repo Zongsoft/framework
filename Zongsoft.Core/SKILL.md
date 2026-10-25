@@ -222,3 +222,5 @@ EventRegistryBase 接受已有注册表时，共享根注册表的 Name、Events
 EventDescriptor<TArgument> 继承 EventDescriptor，构造时固定声明 typeof(TArgument)，支持 IPredication<TArgument> 首参数构造；类型化 HandleAsync 直接转发基类泛型入口，不独立实现断言或处理器循环。Event<TArgument> 返回泛型描述器。EventDescriptor 在构造时复制允许的封闭参数类型，缓存 TypeAlias 签名并拒绝重复类型或签名。HandlerCollection 在 Add 时为每个声明类型绑定 IHandler<T> 委托：精确匹配优先，其次唯一最具体可赋值契约，歧义立即报错。集合按实例引用去重，锁只保护集合操作和委托快照，不在锁内执行处理器。派发调用泛型契约，不经过 HandlerBase 的对象转换入口。
 
 RaiseAsync 以 typeof(TArgument) 选择声明；EventContext 持有描述器与类型，GetArgumentValue 由泛型上下文重写，支持非泛型派生上下文。远程接收和延期快照通过缓存的泛型桥接调用根注册表的 GetContext<TArgument>，保留覆盖点及过滤顺序。Marshaler 的 Signature 只在当前描述器允许列表中解析；消息主题、事件查询和订阅仍以名称为键。EventBinder 以描述器、目标实例及成员保存独立绑定；EventLocatorBase 实现需提供声明类型。回归入口为 GenericEventDescriptorTest、EventSignaturesTest、EventDispatcherTest、TransactionEventDispatchTest、Plugins 的 EventSignaturePluginTests 和 ZeroMQ 的 ZeroQueueEventChannelTests。
+
+EventExchanger.Filtering 使用现有 EventFiltering，在运行状态及通道数量检查之后、DispatchAsync 之前执行；不改动本地注册表分发或接收路径。配置只表达远程范围，不根据通道或 Handler 数量推断数据服务发布需求。过滤规则启动前装配，禁止并发修改；空规则和无匹配默认放行，白名单末尾需显式排除全部。EventPublicationTest 覆盖无通道、白名单拒绝、默认放行及本地接收独立性。

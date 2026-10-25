@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2024 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -49,6 +49,7 @@ public sealed class EventExchanger : WorkerBase, IEventReceiver
 	private Func<string, (EventRegistryBase Registry, EventDescriptor Descriptor)> _locator;
 	private readonly IExecutor<EventContext> _executor;
 	private readonly List<IEventChannel> _channels;
+	private readonly EventFiltering _filtering;
 	private IEventDispatcher _dispatcher;
 	#endregion
 
@@ -57,6 +58,7 @@ public sealed class EventExchanger : WorkerBase, IEventReceiver
 	{
 		_locator = Locate;
 		_dispatcher = new EventDispatcher();
+		_filtering = new EventFiltering();
 		_channels = new List<IEventChannel>();
 		_executor = Executor.Build<EventContext>(this.SendAsync);
 	}
@@ -65,6 +67,10 @@ public sealed class EventExchanger : WorkerBase, IEventReceiver
 	#region 公共属性
 	/// <summary>获取事件交换通道集合。</summary>
 	public ICollection<IEventChannel> Channels => _channels;
+
+	/// <summary>获取远程发布范围；在调度和快照之前筛选，不影响本地处理。</summary>
+	/// <remarks>空规则允许全部事件。白名单需以排除全部事件的规则结尾，规则应在启动前完成配置。</remarks>
+	public EventFiltering Filtering => _filtering;
 
 	/// <summary>获取或设置事件调度器；仅允许在停止时替换。</summary>
 	/// <remarks>实现 <see cref="IWorker"/> 的调度器随交换器启停，停止完成后才关闭通道。</remarks>
@@ -91,13 +97,14 @@ public sealed class EventExchanger : WorkerBase, IEventReceiver
 	/// <summary>通过调度器将事件交给远程投递执行器。</summary>
 	/// <param name="context">待交换的事件上下文。</param>
 	/// <param name="cancellation">取消本次事件等待及投递的令牌。</param>
-	/// <returns>立即投递或延期接收的任务；交换器未运行时不执行。</returns>
-	public ValueTask ExchangeAsync(EventContext context, CancellationToken cancellation)
+	/// <returns>立即投递或延期接收的任务；交换器未运行或没有配置通道时不执行。</returns>
+	public async ValueTask ExchangeAsync(EventContext context, CancellationToken cancellation)
 	{
-		if(this.State != WorkerState.Running)
-			return ValueTask.CompletedTask;
+		if(this.State != WorkerState.Running || _channels.Count == 0)
+			return;
 
-		return _dispatcher.DispatchAsync(context, _executor, cancellation);
+		if(await _filtering.PredicateAsync(context, cancellation))
+			await _dispatcher.DispatchAsync(context, _executor, cancellation);
 	}
 	#endregion
 

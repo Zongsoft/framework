@@ -10,7 +10,7 @@
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/Zongsoft.Core</RepositoryUrl>
-		<PackageReleaseNotes>提供操作上下文返回数据、返回行字典转换及确定条件值提取，修复嵌套条件匹配。</PackageReleaseNotes>
+		<PackageReleaseNotes>统一事件参数签名与派发，提供数据服务写入事件过滤器、远程发布范围筛选及操作返回数据支持。</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<PropertyGroup>
