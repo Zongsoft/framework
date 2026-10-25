@@ -68,7 +68,7 @@
 
 > 💡 提示：`Zongsoft.Data` 采用特殊处理。选择 `Zongsoft.Data` 只发布核心数据包，不会连带发布任何驱动；每个数据驱动都是独立的发布选项，需要分别选择和发布。
 
-本次诊断模块拆分须先发布 `Zongsoft.Diagnostics` **1.13.0**；待 nuget.org 可以获取该版本后，再通过独立的发布选项发布 `Zongsoft.Diagnostics.Web` **1.0.0**，因为其 Release 构建依赖 `Zongsoft.Diagnostics` 1.13.0。
+有项目依赖同批次的新版本包时，先发布依赖包，待 nuget.org 可以获取该版本后，再发布下游项目。例如 `Zongsoft.Diagnostics.Web` 发布前，其项目文件中指定的 `Zongsoft.Diagnostics` 版本必须已可用。
 
 ### Zongsoft.Data 本地 Cake 命令
 

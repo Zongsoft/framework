@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>0.3.0</Version>
+		<Version>0.4.0</Version>
+		<PackageReleaseNotes>修复异步读取发布清单时提前释放 XML 读取器的问题。</PackageReleaseNotes>
 		<Product>Zongsoft Upgrading Upgrader</Product>
 		<Description>This is a upgrader for automatic upgrading.</Description>
 		<RootNamespace>Zongsoft.Upgrading</RootNamespace>

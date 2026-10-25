@@ -4,7 +4,7 @@
 		<TargetFrameworks>net8.0;net9.0;net10.0;</TargetFrameworks>
 		<RootNamespace>Zongsoft.Upgrading</RootNamespace>
 		<Version>0.2.0</Version>
-		<PackageReleaseNotes>完善发布清单校验的本地化错误提示并规范打包路径匹配。</PackageReleaseNotes>
+		<PackageReleaseNotes>修复异步读取发布清单时提前释放读取器的问题，完善发布校验的本地化错误提示。</PackageReleaseNotes>
 		<Authors>Popeye Zhong(zongsoft@qq.com)</Authors>
 		<PackAsTool>true</PackAsTool>
 		<ToolCommandName>dotnet-upgrade</ToolCommandName>

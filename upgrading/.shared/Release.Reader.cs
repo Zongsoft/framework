@@ -160,11 +160,11 @@ partial class Release
 		return release;
 	}
 
-	internal static ValueTask<Release> ReadAsync(Stream stream, CancellationToken cancellation = default)
+	internal static async ValueTask<Release> ReadAsync(Stream stream, CancellationToken cancellation = default)
 	{
 		ArgumentNullException.ThrowIfNull(stream);
 		using var reader = XmlReader.Create(stream, GetSettings(true));
-		return ReadAsync(reader, cancellation);
+		return await ReadAsync(reader, cancellation);
 	}
 	internal static async ValueTask<Release> ReadAsync(XmlReader reader, CancellationToken cancellation = default)
 	{
