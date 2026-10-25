@@ -307,8 +307,8 @@ public class EventDispatcher : WorkerBase, IEventDispatcher
 
 				if(this.Deferred)
 				{
-					var (value, eventParameters) = Events.Marshaler.Unmarshal(argument.Registry[argument.Name], _data);
-					context = argument.Registry.GetContext(argument.Name, value, eventParameters);
+					var (argumentType, value, eventParameters) = Events.Marshaler.Unmarshal(argument.Registry[argument.Name], _data);
+					context = argument.Registry.GetContext(argumentType, argument.Name, value, eventParameters);
 				}
 
 				var parameters = new Collections.Parameters();

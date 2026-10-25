@@ -2,6 +2,54 @@
 
 `EventExchanger` 组织远程投递和本地接收。`IEventDispatcher` 根据调用环境决定执行时机，`IExecutor<EventContext>` 执行投递，`IEventChannel` 承担传输。交换器显式实现 `IEventReceiver.ReceiveAsync()`；通道通过此接口将收到的事件交给本地注册表，不再次交换。
 
+## 事件声明与参数契约
+
+每个事件名称只声明一个描述器。非泛型 `EventDescriptor` 在构造时列出允许发布的参数类型，`ArgumentTypes` 返回该列表的只读副本。无类型列表的构造函数声明 `object` 契约。类型必须封闭且互不重复；其传输签名也必须唯一。
+
+```csharp
+public sealed class InventoryEvents : EventRegistryBase
+{
+	public InventoryEvents() : base("Inventory") => this.Items = new ItemEvents(this);
+	public ItemEvents Items { get; }
+
+	public sealed class ItemEvents(InventoryEvents registry)
+	{
+		public static readonly EventDescriptor Created = new("Item.Created",
+			[typeof(string), typeof(IEnumerable<string>)]);
+
+		public ValueTask<bool> OnCreatedAsync(string argument, Parameters parameters, CancellationToken cancellation = default) =>
+			registry.RaiseAsync(Created, argument, parameters, cancellation);
+		public ValueTask<bool> OnCreatedAsync(IEnumerable<string> argument, Parameters parameters, CancellationToken cancellation = default) =>
+			registry.RaiseAsync(Created, argument, parameters, cancellation);
+	}
+}
+```
+
+单一参数契约也可以使用 `EventDescriptor<TArgument>`，它等价于向基类声明 `[typeof(TArgument)]`。泛型参数可以是单条类型，也可以是集合类型；需要同时支持两种类型时使用非泛型版本。泛型构造函数支持名称、标题、说明，以及首参数为 `IPredication<TArgument>` 的断言重载：
+
+```csharp
+public static readonly EventDescriptor<string> Updated = new(
+	Predication.Predicate<string>(argument => !string.IsNullOrEmpty(argument)), "Item.Updated");
+```
+
+该声明与 `new EventDescriptor("Item.Updated", [typeof(string)]) { Predication = ... }` 使用相同的断言和派发流程。泛型版本的类型化 `HandleAsync` 固定以 `TArgument` 派发，传入数组、派生对象或 null 不改变契约。注册表的 `Event<TArgument>(name, title, description)` 返回相应的泛型描述器；`RaiseAsync<TArgument>` 仍按发布入口的声明类型选择契约。
+
+事件声明通常省略构造函数的 `title`、`description` 参数，也不在属性初始化器中读取资源字符串。`Title` 每次读取时依次查找 `{事件名}.Title`、`{事件名}`，`Description` 查找 `{事件名}.Description`，使用当前 `CurrentUICulture`。例如 `Item.Updated.Title` 和 `Item.Updated.Description`。资源位于声明该事件的注册表类型所处的程序集；扩展注册表共享根注册表的事件集合与投递流程，但仍从扩展自身程序集查找资源。ASP.NET 宿主设置请求文化后，同一静态描述器即可按当前请求返回文案。显式提供非 null 标题或说明（包括空字符串）表示固定覆盖值，不再回退到资源。
+
+注册表根据公开实例属性的声明类型自动发现字段类型可赋值给 `EventDescriptor` 的 public static readonly 字段，包括泛型描述器、派生类型和继承成员，不调用属性 getter。同一实例重复登记忽略；不同描述器使用相同名称（不区分大小写）报错。按名称查找、统计和订阅以事件为单位，增加参数契约不增加事件数量。
+
+发布根据 `RaiseAsync<TArgument>` 的声明类型选择契约，该类型必须精确列于描述器中。集合重载中的数组仍以 `IEnumerable<T>` 发布；实参为 null 时也保留声明类型。运行时类型、数组长度和数据转换均不用于选择契约。需要明确指定类型的调用可使用 `HandleAsync(Type, object, Parameters, CancellationToken)`；`EventLocator` 从执行参数 `name` 和 `argumentType` 取得事件名与声明类型。
+
+处理器实现 `IHandler<T>`，通常继承 `HandlerBase<T>`。每个处理器实例优先使用精确匹配的泛型契约；否则选择可接收声明类型的唯一最具体契约。存在不可比较的多个候选契约时，注册立即失败。兼容的不同处理器实例都会调用，同一实例重复加入只调用一次。不兼容的处理器和仅实现非泛型 `IHandler` 的处理器不能挂载。派发不调用参数转换来匹配处理器。
+
+单条与集合处理器可以同时挂载在同一个插件路径，如 `/Workbench/Modules/Inventory/Events/Item/Created`。一次发布只使用所选契约，不自动把单条包装成集合，也不拆分批量。过滤器可通过 `EventContext.Descriptor`、`ArgumentType` 和 `GetArgument()` 读取本次事件信息。直接调用描述器的 `HandleAsync` 只执行该描述器的断言和处理器；注册表发布还会执行过滤器与远程交换。
+
+## 传输与快照
+
+消息主题只包含事件限定名。JSON 信封包含 `Signature`、`Argument`、`Parameters`；`Signature` 是描述器构造时缓存的声明类型别名（`TypeAlias.GetAlias`），不包含程序集版本。两端必须使用一致的契约与类型别名配置。接收端只在对应描述器的签名列表中匹配，不将输入签名交给类型加载器。缺失、未知或不兼容的签名拒绝处理；不支持旧的无签名信封。
+
+`Events.Marshaler.Unmarshal` 返回 `(Type argumentType, object argument, Parameters parameters)`。自定义通道向 `IEventReceiver.ReceiveAsync(name, argumentType, argument, parameters, cancellation)` 传递该声明类型。远程接收和延期快照均恢复 `EventContext<TArgument>`，包括接口契约和 null 实参；本地与远程使用同一处理器选择规则。远程接收只执行本地处理，不再次交换。
+
 ## 消息队列事件约定
 
 Core 的 `Events.Channel.cs` 提供队列事件通道共享的主题与接收处理：

@@ -27,6 +27,7 @@
  * along with the Zongsoft.Core library. If not, see <http://www.gnu.org/licenses/>.
  */
 
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -37,9 +38,10 @@ public interface IEventReceiver
 {
 	/// <summary>将接收到的事件交给本地事件注册表处理。</summary>
 	/// <param name="name">事件的完整限定名称。</param>
+	/// <param name="argumentType">发送方选择的已声明参数类型。</param>
 	/// <param name="argument">还原后的事件实参。</param>
 	/// <param name="parameters">事件参数集合。</param>
 	/// <param name="cancellation">取消事件处理的令牌。</param>
 	/// <returns>本地事件处理任务。</returns>
-	ValueTask ReceiveAsync(string name, object argument, Collections.Parameters parameters, CancellationToken cancellation = default);
+	ValueTask ReceiveAsync(string name, Type argumentType, object argument, Collections.Parameters parameters, CancellationToken cancellation = default);
 }

@@ -1141,4 +1141,22 @@
   <data name="Disposal.AsyncRequired.Message" xml:space="preserve">
     <value>此操作需要异步释放。请先等待 DisposeAsync 完成，再释放其同步所有者。</value>
   </data>
+  <data name="EventDescriptor.SignaturesRequired.Message" xml:space="preserve">
+    <value>事件必须声明至少一种参数类型。</value>
+  </data>
+  <data name="EventDescriptor.ArgumentType.Message" xml:space="preserve">
+    <value>事件参数类型或签名不受支持。</value>
+  </data>
+  <data name="EventDescriptor.DuplicateSignature.Message" xml:space="preserve">
+    <value>事件参数类型及其签名必须唯一。</value>
+  </data>
+  <data name="EventDescriptor.HandlerAmbiguous.Message" xml:space="preserve">
+    <value>处理器具有多个无法确定优先级的事件参数契约。</value>
+  </data>
+  <data name="EventDescriptor.HandlerUnsupported.Message" xml:space="preserve">
+    <value>处理器必须实现兼容的泛型事件参数契约。</value>
+  </data>
+  <data name="EventDescriptor.Unregistered.Message" xml:space="preserve">
+    <value>事件描述器未在此注册表中注册。</value>
+  </data>
 </root>

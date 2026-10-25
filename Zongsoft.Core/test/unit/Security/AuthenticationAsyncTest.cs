@@ -32,7 +32,7 @@ public class AuthenticationAsyncTest
 		using var scope = new AuthenticationScope();
 		using var cancellation = new CancellationTokenSource();
 		var name = authenticated ? nameof(Authentication.Authenticated) : nameof(Authentication.Authenticating);
-		EventDescriptor descriptor = authenticated ? new EventDescriptor<AuthenticatedEventArgs>(name) : new EventDescriptor<AuthenticatingEventArgs>(name);
+		EventDescriptor descriptor = authenticated ? new EventDescriptor(name, [typeof(AuthenticatedEventArgs)]) : new EventDescriptor(name, [typeof(AuthenticatingEventArgs)]);
 		var handler = new NotificationHandler();
 		descriptor.Handlers.Add(handler);
 		descriptor.Bind(typeof(Authentication), name);

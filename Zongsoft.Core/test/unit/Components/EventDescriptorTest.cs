@@ -30,7 +30,7 @@ public class EventDescriptorTest
 	public async Task TestEventHandler1()
 	{
 		var name = nameof(_trigger.MyEvent);
-		var descriptor = new EventDescriptor<EventArgs>(name);
+		var descriptor = new EventDescriptor(name, [typeof(EventArgs)]);
 		Assert.Equal(name, descriptor.Name);
 		Assert.Null(descriptor.Title);
 		Assert.Null(descriptor.Description);
@@ -51,7 +51,7 @@ public class EventDescriptorTest
 	public async Task TestEventHandler2()
 	{
 		var name = nameof(_trigger.MyEventWithArgs);
-		var descriptor = new EventDescriptor<MyEventArgs>(name);
+		var descriptor = new EventDescriptor(name, [typeof(MyEventArgs)]);
 		Assert.Equal(name, descriptor.Name);
 		Assert.Null(descriptor.Title);
 		Assert.Null(descriptor.Description);
@@ -82,7 +82,7 @@ public class EventDescriptorTest
 		descriptor.Bind(_trigger, nameof(_trigger.Action0));
 		Assert.NotNull(_trigger.Action0);
 
-		descriptor.Handlers.Add(new MyHandlerGeneric());
+		descriptor.Handlers.Add(new MyHandlerObject());
 		Assert.Single(descriptor.Handlers);
 		await Assert.ThrowsAsync<MyHandlerException>(() => _trigger.OnAction0().AsTask());
 
@@ -95,7 +95,7 @@ public class EventDescriptorTest
 	public async Task TestAction1_Object()
 	{
 		var name = nameof(_trigger.Action1_Object);
-		var descriptor = new EventDescriptor<object>(name);
+		var descriptor = new EventDescriptor(name, [typeof(object)]);
 		Assert.Equal(name, descriptor.Name);
 		Assert.Null(descriptor.Title);
 		Assert.Null(descriptor.Description);
@@ -118,7 +118,7 @@ public class EventDescriptorTest
 	public async Task TestAction1_Generic()
 	{
 		var name = nameof(_trigger.Action1_Generic);
-		var descriptor = new EventDescriptor<MyArgument>(name);
+		var descriptor = new EventDescriptor(name, [typeof(MyArgument)]);
 		Assert.Equal(name, descriptor.Name);
 		Assert.Null(descriptor.Title);
 		Assert.Null(descriptor.Description);
@@ -141,7 +141,7 @@ public class EventDescriptorTest
 	public async Task TestAction2_Object()
 	{
 		var name = nameof(_trigger.Action2_Object);
-		var descriptor = new EventDescriptor<object>(name);
+		var descriptor = new EventDescriptor(name, [typeof(object)]);
 		Assert.Equal(name, descriptor.Name);
 		Assert.Null(descriptor.Title);
 		Assert.Null(descriptor.Description);
@@ -164,7 +164,7 @@ public class EventDescriptorTest
 	public async Task TestAction2_Generic()
 	{
 		var name = nameof(_trigger.Action2_Generic);
-		var descriptor = new EventDescriptor<MyArgument>(name);
+		var descriptor = new EventDescriptor(name, [typeof(MyArgument)]);
 		Assert.Equal(name, descriptor.Name);
 		Assert.Null(descriptor.Title);
 		Assert.Null(descriptor.Description);
@@ -187,7 +187,7 @@ public class EventDescriptorTest
 	public async Task TestAction3_Object()
 	{
 		var name = nameof(_trigger.Action3_Object);
-		var descriptor = new EventDescriptor<object>(name);
+		var descriptor = new EventDescriptor(name, [typeof(object)]);
 		Assert.Equal(name, descriptor.Name);
 		Assert.Null(descriptor.Title);
 		Assert.Null(descriptor.Description);
@@ -210,7 +210,7 @@ public class EventDescriptorTest
 	public async Task TestAction3_Generic()
 	{
 		var name = nameof(_trigger.Action3_Generic);
-		var descriptor = new EventDescriptor<MyArgument>(name);
+		var descriptor = new EventDescriptor(name, [typeof(MyArgument)]);
 		Assert.Equal(name, descriptor.Name);
 		Assert.Null(descriptor.Title);
 		Assert.Null(descriptor.Description);
@@ -244,7 +244,7 @@ public class EventDescriptorTest
 		using var cancellation = new CancellationTokenSource();
 		var trigger = new AsyncTrigger();
 		var handler = new PendingHandler();
-		var descriptor = new EventDescriptor<string>($"Changed-{Guid.NewGuid():N}");
+		var descriptor = new EventDescriptor($"Changed-{Guid.NewGuid():N}", [typeof(string)]);
 		var parameters = Collections.Parameters.Parameter("sequence", 19);
 		var name = member switch
 		{

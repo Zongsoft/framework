@@ -76,7 +76,8 @@ public class EventExchangerSample : IAsyncDisposable
 			await _channel.DisposeAsync();
 		}
 
-		_queue?.Dispose();
+		if(_queue != null)
+			await _queue.DisposeAsync();
 	}
 
 	private sealed class Handler : HandlerBase<Models.Meter>

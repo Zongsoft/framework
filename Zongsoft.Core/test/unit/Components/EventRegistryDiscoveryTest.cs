@@ -16,8 +16,8 @@ public class EventRegistryDiscoveryTest
 	{
 		var registry = new AutomaticRegistry();
 
-		Assert.Equal(2, registry.CountInConstructor);
-		Assert.Equal(2, registry.Events.Count);
+		Assert.Equal(3, registry.CountInConstructor);
+		Assert.Equal(3, registry.Events.Count);
 		Assert.Same(StandardEvents.Created, registry["Orders.Created"]);
 		Assert.Same(StandardEvents.Updated, registry["Orders.Updated"]);
 		Assert.Equal("Automatic:Orders.Created", StandardEvents.Created.QualifiedName);
@@ -31,7 +31,7 @@ public class EventRegistryDiscoveryTest
 	{
 		var registry = new InheritedRegistry();
 
-		Assert.Equal(3, registry.Events.Count);
+		Assert.Equal(4, registry.Events.Count);
 		Assert.Same(StandardEvents.Created, registry["Orders.Created"]);
 		Assert.Same(StandardEvents.Updated, registry["Orders.Updated"]);
 		Assert.Same(InheritedEvents.Deleted, registry["Orders.Deleted"]);
@@ -44,8 +44,8 @@ public class EventRegistryDiscoveryTest
 		var second = new AutomaticRegistry();
 
 		Assert.NotSame(first.Events, second.Events);
-		Assert.Equal(2, first.Events.Count);
-		Assert.Equal(2, second.Events.Count);
+		Assert.Equal(3, first.Events.Count);
+		Assert.Equal(3, second.Events.Count);
 		Assert.Same(StandardEvents.Created, second["Orders.Created"]);
 	}
 
@@ -61,7 +61,7 @@ public class EventRegistryDiscoveryTest
 			registry.Declare(StandardEvents.Created);
 			registry.Declare(StandardEvents.Created);
 
-			Assert.Equal(2, registry.Events.Count);
+			Assert.Equal(3, registry.Events.Count);
 			Assert.Same(handler, Assert.Single(StandardEvents.Created.Handlers));
 			Assert.True(await registry.PublishAsync("created"));
 			Assert.Equal(1, handler.Count);
@@ -81,11 +81,11 @@ public class EventRegistryDiscoveryTest
 		var second = new DomainRegistry(first);
 		var handler = new Handler();
 
-		Assert.Equal(2, first.CountInConstructor);
-		Assert.Equal(2, second.CountInConstructor);
+		Assert.Equal(3, first.CountInConstructor);
+		Assert.Equal(3, second.CountInConstructor);
 		Assert.Same(root.Events, first.Events);
 		Assert.Same(root.Events, second.Events);
-		Assert.Equal(2, root.Events.Count);
+		Assert.Equal(3, root.Events.Count);
 		Assert.Equal("Common:Orders.Created", StandardEvents.Created.QualifiedName);
 		Assert.True(root.Register(StandardEvents.Created.Name, handler));
 
@@ -112,11 +112,11 @@ public class EventRegistryDiscoveryTest
 		var registry = new AutomaticRegistry();
 
 		if(differentArgument)
-			Assert.Throws<ArgumentException>(() => registry.Declare(new EventDescriptor<int>(name)));
+			Assert.Throws<ArgumentException>(() => registry.Declare(new EventDescriptor(name, [typeof(int)])));
 		else
-			Assert.Throws<ArgumentException>(() => registry.Declare(new EventDescriptor<string>(name)));
+			Assert.Throws<ArgumentException>(() => registry.Declare(new EventDescriptor(name, [typeof(string)])));
 
-		Assert.Equal(2, registry.Events.Count);
+		Assert.Equal(3, registry.Events.Count);
 		Assert.Same(StandardEvents.Created, registry[name]);
 	}
 
@@ -135,7 +135,8 @@ public class EventRegistryDiscoveryTest
 	{
 		var registry = new ManualRegistry();
 		var descriptor = registry.Declare("Dynamic.Created");
-		registry.Declare((EventDescriptor<string>)descriptor);
+		Assert.IsType<EventDescriptor<string>>(descriptor);
+		registry.Declare((EventDescriptor)descriptor);
 
 		Assert.Same(descriptor, Assert.Single(registry.Events));
 		Assert.Throws<ArgumentException>(() => registry.Declare("dynamic.created"));
@@ -148,14 +149,14 @@ public class EventRegistryDiscoveryTest
 		Assert.Throws<ArgumentNullException>("descriptor", () => new NullRegistry());
 
 		var registry = new ManualRegistry();
-		Assert.Throws<ArgumentNullException>("descriptor", () => registry.Declare<string>(null));
+		Assert.Throws<ArgumentNullException>("descriptor", () => registry.Declare((EventDescriptor)null));
 		Assert.Throws<ArgumentNullException>("name", () => registry.Declare((string)null));
 		Assert.Empty(registry.Events);
 	}
 
 	private sealed class AutomaticRegistry : EventRegistryBase
 	{
-		public static readonly EventDescriptor<string> Direct = new("Direct.Created");
+		public static readonly EventDescriptor Direct = new("Direct.Created", [typeof(string)]);
 
 		public AutomaticRegistry() : base("Automatic")
 		{
@@ -169,12 +170,12 @@ public class EventRegistryDiscoveryTest
 		public static IgnoredEvents Static => throw new InvalidOperationException();
 		private IgnoredEvents Private => throw new InvalidOperationException();
 		public IgnoredEvents this[DateTime date] => throw new InvalidOperationException();
-		public void Declare<TArgument>(EventDescriptor<TArgument> descriptor) => this.Event(descriptor);
+		public void Declare(EventDescriptor descriptor) => this.Event(descriptor);
 		public ValueTask<bool> PublishAsync(string argument) => this.RaiseAsync(StandardEvents.Created.Name, argument);
 
 		public sealed class UnexposedEvents
 		{
-			public static readonly EventDescriptor<string> Created = new("Unexposed.Created");
+			public static readonly EventDescriptor Created = new("Unexposed.Created", [typeof(string)]);
 		}
 	}
 
@@ -191,8 +192,8 @@ public class EventRegistryDiscoveryTest
 	private sealed class ManualRegistry() : EventRegistryBase("Common")
 	{
 		public EventContext Context { get; private set; }
-		public void Declare<TArgument>(EventDescriptor<TArgument> descriptor) => this.Event(descriptor);
-		public EventDescriptor Declare(string name) => this.Event<string>(name);
+		public void Declare(EventDescriptor descriptor) => this.Event(descriptor);
+		public EventDescriptor<string> Declare(string name) => this.Event<string>(name);
 		protected override EventContext<TArgument> GetContext<TArgument>(string name, TArgument argument, Parameters parameters)
 		{
 			var context = base.GetContext(name, argument, parameters);
@@ -222,23 +223,25 @@ public class EventRegistryDiscoveryTest
 	private class StandardEvents
 	{
 		public static readonly EventDescriptor<string> Created = new("Orders.Created");
-		public static readonly EventDescriptor<string> Updated = new("Orders.Updated");
-		public static EventDescriptor<string> Mutable = new("Excluded.Mutable");
-		public readonly EventDescriptor<string> Instance = new("Excluded.Instance");
-		public static readonly EventDescriptor NonGeneric = new("Excluded.NonGeneric");
-		public static readonly object Untyped = new EventDescriptor<string>("Excluded.Untyped");
-		private static readonly EventDescriptor<string> _private = new("Excluded.Private");
-		public static EventDescriptor<string> Property => throw new InvalidOperationException();
+		public static readonly EventDescriptor Updated = new("Orders.Updated", [typeof(string)]);
+		public static EventDescriptor Mutable = new("Excluded.Mutable", [typeof(string)]);
+		public readonly EventDescriptor Instance = new("Excluded.Instance", [typeof(string)]);
+		public static readonly EventDescriptor Completed = new("Orders.Completed");
+		public static readonly object Untyped = new EventDescriptor("Excluded.Untyped", [typeof(string)]);
+		private static readonly EventDescriptor _private = new("Excluded.Private", [typeof(string)]);
+		public static EventDescriptor Property => throw new InvalidOperationException();
 	}
 
 	private sealed class InheritedEvents : StandardEvents
 	{
-		public static readonly EventDescriptor<string> Deleted = new("Orders.Deleted");
+		public static readonly DerivedDescriptor Deleted = new("Orders.Deleted");
 	}
+
+	private sealed class DerivedDescriptor(string name) : EventDescriptor<string>(name);
 
 	private sealed class IgnoredEvents
 	{
-		public static readonly EventDescriptor<string> Created = new("Ignored.Created");
+		public static readonly EventDescriptor Created = new("Ignored.Created", [typeof(string)]);
 	}
 
 	private sealed class ConflictingEvents

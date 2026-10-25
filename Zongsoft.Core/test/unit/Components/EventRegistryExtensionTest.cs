@@ -40,6 +40,34 @@ public class EventRegistryExtensionTest
 	}
 
 	[Fact]
+	public void ResourceLookupUsesDeclaringRegistryAfterDuplicateRegistration()
+	{
+		var root = new RootRegistry();
+		var extension = new ExtensionRegistry(root, "Building.Created");
+		var resource = Assert.IsType<Resources.Resource>(Resources.Resource.GetResource(typeof(ExtensionRegistry)));
+		var original = resource.Locator;
+		var locator = new RecordingResourceLocator();
+
+		try
+		{
+			resource.Locator = locator;
+			root.Declare(extension.Descriptor);
+			_ = extension.Descriptor.Title;
+			Assert.NotEmpty(locator.Origins);
+			Assert.All(locator.Origins, origin => Assert.Equal($"{typeof(ExtensionRegistry).Namespace}.{nameof(ExtensionRegistry)}", origin));
+
+			locator.Origins.Clear();
+			_ = extension.Descriptor.Description;
+			Assert.NotEmpty(locator.Origins);
+			Assert.All(locator.Origins, origin => Assert.Equal($"{typeof(ExtensionRegistry).Namespace}.{nameof(ExtensionRegistry)}", origin));
+		}
+		finally
+		{
+			resource.Locator = original;
+		}
+	}
+
+	[Fact]
 	public void NullRootIsRejected()
 	{
 		var exception = Assert.Throws<ArgumentNullException>(() => new ExtensionRegistry(null, "Created"));
@@ -75,7 +103,7 @@ public class EventRegistryExtensionTest
 			try
 			{
 				exchanger.Locator = name => name == extension.Descriptor.QualifiedName ? (root, extension.Descriptor) : (null, null);
-				await ((IEventReceiver)exchanger).ReceiveAsync(extension.Descriptor.QualifiedName, "created", parameters, cancellation.Token);
+				await ((IEventReceiver)exchanger).ReceiveAsync(extension.Descriptor.QualifiedName, typeof(string), "created", parameters, cancellation.Token);
 			}
 			finally
 			{
@@ -151,6 +179,7 @@ public class EventRegistryExtensionTest
 	{
 		public List<string> Steps { get; } = [];
 		public EventContext Context { get; private set; }
+		public void Declare(EventDescriptor descriptor) => this.Event(descriptor);
 		protected override EventContext<TArgument> GetContext<TArgument>(string name, TArgument argument, Parameters parameters)
 		{
 			this.Steps.Add("Context");
@@ -174,14 +203,24 @@ public class EventRegistryExtensionTest
 	{
 		public ExtensionRegistry(EventRegistryBase registry, string name) : base(registry)
 		{
-			this.Descriptor = new(name);
+			this.Descriptor = new(name, [typeof(string)]);
 			this.Event(this.Descriptor);
 		}
-		public EventDescriptor<string> Descriptor { get; }
+		public EventDescriptor Descriptor { get; }
 		public ValueTask<bool> PublishAsync(string argument, Parameters parameters = null, CancellationToken cancellation = default) => this.RaiseAsync(this.Descriptor.Name, argument, parameters, cancellation);
 		protected override EventContext<TArgument> GetContext<TArgument>(string name, TArgument argument, Parameters parameters) => throw new InvalidOperationException("The root must create the context.");
 		protected override ValueTask OnFiltering(IFilter<EventContext> filter, EventContext context, CancellationToken cancellation) => throw new InvalidOperationException("The root must execute filters.");
 		protected override ValueTask OnFiltered(IFilter<EventContext> filter, EventContext context, CancellationToken cancellation) => throw new InvalidOperationException("The root must execute filters.");
+	}
+
+	private sealed class RecordingResourceLocator : Resources.IResourceLocator
+	{
+		public List<string> Origins { get; } = [];
+		public IEnumerable<string> Locate(string origin)
+		{
+			this.Origins.Add(origin);
+			return [];
+		}
 	}
 
 	private sealed class Handler(Func<string, Parameters, CancellationToken, ValueTask> handle) : HandlerBase<string>

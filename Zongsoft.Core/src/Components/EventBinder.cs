@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2020-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -32,13 +32,14 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Components;
 
 public static class EventBinder
 {
 	#region 私有变量
-	private static readonly Dictionary<EventDescriptor, Delegate> _binding = new();
+	private static readonly ConditionalWeakTable<EventDescriptor, ConditionalWeakTable<object, Dictionary<MemberInfo, Delegate>>> _binding = new();
 	#endregion
 
 	#region 公共方法
@@ -70,12 +71,16 @@ public static class EventBinder
 			throw new ArgumentNullException(nameof(@event));
 
 		(_, var trigger) = GetAdapter(descriptor, @event.EventHandlerType);
-		@event.AddEventHandler(target is Type ? null : target, trigger);
 
-		if(_binding.TryGetValue(descriptor, out var binding))
-			@event.RemoveEventHandler(target is Type ? null : target, binding);
+		lock(_binding)
+		{
+			var bindings = GetBindings(descriptor, target, @event);
+			if(bindings.TryGetValue(@event, out var binding))
+				@event.RemoveEventHandler(target is Type ? null : target, binding);
 
-		_binding[descriptor] = trigger;
+			@event.AddEventHandler(target is Type ? null : target, trigger);
+			bindings[@event] = trigger;
+		}
 	}
 
 	public static void Bind(this EventDescriptor descriptor, object target, FieldInfo field)
@@ -90,8 +95,12 @@ public static class EventBinder
 			throw new InvalidOperationException(string.Format(Properties.Resources.EventBinder_DelegateRequired_Message, field.Name, field.FieldType));
 
 		(_, var trigger) = GetAdapter(descriptor, field.FieldType);
-		field.SetValue(target, trigger);
-		_binding[descriptor] = trigger;
+
+		lock(_binding)
+		{
+			field.SetValue(target is Type ? null : target, trigger);
+			GetBindings(descriptor, target, field)[field] = trigger;
+		}
 	}
 
 	public static void Bind(this EventDescriptor descriptor, object target, PropertyInfo property)
@@ -106,8 +115,12 @@ public static class EventBinder
 			throw new InvalidOperationException(string.Format(Properties.Resources.EventBinder_DelegateRequired_Message, property.Name, property.PropertyType));
 
 		(_, var trigger) = GetAdapter(descriptor, property.PropertyType);
-		property.SetValue(target, trigger);
-		_binding[descriptor] = trigger;
+
+		lock(_binding)
+		{
+			property.SetValue(target is Type ? null : target, trigger);
+			GetBindings(descriptor, target, property)[property] = trigger;
+		}
 	}
 
 
@@ -138,8 +151,11 @@ public static class EventBinder
 		if(@event == null)
 			throw new ArgumentNullException(nameof(@event));
 
-		if(_binding.TryGetValue(descriptor, out var binding))
-			@event.RemoveEventHandler(target is Type ? null : target, binding);
+		lock(_binding)
+		{
+			if(GetBindings(descriptor, target, @event).Remove(@event, out var binding))
+				@event.RemoveEventHandler(target is Type ? null : target, binding);
+		}
 	}
 
 	public static void Unbind(this EventDescriptor descriptor, object target, FieldInfo field)
@@ -153,8 +169,11 @@ public static class EventBinder
 		if(!field.FieldType.IsSubclassOf(typeof(Delegate)))
 			throw new InvalidOperationException(string.Format(Properties.Resources.EventBinder_DelegateRequired_Message, field.Name, field.FieldType));
 
-		field.SetValue(target, null);
-		_binding.Remove(descriptor);
+		lock(_binding)
+		{
+			if(GetBindings(descriptor, target, field).Remove(field, out var binding) && Equals(field.GetValue(target is Type ? null : target), binding))
+				field.SetValue(target is Type ? null : target, null);
+		}
 	}
 
 	public static void Unbind(this EventDescriptor descriptor, object target, PropertyInfo property)
@@ -168,12 +187,18 @@ public static class EventBinder
 		if(!property.PropertyType.IsSubclassOf(typeof(Delegate)))
 			throw new InvalidOperationException(string.Format(Properties.Resources.EventBinder_DelegateRequired_Message, property.Name, property.PropertyType));
 
-		property.SetValue(target, null);
-		_binding.Remove(descriptor);
+		lock(_binding)
+		{
+			if(GetBindings(descriptor, target, property).Remove(property, out var binding) && Equals(property.GetValue(target is Type ? null : target), binding))
+				property.SetValue(target is Type ? null : target, null);
+		}
 	}
 	#endregion
 
 	#region 私有方法
+	private static Dictionary<MemberInfo, Delegate> GetBindings(EventDescriptor descriptor, object target, MemberInfo member) =>
+		_binding.GetOrCreateValue(descriptor).GetOrCreateValue(target ?? member.DeclaringType);
+
 	private static (object adapter, Delegate trigger) GetAdapter(this EventDescriptor descriptor, Type delegateType)
 	{
 		var invoke = delegateType.GetMethod("Invoke");
@@ -187,11 +212,16 @@ public static class EventBinder
 
 		object adapter;
 		if(count == 0)
+		{
+			if(!descriptor.Supports(typeof(object)))
+				throw new InvalidOperationException(Properties.Resources.EventBinder_ArgumentTypeMismatch_Message);
+
 			adapter = new AsyncAdapter(descriptor);
+		}
 		else
 		{
 			var argument = count == 1 ? parameters[0].ParameterType : parameters[1].ParameterType;
-			if(descriptor.GetArgumentType() != argument)
+			if(!descriptor.Supports(argument))
 				throw new InvalidOperationException(Properties.Resources.EventBinder_ArgumentTypeMismatch_Message);
 
 			if(count > 3 || (count > 1 && parameters[0].ParameterType != typeof(object)) ||
@@ -228,11 +258,6 @@ public static class EventBinder
 			_ => throw new InvalidOperationException(string.Format(Properties.Resources.EventBinder_UnsupportedMember_Message, name, type)),
 		};
 	}
-
-	private static Type GetArgumentType(this EventDescriptor descriptor)
-	{
-		return descriptor != null && descriptor.GetType().IsGenericType ? descriptor.GetType().GenericTypeArguments[0] : null;
-	}
 	#endregion
 
 	#region 嵌套子类
@@ -244,7 +269,7 @@ public static class EventBinder
 		public Task RaiseTaskAsync(CancellationToken cancellation) => this.RaiseAsync(cancellation).AsTask();
 	}
 
-	private sealed class AsyncAdapter<TArgument>(EventDescriptor<TArgument> descriptor)
+	private sealed class AsyncAdapter<TArgument>(EventDescriptor descriptor)
 	{
 		public ValueTask RaiseAsync(TArgument argument) => descriptor.HandleAsync(argument);
 		public ValueTask RaiseAsync(TArgument argument, CancellationToken cancellation) => descriptor.HandleAsync(argument, cancellation);
@@ -256,7 +281,7 @@ public static class EventBinder
 		public Task RaiseTaskAsync(object sender, TArgument argument, CancellationToken cancellation) => this.RaiseAsync(sender, argument, cancellation).AsTask();
 	}
 
-	private sealed class AsyncAdapter<TArgument, TParameters>(EventDescriptor<TArgument> descriptor) where TParameters : Collections.Parameters
+	private sealed class AsyncAdapter<TArgument, TParameters>(EventDescriptor descriptor) where TParameters : Collections.Parameters
 	{
 		public ValueTask RaiseAsync(object sender, TArgument argument, TParameters parameters) => descriptor.HandleAsync(argument, parameters);
 		public ValueTask RaiseAsync(object sender, TArgument argument, TParameters parameters, CancellationToken cancellation) => descriptor.HandleAsync(argument, parameters, cancellation);

@@ -76,7 +76,7 @@ Use `ServiceCollectionExtension.Register` to register services from an assembly.
 
 ## Event Dispatch
 
-Use `RaiseAsync` to raise events and await their handlers. Bound event handlers must return an awaitable result. `EventExchanger` supports transaction-aware delivery, and applications can add conditions through `IFeatureProvider` or configure policies through `EventDispatcher.Pipeline`. See [event dispatch and ambient features](docs/event-dispatching.md).
+Each event has one descriptor: use `EventDescriptor<TArgument>` for a single argument contract or non-generic `EventDescriptor` to declare multiple contracts. Single and collection handlers can share a plugin path, and local and remote delivery preserve the declared type. Use `RaiseAsync` to raise events and await their handlers. Bound event handlers must return an awaitable result. `EventExchanger` supports transaction-aware delivery, and applications can add conditions through `IFeatureProvider` or configure policies through `EventDispatcher.Pipeline`. See [event dispatch and ambient features](docs/event-dispatching.md).
 
 ## Condition lookup
 

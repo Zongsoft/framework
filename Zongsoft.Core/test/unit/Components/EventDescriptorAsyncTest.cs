@@ -44,7 +44,7 @@ public class EventDescriptorAsyncTest
 				Assert.Equal("argument", handler.Argument);
 				Assert.Same(parameters, handler.Parameters);
 				Assert.Equal(cancellation.Token, handler.Cancellation);
-				Assert.Equal(typed, handler.Typed);
+				Assert.True(handler.Typed);
 			}
 		}
 		finally
@@ -116,7 +116,7 @@ public class EventDescriptorAsyncTest
 
 	private static EventDescriptor CreateDescriptor(bool typed, Predicate predicate, params Handler[] handlers)
 	{
-		EventDescriptor descriptor = typed ? new EventDescriptor<string>("Changed") : new EventDescriptor("Changed");
+		EventDescriptor descriptor = new EventDescriptor("Changed", [typeof(string)]);
 		descriptor.Predication = predicate;
 		foreach(var handler in handlers)
 			descriptor.Handlers.Add(handler);
@@ -124,8 +124,8 @@ public class EventDescriptorAsyncTest
 	}
 
 	private static ValueTask Invoke(EventDescriptor descriptor, bool typed, Parameters parameters = null, CancellationToken cancellation = default) =>
-		typed ? ((EventDescriptor<string>)descriptor).HandleAsync("argument", parameters, cancellation) :
-			descriptor.HandleAsync("argument", parameters, cancellation);
+		typed ? descriptor.HandleAsync("argument", parameters, cancellation) :
+			descriptor.HandleAsync(typeof(string), "argument", parameters, cancellation);
 
 	private sealed class Predicate : IPredication
 	{

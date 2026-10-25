@@ -171,10 +171,10 @@ internal static class TestProgram
 		await dispatcher.StartAsync();
 		var delivered = new List<int>();
 		var executor = Components.Executor.Build<Components.EventContext>(context =>
-			delivered.Add((int)((Components.EventContext<object>)context).Argument));
+			delivered.Add(((Components.EventContext<int>)context).Argument));
 		var registry = new EventRegistry();
 
-		using(var transaction = new Data.Transaction())
+		await using(var transaction = new Data.Transaction())
 		{
 			await dispatcher.DispatchAsync(new Components.EventContext<int>(registry, "Changed", 1), executor);
 
@@ -182,7 +182,7 @@ internal static class TestProgram
 			await transaction.CommitAsync();
 		}
 
-		using(var transaction = new Data.Transaction())
+		await using(var transaction = new Data.Transaction())
 		{
 			await dispatcher.DispatchAsync(new Components.EventContext<int>(registry, "Changed", 2), executor);
 			await transaction.RollbackAsync();

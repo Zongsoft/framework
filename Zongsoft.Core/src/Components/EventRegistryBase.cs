@@ -41,6 +41,7 @@ public class EventRegistryBase : IFilterable<EventContext>, IEnumerable<EventDes
 {
 	#region 静态字段
 	private static readonly ConcurrentDictionary<Type, FieldInfo[]> _fields = new();
+	private static readonly ConcurrentDictionary<Type, Func<EventRegistryBase, string, object, Collections.Parameters, EventContext>> _contexts = new();
 	#endregion
 
 	#region 成员字段
@@ -97,15 +98,14 @@ public class EventRegistryBase : IFilterable<EventContext>, IEnumerable<EventDes
 	#endregion
 
 	#region 声明事件
-	protected void Event<TArgument>(EventDescriptor<TArgument> descriptor) => this.Event((EventDescriptor)descriptor);
-	protected EventDescriptor Event<TArgument>(string name, string title = null, string description = null)
+	protected EventDescriptor<TArgument> Event<TArgument>(string name, string title = null, string description = null)
 	{
 		var descriptor = new EventDescriptor<TArgument>(name, title, description);
 		this.Event(descriptor);
 		return descriptor;
 	}
 
-	private void Event(EventDescriptor descriptor)
+	protected void Event(EventDescriptor descriptor)
 	{
 		ArgumentNullException.ThrowIfNull(descriptor);
 
@@ -113,6 +113,7 @@ public class EventRegistryBase : IFilterable<EventContext>, IEnumerable<EventDes
 			return;
 
 		this.Events.Add(descriptor);
+		descriptor.SetRegistry(this);
 	}
 	#endregion
 
@@ -143,6 +144,21 @@ public class EventRegistryBase : IFilterable<EventContext>, IEnumerable<EventDes
 	#endregion
 
 	#region 激发方法
+	/// <summary>使用已注册的描述器及声明参数类型发布事件。</summary>
+	/// <param name="descriptor">本注册表中的事件描述器。</param>
+	/// <param name="argument">事件实参。</param>
+	/// <param name="parameters">附加参数。</param>
+	/// <param name="cancellation">取消令牌。</param>
+	/// <returns>事件存在且发布成功时返回 true。</returns>
+	protected ValueTask<bool> RaiseAsync<TArgument>(EventDescriptor descriptor, TArgument argument, Collections.Parameters parameters = null, CancellationToken cancellation = default)
+	{
+		ArgumentNullException.ThrowIfNull(descriptor);
+		if(!this.Events.TryGetValue(descriptor.Name, out var registered) || !ReferenceEquals(descriptor, registered))
+			throw new ArgumentException(Properties.Resources.EventDescriptor_Unregistered_Message, nameof(descriptor));
+
+		return this.RaiseAsync(descriptor.Name, argument, parameters, cancellation);
+	}
+
 	protected ValueTask<bool> RaiseAsync<TArgument>(string name, TArgument argument, CancellationToken cancellation = default) => this.RaiseAsync(name, argument, null, cancellation);
 	protected async ValueTask<bool> RaiseAsync<TArgument>(string name, TArgument argument, Collections.Parameters parameters, CancellationToken cancellation = default)
 	{
@@ -152,8 +168,9 @@ public class EventRegistryBase : IFilterable<EventContext>, IEnumerable<EventDes
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
 
-		if(this.Events.TryGetValue(name, out var value) && value is EventDescriptor<TArgument> descriptor)
+		if(this.Events.TryGetValue(name, out var descriptor))
 		{
+			descriptor.Validate(typeof(TArgument), argument);
 			var context = this.GetContext(name, argument, parameters);
 
 			//执行本地事件调用
@@ -170,7 +187,7 @@ public class EventRegistryBase : IFilterable<EventContext>, IEnumerable<EventDes
 		return false;
 	}
 
-	internal async ValueTask RaiseAsync<TArgument>(EventDescriptor descriptor, EventContext<TArgument> context, CancellationToken cancellation)
+	internal async ValueTask RaiseAsync(EventDescriptor descriptor, EventContext context, CancellationToken cancellation)
 	{
 		//依次执行全局事件过滤器
 		foreach(var filter in EventManager.Global.Filters)
@@ -181,7 +198,7 @@ public class EventRegistryBase : IFilterable<EventContext>, IEnumerable<EventDes
 			await this.OnFiltering(filter, context, cancellation);
 
 		//调用事件处理程序集
-		await descriptor.HandleAsync(context.Argument, context.Parameters, cancellation);
+		await descriptor.HandleAsync(context.ArgumentType, context.GetArgument(), context.Parameters, cancellation);
 
 		//依次执行当前事件库中的过滤器
 		foreach(var filter in this.Filters)
@@ -194,6 +211,13 @@ public class EventRegistryBase : IFilterable<EventContext>, IEnumerable<EventDes
 	#endregion
 
 	#region 内部方法
+	internal EventContext GetContext(Type argumentType, string name, object argument, Collections.Parameters parameters) =>
+		_contexts.GetOrAdd(argumentType, type => typeof(EventRegistryBase).GetMethod(nameof(CreateContext), BindingFlags.Static | BindingFlags.NonPublic)
+			.MakeGenericMethod(type).CreateDelegate<Func<EventRegistryBase, string, object, Collections.Parameters, EventContext>>())(this, name, argument, parameters);
+
+	private static EventContext CreateContext<TArgument>(EventRegistryBase registry, string name, object argument, Collections.Parameters parameters) =>
+		registry.GetContext(name, (TArgument)argument, parameters);
+
 	internal protected virtual EventContext<TArgument> GetContext<TArgument>(string name, TArgument argument, Collections.Parameters parameters) => new(this, name, argument, parameters);
 	#endregion
 
@@ -214,7 +238,7 @@ public class EventRegistryBase : IFilterable<EventContext>, IEnumerable<EventDes
 
 				foreach(var field in property.PropertyType.GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy))
 				{
-					if(field.IsInitOnly && field.FieldType.IsGenericType && field.FieldType.GetGenericTypeDefinition() == typeof(EventDescriptor<>))
+					if(field.IsInitOnly && typeof(EventDescriptor).IsAssignableFrom(field.FieldType))
 						fields.Add(field);
 				}
 			}
@@ -230,7 +254,7 @@ public class EventRegistryBase : IFilterable<EventContext>, IEnumerable<EventDes
 	#endregion
 
 	#region 遍历枚举
-	public IEnumerator<EventDescriptor> GetEnumerator() => this.Events.GetEnumerator();
 	IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+	public IEnumerator<EventDescriptor> GetEnumerator() => this.Events.GetEnumerator();
 	#endregion
 }

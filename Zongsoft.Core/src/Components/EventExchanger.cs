@@ -104,16 +104,20 @@ public sealed class EventExchanger : WorkerBase, IEventReceiver
 	#region 显式实现
 	/// <summary>定位事件注册表并执行本地处理程序，不再次向通道投递。</summary>
 	/// <param name="name">事件的完整限定名称。</param>
+	/// <param name="argumentType">发送方选择的已声明参数类型。</param>
 	/// <param name="argument">事件实参。</param>
 	/// <param name="parameters">事件参数集合。</param>
 	/// <param name="cancellation">取消本地处理的令牌。</param>
 	/// <returns>本地处理任务；事件不存在时不执行。</returns>
-	ValueTask IEventReceiver.ReceiveAsync(string name, object argument, Parameters parameters, CancellationToken cancellation)
+	ValueTask IEventReceiver.ReceiveAsync(string name, Type argumentType, object argument, Parameters parameters, CancellationToken cancellation)
 	{
 		(var registry, var descriptor) = _locator(name);
 
 		if(registry != null && descriptor != null)
-			return registry.RaiseAsync(descriptor, registry.GetContext(descriptor.Name, argument, parameters), cancellation);
+		{
+			descriptor.Validate(argumentType, argument);
+			return registry.RaiseAsync(descriptor, registry.GetContext(argumentType, descriptor.Name, argument, parameters), cancellation);
+		}
 
 		return ValueTask.CompletedTask;
 	}

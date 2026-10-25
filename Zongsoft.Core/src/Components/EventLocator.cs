@@ -36,6 +36,9 @@ public class EventLocator : EventLocatorBase<IExecutorContext>
 	public EventLocator() { }
 	public EventLocator(EventRegistryBase registry) : base(registry) { }
 
+	protected override Type GetArgumentType(IExecutorContext context) =>
+		context.Parameters.TryGetValue("argumentType", out var value) && value is Type type ? type : null;
+
 	protected override string GetName(IExecutorContext context) =>
 		context.Parameters.TryGetValue("name", out var value) && value is string name ? name : null;
 }

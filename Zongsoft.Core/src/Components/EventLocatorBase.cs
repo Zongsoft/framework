@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2023 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -46,7 +46,7 @@ public abstract class EventLocatorBase<TContext> : IHandlerLocator<TContext> whe
 	#endregion
 
 	#region 公共方法
-	public virtual IHandler Locate(TContext context) => this.Registry.Events.TryGetValue(this.GetName(context), out var descriptor) ? new EventHandler(descriptor) : null;
+	public virtual IHandler Locate(TContext context) => this.Registry.Events.TryGetValue(this.GetName(context), out var descriptor) ? new EventHandler(descriptor, this.GetArgumentType(context)) : null;
 	#endregion
 
 	#region 抽象方法
@@ -54,15 +54,27 @@ public abstract class EventLocatorBase<TContext> : IHandlerLocator<TContext> whe
 	/// <param name="context">指定的上下文对象。</param>
 	/// <returns>如果成功则返回对应的事件名，否则返回空(<c>null</c>)。</returns>
 	protected abstract string GetName(TContext context);
+
+	/// <summary>获取本次发布的声明参数类型。</summary>
+	/// <param name="context">执行上下文。</param>
+	/// <returns>在事件描述器中声明的参数类型。</returns>
+	protected abstract Type GetArgumentType(TContext context);
 	#endregion
 
 	#region 嵌套结构
 	private class EventHandler : IHandler
 	{
+		private readonly Type _argumentType;
 		private readonly EventDescriptor _descriptor;
-		public EventHandler(EventDescriptor descriptor) => _descriptor = descriptor;
+
+		public EventHandler(EventDescriptor descriptor, Type argumentType)
+		{
+			_descriptor = descriptor;
+			_argumentType = argumentType;
+		}
+
 		public ValueTask HandleAsync(object argument, CancellationToken cancellation = default) => this.HandleAsync(argument, null, cancellation);
-		public ValueTask HandleAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation = default) => _descriptor.HandleAsync(argument, parameters, cancellation);
+		public ValueTask HandleAsync(object argument, Collections.Parameters parameters, CancellationToken cancellation = default) => _descriptor.HandleAsync(_argumentType, argument, parameters, cancellation);
 	}
 	#endregion
 }

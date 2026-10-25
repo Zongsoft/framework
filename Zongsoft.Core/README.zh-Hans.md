@@ -76,7 +76,7 @@ dotnet add package Zongsoft.Core
 
 ## 事件调度
 
-通过 `RaiseAsync` 触发事件并等待处理器完成，绑定的事件处理器必须返回可等待结果。`EventExchanger` 支持按事务状态控制事件投递，应用可通过 `IFeatureProvider` 增加条件，或通过 `EventDispatcher.Pipeline` 配置策略。详见[事件调度与环境特性](docs/event-dispatching.zh-Hans.md)。
+每个事件声明一个描述器：单一参数契约可用 `EventDescriptor<TArgument>`，多种参数契约使用非泛型 `EventDescriptor`；单条与集合处理器可以挂载到同一插件路径，本地与远程投递均保留声明类型。通过 `RaiseAsync` 触发事件并等待处理器完成，绑定的事件处理器必须返回可等待结果。`EventExchanger` 支持按事务状态控制事件投递，应用可通过 `IFeatureProvider` 增加条件，或通过 `EventDispatcher.Pipeline` 配置策略。详见[事件调度与环境特性](docs/event-dispatching.zh-Hans.md)。
 
 ## 条件查找
 

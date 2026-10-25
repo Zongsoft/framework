@@ -99,7 +99,7 @@ public class EventsTest
 		var data = Events.Marshaler.Marshal(context);
 		var json = Encoding.UTF8.GetString(data);
 
-		(var argument, var parameters) = Events.Marshaler.Unmarshal($"{ModuleB.Current.Name}:{EVENT_NAME}", data);
+		(var argumentType, var argument, var parameters) = Events.Marshaler.Unmarshal($"{ModuleB.Current.Name}:{EVENT_NAME}", data);
 		Assert.NotNull(argument);
 		Assert.IsType<Meter>(argument);
 		Assert.Equal("Meter#1", ((Meter)argument).Key);
@@ -112,8 +112,9 @@ public class EventsTest
 	[Fact]
 	public void TestUnmarshalEvent()
 	{
-		var json = """
+		var json = $$"""
 		{
+			"Signature": "{{Zongsoft.Common.TypeAlias.GetAlias(typeof(CreatedArgument))}}",
 			"Argument": {
 				"Message": "MyMessage"
 			},
@@ -130,7 +131,7 @@ public class EventsTest
 
 		var data = System.Text.Encoding.UTF8.GetBytes(json);
 
-		(var argument, var parameters) = Events.Marshaler.Unmarshal("ModuleB:Target1.Created", data);
+		(var argumentType, var argument, var parameters) = Events.Marshaler.Unmarshal("ModuleB:Target1.Created", data);
 
 		Assert.NotNull(argument);
 		Assert.IsType<CreatedArgument>(argument);
@@ -273,7 +274,7 @@ public class EventsTest
 		var handler = Events.GetHandler(receiver);
 		var message = new Messaging.Message("Events/ModuleB:Target1.Created", "invalid-json"u8.ToArray());
 
-		await Assert.ThrowsAsync<System.Text.Json.JsonException>(() => handler.HandleAsync(message).AsTask());
+		await Assert.ThrowsAnyAsync<System.Text.Json.JsonException>(() => handler.HandleAsync(message).AsTask());
 
 		Assert.Equal(0, receiver.Count);
 	}
@@ -287,7 +288,7 @@ public class EventsTest
 		public CancellationToken Cancellation { get; private set; }
 		public Func<CancellationToken, ValueTask> Completion { get; init; }
 
-		public ValueTask ReceiveAsync(string name, object argument, Parameters parameters, CancellationToken cancellation = default)
+		public ValueTask ReceiveAsync(string name, Type argumentType, object argument, Parameters parameters, CancellationToken cancellation = default)
 		{
 			this.Count++;
 			this.Name = name;
@@ -349,8 +350,8 @@ public class ModuleB : ApplicationModule<ModuleB.EventRegistry>
 		public sealed class Target1Event
 		{
 			#region 静态字段
-			internal static readonly EventDescriptor<CreatedArgument> Created = new($"Target1.{nameof(Created)}");
-			internal static readonly EventDescriptor<StatusChangedArgument> StatusChanged = new($"Target1.{nameof(StatusChanged)}");
+			internal static readonly EventDescriptor Created = new($"Target1.{nameof(Created)}", [typeof(CreatedArgument)]);
+			internal static readonly EventDescriptor StatusChanged = new($"Target1.{nameof(StatusChanged)}", [typeof(StatusChangedArgument)]);
 			#endregion
 
 			#region 成员字段
@@ -370,8 +371,8 @@ public class ModuleB : ApplicationModule<ModuleB.EventRegistry>
 		public sealed class Target2Event
 		{
 			#region 静态字段
-			internal static readonly EventDescriptor<CreatedArgument> Created = new($"Target2.{nameof(Created)}");
-			internal static readonly EventDescriptor<StatusChangedArgument> StatusChanged = new($"Target2.{nameof(StatusChanged)}");
+			internal static readonly EventDescriptor Created = new($"Target2.{nameof(Created)}", [typeof(CreatedArgument)]);
+			internal static readonly EventDescriptor StatusChanged = new($"Target2.{nameof(StatusChanged)}", [typeof(StatusChangedArgument)]);
 			#endregion
 
 			#region 成员字段
@@ -391,7 +392,7 @@ public class ModuleB : ApplicationModule<ModuleB.EventRegistry>
 		public sealed class AcquirerEvent
 		{
 			#region 静态字段
-			internal static readonly EventDescriptor<Meter> Acquired = new($"Acquirer.{nameof(Acquired)}");
+			internal static readonly EventDescriptor Acquired = new($"Acquirer.{nameof(Acquired)}", [typeof(Meter)]);
 			#endregion
 
 			#region 成员字段

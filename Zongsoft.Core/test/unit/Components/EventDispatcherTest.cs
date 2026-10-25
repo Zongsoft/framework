@@ -60,6 +60,7 @@ public class EventDispatcherTest
 		await dispatcher.StopAsync();
 
 		Assert.Equal(allow ? 1 : 0, pipeline.Calls);
+
 		if(allow)
 		{
 			var context = Assert.Single(executor.Contexts);
@@ -485,6 +486,36 @@ public class EventDispatcherTest
 		Assert.Throws<NotSupportedException>(() => ((IList<IFeature>)context.Features).Clear());
 	}
 
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task DeferredSnapshotPreservesDeclaredCollectionType(bool empty)
+	{
+		var gate = NewGate();
+		await using var dispatcher = new EventDispatcher(new Provider(Bind(gate)));
+		var registry = new Registry([typeof(IEnumerable<string>)]);
+		var values = new List<string> { "before" };
+		var context = new EventContext<IEnumerable<string>>(registry, "Changed", empty ? null : values);
+		context.Parameters["source"] = "before";
+		var executor = new ProbeExecutor();
+		await dispatcher.StartAsync();
+		await dispatcher.DispatchAsync(context, executor);
+		values.Add("after");
+		context.Parameters["source"] = "after";
+		gate.SetResult(true);
+		await dispatcher.StopAsync();
+
+		var delivered = Assert.IsType<EventContext<IEnumerable<string>>>(Assert.Single(executor.Contexts).Argument);
+		Assert.Same(registry["Changed"], delivered.Descriptor);
+		Assert.Equal(typeof(IEnumerable<string>), delivered.ArgumentType);
+		Assert.Equal("before", delivered.Parameters["source"]);
+
+		if(empty)
+			Assert.Null(delivered.Argument);
+		else
+			Assert.Equal(["before"], delivered.Argument);
+	}
+
 	private static TaskCompletionSource<bool> NewGate() => new(TaskCreationOptions.RunContinuationsAsynchronously);
 	private static IFeature Bind(TaskCompletionSource<bool> gate) => new Condition((_, _, cancellation) => new(gate.Task.WaitAsync(cancellation)));
 	private static EventContext Context(int value) => new EventContext<int>(new Registry(), "Changed", value);
@@ -492,7 +523,8 @@ public class EventDispatcherTest
 
 	private sealed class Registry : EventRegistryBase
 	{
-		public Registry() : base("DispatchTests") => this.Event<int>("Changed");
+		public Registry() : this([typeof(int)]) { }
+		public Registry(Type[] types) : base("DispatchTests") => this.Event(new EventDescriptor("Changed", types));
 	}
 
 	private sealed class UnknownFeature : IFeature;

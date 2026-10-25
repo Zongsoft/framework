@@ -137,7 +137,7 @@ public sealed class TransactionEventDispatchTest
 			await inner.WaitForCountAsync(1);
 		});
 
-		var received = Assert.IsType<EventContext<object>>(Assert.Single(inner.Contexts));
+		var received = Assert.IsType<EventContext<MutableArgument>>(Assert.Single(inner.Contexts));
 		Assert.Equal("second", Assert.IsType<MutableArgument>(received.Argument).Message);
 	}
 
@@ -181,7 +181,7 @@ public sealed class TransactionEventDispatchTest
 			await transaction.CommitAsync();
 			await inner.WaitForCountAsync(1);
 
-			var received = Assert.IsType<EventContext<object>>(Assert.Single(inner.Contexts));
+			var received = Assert.IsType<EventContext<MutableArgument>>(Assert.Single(inner.Contexts));
 			var receivedArgument = Assert.IsType<MutableArgument>(received.Argument);
 			Assert.Equal("before", receivedArgument.Message);
 			Assert.Equal("nested-before", receivedArgument.Detail.Value);
@@ -319,7 +319,7 @@ public sealed class TransactionEventDispatchTest
 
 			Assert.Equal(
 				["first", "second"],
-				inner.Contexts.Select(context => Assert.IsType<MutableArgument>(Assert.IsType<EventContext<object>>(context).Argument).Message));
+				inner.Contexts.Select(context => Assert.IsType<MutableArgument>(Assert.IsType<EventContext<MutableArgument>>(context).Argument).Message));
 		});
 	}
 

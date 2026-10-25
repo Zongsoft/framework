@@ -11,7 +11,7 @@ internal class Program
 {
 	static async Task Main(string[] args)
 	{
-		using ApplicationContext context = new();
+		await using ApplicationContext context = new();
 
 		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `exit`  to quit the program.");
 		Terminal.WriteLine(CommandOutletColor.DarkYellow, "Input `start` to start the event exchanger.");

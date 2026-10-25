@@ -71,8 +71,8 @@ partial class Events
 				return ValueTask.CompletedTask;
 
 			var name = topic[(TOPIC.Length + 1)..];
-			(var argument, parameters) = Marshaler.Unmarshal(name, message.Data);
-			return _receiver.ReceiveAsync(name, argument, parameters, cancellation);
+			(var argumentType, var argument, parameters) = Marshaler.Unmarshal(name, message.Data);
+			return _receiver.ReceiveAsync(name, argumentType, argument, parameters, cancellation);
 		}
 	}
 }

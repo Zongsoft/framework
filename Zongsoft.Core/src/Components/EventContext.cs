@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2020 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -38,18 +38,35 @@ public class EventContext
 	{
 		this.Registry = registry ?? throw new ArgumentNullException(nameof(registry));
 		this.Name = name;
+		this.Descriptor = registry.Events.TryGetValue(name, out var descriptor) ? descriptor : null;
 		this.QualifiedName = string.IsNullOrEmpty(registry.Name) ? name : $"{registry.Name}:{name}";
 		this.Parameters = parameters ?? new Collections.Parameters();
 	}
 	#endregion
 
 	#region 公共属性
+	/// <summary>获取事件注册表。</summary>
 	[System.Text.Json.Serialization.JsonIgnore]
 	[Serialization.SerializationMember(Ignored = true)]
 	public EventRegistryBase Registry { get; }
+
+	/// <summary>获取发布时的声明参数类型。</summary>
+	[System.Text.Json.Serialization.JsonIgnore]
+	[Serialization.SerializationMember(Ignored = true)]
+	public virtual Type ArgumentType => typeof(object);
+
+	/// <summary>获取对应的事件描述器。</summary>
+	[System.Text.Json.Serialization.JsonIgnore]
+	[Serialization.SerializationMember(Ignored = true)]
+	public EventDescriptor Descriptor { get; }
+
 	public string Name { get; }
 	public string QualifiedName { get; }
 	public Collections.Parameters Parameters { get; }
+	#endregion
+
+	#region 内部方法
+	internal virtual object GetArgumentValue() => null;
 	#endregion
 }
 
@@ -64,5 +81,7 @@ public class EventContext<TArgument> : EventContext
 
 	#region 公共属性
 	public TArgument Argument { get; set; }
+	public override Type ArgumentType => typeof(TArgument);
+	internal override object GetArgumentValue() => this.Argument;
 	#endregion
 }

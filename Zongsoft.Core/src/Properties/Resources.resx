@@ -1147,4 +1147,22 @@
   <data name="Disposal.AsyncRequired.Message" xml:space="preserve">
     <value>This operation requires asynchronous disposal. Await DisposeAsync before disposing its synchronous owner.</value>
   </data>
+  <data name="EventDescriptor.SignaturesRequired.Message" xml:space="preserve">
+    <value>At least one event argument type must be declared.</value>
+  </data>
+  <data name="EventDescriptor.ArgumentType.Message" xml:space="preserve">
+    <value>The event argument type or signature is not supported.</value>
+  </data>
+  <data name="EventDescriptor.DuplicateSignature.Message" xml:space="preserve">
+    <value>Event argument types and their signatures must be unique.</value>
+  </data>
+  <data name="EventDescriptor.HandlerAmbiguous.Message" xml:space="preserve">
+    <value>The handler has multiple incomparable contracts for an event argument type.</value>
+  </data>
+  <data name="EventDescriptor.HandlerUnsupported.Message" xml:space="preserve">
+    <value>The handler must implement a compatible generic event argument contract.</value>
+  </data>
+  <data name="EventDescriptor.Unregistered.Message" xml:space="preserve">
+    <value>The event descriptor is not registered in this registry.</value>
+  </data>
 </root>

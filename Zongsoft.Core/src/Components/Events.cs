@@ -67,6 +67,7 @@ public static partial class Events
 	/// <param name="qualifiedName">事件的完整限定名；没有模块名前缀时查找公共模块。</param>
 	/// <returns>匹配的事件描述；事件不存在时为 <see langword="null"/>。</returns>
 	public static EventDescriptor GetEvent(string qualifiedName) => GetEvent(qualifiedName, out _);
+
 	/// <summary>获取指定事件的描述及其所属注册表。</summary>
 	/// <param name="qualifiedName">事件的完整限定名；没有模块名前缀时查找公共模块。</param>
 	/// <param name="registry">所属模块的事件注册表；模块或注册表不存在时为 <see langword="null"/>。</param>
@@ -147,6 +148,7 @@ public static partial class Events
 	/// <param name="module">应用模块。</param>
 	/// <returns>模块的事件描述集合；模块或注册表不存在时为空序列。</returns>
 	public static IEnumerable<EventDescriptor> GetEvents(this IApplicationModule module) => GetEvents(module, out _);
+
 	/// <summary>获取指定应用模块的事件描述集合及注册表。</summary>
 	/// <param name="module">应用模块。</param>
 	/// <param name="registry">模块的事件注册表；不存在时为 <see langword="null"/>。</param>
@@ -216,78 +218,61 @@ public static partial class Events
 	#region 嵌套子类
 	public static class Marshaler
 	{
-		private static readonly ConcurrentDictionary<Type, Func<object, ValueTuple<object, Collections.Parameters>>> _accessors = new();
-
 		public static byte[] Marshal(EventContext context)
 		{
 			if(context == null)
 				return null;
 
+			var descriptor = context.Descriptor ?? throw new ArgumentException(Properties.Resources.EventDescriptor_Unregistered_Message, nameof(context));
 			var argument = context.GetArgument();
-			var content = argument == null ?
-				Serialization.Serializer.Json.Serialize(new EventToken(context.Parameters)) :
-				Serialization.Serializer.Json.Serialize(Activator.CreateInstance(typeof(EventToken<>).MakeGenericType(argument.GetType()), argument, context.Parameters));
+			descriptor.Validate(context.ArgumentType, argument);
 
-			return System.Text.Encoding.UTF8.GetBytes(content);
+			var token = Activator.CreateInstance(typeof(EventToken<>).MakeGenericType(context.ArgumentType));
+			((IEventToken)token).Initialize(descriptor.GetSignature(context.ArgumentType), argument, context.Parameters);
+			return System.Text.Encoding.UTF8.GetBytes(Serialization.Serializer.Json.Serialize(token));
 		}
 
-		public static (object argument, Collections.Parameters parameters) Unmarshal(string qualifiedName, ReadOnlySpan<byte> data) => Unmarshal(GetEvent(qualifiedName), data);
-		public static (object argument, Collections.Parameters parameters) Unmarshal(EventDescriptor descriptor, ReadOnlySpan<byte> data)
+		public static (Type argumentType, object argument, Collections.Parameters parameters) Unmarshal(string qualifiedName, ReadOnlySpan<byte> data) => Unmarshal(GetEvent(qualifiedName), data);
+		public static (Type argumentType, object argument, Collections.Parameters parameters) Unmarshal(EventDescriptor descriptor, ReadOnlySpan<byte> data)
 		{
 			if(descriptor == null || data.IsEmpty)
 				return default;
 
-			var argumentType = GetArgumentType(descriptor);
-			var targetType = argumentType == null ? typeof(EventToken) : typeof(EventToken<>).MakeGenericType(argumentType);
-			var result = Serialization.Serializer.Json.Deserialize(data, targetType);
+			using var document = System.Text.Json.JsonDocument.Parse(data.ToArray());
+			if(!document.RootElement.TryGetProperty(nameof(EventToken<object>.Signature), out var signature) || signature.ValueKind != System.Text.Json.JsonValueKind.String)
+				throw new System.Text.Json.JsonException(Properties.Resources.EventDescriptor_ArgumentType_Message);
 
-			if(result is EventToken token)
-				return (null, token.Parameters);
+			var argumentType = descriptor.GetArgumentType(signature.GetString());
+			var token = (IEventToken)Serialization.Serializer.Json.Deserialize(data, typeof(EventToken<>).MakeGenericType(argumentType));
+			descriptor.Validate(argumentType, token.GetArgument());
+			return (argumentType, token.GetArgument(), token.GetParameters());
+		}
 
-			var accessor = _accessors.GetOrAdd(argumentType, type =>
+		private interface IEventToken
+		{
+			void Initialize(string signature, object argument, Collections.Parameters parameters);
+			object GetArgument();
+			Collections.Parameters GetParameters();
+		}
+
+		private sealed class EventToken<TArgument> : IEventToken
+		{
+			[System.Text.Json.Serialization.JsonPropertyName("Signature")]
+			public string Signature { get; set; }
+			[System.Text.Json.Serialization.JsonPropertyName("Argument")]
+			public TArgument Argument { get; set; }
+			[System.Text.Json.Serialization.JsonPropertyName("Parameters")]
+			public Collections.Parameters Parameters { get; set; }
+
+			public void Initialize(string signature, object argument, Collections.Parameters parameters)
 			{
-				/*
-				 * 生成的动态代码：
-				 * ValueTuple<object, Parameters> Unnamed(object target)
-				 * {
-				 *     var token = ((EventToken<XXXXX>)target);
-				 *     return new ValueTuple<object, Parameters>((object)token.Argument, token.Parameters);
-				 * }
-				 */
-				var tokenType = typeof(EventToken<>).MakeGenericType(type);
-				var parameter = Expression.Parameter(typeof(object), "target");
-				var variable = Expression.Variable(tokenType, "token");
+				this.Signature = signature;
+				this.Argument = (TArgument)argument;
+				this.Parameters = parameters;
+			}
 
-				var field1 = Expression.Field(variable, tokenType.GetField(nameof(EventToken<object>.Argument), BindingFlags.Instance | BindingFlags.Public));
-				var field2 = Expression.Field(variable, tokenType.GetField(nameof(EventToken<object>.Parameters), BindingFlags.Instance | BindingFlags.Public));
-				var constructor = typeof(ValueTuple<object, Collections.Parameters>).GetConstructor([typeof(object), typeof(Collections.Parameters)]);
-
-				var body = Expression.Block([variable],
-				[
-					Expression.Assign(variable, Expression.Convert(parameter, tokenType)),
-					Expression.New(constructor, Expression.Convert(field1, typeof(object)), field2)
-				]);
-
-				return Expression.Lambda<Func<object, ValueTuple<object, Collections.Parameters>>>(body, parameter).Compile();
-			});
-
-			return accessor.Invoke(result);
-		}
-
-		private static Type GetArgumentType(EventDescriptor descriptor)
-		{
-			return descriptor != null && descriptor.GetType().IsGenericType ? descriptor.GetType().GenericTypeArguments[0] : null;
-		}
-
-		private struct EventToken(Collections.Parameters parameters)
-		{
-			public Collections.Parameters Parameters = parameters;
-		}
-
-		private struct EventToken<TArgument>(TArgument argument, Collections.Parameters parameters)
-		{
-			public TArgument Argument = argument;
-			public Collections.Parameters Parameters = parameters;
+			object IEventToken.GetArgument() => this.Argument;
+			Collections.Parameters IEventToken.GetParameters() => this.Parameters;
 		}
 	}
 	#endregion

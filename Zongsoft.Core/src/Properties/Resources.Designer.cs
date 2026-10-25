@@ -1364,6 +1364,60 @@ namespace Zongsoft.Properties {
                 return ResourceManager.GetString("EventBinder.UnsupportedMember.Message", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   查找类似 The event argument type or signature is not supported. 的本地化字符串。
+        /// </summary>
+        internal static string EventDescriptor_ArgumentType_Message {
+            get {
+                return ResourceManager.GetString("EventDescriptor.ArgumentType.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 Event argument types and their signatures must be unique. 的本地化字符串。
+        /// </summary>
+        internal static string EventDescriptor_DuplicateSignature_Message {
+            get {
+                return ResourceManager.GetString("EventDescriptor.DuplicateSignature.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The handler has multiple incomparable contracts for an event argument type. 的本地化字符串。
+        /// </summary>
+        internal static string EventDescriptor_HandlerAmbiguous_Message {
+            get {
+                return ResourceManager.GetString("EventDescriptor.HandlerAmbiguous.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The handler must implement a compatible generic event argument contract. 的本地化字符串。
+        /// </summary>
+        internal static string EventDescriptor_HandlerUnsupported_Message {
+            get {
+                return ResourceManager.GetString("EventDescriptor.HandlerUnsupported.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 At least one event argument type must be declared. 的本地化字符串。
+        /// </summary>
+        internal static string EventDescriptor_SignaturesRequired_Message {
+            get {
+                return ResourceManager.GetString("EventDescriptor.SignaturesRequired.Message", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   查找类似 The event descriptor is not registered in this registry. 的本地化字符串。
+        /// </summary>
+        internal static string EventDescriptor_Unregistered_Message {
+            get {
+                return ResourceManager.GetString("EventDescriptor.Unregistered.Message", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   查找类似 The event dispatcher has reached its capacity. 的本地化字符串。

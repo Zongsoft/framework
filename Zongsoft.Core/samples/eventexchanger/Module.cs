@@ -25,7 +25,7 @@ public sealed class Module() : Zongsoft.Services.ApplicationModule<Module.EventR
 		public sealed class AcquirerEvent
 		{
 			#region 静态字段
-			public static readonly EventDescriptor<Models.Meter> Acquired = new($"{nameof(Acquirer)}.{nameof(Acquired)}");
+			public static readonly EventDescriptor Acquired = new($"{nameof(Acquirer)}.{nameof(Acquired)}", [typeof(Models.Meter)]);
 			#endregion
 
 			#region 成员字段

@@ -79,7 +79,7 @@ public class DataDictionarySerializationTest
 		var original = DataDictionary.GetDictionary<IEntry>(new Entry { Id = 401, Name = "Building" });
 		var context = new EventContext<IDataDictionary<IEntry>>(registry, "Changed", original);
 		context.Parameters["source"] = "test";
-		var (argument, parameters) = Events.Marshaler.Unmarshal(registry["Changed"], Events.Marshaler.Marshal(context));
+		var (argumentType, argument, parameters) = Events.Marshaler.Unmarshal(registry["Changed"], Events.Marshaler.Marshal(context));
 		var restored = Assert.IsAssignableFrom<IDataDictionary<IEntry>>(argument);
 
 		Assert.Equal(401U, restored.GetValue<uint>("Id", 0));

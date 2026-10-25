@@ -207,6 +207,12 @@ DataDictionaryConverterFactory 根据声明或实现的 IDataDictionary<T> 契�
 
 ## 事件注册表扩展
 
-EventRegistryBase 接受已有注册表时，共享根注册表的 Name、Events 和 Filters；事件描述器由根集合登记归属，RaiseAsync 委托根注册表执行上下文创建、过滤器、处理器和交换流程。多层扩展直接归一到根注册表。领域扩展不重复加入应用模块集合；消费者和远程接收仍从所属模块的根注册表查找事件。事件集合在启动期装配，不新增并发写入保证。扩展实例上的上下文和过滤方法重写不参与根注册表的发布流程。回归入口为 test/unit/Components/EventRegistryExtensionTest.cs。
+EventRegistryBase 接受已有注册表时，共享根注册表的 Name、Events 和 Filters；事件描述器存入根集合后以声明它的注册表作为资源定位来源，重复登记同一实例不改变来源；Title 与 Description 在读取时按 CurrentUICulture 查找 {Name}.Title（回退 {Name}）和 {Name}.Description，非 null 显式值覆盖资源。RaiseAsync 委托根注册表执行上下文创建、过滤器、处理器和交换流程。多层扩展直接归一到根注册表。领域扩展不重复加入应用模块集合；消费者和远程接收仍从所属模块的根注册表查找事件。事件集合在启动期装配，不新增并发写入保证。扩展实例上的上下文和过滤方法重写不参与根注册表的发布流程。回归入口为 test/unit/Components/EventRegistryExtensionTest.cs。
 
-两个构造函数均在事件和过滤器集合就绪后执行自动发现：读取具体注册表类型的公开实例非索引属性元数据，从属性声明类型（含继承成员）中读取 public static readonly EventDescriptor<T> 字段，通过 Event(...) 统一登记；不调用实例属性 getter、不读取事件组的静态属性、不扫描未暴露的嵌套类型。按注册表类型缓存字段元数据，每个实例仍向自己的集合登记。空描述符沿用 ArgumentNullException；同一实例重复登记忽略，不同实例的同名声明（不区分大小写）仍由集合抛出 ArgumentException，保持原有描述符和处理器。按名称创建描述符的重载也经过相同入口，因此再次创建同名描述符仍为冲突。回归入口为 test/unit/Components/EventRegistryDiscoveryTest.cs。
+两个构造函数均在事件和过滤器集合就绪后执行自动发现：读取具体注册表类型的公开实例非索引属性元数据，从属性声明类型（含继承成员）中读取声明类型可赋值给 EventDescriptor 的 public static readonly 字段（含泛型描述器及其派生类），通过 Event(...) 统一登记；不调用实例属性 getter、不读取事件组的静态属性、不扫描未暴露的嵌套类型。按注册表类型缓存字段元数据，每个实例仍向自己的集合登记。空描述符沿用 ArgumentNullException；同一实例重复登记忽略，不同实例的同名声明（不区分大小写）仍由集合抛出 ArgumentException，保持原有描述符和处理器。按名称创建描述符的重载也经过相同入口，因此再次创建同名描述符仍为冲突。回归入口为 test/unit/Components/EventRegistryDiscoveryTest.cs。
+
+## 事件参数签名与处理器选择
+
+EventDescriptor<TArgument> 继承 EventDescriptor，构造时固定声明 typeof(TArgument)，支持 IPredication<TArgument> 首参数构造；类型化 HandleAsync 直接转发基类泛型入口，不独立实现断言或处理器循环。Event<TArgument> 返回泛型描述器。EventDescriptor 在构造时复制允许的封闭参数类型，缓存 TypeAlias 签名并拒绝重复类型或签名。HandlerCollection 在 Add 时为每个声明类型绑定 IHandler<T> 委托：精确匹配优先，其次唯一最具体可赋值契约，歧义立即报错。集合按实例引用去重，锁只保护集合操作和委托快照，不在锁内执行处理器。派发调用泛型契约，不经过 HandlerBase 的对象转换入口。
+
+RaiseAsync 以 typeof(TArgument) 选择声明；EventContext 持有描述器与类型，GetArgumentValue 由泛型上下文重写，支持非泛型派生上下文。远程接收和延期快照通过缓存的泛型桥接调用根注册表的 GetContext<TArgument>，保留覆盖点及过滤顺序。Marshaler 的 Signature 只在当前描述器允许列表中解析；消息主题、事件查询和订阅仍以名称为键。EventBinder 以描述器、目标实例及成员保存独立绑定；EventLocatorBase 实现需提供声明类型。回归入口为 GenericEventDescriptorTest、EventSignaturesTest、EventDispatcherTest、TransactionEventDispatchTest、Plugins 的 EventSignaturePluginTests 和 ZeroMQ 的 ZeroQueueEventChannelTests。

@@ -2,6 +2,54 @@
 
 `EventExchanger` coordinates outbound delivery and local reception. `IEventDispatcher` decides when execution is allowed, `IExecutor<EventContext>` executes delivery, and `IEventChannel` handles transport. The exchanger explicitly implements `IEventReceiver.ReceiveAsync()`. Channels replay incoming events through this interface without exchanging them again.
 
+## Event declarations and argument contracts
+
+Declare one descriptor per event name. For non-generic `EventDescriptor`, list the permitted argument types in its constructor; `ArgumentTypes` exposes a read-only copy. The constructor without a type list declares the `object` contract. Types must be closed and distinct, and their transport signatures must also be unique.
+
+```csharp
+public sealed class InventoryEvents : EventRegistryBase
+{
+	public InventoryEvents() : base("Inventory") => this.Items = new ItemEvents(this);
+	public ItemEvents Items { get; }
+
+	public sealed class ItemEvents(InventoryEvents registry)
+	{
+		public static readonly EventDescriptor Created = new("Item.Created",
+			[typeof(string), typeof(IEnumerable<string>)]);
+
+		public ValueTask<bool> OnCreatedAsync(string argument, Parameters parameters, CancellationToken cancellation = default) =>
+			registry.RaiseAsync(Created, argument, parameters, cancellation);
+		public ValueTask<bool> OnCreatedAsync(IEnumerable<string> argument, Parameters parameters, CancellationToken cancellation = default) =>
+			registry.RaiseAsync(Created, argument, parameters, cancellation);
+	}
+}
+```
+
+A single argument contract can also use `EventDescriptor<TArgument>`, which declares `[typeof(TArgument)]` through the base class. The generic argument can be an individual or collection type; use the non-generic form when an event accepts both. Generic constructors accept a name, title, and description, with an additional overload taking `IPredication<TArgument>` first:
+
+```csharp
+public static readonly EventDescriptor<string> Updated = new(
+	Predication.Predicate<string>(argument => !string.IsNullOrEmpty(argument)), "Item.Updated");
+```
+
+This declaration uses the same predicate and dispatch pipeline as `new EventDescriptor("Item.Updated", [typeof(string)]) { Predication = ... }`. Typed `HandleAsync` overloads on the generic descriptor always dispatch as `TArgument`, including arrays, derived objects, and null. The registry's `Event<TArgument>(name, title, description)` returns the generic descriptor; `RaiseAsync<TArgument>` continues to select the publication's declared argument type.
+
+Event declarations normally omit the constructor's `title` and `description` arguments and avoid reading resource strings in property initializers. Each read of `Title` looks up `{EventName}.Title`, then `{EventName}`; `Description` looks up `{EventName}.Description`, using the current `CurrentUICulture`. For example, use `Item.Updated.Title` and `Item.Updated.Description`. Resources belong to the assembly of the registry that declares the event. An extension registry shares the root's event collection and delivery pipeline while resolving resources from its own assembly. Once an ASP.NET host sets the request culture, the same static descriptor can return text for the current request. An explicit non-null title or description, including an empty string, is a fixed override that disables resource fallback for that property.
+
+Registries discover public static readonly fields whose declared type is assignable to `EventDescriptor` on their public instance property types, including generic descriptors, derived types, and inherited members, without invoking property getters. Registering the same instance again is ignored. Different descriptors with the same case-insensitive name are rejected. Lookup, counting, and subscriptions operate on event names; adding an argument contract does not add an event.
+
+Publication selects the declared type of `RaiseAsync<TArgument>`, which must appear exactly in the descriptor. An array passed through the collection overload retains the `IEnumerable<T>` contract, and null retains its declared type. Runtime types, collection lengths, and conversions do not select contracts. Explicit dispatch uses `HandleAsync(Type, object, Parameters, CancellationToken)`; `EventLocator` reads the event name and declared type from executor parameters `name` and `argumentType`.
+
+Handlers implement `IHandler<T>`, usually through `HandlerBase<T>`. Each instance uses an exact contract when available; otherwise it uses the unique most specific contract capable of accepting the declared type. Incomparable candidates fail at registration. All distinct compatible handler instances run; registering the same instance repeatedly still invokes it once. Incompatible handlers and handlers implementing only non-generic `IHandler` cannot be attached. Dispatch does not convert arguments to make handlers match.
+
+Single and collection handlers can share a plugin path such as `/Workbench/Modules/Inventory/Events/Item/Created`. A publication uses its selected contract without wrapping singles or splitting batches. Filters inspect `EventContext.Descriptor`, `ArgumentType`, and `GetArgument()`. Calling a descriptor's `HandleAsync` runs its predicate and handlers; registry publication also runs filters and remote exchange.
+
+## Transport and snapshots
+
+The message topic contains only the qualified event name. The JSON envelope contains `Signature`, `Argument`, and `Parameters`. `Signature` is the declared type alias (`TypeAlias.GetAlias`) cached when the descriptor is constructed, without assembly versions. Both endpoints require matching contracts and type-alias configuration. Receivers match signatures only against the corresponding descriptor's declarations; they do not pass incoming signatures to a type loader. Missing, unknown, or incompatible signatures are rejected. Envelopes without signatures are unsupported.
+
+`Events.Marshaler.Unmarshal` returns `(Type argumentType, object argument, Parameters parameters)`. Custom channels pass this declared type to `IEventReceiver.ReceiveAsync(name, argumentType, argument, parameters, cancellation)`. Remote reception and deferred snapshots restore `EventContext<TArgument>`, including interface contracts and null arguments. Local and remote dispatch use the same handler selection rules. Reception runs local handlers without exchanging the event again.
+
 ## Queue event conventions
 
 Core's `Events.Channel.cs` supplies the topic convention and incoming message handler shared by queue event channels:
