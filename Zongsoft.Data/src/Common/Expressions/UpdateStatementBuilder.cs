@@ -85,12 +85,12 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 		if(this.GetLinkReturningKind() == ReturningKind.Newer)
 			ValidateLinks(statement);
 
-		if(context.Options.HasReturning(out var returning))
+		if(DataReturning.TryGet(context, out var columns))
 		{
 			var feature = context.Source.Features.Get<IReturningFeature>();
 			if(feature != null && (feature.Supports(DataAccessMethod.Update, ReturningKind.Older) || feature.Supports(DataAccessMethod.Update, ReturningKind.Newer)))
 			{
-				foreach(var column in returning.Columns)
+				foreach(var column in columns)
 				{
 					if(!feature.Supports(DataAccessMethod.Update, column.Kind))
 						continue;
@@ -102,7 +102,7 @@ public class UpdateStatementBuilder : IStatementBuilder<DataUpdateContext>
 			}
 			else
 			{
-				var newers = returning.Columns.Where(column => column.Kind == ReturningKind.Newer);
+				var newers = columns.Where(column => column.Kind == ReturningKind.Newer);
 
 				if(newers.Any())
 				{

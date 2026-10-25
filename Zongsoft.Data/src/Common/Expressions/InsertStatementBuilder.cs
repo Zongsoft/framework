@@ -184,9 +184,9 @@ public class InsertStatementBuilder : IStatementBuilder<DataInsertContext>
 				}
 			}
 
-			if(owner == null && context.Options.HasReturning(out var returning) && feature != null)
+			if(owner == null && DataReturning.TryGet(context, out var columns) && feature != null)
 			{
-				foreach(var column in returning.Columns)
+				foreach(var column in columns)
 				{
 					if(!feature.Supports(DataAccessMethod.Insert, column.Kind))
 						continue;

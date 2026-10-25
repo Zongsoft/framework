@@ -143,14 +143,14 @@ public class DeleteStatementBuilder : IStatementBuilder<DataDeleteContext>
 	#region 私有方法
 	private void BuildReturning(DataDeleteContext context, DeleteStatement statement)
 	{
-		if(!context.Options.HasReturning(out var returning))
+		if(!DataReturning.TryGet(context, out var columns))
 			return;
 
 		var feature = context.Source.Features.Get<IReturningFeature>();
 		if(feature == null || !feature.Supports(DataAccessMethod.Delete, ReturningKind.Older))
 			return;
 
-		foreach(var column in returning.Columns)
+		foreach(var column in columns)
 		{
 			if(!feature.Supports(DataAccessMethod.Delete, column.Kind))
 				continue;

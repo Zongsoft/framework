@@ -32,6 +32,7 @@ using System;
 namespace Zongsoft.Data;
 
 /// <summary>条件接口。</summary>
+/// <remarks>按忽略大小写的字段名查找条件项，不限制条件操作符，也不求解字段值。条件集合按深度优先顺序查找。</remarks>
 public interface ICondition
 {
 	/// <summary>判断当前条件语句中是否包含指定名称的条件项。</summary>
@@ -39,7 +40,7 @@ public interface ICondition
 	/// <returns>如果存在则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	bool Contains(string name);
 
-	/// <summary>在条件语句中查找指定名称的条件项。</summary>
+	/// <summary>在条件语句中查找指定名称的首个条件项。</summary>
 	/// <param name="name">指定要查找的条件项名称。</param>
 	/// <returns>如果查找成功则返回找到的条件项，否则返回空(<c>null</c>)。</returns>
 	Condition Find(string name);
@@ -49,7 +50,7 @@ public interface ICondition
 	/// <returns>返回匹配成功的所有条件项数组，否则返回空(<c>null</c>)或空数组。</returns>
 	Condition[] FindAll(string name);
 
-	/// <summary>在条件语句中查找指定名称的条件项，如果匹配到则回调指定的匹配函数。</summary>
+	/// <summary>在条件语句中查找指定名称的首个条件项，如果匹配到则回调指定的匹配函数。</summary>
 	/// <param name="name">指定要匹配的条件项名称。</param>
 	/// <param name="matched">指定的匹配成功的回调函数。</param>
 	/// <returns>如果匹配成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>

@@ -108,12 +108,22 @@ public class DataProvider : IDataProvider
 			if(mutation != null)
 				data = mutation.Data;
 
+			//合并返回列并准备暂存区，执行前验证当前操作的返回请求。
+			DataReturning.Prepare(context);
+
 			//进行具体的执行处理
 			await this.OnExecuteAsync(context, cancellation);
 
-			//尝试提交当前数据会话
+			//提交之前确认操作所需的返回行完整。
+			DataReturning.Validate(context);
+
+			//确认操作是否已被取消
 			cancellation.ThrowIfCancellationRequested();
+
+			//尝试提交当前数据会话
 			await context.Session.CommitAsync(cancellation);
+
+			//会话提交完成后，将暂存的返回行分别追加到调用方与当前操作的结果。
 			DataReturning.Complete(context);
 
 			//还原当前操作的原始值
@@ -122,7 +132,9 @@ public class DataProvider : IDataProvider
 		}
 		catch(Exception ex)
 		{
+			//丢弃本次操作暂存的返回行，结束返回值收集。
 			DataReturning.Discard(context);
+
 			if(context is IDataMutateContext mutation)
 				mutation.Count = 0;
 
@@ -164,6 +176,8 @@ public class DataProvider : IDataProvider
 		}
 		catch(Exception ex)
 		{
+			context.Count = 0;
+
 			//尝试回滚当前数据会话
 			await context.Session.RollbackAsync(CancellationToken.None);
 

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<Version>7.37.0</Version>
-		<PackageReleaseNotes>以类型化特性组合写入返回值、事务与连接共享能力。</PackageReleaseNotes>
+		<PackageReleaseNotes>以类型化特性组合写入返回值、事务与连接共享能力，合并操作上下文与调用方返回请求并独立分发结果。</PackageReleaseNotes>
 		<Product>Zongsoft Data Library</Product>
 		<Description>This is an Object/Relational Mapping(ORM) data engine.</Description>
 		<RootNamespace>Zongsoft.Data</RootNamespace>
@@ -31,7 +31,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.74.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.75.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

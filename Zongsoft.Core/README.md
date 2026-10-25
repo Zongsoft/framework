@@ -78,11 +78,27 @@ Use `ServiceCollectionExtension.Register` to register services from an assembly.
 
 Use `RaiseAsync` to raise events and await their handlers. Bound event handlers must return an awaitable result. `EventExchanger` supports transaction-aware delivery, and applications can add conditions through `IFeatureProvider` or configure policies through `EventDispatcher.Pipeline`. See [event dispatch and ambient features](docs/event-dispatching.md).
 
+## Condition lookup
+
+`Match` and `Find` locate the first condition with a matching field name, ignoring case and following depth-first collection order. `Matches` and `FindAll` include every matching condition, including nested collections. These methods search the condition tree; they do not evaluate its logic or infer a single field value. Matching an `IN` condition preserves its operator and collection value, and an `OR` branch remains searchable.
+
+The `ConditionExtension` overloads accept `maxDepth`. Depth starts at zero and increases only when a nested collection changes the `AND`/`OR` combination; nesting the same combination does not increase depth. A positive limit excludes that depth and deeper levels, so `FindAll("Id", 1)` stays within the root combination. Zero and negative limits search all depths. `Matches` also accepts `maxCount`, which limits matches across the entire tree; zero and negative values mean unlimited.
+
+Use `criteria.TryGetValue("Id", out object value)` or `criteria.TryGetValue<int>("Id", out var id)` when a consumer needs a definite equality constant. Only standalone conditions and AND chains qualify; OR branches, IN lists, ranges and expressions do not supply values. Constant operands are unwrapped. Repeated equality constants must agree under `Object.Equals`; conflicting constants return false, without guessing database conversions or collation. Strings and byte arrays remain single values. The generic overload converts only after determining the constant; null succeeds for reference and nullable types, but fails for non-nullable value types. These methods neither query the database nor change the condition tree.
+
+```csharp
+var criteria = Condition.Equal("TenantId", 17U) & Condition.In("BuildingId", new uint[] { 101, 102 });
+criteria.TryGetValue<uint>("TenantId", out var tenantId); // true: 17
+criteria.TryGetValue<uint>("BuildingId", out var buildingId); // false: multiple values
+```
+
 ## Asynchronous data operations
 
 IDataAccess and IDataService expose asynchronous database methods. Scalar and write operations return ValueTask; queries return IAsyncEnumerable<T>, with cancellation tokens last. Consume queries with await foreach; leaving enumeration early still releases reader resources. Use await using for accessors you own, and leave shared accessors to their owner.
 
 InsertManyAsync, UpsertManyAsync, UpdateManyAsync and accessor ImportAsync accept both in-memory collections and IAsyncEnumerable<T>. Event handlers accept a cancellation token and return ValueTask. Await database and network work inside handlers.
+
+UpdateAsync uses TryGetValue to copy definite primary-key equality constants into the model. IN, range, inequality, expression, conflicting equality, and OR conditions do not supply a single key value. Both public and protected update entry points follow this rule. DeleteAsync passes the complete validated criteria to the data accessor without extracting a single key.
 
 The Getted event for a single-record query exposes an already obtained Result snapshot; reading it never queries again. IPageable.Paginated completes before the first record is yielded, allowing pagination response metadata to be set in time. Template export awaits GetModelAsync to obtain its model.
 
@@ -96,11 +112,25 @@ Implement `IDataValidator.ValidateAsync` for query conditions and `OnImportAsync
 
 `Pageable.FilterAsync` and `MapAsync` accept asynchronous callbacks over `IAsyncEnumerable<T>`. They process items when enumerated, preserve paging information, and pass the enumeration cancellation token to the callback. A filter returns `Pageable.FilterResult<T>`: `Accepted = true` emits `Data`, including a replacement or `null`; `default` discards the item.
 
+`IDataMutateContextBase.Returning` is owned by one delete, insert, update, or upsert operation. Filters add required columns before execution and read the current operation's rows after success. It is independent of `Options.Returning`: it does not replace that object, extend its columns, or expose additional fields through its rows. The engine combines the SQL projection and distributes separate results. Unsupported required kinds fail; driver limitations still apply. Keep both requests unchanged during execution. Import does not support Returning; service imports participate in the existing service-filter pipeline through their access context.
+
 `Returning.Columns.TryGetValue(name, kind, out column)` looks up a column by case-insensitive name and `ReturningKind`. The overload without `kind`, or a null `kind`, uses the collection's fixed kind, falling back to `Older` when none is fixed. An empty name, incompatible kind, or missing column returns `false` with a default `column`.
 
 `Returning.Rows.Populate(record)` reads the current `IDataRecord` and appends a row; it does not advance or dispose the reader. `Rows.AddRange(rows)` appends the contents of another row collection.
 
 Rows resolve values by case-insensitive name and `ReturningKind`. Later changes to `Columns` do not change existing rows' name mappings. `Row[int]` and `Values` retain the positions of that row's values. `TryGetValue` returns `false` for missing columns and `true` with a `null` value for database nulls. Collections do not support concurrent mutation.
+
+`row.ToDictionary(kind)` and `row.ToDictionary<T>(kind)` convert one row to `IDataDictionary` or `IDataDictionary<T>`. Explicitly select `ReturningKind.Older` or `ReturningKind.Newer`. Field names are case-insensitive and omit the `@Older` / `@Newer` suffix. Only available fields are included; nulls are preserved and missing fields are not filled with model defaults. Each conversion creates an independent dictionary container without deep-copying field values. Call `AsModel()` when a model is needed. `HasChanges` denotes field presence, not a comparison between old and new values.
+
+`returning.Rows.ToDictionaries<T>(kind)` converts rows lazily; its non-generic overload returns non-generic dictionaries. It does not access the database, modify rows, or clear results. A row without available fields of the selected kind produces an empty dictionary; an empty collection produces an empty sequence. Each enumeration creates fresh dictionaries. Materialize once with `ToArray()` for a stable batch event argument. An undefined kind or a kind conflicting with a row's fixed kind throws `ArgumentOutOfRangeException`; collection conversion errors occur during enumeration.
+
+```csharp
+var deleted = options.Returning.Rows
+	.ToDictionaries<Building>(ReturningKind.Older)
+	.ToArray();
+```
+
+Here `options` belongs to a completed delete operation and `Building` is the caller's model. Operations append returned rows; when reusing options, capture the initial row count and select only rows added by the current operation.
 
 ## Transactions
 

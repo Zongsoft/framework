@@ -99,13 +99,12 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 
 	protected virtual async ValueTask<bool> OnMutatedAsync(IDataMutateContext context, TStatement statement, DbDataReader reader, CancellationToken cancellation)
 	{
-		Returning returning;
 		SequenceToken[] sequences;
 
 		switch(context)
 		{
 			case DataDeleteContext deletion:
-				if(deletion.Options.HasReturning(out returning))
+				if(DataReturning.TryGet(context, out _))
 				{
 					while(await reader.ReadAsync(cancellation))
 					{
@@ -119,7 +118,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 					.Select(member => new SequenceToken(member, reader.GetOrdinal(member.Name)))
 					.ToArray();
 
-				if(insertion.Options.HasReturning(out returning))
+				if(DataReturning.TryGet(context, out _))
 				{
 					var enumerator = Utility.IsMultiple(context.Data, out var enumerable) ? enumerable.GetEnumerator() : null;
 
@@ -156,7 +155,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 					.Select(member => new SequenceToken(member, reader.GetOrdinal(member.Name)))
 					.ToArray();
 
-				if(upsertion.Options.HasReturning(out returning))
+				if(DataReturning.TryGet(context, out _))
 				{
 					var enumerator = Utility.IsMultiple(context.Data, out var enumerable) ? enumerable.GetEnumerator() : null;
 
@@ -189,7 +188,7 @@ public abstract class DataMutateExecutor<TStatement> : IDataExecutor<TStatement>
 				}
 				break;
 			case DataUpdateContext updation:
-				if(updation.Options.HasReturning(out returning))
+				if(DataReturning.TryGet(context, out _))
 				{
 					while(await reader.ReadAsync(cancellation))
 					{

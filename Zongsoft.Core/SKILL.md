@@ -35,6 +35,8 @@ description: 设计、修改、审查或测试 Zongsoft.Core 的公共契约与�
 
 IDataAccess、IDataService 的数据库操作使用异步入口；查询返回 IAsyncEnumerable<T>，通过 await foreach 或可等待的集合扩展读取。CT 位于最后，纯内存条件、模式和键转换保持同步。IDataAccess 由所有者等待 DisposeAsync；服务容器提供的共享访问器由容器释放。
 
+条件查找统一使用 ConditionExtension 的匹配遍历，ConditionCollection 的 Contains/Find/FindAll/Match/Matches 转发到此入口。每层只返回本子树的匹配数量，数量上限按剩余额度传给子树，首项匹配须停止整个遍历。深度只在 AND/OR 组合切换时递增。匹配使用 FieldOperand.Name，与单个 Condition 一致，不限制操作符。需要确定等值时使用 ConditionExtension.TryGetValue；它复用深度为 1 的公共遍历并排除 OR 根，只接受 AND 链的等值常量，解包 ConstantOperand，拒绝区间、集合（字符串和 byte[] 除外）、条件及表达式。重复值按 Object.Equals 检查冲突，不推断数据库转换；泛型重载只在取得确定常量后转换，null 仅适用于引用或可空类型。DataServiceBase 的公开及受保护 UpdateAsync 统一调用此入口，不在服务层另写条件遍历；DeleteAsync 保留完整筛选条件。条件查找、条件改写和父记录条件投影继续使用 Find/Matches，不替换为单值提取。
+
 DataServiceBase 构造时按类型继承层级选取最近一层声明的 DataServiceAttribute，泛型特性的不同封闭类型不跨层合并。没有本层声明时才继承；同层多个匹配声明维持反射歧义异常。
 
 访问层按前回调、前事件、过滤器前段、执行、过滤器后段、后事件、后回调的顺序等待；前回调或前事件取消时跳过后续执行和后通知。服务层保留前事件后调用前过滤器、后事件后调用后过滤器的顺序。事件使用 Func<object, TArgs, CancellationToken, ValueTask> 并按订阅顺序逐项等待。失败立即向当前操作传播，不以 async void 或后台任务隐藏失败。
@@ -55,9 +57,13 @@ DataDictionary.GetDictionariesAsync<T> 转换内存集合，GetDictionariesAsync
 
 ## 数据验证与异步结果转换
 
+IDataMutateContextBase.Returning 是四种写入上下文各自拥有的混合种类请求与结果，初始列和行均为空。扩展在执行前追加必需列，完成后只读本次结果；不能借用或改写 Options.Returning、Parameters。DataServiceBase 的导入数据入口通过 IDataAccess 的前后回调调用已有服务过滤器；前置短路跳过执行及后置过滤器，后置故障向调用者传播。
+
 Returning 的 ColumnCollection 使用列数组，构造时复制输入数组，增删列时替换数组。TryGetValue 按不区分大小写的名称与 ReturningKind 查找并返回实际存储的列；省略种类或传入 null 时使用集合固定种类，无固定种类则使用 Older。名称为空、种类与集合不符或列不存在时返回 false，输出默认值；Contains(name, kind) 复用此查找入口。Row 保存采集时的列数组、默认 ReturningKind 和值数组，通过名称与 ReturningKind 查找值。RowCollection 根据列数组身份及读取器字段名缓存列序号，优先匹配别名，再回退到名称；缺失列与数据库空值分别保存。
 
 RowCollection.Populate 解析并追加当前记录，AddRange 直接追加另一个行集合中的行。Core 只负责记录解析和行集合操作，操作过程中的暂存、成功追加与失败丢弃由 Data 引擎负责。集合不支持并发修改。
+
+Row.ToDictionary(kind)/ToDictionary<T>(kind) 使用该行采集时保存的列和值生成忽略大小写的独立字段字典，再复用 DataDictionary 工厂。缺失字段跳过，null 保留，不按 T 反射补字段，不深复制字段值。必须显式选择 Older/Newer，非法或与固定种类冲突时抛出 ArgumentOutOfRangeException。RowCollection.ToDictionaries 两个重载逐行惰性转换，每次枚举生成新的字典，不跳过空投影行、不修改结果、不查询数据库。事件等需要稳定集合的调用方自行一次物化；选项复用时自行截取本次新增行。
 
 IDataValidator 的条件验证使用 ValidateAsync；字段验证使用 OnImportAsync、OnInsertAsync、OnUpdateAsync，返回 DataValidatorResult。HasValue 为 false 表示不提供替代值，为 true 时 Value 允许为 null 或 IDataValueBinder。上下文验证保持显式条件优先、缺少验证器及 ValidatorSuppressed 跳过验证器的行为，不自行改写 Criteria；字段转发保持 Insert/Update 的选择规则。IDataValueBinder.BindAsync 在参数绑定时被等待，不能在返回验证结果时提前执行。
 

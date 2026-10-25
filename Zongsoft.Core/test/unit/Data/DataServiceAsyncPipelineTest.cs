@@ -15,6 +15,68 @@ namespace Zongsoft.Data.Tests;
 [Collection(MappingCollection.Name)]
 public sealed class DataServiceAsyncPipelineTest
 {
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task ImportAwaitsServiceFiltersAndSupportsShortCircuit(bool skip)
+	{
+		using var model = new ModelScope();
+		using var provider = new ServiceCollection().BuildServiceProvider();
+		await using var accessor = new TestDataAccess();
+		var service = new TestService(provider, model.Name, accessor);
+		var options = new DataImportOptions();
+		var source = new Sequence<int>([17, 23]);
+		var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+		var calls = new List<string>();
+		DataImportContextBase operation = null;
+		service.Filters.Add(new ServiceFilter
+		{
+			Before = async (context, token) =>
+			{
+				Assert.Equal("Import", context.Method.Name);
+				Assert.Equal(TestContext.Current.CancellationToken, token);
+				operation = Assert.IsAssignableFrom<DataImportContextBase>(context.AccessContext);
+				Assert.Same(options, operation.Options);
+				calls.Add("before");
+				await release.Task.WaitAsync(token);
+				context.Result = 9;
+				return skip;
+			},
+			After = (context, token) =>
+			{
+				Assert.Same(operation, context.AccessContext);
+				Assert.Equal(2, context.Result);
+				calls.Add("after");
+				return ValueTask.FromException(new InvalidOperationException("Handler failure"));
+			},
+		});
+		accessor.Import = (context, token) =>
+		{
+			Assert.Same(operation, context);
+			calls.Add("write");
+			context.Count = 2;
+			return ValueTask.CompletedTask;
+		};
+		var pending = service.ImportItemsAsync(source.Async, options, TestContext.Current.CancellationToken).AsTask();
+
+		try
+		{
+			Assert.False(pending.IsCompleted);
+			Assert.Equal(["before"], calls);
+		}
+		finally { release.TrySetResult(); }
+
+		if(skip)
+		{
+			Assert.Equal(9, await pending);
+			Assert.Equal(["before"], calls);
+		}
+		else
+		{
+			await Assert.ThrowsAsync<InvalidOperationException>(() => pending);
+			Assert.Equal(["before", "write", "after"], calls);
+		}
+	}
 	[Fact]
 	public async Task SelectAsync_AwaitsAuthorizationValidationAndNotifications()
 	{
@@ -371,6 +433,7 @@ public sealed class DataServiceAsyncPipelineTest
 			this.Name = name;
 			this.DataAccess = accessor;
 		}
+		public ValueTask<int> ImportItemsAsync(IAsyncEnumerable<int> items, DataImportOptions options, CancellationToken cancellation) => this.OnImportAsync(items, [], options, cancellation);
 		public Func<DataServiceMethod, IDataOptions, CancellationToken, ValueTask> Authorizing { get; set; } = (_, _, _) => ValueTask.CompletedTask;
 		public Func<DataServiceMethod, ICondition, IDataOptions, CancellationToken, ValueTask<ICondition>> Validating { get; set; } = (_, criteria, _, _) => ValueTask.FromResult(criteria);
 		protected override ValueTask AuthorizeAsync(DataServiceMethod method, IDataOptions options, CancellationToken cancellation) => this.Authorizing(method, options, cancellation);

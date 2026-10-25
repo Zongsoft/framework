@@ -210,10 +210,7 @@ public class ConditionCollection : System.Collections.ObjectModel.Collection<ICo
 	#region 公共方法
 	public bool Contains(string name)
 	{
-		if(string.IsNullOrEmpty(name))
-			return false;
-
-		return Matches(this, name, condition => true) > 0;
+		return ConditionExtension.Contains(this, name);
 	}
 
 	public int Remove(params string[] names)
@@ -234,12 +231,7 @@ public class ConditionCollection : System.Collections.ObjectModel.Collection<ICo
 
 	public Condition Find(string name)
 	{
-		if(string.IsNullOrEmpty(name))
-			return null;
-
-		Condition found = null;
-		Matches(this, name, condition => { found = condition; return true; });
-		return found;
+		return ConditionExtension.Find(this, name);
 	}
 
 	public Condition[] FindAll(string name)
@@ -247,25 +239,17 @@ public class ConditionCollection : System.Collections.ObjectModel.Collection<ICo
 		if(string.IsNullOrEmpty(name))
 			return null;
 
-		var conditions = new List<Condition>();
-		Matches(this, name, condition => { conditions.Add(condition); return false; });
-		return conditions.ToArray();
+		return ConditionExtension.FindAll(this, name).ToArray();
 	}
 
 	public bool Match(string name, Action<Condition> matched = null)
 	{
-		if(string.IsNullOrEmpty(name))
-			return false;
-
-		return Matches(this, name, condition => { matched?.Invoke(condition); return true; }) > 0;
+		return ConditionExtension.Matches(this, name, 1, 0, matched == null ? null : (condition, _) => matched(condition)) > 0;
 	}
 
 	public int Matches(string name, Action<Condition> matched = null)
 	{
-		if(string.IsNullOrEmpty(name))
-			return 0;
-
-		return Matches(this, name, condition => { matched?.Invoke(condition); return false; });
+		return ConditionExtension.Matches(this, name, 0, 0, matched == null ? null : (condition, _) => matched(condition));
 	}
 
 	public int AddRange(IEnumerable<ICondition> items)
@@ -442,31 +426,6 @@ public class ConditionCollection : System.Collections.ObjectModel.Collection<ICo
 			foreach(var match in matches)
 			{
 				conditions.Remove(match);
-			}
-		}
-
-		return count;
-	}
-
-	private static int Matches(ICollection<ICondition> conditions, string name, Predicate<Condition> matched)
-	{
-		int count = 0;
-
-		foreach(var condition in conditions)
-		{
-			if(condition is Condition c)
-			{
-				if(string.Equals(c.Name, name, StringComparison.OrdinalIgnoreCase))
-				{
-					count++;
-
-					if(matched != null && matched.Invoke(c))
-						return count;
-				}
-			}
-			else if(condition is ConditionCollection cs)
-			{
-				Matches(cs, name, matched);
 			}
 		}
 

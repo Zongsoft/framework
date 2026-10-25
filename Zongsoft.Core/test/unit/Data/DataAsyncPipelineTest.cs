@@ -268,9 +268,14 @@ public sealed class DataAsyncPipelineTest
 		public ValueTask OnFilteredAsync(TContext context, CancellationToken cancellation = default) => this.After(context, cancellation);
 	}
 
+	private sealed class ImportContext(IDataAccess access, string name, object data, IEnumerable<string> members, IDataImportOptions options) : DataImportContextBase(access, name, data, members, options)
+	{
+		public override T GetFeature<T>() => default;
+	}
 	internal sealed class TestDataAccess() : DataAccessBase("Pipeline")
 	{
 		public ExecuteContext Execution { get; private set; }
+		public Func<DataImportContextBase, CancellationToken, ValueTask> Import { get; set; } = (_, _) => throw new NotSupportedException();
 		public SelectContext Selection { get; private set; }
 		public Func<DataExecuteContextBase, CancellationToken, ValueTask> Execute { get; set; } = (_, _) => throw new NotSupportedException();
 		public Func<DataSelectContextBase, CancellationToken, ValueTask> Select { get; set; } = (_, _) => throw new NotSupportedException();
@@ -282,14 +287,14 @@ public sealed class DataAsyncPipelineTest
 		protected override DataSelectContextBase CreateSelectContext(string name, Type modelType, ICondition criteria, Grouping grouping, ISchema schema, Paging paging, Sorting[] sortings, IDataSelectOptions options) => this.Selection = new SelectContext(this, name, modelType, grouping, criteria, schema, paging, sortings, options);
 		protected override DataExistContextBase CreateExistContext(string name, ICondition criteria, IDataExistsOptions options) => throw new NotSupportedException();
 		protected override DataAggregateContextBase CreateAggregateContext(string name, DataAggregate aggregate, ICondition criteria, IDataAggregateOptions options) => throw new NotSupportedException();
-		protected override DataImportContextBase CreateImportContext(string name, object data, IEnumerable<string> members, IDataImportOptions options) => throw new NotSupportedException();
+		protected override DataImportContextBase CreateImportContext(string name, object data, IEnumerable<string> members, IDataImportOptions options) => new ImportContext(this, name, data, members, options);
 		protected override DataDeleteContextBase CreateDeleteContext(string name, ICondition criteria, ISchema schema, IDataDeleteOptions options) => throw new NotSupportedException();
 		protected override DataInsertContextBase CreateInsertContext(string name, bool isMultiple, object data, ISchema schema, IDataInsertOptions options) => throw new NotSupportedException();
 		protected override DataUpsertContextBase CreateUpsertContext(string name, bool isMultiple, object data, ISchema schema, IDataUpsertOptions options) => throw new NotSupportedException();
 		protected override DataUpdateContextBase CreateUpdateContext(string name, object data, ICondition criteria, ISchema schema, IDataUpdateOptions options) => throw new NotSupportedException();
 		protected override ValueTask OnExistsAsync(DataExistContextBase context, CancellationToken cancellation) => throw new NotSupportedException();
 		protected override ValueTask OnAggregateAsync(DataAggregateContextBase context, CancellationToken cancellation) => throw new NotSupportedException();
-		protected override ValueTask OnImportAsync(DataImportContextBase context, CancellationToken cancellation) => throw new NotSupportedException();
+		protected override ValueTask OnImportAsync(DataImportContextBase context, CancellationToken cancellation) => this.Import(context, cancellation);
 		protected override ValueTask OnDeleteAsync(DataDeleteContextBase context, CancellationToken cancellation) => throw new NotSupportedException();
 		protected override ValueTask OnInsertAsync(DataInsertContextBase context, CancellationToken cancellation) => throw new NotSupportedException();
 		protected override ValueTask OnUpsertAsync(DataUpsertContextBase context, CancellationToken cancellation) => throw new NotSupportedException();

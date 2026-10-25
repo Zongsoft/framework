@@ -233,6 +233,17 @@ public class Returning
 
 		public object this[int index] => Values[index];
 
+		/// <summary>将指定种类的返回值转换为独立的数据字典。</summary>
+		/// <param name="kind">要转换的新值或旧值。</param>
+		/// <returns>包含实际返回字段的数据字典；缺失字段不加入字典，数据库空值保留为 null。</returns>
+		public IDataDictionary ToDictionary(ReturningKind kind) => DataDictionary.GetDictionary(this.GetValues(kind));
+
+		/// <summary>将指定种类的返回值转换为独立的类型化数据字典。</summary>
+		/// <typeparam name="T">数据模型类型；转换时不创建模型或补齐模型字段。</typeparam>
+		/// <param name="kind">要转换的新值或旧值。</param>
+		/// <returns>包含实际返回字段的类型化数据字典。</returns>
+		public IDataDictionary<T> ToDictionary<T>(ReturningKind kind) => DataDictionary.GetDictionary<T>(this.GetValues(kind));
+
 		public bool TryGetValue(string name, out object value) => this.TryGetValue(name, null, out value);
 		public bool TryGetValue(string name, ReturningKind? kind, out object value)
 		{
@@ -255,6 +266,23 @@ public class Returning
 			value = null;
 			return false;
 		}
+
+		private Dictionary<string, object> GetValues(ReturningKind kind)
+		{
+			if(kind is not ReturningKind.Newer and not ReturningKind.Older || _kind.HasValue && kind != _kind.Value)
+				throw new ArgumentOutOfRangeException(nameof(kind));
+
+			var count = Math.Min(_columns?.Length ?? 0, this.Values?.Length ?? 0);
+			var dictionary = new Dictionary<string, object>(count, StringComparer.OrdinalIgnoreCase);
+
+			for(int i = 0; i < count; i++)
+			{
+				if(_columns[i].Kind == kind && this.Values[i] is not Missing)
+					dictionary.TryAdd(_columns[i].Name, this.Values[i]);
+			}
+
+			return dictionary;
+		}
 	}
 
 	public sealed class RowCollection(ColumnCollection columns) : IReadOnlyList<Row>
@@ -268,6 +296,31 @@ public class Returning
 		public int Count => _rows.Count;
 		public bool IsEmpty => _rows.Count == 0;
 		public Row this[int index] => _rows[index];
+
+		/// <summary>按行枚举指定种类的返回值，每行转换为独立的数据字典。</summary>
+		/// <param name="kind">要转换的新值或旧值。</param>
+		/// <returns>惰性转换的数据字典序列；不读取数据库或修改返回行。</returns>
+		public IEnumerable<IDataDictionary> ToDictionaries(ReturningKind kind)
+		{
+			if(kind is not ReturningKind.Newer and not ReturningKind.Older)
+				throw new ArgumentOutOfRangeException(nameof(kind));
+
+			foreach(var row in _rows)
+				yield return row.ToDictionary(kind);
+		}
+
+		/// <summary>按行枚举指定种类的返回值，每行转换为独立的类型化数据字典。</summary>
+		/// <typeparam name="T">数据模型类型；转换时不创建模型或补齐模型字段。</typeparam>
+		/// <param name="kind">要转换的新值或旧值。</param>
+		/// <returns>惰性转换的类型化数据字典序列。</returns>
+		public IEnumerable<IDataDictionary<T>> ToDictionaries<T>(ReturningKind kind)
+		{
+			if(kind is not ReturningKind.Newer and not ReturningKind.Older)
+				throw new ArgumentOutOfRangeException(nameof(kind));
+
+			foreach(var row in _rows)
+				yield return row.ToDictionary<T>(kind);
+		}
 
 		public void Populate(IDataRecord record)
 		{

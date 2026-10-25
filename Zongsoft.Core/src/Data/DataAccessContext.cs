@@ -299,6 +299,9 @@ public abstract class DataDeleteContextBase : DataAccessContextBase<IDataDeleteO
 	/// <summary>获取写入操作的选项对象。</summary>
 	IDataMutateOptions IDataMutateContextBase.Options => this.Options;
 
+	/// <inheritdoc cref="IDataMutateContextBase.Returning"/>
+	public Returning Returning { get; } = new([]);
+
 	/// <summary>获取或设置当前删除操作的验证器。</summary>
 	public IDataValidator Validator { get; init; }
 	#endregion
@@ -354,6 +357,9 @@ public abstract class DataInsertContextBase : DataAccessContextBase<IDataInsertO
 
 	/// <summary>获取写入操作的选项对象。</summary>
 	IDataMutateOptions IDataMutateContextBase.Options => this.Options;
+
+	/// <inheritdoc cref="IDataMutateContextBase.Returning"/>
+	public Returning Returning { get; } = new([]);
 
 	/// <summary>获取插入数据的元素类型。</summary>
 	public virtual Type ModelType
@@ -411,6 +417,9 @@ public abstract class DataUpdateContextBase : DataAccessContextBase<IDataUpdateO
 	/// <summary>获取写入操作的选项对象。</summary>
 	IDataMutateOptions IDataMutateContextBase.Options => this.Options;
 
+	/// <inheritdoc cref="IDataMutateContextBase.Returning"/>
+	public Returning Returning { get; } = new([]);
+
 	/// <summary>获取更新数据的元素类型。</summary>
 	public virtual Type ModelType => this.Data?.GetType();
 
@@ -465,6 +474,9 @@ public abstract class DataUpsertContextBase : DataAccessContextBase<IDataUpsertO
 
 	/// <summary>获取写入操作的选项对象。</summary>
 	IDataMutateOptions IDataMutateContextBase.Options => this.Options;
+
+	/// <inheritdoc cref="IDataMutateContextBase.Returning"/>
+	public Returning Returning { get; } = new([]);
 
 	/// <summary>获取操作数据的元素类型。</summary>
 	public virtual Type ModelType

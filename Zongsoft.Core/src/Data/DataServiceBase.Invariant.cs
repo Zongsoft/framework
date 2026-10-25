@@ -162,7 +162,7 @@ partial class DataServiceBase<TModel>
 		//将当前更新数据对象转换成数据字典
 		var dictionary = DataDictionary.GetDictionary<TModel>(data);
 
-		//如果指定了更新条件，则尝试将条件中的主键值同步设置到数据字典中
+		//只从条件中可以确定的等值常量回填主键
 		if(criteria != null)
 		{
 			//获取当前数据服务的实体主键集
@@ -172,7 +172,8 @@ partial class DataServiceBase<TModel>
 			{
 				foreach(var key in keys)
 				{
-					criteria.Match(key.Name, c => dictionary.TrySetValue(c.Name, c.Value));
+					if(criteria.TryGetValue(key.Name, out var value))
+						dictionary.TrySetValue(key.Name, value);
 				}
 			}
 		}

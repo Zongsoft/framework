@@ -16,6 +16,92 @@ namespace Zongsoft.Data.Tests;
 public abstract class ReturningMutationTestBase(IDataAccess accessor, bool enabled, bool older, bool upsert)
 {
 	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public async Task OperationReturningKeepsCallerProjectionAsync(bool withCaller)
+	{
+		Assert.SkipUnless(enabled, "Database tests require ZONGSOFT_DATA_TESTS=1.");
+		var marker = Guid.NewGuid().ToString("N");
+		var criteria = Condition.Equal(nameof(UserModel.Namespace), marker);
+		var user = Model.Build<UserModel>(user =>
+		{
+			user.UserId = 1699001;
+			user.Name = "OperationReturning";
+			user.Namespace = marker;
+			user.Enabled = false;
+		});
+		var options = withCaller ? DataUpdateOptions.Return(ReturningKind.Older, nameof(UserModel.Enabled)).Build() : new DataUpdateOptions();
+		var original = options.Returning;
+		var observed = new List<Returning>();
+
+		try
+		{
+			Assert.Equal(1, await accessor.InsertAsync(user, DataInsertOptions.Sequence(DataSequenceBehavior.Never)));
+
+			foreach(var expected in new[] { true, false })
+			{
+				Assert.Equal(1, await accessor.UpdateAsync<UserModel>(new { Enabled = expected, Description = (string)null },
+					criteria & Condition.Equal(nameof(UserModel.Enabled), !expected), "Enabled,Description", options,
+					(context, _) =>
+					{
+						Assert.Empty(context.Returning.Rows);
+						context.Returning.Columns.Append(nameof(UserModel.UserId), ReturningKind.Newer);
+						context.Returning.Columns.Append(nameof(UserModel.Enabled), ReturningKind.Newer);
+						context.Returning.Columns.Append(nameof(UserModel.Description), ReturningKind.Newer);
+						return ValueTask.FromResult(false);
+					},
+					(context, _) =>
+					{
+						observed.Add(context.Returning);
+						var row = Assert.Single(context.Returning.Rows);
+						Assert.Equal(3, row.Values.Length);
+						Assert.True(row.TryGetValue(nameof(UserModel.UserId), ReturningKind.Newer, out var id));
+						Assert.Equal(user.UserId, Convert.ToUInt32(id));
+						Assert.True(row.TryGetValue(nameof(UserModel.Enabled), ReturningKind.Newer, out var current));
+						Assert.Equal(expected, Convert.ToBoolean(current));
+						Assert.True(row.TryGetValue(nameof(UserModel.Description), ReturningKind.Newer, out var description));
+						Assert.Null(description);
+						return ValueTask.CompletedTask;
+					}));
+			}
+
+			Assert.Same(original, options.Returning);
+			Assert.NotSame(observed[0], observed[1]);
+			Assert.All(observed, result => Assert.Single(result.Rows));
+
+			if(withCaller)
+			{
+				Assert.Single(original.Columns);
+				Assert.Equal(2, original.Rows.Count);
+				Assert.All(original.Rows, row =>
+				{
+					Assert.Single(row.Values);
+					Assert.False(row.TryGetValue(nameof(UserModel.UserId), ReturningKind.Newer, out _));
+					Assert.Equal(older, row.TryGetValue(nameof(UserModel.Enabled), ReturningKind.Older, out _));
+				});
+			}
+
+			var delete = DataDeleteOptions.Return(nameof(UserModel.Name)).Build();
+			Assert.Equal(1, await accessor.DeleteAsync<UserModel>(criteria, null, delete,
+				(context, _) =>
+				{
+					context.Returning.Columns.Append(nameof(UserModel.UserId), ReturningKind.Older);
+					return ValueTask.FromResult(false);
+				},
+				(context, _) =>
+				{
+					var row = Assert.Single(context.Returning.Rows);
+					Assert.Single(row.Values);
+					Assert.True(row.TryGetValue(nameof(UserModel.UserId), ReturningKind.Older, out var id));
+					Assert.Equal(user.UserId, Convert.ToUInt32(id));
+					return ValueTask.CompletedTask;
+				}));
+			Assert.Single(delete.Returning.Columns);
+			Assert.Single(Assert.Single(delete.Returning.Rows).Values);
+		}
+		finally { await accessor.DeleteAsync<UserModel>(criteria); }
+	}
+	[Theory]
 	[InlineData(1)]
 	[InlineData(257)]
 	public async Task UpdatePreservesTargetsWhenPredicateChangesAsync(int count)

@@ -108,6 +108,7 @@ public interface IDataAccess : IAsyncDisposable
 
 	ValueTask<int> ImportAsync<T>(string name, IAsyncEnumerable<T> data, IEnumerable<string> members, CancellationToken cancellation) => this.ImportAsync<T>(name, data, members, default(DataImportOptions), cancellation);
 	ValueTask<int> ImportAsync<T>(string name, IAsyncEnumerable<T> data, IEnumerable<string> members, DataImportOptions options = null, CancellationToken cancellation = default);
+	ValueTask<int> ImportAsync<T>(string name, IAsyncEnumerable<T> data, IEnumerable<string> members, DataImportOptions options, Func<DataImportContextBase, CancellationToken, ValueTask<bool>> importing, Func<DataImportContextBase, CancellationToken, ValueTask> imported, CancellationToken cancellation = default);
 
 	ValueTask<int> ImportAsync<T>(IAsyncEnumerable<T> data, CancellationToken cancellation) => this.ImportAsync<T>(data, Array.Empty<string>(), null, cancellation);
 	ValueTask<int> ImportAsync<T>(IAsyncEnumerable<T> data, DataImportOptions options = null, CancellationToken cancellation = default) => this.ImportAsync<T>(data, Array.Empty<string>(), options, cancellation);

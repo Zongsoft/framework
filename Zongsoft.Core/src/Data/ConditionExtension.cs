@@ -35,58 +35,126 @@ namespace Zongsoft.Data;
 /// <summary>提供条件操作的扩展方法。</summary>
 public static class ConditionExtension
 {
+	#region 取值方法
+	/// <summary>尝试从独立条件或 AND 链中取得指定字段的确定等值。</summary>
+	/// <param name="criteria">待查找的条件。</param>
+	/// <param name="name">忽略大小写的字段名。</param>
+	/// <param name="value">成功时为解包后的常量，允许为空；失败时为空。</param>
+	/// <returns>存在等值常量且所有候选值相同时返回真，否则返回假。</returns>
+	/// <remarks>不进入 OR 分支，不求解区间、集合或表达式。常量按 Object.Equals 比较，不推断数据库的类型转换或排序规则。字符串和字节数组作为单个值保留。</remarks>
+	public static bool TryGetValue(this ICondition criteria, string name, out object value)
+	{
+		value = null;
+
+		if(criteria == null || string.IsNullOrEmpty(name) || criteria is ConditionCollection { Combination: ConditionCombination.Or })
+			return false;
+
+		object result = null;
+		var found = false;
+		var ambiguous = false;
+
+		Matches(criteria, name, 0, 1, (condition, _) =>
+		{
+			if(condition.Operator != ConditionOperator.Equal)
+				return;
+
+			var candidate = condition.Value;
+			if(candidate is Operand operand)
+			{
+				if(operand.Type != OperandType.Constant || !Reflection.Reflector.TryGetValue(ref candidate, nameof(Operand.ConstantOperand<object>.Value), out var constant))
+					return;
+
+				candidate = constant;
+			}
+
+			if(candidate is Operand or ICondition || Range.IsRange(candidate) || candidate is System.Collections.IEnumerable and not string and not byte[])
+				return;
+
+			if(System.Convert.IsDBNull(candidate))
+				candidate = null;
+
+			if(found)
+				ambiguous |= !object.Equals(result, candidate);
+			else
+			{
+				result = candidate;
+				found = true;
+			}
+		});
+
+		if(!found || ambiguous)
+			return false;
+
+		value = result;
+		return true;
+	}
+
+	/// <summary>尝试从独立条件或 AND 链中取得指定字段的确定等值并转换为指定类型。</summary>
+	/// <typeparam name="T">目标类型。</typeparam>
+	/// <param name="criteria">待查找的条件。</param>
+	/// <param name="name">忽略大小写的字段名。</param>
+	/// <param name="value">成功时为转换后的值，失败时为目标类型默认值。</param>
+	/// <returns>存在确定等值且类型转换成功时返回真，否则返回假。空值只适用于引用类型和可空值类型。</returns>
+	public static bool TryGetValue<T>(this ICondition criteria, string name, out T value)
+	{
+		value = default;
+
+		if(!TryGetValue(criteria, name, out object result))
+			return false;
+
+		return result == null ? default(T) is null : Common.Convert.TryConvertValue(result, out value);
+	}
+	#endregion
+
 	#region 匹配方法
 	/// <summary>判断当前条件语句中是否包含指定名称的条件项。</summary>
 	/// <param name="criteria">待判断的条件。</param>
 	/// <param name="name">指定的条件项名称。</param>
-	/// <param name="maxDepth">最大的搜索深度，如果为零或负数则表示不限深度。</param>
+	/// <param name="maxDepth">最大的搜索深度（不含该层），深度从零开始，进入组合方式不同的子集合时递增；为零或负数时不限深度。</param>
 	/// <returns>如果存在则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
 	public static bool Contains(this ICondition criteria, string name, int maxDepth = 0)
 	{
-		return Matches(criteria, name, 1, 0, maxDepth, 0, null) > 0;
+		return Matches(criteria, name, 1, maxDepth, 0, null) > 0;
 	}
 
-	/// <summary>在条件语句中查找指定名称的条件项。</summary>
+	/// <summary>在条件语句中查找指定名称的首个条件项。</summary>
 	/// <param name="criteria">待查找的条件。</param>
 	/// <param name="name">指定要查找的条件项名称。</param>
-	/// <param name="maxDepth">最大的查找深度，如果为零或负数则表示不限深度。</param>
+	/// <param name="maxDepth">最大的查找深度（不含该层），深度从零开始，进入组合方式不同的子集合时递增；为零或负数时不限深度。</param>
 	/// <returns>如果查找成功则返回找到的条件项，否则返回空(<c>null</c>)。</returns>
 	public static Condition Find(this ICondition criteria, string name, int maxDepth = 0)
 	{
 		Condition found = null;
-		Matches(criteria, name, 1, 0, maxDepth, 0, (condition, depth) => found = condition);
+		Matches(criteria, name, 1, maxDepth, 0, (condition, depth) => found = condition);
 		return found;
 	}
 
 	/// <summary>在条件语句中查找指定名称的所有条件项。</summary>
 	/// <param name="criteria">待查找的条件。</param>
 	/// <param name="name">指定要查找的条件项名称。</param>
-	/// <param name="maxDepth">最大的查找深度，如果为零或负数则表示不限深度。</param>
-	/// <returns>返回匹配成功的所有条件项数组，否则返回空(<c>null</c>)或空数组。</returns>
+	/// <param name="maxDepth">最大的查找深度（不含该层），深度从零开始，进入组合方式不同的子集合时递增；为零或负数时不限深度。</param>
+	/// <returns>返回匹配成功的所有条件项集合，否则返回空集合。</returns>
 	public static ICollection<Condition> FindAll(this ICondition criteria, string name, int maxDepth = 0)
 	{
 		var conditions = new List<Condition>();
-		Matches(criteria, name, 1, 0, maxDepth, 0, (condition, depth) => conditions.Add(condition));
+		Matches(criteria, name, 0, maxDepth, 0, (condition, depth) => conditions.Add(condition));
 		return conditions;
 	}
 
 	/// <summary>在条件语句中查找指定名称的所有条件项，如果匹配到则回调指定的匹配函数。</summary>
 	/// <param name="criteria">待查找的条件。</param>
 	/// <param name="name">指定要匹配的条件项名称。</param>
-	/// <param name="maxCount">最大的搜索数量，如果为零或负数则表示不限数量。</param>
-	/// <param name="maxDepth">最大的搜索深度，如果为零或负数则表示不限深度。</param>
+	/// <param name="maxCount">整棵条件树的最大匹配数量，如果为零或负数则表示不限数量。</param>
+	/// <param name="maxDepth">最大的搜索深度（不含该层），深度从零开始，进入组合方式不同的子集合时递增；为零或负数时不限深度。</param>
 	/// <param name="matched">指定的匹配成功的回调函数。</param>
 	/// <returns>返回匹配成功的条件项数量，如果为零则表示没有匹配到任何条件项。</returns>
 	public static int Matches(this ICondition criteria, string name, int maxCount, int maxDepth, Action<Condition, int> matched)
 	{
-		return Matches(criteria, name, maxCount, 0, maxDepth, 0, matched);
+		return Matches(criteria, name, maxCount, maxDepth, 0, matched);
 	}
 
-	private static int Matches(ICondition criteria, string name, int maxCount, int count, int maxDepth, int depth, Action<Condition, int> match)
+	private static int Matches(ICondition criteria, string name, int maxCount, int maxDepth, int depth, Action<Condition, int> match)
 	{
-		if(maxCount > 0 && count >= maxCount)
-			return 0;
-
 		if(maxDepth > 0 && depth >= maxDepth)
 			return 0;
 
@@ -95,7 +163,7 @@ public static class ConditionExtension
 
 		if(criteria is Condition condition)
 		{
-			if(string.Equals(name, condition.Name, StringComparison.OrdinalIgnoreCase))
+			if(condition.Field is Operand.FieldOperand field && string.Equals(name, field.Name, StringComparison.OrdinalIgnoreCase))
 			{
 				match?.Invoke(condition, depth);
 				return 1;
@@ -106,16 +174,14 @@ public static class ConditionExtension
 
 		if(criteria is ConditionCollection conditions)
 		{
-			if(conditions.Count == 0)
-				return 0;
+			var count = 0;
 
 			for(int i = 0; i < conditions.Count; i++)
 			{
 				count += Matches(
 					conditions[i],
 					name,
-					maxCount,
-					count,
+					maxCount > 0 ? maxCount - count : 0,
 					maxDepth,
 					conditions[i] is ConditionCollection cs && cs.Combination != conditions.Combination ? depth + 1 : depth,
 					match);
@@ -208,7 +274,7 @@ public static class ConditionExtension
 
 		if(criteria is Condition condition)
 		{
-			if(string.Equals(name, condition.Name, StringComparison.OrdinalIgnoreCase))
+			if(condition.Field is Operand.FieldOperand field && string.Equals(name, field.Name, StringComparison.OrdinalIgnoreCase))
 			{
 				count = 1;
 				return match(condition, depth);

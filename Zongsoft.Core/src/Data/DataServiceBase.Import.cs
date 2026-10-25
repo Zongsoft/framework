@@ -77,6 +77,8 @@ partial class DataServiceBase<TModel> : IDataImportable
 		return this.OnImportAsync(data, extracting.Members, options, cancellation);
 	}
 
-	protected virtual ValueTask<int> OnImportAsync(IAsyncEnumerable<TModel> items, string[] members, DataImportOptions options, CancellationToken cancellation) => this.DataAccess.ImportAsync(this.Name, items, members, options, cancellation);
+	protected virtual ValueTask<int> OnImportAsync(IAsyncEnumerable<TModel> items, string[] members, DataImportOptions options, CancellationToken cancellation) => this.DataAccess.ImportAsync(this.Name, items, members, options,
+		(context, token) => this.OnFilteringAsync(DataServiceMethod.Import(), context, token),
+		(context, token) => this.OnFilteredAsync(DataServiceMethod.Import(), context, token), cancellation);
 	#endregion
 }

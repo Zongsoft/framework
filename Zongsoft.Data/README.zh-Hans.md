@@ -1042,6 +1042,19 @@ foreach(var row in options.Returning.Rows)
 }
 ```
 
+服务过滤器或数据访问过滤器可以通过 `IDataMutateContextBase.Returning` 请求自己的结果投影，无需修改 `context.Options.Returning`。执行前添加列，在完成回调中读取 `context.Returning.Rows`。调用方 Returning 对象、列顺序及种类保持不变；原来为空的 Returning 仍为空，调用方结果仍只累积其请求的字段。上下文只包含当前操作的返回行。多个过滤器追加的同名同种类列自动去重。
+
+```csharp
+// 更新前，在服务过滤器或数据访问过滤器中请求：
+context.Returning.Columns.Append("UserId", ReturningKind.Newer);
+context.Returning.Columns.Append("Name", ReturningKind.Newer);
+
+// 操作成功后读取：
+var records = context.Returning.Rows.ToDictionaries<UserModel>(ReturningKind.Newer).ToArray();
+```
+
+示例中的 `context` 是 `DataUpdateContextBase`，`UserModel` 是应用中的映射模型。这些请求属于必需结果：不支持的种类、未映射或非简单字段会被拒绝；返回行不完整时在会话提交前失败。调用方请求不支持种类时的原有处理方式不变。驱动限制作用于合并后的请求，包括 MySQL 禁止主键修改与返回值组合的限制。每次访问操作的全部批次及从属语句成功后才执行一次完成回调，只有主实体产生返回行；环境事务仍由调用者决定提交或回滚。
+
 <a name="usage-options"></a>
 ### 选项、事件与事务
 

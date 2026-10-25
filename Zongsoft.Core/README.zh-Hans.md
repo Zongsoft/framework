@@ -78,11 +78,27 @@ dotnet add package Zongsoft.Core
 
 通过 `RaiseAsync` 触发事件并等待处理器完成，绑定的事件处理器必须返回可等待结果。`EventExchanger` 支持按事务状态控制事件投递，应用可通过 `IFeatureProvider` 增加条件，或通过 `EventDispatcher.Pipeline` 配置策略。详见[事件调度与环境特性](docs/event-dispatching.zh-Hans.md)。
 
+## 条件查找
+
+`Match` 和 `Find` 按忽略大小写的字段名查找首个条件，遵循集合顺序进行深度优先遍历；`Matches` 和 `FindAll` 包含嵌套集合中的全部匹配条件。这些方法负责查找条件树，不求解条件逻辑，也不推断字段的单个值。匹配 `IN` 条件时保留其操作符及集合值，`OR` 分支同样可以被查找。
+
+`ConditionExtension` 重载支持 `maxDepth`：深度从零开始，只有进入组合方式不同的 `AND`/`OR` 子集合时才递增，同种组合的嵌套不增加深度。正数限制排除该深度及更深层，因此 `FindAll("Id", 1)` 仅查找根组合方式内的条件；零或负数表示不限深度。`Matches` 的 `maxCount` 对整棵树限制匹配数量，零或负数表示不限数量。
+
+需要确定的等值常量时，使用 `criteria.TryGetValue("Id", out object value)` 或 `criteria.TryGetValue<int>("Id", out var id)`。只从独立条件和 AND 链取值，不从 OR 分支、IN 集合、区间或表达式推断值；常量操作数会被解包。重复等值常量必须满足 `Object.Equals`，存在冲突时返回 false，不推断数据库的类型转换和排序规则。字符串、字节数组作为单个值保留。泛型重载先确定常量再转换类型；空值对引用类型和可空值类型返回成功，对非可空值类型返回失败。这些方法不查询数据库，也不修改条件树。
+
+```csharp
+var criteria = Condition.Equal("TenantId", 17U) & Condition.In("BuildingId", new uint[] { 101, 102 });
+criteria.TryGetValue<uint>("TenantId", out var tenantId); // true：17
+criteria.TryGetValue<uint>("BuildingId", out var buildingId); // false：多个值
+```
+
 ## 异步数据操作
 
 IDataAccess 和 IDataService 使用异步数据库方法。标量和写入操作返回 ValueTask，查询返回 IAsyncEnumerable<T>；取消令牌位于参数末尾。查询用 await foreach 消费，提前结束也会释放读取资源。自建数据访问器使用 await using，共享访问器由其所有者释放。
 
 InsertManyAsync、UpsertManyAsync、UpdateManyAsync 和访问层 ImportAsync 支持内存集合与 IAsyncEnumerable<T>。事件处理器接受取消令牌并返回 ValueTask；需要数据库或网络访问的处理器应等待操作完成。
+
+UpdateAsync 使用 TryGetValue 向模型回填确定的主键等值常量。IN、区间、不等条件、表达式、冲突的等值条件及 OR 分支不提供单个主键值。公开入口和受保护的更新入口遵循相同规则。DeleteAsync 将验证后的完整条件传入数据访问器，不提取单个主键。
 
 单条查询的 Getted 事件提供已经取得的 Result 快照；读取该属性不会再次查询。IPageable.Paginated 在首条结果输出前完成，适合设置分页响应信息。数据服务的模板导出通过 GetModelAsync 等待模型提供程序取数。
 
@@ -96,11 +112,25 @@ InsertManyAsync、UpsertManyAsync、UpdateManyAsync 和访问层 ImportAsync 支
 
 `Pageable.FilterAsync` 和 `MapAsync` 为 `IAsyncEnumerable<T>` 提供可等待的筛选和映射回调。枚举时逐条处理，保留分页信息，并将枚举取消令牌传给回调。筛选返回 `Pageable.FilterResult<T>`：`Accepted = true` 表示输出 `Data`，允许替换记录或输出 `null`；`default` 表示丢弃当前记录。
 
+`IDataMutateContextBase.Returning` 属于一次删除、新增、更新或增改操作。过滤器在执行前追加必需列，在操作成功后读取本次返回行。它独立于 `Options.Returning`，不替换调用方对象、不扩充其列定义，也不通过其返回行暴露额外字段。引擎合并 SQL 投影后分别交付两份结果；必需种类不受支持时拒绝执行，驱动限制仍然适用。执行期间保持两份请求不变。导入不支持 Returning；服务导入通过数据访问上下文参与现有服务过滤器管线。
+
 `Returning.Columns.TryGetValue(name, kind, out column)` 通过不区分大小写的名称及 `ReturningKind` 查找列。省略 `kind` 的重载或传入空值时，使用集合的固定种类；没有固定种类则使用 `Older`。名称为空、种类与集合不符或列不存在时，返回 `false`，`column` 为默认值。
 
 `Returning.Rows.Populate(record)` 读取当前 `IDataRecord` 并追加一行；它不推进或释放读取器。`Rows.AddRange(rows)` 将另一个行集合的内容追加到当前集合。
 
 返回行通过不区分大小写的名称及 `ReturningKind` 取值，后续修改 `Columns` 不改变已有行的名称映射。`Row[int]` 和 `Values` 保留该行的值位置。缺失列的 `TryGetValue` 返回 `false`，数据库空值返回 `true` 且值为 `null`。集合不支持并发修改。
+
+`row.ToDictionary(kind)` 和 `row.ToDictionary<T>(kind)` 将一行指定种类的值转换为 `IDataDictionary` 或 `IDataDictionary<T>`；必须显式选择 `ReturningKind.Older` 或 `ReturningKind.Newer`。字段名不区分大小写，不带 `@Older` / `@Newer` 后缀。仅包含实际返回的字段，保留 null，不用模型默认值补齐缺失字段。转换产生独立的字典容器，字段值不进行深复制；需要模型时可调用 `AsModel()`。字典的 `HasChanges` 表示字段存在，不表示比较过新旧值。
+
+`returning.Rows.ToDictionaries<T>(kind)` 按行惰性转换，非泛型重载返回非泛型字典；不访问数据库、不修改或清空返回行。没有所选种类数据的行仍转换为空字典，空行集合产生空序列。每次枚举创建新的字典，需要稳定的批量事件实参时调用 `ToArray()` 一次物化。非法种类或与行的固定种类冲突时抛出 `ArgumentOutOfRangeException`；集合转换的异常在枚举时产生。
+
+```csharp
+var deleted = options.Returning.Rows
+	.ToDictionaries<Building>(ReturningKind.Older)
+	.ToArray();
+```
+
+其中 `options` 是已执行删除操作的选项，`Building` 是调用方模型。返回行按操作追加；复用选项时，调用方应按操作开始前的行数截取本次新增行。
 
 ## 事务
 

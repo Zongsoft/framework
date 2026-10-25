@@ -1039,6 +1039,19 @@ foreach(var row in options.Returning.Rows)
 }
 ```
 
+Service or access filters can request their own result projection through `IDataMutateContextBase.Returning`, without changing `context.Options.Returning`. Add columns before execution, then read `context.Returning.Rows` in the completion callback. The caller's Returning object, column order and kinds remain unchanged, including a null Returning; caller rows still accumulate only its requested fields. The context contains only the current operation's rows. Requests shared by multiple filters are deduplicated by column name and kind.
+
+```csharp
+// Before an update, in a service or access filter:
+context.Returning.Columns.Append("UserId", ReturningKind.Newer);
+context.Returning.Columns.Append("Name", ReturningKind.Newer);
+
+// After successful completion:
+var records = context.Returning.Rows.ToDictionaries<UserModel>(ReturningKind.Newer).ToArray();
+```
+
+Here `context` is a `DataUpdateContextBase`; `UserModel` is the application's mapped model. These are required requests: an unsupported kind or unmapped/non-simple field is rejected, and incomplete returned rows fail before the session commits. This does not change the existing behavior for unsupported caller-requested kinds. Driver restrictions, including MySQL's primary-key-update restriction, apply to the combined projection. Completion callbacks run once per access operation after all its batches and subordinate statements succeed; only the main entity contributes returned rows. An ambient transaction remains controlled by its caller.
+
 <a name="usage-options"></a>
 ### Options, events, and transactions
 
