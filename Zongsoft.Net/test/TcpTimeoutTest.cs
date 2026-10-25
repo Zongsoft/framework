@@ -47,6 +47,8 @@ public sealed class TcpTimeoutCollection { }
 [Collection(nameof(TcpTimeoutCollection))]
 public class TcpTimeoutTest
 {
+	public static bool IsLinux => OperatingSystem.IsLinux();
+
 	[Fact]
 	public async Task MonitorRecoversWhenConnectionJoinsDuringFaultAndDiagnosticSubscriberThrows()
 	{
@@ -364,7 +366,7 @@ public class TcpTimeoutTest
 		await using var server = TestNetwork.Server();
 		server.Handler = new ReceiveHandler<ReadOnlySequence<byte>>((context, cancellation) => context.Channel.SendAsync(context.Package, cancellation));
 		await server.StartAsync();
-		await using var client = TcpClient.CreateHeaded(new() { TimeProvider = clock, ShutdownTimeout = TimeSpan.FromSeconds(5) });
+		var client = TcpClient.CreateHeaded(new() { TimeProvider = clock, ShutdownTimeout = TimeSpan.FromSeconds(5) });
 		var entered = TestNetwork.Signal();
 		var release = TestNetwork.Signal();
 		var received = TestNetwork.Signal();
@@ -380,7 +382,7 @@ public class TcpTimeoutTest
 			else
 				received.TrySetResult();
 		});
-		var original = await client.ConnectAsync(server.Address).WaitAsync(TestNetwork.Timeout);
+		TcpClientChannel<ReadOnlySequence<byte>> original = null;
 		client.Closing += (_, args) =>
 		{
 			if(ReferenceEquals(args.Channel, original))
@@ -389,6 +391,7 @@ public class TcpTimeoutTest
 
 		try
 		{
+			original = await client.ConnectAsync(server.Address).WaitAsync(TestNetwork.Timeout);
 			await original.SendAsync(new ReadOnlySequence<byte>(new byte[] { 1 }));
 			await entered.Task.WaitAsync(TestNetwork.Timeout);
 			using var cancellation = new CancellationTokenSource();
@@ -419,8 +422,55 @@ public class TcpTimeoutTest
 		finally
 		{
 			release.TrySetResult();
-			await Record.ExceptionAsync(() => original.WaitAsync().WaitAsync(TestNetwork.Timeout));
+			if(original != null)
+				await Record.ExceptionAsync(() => original.WaitAsync().WaitAsync(TestNetwork.Timeout));
+
+			await clock.AdvanceUntilAsync(client.DisposeAsync().AsTask());
 		}
+	}
+
+	[Fact(SkipUnless = nameof(IsLinux), Skip = "此回归用例依赖 Linux Socket 的发送背压。")]
+	public async Task ManualClockCleanupCompletesAfterSocketSendDrains()
+	{
+		var clock = new ManualClock();
+		using var listener = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp) { ReceiveBufferSize = 1024 };
+		listener.Bind(new System.Net.IPEndPoint(System.Net.IPAddress.Loopback, 0));
+		listener.Listen(1);
+		var client = TcpClient.CreateHeaded(new()
+		{
+			TimeProvider = clock,
+			MaximumPacketLength = 8 * 1024 * 1024,
+			MaximumFrameLength = 8 * 1024 * 1024 + 4,
+			MaximumBufferedReceiveBytes = 16 * 1024 * 1024,
+			MaximumPendingSendBytes = 16 * 1024 * 1024,
+			SendPauseThreshold = 16 * 1024 * 1024,
+		});
+
+		try
+		{
+			var connecting = client.ConnectAsync(listener.LocalEndPoint);
+			using var peer = await listener.AcceptAsync().WaitAsync(TestNetwork.Timeout);
+			peer.ReceiveBufferSize = 1024;
+			var channel = await connecting.WaitAsync(TestNetwork.Timeout);
+			await channel.SendAsync(new ReadOnlySequence<byte>(new byte[8 * 1024 * 1024]));
+			Assert.True(channel.PendingSendBytes > 0);
+			var disconnecting = client.DisconnectAsync().AsTask();
+
+			//等待发送进度轮询已注册，保持虚拟时间不变。
+			await TestNetwork.UntilAsync(() => clock.HasPendingTimer(TimeSpan.FromMilliseconds(10)) || channel.WaitAsync().IsCompleted);
+			if(channel.WaitAsync().IsCompleted)
+				await channel.WaitAsync();
+
+			Assert.False(disconnecting.IsCompleted);
+
+			await TestNetwork.ReceiveAsync(peer, 8 * 1024 * 1024 + 4);
+			await TestNetwork.UntilAsync(() => channel.PendingSendBytes == 0);
+			Assert.False(disconnecting.IsCompleted);
+
+			await clock.AdvanceUntilAsync(disconnecting);
+			await channel.WaitAsync().WaitAsync(TestNetwork.Timeout);
+		}
+		finally { await clock.AdvanceUntilAsync(client.DisposeAsync().AsTask()); }
 	}
 
 	[Fact]
@@ -645,6 +695,24 @@ public class TcpTimeoutTest
 
 			foreach(var timer in callbacks)
 				timer.Invoke();
+		}
+
+		internal bool HasPendingTimer(TimeSpan dueTime)
+		{
+			lock(_sync)
+				return _timers.Any(timer => timer.Period == Timeout.InfiniteTimeSpan.Ticks && timer.Due == _ticks + dueTime.Ticks);
+		}
+
+		internal async Task AdvanceUntilAsync(Task task)
+		{
+			await TestNetwork.UntilAsync(() =>
+			{
+				if(!task.IsCompleted)
+					this.Advance(TimeSpan.FromMilliseconds(10));
+
+				return task.IsCompleted;
+			});
+			await task;
 		}
 
 		private sealed class ManualTimer(ManualClock clock, TimerCallback callback, object state) : ITimer
