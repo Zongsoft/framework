@@ -201,6 +201,12 @@ ListenerBase<T> 的 T 是处理器实参，不提供 Packetizer 或 IReceiver；
 
 通信相关变更的验证应覆盖并发关闭／释放、重入、事件与扩展点抛错、独立取消等待、启动失败、停止重试及派生清理恰好一次。ChannelBase 的直接下游包括消息消费者、缓存订阅及 ZeroMQ／Redis 通道；IEventChannel 独立定义可重开的事件通道，FeatureProvider.Default 的 Providers 默认包含 Transaction.Features，并合并当前应用的 IFeatureProvider 服务；FeatureProvider 先按引用固定整个组合的来源快照，再捕获并去重特性，不依赖 Core 服务扫描；运行时条件组合 IFeature 与 Common.IPredication，TransactionContext.Feature.cs 中的私有特性在根事务的登记处理结束后、用户 Completed 通知前发布条件结果；EventDispatcher 传入事件上下文及其 Parameters，每次调度每项条件只求值一次，求值使用 CancellationToken.None，事件取消仅作用于结果等待，false 放弃事件而非跳过特性，未知运行时特性明确报错；EventDispatcher 接受单个 IFeatureProvider，默认使用 FeatureProvider.Default，显式指定时由该提供者负责全部来源；EventExchanger 内部固定投递执行器，EventDispatcher.Pipeline 仅停止时可设置，启动时固定会话管线，环境允许后才进入策略；管线在多次调用及启停间复用，由装配方管理资源；WorkerBase 包括事件交换器、事件调度器、消息守护器、诊断工作器、ZeroMQ、OPC 和 Hangfire 服务；ListenerBase 包括 MQTT 服务。修改 HandlerBase 时在全仓搜索派生类型和参数访问，核对允许 null 的调用链。先阅读下游就近约定，验证实际受影响项目，不为测试扩大生产可见性。
 
+## 数据服务写入事件过滤器
+
+DataServiceBase<TModel>.EventFilterBase 是公开抽象嵌套类，放在 DataServiceBase.EventFilter.cs；服务须显式挂载，构造函数以 params DataAccessMethod[] methods 指定五类写入操作；空数组抛出 ArgumentException，null 数组抛出 ArgumentNullException，非写入操作抛出 ArgumentOutOfRangeException，参数名均为 methods。校验后复制并去重到私有只读 HashSet，按访问操作种类匹配，不按 DataServiceMethod 的方法名称匹配。未启用操作完全跳过，读取操作不能启用。过滤器无每次操作的共享可变状态。
+
+OnFilteringAsync 仅对启用操作准备数据：更新/删除调用可重写的 PrepareReturning 请求当前上下文的 Newer/Older 简单字段；批量新增/增改物化字典，导入物化模型，不修改调用方 Returning 或 Parameters。OnFilteredAsync 只处理正影响行数；更新/删除还要求当前返回行，完整主键的确定非空等值条件选择单条，其它条件选择集合。集合回调保留 IEnumerable<IDataDictionary<TModel>> 契约，不依赖数组长度或运行时类型。前四类提供两种 OnInserted/Updated/Deleted/UpsertedAsync 回调，导入仅集合；默认回调为空，业务派生类通过原事件注册表发布，不直接调用描述器 HandleAsync 绕过过滤和交换。取消、回调异常与异步完成由调用链观察。公开用法见 docs/data-service-events.zh-Hans.md，通用回归入口为 test/unit/Data/DataServiceEventFilterTest.cs。
+
 ## 数据字典序列化
 
 DataDictionaryConverterFactory 根据声明或实现的 IDataDictionary<T> 契约选择泛型转换器，将 JSON 对象还原为 IDataDictionary<T>；非泛型 IDataDictionary 保持原有转换器。两者均保持字段缺失与显式 null 的区别，不为缺失字段创建模型默认值。事件实参采用 IDataDictionary<T> 时，Events.Marshaler.Unmarshal 及事务延期快照使用同一转换规则。回归入口为 test/unit/Serialization/DataDictionarySerializationTest.cs。

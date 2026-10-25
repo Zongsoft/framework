@@ -78,6 +78,10 @@ dotnet add package Zongsoft.Core
 
 每个事件声明一个描述器：单一参数契约可用 `EventDescriptor<TArgument>`，多种参数契约使用非泛型 `EventDescriptor`；单条与集合处理器可以挂载到同一插件路径，本地与远程投递均保留声明类型。通过 `RaiseAsync` 触发事件并等待处理器完成，绑定的事件处理器必须返回可等待结果。`EventExchanger` 支持按事务状态控制事件投递，应用可通过 `IFeatureProvider` 增加条件，或通过 `EventDispatcher.Pipeline` 配置策略。详见[事件调度与环境特性](docs/event-dispatching.zh-Hans.md)。
 
+## 数据服务写入事件
+
+通过显式挂载 `DataServiceBase<TModel>.EventFilterBase`，可以复用新增、更新、删除、增改和导入的事件数据准备与单条/集合回调。业务模块保留事件声明及发布入口；读取操作不参与。用法、Returning 要求和输入生命周期见[数据服务写入事件](docs/data-service-events.zh-Hans.md)。
+
 ## 条件查找
 
 `Match` 和 `Find` 按忽略大小写的字段名查找首个条件，遵循集合顺序进行深度优先遍历；`Matches` 和 `FindAll` 包含嵌套集合中的全部匹配条件。这些方法负责查找条件树，不求解条件逻辑，也不推断字段的单个值。匹配 `IN` 条件时保留其操作符及集合值，`OR` 分支同样可以被查找。

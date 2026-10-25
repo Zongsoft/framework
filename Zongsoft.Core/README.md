@@ -78,6 +78,10 @@ Use `ServiceCollectionExtension.Register` to register services from an assembly.
 
 Each event has one descriptor: use `EventDescriptor<TArgument>` for a single argument contract or non-generic `EventDescriptor` to declare multiple contracts. Single and collection handlers can share a plugin path, and local and remote delivery preserve the declared type. Use `RaiseAsync` to raise events and await their handlers. Bound event handlers must return an awaitable result. `EventExchanger` supports transaction-aware delivery, and applications can add conditions through `IFeatureProvider` or configure policies through `EventDispatcher.Pipeline`. See [event dispatch and ambient features](docs/event-dispatching.md).
 
+## Data service write events
+
+Explicitly register `DataServiceBase<TModel>.EventFilterBase` to reuse event data preparation and single/collection callbacks for insert, update, delete, upsert, and import. Business modules retain event declarations and publication; reads are excluded. See [data service write events](docs/data-service-events.md) for usage, Returning requirements, and input lifetime.
+
 ## Condition lookup
 
 `Match` and `Find` locate the first condition with a matching field name, ignoring case and following depth-first collection order. `Matches` and `FindAll` include every matching condition, including nested collections. These methods search the condition tree; they do not evaluate its logic or infer a single field value. Matching an `IN` condition preserves its operator and collection value, and an `OR` branch remains searchable.
