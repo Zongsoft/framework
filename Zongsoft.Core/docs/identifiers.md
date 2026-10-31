@@ -7,7 +7,7 @@
 ```csharp
 var machine = new Identifier("Machine", 17u, "Vending machine");
 var user = new Identifier(typeof(Zongsoft.Security.Privileges.IUser), 17u);
-var branch = new Identifier<uint, uint>("Branch", 1, 1001, "Hangzhou", alias: "HZ");
+var branch = new Identifier<uint, uint>("Branch", 1, 1001, (null, "HZ"), "Hangzhou");
 Identifier untyped = branch;
 Identifier<(uint, uint)> tuple = branch;
 ```
@@ -25,15 +25,50 @@ var valid = branch.Validate("Branch", static (tenantId, _) => tenantId != 0);
 var specific = branch.Validate("Branch", static (tenantId, branchId) => tenantId != 0 && branchId != 0);
 ```
 
+## Reading and replacing keys
+
+TryGetValue retrieves the complete key, optionally checking a logical Name or CLR Type. Its ordinal overloads retrieve a zero-based component: a scalar has only component 0. Missing components, empty identifiers, category mismatches and failed conversions return false with a default output. Conversion follows existing identifier conversion rules; zero itself is a valid retrieved value. Specify the output type for component access because a runtime ordinal cannot infer a generic type from out var.
+
+```csharp
+branch.TryGetValue("Branch", out var key);
+branch.TryGetValue("Branch", 0, out uint tenantId);
+branch = branch.With(1, 1002);
+```
+
+With(ordinal, value) returns the same identifier variant with one component replaced, converting the value to the original component type. Other components and all metadata remain intact; the result shares the existing Properties dictionary. Empty identifiers throw InvalidOperationException, invalid ordinals throw ArgumentOutOfRangeException, and values that cannot be converted throw InvalidCastException. Initialize a model's category and key before using With in property setters. Validate remains the category/predicate check.
+
+Typed identifiers also support object initializers and native `with` expressions for Value, Code, Label, Alias, Description and Properties. The constructor fixes the Name or Type category. Set Value as a complete typed key; use With(ordinal, value) when a runtime component index is needed. A native with expression preserves other fields and shares Properties; assigning a new Properties dictionary makes one shallow copy. These init accessors do not change the readonly fields of the non-generic Identifier.
+
+```csharp
+var branch = new Identifier<uint, uint>("Branch", 1, 1001)
+{
+	Code = "HZ001",
+	Label = "Hangzhou",
+	Alias = "HZ",
+};
+branch = branch with { Value = (1, 1002), Label = "Ningbo" };
+```
+
 ## Identity and metadata
 
 Use the concrete, non-null primary-key type for generic parameters; use the default identifier to represent an absent identity. Name and CLR Type validation both reject empty identifiers. A zero key is a present value; business predicates determine whether it is allowed.
 
 Names contain only ASCII letters, digits, underscores and dots; the first character cannot be a dot. Names compare without case sensitivity. CLR types and key types are part of identity: `Machine:<uint>17`, `Machine:<int>17` and `Machine:17` are different identifiers. String keys compare with case sensitivity.
 
-`Code`, `Label`, `Alias`, `Description` and `Properties` do not affect equality or hash codes. Code is an optional read-only business number, independent of the identity key in Value. It preserves original text, does not fall back to Value or Alias, and does not make an identifier with a null Value nonempty. Alias is a read-only display field. Constructors accept metadata in the order `label`, `description`, `alias`, `properties`, `code`; use named arguments for optional metadata.
+`Code`, `Label`, `Alias`, `Description` and `Properties` do not affect equality or hash codes. Code is an optional business number, independent of the identity key in Value. It preserves original text, does not fall back to Value or Alias, and does not make an identifier with a null Value nonempty. Alias is an optional display field. Non-generic metadata fields are readonly; typed variants expose init accessors. Constructors provide three metadata parameter groups, shared by all Name, Type and generic variants:
 
-`Properties` is an optional mutable `IDictionary<string, string>`. Constructors make one shallow copy of the supplied dictionary; struct copies and lossless identifier conversions share the internal dictionary. Keys are case-insensitive and may contain Unicode text, spaces, core member names or an empty string. Keys and values use the same escaping rules; null values are written as empty strings. Formatting reads the current dictionary in sorted key order without copying it. Concurrent mutation requires application synchronization.
+- `label, description, properties`: display label, description and extension properties.
+- `(code, alias), label, description, properties`: business code and alias form the extra tuple; the label is a separate argument.
+- `(code, alias, label), description, properties`: business code, alias and label form the extra tuple.
+
+The extra tuple immediately follows the key. Use null for omitted tuple fields; all remaining trailing arguments are optional. Generic composite keys accept individual components or a complete key tuple; parameter position distinguishes key tuples from metadata tuples. Constructor grouping does not change the text protocol field order.
+
+```csharp
+var order = new Identifier("Order", 1001UL, ("SO001", null), "Purchase order");
+var employee = new Identifier<uint>("Employee", 17u, ("E001", "J", "Jane"), "Purchasing");
+```
+
+`Properties` is an optional mutable `IDictionary<string, string>`. Constructors and typed Properties initializers make one shallow copy of the supplied dictionary; struct copies and lossless identifier conversions share the internal dictionary. Keys are case-insensitive and may contain Unicode text, spaces, core member names or an empty string. Keys and values use the same escaping rules; null values are written as empty strings. Formatting reads the current dictionary in sorted key order without copying it. Concurrent mutation requires application synchronization.
 
 ## Text and JSON
 

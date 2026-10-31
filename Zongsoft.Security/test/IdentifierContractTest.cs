@@ -28,12 +28,22 @@ public class IdentifierContractTest
 	{
 		var user = Model.Build<UserModel>();
 		var role = Model.Build<RoleModel>();
+		user.Name = "User";
+		user.Description = "User description";
+		role.Name = "Role";
+		role.Description = "Role description";
 		IIdentifiable userIdentity = user;
 		IIdentifiable roleIdentity = role;
 		userIdentity.Identifier = new Identifier(typeof(IUser), "17");
 		roleIdentity.Identifier = new Identifier(typeof(IRole), "23");
 		Assert.Equal(17u, user.UserId);
 		Assert.Equal(23u, role.RoleId);
+		Assert.Equal("User", userIdentity.Identifier.Label);
+		Assert.Equal("Role", roleIdentity.Identifier.Label);
+		Assert.Equal("User description", userIdentity.Identifier.Description);
+		Assert.Equal("Role description", roleIdentity.Identifier.Description);
+		Assert.Null(userIdentity.Identifier.Code);
+		Assert.Null(roleIdentity.Identifier.Code);
 		Assert.Equal(new Identifier(typeof(IUser), 17u), userIdentity.Identifier);
 		Assert.Equal(new Identifier(typeof(IRole), 23u), roleIdentity.Identifier);
 		Assert.Throws<ArgumentException>(() => userIdentity.Identifier = roleIdentity.Identifier);
@@ -52,6 +62,8 @@ public class IdentifierContractTest
 		var user = identity.AsModel<UserModel>();
 		Assert.Equal(17u, user.UserId);
 		Assert.Equal("alice", user.Name);
+		Assert.Equal("alice", identity.Identify().Label);
+		Assert.Null(identity.Identify().Code);
 		Assert.Equal(((IIdentifiable)user).Identifier, identity.Identify());
 	}
 

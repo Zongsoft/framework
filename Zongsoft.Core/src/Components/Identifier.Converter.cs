@@ -37,6 +37,8 @@ using System.Runtime.ExceptionServices;
 
 namespace Zongsoft.Components;
 
+/// <summary>将标识与统一协议字符串相互转换。</summary>
+/// <param name="type">具体的标识类型。</param>
 internal sealed class IdentifierConverter(Type type) : TypeConverter
 {
 	#region 私有字段
@@ -67,6 +69,7 @@ internal sealed class IdentifierConverter(Type type) : TypeConverter
 	#endregion
 }
 
+/// <summary>创建使用统一标识文本协议的 JSON 转换器。</summary>
 internal sealed class IdentifierJsonConverter : JsonConverterFactory
 {
 	#region 转换工厂
@@ -79,6 +82,8 @@ internal sealed class IdentifierJsonConverter : JsonConverterFactory
 	#endregion
 
 	#region 序列转换
+	/// <summary>实现具体标识类型的 JSON 转换。</summary>
+	/// <typeparam name="T">支持统一标识解析的结构类型。</typeparam>
 	private sealed class Converter<T> : JsonConverter<T> where T : struct, ISpanParsable<T>
 	{
 		public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

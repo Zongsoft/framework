@@ -43,7 +43,7 @@ public partial class RoleService : RoleServiceBase<RoleModel>
 	protected override IDataAccess Accessor => Module.Current.Accessor;
 	protected override ICondition GetCriteria(Identifier identifier)
 	{
-		if(identifier.Validate<IRole, uint>(out var roleId))
+		if(identifier.TryGetValue<IRole, uint>(out var roleId))
 			return Condition.Equal(nameof(RoleModel.RoleId), roleId);
 
 		return base.GetCriteria(identifier);

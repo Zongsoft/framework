@@ -53,7 +53,7 @@ public readonly struct Member : IIdentifiable, IEquatable<Member>
 	public bool IsRole<T>(out T id)
 	{
 		if(this.MemberType == MemberType.Role)
-			return this.MemberId.Validate<IRole, T>(out id);
+			return this.MemberId.TryGetValue<IRole, T>(out id);
 
 		id = default;
 		return false;
@@ -62,7 +62,7 @@ public readonly struct Member : IIdentifiable, IEquatable<Member>
 	public bool IsUser<T>(out T id)
 	{
 		if(this.MemberType == MemberType.User)
-			return this.MemberId.Validate<IUser, T>(out id);
+			return this.MemberId.TryGetValue<IUser, T>(out id);
 
 		id = default;
 		return false;

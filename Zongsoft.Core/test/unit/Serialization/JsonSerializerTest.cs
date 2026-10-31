@@ -308,7 +308,7 @@ public class JsonSerializerTest
 		Assert.Equal(TimeSpan.FromHours(4), credential.Expiration);
 
 		Assert.NotNull(credential.User);
-		Assert.True(credential.User.Identifier.Validate(out int userId));
+		Assert.True(credential.User.Identifier.TryGetValue(out int userId));
 		Assert.Equal(100, userId);
 		Assert.Equal("Popeye", credential.User.Name);
 		Assert.Equal("钟少", credential.User.Nickname);

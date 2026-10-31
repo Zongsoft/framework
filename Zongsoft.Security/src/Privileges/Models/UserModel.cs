@@ -55,13 +55,13 @@ public abstract class UserModel : IUser, IIdentifiable, IIdentifiable<uint>, IEq
 	Identifier IIdentifiable.Identifier
 	{
 		get => new(typeof(IUser), this.UserId, this.Name, this.Description);
-		set => this.UserId = value.Validate<IUser, uint>(out var id) ? id : throw new ArgumentException();
+		set => this.UserId = value.TryGetValue<IUser, uint>(out var id) ? id : throw new ArgumentException();
 	}
 
 	Identifier<uint> IIdentifiable<uint>.Identifier
 	{
 		get => new(typeof(IUser), this.UserId, this.Name, this.Description);
-		set => this.UserId = value.Validate<IUser>(out var id) ? id : throw new ArgumentException();
+		set => this.UserId = value.TryGetValue<IUser>(out var id) ? id : throw new ArgumentException();
 	}
 	#endregion
 

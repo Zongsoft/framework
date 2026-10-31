@@ -23,11 +23,11 @@ public class IdentifierTest
 		Assert.Equal(100u, identifier.Value);
 		Assert.Equal(100u, (uint)identifier);
 
-		Assert.True(identifier.Validate(out var value));
+		Assert.True(identifier.TryGetValue(out var value));
 		Assert.Equal(100U, value);
-		Assert.True(identifier.Validate<IdentifierTest>(out value));
+		Assert.True(identifier.TryGetValue<IdentifierTest>(out value));
 		Assert.Equal(100U, value);
-		Assert.False(identifier.Validate<Exception>(out value));
+		Assert.False(identifier.TryGetValue<Exception>(out value));
 	}
 
 	[Fact]
@@ -42,11 +42,11 @@ public class IdentifierTest
 		Assert.Equal(100u, identifier.Value);
 		Assert.Equal(100u, (uint)identifier);
 
-		Assert.True(identifier.Validate(out uint value));
+		Assert.True(identifier.TryGetValue(out uint value));
 		Assert.Equal(100U, value);
-		Assert.True(identifier.Validate<IdentifierTest, uint>(out value));
+		Assert.True(identifier.TryGetValue<IdentifierTest, uint>(out value));
 		Assert.Equal(100U, value);
-		Assert.False(identifier.Validate<Exception, uint>(out value));
+		Assert.False(identifier.TryGetValue<Exception, uint>(out value));
 	}
 
 	[Fact]
@@ -108,8 +108,8 @@ public class IdentifierTest
 		Assert.True(typed.IsEmpty);
 		Assert.False(named.Validate("Example"));
 		Assert.False(typed.Validate<IDisposable>());
-		Assert.False(typed.Validate<IDisposable, uint>(out _));
-		Assert.False(typed.Validate(typeof(IDisposable), out uint _));
+		Assert.False(typed.TryGetValue<IDisposable, uint>(out _));
+		Assert.False(typed.TryGetValue(typeof(IDisposable), out uint _));
 		Assert.False(default(Identifier).Validate<IDisposable>());
 		Assert.True(new Identifier(typeof(InvalidOperationException), 0).Validate<Exception>());
 
@@ -198,7 +198,7 @@ public class IdentifierTest
 	{
 		var text = new string('x', length) + "\\?#()|\r\n\t\u0001中文";
 		var properties = new Dictionary<string, string> { [text] = text, [""] = "", ["Plain"] = "Value" };
-		var identifier = new Identifier("Slices", text, text, text, text, properties, text);
+		var identifier = new Identifier("Slices", text, (text, text, text), text, properties);
 		var parsed = Identifier.Parse(identifier.ToString());
 		Assert.Equal(text, parsed.Value);
 		Assert.Equal(text, parsed.Code);
@@ -216,7 +216,7 @@ public class IdentifierTest
 	public void TestMetadataAndEscaping()
 	{
 		var properties = new Dictionary<string, string> { ["Region"] = "East;West={x}\\", ["Empty"] = "" };
-		var identifier = new Identifier("Test", "a:b,?()|#{}\\\r\n\t\u0001", "杭州|中心", "Description#{}", "杭运", properties);
+		var identifier = new Identifier("Test", "a:b,?()|#{}\\\r\n\t\u0001", (null, "杭运"), "杭州|中心", "Description#{}", properties);
 		var parsed = Identifier.Parse(identifier.ToString());
 		Assert.Equal(identifier, parsed);
 		Assert.Equal(identifier.Label, parsed.Label);
@@ -229,31 +229,31 @@ public class IdentifierTest
 		copy.Properties["Region"] = "Shared";
 		Assert.Equal("Shared", identifier.Properties["Region"]);
 		Assert.Equal(identifier.GetHashCode(), parsed.GetHashCode());
-		Assert.Equal("Alias:1?|A", new Identifier("Alias", "1", alias: "A").ToString());
-		Assert.Equal("Description:1(D)", new Identifier("Description", "1", description: "D").ToString());
+		Assert.Equal("Alias:1?|A", new Identifier("Alias", "1", (null, "A")).ToString());
+		Assert.Equal("Description:1(D)", new Identifier("Description", "1", null, "D").ToString());
 	}
 
 	[Fact]
 	public void TestCodeMetadata()
 	{
 		var properties = new Dictionary<string, string> { ["Code"] = "Independent property" };
-		var identifier = new Identifier("Order", 1001UL, "Order", "Internal (purchase)", "PO", properties, code: " SO#001?()<>|{}\\\r\n ");
+		var identifier = new Identifier("Order", 1001UL, (" SO#001?()<>|{}\\\r\n ", "PO", "Order"), "Internal (purchase)", properties);
 		var parsed = Identifier.Parse(identifier.ToString());
 		Assert.Equal(identifier.Code, parsed.Code);
 		Assert.Equal(identifier.Label, parsed.Label);
 		Assert.Equal(identifier.Alias, parsed.Alias);
 		Assert.Equal(identifier.Description, parsed.Description);
 		Assert.Equal("Independent property", parsed.Properties["Code"]);
-		var other = new Identifier("Order", 1001UL, code: "SO002");
+		var other = new Identifier("Order", 1001UL, ("SO002", null));
 		Assert.Equal(identifier, other);
 		Assert.Equal(identifier.GetHashCode(), other.GetHashCode());
 		Assert.True(identifier.Validate("Order"));
 		Assert.Equal(identifier.Code, identifier.Cast<Person>().Code);
 		Roundtrip(identifier);
 
-		Assert.Equal("Order:<ulong>1001#SO001", new Identifier("Order", 1001UL, code: "SO001").ToString());
-		Assert.Equal("Order:<ulong>1001", new Identifier("Order", 1001UL, code: "").ToString());
-		var empty = new Identifier("Order", null, code: "SO001");
+		Assert.Equal("Order:<ulong>1001#SO001", new Identifier("Order", 1001UL, ("SO001", null)).ToString());
+		Assert.Equal("Order:<ulong>1001", new Identifier("Order", 1001UL, ("", null)).ToString());
+		var empty = new Identifier("Order", null, ("SO001", null));
 		Assert.True(empty.IsEmpty);
 		Assert.Equal("null", JsonSerializer.Serialize(empty));
 	}
@@ -261,7 +261,7 @@ public class IdentifierTest
 	[Fact]
 	public void TestCodeConversions()
 	{
-		var source = new Identifier<uint, ushort>("Store", 1, 2, "Store", code: "S002", properties: new Dictionary<string, string>());
+		var source = new Identifier<uint, ushort>("Store", 1, 2, ("S002", null), "Store", null, new Dictionary<string, string>());
 		Identifier untyped = source;
 		Identifier<(uint, ushort)> tuple = source;
 		Identifier<uint, ushort> restored = tuple;
@@ -272,14 +272,14 @@ public class IdentifierTest
 		Assert.Equal("S002", ((Identifier<uint, ushort>)untyped).Code);
 		Roundtrip(source);
 		Roundtrip(tuple);
-		Roundtrip(new Identifier<uint>(typeof(Person), 1, code: "P001"));
-		Roundtrip(new Identifier<int, string, Guid>("Three", 1, "two", Guid.Empty, code: "003"));
-		Roundtrip(new Identifier<int, string, bool, decimal>("Four", 1, "two", true, 4m, code: "004"));
-		Roundtrip(new Identifier<int, string, bool, decimal, DateOnly>("Five", 1, "two", true, 4m, new(2026, 10, 31), code: "005"));
+		Roundtrip(new Identifier<uint>(typeof(Person), 1, ("P001", null)));
+		Roundtrip(new Identifier<int, string, Guid>("Three", 1, "two", Guid.Empty, ("003", null)));
+		Roundtrip(new Identifier<int, string, bool, decimal>("Four", 1, "two", true, 4m, ("004", null)));
+		Roundtrip(new Identifier<int, string, bool, decimal, DateOnly>("Five", 1, "two", true, 4m, new(2026, 10, 31), ("005", null)));
 
 		var model = new IdentifiedModel<uint>();
 		IIdentifiable identifiable = model;
-		identifiable.Identifier = new Identifier("Person", 1u, code: "P001");
+		identifiable.Identifier = new Identifier("Person", 1u, ("P001", null));
 		Assert.Equal("P001", model.Identifier.Code);
 		Assert.Equal("P001", identifiable.Identifier.Code);
 	}
@@ -306,8 +306,8 @@ public class IdentifierTest
 	[Fact]
 	public void TestGenericScopeAndEscapedValues()
 	{
-		Roundtrip(new Identifier(typeof(Dictionary<string, List<int>>), 17u, code: "D017", description: "(nested)"));
-		Roundtrip(new Identifier("Text", "<uint>17#Code?(description){x=y}|alias", code: "#?()<>"));
+		Roundtrip(new Identifier(typeof(Dictionary<string, List<int>>), 17u, ("D017", null), null, "(nested)"));
+		Roundtrip(new Identifier("Text", "<uint>17#Code?(description){x=y}|alias", ("#?()<>", null)));
 		Assert.Equal(17u, Identifier.Parse("$List<int>:<uint>17").Value);
 		Assert.Equal(typeof(List<int>), Identifier.Parse("$List<int>:17").Type);
 		Assert.IsType<string>(Identifier.Parse("$List<int>:17").Value);
@@ -326,7 +326,7 @@ public class IdentifierTest
 			[""] = "empty key",
 			["Null"] = null,
 		};
-		var identifier = new Identifier("Test", 17u, "Label", properties: properties);
+		var identifier = new Identifier("Test", 17u, "Label", null, properties);
 		identifier.Properties["Label"] = "Extension label";
 		var text = identifier.ToString();
 		var parsed = Identifier.Parse(text);
@@ -397,12 +397,12 @@ public class IdentifierTest
 		Roundtrip(new Identifier<int, string, Guid>("Three", -1, "a,b", Guid.NewGuid()));
 		Roundtrip(new Identifier<int, string, bool, decimal>("Four", -1, "a,b", true, 12.34m));
 		Roundtrip(new Identifier<int, string, bool, decimal, DateOnly>("Five", -1, "a,b", true, 12.34m, new(2026, 10, 30)));
-		var source = new Identifier<uint, ushort>("Store", 1, 2, "Name", alias: "Alias", properties: new Dictionary<string, string>());
+		var source = new Identifier<uint, ushort>("Store", 1, 2, (null, "Alias"), "Name", null, new Dictionary<string, string>());
 		Identifier<(uint, ushort)> tuple = source;
 		Identifier<uint, ushort> restored = tuple;
 		Assert.Equal(source, restored);
 		Assert.Equal(tuple, Identifier<(uint, ushort)>.Parse(source.ToString("F")));
-		Assert.True(new Identifier("Store", (1, 2)).Validate<(uint, ushort)>(out var converted));
+		Assert.True(new Identifier("Store", (1, 2)).TryGetValue<(uint, ushort)>(out var converted));
 		Assert.Equal((1u, (ushort)2), converted);
 		Assert.Same(source.Properties, restored.Properties);
 		Assert.Equal((Identifier)source, (Identifier)tuple);
@@ -504,7 +504,7 @@ public class IdentifierTest
 	{
 		var model = new IdentifiedModel<uint>();
 		IIdentifiable contract = model;
-		contract.Identifier = new Identifier("Example", "17", "Label", alias: "Alias", properties: new Dictionary<string, string>());
+		contract.Identifier = new Identifier("Example", "17", (null, "Alias"), "Label", null, new Dictionary<string, string>());
 		Assert.Equal(17u, model.Identifier.Value);
 		Assert.Equal("Label", contract.Identifier.Label);
 		Assert.Equal("Alias", contract.Identifier.Alias);
@@ -516,7 +516,7 @@ public class IdentifierTest
 	{
 		var model = new IdentifiedModel<DayOfWeek>();
 		IIdentifiable contract = model;
-		var identifier = new Identifier("Day", DayOfWeek.Friday, "Friday", alias: "Fri", properties: new Dictionary<string, string>());
+		var identifier = new Identifier("Day", DayOfWeek.Friday, (null, "Fri"), "Friday", null, new Dictionary<string, string>());
 		contract.Identifier = identifier;
 		Assert.Equal(DayOfWeek.Friday, model.Identifier.Value);
 		Assert.Equal(identifier, contract.Identifier);
@@ -539,6 +539,292 @@ public class IdentifierTest
 		Assert.False(identifier.Validate<Security.Privileges.IRole>());
 		IIdentifiable member = Security.Privileges.Member.User(17u);
 		Assert.Throws<NotSupportedException>(() => member.Identifier = default);
+	}
+
+	[Fact]
+	public void TestComponentAccessAndReplacement()
+	{
+		var properties = new Dictionary<string, string> { ["region"] = "east" };
+		var branch = new Identifier<uint, ushort>("Branch", 17, 23, ("B23", "B", "Branch label"), "Description", properties);
+		Assert.True(branch.TryGetValue("branch", 0, out uint tenantId));
+		Assert.Equal(17u, tenantId);
+		Assert.True(branch.TryGetValue(1, out ushort branchId));
+		Assert.Equal((ushort)23, branchId);
+		Assert.True(branch.TryGetValue("Branch", out var key));
+		Assert.Equal((17u, (ushort)23), key);
+		Assert.False(branch.TryGetValue("Store", 0, out tenantId));
+		Assert.Equal(0u, tenantId);
+		Assert.False(branch.TryGetValue(-1, out tenantId));
+		Assert.False(branch.TryGetValue(2, out tenantId));
+		Assert.False(default(Identifier<uint, ushort>).TryGetValue(0, out tenantId));
+
+		var changed = branch.With(0, 42).With(1, "7");
+		Assert.Equal((42u, (ushort)7), changed.Value);
+		Assert.Equal((17u, (ushort)23), branch.Value);
+		Assert.Equal(branch.Name, changed.Name);
+		Assert.Equal("B23", changed.Code);
+		Assert.Equal("Branch label", changed.Label);
+		Assert.Equal("B", changed.Alias);
+		Assert.Equal("Description", changed.Description);
+		Assert.Same(branch.Properties, changed.Properties);
+		changed.Properties["region"] = "west";
+		Assert.Equal("west", branch.Properties["region"]);
+		Assert.Equal("east", properties["region"]);
+		Roundtrip(changed);
+		Assert.Throws<ArgumentOutOfRangeException>(() => branch.With(-1, 1));
+		Assert.Throws<ArgumentOutOfRangeException>(() => branch.With(2, 1));
+		Assert.Throws<InvalidCastException>(() => branch.With(1, "invalid"));
+		Assert.Throws<InvalidCastException>(() => branch.With(1, 65536));
+		Assert.Throws<InvalidCastException>(() => branch.With(1, null));
+		Assert.Throws<InvalidOperationException>(() => default(Identifier<uint, uint>).With(0, 1));
+	}
+
+	[Fact]
+	public void TestTypedCategoryComponentAccess()
+	{
+		Identifier identifier = new Identifier<uint, ushort>(typeof(InvalidOperationException), 17, 23);
+		Assert.True(identifier.TryGetValue(typeof(Exception), 1, out ushort value));
+		Assert.Equal((ushort)23, value);
+		Assert.False(identifier.TryGetValue(typeof(IDisposable), 1, out value));
+		Assert.False(identifier.TryGetValue("Exception", 1, out value));
+		Assert.Equal(default, value);
+		var changed = identifier.With(0, 41);
+		Assert.Equal(typeof(InvalidOperationException), changed.Type);
+		Assert.Null(changed.Name);
+		Assert.Equal((41u, (ushort)23), changed.Value);
+		Assert.True(changed.TryGetValue<Exception, (uint, ushort)>(out var key));
+		Assert.Equal((41u, (ushort)23), key);
+	}
+
+	[Fact]
+	public void TestScalarAndAllGenericComponentCounts()
+	{
+		var scalar = new Identifier<object>("Scalar", 17u).With(0, 23);
+		Assert.IsType<uint>(scalar.Value);
+		Assert.True(scalar.TryGetValue(0, out uint value));
+		Assert.Equal(23u, value);
+		Assert.False(scalar.TryGetValue(1, out value));
+		Assert.Throws<ArgumentOutOfRangeException>(() => scalar.With(1, 1));
+		Assert.Equal((1u, (ushort)9), new Identifier<uint, ushort>("Two", 1, 2).With(1, 9).Value);
+		Assert.Equal((1, "changed", true), new Identifier<int, string, bool>("Three", 1, "two", true).With(1, "changed").Value);
+		Assert.Equal((1, "two", false, 4m), new Identifier<int, string, bool, decimal>("Four", 1, "two", true, 4m).With(2, false).Value);
+		var five = new Identifier<int, string, bool, decimal, long>("Five", 1, "two", true, 4m, 5L).With(4, 6);
+		Assert.Equal((1, "two", true, 4m, 6L), five.Value);
+		Assert.True(five.TryGetValue("Five", 4, out long last));
+		Assert.Equal(6L, last);
+		var tuple = new Identifier<(uint, ushort)>("Tuple", (1u, (ushort)2)).With(0, 9);
+		Assert.Equal((9u, (ushort)2), tuple.Value);
+		Assert.True(tuple.TryGetValue(1, out ushort second));
+		Assert.Equal((ushort)2, second);
+	}
+
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public void TestConstructorMetadataGroups(bool typed)
+	{
+		var properties = new Dictionary<string, string> { ["zone"] = "east" };
+		Identifier[] basic =
+		[
+			typed ? new Identifier(typeof(Person), 1, "L", "D", properties) :
+				new Identifier("Example", 1, "L", "D", properties),
+			typed ? new Identifier<int>(typeof(Person), 1, "L", "D", properties) :
+				new Identifier<int>("Example", 1, "L", "D", properties),
+			typed ? new Identifier<int, string>(typeof(Person), 1, "two", "L", "D", properties) :
+				new Identifier<int, string>("Example", 1, "two", "L", "D", properties),
+			typed ? new Identifier<int, string>(typeof(Person), (1, "two"), "L", "D", properties) :
+				new Identifier<int, string>("Example", (1, "two"), "L", "D", properties),
+			typed ? new Identifier<int, string, bool>(typeof(Person), 1, "two", true, "L", "D", properties) :
+				new Identifier<int, string, bool>("Example", 1, "two", true, "L", "D", properties),
+			typed ? new Identifier<int, string, bool>(typeof(Person), (1, "two", true), "L", "D", properties) :
+				new Identifier<int, string, bool>("Example", (1, "two", true), "L", "D", properties),
+			typed ? new Identifier<int, string, bool, decimal>(typeof(Person), 1, "two", true, 4m, "L", "D", properties) :
+				new Identifier<int, string, bool, decimal>("Example", 1, "two", true, 4m, "L", "D", properties),
+			typed ? new Identifier<int, string, bool, decimal>(typeof(Person), (1, "two", true, 4m), "L", "D", properties) :
+				new Identifier<int, string, bool, decimal>("Example", (1, "two", true, 4m), "L", "D", properties),
+			typed ? new Identifier<int, string, bool, decimal, long>(typeof(Person), 1, "two", true, 4m, 5L, "L", "D", properties) :
+				new Identifier<int, string, bool, decimal, long>("Example", 1, "two", true, 4m, 5L, "L", "D", properties),
+			typed ? new Identifier<int, string, bool, decimal, long>(typeof(Person), (1, "two", true, 4m, 5L), "L", "D", properties) :
+				new Identifier<int, string, bool, decimal, long>("Example", (1, "two", true, 4m, 5L), "L", "D", properties),
+		];
+		Identifier[] pair =
+		[
+			typed ? new Identifier(typeof(Person), 1, ("C", "A"), "L", "D", properties) :
+				new Identifier("Example", 1, ("C", "A"), "L", "D", properties),
+			typed ? new Identifier<int>(typeof(Person), 1, ("C", "A"), "L", "D", properties) :
+				new Identifier<int>("Example", 1, ("C", "A"), "L", "D", properties),
+			typed ? new Identifier<int, string>(typeof(Person), 1, "two", ("C", "A"), "L", "D", properties) :
+				new Identifier<int, string>("Example", 1, "two", ("C", "A"), "L", "D", properties),
+			typed ? new Identifier<int, string>(typeof(Person), (1, "two"), ("C", "A"), "L", "D", properties) :
+				new Identifier<int, string>("Example", (1, "two"), ("C", "A"), "L", "D", properties),
+			typed ? new Identifier<int, string, bool>(typeof(Person), 1, "two", true, ("C", "A"), "L", "D", properties) :
+				new Identifier<int, string, bool>("Example", 1, "two", true, ("C", "A"), "L", "D", properties),
+			typed ? new Identifier<int, string, bool>(typeof(Person), (1, "two", true), ("C", "A"), "L", "D", properties) :
+				new Identifier<int, string, bool>("Example", (1, "two", true), ("C", "A"), "L", "D", properties),
+			typed ? new Identifier<int, string, bool, decimal>(typeof(Person), 1, "two", true, 4m, ("C", "A"), "L", "D", properties) :
+				new Identifier<int, string, bool, decimal>("Example", 1, "two", true, 4m, ("C", "A"), "L", "D", properties),
+			typed ? new Identifier<int, string, bool, decimal>(typeof(Person), (1, "two", true, 4m), ("C", "A"), "L", "D", properties) :
+				new Identifier<int, string, bool, decimal>("Example", (1, "two", true, 4m), ("C", "A"), "L", "D", properties),
+			typed ? new Identifier<int, string, bool, decimal, long>(typeof(Person), 1, "two", true, 4m, 5L, ("C", "A"), "L", "D", properties) :
+				new Identifier<int, string, bool, decimal, long>("Example", 1, "two", true, 4m, 5L, ("C", "A"), "L", "D", properties),
+			typed ? new Identifier<int, string, bool, decimal, long>(typeof(Person), (1, "two", true, 4m, 5L), ("C", "A"), "L", "D", properties) :
+				new Identifier<int, string, bool, decimal, long>("Example", (1, "two", true, 4m, 5L), ("C", "A"), "L", "D", properties),
+		];
+		Identifier[] triple =
+		[
+			typed ? new Identifier(typeof(Person), 1, ("C", "A", "L"), "D", properties) :
+				new Identifier("Example", 1, ("C", "A", "L"), "D", properties),
+			typed ? new Identifier<int>(typeof(Person), 1, ("C", "A", "L"), "D", properties) :
+				new Identifier<int>("Example", 1, ("C", "A", "L"), "D", properties),
+			typed ? new Identifier<int, string>(typeof(Person), 1, "two", ("C", "A", "L"), "D", properties) :
+				new Identifier<int, string>("Example", 1, "two", ("C", "A", "L"), "D", properties),
+			typed ? new Identifier<int, string>(typeof(Person), (1, "two"), ("C", "A", "L"), "D", properties) :
+				new Identifier<int, string>("Example", (1, "two"), ("C", "A", "L"), "D", properties),
+			typed ? new Identifier<int, string, bool>(typeof(Person), 1, "two", true, ("C", "A", "L"), "D", properties) :
+				new Identifier<int, string, bool>("Example", 1, "two", true, ("C", "A", "L"), "D", properties),
+			typed ? new Identifier<int, string, bool>(typeof(Person), (1, "two", true), ("C", "A", "L"), "D", properties) :
+				new Identifier<int, string, bool>("Example", (1, "two", true), ("C", "A", "L"), "D", properties),
+			typed ? new Identifier<int, string, bool, decimal>(typeof(Person), 1, "two", true, 4m, ("C", "A", "L"), "D", properties) :
+				new Identifier<int, string, bool, decimal>("Example", 1, "two", true, 4m, ("C", "A", "L"), "D", properties),
+			typed ? new Identifier<int, string, bool, decimal>(typeof(Person), (1, "two", true, 4m), ("C", "A", "L"), "D", properties) :
+				new Identifier<int, string, bool, decimal>("Example", (1, "two", true, 4m), ("C", "A", "L"), "D", properties),
+			typed ? new Identifier<int, string, bool, decimal, long>(typeof(Person), 1, "two", true, 4m, 5L, ("C", "A", "L"), "D", properties) :
+				new Identifier<int, string, bool, decimal, long>("Example", 1, "two", true, 4m, 5L, ("C", "A", "L"), "D", properties),
+			typed ? new Identifier<int, string, bool, decimal, long>(typeof(Person), (1, "two", true, 4m, 5L), ("C", "A", "L"), "D", properties) :
+				new Identifier<int, string, bool, decimal, long>("Example", (1, "two", true, 4m, 5L), ("C", "A", "L"), "D", properties),
+		];
+
+		properties["zone"] = "west";
+		Verify(basic, null, null);
+		Verify(pair, "C", "A");
+		Verify(triple, "C", "A");
+
+		void Verify(Identifier[] identifiers, string code, string alias)
+		{
+			foreach(var identifier in identifiers)
+			{
+				Assert.Equal(typed ? null : "Example", identifier.Name);
+				Assert.Equal(typed ? typeof(Person) : null, identifier.Type);
+				Assert.Equal(code, identifier.Code);
+				Assert.Equal("L", identifier.Label);
+				Assert.Equal(alias, identifier.Alias);
+				Assert.Equal("D", identifier.Description);
+				Assert.NotSame(properties, identifier.Properties);
+				Assert.Equal("east", identifier.Properties["ZONE"]);
+				var converted = identifier.Cast<Person>();
+				Assert.Equal(code, converted.Code);
+				Assert.Equal("L", converted.Label);
+				Assert.Equal(alias, converted.Alias);
+				Assert.Equal("D", converted.Description);
+				Assert.Same(identifier.Properties, converted.Properties);
+				Roundtrip(identifier);
+			}
+		}
+	}
+
+	[Theory]
+	[InlineData(false)]
+	[InlineData(true)]
+	public void TestTypedInitPreservesIdentityAndMetadata(bool typed)
+	{
+		var properties = new Dictionary<string, string> { ["zone"] = "east" };
+		var source1 = typed ? new Identifier<int>(typeof(Person), 1) : new Identifier<int>("Example", 1);
+		source1 = source1 with
+		{
+			Properties = properties,
+			Code = "C",
+			Label = "L",
+			Alias = "A",
+			Description = "D",
+		};
+		var updated1 = source1 with { Value = 2, Label = "Updated", Code = null, Alias = null, Description = null };
+		Assert.Equal(2, updated1.Value);
+		Assert.Equal(source1, source1 with { Label = "Other" });
+		Verify(source1, updated1);
+		var source2 = typed ? new Identifier<int, string>(typeof(Person), (1, "two")) : new Identifier<int, string>("Example", (1, "two"));
+		source2 = source2 with
+		{
+			Properties = properties,
+			Code = "C",
+			Label = "L",
+			Alias = "A",
+			Description = "D",
+		};
+		var updated2 = source2 with { Value = (2, "other"), Label = "Updated", Code = null, Alias = null, Description = null };
+		Assert.Equal((2, "other"), updated2.Value);
+		Assert.Equal(source2, source2 with { Label = "Other" });
+		Verify(source2, updated2);
+		var source3 = typed ? new Identifier<int, string, bool>(typeof(Person), (1, "two", true)) : new Identifier<int, string, bool>("Example", (1, "two", true));
+		source3 = source3 with
+		{
+			Properties = properties,
+			Code = "C",
+			Label = "L",
+			Alias = "A",
+			Description = "D",
+		};
+		var updated3 = source3 with { Value = (2, "other", false), Label = "Updated", Code = null, Alias = null, Description = null };
+		Assert.Equal((2, "other", false), updated3.Value);
+		Assert.Equal(source3, source3 with { Label = "Other" });
+		Verify(source3, updated3);
+		var source4 = typed ? new Identifier<int, string, bool, decimal>(typeof(Person), (1, "two", true, 4m)) : new Identifier<int, string, bool, decimal>("Example", (1, "two", true, 4m));
+		source4 = source4 with
+		{
+			Properties = properties,
+			Code = "C",
+			Label = "L",
+			Alias = "A",
+			Description = "D",
+		};
+		var updated4 = source4 with { Value = (2, "other", false, 8m), Label = "Updated", Code = null, Alias = null, Description = null };
+		Assert.Equal((2, "other", false, 8m), updated4.Value);
+		Assert.Equal(source4, source4 with { Label = "Other" });
+		Verify(source4, updated4);
+		var source5 = typed ? new Identifier<int, string, bool, decimal, long>(typeof(Person), (1, "two", true, 4m, 5L)) : new Identifier<int, string, bool, decimal, long>("Example", (1, "two", true, 4m, 5L));
+		source5 = source5 with
+		{
+			Properties = properties,
+			Code = "C",
+			Label = "L",
+			Alias = "A",
+			Description = "D",
+		};
+		var updated5 = source5 with { Value = (2, "other", false, 8m, 9L), Label = "Updated", Code = null, Alias = null, Description = null };
+		Assert.Equal((2, "other", false, 8m, 9L), updated5.Value);
+		Assert.Equal(source5, source5 with { Label = "Other" });
+		Verify(source5, updated5);
+
+		void Verify(Identifier source, Identifier updated)
+		{
+			Assert.Equal(typed ? null : "Example", updated.Name);
+			Assert.Equal(typed ? typeof(Person) : null, updated.Type);
+			Assert.Equal("C", source.Code);
+			Assert.Equal("L", source.Label);
+			Assert.Equal("A", source.Alias);
+			Assert.Equal("D", source.Description);
+			Assert.Null(updated.Code);
+			Assert.Null(updated.Alias);
+			Assert.Null(updated.Description);
+			Assert.Equal("Updated", updated.Label);
+			Assert.NotSame(properties, source.Properties);
+			Assert.Same(source.Properties, updated.Properties);
+			Assert.NotEqual(source, updated);
+			Assert.Equal("east", updated.Properties["ZONE"]);
+			Roundtrip(updated);
+		}
+	}
+
+	[Fact]
+	public void TestInitCanFillKnownCategoryWithMissingKey()
+	{
+		var empty = new Identifier<string>("Example", null) { Label = "Display" };
+		Assert.True(empty.IsEmpty);
+		var filled = empty with { Value = "key" };
+		Assert.Equal("key", filled.Value);
+		Assert.Equal("Display", filled.Label);
+		Assert.Equal("Example", filled.Name);
+		Assert.False(filled.IsEmpty);
+		Assert.Null(empty.Value);
 	}
 
 	private sealed class IdentifiedModel<T> : IIdentifiable<T>

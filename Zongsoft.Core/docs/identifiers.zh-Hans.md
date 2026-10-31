@@ -7,7 +7,7 @@
 ```csharp
 var machine = new Identifier("Machine", 17u, "售货机");
 var user = new Identifier(typeof(Zongsoft.Security.Privileges.IUser), 17u);
-var branch = new Identifier<uint, uint>("Branch", 1, 1001, "杭州", alias: "杭运");
+var branch = new Identifier<uint, uint>("Branch", 1, 1001, (null, "杭运"), "杭州");
 Identifier untyped = branch;
 Identifier<(uint, uint)> tuple = branch;
 ```
@@ -25,15 +25,50 @@ var valid = branch.Validate("Branch", static (tenantId, _) => tenantId != 0);
 var specific = branch.Validate("Branch", static (tenantId, branchId) => tenantId != 0 && branchId != 0);
 ```
 
+## 读取与替换键值
+
+TryGetValue 获取完整键值，可同时验证逻辑 Name 或 CLR Type。带序号的重载读取从零开始的键分量，单键仅支持序号 0。分量不存在、标识为空、类别不符或转换失败时返回 false，输出默认值；转换沿用标识的既有键转换规则，零值本身不表示读取失败。按分量读取时显式指定输出类型，运行时序号不能使编译器从 out var 推断泛型类型。
+
+```csharp
+branch.TryGetValue("Branch", out var key);
+branch.TryGetValue("Branch", 0, out uint tenantId);
+branch = branch.With(1, 1002);
+```
+
+With(ordinal, value) 返回同一 Identifier 版本的新值，替换值按原分量类型转换。其余分量和所有元数据保持原值，Properties 共享原有字典。空标识抛出 InvalidOperationException，序号越界抛出 ArgumentOutOfRangeException，无法转换的值抛出 InvalidCastException。模型在属性 setter 中调用 With 前，应先初始化类别及键值。Validate 保留类别与条件判断职责。
+
+泛型标识的 Value、Code、Label、Alias、Description、Properties 支持对象初始化器和原生 `with` 表达式；Name 或 Type 类别由构造函数确定。Value 赋值使用完整类型化键，需要运行时分量序号时使用 With(ordinal, value)。原生 with 保留其他字段并共享 Properties；初始化新的 Properties 字典时进行一次浅复制。这些 init 访问器不改变非泛型 Identifier 的只读字段。
+
+```csharp
+var branch = new Identifier<uint, uint>("Branch", 1, 1001)
+{
+	Code = "HZ001",
+	Label = "杭州",
+	Alias = "杭运",
+};
+branch = branch with { Value = (1, 1002), Label = "宁波" };
+```
+
 ## 身份与元数据
 
 泛型参数使用实际的非空主键类型；身份缺失使用默认标识表示。Name 和 CLR Type 验证均拒绝空标识。零键值仍表示有值，是否允许由业务条件判断。
 
 Name 仅包含 ASCII 字母、数字、下划线和点，首字符不能为点。Name 忽略大小写；CLR Type 和实际键类型属于身份。例如 `Machine:<uint>17`、`Machine:<int>17` 与 `Machine:17` 是三个不同标识，字符串键区分大小写。
 
-`Code`、`Label`、`Alias`、`Description`、`Properties` 不参与相等与哈希。Code 是可为空的只读业务编号，与 Value 中的身份键独立，保留原文，不从 Value 或 Alias 回退生成；仅有 Code 而 Value 为空时仍为空标识。Alias 是只读展示字段。构造函数的可选元数据依次为 `label`、`description`、`alias`、`properties`、`code`，建议使用命名参数。
+`Code`、`Label`、`Alias`、`Description`、`Properties` 不参与相等与哈希。Code 是可为空的业务编号，与 Value 中的身份键独立，保留原文，不从 Value 或 Alias 回退生成；仅有 Code 而 Value 为空时仍为空标识。Alias 是可选展示字段。非泛型元数据字段只读，泛型版本提供 init 访问器。构造函数提供三组元数据参数，所有 Name、Type 和泛型版本采用相同规则：
 
-`Properties` 是可为空的可变 `IDictionary<string, string>`。构造时对外部字典进行一次浅复制，结构复制和无损标识转换共享内部字典。扩展键忽略大小写，可以包含 Unicode 字符、空格、核心成员名称或空字符串。键和值使用相同的转义规则，null 值输出为空字符串。格式化按键排序读取当前字典，不再复制；并发修改由应用同步。
+- `label、description、properties`：只提供展示名称、说明或扩展属性。
+- `(code, alias)、label、description、properties`：将业务编号和别名组成 extra 元组，展示名称单独提供。
+- `(code, alias, label)、description、properties`：将业务编号、别名和展示名称合并为 extra 元组。
+
+extra 紧跟键值，元组中未提供的字段使用 null，其余尾部参数均可省略。泛型复合键支持逐个分量或完整键元组；键元组与元数据元组按参数位置区分。构造参数分组不改变文本协议的字段顺序。
+
+```csharp
+var order = new Identifier("Order", 1001UL, ("SO001", null), "采购订单");
+var employee = new Identifier<uint>("Employee", 17u, ("E001", "小张", "张三"), "采购部");
+```
+
+`Properties` 是可为空的可变 `IDictionary<string, string>`。构造或泛型 Properties 初始化时对外部字典进行一次浅复制，结构复制和无损标识转换共享内部字典。扩展键忽略大小写，可以包含 Unicode 字符、空格、核心成员名称或空字符串。键和值使用相同的转义规则，null 值输出为空字符串。格式化按键排序读取当前字典，不再复制；并发修改由应用同步。
 
 ## 文本与 JSON
 

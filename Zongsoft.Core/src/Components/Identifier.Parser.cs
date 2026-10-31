@@ -441,7 +441,7 @@ partial struct Identifier
 			return false;
 
 		var value = context.Values == null ? context.Value : CreateValue(context.Types, context.Values);
-		result = new Identifier(context.Name, context.Type, value, context.Label, context.Description, context.Alias, context.Code, context.Properties, false);
+		result = new Identifier(context.Name, context.Type, value, context.Code, context.Label, context.Alias, context.Description, context.Properties, false);
 		return true;
 	}
 

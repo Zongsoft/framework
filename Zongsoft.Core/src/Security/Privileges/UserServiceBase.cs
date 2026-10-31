@@ -393,7 +393,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		if(identifier.IsEmpty)
 			return null;
 
-		if(identifier.Validate<IUser, string>(out var qualifiedName))
+		if(identifier.TryGetValue<IUser, string>(out var qualifiedName))
 		{
 			var index = qualifiedName.IndexOf(':');
 			return index >= 0 && !qualifiedName.StartsWith("email:", StringComparison.OrdinalIgnoreCase) && !qualifiedName.StartsWith("phone:", StringComparison.OrdinalIgnoreCase) ?

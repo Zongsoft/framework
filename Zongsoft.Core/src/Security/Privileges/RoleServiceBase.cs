@@ -302,7 +302,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		if(identifier.IsEmpty)
 			return null;
 
-		if(identifier.Validate<IRole, string>(out var qualifiedName))
+		if(identifier.TryGetValue<IRole, string>(out var qualifiedName))
 		{
 			var index = qualifiedName.IndexOf(':');
 

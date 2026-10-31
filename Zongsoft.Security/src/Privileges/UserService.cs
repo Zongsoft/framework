@@ -52,7 +52,7 @@ public partial class UserService : UserServiceBase<UserModel>
 	protected override IServiceProvider Services => Module.Current.Services;
 	protected override ICondition GetCriteria(Identifier identifier)
 	{
-		if(identifier.Validate<IUser, uint>(out var userId))
+		if(identifier.TryGetValue<IUser, uint>(out var userId))
 			return Condition.Equal(nameof(UserModel.UserId), userId);
 
 		return base.GetCriteria(identifier);
