@@ -1544,6 +1544,15 @@ namespace Zongsoft.Properties {
                 return ResourceManager.GetString("HierarchicalNode.RootAsChild.Message", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   查找类似 A different identifier format is already registered for this category. 的本地化字符串。
+        /// </summary>
+        internal static string Identifier_FormattingConflict_Message {
+            get {
+                return ResourceManager.GetString("Identifier.FormattingConflict.Message", resourceCulture);
+            }
+        }
         
         /// <summary>
         ///   查找类似 Invalid format of the identifier. 的本地化字符串。

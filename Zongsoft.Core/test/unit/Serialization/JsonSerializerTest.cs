@@ -292,7 +292,7 @@ public class JsonSerializerTest
 	""properties"": {
 		""roles"": [""Administrators"", ""Users"" ]
 	},
-	""identifier"": 100,
+	""identifier"": ""$Zongsoft.Security.Privileges.IUser@Zongsoft.Core:<int>100"",
 	""name"": ""Popeye"",
 	""nickname"": ""钟少"",
 	""namespace"": ""automao"",

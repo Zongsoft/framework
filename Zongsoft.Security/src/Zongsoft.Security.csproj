@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.11.0</Version>
+		<Version>7.12.0</Version>
 		<Product>Zongsoft Security Library</Product>
 		<Description>This is a class library about security development.</Description>
 		<RootNamespace>Zongsoft.Security</RootNamespace>
@@ -9,7 +9,7 @@
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/Zongsoft.Security</RepositoryUrl>
-		<PackageReleaseNotes></PackageReleaseNotes>
+		<PackageReleaseNotes>对齐统一 Identifier 契约，规范用户、角色和成员身份类别，登记安全类型别名并完善身份赋值校验。</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -31,7 +31,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.71.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.76.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

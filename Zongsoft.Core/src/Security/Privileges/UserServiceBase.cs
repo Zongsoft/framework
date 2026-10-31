@@ -393,7 +393,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		if(identifier.IsEmpty)
 			return null;
 
-		if(identifier.Validate(out string qualifiedName))
+		if(identifier.Validate<IUser, string>(out var qualifiedName))
 		{
 			var index = qualifiedName.IndexOf(':');
 			return index >= 0 && !qualifiedName.StartsWith("email:", StringComparison.OrdinalIgnoreCase) && !qualifiedName.StartsWith("phone:", StringComparison.OrdinalIgnoreCase) ?
@@ -410,13 +410,16 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 	protected virtual ValueTask<Identifier> EnsureIdentityAsync(Identifier identifier, CancellationToken cancellation)
 	{
 		if(identifier.IsEmpty)
-			return ValueTask.FromResult(new Identifier(typeof(TUser), ApplicationContext.Current.Principal.Identity.GetIdentifier()));
+			return ValueTask.FromResult(new Identifier(typeof(IUser), ApplicationContext.Current.Principal.Identity.GetIdentifier()));
 
 		/*
 		 * 只有当前用户是如下情况之一，才能操作指定的其他用户：
 		 *   1) 指定的用户就是当前用户自己；
 		 *   2) 当前用户是系统管理员(Administrators)或安全管理员角色(Security)成员。
 		 */
+
+		if(!identifier.Validate<IUser>())
+			throw OperationException.Argument();
 
 		var current = ApplicationContext.Current.Principal.Identity.GetIdentifier();
 

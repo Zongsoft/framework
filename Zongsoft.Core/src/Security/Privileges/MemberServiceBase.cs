@@ -206,14 +206,10 @@ public abstract partial class MemberServiceBase<TRole, TMember> : IMemberService
 		if(identifier.IsEmpty)
 			return null;
 
-		if(identifier.Validate<Member>(out var member))
-			return Condition.Equal(nameof(IMember<TRole>.MemberId), member.MemberId.Value) &
-			       Condition.Equal(nameof(IMember<TRole>.MemberType), member.MemberType);
+		if(identifier.Validate<IRole>())
+			return Condition.Equal(nameof(IMember<TRole>.RoleId), identifier.Value);
 
-		if(identifier.Validate<IRole, Identifier>(out var roleId))
-			return Condition.Equal(nameof(IMember<TRole>.RoleId), roleId.Value);
-
-		return Condition.Equal(nameof(IMember<TRole>.RoleId), identifier.Value);
+		throw OperationException.Argument();
 	}
 	#endregion
 

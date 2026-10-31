@@ -37,9 +37,6 @@ internal static class Utility
 {
 	public static bool IsUser<T>(this ref Identifier identifier, out T id) where T : IEquatable<T>
 	{
-		if(identifier.Validate<Member>(out var member))
-			return member.IsUser(out id);
-
 		return identifier.Validate<IUser, T>(out id) ||
 		       identifier.Validate<System.Security.Principal.IIdentity, T>(out id) ||
 		       identifier.Validate<System.Security.Principal.IPrincipal, T>(out id);
@@ -47,9 +44,6 @@ internal static class Utility
 
 	public static bool IsRole<T>(this ref Identifier identifier, out T id) where T : IEquatable<T>
 	{
-		if(identifier.Validate<Member>(out var member))
-			return member.IsRole(out id);
-
 		return identifier.Validate<IRole, T>(out id);
 	}
 }

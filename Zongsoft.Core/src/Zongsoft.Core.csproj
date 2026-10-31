@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.75.0</Version>
+		<Version>7.76.0</Version>
 		<Product>Zongsoft Core Library</Product>
 		<Description>This is a core library about Zongsoft development framework.</Description>
 		<RootNamespace>Zongsoft</RootNamespace>
@@ -10,7 +10,7 @@
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/Zongsoft.Core</RepositoryUrl>
-		<PackageReleaseNotes>统一事件参数签名与派发，提供数据服务写入事件过滤器、远程发布范围筛选及操作返回数据支持。</PackageReleaseNotes>
+		<PackageReleaseNotes>统一 Identifier 标识契约，支持复合键、业务编号、元数据、简写登记及状态机解析；统一 JSON 和类型转换，完善安全身份桥接。</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<PropertyGroup>

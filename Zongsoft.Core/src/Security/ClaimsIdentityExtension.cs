@@ -449,7 +449,7 @@ public static class ClaimsIdentityExtension
 	public static Identifier Identify(this IIdentity identity) => Identify(identity as ClaimsIdentity);
 	public static Identifier Identify(this ClaimsIdentity identity) => new
 	(
-		identity.GetType(),
+		typeof(Privileges.IUser),
 		identity.GetIdentifier(),
 		identity.GetQualifiedName(),
 		identity.TryGetClaim<string>(nameof(Identifier.Description), out var description) ? description : null

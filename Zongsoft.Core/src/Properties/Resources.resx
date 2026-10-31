@@ -1165,4 +1165,7 @@
   <data name="EventDescriptor.Unregistered.Message" xml:space="preserve">
     <value>The event descriptor is not registered in this registry.</value>
   </data>
+  <data name="Identifier.FormattingConflict.Message" xml:space="preserve">
+    <value>A different identifier format is already registered for this category.</value>
+  </data>
 </root>

@@ -211,7 +211,7 @@ public readonly struct Member : IIdentifiable, IEquatable<Member>
 	#region 显式实现
 	Identifier IIdentifiable.Identifier
 	{
-		get => this.MemberId.IsEmpty ? default : new(typeof(Member), this);
+		get => this.MemberId;
 		set => throw new NotSupportedException();
 	}
 	#endregion

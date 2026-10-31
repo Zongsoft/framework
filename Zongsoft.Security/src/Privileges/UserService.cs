@@ -52,7 +52,7 @@ public partial class UserService : UserServiceBase<UserModel>
 	protected override IServiceProvider Services => Module.Current.Services;
 	protected override ICondition GetCriteria(Identifier identifier)
 	{
-		if(identifier.Validate(out uint userId))
+		if(identifier.Validate<IUser, uint>(out var userId))
 			return Condition.Equal(nameof(UserModel.UserId), userId);
 
 		return base.GetCriteria(identifier);
@@ -71,6 +71,9 @@ public partial class UserService : UserServiceBase<UserModel>
 			object current = uint.TryParse(identityId, out var number) ? number : identityId;
 			identifier = new Identifier(typeof(IUser), current);
 		}
+
+		if(!identifier.Validate<IUser>())
+			throw Zongsoft.Common.OperationException.Argument();
 
 		if(string.Equals(identityId, identifier.Value?.ToString(), StringComparison.Ordinal) || identity.InRoles([IRole.Administrators, IRole.Security]))
 			return ValueTask.FromResult(identifier);

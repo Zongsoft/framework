@@ -100,3 +100,13 @@ nuget:Zongsoft.Security
 用户密码由 `Passworder` 设置和验证，`Password` 封装 PBKDF2 算法、迭代因子、盐和摘要。`Password` 字段存储完整二进制数据，容量为 512 字节，不使用独立的 `PasswordSalt` 字段。只接受 `Password` 格式的数据。数据库密码为 `null` 或空二进制数据时，仅使用 `null` 或空字符串登录可以验证成功，非空密码验证失败；账号必须存在且已启用。用户可用空旧密码设置新密码。
 
 密保问题存于 `SecretQuestion`（500 字符），答案存于 `SecretAnswer`（2048 字节），支持三至五组问答。初始化 SQL 用于创建新表，不会升级已有表；已有数据库须满足这些字段和容量要求。
+
+## 标识类型别名
+
+创建 `Module.Current` 时，安全模块通过 `TypeAlias.Aliases.Map` 登记 `Zongsoft.Security.User`、`Zongsoft.Security.Role`。插件启动时挂载该模块；不使用插件启动流程的工具，应在读写 `$Zongsoft.Security.User:<uint>17` 等短标识之前初始化模块：
+
+```csharp
+_ = Zongsoft.Security.Module.Current;
+```
+
+未登记时，标识使用普通完整类型名称，例如 `$Zongsoft.Security.Privileges.IUser@Zongsoft.Core:<uint>17`。文本和 JSON 的统一格式见[标识协议](../Zongsoft.Core/docs/identifiers.zh-Hans.md)。

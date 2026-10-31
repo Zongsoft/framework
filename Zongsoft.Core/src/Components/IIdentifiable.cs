@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -41,8 +41,14 @@ public interface IIdentifiable
 
 /// <summary>提供对象标识的接口。</summary>
 /// <remarks>接口实现者应实现 <see cref="Identifier{T}"/> 的隐式转换操作符。</remarks>
-public interface IIdentifiable<T> where T : IEquatable<T>
+public interface IIdentifiable<T> : IIdentifiable
 {
 	/// <summary>获取或设置对象的标识。</summary>
-	Identifier<T> Identifier { get; set; }
+	new Identifier<T> Identifier { get; set; }
+
+	Identifier IIdentifiable.Identifier
+	{
+		get => this.Identifier;
+		set => this.Identifier = (Identifier<T>)value;
+	}
 }

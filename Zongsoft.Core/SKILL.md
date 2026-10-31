@@ -224,3 +224,9 @@ EventDescriptor<TArgument> 继承 EventDescriptor，构造时固定声明 typeof
 RaiseAsync 以 typeof(TArgument) 选择声明；EventContext 持有描述器与类型，GetArgumentValue 由泛型上下文重写，支持非泛型派生上下文。远程接收和延期快照通过缓存的泛型桥接调用根注册表的 GetContext<TArgument>，保留覆盖点及过滤顺序。Marshaler 的 Signature 只在当前描述器允许列表中解析；消息主题、事件查询和订阅仍以名称为键。EventBinder 以描述器、目标实例及成员保存独立绑定；EventLocatorBase 实现需提供声明类型。回归入口为 GenericEventDescriptorTest、EventSignaturesTest、EventDispatcherTest、TransactionEventDispatchTest、Plugins 的 EventSignaturePluginTests 和 ZeroMQ 的 ZeroQueueEventChannelTests。
 
 EventExchanger.Filtering 使用现有 EventFiltering，在运行状态及通道数量检查之后、DispatchAsync 之前执行；不改动本地注册表分发或接收路径。配置只表达远程范围，不根据通道或 Handler 数量推断数据服务发布需求。过滤规则启动前装配，禁止并发修改；空规则和无匹配默认放行，白名单末尾需显式排除全部。EventPublicationTest 覆盖无通道、白名单拒绝、默认放行及本地接收独立性。
+
+## 标识契约
+
+Identifier 的公开协议见 [标识](docs/identifiers.zh-Hans.md)。解析使用 ReadOnlySpan<char>、私有状态枚举与 ref struct 上下文，由静态 Do…(ref context) 方法处理类别、冒号后的键类型、键值、Code、展示字段和扩展属性；类型表达式复用 TypeAlias。普通词素直接读取输入切片，仅转义词素使用栈缓冲或池化数组解码；类型声明使用最多五项的内联缓冲，键值逐项转换，不建立临时文本集合。Formatting.Register 的默认分隔符为短横线，完整格式仍使用逗号。解析入口必须验证终止状态，string/span、泛型、JSON 与 TypeConverter 共用解析核心。转换器集中在 `Components/Identifier.Converter.cs`，不另建业务登记目录。
+
+Code 是独立的只读业务编号，不从 Value 或 Alias 推导，不与 Properties 同名项同步；构造、Cast、泛型和接口桥接保持 Code。公开文本使用 `Name:<keyTypes>values#Code?Label|Alias(Description){properties}`，CLR Type 类别以 `$` 开头；描述括号必须闭合，元数据按固定顺序省略。相等与哈希只包含类别和类型化键，Name 忽略大小写，字符串键区分大小写。Name 与 Type 类别验证均拒绝空标识；零键值是否合法由业务判断。单键泛型解析按可赋值关系接受实际键类型，不进行数值换型；复合键分量类型保持匹配。泛型接口不要求键实现 IEquatable<T>，桥接保持 setter 与元数据；只读对象拒绝赋值。不得为了迁移同一调用方而猜测类别、丢弃键类型或以静默 setter 接受错误身份。

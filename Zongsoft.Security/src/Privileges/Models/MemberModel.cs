@@ -59,11 +59,11 @@ public abstract class MemberModel : IMember<RoleModel>, IMember, IEquatable<Memb
 	#endregion
 
 	#region 显式实现
-	Identifier IMember.RoleId => new Identifier<uint>(typeof(IMember<IRole>), this.RoleId);
+	Identifier IMember.RoleId => new Identifier<uint>(typeof(IRole), this.RoleId);
 	Identifier IMember.MemberId => this.MemberType switch
 	{
-		MemberType.Role => new Identifier<uint>(typeof(IMember<IRole>), this.MemberId),
-		MemberType.User => new Identifier<uint>(typeof(IMember<IRole>), this.MemberId),
+		MemberType.Role => new Identifier<uint>(typeof(IRole), this.MemberId),
+		MemberType.User => new Identifier<uint>(typeof(IUser), this.MemberId),
 		_ => default,
 	};
 	#endregion
@@ -75,13 +75,13 @@ public abstract class MemberModel : IMember<RoleModel>, IMember, IEquatable<Memb
 		this.MemberType == other.MemberType;
 
 	bool IEquatable<IMember>.Equals(IMember other) => other is not null &&
-		object.Equals(this.RoleId, other.RoleId) &&
-		object.Equals(this.MemberId, other.MemberId) &&
+		((IMember)this).RoleId.Equals(other.RoleId) &&
+		((IMember)this).MemberId.Equals(other.MemberId) &&
 		this.MemberType == other.MemberType;
 
 	public bool Equals(IMember<RoleModel> other) => other is not null &&
-		object.Equals(this.RoleId, other.RoleId) &&
-		object.Equals(this.MemberId, other.MemberId) &&
+		((IMember)this).RoleId.Equals(other.RoleId) &&
+		((IMember)this).MemberId.Equals(other.MemberId) &&
 		this.MemberType == other.MemberType;
 
 	public override bool Equals(object obj) => obj is MemberModel other && this.Equals(other);

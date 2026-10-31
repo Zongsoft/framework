@@ -1159,4 +1159,7 @@
   <data name="EventDescriptor.Unregistered.Message" xml:space="preserve">
     <value>事件描述器未在此注册表中注册。</value>
   </data>
+  <data name="Identifier.FormattingConflict.Message" xml:space="preserve">
+    <value>此标识类别已登记了不同的格式。</value>
+  </data>
 </root>

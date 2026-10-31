@@ -59,8 +59,7 @@ public class AuthorizationControllerTest
 				Assert.True(identifier.IsEmpty);
 			else
 			{
-				Assert.Equal(typeof(Member), identifier.Type);
-				Assert.Equal(Member.Parse(member), Assert.IsType<Member>(identifier.Value));
+				Assert.Equal(Member.Parse(member).MemberId, identifier);
 			}
 
 			var parameters = Assert.IsType<Parameters>(args[1]);

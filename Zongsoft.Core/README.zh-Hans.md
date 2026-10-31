@@ -242,3 +242,7 @@ dotnet test test/integration/Zongsoft.Core.Tests.slnx -c Release -p:GeneratePack
 ## 许可
 
 Zongsoft.Core 基于 [LGPL-3.0-or-later](https://github.com/Zongsoft/framework/blob/main/LICENSE) 许可证发布。
+
+## 标识
+
+类型化标识支持逻辑名称、CLR 类型、复合键、业务编号、展示元数据及已登记简写，string/span 解析、JSON 与 TypeConverter 共用文本协议。详见[标识](docs/identifiers.zh-Hans.md)。

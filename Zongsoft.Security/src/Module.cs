@@ -28,6 +28,7 @@
  */
 
 using Zongsoft.Data;
+using Zongsoft.Common;
 using Zongsoft.Services;
 
 [assembly: ApplicationModule(Zongsoft.Security.Module.NAME)]
@@ -47,7 +48,11 @@ public partial class Module : ApplicationModule<Module.EventRegistry>
 	#endregion
 
 	#region 私有构造
-	private Module() : base(NAME) { }
+	private Module() : base(NAME)
+	{
+		TypeAlias.Aliases.Map("Zongsoft.Security.User", typeof(Privileges.IUser));
+		TypeAlias.Aliases.Map("Zongsoft.Security.Role", typeof(Privileges.IRole));
+	}
 	#endregion
 
 	#region 公共属性

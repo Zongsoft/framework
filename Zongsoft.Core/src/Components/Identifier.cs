@@ -1,4 +1,4 @@
-﻿/*
+/*
  *   _____                                ______
  *  /_   /  ____  ____  ____  _________  / __/ /_
  *    / /  / __ \/ __ \/ __ \/ ___/ __ \/ /_/ __/
@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -28,88 +28,115 @@
  */
 
 using System;
-using System.Globalization;
 using System.ComponentModel;
-using System.Text.Json;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
-
-using Zongsoft.Common;
 
 namespace Zongsoft.Components;
 
-/// <summary>表示对象标识的结构。</summary>
-[TypeConverter(typeof(TypeConverter))]
-[JsonConverter(typeof(JsonConverter))]
-public readonly struct Identifier(Type type, object value, string label = null, string description = null) : IEquatable<Identifier>, IConvertible
+/// <summary>表示具有逻辑名称或对象类型的类型化标识。</summary>
+[TypeConverter(typeof(IdentifierConverter))]
+[JsonConverter(typeof(IdentifierJsonConverter))]
+public readonly partial struct Identifier : IEquatable<Identifier>, IConvertible, ISpanParsable<Identifier>, IFormattable
 {
+	#region 构造函数
+	public Identifier(string name, object value, string label = null, string description = null, string alias = null, IDictionary<string, string> properties = null, string code = null) :
+		this(name, null, value, label, description, alias, code, properties, true) { }
+	public Identifier(Type type, object value, string label = null, string description = null, string alias = null, IDictionary<string, string> properties = null, string code = null) :
+		this(null, type ?? throw new ArgumentNullException(nameof(type)), value, label, description, alias, code, properties, true) { }
+
+	internal Identifier(string name, Type type, object value, string label, string description, string alias, string code, IDictionary<string, string> properties, bool copy)
+	{
+		if(type == null && !IsName(name))
+			throw new ArgumentException(Zongsoft.Properties.Resources.Identifier_InvalidFormat_Message, nameof(name));
+
+		this.Name = name;
+		this.Type = type;
+		this.Value = value;
+		this.Code = code;
+		this.Alias = alias;
+		this.Label = label;
+		this.Description = description;
+		this.Properties = copy && properties != null ? new Dictionary<string, string>(properties, StringComparer.OrdinalIgnoreCase) : properties;
+	}
+	#endregion
+
 	#region 公共字段
-	/// <summary>获取标识的对象类型。</summary>
-	public readonly Type Type = type ?? throw new ArgumentNullException(nameof(type));
-	/// <summary>获取标识键值。</summary>
-	public readonly object Value = value;
-	/// <summary>获取标识的标签。</summary>
-	public readonly string Label = label;
-	/// <summary>获取标识的描述。</summary>
-	public readonly string Description = description;
+	public readonly string Name;
+	public readonly Type Type;
+	public readonly object Value;
+	public readonly string Code;
+	public readonly string Label;
+	public readonly string Alias;
+	public readonly string Description;
 	#endregion
 
 	#region 公共属性
-	/// <summary>获取一个值，指示当前对象标识是否为一个空标识。</summary>
-	public bool IsEmpty => this.Type == null || this.Value == null;
-
-	/// <summary>获取一个值，指示当前对象标识是否具有键值。</summary>
-	public bool HasValue => this.Type != null && this.Value != null;
+	public IDictionary<string, string> Properties { get; }
+	public bool IsEmpty => (this.Type == null && this.Name == null) || this.Value == null;
+	public bool HasValue => !this.IsEmpty;
 	#endregion
 
 	#region 公共方法
-	public Identifier Cast<TType>() => new(typeof(TType), this.Value, this.Label, this.Description);
-	public Identifier<TValue> Cast<TType, TValue>() where TValue : IEquatable<TValue> => new(typeof(TType), Common.Convert.ConvertValue<TValue>(this.Value), this.Label, this.Description);
-
-	public bool Validate<TValue>(out TValue value) => Common.Convert.TryConvertValue(this.Value, out value);
-	public bool Validate<TType>() => this.Type != null && typeof(TType).IsAssignableFrom(this.Type);
-	public bool Validate<TType, TValue>(out TValue value) => this.Validate(typeof(TType), out value);
-	public bool Validate<TValue>(Type type, out TValue value)
+	public Identifier Cast<TType>() => this.IsEmpty ? default : new(null, typeof(TType), this.Value, this.Label, this.Description, this.Alias, this.Code, this.Properties, false);
+	public Identifier<TValue> Cast<TType, TValue>() => (Identifier<TValue>)this.Cast<TType>();
+	public bool Validate<TValue>(out TValue value)
 	{
-		if(type != null && this.Type != null && type.IsAssignableFrom(this.Type))
-			return Common.Convert.TryConvertValue<TValue>(this.Value, out value);
+		if(TryConvert(this.Value, typeof(TValue), out var converted))
+		{
+			value = (TValue)converted;
+			return true;
+		}
 
 		value = default;
 		return false;
 	}
-	#endregion
-
-	#region 重写方法
-	public bool Equals(Identifier other) => this.Type == other.Type && object.Equals(this.Value, other.Value);
-	public override bool Equals(object obj) => obj is Identifier other && this.Equals(other);
-	public override int GetHashCode() => this.Value is string text ? HashCode.Combine(this.Type, text.ToUpperInvariant()) : HashCode.Combine(this.Type, this.Value);
-	public override string ToString()
+	public bool Validate(string name) => this.HasValue && string.Equals(this.Name, name, StringComparison.OrdinalIgnoreCase);
+	public bool Validate<TType>() => this.HasValue && this.Type != null && typeof(TType).IsAssignableFrom(this.Type);
+	public bool Validate<TType, TValue>(out TValue value) => this.Validate(typeof(TType), out value);
+	public bool Validate<TValue>(string name, out TValue value)
 	{
-		if(this.IsEmpty)
-			return string.Empty;
-
-		string text = null;
-
-		if(!string.IsNullOrEmpty(this.Label))
-			text += $"{nameof(this.Label)}={this.Label};";
-		if(!string.IsNullOrEmpty(this.Description))
-			text += $"{nameof(this.Description)}={this.Description};";
-
-		//对标识值文本进行字符转义
-		var value = this.Value?.ToString()
-			.Replace("{", @"\{")
-			.Replace("}", @"\}");
-
-		if(string.IsNullOrEmpty(text))
-			return $"{TypeAlias.GetAlias(this.Type)}:{value}";
-		else
-			return $"{TypeAlias.GetAlias(this.Type)}:{value}" + '{' + text.Trim(';') + '}';
+		value = default;
+		return this.Validate(name) && this.Validate(out value);
+	}
+	public bool Validate<TValue>(Type type, out TValue value)
+	{
+		value = default;
+		return type != null && this.Type != null && type.IsAssignableFrom(this.Type) && this.Validate(out value);
 	}
 	#endregion
 
-	#region 符号重载
-	public static bool operator ==(Identifier left, Identifier right) => left.Equals(right);
-	public static bool operator !=(Identifier left, Identifier right) => !(left == right);
+	#region 重写方法
+	public bool Equals(Identifier other) => this.IsEmpty ? other.IsEmpty : !other.IsEmpty && this.Type == other.Type &&
+		string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && Equals(this.Value, other.Value);
+	public override bool Equals(object obj) => obj is Identifier other && this.Equals(other);
+	public override int GetHashCode() => this.IsEmpty ? 0 : HashCode.Combine(this.Type, this.Name == null ? 0 : StringComparer.OrdinalIgnoreCase.GetHashCode(this.Name), this.Value);
+	public override string ToString() => this.ToString(null, null);
+	public string ToString(string format) => this.ToString(format, null);
+	public string ToString(string format, IFormatProvider provider) => Format(this, format);
+	#endregion
 
+	#region 解析方法
+	public static Identifier Parse(string text) => Parse(text, null);
+	public static Identifier Parse(string text, IFormatProvider provider) => text == null ? throw new ArgumentNullException(nameof(text)) : Parse(text.AsSpan(), provider);
+	public static Identifier Parse(ReadOnlySpan<char> text) => Parse(text, null);
+	public static Identifier Parse(ReadOnlySpan<char> text, IFormatProvider provider) => TryParse(text, provider, out var result) ? result : throw new FormatException(Zongsoft.Properties.Resources.Identifier_InvalidFormat_Message);
+	public static bool TryParse(string text, out Identifier result) => TryParse(text, null, out result);
+	public static bool TryParse(string text, IFormatProvider provider, out Identifier result)
+	{
+		result = default;
+		return text != null && TryParse(text.AsSpan(), provider, out result);
+	}
+	public static bool TryParse(ReadOnlySpan<char> text, out Identifier result) => TryParse(text, null, out result);
+	public static bool TryParse(ReadOnlySpan<char> text, IFormatProvider provider, out Identifier result) => TryParseCore(text, null, out result);
+	#endregion
+
+	#region 符号重写
+	public static bool operator ==(Identifier left, Identifier right) => left.Equals(right);
+	public static bool operator !=(Identifier left, Identifier right) => !left.Equals(right);
+	#endregion
+
+	#region 类型转换
 	public static explicit operator bool(Identifier identifier) => Common.Convert.ConvertValue<bool>(identifier.Value);
 	public static explicit operator char(Identifier identifier) => Common.Convert.ConvertValue<char>(identifier.Value);
 	public static explicit operator byte(Identifier identifier) => Common.Convert.ConvertValue<byte>(identifier.Value);
@@ -150,162 +177,5 @@ public readonly struct Identifier(Type type, object value, string label = null, 
 	DateTime IConvertible.ToDateTime(IFormatProvider provider) => Common.Convert.ConvertValue<DateTime>(this.Value);
 	object IConvertible.ToType(Type conversionType, IFormatProvider provider) => Common.Convert.ConvertValue(this.Value, conversionType);
 	TypeCode IConvertible.GetTypeCode() => this.Value == null ? TypeCode.Empty : Type.GetTypeCode(this.Value.GetType());
-	#endregion
-
-	#region 解析方法
-	public static Identifier Parse(ReadOnlySpan<char> text) => TryParse(text, out var result) ? result : throw new InvalidOperationException(Properties.Resources.Identifier_InvalidFormat_Message);
-	public static bool TryParse(ReadOnlySpan<char> text, out Identifier result)
-	{
-		if(text.IsEmpty)
-		{
-			result = default;
-			return false;
-		}
-
-		result = default;
-		return false;
-	}
-	#endregion
-
-	#region 嵌套子类
-	private sealed class TypeConverter : System.ComponentModel.TypeConverter
-	{
-		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
-		{
-			return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
-		}
-
-		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
-		{
-			return destinationType == typeof(string) || base.CanConvertTo(context, destinationType);
-		}
-
-		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
-		{
-			if(value is string text && Identifier.TryParse(text, out var result))
-				return result;
-
-			return base.ConvertFrom(context, culture, value);
-		}
-
-		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
-		{
-			if(value is Identifier identifier && destinationType == typeof(string))
-				return identifier.ToString();
-
-			return base.ConvertTo(context, culture, value, destinationType);
-		}
-	}
-
-	private sealed class JsonConverter : JsonConverter<Identifier>
-	{
-		public override Identifier Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-		{
-			return reader.TokenType switch
-			{
-				JsonTokenType.String => new(typeof(object), reader.GetString()),
-				JsonTokenType.Number => reader.TryGetInt32(out var integer) ? new(typeof(object), integer) : new(typeof(object), reader.GetDouble()),
-				JsonTokenType.True => new(typeof(object), true),
-				JsonTokenType.False => new(typeof(object), false),
-				JsonTokenType.Null => default,
-				_ => default,
-			};
-		}
-
-		public override void Write(Utf8JsonWriter writer, Identifier identifier, JsonSerializerOptions options)
-		{
-			if(identifier.IsEmpty || identifier.Value == null)
-			{
-				writer.WriteNullValue();
-				return;
-			}
-
-			Serialization.Json.JsonWriterExtension.WriteObject(writer, identifier.Value, options);
-		}
-	}
-	#endregion
-}
-
-/// <summary>表示对象标识的结构。</summary>
-public readonly struct Identifier<T>(Type type, T value, string label = null, string description = null) : IEquatable<Identifier<T>> where T : IEquatable<T>
-{
-	#region 公共字段
-	/// <summary>获取标识的对象类型。</summary>
-	public readonly Type Type = type ?? throw new ArgumentNullException(nameof(type));
-	/// <summary>获取标识键值。</summary>
-	public readonly T Value = value;
-	/// <summary>获取标识的标签。</summary>
-	public readonly string Label = label;
-	/// <summary>获取标识的描述。</summary>
-	public readonly string Description = description;
-	#endregion
-
-	#region 公共属性
-	/// <summary>获取一个值，指示当前对象标识是否为一个空标识。</summary>
-	public bool IsEmpty => this.Type == null || this.Value == null;
-
-	/// <summary>获取一个值，指示当前对象标识是否具有键值。</summary>
-	public bool HasValue => this.Type != null && this.Value != null;
-	#endregion
-
-	#region 公共方法
-	public bool Validate(out T value) => Common.Convert.TryConvertValue<T>(this.Value, out value);
-	public bool Validate<TType>(out T value) => this.Validate(typeof(TType), out value);
-	public bool Validate(Type type, out T value)
-	{
-		if(type != null && type.IsAssignableFrom(this.Type))
-			return Common.Convert.TryConvertValue<T>(this.Value, out value);
-
-		value = default;
-		return false;
-	}
-	#endregion
-
-	#region 重写方法
-	public bool Equals(Identifier<T> other) => this.Type == other.Type && object.Equals(this.Value, other.Value);
-	public override bool Equals(object obj) => obj is Identifier<T> other && this.Equals(other);
-	public override int GetHashCode() => this.Value is string text ? HashCode.Combine(this.Type, text.ToUpperInvariant()) : HashCode.Combine(this.Type, this.Value);
-	public override string ToString()
-	{
-		if(this.IsEmpty)
-			return string.Empty;
-
-		string text = null;
-
-		if(!string.IsNullOrEmpty(this.Label))
-			text += $"{nameof(this.Label)}={this.Label};";
-		if(!string.IsNullOrEmpty(this.Description))
-			text += $"{nameof(this.Description)}={this.Description};";
-
-		//对标识值文本进行字符转义
-		var value = this.Value?.ToString()
-			.Replace("{", @"\{")
-			.Replace("}", @"\}");
-
-		if(string.IsNullOrEmpty(text))
-			return $"{TypeAlias.GetAlias(this.Type)}:{value}";
-		else
-			return $"{TypeAlias.GetAlias(this.Type)}:{value}" + '{' + text.Trim(';') + '}';
-	}
-	#endregion
-
-	#region 符号重写
-	public static bool operator ==(Identifier<T> left, Identifier<T> right) => left.Equals(right);
-	public static bool operator !=(Identifier<T> left, Identifier<T> right) => !(left == right);
-	#endregion
-
-	#region 类型转换
-	public static implicit operator T(Identifier<T> identifier) => identifier.Value;
-	public static implicit operator Identifier(Identifier<T> identifier) => new(identifier.Type, identifier.Value, identifier.Label, identifier.Description);
-	public static explicit operator Identifier<T>(Identifier identifier) => new(identifier.Type, Common.Convert.ConvertValue<T>(identifier.Value), identifier.Label, identifier.Description);
-	#endregion
-
-	#region 解析方法
-	public static Identifier<T> Parse(ReadOnlySpan<char> text) => TryParse(text, out var result) ? result : throw new InvalidOperationException(Properties.Resources.Identifier_InvalidFormat_Message);
-	public static bool TryParse(ReadOnlySpan<char> text, out Identifier<T> result)
-	{
-		result = default;
-		return false;
-	}
 	#endregion
 }

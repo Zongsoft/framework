@@ -100,3 +100,13 @@ Additional artifacts listed by the deployment manifest include `Zongsoft.Securit
 `Passworder` sets and verifies user passwords. `Password` encapsulates the PBKDF2 algorithm, iteration factor, salt and digest. The `Password` column stores the complete binary value with a capacity of 512 bytes; there is no separate `PasswordSalt` column. Only the `Password` format is accepted. A null or empty binary password accepts only null or empty-string input; nonempty input fails. The account must exist and be enabled. Users can supply an empty old password to set a new one.
 
 Recovery questions use `SecretQuestion` (500 characters) and answers use `SecretAnswer` (2048 bytes), supporting three to five pairs. Initialization SQL creates new tables and does not upgrade existing tables; existing databases must meet these column and capacity requirements.
+
+## Identifier Type Aliases
+
+The Security module registers `Zongsoft.Security.User` and `Zongsoft.Security.Role` through `TypeAlias.Aliases.Map` when `Module.Current` is created. The plugin mounts this module during startup. Tools without plugin startup should initialize it before reading or writing short identifiers such as `$Zongsoft.Security.User:<uint>17`:
+
+```csharp
+_ = Zongsoft.Security.Module.Current;
+```
+
+Without registration, identifiers use ordinary full type names, such as `$Zongsoft.Security.Privileges.IUser@Zongsoft.Core:<uint>17`. The [identifier protocol](../Zongsoft.Core/docs/identifiers.md) defines the shared text and JSON formats.

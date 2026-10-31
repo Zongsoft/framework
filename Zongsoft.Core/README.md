@@ -242,3 +242,7 @@ The `samples` directory contains small console applications that exercise real A
 ## License
 
 Zongsoft.Core is released under the [LGPL-3.0-or-later](https://github.com/Zongsoft/framework/blob/main/LICENSE) license.
+
+## Identifiers
+
+Typed identifiers support logical names, CLR types, composite keys, business codes, display metadata and registered shorthand. String/span parsing, JSON and TypeConverter share one protocol. See [Identifiers](docs/identifiers.md).
