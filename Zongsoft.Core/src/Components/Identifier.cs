@@ -35,7 +35,7 @@ using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Components;
 
-/// <summary>表示由逻辑名称或 CLR 类型限定的类型化标识。</summary>
+/// <summary>表示由逻辑名称或类型限定的类型化标识。</summary>
 /// <remarks>身份比较仅包含类别和类型化键；逻辑名称忽略大小写，元数据不参与比较。结构复制及无损转换共享扩展属性字典。</remarks>
 [TypeConverter(typeof(IdentifierConverter))]
 [JsonConverter(typeof(IdentifierJsonConverter))]
@@ -127,13 +127,13 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IConvertible
 	#endregion
 
 	#region 公共字段
-	/// <summary>获取标识的逻辑名称；使用 CLR 类型作为类别时为空。</summary>
+	/// <summary>获取标识的逻辑名称；使用 <see cref="Type"/> 类型作为类别时该属性为空。</summary>
 	public readonly string Name;
-	/// <summary>获取标识的 CLR 类别；使用逻辑名称作为类别时为空。</summary>
+	/// <summary>获取标识的类别；使用逻辑名称（<see cref="Name"/>）作为类别时该属性为空。</summary>
 	public readonly Type Type;
 	/// <summary>获取可选的业务编号；不从键值推导，不参与身份比较。</summary>
 	public readonly string Code;
-	/// <summary>获取保持实际类型的身份键值。</summary>
+	/// <summary>获取保持实际类型的身份键值，即标识符值。</summary>
 	public readonly object Value;
 	/// <summary>获取可选的展示名称，不参与身份比较。</summary>
 	public readonly string Label;
