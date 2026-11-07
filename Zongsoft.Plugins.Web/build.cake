@@ -1,5 +1,5 @@
 var target = Argument("target", "default");
-var edition = Argument("edition", "Debug");
+var compilation = Argument("compilation", "Debug");
 
 var solutionFile = "Zongsoft.Plugins.Web.slnx";
 
@@ -7,8 +7,8 @@ Task("clean")
 	.Description("清理解决方案")
 	.Does(() =>
 {
-	CleanDirectories($"**/bin/{edition}");
-	CleanDirectories($"**/obj/{edition}");
+	CleanDirectories($"**/bin/{compilation}");
+	CleanDirectories($"**/obj/{compilation}");
 });
 
 Task("restore")
@@ -26,7 +26,7 @@ Task("build")
 {
 	var settings = new DotNetBuildSettings
 	{
-		Configuration = edition,
+		Configuration = compilation,
 	};
 
 	DotNetBuild(solutionFile, settings);
@@ -41,7 +41,7 @@ Task("test")
 	{
 		NoBuild = true,
 		NoRestore = true,
-		Configuration = edition,
+		Configuration = compilation,
 	};
 
 	var projects = GetFiles("test/unit/*.csproj");
@@ -59,7 +59,7 @@ Task("integration-test")
 {
 	DotNetBuild("test/integration/Zongsoft.Plugins.Web.Tests.slnx", new DotNetBuildSettings
 	{
-		Configuration = edition,
+		Configuration = compilation,
 		MSBuildSettings = new DotNetMSBuildSettings().WithProperty("GeneratePackageOnBuild", "false"),
 	});
 
@@ -67,7 +67,7 @@ Task("integration-test")
 	{
 		NoBuild = true,
 		NoRestore = true,
-		Configuration = edition,
+		Configuration = compilation,
 	});
 });
 
@@ -76,7 +76,7 @@ Task("pack")
 	.IsDependentOn("build")
 	.Does(() =>
 {
-	var packages = GetFiles($"**/{edition}/*.nupkg");
+	var packages = GetFiles($"**/{compilation}/*.nupkg");
 
 	foreach(var package in packages)
 	{

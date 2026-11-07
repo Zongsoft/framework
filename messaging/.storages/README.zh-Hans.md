@@ -99,4 +99,4 @@ nuget:Zongsoft.Messaging.Storages.Data
 
 ## 发布
 
-设置 `NUGET_API_KEY` 后，在本目录执行 `dotnet cake build.cake --target=pack --edition=Release`。该任务构建解决方案并发布 NuGet 包；应先发布项目引用的 `Zongsoft.Core` 和 `Zongsoft.Data` 版本。
+设置 `NUGET_API_KEY` 后，在本目录执行 `dotnet cake build.cake --target=pack --compilation=Release`。该任务构建解决方案并发布 NuGet 包；应先发布项目引用的 `Zongsoft.Core` 和 `Zongsoft.Data` 版本。

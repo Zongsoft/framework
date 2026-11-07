@@ -78,21 +78,21 @@ Run the equivalent local Cake commands from the `Zongsoft.Data` directory:
 
 ```powershell
 # Publish only Zongsoft.Data (the following commands are equivalent)
-dotnet cake --edition Release --target pack
-dotnet cake --edition Release --target pack --drivers none
+dotnet cake --compilation Release --target pack
+dotnet cake --compilation Release --target pack --drivers none
 
 # Publish all data drivers
-dotnet cake --edition Release --target pack --drivers *
+dotnet cake --compilation Release --target pack --drivers *
 
 # Publish one specified data driver
-dotnet cake --edition Release --target pack --drivers=mssql
-dotnet cake --edition Release --target pack --drivers=mysql
-dotnet cake --edition Release --target pack --drivers=sqlite
-dotnet cake --edition Release --target pack --drivers=duckdb
-dotnet cake --edition Release --target pack --drivers=influx
-dotnet cake --edition Release --target pack --drivers=tdengine
-dotnet cake --edition Release --target pack --drivers=postgres
-dotnet cake --edition Release --target pack --drivers=clickhouse
+dotnet cake --compilation Release --target pack --drivers=mssql
+dotnet cake --compilation Release --target pack --drivers=mysql
+dotnet cake --compilation Release --target pack --drivers=sqlite
+dotnet cake --compilation Release --target pack --drivers=duckdb
+dotnet cake --compilation Release --target pack --drivers=influx
+dotnet cake --compilation Release --target pack --drivers=tdengine
+dotnet cake --compilation Release --target pack --drivers=postgres
+dotnet cake --compilation Release --target pack --drivers=clickhouse
 ```
 
 > 💡 Tip: when `--drivers` is omitted, the Cake script treats it as an empty value. This has the same effect as passing `--drivers none`: only the `Zongsoft.Data` core project is processed. This rule applies to builds, tests, and publishing. Pass `--drivers *` explicitly to process every driver.

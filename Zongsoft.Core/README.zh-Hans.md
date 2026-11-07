@@ -216,14 +216,14 @@ dotnet test test/unit/Zongsoft.Core.Tests.csproj -c Release
 仓库也提供了 Cake 脚本：
 
 ```powershell
-dotnet cake build.cake --target=test --edition=Release
+dotnet cake build.cake --target=test --compilation=Release
 ```
 
 主解决方案与 Cake 默认目标仅运行 `test/unit`。[集成测试](test/integration/README.zh-Hans.md)需要显式执行：
 
 ```powershell
 dotnet test test/integration/Zongsoft.Core.Tests.slnx -c Release -p:GeneratePackageOnBuild=false
-# 或：dotnet cake build.cake --target=integration-test --edition=Release
+# 或：dotnet cake build.cake --target=integration-test --compilation=Release
 ```
 
 ## 示例

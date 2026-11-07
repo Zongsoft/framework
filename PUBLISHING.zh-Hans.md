@@ -78,21 +78,21 @@
 
 ```powershell
 # 仅发布 Zongsoft.Data（以下两条命令效果相同）
-dotnet cake --edition Release --target pack
-dotnet cake --edition Release --target pack --drivers none
+dotnet cake --compilation Release --target pack
+dotnet cake --compilation Release --target pack --drivers none
 
 # 发布所有数据驱动
-dotnet cake --edition Release --target pack --drivers *
+dotnet cake --compilation Release --target pack --drivers *
 
 # 发布指定的单个数据驱动
-dotnet cake --edition Release --target pack --drivers=mssql
-dotnet cake --edition Release --target pack --drivers=mysql
-dotnet cake --edition Release --target pack --drivers=sqlite
-dotnet cake --edition Release --target pack --drivers=duckdb
-dotnet cake --edition Release --target pack --drivers=influx
-dotnet cake --edition Release --target pack --drivers=tdengine
-dotnet cake --edition Release --target pack --drivers=postgres
-dotnet cake --edition Release --target pack --drivers=clickhouse
+dotnet cake --compilation Release --target pack --drivers=mssql
+dotnet cake --compilation Release --target pack --drivers=mysql
+dotnet cake --compilation Release --target pack --drivers=sqlite
+dotnet cake --compilation Release --target pack --drivers=duckdb
+dotnet cake --compilation Release --target pack --drivers=influx
+dotnet cake --compilation Release --target pack --drivers=tdengine
+dotnet cake --compilation Release --target pack --drivers=postgres
+dotnet cake --compilation Release --target pack --drivers=clickhouse
 ```
 
 > 💡 提示：省略 `--drivers` 时，Cake 脚本将其按空值处理，与传入 `--drivers none` 的效果相同，都只处理 `Zongsoft.Data` 核心项目；该规则同时适用于构建、测试和发布。若要处理全部驱动，必须明确传入 `--drivers *`。

@@ -99,4 +99,4 @@ Additional artifacts listed by the deployment manifest include `Zongsoft.Messagi
 
 ## Publishing
 
-Run `dotnet cake build.cake --target=pack --edition=Release` from this directory with `NUGET_API_KEY` set. The task builds the solution and publishes its NuGet packages. Publish the referenced `Zongsoft.Core` and `Zongsoft.Data` versions first.
+Run `dotnet cake build.cake --target=pack --compilation=Release` from this directory with `NUGET_API_KEY` set. The task builds the solution and publishes its NuGet packages. Publish the referenced `Zongsoft.Core` and `Zongsoft.Data` versions first.

@@ -216,14 +216,14 @@ dotnet test test/unit/Zongsoft.Core.Tests.csproj -c Release
 The repository also includes a Cake script:
 
 ```powershell
-dotnet cake build.cake --target=test --edition=Release
+dotnet cake build.cake --target=test --compilation=Release
 ```
 
 The main solution and the default Cake target run only `test/unit`. Run [integration tests](test/integration/README.md) explicitly:
 
 ```powershell
 dotnet test test/integration/Zongsoft.Core.Tests.slnx -c Release -p:GeneratePackageOnBuild=false
-# Or: dotnet cake build.cake --target=integration-test --edition=Release
+# Or: dotnet cake build.cake --target=integration-test --compilation=Release
 ```
 
 ## Samples

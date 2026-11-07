@@ -94,14 +94,14 @@ jobs:
         working-directory: ${{ inputs.project }}
         env:
           NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
-        run: dotnet cake --edition Release --target pack
+        run: dotnet cake --compilation Release --target pack
 
       - name: Build and publish data package
         if: inputs.project == 'Zongsoft.Data'
         working-directory: Zongsoft.Data
         env:
           NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
-        run: dotnet cake --edition Release --target pack --drivers none
+        run: dotnet cake --compilation Release --target pack --drivers none
 
       - name: Build and publish data driver
         if: startsWith(inputs.project, 'Zongsoft.Data.')
@@ -117,4 +117,4 @@ jobs:
             driver="postgres"
           fi
 
-          dotnet cake --edition Release --target pack --drivers="$driver"
+          dotnet cake --compilation Release --target pack --drivers="$driver"
