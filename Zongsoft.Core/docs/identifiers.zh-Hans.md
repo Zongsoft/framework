@@ -2,9 +2,9 @@
 
 [English](identifiers.md) | [简体中文](identifiers.zh-Hans.md)
 
-`Zongsoft.Components.Identifier` 通过逻辑名称 `Name` 或 CLR `Type` 限定键的身份，两种类别互斥。`Identifier<T>` 及二至五个泛型参数的版本提供类型化键；复合键使用 `ValueTuple`。转换为非泛型标识时保留键类型和元数据。
+`Zongsoft.Components.Identifier` 通过逻辑名称 `Name` 或 CLR `Type` 限定键的身份，两种类别互斥。`Identifier<T>` 及二至七个泛型参数的版本提供类型化键；复合键使用 `ValueTuple`。转换为非泛型标识时保留键类型和元数据。
 
-通用标识和以元组作为键的 `Identifier<T>` 支持二至七个分量的完整文本、JSON、类型转换及按序号读取和替换。独立泛型版本与简写登记最多提供五个分量。元组分量必须是标量键，不支持嵌套元组。
+通用标识和以元组作为键的 `Identifier<T>` 支持二至七个分量的完整文本、JSON、类型转换及按序号读取和替换。独立泛型版本与简写登记同样最多提供七个分量。元组分量必须是标量键，不支持嵌套元组。
 
 ```csharp
 var machine = new Identifier("Machine", 17u, "售货机");
@@ -14,7 +14,7 @@ Identifier untyped = branch;
 Identifier<(uint, uint)> tuple = branch;
 ```
 
-二至五个泛型参数的标识支持解构为类型化键分量，局部变量名称表达各分量的业务含义。默认标识解构后得到各分量的默认值。
+二至七个泛型参数的标识支持解构为类型化键分量，局部变量名称表达各分量的业务含义。默认标识解构后得到各分量的默认值。
 
 ```csharp
 var (tenantId, branchId) = branch;
@@ -111,7 +111,7 @@ var full = branch.ToString("F");        // Branch:<uint,uint>1,1001
 var parsed = Identifier.Parse(text);
 ```
 
-登记也接受 CLR Type，支持一至五个分量。默认分隔符为短横线 `-`，也可以显式指定逗号、斜杠或点；分量中的同字符会被转义。相同登记可重复调用，冲突登记抛出异常，不允许替换规则；支持并发读取与登记。
+登记也接受 CLR Type，支持一至七个分量。默认分隔符为短横线 `-`，也可以显式指定逗号、斜杠或点；分量中的同字符会被转义。相同登记可重复调用，冲突登记抛出异常，不允许替换规则；支持并发读取与登记。
 
 显式类型声明优先于登记规则。同名字符串键输出 `<string>` 避免混淆。已登记简写的数量、类型或范围不符时失败；未登记且未声明类型的非泛型输入按单个字符串键处理。单键泛型解析接受可赋值给 T 的声明或登记键类型，保留实际键类型，不进行数值类型转换。例如 `Identifier<object>` 可以承载 `Scalar:<uint>17`，而 `Identifier<int>` 拒绝该文本。没有类型声明和登记时，能够承载字符串的单键泛型按字符串解析，其余泛型参数提供预期键类型。复合键要求各分量类型匹配。跨应用传输简写要求采用相同登记；`ToString("F")` 不依赖业务简写规则。
 

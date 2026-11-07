@@ -440,6 +440,120 @@ public class IdentifierTest
 		Roundtrip(changed);
 	}
 
+	[Theory]
+	[InlineData(true)]
+	[InlineData(false)]
+	public void TestSixAndSevenGenericContracts(bool typedScope)
+	{
+		var properties = new Dictionary<string, string> { ["zone"] = "east" };
+		var six = typedScope ?
+			new Identifier<int, string, bool, decimal, long, byte>(typeof(Person), 1, "two", true, 4m, 5L, 6, ("C", "A"), "L", "D", properties) :
+			new Identifier<int, string, bool, decimal, long, byte>("Generic.Six", 1, "two", true, 4m, 5L, 6, ("C", "A"), "L", "D", properties);
+		var seven = typedScope ?
+			new Identifier<int, string, bool, decimal, long, byte, short>(typeof(Person), 1, "two", true, 4m, 5L, 6, 7, ("C", "A"), "L", "D", properties) :
+			new Identifier<int, string, bool, decimal, long, byte, short>("Generic.Seven", 1, "two", true, 4m, 5L, 6, 7, ("C", "A"), "L", "D", properties);
+		Roundtrip(six);
+		Roundtrip(seven);
+		Identifier<(int, string, bool, decimal, long, byte)> sixTuple = six;
+		Identifier<(int, string, bool, decimal, long, byte, short)> sevenTuple = seven;
+		Identifier<int, string, bool, decimal, long, byte> restoredSix = sixTuple;
+		Identifier<int, string, bool, decimal, long, byte, short> restoredSeven = sevenTuple;
+		Assert.Equal(six, restoredSix);
+		Assert.Equal(seven, restoredSeven);
+		Assert.Same(six.Properties, sixTuple.Properties);
+		Assert.Same(seven.Properties, restoredSeven.Properties);
+		Assert.NotSame(properties, seven.Properties);
+		Assert.Equal("C", restoredSeven.Code);
+		Assert.Equal("A", restoredSeven.Alias);
+		Assert.Equal("L", restoredSeven.Label);
+		Assert.Equal("D", restoredSeven.Description);
+
+		var (a, b, c, d, e, f) = six;
+		Assert.Equal(six.Value, (a, b, c, d, e, f));
+		var (g, h, i, j, k, l, m) = seven;
+		Assert.Equal(seven.Value, (g, h, i, j, k, l, m));
+		Assert.True(six.TryGetValue(5, out byte sixth));
+		Assert.True(seven.TryGetValue(6, out short seventh));
+		Assert.Equal((byte)6, sixth);
+		Assert.Equal((short)7, seventh);
+		Assert.Equal((1, "two", true, 4m, 5L, (byte)9), six.With(5, "9").Value);
+		Assert.Equal((1, "two", true, 4m, 5L, (byte)6, (short)9), seven.With(6, 9).Value);
+		Assert.Throws<ArgumentOutOfRangeException>(() => six.With(6, 1));
+		Assert.Throws<ArgumentOutOfRangeException>(() => seven.With(7, 1));
+		Assert.Throws<InvalidCastException>(() => six.With(5, 256));
+
+		var sixCalls = 0;
+		Func<int, string, bool, decimal, long, byte, bool> sixPredicate = (v1, v2, v3, v4, v5, v6) =>
+		{
+			sixCalls++;
+			return v1 == 1 && v2 == "two" && v3 && v4 == 4m && v5 == 5L && v6 == 6;
+		};
+		var sevenCalls = 0;
+		Func<int, string, bool, decimal, long, byte, short, bool> sevenPredicate = (v1, v2, v3, v4, v5, v6, v7) =>
+		{
+			sevenCalls++;
+			return v1 == 1 && v2 == "two" && v3 && v4 == 4m && v5 == 5L && v6 == 6 && v7 == 7;
+		};
+		Assert.True(typedScope ? six.Validate(typeof(Person), sixPredicate) : six.Validate("Generic.Six", sixPredicate));
+		Assert.True(typedScope ? seven.Validate(typeof(Person), sevenPredicate) : seven.Validate("Generic.Seven", sevenPredicate));
+		Assert.False(six.Validate("Missing", sixPredicate));
+		Assert.False(seven.Validate(typeof(IDisposable), sevenPredicate));
+		Assert.Equal(1, sixCalls);
+		Assert.Equal(1, sevenCalls);
+		Assert.Throws<ArgumentNullException>(() => six.Validate("Generic.Six", null));
+		Assert.Throws<ArgumentNullException>(() => seven.Validate(typeof(Person), null));
+
+		var updatedSix = six with { Value = (2, "other", false, 8m, 9L, 10), Label = "Updated" };
+		var updatedSeven = seven with { Value = (2, "other", false, 8m, 9L, 10, 11), Code = "Other" };
+		Assert.Equal((2, "other", false, 8m, 9L, (byte)10), updatedSix.Value);
+		Assert.Equal((2, "other", false, 8m, 9L, (byte)10, (short)11), updatedSeven.Value);
+		Assert.Same(six.Properties, updatedSix.Properties);
+		Assert.Same(seven.Properties, updatedSeven.Properties);
+		Assert.Equal(six, six with { Label = "Other" });
+		Assert.Equal(seven, seven with { Code = "Other" });
+		Assert.Equal(seven.GetHashCode(), (seven with { Code = "Other" }).GetHashCode());
+		Assert.NotEqual(six, updatedSix);
+		Assert.NotEqual(seven, updatedSeven);
+		Roundtrip(updatedSix);
+		Roundtrip(updatedSeven);
+
+		var dictionary = new Dictionary<Identifier<int, string, bool, decimal, long, byte, short>, string> { [seven] = "value" };
+		var copy = JsonSerializer.Deserialize<Dictionary<Identifier<int, string, bool, decimal, long, byte, short>, string>>(JsonSerializer.Serialize(dictionary));
+		Assert.Equal("value", copy[seven]);
+		Assert.False(Identifier<int, string, bool, decimal, long, byte>.TryParse(seven.ToString("F"), out _));
+		Assert.False(Identifier<int, string, bool, decimal, long, byte, short>.TryParse(six.ToString("F"), out _));
+		Assert.Throws<ArgumentNullException>(() => Identifier<int, string, bool, decimal, long, byte>.Parse((string)null));
+		Assert.True(Identifier<int, string, bool, decimal, long, byte, short>.Parse(string.Empty).IsEmpty);
+		Roundtrip(default(Identifier<int, string, bool, decimal, long, byte>));
+		Roundtrip(default(Identifier<int, string, bool, decimal, long, byte, short>));
+	}
+
+	[Fact]
+	public void TestSixAndSevenGenericFormatting()
+	{
+		Identifier.Formatting.Register<int, string, bool, decimal, long, byte>("Test.GenericSix", '/');
+		Identifier.Formatting.Register<int, string, bool, decimal, long, byte, short>("Test.GenericSeven", '/');
+		Identifier.Formatting.Register<int, string, bool, decimal, long, byte>(typeof(SixKeyScope), '/');
+		Identifier.Formatting.Register<int, string, bool, decimal, long, byte, short>(typeof(SevenKeyScope), '/');
+		var six = new Identifier<int, string, bool, decimal, long, byte>("Test.GenericSix", 1, "a/b", true, 4m, 5L, 6);
+		var seven = new Identifier<int, string, bool, decimal, long, byte, short>("Test.GenericSeven", 1, "a/b", true, 4m, 5L, 6, 7);
+		var typedSix = new Identifier<int, string, bool, decimal, long, byte>(typeof(SixKeyScope), six.Value);
+		var typedSeven = new Identifier<int, string, bool, decimal, long, byte, short>(typeof(SevenKeyScope), seven.Value);
+		Assert.StartsWith("Test.GenericSix:1/a\\/b/", six.ToString());
+		Assert.StartsWith("Test.GenericSeven:1/a\\/b/", seven.ToString());
+		Assert.StartsWith("Test.GenericSeven:<int,string,bool,decimal,long,byte,short>", seven.ToString("F"));
+		Roundtrip(six);
+		Roundtrip(seven);
+		Roundtrip(typedSix);
+		Roundtrip(typedSeven);
+		Roundtrip((Identifier)seven);
+		Assert.Equal(seven, Identifier<int, string, bool, decimal, long, byte, short>.Parse(seven.ToString("F")));
+		Assert.Equal((Identifier)seven, Identifier.Parse(seven.ToString()));
+		Identifier.Formatting.Register<int, string, bool, decimal, long, byte>("Test.GenericSix", '/');
+		Assert.Throws<InvalidOperationException>(() => Identifier.Formatting.Register<int, string, bool, decimal, long, byte, short>("Test.GenericSix", '/'));
+		Assert.Throws<ArgumentException>(() => Identifier.Formatting.Register("Test.TooMany", '/', Enumerable.Repeat(typeof(int), 8).ToArray()));
+	}
+
 	[Fact]
 	public void TestValidationPredicates()
 	{
@@ -672,6 +786,14 @@ public class IdentifierTest
 				new Identifier<int, string, bool, decimal, long>("Example", 1, "two", true, 4m, 5L, "L", "D", properties),
 			typed ? new Identifier<int, string, bool, decimal, long>(typeof(Person), (1, "two", true, 4m, 5L), "L", "D", properties) :
 				new Identifier<int, string, bool, decimal, long>("Example", (1, "two", true, 4m, 5L), "L", "D", properties),
+			typed ? new Identifier<int, string, bool, decimal, long, byte>(typeof(Person), 1, "two", true, 4m, 5L, (byte)6, "L", "D", properties) :
+				new Identifier<int, string, bool, decimal, long, byte>("Example", 1, "two", true, 4m, 5L, (byte)6, "L", "D", properties),
+			typed ? new Identifier<int, string, bool, decimal, long, byte>(typeof(Person), (1, "two", true, 4m, 5L, (byte)6), "L", "D", properties) :
+				new Identifier<int, string, bool, decimal, long, byte>("Example", (1, "two", true, 4m, 5L, (byte)6), "L", "D", properties),
+			typed ? new Identifier<int, string, bool, decimal, long, byte, short>(typeof(Person), 1, "two", true, 4m, 5L, (byte)6, (short)7, "L", "D", properties) :
+				new Identifier<int, string, bool, decimal, long, byte, short>("Example", 1, "two", true, 4m, 5L, (byte)6, (short)7, "L", "D", properties),
+			typed ? new Identifier<int, string, bool, decimal, long, byte, short>(typeof(Person), (1, "two", true, 4m, 5L, (byte)6, (short)7), "L", "D", properties) :
+				new Identifier<int, string, bool, decimal, long, byte, short>("Example", (1, "two", true, 4m, 5L, (byte)6, (short)7), "L", "D", properties),
 		];
 		Identifier[] pair =
 		[
@@ -695,6 +817,14 @@ public class IdentifierTest
 				new Identifier<int, string, bool, decimal, long>("Example", 1, "two", true, 4m, 5L, ("C", "A"), "L", "D", properties),
 			typed ? new Identifier<int, string, bool, decimal, long>(typeof(Person), (1, "two", true, 4m, 5L), ("C", "A"), "L", "D", properties) :
 				new Identifier<int, string, bool, decimal, long>("Example", (1, "two", true, 4m, 5L), ("C", "A"), "L", "D", properties),
+			typed ? new Identifier<int, string, bool, decimal, long, byte>(typeof(Person), 1, "two", true, 4m, 5L, (byte)6, ("C", "A"), "L", "D", properties) :
+				new Identifier<int, string, bool, decimal, long, byte>("Example", 1, "two", true, 4m, 5L, (byte)6, ("C", "A"), "L", "D", properties),
+			typed ? new Identifier<int, string, bool, decimal, long, byte>(typeof(Person), (1, "two", true, 4m, 5L, (byte)6), ("C", "A"), "L", "D", properties) :
+				new Identifier<int, string, bool, decimal, long, byte>("Example", (1, "two", true, 4m, 5L, (byte)6), ("C", "A"), "L", "D", properties),
+			typed ? new Identifier<int, string, bool, decimal, long, byte, short>(typeof(Person), 1, "two", true, 4m, 5L, (byte)6, (short)7, ("C", "A"), "L", "D", properties) :
+				new Identifier<int, string, bool, decimal, long, byte, short>("Example", 1, "two", true, 4m, 5L, (byte)6, (short)7, ("C", "A"), "L", "D", properties),
+			typed ? new Identifier<int, string, bool, decimal, long, byte, short>(typeof(Person), (1, "two", true, 4m, 5L, (byte)6, (short)7), ("C", "A"), "L", "D", properties) :
+				new Identifier<int, string, bool, decimal, long, byte, short>("Example", (1, "two", true, 4m, 5L, (byte)6, (short)7), ("C", "A"), "L", "D", properties),
 		];
 		Identifier[] triple =
 		[
@@ -718,6 +848,14 @@ public class IdentifierTest
 				new Identifier<int, string, bool, decimal, long>("Example", 1, "two", true, 4m, 5L, ("C", "A", "L"), "D", properties),
 			typed ? new Identifier<int, string, bool, decimal, long>(typeof(Person), (1, "two", true, 4m, 5L), ("C", "A", "L"), "D", properties) :
 				new Identifier<int, string, bool, decimal, long>("Example", (1, "two", true, 4m, 5L), ("C", "A", "L"), "D", properties),
+			typed ? new Identifier<int, string, bool, decimal, long, byte>(typeof(Person), 1, "two", true, 4m, 5L, (byte)6, ("C", "A", "L"), "D", properties) :
+				new Identifier<int, string, bool, decimal, long, byte>("Example", 1, "two", true, 4m, 5L, (byte)6, ("C", "A", "L"), "D", properties),
+			typed ? new Identifier<int, string, bool, decimal, long, byte>(typeof(Person), (1, "two", true, 4m, 5L, (byte)6), ("C", "A", "L"), "D", properties) :
+				new Identifier<int, string, bool, decimal, long, byte>("Example", (1, "two", true, 4m, 5L, (byte)6), ("C", "A", "L"), "D", properties),
+			typed ? new Identifier<int, string, bool, decimal, long, byte, short>(typeof(Person), 1, "two", true, 4m, 5L, (byte)6, (short)7, ("C", "A", "L"), "D", properties) :
+				new Identifier<int, string, bool, decimal, long, byte, short>("Example", 1, "two", true, 4m, 5L, (byte)6, (short)7, ("C", "A", "L"), "D", properties),
+			typed ? new Identifier<int, string, bool, decimal, long, byte, short>(typeof(Person), (1, "two", true, 4m, 5L, (byte)6, (short)7), ("C", "A", "L"), "D", properties) :
+				new Identifier<int, string, bool, decimal, long, byte, short>("Example", (1, "two", true, 4m, 5L, (byte)6, (short)7), ("C", "A", "L"), "D", properties),
 		];
 
 		properties["zone"] = "west";
@@ -874,6 +1012,9 @@ public class IdentifierTest
 			Assert.Equal(text, result.ToString());
 		}
 	}
+
+	private sealed class SixKeyScope { }
+	private sealed class SevenKeyScope { }
 
 	private class Person
 	{

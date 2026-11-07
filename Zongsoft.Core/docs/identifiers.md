@@ -2,9 +2,9 @@
 
 [English](identifiers.md) | [简体中文](identifiers.zh-Hans.md)
 
-`Zongsoft.Components.Identifier` identifies a value within either a logical `Name` or a CLR `Type`. `Identifier<T>` and the versions with two through five type parameters expose typed keys. Composite keys use `ValueTuple`; conversion to the non-generic identifier preserves the key type and metadata.
+`Zongsoft.Components.Identifier` identifies a value within either a logical `Name` or a CLR `Type`. `Identifier<T>` and the versions with two through seven type parameters expose typed keys. Composite keys use `ValueTuple`; conversion to the non-generic identifier preserves the key type and metadata.
 
-The non-generic identifier and `Identifier<T>` with a tuple key support two through seven components in complete text, JSON, type conversion, and ordinal key access or replacement. Dedicated generic variants and shorthand registration expose up to five components. Tuple components must be scalar keys; nested tuples are unsupported.
+The non-generic identifier and `Identifier<T>` with a tuple key support two through seven components in complete text, JSON, type conversion, and ordinal key access or replacement. Dedicated generic variants and shorthand registration also support up to seven components. Tuple components must be scalar keys; nested tuples are unsupported.
 
 ```csharp
 var machine = new Identifier("Machine", 17u, "Vending machine");
@@ -14,7 +14,7 @@ Identifier untyped = branch;
 Identifier<(uint, uint)> tuple = branch;
 ```
 
-Identifiers with two to five generic parameters support deconstruction into typed key components. Local variable names express their business meaning. A default identifier yields the default value of each component.
+Identifiers with two to seven generic parameters support deconstruction into typed key components. Local variable names express their business meaning. A default identifier yields the default value of each component.
 
 ```csharp
 var (tenantId, branchId) = branch;
@@ -111,7 +111,7 @@ var full = branch.ToString("F");        // Branch:<uint,uint>1,1001
 var parsed = Identifier.Parse(text);
 ```
 
-Registration also accepts a CLR Type and supports one through five components. The default separator is `-`; explicit separators can also be `,`, `/` or `.`; component content escapes the selected separator. Identical registrations are idempotent, conflicting registrations throw, and rules cannot be replaced. Concurrent reads and registrations are supported.
+Registration also accepts a CLR Type and supports one through seven components. The default separator is `-`; explicit separators can also be `,`, `/` or `.`; component content escapes the selected separator. Identical registrations are idempotent, conflicting registrations throw, and rules cannot be replaced. Concurrent reads and registrations are supported.
 
 Explicit key types override registered rules. A string key in a registered scope includes `<string>` to avoid misinterpretation. Invalid shorthand counts, types or ranges fail; unregistered, untyped non-generic input is a scalar string. Scalar generic parsing accepts a declared or registered key type assignable to `T`, preserving the actual key type without numeric conversion. For example, `Identifier<object>` can carry `Scalar:<uint>17`, while `Identifier<int>` rejects it. With no declaration or registration, a scalar carrier that accepts strings parses a string key; other generic parameters provide the expected key types. Composite keys require matching component types. Shorthand exchanged between applications requires matching registrations; `ToString("F")` is independent of application shorthand rules.
 

@@ -39,7 +39,7 @@ namespace Zongsoft.Components;
 
 /// <summary>将标识与统一协议字符串相互转换。</summary>
 /// <param name="type">具体的标识类型。</param>
-internal sealed class IdentifierConverter(Type type) : TypeConverter
+internal sealed class IdentifierTypeConverter(Type type) : TypeConverter
 {
 	#region 私有字段
 	private readonly MethodInfo _parse = type.GetMethod(nameof(Identifier.Parse), [typeof(string)]);

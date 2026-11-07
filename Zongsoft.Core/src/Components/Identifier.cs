@@ -37,7 +37,7 @@ namespace Zongsoft.Components;
 
 /// <summary>表示由逻辑名称或类型限定的类型化标识。</summary>
 /// <remarks>身份比较仅包含类别和类型化键；逻辑名称忽略大小写，元数据不参与比较。结构复制及无损转换共享扩展属性字典。</remarks>
-[TypeConverter(typeof(IdentifierConverter))]
+[TypeConverter(typeof(IdentifierTypeConverter))]
 [JsonConverter(typeof(IdentifierJsonConverter))]
 public readonly partial struct Identifier : IEquatable<Identifier>, IConvertible, ISpanParsable<Identifier>, IFormattable
 {

@@ -101,6 +101,38 @@ public readonly partial struct Identifier
 		/// <exception cref="InvalidOperationException">该类别已经登记了不同的键类型或分隔符。</exception>
 		/// <remarks>重复登记同一规则不会改变状态。只有实际键类型与规则完全匹配时，默认文本格式才输出简写；完整格式不依赖此规则。</remarks>
 		public static void Register<T1, T2, T3, T4, T5>(string name, char separator = '-') => Register(name, separator, typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5));
+
+		/// <summary>为逻辑名称登记键类型及简写分隔符。</summary>
+		/// <typeparam name="T1">第 1 个键分量的类型。</typeparam>
+		/// <typeparam name="T2">第 2 个键分量的类型。</typeparam>
+		/// <typeparam name="T3">第 3 个键分量的类型。</typeparam>
+		/// <typeparam name="T4">第 4 个键分量的类型。</typeparam>
+		/// <typeparam name="T5">第 5 个键分量的类型。</typeparam>
+		/// <typeparam name="T6">第 6 个键分量的类型。</typeparam>
+		/// <param name="name">逻辑名称，遵守标识名称规则并忽略大小写。</param>
+		/// <param name="separator">键分量分隔符，仅支持短横线、逗号、斜杠或点。</param>
+		/// <exception cref="ArgumentException">名称或键类型不符合登记规则。</exception>
+		/// <exception cref="ArgumentOutOfRangeException">不支持指定的分隔符。</exception>
+		/// <exception cref="InvalidOperationException">该类别已经登记了不同的键类型或分隔符。</exception>
+		/// <remarks>重复登记同一规则不会改变状态。只有实际键类型与规则完全匹配时，默认文本格式才输出简写；完整格式不依赖此规则。</remarks>
+		public static void Register<T1, T2, T3, T4, T5, T6>(string name, char separator = '-') => Register(name, separator, typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6));
+
+		/// <summary>为逻辑名称登记键类型及简写分隔符。</summary>
+		/// <typeparam name="T1">第 1 个键分量的类型。</typeparam>
+		/// <typeparam name="T2">第 2 个键分量的类型。</typeparam>
+		/// <typeparam name="T3">第 3 个键分量的类型。</typeparam>
+		/// <typeparam name="T4">第 4 个键分量的类型。</typeparam>
+		/// <typeparam name="T5">第 5 个键分量的类型。</typeparam>
+		/// <typeparam name="T6">第 6 个键分量的类型。</typeparam>
+		/// <typeparam name="T7">第 7 个键分量的类型。</typeparam>
+		/// <param name="name">逻辑名称，遵守标识名称规则并忽略大小写。</param>
+		/// <param name="separator">键分量分隔符，仅支持短横线、逗号、斜杠或点。</param>
+		/// <exception cref="ArgumentException">名称或键类型不符合登记规则。</exception>
+		/// <exception cref="ArgumentOutOfRangeException">不支持指定的分隔符。</exception>
+		/// <exception cref="InvalidOperationException">该类别已经登记了不同的键类型或分隔符。</exception>
+		/// <remarks>重复登记同一规则不会改变状态。只有实际键类型与规则完全匹配时，默认文本格式才输出简写；完整格式不依赖此规则。</remarks>
+		public static void Register<T1, T2, T3, T4, T5, T6, T7>(string name, char separator = '-') => Register(name, separator, typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7));
+
 		/// <summary>为 CLR 类别登记键类型及简写分隔符。</summary>
 		/// <typeparam name="T">完整键的类型。</typeparam>
 		/// <param name="type">作为类别的 CLR 类型，不能为空。</param>
@@ -162,10 +194,43 @@ public readonly partial struct Identifier
 		/// <remarks>重复登记同一规则不会改变状态。只有实际键类型与规则完全匹配时，默认文本格式才输出简写；完整格式不依赖此规则。</remarks>
 		public static void Register<T1, T2, T3, T4, T5>(Type type, char separator = '-') => Register(type, separator, typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5));
 
+		/// <summary>为 CLR 类别登记键类型及简写分隔符。</summary>
+		/// <typeparam name="T1">第 1 个键分量的类型。</typeparam>
+		/// <typeparam name="T2">第 2 个键分量的类型。</typeparam>
+		/// <typeparam name="T3">第 3 个键分量的类型。</typeparam>
+		/// <typeparam name="T4">第 4 个键分量的类型。</typeparam>
+		/// <typeparam name="T5">第 5 个键分量的类型。</typeparam>
+		/// <typeparam name="T6">第 6 个键分量的类型。</typeparam>
+		/// <param name="type">作为类别的 CLR 类型，不能为空。</param>
+		/// <param name="separator">键分量分隔符，仅支持短横线、逗号、斜杠或点。</param>
+		/// <exception cref="ArgumentNullException">类别类型为空。</exception>
+		/// <exception cref="ArgumentException">键类型不支持双向文本转换。</exception>
+		/// <exception cref="ArgumentOutOfRangeException">不支持指定的分隔符。</exception>
+		/// <exception cref="InvalidOperationException">该类别已经登记了不同的键类型或分隔符。</exception>
+		/// <remarks>重复登记同一规则不会改变状态。只有实际键类型与规则完全匹配时，默认文本格式才输出简写；完整格式不依赖此规则。</remarks>
+		public static void Register<T1, T2, T3, T4, T5, T6>(Type type, char separator = '-') => Register(type, separator, typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6));
+
+		/// <summary>为 CLR 类别登记键类型及简写分隔符。</summary>
+		/// <typeparam name="T1">第 1 个键分量的类型。</typeparam>
+		/// <typeparam name="T2">第 2 个键分量的类型。</typeparam>
+		/// <typeparam name="T3">第 3 个键分量的类型。</typeparam>
+		/// <typeparam name="T4">第 4 个键分量的类型。</typeparam>
+		/// <typeparam name="T5">第 5 个键分量的类型。</typeparam>
+		/// <typeparam name="T6">第 6 个键分量的类型。</typeparam>
+		/// <typeparam name="T7">第 7 个键分量的类型。</typeparam>
+		/// <param name="type">作为类别的 CLR 类型，不能为空。</param>
+		/// <param name="separator">键分量分隔符，仅支持短横线、逗号、斜杠或点。</param>
+		/// <exception cref="ArgumentNullException">类别类型为空。</exception>
+		/// <exception cref="ArgumentException">键类型不支持双向文本转换。</exception>
+		/// <exception cref="ArgumentOutOfRangeException">不支持指定的分隔符。</exception>
+		/// <exception cref="InvalidOperationException">该类别已经登记了不同的键类型或分隔符。</exception>
+		/// <remarks>重复登记同一规则不会改变状态。只有实际键类型与规则完全匹配时，默认文本格式才输出简写；完整格式不依赖此规则。</remarks>
+		public static void Register<T1, T2, T3, T4, T5, T6, T7>(Type type, char separator = '-') => Register(type, separator, typeof(T1), typeof(T2), typeof(T3), typeof(T4), typeof(T5), typeof(T6), typeof(T7));
+
 		/// <summary>为逻辑名称登记键类型及简写分隔符。</summary>
 		/// <param name="name">逻辑名称，遵守标识名称规则并忽略大小写。</param>
 		/// <param name="separator">键分量分隔符，仅支持短横线、逗号、斜杠或点。</param>
-		/// <param name="types">按键分量顺序排列的一至五个封闭类型，须支持双向文本转换；登记时复制数组。</param>
+		/// <param name="types">按键分量顺序排列的一至七个封闭类型，须支持双向文本转换；登记时复制数组。</param>
 		/// <exception cref="ArgumentException">名称或键类型不符合登记规则。</exception>
 		/// <exception cref="ArgumentOutOfRangeException">不支持指定的分隔符。</exception>
 		/// <exception cref="InvalidOperationException">该类别已经登记了不同的键类型或分隔符。</exception>
@@ -183,7 +248,7 @@ public readonly partial struct Identifier
 		/// <summary>为 CLR 类别登记键类型及简写分隔符。</summary>
 		/// <param name="type">作为类别的 CLR 类型，不能为空。</param>
 		/// <param name="separator">键分量分隔符，仅支持短横线、逗号、斜杠或点。</param>
-		/// <param name="types">按键分量顺序排列的一至五个封闭类型，须支持双向文本转换；登记时复制数组。</param>
+		/// <param name="types">按键分量顺序排列的一至七个封闭类型，须支持双向文本转换；登记时复制数组。</param>
 		/// <exception cref="ArgumentNullException">类别类型为空。</exception>
 		/// <exception cref="ArgumentException">名称或键类型不符合登记规则。</exception>
 		/// <exception cref="ArgumentOutOfRangeException">不支持指定的分隔符。</exception>
@@ -216,7 +281,7 @@ public readonly partial struct Identifier
 				if(separator is not ('-' or ',' or '/' or '.'))
 					throw new ArgumentOutOfRangeException(nameof(separator));
 
-				if(types == null || types.Length is < 1 or > 5 || types.Any(type => type == null || type.ContainsGenericParameters || !Identifier.CanConvert(type)))
+				if(types == null || types.Length is < 1 or > 7 || types.Any(type => type == null || type.ContainsGenericParameters || !Identifier.CanConvert(type)))
 					throw new ArgumentException(Zongsoft.Properties.Resources.Identifier_InvalidFormat_Message, nameof(types));
 
 				this.Separator = separator;
