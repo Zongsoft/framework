@@ -4,6 +4,8 @@
 
 `Zongsoft.Components.Identifier` 通过逻辑名称 `Name` 或 CLR `Type` 限定键的身份，两种类别互斥。`Identifier<T>` 及二至五个泛型参数的版本提供类型化键；复合键使用 `ValueTuple`。转换为非泛型标识时保留键类型和元数据。
 
+通用标识和以元组作为键的 `Identifier<T>` 支持二至七个分量的完整文本、JSON、类型转换及按序号读取和替换。独立泛型版本与简写登记最多提供五个分量。元组分量必须是标量键，不支持嵌套元组。
+
 ```csharp
 var machine = new Identifier("Machine", 17u, "售货机");
 var user = new Identifier(typeof(Zongsoft.Security.Privileges.IUser), 17u);

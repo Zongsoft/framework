@@ -4,6 +4,8 @@
 
 `Zongsoft.Components.Identifier` identifies a value within either a logical `Name` or a CLR `Type`. `Identifier<T>` and the versions with two through five type parameters expose typed keys. Composite keys use `ValueTuple`; conversion to the non-generic identifier preserves the key type and metadata.
 
+The non-generic identifier and `Identifier<T>` with a tuple key support two through seven components in complete text, JSON, type conversion, and ordinal key access or replacement. Dedicated generic variants and shorthand registration expose up to five components. Tuple components must be scalar keys; nested tuples are unsupported.
+
 ```csharp
 var machine = new Identifier("Machine", 17u, "Vending machine");
 var user = new Identifier(typeof(Zongsoft.Security.Privileges.IUser), 17u);

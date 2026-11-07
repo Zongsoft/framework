@@ -152,7 +152,7 @@ partial struct Identifier
 	{
 		if(context.Depth == 0 && context.Character is ',' or '>')
 		{
-			if(context.DeclaredCount == 5)
+			if(context.DeclaredCount == 7)
 			{
 				context.Fail();
 				return;
@@ -500,7 +500,7 @@ partial struct Identifier
 		Error,
 	}
 
-	[InlineArray(5)]
+	[InlineArray(7)]
 	private struct ParseTypes
 	{
 		private Type _element;

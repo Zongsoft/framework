@@ -65,7 +65,8 @@ partial struct Identifier
 
 		var definition = type.GetGenericTypeDefinition();
 		return definition == typeof(ValueTuple<,>) || definition == typeof(ValueTuple<,,>) ||
-		       definition == typeof(ValueTuple<,,,>) || definition == typeof(ValueTuple<,,,,>);
+		       definition == typeof(ValueTuple<,,,>) || definition == typeof(ValueTuple<,,,,>) ||
+		       definition == typeof(ValueTuple<,,,,,>) || definition == typeof(ValueTuple<,,,,,,>);
 	}
 
 	internal static bool CanConvert(Type type)
@@ -192,6 +193,8 @@ partial struct Identifier
 			3 => typeof(ValueTuple<,,>),
 			4 => typeof(ValueTuple<,,,>),
 			5 => typeof(ValueTuple<,,,,>),
+			6 => typeof(ValueTuple<,,,,,>),
+			7 => typeof(ValueTuple<,,,,,,>),
 			_ => throw new FormatException(Zongsoft.Properties.Resources.Identifier_InvalidFormat_Message),
 		}).MakeGenericType(types), values);
 	#endregion

@@ -367,7 +367,8 @@ public class IdentifierTest
 	[InlineData("A:<uint,>1")]
 	[InlineData("A:<uint>>1")]
 	[InlineData("A:<List<int>:1")]
-	[InlineData("A:<int,int,int,int,int,int>1,2,3,4,5,6")]
+	[InlineData("A:<int,int,int,int,int,int,int,int>1,2,3,4,5,6,7,8")]
+	[InlineData("A:<int,int,int,int,int,int,int>1,2,3,4,5,6")]
 	[InlineData("A(uint):1")]
 	[InlineData("A:1#C#D")]
 	[InlineData("A:1?L#C")]
@@ -412,6 +413,31 @@ public class IdentifierTest
 		Assert.Equal(default, JsonSerializer.Deserialize<Identifier>("null"));
 		var typed = new Identifier(typeof(Dictionary<string, Person>), 17u);
 		Assert.Equal(typed, Identifier.Parse(typed.ToString()));
+	}
+
+	[Theory]
+	[InlineData(true)]
+	[InlineData(false)]
+	public void TestSixAndSevenComponentKeys(bool typedScope)
+	{
+		var date = new DateTime(2026, 11, 7);
+		var six = typedScope ?
+			new Identifier<(uint, uint, string, string, string, string)>(typeof(Person), (11u, 23u, "domain", "name", "tag", "key,one")) :
+			new Identifier<(uint, uint, string, string, string, string)>("Statistic", (11u, 23u, "domain", "name", "tag", "key,one"));
+		var seven = typedScope ?
+			new Identifier<(uint, uint, string, string, string, string, DateTime)>(typeof(Person), (11u, 23u, "domain", "name", "tag", "key,one", date)) :
+			new Identifier<(uint, uint, string, string, string, string, DateTime)>("Statistic", (11u, 23u, "domain", "name", "tag", "key,one", date));
+		Roundtrip(six);
+		Roundtrip((Identifier)six);
+		Roundtrip(seven);
+		Identifier source = seven;
+		Roundtrip(source);
+		Assert.True(source.TryGetValue(6, out DateTime actual));
+		Assert.Equal(date, actual);
+		var changed = source.With(6, date.AddDays(1));
+		Assert.NotEqual(source, changed);
+		Assert.Equal((11u, 23u, "domain", "name", "tag", "key,one", date.AddDays(1)), changed.Value);
+		Roundtrip(changed);
 	}
 
 	[Fact]
