@@ -3,7 +3,7 @@
 [English](PUBLISHING.md) |
 [简体中文](PUBLISHING.zh-Hans.md)
 
-本仓库通过手动触发的 [Publish NuGet Packages](.github/workflows/publish-nuget.yml) 工作流发布 NuGet 包。普通代码推送和拉取请求只会运行持续集成，不会发布任何包。
+本仓库通过手动触发的 [Publish NuGet Packages](.github/workflows/publish-nuget.yaml) 工作流发布 NuGet 包。普通代码推送和拉取请求只会运行持续集成，不会发布任何包。
 
 > 💡 提示：当维护者在 GitHub Actions 中选择一个项目并点击 **Run workflow** 时，就明确表达了“现在发布这个包”的意图。GitHub 不会根据代码变更自动猜测是否需要发布。
 
@@ -17,7 +17,7 @@
 2. GitHub 根据工作流中的项目选项执行对应的 Cake 命令。
 3. [Trusted Publishing](#trusted-publishing) 只验证这个 GitHub 工作流是否有权向 [nuget.org](https://nuget.org) 发布；它不会主动触发发布。
 
-> 💡 提示：`git push`、合并拉取请求和持续集成本身都不会发布 NuGet 包。只有手动启动 `publish-nuget.yml` 才会进入发布流程。
+> 💡 提示：`git push`、合并拉取请求和持续集成本身都不会发布 NuGet 包。只有手动启动 `publish-nuget.yaml` 才会进入发布流程。
 
 ## ⚙️ 一次性配置
 
@@ -31,7 +31,7 @@
 | --- | --- |
 | Repository Owner | `Zongsoft` |
 | Repository | `framework` |
-| Workflow File | `publish-nuget.yml` |
+| Workflow File | `publish-nuget.yaml` |
 | Environment | `release` |
 
 策略的 **Scope** 设置为 **Push new packages and package versions**，**Glob Pattern** 设置为 `Zongsoft.*`。这表示工作流可以首次发布名称匹配 `Zongsoft.*` 的新包，也可以发布已有包的新版本。
@@ -110,55 +110,55 @@ dotnet cake --compilation Release --target pack --drivers=clickhouse
 
 ```powershell
 # 核心项目
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Core
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Data
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Net
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Web
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Plugins
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Plugins.Web
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Commands
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Security
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Reporting
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Diagnostics
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Diagnostics.Web
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Intelligences
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Hardwares
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Core
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Data
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Net
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Web
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Plugins
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Plugins.Web
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Commands
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Security
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Reporting
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Diagnostics
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Diagnostics.Web
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Intelligences
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Hardwares
 
 # 数据驱动
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Data.MsSql
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Data.MySql
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Data.SQLite
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Data.DuckDB
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Data.Influx
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Data.TDengine
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Data.PostgreSql
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Data.ClickHouse
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Data.MsSql
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Data.MySql
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Data.SQLite
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Data.DuckDB
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Data.Influx
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Data.TDengine
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Data.PostgreSql
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Data.ClickHouse
 
 # 消息队列
-gh workflow run publish-nuget.yml --ref main -f project=messaging/zero
-gh workflow run publish-nuget.yml --ref main -f project=messaging/mqtt
-gh workflow run publish-nuget.yml --ref main -f project=messaging/kafka
-gh workflow run publish-nuget.yml --ref main -f project=messaging/rabbit
+gh workflow run publish-nuget.yaml --ref main -f project=messaging/zero
+gh workflow run publish-nuget.yaml --ref main -f project=messaging/mqtt
+gh workflow run publish-nuget.yaml --ref main -f project=messaging/kafka
+gh workflow run publish-nuget.yaml --ref main -f project=messaging/rabbit
 
 # 自动升级
-gh workflow run publish-nuget.yml --ref main -f project=upgrading/upgrader
-gh workflow run publish-nuget.yml --ref main -f project=upgrading/tool
-gh workflow run publish-nuget.yml --ref main -f project=upgrading/web
+gh workflow run publish-nuget.yaml --ref main -f project=upgrading/upgrader
+gh workflow run publish-nuget.yaml --ref main -f project=upgrading/tool
+gh workflow run publish-nuget.yaml --ref main -f project=upgrading/web
 
 # 外部扩展
-gh workflow run publish-nuget.yml --ref main -f project=externals/aliyun
-gh workflow run publish-nuget.yml --ref main -f project=externals/amazon
-gh workflow run publish-nuget.yml --ref main -f project=externals/redis
-gh workflow run publish-nuget.yml --ref main -f project=externals/polly
-gh workflow run publish-nuget.yml --ref main -f project=externals/wechat
-gh workflow run publish-nuget.yml --ref main -f project=externals/closedxml
-gh workflow run publish-nuget.yml --ref main -f project=externals/etcd
-gh workflow run publish-nuget.yml --ref main -f project=externals/garnet
-gh workflow run publish-nuget.yml --ref main -f project=externals/hangfire
-gh workflow run publish-nuget.yml --ref main -f project=externals/scriban
-gh workflow run publish-nuget.yml --ref main -f project=externals/python
-gh workflow run publish-nuget.yml --ref main -f project=externals/lua
-gh workflow run publish-nuget.yml --ref main -f project=externals/opc
+gh workflow run publish-nuget.yaml --ref main -f project=externals/aliyun
+gh workflow run publish-nuget.yaml --ref main -f project=externals/amazon
+gh workflow run publish-nuget.yaml --ref main -f project=externals/redis
+gh workflow run publish-nuget.yaml --ref main -f project=externals/polly
+gh workflow run publish-nuget.yaml --ref main -f project=externals/wechat
+gh workflow run publish-nuget.yaml --ref main -f project=externals/closedxml
+gh workflow run publish-nuget.yaml --ref main -f project=externals/etcd
+gh workflow run publish-nuget.yaml --ref main -f project=externals/garnet
+gh workflow run publish-nuget.yaml --ref main -f project=externals/hangfire
+gh workflow run publish-nuget.yaml --ref main -f project=externals/scriban
+gh workflow run publish-nuget.yaml --ref main -f project=externals/python
+gh workflow run publish-nuget.yaml --ref main -f project=externals/lua
+gh workflow run publish-nuget.yaml --ref main -f project=externals/opc
 ```
 
 ## 🧩 概念说明
@@ -213,7 +213,7 @@ OIDC 是 OpenID Connect 的缩写。在这里，它让 GitHub 用一份短期、
 
 之所以仍能看到 `NUGET_API_KEY` 这个名称，是因为 `dotnet nuget push` 的发布接口仍接收 API Key。这个值只为当前工作流临时生成，不是保存在 GitHub Secrets 中的长期密钥。只有直接从本机发布时，才需要维护者自行创建和保管长期 API Key。
 
-> 🚨 注意：如果重命名 `publish-nuget.yml` 或修改其 `release` Environment，必须同步更新 [nuget.org](https://nuget.org) 上的 Trusted Publishing 策略，否则 [nuget.org](https://nuget.org) 将无法识别这个工作流。
+> 🚨 注意：如果重命名 `publish-nuget.yaml` 或修改其 `release` Environment，必须同步更新 [nuget.org](https://nuget.org) 上的 Trusted Publishing 策略，否则 [nuget.org](https://nuget.org) 将无法识别这个工作流。
 
 ## 🩺 故障排查
 

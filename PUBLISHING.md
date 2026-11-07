@@ -3,7 +3,7 @@
 [English](PUBLISHING.md) |
 [简体中文](PUBLISHING.zh-Hans.md)
 
-This repository publishes NuGet packages through the manually triggered [Publish NuGet Packages](.github/workflows/publish-nuget.yml) workflow. Regular pushes and pull requests only run continuous integration and never publish packages.
+This repository publishes NuGet packages through the manually triggered [Publish NuGet Packages](.github/workflows/publish-nuget.yaml) workflow. Regular pushes and pull requests only run continuous integration and never publish packages.
 
 > 💡 Tip: a maintainer explicitly expresses the intent to publish by selecting a project in GitHub Actions and clicking **Run workflow**. GitHub does not guess whether a package should be published from the code changes.
 
@@ -17,7 +17,7 @@ The maintainer always decides when to publish. The process has three parts:
 2. GitHub runs the corresponding Cake command for that selection.
 3. [Trusted Publishing](#trusted-publishing) only proves that this GitHub workflow is allowed to publish to [nuget.org](https://nuget.org); it never starts a release on its own.
 
-> 💡 Tip: a `git push`, a merged pull request, or a continuous-integration run does not publish NuGet packages. Publishing starts only when someone manually runs `publish-nuget.yml`.
+> 💡 Tip: a `git push`, a merged pull request, or a continuous-integration run does not publish NuGet packages. Publishing starts only when someone manually runs `publish-nuget.yaml`.
 
 ## ⚙️ One-time configuration
 
@@ -31,7 +31,7 @@ The [Trusted Publishing](#trusted-publishing) policy on [nuget.org](https://nuge
 | --- | --- |
 | Repository Owner | `Zongsoft` |
 | Repository | `framework` |
-| Workflow File | `publish-nuget.yml` |
+| Workflow File | `publish-nuget.yaml` |
 | Environment | `release` |
 
 Set **Scope** to **Push new packages and package versions** and **Glob Pattern** to `Zongsoft.*`. This allows the workflow to publish a matching package ID for the first time and to publish new versions of existing packages.
@@ -110,55 +110,55 @@ The same workflow can be started from a terminal with GitHub CLI. Run only the c
 
 ```powershell
 # Core projects
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Core
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Data
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Net
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Web
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Plugins
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Plugins.Web
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Commands
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Security
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Reporting
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Diagnostics
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Diagnostics.Web
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Intelligences
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Hardwares
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Core
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Data
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Net
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Web
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Plugins
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Plugins.Web
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Commands
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Security
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Reporting
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Diagnostics
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Diagnostics.Web
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Intelligences
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Hardwares
 
 # Data drivers
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Data.MsSql
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Data.MySql
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Data.SQLite
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Data.DuckDB
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Data.Influx
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Data.TDengine
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Data.PostgreSql
-gh workflow run publish-nuget.yml --ref main -f project=Zongsoft.Data.ClickHouse
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Data.MsSql
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Data.MySql
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Data.SQLite
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Data.DuckDB
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Data.Influx
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Data.TDengine
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Data.PostgreSql
+gh workflow run publish-nuget.yaml --ref main -f project=Zongsoft.Data.ClickHouse
 
 # Messaging packages
-gh workflow run publish-nuget.yml --ref main -f project=messaging/zero
-gh workflow run publish-nuget.yml --ref main -f project=messaging/mqtt
-gh workflow run publish-nuget.yml --ref main -f project=messaging/kafka
-gh workflow run publish-nuget.yml --ref main -f project=messaging/rabbit
+gh workflow run publish-nuget.yaml --ref main -f project=messaging/zero
+gh workflow run publish-nuget.yaml --ref main -f project=messaging/mqtt
+gh workflow run publish-nuget.yaml --ref main -f project=messaging/kafka
+gh workflow run publish-nuget.yaml --ref main -f project=messaging/rabbit
 
 # Upgrading packages
-gh workflow run publish-nuget.yml --ref main -f project=upgrading/upgrader
-gh workflow run publish-nuget.yml --ref main -f project=upgrading/tool
-gh workflow run publish-nuget.yml --ref main -f project=upgrading/web
+gh workflow run publish-nuget.yaml --ref main -f project=upgrading/upgrader
+gh workflow run publish-nuget.yaml --ref main -f project=upgrading/tool
+gh workflow run publish-nuget.yaml --ref main -f project=upgrading/web
 
 # External packages
-gh workflow run publish-nuget.yml --ref main -f project=externals/aliyun
-gh workflow run publish-nuget.yml --ref main -f project=externals/amazon
-gh workflow run publish-nuget.yml --ref main -f project=externals/redis
-gh workflow run publish-nuget.yml --ref main -f project=externals/polly
-gh workflow run publish-nuget.yml --ref main -f project=externals/wechat
-gh workflow run publish-nuget.yml --ref main -f project=externals/closedxml
-gh workflow run publish-nuget.yml --ref main -f project=externals/etcd
-gh workflow run publish-nuget.yml --ref main -f project=externals/garnet
-gh workflow run publish-nuget.yml --ref main -f project=externals/hangfire
-gh workflow run publish-nuget.yml --ref main -f project=externals/scriban
-gh workflow run publish-nuget.yml --ref main -f project=externals/python
-gh workflow run publish-nuget.yml --ref main -f project=externals/lua
-gh workflow run publish-nuget.yml --ref main -f project=externals/opc
+gh workflow run publish-nuget.yaml --ref main -f project=externals/aliyun
+gh workflow run publish-nuget.yaml --ref main -f project=externals/amazon
+gh workflow run publish-nuget.yaml --ref main -f project=externals/redis
+gh workflow run publish-nuget.yaml --ref main -f project=externals/polly
+gh workflow run publish-nuget.yaml --ref main -f project=externals/wechat
+gh workflow run publish-nuget.yaml --ref main -f project=externals/closedxml
+gh workflow run publish-nuget.yaml --ref main -f project=externals/etcd
+gh workflow run publish-nuget.yaml --ref main -f project=externals/garnet
+gh workflow run publish-nuget.yaml --ref main -f project=externals/hangfire
+gh workflow run publish-nuget.yaml --ref main -f project=externals/scriban
+gh workflow run publish-nuget.yaml --ref main -f project=externals/python
+gh workflow run publish-nuget.yaml --ref main -f project=externals/lua
+gh workflow run publish-nuget.yaml --ref main -f project=externals/opc
 ```
 
 ## 🧩 Concepts
@@ -213,7 +213,7 @@ The workflow grants only `contents: read` and `id-token: write`. Authentication 
 
 The name `NUGET_API_KEY` still appears because `dotnet nuget push` accepts an API key as its publishing credential. This value is created only for the current workflow run and is not a long-lived key stored in GitHub Secrets. Only a direct local publish requires a maintainer-created, long-lived API key.
 
-> 🚨 Caution: if `publish-nuget.yml` is renamed or its `release` Environment changes, update the Trusted Publishing policy on [nuget.org](https://nuget.org) as well. Otherwise, [nuget.org](https://nuget.org) cannot recognize the workflow.
+> 🚨 Caution: if `publish-nuget.yaml` is renamed or its `release` Environment changes, update the Trusted Publishing policy on [nuget.org](https://nuget.org) as well. Otherwise, [nuget.org](https://nuget.org) cannot recognize the workflow.
 
 ## 🩺 Troubleshooting
 
