@@ -199,14 +199,14 @@ public partial class AccountHttpTest(AccountHttpContext fixture) : IClassFixture
 		public string Name => "Wechat";
 		public int Calls { get; private set; }
 		public string Key { get; private set; }
-		public ValueTask<object> VerifyAsync(string key, object data, string scenario, Parameters parameters, CancellationToken cancellation = default)
+		public ValueTask<object> AuthenticateAsync(string key, object data, string scenario, Parameters parameters, CancellationToken cancellation = default)
 		{
 			this.Calls++;
 			this.Key = key;
 			Assert.Equal("synthetic-code", data);
 			return new ValueTask<object>(new object());
 		}
-		public ValueTask<ClaimsIdentity> IssueAsync(object identity, string scenario, Parameters parameters, CancellationToken cancellation = default) =>
+		public ValueTask<ClaimsIdentity> IssueAsync(object ticket, string scenario, Parameters parameters, CancellationToken cancellation = default) =>
 			ValueTask.FromResult(new ClaimsIdentity([new Claim(ClaimTypes.NameIdentifier, "900001"), new Claim(ClaimTypes.Name, "synthetic-user")], "Wechat"));
 	}
 

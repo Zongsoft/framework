@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup>
-		<Version>7.10.0</Version>
+		<Version>7.11.0</Version>
 		<OutputType>Library</OutputType>
 		<Product>Zongsoft Wechat Web Library</Product>
 		<Description>This is a web api library about Wechat.</Description>
@@ -19,17 +19,19 @@
 				<Reference Include="Zongsoft.Web">
 					<HintPath>..\..\..\..\Zongsoft.Web\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Web.dll</HintPath>
 				</Reference>
-				<ProjectReference Include="..\..\src\Zongsoft.Externals.Wechat.csproj" />
 			</ItemGroup>
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.72.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.79.0" />
 				<PackageReference Include="Zongsoft.Web" VersionOverride="7.20.0" />
-				<PackageReference Include="Zongsoft.Externals.Wechat" VersionOverride="7.10.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>
+
+	<ItemGroup>
+		<ProjectReference Include="..\..\src\Zongsoft.Externals.Wechat.csproj" />
+	</ItemGroup>
 
 	<ItemGroup>
 		<None Include="..\README.md" Link="README.md" Pack="true" PackagePath="\" />

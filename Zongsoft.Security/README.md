@@ -97,7 +97,7 @@ Additional artifacts listed by the deployment manifest include `Zongsoft.Securit
 
 ## Password Storage and Verification
 
-`Passworder` sets and verifies user passwords. `Password` encapsulates the PBKDF2 algorithm, iteration factor, salt and digest. The `Password` column stores the complete binary value with a capacity of 512 bytes; there is no separate `PasswordSalt` column. Only the `Password` format is accepted. A null or empty binary password accepts only null or empty-string input; nonempty input fails. The account must exist and be enabled. Users can supply an empty old password to set a new one.
+`Passworder.SetAsync` sets a password, `VerifyAsync(identifier, password)` checks a specified user, and `AuthenticateAsync(namespace, identity, password)` authenticates an account and returns its canonical user identifier. `Password` encapsulates the PBKDF2 algorithm, iteration factor, salt and digest. The `Password` column stores the complete binary value with a capacity of 512 bytes; there is no separate `PasswordSalt` column. Only the `Password` format is accepted. A null or empty binary password accepts only null or empty-string input; nonempty input fails. The account must exist and be enabled. Users can supply an empty old password to set a new one.
 
 Recovery questions use `SecretQuestion` (500 characters) and answers use `SecretAnswer` (2048 bytes), supporting three to five pairs. Initialization SQL creates new tables and does not upgrade existing tables; existing databases must meet these column and capacity requirements.
 

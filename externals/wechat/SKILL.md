@@ -109,7 +109,7 @@ HTTP 请求位于独立文档仓库 [Automao/documents/http](../../../../Automao
 
 ## 版本与发行
 
-三程序集使用 7.10.0，最低依赖、Debug/Release 引用分支、部署和数据库要求见[部署契约](docs/implementation.zh-Hans.md#deployment)。正式 Release 发行为显式授权操作；主包须先在所选 NuGet 源可还原，再构建依赖它的 Web/Gateway 包。`build.cake` 的 `pack` 任务接受 `--compilation=Release` 与 `--project=<csproj>`；不指定项目会处理整个解决方案。普通构建关闭 `GeneratePackageOnBuild`，不得为了通过 Release 验证而用旧版主包替代。
+三程序集使用 7.11.0，最低依赖、Debug/Release 引用分支、部署和数据库要求见[部署契约](docs/implementation.zh-Hans.md#deployment)。正式 Release 发行为显式授权操作；上游 Core/Web 包须先在所选 NuGet 源可还原，Web/Gateway 在 Debug/Release 中均通过 ProjectReference 构建同解决方案的微信主库，生成的包依赖使用主库当前版本。`build.cake` 的 `pack` 任务接受 `--compilation=Release` 与 `--project=<csproj>`；不指定项目会处理整个解决方案。普通构建关闭 `GeneratePackageOnBuild`，不得为了通过 Release 验证而用旧版主包替代。
 
 第三方组件按[组件契约](docs/implementation.zh-Hans.md#component-platform)分为配置、消息解析、协议交换及模型 partial。IComponentStore 是宿主可靠接收扩展点；Gateway 只验证与交接，不能在控制器中落入租户业务。组件与自有账号复用内部凭据协调流程，但键域与传输名称分开。
 

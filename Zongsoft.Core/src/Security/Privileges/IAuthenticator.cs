@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -45,22 +45,22 @@ public interface IAuthenticator
 	#endregion
 
 	#region 方法定义
-	/// <summary>校验身份。</summary>
-	/// <param name="key">指定的校验键值。</param>
-	/// <param name="data">指定的校验数据。</param>
+	/// <summary>认证身份并返回认证票证。</summary>
+	/// <param name="key">指定的认证键值。</param>
+	/// <param name="data">指定的认证材料。</param>
 	/// <param name="scenario">指定的验证场景。</param>
 	/// <param name="parameters">指定的参数集。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
-	/// <returns>返回的校验结果。</returns>
-	ValueTask<object> VerifyAsync(string key, object data, string scenario, Parameters parameters, CancellationToken cancellation = default);
+	/// <returns>返回认证通过后的身份票证。</returns>
+	ValueTask<object> AuthenticateAsync(string key, object data, string scenario, Parameters parameters, CancellationToken cancellation = default);
 
-	/// <summary>签发身份凭证。</summary>
-	/// <param name="token">指定的身份令牌。</param>
+	/// <summary>签发声明身份。</summary>
+	/// <param name="ticket">指定的身份票证。</param>
 	/// <param name="scenario">指定的验证场景。</param>
 	/// <param name="parameters">指定的参数集。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
-	/// <returns></returns>
-	ValueTask<ClaimsIdentity> IssueAsync(object token, string scenario, Parameters parameters, CancellationToken cancellation = default);
+	/// <returns>返回签发的声明身份。</returns>
+	ValueTask<ClaimsIdentity> IssueAsync(object ticket, string scenario, Parameters parameters, CancellationToken cancellation = default);
 	#endregion
 }
 
@@ -68,21 +68,21 @@ public interface IAuthenticator
 public interface IAuthenticator<in TRequirement, TTicket> : IAuthenticator
 {
 	#region 方法定义
-	/// <summary>校验身份。</summary>
-	/// <param name="key">指定的校验键值。</param>
-	/// <param name="data">指定的校验数据。</param>
+	/// <summary>认证身份并返回认证票证。</summary>
+	/// <param name="key">指定的认证键值。</param>
+	/// <param name="data">指定的认证材料。</param>
 	/// <param name="scenario">指定的验证场景。</param>
 	/// <param name="parameters">指定的参数集。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
-	/// <returns>返回的校验票证。</returns>
-	ValueTask<TTicket> VerifyAsync(string key, TRequirement data, string scenario, Parameters parameters, CancellationToken cancellation = default);
+	/// <returns>返回认证通过后的身份票证。</returns>
+	ValueTask<TTicket> AuthenticateAsync(string key, TRequirement data, string scenario, Parameters parameters, CancellationToken cancellation = default);
 
-	/// <summary>签发身份凭证。</summary>
+	/// <summary>签发声明身份。</summary>
 	/// <param name="ticket">指定的身份票证。</param>
 	/// <param name="scenario">指定的验证场景。</param>
 	/// <param name="parameters">指定的参数集。</param>
 	/// <param name="cancellation">异步操作的取消标记。</param>
-	/// <returns></returns>
+	/// <returns>返回签发的声明身份。</returns>
 	ValueTask<ClaimsIdentity> IssueAsync(TTicket ticket, string scenario, Parameters parameters, CancellationToken cancellation = default);
 	#endregion
 }

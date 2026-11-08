@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -144,10 +144,10 @@ public static partial class Authentication
 			throw new AuthenticationException(SecurityReasons.InvalidArgument, Properties.Resources.Authentication_InvalidScheme_Message);
 
 		//校验身份
-		var result = await authenticator.VerifyAsync(key, data, scenario, parameters, cancellation);
+		var ticket = await authenticator.AuthenticateAsync(key, data, scenario, parameters, cancellation);
 
 		//签发身份
-		var identity = await authenticator.IssueAsync(result, scenario, parameters, cancellation) ??
+		var identity = await authenticator.IssueAsync(ticket, scenario, parameters, cancellation) ??
 			throw new AuthenticationException(SecurityReasons.InvalidIdentity);
 
 		return identity;

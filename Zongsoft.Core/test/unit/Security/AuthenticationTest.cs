@@ -16,13 +16,13 @@ using Zongsoft.Tests;
 namespace Zongsoft.Security.Tests;
 
 [CollectionDefinition(Name, DisableParallelization = true)]
-public sealed class AuthenticationAsyncCollection
+public sealed class AuthenticationCollection
 {
-	public const string Name = nameof(AuthenticationAsyncCollection);
+	public const string Name = nameof(AuthenticationCollection);
 }
 
-[Collection(AuthenticationAsyncCollection.Name)]
-public class AuthenticationAsyncTest
+[Collection(AuthenticationCollection.Name)]
+public class AuthenticationTest
 {
 	[Theory]
 	[InlineData(false)]
@@ -332,12 +332,12 @@ public class AuthenticationAsyncTest
 		public string Name { get; } = $"async-test-{Guid.NewGuid():N}";
 		public int Verifications { get; private set; }
 		public Func<CancellationToken, ValueTask<object>> Verify { get; set; } = _ => ValueTask.FromResult<object>(new object());
-		public ValueTask<object> VerifyAsync(string key, object data, string scenario, Parameters parameters, CancellationToken cancellation = default)
+		public ValueTask<object> AuthenticateAsync(string key, object data, string scenario, Parameters parameters, CancellationToken cancellation = default)
 		{
 			this.Verifications++;
 			return this.Verify(cancellation);
 		}
-		public ValueTask<ClaimsIdentity> IssueAsync(object token, string scenario, Parameters parameters, CancellationToken cancellation = default) =>
+		public ValueTask<ClaimsIdentity> IssueAsync(object ticket, string scenario, Parameters parameters, CancellationToken cancellation = default) =>
 			ValueTask.FromResult(new ClaimsIdentity([new Claim(ClaimTypes.Name, "test-user")], this.Name));
 	}
 

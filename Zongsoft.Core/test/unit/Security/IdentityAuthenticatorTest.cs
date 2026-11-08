@@ -12,13 +12,13 @@ using Zongsoft.Security.Privileges;
 
 namespace Zongsoft.Security.Tests;
 
-[Collection(AuthenticationAsyncCollection.Name)]
-public class IdentityPasswordTest
+[Collection(AuthenticationCollection.Name)]
+public class IdentityAuthenticatorTest
 {
 	[Theory]
 	[InlineData(true)]
 	[InlineData(false)]
-	public async Task VerifyAsync_AwaitsPasswordVerificationAndRecordsOutcome(bool success)
+	public async Task AuthenticateAsync_AwaitsPasswordVerificationAndRecordsOutcome(bool success)
 	{
 		using var services = new ServiceCollection().BuildServiceProvider();
 		using var cancellation = new CancellationTokenSource();
@@ -33,7 +33,7 @@ public class IdentityPasswordTest
 
 		try
 		{
-			var operation = authenticator.VerifyAsync(null, requirement, null, null, cancellation.Token).AsTask();
+			var operation = authenticator.AuthenticateAsync(null, requirement, null, null, cancellation.Token).AsTask();
 			Assert.False(operation.IsCompleted);
 			Assert.Equal("account", passworder.Identity);
 			Assert.Equal("tenant", passworder.Namespace);
@@ -68,7 +68,7 @@ public class IdentityPasswordTest
 	[Theory]
 	[InlineData(false)]
 	[InlineData(true)]
-	public async Task VerifyAsync_AccountFailure_PreservesReason(bool disabled)
+	public async Task AuthenticateAsync_AccountFailure_PreservesReason(bool disabled)
 	{
 		var reason = disabled ? SecurityReasons.AccountDisabled : SecurityReasons.InvalidIdentity;
 		using var services = new ServiceCollection().BuildServiceProvider();
@@ -83,7 +83,7 @@ public class IdentityPasswordTest
 		try
 		{
 			var authenticator = new Authenticator(services) { Attempter = attempter };
-			var error = await Assert.ThrowsAsync<AuthenticationException>(() => authenticator.VerifyAsync(null, new(null, "account", "contract-password"), null, null).AsTask());
+			var error = await Assert.ThrowsAsync<AuthenticationException>(() => authenticator.AuthenticateAsync(null, new(null, "account", "contract-password"), null, null).AsTask());
 			Assert.Equal(reason, error.Reason);
 			Assert.Equal(0, attempter.Successes);
 			Assert.Equal(0, attempter.Failures);
@@ -107,7 +107,7 @@ public class IdentityPasswordTest
 		public string Password { get; private set; }
 		public CancellationToken Cancellation { get; private set; }
 
-		public override ValueTask<Identifier> VerifyAsync(string identity, string @namespace, string password, CancellationToken cancellation = default)
+		public override ValueTask<Identifier> AuthenticateAsync(string @namespace, string identity, string password, CancellationToken cancellation = default)
 		{
 			this.Identity = identity;
 			this.Namespace = @namespace;

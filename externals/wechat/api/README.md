@@ -74,10 +74,10 @@ Add this fragment to an existing host `.deploy` (retain Main and the host’s ot
 
 ```ini
 [plugins zongsoft externals wechat]
-nuget:Zongsoft.Externals.Wechat@7.10.0
+nuget:Zongsoft.Externals.Wechat@7.11.0
 
 [plugins zongsoft externals wechat web]
-nuget:Zongsoft.Externals.Wechat.Web@7.10.0
+nuget:Zongsoft.Externals.Wechat.Web@7.11.0
 ```
 
 Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.

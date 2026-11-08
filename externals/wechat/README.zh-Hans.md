@@ -32,7 +32,7 @@ JSAPI/小程序、APP、Native 基础支付的身份配置、下单结果、客�
 
 ## 运行要求
 
-主库、Web 与 Gateway 使用同版 7.10.0，支持 .NET 8、9、10。宿主提供 Core 7.72.0 或更高版本，HTTP 入口还需要 Web 7.20.0 或更高版本。包源、授权配置与未完成业务切换要求见[部署契约](docs/implementation.zh-Hans.md#deployment)。
+主库、Web 与 Gateway 使用同版 7.11.0，支持 .NET 8、9、10。宿主提供 Core 7.79.0 或更高版本，HTTP 入口还需要 Web 7.20.0 或更高版本。包源、授权配置与未完成业务切换要求见[部署契约](docs/implementation.zh-Hans.md#deployment)。
 
 ## 商户与密钥
 
@@ -71,7 +71,7 @@ JSAPI/小程序、APP、Native 基础支付的身份配置、下单结果、客�
 
 ```ini
 [plugins zongsoft externals wechat]
-nuget:Zongsoft.Externals.Wechat@7.10.0
+nuget:Zongsoft.Externals.Wechat@7.11.0
 ```
 
 按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。

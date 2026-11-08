@@ -1066,11 +1066,11 @@ Automao 的 `ComponentStore` 实现票据、授权请求、事件和授权者凭
 
 ### 程序集和引用
 
-主库、Web 和 Gateway 的版本为 7.10.0，必须一起使用；目标框架为 .NET 8、9、10。主库需要 Core 7.72.0，Web/Gateway 还需要 Web 7.20.0。框架基础库由宿主统一提供，不在适配器 `.deploy` 中重复部署。
+主库、Web 和 Gateway 的版本为 7.11.0，必须一起使用；目标框架为 .NET 8、9、10。主库需要 Core 7.79.0，Web/Gateway 还需要 Web 7.20.0。框架基础库由宿主统一提供，不在适配器 `.deploy` 中重复部署。
 
-Debug 构建使用当前工作树 Core/Web 的 HintPath，Web/Gateway 以 ProjectReference 引用主库。Release 分支使用上述最低版本的 NuGet 依赖，Web/Gateway 引用主库 7.10.0。未发布的版本不能由旧包替代；正式 Release 包构建须在所选源具备相应依赖后进行。源码构建与离线验证不代表 NuGet 发布或现网部署。
+Debug 构建使用当前工作树 Core/Web 的 HintPath，Release 使用上述最低版本的 Core/Web NuGet 依赖。Web/Gateway 在两种配置下均以 ProjectReference 引用主库，其 NuGet 包声明主库 7.11.0 依赖。未发布的版本不能由旧包替代；正式 Release 包构建须在所选源具备相应依赖后进行。源码构建与离线验证不代表 NuGet 发布或现网部署。
 
-Automao 直接调用项目的本机引用由 `ZongsoftFrameworkPathReferenced` 和 `ZongsoftFrameworkPath` 控制；NuGet 分支同样要求主库 7.10.0。Web 部署清单使用 Web 7.10.0，Gateway 站点另外装入 Gateway 7.10.0。插件应答与业务注册节点见[Gateway](../gateway/README.zh-Hans.md)。数据库映射与业务插件跟随 Automao 自身部署清单，宿主不放置支付业务代码。
+Automao 直接调用项目的本机引用由 `ZongsoftFrameworkPathReferenced` 和 `ZongsoftFrameworkPath` 控制；NuGet 分支同样要求主库 7.11.0。Web 部署清单使用 Web 7.11.0，Gateway 站点另外装入 Gateway 7.11.0。插件应答与业务注册节点见[Gateway](../gateway/README.zh-Hans.md)。数据库映射与业务插件跟随 Automao 自身部署清单，宿主不放置支付业务代码。
 
 <a id="deployment-2"></a>
 

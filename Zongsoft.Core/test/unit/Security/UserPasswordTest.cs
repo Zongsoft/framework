@@ -13,8 +13,8 @@ using Zongsoft.Security.Privileges;
 
 namespace Zongsoft.Security.Tests;
 
-[Collection(AuthenticationAsyncCollection.Name)]
-public class UserPasswordWorkflowTest
+[Collection(AuthenticationCollection.Name)]
+public class UserPasswordTest
 {
 	[Fact]
 	public async Task ChangePassword_VerifiesBeforeSettingAndForwardsCancellation()
@@ -126,7 +126,7 @@ public class UserPasswordWorkflowTest
 			return ValueTask.FromResult(true);
 		}
 
-		public override ValueTask<Identifier> VerifyAsync(string identity, string @namespace, string password, CancellationToken cancellation = default) => throw new NotSupportedException();
+		public override ValueTask<Identifier> AuthenticateAsync(string @namespace, string identity, string password, CancellationToken cancellation = default) => throw new NotSupportedException();
 	}
 
 	public class AnswerAccessor : DispatchProxy

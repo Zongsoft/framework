@@ -34,7 +34,7 @@ See the [offline face and agreement contract](docs/implementation.md#offline-fac
 
 ## Runtime requirements
 
-Use version 7.10.0 of the core adapter, Web and Gateway together. Supported runtimes are .NET 8, 9 and 10; minimum host dependencies are Core 7.72.0 and Web 7.20.0 for HTTP endpoints. See the [deployment contract](docs/implementation.md#deployment) for package availability, authorization and pending-transaction requirements.
+Use version 7.11.0 of the core adapter, Web and Gateway together. Supported runtimes are .NET 8, 9 and 10; minimum host dependencies are Core 7.79.0 and Web 7.20.0 for HTTP endpoints. See the [deployment contract](docs/implementation.md#deployment) for package availability, authorization and pending-transaction requirements.
 
 ## Merchant credentials
 
@@ -73,7 +73,7 @@ Add this fragment to an existing host `.deploy` (retain Main and the host’s ot
 
 ```ini
 [plugins zongsoft externals wechat]
-nuget:Zongsoft.Externals.Wechat@7.10.0
+nuget:Zongsoft.Externals.Wechat@7.11.0
 ```
 
 Run `dotnet deploy` against a test deployment as explained in the workflow, with the host's `framework`, `platform`, `architecture` and, where needed, `site`. Pin compatible versions in real deployments; application dependencies such as databases, caches or commercial runtimes are still separate prerequisites.

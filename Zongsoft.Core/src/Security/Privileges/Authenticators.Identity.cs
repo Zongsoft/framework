@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2010-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2010-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -74,16 +74,16 @@ partial class Authentication
 		protected abstract IDataAccess Accessor { get; }
 		#endregion
 
-		#region 校验方法
-		async ValueTask<object> IAuthenticator.VerifyAsync(string key, object requirement, string scenario, Parameters parameters, CancellationToken cancellation)
+		#region 身份认证
+		async ValueTask<object> IAuthenticator.AuthenticateAsync(string key, object requirement, string scenario, Parameters parameters, CancellationToken cancellation)
 		{
 			if(requirement == null)
 				throw new ArgumentNullException(nameof(requirement));
 
-			return await this.VerifyAsync(key, await GetTicketAsync(requirement, cancellation), scenario, parameters, cancellation);
+			return await this.AuthenticateAsync(key, await GetTicketAsync(requirement, cancellation), scenario, parameters, cancellation);
 		}
 
-		public async ValueTask<Ticket> VerifyAsync(string key, Requirement requirement, string scenario, Parameters parameters, CancellationToken cancellation = default)
+		public async ValueTask<Ticket> AuthenticateAsync(string key, Requirement requirement, string scenario, Parameters parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrWhiteSpace(requirement.Identity))
 			{
@@ -102,7 +102,7 @@ partial class Authentication
 				throw new AuthenticationException(SecurityReasons.AccountSuspended);
 
 			//验证账号密码并获取用户标识
-			var identifier = await Authentication.Servicer.Users.Passworder.VerifyAsync(requirement.Identity, requirement.Namespace, requirement.Password, cancellation);
+			var identifier = await Authentication.Servicer.Users.Passworder.AuthenticateAsync(requirement.Namespace, requirement.Identity, requirement.Password, cancellation);
 
 			if(!identifier.IsEmpty)
 			{

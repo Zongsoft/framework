@@ -97,7 +97,7 @@ nuget:Zongsoft.Security
 
 ## 密码存储与验证
 
-用户密码由 `Passworder` 设置和验证，`Password` 封装 PBKDF2 算法、迭代因子、盐和摘要。`Password` 字段存储完整二进制数据，容量为 512 字节，不使用独立的 `PasswordSalt` 字段。只接受 `Password` 格式的数据。数据库密码为 `null` 或空二进制数据时，仅使用 `null` 或空字符串登录可以验证成功，非空密码验证失败；账号必须存在且已启用。用户可用空旧密码设置新密码。
+`Passworder.SetAsync` 设置密码，`VerifyAsync(identifier, password)` 校验指定用户的密码，`AuthenticateAsync(namespace, identity, password)` 认证账号并返回真实用户标识。`Password` 封装 PBKDF2 算法、迭代因子、盐和摘要。`Password` 字段存储完整二进制数据，容量为 512 字节，不使用独立的 `PasswordSalt` 字段。只接受 `Password` 格式的数据。数据库密码为 `null` 或空二进制数据时，仅使用 `null` 或空字符串登录可以验证成功，非空密码验证失败；账号必须存在且已启用。用户可用空旧密码设置新密码。
 
 密保问题存于 `SecretQuestion`（500 字符），答案存于 `SecretAnswer`（2048 字节），支持三至五组问答。初始化 SQL 用于创建新表，不会升级已有表；已有数据库须满足这些字段和容量要求。
 

@@ -36,7 +36,7 @@ description: 修改或审查 Zongsoft.Security 的身份、凭据、认证器、
 
 - 密码服务契约测试位于 `test/Zongsoft.Security.Tests.csproj`，通过内存访问器替身验证真实用户服务，不使用插件宿主。生产构建按范围选择 `src/Zongsoft.Security.csproj`、`api/src/Zongsoft.Security.Web.csproj` 或 `captcha/src/Zongsoft.Security.Captcha.csproj`。
 - Web API 与 CAPTCHA 单元测试项目分别位于 `api/test/Zongsoft.Security.Web.Tests.csproj`、`captcha/test/Zongsoft.Security.Captcha.Tests.csproj`，各自只通过项目引用接入对应的被测项目；所需 Core、Web 程序集由 HintPath 引用，构建前先生成依赖程序集。Web API 测试直接构造控制器与授权处理器，验证服务调用、请求参数及响应映射；CAPTCHA 测试通过严格缓存替身验证有效期、失败与取消、原子消费和重放，并检查实际图像编码与响应格式。`build.cake` 的 `**/test/*.csproj` 规则覆盖这三个测试目录。
-- API Release 依赖 Zongsoft.Web 7.20.0 与 Zongsoft.Core 7.78.0 或更高版本，保持 Web 分页处理与 Core 异步分页事件的签名一致。
+- API Release 依赖 Zongsoft.Web 7.20.0 与 Zongsoft.Core 7.79.0 或更高版本，保持 Web 分页处理与 Core 异步分页事件的签名一致。
 - 使用固定身份、内存/替身缓存与脱敏签名向量验证拒绝、撤销、过期、重复确认和并发。
 - 数据库验证明确选择脚本与隔离库，不能默认触发真实短信、邮件或支付验证。
 - 不恢复已删除的 Postman 文件；现有 HTTP 文档按实际端点检查。
@@ -50,7 +50,7 @@ description: 修改或审查 Zongsoft.Security 的身份、凭据、认证器、
 
 ## 用户密码服务
 
-`UserService.Passworder` 直接实现 Core 的 `Passworder`，私有 `PasswordRecord` 仅供查询。设置操作只更新完整的 `Password` 字段，验证先检查账号状态，再解析并验证密码；空存储值仅匹配空引用或空字符串，非空输入及损坏的存储格式返回失败。认证器负责尝试限制与票证创建，密码服务返回标识，不公开数据库记录。框架契约测试位于 `test/PassworderContractTest.cs`；Automao 在自己的安全测试项目内独立验证其具体实现，不引用框架测试源码。
+`UserService.Passworder` 直接实现 Core 的 `Passworder`，私有 `PasswordRecord` 仅供查询。设置操作只更新完整的 `Password` 字段，验证先检查账号状态，再解析并验证密码；空存储值仅匹配空引用或空字符串，非空输入及损坏的存储格式返回失败。认证器负责尝试限制与票证创建，Passworder.AuthenticateAsync(namespace, identity, password) 一次查询完成账号认证并返回真实用户标识，VerifyAsync(identifier, password) 返回指定用户的密码校验结果。IAuthenticator.AuthenticateAsync 返回认证票证，IssueAsync(ticket, ...) 签发声明身份；密码记录保留在实现内部。框架契约测试位于 `test/PassworderTest.cs`；Automao 在自己的安全测试项目内独立验证其具体实现，不引用框架测试源码。
 
 ## 标识类别
 

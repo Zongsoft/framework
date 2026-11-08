@@ -234,3 +234,7 @@ Code 是独立的业务编号，非泛型字段只读、泛型属性支持 init�
 Identifier 构造函数提供三组元数据入口：label、description、properties；(code, alias)、label、description、properties；(code, alias, label)、description、properties。extra 元组紧跟键值，未提供的字段使用 null，末尾参数均可省略；非泛型和各泛型版本遵循相同规则，复合键支持分量及元组形式。TryGetValue 负责完整键及按零基序号的分量读取，Validate 负责类别和业务条件判断；With 按原键分量类型转换并返回新标识，保留其他分量与元数据、共享 Properties。空标识不能使用 With，模型应自行初始化已知类别及键值。泛型标识的 Value、Code、Label、Alias、Description、Properties 支持 init 与原生 with；类别由构造函数确定，Value 使用完整类型化键。初始化外部 Properties 字典时复制一次，其他属性初始化及结构复制共享内部字典，保持元数据与序列化协议。
 
 泛型 Identifier 按分量数放在 Components/Identifier`1.cs 至 Identifier`7.cs；泛型参数只描述键类型。IIdentifiable 的二至七参数接口继承完整元组键接口并默认双向桥接，再由单参数接口桥接非泛型接口。安全类别使用 Users.Identifiers.User、Roles.Identifiers.Role 和 Privilege.IdentifierName 常量；Claims 用户回填固定用户类别，其他模型从已有 Identifier.Name 读取类别，不从 CLR 类型推导名称。
+
+## 身份认证
+
+Passworder.VerifyAsync(identifier, password) 校验指定用户并返回 bool；AuthenticateAsync(namespace, identity, password) 一次查询读取真实用户键、启用状态和密码摘要，成功返回真实标识，密码不匹配返回空标识。账号不存在或禁用保留对应 AuthenticationException 原因码。IAuthenticator 与泛型接口通过 AuthenticateAsync 返回认证票证，IssueAsync(ticket, ...) 签发 ClaimsIdentity；Authentication.AuthenticateAsync 继续负责尝试控制之外的流程编排、质询及凭证注册。IdentityAuthenticatorBase 保留尝试检查、成功清理及失败登记顺序。密码摘要只保存在实现内部。

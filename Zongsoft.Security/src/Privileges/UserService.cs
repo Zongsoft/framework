@@ -116,7 +116,7 @@ partial class UserService
 			return record.HasValue && Verify(password, record.Value);
 		}
 
-		public override async ValueTask<Zongsoft.Components.Identifier> VerifyAsync(string identity, string @namespace, string password, CancellationToken cancellation = default)
+		public override async ValueTask<Zongsoft.Components.Identifier> AuthenticateAsync(string @namespace, string identity, string password, CancellationToken cancellation = default)
 		{
 			cancellation.ThrowIfCancellationRequested();
 

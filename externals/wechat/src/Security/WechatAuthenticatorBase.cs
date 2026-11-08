@@ -52,8 +52,8 @@ public abstract class WechatAuthenticatorBase : IAuthenticator, IAuthenticator<s
 	#endregion
 
 	#region 身份校验
-	async ValueTask<object> IAuthenticator.VerifyAsync(string key, object data, string scenario, Parameters parameters, CancellationToken cancellation) => await this.VerifyAsync(key, await GetSecretAsync(data, cancellation), scenario, parameters, cancellation);
-	public async ValueTask<Identity> VerifyAsync(string key, string secret, string scenario, Parameters parameters, CancellationToken cancellation = default)
+	async ValueTask<object> IAuthenticator.AuthenticateAsync(string key, object data, string scenario, Parameters parameters, CancellationToken cancellation) => await this.AuthenticateAsync(key, await GetSecretAsync(data, cancellation), scenario, parameters, cancellation);
+	public async ValueTask<Identity> AuthenticateAsync(string key, string secret, string scenario, Parameters parameters, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(secret))
 			throw new ArgumentNullException(nameof(secret));
@@ -71,7 +71,7 @@ public abstract class WechatAuthenticatorBase : IAuthenticator, IAuthenticator<s
 	#endregion
 
 	#region 身份签发
-	ValueTask<ClaimsIdentity> IAuthenticator.IssueAsync(object identity, string scenario, Parameters parameters, CancellationToken cancellation) => this.IssueAsync((Identity)identity, scenario, parameters, cancellation);
+	ValueTask<ClaimsIdentity> IAuthenticator.IssueAsync(object ticket, string scenario, Parameters parameters, CancellationToken cancellation) => this.IssueAsync((Identity)ticket, scenario, parameters, cancellation);
 	public ValueTask<ClaimsIdentity> IssueAsync(Identity identity, string scenario, Parameters parameters, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(identity.OpenId))

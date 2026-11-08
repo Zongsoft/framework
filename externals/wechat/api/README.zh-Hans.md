@@ -74,10 +74,10 @@ dotnet add package Zongsoft.Externals.Wechat.Web
 
 ```ini
 [plugins zongsoft externals wechat]
-nuget:Zongsoft.Externals.Wechat@7.10.0
+nuget:Zongsoft.Externals.Wechat@7.11.0
 
 [plugins zongsoft externals wechat web]
-nuget:Zongsoft.Externals.Wechat.Web@7.10.0
+nuget:Zongsoft.Externals.Wechat.Web@7.11.0
 ```
 
 按入门指南在测试部署目录执行 `dotnet deploy`，指定匹配宿主的 `framework`、`platform`、`architecture`，并按需指定 `site`。实际部署应固定兼容版本；片段没有列出的数据库、缓存、商业运行时等应用依赖仍需另外准备。

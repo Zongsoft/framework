@@ -47,7 +47,7 @@ public class AuthenticationControllerTest
 			if(method.Name == "get_Name")
 				return "api-test";
 
-			if(method.Name == nameof(IAuthenticator.VerifyAsync))
+			if(method.Name == nameof(IAuthenticator.AuthenticateAsync))
 			{
 				Assert.Equal("account", args[0]);
 				if(payloadKind == 2)

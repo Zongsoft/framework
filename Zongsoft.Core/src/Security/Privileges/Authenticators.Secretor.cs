@@ -82,16 +82,16 @@ partial class Authentication
 		protected abstract IDataAccess Accessor { get; }
 		#endregion
 
-		#region 校验方法
-		async ValueTask<object> IAuthenticator.VerifyAsync(string key, object data, string scenario, Parameters parameters, CancellationToken cancellation)
+		#region 身份认证
+		async ValueTask<object> IAuthenticator.AuthenticateAsync(string key, object data, string scenario, Parameters parameters, CancellationToken cancellation)
 		{
 			if(data == null)
 				throw new ArgumentNullException(nameof(data));
 
-			return await this.VerifyAsync(key, await GetTicketAsync(data, cancellation), scenario, parameters, cancellation);
+			return await this.AuthenticateAsync(key, await GetTicketAsync(data, cancellation), scenario, parameters, cancellation);
 		}
 
-		public async ValueTask<string> VerifyAsync(string key, string data, string scenario, Parameters parameters, CancellationToken cancellation = default)
+		public async ValueTask<string> AuthenticateAsync(string key, string data, string scenario, Parameters parameters, CancellationToken cancellation = default)
 		{
 			if(string.IsNullOrEmpty(data))
 				throw new AuthenticationException(SecurityReasons.InvalidArgument, Properties.Resources.Authentication_MissingToken_Message);
@@ -128,9 +128,9 @@ partial class Authentication
 		#endregion
 
 		#region 身份签发
-		ValueTask<ClaimsIdentity> IAuthenticator.IssueAsync(object identifier, string scenario, Parameters parameters, CancellationToken cancellation)
+		ValueTask<ClaimsIdentity> IAuthenticator.IssueAsync(object ticket, string scenario, Parameters parameters, CancellationToken cancellation)
 		{
-			return identifier == null ? ValueTask.FromResult<ClaimsIdentity>(null) : this.IssueAsync(identifier.ToString(), scenario, parameters, cancellation);
+			return ticket == null ? ValueTask.FromResult<ClaimsIdentity>(null) : this.IssueAsync(ticket.ToString(), scenario, parameters, cancellation);
 		}
 
 		public async ValueTask<ClaimsIdentity> IssueAsync(string identifier, string scenario, Parameters parameters, CancellationToken cancellation = default)

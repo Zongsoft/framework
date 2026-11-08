@@ -8,7 +8,7 @@ using Zongsoft.Services.Distributing;
 
 namespace Zongsoft.Tests.Services;
 
-public class DistributedLockContractTest
+public class DistributedLockTest
 {
 	[Theory]
 	[InlineData(0)]

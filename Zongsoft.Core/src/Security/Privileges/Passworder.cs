@@ -9,7 +9,7 @@
  * Authors:
  *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * Copyright (C) 2020-2025 Zongsoft Studio <http://www.zongsoft.com>
+ * Copyright (C) 2020-2026 Zongsoft Studio <http://www.zongsoft.com>
  *
  * This file is part of Zongsoft.Core library.
  *
@@ -53,12 +53,12 @@ public abstract class Passworder
 	/// <exception cref="AuthenticationException">账号已禁用。</exception>
 	public abstract ValueTask<bool> VerifyAsync(Identifier identifier, string password, CancellationToken cancellation = default);
 
-	/// <summary>验证账号密码，成功时返回用户标识，密码不匹配时返回空标识。</summary>
-	/// <param name="identity">登录账号。</param>
+	/// <summary>通过账号密码认证用户身份，成功时返回真实用户标识，密码不匹配时返回空标识。</summary>
 	/// <param name="namespace">账号所属的命名空间。</param>
+	/// <param name="identity">登录账号(身份标识)。</param>
 	/// <param name="password">待验证的密码明文。</param>
 	/// <param name="cancellation">取消令牌。</param>
 	/// <returns>密码匹配时返回用户标识，否则返回空标识；存储密码为空时，仅空引用或空字符串验证成功。</returns>
 	/// <exception cref="AuthenticationException">账号不存在或已禁用。</exception>
-	public abstract ValueTask<Identifier> VerifyAsync(string identity, string @namespace, string password, CancellationToken cancellation = default);
+	public abstract ValueTask<Identifier> AuthenticateAsync(string @namespace, string identity, string password, CancellationToken cancellation = default);
 }

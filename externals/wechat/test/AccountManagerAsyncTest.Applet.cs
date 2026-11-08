@@ -93,14 +93,14 @@ public sealed partial class AccountManagerAsyncTest
 			return Task.FromResult(CredentialResponse(new { openid = "synthetic-open", session_key = "AAECAwQFBgcICQoLDA0ODw==" }));
 		};
 		var authenticator = new AppletAuthenticator(Zongsoft.Services.ApplicationContext.Current.Services);
-		var operation = authenticator.VerifyAsync($"Applet:{code}", "code", "test", new(), TestContext.Current.CancellationToken).AsTask();
+		var operation = authenticator.AuthenticateAsync($"Applet:{code}", "code", "test", new(), TestContext.Current.CancellationToken).AsTask();
 		var call = await provider.NextAsync();
 		call.Completion.SetResult(Account.Applet(code, "configured"));
 		var identity = await operation.WaitAsync(_timeout, TestContext.Current.CancellationToken);
 		Assert.Null(identity.UnionId);
 		Assert.Equal("synthetic-open", identity.OpenId);
 		Assert.Equal(1, calls);
-		await Assert.ThrowsAsync<ArgumentException>(() => authenticator.VerifyAsync($"Applet:{code}=injected", "code", "test", new(), TestContext.Current.CancellationToken).AsTask());
+		await Assert.ThrowsAsync<ArgumentException>(() => authenticator.AuthenticateAsync($"Applet:{code}=injected", "code", "test", new(), TestContext.Current.CancellationToken).AsTask());
 		Assert.Equal(1, calls);
 	}
 

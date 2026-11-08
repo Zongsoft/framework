@@ -12,10 +12,28 @@ using Zongsoft.Security.Privileges;
 
 namespace Zongsoft.Security.Tests;
 
-public abstract class PassworderContractTest
+public class PassworderTest
 {
 	private static readonly Identifier _user = new(Users.Identifiers.User, 42u);
-	protected abstract Passworder Create(IDataAccess accessor);
+	private Passworder Create(IDataAccess accessor) => ((IUserService)new UserService(accessor)).Passworder;
+
+	[Fact]
+	public async Task AuthenticateAsync_ResolvesAccountInNamespaceWithSingleQuery()
+	{
+		var passworder = this.Create(out var accessor);
+		accessor.Password = (byte[])Password.Generate("contract-password");
+		var identifier = await passworder.AuthenticateAsync("tenant", "contract-user", "contract-password", TestContext.Current.CancellationToken);
+
+		Assert.Equal(_user, identifier);
+		Assert.Equal(1, accessor.Queries);
+		Assert.Equal(1, accessor.Disposals);
+
+		Assert.True(accessor.Criteria.TryGetValue(nameof(IUser.Name), out var account));
+		Assert.Equal("contract-user", account);
+
+		Assert.True(accessor.Criteria.TryGetValue(nameof(IUser.Namespace), out var scope));
+		Assert.Equal("tenant", scope);
+	}
 
 	[Fact]
 	public async Task SetAndVerify_RoundTripsCompletePasswordAndPreservesIdentity()
@@ -27,12 +45,12 @@ public abstract class PassworderContractTest
 		Assert.Equal("SHA256", stored.Algorithm);
 		Assert.Equal(10, stored.Factor);
 		Assert.True(await passworder.VerifyAsync(_user, "contract-password", cancellation.Token));
-		var identifier = await passworder.VerifyAsync("contract-user", "tenant", "contract-password", cancellation.Token);
+		var identifier = await passworder.AuthenticateAsync("tenant", "contract-user", "contract-password", cancellation.Token);
 		Assert.Equal(_user, identifier);
 		Assert.False(await passworder.VerifyAsync(_user, "wrong", cancellation.Token));
-		Assert.True((await passworder.VerifyAsync("contract-user", "tenant", "wrong", cancellation.Token)).IsEmpty);
+		Assert.True((await passworder.AuthenticateAsync("tenant", "contract-user", "wrong", cancellation.Token)).IsEmpty);
 		Assert.False(await passworder.VerifyAsync(_user, null, cancellation.Token));
-		Assert.True((await passworder.VerifyAsync("contract-user", "tenant", string.Empty, cancellation.Token)).IsEmpty);
+		Assert.True((await passworder.AuthenticateAsync("tenant", "contract-user", string.Empty, cancellation.Token)).IsEmpty);
 		Assert.Equal(cancellation.Token, accessor.Cancellation);
 		Assert.Equal(accessor.Queries, accessor.Disposals);
 	}
@@ -48,13 +66,13 @@ public abstract class PassworderContractTest
 		foreach(var password in new[] { null, string.Empty })
 		{
 			Assert.True(await passworder.VerifyAsync(_user, password, TestContext.Current.CancellationToken));
-			Assert.Equal(_user, await passworder.VerifyAsync("contract-user", null, password, TestContext.Current.CancellationToken));
+			Assert.Equal(_user, await passworder.AuthenticateAsync(null, "contract-user", password, TestContext.Current.CancellationToken));
 		}
 
 		foreach(var password in new[] { "contract-password", " " })
 		{
 			Assert.False(await passworder.VerifyAsync(_user, password, TestContext.Current.CancellationToken));
-			Assert.True((await passworder.VerifyAsync("contract-user", null, password, TestContext.Current.CancellationToken)).IsEmpty);
+			Assert.True((await passworder.AuthenticateAsync(null, "contract-user", password, TestContext.Current.CancellationToken)).IsEmpty);
 		}
 	}
 
@@ -69,7 +87,7 @@ public abstract class PassworderContractTest
 		foreach(var password in new[] { null, string.Empty, "contract-password" })
 		{
 			Assert.False(await passworder.VerifyAsync(_user, password, TestContext.Current.CancellationToken));
-			Assert.True((await passworder.VerifyAsync("contract-user", null, password, TestContext.Current.CancellationToken)).IsEmpty);
+			Assert.True((await passworder.AuthenticateAsync(null, "contract-user", password, TestContext.Current.CancellationToken)).IsEmpty);
 		}
 	}
 
@@ -93,7 +111,7 @@ public abstract class PassworderContractTest
 		var passworder = this.Create(out var accessor);
 		accessor.Exists = false;
 		Assert.False(await passworder.VerifyAsync(_user, "contract-password", TestContext.Current.CancellationToken));
-		var error = await Assert.ThrowsAsync<AuthenticationException>(() => passworder.VerifyAsync("missing", null, "contract-password", TestContext.Current.CancellationToken).AsTask());
+		var error = await Assert.ThrowsAsync<AuthenticationException>(() => passworder.AuthenticateAsync(null, "missing", "contract-password", TestContext.Current.CancellationToken).AsTask());
 		Assert.Equal(SecurityReasons.InvalidIdentity, error.Reason);
 	}
 
@@ -104,7 +122,7 @@ public abstract class PassworderContractTest
 		accessor.Enabled = false;
 		var error = await Assert.ThrowsAsync<AuthenticationException>(() => passworder.VerifyAsync(_user, null, TestContext.Current.CancellationToken).AsTask());
 		Assert.Equal(SecurityReasons.AccountDisabled, error.Reason);
-		error = await Assert.ThrowsAsync<AuthenticationException>(() => passworder.VerifyAsync("disabled", null, null, TestContext.Current.CancellationToken).AsTask());
+		error = await Assert.ThrowsAsync<AuthenticationException>(() => passworder.AuthenticateAsync(null, "disabled", null, TestContext.Current.CancellationToken).AsTask());
 		Assert.Equal(SecurityReasons.AccountDisabled, error.Reason);
 	}
 
@@ -119,7 +137,7 @@ public abstract class PassworderContractTest
 
 		await Assert.ThrowsAnyAsync<OperationCanceledException>(() => passworder.SetAsync(_user, "contract-password", cancellation.Token).AsTask());
 		await Assert.ThrowsAnyAsync<OperationCanceledException>(() => passworder.VerifyAsync(_user, "contract-password", cancellation.Token).AsTask());
-		await Assert.ThrowsAnyAsync<OperationCanceledException>(() => passworder.VerifyAsync("user", null, "contract-password", cancellation.Token).AsTask());
+		await Assert.ThrowsAnyAsync<OperationCanceledException>(() => passworder.AuthenticateAsync(null, "user", "contract-password", cancellation.Token).AsTask());
 		Assert.Equal(0, accessor.Queries);
 		Assert.Equal(0, accessor.Updates);
 	}
@@ -138,6 +156,10 @@ public abstract class PassworderContractTest
 		accessor = (PasswordAccessor)proxy;
 		return this.Create(proxy);
 	}
+	private sealed class UserService(IDataAccess accessor) : Zongsoft.Security.Privileges.UserService
+	{
+		protected override IDataAccess Accessor => accessor;
+	}
 }
 
 public class PasswordAccessor : DispatchProxy
@@ -146,6 +168,7 @@ public class PasswordAccessor : DispatchProxy
 	public bool Enabled { get; set; } = true;
 	public byte[] Password { get; set; }
 	public int Queries { get; private set; }
+	public ICondition Criteria { get; private set; }
 	public int Disposals { get; private set; }
 	public int Updates { get; private set; }
 	public CancellationToken Cancellation { get; private set; }
@@ -157,6 +180,7 @@ public class PasswordAccessor : DispatchProxy
 		if(method.Name == nameof(IDataAccess.SelectAsync))
 		{
 			this.Queries++;
+			this.Criteria = Assert.Single(arguments.OfType<ICondition>());
 			return typeof(PasswordAccessor).GetMethod(nameof(this.Select), BindingFlags.NonPublic | BindingFlags.Instance)
 				.MakeGenericMethod(method.GetGenericArguments()[0]).Invoke(this, [this.Cancellation]);
 		}

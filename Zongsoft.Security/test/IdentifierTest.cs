@@ -8,7 +8,7 @@ using Zongsoft.Security.Privileges.Models;
 
 namespace Zongsoft.Security.Tests;
 
-public class IdentifierContractTest
+public class IdentifierTest
 {
 	[Fact]
 	public void SecurityIdentifiersUseLogicalNames()
