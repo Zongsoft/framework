@@ -34,7 +34,7 @@ using System.Collections.Concurrent;
 
 namespace Zongsoft.Components;
 
-public readonly partial struct Identifier
+partial struct Identifier
 {
 	/// <summary>提供标识简写格式的登记入口。</summary>
 	/// <remarks>应在交换简写标识前登记双方一致的规则。相同规则可重复登记，冲突规则明确失败；登记和查询支持并发，规则不能替换。</remarks>
