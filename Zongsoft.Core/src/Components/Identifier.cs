@@ -35,7 +35,7 @@ using System.Runtime.CompilerServices;
 
 namespace Zongsoft.Components;
 
-/// <summary>表示由逻辑名称或类型限定的类型化标识。</summary>
+/// <summary>表示由逻辑名称限定的类型化标识。</summary>
 /// <remarks>身份比较仅包含类别和类型化键；逻辑名称忽略大小写，元数据不参与比较。结构复制及无损转换共享扩展属性字典。</remarks>
 [TypeConverter(typeof(IdentifierTypeConverter))]
 [JsonConverter(typeof(IdentifierJsonConverter))]
@@ -51,7 +51,7 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IConvertible
 	/// <exception cref="ArgumentException">逻辑名称不符合命名规则。</exception>
 	/// <remarks>构造函数复制传入的扩展属性字典；不会验证键值是否满足业务约束，也不会预先验证其能否序列化。</remarks>
 	public Identifier(string name, object value, string label = null, string description = null, IDictionary<string, string> properties = null) :
-		this(name, null, value, null, label, null, description, properties, true) { }
+		this(name, value, null, label, null, description, properties, true) { }
 
 	/// <summary>初始化以逻辑名称为类别的标识。</summary>
 	/// <param name="name">逻辑名称，仅允许 ASCII 字母、数字、下划线和点，且不能以点开头。</param>
@@ -63,7 +63,7 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IConvertible
 	/// <exception cref="ArgumentException">逻辑名称不符合命名规则。</exception>
 	/// <remarks>构造函数复制传入的扩展属性字典；不会验证键值是否满足业务约束，也不会预先验证其能否序列化。</remarks>
 	public Identifier(string name, object value, (string code, string alias) extra, string label = null, string description = null, IDictionary<string, string> properties = null) :
-		this(name, null, value, extra.code, label, extra.alias, description, properties, true) { }
+		this(name, value, extra.code, label, extra.alias, description, properties, true) { }
 
 	/// <summary>初始化以逻辑名称为类别的标识。</summary>
 	/// <param name="name">逻辑名称，仅允许 ASCII 字母、数字、下划线和点，且不能以点开头。</param>
@@ -74,49 +74,14 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IConvertible
 	/// <exception cref="ArgumentException">逻辑名称不符合命名规则。</exception>
 	/// <remarks>构造函数复制传入的扩展属性字典；不会验证键值是否满足业务约束，也不会预先验证其能否序列化。</remarks>
 	public Identifier(string name, object value, (string code, string alias, string label) extra, string description = null, IDictionary<string, string> properties = null) :
-		this(name, null, value, extra.code, extra.label, extra.alias, description, properties, true) { }
+		this(name, value, extra.code, extra.label, extra.alias, description, properties, true) { }
 
-	/// <summary>初始化以 CLR 类型为类别的标识。</summary>
-	/// <param name="type">作为类别的 CLR 类型，不能为空。</param>
-	/// <param name="value">标识的完整键值，保留其实际类型。</param>
-	/// <param name="label">可选的展示名称。</param>
-	/// <param name="description">可选的说明。</param>
-	/// <param name="properties">可选的扩展属性；构造时复制字典，副本的键不区分大小写。</param>
-	/// <exception cref="ArgumentNullException">类别类型为空。</exception>
-	/// <remarks>构造函数复制传入的扩展属性字典；不会验证键值是否满足业务约束，也不会预先验证其能否序列化。</remarks>
-	public Identifier(Type type, object value, string label = null, string description = null, IDictionary<string, string> properties = null) :
-		this(null, type ?? throw new ArgumentNullException(nameof(type)), value, null, label, null, description, properties, true) { }
-
-	/// <summary>初始化以 CLR 类型为类别的标识。</summary>
-	/// <param name="type">作为类别的 CLR 类型，不能为空。</param>
-	/// <param name="value">标识的完整键值，保留其实际类型。</param>
-	/// <param name="extra">业务编号和展示别名组成的元组；未提供的字段使用空引用。</param>
-	/// <param name="label">可选的展示名称。</param>
-	/// <param name="description">可选的说明。</param>
-	/// <param name="properties">可选的扩展属性；构造时复制字典，副本的键不区分大小写。</param>
-	/// <exception cref="ArgumentNullException">类别类型为空。</exception>
-	/// <remarks>构造函数复制传入的扩展属性字典；不会验证键值是否满足业务约束，也不会预先验证其能否序列化。</remarks>
-	public Identifier(Type type, object value, (string code, string alias) extra, string label = null, string description = null, IDictionary<string, string> properties = null) :
-		this(null, type ?? throw new ArgumentNullException(nameof(type)), value, extra.code, label, extra.alias, description, properties, true) { }
-
-	/// <summary>初始化以 CLR 类型为类别的标识。</summary>
-	/// <param name="type">作为类别的 CLR 类型，不能为空。</param>
-	/// <param name="value">标识的完整键值，保留其实际类型。</param>
-	/// <param name="extra">业务编号、展示别名和展示名称组成的元组；未提供的字段使用空引用。</param>
-	/// <param name="description">可选的说明。</param>
-	/// <param name="properties">可选的扩展属性；构造时复制字典，副本的键不区分大小写。</param>
-	/// <exception cref="ArgumentNullException">类别类型为空。</exception>
-	/// <remarks>构造函数复制传入的扩展属性字典；不会验证键值是否满足业务约束，也不会预先验证其能否序列化。</remarks>
-	public Identifier(Type type, object value, (string code, string alias, string label) extra, string description = null, IDictionary<string, string> properties = null) :
-		this(null, type ?? throw new ArgumentNullException(nameof(type)), value, extra.code, extra.label, extra.alias, description, properties, true) { }
-
-	internal Identifier(string name, Type type, object value, string code, string label, string alias, string description, IDictionary<string, string> properties, bool copy)
+	internal Identifier(string name, object value, string code, string label, string alias, string description, IDictionary<string, string> properties, bool copy)
 	{
-		if(type == null && !IsName(name))
+		if(!IsName(name))
 			throw new ArgumentException(Zongsoft.Properties.Resources.Identifier_InvalidFormat_Message, nameof(name));
 
 		this.Name = name;
-		this.Type = type;
 		this.Code = code;
 		this.Value = value;
 		this.Alias = alias;
@@ -127,10 +92,8 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IConvertible
 	#endregion
 
 	#region 公共字段
-	/// <summary>获取标识的逻辑名称；使用 <see cref="Type"/> 类型作为类别时该属性为空。</summary>
+	/// <summary>获取限定标识身份的逻辑名称。</summary>
 	public readonly string Name;
-	/// <summary>获取标识的类别；使用逻辑名称（<see cref="Name"/>）作为类别时该属性为空。</summary>
-	public readonly Type Type;
 	/// <summary>获取可选的业务编号；不从键值推导，不参与身份比较。</summary>
 	public readonly string Code;
 	/// <summary>获取保持实际类型的身份键值，即标识符值。</summary>
@@ -148,31 +111,16 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IConvertible
 	/// <remarks>未提供扩展属性时为空。结构复制、无损转换及 With 返回值共享字典；并发修改由调用方同步。</remarks>
 	public IDictionary<string, string> Properties { get; }
 	/// <summary>获取一个值，指示类别或键值缺失。</summary>
-	public bool IsEmpty => (this.Type == null && this.Name == null) || this.Value == null;
+	public bool IsEmpty => this.Name == null || this.Value == null;
 	/// <summary>获取一个值，指示类别和键值均已提供；零键值仍视为有值。</summary>
 	public bool HasValue => !this.IsEmpty;
 	#endregion
 
 	#region 公共方法
-	/// <summary>将标识的类别改为指定 CLR 类型。</summary>
-	/// <typeparam name="TType">目标 CLR 类别。</typeparam>
-	/// <returns>指定类别的标识，保留元数据并共享扩展属性；空标识返回默认值。</returns>
-	public Identifier Cast<TType>() => this.IsEmpty ? default : new(null, typeof(TType), this.Value, this.Code, this.Label, this.Alias, this.Description, this.Properties, false);
-	/// <summary>将标识的类别改为指定 CLR 类型，并转换键值类型。</summary>
-	/// <typeparam name="TType">目标 CLR 类别。</typeparam>
-	/// <typeparam name="TValue">输出的键值类型。</typeparam>
-	/// <returns>指定类别的标识，保留元数据并共享扩展属性；空标识返回默认值。</returns>
-	/// <exception cref="InvalidCastException">键值无法转换为目标类型。</exception>
-	public Identifier<TValue> Cast<TType, TValue>() => (Identifier<TValue>)this.Cast<TType>();
-
 	/// <summary>验证非空标识的逻辑名称。</summary>
 	/// <param name="name">标识的逻辑名称，按不区分大小写的方式匹配。</param>
 	/// <returns>标识非空、类别匹配时返回真，否则返回假。</returns>
 	public bool Validate(string name) => this.HasValue && string.Equals(this.Name, name, StringComparison.OrdinalIgnoreCase);
-	/// <summary>验证非空标识的 CLR 类别。</summary>
-	/// <typeparam name="TType">目标 CLR 类别。</typeparam>
-	/// <returns>标识非空、类别匹配时返回真，否则返回假。</returns>
-	public bool Validate<TType>() => this.HasValue && this.Type != null && typeof(TType).IsAssignableFrom(this.Type);
 
 	/// <summary>尝试获取完整键值。</summary>
 	/// <typeparam name="TValue">输出的键值类型。</typeparam>
@@ -190,22 +138,6 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IConvertible
 		return false;
 	}
 
-	/// <summary>验证 CLR 类别并尝试获取完整键值。</summary>
-	/// <typeparam name="TType">目标 CLR 类别。</typeparam>
-	/// <typeparam name="TValue">输出的键值类型。</typeparam>
-	/// <param name="value">成功时返回转换后的完整键值，失败时返回默认值。</param>
-	/// <returns>类别匹配、完整键值可转换为指定类型时返回真，否则返回假。</returns>
-	public bool TryGetValue<TType, TValue>(out TValue value) => this.TryGetValue(typeof(TType), out value);
-	/// <summary>验证 CLR 类别并尝试获取完整键值。</summary>
-	/// <typeparam name="TValue">输出的键值类型。</typeparam>
-	/// <param name="type">标识的 CLR 类别；验证时接受该类型及其派生或实现类型。</param>
-	/// <param name="value">成功时返回转换后的完整键值，失败时返回默认值。</param>
-	/// <returns>类别匹配、完整键值可转换为指定类型时返回真，否则返回假。</returns>
-	public bool TryGetValue<TValue>(Type type, out TValue value)
-	{
-		value = default;
-		return type != null && this.Type != null && type.IsAssignableFrom(this.Type) && this.TryGetValue(out value);
-	}
 	/// <summary>验证逻辑名称并尝试获取完整键值。</summary>
 	/// <typeparam name="TValue">输出的键值类型。</typeparam>
 	/// <param name="name">标识的逻辑名称，按不区分大小写的方式匹配。</param>
@@ -258,18 +190,6 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IConvertible
 		return this.Validate(name) && this.TryGetValue(ordinal, out value);
 	}
 
-	/// <summary>验证 CLR 类别并尝试获取指定序号的键分量。</summary>
-	/// <typeparam name="TValue">输出的键值类型。</typeparam>
-	/// <param name="type">标识的 CLR 类别；验证时接受该类型及其派生或实现类型。</param>
-	/// <param name="ordinal">从零开始的键分量序号；单键只支持零。</param>
-	/// <param name="value">成功时返回转换后的键分量，失败时返回默认值。</param>
-	/// <returns>类别匹配、分量存在且可转换为指定类型时返回真，否则返回假。</returns>
-	public bool TryGetValue<TValue>(Type type, int ordinal, out TValue value)
-	{
-		value = default;
-		return type != null && this.Type != null && type.IsAssignableFrom(this.Type) && this.TryGetValue(ordinal, out value);
-	}
-
 	/// <summary>替换指定序号的键分量，返回保留类别及元数据的新标识。</summary>
 	/// <param name="ordinal">从零开始的键分量序号；单键只支持零。</param>
 	/// <param name="value">替换值，按原键分量类型转换。</param>
@@ -308,7 +228,7 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IConvertible
 				throw new InvalidCastException(Zongsoft.Properties.Resources.Identifier_InvalidFormat_Message);
 		}
 
-		return new(this.Name, this.Type, result, this.Code, this.Label, this.Alias, this.Description, this.Properties, false);
+		return new(this.Name, result, this.Code, this.Label, this.Alias, this.Description, this.Properties, false);
 	}
 	#endregion
 
@@ -316,7 +236,7 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IConvertible
 	/// <summary>比较标识的类别及类型化键值。</summary>
 	/// <param name="other">参与比较的另一个标识。</param>
 	/// <returns>类别及类型化键相等时返回真，否则返回假；两个空标识相等。</returns>
-	public bool Equals(Identifier other) => this.IsEmpty ? other.IsEmpty : !other.IsEmpty && this.Type == other.Type &&
+	public bool Equals(Identifier other) => this.IsEmpty ? other.IsEmpty : !other.IsEmpty &&
 		string.Equals(this.Name, other.Name, StringComparison.OrdinalIgnoreCase) && Equals(this.Value, other.Value);
 	/// <summary>比较标识的类别及类型化键值。</summary>
 	/// <param name="obj">参与比较的对象。</param>
@@ -324,7 +244,7 @@ public readonly partial struct Identifier : IEquatable<Identifier>, IConvertible
 	public override bool Equals(object obj) => obj is Identifier other && this.Equals(other);
 	/// <summary>获取由类别和类型化键生成的哈希代码。</summary>
 	/// <returns>身份的哈希代码；空标识返回零，元数据不参与计算。</returns>
-	public override int GetHashCode() => this.IsEmpty ? 0 : HashCode.Combine(this.Type, this.Name == null ? 0 : StringComparer.OrdinalIgnoreCase.GetHashCode(this.Name), this.Value);
+	public override int GetHashCode() => this.IsEmpty ? 0 : HashCode.Combine(StringComparer.OrdinalIgnoreCase.GetHashCode(this.Name), this.Value);
 	/// <summary>将标识格式化为统一的文本协议。</summary>
 	/// <returns>包含类别、键值及非空元数据的标识文本；空标识返回空字符串。</returns>
 	/// <exception cref="FormatException">键值不支持协议要求的文本转换。</exception>

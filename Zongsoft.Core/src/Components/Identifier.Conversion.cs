@@ -208,10 +208,10 @@ partial struct Identifier
 			return string.Empty;
 
 		var types = GetKeyTypes(identifier.Value.GetType());
-		var rule = Formatting.Find(identifier.Name, identifier.Type);
+		var rule = Formatting.Find(identifier.Name);
 		var compact = format != "F" && rule != null && rule.Types.SequenceEqual(types);
 		var separator = compact ? rule.Separator : ',';
-		var result = new StringBuilder(identifier.Type == null ? identifier.Name : "$" + Common.TypeAlias.GetAlias(identifier.Type));
+		var result = new StringBuilder(identifier.Name);
 
 		result.Append(':');
 

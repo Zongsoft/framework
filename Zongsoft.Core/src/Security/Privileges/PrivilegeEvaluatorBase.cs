@@ -57,7 +57,7 @@ public abstract class PrivilegeEvaluatorBase : IPrivilegeEvaluator, IMatchable, 
 			if(principal == null || principal.Identity.IsAnonymous())
 				return Zongsoft.Collections.Enumerable.Empty<IPrivilegeEvaluatorResult>();
 
-			identifier = new Identifier(typeof(IUser), principal.Identity.GetIdentifier());
+			identifier = new Identifier(Users.Identifiers.User, principal.Identity.GetIdentifier());
 		}
 
 		var context = this.CreateContext(identifier, parameters);

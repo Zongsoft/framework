@@ -48,7 +48,7 @@ namespace Zongsoft.Security.Web.Controllers;
 
 [Area(Module.NAME)]
 [ControllerName("Users")]
-[Authorize(Roles = $"{IRole.Administrators},{IRole.Security}")]
+[Authorize(Roles = $"{Roles.Administrators},{Roles.Security}")]
 public partial class UserController : ControllerBase
 {
 	#region 公共属性
@@ -62,7 +62,7 @@ public partial class UserController : ControllerBase
 		if(string.IsNullOrEmpty(id))
 			return this.Paginate(page ??= Paging.First(), this.Service.FindAsync(keyword, this.Request.Headers.GetDataSchema(), page, cancellation));
 
-		var result = await this.Service.GetAsync(new Identifier(typeof(IUser), id), this.Request.Headers.GetDataSchema(), cancellation);
+		var result = await this.Service.GetAsync(new Identifier(Users.Identifiers.User, id), this.Request.Headers.GetDataSchema(), cancellation);
 		return result != null ? this.Ok(result) : this.NoContent();
 	}
 
@@ -85,7 +85,7 @@ public partial class UserController : ControllerBase
 		if(string.IsNullOrEmpty(id))
 			return this.BadRequest();
 
-		return await this.Service.DeleteAsync(new Identifier(typeof(IUser), id), cancellation) ? this.NoContent() : this.NotFound();
+		return await this.Service.DeleteAsync(new Identifier(Users.Identifiers.User, id), cancellation) ? this.NoContent() : this.NotFound();
 	}
 
 	[HttpDelete]
@@ -99,7 +99,7 @@ public partial class UserController : ControllerBase
 		if(ids == null || ids.Length == 0)
 			return this.BadRequest();
 
-		var count = await this.Service.DeleteAsync(ids.Select(id => new Identifier(typeof(IUser), id)), cancellation);
+		var count = await this.Service.DeleteAsync(ids.Select(id => new Identifier(Users.Identifiers.User, id)), cancellation);
 		return count > 0 ? this.Content(count.ToString()) : this.NotFound();
 	}
 
@@ -114,7 +114,7 @@ public partial class UserController : ControllerBase
 		if(model is IActionResult result)
 			return result;
 
-		((IUser)model).Identifier = new(typeof(IUser), id);
+		((IUser)model).Identifier = new(Users.Identifiers.User, id);
 		return await this.Service.UpdateAsync((IUser)model, cancellation) ? this.NoContent() : this.NotFound();
 	}
 
@@ -125,7 +125,7 @@ public partial class UserController : ControllerBase
 		if(string.IsNullOrWhiteSpace(content))
 			return this.BadRequest();
 
-		return await this.Service.RenameAsync(new Identifier(typeof(IUser), string.IsNullOrEmpty(id) ? null : id), content, cancellation) ? this.NoContent() : this.NotFound();
+		return await this.Service.RenameAsync(new Identifier(Users.Identifiers.User, string.IsNullOrEmpty(id) ? null : id), content, cancellation) ? this.NoContent() : this.NotFound();
 	}
 
 	[ActionName("Email")]
@@ -136,7 +136,7 @@ public partial class UserController : ControllerBase
 		if(string.IsNullOrWhiteSpace(email))
 			return this.BadRequest();
 
-		return await this.Service.SetEmailAsync(new Identifier(typeof(IUser), string.IsNullOrEmpty(id) ? null : id), email, cancellation) ? this.NoContent() : this.NotFound();
+		return await this.Service.SetEmailAsync(new Identifier(Users.Identifiers.User, string.IsNullOrEmpty(id) ? null : id), email, cancellation) ? this.NoContent() : this.NotFound();
 	}
 
 	[ActionName("Email")]
@@ -148,7 +148,7 @@ public partial class UserController : ControllerBase
 			return this.BadRequest();
 
 		var token = await this.Service.SetEmailAsync(
-			new Identifier(typeof(IUser), string.IsNullOrEmpty(id) ? null : id),
+			new Identifier(Users.Identifiers.User, string.IsNullOrEmpty(id) ? null : id),
 			email,
 			new Parameters(this.Request.GetParameters()),
 			cancellation);
@@ -174,7 +174,7 @@ public partial class UserController : ControllerBase
 		if(string.IsNullOrWhiteSpace(phone))
 			return this.BadRequest();
 
-		return await this.Service.SetPhoneAsync(new Identifier(typeof(IUser), string.IsNullOrEmpty(id) ? null : id), phone, cancellation) ? this.NoContent() : this.NotFound();
+		return await this.Service.SetPhoneAsync(new Identifier(Users.Identifiers.User, string.IsNullOrEmpty(id) ? null : id), phone, cancellation) ? this.NoContent() : this.NotFound();
 	}
 
 	[ActionName("Phone")]
@@ -186,7 +186,7 @@ public partial class UserController : ControllerBase
 			return this.BadRequest();
 
 		var token = await this.Service.SetPhoneAsync(
-			new Identifier(typeof(IUser), string.IsNullOrEmpty(id) ? null : id),
+			new Identifier(Users.Identifiers.User, string.IsNullOrEmpty(id) ? null : id),
 			phone,
 			new Parameters(this.Request.GetParameters()),
 			cancellation);
@@ -210,7 +210,7 @@ public partial class UserController : ControllerBase
 		if(string.IsNullOrEmpty(id))
 			return this.BadRequest();
 
-		return await this.Service.EnableAsync(new Identifier(typeof(IUser), id), cancellation) ? this.NoContent() : this.NotFound();
+		return await this.Service.EnableAsync(new Identifier(Users.Identifiers.User, id), cancellation) ? this.NoContent() : this.NotFound();
 	}
 
 	[HttpPost("{id:required}/[action]")]
@@ -219,7 +219,7 @@ public partial class UserController : ControllerBase
 		if(string.IsNullOrEmpty(id))
 			return this.BadRequest();
 
-		return await this.Service.DisableAsync(new Identifier(typeof(IUser), id), cancellation) ? this.NoContent() : this.NotFound();
+		return await this.Service.DisableAsync(new Identifier(Users.Identifiers.User, id), cancellation) ? this.NoContent() : this.NotFound();
 	}
 
 	[HttpHead("{id:required}")]
@@ -230,7 +230,7 @@ public partial class UserController : ControllerBase
 		if(string.IsNullOrEmpty(id))
 			return this.BadRequest();
 
-		return await this.Service.ExistsAsync(new Identifier(typeof(IUser), id), cancellation) ? this.NoContent() : this.NotFound();
+		return await this.Service.ExistsAsync(new Identifier(Users.Identifiers.User, id), cancellation) ? this.NoContent() : this.NotFound();
 	}
 	#endregion
 

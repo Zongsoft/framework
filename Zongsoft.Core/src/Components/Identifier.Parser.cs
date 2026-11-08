@@ -106,42 +106,16 @@ partial struct Identifier
 	#region 状态处理
 	private static void DoScope(ref ParseContext context)
 	{
-		if(context.Character is '<' or '[')
-			context.Depth++;
-		if(context.Character is '>' or ']')
-			context.Depth--;
-
-		if(context.Depth < 0)
+		if(context.Character == ':')
 		{
-			context.Fail();
-			return;
-		}
-
-		if(context.Depth == 0 && context.Character == ':')
-		{
-			var scope = context.Take();
-
-			if(scope.StartsWith('$'))
+			var name = context.Take();
+			if(!IsName(name))
 			{
-				context.Type = ResolveType(scope[1..]);
-
-				if(context.Type == null)
-				{
-					context.Fail();
-					return;
-				}
-			}
-			else
-			{
-				if(!IsName(scope))
-				{
-					context.Fail();
-					return;
-				}
-
-				context.Name = scope;
+				context.Fail();
+				return;
 			}
 
+			context.Name = name;
 			context.State = ParseState.ValueStart;
 		}
 		else
@@ -348,7 +322,7 @@ partial struct Identifier
 			if(context.DeclaredCount > 0)
 				return context.Declared[..context.DeclaredCount].ToArray();
 
-			var rule = Formatting.Find(context.Name, context.Type);
+			var rule = Formatting.Find(context.Name);
 			if(rule != null)
 			{
 				separator = rule.Separator;
@@ -441,7 +415,7 @@ partial struct Identifier
 			return false;
 
 		var value = context.Values == null ? context.Value : CreateValue(context.Types, context.Values);
-		result = new Identifier(context.Name, context.Type, value, context.Code, context.Label, context.Alias, context.Description, context.Properties, false);
+		result = new Identifier(context.Name, value, context.Code, context.Label, context.Alias, context.Description, context.Properties, false);
 		return true;
 	}
 
@@ -529,7 +503,6 @@ partial struct Identifier
 		public Dictionary<string, string> Properties;
 		public string Property;
 		public string Name;
-		public Type Type;
 		public string Code;
 		public string Label;
 		public string Alias;

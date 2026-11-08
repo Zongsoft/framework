@@ -101,12 +101,14 @@ Additional artifacts listed by the deployment manifest include `Zongsoft.Securit
 
 Recovery questions use `SecretQuestion` (500 characters) and answers use `SecretAnswer` (2048 bytes), supporting three to five pairs. Initialization SQL creates new tables and does not upgrade existing tables; existing databases must meet these column and capacity requirements.
 
-## Identifier Type Aliases
+## Identifier Categories
 
-The Security module registers `Zongsoft.Security.User` and `Zongsoft.Security.Role` through `TypeAlias.Aliases.Map` when `Module.Current` is created. The plugin mounts this module during startup. Tools without plugin startup should initialize it before reading or writing short identifiers such as `$Zongsoft.Security.User:<uint>17`:
+The built-in user name is `Users.Administrator`; the built-in role names are `Roles.Administrators` and `Roles.Security`. These names and the nested identifier category names are compile-time string constants in `Zongsoft.Security.Privileges`, suitable for authorization attributes.
+
+User and role identifiers use `Users.Identifiers.User` (`Zongsoft.Security.User`) and `Roles.Identifiers.Role` (`Zongsoft.Security.Role`) as logical names. Models determine the typed key; reading and writing identifiers requires no module initialization or category registration.
 
 ```csharp
-_ = Zongsoft.Security.Module.Current;
+var user = new Zongsoft.Components.Identifier(Zongsoft.Security.Privileges.Users.Identifiers.User, 17u);
 ```
 
-Without registration, identifiers use ordinary full type names, such as `$Zongsoft.Security.Privileges.IUser@Zongsoft.Core:<uint>17`. The [identifier protocol](../Zongsoft.Core/docs/identifiers.md) defines the shared text and JSON formats.
+See the [identifier protocol](../Zongsoft.Core/docs/identifiers.md) for the shared text and JSON format.

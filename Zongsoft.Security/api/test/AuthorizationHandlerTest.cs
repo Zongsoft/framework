@@ -39,7 +39,7 @@ public class AuthorizationHandlerTest
 		using var state = new SecurityState();
 		var authorizer = ServiceProxy.Create<IAuthorizer>((method, args) => method.Name == "get_Name" ? "api-test" : throw new InvalidOperationException("Administrators must bypass privilege evaluation."));
 		Authorization.Authorizers.Add(authorizer);
-		var identity = new ClaimsIdentity([new Claim(ClaimTypes.Name, "Alice"), new Claim(ClaimTypes.Role, IRole.Administrators)], "api-test");
+		var identity = new ClaimsIdentity([new Claim(ClaimTypes.Name, "Alice"), new Claim(ClaimTypes.Role, Roles.Administrators)], "api-test");
 		var requirement = new OperationAuthorizationRequirement { Name = "orders:read" };
 		var context = new AuthorizationHandlerContext([requirement], new ClaimsPrincipal(identity), null);
 

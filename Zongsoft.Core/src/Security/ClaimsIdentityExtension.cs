@@ -49,7 +49,7 @@ public static class ClaimsIdentityExtension
 		if(identity == null || !identity.IsAuthenticated || string.IsNullOrEmpty(identity.FindFirst(ClaimTypes.NameIdentifier)?.Value))
 			return false;
 
-		return identity.InRoles([Privileges.IRole.Administrators]) || string.Equals(identity.Name, Privileges.IUser.Administrator, StringComparison.OrdinalIgnoreCase);
+		return identity.InRoles([Privileges.Roles.Administrators]) || string.Equals(identity.Name, Privileges.Users.Administrator, StringComparison.OrdinalIgnoreCase);
 	}
 
 	public static bool InRole(this ClaimsIdentity identity, string role) => identity != null && role != null && identity.HasClaim(identity.RoleClaimType, role);
@@ -449,7 +449,7 @@ public static class ClaimsIdentityExtension
 	public static Identifier Identify(this IIdentity identity) => Identify(identity as ClaimsIdentity);
 	public static Identifier Identify(this ClaimsIdentity identity) => new
 	(
-		typeof(Privileges.IUser),
+		Privileges.Users.Identifiers.User,
 		identity.GetIdentifier(),
 		identity.GetQualifiedName(),
 		identity.TryGetClaim<string>(nameof(Identifier.Description), out var description) ? description : null
@@ -465,7 +465,7 @@ public static class ClaimsIdentityExtension
 				user.Name = claim.Value;
 				return true;
 			case ClaimTypes.NameIdentifier:
-				user.Identifier = new Identifier(typeof(Privileges.IUser), claim.GetValue());
+				user.Identifier = new Identifier(Privileges.Users.Identifiers.User, claim.GetValue());
 				return true;
 			case ClaimTypes.Email:
 				user.Email = claim.Value;
@@ -530,7 +530,7 @@ public static class ClaimsIdentityExtension
 	{
 		if(model is IIdentifiable identifiable)
 		{
-			identifiable.Identifier = new Identifier(Model.GetModelType(model), claim.GetValue());
+			identifiable.Identifier = new Identifier(identifiable.Identifier.Name, claim.GetValue());
 			return true;
 		}
 
@@ -541,7 +541,7 @@ public static class ClaimsIdentityExtension
 	{
 		if(target is IIdentifiable identifiable)
 		{
-			identifiable.Identifier = new Identifier(Model.GetModelType(target), claim.GetValue());
+			identifiable.Identifier = new Identifier(identifiable.Identifier.Name, claim.GetValue());
 			return true;
 		}
 

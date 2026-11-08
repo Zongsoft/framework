@@ -97,14 +97,14 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 	public virtual async ValueTask<bool> EnableAsync(Identifier identifier, CancellationToken cancellation = default)
 	{
 		//确保不能设置内置用户
-		var criteria = this.GetCriteria(identifier) & Condition.NotEqual(nameof(IUser.Name), IUser.Administrator);
+		var criteria = this.GetCriteria(identifier) & Condition.NotEqual(nameof(IUser.Name), Users.Administrator);
 		return criteria != null && await this.Accessor.UpdateAsync(this.Name, new { Enabled = true }, criteria, cancellation) > 0;
 	}
 
 	public virtual async ValueTask<bool> DisableAsync(Identifier identifier, CancellationToken cancellation = default)
 	{
 		//确保不能禁用内置用户
-		var criteria = this.GetCriteria(identifier) & Condition.NotEqual(nameof(IUser.Name), IUser.Administrator);
+		var criteria = this.GetCriteria(identifier) & Condition.NotEqual(nameof(IUser.Name), Users.Administrator);
 		return criteria != null && await this.Accessor.UpdateAsync(this.Name, new { Enabled = false }, criteria, cancellation) > 0;
 	}
 
@@ -117,7 +117,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		this.OnValidateName(name);
 
 		//确保不能更名内置用户
-		var criteria = this.GetCriteria(identifier) & Condition.NotEqual(nameof(IUser.Name), IUser.Administrator);
+		var criteria = this.GetCriteria(identifier) & Condition.NotEqual(nameof(IUser.Name), Users.Administrator);
 		if(criteria == null)
 			return false;
 
@@ -280,7 +280,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 			return false;
 
 		//确保不能删除内置用户
-		var criteria = this.GetCriteria(identifier) & Condition.NotEqual(nameof(IUser.Name), IUser.Administrator);
+		var criteria = this.GetCriteria(identifier) & Condition.NotEqual(nameof(IUser.Name), Users.Administrator);
 		if(criteria == null)
 			return false;
 
@@ -306,7 +306,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 					continue;
 
 				//确保不能禁用内置用户
-				var criteria = this.GetCriteria(identifier) & Condition.NotEqual(nameof(IUser.Name), IUser.Administrator);
+				var criteria = this.GetCriteria(identifier) & Condition.NotEqual(nameof(IUser.Name), Users.Administrator);
 				if(criteria == null)
 					continue;
 
@@ -343,7 +343,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 			this.OnValidateName(user.Name);
 
 		//确保修改的不是内置用户
-		var criteria = this.GetCriteria(user.Identifier) & Condition.NotEqual(nameof(IUser.Name), IUser.Administrator);
+		var criteria = this.GetCriteria(user.Identifier) & Condition.NotEqual(nameof(IUser.Name), Users.Administrator);
 		if(!await this.Accessor.ExistsAsync(this.Name, criteria, cancellation))
 			return false;
 
@@ -371,7 +371,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 	protected virtual void OnValidateName(string name)
 	{
 		//验证指定的名称是否为系统内置名
-		if(string.Equals(name, IUser.Administrator, StringComparison.OrdinalIgnoreCase))
+		if(string.Equals(name, Users.Administrator, StringComparison.OrdinalIgnoreCase))
 			throw new SecurityException("username.illegality", Properties.Resources.Security_BuiltinName_Message);
 
 		var validator = this.Services?.Find<IValidator<string>>("user.name");
@@ -393,7 +393,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		if(identifier.IsEmpty)
 			return null;
 
-		if(identifier.TryGetValue<IUser, string>(out var qualifiedName))
+		if(identifier.TryGetValue<string>(Users.Identifiers.User, out var qualifiedName))
 		{
 			var index = qualifiedName.IndexOf(':');
 			return index >= 0 && !qualifiedName.StartsWith("email:", StringComparison.OrdinalIgnoreCase) && !qualifiedName.StartsWith("phone:", StringComparison.OrdinalIgnoreCase) ?
@@ -410,7 +410,7 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 	protected virtual ValueTask<Identifier> EnsureIdentityAsync(Identifier identifier, CancellationToken cancellation)
 	{
 		if(identifier.IsEmpty)
-			return ValueTask.FromResult(new Identifier(typeof(IUser), ApplicationContext.Current.Principal.Identity.GetIdentifier()));
+			return ValueTask.FromResult(new Identifier(Users.Identifiers.User, ApplicationContext.Current.Principal.Identity.GetIdentifier()));
 
 		/*
 		 * 只有当前用户是如下情况之一，才能操作指定的其他用户：
@@ -418,12 +418,12 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 		 *   2) 当前用户是系统管理员(Administrators)或安全管理员角色(Security)成员。
 		 */
 
-		if(!identifier.Validate<IUser>())
+		if(!identifier.Validate(Users.Identifiers.User))
 			throw OperationException.Argument();
 
 		var current = ApplicationContext.Current.Principal.Identity.GetIdentifier();
 
-		if(object.Equals(current, identifier.Value) || ApplicationContext.Current.Principal.InRoles([IRole.Administrators, IRole.Security]))
+		if(object.Equals(current, identifier.Value) || ApplicationContext.Current.Principal.InRoles([Roles.Administrators, Roles.Security]))
 			return ValueTask.FromResult(identifier);
 
 		throw new AuthorizationException(SecurityReasons.Forbidden, Properties.Resources.UserService_Unauthorized_Message);
@@ -455,8 +455,8 @@ public abstract partial class UserServiceBase<TUser> : IUserService<TUser>, IUse
 
 			return type switch
 			{
-				"email" => await this.SetEmailAsync(new Identifier(typeof(TUser), parts[0]), parts[1], cancellation),
-				"phone" => await this.SetPhoneAsync(new Identifier(typeof(TUser), parts[0]), parts[1], cancellation),
+				"email" => await this.SetEmailAsync(new Identifier(Users.Identifiers.User, parts[0]), parts[1], cancellation),
+				"phone" => await this.SetPhoneAsync(new Identifier(Users.Identifiers.User, parts[0]), parts[1], cancellation),
 				_ => false,
 			};
 		}

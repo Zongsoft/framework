@@ -51,14 +51,14 @@ public abstract class RoleModel : IRole, IIdentifiable, IIdentifiable<uint>, IEq
 	#region 标识属性
 	Identifier IIdentifiable.Identifier
 	{
-		get => new(typeof(IRole), this.RoleId, this.Name, this.Description);
-		set => this.RoleId = value.TryGetValue<IRole, uint>(out var id) ? id : throw new ArgumentException();
+		get => new(Roles.Identifiers.Role, this.RoleId, this.Name, this.Description);
+		set => this.RoleId = value.TryGetValue<uint>(Roles.Identifiers.Role, out var id) ? id : throw new ArgumentException();
 	}
 
 	Identifier<uint> IIdentifiable<uint>.Identifier
 	{
-		get => new(typeof(IRole), this.RoleId, this.Name, this.Description);
-		set => this.RoleId = value.TryGetValue<IRole>(out var id) ? id : throw new ArgumentException();
+		get => new(Roles.Identifiers.Role, this.RoleId, this.Name, this.Description);
+		set => this.RoleId = value.TryGetValue(Roles.Identifiers.Role, out var id) ? id : throw new ArgumentException();
 	}
 	#endregion
 

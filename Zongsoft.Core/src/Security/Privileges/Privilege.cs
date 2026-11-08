@@ -41,6 +41,11 @@ namespace Zongsoft.Security.Privileges;
 [DefaultProperty(nameof(Permissions))]
 public partial class Privilege : IIdentifiable, IIdentifiable<string>
 {
+	#region 常量定义
+	/// <summary>权限标识的逻辑类别名称。</summary>
+	public const string IdentifierName = "Zongsoft.Security.Privilege";
+	#endregion
+
 	#region 成员字段
 	private IResource _resource;
 	private string _label;
@@ -129,8 +134,8 @@ public partial class Privilege : IIdentifiable, IIdentifiable<string>
 	#endregion
 
 	#region 隐式转换
-	public static implicit operator Identifier(Privilege privilege) => new(typeof(Privilege), privilege.Name, privilege.Label, privilege.Description);
-	public static implicit operator Identifier<string>(Privilege privilege) => new(typeof(Privilege), privilege.Name, privilege.Label, privilege.Description);
+	public static implicit operator Identifier(Privilege privilege) => new(Privilege.IdentifierName, privilege.Name, privilege.Label, privilege.Description);
+	public static implicit operator Identifier<string>(Privilege privilege) => new(Privilege.IdentifierName, privilege.Name, privilege.Label, privilege.Description);
 	#endregion
 
 	#region 重写方法

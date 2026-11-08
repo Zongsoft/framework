@@ -22,7 +22,7 @@
 dotnet add package Zongsoft.Security.Web
 ```
 
-请把 `Zongsoft.Security.Web.plugin` 部署到插件化 Web 宿主。清单依赖 `Zongsoft.Security`；核心安全插件、数据映射、数据库结构、凭据身份验证与授权服务必须先可用。宿主要求 Zongsoft.Core 7.71.0 或更高版本、Zongsoft.Web 7.20.0 或更高版本，以及 Zongsoft.Security 7.11.0 或更高版本。
+请把 `Zongsoft.Security.Web.plugin` 部署到插件化 Web 宿主。清单依赖 `Zongsoft.Security`；核心安全插件、数据映射、数据库结构、凭据身份验证与授权服务必须先可用。宿主要求 Zongsoft.Core 7.78.0 或更高版本、Zongsoft.Web 7.20.0 或更高版本，以及 Zongsoft.Security 7.11.0 或更高版本。
 
 ## 端点分组
 

@@ -292,7 +292,7 @@ public class JsonSerializerTest
 	""properties"": {
 		""roles"": [""Administrators"", ""Users"" ]
 	},
-	""identifier"": ""$Zongsoft.Security.Privileges.IUser@Zongsoft.Core:<int>100"",
+	""identifier"": ""Zongsoft.Security.User:<int>100"",
 	""name"": ""Popeye"",
 	""nickname"": ""钟少"",
 	""namespace"": ""automao"",
@@ -440,7 +440,7 @@ public class JsonSerializerTest
 
 	private static IUser CreateUser() => Model.Build<IUser>(user =>
 	{
-		user.Identifier = new Zongsoft.Components.Identifier(typeof(IUser), 100);
+		user.Identifier = new Zongsoft.Components.Identifier(Users.Identifiers.User, 100);
 		user.Name = "Popeye";
 		user.Nickname = "钟少";
 	});

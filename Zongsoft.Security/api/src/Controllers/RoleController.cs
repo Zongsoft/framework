@@ -47,7 +47,7 @@ namespace Zongsoft.Security.Web.Controllers;
 
 [Area(Module.NAME)]
 [ControllerName("Roles")]
-[Authorize(Roles = $"{IRole.Administrators},{IRole.Security}")]
+[Authorize(Roles = $"{Roles.Administrators},{Roles.Security}")]
 public partial class RoleController : ControllerBase
 {
 	#region 公共属性
@@ -61,7 +61,7 @@ public partial class RoleController : ControllerBase
 		if(string.IsNullOrEmpty(id))
 			return this.Paginate(page ??= Paging.First(), this.Service.FindAsync(keyword, this.Request.Headers.GetDataSchema(), page, cancellation));
 
-		var result = await this.Service.GetAsync(new Identifier(typeof(IRole), id), this.Request.Headers.GetDataSchema(), cancellation);
+		var result = await this.Service.GetAsync(new Identifier(Roles.Identifiers.Role, id), this.Request.Headers.GetDataSchema(), cancellation);
 		return result != null ? this.Ok(result) : this.NoContent();
 	}
 
@@ -84,7 +84,7 @@ public partial class RoleController : ControllerBase
 		if(string.IsNullOrEmpty(id))
 			return this.BadRequest();
 
-		return await this.Service.DeleteAsync(new Identifier(typeof(IRole), id), cancellation) ? this.NoContent() : this.NotFound();
+		return await this.Service.DeleteAsync(new Identifier(Roles.Identifiers.Role, id), cancellation) ? this.NoContent() : this.NotFound();
 	}
 
 	[HttpDelete]
@@ -98,7 +98,7 @@ public partial class RoleController : ControllerBase
 		if(ids == null || ids.Length == 0)
 			return this.BadRequest();
 
-		var count = await this.Service.DeleteAsync(ids.Select(id => new Identifier(typeof(IRole), id)), cancellation);
+		var count = await this.Service.DeleteAsync(ids.Select(id => new Identifier(Roles.Identifiers.Role, id)), cancellation);
 		return count > 0 ? this.Content(count.ToString()) : this.NotFound();
 	}
 
@@ -113,7 +113,7 @@ public partial class RoleController : ControllerBase
 		if(model is IActionResult result)
 			return result;
 
-		((IRole)model).Identifier = new(typeof(IRole), id);
+		((IRole)model).Identifier = new(Roles.Identifiers.Role, id);
 		return await this.Service.UpdateAsync((IRole)model, cancellation) ? this.NoContent() : this.NotFound();
 	}
 
@@ -127,7 +127,7 @@ public partial class RoleController : ControllerBase
 		if(string.IsNullOrWhiteSpace(content))
 			return this.BadRequest();
 
-		return await this.Service.RenameAsync(new Identifier(typeof(IRole), id), content, cancellation) ? this.NoContent() : this.NotFound();
+		return await this.Service.RenameAsync(new Identifier(Roles.Identifiers.Role, id), content, cancellation) ? this.NoContent() : this.NotFound();
 	}
 
 	[HttpPost("{id:required}/[action]")]
@@ -136,7 +136,7 @@ public partial class RoleController : ControllerBase
 		if(string.IsNullOrEmpty(id))
 			return this.BadRequest();
 
-		return await this.Service.EnableAsync(new Identifier(typeof(IRole), id), cancellation) ? this.NoContent() : this.NotFound();
+		return await this.Service.EnableAsync(new Identifier(Roles.Identifiers.Role, id), cancellation) ? this.NoContent() : this.NotFound();
 	}
 
 	[HttpPost("{id:required}/[action]")]
@@ -145,7 +145,7 @@ public partial class RoleController : ControllerBase
 		if(string.IsNullOrEmpty(id))
 			return this.BadRequest();
 
-		return await this.Service.DisableAsync(new Identifier(typeof(IRole), id), cancellation) ? this.NoContent() : this.NotFound();
+		return await this.Service.DisableAsync(new Identifier(Roles.Identifiers.Role, id), cancellation) ? this.NoContent() : this.NotFound();
 	}
 
 	[HttpHead("{id:required}")]
@@ -156,7 +156,7 @@ public partial class RoleController : ControllerBase
 		if(string.IsNullOrEmpty(id))
 			return this.BadRequest();
 
-		return await this.Service.ExistsAsync(new Identifier(typeof(IRole), id), cancellation) ? this.NoContent() : this.NotFound();
+		return await this.Service.ExistsAsync(new Identifier(Roles.Identifiers.Role, id), cancellation) ? this.NoContent() : this.NotFound();
 	}
 	#endregion
 

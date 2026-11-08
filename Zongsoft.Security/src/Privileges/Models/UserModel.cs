@@ -54,14 +54,14 @@ public abstract class UserModel : IUser, IIdentifiable, IIdentifiable<uint>, IEq
 	#region 标识属性
 	Identifier IIdentifiable.Identifier
 	{
-		get => new(typeof(IUser), this.UserId, this.Name, this.Description);
-		set => this.UserId = value.TryGetValue<IUser, uint>(out var id) ? id : throw new ArgumentException();
+		get => new(Users.Identifiers.User, this.UserId, this.Name, this.Description);
+		set => this.UserId = value.TryGetValue<uint>(Users.Identifiers.User, out var id) ? id : throw new ArgumentException();
 	}
 
 	Identifier<uint> IIdentifiable<uint>.Identifier
 	{
-		get => new(typeof(IUser), this.UserId, this.Name, this.Description);
-		set => this.UserId = value.TryGetValue<IUser>(out var id) ? id : throw new ArgumentException();
+		get => new(Users.Identifiers.User, this.UserId, this.Name, this.Description);
+		set => this.UserId = value.TryGetValue(Users.Identifiers.User, out var id) ? id : throw new ArgumentException();
 	}
 	#endregion
 

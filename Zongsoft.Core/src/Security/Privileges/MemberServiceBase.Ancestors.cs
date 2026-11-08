@@ -137,7 +137,7 @@ partial class MemberServiceBase<TRole, TMember>
 				this.GetCriteria(member),
 				nameof(IMember<TRole>.RoleId),
 				cancellation
-			).Map(id => new Identifier(typeof(IRole), id));
+			).Map(id => new Identifier(Roles.Identifiers.Role, id));
 	}
 	#endregion
 

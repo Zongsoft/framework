@@ -83,14 +83,14 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 	public virtual async ValueTask<bool> EnableAsync(Identifier identifier, CancellationToken cancellation = default)
 	{
 		//确保不能设置内置角色
-		var criteria = this.GetCriteria(identifier) & Condition.NotIn(nameof(IRole.Name), [IRole.Administrators, IRole.Security]);
+		var criteria = this.GetCriteria(identifier) & Condition.NotIn(nameof(IRole.Name), [Roles.Administrators, Roles.Security]);
 		return criteria != null && await this.Accessor.UpdateAsync(this.Name, new { Enabled = true }, criteria, cancellation) > 0;
 	}
 
 	public virtual async ValueTask<bool> DisableAsync(Identifier identifier, CancellationToken cancellation = default)
 	{
 		//确保不能禁用内置角色
-		var criteria = this.GetCriteria(identifier) & Condition.NotIn(nameof(IRole.Name), [IRole.Administrators, IRole.Security]);
+		var criteria = this.GetCriteria(identifier) & Condition.NotIn(nameof(IRole.Name), [Roles.Administrators, Roles.Security]);
 		return criteria != null && await this.Accessor.UpdateAsync(this.Name, new { Enabled = false }, criteria, cancellation) > 0;
 	}
 
@@ -103,7 +103,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		this.OnValidateName(name);
 
 		//确保不能更名内置角色
-		var criteria = this.GetCriteria(identifier) & Condition.NotIn(nameof(IRole.Name), [IRole.Administrators, IRole.Security]);
+		var criteria = this.GetCriteria(identifier) & Condition.NotIn(nameof(IRole.Name), [Roles.Administrators, Roles.Security]);
 		if(criteria == null)
 			return false;
 
@@ -167,7 +167,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 			return false;
 
 		//确保不能删除内置角色
-		var criteria = this.GetCriteria(identifier) & Condition.NotIn(nameof(IRole.Name), [IRole.Administrators, IRole.Security]);
+		var criteria = this.GetCriteria(identifier) & Condition.NotIn(nameof(IRole.Name), [Roles.Administrators, Roles.Security]);
 		if(criteria == null)
 			return false;
 
@@ -204,7 +204,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 					continue;
 
 				//确保不能删除内置角色
-				var criteria = this.GetCriteria(identifier) & Condition.NotIn(nameof(IRole.Name), [IRole.Administrators, IRole.Security]);
+				var criteria = this.GetCriteria(identifier) & Condition.NotIn(nameof(IRole.Name), [Roles.Administrators, Roles.Security]);
 				if(criteria == null)
 					continue;
 
@@ -245,7 +245,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 			this.OnValidateName(role.Name);
 
 		//确保修改的不是内置角色
-		var criteria = this.GetCriteria(role.Identifier) & Condition.NotIn(nameof(IRole.Name), [IRole.Administrators, IRole.Security]);
+		var criteria = this.GetCriteria(role.Identifier) & Condition.NotIn(nameof(IRole.Name), [Roles.Administrators, Roles.Security]);
 		if(!await this.Accessor.ExistsAsync(this.Name, criteria, cancellation))
 			return false;
 
@@ -271,8 +271,8 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 	protected virtual void OnValidateName(string name)
 	{
 		//验证指定的名称是否为系统内置名
-		if(string.Equals(name, IRole.Administrators, StringComparison.OrdinalIgnoreCase) ||
-		   string.Equals(name, IRole.Security, StringComparison.OrdinalIgnoreCase))
+		if(string.Equals(name, Roles.Administrators, StringComparison.OrdinalIgnoreCase) ||
+		   string.Equals(name, Roles.Security, StringComparison.OrdinalIgnoreCase))
 			throw new SecurityException("rolename.illegality", Properties.Resources.Security_BuiltinName_Message);
 
 		var validator = this.Services.Find<IValidator<string>>("role.name");
@@ -302,7 +302,7 @@ public abstract class RoleServiceBase<TRole> : IRoleService<TRole>, IRoleService
 		if(identifier.IsEmpty)
 			return null;
 
-		if(identifier.TryGetValue<IRole, string>(out var qualifiedName))
+		if(identifier.TryGetValue<string>(Roles.Identifiers.Role, out var qualifiedName))
 		{
 			var index = qualifiedName.IndexOf(':');
 

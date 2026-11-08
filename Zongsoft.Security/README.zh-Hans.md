@@ -101,12 +101,14 @@ nuget:Zongsoft.Security
 
 密保问题存于 `SecretQuestion`（500 字符），答案存于 `SecretAnswer`（2048 字节），支持三至五组问答。初始化 SQL 用于创建新表，不会升级已有表；已有数据库须满足这些字段和容量要求。
 
-## 标识类型别名
+## 标识类别
 
-创建 `Module.Current` 时，安全模块通过 `TypeAlias.Aliases.Map` 登记 `Zongsoft.Security.User`、`Zongsoft.Security.Role`。插件启动时挂载该模块；不使用插件启动流程的工具，应在读写 `$Zongsoft.Security.User:<uint>17` 等短标识之前初始化模块：
+内置用户名称由 `Users.Administrator` 提供，内置角色名称由 `Roles.Administrators` 和 `Roles.Security` 提供。这些名称及嵌套的标识类别名称均为 `Zongsoft.Security.Privileges` 命名空间中的编译期字符串常量，可用于授权特性。
+
+用户和角色标识分别使用 `Users.Identifiers.User`（`Zongsoft.Security.User`）和 `Roles.Identifiers.Role`（`Zongsoft.Security.Role`）作为逻辑名称。类型化键由模型决定，读写标识不需要初始化模块或登记类别。
 
 ```csharp
-_ = Zongsoft.Security.Module.Current;
+var user = new Zongsoft.Components.Identifier(Zongsoft.Security.Privileges.Users.Identifiers.User, 17u);
 ```
 
-未登记时，标识使用普通完整类型名称，例如 `$Zongsoft.Security.Privileges.IUser@Zongsoft.Core:<uint>17`。文本和 JSON 的统一格式见[标识协议](../Zongsoft.Core/docs/identifiers.zh-Hans.md)。
+文本和 JSON 的统一格式见[标识协议](../Zongsoft.Core/docs/identifiers.zh-Hans.md)。

@@ -14,7 +14,7 @@ namespace Zongsoft.Security.Tests;
 
 public abstract class PassworderContractTest
 {
-	private static readonly Identifier _user = new(typeof(IUser), 42u);
+	private static readonly Identifier _user = new(Users.Identifiers.User, 42u);
 	protected abstract Passworder Create(IDataAccess accessor);
 
 	[Fact]

@@ -53,7 +53,7 @@ public readonly struct Member : IIdentifiable, IEquatable<Member>
 	public bool IsRole<T>(out T id)
 	{
 		if(this.MemberType == MemberType.Role)
-			return this.MemberId.TryGetValue<IRole, T>(out id);
+			return this.MemberId.TryGetValue<T>(Roles.Identifiers.Role, out id);
 
 		id = default;
 		return false;
@@ -62,7 +62,7 @@ public readonly struct Member : IIdentifiable, IEquatable<Member>
 	public bool IsUser<T>(out T id)
 	{
 		if(this.MemberType == MemberType.User)
-			return this.MemberId.TryGetValue<IUser, T>(out id);
+			return this.MemberId.TryGetValue<T>(Users.Identifiers.User, out id);
 
 		id = default;
 		return false;
@@ -72,33 +72,33 @@ public readonly struct Member : IIdentifiable, IEquatable<Member>
 	#region 静态方法
 	public static Member Create(MemberType memberType, int id) => memberType switch
 	{
-		MemberType.Role => new(new Identifier(typeof(IRole), id), memberType),
-		MemberType.User => new(new Identifier(typeof(IUser), id), memberType),
+		MemberType.Role => new(new Identifier(Roles.Identifiers.Role, id), memberType),
+		MemberType.User => new(new Identifier(Users.Identifiers.User, id), memberType),
 		_ => throw new ArgumentOutOfRangeException(nameof(memberType), memberType, null)
 	};
 
 	public static Member Create(MemberType memberType, uint id) => memberType switch
 	{
-		MemberType.Role => new(new Identifier(typeof(IRole), id), memberType),
-		MemberType.User => new(new Identifier(typeof(IUser), id), memberType),
+		MemberType.Role => new(new Identifier(Roles.Identifiers.Role, id), memberType),
+		MemberType.User => new(new Identifier(Users.Identifiers.User, id), memberType),
 		_ => throw new ArgumentOutOfRangeException(nameof(memberType), memberType, null)
 	};
 
 	public static Member Create(MemberType memberType, string qualifiedName) => memberType switch
 	{
-		MemberType.Role => new(new Identifier(typeof(IRole), qualifiedName), memberType),
-		MemberType.User => new(new Identifier(typeof(IUser), qualifiedName), memberType),
+		MemberType.Role => new(new Identifier(Roles.Identifiers.Role, qualifiedName), memberType),
+		MemberType.User => new(new Identifier(Users.Identifiers.User, qualifiedName), memberType),
 		_ => throw new ArgumentOutOfRangeException(nameof(memberType), memberType, null)
 	};
 
-	public static Member Role(int id) => new(new Identifier(typeof(IRole), id), MemberType.Role);
-	public static Member Role(uint id) => new(new Identifier(typeof(IRole), id), MemberType.Role);
-	public static Member Role(string qualifiedName) => new(new Identifier(typeof(IRole), qualifiedName), MemberType.Role);
+	public static Member Role(int id) => new(new Identifier(Roles.Identifiers.Role, id), MemberType.Role);
+	public static Member Role(uint id) => new(new Identifier(Roles.Identifiers.Role, id), MemberType.Role);
+	public static Member Role(string qualifiedName) => new(new Identifier(Roles.Identifiers.Role, qualifiedName), MemberType.Role);
 	public static Member Role(Identifier role) => new(role, MemberType.Role);
 
-	public static Member User(int id) => new(new Identifier(typeof(IUser), id), MemberType.User);
-	public static Member User(uint id) => new(new Identifier(typeof(IUser), id), MemberType.User);
-	public static Member User(string qualifiedName) => new(new Identifier(typeof(IUser), qualifiedName), MemberType.User);
+	public static Member User(int id) => new(new Identifier(Users.Identifiers.User, id), MemberType.User);
+	public static Member User(uint id) => new(new Identifier(Users.Identifiers.User, id), MemberType.User);
+	public static Member User(string qualifiedName) => new(new Identifier(Users.Identifiers.User, qualifiedName), MemberType.User);
 	public static Member User(Identifier user) => new(user, MemberType.User);
 	#endregion
 
@@ -137,8 +137,8 @@ public readonly struct Member : IIdentifiable, IEquatable<Member>
 			{
 				return memberType switch
 				{
-					MemberType.Role => new(new Identifier(typeof(IRole), name.ToString()), memberType),
-					MemberType.User => new(new Identifier(typeof(IUser), name.ToString()), memberType),
+					MemberType.Role => new(new Identifier(Roles.Identifiers.Role, name.ToString()), memberType),
+					MemberType.User => new(new Identifier(Users.Identifiers.User, name.ToString()), memberType),
 					_ => throw new InvalidOperationException(string.Format(Properties.Resources.Enum_UndefinedTypedValue_Message, type.ToString(), typeof(MemberType).Name)),
 				};
 			}
@@ -185,8 +185,8 @@ public readonly struct Member : IIdentifiable, IEquatable<Member>
 			{
 				result = memberType switch
 				{
-					MemberType.Role => new(new Identifier(typeof(IRole), name.ToString()), memberType),
-					MemberType.User => new(new Identifier(typeof(IUser), name.ToString()), memberType),
+					MemberType.Role => new(new Identifier(Roles.Identifiers.Role, name.ToString()), memberType),
+					MemberType.User => new(new Identifier(Users.Identifiers.User, name.ToString()), memberType),
 					_ => default,
 				};
 

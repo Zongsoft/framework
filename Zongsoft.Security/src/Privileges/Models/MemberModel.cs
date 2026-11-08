@@ -59,11 +59,11 @@ public abstract class MemberModel : IMember<RoleModel>, IMember, IEquatable<Memb
 	#endregion
 
 	#region 显式实现
-	Identifier IMember.RoleId => new Identifier<uint>(typeof(IRole), this.RoleId);
+	Identifier IMember.RoleId => new Identifier<uint>(Roles.Identifiers.Role, this.RoleId);
 	Identifier IMember.MemberId => this.MemberType switch
 	{
-		MemberType.Role => new Identifier<uint>(typeof(IRole), this.MemberId),
-		MemberType.User => new Identifier<uint>(typeof(IUser), this.MemberId),
+		MemberType.Role => new Identifier<uint>(Roles.Identifiers.Role, this.MemberId),
+		MemberType.User => new Identifier<uint>(Users.Identifiers.User, this.MemberId),
 		_ => default,
 	};
 	#endregion

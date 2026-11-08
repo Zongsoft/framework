@@ -48,7 +48,7 @@ public partial class Authenticators
 	private static async ValueTask<ClaimsIdentity> IssueRolesAsync(IUser user, ClaimsIdentity identity, CancellationToken cancellation)
 	{
 		if(user == null || identity == null || !user.Identifier.HasValue ||
-		   string.Equals(user.Name, IUser.Administrator, StringComparison.OrdinalIgnoreCase))
+		   string.Equals(user.Name, Users.Administrator, StringComparison.OrdinalIgnoreCase))
 			return identity;
 
 		var pending = new Queue<Member>();

@@ -63,14 +63,14 @@ partial class UserController
 			if(string.IsNullOrEmpty(id))
 				return this.BadRequest();
 
-			return await this.Service.HasPasswordAsync(new Identifier(typeof(IUser), id), cancellation) ? this.Content("Yes!") : this.NoContent();
+			return await this.Service.HasPasswordAsync(new Identifier(Users.Identifiers.User, id), cancellation) ? this.Content("Yes!") : this.NoContent();
 		}
 
 		[HttpPost("/[area]/[controller]/[action]")]
 		[HttpPost("/[area]/{id:required}/[controller]/[action]")]
 		public async Task<IActionResult> ChangeAsync(string id, [FromBody]PasswordChangeModel password, CancellationToken cancellation = default)
 		{
-			return await this.Service.ChangePasswordAsync(new Identifier(typeof(IUser), id), password.OldPassword, password.NewPassword, cancellation) ?
+			return await this.Service.ChangePasswordAsync(new Identifier(Users.Identifiers.User, id), password.OldPassword, password.NewPassword, cancellation) ?
 				this.NoContent() : this.NotFound();
 		}
 
@@ -150,7 +150,7 @@ partial class UserController
 				return this.BadRequest();
 
 			return await this.Service.SetPasswordQuestionsAndAnswersAsync(
-				new Identifier(typeof(IUser), id),
+				new Identifier(Users.Identifiers.User, id),
 				content.Password,
 				content.Questions,
 				content.Answers,

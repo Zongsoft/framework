@@ -11,16 +11,15 @@ namespace Zongsoft.Security.Tests;
 public class IdentifierContractTest
 {
 	[Fact]
-	public void ModuleRegistersIdentifierTypeAliases()
+	public void SecurityIdentifiersUseLogicalNames()
 	{
-		Assert.NotNull(Module.Current);
 		Identifier user = Member.User(17u);
 		Identifier role = Member.Role(23u);
-		Assert.Equal("$Zongsoft.Security.User:<uint>17", user.ToString());
-		Assert.Equal("$Zongsoft.Security.Role:<uint>23", role.ToString());
+		Assert.Equal("Zongsoft.Security.User:<uint>17", user.ToString());
+		Assert.Equal("Zongsoft.Security.Role:<uint>23", role.ToString());
 		Assert.Equal(user, Identifier.Parse(user.ToString()));
 		Assert.Equal(role, Identifier.Parse(role.ToString()));
-		Assert.Equal(user, Identifier.Parse("$Zongsoft.Security.Privileges.IUser@Zongsoft.Core:<uint>17"));
+		Assert.Equal(user, Identifier.Parse("Zongsoft.Security.User:<uint>17"));
 	}
 
 	[Fact]
@@ -34,8 +33,8 @@ public class IdentifierContractTest
 		role.Description = "Role description";
 		IIdentifiable userIdentity = user;
 		IIdentifiable roleIdentity = role;
-		userIdentity.Identifier = new Identifier(typeof(IUser), "17");
-		roleIdentity.Identifier = new Identifier(typeof(IRole), "23");
+		userIdentity.Identifier = new Identifier(Users.Identifiers.User, "17");
+		roleIdentity.Identifier = new Identifier(Roles.Identifiers.Role, "23");
 		Assert.Equal(17u, user.UserId);
 		Assert.Equal(23u, role.RoleId);
 		Assert.Equal("User", userIdentity.Identifier.Label);
@@ -44,8 +43,8 @@ public class IdentifierContractTest
 		Assert.Equal("Role description", roleIdentity.Identifier.Description);
 		Assert.Null(userIdentity.Identifier.Code);
 		Assert.Null(roleIdentity.Identifier.Code);
-		Assert.Equal(new Identifier(typeof(IUser), 17u), userIdentity.Identifier);
-		Assert.Equal(new Identifier(typeof(IRole), 23u), roleIdentity.Identifier);
+		Assert.Equal(new Identifier(Users.Identifiers.User, 17u), userIdentity.Identifier);
+		Assert.Equal(new Identifier(Roles.Identifiers.Role, 23u), roleIdentity.Identifier);
 		Assert.Throws<ArgumentException>(() => userIdentity.Identifier = roleIdentity.Identifier);
 		Assert.Throws<ArgumentException>(() => roleIdentity.Identifier = userIdentity.Identifier);
 		Assert.Equal(17u, user.UserId);
@@ -81,8 +80,8 @@ public class IdentifierContractTest
 		other.MemberId = model.MemberId;
 		other.MemberType = model.MemberType;
 		var member = (IMember)model;
-		Assert.Equal(new Identifier(typeof(IRole), 23u), member.RoleId);
-		Assert.Equal(new Identifier(type == MemberType.User ? typeof(IUser) : typeof(IRole), 17u), member.MemberId);
+		Assert.Equal(new Identifier(Roles.Identifiers.Role, 23u), member.RoleId);
+		Assert.Equal(new Identifier(type == MemberType.User ? Users.Identifiers.User : Roles.Identifiers.Role, 17u), member.MemberId);
 		Assert.True(member.Equals(other));
 		Assert.True(model.Equals((IMember<RoleModel>)other));
 		Assert.Equal(model.GetHashCode(), other.GetHashCode());

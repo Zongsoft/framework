@@ -15,11 +15,11 @@ public class UserIdentityTest
 	[InlineData(941u)]
 	public void PlatformAdministratorHasImplicitRoles(uint id)
 	{
-		var identity = new TestUser(id, IUser.Administrator).Identity("test", "test");
+		var identity = new TestUser(id, Users.Administrator).Identity("test", "test");
 
 		Assert.True(identity.IsAdministrator());
-		Assert.True(new ClaimsPrincipal(identity).IsInRole(IRole.Administrators));
-		Assert.True(new ClaimsPrincipal(identity).IsInRole(IRole.Security));
+		Assert.True(new ClaimsPrincipal(identity).IsInRole(Roles.Administrators));
+		Assert.True(new ClaimsPrincipal(identity).IsInRole(Roles.Security));
 	}
 
 	[Theory]
@@ -27,11 +27,11 @@ public class UserIdentityTest
 	[InlineData(207u)]
 	public void TenantAdministratorHasStandardRolesAndNamespace(uint id)
 	{
-		var identity = new TestUser(id, IUser.Administrator) { Namespace = "tenant-a" }.Identity("test", "test");
+		var identity = new TestUser(id, Users.Administrator) { Namespace = "tenant-a" }.Identity("test", "test");
 
 		Assert.True(identity.IsAdministrator());
-		Assert.True(new ClaimsPrincipal(identity).IsInRole(IRole.Administrators));
-		Assert.True(new ClaimsPrincipal(identity).IsInRole(IRole.Security));
+		Assert.True(new ClaimsPrincipal(identity).IsInRole(Roles.Administrators));
+		Assert.True(new ClaimsPrincipal(identity).IsInRole(Roles.Security));
 		Assert.Equal("tenant-a", identity.GetNamespace());
 	}
 
@@ -43,15 +43,15 @@ public class UserIdentityTest
 		var identity = new TestUser(id, name) { Namespace = @namespace }.Identity("test", "test");
 
 		Assert.False(identity.IsAdministrator());
-		Assert.False(new ClaimsPrincipal(identity).IsInRole(IRole.Administrators));
-		Assert.False(new ClaimsPrincipal(identity).IsInRole(IRole.Security));
+		Assert.False(new ClaimsPrincipal(identity).IsInRole(Roles.Administrators));
+		Assert.False(new ClaimsPrincipal(identity).IsInRole(Roles.Security));
 	}
 
 	[Fact]
 	public void AuthenticatedAdministratorNeedsIdentifierButNotFixedNumericId()
 	{
 		var identity = new ClaimsIdentity("test");
-		identity.AddClaim(new Claim(identity.NameClaimType, IUser.Administrator));
+		identity.AddClaim(new Claim(identity.NameClaimType, Users.Administrator));
 
 		Assert.False(identity.IsAdministrator());
 
@@ -63,10 +63,10 @@ public class UserIdentityTest
 	public void AdministratorRoleUsesTheIdentityNamespace()
 	{
 		var identity = new TestUser(207, "Member") { Namespace = "tenant-a" }.Identity("test", "test");
-		identity.AddRole("tenant-b:" + IRole.Administrators);
+		identity.AddRole("tenant-b:" + Roles.Administrators);
 		Assert.False(identity.IsAdministrator());
 
-		identity.AddRole(IRole.Administrators);
+		identity.AddRole(Roles.Administrators);
 		Assert.True(identity.IsAdministrator());
 		Assert.Equal("tenant-a", identity.GetNamespace());
 	}
@@ -124,13 +124,13 @@ public class UserIdentityTest
 	private sealed class TestUserService : UserServiceBase<TestUser>
 	{
 		protected override IDataAccess Accessor => throw new System.NotSupportedException();
-		public ICondition Criteria(string identifier) => this.GetCriteria(new Identifier(typeof(IUser), identifier));
+		public ICondition Criteria(string identifier) => this.GetCriteria(new Identifier(Users.Identifiers.User, identifier));
 	}
 
 	private sealed class TenantUserService : UserServiceBase<TestUser>
 	{
 		protected override IDataAccess Accessor => throw new System.NotSupportedException();
-		public ICondition Criteria(string identifier) => this.GetCriteria(new Identifier(typeof(IUser), identifier));
+		public ICondition Criteria(string identifier) => this.GetCriteria(new Identifier(Users.Identifiers.User, identifier));
 
 		protected override ICondition GetCriteria(string identity, string @namespace) =>
 			base.GetCriteria(identity, null) & (@namespace == null ? null : Condition.Equal("Tenant.TenantNo", @namespace));
@@ -138,7 +138,7 @@ public class UserIdentityTest
 
 	private sealed class TestUser(uint id, string name) : IUser
 	{
-		public Identifier Identifier { get; set; } = new(typeof(IUser), id);
+		public Identifier Identifier { get; set; } = new(Users.Identifiers.User, id);
 		public string Name { get; set; } = name;
 		public string Email { get; set; }
 		public string Phone { get; set; }

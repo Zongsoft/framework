@@ -183,7 +183,7 @@ public sealed class IdentityControllerTest : IDisposable
 			calls++;
 			Assert.Equal("DeleteAsync", method.Name);
 			Assert.Equal(new[] { 11u, 22u, 33u }, Assert.IsAssignableFrom<IEnumerable<Identifier>>(args[0]).Select(id => (uint)id.Value));
-			Assert.All((IEnumerable<Identifier>)args[0], id => Assert.Equal(role ? typeof(IRole) : typeof(IUser), id.Type));
+			Assert.All((IEnumerable<Identifier>)args[0], id => Assert.Equal(role ? Roles.Identifiers.Role : Users.Identifiers.User, id.Name));
 			Assert.Equal(cancellation.Token, args[1]);
 			return new ValueTask<int>(deleted ? 3 : 0);
 		});
@@ -824,7 +824,7 @@ public sealed class IdentityControllerTest : IDisposable
 		{
 			calls.Add(method.Name);
 			var identifier = Assert.IsType<Identifier>(args[0]);
-			Assert.Equal(role ? typeof(IRole) : typeof(IUser), identifier.Type);
+			Assert.Equal(role ? Roles.Identifiers.Role : Users.Identifiers.User, identifier.Name);
 			Assert.Equal("42", identifier.Value);
 			Assert.Equal(cancellation.Token, args[^1]);
 			var parameters = Assert.IsType<Parameters>(args[^2]);
@@ -959,7 +959,7 @@ public sealed class IdentityControllerTest : IDisposable
 	}
 
 	private static ControllerBase Controller(bool role, string body = null, string contentType = "text/plain") => role ? TestContext.Attach(new RoleController(), body, contentType) : TestContext.Attach(new UserController(), body, contentType);
-	private static Identifier Identity(bool role, object id) => new(role ? typeof(IRole) : typeof(IUser), id);
+	private static Identifier Identity(bool role, object id) => new(role ? Roles.Identifiers.Role : Users.Identifiers.User, id);
 	private static object Unexpected(MethodInfo method, object[] _) => throw new InvalidOperationException($"Unexpected service call: {method.Name}");
 	private static void AssertMutation(IActionResult result, bool success)
 	{

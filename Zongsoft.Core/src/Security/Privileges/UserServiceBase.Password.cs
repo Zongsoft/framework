@@ -143,7 +143,7 @@ partial class UserServiceBase<TUser>
 			this.OnValidatePassword(password);
 
 			//更新用户的新密码
-			return await this.Passworder.SetAsync(new Identifier(typeof(TUser), extra), password, cancellation);
+			return await this.Passworder.SetAsync(new Identifier(Users.Identifiers.User, extra), password, cancellation);
 		}
 
 		//返回重置密码失败

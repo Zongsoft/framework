@@ -52,7 +52,7 @@ public partial class UserService : UserServiceBase<UserModel>
 	protected override IServiceProvider Services => Module.Current.Services;
 	protected override ICondition GetCriteria(Identifier identifier)
 	{
-		if(identifier.TryGetValue<IUser, uint>(out var userId))
+		if(identifier.TryGetValue<uint>(Users.Identifiers.User, out var userId))
 			return Condition.Equal(nameof(UserModel.UserId), userId);
 
 		return base.GetCriteria(identifier);
@@ -69,13 +69,13 @@ public partial class UserService : UserServiceBase<UserModel>
 		if(identifier.IsEmpty)
 		{
 			object current = uint.TryParse(identityId, out var number) ? number : identityId;
-			identifier = new Identifier(typeof(IUser), current);
+			identifier = new Identifier(Users.Identifiers.User, current);
 		}
 
-		if(!identifier.Validate<IUser>())
+		if(!identifier.Validate(Users.Identifiers.User))
 			throw Zongsoft.Common.OperationException.Argument();
 
-		if(string.Equals(identityId, identifier.Value?.ToString(), StringComparison.Ordinal) || identity.InRoles([IRole.Administrators, IRole.Security]))
+		if(string.Equals(identityId, identifier.Value?.ToString(), StringComparison.Ordinal) || identity.InRoles([Roles.Administrators, Roles.Security]))
 			return ValueTask.FromResult(identifier);
 
 		throw new AuthorizationException(SecurityReasons.Forbidden, Properties.Resources.UserService_Unauthorized_Message);
@@ -127,7 +127,7 @@ partial class UserService
 			if(!record.HasValue)
 				throw new AuthenticationException(SecurityReasons.InvalidIdentity);
 
-			return Verify(password, record.Value) ? new(typeof(IUser), record.Value.UserId) : default;
+			return Verify(password, record.Value) ? new(Users.Identifiers.User, record.Value.UserId) : default;
 		}
 		#endregion
 

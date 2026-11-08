@@ -84,7 +84,7 @@ public class AuthorizationHandler : AuthorizationHandler<OperationAuthorizationR
 			return;
 
 		//根据角色声明判断管理员的操作权限。
-		if(identity.InRole(IRole.Administrators))
+		if(identity.InRole(Roles.Administrators))
 		{
 			context.Succeed(requirement);
 			return;

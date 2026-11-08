@@ -39,7 +39,7 @@ public class IdentityPasswordTest
 			Assert.Equal("tenant", passworder.Namespace);
 			Assert.Equal("contract-password", passworder.Password);
 			Assert.Equal(cancellation.Token, passworder.Cancellation);
-			var identifier = new Identifier(typeof(IUser), 42u);
+			var identifier = new Identifier(Users.Identifiers.User, 42u);
 			passworder.Completion.SetResult(success ? identifier : default);
 
 			if(success)

@@ -206,7 +206,7 @@ public abstract partial class MemberServiceBase<TRole, TMember> : IMemberService
 		if(identifier.IsEmpty)
 			return null;
 
-		if(identifier.Validate<IRole>())
+		if(identifier.Validate(Roles.Identifiers.Role))
 			return Condition.Equal(nameof(IMember<TRole>.RoleId), identifier.Value);
 
 		throw OperationException.Argument();

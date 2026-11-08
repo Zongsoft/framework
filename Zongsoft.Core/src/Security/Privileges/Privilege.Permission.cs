@@ -76,8 +76,8 @@ partial class Privilege
 		#endregion
 
 		#region 隐式转换
-		public static implicit operator Identifier(Permission permission) => new(typeof(Privilege), permission.ToString());
-		public static implicit operator Identifier<string>(Permission permission) => new(typeof(Privilege), permission.ToString());
+		public static implicit operator Identifier(Permission permission) => new(Privilege.IdentifierName, permission.ToString());
+		public static implicit operator Identifier<string>(Permission permission) => new(Privilege.IdentifierName, permission.ToString());
 		#endregion
 
 		#region 符号重写

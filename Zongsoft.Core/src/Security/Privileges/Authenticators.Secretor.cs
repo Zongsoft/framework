@@ -153,7 +153,7 @@ partial class Authentication
 		protected virtual ICondition GetCriteria(string identifier) => UserUtility.GetCriteria(identifier);
 		protected virtual ClaimsIdentity Identity(IUser user, string scenario) => user.Identity(this.Name, this.Name, this.GetPeriod(scenario));
 		protected virtual ValueTask<ClaimsIdentity> IssueIdentityAsync(IUser user, string scenario, CancellationToken cancellation) => ValueTask.FromResult(this.Identity(user, scenario));
-		protected virtual ValueTask<IUser> GetUserAsync(string identifier, CancellationToken cancellation) => Authentication.Servicer.Users.GetAsync(new Components.Identifier(typeof(IUser), identifier), cancellation);
+		protected virtual ValueTask<IUser> GetUserAsync(string identifier, CancellationToken cancellation) => Authentication.Servicer.Users.GetAsync(new Components.Identifier(Users.Identifiers.User, identifier), cancellation);
 		#endregion
 
 		#region 私有方法

@@ -53,10 +53,10 @@ public static class UserUtility
 			identity.SetClaim(ClaimTypes.NameIdentifier, user.Identifier.Value);
 
 		//内置管理员的角色归属由身份签发代码确定，不依赖角色成员表
-		if(user.Identifier.HasValue && string.Equals(user.Name, IUser.Administrator, StringComparison.OrdinalIgnoreCase))
+		if(user.Identifier.HasValue && string.Equals(user.Name, Users.Administrator, StringComparison.OrdinalIgnoreCase))
 		{
-			identity.AddRole(issuer, IRole.Administrators);
-			identity.AddRole(issuer, IRole.Security);
+			identity.AddRole(issuer, Roles.Administrators);
+			identity.AddRole(issuer, Roles.Security);
 		}
 
 		if(!string.IsNullOrEmpty(user.Email))

@@ -46,7 +46,7 @@ namespace Zongsoft.Security.Web.Controllers;
 partial class UserController
 {
 	[ControllerName("Members")]
-	[Authorize(Roles = $"{IRole.Administrators},{IRole.Security}")]
+	[Authorize(Roles = $"{Roles.Administrators},{Roles.Security}")]
 	public class MemberController : ControllerBase
 	{
 		#region 公共属性
@@ -80,7 +80,7 @@ partial class UserController
 			if(string.IsNullOrEmpty(id) || string.IsNullOrEmpty(roleId))
 				return this.BadRequest();
 
-			return await this.Service.SetParentAsync(Member.User(id), new Identifier(typeof(IRole), roleId), cancellation) ? this.NoContent() : this.NotFound();
+			return await this.Service.SetParentAsync(Member.User(id), new Identifier(Roles.Identifiers.Role, roleId), cancellation) ? this.NoContent() : this.NotFound();
 		}
 
 		[ActionName("Parents")]
@@ -95,7 +95,7 @@ partial class UserController
 			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
-			var roles = Zongsoft.Common.StringExtension.Slice<uint>(content, [',', ';', '\n'], uint.TryParse).Select(id => new Identifier(typeof(IRole), id)).ToArray();
+			var roles = Zongsoft.Common.StringExtension.Slice<uint>(content, [',', ';', '\n'], uint.TryParse).Select(id => new Identifier(Roles.Identifiers.Role, id)).ToArray();
 			var count = await this.Service.SetParentsAsync(Member.User(id), roles, cancellation);
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}

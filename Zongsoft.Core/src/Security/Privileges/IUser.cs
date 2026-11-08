@@ -34,11 +34,6 @@ namespace Zongsoft.Security.Privileges;
 /// <summary>表示权限系统的用户接口。</summary>
 public interface IUser : Zongsoft.Components.IIdentifiable
 {
-	#region 常量定义
-	/// <summary>系统管理员用户名。</summary>
-	public const string Administrator = nameof(Administrator);
-	#endregion
-
 	#region 属性定义
 	/// <summary>获取或设置用户名称。</summary>
 	string Name { get; set; }

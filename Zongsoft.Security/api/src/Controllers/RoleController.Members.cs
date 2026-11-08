@@ -48,7 +48,7 @@ namespace Zongsoft.Security.Web.Controllers;
 partial class RoleController
 {
 	[ControllerName("Members")]
-	[Authorize(Roles = $"{IRole.Administrators},{IRole.Security}")]
+	[Authorize(Roles = $"{Roles.Administrators},{Roles.Security}")]
 	public class MemberController : ControllerBase
 	{
 		#region 公共属性
@@ -82,7 +82,7 @@ partial class RoleController
 			if(string.IsNullOrEmpty(id) || string.IsNullOrEmpty(roleId))
 				return this.BadRequest();
 
-			return await this.Service.SetParentAsync(Member.Role(id), new Identifier(typeof(IRole), roleId), cancellation) ? this.NoContent() : this.NotFound();
+			return await this.Service.SetParentAsync(Member.Role(id), new Identifier(Roles.Identifiers.Role, roleId), cancellation) ? this.NoContent() : this.NotFound();
 		}
 
 		[ActionName("Parents")]
@@ -97,7 +97,7 @@ partial class RoleController
 			if(string.IsNullOrWhiteSpace(content))
 				return this.BadRequest();
 
-			var roles = Zongsoft.Common.StringExtension.Slice<uint>(content, [',', ';', '\n'], uint.TryParse).Select(id => new Identifier(typeof(IRole), id)).ToArray();
+			var roles = Zongsoft.Common.StringExtension.Slice<uint>(content, [',', ';', '\n'], uint.TryParse).Select(id => new Identifier(Roles.Identifiers.Role, id)).ToArray();
 			var count = await this.Service.SetParentsAsync(Member.Role(id), roles, cancellation);
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
@@ -107,7 +107,7 @@ partial class RoleController
 		[HttpGet("/[area]/{id:required}/[controller]")]
 		public IAsyncEnumerable<IMember> Get(string id, CancellationToken cancellation = default)
 		{
-			return this.Service.GetAsync(new Identifier(typeof(IRole), id), this.Request.Headers.GetDataSchema(), cancellation);
+			return this.Service.GetAsync(new Identifier(Roles.Identifiers.Role, id), this.Request.Headers.GetDataSchema(), cancellation);
 		}
 
 		[HttpPut("/[area]/{id:required}/Member/{argument:required}")]
@@ -119,7 +119,7 @@ partial class RoleController
 			if(!Member.TryParse(argument, out var member))
 				return this.BadRequest();
 
-			return await this.Service.SetAsync(new Identifier(typeof(IRole), id), member, cancellation) ?
+			return await this.Service.SetAsync(new Identifier(Roles.Identifiers.Role, id), member, cancellation) ?
 				this.CreatedAtAction(nameof(Get), new { id }, null) : this.NoContent();
 		}
 
@@ -133,7 +133,7 @@ partial class RoleController
 			if(members == null || !members.Any())
 				return this.BadRequest();
 
-			return await this.Service.SetAsync(new Identifier(typeof(IRole), id), members, reset, cancellation) > 0 ?
+			return await this.Service.SetAsync(new Identifier(Roles.Identifiers.Role, id), members, reset, cancellation) > 0 ?
 				this.CreatedAtAction(nameof(Get), new { id }, null) :
 				this.NoContent();
 		}
@@ -147,7 +147,7 @@ partial class RoleController
 			if(!Member.TryParse(argument, out var member))
 				return this.BadRequest();
 
-			return await this.Service.RemoveAsync(new Identifier(typeof(IRole), id), member, cancellation) ?
+			return await this.Service.RemoveAsync(new Identifier(Roles.Identifiers.Role, id), member, cancellation) ?
 				this.NoContent() : this.NotFound();
 		}
 
@@ -158,7 +158,7 @@ partial class RoleController
 				return this.BadRequest();
 
 			var members = await this.GetRequestAsync(cancellation);
-			var count = await this.Service.RemoveAsync(new Identifier(typeof(IRole), id), members, cancellation);
+			var count = await this.Service.RemoveAsync(new Identifier(Roles.Identifiers.Role, id), members, cancellation);
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
 		#endregion

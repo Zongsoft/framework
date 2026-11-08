@@ -49,7 +49,7 @@ namespace Zongsoft.Security.Web.Controllers;
 partial class RoleController
 {
 	[ControllerName("Privileges")]
-	[Authorize(Roles = $"{IRole.Administrators},{IRole.Security}")]
+	[Authorize(Roles = $"{Roles.Administrators},{Roles.Security}")]
 	public class PrivilegeController : ControllerBase
 	{
 		#region 公共属性
@@ -60,7 +60,7 @@ partial class RoleController
 		[HttpGet("/[area]/{id:required}/[controller]")]
 		public IAsyncEnumerable<IPrivilege> Get(string id, CancellationToken cancellation = default)
 		{
-			return this.Service.GetPrivilegesAsync(new Identifier(typeof(IRole), id), new Parameters(this.Request.GetParameters()), cancellation);
+			return this.Service.GetPrivilegesAsync(new Identifier(Roles.Identifiers.Role, id), new Parameters(this.Request.GetParameters()), cancellation);
 		}
 
 		[ActionName("Filtering")]
@@ -68,7 +68,7 @@ partial class RoleController
 		public IAsyncEnumerable<IPrivilege> GetFiltering(string id, CancellationToken cancellation = default)
 		{
 			var filtering = this.Service.Filtering ?? throw new BadHttpRequestException(null, StatusCodes.Status501NotImplemented);
-			return filtering.GetPrivilegesAsync(new Identifier(typeof(IRole), id), new Parameters(this.Request.GetParameters()), cancellation);
+			return filtering.GetPrivilegesAsync(new Identifier(Roles.Identifiers.Role, id), new Parameters(this.Request.GetParameters()), cancellation);
 		}
 
 		[HttpPut("/[area]/{id:required}/[controller]")]
@@ -84,7 +84,7 @@ partial class RoleController
 				return this.StatusCode(StatusCodes.Status501NotImplemented);
 
 			var privileges = (IEnumerable)await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, modelType.MakeArrayType(), cancellation);
-			var count = await this.Service.SetPrivilegesAsync(new Identifier(typeof(IRole), id), privileges.OfType<IPrivilege>(), reset, parameters, cancellation);
+			var count = await this.Service.SetPrivilegesAsync(new Identifier(Roles.Identifiers.Role, id), privileges.OfType<IPrivilege>(), reset, parameters, cancellation);
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
 
@@ -106,7 +106,7 @@ partial class RoleController
 				return this.StatusCode(StatusCodes.Status501NotImplemented);
 
 			var privileges = (IEnumerable)await Serialization.Serializer.Json.DeserializeAsync(this.Request.Body, modelType.MakeArrayType(), cancellation);
-			var count = await filtering.SetPrivilegesAsync(new Identifier(typeof(IRole), id), privileges.OfType<IPrivilege>(), reset, parameters, cancellation);
+			var count = await filtering.SetPrivilegesAsync(new Identifier(Roles.Identifiers.Role, id), privileges.OfType<IPrivilege>(), reset, parameters, cancellation);
 			return count > 0 ? this.Content(count.ToString()) : this.NoContent();
 		}
 		#endregion

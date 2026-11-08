@@ -37,13 +37,11 @@ internal static class Utility
 {
 	public static bool IsUser<T>(this ref Identifier identifier, out T id) where T : IEquatable<T>
 	{
-		return identifier.TryGetValue<IUser, T>(out id) ||
-		       identifier.TryGetValue<System.Security.Principal.IIdentity, T>(out id) ||
-		       identifier.TryGetValue<System.Security.Principal.IPrincipal, T>(out id);
+		return identifier.TryGetValue<T>(Users.Identifiers.User, out id);
 	}
 
 	public static bool IsRole<T>(this ref Identifier identifier, out T id) where T : IEquatable<T>
 	{
-		return identifier.TryGetValue<IRole, T>(out id);
+		return identifier.TryGetValue<T>(Roles.Identifiers.Role, out id);
 	}
 }

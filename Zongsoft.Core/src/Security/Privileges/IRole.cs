@@ -34,14 +34,6 @@ namespace Zongsoft.Security.Privileges;
 /// <summary>表示权限系统的角色接口。</summary>
 public interface IRole : Zongsoft.Components.IIdentifiable
 {
-	#region 常量定义
-	/// <summary>系统管理员角色名。</summary>
-	public const string Administrators = nameof(Administrators);
-
-	/// <summary>安全管理员角色名。</summary>
-	public const string Security = nameof(Security);
-	#endregion
-
 	#region 属性定义
 	/// <summary>获取或设置角色名称。</summary>
 	string Name { get; set; }

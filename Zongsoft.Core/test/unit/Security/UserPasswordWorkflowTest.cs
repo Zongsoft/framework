@@ -22,7 +22,7 @@ public class UserPasswordWorkflowTest
 		var passwords = new TestPassworder();
 		var service = new UserService(null, passwords);
 		using var cancellation = new CancellationTokenSource();
-		var identifier = new Identifier(typeof(IUser), 42u);
+		var identifier = new Identifier(Users.Identifiers.User, 42u);
 		var operation = service.ChangePasswordAsync(identifier, "old", "new", cancellation.Token).AsTask();
 		Assert.False(operation.IsCompleted);
 		Assert.Equal("old", passwords.Verified);
@@ -40,7 +40,7 @@ public class UserPasswordWorkflowTest
 		var passwords = new TestPassworder();
 		passwords.Verification.SetResult(false);
 		var service = new UserService(null, passwords);
-		var error = await Assert.ThrowsAsync<SecurityException>(() => service.ChangePasswordAsync(new(typeof(IUser), 42u), "wrong", "new").AsTask());
+		var error = await Assert.ThrowsAsync<SecurityException>(() => service.ChangePasswordAsync(new(Users.Identifiers.User, 42u), "wrong", "new").AsTask());
 		Assert.Equal(SecurityReasons.InvalidPassword, error.Reason);
 		Assert.Null(passwords.Stored);
 	}
@@ -93,8 +93,8 @@ public class UserPasswordWorkflowTest
 		protected override ValueTask<Identifier> EnsureIdentityAsync(Identifier identifier, CancellationToken cancellation) => ValueTask.FromResult(identifier);
 		protected override void OnValidatePassword(string password) { }
 		protected override ICondition GetCriteria(Identifier identifier) => Condition.Equal("UserId", identifier.Value);
-		public ValueTask<IReadOnlyList<byte[]>> ReadAnswersAsync() => this.GetSecretAnswerAsync(new(typeof(IUser), 42u), TestContext.Current.CancellationToken);
-		public ValueTask<bool> WriteAnswersAsync(string[] answers) => this.SetSecretAnswersAsync(new(typeof(IUser), 42u), answers.Select((_, i) => $"Question {i}").ToArray(), answers, TestContext.Current.CancellationToken);
+		public ValueTask<IReadOnlyList<byte[]>> ReadAnswersAsync() => this.GetSecretAnswerAsync(new(Users.Identifiers.User, 42u), TestContext.Current.CancellationToken);
+		public ValueTask<bool> WriteAnswersAsync(string[] answers) => this.SetSecretAnswersAsync(new(Users.Identifiers.User, 42u), answers.Select((_, i) => $"Question {i}").ToArray(), answers, TestContext.Current.CancellationToken);
 	}
 
 	private sealed class NoopAttempter : IAttempter
