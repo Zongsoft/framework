@@ -11,7 +11,7 @@
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageIcon>zongsoft-logo.png</PackageIcon>
 		<PackageIconUrl>https://github.com/Zongsoft/guidelines/raw/main/zongsoft-logo(48x48).png</PackageIconUrl>
-		<PackageLicenseExpression>LGPL-3.0-or-later</PackageLicenseExpression>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
 		<PublishRepositoryUrl>true</PublishRepositoryUrl>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -36,5 +36,6 @@
 
 	<ItemGroup>
 		<None Include="$(MSBuildThisFileDirectory)zongsoft-logo.png" Pack="true" PackagePath="\" Visible="false" />
+		<None Include="$(MSBuildThisFileDirectory)LICENSE" Pack="true" PackagePath="\" Visible="false" />
 	</ItemGroup>
 </Project>

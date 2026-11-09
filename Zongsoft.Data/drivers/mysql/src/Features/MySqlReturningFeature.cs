@@ -6,22 +6,12 @@
  *  /____/\____/_/ /_/\__  /____/\____/_/  \__/
  *                   /____/
  *
- * Copyright (C) 2015-2026 Zongsoft Studio <http://www.zongsoft.com>
+ * Authors:
+ *   钟峰(Popeye Zhong) <zongsoft@qq.com>
  *
- * This file is part of Zongsoft.Data.MySql library.
+ * Copyright (c) Zongsoft Studio. All rights reserved.
  *
- * The Zongsoft.Data.MySql is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3.0 of the License,
- * or (at your option) any later version.
- *
- * The Zongsoft.Data.MySql is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with the Zongsoft.Data.MySql library. If not, see <http://www.gnu.org/licenses/>.
+ * Licensed under the MIT License (see LICENSE).
  */
 
 using System;

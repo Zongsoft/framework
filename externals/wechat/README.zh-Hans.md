@@ -101,3 +101,7 @@ nuget:Zongsoft.Externals.Wechat@7.11.0
 公众号 OAuth 的 scope、刷新和有效性校验，以及 JS-SDK 站点策略、用户/消息路由见[公众号服务契约](docs/implementation.zh-Hans.md#channel-services)。
 
 公众平台消息提供严格接收方校验的 CBC 加解密和 SHA-1 验签，支持文本及二进制消息；调用顺序、异常和接收层职责见[消息密码协议](docs/implementation.zh-Hans.md#platform-cryptography)。
+
+## 许可
+
+本项目采用仓库根目录的 [MIT](https://github.com/Zongsoft/framework/blob/main/LICENSE) 许可协议。

@@ -241,7 +241,7 @@ dotnet test test/integration/Zongsoft.Core.Tests.slnx -c Release -p:GeneratePack
 
 ## 许可
 
-Zongsoft.Core 基于 [LGPL-3.0-or-later](https://github.com/Zongsoft/framework/blob/main/LICENSE) 许可证发布。
+Zongsoft.Core 基于 [MIT](https://github.com/Zongsoft/framework/blob/main/LICENSE) 许可证发布。
 
 ## 标识
 

@@ -224,7 +224,7 @@ dotnet test externals/closedxml/test/Zongsoft.Externals.ClosedXml.Tests.csproj -
 
 ## License
 
-This project is licensed under the [GNU Lesser General Public License](../../LICENSE).
+This project is licensed under the [MIT License](https://github.com/Zongsoft/framework/blob/main/LICENSE).
 
 ## Plugin-Based Integration
 

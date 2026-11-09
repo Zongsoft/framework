@@ -103,3 +103,7 @@ See the [applet identity contract](docs/implementation.md#applet-identity) for s
 See the [channel service contract](docs/implementation.md#channel-services) for OAuth scopes and refresh, JS-SDK site authorization, and user/message routes.
 
 Public-platform messages support CBC encryption/decryption with required receiver validation and SHA-1 signature verification, for both text and binary payloads. See the [cryptographic contract](docs/implementation.md#platform-cryptography) for call order, errors and receiver responsibilities.
+
+## License
+
+This project is licensed under the [MIT](https://github.com/Zongsoft/framework/blob/main/LICENSE) license in the repository root.

@@ -241,7 +241,7 @@ The `samples` directory contains small console applications that exercise real A
 
 ## License
 
-Zongsoft.Core is released under the [LGPL-3.0-or-later](https://github.com/Zongsoft/framework/blob/main/LICENSE) license.
+Zongsoft.Core is released under the [MIT](https://github.com/Zongsoft/framework/blob/main/LICENSE) license.
 
 ## Identifiers
 

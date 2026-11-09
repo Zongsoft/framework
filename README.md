@@ -207,4 +207,6 @@ We look forward to your support and sponsorship. You can provide us with the nec
 <a name="license"></a>
 ## License
 
-Licensed under the [LGPL](https://opensource.org/licenses/LGPL-2.1) license.
+Licensed under the [MIT](LICENSE) license.
+
+Third-party source files and assets retain their own copyright and license notices.

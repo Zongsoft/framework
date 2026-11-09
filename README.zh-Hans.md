@@ -207,4 +207,6 @@ dotnet build ./Zongsoft.Core/src/Zongsoft.Core.csproj --no-restore -p:GeneratePa
 <a name="license"></a>
 ## 授权协议
 
-本项目采用 [LGPL](https://opensource.org/licenses/LGPL-2.1) 授权协议。
+本项目采用 [MIT](LICENSE) 授权协议。
+
+第三方源码和资源保留各自的版权及许可声明。

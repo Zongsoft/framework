@@ -224,7 +224,7 @@ dotnet test externals/closedxml/test/Zongsoft.Externals.ClosedXml.Tests.csproj -
 
 ## 许可证
 
-本项目采用 [GNU 宽通用公共许可证](../../LICENSE)。
+本项目采用 [GNU 宽通用公共许可证](https://github.com/Zongsoft/framework/blob/main/LICENSE)。
 
 ## 插件化接入
 
@@ -249,3 +249,7 @@ nuget:Zongsoft.Externals.ClosedXml
 部署清单将 ClosedXML 和 ClosedXML.Report 固定为项目声明的版本，并将 SixLabors.Fonts 与 Captcha 插件统一；升级依赖时应同步这些固定版本。由于部署器默认忽略 `System.*` 传递依赖，System.IO.Packaging 和 System.Linq.Dynamic.Core 仍显式列为部署根包。其他依赖由 NuGet 元数据确定，不应在当前解析器之外再添加过时的 Irony 根包。验证时检查最终部署的 DLL 版本及工作簿操作。
 
 清单列出的附属产物包括：`Zongsoft.Externals.ClosedXml.plugin`。同时保留程序集、依赖与附属资源目录。部署后重启宿主，先检查插件加载与服务/驱动注册，再验证前文的使用流程；不要把“文件已复制”当作“功能已启用”。
+
+## 许可
+
+本项目采用仓库根目录的 [MIT](https://github.com/Zongsoft/framework/blob/main/LICENSE) 许可协议。
