@@ -7,8 +7,6 @@ using System.Collections.Concurrent;
 
 using MQTTnet;
 
-using Xunit;
-
 using Zongsoft.Collections;
 using Zongsoft.Components;
 
@@ -168,7 +166,7 @@ internal sealed class MqttMessageBuffer : HandlerBase<Message>, IDisposable
 	}
 }
 
-internal sealed class ConcurrentMessageHandler(int expectedCount) : HandlerBase<Message>
+internal sealed class MessageDispatchHandler(int expectedCount) : HandlerBase<Message>
 {
 	private readonly TaskCompletionSource _completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
 	private readonly int _expectedCount = expectedCount;
@@ -194,6 +192,11 @@ internal sealed class ConcurrentMessageHandler(int expectedCount) : HandlerBase<
 		{
 			await Task.Delay(100, cancellation);
 			await message.AcknowledgeAsync(cancellation);
+		}
+		catch(Exception exception)
+		{
+			_completion.TrySetException(exception);
+			throw;
 		}
 		finally
 		{

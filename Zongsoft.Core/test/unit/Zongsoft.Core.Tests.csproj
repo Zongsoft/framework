@@ -7,6 +7,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<Using Include="Xunit" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<Compile Remove="IO\FileSystemTest.cs" />
 	</ItemGroup>
 

@@ -73,6 +73,8 @@ The aliases `sub` and `unsub` can be used instead of `subscribe` and `unsubscrib
 subscribe samples/#
 ```
 
+The receive callback waits for the message handler to finish. A slow handler can delay subsequent messages on the same connection; concurrent handlers on one connection are not guaranteed.
+
 ### 3. Publish and verify a message
 
 Open a third terminal and start another Client sample with the same `dotnet run` command. Publish a message:

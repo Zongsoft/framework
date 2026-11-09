@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Reflection;
 
-using Xunit;
-
 namespace Zongsoft.Reflection.Tests;
 
 public class ReflectorTest

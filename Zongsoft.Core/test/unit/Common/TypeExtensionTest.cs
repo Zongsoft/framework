@@ -4,8 +4,6 @@ using System.Collections.ObjectModel;
 
 using Zongsoft.Tests;
 
-using Xunit;
-
 namespace Zongsoft.Common.Tests;
 
 public class TypeExtensionTest

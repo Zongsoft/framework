@@ -2,8 +2,6 @@ using System;
 using System.Text.Json;
 using System.Globalization;
 
-using Xunit;
-
 using Zongsoft.Externals.Wechat.Paying;
 
 namespace Zongsoft.Externals.Wechat.Tests;

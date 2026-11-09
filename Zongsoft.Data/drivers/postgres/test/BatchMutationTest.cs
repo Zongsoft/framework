@@ -1,5 +1,3 @@
-using Xunit;
-
 namespace Zongsoft.Data.PostgreSql.Tests;
 
 [Collection("Database")]

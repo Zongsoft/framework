@@ -2,8 +2,6 @@
 using System.IO;
 using System.Linq;
 
-using Xunit;
-
 namespace Zongsoft.IO.Tests
 {
 	public class FileSystemTest

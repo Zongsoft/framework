@@ -7,8 +7,6 @@ using Microsoft.Extensions.Primitives;
 
 using Zongsoft.Components;
 
-using Xunit;
-
 namespace Zongsoft.Caching.Tests;
 
 public class MemoryCacheScannerTest

@@ -2,8 +2,6 @@ using System;
 using System.Data;
 using System.Linq;
 
-using Xunit;
-
 namespace Zongsoft.Data.Tests;
 
 public class ReturningDictionaryTest

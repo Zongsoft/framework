@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 
-using Xunit;
-
 using Zongsoft.Tests;
 
 namespace Zongsoft.Data.Tests;

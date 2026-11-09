@@ -1,5 +1,3 @@
-using Xunit;
-
 using Microsoft.Data.SqlClient;
 
 using Zongsoft.Data.Common;

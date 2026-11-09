@@ -14,7 +14,7 @@ MySQL 和 PostgreSQL 的 Podman 资源提供默认本地服务。启用集成测
 
 ## 运行默认套件
 
-使用仓库要求的 SDK，并按项目引用需要准备 Debug 依赖。在 framework 根目录执行：
+使用仓库要求的 SDK，先构建 Zongsoft.Core 和 Zongsoft.Data，再构建存储解决方案以准备 SQLite、MySQL、PostgreSQL 和 SQL Server 驱动程序集。在 framework 根目录执行：
 
 ```shell
 dotnet test messaging/.storages/test/Zongsoft.Messaging.Storages.Data.Tests.csproj -f net10.0
@@ -24,7 +24,7 @@ dotnet test messaging/.storages/test/Zongsoft.Messaging.Storages.Data.Tests.cspr
 
 ## 夹具与预期结果
 
-[DataMessageStorageTests.cs](DataMessageStorageTests.cs) 检查快照独立性、null 与空载荷、完整替换、主题序数匹配、过期过滤、分区冻结、取消、同标识并发及 IDataAccess 所有权。工厂测试验证同名连接查找，SQLiteDatabaseFixture 创建文件并应用表结构。
+[DataMessageStorageTest.cs](DataMessageStorageTest.cs) 检查快照独立性、null 与空载荷、完整替换、主题序数匹配、过期过滤、分区冻结、取消、同标识并发及 IDataAccess 所有权。工厂测试验证同名连接查找，SQLiteDatabaseFixture 创建文件并应用表结构。
 
 通过套件验证的是存储契约，不是 Broker 重放或业务恰好一次投递。外部用例为条件执行，未启用时不能记为已执行。
 

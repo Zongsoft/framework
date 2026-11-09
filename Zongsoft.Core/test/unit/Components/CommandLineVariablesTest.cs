@@ -2,8 +2,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Xunit;
-
 using Zongsoft.Common;
 using Zongsoft.Text.Templating;
 

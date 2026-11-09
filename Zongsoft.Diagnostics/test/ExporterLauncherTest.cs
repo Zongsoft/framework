@@ -13,8 +13,6 @@ using Zongsoft.Configuration;
 using Zongsoft.Diagnostics.Configuration;
 using Zongsoft.Diagnostics.Telemetry;
 
-using Xunit;
-
 namespace Zongsoft.Diagnostics.Tests;
 
 public class ExporterLauncherTest

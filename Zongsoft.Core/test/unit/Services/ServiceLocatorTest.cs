@@ -6,8 +6,6 @@ using System.ComponentModel;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using Xunit;
-
 namespace Zongsoft.Services.Tests;
 
 [CollectionDefinition(Name, DisableParallelization = true)]

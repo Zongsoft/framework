@@ -1,5 +1,3 @@
-using Xunit;
-
 namespace Zongsoft.Data.MsSql.Tests;
 
 [Collection("Database")]

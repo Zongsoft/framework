@@ -6,9 +6,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-using Xunit;
-using Edition = Zongsoft.Services.ApplicationManifest.Edition;
-
 namespace Zongsoft.Services.Tests;
 
 public class ApplicationManifestTest : IDisposable
@@ -54,7 +51,7 @@ public class ApplicationManifestTest : IDisposable
 	[InlineData(" \t")]
 	public void Edition_RejectsEmptyNames(string name)
 	{
-		Assert.ThrowsAny<ArgumentException>(() => new Edition(name, new Version(1, 0)));
+		Assert.ThrowsAny<ArgumentException>(() => new ApplicationManifest.Edition(name, new Version(1, 0)));
 	}
 
 	[Theory]
@@ -239,7 +236,7 @@ public class ApplicationManifestTest : IDisposable
 		var editions = new ApplicationManifest("App").Editions;
 		editions.Add(new("Community", new Version(1, 0)));
 
-		Assert.ThrowsAny<ArgumentException>(() => editions.Add(default(Edition)));
+		Assert.ThrowsAny<ArgumentException>(() => editions.Add(default(ApplicationManifest.Edition)));
 		Assert.Single(editions);
 		Assert.Equal("Community", editions[0].Name);
 	}
@@ -254,17 +251,17 @@ public class ApplicationManifestTest : IDisposable
 
 		//验证集合按条目匹配名称和版本号的规则。
 #pragma warning disable xUnit2017
-		Assert.True(editions.Contains(new Edition("PROFESSIONAL", new Version(2, 0))));
-		Assert.False(editions.Contains(new Edition("Professional", new Version(2, 1))));
-		Assert.False(editions.Contains(new Edition("Missing", new Version(2, 0))));
-		Assert.False(editions.Contains(default(Edition)));
+		Assert.True(editions.Contains(new ApplicationManifest.Edition("PROFESSIONAL", new Version(2, 0))));
+		Assert.False(editions.Contains(new ApplicationManifest.Edition("Professional", new Version(2, 1))));
+		Assert.False(editions.Contains(new ApplicationManifest.Edition("Missing", new Version(2, 0))));
+		Assert.False(editions.Contains(default(ApplicationManifest.Edition)));
 #pragma warning restore xUnit2017
-		Assert.False(editions.Remove(new Edition("Professional", new Version(2, 1))));
-		Assert.False(editions.Remove(new Edition("Missing", new Version(2, 0))));
-		Assert.False(editions.Remove(default(Edition)));
+		Assert.False(editions.Remove(new ApplicationManifest.Edition("Professional", new Version(2, 1))));
+		Assert.False(editions.Remove(new ApplicationManifest.Edition("Missing", new Version(2, 0))));
+		Assert.False(editions.Remove(default(ApplicationManifest.Edition)));
 		Assert.Equal(new[] { "Community", "Professional", "Enterprise" }, editions.Select(edition => edition.Name));
 
-		Assert.True(editions.Remove(new Edition("PROFESSIONAL", new Version(2, 0))));
+		Assert.True(editions.Remove(new ApplicationManifest.Edition("PROFESSIONAL", new Version(2, 0))));
 		Assert.Equal(new[] { "Community", "Enterprise" }, editions.Select(edition => edition.Name));
 		Assert.Equal(new Version(3, 0), editions[1].Version);
 		Assert.Equal(new Version(3, 0), editions["Enterprise"].Version);
@@ -498,10 +495,10 @@ public class ApplicationManifestTest : IDisposable
 		Assert.False(editions.IsEmpty);
 		editions.Add(new("Enterprise", new Version(3, 0)));
 		Assert.False(editions.IsEmpty);
-		Assert.True(editions.Remove(new Edition("COMMUNITY", new Version(1, 0))));
+		Assert.True(editions.Remove(new ApplicationManifest.Edition("COMMUNITY", new Version(1, 0))));
 		Assert.False(editions.IsEmpty);
 		Assert.Equal("Enterprise", editions[0].Name);
-		Assert.True(editions.Remove(new Edition("Enterprise", new Version(3, 0))));
+		Assert.True(editions.Remove(new ApplicationManifest.Edition("Enterprise", new Version(3, 0))));
 		Assert.True(editions.IsEmpty);
 		Assert.False(editions.TryGetValue("Enterprise", out _));
 
@@ -824,10 +821,10 @@ public class ApplicationManifestTest : IDisposable
 	[Fact]
 	public void Edition_EqualityUsesNameAndVersion()
 	{
-		var edition = new Edition("Professional", new Version(1, 2));
-		var same = new Edition("PROFESSIONAL", new Version(1, 2));
-		var updated = new Edition("Professional", new Version(1, 3));
-		var other = new Edition("Community", new Version(1, 2));
+		var edition = new ApplicationManifest.Edition("Professional", new Version(1, 2));
+		var same = new ApplicationManifest.Edition("PROFESSIONAL", new Version(1, 2));
+		var updated = new ApplicationManifest.Edition("Professional", new Version(1, 3));
+		var other = new ApplicationManifest.Edition("Community", new Version(1, 2));
 		Assert.True(edition.Equals(same));
 		Assert.True(edition.Equals((object)same));
 		Assert.True(edition == same);
@@ -835,19 +832,19 @@ public class ApplicationManifestTest : IDisposable
 		Assert.Equal(edition.GetHashCode(), same.GetHashCode());
 		Assert.NotEqual(edition, updated);
 		Assert.NotEqual(edition, other);
-		Assert.NotEqual(default(Edition), edition);
+		Assert.NotEqual(default(ApplicationManifest.Edition), edition);
 		Assert.False(edition.Equals(null));
 		Assert.False(edition.Equals("Professional"));
-		Assert.Equal(4, new HashSet<Edition> { edition, same, updated, other, default(Edition), default(Edition) }.Count);
+		Assert.Equal(4, new HashSet<ApplicationManifest.Edition> { edition, same, updated, other, default(ApplicationManifest.Edition), default(ApplicationManifest.Edition) }.Count);
 	}
 
 	[Fact]
 	public void Current_SelectsExistingItemAndCanBeCleared()
 	{
 		var editions = new ApplicationManifest("App").Editions;
-		Assert.Equal(default(Edition), editions.Current);
+		Assert.Equal(default(ApplicationManifest.Edition), editions.Current);
 		editions.Add(new("Professional", new Version(1, 0)));
-		Assert.Equal(default(Edition), editions.Current);
+		Assert.Equal(default(ApplicationManifest.Edition), editions.Current);
 		editions.Current = new("PROFESSIONAL", new Version(1, 0));
 		Assert.Equal("Professional", editions.Current.Name);
 		Assert.Equal(editions[0], editions.Current);
@@ -857,8 +854,8 @@ public class ApplicationManifestTest : IDisposable
 		Assert.Equal(editions[0], editions.Current);
 		editions.Insert(0, new("Community", new Version(1, 0)));
 		Assert.Equal(editions[1], editions.Current);
-		editions.Current = default(Edition);
-		Assert.Equal(default(Edition), editions.Current);
+		editions.Current = default(ApplicationManifest.Edition);
+		Assert.Equal(default(ApplicationManifest.Edition), editions.Current);
 		Assert.Equal(2, editions.Count);
 	}
 
@@ -872,16 +869,16 @@ public class ApplicationManifestTest : IDisposable
 		editions[0] = new("PROFESSIONAL", new Version(2, 0));
 		Assert.Equal("PROFESSIONAL", editions.Current.Name);
 		Assert.Equal(new Version(2, 0), editions.Current.Version);
-		((IList<Edition>)editions)[0] = new("Professional", new Version(3, 0));
+		((IList<ApplicationManifest.Edition>)editions)[0] = new("Professional", new Version(3, 0));
 		Assert.Equal(new Version(3, 0), editions.Current.Version);
-		((IList)editions)[0] = new Edition("professional", new Version(4, 0));
+		((IList)editions)[0] = new ApplicationManifest.Edition("professional", new Version(4, 0));
 		Assert.Equal(new Version(4, 0), editions.Current.Version);
-		((KeyedCollection<string, Edition>)editions)[0] = new("Professional", new Version(5, 0));
+		((KeyedCollection<string, ApplicationManifest.Edition>)editions)[0] = new("Professional", new Version(5, 0));
 		Assert.Equal(new Version(5, 0), editions.Current.Version);
 		editions[1] = new("Enterprise", new Version(6, 0));
 		Assert.Equal(editions[0], editions.Current);
 		editions[0] = new("Community", new Version(7, 0));
-		Assert.Equal(default(Edition), editions.Current);
+		Assert.Equal(default(ApplicationManifest.Edition), editions.Current);
 		Assert.False(editions.Contains("Professional"));
 		Assert.Equal(new Version(7, 0), editions["Community"].Version);
 	}
@@ -909,7 +906,7 @@ public class ApplicationManifestTest : IDisposable
 		manifest.Editions[1] = new("Community", new Version(1, 1));
 		Assert.Equal(new Version(1, 1), manifest.Editions.Current.Version);
 		manifest.Editions.Current = null;
-		Assert.Equal(default(Edition), manifest.Editions.Current);
+		Assert.Equal(default(ApplicationManifest.Edition), manifest.Editions.Current);
 		Assert.Equal(2, manifest.Editions.Count);
 	}
 
@@ -924,7 +921,7 @@ public class ApplicationManifestTest : IDisposable
 		manifest.Editions.Current = "Community";
 		manifest.Editions.Current = name;
 
-		Assert.Equal(default(Edition), manifest.Editions.Current);
+		Assert.Equal(default(ApplicationManifest.Edition), manifest.Editions.Current);
 		Assert.Equal(2, manifest.Editions.Count);
 		Assert.Equal(community, manifest.Editions[0]);
 		Assert.Equal(professional, manifest.Editions[1]);
@@ -933,7 +930,7 @@ public class ApplicationManifestTest : IDisposable
 		Assert.StartsWith("App" + writer.NewLine, writer.ToString());
 		using var reader = new StringReader(writer.ToString());
 		var restored = ApplicationManifest.Load(reader);
-		Assert.Equal(default(Edition), restored.Editions.Current);
+		Assert.Equal(default(ApplicationManifest.Edition), restored.Editions.Current);
 		Assert.Equal(manifest.Editions, restored.Editions);
 	}
 
@@ -954,12 +951,12 @@ public class ApplicationManifestTest : IDisposable
 	[Fact]
 	public void Edition_NameReferenceCannotBeStoredAsAnEdition()
 	{
-		Edition reference = " Community ";
+		ApplicationManifest.Edition reference = " Community ";
 		Assert.Equal("Community", reference.Name);
 		Assert.Null(reference.Version);
 		Assert.Equal("Community", reference.ToString());
-		Assert.Equal(string.Empty, default(Edition).ToString());
-		Assert.Equal("Community@1.0", new Edition("Community", new Version(1, 0)).ToString());
+		Assert.Equal(string.Empty, default(ApplicationManifest.Edition).ToString());
+		Assert.Equal("Community@1.0", new ApplicationManifest.Edition("Community", new Version(1, 0)).ToString());
 
 		var editions = new ApplicationManifest("App").Editions;
 		editions.Add(new("Community", new Version(1, 0)));
@@ -985,7 +982,7 @@ public class ApplicationManifestTest : IDisposable
 		editions.Add(new("Community", new Version(1, 0)));
 		editions.Add(new("Professional", new Version(2, 0)));
 		editions.Current = editions[1];
-		var item = new Edition("PROFESSIONAL", new Version(2, 0));
+		var item = new ApplicationManifest.Edition("PROFESSIONAL", new Version(2, 0));
 
 		switch(operation)
 		{
@@ -993,27 +990,27 @@ public class ApplicationManifestTest : IDisposable
 				Assert.True(editions.Remove(item));
 				break;
 			case "key":
-				Assert.True(((KeyedCollection<string, Edition>)editions).Remove(item.Name));
+				Assert.True(((KeyedCollection<string, ApplicationManifest.Edition>)editions).Remove(item.Name));
 				break;
 			case "index":
 				editions.RemoveAt(1);
 				break;
 			case "collection":
-				Assert.True(((ICollection<Edition>)editions).Remove(item));
+				Assert.True(((ICollection<ApplicationManifest.Edition>)editions).Remove(item));
 				break;
 			case "list":
 				((IList)editions).Remove(item);
 				break;
 			case "clear":
-				((Collection<Edition>)editions).Clear();
+				((Collection<ApplicationManifest.Edition>)editions).Clear();
 				break;
 		}
 
-		Assert.Equal(default(Edition), editions.Current);
+		Assert.Equal(default(ApplicationManifest.Edition), editions.Current);
 		Assert.False(editions.Contains("Professional"));
 		Assert.Equal(operation == "clear" ? 0 : 1, editions.Count);
 		editions.Add(item);
-		Assert.Equal(default(Edition), editions.Current);
+		Assert.Equal(default(ApplicationManifest.Edition), editions.Current);
 	}
 
 	[Fact]
@@ -1024,13 +1021,13 @@ public class ApplicationManifestTest : IDisposable
 		editions.Add(new("Community", new Version(2, 0)));
 		editions.Current = editions[0];
 		var expected = editions.ToArray();
-		Assert.Throws<ArgumentException>(() => ((IList<Edition>)editions)[0] = new("COMMUNITY", new Version(3, 0)));
-		Assert.Throws<ArgumentException>("item", () => ((IList)editions)[0] = default(Edition));
+		Assert.Throws<ArgumentException>(() => ((IList<ApplicationManifest.Edition>)editions)[0] = new("COMMUNITY", new Version(3, 0)));
+		Assert.Throws<ArgumentException>("item", () => ((IList)editions)[0] = default(ApplicationManifest.Edition));
 		Assert.Throws<ArgumentException>(() => editions.Insert(0, new("PROFESSIONAL", new Version(4, 0))));
-		Assert.Throws<ArgumentException>("item", () => ((IList<Edition>)editions).Insert(0, default(Edition)));
+		Assert.Throws<ArgumentException>("item", () => ((IList<ApplicationManifest.Edition>)editions).Insert(0, default(ApplicationManifest.Edition)));
 		Assert.Throws<ArgumentOutOfRangeException>(() => editions[-1] = new("Enterprise", new Version(1, 0)));
 		Assert.Throws<ArgumentOutOfRangeException>(() => editions.RemoveAt(2));
-		Assert.False(editions.Remove(new Edition("Professional", new Version(5, 0))));
+		Assert.False(editions.Remove(new ApplicationManifest.Edition("Professional", new Version(5, 0))));
 		Assert.False(editions.Remove("Missing"));
 		Assert.Equal(expected, editions.ToArray());
 		Assert.Equal(expected[0], editions.Current);
@@ -1042,11 +1039,11 @@ public class ApplicationManifestTest : IDisposable
 	public void Editions_EnforceVersionConflictThroughInterfaces()
 	{
 		var manifest = new ApplicationManifest("App", new Version(1, 0));
-		var item = new Edition("Professional", new Version(2, 0));
-		Assert.Throws<InvalidOperationException>(() => ((ICollection<Edition>)manifest.Editions).Add(item));
+		var item = new ApplicationManifest.Edition("Professional", new Version(2, 0));
+		Assert.Throws<InvalidOperationException>(() => ((ICollection<ApplicationManifest.Edition>)manifest.Editions).Add(item));
 		Assert.Throws<InvalidOperationException>(() => ((IList)manifest.Editions).Insert(0, item));
 		Assert.Empty(manifest.Editions);
-		Assert.Equal(default(Edition), manifest.Editions.Current);
+		Assert.Equal(default(ApplicationManifest.Edition), manifest.Editions.Current);
 		Assert.Equal(new Version(1, 0), manifest.Version);
 	}
 
@@ -1055,15 +1052,15 @@ public class ApplicationManifestTest : IDisposable
 	{
 		var editions = new ApplicationManifest("App").Editions;
 		editions.Add(new("Professional", new Version(1, 0)));
-		var item = new Edition("PROFESSIONAL", new Version(1, 0));
-		KeyedCollection<string, Edition> keyed = editions;
+		var item = new ApplicationManifest.Edition("PROFESSIONAL", new Version(1, 0));
+		KeyedCollection<string, ApplicationManifest.Edition> keyed = editions;
 		Assert.Throws<ArgumentNullException>("key", () => editions.TryGetValue(null, out _));
 		Assert.True(keyed.Contains(item.Name));
-		Assert.Equal(0, ((IList<Edition>)editions).IndexOf(item));
+		Assert.Equal(0, ((IList<ApplicationManifest.Edition>)editions).IndexOf(item));
 		Assert.Equal(0, ((IList)editions).IndexOf(item));
 #pragma warning disable xUnit2017
 		Assert.True(keyed.Contains(item));
-		Assert.True(((ICollection<Edition>)editions).Contains(item));
+		Assert.True(((ICollection<ApplicationManifest.Edition>)editions).Contains(item));
 #pragma warning restore xUnit2017
 	}
 
@@ -1076,7 +1073,7 @@ public class ApplicationManifestTest : IDisposable
 		Assert.Equal(new Version(1, 0), edition.Version);
 		Assert.Equal(edition, manifest.Editions[0]);
 		Assert.Equal(edition, manifest.Editions["community"]);
-		Assert.Equal(default(Edition), manifest.Editions.Current);
+		Assert.Equal(default(ApplicationManifest.Edition), manifest.Editions.Current);
 
 		Assert.Throws<ArgumentException>(() => manifest.Editions.Add("COMMUNITY", new Version(2, 0)));
 		Assert.Throws<ArgumentNullException>("name", () => manifest.Editions.Add(null, new Version(1, 0)));
@@ -1179,7 +1176,7 @@ public class ApplicationManifestTest : IDisposable
 		using var savedReader = new StringReader(saved);
 		var loaded = ApplicationManifest.Load(savedReader);
 		Assert.Equal(new[] { "Enterprise", "Professional" }, loaded.Editions.Select(edition => edition.Name));
-		Assert.Equal(default(Edition), loaded.Editions.Current);
+		Assert.Equal(default(ApplicationManifest.Edition), loaded.Editions.Current);
 		Assert.Equal(3, saved.Split(Environment.NewLine).Count(line => line.Length == 0) - 1);
 
 		manifest.Editions.Clear();

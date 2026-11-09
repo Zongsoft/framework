@@ -7,8 +7,6 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 
-using Xunit;
-
 using Zongsoft.Collections;
 using Zongsoft.Externals.Wechat.Paying;
 

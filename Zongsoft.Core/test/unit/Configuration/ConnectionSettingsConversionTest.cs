@@ -3,8 +3,6 @@ using System.Linq;
 using System.Globalization;
 using System.ComponentModel;
 
-using Xunit;
-
 using Zongsoft.Components;
 
 namespace Zongsoft.Configuration.Tests;

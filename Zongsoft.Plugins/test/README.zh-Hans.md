@@ -32,11 +32,11 @@ dotnet test ./Zongsoft.Plugins/test/integration/Zongsoft.Plugins.Tests.slnx -p:G
 
 ## 生命周期断言
 
-[AsyncPluginDisposalTests](unit/AsyncPluginDisposalTests.cs) 验证仅异步释放和双接口释放、并发销毁、拒绝销毁回调重入、嵌套集合和子插件、异常汇总、取消等待、插件树缓存释放以及借用引用。通过释放次数和实例身份区分插件所有权与共享使用。
+[AsyncPluginDisposalTest](unit/AsyncPluginDisposalTest.cs) 验证仅异步释放和双接口释放、并发销毁、拒绝销毁回调重入、嵌套集合和子插件、异常汇总、取消等待、插件树缓存释放以及借用引用。通过释放次数和实例身份区分插件所有权与共享使用。
 
-[ApplicationLifecycleTests](unit/ApplicationLifecycleTests.cs) 验证工作台状态转换及初始器所有权。[HostWorkerLifecycleTests](integration/HostWorkerLifecycleTests.cs) 使用显式门闩验证启动等待全部工作器、回滚等待全部启动尝试、取消不遗弃清理。[TerminalLifecycleTests](integration/TerminalLifecycleTests.cs) 验证异步输入循环的生命周期。超时只防止挂起，不承担事件顺序判断。
+[ApplicationLifecycleTest](unit/ApplicationLifecycleTest.cs) 验证工作台状态转换及初始器所有权。[HostWorkerLifecycleTest](integration/HostWorkerLifecycleTest.cs) 使用显式门闩验证启动等待全部工作器、回滚等待全部启动尝试、取消不遗弃清理。[TerminalLifecycleTest](integration/TerminalLifecycleTest.cs) 验证异步输入循环的生命周期。超时只防止挂起，不承担事件顺序判断。
 
-[TerminalSignalTests](integration/TerminalSignalTests.cs) 在隔离子进程中发送真实操作系统信号。空闲提示符收到 SIGINT 后取消调用方的输入等待并停止宿主，无须等待进程级 Console.In.ReadLine 操作结束。已处理的 SIGINT 保持标准输入可用，或使 ReactiveAsync 返回并继续执行下一条命令。SIGQUIT（Windows 的 Ctrl+Break）及 Linux SIGTERM 不受响应模式否决；清理门闩验证重复信号不能跳过异步停止。阻塞中断通知的用例验证公开宿主停止会等待通知返回，并保留通知故障；Linux 另验证真实 SIGQUIT 与 SIGINT 通知交叠。其他用例验证中断订阅者异常、解除信号注册和保留显式 IHostLifetime 注册。支持 Windows 和 Linux 环境；Windows 需要创建控制台的能力，Linux 需要标准 POSIX 信号。测试持有自身子进程句柄进行限时清理，不按保存的 PID 重新定位进程。
+[TerminalSignalTest](integration/TerminalSignalTest.cs) 在隔离子进程中发送真实操作系统信号。空闲提示符收到 SIGINT 后取消调用方的输入等待并停止宿主，无须等待进程级 Console.In.ReadLine 操作结束。已处理的 SIGINT 保持标准输入可用，或使 ReactiveAsync 返回并继续执行下一条命令。SIGQUIT（Windows 的 Ctrl+Break）及 Linux SIGTERM 不受响应模式否决；清理门闩验证重复信号不能跳过异步停止。阻塞中断通知的用例验证公开宿主停止会等待通知返回，并保留通知故障；Linux 另验证真实 SIGQUIT 与 SIGINT 通知交叠。其他用例验证中断订阅者异常、解除信号注册和保留显式 IHostLifetime 注册。支持 Windows 和 Linux 环境；Windows 需要创建控制台的能力，Linux 需要标准 POSIX 信号。测试持有自身子进程句柄进行限时清理，不按保存的 PID 重新定位进程。
 
 应用上下文、构建管理器和插件树缓存包含进程级状态，因此测试程序集禁用用例并行；并发验证由具体用例显式发起。
 

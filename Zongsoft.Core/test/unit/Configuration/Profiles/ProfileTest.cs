@@ -4,8 +4,6 @@ using System.Linq;
 
 using Zongsoft.Configuration.Profiles;
 
-using Xunit;
-
 namespace Zongsoft.Configuration.Tests;
 
 public class ProfileTest

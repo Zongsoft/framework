@@ -5,8 +5,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using Xunit;
-
 using Zongsoft.IO;
 
 namespace Zongsoft.Externals.Amazon.Tests;
@@ -18,9 +16,9 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 	[Fact]
 	public void GetUrl()
 	{
-		Assert.SkipUnless(Global.IsTestingEnabled, "S3 integration tests require an explicitly enabled debugger session.");
+		Assert.SkipUnless(Global.IsTestingEnabled, "Set ZONGSOFT_AMAZON_TESTS=1 and configure an isolated test bucket to run S3 integration tests.");
 
-		var url = FileSystem.GetUrl("zfs.s3:/zongsoft-fs/Wukong.png");
+		var url = FileSystem.GetUrl($"{_fixture.Root}Wukong.png");
 		Assert.NotNull(url);
 		Assert.NotEmpty(url);
 	}
@@ -28,44 +26,44 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 	[Fact]
 	public async Task ExistsAsync()
 	{
-		Assert.SkipUnless(Global.IsTestingEnabled, "S3 integration tests require an explicitly enabled debugger session.");
+		Assert.SkipUnless(Global.IsTestingEnabled, "Set ZONGSOFT_AMAZON_TESTS=1 and configure an isolated test bucket to run S3 integration tests.");
 
-		var existed = await FileSystem.File.ExistsAsync($"zfs.s3:/zongsoft-fs/NoExisted-{Guid.NewGuid()}.ext");
+		var existed = await FileSystem.File.ExistsAsync($"{_fixture.Root}NoExisted-{Guid.NewGuid()}.ext");
 		Assert.False(existed);
 	}
 
 	[Fact]
 	public async Task DeleteAsync()
 	{
-		Assert.SkipUnless(Global.IsTestingEnabled, "S3 integration tests require an explicitly enabled debugger session.");
+		Assert.SkipUnless(Global.IsTestingEnabled, "Set ZONGSOFT_AMAZON_TESTS=1 and configure an isolated test bucket to run S3 integration tests.");
 
-		var result = await FileSystem.File.DeleteAsync($"zfs.s3:/zongsoft-fs/NoExisted-{Guid.NewGuid()}.ext");
+		var result = await FileSystem.File.DeleteAsync($"{_fixture.Root}NoExisted-{Guid.NewGuid()}.ext");
 		Assert.False(result);
 
-		result = await FileSystem.Directory.DeleteAsync($"zfs.s3:/zongsoft-fs/videos/");
+		result = await FileSystem.Directory.DeleteAsync($"{_fixture.Root}NoExisted-{Guid.NewGuid()}/");
 		Assert.False(result);
 	}
 
 	[Fact]
 	public async Task GetInfoAsync()
 	{
-		Assert.SkipUnless(Global.IsTestingEnabled, "S3 integration tests require an explicitly enabled debugger session.");
+		Assert.SkipUnless(Global.IsTestingEnabled, "Set ZONGSOFT_AMAZON_TESTS=1 and configure an isolated test bucket to run S3 integration tests.");
 
-		var info = await FileSystem.File.GetInfoAsync($"zfs.s3:/zongsoft-fs/NoExisted-{Guid.NewGuid()}.ext");
+		var info = await FileSystem.File.GetInfoAsync($"{_fixture.Root}NoExisted-{Guid.NewGuid()}.ext");
 		Assert.Null(info);
 	}
 
 	[Fact]
 	public async Task SetInfoAsync()
 	{
-		Assert.SkipUnless(Global.IsTestingEnabled, "S3 integration tests require an explicitly enabled debugger session.");
+		Assert.SkipUnless(Global.IsTestingEnabled, "Set ZONGSOFT_AMAZON_TESTS=1 and configure an isolated test bucket to run S3 integration tests.");
 
 		var tags = new Dictionary<string, string>
 		{
 			{ "Author", "Popeye Zhong" },
 		};
 
-		var result = await FileSystem.File.SetInfoAsync($"zfs.s3:/zongsoft-fs/NoExisted-{Guid.NewGuid()}.ext", tags);
+		var result = await FileSystem.File.SetInfoAsync($"{_fixture.Root}NoExisted-{Guid.NewGuid()}.ext", tags);
 		Assert.False(result);
 	}
 
@@ -73,25 +71,25 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 	public async Task GetChildrenAsync()
 	{
 		const int COUNT = 10;
-		const string DIRECTORY = "zfs.s3:/zongsoft-fs/Directory/";
 
-		Assert.SkipUnless(Global.IsTestingEnabled, "S3 integration tests require an explicitly enabled debugger session.");
+		Assert.SkipUnless(Global.IsTestingEnabled, "Set ZONGSOFT_AMAZON_TESTS=1 and configure an isolated test bucket to run S3 integration tests.");
 
+		var directory = $"{_fixture.Root}Directory/";
 		var buffer = new byte[1024];
-		var children = await Utility.ToArrayAsync(FileSystem.Directory.GetChildrenAsync($"zfs.s3:/zongsoft-fs/NoExisted-{Guid.NewGuid()}/"));
+		var children = await Utility.ToArrayAsync(FileSystem.Directory.GetChildrenAsync($"{_fixture.Root}NoExisted-{Guid.NewGuid()}/"));
 		Assert.Empty(children);
 
 		for(int i = 0; i < COUNT; i++)
 		{
-			await using(var stream = await FileSystem.File.OpenAsync($"{DIRECTORY}/{GetFileName(i)}", FileMode.OpenOrCreate))
+			await using(var stream = await FileSystem.File.OpenAsync($"{directory}{GetFileName(i)}", FileMode.OpenOrCreate))
 			{
 				Random.Shared.NextBytes(buffer);
 				await stream.WriteAsync(buffer);
 			}
 		}
 
-		Assert.True(await FileSystem.Directory.ExistsAsync(DIRECTORY));
-		children = (await Utility.ToArrayAsync(FileSystem.Directory.GetChildrenAsync(DIRECTORY)))
+		Assert.True(await FileSystem.Directory.ExistsAsync(directory));
+		children = (await Utility.ToArrayAsync(FileSystem.Directory.GetChildrenAsync(directory)))
 			.OrderBy(info => info.Name)
 			.ToArray();
 
@@ -103,7 +101,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 			Assert.Equal(GetFileName(i), children[i].Name);
 		}
 
-		children = await Utility.ToArrayAsync(FileSystem.Directory.GetChildrenAsync(DIRECTORY, "*.ext"));
+		children = await Utility.ToArrayAsync(FileSystem.Directory.GetChildrenAsync(directory, "*.ext"));
 		Assert.NotEmpty(children);
 		Assert.Equal(COUNT / 2, children.Length);
 
@@ -116,7 +114,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 	[Fact]
 	public async Task OpenAsync()
 	{
-		Assert.SkipUnless(Global.IsTestingEnabled, "S3 integration tests require an explicitly enabled debugger session.");
+		Assert.SkipUnless(Global.IsTestingEnabled, "Set ZONGSOFT_AMAZON_TESTS=1 and configure an isolated test bucket to run S3 integration tests.");
 
 		var properties = new Dictionary<string, string>()
 		{
@@ -124,7 +122,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 		};
 
 		var buffer = new byte[1024];
-		var filePath = $"zfs.s3:/zongsoft-fs/${Zongsoft.Common.Randomizer.GenerateString()}.bin";
+		var filePath = $"{_fixture.Root}{Guid.NewGuid():N}.bin";
 
 		using var source = new MemoryStream();
 		await using(var target = await FileSystem.File.OpenAsync(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, properties))
@@ -158,7 +156,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 	[Fact]
 	public async Task AppendAsync()
 	{
-		Assert.SkipUnless(Global.IsTestingEnabled, "S3 integration tests require an explicitly enabled debugger session.");
+		Assert.SkipUnless(Global.IsTestingEnabled, "Set ZONGSOFT_AMAZON_TESTS=1 and configure an isolated test bucket to run S3 integration tests.");
 
 		const int FIRST_LENGTH = 512;
 		const int LAST_LENGTH = 1024;
@@ -169,7 +167,7 @@ public class S3FileSystemTest(S3FileSystemFixture fixture) : IClassFixture<S3Fil
 		};
 
 		var buffer = new byte[1024];
-		var filePath = $"zfs.s3:/zongsoft-fs/${Zongsoft.Common.Randomizer.GenerateString()}.bin";
+		var filePath = $"{_fixture.Root}{Guid.NewGuid():N}.bin";
 
 		using var first = new MemoryStream();
 		await using(var target = await FileSystem.File.OpenAsync(filePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, properties))

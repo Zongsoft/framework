@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 
 using Npgsql;
-using Xunit;
 
 namespace Zongsoft.Data.PostgreSql.Tests;
 

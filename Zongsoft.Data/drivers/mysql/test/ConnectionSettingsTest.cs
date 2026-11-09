@@ -1,7 +1,5 @@
 ﻿using MySqlConnector;
 
-using Xunit;
-
 namespace Zongsoft.Data.MySql.Tests;
 
 public class ConnectionSettingsTest

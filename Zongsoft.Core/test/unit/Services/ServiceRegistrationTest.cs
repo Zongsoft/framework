@@ -8,8 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 using Zongsoft.Configuration.Options;
 
-using Xunit;
-
 namespace Zongsoft.Services.Tests;
 
 public class ServiceRegistrationTest

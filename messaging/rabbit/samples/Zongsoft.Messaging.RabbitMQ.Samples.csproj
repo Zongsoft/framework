@@ -23,7 +23,6 @@
 		</Otherwise>
 	</Choose>
 
-
 	<ItemGroup>
 		<Compile Update="Properties\Resources.Designer.cs">
 			<DesignTime>true</DesignTime>

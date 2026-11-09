@@ -12,8 +12,6 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-using Xunit;
-
 namespace Zongsoft.Web.Hosting.Tests;
 
 public class WebEndpointPipelineTest

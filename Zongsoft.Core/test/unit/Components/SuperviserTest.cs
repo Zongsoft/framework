@@ -4,8 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 
-using Xunit;
-
 namespace Zongsoft.Components.Tests;
 
 public class SuperviserTest : IDisposable

@@ -21,8 +21,6 @@ using Zongsoft.Services;
 using Zongsoft.Configuration;
 using Zongsoft.Diagnostics.Telemetry;
 
-using Xunit;
-
 namespace Zongsoft.Diagnostics.Tests;
 
 [Collection("Diagnostics")]

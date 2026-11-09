@@ -99,7 +99,7 @@ dotnet test messaging\zero\test\Zongsoft.Messaging.ZeroMQ.Tests.csproj -f net10.
 ```
 
 - NetMQ 测试共享进程级状态和网络资源，各目标框架串行运行。
-- 首条发布回归先运行整套测试，再单独重复 `ZeroQueueConcurrencyTests.ConcurrentProduceOnSingleQueueIsThreadSafe`；单独通过不能排除顺序相关竞态。
+- 首条发布回归先运行整套测试，再单独重复 `ZeroQueueConcurrencyTest.ConcurrentProduceOnSingleQueueIsThreadSafe`；单独通过不能排除顺序相关竞态。
 - 相关区域变化时增加空 Payload、订阅初始化失败/取消回滚、带 Group 的 Event/RPC Topic、活动消费者下释放 Queue、畸形 Frame 和 Broker 重启测试。
 - 独立 samples 用于冒烟。只有插件已刻意部署到隔离宿主时才使用 `D:\Zongsoft\hosting` terminal/daemon；未经授权不运行部署/安装脚本或修改宿主包。
 

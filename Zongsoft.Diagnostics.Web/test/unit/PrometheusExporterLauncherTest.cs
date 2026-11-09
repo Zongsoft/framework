@@ -9,8 +9,6 @@ using OpenTelemetry.Exporter;
 
 using Zongsoft.Diagnostics.Telemetry;
 
-using Xunit;
-
 namespace Zongsoft.Diagnostics.Web.Tests;
 
 public class PrometheusExporterLauncherTest

@@ -5,8 +5,6 @@ using System.Threading.Tasks;
 using System.Threading.Channels;
 using System.Collections.Generic;
 
-using Xunit;
-
 namespace Zongsoft.Common.Tests;
 
 public class TimerTest

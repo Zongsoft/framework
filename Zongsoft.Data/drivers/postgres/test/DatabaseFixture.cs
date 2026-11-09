@@ -3,8 +3,6 @@ using System.Threading.Tasks;
 
 using Zongsoft.Data.Metadata;
 
-using Xunit;
-
 namespace Zongsoft.Data.PostgreSql.Tests;
 
 public class DatabaseFixture : IAsyncDisposable

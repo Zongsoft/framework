@@ -4,8 +4,6 @@ using System.Threading.Tasks;
 
 using Microsoft.Extensions.Configuration;
 
-using Xunit;
-
 namespace Zongsoft.Configuration.Tests;
 
 public class CompositeConfigurationProviderLifecycleTest

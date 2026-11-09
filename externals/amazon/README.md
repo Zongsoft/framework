@@ -64,7 +64,7 @@ Directory operations emulate hierarchy through object-key prefixes; S3 itself ha
 
 🚨 S3 writes and deletes affect remote durable data. Apply least-privilege bucket policies, encryption, versioning and lifecycle rules; validate bucket/key input to prevent tenant crossover. S3-compatible services can differ in metadata, append, consistency, multipart, and URL behavior.
 
-Dispose opened streams promptly. Integration tests make real network calls and mutate a configured disposable bucket; they must remain opt-in.
+Dispose opened streams promptly. S3 integration tests make real network calls. Configure a disposable bucket and endpoint, set `ZONGSOFT_AMAZON_TESTS=1` and `ZONGSOFT_AMAZON_TEST_BUCKET` to its name, and supply credentials through the normal configuration. The tests create and remove objects under a unique prefix.
 
 ## Related Resources
 

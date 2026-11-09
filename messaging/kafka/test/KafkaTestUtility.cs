@@ -10,8 +10,6 @@ using System.Collections.Concurrent;
 using Confluent.Kafka;
 using Confluent.Kafka.Admin;
 
-using Xunit.Sdk;
-
 using Zongsoft.Collections;
 using Zongsoft.Components;
 

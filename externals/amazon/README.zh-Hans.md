@@ -64,7 +64,7 @@ var info = await FileSystem.File.GetInfoAsync(path, cancellationToken);
 
 🚨 S3 写入和删除会影响远程持久数据。请采用最小权限 Bucket Policy、加密、版本控制与生命周期规则，并验证 Bucket/Key 输入以防跨租户访问。兼容 S3 的服务在元数据、追加、一致性、分段上传和 URL 行为上可能不同。
 
-及时释放打开的数据流。集成测试会进行真实网络调用并修改配置的可丢弃 Bucket，必须保持显式启用。
+及时释放打开的数据流。S3 集成测试会进行真实网络调用。请配置可丢弃的 Bucket 和端点，将 `ZONGSOFT_AMAZON_TESTS` 设为 `1`、`ZONGSOFT_AMAZON_TEST_BUCKET` 设为 Bucket 名称，并通过常规配置提供凭据。测试会在唯一前缀下创建并删除对象。
 
 ## 延伸阅读
 

@@ -4,8 +4,6 @@ using System.Collections.Generic;
 
 using MySqlConnector;
 
-using Xunit;
-
 using Zongsoft.Configuration;
 
 namespace Zongsoft.Data.MySql.Tests;

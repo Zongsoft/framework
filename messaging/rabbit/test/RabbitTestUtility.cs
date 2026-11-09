@@ -12,8 +12,6 @@ using System.Collections.Concurrent;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
 
-using Xunit;
-
 using Zongsoft.Collections;
 using Zongsoft.Components;
 
@@ -113,7 +111,7 @@ internal static class RabbitTestUtility
 			objects.GetProperty("channels").GetInt32(),
 			objects.GetProperty("queues").GetInt32(),
 			objects.GetProperty("exchanges").GetInt32(),
-			queues.GetProperty("messages_ready").GetInt64());
+			queues.TryGetProperty("messages_ready", out var messagesReady) ? messagesReady.GetInt64() : 0);
 	}
 
 	public static async Task<RabbitBrokerSnapshot> WaitForBrokerRestoreAsync(RabbitBrokerSnapshot baseline, TimeSpan timeout)

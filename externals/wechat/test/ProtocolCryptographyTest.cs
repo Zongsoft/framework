@@ -5,8 +5,6 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 
-using Xunit;
-
 namespace Zongsoft.Externals.Wechat.Tests;
 
 public class ProtocolCryptographyTest

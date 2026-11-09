@@ -6,8 +6,6 @@ using System.Threading.Tasks;
 using System.Security.Claims;
 using System.Collections.Generic;
 
-using Xunit;
-
 using Zongsoft.Collections;
 using Zongsoft.Components;
 using Zongsoft.Security.Privileges;

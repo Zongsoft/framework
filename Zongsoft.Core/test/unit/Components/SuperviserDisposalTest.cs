@@ -5,8 +5,6 @@ using System.Threading.Tasks;
 
 using Zongsoft.Caching;
 
-using Xunit;
-
 namespace Zongsoft.Components.Tests;
 
 public class SuperviserDisposalTest

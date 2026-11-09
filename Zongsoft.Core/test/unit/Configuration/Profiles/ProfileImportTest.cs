@@ -9,8 +9,6 @@ using System.Collections.Concurrent;
 
 using Zongsoft.Configuration.Profiles;
 
-using Xunit;
-
 namespace Zongsoft.Configuration.Tests;
 
 public class ProfileImportTest

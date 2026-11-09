@@ -15,8 +15,6 @@ using Zongsoft.Configuration.Xml;
 using Zongsoft.Text.Templating;
 using Zongsoft.Diagnostics.Telemetry;
 
-using Xunit;
-
 namespace Zongsoft.Diagnostics.Web.Tests;
 
 public class PrometheusBindingTest

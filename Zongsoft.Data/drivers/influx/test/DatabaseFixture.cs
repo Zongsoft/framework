@@ -1,16 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-using Xunit;
-
 namespace Zongsoft.Data.Influx.Tests;
 
 public class DatabaseFixture : IAsyncDisposable
 {
-	#region 常量定义
-	private const string CONNECTION_STRING = @"server=http://192.168.2.222:8086;database=Test;organization=0f99a31eaaa485f5;token=DqImDLUR5rf3OObPO0qGw-YNTxh8MBW-gZBgFKAPFkizRVuYK7DEkdeB-Oxq4RmSizpaXcqzNVq_ZT6JjrB2eQ==";
-	#endregion
-
 	#region 私有变量
 	private readonly Mapping.Loader _loader;
 	#endregion
@@ -18,10 +12,17 @@ public class DatabaseFixture : IAsyncDisposable
 	#region 构造函数
 	public DatabaseFixture()
 	{
+		if(!Global.IsTestingEnabled)
+			return;
+
+		var connectionString = Environment.GetEnvironmentVariable("ZONGSOFT_INFLUX_TEST_CONNECTION_STRING");
+		if(string.IsNullOrWhiteSpace(connectionString))
+			throw new InvalidOperationException("ZONGSOFT_INFLUX_TEST_CONNECTION_STRING is required for InfluxDB tests.");
+
 		Mapping.Loaders.Add(_loader = new Metadata.Profiles.MetadataFileLoader(AppContext.BaseDirectory));
 		DataEnvironment.Drivers.Add(InfluxDriver.Instance);
 
-		this.ConnectionSettings = Configuration.InfluxConnectionSettingsDriver.Instance.GetSettings(CONNECTION_STRING);
+		this.ConnectionSettings = Configuration.InfluxConnectionSettingsDriver.Instance.GetSettings(connectionString);
 		this.Accessor = DataAccessProvider.Instance.GetAccessor("Test", new DataAccessOptions([this.ConnectionSettings]));
 	}
 	#endregion
@@ -36,12 +37,16 @@ public class DatabaseFixture : IAsyncDisposable
 	{
 		try
 		{
-			await ((IAsyncDisposable)this.Accessor).DisposeAsync();
+			if(this.Accessor != null)
+				await this.Accessor.DisposeAsync();
 		}
 		finally
 		{
-			Mapping.Loaders.Remove(_loader);
-			DataEnvironment.Drivers.Remove(InfluxDriver.Instance);
+			if(_loader != null)
+			{
+				Mapping.Loaders.Remove(_loader);
+				DataEnvironment.Drivers.Remove(InfluxDriver.Instance);
+			}
 		}
 	}
 	#endregion

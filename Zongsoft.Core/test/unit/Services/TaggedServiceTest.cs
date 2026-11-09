@@ -5,8 +5,6 @@ using System.Runtime.CompilerServices;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using Xunit;
-
 namespace Zongsoft.Services.Tests;
 
 public sealed class TaggedServiceTest

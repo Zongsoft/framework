@@ -10,8 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Zongsoft.Services;
 using Zongsoft.Collections;
 
-using Xunit;
-
 namespace Zongsoft.Components.Tests;
 
 public class EventsTest

@@ -32,8 +32,6 @@ using System.Threading.Tasks.Sources;
 using Zongsoft.Collections;
 using Zongsoft.Components;
 
-using Xunit;
-
 namespace Zongsoft.Communication.Tests;
 
 public class ListenerDispatchTest

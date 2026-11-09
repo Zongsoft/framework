@@ -5,8 +5,6 @@ global using System.Threading.Tasks;
 global using System.Collections.Generic;
 global using System.Globalization;
 
-global using Xunit;
-
 global using ClosedXML.Excel;
 
 global using Zongsoft.Common;

@@ -217,6 +217,7 @@ rg --files Zongsoft.Data/drivers | rg -- "-pod\.yaml$|Tests\.csproj$"
 - SQLite 和 DuckDB 是进程内数据库，运行其单元测试不需要启动数据库服务器容器。
 - 其他驱动测试目录的 `*-pod.yaml` 描述 Podman 数据库依赖。先检查已有服务与运行授权；用户允许启用测试容器时才按 YAML 启动缺失服务，并等待数据库真正可连接。Running 不等于 Ready，不停止或删除非本次创建的资源。
 - 当前仓库中的 MSSQL、MySQL、PostgreSQL 和 TDengine 测试目录包含 `*-pod.yaml`；仍应每次动态扫描，不要把该列表视为永久不变。
+- InfluxDB 和 ClickHouse 集成测试启用 `ZONGSOFT_DATA_TESTS=1` 时，还须分别在进程环境中提供 `ZONGSOFT_INFLUX_TEST_CONNECTION_STRING` 和 `ZONGSOFT_CLICKHOUSE_TEST_CONNECTION_STRING`；未启用时不创建外部访问器。
 - 本机容器不豁免凭据规则。真实用户名、密码及完整连接串不写入源码、文档、测试输出摘要或提交记录；通过本地环境配置注入，使用唯一测试数据库/表或键前缀，清理仅限本次测试数据。
 - 先运行与改动直接相关的测试，再运行对应驱动项目的完整测试。使用 `--blame-hang` 和合理的 `--blame-hang-timeout` 防止连接失败测试无限挂起。
 - 多目标框架项目按 `net8.0`、`net9.0`、`net10.0` 分别还原和测试。中央包版本按目标框架定义；发生 NU1605 时先检查 `Directory.Packages.props` 与数据库提供程序的传递依赖约束。

@@ -1,8 +1,6 @@
 using System;
 using System.ComponentModel;
 
-using Xunit;
-
 namespace Zongsoft.Versioning;
 
 public class VersionTest

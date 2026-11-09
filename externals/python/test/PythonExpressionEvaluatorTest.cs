@@ -2,8 +2,6 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 
-using Xunit;
-
 using Zongsoft.Expressions;
 
 namespace Zongsoft.Externals.Python.Tests;

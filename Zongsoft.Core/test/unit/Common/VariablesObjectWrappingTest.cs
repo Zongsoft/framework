@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Runtime.CompilerServices;
 
-using Xunit;
-
 namespace Zongsoft.Common.Tests;
 
 public class VariablesObjectWrappingTest

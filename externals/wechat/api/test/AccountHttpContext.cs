@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Zongsoft.Externals.Wechat.Platforms;
-using Xunit;
 
 namespace Zongsoft.Externals.Wechat.Web.Tests;
 

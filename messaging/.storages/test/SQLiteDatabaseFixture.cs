@@ -1,13 +1,12 @@
 using System;
 using System.IO;
+using System.Threading.Tasks;
 
 using Zongsoft.Configuration;
 using Zongsoft.Data;
 using Zongsoft.Data.Metadata;
 using Zongsoft.Data.SQLite;
 using Zongsoft.Data.SQLite.Configuration;
-
-using Xunit;
 
 namespace Zongsoft.Messaging.Storages.Data.Tests;
 
@@ -17,7 +16,7 @@ public sealed class DatabaseMessageStorageCollection : ICollectionFixture<SQLite
 	public const string Name = nameof(DatabaseMessageStorageCollection);
 }
 
-public sealed class SQLiteDatabaseFixture : IDisposable
+public sealed class SQLiteDatabaseFixture : IAsyncLifetime
 {
 	private const string IDENTIFIER_ENVIRONMENT_VARIABLE = "ZONGSOFT_MESSAGING_STORAGE_IDENTIFIER";
 
@@ -43,7 +42,6 @@ public sealed class SQLiteDatabaseFixture : IDisposable
 		Mapping.Loaders.Add(_loader = new Zongsoft.Data.Metadata.Profiles.MetadataFileLoader(AppContext.BaseDirectory));
 		this.ConnectionSettings = SQLiteConnectionSettingsDriver.Instance.GetSettings($"fixture-{Guid.NewGuid():N}", _connectionString);
 		this.Accessor = DataAccessProvider.Instance.GetAccessor($"Messaging.Storages.Data.Tests.{Guid.NewGuid():N}", new DataAccessOptions([this.ConnectionSettings]));
-		this.ExecuteSchema();
 	}
 
 	public DataAccess Accessor { get; }
@@ -57,22 +55,24 @@ public sealed class SQLiteDatabaseFixture : IDisposable
 		return new DataMessageStorage("test", this.Accessor, settings, $"Zongsoft.Messaging.Storage:{name}:{identifier}");
 	}
 
-	public void ExecuteSchema()
+	public async ValueTask ExecuteSchemaAsync()
 	{
-		var script = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "database", "sqlite", "schema.sql"));
+		var script = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "database", "sqlite", "schema.sql"));
 
-		using var connection = SQLiteDriver.Instance.CreateConnection(_connectionString);
-		using var command = connection.CreateCommand();
-		connection.Open();
+		await using var connection = SQLiteDriver.Instance.CreateConnection(_connectionString);
+		await using var command = connection.CreateCommand();
+		await connection.OpenAsync();
 		command.CommandText = script;
-		command.ExecuteNonQuery();
+		await command.ExecuteNonQueryAsync();
 	}
 
-	public void Dispose()
+	public ValueTask InitializeAsync() => this.ExecuteSchemaAsync();
+
+	public async ValueTask DisposeAsync()
 	{
 		try
 		{
-			this.Accessor.Dispose();
+			await this.Accessor.DisposeAsync();
 			Mapping.Loaders.Remove(_loader);
 
 			if(_driverAdded)

@@ -1,7 +1,5 @@
 ﻿using System;
 
-using Xunit;
-
 namespace Zongsoft.IO.Compression.Tests;
 
 public class CompressorTest

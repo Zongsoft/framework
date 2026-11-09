@@ -2,8 +2,6 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-using Xunit;
-
 namespace Zongsoft.Hardwares.Tests;
 
 public class HardwareCollectorTest

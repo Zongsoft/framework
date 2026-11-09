@@ -3,8 +3,6 @@ using System.Threading.Tasks;
 
 using MySqlConnector;
 
-using Xunit;
-
 using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.MySql.Tests;

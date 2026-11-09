@@ -1,7 +1,5 @@
 using System.IO;
 
-using Xunit;
-
 namespace Zongsoft.Terminals.Tests;
 
 [Collection(ConsoleExecutorCollection.Name)]

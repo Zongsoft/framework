@@ -4,8 +4,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 
-using Xunit;
-
 using Zongsoft.Data;
 
 namespace Zongsoft.Web.Tests;

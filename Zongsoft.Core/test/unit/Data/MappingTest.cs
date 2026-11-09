@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-using Xunit;
-
 namespace Zongsoft.Data.Tests;
 
 [CollectionDefinition(Name)]

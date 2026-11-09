@@ -6,8 +6,6 @@ using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 
-using Xunit;
-
 using Zongsoft.Text.Templating;
 
 namespace Zongsoft.Common.Tests;

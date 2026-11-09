@@ -14,7 +14,7 @@ The MySQL and PostgreSQL Podman assets provide the default local services. Run `
 
 ## Run the Default Suite
 
-Use the repository's SDK and build the referenced Debug dependencies if required by their project files. From the framework root:
+Use the repository's SDK. Build Zongsoft.Core and Zongsoft.Data first, then build the storage solution to prepare the SQLite, MySQL, PostgreSQL and SQL Server driver assemblies. From the framework root:
 
 ```shell
 dotnet test messaging/.storages/test/Zongsoft.Messaging.Storages.Data.Tests.csproj -f net10.0
@@ -24,7 +24,7 @@ Leave the external-test switch unset for SQLite-only execution. Do not start con
 
 ## Fixtures and Expected Result
 
-[DataMessageStorageTests.cs](DataMessageStorageTests.cs) checks snapshot independence, null versus empty payloads, complete replacement, ordinal topics, expiry filtering, partition freezing, cancellation, same-ID concurrency and IDataAccess ownership. Factory tests verify exact-name connection lookup; SQLiteDatabaseFixture creates the file and applies schema.
+[DataMessageStorageTest.cs](DataMessageStorageTest.cs) checks snapshot independence, null versus empty payloads, complete replacement, ordinal topics, expiry filtering, partition freezing, cancellation, same-ID concurrency and IDataAccess ownership. Factory tests verify exact-name connection lookup; SQLiteDatabaseFixture creates the file and applies schema.
 
 A passing suite validates the storage contract, not broker replay or business-level exactly-once delivery. External cases are conditional and must not be counted as executed when disabled.
 

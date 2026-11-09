@@ -1,4 +1,13 @@
 <Solution>
 	<Project Path="src/Zongsoft.Messaging.Storages.Data.csproj" />
-	<Project Path="test/Zongsoft.Messaging.Storages.Data.Tests.csproj" />
+	<Project Path="../../Zongsoft.Data/drivers/mssql/src/Zongsoft.Data.MsSql.csproj" />
+	<Project Path="../../Zongsoft.Data/drivers/mysql/src/Zongsoft.Data.MySql.csproj" />
+	<Project Path="../../Zongsoft.Data/drivers/sqlite/src/Zongsoft.Data.SQLite.csproj" />
+	<Project Path="../../Zongsoft.Data/drivers/postgres/src/Zongsoft.Data.PostgreSql.csproj" />
+	<Project Path="test/Zongsoft.Messaging.Storages.Data.Tests.csproj">
+		<BuildDependency Project="../../Zongsoft.Data/drivers/mssql/src/Zongsoft.Data.MsSql.csproj" />
+		<BuildDependency Project="../../Zongsoft.Data/drivers/mysql/src/Zongsoft.Data.MySql.csproj" />
+		<BuildDependency Project="../../Zongsoft.Data/drivers/sqlite/src/Zongsoft.Data.SQLite.csproj" />
+		<BuildDependency Project="../../Zongsoft.Data/drivers/postgres/src/Zongsoft.Data.PostgreSql.csproj" />
+	</Project>
 </Solution>

@@ -1,8 +1,6 @@
 using System;
 using System.Security.Claims;
 
-using Xunit;
-
 using Zongsoft.Components;
 
 namespace Zongsoft.Security.Tests;

@@ -14,8 +14,6 @@ using Zongsoft.Components;
 using Zongsoft.Collections;
 using Zongsoft.Configuration;
 
-using Xunit;
-
 namespace Zongsoft.Externals.Aliyun.Tests;
 
 public class MessageQueueTest(MessageQueueFixture fixture) : IClassFixture<MessageQueueFixture>

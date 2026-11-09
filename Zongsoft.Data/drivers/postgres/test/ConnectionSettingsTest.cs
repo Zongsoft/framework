@@ -1,7 +1,5 @@
 ﻿using Npgsql;
 
-using Xunit;
-
 namespace Zongsoft.Data.PostgreSql.Tests;
 
 public class ConnectionSettingsTest

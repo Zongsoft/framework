@@ -28,8 +28,6 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Xunit;
-
 namespace Zongsoft.Components.Tests;
 
 public class WorkerCallbackTest

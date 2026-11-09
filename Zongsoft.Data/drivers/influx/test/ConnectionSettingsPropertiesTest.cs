@@ -1,6 +1,4 @@
-﻿using Xunit;
-
-namespace Zongsoft.Data.Influx.Tests;
+﻿namespace Zongsoft.Data.Influx.Tests;
 
 public class ConnectionSettingsPropertiesTest
 {

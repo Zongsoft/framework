@@ -3,8 +3,6 @@ using System.IO;
 using System.Text;
 using System.Collections.Generic;
 
-using Xunit;
-
 using Zongsoft.Expressions;
 
 namespace Zongsoft.Externals.Lua.Tests;

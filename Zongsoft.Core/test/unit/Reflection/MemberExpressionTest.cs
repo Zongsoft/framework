@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 
-using Xunit;
-
 namespace Zongsoft.Reflection.Expressions.Tests;
 
 public class MemberExpressionTest

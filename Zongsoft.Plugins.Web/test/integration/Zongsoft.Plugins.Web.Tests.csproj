@@ -36,6 +36,7 @@
 	<ItemGroup>
 		<None Include="../../../Zongsoft.Plugins/plugins/Main.plugin" Link="Fixtures/Main.plugin" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
+
 	<ItemGroup>
 		<Compile Include="../.shared/PluginTestDirectory.cs" Link="Fixtures/PluginTestDirectory.cs" />
 	</ItemGroup>

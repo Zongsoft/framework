@@ -1,7 +1,5 @@
 using System;
 
-using Xunit;
-
 using Zongsoft.Data.Common.Expressions;
 using Zongsoft.Data.Metadata;
 

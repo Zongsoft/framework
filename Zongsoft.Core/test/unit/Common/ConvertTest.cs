@@ -3,8 +3,6 @@ using System.Collections.Generic;
 
 using Zongsoft.Tests;
 
-using Xunit;
-
 namespace Zongsoft.Common.Tests;
 
 public class ConvertTest

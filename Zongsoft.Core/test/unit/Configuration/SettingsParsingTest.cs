@@ -1,7 +1,5 @@
 using System;
 
-using Xunit;
-
 namespace Zongsoft.Configuration.Tests;
 
 public class SettingsParsingTest

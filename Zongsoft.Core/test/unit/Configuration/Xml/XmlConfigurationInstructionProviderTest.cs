@@ -10,8 +10,6 @@ using Microsoft.Extensions.Primitives;
 
 using Zongsoft.Configuration.Xml;
 
-using Xunit;
-
 namespace Zongsoft.Configuration.Tests;
 
 public class XmlConfigurationInstructionProviderTest

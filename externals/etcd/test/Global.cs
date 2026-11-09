@@ -19,9 +19,9 @@ public static class Global
 			await service.HeartbeatAsync(source.Token);
 			return true;
 		}
-		catch
+		catch(Exception exception)
 		{
-			return false;
+			throw new InvalidOperationException("The etcd integration test endpoint is unavailable.", exception);
 		}
 	}
 

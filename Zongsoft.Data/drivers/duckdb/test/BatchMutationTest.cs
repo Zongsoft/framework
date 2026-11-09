@@ -1,5 +1,3 @@
-using Xunit;
-
 namespace Zongsoft.Data.DuckDB.Tests;
 
 [Collection("Database")]

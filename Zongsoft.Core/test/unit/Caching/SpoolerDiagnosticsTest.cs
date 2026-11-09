@@ -6,8 +6,6 @@ using System.Diagnostics.Metrics;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
-using Xunit;
-
 namespace Zongsoft.Caching.Tests;
 
 [CollectionDefinition(nameof(SpoolerDiagnosticsCollection), DisableParallelization = true)]

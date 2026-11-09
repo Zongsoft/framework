@@ -8,29 +8,49 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<Using Include="Xunit" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<Reference Include="Zongsoft.Core">
 			<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
 		</Reference>
 		<Reference Include="Zongsoft.Data">
 			<HintPath>..\..\..\Zongsoft.Data\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Data.dll</HintPath>
 		</Reference>
+		<Reference Include="Zongsoft.Data.MsSql">
+			<HintPath>..\..\..\Zongsoft.Data\drivers\mssql\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Data.MsSql.dll</HintPath>
+		</Reference>
+		<Reference Include="Zongsoft.Data.MySql">
+			<HintPath>..\..\..\Zongsoft.Data\drivers\mysql\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Data.MySql.dll</HintPath>
+		</Reference>
+		<Reference Include="Zongsoft.Data.SQLite">
+			<HintPath>..\..\..\Zongsoft.Data\drivers\sqlite\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Data.SQLite.dll</HintPath>
+		</Reference>
+		<Reference Include="Zongsoft.Data.PostgreSql">
+			<HintPath>..\..\..\Zongsoft.Data\drivers\postgres\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Data.PostgreSql.dll</HintPath>
+		</Reference>
 	</ItemGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\src\Zongsoft.Messaging.Storages.Data.csproj" />
-		<ProjectReference Include="..\..\..\Zongsoft.Data\drivers\mssql\src\Zongsoft.Data.MsSql.csproj" />
-		<ProjectReference Include="..\..\..\Zongsoft.Data\drivers\mysql\src\Zongsoft.Data.MySql.csproj" />
-		<ProjectReference Include="..\..\..\Zongsoft.Data\drivers\sqlite\src\Zongsoft.Data.SQLite.csproj" />
-		<ProjectReference Include="..\..\..\Zongsoft.Data\drivers\postgres\src\Zongsoft.Data.PostgreSql.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.Data.Sqlite" VersionOverride="10.0.12" />
+		<PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" VersionOverride="3.0.5" />
+		<PackageReference Include="SourceGear.sqlite3" VersionOverride="3.53.4" />
+		<PackageReference Include="MySqlConnector" VersionOverride="2.4.0" />
+		<PackageReference Include="Microsoft.Data.SqlClient" VersionOverride="7.0.2" />
+		<PackageReference Include="System.Security.Cryptography.Pkcs" VersionOverride="9.0.21" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Memory" VersionOverride="9.0.20" Condition="'$(TargetFramework)'!='net10.0'" />
 		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Condition="'$(TargetFramework)'=='net10.0'" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
 		<PackageReference Include="Microsoft.Extensions.FileProviders.Physical" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" VersionOverride="9.0.20" Condition="'$(TargetFramework)'!='net10.0'" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Condition="'$(TargetFramework)'=='net10.0'" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" />
 		<PackageReference Include="xunit.v3" />
 		<PackageReference Include="xunit.v3.core" />
@@ -38,6 +58,18 @@
 		<PackageReference Include="xunit.analyzers" />
 		<PackageReference Include="xunit.v3.runner.msbuild" />
 		<PackageReference Include="xunit.runner.visualstudio" />
+	</ItemGroup>
+
+	<ItemGroup Condition="$(TargetFramework) == 'net8.0'">
+		<PackageReference Include="Npgsql" VersionOverride="8.0.9" />
+	</ItemGroup>
+
+	<ItemGroup Condition="$(TargetFramework) == 'net9.0'">
+		<PackageReference Include="Npgsql" VersionOverride="9.0.5" />
+	</ItemGroup>
+
+	<ItemGroup Condition="$(TargetFramework) == 'net10.0'">
+		<PackageReference Include="Npgsql" VersionOverride="10.0.3" />
 	</ItemGroup>
 
 	<ItemGroup>

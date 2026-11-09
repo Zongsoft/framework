@@ -4,8 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
 
-using Xunit;
-
 using Zongsoft.Components;
 using Zongsoft.Common;
 

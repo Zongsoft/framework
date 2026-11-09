@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Xunit;
-
 namespace Zongsoft.Data.Tests;
 
 public partial class PageableTest

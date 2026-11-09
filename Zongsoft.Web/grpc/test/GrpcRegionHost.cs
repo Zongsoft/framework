@@ -29,8 +29,6 @@ using Zongsoft.Components;
 using Zongsoft.Communication;
 using Zongsoft.Web.Hosting;
 
-using P = Zongsoft.Web.Grpc.Tests.Protocols;
-
 namespace Zongsoft.Web.Grpc.Tests;
 
 internal sealed class GrpcRegionHost(WebApplication application, RegionProbe probe) : IAsyncDisposable
@@ -161,7 +159,7 @@ public sealed class RegionProbe
 
 public static class GrpcRegionServices
 {
-	public abstract class EchoHandler : P.Echo.EchoBase, IDisposable
+	public abstract class EchoHandler : global::Zongsoft.Web.Grpc.Tests.Protocols.Echo.EchoBase, IDisposable
 	{
 		private readonly string _name;
 		private readonly RegionProbe _probe;
@@ -174,7 +172,7 @@ public static class GrpcRegionServices
 			probe.Created.AddOrUpdate(name, 1, (_, count) => count + 1);
 		}
 
-		public override async Task<P.Frame> Unary(P.Frame request, ServerCallContext context)
+		public override async Task<global::Zongsoft.Web.Grpc.Tests.Protocols.Frame> Unary(global::Zongsoft.Web.Grpc.Tests.Protocols.Frame request, ServerCallContext context)
 		{
 			if(request.Text == "wait")
 			{
@@ -202,29 +200,29 @@ public static class GrpcRegionServices
 			return this.Reply(request);
 		}
 
-		public override async Task ServerStream(P.Frame request, IServerStreamWriter<P.Frame> responseStream, ServerCallContext context)
+		public override async Task ServerStream(global::Zongsoft.Web.Grpc.Tests.Protocols.Frame request, IServerStreamWriter<global::Zongsoft.Web.Grpc.Tests.Protocols.Frame> responseStream, ServerCallContext context)
 		{
 			for(var index = 0; index < 3; index++)
-				await responseStream.WriteAsync(this.Reply(new P.Frame { Text = request.Text + index }));
+				await responseStream.WriteAsync(this.Reply(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame { Text = request.Text + index }));
 		}
 
-		public override async Task<P.Frame> ClientStream(IAsyncStreamReader<P.Frame> requestStream, ServerCallContext context)
+		public override async Task<global::Zongsoft.Web.Grpc.Tests.Protocols.Frame> ClientStream(IAsyncStreamReader<global::Zongsoft.Web.Grpc.Tests.Protocols.Frame> requestStream, ServerCallContext context)
 		{
 			var messages = new List<string>();
 
 			while(await requestStream.MoveNext(context.CancellationToken))
 				messages.Add(requestStream.Current.Text);
 
-			return this.Reply(new P.Frame { Text = string.Join(',', messages) });
+			return this.Reply(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame { Text = string.Join(',', messages) });
 		}
 
-		public override async Task Duplex(IAsyncStreamReader<P.Frame> requestStream, IServerStreamWriter<P.Frame> responseStream, ServerCallContext context)
+		public override async Task Duplex(IAsyncStreamReader<global::Zongsoft.Web.Grpc.Tests.Protocols.Frame> requestStream, IServerStreamWriter<global::Zongsoft.Web.Grpc.Tests.Protocols.Frame> responseStream, ServerCallContext context)
 		{
 			while(await requestStream.MoveNext(context.CancellationToken))
 				await responseStream.WriteAsync(this.Reply(requestStream.Current));
 		}
 
-		private P.Frame Reply(P.Frame request) => new() { Text = _name + ":" + request.Text, Payload = request.Payload, Instance = _instance };
+		private global::Zongsoft.Web.Grpc.Tests.Protocols.Frame Reply(global::Zongsoft.Web.Grpc.Tests.Protocols.Frame request) => new() { Text = _name + ":" + request.Text, Payload = request.Payload, Instance = _instance };
 		public void Dispose() => _probe.Disposed.AddOrUpdate(_name, 1, (_, count) => count + 1);
 	}
 
@@ -235,27 +233,27 @@ public static class GrpcRegionServices
 	public sealed class Beta(RegionProbe probe) : EchoHandler(probe, "beta") { }
 
 	[Service(Tags = "gRPC"), Handler("/a")]
-	public sealed class Auxiliary : P.Auxiliary.AuxiliaryBase
+	public sealed class Auxiliary : global::Zongsoft.Web.Grpc.Tests.Protocols.Auxiliary.AuxiliaryBase
 	{
-		public override Task<P.Frame> Ping(P.Frame request, ServerCallContext context) => Task.FromResult(new P.Frame { Text = "auxiliary" });
+		public override Task<global::Zongsoft.Web.Grpc.Tests.Protocols.Frame> Ping(global::Zongsoft.Web.Grpc.Tests.Protocols.Frame request, ServerCallContext context) => Task.FromResult(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame { Text = "auxiliary" });
 	}
 
 	[Service(Tags = "gRPC"), Handler("/a")]
-	public sealed class Third : P.Third.ThirdBase
+	public sealed class Third : global::Zongsoft.Web.Grpc.Tests.Protocols.Third.ThirdBase
 	{
-		public override Task<P.Frame> Ping(P.Frame request, ServerCallContext context) => Task.FromResult(new P.Frame { Text = "third" });
+		public override Task<global::Zongsoft.Web.Grpc.Tests.Protocols.Frame> Ping(global::Zongsoft.Web.Grpc.Tests.Protocols.Frame request, ServerCallContext context) => Task.FromResult(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame { Text = "third" });
 	}
 
 	[Service(Tags = "gRPC"), Handler("/c")]
-	public sealed class Other : P.Other.OtherBase
+	public sealed class Other : global::Zongsoft.Web.Grpc.Tests.Protocols.Other.OtherBase
 	{
-		public override Task<P.Frame> Ping(P.Frame request, ServerCallContext context) => Task.FromResult(new P.Frame { Text = "other" });
+		public override Task<global::Zongsoft.Web.Grpc.Tests.Protocols.Frame> Ping(global::Zongsoft.Web.Grpc.Tests.Protocols.Frame request, ServerCallContext context) => Task.FromResult(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame { Text = "other" });
 	}
 
 	[Service(Tags = "gRPC"), Handler("/a/child")]
-	public sealed class Child : P.Other.OtherBase
+	public sealed class Child : global::Zongsoft.Web.Grpc.Tests.Protocols.Other.OtherBase
 	{
-		public override Task<P.Frame> Ping(P.Frame request, ServerCallContext context) => Task.FromResult(new P.Frame { Text = "child" });
+		public override Task<global::Zongsoft.Web.Grpc.Tests.Protocols.Frame> Ping(global::Zongsoft.Web.Grpc.Tests.Protocols.Frame request, ServerCallContext context) => Task.FromResult(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame { Text = "child" });
 	}
 
 	[Service(Tags = "gRPC"), Handler("/")]

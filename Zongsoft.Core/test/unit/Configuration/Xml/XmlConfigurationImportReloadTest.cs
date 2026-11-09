@@ -7,8 +7,6 @@ using Microsoft.Extensions.Configuration;
 
 using Zongsoft.Configuration.Xml;
 
-using Xunit;
-
 namespace Zongsoft.Configuration.Tests;
 
 public class XmlConfigurationImportReloadTest

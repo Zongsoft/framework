@@ -2,8 +2,6 @@
 using System.Data;
 using System.Collections.Generic;
 
-using Xunit;
-
 using Zongsoft.Tests;
 using Zongsoft.Serialization;
 using Zongsoft.Data.Metadata;

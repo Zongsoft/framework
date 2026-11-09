@@ -28,8 +28,6 @@ using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using Xunit;
-
 using Zongsoft.Components;
 
 namespace Zongsoft.Upgrading.Tests;

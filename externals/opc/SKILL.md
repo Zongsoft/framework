@@ -23,7 +23,7 @@ description: 修改或验证 OPC UA 适配器的认证、订阅通知、异步�
 
 ## 验证
 
-[AuthenticationAsyncTests](test/AuthenticationAsyncTests.cs) 验证挂起、取消和认证失败。[SubscriberAsyncTest](test/SubscriberAsyncTest.cs) 使用未连接订阅验证顺序、慢消费者、处理故障、容量溢出、取消刷新和并发释放。[SubscriberSpoolingTest](test/SubscriberSpoolingTest.cs) 使用 SDK 通知与单个可等待生产者验证缓冲接纳、刷新和释放，不打开端口或生成证书。
+[AuthenticationTest](test/AuthenticationTest.cs) 验证挂起、取消和认证失败。[SubscriberTest](test/SubscriberTest.cs) 使用未连接订阅验证顺序、慢消费者、处理故障、容量溢出、取消刷新和并发释放。[SubscriberSpoolingTest](test/SubscriberSpoolingTest.cs) 使用 SDK 通知与单个可等待生产者验证缓冲接纳、刷新和释放，不打开端口或生成证书。
 
 从框架根目录先构建 Core，再构建 OPC。Debug 使用本机 Core 程序集；分别验证三个目标框架：
 

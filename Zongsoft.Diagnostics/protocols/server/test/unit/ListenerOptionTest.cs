@@ -3,8 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 
-using Xunit;
-
 namespace Zongsoft.Diagnostics.Protocols.Server.Tests;
 
 public class ListenerOptionTest

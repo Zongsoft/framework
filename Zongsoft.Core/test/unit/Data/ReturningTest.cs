@@ -1,8 +1,6 @@
 using System;
 using System.Data;
 
-using Xunit;
-
 namespace Zongsoft.Data.Tests;
 
 public class ReturningTest

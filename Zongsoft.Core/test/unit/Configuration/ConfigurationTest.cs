@@ -4,8 +4,6 @@ using System.ComponentModel;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-using Xunit;
-
 namespace Zongsoft.Configuration.Tests;
 
 public class ConfigurationTest

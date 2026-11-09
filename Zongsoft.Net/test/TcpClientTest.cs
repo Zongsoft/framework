@@ -7,8 +7,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Channels;
 
-using Xunit;
-
 namespace Zongsoft.Net.Tests;
 
 public class TcpClientTest

@@ -2,8 +2,6 @@ using System;
 using System.Collections;
 using System.Threading.Tasks;
 
-using Xunit;
-
 namespace Zongsoft.Data.Tests;
 
 public class ConditionValueTest

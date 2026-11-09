@@ -10,8 +10,6 @@ using System.Collections.Concurrent;
 using NetMQ;
 using NetMQ.Sockets;
 
-using Xunit;
-
 using Zongsoft.Collections;
 using Zongsoft.Communication;
 using Zongsoft.Components;

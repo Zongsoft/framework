@@ -2,8 +2,6 @@
 using System.Linq;
 using System.Threading.Tasks;
 
-using Xunit;
-
 using Zongsoft.Data.Common;
 using Zongsoft.Data.TDengine.Tests.Models;
 

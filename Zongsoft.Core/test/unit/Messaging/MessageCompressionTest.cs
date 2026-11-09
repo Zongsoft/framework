@@ -1,8 +1,6 @@
 using System;
 using System.Text;
 
-using Xunit;
-
 using Zongsoft.Common;
 
 namespace Zongsoft.Messaging.Tests;

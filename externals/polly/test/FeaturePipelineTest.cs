@@ -1,7 +1,5 @@
 ﻿using System;
 
-using Xunit;
-
 namespace Zongsoft.Externals.Polly.Tests;
 
 public class FeaturePipelineTest

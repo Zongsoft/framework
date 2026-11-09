@@ -27,8 +27,6 @@
 using System;
 using System.Buffers;
 
-using Xunit;
-
 namespace Zongsoft.Communication.Tests;
 
 public class PacketizerTest

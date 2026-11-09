@@ -1,6 +1,4 @@
-﻿using Xunit;
-
-namespace Zongsoft.Data.MsSql.Tests;
+﻿namespace Zongsoft.Data.MsSql.Tests;
 
 public class ConnectionSettingsPropertiesTest
 {

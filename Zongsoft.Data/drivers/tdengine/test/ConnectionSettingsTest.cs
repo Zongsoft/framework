@@ -1,7 +1,5 @@
 ﻿using System;
 
-using Xunit;
-
 namespace Zongsoft.Data.TDengine.Tests;
 
 [Collection("Database")]

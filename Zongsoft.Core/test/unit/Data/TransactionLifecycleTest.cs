@@ -4,8 +4,6 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Xunit;
-
 using Zongsoft.Data.Transactions;
 
 namespace Zongsoft.Data.Tests;

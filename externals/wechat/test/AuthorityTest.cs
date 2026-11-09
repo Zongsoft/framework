@@ -8,8 +8,6 @@ using System.Security.Cryptography.X509Certificates;
 
 using Microsoft.Extensions.Configuration;
 
-using Xunit;
-
 using Zongsoft.Configuration;
 using Zongsoft.Externals.Wechat.Options;
 using Zongsoft.Externals.Wechat.Paying;

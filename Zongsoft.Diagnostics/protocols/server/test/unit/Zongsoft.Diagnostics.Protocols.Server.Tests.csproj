@@ -5,6 +5,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<Using Include="Xunit" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="../../src/Zongsoft.Diagnostics.Protocols.Server.csproj" />
 	</ItemGroup>
 

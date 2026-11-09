@@ -19,7 +19,6 @@
 		<PackageReference Include="NetMQ" VersionOverride="4.0.4.4" />
 	</ItemGroup>
 
-
 	<ItemGroup>
 		<Reference Include="Zongsoft.Core">
 			<HintPath>..\..\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>

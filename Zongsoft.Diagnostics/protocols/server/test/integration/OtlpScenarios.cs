@@ -22,12 +22,6 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Exporter;
 using OpenTelemetry.Resources;
 
-using M = OpenTelemetry.Proto.Collector.Metrics.V1;
-using T = OpenTelemetry.Proto.Collector.Trace.V1;
-using L = OpenTelemetry.Proto.Collector.Logs.V1;
-using CM = client::OpenTelemetry.Proto.Collector.Metrics.V1;
-using CT = client::OpenTelemetry.Proto.Collector.Trace.V1;
-using CL = client::OpenTelemetry.Proto.Collector.Logs.V1;
 
 using Xunit;
 
@@ -61,7 +55,7 @@ internal static class OtlpScenarios
 		Assert.True(metrics.ForceFlush(10000));
 		var metric = await host.Metrics.ReadAsync();
 		AssertMetric(metric, "sdk-meter", "sdk.counter", 37);
-		var rawMetric = metric.Parameters.GetValue<M.ExportMetricsServiceRequest>();
+		var rawMetric = metric.Parameters.GetValue<global::OpenTelemetry.Proto.Collector.Metrics.V1.ExportMetricsServiceRequest>();
 		Assert.Equal("sdk-fixture", Assert.Single(rawMetric.ResourceMetrics).Resource.Attributes.Single(item => item.Key == "service.name").Value.StringValue);
 		Assert.Equal("sdk", Assert.Single(rawMetric.ResourceMetrics[0].ScopeMetrics[0].Metrics[0].Sum.DataPoints[0].Attributes).Value.StringValue);
 
@@ -79,7 +73,7 @@ internal static class OtlpScenarios
 		Assert.True(traces.ForceFlush(10000));
 		var trace = await host.Traces.ReadAsync();
 		Assert.Null(trace.Argument);
-		var rawTrace = trace.Parameters.GetValue<T.ExportTraceServiceRequest>();
+		var rawTrace = trace.Parameters.GetValue<global::OpenTelemetry.Proto.Collector.Trace.V1.ExportTraceServiceRequest>();
 		var span = Assert.Single(Assert.Single(Assert.Single(rawTrace.ResourceSpans).ScopeSpans).Spans);
 		Assert.Equal("sdk-span", span.Name);
 		Assert.Equal("sdk-trace", Assert.Single(span.Attributes).Value.StringValue);
@@ -98,7 +92,7 @@ internal static class OtlpScenarios
 
 		var log = await host.Logs.ReadAsync();
 		Assert.Null(log.Argument);
-		var rawLog = log.Parameters.GetValue<L.ExportLogsServiceRequest>();
+		var rawLog = log.Parameters.GetValue<global::OpenTelemetry.Proto.Collector.Logs.V1.ExportLogsServiceRequest>();
 		var record = Assert.Single(Assert.Single(Assert.Single(rawLog.ResourceLogs).ScopeLogs).LogRecords);
 		Assert.Equal("otlp fixture 73", record.Body.StringValue);
 		Assert.Equal(73, record.Attributes.Single(item => item.Key == "Value").Value.IntValue);
@@ -118,14 +112,14 @@ internal static class OtlpScenarios
 		var channel = host.Channel();
 		var metricRequest = MetricsRequest();
 
-		using(var call = new CM.MetricsService.MetricsServiceClient(channel).ExportAsync(CM.ExportMetricsServiceRequest.Parser.ParseFrom(metricRequest.ToByteArray()), deadline: Deadline()))
+		using(var call = new client::OpenTelemetry.Proto.Collector.Metrics.V1.MetricsService.MetricsServiceClient(channel).ExportAsync(client::OpenTelemetry.Proto.Collector.Metrics.V1.ExportMetricsServiceRequest.Parser.ParseFrom(metricRequest.ToByteArray()), deadline: Deadline()))
 			await call.ResponseAsync;
 
 		var metric = await host.Metrics.ReadAsync();
 		AssertMetric(metric, "direct-meter", "direct.counter", 42);
-		Assert.Equal(metricRequest, metric.Parameters.GetValue<M.ExportMetricsServiceRequest>());
+		Assert.Equal(metricRequest, metric.Parameters.GetValue<global::OpenTelemetry.Proto.Collector.Metrics.V1.ExportMetricsServiceRequest>());
 
-		var traceRequest = new T.ExportTraceServiceRequest();
+		var traceRequest = new global::OpenTelemetry.Proto.Collector.Trace.V1.ExportTraceServiceRequest();
 		var traces = new OpenTelemetry.Proto.Trace.V1.ScopeSpans { Scope = new() { Name = "direct-traces" } };
 		traces.Spans.Add(new OpenTelemetry.Proto.Trace.V1.Span
 		{
@@ -135,14 +129,14 @@ internal static class OtlpScenarios
 		});
 		traceRequest.ResourceSpans.Add(new OpenTelemetry.Proto.Trace.V1.ResourceSpans { ScopeSpans = { traces } });
 
-		using(var call = new CT.TraceService.TraceServiceClient(channel).ExportAsync(CT.ExportTraceServiceRequest.Parser.ParseFrom(traceRequest.ToByteArray()), deadline: Deadline()))
+		using(var call = new client::OpenTelemetry.Proto.Collector.Trace.V1.TraceService.TraceServiceClient(channel).ExportAsync(client::OpenTelemetry.Proto.Collector.Trace.V1.ExportTraceServiceRequest.Parser.ParseFrom(traceRequest.ToByteArray()), deadline: Deadline()))
 			await call.ResponseAsync;
 
 		var trace = await host.Traces.ReadAsync();
 		Assert.Null(trace.Argument);
-		Assert.Equal(traceRequest, trace.Parameters.GetValue<T.ExportTraceServiceRequest>());
+		Assert.Equal(traceRequest, trace.Parameters.GetValue<global::OpenTelemetry.Proto.Collector.Trace.V1.ExportTraceServiceRequest>());
 
-		var logRequest = new L.ExportLogsServiceRequest();
+		var logRequest = new global::OpenTelemetry.Proto.Collector.Logs.V1.ExportLogsServiceRequest();
 		var logs = new OpenTelemetry.Proto.Logs.V1.ScopeLogs { Scope = new() { Name = "direct-logs" } };
 		logs.LogRecords.Add(new OpenTelemetry.Proto.Logs.V1.LogRecord
 		{
@@ -152,12 +146,12 @@ internal static class OtlpScenarios
 		});
 		logRequest.ResourceLogs.Add(new OpenTelemetry.Proto.Logs.V1.ResourceLogs { ScopeLogs = { logs } });
 
-		using(var call = new CL.LogsService.LogsServiceClient(channel).ExportAsync(CL.ExportLogsServiceRequest.Parser.ParseFrom(logRequest.ToByteArray()), deadline: Deadline()))
+		using(var call = new client::OpenTelemetry.Proto.Collector.Logs.V1.LogsService.LogsServiceClient(channel).ExportAsync(client::OpenTelemetry.Proto.Collector.Logs.V1.ExportLogsServiceRequest.Parser.ParseFrom(logRequest.ToByteArray()), deadline: Deadline()))
 			await call.ResponseAsync;
 
 		var log = await host.Logs.ReadAsync();
 		Assert.Null(log.Argument);
-		Assert.Equal(logRequest, log.Parameters.GetValue<L.ExportLogsServiceRequest>());
+		Assert.Equal(logRequest, log.Parameters.GetValue<global::OpenTelemetry.Proto.Collector.Logs.V1.ExportLogsServiceRequest>());
 		Assert.Equal(1, host.Metrics.Count);
 		Assert.Equal(1, host.Traces.Count);
 		Assert.Equal(1, host.Logs.Count);
@@ -185,15 +179,15 @@ internal static class OtlpScenarios
 
 		foreach(var path in new[] { "/", "/incorrect" })
 		{
-			using var call = new CM.MetricsService.MetricsServiceClient(host.Channel(path)).ExportAsync(CM.ExportMetricsServiceRequest.Parser.ParseFrom(MetricsRequest().ToByteArray()), deadline: Deadline());
+			using var call = new client::OpenTelemetry.Proto.Collector.Metrics.V1.MetricsService.MetricsServiceClient(host.Channel(path)).ExportAsync(client::OpenTelemetry.Proto.Collector.Metrics.V1.ExportMetricsServiceRequest.Parser.ParseFrom(MetricsRequest().ToByteArray()), deadline: Deadline());
 			var error = await Assert.ThrowsAsync<RpcException>(async () => await call.ResponseAsync);
 			Assert.Equal(Grpc.Core.StatusCode.Unimplemented, error.StatusCode);
 		}
 
-		var method = new Method<CM.ExportMetricsServiceRequest, CM.ExportMetricsServiceResponse>(MethodType.Unary,
+		var method = new Method<client::OpenTelemetry.Proto.Collector.Metrics.V1.ExportMetricsServiceRequest, client::OpenTelemetry.Proto.Collector.Metrics.V1.ExportMetricsServiceResponse>(MethodType.Unary,
 			"opentelemetry.proto.collector.metrics.v1.MetricsService", "Unknown",
-			Marshallers.Create(request => request.ToByteArray(), CM.ExportMetricsServiceRequest.Parser.ParseFrom),
-			Marshallers.Create(response => response.ToByteArray(), CM.ExportMetricsServiceResponse.Parser.ParseFrom));
+			Marshallers.Create(request => request.ToByteArray(), client::OpenTelemetry.Proto.Collector.Metrics.V1.ExportMetricsServiceRequest.Parser.ParseFrom),
+			Marshallers.Create(response => response.ToByteArray(), client::OpenTelemetry.Proto.Collector.Metrics.V1.ExportMetricsServiceResponse.Parser.ParseFrom));
 
 		using(var call = channel.CreateCallInvoker().AsyncUnaryCall(method, null, new CallOptions(deadline: Deadline()), new()))
 		{
@@ -215,7 +209,7 @@ internal static class OtlpScenarios
 		{
 			host.Traces.Block = true;
 			using var cancellation = new CancellationTokenSource();
-			using var call = new CT.TraceService.TraceServiceClient(host.Channel()).ExportAsync(new(), deadline: Deadline(), cancellationToken: cancellation.Token);
+			using var call = new client::OpenTelemetry.Proto.Collector.Trace.V1.TraceService.TraceServiceClient(host.Channel()).ExportAsync(new(), deadline: Deadline(), cancellationToken: cancellation.Token);
 			await host.Traces.Entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
 			cancellation.Cancel();
 			var error = await Assert.ThrowsAsync<RpcException>(async () => await call.ResponseAsync);
@@ -236,9 +230,9 @@ internal static class OtlpScenarios
 		listener.Start();
 	}
 
-	private static M.ExportMetricsServiceRequest MetricsRequest()
+	private static global::OpenTelemetry.Proto.Collector.Metrics.V1.ExportMetricsServiceRequest MetricsRequest()
 	{
-		var request = new M.ExportMetricsServiceRequest();
+		var request = new global::OpenTelemetry.Proto.Collector.Metrics.V1.ExportMetricsServiceRequest();
 		var scope = new OpenTelemetry.Proto.Metrics.V1.ScopeMetrics { Scope = new() { Name = "direct-meter" } };
 		var sum = new OpenTelemetry.Proto.Metrics.V1.Sum { IsMonotonic = true };
 		sum.DataPoints.Add(new OpenTelemetry.Proto.Metrics.V1.NumberDataPoint

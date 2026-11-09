@@ -4,8 +4,6 @@ using System.IO;
 
 using Zongsoft.Data.Metadata;
 
-using Xunit;
-
 namespace Zongsoft.Data.SQLite.Tests;
 
 public class DatabaseFixture : IAsyncLifetime

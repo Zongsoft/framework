@@ -6,8 +6,6 @@ using System.Threading.Tasks;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using Xunit;
-
 using Zongsoft.Components;
 using Zongsoft.Data.Transactions;
 using Zongsoft.Security.Privileges;

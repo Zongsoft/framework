@@ -29,8 +29,6 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Xunit;
-
 namespace Zongsoft.Components.Tests;
 
 public class WorkerDisposalTest

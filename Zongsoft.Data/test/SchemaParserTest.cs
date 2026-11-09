@@ -3,8 +3,6 @@ using System.Linq;
 using System.Reflection;
 using System.Collections.Generic;
 
-using Xunit;
-
 using Zongsoft.Data.Common.Expressions;
 using Zongsoft.Data.Metadata;
 

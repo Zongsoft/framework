@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 
-using Xunit;
-
 namespace Zongsoft.Common.Tests;
 
 public class VariablesExtensionTest

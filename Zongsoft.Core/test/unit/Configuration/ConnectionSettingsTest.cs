@@ -5,8 +5,6 @@ using System.Globalization;
 using System.ComponentModel;
 using System.Collections.Generic;
 
-using Xunit;
-
 using Zongsoft.Components;
 
 namespace Zongsoft.Configuration.Tests;

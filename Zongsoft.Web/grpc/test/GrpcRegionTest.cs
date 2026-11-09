@@ -15,11 +15,6 @@ using Grpc.Reflection.V1Alpha;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using Xunit;
-
-using P = Zongsoft.Web.Grpc.Tests.Protocols;
-using S = Zongsoft.Web.Grpc.Tests.GrpcRegionServices;
-
 namespace Zongsoft.Web.Grpc.Tests;
 
 public class GrpcRegionTest
@@ -30,14 +25,14 @@ public class GrpcRegionTest
 		var first = GrpcRegionHost.Port();
 		var second = GrpcRegionHost.Port();
 
-		await using var host = await GrpcRegionHost.StartAsync([typeof(S.Alpha), typeof(S.Beta)], [(first, "/a"), (first, "/mirror"), (second, "/b")]);
-		var alpha = new P.Echo.EchoClient(host.Channel(first, "/a"));
-		var beta = new P.Echo.EchoClient(host.Channel(second, "/b"));
+		await using var host = await GrpcRegionHost.StartAsync([typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Alpha), typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Beta)], [(first, "/a"), (first, "/mirror"), (second, "/b")]);
+		var alpha = new global::Zongsoft.Web.Grpc.Tests.Protocols.Echo.EchoClient(host.Channel(first, "/a"));
+		var beta = new global::Zongsoft.Web.Grpc.Tests.Protocols.Echo.EchoClient(host.Channel(second, "/b"));
 
-		Assert.Equal("alpha:hello", (await alpha.UnaryAsync(new P.Frame { Text = "hello" }, deadline: Deadline())).Text);
-		Assert.Equal("beta:hello", (await beta.UnaryAsync(new P.Frame { Text = "hello" }, deadline: Deadline())).Text);
-		await Error(StatusCode.Unimplemented, () => new P.Echo.EchoClient(host.Channel(first, "/b")).UnaryAsync(new P.Frame(), deadline: Deadline()).ResponseAsync);
-		await Error(StatusCode.Unimplemented, () => new P.Echo.EchoClient(host.Channel(second, "/a")).UnaryAsync(new P.Frame(), deadline: Deadline()).ResponseAsync);
+		Assert.Equal("alpha:hello", (await alpha.UnaryAsync(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame { Text = "hello" }, deadline: Deadline())).Text);
+		Assert.Equal("beta:hello", (await beta.UnaryAsync(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame { Text = "hello" }, deadline: Deadline())).Text);
+		await Error(StatusCode.Unimplemented, () => new global::Zongsoft.Web.Grpc.Tests.Protocols.Echo.EchoClient(host.Channel(first, "/b")).UnaryAsync(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame(), deadline: Deadline()).ResponseAsync);
+		await Error(StatusCode.Unimplemented, () => new global::Zongsoft.Web.Grpc.Tests.Protocols.Echo.EchoClient(host.Channel(second, "/a")).UnaryAsync(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame(), deadline: Deadline()).ResponseAsync);
 	}
 
 	[Theory]
@@ -49,14 +44,14 @@ public class GrpcRegionTest
 		var port = GrpcRegionHost.Port();
 		var service = name switch
 		{
-			"root" => typeof(S.Root),
-			"trailing" => typeof(S.Trailing),
-			_ => typeof(S.Inherited),
+			"root" => typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Root),
+			"trailing" => typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Trailing),
+			_ => typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Inherited),
 		};
 
 		await using var host = await GrpcRegionHost.StartAsync([service], [(port, path)]);
-		var client = new P.Echo.EchoClient(host.Channel(port, path));
-		Assert.Equal(name + ":hello", (await client.UnaryAsync(new P.Frame { Text = "hello" }, deadline: Deadline())).Text);
+		var client = new global::Zongsoft.Web.Grpc.Tests.Protocols.Echo.EchoClient(host.Channel(port, path));
+		Assert.Equal(name + ":hello", (await client.UnaryAsync(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame { Text = "hello" }, deadline: Deadline())).Text);
 		Assert.Equal(1, host.Probe.Created[name]);
 	}
 
@@ -67,13 +62,13 @@ public class GrpcRegionTest
 	{
 		var first = GrpcRegionHost.Port();
 		var second = GrpcRegionHost.Port();
-		var service = trailing ? typeof(S.SlashVariant) : typeof(S.CaseVariant);
+		var service = trailing ? typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.SlashVariant) : typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.CaseVariant);
 		await using var host = await GrpcRegionHost.StartAsync([service], [(first, "/a"), (second, "/A/")]);
 
 		foreach(var port in new[] { first, second })
 		{
-			var client = new P.Echo.EchoClient(host.Channel(port, "/A/"));
-			Assert.Equal((trailing ? "slash" : "case") + ":hello", (await client.UnaryAsync(new P.Frame { Text = "hello" }, deadline: Deadline())).Text);
+			var client = new global::Zongsoft.Web.Grpc.Tests.Protocols.Echo.EchoClient(host.Channel(port, "/A/"));
+			Assert.Equal((trailing ? "slash" : "case") + ":hello", (await client.UnaryAsync(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame { Text = "hello" }, deadline: Deadline())).Text);
 			await Unknown(host.Channel(port, "/A"), "fixture.echo", "Unary");
 			await Unknown(host.Channel(port, "/A"), "fixture.Echo", "unary");
 		}
@@ -84,15 +79,15 @@ public class GrpcRegionTest
 	{
 		var first = GrpcRegionHost.Port();
 		var second = GrpcRegionHost.Port();
-		var host = await GrpcRegionHost.StartAsync([typeof(S.Alpha)], [(first, "/a"), (first, "/mirror"), (second, "/a")]);
+		var host = await GrpcRegionHost.StartAsync([typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Alpha)], [(first, "/a"), (first, "/mirror"), (second, "/a")]);
 
 		try
 		{
 			var identities = new List<string>();
 			foreach(var (port, path) in new[] { (first, "/a"), (first, "/mirror"), (second, "/a") })
 			{
-				var client = new P.Echo.EchoClient(host.Channel(port, path));
-				identities.Add((await client.UnaryAsync(new P.Frame(), deadline: Deadline())).Instance);
+				var client = new global::Zongsoft.Web.Grpc.Tests.Protocols.Echo.EchoClient(host.Channel(port, path));
+				identities.Add((await client.UnaryAsync(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame(), deadline: Deadline())).Instance);
 			}
 
 			Assert.Single(identities.Distinct());
@@ -112,12 +107,12 @@ public class GrpcRegionTest
 	public async Task CallsPreserveMessagesMetadataStatusAndStreaming()
 	{
 		var port = GrpcRegionHost.Port();
-		await using var host = await GrpcRegionHost.StartAsync([typeof(S.Alpha)], [(port, "/a"), (port, "/mirror")]);
-		var client = new P.Echo.EchoClient(host.Channel(port, "/a", "?fixture=preserved"));
+		await using var host = await GrpcRegionHost.StartAsync([typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Alpha)], [(port, "/a"), (port, "/mirror")]);
+		var client = new global::Zongsoft.Web.Grpc.Tests.Protocols.Echo.EchoClient(host.Channel(port, "/a", "?fixture=preserved"));
 		var payload = new byte[1024 * 1024];
 		new Random(42).NextBytes(payload);
 
-		using var unary = client.UnaryAsync(new P.Frame { Text = "large", Payload = ByteString.CopyFrom(payload) }, new Metadata { { "request-id", "test-id" } }, Deadline());
+		using var unary = client.UnaryAsync(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame { Text = "large", Payload = ByteString.CopyFrom(payload) }, new Metadata { { "request-id", "test-id" } }, Deadline());
 		var reply = await unary.ResponseAsync;
 
 		Assert.Equal("alpha:large", reply.Text);
@@ -127,7 +122,7 @@ public class GrpcRegionTest
 		Assert.Equal(reply.Instance, unary.GetTrailers().GetValue("instance"));
 		Assert.Equal(StatusCode.OK, unary.GetStatus().StatusCode);
 
-		using var server = client.ServerStream(new P.Frame { Text = "item" }, deadline: Deadline());
+		using var server = client.ServerStream(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame { Text = "item" }, deadline: Deadline());
 		var messages = new List<string>();
 
 		while(await server.ResponseStream.MoveNext(CancellationToken.None))
@@ -136,22 +131,22 @@ public class GrpcRegionTest
 		Assert.Equal(new[] { "alpha:item0", "alpha:item1", "alpha:item2" }, messages);
 
 		using var upload = client.ClientStream(deadline: Deadline());
-		await upload.RequestStream.WriteAsync(new P.Frame { Text = "one" });
-		await upload.RequestStream.WriteAsync(new P.Frame { Text = "two" });
+		await upload.RequestStream.WriteAsync(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame { Text = "one" });
+		await upload.RequestStream.WriteAsync(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame { Text = "two" });
 		await upload.RequestStream.CompleteAsync();
 		Assert.Equal("alpha:one,two", (await upload.ResponseAsync).Text);
 
 		using var duplex = client.Duplex(deadline: Deadline());
-		await duplex.RequestStream.WriteAsync(new P.Frame { Text = "first" });
+		await duplex.RequestStream.WriteAsync(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame { Text = "first" });
 		Assert.True(await duplex.ResponseStream.MoveNext(CancellationToken.None));
 		Assert.Equal("alpha:first", duplex.ResponseStream.Current.Text);
-		await duplex.RequestStream.WriteAsync(new P.Frame { Text = "second" });
+		await duplex.RequestStream.WriteAsync(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame { Text = "second" });
 		Assert.True(await duplex.ResponseStream.MoveNext(CancellationToken.None));
 		Assert.Equal("alpha:second", duplex.ResponseStream.Current.Text);
 		await duplex.RequestStream.CompleteAsync();
 		Assert.False(await duplex.ResponseStream.MoveNext(CancellationToken.None));
 
-		var failure = await Error(StatusCode.PermissionDenied, () => client.UnaryAsync(new P.Frame { Text = "fail" }, deadline: Deadline()).ResponseAsync);
+		var failure = await Error(StatusCode.PermissionDenied, () => client.UnaryAsync(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame { Text = "fail" }, deadline: Deadline()).ResponseAsync);
 		Assert.Equal("fixture-denied", failure.Status.Detail);
 		Assert.Equal("retained", failure.Trailers.GetValue("failure"));
 	}
@@ -162,10 +157,10 @@ public class GrpcRegionTest
 	public async Task CancellationAndDeadlineReachTheService(bool deadline)
 	{
 		var port = GrpcRegionHost.Port();
-		await using var host = await GrpcRegionHost.StartAsync([typeof(S.Alpha)], [(port, "/a"), (port, "/mirror")]);
-		var client = new P.Echo.EchoClient(host.Channel(port, "/a"));
+		await using var host = await GrpcRegionHost.StartAsync([typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Alpha)], [(port, "/a"), (port, "/mirror")]);
+		var client = new global::Zongsoft.Web.Grpc.Tests.Protocols.Echo.EchoClient(host.Channel(port, "/a"));
 		using var cancellation = new CancellationTokenSource();
-		using var call = client.UnaryAsync(new P.Frame { Text = "wait" }, deadline: deadline ? DateTime.UtcNow.AddSeconds(2) : Deadline(), cancellationToken: cancellation.Token);
+		using var call = client.UnaryAsync(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame { Text = "wait" }, deadline: deadline ? DateTime.UtcNow.AddSeconds(2) : Deadline(), cancellationToken: cancellation.Token);
 		await host.Probe.Started.Task.WaitAsync(TimeSpan.FromSeconds(10));
 
 		if(!deadline)
@@ -186,19 +181,19 @@ public class GrpcRegionTest
 	public async Task UnknownCallsNeverEscapeTheirSelectedRegion(string region, string service, string method)
 	{
 		var port = GrpcRegionHost.Port();
-		await using var host = await GrpcRegionHost.StartAsync([typeof(S.Alpha), typeof(S.Child)], [(port, "/a"), (port, "/mirror"), (port, "/a/child")]);
+		await using var host = await GrpcRegionHost.StartAsync([typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Alpha), typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Child)], [(port, "/a"), (port, "/mirror"), (port, "/a/child")]);
 		await Unknown(host.Channel(port, region), service, method);
 
 		Assert.Equal(HttpStatusCode.OK, Assert.Single(host.Probe.Responses));
 		Assert.Empty(host.Probe.Created);
-		Assert.Equal("child", (await new P.Other.OtherClient(host.Channel(port, "/a/child")).PingAsync(new P.Frame(), deadline: Deadline())).Text);
+		Assert.Equal("child", (await new global::Zongsoft.Web.Grpc.Tests.Protocols.Other.OtherClient(host.Channel(port, "/a/child")).PingAsync(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame(), deadline: Deadline())).Text);
 	}
 
 	[Fact]
 	public async Task ReflectionListsOnlyRegionalServicesAndPreservesFileDescriptors()
 	{
 		var port = GrpcRegionHost.Port();
-		await using var host = await GrpcRegionHost.StartAsync([typeof(S.Alpha), typeof(S.Auxiliary), typeof(S.Third), typeof(S.Other)], [(port, "/a"), (port, "/mirror"), (port, "/c")]);
+		await using var host = await GrpcRegionHost.StartAsync([typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Alpha), typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Auxiliary), typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Third), typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Other)], [(port, "/a"), (port, "/mirror"), (port, "/c")]);
 
 		var first = host.Channel(port, "/a");
 		var other = host.Channel(port, "/c");
@@ -208,8 +203,8 @@ public class GrpcRegionTest
 
 		var otherList = await Reflect(other, new ServerReflectionRequest { ListServices = "" });
 		Assert.Equal(new[] { "fixture.Other", "grpc.reflection.v1alpha.ServerReflection" }, otherList.ListServicesResponse.Service.Select(service => service.Name).Order(StringComparer.Ordinal));
-		Assert.Equal("auxiliary", (await new P.Auxiliary.AuxiliaryClient(first).PingAsync(new P.Frame(), deadline: Deadline())).Text);
-		Assert.Equal("third", (await new P.Third.ThirdClient(first).PingAsync(new P.Frame(), deadline: Deadline())).Text);
+		Assert.Equal("auxiliary", (await new global::Zongsoft.Web.Grpc.Tests.Protocols.Auxiliary.AuxiliaryClient(first).PingAsync(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame(), deadline: Deadline())).Text);
+		Assert.Equal("third", (await new global::Zongsoft.Web.Grpc.Tests.Protocols.Third.ThirdClient(first).PingAsync(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame(), deadline: Deadline())).Text);
 
 		var description = await Reflect(first, new ServerReflectionRequest { FileContainingSymbol = "fixture.Echo" });
 		var files = description.FileDescriptorResponse.FileDescriptorProto.Select(FileDescriptorProto.Parser.ParseFrom).ToArray();
@@ -233,7 +228,7 @@ public class GrpcRegionTest
 	public async Task RegionalFallbackRunsThroughAuthorization()
 	{
 		var port = GrpcRegionHost.Port();
-		await using var host = await GrpcRegionHost.StartAsync([typeof(S.Alpha)], [(port, "/a"), (port, "/mirror")], authorize: true);
+		await using var host = await GrpcRegionHost.StartAsync([typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Alpha)], [(port, "/a"), (port, "/mirror")], authorize: true);
 		var channel = host.Channel(port, "/a");
 
 		await Unknown(channel, "fixture.Unknown", "Unary", expected: StatusCode.Unauthenticated);
@@ -243,7 +238,7 @@ public class GrpcRegionTest
 		var headers = new Metadata { { "authorization", "Bearer fixture" } };
 		await Unknown(channel, "fixture.Unknown", "Unary", headers);
 		await Unknown(channel, "fixture.Echo", "Unknown", headers);
-		Assert.Equal("alpha:authorized", (await new P.Echo.EchoClient(channel).UnaryAsync(new P.Frame { Text = "authorized" }, headers, Deadline())).Text);
+		Assert.Equal("alpha:authorized", (await new global::Zongsoft.Web.Grpc.Tests.Protocols.Echo.EchoClient(channel).UnaryAsync(new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame { Text = "authorized" }, headers, Deadline())).Text);
 		Assert.Equal(new[] { HttpStatusCode.Unauthorized, HttpStatusCode.Unauthorized, HttpStatusCode.OK, HttpStatusCode.OK, HttpStatusCode.OK }, host.Probe.Responses);
 	}
 
@@ -264,22 +259,22 @@ public class GrpcRegionTest
 		var port = GrpcRegionHost.Port();
 		Type[] services = scenario switch
 		{
-			"handler" => [typeof(S.MissingHandler)],
-			"endpoint" => [typeof(S.MissingEndpoint)],
+			"handler" => [typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.MissingHandler)],
+			"endpoint" => [typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.MissingEndpoint)],
 			"empty" => [],
-			"duplicate" => [typeof(S.Alpha), typeof(S.Duplicate)],
-			"service-fallback-late" => [typeof(S.Alpha), typeof(S.Beta)],
-			"path" => [typeof(S.InvalidPath)],
-			"order" => [typeof(S.Ordered)],
-			"type" => [typeof(S.NotGrpc)],
-			_ => [typeof(S.Alpha)],
+			"duplicate" => [typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Alpha), typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Duplicate)],
+			"service-fallback-late" => [typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Alpha), typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Beta)],
+			"path" => [typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.InvalidPath)],
+			"order" => [typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Ordered)],
+			"type" => [typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.NotGrpc)],
+			_ => [typeof(global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Alpha)],
 		};
 
 		Action<IServiceCollection> configure = scenario switch
 		{
 			"global-fallback" => collection => collection.Configure<global::Grpc.AspNetCore.Server.GrpcServiceOptions>(options => options.IgnoreUnknownServices = false),
-			"service-fallback" => collection => collection.Configure<global::Grpc.AspNetCore.Server.GrpcServiceOptions<S.Alpha>>(options => options.IgnoreUnknownServices = false),
-			"service-fallback-late" => collection => collection.Configure<global::Grpc.AspNetCore.Server.GrpcServiceOptions<S.Beta>>(options => options.IgnoreUnknownServices = false),
+			"service-fallback" => collection => collection.Configure<global::Grpc.AspNetCore.Server.GrpcServiceOptions<global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Alpha>>(options => options.IgnoreUnknownServices = false),
+			"service-fallback-late" => collection => collection.Configure<global::Grpc.AspNetCore.Server.GrpcServiceOptions<global::Zongsoft.Web.Grpc.Tests.GrpcRegionServices.Beta>>(options => options.IgnoreUnknownServices = false),
 			_ => null,
 		};
 
@@ -314,8 +309,8 @@ public class GrpcRegionTest
 
 	private static async Task Unknown(GrpcChannel channel, string service, string method, Metadata headers = null, StatusCode expected = StatusCode.Unimplemented)
 	{
-		var marshaller = Marshallers.Create<P.Frame>(message => message.ToByteArray(), P.Frame.Parser.ParseFrom);
-		using var call = channel.CreateCallInvoker().AsyncUnaryCall(new Method<P.Frame, P.Frame>(MethodType.Unary, service, method, marshaller, marshaller), null, new CallOptions(headers, Deadline()), new P.Frame());
+		var marshaller = Marshallers.Create<global::Zongsoft.Web.Grpc.Tests.Protocols.Frame>(message => message.ToByteArray(), global::Zongsoft.Web.Grpc.Tests.Protocols.Frame.Parser.ParseFrom);
+		using var call = channel.CreateCallInvoker().AsyncUnaryCall(new Method<global::Zongsoft.Web.Grpc.Tests.Protocols.Frame, global::Zongsoft.Web.Grpc.Tests.Protocols.Frame>(MethodType.Unary, service, method, marshaller, marshaller), null, new CallOptions(headers, Deadline()), new global::Zongsoft.Web.Grpc.Tests.Protocols.Frame());
 		await Error(expected, () => call.ResponseAsync);
 	}
 

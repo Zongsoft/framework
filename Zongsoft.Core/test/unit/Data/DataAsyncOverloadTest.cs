@@ -7,8 +7,6 @@ using System.Threading.Tasks;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using Xunit;
-
 namespace Zongsoft.Data.Tests;
 
 public sealed class DataAsyncOverloadTest

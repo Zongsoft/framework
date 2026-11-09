@@ -4,8 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
-
 using Zongsoft.Data;
 using Zongsoft.Components;
 using Zongsoft.Security.Privileges;

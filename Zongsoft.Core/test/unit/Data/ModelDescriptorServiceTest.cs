@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Reflection;
 
-using Xunit;
-
 using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.Tests;

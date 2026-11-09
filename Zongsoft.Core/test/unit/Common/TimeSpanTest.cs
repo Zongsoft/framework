@@ -1,7 +1,5 @@
 ﻿using System;
 
-using Xunit;
-
 namespace Zongsoft.Common.Tests;
 
 public class TimeSpanTest

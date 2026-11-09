@@ -6,8 +6,6 @@ using System.Security.Claims;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
-using Xunit;
-
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Features;
 using Zongsoft.Data.Metadata;

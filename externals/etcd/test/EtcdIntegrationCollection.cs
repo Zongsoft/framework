@@ -1,5 +1,3 @@
-using Xunit;
-
 namespace Zongsoft.Externals.Etcd.Tests;
 
 [CollectionDefinition(Name, DisableParallelization = true)]

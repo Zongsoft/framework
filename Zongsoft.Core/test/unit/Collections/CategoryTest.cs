@@ -1,7 +1,5 @@
 ﻿using System;
 
-using Xunit;
-
 namespace Zongsoft.Collections.Tests;
 
 public class CategoryTest

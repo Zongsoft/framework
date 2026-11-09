@@ -3,8 +3,6 @@ using System.Linq;
 using System.Diagnostics.Metrics;
 using System.Collections.Generic;
 
-using Xunit;
-
 namespace Zongsoft.Diagnostics.Telemetry.Tests;
 
 public class MeterTest

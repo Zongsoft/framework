@@ -5,8 +5,6 @@ using Zongsoft.Configuration.Profiles;
 using Zongsoft.Common;
 using Zongsoft.Text.Templating;
 
-using Xunit;
-
 namespace Zongsoft.Configuration.Tests;
 
 public class ProfileVariablesTest

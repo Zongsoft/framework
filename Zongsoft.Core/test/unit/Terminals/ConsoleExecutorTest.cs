@@ -3,7 +3,6 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Xunit;
 using Zongsoft.Components;
 
 namespace Zongsoft.Terminals.Tests;

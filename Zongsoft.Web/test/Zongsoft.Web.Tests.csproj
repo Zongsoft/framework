@@ -7,6 +7,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<Using Include="Xunit" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="..\src\Zongsoft.Web.csproj" />
 	</ItemGroup>
 

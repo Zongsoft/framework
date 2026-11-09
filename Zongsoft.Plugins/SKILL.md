@@ -14,7 +14,7 @@ description: 开发、审查、调试或测试 Zongsoft.Plugins 与 Zongsoft.Plu
 ## 配置契约
 
 - `.plugin` 的节点名称、属性、路径、依赖和顺序可能影响装配；保持局部格式，不做无关排序。
-- XSD 允许零个或多个 extension；manifest、builders、parsers 各自可省略且最多一个，各节按 manifest → builders → parsers → extension 排列。builders 出现时必须至少包含一个 builder，parsers 出现时必须至少包含一个 parser。模式声明 object/expose、构造及属性行为；动态属性使用 skip，动态子元素使用 lax，保留已知元素的结构校验。ReportValidationWarnings 对动态成员名给出的缺失模式提示不等于结构错误，不得通过把整个子树改成 skip 来隐藏。自定义构建器可以附加模式声明并复用 BuiltinElementType。上下文、类型、表达式及依赖仍由运行时检查；读取器未主动校验各节次数及顺序。用 PluginSchemaTests 分别验证模式约束和合法清单的加载行为。
+- XSD 允许零个或多个 extension；manifest、builders、parsers 各自可省略且最多一个，各节按 manifest → builders → parsers → extension 排列。builders 出现时必须至少包含一个 builder，parsers 出现时必须至少包含一个 parser。模式声明 object/expose、构造及属性行为；动态属性使用 skip，动态子元素使用 lax，保留已知元素的结构校验。ReportValidationWarnings 对动态成员名给出的缺失模式提示不等于结构错误，不得通过把整个子树改成 skip 来隐藏。自定义构建器可以附加模式声明并复用 BuiltinElementType。上下文、类型、表达式及依赖仍由运行时检查；读取器未主动校验各节次数及顺序。用 PluginSchemaTest 分别验证模式约束和合法清单的加载行为。
 - 插件依赖描述运行时装载顺序；不要以项目编译成功替代插件可加载性验证。
 - `.option`、`.mapping`、`.deploy` 分别属于配置、数据和部署契约，不把其语义混入插件解析器。
 

@@ -8,8 +8,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets;
 
-using Xunit;
-
 namespace Zongsoft.Web.Hosting.Tests;
 
 public class KestrelUtilityTest

@@ -8,8 +8,6 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Xunit;
-
 using Zongsoft.IO;
 
 namespace Zongsoft.Net.Tests;

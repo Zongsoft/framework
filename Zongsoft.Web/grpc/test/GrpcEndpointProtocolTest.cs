@@ -7,8 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 
 using Zongsoft.Web.Hosting;
 
-using Xunit;
-
 namespace Zongsoft.Web.Grpc.Tests;
 
 public class GrpcEndpointProtocolTest

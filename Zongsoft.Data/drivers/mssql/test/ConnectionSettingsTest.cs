@@ -1,7 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
 
-using Xunit;
-
 namespace Zongsoft.Data.MsSql.Tests;
 
 public class ConnectionSettingsTest

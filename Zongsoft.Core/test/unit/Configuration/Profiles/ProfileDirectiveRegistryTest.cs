@@ -10,8 +10,6 @@ using System.Collections.Concurrent;
 using Zongsoft.Configuration.Profiles;
 using Zongsoft.Configuration.Profiles.Directives;
 
-using Xunit;
-
 namespace Zongsoft.Configuration.Tests;
 
 public class ProfileDirectiveRegistryTest

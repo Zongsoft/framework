@@ -5,8 +5,6 @@ using System.Globalization;
 using System.ComponentModel;
 using System.Collections.Generic;
 
-using Xunit;
-
 namespace Zongsoft.Components.Tests;
 
 public class IdentifierTest

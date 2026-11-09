@@ -22,7 +22,7 @@ internal static partial class EndpointScenarios
 	private static async Task WebHostConstructionInitializesPluginServices(EndpointTestScope scope)
 	{
 		scope.Plugin("Feature", EndpointTestScope.Endpoint("api", "http://127.0.0.1:18081/"));
-		scope.Write("plugins/Feature.plugin", $"<plugin name=\"Feature\"><manifest><dependencies><dependency name=\"Main\" /></dependencies></manifest><extension path=\"/Workspace/Environment/Services\"><object name=\"FixtureService\" type=\"{typeof(WebHostLifecycleTests.ProbeService).AssemblyQualifiedName}\" /></extension></plugin>");
+		scope.Write("plugins/Feature.plugin", $"<plugin name=\"Feature\"><manifest><dependencies><dependency name=\"Main\" /></dependencies></manifest><extension path=\"/Workspace/Environment/Services\"><object name=\"FixtureService\" type=\"{typeof(WebHostLifecycleTest.ProbeService).AssemblyQualifiedName}\" /></extension></plugin>");
 		await using var application = await ApplicationAsync(scope, endpoints: false);
 		var context = application.Services.GetRequiredService<Zongsoft.Web.WebApplicationContext>();
 
@@ -32,7 +32,7 @@ internal static partial class EndpointScenarios
 		Assert.False(context.Initialize());
 		Assert.Equal(WorkbenchStatus.None, context.Workbench.Status);
 		Assert.IsType<Zongsoft.Web.ControllerActivator>(application.Services.GetRequiredService<Microsoft.AspNetCore.Mvc.Controllers.IControllerActivator>());
-		Assert.Same(application.Services.GetRequiredService<WebHostLifecycleTests.ProbeService>(), context.PluginTree.Find("/Workspace/Environment/Services/FixtureService").UnwrapValue(ObtainMode.Never));
+		Assert.Same(application.Services.GetRequiredService<WebHostLifecycleTest.ProbeService>(), context.PluginTree.Find("/Workspace/Environment/Services/FixtureService").UnwrapValue(ObtainMode.Never));
 	}
 
 	private static async Task PluginRegistrationPrecedesEndpointSnapshot(EndpointTestScope scope)

@@ -1,7 +1,5 @@
 ﻿using System;
 
-using Xunit;
-
 namespace Zongsoft.Components.Tests;
 
 public class CommandLineTest

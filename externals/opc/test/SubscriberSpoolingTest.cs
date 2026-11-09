@@ -8,8 +8,6 @@ using System.Collections.Generic;
 using Opc.Ua;
 using Opc.Ua.Client;
 
-using Xunit;
-
 using Zongsoft.Caching;
 using Zongsoft.Diagnostics;
 

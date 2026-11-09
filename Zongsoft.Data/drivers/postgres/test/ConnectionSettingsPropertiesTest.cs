@@ -1,6 +1,4 @@
-﻿using Xunit;
-
-namespace Zongsoft.Data.PostgreSql.Tests;
+﻿namespace Zongsoft.Data.PostgreSql.Tests;
 
 public class ConnectionSettingsPropertiesTest
 {

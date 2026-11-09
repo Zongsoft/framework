@@ -5,8 +5,6 @@ using OpenTelemetry.Exporter;
 
 using Zongsoft.Diagnostics.Configuration;
 
-using Xunit;
-
 namespace Zongsoft.Diagnostics.Tests;
 
 public class ExporterLauncherSettingsTest

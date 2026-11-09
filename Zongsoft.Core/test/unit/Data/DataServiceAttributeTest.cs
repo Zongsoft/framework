@@ -3,8 +3,6 @@ using System.Reflection;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using Xunit;
-
 using Zongsoft.Data.Metadata;
 
 namespace Zongsoft.Data.Tests;

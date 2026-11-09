@@ -7,8 +7,6 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-using Xunit;
-
 namespace Zongsoft.Externals.Aliyun.Tests;
 
 public sealed class MessageQueueFixture : IAsyncLifetime

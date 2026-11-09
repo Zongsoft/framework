@@ -5,6 +5,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<Using Include="Xunit" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<ProjectReference Include="../../src/Zongsoft.Plugins.Web.csproj" />
 	</ItemGroup>
 
@@ -33,6 +37,7 @@
 	<ItemGroup>
 		<None Include="../../../Zongsoft.Plugins/plugins/Main.plugin" Link="Fixtures/Main.plugin" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
+
 	<ItemGroup>
 		<Compile Include="../.shared/PluginTestDirectory.cs" Link="Fixtures/PluginTestDirectory.cs" />
 	</ItemGroup>

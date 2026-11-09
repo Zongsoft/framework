@@ -3,8 +3,6 @@ using System.Linq;
 using System.Buffers;
 using System.Buffers.Binary;
 
-using Xunit;
-
 namespace Zongsoft.Net.Tests;
 
 public class PacketizerTest

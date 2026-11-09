@@ -4,8 +4,6 @@ using System.Threading.Tasks;
 
 using Microsoft.Extensions.Primitives;
 
-using Xunit;
-
 namespace Zongsoft.Caching.Tests;
 
 public class MemoryCacheTest

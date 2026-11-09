@@ -34,7 +34,7 @@ internal static class TestProgram
 
 			if(args[1] == "host-initializer-failure")
 			{
-				await HostApplicationLifecycleTests.RunInitializationFailureAsync(directory);
+				await HostApplicationLifecycleTest.RunInitializationFailureAsync(directory);
 				File.AppendAllLines(trace, [args[1]]);
 				return 0;
 			}
@@ -48,14 +48,14 @@ internal static class TestProgram
 
 			if(args[1] == "terminal-shipped-commands")
 			{
-				await TerminalLifecycleTests.RunShippedCommandsAsync(directory);
+				await TerminalLifecycleTest.RunShippedCommandsAsync(directory);
 				File.AppendAllLines(trace, [args[1]]);
 				return 0;
 			}
 
 			if(args[1].StartsWith("terminal-loop-", StringComparison.Ordinal))
 			{
-				await TerminalLifecycleTests.RunAsync(args[1], directory);
+				await TerminalLifecycleTest.RunAsync(args[1], directory);
 				File.AppendAllLines(trace, [args[1]]);
 				return 0;
 			}
@@ -79,7 +79,7 @@ internal static class TestProgram
 					builder.Services.AddSingleton<Components.IFeatureProvider>(Components.FeatureProvider.Default);
 				});
 				await using var hostDisposal = (IAsyncDisposable)host;
-				var snapshot = Assert.Single(host.Services.GetServices<HostApplicationLifecycleTests.RegistrationSnapshot>());
+				var snapshot = Assert.Single(host.Services.GetServices<HostApplicationLifecycleTest.RegistrationSnapshot>());
 
 				Assert.Equal("http://*:4317/opentelemetry", snapshot.Url);
 				Assert.Equal("grpc+http2", snapshot.Protocols);
@@ -107,7 +107,7 @@ internal static class TestProgram
 				Assert.Equal("Terminal", context.ApplicationType);
 				Assert.Same(context, host.Services.GetRequiredService<Services.IApplicationContext>());
 				Assert.Equal(WorkbenchStatus.None, context.Workbench.Status);
-				Assert.Same(host.Services.GetRequiredService<HostApplicationLifecycleTests.ProbeService>(), context.PluginTree.Find("/Workspace/Environment/Services/FixtureService").UnwrapValue(ObtainMode.Never));
+				Assert.Same(host.Services.GetRequiredService<HostApplicationLifecycleTest.ProbeService>(), context.PluginTree.Find("/Workspace/Environment/Services/FixtureService").UnwrapValue(ObtainMode.Never));
 				File.AppendAllLines(trace, ["created"]);
 				return 0;
 			}

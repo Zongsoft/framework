@@ -3,8 +3,6 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text.Json;
 
-using Xunit;
-
 namespace Zongsoft.Data.Tests;
 
 public class ModelPropertyRoleTest

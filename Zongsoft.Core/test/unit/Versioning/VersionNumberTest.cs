@@ -3,8 +3,6 @@ using System.IO;
 using System.Text;
 using System.ComponentModel;
 
-using Xunit;
-
 namespace Zongsoft.Versioning;
 
 public class VersionNumberTest

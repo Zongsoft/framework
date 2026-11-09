@@ -2,8 +2,6 @@
 using System.IO;
 using System.Text;
 
-using Xunit;
-
 namespace Zongsoft.Services.Tests;
 
 public class ApplicationIdentifierTest : IDisposable

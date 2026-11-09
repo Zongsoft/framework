@@ -14,7 +14,6 @@ using Zongsoft.Collections;
 using Zongsoft.Security;
 using Zongsoft.Security.Privileges;
 using Zongsoft.Externals.Wechat.Web.Controllers;
-using Xunit;
 
 namespace Zongsoft.Externals.Wechat.Web.Tests;
 

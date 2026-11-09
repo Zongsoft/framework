@@ -3,8 +3,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Security.Cryptography;
 
-using Xunit;
-
 namespace Zongsoft.Externals.Wechat.Tests;
 
 public class CryptographyHelperTest

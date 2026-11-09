@@ -1,5 +1,3 @@
-using Xunit;
-
 using Zongsoft.Externals.Wechat.Paying;
 
 namespace Zongsoft.Externals.Wechat.Tests;

@@ -216,7 +216,7 @@ The equivalent strongly typed construction is `new MessageCompression("Brotli", 
 
 Set `LeastOnce` on both the subscription and publication. Only the Broker requires an `IMessageStorage`; publishers do not persist messages. A handler must call `AcknowledgeAsync`; returning normally is not an acknowledgement.
 
-The following is from [ZeroQueueReliabilityTests.LeastOnceCompletesAfterBrokerAcceptanceBeforeAcknowledge](test/ZeroQueueReliabilityTests.cs). `ReliableServerScope`, `CreateQueue` and `AcknowledgingHandler` are real fixtures in that test file. Read or run them in the original test project; they are not application plugin types:
+The following is from [ZeroQueueReliabilityTest.LeastOnceCompletesAfterBrokerAcceptanceBeforeAcknowledge](test/ZeroQueueReliabilityTest.cs). `ReliableServerScope`, `CreateQueue` and `AcknowledgingHandler` are real fixtures in that test file. Read or run them in the original test project; they are not application plugin types:
 
 ```csharp
 await using var scope = await ReliableServerScope.StartAsync();
@@ -256,13 +256,13 @@ Set `ZeroQueueServer.Storage` and `Storages` only while stopped. With Control en
 
 ### Request and Response
 
-`ZeroRequester` and `ZeroResponder` exchange requests through logical URL topics; the default reply topic is `<url>/reply`. The real [ZeroRequesterTests.RequesterReceivesImmediateResponses](test/ZeroRequesterTests.cs) starts separate requester/responder queues, registers the [EchoHandler fixture](test/ZeroTestUtility.cs), sends to `rpc/echo`, and checks payload and request-identifier correlation. It stops/disposes the responder in `finally` and also disposes each request token.
+`ZeroRequester` and `ZeroResponder` exchange requests through logical URL topics; the default reply topic is `<url>/reply`. The real [ZeroRequesterTest.RequesterReceivesImmediateResponses](test/ZeroRequesterTest.cs) starts separate requester/responder queues, registers the [EchoHandler fixture](test/ZeroTestUtility.cs), sends to `rpc/echo`, and checks payload and request-identifier correlation. It stops/disposes the responder in `finally` and also disposes each request token.
 
-One request can receive multiple replies. Each reply refreshes the ten-minute pending-cache expiry; a `Replaced` notification preserves the active token. Actual expiration removes its registration, while disposing the token also clears buffered replies. Dispose tokens when finished collecting replies. [ZeroRequesterMultipleReplyTests](test/ZeroRequesterMultipleReplyTests.cs) covers 3/8 replies over real sockets and deterministic cache replacement, expiration, late replies, and token/requester disposal. Set `ZONGSOFT_MESSAGING_TESTS=true` to enable the socket tests.
+One request can receive multiple replies. Each reply refreshes the ten-minute pending-cache expiry; a `Replaced` notification preserves the active token. Actual expiration removes its registration, while disposing the token also clears buffered replies. Dispose tokens when finished collecting replies. [ZeroRequesterMultipleReplyTest](test/ZeroRequesterMultipleReplyTest.cs) covers 3/8 replies over real sockets and deterministic cache replacement, expiration, late replies, and token/requester disposal. Set `ZONGSOFT_MESSAGING_TESTS=true` to enable the socket tests.
 
 Enumerate responses with `await foreach` over `token.GetResponsesAsync(timeout, cancellation)`. A positive timeout waits asynchronously for replies; the default zero timeout reads only currently buffered responses. Cancellation ends enumeration, and disposing the token or requester wakes a pending wait. `ZeroRequester.DisposeAsync` waits for accepted requests and reply-subscription cleanup; repeated calls share completion or failure. The offline tests verify pending enumeration returns promptly and wakes for replies, cancellation and disposal.
 
-[ZeroResponderTests](test/ZeroResponderTests.cs) additionally checks subscription rollback on startup failure. No nonexistent `PingHandler` is supplied here. Applications use shared communication contracts and host composition; standalone tests own their directly constructed instances.
+[ZeroResponderTest](test/ZeroResponderTest.cs) additionally checks subscription rollback on startup failure. No nonexistent `PingHandler` is supplied here. Applications use shared communication contracts and host composition; standalone tests own their directly constructed instances.
 
 ### Event Channel
 

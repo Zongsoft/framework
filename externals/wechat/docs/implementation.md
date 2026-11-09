@@ -1065,19 +1065,19 @@ Each test project ProjectReferences only its own production project, with other 
 
 | Test | Contract demonstrated | Not established |
 | --- | --- | --- |
-| [Payments](../test/AccountManagerAsyncTest.Payments.cs), [queries](../test/AccountManagerAsyncTest.PaymentQueries.cs) | Both roles/three scenarios, payer/app identity, launch signing, QR, encoding and unknown states | Live permission, devices or payment |
+| [Payments](../test/AccountManagerPaymentsTest.cs), [queries](../test/AccountManagerPaymentQueriesTest.cs) | Both roles/three scenarios, payer/app identity, launch signing, QR, encoding and unknown states | Live permission, devices or payment |
 | [FallbackTest](../test/FallbackTest.cs) | Raw signatures, merchant/app/events, GCM, limits, failure and cancellation | Delivery or host business persistence |
 | [AuthorityTest](../test/AuthorityTest.cs) | XML option binding, material roles, identity, secret exclusion, borrowed ownership and file rotation | Remote recognition or host deployment |
-| [Certificates](../test/AccountManagerAsyncTest.Certificates.cs) | Verified/encrypted refresh, atomic rotation, earlier retirement, rate limits and cancellation isolation | General response/notification/live download coverage |
-| [HTTP](../test/AccountManagerAsyncTest.Http.cs) | Exact signing bytes, encoding, empty POST, multipart, 204, invalid inputs/errors and bank headers | All product state or live behavior |
-| [HTTP lifecycle](../test/AccountManagerAsyncTest.HttpLifecycle.cs) | No retry, disposal, limits, trusted refresh, content ownership, destinations and snapshots | Arbitrary custom handlers or business persistence |
-| [AccountManagerAsyncTest](../test/AccountManagerAsyncTest.cs) | Provider waits, Get/Find, completed caching, failure/cancellation/concurrency | Actual login, remote permissions or distributed infrastructure |
+| [Certificates](../test/AccountManagerCertificatesTest.cs) | Verified/encrypted refresh, atomic rotation, earlier retirement, rate limits and cancellation isolation | General response/notification/live download coverage |
+| [HTTP](../test/AccountManagerHttpTest.cs) | Exact signing bytes, encoding, empty POST, multipart, 204, invalid inputs/errors and bank headers | All product state or live behavior |
+| [HTTP lifecycle](../test/AccountManagerHttpLifecycleTest.cs) | No retry, disposal, limits, trusted refresh, content ownership, destinations and snapshots | Arbitrary custom handlers or business persistence |
+| [AccountManagerTest](../test/AccountManagerTest.cs) | Provider waits, Get/Find, completed caching, failure/cancellation/concurrency | Actual login, remote permissions or distributed infrastructure |
 | [PaymentRequestTest](../test/PaymentRequestTest.cs) | Valid integer-fen serialization, integer units and currency fields | All invalid-input or transport behavior from this test alone |
-| [Refunds](../test/AccountManagerAsyncTest.Refunds.cs) | Roles, amounts, ownership, encoding and response/notification distinction | Settlement |
+| [Refunds](../test/AccountManagerRefundsTest.cs) | Roles, amounts, ownership, encoding and response/notification distinction | Settlement |
 | [RefundmentRequestTest](../test/RefundmentRequestTest.cs) | Identifiers and original/payer/refund amount distinctions | Verification or durable receipt |
 | [CryptographyHelperTest](../test/CryptographyHelperTest.cs) | Fixed GCM/UTF-8/Base64 vectors, empty inputs, key/nonce/tag lengths, tampering/truncation and 32 synthetic accounts | Proven notification/certificate source |
 | [ProtocolCryptographyTest](../test/ProtocolCryptographyTest.cs) | V2 MD5/HMAC vectors, ordinal/invariant formatting and concurrency | Proven payment source |
-| [Channel signing](../test/AccountManagerAsyncTest.Channel.cs) | Concurrent SHA-1 against cached account tickets | Full site policy or ticket lifecycle |
+| [Channel signing](../test/AccountManagerChannelTest.cs) | Concurrent SHA-1 against cached account tickets | Full site policy or ticket lifecycle |
 
 Models use public DTOs and System.Text.Json rather than copies of internal HTTP configuration. Synthetic callback strings are never sent. Nonempty GCM/CBC vectors were independently generated with Python cryptography, hash expectations with hashlib/hmac, and empty plaintext follows [.NET's NIST AES-256-GCM case 13](https://github.com/dotnet/runtime/blob/main/src/libraries/Common/tests/System/Security/Cryptography/AesGcmTests.cs). Tests do not require Python or runtime downloads. Internal V2 signing is exercised through reflection without widening production visibility; callers own HMAC objects.
 
@@ -1120,25 +1120,25 @@ Controlled `Wechat.Payments` and optional `Wechat.Certificates` replace only tra
 
 ### Onboarding, banks and media
 
-`AccountManagerAsyncTest.Merchants.cs` checks application ownership, sensitive fields, dates, JSON arrays, multiple bank candidates, empty-page totals, MIME/digests/meta and size limits. Serial Automao onboarding.py checks original lookup, pending signature, complete links, finish/freeze/unknown state and ownership; the fixture initializes its isolated database from the current schema scripts.
+`AccountManagerMerchantsTest.cs` checks application ownership, sensitive fields, dates, JSON arrays, multiple bank candidates, empty-page totals, MIME/digests/meta and size limits. Serial Automao onboarding.py checks original lookup, pending signature, complete links, finish/freeze/unknown state and ownership; the fixture initializes its isolated database from the current schema scripts.
 
 <a id="testing-6"></a>
 
 ### Membership
 
-`AccountManagerAsyncTest.Membership.cs` checks V3 paths/signatures, merchant channel selection, template/app/brand isolation, 204, individual allocation outcomes and unsigned-response rejection. Targeted Automao provider builds validate direct calls; unimplemented business operations are not accepted as available.
+`AccountManagerMembershipTest.cs` checks V3 paths/signatures, merchant channel selection, template/app/brand isolation, 204, individual allocation outcomes and unsigned-response rejection. Targeted Automao provider builds validate direct calls; unimplemented business operations are not accepted as available.
 
 <a id="testing-7"></a>
 
 ### Owned stable credentials
 
-`AccountManagerAsyncTest.Credentials.cs` covers local coalescing, rereads after competing publication, forced-refresh deduplication, namespaces, remaining TTL, cancellation, lost leases, failed cache writes and busy backoff. It does not replace actual distributed-cache-driver integration.
+`AccountManagerCredentialsTest.cs` covers local coalescing, rereads after competing publication, forced-refresh deduplication, namespaces, remaining TTL, cancellation, lost leases, failed cache writes and busy backoff. It does not replace actual distributed-cache-driver integration.
 
 <a id="testing-8"></a>
 
 ### Mini program identity
 
-`AccountManagerAsyncTest.Applet.cs` covers optional UnionId, secret exclusion, watermark/OpenId binding, errors and cancellation. api/test exercises real loopback controllers for account policies, host sessions, anonymous phone rejection and absent credential/user-directory routes. Automao identity.py loads the real customer authenticator with isolated MySQL and controlled responses, checking app/tenant/store ownership, untrusted raw phone input, verified association, repeated login and disabled accounts/apps. Build that site and integration host first. Existing phone uniqueness remains enforced: cross-tenant conflicts cannot create or rebind users.
+`AccountManagerAppletTest.cs` covers optional UnionId, secret exclusion, watermark/OpenId binding, errors and cancellation. api/test exercises real loopback controllers for account policies, host sessions, anonymous phone rejection and absent credential/user-directory routes. Automao identity.py loads the real customer authenticator with isolated MySQL and controlled responses, checking app/tenant/store ownership, untrusted raw phone input, verified association, repeated login and disabled accounts/apps. Build that site and integration host first. Existing phone uniqueness remains enforced: cross-tenant conflicts cannot create or rebind users.
 
 <a id="testing-9"></a>
 

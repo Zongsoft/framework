@@ -3,8 +3,6 @@ using System.Text;
 using System.Buffers.Binary;
 using System.Security.Cryptography;
 
-using Xunit;
-
 namespace Zongsoft.Externals.Wechat.Tests;
 
 public class PlatformCryptographyTest

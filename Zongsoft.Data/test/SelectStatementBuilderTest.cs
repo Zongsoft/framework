@@ -4,8 +4,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 
-using Xunit;
-
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Common.Expressions;
 using Zongsoft.Data.Metadata;

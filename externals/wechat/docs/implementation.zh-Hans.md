@@ -1136,19 +1136,19 @@ Gateway 测试使用相同的三目标框架命令，项目路径为 `externals/
 
 | 测试 | 验证契约 | 不能据此推定 |
 | --- | --- | --- |
-| [基础支付](../test/AccountManagerAsyncTest.Payments.cs)与[查询](../test/AccountManagerAsyncTest.PaymentQueries.cs) | 两种角色、三个场景、应用/付款人归属、调起签名、二维码、路径编码与未知状态 | 商户真实权限、设备 SDK 和实际付款 |
+| [基础支付](../test/AccountManagerPaymentsTest.cs)与[查询](../test/AccountManagerPaymentQueriesTest.cs) | 两种角色、三个场景、应用/付款人归属、调起签名、二维码、路径编码与未知状态 | 商户真实权限、设备 SDK 和实际付款 |
 | [FallbackTest](../test/FallbackTest.cs) | 原始字节验签、商户/AppID/事件约束、GCM 解密、超大报文、业务失败和取消 | 微信真实投递、宿主持久化与业务幂等 |
 | [AuthorityTest](../test/AuthorityTest.cs) | 插件 XML 配置绑定、签名材料角色、商户号绑定、密钥序列化排除、借入证书所有权、公钥模式隔离和文件配置切换 | 真实商户材料已获微信认可；宿主配置热更新和插件部署已通过 |
-| [证书刷新测试](../test/AccountManagerAsyncTest.Certificates.cs) | 内存 HTTP 响应验签、GCM 解密、原子轮换、提前弃用、未知序列号限流、并发刷新和调用方取消隔离 | 通用支付响应、通知管线或真实证书下载已通过 |
-| [HTTP 协议测试](../test/AccountManagerAsyncTest.Http.cs) | 实际发送字节与请求签名一致、路径/查询编码、空 POST、multipart meta、204 验签、非法头/时间/签名/正文拒绝、错误码和关联 ID、银行加密头与查询 | 各支付产品 DTO 与状态语义完整、通知已验证或微信实测通过 |
-| [HTTP 生命周期测试](../test/AccountManagerAsyncTest.HttpLifecycle.cs) | 超时/取消不重试、读取中断释放、正文上限、可信证书刷新后验签、JSON 内容所有权、请求目的地及重定向配置拒绝、完整快照客户端隔离 | 自定义传输处理器满足约束、Automao 插件装配或业务落库已验收 |
-| [AccountManagerAsyncTest](../test/AccountManagerAsyncTest.cs) | 公众号/小程序提供者等待、Get/Find 语义、配置缓存、失败不缓存、并发返回实例及调用方取消隔离 | 微信登录、稳定令牌、分布式锁和远端权限已通过 |
+| [证书刷新测试](../test/AccountManagerCertificatesTest.cs) | 内存 HTTP 响应验签、GCM 解密、原子轮换、提前弃用、未知序列号限流、并发刷新和调用方取消隔离 | 通用支付响应、通知管线或真实证书下载已通过 |
+| [HTTP 协议测试](../test/AccountManagerHttpTest.cs) | 实际发送字节与请求签名一致、路径/查询编码、空 POST、multipart meta、204 验签、非法头/时间/签名/正文拒绝、错误码和关联 ID、银行加密头与查询 | 各支付产品 DTO 与状态语义完整、通知已验证或微信实测通过 |
+| [HTTP 生命周期测试](../test/AccountManagerHttpLifecycleTest.cs) | 超时/取消不重试、读取中断释放、正文上限、可信证书刷新后验签、JSON 内容所有权、请求目的地及重定向配置拒绝、完整快照客户端隔离 | 自定义传输处理器满足约束、Automao 插件装配或业务落库已验收 |
+| [AccountManagerTest](../test/AccountManagerTest.cs) | 公众号/小程序提供者等待、Get/Find 语义、配置缓存、失败不缓存、并发返回实例及调用方取消隔离 | 微信登录、稳定令牌、分布式锁和远端权限已通过 |
 | [PaymentRequestTest](../test/PaymentRequestTest.cs) | 有效人民币金额序列化为整数分，整数入口已经表示分，币种及 JSON 字段名正确 | 非法精度、负值、溢出或货币校验已经实现；完整下单报文及签名有效 |
-| [退款协议测试](../test/AccountManagerAsyncTest.Refunds.cs) | 普通商户/服务商请求、金额和订单绑定、路径编码、请求受理与查询/通知字段隔离 | 实际退款到账及商户准入 |
+| [退款协议测试](../test/AccountManagerRefundsTest.cs) | 普通商户/服务商请求、金额和订单绑定、路径编码、请求受理与查询/通知字段隔离 | 实际退款到账及商户准入 |
 | [RefundmentRequestTest](../test/RefundmentRequestTest.cs) | 部分退款请求保留商户订单号/退款号和原金额；应答保留退款状态、微信/商户单号及订单/用户实付金额差异 | 退款已到账、应答已验签、通知已可靠处理或业务已幂等落库 |
 | [CryptographyHelperTest](../test/CryptographyHelperTest.cs) | APIv3 GCM 固定向量、UTF-8/Base64、空关联数据/明文、32 字节密钥/12 字节 nonce/16 字节标签、篡改及截断拒绝、32 个合成账户并发解密 | 通知或平台证书的来源、事件类型和接收商户已验证 |
 | [ProtocolCryptographyTest](../test/ProtocolCryptographyTest.cs) | V2 MD5/HMAC-SHA256 固定签名、Ordinal/固定文化规范和并发 | 微信支付来源验证已完成 |
-| [公众号签名测试](../test/AccountManagerAsyncTest.Channel.cs) | 复用账户测试上下文，通过本地缓存提供不同账户的票据，验证并发 JS-SDK SHA-1 签名 | 票据类型缓存隔离、URL 片段规范化或站点授权校验已实现 |
+| [公众号签名测试](../test/AccountManagerChannelTest.cs) | 复用账户测试上下文，通过本地缓存提供不同账户的票据，验证并发 JS-SDK SHA-1 签名 | 票据类型缓存隔离、URL 片段规范化或站点授权校验已实现 |
 
 模型测试直接使用公开模型和 `System.Text.Json`，不复制内部 HTTP 选项，也不声称覆盖实际传输。字段依据为[JSAPI 下单](https://pay.weixin.qq.com/doc/v3/merchant/4012791856)和[申请退款](https://pay.weixin.qq.com/doc/v3/merchant/4013071036)。测试数据全部合成，`example.com` 回调字符串只用于序列化，不发送请求。
 
@@ -1216,7 +1216,7 @@ HttpYac 按标签或请求名选取用例，禁止将 `--all` 与 `--tag` 合用
 
 Automao 微信支付提供者契约测试位于 `modules/paying/providers/wechat/test/Automao.Paying.Wechat.Contract.Tests.csproj`。它通过合成账户提供者和签名 HTTP 响应验证真实 PaymentProvider 的三场景结果映射，不替代实际插件宿主集成。支付抽象测试的 PaymentStateTest 与 PaymentFeatureAsyncTest 验证原状态条件、终态保护以及独立 Token 的存储映射。
 
-付款码协议夹具见[AccountManagerAsyncTest.Tickets](../test/AccountManagerAsyncTest.Tickets.cs)，覆盖两类商户、支付中/未知状态、V2 查单、XML/签名/身份拒绝、请求取消、撤销证书与 recall 结果，以及在线刷脸凭据。Automao 的微信提供者契约测试覆盖真实提供者的付款码参数传递、超时/无效签名不误报失败及明确支付状态；支付业务契约测试覆盖取消请求的必要落库、取消提供者的等待、终态并发保护和组合支付完整授权。它们使用受控传输或数据协作者，不证明真实微信交易或实际 TLS 握手。
+付款码协议夹具见[AccountManagerTicketsTest](../test/AccountManagerTicketsTest.cs)，覆盖两类商户、支付中/未知状态、V2 查单、XML/签名/身份拒绝、请求取消、撤销证书与 recall 结果，以及在线刷脸凭据。Automao 的微信提供者契约测试覆盖真实提供者的付款码参数传递、超时/无效签名不误报失败及明确支付状态；支付业务契约测试覆盖取消请求的必要落库、取消提供者的等待、终态并发保护和组合支付完整授权。它们使用受控传输或数据协作者，不证明真实微信交易或实际 TLS 握手。
 
 退款业务另有 [Automao 受控传输集成入口](../../../../../Automao/server/externals/wechat/integration/README.zh-Hans.md)：实际插件、MySQL 可串行化额度保留、显式原单重试和部分金额分配。与通知夹具串行运行，使用独立合成数据库及 Redis 数据库 14，不调用真实微信服务。
 
@@ -1224,25 +1224,25 @@ Automao 微信支付提供者契约测试位于 `modules/paying/providers/wechat
 
 ### 进件、银行与上传
 
-`AccountManagerAsyncTest.Merchants.cs` 检查申请号归属、敏感字段加解密、有效期、图片数组编码、银行卡多候选、空页总数、上传 MIME/摘要/meta 签名和大小限制。Automao 的 `externals/wechat/integration/onboarding.py` 与其它夹具串行运行，检查原申请查询、待签约不启用账户、完整链接存储、完成/冻结/未知状态及账户归属。夹具从当前建表脚本初始化自己的隔离库。
+`AccountManagerMerchantsTest.cs` 检查申请号归属、敏感字段加解密、有效期、图片数组编码、银行卡多候选、空页总数、上传 MIME/摘要/meta 签名和大小限制。Automao 的 `externals/wechat/integration/onboarding.py` 与其它夹具串行运行，检查原申请查询、待签约不启用账户、完整链接存储、完成/冻结/未知状态及账户归属。夹具从当前建表脚本初始化自己的隔离库。
 
 <a id="testing-6"></a>
 
 ### 会员卡
 
-`AccountManagerAsyncTest.Membership.cs` 验证完整 V3 路径及请求签名、商户配置中的公众号选择、模板/AppID/品牌隔离、删除和作废的 204 验签、预存逐项结果以及未签名响应拒绝。Automao 会员提供者以定向构建验证直接调用契约；未实现的会员业务不作为可用功能验收。
+`AccountManagerMembershipTest.cs` 验证完整 V3 路径及请求签名、商户配置中的公众号选择、模板/AppID/品牌隔离、删除和作废的 204 验签、预存逐项结果以及未签名响应拒绝。Automao 会员提供者以定向构建验证直接调用契约；未实现的会员业务不作为可用功能验收。
 
 <a id="testing-7"></a>
 
 ### 自有账号稳定凭据
 
-`AccountManagerAsyncTest.Credentials.cs` 通过命名传输及缓存/锁契约替身验证本机合并、跨节点发布后重读、强制刷新去重、账号/票据域隔离、剩余 TTL、取消、锁丢失、缓存写入失败和繁忙退避。此类测试不连接微信，也不替代真实分布式缓存驱动本身的集成测试。
+`AccountManagerCredentialsTest.cs` 通过命名传输及缓存/锁契约替身验证本机合并、跨节点发布后重读、强制刷新去重、账号/票据域隔离、剩余 TTL、取消、锁丢失、缓存写入失败和繁忙退避。此类测试不连接微信，也不替代真实分布式缓存驱动本身的集成测试。
 
 <a id="testing-8"></a>
 
 ### 小程序身份
 
-主库的 `AccountManagerAsyncTest.Applet.cs` 使用合成 code2Session 和手机号响应，覆盖可选 UnionId、密钥序列化排除、应用水印、OpenId 绑定、错误与取消。`api/test` 通过环回 HTTP 和真实 ASP.NET 控制器验证资源授权、应用会话签发、匿名手机号请求拒绝及已移除的凭据/小程序用户路径。
+主库的 `AccountManagerAppletTest.cs` 使用合成 code2Session 和手机号响应，覆盖可选 UnionId、密钥序列化排除、应用水印、OpenId 绑定、错误与取消。`api/test` 通过环回 HTTP 和真实 ASP.NET 控制器验证资源授权、应用会话签发、匿名手机号请求拒绝及已移除的凭据/小程序用户路径。
 
 Automao 的 `externals/wechat/integration/identity.py` 加载实际客户站点微信鉴证插件，使用隔离 MySQL 与受控微信传输验证应用/租户/门店归属、原始手机号不可信、授权号码绑定、重复登录和停用。运行前构建该站点与集成宿主，遵循其它夹具的串行执行及清理要求。用户表的手机号唯一约束仍生效：号码已属于其它租户时拒绝关联，不绕过约束创建或改绑。
 
@@ -1250,7 +1250,7 @@ Automao 的 `externals/wechat/integration/identity.py` 加载实际客户站点�
 
 ### 公众号协议
 
-`AccountManagerAsyncTest.OAuth.cs` 覆盖 scope、缺失资料/UnionId、跨账号/身份拒绝、刷新与有效性错误、原始 URL 去片段、空用户页和模板字段/错误。Web 的 `AccountHttpTest` 使用 Zongsoft 的嵌套控制器发现器验证公众号与小程序会话、用户和消息路由账号绑定、站点策略拒绝以及实际签名 JSON。真实浏览器 state 流程、消息送达和账号权限仍需对应宿主与微信环境验证。
+`AccountManagerOAuthTest.cs` 覆盖 scope、缺失资料/UnionId、跨账号/身份拒绝、刷新与有效性错误、原始 URL 去片段、空用户页和模板字段/错误。Web 的 `AccountHttpTest` 使用 Zongsoft 的嵌套控制器发现器验证公众号与小程序会话、用户和消息路由账号绑定、站点策略拒绝以及实际签名 JSON。真实浏览器 state 流程、消息送达和账号权限仍需对应宿主与微信环境验证。
 
 `PlatformCryptographyTest` 使用官方 SHA-1/CBC 固定向量和独立中文向量，覆盖错误签名、密钥、接收方、完整填充、负数与越界长度、严格 UTF-8 及二进制边界。运行时不下载官方示例，不访问微信；协议契约见[消息密码协议](#platform-cryptography)。
 
@@ -1262,7 +1262,7 @@ Automao 的 `externals/wechat/integration/identity.py` 加载实际客户站点�
 
 ### SaaS 授权与普通服务商
 
-`AccountManagerAsyncTest.Components.cs` 与 `Authorizers.cs` 覆盖组件票据、授权码、实际账号资料、组件/授权者凭据隔离、权限、委托协议及撤销竞争。`Partners.cs` 验证普通服务商申请字段、全部敏感字段加密、签名材料一致、64 位申请号及查询归属；完成进件不表示已取得所有支付权限。
+`AccountManagerComponentsTest.cs` 与 `Authorizers.cs` 覆盖组件票据、授权码、实际账号资料、组件/授权者凭据隔离、权限、委托协议及撤销竞争。`Partners.cs` 验证普通服务商申请字段、全部敏感字段加密、签名材料一致、64 位申请号及查询归属；完成进件不表示已取得所有支付权限。
 
 Automao 的 `components.py` 加载实际业务管理 API、客户鉴证器和 Gateway，验证持久化、当前租户归属、加密密钥环、并发/恢复与权限变化；`partners.py` 分别运行商户端和平台管理端，验证普通进件、平台确认、产品控制及支付/退款联动。两者复用 `D:\Automao\documents\http\sites` 中的微信管理读取请求，通过 HttpYac 验证接口结果。与既有五组夹具串行执行，详细条件和边界见[集成说明](../../../../../Automao/server/externals/wechat/integration/README.zh-Hans.md)。
 

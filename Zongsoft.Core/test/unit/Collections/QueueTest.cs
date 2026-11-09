@@ -2,8 +2,6 @@
 using System.Linq;
 using System.Collections.Generic;
 
-using Xunit;
-
 namespace Zongsoft.Collections.Tests;
 
 public class QueueTest

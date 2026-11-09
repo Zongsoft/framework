@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Security.Cryptography;
 
-using Xunit;
-
 namespace Zongsoft.Common.Tests;
 
 public class ChecksumTest

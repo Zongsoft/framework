@@ -6,8 +6,6 @@ using System.Threading.Tasks;
 
 using Microsoft.Extensions.DependencyInjection;
 
-using Xunit;
-
 using static Zongsoft.Data.Tests.DataAsyncPipelineTest;
 
 namespace Zongsoft.Data.Tests;

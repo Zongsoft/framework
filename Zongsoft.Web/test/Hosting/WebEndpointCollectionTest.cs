@@ -4,8 +4,6 @@ using System.Collections.Generic;
 
 using Zongsoft.Communication;
 
-using Xunit;
-
 namespace Zongsoft.Web.Hosting.Tests;
 
 public class WebEndpointCollectionTest

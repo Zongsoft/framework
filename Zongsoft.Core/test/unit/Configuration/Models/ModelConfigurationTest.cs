@@ -4,8 +4,6 @@ using System.Collections.Generic;
 
 using Microsoft.Extensions.Configuration;
 
-using Xunit;
-
 namespace Zongsoft.Configuration.Tests;
 
 public class ModelConfigurationTest

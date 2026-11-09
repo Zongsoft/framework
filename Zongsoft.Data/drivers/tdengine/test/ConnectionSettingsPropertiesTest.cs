@@ -1,6 +1,4 @@
-﻿using Xunit;
-
-namespace Zongsoft.Data.TDengine.Tests;
+﻿namespace Zongsoft.Data.TDengine.Tests;
 
 public class ConnectionSettingsPropertiesTest
 {

@@ -216,7 +216,7 @@ await queue.ProduceAsync("documents/updated", payload, options);
 
 订阅和发布都要显式选择 `LeastOnce`。只有 Broker 必须挂载 `IMessageStorage`；发布端不存储消息。处理器正常返回不代表确认，必须调用 `AcknowledgeAsync`。
 
-下面摘自 [ZeroQueueReliabilityTests.LeastOnceCompletesAfterBrokerAcceptanceBeforeAcknowledge](test/ZeroQueueReliabilityTests.cs)。`ReliableServerScope`、`CreateQueue`、`AcknowledgingHandler` 等都是同一测试文件中的真实夹具；应在原测试项目中阅读或执行，不是可直接粘贴到业务插件的类型：
+下面摘自 [ZeroQueueReliabilityTest.LeastOnceCompletesAfterBrokerAcceptanceBeforeAcknowledge](test/ZeroQueueReliabilityTest.cs)。`ReliableServerScope`、`CreateQueue`、`AcknowledgingHandler` 等都是同一测试文件中的真实夹具；应在原测试项目中阅读或执行，不是可直接粘贴到业务插件的类型：
 
 ```csharp
 await using var scope = await ReliableServerScope.StartAsync();
@@ -256,13 +256,13 @@ Broker 只在发送瞬间存在在线匹配订阅时接纳消息：没有订阅�
 
 ### 请求与响应
 
-`ZeroRequester` 与 `ZeroResponder` 通过逻辑 URL 主题交换请求，默认回复主题为 `<url>/reply`。真实用例见 [ZeroRequesterTests.RequesterReceivesImmediateResponses](test/ZeroRequesterTests.cs)：它启动独立请求与响应队列，注册 [EchoHandler 夹具](test/ZeroTestUtility.cs)，向 `rpc/echo` 发送消息并检查内容与请求标识一致。测试在 `finally` 中停止、释放响应器，请求令牌也单独释放。
+`ZeroRequester` 与 `ZeroResponder` 通过逻辑 URL 主题交换请求，默认回复主题为 `<url>/reply`。真实用例见 [ZeroRequesterTest.RequesterReceivesImmediateResponses](test/ZeroRequesterTest.cs)：它启动独立请求与响应队列，注册 [EchoHandler 夹具](test/ZeroTestUtility.cs)，向 `rpc/echo` 发送消息并检查内容与请求标识一致。测试在 `finally` 中停止、释放响应器，请求令牌也单独释放。
 
-同一个请求可以接收多份响应。每份响应刷新待处理缓存的十分钟有效期；`Replaced` 通知保留活动令牌，真正过期时移除令牌登记，主动释放令牌还会清空已缓存的响应。收集结束后应释放令牌。[ZeroRequesterMultipleReplyTests](test/ZeroRequesterMultipleReplyTests.cs)覆盖真实 socket 的 3／8 响应，以及确定性的缓存替换、过期、迟到响应和令牌／请求器释放检查。设置 `ZONGSOFT_MESSAGING_TESTS=true` 才启用 socket 测试。
+同一个请求可以接收多份响应。每份响应刷新待处理缓存的十分钟有效期；`Replaced` 通知保留活动令牌，真正过期时移除令牌登记，主动释放令牌还会清空已缓存的响应。收集结束后应释放令牌。[ZeroRequesterMultipleReplyTest](test/ZeroRequesterMultipleReplyTest.cs)覆盖真实 socket 的 3／8 响应，以及确定性的缓存替换、过期、迟到响应和令牌／请求器释放检查。设置 `ZONGSOFT_MESSAGING_TESTS=true` 才启用 socket 测试。
 
 使用 `await foreach` 遍历 `token.GetResponsesAsync(timeout, cancellation)`；正超时值会异步等待响应，默认零超时只读取当前已缓存的响应。取消会结束枚举，释放令牌或请求器会唤醒尚未完成的等待。`ZeroRequester.DisposeAsync` 等待已接受请求及回复订阅清理，重复调用共享完成结果或错误。离线测试验证等待枚举及时返回，并能由响应、取消和释放唤醒。
 
-[ZeroResponderTests](test/ZeroResponderTests.cs)进一步验证启动失败时回滚已建立的订阅。这里不提供不存在的 `PingHandler`；应用应通过公共通信契约和宿主装配使用响应器，独立测试才自行拥有实例生命周期。
+[ZeroResponderTest](test/ZeroResponderTest.cs)进一步验证启动失败时回滚已建立的订阅。这里不提供不存在的 `PingHandler`；应用应通过公共通信契约和宿主装配使用响应器，独立测试才自行拥有实例生命周期。
 
 ### 事件通道
 

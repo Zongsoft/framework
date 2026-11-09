@@ -19,9 +19,6 @@ using Zongsoft.Services;
 using Zongsoft.Configuration;
 using Zongsoft.Diagnostics.Telemetry;
 
-using Xunit;
-using MsLogLevel = Microsoft.Extensions.Logging.LogLevel;
-
 namespace Zongsoft.Diagnostics.Tests;
 
 [Collection("Diagnostics")]
@@ -48,7 +45,7 @@ public class LoggingTest
 
 		var record = Assert.Single(launcher.Records);
 		Assert.Equal("logging-test", record.CategoryName);
-		Assert.Equal(MsLogLevel.Error, record.LogLevel);
+		Assert.Equal(global::Microsoft.Extensions.Logging.LogLevel.Error, record.LogLevel);
 		Assert.Equal(23, record.EventId.Id);
 		Assert.Same(exception, record.Exception);
 		Assert.Equal("Processed 7 records", record.FormattedMessage);

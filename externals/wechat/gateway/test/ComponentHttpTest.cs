@@ -12,7 +12,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Zongsoft.Externals.Wechat.Platforms;
-using Xunit;
 
 namespace Zongsoft.Externals.Wechat.Gateway.Tests;
 

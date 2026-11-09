@@ -1,8 +1,6 @@
 using System;
 using System.IO;
 
-using Xunit;
-
 using Zongsoft.Data.Metadata.Profiles;
 
 namespace Zongsoft.Data.Tests;

@@ -1,5 +1,3 @@
-using Xunit;
-
 namespace Zongsoft.Data.SQLite.Tests;
 
 [Collection("Database")]

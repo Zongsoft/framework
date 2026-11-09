@@ -4,8 +4,6 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
-using Xunit;
-
 namespace Zongsoft.Data.Tests;
 
 public sealed class DataSearcherTest

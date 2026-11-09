@@ -1,6 +1,4 @@
-﻿using Xunit;
-
-namespace Zongsoft.Data.DuckDB.Tests;
+﻿namespace Zongsoft.Data.DuckDB.Tests;
 
 public class ConnectionSettingsPropertiesTest
 {

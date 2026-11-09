@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Linq;
 
-using Xunit;
-
 namespace Zongsoft.Common.Tests;
 
 public class StringExtensionTest

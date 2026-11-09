@@ -6,8 +6,6 @@ using System.Collections.Generic;
 using System.Security.Principal;
 using System.Security.AccessControl;
 
-using Xunit;
-
 namespace Zongsoft.IO.Tests;
 
 public class SearcherTest

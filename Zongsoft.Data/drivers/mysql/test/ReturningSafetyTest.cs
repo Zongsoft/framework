@@ -6,8 +6,6 @@ using System.Collections.Generic;
 
 using MySqlConnector;
 
-using Xunit;
-
 using Zongsoft.Data.Common;
 using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Tests.Models;

@@ -1,6 +1,4 @@
-﻿using Xunit;
-
-namespace Zongsoft.Data.SQLite.Tests;
+﻿namespace Zongsoft.Data.SQLite.Tests;
 
 public class ConnectionSettingsPropertiesTest
 {

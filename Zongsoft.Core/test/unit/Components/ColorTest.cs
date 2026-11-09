@@ -2,8 +2,6 @@ using System;
 using System.ComponentModel;
 using System.Text.Json;
 
-using Xunit;
-
 namespace Zongsoft.Components.Tests;
 
 public class ColorTest

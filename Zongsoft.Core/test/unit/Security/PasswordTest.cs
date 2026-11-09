@@ -3,8 +3,6 @@ using System.Globalization;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 
-using Xunit;
-
 namespace Zongsoft.Security.Tests;
 
 public class PasswordTest

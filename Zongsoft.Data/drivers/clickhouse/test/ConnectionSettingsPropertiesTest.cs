@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Data;
 
-using Xunit;
 using ClickHouse.Driver.ADO;
 
 namespace Zongsoft.Data.ClickHouse.Tests;

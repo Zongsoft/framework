@@ -9,8 +9,6 @@ using System.Collections.Generic;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Primitives;
 
-using Xunit;
-
 namespace Zongsoft.Configuration.Tests;
 
 internal sealed class XmlImportFiles : IFileProvider, IDisposable

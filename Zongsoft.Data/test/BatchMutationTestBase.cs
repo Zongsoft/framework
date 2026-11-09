@@ -5,8 +5,6 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-using Xunit;
-
 using Zongsoft.Data.Metadata;
 using Zongsoft.Data.Tests.Models;
 
