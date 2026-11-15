@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
 		<TargetFrameworks>net10.0;net11.0;</TargetFrameworks>
@@ -42,7 +42,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="8.0.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.79.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

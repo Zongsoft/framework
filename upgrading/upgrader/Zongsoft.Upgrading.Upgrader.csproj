@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<Version>1.0.0</Version>
 		<PackageReleaseNotes>修复异步读取发布清单时提前释放 XML 读取器的问题。</PackageReleaseNotes>
@@ -32,7 +32,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="8.0.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.79.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

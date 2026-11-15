@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
 		<Version>1.0.0</Version>
@@ -30,7 +30,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="8.0.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.79.0" />
 				<PackageReference Include="Zongsoft.Web" VersionOverride="8.0.0" />
 			</ItemGroup>
 		</Otherwise>

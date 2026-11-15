@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<Version>8.0.0</Version>
 		<PackageReleaseNotes>以类型化特性组合写入返回值、事务与连接共享能力，合并操作上下文与调用方返回请求并独立分发结果。</PackageReleaseNotes>
@@ -31,7 +31,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="8.0.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.79.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

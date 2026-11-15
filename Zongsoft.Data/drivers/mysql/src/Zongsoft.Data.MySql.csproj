@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<Version>8.0.0</Version>
 		<PackageReleaseNotes>通过独立返回值特性执行更新和删除，统一驱动能力声明。</PackageReleaseNotes>
@@ -37,7 +37,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="8.0.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="7.79.0" />
 				<PackageReference Include="Zongsoft.Data" VersionOverride="8.0.0" />
 			</ItemGroup>
 		</Otherwise>
