@@ -123,7 +123,7 @@ public static class AuthencodeImager
 		if(RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
 			name = "Courier New";
 		else if(RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-			name = "Monospace";
+			name = "DejaVu Sans Mono";
 		else if(RuntimeInformation.IsOSPlatform(OSPlatform.FreeBSD))
 			name = "Helvetica";
 		else if(RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
