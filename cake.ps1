@@ -29,13 +29,13 @@ try
 	{
 		Write-Host "`n==> dotnet cake $project" -ForegroundColor Magenta
 		$projectPath = Join-Path $PSScriptRoot $project
-		$projectDirectory = Split-Path -Parent $projectPath
+		$projectDirectory = (Resolve-Path -LiteralPath (Split-Path -Parent $projectPath)).Path
 		$projectScript = Split-Path -Leaf $projectPath
 
 		Push-Location $projectDirectory
 		try
 		{
-			& dotnet cake $projectScript '--verbosity=normal' @forwardedArguments
+			& dotnet cake $projectScript "--working=$projectDirectory" '--verbosity=normal' @forwardedArguments
 		}
 		finally
 		{
