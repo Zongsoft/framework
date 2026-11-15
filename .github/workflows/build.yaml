@@ -31,6 +31,9 @@ jobs:
             10.0.x
             11.0.x
 
+      - name: Install fonts
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y fonts-dejavu-core
+
       - name: Install Cake
         run: dotnet tool install --global Cake.Tool
 
