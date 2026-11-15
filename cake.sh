@@ -23,10 +23,12 @@ run_project()
 {
 	project="$1"
 	shift
+	project_directory=$(dirname "$project")
+	project_script=$(basename "$project")
 
 	printf '\n==> dotnet cake %s\n' "$project"
 
-	if dotnet cake "$project" --verbosity=normal "$@"; then
+	if (cd "$project_directory" && dotnet cake "$project_script" --verbosity=normal "$@"); then
 		return 0
 	else
 		status=$?

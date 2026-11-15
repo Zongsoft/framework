@@ -28,7 +28,19 @@ try
 	foreach($project in $projects)
 	{
 		Write-Host "`n==> dotnet cake $project" -ForegroundColor Magenta
-		& dotnet cake $project '--verbosity=normal' @forwardedArguments
+		$projectPath = Join-Path $PSScriptRoot $project
+		$projectDirectory = Split-Path -Parent $projectPath
+		$projectScript = Split-Path -Leaf $projectPath
+
+		Push-Location $projectDirectory
+		try
+		{
+			& dotnet cake $projectScript '--verbosity=normal' @forwardedArguments
+		}
+		finally
+		{
+			Pop-Location
+		}
 
 		if($LASTEXITCODE -ne 0)
 		{
