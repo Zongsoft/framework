@@ -12,7 +12,7 @@
 | [server](server) | Runs an MQTT broker and displays channels, sessions, retained messages, and received application messages. |
 | [client](client) | Connects to an MQTT broker and demonstrates publishing, subscriptions, acknowledgment, and queue inspection. |
 
-Both projects target .NET 10. The client defaults to `127.0.0.1:1883`, which matches the server's default listener.
+Both projects target .NET 11. The client defaults to `127.0.0.1:1883`, which matches the server's default listener.
 
 ## Run
 

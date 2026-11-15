@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8" ?>
+<?xml version="1.0" encoding="utf-8" ?>
 
 <options>
 	<option path="/web/openapi">
@@ -16,22 +16,26 @@
 		</headers>
 
 		<servers>
-			<server server.name="ports" url="http://{host}:{port}">
-				<variable variable.name="host" default="localhost">
-					<value>localhost</value>
-					<value>127.0.0.1</value>
+			<server server.name="current" />
+			<server server.name="ports" description="Host and port" url="{scheme}://{host}:{port}">
+				<variable variable.name="scheme" default="http">
+					<value>http</value>
+					<value>https</value>
 				</variable>
-				<variable variable.name="port" default="8069">
-					<value>8069</value>
-				</variable>
+				<variable variable.name="host" default="localhost" />
+				<variable variable.name="port" default="8069" />
 			</server>
-
-			<server server.name="sites" url="http://{site}.{host}:{port}">
-				<variable variable.name="site" default="b">
-					<value>a</value>
-					<value>b</value>
-					<value>c</value>
-					<value>iot</value>
+			<server server.name="sites" description="Site, host and port" url="{scheme}://{site}.{host}:{port}">
+				<variable variable.name="scheme" default="http">
+					<value>http</value>
+					<value>https</value>
+				</variable>
+				<variable variable.name="site" default="api.b">
+					<value>api.a</value>
+					<value>api.b</value>
+					<value>api.c</value>
+					<value>api.iot</value>
+					<value>api.gateway</value>
 				</variable>
 				<variable variable.name="host" default="zongsoft.com" />
 				<variable variable.name="port" default="80" />
@@ -39,29 +43,34 @@
 		</servers>
 
 		<environments>
-			<environment environment.name="development">
-				<variable variable.name="host" default="192.168.0.101" />
-				<variable variable.name="port" default="80" />
-				<variable variable.name="username" default="administrator" />
-				<variable variable.name="password" default="" />
+			<environment environment.name="production-a" url="http://api.a.zongsoft.com">
+				<variable variable.name="site" default="a" />
 			</environment>
-			<environment environment.name="production">
-				<variable variable.name="host" default="192.168.0.102" />
-				<variable variable.name="port" default="80" />
-				<variable variable.name="username" default="administrator" />
-				<variable variable.name="password" default="" />
+			<environment environment.name="production-b" url="http://api.b.zongsoft.com">
+				<variable variable.name="site" default="b" />
 			</environment>
-			<environment environment.name="staging">
-				<variable variable.name="host" default="192.168.0.103" />
-				<variable variable.name="port" default="80" />
-				<variable variable.name="username" default="administrator" />
-				<variable variable.name="password" default="" />
+			<environment environment.name="production-c" url="http://api.c.zongsoft.com">
+				<variable variable.name="site" default="c" />
 			</environment>
-			<environment environment.name="testing">
-				<variable variable.name="host" default="192.168.0.104" />
-				<variable variable.name="port" default="80" />
-				<variable variable.name="username" default="administrator" />
-				<variable variable.name="password" default="" />
+
+			<environment environment.name="development-a" url="http://192.168.0.100:81">
+				<variable variable.name="site" default="a" />
+			</environment>
+			<environment environment.name="development-b" url="http://192.168.0.100:82">
+				<variable variable.name="site" default="b" />
+			</environment>
+			<environment environment.name="development-c" url="http://192.168.0.100:83">
+				<variable variable.name="site" default="c" />
+			</environment>
+
+			<environment environment.name="staging-a" url="http://192.168.0.101:81">
+				<variable variable.name="site" default="a" />
+			</environment>
+			<environment environment.name="staging-b" url="http://192.168.0.101:82">
+				<variable variable.name="site" default="b" />
+			</environment>
+			<environment environment.name="staging-c" url="http://192.168.0.101:83">
+				<variable variable.name="site" default="c" />
 			</environment>
 		</environments>
 	</option>

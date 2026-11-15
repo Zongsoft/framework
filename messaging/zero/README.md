@@ -26,7 +26,7 @@ The included `ZeroQueueServer` combines an XPUB/XSUB exchange for at-most-once t
 - Supports Brotli, GZip, ZLib, or Deflate payload compression above a configurable threshold;
 - Supports immediate at-most-once broadcast and Broker-persisted, explicitly acknowledged competing at-least-once delivery;
 - Supports standalone use and Zongsoft plugin-based hosting;
-- Targets .NET 8, .NET 9, and .NET 10.
+- Targets .NET 10 and .NET 11.
 
 <a name="installation"></a>
 ## Installation
@@ -299,7 +299,7 @@ See the [ZeroMQ 1.0 protocol](PROTOCOL.md) for the complete Discovery, Broadcast
 <a name="samples"></a>
 ## Samples and Troubleshooting
 
-The [.NET 10 samples](samples) contain an interactive exchange server and client. Start the server first, then run one client as a subscriber and another as a publisher. See the [sample guide](samples/README.md) for commands.
+The [.NET 11 samples](samples) contain an interactive exchange server and client. Start the server first, then run one client as a subscriber and another as a publisher. See the [sample guide](samples/README.md) for commands.
 
 If messages are not received:
 

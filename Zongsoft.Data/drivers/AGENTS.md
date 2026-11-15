@@ -17,5 +17,5 @@
 - 构建目标驱动的 `.slnx`，再运行其 `test` 项目；不要默认运行所有数据库集成测试。
 - 仅运行离线配置或 SDK 替身测试时使用明确的类过滤器；同一测试项目还包含真实数据库用例，不能无过滤器运行。
 - 数据库服务 Running 不等于 Ready，应先探测连接，并为失败测试设置合理超时。
-- 真实数据库测试须显式设置 `ZONGSOFT_DATA_TESTS=1`，并分别记录 net8.0、net9.0、net10.0 结果；未开启开关的提前返回不能作为数据库通过证据。跳过数按测试结果条目的 NotExecuted 统计，不能只读取 TRX 汇总 Counters.notExecuted。
+- 真实数据库测试须显式设置 `ZONGSOFT_DATA_TESTS=1`，并分别记录 net10.0、net11.0 结果；未开启开关的提前返回不能作为数据库通过证据。跳过数按测试结果条目的 NotExecuted 统计，不能只读取 TRX 汇总 Counters.notExecuted。
 - 变更通用行为时先验证 Data/Core，再抽取至少一个相关驱动做回归。

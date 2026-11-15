@@ -9,8 +9,7 @@ The suite covers line-input cancellation, result and failure retention, overlapp
 Run from this directory with the required SDKs installed:
 
 ```powershell
-dotnet test Zongsoft.Core.Tests.csproj --framework net8.0 -p:GeneratePackageOnBuild=false
-dotnet test Zongsoft.Core.Tests.csproj --framework net9.0 -p:GeneratePackageOnBuild=false
+dotnet test Zongsoft.Core.Tests.csproj --framework net11.0 -p:GeneratePackageOnBuild=false
 dotnet test Zongsoft.Core.Tests.csproj --framework net10.0 -p:GeneratePackageOnBuild=false
 ```
 

@@ -18,7 +18,7 @@
 
 ## Samples
 
-The `samples` directory contains two interactive .NET 10 applications:
+The `samples` directory contains two interactive .NET 11 applications:
 
 - [Broker sample](samples/server/Program.cs) starts an MQTT Broker powered by `MqttQueueServer`.
 - [Client sample](samples/client/Program.cs) connects through `MqttQueue` and can subscribe, unsubscribe, publish, and receive messages.
@@ -29,7 +29,7 @@ The client connects to `127.0.0.1:1883` by default. Each client process creates 
 
 ### Prerequisites and build
 
-Install the .NET 10 SDK. From the repository root, build Core first, then the MQTT solution:
+Install the .NET 11 SDK. From the repository root, build Core first, then the MQTT solution:
 
 ```shell
 dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj

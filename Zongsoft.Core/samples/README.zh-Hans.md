@@ -14,7 +14,7 @@
 | [spooler](spooler) | 在并行负载下演示 `Spooler<T>` 批处理及重复值输入。 |
 | [superviser](superviser) | 演示受督对象生命周期、失活、失败处理和手动移除。 |
 
-所有项目均面向 .NET 10。在仓库根目录构建完整范例解决方案：
+所有项目均面向 .NET 11。在仓库根目录构建完整范例解决方案：
 
 ```shell
 dotnet build Zongsoft.Core/samples/samples.slnx

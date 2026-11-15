@@ -139,6 +139,20 @@ internal static class XmlConfigurationReader
 	internal static IDictionary<string, string> CreateData() => new ConfigurationData();
 
 	internal static IReadOnlyList<XmlConfigurationInstruction> GetInstructions(IDictionary<string, string> data) => data is ConfigurationData configuration ? configuration.Instructions : [];
+
+	internal static IEnumerable<string> GetDeclaredChildKeys(IDictionary<string, string> data, string path)
+	{
+		var prefix = string.IsNullOrEmpty(path) ? string.Empty : path + ConfigurationPath.KeyDelimiter;
+
+		foreach(var key in data.Keys)
+		{
+			if(key.Length <= prefix.Length || !key.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+				continue;
+
+			var separator = key.IndexOf(':', prefix.Length);
+			yield return separator < 0 ? key[prefix.Length..] : key[prefix.Length..separator];
+		}
+	}
 	#endregion
 
 	#region 私有方法
@@ -153,7 +167,7 @@ internal static class XmlConfigurationReader
 
 	#region 配置数据
 	//将指令与同次读取的数据一起发布；文件基类清空数据时也自然清空指令视图。
-	private sealed class ConfigurationData() : Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+	private sealed class ConfigurationData() : OrderedDictionary<string, string>(StringComparer.OrdinalIgnoreCase)
 	{
 		public IReadOnlyList<XmlConfigurationInstruction> Instructions { get; set; } = [];
 	}

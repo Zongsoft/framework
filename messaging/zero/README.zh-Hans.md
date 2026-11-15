@@ -26,7 +26,7 @@ Zongsoft.Messaging.ZeroMQ 是基于 [NetMQ](https://github.com/zeromq/netmq) 的
 - 支持超过指定阈值后使用 Brotli、GZip、ZLib 或 Deflate 压缩消息负载；
 - 支持即时最多一次广播，以及由 Broker 持久接纳、显式确认和竞争消费的至少一次投递；
 - 支持独立运行以及 Zongsoft 插件化宿主；
-- 支持 .NET 8、.NET 9 和 .NET 10。
+- 支持 .NET 10 和 .NET 11。
 
 <a name="installation"></a>
 ## 安装
@@ -299,7 +299,7 @@ await channel.SendAsync(eventContext);
 <a name="samples"></a>
 ## 范例与排障
 
-[.NET 10 范例](samples)包含交互式交换服务器和客户端。先启动服务器，再分别启动订阅客户端和发布客户端。具体命令参见[范例指南](samples/README.zh-Hans.md)。
+[.NET 11 范例](samples)包含交互式交换服务器和客户端。先启动服务器，再分别启动订阅客户端和发布客户端。具体命令参见[范例指南](samples/README.zh-Hans.md)。
 
 无法收到消息时：
 

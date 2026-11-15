@@ -22,12 +22,12 @@ description: 修改或审查 Zongsoft.Intelligences 的 Assistant、聊天会话
 - ChatOptions 的 ConversationId 会被写入；共享选项与同一会话并发请求可能互相影响。
 - Manager 的 Current 不是 HTTP 请求局部状态。多个用户必须有明确会话归属和授权，不能把 Current 当作每用户隔离。
 - Abandon 会调用 session.Dispose，后者释放保存的 service 并清理历史；Manager 创建的会话共享传入 service，修改释放策略要验证兄弟会话是否受影响。
-- 会话枚举在 NET9_0_OR_GREATER 走缓存 Keys，在 .NET 8 抛 NotSupportedException；跨框架不可宣称完全一致。
+- 会话枚举使用内存缓存的 Keys 集合。
 
 ## Web、工具与验证
 
 - Web Chat 路径在找不到指定会话时可回退无状态调用；历史查询与显式会话操作的错误语义需分别验证。
 - 工具调用是应用能力执行，不因模型输出可信。授权、参数校验、调用次数与副作用控制留在工具边界。
 - 最小目标为 `src/Zongsoft.Intelligences.csproj`，Web 变化再选 `api/Zongsoft.Intelligences.Web.csproj`；当前没有独立测试项目。
-- 使用替身 IChatService 覆盖普通响应、增量输出、工具内容、取消、半途枚举、重复释放、会话切换及 .NET 8 枚举。
+- 使用替身 IChatService 覆盖普通响应、增量输出、工具内容、取消、半途枚举、重复释放、会话切换及会话枚举。
 - 不用真实对话或付费请求作默认测试；真实 Ollama 验证需指定本地端点、模型和资源预算。

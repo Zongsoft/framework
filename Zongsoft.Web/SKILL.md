@@ -41,7 +41,21 @@ Core 只解析通用网络值；HTTP 基路径限制、Kestrel 承载转换及�
 
 按真实本地连接、请求类别和原始 URI 路径选择范围；基路径忽略大小写及可选尾斜杠，后续业务路径保持协议语义，不改写源配置或请求。已解析路径不得进入另一逻辑范围；这是拒绝校验，不改派后端。WebEndpointFeature 固定选择结果及 Kind，WebEndpointMetadata 关联范围与类别。中间件和 MatcherPolicy 为 WebEndpointExtension 的私有嵌套类，测试通过公开入口执行。Web.Grpc 将 Handler 服务、区域 fallback 和区域反射放入带范围元数据的 MapGroup；关闭上游全局 unknown-service/method fallback，未知 RPC 不回退到其它范围。主库不引入 gRPC 依赖。HTTP/3 仅声明及配置投影通过不代表 QUIC 运行验收通过。
 
-主库测试为 test/Hosting 的 KestrelUtilityTest、WebEndpointCollectionTest 与 WebEndpointPipelineTest，不引用 gRPC；协议专项在 grpc/test 的独立项目中，通过公开注册和真实 ASP.NET 管线验证，不开放内部方法。grpc 与 openapi 均以 src 存放主项目和插件构件，test 存放测试；README 保留在各扩展根目录。OpenAPI 暂无独立测试项目，test 目录保留说明。Release 使用项目指定的 Core/Web 包，必须与当前异步契约匹配；发布前使用隔离本地包源验证 Release 依赖，Debug 本地引用构建不代替包依赖验证。
+主库测试为 test/Hosting 的 KestrelUtilityTest、WebEndpointCollectionTest 与 WebEndpointPipelineTest，不引用 gRPC；协议专项在 grpc/test 的独立项目中，通过公开注册和真实 ASP.NET 管线验证，不开放内部方法。grpc 与 openapi 均以 src 存放主项目和插件构件，test 存放独立测试，README 保留在各扩展根目录。Release 使用项目指定的 Core/Web 包，必须与当前异步契约匹配；发布前使用隔离本地包源验证 Release 依赖，Debug 本地引用构建不代替包依赖验证。
+
+## OpenAPI 文档与 Scalar
+
+[路径生成器](openapi/src/DocumentGenerator.Paths.cs) 从控制器描述和运行时路由构造操作。只有进入文档的操作及其祖先需要导航 Tag。Tag 生成器按模块和服务命名空间逐级关联原生 parent，命名空间前缀对应已发现的服务时复用其 Tag。操作引用服务限定名，目录 ID 包含作用域，summary 仅用于显示。Tag 按名称作序数排序，父子关系决定展示层级。
+
+文档端点按注册实例、Request.PathBase 和选定环境名缓存同一文档的 JSON 和 YAML，缓存不依赖请求 Host。OpenAPI.NET 以 3.2 写出文档，版本写入器只将根 openapi 字段的 3.2.0 更新为 3.2.1。Scalar 使用 Modern 布局渲染原生 Tag 层级。x-scalar-environments 的变量写成 name/value 条目数组。Microsoft.AspNetCore.OpenApi 10.x 的 2.x 库依赖与该插件直接使用的 Microsoft.OpenApi 3.x 应在部署层保持隔离。
+
+服务器列表将保留名称 current 放在首位，其余服务器、认证方案及服务器变量枚举值按 XML 声明顺序输出。当前站点的默认 URL 为已转义的 PathBase 或 /，也可通过配置显式覆盖。ServerOption.Name 写入 OpenAPI name，Description 单独用于显示。服务器变量仅在 Values 非空时输出 enum，并校验默认值属于枚举。服务器变量按 URL 模板中首次出现的位置排序，未使用的变量置后。默认选项提供当前站点、主机端口和子域名站点模式；完整地址仅通过显式配置提供。常用站点是 sites 服务器的 site 变量枚举，由 Scalar 渲染为原生下拉框。Scalar 认证持久化读取 AuthenticationOption.Persisted，不预填随机凭据。
+
+配置了绝对 HTTP(S) Url 的 EnvironmentOption 由 WebInitializer 启动时校验。/scalar/ 使用 Scalar 原生文档选择器，默认的手动文档 v1 显示为 none 并排在第一项。其余环境按 XML 子键声明顺序注册。发布构建需要包含 `GetDeclaredOptionKeys` 的 Zongsoft.Core 包。配置了 URL 的环境使用 /openapi/environments/{documentName}.{extension}。环境名用作文档标题和网址片段。环境文档路径按完整环境名查找，未知名称返回 404。每份环境文档只写自己的 Server Object 和 Scalar 变量，x-scalar-active-environment 使用目标环境名。手动文档使用宿主环境名和手动服务器列表。
+
+手动和环境文档共享生成锁，因为操作发现会填充控制器模型的元数据。Scalar 页面将 AuthenticationOption.Persisted 映射到原生的 persistAuth。Credential 方案声明为 Authorization 请求头类型的 API Key，由用户填写完整头值。
+
+[OpenAPI 测试](openapi/test/Zongsoft.Web.OpenApi.Tests.csproj) 通过本地 ASP.NET Core 管线读取两种文档，覆盖多级标签、父级服务自有操作、同名目录、路径前导斜杠、约定式路由、同操作路由别名、Scalar 环境变量和版本字段，并验证当前站点、服务器排序、路径前缀隔离、显式公开地址、自由变量与枚举限制，并从随插件提供的选项文件验证默认模式及 JSON/YAML 变量顺序。宿主集成验收使用部署后的插件和浏览器。
 
 ## 验证
 

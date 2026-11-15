@@ -7,12 +7,12 @@
 
 ## Purpose and Startup
 
-This interactive .NET 10 program assembles resilience features around a simulated operation; it needs no database or remote service. [Program.cs](Program.cs) registers the commands, builds a pipeline for `execute`, and simulates delay or failure. For application-side plugin composition, see the [library guide](../README.md).
+This interactive .NET 11 program assembles resilience features around a simulated operation; it needs no database or remote service. [Program.cs](Program.cs) registers the commands, builds a pipeline for `execute`, and simulates delay or failure. For application-side plugin composition, see the [library guide](../README.md).
 
 From the repository root, build Core first because this sample's Debug configuration references its output DLL, then start the sample in an interactive terminal:
 
 ```shell
-dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -c Debug -f net10.0 -p:GeneratePackageOnBuild=false
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -c Debug -f net11.0 -p:GeneratePackageOnBuild=false
 dotnet run --project externals/polly/samples/Zongsoft.Externals.Polly.Samples.csproj -c Debug
 ```
 

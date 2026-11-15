@@ -9,7 +9,7 @@
 
 本交互式范例演示 `Zongsoft.Messaging.RabbitMQ` 的队列、消息发布、订阅和消息确认 API。
 
-项目面向 .NET 10，默认连接 `127.0.0.1:5672` 的 RabbitMQ，用户名为 `program`、密码为 `xxxxxx`。运行前请修改 `Program.cs` 中的连接参数，使其与本地代理一致。
+项目面向 .NET 11，默认连接 `127.0.0.1:5672` 的 RabbitMQ，用户名为 `program`、密码为 `xxxxxx`。运行前请修改 `Program.cs` 中的连接参数，使其与本地代理一致。
 
 ## 运行
 

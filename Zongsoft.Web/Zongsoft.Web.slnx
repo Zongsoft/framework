@@ -4,4 +4,5 @@
 	<Project Path="grpc/src/Zongsoft.Web.Grpc.csproj" />
 	<Project Path="grpc/test/Zongsoft.Web.Grpc.Tests.csproj" />
 	<Project Path="openapi/src/Zongsoft.Web.OpenApi.csproj" />
+	<Project Path="openapi/test/Zongsoft.Web.OpenApi.Tests.csproj" />
 </Solution>

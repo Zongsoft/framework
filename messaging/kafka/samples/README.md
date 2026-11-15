@@ -9,7 +9,7 @@
 
 This interactive sample demonstrates the `Zongsoft.Messaging.Kafka` queue, publisher, subscriber, and message acknowledgment APIs.
 
-The project targets .NET 10 and expects a Kafka broker at `127.0.0.1:9092`. Update the connection settings in `Program.cs` if the broker uses a different endpoint or authentication settings.
+The project targets .NET 11 and expects a Kafka broker at `127.0.0.1:9092`. Update the connection settings in `Program.cs` if the broker uses a different endpoint or authentication settings.
 
 ## Run
 

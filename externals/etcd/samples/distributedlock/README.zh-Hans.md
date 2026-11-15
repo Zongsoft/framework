@@ -10,12 +10,12 @@
 
 ## 前置条件
 
-需要 .NET 10 SDK，以及位于 `127.0.0.1:2379` 的临时 etcd v3 实例。两个程序共用 `samples:distributed-lock` 命名空间，勿与生产混用。Debug 项目引用本地构建的 Core DLL。
+需要 .NET 11 SDK，以及位于 `127.0.0.1:2379` 的临时 etcd v3 实例。两个程序共用 `samples:distributed-lock` 命名空间，勿与生产混用。Debug 项目引用本地构建的 Core DLL。
 
 在 framework 根目录先准备 Core：
 
 ```shell
-dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -f net10.0
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -f net11.0
 ```
 
 ## 运行步骤

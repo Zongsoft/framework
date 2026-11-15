@@ -43,14 +43,12 @@
 		<PackageReference Include="MySqlConnector" VersionOverride="2.4.0" />
 		<PackageReference Include="Microsoft.Data.SqlClient" VersionOverride="7.0.2" />
 		<PackageReference Include="System.Security.Cryptography.Pkcs" VersionOverride="9.0.21" />
-		<PackageReference Include="Microsoft.Extensions.Caching.Memory" VersionOverride="9.0.20" Condition="'$(TargetFramework)'!='net10.0'" />
-		<PackageReference Include="Microsoft.Extensions.Caching.Memory" Condition="'$(TargetFramework)'=='net10.0'" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Memory" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
 		<PackageReference Include="Microsoft.Extensions.FileProviders.Physical" />
 		<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" VersionOverride="9.0.20" Condition="'$(TargetFramework)'!='net10.0'" />
-		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Condition="'$(TargetFramework)'=='net10.0'" />
+		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
 		<PackageReference Include="Microsoft.NET.Test.Sdk" />
 		<PackageReference Include="xunit.v3" />
 		<PackageReference Include="xunit.v3.core" />
@@ -60,15 +58,7 @@
 		<PackageReference Include="xunit.runner.visualstudio" />
 	</ItemGroup>
 
-	<ItemGroup Condition="$(TargetFramework) == 'net8.0'">
-		<PackageReference Include="Npgsql" VersionOverride="8.0.9" />
-	</ItemGroup>
-
-	<ItemGroup Condition="$(TargetFramework) == 'net9.0'">
-		<PackageReference Include="Npgsql" VersionOverride="9.0.5" />
-	</ItemGroup>
-
-	<ItemGroup Condition="$(TargetFramework) == 'net10.0'">
+	<ItemGroup>
 		<PackageReference Include="Npgsql" VersionOverride="10.0.3" />
 	</ItemGroup>
 

@@ -10,10 +10,10 @@
 
 ## 前置条件与运行
 
-需要 .NET 10 与临时 etcd v3 端点。Debug 构建依赖本地 Core DLL。在 framework 根目录执行：
+需要 .NET 11 与临时 etcd v3 端点。Debug 构建依赖本地 Core DLL。在 framework 根目录执行：
 
 ```shell
-dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -f net10.0
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -f net11.0
 dotnet run --project externals/etcd/samples/sequence -- "server=127.0.0.1;port=2379"
 ```
 

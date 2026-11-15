@@ -2,7 +2,7 @@
 
 [English](README.md) | [简体中文](README.zh-Hans.md)
 
-两个范例项目面向 .NET 10，Net 库支持 .NET 8、9、10。安装 .NET 10 SDK，运行前先以 Debug 构建本地 Core。默认端点为 `127.0.0.1:7969`，无需数据库、Broker 或真实设备。
+两个范例项目面向 .NET 11，Net 库支持 .NET 11、11。安装 .NET 11 SDK，运行前先以 Debug 构建本地 Core。默认端点为 `127.0.0.1:7969`，无需数据库、Broker 或真实设备。
 
 | 项目 | 用途 |
 | --- | --- |
@@ -15,8 +15,8 @@
 先在仓库根目录执行一次 `dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -c Debug -p:GeneratePackageOnBuild=false`，然后在两个终端分别执行：
 
 ```shell
-dotnet run --project Zongsoft.Net/samples/server/Zongsoft.Net.Samples.Server.csproj -f net10.0 -- 127.0.0.1 7969
-dotnet run --project Zongsoft.Net/samples/client/Zongsoft.Net.Samples.Client.csproj -f net10.0 -- 127.0.0.1 7969
+dotnet run --project Zongsoft.Net/samples/server/Zongsoft.Net.Samples.Server.csproj -f net11.0 -- 127.0.0.1 7969
+dotnet run --project Zongsoft.Net/samples/client/Zongsoft.Net.Samples.Client.csproj -f net11.0 -- 127.0.0.1 7969
 ```
 
 客户端命令：`connect`、`disconnect`、`info`、`send <消息>`。发送前尚未建连时自动建连。服务端命令：`start`、`stop`、`info`、`broadcast <消息>`。普通请求收到 `ACK: <消息>`，只回复发起连接；`PING` 返回 `PONG`。广播输出成功、失败和容量拒绝数。
@@ -30,8 +30,8 @@ dotnet run --project Zongsoft.Net/samples/client/Zongsoft.Net.Samples.Client.csp
 普通请求响应：
 
 ```shell
-dotnet run --project Zongsoft.Net/samples/server/Zongsoft.Net.Samples.Server.csproj -f net10.0 -- 127.0.0.1 7969 --count 1
-dotnet run --project Zongsoft.Net/samples/client/Zongsoft.Net.Samples.Client.csproj -f net10.0 -- 127.0.0.1 7969 --smoke
+dotnet run --project Zongsoft.Net/samples/server/Zongsoft.Net.Samples.Server.csproj -f net11.0 -- 127.0.0.1 7969 --count 1
+dotnet run --project Zongsoft.Net/samples/client/Zongsoft.Net.Samples.Client.csproj -f net11.0 -- 127.0.0.1 7969 --smoke
 ```
 
 自定义分帧：共享的 `LinePacketizer` 派生自 Net 的 `PacketizerBase<ReadOnlySequence<byte>>`，实现 `GetLength`、`Pack`、`Unpack`，借用序列沿用默认无操作的 `Release`。两端都加 `--custom`；服务端仍用 `--count 1`，客户端仍用 `--smoke`。文本正文不能包含 LF，最大 64 KiB，尾部的 LF 是线协议的一部分。Headed 与此协议不能混用。

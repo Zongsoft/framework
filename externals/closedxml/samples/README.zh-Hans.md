@@ -11,10 +11,10 @@
 
 ## 运行
 
-本范例面向 .NET 10，请在仓库根目录运行：
+本范例面向 .NET 11，请在仓库根目录运行：
 
 ```shell
-dotnet run --project externals/closedxml/samples/Zongsoft.Externals.ClosedXml.Samples.csproj -f net10.0
+dotnet run --project externals/closedxml/samples/Zongsoft.Externals.ClosedXml.Samples.csproj -f net11.0
 ```
 
 ## 导出

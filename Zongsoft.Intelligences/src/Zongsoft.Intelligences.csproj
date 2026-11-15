@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>0.8.0</Version>
+		<Version>1.0.0</Version>
 		<Product>Zongsoft Intelligences Library</Product>
 		<Description>This is a library that integrates AI and semantic kernel functions.</Description>
 		<IncludeSymbols>true</IncludeSymbols>
@@ -16,6 +16,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
 		<PackageReference Include="Microsoft.Extensions.Configuration" />
 		<PackageReference Include="Microsoft.Extensions.AI" VersionOverride="10.10.0" />
 		<PackageReference Include="Microsoft.Extensions.AI.Abstractions" VersionOverride="10.10.0" />
@@ -36,7 +37,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.67.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="8.0.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

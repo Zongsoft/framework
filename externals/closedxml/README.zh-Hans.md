@@ -200,7 +200,7 @@ await _renderer.RenderAsync(output, Templates.ApartmentUsage.Template, data, par
 在仓库根目录运行：
 
 ```shell
-dotnet run --project externals/closedxml/samples/Zongsoft.Externals.ClosedXml.Samples.csproj -f net10.0
+dotnet run --project externals/closedxml/samples/Zongsoft.Externals.ClosedXml.Samples.csproj -f net11.0
 ```
 
 可用命令：
@@ -219,7 +219,7 @@ dotnet run --project externals/closedxml/samples/Zongsoft.Externals.ClosedXml.Sa
 
 ```shell
 dotnet build externals/closedxml/Zongsoft.Externals.ClosedXml.slnx --no-incremental
-dotnet test externals/closedxml/test/Zongsoft.Externals.ClosedXml.Tests.csproj -f net10.0
+dotnet test externals/closedxml/test/Zongsoft.Externals.ClosedXml.Tests.csproj -f net11.0
 ```
 
 ## 许可证

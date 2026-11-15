@@ -15,6 +15,9 @@
  */
 
 using System;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using GrapeCity.ActiveReports;
@@ -27,6 +30,10 @@ namespace Zongsoft.Externals.Grapecity.Reporting;
 
 public class ReportDataModel : IReportDataModel
 {
+	#region 静态字段
+	private static readonly MethodInfo _materialize = typeof(ReportDataModel).GetMethod(nameof(MaterializeAsync), BindingFlags.Static | BindingFlags.NonPublic);
+	#endregion
+
 	#region 构造函数
 	public ReportDataModel(IDataSet dataSet, IReportDataSource source)
 	{
@@ -52,5 +59,31 @@ public class ReportDataModel : IReportDataModel
 	public Paging Paging { get; set; }
 	public IReportDataSource Source { get; }
 	public IDictionary<string, string> Settings { get; }
+	#endregion
+
+	#region 公共方法
+	public async ValueTask<object> LoadAsync(IReportDataLoader loader, IReport report, CancellationToken cancellation = default)
+	{
+		ArgumentNullException.ThrowIfNull(loader);
+		cancellation.ThrowIfCancellationRequested();
+
+		var data = await loader.LoadAsync(report, this, cancellation);
+		if(!Zongsoft.Collections.Enumerable.IsAsyncEnumerable(data, out var elementType))
+			return data;
+
+		return await (Task<object>)_materialize.MakeGenericMethod(elementType).Invoke(null, [data, cancellation]);
+	}
+	#endregion
+
+	#region 私有方法
+	private static async Task<object> MaterializeAsync<T>(IAsyncEnumerable<T> source, CancellationToken cancellation)
+	{
+		var rows = new List<T>();
+
+		await foreach(var row in source.WithCancellation(cancellation))
+			rows.Add(row);
+
+		return rows.ToArray();
+	}
 	#endregion
 }

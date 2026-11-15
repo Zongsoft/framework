@@ -16,6 +16,8 @@
 
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
@@ -45,14 +47,15 @@ public class TemplateController : ControllerBase
 
 	#region 公共方法
 	[HttpGet("List")]
-	public IActionResult GetTemplates()
+	public async Task<IActionResult> GetTemplatesAsync(CancellationToken cancellation = default)
 	{
 		var providers = _serviceProvider.ResolveAll<IReportArchiveLocator>();
 		var archives = new List<ReportArchive>();
 
 		foreach(var provider in providers)
 		{
-			archives.AddRange(provider.Find("Template"));
+			await foreach(var archive in provider.FindAsync("Template", cancellation))
+				archives.Add(archive);
 		}
 
 		//注意：不能返回204(NoContent)或无内容的200(OK)，因为那会导致报表设计器JS端的脚本错误
@@ -62,12 +65,12 @@ public class TemplateController : ControllerBase
 	}
 
 	[HttpGet("{key}/Content")]
-	public IActionResult GetTemplateContent(string key)
+	public async Task<IActionResult> GetTemplateContentAsync(string key, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(key))
 			return this.BadRequest();
 
-		var report = this.GetReport(key);
+		var report = await this.GetReportAsync(key, cancellation);
 
 		if(report != null)
 		{
@@ -83,12 +86,12 @@ public class TemplateController : ControllerBase
 	}
 
 	[HttpGet("{key}/Thumbnail")]
-	public IActionResult GetTemplateThumbnail(string key)
+	public async Task<IActionResult> GetTemplateThumbnailAsync(string key, CancellationToken cancellation = default)
 	{
 		if(string.IsNullOrEmpty(key))
 			return this.BadRequest();
 
-		var report = this.GetReport(key);
+		var report = await this.GetReportAsync(key, cancellation);
 
 		if(report != null)
 		{
@@ -103,16 +106,15 @@ public class TemplateController : ControllerBase
 	#endregion
 
 	#region 私有方法
-	private GrapeCity.ActiveReports.PageReportModel.Report GetReport(string key)
+	private async Task<GrapeCity.ActiveReports.PageReportModel.Report> GetReportAsync(string key, CancellationToken cancellation)
 	{
 		var providers = _serviceProvider.ResolveAll<IReportArchiveLocator>();
 
 		foreach(var provider in providers)
 		{
-			using var stream = provider.Open(key, out var archive);
-
-			if(stream != null)
-				return Grapecity.Reporting.Report.Open(stream)?.AsReport();
+			var archive = await provider.OpenAsync(key, cancellation);
+			if(archive.Stream != null)
+				return (await Grapecity.Reporting.Report.OpenAsync(archive.Stream, cancellation))?.AsReport();
 		}
 
 		return null;

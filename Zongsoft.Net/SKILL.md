@@ -112,7 +112,7 @@ description: 修改或审查 Zongsoft.Net 的 TCP 通信、Web 文件系统、�
 
 ## 多目标与依赖
 
-- 三个目标共用收发、生命周期及时间抽象；条件编译只用于真实 API 差异的小范围实现。例如使用 System.Threading.Lock 时以 NET9_0_OR_GREATER 区分锁类型，不复制核心流程。
+- 两个目标共用收发、生命周期及时间抽象；条件编译只用于真实 API 差异的小范围实现。
 - 新增目标框架专属分支前核实 API 可用性与收益，为其他目标提供同语义实现；不为 JIT、GC 或 Socket 的运行时内部优化制造分支。
 - 生产依赖与部署清单保持一致，BenchmarkDotNet 只属于性能工具。验证 runtimeconfig.json、deps.json 和实际运行，确保不引入 Microsoft.AspNetCore.App；只含目标 Runtime 的隔离运行验证与静态依赖检查分别记录。
 

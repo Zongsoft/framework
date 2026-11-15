@@ -26,7 +26,7 @@ Load `Zongsoft.Externals.Grapecity.Web.plugin` after the core GrapeCity and repo
 dotnet add package Zongsoft.Externals.Grapecity.Web
 ```
 
-The registered `IApplicationInitializer<IApplicationBuilder>` calls `UseReporting` and `UseDesigner` with the shared `/Grapecity/Reporting` prefix, compression, a custom report store, and a data-source callback. A configured `IReportDataLoader` is required for data-bound reports; `IReportLocator` implementations supply definitions.
+The registered `IApplicationInitializer<IApplicationBuilder>` calls `UseReporting` and `UseDesigner` with the shared `/Grapecity/Reporting` prefix, compression, a custom report store, and a data-source callback. A configured `IReportDataLoader` supplies data asynchronously, and `IReportLocator` implementations supply definitions. ActiveReports 15 waits for results in its synchronous viewer and designer callbacks. Asynchronous data sequences are materialized in memory before the callback returns.
 
 ```http
 GET /Grapecity/Reporting/Reports

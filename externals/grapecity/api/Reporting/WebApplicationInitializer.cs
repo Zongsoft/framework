@@ -15,11 +15,10 @@
  */
 
 using System;
-using System.Linq;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 
 using GrapeCity.ActiveReports;
 using GrapeCity.ActiveReports.Aspnetcore.Viewer;
@@ -60,40 +59,24 @@ public class WebApplicationInitializer : IApplicationInitializer<IApplicationBui
 	#endregion
 
 	#region 私有方法
-	private static object GetData(GrapeCity.ActiveReports.Rendering.LocateDataSourceArgs args)
+	private static object GetData(GrapeCity.ActiveReports.Rendering.LocateDataSourceArgs args) =>
+		GetData(args.DataSet, args.Report.DataSources);
+
+	private static object GetData(GrapeCity.ActiveReports.Web.Viewer.LocateDataSourceArgs args) =>
+		GetData(args.DataSet, args.Report.DataSources);
+
+	private static object GetData(GrapeCity.ActiveReports.PageReportModel.IDataSet dataSet, IEnumerable<GrapeCity.ActiveReports.PageReportModel.DataSource> sources)
 	{
-		var source = GetDataSource(args.DataSet.Query.DataSourceName, args.Report.DataSources);
+		var source = GetDataSource(dataSet.Query.DataSourceName, sources);
+		if(source == null)
+			return null;
 
-		if(source != null)
-		{
-			var model = source.CreateModel(args.DataSet);
-			var loader = ApplicationContext.Current.Services.Resolve<IReportDataLoader>();
+		var loader = ApplicationContext.Current.Services.Resolve<IReportDataLoader>();
+		if(loader == null)
+			return null;
 
-			if(loader != null)
-			{
-				return loader.Load(null, model);
-			}
-		}
-
-		return null;
-	}
-
-	private static object GetData(GrapeCity.ActiveReports.Web.Viewer.LocateDataSourceArgs args)
-	{
-		var source = GetDataSource(args.DataSet.Query.DataSourceName, args.Report.DataSources);
-
-		if(source != null)
-		{
-			var model = source.CreateModel(args.DataSet);
-			var loader = ApplicationContext.Current.Services.Resolve<IReportDataLoader>();
-
-			if(loader != null)
-			{
-				return loader.Load(null, model);
-			}
-		}
-
-		return null;
+		var model = source.CreateModel(dataSet);
+		return Task.Run(() => model.LoadAsync(loader, null).AsTask()).GetAwaiter().GetResult();
 	}
 
 	private static ReportDataSource GetDataSource(string name, IEnumerable<GrapeCity.ActiveReports.PageReportModel.DataSource> sources)

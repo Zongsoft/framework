@@ -12,7 +12,7 @@
 | [server](server) | Starts an OPC UA server with an in-memory address space containing folders, variables, objects, and arrays. |
 | [client](client) | Connects to an OPC UA server and exercises browsing, reading, writing, subscriptions, and monitoring. |
 
-Both projects target .NET 10. The server uses the OPC UA endpoint settings supplied on its command line; the client's `connect` command defaults to `opc.tcp://localhost:4840` with the additional identity settings declared in its source.
+Both projects target .NET 11. The server uses the OPC UA endpoint settings supplied on its command line; the client's `connect` command defaults to `opc.tcp://localhost:4840` with the additional identity settings declared in its source.
 
 ## Run
 

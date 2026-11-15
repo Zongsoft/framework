@@ -7,12 +7,12 @@
 
 ## 用途与启动
 
-这个 .NET 10 交互程序围绕模拟操作装配韧性策略，不依赖数据库或远程服务。[Program.cs](Program.cs) 注册命令，在 `execute` 时构建管线，并模拟延迟或失败。应用侧的插件装配方式见[类库说明](../README.zh-Hans.md)。
+这个 .NET 11 交互程序围绕模拟操作装配韧性策略，不依赖数据库或远程服务。[Program.cs](Program.cs) 注册命令，在 `execute` 时构建管线，并模拟延迟或失败。应用侧的插件装配方式见[类库说明](../README.zh-Hans.md)。
 
 在仓库根目录先构建 Core，因为范例的 Debug 配置直接引用其输出 DLL，然后在交互终端中启动范例：
 
 ```shell
-dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -c Debug -f net10.0 -p:GeneratePackageOnBuild=false
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -c Debug -f net11.0 -p:GeneratePackageOnBuild=false
 dotnet run --project externals/polly/samples/Zongsoft.Externals.Polly.Samples.csproj -c Debug
 ```
 

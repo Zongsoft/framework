@@ -83,11 +83,9 @@ LeastOnce 使用 ROUTER/DEALER 命令 `REGISTER`、`UNREGISTER`、`PING`、`PUBL
 对每个受影响目标框架先构建 Core，再构建本适配器：
 
 ```powershell
-dotnet build Zongsoft.Core\src\Zongsoft.Core.csproj -f net8.0
-dotnet build Zongsoft.Core\src\Zongsoft.Core.csproj -f net9.0
+dotnet build Zongsoft.Core\src\Zongsoft.Core.csproj -f net11.0
 dotnet build Zongsoft.Core\src\Zongsoft.Core.csproj -f net10.0
-dotnet build messaging\zero\src\Zongsoft.Messaging.ZeroMQ.csproj -f net8.0
-dotnet build messaging\zero\src\Zongsoft.Messaging.ZeroMQ.csproj -f net9.0
+dotnet build messaging\zero\src\Zongsoft.Messaging.ZeroMQ.csproj -f net11.0
 dotnet build messaging\zero\src\Zongsoft.Messaging.ZeroMQ.csproj -f net10.0
 ```
 

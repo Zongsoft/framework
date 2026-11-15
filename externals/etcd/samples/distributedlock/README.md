@@ -10,12 +10,12 @@ A **lease** expires ownership if it is not renewed. A **fencing token** is a mon
 
 ## Prerequisites
 
-Use .NET 10 SDK and a disposable etcd v3 instance on `127.0.0.1:2379`. Both programs use namespace `samples:distributed-lock`; do not share it with production. The Debug projects reference the locally built Core DLL.
+Use .NET 11 SDK and a disposable etcd v3 instance on `127.0.0.1:2379`. Both programs use namespace `samples:distributed-lock`; do not share it with production. The Debug projects reference the locally built Core DLL.
 
 From the framework root, prepare Core:
 
 ```shell
-dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -f net10.0
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -f net11.0
 ```
 
 ## Run

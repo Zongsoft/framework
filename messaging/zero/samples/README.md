@@ -12,7 +12,7 @@
 | [server](server) | Runs the ZeroMQ queue server with separate incoming and outgoing endpoints. |
 | [client](client) | Demonstrates topic subscription, message publishing, and received-message handling through `ZeroQueue`. |
 
-Both projects target .NET 10. The server listens for endpoint discovery on port `7969` and binds incoming port `32101` plus outgoing port `32102`. The client connects to `127.0.0.1:7969` and obtains the message endpoints from the server.
+Both projects target .NET 11. The server listens for endpoint discovery on port `7969` and binds incoming port `32101` plus outgoing port `32102`. The client connects to `127.0.0.1:7969` and obtains the message endpoints from the server.
 
 ## Run
 

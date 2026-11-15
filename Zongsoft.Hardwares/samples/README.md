@@ -8,10 +8,10 @@ This read-only console application demonstrates [HardwareCollector and HardwareP
 
 ## Prerequisites and Run
 
-Use .NET 10 SDK on Windows, Linux or macOS. Results depend on available OS facilities, permissions and whether the process runs in a container. Debug references require the locally built Core DLL. From the framework root:
+Use .NET 11 SDK on Windows, Linux or macOS. Results depend on available OS facilities, permissions and whether the process runs in a container. Debug references require the locally built Core DLL. From the framework root:
 
 ```shell
-dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -f net10.0
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -f net11.0
 dotnet run --project Zongsoft.Hardwares/samples/Zongsoft.Hardwares.Samples.csproj
 ```
 

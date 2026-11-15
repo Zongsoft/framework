@@ -14,7 +14,7 @@
 
 ## 运行方式
 
-从框架根目录运行，需要 .NET 10 SDK 和 .NET 8、9、10 Runtime。Debug 构建使用本地依赖程序集，因此先构建 Core。测试平台为 VSTest，框架为 xUnit v3。
+从框架根目录运行，需要 .NET 11 SDK 和 .NET 10、11 Runtime。Debug 构建使用本地依赖程序集，因此先构建 Core。测试平台为 VSTest，框架为 xUnit v3。
 
 ```powershell
 dotnet build ./Zongsoft.Core/src/Zongsoft.Core.csproj -p:GeneratePackageOnBuild=false
@@ -28,7 +28,7 @@ dotnet test ./Zongsoft.Plugins/test/unit/Zongsoft.Plugins.Tests.csproj --no-buil
 dotnet test ./Zongsoft.Plugins/test/integration/Zongsoft.Plugins.Tests.slnx -p:GeneratePackageOnBuild=false
 ```
 
-添加 `-f net8.0`、`-f net9.0` 或 `-f net10.0` 可选择单个目标框架。宿主生命周期用例通过 PATH 中的 `dotnet` 运行当前目标框架的测试程序集。基础生命周期用例的终端执行器使用内存替身；信号用例使用真实控制台执行器和标准输入读取器：Windows 创建独立隐藏控制台，Linux 保持重定向管道打开。不启动监听器或外部服务。超时仅结束测试自己的子进程；完成标记验证停止操作确实返回调用方。
+添加 `-f net10.0` 或 `-f net11.0` 可选择单个目标框架。宿主生命周期用例通过 PATH 中的 `dotnet` 运行当前目标框架的测试程序集。基础生命周期用例的终端执行器使用内存替身；信号用例使用真实控制台执行器和标准输入读取器：Windows 创建独立隐藏控制台，Linux 保持重定向管道打开。不启动监听器或外部服务。超时仅结束测试自己的子进程；完成标记验证停止操作确实返回调用方。
 
 ## 生命周期断言
 

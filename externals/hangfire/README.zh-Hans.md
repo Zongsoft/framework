@@ -19,7 +19,7 @@
 - 将作业分派给 Zongsoft `IHandler` 实例的后台 `Server` 工作者；
 - 可选的 Redis 存储和 ASP.NET Core Dashboard 集成。
 
-本库支持 .NET 8、.NET 9 和 .NET 10。调度器或服务器启动前必须先配置 Hangfire 存储。
+本库支持 .NET 10 和 .NET 11。调度器或服务器启动前必须先配置 Hangfire 存储。
 
 ## 程序包
 

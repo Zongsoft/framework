@@ -14,7 +14,7 @@
 
 [**Z**ongsoft.**W**eb.**O**pen**A**pi](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Web/openapi) is the [***O**pen **API***](https://www.openapis.org) plugin library in the [***Z**ongsoft*](https://github.com/Zongsoft/framework) open-source framework. It provides out-of-the-box [***O**pen **API***](https://www.openapis.org) features for [*ASP.NET*](https://learn.microsoft.com/aspnet) applications.
 
-The library automatically discovers the controllers and operations of the current application, generates an **OpenAPI 3.1** document (in `JSON` or `YAML`), and serves it through a dedicated endpoint with an integrated [**Scalar**](https://github.com/scalar/scalar) interactive UI — no business code needs to be modified.
+The plugin discovers the application's controllers and operations and serves **OpenAPI 3.2.1** in JSON and YAML. The built-in [Scalar](https://github.com/scalar/scalar) interface uses the document to display a nested API directory. The plugin targets `net10.0` and `net11.0`.
 
 ## Features
 
@@ -55,7 +55,7 @@ After the host is started, the following endpoints are available:
 | `/openapi/v1.yaml` | OpenAPI document in YAML                       |
 | `/openapi/v1.json` | OpenAPI document in JSON                       |
 | `/openapi/v1.yml`  | alias of the YAML format                       |
-| `/scalar`          | interactive Scalar UI (Swagger-style explorer) |
+| `/scalar/`         | interactive Scalar UI with manual mode and configured environments |
 
 The route pattern is `/openapi/{documentName}.{extension}`, and the default document name is `v1`. If you need a different route, register the endpoint manually:
 
@@ -63,19 +63,23 @@ The route pattern is `/openapi/{documentName}.{extension}`, and the default docu
 app.UseOpenApi("/docs/{documentName}.{extension}");
 ```
 
-## How It Works
+## API directory
 
-### Document generation
+The directory follows the application module, each level of the service namespace, and the service. Nested controllers provide nested service namespaces. Scalar displays these levels as expandable sections. A service can contain its own operations and child sections.
 
-`DocumentGenerator.Generate(context)` builds an `OpenApiDocument` from the `ControllerServiceDescriptorCollection` stored in `ApplicationContext.Current.Properties`:
+Automation can follow `tags[].parent` to navigate the directory and match operation tags against `tags[].name`. `tags[].summary` is the display title. An operation's tag name is the service's qualified name. Both document formats contain the same directory and operations.
 
-- `GenerateEnvironments` — environments list (`x-environment` extension, Scalar active environment, etc.);
-- `GenerateServers` — server list with templated variables;
-- `GenerateSecuritySchemes` — security schemes from the `<authentication>` configuration;
-- `GeneratePaths` — paths, operations and parameters;
-- `GenerateSchemas` — component schemas referenced by the operations.
+Operations with multiple documented routes or methods get unique `operationId` values. The first entry in ordinal path and HTTP-method order retains the original identifier. The other entries include the method and escaped path. Response status codes and payloads require an explicit contract. Generated operations without response metadata carry a generic `default` response.
+
+### Host compatibility
+
+The plugin uses `Microsoft.OpenApi` 3.x on both supported target frameworks. `Microsoft.AspNetCore.OpenApi` 10.x requires `Microsoft.OpenApi` 2.x. A .NET 10 application that requires that generator can serve the two documents from different hosts. [OpenAPI.NET migration guide](https://github.com/microsoft/OpenAPI.NET/blob/main/docs/upgrade-guide-3.md#integrations-with-aspnet-core)
+
+## Routes and parameters
 
 ### Route resolution
+
+Path keys under `paths` start with `/` in both JSON and YAML.
 
 1. **Attribute routing**: paths are resolved from the route templates of the controller/action selectors (`AttributeRouteModel`/`IRouteTemplateProvider`). Templates that are empty or `null` (e.g. a bare `[HttpGet]` without a template) are ignored, because they express an HTTP method predicate only, not a route template.
 2. **Conventional routing**: for operations that have no attribute route templates, the generator queries the runtime route table (`EndpointDataSource` resolved from the request services) and matches the corresponding `RouteEndpoint` by `ControllerActionDescriptor` (controller/action names) and `HttpMethodMetadata`. The template text (`RoutePattern.RawText`, e.g. `/quartz/{controller}/{action}`) is then instantiated with the actual route values from `ControllerActionDescriptor.RouteValues` (e.g. `/quartz/Jobs/Edit`). This guarantees that interfaces such as the SilkierQuartz dashboard are documented with their real URLs instead of being skipped.
@@ -109,17 +113,36 @@ All options are configured under the `/web/openapi` configuration path (see `Zon
 		</headers>
 
 		<servers>
-			<server server.name="ports" url="http://{host}:{port}">
-				<variable variable.name="host" default="localhost">
-					<value>localhost</value>
-					<value>127.0.0.1</value>
+			<server server.name="current" />
+			<server server.name="ports" description="Host and port" url="{scheme}://{host}:{port}">
+				<variable variable.name="scheme" default="http">
+					<value>http</value>
+					<value>https</value>
 				</variable>
+				<variable variable.name="host" default="localhost" />
+				<variable variable.name="port" default="8069" />
+			</server>
+			<server server.name="sites" description="Site, host and port" url="{scheme}://{site}.{host}:{port}">
+				<variable variable.name="scheme" default="http">
+					<value>http</value>
+					<value>https</value>
+				</variable>
+				<variable variable.name="site" default="api.b">
+					<value>api.a</value>
+					<value>api.b</value>
+					<value>api.c</value>
+					<value>api.iot</value>
+					<value>api.gateway</value>
+				</variable>
+				<variable variable.name="host" default="zongsoft.com" />
+				<variable variable.name="port" default="80" />
 			</server>
 		</servers>
 
 		<environments>
 			<environment environment.name="development">
-				<variable variable.name="host" default="192.168.0.101" />
+				<variable variable.name="username" default="" />
+				<variable variable.name="password" default="" />
 			</environment>
 		</environments>
 	</option>
@@ -128,8 +151,11 @@ All options are configured under the `/web/openapi` configuration path (see `Zon
 
 ### Authentication
 
-- `persisted` — whether the selected scheme should be persisted in the Scalar UI;
-- `authenticator` — declares a security scheme:
+Set `authentication persisted="true"` to retain authentication settings in browser storage. The shipped options enable this; without the setting, persistence is disabled. Enter valid credentials in Scalar before calling protected endpoints. The plugin does not prefill a generated credential.
+
+To reuse a Zongsoft login credential, run the sign-in API, then open **Test Request → Auth**, select `credential`, and enter `Credential <id>` in **Value**. Scalar does not extract the ID from the sign-in response. With persistence enabled, Scalar remembers the value per document across reloads. If you change the server address within a document, check that the saved credential still belongs to the target.
+
+- `authenticator` — declares a security scheme. The authentication selector follows XML declaration order:
   - `name` — scheme identifier;
   - `kind` — `http` | `custom` | `oauth2` | `openid`;
   - `scheme` — HTTP authentication scheme name (for `kind="http"`);
@@ -142,33 +168,55 @@ Each `<header>` declares a common request header (`name`/`value`) applied to the
 
 ### Servers & environments
 
-Both servers and environments support templated `url` values with `<variable>` placeholders (`{name}`). Each variable declares its `default` value and an optional list of `<value>` candidates, which the Scalar UI renders as dropdown selections.
+The first server is always `current`. Without an explicit URL it uses the document's origin and the request's `PathBase`, so the actual scheme, host and port are used automatically. A root deployment emits `url: /`; an application mounted at `/gateway/app` emits `url: /gateway/app`. Selecting **Current site** therefore requires no port configuration.
+
+The server selector offers **current**, **ports** and **sites**. **Host and port** uses `{scheme}://{host}:{port}` and **Site, host and port** uses `{scheme}://{site}.{host}:{port}`.
+
+In **sites**, choose a subdomain from the `site` dropdown. It offers `api.a`, `api.b`, `api.c`, `api.iot` and `api.gateway`, with `api.b` selected by default. To change the choices, edit the `<value>` entries on `site`. Enter the host and port in their text fields. Use **ports** for a plain IP address and wrap an IPv6 host in brackets, as in `[::1]`.
+
+A complete-address input is optional and is not included in the default selector. To paste a complete URL, including a base path, add this server:
+
+```xml
+<server server.name="full-url" description="Complete service URL" url="{url}">
+	<variable variable.name="url" default="http://localhost:8069" />
+</server>
+```
+
+Each server's `server.name` is its stable OpenAPI `name`; `description` provides explanatory text and falls back to the name. Scalar may show the server name or URL in its selector. The reserved name `current` is case-insensitive and remains first. Other servers follow XML declaration order. You can explicitly set the current site's public base URL when the proxy cannot populate `Request.PathBase`:
+
+```xml
+<server server.name="current" description="Current site" url="/gateway/app" />
+<server server.name="staging" description="Staging" url="https://staging.example.com/api" />
+```
+
+Server URLs support `{name}` placeholders. A variable has a `default` and an optional `description`. A nonempty `<value>` list defines the dropdown choices in XML declaration order. The default must exactly match one of the choices. Omit the list for a free text field. Variables appear in the order of their first occurrence in the URL template.
+
+Configure proxy forwarding and the application's base path in the host before exposing the document endpoints. Relative server URLs follow the document origin rather than an internal listen address. Downloaded documents need an explicit base URL when used by an offline client or automated tests. Cross-origin browser requests require the target server's CORS policy to allow the documentation origin; HTTPS pages also require HTTPS API targets.
+
+Open `/scalar/` to use Scalar. It starts in **none**, which offers the manual server selector. To add a fixed deployment target, set `url` on an environment under `/web/openapi`.
+
+```xml
+<environments>
+	<environment environment.name="development-a" url="http://localhost:5801">
+		<variable variable.name="site" default="a" />
+	</environment>
+	<environment environment.name="development-b" url="http://localhost:5802/api">
+		<variable variable.name="site" default="b" />
+	</environment>
+</environments>
+```
+
+The document selector at the top left of `/scalar/` lists **none** first, followed by the environments with a configured `url` in XML declaration order. The environment name appears in the dropdown, the browser fragment, and the document URL, such as `/scalar/#development-a` and `/openapi/environments/development-a.json`. The optional `description` describes the server. Environments without a URL still provide variables to the manual document. When switching environments from an operation, Scalar can keep the operation suffix in the fragment. Open the environment's short URL, for example `/scalar/#staging-a`, to go directly to its document.
+
+Each environment has its own `<variable>` entries. For example, reference `{{site}}` in a request field to use the current environment's site value. The `url` still provides the full server address.
+
+Environment names use lowercase ASCII letters and digits, with single hyphens between groups, up to 255 characters. The name `none` is reserved for manual mode. The URL must be an absolute HTTP or HTTPS address without user information, query string or fragment. Include the port and base path if needed. For browser requests to a different origin, configure that environment to allow the documentation origin through CORS. Credentials are entered through the client. Keep actual passwords and tokens out of the public configuration and documents.
 
 ## Extension Points
 
 | Interface                  | Purpose                                                       |
 | -------------------------- | ------------------------------------------------------------- |
 | `Services.IHeaderProvider` | Supplies common request headers per operation and HTTP method |
-
-## Directory Layout
-
-```
-openapi/
-├── src/
-│   ├── DocumentGenerator.cs            # document generation entry
-│   ├── DocumentGenerator.*.cs          # environments / servers / security / paths / schemas
-│   ├── DocumentContext.cs              # generation context (format, services, endpoints, ...)
-│   ├── DocumentFormat.cs               # json / yaml format
-│   ├── Tags.cs                         # tag generation (x-parent, x-displayName, ...)
-│   ├── Utility.cs                      # parameter location & type utilities
-│   ├── WebExtension.cs                 # UseOpenApi() endpoint extension
-│   ├── WebExtension.Writer.cs          # UTF-8 buffered writer for the response
-│   ├── WebInitializer.cs               # automatic registration of the endpoint & Scalar UI
-│   ├── Configuration/                  # authentication / header / server / environment / variable options
-│   ├── Services/                       # IHeaderProvider and its implementation
-│   └── Extensions/                     # OpenAPI extension (x-*) builders
-└── test/                           # reserved test directory; no dedicated test project yet
-```
 
 ## License
 

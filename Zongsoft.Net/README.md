@@ -14,7 +14,7 @@
 
 [**Z**ongsoft.**N**et](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Net) is a high-performance networking library in the [_**Z**ongsoft_](https://github.com/Zongsoft/framework) open-source framework. It provides functionality for _**S**ocket_ network development.
 
-It provides asynchronous TCP clients, servers, channels, connection statistics, broadcast, and packet framing. It supports .NET 8, 9, and 10 with only the corresponding `Microsoft.NETCore.App` runtime. Use it for application protocols with long-lived device connections, heartbeats, small and medium messages, and device batching.
+It provides asynchronous TCP clients, servers, channels, connection statistics, broadcast, and packet framing. It supports .NET 10 and 11 with only the corresponding `Microsoft.NETCore.App` runtime. Use it for application protocols with long-lived device connections, heartbeats, small and medium messages, and device batching.
 
 ## Packets and streams
 

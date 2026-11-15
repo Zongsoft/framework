@@ -38,7 +38,7 @@ Option | Type | Required | Default | Description
 `--name` | string | ✓ | - | Application name, must match the published application name; used by the upgrader for application matching
 `--version` | string | ✓ | - | Version number, consisting of up to four integer segments, e.g. `1.2.3` or `1.2.3.4`
 `--platform` | string | ✓ | - | Operating system platform, options: `windows`, `linux`
-`--framework` | string | ✓ | - | .NET framework identifier, e.g. `net10.0`, `net9.0`, `net8.0`
+`--framework` | string | ✓ | - | .NET framework identifier, e.g. `net10.0`, `net11.0`
 `--source` | string | - | Current directory | Source directory of the publish output, supports variable substitution
 `--kind` | string | - | `Fully` | Publish type: `Fully` (full), `Delta` (incremental)
 `--edition` | string | - | Empty | Version distribution name, common values: `stable`, `community`, `standard`, `professional`, `enterprise`

@@ -220,8 +220,8 @@ rg --files Zongsoft.Data/drivers | rg -- "-pod\.yaml$|Tests\.csproj$"
 - InfluxDB 和 ClickHouse 集成测试启用 `ZONGSOFT_DATA_TESTS=1` 时，还须分别在进程环境中提供 `ZONGSOFT_INFLUX_TEST_CONNECTION_STRING` 和 `ZONGSOFT_CLICKHOUSE_TEST_CONNECTION_STRING`；未启用时不创建外部访问器。
 - 本机容器不豁免凭据规则。真实用户名、密码及完整连接串不写入源码、文档、测试输出摘要或提交记录；通过本地环境配置注入，使用唯一测试数据库/表或键前缀，清理仅限本次测试数据。
 - 先运行与改动直接相关的测试，再运行对应驱动项目的完整测试。使用 `--blame-hang` 和合理的 `--blame-hang-timeout` 防止连接失败测试无限挂起。
-- 多目标框架项目按 `net8.0`、`net9.0`、`net10.0` 分别还原和测试。中央包版本按目标框架定义；发生 NU1605 时先检查 `Directory.Packages.props` 与数据库提供程序的传递依赖约束。
-- MSSQL 测试项目在 net9.0 下不要直接固定 `Microsoft.Extensions.Caching.Memory` 9.0.2，因为 `Microsoft.Data.SqlClient 7.0.2` 要求至少 9.0.13；net8.0 和 net10.0 仍需要各自匹配的直接运行时依赖。
+- 多目标框架项目按 `net10.0`、`net11.0` 分别还原和测试。中央包版本按目标框架定义；发生 NU1605 时先检查 `Directory.Packages.props` 与数据库提供程序的传递依赖约束。
+- MSSQL 测试项目的 Microsoft.Extensions.Caching.Memory 版本由中央包按目标框架管理。
 
 连接故障韧性测试至少验证：
 

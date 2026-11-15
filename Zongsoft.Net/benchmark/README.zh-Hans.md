@@ -2,7 +2,7 @@
 
 [English](README.md) | [简体中文](README.zh-Hans.md)
 
-性能工具面向 .NET 8、9、10，提供分帧微基准、客户端负载、设备模拟和并发发送测试。使用生成数据与本机回环连接，无需真实设备或外部服务。.NET 10 是主要性能测量目标；.NET 8、9 用于正确性和可运行性检查，需要比较运行时差异时再执行完整测量。
+性能工具面向 .NET 10、11，提供分帧微基准、客户端负载、设备模拟和并发发送测试。使用生成数据与本机回环连接，无需真实设备或外部服务。比较运行时性能时，对两个目标使用同一工作负载。
 
 ## 构建与微基准
 
@@ -19,7 +19,8 @@ dotnet build Zongsoft.Net/benchmark/Zongsoft.Net.Benchmarks.csproj -c Debug -p:G
 dotnet build Zongsoft.Net/benchmark/Zongsoft.Net.Benchmarks.csproj -c Release -p:GeneratePackageOnBuild=false
 # 以下命令从 benchmark 目录执行
 dotnet bin/Release/net10.0/Zongsoft.Net.Benchmarks.dll micro --list flat
-dotnet bin/Release/net10.0/Zongsoft.Net.Benchmarks.dll micro --filter "*" --job Dry --runtimes net8.0 net9.0 net10.0 --artifacts artifacts/dry --noOverwrite > artifacts-dry.log 2>&1
+dotnet bin/Release/net10.0/Zongsoft.Net.Benchmarks.dll micro --filter "*" --job Dry --artifacts artifacts/dry-net10.0 --noOverwrite > artifacts-dry-net10.0.log 2>&1
+dotnet bin/Release/net11.0/Zongsoft.Net.Benchmarks.dll micro --filter "*" --job Dry --artifacts artifacts/dry-net11.0 --noOverwrite > artifacts-dry-net11.0.log 2>&1
 dotnet bin/Release/net10.0/Zongsoft.Net.Benchmarks.dll micro --filter "*HeadedPacketizerBenchmarks.UnpackSingle*128*" --launchCount 3 --exporters fulljson --artifacts artifacts/representative --noOverwrite > artifacts-representative.log 2>&1
 dotnet bin/Release/net10.0/Zongsoft.Net.Benchmarks.dll micro --filter "*" --job Short --launchCount 3 --exporters fulljson --artifacts artifacts/matrix --noOverwrite > artifacts-matrix.log 2>&1
 ```
@@ -95,4 +96,4 @@ service 每秒记录在线连接、累计帧／字节、活动连接读取次数
 
 容量必须用真实 Socket 逐级测量，并说明源端口、内存、句柄和负载端 CPU 限制。此机 loopback 结果不能推算生产网络 SLO。记录完整命令、代码哈希、硬件与至少三轮原始数据；单连接内存通过稳定在线快照减去启动快照后除以连接增量估算。自然回收、池保留和强制 GC 分别解释。
 
-正确性与慢设备、取消、广播、分片边界见 [测试源码](../test)。三目标完整测试命令为 `dotnet test ../test/Zongsoft.Net.Tests.csproj -c Debug -f net8.0 -p:GeneratePackageOnBuild=false`，分别替换 net9.0、net10.0。性能结果不能替代生命周期和协议断言。
+正确性与慢设备、取消、广播、分片边界见 [测试源码](../test)。测试命令为 `dotnet test ../test/Zongsoft.Net.Tests.csproj -c Debug -f net10.0 -p:GeneratePackageOnBuild=false`，再以 net11.0 运行。性能结果不能替代生命周期和协议断言。

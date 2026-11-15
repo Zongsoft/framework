@@ -18,7 +18,7 @@
 
 ## 范例
 
-`samples` 目录包含两个基于 .NET 10 的交互式应用：
+`samples` 目录包含两个基于 .NET 11 的交互式应用：
 
 - [Broker 范例](samples/server/Program.cs)使用 `MqttQueueServer` 启动 MQTT Broker。
 - [客户端范例](samples/client/Program.cs)通过 `MqttQueue` 连接 Broker，可以订阅、取消订阅、发布和接收消息。
@@ -29,7 +29,7 @@
 
 ### 环境准备与构建
 
-安装 .NET 10 SDK。在仓库根目录中先构建 Core，再构建 MQTT 解决方案：
+安装 .NET 11 SDK。在仓库根目录中先构建 Core，再构建 MQTT 解决方案：
 
 ```shell
 dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj

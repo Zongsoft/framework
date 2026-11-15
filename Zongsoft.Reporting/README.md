@@ -56,7 +56,7 @@ Descriptors open templates; IReportResourceResolver.ResolveAsync parses assets s
 
 Call `await loader.LoadAsync(report, model, cancellation)` to obtain data. The returned object can be an asynchronous query result; the report provider must consume it asynchronously before passing ready data to a rendering API that requires an in-memory collection.
 
-The current GrapeCity adapter is incompatible with this version's asynchronous loading, location, and storage contracts and cannot be used with it.
+The GrapeCity adapter uses these asynchronous contracts and materializes asynchronous query results before returning data to ActiveReports 15 synchronous callbacks.
 
 Template and resource lookup, repository creation/update/deletion, and report saving use cancellable Async methods. IReportArchiveLocator.OpenAsync returns ReportArchiveResult: default means no archive; a missing file path can still yield valid Archive metadata; callers own a non-null Stream and dispose it with await using.
 

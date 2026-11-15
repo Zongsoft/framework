@@ -38,7 +38,7 @@ dotnet-upgrade publish [选项] <包文件...>
 `--name` | string | ✓ | - | 应用名称，必须与发布的应用名一致，升级器以此作为应用匹配依据
 `--version` | string | ✓ | - | 版本号，由最多四段整数组成，如 `1.2.3` 或 `1.2.3.4`
 `--platform` | string | ✓ | - | 操作系统平台，可选值：`windows`、`linux`
-`--framework` | string | ✓ | - | .NET 框架标识，如 `net10.0`、`net9.0`、`net8.0`
+`--framework` | string | ✓ | - | .NET 框架标识，如 `net10.0`、`net11.0`
 `--source` | string | - | 当前目录 | 发布包源目录，支持变量替换
 `--kind` | string | - | `Fully` | 发布类型：`Fully`（全量）、`Delta`（增量）
 `--edition` | string | - | 空 | 版本分发名，常见取值：`stable`、`community`、`standard`、`professional`、`enterprise`

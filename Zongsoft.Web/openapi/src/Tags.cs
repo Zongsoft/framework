@@ -15,7 +15,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 
 using Microsoft.OpenApi;
 
@@ -34,8 +33,7 @@ public static class Tags
 		{
 			if(!string.IsNullOrEmpty(ancestors[i]))
 			{
-				tag.Extensions ??= new Dictionary<string, IOpenApiExtension>(StringComparer.OrdinalIgnoreCase);
-				tag.Extensions["x-parent"] = Extensions.Helper.String(ancestors[i]);
+				tag.Parent = new OpenApiTagReference(ancestors[i]);
 				break;
 			}
 		}
@@ -45,24 +43,7 @@ public static class Tags
 
 	public static OpenApiTag Caption(this OpenApiTag tag, string caption)
 	{
-		const string EXTENSION_KEY = "x-displayName";
-
-		if(tag == null)
-			return tag;
-
-		if(string.IsNullOrEmpty(caption))
-			tag.Extensions?.Remove(EXTENSION_KEY);
-		else
-		{
-			if(tag.Extensions == null)
-				tag.Extensions = new Dictionary<string, IOpenApiExtension>()
-				{
-					{ EXTENSION_KEY, Extensions.Helper.String(caption) },
-				};
-			else
-				tag.Extensions.Add(EXTENSION_KEY, Extensions.Helper.String(caption));
-		}
-
+		tag?.Summary = string.IsNullOrEmpty(caption) ? null : caption;
 		return tag;
 	}
 

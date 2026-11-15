@@ -19,6 +19,8 @@ using System.IO;
 using System.Xml;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using GrapeCity.ActiveReports;
@@ -121,6 +123,25 @@ public class ThemeResolver : IReportResourceResolver
 		}
 
 		return theme;
+	}
+
+	public async ValueTask<IReportResource> ResolveAsync(string name, Stream stream, string title, string description, CancellationToken cancellation = default)
+	{
+		ArgumentNullException.ThrowIfNull(stream);
+		cancellation.ThrowIfCancellationRequested();
+
+		using var buffer = new MemoryStream();
+
+		await using(stream)
+		{
+			if(stream.CanSeek)
+				stream.Seek(0, SeekOrigin.Begin);
+
+			await stream.CopyToAsync(buffer, cancellation);
+		}
+
+		cancellation.ThrowIfCancellationRequested();
+		return this.Resolve(name, buffer, title, description);
 	}
 
 	public IReportResource Resolve(string name, Stream stream, string title = null, string description = null)

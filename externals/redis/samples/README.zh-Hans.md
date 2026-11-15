@@ -13,14 +13,14 @@
 | [distributedcache](distributedcache) | 演示 Redis 分布式缓存的键值操作、过期管理与键空间变化通知。 |
 | [distributedlock](distributedlock) | 通过多个进程竞争 Redis 分布式锁，验证互斥、锁过期行为、自动续期与栅栏令牌。 |
 
-所有项目均面向 .NET 10，并要求 Redis 服务可连接。运行前请检查各范例中的连接字符串；消息范例默认连接 `127.0.0.1:6379`，密码为 `xxxxxx`。
+所有项目均面向 .NET 11，并要求 Redis 服务可连接。运行前请检查各范例中的连接字符串；消息范例默认连接 `127.0.0.1:6379`，密码为 `xxxxxx`。
 
 ## 消息范例
 
 在仓库根目录运行交互式消息客户端：
 
 ```shell
-dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -c Debug -f net10.0 -p:GeneratePackageOnBuild=false
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -c Debug -f net11.0 -p:GeneratePackageOnBuild=false
 dotnet run --project externals/redis/samples/messaging/Zongsoft.Externals.Redis.Messaging.Samples.csproj
 ```
 

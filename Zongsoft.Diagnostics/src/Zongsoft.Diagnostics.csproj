@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>1.14.0</Version>
+		<Version>2.0.0</Version>
 		<Product>Zongsoft Diagnostics Library</Product>
 		<Description>This is a class library for OpenTelemetry protocols.</Description>
 		<IncludeSymbols>true</IncludeSymbols>
@@ -16,6 +16,8 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Configuration" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
 		<PackageReference Include="OpenTelemetry" VersionOverride="1.18.0" />
 		<PackageReference Include="OpenTelemetry.Api" VersionOverride="1.18.0" />
 		<PackageReference Include="OpenTelemetry.Api.ProviderBuilderExtensions" VersionOverride="1.18.0" />
@@ -40,7 +42,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.67.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="8.0.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

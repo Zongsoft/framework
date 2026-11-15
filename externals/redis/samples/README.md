@@ -13,14 +13,14 @@
 | [distributedcache](distributedcache) | Demonstrates Redis distributed cache operations, expiry management, and keyspace change notifications. |
 | [distributedlock](distributedlock) | Validates mutual exclusion, expiry behavior, automatic renewal, and fencing tokens with multiple processes competing for a Redis distributed lock. |
 
-All projects target .NET 10 and require a reachable Redis server. Review the connection strings in each sample before running them; the messaging sample defaults to `127.0.0.1:6379` with password `xxxxxx`.
+All projects target .NET 11 and require a reachable Redis server. Review the connection strings in each sample before running them; the messaging sample defaults to `127.0.0.1:6379` with password `xxxxxx`.
 
 ## Messaging Sample
 
 Run the interactive messaging client from the repository root:
 
 ```shell
-dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -c Debug -f net10.0 -p:GeneratePackageOnBuild=false
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -c Debug -f net11.0 -p:GeneratePackageOnBuild=false
 dotnet run --project externals/redis/samples/messaging/Zongsoft.Externals.Redis.Messaging.Samples.csproj
 ```
 

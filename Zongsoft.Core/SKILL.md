@@ -126,7 +126,7 @@ ITerminal.Abort 同步触发 Aborting 并返回最终 Cancel，异常向调用�
 
 ## 验证
 
-`Zongsoft.Core.slnx` 和默认 Cake `test` 只包含 `test/unit/Zongsoft.Core.Tests.csproj`。终端输入和 Shell 进程测试位于 `test/integration`，通过 `test/integration/Zongsoft.Core.Tests.slnx` 或 Cake `integration-test` 显式执行；Windows Shell 场景只在 Windows 运行。构建主解决方案并运行对应单元测试，集成测试按所改行为单独选择。公共行为变化至少选择一个真实下游实现做定向构建；多目标差异分别验证 net8.0、net9.0、net10.0。
+`Zongsoft.Core.slnx` 和默认 Cake `test` 只包含 `test/unit/Zongsoft.Core.Tests.csproj`。终端输入和 Shell 进程测试位于 `test/integration`，通过 `test/integration/Zongsoft.Core.Tests.slnx` 或 Cake `integration-test` 显式执行；Windows Shell 场景只在 Windows 运行。构建主解决方案并运行对应单元测试，集成测试按所改行为单独选择。公共行为变化至少选择一个真实下游实现做定向构建；多目标差异分别验证 net10.0、net11.0。
 
 集成测试通过重定向标准输入管道和隔离子进程验证进程级读取器；受控 `TextReader` 使用显式门闩模拟阻塞的原生输入。Windows Shell 用唯一命名管道控制测试子进程，并持有进程句柄完成期限控制和清理；不将这类场景加入默认单元测试。
 

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.17.0</Version>
+		<Version>8.0.0</Version>
 		<PackageReleaseNotes>使用类型化特性提供返回值能力，并按数据源配置判断连接共享。</PackageReleaseNotes>
 		<Product>Zongsoft Data Driver for SQL Server</Product>
 		<Description>This is a data driver for Microsoft SQL Server of the Zongsoft data engine.</Description>
@@ -37,8 +37,8 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.75.0" />
-				<PackageReference Include="Zongsoft.Data" VersionOverride="7.37.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="8.0.0" />
+				<PackageReference Include="Zongsoft.Data" VersionOverride="8.0.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

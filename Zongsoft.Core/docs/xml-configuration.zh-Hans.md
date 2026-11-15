@@ -6,6 +6,8 @@
 
 `Zongsoft.Configuration.Xml` 提供 XML 配置读取能力。配置根元素为 `configuration` 或 `options`，根下使用 `option path="..."` 声明配置路径。普通属性映射为配置键，`元素名.name` / `元素名.key` 指定集合项名称，文本和 CDATA 沿用单值集合的映射规则。
 
+需要按声明顺序使用 XML 配置时，可用 `configuration.GetDeclaredOptionKeys("/Section/Items")` 获取指定路径下的直接子键。导入文件的键按导入位置展开，重复的键保持首次出现的位置。配置值仍通过生效的配置读取。
+
 XML 处理指令（PI）以原始定义单独收集，不自动映射为配置键。文件和流提供程序在读取时执行已注册的指令，默认包含 `import`；未知指令默认保留定义，由使用者决定如何解释。静态 `XmlStreamConfigurationProvider.Read` 只解析当前流，不执行指令。
 
 ```xml

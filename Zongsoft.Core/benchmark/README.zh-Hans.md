@@ -2,7 +2,7 @@
 
 [English](README.md)
 
-此项目使用 BenchmarkDotNet，支持 .NET 8、9、10。以下命令在仓库根目录执行。使用 Release 构建，并通过 `--filter` 显式选择工作负载，避免进入交互式选择界面。正式测量应在无其它重负载的机器上串行执行。
+此项目使用 BenchmarkDotNet，支持 .NET 10、11。以下命令在仓库根目录执行。使用 Release 构建，并通过 `--filter` 显式选择工作负载，避免进入交互式选择界面。正式测量应在无其它重负载的机器上串行执行。
 
 ## Spooler 工作负载
 
@@ -27,39 +27,39 @@
 先构建基准项目；它未包含在 `Zongsoft.Core.slnx` 中：
 
 ```text
-dotnet build Zongsoft.Core/benchmark/Zongsoft.Core.Benchmarks.csproj -c Release -f net8.0 -p:GeneratePackageOnBuild=false
+dotnet build Zongsoft.Core/benchmark/Zongsoft.Core.Benchmarks.csproj -c Release -f net10.0 -p:GeneratePackageOnBuild=false
 ```
 
 通过 Dry 检查 14 个聚焦的 Spooler 用例：
 
 ```text
-dotnet run --project Zongsoft.Core/benchmark/Zongsoft.Core.Benchmarks.csproj -c Release -f net8.0 --no-build -- --filter "*SpoolerAdmissionBenchmark*" "*SpoolerFlushBenchmark*" "*SpoolerTelemetryBenchmark*" --job Dry --noOverwrite > spooler-dry.log 2>&1
+dotnet run --project Zongsoft.Core/benchmark/Zongsoft.Core.Benchmarks.csproj -c Release -f net10.0 --no-build -- --filter "*SpoolerAdmissionBenchmark*" "*SpoolerFlushBenchmark*" "*SpoolerTelemetryBenchmark*" --job Dry --noOverwrite > spooler-dry.log 2>&1
 ```
 
 单独测量遥测开销：
 
 ```text
-dotnet run --project Zongsoft.Core/benchmark/Zongsoft.Core.Benchmarks.csproj -c Release -f net8.0 --no-build -- --filter "*SpoolerTelemetryBenchmark*" --job Short --noOverwrite > spooler-telemetry.log 2>&1
+dotnet run --project Zongsoft.Core/benchmark/Zongsoft.Core.Benchmarks.csproj -c Release -f net10.0 --no-build -- --filter "*SpoolerTelemetryBenchmark*" --job Short --noOverwrite > spooler-telemetry.log 2>&1
 ```
 
 `Dry` 只验证构建和执行，其时间不作为性能证据。`Short` 用于初步测量；需要更多数据时，去掉 `--job Short`，使用 BenchmarkDotNet 默认的测量策略。普通模式保持 BenchmarkDotNet 原有命令行选项。
 
 ## 比较两个已保存的构建
 
-将两个兼容的 Release 版本 `Zongsoft.Core.dll` 分别保存在不同目录，并保留各自需要的依赖；运行期间不要修改这两个目录。两个版本必须支持所选工作负载使用的 API。双版本入口固定使用 .NET 8，需要安装对应 SDK 和运行时。
+将两个兼容的 Release 版本 `Zongsoft.Core.dll` 分别保存在不同目录，并保留各自需要的依赖；运行期间不要修改这两个目录。两个版本必须支持所选工作负载使用的 API。双版本入口固定使用 .NET 10，需要安装 .NET 11 SDK 和 .NET 10 运行时。
 
 入口接受 `--compare <基线 DLL> <候选 DLL>`，以及可选的 `--compare-job Dry|Short|Default`，默认 `Default`。路径可以是绝对路径或相对于当前工作目录的路径。入口剥离这些参数，再将剩余参数交给 BenchmarkDotNet。双版本模式拒绝 `--job`/`-j`、`--runtimes`/`-r`、`--inProcess`/`-i`，保持两个任务的运行时一致并分别运行。
 
 以下筛选条件选择接收和刷新工作负载，每个版本 10 个用例，共 20 项结果：
 
 ```text
-dotnet run --project Zongsoft.Core/benchmark/Zongsoft.Core.Benchmarks.csproj -c Release -f net8.0 --no-build -- --compare "D:/bench/before/Zongsoft.Core.dll" "D:/bench/after/Zongsoft.Core.dll" --compare-job Dry --filter "*SpoolerAdmissionBenchmark*" "*SpoolerFlushBenchmark*" --keepFiles --noOverwrite > spooler-compare-dry.log 2>&1
+dotnet run --project Zongsoft.Core/benchmark/Zongsoft.Core.Benchmarks.csproj -c Release -f net10.0 --no-build -- --compare "D:/bench/before/Zongsoft.Core.dll" "D:/bench/after/Zongsoft.Core.dll" --compare-job Dry --filter "*SpoolerAdmissionBenchmark*" "*SpoolerFlushBenchmark*" --keepFiles --noOverwrite > spooler-compare-dry.log 2>&1
 ```
 
 Dry 成功后，用相同输入进行测量：
 
 ```text
-dotnet run --project Zongsoft.Core/benchmark/Zongsoft.Core.Benchmarks.csproj -c Release -f net8.0 --no-build -- --compare "D:/bench/before/Zongsoft.Core.dll" "D:/bench/after/Zongsoft.Core.dll" --compare-job Short --filter "*SpoolerAdmissionBenchmark*" "*SpoolerFlushBenchmark*" --apples --keepFiles --noOverwrite > spooler-compare.log 2>&1
+dotnet run --project Zongsoft.Core/benchmark/Zongsoft.Core.Benchmarks.csproj -c Release -f net10.0 --no-build -- --compare "D:/bench/before/Zongsoft.Core.dll" "D:/bench/after/Zongsoft.Core.dll" --compare-job Short --filter "*SpoolerAdmissionBenchmark*" "*SpoolerFlushBenchmark*" --apples --keepFiles --noOverwrite > spooler-compare.log 2>&1
 ```
 
 将示例路径替换为本机路径。`--apples` 使每对用例采用相同的调用次数；它需要明确的迭代次数，此处由 `Short` 提供。使用此选项进行更长时间的比较时，应明确指定合适的 `--iterationCount`。

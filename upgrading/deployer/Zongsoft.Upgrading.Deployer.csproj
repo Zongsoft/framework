@@ -1,12 +1,12 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>0.1.0</Version>
+		<Version>1.0.0</Version>
 		<OutputType>Exe</OutputType>
 		<PublishAot>true</PublishAot>
 		<IsAotCompatible>true</IsAotCompatible>
 		<StaticExecutable>true</StaticExecutable>
-		<TargetFramework>net10.0</TargetFramework>
-		<TargetFrameworks>net10.0</TargetFrameworks>
+		<TargetFramework>net11.0</TargetFramework>
+		<TargetFrameworks>net11.0</TargetFrameworks>
 		<InvariantGlobalization>true</InvariantGlobalization>
 		<Product>Zongsoft Upgrader</Product>
 		<Description>This is the local deployer for the automatic upgrading.</Description>
@@ -34,7 +34,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.68.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="8.0.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

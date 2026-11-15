@@ -8,7 +8,7 @@ This is the master participant in the [two-process lock example](../README.md). 
 
 ## Prerequisites and Run
 
-Use .NET 10, a locally built Debug Core library and a disposable etcd v3 instance. Follow the parent guide to prepare Core. From this directory:
+Use .NET 11, a locally built Debug Core library and a disposable etcd v3 instance. Follow the parent guide to prepare Core. From this directory:
 
 ```shell
 dotnet run -- "server=127.0.0.1;port=2379"

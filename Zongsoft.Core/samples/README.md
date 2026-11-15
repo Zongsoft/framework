@@ -14,7 +14,7 @@
 | [spooler](spooler) | Exercises `Spooler<T>` batching with repeated input values under parallel load. |
 | [superviser](superviser) | Demonstrates supervised object lifecycle, inactivity, failure handling, and manual removal. |
 
-All projects target .NET 10. Build the complete sample solution from the repository root:
+All projects target .NET 11. Build the complete sample solution from the repository root:
 
 ```shell
 dotnet build Zongsoft.Core/samples/samples.slnx

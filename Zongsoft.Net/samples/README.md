@@ -2,7 +2,7 @@
 
 [English](README.md) | [简体中文](README.zh-Hans.md)
 
-Both sample projects target .NET 10; the Net library targets .NET 8, 9, and 10. Install the .NET 10 SDK and build local Core in Debug first. The default endpoint is `127.0.0.1:7969`. No database, broker, or real device is required.
+Both sample projects target .NET 11; the Net library targets .NET 11 and 11. Install the .NET 11 SDK and build local Core in Debug first. The default endpoint is `127.0.0.1:7969`. No database, broker, or real device is required.
 
 | Project | Purpose |
 | --- | --- |
@@ -15,8 +15,8 @@ Both sample projects target .NET 10; the Net library targets .NET 8, 9, and 10. 
 Build Core once from the repository root with `dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -c Debug -p:GeneratePackageOnBuild=false`, then run these commands in separate terminals:
 
 ```shell
-dotnet run --project Zongsoft.Net/samples/server/Zongsoft.Net.Samples.Server.csproj -f net10.0 -- 127.0.0.1 7969
-dotnet run --project Zongsoft.Net/samples/client/Zongsoft.Net.Samples.Client.csproj -f net10.0 -- 127.0.0.1 7969
+dotnet run --project Zongsoft.Net/samples/server/Zongsoft.Net.Samples.Server.csproj -f net11.0 -- 127.0.0.1 7969
+dotnet run --project Zongsoft.Net/samples/client/Zongsoft.Net.Samples.Client.csproj -f net11.0 -- 127.0.0.1 7969
 ```
 
 Client commands: `connect`, `disconnect`, `info`, `send <message>`. Sending connects lazily when needed. Server commands: `start`, `stop`, `info`, `broadcast <message>`. Ordinary requests receive `ACK: <message>` only on their originating connection; `PING` receives `PONG`. Broadcast reports successful, failed, and capacity-rejected sends.
@@ -28,8 +28,8 @@ Start two clients to check routing: a request from client one must not deliver i
 Run the following in two processes. Server `--count N` drains and stops after N handled requests, with a 60-second overall wait limit. Scripted clients validate responses and exit. The server prints `READY` and `STOPPED`; clients finish with `DISCONNECTED` or `BATCH completed=17`. Port zero is supported on the server; use the actual port printed in `READY`.
 
 ```shell
-dotnet run --project Zongsoft.Net/samples/server/Zongsoft.Net.Samples.Server.csproj -f net10.0 -- 127.0.0.1 7969 --count 1
-dotnet run --project Zongsoft.Net/samples/client/Zongsoft.Net.Samples.Client.csproj -f net10.0 -- 127.0.0.1 7969 --smoke
+dotnet run --project Zongsoft.Net/samples/server/Zongsoft.Net.Samples.Server.csproj -f net11.0 -- 127.0.0.1 7969 --count 1
+dotnet run --project Zongsoft.Net/samples/client/Zongsoft.Net.Samples.Client.csproj -f net11.0 -- 127.0.0.1 7969 --smoke
 ```
 
 For custom framing, add `--custom` to both commands. The shared `LinePacketizer` derives from Net's `PacketizerBase<ReadOnlySequence<byte>>`, implements `GetLength`, `Pack`, and `Unpack`, and inherits the no-op `Release` for borrowed sequences. The body must not contain LF and may contain at most 64 KiB; its trailing LF is part of the wire format. This protocol cannot interoperate with Headed.

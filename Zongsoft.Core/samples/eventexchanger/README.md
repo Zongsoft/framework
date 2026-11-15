@@ -9,8 +9,8 @@ This sample provides interactive local event publishing and remote event deliver
 Run from the framework directory:
 
 ```powershell
-dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -f net10.0 -p:GeneratePackageOnBuild=false
-dotnet build messaging/zero/src/Zongsoft.Messaging.ZeroMQ.csproj -f net10.0 -p:GeneratePackageOnBuild=false
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -f net11.0 -p:GeneratePackageOnBuild=false
+dotnet build messaging/zero/src/Zongsoft.Messaging.ZeroMQ.csproj -f net11.0 -p:GeneratePackageOnBuild=false
 dotnet run --project Zongsoft.Core/samples/eventexchanger/Zongsoft.Samples.EventExchanger.csproj -- --local
 ```
 

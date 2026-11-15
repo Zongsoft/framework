@@ -57,14 +57,16 @@ if(!$SkipBenchmarks)
 	Push-Location (Split-Path -Parent $benchmarkProject)
 	try
 	{
-		Invoke-DotNet @(
-			'bin/Release/net10.0/Zongsoft.Core.Benchmarks.dll',
-			'--filter', '*Spooler*',
-			'--job', 'Dry',
-			'--runtimes', 'net8.0', 'net9.0', 'net10.0',
-			'--artifacts', (Join-Path $artifactRoot 'benchmarks'),
-			'--noOverwrite'
-		)
+		foreach($framework in @('net10.0', 'net11.0'))
+		{
+			Invoke-DotNet @(
+				"bin/Release/$framework/Zongsoft.Core.Benchmarks.dll",
+				'--filter', '*Spooler*',
+				'--job', 'Dry',
+				'--artifacts', (Join-Path $artifactRoot "benchmarks/$framework"),
+				'--noOverwrite'
+			)
+		}
 	}
 	finally { Pop-Location }
 }

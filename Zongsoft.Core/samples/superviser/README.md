@@ -39,7 +39,7 @@
 
 ## Prerequisites and Run
 
-This is a .NET 10 interactive sample; no server or database is needed. From the framework root:
+This is a .NET 11 interactive sample; no server or database is needed. From the framework root:
 
 ```shell
 dotnet run --project Zongsoft.Core/samples/superviser/Zongsoft.Samples.Superviser.csproj

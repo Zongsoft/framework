@@ -19,7 +19,7 @@
 - A background `Server` worker that dispatches jobs to Zongsoft `IHandler` instances.
 - Optional Redis storage and ASP.NET Core Dashboard integration.
 
-The library targets .NET 8, .NET 9, and .NET 10. Hangfire storage must be configured before the scheduler or server starts.
+The library targets .NET 10 and .NET 11. Hangfire storage must be configured before the scheduler or server starts.
 
 ## Packages
 

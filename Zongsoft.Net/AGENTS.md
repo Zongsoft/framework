@@ -1,6 +1,6 @@
 ## 概述
 
-本目录遵循 [../AGENTS.md](../AGENTS.md)与 [C# 开发规范](../../guidelines/zongsoft.csharp.guidelines.md)。`Zongsoft.Net` 提供异步 TCP 客户端、服务端、通道、分帧能力及基于 HTTP 的 Web 文件系统，支持 .NET 8、9、10，三个目标保持一致的公开契约和可观察行为。
+本目录遵循 [../AGENTS.md](../AGENTS.md)与 [C# 开发规范](../../guidelines/zongsoft.csharp.guidelines.md)。`Zongsoft.Net` 提供异步 TCP 客户端、服务端、通道、分帧能力及基于 HTTP 的 Web 文件系统，支持 .NET 10、11，两个目标保持一致的公开契约和可观察行为。
 
 ## 工作边界
 
@@ -20,8 +20,8 @@
 ## 验证
 
 - 默认只使用 Debug 构建和测试。Debug 使用本地 Core 产物，先构建 `../Zongsoft.Core/src/Zongsoft.Core.csproj`，再构建 `Zongsoft.Net.slnx`；均使用 `-p:GeneratePackageOnBuild=false`。Release 构建或性能测量须有明确要求，并确认所引用的 Core NuGet 包可用。
-- 对 `test/Zongsoft.Net.Tests.csproj` 分别执行 `dotnet test -c Debug -f net8.0`、`net9.0`、`net10.0`，附加 `-p:GeneratePackageOnBuild=false`。涉及跨平台 Socket 行为时验证 Windows 和 Linux；环境未满足时说明验证边界。
-- 范例和基准独立验证：`samples/Zongsoft.Net.Samples.slnx` 面向 .NET 10；`benchmark/Zongsoft.Net.Benchmarks.csproj` 面向三个目标。范例用于功能演示与端到端冒烟，性能测量见 [benchmark](benchmark/README.zh-Hans.md)，不能替代契约断言。
+- 对 `test/Zongsoft.Net.Tests.csproj` 分别执行 `dotnet test -c Debug -f net10.0` 和 `-f net11.0`，附加 `-p:GeneratePackageOnBuild=false`。涉及跨平台 Socket 行为时验证 Windows 和 Linux；环境未满足时说明验证边界。
+- 范例和基准独立验证：`samples/Zongsoft.Net.Samples.slnx` 面向 .NET 11；`benchmark/Zongsoft.Net.Benchmarks.csproj` 面向两个目标。范例用于功能演示与端到端冒烟，性能测量见 [benchmark](benchmark/README.zh-Hans.md)，不能替代契约断言。
 - 使用真实回环 Socket、可控同步信号与 `TimeProvider` 验证并发和期限，避免用任意延迟猜测状态。异常断言使用类型、参数名、错误码与业务状态，不依赖本地化消息。
 
 | 变化范围 | 必须覆盖的边界 |

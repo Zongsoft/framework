@@ -2,7 +2,7 @@
 
 [简体中文](README.zh-Hans.md)
 
-This project uses BenchmarkDotNet and supports .NET 8, 9, and 10. Run commands below from the repository root. Use Release builds and select a workload explicitly with `--filter` to avoid the interactive benchmark picker. Run measurements sequentially on an otherwise idle machine.
+This project uses BenchmarkDotNet and supports .NET 10 and 11. Run commands below from the repository root. Use Release builds and select a workload explicitly with `--filter` to avoid the interactive benchmark picker. Run measurements sequentially on an otherwise idle machine.
 
 ## Spooler workloads
 
@@ -27,39 +27,39 @@ The existing `Data` and `Reflection` directories contain model construction and 
 Build the benchmark project first; it is not included in `Zongsoft.Core.slnx`:
 
 ```text
-dotnet build Zongsoft.Core/benchmark/Zongsoft.Core.Benchmarks.csproj -c Release -f net8.0 -p:GeneratePackageOnBuild=false
+dotnet build Zongsoft.Core/benchmark/Zongsoft.Core.Benchmarks.csproj -c Release -f net10.0 -p:GeneratePackageOnBuild=false
 ```
 
 Check the 14 focused Spooler cases with a dry run:
 
 ```text
-dotnet run --project Zongsoft.Core/benchmark/Zongsoft.Core.Benchmarks.csproj -c Release -f net8.0 --no-build -- --filter "*SpoolerAdmissionBenchmark*" "*SpoolerFlushBenchmark*" "*SpoolerTelemetryBenchmark*" --job Dry --noOverwrite > spooler-dry.log 2>&1
+dotnet run --project Zongsoft.Core/benchmark/Zongsoft.Core.Benchmarks.csproj -c Release -f net10.0 --no-build -- --filter "*SpoolerAdmissionBenchmark*" "*SpoolerFlushBenchmark*" "*SpoolerTelemetryBenchmark*" --job Dry --noOverwrite > spooler-dry.log 2>&1
 ```
 
 Measure telemetry overhead separately:
 
 ```text
-dotnet run --project Zongsoft.Core/benchmark/Zongsoft.Core.Benchmarks.csproj -c Release -f net8.0 --no-build -- --filter "*SpoolerTelemetryBenchmark*" --job Short --noOverwrite > spooler-telemetry.log 2>&1
+dotnet run --project Zongsoft.Core/benchmark/Zongsoft.Core.Benchmarks.csproj -c Release -f net10.0 --no-build -- --filter "*SpoolerTelemetryBenchmark*" --job Short --noOverwrite > spooler-telemetry.log 2>&1
 ```
 
 `Dry` checks building and execution; its timings are not performance evidence. `Short` is an initial measurement. Omit `--job Short` for BenchmarkDotNet's default measurement strategy when a decision requires more data. Ordinary mode preserves BenchmarkDotNet's command-line options.
 
 ## Compare two saved builds
 
-Save two compatible Release builds of `Zongsoft.Core.dll` in different directories, including any dependencies required by those builds. Keep both directories unchanged throughout the run. Both versions must support the APIs used by the selected workloads. The comparison entry point targets .NET 8 and requires the .NET 8 SDK/runtime.
+Save two compatible Release builds of `Zongsoft.Core.dll` in different directories, including any dependencies required by those builds. Keep both directories unchanged throughout the run. Both versions must support the APIs used by the selected workloads. The comparison entry point targets .NET 10 and requires the .NET 11 SDK and .NET 10 runtime.
 
 The entry point accepts `--compare <baseline DLL> <candidate DLL>` and an optional `--compare-job Dry|Short|Default` (default: `Default`). Paths may be absolute or relative to the current working directory. These options are removed before the remaining arguments are passed to BenchmarkDotNet. Comparison mode rejects `--job`/`-j`, `--runtimes`/`-r`, and `--inProcess`/`-i` so that both jobs retain the same runtime and isolated execution.
 
 Use the admission and flush filters, which produce 10 cases for each build and 20 results:
 
 ```text
-dotnet run --project Zongsoft.Core/benchmark/Zongsoft.Core.Benchmarks.csproj -c Release -f net8.0 --no-build -- --compare "D:/bench/before/Zongsoft.Core.dll" "D:/bench/after/Zongsoft.Core.dll" --compare-job Dry --filter "*SpoolerAdmissionBenchmark*" "*SpoolerFlushBenchmark*" --keepFiles --noOverwrite > spooler-compare-dry.log 2>&1
+dotnet run --project Zongsoft.Core/benchmark/Zongsoft.Core.Benchmarks.csproj -c Release -f net10.0 --no-build -- --compare "D:/bench/before/Zongsoft.Core.dll" "D:/bench/after/Zongsoft.Core.dll" --compare-job Dry --filter "*SpoolerAdmissionBenchmark*" "*SpoolerFlushBenchmark*" --keepFiles --noOverwrite > spooler-compare-dry.log 2>&1
 ```
 
 After the dry run succeeds, run measurements with the same inputs:
 
 ```text
-dotnet run --project Zongsoft.Core/benchmark/Zongsoft.Core.Benchmarks.csproj -c Release -f net8.0 --no-build -- --compare "D:/bench/before/Zongsoft.Core.dll" "D:/bench/after/Zongsoft.Core.dll" --compare-job Short --filter "*SpoolerAdmissionBenchmark*" "*SpoolerFlushBenchmark*" --apples --keepFiles --noOverwrite > spooler-compare.log 2>&1
+dotnet run --project Zongsoft.Core/benchmark/Zongsoft.Core.Benchmarks.csproj -c Release -f net10.0 --no-build -- --compare "D:/bench/before/Zongsoft.Core.dll" "D:/bench/after/Zongsoft.Core.dll" --compare-job Short --filter "*SpoolerAdmissionBenchmark*" "*SpoolerFlushBenchmark*" --apples --keepFiles --noOverwrite > spooler-compare.log 2>&1
 ```
 
 Adjust the example paths for your machine. `--apples` uses a shared invocation count for each pair of cases; it requires an explicit iteration count, supplied here by `Short`. For a longer comparison with this option, specify an appropriate `--iterationCount`.

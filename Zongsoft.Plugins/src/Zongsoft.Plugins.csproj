@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.22.0</Version>
+		<Version>8.0.0</Version>
 		<PackageReleaseNotes>暴露事件交换器的远程发布筛选规则，支持通过插件配置事件发布范围。</PackageReleaseNotes>
 		<Product>Zongsoft Plugins Development Library</Product>
 		<Description>This is a framework about plugin application development.</Description>
@@ -41,7 +41,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.75.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="8.0.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>7.6.0</Version>
+		<Version>8.0.0</Version>
 		<PackageReleaseNotes>修复主动关闭与接收循环之间的竞态，确保关闭期间安全归还接收缓冲。</PackageReleaseNotes>
 		<Product>Zongsoft Net Library</Product>
 		<Description>This is a high-performance network development library.</Description>
@@ -33,7 +33,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.67.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="8.0.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

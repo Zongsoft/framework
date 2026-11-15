@@ -125,7 +125,7 @@ Run the following command in the `deployer` directory:
 ```cmd
 dotnet publish "Zongsoft.Upgrading.Deployer.csproj" ^
   -c Release ^
-  -f net10.0 ^
+  -f net11.0 ^
   -r win-x64 ^
   --self-contained true ^
   -p:PublishSingleFile=true ^
@@ -136,14 +136,14 @@ dotnet publish "Zongsoft.Upgrading.Deployer.csproj" ^
 The published executable is written to:
 
 ```text
-bin\Release\net10.0\win-x64\publish\Zongsoft.Upgrading.Deployer.exe
+bin\Release\net11.0\win-x64\publish\Zongsoft.Upgrading.Deployer.exe
 ```
 
 ### Linux
 
 #### Publish Inside The Container
 
-1. Run the [framework.start](./../../framework-start.cmd) script to start the _**L**inux_ Alpine container that contains the _.NET 10 SDK_.
+1. Run the [framework.start](./../../framework-start.cmd) script to start the _**L**inux_ Alpine container that contains the _.NET 11 SDK_.
 
 	Make sure the container has finished loading:
 
@@ -169,7 +169,7 @@ bin\Release\net10.0\win-x64\publish\Zongsoft.Upgrading.Deployer.exe
 
 #### Publish Outside The Container
 
-1. Run the [framework.start](./../../framework-start.cmd) script to start the _**L**inux_ Alpine container that contains the _.NET 10 SDK_.
+1. Run the [framework.start](./../../framework-start.cmd) script to start the _**L**inux_ Alpine container that contains the _.NET 11 SDK_.
 
 	Make sure the container has finished loading:
 

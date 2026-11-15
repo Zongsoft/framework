@@ -17,7 +17,7 @@ description: 修改或审查 Zongsoft.Reporting 的报表描述符、资源解�
 - IReportArchiveLocator.OpenAsync 返回 ReportArchiveResult（Archive、Stream）。default 是未找到；无路径时仍返回 Archive；打开的 Stream 归调用方异步释放。文件 URL 转换不承担文件打开或数据查询。
 - 格式专属逻辑属于 [Grapecity](../externals/grapecity)，本包不引入 ActiveReports 类型。
 
-GrapeCity 的同步 LocateDataSource/GetData 回调不能调用 LoadAsync 完成异步取数，当前适配器不能针对这一契约编译或直接与其旧二进制混用。其异步预加载和商业运行时接入属于独立适配任务。
+GrapeCity 通过 LoadAsync 取得结果并异步物化数据序列。ActiveReports 15 的同步数据源和资源回调在适配层等待结果，Reporting 公共契约保持异步。
 
 ## 实现级风险
 
@@ -30,7 +30,7 @@ GrapeCity 的同步 LocateDataSource/GetData 回调不能调用 LoadAsync 完成
 
 ## 最小验证
 
-- 最小目标 `src/Zongsoft.Reporting.csproj`，本包的接口由直接业务实现验证；GrapeCity 与其 Web 项目暂缓，记录兼容限制，不为其保留同步数据桥。
+- 最小目标 `src/Zongsoft.Reporting.csproj`，本包的接口由直接业务实现验证；验证 GrapeCity 与其 Web 项目时分别检查异步调用和 SDK 同步回调，并确认商业运行时及许可证齐备。
 - 流使用可观测的内存流替身，验证打开失败、读取异常、重复释放；loader 使用记录型 IDataService 核对模型名称、Schema 和分页。
 - 报表模板采用无凭据的小型夹具；商业运行时、设计器、字体及许可证需显式准备。
 - 不将尚未实现的导出方法写成可用示例，不默认执行商业渲染服务。

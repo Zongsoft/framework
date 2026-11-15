@@ -30,7 +30,7 @@ public class ReflectorTest
 		Reflector.SetValue(ref target, nameof(MyValue.StringProperty), "NewStringProperty");
 
 		Assert.Equal(200, (int)Reflector.GetValue(ref target, nameof(MyValue.IntegerField)));
-		Assert.Equal(456.78m, (decimal)Reflector.GetValue(ref target, nameof(MyValue.DecimalProperty)));
+		Assert.Equal(System.Convert.ToDecimal(456.78), (decimal)Reflector.GetValue(ref target, nameof(MyValue.DecimalProperty)));
 		Assert.Equal("NewStringField", (string)Reflector.GetValue(ref target, nameof(MyValue.StringField)));
 		Assert.Equal("NewStringProperty", (string)Reflector.GetValue(ref target, nameof(MyValue.StringProperty)));
 
@@ -52,7 +52,7 @@ public class ReflectorTest
 		Reflector.SetValue(ref obj, nameof(MyValue.StringProperty), "MyStringProperty");
 
 		Assert.Equal(300, (int)Reflector.GetValue(ref obj, nameof(MyValue.IntegerField)));
-		Assert.Equal(168.09m, (decimal)Reflector.GetValue(ref obj, nameof(MyValue.DecimalProperty)));
+		Assert.Equal(System.Convert.ToDecimal(168.09), (decimal)Reflector.GetValue(ref obj, nameof(MyValue.DecimalProperty)));
 		Assert.Equal("MyStringField", (string)Reflector.GetValue(ref obj, nameof(MyValue.StringField)));
 		Assert.Equal("MyStringProperty", (string)Reflector.GetValue(ref obj, nameof(MyValue.StringProperty)));
 
@@ -92,7 +92,7 @@ public class ReflectorTest
 		Reflector.SetValue(ref target, nameof(MyClass.StringProperty), "NewStringProperty");
 
 		Assert.Equal(200, (int)Reflector.GetValue(ref target, nameof(MyClass.IntegerField)));
-		Assert.Equal(456.78m, (decimal)Reflector.GetValue(ref target, nameof(MyClass.DecimalProperty)));
+		Assert.Equal(System.Convert.ToDecimal(456.78), (decimal)Reflector.GetValue(ref target, nameof(MyClass.DecimalProperty)));
 		Assert.Equal("NewStringField", (string)Reflector.GetValue(ref target, nameof(MyClass.StringField)));
 		Assert.Equal("NewStringProperty", (string)Reflector.GetValue(ref target, nameof(MyClass.StringProperty)));
 
@@ -114,7 +114,7 @@ public class ReflectorTest
 		Reflector.SetValue(ref obj, nameof(MyClass.StringProperty), "MyStringProperty");
 
 		Assert.Equal(300, (int)Reflector.GetValue(ref obj, nameof(MyClass.IntegerField)));
-		Assert.Equal(168.09m, (decimal)Reflector.GetValue(ref obj, nameof(MyClass.DecimalProperty)));
+		Assert.Equal(System.Convert.ToDecimal(168.09), (decimal)Reflector.GetValue(ref obj, nameof(MyClass.DecimalProperty)));
 		Assert.Equal("MyStringField", (string)Reflector.GetValue(ref obj, nameof(MyClass.StringField)));
 		Assert.Equal("MyStringProperty", (string)Reflector.GetValue(ref obj, nameof(MyClass.StringProperty)));
 

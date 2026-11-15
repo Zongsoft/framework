@@ -1001,11 +1001,11 @@ Events correlate by PreAuthCode with the server request, then hosts persist auth
 
 ### Assemblies and references
 
-The main, Web and Gateway packages use version 7.11.0 together and target .NET 8/9/10. Core 7.79.0 is required; Web/Gateway additionally require Web 7.20.0. Hosts provide foundational assemblies rather than duplicating them in adapter deployment manifests.
+The main, Web and Gateway packages use version 8.0.0 together and target .NET 10/11. Core 8.0.0 is required; Web/Gateway additionally require Web 8.0.0. Hosts provide foundational assemblies rather than duplicating them in adapter deployment manifests.
 
-Debug uses current-tree Core/Web HintPaths; Release uses the minimum Core/Web NuGet versions above. Web/Gateway use ProjectReferences to the main library in both configurations, and their NuGet packages declare that library as a dependency at version 7.11.0. An old package cannot substitute for an unpublished dependency; Release package builds require the selected source to contain those versions. Source builds/offline checks are not NuGet publication or deployment.
+Debug uses current-tree Core/Web HintPaths; Release uses the minimum Core/Web NuGet versions above. Web/Gateway use ProjectReferences to the main library in both configurations, and their NuGet packages declare that library as a dependency at version 8.0.0. An old package cannot substitute for an unpublished dependency; Release package builds require the selected source to contain those versions. Source builds/offline checks are not NuGet publication or deployment.
 
-Automao local references are controlled by `ZongsoftFrameworkPathReferenced`/`ZongsoftFrameworkPath`; NuGet fallback requires main 7.11.0 too. Web deploys Web 7.11.0; Gateway adds Gateway 7.11.0. [Gateway documentation](../gateway/README.md) defines registration. Automao owns its mappings/business manifests; host startup contains no payment logic.
+Automao local references are controlled by `ZongsoftFrameworkPathReferenced`/`ZongsoftFrameworkPath`; NuGet fallback requires main 8.0.0 too. Web deploys Web 8.0.0; Gateway adds Gateway 8.0.0. [Gateway documentation](../gateway/README.md) defines registration. Automao owns its mappings/business manifests; host startup contains no payment logic.
 
 <a id="deployment-2"></a>
 
@@ -1050,8 +1050,7 @@ dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -c Debug -p:GeneratePackageO
 dotnet build Zongsoft.Web/src/Zongsoft.Web.csproj -c Debug -p:GeneratePackageOnBuild=false
 dotnet build externals/wechat/Zongsoft.Externals.Wechat.slnx -c Debug -p:GeneratePackageOnBuild=false
 
-dotnet test externals/wechat/test/Zongsoft.Externals.Wechat.Tests.csproj -c Debug --framework net8.0 --no-build --no-restore
-dotnet test externals/wechat/test/Zongsoft.Externals.Wechat.Tests.csproj -c Debug --framework net9.0 --no-build --no-restore
+dotnet test externals/wechat/test/Zongsoft.Externals.Wechat.Tests.csproj -c Debug --framework net11.0 --no-build --no-restore
 dotnet test externals/wechat/test/Zongsoft.Externals.Wechat.Tests.csproj -c Debug --framework net10.0 --no-build --no-restore
 ```
 

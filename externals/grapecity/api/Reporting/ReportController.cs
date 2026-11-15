@@ -16,6 +16,8 @@
 
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 using Microsoft.AspNetCore.Mvc;
@@ -42,14 +44,15 @@ public class ReportController : ControllerBase
 
 	#region 公共方法
 	[HttpGet]
-	public IActionResult GetReports()
+	public async Task<IActionResult> GetReportsAsync(CancellationToken cancellation = default)
 	{
 		var providers = _serviceProvider.ResolveAll<IReportLocator>();
 		var reports = new List<IReportDescriptor>();
 
 		foreach(var provider in providers)
 		{
-			reports.AddRange(provider.GetReports());
+			await foreach(var descriptor in provider.GetReportsAsync(cancellation))
+				reports.Add(descriptor);
 		}
 
 		return reports.Count > 0 ? this.Ok(reports.Select(report => report.Name)) : this.NoContent();

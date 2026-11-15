@@ -10,7 +10,7 @@ The main Plugins.Web solution and Cake `test` task include only unit tests. Inte
 
 ## Running
 
-Run from the framework root with the .NET 10 SDK and .NET 8, 9 and 10 runtimes. Build local Debug dependencies in order:
+Run from the framework root with the .NET 11 SDK and .NET 10 and 11 runtimes. Build local Debug dependencies in order:
 
 ```powershell
 dotnet build ./Zongsoft.Core/src/Zongsoft.Core.csproj -p:GeneratePackageOnBuild=false
@@ -26,6 +26,6 @@ Run integration tests explicitly:
 dotnet test ./Zongsoft.Plugins.Web/test/integration/Zongsoft.Plugins.Web.Tests.slnx -p:GeneratePackageOnBuild=false
 ```
 
-Add `-f net8.0`, `-f net9.0` or `-f net10.0` to choose one framework. VSTest discovers the xUnit v3 tests. Integration subprocesses use `dotnet` from PATH, and require both exit code zero and a completion marker. Local HTTP tests use bounded request and process timeouts and require IPv4/IPv6 loopback socket support. They do not contact external services. Transport doubles do not establish real QUIC behavior, and HTTPS port projection does not establish a TLS handshake.
+Add `-f net10.0` or `-f net11.0` to choose one framework. VSTest discovers the xUnit v3 tests. Integration subprocesses use `dotnet` from PATH, and require both exit code zero and a completion marker. Local HTTP tests use bounded request and process timeouts and require IPv4/IPv6 loopback socket support. They do not contact external services. Transport doubles do not establish real QUIC behavior, and HTTPS port projection does not establish a TLS handshake.
 
 Assembly-level parallelism is disabled for process-wide application state. Fixtures await application and provider disposal before removing files. Initializer failure tests gate asynchronous disposal and verify the factory remains pending until cleanup finishes.

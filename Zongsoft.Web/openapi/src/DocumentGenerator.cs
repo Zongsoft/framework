@@ -19,13 +19,11 @@ using System.Collections.Generic;
 
 using Microsoft.OpenApi;
 
-using Zongsoft.Services;
-
 namespace Zongsoft.Web.OpenApi;
 
 public static partial class DocumentGenerator
 {
-	public static OpenApiDocument Generate(DocumentContext context) => Generate(context, ApplicationContext.Current?.Properties.GetValue<ControllerServiceDescriptorCollection>());
+	public static OpenApiDocument Generate(DocumentContext context) => Generate(context, context.Application.Properties.GetValue<ControllerServiceDescriptorCollection>());
 	public static OpenApiDocument Generate(DocumentContext context, ControllerServiceDescriptorCollection descriptors)
 	{
 		if(descriptors == null)
@@ -35,8 +33,8 @@ public static partial class DocumentGenerator
 		context.Document ??= CreateDocument();
 
 		//添加环境名到扩展集
-		context.Document.AddExtension("x-environment", Extensions.Helper.String(ApplicationContext.Current.Environment.Name));
-		context.Document.AddExtension("x-scalar-active-environment", Extensions.Helper.String(ApplicationContext.Current.Environment.Name));
+		context.Document.AddExtension("x-environment", Extensions.Helper.String(context.Application.Environment.Name));
+		context.Document.AddExtension("x-scalar-active-environment", Extensions.Helper.String(context.Environment?.Name ?? context.Application.Environment.Name));
 
 		//生成环境列表
 		context.GenerateEnvironments();
@@ -48,19 +46,19 @@ public static partial class DocumentGenerator
 		context.GenerateSecuritySchemes();
 
 		//生成API路径列表
-		context.GeneratePaths(descriptors);
+		var services = context.GeneratePaths(descriptors);
+		context.Document.Tags = GenerateTags(descriptors, services);
 
 		return context.Document;
 
-		static OpenApiDocument CreateDocument() => new()
+		OpenApiDocument CreateDocument() => new()
 		{
 			Info = new()
 			{
-				Title = ApplicationContext.Current.Title,
-				Description = ApplicationContext.Current.Description,
-				Version = ApplicationContext.Current.Version.ToString(),
+				Title = context.Application.Title ?? context.Application.Name,
+				Description = context.Application.Description,
+				Version = context.Application.Version.ToString(),
 			},
-			Tags = new HashSet<OpenApiTag>(),
 			Components = new()
 			{
 				Schemas = new Dictionary<string, IOpenApiSchema>(),

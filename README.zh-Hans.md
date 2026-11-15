@@ -7,13 +7,17 @@
 
 -----
 
-这是 _**Z**ongsoft_ 开发框架的开源项目集，支持 _**.NET**_ `8`,`9`,`10` 等版本。
+这是面向 .NET 10 和 .NET 11 的 Zongsoft 开源插件化应用框架。
 可插拔应用程序生态系统是 _**Z**ongsoft_ 的特点，欢迎与我们[携手共建](CONTRIBUTING-zh.md)。
 
 > 💡 在 `clone` 本项目源码后，需要使用 `git submodule update` 命令来更新 [子模块](.gitmodules)。
 
 > - 🛠️ 开发时使用 [代码规范检查](#code-analysis) 核对编码风格与构建诊断。
 > - 📦 维护者发布包前，请先阅读 [NuGet 发布指南](PUBLISHING.zh-Hans.md)。
+
+从源码构建需要 .NET 11 SDK。
+
+全仓构建脚本 `cake.ps1` 和 `cake.sh` 需要全局安装的 Cake 工具。如尚未安装，请先运行 `dotnet tool install --global Cake.Tool`；脚本使用本机已安装的全局版本。
 
 ## 从哪里开始
 

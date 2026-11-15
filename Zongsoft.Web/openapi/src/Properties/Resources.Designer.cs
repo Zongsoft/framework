@@ -79,6 +79,52 @@ namespace Zongsoft.Web.OpenApi.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The operation does not declare a response contract for this status code..
+        /// </summary>
+        internal static string ResponseDefault_Description {
+            get {
+                return ResourceManager.GetString("ResponseDefault.Description", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The OpenAPI tag &apos;{0}&apos; conflicts with its assigned parent &apos;{1}&apos;..
+        /// </summary>
+        internal static string TagConflict_Message {
+            get {
+                return ResourceManager.GetString("TagConflict.Message", resourceCulture);
+            }
+        }
+
+		/// <summary>Looks up the current site's display description.</summary>
+		internal static string ServerCurrent_Description {
+			get {
+				return ResourceManager.GetString("ServerCurrent.Description", resourceCulture);
+			}
+		}
+
+		/// <summary>Looks up the invalid server variable default message.</summary>
+		internal static string ServerVariableDefaultInvalid_Message {
+			get {
+				return ResourceManager.GetString("ServerVariableDefaultInvalid.Message", resourceCulture);
+			}
+		}
+
+		/// <summary>Looks up the invalid environment document configuration message.</summary>
+		internal static string EnvironmentDocumentInvalid_Message {
+			get {
+				return ResourceManager.GetString("EnvironmentDocumentInvalid.Message", resourceCulture);
+			}
+		}
+
+		/// <summary>Looks up the reserved OpenAPI environment name message.</summary>
+		internal static string EnvironmentDocumentNameReserved_Message {
+			get {
+				return ResourceManager.GetString("EnvironmentDocumentNameReserved.Message", resourceCulture);
+			}
+		}
+
+        /// <summary>
         ///   Looks up a localized string similar to The writer wasn&apos;t returned!.
         /// </summary>
         internal static string WriterNotReturned_Message {

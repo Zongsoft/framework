@@ -2,7 +2,7 @@
 
 [English](README.md) | [简体中文](README.zh-Hans.md)
 
-These tools target .NET 8, 9, and 10 and provide framing microbenchmarks, client workloads, device simulation, and concurrent-send tests. They use generated data and local loopback connections without real devices or external services. .NET 10 is the main performance target; use .NET 8 and 9 for correctness and executability checks, with full measurements when comparing runtime behavior.
+These tools target .NET 10 and 11 and provide framing microbenchmarks, client workloads, device simulation, and concurrent-send tests. They use generated data and local loopback connections without real devices or external services. Use the same workload on both runtimes when comparing performance.
 
 ## Build and microbenchmarks
 
@@ -19,7 +19,8 @@ Performance measurements require Release without a debugger; BenchmarkDotNet als
 dotnet build Zongsoft.Net/benchmark/Zongsoft.Net.Benchmarks.csproj -c Release -p:GeneratePackageOnBuild=false
 # Run the following commands from benchmark
 dotnet bin/Release/net10.0/Zongsoft.Net.Benchmarks.dll micro --list flat
-dotnet bin/Release/net10.0/Zongsoft.Net.Benchmarks.dll micro --filter "*" --job Dry --runtimes net8.0 net9.0 net10.0 --artifacts artifacts/dry --noOverwrite > artifacts-dry.log 2>&1
+dotnet bin/Release/net10.0/Zongsoft.Net.Benchmarks.dll micro --filter "*" --job Dry --artifacts artifacts/dry-net10.0 --noOverwrite > artifacts-dry-net10.0.log 2>&1
+dotnet bin/Release/net11.0/Zongsoft.Net.Benchmarks.dll micro --filter "*" --job Dry --artifacts artifacts/dry-net11.0 --noOverwrite > artifacts-dry-net11.0.log 2>&1
 dotnet bin/Release/net10.0/Zongsoft.Net.Benchmarks.dll micro --filter "*HeadedPacketizerBenchmarks.UnpackSingle*128*" --launchCount 3 --exporters fulljson --artifacts artifacts/representative --noOverwrite > artifacts-representative.log 2>&1
 dotnet bin/Release/net10.0/Zongsoft.Net.Benchmarks.dll micro --filter "*" --job Short --launchCount 3 --exporters fulljson --artifacts artifacts/matrix --noOverwrite > artifacts-matrix.log 2>&1
 ```
@@ -95,4 +96,4 @@ With `--diagnostics 1`, service reads shared connection-monitoring scan counts, 
 
 Capacity tests must use real sockets and identify source-port, memory, handle and client CPU limits. Loopback results do not predict production network SLOs. Preserve complete arguments, source hashes, hardware and at least three raw runs. Estimate incremental connection cost from stable connected snapshots minus startup; distinguish natural recovery, pool retention and forced GC.
 
-See the [test sources](../test) for protocol, slow-peer, cancellation, broadcast and lifecycle coverage. Run `dotnet test ../test/Zongsoft.Net.Tests.csproj -c Debug -f net8.0 -p:GeneratePackageOnBuild=false` and repeat for net9.0/net10.0. Performance measurements do not replace correctness assertions.
+See the [test sources](../test) for protocol, slow-peer, cancellation, broadcast and lifecycle coverage. Run `dotnet test ../test/Zongsoft.Net.Tests.csproj -c Debug -f net10.0 -p:GeneratePackageOnBuild=false` and repeat for net11.0. Performance measurements do not replace correctness assertions.

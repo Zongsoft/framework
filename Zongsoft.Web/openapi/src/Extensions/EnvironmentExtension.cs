@@ -35,13 +35,26 @@ public class EnvironmentExtension(Configuration.EnvironmentOption environment) :
 		if(!string.IsNullOrEmpty(environment.Description))
 			writer.WriteProperty("description", environment.Description);
 
+		writer.WriteProperty("color", "#FFFFFF");
 		writer.WritePropertyName("variables");
-		writer.WriteStartObject();
+		writer.WriteStartArray();
 
-		for(int i = 0; i < environment.Variables.Count; i++)
-			Helper.Variable(environment.Variables[i]).Write(writer, version);
+		foreach(var variable in environment.Variables)
+		{
+			writer.WriteStartObject();
+			writer.WriteProperty("name", variable.Name);
+			writer.WritePropertyName("value");
+			writer.WriteStartObject();
+			writer.WriteProperty("default", variable.Default ?? string.Empty);
 
-		writer.WriteEndObject();
+			if(!string.IsNullOrEmpty(variable.Description))
+				writer.WriteProperty("description", variable.Description);
+
+			writer.WriteEndObject();
+			writer.WriteEndObject();
+		}
+
+		writer.WriteEndArray();
 		writer.WriteEndObject();
 	}
 }

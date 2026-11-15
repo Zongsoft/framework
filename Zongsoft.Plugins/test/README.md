@@ -14,7 +14,7 @@ Both suites reuse the shipped [Main.plugin](../plugins/Main.plugin) registration
 
 ## Running
 
-Run from the framework root with the .NET 10 SDK and the .NET 8, 9 and 10 runtimes. Debug builds consume local dependency outputs; build Core first. These projects use VSTest and xUnit v3.
+Run from the framework root with the .NET 11 SDK and the .NET 10 and 11 runtimes. Debug builds consume local dependency outputs; build Core first. These projects use VSTest and xUnit v3.
 
 ```powershell
 dotnet build ./Zongsoft.Core/src/Zongsoft.Core.csproj -p:GeneratePackageOnBuild=false
@@ -28,7 +28,7 @@ Run the integration suite explicitly:
 dotnet test ./Zongsoft.Plugins/test/integration/Zongsoft.Plugins.Tests.slnx -p:GeneratePackageOnBuild=false
 ```
 
-Add `-f net8.0`, `-f net9.0` or `-f net10.0` to select one framework. Integration lifecycle tests invoke the matching test assembly with `dotnet` from PATH. The basic lifecycle probes use an in-memory terminal executor. Signal probes use the real console executor and standard-input reader: Windows creates an isolated hidden console, while Linux keeps a redirected pipe open. No listener or external service starts. A bounded timeout terminates only the test's child process, and a completion marker verifies that shutdown returned to the caller.
+Add `-f net10.0` or `-f net11.0` to select one framework. Integration lifecycle tests invoke the matching test assembly with `dotnet` from PATH. The basic lifecycle probes use an in-memory terminal executor. Signal probes use the real console executor and standard-input reader: Windows creates an isolated hidden console, while Linux keeps a redirected pipe open. No listener or external service starts. A bounded timeout terminates only the test's child process, and a completion marker verifies that shutdown returned to the caller.
 
 ## Lifecycle assertions
 

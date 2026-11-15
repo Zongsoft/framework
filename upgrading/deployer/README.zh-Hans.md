@@ -125,7 +125,7 @@ Zongsoft.Upgrading.Deployer \
 ```cmd
 dotnet publish "Zongsoft.Upgrading.Deployer.csproj" ^
   -c Release ^
-  -f net10.0 ^
+  -f net11.0 ^
   -r win-x64 ^
   --self-contained true ^
   -p:PublishSingleFile=true ^
@@ -136,14 +136,14 @@ dotnet publish "Zongsoft.Upgrading.Deployer.csproj" ^
 发布后的可执行文件位于：
 
 ```text
-bin\Release\net10.0\win-x64\publish\Zongsoft.Upgrading.Deployer.exe
+bin\Release\net11.0\win-x64\publish\Zongsoft.Upgrading.Deployer.exe
 ```
 
 ### Linux 平台
 
 #### 容器内发布
 
-1. 运行 [framework.start](./../../framework-start.cmd) 脚本，启动一个包含 _.NET 10 SDK_ 的 _**L**inux_ Alpine 容器。
+1. 运行 [framework.start](./../../framework-start.cmd) 脚本，启动一个包含 _.NET 11 SDK_ 的 _**L**inux_ Alpine 容器。
 
 	先确保该容器已经加载完成：
 
@@ -169,7 +169,7 @@ bin\Release\net10.0\win-x64\publish\Zongsoft.Upgrading.Deployer.exe
 
 #### 容器外发布
 
-1. 运行 [framework.start](./../../framework-start.cmd) 脚本，启动一个包含 _.NET 10 SDK_ 的 _**L**inux_ Alpine 容器。
+1. 运行 [framework.start](./../../framework-start.cmd) 脚本，启动一个包含 _.NET 11 SDK_ 的 _**L**inux_ Alpine 容器。
 
 	先确保该容器已经加载完成：
 

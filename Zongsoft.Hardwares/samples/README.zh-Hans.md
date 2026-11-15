@@ -8,10 +8,10 @@
 
 ## 前置条件与运行
 
-需要 .NET 10 SDK，可在 Windows、Linux 或 macOS 上运行。结果取决于系统设施、权限以及是否运行于容器中。Debug 引用依赖本地构建的 Core DLL。在 framework 根目录执行：
+需要 .NET 11 SDK，可在 Windows、Linux 或 macOS 上运行。结果取决于系统设施、权限以及是否运行于容器中。Debug 引用依赖本地构建的 Core DLL。在 framework 根目录执行：
 
 ```shell
-dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -f net10.0
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -f net11.0
 dotnet run --project Zongsoft.Hardwares/samples/Zongsoft.Hardwares.Samples.csproj
 ```
 

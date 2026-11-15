@@ -76,12 +76,11 @@ jobs:
         uses: actions/setup-dotnet@v6
         with:
           dotnet-version: |
-            8.0.x
-            9.0.x
             10.0.x
+            11.0.x
 
-      - name: Restore .NET tools
-        run: dotnet tool restore
+      - name: Install Cake
+        run: dotnet tool install --global Cake.Tool
 
       - name: NuGet login
         id: login

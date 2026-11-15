@@ -50,6 +50,10 @@ public class XmlConfigurationProvider : FileConfigurationProvider
 	public IReadOnlyList<XmlConfigurationInstruction> Instructions => XmlStreamConfigurationProvider.GetInstructions(this.Data);
 	#endregion
 
+	#region 内部方法
+	internal IEnumerable<string> GetDeclaredChildKeys(string path) => XmlConfigurationReader.GetDeclaredChildKeys(this.Data, path);
+	#endregion
+
 	#region 重写方法
 	/// <summary>读取 XML 配置并执行处理指令，成功后替换当前快照。</summary>
 	/// <param name="stream">配置输入流；此方法不会关闭它。</param>

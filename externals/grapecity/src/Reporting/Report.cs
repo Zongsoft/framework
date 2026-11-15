@@ -16,6 +16,8 @@
 
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 using GrapeCity.ActiveReports;
 using GrapeCity.ActiveReports.Document;
@@ -75,13 +77,27 @@ public class Report : IReport, IDisposable
 		return new Report(new PageReport(reader));
 	}
 
-	public static Report Open(IReportDescriptor descriptor)
+	public static async ValueTask<Report> OpenAsync(IReportDescriptor descriptor, CancellationToken cancellation = default)
 	{
-		if(descriptor == null)
-			throw new ArgumentNullException(nameof(descriptor));
+		ArgumentNullException.ThrowIfNull(descriptor);
+		cancellation.ThrowIfCancellationRequested();
 
-		using var stream = descriptor.Open();
-		return stream == null ? null : Open(stream);
+		var stream = await descriptor.OpenAsync(cancellation);
+		return stream == null ? null : await OpenAsync(stream, cancellation);
+	}
+
+	public static async ValueTask<Report> OpenAsync(Stream stream, CancellationToken cancellation = default)
+	{
+		ArgumentNullException.ThrowIfNull(stream);
+
+		using var buffer = new MemoryStream();
+
+		await using(stream)
+			await stream.CopyToAsync(buffer, cancellation);
+
+		cancellation.ThrowIfCancellationRequested();
+		buffer.Position = 0;
+		return Open(buffer);
 	}
 
 	public GrapeCity.ActiveReports.PageReportModel.Report AsReport() => _report.Report;
@@ -104,6 +120,17 @@ public class Report : IReport, IDisposable
 
 		if(data != null && data.Length > 0)
 			stream.Write(data);
+	}
+
+	public async ValueTask SaveAsync(Stream stream, CancellationToken cancellation = default)
+	{
+		ArgumentNullException.ThrowIfNull(stream);
+		cancellation.ThrowIfCancellationRequested();
+
+		var data = GrapeCity.ActiveReports.Aspnetcore.Designer.Utilities.ReportConverter.ToXml(_report.Report);
+
+		if(data != null && data.Length > 0)
+			await stream.WriteAsync(data, cancellation);
 	}
 
 	public void Export(Stream stream, IReportExportOptions options) { }
@@ -129,7 +156,7 @@ public class Report : IReport, IDisposable
 				var loader = ApplicationContext.Current.Services.Resolve<IReportDataLoader>();
 
 				if(loader != null)
-					args.Data = loader.Load(this, model);
+					args.Data = Utility.RunForSynchronousCallback(() => model.LoadAsync(loader, this).AsTask());
 
 				break;
 			}

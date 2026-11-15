@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<IsPackable>false</IsPackable>
+		<RootNamespace>Zongsoft.Web.OpenApi.Tests</RootNamespace>
+		<GenerateDocumentationFile>false</GenerateDocumentationFile>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\src\Zongsoft.Web.OpenApi.option" Link="Zongsoft.Web.OpenApi.option" CopyToOutputDirectory="PreserveNewest" />
+		<Using Include="Xunit" />
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
+		<ProjectReference Include="..\src\Zongsoft.Web.OpenApi.csproj" />
+		<Reference Include="Zongsoft.Core">
+			<HintPath>..\..\..\Zongsoft.Core\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Core.dll</HintPath>
+		</Reference>
+		<Reference Include="Zongsoft.Web">
+			<HintPath>..\..\src\bin\$(Configuration)\$(TargetFramework)\Zongsoft.Web.dll</HintPath>
+		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.NET.Test.Sdk" />
+		<PackageReference Include="xunit.v3" />
+		<PackageReference Include="xunit.v3.core" />
+		<PackageReference Include="xunit.v3.assert" />
+		<PackageReference Include="xunit.analyzers" />
+		<PackageReference Include="xunit.v3.runner.msbuild" />
+		<PackageReference Include="xunit.runner.visualstudio" />
+		<PackageReference Include="YamlDotNet" VersionOverride="18.1.0" />
+	</ItemGroup>
+</Project>

@@ -1066,11 +1066,11 @@ Automao 的 `ComponentStore` 实现票据、授权请求、事件和授权者凭
 
 ### 程序集和引用
 
-主库、Web 和 Gateway 的版本为 7.11.0，必须一起使用；目标框架为 .NET 8、9、10。主库需要 Core 7.79.0，Web/Gateway 还需要 Web 7.20.0。框架基础库由宿主统一提供，不在适配器 `.deploy` 中重复部署。
+主库、Web 和 Gateway 的版本为 8.0.0，必须一起使用；目标框架为 .NET 10、11。主库需要 Core 8.0.0，Web/Gateway 还需要 Web 8.0.0。框架基础库由宿主统一提供，不在适配器 `.deploy` 中重复部署。
 
-Debug 构建使用当前工作树 Core/Web 的 HintPath，Release 使用上述最低版本的 Core/Web NuGet 依赖。Web/Gateway 在两种配置下均以 ProjectReference 引用主库，其 NuGet 包声明主库 7.11.0 依赖。未发布的版本不能由旧包替代；正式 Release 包构建须在所选源具备相应依赖后进行。源码构建与离线验证不代表 NuGet 发布或现网部署。
+Debug 构建使用当前工作树 Core/Web 的 HintPath，Release 使用上述最低版本的 Core/Web NuGet 依赖。Web/Gateway 在两种配置下均以 ProjectReference 引用主库，其 NuGet 包声明主库 8.0.0 依赖。未发布的版本不能由旧包替代；正式 Release 包构建须在所选源具备相应依赖后进行。源码构建与离线验证不代表 NuGet 发布或现网部署。
 
-Automao 直接调用项目的本机引用由 `ZongsoftFrameworkPathReferenced` 和 `ZongsoftFrameworkPath` 控制；NuGet 分支同样要求主库 7.11.0。Web 部署清单使用 Web 7.11.0，Gateway 站点另外装入 Gateway 7.11.0。插件应答与业务注册节点见[Gateway](../gateway/README.zh-Hans.md)。数据库映射与业务插件跟随 Automao 自身部署清单，宿主不放置支付业务代码。
+Automao 直接调用项目的本机引用由 `ZongsoftFrameworkPathReferenced` 和 `ZongsoftFrameworkPath` 控制；NuGet 分支同样要求主库 8.0.0。Web 部署清单使用 Web 8.0.0，Gateway 站点另外装入 Gateway 8.0.0。插件应答与业务注册节点见[Gateway](../gateway/README.zh-Hans.md)。数据库映射与业务插件跟随 Automao 自身部署清单，宿主不放置支付业务代码。
 
 <a id="deployment-2"></a>
 
@@ -1115,18 +1115,17 @@ dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -c Debug -p:GeneratePackageO
 dotnet build Zongsoft.Web/src/Zongsoft.Web.csproj -c Debug -p:GeneratePackageOnBuild=false
 dotnet build externals/wechat/Zongsoft.Externals.Wechat.slnx -c Debug -p:GeneratePackageOnBuild=false
 
-dotnet test externals/wechat/test/Zongsoft.Externals.Wechat.Tests.csproj -c Debug --framework net8.0 --no-build --no-restore
-dotnet test externals/wechat/test/Zongsoft.Externals.Wechat.Tests.csproj -c Debug --framework net9.0 --no-build --no-restore
+dotnet test externals/wechat/test/Zongsoft.Externals.Wechat.Tests.csproj -c Debug --framework net11.0 --no-build --no-restore
 dotnet test externals/wechat/test/Zongsoft.Externals.Wechat.Tests.csproj -c Debug --framework net10.0 --no-build --no-restore
 ```
 
-每条命令成功后才运行后续命令。项目采用 xUnit v3，通过 `Microsoft.NET.Test.Sdk` 和 Visual Studio adapter 使用 VSTest；仓库未启用 MTP runner。`--framework` 分别运行三个目标；不能把仅安装 SDK 或通过框架前滚运行视为原目标运行时验证。包版本、目标框架和运行器以实际共享配置及项目文件为准。
+每条命令成功后才运行后续命令。项目采用 xUnit v3，通过 `Microsoft.NET.Test.Sdk` 和 Visual Studio adapter 使用 VSTest；仓库未启用 MTP runner。`--framework` 分别运行两个目标；不能把仅安装 SDK 或通过框架前滚运行视为原目标运行时验证。包版本、目标框架和运行器以实际共享配置及项目文件为准。
 
 主库测试工程只通过 `ProjectReference` 引用微信主库；Core 使用已构建程序集的 `Reference/HintPath`，实际使用的配置、DI 和宿主抽象包显式声明。测试不引用 `Zongsoft.Plugins`，不读取生产配置、密钥和真实交易数据。
 
-Web API 测试使用相同的三目标框架命令，项目路径为 `externals/wechat/api/test/Zongsoft.Externals.Wechat.Web.Tests.csproj`。
+Web API 测试使用相同的两个目标框架的命令，项目路径为 `externals/wechat/api/test/Zongsoft.Externals.Wechat.Web.Tests.csproj`。
 
-Gateway 测试使用相同的三目标框架命令，项目路径为 `externals/wechat/gateway/test/Zongsoft.Externals.Wechat.Gateway.Tests.csproj`。它直接装配真实控制器和本地 Kestrel，以接收结果替身隔离应答边界；协议验签在主库测试中覆盖。
+Gateway 测试使用相同的两个目标框架的命令，项目路径为 `externals/wechat/gateway/test/Zongsoft.Externals.Wechat.Gateway.Tests.csproj`。它直接装配真实控制器和本地 Kestrel，以接收结果替身隔离应答边界；协议验签在主库测试中覆盖。
 
 <a id="testing-2"></a>
 

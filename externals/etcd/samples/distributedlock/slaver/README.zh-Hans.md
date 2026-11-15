@@ -8,7 +8,7 @@
 
 ## 前置条件与运行
 
-需要 .NET 10、本地构建的 Debug Core 类库及临时 etcd v3 实例。按上级指南准备 Core 后，在本目录执行：
+需要 .NET 11、本地构建的 Debug Core 类库及临时 etcd v3 实例。按上级指南准备 Core 后，在本目录执行：
 
 ```shell
 dotnet run -- "server=127.0.0.1;port=2379"

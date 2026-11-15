@@ -9,8 +9,7 @@
 在本目录执行：
 
 ```powershell
-dotnet test Zongsoft.Core.Tests.csproj --framework net8.0 -p:GeneratePackageOnBuild=false
-dotnet test Zongsoft.Core.Tests.csproj --framework net9.0 -p:GeneratePackageOnBuild=false
+dotnet test Zongsoft.Core.Tests.csproj --framework net11.0 -p:GeneratePackageOnBuild=false
 dotnet test Zongsoft.Core.Tests.csproj --framework net10.0 -p:GeneratePackageOnBuild=false
 ```
 

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
-		<Version>2.4.0</Version>
+		<Version>3.0.0</Version>
 		<Product>Zongsoft Security Captcha Library</Product>
 		<Description>This is a verification code class library for CAPTCHA.</Description>
 		<RootNamespace>Zongsoft.Security</RootNamespace>
@@ -38,8 +38,8 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.63.0" />
-				<PackageReference Include="Zongsoft.Web" VersionOverride="7.18.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="8.0.0" />
+				<PackageReference Include="Zongsoft.Web" VersionOverride="8.0.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

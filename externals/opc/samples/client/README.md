@@ -7,7 +7,7 @@
 
 ## Purpose and Startup
 
-This .NET 10 interactive client exercises OPC UA connection, subscription, and monitoring. Start the [local sample server](../README.md) first and verify its endpoint and security settings, then run the following command from the repository root:
+This .NET 11 interactive client exercises OPC UA connection, subscription, and monitoring. Start the [local sample server](../README.md) first and verify its endpoint and security settings, then run the following command from the repository root:
 
 ```shell
 dotnet run --project externals/opc/samples/client/Zongsoft.Externals.Opc.Samples.Client.csproj

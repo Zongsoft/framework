@@ -26,7 +26,7 @@
 dotnet add package Zongsoft.Externals.Grapecity.Web
 ```
 
-注册的 `IApplicationInitializer<IApplicationBuilder>` 使用共享 `/Grapecity/Reporting` 前缀、压缩、自定义报表存储和数据源回调调用 `UseReporting` 与 `UseDesigner`。数据报表需要已配置的 `IReportDataLoader`，报表定义由 `IReportLocator` 实现提供。
+注册的 `IApplicationInitializer<IApplicationBuilder>` 使用共享 `/Grapecity/Reporting` 前缀、压缩、自定义报表存储和数据源回调调用 `UseReporting` 与 `UseDesigner`。数据报表通过 `IReportDataLoader` 异步取数，报表定义由 `IReportLocator` 实现提供。ActiveReports 15 的查看器和设计器在同步回调中等待结果，异步数据序列会在回调返回前读入内存。
 
 ```http
 GET /Grapecity/Reporting/Reports

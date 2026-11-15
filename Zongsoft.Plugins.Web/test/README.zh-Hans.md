@@ -10,7 +10,7 @@ Plugins.Web 主解决方案和 Cake `test` 任务只包含单元测试。集成�
 
 ## 运行方式
 
-从框架根目录运行，需要 .NET 10 SDK 和 .NET 8、9、10 Runtime。按顺序构建本地 Debug 依赖：
+从框架根目录运行，需要 .NET 11 SDK 和 .NET 10、11 Runtime。按顺序构建本地 Debug 依赖：
 
 ```powershell
 dotnet build ./Zongsoft.Core/src/Zongsoft.Core.csproj -p:GeneratePackageOnBuild=false
@@ -26,6 +26,6 @@ dotnet test ./Zongsoft.Plugins.Web/test/unit/Zongsoft.Plugins.Web.Tests.csproj -
 dotnet test ./Zongsoft.Plugins.Web/test/integration/Zongsoft.Plugins.Web.Tests.slnx -p:GeneratePackageOnBuild=false
 ```
 
-添加 `-f net8.0`、`-f net9.0` 或 `-f net10.0` 可选择单个目标框架。VSTest 发现并执行 xUnit v3 测试。集成子进程通过 PATH 中的 `dotnet` 运行，必须同时满足退出码为零及存在完成标记。本地 HTTP 用例限制请求与进程等待时间，需要 IPv4/IPv6 回环套接字支持，不访问真实外部服务。传输替身不验证真实 QUIC，HTTPS 端口投影不代表完成 TLS 握手。
+添加 `-f net10.0` 或 `-f net11.0` 可选择单个目标框架。VSTest 发现并执行 xUnit v3 测试。集成子进程通过 PATH 中的 `dotnet` 运行，必须同时满足退出码为零及存在完成标记。本地 HTTP 用例限制请求与进程等待时间，需要 IPv4/IPv6 回环套接字支持，不访问真实外部服务。传输替身不验证真实 QUIC，HTTPS 端口投影不代表完成 TLS 握手。
 
 程序集禁用用例并行以隔离进程级应用状态。夹具等待应用和服务容器释放后删除文件。初始器失败用例通过门闩控制异步释放，验证工厂在清理完成前保持未完成状态。

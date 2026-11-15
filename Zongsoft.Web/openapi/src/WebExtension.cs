@@ -16,6 +16,10 @@
 
 using System;
 using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 using Microsoft.OpenApi;
 
@@ -24,53 +28,96 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 
+using Zongsoft.Services;
+
 namespace Zongsoft.Web.OpenApi;
 
 public static partial class WebExtension
 {
-	private static OpenApiDocument _document;
+	public static IEndpointConventionBuilder UseOpenApi(this IEndpointRouteBuilder endpoints, string pattern = null) => UseOpenApi(endpoints, pattern, null, new SemaphoreSlim(1));
 
-	public static IEndpointConventionBuilder UseOpenApi(this IEndpointRouteBuilder endpoints, string pattern = null) => endpoints.MapGet(pattern ?? "/openapi/{documentName}.{extension}", async (HttpContext context, string documentName = "v1", string extension = "json") =>
+	internal static IEndpointConventionBuilder UseOpenApi(this IEndpointRouteBuilder endpoints, string pattern, IReadOnlyDictionary<string, Configuration.EnvironmentOption> environments, SemaphoreSlim gate)
 	{
-		if(!DocumentFormat.TryParse(extension, out var format))
-		{
-			context.Response.StatusCode = StatusCodes.Status400BadRequest;
-			context.Response.ContentType = "text/plain;charset=utf-8";
-			await context.Response.WriteAsync(Properties.Resources.DocumentFormatNotSupported_Message);
-			return;
-		}
+		var application = ApplicationContext.Current;
+		var snapshots = new ConcurrentDictionary<(string PathBase, string Environment), DocumentSnapshot>();
 
-		if(_document == null)
+		return endpoints.MapGet(pattern ?? "/openapi/{documentName}.{extension}", async (HttpContext context, string documentName = "v1", string extension = "json") =>
 		{
-			var documentContext = new DocumentContext(format)
+			if(!DocumentFormat.TryParse(extension, out var format))
 			{
-				//注入运行时路由表，用于补全约定式路由的接口路径
-				Routing = context.RequestServices?.GetService<EndpointDataSource>(),
-			};
+				context.Response.StatusCode = StatusCodes.Status400BadRequest;
+				context.Response.ContentType = "text/plain;charset=utf-8";
+				await context.Response.WriteAsync(Properties.Resources.DocumentFormatNotSupported_Message, context.RequestAborted);
+				return;
+			}
 
-			_document = DocumentGenerator.Generate(documentContext);
+			Configuration.EnvironmentOption environment = null;
+			DocumentSnapshot document = null;
 
-			if(_document == null)
+			if(environments == null || environments.TryGetValue(documentName, out environment))
+			{
+				var key = (context.Request.PathBase.ToUriComponent(), environment?.Name);
+				document = snapshots.TryGetValue(key, out var cached) ? cached : await GetSnapshot(context, key, environment);
+			}
+
+			if(document == null)
 			{
 				context.Response.StatusCode = StatusCodes.Status404NotFound;
 				context.Response.ContentType = "text/plain;charset=utf-8";
-				await context.Response.WriteAsync(string.Format(Properties.Resources.DocumentNotFound_Message, documentName));
+				await context.Response.WriteAsync(string.Format(Properties.Resources.DocumentNotFound_Message, documentName), context.RequestAborted);
 				return;
 			}
-		}
 
-		using var memory = new MemoryStream();
-		using(var streamWriter = new StreamWriter(memory, System.Text.Encoding.UTF8, leaveOpen: true))
+			context.Response.ContentType = format.Type;
+			await context.Response.Body.WriteAsync(format == DocumentFormat.Yaml ? document.Yaml : document.Json, context.RequestAborted);
+		}).ExcludeFromDescription();
+
+		async Task<DocumentSnapshot> GetSnapshot(HttpContext context, (string PathBase, string Environment) key, Configuration.EnvironmentOption environment)
 		{
-			OpenApiWriterBase writer = format == DocumentFormat.Yaml ?
-				new OpenApiYamlWriter(streamWriter):
-				new OpenApiJsonWriter(streamWriter);
+			await gate.WaitAsync(context.RequestAborted);
 
-			await _document.SerializeAsync(writer, OpenApiSpecVersion.OpenApi3_1, context.RequestAborted);
-			await streamWriter.FlushAsync();
+			try
+			{
+				if(snapshots.TryGetValue(key, out var snapshot))
+					return snapshot;
+
+				var owner = application ?? ApplicationContext.Current;
+				if(owner == null)
+					return null;
+
+				var document = DocumentGenerator.Generate(new DocumentContext(DocumentFormat.Json, owner)
+				{
+					Routing = endpoints.ServiceProvider.GetService<EndpointDataSource>(),
+					PathBase = key.PathBase,
+					Environment = environment,
+				});
+
+				if(document == null)
+					return null;
+
+				var result = new DocumentSnapshot(Serialize(document, DocumentFormat.Json), Serialize(document, DocumentFormat.Yaml));
+				snapshots[key] = result;
+				return result;
+			}
+			finally
+			{
+				gate.Release();
+			}
+		}
+	}
+
+	private static byte[] Serialize(OpenApiDocument document, DocumentFormat format)
+	{
+		using var buffer = new MemoryStream();
+		//使用默认编码和缓冲区大小，释放写入器时保留底层流
+		using(var text = new StreamWriter(buffer, null, -1, true))
+		{
+			IOpenApiWriter writer = format == DocumentFormat.Yaml ? new VersionedYamlWriter(text) : new VersionedJsonWriter(text);
+			document.SerializeAsV32(writer);
 		}
 
-		context.Response.ContentType = format.Type;
-		await context.Response.Body.WriteAsync(memory.GetBuffer().AsMemory(0, (int)memory.Length), context.RequestAborted);
-	}).ExcludeFromDescription();
+		return buffer.ToArray();
+	}
+
+	private sealed record DocumentSnapshot(ReadOnlyMemory<byte> Json, ReadOnlyMemory<byte> Yaml);
 }

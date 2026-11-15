@@ -14,7 +14,7 @@
  * Licensed under the MIT License (see LICENSE).
  */
 
-using System;
+using System.Linq;
 
 using Microsoft.OpenApi;
 
@@ -24,9 +24,9 @@ partial class DocumentGenerator
 {
 	internal static void GenerateEnvironments(this DocumentContext context)
 	{
-		var environments = context.Configuration.GetEnvironments();
+		var environments = context.Environment == null ? context.Configuration.GetEnvironmentsInDeclarationOrder().ToArray() : [context.Environment];
 
-		if(environments != null && environments.Count > 0)
+		if(environments.Length > 0)
 			context.Document.AddExtension("x-scalar-environments", Extensions.Helper.Object(environments));
 	}
 }

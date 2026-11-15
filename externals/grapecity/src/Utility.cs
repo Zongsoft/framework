@@ -16,6 +16,7 @@
 
 using System;
 using System.IO;
+using System.Threading.Tasks;
 using System.Collections.Generic;
 
 namespace Zongsoft.Externals.Grapecity;
@@ -53,4 +54,10 @@ public static class Utility
 
 		return data.ToArray();
 	}
+
+	internal static TResult RunForSynchronousCallback<TResult>(Func<Task<TResult>> action) =>
+		Task.Run(action).GetAwaiter().GetResult();
+
+	internal static void RunForSynchronousCallback(Func<Task> action) =>
+		Task.Run(action).GetAwaiter().GetResult();
 }

@@ -29,26 +29,17 @@ Load `Zongsoft.Externals.Grapecity.plugin` after `Zongsoft.Reporting`. ActiveRep
 dotnet add package Zongsoft.Externals.Grapecity
 ```
 
-For a concrete reference, follow the adapter's [Report.Open(IReportDescriptor)](src/Reporting/Report.cs) implementation:
+Call `Report.OpenAsync(descriptor, cancellation)` to open a report definition from an `IReportDescriptor`. The asynchronous overloads accept a descriptor or a stream, read the definition into memory, and dispose the source stream. Use `Report.Open` for synchronous file-path or stream input.
 
-```csharp
-public static Report Open(IReportDescriptor descriptor)
-{
-	if(descriptor == null)
-		throw new ArgumentNullException(nameof(descriptor));
+Use a trusted ActiveReports definition. For host-side viewer and designer composition, see the [Web package](api/README.md).
 
-	using var stream = descriptor.Open();
-	return stream == null ? null : Open(stream);
-}
-```
-
-This source excerpt shows the boundary between a framework descriptor and the vendor engine; it is not an application service to construct manually. The repository does not include a sales RDLX template or a predefined `Title` parameter. Deploy a trusted ActiveReports definition and use only parameters actually declared in it. For host-side viewer/designer composition, follow the [Web package](api/README.md).
-
-`Report.Open` accepts a framework file path, stream, or `IReportDescriptor`. It wraps an ActiveReports `PageReport`, classifies the first report item as fixed-page (`FPL`) or continuous-page (`CPL`), and projects ActiveReports parameters/data sources into Zongsoft reporting contracts.
+Call `Report.SaveAsync(stream, cancellation)` to write the report definition asynchronously. The caller owns the output stream.
 
 ## Data and Designer Resources
 
 ActiveReports data-source definitions become `ReportDataSource`/`ReportDataModel`; a registered `IReportDataLoader` must turn those models into runtime data. `ResourceService` and `ThemeResolver` connect report locators, images, templates and themes to the ActiveReports designer.
+
+`ThemeResolver.ResolveAsync(name, stream, title, description, cancellation)` reads the theme into memory and disposes the input stream after reading. Seekable streams are read from the beginning.
 
 > 💡 Keep credentials out of RDLX definitions. Let a trusted `IReportDataLoader` map logical source names and parameterized schemas to environment-specific data access.
 

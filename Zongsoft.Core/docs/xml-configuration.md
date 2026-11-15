@@ -6,6 +6,8 @@
 
 `Zongsoft.Configuration.Xml` reads XML configuration with a `configuration` or `options` root and `option path="..."` children. Ordinary attributes become configuration keys; `element.name` / `element.key` select named collection entries. Text and CDATA retain the existing scalar-collection mapping.
 
+Use `configuration.GetDeclaredOptionKeys("/Section/Items")` when presentation needs the declaration order of direct XML configuration children. Imports contribute keys at their declaration point. A repeated key retains its first position. Read the values from the effective configuration as usual.
+
 Processing instructions (PIs) are collected as original definitions rather than mapped to configuration keys. File and stream providers execute registered instructions while loading, with `import` registered by default. Unknown instructions retain their definitions for consumers to interpret. Static `XmlStreamConfigurationProvider.Read` only parses the current stream and does not execute instructions.
 
 ```xml

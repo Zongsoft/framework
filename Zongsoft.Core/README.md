@@ -13,7 +13,7 @@
 
 _**Z**ongsoft.**C**ore_ is the foundation package of the [_**Z**ongsoft Framework_](https://github.com/Zongsoft/framework). It provides the shared abstractions, base types, utility APIs, and infrastructure building blocks used by the rest of the _**Z**ongsoft_ ecosystem.
 
-The current project targets `net8.0`, `net9.0`, and `net10.0`, uses the root namespace `Zongsoft`, and is packaged as the `Zongsoft.Core` NuGet package. It integrates with the `Microsoft.Extensions.*` stack for dependency injection, configuration, options, hosting abstractions, object pooling, and memory caching.
+The current project targets `net10.0` and `net11.0`, uses the root namespace `Zongsoft`, and is packaged as the `Zongsoft.Core` NuGet package. It integrates with the `Microsoft.Extensions.*` stack for dependency injection, configuration, options, hosting abstractions, object pooling, and memory caching.
 
 ## Installation
 

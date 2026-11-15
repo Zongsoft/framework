@@ -200,7 +200,7 @@ The interactive [sample project](samples/Program.cs) uses [Bogus](https://github
 Run it from the repository root:
 
 ```shell
-dotnet run --project externals/closedxml/samples/Zongsoft.Externals.ClosedXml.Samples.csproj -f net10.0
+dotnet run --project externals/closedxml/samples/Zongsoft.Externals.ClosedXml.Samples.csproj -f net11.0
 ```
 
 Available commands:
@@ -219,7 +219,7 @@ For example, `export --count:20 --culture:en-US users.en.xlsx` generates English
 
 ```shell
 dotnet build externals/closedxml/Zongsoft.Externals.ClosedXml.slnx --no-incremental
-dotnet test externals/closedxml/test/Zongsoft.Externals.ClosedXml.Tests.csproj -f net10.0
+dotnet test externals/closedxml/test/Zongsoft.Externals.ClosedXml.Tests.csproj -f net11.0
 ```
 
 ## License

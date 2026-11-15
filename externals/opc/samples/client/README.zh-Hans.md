@@ -7,7 +7,7 @@
 
 ## 用途与启动
 
-这个 .NET 10 交互客户端演示 OPC UA 连接、订阅和监视。先启动[本地示例服务端](../README.zh-Hans.md)，确认其端点与安全设置，再从仓库根目录运行：
+这个 .NET 11 交互客户端演示 OPC UA 连接、订阅和监视。先启动[本地示例服务端](../README.zh-Hans.md)，确认其端点与安全设置，再从仓库根目录运行：
 
 ```shell
 dotnet run --project externals/opc/samples/client/Zongsoft.Externals.Opc.Samples.Client.csproj

@@ -4,7 +4,7 @@ podman exec ^
     dotnet publish               ^
         --self-contained         ^
         --runtime linux-musl-x64 ^
-        --framework net10.0      ^
+        --framework net11.0      ^
         --configuration Release  ^
         -p:PublishAot=true       ^
         -p:NativeLinker=lld      ^

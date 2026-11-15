@@ -29,6 +29,7 @@ public class XmlConfigurationImportTest
 		Assert.Equal("kept", configuration["Example:inside:value"]);
 		Assert.Equal("kept", configuration["Example:after:value"]);
 		Assert.Equal("root-tail", configuration["Example:tail:value"]);
+		Assert.Equal(["before", "item", "inside", "tail", "after"], configuration.GetDeclaredOptionKeys("/Example"));
 		Assert.Null(configuration["Other:unselected:value"]);
 		Assert.Equal(["path='before.option'", "path='inside.option'", "path='after.option'"], provider.Instructions.Select(instruction => instruction.Data));
 		Assert.Equal([string.Empty, "/configuration/option", string.Empty], provider.Instructions.Select(instruction => instruction.Path));

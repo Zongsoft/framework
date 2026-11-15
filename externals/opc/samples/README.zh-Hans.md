@@ -12,7 +12,7 @@
 | [server](server) | 启动 OPC UA 服务端，并创建包含文件夹、变量、对象和数组的内存地址空间。 |
 | [client](client) | 连接 OPC UA 服务端，演示浏览、读取、写入、订阅和监视。 |
 
-两个项目均面向 .NET 10。服务端使用命令行传入的 OPC UA 端点设置；客户端的 `connect` 命令默认使用 `opc.tcp://localhost:4840` 及源码中声明的附加身份设置。
+两个项目均面向 .NET 11。服务端使用命令行传入的 OPC UA 端点设置；客户端的 `connect` 命令默认使用 `opc.tcp://localhost:4840` 及源码中声明的附加身份设置。
 
 ## 运行
 

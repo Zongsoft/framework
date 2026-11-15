@@ -33,36 +33,74 @@ namespace Zongsoft.Web.OpenApi;
 
 partial class DocumentGenerator
 {
-	internal static void GeneratePaths(this DocumentContext context, ControllerServiceDescriptorCollection descriptors)
+	private static List<ControllerServiceDescriptor> GeneratePaths(this DocumentContext context, ControllerServiceDescriptorCollection descriptors)
 	{
+		var paths = context.Document.Paths;
+		var services = new List<ControllerServiceDescriptor>(descriptors.Count);
+
 		foreach(var descriptor in descriptors)
 		{
-			if(!string.IsNullOrEmpty(descriptor.Module))
-				context.Document.Tags.Add(Tags.Tag(descriptor.Module));
+			if(SetPaths(context, descriptor, paths))
+				services.Add(descriptor);
+		}
 
-			if(!string.IsNullOrEmpty(descriptor.Namespace))
-				context.Document.Tags.Add(Tags.Tag(descriptor.Namespace, descriptor.Module));
+		foreach(var path in paths)
+		{
+			if((path.Value.Operations == null || path.Value.Operations.Count == 0) &&
+			   (path.Value.Extensions == null || path.Value.Extensions.Count == 0) &&
+			   (path.Value.Parameters == null || path.Value.Parameters.Count == 0))
+				paths.Remove(path.Key);
+		}
 
-			context.Document.Tags.Add(Tags
-				.Tag(descriptor.QualifiedName, descriptor.Module, descriptor.Namespace)
-				.Caption(descriptor.Title)
-				.Description(descriptor.Description));
+		EnsureUniqueOperationIds(paths);
+		return services;
+	}
 
-			SetPaths(context, descriptor, context.Document.Paths);
+	private static void EnsureUniqueOperationIds(OpenApiPaths paths)
+	{
+		var operations = new List<(string Path, string Method, OpenApiOperation Operation)>();
+
+		foreach(var path in paths)
+		{
+			foreach(var operation in path.Value.Operations)
+				operations.Add((path.Key, operation.Key.Method, operation.Value));
+		}
+
+		var groups = operations.ToLookup(item => item.Operation.OperationId, StringComparer.Ordinal);
+		var used = groups.Select(group => group.Key).ToHashSet(StringComparer.Ordinal);
+		var duplicates = groups.Where(group => group.Count() > 1).OrderBy(group => group.Key, StringComparer.Ordinal);
+
+		foreach(var group in duplicates)
+		{
+			var ordered = group.OrderBy(item => item.Path, StringComparer.Ordinal).ThenBy(item => item.Method, StringComparer.Ordinal);
+
+			//按路径和 HTTP 方法排序，首项保留原始标识
+			foreach(var item in ordered.Skip(1))
+			{
+				var prefix = $"{group.Key}.{item.Method}.{Uri.EscapeDataString(item.Path)}";
+				var id = prefix;
+
+				for(var index = 2; !used.Add(id); index++)
+					id = $"{prefix}.{index}";
+
+				item.Operation.OperationId = id;
+			}
 		}
 	}
 
-	private static void SetPaths(DocumentContext context, ControllerServiceDescriptor descriptor, IDictionary<string, IOpenApiPathItem> paths)
+	private static bool SetPaths(DocumentContext context, ControllerServiceDescriptor descriptor, IDictionary<string, IOpenApiPathItem> paths)
 	{
+		var included = false;
+
 		foreach(var controller in descriptor.Controllers)
 		{
 			foreach(var pattern in controller.GetRoutePatterns())
 			{
-				var url = pattern.GetUrl();
+				var pathKey = GetPathKey(pattern);
 
-				if(!paths.ContainsKey(url))
+				if(!paths.ContainsKey(pathKey))
 				{
-					paths.TryAdd(url, new OpenApiPathItem()
+					paths.TryAdd(pathKey, new OpenApiPathItem()
 					{
 						Summary = descriptor.Title,
 						Description = descriptor.Description,
@@ -89,32 +127,31 @@ partial class DocumentGenerator
 
 				foreach(var pattern in patterns)
 				{
-					var url = pattern.GetUrl();
+					var pathKey = GetPathKey(pattern);
 
-					if(!paths.TryGetValue(url, out var path))
-						paths.Add(url, path = new OpenApiPathItem()
+					if(!paths.TryGetValue(pathKey, out var path))
+						paths.Add(pathKey, path = new OpenApiPathItem()
 						{
 							Summary = operation.Title,
 							Description = operation.Description,
 							Operations = new Dictionary<HttpMethod, OpenApiOperation>(),
 						});
 
-					path.Operations.TryAdd(method, GetOperation(context, descriptor, operation, method, pattern));
+					included |= path.Operations.TryAdd(method, GetOperation(context, descriptor, operation, method, pattern));
 				}
 			}
 		}
 
-		foreach(var path in paths)
-		{
-			if(IsEmpty(path.Value))
-				paths.Remove(path.Key);
-		}
+		return included;
 
-		static bool IsEmpty(IOpenApiPathItem path)
+		static string GetPathKey(RoutePattern pattern)
 		{
-			return (path.Operations == null || path.Operations.Count == 0) &&
-			       (path.Extensions == null || path.Extensions.Count == 0) &&
-			       (path.Parameters == null || path.Parameters.Count == 0);
+			var path = pattern.GetUrl();
+
+			if(path.StartsWith("~/", StringComparison.Ordinal))
+				return path[1..];
+
+			return path.StartsWith('/') ? path : "/" + path;
 		}
 	}
 
@@ -125,6 +162,10 @@ partial class DocumentGenerator
 			OperationId = $"{service.QualifiedName}.{descriptor.Name}",
 			Summary = GetSummary(descriptor),
 			Description = descriptor.Description,
+			Responses = new OpenApiResponses()
+			{
+				["default"] = new OpenApiResponse() { Description = Properties.Resources.ResponseDefault_Description },
+			},
 		};
 
 		if(operation.Tags == null)
@@ -145,7 +186,7 @@ partial class DocumentGenerator
 						Description = parameterModel.DisplayName,
 						Required = !parameterModel.ParameterInfo.HasDefaultValue,
 
-						Content = new Dictionary<string, OpenApiMediaType>()
+						Content = new Dictionary<string, IOpenApiMediaType>()
 						{
 							["application/json"] = new OpenApiMediaType()
 							{
@@ -183,11 +224,10 @@ partial class DocumentGenerator
 
 		static string GetSummary(ControllerServiceDescriptor.ControllerOperationDescriptor descriptor)
 		{
-			var signature = string.Join(',',
-				descriptor.Action.Parameters
-					.Where(parameter => parameter.BindingInfo?.BindingSource == BindingSource.Path)
-					.Select(parameter => parameter.Name)
-			);
+			var parameters = descriptor.Action.Parameters
+				.Where(parameter => parameter.BindingInfo?.BindingSource == BindingSource.Path)
+				.Select(parameter => parameter.Name);
+			var signature = string.Join(',', parameters);
 
 			return string.IsNullOrEmpty(signature) ? descriptor.Name : $"{descriptor.Name}({signature})";
 		}
@@ -219,11 +259,13 @@ partial class DocumentGenerator
 		{
 			Name = model.Name,
 			In = location,
-			AllowEmptyValue = nullable,
 			Description = model.DisplayName,
 			Example = GetValue(model, pattern),
-			Required = IsRequired(model, pattern, nullable),
+			Required = location == ParameterLocation.Path || IsRequired(model, pattern, nullable),
 			Schema = GenerateSchema(context, model.ParameterType),
+			#pragma warning disable CS0618 // Preserve OpenAPI 3.2 query parameters that accept an empty value.
+			AllowEmptyValue = location == ParameterLocation.Query && nullable,
+			#pragma warning restore CS0618
 		};
 
 		static string GetValue(ParameterModel parameter, RoutePattern pattern)

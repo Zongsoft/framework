@@ -39,7 +39,7 @@
 
 ## 前置条件与运行
 
-这是 .NET 10 交互样例，不需要服务器或数据库。在 framework 根目录执行：
+这是 .NET 11 交互样例，不需要服务器或数据库。在 framework 根目录执行：
 
 ```shell
 dotnet run --project Zongsoft.Core/samples/superviser/Zongsoft.Samples.Superviser.csproj

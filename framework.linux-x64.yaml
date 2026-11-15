@@ -7,7 +7,7 @@ metadata:
 spec:
   containers:
   - name: musl
-    image: mcr.microsoft.com/dotnet/sdk:10.0-alpine
+    image: mcr.microsoft.com/dotnet/sdk:11.0-alpine
     command: ["/bin/sh"]
     args: 
     - "-c"

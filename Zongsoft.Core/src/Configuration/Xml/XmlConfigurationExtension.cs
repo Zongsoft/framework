@@ -16,6 +16,8 @@
 
 using System;
 using System.IO;
+using System.Linq;
+using System.Collections.Generic;
 
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.FileProviders;
@@ -24,6 +26,34 @@ namespace Zongsoft.Configuration;
 
 public static class XmlConfigurationExtension
 {
+	/// <summary>按 XML 配置的声明顺序获取指定路径下的直接子键。同名键以首次出现的位置为准。</summary>
+	/// <param name="configuration">包含 XML 配置提供程序的配置根。</param>
+	/// <param name="path">父级配置路径，可使用冒号或斜杠分隔。</param>
+	/// <returns>按声明顺序排列的 XML 配置子键。</returns>
+	public static IEnumerable<string> GetDeclaredOptionKeys(this IConfigurationRoot configuration, string path)
+	{
+		ArgumentNullException.ThrowIfNull(configuration);
+		return GetKeys(configuration.Providers, Xml.XmlConfigurationUtility.NormalizeOptionPath(path)).Distinct(StringComparer.OrdinalIgnoreCase);
+
+		static IEnumerable<string> GetKeys(IEnumerable<IConfigurationProvider> providers, string path)
+		{
+			foreach(var provider in providers)
+			{
+				var keys = provider switch
+				{
+					Xml.XmlConfigurationProvider file => file.GetDeclaredChildKeys(path),
+					Xml.XmlStreamConfigurationProvider stream => stream.GetDeclaredChildKeys(path),
+					ICompositeConfigurationProvider composite => GetKeys(composite.Providers, path),
+					ChainedConfigurationProvider chained when chained.Configuration is IConfigurationRoot root => GetKeys(root.Providers, path),
+					_ => [],
+				};
+
+				foreach(var key in keys)
+					yield return key;
+			}
+		}
+	}
+
 	public static IConfigurationBuilder AddOptionFile(this IConfigurationBuilder builder, string path)
 	{
 		return AddOptionFile(builder, provider: null, path: path, optional: false, reloadOnChange: false);

@@ -29,26 +29,17 @@
 dotnet add package Zongsoft.Externals.Grapecity
 ```
 
-真实参考可从适配器的 [Report.Open(IReportDescriptor)](src/Reporting/Report.cs) 实现入手：
+调用 `Report.OpenAsync(descriptor, cancellation)` 打开 `IReportDescriptor` 提供的报表定义。异步重载接受描述符或数据流，将定义读入内存并释放源流。同步的文件路径或数据流可使用 `Report.Open`。
 
-```csharp
-public static Report Open(IReportDescriptor descriptor)
-{
-	if(descriptor == null)
-		throw new ArgumentNullException(nameof(descriptor));
+请使用可信的 ActiveReports 定义。宿主查看器和设计器的接入方式见 [Web 包](api/README.zh-Hans.md)。
 
-	using var stream = descriptor.Open();
-	return stream == null ? null : Open(stream);
-}
-```
-
-这段源码展示框架描述符与厂商引擎之间的边界，并不是要求使用者手动构造应用服务。仓库未附带销售报表 RDLX 模板，也没有预定义的 `Title` 参数。请部署可信的 ActiveReports 定义，并只使用其中实际声明的参数。宿主中的查看器和设计器组合方式见 [Web 包](api/README.zh-Hans.md)。
-
-`Report.Open` 接受框架文件路径、数据流或 `IReportDescriptor`。它包装 ActiveReports `PageReport`，按第一个报表项分类为固定页（`FPL`）或连续页（`CPL`），并把 ActiveReports 参数/数据源投射到 Zongsoft 报表契约。
+调用 `Report.SaveAsync(stream, cancellation)` 异步写入报表定义，输出流由调用方释放。
 
 ## 数据与设计器资源
 
 ActiveReports 数据源定义转换为 `ReportDataSource`/`ReportDataModel`；已注册 `IReportDataLoader` 必须把模型物化为运行数据。`ResourceService` 与 `ThemeResolver` 把报表定位器、图片、模板和主题接入 ActiveReports 设计器。
+
+`ThemeResolver.ResolveAsync(name, stream, title, description, cancellation)` 将主题读入内存，读取后释放输入流。可定位的流从起始位置读取。
 
 > 💡 不要在 RDLX 定义中保存凭据。由可信 `IReportDataLoader` 把逻辑数据源名称和参数化 Schema 映射到环境专属数据访问。
 

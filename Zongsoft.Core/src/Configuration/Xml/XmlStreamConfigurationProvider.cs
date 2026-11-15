@@ -29,6 +29,8 @@ public class XmlStreamConfigurationProvider(XmlStreamConfigurationSource source)
 	/// <summary>获取当前配置数据对应的处理指令只读快照，按导入位置展开并保留重复声明。</summary>
 	public IReadOnlyList<XmlConfigurationInstruction> Instructions => GetInstructions(this.Data);
 
+	internal IEnumerable<string> GetDeclaredChildKeys(string path) => XmlConfigurationReader.GetDeclaredChildKeys(this.Data, path);
+
 	/// <summary>读取配置并执行指令，成功后替换当前快照，不关闭调用方的流。</summary>
 	/// <param name="stream">配置输入流，由调用方负责关闭。</param>
 	public override void Load(Stream stream)

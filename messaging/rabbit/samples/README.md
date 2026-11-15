@@ -9,7 +9,7 @@
 
 This interactive sample demonstrates the `Zongsoft.Messaging.RabbitMQ` queue, publisher, subscriber, and message acknowledgment APIs.
 
-The project targets .NET 10 and expects RabbitMQ at `127.0.0.1:5672`, using the user `program` and password `xxxxxx`. Update the connection settings in `Program.cs` to match the local broker before running the sample.
+The project targets .NET 11 and expects RabbitMQ at `127.0.0.1:5672`, using the user `program` and password `xxxxxx`. Update the connection settings in `Program.cs` to match the local broker before running the sample.
 
 ## Run
 

@@ -100,7 +100,7 @@ internal class Program
 
 	private static Job CreateJob(Job preset, string name, string path) => preset
 		.WithId(name)
-		.WithRuntime(CoreRuntime.Core80)
+		.WithRuntime(CoreRuntime.Core10_0)
 		.WithMsBuildArguments($"/p:BenchmarkCorePath=\"{path}\"", "/p:GeneratePackageOnBuild=false");
 
 	private static bool IsComparisonConflict(string argument) => argument.Split('=')[0].ToLowerInvariant() is

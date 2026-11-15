@@ -14,7 +14,7 @@
 
 [**Z**ongsoft.**N**et](https://github.com/Zongsoft/framework/tree/main/Zongsoft.Net) 是 [_**Z**ongsoft_](https://github.com/Zongsoft/framework) 开源框架中的高性能网络通讯类库，提供了有关 _**S**ocket_ 网络开发的各项功能。
 
-它提供异步 TCP 客户端、服务器、通道、连接统计、广播和分帧，支持 .NET 8、9、10，仅要求 `Microsoft.NETCore.App` 运行时。适用于设备长连接、心跳、中小消息交互和设备合批等应用专属协议。
+它提供异步 TCP 客户端、服务器、通道、连接统计、广播和分帧，支持 .NET 10、11，仅要求 `Microsoft.NETCore.App` 运行时。适用于设备长连接、心跳、中小消息交互和设备合批等应用专属协议。
 
 ## 数据包与字节流
 

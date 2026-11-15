@@ -10,10 +10,10 @@ The seed applies only when the key is absent. The first result is `seed + interv
 
 ## Prerequisites and Run
 
-Use .NET 10 and a disposable etcd v3 endpoint. Debug builds require the local Core DLL. From the framework root:
+Use .NET 11 and a disposable etcd v3 endpoint. Debug builds require the local Core DLL. From the framework root:
 
 ```shell
-dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -f net10.0
+dotnet build Zongsoft.Core/src/Zongsoft.Core.csproj -f net11.0
 dotnet run --project externals/etcd/samples/sequence -- "server=127.0.0.1;port=2379"
 ```
 

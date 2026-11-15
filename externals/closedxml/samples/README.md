@@ -11,10 +11,10 @@ This sample demonstrates spreadsheet import and export with `Zongsoft.Externals.
 
 ## Run
 
-The sample targets .NET 10. Run it from the repository root:
+The sample targets .NET 11. Run it from the repository root:
 
 ```shell
-dotnet run --project externals/closedxml/samples/Zongsoft.Externals.ClosedXml.Samples.csproj -f net10.0
+dotnet run --project externals/closedxml/samples/Zongsoft.Externals.ClosedXml.Samples.csproj -f net11.0
 ```
 
 ## Export

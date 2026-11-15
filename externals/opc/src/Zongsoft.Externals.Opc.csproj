@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>0.28.0</Version>
+		<Version>1.0.0</Version>
 		<Product>Zongsoft Opc Library</Product>
 		<Description>This is a library about OPC-UA SDK.</Description>
 		<RootNamespace>Zongsoft.Externals.Opc</RootNamespace>
@@ -15,6 +15,9 @@
 	</PropertyGroup>
 
 	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Configuration" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+		<PackageReference Include="Microsoft.Extensions.ObjectPool" />
 		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua" VersionOverride="2.0.1" />
 		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Core" VersionOverride="2.0.1" />
 		<PackageReference Include="OPCFoundation.NetStandard.Opc.Ua.Client" VersionOverride="2.0.1" />
@@ -33,7 +36,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="7.68.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="8.0.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

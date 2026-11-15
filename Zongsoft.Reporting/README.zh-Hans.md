@@ -56,7 +56,7 @@ await using var stream = await descriptor.OpenAsync(cancellation);
 
 通过 `await loader.LoadAsync(report, model, cancellation)` 取得数据。返回对象可以是异步查询结果；报表提供程序需要异步读取数据，再向要求内存集合的渲染 API 提供已就绪的数据。
 
-当前 GrapeCity 适配器与本版本的异步加载、定位和存储契约不兼容，不能组合使用。
+GrapeCity 适配器使用这些异步契约，并在向 ActiveReports 15 的同步回调返回数据前将异步查询结果读入内存。
 
 模板和资源的定位、仓储创建/更新/删除、报表保存均使用 Async 入口并支持取消。IReportArchiveLocator.OpenAsync 返回 ReportArchiveResult：未找到时为默认值；没有文件路径时仍可返回有效的 Archive 元数据；非空 Stream 由调用方通过 await using 释放。
 
