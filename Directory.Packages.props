@@ -4,52 +4,46 @@
 	</PropertyGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-		<PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="10.0.15" />
-		<PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.15" />
-		<PackageVersion Include="Microsoft.Extensions.Configuration.FileExtensions" Version="10.0.15" />
-		<PackageVersion Include="Microsoft.Extensions.FileProviders.Abstractions" Version="10.0.15" />
-		<PackageVersion Include="Microsoft.Extensions.FileProviders.Physical" Version="10.0.15" />
 		<PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.15" />
-		<PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.15" />
+		<PackageVersion Include="Microsoft.Extensions.Primitives" Version="10.0.15" />
 		<PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="10.0.15" />
 		<PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.15" />
 		<PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.15" />
+		<PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.15" />
+		<PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.15" />
+		<PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.15" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.15" />
+		<PackageVersion Include="Microsoft.Extensions.Configuration.FileExtensions" Version="10.0.15" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.15" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="10.0.15" />
 		<PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.15" />
 		<PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.15" />
-		<PackageVersion Include="Microsoft.Extensions.Options" Version="10.0.15" />
-		<PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.15" />
-		<PackageVersion Include="Microsoft.Extensions.Primitives" Version="10.0.15" />
+		<PackageVersion Include="Microsoft.Extensions.FileProviders.Abstractions" Version="10.0.15" />
+		<PackageVersion Include="Microsoft.Extensions.FileProviders.Physical" Version="10.0.15" />
+		<PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.15" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(TargetFramework)' == 'net11.0'">
-		<PackageVersion Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="11.0.0" />
-		<PackageVersion Include="Microsoft.Extensions.Configuration" Version="11.0.0" />
-		<PackageVersion Include="Microsoft.Extensions.Configuration.FileExtensions" Version="11.0.0" />
-		<PackageVersion Include="Microsoft.Extensions.FileProviders.Abstractions" Version="11.0.0" />
-		<PackageVersion Include="Microsoft.Extensions.FileProviders.Physical" Version="11.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Http" Version="11.0.0" />
-		<PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="11.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.Primitives" Version="11.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.ObjectPool" Version="11.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Hosting" Version="11.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="11.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.Options" Version="11.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="11.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.Configuration" Version="11.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="11.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.Configuration.FileExtensions" Version="11.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Abstractions" Version="11.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.Caching.Memory" Version="11.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0" />
 		<PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="11.0.0" />
-		<PackageVersion Include="Microsoft.Extensions.Options" Version="11.0.0" />
-		<PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="11.0.0" />
-		<PackageVersion Include="Microsoft.Extensions.Primitives" Version="11.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.FileProviders.Abstractions" Version="11.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.FileProviders.Physical" Version="11.0.0" />
+		<PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="11.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageVersion Include="BenchmarkDotNet" Version="0.15.8" />
-		<PackageVersion Include="BenchmarkDotNet.Annotations" Version="0.15.8" />
-		<PackageVersion Include="BenchmarkDotNet.Diagnostics.Windows" Version="0.15.8" />
-		<PackageVersion Include="coverlet.collector" Version="6.0.4" />
 		<PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
 		<PackageVersion Include="xunit.v3" Version="3.2.2" />
 		<PackageVersion Include="xunit.v3.core" Version="3.2.2" />
@@ -57,6 +51,10 @@
 		<PackageVersion Include="xunit.analyzers" Version="1.27.0" />
 		<PackageVersion Include="xunit.v3.runner.msbuild" Version="3.2.2" />
 		<PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+		<PackageVersion Include="coverlet.collector" Version="6.0.4" />
+	</ItemGroup>
+
+	<ItemGroup>
 		<PackageVersion Include="Zongsoft.Core" Version="8.0.0" />
 		<PackageVersion Include="Zongsoft.Web" Version="8.0.0" />
 		<PackageVersion Include="Zongsoft.Plugins" Version="8.0.0" />

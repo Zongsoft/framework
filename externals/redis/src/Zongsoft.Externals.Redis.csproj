@@ -15,14 +15,21 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.Configuration" />
-		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
-		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
-		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" />
+		<PackageReference Include="StackExchange.Redis" VersionOverride="3.1.31" />
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="StackExchange.Redis" VersionOverride="3.1.31" />
+		<PackageReference Include="Microsoft.Extensions.Configuration" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+		<PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" VersionOverride="10.0.15" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(TargetFramework)' == 'net11.0'">
+		<PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" VersionOverride="11.0.0" />
 	</ItemGroup>
 
 	<Choose>
