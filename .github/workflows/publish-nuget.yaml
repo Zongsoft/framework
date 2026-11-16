@@ -89,21 +89,11 @@ jobs:
           user: ${{ secrets.NUGET_USER }}
 
       - name: Build and publish
-        if: inputs.project != 'Zongsoft.Data' && inputs.project != 'Zongsoft.Web' && startsWith(inputs.project, 'Zongsoft.Data.') == false
+        if: inputs.project != 'Zongsoft.Data' && startsWith(inputs.project, 'Zongsoft.Data.') == false
         working-directory: ${{ inputs.project }}
         env:
           NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
         run: dotnet cake --compilation Release --target pack
-
-      - name: Build and publish Web base package
-        if: inputs.project == 'Zongsoft.Web'
-        working-directory: Zongsoft.Web
-        env:
-          NUGET_API_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
-        run: |
-          dotnet pack src/Zongsoft.Web.csproj --configuration Release -p:GeneratePackageOnBuild=false
-          dotnet nuget push src/bin/Release/*.nupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
-          dotnet nuget push src/bin/Release/*.snupkg --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
 
       - name: Build and publish data package
         if: inputs.project == 'Zongsoft.Data'
