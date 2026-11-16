@@ -4,7 +4,6 @@ set -u
 
 SCRIPT_DIRECTORY=$(CDPATH= cd "$(dirname "$0")" && pwd)
 PROJECT_MANIFEST="$SCRIPT_DIRECTORY/cake.projects"
-PROJECT_ADMINISTRATIVES="$SCRIPT_DIRECTORY/../Administratives/build.cake"
 FAILED_PROJECTS=""
 
 if ! command -v dotnet >/dev/null 2>&1; then
@@ -52,12 +51,6 @@ while IFS= read -r project || [ -n "$project" ]; do
 		:
 	fi
 done < "$PROJECT_MANIFEST"
-
-if [ -f "$PROJECT_ADMINISTRATIVES" ]; then
-	if run_project "$PROJECT_ADMINISTRATIVES" "$@"; then
-		:
-	fi
-fi
 
 if [ -n "$FAILED_PROJECTS" ]; then
 	printf '\nThe following Cake projects failed:\n' >&2

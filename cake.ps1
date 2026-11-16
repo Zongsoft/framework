@@ -1,7 +1,6 @@
 $ErrorActionPreference = 'Stop'
 
 [string]$projectManifest = Join-Path $PSScriptRoot 'cake.projects'
-[string]$projectAdministratives = Join-Path $PSScriptRoot '../Administratives/build.cake'
 [string[]]$forwardedArguments = @($args)
 $failedProjects = [System.Collections.Generic.List[string]]::new()
 
@@ -15,11 +14,6 @@ if(-not (Test-Path -LiteralPath $projectManifest -PathType Leaf))
 $projects = Get-Content -LiteralPath $projectManifest |
 	ForEach-Object { $_.Trim() } |
 	Where-Object { $_ -and -not $_.StartsWith('#') }
-
-if(Test-Path -LiteralPath $projectAdministratives -PathType Leaf)
-{
-	$projects = @($projects) + $projectAdministratives
-}
 
 Push-Location $PSScriptRoot
 
