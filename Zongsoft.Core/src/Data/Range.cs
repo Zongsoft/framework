@@ -82,17 +82,17 @@ public static class Range
 		return vector.IsZero ? default : new Range<uint>(vector.Minimum, vector.Maximum);
 	}
 
-	public static Range<T> Create<T>(T minimum, T maximum) where T : struct, IComparable<T> => new Range<T>(minimum, maximum);
-	public static Range<T> Create<T>(T? minimum, T? maximum) where T : struct, IComparable<T> => new Range<T>(minimum, maximum);
+	public static Range<T> Create<T>(T minimum, T maximum) where T : struct => new Range<T>(minimum, maximum);
+	public static Range<T> Create<T>(T? minimum, T? maximum) where T : struct => new Range<T>(minimum, maximum);
 
-	public static Range<T> Empty<T>() where T : struct, IComparable<T> => EmptyRange<T>.Value;
-	public static Range<T> Minimum<T>(T minimum) where T : struct, IComparable<T> => new Range<T>(minimum, null);
-	public static Range<T> Maximum<T>(T maximum) where T : struct, IComparable<T> => new Range<T>(null, maximum);
+	public static Range<T> Empty<T>() where T : struct => EmptyRange<T>.Value;
+	public static Range<T> Minimum<T>(T minimum) where T : struct => new Range<T>(minimum, null);
+	public static Range<T> Maximum<T>(T maximum) where T : struct => new Range<T>(null, maximum);
 
-	public static Range<T> Parse<T>(string text) where T : struct, IComparable<T> => Range<T>.Parse(text);
-	public static bool TryParse<T>(string text, out Range<T> value) where T : struct, IComparable<T> => Range<T>.TryParse(text, out value);
+	public static Range<T> Parse<T>(string text) where T : struct => Range<T>.Parse(text);
+	public static bool TryParse<T>(string text, out Range<T> value) where T : struct => Range<T>.TryParse(text, out value);
 
-	public static bool In<T>(T value, T? minimum, T? maximum) where T : struct, IComparable<T>
+	public static bool In<T>(T value, T? minimum, T? maximum) where T : struct
 	{
 		var range = new Range<T>(minimum, maximum);
 		return range.Contains(value);
@@ -191,6 +191,8 @@ public static class Range
 	#region 时间范围
 	public static class Timing
 	{
+		public static Range<DateOnly> Day(DateOnly date) => new(date);
+		public static Range<DateTimeOffset> Day(DateTimeOffset date) => new(new DateTimeOffset(date.Year, date.Month, date.Day, 0, 0, 0, date.Offset), new DateTimeOffset(date.Year, date.Month, date.Day, 23, 59, 59, 999, date.Offset));
 		public static Range<DateTime> Day(DateTime date) => new(date.Date, new DateTime(date.Year, date.Month, date.Day, 23, 59, 59, 999));
 		public static Range<DateTime> Day(int year, int month, int day) => new(new DateTime(year, month, day), new DateTime(year, month, day, 23, 59, 59, 999));
 		public static Range<DateTime> Today() => Day(DateTime.Today);
@@ -279,11 +281,95 @@ public static class Range
 					$"Invalid parameter unit({unit}) of the ago datetime range function."),
 			};
 		}
+
+		public static Range<T> Day<T>(DateTime date) where T : struct
+		{
+			var range = Day(date);
+
+			if(typeof(T) == typeof(DateTimeOffset))
+				range.Maximum = DateTime.SpecifyKind(range.Maximum.Value, date.Kind);
+
+			return Convert<T>(range);
+		}
+
+		public static Range<T> Day<T>(int year, int month, int day) where T : struct => Convert<T>(Day(year, month, day));
+		public static Range<T> Today<T>() where T : struct => Convert<T>(Today());
+		public static Range<T> Tomorrow<T>() where T : struct => Convert<T>(Tomorrow());
+		public static Range<T> Yesterday<T>() where T : struct => Convert<T>(Yesterday());
+		public static Range<T> ThisWeek<T>() where T : struct => Convert<T>(ThisWeek());
+		public static Range<T> LastWeek<T>() where T : struct => Convert<T>(LastWeek());
+		public static Range<T> ThisMonth<T>() where T : struct => Convert<T>(ThisMonth());
+		public static Range<T> LastMonth<T>() where T : struct => Convert<T>(LastMonth());
+		public static Range<T> ThisYear<T>() where T : struct => Convert<T>(ThisYear());
+		public static Range<T> LastYear<T>() where T : struct => Convert<T>(LastYear());
+		public static Range<T> Year<T>(int year) where T : struct => Convert<T>(Year(year));
+		public static Range<T> Month<T>(int year, int month) where T : struct => Convert<T>(Month(year, month));
+		public static Range<T> Ago<T>(int number, char unit) where T : struct => Convert<T>(Ago(number, unit));
+		public static Range<T> Last<T>(int number, char unit) where T : struct => Convert<T>(Last(number, unit));
+
+		private static Range<T> Convert<T>(Range<DateTime> range) where T : struct
+		{
+			if(TryConvert(range, out Range<T> result))
+				return result;
+
+			if(typeof(T) == typeof(DateTimeOffset))
+				throw new ArgumentOutOfRangeException(nameof(range), Properties.Resources.RangeParser_InvalidDateTimeFormat_Message);
+
+			throw new NotSupportedException(Properties.Resources.OperationException_Unsupported_Message);
+		}
+
+		internal static bool TryConvert<T>(Range<DateTime> range, out Range<T> result) where T : struct
+		{
+			result = default;
+
+			if(typeof(T) == typeof(DateTime))
+			{
+				result = (Range<T>)(object)range;
+				return true;
+			}
+
+			if(typeof(T) == typeof(DateOnly))
+			{
+				result = (Range<T>)(object)new Range<DateOnly>(
+					range.Minimum.HasValue ? DateOnly.FromDateTime(range.Minimum.Value) : null,
+					range.Maximum.HasValue ? DateOnly.FromDateTime(range.Maximum.Value) : null);
+				return true;
+			}
+
+			if(typeof(T) == typeof(DateTimeOffset))
+			{
+				if(!TryConvert(range.Minimum, out var minimum) || !TryConvert(range.Maximum, out var maximum))
+					return false;
+
+				result = (Range<T>)(object)new Range<DateTimeOffset>(minimum, maximum);
+				return true;
+			}
+
+			return false;
+		}
+
+		private static bool TryConvert(DateTime? value, out DateTimeOffset? result)
+		{
+			result = null;
+
+			if(!value.HasValue)
+				return true;
+
+			var timestamp = value.Value;
+			var offset = timestamp.Kind == DateTimeKind.Utc ? TimeSpan.Zero : TimeZoneInfo.Local.GetUtcOffset(timestamp);
+			var ticks = timestamp.Ticks - offset.Ticks;
+
+			if(ticks < DateTime.MinValue.Ticks || ticks > DateTime.MaxValue.Ticks)
+				return false;
+
+			result = new DateTimeOffset(timestamp.Ticks, offset);
+			return true;
+		}
 	}
 	#endregion
 
 	#region 嵌套子类
-	private static class EmptyRange<T> where T : struct, IComparable<T>
+	private static class EmptyRange<T> where T : struct
 	{
 		internal static readonly Range<T> Value = new();
 	}
@@ -363,7 +449,6 @@ public static class Range
 		#endregion
 
 		#region 动态编译
-
 		/*
 		 * 示例：动态编译后的代码。
 		 * 

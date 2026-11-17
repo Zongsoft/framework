@@ -15,11 +15,13 @@
  */
 
 using System;
-using System.Linq;
+using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-public readonly struct Mixture<T> : IEquatable<Mixture<T>> where T : struct, IEquatable<T>, IComparable<T>
+/// <summary>表示单值、多值选择或范围。</summary>
+/// <typeparam name="T">选择值类型。范围操作要求支持默认顺序比较，相等性比较使用默认值比较器。</typeparam>
+public readonly struct Mixture<T> : IEquatable<Mixture<T>>, ISpanParsable<Mixture<T>> where T : struct
 {
 	#region 构造函数
 	public Mixture(T value)
@@ -60,14 +62,14 @@ public readonly struct Mixture<T> : IEquatable<Mixture<T>> where T : struct, IEq
 
 			for(int i = 0; i < this.Array.Length; i++)
 			{
-				if(!this.Array[i].Equals(other.Array[i]))
+				if(!EqualityComparer<T>.Default.Equals(this.Array[i], other.Array[i]))
 					return false;
 			}
 
 			return true;
 		}
 
-		return this.Range.Equals(other.Range);
+		return (other.Array == null || other.Array.Length == 0) && this.Range.Equals(other.Range);
 	}
 	public override bool Equals(object obj) => obj is Mixture<T> other && this.Equals(other);
 
@@ -92,15 +94,69 @@ public readonly struct Mixture<T> : IEquatable<Mixture<T>> where T : struct, IEq
 	#endregion
 
 	#region 解析方法
-	public static bool TryParse(string text, out Mixture<T> result)
+	public static Mixture<T> Parse(string text) => text == null ? throw new ArgumentNullException(nameof(text)) : Parse(text.AsSpan());
+	public static Mixture<T> Parse(ReadOnlySpan<char> text) => TryParse(text, out var result) ? result : throw new FormatException(Properties.Resources.InvalidFormat_Message);
+	public static bool TryParse(string text, out Mixture<T> result) => TryParse(text.AsSpan(), out result);
+	public static bool TryParse(ReadOnlySpan<char> text, out Mixture<T> result)
 	{
-		if(Range<T>.TryParse(text, out var range))
-			result = new Mixture<T>(range);
-		else
-			result = new Mixture<T>(Common.StringExtension.Slice<T>(text, ',', Common.Convert.TryConvertValue).ToArray());
+		result = default;
+		var depth = 0;
+		var multiple = false;
 
+		foreach(var character in text)
+		{
+			switch(character)
+			{
+				case '(':
+					depth++;
+					break;
+				case ')':
+					if(--depth < 0)
+						return false;
+					break;
+				case ',':
+					multiple |= depth == 0;
+					break;
+			}
+		}
+
+		if(depth != 0)
+			return false;
+
+		if(!multiple)
+		{
+			if(Range<T>.TryParse(text, out var range))
+				result = new Mixture<T>(range);
+
+			return result.HasValue;
+		}
+
+		var values = new List<T>();
+
+		foreach(var part in text.Split(','))
+		{
+			var token = text[part].Trim();
+
+			if(token.IsEmpty)
+				continue;
+
+			if(!Common.Convert.TryConvertValue(token.ToString(), out T value))
+				return false;
+
+			values.Add(value);
+		}
+
+		if(values.Count == 0)
+			return false;
+
+		result = new Mixture<T>([.. values]);
 		return result.HasValue;
 	}
+
+	static Mixture<T> IParsable<Mixture<T>>.Parse(string text, IFormatProvider provider) => Parse(text);
+	static bool IParsable<Mixture<T>>.TryParse(string text, IFormatProvider provider, out Mixture<T> result) => TryParse(text, out result);
+	static Mixture<T> ISpanParsable<Mixture<T>>.Parse(ReadOnlySpan<char> text, IFormatProvider provider) => Parse(text);
+	static bool ISpanParsable<Mixture<T>>.TryParse(ReadOnlySpan<char> text, IFormatProvider provider, out Mixture<T> result) => TryParse(text, out result);
 	#endregion
 
 	#region 符号重写
@@ -112,7 +168,7 @@ public readonly struct Mixture<T> : IEquatable<Mixture<T>> where T : struct, IEq
 public static class MixtureUtility
 {
 	#region 静态方法
-	public static Condition ToCondition<T>(this Mixture<T> mixture, string name) where T : struct, IEquatable<T>, IComparable<T>
+	public static Condition ToCondition<T>(this Mixture<T> mixture, string name) where T : struct
 	{
 		if(string.IsNullOrEmpty(name))
 			throw new ArgumentNullException(nameof(name));
@@ -128,7 +184,7 @@ public static class MixtureUtility
 	#endregion
 }
 
-public class MixtureConverter<T> : IConditionConverter where T : struct, IEquatable<T>, IComparable<T>
+public class MixtureConverter<T> : IConditionConverter where T : struct
 {
 	#region 公共方法
 	public ICondition Convert(ConditionConverterContext context) => context.Value is Mixture<T> mixture ? mixture.ToCondition(context.GetFullName()) : null;

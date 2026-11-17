@@ -58,6 +58,47 @@ dotnet add package Zongsoft.Core
 - **运行时辅助** _(`Zongsoft.Resources`、`Zongsoft.Scheduling`、`Zongsoft.Versioning`、`Zongsoft.Terminals`)_
   > 资源定位、触发器抽象、语义化版本解析，以及终端/控制台命令执行。
 
+## 时间范围
+
+`Zongsoft.Data.Range<T>` 支持 `DateTime`、`DateOnly` 和 `DateTimeOffset` 的起止值、单值及开放边界。文本使用 `起始值~截止值`，留空、独立的 `?` 或 `*` 表示无边界，允许一层配对的外层圆括号。区间包含两端，起止值反向时自动交换。
+
+```csharp
+var dates = Zongsoft.Data.Range<DateOnly>.Parse("2026-11-01~2026-11-30");
+var today = Zongsoft.Data.Range.Timing.Today<DateOnly>();
+var year = Zongsoft.Data.Range.Timing.Year<DateTimeOffset>(2026);
+var day = Zongsoft.Data.Range.Timing.Day(DateTimeOffset.Now);
+var recent = Zongsoft.Data.Range<DateTimeOffset>.Parse("last(3d)");
+```
+
+`Range.Timing` 的泛型方法支持上述三种类型，原有无类型参数的入口返回 `Range<DateTime>`。`Day(DateOnly)` 返回该日期的单值区间，`Day(DateTimeOffset)` 使用实参日期并保留其偏移量。`Day<DateTimeOffset>(DateTime)` 按实参的 `Kind` 解释时间，UTC 输入生成零偏移量区间。
+
+三种类型均支持 `today`、`tomorrow`、`yesterday`、`thisweek`、`lastweek`、`thismonth`、`lastmonth`、`thisyear`、`lastyear`，以及 `year(2026)`、`month(2026,11)`、`day(2026,11,18)`、`ago(3d)` 和 `last(3d)`。名称忽略大小写，无参表达式允许省略括号。相对单位为 `y/Y` 年、`M` 月、`d/D` 日、`h/H` 时、`m` 分、`s/S` 秒。`ago` 生成无下界区间，`last` 生成截止当前时刻的区间。数量为零时，`last` 从当前年、月、日、小时或分钟的起点开始，秒单位取当前时刻。
+
+时间表达式和泛型日历工厂按进程所在机器的本地日历计算，`DateOnly` 取计算结果的日期部分，`DateTimeOffset` 使用各端点对应的本地偏移量。明确日期时间文本中的偏移量会保留。周从星期一开始，周区间上界为星期日 `23:59:59`。日、月、年区间上界为末日 `23:59:59.999`。文本转换和 `ToString()` 使用当前区域设置。
+
+`TryParse` 对非法表达式、参数数量或单位错误、无效日期及数值越界返回 `false`，输出默认区间。泛型时间工厂使用其它值类型时抛出 `NotSupportedException`。
+
+## 查询设置解析
+
+`Range<T>`、`Mixture<T>`、`Paging` 和 `Sorting` 均实现 `ISpanParsable<TSelf>`（包含 `IParsable<TSelf>`），提供 string 与 `ReadOnlySpan<char>` 的公开 `Parse`、`TryParse` 重载。接口方法的 `IFormatProvider` 参数被忽略，值转换沿用当前区域设置。
+
+`Range<T>` 和 `Mixture<T>` 的泛型约束为 `where T : struct`。范围顺序比较使用 `Comparer<T>.Default`，支持枚举、实现 `IComparable<T>` 或非泛型 `IComparable` 的值类型。缺少顺序比较能力时，涉及比较的范围操作会抛出 `ArgumentException`，范围 `TryParse` 返回 `false`。多值选择使用默认相等性比较，允许仅具有值相等性的结构。范围条件构建器和 Range/Mixture Web 绑定器遵循相同的类型要求。
+
+`Mixture<T>` 支持数值、枚举、`DateTime`、`DateTimeOffset` 和 `DateOnly` 的单值、多值及范围。顶层逗号分隔多值，时间表达式括号内的逗号保留为参数分隔符。`A~C` 生成包含两端的枚举数值范围，`A,B,D,F` 生成多值选择。多值中的空项被跳过，任一非空项无效时整体解析失败。
+
+```csharp
+var dates = Zongsoft.Data.Mixture<DateOnly>.Parse("month(2026,11)".AsSpan());
+var days = Zongsoft.Data.Mixture<DayOfWeek>.Parse("Monday,Wednesday,Friday");
+var paging = Zongsoft.Data.Paging.Parse("2|50");
+var sorting = Zongsoft.Data.Sorting.Parse("-CreatedTime".AsSpan());
+```
+
+框架 JSON 序列化器为 `Mixture<T>` 复用相同的字符串解析规则，并接受 JSON 数组表示多值选择。`CriteriaBase` 的 `Mixture<T>` 和可空 `Mixture<T>?` 属性自动按值生成等值、`IN`、`BETWEEN` 或单边范围条件。
+
+`Paging` 接受页号、`页号|页大小`、`限制数@偏移量`、`页号/页数(总记录数)`，以及 `*`、`Disabled`。分页结果文本中的页数必须大于零，计算所得页大小须在 `int` 范围内。空引用或空文本表示 `Paging.Disabled`。`Sorting` 使用名称表示升序，支持 `+` 前缀，以及表示降序的 `-`、`~` 前缀。
+
+`Range<T>` 和 `Sorting` 的 `Parse` 对空引用或空文本抛出 `ArgumentNullException`。`Mixture<T>.Parse` 对空引用抛出 `ArgumentNullException`，对空文本或非法文本抛出 `FormatException`。这些输入使相应 `TryParse` 返回 `false` 并输出默认值。
+
 ## 密码哈希
 
 [`Password`](src/Security/Password.cs) 使用 PBKDF2，默认哈希算法为 SHA256。`Factor` 的范围为 `0～255`，默认值为 `10`。因子为零时关闭额外迭代，仅执行一次 PBKDF2；正值对应 `Factor × 65,535` 次迭代。默认因子 `10` 对应 655,350 次，因子 `127` 对应 8,322,945 次。实际耗时取决于硬件、哈希算法和负载。
@@ -83,6 +124,8 @@ dotnet add package Zongsoft.Core
 通过显式挂载 `DataServiceBase<TModel>.EventFilterBase`，可以复用新增、更新、删除、增改和导入的事件数据准备与单条/集合回调。业务模块保留事件声明及发布入口；读取操作不参与。用法、Returning 要求和输入生命周期见[数据服务写入事件](docs/data-service-events.zh-Hans.md)。
 
 ## 条件查找
+
+查询条件属性可使用 `Mixture<T>?` 接收单值、多值数组或范围。`T` 支持数值、日期及枚举等可比较的值类型。价格、数量和金额的范围筛选可使用 `Range<T>?`，仅设置一个边界可表示单边范围。枚举名称列表如 `Pending,Failed` 转为 `IN` 条件，单个枚举值转为等值条件。
 
 `Match` 和 `Find` 按忽略大小写的字段名查找首个条件，遵循集合顺序进行深度优先遍历；`Matches` 和 `FindAll` 包含嵌套集合中的全部匹配条件。这些方法负责查找条件树，不求解条件逻辑，也不推断字段的单个值。匹配 `IN` 条件时保留其操作符及集合值，`OR` 分支同样可以被查找。
 

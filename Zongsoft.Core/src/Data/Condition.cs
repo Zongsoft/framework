@@ -249,7 +249,7 @@ public class Condition : ICondition, IEquatable<Condition>
 	/// <param name="name">字段名。</param>
 	/// <param name="range">表示范围的对象。</param>
 	/// <returns>返回构建成功的条件项。</returns>
-	public static Condition Between<T>(string name, Range<T> range) where T : struct, IComparable<T>
+	public static Condition Between<T>(string name, Range<T> range) where T : struct
 	{
 		return range.ToCondition(name);
 	}
@@ -260,7 +260,7 @@ public class Condition : ICondition, IEquatable<Condition>
 	/// <param name="minimum">最小值。</param>
 	/// <param name="maximum">最大值。</param>
 	/// <returns>返回构建成功的条件项。</returns>
-	public static Condition Between<T>(string name, T minimum, T maximum) where T : struct, IComparable<T>
+	public static Condition Between<T>(string name, T minimum, T maximum) where T : struct
 	{
 		return (new Range<T>(minimum, maximum)).ToCondition(name);
 	}
@@ -271,7 +271,7 @@ public class Condition : ICondition, IEquatable<Condition>
 	/// <param name="minimum">最小值。</param>
 	/// <param name="maximum">最大值。</param>
 	/// <returns>返回构建成功的条件项。</returns>
-	public static Condition Between<T>(string name, T? minimum, T? maximum) where T : struct, IComparable<T>
+	public static Condition Between<T>(string name, T? minimum, T? maximum) where T : struct
 	{
 		if(minimum == null && maximum == null)
 			return null;
@@ -285,7 +285,7 @@ public class Condition : ICondition, IEquatable<Condition>
 	/// <param name="values">用于匹配的集合。</param>
 	/// <returns>返回构建成功的条件项。</returns>
 	/// <exception cref="ArgumentNullException">参数空异常。</exception>
-	public static Condition In<T>(string name, IEnumerable<T> values) where T : IEquatable<T>
+	public static Condition In<T>(string name, IEnumerable<T> values)
 	{
 		if(values == null)
 			throw new ArgumentNullException(nameof(values));
@@ -299,7 +299,7 @@ public class Condition : ICondition, IEquatable<Condition>
 	/// <param name="values">用于匹配的集合。</param>
 	/// <returns>返回构建成功的条件项。</returns>
 	/// <exception cref="ArgumentNullException">参数空异常。</exception>
-	public static Condition In<T>(string name, params T[] values) where T : IEquatable<T>
+	public static Condition In<T>(string name, params T[] values)
 	{
 		if(values == null)
 			throw new ArgumentNullException(nameof(values));
@@ -313,7 +313,7 @@ public class Condition : ICondition, IEquatable<Condition>
 	/// <param name="values">用于排除的集合。</param>
 	/// <returns>返回构建成功的条件项。</returns>
 	/// <exception cref="ArgumentNullException">参数空异常。</exception>
-	public static Condition NotIn<T>(string name, IEnumerable<T> values) where T : IEquatable<T>
+	public static Condition NotIn<T>(string name, IEnumerable<T> values)
 	{
 		if(values == null)
 			throw new ArgumentNullException(nameof(values));
@@ -327,7 +327,7 @@ public class Condition : ICondition, IEquatable<Condition>
 	/// <param name="values">用于排除的集合。</param>
 	/// <returns>返回构建成功的条件项。</returns>
 	/// <exception cref="ArgumentNullException">参数空异常。</exception>
-	public static Condition NotIn<T>(string name, params T[] values) where T : IEquatable<T>
+	public static Condition NotIn<T>(string name, params T[] values)
 	{
 		if(values == null)
 			throw new ArgumentNullException(nameof(values));
@@ -553,13 +553,13 @@ public class Condition : ICondition, IEquatable<Condition>
 		public static Condition LessThanEqual(Operand field, Operand value) => Condition.LessThanEqual(field, value);
 		public static Condition Like(string name, string value) => Condition.Like(name, value);
 		public static Condition Like(Operand field, string value) => Condition.Like(field, value);
-		public static Condition Between<TValue>(string name, Range<TValue> range) where TValue : struct, IComparable<TValue> => Condition.Between<TValue>(name, range);
-		public static Condition Between<TValue>(string name, TValue minimum, TValue maximum) where TValue : struct, IComparable<TValue> => Condition.Between<TValue>(name, minimum, maximum);
-		public static Condition Between<TValue>(string name, TValue? minimum, TValue? maximum) where TValue : struct, IComparable<TValue> => Condition.Between<TValue>(name, minimum, maximum);
-		public static Condition In<TValue>(string name, IEnumerable<TValue> values) where TValue : IEquatable<TValue> => Condition.In<TValue>(name, values);
-		public static Condition In<TValue>(string name, params TValue[] values) where TValue : IEquatable<TValue> => Condition.In<TValue>(name, values);
-		public static Condition NotIn<TValue>(string name, IEnumerable<TValue> values) where TValue : IEquatable<TValue> => Condition.NotIn<TValue>(name, values);
-		public static Condition NotIn<TValue>(string name, params TValue[] values) where TValue : IEquatable<TValue> => Condition.NotIn<TValue>(name, values);
+		public static Condition Between<TValue>(string name, Range<TValue> range) where TValue : struct => Condition.Between<TValue>(name, range);
+		public static Condition Between<TValue>(string name, TValue minimum, TValue maximum) where TValue : struct => Condition.Between<TValue>(name, minimum, maximum);
+		public static Condition Between<TValue>(string name, TValue? minimum, TValue? maximum) where TValue : struct => Condition.Between<TValue>(name, minimum, maximum);
+		public static Condition In<TValue>(string name, IEnumerable<TValue> values) => Condition.In<TValue>(name, values);
+		public static Condition In<TValue>(string name, params TValue[] values) => Condition.In<TValue>(name, values);
+		public static Condition NotIn<TValue>(string name, IEnumerable<TValue> values) => Condition.NotIn<TValue>(name, values);
+		public static Condition NotIn<TValue>(string name, params TValue[] values) => Condition.NotIn<TValue>(name, values);
 		public static Condition Exists(string name, ICondition filter = null) => Condition.Exists(name, filter);
 		public static Condition NotExists(string name, ICondition filter = null) => Condition.NotExists(name, filter);
 		#endregion
@@ -572,13 +572,13 @@ public class Condition : ICondition, IEquatable<Condition>
 		public static Condition LessThan<TValue>(Expression<Func<T, TValue>> member, TValue value) => Condition.LessThan(Reflection.ExpressionUtility.GetMemberName(member), value);
 		public static Condition LessThanEqual<TValue>(Expression<Func<T, TValue>> member, TValue value) => Condition.LessThanEqual(Reflection.ExpressionUtility.GetMemberName(member), value);
 		public static Condition Like(Expression<Func<T, string>> member, string value) => Condition.Like(Reflection.ExpressionUtility.GetMemberName(member), value);
-		public static Condition Between<TValue>(Expression<Func<T, TValue>> member, Range<TValue> range) where TValue : struct, IComparable<TValue> => Condition.Between<TValue>(Reflection.ExpressionUtility.GetMemberName(member), range);
-		public static Condition Between<TValue>(Expression<Func<T, TValue>> member, TValue minimum, TValue maximum) where TValue : struct, IComparable<TValue> => Condition.Between(Reflection.ExpressionUtility.GetMemberName(member), minimum, maximum);
-		public static Condition Between<TValue>(Expression<Func<T, TValue>> member, TValue? minimum, TValue? maximum) where TValue : struct, IComparable<TValue> => Condition.Between(Reflection.ExpressionUtility.GetMemberName(member), minimum, maximum);
-		public static Condition In<TValue>(Expression<Func<T, TValue>> member, params TValue[] values) where TValue : IEquatable<TValue> => Condition.In(Reflection.ExpressionUtility.GetMemberName(member), values);
-		public static Condition In<TValue>(Expression<Func<T, TValue>> member, IEnumerable<TValue> values) where TValue : IEquatable<TValue> => Condition.In(Reflection.ExpressionUtility.GetMemberName(member), values);
-		public static Condition NotIn<TValue>(Expression<Func<T, TValue>> member, params TValue[] values) where TValue : IEquatable<TValue> => Condition.NotIn(Reflection.ExpressionUtility.GetMemberName(member), values);
-		public static Condition NotIn<TValue>(Expression<Func<T, TValue>> member, IEnumerable<TValue> values) where TValue : IEquatable<TValue> => Condition.NotIn(Reflection.ExpressionUtility.GetMemberName(member), values);
+		public static Condition Between<TValue>(Expression<Func<T, TValue>> member, Range<TValue> range) where TValue : struct => Condition.Between<TValue>(Reflection.ExpressionUtility.GetMemberName(member), range);
+		public static Condition Between<TValue>(Expression<Func<T, TValue>> member, TValue minimum, TValue maximum) where TValue : struct => Condition.Between(Reflection.ExpressionUtility.GetMemberName(member), minimum, maximum);
+		public static Condition Between<TValue>(Expression<Func<T, TValue>> member, TValue? minimum, TValue? maximum) where TValue : struct => Condition.Between(Reflection.ExpressionUtility.GetMemberName(member), minimum, maximum);
+		public static Condition In<TValue>(Expression<Func<T, TValue>> member, params TValue[] values) => Condition.In(Reflection.ExpressionUtility.GetMemberName(member), values);
+		public static Condition In<TValue>(Expression<Func<T, TValue>> member, IEnumerable<TValue> values) => Condition.In(Reflection.ExpressionUtility.GetMemberName(member), values);
+		public static Condition NotIn<TValue>(Expression<Func<T, TValue>> member, params TValue[] values) => Condition.NotIn(Reflection.ExpressionUtility.GetMemberName(member), values);
+		public static Condition NotIn<TValue>(Expression<Func<T, TValue>> member, IEnumerable<TValue> values) => Condition.NotIn(Reflection.ExpressionUtility.GetMemberName(member), values);
 		#endregion
 	}
 	#endregion

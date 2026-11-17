@@ -27,7 +27,10 @@ partial class Paging
 		TimeSpan.FromMilliseconds(1000));
 	#endregion
 
+	#region 解析方法
+	public static Paging Parse(string text) => Parse(text.AsSpan());
 	public static Paging Parse(ReadOnlySpan<char> text) => TryParse(text, out Paging result) ? result : throw new ArgumentException(Properties.Resources.Paging_InvalidFormat_Message);
+	public static bool TryParse(string text, out Paging result) => TryParse(text.AsSpan(), out result);
 	public static bool TryParse(ReadOnlySpan<char> text, out Paging result)
 	{
 		if(text.IsEmpty)
@@ -36,7 +39,7 @@ partial class Paging
 			return true;
 		}
 
-		if(text == "*" || text.Equals(nameof(Disabled), StringComparison.OrdinalIgnoreCase))
+		if(text.Equals("*", StringComparison.Ordinal) || text.Equals(nameof(Disabled), StringComparison.OrdinalIgnoreCase))
 		{
 			result = Paging.Disabled;
 			return true;
@@ -71,7 +74,8 @@ partial class Paging
 		if(match.Success &&
 		   int.TryParse(match.Groups["index"].ValueSpan, out index) &&
 		   int.TryParse(match.Groups["count"].ValueSpan, out var count) &&
-		   long.TryParse(match.Groups["total"].ValueSpan, out var total))
+		   long.TryParse(match.Groups["total"].ValueSpan, out var total) &&
+		   count > 0 && total / count <= int.MaxValue)
 		{
 			result = new(index, (int)(total / count)) { Total = total };
 			return true;
@@ -80,4 +84,12 @@ partial class Paging
 		result = null;
 		return false;
 	}
+	#endregion
+
+	#region 显式实现
+	static Paging IParsable<Paging>.Parse(string text, IFormatProvider provider) => Parse(text);
+	static bool IParsable<Paging>.TryParse(string text, IFormatProvider provider, out Paging result) => TryParse(text, out result);
+	static Paging ISpanParsable<Paging>.Parse(ReadOnlySpan<char> text, IFormatProvider provider) => Parse(text);
+	static bool ISpanParsable<Paging>.TryParse(ReadOnlySpan<char> text, IFormatProvider provider, out Paging result) => TryParse(text, out result);
+	#endregion
 }

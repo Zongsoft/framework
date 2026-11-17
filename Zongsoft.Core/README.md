@@ -58,6 +58,47 @@ The package is intentionally broad: it is the common layer that higher-level _**
 - **Runtime helpers** _(`Zongsoft.Resources`, `Zongsoft.Scheduling`, `Zongsoft.Versioning`, `Zongsoft.Terminals`)_
   > Resource lookup, trigger abstractions, semantic version parsing, and terminal/console command execution.
 
+## Temporal Ranges
+
+`Zongsoft.Data.Range<T>` supports `DateTime`, `DateOnly` and `DateTimeOffset` endpoints, single values and unbounded ranges. Text uses `minimum~maximum`, with an empty endpoint or a standalone `?` or `*` for an unbounded endpoint and one optional matching pair of surrounding parentheses. Both endpoints are inclusive. Reversed endpoints are exchanged automatically.
+
+```csharp
+var dates = Zongsoft.Data.Range<DateOnly>.Parse("2026-11-01~2026-11-30");
+var today = Zongsoft.Data.Range.Timing.Today<DateOnly>();
+var year = Zongsoft.Data.Range.Timing.Year<DateTimeOffset>(2026);
+var day = Zongsoft.Data.Range.Timing.Day(DateTimeOffset.Now);
+var recent = Zongsoft.Data.Range<DateTimeOffset>.Parse("last(3d)");
+```
+
+Generic `Range.Timing` methods support these three types. Existing entry points without a type argument return `Range<DateTime>`. `Day(DateOnly)` returns a single-date range. `Day(DateTimeOffset)` uses the supplied date and preserves its offset. `Day<DateTimeOffset>(DateTime)` respects the argument's `Kind`, producing zero-offset endpoints for UTC input.
+
+All three types support `today`, `tomorrow`, `yesterday`, `thisweek`, `lastweek`, `thismonth`, `lastmonth`, `thisyear`, `lastyear`, `year(2026)`, `month(2026,11)`, `day(2026,11,18)`, `ago(3d)` and `last(3d)`. Names are case-insensitive. Parameterless expressions allow omitted parentheses. Relative units are `y/Y` for years, `M` for months, `d/D` for days, `h/H` for hours, `m` for minutes and `s/S` for seconds. `ago` produces a range without a lower bound. `last` ends at the current time. With a zero count, `last` starts at the beginning of the current year, month, day, hour or minute. Zero seconds selects the current time.
+
+Expressions and generic calendar factories use the machine's local calendar. `DateOnly` takes the date component of each calculated endpoint. `DateTimeOffset` uses the local offset applicable to each endpoint. Explicit date-time text preserves its supplied offsets. Weeks start on Monday and end on Sunday at `23:59:59`. Day, month and year ranges end at `23:59:59.999` on their final date. Text conversion and `ToString()` use the current culture.
+
+`TryParse` returns `false` and a default range for invalid expressions, incorrect argument counts or units, invalid dates and numeric overflow. Generic temporal factories throw `NotSupportedException` for other value types.
+
+## Parsing Query Settings
+
+`Range<T>`, `Mixture<T>`, `Paging` and `Sorting` implement `ISpanParsable<TSelf>`, which includes `IParsable<TSelf>`. Each provides public string and `ReadOnlySpan<char>` overloads of `Parse` and `TryParse`. Interface methods ignore their `IFormatProvider` argument and retain current-culture value conversion.
+
+`Range<T>` and `Mixture<T>` constrain their element type with `where T : struct`. Range ordering uses `Comparer<T>.Default`, supporting enums and value types that implement `IComparable<T>` or nongeneric `IComparable`. Operations requiring an unavailable ordering throw `ArgumentException`, and range `TryParse` returns `false`. Selections use default value equality and allow structs that provide value equality alone. Range condition builders and Range/Mixture Web binders follow the same element requirements.
+
+`Mixture<T>` supports single values, selections and ranges for numeric types, enums, `DateTime`, `DateTimeOffset` and `DateOnly`. Top-level commas separate selected values. Commas inside temporal expression parentheses separate function arguments. `A~C` selects an inclusive range ordered by the underlying enum values. `A,B,D,F` selects individual values. Empty list entries are skipped. Any invalid nonempty entry makes the entire parse fail.
+
+```csharp
+var dates = Zongsoft.Data.Mixture<DateOnly>.Parse("month(2026,11)".AsSpan());
+var days = Zongsoft.Data.Mixture<DayOfWeek>.Parse("Monday,Wednesday,Friday");
+var paging = Zongsoft.Data.Paging.Parse("2|50");
+var sorting = Zongsoft.Data.Sorting.Parse("-CreatedTime".AsSpan());
+```
+
+The framework JSON serializer uses the same string parsing rules for `Mixture<T>` and accepts JSON arrays for selections. `Mixture<T>` and nullable `Mixture<T>?` properties on `CriteriaBase` automatically produce equality, `IN`, `BETWEEN` or one-sided range conditions.
+
+`Paging` accepts a page index, `index|size`, `limit@offset`, `index/count(total)`, `*` and `Disabled`. Result text requires a positive page count and a calculated page size within the `int` range. Null or empty text produces `Paging.Disabled`. `Sorting` accepts a name for ascending order, an optional `+` prefix, and `-` or `~` prefixes for descending order.
+
+`Range<T>.Parse` and `Sorting.Parse` throw `ArgumentNullException` for null or empty text. `Mixture<T>.Parse` throws `ArgumentNullException` for null text and `FormatException` for empty or invalid text. The corresponding `TryParse` methods return `false` with a default result for these inputs.
+
 ## Password Hashing
 
 [`Password`](src/Security/Password.cs) uses PBKDF2 with SHA256 by default. Its `Factor` ranges from `0` to `255` and defaults to `10`. Zero disables additional iterations by performing PBKDF2 once; positive factors map to `Factor × 65,535` iterations. The default factor `10` means 655,350 iterations; factor `127` means 8,322,945 iterations. Execution time depends on the hardware, hash algorithm, and load.
@@ -83,6 +124,8 @@ Each event has one descriptor: use `EventDescriptor<TArgument>` for a single arg
 Explicitly register `DataServiceBase<TModel>.EventFilterBase` to reuse event data preparation and single/collection callbacks for insert, update, delete, upsert, and import. Business modules retain event declarations and publication; reads are excluded. See [data service write events](docs/data-service-events.md) for usage, Returning requirements, and input lifetime.
 
 ## Condition lookup
+
+Criteria properties can use `Mixture<T>?` to receive a single value, an array or a range. Supported values include comparable numeric, date and enum types. Use `Range<T>?` for price, quantity and amount filters, with either boundary left empty for a one-sided range. An enum name list such as `Pending,Failed` produces an `IN` condition, and a single enum value produces an equality condition.
 
 `Match` and `Find` locate the first condition with a matching field name, ignoring case and following depth-first collection order. `Matches` and `FindAll` include every matching condition, including nested collections. These methods search the condition tree; they do not evaluate its logic or infer a single field value. Matching an `IN` condition preserves its operator and collection value, and an `OR` branch remains searchable.
 

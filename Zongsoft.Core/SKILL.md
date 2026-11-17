@@ -101,6 +101,18 @@ ITerminal.Abort 同步触发 Aborting 并返回最终 Cancel，异常向调用�
 
 [NetworkAddress 和 NetworkProtocol](docs/networking.zh-Hans.md) 提供通用网络地址及协议组合的解析、规范化和相等语义，均实现 `ISpanParsable<T>`（包含 `IParsable<T>`），公开 string 与 `ReadOnlySpan<char>` 重载。NetworkAddress 不设置应用方案白名单，保留地址族、区分大小写的 IPv6 区域及原始路径。NetworkProtocol 接受任意合法上层名称与 tcp、udp、http、http1、http2、http3 承载组合，组合顺序无关，不补全应用协议的默认承载。集合使用必须指定分隔符的 Parse/TryParse 重载，在相同上层名称内归并 HTTP 泛称，保留所有显式版本及未指定承载的名称。先通过 TemplateEvaluator 求值，再解析协议文本；应用简写、绑定路径限制及地址与协议的一致性由消费者负责。二者不执行 zongsoft.tools.binding PI、不探测后端、不选择最高版本、不生成代理配置。EndpointConverter 的 EndPoint 转换及 HandlerAttribute 的元数据契约保持独立。测试为 Communication/NetworkAddressTest 与 NetworkProtocolTest。
 
+## 时间范围
+
+`Range.Timing` 的泛型工厂通过既有 `DateTime` 计算生成 `DateTime`、`DateOnly` 或 `DateTimeOffset` 区间。`DateOnly` 提取日期，`DateTimeOffset` 按每个端点的 `DateTime.Kind` 和本地时区构造，转换前校验 UTC 表示范围；`Day(DateTimeOffset)` 保留实参偏移量。日、月、年末端精度为毫秒，周末端精度为秒，区间包含两端。
+
+`RangeParser.Parse` 直接返回输入的边界切片，识别可选的一层圆括号、单个 `~` 和独立通配符 `*`／`?`，拒绝残缺或嵌套括号、重复分隔符及通配符拼接。`DateTimeRangeParser.Parse<T>` 使用 `OrdinalIgnoreCase` 的冻结字典按字符跨度查找函数枚举，最多三个参数存于栈上；参数读取使用 `int.TryParse`，先校验参数个数、单位、日历日期、时间运算及偏移转换边界，再求值。两个内部解析器均以结果表示格式或边界错误，不使用异常作为解析分支；时间解析器以 null 表示交给普通范围语法处理。公开 `Range<T>.Parse` 在失败时抛出异常，`TryParse` 对这些失败返回 false 并保留默认输出。相关测试位于 `test/unit/Data/RangeTest.cs`。
+
+## 查询设置解析
+
+`Range<T>`、`Mixture<T>`、`Paging`、`Sorting` 的公开 string/span 入口共享解析逻辑，显式实现 `IParsable<TSelf>` 和 `ISpanParsable<TSelf>` 的带 provider 方法，沿用当前区域设置。`Mixture<T>` 按括号深度区分顶层多值逗号和时间函数参数逗号，多值采用通用转换器逐项解析，任一非空项失败时保持默认输出。JSON 字符串复用 `Mixture<T>.TryParse`，JSON 数组逐项读取值，保留空字符串、空选择和空范围的 JSON 行为。`Paging.TryParse` 拒绝页数为零及页大小越界的结果文本；`Sorting.TryParse` 对空名称及非法切片返回失败。接口测试按类型放在 `test/unit/Data/RangeTest.cs`、`MixtureTest.cs`、`PagingTest.cs` 和 `SortingTest.cs`；Criteria JSON 路径和日期时间选择测试位于 `test/unit/Data/MixtureTest.cs`。
+
+`Range<T>`、`Mixture<T>` 及其范围工厂、范围条件构建器、Web 绑定器只约束 `T : struct`。范围统一使用 `Comparer<T>.Default`，允许泛型比较、非泛型比较及枚举，相等性使用 `EqualityComparer<T>.Default`。`Condition.In/NotIn` 仅包装值集合，不要求元素实现比较接口。缺少顺序比较能力的类型在范围比较时由默认比较器抛出 `ArgumentException`，范围解析入口在 `TryParse` 中将其转为失败。范围比较契约测试位于 `test/unit/Data/RangeTest.cs`，多值相等性及无序值类型选择测试位于 `test/unit/Data/MixtureTest.cs`。
+
 ## 服务注册与解析调用链
 
 - [ServiceCollectionExtension](src/Services/ServiceCollectionExtension.cs) 扫描程序集 DefinedTypes，跳过非类和未闭合的泛型类型：`IServiceRegistration` 支持非公开实现，优先使用公开静态字段或属性供应实例，否则以公开或非公开无参构造创建；无实例供应的抽象注册器不实例化。普通 `ServiceAttribute` 与选项扫描仍要求 Type.IsVisible；通常将实现注册为 Singleton，契约指向同一实例，Members 分支读取静态成员。不要推断成 transient。

@@ -26,17 +26,17 @@ namespace Zongsoft.Data;
 /// <list type="bullet">
 ///		<item>
 ///			<term>Limit@Offset</term>
-///			<description>分页条件：<c>限制数</c> 与 <c>偏移量</c> 之间采用“<c>^</c>”符号分隔。</description>
+///			<description><c>限制数</c> 与 <c>偏移量</c> 之间采用“<c>@</c>”符号分隔。</description>
 ///		</item>
 ///		<item>
-///			<term>PageIndex|PageSize</term>
+///			<term>Index|Size</term>
 ///			<description>分页条件：<c>页号</c> 与 <c>页大小</c> 之间采用“<c>|</c>”符号分隔，其中 <c>页大小</c> 可选（忽略则表示系统默认值）。
 ///				<para>如果 <c>页号</c> 为数字零(<c>0</c>)或星号(<c>*</c>)，则表示不分页（参见：<seealso cref="Paging.Disabled"/>）。</para>
 ///			</description>
 ///		</item>
 ///		<item>
-///			<term>PageIndex/PageCount(TotalCount)</term>
-///			<description>分页结果：<c>页号</c> 与 <c>分页数</c> 之间采用“<c>/</c>”符号分隔，之后的 <c>记录总数</c>(采用圆括号包裹)可选。</description>
+///			<term>Index/Count(Total)</term>
+///			<description><c>页号</c> 与 <c>分页数</c> 之间采用“<c>/</c>”符号分隔，之后提供采用圆括号包裹的 <c>记录总数</c>。分页数必须大于零。</description>
 ///		</item>
 /// </list>
 /// </remarks>

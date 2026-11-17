@@ -15,6 +15,7 @@
  */
 
 using System;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 
 namespace Zongsoft.Data;
@@ -22,194 +23,32 @@ namespace Zongsoft.Data;
 internal static class RangeParser
 {
 	#region 公共方法
-	public static RangeParserResult Parse<T>(ReadOnlySpan<char> span, int start = 0) where T : struct
+	public static RangeParserResult Parse(ReadOnlySpan<char> span)
 	{
-		var minimum = string.Empty;
-		var maximum = string.Empty;
-		var context = new RangeParserContext(span);
+		span = span.Trim();
 
-		for(int i = start; i < span.Length; i++)
+		if(!span.IsEmpty && span[0] == '(')
 		{
-			context.Move(i);
-
-			switch(context.State)
-			{
-				case State.Error:
-					return new RangeParserResult(context.ErrorMessage);
-				case State.Start:
-					DoStart(ref context);
-					break;
-				case State.Final:
-					DoFinal(ref context);
-					break;
-				case State.Minimum:
-					DoMinimum(ref context, out minimum);
-					break;
-				case State.MinimumFinal:
-					DoMinimunFinal(ref context);
-					break;
-				case State.Maximum:
-					DoMaximum(ref context, out maximum);
-					break;
-				case State.MaximumFinal:
-					DoMaximumFinal(ref context);
-					break;
-				case State.Separator:
-					DoSeparator(ref context);
-					break;
-			}
-		}
-
-		if(context.State != State.Final)
-		{
-			//未正常关闭圆括号
-			if(context.HasFlags(Flags.Parenthesis))
+			if(span[^1] != ')')
 				return new RangeParserResult(Properties.Resources.RangeParser_MissingClosingParenthesis_Message);
 
-			//必须移动指针到最后，以便Reset正确计算内容值
-			context.Move(-1);
-
-			switch(context.State)
-			{
-				case State.Minimum:
-				case State.MinimumFinal:
-				case State.Separator:
-					context.Reset(out var minimumSpan);
-					minimum = minimumSpan.ToString();
-					break;
-				default:
-					context.Reset(out var maximumSpan);
-					maximum = maximumSpan.ToString();
-					break;
-			}
+			span = span[1..^1].Trim();
 		}
 
-		if(string.IsNullOrEmpty(maximum) && (context.State == State.Minimum || context.State == State.MinimumFinal))
-			maximum = minimum;
+		var separator = span.IndexOf('~');
+		var minimum = separator < 0 ? span : span[..separator].TrimEnd();
+		var maximum = separator < 0 ? span : span[(separator + 1)..].TrimStart();
+
+		if(minimum is ['*'] or ['?'])
+			minimum = default;
+
+		if(maximum is ['*'] or ['?'])
+			maximum = default;
+
+		if(minimum.IndexOfAny("()*?~") >= 0 || maximum.IndexOfAny("()*?~") >= 0)
+			return new RangeParserResult(Properties.Resources.InvalidFormat_Message);
 
 		return new RangeParserResult(minimum, maximum);
-	}
-	#endregion
-
-	#region 状态处理
-	private static void DoStart(ref RangeParserContext context)
-	{
-		switch(context.Character)
-		{
-			case '(':
-				context.Reset(State.Minimum, Flags.Parenthesis);
-				break;
-			case '*':
-			case '?':
-				context.Reset(State.MinimumFinal);
-				break;
-			case '~':
-				context.Reset(State.Separator);
-				break;
-			default:
-				if(!context.IsWhitespace)
-					context.Accept(State.Minimum);
-				break;
-		}
-	}
-
-	private static void DoFinal(ref RangeParserContext context)
-	{
-		if(!context.IsWhitespace)
-			context.Error(Properties.Resources.RangeParser_RedundantContent_Message);
-	}
-
-	private static void DoMinimum(ref RangeParserContext context, out string value)
-	{
-		ReadOnlySpan<char> part;
-
-		switch(context.Character)
-		{
-			case '~':
-				context.Reset(State.Separator, out part);
-				break;
-			case '*':
-			case '?':
-				context.Reset(State.MinimumFinal, out part);
-				break;
-			case ')':
-				context.Reset(State.Final, out part);
-				break;
-			default:
-				context.Accept(State.Minimum);
-				part = default;
-				break;
-		}
-
-		value = part.IsEmpty ? null : part.ToString();
-	}
-
-	private static void DoMinimunFinal(ref RangeParserContext context)
-	{
-		switch(context.Character)
-		{
-			case '~':
-				context.Reset(State.Separator);
-				break;
-			case ')':
-				context.Reset(State.Final);
-				break;
-			default:
-				if(!context.IsWhitespace)
-					context.Error($"The invalid character is at {context.Index + 1} character.");
-				break;
-		}
-	}
-
-	private static void DoMaximum(ref RangeParserContext context, out string value)
-	{
-		ReadOnlySpan<char> part;
-
-		switch(context.Character)
-		{
-			case '*':
-			case '?':
-				context.Reset(State.MaximumFinal, out part);
-				break;
-			case ')':
-				context.Reset(State.Final, out part);
-				break;
-			default:
-				context.Accept(State.Maximum);
-				part = ReadOnlySpan<char>.Empty;
-				break;
-		}
-
-		value = part.IsEmpty ? null : part.ToString();
-	}
-
-	private static void DoMaximumFinal(ref RangeParserContext context)
-	{
-		switch(context.Character)
-		{
-			case ')':
-				context.Reset(State.Final);
-				break;
-			default:
-				if(!context.IsWhitespace)
-					context.Error($"The invalid character is at {context.Index + 1} character.");
-				break;
-		}
-	}
-
-	private static void DoSeparator(ref RangeParserContext context)
-	{
-		switch(context.Character)
-		{
-			case '*':
-			case '?':
-				context.Reset(State.MaximumFinal);
-				break;
-			default:
-				if(!context.IsWhitespace)
-					context.Accept(State.Maximum);
-				break;
-		}
 	}
 	#endregion
 
@@ -229,8 +68,8 @@ internal static class RangeParser
 		public RangeParserResult(string message)
 		{
 			_message = message;
-			this.Minimum = ReadOnlySpan<char>.Empty;
-			this.Maximum = ReadOnlySpan<char>.Empty;
+			this.Minimum = default;
+			this.Maximum = default;
 		}
 
 		public RangeParserResult(ReadOnlySpan<char> minimum, ReadOnlySpan<char> maximum)
@@ -242,157 +81,48 @@ internal static class RangeParser
 		#endregion
 
 		#region 公共方法
-		public readonly bool IsFailed(out string message)
+		public bool IsFailed(out string message)
 		{
 			message = _message;
-			return message != null && message.Length > 0;
+			return !string.IsNullOrEmpty(message);
 		}
 		#endregion
-	}
-
-	private ref struct RangeParserContext
-	{
-		#region 私有字段
-		private readonly ReadOnlySpan<char> _text;
-		private State _state;
-		private char _character;
-		private int _index;
-		private Flags _flags;
-		private int _count;
-		private int _whitespaces;
-		private string _errorMessage;
-		#endregion
-
-		#region 构造函数
-		public RangeParserContext(ReadOnlySpan<char> text)
-		{
-			_text = text;
-			_state = State.Start;
-			_index = 0;
-			_character = '\0';
-			_flags = Flags.None;
-			_count = 0;
-			_whitespaces = 0;
-			_errorMessage = null;
-		}
-		#endregion
-
-		#region 公共属性
-		public readonly State State => _state;
-		public readonly int Index => _index;
-		public readonly char Character => _character;
-		public readonly string ErrorMessage => _errorMessage;
-		public readonly bool IsWhitespace => char.IsWhiteSpace(_character);
-		#endregion
-
-		#region 公共方法
-		public bool Move(int index)
-		{
-			if(index >= 0 && index < _text.Length)
-			{
-				_index = index;
-				_character = _text[index];
-				return true;
-			}
-
-			_index = _text.Length;
-			_character = '\0';
-			return false;
-		}
-
-		public void Error(string message)
-		{
-			_state = State.Error;
-			_errorMessage = message;
-		}
-
-		public void Reset(State state, Flags flags = Flags.None)
-		{
-			_count = 0;
-			_whitespaces = 0;
-			_state = state;
-
-			if(flags != 0)
-				_flags |= flags;
-		}
-
-		public void Reset(out ReadOnlySpan<char> value)
-		{
-			value = _count > 0 ? _text.Slice(_index - _count - _whitespaces, _count) : ReadOnlySpan<char>.Empty;
-
-			_count = 0;
-			_whitespaces = 0;
-		}
-
-		public void Reset(State state, out ReadOnlySpan<char> value)
-		{
-			value = _count > 0 ? _text.Slice(_index - _count - _whitespaces, _count) : ReadOnlySpan<char>.Empty;
-
-			_count = 0;
-			_whitespaces = 0;
-			_state = state;
-		}
-
-		public void Accept(State state, Flags flags = Flags.None)
-		{
-			if(char.IsWhiteSpace(_character))
-			{
-				if(_count > 0)
-					_whitespaces++;
-			}
-			else
-			{
-				_count += _whitespaces + 1;
-				_whitespaces = 0;
-			}
-
-			_state = state;
-
-			if(flags != 0)
-				_flags |= flags;
-		}
-
-		public readonly bool HasFlags(Flags flags) => (_flags & flags) == flags;
-		#endregion
-	}
-	#endregion
-
-	#region 枚举定义
-	[Flags]
-	private enum Flags
-	{
-		/// <summary>无标记</summary>
-		None = 0,
-		/// <summary>圆括号包裹</summary>
-		Parenthesis = 1,
-	}
-
-	private enum State
-	{
-		Start,
-		Final,
-		Error,
-
-		Minimum,
-		MinimumFinal,
-		Maximum,
-		MaximumFinal,
-		Separator,
 	}
 	#endregion
 }
 
 internal static class DateTimeRangeParser
 {
-	#region 公共方法
-	public static DateTimeRangeParserResult? Parse<T>(ReadOnlySpan<char> span, int start = 0) where T : struct
+	#region 私有字段
+	private static readonly FrozenDictionary<string, Function> _functions = new Dictionary<string, Function>(StringComparer.OrdinalIgnoreCase)
 	{
-		var name = string.Empty;
-		IList<DataTimeRangeFunctionArgument> arguments = null;
+		["today"] = Function.Today,
+		["tomorrow"] = Function.Tomorrow,
+		["yesterday"] = Function.Yesterday,
+		["thisweek"] = Function.ThisWeek,
+		["lastweek"] = Function.LastWeek,
+		["thismonth"] = Function.ThisMonth,
+		["lastmonth"] = Function.LastMonth,
+		["thisyear"] = Function.ThisYear,
+		["lastyear"] = Function.LastYear,
+		["ago"] = Function.Ago,
+		["last"] = Function.Last,
+		["year"] = Function.Year,
+		["month"] = Function.Month,
+		["day"] = Function.Day,
+	}.ToFrozenDictionary(StringComparer.OrdinalIgnoreCase);
+	#endregion
+
+	#region 公共方法
+	public static DateTimeRangeParserResult<T>? Parse<T>(ReadOnlySpan<char> span) where T : struct
+	{
+		var function = Function.Unknown;
+		Span<DataTimeRangeFunctionArgument> arguments = stackalloc DataTimeRangeFunctionArgument[3];
+		int argumentCount = 0;
 
 		var context = new DataTimeRangeParserContext(span);
 
-		for(int i = start; i < span.Length; i++)
+		for(int i = 0; i < span.Length; i++)
 		{
 			context.Move(i);
 
@@ -401,7 +131,7 @@ internal static class DateTimeRangeParser
 				case State.Exit:
 					return null;
 				case State.Error:
-					return new DateTimeRangeParserResult(context.ErrorMessage);
+					return new DateTimeRangeParserResult<T>(context.ErrorMessage);
 				case State.Start:
 					DoStart(ref context);
 					break;
@@ -409,7 +139,7 @@ internal static class DateTimeRangeParser
 					DoFinal(ref context);
 					break;
 				case State.Identifier:
-					DoIdentifier(ref context, out name);
+					DoIdentifier(ref context, out function);
 					break;
 				case State.Gutter:
 					DoGutter(ref context);
@@ -420,10 +150,10 @@ internal static class DateTimeRangeParser
 				case State.Number:
 					if(DoNumber(ref context, out var value, out var unit))
 					{
-						if(arguments == null)
-							arguments = new List<DataTimeRangeFunctionArgument>();
+						if(argumentCount == arguments.Length)
+							return new DateTimeRangeParserResult<T>(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_TooManyArguments_Message, function));
 
-						arguments.Add(new DataTimeRangeFunctionArgument(value, unit));
+						arguments[argumentCount++] = new DataTimeRangeFunctionArgument(value, unit);
 					}
 					break;
 				case State.Argument:
@@ -437,6 +167,10 @@ internal static class DateTimeRangeParser
 
 		switch(context.State)
 		{
+			case State.Exit:
+				return null;
+			case State.Error:
+				return new DateTimeRangeParserResult<T>(context.ErrorMessage);
 			case State.Identifier:
 				//必须移动指针到最后，以便Reset正确计算内容值
 				context.Move(-1);
@@ -445,79 +179,207 @@ internal static class DateTimeRangeParser
 				context.Reset(State.Final, out var text);
 
 				//更新标识名称(函数名)
-				name = text.ToString();
+				function = GetFunction(text);
 
 				break;
 			case State.Gutter:
 			case State.Final:
 				break;
 			default:
-				return new DateTimeRangeParserResult(Properties.Resources.RangeParser_InvalidDateTimeFormat_Message);
+				return new DateTimeRangeParserResult<T>(Properties.Resources.RangeParser_InvalidDateTimeFormat_Message);
 		}
 
-		switch(name.ToLowerInvariant())
+		var count = function switch
 		{
-			case "today":
-				return new DateTimeRangeParserResult(Range.Timing.Today());
-			case "tomorrow":
-				return new DateTimeRangeParserResult(Range.Timing.Tomorrow());
-			case "yesterday":
-				return new DateTimeRangeParserResult(Range.Timing.Yesterday());
-			case "thisweek":
-				return new DateTimeRangeParserResult(Range.Timing.ThisWeek());
-			case "lastweek":
-				return new DateTimeRangeParserResult(Range.Timing.LastWeek());
-			case "thismonth":
-				return new DateTimeRangeParserResult(Range.Timing.ThisMonth());
-			case "lastmonth":
-				return new DateTimeRangeParserResult(Range.Timing.LastMonth());
-			case "thisyear":
-				return new DateTimeRangeParserResult(Range.Timing.ThisYear());
-			case "lastyear":
-				return new DateTimeRangeParserResult(Range.Timing.LastYear());
-			case "ago":
-				if(arguments == null || arguments.Count < 1)
-					return new DateTimeRangeParserResult(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_MissingArguments_Message, nameof(Range.Timing.Ago)));
+			Function.Ago or Function.Last or Function.Year => 1,
+			Function.Month => 2,
+			Function.Day => 3,
+			Function.Unknown => -1,
+			_ => 0,
+		};
 
-				if(arguments.Count > 1)
-					return new DateTimeRangeParserResult(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_TooManyArguments_Message, nameof(Range.Timing.Ago)));
+		if(count < 0)
+			return new DateTimeRangeParserResult<T>(Properties.Resources.RangeParser_InvalidDateTimeFormat_Message);
 
-				return new DateTimeRangeParserResult(Range.Timing.Ago(arguments[0].Value, arguments[0].Unit));
-			case "last":
-				if(arguments == null || arguments.Count < 1)
-					return new DateTimeRangeParserResult(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_MissingArguments_Message, nameof(Range.Timing.Last)));
+		if(argumentCount < count)
+			return new DateTimeRangeParserResult<T>(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_MissingArguments_Message, function));
 
-				if(arguments.Count > 1)
-					return new DateTimeRangeParserResult(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_TooManyArguments_Message, nameof(Range.Timing.Last)));
+		if(argumentCount > count)
+			return new DateTimeRangeParserResult<T>(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_TooManyArguments_Message, function));
 
-				return new DateTimeRangeParserResult(Range.Timing.Last(arguments[0].Value, arguments[0].Unit));
-			case "year":
-				if(arguments == null || arguments.Count < 1)
-					return new DateTimeRangeParserResult(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_MissingArguments_Message, nameof(Range.Timing.Year)));
-
-				if(arguments.Count > 1)
-					return new DateTimeRangeParserResult(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_TooManyArguments_Message, nameof(Range.Timing.Year)));
-
-				return new DateTimeRangeParserResult(Range.Timing.Year(arguments[0].Value));
-			case "month":
-				if(arguments == null || arguments.Count < 2)
-					return new DateTimeRangeParserResult(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_MissingArguments_Message, nameof(Range.Timing.Month)));
-
-				if(arguments.Count > 2)
-					return new DateTimeRangeParserResult(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_TooManyArguments_Message, nameof(Range.Timing.Month)));
-
-				return new DateTimeRangeParserResult(Range.Timing.Month(arguments[0].Value, arguments[1].Value));
-			case "day":
-				if(arguments == null || arguments.Count < 3)
-					return new DateTimeRangeParserResult(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_MissingArguments_Message, nameof(Range.Timing.Day)));
-
-				if(arguments.Count > 3)
-					return new DateTimeRangeParserResult(string.Format(System.Globalization.CultureInfo.CurrentCulture, Properties.Resources.RangeParser_TooManyArguments_Message, nameof(Range.Timing.Day)));
-
-				return new DateTimeRangeParserResult(Range.Timing.Day(arguments[0].Value, arguments[1].Value, arguments[2].Value));
-			default:
-				return new DateTimeRangeParserResult($"Invalid datetime range function name: {name}.");
+		if(function is Function.Ago or Function.Last)
+		{
+			if(arguments[0].Unit == '\0')
+				return new DateTimeRangeParserResult<T>(Properties.Resources.RangeParser_InvalidDateTimeFormat_Message);
 		}
+		else
+		{
+			foreach(var argument in arguments[..argumentCount])
+			{
+				if(argument.Unit != '\0')
+					return new DateTimeRangeParserResult<T>(Properties.Resources.RangeParser_NumericArgumentRequired_Message);
+			}
+		}
+
+		return TryEvaluate(function, arguments[..argumentCount], out var range) && Range.Timing.TryConvert(range, out Range<T> result) ?
+			new DateTimeRangeParserResult<T>(result) :
+			new DateTimeRangeParserResult<T>(Properties.Resources.RangeParser_InvalidDateTimeFormat_Message);
+	}
+	#endregion
+
+	#region 私有方法
+	private static Function GetFunction(ReadOnlySpan<char> name) =>
+		_functions.GetAlternateLookup<ReadOnlySpan<char>>().TryGetValue(name, out var function) ? function : Function.Unknown;
+
+	private static bool TryEvaluate(Function function, ReadOnlySpan<DataTimeRangeFunctionArgument> arguments, out Range<DateTime> range)
+	{
+		range = default;
+		var now = function is Function.Year or Function.Month or Function.Day ? default : DateTime.Now;
+		var today = now.Date;
+
+		switch(function)
+		{
+			case Function.Today:
+				range = Range.Timing.Day(today);
+				return true;
+			case Function.Tomorrow:
+			case Function.Yesterday:
+				if(!TryShift(today, function == Function.Tomorrow ? -1 : 1, 'd', out var day))
+					return false;
+
+				range = Range.Timing.Day(day);
+				return true;
+			case Function.ThisWeek:
+			case Function.LastWeek:
+				var days = today.DayOfWeek == DayOfWeek.Sunday ? 6 : (int)today.DayOfWeek - 1;
+
+				if(!TryShift(today, days + (function == Function.LastWeek ? 7 : 0), 'd', out var first) ||
+				   !TryShift(first, -604799, 's', out var last))
+					return false;
+
+				range = new(first, last);
+				return true;
+			case Function.ThisMonth:
+				range = Range.Timing.Month(today.Year, today.Month);
+				return true;
+			case Function.LastMonth:
+				if(!TryShift(today, 1, 'M', out var month))
+					return false;
+
+				range = Range.Timing.Month(month.Year, month.Month);
+				return true;
+			case Function.ThisYear:
+				range = Range.Timing.Year(today.Year);
+				return true;
+			case Function.LastYear:
+				if(today.Year == 1)
+					return false;
+
+				range = Range.Timing.Year(today.Year - 1);
+				return true;
+			case Function.Year:
+			case Function.Month:
+			case Function.Day:
+				var year = arguments[0].Value;
+
+				if(year is < 1 or > 9999)
+					return false;
+
+				if(function == Function.Year)
+				{
+					range = Range.Timing.Year(year);
+					return true;
+				}
+
+				var monthNumber = arguments[1].Value;
+
+				if(monthNumber is < 1 or > 12)
+					return false;
+
+				if(function == Function.Month)
+				{
+					range = Range.Timing.Month(year, monthNumber);
+					return true;
+				}
+
+				var dayNumber = arguments[2].Value;
+
+				if(dayNumber < 1 || dayNumber > DateTime.DaysInMonth(year, monthNumber))
+					return false;
+
+				range = Range.Timing.Day(year, monthNumber, dayNumber);
+				return true;
+			case Function.Ago:
+			case Function.Last:
+				var argument = arguments[0];
+
+				if(!TryShift(now, argument.Value, argument.Unit, out var timestamp))
+					return false;
+
+				if(function == Function.Ago)
+				{
+					range = new(null, timestamp);
+					return true;
+				}
+
+				if(argument.Value == 0)
+				{
+					timestamp = argument.Unit switch
+					{
+						'Y' or 'y' => new(now.Year, 1, 1),
+						'M' => new(now.Year, now.Month, 1),
+						'D' or 'd' => today,
+						'H' or 'h' => new(now.Year, now.Month, now.Day, now.Hour, 0, 0),
+						'm' => new(now.Year, now.Month, now.Day, now.Hour, now.Minute, 0),
+						_ => now,
+					};
+				}
+
+				range = new(timestamp, now);
+				return true;
+			default:
+				return false;
+		}
+	}
+
+	private static bool TryShift(DateTime timestamp, int number, char unit, out DateTime result)
+	{
+		result = default;
+
+		if(unit is 'Y' or 'y')
+		{
+			if(number < timestamp.Year - 9999 || number > timestamp.Year - 1)
+				return false;
+
+			result = timestamp.AddYears(-number);
+			return true;
+		}
+
+		if(unit == 'M')
+		{
+			if(number < (timestamp.Year - 9999) * 12 + timestamp.Month - 12 ||
+				number > (timestamp.Year - 1) * 12 + timestamp.Month - 1)
+				return false;
+
+			result = timestamp.AddMonths(-number);
+			return true;
+		}
+
+		var ticks = unit switch
+		{
+			'D' or 'd' => TimeSpan.TicksPerDay,
+			'H' or 'h' => TimeSpan.TicksPerHour,
+			'm' => TimeSpan.TicksPerMinute,
+			'S' or 's' => TimeSpan.TicksPerSecond,
+			_ => 0,
+		};
+
+		if(ticks == 0 || number > timestamp.Ticks / ticks ||
+			number < 0 && -(long)number > (DateTime.MaxValue.Ticks - timestamp.Ticks) / ticks)
+			return false;
+
+		result = timestamp.AddTicks(-(long)number * ticks);
+		return true;
 	}
 	#endregion
 
@@ -539,26 +401,26 @@ internal static class DateTimeRangeParser
 			context.Error(Properties.Resources.RangeParser_RedundantContent_Message);
 	}
 
-	private static void DoIdentifier(ref DataTimeRangeParserContext context, out string name)
+	private static void DoIdentifier(ref DataTimeRangeParserContext context, out Function function)
 	{
 		if(context.Character == '(')
 		{
 			context.Reset(State.Method, out var text);
-			name = text.ToString();
+			function = GetFunction(text);
 		}
 		else if(context.IsWhitespace)
 		{
 			context.Reset(State.Gutter, out var text);
-			name = text.ToString();
+			function = GetFunction(text);
 		}
 		else if(context.IsLetterOrDigit)
 		{
-			name = null;
+			function = Function.Unknown;
 			context.Accept(State.Identifier);
 		}
 		else
 		{
-			name = null;
+			function = Function.Unknown;
 			context.Error($"The invalid character '{context.Character}' is at {context.Index + 1} character.");
 		}
 	}
@@ -635,10 +497,10 @@ internal static class DateTimeRangeParser
 		{
 			context.Reset(state, out var text);
 
-			if(text.Length > 0)
-				return int.Parse(text.ToString());
+			if(int.TryParse(text, out var number))
+				return number;
 
-			context.Error($"Missing datetime range function parameter value.");
+			context.Error(Properties.Resources.RangeParser_NumericArgumentRequired_Message);
 			return 0;
 		}
 	}
@@ -675,30 +537,27 @@ internal static class DateTimeRangeParser
 	#endregion
 
 	#region 嵌套结构
-	public struct DateTimeRangeParserResult
+	public readonly struct DateTimeRangeParserResult<T> where T : struct
 	{
 		#region 私有字段
 		private readonly string _message;
 		#endregion
 
 		#region 公共字段
-		public readonly DateTime? Minimum;
-		public readonly DateTime? Maximum;
+		public readonly Range<T> Range;
 		#endregion
 
 		#region 构造函数
 		public DateTimeRangeParserResult(string message)
 		{
 			_message = message;
-			this.Minimum = DateTime.MinValue;
-			this.Maximum = DateTime.MaxValue;
+			this.Range = default;
 		}
 
-		public DateTimeRangeParserResult(Range<DateTime> duration)
+		public DateTimeRangeParserResult(Range<T> value)
 		{
 			_message = null;
-			this.Minimum = duration.Minimum;
-			this.Maximum = duration.Maximum;
+			this.Range = value;
 		}
 		#endregion
 
@@ -706,7 +565,7 @@ internal static class DateTimeRangeParser
 		public bool IsFailed(out string message)
 		{
 			message = _message;
-			return message != null && message.Length > 0;
+			return !string.IsNullOrEmpty(message);
 		}
 		#endregion
 	}
@@ -828,6 +687,25 @@ internal static class DateTimeRangeParser
 	#endregion
 
 	#region 枚举定义
+	private enum Function
+	{
+		Unknown,
+		Today,
+		Tomorrow,
+		Yesterday,
+		ThisWeek,
+		LastWeek,
+		ThisMonth,
+		LastMonth,
+		ThisYear,
+		LastYear,
+		Ago,
+		Last,
+		Year,
+		Month,
+		Day,
+	}
+
 	private enum State
 	{
 		Start,

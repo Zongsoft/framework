@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<Version>8.0.0</Version>
+		<Version>8.1.0</Version>
 		<Product>Zongsoft Core Library</Product>
 		<Description>This is a core library about Zongsoft development framework.</Description>
 		<RootNamespace>Zongsoft</RootNamespace>
@@ -10,7 +10,7 @@
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageProjectUrl>https://github.com/Zongsoft/framework</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/Zongsoft/framework/tree/main/Zongsoft.Core</RepositoryUrl>
-		<PackageReleaseNotes>账号密码认证使用命名空间优先的 AuthenticateAsync；认证器通过 AuthenticateAsync 返回票证，并通过 IssueAsync 签发声明身份。</PackageReleaseNotes>
+		<PackageReleaseNotes>完善 DateOnly、DateTimeOffset 和枚举范围及混合选择；Range、Mixture、Paging、Sorting 支持跨度解析，修复时间表达式、开放边界及无效输入处理。</PackageReleaseNotes>
 	</PropertyGroup>
 
 	<PropertyGroup>

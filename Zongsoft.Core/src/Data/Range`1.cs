@@ -19,7 +19,9 @@ using System.Collections.Generic;
 
 namespace Zongsoft.Data;
 
-public struct Range<T> where T : struct, IComparable<T>
+/// <summary>表示具有可选上下界的值类型范围。</summary>
+/// <typeparam name="T">范围值类型。顺序比较要求支持 <see cref="Comparer{T}.Default"/>，可实现 <see cref="IComparable{T}"/> 或 <see cref="IComparable"/>。</typeparam>
+public struct Range<T> : ISpanParsable<Range<T>> where T : struct
 {
 	#region 成员字段
 	private T? _minimum;
@@ -107,30 +109,31 @@ public struct Range<T> where T : struct, IComparable<T>
 	#endregion
 
 	#region 静态方法
-	public static Range<T> Parse(string text)
+	public static Range<T> Parse(string text) => Parse(text.AsSpan());
+	public static Range<T> Parse(ReadOnlySpan<char> text)
 	{
-		if(string.IsNullOrEmpty(text))
+		if(text.IsEmpty)
 			throw new ArgumentNullException(nameof(text));
 
 		string message;
 
-		if(typeof(T) == typeof(DateTime) || typeof(T) == typeof(DateTimeOffset))
+		if(typeof(T) == typeof(DateTime) || typeof(T) == typeof(DateOnly) || typeof(T) == typeof(DateTimeOffset))
 		{
-			var duration = DateTimeRangeParser.Parse<T>(text.AsSpan());
+			var duration = DateTimeRangeParser.Parse<T>(text);
 
 			if(duration != null)
 			{
 				if(duration.Value.IsFailed(out message))
-					throw new ArgumentException(message ?? string.Format("Invalid value '{0}' of the argument.", text));
+					throw new ArgumentException(message ?? Properties.Resources.InvalidFormat_Message);
 
-				return (Range<T>)Range.Create(typeof(T), duration.Value.Minimum, duration.Value.Maximum);
+				return duration.Value.Range;
 			}
 		}
 
-		var result = RangeParser.Parse<T>(text.AsSpan());
+		var result = RangeParser.Parse(text);
 
 		if(result.IsFailed(out message))
-			throw new ArgumentException(message ?? string.Format("Invalid value '{0}' of the argument.", text));
+			throw new ArgumentException(message ?? Properties.Resources.InvalidFormat_Message);
 
 		T? minimum = null, maximum = null;
 
@@ -143,28 +146,29 @@ public struct Range<T> where T : struct, IComparable<T>
 		return new Range<T>(minimum, maximum);
 	}
 
-	public static bool TryParse(string text, out Range<T> value)
+	public static bool TryParse(string text, out Range<T> value) => TryParse(text.AsSpan(), out value);
+	public static bool TryParse(ReadOnlySpan<char> text, out Range<T> value)
 	{
 		value = default;
 
-		if(string.IsNullOrEmpty(text))
+		if(text.IsEmpty)
 			return false;
 
-		if(typeof(T) == typeof(DateTime) || typeof(T) == typeof(DateTimeOffset))
+		if(typeof(T) == typeof(DateTime) || typeof(T) == typeof(DateOnly) || typeof(T) == typeof(DateTimeOffset))
 		{
-			var duration = DateTimeRangeParser.Parse<T>(text.AsSpan());
+			var duration = DateTimeRangeParser.Parse<T>(text);
 
-			if(duration != null)
+			if(duration.HasValue)
 			{
 				if(duration.Value.IsFailed(out _))
 					return false;
 
-				value = (Range<T>)Range.Create(typeof(T), duration.Value.Minimum, duration.Value.Maximum);
+				value = duration.Value.Range;
 				return true;
 			}
 		}
 
-		var result = RangeParser.Parse<T>(text.AsSpan());
+		var result = RangeParser.Parse(text);
 
 		if(result.IsFailed(out _))
 			return false;
@@ -183,9 +187,21 @@ public struct Range<T> where T : struct, IComparable<T>
 				return false;
 		}
 
-		value = new Range<T>(minimum, maximum);
-		return true;
+		try
+		{
+			value = new Range<T>(minimum, maximum);
+			return true;
+		}
+		catch(ArgumentException)
+		{
+			return false;
+		}
 	}
+
+	static Range<T> IParsable<Range<T>>.Parse(string text, IFormatProvider provider) => Parse(text);
+	static bool IParsable<Range<T>>.TryParse(string text, IFormatProvider provider, out Range<T> result) => TryParse(text, out result);
+	static Range<T> ISpanParsable<Range<T>>.Parse(ReadOnlySpan<char> text, IFormatProvider provider) => Parse(text);
+	static bool ISpanParsable<Range<T>>.TryParse(ReadOnlySpan<char> text, IFormatProvider provider, out Range<T> result) => TryParse(text, out result);
 	#endregion
 
 	#region 隐式转换
@@ -200,7 +216,7 @@ public struct Range<T> where T : struct, IComparable<T>
 		{
 			var to = _maximum;
 
-			if(to != null && to.Value.CompareTo(value.Value) < 0)
+			if(to != null && Comparer<T>.Default.Compare(to.Value, value.Value) < 0)
 			{
 				_maximum = value;
 				return to;
@@ -216,7 +232,7 @@ public struct Range<T> where T : struct, IComparable<T>
 		{
 			var from = _minimum;
 
-			if(from != null && from.Value.CompareTo(value.Value) > 0)
+			if(from != null && Comparer<T>.Default.Compare(from.Value, value.Value) > 0)
 			{
 				_minimum = value;
 				return from;

@@ -21,7 +21,7 @@ namespace Zongsoft.Data;
 
 /// <summary>表示数据分页的设置类。</summary>
 [TypeConverter(typeof(PagingConverter))]
-public partial class Paging : INotifyPropertyChanged, INotifyPropertyChanging
+public partial class Paging : INotifyPropertyChanged, INotifyPropertyChanging, ISpanParsable<Paging>
 {
 	#region 常量定义
 	private const int PAGE_SIZE = 20;

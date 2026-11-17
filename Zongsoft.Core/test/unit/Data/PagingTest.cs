@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 
 namespace Zongsoft.Data.Tests;
 
@@ -125,4 +126,66 @@ public class PagingTest
 		Assert.Equal(11, page.Count);
 		Assert.Equal(220, page.Total);
 	}
+
+	[Theory]
+	[InlineData(null, 0, 0, -1, 0)]
+	[InlineData("", 0, 0, -1, 0)]
+	[InlineData("*", 0, 0, -1, 0)]
+	[InlineData("0", 0, 0, -1, 0)]
+	[InlineData("disabled", 0, 0, -1, 0)]
+	[InlineData("5", 5, 20, -1, 0)]
+	[InlineData("5|25", 5, 25, -1, 0)]
+	[InlineData("100@50", 0, 100, -1, 50)]
+	[InlineData("1/11(220)", 1, 20, 220, 0)]
+	public void ParsesPagingThroughStringAndSpanInterfaces(string text, int index, int size, long total, long offset)
+	{
+		var expected = Paging.Parse(text.AsSpan());
+		Assert.Equal(index, expected.Index);
+		Assert.Equal(size, expected.Size);
+		Assert.Equal(total, expected.Total);
+		Assert.Equal(expected, Paging.Parse(text));
+		Assert.True(Paging.TryParse(text, out var fromString));
+		Assert.Equal(expected, fromString);
+		AssertInterfaceParsing(text, expected);
+
+		if(index == 0 && size > 0)
+		{
+			Assert.True(expected.IsLimited(out var count, out var actualOffset));
+			Assert.Equal(size, count);
+			Assert.Equal(offset, actualOffset);
+		}
+	}
+
+	[Theory]
+	[InlineData("invalid")]
+	[InlineData("1|")]
+	[InlineData("1/0(220)")]
+	[InlineData("1/1(9223372036854775807)")]
+	public void RejectsInvalidPagingThroughInterfaces(string text)
+	{
+		Assert.False(TryParseString<Paging>(text, out var fromString));
+		Assert.False(TryParseSpan<Paging>(text.AsSpan(), out var fromSpan));
+		Assert.Null(fromString);
+		Assert.Null(fromSpan);
+		Assert.Throws<ArgumentException>(() => ParseString<Paging>(text));
+		Assert.Throws<ArgumentException>(() => ParseSpan<Paging>(text.AsSpan()));
+	}
+
+	private static void AssertInterfaceParsing<T>(string text, T expected) where T : ISpanParsable<T>
+	{
+		Assert.Equal(expected, ParseString<T>(text));
+		Assert.True(TryParseString<T>(text, out var fromString));
+		Assert.Equal(expected, fromString);
+
+		var decorated = "!" + text + "!";
+		var span = decorated.AsSpan(1, text?.Length ?? 0);
+		Assert.Equal(expected, ParseSpan<T>(span));
+		Assert.True(TryParseSpan<T>(span, out var fromSpan));
+		Assert.Equal(expected, fromSpan);
+	}
+
+	private static T ParseString<T>(string text) where T : IParsable<T> => T.Parse(text, CultureInfo.InvariantCulture);
+	private static T ParseSpan<T>(ReadOnlySpan<char> text) where T : ISpanParsable<T> => T.Parse(text, CultureInfo.InvariantCulture);
+	private static bool TryParseString<T>(string text, out T result) where T : IParsable<T> => T.TryParse(text, CultureInfo.InvariantCulture, out result);
+	private static bool TryParseSpan<T>(ReadOnlySpan<char> text, out T result) where T : ISpanParsable<T> => T.TryParse(text, CultureInfo.InvariantCulture, out result);
 }

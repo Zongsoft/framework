@@ -21,7 +21,7 @@ namespace Zongsoft.Data;
 
 /// <summary>表示数据排序的设置项。</summary>
 [TypeConverter(typeof(SortingConverter))]
-public readonly struct Sorting : IEquatable<Sorting>
+public readonly struct Sorting : IEquatable<Sorting>, ISpanParsable<Sorting>
 {
 	#region 成员字段
 	private readonly SortingMode _mode;
@@ -57,15 +57,18 @@ public readonly struct Sorting : IEquatable<Sorting>
 	/// <param name="name">指定的排序项名称。</param>
 	/// <returns>返回创建成果的排序设置项实例。</returns>
 	public static Sorting Descending(string name) => new(name, SortingMode.Descending);
+	#endregion
 
+	#region 解析方法
 	/// <summary>将排序设置规则的字符串表示形式解析为其等效的<see cref="Sorting"/>。</summary>
 	/// <param name="text">待解析的排序设置规则文本。</param>
 	/// <returns>返回解析成功的<see cref="Sorting"/>排序设置。</returns>
 	/// <exception cref="ArgumentException">当指定的<paramref name="text"/>参数值不符合排序设置格式。</exception>
 	/// <exception cref="ArgumentNullException">当指定的<paramref name="text"/>参数值为空(<c>null</c>)或空字符串。</exception>
-	public static Sorting Parse(string text)
+	public static Sorting Parse(string text) => Parse(text.AsSpan());
+	public static Sorting Parse(ReadOnlySpan<char> text)
 	{
-		if(string.IsNullOrEmpty(text))
+		if(text.IsEmpty)
 			throw new ArgumentNullException(nameof(text));
 
 		if(TryParse(text, out var result))
@@ -78,7 +81,8 @@ public readonly struct Sorting : IEquatable<Sorting>
 	/// <param name="text">待解析的排序设置规则文本。</param>
 	/// <param name="value">输出参数，表示解析成功的<see cref="Sorting"/>排序设置。</param>
 	/// <returns>如果解析成功则返回真(<c>True</c>)，否则返回假(<c>False</c>)。</returns>
-	public static bool TryParse(string text, out Sorting value)
+	public static bool TryParse(string text, out Sorting value) => TryParse(text.AsSpan(), out value);
+	public static bool TryParse(ReadOnlySpan<char> text, out Sorting value)
 	{
 		const int NONE_STATE = 0;       //未开始
 		const int GAPS_STATE = 1;       //符号与名字的间隔
@@ -87,17 +91,16 @@ public readonly struct Sorting : IEquatable<Sorting>
 
 		value = default;
 
-		if(string.IsNullOrEmpty(text))
+		if(text.IsEmpty)
 			return false;
 
-		var span = text.AsSpan();
 		var mode = SortingMode.Ascending;
-		int state = NONE_STATE;
+		var state = NONE_STATE;
 		int index = 0, length = 0;
 
-		for(int i = 0; i < span.Length; i++)
+		for(int i = 0; i < text.Length; i++)
 		{
-			if(span[i] == ' ' || span[i] == '\t')
+			if(text[i] is ' ' or '\t')
 			{
 				if(state == NAME_STATE)
 					state = WHITESPACE_STATE;
@@ -105,13 +108,13 @@ public readonly struct Sorting : IEquatable<Sorting>
 				continue;
 			}
 
-			if(span[i] == '+')
+			if(text[i] == '+')
 			{
 				state = GAPS_STATE;
 				continue;
 			}
 
-			if(span[i] == '-' || span[i] == '~')
+			if(text[i] is '-' or '~')
 			{
 				mode = SortingMode.Descending;
 				state = GAPS_STATE;
@@ -121,16 +124,24 @@ public readonly struct Sorting : IEquatable<Sorting>
 			if(state == WHITESPACE_STATE)
 				return false;
 
-			if(state == NONE_STATE || state == GAPS_STATE)
+			if(state is NONE_STATE or GAPS_STATE)
 				index = i;
 
 			length++;
 			state = NAME_STATE;
 		}
 
-		value = new Sorting(span.Slice(index, length).ToString(), mode);
+		if(length == 0 || index > text.Length - length || text.Slice(index, length).IsWhiteSpace())
+			return false;
+
+		value = new Sorting(text.Slice(index, length).ToString(), mode);
 		return true;
 	}
+
+	static Sorting IParsable<Sorting>.Parse(string text, IFormatProvider provider) => Parse(text);
+	static bool IParsable<Sorting>.TryParse(string text, IFormatProvider provider, out Sorting result) => TryParse(text, out result);
+	static Sorting ISpanParsable<Sorting>.Parse(ReadOnlySpan<char> text, IFormatProvider provider) => Parse(text);
+	static bool ISpanParsable<Sorting>.TryParse(ReadOnlySpan<char> text, IFormatProvider provider, out Sorting result) => TryParse(text, out result);
 	#endregion
 
 	#region 重写方法
