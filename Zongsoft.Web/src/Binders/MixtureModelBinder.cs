@@ -21,7 +21,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Zongsoft.Web.Binders;
 
-public class MixtureModelBinder<T> : IModelBinder where T : struct, IEquatable<T>, IComparable<T>
+public class MixtureModelBinder<T> : IModelBinder where T : struct
 {
 	#region 委托定义
 	private delegate bool TryParseDelegate(string text, out Data.Mixture<T> value);
@@ -34,8 +34,7 @@ public class MixtureModelBinder<T> : IModelBinder where T : struct, IEquatable<T
 	#region 构造函数
 	public MixtureModelBinder()
 	{
-		var method = typeof(Data.Mixture<T>).GetMethod(nameof(Data.Mixture<T>.TryParse));
-		_TryParse_ = (TryParseDelegate)method.CreateDelegate(typeof(TryParseDelegate));
+		_TryParse_ = Data.Mixture<T>.TryParse;
 	}
 	#endregion
 

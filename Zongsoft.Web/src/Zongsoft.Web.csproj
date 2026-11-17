@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 	<PropertyGroup>
 		<OutputType>Library</OutputType>
-		<Version>8.0.0</Version>
+		<Version>8.1.0</Version>
+		<PackageReleaseNotes>范围与混合选择绑定支持枚举及日期时间类型，并适配核心库的字符串和跨度解析重载。</PackageReleaseNotes>
 		<Product>Zongsoft Web Library</Product>
 		<Description>This is a base class library that provides web development.</Description>
 		<RootNamespace>Zongsoft.Web</RootNamespace>
@@ -26,7 +27,7 @@
 		</When>
 		<Otherwise>
 			<ItemGroup>
-				<PackageReference Include="Zongsoft.Core" VersionOverride="8.0.0" />
+				<PackageReference Include="Zongsoft.Core" VersionOverride="8.1.0" />
 			</ItemGroup>
 		</Otherwise>
 	</Choose>

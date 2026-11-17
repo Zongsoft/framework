@@ -58,6 +58,8 @@ Deploy the complete domain and Web plugins and configure data, security and site
 
 `WebUtility.Paginate` writes paging metadata to response headers. The JSON formatters use the framework serializer. Binders understand `Paging`, `Sorting`, `Range<T>`, `Mixture<T>`, booleans, and time spans; invalid input is reported through MVC model state.
 
+`Range<T>` and `Mixture<T>` binders support value types including enums, numbers, `DateTime`, `DateTimeOffset` and `DateOnly`. Ranges use default ordering. Temporal expressions such as `month(2026,11)` can supply date-time criteria. JSON request bodies use the same Core range and mixture parsing rules.
+
 Register the credential scheme through ASP.NET authentication:
 
 ```csharp

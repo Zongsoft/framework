@@ -58,6 +58,8 @@ public class ForumController : ServiceController<Forum, ForumService>
 
 `WebUtility.Paginate` 把分页元数据写入响应头。JSON 格式化器使用框架序列化器。绑定器支持 `Paging`、`Sorting`、`Range<T>`、`Mixture<T>`、布尔值和时间跨度；无效输入通过 MVC 模型状态报告。
 
+`Range<T>` 和 `Mixture<T>` 的绑定器支持枚举、数值、`DateTime`、`DateTimeOffset`、`DateOnly` 等值类型，范围按默认比较器排序。`month(2026,11)` 时间表达式可用于日期时间条件。JSON 请求体使用相同的 Core 范围与混合值解析规则。
+
 通过 ASP.NET 身份验证注册凭据方案：
 
 ```csharp

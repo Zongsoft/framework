@@ -16,6 +16,7 @@ description: 开发、审查、调试或测试 Zongsoft.Web 及其 OpenAPI、gRP
 - [ServiceControllerBase](src/ServiceControllerBase.cs) 与 [ServiceController](src/ServiceController.cs) 把 HTTP 操作委托给数据服务；最小派生类使用真实的无参构造/GetService 扩展点，不编造 service 基类构造参数。
 - [ControllerActivator](src/ControllerActivator.cs) 与 [ControllerFeatureProvider](src/ControllerFeatureProvider.cs) 负责激活/发现边界；插件程序集由 Plugins.Web 的 WebApplicationContext 加入 ApplicationParts，单独包引用不能证明路由存在。
 - [Binders](src/Binders) 解析条件/排序/范围等文本，[Formatters](src/Formatters) 负责 JSON，[Filters](src/Filters) 负责横切处理。HTTP Schema 与排序格式也受 Core/Data 契约约束。
+- Range/Mixture 绑定器通过方法组绑定 string 解析重载，泛型参数只约束为值类型，允许枚举与日期时间类型。正常绑定、无效值及带参数时间表达式的回归位于 `test/Binders/ValueModelBinderTest.cs`。
 - [Plugins.Web Application](../Zongsoft.Plugins.Web/src/Application.cs) 调用初始化器后依次加入 CORS、本地化、方法覆盖、路由、认证、授权、压缩与静态文件，最后映射 Controller/Hub。不能在可选扩展中无意重复注册整条管线。
 - [GrpcInitializer](grpc/src/GrpcInitializer.cs) 注册 gRPC，按服务标签发现类型并以 Handler 字面基路径挂载到 Web 端点区域；注解与 gRPC 监听基路径忽略大小写及可选尾斜杠关联，Order 为零。缺注解、缺监听、空区域及服务/方法冲突均失败。反射包装器从区域元数据取得该区域的上游 ReflectionServiceImpl；不建立全局业务服务目录。
 - [Plugins.Web 默认策略](../Zongsoft.Plugins.Web/src/WebApplicationBuilder.cs) 包含宽松 CORS。安全部署必须校准宿主策略，不把默认认证中间件存在等同于所有接口已经授权保护。

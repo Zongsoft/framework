@@ -21,7 +21,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Zongsoft.Web.Binders;
 
-public class RangeModelBinder<T> : IModelBinder where T : struct, IComparable<T>
+public class RangeModelBinder<T> : IModelBinder where T : struct
 {
 	#region 委托定义
 	private delegate bool TryParseDelegate(string text, out Data.Range<T> value);
@@ -34,8 +34,7 @@ public class RangeModelBinder<T> : IModelBinder where T : struct, IComparable<T>
 	#region 构造函数
 	public RangeModelBinder()
 	{
-		var method = typeof(Data.Range<T>).GetMethod(nameof(Data.Range<T>.TryParse));
-		_TryParse_ = (TryParseDelegate)method.CreateDelegate(typeof(TryParseDelegate));
+		_TryParse_ = Data.Range<T>.TryParse;
 	}
 	#endregion
 
