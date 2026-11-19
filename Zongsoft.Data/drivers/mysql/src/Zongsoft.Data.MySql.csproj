@@ -14,7 +14,7 @@
 
 	<ItemGroup>
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
-		<PackageReference Include="MySqlConnector" VersionOverride="2.4.0" />
+		<PackageReference Include="MySqlConnector" VersionOverride="3.0.0" />
 	</ItemGroup>
 
 	<ItemGroup>

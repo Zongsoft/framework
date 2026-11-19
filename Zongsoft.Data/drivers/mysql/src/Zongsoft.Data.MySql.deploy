@@ -2,4 +2,4 @@ artifacts/Zongsoft.Data.MySql.plugin
 lib/${Framework}/Zongsoft.Data.MySql.*
 lib/${Framework}/*/Zongsoft.Data.MySql.resources.*
 
-nuget:MySqlConnector@2.4.0
+nuget:MySqlConnector@3.0.0
